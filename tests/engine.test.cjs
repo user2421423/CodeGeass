@@ -52,7 +52,8 @@ const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
 });
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
-  assert.equal(Object.keys(E.TYPES).length, 31);
+  assert.equal(Object.keys(E.TYPES).filter(k => !E.TYPES[k].elite).length, 31);
+  assert.equal(Object.keys(E.TYPES).filter(k => E.TYPES[k].elite).length, 9);
   for (const side of E.MAJORS) {
     assert.deepEqual(Object.keys(E.ROSTER[side]).sort(), [...E.CLASS_ORDER].sort());
     const branches = E.CLASS_ORDER.map(c => E.TYPES[T(side, c)].branch);
@@ -69,7 +70,7 @@ test('Each power fields ten Knightmares across the three branches', () => {
   assert.deepEqual(lineup('cf'), ['akatsuki', 'akatsuki_zikisan', 'akatsuki_air', 'gekka_rocket', 'akatsuki_missile', 'akatsuki_heavy']);
   assert.equal(T('eu', 'assault'), 'estrella_cc');
   assert.equal(T('cf', 'assault'), 'burai_kai');
-  assert.deepEqual(Object.keys(E.TYPES).filter(k => E.TYPES[k].float).sort(), ['akatsuki_air', 'sutherland_air']);
+  assert.deepEqual(Object.keys(E.TYPES).filter(k => E.TYPES[k].float && !E.TYPES[k].elite).sort(), ['akatsuki_air', 'sutherland_air']);
 });
 test('The world map wraps east to west and every city stands on land', () => {
   const g = E.createGame('eu', 'normal', 'conquest', 5);
@@ -651,4 +652,51 @@ test('Rival powers aim warheads at the most valuable target and never at their o
   const h = blank('britannia');
   E.newUnit(h, T('britannia', 'scout'), 'britannia', 6, 6);
   assert.equal(E.aiLaunchTarget(h, 'eu'), null);
+});
+
+
+test('Elite Forces are persistent single-frame units with fragment progression', () => {
+  assert.equal(Object.keys(E.ELITE_FORCES).length, 9);
+  const p = {};
+  const roster = E.eliteProfile(p);
+  assert.equal(roster.cornelia_gloucester.fragments, E.ELITE_UNLOCK_FRAGMENTS);
+  assert.equal(roster.tohdoh_gekka.fragments, E.ELITE_UNLOCK_FRAGMENTS);
+  assert.equal(roster.lancelot.fragments, 0);
+  assert(E.upgradeElite(p, 'cornelia_gloucester').ok);
+  assert.equal(roster.cornelia_gloucester.level, 1);
+
+  const g = E.applyProfile(blank('britannia'), p);
+  const r = E.deployElite(g, 0, 'cornelia_gloucester', p);
+  assert(r.ok, r.reason);
+  assert.equal(r.unit.stack, 1);
+  assert.equal(r.unit.elite, 'cornelia_gloucester');
+  assert.match(E.reinforceReason(g, r.unit), /single unique/i);
+  assert.match(E.eliteDeployReason(g, g.stations[0], 'cornelia_gloucester', p), /Already deployed/);
+});
+
+test('Elite levels scale stats and unlock signature abilities at Lv.3/Lv.5', () => {
+  const one = E.eliteStats('lancelot_albion', 1),
+    five = E.eliteStats('lancelot_albion', 5);
+  assert(five.hp > one.hp);
+  assert(five.attack > one.attack);
+  assert(five.armor > one.armor);
+  assert.equal(five.move, one.move + 2);
+
+  const albion = { elite: 'lancelot_albion', eliteLevel: 3 },
+    seiten = { elite: 'guren_seiten', eliteLevel: 5 };
+  assert.equal(E.eliteFx(albion).moveAfterAttack, true);
+  assert.equal(E.eliteFx(albion).float, true);
+  assert.equal(E.eliteFx(seiten).noCounter, true);
+  assert.equal(E.eliteFx(seiten).refire, true);
+});
+
+test('Elite fragment rewards are slower for higher rarities', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 9);
+  g.over = { winner: 'britannia' };
+  const first = E.eliteVictoryReward(g, { cleared: {} });
+  assert.equal(first.cornelia_gloucester, 12);
+  assert.equal(first.lancelot, 9);
+  assert.equal(first.lancelot_albion, 6);
+  const repeat = E.eliteVictoryReward(g, { cleared: { [E.operationKey(g)]: true } });
+  assert(repeat.cornelia_gloucester > repeat.lancelot_albion);
 });

@@ -605,6 +605,78 @@
       "page": "https://codegeass.fandom.com/wiki/Michael_Augustus",
       "image": "https://static.wikia.nocookie.net/codegeass/images/6/67/Michael_Augustus.jpeg/revision/latest?cb=20200713233157",
       "method": "Source portrait copied locally; game crops with object-fit: cover and top alignment"
+    },
+    {
+      "kind": "units",
+      "id": "elite_cornelia_gloucester",
+      "file": "units/elite_cornelia_gloucester.jpg",
+      "page": "https://www.1999.co.jp/eng/10063379",
+      "image": "https://www.1999.co.jp/itbig06/10063379a5.jpg",
+      "method": "Licensed MegaHouse Gloucester Cornelia custom product image used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_lancelot",
+      "file": "units/elite_lancelot.jpg",
+      "page": "https://bibliomecha.altervista.org/mecha/lancelot.html",
+      "image": "https://bibliomecha.altervista.org/mecha/images/Code%20Geass/lancelot-mvs-varis.jpg",
+      "method": "Lancelot reference image showing MVS and VARIS, used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_guren_mkii",
+      "file": "units/elite_guren_mkii.png",
+      "page": "https://wiki.biligame.com/loststories/Type-02%E7%BA%A2%E8%8E%B2%E4%BA%8C%E5%BC%8F",
+      "image": "https://patchwiki.biligame.com/images/loststories/thumb/c/c7/2r99h02q195g4zbrthf5hbnq8fgvqtc.png/385px-%E7%BA%A2%E8%8E%B2%E4%BA%8C%E5%BC%8F_%284%29.png",
+      "method": "Code Geass Lost Stories Guren Mk-II game artwork used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_tohdoh_gekka",
+      "file": "units/elite_tohdoh_gekka.jpg",
+      "page": "https://p-bandai.jp/item/item-1000002488/",
+      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000002488_3.jpg",
+      "method": "Official Premium Bandai Tohdoh Gekka product image used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_mordred",
+      "file": "units/elite_mordred.jpg",
+      "page": "https://schizophonic9.com/robot_mordred.html",
+      "image": "https://schizophonic9.com/robot_mordred002.jpg",
+      "method": "Bandai ROBOT Spirits Mordred reference photograph used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_gawain",
+      "file": "units/elite_gawain.webp",
+      "page": "https://www.zerochan.net/4253260",
+      "image": "https://static.zerochan.net/IFX-V3D1.Gawain.1024.4253260.webp",
+      "method": "Sunrise Gawain promotional artwork mirrored by Zerochan, used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_shinkiro",
+      "file": "units/elite_shinkiro.jpg",
+      "page": "https://www.animecharactersdatabase.com/image.php?imgid=65222&type_id=1",
+      "image": "https://ami.animecharactersdatabase.com/uploads/chars/9180-2027930139.jpg",
+      "method": "Shinkirō reference artwork used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_lancelot_albion",
+      "file": "units/elite_lancelot_albion.jpg",
+      "page": "https://www.zerochan.net/4254103",
+      "image": "https://static.zerochan.net/Z-01Z.Lancelot.Albion.full.4254103.jpg",
+      "method": "Bandai Namco Entertainment Lancelot Albion artwork mirrored by Zerochan, used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "elite_guren_seiten",
+      "file": "units/elite_guren_seiten.webp",
+      "page": "https://www.zerochan.net/4446529",
+      "image": "https://static.zerochan.net/Type-02.F1Z.Guren.S.E.I.T.E.N.1024.4446529.webp",
+      "method": "Sunrise Guren S.E.I.T.E.N. promotional artwork mirrored by Zerochan, used as Elite Force art."
     }
   ],
   "drawnFallbacks": {

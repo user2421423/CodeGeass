@@ -2782,3 +2782,35 @@ button.danger:hover:not(:disabled) {
     animation: none;
   }
 }
+/* ---- Elite Forces ---- */
+.elite-card {
+  position: relative;
+}
+.elite-card::before {
+  content: 'ELITE';
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 2;
+  padding: 3px 6px;
+  border: 1px solid var(--gold);
+  background: #182420dd;
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+.elite-card.locked .catalog-ship {
+  filter: grayscale(.6);
+  opacity: .62;
+}
+.elite-fragments {
+  margin: 8px 0 10px;
+  padding-top: 7px;
+  border-top: 1px solid #ffffff1c;
+  color: var(--muted);
+  font-size: 12px;
+}
+.elite-fragments b {
+  color: var(--gold);
+}
