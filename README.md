@@ -28,12 +28,19 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   | Artillery | Siege (range 2, +100% vs cities) | Zetland | Panzer-Wespe | Sutherland Sieg |
   The Middle Eastern Federation garrisons field the Bamides.
 - **Doctrines:** Britannian Armor +8% damage; E.U. Artillery +10% damage; Federation Infantry 15% cheaper.
+- **Sakuradite, the fourth resource:** mined at six deposits. Japan holds 70 of the world's 100 base output, as in
+  the lore: the great mine on **Mount Fuji** (40 a turn, its own hex beside Tokyo), Hokkaido and Kyushu (15 each,
+  worked from Sapporo and Fukuoka); Stonehenge (worked from London), the Rocky Mountains and the Qaidam Basin yield
+  10. A refinery extracts 25% / 50% / 75% / 100% (+15 credits) of a deposit at levels 0–3. Mainline, raider and
+  rocket frames cost 5 Sakuradite a frame, heavy and siege 10, super-heavy 25; tier-I frames need none. Mines have no
+  defenses: Infantry or Armor seize one by moving onto it. Every power starts with 50. (First-pass numbers.)
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
-  frame, range 3), cities with factory / research lab / Sakuradite refinery (levels 1–3), repairs and reinforcement.
+  frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
+  deposit, repairs and reinforcement.
 - **Commanders (WC4 generals):** 35 named commanders (14 Britannian, 11 E.U., 10 Federation), each with one signature
   ability: Suzaku's *Live On*, Cornelia's *Witch of Britannia*, Bismarck's *Excalibur*, Julius Kingsley's *Geass
   Command*, Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and

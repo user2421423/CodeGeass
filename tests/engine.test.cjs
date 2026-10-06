@@ -36,9 +36,20 @@ function blank(player = 'britannia', size = 12) {
   g.phase = player;
   g.over = null;
   g.fallen = {};
-  for (const s of E.MAJORS) g.economy[s] = { credits: 5000, industry: 5000, science: 0 };
+  g.sites = [];
+  for (const s of E.MAJORS) g.economy[s] = { credits: 5000, industry: 5000, science: 0, sakuradite: 500 };
   return g;
 }
+const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
+  id: 0,
+  name: 'Test Mine',
+  c,
+  r,
+  base,
+  city: null,
+  owner,
+  refinery,
+});
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
   assert.equal(Object.keys(E.TYPES).length, 31);
@@ -334,4 +345,118 @@ test('Rewards are paid for the first victory only; saves from other versions are
   assert(E.missionReward(g, 1, { [E.operationKey(g)]: true }).repeat);
   assert.equal(E.migrateSave({ ...g, rulesVersion: 0 }), null);
   assert.equal(E.migrateSave(JSON.parse(JSON.stringify(g))).player, 'eu');
+});
+test('Sakuradite: Japan holds 70% of the deposits; Fuji is a mine of its own, island deposits are worked from cities', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 3),
+    site = n => g.sites.find(d => d.name === n),
+    city = n => g.stations.find(s => s.name === n);
+  assert.equal(g.sites.reduce((a, d) => a + d.base, 0), 100);
+  assert.equal(['Mount Fuji', 'Hokkaido', 'Kyushu'].reduce((a, n) => a + site(n).base, 0), 70);
+  const fuji = site('Mount Fuji');
+  assert.equal(fuji.city, null);
+  assert.equal(fuji.owner, 'britannia');
+  assert.equal(E.distance(fuji, city('Tokyo Settlement'), g), 1);
+  assert.equal(E.tile(g, fuji.c, fuji.r).terrain, 'mountain');
+  assert.equal(site('Hokkaido').city, city('Sapporo').id);
+  assert.equal(site('Kyushu').city, city('Fukuoka').id);
+  assert.equal(site('Stonehenge').city, city('London').id);
+  assert.equal(E.depositOwner(g, site('Stonehenge')), 'eu');
+  assert.equal(site('Rocky Mountains').owner, 'britannia');
+  assert.equal(site('Qaidam Basin').owner, 'cf');
+  for (const s of E.MAJORS) assert.equal(g.economy[s].sakuradite, E.SAKURADITE.start);
+  // Capitals keep their old income: 50 plus the 15 their refinery used to export.
+  assert.equal(city('Pendragon').income, 65);
+  assert.equal(city('Pendragon').refinery, 0);
+  // The AI wants Fuji almost as much as a capital.
+  assert.equal(E.goalField(g, 'cf')[fuji.r * g.cols + fuji.c], -5);
+});
+test('Refineries extract 25/50/75/100% of a deposit; a level-3 refinery also exports for credits', () => {
+  const g = blank();
+  g.sites = [mine('britannia', 5, 5)];
+  const levels = [0, 1, 2, 3].map(l => {
+    g.sites[0].refinery = l;
+    return E.income(g, 'britannia');
+  });
+  assert.deepEqual(levels.map(i => i.sakuradite), [10, 20, 30, 40]);
+  assert.equal(levels[3].credits - levels[2].credits, E.SAKURADITE.exportCredits);
+  g.sites[0].refinery = 0;
+  const credits = g.economy.britannia.credits;
+  assert(E.refine(g, 0).ok);
+  assert.equal(g.sites[0].refinery, 1);
+  assert.equal(g.economy.britannia.credits, credits - E.buildCost({ refinery: 0 }, 'refinery').credits);
+  E.newUnit(g, T('eu', 'support'), 'eu', 5, 5);
+  assert.match(E.refineReason(g, g.sites[0]), /Enemy unit/);
+  // A deposit under a city uses the city's refinery; a city without one cannot build a refinery.
+  assert.match(E.buildReason(g, g.stations[0], 'refinery'), /No Sakuradite deposit/);
+  g.sites.push({ id: 1, name: 'City Field', c: 0, r: 0, base: 15, city: 0 });
+  assert.equal(E.buildReason(g, g.stations[0], 'refinery'), null);
+  assert(E.build(g, 0, 'refinery').ok);
+  assert.equal(E.cityYield(g, g.stations[0]).sakuradite, Math.round(15 * 0.5));
+});
+test('Heavier frames cost Sakuradite by class; shortfalls name it', () => {
+  const g = blank();
+  for (const cls of ['scout', 'assault', 'light', 'support'])
+    assert.equal(E.price(T('britannia', cls), 1, g).sakuradite, 0);
+  for (const cls of ['raider', 'medium', 'rocket']) assert.equal(E.price(T('britannia', cls), 1, g).sakuradite, 5);
+  assert.equal(E.price(T('britannia', 'heavy'), 1, g).sakuradite, 10);
+  assert.equal(E.price(T('britannia', 'siege'), 1, g).sakuradite, 10);
+  assert.equal(E.price(T('britannia', 'super'), 1, g).sakuradite, 25);
+  assert.equal(E.price(T('britannia', 'heavy'), 3, g).sakuradite, Math.round(10 * 2.7));
+  assert.equal(E.price(T('cf', 'raider'), 1, g, 'cf').sakuradite, Math.round(5 * 0.85), 'Federation Infantry discount');
+  g.economy.britannia.sakuradite = 4;
+  assert.equal(E.buyReason(g, g.stations[0], T('britannia', 'heavy'), 1), 'Need 6 more Sakuradite');
+  g.economy.britannia.sakuradite = 30;
+  assert(E.recruit(g, 0, T('britannia', 'heavy'), 1).ok);
+  assert.equal(g.economy.britannia.sakuradite, 20);
+  assert.equal(E.reinforceCost(T('britannia', 'heavy'), g, 'britannia').sakuradite, 10);
+});
+test('Infantry and Armor seize a mine by moving onto it; artillery cannot; city deposits change hands with the city', () => {
+  const g = blank(),
+    gun = E.newUnit(g, T('britannia', 'support'), 'britannia', 5, 5);
+  g.sites = [mine('eu', 6, 5, 40, 2)];
+  assert(E.move(g, gun.id, 6, 5).ok);
+  assert.equal(g.sites[0].owner, 'eu', 'artillery cannot seize');
+  const h = blank(),
+    scout = E.newUnit(h, T('britannia', 'scout'), 'britannia', 5, 5);
+  h.sites = [mine('eu', 6, 5, 40, 2)];
+  const r = E.move(h, scout.id, 6, 5);
+  assert.equal(r.seized, 'Test Mine');
+  assert.equal(h.sites[0].owner, 'britannia');
+  assert.equal(h.sites[0].refinery, 2, 'the refinery is taken intact');
+  assert.equal(E.income(h, 'britannia').sakuradite, 30);
+  assert.equal(E.income(h, 'eu').sakuradite, 0);
+  // Paris falls: the E.U. surrenders, so its city deposit, its own mines and half its Sakuradite pass over.
+  const k = blank();
+  k.sites = [{ id: 0, name: 'Paris Field', c: 11, r: 0, base: 10, city: 1 }, { ...mine('eu', 4, 8), id: 1 }];
+  k.economy.eu.sakuradite = 100;
+  k.economy.britannia.sakuradite = 0;
+  k.stations[1].shield = 0;
+  const u = E.newUnit(k, T('britannia', 'scout'), 'britannia', 10, 0);
+  assert(E.move(k, u.id, 11, 0).annexed);
+  assert.equal(E.depositOwner(k, k.sites[0]), 'britannia');
+  assert.equal(k.sites[1].owner, 'britannia');
+  assert.equal(k.economy.britannia.sakuradite, 50);
+  assert.equal(k.economy.eu.sakuradite, 0);
+});
+test('Version 1 saves are upgraded: deposits placed, refineries away from a deposit become credits', () => {
+  const v1 = JSON.parse(JSON.stringify(E.createGame('britannia', 'normal', 'conquest', 4))),
+    city = n => v1.stations.find(s => s.name === n);
+  v1.rulesVersion = 1;
+  delete v1.sites;
+  for (const e of Object.values(v1.economy)) delete e.sakuradite;
+  Object.assign(city('Pendragon'), { income: 50, refinery: 1 });
+  city('London').refinery = 2;
+  city('Madrid').refinery = 2;
+  const madrid = city('Madrid').income,
+    g = E.migrateSave(v1);
+  assert.equal(g.rulesVersion, E.RULES_VERSION);
+  assert.equal(g.sites.length, E.RESOURCE_SITES.length);
+  assert.equal(g.economy.eu.sakuradite, E.SAKURADITE.start);
+  assert.equal(g.economy.neutral.sakuradite, 0);
+  assert.equal(city('Pendragon').income, 65);
+  assert.equal(city('Pendragon').refinery, 0);
+  assert.equal(city('Madrid').income, madrid + 30);
+  assert.equal(city('Madrid').refinery, 0);
+  assert.equal(city('London').refinery, 2, 'London works the Stonehenge deposit');
+  assert.equal(E.migrateSave({ ...v1, rulesVersion: 0 }), null);
 });

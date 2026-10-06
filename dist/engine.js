@@ -1625,6 +1625,7 @@
       ['credits', 'credits'],
       ['industry', 'industry'],
       ['science', 'research'],
+      ['sakuradite', 'Sakuradite'],
     ]
       .filter(([k]) => (cost[k] || 0) > (e?.[k] || 0))
       .map(([k, label]) => `${Math.ceil(cost[k] - (e?.[k] || 0))} more ${label}`);
@@ -1685,6 +1686,7 @@
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
+      (kind === 'refinery' && !depositOf(g, s) ? 'No Sakuradite deposit here' : null) ||
       shortfall(funds(g, s.owner), buildCost(s, kind))
     );
   }
@@ -1961,10 +1963,12 @@
         (1 + (u.hpTech || 0)),
     );
   }
-  // Saves from other rules versions are not carried forward.
-  const RULES_VERSION = 1;
+  // Version 2 added Sakuradite; version 1 saves are upgraded (see upgradeSave), older ones are not carried forward.
+  const RULES_VERSION = 2;
   function migrateSave(g) {
-    if (!g || g.game !== 'knightmare' || g.rulesVersion !== RULES_VERSION || !Array.isArray(g.units)) return null;
+    if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    if (g.rulesVersion === 1 && Array.isArray(g.stations) && Array.isArray(g.tiles)) upgradeSave(g);
+    if (g.rulesVersion !== RULES_VERSION) return null;
     return g.units.every(u => TYPES[u.type]) ? g : null;
   }
   function newUnit(g, type, side, c, r, stack = 1, cmd = null, ready = true) {
@@ -2113,8 +2117,9 @@
         annexed = surrender(g, loser, u.side, s);
       }
     }
+    const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
-    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed };
+    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, seized };
   }
   function surrender(g, loser, winner, capital) {
     (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: capital.name };
@@ -2139,6 +2144,7 @@
     w.credits += Math.round(e.credits / 2);
     w.industry += Math.round(e.industry / 2);
     e.credits = e.industry = 0;
+    annexDeposits(g, loser, winner);
     log(
       g,
       `${capital.name} has fallen. The ${FACTIONS[loser].name} surrenders to the ${FACTIONS[winner].name}: ${cities} cities annexed, ${units} units disbanded.`,
@@ -2383,12 +2389,20 @@
       .filter(s => s.owner === side)
       .reduce(
         (a, s) => ({
-          credits: a.credits + s.income + 15 * (s.refinery || 0),
+          credits: a.credits + s.income,
           industry: a.industry + s.industry,
           science: a.science + s.science,
         }),
         { credits: 0, industry: 0, science: 0 },
       );
+    // Sakuradite deposits: extraction by refinery level; a level-3 refinery also exports for credits.
+    total.sakuradite = 0;
+    for (const d of g.sites || [])
+      if (depositOwner(g, d) === side) {
+        const y = depositYield(g, d);
+        total.sakuradite += y.sakuradite;
+        total.credits += y.credits;
+      }
     total.credits = Math.round(total.credits * refining);
     return total;
   }
@@ -2404,13 +2418,14 @@
         (!stationAt(g, p) || stationAt(g, p).owner === side),
     );
   }
-  // The Federation's doctrine discounts its Infantry.
+  // The Federation's doctrine discounts its Infantry. Sakuradite is priced by class (SAKURADITE.cost).
   function price(type, stack = 1, g = null, side = null) {
     const t = TYPES[type],
       off = (side || t.side) === 'cf' && t.branch === 'Infantry' ? 0.85 : 1;
     return {
       credits: Math.round(t.cost * (1 + 0.85 * (stack - 1)) * off),
       industry: Math.round(t.industry * (1 + 0.85 * (stack - 1)) * off),
+      sakuradite: Math.round((SAKURADITE.cost[t.cls] || 0) * (1 + 0.85 * (stack - 1)) * off),
     };
   }
   function canBuy(g, s, type, stack = 1) {
@@ -2424,8 +2439,7 @@
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     const cost = price(type, stack, g, s.owner);
-    funds(g, s.owner).credits -= cost.credits;
-    funds(g, s.owner).industry -= cost.industry;
+    spend(funds(g, s.owner), cost);
     s.producedTurn = g.turn;
     const u = newUnit(g, type, s.owner, p.c, p.r, stack, null, false);
     log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, s.owner);
@@ -2433,7 +2447,7 @@
   }
   function reinforceCost(type, g = null, side = null) {
     const p = price(type, 1, g, side);
-    return { credits: p.credits, industry: p.industry };
+    return { credits: p.credits, industry: p.industry, sakuradite: p.sakuradite };
   }
   // Repairs restore 35% of the frame for a fifth of the unit's build price.
   function repairCost(u, g = null) {
@@ -2449,8 +2463,7 @@
     if (why) return { ok: false, reason: why };
     const cost = reinforceCost(u.type, g, u.side),
       e = funds(g, u.side);
-    e.credits -= cost.credits;
-    e.industry -= cost.industry;
+    spend(e, cost);
     const old = maxHP(u);
     u.stack++;
     u.hp += maxHP(u) - old;
@@ -2484,7 +2497,7 @@
     refinery: {
       name: 'Sakuradite refinery',
       field: 'refinery',
-      desc: 'Refines Sakuradite for export: +15 credits per level.',
+      desc: 'Only where there is a Sakuradite deposit. Extracts 25% of its output, then 50%, 75% and 100% (+15 credits) at levels 1–3.',
     },
   };
   function buildingLevel(s, kind) {
@@ -2503,8 +2516,7 @@
     if (why) return { ok: false, reason: why };
     const cost = buildCost(s, kind),
       e = funds(g, s.owner);
-    e.credits -= cost.credits;
-    e.industry -= cost.industry;
+    spend(e, cost);
     s[b.field] = buildingLevel(s, kind) + 1;
     if (kind === 'factory') {
       s.industry += 10;
@@ -2539,6 +2551,141 @@
     log(g, `${COMMANDERS[u.cmd].action.verb} disrupts ${victims.length} enemy units.`, u.side);
     return { ok: true, affected: victims.length };
   }
+
+  // ======== Sakuradite: the fourth resource, mined at a handful of deposits ========
+  // Japan holds 70 of the world's 100 base output, as in the lore (nearly 70% of the world's Sakuradite). Outputs,
+  // extraction rates, the starting stockpile and prices are first-pass balance guesses.
+  const SAKURADITE = {
+    start: 50,
+    extraction: [0.25, 0.5, 0.75, 1], // share of a deposit's output by refinery level 0–3
+    exportCredits: 15, // a level-3 refinery also exports for credits
+    // Per frame, by class; tier-1 classes need none. Extra frames follow the 85% rule.
+    cost: { raider: 5, medium: 5, rocket: 5, heavy: 10, siege: 10, super: 25 },
+  };
+  // [name, lon, lat, base output per turn, starting refinery level, terrain]. A deposit on a free land hex is a mine
+  // of its own, captured like a city; one whose hex holds a city is worked from that city and changes hands with it.
+  const RESOURCE_SITES = [
+    // The great mine on Mount Fuji (Code Geass wiki), set just west of Tokyo so it gets its own hex.
+    ['Mount Fuji', 136.6, 35.4, 40, 1, 'mountain'],
+    ['Hokkaido', 142.5, 43.3, 15, 0], // Hokkaido is a single hex: worked from Sapporo
+    ['Kyushu', 131.1, 32.9, 15, 0], // worked from Fukuoka
+    ['Stonehenge', -1.83, 51.18, 10, 0], // where Sakuradite was first found (wiki); worked from London
+    ['Rocky Mountains', -106.5, 39, 10, 0],
+    ['Qaidam Basin', 95, 37, 10, 0],
+  ];
+  // Stockpiles and deposits for a new game (or a save from before Sakuradite).
+  function setupSakuradite(g) {
+    for (const [side, e] of Object.entries(g.economy)) e.sakuradite ??= MAJORS.includes(side) ? SAKURADITE.start : 0;
+    if (g.sites) return g;
+    g.sites = [];
+    for (const [name, lon, lat, base, level, terrain] of RESOURCE_SITES) {
+      const h = hexOf(lon, lat),
+        t = tile(g, h.c, h.r),
+        city = t && stationAt(g, t),
+        id = g.sites.length;
+      if (!t) continue;
+      if (city) {
+        city.refinery = Math.max(city.refinery || 0, level);
+        g.sites.push({ id, name, c: city.c, r: city.r, base, city: city.id });
+        continue;
+      }
+      const open = n => !isSea(n) && !TERRAIN[n.terrain]?.blocked && !stationAt(g, n),
+        at = open(t) ? t : nearest(g, t, open);
+      if (!at) continue;
+      if (terrain) at.terrain = terrain;
+      g.sites.push({ id, name, c: at.c, r: at.r, base, city: null, owner: at.owner || 'neutral', refinery: level });
+    }
+    return g;
+  }
+  // A deposit's refinery and owner live on its city, or on the mine itself.
+  function depositHost(g, d) {
+    return d.city == null ? d : g.stations.find(s => s.id === d.city) || null;
+  }
+  function depositOwner(g, d) {
+    return depositHost(g, d)?.owner || null;
+  }
+  function depositOf(g, s) {
+    return (s && g.sites?.find(d => d.city === s.id)) || null;
+  }
+  function siteAt(g, p) {
+    return (p && g.sites?.find(d => d.city == null && d.c === p.c && d.r === p.r)) || null;
+  }
+  function depositYield(g, d) {
+    const host = depositHost(g, d),
+      level = clamp(host?.refinery || 0, 0, 3),
+      rate = host ? SAKURADITE.extraction[level] : 0;
+    return {
+      level,
+      rate,
+      sakuradite: Math.round(d.base * rate),
+      credits: host && level >= 3 ? SAKURADITE.exportCredits : 0,
+    };
+  }
+  function spend(e, cost) {
+    e.credits -= cost.credits || 0;
+    e.industry -= cost.industry || 0;
+    if (cost.science) e.science -= cost.science;
+    if (cost.sakuradite) e.sakuradite = (e.sakuradite || 0) - cost.sakuradite;
+  }
+  // A city's output per turn, with the deposit it works.
+  function cityYield(g, s) {
+    const d = depositOf(g, s),
+      y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
+    return { credits: s.income + y.credits, industry: s.industry, science: s.science, sakuradite: y.sakuradite };
+  }
+  // Infantry or Armor moving onto a mine seizes it; it has no defenses.
+  function seizeDeposit(g, u, p) {
+    const d = siteAt(g, p);
+    if (!d || d.owner === u.side || !canCapture(u)) return null;
+    const loser = d.owner;
+    d.owner = u.side;
+    log(
+      g,
+      `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} seizes the ${d.name} Sakuradite mine${FACTIONS[loser] && loser !== 'neutral' ? ' from the ' + FACTIONS[loser].short : ''}.`,
+      u.side,
+    );
+    return d.name;
+  }
+  // A surrendering power's mines and half its Sakuradite pass to the conqueror.
+  function annexDeposits(g, loser, winner) {
+    for (const d of g.sites || []) if (d.city == null && d.owner === loser) d.owner = winner;
+    const e = funds(g, loser),
+      w = funds(g, winner);
+    if (!e || !w) return;
+    w.sakuradite = (w.sakuradite || 0) + Math.round((e.sakuradite || 0) / 2);
+    e.sakuradite = 0;
+  }
+  // Refineries at mines of their own (deposits under a city use the city's refinery building).
+  function refineReason(g, d) {
+    if (!d || d.city != null) return 'Unavailable';
+    const foe = unitAt(g, d);
+    return (
+      (g.over ? 'Operation over' : d.owner !== g.phase ? 'Not your mine' : null) ||
+      ((d.refinery || 0) >= 3 ? 'Maximum level' : null) ||
+      (foe && foe.side !== d.owner ? 'Enemy unit on the mine' : null) ||
+      shortfall(funds(g, d.owner), buildCost(d, 'refinery'))
+    );
+  }
+  function refine(g, id) {
+    const d = g.sites?.find(d => d.id === id),
+      why = refineReason(g, d);
+    if (why) return { ok: false, reason: why };
+    spend(funds(g, d.owner), buildCost(d, 'refinery'));
+    d.refinery = (d.refinery || 0) + 1;
+    log(g, `${d.name}: Sakuradite refinery upgraded to level ${d.refinery}.`, d.owner);
+    return { ok: true };
+  }
+  // Version 1 saves: refineries away from a deposit become the credits they exported; deposits are placed.
+  function upgradeSave(g) {
+    const old = new Map(g.stations.map(s => [s.id, s.refinery || 0]));
+    g.stations.forEach(s => (s.refinery = 0));
+    setupSakuradite(g);
+    for (const s of g.stations)
+      if (depositOf(g, s)) s.refinery = Math.max(s.refinery, old.get(s.id));
+      else s.income += 15 * old.get(s.id);
+    g.rulesVersion = 2;
+    return g;
+  }
   function beginTurn(g, side, collect = true) {
     g.phase = side;
     if (collect) {
@@ -2548,6 +2695,7 @@
       e.credits += Math.round(inc.credits * modifier);
       e.industry += Math.round(inc.industry * modifier);
       e.science += Math.round(inc.science * modifier);
+      e.sakuradite = (e.sakuradite || 0) + Math.round(inc.sakuradite * modifier);
     }
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
     for (const u of mine) {
@@ -3133,14 +3281,15 @@
         owner,
         tier,
         lab: capital ? 1 : 0,
-        refinery: capital ? 1 : 0,
+        refinery: 0,
         capital,
         capitalOf: capital ? owner : null,
         fort,
         gun: gun || null,
         shield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
         maxShield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
-        income: capital ? 50 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
+        // Capitals: 50 plus the 15 their old refinery exported (refineries now need a Sakuradite deposit).
+        income: capital ? 65 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
         industry: capital ? 30 : 6 * tier,
         science: capital ? 10 : 1 + tier,
         producedTurn: 0,
@@ -3174,6 +3323,7 @@
       const s = g.stations.find(s => s.name === city);
       newUnit(g, type, 'neutral', s.c, s.r, stack);
     }
+    setupSakuradite(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
     for (const u of g.units)
       if (u.cmd) {
@@ -3227,6 +3377,16 @@
         field[i] = d;
         push(i, d);
       }
+    // Sakuradite mines held by others: Mount Fuji pulls almost like a capital.
+    for (const d of g.sites || [])
+      if (d.city == null && d.owner !== side) {
+        const i = d.r * g.cols + d.c,
+          w = d.base >= 30 ? -5 : -1;
+        if (w < field[i]) {
+          field[i] = w;
+          push(i, w);
+        }
+      }
     while (heap.length) {
       const [d, i] = pop();
       if (d > field[i]) continue;
@@ -3271,6 +3431,14 @@
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
       for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
     }
+    // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
+    for (const d of g.sites || []) {
+      if (d.city != null || d.owner !== side) continue;
+      const t = threat(d),
+        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
+      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= 5).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
+    }
     return taken;
   }
   // Enemy high command, run once at the start of each AI turn before its units act: batteries, repairs, saving for
@@ -3310,8 +3478,10 @@
     }
     // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
     const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
+    // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.
     if (!yard3.length || supers >= 2) plan.saving = false;
-    else if (!plan.saving && g.turn >= 3 && random(g) < 0.35) plan.saving = true;
+    else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
+      plan.saving = true;
     if (plan.saving) {
       const yard = yard3.find(s => canBuy(g, s, superType, 1));
       if (yard) {
@@ -3321,16 +3491,38 @@
     }
     const reserve = plan.saving ? Math.min(e.credits, superPrice.credits) : 60;
     const reserveInd = plan.saving ? Math.min(e.industry, superPrice.industry) : 0;
+    const reserveSak = plan.saving ? superPrice.sakuradite : 0;
     const spendable = () => Math.max(0, e.credits - reserve);
-    const affordable = c => c.credits <= spendable() && e.industry - (c.industry || 0) >= reserveInd;
-    // 3. Upgrade one building per turn when there is surplus: the lowest-level building at the safest city.
+    const affordable = c =>
+      c.credits <= spendable() &&
+      e.industry - (c.industry || 0) >= reserveInd &&
+      (e.sakuradite || 0) - (c.sakuradite || 0) >= reserveSak;
+    // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
+    const heavySak = yard3.length ? price(typeFor(side, 'heavy'), 1, g, side).sakuradite : 0;
+    const keepsHeavy = (type, c) =>
+      !c.sakuradite || TYPES[type].tier >= 3 || (e.sakuradite || 0) - c.sakuradite >= heavySak;
+    // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),
+    // then the lowest-level factory or lab at the safest city.
     if (!plan.saving && g.turn >= 2) {
+      let upgraded = false;
+      for (const d of (g.sites || []).filter(d => depositOwner(g, d) === side).sort((a, b) => b.base - a.base)) {
+        const host = depositHost(g, d),
+          cost = buildCost(host, 'refinery');
+        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !affordable(cost)) continue;
+        upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
+        if (upgraded) break;
+      }
       const options = bases
-        .flatMap(s => ['factory', 'lab', 'refinery'].map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
+        .flatMap(s => ['factory', 'lab'].map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
         .filter(o => o.level < 3)
         .sort((a, b) => a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
       const pick = options[0];
-      if (pick && spendable() - buildCost(pick.s, pick.kind).credits >= 250 && affordable(buildCost(pick.s, pick.kind)))
+      if (
+        !upgraded &&
+        pick &&
+        spendable() - buildCost(pick.s, pick.kind).credits >= 250 &&
+        affordable(buildCost(pick.s, pick.kind))
+      )
         build(g, pick.s.id, pick.kind);
     }
     // 4. Reinforce healthy Armor and Artillery units parked at a friendly city.
@@ -3347,18 +3539,19 @@
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side);
-      if (affordable(c) && spendable() - c.credits >= 150) reinforce(g, u.id);
+      if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
     }
     // 5. Build: front-line factories first; stack up when the budget allows. A soft cap keeps armies manageable.
     const cap = 14 + Math.round(bases.length * 0.9);
     let army = own().length;
     for (const [i, s] of bases.entries()) {
       if (army >= cap) break;
+      // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const menu = (
         s.tier >= 3
-          ? ['heavy', 'siege', 'medium', 'rocket', 'assault', 'scout']
+          ? ['heavy', 'siege', 'medium', 'rocket', 'light', 'assault', 'support', 'scout']
           : s.tier === 2
-            ? ['medium', 'rocket', 'raider', 'scout']
+            ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
             : ['light', 'support', 'assault', 'scout']
       ).map(cls => typeFor(side, cls));
       const preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
@@ -3368,7 +3561,13 @@
         for (let n = 3; n >= 1 && !built; n--) {
           const c = price(type, n, g, side);
           // Single frames may use the whole budget; stacks only this factory's share of it.
-          if (!canBuy(g, s, type, n) || !affordable(c) || (n > 1 && c.credits > spendable() * share)) continue;
+          if (
+            !canBuy(g, s, type, n) ||
+            !affordable(c) ||
+            !keepsHeavy(type, c) ||
+            (n > 1 && c.credits > spendable() * share)
+          )
+            continue;
           recruit(g, s.id, type, n);
           built = true;
           army++;
@@ -3425,6 +3624,8 @@
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && station.owner !== u.side && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        const mine = siteAt(g, p);
+        if (mine && mine.owner !== u.side && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
         sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : fieldAt(p) * 8;
         let nearestEnemy = 15,
           danger = 0;
@@ -3598,6 +3799,19 @@
     aiProduction,
     aiOrder,
     canCapture,
+    // Sakuradite.
+    SAKURADITE,
+    RESOURCE_SITES,
+    RULES_VERSION,
+    setupSakuradite,
+    depositHost,
+    depositOwner,
+    depositOf,
+    depositYield,
+    siteAt,
+    cityYield,
+    refineReason,
+    refine,
   };
   if (typeof module !== 'undefined') module.exports = root.Knightmare;
 })(typeof window !== 'undefined' ? window : globalThis);

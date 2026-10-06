@@ -50,7 +50,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 |---|---|
 | `dist/engine.js` | The deterministic rules engine (`window.Knightmare`, aliased `E` in the UI; `module.exports` for Node). No DOM. Factions, Knightmare classes and lineups, commanders, tech tree, terrain, combat, sea transport, economy, AI, the world map (`WORLD_ROWS`, `CITY_DATA`, `ARMY_DATA`, `GARRISONS`), profile/roster logic. Seeded LCG via `random(g)`. |
 | `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and original-design commander busts (`LOOKS`), cached as images for the canvas. Public images load synchronously from `assets/art/manifest.js`, built by `tools/publish_art.py`; drawn art remains the fallback. Optional localhost override: `local-art/manifest.json` (git-ignored folder `dist/local-art/`; `tools/local_art_prepare.py` turns raw files in `local-art/raw/` into game-ready images and runs `tools/local_art_manifest.py`) layers the owner's own files over the drawings via `ART.useLocal`. |
-| `dist/icons.js` | `ICONS`: inline SVG sprite (credits, industry, research, command token, attack/defense/move/range, factory, refinery, sea) and the HP ring. |
+| `dist/icons.js` | `ICONS`: inline SVG sprite (credits, industry, research, Sakuradite, command token, attack/defense/move/range, factory, refinery, sea) and the HP ring. |
 | `dist/audio.js` | `SFX`: Web Audio synthesized sounds per class and faction voice, Landspinner movement, MVS slash, batteries. |
 | `dist/game.js` | The whole UI: start screen, wrapping world-map renderer (camera, minimap, terrain, tokens), input, panels, dock, dialogs (factory, HQ research, commanders, Commander Info, Knightmare archive, world powers, field manual, results), effects, rival-turn playback with Skip, saving. |
 | `dist/style.css`, `dist/battlefield.css` | Base styles and the WC4 reskin from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
@@ -69,7 +69,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   ever moves a unit by assigning `u.c/u.r` directly, call `reindex(g, u, from)` or the index self-heals on a miss.
 - Every player action has a `…Reason(g, …)` function returning `null` or a human-readable reason; the UI shows it on
   disabled buttons. Shortfalls read "Need N more credits / command tokens" and render as red costs instead.
-- Saves are gated by `RULES_VERSION` (currently 1) in `migrateSave`; bump it when save shape or rules change.
+- Saves are gated by `RULES_VERSION` (currently 2) in `migrateSave`; bump it when save shape or rules change.
+  Version 1 saves are upgraded by `upgradeSave` (deposits placed, Sakuradite stockpiles added, refineries away from
+  a deposit converted into the 15 credits a level they used to export); anything older is rejected.
 - `createGame(player, difficulty, 'conquest', seed)`. Cities and armies are placed by longitude/latitude and snap to
   the nearest free land hex, so they can be edited without touching coordinates.
 - Commander abilities are data (`fx` on each commander: `dmg`, `dmgBranch`, `crit`, `move`, `taken`, `counter`,
@@ -108,10 +110,32 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   reinforce. Landing on a coast takes a step and ends the move.
 
 ### Cities and economy
-- 107 cities: Britannia 41, E.U. 29, Federation 29, neutral 8. Income: capital 50, tier 3 30, tier 2 20, tier 1 12
-  credits; industry 6 per tier (capital 30). Defenses 180/240/300 by tier, 400 for fortress cities, 600 for capitals.
+- 107 cities: Britannia 41, E.U. 29, Federation 29, neutral 8. Income: capital 65 (50 plus the 15 its old
+  refinery exported), tier 3 30, tier 2 20, tier 1 12 credits; industry 6 per tier (capital 30). Defenses
+  180/240/300 by tier, 400 for fortress cities, 600 for capitals.
 - Buildings, each to level 3: Knightmare factory (unlocks tiers, +10 industry, +60 defense), research lab
-  (+8 research), Sakuradite refinery (+15 credits). One unit per city per turn; new units act next turn.
+  (+8 research), and a Sakuradite refinery only where there is a deposit. One unit per city per turn; new units act
+  next turn.
+
+### Sakuradite (the fourth resource)
+- Engine block "Sakuradite" (above `beginTurn`): `SAKURADITE` (starting stockpile 50, extraction
+  `[0.25, 0.5, 0.75, 1]` by refinery level, 15 export credits at level 3, `cost` by class) and `RESOURCE_SITES`
+  (`[name, lon, lat, base, starting refinery, terrain]`). All numbers are first-pass.
+- `g.sites`: `{ id, name, c, r, base, city, owner?, refinery? }`. A deposit whose hex holds a city is worked from it
+  (`city` = station id; the city's `refinery` building sets extraction and the deposit changes hands with the city).
+  Otherwise it is a mine on its own hex (`city: null`, own `owner` and `refinery`), seized by Infantry or Armor moving
+  onto it (`seizeDeposit`, called from `move()`; the result carries `seized`). Mines have no defenses.
+- Placement: Mount Fuji (40, set just west of Tokyo so it is its own mountain hex, refinery 1 at the start), Hokkaido
+  (15, Sapporo), Kyushu (15, Fukuoka), Stonehenge (10, London), Rocky Mountains (10, own hex), Qaidam Basin (10, own
+  hex). Japan = 70 of 100.
+- Economy: `economy[side].sakuradite`; `income()` adds `sakuradite`; `price()` adds `sakuradite` (by class, extra frames
+  at 85%, the Federation's Infantry discount applies); `spend()` deducts every resource; `shortfall()` names
+  Sakuradite. Helpers: `depositHost`, `depositOwner`, `depositOf(g, city)`, `siteAt`, `depositYield`, `cityYield`,
+  `refineReason`/`refine` (mines on their own hex). A surrendering power's mines and half its stockpile pass on.
+- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` keeps a guard on Fuji and up to
+  two on any threatened mine; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
+  turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavy saving only
+  starts with the Sakuradite in hand; tier-I frames are fallbacks when Sakuradite runs short.
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
   Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
 

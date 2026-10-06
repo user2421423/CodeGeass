@@ -2610,3 +2610,56 @@ table.powers .legend-dot {
 .credits .notice {
   margin: 4px 0 0;
 }
+
+/* ---- Sakuradite: deposits, mines and the fourth resource ---- */
+.deposit-box {
+  border-color: #ff6fb566;
+  background: linear-gradient(135deg, #3a0f2633, #0c202966);
+}
+.deposit-box h3 {
+  color: #ffc2e0;
+}
+.mine-art {
+  display: grid;
+  place-items: center;
+  height: 110px;
+}
+.mine-art .mine-icon {
+  width: 92px;
+  height: 92px;
+  filter: drop-shadow(0 6px 6px #000a);
+}
+.mine-visual {
+  display: grid;
+  place-items: center;
+}
+.mine-visual .dock-mine {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 3px 3px #000a);
+}
+.deposit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 12px;
+}
+.deposit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid;
+  border-radius: 3px;
+  background: #0c202999;
+  font-size: 12px;
+}
+.deposit-chip small {
+  color: #b9c6bd;
+}
+@media (max-width: 500px) {
+  /* Six resources do not fit a phone: command tokens stay in HQ. */
+  .resource.res-token {
+    display: none;
+  }
+}
