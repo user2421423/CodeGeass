@@ -215,8 +215,38 @@ BIOMES = [
     ('s', 1.0, [(-73, 59), (-18, 59), (-18, 80), (-73, 80)]),  # Greenland
 ]
 # Hexes painted after rasterizing, by (lon, lat) of a point inside them.
-PEAKS = [(80, 31), (84, 29.5), (88, 28.5), (92, 28.5), (76, 33.5)]  # the high Himalaya: impassable
+PEAKS = [
+    (76, 33.5), (78, 32), (80, 31), (82, 30.5), (84, 29.5), (86, 29), (88, 28.5), (90, 29),
+    (92, 28.5), (94, 30), (98, 31.5),
+]  # the high Himalaya: an impassable core with routes around its western/eastern ends
 ICE_CAP = [(-42, 72), (-38, 68), (-44, 66), (-48, 70)]  # Greenland interior: impassable
+
+# Deterministic strategic terrain anchors. The biome polygons supply texture; these guarantee that major real-world
+# barriers remain legible and tactically meaningful on the 180 x 76 grid.
+FORCE_TERRAIN = {
+    'm': [
+        # Alps / Carpathians
+        (7, 46.5), (10, 47), (13, 47), (16, 47), (22, 47), (25, 47),
+        # Caucasus / Zagros
+        (41, 43), (44, 42), (47, 41), (47, 35), (50, 32), (53, 29),
+        # Urals
+        (59, 52), (60, 55), (61, 58), (62, 61),
+        # Andes
+        (-75, -5), (-73, -12), (-70, -20), (-69, -28), (-71, -35), (-72, -42),
+        # Korea
+        (127, 37), (128.5, 39),
+    ],
+    'd': [
+        # Sahara / Arabia
+        (-10, 24), (0, 25), (10, 25), (20, 24), (30, 23), (40, 22), (47, 23), (53, 22),
+        # Taklamakan / Gobi and Australian interior
+        (82, 39), (100, 43), (120, -24), (128, -24), (136, -25),
+    ],
+    'f': [
+        # Malay peninsula: slow, defensible jungle corridor.
+        (101, 10), (101.5, 7), (102, 4),
+    ],
+}
 
 
 def inside(poly, x, y):
@@ -321,6 +351,11 @@ def build():
             for i, (code, density, poly) in enumerate(BIOMES):
                 if in_region(poly, lon, lat) and hash01(c, r, i) < density:
                     grid[r][c] = code
+    for code, points in FORCE_TERRAIN.items():
+        for lon, lat in points:
+            c, r = hex_of(lon, lat)
+            if grid[r][c] != '.':
+                grid[r][c] = code
     for lon, lat in PEAKS + ICE_CAP:
         c, r = hex_of(lon, lat)
         if grid[r][c] != '.':
