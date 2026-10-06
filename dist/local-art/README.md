@@ -27,3 +27,9 @@ To move a portrait's crop, add a focus to its manifest entry:
 `"suzaku": { "src": "portraits/suzaku.jpg", "fx": 0.4, "fy": 0.2 }` (positions inside the image, 0 to 1).
 
 Ids are the keys in `dist/engine.js` (`KNIGHTMARES` and `COMMANDERS`); the scripts print the full list of missing ids.
+
+## Publish the finished images
+
+After preparation, run `python3 tools/publish_art.py`. This copies only processed units and portraits into tracked
+`dist/assets/art/` and generates the public manifest. Commit that folder to publish the images on GitHub Pages.
+This working folder and raw downloads remain ignored. See the repository README for the complete commands.

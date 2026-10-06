@@ -82,7 +82,7 @@ const env = {
 };
 env.window = env;
 const context = vm.createContext(env);
-for (const file of ['engine.js', 'art.js', 'icons.js', 'audio.js', 'game.js'])
+for (const file of ['engine.js', 'assets/art/manifest.js', 'art.js', 'icons.js', 'audio.js', 'game.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist', file), 'utf8'), context);
 const run = s => vm.runInContext(s, context);
 const modal = () => node('modal-root').innerHTML;

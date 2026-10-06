@@ -1,7 +1,8 @@
 .DS_Store
 node_modules/
 __pycache__/
-*.png
-# Your own local art: never committed or deployed.
+# Raw downloads and local preparation stay private. Finished public art lives in dist/assets/art/.
 dist/local-art/*
 !dist/local-art/README.md
+/art-source/
+/map-preview*.png

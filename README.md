@@ -44,9 +44,9 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 - **Difficulty:** Normal, Hard and Challenge, as in Galactic Command (rival research, upgraded and extra units,
   higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.
 - **Presentation:** WC4-style HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
-  minimap, procedural terrain, original drawn Knightmares and portraits, synthesized sound, camera shake.
-- **Your own art, locally:** put raw images in the git-ignored `dist/local-art/raw/` folder and run
-  `python3 tools/local_art_prepare.py`; the game uses them on your machine and nothing is committed or deployed.
+  minimap, procedural terrain, drawn fallbacks for every Knightmare and commander, published image support, synthesized sound, camera shake.
+- **Published artwork:** finished sprites and portraits live in tracked `dist/assets/art/`. The startup manifest loads
+  before the UI, with drawn art for missing or failed images. Raw downloads remain ignored. See **Publish artwork** below.
 - **Rival turns:** off-screen rival moves resolve instantly; press **Skip** to finish a rival turn at once.
 
 ## Run the game
@@ -65,9 +65,31 @@ step and no dependency.
 With Node.js 22:
 
 ```sh
-node --test tests/engine.test.cjs
+node --test tests/*.test.cjs
 node tests/ui-smoke.cjs
+node tools/validate_assets.cjs --tracked
 ```
+
+## Publish artwork
+
+Claude’s untracked downloads are not included in the repository. Supply the processed `dist/local-art/` folder
+(with `manifest.json`, `units/` and `portraits/`) or the raw inputs and face-crop boxes. Then:
+
+```sh
+# Only needed when preparing raw downloads (requires Pillow and NumPy):
+python3 tools/local_art_prepare.py
+# Copies only finished images; never copies raw downloads:
+python3 tools/publish_art.py
+git add dist/assets/art
+node tools/validate_assets.cjs --tracked
+git commit -m "Publish finished Knightmare and commander artwork"
+git push origin main
+```
+
+Use `python3 tools/publish_art.py --source /path/to/processed-art` for an extracted processed folder. Public image
+filenames include content hashes so changed images cannot be confused with cached old versions. GitHub Actions
+checks the game and every referenced public file before deploying. The repository currently contains no imported
+images; every entry uses its drawn fallback until the missing image bundle is published.
 
 ## Map tools
 
@@ -75,5 +97,5 @@ node tests/ui-smoke.cjs
 block in `dist/engine.js` (`python3 tools/build_map.py --inject dist/engine.js`). `tools/preview_map.py` renders the
 grid to a PNG (needs Pillow).
 
-Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; all artwork is
-original and drawn in code. Gameplay draws on EasyTech's World Conqueror 4.
+Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; drawn artwork is
+original and generated in code; imported images, when supplied, are credited in ASSETS.md. Gameplay draws on EasyTech's World Conqueror 4.

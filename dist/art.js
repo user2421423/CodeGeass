@@ -652,12 +652,21 @@ const ART = (() => {
     }
     return img.complete && img.naturalWidth ? img : null;
   }
-  // ---- Optional local art: your own files in dist/local-art/, listed in local-art/manifest.json ----
-  // The folder is git-ignored, so nothing in it is committed or deployed. Missing entries keep the drawn art.
+  // Public art is registered synchronously by assets/art/manifest.js, including when opened via file://.
+  // Local overrides remain optional. Missing or failed images keep the drawn fallback.
   const LOCAL = { units: {}, portraits: {}, base: 'local-art/', imgs: new Map() };
   function localEntry(kind, id) {
     const e = LOCAL[kind][id];
     return e ? (typeof e === 'string' ? { src: e } : e) : null;
+  }
+  const escapeAttr = value => String(value).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[c]);
+  function entries(values, base) {
+    return Object.fromEntries(Object.entries(values || {}).flatMap(([id, value]) => {
+      const e = typeof value === 'string' ? { src: value } : value;
+      if (!e || typeof e.src !== 'string' || !/^(units|portraits)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
+      const focus = v => Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : undefined;
+      return [[id, { src: e.src, base, fx: focus(e.fx), fy: focus(e.fy) }]];
+    }));
   }
   function localImage(kind, id) {
     const e = localEntry(kind, id);
@@ -667,7 +676,7 @@ const ART = (() => {
     if (!img) {
       img = new Image();
       img.onerror = () => (img.failed = true);
-      img.src = LOCAL.base + e.src;
+      img.src = e.base + e.src;
       LOCAL.imgs.set(k, img);
     }
     return !img.failed && img.complete && img.naturalWidth ? img : null;
@@ -676,7 +685,7 @@ const ART = (() => {
   const withLocal = (kind, id, svg, style = '') => {
     const e = localEntry(kind, id);
     if (!e) return { cls: '', html: svg };
-    const src = LOCAL.base + e.src;
+    const src = escapeAttr(e.base + e.src);
     return {
       cls: ' local-art',
       html: `${svg}<img src="${src}" alt="" draggable="false"${style} onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.remove()">`,
@@ -689,11 +698,13 @@ const ART = (() => {
     // Called after a local manifest loads, so the UI can redraw (set by game.js).
     onLocal: null,
     // manifest: { base?, units: { <knightmare id>: 'units/x.png' }, portraits: { <commander id>: 'portraits/x.jpg' | { src, fx, fy } } }
-    useLocal(manifest) {
-      LOCAL.units = { ...(manifest?.units || {}) };
-      LOCAL.portraits = { ...(manifest?.portraits || {}) };
-      LOCAL.base = manifest?.base || 'local-art/';
+    useLocal(manifest, merge = false) {
+      const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';
+      LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base) };
+      LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base) };
+      LOCAL.base = base;
       LOCAL.imgs.clear();
+      for (const kind of ['units', 'portraits']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
       api.onLocal?.();
     },
     // Register which faction builds each type and which faction each commander serves (from the engine).
@@ -775,10 +786,15 @@ const ART = (() => {
       for (const s of sides) for (const kind of ['city', 'capital', 'fortress']) image(`c|${kind}|${s}`, citySVG(kind, s));
     },
   };
-  if (typeof fetch === 'function' && typeof location !== 'undefined')
+  if (typeof globalThis !== 'undefined' && globalThis.KnightmareArtManifest) api.useLocal(globalThis.KnightmareArtManifest);
+  // Only development servers request the ignored manifest; GitHub Pages never requests a missing file.
+  if (typeof fetch === 'function' && typeof location !== 'undefined' && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname))
     fetch('local-art/manifest.json', { cache: 'no-cache' })
       .then(r => (r.ok ? r.json() : null))
-      .then(m => m && api.useLocal(m))
+      .then(m => {
+        if (!m) return;
+        api.useLocal(m, true);
+      })
       .catch(() => {});
   return api;
 })();

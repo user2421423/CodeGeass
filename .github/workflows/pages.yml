@@ -14,7 +14,7 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-# Deploys straight from dist/ without running the test suite (tests/ can still be run locally).
+# Validate the game and tracked public assets before deploying dist/.
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -23,6 +23,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check game rules, artwork loading, and public assets
+        run: |
+          node --test tests/*.test.cjs
+          node tests/ui-smoke.cjs
+          node tools/validate_assets.cjs --tracked
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

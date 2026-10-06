@@ -3,7 +3,7 @@
 This document is for whoever picks up the project next, human or AI. It explains what the game is, how the code is
 organised, every system built so far, and the working conventions the owner expects.
 
-- Location: `/Users/aveev/Desktop/Coding/CodeGeass` (local git repository; no remote yet).
+- Location: `/Users/aveev/Desktop/Coding/CodeGeass` (owner’s local copy); remote: `https://github.com/user2421423/CodeGeass`.
 - Sister project: *Galactic Command* (the LOGH game, repository `user2421423/LOGH`). This game was ported from it and
   keeps its systems, file layout and conventions.
 
@@ -26,14 +26,21 @@ Campaign chapters (like Galactic Command's) are not built yet; the engine is con
 ## 2. Running, testing and deploying
 
 - **Run locally:** serve `dist/` with any static server (`python3 -m http.server -d dist`) and open it.
-- **Tests (local only):** `node --test tests/engine.test.cjs` (16 engine tests) and `node tests/ui-smoke.cjs`
+- **Tests (local only):** `node --test tests/*.test.cjs` (16 engine tests plus artwork loading tests) and `node tests/ui-smoke.cjs`
   (loads all UI scripts in a stubbed DOM and clicks through every dialog and a rival turn for all three powers).
   Node 22. Node was not installed on the machine this was built on; the same tests were run through the macOS
   JavaScriptCore shell (`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`) with a
   small `require` shim.
-- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` (no tests run,
-  as in the LOGH project). It needs a GitHub repository first.
+- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` after engine, artwork-loading, UI smoke and tracked-asset checks pass.
 - **Formatting:** Prettier with `.prettierrc` (`printWidth 120`, `singleQuote`, `arrowParens: avoid`).
+
+### Artwork handoff status
+
+The attached files and repository do not contain Claude’s 65 untracked downloads, 25 processed units, 13 portraits,
+or crops.json. The public manifest is intentionally empty until those files are supplied. Do not claim official
+art is deployed. Use `tools/publish_art.py` on the processed bundle, then validate, commit and push. Three
+screenshot-only units (Guren Type-Hei, Wang Hu, Panzer-Wespe) and Fernando Noriega should retain drawn art unless
+usable replacements are supplied. Character sheets require face-crop boxes before preparing portraits.
 
 ## 3. Code layout
 
@@ -42,7 +49,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | File | Role |
 |---|---|
 | `dist/engine.js` | The deterministic rules engine (`window.Knightmare`, aliased `E` in the UI; `module.exports` for Node). No DOM. Factions, Knightmare classes and lineups, commanders, tech tree, terrain, combat, sea transport, economy, AI, the world map (`WORLD_ROWS`, `CITY_DATA`, `ARMY_DATA`, `GARRISONS`), profile/roster logic. Seeded LCG via `random(g)`. |
-| `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and original-design commander busts (`LOOKS`), cached as images for the canvas. No image files ship. Optional override: `local-art/manifest.json` (git-ignored folder `dist/local-art/`; `tools/local_art_prepare.py` turns raw files in `local-art/raw/` into game-ready images and runs `tools/local_art_manifest.py`) layers the owner's own files over the drawings via `ART.useLocal`. |
+| `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and original-design commander busts (`LOOKS`), cached as images for the canvas. Public images load synchronously from `assets/art/manifest.js`, built by `tools/publish_art.py`; drawn art remains the fallback. Optional localhost override: `local-art/manifest.json` (git-ignored folder `dist/local-art/`; `tools/local_art_prepare.py` turns raw files in `local-art/raw/` into game-ready images and runs `tools/local_art_manifest.py`) layers the owner's own files over the drawings via `ART.useLocal`. |
 | `dist/icons.js` | `ICONS`: inline SVG sprite (credits, industry, research, command token, attack/defense/move/range, factory, refinery, sea) and the HP ring. |
 | `dist/audio.js` | `SFX`: Web Audio synthesized sounds per class and faction voice, Landspinner movement, MVS slash, batteries. |
 | `dist/game.js` | The whole UI: start screen, wrapping world-map renderer (camera, minimap, terrain, tokens), input, panels, dock, dialogs (factory, HQ research, commanders, Commander Info, Knightmare archive, world powers, field manual, results), effects, rival-turn playback with Skip, saving. |

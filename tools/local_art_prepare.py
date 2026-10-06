@@ -38,7 +38,9 @@ RATIO = 13 / 16
 
 def trim(im):
     box = im.getchannel('A').getbbox()
-    return im.crop(box) if box else im
+    if not box:
+        raise ValueError('Image is fully transparent after background removal')
+    return im.crop(box)
 
 
 def cutout(im, tolerance):
@@ -68,13 +70,17 @@ def unit(path, tolerance, do_cutout):
 def portrait(path, box):
     im = Image.open(path).convert('RGB')
     if box:
-        im = im.crop(tuple(box))
-    else:
         w, h = im.size
-        cw = min(w, h * RATIO)
-        ch = cw / RATIO
-        x0 = (w - cw) / 2
-        im = im.crop((round(x0), 0, round(x0 + cw), round(ch)))
+        if (not isinstance(box, list) or len(box) != 4
+                or not all(isinstance(v, (int, float)) for v in box)
+                or not 0 <= box[0] < box[2] <= w or not 0 <= box[1] < box[3] <= h):
+            raise ValueError(f'Portrait crop must be a positive box inside the {w}x{h} image')
+        im = im.crop(tuple(box))
+    w, h = im.size
+    cw = min(w, h * RATIO)
+    ch = cw / RATIO
+    x0 = (w - cw) / 2
+    im = im.crop((round(x0), 0, round(x0 + cw), round(ch)))
     im.thumbnail(PORTRAIT_MAX, Image.LANCZOS)
     return im
 
@@ -89,6 +95,7 @@ def main():
     crops_path = os.path.join(root, 'crops.json')
     crops = json.load(open(crops_path)) if os.path.exists(crops_path) else {}
     done = 0
+    failed = 0
     for kind in ('units', 'portraits'):
         raw = os.path.join(root, 'raw', kind)
         out = os.path.join(root, kind)
@@ -107,9 +114,14 @@ def main():
                 done += 1
             except Exception as e:  # keep going: one bad file should not stop the rest
                 print(f'  failed {kind}/{f}: {e}')
+                failed += 1
     print(f'prepared {done} image(s)')
+    if failed:
+        print(f'{failed} image(s) failed. Manifest was not rebuilt; fix these before publishing.', file=sys.stderr)
+        return 1
     manifest.main(root)
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

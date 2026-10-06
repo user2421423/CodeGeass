@@ -2579,7 +2579,7 @@ table.powers .legend-dot {
   }
 }
 
-/* Optional local art (dist/local-art, git-ignored): the file sits over the drawn fallback. */
+/* Published or optional local art: the file sits over the drawn fallback. */
 .unit-art.local-art,
 .portrait-art.local-art {
   position: relative;
