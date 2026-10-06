@@ -622,7 +622,7 @@ function generalPortrait(k, cls = '', personal = false) {
     `<span data-general="${k}" data-personal="${personal ? 1 : 0}" role="button" tabindex="0" title="${esc(C(k).name)}: commander info" `,
   );
 }
-const BRANCH_ICONS = { infantry: 'scout', armor: 'medium', artillery: 'rocket' };
+const BRANCH_ICONS = { infantry: 'scout', armor: 'medium', artillery: 'rocket', mobility: 'scout' };
 // A token-priced button. When unavailable it stays hoverable (aria-disabled) so the reason shows as a tooltip.
 function tokenButton(attrs, cost, why, label = '', cls = '') {
   const have = loadProfile().tokens || 0;
@@ -648,7 +648,7 @@ function generalDialog(k, personal = false) {
   const ratings = Object.entries(E.BRANCH_NAMES)
     .map(
       ([b, name]) =>
-        `<div class="gi-rating" title="${name}: ${o.ratings[b]} of ${E.MAX_RATING} stars. Each star above 3 adds 4% damage and cuts damage taken 3% in this branch."><span class="gi-badge">${ART.unit(E.typeFor(a.side, BRANCH_ICONS[b]), '', a.side)}</span><span class="gi-rating-info"><span class="gi-name">${name}</span><span class="gi-stars">${stars(o.ratings[b])}</span></span>${editable && o.ratings[b] < E.MAX_RATING ? tokenButton(`data-buy-star="${b}" data-officer="${k}" aria-label="Buy a ${name} star"`, E.starCost(profile, k, b), E.starReason(profile, k, b)) : ''}</div>`,
+        `<div class="gi-rating" title="${name}: ${o.ratings[b]} of ${E.MAX_RATING} stars. ${b === 'mobility' ? '1–2★ gives no bonus, 3–4★ gives +1 movement, and 5–6★ gives +2 movement.' : 'Each star above 3 adds 4% damage and cuts damage taken 3% in this branch.'}"><span class="gi-badge">${ART.unit(E.typeFor(a.side, BRANCH_ICONS[b]), '', a.side)}</span><span class="gi-rating-info"><span class="gi-name">${name}</span><span class="gi-stars">${stars(o.ratings[b])}</span></span>${editable && o.ratings[b] < E.MAX_RATING ? tokenButton(`data-buy-star="${b}" data-officer="${k}" aria-label="Buy a ${name} star"`, E.starCost(profile, k, b), E.starReason(profile, k, b)) : ''}</div>`,
     )
     .join('');
   const medals = editable
@@ -717,7 +717,7 @@ function generalsDialog(side = generalsSide) {
           '',
         )}</div><div class="officer-actions">${owned ? `<button class="small" data-general-open="${k}">Upgrade</button>` : tokenButton(`data-recruit-admiral="${k}"`, E.recruitPrice(k), E.recruitReason(profile, k), 'Recruit ')}</div></section>`;
     };
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="HQ commanders"><div class="dialog-head"><div><div class="eyebrow">Command HQ · kept across every operation</div><h2>Commanders</h2><p class="hq-balance">${ICONS.use('token', 'cost-ico')} <b>${count(profile.tokens || 0)}</b> command tokens · ${Object.keys(E.roster(profile)).length} commanders</p></div><button class="small close" data-action="generals-close">Close</button></div><div class="tabs">${E.MAJORS.map(s => `<button data-generals-side="${s}" class="${s === side ? 'active' : ''}">${F(s).name}</button>`).join('')}</div><p class="description">Your commanders can lead any unit of their faction in any operation, even when the operation already fields its own version of them. Promote them and buy branch stars with command tokens; medals you earn are worn here.</p><h3 class="officer-section">Your commanders · ${mine.length}</h3><div class="admiral-grid officers">${mine.map(card).join('')}</div>${locked.length ? `<h3 class="officer-section">Recruit · ${locked.length}</h3><div class="admiral-grid officers">${locked.map(card).join('')}</div>` : ''}</section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="HQ commanders"><div class="dialog-head"><div><div class="eyebrow">Command HQ · kept across every operation</div><h2>Commanders</h2><p class="hq-balance">${ICONS.use('token', 'cost-ico')} <b>${count(profile.tokens || 0)}</b> command tokens · ${Object.keys(E.roster(profile)).length} commanders</p></div><button class="small close" data-action="generals-close">Close</button></div><div class="tabs">${E.MAJORS.map(s => `<button data-generals-side="${s}" class="${s === side ? 'active' : ''}">${F(s).name}</button>`).join('')}</div><p class="description">Your commanders can lead any unit of their faction in any operation, even when the operation already fields its own version of them. Promote them and buy branch or Mobility stars with command tokens; medals you earn are worn here.</p><h3 class="officer-section">Your commanders · ${mine.length}</h3><div class="admiral-grid officers">${mine.map(card).join('')}</div>${locked.length ? `<h3 class="officer-section">Recruit · ${locked.length}</h3><div class="admiral-grid officers">${locked.map(card).join('')}</div>` : ''}</section></div>`;
   focusDialog();
 }
 let archiveSide = null,
