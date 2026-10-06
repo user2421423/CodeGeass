@@ -108,6 +108,13 @@ test('The world map wraps east to west and every city stands on land', () => {
     ['Pendragon', 'britannia'],
   ]);
   assert.equal(new Set(g.stations.map(E.key)).size, g.stations.length);
+  assert.equal(g.stations.length, 149);
+  assert.deepEqual(
+    Object.fromEntries(['britannia', 'eu', 'cf', 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length])),
+    { britannia: 39, eu: 56, cf: 42, neutral: 12 },
+  );
+  for (const name of ['Vancouver', 'Sao Paulo', 'Amsterdam', 'Dar es Salaam', 'Chengdu', 'Kuala Lumpur', 'Brisbane', 'Jerusalem'])
+    assert(city(name), name + ' should be present in conquest');
   assert(g.units.every(u => !E.isSea(E.tile(g, u.c, u.r))));
   assert.deepEqual(g.order, ['eu', 'britannia', 'cf']);
 });
