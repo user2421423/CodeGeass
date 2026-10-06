@@ -2814,3 +2814,296 @@ button.danger:hover:not(:disabled) {
 .elite-fragments b {
   color: var(--gold);
 }
+
+/* ---- Campaign ---- */
+.campaign-row {
+  border-color: #f0c94a66;
+  background: linear-gradient(100deg, #221d0fcc, #101c2c99 60%);
+}
+.campaign-select .tabs button.active {
+  border-color: var(--c);
+  color: var(--c);
+}
+.campaign-total {
+  color: #f1d27a;
+  font-weight: 700;
+}
+.campaign-layout {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.campaign-portrait {
+  display: block;
+  width: 170px;
+  height: 230px;
+  overflow: hidden;
+  border: 1px solid #4a5b70;
+  border-radius: 4px;
+}
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.mission-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 10px 12px;
+  text-align: left;
+  background: #122032;
+  border-color: #3c4d61;
+}
+.mission-card:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+.mission-card.cleared {
+  border-color: #c9a24a88;
+}
+.mission-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.mission-num {
+  flex: 0 0 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c9a24a88;
+  border-radius: 50%;
+  font: 16px Georgia;
+  color: var(--gold);
+}
+.mission-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mission-info small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.stars {
+  white-space: nowrap;
+  letter-spacing: 2px;
+  color: #3a4858;
+}
+.stars i,
+.result-stars span {
+  font-style: normal;
+}
+.stars .on,
+.result-stars .on {
+  color: #f1d27a;
+  text-shadow: 0 0 8px #f1d27a88;
+}
+.brief-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.brief-story {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #c3d0dd;
+}
+.brief-block {
+  margin: 12px 0;
+}
+.brief-block > p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #d6dde6;
+}
+.star-list {
+  list-style: none;
+  display: grid;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding: 0;
+  font-size: 14px;
+}
+.star-list b {
+  display: inline-block;
+  width: 20px;
+  color: #f1d27a;
+}
+.star-list .lost {
+  color: var(--muted);
+}
+.star-list .lost b {
+  color: #e07a6e;
+}
+.mission-result .star-list .lost b {
+  color: #5a6878;
+}
+.side-chips,
+.brief-cmds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.side-chip {
+  padding: 3px 9px;
+  border: 1px solid var(--c);
+  border-radius: 3px;
+  background: #0b1520;
+  color: var(--c);
+  font-size: 12px;
+}
+.versus {
+  font-size: 12px;
+  color: var(--muted);
+}
+.brief-cmd {
+  width: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  text-align: center;
+  color: var(--muted);
+}
+.brief-portrait {
+  display: block;
+  width: 54px;
+  height: 54px;
+  overflow: hidden;
+  border: 1px solid #c9a24a88;
+  border-radius: 50%;
+}
+.brief-map {
+  display: block;
+  width: 100%;
+  border: 1px solid #4a5b70;
+  border-radius: 4px;
+  background: #0d2b40;
+}
+.brief-side > small {
+  display: block;
+  margin: 6px 0 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.star-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.star-chip {
+  padding: 1px 8px;
+  border: 1px solid #c9a24a88;
+  border-radius: 10px;
+  font-size: 11px;
+  color: #f1d27a;
+}
+.star-chip.todo {
+  border-color: #4a5b70;
+  color: #aab7c5;
+}
+.star-chip.lost {
+  border-color: #5a6878;
+  color: #7d8b9b;
+  text-decoration: line-through;
+}
+.overlay.talk-overlay {
+  align-items: flex-end;
+  background: #02081040;
+  backdrop-filter: none;
+}
+.dialog.talk {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  width: min(860px, 100%);
+  margin-bottom: 64px;
+  padding: 20px 24px;
+  border-color: #c9a24a88;
+}
+.talk-portrait {
+  flex: 0 0 96px;
+  display: block;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border: 1px solid #c9a24a88;
+  border-radius: 4px;
+}
+.talk-emblem {
+  display: grid;
+  place-items: center;
+  background: #0b1520;
+  font: 40px Georgia;
+  color: var(--c);
+}
+.talk-body {
+  flex: 1;
+  min-width: 0;
+}
+.talk-body p {
+  margin: 6px 0 12px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+.talk-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.talk-actions small {
+  order: -2;
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.talk-actions .ghost {
+  order: -1;
+}
+.campaign-portrait img,
+.brief-portrait img,
+.talk-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.result-stars {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 14px 0 4px;
+  font-size: 54px;
+  line-height: 1;
+  color: #2d3a4a;
+}
+@media (max-width: 760px) {
+  .campaign-layout,
+  .brief-grid,
+  .mission-grid {
+    grid-template-columns: 1fr;
+  }
+  .campaign-portrait {
+    display: none;
+  }
+  .dialog.talk {
+    margin-bottom: 12px;
+    padding: 14px;
+  }
+  .talk-portrait {
+    flex-basis: 64px;
+    width: 64px;
+    height: 64px;
+  }
+}

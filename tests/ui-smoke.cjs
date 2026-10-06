@@ -82,7 +82,7 @@ const env = {
 };
 env.window = env;
 const context = vm.createContext(env);
-for (const file of ['engine.js', 'assets/art/manifest.js', 'art.js', 'icons.js', 'audio.js', 'game.js'])
+for (const file of ['engine.js', 'missions.js', 'campaign.js', 'assets/art/manifest.js', 'art.js', 'icons.js', 'audio.js', 'game.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist', file), 'utf8'), context);
 const run = s => vm.runInContext(s, context);
 const modal = () => node('modal-root').innerHTML;
@@ -204,6 +204,32 @@ const modal = () => node('modal-root').innerHTML;
   assert(tokens > 0);
   run('resultDialog();');
   assert.equal(JSON.parse(storage['knightmare-conquest-profile']).tokens, tokens);
+  // Campaign: mission select, briefing, opening dialogue, a closed battlefield, a separate save and the star result.
+  run('startMenu()');
+  assert(modal().includes('data-action="campaign"'), 'the start menu offers the campaigns');
+  run("campaignDialog('bk')");
+  assert(modal().includes('Shinjuku Ghetto') && modal().includes('data-mission="bk1"'));
+  assert(/data-mission="bk2"[^>]*disabled/.test(modal()), 'later missions start locked');
+  run("briefingDialog('bk1')");
+  assert(modal().includes('G-1 Base') && modal().includes('data-start-mission="bk1"'));
+  run("startMission('bk1')");
+  assert.equal(run('game.mode'), 'campaign');
+  assert(modal().includes('Mission dialogue'), 'the opening dialogue plays');
+  run('talkNext(true)');
+  assert(!modal().includes('Mission dialogue'));
+  assert(node('app').innerHTML.includes('Shinjuku Ghetto') && node('app').innerHTML.includes('star-chip'));
+  run('draw(80, .016); drawMinimap(); briefingDialog(game.campaign.id, true); closeModal();');
+  assert.equal(run('getSave(CAMPAIGN_KEY).mode'), 'campaign');
+  assert.notEqual(run('getSave().mode'), 'campaign', 'a mission never replaces the conquest save');
+  run("game.stations.find(s => s.name === 'G-1 Base').owner = game.player; E.checkVictory(game); resultDialog();");
+  assert(modal().includes('Mission complete') && modal().includes('data-mission="bk2"'));
+  const profile = JSON.parse(storage['knightmare-conquest-profile']);
+  assert.equal(profile.campaign.bk1, 3);
+  assert.equal(profile.tokens, tokens + run('E.campaign.REWARD.first + 2 * E.campaign.REWARD.star'));
+  run("campaignDialog('bk')");
+  assert(!/data-mission="bk2"[^>]*disabled/.test(modal()), 'clearing a mission unlocks the next');
+  run('startMenu()');
+  assert.equal(run('game.mode'), 'conquest');
   console.log(
     'PASS: start menu, all dialogs and the map render for all three powers; rival turns complete; saves and rewards are coherent; WebMCP tools validate input.',
   );

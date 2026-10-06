@@ -34,8 +34,6 @@ let detailOpen = false,
   flash = 0; // full-screen white-pink flash, 1 → 0
 const R = 43,
   SQ = Math.sqrt(3),
-  WORLD_W = SQ * R * E.WORLD.cols,
-  WORLD_H = R * 1.5 * (E.WORLD.rows - 1) + 2 * R,
   ZOOM_MIN = 1,
   ZOOM_MAX = 7,
   count = n => Math.round(n).toLocaleString('en-US'),
@@ -44,14 +42,28 @@ const R = 43,
 // Required attribution notice (shown in the start menu, the game menu and the field manual).
 const NOTICE =
   'Code Geass and related characters are trademarks and copyrighted property. This project is an unofficial fan creation and is not officially affiliated with or endorsed by the copyright holders.';
+// The map in world units: the 100 × 42 world wraps east to west; a campaign battlefield is a closed rectangle.
+const mapW = g => SQ * R * (g.cols + (g.wrap ? 0 : 0.6)),
+  mapH = g => R * 1.5 * (g.rows - 1) + 2 * R,
+  wraps = () => !!game.wrap,
+  homeZoom = () => (wraps() ? 3.2 : 1.25);
+let WORLD_W, WORLD_H;
+function setWorld() {
+  WORLD_W = mapW(game);
+  WORLD_H = mapH(game);
+}
+setWorld();
+// A campaign mission saves apart from your conquest, so neither replaces the other.
 const SAVE_KEY = 'knightmare-conquest-save',
-  PROFILE_KEY = 'knightmare-conquest-profile';
+  CAMPAIGN_KEY = 'knightmare-conquest-mission',
+  PROFILE_KEY = 'knightmare-conquest-profile',
+  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : SAVE_KEY);
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
   selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
   selectedSite = () => (selection?.kind === 'site' ? game.sites?.find(d => d.id === selection.id) || null : null);
 const interactive = () => !game.over && game.phase === game.player;
-const F = side => E.FACTIONS[side] || E.FACTIONS.neutral,
+const F = side => game.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral,
   C = k => E.COMMANDERS[k];
 function toast(text, long = false) {
   $('toast').textContent = text;
@@ -79,16 +91,16 @@ function save() {
   if (game.phase !== game.player) return;
   try {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(E.exportProfile(game, loadProfile())));
-    localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+    localStorage.setItem(saveKey(), JSON.stringify(game));
     saveOk = true;
   } catch (e) {
     saveOk = false;
     toast('This browser could not save progress. Keep this tab open.');
   }
 }
-function getSave() {
+function getSave(key = SAVE_KEY) {
   try {
-    const g = JSON.parse(localStorage.getItem(SAVE_KEY));
+    const g = JSON.parse(localStorage.getItem(key));
     if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player])
       return E.migrateSave(g);
   } catch (e) {}
@@ -105,11 +117,14 @@ function closeModal() {
 function capitalOf(side) {
   return game.stations.find(s => s.capitalOf === side && s.owner === side) || game.stations.find(s => s.owner === side);
 }
+// Where the ⌂ button and H key look: your capital, else your first city, else your commanders.
+const homeOf = () => capitalOf(game.player) || ownUnits().find(u => u.cmd) || ownUnits()[0];
 function newGame() {
   aiToken++;
   hqBack = 'game';
   strikeMode = false;
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0), loadProfile());
+  setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
   undoStack = [];
   effects = [];
@@ -139,6 +154,17 @@ const FACTION_BLURB = {
   },
 };
 function startMenu() {
+  // Leaving a mission (it stays saved) puts the world map back behind the menu.
+  if (game.mode === 'campaign') {
+    aiToken++;
+    game = E.createGame('britannia');
+    setWorld();
+    selection = null;
+    undoStack = [];
+    effects = [];
+    zoom = 3.2;
+    render();
+  }
   const saved = getSave(),
     profile = loadProfile();
   const cards = E.MAJORS.map(side => {
@@ -147,7 +173,7 @@ function startMenu() {
     return `<button class="faction ${side} ${on ? 'active' : ''}" data-faction="${side}">${ART.portrait(b.portrait, 'faction-portrait')}<span class="label" style="color:${F(side).color}">${b.label}</span><h3>${F(side).name}</h3><p>${b.text}</p><p class="doctrine"><b>${F(side).doctrine}:</b> ${F(side).doctrineText}</p><span class="select-mark">${on ? '✓ Command selected' : 'Select ' + F(side).short}</span></button>`;
   }).join('');
   const reward = conquestReward(setup.difficulty, profile);
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Operation setup"><div class="eyebrow">Code Geass · WC4-inspired world conquest</div><h1>One world.<br>Three empires.</h1><p>Build a Knightmare army. Appoint your commanders. Take the capitals of your rivals—each power surrenders the moment its capital falls.</p><div class="choice-grid three">${cards}</div><div class="conquest-row"><div><label>Conquest · ${E.WORLD.cols} × ${E.WORLD.rows} world map</label><h3 class="conquest-title">${E.ERAS.world.name}</h3><p class="mode-note">${E.ERAS.world.desc} <b>${E.ERAS.world.rulesText}</b> Played as the ${F(setup.side).name}.${reward ? ` First win: up to ${reward} command tokens.` : ''}</p></div><button class="primary" data-action="start-conquest">Launch conquest</button></div><div class="setup-row"><div><label for="difficulty-select">Difficulty</label><select class="select" id="difficulty-select">${Object.entries(
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Operation setup"><div class="eyebrow">Code Geass · WC4-inspired world conquest</div><h1>One world.<br>Three empires.</h1><p>Build a Knightmare army. Appoint your commanders. Take the capitals of your rivals—each power surrenders the moment its capital falls.</p><div class="choice-grid three">${cards}</div><div class="conquest-row"><div><label>Conquest · ${E.WORLD.cols} × ${E.WORLD.rows} world map</label><h3 class="conquest-title">${E.ERAS.world.name}</h3><p class="mode-note">${E.ERAS.world.desc} <b>${E.ERAS.world.rulesText}</b> Played as the ${F(setup.side).name}.${reward ? ` First win: up to ${reward} command tokens.` : ''}</p></div><button class="primary" data-action="start-conquest">Launch conquest</button></div>${campaignRow(profile)}<div class="setup-row"><div><label for="difficulty-select">Difficulty</label><select class="select" id="difficulty-select">${Object.entries(
     E.DIFFICULTIES,
   )
     .map(
@@ -172,7 +198,7 @@ function render() {
   const e = game.economy[game.player],
     inc = E.income(game, game.player),
     cities = game.stations.filter(s => s.owner === game.player).length;
-  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · WORLD WAR</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Sakuradite · mined at deposits; heavier Knightmares need it', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus">${arsenalButton()}<button class="small" data-action="research">Research</button><button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="elite-forces">Elite Forces</button><button class="small ghost" data-action="powers">Powers</button><button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${F(game.phase).color}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn} / ${E.ARMISTICE}</b></p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select your unit using the unit selector or N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green hex or attacks a red hex. Z undoes the last move. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="World overview">World</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas><div class="map-legend">${E.MAJORS.map(s => `<span style="color:${F(s).color}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div></div><div class="map-caption"><span id="map-caption">Green hex: move · Red hex: attack · Blue sea hex: embark as a transport</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small" data-action="details">Unit orders</button><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn</button>` : `<button class="primary end" data-action="skip-ai">${F(game.phase).short} turn… <span class="kbd">Skip ▶▶</span></button>`}</div></footer>`;
+  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · ${game.mode === 'campaign' ? 'CAMPAIGN' : 'WORLD WAR'}</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Sakuradite · mined at deposits; heavier Knightmares need it', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus">${arsenalButton()}<button class="small" data-action="research">Research</button>${game.mode === 'campaign' ? '<button class="small" data-action="briefing">Briefing</button><button class="small ghost" data-action="archive">Units</button>' : `<button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="elite-forces">Elite Forces</button><button class="small ghost" data-action="powers">Powers</button>`}<button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${F(game.phase).color}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn}${turnLimit() ? ' / ' + turnLimit() : ''}</b>${starChips()}</p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select your unit using the unit selector or N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green hex or attacks a red hex. Z undoes the last move. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="${wraps() ? 'World overview' : 'Whole battlefield'}">${wraps() ? 'World' : 'Map'}</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas><div class="map-legend">${(game.mode === 'campaign' ? game.order.filter(s => s !== 'neutral') : E.MAJORS).map(s => `<span style="color:${F(s).color}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div></div><div class="map-caption"><span id="map-caption">Green hex: move · Red hex: attack · Blue sea hex: embark as a transport</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small" data-action="details">Unit orders</button><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn</button>` : `<button class="primary end" data-action="skip-ai">${F(game.phase).short} turn… <span class="kbd">Skip ▶▶</span></button>`}</div></footer>`;
   canvas = $('map');
   ctx = canvas.getContext('2d');
   attachMap();
@@ -556,7 +582,7 @@ function refreshAndSave(keepUndo = false) {
   if (!keepUndo) undoStack = [];
   render();
   save();
-  if (game.over) resultDialog();
+  campaignFeed(() => game.over && resultDialog());
 }
 function doAction(fn) {
   if (!interactive()) return;
@@ -688,9 +714,9 @@ async function endTurn(force = false) {
   }
   render();
   save();
-  if (game.over) resultDialog();
-  else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.`, true);
-  else toast(`Turn ${game.turn}. Income collected; unit orders refreshed.`);
+  campaignFeed(() => game.over && resultDialog());
+  if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.`, true);
+  else if (!game.over) toast(`Turn ${game.turn}. Income collected; unit orders refreshed.`);
 }
 // A power's capital fell: it surrendered and its cities changed hands.
 function annexNotice(a) {
@@ -709,7 +735,14 @@ function claimReward() {
   if (!game.over || game.rewardClaimed) return;
   const p = loadProfile();
   p.medals = [...(p.medals || []), ...(game.medalsEarned || []).map(m => m.id)];
-  if (game.over.winner === game.player) {
+  if (game.mode === 'campaign') {
+    const CP = E.campaign,
+      id = game.campaign.id,
+      r = CP.reward(game, p);
+    p.tokens = (p.tokens || 0) + r.total;
+    if (game.over.winner === game.player) (p.campaign ||= {})[id] = Math.max(CP.best(p, id), r.stars);
+    game.reward = r;
+  } else if (game.over.winner === game.player) {
     const r = E.missionReward(game, p.wins || 0, p.cleared || {}),
       eliteAward = E.eliteVictoryReward(game, p);
     E.grantEliteFragments(p, eliteAward);
@@ -725,11 +758,12 @@ function claimReward() {
   undoStack = [];
   saveProfile(p);
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(game));
+    localStorage.setItem(saveKey(), JSON.stringify(game));
   } catch (e) {}
 }
 function resultDialog() {
   claimReward();
+  if (game.mode === 'campaign') return missionResult();
   const win = game.over.winner === game.player,
     draw = game.over.winner === 'draw';
   modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Operation result"><div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? 'The world bows.' : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${(game.medalsEarned || []).length ? `<div class="medal-case"><span class="label">Medals earned</span>${game.medalsEarned.map(m => `<span class="medal-chip" title="${esc(m.reason)}">🎖 ${E.MEDALS[m.id].name}</span>`).join('')}</div>` : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Medals earned go to your medal case. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p><div class="result-numbers"><div><b>${game.turn}</b><small>Turns elapsed</small></div><div><b>${game.stations.filter(s => s.owner === game.player).length}</b><small>Cities held</small></div><div><b>${ownUnits().length}</b><small>Units remaining</small></div></div><div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
@@ -744,8 +778,9 @@ function openShop(id, branch = shop.branch) {
   shop.branch = branch;
   if (branch === ELITE_FACTORY_TAB) return openEliteShop(id);
   const free = E.recruitOptions(game, s, game.player);
-  const types = E.CLASS_ORDER.map(cls => E.ROSTER[game.player][cls]).filter(k => E.TYPES[k].branch === branch);
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare factory"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${s.name} · Factory level ${s.tier}</div><h2>Roll out a Knightmare unit</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${[...BRANCH_LIST, ELITE_FACTORY_TAB].map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : !free.length ? '<div class="info-strip">No free land hex. Move friendly units away from the city.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city or a free land hex next to it and act next turn. Tier II and III frames also cost Sakuradite.</p>'}<div class="cards">${types
+  const lineup = E.lineupOf(game, game.player),
+    types = (game.buildable?.[game.player] || E.CLASS_ORDER.map(cls => lineup[cls])).filter(k => k && E.TYPES[k].branch === branch);
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare factory"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${s.name} · Factory level ${s.tier}</div><h2>Roll out a Knightmare unit</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${[...BRANCH_LIST, ...(game.mode === 'campaign' ? [] : [ELITE_FACTORY_TAB])].map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : !free.length ? '<div class="info-strip">No free land hex. Move friendly units away from the city.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city or a free land hex next to it and act next turn. Tier II and III frames also cost Sakuradite.</p>'}<div class="cards">${types
     .map(k => {
       const t = E.TYPES[k],
         n = shop.stack,
@@ -958,7 +993,7 @@ let archiveSide = null,
   archiveBack = 'game';
 function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
   archiveSide = side;
-  const types = E.CLASS_ORDER.map(cls => E.ROSTER[side][cls]).filter(k => E.TYPES[k].branch === branch);
+  const types = E.CLASS_ORDER.map(cls => E.ROSTER[side][cls]).filter(k => k && E.TYPES[k].branch === branch);
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare archive"><div class="dialog-head"><div><div class="eyebrow">Order of battle</div><h2>Knightmare archive</h2><p>${F(side).name} frames. Values shown for one frame. <b>${F(side).doctrine}:</b> ${F(side).doctrineText}</p></div><button class="small close" data-action="archive-close">Close</button></div><div class="tabs">${E.MAJORS.map(s => `<button data-archive-side="${s}" class="${s === side ? 'active' : ''}">${F(s).short}</button>`).join('')}</div><div class="tabs">${BRANCH_LIST.map(b => `<button data-archive-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div class="cards">${types
     .map(k => {
       const t = E.TYPES[k];
@@ -1026,7 +1061,205 @@ function helpDialog() {
   focusDialog();
 }
 function menuDialog() {
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Game menu"><div class="eyebrow">Command headquarters</div><h2>Your orders, Commander.</h2><p>Your current operation is saved automatically in this browser.</p><div class="credits"><span class="label">Credits</span><p class="notice">${NOTICE}</p><p class="notice">Free, non-commercial fan game. Unit and character names follow the Code Geass wiki; drawn artwork is original, with published imagery credited in the project’s ASSETS.md. Gameplay draws on EasyTech’s World Conqueror 4.</p></div><div class="dialog-footer"><div><button class="primary" data-action="close">Resume</button><button data-action="new">New operation</button><button data-action="help">Field manual</button></div></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Game menu"><div class="eyebrow">Command headquarters</div><h2>Your orders, Commander.</h2><p>Your current operation is saved automatically in this browser.</p><div class="credits"><span class="label">Credits</span><p class="notice">${NOTICE}</p><p class="notice">Free, non-commercial fan game. Unit and character names follow the Code Geass wiki; drawn artwork is original, with published imagery credited in the project’s ASSETS.md. Gameplay draws on EasyTech’s World Conqueror 4.</p></div><div class="dialog-footer"><div><button class="primary" data-action="close">Resume</button>${game.mode === 'campaign' ? '<button data-action="mission-retry">Restart mission</button><button data-action="campaign">Mission select</button><button data-action="new">Main menu</button>' : '<button data-action="new">New operation</button>'}<button data-action="help">Field manual</button></div></div></section></div>`;
+  focusDialog();
+}
+
+// ======== Campaign: mission select, briefing, dialogue and star results (rules in campaign.js) ========
+const asList = x => (Array.isArray(x) ? x : x ? [x] : []);
+let campaignTab = 'bk',
+  talkThen = null; // what follows the dialogue now playing (a result screen, or nothing)
+// The turn shown beside the objective: a mission's turn limit, or the conquest armistice.
+function turnLimit() {
+  return game.mode === 'campaign' ? E.campaign.mission(game.campaign.id)?.lose?.turns || 0 : E.ARMISTICE;
+}
+function starRow(n) {
+  return `<span class="stars" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join('')}</span>`;
+}
+// A mission's three stars: the victory itself, then its two star goals.
+function starGoals(m) {
+  return [asList(m.win).map(c => E.campaign.text(c)).join(' · '), ...m.stars.map(c => E.campaign.text(c))];
+}
+// A star goal during play: kept so far, done, still to do, or missed for good.
+function goalState(c) {
+  const held = E.campaign.holds(game, c);
+  if (c.turns || c.losses != null || c.alive || c.keep) return held ? 'kept' : 'lost';
+  return held ? 'done' : 'todo';
+}
+const goalMark = st => (st === 'done' ? '✓' : st === 'lost' ? '✗' : '★');
+function starChips() {
+  if (game.mode !== 'campaign') return '';
+  const m = E.campaign.mission(game.campaign.id);
+  return `<span class="star-chips">${m.stars
+    .map(c => {
+      const st = goalState(c);
+      return `<span class="star-chip ${st}">${goalMark(st)} ${esc(E.campaign.text(c))}</span>`;
+    })
+    .join('')}</span>`;
+}
+function campaignRow(profile) {
+  const CP = E.campaign;
+  if (!CP) return '';
+  const camps = Object.values(CP.CAMPAIGNS),
+    all = camps.flatMap(c => c.missions),
+    got = all.reduce((a, m) => a + CP.best(profile, m.id), 0);
+  return `<div class="conquest-row campaign-row"><div><label>Campaign · ${camps.length} story campaigns · ${all.length} missions</label><h3 class="conquest-title">${camps.map(c => c.short).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. A first clear pays ${CP.REWARD.first} command tokens and every new star ${CP.REWARD.star}.</p></div><button class="primary" data-action="campaign">Campaigns</button></div>`;
+}
+function campaignDialog(cid = campaignTab) {
+  const CP = E.campaign,
+    profile = loadProfile(),
+    saved = getSave(CAMPAIGN_KEY),
+    resume = saved && !saved.over && CP.mission(saved.campaign?.id);
+  campaignTab = CP.CAMPAIGNS[cid] ? cid : Object.keys(CP.CAMPAIGNS)[0];
+  const camp = CP.CAMPAIGNS[campaignTab],
+    got = camp.missions.reduce((a, m) => a + CP.best(profile, m.id), 0);
+  const tabs = Object.entries(CP.CAMPAIGNS)
+    .map(([k, c]) => `<button data-campaign-tab="${k}" class="${k === campaignTab ? 'active' : ''}" style="--c:${E.FACTIONS[c.side].color}">${esc(c.short)}</button>`)
+    .join('');
+  const cards = camp.missions
+    .map((m, i) => {
+      const open = CP.unlocked(profile, m.id),
+        best = CP.best(profile, m.id);
+      return `<button class="mission-card${best ? ' cleared' : ''}" data-mission="${m.id}" ${open ? '' : `disabled title="Clear ${esc(camp.missions[i - 1].title)} first"`}><span class="mission-num">${open ? i + 1 : '🔒'}</span><span class="mission-info"><small>${m.year} · ${esc(m.place)}</small><b>${esc(m.title)}</b></span>${starRow(best)}</button>`;
+    })
+    .join('');
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Campaigns"><div class="dialog-head"><div><div class="eyebrow">Campaign · ${camp.years}</div><h2>${esc(camp.name)}</h2><p>${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
+  focusDialog();
+}
+// Before a mission (live = false) or during one (live = true, with each star goal's current state).
+function briefingDialog(id, live = false) {
+  const CP = E.campaign,
+    m = CP?.mission(id);
+  if (!m) return;
+  const camp = CP.CAMPAIGNS[m.campaign],
+    g = live ? game : CP.createMission(id, 1),
+    best = CP.best(loadProfile(), id),
+    fac = side => g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral,
+    chip = side => `<span class="side-chip" style="--c:${fac(side).color}">${esc(fac(side).name)}</span>`,
+    allies = g.order.filter(side => side !== g.player && !E.foe(g, side, g.player)),
+    enemies = g.order.filter(side => E.foe(g, side, g.player)),
+    cmds = foe => [...new Set(g.units.filter(u => u.hp > 0 && u.cmd && !!E.foe(g, u.side, g.player) === foe).map(u => u.cmd))],
+    face = k => `<span class="brief-cmd">${ART.portrait(k, 'brief-portrait')}<small>${esc(C(k).short || C(k).name)}</small></span>`,
+    lose = m.lose || {},
+    fails = [
+      ...asList(lose.cmd).map(k => `${C(k).name} must survive`),
+      ...asList(lose.cities).map(n => `${n} must not fall`),
+      lose.turns ? `Win by the end of turn ${lose.turns}` : '',
+      'Lose every unit and city and the mission fails',
+    ].filter(Boolean),
+    state = i => (!live ? '' : i ? goalState(m.stars[i - 1]) : 'todo'),
+    foes = cmds(true);
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide briefing" role="dialog" aria-modal="true" aria-label="Mission briefing" ${live ? '' : 'data-back="campaign"'}><div class="dialog-head"><div><div class="eyebrow">${esc(camp.short)} · Mission ${m.index + 1} · ${esc(m.place)} · ${m.year}</div><h2>${esc(m.title)}</h2></div><button class="small close" data-action="${live ? 'close' : 'campaign'}">${live ? 'Close' : 'Back'}</button></div><div class="brief-grid"><div><p class="brief-story">${esc(m.brief)}</p><div class="brief-block"><span class="label">Objective</span><p>${esc(live ? E.objectiveText(game) : m.objective)}</p></div><div class="brief-block"><span class="label">Stars</span><ul class="star-list">${starGoals(m)
+    .map((t, i) => `<li class="${state(i)}"><b>${goalMark(state(i))}</b>${i ? '' : 'Victory: '}${esc(t)}</li>`)
+    .join('')}</ul></div><div class="brief-block"><span class="label">Failure</span><p>${fails.map(esc).join(' · ')}</p></div><div class="brief-block"><span class="label">Forces</span><div class="side-chips">${[g.player, ...allies].map(chip).join('')}<span class="versus">vs</span>${enemies.map(chip).join('')}</div></div><div class="brief-block"><span class="label">Commanders on your side</span><div class="brief-cmds">${cmds(false).map(face).join('')}</div></div>${foes.length ? `<div class="brief-block"><span class="label">Enemy commanders</span><div class="brief-cmds">${foes.map(face).join('')}</div></div>` : ''}</div><div class="brief-side"><canvas id="brief-map" class="brief-map" aria-label="Battlefield map"></canvas><small>${g.cols} × ${g.rows} battlefield · squares are cities, dots are units</small><div class="reward"><span class="label">${best ? 'Best result' : 'First clear'}</span>${best ? starRow(best) : `<b>${ICONS.use('token', 'cost-ico')} +${CP.REWARD.first}</b>`}<small>${best ? `Each new star pays ${CP.REWARD.star} command tokens.` : `Plus ${CP.REWARD.star} command tokens for each star goal met.`}${m.unlock ? ` Story: ${esc(m.unlock)}.` : ''}</small></div></div></div><div class="dialog-footer"><div>${live ? '<button data-action="mission-retry">Restart mission</button>' : '<button data-action="campaign">Mission select</button>'}</div>${live ? '<button class="primary" data-action="close">Resume</button>' : `<button class="primary" data-start-mission="${id}">Launch mission</button>`}</div></section></div>`;
+  const map = $('brief-map');
+  if (map?.getContext) {
+    const dpr = Math.min(devicePixelRatio || 1, 2),
+      w = map.clientWidth || 320,
+      h = Math.round((w * mapH(g)) / mapW(g));
+    map.width = Math.round(w * dpr);
+    map.height = Math.round(h * dpr);
+    map.style.height = h + 'px';
+    const b = map.getContext('2d');
+    if (b) paintMap(b, g, map.width, map.height, dpr, true);
+  }
+  focusDialog();
+}
+function startMission(id) {
+  const CP = E.campaign;
+  if (!CP?.mission(id)) return;
+  aiToken++;
+  hqBack = 'game';
+  strikeMode = false;
+  campaignTab = CP.mission(id).campaign;
+  game = E.applyProfile(CP.createMission(id, Date.now() >>> 0), loadProfile());
+  setWorld();
+  selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
+  undoStack = [];
+  effects = [];
+  zoom = homeZoom();
+  closeModal();
+  render();
+  centerOn(selectedUnit() || homeOf());
+  save();
+  campaignFeed();
+}
+// A saved conquest or mission picks up where it stopped, with any unread dialogue and its result screen.
+function loadGame(s) {
+  if (!s) return;
+  aiToken++;
+  hqBack = 'game';
+  strikeMode = false;
+  game = E.applyProfile(s, loadProfile());
+  setWorld();
+  selection = null;
+  undoStack = [];
+  effects = [];
+  zoom = homeZoom();
+  closeModal();
+  render();
+  centerOn(homeOf());
+  campaignFeed(() => game.over && resultDialog());
+}
+// Campaign events reach the screen here: blasts and Gefjun Disturbers play on the map, new warnings are flagged,
+// then the queued dialogue runs and `then` follows it.
+function campaignFeed(then = null) {
+  const cm = game.campaign;
+  if (!cm) return then?.();
+  const fx = cm.fx.splice(0),
+    fresh = cm.warnings.filter(w => !w.seen);
+  for (const f of fx) {
+    const nuke = /F\.L\.E\.I\.J\.A/.test(f.name);
+    effects.push({ kind: 'ring', to: { c: f.c, r: f.r }, radius: f.radius, color: f.color, text: f.name, life: 2.4, max: 2.4 });
+    if (nuke) {
+      effects.push({ kind: 'fleija', to: { c: f.c, r: f.r }, life: 3.6, max: 3.6 });
+      flash = 1;
+    }
+    bump(f.kind === 'stun' ? 3 : nuke ? 12 : 8);
+    SFX.play(nuke ? 'fleija' : f.kind === 'stun' ? 'beam' : 'siege', game.player);
+  }
+  for (const w of fresh) w.seen = true;
+  if (fx.length || fresh.length) {
+    centerOn(fx[0] || fresh[0]);
+    save();
+  }
+  if (fresh.length) toast(`Warning: ${fresh.map(w => w.label || 'strike').join(' and ')} incoming. Clear the marked hexes.`, true);
+  if (cm.queue.length) talkDialog(then);
+  else then?.();
+}
+function talkDialog(then = talkThen) {
+  talkThen = then;
+  const q = game.campaign.queue,
+    line = q[0],
+    f = F(line.side),
+    face = line.portrait
+      ? ART.portrait(line.portrait, 'talk-portrait')
+      : `<span class="talk-portrait talk-emblem" style="--c:${f.color}">${line.name === 'Mission briefing' ? '◈' : esc(f.letter || '◈')}</span>`;
+  modal.innerHTML = `<div class="overlay talk-overlay"><section class="dialog talk" role="dialog" aria-modal="true" aria-label="Mission dialogue">${face}<div class="talk-body"><span class="label" style="color:${f.color}">${esc(line.name)}</span><p>${esc(line.text)}</p><div class="talk-actions"><button class="primary" data-action="talk-next">${q.length > 1 ? 'Next ▶' : 'Continue'}</button><button class="small ghost" data-action="talk-skip">Skip</button><small>${q.length > 1 ? `${q.length - 1} more` : ''}</small></div></div></section></div>`;
+  focusDialog();
+}
+function talkNext(skip = false) {
+  const q = game.campaign?.queue || [];
+  if (skip) q.length = 0;
+  else q.shift();
+  if (q.length) return talkDialog();
+  closeModal();
+  save();
+  const then = talkThen;
+  talkThen = null;
+  then?.();
+}
+function missionResult() {
+  const CP = E.campaign,
+    m = CP.mission(game.campaign.id),
+    cm = game.campaign,
+    win = game.over.winner === game.player,
+    got = win ? game.over.starList || [true, false, false] : [false, false, false],
+    r = game.reward || { total: 0, parts: [] },
+    next = win && CP.next(m.id);
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow mission-result" role="dialog" aria-modal="true" aria-label="Mission result"><div class="eyebrow">${esc(E.modeTitle(game))}</div><h2>${win ? 'Mission complete' : 'Mission failed'}</h2><div class="result-stars" aria-label="${got.filter(Boolean).length} of 3 stars">${got.map(on => `<span class="${on ? 'on' : ''}">★</span>`).join('')}</div><p>${esc(game.over.reason)}</p><ul class="star-list">${starGoals(m)
+    .map((t, i) => `<li class="${got[i] ? 'done' : 'lost'}"><b>${got[i] ? '★' : '☆'}</b>${esc(t)}</li>`)
+    .join('')}</ul>${win ? (r.repeat ? `<div class="reward"><span class="label">No new stars</span><small>Each star pays once. Meet the goals you missed for ${CP.REWARD.star} command tokens each.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${r.total}</b><small>${r.parts.map(([k, v]) => `${k} +${v}`).join(' · ')}</small></div>`) : ''}<div class="result-numbers"><div><b>${game.turn}</b><small>Turns</small></div><div><b>${cm.kills}</b><small>Enemy units destroyed</small></div><div><b>${cm.losses}</b><small>Units lost</small></div></div><div class="dialog-footer"><div><button data-action="close">Inspect the map</button><button data-action="campaign">Mission select</button></div><div><button data-action="mission-retry">${win ? 'Replay' : 'Retry'}</button>${next ? `<button class="primary" data-mission="${next}">Next mission</button>` : ''}</div></div></section></div>`;
   focusDialog();
 }
 
@@ -1036,7 +1269,7 @@ function hexCenter(p) {
 }
 // The copy of world x closest to ref.
 function wrapNear(x, ref) {
-  return x + Math.round((ref - x) / WORLD_W) * WORLD_W;
+  return wraps() ? x + Math.round((ref - x) / WORLD_W) * WORLD_W : x;
 }
 function viewPad() {
   const compact = mapSize.w < 700;
@@ -1046,9 +1279,14 @@ function computeView() {
   const rect = canvas.getBoundingClientRect();
   mapSize = { w: rect.width, h: rect.height };
   const pad = viewPad();
-  baseScale = Math.max(0.05, (rect.height - pad.top - pad.bottom) / WORLD_H);
+  const fitH = (rect.height - pad.top - pad.bottom) / WORLD_H;
+  baseScale = Math.max(0.05, wraps() ? fitH : Math.min(fitH, (rect.width - 40) / WORLD_W));
   const scale = baseScale * zoom;
-  cam.x = ((cam.x % WORLD_W) + WORLD_W) % WORLD_W;
+  if (wraps()) cam.x = ((cam.x % WORLD_W) + WORLD_W) % WORLD_W;
+  else {
+    const halfW = rect.width / 2 / scale;
+    cam.x = WORLD_W <= 2 * halfW ? WORLD_W / 2 : E.clamp(cam.x, halfW - 40 / scale, WORLD_W - halfW + 40 / scale);
+  }
   const halfH = (rect.height - pad.top - pad.bottom) / 2 / scale,
     midY = pad.top + (rect.height - pad.top - pad.bottom) / 2;
   cam.y = WORLD_H <= 2 * halfH ? WORLD_H / 2 : E.clamp(cam.y, halfH - 40 / scale, WORLD_H - halfH + 40 / scale);
@@ -1270,6 +1508,7 @@ const MINI_TERRAIN = {
   snow: '#cfd9df',
   peak: '#4f4a52',
   crater: '#f2bfdc',
+  urban: '#6c6f78',
 };
 function drawMinimap() {
   const mini = $('minimap');
@@ -1289,41 +1528,8 @@ function drawMinimap() {
     minimapBase ||= document.createElement('canvas');
     minimapBase.width = mini.width;
     minimapBase.height = mini.height;
-    const b = minimapBase.getContext('2d'),
-      sx = mini.width / WORLD_W,
-      sy = mini.height / WORLD_H;
-    if (b) {
-      b.fillStyle = '#0d2b40';
-      b.fillRect(0, 0, mini.width, mini.height);
-      for (const t of game.tiles) {
-        const p = hexCenter(t);
-        b.fillStyle = MINI_TERRAIN[t.terrain];
-        b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
-        if (t.owner && t.terrain !== 'sea') {
-          b.fillStyle = F(t.owner).color + '88';
-          b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
-        }
-      }
-      for (const s of game.stations) {
-        const p = hexCenter(s);
-        b.fillStyle = s.capital ? '#ffffff' : F(s.owner).color;
-        const z = s.capital ? 3.4 * dpr : 2 * dpr;
-        b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
-      }
-      for (const d of game.sites || [])
-        if (d.city == null) {
-          const p = hexCenter(d),
-            z = 2.6 * dpr;
-          b.fillStyle = '#ff6fb5';
-          b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
-        }
-      for (const u of game.units)
-        if (u.hp > 0 && u.side === game.player) {
-          const p = hexCenter(u);
-          b.fillStyle = '#7dffb0';
-          b.fillRect(p.x * sx - dpr, p.y * sy - dpr, 2 * dpr, 2 * dpr);
-        }
-    }
+    const b = minimapBase.getContext('2d');
+    if (b) paintMap(b, game, mini.width, mini.height, dpr);
     minimapDirty = false;
   }
   m.setTransform(1, 0, 0, 1, 0, 0);
@@ -1336,7 +1542,48 @@ function drawMinimap() {
     vy = (-offset.y / scale) * (mini.height / WORLD_H);
   m.strokeStyle = '#ffe9a0';
   m.lineWidth = 1.5 * dpr;
-  for (const shift of [-mini.width, 0, mini.width]) m.strokeRect(vx + shift, vy, vw, vh);
+  for (const shift of wraps() ? [-mini.width, 0, mini.width] : [0]) m.strokeRect(vx + shift, vy, vw, vh);
+}
+// Terrain, territory, cities, mines and units on a small canvas: the minimap, and the map in a mission briefing.
+function paintMap(b, g, width, height, dpr, allUnits = false) {
+  const sx = width / mapW(g),
+    sy = height / mapH(g),
+    col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
+  b.fillStyle = '#0d2b40';
+  b.fillRect(0, 0, width, height);
+  for (const t of g.tiles) {
+    const p = hexCenter(t);
+    b.fillStyle = MINI_TERRAIN[t.terrain];
+    b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
+    if (t.owner && t.terrain !== 'sea') {
+      b.fillStyle = col(t.owner) + '88';
+      b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
+    }
+  }
+  for (const s of g.stations) {
+    const p = hexCenter(s);
+    b.fillStyle = s.capital ? '#ffffff' : col(s.owner);
+    const z = (s.capital ? 3.4 : allUnits ? 5 : 2) * dpr;
+    b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
+  }
+  for (const d of g.sites || [])
+    if (d.city == null) {
+      const p = hexCenter(d),
+        z = 2.6 * dpr;
+      b.fillStyle = '#ff6fb5';
+      b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
+    }
+  for (const u of g.units)
+    if (u.hp > 0 && (allUnits || u.side === g.player)) {
+      const p = hexCenter(u),
+        z = (allUnits ? 3.5 : 2) * dpr;
+      if (allUnits) {
+        b.fillStyle = '#000';
+        b.fillRect(p.x * sx - z / 2 - dpr, p.y * sy - z / 2 - dpr, z + 2 * dpr, z + 2 * dpr);
+      }
+      b.fillStyle = allUnits ? col(u.side) : '#7dffb0';
+      b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
+    }
 }
 const HEAVY_SHAKE = { siege: 10, heavy: 6, super: 7, rocket: 4, medium: 2.5, light: 1.5 };
 function bump(amount) {
@@ -1632,6 +1879,9 @@ document.addEventListener('click', e => {
     generalsDialog(d.generalsSide);
     return;
   }
+  if (d.campaignTab) return campaignDialog(d.campaignTab);
+  if (d.mission) return briefingDialog(d.mission);
+  if (d.startMission) return startMission(d.startMission);
   if (d.admiral) {
     const u = selectedUnit(),
       r = u ? E.assign(game, u.id, d.admiral) : { ok: false, reason: 'Select a unit first.' };
@@ -1650,23 +1900,28 @@ document.addEventListener('click', e => {
     case 'start-conquest':
       newGame();
       break;
-    case 'continue': {
-      const s = getSave();
-      if (s) {
-        aiToken++;
-        hqBack = 'game';
-        strikeMode = false;
-        game = E.applyProfile(s, loadProfile());
-        selection = null;
-        undoStack = [];
-        zoom = 3.2;
-        closeModal();
-        render();
-        centerOn(capitalOf(game.player));
-        if (game.over) resultDialog();
-      }
+    case 'continue':
+      loadGame(getSave());
       break;
-    }
+    case 'continue-mission':
+      loadGame(getSave(CAMPAIGN_KEY));
+      break;
+    case 'campaign':
+      campaignDialog();
+      break;
+    case 'campaign-close':
+      startMenu();
+      break;
+    case 'briefing':
+      briefingDialog(game.campaign.id, true);
+      break;
+    case 'mission-retry':
+      startMission(game.campaign.id);
+      break;
+    case 'talk-next':
+    case 'talk-skip':
+      talkNext(d.action === 'talk-skip');
+      break;
     case 'new':
       startMenu();
       break;
@@ -1801,8 +2056,8 @@ document.addEventListener('click', e => {
       zoom = ZOOM_MIN;
       break;
     case 'home':
-      zoom = Math.max(zoom, 3.2);
-      centerOn(capitalOf(game.player));
+      zoom = Math.max(zoom, homeZoom());
+      centerOn(homeOf());
       break;
   }
 });
@@ -1826,7 +2081,10 @@ document.addEventListener('keydown', e => {
       }
     }
     if (e.key === 'Escape' && !modal.querySelector('[aria-label="Operation setup"]')) {
-      if (helpBack === 'start' && modal.querySelector('[aria-label="Field manual"]')) startMenu();
+      if (modal.querySelector('[aria-label="Mission dialogue"]')) talkNext(true);
+      else if (modal.querySelector('[aria-label="Campaigns"]')) startMenu();
+      else if (modal.querySelector('[data-back="campaign"]')) campaignDialog();
+      else if (helpBack === 'start' && modal.querySelector('[aria-label="Field manual"]')) startMenu();
       else if (archiveBack === 'start' && modal.querySelector('[aria-label="Knightmare archive"]')) startMenu();
       else closeModal();
     }
@@ -1842,7 +2100,7 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     undoMove();
   }
-  if (k === 'h') centerOn(capitalOf(game.player));
+  if (k === 'h') centerOn(homeOf());
   if (k === 'escape' && strikeMode) {
     strikeMode = false;
     render();
@@ -1862,7 +2120,8 @@ document.addEventListener('keydown', e => {
   }
   if (e.key.startsWith('Arrow')) {
     e.preventDefault();
-    const p = hover || selectedUnit() || selectedStation() || capitalOf(game.player);
+    const p = hover || selectedUnit() || selectedStation() || homeOf();
+    if (!p) return;
     hover = E.tile(
       game,
       p.c + (e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0),
@@ -1950,6 +2209,8 @@ const PLATE = {
   britannia: { light: '#5d418f', mid: '#2e1d52', dark: '#170d2e', trim: '#e6c56a', bar: '#d9b45a' },
   eu: { light: '#3d63ad', mid: '#1a3266', dark: '#0b1a3a', trim: '#d3dbe2', bar: '#c4ccd3' },
   cf: { light: '#ad3a33', mid: '#5c1512', dark: '#330806', trim: '#f2c14e', bar: '#e0b24a' },
+  bk: { light: '#44434f', mid: '#1f1e27', dark: '#0c0b10', trim: '#f0c94a', bar: '#e6c048' },
+  jlf: { light: '#4c8550', mid: '#224a28', dark: '#0f2613', trim: '#d4ebbd', bar: '#a9d68f' },
 };
 const TERRAIN_FILL = {
   sea: '#174a6c',
@@ -1960,6 +2221,7 @@ const TERRAIN_FILL = {
   snow: '#e3eaef',
   peak: '#5d5862',
   crater: '#ecd2e2',
+  urban: '#80838a',
 };
 function hash01(c, r, salt = 0) {
   const v = Math.sin(c * 127.1 + r * 311.7 + salt * 74.7) * 43758.5453;
@@ -2061,6 +2323,20 @@ function terrainProps(t, x, y, scale) {
     ctx.beginPath();
     ctx.ellipse(x, y + 2, R * 0.2, R * 0.13, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (t.terrain === 'urban') {
+    // City ruins: three broken blocks of flats with dark windows.
+    for (let i = 0; i < 3; i++) {
+      const bx = x - 20 + i * 13 + (h(i) - 0.5) * 6,
+        bh = 10 + h(i + 4) * 14,
+        by = y + 10;
+      ctx.fillStyle = i % 2 ? '#5b5f67' : '#4b4f57';
+      ctx.fillRect(bx, by - bh, 10, bh);
+      ctx.fillStyle = '#2b2e34';
+      for (let k = by - bh + 3; k < by - 2; k += 5) {
+        ctx.fillRect(bx + 2, k, 2, 2);
+        ctx.fillRect(bx + 6, k, 2, 2);
+      }
+    }
   } else if (t.terrain === 'snow') {
     ctx.fillStyle = '#c6d4dd';
     for (let i = 0; i < 3; i++) ctx.fillRect(x + (h(i) - 0.5) * 40, y + (h(i + 5) - 0.5) * 30, 6, 2);
@@ -2397,8 +2673,9 @@ function draw(time, dt) {
     top = -offset.y / scale - R * 2,
     bottom = (h - offset.y) / scale + R * 2,
     mid = (left + right) / 2;
-  // Every on-screen copy of world x (the map wraps east to west).
+  // Every on-screen copy of world x (the world map wraps east to west; a campaign battlefield does not).
   const copies = x => {
+    if (!wraps()) return [x];
     const out = [];
     for (let k = Math.floor((left - x) / WORLD_W); x + k * WORLD_W <= right; k++)
       if (x + k * WORLD_W >= left) out.push(x + k * WORLD_W);
@@ -2660,6 +2937,23 @@ function draw(time, dt) {
       p = hexCenter({ c, r });
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
   }
+  // Campaign warnings: the hexes a scripted strike will hit next turn.
+  for (const w of game.campaign?.warnings || []) {
+    const pulse = 0.5 + 0.5 * Math.sin(time / 220);
+    for (const t of E.within(game, w, w.radius)) {
+      const q = hexCenter(t);
+      for (const x of copies(q.x)) {
+        hexPath(x, q.y, R - 2);
+        ctx.fillStyle = `rgba(255,70,110,${0.14 + 0.14 * pulse})`;
+        ctx.fill();
+        ctx.strokeStyle = '#ff9fb8';
+        ctx.lineWidth = 1.4 / Math.max(scale, 0.4);
+        ctx.stroke();
+      }
+    }
+    const q = hexCenter(w);
+    for (const x of copies(q.x)) outlinedText(`⚠ ${w.label || 'Danger'}`, x, q.y - R * 0.9, 13, '#ffd0dc', scale, 'Trebuchet MS', true);
+  }
   // F.L.E.I.J.A. targeting: the blast under the cursor, ground zero brighter than the ring.
   if (hover && strikeMode)
     for (const t of E.blastArea(game, hover)) {
@@ -2725,6 +3019,20 @@ function draw(time, dt) {
       ctx.strokeStyle = '#ffe6f3';
       ctx.lineWidth = 3 / Math.max(scale, 0.4);
       ctx.stroke();
+    } else if (e.kind === 'ring') {
+      // Campaign blasts and Gefjun Disturbers: a wave that sweeps out over the hexes they hit.
+      const grow = 1 - fade,
+        rad = R * SQ * (e.radius + 0.6) * Math.min(1, 0.25 + grow * 2);
+      ctx.globalAlpha = fade * 0.45;
+      ctx.fillStyle = e.color;
+      ctx.beginPath();
+      ctx.arc(bx, b0.y, rad, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = fade;
+      ctx.strokeStyle = e.color;
+      ctx.lineWidth = 4 / Math.max(scale, 0.4);
+      ctx.stroke();
+      if (e.text) outlinedText(e.text, bx, b0.y - R - grow * 20, 16, '#fff6e8', scale, 'Trebuchet MS', true);
     } else if (e.kind === 'move') {
       drawLine(ax, a0.y, bx, b0.y, e.color, 2 / scale, [7, 6]);
     } else if (e.kind === 'text') {

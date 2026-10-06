@@ -21,9 +21,9 @@ Knightmare Frames.
   disband. Take every rival capital, or hold the most cities at the 120-turn armistice.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
-**Campaign (in progress):** two story campaigns, the Black Knights (10 missions) and Britannia (11), on hand-built
-tactical maps. The rules are done (`dist/campaign.js`, `dist/missions.js`, tested in `tests/campaign.test.cjs`);
-the screens are not built and `index.html` does not load the two files yet, so players cannot reach it. See §4.
+**Campaign:** two story campaigns, the Black Knights (10 missions) and Britannia (11), on hand-built tactical maps,
+reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (tested in `tests/campaign.test.cjs`);
+screens in `dist/game.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
 
 ## 2. Running, testing and deploying
 
@@ -194,7 +194,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   levelled (1–5) in HQ with fragments earned from victories; signature abilities at Lv.3 and Lv.5; each deploys once
   per operation from the factory's Elite Forces tab. `applyElites` applies your HQ levels to your own units only.
 
-### Campaign (rules done, screens not built)
+### Campaign
 - Campaign-only sides `bk` (Order of the Black Knights, doctrine: +10% damage from forest, mountains or ruins) and
   `jlf` (Japan Liberation Front, 10% less damage in forest or mountains), never in Conquest (`MAJORS` is unchanged).
 - Campaign-only frames (`campaign: true`): Burai, Akatsuki Flight-Enabled, Zangetsu, Raikō, Japanese battle tank and
@@ -208,8 +208,12 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Sakuradite eruptions and F.L.E.I.J.A. blasts with a warning a turn ahead, Gefjun Disturber shutdowns, frame
   upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star;
   progress in `profile.campaign`). Missions unlock in order.
-- Still to do: the Campaign tab, mission select and briefing, the dialogue box, blast and warning effects, the star
-  results screen, a camera for small non-wrapping maps, and loading `missions.js` and `campaign.js` in `index.html`.
+- Screens (`game.js`, campaign section): a start-menu row opens mission select (tabs per campaign, locks, best
+  stars), then a briefing (story, star goals, failure terms, forces, commanders, map preview). In a mission: a dialogue
+  box plays `g.campaign.queue`, `campaignFeed()` turns `g.campaign.fx` into blast and Gefjun effects and flags new
+  warnings (drawn as pulsing hexes), star chips beside the objective track each goal, and the result screen grades
+  stars and offers retry or the next mission. Campaign maps do not wrap: the camera clamps to the map and zoom 1 fits
+  it. A mission saves under its own key (`knightmare-conquest-mission`), so it never replaces the conquest save.
 
 ### Commanders
 - 58 commanders. Conquest's 35, plus the commander expansion (Zero, Kallen, Tohdoh, C.C., Ohgi, Chiba, Asahina, Senba,
