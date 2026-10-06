@@ -11,6 +11,7 @@ Run:  python3 tools/local_art_prepare.py            (then reload the game)
 Options:
   crops.json   dist/local-art/crops.json maps a portrait id to a pixel box in the raw image, [x0, y0, x1, y1],
                for character sheets or wide shots:  { "suzaku": [380, 40, 520, 215] }
+  backgrounds.json maps a unit id to background seed pixels for enclosed gaps between limbs.
   --no-cutout  keep unit backgrounds as they are (use for files that already have transparency)
   --tolerance  how far from pure white still counts as background (default 40)
 
@@ -43,16 +44,24 @@ def trim(im):
     return im.crop(box)
 
 
-def cutout(im, tolerance):
-    """Remove a white-ish background by flood fill from the corners, then clear the light fringe."""
+def cutout(im, tolerance, seeds=()):
+    """Remove neutral light background connected to any edge or a supplied background seed."""
     im = im.convert('RGBA')
     if im.getchannel('A').getextrema()[0] < 255:
         return trim(im)  # already has transparency
     w, h = im.size
-    for pt in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
-        if min(im.getpixel(pt)[:3]) >= 225 and im.getpixel(pt)[3] == 255:
-            ImageDraw.floodfill(im, pt, (255, 255, 255, 0), thresh=tolerance)
     a = np.array(im)
+    rgb = a[..., :3].astype('int16')
+    light = (rgb.min(axis=2) >= 255 - tolerance) & (rgb.max(axis=2) - rgb.min(axis=2) <= tolerance)
+    # Pillow's array-backed L images are read-only; floodfill needs a writable copy.
+    mask = Image.fromarray((light * 255).astype('uint8')).copy()
+    edges = [(x, y) for y in (0, h - 1) for x in range(w)] + [(x, y) for x in (0, w - 1) for y in range(h)]
+    for pt in edges + [tuple(p) for p in seeds]:
+        if not (0 <= pt[0] < w and 0 <= pt[1] < h):
+            raise ValueError(f'Background seed outside {w}x{h} image: {pt}')
+        if mask.getpixel(pt) == 255:
+            ImageDraw.floodfill(mask, pt, 0)
+    a[..., 3][light & (np.array(mask) == 0)] = 0
     clear = a[..., 3] == 0
     near = np.array(Image.fromarray((clear * 255).astype('uint8')).filter(ImageFilter.MaxFilter(3))) > 0
     light = a[..., :3].min(axis=2) >= 215
@@ -60,9 +69,9 @@ def cutout(im, tolerance):
     return trim(Image.fromarray(a, 'RGBA'))
 
 
-def unit(path, tolerance, do_cutout):
+def unit(path, tolerance, do_cutout, seeds=()):
     im = Image.open(path)
-    im = cutout(im, tolerance) if do_cutout else trim(im.convert('RGBA'))
+    im = cutout(im, tolerance, seeds) if do_cutout else trim(im.convert('RGBA'))
     im.thumbnail((UNIT_MAX, UNIT_MAX), Image.LANCZOS)
     return im
 
@@ -85,6 +94,17 @@ def portrait(path, box):
     return im
 
 
+def save_image(image, path, **options):
+    """Replace a finished image only after its encoder succeeds."""
+    temporary = path + '.tmp'
+    try:
+        image.save(temporary, format='PNG' if path.endswith('.png') else 'JPEG', **options)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.remove(temporary)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--dir', default=manifest.ART, help='local art folder (default: dist/local-art)')
@@ -93,7 +113,13 @@ def main():
     args = ap.parse_args()
     root = os.path.abspath(args.dir)
     crops_path = os.path.join(root, 'crops.json')
+    if not os.path.exists(crops_path):
+        crops_path = os.path.join(HERE, 'art-crops.json')
     crops = json.load(open(crops_path)) if os.path.exists(crops_path) else {}
+    seeds_path = os.path.join(root, 'backgrounds.json')
+    if not os.path.exists(seeds_path):
+        seeds_path = os.path.join(HERE, 'art-backgrounds.json')
+    seeds = json.load(open(seeds_path)) if os.path.exists(seeds_path) else {}
     done = 0
     failed = 0
     for kind in ('units', 'portraits'):
@@ -108,9 +134,9 @@ def main():
                 continue
             try:
                 if kind == 'units':
-                    unit(os.path.join(raw, f), args.tolerance, not args.no_cutout).save(os.path.join(out, stem + '.png'), optimize=True)
+                    save_image(unit(os.path.join(raw, f), args.tolerance, not args.no_cutout, seeds.get(stem, [])), os.path.join(out, stem + '.png'), optimize=True)
                 else:
-                    portrait(os.path.join(raw, f), crops.get(stem)).save(os.path.join(out, stem + '.jpg'), quality=90)
+                    save_image(portrait(os.path.join(raw, f), crops.get(stem)), os.path.join(out, stem + '.jpg'), quality=90)
                 done += 1
             except Exception as e:  # keep going: one bad file should not stop the rest
                 print(f'  failed {kind}/{f}: {e}')

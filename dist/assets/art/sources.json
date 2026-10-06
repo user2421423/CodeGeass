@@ -1,0 +1,399 @@
+{
+  "notice": "Unofficial Code Geass fan game. Studio imagery remains the property of its respective copyright holders; the wiki text license is not an image license.",
+  "archive": {
+    "name": "local-art.zip",
+    "suppliedBy": "repository owner",
+    "originalImageUrls": "Not present in the supplied archive. Previous handoff identifies Code Geass Wiki as the download source.",
+    "sha256": "c1adc2d5350195d82f1ed863e29856e60edb5718d6b74a33f39fb9ef7f70e266",
+    "entries": [
+      {
+        "kind": "units",
+        "id": "akatsuki",
+        "file": "units/akatsuki-11240620a78b.png"
+      },
+      {
+        "kind": "units",
+        "id": "alexander_drone",
+        "file": "units/alexander_drone-54ba57a3d17c.png"
+      },
+      {
+        "kind": "units",
+        "id": "alexander_liberte",
+        "file": "units/alexander_liberte-95974233a76b.png"
+      },
+      {
+        "kind": "units",
+        "id": "alexander_redorga",
+        "file": "units/alexander_redorga-9053b7e33e00.png"
+      },
+      {
+        "kind": "units",
+        "id": "amanecer",
+        "file": "units/amanecer-ed71c27edb73.png"
+      },
+      {
+        "kind": "units",
+        "id": "bamides",
+        "file": "units/bamides-112358cce84d.png"
+      },
+      {
+        "kind": "units",
+        "id": "brighton",
+        "file": "units/brighton-4bb8a725ddf1.png"
+      },
+      {
+        "kind": "units",
+        "id": "chuyen",
+        "file": "units/chuyen-427d2c85b500.png"
+      },
+      {
+        "kind": "units",
+        "id": "estrella",
+        "file": "units/estrella-892bfb12bb42.png"
+      },
+      {
+        "kind": "units",
+        "id": "gardmare",
+        "file": "units/gardmare-f06f450a0f42.png"
+      },
+      {
+        "kind": "units",
+        "id": "gareth",
+        "file": "units/gareth-9a032af80554.png"
+      },
+      {
+        "kind": "units",
+        "id": "gawain",
+        "file": "units/gawain-724c6a9bbac4.png"
+      },
+      {
+        "kind": "units",
+        "id": "gekka",
+        "file": "units/gekka-6c896ee459cb.png"
+      },
+      {
+        "kind": "units",
+        "id": "glasgow",
+        "file": "units/glasgow-56c6373a34fe.png"
+      },
+      {
+        "kind": "units",
+        "id": "gloucester",
+        "file": "units/gloucester-126adb5d70c7.png"
+      },
+      {
+        "kind": "units",
+        "id": "gracchus",
+        "file": "units/gracchus-791078ba5bcf.png"
+      },
+      {
+        "kind": "units",
+        "id": "gun_ru",
+        "file": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "kind": "units",
+        "id": "guren_type01",
+        "file": "units/guren_type01-2f3da3b4d5e8.png"
+      },
+      {
+        "kind": "units",
+        "id": "liverpool",
+        "file": "units/liverpool-040286c14865.png"
+      },
+      {
+        "kind": "units",
+        "id": "panzer_hummel",
+        "file": "units/panzer_hummel-4c9a513db11b.png"
+      },
+      {
+        "kind": "units",
+        "id": "shen_hu",
+        "file": "units/shen_hu-761ab82d666e.png"
+      },
+      {
+        "kind": "units",
+        "id": "sutherland",
+        "file": "units/sutherland-4273fc3f9125.png"
+      },
+      {
+        "kind": "units",
+        "id": "sutherland_sieg",
+        "file": "units/sutherland_sieg-e0f49c4f1f59.png"
+      },
+      {
+        "kind": "units",
+        "id": "vincent_ward",
+        "file": "units/vincent_ward-474e03b4ee9c.png"
+      },
+      {
+        "kind": "units",
+        "id": "zangetsu",
+        "file": "units/zangetsu-4e4cb3c3bd61.png"
+      },
+      {
+        "kind": "portraits",
+        "id": "anna",
+        "file": "portraits/anna-7dad70f680c2.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "bismarck",
+        "file": "portraits/bismarck-2556b7693b2f.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "gaohai",
+        "file": "portraits/gaohai-8c82ae4c950e.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "honggu",
+        "file": "portraits/honggu-5a19181e95e4.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "klaus",
+        "file": "portraits/klaus-74b8fc7e1e8c.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "leifeng",
+        "file": "portraits/leifeng-083b5d5c1348.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "luciano",
+        "file": "portraits/luciano-e90561c6a0a0.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "meiling",
+        "file": "portraits/meiling-53c77f6ca5a5.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "rakshata",
+        "file": "portraits/rakshata-f166df1733c9.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "rolo",
+        "file": "portraits/rolo-27001d541bcb.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "ryo",
+        "file": "portraits/ryo-871bf8ae7004.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "xianglin",
+        "file": "portraits/xianglin-545d256b1137.jpg"
+      },
+      {
+        "kind": "portraits",
+        "id": "zhaohao",
+        "file": "portraits/zhaohao-f75b0bf42b4c.jpg"
+      }
+    ]
+  },
+  "retrieved": [
+    {
+      "kind": "portraits",
+      "id": "cornelia",
+      "page": "https://codegeass.fandom.com/wiki/Cornelia_li_Britannia",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/2/24/Cornelia_li_Britannia.jpg/revision/latest/scale-to-width-down/1200?cb=20160428174414",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "julius",
+      "page": "https://codegeass.fandom.com/wiki/Julius_Kingsley",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/9/95/Julius_Kingsley_Code_Geass.png/revision/latest/scale-to-width-down/1200?cb=20180622123329",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "schneizel",
+      "page": "https://codegeass.fandom.com/wiki/Schneizel_el_Britannia",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/3/32/Schneizel_el_britania.jpg/revision/latest/scale-to-width-down/1200?cb=20110109084341",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "gino",
+      "page": "https://codegeass.fandom.com/wiki/Gino_Weinberg",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/1/1e/Gino27.jpg/revision/latest/scale-to-width-down/1200?cb=20120108123623",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "anya",
+      "page": "https://codegeass.fandom.com/wiki/Anya_Alstreim",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/c/cc/Char_6728.jpg/revision/latest/scale-to-width-down/1200?cb=20111222073133",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "jeremiah",
+      "page": "https://codegeass.fandom.com/wiki/Jeremiah_Gottwald",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/e/ef/Jeremiah00.jpg/revision/latest/scale-to-width-down/1200?cb=20120418135259",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "shin",
+      "page": "https://codegeass.fandom.com/wiki/Shin_Hyuga_Shaing",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/d/d0/Pict490.jpg/revision/latest/scale-to-width-down/1200?cb=20141022042001",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "guilford",
+      "page": "https://codegeass.fandom.com/wiki/Gilbert_G.P._Guilford",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/0/04/Guilford.03.png/revision/latest/scale-to-width-down/1200?cb=20120618135410",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "darlton",
+      "page": "https://codegeass.fandom.com/wiki/Andreas_Darlton",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/7/7f/Andreas_Darlton.png/revision/latest/scale-to-width-down/1200?cb=20091116230842",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "ashley",
+      "page": "https://codegeass.fandom.com/wiki/Ashley_Ashra",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/7/78/1035083_1200.jpg/revision/latest?cb=20150113004608",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "leila",
+      "page": "https://codegeass.fandom.com/wiki/Leila_Malcal",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/e/ef/Leilaimage.jpg/revision/latest/scale-to-width-down/1200?cb=20171007075847",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "akito",
+      "page": "https://codegeass.fandom.com/wiki/Akito_Hyuga",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/9/92/Akito_Hyuga2.png/revision/latest/scale-to-width-down/1200?cb=20130210024208",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "ayano",
+      "page": "https://codegeass.fandom.com/wiki/Ayano_Kosaka",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/3/3c/Ayano_Kosaka1.png/revision/latest/scale-to-width-down/1200?cb=20231223015906",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "yukiya",
+      "page": "https://codegeass.fandom.com/wiki/Yukiya_Naruse",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/0/04/Pict508.jpg/revision/latest/scale-to-width-down/1200?cb=20141022041616",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "oscar",
+      "page": "https://codegeass.fandom.com/wiki/Oscar_Hammel",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/a/ac/Oscar_Hamel.png/revision/latest/scale-to-width-down/1200?cb=20130210214936",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "smilas",
+      "page": "https://codegeass.fandom.com/wiki/Gene_Smilas",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/5/5d/Genesmilas.png/revision/latest/scale-to-width-down/1200?cb=20130211065355",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "marirrosa",
+      "page": "https://codegeass.fandom.com/wiki/Marirrosa_Noriega",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/f/fa/MarirrosaFace.png/revision/latest?cb=20180908073830",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "xingke",
+      "page": "https://codegeass.fandom.com/wiki/Li_Xingke",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/f/fd/Li_Xingke.png/revision/latest/scale-to-width-down/1200?cb=20120101065019",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "cao",
+      "page": "https://codegeass.fandom.com/wiki/Cao",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/5/5d/Tsao_and_Sawasaki.png/revision/latest/scale-to-width-down/1200?cb=20120305034505",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "lifeng",
+      "page": "https://codegeass.fandom.com/wiki/Xu_Lifeng",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/7/7d/LifengFace.jpg/revision/latest?cb=20180901171934",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "portraits",
+      "id": "suzaku",
+      "page": "https://codegeass.fandom.com/wiki/Suzaku_Kururugi",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/2/28/Suzaku253.jpg/revision/latest/scale-to-width-down/1200?cb=20120108065204",
+      "method": "Face crop of rendered source image"
+    },
+    {
+      "kind": "units",
+      "id": "alexander",
+      "page": "https://codegeass.fandom.com/wiki/Alexander_Type-02",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/3/30/9.jpg/revision/latest?cb=20120507100100",
+      "method": "Single front view isolated from rendered design sheet; outline recipe in tools/art-sheet-recipes.json",
+      "renderedImageBox": {
+        "height": 585,
+        "width": 796,
+        "x": 283.5,
+        "y": 175.5
+      }
+    },
+    {
+      "kind": "units",
+      "id": "alexander_valiant",
+      "page": "https://codegeass.fandom.com/wiki/Alexander_Valiant",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/c/c4/Kmf_Alexv_ryo.jpg/revision/latest?cb=20150522042944",
+      "method": "Single front view isolated from rendered design sheet; outline recipe in tools/art-sheet-recipes.json",
+      "renderedImageBox": {
+        "height": 585,
+        "width": 796,
+        "x": 283.5,
+        "y": 175.5
+      }
+    },
+    {
+      "kind": "units",
+      "id": "zetland",
+      "page": "https://codegeass.fandom.com/wiki/Zetland",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/d/de/Zetland_%28Color%29.jpg/revision/latest?cb=20130225161356",
+      "method": "Single front view isolated from rendered design sheet; outline recipe in tools/art-sheet-recipes.json",
+      "renderedImageBox": {
+        "height": 600,
+        "width": 660,
+        "x": 351.5,
+        "y": 168
+      }
+    }
+  ],
+  "drawnFallbacks": {
+    "units": [
+      "guren_hei",
+      "wang_hu",
+      "panzer_wespe"
+    ],
+    "portraits": [
+      "fernando"
+    ]
+  }
+}

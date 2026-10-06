@@ -72,8 +72,9 @@ node tools/validate_assets.cjs --tracked
 
 ## Publish artwork
 
-Claude’s untracked downloads are not included in the repository. Supply the processed `dist/local-art/` folder
-(with `manifest.json`, `units/` and `portraits/`) or the raw inputs and face-crop boxes. Then:
+The live game ships 28 finished Knightmare sprites and 34 commander portraits. Guren Type-Hei, Wang Hu,
+Panzer-Wespe and Fernando Noriega keep the drawn artwork. Credits and source provenance are in `ASSETS.md`
+and `dist/assets/art/sources.json`. To update the artwork from local raw inputs or a processed bundle:
 
 ```sh
 # Only needed when preparing raw downloads (requires Pillow and NumPy):
@@ -88,8 +89,9 @@ git push origin main
 
 Use `python3 tools/publish_art.py --source /path/to/processed-art` for an extracted processed folder. Public image
 filenames include content hashes so changed images cannot be confused with cached old versions. GitHub Actions
-checks the game and every referenced public file before deploying. The repository currently contains no imported
-images; every entry uses its drawn fallback until the missing image bundle is published.
+checks the game and every referenced public file before deploying. Raw sources remain local; finished public assets
+are tracked. The saved face crops and enclosed-background seeds in `tools/art-crops.json` and
+`tools/art-backgrounds.json` are the preparation defaults; local recipe files override them.
 
 ## Map tools
 
@@ -98,4 +100,4 @@ block in `dist/engine.js` (`python3 tools/build_map.py --inject dist/engine.js`)
 grid to a PNG (needs Pillow).
 
 Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; drawn artwork is
-original and generated in code; imported images, when supplied, are credited in ASSETS.md. Gameplay draws on EasyTech's World Conqueror 4.
+original and generated in code; imported images are credited in ASSETS.md. Gameplay draws on EasyTech's World Conqueror 4.

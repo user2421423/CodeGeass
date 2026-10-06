@@ -47,6 +47,9 @@ def publish(source, output=PUBLIC):
                 raise ValueError(f'Missing or unsafe image: {relative}')
             with Image.open(path) as image:
                 image.verify()
+            # Header/CRC verification alone can miss a truncated compressed image stream.
+            with Image.open(path) as image:
+                image.load()
             suffix = path.suffix.lower()
             if suffix not in ('.png', '.jpg', '.jpeg', '.webp', '.gif'):
                 raise ValueError(f'Unsupported processed image: {relative}')
