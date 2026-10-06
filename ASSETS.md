@@ -18,7 +18,7 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **28 Knightmare sprites and 34 commander portraits** in `dist/assets/art/`. These include imagery
+The game ships **31 Knightmare sprites and 35 commander portraits** in `dist/assets/art/`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
@@ -30,8 +30,7 @@ license does not license the studio artwork.
   The three replacement units (Alexander Type-02, Alexander Valiant and Zetland) were isolated as single front
   views from rendered design sheets. Exact page URLs, image URLs and processing notes are recorded per image
   in `dist/assets/art/sources.json`.
-- Guren Type-Hei, Wang Hu, Panzer-Wespe and Fernando Noriega retain the original drawn fallbacks. Every imported
-  image also has a drawn fallback if it fails to load.
+- All 31 Knightmare types and all 35 commanders now have published image assets. The procedural drawings remain only as runtime safety fallbacks if an imported image fails to load.
 
 ## Preparing and publishing art
 

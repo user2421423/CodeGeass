@@ -59,6 +59,9 @@ globalThis.KnightmareArtManifest = {
     "gun_ru": {
       "src": "units/gun_ru-e7776a73350d.png"
     },
+    "guren_hei": {
+      "src": "units/guren_hei-web.png"
+    },
     "guren_type01": {
       "src": "units/guren_type01-2f3da3b4d5e8.png"
     },
@@ -67,6 +70,9 @@ globalThis.KnightmareArtManifest = {
     },
     "panzer_hummel": {
       "src": "units/panzer_hummel-4c9a513db11b.png"
+    },
+    "panzer_wespe": {
+      "src": "units/panzer_wespe-web.png"
     },
     "shen_hu": {
       "src": "units/shen_hu-761ab82d666e.png"
@@ -79,6 +85,9 @@ globalThis.KnightmareArtManifest = {
     },
     "vincent_ward": {
       "src": "units/vincent_ward-474e03b4ee9c.png"
+    },
+    "wang_hu": {
+      "src": "units/wang_hu-web.png"
     },
     "zangetsu": {
       "src": "units/zangetsu-4e4cb3c3bd61.png"
@@ -114,6 +123,9 @@ globalThis.KnightmareArtManifest = {
     },
     "darlton": {
       "src": "portraits/darlton-cd755ff4b7a4.jpg"
+    },
+    "fernando": {
+      "src": "portraits/fernando-web.jpg"
     },
     "gaohai": {
       "src": "portraits/gaohai-8c82ae4c950e.jpg"

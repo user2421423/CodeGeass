@@ -36,11 +36,10 @@ Campaign chapters (like Galactic Command's) are not built yet; the engine is con
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **28 Knightmare sprites and 34 commander
+Published artwork is tracked and deployed from `dist/assets/art/`: **31 Knightmare sprites and 35 commander
 portraits**, registered synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
-workspace and is never required by GitHub Pages. Three screenshot-only units (Guren Type-Hei, Wang Hu, Panzer-Wespe)
-and Fernando Noriega intentionally retain the procedural fallback art until usable replacements are supplied.
+workspace and is never required by GitHub Pages. All Knightmare types and commanders now have published image assets; procedural art remains only as a runtime safety fallback.
 To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
 ## 3. Code layout

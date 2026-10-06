@@ -384,16 +384,38 @@
         "x": 351.5,
         "y": 168
       }
+    },
+    {
+      "kind": "units",
+      "id": "wang_hu",
+      "page": "https://geass.miraheze.org/wiki/Wang_Hu_Flight-Enabled_Version",
+      "image": "https://static.wikitide.net/geasswiki/3/36/Wang_hu_flight_enabled_front_color_settei.png",
+      "method": "Front color design art; edge-connected pale background removed and sprite padded to transparent 640×640"
+    },
+    {
+      "kind": "units",
+      "id": "guren_hei",
+      "page": "https://geass.miraheze.org/wiki/Guren_Type-Hei",
+      "image": "https://static.wikitide.net/geasswiki/9/97/Guren_type-hei_tamaki_ls_art.png",
+      "method": "Lost Stories art; edge-connected pale background removed and sprite padded to transparent 640×640"
+    },
+    {
+      "kind": "units",
+      "id": "panzer_wespe",
+      "page": "https://codegeass.fandom.com/wiki/Panzer-Wespe",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/1/1c/FnTimL1_%281%29.jpg/revision/latest?cb=20150216030815",
+      "method": "Panzer-Wespe reference image; pale edge background removed and unit padded to transparent 640×640"
+    },
+    {
+      "kind": "portraits",
+      "id": "fernando",
+      "page": "https://www.anime-planet.com/manga/code-geass-soubou-no-oz-o2/characters",
+      "image": "https://cdn.anime-planet.com/characters/primary/fernando-noriega-1-171x240.webp?t=1672851463",
+      "method": "Fernando Noriega character portrait cropped to the game's 13:16 commander frame"
     }
   ],
   "drawnFallbacks": {
-    "units": [
-      "guren_hei",
-      "wang_hu",
-      "panzer_wespe"
-    ],
-    "portraits": [
-      "fernando"
-    ]
+    "units": [],
+    "portraits": []
   }
 }
