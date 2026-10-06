@@ -77,6 +77,7 @@ test('The world map wraps east to west and every city stands on land', () => {
   const g = E.createGame('eu', 'normal', 'conquest', 5);
   const last = E.WORLD.cols - 1;
   assert.equal(g.tiles.length, E.WORLD.cols * E.WORLD.rows);
+  assert.deepEqual([E.WORLD.cols, E.WORLD.rows], [180, 76]);
   assert.equal(E.distance({ c: 0, r: 6 }, { c: last, r: 6 }, g), 1);
   assert.equal(E.distance({ c: 0, r: 6 }, { c: last, r: 6 }), last);
   assert(E.adjacent(g, { c: 0, r: 6 }).some(t => t.c === last));
@@ -362,6 +363,10 @@ test('Rewards are paid for the first victory only; saves from other versions are
   assert(E.missionReward(g, 1, { [E.operationKey(g)]: true }).repeat);
   assert.equal(E.migrateSave({ ...g, rulesVersion: 0 }), null);
   assert.equal(E.migrateSave(JSON.parse(JSON.stringify(g))).player, 'eu');
+  const oldMap = JSON.parse(JSON.stringify(g));
+  oldMap.cols = 100;
+  oldMap.rows = 42;
+  assert.equal(E.migrateSave(oldMap), null, 'old low-resolution conquest saves are rejected');
 });
 test('Sakuradite: Japan holds 70% of the deposits; Fuji is a mine of its own, island deposits are worked from cities', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 3),
@@ -455,7 +460,7 @@ test('Infantry and Armor seize a mine by moving onto it; artillery cannot; city 
   assert.equal(k.economy.britannia.sakuradite, 50);
   assert.equal(k.economy.eu.sakuradite, 0);
 });
-test('Version 2 saves (before Sakuradite) are upgraded: deposits placed, refineries away from a deposit become credits', () => {
+test('Version 2 saves on the current map (before Sakuradite) are upgraded: deposits placed, refineries away from a deposit become credits', () => {
   const v1 = JSON.parse(JSON.stringify(E.createGame('britannia', 'normal', 'conquest', 4))),
     city = n => v1.stations.find(s => s.name === n);
   v1.rulesVersion = 2;
