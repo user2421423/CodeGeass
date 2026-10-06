@@ -2597,3 +2597,18 @@ table.powers .legend-dot {
 .portrait-art.local-art > img {
   object-fit: cover;
 }
+
+.notice {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #b9c6bd;
+}
+.credits {
+  margin: 12px 0 6px;
+  padding: 10px 12px;
+  border: 1px solid #6c776f66;
+  background: #0c202966;
+}
+.credits .notice {
+  margin: 4px 0 0;
+}

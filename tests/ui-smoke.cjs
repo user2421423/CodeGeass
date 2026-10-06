@@ -87,7 +87,9 @@ for (const file of ['engine.js', 'art.js', 'icons.js', 'audio.js', 'game.js'])
 const run = s => vm.runInContext(s, context);
 const modal = () => node('modal-root').innerHTML;
 (async () => {
+  const NOTICE = 'Code Geass and related characters are trademarks and copyrighted property. This project is an unofficial fan creation and is not officially affiliated with or endorsed by the copyright holders.';
   assert(modal().includes('One world.'));
+  assert(modal().includes(NOTICE), 'start menu shows the attribution notice');
   for (const side of ['britannia', 'eu', 'cf']) assert(modal().includes(`data-faction="${side}"`));
   for (const side of ['britannia', 'eu', 'cf']) {
     run(`setup={side:'${side}',difficulty:'normal'};newGame();draw(0,.016);drawMinimap();`);
@@ -126,6 +128,9 @@ const modal = () => node('modal-root').innerHTML;
     assert(node('side').innerHTML.includes('Knightmare factory'));
     run('helpDialog()');
     assert(modal().includes('War on a world of hexes'));
+    assert(modal().includes(NOTICE), 'field manual shows the notice');
+    run('menuDialog()');
+    assert(modal().includes(NOTICE) && modal().includes('Credits'), 'game menu shows the notice and credits');
     run('closeModal()');
     await run('endTurn(true)');
     assert.equal(run('game.turn'), 2);

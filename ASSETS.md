@@ -23,3 +23,14 @@ were copied from the wiki or the anime. Unofficial fan game.
 over the drawn art; anything missing keeps the drawing. See `dist/local-art/README.md`. The repository and the
 published site ship none of it. If you ever commit files from that folder, they become public on GitHub Pages, so
 only do that with art you have the rights to publish.
+
+## Notice and permission terms
+
+The game shows this notice in the start menu, the game menu (credits) and the field manual: "Code Geass and related
+characters are trademarks and copyrighted property. This project is an unofficial fan creation and is not officially
+affiliated with or endorsed by the copyright holders."
+
+Per the owner's email from the rights holders, the permission to use Code Geass characters, elements and lore in a
+fan game is limited and non-exclusive, and conditional on: free distribution with no paid access, microtransactions,
+crowdfunding or ad revenue; the visible notice above; no content that violates community guidelines or damages the
+brand; and the holders may revoke it at any time. Keep the game free and keep the notice.
