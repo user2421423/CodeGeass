@@ -1,7 +1,8 @@
 # Local art (not committed, not deployed)
 
-Put your own images here to replace the drawn art on your machine. Everything in this folder except this file is
-git-ignored, so it is never committed, pushed or published. Anything you do not provide keeps the drawn art.
+Put your own images here to override the game's published or procedural art on your machine. Everything in this
+folder except this file is git-ignored, so it is never committed, pushed or published. Anything you do not provide
+keeps the currently published image when one exists, otherwise the procedural fallback remains.
 
 ## Quick way: drop in raw files and let the helper prepare them
 
