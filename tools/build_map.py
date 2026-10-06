@@ -243,8 +243,8 @@ FORCE_TERRAIN = {
         (82, 39), (100, 43), (120, -24), (128, -24), (136, -25),
     ],
     'f': [
-        # Malay peninsula: slow, defensible jungle corridor.
-        (101, 10), (101.5, 7), (102, 4),
+        # Malay peninsula: slow, defensible jungle corridor (points follow the narrow high-resolution land spine).
+        (100, 10.85), (100, 7.4), (101, 5.7), (102, 4),
     ],
 }
 
