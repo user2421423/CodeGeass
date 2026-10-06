@@ -33,6 +33,29 @@
       doctrine: 'Strength in Numbers',
       doctrineText: 'Infantry-branch Knightmares cost 15% less.',
     },
+    // Campaign-only sides: they never appear in Conquest.
+    bk: {
+      name: 'Order of the Black Knights',
+      short: 'Black Knights',
+      adj: 'Black Knight',
+      color: '#f0c94a',
+      letter: 'K',
+      capital: 'Hōrai Island',
+      doctrine: 'Guerrilla Tactics',
+      doctrineText: 'Knightmares fighting from forest, mountains or city ruins deal +10% damage.',
+      campaign: true,
+    },
+    jlf: {
+      name: 'Japan Liberation Front',
+      short: 'JLF',
+      adj: 'JLF',
+      color: '#86d17c',
+      letter: 'J',
+      capital: 'Mount Narita',
+      doctrine: 'Mountain Fortress',
+      doctrineText: 'Units in forest or mountains take 10% less damage.',
+      campaign: true,
+    },
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },
   };
   const MAJORS = ['britannia', 'eu', 'cf'];
@@ -511,6 +534,160 @@
       weapon: 'Large cannon · Bazooka',
       lore: 'Akatsukis hauling large cannons, used to shell fortified positions.',
     },
+    // Campaign-only frames (campaign: true): named aces and the Black Knights' and JLF's own machines. They are
+    // placed by missions and never appear in Conquest lineups.
+    burai: {
+      side: 'bk',
+      cls: 'scout',
+      name: 'Burai',
+      model: 'Type-1R',
+      gen: '4th generation',
+      weapon: 'Assault rifle · Wrist-mounted missile launchers',
+      lore: 'Kyoto House’s copy of the Glasgow, smuggled to the resistance: the first frames of the Black Knights.',
+      campaign: true,
+    },
+    akatsuki_flight: {
+      side: 'bk',
+      cls: 'raider',
+      name: 'Akatsuki Flight-Enabled',
+      model: 'Type-05/F2D',
+      gen: '7th-generation equivalent',
+      weapon: 'Air Glide wings · Bazooka',
+      lore: 'The mass-production Akatsuki with Air Glide wings, issued before the UFN war: it flies over any terrain.',
+      float: true,
+      campaign: true,
+    },
+    zangetsu: {
+      side: 'bk',
+      cls: 'heavy',
+      name: 'Zangetsu',
+      model: 'Type-04',
+      gen: '7th-generation equivalent',
+      weapon: '12-tube missile launcher · Revolving Blade Sword',
+      lore: 'Tohdoh’s commander frame, built at Jabalpur for the Black Knights.',
+      campaign: true,
+    },
+    guren_mk2: {
+      side: 'bk',
+      cls: 'super',
+      name: 'Guren Mk-II',
+      model: 'Type-02',
+      gen: '7th-generation equivalent',
+      weapon: 'Radiant Wave Surger · Fork knife',
+      lore: 'Rakshata’s Type-02, the first Japanese-built frame to outclass Britannia’s best. Kallen’s machine.',
+      campaign: true,
+    },
+    guren_seiten: {
+      side: 'bk',
+      cls: 'super',
+      name: 'Guren S.E.I.T.E.N.',
+      model: 'Type-02/F1Z',
+      gen: '9th-generation equivalent',
+      weapon: 'Radiation Wave unit · Energy Wings · MVS',
+      lore: 'The Guren rebuilt with Energy Wings, a match for the Lancelot Albion: it flies over any terrain.',
+      float: true,
+      attack: 120,
+      hp: 620,
+      campaign: true,
+    },
+    gawain: {
+      side: 'bk',
+      cls: 'super',
+      name: 'Gawain',
+      model: 'IFX-V3D1',
+      gen: '6th generation',
+      weapon: 'Shoulder Hadron Cannons · Druid System',
+      lore: 'A Britannian prototype stolen by Zero and C.C., carried by an integrated Float System: it flies over any terrain.',
+      float: true,
+      campaign: true,
+    },
+    shinkiro: {
+      side: 'bk',
+      cls: 'super',
+      name: 'Shinkirō',
+      model: 'Type-0/0A',
+      gen: '7th-generation equivalent',
+      weapon: 'Absolute Defense Field · Phase Transition Cannon',
+      lore: 'Zero’s command frame. Its Absolute Defense Field turns aside almost anything, and it flies over any terrain.',
+      float: true,
+      attack: 100,
+      armor: 64,
+      campaign: true,
+    },
+    raiko: {
+      side: 'jlf',
+      cls: 'siege',
+      name: 'Raikō',
+      model: 'Type-5R/11G',
+      gen: '4th generation',
+      weapon: 'Super Electromagnetic Shrapnel Cannon',
+      lore: 'The JLF’s linear-cannon fortress frame, dug in on Mount Narita.',
+      campaign: true,
+    },
+    jp_tank: {
+      side: 'jlf',
+      cls: 'light',
+      name: 'Japanese Battle Tank',
+      model: 'Japanese Army',
+      gen: 'Conventional armor',
+      weapon: 'Main gun · Machine gun',
+      lore: 'Japan’s armored divisions in 2010: tough in a line, helpless against Knightmares in the open.',
+      hp: 220,
+      attack: 50,
+      armor: 26,
+      move: 3,
+      campaign: true,
+    },
+    jp_artillery: {
+      side: 'jlf',
+      cls: 'rocket',
+      name: 'Japanese Rocket Artillery',
+      model: 'Japanese Army',
+      gen: 'Conventional artillery',
+      weapon: 'Truck-mounted rocket launchers',
+      lore: 'Rocket batteries that shelled the Britannian landings in 2010.',
+      hp: 160,
+      armor: 8,
+      campaign: true,
+    },
+    lancelot: {
+      side: 'britannia',
+      cls: 'super',
+      name: 'Lancelot',
+      model: 'Z-01',
+      gen: '7th generation',
+      weapon: 'Twin MVS · VARIS rifle · Blaze Luminous',
+      lore: 'Camelot’s seventh-generation prototype, flown by Suzaku Kururugi: faster than any other super-heavy.',
+      hp: 560,
+      move: 3,
+      campaign: true,
+    },
+    lancelot_albion: {
+      side: 'britannia',
+      cls: 'super',
+      name: 'Lancelot Albion',
+      model: 'Z-01Z',
+      gen: '9th generation',
+      weapon: 'Energy Wings · Super VARIS · Twin MVS',
+      lore: 'The final Lancelot, flying on Energy Wings: the deadliest frame of the war.',
+      float: true,
+      attack: 122,
+      hp: 620,
+      move: 3,
+      campaign: true,
+    },
+    shen_hu: {
+      side: 'cf',
+      cls: 'super',
+      name: 'Shen Hu',
+      model: 'XT-404',
+      gen: '7th-generation equivalent',
+      weapon: 'Baryon Cannon · Electrified harkens',
+      lore: 'Li Xingke’s “Divine Tiger”: its Baryon Cannon hits harder than any other super-heavy, at the cost of hull.',
+      attack: 114,
+      hp: 560,
+      campaign: true,
+    },
     // Neutral garrisons: the Middle Eastern Federation's own frame.
     bamides: {
       side: 'neutral',
@@ -544,14 +721,52 @@
       ];
     }),
   );
-  const ROSTER = Object.fromEntries(
-    MAJORS.map(side => [
-      side,
-      Object.fromEntries(Object.entries(KNIGHTMARES).filter(([, k]) => k.side === side).map(([id, k]) => [k.cls, id])),
-    ]),
-  );
-  function typeFor(side, cls) {
-    return ROSTER[side]?.[cls] || ROSTER.britannia[cls];
+  // Campaign-only sides build these lineups (sharing some frames with the Federation); missions may override any
+  // side's lineup in g.lineup.
+  const LINEUPS = {
+    bk: {
+      scout: 'burai',
+      assault: 'burai_kai',
+      raider: 'akatsuki_flight',
+      light: 'gekka',
+      medium: 'akatsuki',
+      heavy: 'akatsuki_zikisan',
+      super: 'guren_mk2',
+      support: 'gekka_rocket',
+      rocket: 'akatsuki_missile',
+      siege: 'akatsuki_heavy',
+    },
+    jlf: {
+      scout: 'burai',
+      assault: 'burai_kai',
+      raider: 'burai',
+      light: 'jp_tank',
+      medium: 'jp_tank',
+      heavy: 'burai_kai',
+      super: 'burai_kai',
+      support: 'jp_artillery',
+      rocket: 'jp_artillery',
+      siege: 'raiko',
+    },
+  };
+  const ROSTER = {
+    ...Object.fromEntries(
+      MAJORS.map(side => [
+        side,
+        Object.fromEntries(
+          Object.entries(KNIGHTMARES)
+            .filter(([, k]) => k.side === side && !k.campaign)
+            .map(([id, k]) => [k.cls, id]),
+        ),
+      ]),
+    ),
+    ...LINEUPS,
+  };
+  function typeFor(side, cls, g = null) {
+    return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
+  }
+  function lineupOf(g, side) {
+    return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
   // ======== Commanders (WC4 generals): signature abilities are data, read by the combat rules ========
   const COMMANDERS = {
@@ -1040,6 +1255,149 @@
       fx: { dmgBranch: { Artillery: 0.25 }, vsCity: 0.3 },
       recruit: 300,
     },
+    // Campaign-only commanders (campaign: true): they lead mission units and are never recruited.
+    zero: {
+      name: 'Zero',
+      short: 'Zero',
+      side: 'bk',
+      stars: 5,
+      cost: 220,
+      role: 'Armor',
+      hull: 'Gawain',
+      title: 'Leader of the Black Knights',
+      skill: 'Geass: Absolute Obedience',
+      desc: 'Command aura reaches 3 hexes with +12% damage. Geass lowers nearby enemy morale by 2.',
+      fx: { aura: { range: 3, value: 0.12 } },
+      action: { name: 'Geass', verb: 'Zero’s Geass' },
+      campaign: true,
+    },
+    kallen: {
+      name: 'Kallen Kōzuki',
+      short: 'Kallen',
+      side: 'bk',
+      stars: 5,
+      cost: 200,
+      role: 'Armor',
+      hull: 'Guren Mk-II',
+      title: 'Captain of the Zero Squad',
+      skill: 'Radiant Wave Surger',
+      desc: '+15% damage, +25% critical chance and +1 movement.',
+      fx: { dmg: 0.15, crit: 0.25, move: 1 },
+      campaign: true,
+    },
+    tohdoh: {
+      name: 'Kyoshiro Tohdoh',
+      short: 'Tohdoh',
+      side: 'bk',
+      stars: 5,
+      cost: 190,
+      role: 'Armor',
+      hull: 'Zangetsu',
+      title: 'Tohdoh of Miracles',
+      skill: 'Three-Stage Thrust',
+      desc: '+40% counter-fire and 10% less damage taken. Armor can fire again after a kill twice per turn.',
+      fx: { counter: 0.4, taken: 0.9, refire: true },
+      campaign: true,
+    },
+    ohgi: {
+      name: 'Kaname Ohgi',
+      short: 'Ohgi',
+      side: 'bk',
+      stars: 3,
+      cost: 120,
+      role: 'Infantry',
+      hull: 'Burai',
+      title: 'Deputy Commander',
+      skill: 'Steady Hands',
+      desc: 'Friendly units within 2 hexes recover one extra morale step and 5% of their frame each turn.',
+      fx: { reassure: true },
+      campaign: true,
+    },
+    tamaki: {
+      name: 'Shinichirō Tamaki',
+      short: 'Tamaki',
+      side: 'bk',
+      stars: 2,
+      cost: 90,
+      role: 'Infantry',
+      hull: 'Burai',
+      title: 'Self-styled Ace',
+      skill: 'Charge!',
+      desc: '+20% damage when attacking before moving, but takes 10% more damage.',
+      fx: { opening: 0.2, taken: 1.1 },
+      campaign: true,
+    },
+    chiba: {
+      name: 'Nagisa Chiba',
+      short: 'Chiba',
+      side: 'bk',
+      stars: 4,
+      cost: 140,
+      role: 'Armor',
+      hull: 'Akatsuki Command Model',
+      title: 'Four Holy Swords',
+      skill: 'Holy Sword',
+      desc: '+20% critical chance and +10% Armor damage.',
+      fx: { crit: 0.2, dmgBranch: { Armor: 0.1 } },
+      campaign: true,
+    },
+    asahina: {
+      name: 'Shōgo Asahina',
+      short: 'Asahina',
+      side: 'bk',
+      stars: 4,
+      cost: 140,
+      role: 'Armor',
+      hull: 'Akatsuki Command Model',
+      title: 'Four Holy Swords',
+      skill: 'Holy Sword',
+      desc: '+1 movement and +30% counter-fire.',
+      fx: { move: 1, counter: 0.3 },
+      campaign: true,
+    },
+    cc: {
+      name: 'C.C.',
+      short: 'C.C.',
+      side: 'bk',
+      stars: 4,
+      cost: 160,
+      role: 'Armor',
+      hull: 'Akatsuki Command Model (C.C.)',
+      title: 'The Witch',
+      skill: 'Code Bearer',
+      desc: 'Repairs 15% of the frame each turn; morale never falls below steady.',
+      fx: { regen: 0.15, floor: 0 },
+      campaign: true,
+    },
+    lelouch: {
+      name: 'Lelouch vi Britannia',
+      short: 'Lelouch',
+      side: 'britannia',
+      stars: 5,
+      cost: 230,
+      role: 'Armor',
+      hull: 'Shinkirō',
+      title: '99th Emperor of Britannia',
+      skill: 'Geass: Absolute Obedience',
+      desc: 'Command aura reaches 3 hexes with +15% damage. Royal Geass lowers nearby enemy morale by 2.',
+      fx: { aura: { range: 3, value: 0.15 } },
+      action: { name: 'Royal Geass', verb: 'Lelouch’s Geass' },
+      campaign: true,
+    },
+    katase: {
+      name: 'Tatewaki Katase',
+      short: 'Katase',
+      side: 'jlf',
+      stars: 3,
+      cost: 110,
+      role: 'Artillery',
+      hull: 'Raikō',
+      title: 'Commander of the JLF',
+      skill: 'Hold the Mountain',
+      desc: 'Units next to a friendly city take 20% less damage.',
+      fx: { cityGuard: 0.8 },
+      campaign: true,
+    },
   };
   const NOFX = {};
   // HQ technology, as in World Conqueror 4: bought with command tokens earned by winning operations, kept in the
@@ -1443,6 +1801,16 @@
     meiling: { infantry: 3, armor: 4, artillery: 3 },
     lifeng: { infantry: 5, armor: 3, artillery: 2 },
     rakshata: { infantry: 3, armor: 3, artillery: 5 },
+    zero: { infantry: 4, armor: 5, artillery: 5 },
+    kallen: { infantry: 5, armor: 5, artillery: 3 },
+    tohdoh: { infantry: 5, armor: 5, artillery: 3 },
+    ohgi: { infantry: 4, armor: 3, artillery: 3 },
+    tamaki: { infantry: 3, armor: 2, artillery: 2 },
+    chiba: { infantry: 4, armor: 4, artillery: 3 },
+    asahina: { infantry: 4, armor: 4, artillery: 3 },
+    cc: { infantry: 4, armor: 4, artillery: 3 },
+    lelouch: { infantry: 4, armor: 5, artillery: 5 },
+    katase: { infantry: 3, armor: 3, artillery: 4 },
   };
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
@@ -1672,7 +2040,7 @@
     if (!t || !s) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
-      (t.side !== s.owner ? 'Not built by this faction' : null) ||
+      (!Object.values(lineupOf(g, s.owner)).includes(type) ? 'Not built by this faction' : null) ||
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
@@ -1730,7 +2098,7 @@
       turnReason(g, u.side) ||
       (u.morale <= -3 ? 'Unit is confused' : null) ||
       (u.feintCD > 0 ? `Ready in ${u.feintCD} turn${u.feintCD > 1 ? 's' : ''}` : null) ||
-      (!g.units.some(v => v.hp > 0 && v.side !== u.side && dist(g, u, v) <= 2) ? 'No enemy within 2 hexes' : null)
+      (!g.units.some(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2) ? 'No enemy within 2 hexes' : null)
     );
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
@@ -1915,8 +2283,16 @@
     return g.economy[side];
   }
   function alive(g, side) {
-    return MAJORS.includes(side) && !g.fallen?.[side];
+    return (g?.mode === 'campaign' ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
   }
+  // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
+  function foe(g, a, b) {
+    return a !== b && !(g?.teams?.[a] && g.teams[a] === g.teams[b]);
+  }
+  const isFoe = foe;
+  // Optional rule hooks, set by the campaign module (dist/campaign.js): turn(g, side), capture(g, city, unit),
+  // kill(g, victim, attacker), decide(g), objective(g), title(g).
+  const hooks = {};
 
   // ======== Terrain ========
   const TERRAIN = {
@@ -1937,8 +2313,25 @@
       desc: 'Movement cost 2. Units lose 2.5% of their frame each turn they start here.',
     },
     peak: { name: 'Impassable peaks', blocked: true, desc: 'The high Himalaya and the Greenland ice cap: impassable.' },
+    // Campaign maps only.
+    urban: { name: 'City ruins', cost: 1, cover: 0.2, desc: 'Movement cost 1. Buildings and rubble cut incoming damage by 20%.' },
+    crater: {
+      name: 'F.L.E.I.J.A. crater',
+      cost: 2,
+      desc: 'Movement cost 2. A glassy crater where everything was erased: no cover.',
+    },
   };
-  const TERRAIN_CODES = { '.': 'sea', p: 'plains', f: 'forest', m: 'mountain', d: 'desert', s: 'snow', x: 'peak' };
+  const TERRAIN_CODES = {
+    '.': 'sea',
+    p: 'plains',
+    f: 'forest',
+    m: 'mountain',
+    d: 'desert',
+    s: 'snow',
+    x: 'peak',
+    u: 'urban',
+    c: 'crater',
+  };
   const SEA_MOVE = 5;
   const isSea = t => t?.terrain === 'sea';
   function atSea(g, u) {
@@ -2034,7 +2427,7 @@
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (occ && occ.side !== u.side) continue;
-        if (st && st.owner !== u.side && (st.shield > 0 || !canCapture(u))) continue;
+        if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
         const cross = isSea(n) !== fromSea;
         // Embarking or landing takes the rest of the turn: allowed whenever any movement is left.
         const nc = cross ? budget : cost + terrainCost(g, u, n);
@@ -2062,8 +2455,8 @@
   function hostileTarget(g, u, p) {
     const target = unitAt(g, p),
       st = stationAt(g, p);
-    if (target) return target.side !== u.side;
-    return !!st && st.owner !== u.side && st.shield > 0;
+    if (target) return foe(g, target.side, u.side);
+    return !!st && foe(g, st.owner, u.side) && st.shield > 0;
   }
   // Whether a unit still has any order besides holding position: firing, moving, repairing, reinforcing or an action.
   function hasOrders(g, u) {
@@ -2095,7 +2488,7 @@
     const s = stationAt(g, u);
     let captured = null,
       annexed = null;
-    if (s && s.owner !== u.side && canCapture(u)) {
+    if (s && foe(g, s.owner, u.side) && canCapture(u)) {
       const loser = s.owner;
       s.owner = u.side;
       s.shield = 0;
@@ -2107,6 +2500,7 @@
       claim(g, s, u.side);
       if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + maxHP(u) * fx(u).captureHeal);
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
+      hooks.capture?.(g, s, u, loser);
       // As in WC4, a power whose capital falls surrenders: its cities pass to the conqueror, its armies disband.
       if (s.capitalOf && s.capitalOf === loser && alive(g, loser)) {
         award(g, u.side, 'star', `${s.name} captured`);
@@ -2168,6 +2562,7 @@
     // Faction doctrines.
     if (u.side === 'britannia' && t.branch === 'Armor') attack *= 1.08;
     if (u.side === 'eu' && t.branch === 'Artillery') attack *= 1.1;
+    if (u.side === 'bk' && ['forest', 'mountain', 'urban'].includes(tile(g, u.c, u.r)?.terrain)) attack *= 1.1;
     // Commander signature abilities (attacker side).
     if (f.dmg && strike) attack *= 1 + f.dmg;
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
@@ -2225,6 +2620,7 @@
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       const ground = tile(g, target.c, target.r);
+      if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= 1 + seaPenalty(g, target.side);
       else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
     }
@@ -2240,7 +2636,7 @@
       d = unitAt(g, p),
       s = stationAt(g, p);
     const base = power(g, a, d, s),
-      shield = s && s.owner !== a.side && s.shield > 0;
+      shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Chaos Mines and city-breaker commanders raise damage to city defenses.
     const raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0));
@@ -2287,6 +2683,7 @@
       attacker.morale = clamp(attacker.morale + 1, -3, 1);
     }
     if (v.cmd) log(g, `${COMMANDERS[v.cmd].short}'s unit is lost.`, v.side);
+    hooks.kill?.(g, v, attacker);
   }
   function attack(g, id, c, r) {
     const a = g.units.find(u => u.id === id);
@@ -2327,7 +2724,7 @@
     }
     if (pr.splash) {
       for (const v of g.units) {
-        if (v.hp <= 0 || v.side === a.side || v.id === d?.id || dist(g, v, p) !== 1) continue;
+        if (v.hp <= 0 || !foe(g, v.side, a.side) || v.id === d?.id || dist(g, v, p) !== 1) continue;
         const amount = Math.round(power(g, a, v, stationAt(g, v)) * pr.splash);
         v.hp = Math.max(0, v.hp - amount);
         v.morale = Math.max(moraleFloor(g, v), v.morale - 1);
@@ -2533,7 +2930,7 @@
     const u = g.units.find(u => u.id === id);
     const why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
-    const victims = g.units.filter(v => v.hp > 0 && v.side !== u.side && dist(g, u, v) <= 2);
+    const victims = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2);
     victims.forEach(v => (v.morale = Math.max(moraleFloor(g, v), v.morale - 2)));
     u.feintCD = 3;
     log(g, `${COMMANDERS[u.cmd].action.verb} disrupts ${victims.length} enemy units.`, u.side);
@@ -2555,7 +2952,7 @@
       u.attacked = false;
       u.chain = 0;
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
-      const nearby = g.units.filter(v => v.hp > 0 && v.side !== side && dist(g, u, v) === 1).length;
+      const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
       if (u.morale < desired) u.morale++;
@@ -2585,6 +2982,7 @@
     for (const s of g.stations) {
       if (s.owner === side) s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * 0.12));
     }
+    hooks.turn?.(g, side);
     checkVictory(g);
   }
   // Fortress batteries: fired by the owner, range 3, then two turns to recharge.
@@ -2614,14 +3012,14 @@
     if (!fortressReady(g, s)) return [];
     return within(g, s, FORTRESS_GUN.range)
       .map(p => unitAt(g, p))
-      .filter(u => u && u.side !== s.owner)
+      .filter(u => u && foe(g, u.side, s.owner))
       .map(u => tile(g, u.c, u.r));
   }
   function fireFortress(g, id, c, r) {
     const s = g.stations.find(s => s.id === id);
     if (!fortressReady(g, s)) return { ok: false, reason: 'The battery is not ready.' };
     const foe = unitAt(g, { c, r });
-    if (!foe || foe.side === s.owner || dist(g, s, foe) > FORTRESS_GUN.range)
+    if (!foe || !isFoe(g, foe.side, s.owner) || dist(g, s, foe) > FORTRESS_GUN.range)
       return { ok: false, reason: 'No enemy unit within 3 hexes of the city.' };
     const damage = fortressDamage(g, foe, s.owner),
       name = fortressName(s),
@@ -2634,7 +3032,7 @@
     // Battery Overcharge II: the blast also catches enemy units next to the target.
     if (techLevel(g, s.owner, 'cities.overcharge') >= 2)
       for (const v of g.units) {
-        if (v.hp <= 0 || v.side === s.owner || v.id === foe.id || dist(g, v, foe) !== 1) continue;
+        if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
         const amount = Math.round(fortressDamage(g, v, s.owner) * 0.5);
         v.hp = Math.max(0, v.hp - amount);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
@@ -2657,6 +3055,7 @@
   // World conquest: hold every major capital (each rival surrenders when its capital falls), or hold the most
   // cities at the armistice.
   function decideVictory(g) {
+    if (g.mode === 'campaign') return hooks.decide?.(g);
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -2679,12 +3078,14 @@
     return g.over;
   }
   function objectiveText(g) {
+    if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => FACTIONS[s].capital);
     return rivals.length
       ? `Take ${rivals.join(' and ')} while holding ${FACTIONS[g.player].capital}. A power surrenders when its capital falls.`
       : 'Every rival capital has fallen.';
   }
-  function modeTitle() {
+  function modeTitle(g) {
+    if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
     return 'World War · 2017 a.t.b.';
   }
 
@@ -3221,12 +3622,27 @@
       return top;
     };
     for (const s of g.stations)
-      if (s.owner !== side) {
+      if (foe(g, s.owner, side)) {
         const i = s.r * g.cols + s.c,
           d = s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0;
         field[i] = d;
         push(i, d);
       }
+    if (g.mode === 'campaign') {
+      for (const u of g.units)
+        if (u.hp > 0 && foe(g, u.side, side)) {
+          const i = u.r * g.cols + u.c;
+          if (field[i] > 2) {
+            field[i] = 2;
+            push(i, 2);
+          }
+        }
+      for (const [c, r, d = -4] of g.campaign?.goals?.[side] || []) {
+        const i = r * g.cols + c;
+        field[i] = d;
+        push(i, d);
+      }
+    }
     while (heap.length) {
       const [d, i] = pop();
       if (d > field[i]) continue;
@@ -3256,7 +3672,7 @@
   // within 3 hexes draw the nearest units back to defend them. Returns { unitId: city }.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
-      foes = g.units.filter(u => u.hp > 0 && u.side !== side && u.side !== 'neutral'),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
       threat = s => foes.filter(f => dist(g, f, s) <= 3).reduce((a, f) => a + f.stack, 0);
     const cities = g.stations
@@ -3278,7 +3694,7 @@
   function aiProduction(g) {
     const side = g.phase,
       e = funds(g, side),
-      foes = g.units.filter(u => u.hp > 0 && u.side !== side && u.side !== 'neutral'),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       own = () => g.units.filter(u => u.hp > 0 && u.side === side),
       front = p => {
         let best = 99;
@@ -3286,10 +3702,11 @@
         return best;
       },
       plan = ((g.ai ||= {})[side] ||= { saving: false }),
-      memo = aiPlan(g, side);
+      memo = aiPlan(g, side),
+      builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side);
     const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
     const yard3 = bases.filter(s => s.tier >= 3);
-    const superType = typeFor(side, 'super'),
+    const superType = typeFor(side, 'super', g),
       superPrice = price(superType, 1, g, side);
     // 0. Fire every ready battery at the strongest enemy unit in range (the UI animates g.strikes).
     g.strikes = [];
@@ -3308,6 +3725,7 @@
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
     }
+    if (!builds) return;
     // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
     const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
     if (!yard3.length || supers >= 2) plan.saving = false;
@@ -3360,7 +3778,7 @@
           : s.tier === 2
             ? ['medium', 'rocket', 'raider', 'scout']
             : ['light', 'support', 'assault', 'scout']
-      ).map(cls => typeFor(side, cls));
+      ).map(cls => typeFor(side, cls, g));
       const preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
       const share = i === bases.length - 1 ? 1 : 0.6;
       for (const type of [preferred, ...menu.filter(x => x !== preferred)]) {
@@ -3414,7 +3832,7 @@
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       });
-      const enemies = g.units.filter(v => v.hp > 0 && v.side !== u.side && dist(g, v, u) <= 10);
+      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= 10);
       const old = { c: u.c, r: u.r };
       // Overseas invasions sail in groups: a land unit embarks only beside two other free land units.
       const fromLand = !atSea(g, u),
@@ -3424,8 +3842,9 @@
             .length >= 2;
       const placeScore = p => {
         const station = stationAt(g, p);
-        let sc = station && station.owner !== u.side && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
-        sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : fieldAt(p) * 8;
+        let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : u.hold ? 0 : fieldAt(p) * 8;
+        if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
         let nearestEnemy = 15,
           danger = 0;
         for (const v of enemies) {
@@ -3480,9 +3899,21 @@
     CLASSES,
     CLASS_ORDER,
     TYPES,
+    RULES_VERSION,
     ROSTER,
+    LINEUPS,
     typeFor,
+    lineupOf,
     COMMANDERS,
+    RATINGS,
+    TERRAIN_CODES,
+    hooks,
+    foe,
+    defaultOfficer,
+    fortify,
+    claim,
+    kill,
+    isReady,
     TERRAIN,
     WORLD,
     hexOf,
