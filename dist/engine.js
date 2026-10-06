@@ -68,7 +68,7 @@
       hp: 150,
       attack: 37,
       armor: 9,
-      move: 5,
+      move: 4,
       min: 1,
       max: 1,
       cost: 60,
@@ -85,7 +85,7 @@
       hp: 210,
       attack: 53,
       armor: 16,
-      move: 4,
+      move: 3,
       min: 1,
       max: 1,
       cost: 110,
@@ -103,7 +103,7 @@
       hp: 200,
       attack: 47,
       armor: 15,
-      move: 6,
+      move: 5,
       min: 1,
       max: 1,
       cost: 115,
@@ -111,7 +111,7 @@
       tier: 2,
       crit: 0.1,
       pen: 0.15,
-      rule: 'Six-hex movement for flanking and city raids on the high-resolution world map. Range 1; exchanges counter-fire.',
+      rule: 'Base movement 5 for flanking and city raids; Conquest adds the high-resolution world mobility bonus. Range 1; exchanges counter-fire.',
     },
     light: {
       branch: 'Armor',
@@ -120,7 +120,7 @@
       hp: 245,
       attack: 57,
       armor: 23,
-      move: 5,
+      move: 4,
       min: 1,
       max: 1,
       cost: 135,
@@ -138,7 +138,7 @@
       hp: 330,
       attack: 71,
       armor: 32,
-      move: 4,
+      move: 3,
       min: 1,
       max: 1,
       cost: 215,
@@ -156,7 +156,7 @@
       hp: 440,
       attack: 89,
       armor: 42,
-      move: 4,
+      move: 3,
       min: 1,
       max: 2,
       cost: 330,
@@ -175,7 +175,7 @@
       hp: 590,
       attack: 108,
       armor: 52,
-      move: 3,
+      move: 2,
       min: 1,
       max: 2,
       cost: 500,
@@ -194,7 +194,7 @@
       hp: 150,
       attack: 59,
       armor: 10,
-      move: 3,
+      move: 2,
       min: 1,
       max: 1,
       cost: 130,
@@ -212,7 +212,7 @@
       hp: 185,
       attack: 77,
       armor: 12,
-      move: 4,
+      move: 3,
       min: 2,
       max: 2,
       cost: 235,
@@ -231,7 +231,7 @@
       hp: 280,
       attack: 112,
       armor: 23,
-      move: 2,
+      move: 1,
       min: 2,
       max: 2,
       cost: 380,
@@ -242,7 +242,7 @@
       pen: 0.8,
       noCounter: true,
       siege: 2,
-      rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, movement 2. No counter-fire.',
+      rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, base movement 1. No counter-fire.',
     },
   };
   const CLASS_ORDER = ['scout', 'assault', 'raider', 'light', 'medium', 'heavy', 'super', 'support', 'rocket', 'siege'];
@@ -2766,7 +2766,8 @@
     u: 'urban',
     c: 'crater',
   };
-  const SEA_MOVE = 7;
+  const CONQUEST_MOVE_BONUS = 1,
+    SEA_MOVE = { conquest: 7, campaign: 5 };
   const isSea = t => t?.terrain === 'sea';
   function atSea(g, u) {
     return isSea(tile(g, u.c, u.r));
@@ -2776,7 +2777,8 @@
     return techLevel(g, side, 'sakura.landing') ? 0.25 : 0.5;
   }
   function seaMove(g, u) {
-    return SEA_MOVE + techValue(g, u.side, 'sakura.transport');
+    const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
+    return base + techValue(g, u.side, 'sakura.transport');
   }
 
   // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
@@ -2842,6 +2844,7 @@
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
     let n = t.move + unitTech(g, u, 'drives') + (eliteFx(u).move || 0);
+    if (g?.mode !== 'campaign') n += CONQUEST_MOVE_BONUS;
     // WC4-style Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
     n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
     n += wears(g, u, 'star') ? 1 : 0;
