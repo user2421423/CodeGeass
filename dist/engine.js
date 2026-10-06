@@ -4283,6 +4283,57 @@
     ['Riyadh', 46.7, 24.7, 'neutral', 1],
     ['Damascus', 36.3, 33.5, 'neutral', 1],
     ['Muscat', 58.4, 23.6, 'neutral', 1],
+
+    // Strategic city expansion: secondary regional centres. Existing cities stay first so their map placement is stable.
+    // Holy Britannian Empire.
+    ['Vancouver', -123.1, 49.3, 'britannia', 1],
+    ['San Francisco', -122.4, 37.8, 'britannia', 2],
+    ['Los Angeles', -118.2, 34.1, 'britannia', 2],
+    ['Houston', -95.4, 29.8, 'britannia', 2],
+    ['Toronto', -79.4, 43.7, 'britannia', 2],
+    ['Montreal', -73.6, 45.5, 'britannia', 1],
+    ['Havana', -82.4, 23.1, 'britannia', 1],
+    ['Quito', -78.5, -0.2, 'britannia', 1],
+    ['Caracas', -66.9, 10.5, 'britannia', 1],
+    ['Brasilia', -47.9, -15.8, 'britannia', 1],
+    ['Sao Paulo', -46.6, -23.5, 'britannia', 2],
+    ['Montevideo', -56.2, -34.9, 'britannia', 1],
+
+    // Europia United.
+    ['Lisbon', -9.1, 38.7, 'eu', 1],
+    ['Barcelona', 2.2, 41.4, 'eu', 2],
+    ['Amsterdam', 4.9, 52.4, 'eu', 2],
+    ['Prague', 14.4, 50.1, 'eu', 1],
+    ['Budapest', 19, 47.5, 'eu', 1],
+    ['Sofia', 23.3, 42.7, 'eu', 1],
+    ['Helsinki', 24.9, 60.2, 'eu', 1],
+    ['Tunis', 10.2, 36.8, 'eu', 1],
+    ['Casablanca', -7.6, 33.6, 'eu', 1],
+    ['Accra', -0.2, 5.6, 'eu', 1],
+    ['Luanda', 13.2, -8.8, 'eu', 1],
+    ['Dar es Salaam', 39.2, -6.8, 'eu', 1],
+    ['Maputo', 32.6, -25.9, 'eu', 1],
+
+    // Chinese Federation.
+    ['Harbin', 126.6, 45.8, 'cf', 1],
+    ['Xian', 108.9, 34.3, 'cf', 2],
+    ['Chengdu', 104.1, 30.7, 'cf', 2],
+    ['Wuhan', 114.3, 30.6, 'cf', 2],
+    ['Nanjing', 118.8, 32.1, 'cf', 2],
+    ['Guangzhou', 113.3, 23.1, 'cf', 2],
+    ['Kunming', 102.8, 25, 'cf', 1],
+    ['Kathmandu', 85.3, 27.7, 'cf', 1],
+    ['Dhaka', 90.4, 23.8, 'cf', 1],
+    ['Mandalay', 96.1, 21.9, 'cf', 1],
+    ['Ho Chi Minh City', 106.7, 10.8, 'cf', 1],
+    ['Kuala Lumpur', 101.7, 3.1, 'cf', 1],
+    ['Surabaya', 112.8, -7.3, 'cf', 1],
+
+    // Neutral Australia and Middle Eastern Federation.
+    ['Brisbane', 153, -27.5, 'neutral', 1],
+    ['Adelaide', 138.6, -34.9, 'neutral', 1],
+    ['Jerusalem', 35.2, 31.8, 'neutral', 1],
+    ['Sanaa', 44.2, 15.4, 'neutral', 1],
   ];
   // [side, class, lon, lat, frames, commander]. Units snap to their nearest free land hex.
   const ARMY_DATA = [
@@ -4393,6 +4444,10 @@
     ['Riyadh', 'bamides', 1],
     ['Damascus', 'glasgow', 2],
     ['Muscat', 'glasgow', 1],
+    ['Brisbane', 'glasgow', 1],
+    ['Adelaide', 'glasgow', 1],
+    ['Jerusalem', 'bamides', 1],
+    ['Sanaa', 'bamides', 1],
   ];
   const ERAS = {
     world: {
