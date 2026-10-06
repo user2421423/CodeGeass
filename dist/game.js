@@ -741,12 +741,14 @@ function claimReward() {
       r = CP.reward(game, p);
     p.tokens = (p.tokens || 0) + r.total;
     if (game.over.winner === game.player) {
-      (p.campaign ||= {})[id] = Math.max(CP.best(p, id), r.stars);
-      const byDifficulty = ((p.campaignDifficulty ||= {})[id] ||= {});
-      byDifficulty[game.difficulty || 'normal'] = Math.max(
-        CP.bestDifficulty(p, id, game.difficulty || 'normal'),
-        r.stars,
-      );
+      const legacyBest = CP.best(p, id),
+        difficultyRecords = (p.campaignDifficulty ||= {});
+      // Migrate old campaign progress once: pre-difficulty stars belong to Normal.
+      if (!difficultyRecords[id]) difficultyRecords[id] = { normal: legacyBest };
+      const byDifficulty = difficultyRecords[id],
+        diff = game.difficulty || 'normal';
+      byDifficulty[diff] = Math.max(byDifficulty[diff] || 0, r.stars);
+      (p.campaign ||= {})[id] = Math.max(legacyBest, r.stars);
     }
     game.reward = r;
   } else if (game.over.winner === game.player) {
