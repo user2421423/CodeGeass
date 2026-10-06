@@ -540,6 +540,7 @@ h3 {
   color: #aebfba;
 }
 .ship-art {
+  position: relative;
   display: block;
   width: 128px;
   height: 128px;
@@ -547,6 +548,7 @@ h3 {
   pointer-events: none;
 }
 .portrait-art {
+  position: relative;
   display: block;
   width: 60px;
   height: 80px;
@@ -2579,11 +2581,7 @@ table.powers .legend-dot {
   }
 }
 
-/* Published or optional local art: the file sits over the drawn fallback. */
-.unit-art.local-art,
-.portrait-art.local-art {
-  position: relative;
-}
+/* Layer imported images inside the wrapper's existing card or dock placement. */
 .unit-art.local-art > img,
 .portrait-art.local-art > img {
   position: absolute;
