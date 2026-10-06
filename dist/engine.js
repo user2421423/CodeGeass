@@ -995,14 +995,14 @@
       lv3: { range: 1, taken: 0.85, pen: 0.10 }, lv5: { range: 1, taken: 0.75, pen: 0.18 },
     },
     guren_mkii: {
-      type: 'elite_guren_mkii', faction: 'black_knights', availableTo: ['cf'], rarity: 'Epic',
+      type: 'elite_guren_mkii', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic',
       skill: 'Radiant Wave Surger',
       lv3Text: '+35% damage against Armor, +20% penetration; targets cannot counter-fire.',
       lv5Text: '+50% vs Armor, +30% penetration; surviving targets lose their remaining action.',
       lv3: { vsArmor: 0.35, pen: 0.20, noCounter: true }, lv5: { vsArmor: 0.50, pen: 0.30, noCounter: true, stun: true },
     },
     tohdoh_gekka: {
-      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['cf'], rarity: 'Epic', starter: true,
+      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic', starter: true,
       skill: 'Four Holy Swords',
       lv3Text: 'Adjacent friendly Infantry and Armor deal +12% damage.',
       lv5Text: 'Aura rises to +18%; Tohdoh gains +25% counter-fire.',
@@ -1017,7 +1017,7 @@
       lv3: { vsCity: 0.50, splash: 0.30 }, lv5: { vsCity: 0.75, splash: 0.50, range: 1 },
     },
     gawain: {
-      type: 'elite_gawain', faction: 'black_knights', availableTo: ['cf'], rarity: 'Legendary',
+      type: 'elite_gawain', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
       skill: 'Hadron Cannons · Druid System',
       lv3Text: '+1 range and 30% splash from twin Hadron Cannons.',
       lv5Text: '50% splash; adjacent allies gain +10% targeting damage.',
@@ -1025,7 +1025,7 @@
       lv5: { range: 1, splash: 0.50, aura: { range: 1, value: 0.10 } },
     },
     shinkiro: {
-      type: 'elite_shinkiro', faction: 'black_knights', availableTo: ['cf'], rarity: 'Legendary',
+      type: 'elite_shinkiro', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
       skill: 'Absolute Defense Territory',
       lv3Text: 'Takes 35% less damage.',
       lv5Text: 'Takes 45% less damage; adjacent allies take 15% less.',
@@ -1040,7 +1040,7 @@
       lv5: { float: true, move: 2, moveAfterAttack: true, refire: true, splash: 0.20, breakthrough: true },
     },
     guren_seiten: {
-      type: 'elite_guren_seiten', faction: 'black_knights', availableTo: ['cf'], rarity: 'Legendary',
+      type: 'elite_guren_seiten', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
       skill: 'Radiant Wave Burst',
       lv3Text: 'Ignores terrain, +1 movement, +20% damage and 20% splash.',
       lv5Text: '+2 movement, +30% damage, 35% splash; no counter-fire and kill-chain refire.',
