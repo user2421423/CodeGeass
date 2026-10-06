@@ -59,6 +59,7 @@ const SFX = (() => {
     f.frequency.setValueAtTime(f0, t);
     f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
     envelope(g, t, 0.01, peak, dur);
+    n.loop = true; // the noise buffer is 1.5 s; longer bursts loop it
     n.connect(f);
     f.connect(g);
     g.connect(master);
@@ -146,6 +147,17 @@ const SFX = (() => {
       tone(t, 'sawtooth', 600 * v.pitch, 2400 * v.pitch, 0.16, 0.08);
       burst(t + 0.1, 'highpass', 5200, 2200, 0.18, 0.18, 1.5);
       tone(t + 0.12, 'sine', 1900 * v.pitch, 1200 * v.pitch, 0.25, 0.08);
+    },
+    // F.L.E.I.J.A.: a two-second rising charge under the warning, then the collapse: sub-bass, a long roar and a
+    // glassy ring as the sphere swallows the target.
+    fleija(t) {
+      tone(t, 'sawtooth', 70, 1600, 1.8, 0.1);
+      tone(t, 'sine', 180, 2600, 1.8, 0.05);
+      tone(t + 1.95, 'sine', 62, 16, 2.8, 1);
+      burst(t + 1.95, 'lowpass', 2600, 40, 3, 1);
+      burst(t + 1.95, 'highpass', 6000, 1800, 1.2, 0.25);
+      tone(t + 2.05, 'sine', 2093, 1568, 2.6, 0.08);
+      tone(t + 2.05, 'triangle', 1318, 988, 2.6, 0.06);
     },
     explosion(t) {
       burst(t, 'lowpass', 1800, 80, 0.65, 0.6);

@@ -460,3 +460,133 @@ test('Version 1 saves are upgraded: deposits placed, refineries away from a depo
   assert.equal(city('London').refinery, 2, 'London works the Stonehenge deposit');
   assert.equal(E.migrateSave({ ...v1, rulesVersion: 0 }), null);
 });
+test('F.L.E.I.J.A. projects need the technology and a level-3 lab, take 4 turns and alert every power', () => {
+  const g = blank(),
+    s = g.stations[0];
+  assert.match(E.projectReason(g, s), /Research F.L.E.I.J.A./);
+  g.tech.britannia = { 'sakura.fleija': 1 };
+  assert.match(E.projectReason(g, s), /research lab level 3/);
+  s.lab = 3;
+  g.economy.britannia = { credits: 1000, industry: 5000, science: 5000, sakuradite: 500 };
+  assert.equal(E.projectReason(g, s), 'Need 800 more credits');
+  g.economy.britannia.credits = 5000;
+  const r = E.startProject(g, 0);
+  assert(r.ok);
+  assert.equal(r.ready, g.turn + E.FLEIJA.turns);
+  assert.deepEqual(g.economy.britannia, { credits: 3200, industry: 4550, science: 4700, sakuradite: 350 });
+  assert(g.log.some(l => l.text === 'INTELLIGENCE: Strategic weapons research detected in Pendragon.'));
+  // The city builds nothing else meanwhile.
+  assert.equal(E.buyReason(g, s, T('britannia', 'scout')), 'F.L.E.I.J.A. project under way');
+  s.tier = 2;
+  assert.equal(E.buildReason(g, s, 'factory'), 'F.L.E.I.J.A. project under way');
+  for (let t = 1; t < E.FLEIJA.turns; t++) {
+    g.turn++;
+    E.beginTurn(g, 'britannia', false);
+    assert.equal(g.arsenal?.britannia || 0, 0, 'not ready on turn ' + g.turn);
+  }
+  g.turn++;
+  E.beginTurn(g, 'britannia', false);
+  assert.equal(g.arsenal.britannia, 1);
+  assert.equal(s.project, null);
+  // Rival powers gain the technology on turn 60, earlier on harder difficulties.
+  g.turn = 59;
+  assert(!E.hasFleija(g, 'eu'));
+  g.turn = 60;
+  assert(E.hasFleija(g, 'eu'));
+  g.difficulty = 'challenge';
+  g.turn = 30;
+  assert(E.hasFleija(g, 'cf'));
+});
+test('Capturing a city ends its F.L.E.I.J.A. project; a surrendering power loses its warheads', () => {
+  const g = blank('britannia');
+  g.stations.push({
+    ...g.stations[2],
+    id: 3,
+    name: 'Beijing',
+    c: 6,
+    r: 6,
+    capital: false,
+    capitalOf: null,
+    shield: 0,
+    project: { side: 'cf', started: 1, ready: 5 },
+  });
+  const u = E.newUnit(g, T('britannia', 'scout'), 'britannia', 5, 6);
+  assert(E.move(g, u.id, 6, 6).ok);
+  assert.equal(g.stations[3].project, null);
+  assert(g.log.some(l => /Beijing: the F\.L\.E\.I\.J\.A\. project is lost/.test(l.text)));
+  g.arsenal = { cf: 2 };
+  g.stations[2].shield = 0;
+  const v = E.newUnit(g, T('britannia', 'scout'), 'britannia', 10, 11);
+  assert(E.move(g, v.id, 11, 11).annexed);
+  assert.equal(g.arsenal.cf, 0);
+});
+test('A F.L.E.I.J.A. strike erases ground zero, cripples the ring and devastates the city there', () => {
+  const g = blank('britannia'),
+    city = (id, name, c, r, extra) => ({ ...g.stations[1], id, name, c, r, capital: false, capitalOf: null, ...extra });
+  const berlin = city(3, 'Berlin', 6, 6, { tier: 3, lab: 2, refinery: 1, shield: 300, maxShield: 300, industry: 40 });
+  const vienna = city(4, 'Vienna', 7, 6, { tier: 2, lab: 1, shield: 240, maxShield: 240, industry: 30, science: 11 });
+  g.stations.push(berlin, vienna);
+  const heavy = E.newUnit(g, T('eu', 'heavy'), 'eu', 6, 6, 3),
+    scout = E.newUnit(g, T('eu', 'scout'), 'eu', 5, 6),
+    own = E.newUnit(g, T('britannia', 'scout'), 'britannia', 6, 5),
+    far = E.newUnit(g, T('eu', 'scout'), 'eu', 2, 2);
+  assert.match(E.launchReason(g, 'britannia', { c: 6, r: 6 }), /No F\.L\.E\.I\.J\.A\. warhead/);
+  g.arsenal = { britannia: 2 };
+  const r = E.launch(g, 'britannia', 6, 6);
+  assert(r.ok);
+  assert.equal(r.name, 'Berlin');
+  assert.equal(heavy.hp, 0);
+  assert.deepEqual(r.destroyed, [heavy.id]);
+  for (const v of [scout, own]) {
+    assert.equal(v.hp, Math.max(1, Math.round(E.maxHP(v) * E.FLEIJA.ringHP)));
+    assert.equal(v.morale, -3);
+  }
+  assert.equal(far.hp, E.maxHP(far), 'outside the blast');
+  // Ground zero: devastated for 10 turns, every building at level 0, a crater; the owner is unchanged.
+  assert.equal(berlin.owner, 'eu');
+  assert.equal(berlin.devastated, g.turn + E.FLEIJA.devastation);
+  assert.deepEqual([berlin.shield, berlin.tier, berlin.lab, berlin.refinery], [0, 0, 0, 0]);
+  assert.equal(berlin.industry, 18, 'back to its founding industry');
+  assert.equal(E.tile(g, 6, 6).terrain, 'crater');
+  assert.deepEqual(E.cityYield(g, berlin), { credits: 0, industry: 0, science: 0, sakuradite: 0 });
+  // The ring: defenses gone and one level of every building.
+  assert.deepEqual([vienna.shield, vienna.tier, vienna.lab], [0, 1, 0]);
+  assert.equal(vienna.industry, 20);
+  assert.equal(E.launchReason(g, 'britannia', { c: 2, r: 2 }), 'One launch per turn');
+  assert(g.log.some(l => l.text.startsWith('F.L.E.I.J.A. detonation at Berlin: 1 units erased, 2 crippled')));
+  // Ruins stay without defenses or output; the factory must be rebuilt afterwards.
+  E.beginTurn(g, 'eu', true);
+  assert.equal(berlin.shield, 0);
+  assert(vienna.shield > 0);
+  assert.equal(E.buyReason(g, berlin, T('eu', 'scout')), `Devastated by F.L.E.I.J.A. until turn ${berlin.devastated}`);
+  g.turn += E.FLEIJA.devastation;
+  assert(!E.devastated(g, berlin));
+  assert.equal(E.buyReason(g, berlin, T('eu', 'scout')), 'Requires factory level 1');
+  assert.deepEqual(E.buildCost(berlin, 'factory'), { credits: 110, industry: 25 });
+});
+test('Rival powers aim warheads at the most valuable target and never at their own forces', () => {
+  const g = blank('britannia');
+  g.stations.push({
+    ...g.stations[0],
+    id: 3,
+    name: 'Chicago',
+    c: 3,
+    r: 8,
+    capital: false,
+    capitalOf: null,
+    project: { side: 'britannia', started: 1, ready: 9 },
+  });
+  E.newUnit(g, T('britannia', 'heavy'), 'britannia', 7, 7, 3);
+  const guard = E.newUnit(g, T('eu', 'scout'), 'eu', 8, 7);
+  g.phase = 'eu';
+  g.arsenal = { eu: 1 };
+  assert.deepEqual(E.aiLaunchTarget(g, 'eu'), E.tile(g, 3, 8), 'the project city, not the stack beside its own unit');
+  E.aiProduction(g);
+  assert.equal(g.launches.length, 1);
+  assert.equal(g.launches[0].name, 'Chicago');
+  assert.equal(guard.hp, E.maxHP(guard));
+  // Nothing worth a warhead: hold it.
+  const h = blank('britannia');
+  E.newUnit(h, T('britannia', 'scout'), 'britannia', 6, 6);
+  assert.equal(E.aiLaunchTarget(h, 'eu'), null);
+});

@@ -2663,3 +2663,112 @@ table.powers .legend-dot {
     display: none;
   }
 }
+
+/* ---- F.L.E.I.J.A.: arsenal, projects, the strategic-weapon warning ---- */
+.fleija-button {
+  background: linear-gradient(#b0356f, #6d1440);
+  border-color: #ff9fd0;
+  color: #fff1f8;
+  text-shadow: 0 1px 1px #0008;
+}
+.fleija-button:hover:not(:disabled) {
+  background: linear-gradient(#cf4686, #861a50);
+}
+.fleija-button.armed {
+  box-shadow:
+    0 0 0 2px #ffd6ec,
+    0 0 16px #ff5fae;
+}
+.fleija-panel {
+  border-color: #ff5fae88;
+  background: linear-gradient(135deg, #4a0f2c55, #0c202966);
+}
+.fleija-panel h3 {
+  color: #ffc2e0;
+}
+.fleija-text {
+  color: #ff9fd0;
+}
+.danger-strip {
+  border-color: #ff5fae;
+  background: #4a0f2c99;
+  color: #ffe0ef;
+}
+button.danger {
+  background: linear-gradient(#e0478e, #8e1a52);
+  border-color: #ffb6d9;
+  color: #fff4f9;
+  text-shadow: 0 1px 1px #0009;
+}
+button.danger:hover:not(:disabled) {
+  background: linear-gradient(#f05a9f, #a32462);
+}
+.blast-list {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+  color: #d9e2dc;
+}
+.fleija-alert {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, #3a0820 0%, #0b0207 70%);
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.fleija-alert[hidden] {
+  display: none;
+}
+.fleija-alert.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.fleija-box {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding: 28px 36px;
+  border-top: 2px solid #ff5fae;
+  border-bottom: 2px solid #ff5fae;
+  text-align: center;
+  color: #ffe6f3;
+  font-family: 'Trebuchet MS', Arial, sans-serif;
+  text-transform: uppercase;
+  animation: fleija-pulse 0.5s ease-in-out infinite alternate;
+}
+.fleija-kicker {
+  color: #ff5f5f;
+  font-size: 15px;
+  letter-spacing: 4px;
+  font-weight: 700;
+}
+.fleija-box b {
+  font-size: clamp(30px, 7vw, 64px);
+  letter-spacing: 6px;
+  color: #ffd6ec;
+  text-shadow: 0 0 24px #ff5fae;
+}
+.fleija-impact {
+  font-size: clamp(16px, 3vw, 24px);
+  letter-spacing: 3px;
+}
+.fleija-box small {
+  color: #ff9fd0;
+  letter-spacing: 2px;
+}
+@keyframes fleija-pulse {
+  from {
+    border-color: #ff5fae;
+  }
+  to {
+    border-color: #ff2a2a;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fleija-box {
+    animation: none;
+  }
+}

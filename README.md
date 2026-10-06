@@ -34,6 +34,15 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   10. A refinery extracts 25% / 50% / 75% / 100% (+15 credits) of a deposit at levels 0–3. Mainline, raider and
   rocket frames cost 5 Sakuradite a frame, heavy and siege 10, super-heavy 25; tier-I frames need none. Mines have no
   defenses: Infantry or Armor seize one by moving onto it. Every power starts with 50. (First-pass numbers.)
+- **F.L.E.I.J.A., the superweapon:** research it at HQ (tier IV, after Blaze Luminous Generators); rival powers gain
+  it on turn 60 (45 on Hard, 30 on Challenge). A city with a level-3 research lab builds a warhead for 1,800
+  credits, 450 industry, 300 research and 150 Sakuradite over 4 turns, building nothing else meanwhile. Every power
+  is alerted ("INTELLIGENCE: Strategic weapons research detected in …") and the AI goes for that city; capturing it
+  ends the project. Launch from the arsenal button at any hex, once a turn: a full-screen warning, a white-pink
+  flash and an expanding sphere. Ground zero: every unit erased, a city devastated for 10 turns (no defenses,
+  buildings back to level 0, no output), the land turned into a crater. The ring: units left at 10% with collapsed
+  morale; cities lose their defenses and a level of every building. On the world map the blast is the target hex
+  plus one ring (a hex is ~330 km). (First-pass numbers.)
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
@@ -46,7 +55,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   Command*, Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and
   more. Operation commanders are fixed; your own commanders are recruited with command tokens, promoted through
   eleven ranks (frame 112%–160%), given branch stars (up to 6) and medals.
-- **HQ research with command tokens:** 36 technologies in five trees (Infantry, Armor, Artillery, Sakuradite,
+- **HQ research with command tokens:** 37 technologies in five trees (Infantry, Armor, Artillery, Sakuradite,
   Cities), tiers II–IV unlocked by victories, kept across operations and factions.
 - **Difficulty:** Normal, Hard and Challenge, as in Galactic Command (rival research, upgraded and extra units,
   higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.

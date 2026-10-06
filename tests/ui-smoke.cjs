@@ -147,6 +147,33 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().turn'), 2);
     run('draw(16,.016)');
   }
+  // F.L.E.I.J.A.: the HQ node, the arsenal button, targeting, confirmation, your launch and a rival's.
+  run("researchDialog('sakura')");
+  assert(modal().includes('F.L.E.I.J.A.'));
+  run("closeModal(); game.tech[game.player]['sakura.fleija'] = 1; game.arsenal = { [game.player]: 1 }; render();");
+  assert(node('app').innerHTML.includes('data-action="fleija"'), 'the arsenal button appears');
+  run('selectStation(capitalOf(game.player).id)');
+  assert(node('side').innerHTML.includes('Build a warhead'));
+  const target = run(
+    "(() => { const u = game.units.find(u => u.hp > 0 && u.side !== game.player && u.side !== 'neutral' && !E.atSea(game, u)); return u.c + ',' + u.r; })()",
+  ).split(',');
+  run(`strikeMode = true; hover = E.tile(game, ${target[0]}, ${target[1]}); draw(40, .016); activateHex(hover)`);
+  assert(modal().includes('Launch F.L.E.I.J.A. at'));
+  await run(`launchAt({ c: ${target[0]}, r: ${target[1]} })`);
+  assert.equal(run('game.arsenal[game.player]'), 0);
+  assert(run("game.log.some(l => l.text.startsWith('F.L.E.I.J.A. detonation'))"));
+  assert.equal(run(`E.tile(game, ${target[0]}, ${target[1]}).terrain`), 'crater');
+  run('draw(48, .016); drawMinimap();');
+  // A rival with a warhead strikes your city building one; the warning plays during its turn.
+  run(
+    '(() => { const s = capitalOf(game.player); s.project = { side: game.player, started: game.turn, ready: game.turn + 4 }; game.arsenal[game.order[1]] = 1; })()',
+  );
+  run('powersDialog()');
+  assert(modal().includes('building in'));
+  run('closeModal()');
+  await run('endTurn(true)');
+  assert(node('fleija-alert').innerHTML.includes('Strategic weapon detected'));
+  assert.equal(run('game.arsenal[game.order[1]]'), 0);
   // Optional local art: a manifest entry layers a file over the drawn art; no entry keeps the drawing.
   run("ART.useLocal({units:{glasgow:'units/glasgow.png'},portraits:{suzaku:{src:'portraits/suzaku.jpg',fx:0.4,fy:0.2}}})");
   assert(run("ART.unit('glasgow')").includes('<img src="local-art/units/glasgow.png"'));

@@ -51,7 +51,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | `dist/engine.js` | The deterministic rules engine (`window.Knightmare`, aliased `E` in the UI; `module.exports` for Node). No DOM. Factions, Knightmare classes and lineups, commanders, tech tree, terrain, combat, sea transport, economy, AI, the world map (`WORLD_ROWS`, `CITY_DATA`, `ARMY_DATA`, `GARRISONS`), profile/roster logic. Seeded LCG via `random(g)`. |
 | `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and original-design commander busts (`LOOKS`), cached as images for the canvas. Public images load synchronously from `assets/art/manifest.js`, built by `tools/publish_art.py`; drawn art remains the fallback. Optional localhost override: `local-art/manifest.json` (git-ignored folder `dist/local-art/`; `tools/local_art_prepare.py` turns raw files in `local-art/raw/` into game-ready images and runs `tools/local_art_manifest.py`) layers the owner's own files over the drawings via `ART.useLocal`. |
 | `dist/icons.js` | `ICONS`: inline SVG sprite (credits, industry, research, Sakuradite, command token, attack/defense/move/range, factory, refinery, sea) and the HP ring. |
-| `dist/audio.js` | `SFX`: Web Audio synthesized sounds per class and faction voice, Landspinner movement, MVS slash, batteries. |
+| `dist/audio.js` | `SFX`: Web Audio synthesized sounds per class and faction voice, Landspinner movement, MVS slash, batteries, the F.L.E.I.J.A. detonation. |
 | `dist/game.js` | The whole UI: start screen, wrapping world-map renderer (camera, minimap, terrain, tokens), input, panels, dock, dialogs (factory, HQ research, commanders, Commander Info, Knightmare archive, world powers, field manual, results), effects, rival-turn playback with Skip, saving. |
 | `dist/style.css`, `dist/battlefield.css` | Base styles and the WC4 reskin from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
 | `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid; `--inject dist/engine.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
@@ -136,6 +136,35 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   two on any threatened mine; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
   turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavy saving only
   starts with the Sakuradite in hand; tier-I frames are fallbacks when Sakuradite runs short.
+
+### F.L.E.I.J.A. (the superweapon)
+- Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 1, `cost`
+  1,800 credits / 450 industry / 300 research / 150 Sakuradite, `turns` 4, `lab` 3, `devastation` 10, `ringHP` 0.1,
+  `aiTurn` 60 / 45 / 30 by difficulty, `aiThreshold` 1500, `aiRest` 8). All first-pass.
+- Technology: HQ node `sakura.fleija` (tier IV, needs Blaze Luminous Generators I, 500 tokens). `hasFleija(g, side)`:
+  the player needs the node; rival majors gain it on `aiTurn[difficulty]` (their HQ tech table is ignored for it).
+- State: `s.project = { side, started, ready }` on a city; `g.arsenal[side]` warheads; `g.launched[side]` the turn
+  of the last launch; `s.devastated` / mine `d.devastated` = the turn output resumes; `g.launches` (this AI turn's
+  strikes, played by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
+- Rules: `projectReason`/`startProject` (logs the INTELLIGENCE line), `cityBusyReason` blocks units and buildings in
+  a city with a project or in ruins, `strategicTurn` (called from `beginTurn`) completes warheads and keeps ruins at
+  0 defenses, `dropProject` on capture, ruin or surrender (`annexStrategic` also empties the loser's arsenal).
+  `launchReason`/`launch(g, side, c, r)`: one a turn, from any owned city (the nearest is the visual origin).
+  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, city `ruin(…, Infinity)` +
+  10 turns devastated (owner unchanged), mine refinery 0, crater. Ring: units to 10% and their morale floor; cities
+  `ruin(…, 1)` (defenses 0, one level off each building and the output it added, never below founding values from
+  `CITY_DATA`). A factory at level 0 is rebuilt for 110 credits / 25 industry.
+- AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ruins score 0;
+  projects +2000; a live capital +1500 only with the launcher's capturing units within 4 hexes), skips any blast
+  touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches; step 2b starts one warhead
+  at a time in `fleijaCity` (best lab, then farthest from the enemy) once it holds the Sakuradite or earns 15+ a
+  turn, saving credits/industry when ready and waiting `aiRest` turns after a launch; step 3 builds that city's lab
+  to 3 from 10 turns before `aiTurn`. Rival projects seed `goalField` at −8 (above capitals), attacks on them score
+  +120 and a power guards its own project city like its capital.
+- UI (`game.js`): `arsenalButton` (top bar), `strikeMode` targeting with a blast preview, `confirmLaunch`,
+  `launchAt`, `fleijaSequence` (the `#fleija-alert` warning in `index.html`, `SFX.play('fleija')`, the `flash`
+  overlay and the `fleija` sphere effect; it plays for rival launches during `endTurn` even after Skip),
+  `projectPanel` in the city panel, `strategicText` in World powers, ruins and project markers on the map.
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
   Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
 
@@ -147,8 +176,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Leila, Ryo, Ayano (E.U.); Xingke, Cao, Hong Gu, Xianglin, Lei Feng (Federation).
 
 ### HQ research, tokens, difficulty
-- 36 technologies in five trees: Infantry, Armor, Artillery, Sakuradite (VARIS, Naval Transports, Landing Craft,
-  Blaze Luminous, Energy Filler Network, Float System) and Cities. Tiers II–IV after 2, 4 and 7 victories.
+- 37 technologies in five trees: Infantry, Armor, Artillery, Sakuradite (VARIS, Naval Transports, Landing Craft,
+  Blaze Luminous, Energy Filler Network, Float System, F.L.E.I.J.A.) and Cities. Tiers II–IV after 2, 4 and 7
+  victories.
 - Tokens only for the first win at each difficulty: 250 + 150 conquest + banked research (5 : 1, capped at 300),
   ×1.5 Hard, ×2 Challenge, +150 for the first win ever.
 - Difficulty works as in Galactic Command, applied to both rival powers and the neutrals.

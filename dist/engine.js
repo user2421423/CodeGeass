@@ -1305,6 +1305,15 @@
           req: ['transport', 1],
           text: v => (v === 1 ? 'Armor units ignore terrain movement costs' : '+1 movement for every unit'),
         },
+        // First-pass price. Rival powers gain it by turn instead (FLEIJA.aiTurn).
+        fleija: {
+          name: 'F.L.E.I.J.A.',
+          values: [1],
+          tiers: [4],
+          costs: [500],
+          req: ['blaze', 1],
+          text: () => 'Cities with a level-3 research lab can build F.L.E.I.J.A. warheads',
+        },
       },
     },
     cities: {
@@ -1674,6 +1683,7 @@
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (t.side !== s.owner ? 'Not built by this faction' : null) ||
+      cityBusyReason(g, s) ||
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
@@ -1687,6 +1697,7 @@
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
       (kind === 'refinery' && !depositOf(g, s) ? 'No Sakuradite deposit here' : null) ||
+      cityBusyReason(g, s) ||
       shortfall(funds(g, s.owner), buildCost(s, kind))
     );
   }
@@ -1939,6 +1950,11 @@
       desc: 'Movement cost 2. Units lose 2.5% of their frame each turn they start here.',
     },
     peak: { name: 'Impassable peaks', blocked: true, desc: 'The high Himalaya and the Greenland ice cap: impassable.' },
+    crater: {
+      name: 'F.L.E.I.J.A. crater',
+      cost: 2,
+      desc: 'Movement cost 2. A F.L.E.I.J.A. warhead erased everything here and glassed the ground pink and white.',
+    },
   };
   const TERRAIN_CODES = { '.': 'sea', p: 'plains', f: 'forest', m: 'mountain', d: 'desert', s: 'snow', x: 'peak' };
   const SEA_MOVE = 5;
@@ -2104,6 +2120,7 @@
       s.owner = u.side;
       s.shield = 0;
       s.capturedTurn = g.turn;
+      dropProject(g, s, 'captured');
       captured = s.name;
       u.morale = 1;
       funds(g, u.side).credits += 40;
@@ -2145,6 +2162,7 @@
     w.industry += Math.round(e.industry / 2);
     e.credits = e.industry = 0;
     annexDeposits(g, loser, winner);
+    annexStrategic(g, loser);
     log(
       g,
       `${capital.name} has fallen. The ${FACTIONS[loser].name} surrenders to the ${FACTIONS[winner].name}: ${cities} cities annexed, ${units} units disbanded.`,
@@ -2386,7 +2404,7 @@
   function income(g, side) {
     const refining = 1 + techValue(g, side, 'cities.refining');
     const total = g.stations
-      .filter(s => s.owner === side)
+      .filter(s => s.owner === side && !devastated(g, s))
       .reduce(
         (a, s) => ({
           credits: a.credits + s.income,
@@ -2505,7 +2523,8 @@
   }
   function buildCost(s, kind) {
     const l = buildingLevel(s, kind);
-    if (kind === 'factory') return { credits: 160 * l, industry: 40 * l };
+    // A factory wrecked to level 0 (F.L.E.I.J.A.) is rebuilt for the price of a level-1 lab.
+    if (kind === 'factory') return l ? { credits: 160 * l, industry: 40 * l } : { credits: 110, industry: 25 };
     if (kind === 'lab') return { credits: 110 * (l + 1), industry: 25 * (l + 1) };
     return { credits: 120 * (l + 1), industry: 30 * (l + 1) };
   }
@@ -2613,12 +2632,12 @@
   function depositYield(g, d) {
     const host = depositHost(g, d),
       level = clamp(host?.refinery || 0, 0, 3),
-      rate = host ? SAKURADITE.extraction[level] : 0;
+      rate = host && !devastated(g, host) ? SAKURADITE.extraction[level] : 0;
     return {
       level,
       rate,
       sakuradite: Math.round(d.base * rate),
-      credits: host && level >= 3 ? SAKURADITE.exportCredits : 0,
+      credits: rate && level >= 3 ? SAKURADITE.exportCredits : 0,
     };
   }
   function spend(e, cost) {
@@ -2631,6 +2650,7 @@
   function cityYield(g, s) {
     const d = depositOf(g, s),
       y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
+    if (devastated(g, s)) return { credits: 0, industry: 0, science: 0, sakuradite: 0 };
     return { credits: s.income + y.credits, industry: s.industry, science: s.science, sakuradite: y.sakuradite };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
@@ -2686,6 +2706,237 @@
     g.rulesVersion = 2;
     return g;
   }
+
+  // ======== F.L.E.I.J.A.: the Sakuradite superweapon ========
+  // Every number is a first-pass balance guess. A world-map hex is about 330 km wide, so a warhead covers its target
+  // hex and one ring; campaign maps can pass a larger radius to blastArea().
+  const FLEIJA = {
+    radius: 1,
+    cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
+    turns: 4, // construction time
+    lab: 3, // research lab level needed
+    devastation: 10, // turns a city at ground zero produces nothing
+    ringHP: 0.1, // units in the ring are left with 10% of their frame
+    aiTurn: { normal: 60, hard: 45, challenge: 30 }, // when rival powers gain the technology
+    aiThreshold: 1500, // the least target value a rival will spend a warhead on
+    aiRest: 8, // turns a rival waits after a launch before starting another warhead
+  };
+  const devastated = (g, x) => (x?.devastated || 0) > g.turn;
+  // You research F.L.E.I.J.A. at HQ; rival powers gain it on a set turn (earlier on harder difficulties).
+  function hasFleija(g, side) {
+    if (side === g.player) return techLevel(g, side, 'sakura.fleija') >= 1;
+    return MAJORS.includes(side) && g.turn >= (FLEIJA.aiTurn[g.difficulty] ?? FLEIJA.aiTurn.normal);
+  }
+  function cityBusyReason(g, s) {
+    return devastated(g, s)
+      ? `Devastated by F.L.E.I.J.A. until turn ${s.devastated}`
+      : s.project
+        ? 'F.L.E.I.J.A. project under way'
+        : null;
+  }
+  function projectReason(g, s) {
+    if (!s) return 'Unavailable';
+    return (
+      (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (!hasFleija(g, s.owner)
+        ? s.owner === g.player
+          ? 'Research F.L.E.I.J.A. at HQ first'
+          : 'Technology not ready'
+        : null) ||
+      cityBusyReason(g, s) ||
+      ((s.lab || 0) < FLEIJA.lab ? `Requires research lab level ${FLEIJA.lab}` : null) ||
+      shortfall(funds(g, s.owner), FLEIJA.cost)
+    );
+  }
+  // Starting a warhead alerts every power; the city builds nothing else until it is done.
+  function startProject(g, id) {
+    const s = g.stations.find(s => s.id === id),
+      why = projectReason(g, s);
+    if (why) return { ok: false, reason: why };
+    spend(funds(g, s.owner), FLEIJA.cost);
+    s.project = { side: s.owner, started: g.turn, ready: g.turn + FLEIJA.turns };
+    log(g, `INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, s.owner);
+    return { ok: true, ready: s.project.ready };
+  }
+  function dropProject(g, s, why) {
+    if (!s?.project) return;
+    log(g, `${s.name}: the F.L.E.I.J.A. project is lost${why ? ' (' + why + ')' : ''}.`, s.owner);
+    s.project = null;
+  }
+  // A surrendering power's projects and warheads are lost; its devastated cities stay without defenses.
+  function annexStrategic(g, loser) {
+    for (const s of g.stations) {
+      if (s.project?.side === loser) dropProject(g, s, 'surrender');
+      if (devastated(g, s)) s.shield = 0;
+    }
+    if (g.arsenal) g.arsenal[loser] = 0;
+  }
+  // Start of a power's turn: finished warheads join its arsenal; devastated cities stay without defenses.
+  function strategicTurn(g, side) {
+    for (const s of g.stations) {
+      if (devastated(g, s)) s.shield = 0;
+      if (s.project?.side !== side || s.owner !== side || s.project.ready > g.turn) continue;
+      s.project = null;
+      (g.arsenal ||= {})[side] = (g.arsenal[side] || 0) + 1;
+      log(g, `${s.name} completes a F.L.E.I.J.A. warhead.`, side);
+    }
+  }
+  function blastArea(g, p, radius = FLEIJA.radius) {
+    return within(g, p, radius);
+  }
+  // What a strike is called: the city or mine at ground zero, else the nearest city.
+  function targetName(g, p) {
+    const near = g.stations.slice().sort((a, b) => dist(g, a, p) - dist(g, b, p) || a.id - b.id)[0];
+    return stationAt(g, p)?.name || siteAt(g, p)?.name || (near ? `near ${near.name}` : `hex ${p.c},${p.r}`);
+  }
+  function launchReason(g, side, p) {
+    if (g.over) return 'Operation over';
+    if (g.phase !== side) return 'Not your turn';
+    if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
+    if (g.launched?.[side] === g.turn) return 'One launch per turn';
+    if (!g.stations.some(s => s.owner === side)) return 'No city to launch from';
+    if (!p || !tile(g, p.c, p.r)) return 'Choose a target hex';
+    return null;
+  }
+  // The city's founding output and defenses: wrecked buildings never leave a city below them.
+  function founding(s) {
+    const row = CITY_DATA.find(r => r[0] === s.name);
+    if (!row) return { industry: 0, science: 0, maxShield: 0 };
+    const [, , , , tier, capital = false, fort = false] = row;
+    return {
+      industry: capital ? 30 : 6 * tier,
+      science: capital ? 10 : 1 + tier,
+      maxShield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
+    };
+  }
+  // Knock down every building by `levels` (Infinity: back to level 0) with the output and defenses they added.
+  function ruin(g, s, levels) {
+    const base = founding(s),
+      lostFactory = Math.min(levels, s.tier || 0),
+      lostLab = Math.min(levels, s.lab || 0);
+    s.tier = (s.tier || 0) - lostFactory;
+    s.lab = (s.lab || 0) - lostLab;
+    s.refinery = Math.max(0, (s.refinery || 0) - levels);
+    s.industry = Math.max(Math.min(base.industry, s.industry), s.industry - 10 * lostFactory);
+    s.science = Math.max(Math.min(base.science, s.science), s.science - 8 * lostLab);
+    s.maxShield = Math.max(Math.min(base.maxShield + (s.fortBonus || 0), s.maxShield), s.maxShield - 60 * lostFactory);
+    s.shield = 0;
+    dropProject(g, s, 'destroyed');
+  }
+  // Detonation: everything at ground zero is erased, the ring is left at 10% with collapsed morale.
+  function launch(g, side, c, r) {
+    const center = tile(g, c, r),
+      why = launchReason(g, side, center);
+    if (why) return { ok: false, reason: why };
+    const origin = g.stations
+        .filter(s => s.owner === side)
+        .sort((a, b) => dist(g, a, center) - dist(g, b, center) || a.id - b.id)[0],
+      name = targetName(g, center);
+    g.arsenal[side]--;
+    (g.launched ||= {})[side] = g.turn;
+    const destroyed = [],
+      crippled = [],
+      cities = [],
+      hit = [];
+    for (const t of blastArea(g, center)) {
+      const ring = key(t) !== key(center),
+        v = unitAt(g, t),
+        s = stationAt(g, t),
+        d = siteAt(g, t);
+      if (v && !ring) {
+        hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp });
+        v.hp = 0;
+        kill(g, v, null);
+        destroyed.push(v.id);
+      } else if (v) {
+        const left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * FLEIJA.ringHP)));
+        hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp - left });
+        v.hp = left;
+        v.morale = moraleFloor(g, v);
+        crippled.push(v.id);
+      }
+      if (s) {
+        ruin(g, s, ring ? 1 : Infinity);
+        if (!ring) s.devastated = g.turn + FLEIJA.devastation;
+        cities.push({ name: s.name, devastated: !ring });
+      }
+      if (d) {
+        d.refinery = ring ? Math.max(0, (d.refinery || 0) - 1) : 0;
+        if (!ring) d.devastated = g.turn + FLEIJA.devastation;
+      }
+      if (!ring && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
+    }
+    log(
+      g,
+      `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled${cities.length ? ', ' + cities.map(x => x.name).join(' and ') + ' in ruins' : ''}.`,
+      side,
+    );
+    checkVictory(g);
+    return {
+      ok: true,
+      side,
+      from: origin ? { c: origin.c, r: origin.r } : { c, r },
+      to: { c, r },
+      name,
+      destroyed,
+      crippled,
+      cities,
+      hit,
+    };
+  }
+  // ---- Rival high command and F.L.E.I.J.A. ----
+  // The project city: the best lab, then the city farthest from the enemy.
+  function fleijaCity(g, side, front) {
+    return (
+      g.stations
+        .filter(s => s.owner === side && !cityBusyReason(g, s))
+        .sort((a, b) => (b.lab || 0) - (a.lab || 0) || front(b) - front(a) || a.id - b.id)[0] || null
+    );
+  }
+  // The most valuable target that spares the launcher's own units and cities, or null below the threshold.
+  function aiLaunchTarget(g, side) {
+    const rival = s => !!s && s !== side && s !== 'neutral',
+      seen = new Set();
+    let best = null;
+    const candidates = [
+      ...g.units.filter(u => u.hp > 0 && rival(u.side)),
+      ...g.stations.filter(s => rival(s.owner)),
+    ].map(p => tile(g, p.c, p.r));
+    for (const p of candidates) {
+      if (!p || seen.has(key(p))) continue;
+      seen.add(key(p));
+      let score = 0,
+        safe = true;
+      for (const t of blastArea(g, p)) {
+        const ring = key(t) !== key(p),
+          v = unitAt(g, t),
+          s = stationAt(g, t);
+        if (v?.side === side || s?.owner === side) {
+          safe = false;
+          break;
+        }
+        if (v && rival(v.side))
+          score +=
+            price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
+        // Cities are worth what the blast destroys (a ruin is worth nothing); a capital is worth more only when
+        // the launcher has troops close enough to take it afterwards.
+        if (s && rival(s.owner) && !devastated(g, s)) {
+          const levels = (s.tier || 0) + (s.lab || 0) + (s.refinery || 0);
+          score += ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
+          if (s.project) score += 2000;
+          if (
+            !ring &&
+            s.capitalOf === s.owner &&
+            alive(g, s.owner) &&
+            g.units.some(u => u.hp > 0 && u.side === side && canCapture(u) && dist(g, u, s) <= 4)
+          )
+            score += 1500;
+        }
+      }
+      if (safe && (!best || score > best.score)) best = { p, score };
+    }
+    return best && best.score >= FLEIJA.aiThreshold ? best.p : null;
+  }
   function beginTurn(g, side, collect = true) {
     g.phase = side;
     if (collect) {
@@ -2733,6 +2984,7 @@
     for (const s of g.stations) {
       if (s.owner === side) s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * 0.12));
     }
+    strategicTurn(g, side);
     checkVictory(g);
   }
   // Fortress batteries: fired by the owner, range 3, then two turns to recharge.
@@ -3372,8 +3624,9 @@
     };
     for (const s of g.stations)
       if (s.owner !== side) {
+        // A rival's F.L.E.I.J.A. project outranks even a capital.
         const i = s.r * g.cols + s.c,
-          d = s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0;
+          d = s.project ? -8 : s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0;
         field[i] = d;
         push(i, d);
       }
@@ -3419,9 +3672,10 @@
       foes = g.units.filter(u => u.hp > 0 && u.side !== side && u.side !== 'neutral'),
       taken = {},
       threat = s => foes.filter(f => dist(g, f, s) <= 3).reduce((a, f) => a + f.stack, 0);
+    // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
-      .map(s => ({ s, threat: threat(s), capital: s.capitalOf === side }))
+      .map(s => ({ s, threat: threat(s), capital: s.capitalOf === side || s.project?.side === side }))
       .filter(c => c.capital || c.threat > 0)
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
@@ -3470,6 +3724,14 @@
         if (shot.ok) g.strikes.push(shot);
       }
     }
+    // 0b. F.L.E.I.J.A.: launch a ready warhead at the most valuable target that spares its own units and cities
+    // (the UI plays g.launches).
+    g.launches = [];
+    if ((g.arsenal?.[side] || 0) > 0) {
+      const p = aiLaunchTarget(g, side),
+        shot = p && launch(g, side, p.c, p.r);
+      if (shot?.ok) g.launches.push(shot);
+    }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
     for (const u of own()
       .filter(u => u.hp / maxHP(u) < 0.55 && nearFriendlyCity(g, u) && !atSea(g, u))
@@ -3482,6 +3744,22 @@
     if (!yard3.length || supers >= 2) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
       plan.saving = true;
+    // 2b. F.L.E.I.J.A.: one warhead at a time. A power with the Sakuradite for it (or the income to gather it soon)
+    // keeps that Sakuradite back, then saves credits and industry and starts the project in its best-lab city.
+    const warCity =
+      hasFleija(g, side) &&
+      !g.stations.some(s => s.project?.side === side) &&
+      !(g.arsenal?.[side] > 0) &&
+      g.turn - (g.launched?.[side] ?? -Infinity) >= FLEIJA.aiRest
+        ? fleijaCity(g, side, front)
+        : null;
+    plan.warhead = !!warCity && ((e.sakuradite || 0) >= FLEIJA.cost.sakuradite || income(g, side).sakuradite >= 15);
+    if (plan.warhead && !projectReason(g, warCity)) {
+      startProject(g, warCity.id);
+      plan.warhead = false;
+    }
+    const warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
+    if (plan.warhead) plan.saving = false;
     if (plan.saving) {
       const yard = yard3.find(s => canBuy(g, s, superType, 1));
       if (yard) {
@@ -3489,9 +3767,17 @@
         plan.saving = false;
       }
     }
-    const reserve = plan.saving ? Math.min(e.credits, superPrice.credits) : 60;
-    const reserveInd = plan.saving ? Math.min(e.industry, superPrice.industry) : 0;
-    const reserveSak = plan.saving ? superPrice.sakuradite : 0;
+    const reserve = warSaving
+      ? Math.min(e.credits, FLEIJA.cost.credits)
+      : plan.saving
+        ? Math.min(e.credits, superPrice.credits)
+        : 60;
+    const reserveInd = warSaving
+      ? Math.min(e.industry, FLEIJA.cost.industry)
+      : plan.saving
+        ? Math.min(e.industry, superPrice.industry)
+        : 0;
+    const reserveSak = plan.warhead ? FLEIJA.cost.sakuradite : plan.saving ? superPrice.sakuradite : 0;
     const spendable = () => Math.max(0, e.credits - reserve);
     const affordable = c =>
       c.credits <= spendable() &&
@@ -3505,9 +3791,17 @@
     // then the lowest-level factory or lab at the safest city.
     if (!plan.saving && g.turn >= 2) {
       let upgraded = false;
+      // A warhead needs a level-3 lab: from ten turns before the technology arrives, build up the project city's lab.
+      const soon = g.turn >= (FLEIJA.aiTurn[g.difficulty] ?? FLEIJA.aiTurn.normal) - 10,
+        prep = side !== g.player && MAJORS.includes(side) && soon ? fleijaCity(g, side, front) : null;
+      if (prep && (prep.lab || 0) < FLEIJA.lab) {
+        const cost = buildCost(prep, 'lab');
+        if (spendable() - cost.credits >= 100 && affordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
+      }
       for (const d of (g.sites || []).filter(d => depositOwner(g, d) === side).sort((a, b) => b.base - a.base)) {
         const host = depositHost(g, d),
           cost = buildCost(host, 'refinery');
+        if (upgraded) break;
         if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !affordable(cost)) continue;
         upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
         if (upgraded) break;
@@ -3603,6 +3897,7 @@
             (d && pr.unit >= d.hp ? 130 : 0) +
             (s ? 35 : 0) +
             (s?.capitalOf ? 60 : 0) +
+            (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) -
             pr.counter * 0.5;
           return { p, score };
@@ -3812,6 +4107,17 @@
     cityYield,
     refineReason,
     refine,
+    // F.L.E.I.J.A.
+    FLEIJA,
+    hasFleija,
+    devastated,
+    projectReason,
+    startProject,
+    launchReason,
+    launch,
+    blastArea,
+    targetName,
+    aiLaunchTarget,
   };
   if (typeof module !== 'undefined') module.exports = root.Knightmare;
 })(typeof window !== 'undefined' ? window : globalThis);
