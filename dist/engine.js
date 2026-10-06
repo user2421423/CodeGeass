@@ -1305,15 +1305,6 @@
           req: ['transport', 1],
           text: v => (v === 1 ? 'Armor units ignore terrain movement costs' : '+1 movement for every unit'),
         },
-        // First-pass price. Rival powers gain it by turn instead (FLEIJA.aiTurn).
-        fleija: {
-          name: 'F.L.E.I.J.A.',
-          values: [1],
-          tiers: [4],
-          costs: [500],
-          req: ['blaze', 1],
-          text: () => 'Cities with a level-3 research lab can build F.L.E.I.J.A. warheads',
-        },
       },
     },
     cities: {
@@ -1696,6 +1687,9 @@
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
+      (kind === 'lab' && buildingLevel(s, kind) === 2 && g.turn < FLEIJA.labTurn
+        ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}`
+        : null) ||
       (kind === 'refinery' && !depositOf(g, s) ? 'No Sakuradite deposit here' : null) ||
       cityBusyReason(g, s) ||
       shortfall(funds(g, s.owner), buildCost(s, kind))
@@ -2715,17 +2709,16 @@
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
     lab: 3, // research lab level needed
+    labTurn: 15, // Research Lab III, and therefore the strategic-weapons program, opens in each conquest
     devastation: 10, // turns a city at ground zero produces nothing
     ringHP: 0.1, // units in the ring are left with 10% of their frame
-    aiTurn: { normal: 60, hard: 45, challenge: 30 }, // when rival powers gain the technology
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
     aiRest: 8, // turns a rival waits after a launch before starting another warhead
   };
   const devastated = (g, x) => (x?.devastated || 0) > g.turn;
-  // You research F.L.E.I.J.A. at HQ; rival powers gain it on a set turn (earlier on harder difficulties).
+  // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
-    if (side === g.player) return techLevel(g, side, 'sakura.fleija') >= 1;
-    return MAJORS.includes(side) && g.turn >= (FLEIJA.aiTurn[g.difficulty] ?? FLEIJA.aiTurn.normal);
+    return MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
     return devastated(g, s)
@@ -2738,11 +2731,7 @@
     if (!s) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
-      (!hasFleija(g, s.owner)
-        ? s.owner === g.player
-          ? 'Research F.L.E.I.J.A. at HQ first'
-          : 'Technology not ready'
-        : null) ||
+      (!hasFleija(g, s.owner) ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}` : null) ||
       cityBusyReason(g, s) ||
       ((s.lab || 0) < FLEIJA.lab ? `Requires research lab level ${FLEIJA.lab}` : null) ||
       shortfall(funds(g, s.owner), FLEIJA.cost)
@@ -3791,10 +3780,14 @@
     // then the lowest-level factory or lab at the safest city.
     if (!plan.saving && g.turn >= 2) {
       let upgraded = false;
-      // A warhead needs a level-3 lab: from ten turns before the technology arrives, build up the project city's lab.
-      const soon = g.turn >= (FLEIJA.aiTurn[g.difficulty] ?? FLEIJA.aiTurn.normal) - 10,
+      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player.
+      const soon = g.turn >= FLEIJA.labTurn - 5,
         prep = side !== g.player && MAJORS.includes(side) && soon ? fleijaCity(g, side, front) : null;
-      if (prep && (prep.lab || 0) < FLEIJA.lab) {
+      if (
+        prep &&
+        (prep.lab || 0) < FLEIJA.lab &&
+        ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= FLEIJA.labTurn)
+      ) {
         const cost = buildCost(prep, 'lab');
         if (spendable() - cost.credits >= 100 && affordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
       }
@@ -3808,7 +3801,7 @@
       }
       const options = bases
         .flatMap(s => ['factory', 'lab'].map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
-        .filter(o => o.level < 3)
+        .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < FLEIJA.labTurn))
         .sort((a, b) => a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
       const pick = options[0];
       if (

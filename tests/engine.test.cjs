@@ -460,13 +460,23 @@ test('Version 1 saves are upgraded: deposits placed, refineries away from a depo
   assert.equal(city('London').refinery, 2, 'London works the Stonehenge deposit');
   assert.equal(E.migrateSave({ ...v1, rulesVersion: 0 }), null);
 });
-test('F.L.E.I.J.A. projects need the technology and a level-3 lab, take 4 turns and alert every power', () => {
+test('F.L.E.I.J.A. is conquest-only behind Research Lab III, which unlocks on turn 15', () => {
   const g = blank(),
     s = g.stations[0];
-  assert.match(E.projectReason(g, s), /Research F.L.E.I.J.A./);
-  g.tech.britannia = { 'sakura.fleija': 1 };
-  assert.match(E.projectReason(g, s), /research lab level 3/);
-  s.lab = 3;
+  assert.equal(E.TECH_NODES['sakura.fleija'], undefined, 'F.L.E.I.J.A. is not persistent HQ research');
+  s.lab = 2;
+  g.turn = E.FLEIJA.labTurn - 1;
+  assert.equal(E.buildReason(g, s, 'lab'), `Research lab level 3 unlocks on turn ${E.FLEIJA.labTurn}`);
+  assert.equal(E.projectReason(g, s), `Research lab level 3 unlocks on turn ${E.FLEIJA.labTurn}`);
+  assert(!E.hasFleija(g, 'britannia'));
+  assert(!E.hasFleija(g, 'eu'));
+  g.difficulty = 'challenge';
+  g.turn = E.FLEIJA.labTurn;
+  assert(E.hasFleija(g, 'britannia'));
+  assert(E.hasFleija(g, 'eu'), 'difficulty does not change the unlock turn');
+  assert.equal(E.buildReason(g, s, 'lab'), null);
+  assert(E.build(g, s.id, 'lab').ok);
+  assert.equal(s.lab, 3);
   g.economy.britannia = { credits: 1000, industry: 5000, science: 5000, sakuradite: 500 };
   assert.equal(E.projectReason(g, s), 'Need 800 more credits');
   g.economy.britannia.credits = 5000;
@@ -488,14 +498,6 @@ test('F.L.E.I.J.A. projects need the technology and a level-3 lab, take 4 turns 
   E.beginTurn(g, 'britannia', false);
   assert.equal(g.arsenal.britannia, 1);
   assert.equal(s.project, null);
-  // Rival powers gain the technology on turn 60, earlier on harder difficulties.
-  g.turn = 59;
-  assert(!E.hasFleija(g, 'eu'));
-  g.turn = 60;
-  assert(E.hasFleija(g, 'eu'));
-  g.difficulty = 'challenge';
-  g.turn = 30;
-  assert(E.hasFleija(g, 'cf'));
 });
 test('Capturing a city ends its F.L.E.I.J.A. project; a surrendering power loses its warheads', () => {
   const g = blank('britannia');

@@ -147,10 +147,10 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().turn'), 2);
     run('draw(16,.016)');
   }
-  // F.L.E.I.J.A.: the HQ node, the arsenal button, targeting, confirmation, your launch and a rival's.
+  // F.L.E.I.J.A.: conquest-only Lab III gate, arsenal button, targeting, confirmation, your launch and a rival's.
   run("researchDialog('sakura')");
-  assert(modal().includes('F.L.E.I.J.A.'));
-  run("closeModal(); game.tech[game.player]['sakura.fleija'] = 1; game.arsenal = { [game.player]: 1 }; render();");
+  assert(!modal().includes('F.L.E.I.J.A.'), 'F.L.E.I.J.A. is not an HQ technology');
+  run("closeModal(); game.turn = E.FLEIJA.labTurn; capitalOf(game.player).lab = 3; game.arsenal = { [game.player]: 1 }; render();");
   assert(node('app').innerHTML.includes('data-action="fleija"'), 'the arsenal button appears');
   run('selectStation(capitalOf(game.player).id)');
   assert(node('side').innerHTML.includes('Build a warhead'));

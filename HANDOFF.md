@@ -139,10 +139,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 1, `cost`
-  1,800 credits / 450 industry / 300 research / 150 Sakuradite, `turns` 4, `lab` 3, `devastation` 10, `ringHP` 0.1,
-  `aiTurn` 60 / 45 / 30 by difficulty, `aiThreshold` 1500, `aiRest` 8). All first-pass.
-- Technology: HQ node `sakura.fleija` (tier IV, needs Blaze Luminous Generators I, 500 tokens). `hasFleija(g, side)`:
-  the player needs the node; rival majors gain it on `aiTurn[difficulty]` (their HQ tech table is ignored for it).
+  1,800 credits / 450 industry / 300 research / 150 Sakuradite, `turns` 4, `lab` 3, `labTurn` 15,
+  `devastation` 10, `ringHP` 0.1, `aiThreshold` 1500, `aiRest` 8). All first-pass.
+- Access: F.L.E.I.J.A. is conquest-only and has no HQ node. Research Lab III unlocks on turn 15 for every major power;
+  `hasFleija(g, side)` uses that same universal turn gate, while `projectReason` still requires Lab III in the city.
 - State: `s.project = { side, started, ready }` on a city; `g.arsenal[side]` warheads; `g.launched[side]` the turn
   of the last launch; `s.devastated` / mine `d.devastated` = the turn output resumes; `g.launches` (this AI turn's
   strikes, played by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
@@ -158,8 +158,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   projects +2000; a live capital +1500 only with the launcher's capturing units within 4 hexes), skips any blast
   touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches; step 2b starts one warhead
   at a time in `fleijaCity` (best lab, then farthest from the enemy) once it holds the Sakuradite or earns 15+ a
-  turn, saving credits/industry when ready and waiting `aiRest` turns after a launch; step 3 builds that city's lab
-  to 3 from 10 turns before `aiTurn`. Rival projects seed `goalField` at −8 (above capitals), attacks on them score
+  turn, saving credits/industry when ready and waiting `aiRest` turns after a launch; step 3 begins preparing that
+  city's lab five turns before turn 15, but Lab III itself cannot be built before turn 15. Rival projects seed
+  `goalField` at −8 (above capitals), attacks on them score
   +120 and a power guards its own project city like its capital.
 - UI (`game.js`): `arsenalButton` (top bar), `strikeMode` targeting with a blast preview, `confirmLaunch`,
   `launchAt`, `fleijaSequence` (the `#fleija-alert` warning in `index.html`, `SFX.play('fleija')`, the `flash`
@@ -176,7 +177,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Leila, Ryo, Ayano (E.U.); Xingke, Cao, Hong Gu, Xianglin, Lei Feng (Federation).
 
 ### HQ research, tokens, difficulty
-- 37 technologies in five trees: Infantry, Armor, Artillery, Sakuradite (VARIS, Naval Transports, Landing Craft,
+- 36 technologies in five trees: Infantry, Armor, Artillery, Sakuradite (VARIS, Naval Transports, Landing Craft,
   Blaze Luminous, Energy Filler Network, Float System, F.L.E.I.J.A.) and Cities. Tiers II–IV after 2, 4 and 7
   victories.
 - Tokens only for the first win at each difficulty: 250 + 150 conquest + banked research (5 : 1, capped at 300),
