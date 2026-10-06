@@ -47,11 +47,11 @@
     support: 'rocket',
     rocket: 'siege',
   };
-  function upgradedType(type) {
+  function upgradedType(type, side, g) {
     const t = E.TYPES[type],
       next = t && UPGRADE[t.cls];
     if (!t || !next || t.elite) return type;
-    return E.typeFor(t.side, next) || type;
+    return E.typeFor(side, next, g) || E.typeFor(t.side, next, g) || type;
   }
   function techUpToTier(tier) {
     return Object.fromEntries(
@@ -121,7 +121,7 @@
       if (!enemy && side === g.player && d.playerStack) unitStack = Math.min(3, unitStack + d.playerStack);
       if (enemy && d.level) {
         const n = g.campaign.enemyPlaced++;
-        if (n % d.upgradeEvery === 0 && !(cmd && E.TYPES[type].cls === 'heavy')) type = upgradedType(type);
+        if (n % d.upgradeEvery === 0 && !(cmd && E.TYPES[type].cls === 'heavy')) type = upgradedType(type, side, g);
         if (d.stack) unitStack = Math.min(3, unitStack + 1);
       }
     }
