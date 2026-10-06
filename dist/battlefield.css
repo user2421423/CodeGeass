@@ -2578,3 +2578,22 @@ table.powers .legend-dot {
     width: 140px;
   }
 }
+
+/* Optional local art (dist/local-art, git-ignored): the file sits over the drawn fallback. */
+.unit-art.local-art,
+.portrait-art.local-art {
+  position: relative;
+}
+.unit-art.local-art > img,
+.portrait-art.local-art > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.unit-art.local-art > img {
+  object-fit: contain;
+}
+.portrait-art.local-art > img {
+  object-fit: cover;
+}

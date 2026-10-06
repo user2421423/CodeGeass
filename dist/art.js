@@ -497,43 +497,48 @@ const ART = (() => {
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`;
   }
-  // ---- Commander busts: original drawn portraits ----
+  // ---- Commander busts: original character designs drawn in code ----
+  // These are generic officers in each power's colors, deliberately NOT likenesses of the show's characters.
+  // Name, rank and abilities come from the engine; this table only sets a face, hair and uniform.
   const LOOKS = {
-    suzaku: { hair: 'curly', hc: '#6b4a2e', eye: '#3fbf6a', coat: '#eeeef2', trim: '#d4af37', cape: '#3f7f4f' },
-    cornelia: { hair: 'long', hc: '#7d4fb3', eye: '#9b6bd6', coat: '#5b2c6f', trim: '#d4af37' },
-    bismarck: { hair: 'long', hc: '#3a2f2a', eye: '#4a7ad6', coat: '#eeeef2', trim: '#d4af37', acc: ['closed', 'beard'], age: 1 },
-    julius: { hair: 'swept', hc: '#1c1c24', eye: '#8a5cd6', coat: '#24242c', trim: '#d4af37', acc: ['patch'] },
-    schneizel: { hair: 'swept', hc: '#e8d7a0', eye: '#6b7fd6', coat: '#f2efe6', trim: '#c9a04a' },
-    gino: { hair: 'braids', hc: '#f0d27a', eye: '#4a8ad6', coat: '#eeeef2', trim: '#d4af37', cape: '#3c7a4e' },
-    anya: { hair: 'bob', hc: '#f0a6c8', eye: '#d24a7a', coat: '#eeeef2', trim: '#d4af37', cape: '#b04a7a' },
-    luciano: { hair: 'messy', hc: '#7a6a9a', eye: '#e08a2a', coat: '#eeeef2', trim: '#d4af37', cape: '#8a2a2a', acc: ['grin'] },
-    jeremiah: { hair: 'swept', hc: '#4ec9b0', eye: '#4a7ad6', coat: '#2f4a7a', trim: '#d4af37', acc: ['mask'] },
-    shin: { hair: 'messy', hc: '#d9b77a', eye: '#e03a3a', coat: '#f0ede4', trim: '#c9a04a' },
-    rolo: { hair: 'short', hc: '#b58a5a', eye: '#8a5cd6', coat: '#2a2f45', trim: '#c9a04a' },
-    guilford: { hair: 'swept', hc: '#2c2a33', eye: '#7a8aa6', coat: '#4a2c63', trim: '#d4af37', acc: ['glasses'] },
-    darlton: { hair: 'bald', hc: '#3a3028', eye: '#6a5a4a', coat: '#4a2c63', trim: '#d4af37', skin: '#d9a77f', acc: ['scar'], age: 1 },
-    ashley: { hair: 'messy', hc: '#ddd5bd', eye: '#c43a3a', coat: '#26262c', trim: '#c9a04a', acc: ['grin'] },
-    leila: { hair: 'long', hc: '#f0dc9a', eye: '#4a8ad6', coat: '#2f4f8f', trim: '#d7dde6' },
-    akito: { hair: 'messy', hc: '#2a2a33', eye: '#c03030', coat: '#1f2a44', trim: '#d7dde6' },
-    ryo: { hair: 'spiky', hc: '#6b4a2e', eye: '#7a5a3a', coat: '#1f2a44', trim: '#f08a2a' },
-    ayano: { hair: 'ponytail', hc: '#1b1b22', eye: '#7a4a3a', coat: '#1f2a44', trim: '#b07ad6' },
-    yukiya: { hair: 'short', hc: '#d8d8d0', eye: '#7a8a96', coat: '#1f2a44', trim: '#5fbf6a' },
-    oscar: { hair: 'short', hc: '#5a4030', eye: '#5a6a7a', coat: '#2a3346', trim: '#d7dde6' },
-    klaus: { hair: 'messy', hc: '#8a8a86', eye: '#6a6a66', coat: '#55603a', trim: '#d7dde6', acc: ['stubble'], age: 1 },
-    anna: { hair: 'bun', hc: '#7a4a2a', eye: '#5a7a4a', coat: '#f2f2ee', trim: '#2f4f8f', acc: ['glasses'] },
-    smilas: { hair: 'swept', hc: '#c9b07a', eye: '#4a6a8a', coat: '#2f4f8f', trim: '#f4d35e', acc: ['mustache'], age: 1 },
+    // Holy Britannian Empire: ivory, violet and black coats with gold trim.
+    suzaku: { hair: 'short', hc: '#3a4252', eye: '#c9983a', coat: '#e9e6dc', trim: '#d4af37' },
+    cornelia: { hair: 'tied', hc: '#2e2420', eye: '#7a5a3a', coat: '#4a2c63', trim: '#d4af37' },
+    bismarck: { hair: 'swept', hc: '#c9c4b8', eye: '#5a6a7a', coat: '#eeeef2', trim: '#d4af37', acc: ['mustache'], age: 1 },
+    julius: { hair: 'spiky', hc: '#2a3a52', eye: '#b04a4a', coat: '#24242c', trim: '#d4af37' },
+    schneizel: { hair: 'bob', hc: '#b0793a', eye: '#4a7ab0', coat: '#f2efe6', trim: '#c9a04a' },
+    gino: { hair: 'ponytail', hc: '#6a4228', eye: '#3a8a8a', coat: '#eeeef2', trim: '#2f6a5a' },
+    anya: { hair: 'bun', hc: '#2a2430', eye: '#6a4a8a', coat: '#eeeef2', trim: '#b04a7a' },
+    luciano: { hair: 'braids', hc: '#7a3a2a', eye: '#c08a2a', coat: '#eeeef2', trim: '#d4af37', acc: ['stubble'] },
+    jeremiah: { hair: 'swept', hc: '#26332a', eye: '#4a5a8a', coat: '#2f4a7a', trim: '#d4af37', acc: ['mustache'] },
+    shin: { hair: 'long', hc: '#e0d6c0', eye: '#7a4a9a', coat: '#f0ede4', trim: '#c9a04a' },
+    rolo: { hair: 'curly', hc: '#8a6a4a', eye: '#4a6a8a', coat: '#2a2f45', trim: '#c9a04a' },
+    guilford: { hair: 'swept', hc: '#3a2a26', eye: '#5a6a7a', coat: '#4a2c63', trim: '#d4af37', acc: ['mustache'] },
+    darlton: { hair: 'bald', hc: '#3a3028', eye: '#6a5a4a', coat: '#4a2c63', trim: '#d4af37', skin: '#d9a77f', acc: ['beard'], age: 1 },
+    ashley: { hair: 'spiky', hc: '#9aa0a8', eye: '#c43a3a', coat: '#26262c', trim: '#c9a04a', acc: ['grin'] },
+    // Europia United: navy, blue and green with silver trim.
+    leila: { hair: 'ponytail', hc: '#5a3a2a', eye: '#4a7ab0', coat: '#2f4f8f', trim: '#d7dde6' },
+    akito: { hair: 'messy', hc: '#1e2a3a', eye: '#6a8a3a', coat: '#1f2a44', trim: '#d7dde6' },
+    ryo: { hair: 'spiky', hc: '#a0522d', eye: '#7a5a3a', coat: '#1f2a44', trim: '#f08a2a' },
+    ayano: { hair: 'bob', hc: '#2a2a38', eye: '#5a4a3a', coat: '#1f2a44', trim: '#b07ad6' },
+    yukiya: { hair: 'curly', hc: '#c9b890', eye: '#6a8a96', coat: '#1f2a44', trim: '#5fbf6a' },
+    oscar: { hair: 'short', hc: '#6a7078', eye: '#4a5a6a', coat: '#2a3346', trim: '#d7dde6' },
+    klaus: { hair: 'messy', hc: '#6a5a48', eye: '#6a6a66', coat: '#55603a', trim: '#d7dde6', acc: ['stubble'], age: 1 },
+    anna: { hair: 'bun', hc: '#3a2a22', eye: '#5a7a4a', coat: '#f2f2ee', trim: '#2f4f8f', acc: ['glasses'] },
+    smilas: { hair: 'swept', hc: '#9a9a9a', eye: '#4a6a8a', coat: '#2f4f8f', trim: '#f4d35e', acc: ['mustache'], age: 1 },
     fernando: { hair: 'short', hc: '#2a2220', eye: '#5a3a2a', coat: '#2f6a3a', trim: '#d7dde6', skin: '#e4b48f', acc: ['stubble'] },
     marirrosa: { hair: 'long', hc: '#7a2a2a', eye: '#5a3a2a', coat: '#9a2a2a', trim: '#d7dde6', skin: '#e9bf9a' },
-    xingke: { hair: 'tied', hc: '#eeeef2', eye: '#9a2a2a', coat: '#1f3a35', trim: '#f2c14e' },
-    xianglin: { hair: 'buns', hc: '#1c2232', eye: '#6a6ad6', coat: '#2a3a5a', trim: '#f2c14e' },
+    // Chinese Federation: crimson, jade and gold.
+    xingke: { hair: 'short', hc: '#1a1a22', eye: '#8a3a2a', coat: '#1f3a35', trim: '#f2c14e' },
+    xianglin: { hair: 'ponytail', hc: '#3a2a4a', eye: '#6a6ad6', coat: '#2a3a5a', trim: '#f2c14e' },
     honggu: { hair: 'short', hc: '#7a7a76', eye: '#5a4a3a', coat: '#3a4a2a', trim: '#f2c14e', acc: ['beard'], age: 1 },
     cao: { hair: 'short', hc: '#2a2622', eye: '#5a4a3a', coat: '#4a3a2a', trim: '#f2c14e', acc: ['mustache'], age: 1 },
     gaohai: { hair: 'cap', hc: '#151515', eye: '#4a3a2a', coat: '#8a1f1f', trim: '#f2c14e', skin: '#f2dcc8', acc: ['grin'] },
     zhaohao: { hair: 'cap', hc: '#151515', eye: '#4a3a2a', coat: '#4a2050', trim: '#f2c14e', skin: '#efd6c0' },
     leifeng: { hair: 'messy', hc: '#262230', eye: '#c08a2a', coat: '#5a1f1f', trim: '#f2c14e' },
-    meiling: { hair: 'bob', hc: '#1a1a20', eye: '#6a4a3a', coat: '#3a3f48', trim: '#f2c14e' },
+    meiling: { hair: 'bob', hc: '#6a4a38', eye: '#6a4a3a', coat: '#3a3f48', trim: '#f2c14e' },
     lifeng: { hair: 'short', hc: '#202020', eye: '#5a3a2a', coat: '#c4442c', trim: '#f2c14e' },
-    rakshata: { hair: 'wavy', hc: '#e8d49a', eye: '#4a7a8a', coat: '#f2f2ee', trim: '#c4442c', skin: '#c99a6c', acc: ['pipe'] },
+    rakshata: { hair: 'wavy', hc: '#2a1e1a', eye: '#4a7a8a', coat: '#f2f2ee', trim: '#c4442c', skin: '#c99a6c' },
   };
   const BACKDROP = {
     britannia: ['#3a2a5c', '#b8963e'],
@@ -647,10 +652,50 @@ const ART = (() => {
     }
     return img.complete && img.naturalWidth ? img : null;
   }
-  return {
+  // ---- Optional local art: your own files in dist/local-art/, listed in local-art/manifest.json ----
+  // The folder is git-ignored, so nothing in it is committed or deployed. Missing entries keep the drawn art.
+  const LOCAL = { units: {}, portraits: {}, base: 'local-art/', imgs: new Map() };
+  function localEntry(kind, id) {
+    const e = LOCAL[kind][id];
+    return e ? (typeof e === 'string' ? { src: e } : e) : null;
+  }
+  function localImage(kind, id) {
+    const e = localEntry(kind, id);
+    if (!e || typeof Image === 'undefined') return null;
+    const k = kind + '|' + id;
+    let img = LOCAL.imgs.get(k);
+    if (!img) {
+      img = new Image();
+      img.onerror = () => (img.failed = true);
+      img.src = LOCAL.base + e.src;
+      LOCAL.imgs.set(k, img);
+    }
+    return !img.failed && img.complete && img.naturalWidth ? img : null;
+  }
+  // The drawn SVG sits underneath and is hidden once the file loads; a missing file leaves the drawing in place.
+  const withLocal = (kind, id, svg, style = '') => {
+    const e = localEntry(kind, id);
+    if (!e) return { cls: '', html: svg };
+    const src = LOCAL.base + e.src;
+    return {
+      cls: ' local-art',
+      html: `${svg}<img src="${src}" alt="" draggable="false"${style} onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.remove()">`,
+    };
+  };
+  const api = {
     SPECS,
     FACTION_ART,
     LOOKS,
+    // Called after a local manifest loads, so the UI can redraw (set by game.js).
+    onLocal: null,
+    // manifest: { base?, units: { <knightmare id>: 'units/x.png' }, portraits: { <commander id>: 'portraits/x.jpg' | { src, fx, fy } } }
+    useLocal(manifest) {
+      LOCAL.units = { ...(manifest?.units || {}) };
+      LOCAL.portraits = { ...(manifest?.portraits || {}) };
+      LOCAL.base = manifest?.base || 'local-art/';
+      LOCAL.imgs.clear();
+      api.onLocal?.();
+    },
     // Register which faction builds each type and which faction each commander serves (from the engine).
     init(types, commanders) {
       typeSides = Object.fromEntries(Object.entries(types).map(([k, t]) => [k, t.side]));
@@ -661,16 +706,32 @@ const ART = (() => {
     portraitSVG,
     // HTML: a Knightmare for panels and cards.
     unit(type, extra = '', side) {
-      return `<span class="ship-art unit-art ${extra}" aria-hidden="true">${knightmareSVG(type, side || typeSides[type])}</span>`;
+      const l = withLocal('units', type, knightmareSVG(type, side || typeSides[type]));
+      return `<span class="ship-art unit-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     city(kind, side, extra = '') {
       return `<span class="ship-art unit-art city-art ${extra}" aria-hidden="true">${citySVG(kind, side)}</span>`;
     },
     portrait(k, extra = '') {
-      return `<span class="portrait-art generated ${extra}" aria-hidden="true">${portraitSVG(k)}</span>`;
+      const e = localEntry('portraits', k),
+        style = e ? ` style="object-position:${(e.fx ?? 0.5) * 100}% ${(e.fy ?? 0.25) * 100}%"` : '',
+        l = withLocal('portraits', k, portraitSVG(k), style);
+      return `<span class="portrait-art generated${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     // Canvas: draw a cached image centered at (x, y); false while the image is still decoding.
     drawUnit(ctx, type, side, x, y, w, h = w, flip = false) {
+      const local = localImage('units', type);
+      if (local) {
+        const r = Math.min(w / local.naturalWidth, h / local.naturalHeight),
+          dw = local.naturalWidth * r,
+          dh = local.naturalHeight * r;
+        ctx.save();
+        ctx.translate(x, y);
+        if (flip) ctx.scale(-1, 1);
+        ctx.drawImage(local, -dw / 2, -dh / 2, dw, dh);
+        ctx.restore();
+        return true;
+      }
       const img = image(`u|${type}|${side}`, knightmareSVG(type, side));
       if (!img) return false;
       ctx.save();
@@ -687,7 +748,26 @@ const ART = (() => {
       return true;
     },
     portraitImage(k) {
-      return image(`p|${k}`, portraitSVG(k));
+      return localImage('portraits', k) || image(`p|${k}`, portraitSVG(k));
+    },
+    // Source rectangle for a w:h portrait frame: a local file is cropped around its focus point (fx, fy).
+    portraitSprite(k, w, h) {
+      const local = localImage('portraits', k);
+      if (local) {
+        const e = localEntry('portraits', k),
+          nw = local.naturalWidth,
+          nh = local.naturalHeight;
+        let sw = nw,
+          sh = (nw * h) / w;
+        if (sh > nh) {
+          sh = nh;
+          sw = (nh * w) / h;
+        }
+        const cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+        return { img: local, sx: cl((e.fx ?? 0.5) * nw - sw / 2, 0, nw - sw), sy: cl((e.fy ?? 0.25) * nh - sh / 2, 0, nh - sh), sw, sh };
+      }
+      const img = image(`p|${k}`, portraitSVG(k));
+      return img ? { img, sx: 0, sy: 0, sw: img.naturalWidth, sh: Math.min(img.naturalHeight, (img.naturalWidth * h) / w) } : null;
     },
     // Warm the cache so the first frames already have art.
     preload(types, sides) {
@@ -695,6 +775,12 @@ const ART = (() => {
       for (const s of sides) for (const kind of ['city', 'capital', 'fortress']) image(`c|${kind}|${s}`, citySVG(kind, s));
     },
   };
+  if (typeof fetch === 'function' && typeof location !== 'undefined')
+    fetch('local-art/manifest.json', { cache: 'no-cache' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(m => m && api.useLocal(m))
+      .catch(() => {});
+  return api;
 })();
 if (typeof Knightmare !== 'undefined') {
   ART.init(Knightmare.TYPES, Knightmare.COMMANDERS);

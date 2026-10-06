@@ -1845,8 +1845,8 @@ function drawAdmiralPin(u, p, scale, sel) {
   ctx.fillRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4);
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
-  const img = ART.portraitImage(u.cmd);
-  if (img) ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalWidth * (h / w), -w / 2, -h / 2, w, h);
+  const sp = ART.portraitSprite(u.cmd, w, h);
+  if (sp) ctx.drawImage(sp.img, sp.sx, sp.sy, sp.sw, sp.sh, -w / 2, -h / 2, w, h);
   else outlinedText('★', 0, 4, 14, '#e9c366', scale);
   ctx.strokeStyle = sel ? '#3ff2c4' : PLATE[u.side].trim;
   ctx.lineWidth = 1.8;
@@ -2186,6 +2186,11 @@ function draw(time, dt) {
   effects = effects.filter(e => e.life > 0);
   ctx.restore();
 }
+// Optional local art (dist/local-art, git-ignored) arrives after the first render: redraw once it is registered.
+ART.onLocal = () => {
+  render();
+  if (modal.querySelector('[aria-label="Operation setup"]')) startMenu();
+};
 render();
 startMenu();
 registerTools();

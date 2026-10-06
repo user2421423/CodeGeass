@@ -2,3 +2,6 @@
 node_modules/
 __pycache__/
 *.png
+# Your own local art: never committed or deployed.
+dist/local-art/*
+!dist/local-art/README.md

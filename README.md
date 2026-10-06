@@ -45,6 +45,8 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.
 - **Presentation:** WC4-style HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
   minimap, procedural terrain, original drawn Knightmares and portraits, synthesized sound, camera shake.
+- **Your own art, locally:** drop images in the git-ignored `dist/local-art/` folder and run
+  `python3 tools/local_art_manifest.py`; the game uses them on your machine and nothing is committed or deployed.
 - **Rival turns:** off-screen rival moves resolve instantly; press **Skip** to finish a rival turn at once.
 
 ## Run the game

@@ -42,7 +42,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | File | Role |
 |---|---|
 | `dist/engine.js` | The deterministic rules engine (`window.Knightmare`, aliased `E` in the UI; `module.exports` for Node). No DOM. Factions, Knightmare classes and lineups, commanders, tech tree, terrain, combat, sea transport, economy, AI, the world map (`WORLD_ROWS`, `CITY_DATA`, `ARMY_DATA`, `GARRISONS`), profile/roster logic. Seeded LCG via `random(g)`. |
-| `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and commander busts (`LOOKS`), cached as images for the canvas. No image files. |
+| `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and original-design commander busts (`LOOKS`), cached as images for the canvas. No image files ship. Optional override: `local-art/manifest.json` (git-ignored folder `dist/local-art/`, built by `tools/local_art_manifest.py`) layers the owner's own files over the drawings via `ART.useLocal`. |
 | `dist/icons.js` | `ICONS`: inline SVG sprite (credits, industry, research, command token, attack/defense/move/range, factory, refinery, sea) and the HP ring. |
 | `dist/audio.js` | `SFX`: Web Audio synthesized sounds per class and faction voice, Landspinner movement, MVS slash, batteries. |
 | `dist/game.js` | The whole UI: start screen, wrapping world-map renderer (camera, minimap, terrain, tokens), input, panels, dock, dialogs (factory, HQ research, commanders, Commander Info, Knightmare archive, world powers, field manual, results), effects, rival-turn playback with Skip, saving. |

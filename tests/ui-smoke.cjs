@@ -133,6 +133,14 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().turn'), 2);
     run('draw(16,.016)');
   }
+  // Optional local art: a manifest entry layers a file over the drawn art; no entry keeps the drawing.
+  run("ART.useLocal({units:{glasgow:'units/glasgow.png'},portraits:{suzaku:{src:'portraits/suzaku.jpg',fx:0.4,fy:0.2}}})");
+  assert(run("ART.unit('glasgow')").includes('<img src="local-art/units/glasgow.png"'));
+  assert(run("ART.portrait('suzaku')").includes('object-position:40% 20%'));
+  assert(!run("ART.unit('sutherland')").includes('<img'));
+  assert(!run("ART.portrait('leila')").includes('<img'));
+  run('ART.useLocal({})');
+  assert(!run("ART.unit('glasgow')").includes('<img'));
   const read = registered[0].execute({});
   assert.equal(read.player, 'cf');
   registered[1].execute({ unitId: run('ownUnits()[0].id') });
