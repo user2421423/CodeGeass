@@ -42,7 +42,10 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   flash and an expanding sphere. Ground zero: every unit erased, a city devastated for 10 turns (no defenses,
   buildings back to level 0, no output), the land turned into a crater. The ring: units left at 10% with collapsed
   morale; cities lose their defenses and a level of every building. On the world map the blast is the target hex
-  plus one ring (a hex is ~330 km). (First-pass numbers.)
+  plus one ring (a hex is ~330 km). After the first successful detonation, a level-3 lab can build one
+  **F.L.E.I.J.A. Eliminator** charge per power for 1,200 credits, 300 industry, 250 research and 100 Sakuradite over
+  3 turns. The charge is tied to that city, protects targets within 2 hexes and automatically neutralizes one
+  incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).

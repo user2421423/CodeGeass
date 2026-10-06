@@ -162,8 +162,19 @@ const modal = () => node('modal-root').innerHTML;
   await run(`launchAt({ c: ${target[0]}, r: ${target[1]} })`);
   assert.equal(run('game.arsenal[game.player]'), 0);
   assert(run("game.log.some(l => l.text.startsWith('F.L.E.I.J.A. detonation'))"));
+  assert(run('E.eliminatorUnlocked(game)'));
   assert.equal(run(`E.tile(game, ${target[0]}, ${target[1]}).terrain`), 'crater');
+  run('selectStation(capitalOf(game.player).id)');
+  assert(node('side').innerHTML.includes('F.L.E.I.J.A. Eliminator'));
+  assert(node('side').innerHTML.includes('data-eliminator='));
   run('draw(48, .016); drawMinimap();');
+  const defended = run(
+    "(() => { const s = game.stations.find(s => s.owner !== game.player && s.owner !== 'neutral'); s.eliminator = 1; return s.c + ',' + s.r; })()",
+  ).split(',');
+  run('game.turn++; game.phase = game.player; game.arsenal[game.player] = 1;');
+  await run(`launchAt({ c: ${defended[0]}, r: ${defended[1]} })`);
+  assert.equal(run('game.arsenal[game.player]'), 0);
+  assert(run("node('fleija-alert').innerHTML.includes('F.L.E.I.J.A. eliminated')"));
   // A rival with a warhead strikes your city building one; the warning plays during its turn.
   run(
     '(() => { const s = capitalOf(game.player); s.project = { side: game.player, started: game.turn, ready: game.turn + 4 }; game.arsenal[game.order[1]] = 1; })()',

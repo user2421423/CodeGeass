@@ -2115,6 +2115,7 @@
       s.shield = 0;
       s.capturedTurn = g.turn;
       dropProject(g, s, 'captured');
+      dropEliminator(g, s, 'captured');
       captured = s.name;
       u.morale = 1;
       funds(g, u.side).credits += 40;
@@ -2715,7 +2716,19 @@
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
     aiRest: 8, // turns a rival waits after a launch before starting another warhead
   };
+  const ELIMINATOR = {
+    range: 2, // protects targets this many hexes from the city holding the charge
+    cost: { credits: 1200, industry: 300, science: 250, sakuradite: 100 },
+    turns: 3,
+    lab: 3,
+  };
   const devastated = (g, x) => (x?.devastated || 0) > g.turn;
+  function eliminatorUnlocked(g) {
+    return !!g.fleijaDetonated || (g.log || []).some(l => String(l.text || '').startsWith('F.L.E.I.J.A. detonation'));
+  }
+  function sideEliminator(g, side) {
+    return g.stations.find(s => s.owner === side && ((s.eliminator || 0) > 0 || s.eliminatorProject?.side === side)) || null;
+  }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
     return MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
@@ -2725,7 +2738,9 @@
       ? `Devastated by F.L.E.I.J.A. until turn ${s.devastated}`
       : s.project
         ? 'F.L.E.I.J.A. project under way'
-        : null;
+        : s.eliminatorProject
+          ? 'F.L.E.I.J.A. Eliminator project under way'
+          : null;
   }
   function projectReason(g, s) {
     if (!s) return 'Unavailable';
@@ -2747,31 +2762,89 @@
     log(g, `INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, s.owner);
     return { ok: true, ready: s.project.ready };
   }
+  function eliminatorReason(g, s) {
+    if (!s) return 'Unavailable';
+    const existing = sideEliminator(g, s.owner);
+    return (
+      (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (!eliminatorUnlocked(g) ? 'Available after the first F.L.E.I.J.A. detonation' : null) ||
+      cityBusyReason(g, s) ||
+      ((s.lab || 0) < ELIMINATOR.lab ? `Requires research lab level ${ELIMINATOR.lab}` : null) ||
+      (existing
+        ? existing.eliminatorProject
+          ? `Eliminator already under construction in ${existing.name}`
+          : `Eliminator charge already ready in ${existing.name}`
+        : null) ||
+      shortfall(funds(g, s.owner), ELIMINATOR.cost)
+    );
+  }
+  function startEliminator(g, id) {
+    const s = g.stations.find(s => s.id === id),
+      why = eliminatorReason(g, s);
+    if (why) return { ok: false, reason: why };
+    spend(funds(g, s.owner), ELIMINATOR.cost);
+    s.eliminatorProject = { side: s.owner, started: g.turn, ready: g.turn + ELIMINATOR.turns };
+    log(g, `INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, s.owner);
+    return { ok: true, ready: s.eliminatorProject.ready };
+  }
   function dropProject(g, s, why) {
     if (!s?.project) return;
     log(g, `${s.name}: the F.L.E.I.J.A. project is lost${why ? ' (' + why + ')' : ''}.`, s.owner);
     s.project = null;
   }
+  function dropEliminator(g, s, why) {
+    if (!s) return;
+    if (s.eliminatorProject) {
+      log(g, `${s.name}: the F.L.E.I.J.A. Eliminator project is lost${why ? ' (' + why + ')' : ''}.`, s.owner);
+      s.eliminatorProject = null;
+    }
+    if (s.eliminator) {
+      log(g, `${s.name}: the F.L.E.I.J.A. Eliminator charge is destroyed${why ? ' (' + why + ')' : ''}.`, s.owner);
+      s.eliminator = 0;
+    }
+  }
   // A surrendering power's projects and warheads are lost; its devastated cities stay without defenses.
   function annexStrategic(g, loser) {
     for (const s of g.stations) {
       if (s.project?.side === loser) dropProject(g, s, 'surrender');
+      if (s.eliminatorProject?.side === loser || s.eliminator) dropEliminator(g, s, 'surrender');
       if (devastated(g, s)) s.shield = 0;
     }
     if (g.arsenal) g.arsenal[loser] = 0;
   }
-  // Start of a power's turn: finished warheads join its arsenal; devastated cities stay without defenses.
+  // Start of a power's turn: finished strategic projects come online; devastated cities stay without defenses.
   function strategicTurn(g, side) {
     for (const s of g.stations) {
       if (devastated(g, s)) s.shield = 0;
-      if (s.project?.side !== side || s.owner !== side || s.project.ready > g.turn) continue;
-      s.project = null;
-      (g.arsenal ||= {})[side] = (g.arsenal[side] || 0) + 1;
-      log(g, `${s.name} completes a F.L.E.I.J.A. warhead.`, side);
+      if (s.project?.side === side && s.owner === side && s.project.ready <= g.turn) {
+        s.project = null;
+        (g.arsenal ||= {})[side] = (g.arsenal[side] || 0) + 1;
+        log(g, `${s.name} completes a F.L.E.I.J.A. warhead.`, side);
+      }
+      if (s.eliminatorProject?.side === side && s.owner === side && s.eliminatorProject.ready <= g.turn) {
+        s.eliminatorProject = null;
+        s.eliminator = 1;
+        log(g, `${s.name} completes a F.L.E.I.J.A. Eliminator charge.`, side);
+      }
     }
   }
   function blastArea(g, p, radius = FLEIJA.radius) {
     return within(g, p, radius);
+  }
+  function eliminatorDefender(g, attacker, p) {
+    if (!p) return null;
+    return (
+      g.stations
+        .filter(
+          s =>
+            s.owner !== attacker &&
+            MAJORS.includes(s.owner) &&
+            (s.eliminator || 0) > 0 &&
+            !devastated(g, s) &&
+            dist(g, s, p) <= ELIMINATOR.range,
+        )
+        .sort((a, b) => dist(g, a, p) - dist(g, b, p) || a.id - b.id)[0] || null
+    );
   }
   // What a strike is called: the city or mine at ground zero, else the nearest city.
   function targetName(g, p) {
@@ -2811,6 +2884,7 @@
     s.maxShield = Math.max(Math.min(base.maxShield + (s.fortBonus || 0), s.maxShield), s.maxShield - 60 * lostFactory);
     s.shield = 0;
     dropProject(g, s, 'destroyed');
+    dropEliminator(g, s, 'destroyed');
   }
   // Detonation: everything at ground zero is erased, the ring is left at 10% with collapsed morale.
   function launch(g, side, c, r) {
@@ -2823,6 +2897,26 @@
       name = targetName(g, center);
     g.arsenal[side]--;
     (g.launched ||= {})[side] = g.turn;
+    const defense = eliminatorDefender(g, side, center);
+    if (defense) {
+      defense.eliminator = 0;
+      log(g, `${defense.name}: F.L.E.I.J.A. Eliminator neutralizes the incoming warhead aimed at ${name}.`, defense.owner);
+      return {
+        ok: true,
+        side,
+        from: origin ? { c: origin.c, r: origin.r } : { c, r },
+        to: { c, r },
+        name,
+        intercepted: true,
+        defender: defense.owner,
+        eliminatorCity: defense.name,
+        destroyed: [],
+        crippled: [],
+        cities: [],
+        hit: [],
+      };
+    }
+    const unlocksEliminator = !eliminatorUnlocked(g);
     const destroyed = [],
       crippled = [],
       cities = [],
@@ -2855,11 +2949,14 @@
       }
       if (!ring && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
     }
+    g.fleijaDetonated = true;
     log(
       g,
       `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled${cities.length ? ', ' + cities.map(x => x.name).join(' and ') + ' in ruins' : ''}.`,
       side,
     );
+    if (unlocksEliminator)
+      log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
     checkVictory(g);
     return {
       ok: true,
@@ -2871,6 +2968,7 @@
       crippled,
       cities,
       hit,
+      eliminatorUnlocked: unlocksEliminator,
     };
   }
   // ---- Rival high command and F.L.E.I.J.A. ----
@@ -2886,7 +2984,8 @@
   function aiLaunchTarget(g, side) {
     const rival = s => !!s && s !== side && s !== 'neutral',
       seen = new Set();
-    let best = null;
+    let best = null,
+      protectedBest = null;
     const candidates = [
       ...g.units.filter(u => u.hp > 0 && rival(u.side)),
       ...g.stations.filter(s => rival(s.owner)),
@@ -2913,6 +3012,7 @@
           const levels = (s.tier || 0) + (s.lab || 0) + (s.refinery || 0);
           score += ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
           if (s.project) score += 2000;
+          if (s.eliminatorProject) score += 1600;
           if (
             !ring &&
             s.capitalOf === s.owner &&
@@ -2922,9 +3022,14 @@
             score += 1500;
         }
       }
-      if (safe && (!best || score > best.score)) best = { p, score };
+      if (!safe) continue;
+      const pick = { p, score };
+      if (eliminatorDefender(g, side, p)) {
+        if (!protectedBest || score > protectedBest.score) protectedBest = pick;
+      } else if (!best || score > best.score) best = pick;
     }
-    return best && best.score >= FLEIJA.aiThreshold ? best.p : null;
+    if (best && best.score >= FLEIJA.aiThreshold) return best.p;
+    return protectedBest && protectedBest.score >= FLEIJA.aiThreshold * 1.5 ? protectedBest.p : null;
   }
   function beginTurn(g, side, collect = true) {
     g.phase = side;
@@ -3615,7 +3720,7 @@
       if (s.owner !== side) {
         // A rival's F.L.E.I.J.A. project outranks even a capital.
         const i = s.r * g.cols + s.c,
-          d = s.project ? -8 : s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0;
+          d = s.project || s.eliminatorProject ? -8 : s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0;
         field[i] = d;
         push(i, d);
       }
@@ -3664,7 +3769,11 @@
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
-      .map(s => ({ s, threat: threat(s), capital: s.capitalOf === side || s.project?.side === side }))
+      .map(s => ({
+        s,
+        threat: threat(s),
+        capital: s.capitalOf === side || s.project?.side === side || s.eliminatorProject?.side === side || (s.eliminator || 0) > 0,
+      }))
       .filter(c => c.capital || c.threat > 0)
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
@@ -3733,9 +3842,21 @@
     if (!yard3.length || supers >= 2) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
       plan.saving = true;
-    // 2b. F.L.E.I.J.A.: one warhead at a time. A power with the Sakuradite for it (or the income to gather it soon)
+    // 2b. F.L.E.I.J.A. Eliminator: after the first detonation, rivals prioritize one defensive charge.
+    const defenseCity = eliminatorUnlocked(g) && !sideEliminator(g, side) ? fleijaCity(g, side, front) : null;
+    plan.eliminator =
+      !!defenseCity &&
+      ((e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite || income(g, side).sakuradite >= 10);
+    if (plan.eliminator && !eliminatorReason(g, defenseCity)) {
+      startEliminator(g, defenseCity.id);
+      plan.eliminator = false;
+    }
+    const defenseProject = g.stations.some(s => s.eliminatorProject?.side === side);
+    // 2c. F.L.E.I.J.A.: one warhead at a time. A power with the Sakuradite for it (or the income to gather it soon)
     // keeps that Sakuradite back, then saves credits and industry and starts the project in its best-lab city.
     const warCity =
+      !plan.eliminator &&
+      !defenseProject &&
       hasFleija(g, side) &&
       !g.stations.some(s => s.project?.side === side) &&
       !(g.arsenal?.[side] > 0) &&
@@ -3747,8 +3868,9 @@
       startProject(g, warCity.id);
       plan.warhead = false;
     }
-    const warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
-    if (plan.warhead) plan.saving = false;
+    const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
+      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
+    if (plan.eliminator || plan.warhead) plan.saving = false;
     if (plan.saving) {
       const yard = yard3.find(s => canBuy(g, s, superType, 1));
       if (yard) {
@@ -3756,17 +3878,27 @@
         plan.saving = false;
       }
     }
-    const reserve = warSaving
-      ? Math.min(e.credits, FLEIJA.cost.credits)
-      : plan.saving
-        ? Math.min(e.credits, superPrice.credits)
-        : 60;
-    const reserveInd = warSaving
-      ? Math.min(e.industry, FLEIJA.cost.industry)
-      : plan.saving
-        ? Math.min(e.industry, superPrice.industry)
-        : 0;
-    const reserveSak = plan.warhead ? FLEIJA.cost.sakuradite : plan.saving ? superPrice.sakuradite : 0;
+    const reserve = defenseSaving
+      ? Math.min(e.credits, ELIMINATOR.cost.credits)
+      : warSaving
+        ? Math.min(e.credits, FLEIJA.cost.credits)
+        : plan.saving
+          ? Math.min(e.credits, superPrice.credits)
+          : 60;
+    const reserveInd = defenseSaving
+      ? Math.min(e.industry, ELIMINATOR.cost.industry)
+      : warSaving
+        ? Math.min(e.industry, FLEIJA.cost.industry)
+        : plan.saving
+          ? Math.min(e.industry, superPrice.industry)
+          : 0;
+    const reserveSak = plan.eliminator
+      ? ELIMINATOR.cost.sakuradite
+      : plan.warhead
+        ? FLEIJA.cost.sakuradite
+        : plan.saving
+          ? superPrice.sakuradite
+          : 0;
     const spendable = () => Math.max(0, e.credits - reserve);
     const affordable = c =>
       c.credits <= spendable() &&
@@ -4102,7 +4234,12 @@
     refine,
     // F.L.E.I.J.A.
     FLEIJA,
+    ELIMINATOR,
     hasFleija,
+    eliminatorUnlocked,
+    eliminatorReason,
+    startEliminator,
+    eliminatorDefender,
     devastated,
     projectReason,
     startProject,

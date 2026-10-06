@@ -499,6 +499,51 @@ test('F.L.E.I.J.A. is conquest-only behind Research Lab III, which unlocks on tu
   assert.equal(g.arsenal.britannia, 1);
   assert.equal(s.project, null);
 });
+test('F.L.E.I.J.A. Eliminator unlocks after the first detonation and intercepts one nearby warhead', () => {
+  const g = blank('britannia'),
+    pendragon = g.stations[0];
+  g.turn = E.FLEIJA.labTurn;
+  pendragon.lab = 3;
+  assert.equal(E.eliminatorReason(g, pendragon), 'Available after the first F.L.E.I.J.A. detonation');
+  g.phase = 'eu';
+  g.arsenal = { eu: 1 };
+  const first = E.launch(g, 'eu', 6, 6);
+  assert(first.ok && !first.intercepted);
+  assert(first.eliminatorUnlocked);
+  assert(E.eliminatorUnlocked(g));
+  g.phase = 'britannia';
+  g.economy.britannia = { credits: 5000, industry: 5000, science: 5000, sakuradite: 500 };
+  assert.equal(E.eliminatorReason(g, pendragon), null);
+  const project = E.startEliminator(g, pendragon.id);
+  assert(project.ok);
+  assert.equal(project.ready, g.turn + E.ELIMINATOR.turns);
+  assert.deepEqual(g.economy.britannia, { credits: 3800, industry: 4700, science: 4750, sakuradite: 400 });
+  assert.equal(E.buyReason(g, pendragon, T('britannia', 'scout')), 'F.L.E.I.J.A. Eliminator project under way');
+  for (let t = 0; t < E.ELIMINATOR.turns; t++) {
+    g.turn++;
+    E.beginTurn(g, 'britannia', false);
+  }
+  assert.equal(pendragon.eliminator, 1);
+  assert.equal(pendragon.eliminatorProject, null);
+  const protectedTile = E.tile(g, 1, 0),
+    beforeTerrain = protectedTile.terrain;
+  g.phase = 'eu';
+  g.arsenal.eu = 1;
+  const blocked = E.launch(g, 'eu', protectedTile.c, protectedTile.r);
+  assert(blocked.ok && blocked.intercepted);
+  assert.equal(blocked.eliminatorCity, 'Pendragon');
+  assert.equal(pendragon.eliminator, 0);
+  assert.equal(protectedTile.terrain, beforeTerrain);
+  pendragon.eliminator = 1;
+  g.turn++;
+  g.phase = 'eu';
+  g.arsenal.eu = 1;
+  const far = E.tile(g, 8, 8),
+    hit = E.launch(g, 'eu', far.c, far.r);
+  assert(hit.ok && !hit.intercepted);
+  assert.equal(far.terrain, 'crater');
+  assert.equal(pendragon.eliminator, 1);
+});
 test('Capturing a city ends its F.L.E.I.J.A. project; a surrendering power loses its warheads', () => {
   const g = blank('britannia');
   g.stations.push({
@@ -511,16 +556,22 @@ test('Capturing a city ends its F.L.E.I.J.A. project; a surrendering power loses
     capitalOf: null,
     shield: 0,
     project: { side: 'cf', started: 1, ready: 5 },
+    eliminatorProject: { side: 'cf', started: 1, ready: 4 },
+    eliminator: 1,
   });
   const u = E.newUnit(g, T('britannia', 'scout'), 'britannia', 5, 6);
   assert(E.move(g, u.id, 6, 6).ok);
   assert.equal(g.stations[3].project, null);
+  assert.equal(g.stations[3].eliminatorProject, null);
+  assert.equal(g.stations[3].eliminator, 0);
   assert(g.log.some(l => /Beijing: the F\.L\.E\.I\.J\.A\. project is lost/.test(l.text)));
   g.arsenal = { cf: 2 };
+  g.stations[2].eliminator = 1;
   g.stations[2].shield = 0;
   const v = E.newUnit(g, T('britannia', 'scout'), 'britannia', 10, 11);
   assert(E.move(g, v.id, 11, 11).annexed);
   assert.equal(g.arsenal.cf, 0);
+  assert.equal(g.stations[2].eliminator, 0);
 });
 test('A F.L.E.I.J.A. strike erases ground zero, cripples the ring and devastates the city there', () => {
   const g = blank('britannia'),

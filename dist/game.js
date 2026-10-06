@@ -190,7 +190,7 @@ function arsenalButton() {
 }
 // The strategic-weapon warning, then a white-pink flash and the expanding sphere. A rival's strike has already been
 // resolved by the engine; your own fires (fire()) while the warning covers the screen.
-async function fleijaSequence(target, side, name, fire = null) {
+async function fleijaSequence(target, side, name, fire = null, resolved = null) {
   const alert = $('fleija-alert');
   alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Strategic weapon detected</span><b>F.L.E.I.J.A. warhead</b><span class="fleija-impact">Impact: ${esc(name)}</span><small>${esc(F(side).name)}</small></div>`;
   alert.hidden = false;
@@ -199,7 +199,21 @@ async function fleijaSequence(target, side, name, fire = null) {
   zoom = Math.max(zoom, 3.2);
   centerOn(target);
   await pause(2000);
-  const result = fire ? fire() : null;
+  const result = fire ? fire() : resolved;
+  if (result?.intercepted) {
+    alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Countermeasure engaged</span><b>F.L.E.I.J.A. eliminated</b><span class="fleija-impact">${esc(result.eliminatorCity)}</span><small>${esc(F(result.defender).name)}</small></div>`;
+    await pause(1200);
+    alert.classList.remove('show');
+    alert.hidden = true;
+    minimapDirty = true;
+    render();
+    return result;
+  }
+  if (result && !result.ok) {
+    alert.classList.remove('show');
+    alert.hidden = true;
+    return result;
+  }
   alert.classList.remove('show');
   alert.hidden = true;
   flash = 1;
@@ -232,10 +246,11 @@ function blastSummary(p) {
 function confirmLaunch(p) {
   const { tally, cities, own } = blastSummary(p),
     name = E.targetName(game, p),
+    defense = E.eliminatorDefender(game, game.player, p),
     rows = Object.entries(tally)
       .map(([side, k]) => `<li><b style="color:${F(side).color}">${F(side).short}</b> ${k.erased} erased · ${k.crippled} crippled</li>`)
       .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => !c.ring) ? ` and ${esc(cities.find(c => !c.ring).s.name)} is devastated for ${E.FLEIJA.devastation} turns: no defenses, no buildings, no output` : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.ring) ? `; ${cities.filter(c => c.ring).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.ring).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => !c.ring) ? ` and ${esc(cities.find(c => !c.ring).s.name)} is devastated for ${E.FLEIJA.devastation} turns: no defenses, no buildings, no output` : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.ring) ? `; ${cities.filter(c => c.ring).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.ring).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}${defense ? `<div class="info-strip">F.L.E.I.J.A. Eliminator coverage detected from ${esc(defense.name)}. This warhead will be neutralized and consume its one defensive charge.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
   focusDialog();
 }
 async function launchAt(p) {
@@ -250,7 +265,13 @@ async function launchAt(p) {
   }
   undoStack = [];
   refreshAndSave();
-  toast(`F.L.E.I.J.A. detonation at ${name}: ${result.destroyed.length} units erased, ${result.crippled.length} crippled.`, true);
+  if (result.intercepted)
+    toast(`F.L.E.I.J.A. Eliminator at ${result.eliminatorCity} neutralized the warhead.`, true);
+  else
+    toast(
+      `F.L.E.I.J.A. detonation at ${name}: ${result.destroyed.length} units erased, ${result.crippled.length} crippled.${result.eliminatorUnlocked ? ' Eliminator countermeasures are now available at level-3 research labs.' : ''}`,
+      true,
+    );
 }
 // Why the player cannot act right now (rival phase or finished operation).
 function phaseReason() {
@@ -456,16 +477,28 @@ function shipyardReason(s) {
     (!E.recruitOptions(game, s, game.player).length ? 'No free land hex next to the city' : null)
   );
 }
-// F.L.E.I.J.A. at a city: your project or its button, or intelligence on a rival's project.
+// Strategic projects at a city: F.L.E.I.J.A. offense and the one-charge Eliminator defense.
 function projectPanel(s) {
   const ours = s.owner === game.player,
-    p = s.project;
+    p = s.project,
+    ep = s.eliminatorProject;
   if (p) {
     const left = Math.max(0, p.ready - game.turn);
     return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. project' : 'Intelligence'}</span><h3>${ours ? 'Warhead under construction' : 'Strategic weapons research detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${p.ready} (${left} turn${left === 1 ? '' : 's'}). ${ours ? 'The city builds nothing else meanwhile; if it is captured, the project is lost.' : 'Capture the city to stop it.'}</p></div>`;
   }
-  if (!ours || !E.hasFleija(game, game.player)) return '';
-  return `<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`;
+  if (ep) {
+    const left = Math.max(0, ep.ready - game.turn);
+    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). It will neutralize one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of this city.</p></div>`;
+  }
+  const blocks = [];
+  if (s.eliminator)
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>Eliminator charge ready</h3><p>Automatically neutralizes the next incoming F.L.E.I.J.A. aimed within ${E.ELIMINATOR.range} hexes of ${esc(s.name)}. One use.</p></div>`);
+  if (!ours) return blocks.join('');
+  if (E.hasFleija(game, game.player))
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`);
+  if (E.eliminatorUnlocked(game) && !s.eliminator)
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Only one charge may be ready per power.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
+  return blocks.join('');
 }
 function fortressPanel(s) {
   if (!s.fort) return '';
@@ -594,11 +627,18 @@ async function endTurn(force = false) {
     render();
     if (game.strikes?.some(s => onScreen(s.to)) && !skipAI) await pause(900);
     // F.L.E.I.J.A.: every power hears of a new project; a launch always plays in full, even when skipping.
-    for (const s of game.stations)
+    for (const s of game.stations) {
       if (s.project?.side === side && s.project.started === game.turn)
         toast(`INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, true);
+      if (s.eliminatorProject?.side === side && s.eliminatorProject.started === game.turn)
+        toast(`INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, true);
+    }
     for (const shot of game.launches || []) {
-      await fleijaSequence(shot.to, side, shot.name);
+      await fleijaSequence(shot.to, side, shot.name, null, shot);
+      if (shot.intercepted)
+        toast(`F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`, true);
+      else if (shot.eliminatorUnlocked)
+        toast('F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', true);
       if (token !== aiToken) return;
     }
     const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).map(u => u.id),
@@ -868,10 +908,14 @@ function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
 // A power's strategic weapons as intelligence sees them: projects under way and warheads ready.
 function strategicText(side) {
   const projects = game.stations.filter(s => s.project?.side === side),
+    eliminatorProjects = game.stations.filter(s => s.eliminatorProject?.side === side),
+    eliminators = game.stations.filter(s => s.owner === side && s.eliminator),
     warheads = game.arsenal?.[side] || 0,
     parts = [
-      ...projects.map(s => `building in ${s.name} (turn ${s.project.ready})`),
-      ...(warheads ? [`${warheads} ready`] : []),
+      ...projects.map(s => `F.L.E.I.J.A. building in ${s.name} (turn ${s.project.ready})`),
+      ...(warheads ? [`F.L.E.I.J.A. ×${warheads} ready`] : []),
+      ...eliminatorProjects.map(s => `Eliminator building in ${s.name} (turn ${s.eliminatorProject.ready})`),
+      ...eliminators.map(s => `Eliminator ready at ${s.name}`),
     ];
   return parts.length ? `<span class="fleija-text">${parts.join(' · ')}</span>` : '—';
 }
@@ -893,7 +937,7 @@ function powersDialog() {
       return `<span class="deposit-chip" style="border-color:${F(owner).color}">${ICONS.use('sakuradite', 'cost-ico')} ${esc(d.name)} <small>${host} · ${F(owner).short} · +${E.depositYield(game, d).sakuradite}</small></span>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="World powers"><div class="dialog-head"><div><div class="eyebrow">Turn ${game.turn} of ${E.ARMISTICE}</div><h2>World powers</h2></div><button class="small close" data-action="close">Close</button></div><table class="powers"><thead><tr><th>Power</th><th>Capital</th><th>Cities</th><th>Income</th><th>Sakuradite</th><th>F.L.E.I.J.A.</th><th>Units</th></tr></thead><tbody>${rows}<tr><td><span class="legend-dot" style="background:#d8cfa6"></span> Neutral powers</td><td>Australia · Middle East</td><td>${neutral}</td><td>—</td><td>—</td><td>—</td><td>${game.units.filter(u => u.hp > 0 && u.side === 'neutral').length}</td></tr></tbody></table>${deposits ? `<span class="label">Sakuradite deposits</span><div class="deposit-list">${deposits}</div>` : ''}<p class="description">A power surrenders when its capital falls: its cities pass to the conqueror and its armies disband. Win by taking every rival capital, or by holding the most cities at the ${E.ARMISTICE}-turn armistice.</p></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="World powers"><div class="dialog-head"><div><div class="eyebrow">Turn ${game.turn} of ${E.ARMISTICE}</div><h2>World powers</h2></div><button class="small close" data-action="close">Close</button></div><table class="powers"><thead><tr><th>Power</th><th>Capital</th><th>Cities</th><th>Income</th><th>Sakuradite</th><th>Strategic</th><th>Units</th></tr></thead><tbody>${rows}<tr><td><span class="legend-dot" style="background:#d8cfa6"></span> Neutral powers</td><td>Australia · Middle East</td><td>${neutral}</td><td>—</td><td>—</td><td>—</td><td>${game.units.filter(u => u.hp > 0 && u.side === 'neutral').length}</td></tr></tbody></table>${deposits ? `<span class="label">Sakuradite deposits</span><div class="deposit-list">${deposits}</div>` : ''}<p class="description">A power surrenders when its capital falls: its cities pass to the conqueror and its armies disband. Win by taking every rival capital, or by holding the most cities at the ${E.ARMISTICE}-turn armistice.</p></section></div>`;
   focusDialog();
 }
 // The field manual's Sakuradite entry, built from the engine's numbers.
@@ -911,7 +955,9 @@ function sakuraditeManual() {
 function fleijaManual() {
   const f = E.FLEIJA,
     c = f.cost;
-  return `The Sakuradite superweapon is conquest-only, not permanent HQ research. Research Lab III unlocks for every major power on turn ${f.labTurn}; a city with a level-${f.lab} lab can then build a warhead for ${c.credits} credits, ${c.industry} industry, ${c.science} research and ${c.sakuradite} Sakuradite over ${f.turns} turns and builds nothing else meanwhile. Every power is alerted when work begins, and capturing the city ends the project. Launch a finished warhead from the arsenal button at any hex, once a turn. Ground zero: every unit is erased, a city there is devastated for ${f.devastation} turns (no defenses, buildings back to level 0, no output) and the land becomes a crater. The ring around it: units are left at ${Math.round(f.ringHP * 100)}% with collapsed morale; cities lose their defenses and a level of every building. The blast spares no one, including your own forces.`;
+  const e = E.ELIMINATOR,
+    ec = e.cost;
+  return `The Sakuradite superweapon is conquest-only, not permanent HQ research. Research Lab III unlocks for every major power on turn ${f.labTurn}; a city with a level-${f.lab} lab can then build a warhead for ${c.credits} credits, ${c.industry} industry, ${c.science} research and ${c.sakuradite} Sakuradite over ${f.turns} turns and builds nothing else meanwhile. Every power is alerted when work begins, and capturing the city ends the project. Launch a finished warhead from the arsenal button at any hex, once a turn. Ground zero: every unit is erased, a city there is devastated for ${f.devastation} turns (no defenses, buildings back to level 0, no output) and the land becomes a crater. The ring around it: units are left at ${Math.round(f.ringHP * 100)}% with collapsed morale; cities lose their defenses and a level of every building. After the first successful detonation, level-${e.lab} labs can build a F.L.E.I.J.A. Eliminator for ${ec.credits} credits, ${ec.industry} industry, ${ec.science} research and ${ec.sakuradite} Sakuradite over ${e.turns} turns. One ready charge protects targets within ${e.range} hexes of its city and automatically neutralizes one incoming warhead; capturing or ruining that city destroys it. The blast itself spares no one, including your own forces.`;
 }
 function helpDialog() {
   modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="Field manual"><div class="dialog-head"><div><div class="eyebrow">Field manual</div><h2>War on a world of hexes</h2></div><button class="small close" data-action="help-close">Close</button></div><div class="help-grid"><div><b>Movement &amp; firing</b><p>Every unit can move once, then attack once per turn. Attacking ends its movement. Select a unit, click a green hex to move, and click a red hex to attack at once; hover a red hex to see the expected damage. Undo (Z) returns a unit that moved but has not fired.</p></div><div><b>Three branches</b><p>As WC4's infantry, tanks and artillery, every Knightmare belongs to a branch. <b>Infantry</b>: cheap scouts, assault frames (+55% against Armor and city defenses) and five-hex raiders. <b>Armor</b>: line, mainline, heavy and super-heavy frames with breakthroughs. <b>Artillery</b>: fire support at range 1 and rocket and siege frames at exactly range 2. Artillery attacks draw no counter-fire and cannot capture cities.</p></div><div><b>Factions</b><p>Each power builds its own frames. Britannia: Glasgow, Gloucester, Gracchus, Sutherland, Vincent Ward, Brighton, Gawain, Liverpool, Gareth, Zetland. E.U.: Alexander Drone, Amanecer, Alexander Type-02, Estrella, Valiant, Redorga, Liberte, Gardmare, Panzer-Hummel, Panzer-Wespe. Federation: Gun-Ru, Guren Type-01, Chuyen, Gekka, Akatsuki, Wang Hu, Shen Hu, Guren Type-Hei, Zangetsu, Sutherland Sieg. Doctrines: Britannian Armor +8% damage, E.U. Artillery +10% damage, Federation Infantry 15% cheaper.</p></div><div><b>Oceans &amp; transports</b><p>The map wraps around the globe. A land unit with movement left may step onto a sea hex: it embarks as a transport and stops. Embarked units sail 5 hexes a turn (more with Naval Transports), cannot fire or counter-fire, and take 50% extra damage. Sailing onto a coast hex lands the unit and ends its move; landing on an undefended enemy city captures it.</p></div><div><b>Capture cities &amp; capitals</b><p>Break a city's defenses and remove its garrison, then move an Infantry or Armor unit in. Cities produce credits, industry and research, and repair garrisons 8% each turn. As in WC4, when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to the conqueror and its armies disband. Lose your own capital and the war is lost.</p></div><div><b>Stacking &amp; breakthroughs</b><p>Build 1–3-frame units. Each extra frame adds 70% HP and 45% attack. After a kill, line and mainline frames may fire once more per turn; Cornelia, Gino and Ashley allow two. Heavy and super-heavy frames fire again after every kill, and their first kill also restores movement.</p></div><div><b>Commanders &amp; morale</b><p>Commanders lead units: each has one signature ability and branch ratings (up to 6 stars). Operation commanders come with the war and are fixed. Your commanders live in HQ → Commanders: two per faction to start (Suzaku and Cornelia, Leila and Akito, Xingke and Xianglin); recruit the rest with command tokens, promote them through eleven ranks (unit frame 112% to 160%), buy stars and wear medals. High morale gives +25% damage; low −25%, diminished −50%; confused units cannot act. Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem lower nearby enemy morale by 2.</p></div><div><b>Terrain</b><p>Plains cost 1. Forests (−15% damage taken) and mountains (−25%) cost 2. Deserts cost 1 but drain 3% of a frame each turn; tundra costs 2 and drains 2.5%. The high Himalaya and the Greenland ice cap are impassable. Julius and float units ignore terrain costs.</p></div><div><b>Factories &amp; buildings</b><p>Each city builds one unit per turn; new units act next turn. Every city has a Knightmare factory (heavier frames at levels 2 and 3, +10 industry) and a research lab (+8 research). Research Lab III unlocks on turn ${E.FLEIJA.labTurn}; cities on a Sakuradite deposit also build a Sakuradite refinery.</p></div><div><b>Sakuradite</b><p>${sakuraditeManual()}</p></div><div><b>F.L.E.I.J.A.</b><p>${fleijaManual()}</p></div><div><b>Fortress batteries</b><p>Capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo, Liaodong, Singapore, Panama, Pearl Harbor) carry a battery. Select your city and click a red hex to strike an enemy unit within 3 hexes for 40% of its frame. It recharges for 2 turns and is silenced while the city's defenses are down. Rivals fire theirs too.</p></div><div><b>HQ research &amp; command tokens</b><p>As in World Conqueror 4, technology is researched at Command HQ with command tokens and kept across every operation and faction. The first win at each difficulty pays 250 + 150 tokens plus banked research, ×1.5 on Hard and ×2 on Challenge, with 150 more for your first win ever. Five trees (Infantry, Armor, Artillery, Sakuradite, Cities); higher tiers open after 2, 4 and 7 wins.</p></div><div><b>Difficulty</b><p>Normal is the world as it stands. Hard gives the rival powers all tier I–II research, upgrades half their units a class and adds a unit for every four. Challenge gives them every technology, upgrades every unit with an extra frame, adds a unit for every two and raises their income 25%. Rival commanders start one or two ranks higher.</p></div><div><b>Rival turns</b><p>Each rival power moves after you, in order. Moves off screen resolve instantly; press Skip to finish a rival turn at once. Rivals fight each other as well as you, and the neutral powers (Australia, the Middle Eastern Federation) only defend.</p></div></div><div class="info-strip">Controls: N cycles ready units · Click or Enter on a red hex attacks · Z undoes the last move · Escape clears the selection or closes a menu · Arrow keys move the hex cursor and Enter selects · Drag or WASD pans · Scroll / + / − zooms · 0 shows the world · H centers on your capital · Click the minimap to jump.</div><p style="font-size:12px">${NOTICE} Unit names and roles follow the <a href="https://codegeass.fandom.com/wiki/Knightmare_Frame" target="_blank" rel="noopener noreferrer">Code Geass wiki</a>; drawn artwork is original; published imagery is credited in the project’s ASSETS.md. Gameplay draws on <a href="https://apps.apple.com/sg/app/world-conqueror-4/id1258468290" target="_blank" rel="noopener noreferrer">EasyTech’s World Conqueror 4</a>. Numbers are adapted for this game.</p></section></div>`;
@@ -1380,6 +1426,13 @@ document.addEventListener('click', e => {
     doAction(() => E.startProject(game, +d.project));
     const s = game.stations.find(s => s.id === +d.project);
     if (s?.project) toast(`F.L.E.I.J.A. warhead under way in ${s.name}: ready on turn ${s.project.ready}. Every power has been alerted.`, true);
+    return;
+  }
+  if (d.eliminator) {
+    doAction(() => E.startEliminator(game, +d.eliminator));
+    const s = game.stations.find(s => s.id === +d.eliminator);
+    if (s?.eliminatorProject)
+      toast(`F.L.E.I.J.A. Eliminator under way in ${s.name}: ready on turn ${s.eliminatorProject.ready}.`, true);
     return;
   }
   if (d.launch) {
@@ -2382,7 +2435,7 @@ function draw(time, dt) {
         ctx.arc(26, -22, 3, 0, Math.PI * 2);
         ctx.fill();
       }
-      // A F.L.E.I.J.A. project: a pulsing pink ring and its countdown; ruins show the turns left.
+      // Strategic projects: pink for F.L.E.I.J.A., cyan for the one-charge Eliminator.
       if (s.project) {
         const pulse = 0.5 + 0.5 * Math.sin(time / 300);
         ctx.strokeStyle = `rgba(255,95,174,${0.45 + 0.5 * pulse})`;
@@ -2391,6 +2444,24 @@ function draw(time, dt) {
         ctx.arc(0, -4, R * (0.95 + 0.07 * pulse), 0, Math.PI * 2);
         ctx.stroke();
         outlinedText(`F.L.E.I.J.A. · ${Math.max(0, s.project.ready - game.turn)}`, 0, -R - 4, 10, '#ff9fd0', scale, 'Trebuchet MS', true);
+      }
+      if (s.eliminatorProject || s.eliminator) {
+        const pulse = 0.5 + 0.5 * Math.sin(time / 260);
+        ctx.strokeStyle = `rgba(130,225,255,${0.5 + 0.45 * pulse})`;
+        ctx.lineWidth = Math.max(2.2, 1.8 / scale);
+        ctx.beginPath();
+        ctx.arc(0, -4, R * (0.78 + 0.05 * pulse), 0, Math.PI * 2);
+        ctx.stroke();
+        outlinedText(
+          s.eliminator ? 'ELIMINATOR · READY' : `ELIMINATOR · ${Math.max(0, s.eliminatorProject.ready - game.turn)}`,
+          0,
+          -R - (s.project ? 16 : 4),
+          9,
+          '#9eeaff',
+          scale,
+          'Trebuchet MS',
+          true,
+        );
       }
       if (E.devastated(game, s))
         outlinedText(`RUINS · ${s.devastated - game.turn}`, 0, garrison ? 62 : 56, 9.5, '#ffb3d6', scale, 'Trebuchet MS', true);

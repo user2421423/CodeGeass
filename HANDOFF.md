@@ -144,8 +144,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Access: F.L.E.I.J.A. is conquest-only and has no HQ node. Research Lab III unlocks on turn 15 for every major power;
   `hasFleija(g, side)` uses that same universal turn gate, while `projectReason` still requires Lab III in the city.
 - State: `s.project = { side, started, ready }` on a city; `g.arsenal[side]` warheads; `g.launched[side]` the turn
-  of the last launch; `s.devastated` / mine `d.devastated` = the turn output resumes; `g.launches` (this AI turn's
-  strikes, played by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
+  of the last launch; `g.fleijaDetonated` unlocks countermeasures after the first successful blast;
+  `s.eliminatorProject = { side, started, ready }` and `s.eliminator = 1` hold the defensive project/charge;
+  `s.devastated` / mine `d.devastated` = the turn output resumes; `g.launches` (this AI turn's strikes, played
+  by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
 - Rules: `projectReason`/`startProject` (logs the INTELLIGENCE line), `cityBusyReason` blocks units and buildings in
   a city with a project or in ruins, `strategicTurn` (called from `beginTurn`) completes warheads and keeps ruins at
   0 defenses, `dropProject` on capture, ruin or surrender (`annexStrategic` also empties the loser's arsenal).
@@ -154,18 +156,28 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   10 turns devastated (owner unchanged), mine refinery 0, crater. Ring: units to 10% and their morale floor; cities
   `ruin(…, 1)` (defenses 0, one level off each building and the output it added, never below founding values from
   `CITY_DATA`). A factory at level 0 is rebuilt for 110 credits / 25 industry.
+- F.L.E.I.J.A. Eliminator: `ELIMINATOR` is conquest-only and unlocks only after the first successful F.L.E.I.J.A.
+  detonation. A level-3 lab builds one charge per power for 1,200 credits / 300 industry / 250 research /
+  100 Sakuradite over 3 turns. The completed charge is tied to its city and automatically intercepts one enemy
+  warhead targeted within range 2; the attacking warhead and defensive charge are both consumed and no blast occurs.
+  Capture, surrender or F.L.E.I.J.A. ruin destroys the project/charge. `eliminatorReason`, `startEliminator`,
+  `eliminatorDefender` and `dropEliminator` implement it.
 - AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ruins score 0;
   projects +2000; a live capital +1500 only with the launcher's capturing units within 4 hexes), skips any blast
   touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches; step 2b starts one warhead
   at a time in `fleijaCity` (best lab, then farthest from the enemy) once it holds the Sakuradite or earns 15+ a
   turn, saving credits/industry when ready and waiting `aiRest` turns after a launch; step 3 begins preparing that
-  city's lab five turns before turn 15, but Lab III itself cannot be built before turn 15. Rival projects seed
-  `goalField` at −8 (above capitals), attacks on them score
+  city's lab five turns before turn 15, but Lab III itself cannot be built before turn 15. After the first blast,
+  AI powers prioritize one Eliminator charge and reserve its Sakuradite before resuming warhead production.
+  `aiLaunchTarget` prefers unprotected targets but will spend a warhead to burn an Eliminator protecting a target
+  worth at least 1.5× the normal threshold. Rival strategic projects seed `goalField` at −8 (above capitals), attacks on them score
   +120 and a power guards its own project city like its capital.
 - UI (`game.js`): `arsenalButton` (top bar), `strikeMode` targeting with a blast preview, `confirmLaunch`,
   `launchAt`, `fleijaSequence` (the `#fleija-alert` warning in `index.html`, `SFX.play('fleija')`, the `flash`
   overlay and the `fleija` sphere effect; it plays for rival launches during `endTurn` even after Skip),
   `projectPanel` in the city panel, `strategicText` in World powers, ruins and project markers on the map.
+  Eliminator projects/ready charges use cyan map rings; protected launch confirmations warn that the warhead will be
+  consumed, and `fleijaSequence` shows a separate "F.L.E.I.J.A. eliminated" interception state instead of a blast.
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
   Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
 
