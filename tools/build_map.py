@@ -8,8 +8,8 @@ Output: a JS snippet (WORLD_ROWS) to paste into dist/engine.js, one string per r
   . sea   p plains   f forest   m mountains   d desert   s snow/tundra   x impassable peaks / ice cap
 
 Run:  python3 tools/build_map.py > /tmp/world.txt   (prints the JS block and an ASCII preview on stderr)
-Coastlines are deliberately coarse: this is a game map, not an atlas. FORCE_LAND / FORCE_SEA fix small
-islands and straits after rasterizing.
+Coastlines are hand-drawn for gameplay rather than GIS-precise, but the high-resolution raster keeps their shape
+close to the world map. FORCE_LAND / FORCE_SEA preserve small islands, isthmuses and important straits.
 """
 import math
 import sys
@@ -276,6 +276,7 @@ FORCE_LAND = [
     (158.6, 53.0), (-150, 61.2), (-166, 66),  # Kamchatka, Alaska
     (23.7, 38.0), (29.0, 41.0), (35.5, 33.9), (33, 30),  # Athens, Istanbul, Levant, Sinai
     (147.2, -9.4), (106.8, -6.2), (110, -7.3),  # Port Moresby, Java
+    (100.0, 10.85),  # Kra Isthmus: keep the Thai–Malay peninsula continuous at high resolution
 ]
 FORCE_SEA = [
     (0, 52.16), (-1.8, 49.04), (-5.4, 49.04),  # English Channel: Britain is an island
@@ -292,6 +293,8 @@ FORCE_SEA = [
     (5, 39.5), (-2, 37.5),  # western Mediterranean
     (20, 58.5),  # Baltic
     (-85, 58),  # Hudson Bay
+    (-3.0, 36.45), (-6.0, 34.75), (-4.0, 34.75), (-2.0, 34.75),  # Strait of Gibraltar / Alboran Sea
+    (105.0, -4.5),  # Sunda Strait: keep Java separated from Sumatra/mainland Asia
 ]
 
 
