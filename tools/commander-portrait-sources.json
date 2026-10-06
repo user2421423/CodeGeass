@@ -1,159 +1,181 @@
 {
-  "notice": "Portrait sources identified for the commander expansion. These are source references only; no binary portrait is published until it has been cropped, processed, hashed and added to dist/assets/art/portraits.",
+  "notice": "Commander expansion portrait sources and published local asset paths. Portraits are stored in the repository; runtime does not depend on external image hosts.",
   "commanders": [
     {
       "id": "zero",
       "name": "Lelouch vi Britannia / Zero",
       "page": "https://codegeass.fandom.com/wiki/Lelouch_vi_Britannia",
       "image": "https://static.wikia.nocookie.net/codegeass/images/6/6a/LelouchviBritannia.jpg/revision/latest/scale-to-width-down/1200?cb=20120107132514",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/zero-78b808b17079.webp"
     },
     {
       "id": "kallen",
       "name": "Kallen Kōzuki",
       "page": "https://codegeass.fandom.com/wiki/Kallen_K%C5%8Dzuki",
       "image": "https://static.wikia.nocookie.net/codegeass/images/7/75/1619487-kallen.jpg/revision/latest?cb=20111226053129",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/kallen-2d97aa0e5ce2.webp"
     },
     {
       "id": "tohdoh",
       "name": "Kyoshiro Tohdoh",
       "page": "https://codegeass.fandom.com/wiki/Kyoshiro_Tohdoh",
       "image": "https://static.wikia.nocookie.net/codegeass/images/4/4c/Tohdoh.jpg/revision/latest/scale-to-width-down/1200?cb=20100523223701",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/tohdoh-4f6e2703ed4f.webp"
     },
     {
       "id": "cc",
       "name": "C.C.",
       "page": "https://codegeass.fandom.com/wiki/C.C.",
       "image": "https://static.wikia.nocookie.net/codegeass/images/f/f8/C.C.20.jpg/revision/latest/scale-to-width-down/1200?cb=20120108105947",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/cc-f4ce4228b201.webp"
     },
     {
       "id": "ohgi",
       "name": "Kaname Ohgi",
       "page": "https://codegeass.fandom.com/wiki/Kaname_Ohgi",
       "image": "https://static.wikia.nocookie.net/codegeass/images/a/a6/Kaname_Ohgi.png/revision/latest/scale-to-width-down/1200?cb=20091118224219",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/ohgi-3135b3a335e2.webp"
     },
     {
       "id": "chiba",
       "name": "Nagisa Chiba",
       "page": "https://codegeass.fandom.com/wiki/Nagisa_Chiba",
       "image": "https://static.wikia.nocookie.net/codegeass/images/1/1c/Nagisa00.jpg/revision/latest/scale-to-width-down/1200?cb=20120420153417",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/chiba-2a8d68b85b10.webp"
     },
     {
       "id": "asahina",
       "name": "Shōgo Asahina",
       "page": "https://codegeass.fandom.com/wiki/Sh%C5%8Dgo_Asahina",
       "image": "https://static.wikia.nocookie.net/codegeass/images/2/21/Shogo_Asahina_-_1.png/revision/latest/scale-to-width-down/1200?cb=20130113012525",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/asahina-9c1cd13d87e7.webp"
     },
     {
       "id": "senba",
       "name": "Ryōga Senba",
       "page": "https://codegeass.fandom.com/wiki/Ry%C5%8Dga_Senba",
       "image": "https://static.wikia.nocookie.net/codegeass/images/8/8e/Ry%C5%8Dga_Senba.png/revision/latest/scale-to-width-down/1200?cb=20130204153700",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/senba-25588f9384c9.webp"
     },
     {
       "id": "urabe",
       "name": "Kōsetsu Urabe",
       "page": "https://codegeass.fandom.com/wiki/K%C5%8Dsetsu_Urabe",
       "image": "https://static.wikia.nocookie.net/codegeass/images/0/0b/K%C5%8Dsetsu_Urabe.png/revision/latest/scale-to-width-down/1200?cb=20091112003037",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/urabe-70da55427282.webp"
     },
     {
       "id": "sugiyama",
       "name": "Kento Sugiyama",
       "page": "https://codegeass.fandom.com/wiki/Kento_Sugiyama",
       "image": "https://static.wikia.nocookie.net/codegeass/images/9/96/Kento.png/revision/latest/scale-to-width-down/1200?cb=20120513064326",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/sugiyama-9012f351d673.webp"
     },
     {
       "id": "minami",
       "name": "Yoshitaka Minami",
       "page": "https://codegeass.fandom.com/wiki/Yoshitaka_Minami",
       "image": "https://static.wikia.nocookie.net/codegeass/images/3/38/Yoshitaka_Minami.png/revision/latest/scale-to-width-down/1200?cb=20130218144922",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/minami-020c7b02939d.webp"
     },
     {
       "id": "tamaki",
       "name": "Shinichirō Tamaki",
       "page": "https://codegeass.fandom.com/wiki/Shinichir%C5%8D_Tamaki",
       "image": "https://static.wikia.nocookie.net/codegeass/images/3/31/Shinichir%C5%8D_Tamaki.png/revision/latest/scale-to-width-down/1200?cb=20091105023627",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/tamaki-1cee92e724c5.webp"
     },
     {
       "id": "katase",
       "name": "Tatewaki Katase",
       "page": "https://codegeass.fandom.com/wiki/Tatewaki_Katase",
       "image": "https://static.wikia.nocookie.net/codegeass/images/5/56/Katase_Tatewaki.png/revision/latest/scale-to-width-down/1200?cb=20091118220726",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/katase-2e2d597e95f8.webp"
     },
     {
       "id": "inoue",
       "name": "Naomi Inoue",
       "page": "https://codegeass.fandom.com/wiki/Naomi_Inoue",
       "image": "https://static.wikia.nocookie.net/codegeass/images/0/04/Inoue.png/revision/latest/scale-to-width-down/1200?cb=20111231063438",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/inoue-2519cfa03cf4.webp"
     },
     {
       "id": "villetta",
       "name": "Villetta Nu",
       "page": "https://codegeass.fandom.com/wiki/Villetta_Nu",
       "image": "https://static.wikia.nocookie.net/codegeass/images/4/47/VillettaFace.jpg/revision/latest?cb=20240703044757",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/villetta-4ce3cc8093ad.webp"
     },
     {
       "id": "kewell",
       "name": "Kewell Soresi",
       "page": "https://codegeass.fandom.com/wiki/Kewell_Soresi",
       "image": "https://static.wikia.nocookie.net/codegeass/images/8/8d/Kewell_Soresi.png/revision/latest/scale-to-width-down/1200?cb=20091118215459",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/kewell-c1ebb31e4e21.webp"
     },
     {
       "id": "monica",
       "name": "Monica Krushevsky",
       "page": "https://codegeass.fandom.com/wiki/Monica_Krushevsky",
       "image": "https://static.wikia.nocookie.net/codegeass/images/d/d9/Monica_Kruszewski.jpg/revision/latest?cb=20110705225205",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/monica-1648578c93a5.webp"
     },
     {
       "id": "dorothea",
       "name": "Dorothea Ernst",
       "page": "https://codegeass.fandom.com/wiki/Dorothea_Ernst",
       "image": "https://static.wikia.nocookie.net/codegeass/images/6/67/Dorothea_Ernst_Cockpit.JPG/revision/latest/scale-to-width-down/1200?cb=20090903005246",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/dorothea-2a7f5890fb53.webp"
     },
     {
       "id": "nonette",
       "name": "Nonette Enneagram",
       "page": "https://codegeass.fandom.com/wiki/Nonette_Enneagram",
       "image": "https://static.wikia.nocookie.net/codegeass/images/e/ed/14.jpg/revision/latest?cb=20151025032928",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/nonette-edf81d950570.webp"
     },
     {
       "id": "manfredi",
       "name": "Michele Manfredi",
       "page": "https://codegeass.fandom.com/wiki/Michele_Manfredi",
       "image": "https://static.wikia.nocookie.net/codegeass/images/b/ba/Michele_Manfredi2.png/revision/latest/scale-to-width-down/1200?cb=20130210212147",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/manfredi-57a7bea25a0a.webp"
     },
     {
       "id": "farnese",
       "name": "Andrea Farnese",
       "page": "https://codegeass.fandom.com/wiki/Andrea_Farnese",
       "image": "https://static.wikia.nocookie.net/codegeass/images/e/e7/Andrea_Farnese.png/revision/latest/scale-to-width-down/1200?cb=20121221165654",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/farnese-a73888e2a52c.webp"
     },
     {
       "id": "augustus",
       "name": "Michael Augustus",
       "page": "https://codegeass.fandom.com/wiki/Michael_Augustus",
       "image": "https://static.wikia.nocookie.net/codegeass/images/6/67/Michael_Augustus.jpeg/revision/latest?cb=20200713233157",
-      "method": "Source identified; crop/publish pending"
+      "method": "Published locally from the identified source; displayed with object-fit cover and top alignment",
+      "file": "dist/assets/art/portraits/augustus-f9e54bbe1b6c.webp"
     }
   ]
 }
