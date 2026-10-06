@@ -174,7 +174,7 @@ const modal = () => node('modal-root').innerHTML;
   run('game.turn++; game.phase = game.player; game.arsenal[game.player] = 1;');
   await run(`launchAt({ c: ${defended[0]}, r: ${defended[1]} })`);
   assert.equal(run('game.arsenal[game.player]'), 0);
-  assert(run("node('fleija-alert').innerHTML.includes('F.L.E.I.J.A. eliminated')"));
+  assert(node('fleija-alert').innerHTML.includes('F.L.E.I.J.A. eliminated'));
   // A rival with a warhead strikes your city building one; the warning plays during its turn.
   run(
     '(() => { const s = capitalOf(game.player); s.project = { side: game.player, started: game.turn, ready: game.turn + 4 }; game.arsenal[game.order[1]] = 1; })()',
