@@ -322,9 +322,10 @@
     {
       "kind": "units",
       "id": "panzer_wespe",
-      "page": "https://codegeass.fandom.com/wiki/Panzer-Wespe",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/1/1c/FnTimL1_%281%29.jpg/revision/latest?cb=20150216030815",
-      "method": "Panzer-Wespe reference image; pale edge background removed and unit padded to transparent 640×640"
+      "file": "units/panzer_wespe-87f95d6c1bbd.png",
+      "page": "https://codegeass.fandom.com/wiki/Panzer_Hummel",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/5/55/PanzerHummel.jpg/revision/latest?cb=20120601194414",
+      "method": "The Panzer-Wespe has only a manga panel on the wiki; the color Akito the Exiled Panzer-Hummel (its predecessor) stands in. Left figure cropped from the design sheet, lavender background removed and trimmed"
     },
     {
       "kind": "portraits",

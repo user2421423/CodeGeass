@@ -81,7 +81,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/panzer_hummel-4c9a513db11b.png"
     },
     "panzer_wespe": {
-      "src": "units/panzer_wespe-web.png"
+      "src": "units/panzer_wespe-87f95d6c1bbd.png"
     },
     "sutherland": {
       "src": "units/sutherland-4273fc3f9125.png"
