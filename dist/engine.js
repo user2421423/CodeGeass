@@ -511,6 +511,134 @@
       weapon: 'Large cannon · Bazooka',
       lore: 'Akatsukis hauling large cannons, used to shell fortified positions.',
     },
+
+    // Persistent Elite Forces. These are not part of the ordinary class roster: they are unlocked in HQ
+    // with fragments and each may deploy only once per operation as a single unique frame.
+    elite_cornelia_gloucester: {
+      side: 'britannia',
+      elite: true,
+      cls: 'assault',
+      role: 'Elite assault',
+      name: "Cornelia's Gloucester",
+      model: 'RPI-209 · Cornelia custom',
+      gen: '5th generation',
+      weapon: 'EM jousting lance · Chaos mines',
+      lore: "Cornelia's personal Gloucester, tuned for aggressive urban breakthroughs and royal-guard assaults.",
+      desc: 'Fast city-assault elite. Royal Guard becomes active at Elite Lv.3.',
+      hp: 255, attack: 62, armor: 21, move: 4, cost: 175, industry: 42, tier: 1, crit: 0.16, pen: 0.48,
+    },
+    elite_lancelot: {
+      side: 'britannia',
+      elite: true,
+      cls: 'heavy',
+      role: 'Elite heavy',
+      name: 'Lancelot',
+      model: 'Z-01',
+      gen: '7th generation',
+      weapon: 'VARIS · MVS · Blaze Luminous',
+      lore: "Lloyd Asplund's prototype seventh-generation Knightmare and the technological foundation of Britannia's later ace frames.",
+      desc: 'Prototype ranged heavy elite. VARIS and Blaze Luminous become active at Elite Lv.3.',
+      hp: 450, attack: 94, armor: 43, move: 4, min: 1, max: 1, cost: 440, industry: 120, tier: 2, crit: 0.24, pen: 0.50,
+      breakthrough: true, relentless: false,
+    },
+    elite_guren_mkii: {
+      side: 'cf',
+      elite: true,
+      cls: 'heavy',
+      role: 'Elite assault',
+      name: 'Guren Mk-II',
+      model: 'Type-02',
+      gen: '7th-generation equivalent',
+      weapon: 'Radiant Wave Surger · Fork Knife · Hand gun',
+      lore: "Rakshata's close-combat prototype built around the Radiant Wave Surger, fielded by the Black Knights.",
+      desc: 'Close-range anti-armor elite. Radiant Wave Surger becomes active at Elite Lv.3.',
+      hp: 410, attack: 96, armor: 36, move: 4, min: 1, max: 1, cost: 430, industry: 115, tier: 2, crit: 0.22, pen: 0.50,
+      breakthrough: true, relentless: false,
+    },
+    elite_tohdoh_gekka: {
+      side: 'cf',
+      elite: true,
+      cls: 'medium',
+      role: 'Elite raider',
+      name: "Tohdoh's Gekka Custom",
+      model: 'Type-03F · Tohdoh custom',
+      gen: '7th-generation equivalent',
+      weapon: 'Revolving Blade Sword · Custom hand gun',
+      lore: "Kyoshiro Tohdoh's tuned Gekka leads the Four Holy Swords through coordinated close combat.",
+      desc: 'High-mobility command elite. Four Holy Swords formation becomes active at Elite Lv.3.',
+      hp: 355, attack: 82, armor: 32, move: 5, min: 1, max: 1, cost: 350, industry: 88, tier: 2, crit: 0.20, pen: 0.36,
+      breakthrough: true, relentless: false,
+    },
+    elite_mordred: {
+      side: 'britannia',
+      elite: true,
+      cls: 'siege',
+      role: 'Elite siege',
+      name: 'Mordred',
+      model: 'RZA-6DG',
+      gen: '8th generation',
+      weapon: 'Stark Hadron Cannon · Hadron Blasters',
+      lore: "Anya Alstreim's immense Knightmare turns Hadron firepower into a mobile fortress-breaker.",
+      desc: 'Armored siege elite. Stark Hadron Cannon becomes active at Elite Lv.3.',
+      hp: 340, attack: 120, armor: 28, move: 2, min: 2, max: 2, cost: 520, industry: 155, tier: 3, crit: 0.26, critMult: 1.9, pen: 0.82,
+      noCounter: true, siege: 2.1,
+    },
+    elite_gawain: {
+      side: 'cf',
+      elite: true,
+      cls: 'siege',
+      role: 'Elite super',
+      name: 'Gawain',
+      model: 'IFX-V3D1',
+      gen: 'Experimental',
+      weapon: 'Twin Hadron Cannons · Druid System',
+      lore: "The Black Knights' captured command Knightmare combines twin Hadron Cannons with the Druid System.",
+      desc: 'Long-range command artillery. Hadron Cannons and Druid targeting become active at Elite Lv.3.',
+      hp: 440, attack: 108, armor: 35, move: 2, min: 2, max: 2, cost: 630, industry: 190, tier: 3, crit: 0.24, pen: 0.72,
+      noCounter: true, float: true,
+    },
+    elite_shinkiro: {
+      side: 'cf',
+      elite: true,
+      cls: 'siege',
+      role: 'Elite super',
+      name: 'Shinkirō',
+      model: 'Type-0/0A',
+      gen: '8th-generation equivalent',
+      weapon: 'Diffusion Structure Phase Transition Cannon · Absolute Defense Territory',
+      lore: "Zero's transformable command Knightmare pairs precise long-range fire with the Absolute Defense Territory.",
+      desc: 'Defensive command artillery. Absolute Defense Territory becomes active at Elite Lv.3.',
+      hp: 430, attack: 104, armor: 44, move: 3, min: 1, max: 2, cost: 660, industry: 195, tier: 3, crit: 0.22, pen: 0.68,
+      noCounter: true, float: true,
+    },
+    elite_lancelot_albion: {
+      side: 'britannia',
+      elite: true,
+      cls: 'super',
+      role: 'Elite super',
+      name: 'Lancelot Albion',
+      model: 'Z-01Z',
+      gen: '9th generation',
+      weapon: 'Super VARIS · MVS · Energy Wings',
+      lore: "Suzaku's final Lancelot combines overwhelming ninth-generation output with Energy Wing mobility.",
+      desc: 'Endgame aerial ace. Energy Wings become active at Elite Lv.3.',
+      hp: 610, attack: 123, armor: 56, move: 5, min: 1, max: 2, cost: 740, industry: 225, tier: 3, crit: 0.29, pen: 0.58,
+      breakthrough: false, relentless: false,
+    },
+    elite_guren_seiten: {
+      side: 'cf',
+      elite: true,
+      cls: 'super',
+      role: 'Elite super',
+      name: 'Guren S.E.I.T.E.N. Eight Elements',
+      model: 'Type-02/F1Z',
+      gen: '9th generation',
+      weapon: 'Radiant Wave Surger · Energy Wings · Fork Knife',
+      lore: "Kallen's ultimate Guren is the Black Knights' ninth-generation counterpart to Lancelot Albion.",
+      desc: 'Endgame aerial assault ace. Radiant Wave Burst and Energy Wings become active at Elite Lv.3.',
+      hp: 600, attack: 126, armor: 54, move: 5, min: 1, max: 2, cost: 750, industry: 225, tier: 3, crit: 0.30, pen: 0.60,
+      breakthrough: false, relentless: false,
+    },
     // Neutral garrisons: the Middle Eastern Federation's own frame.
     bamides: {
       side: 'neutral',
@@ -539,7 +667,7 @@
             .join('')
             .slice(0, 2)
             .toUpperCase(),
-          desc: `${c.rule}${k.float ? ' Integrated Float System: ignores terrain movement costs.' : ''}`,
+          desc: k.desc || `${c.rule}${k.float ? ' Integrated Float System: ignores terrain movement costs.' : ''}`,
         },
       ];
     }),
@@ -547,11 +675,172 @@
   const ROSTER = Object.fromEntries(
     MAJORS.map(side => [
       side,
-      Object.fromEntries(Object.entries(KNIGHTMARES).filter(([, k]) => k.side === side).map(([id, k]) => [k.cls, id])),
+      Object.fromEntries(Object.entries(KNIGHTMARES).filter(([, k]) => k.side === side && !k.elite).map(([id, k]) => [k.cls, id])),
     ]),
   );
   function typeFor(side, cls) {
     return ROSTER[side]?.[cls] || ROSTER.britannia[cls];
+  }
+
+  // ======== Elite Forces: persistent WC4-style unique units ========
+  const ELITE_MAX_LEVEL = 5;
+  const ELITE_UNLOCK_FRAGMENTS = 30;
+  const ELITE_UPGRADE_FRAGMENTS = [0, ELITE_UNLOCK_FRAGMENTS, 20, 30, 40, 50];
+  const ELITE_LEVEL_SCALE = [
+    null,
+    { hp: 1, attack: 1, armor: 0 },
+    { hp: 1.06, attack: 1.05, armor: 2 },
+    { hp: 1.12, attack: 1.10, armor: 4 },
+    { hp: 1.18, attack: 1.15, armor: 6 },
+    { hp: 1.25, attack: 1.22, armor: 8 },
+  ];
+  const ELITE_FORCES = {
+    cornelia_gloucester: {
+      type: 'elite_cornelia_gloucester', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare', starter: true,
+      skill: 'Royal Guard',
+      lv3Text: '+25% damage on or next to a friendly city.',
+      lv5Text: '+40% city-position damage; a kill restores movement.',
+      lv3: { cityAttack: 0.25 }, lv5: { cityAttack: 0.40, moveAfterKill: true },
+    },
+    lancelot: {
+      type: 'elite_lancelot', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
+      skill: 'VARIS · Blaze Luminous',
+      lv3Text: '+1 range, 15% less damage taken and +10% armor penetration.',
+      lv5Text: '25% less damage taken and +18% armor penetration.',
+      lv3: { range: 1, taken: 0.85, pen: 0.10 }, lv5: { range: 1, taken: 0.75, pen: 0.18 },
+    },
+    guren_mkii: {
+      type: 'elite_guren_mkii', faction: 'black_knights', availableTo: ['cf'], rarity: 'Epic',
+      skill: 'Radiant Wave Surger',
+      lv3Text: '+35% damage against Armor, +20% penetration; targets cannot counter-fire.',
+      lv5Text: '+50% vs Armor, +30% penetration; surviving targets lose their remaining action.',
+      lv3: { vsArmor: 0.35, pen: 0.20, noCounter: true }, lv5: { vsArmor: 0.50, pen: 0.30, noCounter: true, stun: true },
+    },
+    tohdoh_gekka: {
+      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['cf'], rarity: 'Epic', starter: true,
+      skill: 'Four Holy Swords',
+      lv3Text: 'Adjacent friendly Infantry and Armor deal +12% damage.',
+      lv5Text: 'Aura rises to +18%; Tohdoh gains +25% counter-fire.',
+      lv3: { aura: { range: 1, value: 0.12, branches: ['Infantry', 'Armor'] } },
+      lv5: { aura: { range: 1, value: 0.18, branches: ['Infantry', 'Armor'] }, counter: 0.25 },
+    },
+    mordred: {
+      type: 'elite_mordred', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
+      skill: 'Stark Hadron Cannon',
+      lv3Text: '+50% damage to city defenses and 30% splash.',
+      lv5Text: '+75% city-defense damage, 50% splash and +1 range.',
+      lv3: { vsCity: 0.50, splash: 0.30 }, lv5: { vsCity: 0.75, splash: 0.50, range: 1 },
+    },
+    gawain: {
+      type: 'elite_gawain', faction: 'black_knights', availableTo: ['cf'], rarity: 'Legendary',
+      skill: 'Hadron Cannons · Druid System',
+      lv3Text: '+1 range and 30% splash from twin Hadron Cannons.',
+      lv5Text: '50% splash; adjacent allies gain +10% targeting damage.',
+      lv3: { range: 1, splash: 0.30 },
+      lv5: { range: 1, splash: 0.50, aura: { range: 1, value: 0.10 } },
+    },
+    shinkiro: {
+      type: 'elite_shinkiro', faction: 'black_knights', availableTo: ['cf'], rarity: 'Legendary',
+      skill: 'Absolute Defense Territory',
+      lv3Text: 'Takes 35% less damage.',
+      lv5Text: 'Takes 45% less damage; adjacent allies take 15% less.',
+      lv3: { taken: 0.65 }, lv5: { taken: 0.55, protect: { range: 1, value: 0.85 } },
+    },
+    lancelot_albion: {
+      type: 'elite_lancelot_albion', faction: 'britannia', availableTo: ['britannia'], rarity: 'Legendary',
+      skill: 'Energy Wings',
+      lv3Text: 'Ignores terrain, +1 movement and may move after attacking.',
+      lv5Text: '+2 movement total; kill chains can refire and attacks gain 20% splash.',
+      lv3: { float: true, move: 1, moveAfterAttack: true },
+      lv5: { float: true, move: 2, moveAfterAttack: true, refire: true, splash: 0.20, breakthrough: true },
+    },
+    guren_seiten: {
+      type: 'elite_guren_seiten', faction: 'black_knights', availableTo: ['cf'], rarity: 'Legendary',
+      skill: 'Radiant Wave Burst',
+      lv3Text: 'Ignores terrain, +1 movement, +20% damage and 20% splash.',
+      lv5Text: '+2 movement, +30% damage, 35% splash; no counter-fire and kill-chain refire.',
+      lv3: { float: true, move: 1, dmg: 0.20, splash: 0.20 },
+      lv5: { float: true, move: 2, dmg: 0.30, splash: 0.35, noCounter: true, refire: true, breakthrough: true },
+    },
+  };
+  const ELITE_TYPE_TO_ID = Object.fromEntries(Object.entries(ELITE_FORCES).map(([id, e]) => [e.type, id]));
+  function eliteProfile(profile = {}) {
+    profile.elites ||= {};
+    for (const [id, e] of Object.entries(ELITE_FORCES)) {
+      const rec = profile.elites[id] || {};
+      profile.elites[id] = {
+        level: Math.max(0, Math.min(ELITE_MAX_LEVEL, Number.isInteger(rec.level) ? rec.level : 0)),
+        fragments: Math.max(0, Number.isFinite(rec.fragments) ? Math.floor(rec.fragments) : e.starter ? ELITE_UNLOCK_FRAGMENTS : 0),
+      };
+    }
+    return profile.elites;
+  }
+  function eliteRecord(profile, id) {
+    return ELITE_FORCES[id] ? eliteProfile(profile)[id] : null;
+  }
+  function eliteScale(u) {
+    if (!u?.elite) return ELITE_LEVEL_SCALE[1];
+    return ELITE_LEVEL_SCALE[Math.max(1, Math.min(ELITE_MAX_LEVEL, u.eliteLevel || 1))];
+  }
+  function eliteFx(u) {
+    const e = u?.elite && ELITE_FORCES[u.elite];
+    if (!e || (u.eliteLevel || 1) < 3) return {};
+    return (u.eliteLevel || 1) >= 5 ? { ...e.lv3, ...e.lv5 } : e.lv3;
+  }
+  function eliteStats(id, level = 1) {
+    const e = ELITE_FORCES[id], t = e && TYPES[e.type];
+    if (!e || !t) return null;
+    level = Math.max(1, Math.min(ELITE_MAX_LEVEL, level | 0));
+    const s = ELITE_LEVEL_SCALE[level],
+      ef = level >= 5 ? { ...e.lv3, ...e.lv5 } : level >= 3 ? e.lv3 : {};
+    return {
+      hp: Math.round(t.hp * s.hp),
+      attack: Math.round(t.attack * s.attack),
+      armor: t.armor + s.armor,
+      move: t.move + (ef.move || 0),
+      min: t.min,
+      max: t.max + (ef.range || 0),
+    };
+  }
+  function eliteUpgradeReason(profile, id) {
+    const e = ELITE_FORCES[id], rec = e && eliteRecord(profile, id);
+    if (!rec) return 'Unknown Elite Force';
+    if (rec.level >= ELITE_MAX_LEVEL) return 'Maximum Elite level reached';
+    const next = rec.level + 1,
+      cost = ELITE_UPGRADE_FRAGMENTS[next];
+    return rec.fragments < cost
+      ? `Need ${cost - rec.fragments} more ${TYPES[e.type].name} fragments`
+      : null;
+  }
+  function upgradeElite(profile, id) {
+    const why = eliteUpgradeReason(profile, id);
+    if (why) return { ok: false, reason: why };
+    const rec = eliteRecord(profile, id),
+      next = rec.level + 1,
+      cost = ELITE_UPGRADE_FRAGMENTS[next];
+    rec.fragments -= cost;
+    rec.level = next;
+    return { ok: true, level: rec.level, fragments: rec.fragments, cost };
+  }
+  function grantEliteFragments(profile, awards = {}) {
+    const records = eliteProfile(profile);
+    for (const [id, amount] of Object.entries(awards))
+      if (records[id] && amount > 0) records[id].fragments += Math.floor(amount);
+    return records;
+  }
+  // Fragment drops are deterministic: first clears pay more; rarity controls acquisition speed rather than raw strength.
+  function eliteVictoryReward(g, profile = {}) {
+    if (!g || g.over?.winner !== g.player) return {};
+    const first = !(profile.cleared || {})[operationKey(g)],
+      base = first
+        ? ({ normal: 12, hard: 18, challenge: 24 }[g.difficulty] || 12)
+        : ({ normal: 5, hard: 8, challenge: 12 }[g.difficulty] || 5),
+      rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
+    return Object.fromEntries(
+      Object.entries(ELITE_FORCES)
+        .filter(([, e]) => e.availableTo.includes(g.player))
+        .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
+    );
   }
   // ======== Commanders (WC4 generals): signature abilities are data, read by the combat rules ========
   const COMMANDERS = {
@@ -1660,6 +1949,7 @@
     if (!u) return 'Select a unit';
     return (
       turnReason(g, u.side) ||
+      (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
       (u.stack >= 3 ? 'Already at 3 frames' : null) ||
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
@@ -1672,6 +1962,7 @@
     if (!t || !s) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
       (t.side !== s.owner ? 'Not built by this faction' : null) ||
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
@@ -1736,7 +2027,20 @@
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
   function applyProfile(g, profile = {}) {
     applyRoster(g, profile);
+    applyElites(g, profile);
     return applyTech(g, profile?.research);
+  }
+  function applyElites(g, profile = {}) {
+    const records = eliteProfile(profile);
+    g.eliteDeployed ||= {};
+    for (const u of g.units) {
+      if (!u.elite) continue;
+      const old = maxHP(u),
+        rec = records[u.elite];
+      if (rec?.level) u.eliteLevel = rec.level;
+      if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+    }
+    return g;
   }
   // Refresh your commanders inside an operation, e.g. after an HQ promotion; personal units keep their damage.
   function applyRoster(g, profile = {}) {
@@ -1954,8 +2258,10 @@
 
   // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
   function maxHP(u) {
+    const es = eliteScale(u);
     return Math.round(
       TYPES[u.type].hp *
+        es.hp *
         (1 + 0.7 * (u.stack - 1)) *
         (u.cmdRank == null ? 1 : RANK_HP[u.cmdRank] || 1) *
         (1 + (u.hpTech || 0)),
@@ -1965,7 +2271,17 @@
   const RULES_VERSION = 2;
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || g.rulesVersion !== RULES_VERSION || !Array.isArray(g.units)) return null;
-    return g.units.every(u => TYPES[u.type]) ? g : null;
+    if (!g.units.every(u => TYPES[u.type])) return null;
+    g.eliteDeployed ||= {};
+    for (const u of g.units) {
+      const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
+      if (elite) {
+        u.elite = elite;
+        u.eliteLevel ||= 1;
+        g.eliteDeployed[elite] = true;
+      }
+    }
+    return g;
   }
   function newUnit(g, type, side, c, r, stack = 1, cmd = null, ready = true) {
     const u = {
@@ -1984,6 +2300,9 @@
       chain: 0,
       xp: 0,
       feintCD: 0,
+      elite: ELITE_TYPE_TO_ID[type] || null,
+      eliteLevel: ELITE_TYPE_TO_ID[type] ? 1 : 0,
+      eliteMoveAfterKill: false,
     };
     u.hpTech = unitTech(g, u, 'hull');
     u.hp = maxHP(u);
@@ -1993,7 +2312,7 @@
   function movement(g, u) {
     const t = TYPES[u.type],
       f = fx(u);
-    let n = t.move + unitTech(g, u, 'drives');
+    let n = t.move + unitTech(g, u, 'drives') + (eliteFx(u).move || 0);
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
     n += techLevel(g, u.side, 'sakura.float') >= 2 ? 1 : 0;
@@ -2002,7 +2321,7 @@
   function terrainCost(g, u, t) {
     if (isSea(t)) return 1;
     const type = TYPES[u.type];
-    if (fx(u).ignoreTerrain || type.float) return 1;
+    if (fx(u).ignoreTerrain || type.float || eliteFx(u).float) return 1;
     if (type.branch === 'Armor' && techLevel(g, u.side, 'sakura.float') >= 1) return 1;
     const nav = type.branch === 'Infantry' ? techLevel(g, u.side, 'infantry.nav') : 0;
     if (nav >= 2 || (nav >= 1 && (t.terrain === 'forest' || t.terrain === 'mountain'))) return 1;
@@ -2018,7 +2337,8 @@
   // units sail up to their sea movement and may land on a coast hex (which ends the move).
   function reachable(g, u) {
     const found = new Map();
-    if (!isReady(g, u) || u.moved || u.attacked) return found;
+    const ef = eliteFx(u);
+    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill)) return found;
     const start = tile(g, u.c, u.r),
       fromSea = isSea(start),
       budget = fromSea ? seaMove(g, u) : movement(g, u),
@@ -2051,7 +2371,7 @@
     const t = TYPES[u.type];
     return {
       min: t.min,
-      max: t.max + (g && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0),
+      max: t.max + (eliteFx(u).range || 0) + (g && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0),
     };
   }
   function inRange(a, p, g) {
@@ -2090,6 +2410,7 @@
     u.c = dest.c;
     u.r = dest.r;
     u.moved = true;
+    u.eliteMoveAfterKill = false;
     reindex(g, u, from);
     if (!isSea(dest)) dest.owner = u.side;
     const s = stationAt(g, u);
@@ -2150,9 +2471,11 @@
   function auraBonus(g, u) {
     let bonus = 0;
     for (const a of g.units) {
-      if (a.hp <= 0 || a.side !== u.side || !a.cmd || a.id === u.id) continue;
-      if (dist(g, a, u) > auraRange(a)) continue;
-      bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
+      if (a.cmd && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      const ea = eliteFx(a).aura;
+      if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
+        bonus = Math.max(bonus, ea.value);
     }
     return bonus;
   }
@@ -2160,8 +2483,9 @@
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
       f = fx(u),
+      ef = eliteFx(u),
       strike = !counter || !f.attackOnly;
-    let attack = t.attack * (1 + 0.45 * (u.stack - 1)) * (1 + 0.07 * Math.min(5, u.xp));
+    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1)) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
     attack *= u.hp / maxHP(u) < 0.5 ? 0.72 : 1;
     attack *= 1 + auraBonus(g, u);
@@ -2173,6 +2497,11 @@
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
+    if (ef.dmg && strike) attack *= 1 + ef.dmg;
+    if (counter && ef.counter) attack *= 1 + ef.counter;
+    if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
+    if (ef.cityAttack && g.stations.some(s => s.owner === u.side && dist(g, s, u) <= 1) && strike)
+      attack *= 1 + ef.cityAttack;
     if (f.artist && target)
       attack *=
         1 +
@@ -2197,8 +2526,8 @@
       friends(u.side, target, v => v.branch !== 'Artillery')
     )
       attack *= 1.2;
-    const pen = clamp(t.pen + (f.pen || 0), 0, 0.95);
-    const armor = target ? victim.armor + unitTech(g, target, 'armor') : 35;
+    const pen = clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95);
+    const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') : 35;
     attack *= 100 / (100 + armor * (1 - pen) * 2);
     if (target) {
       const tf = fx(target),
@@ -2219,6 +2548,13 @@
         attack *= 0.85;
       // Commander signature abilities (defender side).
       if (tf.taken) attack *= tf.taken;
+      const tef = eliteFx(target);
+      if (tef.taken) attack *= tef.taken;
+      const protector = g.units.find(v => {
+        const p = eliteFx(v).protect;
+        return v.hp > 0 && v.side === target.side && v.id !== target.id && p && dist(g, v, target) <= p.range;
+      });
+      if (protector) attack *= eliteFx(protector).protect.value;
       if (tf.belowHalf && target.hp / maxHP(target) < 0.5) attack *= tf.belowHalf;
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
@@ -2243,7 +2579,8 @@
       shield = s && s.owner !== a.side && s.shield > 0;
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Chaos Mines and city-breaker commanders raise damage to city defenses.
-    const raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0));
+    const ef = eliteFx(a),
+      raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0));
     const shieldDmg = shield
       ? Math.round(
           base *
@@ -2254,7 +2591,7 @@
         )
       : 0;
     const counter =
-      !!d && !t.noCounter && d.morale > -3 && !atSea(g, d) && inRange(d, a, g) && hostileTarget(g, d, a);
+      !!d && !t.noCounter && !ef.noCounter && d.morale > -3 && !atSea(g, d) && inRange(d, a, g) && hostileTarget(g, d, a);
     const crit = clamp(
       t.crit + (f.crit || 0) + (wears(g, a, 'marksman') ? 0.08 : 0) + techValue(g, a.side, 'sakura.varis'),
       0,
@@ -2267,8 +2604,8 @@
       counterAllowed: counter,
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
-      splash: t.splash ? t.splash + techValue(g, a.side, 'artillery.salvo') : 0,
-      armorPen: clamp(t.pen + (f.pen || 0), 0, 0.95),
+      splash: (t.splash || 0) + (ef.splash || 0) + (t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
+      armorPen: clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95),
     };
   }
   function kill(g, v, attacker) {
@@ -2318,6 +2655,12 @@
       s.shield -= sd;
     }
     if (f.terror && d && d.hp > 0) d.morale = Math.max(moraleFloor(g, d), d.morale - 1);
+    const aef = eliteFx(a);
+    if (aef.stun && d && d.hp > 0) {
+      d.moved = true;
+      d.attacked = true;
+      d.morale = Math.max(moraleFloor(g, d), d.morale - 1);
+    }
     let retaliation = 0;
     if (d && d.hp > 0 && pr.counterAllowed) {
       retaliation = Math.round(pr.counter * (0.94 + random(g) * 0.12));
@@ -2337,24 +2680,31 @@
     }
     const destroyed = !!d && d.hp <= 0;
     if (destroyed) kill(g, d, a);
-    let cap = f.refire ? 2 : 1;
+    const eliteBreakthrough = !!aef.breakthrough,
+      eliteRelentless = !!aef.relentless;
+    let cap = f.refire || aef.refire ? 2 : 1;
     // Breakthrough Doctrine: a kill at the cap may still earn one more breakthrough.
-    if (destroyed && a.hp > 0 && TYPES[a.type].breakthrough && a.chain === cap) {
+    if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain === cap) {
       const chance = techValue(g, a.side, 'armor.assault');
       if (chance && random(g) < chance) cap++;
     }
     let breakthrough = false;
-    if (destroyed && a.hp > 0 && TYPES[a.type].breakthrough && a.chain < cap) {
+    if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain < cap) {
       // Breakthrough: a kill lets the frame fire again. Line and mainline frames get no extra movement; heavy
       // and super-heavy frames also regain movement on their first kill.
       a.chain++;
       a.attacked = false;
-      if (TYPES[a.type].relentless) a.moved = false;
+      if ((TYPES[a.type].relentless || eliteRelentless)) a.moved = false;
       breakthrough = true;
-    } else if (destroyed && a.hp > 0 && TYPES[a.type].relentless) {
+    } else if (destroyed && a.hp > 0 && (TYPES[a.type].relentless || eliteRelentless)) {
       // Heavy and super-heavy frames always fire again after a kill, beyond the breakthrough cap.
       a.attacked = false;
       breakthrough = true;
+    }
+    if (a.hp > 0 && aef.moveAfterAttack) a.moved = false;
+    if (destroyed && a.hp > 0 && aef.moveAfterKill) {
+      a.moved = false;
+      a.eliteMoveAfterKill = true;
     }
     log(
       g,
@@ -2430,6 +2780,61 @@
     const u = newUnit(g, type, s.owner, p.c, p.r, stack, null, false);
     log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u };
+  }
+
+  function elitePrice(id, level = 1) {
+    const e = ELITE_FORCES[id], t = e && TYPES[e.type];
+    if (!t) return { credits: 0, industry: 0 };
+    const premium = 1 + 0.04 * Math.max(0, level - 1);
+    return { credits: Math.round(t.cost * premium), industry: Math.round(t.industry * premium) };
+  }
+  function eliteDeployReason(g, s, id, profile = {}) {
+    const e = ELITE_FORCES[id],
+      rec = e && eliteRecord(profile, id);
+    if (!e || !s) return 'Unavailable';
+    return (
+      (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (!e.availableTo.includes(s.owner) ? 'This Elite Force is not available to this faction' : null) ||
+      (!rec?.level ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
+      (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
+      (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
+      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      (!recruitOptions(g, s, s.owner).length ? 'No free land hex next to the city' : null) ||
+      shortfall(funds(g, s.owner), elitePrice(id, rec?.level || 1))
+    );
+  }
+  function deployElite(g, stationId, id, profile = {}, position) {
+    const s = g.stations.find(v => v.id === stationId),
+      why = eliteDeployReason(g, s, id, profile);
+    if (why) return { ok: false, reason: why };
+    const e = ELITE_FORCES[id],
+      rec = eliteRecord(profile, id),
+      options = recruitOptions(g, s, s.owner),
+      p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
+      cost = elitePrice(id, rec.level);
+    if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
+    funds(g, s.owner).credits -= cost.credits;
+    funds(g, s.owner).industry -= cost.industry;
+    s.producedTurn = g.turn;
+    g.eliteDeployed ||= {};
+    g.eliteDeployed[id] = true;
+    const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
+    u.elite = id;
+    u.eliteLevel = rec.level;
+    u.hp = maxHP(u);
+    log(g, `${TYPES[e.type].name} · Elite Lv.${rec.level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    return { ok: true, unit: u, cost };
+  }
+  function unitStats(g, u) {
+    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u);
+    return {
+      hp: maxHP(u),
+      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1))),
+      armor: t.armor + s.armor,
+      move: movement(g, u),
+      min: r.min,
+      max: r.max,
+    };
   }
   function reinforceCost(type, g = null, side = null) {
     const p = price(type, 1, g, side);
@@ -2554,6 +2959,7 @@
       u.moved = false;
       u.attacked = false;
       u.chain = 0;
+      u.eliteMoveAfterKill = false;
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       const nearby = g.units.filter(v => v.hp > 0 && v.side !== side && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
@@ -3118,6 +3524,7 @@
       medalsEarned: [],
       over: null,
       stats: {},
+      eliteDeployed: {},
     };
     for (let r = 0; r < g.rows; r++)
       for (let c = 0; c < g.cols; c++)
@@ -3482,6 +3889,23 @@
     TYPES,
     ROSTER,
     typeFor,
+    ELITE_FORCES,
+    ELITE_MAX_LEVEL,
+    ELITE_UNLOCK_FRAGMENTS,
+    ELITE_UPGRADE_FRAGMENTS,
+    eliteProfile,
+    eliteRecord,
+    eliteStats,
+    eliteFx,
+    eliteUpgradeReason,
+    upgradeElite,
+    grantEliteFragments,
+    eliteVictoryReward,
+    elitePrice,
+    eliteDeployReason,
+    deployElite,
+    unitStats,
+    applyElites,
     COMMANDERS,
     TERRAIN,
     WORLD,
