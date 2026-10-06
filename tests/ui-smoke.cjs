@@ -169,7 +169,7 @@ const modal = () => node('modal-root').innerHTML;
   assert(node('side').innerHTML.includes('data-eliminator='));
   run('draw(48, .016); drawMinimap();');
   const defended = run(
-    "(() => { const s = game.stations.find(s => s.owner !== game.player && s.owner !== 'neutral'); s.eliminator = 1; return s.c + ',' + s.r; })()",
+    "(() => { const s = game.stations.find(s => s.owner !== game.player && s.owner !== 'neutral' && !E.devastated(game, s)); s.eliminator = 1; return s.c + ',' + s.r; })()",
   ).split(',');
   run('game.turn++; game.phase = game.player; game.arsenal[game.player] = 1;');
   await run(`launchAt({ c: ${defended[0]}, r: ${defended[1]} })`);
