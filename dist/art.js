@@ -52,6 +52,15 @@ const ART = (() => {
     gekka_rocket: { body: 'humanoid', bulk: 0.9, head: 'fin', shoulder: 'round', weapon: 'rifle', back: 'pods', main: '#3d5a55' },
     akatsuki_missile: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'none', back: 'launcher', main: '#8a8f96', trim: '#c8562a' },
     akatsuki_heavy: { body: 'humanoid', bulk: 1.05, head: 'fin', shoulder: 'block', weapon: 'none', back: 'bigcannon', main: '#5f8f86' },
+    elite_cornelia_gloucester: { body: 'humanoid', bulk: 1.05, head: 'horn', shoulder: 'pauldron', weapon: 'lance', back: 'cape', main: '#6e3f99', trim: '#d6b75e' },
+    elite_lancelot: { body: 'humanoid', bulk: 1.02, head: 'fin', shoulder: 'round', weapon: 'rifle', main: '#eef0ed', dark: '#313b47', trim: '#d5aa43', glow: '#67d8ff' },
+    elite_guren_mkii: { body: 'humanoid', bulk: 1.02, head: 'fin', shoulder: 'spike', weapon: 'katana', main: '#9f2827', dark: '#3b1719', trim: '#d08b35', glow: '#ff6048' },
+    elite_tohdoh_gekka: { body: 'humanoid', bulk: 0.94, head: 'fin', shoulder: 'round', weapon: 'katana', main: '#30333a', dark: '#14161b', trim: '#8d2e31', glow: '#ff7a55' },
+    elite_mordred: { body: 'giant', bulk: 1.35, head: 'mono', shoulder: 'wide', weapon: 'none', back: 'bigcannon', main: '#7a2e43', dark: '#2d1823', trim: '#d0a557', glow: '#dc74ff' },
+    elite_gawain: { body: 'giant', bulk: 1.25, head: 'crest', shoulder: 'wide', weapon: 'none', back: 'wings', main: '#27232d', dark: '#111116', trim: '#d3aa4f', glow: '#a86cff' },
+    elite_shinkiro: { body: 'humanoid', bulk: 1.1, head: 'crest', shoulder: 'wide', weapon: 'none', back: 'wings', main: '#24252b', dark: '#0f1115', trim: '#d3a94e', glow: '#f05a46' },
+    elite_lancelot_albion: { body: 'humanoid', bulk: 1.06, head: 'fin', shoulder: 'round', weapon: 'rifle', back: 'wings', main: '#f1f0e8', dark: '#2d3440', trim: '#d7ac43', glow: '#64e4ff' },
+    elite_guren_seiten: { body: 'humanoid', bulk: 1.07, head: 'fin', shoulder: 'spike', weapon: 'katana', back: 'wings', main: '#a82225', dark: '#351519', trim: '#d69735', glow: '#ff684f' },
     bamides: { body: 'tripod', main: '#b9a67b', trim: '#5b4b2b' },
   };
   function shade(hex, f) {

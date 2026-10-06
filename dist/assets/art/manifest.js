@@ -41,6 +41,33 @@ globalThis.KnightmareArtManifest = {
     "chuyen": {
       "src": "units/chuyen-427d2c85b500.png"
     },
+    "elite_cornelia_gloucester": {
+      "src": "units/elite_cornelia_gloucester.jpg"
+    },
+    "elite_gawain": {
+      "src": "units/elite_gawain.webp"
+    },
+    "elite_guren_mkii": {
+      "src": "units/elite_guren_mkii.png"
+    },
+    "elite_guren_seiten": {
+      "src": "units/elite_guren_seiten.webp"
+    },
+    "elite_lancelot": {
+      "src": "units/elite_lancelot.jpg"
+    },
+    "elite_lancelot_albion": {
+      "src": "units/elite_lancelot_albion.jpg"
+    },
+    "elite_mordred": {
+      "src": "units/elite_mordred.jpg"
+    },
+    "elite_shinkiro": {
+      "src": "units/elite_shinkiro.jpg"
+    },
+    "elite_tohdoh_gekka": {
+      "src": "units/elite_tohdoh_gekka.jpg"
+    },
     "estrella": {
       "src": "units/estrella-892bfb12bb42.png"
     },
