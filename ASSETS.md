@@ -23,13 +23,15 @@ from Code Geass anime/design material and manga, cropped or isolated for in-game
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
 
-- The owner-supplied `local-art.zip` provided 25 units and 13 portraits. The previous handoff identifies Code
+- The owner-supplied `local-art.zip` provided 25 units (17 are still in the lineup) and 13 portraits. The previous handoff identifies Code
   Geass Wiki as the download source; exact original image URLs were not included in the archive. The archive
   checksum and all supplied image IDs are recorded in `dist/assets/art/sources.json` without inventing URLs.
 - Another 21 portraits were cropped from rendered images linked by their Code Geass Wiki character pages.
-  The three replacement units (Alexander Type-02, Alexander Valiant and Zetland) were isolated as single front
-  views from rendered design sheets. Exact page URLs, image URLs and processing notes are recorded per image
-  in `dist/assets/art/sources.json`.
+  Alexander Type-02 was isolated as a single front view from a rendered design sheet. The twelve frames added by
+  the lineup change of October 2026 come from their Code Geass Wiki pages; for the game's configurations without
+  artwork of their own, the closest wiki image stands in (Akito's Alexander for the Type-02 Elite, the
+  Akatsuki-Upgrade for the Akatsuki Heavy Weapons). Exact page URLs, image URLs and processing notes are recorded
+  per image in `dist/assets/art/sources.json`.
 - All 31 Knightmare types and all 35 commanders now have published image assets. The procedural drawings remain only as runtime safety fallbacks if an imported image fails to load.
 
 ## Preparing and publishing art

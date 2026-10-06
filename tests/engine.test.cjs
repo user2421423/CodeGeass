@@ -52,6 +52,13 @@ test('Each power fields ten Knightmares across the three branches', () => {
   assert.equal(T('britannia', 'light'), 'sutherland');
   assert.equal(T('eu', 'rocket'), 'panzer_hummel');
   assert.equal(T('cf', 'scout'), 'gun_ru');
+  const lineup = side => E.CLASS_ORDER.slice(4).map(c => T(side, c));
+  assert.deepEqual(lineup('britannia'), ['vincent_ward', 'vincent_commander', 'brighton', 'liverpool', 'sutherland_air', 'gareth']);
+  assert.deepEqual(lineup('eu'), ['alexander_mp', 'panzer_wespe', 'alexander_elite', 'gardmare', 'panzer_hummel', 'hummel_battery']);
+  assert.deepEqual(lineup('cf'), ['akatsuki', 'akatsuki_zikisan', 'akatsuki_air', 'gekka_rocket', 'akatsuki_missile', 'akatsuki_heavy']);
+  assert.equal(T('eu', 'assault'), 'estrella_cc');
+  assert.equal(T('cf', 'assault'), 'burai_kai');
+  assert.deepEqual(Object.keys(E.TYPES).filter(k => E.TYPES[k].float).sort(), ['akatsuki_air', 'sutherland_air']);
 });
 test('The world map wraps east to west and every city stands on land', () => {
   const g = E.createGame('eu', 'normal', 'conquest', 5);

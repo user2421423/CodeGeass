@@ -5,23 +5,29 @@ globalThis.KnightmareArtManifest = {
     "akatsuki": {
       "src": "units/akatsuki-11240620a78b.png"
     },
+    "akatsuki_air": {
+      "src": "units/akatsuki_air-c649000bc081.png"
+    },
+    "akatsuki_heavy": {
+      "src": "units/akatsuki_heavy-7c180ab2623f.png"
+    },
+    "akatsuki_missile": {
+      "src": "units/akatsuki_missile-0231df0f89b3.png"
+    },
+    "akatsuki_zikisan": {
+      "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
+    },
     "alexander": {
       "src": "units/alexander-4b4929ebecea.png"
     },
     "alexander_drone": {
       "src": "units/alexander_drone-54ba57a3d17c.png"
     },
-    "alexander_liberte": {
-      "src": "units/alexander_liberte-95974233a76b.png"
+    "alexander_elite": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
     },
-    "alexander_redorga": {
-      "src": "units/alexander_redorga-9053b7e33e00.png"
-    },
-    "alexander_valiant": {
-      "src": "units/alexander_valiant-42a82547916e.png"
-    },
-    "amanecer": {
-      "src": "units/amanecer-ed71c27edb73.png"
+    "alexander_mp": {
+      "src": "units/alexander_mp-aba6042c8fcf.png"
     },
     "bamides": {
       "src": "units/bamides-112358cce84d.png"
@@ -29,11 +35,17 @@ globalThis.KnightmareArtManifest = {
     "brighton": {
       "src": "units/brighton-4bb8a725ddf1.png"
     },
+    "burai_kai": {
+      "src": "units/burai_kai-8b9e363ea1c1.png"
+    },
     "chuyen": {
       "src": "units/chuyen-427d2c85b500.png"
     },
     "estrella": {
       "src": "units/estrella-892bfb12bb42.png"
+    },
+    "estrella_cc": {
+      "src": "units/estrella_cc-4ebf772963e3.png"
     },
     "gardmare": {
       "src": "units/gardmare-f06f450a0f42.png"
@@ -41,11 +53,11 @@ globalThis.KnightmareArtManifest = {
     "gareth": {
       "src": "units/gareth-9a032af80554.png"
     },
-    "gawain": {
-      "src": "units/gawain-724c6a9bbac4.png"
-    },
     "gekka": {
       "src": "units/gekka-6c896ee459cb.png"
+    },
+    "gekka_rocket": {
+      "src": "units/gekka_rocket-387410e0fd8f.png"
     },
     "glasgow": {
       "src": "units/glasgow-56c6373a34fe.png"
@@ -59,11 +71,8 @@ globalThis.KnightmareArtManifest = {
     "gun_ru": {
       "src": "units/gun_ru-e7776a73350d.png"
     },
-    "guren_hei": {
-      "src": "units/guren_hei-web.png"
-    },
-    "guren_type01": {
-      "src": "units/guren_type01-2f3da3b4d5e8.png"
+    "hummel_battery": {
+      "src": "units/hummel_battery-11b7539ef1e2.png"
     },
     "liverpool": {
       "src": "units/liverpool-040286c14865.png"
@@ -74,26 +83,17 @@ globalThis.KnightmareArtManifest = {
     "panzer_wespe": {
       "src": "units/panzer_wespe-web.png"
     },
-    "shen_hu": {
-      "src": "units/shen_hu-761ab82d666e.png"
-    },
     "sutherland": {
       "src": "units/sutherland-4273fc3f9125.png"
     },
-    "sutherland_sieg": {
-      "src": "units/sutherland_sieg-e0f49c4f1f59.png"
+    "sutherland_air": {
+      "src": "units/sutherland_air-cc57c87d038f.png"
+    },
+    "vincent_commander": {
+      "src": "units/vincent_commander-d4d91fbcf7f5.png"
     },
     "vincent_ward": {
       "src": "units/vincent_ward-474e03b4ee9c.png"
-    },
-    "wang_hu": {
-      "src": "units/wang_hu-web.png"
-    },
-    "zangetsu": {
-      "src": "units/zangetsu-4e4cb3c3bd61.png"
-    },
-    "zetland": {
-      "src": "units/zetland-34eaf2c7197b.png"
     }
   },
   "portraits": {

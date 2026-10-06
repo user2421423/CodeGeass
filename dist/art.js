@@ -27,31 +27,31 @@ const ART = (() => {
     gracchus: { body: 'humanoid', bulk: 0.9, head: 'crest', shoulder: 'spike', weapon: 'rapier', main: '#dcd7cb', dark: '#2b2b33' },
     sutherland: { body: 'humanoid', bulk: 1, head: 'visor', shoulder: 'block', weapon: 'rifle', main: '#6e5ca3' },
     vincent_ward: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'round', weapon: 'lance', main: '#4b7c66' },
+    vincent_commander: { body: 'humanoid', bulk: 1.05, head: 'fin', shoulder: 'spike', weapon: 'lance', back: 'wings', main: '#8a3f88', trim: '#c9c5d6' },
     brighton: { body: 'humanoid', bulk: 1.25, head: 'mono', shoulder: 'wide', weapon: 'railgun', main: '#5b6190' },
-    gawain: { body: 'giant', bulk: 1.4, head: 'crest', shoulder: 'wide', weapon: 'none', back: 'hadron', main: '#2d2b36' },
     liverpool: { body: 'tank', main: '#8b8164' },
+    sutherland_air: { body: 'humanoid', bulk: 1, head: 'visor', shoulder: 'block', weapon: 'rifle', back: 'wings', main: '#6e5ca3', trim: '#c23b3b' },
     gareth: { body: 'giant', bulk: 1.3, head: 'mono', shoulder: 'wide', weapon: 'none', back: 'launcher', main: '#463d68' },
-    zetland: { body: 'humanoid', bulk: 1.35, head: 'mono', shoulder: 'wide', weapon: 'none', back: 'bigcannon', main: '#7d3039' },
     alexander_drone: { body: 'humanoid', bulk: 0.8, head: 'insect', shoulder: 'none', weapon: 'rifle', main: '#33405c' },
-    amanecer: { body: 'humanoid', bulk: 0.95, head: 'crest', shoulder: 'round', weapon: 'sword', back: 'cape', main: '#b8292e', trim: '#efe6c8' },
+    estrella_cc: { body: 'humanoid', bulk: 1.05, head: 'visor', shoulder: 'block', weapon: 'twin', main: '#2f6f5a', trim: '#e0c040' },
     alexander: { body: 'insect', main: '#3b4f7c' },
     estrella: { body: 'humanoid', bulk: 1.05, head: 'visor', shoulder: 'block', weapon: 'rifle', main: '#2c2e33', trim: '#55b85f' },
-    alexander_valiant: { body: 'humanoid', bulk: 0.95, head: 'insect', shoulder: 'spike', weapon: 'axe', main: '#3064b8', trim: '#f08a2a' },
-    alexander_redorga: { body: 'humanoid', bulk: 1.1, head: 'insect', shoulder: 'spike', weapon: 'twin', main: '#932727', trim: '#2a2a2e' },
-    alexander_liberte: { body: 'humanoid', bulk: 1, head: 'insect', shoulder: 'round', weapon: 'katana', back: 'wings', main: '#e8ebf2', trim: '#3064b8', glow: '#9fe8ff' },
+    alexander_mp: { body: 'humanoid', bulk: 0.9, head: 'insect', shoulder: 'spike', weapon: 'rifle', main: '#4a4fb0', trim: '#7ed957' },
+    panzer_wespe: { body: 'box', heavy: true, main: '#57654a', trim: '#e1d39a' },
+    alexander_elite: { body: 'humanoid', bulk: 1, head: 'insect', shoulder: 'round', weapon: 'katana', back: 'wings', main: '#e8ebf2', trim: '#c0303a', glow: '#9fe8ff' },
     gardmare: { body: 'egg', main: '#7e8b5a', trim: '#cbc28c' },
     panzer_hummel: { body: 'box', main: '#6d7b56', trim: '#e1d39a' },
-    panzer_wespe: { body: 'box', heavy: true, main: '#57654a', trim: '#e1d39a' },
+    hummel_battery: { body: 'box', heavy: true, main: '#5d6f80', trim: '#8f925a' },
     gun_ru: { body: 'dome', main: '#4f7e48', trim: '#c2342c' },
-    guren_type01: { body: 'humanoid', bulk: 0.95, head: 'crest', shoulder: 'round', weapon: 'claw', main: '#b9332d' },
+    burai_kai: { body: 'humanoid', bulk: 1, head: 'visor', shoulder: 'round', weapon: 'katana', main: '#8a7f62', trim: '#4a3a2a' },
     chuyen: { body: 'humanoid', bulk: 0.85, head: 'tiger', shoulder: 'spike', weapon: 'pole', main: '#c5452d' },
     gekka: { body: 'humanoid', bulk: 0.9, head: 'fin', shoulder: 'round', weapon: 'katana', main: '#3d4859' },
     akatsuki: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'katana', back: 'guns', main: '#3b414b' },
-    wang_hu: { body: 'humanoid', bulk: 1.1, head: 'tiger', shoulder: 'pauldron', weapon: 'twin', main: '#c8a03b', trim: '#7d2a22' },
-    shen_hu: { body: 'humanoid', bulk: 1.15, head: 'mask', shoulder: 'pauldron', weapon: 'sword', chest: true, main: '#2f5bab', trim: '#d4372f' },
-    guren_hei: { body: 'humanoid', bulk: 1, head: 'crest', shoulder: 'round', weapon: 'claw', main: '#9f302b' },
-    zangetsu: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'block', weapon: 'katana', back: 'pods', main: '#272b35' },
-    sutherland_sieg: { body: 'fortress', main: '#d88b2b', trim: '#6b3a14' },
+    akatsuki_zikisan: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'spike', weapon: 'katana', main: '#2c3170' },
+    akatsuki_air: { body: 'humanoid', bulk: 1.05, head: 'fin', shoulder: 'spike', weapon: 'rifle', back: 'wings', main: '#2c3170' },
+    gekka_rocket: { body: 'humanoid', bulk: 0.9, head: 'fin', shoulder: 'round', weapon: 'rifle', back: 'pods', main: '#3d5a55' },
+    akatsuki_missile: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'none', back: 'launcher', main: '#8a8f96', trim: '#c8562a' },
+    akatsuki_heavy: { body: 'humanoid', bulk: 1.05, head: 'fin', shoulder: 'block', weapon: 'none', back: 'bigcannon', main: '#5f8f86' },
     bamides: { body: 'tripod', main: '#b9a67b', trim: '#5b4b2b' },
   };
   function shade(hex, f) {
@@ -361,7 +361,7 @@ const ART = (() => {
     return svg;
   }
   function box(s, c) {
-    // Panzer-Hummel / Panzer-Wespe: a walking armored box with arm cannons and missile pods.
+    // Panzer-Hummel, Panzer-Wespe and the Hummel gun battery: a walking armored box with arm cannons and missile pods.
     let svg = '';
     svg += poly([[32, 70], [42, 70], [40, 88], [30, 88]], c.dark, ink()) + poly([[27, 88], [44, 88], [45, 92], [26, 92]], c.deep, ink());
     svg += poly([[56, 70], [66, 70], [68, 88], [56, 88]], c.main, ink()) + poly([[54, 88], [71, 88], [72, 92], [53, 92]], c.deep, ink());

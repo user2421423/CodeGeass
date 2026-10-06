@@ -17,16 +17,18 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   | Branch | Class | Britannia | E.U. | Federation |
   |---|---|---|---|---|
   | Infantry | Scout | Glasgow | Alexander Drone | Gun-Ru |
-  | Infantry | Assault (+55% vs Armor and cities) | Gloucester | Amanecer | Guren Type-01 |
+  | Infantry | Assault (+55% vs Armor and cities) | Gloucester | Estrella Close-Combat | Burai Kai |
   | Infantry | Raider (5 move) | Gracchus | Alexander Type-02 | Chuyen |
   | Armor | Line | Sutherland | Estrella | Gekka |
-  | Armor | Mainline | Vincent Ward | Alexander Valiant | Akatsuki |
-  | Armor | Heavy (range 1–2) | Brighton | Alexander Redorga | Wang Hu |
-  | Armor | Super-heavy (range 1–2) | Gawain | Alexander Liberte | Shen Hu |
-  | Artillery | Fire support (range 1) | Liverpool | Gardmare | Guren Type-Hei |
-  | Artillery | Rocket (range 2, splash) | Gareth | Panzer-Hummel | Zangetsu |
-  | Artillery | Siege (range 2, +100% vs cities) | Zetland | Panzer-Wespe | Sutherland Sieg |
-  The Middle Eastern Federation garrisons field the Bamides.
+  | Armor | Mainline | Vincent Ward | Alexander Mass-Production | Akatsuki |
+  | Armor | Heavy (range 1–2) | Vincent Commander Model | Panzer-Wespe | Akatsuki Command Model Zikisan |
+  | Armor | Super-heavy (range 1–2) | Brighton | Alexander Type-02 Elite | Akatsuki Zikisan Air Glide |
+  | Artillery | Fire support (range 1) | Liverpool | Gardmare | Gekka Rocket |
+  | Artillery | Rocket (range 2, splash) | Sutherland Air | Panzer-Hummel | Akatsuki Missile |
+  | Artillery | Siege (range 2, +100% vs cities) | Gareth | Panzer-Hummel Gun Battery | Akatsuki Heavy Weapons |
+  Sutherland Air and the Akatsuki Zikisan Air Glide fly (they ignore terrain movement costs). Frames named as a
+  configuration (Close-Combat, Elite, Rocket, Missile, Heavy Weapons, Gun Battery) are the game's loadouts of a wiki
+  frame. The Middle Eastern Federation garrisons field the Bamides.
 - **Doctrines:** Britannian Armor +8% damage; E.U. Artillery +10% damage; Federation Infantry 15% cheaper.
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
@@ -72,8 +74,7 @@ node tools/validate_assets.cjs --tracked
 
 ## Publish artwork
 
-The live game ships 28 finished Knightmare sprites and 34 commander portraits. Guren Type-Hei, Wang Hu,
-Panzer-Wespe and Fernando Noriega keep the drawn artwork. Credits and source provenance are in `ASSETS.md`
+The live game ships 31 finished Knightmare sprites and 35 commander portraits. Credits and source provenance are in `ASSETS.md`
 and `dist/assets/art/sources.json`. To update the artwork from local raw inputs or a processed bundle:
 
 ```sh

@@ -18,21 +18,6 @@
       },
       {
         "kind": "units",
-        "id": "alexander_liberte",
-        "file": "units/alexander_liberte-95974233a76b.png"
-      },
-      {
-        "kind": "units",
-        "id": "alexander_redorga",
-        "file": "units/alexander_redorga-9053b7e33e00.png"
-      },
-      {
-        "kind": "units",
-        "id": "amanecer",
-        "file": "units/amanecer-ed71c27edb73.png"
-      },
-      {
-        "kind": "units",
         "id": "bamides",
         "file": "units/bamides-112358cce84d.png"
       },
@@ -63,11 +48,6 @@
       },
       {
         "kind": "units",
-        "id": "gawain",
-        "file": "units/gawain-724c6a9bbac4.png"
-      },
-      {
-        "kind": "units",
         "id": "gekka",
         "file": "units/gekka-6c896ee459cb.png"
       },
@@ -93,11 +73,6 @@
       },
       {
         "kind": "units",
-        "id": "guren_type01",
-        "file": "units/guren_type01-2f3da3b4d5e8.png"
-      },
-      {
-        "kind": "units",
         "id": "liverpool",
         "file": "units/liverpool-040286c14865.png"
       },
@@ -108,28 +83,13 @@
       },
       {
         "kind": "units",
-        "id": "shen_hu",
-        "file": "units/shen_hu-761ab82d666e.png"
-      },
-      {
-        "kind": "units",
         "id": "sutherland",
         "file": "units/sutherland-4273fc3f9125.png"
       },
       {
         "kind": "units",
-        "id": "sutherland_sieg",
-        "file": "units/sutherland_sieg-e0f49c4f1f59.png"
-      },
-      {
-        "kind": "units",
         "id": "vincent_ward",
         "file": "units/vincent_ward-474e03b4ee9c.png"
-      },
-      {
-        "kind": "units",
-        "id": "zangetsu",
-        "file": "units/zangetsu-4e4cb3c3bd61.png"
       },
       {
         "kind": "portraits",
@@ -361,46 +321,6 @@
     },
     {
       "kind": "units",
-      "id": "alexander_valiant",
-      "page": "https://codegeass.fandom.com/wiki/Alexander_Valiant",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/c/c4/Kmf_Alexv_ryo.jpg/revision/latest?cb=20150522042944",
-      "method": "Single front view isolated from rendered design sheet; outline recipe in tools/art-sheet-recipes.json",
-      "renderedImageBox": {
-        "height": 585,
-        "width": 796,
-        "x": 283.5,
-        "y": 175.5
-      }
-    },
-    {
-      "kind": "units",
-      "id": "zetland",
-      "page": "https://codegeass.fandom.com/wiki/Zetland",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/d/de/Zetland_%28Color%29.jpg/revision/latest?cb=20130225161356",
-      "method": "Single front view isolated from rendered design sheet; outline recipe in tools/art-sheet-recipes.json",
-      "renderedImageBox": {
-        "height": 600,
-        "width": 660,
-        "x": 351.5,
-        "y": 168
-      }
-    },
-    {
-      "kind": "units",
-      "id": "wang_hu",
-      "page": "https://geass.miraheze.org/wiki/Wang_Hu_Flight-Enabled_Version",
-      "image": "https://static.wikitide.net/geasswiki/3/36/Wang_hu_flight_enabled_front_color_settei.png",
-      "method": "Front color design art; edge-connected pale background removed and sprite padded to transparent 640×640"
-    },
-    {
-      "kind": "units",
-      "id": "guren_hei",
-      "page": "https://geass.miraheze.org/wiki/Guren_Type-Hei",
-      "image": "https://static.wikitide.net/geasswiki/9/97/Guren_type-hei_tamaki_ls_art.png",
-      "method": "Lost Stories art; edge-connected pale background removed and sprite padded to transparent 640×640"
-    },
-    {
-      "kind": "units",
       "id": "panzer_wespe",
       "page": "https://codegeass.fandom.com/wiki/Panzer-Wespe",
       "image": "https://static.wikia.nocookie.net/codegeass/images/1/1c/FnTimL1_%281%29.jpg/revision/latest?cb=20150216030815",
@@ -412,6 +332,102 @@
       "page": "https://www.anime-planet.com/manga/code-geass-soubou-no-oz-o2/characters",
       "image": "https://cdn.anime-planet.com/characters/primary/fernando-noriega-1-171x240.webp?t=1672851463",
       "method": "Fernando Noriega character portrait cropped to the game's 13:16 commander frame"
+    },
+    {
+      "kind": "units",
+      "id": "vincent_commander",
+      "file": "units/vincent_commander-d4d91fbcf7f5.png",
+      "page": "https://codegeass.fandom.com/wiki/Vincent_Commander_Model",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/b/b8/Rpi-212a-guilford.jpg/revision/latest",
+      "method": "Guilford-colors reference render; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "sutherland_air",
+      "file": "units/sutherland_air-cc57c87d038f.png",
+      "page": "https://codegeass.fandom.com/wiki/Sutherland_Flight-Enabled",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/e/e9/Rpi-13-jeremiah.jpg/revision/latest",
+      "method": "Reference render; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "estrella_cc",
+      "file": "units/estrella_cc-4ebf772963e3.png",
+      "page": "https://codegeass.fandom.com/wiki/Estrella",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/2/2e/Estrella-Fernando.jpg/revision/latest",
+      "method": "Fernando Noriega colors (stun tonfa unit); white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "alexander_mp",
+      "file": "units/alexander_mp-aba6042c8fcf.png",
+      "page": "https://codegeass.fandom.com/wiki/Alexander_Drone_(Mass_Production_Model)",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/5/57/AlexDroneYukiya.jpg/revision/latest",
+      "method": "Yukiya version design art; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "alexander_elite",
+      "file": "units/alexander_elite-da3094ec72b4.png",
+      "page": "https://codegeass.fandom.com/wiki/Alexander",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/2/2d/Alexander-6.jpg/revision/latest",
+      "method": "Akito Hyuga's Alexander design art standing in for the ace configuration; background and gaps removed, trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "hummel_battery",
+      "file": "units/hummel_battery-11b7539ef1e2.png",
+      "page": "https://codegeass.fandom.com/wiki/Panzer_Hummel",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/b/b3/PanzerHummelturret.jpg/revision/latest",
+      "method": "Main view cropped from the gun battery design sheet; background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "burai_kai",
+      "file": "units/burai_kai-8b9e363ea1c1.png",
+      "page": "https://codegeass.fandom.com/wiki/Burai_Kai",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/2/23/Burai_Kai_-_Lineart.jpg/revision/latest",
+      "method": "Four Holy Swords version; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "akatsuki_zikisan",
+      "file": "units/akatsuki_zikisan-ca4e4c5cca20.png",
+      "page": "https://codegeass.fandom.com/wiki/Akatsuki_Command_Model_Zikisan",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/d/d6/Akatsuki_Command_Model_Jikisanshiy%C5%8D_-_Line_Art.jpg/revision/latest",
+      "method": "Standard colors; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "akatsuki_air",
+      "file": "units/akatsuki_air-c649000bc081.png",
+      "page": "https://codegeass.fandom.com/wiki/Akatsuki_Command_Model_Zikisan",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/d/dd/Type-05-jikisan-air-full.jpg/revision/latest",
+      "method": "Flight-enabled version with full armament; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "gekka_rocket",
+      "file": "units/gekka_rocket-387410e0fd8f.png",
+      "page": "https://codegeass.fandom.com/wiki/Gekka",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/3/33/Gekka_Arm_Mounted_Gun_Artwork.png/revision/latest",
+      "method": "Arm-mounted weapon artwork; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "akatsuki_missile",
+      "file": "units/akatsuki_missile-0231df0f89b3.png",
+      "page": "https://codegeass.fandom.com/wiki/Akatsuki_Mass-Production_Model",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/2/25/Rollout.png/revision/latest",
+      "method": "Rollout colors; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "akatsuki_heavy",
+      "file": "units/akatsuki_heavy-7c180ab2623f.png",
+      "page": "https://codegeass.fandom.com/wiki/Akatsuki-Upgrade",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/a/a8/Akatsuki-upgrade.jpg/revision/latest",
+      "method": "Akatsuki-Upgrade design art standing in for the heavy weapons configuration; white background removed and trimmed"
     }
   ],
   "drawnFallbacks": {

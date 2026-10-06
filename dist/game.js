@@ -730,7 +730,7 @@ function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
       const t = E.TYPES[k];
       return `<article class="unit-card">${ART.unit(k, 'catalog-ship', side)}<span class="unit-code">${t.role} · ${t.wc} · Tier ${t.tier}</span><h3>${t.name}</h3><span class="weapon-focus">${t.model} · ${t.gen}</span><p style="margin-top:10px">${t.desc}</p><p class="lore">${t.lore}<br><b>${t.weapon}</b></p><div class="unit-spec"><span>HP ${t.hp}</span><span>${ICONS.use('atk')}${t.attack}</span><span>${ICONS.use('def')}${t.armor}</span><span>${ICONS.use('mov')}${t.move}</span><span>${ICONS.use('rng')}${t.min === t.max ? t.max : t.min + '–' + t.max}</span></div><div class="cost">${costHTML(E.price(k, 1, game, side))}</div></article>`;
     })
-    .join('')}</div><p class="description">Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Militarized Zone of India’s Jabalpur frames.</p></section></div>`;
+    .join('')}</div><p class="description">Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Jabalpur-built Black Knights frames and the Burai Kai. Configurations are the game’s loadouts of a wiki frame.</p></section></div>`;
   focusDialog();
 }
 // The war at a glance: each power's cities, income, army and capital.

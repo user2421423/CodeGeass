@@ -224,6 +224,7 @@
   };
   const CLASS_ORDER = ['scout', 'assault', 'raider', 'light', 'medium', 'heavy', 'super', 'support', 'rocket', 'siege'];
   // Faction Knightmare lineups (Code Geass wiki). Stats come from the class; a few frames tweak them.
+  // A "configuration" is the game's loadout of a wiki frame, using the optional weapons the wiki lists for it.
   const KNIGHTMARES = {
     // Holy Britannian Empire (with Euro Britannia).
     glasgow: {
@@ -271,24 +272,23 @@
       weapon: 'Lance-type MVS · Assault rifle',
       lore: 'The mass-production descendant of the Lancelot.',
     },
-    brighton: {
+    vincent_commander: {
       side: 'britannia',
       cls: 'heavy',
+      name: 'Vincent Commander Model',
+      model: 'RPI-212A',
+      gen: '7th generation',
+      weapon: 'Twin lance-type MVS · Needle Blazers',
+      lore: 'The refined Vincent built in small numbers for field commanders and elite squadrons; it replaced the Gloucester as Britannia’s front-line elite frame.',
+    },
+    brighton: {
+      side: 'britannia',
+      cls: 'super',
       name: 'Brighton',
       model: 'RPI-213',
       gen: '7th generation',
-      weapon: 'Foldable railgun · Forearm blade',
-      lore: 'A heavily armoured command frame built to lead Vincent Ward squadrons.',
-    },
-    gawain: {
-      side: 'britannia',
-      cls: 'super',
-      name: 'Gawain',
-      model: 'IFX-V3D1',
-      gen: '6th generation',
-      weapon: 'Shoulder Hadron Cannons · Druid System',
-      lore: 'Twice the mass of a normal Knightmare, carried by an integrated Float System: ignores terrain movement costs.',
-      float: true,
+      weapon: 'Foldable railgun · Forearm blade and gun',
+      lore: 'A 10-tonne giant among seventh-generation frames, standing over five and a half metres tall.',
     },
     liverpool: {
       side: 'britannia',
@@ -301,23 +301,24 @@
       attack: 63,
       armor: 8,
     },
-    gareth: {
+    sutherland_air: {
       side: 'britannia',
       cls: 'rocket',
+      name: 'Sutherland Air',
+      model: 'RPI-13/F2 Flight-Enabled',
+      gen: '5th generation',
+      weapon: 'Arm-mounted bazooka · Assault rifle',
+      lore: 'A Sutherland given Air Glide wings and a heavy bazooka: it flies over any terrain.',
+      float: true,
+    },
+    gareth: {
+      side: 'britannia',
+      cls: 'siege',
       name: 'Gareth',
       model: 'RPI-V4L',
       gen: '7th generation',
       weapon: 'Hadron Cannons · 14-tube missile launchers',
-      lore: 'The mass-production Gawain flown by the Glaston Knights.',
-    },
-    zetland: {
-      side: 'britannia',
-      cls: 'siege',
-      name: 'Zetland',
-      model: 'RZX-6DD',
-      gen: '6th generation',
-      weapon: 'Mega Hadron Launcher',
-      lore: 'A positional-defense prototype; its launcher became the Mordred’s Stark Hadron Cannon.',
+      lore: 'The mass-production Gawain flown by the Glaston Knights, built for long-range bombardment.',
     },
     // Europia United (with wZERO and the Star of Madrid).
     alexander_drone: {
@@ -329,14 +330,14 @@
       weapon: 'Judgement 30mm rifle · Uruna Edge knives',
       lore: 'AI-piloted Alexanders: weaker than a manned frame, but numerous and expendable.',
     },
-    amanecer: {
+    estrella_cc: {
       side: 'eu',
       cls: 'assault',
-      name: 'Amanecer',
-      model: 'Type-05G/ESP',
-      gen: '7th-generation equivalent',
-      weapon: 'Brazo Caliente · Espada blades',
-      lore: 'The “Red Manteau” of the Star of Madrid, built in India from Akatsuki plans.',
+      name: 'Estrella Close-Combat',
+      model: 'Type-06/ESP · close-combat configuration',
+      gen: '5th generation',
+      weapon: 'Elbow stun tonfas · Slash Harkens',
+      lore: 'The Estrella fitted for melee like Fernando Noriega’s green unit, trading its rifle for stun tonfas.',
     },
     alexander: {
       side: 'eu',
@@ -353,35 +354,35 @@
       name: 'Estrella',
       model: 'Type-06/ESP',
       gen: '5th generation',
-      weapon: 'Assault rifle · Stun tonfas',
+      weapon: 'Assault rifle · Slash Harkens',
       lore: 'A Sutherland copy with added armor, flown by the Star of Madrid.',
     },
-    alexander_valiant: {
+    alexander_mp: {
       side: 'eu',
       cls: 'medium',
-      name: 'Alexander Valiant',
-      model: 'WOX-Type02V',
-      gen: '7th generation',
-      weapon: 'Personal weapons · Judgement rifle',
-      lore: 'wZERO’s upgraded Alexanders, on par with Britannia’s Vincent.',
+      name: 'Alexander Mass-Production',
+      model: 'WOX-Type02/MPM',
+      gen: '7th-generation equivalent',
+      weapon: 'Judgement rifle · Sniper barrel · Uruna Edge knives',
+      lore: 'The Alexander Drone rebuilt for human pilots, who make it the equal of any other Alexander.',
     },
-    alexander_redorga: {
+    panzer_wespe: {
       side: 'eu',
       cls: 'heavy',
-      name: 'Alexander Redorga',
-      model: 'WOX Type-03/SC',
-      gen: '7th-generation equivalent',
-      weapon: 'Heat swords · Judgement Mk2 rifle',
-      lore: 'The “Red Ogre”: a Valiant rebuilt with extra limbs and a new OS.',
+      name: 'Panzer-Wespe',
+      model: 'Hummel successor',
+      gen: '5th generation',
+      weapon: 'Shoulder artillery cannons · Missile pods',
+      lore: 'The Hummel’s heavier successor, carrying enormous shoulder guns.',
     },
-    alexander_liberte: {
+    alexander_elite: {
       side: 'eu',
       cls: 'super',
-      name: 'Alexander Liberte',
-      model: 'WOX-Type-01AC',
+      name: 'Alexander Type-02 Elite',
+      model: 'WOX-Type02 · ace configuration',
       gen: '7th-generation equivalent',
-      weapon: 'MVS katana · Blaze Luminous',
-      lore: 'Akito’s Alexander, rebuilt in Schrötter steel with propulsion wings: lighter and faster than other super-heavies.',
+      weapon: 'Personal axes, swords and sniper rifles',
+      lore: 'Type-02s tuned for wZERO’s aces, each with its own weapons: lighter and faster than other super-heavies.',
       hp: 540,
       move: 3,
     },
@@ -407,16 +408,16 @@
       armor: 16,
       move: 2,
     },
-    panzer_wespe: {
+    hummel_battery: {
       side: 'eu',
       cls: 'siege',
-      name: 'Panzer-Wespe',
-      model: 'Hummel successor',
-      gen: '5th generation',
-      weapon: 'Shoulder artillery cannons · Missile pods',
-      lore: 'The Hummel’s heavier successor, carrying enormous shoulder guns.',
+      name: 'Panzer-Hummel Gun Battery',
+      model: 'Mk3-E2E8 · gun battery version',
+      gen: '4th generation',
+      weapon: 'Twin heavy cannons on a towed mount',
+      lore: 'A Hummel upper body mounted on a towed gun carriage; batteries of them guarded the forest around Castle Weisswolf.',
     },
-    // Chinese Federation (with the Militarized Zone of India's Jabalpur designs).
+    // Chinese Federation (with the Jabalpur-built Black Knights frames and the Japan Liberation Front's Burai Kai).
     gun_ru: {
       side: 'cf',
       cls: 'scout',
@@ -428,14 +429,14 @@
       hp: 175,
       move: 3,
     },
-    guren_type01: {
+    burai_kai: {
       side: 'cf',
       cls: 'assault',
-      name: 'Guren Type-01',
-      model: 'Type-01',
-      gen: '7th-generation equivalent',
-      weapon: 'Fork knife · 43mm grenade launcher',
-      lore: 'Rakshata’s first Jabalpur prototype, built in small numbers in India.',
+      name: 'Burai Kai',
+      model: 'Type-1RC',
+      gen: '4th generation',
+      weapon: 'Revolving Blade Sword · Chest Slash Harkens',
+      lore: 'The Four Holy Swords’ tuned Burai: in skilled hands it took on Gloucesters at Narita.',
     },
     chuyen: {
       side: 'cf',
@@ -464,52 +465,51 @@
       weapon: 'Revolving blade · Shoulder machine guns',
       lore: 'Jabalpur’s mass-production frame, standard issue of the UFN era.',
     },
-    wang_hu: {
+    akatsuki_zikisan: {
       side: 'cf',
       cls: 'heavy',
-      name: 'Wang Hu',
-      model: 'XT-403',
+      name: 'Akatsuki Command Model Zikisan',
+      model: 'Type-05S/G',
       gen: '7th-generation equivalent',
-      weapon: 'Twin MVS Netsu Zanto · Radiant Wave barrier',
-      lore: 'The “King Tiger”, brother machine of the Shen Hu.',
+      weapon: 'Full-size Revolving Blade Sword · Radiation Wave barrier',
+      lore: 'Rakshata’s squadron-leader Akatsuki, closer to the Gekka, with head emitters that raise a Guren-style barrier.',
     },
-    shen_hu: {
+    akatsuki_air: {
       side: 'cf',
       cls: 'super',
-      name: 'Shen Hu',
-      model: 'XT-404',
+      name: 'Akatsuki Zikisan Air Glide',
+      model: 'Type-05S/F2F · heavy configuration',
       gen: '7th-generation equivalent',
-      weapon: 'Baryon Cannon · Electrified harkens',
-      lore: 'The “Divine Tiger”: its Baryon Cannon hits harder than any other super-heavy, at the cost of hull.',
-      attack: 114,
-      hp: 560,
+      weapon: 'Air Glide wings · Bazooka · Radiation Wave missiles',
+      lore: 'The Command Model with Air Glide wings and its full heavy armament: it flies over any terrain.',
+      float: true,
     },
-    guren_hei: {
+    gekka_rocket: {
       side: 'cf',
       cls: 'support',
-      name: 'Guren Type-Hei',
-      model: 'Type-Hei',
-      gen: '7th generation',
-      weapon: 'Radiation Wave arm · Hand gun',
-      lore: 'An Indian anti-panzer Guren that cooks enemy frames at close range.',
+      name: 'Gekka Rocket',
+      model: 'Type-03F · rocket configuration',
+      gen: '7th-generation equivalent',
+      weapon: 'Arm-mounted rocket launcher · Custom hand gun',
+      lore: 'The Gekka armed with its arm-mounted rocket launcher for close fire support.',
     },
-    zangetsu: {
+    akatsuki_missile: {
       side: 'cf',
       cls: 'rocket',
-      name: 'Zangetsu',
-      model: 'Type-04',
+      name: 'Akatsuki Missile',
+      model: 'Type-05 · missile configuration',
       gen: '7th-generation equivalent',
-      weapon: '12-tube missile launcher · Radiant Wave',
-      lore: 'Jabalpur’s commander frame, built for the United Federation of Nations.',
+      weapon: '12-tube missile launcher · Shoulder machine guns',
+      lore: 'An Akatsuki carrying the optional 12-tube missile launcher.',
     },
-    sutherland_sieg: {
+    akatsuki_heavy: {
       side: 'cf',
       cls: 'siege',
-      name: 'Sutherland Sieg',
-      model: 'RPI-13J/X',
-      gen: 'Knight Giga Fortress',
-      weapon: 'Hyper-velocity cannon · Lance harkens',
-      lore: 'The Siegfried, rebuilt by Rakshata at Jabalpur around a Sutherland core.',
+      name: 'Akatsuki Heavy Weapons',
+      model: 'Type-05 · heavy weapons configuration',
+      gen: '7th-generation equivalent',
+      weapon: 'Large cannon · Bazooka',
+      lore: 'Akatsukis hauling large cannons, used to shell fortified positions.',
     },
     // Neutral garrisons: the Middle Eastern Federation's own frame.
     bamides: {
@@ -1962,7 +1962,7 @@
     );
   }
   // Saves from other rules versions are not carried forward.
-  const RULES_VERSION = 1;
+  const RULES_VERSION = 2;
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || g.rulesVersion !== RULES_VERSION || !Array.isArray(g.units)) return null;
     return g.units.every(u => TYPES[u.type]) ? g : null;

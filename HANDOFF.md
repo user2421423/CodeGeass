@@ -69,7 +69,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   ever moves a unit by assigning `u.c/u.r` directly, call `reindex(g, u, from)` or the index self-heals on a miss.
 - Every player action has a `…Reason(g, …)` function returning `null` or a human-readable reason; the UI shows it on
   disabled buttons. Shortfalls read "Need N more credits / command tokens" and render as red costs instead.
-- Saves are gated by `RULES_VERSION` (currently 1) in `migrateSave`; bump it when save shape or rules change.
+- Saves are gated by `RULES_VERSION` (currently 2; 2 replaced the frame lineup) in `migrateSave`; bump it when save shape or rules change.
 - `createGame(player, difficulty, 'conquest', seed)`. Cities and armies are placed by longitude/latitude and snap to
   the nearest free land hex, so they can be edited without touching coordinates.
 - Commander abilities are data (`fx` on each commander: `dmg`, `dmgBranch`, `crit`, `move`, `taken`, `counter`,
@@ -91,7 +91,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 ### Knightmares (30 faction frames + the neutral Bamides)
 - Three branches with ten classes; each power builds its own frame for every class (see the README table).
   Class stats come from `CLASSES`; a few frames tweak them (Gun-Ru sturdier but slower, Liverpool and Gardmare
-  glass cannons, Panzer-Hummel armored and slow, Liberte faster and lighter, Shen Hu hits harder, Gawain floats).
+  glass cannons, Panzer-Hummel armored and slow, Alexander Type-02 Elite faster and lighter; Sutherland Air and
+  Akatsuki Zikisan Air Glide float). Frames named as a configuration are game loadouts of a wiki frame.
 - **Infantry:** Scout, Assault (+55% vs Armor and city defenses), Raider (5 movement). **Armor:** Line and Mainline
   (a kill grants one more shot per turn), Heavy and Super-heavy (range 1–2; fire again after every kill, the first
   also restores movement). **Artillery:** Fire support (range 1), Rocket (exactly range 2, 45% splash), Siege
