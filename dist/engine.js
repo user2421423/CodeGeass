@@ -4874,8 +4874,8 @@
       memo[side] = { turn: g.turn, field: goalField(g, side), guards: assignGuards(g, side) };
     return memo[side];
   }
-  // Garrison duty: the capital always keeps two defenders (four when threatened); other cities with enemy units
-  // within 3 hexes draw the nearest units back to defend them. Returns { unitId: city }.
+  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
+  // to enemies within five hexes and draw defenders from proportionally larger strategic radii. Returns { unitId: city }.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
