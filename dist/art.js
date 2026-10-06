@@ -1,5 +1,6 @@
-/* Original procedural artwork: Knightmare Frames, cities and commander busts are drawn as SVG at runtime and
-   cached as images for the canvas. No sprite files are loaded. */
+/* Procedural fallback artwork: Knightmare Frames, cities and commander busts are drawn as SVG at runtime and
+   cached as images for the canvas. Published sprites and portraits from assets/art/manifest.js overlay these
+   drawings when available; missing or failed image files automatically keep the procedural fallback. */
 const ART = (() => {
   const INK = '#0b0d14';
   // Faction trims and sensor glows; a unit's own palette sets its armor colors.
@@ -497,9 +498,9 @@ const ART = (() => {
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${body}</svg>`;
   }
-  // ---- Commander busts: original character designs drawn in code ----
-  // These are generic officers in each power's colors, deliberately NOT likenesses of the show's characters.
-  // Name, rank and abilities come from the engine; this table only sets a face, hair and uniform.
+  // ---- Fallback commander busts: original character designs drawn in code ----
+  // These generic officers are used only when a published portrait is unavailable or fails to load.
+  // Name, rank and abilities come from the engine; this table only sets fallback face, hair and uniform.
   const LOOKS = {
     // Holy Britannian Empire: ivory, violet and black coats with gold trim.
     suzaku: { hair: 'short', hc: '#3a4252', eye: '#c9983a', coat: '#e9e6dc', trim: '#d4af37' },
