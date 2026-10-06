@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Features
 
-- **Conquest on a full world map:** 100 × 42 hexes that wrap east–west around the globe, 107 cities, oceans, forests,
+- **Conquest on a full world map:** 100 × 42 hexes that wrap east–west around the globe, 149 cities, oceans, forests,
   mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan) and
   Pacific bases; the E.U. holds Europe, Russia, Siberia and Africa; the Federation holds Asia from
   Tehran to Taipei. Australia and the Middle Eastern Federation are neutral and defend themselves.
