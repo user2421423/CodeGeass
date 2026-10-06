@@ -7,8 +7,8 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 ## Features
 
 - **Conquest on a full world map:** 100 × 42 hexes that wrap east–west around the globe, 107 cities, oceans, forests,
-  mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan), Euro
-  Britannia (Russia to Turkey) and Pacific bases; the E.U. holds Europe and Africa; the Federation holds Asia from
+  mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan) and
+  Pacific bases; the E.U. holds Europe, Russia, Siberia and Africa; the Federation holds Asia from
   Tehran to Taipei. Australia and the Middle Eastern Federation are neutral and defend themselves.
 - **WC4 surrender rule:** when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to
   the conqueror and its armies disband. Take every rival capital to win, or hold the most cities at the 120-turn

@@ -125,12 +125,12 @@ const FACTION_BLURB = {
   britannia: {
     portrait: 'suzaku',
     label: 'All hail Britannia',
-    text: 'The Americas, Area 11 and Euro Britannia. Suzaku, Cornelia, Bismarck and Julius Kingsley. The richest power, fighting on three fronts.',
+    text: 'The Americas, Area 11 and the Pacific. Suzaku, Cornelia, Bismarck and Euro Britannia’s exiled knights. Fewer cities, but the best frames and commanders.',
   },
   eu: {
     portrait: 'leila',
     label: 'Liberté, égalité, fraternité',
-    text: 'Europe and Africa. Leila, Akito and the wZERO unit with the Alexanders, Panzer-Hummel firepower and the El Alamein line.',
+    text: 'Europe, Russia and Africa, the largest power on Earth. Leila, Akito and the wZERO unit with the Alexanders, Panzer-Hummel firepower and the El Alamein line.',
   },
   cf: {
     portrait: 'xingke',
