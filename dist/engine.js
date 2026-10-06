@@ -1354,7 +1354,7 @@
   // HQ technology, as in World Conqueror 4: bought with command tokens earned by winning operations, kept in the
   // player's profile across every operation and faction. Each level unlocks at a tier gated by total victories.
   const BRANCHES = { Infantry: 'infantry', Armor: 'armor', Artillery: 'artillery' };
-  const BRANCH_NAMES = { infantry: 'Infantry', armor: 'Armor', artillery: 'Artillery' };
+  const BRANCH_NAMES = { infantry: 'Infantry', armor: 'Armor', artillery: 'Artillery', mobility: 'Mobility' };
   const TECH_TIERS = [0, 0, 2, 4, 7];
   const pct = v => `${Math.round(v * 100)}%`;
   const TECH_TREE = {
@@ -1717,64 +1717,64 @@
   };
   // Starting branch ratings (stars, up to 6 with command tokens): Infantry, Armor, Artillery.
   const RATINGS = {
-    suzaku: { infantry: 4, armor: 5, artillery: 3 },
-    cornelia: { infantry: 4, armor: 5, artillery: 4 },
-    bismarck: { infantry: 4, armor: 5, artillery: 4 },
-    julius: { infantry: 3, armor: 5, artillery: 5 },
-    schneizel: { infantry: 3, armor: 4, artillery: 5 },
-    gino: { infantry: 5, armor: 4, artillery: 3 },
-    anya: { infantry: 3, armor: 3, artillery: 5 },
-    luciano: { infantry: 4, armor: 5, artillery: 2 },
-    jeremiah: { infantry: 4, armor: 5, artillery: 3 },
-    shin: { infantry: 4, armor: 5, artillery: 3 },
-    rolo: { infantry: 5, armor: 3, artillery: 2 },
-    guilford: { infantry: 4, armor: 4, artillery: 3 },
-    darlton: { infantry: 4, armor: 4, artillery: 3 },
-    ashley: { infantry: 4, armor: 4, artillery: 3 },
-    leila: { infantry: 3, armor: 4, artillery: 5 },
-    akito: { infantry: 5, armor: 4, artillery: 3 },
-    ryo: { infantry: 4, armor: 4, artillery: 3 },
-    ayano: { infantry: 5, armor: 3, artillery: 3 },
-    yukiya: { infantry: 3, armor: 3, artillery: 5 },
-    oscar: { infantry: 3, armor: 4, artillery: 3 },
-    klaus: { infantry: 4, armor: 3, artillery: 3 },
-    anna: { infantry: 3, armor: 3, artillery: 4 },
-    smilas: { infantry: 3, armor: 4, artillery: 4 },
-    fernando: { infantry: 4, armor: 3, artillery: 3 },
-    marirrosa: { infantry: 3, armor: 3, artillery: 5 },
-    xingke: { infantry: 4, armor: 5, artillery: 4 },
-    xianglin: { infantry: 5, armor: 3, artillery: 4 },
-    honggu: { infantry: 3, armor: 3, artillery: 4 },
-    cao: { infantry: 4, armor: 3, artillery: 3 },
-    gaohai: { infantry: 3, armor: 3, artillery: 3 },
-    zhaohao: { infantry: 3, armor: 4, artillery: 2 },
-    leifeng: { infantry: 4, armor: 5, artillery: 3 },
-    meiling: { infantry: 3, armor: 4, artillery: 3 },
-    lifeng: { infantry: 5, armor: 3, artillery: 2 },
-    rakshata: { infantry: 3, armor: 3, artillery: 5 },
+    suzaku: { infantry: 4, armor: 5, artillery: 3, mobility: 6},
+    cornelia: { infantry: 4, armor: 5, artillery: 4, mobility: 5},
+    bismarck: { infantry: 4, armor: 5, artillery: 4, mobility: 5},
+    julius: { infantry: 3, armor: 5, artillery: 5, mobility: 4},
+    schneizel: { infantry: 3, armor: 4, artillery: 5, mobility: 3},
+    gino: { infantry: 5, armor: 4, artillery: 3, mobility: 6},
+    anya: { infantry: 3, armor: 3, artillery: 5, mobility: 3},
+    luciano: { infantry: 4, armor: 5, artillery: 2, mobility: 5},
+    jeremiah: { infantry: 4, armor: 5, artillery: 3, mobility: 5},
+    shin: { infantry: 4, armor: 5, artillery: 3, mobility: 5},
+    rolo: { infantry: 5, armor: 3, artillery: 2, mobility: 5},
+    guilford: { infantry: 4, armor: 4, artillery: 3, mobility: 4},
+    darlton: { infantry: 4, armor: 4, artillery: 3, mobility: 3},
+    ashley: { infantry: 4, armor: 4, artillery: 3, mobility: 5},
+    leila: { infantry: 3, armor: 4, artillery: 5, mobility: 3},
+    akito: { infantry: 5, armor: 4, artillery: 3, mobility: 6},
+    ryo: { infantry: 4, armor: 4, artillery: 3, mobility: 5},
+    ayano: { infantry: 5, armor: 3, artillery: 3, mobility: 5},
+    yukiya: { infantry: 3, armor: 3, artillery: 5, mobility: 4},
+    oscar: { infantry: 3, armor: 4, artillery: 3, mobility: 4},
+    klaus: { infantry: 4, armor: 3, artillery: 3, mobility: 3},
+    anna: { infantry: 3, armor: 3, artillery: 4, mobility: 2},
+    smilas: { infantry: 3, armor: 4, artillery: 4, mobility: 3},
+    fernando: { infantry: 4, armor: 3, artillery: 3, mobility: 4},
+    marirrosa: { infantry: 3, armor: 3, artillery: 5, mobility: 3},
+    xingke: { infantry: 4, armor: 5, artillery: 4, mobility: 6},
+    xianglin: { infantry: 5, armor: 3, artillery: 4, mobility: 5},
+    honggu: { infantry: 3, armor: 3, artillery: 4, mobility: 3},
+    cao: { infantry: 4, armor: 3, artillery: 3, mobility: 3},
+    gaohai: { infantry: 3, armor: 3, artillery: 3, mobility: 2},
+    zhaohao: { infantry: 3, armor: 4, artillery: 2, mobility: 2},
+    leifeng: { infantry: 4, armor: 5, artillery: 3, mobility: 5},
+    meiling: { infantry: 3, armor: 4, artillery: 3, mobility: 4},
+    lifeng: { infantry: 5, armor: 3, artillery: 2, mobility: 5},
+    rakshata: { infantry: 3, armor: 3, artillery: 5, mobility: 2},
 
-    zero: { infantry: 3, armor: 4, artillery: 6 },
-    kallen: { infantry: 5, armor: 6, artillery: 2 },
-    tohdoh: { infantry: 5, armor: 6, artillery: 3 },
-    cc: { infantry: 4, armor: 5, artillery: 4 },
-    ohgi: { infantry: 5, armor: 3, artillery: 3 },
-    chiba: { infantry: 5, armor: 4, artillery: 2 },
-    asahina: { infantry: 4, armor: 5, artillery: 2 },
-    senba: { infantry: 5, armor: 3, artillery: 2 },
-    urabe: { infantry: 5, armor: 4, artillery: 2 },
-    sugiyama: { infantry: 4, armor: 3, artillery: 3 },
-    minami: { infantry: 2, armor: 3, artillery: 5 },
-    tamaki: { infantry: 3, armor: 2, artillery: 1 },
-    katase: { infantry: 4, armor: 4, artillery: 5 },
-    inoue: { infantry: 3, armor: 2, artillery: 2 },
-    villetta: { infantry: 3, armor: 5, artillery: 2 },
-    kewell: { infantry: 3, armor: 4, artillery: 2 },
-    monica: { infantry: 4, armor: 5, artillery: 3 },
-    dorothea: { infantry: 3, armor: 5, artillery: 4 },
-    nonette: { infantry: 4, armor: 5, artillery: 3 },
-    manfredi: { infantry: 4, armor: 6, artillery: 4 },
-    farnese: { infantry: 3, armor: 4, artillery: 5 },
-    augustus: { infantry: 3, armor: 4, artillery: 3 },
+    zero: { infantry: 3, armor: 4, artillery: 6, mobility: 4},
+    kallen: { infantry: 5, armor: 6, artillery: 2, mobility: 6},
+    tohdoh: { infantry: 5, armor: 6, artillery: 3, mobility: 5},
+    cc: { infantry: 4, armor: 5, artillery: 4, mobility: 5},
+    ohgi: { infantry: 5, armor: 3, artillery: 3, mobility: 3},
+    chiba: { infantry: 5, armor: 4, artillery: 2, mobility: 5},
+    asahina: { infantry: 4, armor: 5, artillery: 2, mobility: 5},
+    senba: { infantry: 5, armor: 3, artillery: 2, mobility: 3},
+    urabe: { infantry: 5, armor: 4, artillery: 2, mobility: 4},
+    sugiyama: { infantry: 4, armor: 3, artillery: 3, mobility: 4},
+    minami: { infantry: 2, armor: 3, artillery: 5, mobility: 3},
+    tamaki: { infantry: 3, armor: 2, artillery: 1, mobility: 4},
+    katase: { infantry: 4, armor: 4, artillery: 5, mobility: 2},
+    inoue: { infantry: 3, armor: 2, artillery: 2, mobility: 3},
+    villetta: { infantry: 3, armor: 5, artillery: 2, mobility: 4},
+    kewell: { infantry: 3, armor: 4, artillery: 2, mobility: 3},
+    monica: { infantry: 4, armor: 5, artillery: 3, mobility: 5},
+    dorothea: { infantry: 3, armor: 5, artillery: 4, mobility: 5},
+    nonette: { infantry: 4, armor: 5, artillery: 3, mobility: 5},
+    manfredi: { infantry: 4, armor: 6, artillery: 4, mobility: 5},
+    farnese: { infantry: 3, armor: 4, artillery: 5, mobility: 3},
+    augustus: { infantry: 3, armor: 4, artillery: 3, mobility: 3},
   };
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
@@ -2324,8 +2324,12 @@
   }
   function movement(g, u) {
     const t = TYPES[u.type],
-      f = fx(u);
+      f = fx(u),
+      mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
     let n = t.move + unitTech(g, u, 'drives');
+    // WC4-style Mobility rating, scaled for this game's smaller hex movement values:
+    // 1–2★ = +0, 3–4★ = +1, 5–6★ = +2 movement.
+    n += mobilityStars ? Math.max(0, Math.floor((mobilityStars - 1) / 2)) : 0;
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
     n += techLevel(g, u.side, 'sakura.float') >= 2 ? 1 : 0;
