@@ -9,6 +9,8 @@ const ART = (() => {
     eu: { trim: '#d7dde6', glow: '#ffd24a', flag: '#2f5fb8', flag2: '#f4d35e' },
     cf: { trim: '#f2c14e', glow: '#ff7a45', flag: '#b52a2a', flag2: '#f2c14e' },
     neutral: { trim: '#d8cfa6', glow: '#b8ff8a', flag: '#8a8466', flag2: '#e6dfc0' },
+    bk: { trim: '#f0c94a', glow: '#ff5a5a', flag: '#1d1d24', flag2: '#f0c94a' },
+    jlf: { trim: '#c9d6a0', glow: '#9fff7a', flag: '#3d4a2c', flag2: '#d8e2b0' },
   };
   // Neutral garrisons fly frames bought abroad, repainted in desert khaki.
   const NEUTRAL_PAINT = { main: '#9c9472', dark: '#5f5a44' };
@@ -62,6 +64,14 @@ const ART = (() => {
     elite_lancelot_albion: { body: 'humanoid', bulk: 1.06, head: 'fin', shoulder: 'round', weapon: 'rifle', back: 'wings', main: '#f1f0e8', dark: '#2d3440', trim: '#d7ac43', glow: '#64e4ff' },
     elite_guren_seiten: { body: 'humanoid', bulk: 1.07, head: 'fin', shoulder: 'spike', weapon: 'katana', back: 'wings', main: '#a82225', dark: '#351519', trim: '#d69735', glow: '#ff684f' },
     bamides: { body: 'tripod', main: '#b9a67b', trim: '#5b4b2b' },
+    // Campaign-only frames.
+    burai: { body: 'humanoid', bulk: 0.95, head: 'visor', shoulder: 'round', weapon: 'rifle', main: '#3a3b40' },
+    akatsuki_flight: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'rifle', back: 'wings', main: '#5f8f86' },
+    zangetsu: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'block', weapon: 'katana', back: 'pods', main: '#272b35' },
+    raiko: { body: 'tank', main: '#4b5040', trim: '#a8a07a' },
+    jp_tank: { body: 'tank', main: '#5a6648', trim: '#c9c28a' },
+    jp_artillery: { body: 'box', main: '#626b4c', trim: '#c9c28a' },
+    shen_hu: { body: 'humanoid', bulk: 1.15, head: 'mask', shoulder: 'pauldron', weapon: 'sword', chest: true, main: '#2f5bab', trim: '#d4372f' },
   };
   function shade(hex, f) {
     const n = parseInt(hex.slice(1), 16),
@@ -554,6 +564,8 @@ const ART = (() => {
     britannia: ['#3a2a5c', '#b8963e'],
     eu: ['#1d3359', '#6f8fbf'],
     cf: ['#5a1a1a', '#c49a3a'],
+    bk: ['#16161c', '#c9a43a'],
+    jlf: ['#26301c', '#8fa060'],
   };
   function hairBack(style, hc) {
     switch (style) {

@@ -33,6 +33,29 @@
       doctrine: 'Strength in Numbers',
       doctrineText: 'Infantry-branch Knightmares cost 15% less.',
     },
+    // Campaign-only sides: they never appear in Conquest.
+    bk: {
+      name: 'Order of the Black Knights',
+      short: 'Black Knights',
+      adj: 'Black Knight',
+      color: '#f0c94a',
+      letter: 'K',
+      capital: 'Hōrai Island',
+      doctrine: 'Guerrilla Tactics',
+      doctrineText: 'Knightmares fighting from forest, mountains or city ruins deal +10% damage.',
+      campaign: true,
+    },
+    jlf: {
+      name: 'Japan Liberation Front',
+      short: 'JLF',
+      adj: 'JLF',
+      color: '#86d17c',
+      letter: 'J',
+      capital: 'Mount Narita',
+      doctrine: 'Mountain Fortress',
+      doctrineText: 'Units in forest or mountains take 10% less damage.',
+      campaign: true,
+    },
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },
   };
   const MAJORS = ['britannia', 'eu', 'cf'];
@@ -639,6 +662,87 @@
       hp: 600, attack: 126, armor: 54, move: 5, min: 1, max: 2, cost: 750, industry: 225, tier: 3, crit: 0.30, pen: 0.60,
       breakthrough: false, relentless: false,
     },
+    // Campaign-only frames (campaign: true): the Black Knights' and JLF's own machines and Shen Hu, placed by
+    // missions and never part of Conquest lineups. Missions field the named aces as Elite Force frames.
+    burai: {
+      side: 'bk',
+      cls: 'scout',
+      name: 'Burai',
+      model: 'Type-1R',
+      gen: '4th generation',
+      weapon: 'Assault rifle · Wrist-mounted missile launchers',
+      lore: 'Kyoto House’s copy of the Glasgow, smuggled to the resistance: the first frames of the Black Knights.',
+      campaign: true,
+    },
+    akatsuki_flight: {
+      side: 'bk',
+      cls: 'raider',
+      name: 'Akatsuki Flight-Enabled',
+      model: 'Type-05/F2D',
+      gen: '7th-generation equivalent',
+      weapon: 'Air Glide wings · Bazooka',
+      lore: 'The mass-production Akatsuki with Air Glide wings, issued before the UFN war: it flies over any terrain.',
+      float: true,
+      campaign: true,
+    },
+    zangetsu: {
+      side: 'bk',
+      cls: 'heavy',
+      name: 'Zangetsu',
+      model: 'Type-04',
+      gen: '7th-generation equivalent',
+      weapon: '12-tube missile launcher · Revolving Blade Sword',
+      lore: 'Tohdoh’s commander frame, built at Jabalpur for the Black Knights.',
+      campaign: true,
+    },
+    raiko: {
+      side: 'jlf',
+      cls: 'siege',
+      name: 'Raikō',
+      model: 'Type-5R/11G',
+      gen: '4th generation',
+      weapon: 'Super Electromagnetic Shrapnel Cannon',
+      lore: 'The JLF’s linear-cannon fortress frame, dug in on Mount Narita.',
+      campaign: true,
+    },
+    jp_tank: {
+      side: 'jlf',
+      cls: 'light',
+      name: 'Japanese Battle Tank',
+      model: 'Japanese Army',
+      gen: 'Conventional armor',
+      weapon: 'Main gun · Machine gun',
+      lore: 'Japan’s armored divisions in 2010: tough in a line, helpless against Knightmares in the open.',
+      hp: 220,
+      attack: 50,
+      armor: 26,
+      move: 3,
+      campaign: true,
+    },
+    jp_artillery: {
+      side: 'jlf',
+      cls: 'rocket',
+      name: 'Japanese Rocket Artillery',
+      model: 'Japanese Army',
+      gen: 'Conventional artillery',
+      weapon: 'Truck-mounted rocket launchers',
+      lore: 'Rocket batteries that shelled the Britannian landings in 2010.',
+      hp: 160,
+      armor: 8,
+      campaign: true,
+    },
+    shen_hu: {
+      side: 'cf',
+      cls: 'super',
+      name: 'Shen Hu',
+      model: 'XT-404',
+      gen: '7th-generation equivalent',
+      weapon: 'Baryon Cannon · Electrified harkens',
+      lore: 'Li Xingke’s “Divine Tiger”: its Baryon Cannon hits harder than any other super-heavy, at the cost of hull.',
+      attack: 114,
+      hp: 560,
+      campaign: true,
+    },
     // Neutral garrisons: the Middle Eastern Federation's own frame.
     bamides: {
       side: 'neutral',
@@ -672,14 +776,52 @@
       ];
     }),
   );
-  const ROSTER = Object.fromEntries(
-    MAJORS.map(side => [
-      side,
-      Object.fromEntries(Object.entries(KNIGHTMARES).filter(([, k]) => k.side === side && !k.elite).map(([id, k]) => [k.cls, id])),
-    ]),
-  );
-  function typeFor(side, cls) {
-    return ROSTER[side]?.[cls] || ROSTER.britannia[cls];
+  // Campaign-only sides build these lineups (sharing some frames with the Federation); missions may override any
+  // side's lineup in g.lineup.
+  const LINEUPS = {
+    bk: {
+      scout: 'burai',
+      assault: 'burai_kai',
+      raider: 'akatsuki_flight',
+      light: 'gekka',
+      medium: 'akatsuki',
+      heavy: 'akatsuki_zikisan',
+      super: 'akatsuki_air',
+      support: 'gekka_rocket',
+      rocket: 'akatsuki_missile',
+      siege: 'akatsuki_heavy',
+    },
+    jlf: {
+      scout: 'burai',
+      assault: 'burai_kai',
+      raider: 'burai',
+      light: 'jp_tank',
+      medium: 'jp_tank',
+      heavy: 'burai_kai',
+      super: 'burai_kai',
+      support: 'jp_artillery',
+      rocket: 'jp_artillery',
+      siege: 'raiko',
+    },
+  };
+  const ROSTER = {
+    ...Object.fromEntries(
+      MAJORS.map(side => [
+        side,
+        Object.fromEntries(
+          Object.entries(KNIGHTMARES)
+            .filter(([, k]) => k.side === side && !k.elite && !k.campaign)
+            .map(([id, k]) => [k.cls, id]),
+        ),
+      ]),
+    ),
+    ...LINEUPS,
+  };
+  function typeFor(side, cls, g = null) {
+    return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
+  }
+  function lineupOf(g, side) {
+    return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 
   // ======== Elite Forces: persistent WC4-style unique units ========
@@ -1638,6 +1780,21 @@
       fx: { aura: { range: 1, value: 0.1 }, rally: 2 },
       recruit: 200,
     },
+    lelouch: {
+      name: 'Lelouch vi Britannia',
+      short: 'Lelouch',
+      side: 'britannia',
+      stars: 5,
+      cost: 230,
+      role: 'Armor',
+      hull: 'Shinkirō',
+      title: '99th Emperor of Britannia',
+      skill: 'Geass: Absolute Obedience',
+      desc: 'Command aura reaches 3 hexes with +15% damage. Royal Geass lowers nearby enemy morale by 2.',
+      fx: { aura: { range: 3, value: 0.15 } },
+      action: { name: 'Royal Geass', verb: 'Lelouch’s Geass' },
+      campaign: true,
+    },
   };
   const NOFX = {};
   // HQ technology, as in World Conqueror 4: bought with command tokens earned by winning operations, kept in the
@@ -2064,6 +2221,7 @@
     manfredi: { infantry: 4, armor: 6, artillery: 4, mobility: 4},
     farnese: { infantry: 3, armor: 4, artillery: 5, mobility: 2},
     augustus: { infantry: 3, armor: 4, artillery: 3, mobility: 2},
+    lelouch: { infantry: 4, armor: 5, artillery: 5, mobility: 4 },
   };
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
@@ -2296,7 +2454,7 @@
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
-      (t.side !== s.owner ? 'Not built by this faction' : null) ||
+      (!(g.buildable?.[s.owner] || Object.values(lineupOf(g, s.owner))).includes(type) ? 'Not built by this faction' : null) ||
       cityBusyReason(g, s) ||
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
@@ -2360,7 +2518,7 @@
       turnReason(g, u.side) ||
       (u.morale <= -3 ? 'Unit is confused' : null) ||
       (u.feintCD > 0 ? `Ready in ${u.feintCD} turn${u.feintCD > 1 ? 's' : ''}` : null) ||
-      (!g.units.some(v => v.hp > 0 && v.side !== u.side && dist(g, u, v) <= 2) ? 'No enemy within 2 hexes' : null)
+      (!g.units.some(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2) ? 'No enemy within 2 hexes' : null)
     );
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
@@ -2373,7 +2531,8 @@
     const records = eliteProfile(profile);
     g.eliteDeployed ||= {};
     for (const u of g.units) {
-      if (!u.elite) continue;
+      // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
+      if (!u.elite || u.side !== g.player) continue;
       const old = maxHP(u),
         rec = records[u.elite];
       if (rec?.level) u.eliteLevel = rec.level;
@@ -2558,8 +2717,16 @@
     return g.economy[side];
   }
   function alive(g, side) {
-    return MAJORS.includes(side) && !g.fallen?.[side];
+    return (g?.mode === 'campaign' ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
   }
+  // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
+  function foe(g, a, b) {
+    return a !== b && !(g?.teams?.[a] && g.teams[a] === g.teams[b]);
+  }
+  const isFoe = foe;
+  // Optional rule hooks, set by the campaign module (dist/campaign.js): turn(g, side), capture(g, city, unit),
+  // kill(g, victim, attacker), decide(g), objective(g), title(g).
+  const hooks = {};
 
   // ======== Terrain ========
   const TERRAIN = {
@@ -2580,13 +2747,25 @@
       desc: 'Movement cost 2. Units lose 2.5% of their frame each turn they start here.',
     },
     peak: { name: 'Impassable peaks', blocked: true, desc: 'The high Himalaya and the Greenland ice cap: impassable.' },
+    // City ruins appear on campaign maps only.
+    urban: { name: 'City ruins', cost: 1, cover: 0.2, desc: 'Movement cost 1. Buildings and rubble cut incoming damage by 20%.' },
     crater: {
       name: 'F.L.E.I.J.A. crater',
       cost: 2,
       desc: 'Movement cost 2. A F.L.E.I.J.A. warhead erased everything here and glassed the ground pink and white.',
     },
   };
-  const TERRAIN_CODES = { '.': 'sea', p: 'plains', f: 'forest', m: 'mountain', d: 'desert', s: 'snow', x: 'peak' };
+  const TERRAIN_CODES = {
+    '.': 'sea',
+    p: 'plains',
+    f: 'forest',
+    m: 'mountain',
+    d: 'desert',
+    s: 'snow',
+    x: 'peak',
+    u: 'urban',
+    c: 'crater',
+  };
   const SEA_MOVE = 5;
   const isSea = t => t?.terrain === 'sea';
   function atSea(g, u) {
@@ -2704,7 +2883,7 @@
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (occ && occ.side !== u.side) continue;
-        if (st && st.owner !== u.side && (st.shield > 0 || !canCapture(u))) continue;
+        if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
         const cross = isSea(n) !== fromSea;
         // Embarking or landing takes the rest of the turn: allowed whenever any movement is left.
         const nc = cross ? budget : cost + terrainCost(g, u, n);
@@ -2732,8 +2911,8 @@
   function hostileTarget(g, u, p) {
     const target = unitAt(g, p),
       st = stationAt(g, p);
-    if (target) return target.side !== u.side;
-    return !!st && st.owner !== u.side && st.shield > 0;
+    if (target) return foe(g, target.side, u.side);
+    return !!st && foe(g, st.owner, u.side) && st.shield > 0;
   }
   // Whether a unit still has any order besides holding position: firing, moving, repairing, reinforcing or an action.
   function hasOrders(g, u) {
@@ -2766,7 +2945,7 @@
     const s = stationAt(g, u);
     let captured = null,
       annexed = null;
-    if (s && s.owner !== u.side && canCapture(u)) {
+    if (s && foe(g, s.owner, u.side) && canCapture(u)) {
       const loser = s.owner;
       s.owner = u.side;
       s.shield = 0;
@@ -2780,6 +2959,7 @@
       claim(g, s, u.side);
       if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + maxHP(u) * fx(u).captureHeal);
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
+      hooks.capture?.(g, s, u, loser);
       // As in WC4, a power whose capital falls surrenders: its cities pass to the conqueror, its armies disband.
       if (s.capitalOf && s.capitalOf === loser && alive(g, loser)) {
         award(g, u.side, 'star', `${s.name} captured`);
@@ -2847,6 +3027,7 @@
     // Faction doctrines.
     if (u.side === 'britannia' && t.branch === 'Armor') attack *= 1.08;
     if (u.side === 'eu' && t.branch === 'Artillery') attack *= 1.1;
+    if (u.side === 'bk' && ['forest', 'mountain', 'urban'].includes(tile(g, u.c, u.r)?.terrain)) attack *= 1.1;
     // Commander signature abilities (attacker side).
     if (f.dmg && strike) attack *= 1 + f.dmg;
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
@@ -2916,6 +3097,7 @@
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       const ground = tile(g, target.c, target.r);
+      if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= 1 + seaPenalty(g, target.side);
       else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
     }
@@ -2931,7 +3113,7 @@
       d = unitAt(g, p),
       s = stationAt(g, p);
     const base = power(g, a, d, s),
-      shield = s && s.owner !== a.side && s.shield > 0;
+      shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Chaos Mines and city-breaker commanders raise damage to city defenses.
     const ef = eliteFx(a),
@@ -2979,6 +3161,7 @@
       attacker.morale = clamp(attacker.morale + 1, -3, 1);
     }
     if (v.cmd) log(g, `${COMMANDERS[v.cmd].short}'s unit is lost.`, v.side);
+    hooks.kill?.(g, v, attacker);
   }
   function attack(g, id, c, r) {
     const a = g.units.find(u => u.id === id);
@@ -3025,7 +3208,7 @@
     }
     if (pr.splash) {
       for (const v of g.units) {
-        if (v.hp <= 0 || v.side === a.side || v.id === d?.id || dist(g, v, p) !== 1) continue;
+        if (v.hp <= 0 || !foe(g, v.side, a.side) || v.id === d?.id || dist(g, v, p) !== 1) continue;
         const amount = Math.round(power(g, a, v, stationAt(g, v)) * pr.splash);
         v.hp = Math.max(0, v.hp - amount);
         v.morale = Math.max(moraleFloor(g, v), v.morale - 1);
@@ -3300,7 +3483,7 @@
     const u = g.units.find(u => u.id === id);
     const why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
-    const victims = g.units.filter(v => v.hp > 0 && v.side !== u.side && dist(g, u, v) <= 2);
+    const victims = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2);
     victims.forEach(v => (v.morale = Math.max(moraleFloor(g, v), v.morale - 2)));
     u.feintCD = 3;
     log(g, `${COMMANDERS[u.cmd].action.verb} disrupts ${victims.length} enemy units.`, u.side);
@@ -3472,7 +3655,7 @@
   }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
-    return MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
+    return g.mode !== 'campaign' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
     return devastated(g, s)
@@ -3790,7 +3973,7 @@
       u.chain = 0;
       u.eliteMoveAfterKill = false;
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
-      const nearby = g.units.filter(v => v.hp > 0 && v.side !== side && dist(g, u, v) === 1).length;
+      const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
       if (u.morale < desired) u.morale++;
@@ -3821,6 +4004,7 @@
       if (s.owner === side) s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * 0.12));
     }
     strategicTurn(g, side);
+    hooks.turn?.(g, side);
     checkVictory(g);
   }
   // Fortress batteries: fired by the owner, range 3, then two turns to recharge.
@@ -3850,14 +4034,14 @@
     if (!fortressReady(g, s)) return [];
     return within(g, s, FORTRESS_GUN.range)
       .map(p => unitAt(g, p))
-      .filter(u => u && u.side !== s.owner)
+      .filter(u => u && foe(g, u.side, s.owner))
       .map(u => tile(g, u.c, u.r));
   }
   function fireFortress(g, id, c, r) {
     const s = g.stations.find(s => s.id === id);
     if (!fortressReady(g, s)) return { ok: false, reason: 'The battery is not ready.' };
     const foe = unitAt(g, { c, r });
-    if (!foe || foe.side === s.owner || dist(g, s, foe) > FORTRESS_GUN.range)
+    if (!foe || !isFoe(g, foe.side, s.owner) || dist(g, s, foe) > FORTRESS_GUN.range)
       return { ok: false, reason: 'No enemy unit within 3 hexes of the city.' };
     const damage = fortressDamage(g, foe, s.owner),
       name = fortressName(s),
@@ -3870,7 +4054,7 @@
     // Battery Overcharge II: the blast also catches enemy units next to the target.
     if (techLevel(g, s.owner, 'cities.overcharge') >= 2)
       for (const v of g.units) {
-        if (v.hp <= 0 || v.side === s.owner || v.id === foe.id || dist(g, v, foe) !== 1) continue;
+        if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
         const amount = Math.round(fortressDamage(g, v, s.owner) * 0.5);
         v.hp = Math.max(0, v.hp - amount);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
@@ -3893,6 +4077,7 @@
   // World conquest: hold every major capital (each rival surrenders when its capital falls), or hold the most
   // cities at the armistice.
   function decideVictory(g) {
+    if (g.mode === 'campaign') return hooks.decide?.(g);
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -3915,12 +4100,14 @@
     return g.over;
   }
   function objectiveText(g) {
+    if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => FACTIONS[s].capital);
     return rivals.length
       ? `Take ${rivals.join(' and ')} while holding ${FACTIONS[g.player].capital}. A power surrenders when its capital falls.`
       : 'Every rival capital has fallen.';
   }
-  function modeTitle() {
+  function modeTitle(g) {
+    if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
     return 'World War · 2017 a.t.b.';
   }
 
@@ -4460,7 +4647,7 @@
       return top;
     };
     for (const s of g.stations)
-      if (s.owner !== side) {
+      if (foe(g, s.owner, side)) {
         // A rival's F.L.E.I.J.A. project outranks even a capital.
         const i = s.r * g.cols + s.c,
           d = s.project || s.eliminatorProject ? -8 : s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0;
@@ -4469,7 +4656,7 @@
       }
     // Sakuradite mines held by others: Mount Fuji pulls almost like a capital.
     for (const d of g.sites || [])
-      if (d.city == null && d.owner !== side) {
+      if (d.city == null && foe(g, d.owner, side)) {
         const i = d.r * g.cols + d.c,
           w = d.base >= 30 ? -5 : -1;
         if (w < field[i]) {
@@ -4477,6 +4664,21 @@
           push(i, w);
         }
       }
+    if (g.mode === 'campaign') {
+      for (const u of g.units)
+        if (u.hp > 0 && foe(g, u.side, side)) {
+          const i = u.r * g.cols + u.c;
+          if (field[i] > 2) {
+            field[i] = 2;
+            push(i, 2);
+          }
+        }
+      for (const [c, r, d = -4] of g.campaign?.goals?.[side] || []) {
+        const i = r * g.cols + c;
+        field[i] = d;
+        push(i, d);
+      }
+    }
     while (heap.length) {
       const [d, i] = pop();
       if (d > field[i]) continue;
@@ -4506,7 +4708,7 @@
   // within 3 hexes draw the nearest units back to defend them. Returns { unitId: city }.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
-      foes = g.units.filter(u => u.hp > 0 && u.side !== side && u.side !== 'neutral'),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
       threat = s => foes.filter(f => dist(g, f, s) <= 3).reduce((a, f) => a + f.stack, 0);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
@@ -4541,7 +4743,7 @@
   function aiProduction(g) {
     const side = g.phase,
       e = funds(g, side),
-      foes = g.units.filter(u => u.hp > 0 && u.side !== side && u.side !== 'neutral'),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       own = () => g.units.filter(u => u.hp > 0 && u.side === side),
       front = p => {
         let best = 99;
@@ -4549,10 +4751,11 @@
         return best;
       },
       plan = ((g.ai ||= {})[side] ||= { saving: false }),
-      memo = aiPlan(g, side);
+      memo = aiPlan(g, side),
+      builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side);
     const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
     const yard3 = bases.filter(s => s.tier >= 3);
-    const superType = typeFor(side, 'super'),
+    const superType = typeFor(side, 'super', g),
       superPrice = price(superType, 1, g, side);
     // 0. Fire every ready battery at the strongest enemy unit in range (the UI animates g.strikes).
     g.strikes = [];
@@ -4579,6 +4782,7 @@
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
     }
+    if (!builds) return;
     // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
     const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
     // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.
@@ -4715,7 +4919,7 @@
           : s.tier === 2
             ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
             : ['light', 'support', 'assault', 'scout']
-      ).map(cls => typeFor(side, cls));
+      ).map(cls => typeFor(side, cls, g));
       const preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
       const share = i === bases.length - 1 ? 1 : 0.6;
       for (const type of [preferred, ...menu.filter(x => x !== preferred)]) {
@@ -4776,7 +4980,7 @@
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       });
-      const enemies = g.units.filter(v => v.hp > 0 && v.side !== u.side && dist(g, v, u) <= 10);
+      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= 10);
       const old = { c: u.c, r: u.r };
       // Overseas invasions sail in groups: a land unit embarks only beside two other free land units.
       const fromLand = !atSea(g, u),
@@ -4786,10 +4990,11 @@
             .length >= 2;
       const placeScore = p => {
         const station = stationAt(g, p);
-        let sc = station && station.owner !== u.side && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
         const mine = siteAt(g, p);
-        if (mine && mine.owner !== u.side && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
-        sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : fieldAt(p) * 8;
+        if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
+        sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : u.hold ? 0 : fieldAt(p) * 8;
+        if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
         let nearestEnemy = 15,
           danger = 0;
         for (const v of enemies) {
@@ -4845,6 +5050,7 @@
     CLASS_ORDER,
     TYPES,
     ROSTER,
+    LINEUPS,
     typeFor,
     ELITE_FORCES,
     ELITE_MAX_LEVEL,
@@ -4863,7 +5069,17 @@
     deployElite,
     unitStats,
     applyElites,
+    lineupOf,
     COMMANDERS,
+    RATINGS,
+    TERRAIN_CODES,
+    hooks,
+    foe,
+    defaultOfficer,
+    fortify,
+    claim,
+    kill,
+    isReady,
     TERRAIN,
     WORLD,
     hexOf,

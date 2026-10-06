@@ -21,12 +21,14 @@ Knightmare Frames.
   disband. Take every rival capital, or hold the most cities at the 120-turn armistice.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
-Campaign chapters (like Galactic Command's) are not built yet; the engine is conquest-only.
+**Campaign (in progress):** two story campaigns, the Black Knights (10 missions) and Britannia (11), on hand-built
+tactical maps. The rules are done (`dist/campaign.js`, `dist/missions.js`, tested in `tests/campaign.test.cjs`);
+the screens are not built and `index.html` does not load the two files yet, so players cannot reach it. See §4.
 
 ## 2. Running, testing and deploying
 
 - **Run locally:** serve `dist/` with any static server (`python3 -m http.server -d dist`) and open it.
-- **Tests (local only):** `node --test tests/*.test.cjs` (16 engine tests plus artwork loading tests) and `node tests/ui-smoke.cjs`
+- **Tests (local only):** `node --test tests/*.test.cjs` (engine, campaign and artwork loading tests) and `node tests/ui-smoke.cjs`
   (loads all UI scripts in a stubbed DOM and clicks through every dialog and a rival turn for all three powers).
   Node 22. Node was not installed on the machine this was built on; the same tests were run through the macOS
   JavaScriptCore shell (`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`) with a
@@ -36,10 +38,12 @@ Campaign chapters (like Galactic Command's) are not built yet; the engine is con
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **31 Knightmare sprites and 35 commander
-portraits**, registered synchronously by `manifest.js`. Source provenance and preparation details are recorded in
+Published artwork is tracked and deployed from `dist/assets/art/`: **45 Knightmare sprites (31 Conquest frames, 9
+Elite Forces, 5 campaign frames) and 58 commander portraits**, registered synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
-workspace and is never required by GitHub Pages. All Knightmare types and commanders now have published image assets; procedural art remains only as a runtime safety fallback.
+workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art except the two
+campaign-only Japanese Army vehicles (tank and rocket artillery), which use their drawings; procedural art is otherwise
+only a runtime safety fallback.
 To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
 ## 3. Code layout
@@ -183,10 +187,37 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
   Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
 
+### Elite Forces
+- Nine persistent single-frame hero units (`ELITE_FORCES`, frames `elite_*`): Cornelia's Gloucester, Lancelot,
+  Guren Mk-II, Tohdoh's Gekka, Mordred, Gawain, Shinkirō, Lancelot Albion and Guren S.E.I.T.E.N. Unlocked and
+  levelled (1–5) in HQ with fragments earned from victories; signature abilities at Lv.3 and Lv.5; each deploys once
+  per operation from the factory's Elite Forces tab. `applyElites` applies your HQ levels to your own units only.
+
+### Campaign (rules done, screens not built)
+- Campaign-only sides `bk` (Order of the Black Knights, doctrine: +10% damage from forest, mountains or ruins) and
+  `jlf` (Japan Liberation Front, 10% less damage in forest or mountains), never in Conquest (`MAJORS` is unchanged).
+- Campaign-only frames (`campaign: true`): Burai, Akatsuki Flight-Enabled, Zangetsu, Raikō, Japanese battle tank and
+  rocket artillery, and Shen Hu. Named aces in missions are Elite Force frames at Elite level 3. `LINEUPS` gives the
+  two new sides factory lineups; missions can override lineups (`g.lineup`) or restrict builds (`g.buildable`).
+- Engine support: alliances (`g.teams`, checked with `foe()`), city-ruin (`u`) and crater (`c`) terrain, rule hooks
+  (`hooks.turn/capture/kill/decide/objective/title`), AI production limited to `g.campaign.production`, defenders
+  that hold near their post (`u.hold`), and campaign goals in the AI's goal field. F.L.E.I.J.A. projects are
+  Conquest-only (`hasFleija`).
+- `campaign.js` builds a mission (`createMission(id)`), runs its events (dialogue queue, reinforcements, landslides,
+  Sakuradite eruptions and F.L.E.I.J.A. blasts with a warning a turn ahead, Gefjun Disturber shutdowns, frame
+  upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star;
+  progress in `profile.campaign`). Missions unlock in order.
+- Still to do: the Campaign tab, mission select and briefing, the dialogue box, blast and warning effects, the star
+  results screen, a camera for small non-wrapping maps, and loading `missions.js` and `campaign.js` in `index.html`.
+
 ### Commanders
-- 35 commanders; starters Suzaku and Cornelia (Britannia), Leila and Akito (E.U.), Xingke and Xianglin (Federation).
+- 58 commanders. Conquest's 35, plus the commander expansion (Zero, Kallen, Tohdoh, C.C., Ohgi, Chiba, Asahina, Senba,
+  Urabe, Sugiyama, Minami, Tamaki, Katase, Inoue for the Black Knights and JLF; Villetta, Kewell, Monica, Dorothea,
+  Nonette, Manfredi, Farnese and Augustus for Britannia) and campaign-only Emperor Lelouch.
+- A fourth rating, **Mobility** (1–6 stars), replaces fixed movement bonuses: 3★ +1 movement up to 6★ +4.
+- Starters Suzaku and Cornelia (Britannia), Leila and Akito (E.U.), Xingke and Xianglin (Federation).
   Recruit prices 400 / 300 / 200 tokens by stars. Eleven ranks from Second Lieutenant (112% frame) to Marshal (160%).
-  Branch stars (Infantry, Armor, Artillery) up to 6; medals as in Galactic Command.
+  Branch stars (Infantry, Armor, Artillery, Mobility) up to 6; medals as in Galactic Command.
 - Operation commanders on the map: Bismarck, Suzaku, Cornelia, Shin, Julius, Ashley (Britannia); Smilas, Akito,
   Leila, Ryo, Ayano (E.U.); Xingke, Cao, Hong Gu, Xianglin, Lei Feng (Federation).
 

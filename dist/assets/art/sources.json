@@ -609,66 +609,66 @@
     {
       "kind": "units",
       "id": "elite_cornelia_gloucester",
-      "file": "units/elite_cornelia_gloucester.jpg",
-      "page": "https://www.1999.co.jp/eng/10063379",
-      "image": "https://www.1999.co.jp/itbig06/10063379a5.jpg",
-      "method": "Licensed MegaHouse Gloucester Cornelia custom product image used as Elite Force art."
+      "file": "units/elite_cornelia_gloucester-e760719b1694.png",
+      "page": "https://codegeass.fandom.com/wiki/Gloucester",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/1/1e/Rpi-209-royalguard.jpg/revision/latest?cb=20091211033940",
+      "method": "Royal Guard Gloucester reference render; white background removed and trimmed (replaces a figure photo or screenshot)"
     },
     {
       "kind": "units",
       "id": "elite_lancelot",
-      "file": "units/elite_lancelot.jpg",
+      "file": "units/elite_lancelot-dc7e3a1ebabc.png",
       "page": "https://bibliomecha.altervista.org/mecha/lancelot.html",
       "image": "https://bibliomecha.altervista.org/mecha/images/Code%20Geass/lancelot-mvs-varis.jpg",
-      "method": "Lancelot reference image showing MVS and VARIS, used as Elite Force art."
+      "method": "Same source image; white background removed and trimmed to a transparent sprite"
     },
     {
       "kind": "units",
       "id": "elite_guren_mkii",
-      "file": "units/elite_guren_mkii.png",
-      "page": "https://wiki.biligame.com/loststories/Type-02%E7%BA%A2%E8%8E%B2%E4%BA%8C%E5%BC%8F",
-      "image": "https://patchwiki.biligame.com/images/loststories/thumb/c/c7/2r99h02q195g4zbrthf5hbnq8fgvqtc.png/385px-%E7%BA%A2%E8%8E%B2%E4%BA%8C%E5%BC%8F_%284%29.png",
-      "method": "Code Geass Lost Stories Guren Mk-II game artwork used as Elite Force art."
+      "file": "units/elite_guren_mkii-ae467a56c715.png",
+      "page": "https://codegeass.fandom.com/wiki/Guren_Mk-II",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/6/69/Guren_Mk_II_-_Original_-_Line_Art.jpg/revision/latest?cb=20091107180410",
+      "method": "Reference render; white background removed and trimmed (replaces a figure photo or screenshot)"
     },
     {
       "kind": "units",
       "id": "elite_tohdoh_gekka",
-      "file": "units/elite_tohdoh_gekka.jpg",
-      "page": "https://p-bandai.jp/item/item-1000002488/",
-      "image": "https://bandai-a.akamaihd.net/bc/img/model/b/1000002488_3.jpg",
-      "method": "Official Premium Bandai Tohdoh Gekka product image used as Elite Force art."
+      "file": "units/elite_tohdoh_gekka-4dfd9d98b2b6.png",
+      "page": "https://codegeass.fandom.com/wiki/Gekka_(Todoh_version)",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/4/44/Type-3f-tohdoh.jpg/revision/latest?cb=20100426144107",
+      "method": "Reference render; white background removed and trimmed (replaces a figure photo or screenshot)"
     },
     {
       "kind": "units",
       "id": "elite_mordred",
-      "file": "units/elite_mordred.jpg",
-      "page": "https://schizophonic9.com/robot_mordred.html",
-      "image": "https://schizophonic9.com/robot_mordred002.jpg",
-      "method": "Bandai ROBOT Spirits Mordred reference photograph used as Elite Force art."
+      "file": "units/elite_mordred-86a54d5a327a.png",
+      "page": "https://codegeass.fandom.com/wiki/Mordred",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/e/eb/Mordred_-_Line_Art.jpg/revision/latest?cb=20090610195525",
+      "method": "Reference render; white background removed and trimmed (replaces a figure photo or screenshot)"
     },
     {
       "kind": "units",
       "id": "elite_gawain",
-      "file": "units/elite_gawain.webp",
+      "file": "units/elite_gawain-7a674202b272.png",
       "page": "https://www.zerochan.net/4253260",
       "image": "https://static.zerochan.net/IFX-V3D1.Gawain.1024.4253260.webp",
-      "method": "Sunrise Gawain promotional artwork mirrored by Zerochan, used as Elite Force art."
+      "method": "Same source image; white background removed and trimmed to a transparent sprite"
     },
     {
       "kind": "units",
       "id": "elite_shinkiro",
-      "file": "units/elite_shinkiro.jpg",
-      "page": "https://www.animecharactersdatabase.com/image.php?imgid=65222&type_id=1",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/9180-2027930139.jpg",
-      "method": "Shinkirō reference artwork used as Elite Force art."
+      "file": "units/elite_shinkiro-5874485eb1c1.png",
+      "page": "https://codegeass.fandom.com/wiki/Shinkir%C5%8D",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/6/65/Shinkiro.png/revision/latest?cb=20240811162645",
+      "method": "Reference render; white background removed and trimmed (replaces a figure photo or screenshot)"
     },
     {
       "kind": "units",
       "id": "elite_lancelot_albion",
-      "file": "units/elite_lancelot_albion.jpg",
+      "file": "units/elite_lancelot_albion-8650bf95c9be.png",
       "page": "https://www.zerochan.net/4254103",
       "image": "https://static.zerochan.net/Z-01Z.Lancelot.Albion.full.4254103.jpg",
-      "method": "Bandai Namco Entertainment Lancelot Albion artwork mirrored by Zerochan, used as Elite Force art."
+      "method": "Same source image; white background removed and trimmed to a transparent sprite"
     },
     {
       "kind": "units",
@@ -677,6 +677,54 @@
       "page": "https://www.zerochan.net/4446529",
       "image": "https://static.zerochan.net/Type-02.F1Z.Guren.S.E.I.T.E.N.1024.4446529.webp",
       "method": "Sunrise Guren S.E.I.T.E.N. promotional artwork mirrored by Zerochan, used as Elite Force art."
+    },
+    {
+      "kind": "units",
+      "id": "burai",
+      "file": "units/burai-6f5b891028e0.png",
+      "page": "https://codegeass.fandom.com/wiki/Burai",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/d/d4/Type-10r.jpg/revision/latest?cb=20170507153930",
+      "method": "Reference render; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "raiko",
+      "file": "units/raiko-9403f454e0ce.png",
+      "page": "https://codegeass.fandom.com/wiki/Raik%C5%8D",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/f/fb/Raiko.jpg/revision/latest?cb=20120302034133",
+      "method": "Reference render; white background removed and trimmed"
+    },
+    {
+      "kind": "units",
+      "id": "zangetsu",
+      "file": "units/zangetsu-4e4cb3c3bd61.png",
+      "page": "https://codegeass.fandom.com/wiki/Zangetsu",
+      "image": "",
+      "method": "Restored from the owner-supplied archive art (see archive entries)"
+    },
+    {
+      "kind": "units",
+      "id": "shen_hu",
+      "file": "units/shen_hu-761ab82d666e.png",
+      "page": "https://codegeass.fandom.com/wiki/Shen_Hu",
+      "image": "",
+      "method": "Restored from the owner-supplied archive art (see archive entries)"
+    },
+    {
+      "kind": "units",
+      "id": "akatsuki_flight",
+      "file": "units/akatsuki_flight-c649000bc081.png",
+      "page": "https://codegeass.fandom.com/wiki/Akatsuki_Command_Model_Zikisan",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/d/dd/Type-05-jikisan-air-full.jpg/revision/latest",
+      "method": "Shares the flight-enabled Akatsuki render used for the Akatsuki Zikisan Air Glide"
+    },
+    {
+      "kind": "portraits",
+      "id": "lelouch",
+      "file": "portraits/lelouch-78b808b17079.webp",
+      "page": "https://codegeass.fandom.com/wiki/Lelouch_vi_Britannia",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/6/6a/LelouchviBritannia.jpg/revision/latest/scale-to-width-down/1200?cb=20120107132514",
+      "method": "Same portrait as Zero (Lelouch vi Britannia)"
     }
   ],
   "drawnFallbacks": {

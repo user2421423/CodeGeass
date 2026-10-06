@@ -7,6 +7,9 @@
     "akatsuki_air": {
       "src": "units/akatsuki_air-c649000bc081.png"
     },
+    "akatsuki_flight": {
+      "src": "units/akatsuki_flight-c649000bc081.png"
+    },
     "akatsuki_heavy": {
       "src": "units/akatsuki_heavy-7c180ab2623f.png"
     },
@@ -34,6 +37,9 @@
     "brighton": {
       "src": "units/brighton-4bb8a725ddf1.png"
     },
+    "burai": {
+      "src": "units/burai-6f5b891028e0.png"
+    },
     "burai_kai": {
       "src": "units/burai_kai-8b9e363ea1c1.png"
     },
@@ -41,31 +47,31 @@
       "src": "units/chuyen-427d2c85b500.png"
     },
     "elite_cornelia_gloucester": {
-      "src": "units/elite_cornelia_gloucester.jpg"
+      "src": "units/elite_cornelia_gloucester-e760719b1694.png"
     },
     "elite_gawain": {
-      "src": "units/elite_gawain.webp"
+      "src": "units/elite_gawain-7a674202b272.png"
     },
     "elite_guren_mkii": {
-      "src": "units/elite_guren_mkii.png"
+      "src": "units/elite_guren_mkii-ae467a56c715.png"
     },
     "elite_guren_seiten": {
       "src": "units/elite_guren_seiten.webp"
     },
     "elite_lancelot": {
-      "src": "units/elite_lancelot.jpg"
+      "src": "units/elite_lancelot-dc7e3a1ebabc.png"
     },
     "elite_lancelot_albion": {
-      "src": "units/elite_lancelot_albion.jpg"
+      "src": "units/elite_lancelot_albion-8650bf95c9be.png"
     },
     "elite_mordred": {
-      "src": "units/elite_mordred.jpg"
+      "src": "units/elite_mordred-86a54d5a327a.png"
     },
     "elite_shinkiro": {
-      "src": "units/elite_shinkiro.jpg"
+      "src": "units/elite_shinkiro-5874485eb1c1.png"
     },
     "elite_tohdoh_gekka": {
-      "src": "units/elite_tohdoh_gekka.jpg"
+      "src": "units/elite_tohdoh_gekka-4dfd9d98b2b6.png"
     },
     "estrella": {
       "src": "units/estrella-892bfb12bb42.png"
@@ -109,6 +115,12 @@
     "panzer_wespe": {
       "src": "units/panzer_wespe-87f95d6c1bbd.png"
     },
+    "raiko": {
+      "src": "units/raiko-9403f454e0ce.png"
+    },
+    "shen_hu": {
+      "src": "units/shen_hu-761ab82d666e.png"
+    },
     "sutherland": {
       "src": "units/sutherland-4273fc3f9125.png"
     },
@@ -120,6 +132,9 @@
     },
     "vincent_ward": {
       "src": "units/vincent_ward-474e03b4ee9c.png"
+    },
+    "zangetsu": {
+      "src": "units/zangetsu-4e4cb3c3bd61.png"
     }
   },
   "portraits": {
@@ -132,8 +147,14 @@
     "anya": {
       "src": "portraits/anya-d4bc9e7634e5.jpg"
     },
+    "asahina": {
+      "src": "portraits/asahina-9c1cd13d87e7.webp"
+    },
     "ashley": {
       "src": "portraits/ashley-04f091dfaee3.jpg"
+    },
+    "augustus": {
+      "src": "portraits/augustus-f9e54bbe1b6c.webp"
     },
     "ayano": {
       "src": "portraits/ayano-9eb9a9cc2e92.jpg"
@@ -144,11 +165,23 @@
     "cao": {
       "src": "portraits/cao-1cbec12715ce.jpg"
     },
+    "cc": {
+      "src": "portraits/cc-f4ce4228b201.webp"
+    },
+    "chiba": {
+      "src": "portraits/chiba-2a8d68b85b10.webp"
+    },
     "cornelia": {
       "src": "portraits/cornelia-b2b14d2093da.jpg"
     },
     "darlton": {
       "src": "portraits/darlton-cd755ff4b7a4.jpg"
+    },
+    "dorothea": {
+      "src": "portraits/dorothea-2a7f5890fb53.webp"
+    },
+    "farnese": {
+      "src": "portraits/farnese-a73888e2a52c.webp"
     },
     "fernando": {
       "src": "portraits/fernando-web.jpg"
@@ -165,11 +198,23 @@
     "honggu": {
       "src": "portraits/honggu-5a19181e95e4.jpg"
     },
+    "inoue": {
+      "src": "portraits/inoue-2519cfa03cf4.webp"
+    },
     "jeremiah": {
       "src": "portraits/jeremiah-ae67659a6758.jpg"
     },
     "julius": {
       "src": "portraits/julius-5114e41ec096.jpg"
+    },
+    "kallen": {
+      "src": "portraits/kallen-2d97aa0e5ce2.webp"
+    },
+    "katase": {
+      "src": "portraits/katase-2e2d597e95f8.webp"
+    },
+    "kewell": {
+      "src": "portraits/kewell-c1ebb31e4e21.webp"
     },
     "klaus": {
       "src": "portraits/klaus-74b8fc7e1e8c.jpg"
@@ -180,17 +225,35 @@
     "leila": {
       "src": "portraits/leila-83d5a9985185.jpg"
     },
+    "lelouch": {
+      "src": "portraits/lelouch-78b808b17079.webp"
+    },
     "lifeng": {
       "src": "portraits/lifeng-1a1927a55740.jpg"
     },
     "luciano": {
       "src": "portraits/luciano-e90561c6a0a0.jpg"
     },
+    "manfredi": {
+      "src": "portraits/manfredi-57a7bea25a0a.webp"
+    },
     "marirrosa": {
       "src": "portraits/marirrosa-d49e1554e510.jpg"
     },
     "meiling": {
       "src": "portraits/meiling-53c77f6ca5a5.jpg"
+    },
+    "minami": {
+      "src": "portraits/minami-020c7b02939d.webp"
+    },
+    "monica": {
+      "src": "portraits/monica-1648578c93a5.webp"
+    },
+    "nonette": {
+      "src": "portraits/nonette-edf81d950570.webp"
+    },
+    "ohgi": {
+      "src": "portraits/ohgi-3135b3a335e2.webp"
     },
     "oscar": {
       "src": "portraits/oscar-49ac0f1f682e.jpg"
@@ -207,14 +270,32 @@
     "schneizel": {
       "src": "portraits/schneizel-479bedb0e940.jpg"
     },
+    "senba": {
+      "src": "portraits/senba-25588f9384c9.webp"
+    },
     "shin": {
       "src": "portraits/shin-b8d4971483c5.jpg"
     },
     "smilas": {
       "src": "portraits/smilas-36f08536b343.jpg"
     },
+    "sugiyama": {
+      "src": "portraits/sugiyama-9012f351d673.webp"
+    },
     "suzaku": {
       "src": "portraits/suzaku-d9d72b74ec97.jpg"
+    },
+    "tamaki": {
+      "src": "portraits/tamaki-1cee92e724c5.webp"
+    },
+    "tohdoh": {
+      "src": "portraits/tohdoh-4f6e2703ed4f.webp"
+    },
+    "urabe": {
+      "src": "portraits/urabe-70da55427282.webp"
+    },
+    "villetta": {
+      "src": "portraits/villetta-4ce3cc8093ad.webp"
     },
     "xianglin": {
       "src": "portraits/xianglin-545d256b1137.jpg"
@@ -225,74 +306,11 @@
     "yukiya": {
       "src": "portraits/yukiya-222f726c4d9a.jpg"
     },
-    "zhaohao": {
-      "src": "portraits/zhaohao-f75b0bf42b4c.jpg"
-    },
     "zero": {
       "src": "portraits/zero-78b808b17079.webp"
     },
-    "kallen": {
-      "src": "portraits/kallen-2d97aa0e5ce2.webp"
-    },
-    "tohdoh": {
-      "src": "portraits/tohdoh-4f6e2703ed4f.webp"
-    },
-    "cc": {
-      "src": "portraits/cc-f4ce4228b201.webp"
-    },
-    "ohgi": {
-      "src": "portraits/ohgi-3135b3a335e2.webp"
-    },
-    "chiba": {
-      "src": "portraits/chiba-2a8d68b85b10.webp"
-    },
-    "asahina": {
-      "src": "portraits/asahina-9c1cd13d87e7.webp"
-    },
-    "senba": {
-      "src": "portraits/senba-25588f9384c9.webp"
-    },
-    "urabe": {
-      "src": "portraits/urabe-70da55427282.webp"
-    },
-    "sugiyama": {
-      "src": "portraits/sugiyama-9012f351d673.webp"
-    },
-    "minami": {
-      "src": "portraits/minami-020c7b02939d.webp"
-    },
-    "tamaki": {
-      "src": "portraits/tamaki-1cee92e724c5.webp"
-    },
-    "katase": {
-      "src": "portraits/katase-2e2d597e95f8.webp"
-    },
-    "inoue": {
-      "src": "portraits/inoue-2519cfa03cf4.webp"
-    },
-    "villetta": {
-      "src": "portraits/villetta-4ce3cc8093ad.webp"
-    },
-    "kewell": {
-      "src": "portraits/kewell-c1ebb31e4e21.webp"
-    },
-    "monica": {
-      "src": "portraits/monica-1648578c93a5.webp"
-    },
-    "dorothea": {
-      "src": "portraits/dorothea-2a7f5890fb53.webp"
-    },
-    "nonette": {
-      "src": "portraits/nonette-edf81d950570.webp"
-    },
-    "manfredi": {
-      "src": "portraits/manfredi-57a7bea25a0a.webp"
-    },
-    "farnese": {
-      "src": "portraits/farnese-a73888e2a52c.webp"
-    },
-    "augustus": {
-      "src": "portraits/augustus-f9e54bbe1b6c.webp"
+    "zhaohao": {
+      "src": "portraits/zhaohao-f75b0bf42b4c.jpg"
     }
   }
 }

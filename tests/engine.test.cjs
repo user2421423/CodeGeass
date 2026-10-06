@@ -52,8 +52,9 @@ const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
 });
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
-  assert.equal(Object.keys(E.TYPES).filter(k => !E.TYPES[k].elite).length, 31);
-  assert.equal(Object.keys(E.TYPES).filter(k => E.TYPES[k].elite).length, 9);
+  assert.equal(Object.values(E.TYPES).filter(t => !t.elite && !t.campaign).length, 31);
+  assert.equal(Object.values(E.TYPES).filter(t => t.elite).length, 9);
+  assert.equal(Object.values(E.TYPES).filter(t => t.campaign).length, 7);
   for (const side of E.MAJORS) {
     assert.deepEqual(Object.keys(E.ROSTER[side]).sort(), [...E.CLASS_ORDER].sort());
     const branches = E.CLASS_ORDER.map(c => E.TYPES[T(side, c)].branch);
@@ -70,7 +71,7 @@ test('Each power fields ten Knightmares across the three branches', () => {
   assert.deepEqual(lineup('cf'), ['akatsuki', 'akatsuki_zikisan', 'akatsuki_air', 'gekka_rocket', 'akatsuki_missile', 'akatsuki_heavy']);
   assert.equal(T('eu', 'assault'), 'estrella_cc');
   assert.equal(T('cf', 'assault'), 'burai_kai');
-  assert.deepEqual(Object.keys(E.TYPES).filter(k => E.TYPES[k].float && !E.TYPES[k].elite).sort(), ['akatsuki_air', 'sutherland_air']);
+  assert.deepEqual(Object.keys(E.TYPES).filter(k => E.TYPES[k].float && !E.TYPES[k].elite && !E.TYPES[k].campaign).sort(), ['akatsuki_air', 'sutherland_air']);
 });
 test('The world map wraps east to west and every city stands on land', () => {
   const g = E.createGame('eu', 'normal', 'conquest', 5);

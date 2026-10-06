@@ -18,7 +18,7 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **31 Knightmare sprites and 35 commander portraits** in `dist/assets/art/`. These include imagery
+The game ships **45 Knightmare sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
@@ -32,7 +32,14 @@ license does not license the studio artwork.
   artwork of their own, the closest wiki image stands in (Akito's Alexander for the Type-02 Elite, the
   Akatsuki-Upgrade for the Akatsuki Heavy Weapons). Exact page URLs, image URLs and processing notes are recorded
   per image in `dist/assets/art/sources.json`.
-- All 31 Knightmare types and all 35 commanders now have published image assets. The procedural drawings remain only as runtime safety fallbacks if an imported image fails to load.
+- The commander expansion's 22 portraits and the nine Elite Force sprites came with their own source records.
+  Five Elite Force pictures were figure photos or screenshots and three kept a white background; they were replaced
+  with wiki reference renders (Royal Guard Gloucester, Mordred, Tohdoh's Gekka, Shinkirō, Guren Mk-II) or cut out
+  (Gawain, Lancelot, Lancelot Albion) so every unit sprite has a transparent background. Burai and Raikō come from
+  their wiki pages; Zangetsu and Shen Hu reuse earlier archive art; the Akatsuki Flight-Enabled shares the Air Glide
+  render; Emperor Lelouch shares Zero's portrait.
+- Every Knightmare type and commander has published art except the campaign's Japanese Army tank and rocket
+  artillery, which use their drawings. Procedural drawings otherwise remain only as runtime safety fallbacks.
 
 ## Preparing and publishing art
 
