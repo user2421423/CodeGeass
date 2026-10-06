@@ -101,6 +101,23 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(!byLand(city('Seoul'), city('Fukuoka')));
   assert(byLand(city('Fukuoka'), city('Tokyo Settlement')));
   assert(byLand(city('Moscow'), city('Beijing')));
+  const landDistance = (a, b) => {
+    const seen = new Set([E.key(a)]),
+      queue = [[E.tile(g, a.c, a.r), 0]];
+    while (queue.length) {
+      const [t, d] = queue.shift();
+      if (t.c === b.c && t.r === b.r) return d;
+      for (const n of E.adjacent(g, t))
+        if (!seen.has(E.key(n)) && !E.isSea(n) && n.terrain !== 'peak') {
+          seen.add(E.key(n));
+          queue.push([n, d + 1]);
+        }
+    }
+    return Infinity;
+  };
+  assert(landDistance(city('Madrid'), city('Algiers')) > 20, 'Gibraltar remains a sea crossing, not a land bridge');
+  assert(byLand(city('Bangkok'), city('Kuala Lumpur')), 'Thai–Malay peninsula stays continuous');
+  assert(!byLand(city('Surabaya'), city('Kuala Lumpur')), 'Sunda Strait keeps Java separated from mainland Asia');
   for (const s of g.stations) assert.notEqual(E.tile(g, s.c, s.r).terrain, 'sea', s.name);
   const capitals = g.stations.filter(s => s.capital).map(s => [s.name, s.owner]);
   assert.deepEqual(capitals.sort(), [
