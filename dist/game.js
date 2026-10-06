@@ -648,7 +648,7 @@ function generalDialog(k, personal = false) {
   const ratings = Object.entries(E.BRANCH_NAMES)
     .map(
       ([b, name]) =>
-        `<div class="gi-rating" title="${name}: ${o.ratings[b]} of ${E.MAX_RATING} stars. ${b === 'mobility' ? '1–2★ gives no bonus, 3–4★ gives +1 movement, and 5–6★ gives +2 movement.' : 'Each star above 3 adds 4% damage and cuts damage taken 3% in this branch.'}"><span class="gi-badge">${ART.unit(E.typeFor(a.side, BRANCH_ICONS[b]), '', a.side)}</span><span class="gi-rating-info"><span class="gi-name">${name}</span><span class="gi-stars">${stars(o.ratings[b])}</span></span>${editable && o.ratings[b] < E.MAX_RATING ? tokenButton(`data-buy-star="${b}" data-officer="${k}" aria-label="Buy a ${name} star"`, E.starCost(profile, k, b), E.starReason(profile, k, b)) : ''}</div>`,
+        `<div class="gi-rating" title="${name}: ${o.ratings[b]} of ${E.MAX_RATING} stars. ${b === 'mobility' ? '1–2★ gives no bonus, 3★ gives +1 movement, 4★ gives +2, 5★ gives +3, and 6★ gives +4 movement.' : 'Each star above 3 adds 4% damage and cuts damage taken 3% in this branch.'}"><span class="gi-badge">${ART.unit(E.typeFor(a.side, BRANCH_ICONS[b]), '', a.side)}</span><span class="gi-rating-info"><span class="gi-name">${name}</span><span class="gi-stars">${stars(o.ratings[b])}</span></span>${editable && o.ratings[b] < E.MAX_RATING ? tokenButton(`data-buy-star="${b}" data-officer="${k}" aria-label="Buy a ${name} star"`, E.starCost(profile, k, b), E.starReason(profile, k, b)) : ''}</div>`,
     )
     .join('');
   const medals = editable
