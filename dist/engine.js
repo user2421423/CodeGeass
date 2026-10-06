@@ -1040,8 +1040,6 @@
       fx: { dmgBranch: { Artillery: 0.25 }, vsCity: 0.3 },
       recruit: 300,
     },
-  };
-
     // ======== Commander expansion: Black Knights, JLF and additional Britannian officers ========
     zero: {
       name: 'Lelouch vi Britannia / Zero',
@@ -1351,6 +1349,7 @@
       fx: { aura: { range: 1, value: 0.1 }, rally: 2 },
       recruit: 200,
     },
+  };
   const NOFX = {};
   // HQ technology, as in World Conqueror 4: bought with command tokens earned by winning operations, kept in the
   // player's profile across every operation and faction. Each level unlocks at a tier gated by total victories.
