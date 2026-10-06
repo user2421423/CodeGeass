@@ -68,7 +68,7 @@
       hp: 150,
       attack: 37,
       armor: 9,
-      move: 4,
+      move: 5,
       min: 1,
       max: 1,
       cost: 60,
@@ -85,7 +85,7 @@
       hp: 210,
       attack: 53,
       armor: 16,
-      move: 3,
+      move: 4,
       min: 1,
       max: 1,
       cost: 110,
@@ -103,7 +103,7 @@
       hp: 200,
       attack: 47,
       armor: 15,
-      move: 5,
+      move: 6,
       min: 1,
       max: 1,
       cost: 115,
@@ -111,7 +111,7 @@
       tier: 2,
       crit: 0.1,
       pen: 0.15,
-      rule: 'Five-hex movement for flanking and city raids. Range 1; exchanges counter-fire.',
+      rule: 'Six-hex movement for flanking and city raids on the high-resolution world map. Range 1; exchanges counter-fire.',
     },
     light: {
       branch: 'Armor',
@@ -120,7 +120,7 @@
       hp: 245,
       attack: 57,
       armor: 23,
-      move: 4,
+      move: 5,
       min: 1,
       max: 1,
       cost: 135,
@@ -138,7 +138,7 @@
       hp: 330,
       attack: 71,
       armor: 32,
-      move: 3,
+      move: 4,
       min: 1,
       max: 1,
       cost: 215,
@@ -156,7 +156,7 @@
       hp: 440,
       attack: 89,
       armor: 42,
-      move: 3,
+      move: 4,
       min: 1,
       max: 2,
       cost: 330,
@@ -175,7 +175,7 @@
       hp: 590,
       attack: 108,
       armor: 52,
-      move: 2,
+      move: 3,
       min: 1,
       max: 2,
       cost: 500,
@@ -194,7 +194,7 @@
       hp: 150,
       attack: 59,
       armor: 10,
-      move: 2,
+      move: 3,
       min: 1,
       max: 1,
       cost: 130,
@@ -212,7 +212,7 @@
       hp: 185,
       attack: 77,
       armor: 12,
-      move: 3,
+      move: 4,
       min: 2,
       max: 2,
       cost: 235,
@@ -231,7 +231,7 @@
       hp: 280,
       attack: 112,
       armor: 23,
-      move: 1,
+      move: 2,
       min: 2,
       max: 2,
       cost: 380,
@@ -242,7 +242,7 @@
       pen: 0.8,
       noCounter: true,
       siege: 2,
-      rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, movement 1. No counter-fire.',
+      rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, movement 2. No counter-fire.',
     },
   };
   const CLASS_ORDER = ['scout', 'assault', 'raider', 'light', 'medium', 'heavy', 'super', 'support', 'rocket', 'siege'];
@@ -2766,7 +2766,7 @@
     u: 'urban',
     c: 'crater',
   };
-  const SEA_MOVE = 5;
+  const SEA_MOVE = 7;
   const isSea = t => t?.terrain === 'sea';
   function atSea(g, u) {
     return isSea(tile(g, u.c, u.r));
@@ -3629,21 +3629,23 @@
   }
 
   // ======== F.L.E.I.J.A.: the Sakuradite superweapon ========
-  // Every number is a first-pass balance guess. A world-map hex is about 200 km wide, so a warhead covers its target
-  // hex and one ring; campaign maps can pass a larger radius to blastArea().
+  // The high-resolution world uses roughly 200 km hexes. A warhead reaches two rings: the first is catastrophic,
+  // while the second is a weaker blast fringe. Campaign maps can still pass an explicit radius to blastArea().
   const FLEIJA = {
-    radius: 1,
+    radius: 2,
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
     lab: 3, // research lab level needed
     labTurn: 15, // Research Lab III, and therefore the strategic-weapons program, opens in each conquest
     devastation: 10, // turns a city at ground zero produces nothing
-    ringHP: 0.1, // units in the ring are left with 10% of their frame
+    ringHP: 0.1, // first ring: units are left with 10% of their frame
+    outerHP: 0.55, // second ring: units are left with at most 55%
+    outerShield: 0.35, // second-ring cities retain at most 35% of their defenses
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
     aiRest: 8, // turns a rival waits after a launch before starting another warhead
   };
   const ELIMINATOR = {
-    range: 2, // protects targets this many hexes from the city holding the charge
+    range: 3, // scaled with the denser world map; protects targets this many hexes from the city holding the charge
     cost: { credits: 1200, industry: 300, science: 250, sakuradite: 100 },
     turns: 3,
     lab: 3,
@@ -3838,6 +3840,7 @@
         eliminatorCity: defense.name,
         destroyed: [],
         crippled: [],
+        damaged: [],
         cities: [],
         hit: [],
       };
@@ -3845,40 +3848,59 @@
     const unlocksEliminator = !eliminatorUnlocked(g);
     const destroyed = [],
       crippled = [],
+      damaged = [],
       cities = [],
       hit = [];
     for (const t of blastArea(g, center)) {
-      const ring = key(t) !== key(center),
+      const blastDistance = dist(g, t, center),
+        ring = blastDistance === 1,
+        outer = blastDistance > 1,
         v = unitAt(g, t),
         s = stationAt(g, t),
         d = siteAt(g, t);
-      if (v && !ring) {
+      if (v && blastDistance === 0) {
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp });
         v.hp = 0;
         kill(g, v, null);
         destroyed.push(v.id);
       } else if (v) {
-        const left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * FLEIJA.ringHP)));
+        const ratio = outer ? FLEIJA.outerHP : FLEIJA.ringHP,
+          left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * ratio)));
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp - left });
         v.hp = left;
-        v.morale = moraleFloor(g, v);
-        crippled.push(v.id);
+        if (ring) {
+          v.morale = moraleFloor(g, v);
+          crippled.push(v.id);
+        } else {
+          v.morale = Math.min(v.morale ?? 0, -1);
+          damaged.push(v.id);
+        }
       }
       if (s) {
-        ruin(g, s, ring ? 1 : Infinity);
-        if (!ring) s.devastated = g.turn + FLEIJA.devastation;
-        cities.push({ name: s.name, devastated: !ring });
+        if (blastDistance === 0) {
+          ruin(g, s, Infinity);
+          s.devastated = g.turn + FLEIJA.devastation;
+          cities.push({ name: s.name, severity: 'ground', devastated: true });
+        } else if (ring) {
+          ruin(g, s, 1);
+          cities.push({ name: s.name, severity: 'inner', devastated: false });
+        } else {
+          s.shield = Math.min(s.shield, Math.round(s.maxShield * FLEIJA.outerShield));
+          cities.push({ name: s.name, severity: 'outer', devastated: false });
+        }
       }
       if (d) {
-        d.refinery = ring ? Math.max(0, (d.refinery || 0) - 1) : 0;
-        if (!ring) d.devastated = g.turn + FLEIJA.devastation;
+        if (blastDistance === 0) {
+          d.refinery = 0;
+          d.devastated = g.turn + FLEIJA.devastation;
+        } else if (ring) d.refinery = Math.max(0, (d.refinery || 0) - 1);
       }
-      if (!ring && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
+      if (blastDistance === 0 && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
     }
     g.fleijaDetonated = true;
     log(
       g,
-      `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled${cities.length ? ', ' + cities.map(x => x.name).join(' and ') + ' in ruins' : ''}.`,
+      `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled, ${damaged.length} damaged${cities.length ? ', ' + cities.length + ' cities affected' : ''}.`,
       side,
     );
     if (unlocksEliminator)
@@ -3892,6 +3914,7 @@
       name,
       destroyed,
       crippled,
+      damaged,
       cities,
       hit,
       eliminatorUnlocked: unlocksEliminator,
@@ -3922,7 +3945,9 @@
       let score = 0,
         safe = true;
       for (const t of blastArea(g, p)) {
-        const ring = key(t) !== key(p),
+        const blastDistance = dist(g, t, p),
+          ring = blastDistance > 0,
+          outer = blastDistance > 1,
           v = unitAt(g, t),
           s = stationAt(g, t);
         if (v?.side === side || s?.owner === side) {
@@ -3931,12 +3956,12 @@
         }
         if (v && rival(v.side))
           score +=
-            price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
+            price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (outer ? 0.35 : ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
         // Cities are worth what the blast destroys (a ruin is worth nothing); a capital is worth more only when
         // the launcher has troops close enough to take it afterwards.
         if (s && rival(s.owner) && !devastated(g, s)) {
           const levels = (s.tier || 0) + (s.lab || 0) + (s.refinery || 0);
-          score += ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
+          score += outer ? 15 * levels + s.shield * 0.08 : ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
           if (s.project) score += 2000;
           if (s.eliminatorProject) score += 1600;
           if (
@@ -4469,6 +4494,47 @@
     ['cf', 'scout', 103.8, 1.35, 1],
     ['cf', 'scout', 100.5, 13.7, 1],
     ['cf', 'scout', 124.2, 24.1, 1],
+
+    // High-resolution front-line reinforcement pass: concentrate forces in actual theatres rather than filling every city.
+    // Britannia: North American coasts, South America, the Pacific and Area 11.
+    ['britannia', 'light', -122.4, 37.8, 2],
+    ['britannia', 'medium', -118.2, 34.1, 2],
+    ['britannia', 'heavy', -79.4, 43.7, 2],
+    ['britannia', 'rocket', -63.6, 44.6, 1],
+    ['britannia', 'medium', -46.6, -23.5, 2],
+    ['britannia', 'light', -66.9, 10.5, 1],
+    ['britannia', 'assault', 135.8, 35.0, 2],
+    ['britannia', 'raider', 130.4, 33.6, 2],
+    ['britannia', 'medium', 121, 14.6, 2],
+    ['britannia', 'light', -157.9, 21.3, 2],
+
+    // E.U.: the Atlantic wall, central/eastern Europe, Mediterranean, Africa and Siberia.
+    ['eu', 'medium', 2.35, 48.85, 2],
+    ['eu', 'heavy', 13.4, 52.5, 2],
+    ['eu', 'light', 4.9, 52.4, 2],
+    ['eu', 'medium', 21, 52.2, 2],
+    ['eu', 'heavy', 30.5, 50.4, 2],
+    ['eu', 'support', 29, 41, 2],
+    ['eu', 'assault', 44.8, 41.7, 2],
+    ['eu', 'medium', 3, 36.7, 2],
+    ['eu', 'medium', 31.2, 30, 2],
+    ['eu', 'light', 36.8, -1.3, 1],
+    ['eu', 'medium', 28, -26.2, 2],
+    ['eu', 'light', 82.9, 55, 1],
+    ['eu', 'light', 104.3, 52.3, 1],
+
+    // Chinese Federation: the China/Area 11 front, India, Central Asia, Iran and Southeast Asia.
+    ['cf', 'medium', 121.5, 31.2, 2],
+    ['cf', 'rocket', 118.8, 32.1, 1],
+    ['cf', 'light', 113.3, 23.1, 2],
+    ['cf', 'heavy', 126.2, 39.4, 2],
+    ['cf', 'medium', 126.6, 45.8, 2],
+    ['cf', 'medium', 77.2, 28.6, 2],
+    ['cf', 'support', 88.4, 22.6, 1],
+    ['cf', 'light', 76.9, 43.2, 1],
+    ['cf', 'light', 105.8, 21, 2],
+    ['cf', 'medium', 103.8, 1.35, 2],
+    ['cf', 'heavy', 51.4, 35.7, 2],
   ];
   // Neutral garrisons: [city, type, frames].
   const GARRISONS = [
@@ -4707,6 +4773,16 @@
   }
 
   // ======== AI ========
+  // Strategic awareness is scaled for the 180 × 76 world. Combat ranges remain deliberately unchanged.
+  const AI_RANGE = {
+    threat: 5,
+    capitalGuard: 13,
+    cityGuard: 7,
+    mineGuard: 8,
+    enemyScan: 16,
+    convoyLand: 4,
+    convoySea: 6,
+  };
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
   function goalField(g, side) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
@@ -4780,7 +4856,7 @@
       for (const n of adjacent(g, t)) {
         if (TERRAIN[n.terrain]?.blocked) continue;
         const j = n.r * g.cols + n.c,
-          step = (isSea(n) !== isSea(t) ? 6 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost),
+          step = (isSea(n) !== isSea(t) ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost),
           nd = d + step;
         if (nd < field[j]) {
           field[j] = nd;
@@ -4804,7 +4880,7 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.filter(f => dist(g, f, s) <= 3).reduce((a, f) => a + f.stack, 0);
+      threat = s => foes.filter(f => dist(g, f, s) <= AI_RANGE.threat).reduce((a, f) => a + f.stack, 0);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -4818,7 +4894,7 @@
     for (const { s, threat: t, capital } of cities) {
       const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
       const near = own
-        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? 8 : 4))
+        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? AI_RANGE.capitalGuard : AI_RANGE.cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
       for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
     }
@@ -4827,7 +4903,7 @@
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
-      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= 5).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= AI_RANGE.mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
       for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
     }
     return taken;
@@ -5036,6 +5112,9 @@
       }
     }
   }
+  function coastTile(g, p) {
+    return !isSea(p) && adjacent(g, p).some(isSea);
+  }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
@@ -5074,14 +5153,16 @@
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       });
-      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= 10);
+      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= AI_RANGE.enemyScan);
       const old = { c: u.c, r: u.r };
-      // Overseas invasions sail in groups: a land unit embarks only beside two other free land units.
+      // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
+      // count as an escort so follow-on waves do not get stranded waiting for a fresh three-unit convoy.
       const fromLand = !atSea(g, u),
-        convoy =
-          fromLand &&
-          g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !atSea(g, v) && !memo.guards?.[v.id] && dist(g, v, u) <= 2)
-            .length >= 2;
+        freeAllies = g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !memo.guards?.[v.id]),
+        landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= AI_RANGE.convoyLand).length,
+        seaEscort = freeAllies.filter(v => atSea(g, v) && dist(g, v, u) <= AI_RANGE.convoySea).length,
+        convoy = fromLand && !guard && (landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1)),
+        currentField = fieldAt(old);
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
@@ -5096,7 +5177,15 @@
           nearestEnemy = Math.min(nearestEnemy, d);
           if (d <= 1) danger++;
         }
-        if (isSea(p)) sc -= 20 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
+        if (isSea(p)) {
+          sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
+          if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
+        } else if (!fromLand) {
+          sc += 90;
+        } else if (!guard && !convoy && coastTile(g, p) && fieldAt(p) <= currentField) {
+          const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= AI_RANGE.convoyLand).length;
+          sc += 28 + Math.min(3, assembling) * 12;
+        }
         if (TYPES[u.type].branch === 'Artillery') {
           sc -= danger * 28;
           sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;
