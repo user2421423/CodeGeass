@@ -31,6 +31,12 @@ const ICONS = (() => {
     // Sakuradite refinery: a pink crystal over a refinery stack.
     refinery: `<path d="M5 27h22v-8l-5 3v-3l-5 3v-9h-5v14H5Z" fill="#4a525c" stroke="#c9d3da" stroke-width="1"/>
       <path d="M16 3l5 6-5 8-5-8Z" fill="#ff7ab8" stroke="#7a1f4a" stroke-width="1"/><path d="M16 3v14" stroke="#ffd6ea" stroke-width=".8"/>`,
+    // Sakuradite: a cluster of glowing pink crystals, the fourth resource.
+    sakuradite: `<g filter="url(#if-glow-pink)"><path d="M16 2.5l5.2 8.6-2.1 15.4h-6.2L10.8 11.1Z" fill="url(#ig-sakura)" stroke="#5c1235" stroke-width="1"/></g>
+      <path d="M7.4 12.5l4 6.2-1.4 9.3H6.2L4.4 18.2Z" fill="url(#ig-sakura)" stroke="#5c1235" stroke-width=".9"/>
+      <path d="M24.6 12.5l-4 6.2 1.4 9.3h3.8l1.8-9.8Z" fill="url(#ig-sakura)" stroke="#5c1235" stroke-width=".9"/>
+      <path d="M16 2.5v24M7.4 12.5 8 28M24.6 12.5 24 28" stroke="#ffe3f0" stroke-opacity=".75" stroke-width=".8"/>
+      <path d="M4 29h24" stroke="#3a2030" stroke-width="2" stroke-linecap="round"/>`,
     // Knightmare factory: a hangar with a gear.
     factory: `<path d="M3 27V13l8-5v5l8-5v5l8-5v19Z" fill="#59636c" stroke="#d6dde3" stroke-width="1"/>
       <rect x="12" y="19" width="8" height="8" fill="#20262c"/><circle cx="23.5" cy="20" r="2.2" fill="#ffd24a"/>`,
@@ -80,6 +86,8 @@ const ICONS = (() => {
     <linearGradient id="ig-bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4d29a"/><stop offset=".5" stop-color="#a8743c"/><stop offset="1" stop-color="#4e3218"/></linearGradient>
     <linearGradient id="ig-steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2f6f8"/><stop offset="1" stop-color="#8e9aa4"/></linearGradient>
     <linearGradient id="ig-chip" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cf3ff"/><stop offset="1" stop-color="#0a7fa6"/></linearGradient>
+    <linearGradient id="ig-sakura" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd3ea"/><stop offset=".45" stop-color="#ff6fb5"/><stop offset="1" stop-color="#a3175f"/></linearGradient>
+    <filter id="if-glow-pink" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="1.3" result="b"/><feFlood flood-color="#ff5fae"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <radialGradient id="ig-shield" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#7fd0ff" stop-opacity=".95"/><stop offset="1" stop-color="#1b4fa0" stop-opacity=".85"/></radialGradient>
     <filter id="if-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2" result="b"/><feFlood flood-color="#4fe6ff"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <filter id="if-glow-green" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.1" result="b"/><feFlood flood-color="#39ff8a"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>

@@ -36,9 +36,20 @@ function blank(player = 'britannia', size = 12) {
   g.phase = player;
   g.over = null;
   g.fallen = {};
-  for (const s of E.MAJORS) g.economy[s] = { credits: 5000, industry: 5000, science: 0 };
+  g.sites = [];
+  for (const s of E.MAJORS) g.economy[s] = { credits: 5000, industry: 5000, science: 0, sakuradite: 500 };
   return g;
 }
+const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
+  id: 0,
+  name: 'Test Mine',
+  c,
+  r,
+  base,
+  city: null,
+  owner,
+  refinery,
+});
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
   assert.equal(Object.keys(E.TYPES).length, 31);
@@ -341,4 +352,302 @@ test('Rewards are paid for the first victory only; saves from other versions are
   assert(E.missionReward(g, 1, { [E.operationKey(g)]: true }).repeat);
   assert.equal(E.migrateSave({ ...g, rulesVersion: 0 }), null);
   assert.equal(E.migrateSave(JSON.parse(JSON.stringify(g))).player, 'eu');
+});
+test('Sakuradite: Japan holds 70% of the deposits; Fuji is a mine of its own, island deposits are worked from cities', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 3),
+    site = n => g.sites.find(d => d.name === n),
+    city = n => g.stations.find(s => s.name === n);
+  assert.equal(g.sites.reduce((a, d) => a + d.base, 0), 100);
+  assert.equal(['Mount Fuji', 'Hokkaido', 'Kyushu'].reduce((a, n) => a + site(n).base, 0), 70);
+  const fuji = site('Mount Fuji');
+  assert.equal(fuji.city, null);
+  assert.equal(fuji.owner, 'britannia');
+  assert.equal(E.distance(fuji, city('Tokyo Settlement'), g), 1);
+  assert.equal(E.tile(g, fuji.c, fuji.r).terrain, 'mountain');
+  assert.equal(site('Hokkaido').city, city('Sapporo').id);
+  assert.equal(site('Kyushu').city, city('Fukuoka').id);
+  assert.equal(site('Stonehenge').city, city('London').id);
+  assert.equal(E.depositOwner(g, site('Stonehenge')), 'eu');
+  assert.equal(site('Rocky Mountains').owner, 'britannia');
+  assert.equal(site('Qaidam Basin').owner, 'cf');
+  for (const s of E.MAJORS) assert.equal(g.economy[s].sakuradite, E.SAKURADITE.start);
+  // Capitals keep their old income: 50 plus the 15 their refinery used to export.
+  assert.equal(city('Pendragon').income, 65);
+  assert.equal(city('Pendragon').refinery, 0);
+  // The AI wants Fuji almost as much as a capital.
+  assert.equal(E.goalField(g, 'cf')[fuji.r * g.cols + fuji.c], -5);
+});
+test('Refineries extract 25/50/75/100% of a deposit; a level-3 refinery also exports for credits', () => {
+  const g = blank();
+  g.sites = [mine('britannia', 5, 5)];
+  const levels = [0, 1, 2, 3].map(l => {
+    g.sites[0].refinery = l;
+    return E.income(g, 'britannia');
+  });
+  assert.deepEqual(levels.map(i => i.sakuradite), [10, 20, 30, 40]);
+  assert.equal(levels[3].credits - levels[2].credits, E.SAKURADITE.exportCredits);
+  g.sites[0].refinery = 0;
+  const credits = g.economy.britannia.credits;
+  assert(E.refine(g, 0).ok);
+  assert.equal(g.sites[0].refinery, 1);
+  assert.equal(g.economy.britannia.credits, credits - E.buildCost({ refinery: 0 }, 'refinery').credits);
+  E.newUnit(g, T('eu', 'support'), 'eu', 5, 5);
+  assert.match(E.refineReason(g, g.sites[0]), /Enemy unit/);
+  // A deposit under a city uses the city's refinery; a city without one cannot build a refinery.
+  assert.match(E.buildReason(g, g.stations[0], 'refinery'), /No Sakuradite deposit/);
+  g.sites.push({ id: 1, name: 'City Field', c: 0, r: 0, base: 15, city: 0 });
+  assert.equal(E.buildReason(g, g.stations[0], 'refinery'), null);
+  assert(E.build(g, 0, 'refinery').ok);
+  assert.equal(E.cityYield(g, g.stations[0]).sakuradite, Math.round(15 * 0.5));
+});
+test('Heavier frames cost Sakuradite by class; shortfalls name it', () => {
+  const g = blank();
+  for (const cls of ['scout', 'assault', 'light', 'support'])
+    assert.equal(E.price(T('britannia', cls), 1, g).sakuradite, 0);
+  for (const cls of ['raider', 'medium', 'rocket']) assert.equal(E.price(T('britannia', cls), 1, g).sakuradite, 5);
+  assert.equal(E.price(T('britannia', 'heavy'), 1, g).sakuradite, 10);
+  assert.equal(E.price(T('britannia', 'siege'), 1, g).sakuradite, 10);
+  assert.equal(E.price(T('britannia', 'super'), 1, g).sakuradite, 25);
+  assert.equal(E.price(T('britannia', 'heavy'), 3, g).sakuradite, Math.round(10 * 2.7));
+  assert.equal(E.price(T('cf', 'raider'), 1, g, 'cf').sakuradite, Math.round(5 * 0.85), 'Federation Infantry discount');
+  g.economy.britannia.sakuradite = 4;
+  assert.equal(E.buyReason(g, g.stations[0], T('britannia', 'heavy'), 1), 'Need 6 more Sakuradite');
+  g.economy.britannia.sakuradite = 30;
+  assert(E.recruit(g, 0, T('britannia', 'heavy'), 1).ok);
+  assert.equal(g.economy.britannia.sakuradite, 20);
+  assert.equal(E.reinforceCost(T('britannia', 'heavy'), g, 'britannia').sakuradite, 10);
+});
+test('Infantry and Armor seize a mine by moving onto it; artillery cannot; city deposits change hands with the city', () => {
+  const g = blank(),
+    gun = E.newUnit(g, T('britannia', 'support'), 'britannia', 5, 5);
+  g.sites = [mine('eu', 6, 5, 40, 2)];
+  assert(E.move(g, gun.id, 6, 5).ok);
+  assert.equal(g.sites[0].owner, 'eu', 'artillery cannot seize');
+  const h = blank(),
+    scout = E.newUnit(h, T('britannia', 'scout'), 'britannia', 5, 5);
+  h.sites = [mine('eu', 6, 5, 40, 2)];
+  const r = E.move(h, scout.id, 6, 5);
+  assert.equal(r.seized, 'Test Mine');
+  assert.equal(h.sites[0].owner, 'britannia');
+  assert.equal(h.sites[0].refinery, 2, 'the refinery is taken intact');
+  assert.equal(E.income(h, 'britannia').sakuradite, 30);
+  assert.equal(E.income(h, 'eu').sakuradite, 0);
+  // Paris falls: the E.U. surrenders, so its city deposit, its own mines and half its Sakuradite pass over.
+  const k = blank();
+  k.sites = [{ id: 0, name: 'Paris Field', c: 11, r: 0, base: 10, city: 1 }, { ...mine('eu', 4, 8), id: 1 }];
+  k.economy.eu.sakuradite = 100;
+  k.economy.britannia.sakuradite = 0;
+  k.stations[1].shield = 0;
+  const u = E.newUnit(k, T('britannia', 'scout'), 'britannia', 10, 0);
+  assert(E.move(k, u.id, 11, 0).annexed);
+  assert.equal(E.depositOwner(k, k.sites[0]), 'britannia');
+  assert.equal(k.sites[1].owner, 'britannia');
+  assert.equal(k.economy.britannia.sakuradite, 50);
+  assert.equal(k.economy.eu.sakuradite, 0);
+});
+test('Version 2 saves (before Sakuradite) are upgraded: deposits placed, refineries away from a deposit become credits', () => {
+  const v1 = JSON.parse(JSON.stringify(E.createGame('britannia', 'normal', 'conquest', 4))),
+    city = n => v1.stations.find(s => s.name === n);
+  v1.rulesVersion = 2;
+  delete v1.sites;
+  for (const e of Object.values(v1.economy)) delete e.sakuradite;
+  Object.assign(city('Pendragon'), { income: 50, refinery: 1 });
+  city('London').refinery = 2;
+  city('Madrid').refinery = 2;
+  const madrid = city('Madrid').income,
+    g = E.migrateSave(v1);
+  assert.equal(g.rulesVersion, E.RULES_VERSION);
+  assert.equal(g.sites.length, E.RESOURCE_SITES.length);
+  assert.equal(g.economy.eu.sakuradite, E.SAKURADITE.start);
+  assert.equal(g.economy.neutral.sakuradite, 0);
+  assert.equal(city('Pendragon').income, 65);
+  assert.equal(city('Pendragon').refinery, 0);
+  assert.equal(city('Madrid').income, madrid + 30);
+  assert.equal(city('Madrid').refinery, 0);
+  assert.equal(city('London').refinery, 2, 'London works the Stonehenge deposit');
+  assert.equal(E.migrateSave({ ...v1, rulesVersion: 0 }), null);
+  assert.equal(E.migrateSave({ ...JSON.parse(JSON.stringify(v1)), rulesVersion: 1 }), null, 'Version 1 saves use retired frames');
+});
+test('F.L.E.I.J.A. is conquest-only behind Research Lab III, which unlocks on turn 15', () => {
+  const g = blank(),
+    s = g.stations[0];
+  assert.equal(E.TECH_NODES['sakura.fleija'], undefined, 'F.L.E.I.J.A. is not persistent HQ research');
+  s.lab = 2;
+  g.turn = E.FLEIJA.labTurn - 1;
+  assert.equal(E.buildReason(g, s, 'lab'), `Research lab level 3 unlocks on turn ${E.FLEIJA.labTurn}`);
+  assert.equal(E.projectReason(g, s), `Research lab level 3 unlocks on turn ${E.FLEIJA.labTurn}`);
+  assert(!E.hasFleija(g, 'britannia'));
+  assert(!E.hasFleija(g, 'eu'));
+  g.difficulty = 'challenge';
+  g.turn = E.FLEIJA.labTurn;
+  assert(E.hasFleija(g, 'britannia'));
+  assert(E.hasFleija(g, 'eu'), 'difficulty does not change the unlock turn');
+  assert.equal(E.buildReason(g, s, 'lab'), null);
+  assert(E.build(g, s.id, 'lab').ok);
+  assert.equal(s.lab, 3);
+  g.economy.britannia = { credits: 1000, industry: 5000, science: 5000, sakuradite: 500 };
+  assert.equal(E.projectReason(g, s), 'Need 800 more credits');
+  g.economy.britannia.credits = 5000;
+  const r = E.startProject(g, 0);
+  assert(r.ok);
+  assert.equal(r.ready, g.turn + E.FLEIJA.turns);
+  assert.deepEqual(g.economy.britannia, { credits: 3200, industry: 4550, science: 4700, sakuradite: 350 });
+  assert(g.log.some(l => l.text === 'INTELLIGENCE: Strategic weapons research detected in Pendragon.'));
+  // The city builds nothing else meanwhile.
+  assert.equal(E.buyReason(g, s, T('britannia', 'scout')), 'F.L.E.I.J.A. project under way');
+  s.tier = 2;
+  assert.equal(E.buildReason(g, s, 'factory'), 'F.L.E.I.J.A. project under way');
+  for (let t = 1; t < E.FLEIJA.turns; t++) {
+    g.turn++;
+    E.beginTurn(g, 'britannia', false);
+    assert.equal(g.arsenal?.britannia || 0, 0, 'not ready on turn ' + g.turn);
+  }
+  g.turn++;
+  E.beginTurn(g, 'britannia', false);
+  assert.equal(g.arsenal.britannia, 1);
+  assert.equal(s.project, null);
+});
+test('F.L.E.I.J.A. Eliminator unlocks after the first detonation and intercepts one nearby warhead', () => {
+  const g = blank('britannia'),
+    pendragon = g.stations[0];
+  g.turn = E.FLEIJA.labTurn;
+  pendragon.lab = 3;
+  assert.equal(E.eliminatorReason(g, pendragon), 'Available after the first F.L.E.I.J.A. detonation');
+  g.phase = 'eu';
+  g.arsenal = { eu: 1 };
+  const first = E.launch(g, 'eu', 6, 6);
+  assert(first.ok && !first.intercepted);
+  assert(first.eliminatorUnlocked);
+  assert(E.eliminatorUnlocked(g));
+  g.phase = 'britannia';
+  g.economy.britannia = { credits: 5000, industry: 5000, science: 5000, sakuradite: 500 };
+  assert.equal(E.eliminatorReason(g, pendragon), null);
+  const project = E.startEliminator(g, pendragon.id);
+  assert(project.ok);
+  assert.equal(project.ready, g.turn + E.ELIMINATOR.turns);
+  assert.deepEqual(g.economy.britannia, { credits: 3800, industry: 4700, science: 4750, sakuradite: 400 });
+  assert.equal(E.buyReason(g, pendragon, T('britannia', 'scout')), 'F.L.E.I.J.A. Eliminator project under way');
+  for (let t = 0; t < E.ELIMINATOR.turns; t++) {
+    g.turn++;
+    E.beginTurn(g, 'britannia', false);
+  }
+  assert.equal(pendragon.eliminator, 1);
+  assert.equal(pendragon.eliminatorProject, null);
+  const protectedTile = E.tile(g, 1, 0),
+    beforeTerrain = protectedTile.terrain;
+  g.phase = 'eu';
+  g.arsenal.eu = 1;
+  const blocked = E.launch(g, 'eu', protectedTile.c, protectedTile.r);
+  assert(blocked.ok && blocked.intercepted);
+  assert.equal(blocked.eliminatorCity, 'Pendragon');
+  assert.equal(pendragon.eliminator, 0);
+  assert.equal(protectedTile.terrain, beforeTerrain);
+  pendragon.eliminator = 1;
+  g.turn++;
+  g.phase = 'eu';
+  g.arsenal.eu = 1;
+  const far = E.tile(g, 8, 8),
+    hit = E.launch(g, 'eu', far.c, far.r);
+  assert(hit.ok && !hit.intercepted);
+  assert.equal(far.terrain, 'crater');
+  assert.equal(pendragon.eliminator, 1);
+});
+test('Capturing a city ends its F.L.E.I.J.A. project; a surrendering power loses its warheads', () => {
+  const g = blank('britannia');
+  g.stations.push({
+    ...g.stations[2],
+    id: 3,
+    name: 'Beijing',
+    c: 6,
+    r: 6,
+    capital: false,
+    capitalOf: null,
+    shield: 0,
+    project: { side: 'cf', started: 1, ready: 5 },
+    eliminatorProject: { side: 'cf', started: 1, ready: 4 },
+    eliminator: 1,
+  });
+  const u = E.newUnit(g, T('britannia', 'scout'), 'britannia', 5, 6);
+  assert(E.move(g, u.id, 6, 6).ok);
+  assert.equal(g.stations[3].project, null);
+  assert.equal(g.stations[3].eliminatorProject, null);
+  assert.equal(g.stations[3].eliminator, 0);
+  assert(g.log.some(l => /Beijing: the F\.L\.E\.I\.J\.A\. project is lost/.test(l.text)));
+  g.arsenal = { cf: 2 };
+  g.stations[2].eliminator = 1;
+  g.stations[2].shield = 0;
+  const v = E.newUnit(g, T('britannia', 'scout'), 'britannia', 10, 11);
+  assert(E.move(g, v.id, 11, 11).annexed);
+  assert.equal(g.arsenal.cf, 0);
+  assert.equal(g.stations[2].eliminator, 0);
+});
+test('A F.L.E.I.J.A. strike erases ground zero, cripples the ring and devastates the city there', () => {
+  const g = blank('britannia'),
+    city = (id, name, c, r, extra) => ({ ...g.stations[1], id, name, c, r, capital: false, capitalOf: null, ...extra });
+  const berlin = city(3, 'Berlin', 6, 6, { tier: 3, lab: 2, refinery: 1, shield: 300, maxShield: 300, industry: 40 });
+  const vienna = city(4, 'Vienna', 7, 6, { tier: 2, lab: 1, shield: 240, maxShield: 240, industry: 30, science: 11 });
+  g.stations.push(berlin, vienna);
+  const heavy = E.newUnit(g, T('eu', 'heavy'), 'eu', 6, 6, 3),
+    scout = E.newUnit(g, T('eu', 'scout'), 'eu', 5, 6),
+    own = E.newUnit(g, T('britannia', 'scout'), 'britannia', 6, 5),
+    far = E.newUnit(g, T('eu', 'scout'), 'eu', 2, 2);
+  assert.match(E.launchReason(g, 'britannia', { c: 6, r: 6 }), /No F\.L\.E\.I\.J\.A\. warhead/);
+  g.arsenal = { britannia: 2 };
+  const r = E.launch(g, 'britannia', 6, 6);
+  assert(r.ok);
+  assert.equal(r.name, 'Berlin');
+  assert.equal(heavy.hp, 0);
+  assert.deepEqual(r.destroyed, [heavy.id]);
+  for (const v of [scout, own]) {
+    assert.equal(v.hp, Math.max(1, Math.round(E.maxHP(v) * E.FLEIJA.ringHP)));
+    assert.equal(v.morale, -3);
+  }
+  assert.equal(far.hp, E.maxHP(far), 'outside the blast');
+  // Ground zero: devastated for 10 turns, every building at level 0, a crater; the owner is unchanged.
+  assert.equal(berlin.owner, 'eu');
+  assert.equal(berlin.devastated, g.turn + E.FLEIJA.devastation);
+  assert.deepEqual([berlin.shield, berlin.tier, berlin.lab, berlin.refinery], [0, 0, 0, 0]);
+  assert.equal(berlin.industry, 18, 'back to its founding industry');
+  assert.equal(E.tile(g, 6, 6).terrain, 'crater');
+  assert.deepEqual(E.cityYield(g, berlin), { credits: 0, industry: 0, science: 0, sakuradite: 0 });
+  // The ring: defenses gone and one level of every building.
+  assert.deepEqual([vienna.shield, vienna.tier, vienna.lab], [0, 1, 0]);
+  assert.equal(vienna.industry, 20);
+  assert.equal(E.launchReason(g, 'britannia', { c: 2, r: 2 }), 'One launch per turn');
+  assert(g.log.some(l => l.text.startsWith('F.L.E.I.J.A. detonation at Berlin: 1 units erased, 2 crippled')));
+  // Ruins stay without defenses or output; the factory must be rebuilt afterwards.
+  E.beginTurn(g, 'eu', true);
+  assert.equal(berlin.shield, 0);
+  assert(vienna.shield > 0);
+  assert.equal(E.buyReason(g, berlin, T('eu', 'scout')), `Devastated by F.L.E.I.J.A. until turn ${berlin.devastated}`);
+  g.turn += E.FLEIJA.devastation;
+  assert(!E.devastated(g, berlin));
+  assert.equal(E.buyReason(g, berlin, T('eu', 'scout')), 'Requires factory level 1');
+  assert.deepEqual(E.buildCost(berlin, 'factory'), { credits: 110, industry: 25 });
+});
+test('Rival powers aim warheads at the most valuable target and never at their own forces', () => {
+  const g = blank('britannia');
+  g.stations.push({
+    ...g.stations[0],
+    id: 3,
+    name: 'Chicago',
+    c: 3,
+    r: 8,
+    capital: false,
+    capitalOf: null,
+    project: { side: 'britannia', started: 1, ready: 9 },
+  });
+  E.newUnit(g, T('britannia', 'heavy'), 'britannia', 7, 7, 3);
+  const guard = E.newUnit(g, T('eu', 'scout'), 'eu', 8, 7);
+  g.phase = 'eu';
+  g.arsenal = { eu: 1 };
+  assert.deepEqual(E.aiLaunchTarget(g, 'eu'), E.tile(g, 3, 8), 'the project city, not the stack beside its own unit');
+  E.aiProduction(g);
+  assert.equal(g.launches.length, 1);
+  assert.equal(g.launches[0].name, 'Chicago');
+  assert.equal(guard.hp, E.maxHP(guard));
+  // Nothing worth a warhead: hold it.
+  const h = blank('britannia');
+  E.newUnit(h, T('britannia', 'scout'), 'britannia', 6, 6);
+  assert.equal(E.aiLaunchTarget(h, 'eu'), null);
 });

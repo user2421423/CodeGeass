@@ -29,7 +29,9 @@ let game = E.createGame('britannia'),
   minimapBase = null;
 let detailOpen = false,
   saveOk = true,
-  shake = 0;
+  shake = 0,
+  strikeMode = false, // choosing a F.L.E.I.J.A. target
+  flash = 0; // full-screen white-pink flash, 1 → 0
 const R = 43,
   SQ = Math.sqrt(3),
   WORLD_W = SQ * R * E.WORLD.cols,
@@ -46,7 +48,8 @@ const SAVE_KEY = 'knightmare-conquest-save',
   PROFILE_KEY = 'knightmare-conquest-profile';
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
-  selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null);
+  selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
+  selectedSite = () => (selection?.kind === 'site' ? game.sites?.find(d => d.id === selection.id) || null : null);
 const interactive = () => !game.over && game.phase === game.player;
 const F = side => E.FACTIONS[side] || E.FACTIONS.neutral,
   C = k => E.COMMANDERS[k];
@@ -105,6 +108,7 @@ function capitalOf(side) {
 function newGame() {
   aiToken++;
   hqBack = 'game';
+  strikeMode = false;
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0), loadProfile());
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
   undoStack = [];
@@ -168,7 +172,7 @@ function render() {
   const e = game.economy[game.player],
     inc = E.income(game, game.player),
     cities = game.stations.filter(s => s.owner === game.player).length;
-  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · WORLD WAR</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus"><button class="small" data-action="research">Research</button><button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="powers">Powers</button><button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${F(game.phase).color}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn} / ${E.ARMISTICE}</b></p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select your unit using the unit selector or N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green hex or attacks a red hex. Z undoes the last move. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="World overview">World</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas><div class="map-legend">${E.MAJORS.map(s => `<span style="color:${F(s).color}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div></div><div class="map-caption"><span id="map-caption">Green hex: move · Red hex: attack · Blue sea hex: embark as a transport</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small" data-action="details">Unit orders</button><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn</button>` : `<button class="primary end" data-action="skip-ai">${F(game.phase).short} turn… <span class="kbd">Skip ▶▶</span></button>`}</div></footer>`;
+  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · WORLD WAR</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Sakuradite · mined at deposits; heavier Knightmares need it', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus">${arsenalButton()}<button class="small" data-action="research">Research</button><button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="powers">Powers</button><button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${F(game.phase).color}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn} / ${E.ARMISTICE}</b></p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select your unit using the unit selector or N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green hex or attacks a red hex. Z undoes the last move. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="World overview">World</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas><div class="map-legend">${E.MAJORS.map(s => `<span style="color:${F(s).color}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div></div><div class="map-caption"><span id="map-caption">Green hex: move · Red hex: attack · Blue sea hex: embark as a transport</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small" data-action="details">Unit orders</button><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn</button>` : `<button class="primary end" data-action="skip-ai">${F(game.phase).short} turn… <span class="kbd">Skip ▶▶</span></button>`}</div></footer>`;
   canvas = $('map');
   ctx = canvas.getContext('2d');
   attachMap();
@@ -176,6 +180,98 @@ function render() {
   minimapDirty = true;
   updateSelection();
   if (mapFocused) canvas.focus({ preventScroll: true });
+}
+// Your F.L.E.I.J.A. arsenal: shown once you hold a warhead; it arms the targeting mode.
+function arsenalButton() {
+  const n = game.arsenal?.[game.player] || 0;
+  if (!n) return '';
+  const why = phaseReason() || (game.launched?.[game.player] === game.turn ? 'One launch per turn' : null);
+  return `<button class="small fleija-button${strikeMode ? ' armed' : ''}" data-action="fleija" ${why ? `disabled title="${why}"` : `title="${strikeMode ? 'Cancel the launch' : 'Choose a target for a F.L.E.I.J.A. warhead'}"`}>F.L.E.I.J.A. ×${n}</button>`;
+}
+// The strategic-weapon warning, then a white-pink flash and the expanding sphere. A rival's strike has already been
+// resolved by the engine; your own fires (fire()) while the warning covers the screen.
+async function fleijaSequence(target, side, name, fire = null, resolved = null) {
+  const alert = $('fleija-alert');
+  alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Strategic weapon detected</span><b>F.L.E.I.J.A. warhead</b><span class="fleija-impact">Impact: ${esc(name)}</span><small>${esc(F(side).name)}</small></div>`;
+  alert.hidden = false;
+  alert.classList.add('show');
+  SFX.play('fleija', side);
+  zoom = Math.max(zoom, 3.2);
+  centerOn(target);
+  await pause(2000);
+  const result = fire ? fire() : resolved;
+  if (result?.intercepted) {
+    alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Countermeasure engaged</span><b>F.L.E.I.J.A. eliminated</b><span class="fleija-impact">${esc(result.eliminatorCity)}</span><small>${esc(F(result.defender).name)}</small></div>`;
+    await pause(1200);
+    alert.classList.remove('show');
+    alert.hidden = true;
+    minimapDirty = true;
+    render();
+    return result;
+  }
+  if (result && !result.ok) {
+    alert.classList.remove('show');
+    alert.hidden = true;
+    return result;
+  }
+  alert.classList.remove('show');
+  alert.hidden = true;
+  flash = 1;
+  effects.push({ kind: 'fleija', to: { c: target.c, r: target.r }, life: 3.6, max: 3.6 });
+  bump(30);
+  minimapDirty = true;
+  render();
+  await pause(1700);
+  return result;
+}
+// What a strike on p would do: units erased and crippled by side, cities hit, and whether your own are inside.
+function blastSummary(p) {
+  const tally = {},
+    cities = [];
+  let own = 0;
+  for (const t of E.blastArea(game, p)) {
+    const ring = t.c !== p.c || t.r !== p.r,
+      u = E.unitAt(game, t),
+      s = E.stationAt(game, t);
+    if (u) {
+      const k = (tally[u.side] ||= { erased: 0, crippled: 0 });
+      k[ring ? 'crippled' : 'erased']++;
+      if (u.side === game.player) own++;
+    }
+    if (s) cities.push({ s, ring });
+    if (s?.owner === game.player) own++;
+  }
+  return { tally, cities, own };
+}
+function confirmLaunch(p) {
+  const { tally, cities, own } = blastSummary(p),
+    name = E.targetName(game, p),
+    defense = E.eliminatorDefender(game, game.player, p),
+    rows = Object.entries(tally)
+      .map(([side, k]) => `<li><b style="color:${F(side).color}">${F(side).short}</b> ${k.erased} erased · ${k.crippled} crippled</li>`)
+      .join('');
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => !c.ring) ? ` and ${esc(cities.find(c => !c.ring).s.name)} is devastated for ${E.FLEIJA.devastation} turns: no defenses, no buildings, no output` : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.ring) ? `; ${cities.filter(c => c.ring).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.ring).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}${defense ? `<div class="info-strip">F.L.E.I.J.A. Eliminator coverage detected from ${esc(defense.name)}. This warhead will be neutralized and consume its one defensive charge.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
+  focusDialog();
+}
+async function launchAt(p) {
+  closeModal();
+  strikeMode = false;
+  const name = E.targetName(game, p),
+    result = await fleijaSequence(p, game.player, name, () => E.launch(game, game.player, p.c, p.r));
+  if (!result?.ok) {
+    toast(result?.reason || 'Launch failed.');
+    render();
+    return;
+  }
+  undoStack = [];
+  refreshAndSave();
+  if (result.intercepted)
+    toast(`F.L.E.I.J.A. Eliminator at ${result.eliminatorCity} neutralized the warhead.`, true);
+  else
+    toast(
+      `F.L.E.I.J.A. detonation at ${name}: ${result.destroyed.length} units erased, ${result.crippled.length} crippled.${result.eliminatorUnlocked ? ' Eliminator countermeasures are now available at level-3 research labs.' : ''}`,
+      true,
+    );
 }
 // Why the player cannot act right now (rival phase or finished operation).
 function phaseReason() {
@@ -207,7 +303,7 @@ function rangeText(u) {
 }
 function resource(icon, label, title, value, perTurn) {
   const rate = perTurn == null ? '' : ` · +${perTurn}/turn`;
-  return `<div class="resource" title="${title}${rate}">${ICONS.use(icon, 'res-icon')}<span class="label">${label}</span><b>${count(value)} ${perTurn == null ? '' : `<small>+${perTurn}/turn</small>`}</b></div>`;
+  return `<div class="resource res-${icon}" title="${title}${rate}">${ICONS.use(icon, 'res-icon')}<span class="label">${label}</span><b>${count(value)} ${perTurn == null ? '' : `<small>+${perTurn}/turn</small>`}</b></div>`;
 }
 // Costs render as WC4 resource tokens; zero amounts are omitted unless all is set.
 // Prices (not balances, which pass all) turn red for each resource the player cannot cover.
@@ -217,6 +313,7 @@ function costHTML(c, all = false) {
       ['credits', c.credits, 'credits'],
       ['industry', c.industry, 'industry'],
       ['research', c.science, 'science'],
+      ['sakuradite', c.sakuradite, 'sakuradite'],
     ].filter(([, v]) => v != null && (all || v > 0));
   return `<span class="cost-line">${parts.map(([k, v, f]) => `<span class="cost-item${!all && v > (have[f] || 0) ? ' short' : ''}">${ICONS.use(k, 'cost-ico')}${count(v)}</span>`).join('')}</span>`;
 }
@@ -265,11 +362,15 @@ function updateSelection() {
       ? `${F(game.phase).name} is maneuvering…`
       : game.over
         ? 'Operation concluded'
-        : u?.side === game.player
-          ? `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)} ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${u.morale <= -3 ? ' · In confusion' : !hasOrders(u) ? ' · Orders complete' : ''}`
-          : selectedStation()
-            ? `${selectedStation().name} · ${selectedStation().owner === game.player ? 'Open the factory to build Knightmares' : 'Break its defenses before capture'}`
-            : 'Select a Knightmare to reveal movement and firing range.';
+        : strikeMode
+          ? 'F.L.E.I.J.A. armed · choose a target hex · Escape cancels'
+          : u?.side === game.player
+            ? `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)} ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${u.morale <= -3 ? ' · In confusion' : !hasOrders(u) ? ' · Orders complete' : ''}`
+            : selectedStation()
+              ? `${selectedStation().name} · ${selectedStation().owner === game.player ? 'Open the factory to build Knightmares' : 'Break its defenses before capture'}`
+              : selectedSite()
+                ? `${selectedSite().name} · Sakuradite mine · ${selectedSite().owner === game.player ? 'Upgrade its refinery to extract more' : 'Move Infantry or Armor onto it to seize it'}`
+                : 'Select a Knightmare to reveal movement and firing range.';
 }
 function moraleName(n) {
   return n >= 1
@@ -282,9 +383,19 @@ function moraleName(n) {
           ? 'Diminished (−50%)'
           : 'Confused';
 }
+// A Sakuradite deposit's output: base, extraction at its refinery level, and the yield per turn.
+function depositBox(d) {
+  const y = E.depositYield(game, d);
+  return `<div class="target-box deposit-box"><span class="label">${ICONS.use('sakuradite', 'cost-ico')} Sakuradite deposit</span><h3>${esc(d.name)}</h3><p>Base output ${d.base} a turn · refinery level ${y.level} extracts ${Math.round(y.rate * 100)}%.</p><p><b>+${y.sakuradite} Sakuradite${y.credits ? ` · +${y.credits} credits` : ''} a turn</b></p></div>`;
+}
+function refineryRow(host, attrs, why) {
+  const l = host.refinery || 0;
+  return `<div class="building"><span class="label">${ICONS.use('refinery')} ${E.BUILDINGS.refinery.name}</span><span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${E.BUILDINGS.refinery.desc}</small>${attrs ? act(attrs, l >= 3 ? 'Maximum level' : (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), l >= 3 ? null : why, costHTML(E.buildCost(host, 'refinery')), 'small') : ''}</div>`;
+}
 function panel() {
   const u = selectedUnit(),
-    s = selectedStation();
+    s = selectedStation(),
+    m = selectedSite();
   const unitPicker = `<label class="label" for="fleet-select">Your units</label><select class="select unit-select" id="fleet-select"><option value="">Select a unit…</option>${ownUnits()
     .map(
       v =>
@@ -296,14 +407,21 @@ function panel() {
     const t = E.TYPES[u.type],
       ours = u.side === game.player,
       st = E.stationAt(game, u),
+      mine = E.siteAt(game, u),
       a = C(u.cmd),
       sea = E.atSea(game, u);
-    main = `<section>${unitPicker}<div class="side-title"><span class="label">${t.branch} · ${t.role}</span><span class="chip" style="color:${F(u.side).color}">${F(u.side).short}</span></div>${ART.unit(u.type, 'panel-ship', u.side)}<h2 class="unit-name">${unitName(u)}</h2><p class="unit-model">${t.model} · ${t.gen}${a && t.cls === 'super' ? ` · ${t.name}` : ''}</p><p class="description">${t.desc}</p><p class="lore">${t.lore}</p>${sea ? `<div class="info-strip sea-strip">${ICONS.use('sea', 'cost-ico')} Embarked as a transport: cannot fire or counter-fire and takes ${Math.round(100 * (E.techLevel(game, u.side, 'sakura.landing') ? 0.25 : 0.5))}% extra damage. Sails ${E.seaMove(game, u)} hexes; landing ends the move.</div>` : ''}<div class="hp-row">${ICONS.hp(u.hp, E.maxHP(u), 'hp-ring-lg')}<span>Frame integrity</span><span class="mono">${Math.ceil(u.hp)} / ${E.maxHP(u)}</span></div><div class="stat-grid"><div><span class="label">${ICONS.use('atk')} Attack</span><b>${Math.round(t.attack * (1 + 0.45 * (u.stack - 1)))}</b></div><div><span class="label">${ICONS.use('def')} Armor</span><b>${t.armor}</b></div><div><span class="label">${ICONS.use('mov')} Move</span><b>${sea ? E.seaMove(game, u) : E.movement(game, u)}</b></div><div><span class="label">${ICONS.use('rng')} Range</span><b>${rangeText(u)}</b></div><div><span class="label">Frames</span><b>${u.stack}/3</b></div><div><span class="label">Veteran</span><b>${u.xp}/5</b></div></div><div class="status-line"><span class="status ${u.moved ? 'spent' : 'ready'}">${u.moved ? 'Moved' : 'Move ready'}</span><span class="status ${fireStatus(u) === 'Fire ready' ? 'ready' : 'spent'}">${fireStatus(u)}</span><span class="status">${moraleName(u.morale)}</span></div>${a ? commanderCard(u) : ''}${ours ? `<div class="actions">${!a ? act('data-action="assign"', 'Assign commander', phaseReason(), 'Choose a commander') : ''}${a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '−2 morale · 2 hex radius', '', false) : ''}${act('data-action="reinforce"', 'Add a frame', phaseReason() || E.reinforceReason(game, u), costHTML(E.reinforceCost(u.type, game, u.side)))}${act('data-action="repair"', 'Repair unit', phaseReason() || E.repairReason(game, u), '+35% frame · ' + costHTML({ credits: E.repairCost(u, game) }))}${act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), 'Finish this unit’s turn')}</div><p class="description" style="font-size:11px">Repair and reinforcement need a friendly city within 1 hex and use this unit’s turn.</p>` : ''}${st ? `<div class="section-divider"><span class="label">City beneath unit</span><div class="station-buttons"><button data-station="${st.id}">${st.name} · Factory ${st.tier}</button>${st.owner === game.player ? `<button data-shop="${st.id}" ${!interactive() ? 'disabled' : ''}>Factory</button>` : ''}</div></div>` : ''}</section>`;
+    main = `<section>${unitPicker}<div class="side-title"><span class="label">${t.branch} · ${t.role}</span><span class="chip" style="color:${F(u.side).color}">${F(u.side).short}</span></div>${ART.unit(u.type, 'panel-ship', u.side)}<h2 class="unit-name">${unitName(u)}</h2><p class="unit-model">${t.model} · ${t.gen}${a && t.cls === 'super' ? ` · ${t.name}` : ''}</p><p class="description">${t.desc}</p><p class="lore">${t.lore}</p>${sea ? `<div class="info-strip sea-strip">${ICONS.use('sea', 'cost-ico')} Embarked as a transport: cannot fire or counter-fire and takes ${Math.round(100 * (E.techLevel(game, u.side, 'sakura.landing') ? 0.25 : 0.5))}% extra damage. Sails ${E.seaMove(game, u)} hexes; landing ends the move.</div>` : ''}<div class="hp-row">${ICONS.hp(u.hp, E.maxHP(u), 'hp-ring-lg')}<span>Frame integrity</span><span class="mono">${Math.ceil(u.hp)} / ${E.maxHP(u)}</span></div><div class="stat-grid"><div><span class="label">${ICONS.use('atk')} Attack</span><b>${Math.round(t.attack * (1 + 0.45 * (u.stack - 1)))}</b></div><div><span class="label">${ICONS.use('def')} Armor</span><b>${t.armor}</b></div><div><span class="label">${ICONS.use('mov')} Move</span><b>${sea ? E.seaMove(game, u) : E.movement(game, u)}</b></div><div><span class="label">${ICONS.use('rng')} Range</span><b>${rangeText(u)}</b></div><div><span class="label">Frames</span><b>${u.stack}/3</b></div><div><span class="label">Veteran</span><b>${u.xp}/5</b></div></div><div class="status-line"><span class="status ${u.moved ? 'spent' : 'ready'}">${u.moved ? 'Moved' : 'Move ready'}</span><span class="status ${fireStatus(u) === 'Fire ready' ? 'ready' : 'spent'}">${fireStatus(u)}</span><span class="status">${moraleName(u.morale)}</span></div>${a ? commanderCard(u) : ''}${ours ? `<div class="actions">${!a ? act('data-action="assign"', 'Assign commander', phaseReason(), 'Choose a commander') : ''}${a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '−2 morale · 2 hex radius', '', false) : ''}${act('data-action="reinforce"', 'Add a frame', phaseReason() || E.reinforceReason(game, u), costHTML(E.reinforceCost(u.type, game, u.side)))}${act('data-action="repair"', 'Repair unit', phaseReason() || E.repairReason(game, u), '+35% frame · ' + costHTML({ credits: E.repairCost(u, game) }))}${act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), 'Finish this unit’s turn')}</div><p class="description" style="font-size:11px">Repair and reinforcement need a friendly city within 1 hex and use this unit’s turn.</p>` : ''}${st ? `<div class="section-divider"><span class="label">City beneath unit</span><div class="station-buttons"><button data-station="${st.id}">${st.name} · Factory ${st.tier}</button>${st.owner === game.player ? `<button data-shop="${st.id}" ${!interactive() ? 'disabled' : ''}>Factory</button>` : ''}</div></div>` : ''}${mine ? `<div class="section-divider"><span class="label">Sakuradite mine beneath unit</span><div class="station-buttons"><button data-site="${mine.id}">${esc(mine.name)} · ${F(mine.owner).short} · +${E.depositYield(game, mine).sakuradite} a turn</button></div></div>` : ''}</section>`;
+  } else if (m) {
+    const ours = m.owner === game.player;
+    main = `<section>${unitPicker}<div class="side-title"><span class="label">Sakuradite mine</span><span class="chip" style="color:${F(m.owner).color}">${F(m.owner).short}</span></div><div class="mine-art">${ICONS.use('sakuradite', 'mine-icon')}</div><h2 class="unit-name">${esc(m.name)}</h2><p class="description">${m.base >= 30 ? 'The richest Sakuradite deposit on Earth. ' : ''}A mine has no defenses: move an Infantry or Armor unit onto it to seize it. Artillery cannot capture.</p>${depositBox(m)}<div class="buildings">${refineryRow(m, ours ? `data-refine="${m.id}"` : '', phaseReason() || E.refineReason(game, m))}</div></section>`;
   } else if (s) {
-    const ours = s.owner === game.player;
-    main = `<section>${unitPicker}<div class="side-title"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'}</span><span class="chip" style="color:${F(s.owner).color}">${F(s.owner).short}</span></div>${ART.city(cityKind(s), s.owner, 'panel-ship')}<h2 class="unit-name">${s.name}</h2><p class="description">${s.capitalOf && E.alive(game, s.capitalOf) && s.owner === s.capitalOf ? `Capital of the ${F(s.owner).name}. If it falls, the whole power surrenders.` : s.fort ? 'Fortified city with a battery covering 3 hexes.' : 'Capture and hold cities to fund your army.'}</p><div class="hp-row"><span>City defenses</span><span class="mono">${Math.ceil(s.shield)} / ${s.maxShield}</span></div><div class="bar"><i style="width:${(s.shield / s.maxShield) * 100}%;background:${F(s.owner).color}"></i></div><div class="stat-grid"><div><span class="label">${ICONS.use('credits')} Credits</span><b>+${s.income + 15 * (s.refinery || 0)}</b></div><div><span class="label">${ICONS.use('industry')} Industry</span><b>+${s.industry}</b></div><div><span class="label">${ICONS.use('research')} Research</span><b>+${s.science}</b></div></div>${fortressPanel(s)}<div class="buildings">${Object.entries(
+    const ours = s.owner === game.player,
+      deposit = E.depositOf(game, s),
+      yields = E.cityYield(game, s);
+    main = `<section>${unitPicker}<div class="side-title"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'}</span><span class="chip" style="color:${F(s.owner).color}">${F(s.owner).short}</span></div>${ART.city(cityKind(s), s.owner, 'panel-ship')}<h2 class="unit-name">${s.name}</h2><p class="description">${s.capitalOf && E.alive(game, s.capitalOf) && s.owner === s.capitalOf ? `Capital of the ${F(s.owner).name}. If it falls, the whole power surrenders.` : s.fort ? 'Fortified city with a battery covering 3 hexes.' : 'Capture and hold cities to fund your army.'}</p>${E.devastated(game, s) ? `<div class="info-strip danger-strip">Devastated by F.L.E.I.J.A.: no defenses, output or production until turn ${s.devastated}.</div>` : ''}<div class="hp-row"><span>City defenses</span><span class="mono">${Math.ceil(s.shield)} / ${s.maxShield}</span></div><div class="bar"><i style="width:${(s.shield / s.maxShield) * 100}%;background:${F(s.owner).color}"></i></div><div class="stat-grid"><div><span class="label">${ICONS.use('credits')} Credits</span><b>+${yields.credits}</b></div><div><span class="label">${ICONS.use('industry')} Industry</span><b>+${yields.industry}</b></div><div><span class="label">${ICONS.use('research')} Research</span><b>+${yields.science}</b></div>${deposit ? `<div><span class="label">${ICONS.use('sakuradite')} Sakuradite</span><b>+${yields.sakuradite}</b></div>` : ''}</div>${deposit ? depositBox(deposit) : ''}${projectPanel(s)}${fortressPanel(s)}<div class="buildings">${Object.entries(
       E.BUILDINGS,
     )
+      .filter(([k]) => k !== 'refinery' || deposit)
       .map(([k, b]) => {
         const l = E.buildingLevel(s, k);
         return `<div class="building"><span class="label">${ICONS.use(k === 'factory' ? 'factory' : k === 'lab' ? 'research' : 'refinery')} ${b.name}</span><span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${b.desc}</small>${ours ? act(`data-build="${k}" data-station-id="${s.id}"`, l >= 3 ? 'Maximum level' : (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), l >= 3 ? null : phaseReason() || E.buildReason(game, s, k), costHTML(E.buildCost(s, k)), 'small') : ''}</div>`;
@@ -322,8 +440,8 @@ function panel() {
         : s
           ? E.tile(game, s.c, s.r)
           : null;
-  // A selected unit or city gets the whole panel; hex details, the directory and dispatches show otherwise.
-  if (u || s) return main;
+  // A selected unit, city or mine gets the whole panel; hex details, the directory and dispatches show otherwise.
+  if (u || s || m) return main;
   return (
     main +
     `<section class="section-divider"><span class="label">${selectedTile ? 'Hex ' + selectedTile.c + ', ' + selectedTile.r : 'Theater intelligence'}</span><p class="description">${selectedTile ? terrainDescription(selectedTile) : 'Oceans separate the powers: embark Knightmares as transports to cross them.'}</p><label class="label" for="station-select">City directory</label><select class="select unit-select" id="station-select"><option value="">Inspect city…</option>${[
@@ -359,6 +477,29 @@ function shipyardReason(s) {
     (!E.recruitOptions(game, s, game.player).length ? 'No free land hex next to the city' : null)
   );
 }
+// Strategic projects at a city: F.L.E.I.J.A. offense and the one-charge Eliminator defense.
+function projectPanel(s) {
+  const ours = s.owner === game.player,
+    p = s.project,
+    ep = s.eliminatorProject;
+  if (p) {
+    const left = Math.max(0, p.ready - game.turn);
+    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. project' : 'Intelligence'}</span><h3>${ours ? 'Warhead under construction' : 'Strategic weapons research detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${p.ready} (${left} turn${left === 1 ? '' : 's'}). ${ours ? 'The city builds nothing else meanwhile; if it is captured, the project is lost.' : 'Capture the city to stop it.'}</p></div>`;
+  }
+  if (ep) {
+    const left = Math.max(0, ep.ready - game.turn);
+    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). It will neutralize one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of this city.</p></div>`;
+  }
+  const blocks = [];
+  if (s.eliminator)
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>Eliminator charge ready</h3><p>Automatically neutralizes the next incoming F.L.E.I.J.A. aimed within ${E.ELIMINATOR.range} hexes of ${esc(s.name)}. One use.</p></div>`);
+  if (!ours) return blocks.join('');
+  if (E.hasFleija(game, game.player))
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`);
+  if (E.eliminatorUnlocked(game) && !s.eliminator)
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Only one charge may be ready per power.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
+  return blocks.join('');
+}
 function fortressPanel(s) {
   if (!s.fort) return '';
   const ours = s.owner === game.player,
@@ -391,6 +532,13 @@ function selectStation(id, center = false) {
   selection = { kind: 'station', id };
   updateSelection();
   if (center) centerOn(s);
+}
+function selectSite(id, center = false) {
+  const d = game.sites?.find(v => v.id === id);
+  if (!d) return;
+  selection = { kind: 'site', id };
+  updateSelection();
+  if (center) centerOn(d);
 }
 function nextFleet() {
   const ready = ownUnits().filter(u => readyIds.has(u.id));
@@ -464,6 +612,7 @@ async function endTurn(force = false) {
   }
   closeModal();
   undoStack = [];
+  strikeMode = false;
   save();
   const token = ++aiToken;
   skipAI = false;
@@ -477,7 +626,23 @@ async function endTurn(force = false) {
     (game.strikes || []).filter(s => onScreen(s.to)).forEach((s, i) => strikeEffects(s, i * 0.5));
     render();
     if (game.strikes?.some(s => onScreen(s.to)) && !skipAI) await pause(900);
-    const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).map(u => u.id);
+    // F.L.E.I.J.A.: every power hears of a new project; a launch always plays in full, even when skipping.
+    for (const s of game.stations) {
+      if (s.project?.side === side && s.project.started === game.turn)
+        toast(`INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, true);
+      if (s.eliminatorProject?.side === side && s.eliminatorProject.started === game.turn)
+        toast(`INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, true);
+    }
+    for (const shot of game.launches || []) {
+      await fleijaSequence(shot.to, side, shot.name, null, shot);
+      if (shot.intercepted)
+        toast(`F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`, true);
+      else if (shot.eliminatorUnlocked)
+        toast('F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', true);
+      if (token !== aiToken) return;
+    }
+    const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).map(u => u.id),
+      minesBefore = (game.sites || []).map(d => d.owner);
     let quiet = 0;
     for (const id of ids) {
       if (token !== aiToken || game.over) break;
@@ -501,20 +666,27 @@ async function endTurn(force = false) {
         await pause(orders.some(o => o.kind === 'attack') ? 420 : 160);
       } else if (++quiet % 12 === 0) await pause(0);
     }
+    const lost = (game.sites || []).filter((d, i) => minesBefore[i] === game.player && d.owner !== game.player);
+    if (lost.length)
+      toast(`${lost.map(d => d.name).join(' and ')} Sakuradite mine${lost.length > 1 ? 's' : ''} seized by the ${F(side).short}.`, true);
     if (token !== aiToken) return;
     if (game.over) break;
   }
   aiSide = null;
   if (token !== aiToken) return;
+  let armed = false;
   if (!game.over) {
     game.turn++;
-    const before = unitSnapshot();
+    const before = unitSnapshot(),
+      warheads = game.arsenal?.[game.player] || 0;
     E.beginTurn(game, game.player, true);
     turnStartPopups(before, game.player);
+    armed = (game.arsenal?.[game.player] || 0) > warheads;
   }
   render();
   save();
   if (game.over) resultDialog();
+  else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.`, true);
   else toast(`Turn ${game.turn}. Income collected; unit orders refreshed.`);
 }
 // A power's capital fell: it surrendered and its cities changed hands.
@@ -565,7 +737,7 @@ function openShop(id, branch = shop.branch) {
   shop.branch = branch;
   const free = E.recruitOptions(game, s, game.player);
   const types = E.CLASS_ORDER.map(cls => E.ROSTER[game.player][cls]).filter(k => E.TYPES[k].branch === branch);
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare factory"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${s.name} · Factory level ${s.tier}</div><h2>Roll out a Knightmare unit</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${BRANCH_LIST.map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : !free.length ? '<div class="info-strip">No free land hex. Move friendly units away from the city.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city or a free land hex next to it and act next turn.</p>'}<div class="cards">${types
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare factory"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${s.name} · Factory level ${s.tier}</div><h2>Roll out a Knightmare unit</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${BRANCH_LIST.map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : !free.length ? '<div class="info-strip">No free land hex. Move friendly units away from the city.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city or a free land hex next to it and act next turn. Tier II and III frames also cost Sakuradite.</p>'}<div class="cards">${types
     .map(k => {
       const t = E.TYPES[k],
         n = shop.stack,
@@ -733,6 +905,20 @@ function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
     .join('')}</div><p class="description">Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Jabalpur-built Black Knights frames and the Burai Kai. Configurations are the game’s loadouts of a wiki frame.</p></section></div>`;
   focusDialog();
 }
+// A power's strategic weapons as intelligence sees them: projects under way and warheads ready.
+function strategicText(side) {
+  const projects = game.stations.filter(s => s.project?.side === side),
+    eliminatorProjects = game.stations.filter(s => s.eliminatorProject?.side === side),
+    eliminators = game.stations.filter(s => s.owner === side && s.eliminator),
+    warheads = game.arsenal?.[side] || 0,
+    parts = [
+      ...projects.map(s => `F.L.E.I.J.A. building in ${s.name} (turn ${s.project.ready})`),
+      ...(warheads ? [`F.L.E.I.J.A. ×${warheads} ready`] : []),
+      ...eliminatorProjects.map(s => `Eliminator building in ${s.name} (turn ${s.eliminatorProject.ready})`),
+      ...eliminators.map(s => `Eliminator ready at ${s.name}`),
+    ];
+  return parts.length ? `<span class="fleija-text">${parts.join(' · ')}</span>` : '—';
+}
 // The war at a glance: each power's cities, income, army and capital.
 function powersDialog() {
   const rows = E.MAJORS.map(side => {
@@ -740,14 +926,41 @@ function powersDialog() {
       cities = game.stations.filter(s => s.owner === side).length,
       army = game.units.filter(u => u.hp > 0 && u.side === side).length,
       fall = game.fallen?.[side];
-    return `<tr class="${side === game.player ? 'mine' : ''}"><td><span class="legend-dot" style="background:${F(side).color}"></span> ${F(side).name}</td><td>${fall ? `Surrendered to the ${F(fall.by).short} (turn ${fall.turn})` : F(side).capital}</td><td>${cities}</td><td>${fall ? '—' : '+' + inc.credits}</td><td>${army}</td></tr>`;
+    return `<tr class="${side === game.player ? 'mine' : ''}"><td><span class="legend-dot" style="background:${F(side).color}"></span> ${F(side).name}</td><td>${fall ? `Surrendered to the ${F(fall.by).short} (turn ${fall.turn})` : F(side).capital}</td><td>${cities}</td><td>${fall ? '—' : '+' + inc.credits}</td><td>${fall ? '—' : '+' + inc.sakuradite}</td><td>${fall ? '—' : strategicText(side)}</td><td>${army}</td></tr>`;
   }).join('');
   const neutral = game.stations.filter(s => s.owner === 'neutral').length;
-  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="World powers"><div class="dialog-head"><div><div class="eyebrow">Turn ${game.turn} of ${E.ARMISTICE}</div><h2>World powers</h2></div><button class="small close" data-action="close">Close</button></div><table class="powers"><thead><tr><th>Power</th><th>Capital</th><th>Cities</th><th>Income</th><th>Units</th></tr></thead><tbody>${rows}<tr><td><span class="legend-dot" style="background:#d8cfa6"></span> Neutral powers</td><td>Australia · Middle East</td><td>${neutral}</td><td>—</td><td>${game.units.filter(u => u.hp > 0 && u.side === 'neutral').length}</td></tr></tbody></table><p class="description">A power surrenders when its capital falls: its cities pass to the conqueror and its armies disband. Win by taking every rival capital, or by holding the most cities at the ${E.ARMISTICE}-turn armistice.</p></section></div>`;
+  // Who works each Sakuradite deposit.
+  const deposits = (game.sites || [])
+    .map(d => {
+      const owner = E.depositOwner(game, d),
+        host = d.city == null ? 'Mine' : game.stations.find(s => s.id === d.city)?.name;
+      return `<span class="deposit-chip" style="border-color:${F(owner).color}">${ICONS.use('sakuradite', 'cost-ico')} ${esc(d.name)} <small>${host} · ${F(owner).short} · +${E.depositYield(game, d).sakuradite}</small></span>`;
+    })
+    .join('');
+  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="World powers"><div class="dialog-head"><div><div class="eyebrow">Turn ${game.turn} of ${E.ARMISTICE}</div><h2>World powers</h2></div><button class="small close" data-action="close">Close</button></div><table class="powers"><thead><tr><th>Power</th><th>Capital</th><th>Cities</th><th>Income</th><th>Sakuradite</th><th>Strategic</th><th>Units</th></tr></thead><tbody>${rows}<tr><td><span class="legend-dot" style="background:#d8cfa6"></span> Neutral powers</td><td>Australia · Middle East</td><td>${neutral}</td><td>—</td><td>—</td><td>—</td><td>${game.units.filter(u => u.hp > 0 && u.side === 'neutral').length}</td></tr></tbody></table>${deposits ? `<span class="label">Sakuradite deposits</span><div class="deposit-list">${deposits}</div>` : ''}<p class="description">A power surrenders when its capital falls: its cities pass to the conqueror and its armies disband. Win by taking every rival capital, or by holding the most cities at the ${E.ARMISTICE}-turn armistice.</p></section></div>`;
   focusDialog();
 }
+// The field manual's Sakuradite entry, built from the engine's numbers.
+function sakuraditeManual() {
+  const S = E.SAKURADITE,
+    rates = S.extraction.map(r => Math.round(r * 100) + '%'),
+    sites = E.RESOURCE_SITES.map(([name, , , base]) => `${name} ${base}`).join(', '),
+    cost = Object.entries(S.cost)
+      .reduce((a, [cls, n]) => ((a[n] ||= []).push(E.CLASSES[cls].role.toLowerCase()), a), {}),
+    costText = Object.entries(cost)
+      .map(([n, roles]) => `${roles.join(', ')} ${n}`)
+      .join('; ');
+  return `The fourth resource. Japan holds 70 of the world's 100 base output. Deposits and base output a turn: ${sites}. A refinery extracts ${rates[0]} of a deposit's output with no upgrades, then ${rates[1]}, ${rates[2]} and ${rates[3]} (plus ${S.exportCredits} credits) at levels 1–3. Sakuradite per frame: ${costText}; tier I frames need none. A mine on its own hex has no defenses: move Infantry or Armor onto it to seize it. A deposit under a city changes hands with the city. Every power starts with ${S.start}.`;
+}
+function fleijaManual() {
+  const f = E.FLEIJA,
+    c = f.cost;
+  const e = E.ELIMINATOR,
+    ec = e.cost;
+  return `The Sakuradite superweapon is conquest-only, not permanent HQ research. Research Lab III unlocks for every major power on turn ${f.labTurn}; a city with a level-${f.lab} lab can then build a warhead for ${c.credits} credits, ${c.industry} industry, ${c.science} research and ${c.sakuradite} Sakuradite over ${f.turns} turns and builds nothing else meanwhile. Every power is alerted when work begins, and capturing the city ends the project. Launch a finished warhead from the arsenal button at any hex, once a turn. Ground zero: every unit is erased, a city there is devastated for ${f.devastation} turns (no defenses, buildings back to level 0, no output) and the land becomes a crater. The ring around it: units are left at ${Math.round(f.ringHP * 100)}% with collapsed morale; cities lose their defenses and a level of every building. After the first successful detonation, level-${e.lab} labs can build a F.L.E.I.J.A. Eliminator for ${ec.credits} credits, ${ec.industry} industry, ${ec.science} research and ${ec.sakuradite} Sakuradite over ${e.turns} turns. One ready charge protects targets within ${e.range} hexes of its city and automatically neutralizes one incoming warhead; capturing or ruining that city destroys it. The blast itself spares no one, including your own forces.`;
+}
 function helpDialog() {
-  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="Field manual"><div class="dialog-head"><div><div class="eyebrow">Field manual</div><h2>War on a world of hexes</h2></div><button class="small close" data-action="help-close">Close</button></div><div class="help-grid"><div><b>Movement &amp; firing</b><p>Every unit can move once, then attack once per turn. Attacking ends its movement. Select a unit, click a green hex to move, and click a red hex to attack at once; hover a red hex to see the expected damage. Undo (Z) returns a unit that moved but has not fired.</p></div><div><b>Three branches</b><p>As WC4's infantry, tanks and artillery, every Knightmare belongs to a branch. <b>Infantry</b>: cheap scouts, assault frames (+55% against Armor and city defenses) and five-hex raiders. <b>Armor</b>: line, mainline, heavy and super-heavy frames with breakthroughs. <b>Artillery</b>: fire support at range 1 and rocket and siege frames at exactly range 2. Artillery attacks draw no counter-fire and cannot capture cities.</p></div><div><b>Factions</b><p>Each power builds its own frames. Britannia: Glasgow, Gloucester, Gracchus, Sutherland, Vincent Ward, Brighton, Gawain, Liverpool, Gareth, Zetland. E.U.: Alexander Drone, Amanecer, Alexander Type-02, Estrella, Valiant, Redorga, Liberte, Gardmare, Panzer-Hummel, Panzer-Wespe. Federation: Gun-Ru, Guren Type-01, Chuyen, Gekka, Akatsuki, Wang Hu, Shen Hu, Guren Type-Hei, Zangetsu, Sutherland Sieg. Doctrines: Britannian Armor +8% damage, E.U. Artillery +10% damage, Federation Infantry 15% cheaper.</p></div><div><b>Oceans &amp; transports</b><p>The map wraps around the globe. A land unit with movement left may step onto a sea hex: it embarks as a transport and stops. Embarked units sail 5 hexes a turn (more with Naval Transports), cannot fire or counter-fire, and take 50% extra damage. Sailing onto a coast hex lands the unit and ends its move; landing on an undefended enemy city captures it.</p></div><div><b>Capture cities &amp; capitals</b><p>Break a city's defenses and remove its garrison, then move an Infantry or Armor unit in. Cities produce credits, industry and research, and repair garrisons 8% each turn. As in WC4, when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to the conqueror and its armies disband. Lose your own capital and the war is lost.</p></div><div><b>Stacking &amp; breakthroughs</b><p>Build 1–3-frame units. Each extra frame adds 70% HP and 45% attack. After a kill, line and mainline frames may fire once more per turn; Cornelia, Gino and Ashley allow two. Heavy and super-heavy frames fire again after every kill, and their first kill also restores movement.</p></div><div><b>Commanders &amp; morale</b><p>Commanders lead units: each has one signature ability and branch ratings (up to 6 stars). Operation commanders come with the war and are fixed. Your commanders live in HQ → Commanders: two per faction to start (Suzaku and Cornelia, Leila and Akito, Xingke and Xianglin); recruit the rest with command tokens, promote them through eleven ranks (unit frame 112% to 160%), buy stars and wear medals. High morale gives +25% damage; low −25%, diminished −50%; confused units cannot act. Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem lower nearby enemy morale by 2.</p></div><div><b>Terrain</b><p>Plains cost 1. Forests (−15% damage taken) and mountains (−25%) cost 2. Deserts cost 1 but drain 3% of a frame each turn; tundra costs 2 and drains 2.5%. The high Himalaya and the Greenland ice cap are impassable. Julius and float units ignore terrain costs.</p></div><div><b>Factories &amp; buildings</b><p>Each city builds one unit per turn; new units act next turn. Every city has a Knightmare factory (heavier frames at levels 2 and 3, +10 industry), a research lab (+8 research) and a Sakuradite refinery (+15 credits), each upgradable to level 3.</p></div><div><b>Fortress batteries</b><p>Capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo, Liaodong, Singapore, Panama, Pearl Harbor) carry a battery. Select your city and click a red hex to strike an enemy unit within 3 hexes for 40% of its frame. It recharges for 2 turns and is silenced while the city's defenses are down. Rivals fire theirs too.</p></div><div><b>HQ research &amp; command tokens</b><p>As in World Conqueror 4, technology is researched at Command HQ with command tokens and kept across every operation and faction. The first win at each difficulty pays 250 + 150 tokens plus banked research, ×1.5 on Hard and ×2 on Challenge, with 150 more for your first win ever. Five trees (Infantry, Armor, Artillery, Sakuradite, Cities); higher tiers open after 2, 4 and 7 wins.</p></div><div><b>Difficulty</b><p>Normal is the world as it stands. Hard gives the rival powers all tier I–II research, upgrades half their units a class and adds a unit for every four. Challenge gives them every technology, upgrades every unit with an extra frame, adds a unit for every two and raises their income 25%. Rival commanders start one or two ranks higher.</p></div><div><b>Rival turns</b><p>Each rival power moves after you, in order. Moves off screen resolve instantly; press Skip to finish a rival turn at once. Rivals fight each other as well as you, and the neutral powers (Australia, the Middle Eastern Federation) only defend.</p></div></div><div class="info-strip">Controls: N cycles ready units · Click or Enter on a red hex attacks · Z undoes the last move · Escape clears the selection or closes a menu · Arrow keys move the hex cursor and Enter selects · Drag or WASD pans · Scroll / + / − zooms · 0 shows the world · H centers on your capital · Click the minimap to jump.</div><p style="font-size:12px">${NOTICE} Unit names and roles follow the <a href="https://codegeass.fandom.com/wiki/Knightmare_Frame" target="_blank" rel="noopener noreferrer">Code Geass wiki</a>; drawn artwork is original; published imagery is credited in the project’s ASSETS.md. Gameplay draws on <a href="https://apps.apple.com/sg/app/world-conqueror-4/id1258468290" target="_blank" rel="noopener noreferrer">EasyTech’s World Conqueror 4</a>. Numbers are adapted for this game.</p></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="Field manual"><div class="dialog-head"><div><div class="eyebrow">Field manual</div><h2>War on a world of hexes</h2></div><button class="small close" data-action="help-close">Close</button></div><div class="help-grid"><div><b>Movement &amp; firing</b><p>Every unit can move once, then attack once per turn. Attacking ends its movement. Select a unit, click a green hex to move, and click a red hex to attack at once; hover a red hex to see the expected damage. Undo (Z) returns a unit that moved but has not fired.</p></div><div><b>Three branches</b><p>As WC4's infantry, tanks and artillery, every Knightmare belongs to a branch. <b>Infantry</b>: cheap scouts, assault frames (+55% against Armor and city defenses) and five-hex raiders. <b>Armor</b>: line, mainline, heavy and super-heavy frames with breakthroughs. <b>Artillery</b>: fire support at range 1 and rocket and siege frames at exactly range 2. Artillery attacks draw no counter-fire and cannot capture cities.</p></div><div><b>Factions</b><p>Each power builds its own frames. ${E.MAJORS.map(side => `${F(side).short}: ${E.CLASS_ORDER.map(cls => E.TYPES[E.ROSTER[side][cls]].name).join(', ')}.`).join(' ')} Doctrines: Britannian Armor +8% damage, E.U. Artillery +10% damage, Federation Infantry 15% cheaper.</p></div><div><b>Oceans &amp; transports</b><p>The map wraps around the globe. A land unit with movement left may step onto a sea hex: it embarks as a transport and stops. Embarked units sail 5 hexes a turn (more with Naval Transports), cannot fire or counter-fire, and take 50% extra damage. Sailing onto a coast hex lands the unit and ends its move; landing on an undefended enemy city captures it.</p></div><div><b>Capture cities &amp; capitals</b><p>Break a city's defenses and remove its garrison, then move an Infantry or Armor unit in. Cities produce credits, industry and research, and repair garrisons 8% each turn. As in WC4, when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to the conqueror and its armies disband. Lose your own capital and the war is lost.</p></div><div><b>Stacking &amp; breakthroughs</b><p>Build 1–3-frame units. Each extra frame adds 70% HP and 45% attack. After a kill, line and mainline frames may fire once more per turn; Cornelia, Gino and Ashley allow two. Heavy and super-heavy frames fire again after every kill, and their first kill also restores movement.</p></div><div><b>Commanders &amp; morale</b><p>Commanders lead units: each has one signature ability and branch ratings (up to 6 stars). Operation commanders come with the war and are fixed. Your commanders live in HQ → Commanders: two per faction to start (Suzaku and Cornelia, Leila and Akito, Xingke and Xianglin); recruit the rest with command tokens, promote them through eleven ranks (unit frame 112% to 160%), buy stars and wear medals. High morale gives +25% damage; low −25%, diminished −50%; confused units cannot act. Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem lower nearby enemy morale by 2.</p></div><div><b>Terrain</b><p>Plains cost 1. Forests (−15% damage taken) and mountains (−25%) cost 2. Deserts cost 1 but drain 3% of a frame each turn; tundra costs 2 and drains 2.5%. The high Himalaya and the Greenland ice cap are impassable. Julius and float units ignore terrain costs.</p></div><div><b>Factories &amp; buildings</b><p>Each city builds one unit per turn; new units act next turn. Every city has a Knightmare factory (heavier frames at levels 2 and 3, +10 industry) and a research lab (+8 research). Research Lab III unlocks on turn ${E.FLEIJA.labTurn}; cities on a Sakuradite deposit also build a Sakuradite refinery.</p></div><div><b>Sakuradite</b><p>${sakuraditeManual()}</p></div><div><b>F.L.E.I.J.A.</b><p>${fleijaManual()}</p></div><div><b>Fortress batteries</b><p>Capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo, Liaodong, Singapore, Panama, Pearl Harbor) carry a battery. Select your city and click a red hex to strike an enemy unit within 3 hexes for 40% of its frame. It recharges for 2 turns and is silenced while the city's defenses are down. Rivals fire theirs too.</p></div><div><b>HQ research &amp; command tokens</b><p>As in World Conqueror 4, technology is researched at Command HQ with command tokens and kept across every operation and faction. The first win at each difficulty pays 250 + 150 tokens plus banked research, ×1.5 on Hard and ×2 on Challenge, with 150 more for your first win ever. Five trees (Infantry, Armor, Artillery, Sakuradite, Cities); higher tiers open after 2, 4 and 7 wins.</p></div><div><b>Difficulty</b><p>Normal is the world as it stands. Hard gives the rival powers all tier I–II research, upgrades half their units a class and adds a unit for every four. Challenge gives them every technology, upgrades every unit with an extra frame, adds a unit for every two and raises their income 25%. Rival commanders start one or two ranks higher.</p></div><div><b>Rival turns</b><p>Each rival power moves after you, in order. Moves off screen resolve instantly; press Skip to finish a rival turn at once. Rivals fight each other as well as you, and the neutral powers (Australia, the Middle Eastern Federation) only defend.</p></div></div><div class="info-strip">Controls: N cycles ready units · Click or Enter on a red hex attacks · Z undoes the last move · Escape clears the selection or closes a menu · Arrow keys move the hex cursor and Enter selects · Drag or WASD pans · Scroll / + / − zooms · 0 shows the world · H centers on your capital · Click the minimap to jump.</div><p style="font-size:12px">${NOTICE} Unit names and roles follow the <a href="https://codegeass.fandom.com/wiki/Knightmare_Frame" target="_blank" rel="noopener noreferrer">Code Geass wiki</a>; drawn artwork is original; published imagery is credited in the project’s ASSETS.md. Gameplay draws on <a href="https://apps.apple.com/sg/app/world-conqueror-4/id1258468290" target="_blank" rel="noopener noreferrer">EasyTech’s World Conqueror 4</a>. Numbers are adapted for this game.</p></section></div>`;
   focusDialog();
 }
 function menuDialog() {
@@ -851,6 +1064,10 @@ function fireFortressAt(s, p) {
 }
 function activateHex(p) {
   if (!p) return;
+  if (strikeMode) {
+    if (interactive()) confirmLaunch(p);
+    return;
+  }
   const fort = selectedStation();
   if (fort && interactive() && targetCache.has(E.key(p))) {
     fireFortressAt(fort, p);
@@ -883,14 +1100,17 @@ function activateHex(p) {
         refreshAndSave(!result.annexed);
         if (result.annexed) annexNotice(result.annexed);
         else if (result.captured) toast(`${result.captured} captured. +40 credits.`);
+        else if (result.seized) toast(`${result.seized} Sakuradite mine seized.`);
         else if (E.atSea(game, u) && !wasSea) toast('Embarked as a transport. Sail to a coast next turn to land.');
         else if (wasSea) toast('Landed. The unit can fire next turn.');
         return;
       }
     }
   }
+  const mine = E.siteAt(game, p);
   if (hit) selectUnit(hit.id);
   else if (station) selectStation(station.id);
+  else if (mine) selectSite(mine.id);
   else {
     selection = { kind: 'tile', c: p.c, r: p.r };
     updateSelection();
@@ -917,20 +1137,26 @@ function attachMap() {
     }
     hover = hitHex(e.clientX, e.clientY);
     if (hover && !pointer?.dragged) {
-      canvas.style.cursor = readyCache.has(E.key(hover)) || targetCache.has(E.key(hover)) ? 'pointer' : 'default';
+      canvas.style.cursor = strikeMode
+        ? 'crosshair'
+        : readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
+          ? 'pointer'
+          : 'default';
       const u = E.unitAt(game, hover),
         s = E.stationAt(game, hover),
         own = selectedUnit(),
         fort = selectedStation(),
         pr = own && targetCache.has(E.key(hover)) ? E.preview(game, own.id, hover.c, hover.r) : null;
-      $('map-caption').textContent =
-        own && readyCache.has(E.key(hover)) && E.isSea(hover) && !E.atSea(game, own)
+      const blast = strikeMode ? blastSummary(hover) : null;
+      $('map-caption').textContent = blast
+        ? `F.L.E.I.J.A. target: ${E.targetName(game, hover)} · ${Object.values(blast.tally).reduce((a, k) => a + k.erased, 0)} erased · ${Object.values(blast.tally).reduce((a, k) => a + k.crippled, 0)} crippled${blast.own ? ' · your own forces are inside' : ''}`
+        : own && readyCache.has(E.key(hover)) && E.isSea(hover) && !E.atSea(game, own)
           ? 'Embark here: the unit becomes a transport (cannot fire, +50% damage taken) and stops'
           : fort && u && targetCache.has(E.key(hover))
             ? `Click to fire ${E.fortressName(fort)} at ${E.TYPES[u.type].short} · ~${E.fortressDamage(game, u, fort.owner)} damage`
             : pr
               ? `Click to attack ${u ? E.TYPES[u.type].short : s.name} · ~${pr.unit || pr.shield} damage · ${pr.counterAllowed ? pr.counter + ' counter-fire' : 'no counter-fire'}`
-              : `${s ? s.name + ' · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
+              : `${s ? s.name + ' · ' : ''}${E.siteAt(game, hover) ? E.siteAt(game, hover).name + ' Sakuradite mine · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
     }
   };
   canvas.onpointerup = e => {
@@ -938,7 +1164,8 @@ function attachMap() {
       // A click on a commander's map portrait opens Commander Info, unless it lands on a move or attack hex.
       const p = hitHex(e.clientX, e.clientY),
         pin = hitPin(e.clientX, e.clientY);
-      if (pin && !(p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p))))) generalDialog(pin.cmd, !!pin.personal);
+      if (pin && !strikeMode && !(p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)))))
+        generalDialog(pin.cmd, !!pin.personal);
       else activateHex(p);
     }
     pointer = null;
@@ -980,6 +1207,7 @@ const MINI_TERRAIN = {
   desert: '#bda770',
   snow: '#cfd9df',
   peak: '#4f4a52',
+  crater: '#f2bfdc',
 };
 function drawMinimap() {
   const mini = $('minimap');
@@ -1020,6 +1248,13 @@ function drawMinimap() {
         const z = s.capital ? 3.4 * dpr : 2 * dpr;
         b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
       }
+      for (const d of game.sites || [])
+        if (d.city == null) {
+          const p = hexCenter(d),
+            z = 2.6 * dpr;
+          b.fillStyle = '#ff6fb5';
+          b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
+        }
       for (const u of game.units)
         if (u.hp > 0 && u.side === game.player) {
           const p = hexCenter(u);
@@ -1179,6 +1414,32 @@ document.addEventListener('click', e => {
     selectStation(+d.station);
     return;
   }
+  if (d.site) {
+    selectSite(+d.site);
+    return;
+  }
+  if (d.refine) {
+    doAction(() => E.refine(game, +d.refine));
+    return;
+  }
+  if (d.project) {
+    doAction(() => E.startProject(game, +d.project));
+    const s = game.stations.find(s => s.id === +d.project);
+    if (s?.project) toast(`F.L.E.I.J.A. warhead under way in ${s.name}: ready on turn ${s.project.ready}. Every power has been alerted.`, true);
+    return;
+  }
+  if (d.eliminator) {
+    doAction(() => E.startEliminator(game, +d.eliminator));
+    const s = game.stations.find(s => s.id === +d.eliminator);
+    if (s?.eliminatorProject)
+      toast(`F.L.E.I.J.A. Eliminator under way in ${s.name}: ready on turn ${s.eliminatorProject.ready}.`, true);
+    return;
+  }
+  if (d.launch) {
+    const [c, r] = d.launch.split(',').map(Number);
+    launchAt({ c, r });
+    return;
+  }
   if (d.shop) {
     openShop(+d.shop);
     return;
@@ -1298,6 +1559,7 @@ document.addEventListener('click', e => {
       if (s) {
         aiToken++;
         hqBack = 'game';
+        strikeMode = false;
         game = E.applyProfile(s, loadProfile());
         selection = null;
         undoStack = [];
@@ -1392,6 +1654,11 @@ document.addEventListener('click', e => {
     case 'skip-ai':
       skipAI = true;
       break;
+    case 'fleija':
+      strikeMode = !strikeMode && interactive();
+      render();
+      toast(strikeMode ? 'Choose a target hex for the F.L.E.I.J.A. warhead. Escape cancels.' : 'Launch cancelled.');
+      break;
     case 'feint': {
       const u = selectedUnit();
       if (u) doAction(() => E.feint(game, u.id));
@@ -1468,7 +1735,11 @@ document.addEventListener('keydown', e => {
     undoMove();
   }
   if (k === 'h') centerOn(capitalOf(game.player));
-  if (k === 'escape') {
+  if (k === 'escape' && strikeMode) {
+    strikeMode = false;
+    render();
+    toast('Launch cancelled.');
+  } else if (k === 'escape') {
     selection = null;
     updateSelection();
   }
@@ -1511,6 +1782,8 @@ function registerTools() {
         player: game.player,
         resources: game.economy[game.player],
         cities: game.stations,
+        sakuraditeDeposits: game.sites || [],
+        fleijaArsenal: game.arsenal || {},
         units: game.units.filter(u => u.hp > 0),
         fallen: game.fallen,
         result: game.over,
@@ -1552,8 +1825,14 @@ function dockHTML() {
     return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}<span class="faction-flag ${u.side}">${F(u.side).letter}</span></div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}</span><strong>${unitName(u)}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div><p>${Math.ceil(u.hp)} / ${E.maxHP(u)} frame · ${moraleName(u.morale)}${ours ? ' · ' + fireStatus(u) : ''}</p></div><div class="dock-actions">${canUndo ? '<button class="small undo-button" data-action="undo">↶ Undo move</button>' : ''}<button class="small" data-action="details">${ours ? 'Orders & upgrades' : 'Unit details'}</button>${ours && !u.cmd ? '<button class="small" data-action="assign">Assign commander</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost') : ''}</div>`;
   }
   if (s) {
-    const ours = s.owner === game.player;
-    return `<div class="dock-visual">${ART.city(cityKind(s), s.owner)}<span class="faction-flag ${s.owner}">${F(s.owner).letter}</span></div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.shield / s.maxShield) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${s.income + 15 * (s.refinery || 0)} &nbsp; Industry +${s.industry}</p></div><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', shipyardReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
+    const ours = s.owner === game.player,
+      y = E.cityYield(game, s);
+    return `<div class="dock-visual">${ART.city(cityKind(s), s.owner)}<span class="faction-flag ${s.owner}">${F(s.owner).letter}</span></div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.shield / s.maxShield) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', shipyardReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
+  }
+  const m = selectedSite();
+  if (m) {
+    const y = E.depositYield(game, m);
+    return `<div class="dock-visual mine-visual">${ICONS.use('sakuradite', 'dock-mine')}<span class="faction-flag ${m.owner}">${F(m.owner).letter}</span></div><div class="dock-unit"><span class="label">Sakuradite mine · Refinery ${y.level}</span><strong>${esc(m.name)}</strong><p>+${y.sakuradite} Sakuradite${y.credits ? ` · +${y.credits} credits` : ''} a turn · base ${m.base}</p></div><div class="dock-actions"><button class="small" data-action="details">Mine details</button></div>`;
   }
   return `<div class="dock-idle"><span class="label">Army command</span><strong>Select a unit or city</strong><p>Click a Knightmare to move and attack. Click a city to build.</p></div><div class="dock-actions"><button class="small" data-action="next">Select a ready unit</button><button class="small ghost" data-action="details">Unit directory</button></div>`;
 }
@@ -1572,6 +1851,7 @@ const TERRAIN_FILL = {
   desert: '#d3bc85',
   snow: '#e3eaef',
   peak: '#5d5862',
+  crater: '#ecd2e2',
 };
 function hash01(c, r, salt = 0) {
   const v = Math.sin(c * 127.1 + r * 311.7 + salt * 74.7) * 43758.5453;
@@ -1660,6 +1940,19 @@ function terrainProps(t, x, y, scale) {
       ctx.quadraticCurveTo(x + 16, y + dy + 4, x + 22, y + dy);
       ctx.stroke();
     }
+  } else if (t.terrain === 'crater') {
+    // F.L.E.I.J.A. crater: glassed pink-white rings around a pink core.
+    ctx.strokeStyle = '#ffffffb0';
+    ctx.lineWidth = 1.5;
+    for (const k of [0.78, 0.52, 0.28]) {
+      ctx.beginPath();
+      ctx.ellipse(x, y + 2, R * k, R * k * 0.62, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#ff7ab860';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 2, R * 0.2, R * 0.13, 0, 0, Math.PI * 2);
+    ctx.fill();
   } else if (t.terrain === 'snow') {
     ctx.fillStyle = '#c6d4dd';
     for (let i = 0; i < 3; i++) ctx.fillRect(x + (h(i) - 0.5) * 40, y + (h(i + 5) - 0.5) * 30, 6, 2);
@@ -1867,6 +2160,63 @@ function drawAdmiralPin(u, p, scale, sel) {
   ctx.restore();
   if (sel || scale > 0.8) outlinedText(a.short, p.x - 22, p.y - 40 - (h / 2 + 7) * k, 10, '#f7e5ad', scale);
 }
+// Sakuradite: a cluster of glowing pink crystals (k scales it; the glow breathes slowly).
+function drawCrystals(x, y, k, time) {
+  const glow = 0.55 + 0.25 * Math.sin(time / 420);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(k, k);
+  ctx.shadowColor = `rgba(255,95,174,${glow})`;
+  ctx.shadowBlur = 14;
+  for (const [dx, h, w] of [
+    [-11, 20, 6],
+    [11, 17, 6],
+    [0, 30, 8],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(dx, -h);
+    ctx.lineTo(dx + w, -h * 0.62);
+    ctx.lineTo(dx + w * 0.7, 0);
+    ctx.lineTo(dx - w * 0.7, 0);
+    ctx.lineTo(dx - w, -h * 0.62);
+    ctx.closePath();
+    const gr = ctx.createLinearGradient(dx - w, -h, dx + w, 0);
+    gr.addColorStop(0, '#ffe0f0');
+    gr.addColorStop(0.45, '#ff6fb5');
+    gr.addColorStop(1, '#9c1559');
+    ctx.fillStyle = gr;
+    ctx.fill();
+    ctx.strokeStyle = '#4a0d2c';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// A Sakuradite mine on its own hex: rock base ringed in the owner's color, crystals, refinery pips and its name.
+// A unit standing on it hides the base, so the crystals move up beside the token.
+function drawMine(d, owner, scale, time, occupied) {
+  const level = d.refinery || 0;
+  if (occupied) {
+    drawCrystals(-30, -12, 0.55, time);
+    outlinedText(d.name, 0, 52, 10, '#ffc2e0', scale, 'Trebuchet MS', d.base >= 30);
+    return;
+  }
+  ctx.beginPath();
+  ctx.ellipse(0, 10, 27, 10, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#3a3036';
+  ctx.fill();
+  ctx.strokeStyle = F(owner).color;
+  ctx.lineWidth = Math.max(1.6, 1.4 / scale);
+  ctx.stroke();
+  drawCrystals(0, 9, 1, time);
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < level ? '#ff7ab8' : '#2a1d25';
+    ctx.fillRect(20, 6 - i * 5, 4, 3);
+  }
+  mapBadge(-25, 14, owner, scale);
+  // Above the crystals: commander pins of units on the hexes below would cover a name underneath.
+  outlinedText(d.name, 0, -27, 10.5, '#ffc2e0', scale, 'Trebuchet MS', d.base >= 30);
+}
 function mapBadge(x, y, side, scale) {
   const radius = Math.max(7, 7 / scale);
   ctx.save();
@@ -2029,9 +2379,11 @@ function draw(time, dt) {
       ? selectedUnit()
       : selection?.kind === 'station'
         ? selectedStation()
-        : selection?.kind === 'tile'
-          ? selection
-          : null;
+        : selection?.kind === 'site'
+          ? selectedSite()
+          : selection?.kind === 'tile'
+            ? selection
+            : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
   // Cities.
   for (const s of game.stations) {
@@ -2049,6 +2401,11 @@ function draw(time, dt) {
         const z = s.capital ? 30 : 20;
         ctx.fillRect(-z / 2, -z / 2, z, z);
         ctx.strokeRect(-z / 2, -z / 2, z, z);
+        if (s.project) {
+          ctx.strokeStyle = '#ff5fae';
+          ctx.lineWidth = 4 / scale;
+          ctx.strokeRect(-z / 2 - 7, -z / 2 - 7, z + 14, z + 14);
+        }
         if (s.capital && R * scale > 7) outlinedText(s.name, 0, 34, 11, '#fff6d6', scale, 'Trebuchet MS', true);
         ctx.restore();
         continue;
@@ -2078,6 +2435,58 @@ function draw(time, dt) {
         ctx.arc(26, -22, 3, 0, Math.PI * 2);
         ctx.fill();
       }
+      // Strategic projects: pink for F.L.E.I.J.A., cyan for the one-charge Eliminator.
+      if (s.project) {
+        const pulse = 0.5 + 0.5 * Math.sin(time / 300);
+        ctx.strokeStyle = `rgba(255,95,174,${0.45 + 0.5 * pulse})`;
+        ctx.lineWidth = Math.max(2.5, 2 / scale);
+        ctx.beginPath();
+        ctx.arc(0, -4, R * (0.95 + 0.07 * pulse), 0, Math.PI * 2);
+        ctx.stroke();
+        outlinedText(`F.L.E.I.J.A. · ${Math.max(0, s.project.ready - game.turn)}`, 0, -R - 4, 10, '#ff9fd0', scale, 'Trebuchet MS', true);
+      }
+      if (s.eliminatorProject || s.eliminator) {
+        const pulse = 0.5 + 0.5 * Math.sin(time / 260);
+        ctx.strokeStyle = `rgba(130,225,255,${0.5 + 0.45 * pulse})`;
+        ctx.lineWidth = Math.max(2.2, 1.8 / scale);
+        ctx.beginPath();
+        ctx.arc(0, -4, R * (0.78 + 0.05 * pulse), 0, Math.PI * 2);
+        ctx.stroke();
+        outlinedText(
+          s.eliminator ? 'ELIMINATOR · READY' : `ELIMINATOR · ${Math.max(0, s.eliminatorProject.ready - game.turn)}`,
+          0,
+          -R - (s.project ? 16 : 4),
+          9,
+          '#9eeaff',
+          scale,
+          'Trebuchet MS',
+          true,
+        );
+      }
+      if (E.devastated(game, s))
+        outlinedText(`RUINS · ${s.devastated - game.turn}`, 0, garrison ? 62 : 56, 9.5, '#ffb3d6', scale, 'Trebuchet MS', true);
+      ctx.restore();
+    }
+  }
+  // Sakuradite: mines on their own hex, and a small crystal on cities that work a deposit.
+  for (const d of game.sites || []) {
+    const c = hexCenter(d);
+    if (!visible(c)) continue;
+    const owner = E.depositOwner(game, d);
+    for (const x of copies(c.x)) {
+      ctx.save();
+      ctx.translate(x, c.y);
+      if (!detail) {
+        if (d.city == null) {
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = '#ff6fb5';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 2 / scale;
+          ctx.fillRect(-8, -8, 16, 16);
+          ctx.strokeRect(-8, -8, 16, 16);
+        }
+      } else if (d.city == null) drawMine(d, owner, scale, time, !!E.unitAt(game, d));
+      else drawCrystals(-28, -12, 0.5, time);
       ctx.restore();
     }
   }
@@ -2143,6 +2552,21 @@ function draw(time, dt) {
       p = hexCenter({ c, r });
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
   }
+  // F.L.E.I.J.A. targeting: the blast under the cursor, ground zero brighter than the ring.
+  if (hover && strikeMode)
+    for (const t of E.blastArea(game, hover)) {
+      const q = hexCenter(t),
+        zero = t.c === hover.c && t.r === hover.r,
+        pulse = 0.5 + 0.5 * Math.sin(time / 180);
+      for (const x of copies(q.x)) {
+        hexPath(x, q.y, R - 1.5);
+        ctx.fillStyle = zero ? `rgba(255,120,190,${0.45 + 0.2 * pulse})` : 'rgba(255,150,205,0.28)';
+        ctx.fill();
+        ctx.strokeStyle = '#ffd6ec';
+        ctx.lineWidth = 1.6 / Math.max(scale, 0.4);
+        ctx.stroke();
+      }
+    }
   if (hover) {
     const p = hexCenter(hover),
       u = selectedUnit(),
@@ -2177,6 +2601,22 @@ function draw(time, dt) {
       ctx.beginPath();
       ctx.arc(bx + 8, b0.y - 18 - grow * 20, 14 + grow * 18, 0, Math.PI * 2);
       ctx.fill();
+    } else if (e.kind === 'fleija') {
+      // The F.L.E.I.J.A. sphere: it swells over the blast in the first third of its life, then fades to the ruins.
+      const grow = Math.min(1, (1 - fade) / 0.33),
+        rad = R * (0.3 + 2.6 * (1 - Math.pow(1 - grow, 3))),
+        sphere = ctx.createRadialGradient(bx, b0.y, rad * 0.08, bx, b0.y, rad);
+      sphere.addColorStop(0, 'rgba(255,255,255,0.98)');
+      sphere.addColorStop(0.55, 'rgba(255,190,225,0.9)');
+      sphere.addColorStop(0.9, 'rgba(255,95,174,0.75)');
+      sphere.addColorStop(1, 'rgba(255,95,174,0)');
+      ctx.fillStyle = sphere;
+      ctx.beginPath();
+      ctx.arc(bx, b0.y, rad, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffe6f3';
+      ctx.lineWidth = 3 / Math.max(scale, 0.4);
+      ctx.stroke();
     } else if (e.kind === 'move') {
       drawLine(ax, a0.y, bx, b0.y, e.color, 2 / scale, [7, 6]);
     } else if (e.kind === 'text') {
@@ -2188,6 +2628,12 @@ function draw(time, dt) {
   }
   effects = effects.filter(e => e.life > 0);
   ctx.restore();
+  // The F.L.E.I.J.A. flash covers the whole screen, then fades.
+  if (flash > 0) {
+    ctx.fillStyle = `rgba(255,236,246,${reducedMotion() ? flash * 0.5 : flash})`;
+    ctx.fillRect(0, 0, w, h);
+    flash = Math.max(0, flash - dt * 0.9);
+  }
 }
 // Optional localhost overrides arrive after the first render; public art is registered before this script.
 ART.onLocal = () => {
