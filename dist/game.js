@@ -230,15 +230,15 @@ function blastSummary(p) {
     cities = [];
   let own = 0;
   for (const t of E.blastArea(game, p)) {
-    const ring = t.c !== p.c || t.r !== p.r,
+    const distance = E.distance(t, p, game),
       u = E.unitAt(game, t),
       s = E.stationAt(game, t);
     if (u) {
-      const k = (tally[u.side] ||= { erased: 0, crippled: 0 });
-      k[ring ? 'crippled' : 'erased']++;
+      const k = (tally[u.side] ||= { erased: 0, crippled: 0, damaged: 0 });
+      k[distance === 0 ? 'erased' : distance === 1 ? 'crippled' : 'damaged']++;
       if (u.side === game.player) own++;
     }
-    if (s) cities.push({ s, ring });
+    if (s) cities.push({ s, distance });
     if (s?.owner === game.player) own++;
   }
   return { tally, cities, own };
@@ -1211,7 +1211,7 @@ function attachMap() {
         pr = own && targetCache.has(E.key(hover)) ? E.preview(game, own.id, hover.c, hover.r) : null;
       const blast = strikeMode ? blastSummary(hover) : null;
       $('map-caption').textContent = blast
-        ? `F.L.E.I.J.A. target: ${E.targetName(game, hover)} · ${Object.values(blast.tally).reduce((a, k) => a + k.erased, 0)} erased · ${Object.values(blast.tally).reduce((a, k) => a + k.crippled, 0)} crippled${blast.own ? ' · your own forces are inside' : ''}`
+        ? `F.L.E.I.J.A. target: ${E.targetName(game, hover)} · ${Object.values(blast.tally).reduce((a, k) => a + k.erased, 0)} erased · ${Object.values(blast.tally).reduce((a, k) => a + k.crippled, 0)} crippled · ${Object.values(blast.tally).reduce((a, k) => a + k.damaged, 0)} damaged${blast.own ? ' · your own forces are inside' : ''}`
         : own && readyCache.has(E.key(hover)) && E.isSea(hover) && !E.atSea(game, own)
           ? 'Embark here: the unit becomes a transport (cannot fire, +50% damage taken) and stops'
           : fort && u && targetCache.has(E.key(hover))
@@ -1307,7 +1307,7 @@ function drawMinimap() {
       for (const s of game.stations) {
         const p = hexCenter(s);
         b.fillStyle = s.capital ? '#ffffff' : F(s.owner).color;
-        const z = s.capital ? 3.4 * dpr : 2 * dpr;
+        const z = s.capital ? 3.4 * dpr : (s.tier >= 3 ? 2.4 : s.tier >= 2 ? 1.8 : 1.2) * dpr;
         b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
       }
       for (const d of game.sites || [])
@@ -2493,7 +2493,8 @@ function draw(time, dt) {
             ? selection
             : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
-  // Cities.
+  // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
+  const pickedCity = selectedStation()?.id;
   for (const s of game.stations) {
     const c = hexCenter(s);
     if (!visible(c)) continue;
@@ -2514,7 +2515,8 @@ function draw(time, dt) {
           ctx.lineWidth = 4 / scale;
           ctx.strokeRect(-z / 2 - 7, -z / 2 - 7, z + 14, z + 14);
         }
-        if (s.capital && R * scale > 7) outlinedText(s.name, 0, 34, 11, '#fff6d6', scale, 'Trebuchet MS', true);
+        if ((s.capital || (s.fort && R * scale > 10)) && R * scale > 7)
+          outlinedText(s.name, 0, 34, 11, s.capital ? '#fff6d6' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
         ctx.restore();
         continue;
       }
@@ -2529,7 +2531,15 @@ function draw(time, dt) {
       ctx.fillRect(-20, 27, 40, 4);
       ctx.fillStyle = s.shield > 0 ? '#9fd8ff' : '#ff6a5a';
       ctx.fillRect(-20, 27, (40 * s.shield) / s.maxShield, 4);
-      outlinedText(s.name, 0, garrison ? 50 : 44, 11, s.capital ? '#ffe9a0' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
+      const showCityName =
+        s.id === pickedCity ||
+        s.capital ||
+        s.fort ||
+        R * scale >= 28 ||
+        (s.tier >= 3 && R * scale >= 16) ||
+        (s.tier >= 2 && R * scale >= 21);
+      if (showCityName)
+        outlinedText(s.name, 0, garrison ? 50 : 44, 11, s.capital ? '#ffe9a0' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
       if (!garrison) {
         mapBadge(-25, 20, s.owner, scale);
         for (let i = 0; i < s.tier; i++) {
