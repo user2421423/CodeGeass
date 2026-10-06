@@ -4,5 +4,6 @@ __pycache__/
 # Raw downloads and local preparation stay private. Finished public art lives in dist/assets/art/.
 dist/local-art/*
 !dist/local-art/README.md
+/dist/*.zip
 /art-source/
 /map-preview*.png
