@@ -158,7 +158,7 @@
             (!E.stationAt(g, p) || !E.foe(g, E.stationAt(g, p).owner, src.side)),
         );
       if (!spot) continue;
-      const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, src.stack, null, false);
+      const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, src.stack);
       u.hp = E.maxHP(u);
       if (!E.isSea(spot)) spot.owner = src.side;
       made++;
@@ -428,8 +428,9 @@
     return profile?.campaign?.[id] || 0;
   }
   function bestDifficulty(profile, id, mode = 'normal') {
-    const recorded = profile?.campaignDifficulty?.[id]?.[mode];
-    if (recorded != null) return recorded;
+    const perMission = profile?.campaignDifficulty?.[id];
+    if (perMission && Object.keys(perMission).length) return perMission[mode] || 0;
+    // Legacy profiles predate per-difficulty records; treat their old campaign score as a Normal clear only.
     return mode === 'normal' ? best(profile, id) : 0;
   }
   function unlocked(profile, id) {
