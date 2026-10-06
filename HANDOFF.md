@@ -36,11 +36,12 @@ Campaign chapters (like Galactic Command's) are not built yet; the engine is con
 
 ### Artwork handoff status
 
-The attached files and repository do not contain Claude’s 65 untracked downloads, 25 processed units, 13 portraits,
-or crops.json. The public manifest is intentionally empty until those files are supplied. Do not claim official
-art is deployed. Use `tools/publish_art.py` on the processed bundle, then validate, commit and push. Three
-screenshot-only units (Guren Type-Hei, Wang Hu, Panzer-Wespe) and Fernando Noriega should retain drawn art unless
-usable replacements are supplied. Character sheets require face-crop boxes before preparing portraits.
+Published artwork is tracked and deployed from `dist/assets/art/`: **28 Knightmare sprites and 34 commander
+portraits**, registered synchronously by `manifest.js`. Source provenance and preparation details are recorded in
+`ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
+workspace and is never required by GitHub Pages. Three screenshot-only units (Guren Type-Hei, Wang Hu, Panzer-Wespe)
+and Fernando Noriega intentionally retain the procedural fallback art until usable replacements are supplied.
+To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
 ## 3. Code layout
 
