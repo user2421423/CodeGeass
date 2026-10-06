@@ -116,7 +116,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   reinforce. Landing on a coast takes a step and ends the move.
 
 ### Cities and economy
-- 107 cities: Britannia 27, E.U. 43, Federation 29, neutral 8. The political map follows the first season (2017):
+- 149 cities: Britannia 39, E.U. 56, Federation 42, neutral 12. The political map follows the first season (2017):
   Russia, Siberia and the Balkans are E.U.; Euro Britannia's knights start on Britannia's Atlantic coast. Income: capital 65 (50 plus the 15 its old
   refinery exported), tier 3 30, tier 2 20, tier 1 12 credits; industry 6 per tier (capital 30). Defenses
   180/240/300 by tier, 400 for fortress cities, 600 for capitals.
