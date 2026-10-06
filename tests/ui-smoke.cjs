@@ -107,6 +107,8 @@ const modal = () => node('modal-root').innerHTML;
     run('admiralDialog()');
     assert(modal().includes('Commanders'));
     assert(modal().includes('data-general='));
+    run("generalsDialog('bk')");
+    assert(modal().includes('Lelouch vi Britannia / Zero') && modal().includes('Tatewaki Katase'), 'HQ lists the Black Knights');
     run(`generalsDialog('${side}')`);
     assert(modal().includes('Your commanders'));
     const starter = run(`E.STARTERS['${side}'][0]`);

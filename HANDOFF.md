@@ -215,6 +215,14 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - 58 commanders. Conquest's 35, plus the commander expansion (Zero, Kallen, Tohdoh, C.C., Ohgi, Chiba, Asahina, Senba,
   Urabe, Sugiyama, Minami, Tamaki, Katase, Inoue for the Black Knights and JLF; Villetta, Kewell, Monica, Dorothea,
   Nonette, Manfredi, Farnese and Augustus for Britannia) and campaign-only Emperor Lelouch.
+- Black Knights and JLF commanders have their own HQ tab and, in Conquest, lead Chinese Federation units
+  (`ALLIES = { cf: ['bk', 'jlf'] }`, `serves(k, side)` in `assignReason` and the UI's assignment list).
+- Their signature skills (engine block "Black Knights and JLF commanders", first-pass numbers): Zero's Tactical
+  Command (`action.kind: 'command'`, `feint(g, id, targetId)`, `commandTargets`; the AI uses it after Zero's own
+  orders), Kallen `ace`, Tohdoh `miracle`, C.C. `undying` (`kill(…, force)` skips it for F.L.E.I.J.A.) with floor −2,
+  Ohgi `organizer`, Chiba `artist`, Asahina `followUp` (reads `u.struck`), Senba `guard` (needs `u.held`, set at turn
+  start and cleared by `move()`), Urabe `lastStand`/`martyr`, Sugiyama `specialOps`, Minami `spotter`, Tamaki
+  `charge`, Katase `prepared`, Inoue `logistics` (`reinforceCost(type, g, side, u)`).
 - A fourth rating, **Mobility** (1–6 stars), replaces fixed movement bonuses: 3★ +1 movement up to 6★ +4.
 - Starters Suzaku and Cornelia (Britannia), Leila and Akito (E.U.), Xingke and Xianglin (Federation).
   Recruit prices 400 / 300 / 200 tokens by stars. Eleven ranks from Second Lieutenant (112% frame) to Marshal (160%).
