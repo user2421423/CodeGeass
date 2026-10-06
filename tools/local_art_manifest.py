@@ -18,18 +18,18 @@ def ids(src, start, end):
     return re.findall(r'^    (\w+): \{$', block, re.M)
 
 
-def main():
+def main(art=ART):
     src = open(os.path.join(ROOT, 'engine.js')).read()
     known = {
         'units': ids(src, 'const KNIGHTMARES = {', 'const TYPES ='),
         'portraits': ids(src, 'const COMMANDERS = {', 'const NOFX'),
     }
-    path = os.path.join(ART, 'manifest.json')
+    path = os.path.join(art, 'manifest.json')
     old = json.load(open(path)) if os.path.exists(path) else {}
     manifest = {}
     for kind in ('units', 'portraits'):
         manifest[kind] = {}
-        folder = os.path.join(ART, kind)
+        folder = os.path.join(art, kind)
         files = sorted(os.listdir(folder)) if os.path.isdir(folder) else []
         for f in files:
             stem, ext = os.path.splitext(f)
@@ -47,7 +47,7 @@ def main():
         print(f'{kind}: {len(manifest[kind])} of {len(known[kind])} have a file')
         if missing:
             print('  missing:', ', '.join(missing))
-    os.makedirs(ART, exist_ok=True)
+    os.makedirs(art, exist_ok=True)
     json.dump(manifest, open(path, 'w'), indent=2)
     print('wrote', os.path.normpath(path))
 

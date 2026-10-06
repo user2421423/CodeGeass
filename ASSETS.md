@@ -18,8 +18,8 @@ were copied from the wiki or the anime. Unofficial fan game.
 
 ## Using your own art (optional, local only)
 
-`dist/local-art/` is git-ignored. Put your own images there (`units/<knightmare id>.png`,
-`portraits/<commander id>.jpg`), run `python3 tools/local_art_manifest.py`, and the game shows them on your machine
+`dist/local-art/` is git-ignored. Put your own raw images in `dist/local-art/raw/units/<knightmare id>.*` and
+`raw/portraits/<commander id>.*`, run `python3 tools/local_art_prepare.py`, and the game shows them on your machine
 over the drawn art; anything missing keeps the drawing. See `dist/local-art/README.md`. The repository and the
 published site ship none of it. If you ever commit files from that folder, they become public on GitHub Pages, so
 only do that with art you have the rights to publish.
@@ -34,3 +34,8 @@ Per the owner's email from the rights holders, the permission to use Code Geass 
 fan game is limited and non-exclusive, and conditional on: free distribution with no paid access, microtransactions,
 crowdfunding or ad revenue; the visible notice above; no content that violates community guidelines or damages the
 brand; and the holders may revoke it at any time. Keep the game free and keep the notice.
+
+The rights holders' follow-up email extends the permission to official imagery and artwork from the anime, provided
+the artwork is used strictly within the game itself and the non-commercial and attribution terms are kept. This
+repository therefore ships no studio artwork: the owner supplies it locally, and anything they choose to publish
+(for example by committing files from `dist/local-art/`) is their decision under those terms.
