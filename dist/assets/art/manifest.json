@@ -200,6 +200,72 @@
     },
     "zhaohao": {
       "src": "portraits/zhaohao-f75b0bf42b4c.jpg"
+    },
+    "zero": {
+      "src": "portraits/zero-78b808b17079.webp"
+    },
+    "kallen": {
+      "src": "portraits/kallen-2d97aa0e5ce2.webp"
+    },
+    "tohdoh": {
+      "src": "portraits/tohdoh-4f6e2703ed4f.webp"
+    },
+    "cc": {
+      "src": "portraits/cc-f4ce4228b201.webp"
+    },
+    "ohgi": {
+      "src": "portraits/ohgi-3135b3a335e2.webp"
+    },
+    "chiba": {
+      "src": "portraits/chiba-2a8d68b85b10.webp"
+    },
+    "asahina": {
+      "src": "portraits/asahina-9c1cd13d87e7.webp"
+    },
+    "senba": {
+      "src": "portraits/senba-25588f9384c9.webp"
+    },
+    "urabe": {
+      "src": "portraits/urabe-70da55427282.webp"
+    },
+    "sugiyama": {
+      "src": "portraits/sugiyama-9012f351d673.webp"
+    },
+    "minami": {
+      "src": "portraits/minami-020c7b02939d.webp"
+    },
+    "tamaki": {
+      "src": "portraits/tamaki-1cee92e724c5.webp"
+    },
+    "katase": {
+      "src": "portraits/katase-2e2d597e95f8.webp"
+    },
+    "inoue": {
+      "src": "portraits/inoue-2519cfa03cf4.webp"
+    },
+    "villetta": {
+      "src": "portraits/villetta-4ce3cc8093ad.webp"
+    },
+    "kewell": {
+      "src": "portraits/kewell-c1ebb31e4e21.webp"
+    },
+    "monica": {
+      "src": "portraits/monica-1648578c93a5.webp"
+    },
+    "dorothea": {
+      "src": "portraits/dorothea-2a7f5890fb53.webp"
+    },
+    "nonette": {
+      "src": "portraits/nonette-edf81d950570.webp"
+    },
+    "manfredi": {
+      "src": "portraits/manfredi-57a7bea25a0a.webp"
+    },
+    "farnese": {
+      "src": "portraits/farnese-a73888e2a52c.webp"
+    },
+    "augustus": {
+      "src": "portraits/augustus-f9e54bbe1b6c.webp"
     }
   }
 }
