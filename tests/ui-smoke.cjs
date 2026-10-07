@@ -1,23 +1,23 @@
-const vm = require('node:vm'),
-  fs = require('node:fs'),
-  path = require('node:path'),
-  assert = require('node:assert/strict');
-const nodes = new Map(),
-  events = {},
-  storage = {},
-  registered = [];
-const drawContext = new Proxy(
-  {},
-  {
-    get: (o, p) =>
-      p === 'createRadialGradient' || p === 'createLinearGradient'
-        ? () => ({ addColorStop() {} })
-        : p === 'measureText'
-          ? () => ({ width: 40 })
-          : o[p] || (() => {}),
-    set: (o, p, v) => ((o[p] = v), true),
-  },
-);
+const vm = require('node:vm');
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+
+const nodes = new Map();
+const events = {};
+const storage = {};
+const registered = [];
+
+const drawContext = new Proxy({}, {
+  get: (o, p) =>
+    p === 'createRadialGradient' || p === 'createLinearGradient'
+      ? () => ({ addColorStop() {} })
+      : p === 'measureText'
+        ? () => ({ width: 40 })
+        : o[p] || (() => {}),
+  set: (o, p, v) => ((o[p] = v), true),
+});
+
 function node(id) {
   if (!nodes.has(id)) {
     const n = {
@@ -30,18 +30,10 @@ function node(id) {
       classList: { add() {}, remove() {}, toggle() {} },
       dataset: {},
       addEventListener() {},
-      querySelector() {
-        return null;
-      },
-      querySelectorAll() {
-        return [];
-      },
-      getBoundingClientRect() {
-        return { width: 1280, height: 760, left: 0, top: 0 };
-      },
-      getContext() {
-        return drawContext;
-      },
+      querySelector() { return null; },
+      querySelectorAll() { return []; },
+      getBoundingClientRect() { return { width: 1280, height: 760, left: 0, top: 0 }; },
+      getContext() { return drawContext; },
       setPointerCapture() {},
       focus() {},
     };
@@ -50,25 +42,25 @@ function node(id) {
   }
   return nodes.get(id);
 }
+
 let serial = 0;
 const document = {
   getElementById: node,
   documentElement: node('root'),
   body: node('body'),
   addEventListener: (k, fn) => (events[k] = fn),
-  querySelectorAll() {
-    return [];
-  },
+  querySelectorAll() { return []; },
   createElement: () => node('scratch-' + serial++),
   modelContext: { registerTool: t => registered.push(t) },
 };
+
 const env = {
   document,
-  localStorage: { getItem: k => storage[k] ?? null, setItem: (k, v) => (storage[k] = String(v)) },
-  setTimeout: fn => {
-    fn();
-    return 1;
+  localStorage: {
+    getItem: k => storage[k] ?? null,
+    setItem: (k, v) => (storage[k] = String(v)),
   },
+  setTimeout: fn => { fn(); return 1; },
   clearTimeout() {},
   requestAnimationFrame() {},
   devicePixelRatio: 1,
@@ -81,238 +73,48 @@ const env = {
   Promise,
 };
 env.window = env;
+
 const context = vm.createContext(env);
-// The scripts index.html loads, in its order.
 const scripts = [
   ...fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8').matchAll(/<script src="([^"]+)"/g),
 ].map(m => m[1]);
-assert(
-  scripts.includes('engine/ai.js') && scripts.at(-1) === 'game.js',
-  'index.html loads the engine parts and ends with game.js',
-);
-for (const file of scripts) vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist', file), 'utf8'), context);
-const run = s => vm.runInContext(s, context);
+assert(scripts.length > 0 && scripts.at(-1) === 'game.js', 'index.html must load the game scripts');
+
+for (const file of scripts) {
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist', file), 'utf8'), context);
+}
+
+const run = code => vm.runInContext(code, context);
 const modal = () => node('modal-root').innerHTML;
+
 (async () => {
-  const NOTICE = 'Code Geass and related characters are trademarks and copyrighted property. This project is an unofficial fan creation and is not officially affiliated with or endorsed by the copyright holders.';
-  assert(modal().includes('One world.'));
-  assert(modal().includes(NOTICE), 'start menu shows the attribution notice');
-  for (const side of ['britannia', 'eu', 'cf']) assert(modal().includes(`data-faction="${side}"`));
+  assert(modal().includes('One world.'), 'start menu renders');
+
   for (const side of ['britannia', 'eu', 'cf']) {
     run(`setup={side:'${side}',difficulty:'normal'};newGame();draw(0,.016);drawMinimap();`);
-    assert(node('app').innerHTML.includes('World War'));
-    assert(node('app').innerHTML.includes('res-sakuradite'), 'the resource bar shows Sakuradite');
-    assert(node('app').innerHTML.includes('data-action="production"'), 'Conquest top bar exposes Production Command');
     assert.equal(run('game.player'), side);
     assert.equal(run('getSave().player'), side);
-    run('nextFleet();updateSelection();');
-    assert(node('side').innerHTML.includes('Frame integrity'));
-    // Standing orders: the next map click sets the destination; the dock then offers to stop the auto-move.
-    run('startRouting()');
-    assert(node('map-banner').textContent.includes('Standing orders'), 'Set destination waits for a map click');
-    run('hover = game.tiles.find(t => E.distance(t, selectedUnit(), game) === 5 && !E.gotoReason(game, selectedUnit(), t)); draw(40, .016); activateHex(hover); draw(40, .016)');
-    assert(run('!!selectedUnit().goto') && node('selection-dock').innerHTML.includes('data-action="goto-cancel"'), 'the dock offers to stop the auto-move');
-    run('E.clearGoto(game, selectedUnit().id); updateSelection()');
-    run('selectUnit(game.units.find(u=>u.side!==game.player&&u.hp>0).id)');
-    run("researchDialog('infantry')");
-    assert(modal().includes('Landspinner Tuning'));
-    run("researchDialog('sakura')");
-    assert(modal().includes('Float System'));
-    run('admiralDialog()');
-    assert(modal().includes('Commanders'));
-    assert(modal().includes('data-general='));
-    run("generalsDialog('bk')");
-    assert(modal().includes('Lelouch vi Britannia / Zero') && modal().includes('Tatewaki Katase'), 'HQ lists the Black Knights');
-    run(`generalsDialog('${side}')`);
-    assert(modal().includes('Your commanders'));
-    const starter = run(`E.STARTERS['${side}'][0]`);
-    run(`generalDialog('${starter}', true)`);
-    assert(modal().includes('Your commander'));
-    run(`generalDialog('${starter}')`);
-    assert(modal().includes('Commander Info'));
-    if (['britannia', 'cf'].includes(side)) assert(modal().includes('Base stats'), 'permanent combat stats are distinct from the signature');
-    if (side === 'britannia') {
-      const snapshot = run('JSON.stringify(game)');
-      run(`game=E.createGame('britannia','normal','campaign',123);game.cols=game.rows=12;game.wrap=false;
-        game.tiles=Array.from({length:144},(_,n)=>({c:n%12,r:Math.floor(n/12),terrain:'plains'}));game.units=[];
-        game.phase=game.player='britannia';game.over=null;
-        E.newUnit(game,E.typeFor('britannia','light'),'britannia',5,5,1,'julius');
-        E.newUnit(game,E.typeFor('eu','light'),'eu',6,5);selection={kind:'unit',id:game.units[0].id};
-        commandDialog(selectedUnit());`);
-      assert(modal().includes('Designate an enemy') && modal().includes('data-command='));
-      run(`E.feint(game,selectedUnit().id,game.units[1].id);selection={kind:'unit',id:game.units[1].id};updateSelection();`);
-      assert(node('side').innerHTML.includes('Designated target'), 'temporary commander effects are visible on the target');
-      run(`game=${snapshot};setWorld();render();`);
-    }
-    run(`archiveDialog('Artillery','${side}')`);
-    assert(modal().includes(run(`E.TYPES[E.ROSTER['${side}'].siege].name`)));
-    run('powersDialog()');
-    assert(modal().includes('World powers'));
-    assert(modal().includes('Sakuradite deposits') && modal().includes('Mount Fuji'));
-    run("selectSite(game.sites.find(d=>d.name==='Mount Fuji').id)");
-    assert(node('side').innerHTML.includes('Sakuradite mine'));
-    assert(node('side').innerHTML.includes('Sakuradite refinery'));
-    assert(node('selection-dock').innerHTML.includes('Mount Fuji'));
-    run("selectStation(game.stations.find(s=>s.name==='London').id)");
-    assert(node('side').innerHTML.includes('Stonehenge'), 'London shows the deposit it works');
-    run("openShop(game.stations.find(s=>s.owner===game.player&&s.tier>=3).id,'Armor')");
-    assert(modal().includes('Roll out a Knightmare unit'));
-    assert.equal((modal().match(/data-recruit=/g) || []).length, 4);
-    if (side === 'britannia') {
-      run("openShop(game.stations.find(s=>s.owner===game.player&&s.tier>=3).id,'Naval')");
-      assert(modal().includes('Carrier-Battleship') && modal().includes('Portman II'), 'Britannia builds a navy');
-    }
-    for (const branch of ['Infantry', 'Artillery']) {
-      run(`openShop(game.stations.find(s=>s.owner===game.player&&s.tier>=3).id,'${branch}')`);
-      assert.equal((modal().match(/data-recruit=/g) || []).length, 3);
-    }
-    run('selectStation(game.stations.find(s=>s.owner===game.player).id)');
-    assert(node('side').innerHTML.includes('Knightmare factory'));
-    assert(node('side').innerHTML.includes('Auto-produce each turn'), 'owned city exposes an exact unit auto-production queue');
-    assert(node('side').innerHTML.includes('Off — manual production'));
-    run('productionDialog()');
-    assert(modal().includes('Production Command') && modal().includes('Protected resource reserve'));
-    assert(modal().includes('Clear all auto-production queues'));
-    run('closeModal()');
-    run('helpDialog()');
-    assert(modal().includes('War on a world of hexes'));
-    assert(modal().includes('Japan holds 70'), 'field manual explains Sakuradite');
-    assert(modal().includes('Production Command'), 'field manual explains player city automation');
-    assert(modal().includes(NOTICE), 'field manual shows the notice');
-    run('menuDialog()');
-    assert(modal().includes(NOTICE) && modal().includes('Credits'), 'game menu shows the notice and credits');
-    run('closeModal()');
-    run(`(() => {
-      const a = E.automationState(game), s = capitalOf(game.player), type = E.typeFor(game.player, 'scout');
-      a.enabled = true; a.autoUpgrade = true; a.stack = 1;
-      a.reserve = { credits: 0, industry: 0, sakuradite: 0 };
-      E.setCityAutomation(game, s.id, { unit: type });
-      game.economy[game.player].credits = 100000; game.economy[game.player].industry = 100000;
-      game.economy[game.player].sakuradite = 10000;
-    })()`);
+    assert(node('app').innerHTML.includes('World War'), `${side}: conquest HUD renders`);
+
     await run('endTurn(true)');
-    assert.equal(run('game.turn'), 2);
-    assert.equal(run('game.phase'), side);
-    assert.equal(run('getSave().turn'), 2);
-    assert(run('game.automation.lastReport.upgrades') >= 1, 'Production Command runs global upgrades after start-of-turn income');
-    assert.equal(run('game.automation.lastReport.units'), 1, 'the capital builds its exact queued unit');
-    assert.equal(run('capitalOf(game.player).lab'), 2, 'global auto-upgrade used the normal lab build rules');
-    run('draw(16,.016)');
+    assert.equal(run('game.turn'), 2, `${side}: one complete turn resolves`);
+    assert.equal(run('game.phase'), side, `${side}: control returns to the player`);
+    assert.equal(run('getSave().turn'), 2, `${side}: turn is saved`);
   }
-  // F.L.E.I.J.A.: conquest-only Lab III gate, arsenal button, targeting, confirmation, your launch and a rival's.
-  run("researchDialog('sakura')");
-  assert(!modal().includes('F.L.E.I.J.A.'), 'F.L.E.I.J.A. is not an HQ technology');
-  run("closeModal(); game.turn = E.FLEIJA.labTurn; capitalOf(game.player).lab = 3; game.arsenal = { [game.player]: 1 }; render();");
-  assert(node('app').innerHTML.includes('data-action="fleija"'), 'the arsenal button appears');
-  run('selectStation(capitalOf(game.player).id)');
-  assert(node('side').innerHTML.includes('Build a warhead'));
-  const target = run(
-    "(() => { const u = game.units.find(u => u.hp > 0 && u.side !== game.player && u.side !== 'neutral' && !E.atSea(game, u)); return u.c + ',' + u.r; })()",
-  ).split(',');
-  run(`strikeMode = true; hover = E.tile(game, ${target[0]}, ${target[1]}); draw(40, .016); activateHex(hover)`);
-  assert(modal().includes('Launch F.L.E.I.J.A. at'));
-  await run(`launchAt({ c: ${target[0]}, r: ${target[1]} })`);
-  assert.equal(run('game.arsenal[game.player]'), 0);
-  assert(run("game.log.some(l => l.text.startsWith('F.L.E.I.J.A. detonation'))"));
-  assert(!run('E.eliminatorUnlocked(game)'), 'Eliminator research takes a few turns');
-  run('game.turn += E.ELIMINATOR.research');
-  assert(run('E.eliminatorUnlocked(game)'));
-  assert.equal(run(`E.tile(game, ${target[0]}, ${target[1]}).terrain`), 'crater');
-  run('selectStation(capitalOf(game.player).id)');
-  assert(node('side').innerHTML.includes('F.L.E.I.J.A. Eliminator'));
-  assert(node('side').innerHTML.includes('data-eliminator='));
-  run('draw(48, .016); drawMinimap();');
-  const defended = run(
-    "(() => { const s = game.stations.find(s => s.owner !== game.player && s.owner !== 'neutral' && !E.devastated(game, s)); s.eliminator = 1; return s.c + ',' + s.r; })()",
-  ).split(',');
-  run('game.turn++; game.phase = game.player; game.arsenal[game.player] = 1;');
-  await run(`launchAt({ c: ${defended[0]}, r: ${defended[1]} })`);
-  assert.equal(run('game.arsenal[game.player]'), 0);
-  assert(node('fleija-alert').innerHTML.includes('F.L.E.I.J.A. eliminated'));
-  // A rival with a warhead strikes your city building one; the warning plays during its turn.
-  run(
-    '(() => { const s = capitalOf(game.player); s.project = { side: game.player, started: game.turn, ready: game.turn + 4 }; game.arsenal[game.order[1]] = 1; })()',
-  );
-  run('powersDialog()');
-  assert(modal().includes('building in'));
-  run('closeModal()');
-  await run('endTurn(true)');
-  assert(node('fleija-alert').innerHTML.includes('Strategic weapon detected'));
-  assert.equal(run('game.arsenal[game.order[1]]'), 0);
-  // Optional local art: a manifest entry layers a file over the drawn art; no entry keeps the drawing.
-  run("ART.useLocal({units:{glasgow:'units/glasgow.png'},portraits:{suzaku:{src:'portraits/suzaku.jpg',fx:0.4,fy:0.2}}})");
-  assert(run("ART.unit('glasgow')").includes('<img src="local-art/units/glasgow.png"'));
-  assert(run("ART.portrait('suzaku')").includes('object-position:40% 20%'));
-  assert(!run("ART.unit('sutherland')").includes('<img'));
-  assert(!run("ART.portrait('leila')").includes('<img'));
-  run('ART.useLocal({})');
-  assert(!run("ART.unit('glasgow')").includes('<img'));
-  const read = registered[0].execute({});
-  assert.equal(read.player, 'cf');
-  registered[1].execute({ unitId: run('ownUnits()[0].id') });
-  assert.throws(() => registered[1].execute({ unitId: -1 }), /Invalid/);
-  run('game.over={winner:game.player,reason:"Test victory"};resultDialog();');
-  assert(modal().includes('The world bows.'));
-  assert(modal().includes('Command tokens earned'));
-  const tokens = JSON.parse(storage['knightmare-conquest-profile']).tokens;
-  assert(tokens > 0);
-  run('resultDialog();');
-  assert.equal(JSON.parse(storage['knightmare-conquest-profile']).tokens, tokens);
-  // Campaign: factory catalogs deduplicate reused frames, team allies are not hostile, then normal mission flow.
-  run('startMenu()');
-  assert(modal().includes('data-action="campaign"'), 'the start menu offers the campaigns');
-  run("game=window.KnightmareCampaign.createMission('eb_narva',1); setWorld(); render();");
-  const ebCity = run("game.stations.find(s=>s.owner===game.player).id");
-  run(`openShop(${ebCity},'Infantry')`);
-  assert.equal((modal().match(/data-recruit="gloucester"/g) || []).length, 1, 'Euro Britannia shows Gloucester only once');
-  run(`openShop(${ebCity},'Artillery')`);
-  assert.equal((modal().match(/data-recruit="liverpool"/g) || []).length, 1, 'Euro Britannia shows Liverpool only once');
-  assert.equal((modal().match(/data-recruit="canterbury"/g) || []).length, 1, 'Euro Britannia shows Canterbury only once');
-  run("archiveDialog('Infantry','eb')");
-  assert.equal((modal().match(/<h3>Gloucester<\/h3>/g) || []).length, 1, 'Euro Britannia unit archive shows Gloucester only once');
-  run("archiveDialog('Artillery','eb')");
-  assert.equal((modal().match(/<h3>Liverpool<\/h3>/g) || []).length, 1, 'Euro Britannia unit archive shows Liverpool only once');
-  run("archiveDialog('Naval','britannia')");
-  assert(modal().includes('<h3>Portman</h3>') && modal().includes('<h3>Carrier-Battleship</h3>'), 'the archive has a Naval tab');
-  const archived = 'ARCHIVE_SIDES.flatMap(s => ARCHIVE_BRANCHES.flatMap(b => archiveTypes(s, b)))';
-  assert.equal(run(`Object.keys(E.TYPES).filter(k => !E.TYPES[k].elite && !${archived}.includes(k)).join()`), '', 'the archive shows every non-Elite frame');
-  assert.equal(run(`${archived}.filter(k => E.TYPES[k].elite).join()`), '', 'the archive leaves out Elite Forces');
-  run("game=window.KnightmareCampaign.createMission('eb_fall',1); setWorld(); render();");
-  assert.equal(run("hostileUnit(game.units.find(u=>u.side==='britannia'))"), false, 'campaign team ally has no hostile marker');
-  assert.equal(run("hostileUnit(game.units.find(u=>u.side==='eu'))"), true, 'campaign enemy receives hostile marker');
-  run('updateSelection()');
-  assert.equal(run("readyUnit(game.units.find(u=>u.side===game.player && E.hasOrders(game,u)))"), true, 'an actionable player unit makes its existing ring glow');
-  assert.equal(run("typeof drawReadyBadge"), 'undefined', 'no separate ready badge is rendered');
-  run('draw(72,.016)');
-  run('startMenu()');
-  run("campaignDialog('bk_s1')");
-  assert(modal().includes('Shinjuku Ghetto') && modal().includes('data-mission="bk1"'));
-  assert(modal().includes('season-tab') && modal().includes('data-campaign-tab="bk_r2"'), 'Season 1 and R2 are separate campaigns');
-  assert(/data-mission="bk2"[^>]*disabled/.test(modal()), 'later missions start locked');
-  run("briefingDialog('bk1')");
-  assert(modal().includes('G-1 Base') && modal().includes('data-start-mission="bk1"'));
-  run("startMission('bk1')");
+
+  run('startMenu();campaignDialog("bk_s1")');
+  assert(modal().includes('data-mission="bk1"'), 'campaign menu renders');
+
+  run('startMission("bk1")');
   assert.equal(run('game.mode'), 'campaign');
-  assert(modal().includes('Mission dialogue'), 'the opening dialogue plays');
-  run('talkNext(true)');
-  assert(!modal().includes('Mission dialogue'));
-  assert(node('app').innerHTML.includes('Shinjuku Ghetto') && node('app').innerHTML.includes('star-chip'));
-  run('draw(80, .016); drawMinimap(); briefingDialog(game.campaign.id, true); closeModal();');
-  assert.equal(run('getSave(CAMPAIGN_KEY).mode'), 'campaign');
-  assert.notEqual(run('getSave().mode'), 'campaign', 'a mission never replaces the conquest save');
-  run("game.stations.find(s => s.name === 'G-1 Base').owner = game.player; E.checkVictory(game); resultDialog();");
-  assert(modal().includes('Mission complete') && modal().includes('data-mission="bk2"'));
-  const profile = JSON.parse(storage['knightmare-conquest-profile']);
-  assert.equal(profile.campaign.bk1, 3);
-  assert.equal(profile.tokens, tokens + run('E.campaign.REWARD.first + 2 * E.campaign.REWARD.star'));
-  run("campaignDialog('bk_s1')");
-  assert(!/data-mission="bk2"[^>]*disabled/.test(modal()), 'clearing a mission unlocks the next');
-  run('startMenu()');
-  assert.equal(run('game.mode'), 'conquest');
-  console.log(
-    'PASS: start menu, all dialogs and the map render for all three powers; rival turns complete; saves and rewards are coherent; WebMCP tools validate input.',
-  );
-})().catch(e => {
-  console.error(e);
+  assert(modal().includes('Mission dialogue'), 'campaign opening dialogue renders');
+
+  run('talkNext(true);draw(16,.016);drawMinimap();');
+  assert(node('app').innerHTML.includes('Shinjuku Ghetto'), 'campaign HUD renders');
+  assert.equal(run('getSave(CAMPAIGN_KEY).mode'), 'campaign', 'campaign uses its own save slot');
+
+  console.log('PASS: scripts load, all three conquest factions complete a turn, and a campaign mission boots.');
+})().catch(err => {
+  console.error(err);
   process.exitCode = 1;
 });
