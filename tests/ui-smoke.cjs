@@ -242,6 +242,8 @@ const modal = () => node('modal-root').innerHTML;
   run("game=window.KnightmareCampaign.createMission('eb_fall',1); setWorld(); render();");
   assert.equal(run("hostileUnit(game.units.find(u=>u.side==='britannia'))"), false, 'campaign team ally has no hostile marker');
   assert.equal(run("hostileUnit(game.units.find(u=>u.side==='eu'))"), true, 'campaign enemy receives hostile marker');
+  run('updateSelection()');
+  assert.equal(run("readyUnit(game.units.find(u=>u.side===game.player && E.hasOrders(game,u)))"), true, 'an actionable player unit receives the glowing ready ring');
   run('draw(72,.016)');
   run('startMenu()');
   run("campaignDialog('bk_s1')");
