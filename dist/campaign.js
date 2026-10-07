@@ -21,11 +21,11 @@
       level: 0,
       tokens: 1,
       playerStack: 1,
-      enemyHp: 0.8,
-      enemyShield: 0.75,
+      enemyHp: 1,
+      enemyShield: 1,
       economy: 1.5,
-      extraTurns: 3,
-      desc: 'Forgiving story mode: stronger starting forces, weaker enemy formations and defenses, 50% more starting resources and three extra turns.',
+      extraTurns: 5,
+      desc: 'Story mode: full-strength enemies and city defenses, but stronger starting formations, favorable scenario force counts, 50% more starting resources and five extra turns on timed missions.',
     },
     hard: {
       ...E.DIFFICULTIES.hard,
@@ -110,11 +110,13 @@
   }
 
   // ======== Building a mission ========
-  // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready }].
+  // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal }].
   function placeUnit(g, spec) {
     const [side, kind, c, r, stack = 1, cmd = null, opts = {}] = spec,
       d = difficulty(g.difficulty),
       enemy = E.foe(g, side, g.player);
+    if (opts.normalOnly && g.difficulty !== 'normal') return null;
+    if (opts.skipNormal && g.difficulty === 'normal') return null;
     let type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g),
       unitStack = stack;
     if (!E.TYPES[type].elite) {
@@ -242,7 +244,7 @@
         warnings: [],
         note: null,
         enemyPlaced: 0,
-        turnLimit: (m.lose?.turns || 0) + (d.extraTurns || 0),
+        turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
       },
     };
     if (d.economy && g.economy[g.player]) {
