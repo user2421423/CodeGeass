@@ -154,10 +154,19 @@ const modal = () => node('modal-root').innerHTML;
     run('menuDialog()');
     assert(modal().includes(NOTICE) && modal().includes('Credits'), 'game menu shows the notice and credits');
     run('closeModal()');
+    run(`(() => {
+      const a = E.automationState(game), s = capitalOf(game.player);
+      a.enabled = true; a.defaultPolicy = 'manual'; a.autoUpgrade = true; a.autoProduce = false;
+      a.reserve = { credits: 0, industry: 0, sakuradite: 0 };
+      E.setCityAutomation(game, s.id, { policy: 'economy', autoUpgrade: true, autoProduce: false });
+      game.economy[game.player].credits = 100000; game.economy[game.player].industry = 100000;
+    })()`);
     await run('endTurn(true)');
     assert.equal(run('game.turn'), 2);
     assert.equal(run('game.phase'), side);
     assert.equal(run('getSave().turn'), 2);
+    assert.equal(run('game.automation.lastReport.upgrades'), 1, 'Production Command runs after start-of-turn income');
+    assert.equal(run('capitalOf(game.player).lab'), 2, 'Economy policy upgraded the capital lab through normal build rules');
     run('draw(16,.016)');
   }
   // F.L.E.I.J.A.: conquest-only Lab III gate, arsenal button, targeting, confirmation, your launch and a rival's.
