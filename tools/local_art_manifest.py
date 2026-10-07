@@ -2,7 +2,8 @@
 """Write dist/local-art/manifest.json from the files in dist/local-art/units and dist/local-art/portraits.
 
 A file's name (without extension) must be a Knightmare id (units/) or a commander id (portraits/), as listed in
-dist/engine.js. Existing focus settings ("fx"/"fy") in the manifest are kept. Prints the ids that have no file.
+dist/engine/frames.js and commanders.js. Existing focus settings ("fx"/"fy") in the manifest are kept. Prints the
+ids that have no file.
 """
 import json
 import os
@@ -18,12 +19,18 @@ def ids(src, start, end):
     return re.findall(r'^    (\w+): \{$', block, re.M)
 
 
-def main(art=ART):
-    src = open(os.path.join(ROOT, 'engine.js')).read()
-    known = {
-        'units': ids(src, 'const KNIGHTMARES = {', 'const TYPES ='),
-        'portraits': ids(src, 'const COMMANDERS = {', 'const NOFX'),
+def known_ids(dist=ROOT):
+    """Knightmare and commander ids from the engine's data files (dist/engine/frames.js and commanders.js)."""
+    frames = open(os.path.join(dist, 'engine', 'frames.js')).read()
+    commanders = open(os.path.join(dist, 'engine', 'commanders.js')).read()
+    return {
+        'units': ids(frames, 'const KNIGHTMARES = {', 'const LINEUPS ='),
+        'portraits': ids(commanders, 'const COMMANDERS = {', 'const RANKS'),
     }
+
+
+def main(art=ART):
+    known = known_ids()
     path = os.path.join(art, 'manifest.json')
     old = json.load(open(path)) if os.path.exists(path) else {}
     manifest = {}

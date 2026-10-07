@@ -4,7 +4,7 @@
 The grid is odd-r offset hexes, 180 columns x 76 rows, wrapping east-west. Each column spans 2 degrees of
 longitude; rows run from 74N to 54S in roughly 1.707-degree steps. Odd rows are shifted half a hex east.
 
-Output: a JS snippet (WORLD_ROWS) to paste into dist/engine.js, one string per row:
+Output: a JS snippet (WORLD_ROWS) to paste into dist/engine/world.js, one string per row:
   . sea   p plains   f forest   m mountains   d desert   s snow/tundra   x impassable peaks / ice cap
 
 Run:  python3 tools/build_map.py > /tmp/world.txt   (prints the JS block and an ASCII preview on stderr)
@@ -417,7 +417,7 @@ if __name__ == '__main__':
     g = build()
     block = js_block(g)
     if '--inject' in sys.argv:
-        # Replace the generated block inside dist/engine.js in place.
+        # Replace the generated block inside dist/engine/world.js in place.
         path = sys.argv[sys.argv.index('--inject') + 1]
         src = open(path).read()
         start = src.index('  // <world>')

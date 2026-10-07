@@ -82,8 +82,15 @@ const env = {
 };
 env.window = env;
 const context = vm.createContext(env);
-for (const file of ['engine.js', 'missions.js', 'campaign.js', 'assets/art/manifest.js', 'art.js', 'icons.js', 'audio.js', 'game.js'])
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist', file), 'utf8'), context);
+// The scripts index.html loads, in its order.
+const scripts = [
+  ...fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8').matchAll(/<script src="([^"]+)"/g),
+].map(m => m[1]);
+assert(
+  scripts.includes('engine/ai.js') && scripts.at(-1) === 'game.js',
+  'index.html loads the engine parts and ends with game.js',
+);
+for (const file of scripts) vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist', file), 'utf8'), context);
 const run = s => vm.runInContext(s, context);
 const modal = () => node('modal-root').innerHTML;
 (async () => {

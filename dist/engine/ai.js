@@ -1,0 +1,973 @@
+/* Knightmare Conquest AI: rival high command (production, F.L.E.I.J.A., carriers), theaters and unit orders.
+   Loads after engine.js and adds the AI to its API; it uses the rules through the engine's shared internals. */
+(function (root) {
+  'use strict';
+  const E = root.Knightmare;
+  const {
+    COMMANDERS,
+    ELIMINATOR,
+    FACTIONS,
+    FLEIJA,
+    MAJORS,
+    NAVAL,
+    TYPES,
+    adjacent,
+    aiLaunchTarget,
+    alive,
+    allUnits,
+    amphibiousSea,
+    assign,
+    atSea,
+    attack,
+    build,
+    buildCost,
+    buildReason,
+    buildingLevel,
+    canBoard,
+    canBuy,
+    canCapture,
+    deploy,
+    deployReason,
+    deployTargets,
+    deployTargetsAt,
+    depositHost,
+    depositOwner,
+    dist,
+    eliminatorReason,
+    eliminatorUnlocked,
+    feint,
+    feintReason,
+    fireFortress,
+    fleijaCity,
+    foe,
+    fortressTargets,
+    funds,
+    goalField,
+    goalSeeds,
+    hasFleija,
+    income,
+    isReady,
+    isSea,
+    isShip,
+    launch,
+    log,
+    massOf,
+    maxHP,
+    move,
+    nearFriendlyCity,
+    portAtHex,
+    portSite,
+    preview,
+    price,
+    projectReason,
+    random,
+    reachable,
+    recruit,
+    refine,
+    reindex,
+    reinforce,
+    reinforceCost,
+    repair,
+    repairCost,
+    seaMove,
+    serves,
+    sideEliminator,
+    siteAt,
+    startEliminator,
+    startProject,
+    stationAt,
+    targets,
+    tile,
+    typeFor,
+    unitAt,
+  } = E.internal;
+  // ======== AI ========
+  // Strategic awareness is scaled for the 180 × 76 world. Combat ranges remain deliberately unchanged.
+  const AI_RANGE = {
+    threat: 5,
+    capitalGuard: 13,
+    cityGuard: 7,
+    mineGuard: 8,
+    enemyScan: 16,
+    convoyLand: 4,
+    convoySea: 6,
+  };
+  // Campaign battlefields are a few dozen hexes across and keep the original, tighter radii.
+  const AI_RANGE_CAMPAIGN = { threat: 3, capitalGuard: 8, cityGuard: 4, mineGuard: 5, enemyScan: 10, convoyLand: 2, convoySea: 6 },
+    aiRange = g => (g.mode === 'campaign' ? AI_RANGE_CAMPAIGN : AI_RANGE);
+  const aiMemo = new WeakMap();
+  // Each AI turn starts with a plan: garrisons, then (Conquest) the theaters it fights in. Campaign battlefields are a
+  // single theater and keep one side-wide goal field.
+  function aiPlan(g, side) {
+    let memo = aiMemo.get(g);
+    if (!memo) aiMemo.set(g, (memo = {}));
+    if (!memo[side] || memo[side].turn !== g.turn) {
+      memo[side] = { turn: g.turn, guards: assignGuards(g, side) };
+      if (g.mode === 'campaign') memo[side].field = goalField(g, side);
+      else planFronts(g, side, memo[side]);
+    }
+    return memo[side];
+  }
+  // ======== Theaters ========
+  // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
+  // units keep their front for `sticky` turns, an offensive gathers within `rally` hexes of its rally city before it
+  // attacks (or after `wait` turns), and `reserve` of the army's strength waits at the capital.
+  const FRONT = { radius: 16, near: 20, max: 4, sticky: 4, far: 60, rally: 4, reserve: 0.1, wait: 3, pull: 15, stray: 4, floor: 0.25 };
+  // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
+  function unitStrength(u) {
+    const t = TYPES[u.type];
+    return u.stack * Math.max(0.2, u.hp / maxHP(u)) * (1 + 0.25 * ((t.tier || 1) - 1)) * (u.cmd ? 1.5 : 1) * (t.elite ? 1.5 : 1);
+  }
+  // What a side cares about this turn: enemy cities near its territory, every rival capital and F.L.E.I.J.A. project,
+  // Sakuradite mines, and its own threatened cities, capital and mines. `value` scores the front, `seed` feeds its field.
+  function frontObjectives(g, side) {
+    const R = aiRange(g),
+      own = g.stations.filter(s => s.owner === side),
+      army = g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u)),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      near = p => own.some(s => dist(g, s, p) <= FRONT.near) || army.some(u => dist(g, u, p) <= FRONT.near),
+      threatened = (p, vital) => foes.some(f => (vital && dist(g, f, p) <= R.threat * 2) || threatTo(g, f, p) > 0),
+      list = [];
+    for (const s of g.stations) {
+      if (foe(g, s.owner, side)) {
+        const project = s.project || s.eliminatorProject,
+          capital = s.capitalOf && alive(g, s.owner);
+        if (!project && !capital && !near(s)) continue;
+        const [value, seed] = project ? [100, -8] : capital ? [70, -6] : s.owner === 'neutral' ? [8, 1] : s.tier >= 3 ? [20, -1] : [10, 0];
+        list.push({ key: 's' + s.id, c: s.c, r: s.r, name: s.name, owner: s.owner, value, seed, fortified: value >= 20 });
+      } else if (s.owner === side) {
+        const vital = s.capitalOf === side || s.project?.side === side || s.eliminatorProject?.side === side;
+        if (threatened(s, vital))
+          list.push({ key: 'd' + s.id, c: s.c, r: s.r, name: s.name, defend: true, vital, value: vital ? 100 : 20, seed: vital ? -6 : -2 });
+      }
+    }
+    for (const d of g.sites || []) {
+      if (d.city != null) continue;
+      const major = d.base >= 30;
+      if (foe(g, d.owner, side) && (major || near(d)))
+        list.push({ key: 'm' + d.id, c: d.c, r: d.r, name: d.name, value: major ? 40 : 10, seed: major ? -5 : -1 });
+      else if (d.owner === side && major && threatened(d, false))
+        list.push({ key: 'n' + d.id, c: d.c, r: d.r, name: d.name, defend: true, value: 40, seed: -4 });
+    }
+    return list;
+  }
+  // Clusters objectives into fronts, scores and sizes them against the enemy strength there, assigns the army (sticky,
+  // emergencies and strength deficits first, a strategic reserve kept back), moves offensives between ASSEMBLING and
+  // ATTACKING, and builds one goal field per front. Persistent state lives in g.ai[side].fronts and .assignments.
+  function planFronts(g, side, memo) {
+    const R = aiRange(g),
+      state = ((g.ai ||= {})[side] ||= { saving: false }),
+      saved = (state.fronts ||= {}),
+      sticky = (state.assignments ||= {}),
+      own = g.stations.filter(s => s.owner === side),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      host = {};
+    for (const v of g.units) for (const c of v.cargo || []) host[c.id] = v;
+    const at = u => host[u.id] || u,
+      units = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold && !memo.guards[u.id]),
+      sum = list => list.reduce((a, u) => a + unitStrength(u), 0),
+      byDist = (p, list) => list.slice().sort((a, b) => dist(g, a.anchor || a, p) - dist(g, b.anchor || b, p) || (a.id < b.id ? -1 : 1));
+    // 1. Cluster: existing fronts re-form around their old anchors so ids stay stable from turn to turn.
+    const objectives = frontObjectives(g, side).sort(
+      (a, b) => !!saved[b.key] - !!saved[a.key] || b.value - a.value || (a.key < b.key ? -1 : 1),
+    );
+    let fronts = [];
+    for (const o of objectives) {
+      if (o.front) continue;
+      const f = { id: o.key, side, anchor: o, objectives: [], assigned: 0 };
+      for (const q of objectives)
+        if (!q.front && dist(g, q, o) <= FRONT.radius) {
+          q.front = f;
+          f.objectives.push(q);
+        }
+      fronts.push(f);
+    }
+    // 2. Score and size: objective values, minus distance from the nearest own city; enemy strength sets the force needed.
+    const army = sum(units);
+    for (const f of fronts) {
+      const attack = f.objectives.filter(o => !o.defend),
+        defend = f.objectives.filter(o => o.defend),
+        worth = list => list.reduce((a, o) => a + o.value, 0),
+        home = own.length ? Math.min(...own.map(s => dist(g, s, f.anchor))) : 0,
+        enemies = foes.filter(v => f.objectives.some(o => dist(g, v, o) <= 6));
+      f.type = defend.some(o => o.vital) || worth(defend) >= worth(attack) ? 'defensive' : 'offensive';
+      f.vital = defend.some(o => o.vital);
+      // The best objective counts in full and the rest at half, so a sprawl of small towns does not drown out a capital.
+      const best = Math.max(...f.objectives.map(o => o.value));
+      f.score = Math.round(best + (worth(f.objectives) - best) / 2 - Math.max(0, home - 8) * 1.2);
+      f.name = (f.type === 'offensive' ? attack.reduce((a, o) => (o.value > a.value ? o : a)) : f.anchor).name;
+      f.enemies = enemies;
+      f.enemyStrength = sum(enemies);
+      // Defense is sized against the enemies menacing the threatened cities, less the garrisons already there.
+      const menace = foes
+          .filter(v => defend.some(o => (o.vital && dist(g, v, o) <= R.threat * 2) || threatTo(g, v, o) > 0))
+          .reduce((a, v) => a + unitStrength(v) + sum(v.cargo || []), 0),
+        present = sum(g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u) && defend.some(o => dist(g, u, o) <= R.threat))),
+        garrison = sum(g.units.filter(u => memo.guards[u.id] && defend.some(o => dist(g, u, o) <= R.threat)));
+      f.desiredStrength =
+        f.type === 'defensive'
+          ? Math.max(2, menace * 1.2 - garrison)
+          : Math.max(3, f.enemyStrength * 1.5 + attack.length * 0.5);
+      // A defensive front is an emergency when the capital or a F.L.E.I.J.A. project is threatened, or when the friendly
+      // strength at its threatened cities (garrisons included) is under 60% of the enemy strength menacing them.
+      f.emergency = f.type === 'defensive' && (f.vital || (menace > 0 && present / menace < 0.6));
+      // Offensives stage at the nearest own city on the target's landmass, else at the nearest own coastal city.
+      if (f.type === 'offensive') {
+        const land = own.filter(s => massOf(g, s) === massOf(g, f.anchor));
+        f.overseas = !land.length;
+        f.rally = byDist(f.anchor, land.length ? land : own.filter(s => coastTile(g, s)))[0] || null;
+      }
+      // Priority: the score, discounted (down to `floor`) when half the army could not field the force it needs.
+      f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength));
+    }
+    // Every emergency, plus the `max` best other fronts.
+    fronts = fronts
+      .sort((a, b) => b.emergency - a.emergency || b.priority - a.priority || (a.id < b.id ? -1 : 1))
+      .filter((f, i, all) => f.emergency || i - all.filter(e => e.emergency).length < FRONT.max);
+    const byId = Object.fromEntries(fronts.map(f => [f.id, f])),
+      capital =
+        own.find(s => s.capitalOf === side) ||
+        own.slice().sort((a, b) => b.tier - a.tier || (b.factory || 0) - (a.factory || 0) || a.id - b.id)[0],
+      reserve = capital && {
+        id: 'reserve',
+        side,
+        type: 'reserve',
+        name: capital.name,
+        anchor: capital,
+        objectives: [{ c: capital.c, r: capital.r, seed: 0 }],
+        assigned: 0,
+        desiredStrength: FRONT.reserve * army,
+        score: 0,
+      };
+    if (reserve) byId.reserve = reserve;
+    // 3. Sticky assignments hold unless the front is gone, the unit has served its turns, drifted extremely far, or a
+    // vital emergency nearby (any emergency, for the reserve) needs it.
+    const assign = {},
+      emergencies = fronts.filter(f => f.emergency),
+      give = (u, f) => {
+        assign[u.id] = f.id;
+        f.assigned += unitStrength(u);
+        if (sticky[u.id]?.front !== f.id) sticky[u.id] = { front: f.id, since: g.turn };
+      };
+    for (const u of units) {
+      const a = sticky[u.id],
+        f = a && byId[a.front];
+      if (!f) continue;
+      const pulled =
+        f === reserve ? emergencies.length > 0 : emergencies.some(e => e !== f && e.vital && dist(g, at(u), e.anchor) <= FRONT.pull);
+      if (!pulled && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
+    }
+    // 4. Targets: emergencies get their full need and the reserve its share; the rest of the army splits 50/25/15/10 by
+    // front rank, a front never taking more than it needs (the surplus flows to the others).
+    const open = fronts.filter(f => !f.emergency),
+      weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
+    let pot = army - (reserve?.desiredStrength || 0),
+      left = open;
+    // A vital emergency (capital, F.L.E.I.J.A. project) may claim everything it needs; any other at most a fifth.
+    for (const f of emergencies) pot -= f.target = f.vital ? f.desiredStrength : Math.min(f.desiredStrength, army * 0.2);
+    pot = Math.max(0, pot);
+    while (left.length) {
+      const w = left.reduce((a, f) => a + weight.get(f), 0),
+        capped = left.filter(f => f.desiredStrength <= (pot * weight.get(f)) / w);
+      if (!capped.length) {
+        for (const f of left) f.target = (pot * weight.get(f)) / w;
+        break;
+      }
+      for (const f of capped) pot -= f.target = f.desiredStrength;
+      left = left.filter(f => !capped.includes(f));
+    }
+    // The pool goes to emergencies, then the reserve, then whichever front is furthest below its target; each front
+    // takes the nearest free unit (a little nearer if it served there before). Leftovers join the nearest front.
+    const pool = units.filter(u => !assign[u.id]),
+      take = (f, range = Infinity) => {
+        let best = null,
+          bd = Infinity;
+        for (const u of pool) {
+          if (assign[u.id]) continue;
+          const d = dist(g, at(u), f.anchor) - (sticky[u.id]?.front === f.id ? 10 : 0);
+          if (d <= range && (d < bd || (d === bd && u.id < best.id))) {
+            bd = d;
+            best = u;
+          }
+        }
+        if (best) give(best, f);
+        return !!best;
+      };
+    for (const f of emergencies) while (f.assigned < f.target && take(f, FRONT.pull + 10));
+    if (reserve) while (reserve.assigned < reserve.desiredStrength && take(reserve, 25));
+    for (;;) {
+      const f = fronts.filter(f => f.assigned < f.target).sort((a, b) => b.target - b.assigned - (a.target - a.assigned))[0];
+      if (!f || !take(f)) break;
+    }
+    for (const u of pool) {
+      if (assign[u.id]) continue;
+      const f = byDist(at(u), fronts)[0] || reserve;
+      if (f) give(u, f);
+    }
+    // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
+    // ATTACKING; an attack that has lost over half its force falls back to regroup. Defensive fronts hold.
+    for (const f of fronts) {
+      const st = (saved[f.id] ||= { state: 'assembling', since: g.turn });
+      st.seen = g.turn;
+      const mine = units.filter(u => assign[u.id] === f.id),
+        set = v => {
+          if (st.state !== v) Object.assign(st, { state: v, since: g.turn });
+        };
+      if (f.type !== 'offensive' || !f.rally) set(f.type === 'offensive' ? 'attacking' : 'holding');
+      else {
+        if (st.state === 'holding') set('assembling');
+        f.readyStrength = sum(mine.filter(u => dist(g, at(u), f.rally) <= FRONT.rally || aheadOfRally(g, f, at(u))));
+        f.attackThreshold = Math.max(2, Math.min(f.desiredStrength * 0.8, f.assigned * 0.5));
+        if (st.state === 'assembling' && (f.readyStrength >= f.attackThreshold || g.turn - st.since >= FRONT.wait)) {
+          set('attacking');
+          st.force = f.assigned;
+          if (side !== g.player && f.objectives.some(o => o.owner === g.player))
+            log(g, `${FACTIONS[side].short} forces massed at ${f.rally.name} open an offensive toward ${f.name}.`, side);
+        } else if (st.state === 'attacking' && g.turn - st.since >= 2 && f.assigned < (st.force || 0) * 0.45) set('assembling');
+      }
+      f.state = st.state;
+      f.friendlyStrength = f.assigned;
+    }
+    // A front that drops out of the plan keeps its state for three turns in case it returns.
+    for (const [id, st] of Object.entries(saved)) if (g.turn - (st.seen ?? st.since) > 3) delete saved[id];
+    const living = new Set(allUnits(g).map(u => u.id));
+    for (const id of Object.keys(sticky)) if (!living.has(+id)) delete sticky[id];
+    // 6. One goal field per front (built when a unit first asks): an assembling offensive pulls toward its rally city;
+    // otherwise the objectives, and for threatened own cities the enemy units menacing them. An attacking front also
+    // takes targets of opportunity, but only those `stray` path cost nearer than its own.
+    const elsewhere = goalSeeds(g, side).map(([p, d]) => [p, d + FRONT.stray]);
+    for (const f of [...fronts, ...(reserve ? [reserve] : [])]) {
+      const seeds = (f.seeds =
+        f.state === 'assembling'
+          ? [[f.rally, 0]]
+          : f.objectives.flatMap(o =>
+              o.defend ? [[o, o.seed], ...foes.filter(v => dist(g, v, o) <= R.threat).map(v => [v, o.seed + 1])] : [[o, o.seed]],
+            ));
+      f.masses = new Set(seeds.map(([p]) => massOf(g, p)).filter(m => m >= 0));
+      if (f.state === 'attacking') f.seeds = [...seeds, ...elsewhere];
+      f.need = frontNeeds(f, units.filter(u => assign[u.id] === f.id));
+    }
+    // Idle carriers wait off the rally city of the best offensive across the sea.
+    const lift = fronts.find(f => f.overseas && f.rally);
+    Object.assign(memo, { fronts, byId, assign, fields: {}, reserve, staging: lift?.rally || null });
+  }
+  // Already nearer an assembling front's target than its rally city is, on the rally's landmass.
+  const aheadOfRally = (g, f, p) => massOf(g, p) === massOf(g, f.rally) && dist(g, p, f.anchor) < dist(g, f.rally, f.anchor);
+  // Two formations may share a carrier when their fronts head for the same landmass.
+  const sameLift = (a, b) => a === b || (!!a?.masses && !!b?.masses && [...a.masses].some(m => b.masses.has(m)));
+  // What a front asks its factories for, by the enemy's composition there and its own: assault frames and rockets
+  // against Armor, Armor against Infantry, guns when it lacks artillery, siege for fortified cities, and fast raiders
+  // around a medium-frame core for an invasion across the sea (every formation needs a hull).
+  function frontNeeds(f, mine) {
+    const mix = list => {
+        const m = { Infantry: 0, Armor: 0, Artillery: 0, total: 0 };
+        for (const u of list) {
+          const v = unitStrength(u);
+          m[TYPES[u.type].branch] = (m[TYPES[u.type].branch] || 0) + v;
+          m.total += v;
+        }
+        return m;
+      },
+      enemy = mix((f.enemies || []).filter(u => !isShip(u))),
+      ours = mix(mine);
+    if (f.type === 'reserve') return ['heavy', 'medium', 'rocket'];
+    const need = f.overseas
+      ? ['raider', 'medium', 'assault', 'heavy']
+      : f.type === 'defensive'
+        ? ['heavy', 'rocket', 'medium', 'support']
+        : enemy.total && enemy.Armor >= enemy.total * 0.5
+          ? ['assault', 'rocket', 'heavy', 'medium']
+          : ['medium', 'heavy', 'rocket', 'light'];
+    if (!f.overseas && ours.Artillery < ours.total * 0.2)
+      need.unshift(f.type === 'offensive' && f.objectives.some(o => o.fortified) ? 'siege' : 'rocket');
+    return [...new Set(need)];
+  }
+  // The front (or reserve) a unit serves; formations raised after the plan join the nearest front still short of strength.
+  function frontOf(g, memo, u) {
+    if (!memo?.byId || !u || memo.guards?.[u.id] || isShip(u) || u.hold) return null;
+    if (!(u.id in memo.assign)) {
+      const short = memo.fronts.filter(f => f.assigned < f.desiredStrength),
+        f = (short.length ? short : memo.fronts)
+          .slice()
+          .sort((a, b) => dist(g, u, a.anchor) - dist(g, u, b.anchor) || (a.id < b.id ? -1 : 1))[0] || memo.reserve;
+      memo.assign[u.id] = f?.id ?? null;
+      if (f) {
+        f.assigned += unitStrength(u);
+        g.ai[u.side].assignments[u.id] = { front: f.id, since: g.turn };
+      }
+    }
+    return memo.byId[memo.assign[u.id]] || null;
+  }
+  // The goal field a unit follows: its front's; guards lean on the reserve's and warships on the main front's; else the
+  // side-wide field. Fields are built on first use.
+  function fieldFor(g, memo, u) {
+    const f = frontOf(g, memo, u) || (isShip(u) ? memo.fronts?.[0] : memo.reserve);
+    let field = null;
+    return p => {
+      field ||= (f && (memo.fields[f.id] ||= goalField(g, f.side, f.seeds))) || (memo.field ||= goalField(g, u.side));
+      const v = field[p.r * g.cols + p.c];
+      return Number.isFinite(v) ? v : 60;
+    };
+  }
+  // The frames an enemy unit threatens a position with next turn: anything within `threat` hexes; in Conquest also,
+  // against a coastal position, a carrier's cargo within a sail and a launch, an amphibious frame within its sea move,
+  // and an embarked transport within its sail.
+  function threatTo(g, f, p) {
+    const d = dist(g, f, p);
+    if (d <= aiRange(g).threat) return f.stack;
+    if (g.mode === 'campaign' || !adjacent(g, p).some(isSea)) return 0;
+    const t = TYPES[f.type];
+    if (t.naval === 'ship') return d <= t.move + 1 ? (f.cargo || []).reduce((a, c) => a + c.stack, 0) : 0;
+    if (t.naval === 'amphibious') return d <= amphibiousSea(g, f) + 1 ? f.stack : 0;
+    return atSea(g, f) && d <= seaMove(g, f) + 1 ? f.stack : 0;
+  }
+  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
+  // to enemies within five hexes (or a landing's reach, see threatTo) and draw defenders from proportionally larger
+  // strategic radii. In Conquest, fortress cities and naval bases also keep one defender. Returns { unitId: city }.
+  function assignGuards(g, side) {
+    const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      taken = {},
+      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0);
+    // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
+    const cities = g.stations
+      .filter(s => s.owner === side)
+      .map(s => ({
+        s,
+        threat: threat(s),
+        capital: s.capitalOf === side || s.project?.side === side || s.eliminatorProject?.side === side || (s.eliminator || 0) > 0,
+      }))
+      .filter(c => c.capital || c.threat > 0)
+      .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
+    for (const { s, threat: t, capital } of cities) {
+      const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
+      const near = own
+        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
+        .sort((a, b) => dist(g, a, s) - dist(g, b, s));
+      for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+    }
+    // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
+    // empty, even in quiet times.
+    if (g.mode !== 'campaign')
+      for (const s of g.stations) {
+        if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
+        if (Object.values(taken).some(t => t.id === s.id)) continue;
+        const u = own
+          .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
+          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
+        if (u) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+      }
+    // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
+    for (const d of g.sites || []) {
+      if (d.city != null || d.owner !== side) continue;
+      const t = threat(d),
+        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
+      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
+    }
+    return taken;
+  }
+  // Enemy high command, run once at the start of each AI turn before its units act: batteries, repairs, saving for
+  // super-heavies, upgrades, reinforcements, then stacked production up to a soft army cap.
+  const hostileMass = (g, side, mass) => g.stations.some(s => massOf(g, s) === mass && foe(g, s.owner, side));
+  // Troops worth lifting: their front's goal (its rally city while assembling) lies on another landmass, or (no front)
+  // nothing to attack on theirs; or (city-taking Infantry and Armor only) far from it (goal field 14+), unless they are
+  // still gathering.
+  function wantsLift(g, u, memo) {
+    if (TYPES[u.type].naval || atSea(g, u) || u.hold) return false;
+    const front = frontOf(g, memo, u),
+      mass = massOf(g, u),
+      far = canCapture(u) && fieldFor(g, memo, u)(u) >= 14;
+    if (front?.masses) return !front.masses.has(mass) || (far && front.state !== 'assembling');
+    return !hostileMass(g, u.side, mass) || far;
+  }
+  // A landing hex: enemy frames within 3 hexes (threat) and an undefended enemy city within 2 (prize). Lower is better;
+  // null when the beach is defended by more frames than the carrier brings.
+  function landingScore(g, side, t, strength, fieldAt, masses = null) {
+    if (!hostileMass(g, side, massOf(g, t)) && !masses?.has(massOf(g, t))) return null;
+    const threat = g.units
+      .filter(v => v.hp > 0 && foe(g, v.side, side) && !TYPES[v.type].naval && dist(g, v, t) <= 3)
+      .reduce((a, v) => a + v.stack, 0);
+    if (threat > strength) return null;
+    const prize = g.stations.some(s => foe(g, s.owner, side) && !unitAt(g, s) && s.shield <= 60 && dist(g, s, t) <= 2);
+    return fieldAt(t) + threat * 3 - (prize ? 25 : 0);
+  }
+  // Launch every ready formation onto the best landing hex (toward its front, which may be a friendly rally city), then
+  // give each its full turn.
+  function aiLaunch(g, ship, events, fieldAt, masses) {
+    for (let i = (ship.cargo?.length || 0) - 1; i >= 0; i--) {
+      if (deployReason(g, ship, i)) continue;
+      const strength = ship.cargo.reduce((a, c) => a + c.stack, 0),
+        spot = deployTargets(g, ship)
+          .map(t => ({ t, s: landingScore(g, ship.side, t, strength, fieldAt, masses) }))
+          .filter(o => o.s != null)
+          .sort((a, b) => a.s - b.s)[0]?.t;
+      if (!spot) break;
+      const d = deploy(g, ship.id, i, spot.c, spot.r);
+      if (!d.ok) continue;
+      events.push({ kind: 'deploy', id: d.unit.id, from: { c: ship.c, r: ship.r }, to: d.to });
+      events.push(...aiOrder(g, d.unit.id));
+    }
+  }
+  // A carrier's operation: wait off a coast where troops bound overseas gather, sail for their front once loaded (full,
+  // or after three turns), launch everything ashore; badly damaged and empty, head home to a port; idle, wait off the
+  // rally city of the best offensive across the sea. One carrier serves one front. Returns false when there is nothing
+  // to do, so the generic orders use it as a gunship.
+  function aiCarrier(g, u, memo, events, fieldAt) {
+    const bound = u.cargo?.length ? frontOf(g, memo, u.cargo[0]) : null,
+      masses = bound?.masses || null;
+    if (bound) fieldAt = fieldFor(g, memo, u.cargo[0]);
+    const fleet = (((g.ai ||= {})[u.side] ||= {}).fleet ||= {}),
+      job = (fleet[u.id] ||= { wait: 0 }),
+      cargo = u.cargo || [],
+      reach = [...reachable(g, u).keys()]
+        .map(k => {
+          const [c, r] = k.split(',').map(Number);
+          return tile(g, c, r);
+        })
+        .filter(p => !unitAt(g, p)),
+      sail = p => {
+        if (!p || (p.c === u.c && p.r === u.r)) return;
+        const m = move(g, u.id, p.c, p.r);
+        if (m.ok) events.push({ kind: 'move', ...m, id: u.id });
+      },
+      danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
+      strength = cargo.reduce((a, c) => a + c.stack, 0),
+      landing = p => {
+        const scores = deployTargetsAt(g, p, u.side)
+          .map(t => landingScore(g, u.side, t, strength, fieldAt, masses))
+          .filter(v => v != null);
+        return scores.length ? Math.min(...scores) + danger(p) * 2 : null;
+      };
+    const ports = g.stations.filter(s => s.portAt && s.portOwner === u.side).map(s => tile(g, s.portAt.c, s.portAt.r));
+    if (!cargo.length && u.hp / maxHP(u) < 0.4 && ports.length) {
+      const port = ports.sort((a, b) => dist(g, a, u) - dist(g, b, u))[0];
+      if (dist(g, u, port) > 0) sail(reach.sort((a, b) => dist(g, a, port) - dist(g, b, port))[0]);
+      return true;
+    }
+    const ready = cargo.some(c => c.boardedTurn !== g.turn);
+    if (ready && (cargo.length >= TYPES[u.type].capacity || job.wait >= 3)) {
+      if (landing(tile(g, u.c, u.r)) == null) {
+        const best = reach
+          .map(p => ({ p, s: landing(p) }))
+          .filter(o => o.s != null)
+          .sort((a, b) => a.s - b.s)[0];
+        sail(best ? best.p : reach.sort((a, b) => fieldAt(a) - fieldAt(b))[0]);
+      }
+      if (landing(tile(g, u.c, u.r)) != null) aiLaunch(g, u, events, fieldAt, masses);
+      if (!u.cargo.length) job.wait = 0;
+      return true;
+    }
+    if (cargo.length) job.wait++;
+    const riders = g.units.filter(
+      v => v.hp > 0 && v.side === u.side && !memo.guards?.[v.id] && (!cargo.length || sameLift(frontOf(g, memo, v), bound)) && wantsLift(g, v, memo),
+    );
+    if (!riders.length) {
+      const stage = !cargo.length && memo.staging;
+      if (!stage) return cargo.length > 0;
+      if (dist(g, u, stage) > 2) sail(reach.sort((a, b) => dist(g, a, stage) - dist(g, b, stage))[0]);
+      return true;
+    }
+    const score = p =>
+      adjacent(g, p).some(n => !isSea(n)) ? riders.filter(v => dist(g, v, p) <= 3).length * 10 - danger(p) * 6 : -Infinity;
+    const here = tile(g, u.c, u.r),
+      best = [here, ...reach].sort((a, b) => score(b) - score(a) || dist(g, a, u) - dist(g, b, u))[0],
+      closest = p => Math.min(...riders.map(v => dist(g, v, p)));
+    sail(score(best) > 0 ? best : reach.sort((a, b) => closest(a) - closest(b))[0]);
+    return true;
+  }
+  function aiProduction(g) {
+    const side = g.phase,
+      e = funds(g, side),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      own = () => g.units.filter(u => u.hp > 0 && u.side === side),
+      front = p => {
+        let best = 99;
+        for (const u of foes) best = Math.min(best, dist(g, u, p));
+        return best;
+      },
+      plan = ((g.ai ||= {})[side] ||= { saving: false }),
+      memo = aiPlan(g, side),
+      builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side);
+    const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
+    const yard3 = bases.filter(s => s.tier >= 3);
+    const superType = typeFor(side, 'super', g),
+      superPrice = price(superType, 1, g, side);
+    // 0. Fire every ready battery at the strongest enemy unit in range (the UI animates g.strikes).
+    g.strikes = [];
+    for (const s of bases) {
+      const target = fortressTargets(g, s)
+        .map(p => unitAt(g, p))
+        .sort((a, b) => b.hp - a.hp || a.id - b.id)[0];
+      if (target) {
+        const shot = fireFortress(g, s.id, target.c, target.r);
+        if (shot.ok) g.strikes.push(shot);
+      }
+    }
+    // 0b. F.L.E.I.J.A.: launch a ready warhead at the most valuable target that spares its own units and cities
+    // (the UI plays g.launches).
+    g.launches = [];
+    if ((g.arsenal?.[side] || 0) > 0) {
+      const p = aiLaunchTarget(g, side),
+        shot = p && launch(g, side, p.c, p.r);
+      if (shot?.ok) g.launches.push(shot);
+    }
+    // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
+    for (const u of own()
+      .filter(u => u.hp / maxHP(u) < 0.55 && nearFriendlyCity(g, u) && !atSea(g, u))
+      .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
+      if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
+    }
+    if (!builds) return;
+    // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
+    const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
+    // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.
+    if (!yard3.length || supers >= 2) plan.saving = false;
+    else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
+      plan.saving = true;
+    // 2b. F.L.E.I.J.A. Eliminator: after the first detonation, rivals prioritize one defensive charge.
+    const defenseCity = eliminatorUnlocked(g) && !sideEliminator(g, side) ? fleijaCity(g, side, front) : null;
+    plan.eliminator =
+      !!defenseCity &&
+      ((e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite || income(g, side).sakuradite >= 10);
+    if (plan.eliminator && !eliminatorReason(g, defenseCity)) {
+      startEliminator(g, defenseCity.id);
+      plan.eliminator = false;
+    }
+    const defenseProject = g.stations.some(s => s.eliminatorProject?.side === side);
+    // 2c. F.L.E.I.J.A.: one warhead at a time. A power with the Sakuradite for it (or the income to gather it soon)
+    // keeps that Sakuradite back, then saves credits and industry and starts the project in its best-lab city.
+    const warCity =
+      !plan.eliminator &&
+      !defenseProject &&
+      hasFleija(g, side) &&
+      !g.stations.some(s => s.project?.side === side) &&
+      !(g.arsenal?.[side] > 0) &&
+      g.turn - (g.launched?.[side] ?? -Infinity) >= FLEIJA.aiRest
+        ? fleijaCity(g, side, front)
+        : null;
+    plan.warhead = !!warCity && ((e.sakuradite || 0) >= FLEIJA.cost.sakuradite || income(g, side).sakuradite >= 15);
+    if (plan.warhead && !projectReason(g, warCity)) {
+      startProject(g, warCity.id);
+      plan.warhead = false;
+    }
+    const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
+      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
+    if (plan.eliminator || plan.warhead) plan.saving = false;
+    if (plan.saving) {
+      const yard = yard3.find(s => canBuy(g, s, superType, 1));
+      if (yard) {
+        recruit(g, yard.id, superType, 1);
+        plan.saving = false;
+      }
+    }
+    const reserve = defenseSaving
+      ? Math.min(e.credits, ELIMINATOR.cost.credits)
+      : warSaving
+        ? Math.min(e.credits, FLEIJA.cost.credits)
+        : plan.saving
+          ? Math.min(e.credits, superPrice.credits)
+          : 60;
+    const reserveInd = defenseSaving
+      ? Math.min(e.industry, ELIMINATOR.cost.industry)
+      : warSaving
+        ? Math.min(e.industry, FLEIJA.cost.industry)
+        : plan.saving
+          ? Math.min(e.industry, superPrice.industry)
+          : 0;
+    const reserveSak = plan.eliminator
+      ? ELIMINATOR.cost.sakuradite
+      : plan.warhead
+        ? FLEIJA.cost.sakuradite
+        : plan.saving
+          ? superPrice.sakuradite
+          : 0;
+    const spendable = () => Math.max(0, e.credits - reserve);
+    // Sakuradite held back for a project only blocks purchases that spend Sakuradite.
+    const affordable = c =>
+      c.credits <= spendable() &&
+      e.industry - (c.industry || 0) >= reserveInd &&
+      (!c.sakuradite || (e.sakuradite || 0) - c.sakuradite >= reserveSak);
+    // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
+    const heavySak = yard3.length ? price(typeFor(side, 'heavy'), 1, g, side).sakuradite : 0;
+    const keepsHeavy = (type, c) =>
+      !c.sakuradite || TYPES[type].tier >= 3 || (e.sakuradite || 0) - c.sakuradite >= heavySak;
+    // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),
+    // then the lowest-level factory or lab at the safest city.
+    if (!plan.saving && g.turn >= 2) {
+      let upgraded = false;
+      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player.
+      const soon = g.turn >= FLEIJA.labTurn - 5,
+        prep = side !== g.player && MAJORS.includes(side) && soon ? fleijaCity(g, side, front) : null;
+      if (
+        prep &&
+        (prep.lab || 0) < FLEIJA.lab &&
+        ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= FLEIJA.labTurn)
+      ) {
+        const cost = buildCost(prep, 'lab');
+        if (spendable() - cost.credits >= 100 && affordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
+      }
+      for (const d of (g.sites || []).filter(d => depositOwner(g, d) === side).sort((a, b) => b.base - a.base)) {
+        const host = depositHost(g, d),
+          cost = buildCost(host, 'refinery');
+        if (upgraded) break;
+        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !affordable(cost)) continue;
+        upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
+        if (upgraded) break;
+      }
+      const options = bases
+        .flatMap(s => ['factory', 'lab'].map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
+        .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < FLEIJA.labTurn))
+        .sort((a, b) => a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
+      const pick = options[0];
+      if (
+        !upgraded &&
+        pick &&
+        spendable() - buildCost(pick.s, pick.kind).credits >= 250 &&
+        affordable(buildCost(pick.s, pick.kind))
+      )
+        build(g, pick.s.id, pick.kind);
+    }
+    // 4. Reinforce healthy Armor and Artillery units parked at a friendly city.
+    for (const u of own()
+      .filter(
+        u =>
+          u.stack < 3 &&
+          !u.moved &&
+          !u.attacked &&
+          TYPES[u.type].branch !== 'Infantry' &&
+          u.hp / maxHP(u) >= 0.7 &&
+          nearFriendlyCity(g, u) &&
+          !atSea(g, u),
+      )
+      .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
+      const c = reinforceCost(u.type, g, side, u);
+      if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
+    }
+    // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
+    // putting what its front asks for at the top of its menu; stack up when the budget allows. A soft cap keeps armies
+    // manageable.
+    const serves = s =>
+        (memo.fronts || [])
+          .filter(f => f.assigned < f.desiredStrength && dist(g, s, f.rally || f.anchor) <= 25)
+          .sort((a, b) => dist(g, s, a.rally || a.anchor) - dist(g, s, b.rally || b.anchor))[0],
+      urgency = s => {
+        const f = serves(s);
+        return f ? (f.desiredStrength - f.assigned) * (0.5 + Math.max(0, f.score) / 100) : 0;
+      },
+      yards = bases.slice().sort((a, b) => urgency(b) - urgency(a));
+    const cap = 14 + Math.round(bases.length * 0.9);
+    let army = own().length;
+    // 4b. Navy: one level-2 port for carriers and up to three ports in all (one port build a turn), then a fleet of up
+    // to four Carrier-Battleships and six amphibious formations.
+    const navy = g.mode !== 'campaign' && NAVAL[side];
+    if (navy) {
+      const coastal = bases.filter(s => portSite(g, s)),
+        ports = coastal.filter(s => s.portLevel && s.portOwner === side),
+        pick = !ports.some(s => s.portLevel >= 2)
+          ? ports.sort((a, b) => b.portLevel - a.portLevel || front(b) - front(a))[0] ||
+            coastal.sort((a, b) => front(b) - front(a))[0]
+          : ports.length < Math.min(3, coastal.length)
+            ? coastal.filter(s => !s.portLevel).sort((a, b) => front(a) - front(b))[0]
+            : null;
+      if (pick && !buildReason(g, pick, 'port')) {
+        const cost = buildCost(pick, 'port');
+        if (spendable() - cost.credits >= 150 && affordable(cost)) build(g, pick.id, 'port');
+      }
+      const count = (...roles) => own().filter(u => roles.some(r => u.type === navy[r])).length;
+      for (const [role, short] of [
+        ['carrier', count('carrier') < 4],
+        ['amphibious2', count('amphibious', 'amphibious2') < 6],
+        ['amphibious', count('amphibious', 'amphibious2') < 6],
+      ]) {
+        if (!short || army >= cap || random(g) >= 0.5) continue;
+        const type = navy[role],
+          c = price(type, 1, g, side),
+          yard = bases.find(s => canBuy(g, s, type, 1));
+        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok) {
+          army++;
+          break;
+        }
+      }
+    }
+    for (const [i, s] of yards.entries()) {
+      if (army >= cap) break;
+      // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
+      const classes =
+          s.tier >= 3
+            ? ['heavy', 'siege', 'medium', 'rocket', 'light', 'assault', 'support', 'scout']
+            : s.tier === 2
+              ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
+              : ['light', 'support', 'assault', 'scout'],
+        need = (serves(s)?.need || []).filter(c => classes.includes(c));
+      const menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g));
+      const preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
+      const share = i === yards.length - 1 ? 1 : 0.6;
+      for (const type of [preferred, ...menu.filter(x => x !== preferred)]) {
+        let built = false;
+        for (let n = 3; n >= 1 && !built; n--) {
+          const c = price(type, n, g, side);
+          // Single frames may use the whole budget; stacks only this factory's share of it.
+          if (
+            !canBuy(g, s, type, n) ||
+            !affordable(c) ||
+            !keepsHeavy(type, c) ||
+            (n > 1 && c.credits > spendable() * share)
+          )
+            continue;
+          recruit(g, s.id, type, n);
+          built = true;
+          army++;
+        }
+        if (built) break;
+      }
+    }
+  }
+  function coastTile(g, p) {
+    return !isSea(p) && adjacent(g, p).some(isSea);
+  }
+  function aiOrder(g, id) {
+    const u = g.units.find(u => u.id === id);
+    if (!u || !isReady(g, u)) return [];
+    const events = [],
+      memo = aiPlan(g, u.side),
+      guard = memo.guards?.[u.id],
+      front = frontOf(g, memo, u),
+      // Units already ahead of an assembling front's rally city hold their ground rather than walk back.
+      forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
+      home = { c: u.c, r: u.r },
+      fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
+    const steered = isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
+    if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
+      const berth = [...reachable(g, u).keys()]
+        .map(k => {
+          const [c, r] = k.split(',').map(Number);
+          return tile(g, c, r);
+        })
+        .find(p => {
+          const v = unitAt(g, p);
+          return v && v !== u && v.side === u.side && canBoard(v) && (!v.cargo?.length || sameLift(frontOf(g, memo, v.cargo[0]), front));
+        });
+      const m = berth && move(g, id, berth.c, berth.r);
+      if (m?.ok) return [...events, { kind: 'move', ...m, id }];
+    }
+    const action = COMMANDERS[u.cmd]?.action;
+    if (action && action.kind !== 'command' && !feintReason(g, u)) {
+      const r = feint(g, id);
+      if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
+    }
+    const choose = () =>
+      targets(g, u)
+        .map(p => {
+          const d = unitAt(g, p),
+            s = stationAt(g, p),
+            pr = preview(g, id, p.c, p.r);
+          const score =
+            pr.unit +
+            pr.shield * 0.7 +
+            (d && pr.unit >= d.hp ? 130 : 0) +
+            (s ? 35 : 0) +
+            (s?.capitalOf ? 60 : 0) +
+            (s?.project ? 120 : 0) +
+            (d?.cmd ? 30 : 0) -
+            pr.counter * 0.5;
+          return { p, score };
+        })
+        .sort((a, b) => b.score - a.score)[0];
+    if (!u.moved && !u.attacked && !steered) {
+      // Boarding is decided above (idle troops and waiting carriers), so occupied hexes are not destinations here.
+      const spots = [...reachable(g, u).keys()]
+        .map(k => {
+          const [c, r] = k.split(',').map(Number);
+          return tile(g, c, r);
+        })
+        .filter(p => !unitAt(g, p));
+      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= aiRange(g).enemyScan);
+      const old = { c: u.c, r: u.r };
+      // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
+      // count as an escort so follow-on waves do not get stranded waiting for a fresh three-unit convoy.
+      const naval = !!TYPES[u.type].naval,
+        fromLand = !naval && !atSea(g, u),
+        freeAllies = g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !memo.guards?.[v.id]),
+        landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= aiRange(g).convoyLand).length,
+        seaEscort = freeAllies.filter(v => atSea(g, v) && dist(g, v, u) <= aiRange(g).convoySea).length,
+        // A front still gathering (or holding) on this landmass keeps its troops ashore; one bound overseas lets a lone
+        // formation cross where no enemy is near.
+        ashore = front && front.state !== 'attacking' && front.masses?.has(massOf(g, u)),
+        safe = front && !enemies.some(v => dist(g, v, u) <= aiRange(g).enemyScan / 2),
+        convoy = fromLand && !guard && !ashore && (landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
+        currentField = fieldAt(old);
+      const placeScore = p => {
+        const station = stationAt(g, p);
+        let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        const mine = siteAt(g, p);
+        if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
+        sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : u.hold ? 0 : fieldAt(p) * 8;
+        if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
+        let nearestEnemy = 15,
+          danger = 0;
+        for (const v of enemies) {
+          const d = dist(g, v, p);
+          nearestEnemy = Math.min(nearestEnemy, d);
+          if (d <= 1) danger++;
+        }
+        if (isSea(p) && naval) {
+          sc -= danger * 20;
+        } else if (isSea(p)) {
+          sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
+          if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
+        } else if (!fromLand) {
+          sc += naval ? 30 : 90;
+        } else if (!guard && !convoy && coastTile(g, p) && fieldAt(p) <= currentField) {
+          const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= aiRange(g).convoyLand).length;
+          sc += 28 + Math.min(3, assembling) * 12;
+        }
+        if (TYPES[u.type].branch === 'Artillery') {
+          sc -= danger * 28;
+          sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;
+        } else sc -= nearestEnemy * 2;
+        if (station?.owner === u.side && u.hp / maxHP(u) < 0.5) sc += 20;
+        if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
+        return sc;
+      };
+      let best = null,
+        bestScore = -Infinity;
+      for (const p of spots) {
+        let sc = placeScore(p);
+        u.c = p.c;
+        u.r = p.r;
+        reindex(g, u, old);
+        const shot = choose();
+        u.c = old.c;
+        u.r = old.r;
+        reindex(g, u, p);
+        if (shot) sc += shot.score * 0.6;
+        if (sc > bestScore) {
+          bestScore = sc;
+          best = p;
+        }
+      }
+      const current = choose(),
+        stay = placeScore(tile(g, u.c, u.r)) + (current ? current.score * 0.6 : 0);
+      if (best && bestScore > stay + 4) {
+        const m = move(g, id, best.c, best.r);
+        if (m.ok) events.push({ kind: 'move', ...m, id });
+      }
+    }
+    for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
+      const shot = choose();
+      if (!shot) break;
+      const a = attack(g, id, shot.p.c, shot.p.r);
+      if (a.ok) events.push({ kind: 'attack', ...a, id });
+      else break;
+    }
+    // Zero's Tactical Command, after his own orders: the strongest friendly unit that has acted goes again.
+    if (action?.kind === 'command' && !g.over && u.hp > 0 && !feintReason(g, u)) {
+      const r = feint(g, id);
+      if (r.ok) events.push({ kind: 'feint', id, affected: 1 }, ...aiOrder(g, r.target));
+    }
+    return events;
+  }
+  Object.assign(E, { aiProduction, aiOrder, aiPlan, unitStrength, FRONT });
+})(typeof window !== 'undefined' ? window : globalThis);

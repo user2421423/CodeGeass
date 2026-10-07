@@ -2,7 +2,7 @@
 """Render tools/build_map.py's world grid to a PNG for checking coastlines (needs Pillow).
 
 Usage: python3 tools/preview_map.py out.png [--cities]
---cities marks the conquest cities read from dist/engine.js (CITY_DATA lines: [name, lon, lat, ...]).
+--cities marks the conquest cities read from dist/engine/world.js (CITY_DATA lines: [name, lon, lat, ...]).
 """
 import math
 import re
@@ -39,7 +39,7 @@ def main():
             if c % 10 == 0 and r % 4 == 0:
                 d.text((x - 6, y - 6), f'{c},{r}', fill=(255, 255, 0))
     if '--cities' in sys.argv:
-        src = open(__file__.rsplit('/', 2)[0] + '/dist/engine.js').read()
+        src = open(__file__.rsplit('/', 2)[0] + '/dist/engine/world.js').read()
         for m in re.finditer(r"\['([^']+)', (-?[\d.]+), (-?[\d.]+), '(\w+)'", src):
             name, lon, lat, owner = m.group(1), float(m.group(2)), float(m.group(3)), m.group(4)
             c, r = bm.hex_of(lon, lat)
