@@ -2759,7 +2759,7 @@ function draw(time, dt) {
         ctx.fill();
       }
       if (t.owner && t.terrain !== 'sea') {
-        ctx.fillStyle = F(t.owner).color + '30';
+        ctx.fillStyle = F(t.owner).color + '78';
         ctx.fill();
       }
       if (detail) {
