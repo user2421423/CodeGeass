@@ -40,9 +40,9 @@ license does not license the studio artwork.
   render; Emperor Lelouch shares Zero's portrait.
 - Owner-supplied artwork (added 2026-10-07 from the `feature/canon-unit-art-v2` branch; origin not recorded in this
   repository) covers Vercingetorix, Ahura Mazda, Canterbury, Siegfried, Portman, Portman II, Panzer-Frosch,
-  Panzer-Frosch II, the Japanese Army tank and rocket artillery, Britannia's Carrier-Battleship and the generic carrier
-  shared by the E.U. and Federation. Backgrounds were removed with `tools/local_art_prepare.py`; the enclosed-gap seeds
-  are in `tools/art-backgrounds.json`.
+  Panzer-Frosch II, the Japanese Army tank and rocket artillery, and the carriers: all three powers share one
+  insignia-free generic carrier (three hulls, from the canon Britannian Carrier-Battleship's silhouette). Backgrounds
+  were removed with `tools/local_art_prepare.py`; the enclosed-gap seeds are in `tools/art-backgrounds.json`.
 - Every Knightmare type and commander has published art except Shui Gun-Ru and Shui Gun-Ru II, which use their
   drawings. Procedural drawings otherwise remain only as runtime safety fallbacks.
 

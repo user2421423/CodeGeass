@@ -769,10 +769,10 @@
     {
       "kind": "units",
       "id": "carrier_battleship",
-      "file": "units/carrier_battleship-3d952e86c4cf.png",
+      "file": "units/generic_carrier-bf5e0799d818.png",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
       "image": null,
-      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. One insignia-free generic carrier shared by all three powers."
     },
     {
       "kind": "units",
@@ -780,7 +780,7 @@
       "file": "units/generic_carrier-bf5e0799d818.png",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
       "image": null,
-      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. Generic carrier shared by the E.U. and Federation."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. One insignia-free generic carrier shared by all three powers."
     },
     {
       "kind": "units",
@@ -788,7 +788,7 @@
       "file": "units/generic_carrier-bf5e0799d818.png",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
       "image": null,
-      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. Generic carrier shared by the E.U. and Federation."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. One insignia-free generic carrier shared by all three powers."
     },
     {
       "kind": "units",
