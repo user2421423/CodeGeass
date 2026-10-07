@@ -58,12 +58,12 @@ jobs:
             DIFFICULTIES="${{ inputs.difficulties }}"
             SEED="${{ inputs.seed }}"
           else
-            # One full benchmark on this feature branch. This is reverted to
-            # the cheap smoke configuration after the benchmark artifact is captured.
-            RUNS="2"
-            MAX_TURNS="120"
+            # Branch-push smoke run: enough to prove the harness still talks to
+            # the split engine correctly without spending minutes on every edit.
+            RUNS="1"
+            MAX_TURNS="12"
             PLAYERS="britannia,eu,cf"
-            DIFFICULTIES="normal,hard,challenge"
+            DIFFICULTIES="normal"
             SEED="20261007"
           fi
 
