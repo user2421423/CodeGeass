@@ -110,7 +110,7 @@ function getSave(key = SAVE_KEY) {
   return null;
 }
 function focusDialog() {
-  setTimeout(() => modal.querySelector('button:not(:disabled),select')?.focus(), 15);
+  setTimeout(() => modal.querySelector('button:not(:disabled),select,input:not(:disabled)')?.focus(), 15);
 }
 function closeModal() {
   generalOpen = null;
@@ -2349,7 +2349,7 @@ document.addEventListener('keydown', e => {
   }
   if (modal.children.length) {
     if (e.key === 'Tab') {
-      const list = [...modal.querySelectorAll('button:not(:disabled),select,a[href]')],
+      const list = [...modal.querySelectorAll('button:not(:disabled),select,input:not(:disabled),a[href]')],
         first = list[0],
         last = list.at(-1);
       if (e.shiftKey && document.activeElement === first) {
