@@ -3300,6 +3300,7 @@
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
     g.eliteDeployed ||= {};
+    if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {
@@ -4117,6 +4118,172 @@
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };
   }
+  // ======== Player city automation ========
+  // Automation is an administrative layer: it calls the same build/recruit rules as manual orders, never deploys
+  // Elite Forces or strategic weapons, and never spends through the player's protected resource reserve.
+  const AUTOMATION_POLICIES = {
+    manual: { name: 'Manual', desc: 'No automatic purchases.' },
+    balanced: { name: 'Balanced', desc: 'Mixes Infantry, Armor and Artillery while improving military infrastructure.' },
+    armor: { name: 'Armor', desc: 'Prioritises the strongest Armor the city can field.' },
+    artillery: { name: 'Artillery', desc: 'Prioritises Artillery and the factory levels needed to support it.' },
+    cheap: { name: 'Cheap Forces', desc: 'Builds inexpensive Infantry formations and economical infrastructure.' },
+    economy: { name: 'Economy', desc: 'Upgrades the city but does not automatically produce units.' },
+  };
+  const AUTOMATION_DEFAULT_RESERVE = { credits: 500, industry: 150, sakuradite: 25 };
+  function automationState(g) {
+    const a = (g.automation ||= {});
+    a.enabled ??= false;
+    a.autoUpgrade ??= true;
+    a.autoProduce ??= true;
+    a.defaultPolicy = AUTOMATION_POLICIES[a.defaultPolicy] ? a.defaultPolicy : 'manual';
+    a.stack = [1, 2, 3].includes(+a.stack) ? +a.stack : 1;
+    a.reserve ||= {};
+    for (const [k, v] of Object.entries(AUTOMATION_DEFAULT_RESERVE))
+      if (!Number.isFinite(+a.reserve[k]) || +a.reserve[k] < 0) a.reserve[k] = v;
+      else a.reserve[k] = Math.floor(+a.reserve[k]);
+    a.cities ||= {};
+    return a;
+  }
+  function cityAutomation(g, s) {
+    const a = automationState(g),
+      o = a.cities?.[s?.id] || {};
+    return {
+      policy: AUTOMATION_POLICIES[o.policy] ? o.policy : a.defaultPolicy,
+      autoUpgrade: o.autoUpgrade == null ? a.autoUpgrade : !!o.autoUpgrade,
+      autoProduce: o.autoProduce == null ? a.autoProduce : !!o.autoProduce,
+    };
+  }
+  function setCityAutomation(g, stationId, patch = {}) {
+    const a = automationState(g),
+      s = g.stations.find(v => v.id === +stationId);
+    if (!s) return { ok: false, reason: 'Unknown city' };
+    const o = (a.cities[s.id] ||= {});
+    if (patch.policy != null) {
+      if (!AUTOMATION_POLICIES[patch.policy]) return { ok: false, reason: 'Unknown production policy' };
+      o.policy = patch.policy;
+    }
+    if (patch.autoUpgrade != null) o.autoUpgrade = !!patch.autoUpgrade;
+    if (patch.autoProduce != null) o.autoProduce = !!patch.autoProduce;
+    if (patch.inheritUpgrade) delete o.autoUpgrade;
+    if (patch.inheritProduce) delete o.autoProduce;
+    return { ok: true, settings: cityAutomation(g, s) };
+  }
+  function automationReserveAllows(g, side, cost = {}, reserve = null) {
+    const e = funds(g, side),
+      r = reserve || automationState(g).reserve;
+    return ['credits', 'industry', 'sakuradite'].every(k => (e?.[k] || 0) - (cost[k] || 0) >= (r?.[k] || 0));
+  }
+  function automationUpgradeOrder(policy) {
+    if (policy === 'economy') return ['refinery', 'lab', 'port', 'factory'];
+    if (policy === 'cheap') return ['refinery', 'lab', 'factory', 'port'];
+    return ['factory', 'refinery', 'lab', 'port'];
+  }
+  function automationTypeCandidates(g, s, policy, stack = 1) {
+    if (!s || policy === 'manual' || policy === 'economy') return [];
+    const pool = [...new Set(g.buildable?.[s.owner] || Object.values(lineupOf(g, s.owner)))]
+      .filter(id => TYPES[id] && !TYPES[id].elite && !TYPES[id].campaign && !TYPES[id].naval && TYPES[id].tier <= s.tier);
+    const totalCost = id => {
+      const p = price(id, stack, g, s.owner);
+      return (p.credits || 0) + 2 * (p.industry || 0) + 4 * (p.sakuradite || 0);
+    };
+    if (policy === 'cheap')
+      return pool
+        .filter(id => TYPES[id].branch === 'Infantry')
+        .sort((a, b) => totalCost(a) - totalCost(b) || TYPES[a].tier - TYPES[b].tier || a.localeCompare(b));
+    if (policy === 'armor' || policy === 'artillery') {
+      const branch = policy === 'armor' ? 'Armor' : 'Artillery';
+      return pool
+        .filter(id => TYPES[id].branch === branch)
+        .sort((a, b) => TYPES[b].tier - TYPES[a].tier || TYPES[b].attack - TYPES[a].attack || a.localeCompare(b));
+    }
+    const counts = { Infantry: 0, Armor: 0, Artillery: 0 };
+    for (const u of allUnits(g))
+      if (u.hp > 0 && u.side === s.owner && counts[TYPES[u.type]?.branch] != null) counts[TYPES[u.type].branch] += u.stack || 1;
+    const branchRank = Object.fromEntries(
+      Object.keys(counts)
+        .sort((a, b) => counts[a] - counts[b] || a.localeCompare(b))
+        .map((b, i) => [b, i]),
+    );
+    return pool.sort(
+      (a, b) =>
+        branchRank[TYPES[a].branch] - branchRank[TYPES[b].branch] ||
+        TYPES[b].tier - TYPES[a].tier ||
+        TYPES[b].attack - TYPES[a].attack ||
+        a.localeCompare(b),
+    );
+  }
+  function emptyAutomationReport() {
+    return { units: 0, upgrades: 0, spent: { credits: 0, industry: 0, sakuradite: 0 }, entries: [] };
+  }
+  function addAutomationSpend(report, cost = {}) {
+    for (const k of ['credits', 'industry', 'sakuradite']) report.spent[k] += cost[k] || 0;
+  }
+  function runCityAutomation(g, side = g.player, opts = {}) {
+    const a = automationState(g),
+      report = emptyAutomationReport();
+    if (g.mode !== 'conquest' || g.over || g.phase !== side || (!a.enabled && !opts.force)) return report;
+    const reserve = a.reserve,
+      stack = a.stack;
+    for (const s of g.stations.filter(v => v.owner === side).sort((x, y) => x.id - y.id)) {
+      const cfg = cityAutomation(g, s);
+      if (cfg.policy === 'manual') continue;
+      if (cfg.autoUpgrade) {
+        for (const kind of automationUpgradeOrder(cfg.policy)) {
+          if (buildReason(g, s, kind)) continue;
+          const cost = buildCost(s, kind);
+          if (!automationReserveAllows(g, side, cost, reserve)) continue;
+          const r = build(g, s.id, kind);
+          if (r.ok) {
+            report.upgrades++;
+            addAutomationSpend(report, cost);
+            report.entries.push({ kind: 'upgrade', city: s.name, building: kind, cost });
+            break;
+          }
+        }
+      }
+      if (cfg.autoProduce && cfg.policy !== 'economy' && s.producedTurn !== g.turn) {
+        for (const type of automationTypeCandidates(g, s, cfg.policy, stack)) {
+          const cost = price(type, stack, g, side);
+          if (!automationReserveAllows(g, side, cost, reserve) || buyReason(g, s, type, stack)) continue;
+          const r = recruit(g, s.id, type, stack);
+          if (r.ok) {
+            report.units++;
+            addAutomationSpend(report, cost);
+            report.entries.push({ kind: 'unit', city: s.name, type, stack, cost });
+            break;
+          }
+        }
+      }
+    }
+    a.lastReport = { ...report, turn: g.turn };
+    if (report.units || report.upgrades)
+      log(
+        g,
+        `AUTOMATED LOGISTICS: ${report.units} unit${report.units === 1 ? '' : 's'} produced · ${report.upgrades} building upgrade${report.upgrades === 1 ? '' : 's'} · ${report.spent.credits} credits · ${report.spent.industry} industry${report.spent.sakuradite ? ` · ${report.spent.sakuradite} Sakuradite` : ''} spent.`,
+        side,
+      );
+    return report;
+  }
+  function bulkCityUpgrade(g, side = g.player, kind) {
+    const report = emptyAutomationReport(),
+      a = automationState(g);
+    if (g.mode !== 'conquest') return { ...report, reason: 'Production Command is Conquest-only' };
+    if (g.over || g.phase !== side) return { ...report, reason: 'Not your turn' };
+    if (!BUILDINGS[kind]) return { ...report, reason: 'Unknown building' };
+    for (const s of g.stations.filter(v => v.owner === side).sort((x, y) => x.id - y.id)) {
+      if (buildReason(g, s, kind)) continue;
+      const cost = buildCost(s, kind);
+      if (!automationReserveAllows(g, side, cost, a.reserve)) continue;
+      const r = build(g, s.id, kind);
+      if (!r.ok) continue;
+      report.upgrades++;
+      addAutomationSpend(report, cost);
+      report.entries.push({ kind: 'upgrade', city: s.name, building: kind, cost });
+    }
+    a.lastReport = { ...report, turn: g.turn, bulk: kind };
+    return report;
+  }
+
   function assign(g, id, k) {
     const u = g.units.find(u => u.id === id),
       a = COMMANDERS[k];
@@ -5458,6 +5625,15 @@
       over: null,
       stats: {},
       eliteDeployed: {},
+      automation: {
+        enabled: false,
+        autoUpgrade: true,
+        autoProduce: true,
+        defaultPolicy: 'manual',
+        stack: 1,
+        reserve: { ...AUTOMATION_DEFAULT_RESERVE },
+        cities: {},
+      },
     };
     for (let r = 0; r < g.rows; r++)
       for (let c = 0; c < g.cols; c++)
@@ -6224,6 +6400,15 @@
     buildingLevel,
     buildCost,
     build,
+    AUTOMATION_POLICIES,
+    AUTOMATION_DEFAULT_RESERVE,
+    automationState,
+    cityAutomation,
+    setCityAutomation,
+    automationReserveAllows,
+    automationTypeCandidates,
+    runCityAutomation,
+    bulkCityUpgrade,
     FORTRESS_GUN,
     fortressName,
     fortressReady,
