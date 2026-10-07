@@ -1,110 +1,28 @@
 #!/usr/bin/env python3
 """Rasterize hand-drawn continent outlines onto the Knightmare Conquest world hex grid.
 
-The grid is odd-r offset hexes, 180 columns x 76 rows, wrapping east-west, from 74N to 54S. Odd rows are shifted
-half a hex east. Like World Conqueror 4's map, the projection is not uniform: LENSES give Europe, the Mediterranean
-and East Asia about twice the hexes per degree and take them from the open oceans and the Arctic, so the countries
-that matter keep recognizable shapes without adding hexes. dist/engine.js applies the same projection (hexOf).
+The grid is odd-r offset hexes, 180 columns x 76 rows, wrapping east-west. Each column spans 2 degrees of
+longitude; rows run from 74N to 54S in roughly 1.707-degree steps. Odd rows are shifted half a hex east.
 
-Output: the generated block of dist/engine/world.js (WORLD and WORLD_ROWS), one string per row:
+Output: a JS snippet (WORLD_ROWS) to paste into dist/engine/world.js, one string per row:
   . sea   p plains   f forest   m mountains   d desert   s snow/tundra   x impassable peaks / ice cap
 
-Run:  python3 tools/build_map.py --inject dist/engine/world.js   (prints an ASCII preview on stderr)
-Coastlines are hand-drawn for gameplay rather than GIS-precise. FORCE_LAND / FORCE_SEA preserve small islands,
-isthmuses and important straits; every edit is given in lon/lat so it survives projection changes.
+Run:  python3 tools/build_map.py > /tmp/world.txt   (prints the JS block and an ASCII preview on stderr)
+Coastlines are hand-drawn for gameplay rather than GIS-precise, but the high-resolution raster keeps their shape
+close to the world map. FORCE_LAND / FORCE_SEA preserve small islands, isthmuses and important straits.
 """
-import bisect
 import math
 import sys
 
 COLS, ROWS = 180, 76
 LON0, LAT0 = -180.0, 74.0
 LAT_MIN = -54.0
-
-# Rows of hexes follow latitude only (no row ever tilts): ROW_BANDS give the populated northern mid-latitudes about twice
-# the rows per degree of the tropics and the far south, as WC4's Mercator-like map does. (lat centre, half-width at full
-# gain, taper, gain); the 76 rows still span 74N-54S, so a gain in one band is paid for by the others.
-ROW_BANDS = [
-    (68.5, 4.5, 2, -0.29),  # Arctic coasts
-    (54, 7, 3, 1.55),  # northern Europe, Russia, Canada
-    (39, 5, 3, 1.14),  # the Mediterranean, the United States, Korea and Japan
-    (24, 7, 2, 0.02),  # the Sahara, Arabia, northern India
-    (-46, 9, 2, -0.59),  # the Southern Ocean
-]
-# Column lenses: (lon centre, lon half-width at full gain, lon taper, lat centre, lat half-width, lat taper, gain).
-# Inside the window a row has (1 + gain) times the hexes per degree of longitude. The lenses come in balanced groups
-# that share a latitude window: each enlargement is paid for by compressing open ocean or empty interior beside it on
-# the same rows, so every group adds up to zero columns and meridians outside it stay straight. (A window's weight is
-# 2 * half-width + taper.) Windows may not cross 180.
-LENSES = [
-    # Europe and the Mediterranean, paid for by the North Atlantic and the Central Asian steppe.
-    (14, 26, 8, 47, 11, 14, 0.5),
-    (-33, 14, 6, 47, 11, 14, -0.441),
-    (72, 12, 6, 47, 11, 14, -0.5),
-    # North America, paid for by the North Pacific.
-    (-95, 30, 6, 44, 11, 14, 0.25),
-    (-155, 22, 3, 44, 11, 14, -0.351),
-    # China's coast, Korea and Japan, paid for by Tibet and the north-west Pacific.
-    (130, 13, 6, 37, 10, 10, 0.55),
-    (90, 10, 5, 37, 10, 10, -0.352),
-    (166, 10, 4, 37, 10, 10, -0.3667),
-]
+DLON = 360.0 / COLS
+DLAT = (LAT0 - LAT_MIN) / (ROWS - 1)
 
 
-def _ramp(d, inner, taper):
-    """Integral of a lens window from -infinity to d: 1 within +-inner, cosine shoulders of width taper."""
-    if d <= -inner - taper:
-        return 0.0
-    if d < -inner:
-        s = d + inner + taper
-        return s / 2 - taper * math.sin(math.pi * s / taper) / (2 * math.pi)
-    if d <= inner:
-        return taper / 2 + d + inner
-    if d < inner + taper:
-        s = d - inner
-        return taper / 2 + 2 * inner + s / 2 + taper * math.sin(math.pi * s / taper) / (2 * math.pi)
-    return taper + 2 * inner
-
-
-def _window(d, inner, taper):
-    d = abs(d)
-    if d <= inner:
-        return 1.0
-    if d < inner + taper:
-        return math.cos(math.pi * (d - inner) / (2 * taper)) ** 2
-    return 0.0
-
-
-def grid_xy(lon, lat):
-    """Fractional (column, row) of a point; hex (c, r) is centred on (c + 0.5 + 0.5 * (r & 1), r). Mirrors gridXY()
-    in dist/engine.js operation for operation."""
-    wraps = math.floor((lon - LON0) / 360)
-    lon -= 360 * wraps
-    a, a_total = lon - LON0, 360.0
-    for lc, lh, lt, tc, th, tt, gain in LENSES:
-        w = gain * _window(lat - tc, th, tt)
-        base = _ramp(LON0 - lc, lh, lt)
-        a += w * (_ramp(lon - lc, lh, lt) - base)
-        a_total += w * (_ramp(LON0 + 360 - lc, lh, lt) - base)
-    b, b_total = LAT0 - lat, LAT0 - LAT_MIN
-    for tc, th, tt, gain in ROW_BANDS:
-        top = _ramp(tc - LAT0, th, tt)
-        b += gain * (_ramp(tc - lat, th, tt) - top)
-        b_total += gain * (_ramp(tc - LAT_MIN, th, tt) - top)
-    return COLS * (a / a_total + wraps), (ROWS - 1) * b / b_total
-
-
-def lonlat_of(c, r):
-    """Inverse of grid_xy at a hex centre (Newton steps on each axis)."""
-    x, y = c + 0.5 + 0.5 * (r & 1), r
-    lon, lat = LON0 + 360 * x / COLS, LAT0 - (LAT0 - LAT_MIN) * y / (ROWS - 1)
-    for _ in range(30):
-        gx, gy = grid_xy(lon, lat)
-        dx = (grid_xy(lon + 0.01, lat)[0] - gx) / 0.01
-        dy = (grid_xy(lon, lat - 0.01)[1] - gy) / 0.01
-        lon += (x - gx) / dx
-        lat -= (y - gy) / dy
-    return lon, lat
+def center(c, r):
+    return LON0 + (c + 0.5 + 0.5 * (r & 1)) * DLON, LAT0 - r * DLAT
 
 
 # ---------------------------------------------------------------- land outlines (lon, lat), clockwise-ish
@@ -146,16 +64,9 @@ SOUTH_AMERICA = [
 ]
 EURASIA = [
     (-5.6, 36.0), (-2, 36.7), (0.2, 38.8), (-0.3, 39.5), (0.8, 41), (3.2, 41.9), (3.1, 43.0), (4.8, 43.4),
-    # Italy: drawn a little broader than life (as WC4 does) so the boot reads at hex scale.
-    (7.5, 43.8), (8.9, 44.4), (9.8, 44.0), (10.3, 43.4), (10.5, 42.8), (11.6, 42.2), (12.3, 41.6), (13.4, 41.1),
-    (14.2, 40.7), (14.8, 40.4), (15.4, 39.9), (15.8, 39.2), (15.6, 38.4), (15.7, 37.8), (16.3, 38.2), (16.8, 38.7),
-    (17.3, 39.1), (16.9, 39.7), (17.3, 40.3), (18.0, 39.9), (18.6, 39.9), (18.6, 40.4), (17.9, 40.8), (16.9, 41.3),
-    (16.2, 41.6), (16.3, 42.0), (15.0, 42.1), (14.2, 42.6), (13.6, 43.6), (12.6, 44.1), (12.5, 44.9), (12.3, 45.4),
-    (13.7, 45.7),
-    # The Balkans and Greece.
-    (14.5, 45.2), (15.2, 44.2), (17.4, 43.0), (19.4, 41.9), (19.3, 40.5), (20.0, 39.6), (20.7, 39.0), (21.1, 38.3),
-    (21.3, 37.6), (21.6, 36.8), (22.4, 36.4), (23.1, 36.4), (23.0, 37.2), (24.1, 37.6), (24.3, 38.3), (23.3, 39.0),
-    (22.7, 39.6), (22.6, 40.2), (22.9, 40.6), (23.8, 40.1), (24.0, 40.7), (24.4, 40.9),
+    (7.5, 43.8), (8.8, 44.4), (10.2, 43.9), (12.3, 41.7), (15.6, 40.1), (16, 38.0), (17.1, 39.0), (16.8, 40.4),
+    (18.5, 40.1), (16, 41.5), (13.8, 43.6), (12.4, 44.5), (13.6, 45.7), (15.2, 44.2), (17.4, 43.0), (19.4, 41.9),
+    (19.5, 40.5), (21, 38.7), (21.7, 36.8), (22.9, 36.4), (23, 37.9), (24, 38.2), (22.9, 40.6), (24.4, 40.9),
     (26, 40.8), (26.2, 39.5), (27.2, 37.6), (28.2, 36.7), (30.5, 36.3), (32.5, 36.1), (34.5, 36.8), (36, 36.6),
     (35.8, 35.0), (35.5, 33.8), (34.8, 32), (34.3, 31.3), (34.5, 29.5), (36.5, 26), (39, 21.5), (41.5, 16.5),
     (43.3, 12.7), (45, 12.8), (49, 14.2), (52.2, 15.6), (55.5, 17.5), (57.7, 18.9), (59.8, 22.5), (58.5, 23.6),
@@ -207,47 +118,18 @@ AFRICA = [
 ]
 MADAGASCAR = [(49.3, -12), (50.5, -15.5), (49.4, -17.8), (47.2, -24.8), (45.1, -25.5), (43.6, -23.4), (44, -20),
               (44.4, -16.2), (47.2, -13.6)]
-# Great Britain and Ireland follow the real coast (Cornwall, Wales, the Highlands, East Anglia); the Channel, the
-# Irish Sea and the North Channel are held open by CHANNELS below.
-BRITAIN = [(-5.7, 50.05), (-5.1, 49.95), (-4.1, 50.3), (-3.4, 50.55), (-2.4, 50.55), (-1.3, 50.7), (-0.1, 50.75),
-           (1.0, 50.95), (1.45, 51.35), (0.8, 51.55), (1.3, 51.95), (1.75, 52.5), (1.3, 52.95), (0.3, 52.85),
-           (0.1, 53.6), (-0.1, 54.15), (-0.6, 54.5), (-1.4, 55.0), (-2.0, 55.8), (-2.6, 56.05), (-2.6, 56.3),
-           (-2.1, 57.1), (-1.8, 57.5), (-2.0, 57.7), (-3.5, 57.7), (-4.2, 57.55), (-3.9, 57.85), (-3.1, 58.45),
-           (-3.0, 58.65), (-5.0, 58.65), (-5.4, 58.1), (-5.7, 57.6), (-6.3, 57.5), (-5.8, 56.9), (-6.2, 56.5),
-           (-5.7, 56.0), (-5.8, 55.3), (-4.9, 55.7), (-4.6, 55.4), (-5.1, 54.8), (-4.4, 54.7), (-3.5, 54.95),
-           (-3.6, 54.5), (-3.0, 54.1), (-3.0, 53.4), (-3.9, 53.3), (-4.6, 53.35), (-4.7, 52.8), (-4.1, 52.45),
-           (-4.4, 52.15), (-5.3, 51.9), (-5.0, 51.65), (-4.0, 51.55), (-3.2, 51.4), (-2.7, 51.5), (-3.5, 51.2),
-           (-4.5, 51.0), (-4.95, 50.55)]
-IRELAND = [(-6.0, 52.15), (-6.0, 53.0), (-6.1, 53.6), (-6.0, 54.0), (-5.5, 54.3), (-5.7, 54.8), (-6.2, 55.2),
-           (-7.3, 55.35), (-8.3, 55.15), (-8.6, 54.6), (-9.9, 54.25), (-10.1, 53.55), (-9.4, 53.1), (-9.9, 52.6),
-           (-10.4, 52.1), (-10.1, 51.6), (-9.0, 51.5), (-7.7, 51.95)]
-# Japan: Honshu, Kyushu, Shikoku and Hokkaido, a little broader than life. CHANNELS keep the Tsugaru Strait and the
-# Inland Sea open; LAND_BRIDGES keep Kyushu joined to Honshu at Shimonoseki, as the coarser maps did.
-HONSHU = [(130.9, 33.9), (131.4, 34.45), (132.7, 35.45), (134.2, 35.6), (136.0, 35.75), (136.7, 36.9), (137.1, 37.55),
-          (137.4, 37.0), (138.5, 37.6), (139.1, 38.0), (139.8, 39.2), (139.7, 39.95), (140.0, 40.7), (140.3, 41.3),
-          (141.4, 41.45), (141.5, 40.5), (142.1, 39.5), (141.6, 38.4), (141.0, 38.0), (141.1, 37.0), (140.9, 35.7),
-          (140.0, 34.9), (139.8, 35.3), (139.0, 34.6), (138.2, 34.55), (136.9, 34.25), (135.8, 33.4), (135.1, 33.9),
-          (135.3, 34.6), (133.9, 34.4), (132.4, 34.2), (131.6, 33.95)]
-KYUSHU = [(129.7, 33.4), (130.4, 33.75), (131.0, 33.95), (131.75, 33.3), (131.6, 32.4), (131.4, 31.4), (130.7, 30.95),
-          (130.2, 31.3), (130.1, 32.0), (129.75, 32.6), (129.6, 33.1)]
-SHIKOKU = [(132.3, 33.85), (133.5, 34.3), (134.6, 34.25), (134.75, 33.8), (134.2, 33.2), (133.5, 33.45), (132.95, 32.75),
-           (132.4, 33.15)]
-HOKKAIDO = [(140.0, 41.6), (140.0, 42.6), (140.5, 43.2), (141.4, 43.3), (141.6, 43.95), (141.7, 45.45), (142.6, 44.8),
-            (143.9, 44.15), (145.3, 44.35), (145.6, 43.3), (144.4, 42.95), (143.3, 41.95), (141.7, 42.6), (141.0, 42.3),
-            (140.7, 41.75)]
+BRITAIN = [(-5.7, 50.1), (-3, 50.6), (1.4, 51.2), (1.7, 52.5), (0.3, 53.4), (-0.1, 54.5), (-1.6, 55.6),
+           (-2.1, 57.1), (-3.0, 58.6), (-5, 58.6), (-6.2, 56.6), (-5.1, 55.4), (-3.4, 54.9), (-3.0, 53.9),
+           (-3, 53.4), (-4.7, 52.8), (-4.1, 52.0), (-5.2, 51.7), (-3.1, 51.4)]
+IRELAND = [(-6, 52.2), (-6.2, 53.3), (-5.6, 54.6), (-7.3, 55.3), (-8.6, 54.5), (-10, 53.4), (-9.9, 51.6),
+           (-8, 51.8)]
+HONSHU = [(130.9, 34), (132.5, 35.5), (135.2, 35.7), (136.8, 37.3), (138.5, 37.9), (139.9, 39.8), (140.5, 41.3),
+          (141.5, 40.6), (141.9, 38.9), (141, 36.9), (140.9, 35.7), (139.8, 34.9), (138.8, 34.6), (136.9, 34.3),
+          (135.8, 33.5), (135.2, 34.6), (133.2, 34.4), (131.9, 33.9)]
+KYUSHU = [(129.6, 33.4), (131, 33.9), (131.9, 32.8), (131.3, 31.4), (130.6, 31.1), (130.1, 32.5)]
+HOKKAIDO = [(140.0, 41.4), (139.8, 42.6), (141.6, 45.4), (143.5, 44.2), (145.3, 43.3), (143.2, 42), (141, 42.3)]
 SAKHALIN = [(141.8, 46), (142.3, 50), (142.5, 54.4), (143.5, 49), (142.8, 46.6)]
-TAIWAN = [(120.15, 23.0), (120.25, 23.7), (121.05, 25.1), (121.65, 25.3), (121.95, 24.6), (121.55, 22.8),
-          (120.85, 21.9), (120.6, 22.3)]
-# Mediterranean islands: Sicily, Sardinia, Corsica, Mallorca, Crete and Cyprus.
-SICILY = [(12.4, 38.05), (13.35, 38.2), (14.5, 38.05), (15.6, 38.3), (15.2, 37.5), (15.3, 37.0), (15.1, 36.6),
-          (14.4, 36.75), (13.5, 37.15), (12.45, 37.6)]
-SARDINIA = [(8.2, 40.95), (9.2, 41.25), (9.7, 40.9), (9.75, 40.0), (9.6, 39.1), (9.05, 39.15), (8.55, 38.9),
-            (8.35, 39.1), (8.45, 39.9), (8.3, 40.55)]
-CORSICA = [(9.35, 43.0), (9.5, 42.6), (9.55, 42.1), (9.25, 41.4), (8.75, 41.6), (8.6, 42.05), (8.65, 42.55),
-           (9.3, 42.7)]
-MALLORCA = [(2.3, 39.6), (3.1, 39.95), (3.5, 39.7), (3.2, 39.3), (2.7, 39.45)]
-CRETE = [(23.5, 35.65), (24.2, 35.6), (25.0, 35.45), (26.3, 35.3), (26.2, 34.95), (24.7, 34.9), (23.6, 35.15)]
-CYPRUS = [(32.3, 35.1), (33.0, 35.4), (34.6, 35.7), (34.0, 35.0), (33.0, 34.55), (32.4, 34.7)]
+TAIWAN = [(120.1, 23), (121.9, 25.1), (121, 22)]
 HAINAN = [(110.5, 18.2), (108.7, 19.5), (110.6, 20.1), (111, 19.6)]
 SRI_LANKA = [(79.9, 9.8), (81.9, 7.4), (80.6, 5.9), (79.8, 7.2)]
 LUZON = [(120.6, 18.5), (122.3, 18.4), (121.6, 15.8), (124, 12.9), (120.6, 13.8), (120, 16)]
@@ -273,36 +155,9 @@ NZ_NORTH = [(172.7, -34.4), (174.8, -36.9), (178.5, -37.7), (177.9, -39.3), (176
             (173.8, -39.2), (174.6, -37)]
 NZ_SOUTH = [(172.7, -40.5), (174.3, -41.7), (173.0, -43.8), (171.2, -44.4), (169.3, -46.6), (166.5, -45.8),
             (168.3, -44), (171.5, -41.8)]
-
-def swell(poly, d):
-    """Push an outline's vertices d degrees outward, as WC4 draws small islands a little larger than life."""
-    area = sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(poly, poly[1:] + poly[:1]))
-    side = 1 if area > 0 else -1  # counter-clockwise outlines have their outside on the right of each edge
-    out = []
-    for i, (x, y) in enumerate(poly):
-        (px, py), (nx, ny) = poly[i - 1], poly[(i + 1) % len(poly)]
-        ex, ey = nx - px, ny - py
-        n = math.hypot(ex, ey) or 1
-        out.append((x + side * d * ey / n, y - side * d * ex / n))
-    return out
-
-
-# Italy's boot again, swollen over the mainland outline so the peninsula is three hexes wide as on WC4's map.
-ITALY = [(7.6, 44.1), (8.9, 44.4), (9.8, 44.0), (10.3, 43.4), (10.5, 42.8), (11.6, 42.2), (12.3, 41.6), (13.4, 41.1),
-         (14.2, 40.7), (14.8, 40.4), (15.4, 39.9), (15.8, 39.2), (15.6, 38.4), (15.7, 37.9), (16.3, 38.2),
-         (16.8, 38.7), (17.3, 39.1), (16.9, 39.7), (17.3, 40.3), (18.0, 39.9), (18.5, 40.0), (18.5, 40.3), (17.9, 40.8),
-         (16.9, 41.3), (16.2, 41.6), (16.3, 42.0), (15.0, 42.1), (14.2, 42.6), (13.6, 43.6), (12.6, 44.1), (12.4, 44.8),
-         (11.0, 45.0), (9.0, 45.0)]
-# Denmark's islands: Zealand (Copenhagen) and Funen.
-ZEALAND = [(10.9, 55.75), (11.7, 56.0), (12.55, 56.05), (12.6, 55.6), (12.15, 55.2), (11.2, 55.2)]
-FUNEN = [(9.75, 55.5), (10.5, 55.6), (10.85, 55.1), (10.0, 55.05)]
-
-# Banks, Victoria and Baffin islands are left out: the Canadian Arctic is simplified for gameplay.
-LAND = [NORTH_AMERICA, GREENLAND, ICELAND, CUBA, HISPANIOLA, SOUTH_AMERICA, EURASIA, AFRICA, MADAGASCAR, BRITAIN,
-        IRELAND, ZEALAND, FUNEN, SAKHALIN, BORNEO, SULAWESI, NEW_GUINEA, AUSTRALIA, TASMANIA, NZ_NORTH, NZ_SOUTH]
-LAND += [swell(p, 0.3) for p in (HONSHU, KYUSHU, SHIKOKU, HOKKAIDO, SICILY, SARDINIA, CORSICA, CRETE, CYPRUS)]
-LAND += [swell(p, 0.35) for p in (ITALY, TAIWAN, HAINAN, SRI_LANKA, LUZON, MINDANAO, MALLORCA)]
-LAND += [swell(p, 0.15) for p in (SUMATRA, JAVA)]
+LAND = [NORTH_AMERICA, BAFFIN, VICTORIA, BANKS, GREENLAND, ICELAND, CUBA, HISPANIOLA, SOUTH_AMERICA, EURASIA,
+        AFRICA, MADAGASCAR, BRITAIN, IRELAND, HONSHU, KYUSHU, HOKKAIDO, SAKHALIN, TAIWAN, HAINAN, SRI_LANKA, LUZON,
+        MINDANAO, SUMATRA, JAVA, BORNEO, SULAWESI, NEW_GUINEA, AUSTRALIA, TASMANIA, NZ_NORTH, NZ_SOUTH]
 WATER = [BLACK_SEA, CASPIAN]
 
 # ---------------------------------------------------------------- biomes, painted in order (later wins)
@@ -367,7 +222,7 @@ PEAKS = [
 ICE_CAP = [(-42, 72), (-38, 68), (-44, 66), (-48, 70)]  # Greenland interior: impassable
 
 # Deterministic strategic terrain anchors. The biome polygons supply texture; these guarantee that major real-world
-# barriers remain legible and tactically meaningful on the grid.
+# barriers remain legible and tactically meaningful on the 180 x 76 grid.
 FORCE_TERRAIN = {
     'm': [
         # Alps / Carpathians
@@ -394,44 +249,30 @@ FORCE_TERRAIN = {
 }
 
 
-class Shape:
-    """A lon/lat outline projected onto the grid. Edges are subdivided first so they follow the lenses' curvature."""
-
-    def __init__(self, poly, step=0.5):
-        pts = []
-        for i, (x1, y1) in enumerate(poly):
-            x2, y2 = poly[(i + 1) % len(poly)]
-            n = max(1, math.ceil(max(abs(x2 - x1), abs(y2 - y1)) / step))
-            pts += [grid_xy(x1 + (x2 - x1) * k / n, y1 + (y2 - y1) * k / n) for k in range(n)]
-        self.pts, self.rows = pts, {}
-
-    def crossings(self, y):
-        xs = self.rows.get(y)
-        if xs is None:
-            xs, pts = [], self.pts
-            for i, (x1, y1) in enumerate(pts):
-                x2, y2 = pts[i - 1]
-                if (y1 > y) != (y2 > y):
-                    xs.append(x1 + (y - y1) * (x2 - x1) / (y2 - y1))
-            xs.sort()
-            self.rows[y] = xs
-        return xs
-
-    def contains(self, x, y):
-        return bisect.bisect_right(self.crossings(y), x) & 1 == 1
+def inside(poly, x, y):
+    hit = False
+    n = len(poly)
+    for i in range(n):
+        x1, y1 = poly[i]
+        x2, y2 = poly[(i + 1) % n]
+        if (y1 > y) != (y2 > y):
+            xi = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+            if x < xi:
+                hit = not hit
+    return hit
 
 
-def is_land(x, y):
-    for xx in (x, x + COLS, x - COLS):
-        if any(s.contains(xx, y) for s in WATER_SHAPES):
+def is_land(lon, lat):
+    for x in (lon, lon + 360, lon - 360):
+        if any(inside(p, x, lat) for p in WATER):
             return False
-        if any(s.contains(xx, y) for s in LAND_SHAPES):
+        if any(inside(p, x, lat) for p in LAND):
             return True
     return False
 
 
-def in_region(shape, x, y):
-    return any(shape.contains(xx, y) for xx in (x, x + COLS, x - COLS))
+def in_region(poly, lon, lat):
+    return any(inside(poly, x, lat) for x in (lon, lon + 360, lon - 360))
 
 
 def hash01(c, r, salt):
@@ -441,146 +282,116 @@ def hash01(c, r, salt):
 
 def hex_of(lon, lat):
     # Same rounding as hexOf() in dist/engine.js (JS Math.round, not Python's banker's rounding).
-    x, y = grid_xy(lon, lat)
-    r = max(0, min(ROWS - 1, math.floor(y + 0.5)))
-    c = math.floor(x - 0.5 - 0.5 * (r & 1) + 0.5)
+    r = math.floor((LAT0 - lat) / DLAT + 0.5)
+    r = max(0, min(ROWS - 1, r))
+    c = math.floor((lon - LON0) / DLON - 0.5 - 0.5 * (r & 1) + 0.5)
     return c % COLS, r
 
 
-# Islands, coasts and isthmuses that the raster would lose, as (lon, lat) points inside the hex to make land.
+# Islands and straits that the coarse raster would lose or merge.
 FORCE_LAND = [
     (-157.9, 21.3),  # Oahu (Pearl Harbor)
-    (123, 12.56), (124, 10.85), (118, 10.85), (120.9, 14.6), (125, 8),  # Philippines: Visayas, Palawan, Luzon, Mindanao
-    (69, 22.8),  # India: Gujarat
-    (103.8, 1.4), (101.5, 4.5), (100.0, 10.85),  # Singapore, Malaya and the Kra Isthmus
+    (-9, 55.28), (-3.6, 52.16), (-1.8, 55.28), (-3.6, 58.4),  # Ireland, England, Scotland
+    (133.2, 33.44),  # Kyushu joined to Honshu
+    (124.2, 24.08),  # Taiwan, set east of the strait
+    (139.7, 35.7), (135.6, 34.8), (130.6, 32.8), (141.4, 43.1), (140.5, 39.5),  # Area 11
+    (126.9, 37.5), (128.8, 35.6),  # Korea
+    (121.5, 25), (120.9, 14.6), (125, 8),  # Taiwan, Luzon, Mindanao
+    (-3.2, 55.9), (-1.5, 52.5), (-7.5, 53.3),  # Great Britain and Ireland
+    (12.5, 41.9), (14.5, 37.5), (9.0, 40.0),  # Italy, Sicily, Sardinia
+    (103.8, 1.4), (101.5, 4.5),  # Malaya and Singapore
     (79.9, 7.0), (47.5, -19), (-21.9, 64.1), (-51.7, 64.2),  # Sri Lanka, Madagascar, Iceland, Nuuk
     (174.8, -37), (172, -43.5), (147, -42), (142.7, 49.5),  # New Zealand, Tasmania, Sakhalin
-    (152, -33.5), (154, -26.7), (115, -31.8), (130, -13.05), (-66, -54),  # Australian coasts, Cape Horn
     (-82.4, 23.1), (-79.5, 9.0), (-87, 14), (-99.1, 19.4),  # Cuba, Panama, Central America, Mexico
     (158.6, 53.0), (-150, 61.2), (-166, 66),  # Kamchatka, Alaska
-    (35.5, 33.9), (33, 30),  # Levant, Sinai
+    (23.7, 38.0), (29.0, 41.0), (35.5, 33.9), (33, 30),  # Athens, Istanbul, Levant, Sinai
     (147.2, -9.4), (106.8, -6.2), (110, -7.3),  # Port Moresby, Java
+    (100.0, 10.85),  # Kra Isthmus: keep the Thai–Malay peninsula continuous at high resolution
 ]
 FORCE_SEA = [
+    (0, 52.16), (-1.8, 49.04), (-5.4, 49.04),  # English Channel: Britain is an island
+    (-5.4, 55.28), (-7.2, 52.16),  # North Channel and Irish Sea: Ireland is an island
+    (127.8, 36.56), (129.6, 39.68),  # Korea Strait and the Sea of Japan
+    (120.6, 24.08),  # Taiwan Strait
     (-168.9, 65.9),  # Bering Strait
+    (132.5, 36.8),  # Tsushima Strait / Sea of Japan
+    (2.5, 51.0),  # Dover Strait
+    (35, 25),  # Red Sea
+    (51, 27.5),  # Persian Gulf
     (-90, 25),  # Gulf of Mexico
-    (-85, 58), (-60, 55.2),  # Hudson Bay and its strait
-    (138, -16.45),  # Gulf of Carpentaria
-    (136.45, 33.76),  # the Kii coast: Osaka Bay is narrower than a hex, so Kyoto keeps a sea frontage for its port
-    (105.0, -4.5),  # Sunda Strait: keep Java separated from Sumatra
+    (17, 41.5), (24.5, 37.5), (18, 35),  # Adriatic, Aegean, Ionian
+    (5, 39.5), (-2, 37.5),  # western Mediterranean
+    (20, 58.5),  # Baltic
+    (-85, 58),  # Hudson Bay
+    (-3.0, 36.45), (-6.0, 34.75), (-4.0, 34.75), (-2.0, 34.75),  # Strait of Gibraltar / Alboran Sea
+    (105.0, -4.5),  # Sunda Strait: keep Java separated from Sumatra/mainland Asia
 ]
-# Narrow straits, widened to a continuous one-hex sea lane along each (lon, lat) polyline, as WC4 draws them.
-CHANNELS = [
-    [(-7.0, 49.4), (-4.0, 49.75), (-1.5, 50.15), (0.6, 50.55), (1.5, 50.95), (2.6, 51.2)],  # English Channel
-    [(-6.8, 51.2), (-5.7, 52.1)],  # St George's Channel
-    [(-5.2, 54.3), (-5.45, 54.9), (-6.0, 55.5), (-6.6, 56.0)],  # North Channel
-    [(15.0, 38.9), (15.62, 38.25), (15.65, 37.6)],  # Strait of Messina
-    [(8.3, 41.33), (9.9, 41.3)],  # Strait of Bonifacio
-    [(10.4, 43.9), (10.1, 42.9), (10.1, 41.9)],  # Corsica Channel: Corsica stays clear of Tuscany
-    [(18.0, 41.6), (18.95, 40.4), (19.3, 39.4)],  # Strait of Otranto
-    [(24.8, 40.2), (25.55, 40.56), (26.95, 40.56), (27.66, 41.53), (29.06, 41.53), (29.4, 42.3)],  # Dardanelles, Bosporus (west of Istanbul)
-    [(-7.5, 35.7), (-3.8, 35.7)],  # Strait of Gibraltar (the city sits on the Spanish shore just north)
-    [(10.8, 58.0), (11.7, 57.0), (12.3, 56.3), (12.75, 55.85), (12.85, 55.4), (13.4, 54.9)],  # Kattegat and the Øresund
-    [(139.4, 41.45), (140.6, 41.5), (141.4, 41.6), (142.3, 41.6)],  # Tsugaru Strait
-    [(119.4, 22.5), (119.8, 24.2), (120.4, 25.6)],  # Taiwan Strait
-    [(32.6, 29.6), (33.8, 27.4), (35.6, 24.8), (37.5, 22.0), (39.2, 19.3), (40.7, 16.4), (42.2, 14.3), (43.3, 12.8),
-     (44.5, 12.0), (46.5, 12.3)],  # the Red Sea and Bab-el-Mandeb
-    [(78.3, 8.6), (79.5, 9.5), (80.5, 10.5), (81.5, 11.4)],  # Palk Strait: Sri Lanka stays an island
-    [(48.6, 29.8), (50.0, 28.6), (51.5, 27.3), (53.0, 26.4), (55.0, 26.3), (56.4, 26.5), (57.5, 25.5), (59.5, 24.0)],  # Persian Gulf
-    [(98.36, 6.45), (98.49, 4.38), (99.59, 2.3), (100.69, 0.23), (102.9, 0.23), (105.1, 0.23), (108.4, 2.3)],  # Malacca, south of Singapore
+# Final coastline pass on exact hexes (column, row), applied after the lon/lat lists above. These edits prioritize
+# recognizable silhouettes and navigable strategic waterways at the 2-degree hex scale. Narrow real-world straits
+# are widened to at least one water hex where naval movement needs a route; tiny Arctic islands with no conquest
+# value are suppressed. Kyushu remains joined to Honshu at this resolution, while Hokkaido is kept separate.
+HEX_LAND = [
+    (87, 14), (89, 10),  # Great Britain: Cornwall, north-east Scotland
+    (154, 25), (157, 24), (160, 21),  # Japan: southern Kyushu, Shikoku/Kii, eastern Tohoku
+    (151, 36), (151, 37), (148, 37),  # Philippines: central Visayas and Palawan
+    (98, 19),  # Italy: Apulian heel (paired with the Otranto sea cut below)
+    (124, 30), (129, 37),  # India: Gujarat, Tamil Nadu
+    (85, 18), (84, 21), (86, 22),  # Iberia: Galicia, Portugal, the Algarve
+    (152, 23),  # Korea: south-west coast
+    (100, 2), (95, 10),  # Scandinavia/Denmark: northern Norway and Jutland
+    (165, 63), (166, 59), (147, 62), (154, 51),  # Australia: Sydney, Brisbane, Perth, Darwin coasts
+    (56, 75),  # Tierra del Fuego / Cape Horn
 ]
-# Short land links kept as one continuous chain of land hexes along each polyline.
-LAND_BRIDGES = [
-    [(130.85, 33.8), (131.05, 34.05)],  # Shimonoseki: Kyushu joined to Honshu
+HEX_SEA = [
+    (87, 15),  # a stray one-hex islet off Brittany that Cornwall would otherwise join to Britain
+    (160, 18), (159, 19),  # Tsugaru Strait: fully separate Hokkaido from Honshu
+    (92, 18),  # Iberia: an over-extended north-east coastal hex
+    (99, 19),  # Strait of Otranto: keep Italy's new heel separate from the Balkans
+    (94, 11),  # Danish Straits: connect the Baltic to the North Sea
+    (103, 19), (103, 20),  # Bosporus/Dardanelles: connect Black Sea to Mediterranean
+    (107, 27), (111, 34), (111, 35),  # Red Sea north extension and Bab-el-Mandeb
+    (115, 26),  # Persian Gulf: open the north-western gulf
+    (59, 11),  # Hudson Strait: connect Hudson Bay to the Atlantic
+    (140, 42), (140, 43), (141, 42),  # Strait of Malacca: separate Malaya/Singapore from Sumatra
+    (158, 53),  # Gulf of Carpentaria
+    # Simplify the Canadian Arctic archipelago for gameplay: remove Banks, Victoria and Baffin islands.
+    (29, 0), (27, 1), (28, 1), (29, 1), (30, 1), (32, 1), (33, 1), (34, 1),
+    (35, 1), (36, 1), (37, 1), (38, 1), (30, 2), (31, 2), (32, 2), (33, 2),
+    (34, 2), (35, 2), (36, 2), (37, 2), (38, 2), (33, 3), (34, 3), (35, 3),
+    (36, 3), (48, 1), (49, 1), (50, 1), (51, 1), (52, 1), (48, 2), (49, 2),
+    (50, 2), (51, 2), (52, 2), (53, 2), (54, 2), (49, 3), (50, 3), (51, 3),
+    (52, 3), (53, 3), (54, 3), (55, 3), (50, 4), (51, 4), (52, 4), (53, 4),
+    (54, 4), (55, 4), (56, 4), (57, 4), (50, 5), (51, 5), (52, 5), (53, 5),
+    (54, 5), (55, 5), (56, 5), (57, 5), (54, 6), (55, 6), (56, 6), (57, 6),
 ]
-
-# Sea lanes that must stay open: (name, a point in each sea).
-SEA_LANES = [
-    ('Strait of Gibraltar', (-12, 36), (3, 38.5)),
-    ('Bosporus and Dardanelles', (34, 43), (25, 38)),
-    ('Danish Straits', (20, 58.5), (5, 55)),
-    ('English Channel', (-6, 49.5), (3, 52.5)),
-    ('Suez to Aden', (38, 21), (48, 12)),
-    ('Strait of Hormuz', (50, 28.4), (62, 22)),
-    ('Strait of Malacca', (95, 7), (108, 6)),
-    ('Hudson Strait', (-85, 58), (-60, 55)),
-]
-
-
-def city_points():
-    """Every conquest city, read from dist/engine/world.js: its own hex is always land."""
-    import os
-    import re
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'dist', 'engine', 'world.js')
-    src = open(path).read()
-    block = src[src.index('const CITY_DATA'):src.index('const ARMY_DATA')]
-    return [(m.group(1), float(m.group(2)), float(m.group(3)))
-            for m in re.finditer(r"\['([^']+)', (-?[\d.]+), (-?[\d.]+), '", block)]
-
-
-def neighbours(c, r):
-    odd = r & 1
-    for dc, dr in ((-1, 0), (1, 0), (odd - 1, -1), (odd, -1), (odd - 1, 1), (odd, 1)):
-        if 0 <= r + dr < ROWS:
-            yield (c + dc) % COLS, r + dr
-
-
-def sea_connected(grid, a, b):
-    start, goal = hex_of(*a), hex_of(*b)
-    seen, queue = {start}, [start]
-    while queue:
-        h = queue.pop()
-        if h == goal:
-            return True
-        for n in neighbours(*h):
-            if n not in seen and grid[n[1]][n[0]] == '.':
-                seen.add(n)
-                queue.append(n)
-    return False
-
-
-LAND_SHAPES = [Shape(p) for p in LAND]
-WATER_SHAPES = [Shape(p) for p in WATER]
-BIOME_SHAPES = [(code, density, Shape(poly, 2)) for code, density, poly in BIOMES]
-SAMPLES = [(0, 0)] + [(0.42 * math.cos(a), 0.42 * math.sin(a)) for a in [i * math.pi / 3 for i in range(6)]]
-
-
-def hexes_along(line):
-    """Every hex on a lon/lat polyline, in order; consecutive hexes are neighbours."""
-    out = []
-    for (lon1, lat1), (lon2, lat2) in zip(line, line[1:]):
-        n = max(1, math.ceil(max(abs(lon2 - lon1), abs(lat2 - lat1)) / 0.02))
-        for k in range(n + 1):
-            h = hex_of(lon1 + (lon2 - lon1) * k / n, lat1 + (lat2 - lat1) * k / n)
-            if not out or out[-1] != h:
-                out.append(h)
-    return out
 
 
 def build():
     grid = [['.'] * COLS for _ in range(ROWS)]
+    samples = [(0, 0)] + [(0.42 * math.cos(a), 0.42 * math.sin(a)) for a in [i * math.pi / 3 for i in range(6)]]
     for r in range(ROWS):
         for c in range(COLS):
-            x = c + 0.5 + 0.5 * (r & 1)
-            hits = sum(1 for dx, dy in SAMPLES if is_land(x + dx, r + dy))
-            if is_land(x, r) or hits >= 3:
+            lon, lat = center(c, r)
+            hits = sum(1 for dx, dy in samples if is_land(lon + dx * DLON, lat + dy * DLAT))
+            if is_land(lon, lat) or hits >= 3:
                 grid[r][c] = 'p'
-    for line, code in [(line, 'p') for line in LAND_BRIDGES] + [(line, '.') for line in CHANNELS]:
-        for c, r in hexes_along(line):
-            grid[r][c] = code
-    for lon, lat in FORCE_LAND + [(lon, lat) for _, lon, lat in city_points()]:
+    for lon, lat in FORCE_LAND:
         c, r = hex_of(lon, lat)
         grid[r][c] = 'p'
     for lon, lat in FORCE_SEA:
         c, r = hex_of(lon, lat)
         grid[r][c] = '.'
+    for c, r in HEX_LAND:
+        grid[r][c] = 'p'
+    for c, r in HEX_SEA:
+        grid[r][c] = '.'
     for r in range(ROWS):
         for c in range(COLS):
             if grid[r][c] == '.':
                 continue
-            x = c + 0.5 + 0.5 * (r & 1)
-            for i, (code, density, shape) in enumerate(BIOME_SHAPES):
-                if in_region(shape, x, r) and hash01(c, r, i) < density:
+            lon, lat = center(c, r)
+            for i, (code, density, poly) in enumerate(BIOMES):
+                if in_region(poly, lon, lat) and hash01(c, r, i) < density:
                     grid[r][c] = code
     for code, points in FORCE_TERRAIN.items():
         for lon, lat in points:
@@ -591,21 +402,11 @@ def build():
         c, r = hex_of(lon, lat)
         if grid[r][c] != '.':
             grid[r][c] = 'x'
-    for name, a, b in SEA_LANES:
-        assert sea_connected(grid, a, b), f'{name} is closed'
     return grid
 
 
 def js_block(g):
-    def rows(items):
-        return ',\n'.join(f'      {list(item)}' for item in items)
-    lines = [f'  // <world> Generated by tools/build_map.py: {COLS} x {ROWS} wrapping hexes, 74N to 54S. Row bands and column',
-             '  // lenses (see build_map.py) enlarge Europe and East Asia at the expense of the open oceans, as WC4 does.',
-             f'  const WORLD = {{',
-             f'    cols: {COLS}, rows: {ROWS}, lon0: {LON0:g}, lat0: {LAT0:g}, lat1: {LAT_MIN:g},',
-             '    rowBands: [', rows(ROW_BANDS), '    ],',
-             '    lenses: [', rows(LENSES), '    ],',
-             '  };',
+    lines = [f'  // <world> Generated by tools/build_map.py: {COLS} x {ROWS} wrapping hexes, {DLON:g} degrees per column.',
              '  const WORLD_ROWS = [']
     lines += [f"    '{''.join(row)}'," for row in g]
     lines += ['  ];', '  // </world>']
@@ -625,4 +426,4 @@ if __name__ == '__main__':
     else:
         print(block)
     for r, row in enumerate(g):
-        sys.stderr.write(('  ' if r & 1 else '') + ' '.join(row) + f'  {r:2d}\n')
+        sys.stderr.write(('  ' if r & 1 else '') + ' '.join(row) + f'  {r:2d} {LAT0 - r * DLAT:6.1f}\n')

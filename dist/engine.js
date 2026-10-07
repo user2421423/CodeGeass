@@ -2772,68 +2772,13 @@
   }
 
   // ======== The world ========
-  // The world map's projection, shared with tools/build_map.py (grid_xy): rows follow latitude only, with WORLD.rowBands
-  // giving the northern mid-latitudes more rows per degree; WORLD.lenses give Europe and East Asia more columns per
-  // degree, paid for by the open oceans on the same rows, as World Conqueror 4's map does.
-  function lensRamp(d, inner, taper) {
-    // The integral of a lens window up to d: 1 within ±inner, cosine shoulders of width taper.
-    if (d <= -inner - taper) return 0;
-    if (d < -inner) {
-      const s = d + inner + taper;
-      return s / 2 - (taper * Math.sin((Math.PI * s) / taper)) / (2 * Math.PI);
-    }
-    if (d <= inner) return taper / 2 + d + inner;
-    if (d < inner + taper) {
-      const s = d - inner;
-      return taper / 2 + 2 * inner + s / 2 + (taper * Math.sin((Math.PI * s) / taper)) / (2 * Math.PI);
-    }
-    return taper + 2 * inner;
-  }
-  function lensWindow(d, inner, taper) {
-    d = Math.abs(d);
-    if (d <= inner) return 1;
-    if (d < inner + taper) return Math.cos((Math.PI * (d - inner)) / (2 * taper)) ** 2;
-    return 0;
-  }
-  // Fractional (column, row) of a point; hex (c, r) is centred on (c + 0.5 + 0.5 * (r & 1), r).
-  function gridXY(lon, lat) {
-    const wraps = Math.floor((lon - WORLD.lon0) / 360);
-    lon -= 360 * wraps;
-    let a = lon - WORLD.lon0,
-      aTotal = 360;
-    for (const [lc, lh, lt, tc, th, tt, gain] of WORLD.lenses) {
-      const w = gain * lensWindow(lat - tc, th, tt),
-        base = lensRamp(WORLD.lon0 - lc, lh, lt);
-      a += w * (lensRamp(lon - lc, lh, lt) - base);
-      aTotal += w * (lensRamp(WORLD.lon0 + 360 - lc, lh, lt) - base);
-    }
-    let b = WORLD.lat0 - lat,
-      bTotal = WORLD.lat0 - WORLD.lat1;
-    for (const [tc, th, tt, gain] of WORLD.rowBands) {
-      const top = lensRamp(tc - WORLD.lat0, th, tt);
-      b += gain * (lensRamp(tc - lat, th, tt) - top);
-      bTotal += gain * (lensRamp(tc - WORLD.lat1, th, tt) - top);
-    }
-    return { x: WORLD.cols * (a / aTotal + wraps), y: ((WORLD.rows - 1) * b) / bTotal };
-  }
   function hexOf(lon, lat) {
-    const { x, y } = gridXY(lon, lat),
-      r = clamp(Math.round(y), 0, WORLD.rows - 1),
-      c = Math.round(x - 0.5 - 0.5 * (r & 1));
+    const r = clamp(Math.round((WORLD.lat0 - lat) / WORLD.dlat), 0, WORLD.rows - 1),
+      c = Math.round((lon - WORLD.lon0) / WORLD.dlon - 0.5 - 0.5 * (r & 1));
     return { c: ((c % WORLD.cols) + WORLD.cols) % WORLD.cols, r };
   }
-  // The centre of a hex in lon/lat: the inverse of gridXY, by Newton steps on each axis.
   function lonLatOf(p) {
-    const x = p.c + 0.5 + 0.5 * (p.r & 1),
-      y = p.r;
-    let lon = WORLD.lon0 + (360 * x) / WORLD.cols,
-      lat = WORLD.lat0 - ((WORLD.lat0 - WORLD.lat1) * y) / (WORLD.rows - 1);
-    for (let i = 0; i < 30; i++) {
-      const g = gridXY(lon, lat);
-      lon += (x - g.x) / ((gridXY(lon + 0.01, lat).x - g.x) / 0.01);
-      lat -= (y - g.y) / ((gridXY(lon, lat - 0.01).y - g.y) / 0.01);
-    }
-    return { lon, lat };
+    return { lon: WORLD.lon0 + (p.c + 0.5 + 0.5 * (p.r & 1)) * WORLD.dlon, lat: WORLD.lat0 - p.r * WORLD.dlat };
   }
   const ERAS = {
     world: {
