@@ -4146,7 +4146,7 @@
   function automationUnitOptions(g, s) {
     if (!s) return [];
     const land = g.buildable?.[s.owner] || Object.values(lineupOf(g, s.owner)),
-      navy = navalTypes(g, s.owner);
+      navy = s.portAt || portSite(g, s) ? navalTypes(g, s.owner) : [];
     return [...new Set([...land, ...navy])]
       .filter(id => {
         const t = TYPES[id];
