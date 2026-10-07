@@ -32,13 +32,14 @@ for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS]]) {
   for (const [id, entry] of Object.entries(manifest[kind])) {
     assert(Object.hasOwn(known, id), `Unknown ${kind} id: ${id}`);
     const src = typeof entry === 'string' ? entry : entry.src;
-    assert(new RegExp(`^${kind}/[\\w-]+\\.(png|jpe?g|webp|gif)$`, 'i').test(src), `Unsafe art path: ${src}`);
+    assert(new RegExp(`^${kind}/[\\w-]+\\.(png|jpe?g|webp|gif|svg)$`, 'i').test(src), `Unsafe art path: ${src}`);
     checkFile(manifest.base + src);
     const bytes = fs.readFileSync(path.join(dist, manifest.base, src));
     const ext = path.extname(src).toLowerCase();
     const valid = ext === '.png' ? bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
       : ext === '.webp' ? bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP'
       : ext === '.gif' ? /^GIF8[79]a$/.test(bytes.toString('ascii', 0, 6))
+      : ext === '.svg' ? /<svg[\s>]/i.test(bytes.toString('utf8')) && /<\/svg>/i.test(bytes.toString('utf8'))
       : bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
     assert(valid, `Invalid image content: ${src}`);
     for (const key of ['fx', 'fy']) if (typeof entry === 'object' && key in entry)
