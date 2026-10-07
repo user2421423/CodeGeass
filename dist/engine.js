@@ -5940,7 +5940,7 @@
       army = g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       near = p => own.some(s => dist(g, s, p) <= FRONT.near) || army.some(u => dist(g, u, p) <= FRONT.near),
-      threatened = (p, range) => foes.some(f => dist(g, f, p) <= range),
+      threatened = (p, vital) => foes.some(f => (vital && dist(g, f, p) <= R.threat * 2) || threatTo(g, f, p) > 0),
       list = [];
     for (const s of g.stations) {
       if (foe(g, s.owner, side)) {
@@ -5951,7 +5951,7 @@
         list.push({ key: 's' + s.id, c: s.c, r: s.r, name: s.name, owner: s.owner, value, seed, fortified: value >= 20 });
       } else if (s.owner === side) {
         const vital = s.capitalOf === side || s.project?.side === side || s.eliminatorProject?.side === side;
-        if (threatened(s, vital ? R.threat * 2 : R.threat))
+        if (threatened(s, vital))
           list.push({ key: 'd' + s.id, c: s.c, r: s.r, name: s.name, defend: true, vital, value: vital ? 100 : 20, seed: vital ? -6 : -2 });
       }
     }
@@ -5960,7 +5960,7 @@
       const major = d.base >= 30;
       if (foe(g, d.owner, side) && (major || near(d)))
         list.push({ key: 'm' + d.id, c: d.c, r: d.r, name: d.name, value: major ? 40 : 10, seed: major ? -5 : -1 });
-      else if (d.owner === side && major && threatened(d, R.threat))
+      else if (d.owner === side && major && threatened(d, false))
         list.push({ key: 'n' + d.id, c: d.c, r: d.r, name: d.name, defend: true, value: 40, seed: -4 });
     }
     return list;
@@ -6013,7 +6013,9 @@
       f.enemies = enemies;
       f.enemyStrength = sum(enemies);
       // Defense is sized against the enemies menacing the threatened cities, less the garrisons already there.
-      const menace = sum(foes.filter(v => defend.some(o => dist(g, v, o) <= (o.vital ? R.threat * 2 : R.threat)))),
+      const menace = foes
+          .filter(v => defend.some(o => (o.vital && dist(g, v, o) <= R.threat * 2) || threatTo(g, v, o) > 0))
+          .reduce((a, v) => a + unitStrength(v) + sum(v.cargo || []), 0),
         present = sum(g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u) && defend.some(o => dist(g, u, o) <= R.threat))),
         garrison = sum(g.units.filter(u => memo.guards[u.id] && defend.some(o => dist(g, u, o) <= R.threat)));
       f.desiredStrength =
@@ -6221,13 +6223,26 @@
       return Number.isFinite(v) ? v : 60;
     };
   }
+  // The frames an enemy unit threatens a position with next turn: anything within `threat` hexes; in Conquest also,
+  // against a coastal position, a carrier's cargo within a sail and a launch, an amphibious frame within its sea move,
+  // and an embarked transport within its sail.
+  function threatTo(g, f, p) {
+    const d = dist(g, f, p);
+    if (d <= aiRange(g).threat) return f.stack;
+    if (g.mode === 'campaign' || !adjacent(g, p).some(isSea)) return 0;
+    const t = TYPES[f.type];
+    if (t.naval === 'ship') return d <= t.move + 1 ? (f.cargo || []).reduce((a, c) => a + c.stack, 0) : 0;
+    if (t.naval === 'amphibious') return d <= amphibiousSea(g, f) + 1 ? f.stack : 0;
+    return atSea(g, f) && d <= seaMove(g, f) + 1 ? f.stack : 0;
+  }
   // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
-  // to enemies within five hexes and draw defenders from proportionally larger strategic radii. Returns { unitId: city }.
+  // to enemies within five hexes (or a landing's reach, see threatTo) and draw defenders from proportionally larger
+  // strategic radii. In Conquest, fortress cities and naval bases also keep one defender. Returns { unitId: city }.
   function assignGuards(g, side) {
-    const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
+    const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.filter(f => dist(g, f, s) <= aiRange(g).threat).reduce((a, f) => a + f.stack, 0);
+      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -6245,6 +6260,17 @@
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
       for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
     }
+    // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
+    // empty, even in quiet times.
+    if (g.mode !== 'campaign')
+      for (const s of g.stations) {
+        if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
+        if (Object.values(taken).some(t => t.id === s.id)) continue;
+        const u = own
+          .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
+          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
+        if (u) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+      }
     // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;

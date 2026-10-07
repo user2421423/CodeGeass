@@ -370,6 +370,14 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 ### AI
 - `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: the capital keeps 2–4 defenders), then in
   Conquest the theaters (`planFronts`). Campaign missions keep one side-wide `goalField`.
+- Threats (`threatTo`): any enemy within 5 hexes. In Conquest a coastal city or mine is also threatened by a loaded
+  carrier within its sail + 1, an amphibious frame within its sea move + 1, or an embarked transport within its
+  sail + 1. Garrisons and defensive fronts both use it.
+- In Conquest, fortress cities (the strait guns) and level-2+ naval bases always keep one land defender. Warships are
+  never picked as garrisons.
+- The geography pass opened the strategic straits (Malacca, Otranto, Danish Straits, Bosporus, Bab-el-Mandeb,
+  Hudson, Tsugaru). At this scale the Malacca gap leaves Singapore on the Sumatra landmass, so it's an island
+  fortress the AI holds, reinforces and attacks by sea.
 - **Theaters (Conquest):** `frontObjectives` collects enemy cities within 20 hexes of own cities or units, every
   rival capital and F.L.E.I.J.A. project, Sakuradite mines (Fuji always), and own threatened cities, capital and
   mines. Objectives within 16 hexes cluster into fronts. Front ids are the anchor objective's key and re-form around

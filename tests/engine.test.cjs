@@ -591,6 +591,29 @@ test('Standing orders: land routes go round a bay, overseas ones embark; warship
   }
   assert.deepEqual([v.c, v.r], [18, 5]);
 });
+test('AI garrisons: fortress cities keep a defender; a carrier with troops in reach threatens a coastal city', () => {
+  const g = blank('cf', 30),
+    city = (id, name, c, r, extra) => ({ ...g.stations[0], id, name, c, r, capital: false, capitalOf: null, ...extra });
+  const fort = city(3, 'Gibraltar', 20, 10, { fort: true });
+  g.stations.push(fort);
+  g.phase = 'britannia';
+  const sentry = E.newUnit(g, T('britannia', 'medium'), 'britannia', 18, 10);
+  assert.equal(E.aiPlan(g, 'britannia').guards[sentry.id]?.id, fort.id, 'a quiet fortress still keeps one defender');
+  // A coastal city across the water from an enemy carrier: only a loaded carrier within a sail and a launch counts.
+  const h = blank('cf', 30);
+  for (const t of h.tiles) if (t.c >= 12) t.terrain = 'sea';
+  const port = city(3, 'Port', 11, 15);
+  h.stations = [h.stations[0], port];
+  h.phase = 'britannia';
+  const guard = E.newUnit(h, T('britannia', 'medium'), 'britannia', 9, 15),
+    carrier = E.newUnit(h, 'eu_carrier', 'eu', 20, 15);
+  assert(!E.aiPlan(h, 'britannia').guards[guard.id], 'an empty carrier is no landing threat');
+  const troops = [0, 1].map(i => E.newUnit(h, T('eu', 'medium'), 'eu', 2 + i, 28));
+  h.units = h.units.filter(u => !troops.includes(u));
+  carrier.cargo = troops;
+  h.turn++;
+  assert.equal(E.aiPlan(h, 'britannia').guards[guard.id]?.id, port.id, 'a loaded carrier nine hexes out puts the city on guard');
+});
 test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Rations', () => {
   const g = blank(),
     julius = E.newUnit(g, T('britannia', 'medium'), 'britannia', 5, 5, 1, 'julius'),
