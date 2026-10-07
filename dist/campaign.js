@@ -24,8 +24,8 @@
       enemyHp: 1,
       enemyShield: 1,
       economy: 1.5,
-      extraTurns: 5,
-      desc: 'Story mode: full-strength enemies and city defenses, but stronger starting formations, favorable scenario force counts, 50% more starting resources and five extra turns on timed missions.',
+      extraTurns: 0,
+      desc: 'Story mode: full-strength enemies and city defenses, but stronger starting formations, favorable scenario force counts and 50% more starting resources. Mission turn limits are unchanged.',
     },
     hard: {
       ...E.DIFFICULTIES.hard,
