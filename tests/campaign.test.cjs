@@ -155,6 +155,14 @@ test('Normal campaign keeps full enemy strength while using time and force-count
   assert.equal(g.campaign.turnLimit, 14, 'Normal keeps the mission’s original turn limit');
   assert.equal(g.units.filter(u => u.side === 'bk').length, 6, 'BK2 gets one extra player formation on Normal');
 
+  const br2 = C.createMission('br2', 21, 'normal'),
+    jeremiah = br2.units.find(u => u.cmd === 'jeremiah'),
+    villetta = br2.units.find(u => u.cmd === 'villetta'),
+    oneFrame = br2.units.find(u => u.side === 'britannia' && u.type === 'sutherland' && !u.cmd && u.stack === 1);
+  assert.equal(jeremiah.stack, 2, 'Normal keeps Jeremiah at the authored two-frame formation');
+  assert.equal(villetta.stack, 2, 'Normal keeps Villetta at the authored two-frame formation');
+  assert(oneFrame, 'Normal keeps authored one-frame Britannian formations instead of inflating them');
+
   const hold = C.createMission('br5', 12, 'normal');
   assert.equal(hold.campaign.turnLimit, 0, 'hold missions without a failure timer do not gain a bogus turn limit');
 
