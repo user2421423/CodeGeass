@@ -1902,27 +1902,16 @@ document.addEventListener('change', e => {
     shop.stack = +e.target.value;
     openShop(shop.station);
   }
-  if (e.target.dataset.cityPolicy) {
-    E.setCityAutomation(game, +e.target.dataset.cityPolicy, { policy: e.target.value });
-    save();
-    updateSelection();
-  }
-  if (e.target.dataset.cityAutoUpgrade) {
-    E.setCityAutomation(game, +e.target.dataset.cityAutoUpgrade, { autoUpgrade: e.target.checked });
-    save();
-    updateSelection();
-  }
-  if (e.target.dataset.cityAutoProduce) {
-    E.setCityAutomation(game, +e.target.dataset.cityAutoProduce, { autoProduce: e.target.checked });
+  if (e.target.dataset.cityUnit) {
+    E.setCityAutomation(game, +e.target.dataset.cityUnit, { unit: e.target.value || null });
     save();
     updateSelection();
   }
   if (e.target.dataset.automationField) {
     const a = E.automationState(game),
       field = e.target.dataset.automationField;
-    if (field === 'enabled' || field === 'autoUpgrade' || field === 'autoProduce') a[field] = e.target.checked;
+    if (field === 'enabled' || field === 'autoUpgrade') a[field] = e.target.checked;
     else if (field === 'stack') a.stack = Math.max(1, Math.min(3, +e.target.value || 1));
-    else if (field === 'defaultPolicy' && E.AUTOMATION_POLICIES[e.target.value]) a.defaultPolicy = e.target.value;
     E.automationState(game);
     save();
     productionDialog();
@@ -2202,19 +2191,11 @@ document.addEventListener('click', e => {
     case 'production':
       productionDialog();
       break;
-    case 'automation-apply-all': {
-      const a = E.automationState(game);
-      for (const st of game.stations.filter(v => v.owner === game.player)) E.setCityAutomation(game, st.id, { policy: a.defaultPolicy });
-      save();
-      productionDialog();
-      toast(`${E.AUTOMATION_POLICIES[a.defaultPolicy].name} applied to all owned cities.`);
-      break;
-    }
     case 'automation-clear-cities': {
       E.automationState(game).cities = {};
       save();
       productionDialog();
-      toast('City overrides cleared; all cities now inherit the global defaults.');
+      toast('All city auto-production queues cleared.');
       break;
     }
     case 'automation-fleija-reserve': {
