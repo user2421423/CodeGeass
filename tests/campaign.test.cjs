@@ -70,9 +70,9 @@ test('Named aces are single-frame Elite Forces at level 3; Elite levels from HQ 
   assert.equal(guren.stack, 1);
   const h = C.createMission('br4', 3);
   E.applyProfile(h, { elites: { guren_mkii: { level: 5, fragments: 0 } } });
+  assert.equal(h.units.find(u => u.cmd === 'kallen').eliteLevel, 3, 'the enemy Guren keeps its mission level');
   play(h, 4);
-  const enemy = h.units.find(u => u.cmd === 'kallen');
-  assert(enemy && enemy.eliteLevel === 3, 'the enemy Guren keeps its mission level');
+  for (const u of h.units) if (u.elite && u.side !== h.player) assert.equal(u.eliteLevel, 3, `${u.type} keeps its mission level`);
 });
 
 test('Allies never target each other; Conquest lineups exclude campaign and Elite Force frames', () => {

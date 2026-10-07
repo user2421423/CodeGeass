@@ -166,7 +166,7 @@ test('Movement obeys terrain, occupancy and the one-move rule', () => {
   assert(!E.reachable(g, a).has('5,6'));
 });
 test('Units embark onto the sea, sail as transports that cannot fire, and land on a coast', () => {
-  const g = blank();
+  const g = blank('britannia', 16);
   for (const t of g.tiles) if (t.c >= 4 && t.c <= 12) t.terrain = 'sea';
   const u = E.newUnit(g, T('britannia', 'light'), 'britannia', 3, 5);
   const reach = E.reachable(g, u);
@@ -342,8 +342,8 @@ test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Ra
   assert.match(E.feintReason(g, julius), /Ready in 3/);
   const suzaku = E.newUnit(g, T('britannia', 'super'), 'britannia', 2, 2, 1, 'suzaku');
   assert.equal(E.moraleFloor(g, suzaku), 0);
-  // Speed now comes from the Mobility rating: Suzaku's 6 stars give +4 movement.
-  assert.equal(E.movement(g, suzaku), E.TYPES[suzaku.type].move + 4);
+  // Speed now comes from the Mobility rating: Suzaku's 6 stars give +4 movement (plus Conquest's +1 world bonus).
+  assert.equal(E.movement(g, suzaku), E.TYPES[suzaku.type].move + 1 + 4);
   const h = blank(),
     bis = E.newUnit(h, T('britannia', 'heavy'), 'britannia', 5, 5, 1, 'bismarck'),
     tank = E.newUnit(h, T('eu', 'super'), 'eu', 6, 5, 3);
