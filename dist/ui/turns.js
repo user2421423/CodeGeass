@@ -100,14 +100,14 @@ async function endTurn(force = false) {
   const annexed = orders?.moved.find(m => m.annexed)?.annexed;
   if (annexed) annexNotice(annexed);
 }
-// A power's capital fell: it surrendered and its cities changed hands.
+// A power lost its last city: it surrendered and its armies disbanded.
 function annexNotice(a) {
   const mine = a.winner === game.player,
     lost = a.loser === game.player;
   toast(
     lost
-      ? `${a.capital} has fallen. The ${F(a.loser).name} surrenders.`
-      : `${a.capital} has fallen! The ${F(a.loser).name} surrenders to ${mine ? 'you' : 'the ' + F(a.winner).name}: ${a.cities} cities change hands.`,
+      ? `${a.city}, your last city, has fallen. The ${F(a.loser).name} surrenders.`
+      : `${a.city} has fallen! The ${F(a.loser).name} has lost its last city and surrenders to ${mine ? 'you' : 'the ' + F(a.winner).name}: ${a.units} units disband.`,
     true,
   );
   SFX.play('thor', a.winner);

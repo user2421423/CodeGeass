@@ -205,6 +205,12 @@ globalThis.KnightmareArtManifest = {
     },
     "panzer_frosch_ii": {
       "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
+    },
+    "shui_gun_ru": {
+      "src": "units/shui_gun_ru-9ec996b824ab.png"
+    },
+    "shui_gun_ru_ii": {
+      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
     }
   },
   "portraits": {

@@ -468,7 +468,7 @@
     return taken;
   }
   // Enemy high command, run once at the start of each AI turn before its units act: batteries, repairs, saving for
-  // super-heavies, upgrades, reinforcements, then stacked production up to a soft army cap.
+  // super-heavies, upgrades, reinforcements, then production that prefers 2- and 3-frame formations.
   const hostileMass = (g, side, mass) => g.stations.some(s => massOf(g, s) === mass && foe(g, s.owner, side));
   // Troops worth lifting: their front's goal (its rally city while assembling) lies on another landmass, or (no front)
   // nothing to attack on theirs; or (city-taking Infantry and Armor only) far from it (goal field 14+), unless they are
@@ -654,13 +654,16 @@
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     if (plan.eliminator || plan.warhead) plan.saving = false;
-    if (plan.saving) {
-      const yard = yard3.find(s => canBuy(g, s, superType, 1));
-      if (yard) {
-        recruit(g, yard.id, superType, 1);
-        plan.saving = false;
+    // The savings buy the largest super-heavy formation the treasury allows (canBuy includes the cost).
+    if (plan.saving)
+      for (const n of [3, 2, 1]) {
+        const yard = yard3.find(s => canBuy(g, s, superType, n));
+        if (yard) {
+          recruit(g, yard.id, superType, n);
+          plan.saving = false;
+          break;
+        }
       }
-    }
     const reserve = defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
       : warSaving
@@ -745,8 +748,7 @@
       if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
-    // putting what its front asks for at the top of its menu; stack up when the budget allows. A soft cap keeps armies
-    // manageable.
+    // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
     const serves = s =>
         (memo.fronts || [])
           .filter(f => f.assigned < f.desiredStrength && dist(g, s, f.rally || f.anchor) <= 25)
@@ -756,8 +758,6 @@
         return f ? (f.desiredStrength - f.assigned) * (0.5 + Math.max(0, f.score) / 100) : 0;
       },
       yards = bases.slice().sort((a, b) => urgency(b) - urgency(a));
-    const cap = 14 + Math.round(bases.length * 0.9);
-    let army = own().length;
     // 4b. Navy: one level-2 port for carriers and up to three ports in all (one port build a turn), then a fleet of up
     // to four Carrier-Battleships and six amphibious formations.
     const navy = g.mode !== 'campaign' && NAVAL[side];
@@ -780,18 +780,17 @@
         ['amphibious2', count('amphibious', 'amphibious2') < 6],
         ['amphibious', count('amphibious', 'amphibious2') < 6],
       ]) {
-        if (!short || army >= cap || random(g) >= 0.5) continue;
+        if (!short || random(g) >= 0.5) continue;
         const type = navy[role],
           c = price(type, 1, g, side),
           yard = bases.find(s => canBuy(g, s, type, 1));
-        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok) {
-          army++;
-          break;
-        }
+        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok) break;
       }
     }
-    for (const [i, s] of yards.entries()) {
-      if (army >= cap) break;
+    // Formations first: every factory builds a 3- or 2-frame formation when the treasury allows, taking a cheaper frame
+    // from its menu as a formation before settling for a lone frame. Only when no factory can afford any formation
+    // does the most urgent one build a single frame; otherwise the money is saved for formations.
+    const menuOf = s => {
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
@@ -799,29 +798,24 @@
             : s.tier === 2
               ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
               : ['light', 'support', 'assault', 'scout'],
-        need = (serves(s)?.need || []).filter(c => classes.includes(c));
-      const menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g));
-      const preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
-      const share = i === yards.length - 1 ? 1 : 0.6;
-      for (const type of [preferred, ...menu.filter(x => x !== preferred)]) {
-        let built = false;
-        for (let n = 3; n >= 1 && !built; n--) {
+        need = (serves(s)?.need || []).filter(c => classes.includes(c)),
+        menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g)),
+        preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
+      return [preferred, ...menu.filter(x => x !== preferred)];
+    };
+    // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
+    const tryBuild = (s, menu, sizes) => {
+      for (const type of menu)
+        for (const n of sizes) {
           const c = price(type, n, g, side);
-          // Single frames may use the whole budget; stacks only this factory's share of it.
-          if (
-            !canBuy(g, s, type, n) ||
-            !affordable(c) ||
-            !keepsHeavy(type, c) ||
-            (n > 1 && c.credits > spendable() * share)
-          )
-            continue;
-          recruit(g, s.id, type, n);
-          built = true;
-          army++;
+          if (canBuy(g, s, type, n) && affordable(c) && keepsHeavy(type, c) && recruit(g, s.id, type, n).ok) return true;
         }
-        if (built) break;
-      }
-    }
+      return false;
+    };
+    const menus = new Map(yards.map(s => [s, menuOf(s)]));
+    let formations = 0;
+    for (const s of yards) if (tryBuild(s, menus.get(s), [3, 2])) formations++;
+    if (!formations) for (const s of yards) if (tryBuild(s, menus.get(s), [1])) break;
   }
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);

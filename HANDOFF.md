@@ -17,8 +17,10 @@ Knightmare Frames.
 - Move each unit once and attack once per turn; click a green hex to move, a red hex to attack at once.
 - Units are 1–3 frames; commanders ride on units and give bonuses; morale, terrain and counter-fire matter.
 - Capture cities for income, build Knightmares in city factories, upgrade cities, research HQ technology.
-- **WC4 surrender rule:** a power whose capital falls surrenders; its cities pass to the conqueror and its units
-  disband. Take every rival capital, or hold the most cities at the 120-turn armistice.
+- **Surrender at zero cities (Conquest):** a major power surrenders only when its last city falls (`move()` checks after
+  every capture; campaign missions never surrender). Its units disband, its mines and half its stockpiles pass to the
+  conqueror (`surrender`, `annexDeposits`, `annexStrategic`). A capital is just the richest city. Defeat every rival,
+  or hold the most cities at the 120-turn armistice; losing your last city loses the war.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
 **Campaign:** three story arcs as WC4-style campaigns, each played from either side: Season 1 and R2 (Black Knights or
@@ -40,12 +42,11 @@ screens in `dist/ui/campaign-screens.js` (smoke-tested in `tests/ui-smoke.cjs`).
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **68 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 11 campaign frames, 7 naval frames) and 58 commander portraits**, registered
+Published artwork is tracked and deployed from `dist/assets/art/`: **70 Knightmare sprites (31 Conquest frames
+including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames) and 58 commander portraits**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
-workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art except
-the Federation's amphibious Shui Gun-Ru and Shui Gun-Ru II, which use their drawings; procedural art is otherwise
+workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art; procedural art is
 only a runtime safety fallback.
 To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
@@ -276,7 +277,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   rocket artillery, Shen Hu, V.V.'s Siegfried, and Euro Britannia's Vercingetorix (Shin), Ahura Mazda (Ashley) and
   Canterbury siege gun.
 - Campaign-only side `eb` (Euro Britannia, doctrine Knightly Orders: units led by a commander deal +10% damage), with
-  `LINEUPS.eb` (Britannia's 2017 frames plus the Canterbury). Like `bk` and `jlf` it never appears in Conquest. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
+  `LINEUPS.eb` (Britannia's 2017 frames plus the Canterbury; three artillery frames: Liverpool, Sutherland Air, Canterbury). Like `bk` and `jlf` it never appears in Conquest. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
   (120 HP / 28 attack / 7 armor / 2 move); Tohdoh's three-tank commander formation is the conventional force that can
   still contest a Knightmare unit. Named aces in missions are Elite Force frames at Elite level 3. `LINEUPS` gives the
   two new sides factory lineups; missions can override lineups (`g.lineup`) or restrict builds (`g.buildable`).
@@ -406,10 +407,12 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   - Carriers carry only formations whose fronts head for the same landmass; idle ones wait off the best overseas
     rally city.
   - Tunables are in `FRONT` (exported); `aiPlan`, `unitStrength` and `FRONT` are exported for tests.
-- `aiProduction`: batteries, repairs, saving for super-heavies, one building upgrade, reinforcements, then
-  production up to a soft cap of 14 + 0.9 × cities units. Factories serving the front furthest below its need build
-  first, and put what that front asks for (`frontNeeds`: by the enemy's and its own composition) at the top of their
-  menu. Sakuradite held back for a project only blocks purchases that spend Sakuradite.
+- `aiProduction`: batteries, repairs, saving for super-heavies (then the largest super-heavy formation affordable),
+  one building upgrade, reinforcements, then production with no army cap; the treasury is the limit. Factories
+  serving the front furthest below its need build first, and put what that front asks for (`frontNeeds`: by the
+  enemy's and its own composition) at the top of their menu. Each factory builds a 3- or 2-frame formation of the
+  first menu frame it can afford that way; a lone frame is built only when no factory can afford any formation that
+  turn (otherwise the money is saved). Sakuradite held back for a project only blocks purchases that spend Sakuradite.
 - `aiOrder`: moves along the unit's front field, scores attacks, and otherwise embarks only in convoys.
 - In 25-turn all-AI simulations the Federation now survives to turn 25 in 11 of 12 games (it was always eliminated
   before); the E.U. still leads. Balance is first-pass.

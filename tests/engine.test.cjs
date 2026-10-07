@@ -335,27 +335,39 @@ test('Armor breakthroughs: line frames fire again after a kill; heavies also mov
   E.attack(h, heavy.id, 6, 5);
   assert.equal(heavy.moved, false);
 });
-test('Capturing a capital makes that power surrender, as in WC4', () => {
+test('Capturing a capital does not end a power; it surrenders when its last city falls', () => {
   const g = blank('britannia');
-  g.stations.push({ ...g.stations[2], id: 3, name: 'Beijing', c: 9, r: 9, capital: false, capitalOf: null });
+  g.stations.push({ ...g.stations[2], id: 3, name: 'Beijing', c: 9, r: 9, capital: false, capitalOf: null, shield: 0 });
   const cfUnit = E.newUnit(g, T('cf', 'light'), 'cf', 9, 10);
   const u = E.newUnit(g, T('britannia', 'light'), 'britannia', 11, 10);
   g.stations[2].shield = 0;
+  // Luoyang falls, but the Federation still holds Beijing: no surrender, its army fights on.
   const r = E.move(g, u.id, 11, 11);
-  assert(r.ok && r.annexed);
-  assert.equal(r.annexed.loser, 'cf');
-  assert.equal(g.stations.find(s => s.name === 'Beijing').owner, 'britannia');
+  assert(r.ok && r.captured === 'Luoyang' && !r.annexed);
+  assert(E.alive(g, 'cf'));
+  assert.equal(cfUnit.hp > 0, true);
+  // Beijing was its last city: the Federation surrenders and its armies disband.
+  const v = E.newUnit(g, T('britannia', 'light'), 'britannia', 10, 9);
+  const last = E.move(g, v.id, 9, 9);
+  assert(last.ok && last.annexed);
+  assert.equal(last.annexed.loser, 'cf');
+  assert.equal(last.annexed.city, 'Beijing');
   assert.equal(cfUnit.hp, 0);
   assert(!E.alive(g, 'cf'));
   assert.equal(g.over, null);
-  g.stations[1].shield = 0;
+  // Paris is the E.U.'s only city: taking it ends the war once every rival has surrendered.
   E.beginTurn(g, 'britannia', false);
   g.stations[1].shield = 0;
   const u2 = E.newUnit(g, T('britannia', 'scout'), 'britannia', 10, 0);
   assert(E.move(g, u2.id, 11, 0).ok);
   assert.equal(g.over.winner, 'britannia');
 });
-test('Losing your own capital loses the war', () => {
+test('Euro Britannia fields three different artillery frames', () => {
+  const art = new Set(['support', 'rocket', 'siege'].map(cls => E.ROSTER.eb[cls]));
+  assert.deepEqual([...art].sort(), ['canterbury', 'liverpool', 'sutherland_air']);
+  assert(art.size === 3 && [...art].every(k => E.TYPES[k].branch === 'Artillery'));
+});
+test('Losing your last city loses the war', () => {
   const g = blank('eu');
   g.phase = 'britannia';
   g.stations[1].shield = 0;
@@ -680,21 +692,25 @@ test('Difficulty: Hard and Challenge strengthen every rival power', () => {
   assert(Object.keys(h.tech.britannia).length > 0 && Object.keys(c.tech.eu).length > Object.keys(h.tech.eu).length);
   assert.equal(Object.keys(h.tech.cf).length, 0);
 });
-test('Rival powers take their turns without errors and respect the army cap', () => {
+test('Rival powers take their turns without errors and build 2- and 3-frame formations rather than lone frames', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 31);
+  const sizes = [];
   for (let turn = 0; turn < 6; turn++) {
     for (const side of g.order) {
       if (!E.alive(g, side) || g.over) continue;
       E.beginTurn(g, side, g.turn > 1);
+      const first = g.nextId;
       E.aiProduction(g);
+      // Land units built this turn, apart from a super-heavy the power saved up for.
+      const built = g.units.filter(u => u.id >= first && !E.TYPES[u.type].naval && E.TYPES[u.type].cls !== 'super');
+      const singles = built.filter(u => u.stack === 1).length;
+      assert(!singles || (singles === 1 && built.length === 1), `${side} turn ${g.turn}: lone frames only when no formation is affordable`);
+      sizes.push(...built.map(u => u.stack));
       for (const u of g.units.filter(u => u.hp > 0 && u.side === side && !u.attacked)) E.aiOrder(g, u.id);
     }
     g.turn++;
   }
-  for (const side of E.MAJORS) {
-    const cities = g.stations.filter(s => s.owner === side).length;
-    assert(g.units.filter(u => u.hp > 0 && u.side === side).length <= 14 + Math.round(cities * 0.9) + 12);
-  }
+  assert(sizes.length > 5 && sizes.filter(n => n >= 2).length / sizes.length > 0.8, 'most new formations have 2 or 3 frames');
 });
 test('Rewards are paid for the first victory only; saves from other versions are rejected', () => {
   const g = E.createGame('eu');
@@ -878,7 +894,8 @@ test('Infantry and Armor seize a mine by moving onto it; artillery cannot; city 
   assert.equal(h.sites[0].refinery, 2, 'the refinery is taken intact');
   assert.equal(E.income(h, 'britannia').sakuradite, 30);
   assert.equal(E.income(h, 'eu').sakuradite, 0);
-  // Paris falls: the E.U. surrenders, so its city deposit, its own mines and half its Sakuradite pass over.
+  // Paris, the E.U.'s only city, falls: the E.U. surrenders, so its city deposit, its own mines and half its Sakuradite
+  // pass over.
   const k = blank();
   k.sites = [{ id: 0, name: 'Paris Field', c: 11, r: 0, base: 10, city: 1 }, { ...mine('eu', 4, 8), id: 1 }];
   k.economy.eu.sakuradite = 100;

@@ -1071,7 +1071,7 @@
       rocket: 'jp_artillery',
       siege: 'raiko',
     },
-    // Euro Britannia fields Britannia's 2017 frames plus its own Canterbury siege gun.
+    // Euro Britannia fields Britannia's 2017 frames plus its own Canterbury siege gun: three artillery frames.
     eb: {
       scout: 'glasgow',
       assault: 'gloucester',
@@ -1081,7 +1081,7 @@
       heavy: 'gloucester',
       super: 'canterbury',
       support: 'liverpool',
-      rocket: 'liverpool',
+      rocket: 'sutherland_air',
       siege: 'canterbury',
     },
   };

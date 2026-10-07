@@ -10,9 +10,10 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan) and
   Pacific bases; the E.U. holds Europe, Russia, Siberia and Africa; the Federation holds Asia from
   Tehran to Taipei. Australia and the Middle Eastern Federation are neutral and defend themselves.
-- **WC4 surrender rule:** when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to
-  the conqueror and its armies disband. Take every rival capital to win, or hold the most cities at the 120-turn
-  armistice. Lose your capital and the war is lost.
+- **Surrender at zero cities:** a power surrenders only when it has lost every city; its armies disband and its mines
+  and half its stockpiles pass to the conqueror. A capital (Pendragon, Paris, Luoyang) is its richest city, not a
+  knockout. Defeat every rival to win, or hold the most cities at the 120-turn armistice. Lose your last city and the
+  war is lost.
 - **Knightmares only, in three branches** (WC4's infantry, tanks and artillery), ten per power:
   | Branch | Class | Britannia | E.U. | Federation |
   |---|---|---|---|---|
@@ -120,7 +121,7 @@ node tools/validate_assets.cjs --tracked
 
 ## Publish artwork
 
-The live game ships 68 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
+The live game ships 70 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
 58 commander portraits. Credits and source provenance are in `ASSETS.md`
 and `dist/assets/art/sources.json`. To update the artwork from local raw inputs or a processed bundle:
 

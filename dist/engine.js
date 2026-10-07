@@ -1100,18 +1100,19 @@
       }
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
       hooks.capture?.(g, s, u, loser);
-      // As in WC4, a power whose capital falls surrenders: its cities pass to the conqueror, its armies disband.
-      if (s.capitalOf && s.capitalOf === loser && alive(g, loser)) {
-        award(g, u.side, 'star', `${s.name} captured`);
+      if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
+      // Conquest: a major power surrenders only when its last city falls; its armies disband. A capital is just its
+      // richest city.
+      if (g.mode !== 'campaign' && alive(g, loser) && !g.stations.some(c => c.owner === loser))
         annexed = surrender(g, loser, u.side, s);
-      }
     }
     const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
     return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, seized };
   }
-  function surrender(g, loser, winner, capital) {
-    (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: capital.name };
+  // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
+  function surrender(g, loser, winner, last) {
+    (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: last.name };
     let cities = 0,
       units = 0;
     for (const s of g.stations)
@@ -1138,10 +1139,10 @@
     annexStrategic(g, loser);
     log(
       g,
-      `${capital.name} has fallen. The ${FACTIONS[loser].name} surrenders to the ${FACTIONS[winner].name}: ${cities} cities annexed, ${units} units disbanded.`,
+      `${last.name}, the last city of the ${FACTIONS[loser].name}, has fallen. It surrenders to the ${FACTIONS[winner].name}: ${units} units disbanded.`,
       winner,
     );
-    return { loser, winner, cities, units, capital: capital.name };
+    return { loser, winner, cities, units, city: last.name };
   }
   // Command auras: every commander lifts adjacent friends by 8%; some reach farther or further.
   function auraBonus(g, u) {
@@ -2528,18 +2529,19 @@
     }
     return g.over;
   }
-  // World conquest: hold every major capital (each rival surrenders when its capital falls), or hold the most
-  // cities at the armistice.
+  // World conquest: every rival surrenders (a power surrenders when it holds no city), or hold the most cities at the
+  // armistice.
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
-    if (fall) g.over = { winner: fall.by, reason: `${fall.city} has fallen. The ${FACTIONS[P].name} has surrendered.` };
+    if (fall)
+      g.over = { winner: fall.by, reason: `${fall.city}, your last city, has fallen. The ${FACTIONS[P].name} has surrendered.` };
     else if (!rivals.length)
       g.over = {
         winner: P,
-        reason: `Every rival capital flies the colors of the ${FACTIONS[P].name}. The world is yours.`,
+        reason: `Every rival power has surrendered to the ${FACTIONS[P].name}. The world is yours.`,
       };
     else if (g.turn > ARMISTICE) {
       const held = s => g.stations.filter(c => c.owner === s).length,
@@ -2555,10 +2557,10 @@
   }
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
-    const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => FACTIONS[s].capital);
+    const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
-      ? `Take ${rivals.join(' and ')} while holding ${FACTIONS[g.player].capital}. A power surrenders when its capital falls.`
-      : 'Every rival capital has fallen.';
+      ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
+      : 'Every rival power has surrendered.';
   }
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
@@ -2580,7 +2582,7 @@
       year: '2017 a.t.b.',
       desc: 'The Holy Britannian Empire holds the Americas, Area 11 and its Pacific bases; the Europia United holds Europe, Russia and Africa; the Chinese Federation holds Asia. Australia and the Middle Eastern Federation stand neutral.',
       rulesText:
-        'A power surrenders when its capital falls: its cities pass to the conqueror and its armies disband. Take every rival capital, or hold the most cities at the 120-turn armistice.',
+        'A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. Defeat every rival, or hold the most cities at the 120-turn armistice.',
     },
   };
 
