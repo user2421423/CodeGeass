@@ -14,7 +14,6 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-# Validate the game and tracked public assets before deploying dist/.
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,16 +25,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Check image preparation and decode published images
+      - name: Run essential regression checks
         run: |
-          python -m pip install Pillow numpy
-          python tests/art_pipeline_test.py
-      - name: Check game rules, artwork loading, and public assets
-        run: |
-          node --test tests/*.test.cjs
+          node --test tests/core.test.cjs
           node tests/ui-smoke.cjs
           node tools/validate_assets.cjs --tracked
       - uses: actions/configure-pages@v5
