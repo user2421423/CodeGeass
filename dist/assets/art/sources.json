@@ -725,6 +725,78 @@
       "page": "https://codegeass.fandom.com/wiki/Lelouch_vi_Britannia",
       "image": "https://static.wikia.nocookie.net/codegeass/images/6/6a/LelouchviBritannia.jpg/revision/latest/scale-to-width-down/1200?cb=20120107132514",
       "method": "Same portrait as Zero (Lelouch vi Britannia)"
+    },
+    {
+      "kind": "units",
+      "id": "vercingetorix",
+      "file": "units/vercingetorix-92a4a0e7e849.webp",
+      "page": "https://codegeass.fandom.com/wiki/Vercingetorix",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/a/ac/Verki.jpg/revision/latest?cb=20160304155817",
+      "method": "Original transparent game sprite redrawn from the canonical Vercingetorix design; reference used for silhouette, red/gold palette and four-legged high-speed form."
+    },
+    {
+      "kind": "units",
+      "id": "ahura_mazda",
+      "file": "units/ahura_mazda-3d3a09cb258d.webp",
+      "page": "https://codegeass.fandom.com/wiki/Ahuramazda",
+      "image": "https://www.geass.jp/akito/img/kmf_Ahura.jpg",
+      "method": "Original transparent game sprite redrawn from official Ahuramazda reference art, preserving the red/gold armor and heavy arm-gun silhouette."
+    },
+    {
+      "kind": "units",
+      "id": "canterbury",
+      "file": "units/canterbury-9d1d46414366.webp",
+      "page": "https://codegeass.fandom.com/wiki/Canterbury",
+      "image": "",
+      "method": "Original transparent game sprite based on the canonical Canterbury siege-KMF concept: low quadruped chassis with oversized VARIS siege cannon."
+    },
+    {
+      "kind": "units",
+      "id": "siegfried",
+      "file": "units/siegfried-3d64a2aa7be2.webp",
+      "page": "https://codegeass.fandom.com/wiki/Siegfried",
+      "image": "https://static.wikitide.net/geasswiki/e/e1/Siegfried_front_color_settei2.png",
+      "method": "Original transparent game sprite redrawn from canonical Siegfried settei/reference imagery, keeping the circular Knight Giga Fortress body and radial Slash Harkens."
+    },
+    {
+      "kind": "units",
+      "id": "portman",
+      "file": "units/portman-b4211d14122a.webp",
+      "page": "https://codegeass.fandom.com/wiki/Portman",
+      "image": "https://static.wikitide.net/geasswiki/b/ba/Portman_front_color_settei.png",
+      "method": "Original transparent game sprite redrawn from canonical Portman front-color settei, keeping the hydro-jet/amphibious silhouette."
+    },
+    {
+      "kind": "units",
+      "id": "portman_ii",
+      "file": "units/portman_ii-fbc097994d6f.webp",
+      "page": "https://codegeass.fandom.com/wiki/Portman_Type_2",
+      "image": "https://static.wikitide.net/geasswiki/8/84/Portman_type_2_front_color_settei.png",
+      "method": "Original transparent game sprite redrawn from canonical Portman II settei, with the additional forearm turbines and heavier amphibious profile."
+    },
+    {
+      "kind": "units",
+      "id": "carrier_battleship",
+      "file": "units/generic_carrier-67018edf4e80.webp",
+      "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
+      "image": "",
+      "method": "Genericized Britannian-style carrier-battleship sprite: trimaran carrier silhouette retained, faction flags and insignia removed."
+    },
+    {
+      "kind": "units",
+      "id": "eu_carrier",
+      "file": "units/generic_carrier-67018edf4e80.webp",
+      "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
+      "image": "",
+      "method": "Reuses the genericized Britannian-style carrier-battleship sprite with all faction flags and insignia removed, per game naval standardization."
+    },
+    {
+      "kind": "units",
+      "id": "cf_carrier",
+      "file": "units/generic_carrier-67018edf4e80.webp",
+      "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
+      "image": "",
+      "method": "Reuses the genericized Britannian-style carrier-battleship sprite with all faction flags and insignia removed, per game naval standardization."
     }
   ],
   "drawnFallbacks": {
