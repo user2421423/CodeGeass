@@ -73,7 +73,8 @@
     repairCost,
     seaMove,
     serves,
-    sideEliminator,
+    sideEliminators,
+    eliminatorCity,
     siteAt,
     startEliminator,
     startProject,
@@ -606,13 +607,14 @@
         if (shot.ok) g.strikes.push(shot);
       }
     }
-    // 0b. F.L.E.I.J.A.: launch a ready warhead at the most valuable target that spares its own units and cities
-    // (the UI plays g.launches).
+    // 0b. F.L.E.I.J.A.: launch every ready warhead, each at the most valuable target that spares its own units and
+    // cities (the UI plays g.launches).
     g.launches = [];
-    if ((g.arsenal?.[side] || 0) > 0) {
+    while ((g.arsenal?.[side] || 0) > 0 && !g.over) {
       const p = aiLaunchTarget(g, side),
         shot = p && launch(g, side, p.c, p.r);
-      if (shot?.ok) g.launches.push(shot);
+      if (!shot?.ok) break;
+      g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
     for (const u of own()
@@ -627,25 +629,25 @@
     if (!yard3.length || supers >= 2) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
       plan.saving = true;
-    // 2b. F.L.E.I.J.A. Eliminator: after the first detonation, rivals prioritize one defensive charge.
-    const defenseCity = eliminatorUnlocked(g) && !sideEliminator(g, side) ? fleijaCity(g, side, front) : null;
-    plan.eliminator =
-      !!defenseCity &&
-      ((e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite || income(g, side).sakuradite >= 10);
-    if (plan.eliminator && !eliminatorReason(g, defenseCity)) {
+    // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
+    // starting every charge they can afford (up to ELIMINATOR.max) and saving for the next one. With no free lab-3
+    // city outside their charges' cover, step 3 raises a lab for one (defensePrep).
+    const wantsDefense = () => eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
+    let defenseCity = null;
+    while (wantsDefense() && (defenseCity = eliminatorCity(g, side)) && !eliminatorReason(g, defenseCity)) {
       startEliminator(g, defenseCity.id);
-      plan.eliminator = false;
+      defenseCity = null;
     }
-    const defenseProject = g.stations.some(s => s.eliminatorProject?.side === side);
-    // 2c. F.L.E.I.J.A.: one warhead at a time. A power with the Sakuradite for it (or the income to gather it soon)
-    // keeps that Sakuradite back, then saves credits and industry and starts the project in its best-lab city.
+    plan.eliminator = !!defenseCity;
+    const defensePrep = wantsDefense() && !defenseCity ? eliminatorCity(g, side, true) : null;
+    // 2c. F.L.E.I.J.A.: one warhead at a time, started again as soon as the last one is fired. A power with the
+    // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
+    // and starts the project in its best-lab city.
     const warCity =
       !plan.eliminator &&
-      !defenseProject &&
       hasFleija(g, side) &&
       !g.stations.some(s => s.project?.side === side) &&
-      !(g.arsenal?.[side] > 0) &&
-      g.turn - (g.launched?.[side] ?? -Infinity) >= FLEIJA.aiRest
+      !(g.arsenal?.[side] > 0)
         ? fleijaCity(g, side, front)
         : null;
     plan.warhead = !!warCity && ((e.sakuradite || 0) >= FLEIJA.cost.sakuradite || income(g, side).sakuradite >= 15);
@@ -701,9 +703,11 @@
     // then the lowest-level factory or lab at the safest city.
     if (!plan.saving && g.turn >= 2) {
       let upgraded = false;
-      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player.
+      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player. A city that
+      // needs a lab for its next Eliminator comes first.
       const soon = g.turn >= FLEIJA.labTurn - 5,
-        prep = side !== g.player && MAJORS.includes(side) && soon ? fleijaCity(g, side, front) : null;
+        prep =
+          side !== g.player && MAJORS.includes(side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&

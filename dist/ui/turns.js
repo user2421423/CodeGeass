@@ -36,7 +36,7 @@ async function endTurn(force = false) {
       if (shot.intercepted)
         toast(`F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`, true);
       else if (shot.eliminatorUnlocked)
-        toast('F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', true);
+        toast(`F.L.E.I.J.A. Eliminator research begins; countermeasures are available from turn ${shot.eliminatorTurn}.`, true);
       if (token !== aiToken) return;
     }
     const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).sort((a, b) => Number(['command', 'withdraw'].includes(C(a.cmd)?.action?.kind)) - Number(['command', 'withdraw'].includes(C(b.cmd)?.action?.kind))).map(u => u.id),

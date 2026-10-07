@@ -214,6 +214,8 @@ const modal = () => node('modal-root').innerHTML;
   await run(`launchAt({ c: ${target[0]}, r: ${target[1]} })`);
   assert.equal(run('game.arsenal[game.player]'), 0);
   assert(run("game.log.some(l => l.text.startsWith('F.L.E.I.J.A. detonation'))"));
+  assert(!run('E.eliminatorUnlocked(game)'), 'Eliminator research takes a few turns');
+  run('game.turn += E.ELIMINATOR.research');
   assert(run('E.eliminatorUnlocked(game)'));
   assert.equal(run(`E.tile(game, ${target[0]}, ${target[1]}).terrain`), 'crater');
   run('selectStation(capitalOf(game.player).id)');
