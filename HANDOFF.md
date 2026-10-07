@@ -220,7 +220,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Campaign-only sides `bk` (Order of the Black Knights, doctrine: +10% damage from forest, mountains or ruins) and
   `jlf` (Japan Liberation Front, 10% less damage in forest or mountains), never in Conquest (`MAJORS` is unchanged).
 - Campaign-only frames (`campaign: true`): Burai, Akatsuki Flight-Enabled, Zangetsu, Raikō, Japanese battle tank and
-  rocket artillery, and Shen Hu. Named aces in missions are Elite Force frames at Elite level 3. `LINEUPS` gives the
+  rocket artillery, and Shen Hu. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
+  (120 HP / 28 attack / 7 armor / 2 move); Tohdoh's three-tank commander formation is the conventional force that can
+  still contest a Knightmare unit. Named aces in missions are Elite Force frames at Elite level 3. `LINEUPS` gives the
   two new sides factory lineups; missions can override lineups (`g.lineup`) or restrict builds (`g.buildable`).
 - Engine support: alliances (`g.teams`, checked with `foe()`), city-ruin (`u`) and crater (`c`) terrain, rule hooks
   (`hooks.turn/capture/kill/decide/objective/title`), AI production limited to `g.campaign.production`, defenders
@@ -231,9 +233,11 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star,
   scaled by difficulty; progress in `profile.campaign`, per difficulty in `profile.campaignDifficulty`). Missions
   unlock in order. Ground-zero blasts kill outright (C.C.'s Code Bearer does not save her).
-- Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal is a forgiving story mode
-  (your formations +1 frame, enemies at 80% integrity and 75% city defenses, 50% more starting resources, 3 extra
-  turns); Hard and Challenge reuse Conquest's enemy research, upgrades, reinforcements, ranks and income.
+- Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal keeps enemy units and city
+  defenses at full strength, but gives your ordinary starting formations +1 frame, selected difficult scenarios a
+  favorable force-count pass, 50% more starting resources and 5 extra turns where a failure timer exists. Missions
+  whose objective is simply to hold through a given turn keep no separate failure timer. Hard and Challenge reuse
+  Conquest's enemy research, upgrades, reinforcements, ranks and income.
 - Campaign maps keep the original movement, sea speed and AI search radii (`aiRange(g)`); the larger Conquest values
   apply to the 180 × 76 world only.
 - Screens (`game.js`, campaign section): a start-menu row opens mission select (tabs per campaign, locks, best
