@@ -2304,12 +2304,9 @@
           turn: 1,
           say: [
             ['lelouch', 'The Emperor is on Kamejima. Every ship and soldier I have Geassed—turn your guns on his loyalists.'],
+            ['suzaku', 'Lelouch. Geass caused this ruin for both of us. I will help you end it.'],
             ['bismarck', 'Protect His Majesty. No rebel reaches the Thought Elevator.'],
           ],
-        },
-        {
-          turn: 3,
-          say: [['suzaku', 'Lelouch. Geass caused this ruin for both of us. I will help you end it.']],
           spawn: [[B, 'elite_lancelot_albion', 5, 10, 1, 'suzaku']],
         },
       ],
