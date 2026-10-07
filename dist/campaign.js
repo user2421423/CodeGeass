@@ -430,7 +430,76 @@
   Object.assign(E.hooks, { turn: onTurn, capture: onCapture, kill: onKill, decide, objective, title });
 
   // ======== Progress and rewards (profile.campaign = { missionId: best stars }) ========
-  const REWARD = { first: 60, star: 30 };
+  // Clearing a mission is still enough to progress. Two- and three-star play now adds one-time, overall
+  // performance rewards, while each difficulty keeps its own first-clear/new-star token payouts.
+  const REWARD = { first: 60, star: 30, twoStarFragments: 4, masteryFragments: 10 };
+  const MILESTONES = [
+    { id: 'half', ratio: 0.5, label: '50% stars', tokens: 100, fragments: 0 },
+    { id: 'three_quarters', ratio: 0.75, label: '75% stars', tokens: 0, fragments: 12 },
+    { id: 'master', ratio: 1, label: '100% stars', tokens: 200, fragments: 20 },
+  ];
+  // A mission pays fragments toward a story-relevant Elite Force when possible. Euro Britannia does not have a
+  // persistent Elite roster of its own, so its mastery rewards feed Britannia's Lancelot progression.
+  const CAMPAIGN_ELITE = {
+    bk_s1: 'guren_mkii',
+    britannia_s1: 'lancelot',
+    bk_r2: 'shinkiro',
+    britannia_r2: 'lancelot_albion',
+    eb_europe: 'lancelot',
+    eu_europe: 'akito_liberte',
+  };
+  const MISSION_ELITE = {
+    bk1: 'guren_mkii',
+    bk2: 'guren_mkii',
+    bk3: 'guren_mkii',
+    bk_yokosuka: 'guren_mkii',
+    bk_tohdoh: 'tohdoh_gekka',
+    bk_shikine: 'gawain',
+    bk_fukuoka: 'gawain',
+    bk_saz: 'gawain',
+    bk4: 'gawain',
+    br1: 'cornelia_gloucester',
+    br2: 'cornelia_gloucester',
+    br_mef: 'cornelia_gloucester',
+    br3: 'cornelia_gloucester',
+    br4: 'lancelot',
+    br_yokosuka: 'lancelot',
+    br_tohdoh: 'lancelot',
+    br_shikine: 'lancelot',
+    br_fukuoka: 'lancelot',
+    br5: 'lancelot',
+    bk5: 'guren_mkii',
+    bk_rescue: 'tohdoh_gekka',
+    bk_pacific: 'guren_mkii',
+    bk_yokosuka2: 'guren_mkii',
+    bk_zhengzhou: 'guren_mkii',
+    bk_xiaopei: 'guren_mkii',
+    bk6: 'shinkiro',
+    bk_geass: 'shinkiro',
+    bk7: 'shinkiro',
+    bk8: 'shinkiro',
+    bk9: 'guren_seiten',
+    bk10: 'guren_seiten',
+    br7: 'lancelot',
+    br_pacific: 'lancelot',
+    br_yokosuka2: 'lancelot',
+    br_xiaopei: 'lancelot',
+    br_mausoleum: 'mordred',
+    br_kagoshima: 'mordred',
+    br8: 'mordred',
+    br_kamejima: 'lancelot_albion',
+    br9: 'lancelot_albion',
+    br10: 'lancelot_albion',
+    br11: 'lancelot_albion',
+    eu_narva: 'leila_alexander',
+    eu_ambush: 'ryo_valiant',
+    eu_slonim: 'yukiya_valiant',
+    eu_front: 'leila_alexander',
+    eu_ark: 'ryo_valiant',
+    eu_weisswolf: 'yukiya_valiant',
+    eu_assault: 'akito_liberte',
+    eu_paris: 'akito_liberte',
+  };
   function best(profile, id) {
     return profile?.campaign?.[id] || 0;
   }
@@ -444,12 +513,53 @@
     const m = mission(id);
     return !!m && (m.index === 0 || best(profile, CAMPAIGNS[m.campaign].missions[m.index - 1].id) > 0);
   }
+  function starElite(id) {
+    const m = mission(id);
+    return (m && MISSION_ELITE[id]) || (m && CAMPAIGN_ELITE[m.campaign]) || null;
+  }
+  function campaignElite(cid) {
+    return CAMPAIGN_ELITE[cid] || null;
+  }
+  function campaignStars(profile, cid, overrideId = null, overrideStars = null) {
+    const camp = CAMPAIGNS[cid];
+    if (!camp) return 0;
+    return camp.missions.reduce((sum, m) => {
+      const n =
+        overrideId === m.id && overrideStars != null ? Math.max(best(profile, m.id), overrideStars) : best(profile, m.id);
+      return sum + n;
+    }, 0);
+  }
+  function milestoneStatus(profile, cid) {
+    const camp = CAMPAIGNS[cid];
+    if (!camp) return [];
+    const total = campaignStars(profile, cid),
+      max = camp.missions.length * 3,
+      claimed = profile?.campaignMilestones?.[cid] || {};
+    return MILESTONES.map(m => ({
+      ...m,
+      stars: Math.ceil(max * m.ratio),
+      claimed: !!claimed[m.id],
+      reached: total >= Math.ceil(max * m.ratio),
+    }));
+  }
   function reward(g, profile = {}) {
-    if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [], stars: 0 };
-    const d = difficulty(g.difficulty),
+    if (!g.over || g.over.winner !== g.player)
+      return { total: 0, parts: [], fragments: {}, fragmentParts: [], milestones: [], stars: 0, repeat: true };
+    const m = mission(g.campaign.id),
+      d = difficulty(g.difficulty),
       had = bestDifficulty(profile, g.campaign.id, g.difficulty),
       got = g.over.stars,
-      parts = [];
+      oldOverall = best(profile, g.campaign.id),
+      newOverall = Math.max(oldOverall, got),
+      parts = [],
+      fragments = {},
+      fragmentParts = [],
+      milestones = [];
+    const addFragments = (id, amount, label) => {
+      if (!id || !E.ELITE_FORCES[id] || amount <= 0) return;
+      fragments[id] = (fragments[id] || 0) + amount;
+      fragmentParts.push([label, id, amount]);
+    };
     if (!had) parts.push([`${d.name} first clear`, Math.round(REWARD.first * d.tokens)]);
     const fresh = Math.max(0, got - Math.max(had, 1));
     if (fresh)
@@ -457,7 +567,43 @@
         `${fresh} new ${d.name} star${fresh > 1 ? 's' : ''}`,
         Math.round(fresh * REWARD.star * d.tokens),
       ]);
-    return { total: parts.reduce((a, [, v]) => a + v, 0), parts, stars: got, first: !had, repeat: !parts.length };
+
+    // These are overall mission achievements, not per-difficulty farming: earn them once, even if the first 3-star
+    // result is on Hard or Challenge.
+    const elite = starElite(g.campaign.id);
+    if (oldOverall < 2 && newOverall >= 2)
+      addFragments(elite, REWARD.twoStarFragments, '2★ performance');
+    if (oldOverall < 3 && newOverall >= 3)
+      addFragments(elite, REWARD.masteryFragments, '3★ mastery');
+
+    // Campaign milestones are likewise one-time. Old profiles receive any milestone they already qualify for the
+    // next time they finish a mission, so introducing this system never strands previously earned stars.
+    if (m) {
+      const cid = m.campaign,
+        camp = CAMPAIGNS[cid],
+        max = camp.missions.length * 3,
+        total = campaignStars(profile, cid, g.campaign.id, newOverall),
+        claimed = profile?.campaignMilestones?.[cid] || {},
+        milestoneElite = campaignElite(cid);
+      for (const rule of MILESTONES) {
+        const need = Math.ceil(max * rule.ratio);
+        if (claimed[rule.id] || total < need) continue;
+        milestones.push(rule.id);
+        if (rule.tokens) parts.push([`${camp.short} · ${rule.label}`, rule.tokens]);
+        if (rule.fragments)
+          addFragments(milestoneElite, rule.fragments, `${camp.short} · ${rule.label}`);
+      }
+    }
+    return {
+      total: parts.reduce((a, [, v]) => a + v, 0),
+      parts,
+      fragments,
+      fragmentParts,
+      milestones,
+      stars: got,
+      first: !had,
+      repeat: !parts.length && !fragmentParts.length,
+    };
   }
   function next(id) {
     const m = mission(id);
@@ -476,8 +622,13 @@
     unlocked,
     best,
     bestDifficulty,
+    starElite,
+    campaignElite,
+    campaignStars,
+    milestoneStatus,
     next,
     REWARD,
+    MILESTONES,
   };
   root.KnightmareCampaign = api;
   E.campaign = api;

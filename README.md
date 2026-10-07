@@ -68,6 +68,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   Cities), tiers II–IV unlocked by victories, kept across operations and factions.
 - **Difficulty:** Normal, Hard and Challenge, as in Galactic Command (rival research, upgraded and extra units,
   higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.
+- **Campaign mastery rewards:** 1★ still clears a mission and unlocks the next. Reaching 2★ and 3★ for the first time across any difficulty awards story-relevant Elite Force fragments, while each difficulty keeps its own token rewards. Every campaign also pays one-time rewards at 50%, 75% and 100% of its total stars.
 - **Presentation:** WC4-style HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
   minimap, procedural terrain, drawn fallbacks for every Knightmare and commander, published image support, synthesized sound, camera shake.
 - **Published artwork:** finished sprites and portraits live in tracked `dist/assets/art/`. The startup manifest loads

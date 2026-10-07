@@ -207,6 +207,57 @@ test('Victory grades stars; rewards pay a first clear and new stars once; losing
 });
 
 
+test('Campaign stars pay one-time performance fragments and campaign mastery milestones', () => {
+  const finished = (id, stars = 3) => {
+    const g = C.createMission(id, 9);
+    g.over = { winner: g.player, stars };
+    return g;
+  };
+
+  const shikine = finished('bk_shikine', 3),
+    fresh = C.reward(shikine, {});
+  assert.equal(C.starElite('bk_shikine'), 'gawain');
+  assert.equal(fresh.fragments.gawain, C.REWARD.twoStarFragments + C.REWARD.masteryFragments);
+  assert(fresh.fragmentParts.some(([label]) => label === '2★ performance'));
+  assert(fresh.fragmentParts.some(([label]) => label === '3★ mastery'));
+
+  const twoStarProfile = {
+      campaign: { bk_shikine: 2 },
+      campaignDifficulty: { bk_shikine: { normal: 2 } },
+    },
+    mastered = C.reward(shikine, twoStarProfile);
+  assert.equal(mastered.fragments.gawain, C.REWARD.masteryFragments, 'going 2★ → 3★ only pays the mastery fragments');
+  assert.equal(mastered.total, C.REWARD.star, 'the newly earned Normal star still pays its normal token reward');
+
+  const masteredProfile = {
+      campaign: { bk_shikine: 3 },
+      campaignDifficulty: { bk_shikine: { normal: 3 } },
+    },
+    repeat = C.reward(shikine, masteredProfile);
+  assert.equal(repeat.fragments.gawain, undefined, 'mission performance fragments cannot be farmed by replaying 3★');
+  assert(repeat.repeat);
+
+  const halfProfile = { campaign: {} };
+  for (const m of C.CAMPAIGNS.bk_s1.missions.slice(0, 5)) halfProfile.campaign[m.id] = 3;
+  const half = C.reward(finished('bk1'), halfProfile);
+  assert.deepEqual(half.milestones, ['half']);
+  assert.equal(half.total, 100);
+  assert.equal(C.milestoneStatus(halfProfile, 'bk_s1')[0].stars, 14, '9 missions × 3 stars rounds 50% up to 14');
+
+  const claimedHalf = {
+    ...halfProfile,
+    campaignMilestones: { bk_s1: { half: true } },
+  };
+  assert(!C.reward(finished('bk1'), claimedHalf).milestones.length, 'claimed campaign milestones do not repeat');
+
+  const perfectProfile = { campaign: {} };
+  for (const m of C.CAMPAIGNS.bk_s1.missions) perfectProfile.campaign[m.id] = 3;
+  const retroactive = C.reward(finished('bk1'), perfectProfile);
+  assert.deepEqual(retroactive.milestones, ['half', 'three_quarters', 'master']);
+  assert.equal(retroactive.total, 300, '50% and 100% milestones together pay 300 tokens');
+  assert.equal(retroactive.fragments.guren_mkii, 32, '75% and 100% milestones pay the campaign Elite fragment packs');
+});
+
 test('Normal campaign keeps full enemy strength while using time and force-count advantages', () => {
   const g = C.createMission('bk2', 11, 'normal'),
     enemy = g.units.find(u => E.foe(g, u.side, g.player)),

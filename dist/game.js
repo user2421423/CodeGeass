@@ -774,18 +774,30 @@ function claimReward() {
     p.tokens = (p.tokens || 0) + r.total;
     if (game.over.winner === game.player) {
       const legacyBest = CP.best(p, id),
-        difficultyRecords = (p.campaignDifficulty ||= {});
+        difficultyRecords = (p.campaignDifficulty ||= {}),
+        eliteAward = {},
+        addEliteAward = awards => {
+          for (const [k, v] of Object.entries(awards || {})) eliteAward[k] = (eliteAward[k] || 0) + v;
+        };
       // Migrate old campaign progress once: pre-difficulty stars belong to Normal.
       if (!difficultyRecords[id]) difficultyRecords[id] = { normal: legacyBest };
       const byDifficulty = difficultyRecords[id],
         diff = game.difficulty || 'normal';
       byDifficulty[diff] = Math.max(byDifficulty[diff] || 0, r.stars);
       (p.campaign ||= {})[id] = Math.max(legacyBest, r.stars);
-      // A first clear at each difficulty recovers fragments for the mission side's Elite Forces; the Black
-      // Knights' Elite Forces are earned only here.
-      if (r.first) {
-        game.eliteReward = E.eliteVictoryReward(game, {});
-        E.grantEliteFragments(p, game.eliteReward);
+      // A first clear at each difficulty still pays the broad faction fragment drop. Two-star, three-star and
+      // campaign milestone bonuses are targeted and can stack onto that same result.
+      if (r.first) addEliteAward(E.eliteVictoryReward(game, {}));
+      addEliteAward(r.fragments);
+      if (Object.keys(eliteAward).length) {
+        E.grantEliteFragments(p, eliteAward);
+        game.eliteReward = eliteAward;
+      } else delete game.eliteReward;
+      // Campaign milestone rewards are once-only and live in the persistent profile.
+      if (r.milestones?.length) {
+        const cid = CP.mission(id)?.campaign,
+          claimed = ((p.campaignMilestones ||= {})[cid] ||= {});
+        for (const milestone of r.milestones) claimed[milestone] = true;
       }
     }
     game.reward = r;
@@ -1186,7 +1198,18 @@ function campaignDialog(cid = campaignTab) {
   const camp = CP.CAMPAIGNS[campaignTab],
     season = CP.SEASONS?.[camp.season] || { name: camp.name, short: camp.short },
     camps = Object.entries(CP.CAMPAIGNS),
-    got = camp.missions.reduce((a, m) => a + CP.best(profile, m.id), 0);
+    got = camp.missions.reduce((a, m) => a + CP.best(profile, m.id), 0),
+    milestoneElite = CP.campaignElite(campaignTab),
+    milestoneEliteName = milestoneElite ? E.TYPES[E.ELITE_FORCES[milestoneElite].type].name : 'Elite Force',
+    milestones = CP.milestoneStatus(profile, campaignTab),
+    milestoneText = milestones
+      .map(m => {
+        const prize = [m.tokens ? `${m.tokens} tokens` : '', m.fragments ? `${m.fragments} ${milestoneEliteName} fragments` : '']
+          .filter(Boolean)
+          .join(' + ');
+        return `${m.claimed ? '✓' : m.reached ? '◆' : '○'} ${m.stars}★: ${prize}`;
+      })
+      .join(' · ');
   // WC4-style: pick a season first, then the side you play it from.
   const seasonTabs = Object.entries(CP.SEASONS || {})
     .map(([n, s]) => {
@@ -1205,7 +1228,7 @@ function campaignDialog(cid = campaignTab) {
       return `<button class="mission-card${best ? ' cleared' : ''}" data-mission="${m.id}" ${open ? '' : `disabled title="Clear ${esc(camp.missions[i - 1].title)} first"`}><span class="mission-num">${open ? i + 1 : '🔒'}</span><span class="mission-info"><small>${m.year} · ${esc(m.place)}</small><b>${esc(m.title)}</b></span>${starRow(best)}</button>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Campaigns"><div class="dialog-head"><div><div class="eyebrow">Campaign · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Campaigns"><div class="dialog-head"><div><div class="eyebrow">Campaign · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order; 1★ is enough to progress. Campaign milestones: ${milestoneText}. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
   focusDialog();
 }
 // Before a mission (live = false) or during one (live = true, with each star goal's current state).
@@ -1218,7 +1241,11 @@ function briefingDialog(id, live = false) {
     camp = CP.CAMPAIGNS[m.campaign],
     g = live ? game : CP.createMission(id, 1, diff),
     diffRule = CP.DIFFICULTIES[diff] || CP.DIFFICULTIES.normal,
-    best = CP.bestDifficulty(loadProfile(), id, diff),
+    profile = loadProfile(),
+    best = CP.bestDifficulty(profile, id, diff),
+    overallBest = CP.best(profile, id),
+    performanceElite = CP.starElite(id),
+    performanceEliteName = performanceElite ? E.TYPES[E.ELITE_FORCES[performanceElite].type].name : 'Elite Force',
     fac = side => g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral,
     chip = side => `<span class="side-chip" style="--c:${fac(side).color}">${esc(fac(side).name)}</span>`,
     allies = g.order.filter(side => side !== g.player && !E.foe(g, side, g.player)),
@@ -1241,7 +1268,7 @@ function briefingDialog(id, live = false) {
           .join('')}</select><p class="mode-note">${esc(diffRule.desc)}</p></div>`;
   modal.innerHTML = `<div class="overlay"><section class="dialog wide briefing" role="dialog" aria-modal="true" aria-label="Mission briefing" ${live ? '' : 'data-back="campaign"'}><div class="dialog-head"><div><div class="eyebrow">${esc(camp.short)} · Mission ${m.index + 1} · ${esc(m.place)} · ${m.year}</div><h2>${esc(m.title)}</h2></div><button class="small close" data-action="${live ? 'close' : 'campaign'}">${live ? 'Close' : 'Back'}</button></div><div class="brief-grid"><div><p class="brief-story">${esc(m.brief)}</p>${difficultyControl}<div class="brief-block"><span class="label">Objective</span><p>${esc(live ? E.objectiveText(game) : m.objective)}</p></div><div class="brief-block"><span class="label">Stars</span><ul class="star-list">${starGoals(m)
     .map((t, i) => `<li class="${state(i)}"><b>${goalMark(state(i))}</b>${i ? '' : 'Victory: '}${esc(t)}</li>`)
-    .join('')}</ul></div><div class="brief-block"><span class="label">Failure</span><p>${fails.map(esc).join(' · ')}</p></div><div class="brief-block"><span class="label">Forces</span><div class="side-chips">${[g.player, ...allies].map(chip).join('')}<span class="versus">vs</span>${enemies.map(chip).join('')}</div></div><div class="brief-block"><span class="label">Commanders on your side</span><div class="brief-cmds">${cmds(false).map(face).join('')}</div></div>${foes.length ? `<div class="brief-block"><span class="label">Enemy commanders</span><div class="brief-cmds">${foes.map(face).join('')}</div></div>` : ''}</div><div class="brief-side"><canvas id="brief-map" class="brief-map" aria-label="Battlefield map"></canvas><small>${g.cols} × ${g.rows} battlefield · squares are cities, dots are units</small><div class="reward"><span class="label">${best ? `Best ${esc(diffRule.name)} result` : `${esc(diffRule.name)} first clear`}</span>${best ? starRow(best) : `<b>${ICONS.use('token', 'cost-ico')} +${Math.round(CP.REWARD.first * diffRule.tokens)}</b>`}<small>${best ? `Each new ${esc(diffRule.name)} star pays ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens.` : `Plus ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens for each star goal met on this difficulty.`}${m.unlock ? ` Story: ${esc(m.unlock)}.` : ''}</small></div></div></div><div class="dialog-footer"><div>${live ? '<button data-action="mission-retry">Restart mission</button>' : '<button data-action="campaign">Mission select</button>'}</div>${live ? '<button class="primary" data-action="close">Resume</button>' : `<button class="primary" data-start-mission="${id}">Launch mission</button>`}</div></section></div>`;
+    .join('')}</ul></div><div class="brief-block"><span class="label">Failure</span><p>${fails.map(esc).join(' · ')}</p></div><div class="brief-block"><span class="label">Forces</span><div class="side-chips">${[g.player, ...allies].map(chip).join('')}<span class="versus">vs</span>${enemies.map(chip).join('')}</div></div><div class="brief-block"><span class="label">Commanders on your side</span><div class="brief-cmds">${cmds(false).map(face).join('')}</div></div>${foes.length ? `<div class="brief-block"><span class="label">Enemy commanders</span><div class="brief-cmds">${foes.map(face).join('')}</div></div>` : ''}</div><div class="brief-side"><canvas id="brief-map" class="brief-map" aria-label="Battlefield map"></canvas><small>${g.cols} × ${g.rows} battlefield · squares are cities, dots are units</small><div class="reward"><span class="label">${best ? `Best ${esc(diffRule.name)} result` : `${esc(diffRule.name)} first clear`}</span>${best ? starRow(best) : `<b>${ICONS.use('token', 'cost-ico')} +${Math.round(CP.REWARD.first * diffRule.tokens)}</b>`}<small>${best ? `Each new ${esc(diffRule.name)} star pays ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens.` : `Plus ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens for each star goal met on this difficulty.`}${m.unlock ? ` Story: ${esc(m.unlock)}.` : ''}</small><small><b>Overall performance:</b> ${overallBest >= 2 ? '✓' : '2★'} ${esc(performanceEliteName)} +${CP.REWARD.twoStarFragments} fragments · ${overallBest >= 3 ? '✓' : '3★'} ${esc(performanceEliteName)} +${CP.REWARD.masteryFragments} fragments. These fragment rewards are earned once per mission across all difficulties.</small></div></div></div><div class="dialog-footer"><div>${live ? '<button data-action="mission-retry">Restart mission</button>' : '<button data-action="campaign">Mission select</button>'}</div>${live ? '<button class="primary" data-action="close">Resume</button>' : `<button class="primary" data-start-mission="${id}">Launch mission</button>`}</div></section></div>`;
   const map = $('brief-map');
   if (map?.getContext) {
     const dpr = Math.min(devicePixelRatio || 1, 2),
@@ -1352,7 +1379,7 @@ function missionResult() {
     diffRule = CP.DIFFICULTIES[game.difficulty] || CP.DIFFICULTIES.normal;
   modal.innerHTML = `<div class="overlay"><section class="dialog narrow mission-result" role="dialog" aria-modal="true" aria-label="Mission result"><div class="eyebrow">${esc(E.modeTitle(game))}</div><h2>${win ? 'Mission complete' : 'Mission failed'}</h2><div class="result-stars" aria-label="${got.filter(Boolean).length} of 3 stars">${got.map(on => `<span class="${on ? 'on' : ''}">★</span>`).join('')}</div><p>${esc(game.over.reason)}</p><ul class="star-list">${starGoals(m)
     .map((t, i) => `<li class="${got[i] ? 'done' : 'lost'}"><b>${got[i] ? '★' : '☆'}</b>${esc(t)}</li>`)
-    .join('')}</ul>${win ? (r.repeat ? `<div class="reward"><span class="label">No new ${esc(diffRule.name)} stars</span><small>Each star pays once per difficulty. Meet the goals you missed on ${esc(diffRule.name)} for ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens each.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${r.total}</b><small>${r.parts.map(([k, v]) => `${k} +${v}`).join(' · ')}</small></div>`) : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k, v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}<div class="result-numbers"><div><b>${game.turn}</b><small>Turns</small></div><div><b>${cm.kills}</b><small>Enemy units destroyed</small></div><div><b>${cm.losses}</b><small>Units lost</small></div></div><div class="dialog-footer"><div><button data-action="close">Inspect the map</button><button data-action="campaign">Mission select</button></div><div><button data-action="mission-retry">${win ? 'Replay' : 'Retry'}</button>${next ? `<button class="primary" data-mission="${next}">Next mission</button>` : ''}</div></div></section></div>`;
+    .join('')}</ul>${win && r.repeat ? `<div class="reward"><span class="label">No new ${esc(diffRule.name)} stars</span><small>Each difficulty pays its star tokens once. Improve your overall mission result to 2★ or 3★ for the one-time Elite rewards.</small></div>` : ''}${win && r.parts?.length ? `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${r.total}</b><small>${r.parts.map(([k, v]) => `${k} +${v}`).join(' · ')}</small></div>` : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k, v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small>${r.fragmentParts?.length ? `<small>${r.fragmentParts.map(([label, k, v]) => `${esc(label)}: ${esc(E.TYPES[E.ELITE_FORCES[k].type].name)} +${v}`).join(' · ')}</small>` : ''}</div>` : ''}<div class="result-numbers"><div><b>${game.turn}</b><small>Turns</small></div><div><b>${cm.kills}</b><small>Enemy units destroyed</small></div><div><b>${cm.losses}</b><small>Units lost</small></div></div><div class="dialog-footer"><div><button data-action="close">Inspect the map</button><button data-action="campaign">Mission select</button></div><div><button data-action="mission-retry">${win ? 'Replay' : 'Retry'}</button>${next ? `<button class="primary" data-mission="${next}">Next mission</button>` : ''}</div></div></section></div>`;
   focusDialog();
 }
 
