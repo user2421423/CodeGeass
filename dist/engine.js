@@ -111,7 +111,7 @@
       tier: 2,
       crit: 0.1,
       pen: 0.15,
-      rule: 'Five-hex movement for flanking and city raids. Range 1; exchanges counter-fire.',
+      rule: 'Base movement 5 for flanking and city raids; Conquest adds the high-resolution world mobility bonus. Range 1; exchanges counter-fire.',
     },
     light: {
       branch: 'Armor',
@@ -242,7 +242,7 @@
       pen: 0.8,
       noCounter: true,
       siege: 2,
-      rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, movement 1. No counter-fire.',
+      rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, base movement 1. No counter-fire.',
     },
   };
   const CLASS_ORDER = ['scout', 'assault', 'raider', 'light', 'medium', 'heavy', 'super', 'support', 'rocket', 'siege'];
@@ -3002,7 +3002,8 @@
     u: 'urban',
     c: 'crater',
   };
-  const SEA_MOVE = 5;
+  const CONQUEST_MOVE_BONUS = 1,
+    SEA_MOVE = { conquest: 7, campaign: 5 };
   const isSea = t => t?.terrain === 'sea';
   function atSea(g, u) {
     return isSea(tile(g, u.c, u.r));
@@ -3012,7 +3013,8 @@
     return techLevel(g, side, 'sakura.landing') ? 0.25 : 0.5;
   }
   function seaMove(g, u) {
-    return SEA_MOVE + techValue(g, u.side, 'sakura.transport');
+    const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
+    return base + techValue(g, u.side, 'sakura.transport');
   }
 
   // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
@@ -3031,6 +3033,8 @@
   const RULES_VERSION = 3;
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
+    if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion === 2 && Array.isArray(g.stations) && Array.isArray(g.tiles)) upgradeSave(g);
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
@@ -3076,6 +3080,7 @@
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
     let n = t.move + unitTech(g, u, 'drives') + (eliteFx(u).move || 0);
+    if (g?.mode !== 'campaign') n += CONQUEST_MOVE_BONUS;
     // WC4-style Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
     n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
     n += wears(g, u, 'star') ? 1 : 0;
@@ -3851,11 +3856,11 @@
   // [name, lon, lat, base output per turn, starting refinery level, terrain]. A deposit on a free land hex is a mine
   // of its own, captured like a city; one whose hex holds a city is worked from that city and changes hands with it.
   const RESOURCE_SITES = [
-    // The great mine on Mount Fuji (Code Geass wiki), set just west of Tokyo so it gets its own hex.
-    ['Mount Fuji', 136.6, 35.4, 40, 1, 'mountain'],
-    ['Hokkaido', 142.5, 43.3, 15, 0], // Hokkaido is a single hex: worked from Sapporo
-    ['Kyushu', 131.1, 32.9, 15, 0], // worked from Fukuoka
-    ['Stonehenge', -1.83, 51.18, 10, 0], // where Sakuradite was first found (wiki); worked from London
+    // The great mine on Mount Fuji (Code Geass wiki), now placed at Fuji itself; the denser grid keeps it separate from Tokyo.
+    ['Mount Fuji', 138.7, 35.36, 40, 1, 'mountain'],
+    ['Hokkaido', 141.35, 43.06, 15, 0], // Hokkaido is a single hex: worked from Sapporo
+    ['Kyushu', 130.4, 33.6, 15, 0], // worked from Fukuoka
+    ['Stonehenge', -3.6, 52.2, 10, 0], // where Sakuradite was first found (wiki); worked from London
     ['Rocky Mountains', -106.5, 39, 10, 0],
     ['Qaidam Basin', 95, 37, 10, 0],
   ];
@@ -3975,21 +3980,23 @@
   }
 
   // ======== F.L.E.I.J.A.: the Sakuradite superweapon ========
-  // Every number is a first-pass balance guess. A world-map hex is about 330 km wide, so a warhead covers its target
-  // hex and one ring; campaign maps can pass a larger radius to blastArea().
+  // The high-resolution world uses roughly 200 km hexes. A warhead reaches two rings: the first is catastrophic,
+  // while the second is a weaker blast fringe. Campaign maps can still pass an explicit radius to blastArea().
   const FLEIJA = {
-    radius: 1,
+    radius: 2,
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
     lab: 3, // research lab level needed
     labTurn: 15, // Research Lab III, and therefore the strategic-weapons program, opens in each conquest
     devastation: 10, // turns a city at ground zero produces nothing
-    ringHP: 0.1, // units in the ring are left with 10% of their frame
+    ringHP: 0.1, // first ring: units are left with 10% of their frame
+    outerHP: 0.55, // second ring: units are left with at most 55%
+    outerShield: 0.35, // second-ring cities retain at most 35% of their defenses
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
     aiRest: 8, // turns a rival waits after a launch before starting another warhead
   };
   const ELIMINATOR = {
-    range: 2, // protects targets this many hexes from the city holding the charge
+    range: 3, // scaled with the denser world map; protects targets this many hexes from the city holding the charge
     cost: { credits: 1200, industry: 300, science: 250, sakuradite: 100 },
     turns: 3,
     lab: 3,
@@ -4184,6 +4191,7 @@
         eliminatorCity: defense.name,
         destroyed: [],
         crippled: [],
+        damaged: [],
         cities: [],
         hit: [],
       };
@@ -4191,40 +4199,59 @@
     const unlocksEliminator = !eliminatorUnlocked(g);
     const destroyed = [],
       crippled = [],
+      damaged = [],
       cities = [],
       hit = [];
     for (const t of blastArea(g, center)) {
-      const ring = key(t) !== key(center),
+      const blastDistance = dist(g, t, center),
+        ring = blastDistance === 1,
+        outer = blastDistance > 1,
         v = unitAt(g, t),
         s = stationAt(g, t),
         d = siteAt(g, t);
-      if (v && !ring) {
+      if (v && blastDistance === 0) {
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp });
         v.hp = 0;
         kill(g, v, null, true);
         destroyed.push(v.id);
       } else if (v) {
-        const left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * FLEIJA.ringHP)));
+        const ratio = outer ? FLEIJA.outerHP : FLEIJA.ringHP,
+          left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * ratio)));
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp - left });
         v.hp = left;
-        v.morale = moraleFloor(g, v);
-        crippled.push(v.id);
+        if (ring) {
+          v.morale = moraleFloor(g, v);
+          crippled.push(v.id);
+        } else {
+          v.morale = Math.min(v.morale ?? 0, -1);
+          damaged.push(v.id);
+        }
       }
       if (s) {
-        ruin(g, s, ring ? 1 : Infinity);
-        if (!ring) s.devastated = g.turn + FLEIJA.devastation;
-        cities.push({ name: s.name, devastated: !ring });
+        if (blastDistance === 0) {
+          ruin(g, s, Infinity);
+          s.devastated = g.turn + FLEIJA.devastation;
+          cities.push({ name: s.name, severity: 'ground', devastated: true });
+        } else if (ring) {
+          ruin(g, s, 1);
+          cities.push({ name: s.name, severity: 'inner', devastated: false });
+        } else {
+          s.shield = Math.min(s.shield, Math.round(s.maxShield * FLEIJA.outerShield));
+          cities.push({ name: s.name, severity: 'outer', devastated: false });
+        }
       }
       if (d) {
-        d.refinery = ring ? Math.max(0, (d.refinery || 0) - 1) : 0;
-        if (!ring) d.devastated = g.turn + FLEIJA.devastation;
+        if (blastDistance === 0) {
+          d.refinery = 0;
+          d.devastated = g.turn + FLEIJA.devastation;
+        } else if (ring) d.refinery = Math.max(0, (d.refinery || 0) - 1);
       }
-      if (!ring && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
+      if (blastDistance === 0 && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
     }
     g.fleijaDetonated = true;
     log(
       g,
-      `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled${cities.length ? ', ' + cities.map(x => x.name).join(' and ') + ' in ruins' : ''}.`,
+      `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled, ${damaged.length} damaged${cities.length ? ', ' + cities.length + ' cities affected' : ''}.`,
       side,
     );
     if (unlocksEliminator)
@@ -4238,6 +4265,7 @@
       name,
       destroyed,
       crippled,
+      damaged,
       cities,
       hit,
       eliminatorUnlocked: unlocksEliminator,
@@ -4268,7 +4296,9 @@
       let score = 0,
         safe = true;
       for (const t of blastArea(g, p)) {
-        const ring = key(t) !== key(p),
+        const blastDistance = dist(g, t, p),
+          ring = blastDistance > 0,
+          outer = blastDistance > 1,
           v = unitAt(g, t),
           s = stationAt(g, t);
         if (v?.side === side || s?.owner === side) {
@@ -4277,12 +4307,12 @@
         }
         if (v && rival(v.side))
           score +=
-            price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
+            price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (outer ? 0.35 : ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
         // Cities are worth what the blast destroys (a ruin is worth nothing); a capital is worth more only when
         // the launcher has troops close enough to take it afterwards.
         if (s && rival(s.owner) && !devastated(g, s)) {
           const levels = (s.tier || 0) + (s.lab || 0) + (s.refinery || 0);
-          score += ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
+          score += outer ? 15 * levels + s.shield * 0.08 : ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
           if (s.project) score += 2000;
           if (s.eliminatorProject) score += 1600;
           if (
@@ -4469,53 +4499,87 @@
   }
 
   // ======== The world ========
-  // <world> Generated by tools/build_map.py: 100 x 42 wrapping hexes, 3.6 degrees per column.
+  // <world> Generated by tools/build_map.py: 180 x 76 wrapping hexes, 2 degrees per column.
   const WORLD_ROWS = [
-    '................s.................sssssssssss.........................ssssssssssss..................',
-    '.....ss.........sssss.....ssss....ssxxsssss.............s...........ssssssssssssssssssssssss........',
-    's...ssssssssssssssssssssss..ssss...ssssxs.............sssssss.ssssssssssssssssssssssssssssssssssssss',
-    'pp.pppppppppppppppppppppss..ssss...ssxs....spp......ppfpppppppppppmpppppppppppppppppppmmmpmppppppppp',
-    '....pppppmpppfpppppppppp....ssss....sss.............mpp.fpppppppppppppppppppppppppppppppppmppppppp..',
-    '.....ppp...pffpmmfffffff....pppp................p..ppp..ppppfppfppppppppppppppppppppppppp....pp.....',
-    '.............ppmmmffpffffp..fppppp.............p.p..p.ffpfppppppppffffffffpfpfpfppfpfpfp.....pp.....',
-    '..............pmmppppffppfpfpffppp..............p..pfpfppppppppppppppppppppppppppppppffpp....p......',
-    '...............ppmppppppfppfppff..................ppppppppppppppppppppppppmppppppppppppppp..........',
-    '...............pppmppppppppppppp.................ppmmmppppppppp.pppppppppppppppppppppppp............',
-    '...............ppppmppppppppppp................pppp..p.ppp...mp.pdppppppppppdddpddppppp..p..........',
-    '...............pppmmppppfffff..................ppp..p..p.pppppp.pdddppmdddpppddpppppp...p...........',
-    '................ppdmmpppppffp...................p.ppp.p...pppppmpppppmpmmmmppppppppp...pp...........',
-    '................pddmmpppfpfp...................pmmppp......pppmpppdpppxpmmmpmpppppp..ppp............',
-    '..................ppdppppfpp...................pddpdddpdddpppddpmpdddpppxxmmpmmppppp................',
-    '..................ppppp.......................dpddddddpdddppdpd.pppddppppxpxmpppppp.................',
-    '....................ppp....p..................ddpdddddddddp.pddppp...pppppppffppppp.p...............',
-    '.....p..............pmp.p..p.................ddpdpdddddddddpppppdp...ppppp.ppffpp...................',
-    '.....................ppppp...................dddddddddpddpddppdddp....ppp...pffp...p................',
-    '........................pp...................ppppppppppppppppppp......pp.....fpf...p................',
-    '..........................p..p................ppppppppppppppmppp.......p.....pff....................',
-    '..........................ppppppp.............pppppppppppppmmppp.......p............p...............',
-    '............................ppppppp............pff.fpppppppppppp.............fp...f.................',
-    '............................mffffppp................pfpffppppp...............ff.ff..................',
-    '............................pfffffppp................pffpfpppp................f.fff.................',
-    '...........................mfppfffppppp..............pfffpppp.................f.......pfpp..........',
-    '............................mfppfffppppp.............pppppppp..................fff......ffp.........',
-    '............................mffppfpppppp.............pppppppp.............................f.........',
-    '.............................pppppppppp..............pppppppp..p......................pp.p..........',
-    '.............................mmpppppppp..............ppppppp..p.....................pppppp..........',
-    '..............................ppppppppp...............ddpppp..pp...................dpddpppp.........',
-    '..............................mppppppp...............dddppp..pp..................ppddpddpppp........',
-    '..............................mpppppp.................pdppp.......................dddddddpppp.......',
-    '..............................mppppp..................pppp.......................pppddpdpppp........',
-    '..............................mppppp...................ppp........................pppppppppp........',
-    '.............................mpppp......................................................ppp.........',
-    '.............................ppppp.......................................................pp.......pp',
-    '.............................mpp..........................................................p......p..',
-    '.............................mpp................................................................pp..',
-    '............................ppp.....................................................................',
-    '.............................pp.....................................................................',
-    '.............................pp.....................................................................',
+    '.............................ss...............................ssssssssssssssssss...............................................ssssssssssssssssssss.................................',
+    '...........................ssssssssssss........ssssss.........ssssssxssssssssss.............................................ssssssssssssssssssssssssssssss....sssss.................',
+    '.........ssssss...............sssssssss.........sssssss........sssxsssssssssss.......................ssss...................sssssssssssssssssssssssssssssssssssssssssss.............',
+    '.......ssssssssssssssssssssssssssssss............sssssss.......sssssssssssss.....................ssssssssss............sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
+    'sss....sssssssssssssssssssssssssssssssssssssss....sssssssss....ssssssssxss.......................sssssssssssss..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
+    'pppp..ppppppppppppppppppppppppppppppppppppppsss...ssssssss......sssxsss......ssspp.............pmpppfpfpppppp.pppppppppppppppppppppppppppppppppppppppppppppmmmmmmmmmmmpppppppppppppp',
+    'p......pppppppppppppppppppppppppppppppppppppps.......sssss......ssssss.........ssp............pppppf.ffpfpppppppppppppppppppppppppppppppppppppppppppppppppppmmmmmppmmpmmpmpppppppppp',
+    '.......ppppppmmmpmpppffppfpfppppppppppppppp........sss...........ssss.......................ppmppp..ffppppppppppppppppppmpppppppppppppppppppppppppppppppppppppmmppppmmpppppppppppp..',
+    '.........pppppmpmmpmfffffppfppffpfpffpppppp........sssssss.........ss.......................pmpppff..ppppppfpppppppppppppmpppppppppppppppppppppppppppppppppppppppppppppp..pppppp....',
+    '..........pppp.......pfffpfmfmmffpffffppppp.......pppppppp.............................p....ppppppp..ppppppppffpfpfpfppmmpppppppppppppppppppppppppppppppppppppppp.......ppp.........',
+    '..........pp...........ppppmfmmmpppfffffpffpf.....ppppppppp............................pp.....p.pp...ppppppppppfpffppffmppfpffpfpffffppppfffpffpfffppffpppffpppp........ppp.........',
+    '........p...............pppmfmmmppfpppfppfppppf...fppppppppp.........................p.pp.....p.....ppfpppppppppppppppfmfpfpfffpffpffffppffffpfffpffffpfpffpfp.........ppp..........',
+    '.........................pppmmmpmffpfpfpfpfpppfpffffpfppppppp........................pp.pp...pppfpppppfppppppppppppppppmpppppppppppppppppfpfppffffpppppfpffffppp........pp..........',
+    '.........................pppmmppmppfppffppffpfpfpppffppfpffff..........................pp..ppppffppppppppppppppppppppppmpppppppppppppmppppppppppppppppppppppppppp...................',
+    '..........................pppmmmpppppppppppfppppffpfffffppff..............................pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp.p..................',
+    '...........................pppmmmmppppppppppfppfpfppfffff..............................p.pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp.p...................',
+    '............................pppmmpmpppppppppppppppfffppff................................ppppmpmmmmppmmpppppppppppppppppppppppppppppppppppppppppppppppppppppppp.....................',
+    '...........................ppppmmmmpppppppppppppppffpfpppp...............................ppppmpp.ppppppp..ppppppp...ppppppppppppppppppppppppdppppppppppppppppp..p...................',
+    '............................pppmpmpmppppppppppppppfffpp...............................ppppppp..pp.pppppp......mppp..pppddddppppppppmppppdddddddddddpppppppppp...ppp.................',
+    '...........................ppppmmmmmmpppppppppfpppffpp...............................pppppp....ppp.pppppp.pp..pmmm..pddddpdpppppppppppppdpppdddddddpppppppp....p....................',
+    '............................ppppmmppmmpppppppfpfpffpf................................ppppp....p...p.pp.pppppppppppp..dddpddppppmdddddddppppddddppppppppppp......p...................',
+    '............................ppppmmmmmpppppppfpffffpf.................................ppp........pp..p..ppppppppppp..pdddpdpppmmpddddpdppppppppppppppp...pm....pp....................',
+    '.............................pppppdmmmppppppfpppffpf...................................p...pppp.........ppp.pppppmmpppppppppmmppmmmmmpmpppppppppppppppp...p...ppp...................',
+    '.............................ppdpdmdmppppppfpfppffp......................................mmmmpp............ppppppmppppppppppppmmmmmmmmmmmmpppppppppppp...p.ppppp....................',
+    '...............................ddpdmmpppppfpfppfpp...................................ppmpmpppppp............pppppmpmppdppdppppppxmmmmmmmpmpmpppppppppp.....pp.......................',
+    '...............................pdpdddpppppffpffpp...................................pppppdddddddpp.ppppp..pppppdppmppdppddppppppxxxmmmpmmmxppppppppppp..............................',
+    '................................pppppppppppppp..pp...................................pdddddddddpdpdddddddpppddpddd.mmmdddddpppppppmmxxmxmxmmmpppppppppp.............................',
+    '................................ppppmpppp.......p..................................ddddddddddddpdddddpdddp.pdpdpdd..mmdpppdddpppppppmxmxmmmppppppppppp..............................',
+    '.................................p.pppmpp........p.................................dddddddddpddddppddddpddp.pdddddpp...ppppdpdpppppppppppppppppppppppp..............................',
+    '.................................p.ppmmpp.........................................dddddddddddddpdddddpdpddp.ppdddddppp.....pppppppppppppppppppppppppp.pp............................',
+    '.....................................pmpp.......ppp...............................dddddddpdddddddpdpdddddddp.ddddddddppp.....pppppppppppfpffpppppppp..p.............................',
+    '..........p..........................ppmp...pp...ppp.............................ddpddddddddddpddddddddddddp.ddddddddpp......ppppppppp.pfpfpfpppp...................................',
+    '......................................ppmp..pp.......pp..........................pddddpdddddddddpppdddddddpdp.pdddddddp.......ppppppp...pffpffp.pp..................................',
+    '......................................pppppppp...................................dppddddddddddddddddddpddddpp.pddddddp........ppppp.....ppfppff.......p.............................',
+    '..........................................ppppp..................................pppppppppppppppppddddddddpppp.ppdddp..........pppp.......fpfpfp......p.............................',
+    '...........................................ppppp.................................ppppppppppppppppppppppppppppppppp.............ppp........fpfppf.....pp.............................',
+    '..............................................pp..................................ppppppppppppppppppppppppppmppp...............ppp.........p.fpfp...................................',
+    '..............................................pp....ppp...........................pppppppppppppppppppppppppppmppppp............pp..........f.pfp....................................',
+    '................................................ppp.pppppppp.......................pppppppppppppppppppppppppmmmpppp.............p..........p..p.........p...........................',
+    '.................................................ppppppppppp.......................pfpfffppppppppppppppppppppmppppp..............p.........f...........pp...........................',
+    '...................................................pmmppppppppp......................pppppf.pfppppppppppppppppppppp.........................f.......p...............................',
+    '...................................................mmppfffpfpppp..............................pffffffffpppppppppp.........................f.f.....pff...............................',
+    '...................................................pppfpfffpfffpp..............................fpppppffpppppppppp..........................fpp...ppff...............................',
+    '..................................................pppffpfpffffffp.............................pfffpfpffppppppppp...........................fff..ffpf..pf............................',
+    '..................................................mffffffffppffffpp............................pfpffpffffpppppp.............................ff...fff..ff....fp......................',
+    '.................................................mmpffffppffffffppppp..........................pffffpfpfpppppp..............................ff...fff.pf....fffppp...................',
+    '.................................................ppmmfpfpfffffpfffpppppp........................ppffffpppppppp...............................f........f......fffppp.................',
+    '.................................................pmmfppppffffffppppppppp........................ppppppppppppp.................................ff..............fffpp.................',
+    '..................................................pmppfpfffffpffppppppppp.......................pppppppppppppp..................................ffp............pppfp................',
+    '..................................................pmpfffffppffpppppppppp........................pppppppppppppp.....................................................fp...............',
+    '...................................................pmmffffffpppppppppppp........................pppppppppppppp......................................................................',
+    '...................................................ppmpppppppppppppppp..........................pppppppppppppp...p.........................................ppp..pp..................',
+    '....................................................ppmmppppppppppppppp.........................pppppppppppppp...pp......................................ppppp...pp.................',
+    '.....................................................mpmpppppppppppppp.........................pppppppppppppp...ppp....................................pppppppp.pp..................',
+    '......................................................mmpppppppppppppp..........................pddppppppppp....ppp....................................pdpppppppppp.................',
+    '......................................................mmpppppppppppppp..........................ddddppppppp....ppp...................................ddddddddppppppp................',
+    '.......................................................mmppppppppppppp...........................dddpppppppp....pp.................................pddpdddpddddpppppp...............',
+    '......................................................mmpppppppppppp.............................dddppppppp....pp.................................pppdddddddpddpppppp...............',
+    '.......................................................pmpppppppppp..............................pddddppppp.....p..................................pppdddddddddpppppppp.............',
+    '......................................................mmppppppppp................................pddpppppp........................................pppdpdddddddddpppppp..............',
+    '......................................................pmpppppppppp................................pppppppp.........................................pppdddpdpddddppppppp.............',
+    '......................................................pmpppppppp..................................ppppppp..........................................pppppppdddddppppppp..............',
+    '......................................................mmpppppppp...................................pppppp...........................................pppppppppppppppppp..............',
+    '.....................................................pmpppppppp...................................ppppp............................................ppppp....ppppppppp...............',
+    '......................................................mppppppp.................................................................................................pppppp...............',
+    '.....................................................mmpppppp..................................................................................................pppppp...........p...',
+    '.....................................................pppppppp....................................................................................................ppp.............pp.',
+    '.....................................................ppppp.......................................................................................................................p..',
+    '.....................................................mmppp.........................................................................................................p...........pp...',
+    '....................................................pmppp.....................................................................................................................pp....',
+    '.....................................................mppp....................................................................................................................pp.....',
+    '....................................................mmpp............................................................................................................................',
+    '....................................................pmppp...........................................................................................................................',
+    '....................................................ppp.............................................................................................................................',
+    '.....................................................ppp............................................................................................................................',
+    '......................................................pp............................................................................................................................',
   ];
   // </world>
-  const WORLD = { cols: 100, rows: 42, lon0: -180, dlon: 3.6, lat0: 74, dlat: 3.12 };
+  const WORLD = { cols: 180, rows: 76, lon0: -180, dlon: 2, lat0: 74, dlat: 128 / 75 };
   function hexOf(lon, lat) {
     const r = clamp(Math.round((WORLD.lat0 - lat) / WORLD.dlat), 0, WORLD.rows - 1),
       c = Math.round((lon - WORLD.lon0) / WORLD.dlon - 0.5 - 0.5 * (r & 1));
@@ -4640,6 +4704,57 @@
     ['Riyadh', 46.7, 24.7, 'neutral', 1],
     ['Damascus', 36.3, 33.5, 'neutral', 1],
     ['Muscat', 58.4, 23.6, 'neutral', 1],
+
+    // Strategic city expansion: secondary regional centres. Existing cities stay first so their map placement is stable.
+    // Holy Britannian Empire.
+    ['Vancouver', -123.1, 49.3, 'britannia', 1],
+    ['San Francisco', -122.4, 37.8, 'britannia', 2],
+    ['Los Angeles', -118.2, 34.1, 'britannia', 2],
+    ['Houston', -95.4, 29.8, 'britannia', 2],
+    ['Toronto', -79.4, 43.7, 'britannia', 2],
+    ['Montreal', -73.6, 45.5, 'britannia', 1],
+    ['Havana', -82.4, 23.1, 'britannia', 1],
+    ['Quito', -78.5, -0.2, 'britannia', 1],
+    ['Caracas', -66.9, 10.5, 'britannia', 1],
+    ['Brasilia', -47.9, -15.8, 'britannia', 1],
+    ['Sao Paulo', -46.6, -23.5, 'britannia', 2],
+    ['Montevideo', -56.2, -34.9, 'britannia', 1],
+
+    // Europia United.
+    ['Lisbon', -9.1, 38.7, 'eu', 1],
+    ['Barcelona', 2.2, 41.4, 'eu', 2],
+    ['Amsterdam', 4.9, 52.4, 'eu', 2],
+    ['Prague', 14.4, 50.1, 'eu', 1],
+    ['Budapest', 19, 47.5, 'eu', 1],
+    ['Sofia', 23.3, 42.7, 'eu', 1],
+    ['Helsinki', 24.9, 60.2, 'eu', 1],
+    ['Tunis', 10.2, 36.8, 'eu', 1],
+    ['Casablanca', -7.6, 33.6, 'eu', 1],
+    ['Accra', -0.2, 5.6, 'eu', 1],
+    ['Luanda', 13.2, -8.8, 'eu', 1],
+    ['Dar es Salaam', 39.2, -6.8, 'eu', 1],
+    ['Maputo', 32.6, -25.9, 'eu', 1],
+
+    // Chinese Federation.
+    ['Harbin', 126.6, 45.8, 'cf', 1],
+    ['Xian', 108.9, 34.3, 'cf', 2],
+    ['Chengdu', 104.1, 30.7, 'cf', 2],
+    ['Wuhan', 114.3, 30.6, 'cf', 2],
+    ['Nanjing', 118.8, 32.1, 'cf', 2],
+    ['Guangzhou', 113.3, 23.1, 'cf', 2],
+    ['Kunming', 102.8, 25, 'cf', 1],
+    ['Kathmandu', 85.3, 27.7, 'cf', 1],
+    ['Dhaka', 90.4, 23.8, 'cf', 1],
+    ['Mandalay', 96.1, 21.9, 'cf', 1],
+    ['Ho Chi Minh City', 106.7, 10.8, 'cf', 1],
+    ['Kuala Lumpur', 101.7, 3.1, 'cf', 1],
+    ['Surabaya', 112.8, -7.3, 'cf', 1],
+
+    // Neutral Australia and Middle Eastern Federation.
+    ['Brisbane', 153, -27.5, 'neutral', 1],
+    ['Adelaide', 138.6, -34.9, 'neutral', 1],
+    ['Jerusalem', 35.2, 31.8, 'neutral', 1],
+    ['Sanaa', 44.2, 15.4, 'neutral', 1],
   ];
   // [side, class, lon, lat, frames, commander]. Units snap to their nearest free land hex.
   const ARMY_DATA = [
@@ -4739,6 +4854,47 @@
     ['cf', 'scout', 103.8, 1.35, 1],
     ['cf', 'scout', 100.5, 13.7, 1],
     ['cf', 'scout', 124.2, 24.1, 1],
+
+    // High-resolution front-line reinforcement pass: concentrate forces in actual theatres rather than filling every city.
+    // Britannia: North American coasts, South America, the Pacific and Area 11.
+    ['britannia', 'light', -122.4, 37.8, 2],
+    ['britannia', 'medium', -118.2, 34.1, 2],
+    ['britannia', 'heavy', -79.4, 43.7, 2],
+    ['britannia', 'rocket', -63.6, 44.6, 1],
+    ['britannia', 'medium', -46.6, -23.5, 2],
+    ['britannia', 'light', -66.9, 10.5, 1],
+    ['britannia', 'assault', 135.8, 35.0, 2],
+    ['britannia', 'raider', 130.4, 33.6, 2],
+    ['britannia', 'medium', 121, 14.6, 2],
+    ['britannia', 'light', -157.9, 21.3, 2],
+
+    // E.U.: the Atlantic wall, central/eastern Europe, Mediterranean, Africa and Siberia.
+    ['eu', 'medium', 2.35, 48.85, 2],
+    ['eu', 'heavy', 13.4, 52.5, 2],
+    ['eu', 'light', 4.9, 52.4, 2],
+    ['eu', 'medium', 21, 52.2, 2],
+    ['eu', 'heavy', 30.5, 50.4, 2],
+    ['eu', 'support', 29, 41, 2],
+    ['eu', 'assault', 44.8, 41.7, 2],
+    ['eu', 'medium', 3, 36.7, 2],
+    ['eu', 'medium', 31.2, 30, 2],
+    ['eu', 'light', 36.8, -1.3, 1],
+    ['eu', 'medium', 28, -26.2, 2],
+    ['eu', 'light', 82.9, 55, 1],
+    ['eu', 'light', 104.3, 52.3, 1],
+
+    // Chinese Federation: the China/Area 11 front, India, Central Asia, Iran and Southeast Asia.
+    ['cf', 'medium', 121.5, 31.2, 2],
+    ['cf', 'rocket', 118.8, 32.1, 1],
+    ['cf', 'light', 113.3, 23.1, 2],
+    ['cf', 'heavy', 126.2, 39.4, 2],
+    ['cf', 'medium', 126.6, 45.8, 2],
+    ['cf', 'medium', 77.2, 28.6, 2],
+    ['cf', 'support', 88.4, 22.6, 1],
+    ['cf', 'light', 76.9, 43.2, 1],
+    ['cf', 'light', 105.8, 21, 2],
+    ['cf', 'medium', 103.8, 1.35, 2],
+    ['cf', 'heavy', 51.4, 35.7, 2],
   ];
   // Neutral garrisons: [city, type, frames].
   const GARRISONS = [
@@ -4750,6 +4906,10 @@
     ['Riyadh', 'bamides', 1],
     ['Damascus', 'glasgow', 2],
     ['Muscat', 'glasgow', 1],
+    ['Brisbane', 'glasgow', 1],
+    ['Adelaide', 'glasgow', 1],
+    ['Jerusalem', 'bamides', 1],
+    ['Sanaa', 'bamides', 1],
   ];
   const ERAS = {
     world: {
@@ -4933,13 +5093,13 @@
       at.terrain = 'plains';
       g.stations.push(s);
     }
-    // Territory: each land hex belongs to the nearest city over land, out to 6 hexes.
+    // Territory: each land hex belongs to the nearest city over land. Radius 11 preserves the old geographic reach on the denser map.
     const frontier = g.stations.map(s => ({ t: tile(g, s.c, s.r), owner: s.owner, d: 0 })),
       seenT = new Set(frontier.map(f => key(f.t)));
     for (const f of frontier) f.t.owner = f.owner;
     while (frontier.length) {
       const f = frontier.shift();
-      if (f.d >= 6) continue;
+      if (f.d >= 11) continue;
       for (const n of adjacent(g, f.t))
         if (!seenT.has(key(n)) && freeLand(n)) {
           seenT.add(key(n));
@@ -4973,6 +5133,16 @@
   }
 
   // ======== AI ========
+  // Strategic awareness is scaled for the 180 × 76 world. Combat ranges remain deliberately unchanged.
+  const AI_RANGE = {
+    threat: 5,
+    capitalGuard: 13,
+    cityGuard: 7,
+    mineGuard: 8,
+    enemyScan: 16,
+    convoyLand: 4,
+    convoySea: 6,
+  };
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
   function goalField(g, side) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
@@ -5046,7 +5216,7 @@
       for (const n of adjacent(g, t)) {
         if (TERRAIN[n.terrain]?.blocked) continue;
         const j = n.r * g.cols + n.c,
-          step = (isSea(n) !== isSea(t) ? 6 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost),
+          step = (isSea(n) !== isSea(t) ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost),
           nd = d + step;
         if (nd < field[j]) {
           field[j] = nd;
@@ -5064,13 +5234,13 @@
       memo[side] = { turn: g.turn, field: goalField(g, side), guards: assignGuards(g, side) };
     return memo[side];
   }
-  // Garrison duty: the capital always keeps two defenders (four when threatened); other cities with enemy units
-  // within 3 hexes draw the nearest units back to defend them. Returns { unitId: city }.
+  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
+  // to enemies within five hexes and draw defenders from proportionally larger strategic radii. Returns { unitId: city }.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.filter(f => dist(g, f, s) <= 3).reduce((a, f) => a + f.stack, 0);
+      threat = s => foes.filter(f => dist(g, f, s) <= AI_RANGE.threat).reduce((a, f) => a + f.stack, 0);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -5084,7 +5254,7 @@
     for (const { s, threat: t, capital } of cities) {
       const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
       const near = own
-        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? 8 : 4))
+        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? AI_RANGE.capitalGuard : AI_RANGE.cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
       for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
     }
@@ -5093,7 +5263,7 @@
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
-      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= 5).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= AI_RANGE.mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
       for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
     }
     return taken;
@@ -5302,6 +5472,9 @@
       }
     }
   }
+  function coastTile(g, p) {
+    return !isSea(p) && adjacent(g, p).some(isSea);
+  }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
@@ -5341,14 +5514,16 @@
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       });
-      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= 10);
+      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= AI_RANGE.enemyScan);
       const old = { c: u.c, r: u.r };
-      // Overseas invasions sail in groups: a land unit embarks only beside two other free land units.
+      // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
+      // count as an escort so follow-on waves do not get stranded waiting for a fresh three-unit convoy.
       const fromLand = !atSea(g, u),
-        convoy =
-          fromLand &&
-          g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !atSea(g, v) && !memo.guards?.[v.id] && dist(g, v, u) <= 2)
-            .length >= 2;
+        freeAllies = g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !memo.guards?.[v.id]),
+        landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= AI_RANGE.convoyLand).length,
+        seaEscort = freeAllies.filter(v => atSea(g, v) && dist(g, v, u) <= AI_RANGE.convoySea).length,
+        convoy = fromLand && !guard && (landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1)),
+        currentField = fieldAt(old);
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
@@ -5363,7 +5538,15 @@
           nearestEnemy = Math.min(nearestEnemy, d);
           if (d <= 1) danger++;
         }
-        if (isSea(p)) sc -= 20 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
+        if (isSea(p)) {
+          sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
+          if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
+        } else if (!fromLand) {
+          sc += 90;
+        } else if (!guard && !convoy && coastTile(g, p) && fieldAt(p) <= currentField) {
+          const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= AI_RANGE.convoyLand).length;
+          sc += 28 + Math.min(3, assembling) * 12;
+        }
         if (TYPES[u.type].branch === 'Artillery') {
           sc -= danger * 28;
           sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;

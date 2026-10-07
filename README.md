@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Features
 
-- **Conquest on a full world map:** 100 × 42 hexes that wrap east–west around the globe, 107 cities, oceans, forests,
+- **Conquest on a full world map:** 180 × 76 hexes (13,680 total) that wrap east–west around the globe, 149 cities, much finer WC4-style coastlines, strategically anchored mountain/desert bottlenecks, oceans, forests,
   mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan) and
   Pacific bases; the E.U. holds Europe, Russia, Siberia and Africa; the Federation holds Asia from
   Tehran to Taipei. Australia and the Middle Eastern Federation are neutral and defend themselves.
@@ -48,7 +48,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   **F.L.E.I.J.A. Eliminator** charge per power for 1,200 credits, 300 industry, 250 research and 100 Sakuradite over
   3 turns. The charge is tied to that city, protects targets within 2 hexes and automatically neutralizes one
   incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
-- **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
+- **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 7 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo

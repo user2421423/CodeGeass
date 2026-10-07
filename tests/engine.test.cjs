@@ -77,6 +77,7 @@ test('The world map wraps east to west and every city stands on land', () => {
   const g = E.createGame('eu', 'normal', 'conquest', 5);
   const last = E.WORLD.cols - 1;
   assert.equal(g.tiles.length, E.WORLD.cols * E.WORLD.rows);
+  assert.deepEqual([E.WORLD.cols, E.WORLD.rows], [180, 76]);
   assert.equal(E.distance({ c: 0, r: 6 }, { c: last, r: 6 }, g), 1);
   assert.equal(E.distance({ c: 0, r: 6 }, { c: last, r: 6 }), last);
   assert(E.adjacent(g, { c: 0, r: 6 }).some(t => t.c === last));
@@ -100,6 +101,23 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(!byLand(city('Seoul'), city('Fukuoka')));
   assert(byLand(city('Fukuoka'), city('Tokyo Settlement')));
   assert(byLand(city('Moscow'), city('Beijing')));
+  const landDistance = (a, b) => {
+    const seen = new Set([E.key(a)]),
+      queue = [[E.tile(g, a.c, a.r), 0]];
+    while (queue.length) {
+      const [t, d] = queue.shift();
+      if (t.c === b.c && t.r === b.r) return d;
+      for (const n of E.adjacent(g, t))
+        if (!seen.has(E.key(n)) && !E.isSea(n) && n.terrain !== 'peak') {
+          seen.add(E.key(n));
+          queue.push([n, d + 1]);
+        }
+    }
+    return Infinity;
+  };
+  assert(landDistance(city('Madrid'), city('Algiers')) > 20, 'Gibraltar remains a sea crossing, not a land bridge');
+  assert(byLand(city('Bangkok'), city('Kuala Lumpur')), 'Thai–Malay peninsula stays continuous');
+  assert(!byLand(city('Surabaya'), city('Kuala Lumpur')), 'Sunda Strait keeps Java separated from mainland Asia');
   for (const s of g.stations) assert.notEqual(E.tile(g, s.c, s.r).terrain, 'sea', s.name);
   const capitals = g.stations.filter(s => s.capital).map(s => [s.name, s.owner]);
   assert.deepEqual(capitals.sort(), [
@@ -108,15 +126,36 @@ test('The world map wraps east to west and every city stands on land', () => {
     ['Pendragon', 'britannia'],
   ]);
   assert.equal(new Set(g.stations.map(E.key)).size, g.stations.length);
+  assert.equal(g.stations.length, 149);
+  assert.deepEqual(
+    Object.fromEntries(['britannia', 'eu', 'cf', 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length])),
+    { britannia: 39, eu: 56, cf: 42, neutral: 12 },
+  );
+  for (const name of ['Vancouver', 'Sao Paulo', 'Amsterdam', 'Dar es Salaam', 'Chengdu', 'Kuala Lumpur', 'Brisbane', 'Jerusalem'])
+    assert(city(name), name + ' should be present in conquest');
   assert(g.units.every(u => !E.isSea(E.tile(g, u.c, u.r))));
+  assert.deepEqual(g.startUnits, { britannia: 38, eu: 47, cf: 40 });
+  for (const [lon, lat, terrain, name] of [
+    [10, 47, 'mountain', 'Alps'],
+    [41, 43, 'mountain', 'Caucasus'],
+    [61, 58, 'mountain', 'Urals'],
+    [-70, -20, 'mountain', 'Andes'],
+    [10, 25, 'desert', 'Sahara'],
+    [100, 43, 'desert', 'Gobi'],
+    [128, -24, 'desert', 'Australian interior'],
+    [88, 28.5, 'peak', 'Himalaya'],
+  ]) {
+    const h = E.hexOf(lon, lat);
+    assert.equal(E.tile(g, h.c, h.r).terrain, terrain, name);
+  }
   assert.deepEqual(g.order, ['eu', 'britannia', 'cf']);
 });
 test('Movement obeys terrain, occupancy and the one-move rule', () => {
   let g = blank();
   const u = E.newUnit(g, T('britannia', 'siege'), 'britannia', 5, 5);
+  assert.equal(E.movement(g, u), 2);
   E.tile(g, 6, 5).terrain = 'forest';
-  assert(!E.reachable(g, u).has('6,5'));
-  E.tile(g, 6, 5).terrain = 'plains';
+  assert(E.reachable(g, u).has('6,5'), 'high-resolution siege units can spend their full move entering forest');
   assert(E.move(g, u.id, 6, 5).ok);
   assert(!E.move(g, u.id, 7, 5).ok);
   g = blank();
@@ -128,7 +167,7 @@ test('Movement obeys terrain, occupancy and the one-move rule', () => {
 });
 test('Units embark onto the sea, sail as transports that cannot fire, and land on a coast', () => {
   const g = blank();
-  for (const t of g.tiles) if (t.c >= 4 && t.c <= 10) t.terrain = 'sea';
+  for (const t of g.tiles) if (t.c >= 4 && t.c <= 12) t.terrain = 'sea';
   const u = E.newUnit(g, T('britannia', 'light'), 'britannia', 3, 5);
   const reach = E.reachable(g, u);
   assert(reach.has('4,5'), 'adjacent sea hex reachable');
@@ -138,16 +177,16 @@ test('Units embark onto the sea, sail as transports that cannot fire, and land o
   const raider = E.newUnit(g, T('eu', 'scout'), 'eu', 5, 5);
   assert.equal(E.targets(g, u).length, 0, 'embarked units cannot fire');
   raider.hp = 0;
-  // Next turn: sail five hexes; landing takes a step and ends the move.
+  // Next turn: sail seven hexes; landing takes a step and ends the move.
   E.beginTurn(g, 'britannia', false);
   const sail = E.reachable(g, u);
-  assert(sail.has('9,5') && !sail.has('10,5'), 'sails five hexes');
-  assert(!sail.has('11,5'), 'no movement left to land');
-  assert(E.move(g, u.id, 9, 5).ok);
+  assert(sail.has('11,5') && !sail.has('12,5'), 'sails seven hexes');
+  assert(!sail.has('13,5'), 'cannot cross eight sea hexes and land');
+  assert(E.move(g, u.id, 11, 5).ok);
   E.beginTurn(g, 'britannia', false);
   const land = E.reachable(g, u);
-  assert(land.has('11,5'), 'lands on the coast');
-  assert(E.move(g, u.id, 11, 5).ok && !E.atSea(g, u));
+  assert(land.has('13,5'), 'lands on the coast');
+  assert(E.move(g, u.id, 13, 5).ok && !E.atSea(g, u));
   assert.equal(E.reachable(g, u).size, 0, 'landing ends the move');
   // An embarked unit takes 50% extra damage and gives no counter-fire.
   const g2 = blank();
@@ -161,6 +200,34 @@ test('Units embark onto the sea, sail as transports that cannot fire, and land o
   assert(ashore.counterAllowed);
   assert(atSea.unit > ashore.unit * 1.45 && atSea.unit < ashore.unit * 1.55);
   assert(boat);
+});
+test('AI assembles a coastal group and embarks toward an overseas objective', () => {
+  const g = blank('eu');
+  for (const t of g.tiles) if (t.c === 5 || t.c === 6) t.terrain = 'sea';
+  g.stations = [
+    {
+      ...g.stations[0],
+      id: 0,
+      name: 'Enemy Port',
+      c: 8,
+      r: 5,
+      owner: 'britannia',
+      capital: false,
+      capitalOf: null,
+      shield: 120,
+      maxShield: 120,
+    },
+  ];
+  g.units = [];
+  g.nextId = 1;
+  g.phase = 'eu';
+  const lead = E.newUnit(g, T('eu', 'light'), 'eu', 4, 4),
+    wing = E.newUnit(g, T('eu', 'light'), 'eu', 4, 5),
+    reserve = E.newUnit(g, T('eu', 'light'), 'eu', 4, 6);
+  const orders = E.aiOrder(g, lead.id);
+  assert(orders.some(o => o.kind === 'move'));
+  assert(E.atSea(g, lead), 'lead unit embarks once its convoy is assembled');
+  assert(wing && reserve);
 });
 test('Fire support suppresses counter-fire; Infantry and Armor exchange it', () => {
   const g = blank(),
@@ -355,6 +422,10 @@ test('Rewards are paid for the first victory only; saves from other versions are
   assert(E.missionReward(g, 1, { [E.operationKey(g)]: true }).repeat);
   assert.equal(E.migrateSave({ ...g, rulesVersion: 0 }), null);
   assert.equal(E.migrateSave(JSON.parse(JSON.stringify(g))).player, 'eu');
+  const oldMap = JSON.parse(JSON.stringify(g));
+  oldMap.cols = 100;
+  oldMap.rows = 42;
+  assert.equal(E.migrateSave(oldMap), null, 'old low-resolution conquest saves are rejected');
 });
 test('Sakuradite: Japan holds 70% of the deposits; Fuji is a mine of its own, island deposits are worked from cities', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 3),
@@ -448,7 +519,7 @@ test('Infantry and Armor seize a mine by moving onto it; artillery cannot; city 
   assert.equal(k.economy.britannia.sakuradite, 50);
   assert.equal(k.economy.eu.sakuradite, 0);
 });
-test('Version 2 saves (before Sakuradite) are upgraded: deposits placed, refineries away from a deposit become credits', () => {
+test('Version 2 saves on the current map (before Sakuradite) are upgraded: deposits placed, refineries away from a deposit become credits', () => {
   const v1 = JSON.parse(JSON.stringify(E.createGame('britannia', 'normal', 'conquest', 4))),
     city = n => v1.stations.find(s => s.name === n);
   v1.rulesVersion = 2;
@@ -589,10 +660,12 @@ test('A F.L.E.I.J.A. strike erases ground zero, cripples the ring and devastates
     city = (id, name, c, r, extra) => ({ ...g.stations[1], id, name, c, r, capital: false, capitalOf: null, ...extra });
   const berlin = city(3, 'Berlin', 6, 6, { tier: 3, lab: 2, refinery: 1, shield: 300, maxShield: 300, industry: 40 });
   const vienna = city(4, 'Vienna', 7, 6, { tier: 2, lab: 1, shield: 240, maxShield: 240, industry: 30, science: 11 });
-  g.stations.push(berlin, vienna);
+  const prague = city(5, 'Prague', 8, 6, { tier: 2, lab: 1, shield: 240, maxShield: 240, industry: 30, science: 11 });
+  g.stations.push(berlin, vienna, prague);
   const heavy = E.newUnit(g, T('eu', 'heavy'), 'eu', 6, 6, 3),
     scout = E.newUnit(g, T('eu', 'scout'), 'eu', 5, 6),
     own = E.newUnit(g, T('britannia', 'scout'), 'britannia', 6, 5),
+    outer = E.newUnit(g, T('eu', 'light'), 'eu', 8, 6),
     far = E.newUnit(g, T('eu', 'scout'), 'eu', 2, 2);
   assert.match(E.launchReason(g, 'britannia', { c: 6, r: 6 }), /No F\.L\.E\.I\.J\.A\. warhead/);
   g.arsenal = { britannia: 2 };
@@ -605,6 +678,11 @@ test('A F.L.E.I.J.A. strike erases ground zero, cripples the ring and devastates
     assert.equal(v.hp, Math.max(1, Math.round(E.maxHP(v) * E.FLEIJA.ringHP)));
     assert.equal(v.morale, -3);
   }
+  assert.equal(outer.hp, Math.max(1, Math.round(E.maxHP(outer) * E.FLEIJA.outerHP)));
+  assert.equal(outer.morale, -1);
+  assert(r.damaged.includes(outer.id));
+  assert.equal(prague.tier, 2, 'outer ring does not remove factory levels');
+  assert.equal(prague.shield, Math.round(prague.maxShield * E.FLEIJA.outerShield));
   assert.equal(far.hp, E.maxHP(far), 'outside the blast');
   // Ground zero: devastated for 10 turns, every building at level 0, a crater; the owner is unchanged.
   assert.equal(berlin.owner, 'eu');

@@ -182,7 +182,7 @@ function startMenu() {
     )
     .join(
       '',
-    )}</select><p class="mode-note">${E.DIFFICULTIES[setup.difficulty]?.desc || ''}</p></div><div class="hq-summary"><span class="label">Command HQ</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b><small>${profile.wins || 0} victories · ${Object.values(profile.research || {}).reduce((a, l) => a + l, 0)} research levels</small><span class="hq-buttons"><button class="small" data-action="research">HQ research</button><button class="small" data-action="generals-start">Commanders</button><button class="small" data-action="elite-forces-start">Elite Forces</button></span></div></div><div class="badge-row"><span class="badge">${Object.values(E.TYPES).filter(t => t.side !== 'neutral').length} Knightmare Frames</span><span class="badge">3 branches: Infantry · Armor · Artillery</span><span class="badge">${Object.keys(E.COMMANDERS).length} commanders · ${Object.values(E.COMMANDERS).filter(a => a.recruit).length} to recruit</span><span class="badge">${Object.keys(E.TECH_NODES).length} HQ technologies</span><span class="badge">${Object.keys(E.ELITE_FORCES).length} Elite Forces</span><span class="badge">${game.stations?.length || 107} cities</span></div><div class="dialog-footer"><div>${saved ? '<button data-action="continue">Continue saved game</button>' : ''}<button class="ghost" data-action="help">Field manual</button><button class="ghost" data-action="archive-start">Knightmare archive</button></div><small class="notice">${NOTICE}<br>Free, non-commercial fan game. Saved in this browser; a new operation replaces your saved conquest.</small></div></section></div>`;
+    )}</select><p class="mode-note">${E.DIFFICULTIES[setup.difficulty]?.desc || ''}</p></div><div class="hq-summary"><span class="label">Command HQ</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b><small>${profile.wins || 0} victories · ${Object.values(profile.research || {}).reduce((a, l) => a + l, 0)} research levels</small><span class="hq-buttons"><button class="small" data-action="research">HQ research</button><button class="small" data-action="generals-start">Commanders</button><button class="small" data-action="elite-forces-start">Elite Forces</button></span></div></div><div class="badge-row"><span class="badge">${Object.values(E.TYPES).filter(t => t.side !== 'neutral').length} Knightmare Frames</span><span class="badge">3 branches: Infantry · Armor · Artillery</span><span class="badge">${Object.keys(E.COMMANDERS).length} commanders · ${Object.values(E.COMMANDERS).filter(a => a.recruit).length} to recruit</span><span class="badge">${Object.keys(E.TECH_NODES).length} HQ technologies</span><span class="badge">${Object.keys(E.ELITE_FORCES).length} Elite Forces</span><span class="badge">${game.stations?.length || 149} cities</span></div><div class="dialog-footer"><div>${saved ? '<button data-action="continue">Continue saved game</button>' : ''}<button class="ghost" data-action="help">Field manual</button><button class="ghost" data-action="archive-start">Knightmare archive</button></div><small class="notice">${NOTICE}<br>Free, non-commercial fan game. Saved in this browser; a new operation replaces your saved conquest.</small></div></section></div>`;
   focusDialog();
 }
 // Tokens still on offer for a first victory at this difficulty (before banked research).
@@ -256,15 +256,15 @@ function blastSummary(p) {
     cities = [];
   let own = 0;
   for (const t of E.blastArea(game, p)) {
-    const ring = t.c !== p.c || t.r !== p.r,
+    const distance = E.distance(t, p, game),
       u = E.unitAt(game, t),
       s = E.stationAt(game, t);
     if (u) {
-      const k = (tally[u.side] ||= { erased: 0, crippled: 0 });
-      k[ring ? 'crippled' : 'erased']++;
+      const k = (tally[u.side] ||= { erased: 0, crippled: 0, damaged: 0 });
+      k[distance === 0 ? 'erased' : distance === 1 ? 'crippled' : 'damaged']++;
       if (u.side === game.player) own++;
     }
-    if (s) cities.push({ s, ring });
+    if (s) cities.push({ s, distance });
     if (s?.owner === game.player) own++;
   }
   return { tally, cities, own };
@@ -1481,7 +1481,7 @@ function attachMap() {
         pr = own && targetCache.has(E.key(hover)) ? E.preview(game, own.id, hover.c, hover.r) : null;
       const blast = strikeMode ? blastSummary(hover) : null;
       $('map-caption').textContent = blast
-        ? `F.L.E.I.J.A. target: ${E.targetName(game, hover)} · ${Object.values(blast.tally).reduce((a, k) => a + k.erased, 0)} erased · ${Object.values(blast.tally).reduce((a, k) => a + k.crippled, 0)} crippled${blast.own ? ' · your own forces are inside' : ''}`
+        ? `F.L.E.I.J.A. target: ${E.targetName(game, hover)} · ${Object.values(blast.tally).reduce((a, k) => a + k.erased, 0)} erased · ${Object.values(blast.tally).reduce((a, k) => a + k.crippled, 0)} crippled · ${Object.values(blast.tally).reduce((a, k) => a + k.damaged, 0)} damaged${blast.own ? ' · your own forces are inside' : ''}`
         : own && readyCache.has(E.key(hover)) && E.isSea(hover) && !E.atSea(game, own)
           ? 'Embark here: the unit becomes a transport (cannot fire, +50% damage taken) and stops'
           : fort && u && targetCache.has(E.key(hover))
@@ -1595,7 +1595,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   for (const s of g.stations) {
     const p = hexCenter(s);
     b.fillStyle = s.capital ? '#ffffff' : col(s.owner);
-    const z = (s.capital ? 3.4 : allUnits ? 5 : 2) * dpr;
+    const z = (s.capital ? 3.4 : allUnits ? 5 : s.tier >= 3 ? 2.4 : s.tier >= 2 ? 1.8 : 1.2) * dpr;
     b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
   }
   for (const d of g.sites || [])
@@ -2814,7 +2814,8 @@ function draw(time, dt) {
             ? selection
             : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
-  // Cities.
+  // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
+  const pickedCity = selectedStation()?.id;
   for (const s of game.stations) {
     const c = hexCenter(s);
     if (!visible(c)) continue;
@@ -2835,7 +2836,8 @@ function draw(time, dt) {
           ctx.lineWidth = 4 / scale;
           ctx.strokeRect(-z / 2 - 7, -z / 2 - 7, z + 14, z + 14);
         }
-        if (s.capital && R * scale > 7) outlinedText(s.name, 0, 34, 11, '#fff6d6', scale, 'Trebuchet MS', true);
+        if ((s.capital || (s.fort && R * scale > 10)) && R * scale > 7)
+          outlinedText(s.name, 0, 34, 11, s.capital ? '#fff6d6' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
         ctx.restore();
         continue;
       }
@@ -2850,7 +2852,15 @@ function draw(time, dt) {
       ctx.fillRect(-20, 27, 40, 4);
       ctx.fillStyle = s.shield > 0 ? '#9fd8ff' : '#ff6a5a';
       ctx.fillRect(-20, 27, (40 * s.shield) / s.maxShield, 4);
-      outlinedText(s.name, 0, garrison ? 50 : 44, 11, s.capital ? '#ffe9a0' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
+      const showCityName =
+        s.id === pickedCity ||
+        s.capital ||
+        s.fort ||
+        R * scale >= 28 ||
+        (s.tier >= 3 && R * scale >= 16) ||
+        (s.tier >= 2 && R * scale >= 21);
+      if (showCityName)
+        outlinedText(s.name, 0, garrison ? 50 : 44, 11, s.capital ? '#ffe9a0' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
       if (!garrison) {
         mapBadge(-25, 20, s.owner, scale);
         for (let i = 0; i < s.tier; i++) {
