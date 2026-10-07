@@ -153,7 +153,7 @@ test('The world map wraps east to west and every city stands on land', () => {
 test('Movement obeys terrain, occupancy and the one-move rule', () => {
   let g = blank();
   const u = E.newUnit(g, T('britannia', 'siege'), 'britannia', 5, 5);
-  assert.equal(E.movement(g, u), 2);
+  assert.equal(E.movement(g, u), 3);
   E.tile(g, 6, 5).terrain = 'forest';
   assert(E.reachable(g, u).has('6,5'), 'high-resolution siege units can spend their full move entering forest');
   assert(E.move(g, u.id, 6, 5).ok);
@@ -166,8 +166,8 @@ test('Movement obeys terrain, occupancy and the one-move rule', () => {
   assert(!E.reachable(g, a).has('5,6'));
 });
 test('Units embark onto the sea, sail as transports that cannot fire, and land on a coast', () => {
-  const g = blank('britannia', 16);
-  for (const t of g.tiles) if (t.c >= 4 && t.c <= 12) t.terrain = 'sea';
+  const g = blank('britannia', 20);
+  for (const t of g.tiles) if (t.c >= 4 && t.c <= 14) t.terrain = 'sea';
   const u = E.newUnit(g, T('britannia', 'light'), 'britannia', 3, 5);
   const reach = E.reachable(g, u);
   assert(reach.has('4,5'), 'adjacent sea hex reachable');
@@ -177,16 +177,16 @@ test('Units embark onto the sea, sail as transports that cannot fire, and land o
   const raider = E.newUnit(g, T('eu', 'scout'), 'eu', 5, 5);
   assert.equal(E.targets(g, u).length, 0, 'embarked units cannot fire');
   raider.hp = 0;
-  // Next turn: sail seven hexes; landing takes a step and ends the move.
+  // Next turn: sail ten hexes; landing takes a step and ends the move.
   E.beginTurn(g, 'britannia', false);
   const sail = E.reachable(g, u);
-  assert(sail.has('11,5') && !sail.has('12,5'), 'sails seven hexes');
-  assert(!sail.has('13,5'), 'cannot cross eight sea hexes and land');
-  assert(E.move(g, u.id, 11, 5).ok);
+  assert(sail.has('14,5') && !sail.has('15,5'), 'sails ten hexes');
+  assert(!sail.has('16,5'), 'cannot move beyond the ten-hex transport range');
+  assert(E.move(g, u.id, 14, 5).ok);
   E.beginTurn(g, 'britannia', false);
   const land = E.reachable(g, u);
-  assert(land.has('13,5'), 'lands on the coast');
-  assert(E.move(g, u.id, 13, 5).ok && !E.atSea(g, u));
+  assert(land.has('15,5'), 'lands on the coast');
+  assert(E.move(g, u.id, 15, 5).ok && !E.atSea(g, u));
   assert.equal(E.reachable(g, u).size, 0, 'landing ends the move');
   // An embarked unit takes 50% extra damage and gives no counter-fire.
   const g2 = blank();
@@ -342,8 +342,8 @@ test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Ra
   assert.match(E.feintReason(g, julius), /Ready in 3/);
   const suzaku = E.newUnit(g, T('britannia', 'super'), 'britannia', 2, 2, 1, 'suzaku');
   assert.equal(E.moraleFloor(g, suzaku), 0);
-  // Speed now comes from the Mobility rating: Suzaku's 6 stars give +4 movement (plus Conquest's +1 world bonus).
-  assert.equal(E.movement(g, suzaku), E.TYPES[suzaku.type].move + 1 + 4);
+  // Speed now comes from the Mobility rating: Suzaku's 6 stars give +4 movement (plus Conquest's +2 world bonus).
+  assert.equal(E.movement(g, suzaku), E.TYPES[suzaku.type].move + 2 + 4);
   const h = blank(),
     bis = E.newUnit(h, T('britannia', 'heavy'), 'britannia', 5, 5, 1, 'bismarck'),
     tank = E.newUnit(h, T('eu', 'super'), 'eu', 6, 5, 3);
