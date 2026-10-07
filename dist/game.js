@@ -201,7 +201,7 @@ function render() {
   const e = game.economy[game.player],
     inc = E.income(game, game.player),
     cities = game.stations.filter(s => s.owner === game.player).length;
-  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · ${game.mode === 'campaign' ? 'CAMPAIGN' : 'WORLD WAR'}</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Sakuradite · mined at deposits; heavier Knightmares need it', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus">${arsenalButton()}<button class="small" data-action="research">Research</button>${game.mode === 'campaign' ? '<button class="small" data-action="briefing">Briefing</button><button class="small ghost" data-action="archive">Units</button>' : `<button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="elite-forces">Elite Forces</button><button class="small ghost" data-action="powers">Powers</button>`}<button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${F(game.phase).color}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn}${turnLimit() ? ' / ' + turnLimit() : ''}</b>${starChips()}</p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select your unit using the unit selector or N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green hex or attacks a red hex. Z undoes the last move. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="${wraps() ? 'World overview' : 'Whole battlefield'}">${wraps() ? 'World' : 'Map'}</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas><div class="map-legend">${(game.mode === 'campaign' ? game.order.filter(s => s !== 'neutral') : E.MAJORS).map(s => `<span style="color:${F(s).color}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div></div><div class="map-caption"><span id="map-caption">Green hex: move · Red hex: attack · Blue sea hex: embark as a transport</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small" data-action="details">Unit orders</button><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn</button>` : `<button class="primary end" data-action="skip-ai">${F(game.phase).short} turn… <span class="kbd">Skip ▶▶</span></button>`}</div></footer>`;
+  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · ${game.mode === 'campaign' ? 'CAMPAIGN' : 'WORLD WAR'}</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Sakuradite · mined at deposits; heavier Knightmares need it', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus">${arsenalButton()}<button class="small" data-action="research">Research</button>${game.mode === 'campaign' ? '<button class="small" data-action="briefing">Briefing</button><button class="small ghost" data-action="archive">Units</button>' : `<button class="small" data-action="production">Production</button><button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="elite-forces">Elite Forces</button><button class="small ghost" data-action="powers">Powers</button>`}<button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${F(game.phase).color}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn}${turnLimit() ? ' / ' + turnLimit() : ''}</b>${starChips()}</p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select your unit using the unit selector or N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green hex or attacks a red hex. Z undoes the last move. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="${wraps() ? 'World overview' : 'Whole battlefield'}">${wraps() ? 'World' : 'Map'}</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas><div class="map-legend">${(game.mode === 'campaign' ? game.order.filter(s => s !== 'neutral') : E.MAJORS).map(s => `<span style="color:${F(s).color}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div></div><div class="map-caption"><span id="map-caption">Green hex: move · Red hex: attack · Blue sea hex: embark as a transport</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small" data-action="details">Unit orders</button><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn</button>` : `<button class="primary end" data-action="skip-ai">${F(game.phase).short} turn… <span class="kbd">Skip ▶▶</span></button>`}</div></footer>`;
   canvas = $('map');
   ctx = canvas.getContext('2d');
   attachMap();
@@ -466,7 +466,7 @@ function panel() {
       })
       .join(
         '',
-      )}</div>${ours ? `<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', shipyardReason(s), 'Build a Knightmare unit', 'primary')}</div><p class="description">One unit per city per turn. New units act next turn. Garrisons repair 8% of their frame here each turn.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
+      )}</div>${ours ? `${cityAutomationPanel(s)}<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', shipyardReason(s), 'Build a Knightmare unit', 'primary')}</div><p class="description">One unit per city per turn. New units act next turn. Garrisons repair 8% of their frame here each turn.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
   } else {
     const tileChoice = selection?.kind === 'tile' ? E.tile(game, selection.c, selection.r) : null;
     if (tileChoice) {
@@ -558,6 +558,45 @@ function projectPanel(s) {
   if (E.eliminatorUnlocked(game) && !s.eliminator)
     blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Only one charge may be ready per power.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
   return blocks.join('');
+}
+function automationPolicyOptions(selected) {
+  return Object.entries(E.AUTOMATION_POLICIES)
+    .map(([k, p]) => `<option value="${k}" ${selected === k ? 'selected' : ''}>${esc(p.name)}</option>`)
+    .join('');
+}
+function automationReportText(r) {
+  if (!r) return '';
+  const parts = [
+    `${r.units || 0} unit${r.units === 1 ? '' : 's'} produced`,
+    `${r.upgrades || 0} building upgrade${r.upgrades === 1 ? '' : 's'}`,
+    `${count(r.spent?.credits || 0)} credits`,
+    `${count(r.spent?.industry || 0)} industry`,
+  ];
+  if (r.spent?.sakuradite) parts.push(`${count(r.spent.sakuradite)} Sakuradite`);
+  return parts.join(' · ');
+}
+function cityAutomationPanel(s) {
+  if (game.mode !== 'conquest' || s.owner !== game.player) return '';
+  const a = E.automationState(game),
+    cfg = E.cityAutomation(game, s),
+    raw = a.cities?.[s.id] || {},
+    inheritedUpgrade = raw.autoUpgrade == null,
+    inheritedProduce = raw.autoProduce == null;
+  return `<div class="target-box"><span class="label">Production policy</span><select class="select" data-city-policy="${s.id}">${automationPolicyOptions(cfg.policy)}</select><small>${esc(E.AUTOMATION_POLICIES[cfg.policy].desc)}</small><label class="auto-check"><input type="checkbox" data-city-auto-upgrade="${s.id}" ${cfg.autoUpgrade ? 'checked' : ''}> Auto-upgrade buildings${inheritedUpgrade ? ' · global' : ''}</label><label class="auto-check"><input type="checkbox" data-city-auto-produce="${s.id}" ${cfg.autoProduce ? 'checked' : ''}> Auto-produce units${inheritedProduce ? ' · global' : ''}</label><small>${a.enabled ? 'Automation runs after income is collected at the start of your turn.' : 'Global automation is currently off. Configure it from Production Command.'}</small></div>`;
+}
+function productionDialog() {
+  if (game.mode !== 'conquest') return;
+  const a = E.automationState(game),
+    owned = game.stations.filter(s => s.owner === game.player),
+    policies = Object.keys(E.AUTOMATION_POLICIES),
+    countsByPolicy = Object.fromEntries(policies.map(k => [k, 0]));
+  for (const s of owned) countsByPolicy[E.cityAutomation(game, s).policy]++;
+  const summary = policies
+    .filter(k => countsByPolicy[k])
+    .map(k => `${E.AUTOMATION_POLICIES[k].name} ${countsByPolicy[k]}`)
+    .join(' · ');
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Production Command"><div class="dialog-head"><div><div class="eyebrow">Conquest logistics</div><h2>Production Command</h2><p>Automate administration without handing over strategy. Every purchase uses the normal city rules and stops before touching your protected reserves.</p></div><button class="small close" data-action="close">Close</button></div><div class="brief-grid"><div><div class="brief-block"><span class="label">Master automation</span><label class="auto-check"><input type="checkbox" data-automation-field="enabled" ${a.enabled ? 'checked' : ''}> Run configured city automation at the start of every player turn</label><label class="auto-check"><input type="checkbox" data-automation-field="autoUpgrade" ${a.autoUpgrade ? 'checked' : ''}> Auto-upgrade buildings by default</label><label class="auto-check"><input type="checkbox" data-automation-field="autoProduce" ${a.autoProduce ? 'checked' : ''}> Auto-produce units by default</label></div><div class="brief-block"><span class="label">Default policy</span><select class="select" data-automation-field="defaultPolicy">${automationPolicyOptions(a.defaultPolicy)}</select><p class="mode-note">Used by newly captured and otherwise unconfigured cities. Current mix: ${esc(summary || 'all manual')}.</p><div class="actions"><button data-action="automation-apply-all">Apply default policy to all ${owned.length} cities</button><button class="ghost" data-action="automation-clear-cities">Clear city overrides</button></div></div><div class="brief-block"><span class="label">Formation size</span><select class="select" data-automation-field="stack">${[1,2,3].map(n => `<option value="${n}" ${a.stack === n ? 'selected' : ''}>${n} frame${n > 1 ? 's' : ''} per automatic unit</option>`).join('')}</select><p class="mode-note">Automation never deploys Elite Forces or starts F.L.E.I.J.A./Eliminator projects.</p></div></div><div><div class="brief-block"><span class="label">Protected resource reserve</span><p>Automatic and bulk purchases are skipped if they would leave you below these values.</p><div class="stat-grid"><label><span class="label">Credits</span><input class="select" type="number" min="0" step="50" value="${a.reserve.credits}" data-automation-reserve="credits"></label><label><span class="label">Industry</span><input class="select" type="number" min="0" step="25" value="${a.reserve.industry}" data-automation-reserve="industry"></label><label><span class="label">Sakuradite</span><input class="select" type="number" min="0" step="5" value="${a.reserve.sakuradite}" data-automation-reserve="sakuradite"></label></div><div class="actions"><button data-action="automation-fleija-reserve">Protect one F.L.E.I.J.A. budget</button></div></div><div class="brief-block"><span class="label">Bulk construction now</span><p>Upgrade one level of the selected building in every eligible city, stopping at the reserve.</p><div class="actions"><button data-bulk-build="factory" ${!interactive() ? 'disabled' : ''}>Factories</button><button data-bulk-build="lab" ${!interactive() ? 'disabled' : ''}>Labs</button><button data-bulk-build="refinery" ${!interactive() ? 'disabled' : ''}>Refineries</button><button data-bulk-build="port" ${!interactive() ? 'disabled' : ''}>Ports</button></div></div>${a.lastReport ? `<div class="brief-block"><span class="label">Last logistics report · turn ${a.lastReport.turn}</span><p>${esc(automationReportText(a.lastReport))}</p></div>` : ''}</div></div><div class="dialog-footer"><small class="notice">Individual cities can override their policy and the two automation toggles from the city panel.</small><div><button data-action="automation-run" ${!interactive() ? 'disabled' : ''}>Run configured production now</button><button class="primary" data-action="close">Done</button></div></div></section></div>`;
+  focusDialog();
 }
 function fortressPanel(s) {
   if (!s.fort) return '';
@@ -742,12 +781,16 @@ async function endTurn(force = false) {
       warheads = game.arsenal?.[game.player] || 0;
     E.beginTurn(game, game.player, true);
     turnStartPopups(before, game.player);
+    game.automationReport = game.mode === 'conquest' ? E.runCityAutomation(game, game.player) : null;
     armed = (game.arsenal?.[game.player] || 0) > warheads;
   }
   render();
   save();
   campaignFeed(() => game.over && resultDialog());
+  const logistics = game.automationReport;
   if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.`, true);
+  else if (!game.over && logistics && (logistics.units || logistics.upgrades))
+    toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}`, true);
   else if (!game.over) toast(`Turn ${game.turn}. Income collected; unit orders refreshed.`);
 }
 // A power's capital fell: it surrendered and its cities changed hands.
@@ -1845,6 +1888,39 @@ document.addEventListener('change', e => {
     shop.stack = +e.target.value;
     openShop(shop.station);
   }
+  if (e.target.dataset.cityPolicy) {
+    E.setCityAutomation(game, +e.target.dataset.cityPolicy, { policy: e.target.value });
+    save();
+    updateSelection();
+  }
+  if (e.target.dataset.cityAutoUpgrade) {
+    E.setCityAutomation(game, +e.target.dataset.cityAutoUpgrade, { autoUpgrade: e.target.checked });
+    save();
+    updateSelection();
+  }
+  if (e.target.dataset.cityAutoProduce) {
+    E.setCityAutomation(game, +e.target.dataset.cityAutoProduce, { autoProduce: e.target.checked });
+    save();
+    updateSelection();
+  }
+  if (e.target.dataset.automationField) {
+    const a = E.automationState(game),
+      field = e.target.dataset.automationField;
+    if (field === 'enabled' || field === 'autoUpgrade' || field === 'autoProduce') a[field] = e.target.checked;
+    else if (field === 'stack') a.stack = Math.max(1, Math.min(3, +e.target.value || 1));
+    else if (field === 'defaultPolicy' && E.AUTOMATION_POLICIES[e.target.value]) a.defaultPolicy = e.target.value;
+    E.automationState(game);
+    save();
+    productionDialog();
+  }
+  if (e.target.dataset.automationReserve) {
+    const a = E.automationState(game),
+      key = e.target.dataset.automationReserve;
+    a.reserve[key] = Math.max(0, Math.floor(+e.target.value || 0));
+    E.automationState(game);
+    save();
+    productionDialog();
+  }
 });
 document.addEventListener('click', e => {
   const portrait = e.target.closest('[data-general]');
@@ -1948,6 +2024,17 @@ document.addEventListener('click', e => {
       refreshAndSave();
       toast(`${E.TYPES[d.recruit].name} rolls out. It will be ready next turn.`);
     } else toast(r.reason);
+    return;
+  }
+  if (d.bulkBuild) {
+    const r = E.bulkCityUpgrade(game, game.player, d.bulkBuild);
+    if (r.reason) toast(r.reason);
+    else {
+      render();
+      save();
+      productionDialog();
+      toast(r.upgrades ? `AUTOMATED LOGISTICS — ${automationReportText(r)}` : 'No eligible city could be upgraded without crossing the reserve.');
+    }
     return;
   }
   if (d.researchBranch) {
@@ -2098,6 +2185,42 @@ document.addEventListener('click', e => {
     case 'powers':
       powersDialog();
       break;
+    case 'production':
+      productionDialog();
+      break;
+    case 'automation-apply-all': {
+      const a = E.automationState(game);
+      for (const st of game.stations.filter(v => v.owner === game.player)) E.setCityAutomation(game, st.id, { policy: a.defaultPolicy });
+      save();
+      productionDialog();
+      toast(`${E.AUTOMATION_POLICIES[a.defaultPolicy].name} applied to all owned cities.`);
+      break;
+    }
+    case 'automation-clear-cities': {
+      E.automationState(game).cities = {};
+      save();
+      productionDialog();
+      toast('City overrides cleared; all cities now inherit the global defaults.');
+      break;
+    }
+    case 'automation-fleija-reserve': {
+      const a = E.automationState(game);
+      a.reserve.credits = E.FLEIJA.cost.credits;
+      a.reserve.industry = E.FLEIJA.cost.industry;
+      a.reserve.sakuradite = E.FLEIJA.cost.sakuradite;
+      save();
+      productionDialog();
+      toast('Protected reserve set to one F.L.E.I.J.A. warhead budget.');
+      break;
+    }
+    case 'automation-run': {
+      const r = E.runCityAutomation(game, game.player, { force: true });
+      render();
+      save();
+      productionDialog();
+      toast(r.units || r.upgrades ? `AUTOMATED LOGISTICS — ${automationReportText(r)}` : 'Configured production made no purchases; city rules or reserves blocked every order.');
+      break;
+    }
     case 'next':
       nextFleet();
       break;
