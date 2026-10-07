@@ -902,12 +902,15 @@ function openShop(id, branch = shop.branch) {
   if (branch === ELITE_FACTORY_TAB) return openEliteShop(id);
   const free = E.recruitOptions(game, s, game.player);
   const lineup = E.lineupOf(game, game.player),
-    types =
+    catalog =
       branch === NAVAL_TAB
         ? E.navalTypes(game, game.player)
-        : (game.buildable?.[game.player] || E.CLASS_ORDER.map(cls => lineup[cls])).filter(
-            k => k && E.TYPES[k].branch === branch && !E.TYPES[k].naval,
-          );
+        : game.buildable?.[game.player] || E.CLASS_ORDER.map(cls => lineup[cls]),
+    // Campaign factions can deliberately reuse one frame for several class slots (Euro Britannia is the main
+    // example). The factory should show that frame once, not duplicate the card for every slot it fills.
+    types = [...new Set(catalog)].filter(
+      k => k && (branch === NAVAL_TAB ? E.TYPES[k].naval : E.TYPES[k].branch === branch && !E.TYPES[k].naval),
+    );
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare factory"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${s.name} · Factory level ${s.tier}</div><h2>Roll out a Knightmare unit</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${shopTabs().map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : branch === NAVAL_TAB ? '<p class="description">Naval units are built at the city’s port and wait on its sea hex: amphibious Knightmares need a level-1 port, Carrier-Battleships level 2. Build or upgrade the port in the city panel.</p>' : !free.length ? '<div class="info-strip">No free land hex. Move friendly units away from the city.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city or a free land hex next to it and act next turn. Tier II and III frames also cost Sakuradite.</p>'}<div class="cards">${types
     .map(k => {
       const t = E.TYPES[k],
@@ -2774,6 +2777,23 @@ function drawPlate(u, scale, sea) {
   }
   ctx.restore();
 }
+// A high-contrast outer ring makes hostile formations readable at a glance regardless of faction color.
+// Team allies in campaign missions are not marked: hostility follows the engine's foe/team rules.
+function drawHostileRing(scale, compact = false) {
+  const cy = compact ? 0 : 14,
+    rx = compact ? 20 : 44,
+    ry = compact ? 20 : 31;
+  ctx.beginPath();
+  ctx.ellipse(0, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#280307dd';
+  ctx.lineWidth = Math.max(5, 4 / Math.max(scale, 0.3));
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(0, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ff334d';
+  ctx.lineWidth = Math.max(2.6, 2.1 / Math.max(scale, 0.3));
+  ctx.stroke();
+}
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
 function drawStackBars(n, side) {
   const c = PLATE[side],
@@ -3201,10 +3221,12 @@ function draw(time, dt) {
         ctx.strokeStyle = sel ? '#3ff2c4' : PLATE[u.side].trim;
         ctx.lineWidth = 3 / Math.max(scale, 0.3);
         ctx.stroke();
+        if (E.foe(game, game.player, u.side)) drawHostileRing(scale, true);
         ctx.restore();
         continue;
       }
       drawPlate(u, scale, sea);
+      if (E.foe(game, game.player, u.side)) drawHostileRing(scale);
       ctx.globalAlpha = spent ? 0.6 : 1;
       const size = t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
