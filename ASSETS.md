@@ -18,7 +18,7 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **45 Knightmare sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
+The game ships **70 unit sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
@@ -38,13 +38,12 @@ license does not license the studio artwork.
   (Gawain, Lancelot, Lancelot Albion) so every unit sprite has a transparent background. Burai and Raikō come from
   their wiki pages; Zangetsu and Shen Hu reuse earlier archive art; the Akatsuki Flight-Enabled shares the Air Glide
   render; Emperor Lelouch shares Zero's portrait.
-- Every Knightmare type and commander has published art except the campaign's Japanese Army tank and rocket
-  artillery, which use their drawings. Procedural drawings otherwise remain only as runtime safety fallbacks.
+- Every current unit type and commander now has published art. The October 2026 completion pass adds vector sprites for Vercingetorix, Ahura Mazda, Canterbury, Siegfried, Portman, Portman II, the conventional Japanese vehicles, and the newer amphibious/naval units. The three carrier-battleship factions deliberately share one insignia-free Britannian-derived carrier design. Procedural drawings remain only as runtime safety fallbacks if an image fails to load.
 
 ## Preparing and publishing art
 
 Raw downloads and the working `dist/local-art/` folder stay ignored. The broad `*.png` ignore was removed so
-finished public PNGs can be tracked. Run `tools/local_art_prepare.py` to remove unit backgrounds and crop portraits
+finished public PNGs/SVGs can be tracked. Run `tools/local_art_prepare.py` to remove unit backgrounds and crop portraits
 using the hand-picked boxes in `crops.json`. If local recipes are absent, it uses the tracked
 `tools/art-crops.json` and `tools/art-backgrounds.json`. Background seeds clear enclosed gaps while keeping white
 armor. Preparation fails on empty sprites and out-of-bounds crops and writes each finished image atomically.
