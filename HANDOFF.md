@@ -21,7 +21,8 @@ Knightmare Frames.
   disband. Take every rival capital, or hold the most cities at the 120-turn armistice.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
-**Campaign:** two story campaigns, the Black Knights (10 missions) and Britannia (11), on hand-built tactical maps,
+**Campaign:** two seasons as WC4-style campaigns, Season 1 (Lelouch of the Rebellion) and R2, each played as the Black
+Knights or Britannia: 4 campaigns and 39 missions on hand-built tactical maps,
 reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (tested in `tests/campaign.test.cjs`);
 screens in `dist/game.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
 
@@ -220,7 +221,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Campaign-only sides `bk` (Order of the Black Knights, doctrine: +10% damage from forest, mountains or ruins) and
   `jlf` (Japan Liberation Front, 10% less damage in forest or mountains), never in Conquest (`MAJORS` is unchanged).
 - Campaign-only frames (`campaign: true`): Burai, Akatsuki Flight-Enabled, Zangetsu, Raikō, Japanese battle tank and
-  rocket artillery, and Shen Hu. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
+  rocket artillery, Shen Hu and V.V.'s Siegfried (drawn art only). The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
   (120 HP / 28 attack / 7 armor / 2 move); Tohdoh's three-tank commander formation is the conventional force that can
   still contest a Knightmare unit. Named aces in missions are Elite Force frames at Elite level 3. `LINEUPS` gives the
   two new sides factory lineups; missions can override lineups (`g.lineup`) or restrict builds (`g.buildable`).
@@ -232,7 +233,24 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Sakuradite eruptions and F.L.E.I.J.A. blasts with a warning a turn ahead, Gefjun Disturber shutdowns, frame
   upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star,
   scaled by difficulty; progress in `profile.campaign`, per difficulty in `profile.campaignDifficulty`). Missions
-  unlock in order. Ground-zero blasts kill outright (C.C.'s Code Bearer does not save her).
+  unlock in order within a campaign; each campaign's first mission is always open. Ground-zero blasts kill outright
+  (C.C.'s Code Bearer does not save her). `remove: [commanders]` takes a unit off the field without a loss or a kill
+  (Kallen's capture at Xiaopei).
+- Campaigns (`CAMPAIGNS` and `SEASONS` at the end of `missions.js`, assembled from mission ids so saved stars carry
+  over):
+  - Black Knights S1 (9): Shinjuku Ghetto, Lake Kawaguchi, Narita, Port Yokosuka, Rescue of Tohdoh, Shikine and Kamine
+    Islands (the Gawain), Fukuoka Base (allied with Britannia against Sawasaki), Special Administrative Zone, Black
+    Rebellion.
+  - Britannia S1 (10): Invasion of Japan, Shinjuku, Saitama, Narita, Port Yokosuka Blockade, Chofu Detention Center,
+    Shikine and Kamine, Fukuoka Base, European Front, Black Rebellion.
+  - Black Knights R2 (10): Return of Zero (Babel Tower and the prisoner rescue), Battle over the Pacific, Second Port
+    Yokosuka, Xiaopei, Mausoleum of the Eighty-Eight Emperors, Geass Order, Second Tokyo, Kagoshima, Mount Fuji,
+    Damocles.
+  - Britannia R2 (10): Return of the Black Knights, Pacific, Second Port Yokosuka, Xiaopei, Mausoleum, Kagoshima,
+    Second Tokyo, Emperor Lelouch, Mount Fuji, Damocles.
+  - Air battles (Pacific, Damocles) are drawn as land maps of open sky and cloud. Naval battles put warships on
+    single-hex gun fortresses; units cross the water as transports. New missions follow the Normal convention:
+    `normalOnly` extra player formations and `skipNormal` enemy formations.
 - Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal keeps enemy units, city
   defenses and authored formation stack sizes at full/original strength. Its easier balance comes from selected
   difficult scenarios receiving a favorable force-count pass plus 50% more starting resources. Normal does not alter

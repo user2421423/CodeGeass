@@ -69,6 +69,7 @@ const ART = (() => {
     akatsuki_flight: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'rifle', back: 'wings', main: '#5f8f86' },
     zangetsu: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'block', weapon: 'katana', back: 'pods', main: '#272b35' },
     raiko: { body: 'tank', main: '#4b5040', trim: '#a8a07a' },
+    siegfried: { body: 'giant', bulk: 1.35, head: 'mono', shoulder: 'spike', weapon: 'claw', main: '#c9772f', dark: '#3a2312', trim: '#e9c46a', glow: '#ff9a4a' },
     jp_tank: { body: 'tank', main: '#5a6648', trim: '#c9c28a' },
     jp_artillery: { body: 'box', main: '#626b4c', trim: '#c9c28a' },
     shen_hu: { body: 'humanoid', bulk: 1.15, head: 'mask', shoulder: 'pauldron', weapon: 'sword', chest: true, main: '#2f5bab', trim: '#d4372f' },

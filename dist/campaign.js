@@ -302,7 +302,7 @@
 
   // ======== Events ========
   // { turn | capture | killed | start, say: [[speaker, text]], spawn: [unit specs], blast, stun, upgrade, shield,
-  //   warn, note }. Speakers are commander ids or 'Name@side'; null narrates.
+  //   remove: [commanders taken off the field, e.g. captured; not a loss or a kill], warn, note }. Speakers are commander ids or 'Name@side'; null narrates.
   function speaker(g, who) {
     if (!who) return { name: 'Mission briefing', side: g.player };
     if (E.COMMANDERS[who]) return { name: E.COMMANDERS[who].name, side: E.COMMANDERS[who].side, portrait: who };
@@ -322,6 +322,10 @@
     for (const [who, line] of ev.say || []) cm.queue.push({ ...speaker(g, who), text: line });
     if (ev.note) cm.note = ev.note;
     for (const spec of ev.spawn || []) placeUnit(g, spec);
+    for (const k of asList(ev.remove)) {
+      const u = unitWith(g, k);
+      if (u) u.hp = 0;
+    }
     for (const w of asList(ev.warn)) cm.warnings.push({ c: w.c, r: w.r, radius: w.radius ?? 2, label: w.label || '' });
     for (const b of asList(ev.blast)) blast(g, b);
     for (const s of asList(ev.stun)) stun(g, s);
@@ -421,7 +425,7 @@
   }
   function title(g) {
     const m = mission(g.campaign.id);
-    return `${CAMPAIGNS[m.campaign].short} ${m.index + 1} · ${m.title} · ${difficulty(g.difficulty).name}`;
+    return `${CAMPAIGNS[m.campaign].short} · ${m.index + 1}. ${m.title} · ${difficulty(g.difficulty).name}`;
   }
   Object.assign(E.hooks, { turn: onTurn, capture: onCapture, kill: onKill, decide, objective, title });
 
@@ -461,6 +465,7 @@
   }
   const api = {
     CAMPAIGNS,
+    SEASONS: MISSIONS.SEASONS || {},
     DIFFICULTIES,
     mission,
     createMission,

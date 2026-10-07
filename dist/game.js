@@ -1097,7 +1097,7 @@ function menuDialog() {
 
 // ======== Campaign: mission select, briefing, dialogue and star results (rules in campaign.js) ========
 const asList = x => (Array.isArray(x) ? x : x ? [x] : []);
-let campaignTab = 'bk',
+let campaignTab = 'bk_s1',
   missionDifficulty = 'normal',
   missionBriefingId = null,
   talkThen = null; // what follows the dialogue now playing (a result screen, or nothing)
@@ -1135,9 +1135,10 @@ function campaignRow(profile) {
   const CP = E.campaign;
   if (!CP) return '';
   const camps = Object.values(CP.CAMPAIGNS),
+    seasons = Object.values(CP.SEASONS || {}),
     all = camps.flatMap(c => c.missions),
     got = all.reduce((a, m) => a + CP.best(profile, m.id), 0);
-  return `<div class="conquest-row campaign-row"><div><label>Campaign · ${camps.length} story campaigns · ${all.length} missions</label><h3 class="conquest-title">${camps.map(c => c.short).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard and Challenge modes. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Campaigns</button></div>`;
+  return `<div class="conquest-row campaign-row"><div><label>Campaign · ${seasons.length} seasons · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard and Challenge modes. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Campaigns</button></div>`;
 }
 function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
@@ -1146,9 +1147,19 @@ function campaignDialog(cid = campaignTab) {
     resume = saved && !saved.over && CP.mission(saved.campaign?.id);
   campaignTab = CP.CAMPAIGNS[cid] ? cid : Object.keys(CP.CAMPAIGNS)[0];
   const camp = CP.CAMPAIGNS[campaignTab],
+    season = CP.SEASONS?.[camp.season] || { name: camp.name, short: camp.short },
+    camps = Object.entries(CP.CAMPAIGNS),
     got = camp.missions.reduce((a, m) => a + CP.best(profile, m.id), 0);
-  const tabs = Object.entries(CP.CAMPAIGNS)
-    .map(([k, c]) => `<button data-campaign-tab="${k}" class="${k === campaignTab ? 'active' : ''}" style="--c:${E.FACTIONS[c.side].color}">${esc(c.short)}</button>`)
+  // WC4-style: pick a season first, then the side you play it from.
+  const seasonTabs = Object.entries(CP.SEASONS || {})
+    .map(([n, s]) => {
+      const [k] = camps.find(([, c]) => String(c.season) === n && c.side === camp.side) || camps.find(([, c]) => String(c.season) === n);
+      return `<button data-campaign-tab="${k}" class="season-tab ${String(camp.season) === n ? 'active' : ''}"><b>${esc(s.short)}</b><small>${esc(s.name)} · ${s.years}</small></button>`;
+    })
+    .join('');
+  const tabs = camps
+    .filter(([, c]) => c.season === camp.season)
+    .map(([k, c]) => `<button data-campaign-tab="${k}" class="${k === campaignTab ? 'active' : ''}" style="--c:${E.FACTIONS[c.side].color}">${esc(E.FACTIONS[c.side].name)}</button>`)
     .join('');
   const cards = camp.missions
     .map((m, i) => {
@@ -1157,7 +1168,7 @@ function campaignDialog(cid = campaignTab) {
       return `<button class="mission-card${best ? ' cleared' : ''}" data-mission="${m.id}" ${open ? '' : `disabled title="Clear ${esc(camp.missions[i - 1].title)} first"`}><span class="mission-num">${open ? i + 1 : '🔒'}</span><span class="mission-info"><small>${m.year} · ${esc(m.place)}</small><b>${esc(m.title)}</b></span>${starRow(best)}</button>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Campaigns"><div class="dialog-head"><div><div class="eyebrow">Campaign · ${camp.years}</div><h2>${esc(camp.name)}</h2><p>${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Campaigns"><div class="dialog-head"><div><div class="eyebrow">Campaign · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
   focusDialog();
 }
 // Before a mission (live = false) or during one (live = true, with each star goal's current state).

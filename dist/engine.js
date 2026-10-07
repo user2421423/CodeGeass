@@ -838,6 +838,18 @@
       lore: 'Tohdoh’s commander frame, built at Jabalpur for the Black Knights.',
       campaign: true,
     },
+    siegfried: {
+      side: 'neutral',
+      cls: 'super',
+      name: 'Siegfried',
+      model: 'Knightmare Mobile Fortress',
+      gen: 'Geass Order prototype',
+      weapon: 'Slash Harken spikes · Electromagnetic shield',
+      lore: 'The Geass Order’s spherical mobile fortress, flown by V.V. in the Directorate’s last stand.',
+      hp: 680, attack: 112, armor: 54, move: 3, min: 1, max: 2,
+      float: true,
+      campaign: true,
+    },
     raiko: {
       side: 'jlf',
       cls: 'siege',

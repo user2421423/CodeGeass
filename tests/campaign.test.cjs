@@ -19,14 +19,34 @@ function play(g, turns) {
   return g;
 }
 
-test('Both campaigns list their missions in order: 10 for the Black Knights, 11 for Britannia', () => {
-  assert.equal(C.CAMPAIGNS.bk.missions.length, 10);
-  assert.equal(C.CAMPAIGNS.britannia.missions.length, 11);
-  assert(C.unlocked({}, 'bk1') && C.unlocked({}, 'br1'));
+test('Two seasons, each played from both sides; missions unlock in order within each campaign', () => {
+  const count = Object.fromEntries(Object.entries(C.CAMPAIGNS).map(([k, c]) => [k, c.missions.length]));
+  assert.deepEqual(count, { bk_s1: 9, britannia_s1: 10, bk_r2: 10, britannia_r2: 10 });
+  assert.deepEqual(Object.keys(C.SEASONS), ['1', '2']);
+  for (const c of Object.values(C.CAMPAIGNS)) assert(C.SEASONS[c.season] && E.FACTIONS[c.side]);
+  assert.equal(new Set(ids).size, ids.length, 'every mission belongs to one campaign');
+  for (const id of ['bk1', 'br1', 'bk5', 'br7']) assert(C.unlocked({}, id), `${id} opens its campaign`);
   assert(!C.unlocked({}, 'bk2'));
   assert(C.unlocked({ campaign: { bk1: 1 } }, 'bk2'));
-  assert.equal(C.next('bk1'), 'bk2');
+  assert.equal(C.next('bk3'), 'bk_yokosuka');
+  assert.equal(C.next('bk4'), null, 'the Black Rebellion ends Season 1');
   assert.equal(C.next('bk10'), null);
+});
+test('Season-split events: Gawain on Kamine, Kallen captured at Xiaopei, the Siegfried at the Geass Order', () => {
+  const s = C.createMission('bk_shikine', 5),
+    ruins = s.stations.find(c => c.name === 'Kamine Ruins');
+  ruins.owner = 'bk';
+  E.hooks.capture(s, ruins, s.units.find(u => u.side === 'bk'), 'britannia');
+  assert.equal(s.units.find(u => u.cmd === 'zero').type, 'elite_gawain');
+  const x = C.createMission('bk_xiaopei', 5);
+  x.turn = 4;
+  E.beginTurn(x, 'bk', true);
+  assert(!x.units.some(u => u.hp > 0 && u.cmd === 'kallen'), 'Kallen is taken off the field');
+  assert(!x.campaign.killed.includes('kallen') && x.campaign.losses === 0, 'a capture is not a loss');
+  const g = C.createMission('bk_geass', 5);
+  g.turn = 3;
+  E.beginTurn(g, 'bk', true);
+  assert(g.units.some(u => u.type === 'siegfried' && u.side === 'neutral'));
 });
 
 test('Every mission builds: rectangular map, cities on open land, known frames and commanders, every side fielded', () => {
