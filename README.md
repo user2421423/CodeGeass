@@ -68,12 +68,13 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   manual. Global controls handle building auto-upgrades, 1–3-frame formation size, bulk upgrades and protected
   credit/industry/Sakuradite reserves. A queue waits if its chosen unit is unavailable rather than substituting another
   frame, and all automated orders use the same legality checks as manual ones.
-- **Commanders (WC4 generals):** 35 named commanders (14 Britannian, 11 E.U., 10 Federation), each with one signature
-  ability: Suzaku's *Live On*, Cornelia's *Witch of Britannia*, Bismarck's *Excalibur*, Julius Kingsley's *Geass
-  Command*, Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and
-  more. Operation commanders are fixed; your own commanders are recruited with command tokens, promoted through
-  eleven ranks (frame 112%–160%), given branch stars (up to 6) and medals.
-- **HQ research with command tokens:** 36 technologies in five trees (Infantry, Armor, Artillery, Sakuradite,
+- **Commanders (WC4 generals):** 58 named commanders (22 Britannian, 11 E.U., 10 Federation, 14 Black Knights and JLF
+  who lead Federation units in Conquest, and the campaign-only Emperor Lelouch), each with one signature ability:
+  Suzaku's *Live On*, Cornelia's *Witch of Britannia*, Bismarck's *Excalibur*, Julius Kingsley's *Geass Command*,
+  Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and more.
+  Operation commanders are fixed; your own commanders are recruited with command tokens, promoted through eleven ranks
+  (frame 112%–160%), given branch stars (up to 6) and medals.
+- **HQ research with command tokens:** 40 technologies in six trees (Infantry, Armor, Artillery, Sakuradite, Naval,
   Cities), tiers II–IV unlocked by victories, kept across operations and factions.
 - **Difficulty:** Normal, Hard and Challenge, as in Galactic Command (rival research, upgraded and extra units,
   higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.
@@ -95,6 +96,18 @@ python3 -m http.server 8000 --directory dist
 Then open http://localhost:8000. Opening `dist/index.html` directly also works in most browsers. There is no build
 step and no dependency.
 
+## Code layout
+
+Everything ships from `dist/` as plain scripts that `index.html` loads in order; there is no bundler.
+
+- `engine.js`: the deterministic rules (combat, movement, economy, Sakuradite, F.L.E.I.J.A., standing orders,
+  pathfinding). Its data lives in `engine/frames.js`, `engine/commanders.js`, `engine/research.js` and
+  `engine/world.js`; `engine/ai.js` adds the rival AI. In Node, `require('./dist/engine.js')` loads all of them.
+- `missions.js` and `campaign.js`: campaign missions and their rules.
+- `art.js`, `icons.js`, `audio.js`: drawn art, icons and synthesized sound.
+- `ui/*.js`: the interface, one file per system (core state, HUD, turns, dialogs, campaign screens, camera, effects,
+  input, renderer); `game.js` starts it.
+
 ## Tests (optional)
 
 With Node.js 22:
@@ -107,8 +120,8 @@ node tools/validate_assets.cjs --tracked
 
 ## Publish artwork
 
-The live game ships 45 finished Knightmare sprites (Conquest frames, Elite Forces and campaign frames) and 58
-commander portraits. Credits and source provenance are in `ASSETS.md`
+The live game ships 63 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
+58 commander portraits. Credits and source provenance are in `ASSETS.md`
 and `dist/assets/art/sources.json`. To update the artwork from local raw inputs or a processed bundle:
 
 ```sh
@@ -130,9 +143,9 @@ are tracked. The saved face crops and enclosed-background seeds in `tools/art-cr
 
 ## Map tools
 
-`tools/build_map.py` rasterizes the hand-drawn continent outlines into the hex grid and can rewrite the generated
-block in `dist/engine.js` (`python3 tools/build_map.py --inject dist/engine.js`). `tools/preview_map.py` renders the
-grid to a PNG (needs Pillow).
+`tools/build_map.py` rasterizes the hand-drawn continent outlines into the hex grid and can rewrite the generated block
+in `dist/engine/world.js` (`python3 tools/build_map.py --inject dist/engine/world.js`). `tools/preview_map.py` renders
+the grid to a PNG (needs Pillow).
 
 Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; drawn artwork is
 original and generated in code; imported images are credited in ASSETS.md. Gameplay draws on EasyTech's World Conqueror 4.

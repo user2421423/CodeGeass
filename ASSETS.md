@@ -18,7 +18,7 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **45 Knightmare sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
+The game ships **63 Knightmare sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
