@@ -144,3 +144,25 @@ test('Victory grades stars; rewards pay a first clear and new stars once; losing
   E.beginTurn(k, 'britannia', true);
   assert.equal(k.over?.winner, 'britannia', 'holding until turn 10 wins');
 });
+
+
+test('Normal campaign keeps full enemy strength while using time and force-count advantages', () => {
+  const g = C.createMission('bk2', 11, 'normal'),
+    enemy = g.units.find(u => E.foe(g, u.side, g.player)),
+    hotel = g.stations.find(s => s.name === 'Convention Center Hotel');
+  assert.equal(enemy.hp, E.maxHP(enemy), 'Normal enemies start at 100% HP');
+  assert.equal(hotel.shield, 240, 'Normal enemy city defenses stay at 100%');
+  assert.equal(g.campaign.turnLimit, 19, 'a 14-turn mission gets five extra Normal turns');
+  assert.equal(g.units.filter(u => u.side === 'bk').length, 6, 'BK2 gets one extra player formation on Normal');
+
+  const hold = C.createMission('br5', 12, 'normal');
+  assert.equal(hold.campaign.turnLimit, 0, 'hold missions without a failure timer do not gain a bogus turn limit');
+
+  const invasion = C.createMission('br1', 13, 'normal'),
+    tohdoh = invasion.units.find(u => u.cmd === 'tohdoh');
+  assert(E.TYPES.jp_tank.hp < E.TYPES.glasgow.hp);
+  assert(E.TYPES.jp_tank.attack < E.TYPES.glasgow.attack);
+  assert(E.TYPES.jp_tank.armor < E.TYPES.glasgow.armor);
+  assert(E.TYPES.jp_tank.move < E.TYPES.glasgow.move);
+  assert.equal(tohdoh.stack, 3, 'Tohdoh alone commands a full conventional armored formation');
+});
