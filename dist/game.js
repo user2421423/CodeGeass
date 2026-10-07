@@ -2256,8 +2256,8 @@ function dockHTML() {
 // ======== Map renderer ========
 const PLATE = {
   neutral: { light: '#7a7462', mid: '#45402f', dark: '#25221a', trim: '#e6dfc0', bar: '#c9c2a2' },
-  britannia: { light: '#5d418f', mid: '#2e1d52', dark: '#170d2e', trim: '#e6c56a', bar: '#d9b45a' },
-  eu: { light: '#3d63ad', mid: '#1a3266', dark: '#0b1a3a', trim: '#d3dbe2', bar: '#c4ccd3' },
+  britannia: { light: '#9d3737', mid: '#5d1818', dark: '#2b0909', trim: '#f0c76a', bar: '#e0b85a' },
+  eu: { light: '#4778cc', mid: '#214783', dark: '#0d244d', trim: '#dbe5ef', bar: '#c9d3dd' },
   cf: { light: '#ad3a33', mid: '#5c1512', dark: '#330806', trim: '#f2c14e', bar: '#e0b24a' },
   bk: { light: '#44434f', mid: '#1f1e27', dark: '#0c0b10', trim: '#f0c94a', bar: '#e6c048' },
   jlf: { light: '#4c8550', mid: '#224a28', dark: '#0f2613', trim: '#d4ebbd', bar: '#a9d68f' },
