@@ -582,10 +582,10 @@ a {
   border-color: var(--cyan);
 }
 .faction.britannia {
-  border-top-color: #c9a4ff;
+  border-top-color: #e34b4b;
 }
 .faction.eu {
-  border-top-color: #72b4ff;
+  border-top-color: #4f8cff;
 }
 .faction.cf {
   border-top-color: #ff8c6e;
