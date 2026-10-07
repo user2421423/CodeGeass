@@ -21,11 +21,11 @@ function play(g, turns) {
 
 test('Two seasons, each played from both sides; missions unlock in order within each campaign', () => {
   const count = Object.fromEntries(Object.entries(C.CAMPAIGNS).map(([k, c]) => [k, c.missions.length]));
-  assert.deepEqual(count, { bk_s1: 9, britannia_s1: 10, bk_r2: 10, britannia_r2: 10 });
-  assert.deepEqual(Object.keys(C.SEASONS), ['1', '2']);
+  assert.deepEqual(count, { bk_s1: 9, britannia_s1: 9, bk_r2: 10, britannia_r2: 10, eb_europe: 8, eu_europe: 8 });
+  assert.deepEqual(Object.keys(C.SEASONS), ['1', '2', '3']);
   for (const c of Object.values(C.CAMPAIGNS)) assert(C.SEASONS[c.season] && E.FACTIONS[c.side]);
   assert.equal(new Set(ids).size, ids.length, 'every mission belongs to one campaign');
-  for (const id of ['bk1', 'br1', 'bk5', 'br7']) assert(C.unlocked({}, id), `${id} opens its campaign`);
+  for (const id of ['bk1', 'br1', 'bk5', 'br7', 'eb_narva', 'eu_narva']) assert(C.unlocked({}, id), `${id} opens its campaign`);
   assert(!C.unlocked({}, 'bk2'));
   assert(C.unlocked({ campaign: { bk1: 1 } }, 'bk2'));
   assert.equal(C.next('bk3'), 'bk_yokosuka');
@@ -47,6 +47,22 @@ test('Season-split events: Gawain on Kamine, Kallen captured at Xiaopei, the Sie
   g.turn = 3;
   E.beginTurn(g, 'bk', true);
   assert(g.units.some(u => u.type === 'siegfried' && u.side === 'neutral'));
+});
+test('The Euro Britannia War: Euro Britannia is a campaign-only side; Ryo’s bridge falls; Yukiya’s bomb hits only the knights', () => {
+  assert(E.FACTIONS.eb.campaign && !E.MAJORS.includes('eb'));
+  assert.equal(E.ROSTER.eb.siege, 'canterbury');
+  assert.equal(C.mission('br6').player, 'eb', 'the European Front is fought by Euro Britannia');
+  const r = C.createMission('eu_ambush', 2);
+  assert.equal(E.tile(r, 7, 5).terrain, 'peak', 'the land bridge collapses on turn 1');
+  const w = C.createMission('eu_weisswolf', 2),
+    eu = w.units.filter(u => u.side === 'eu').reduce((a, u) => a + u.hp, 0);
+  w.turn = 6;
+  E.beginTurn(w, 'eu', true);
+  assert(w.units.filter(u => u.side === 'eu').reduce((a, u) => a + Math.max(0, u.hp), 0) >= eu, 'the bomb spares the E.U.');
+  assert(w.campaign.fx.some(f => f.name === 'Sakuradite bomb'));
+  const hard = C.createMission('eb_narva', 2, 'hard');
+  assert.equal(hard.difficulty, 'hard');
+  assert(Object.keys(hard.tech.eu).length > 0, 'Hard gives the enemy research');
 });
 
 test('Every mission builds: rectangular map, cities on open land, known frames and commanders, every side fielded', () => {

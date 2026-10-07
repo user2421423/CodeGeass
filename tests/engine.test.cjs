@@ -54,7 +54,7 @@ const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
   assert.equal(Object.values(E.TYPES).filter(t => !t.elite && !t.campaign).length, 31);
   assert.equal(Object.values(E.TYPES).filter(t => t.elite).length, 19);
-  assert.equal(Object.values(E.TYPES).filter(t => t.campaign).length, 8);
+  assert.equal(Object.values(E.TYPES).filter(t => t.campaign).length, 11);
   for (const side of E.MAJORS) {
     assert.deepEqual(Object.keys(E.ROSTER[side]).sort(), [...E.CLASS_ORDER].sort());
     const branches = E.CLASS_ORDER.map(c => E.TYPES[T(side, c)].branch);

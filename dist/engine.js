@@ -56,6 +56,17 @@
       doctrineText: 'Units in forest or mountains take 10% less damage.',
       campaign: true,
     },
+    eb: {
+      name: 'Euro Britannia',
+      short: 'Euro Britannia',
+      adj: 'Euro-Britannian',
+      color: '#a77be8',
+      letter: 'Æ',
+      capital: 'Sankt Petersburg',
+      doctrine: 'Knightly Orders',
+      doctrineText: 'Units led by a commander deal +10% damage.',
+      campaign: true,
+    },
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },
   };
   const MAJORS = ['britannia', 'eu', 'cf'];
@@ -838,6 +849,40 @@
       lore: 'Tohdoh’s commander frame, built at Jabalpur for the Black Knights.',
       campaign: true,
     },
+    vercingetorix: {
+      side: 'eb',
+      cls: 'heavy',
+      name: 'Vercingetorix',
+      model: 'Euro-Britannian custom frame',
+      gen: '7th-generation equivalent',
+      weapon: 'Scythe Slash Harkens · transformable flight form',
+      lore: 'Shin Hyuga Shaing’s golden frame, Grand Master of the Knights of St. Michael.',
+      hp: 470, attack: 98, armor: 44, move: 4, min: 1, max: 1,
+      float: true,
+      campaign: true,
+    },
+    ahura_mazda: {
+      side: 'eb',
+      cls: 'super',
+      name: 'Ahura Mazda',
+      model: 'Euro-Britannian heavy assault frame',
+      gen: '7th-generation equivalent',
+      weapon: 'Shoulder cannons · missile pods · twin rifles',
+      lore: 'Ashley Ashra’s heavily armed frame, sent with him to guard the Gallia Grande.',
+      hp: 560, attack: 110, armor: 50, move: 3, min: 1, max: 2,
+      campaign: true,
+    },
+    canterbury: {
+      side: 'eb',
+      cls: 'siege',
+      name: 'Canterbury',
+      model: 'Euro-Britannian siege frame',
+      gen: '5th generation',
+      weapon: 'Long-range linear cannon',
+      lore: 'The Knights of St. Michael’s siege gun, brought up against the walls of Castle Weisswolf.',
+      hp: 300, attack: 115, armor: 24, move: 1,
+      campaign: true,
+    },
     siegfried: {
       side: 'neutral',
       cls: 'super',
@@ -960,6 +1005,19 @@
       support: 'jp_artillery',
       rocket: 'jp_artillery',
       siege: 'raiko',
+    },
+    // Euro Britannia fields Britannia's 2017 frames plus its own Canterbury siege gun.
+    eb: {
+      scout: 'glasgow',
+      assault: 'gloucester',
+      raider: 'gracchus',
+      light: 'sutherland',
+      medium: 'gloucester',
+      heavy: 'gloucester',
+      super: 'canterbury',
+      support: 'liverpool',
+      rocket: 'liverpool',
+      siege: 'canterbury',
     },
   };
   const ROSTER = {
@@ -3294,6 +3352,7 @@
     if (u.side === 'britannia' && t.branch === 'Armor') attack *= 1.08;
     if (u.side === 'eu' && t.branch === 'Artillery') attack *= 1.1;
     if (u.side === 'bk' && ['forest', 'mountain', 'urban'].includes(tile(g, u.c, u.r)?.terrain)) attack *= 1.1;
+    if (u.side === 'eb' && u.cmd) attack *= 1.1;
     // Commander signature abilities (attacker side).
     if (f.dmg && strike) attack *= 1 + f.dmg;
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];

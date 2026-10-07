@@ -11,6 +11,7 @@ const ART = (() => {
     neutral: { trim: '#d8cfa6', glow: '#b8ff8a', flag: '#8a8466', flag2: '#e6dfc0' },
     bk: { trim: '#f0c94a', glow: '#ff5a5a', flag: '#1d1d24', flag2: '#f0c94a' },
     jlf: { trim: '#c9d6a0', glow: '#9fff7a', flag: '#3d4a2c', flag2: '#d8e2b0' },
+    eb: { trim: '#e3c06a', glow: '#d2a8ff', flag: '#4b2a7a', flag2: '#e3c06a' },
   };
   // Neutral garrisons fly frames bought abroad, repainted in desert khaki.
   const NEUTRAL_PAINT = { main: '#9c9472', dark: '#5f5a44' };
@@ -69,6 +70,9 @@ const ART = (() => {
     akatsuki_flight: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'rifle', back: 'wings', main: '#5f8f86' },
     zangetsu: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'block', weapon: 'katana', back: 'pods', main: '#272b35' },
     raiko: { body: 'tank', main: '#4b5040', trim: '#a8a07a' },
+    vercingetorix: { body: 'humanoid', bulk: 1.05, head: 'crest', shoulder: 'spike', weapon: 'axe', back: 'wings', main: '#d8b04a', dark: '#4a3412', trim: '#f4e2a0', glow: '#ff7a3a' },
+    ahura_mazda: { body: 'giant', bulk: 1.3, head: 'mono', shoulder: 'wide', weapon: 'none', back: 'bigcannon', main: '#8e2f2f', dark: '#2a1010', trim: '#e0b45a', glow: '#ff5a3a' },
+    canterbury: { body: 'tank', main: '#5a4a6a', trim: '#cdb0f0' },
     siegfried: { body: 'giant', bulk: 1.35, head: 'mono', shoulder: 'spike', weapon: 'claw', main: '#c9772f', dark: '#3a2312', trim: '#e9c46a', glow: '#ff9a4a' },
     jp_tank: { body: 'tank', main: '#5a6648', trim: '#c9c28a' },
     jp_artillery: { body: 'box', main: '#626b4c', trim: '#c9c28a' },
@@ -567,6 +571,7 @@ const ART = (() => {
     cf: ['#5a1a1a', '#c49a3a'],
     bk: ['#16161c', '#c9a43a'],
     jlf: ['#26301c', '#8fa060'],
+    eb: ['#2a1640', '#a07ad8'],
   };
   function hairBack(style, hc) {
     switch (style) {

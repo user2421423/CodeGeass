@@ -1138,7 +1138,7 @@ function campaignRow(profile) {
     seasons = Object.values(CP.SEASONS || {}),
     all = camps.flatMap(c => c.missions),
     got = all.reduce((a, m) => a + CP.best(profile, m.id), 0);
-  return `<div class="conquest-row campaign-row"><div><label>Campaign · ${seasons.length} seasons · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard and Challenge modes. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Campaigns</button></div>`;
+  return `<div class="conquest-row campaign-row"><div><label>Campaign · ${seasons.length} story arcs · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard and Challenge modes. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Campaigns</button></div>`;
 }
 function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
@@ -2021,7 +2021,7 @@ document.addEventListener('click', e => {
       break;
     case 'elite-forces':
       eliteBack = 'game';
-      eliteDialog(game.player === 'bk' || game.player === 'jlf' ? 'black_knights' : game.player);
+      eliteDialog(game.player === 'bk' || game.player === 'jlf' ? 'black_knights' : game.player === 'eb' ? 'britannia' : game.player);
       break;
     case 'elite-forces-start':
       eliteBack = 'start';
@@ -2285,6 +2285,7 @@ const PLATE = {
   cf: { light: '#ad3a33', mid: '#5c1512', dark: '#330806', trim: '#f2c14e', bar: '#e0b24a' },
   bk: { light: '#44434f', mid: '#1f1e27', dark: '#0c0b10', trim: '#f0c94a', bar: '#e6c048' },
   jlf: { light: '#4c8550', mid: '#224a28', dark: '#0f2613', trim: '#d4ebbd', bar: '#a9d68f' },
+  eb: { light: '#6e4fa8', mid: '#3a2466', dark: '#1a0f33', trim: '#e3c06a', bar: '#cdb0f0' },
 };
 const TERRAIN_FILL = {
   sea: '#174a6c',
