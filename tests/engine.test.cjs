@@ -626,13 +626,14 @@ test('AI garrisons: fortress cities keep a defender; a carrier with troops in re
   h.turn++;
   assert.equal(E.aiPlan(h, 'britannia').guards[guard.id]?.id, port.id, 'a loaded carrier nine hexes out puts the city on guard');
 });
-test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Rations', () => {
+test('Commander abilities: Imperial Stratagem, Live On, Future Sight and Field Supply', () => {
   const g = blank(),
     julius = E.newUnit(g, T('britannia', 'medium'), 'britannia', 5, 5, 1, 'julius'),
     foe = E.newUnit(g, T('eu', 'light'), 'eu', 6, 5);
   assert.equal(E.feintReason(g, julius), null);
   assert(E.feint(g, julius.id).ok);
-  assert.equal(foe.morale, -2);
+  assert.equal(foe.morale, 0);
+  assert.equal(foe.skillMarks[0].damage, 0.2);
   assert.match(E.feintReason(g, julius), /Ready in 3/);
   const suzaku = E.newUnit(g, T('britannia', 'super'), 'britannia', 2, 2, 1, 'suzaku');
   assert.equal(E.moraleFloor(g, suzaku), 0);
@@ -643,10 +644,10 @@ test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Ra
     tank = E.newUnit(h, T('eu', 'super'), 'eu', 6, 5, 3);
   const before = tank.hp,
     r = E.attack(h, bis.id, 6, 5);
-  assert(before - tank.hp > r.damage, 'Excalibur reflects counter-fire');
+  assert.equal(before - tank.hp, r.damage, 'Future Sight replaces reflected counter-fire');
   const k = blank('eu'),
     klaus = E.newUnit(k, T('eu', 'scout'), 'eu', 5, 5, 1, 'klaus'),
-    hurt = E.newUnit(k, T('eu', 'light'), 'eu', 10, 0);
+    hurt = E.newUnit(k, T('eu', 'light'), 'eu', 6, 5);
   const full = E.repairCost(hurt);
   assert.equal(E.repairCost(hurt, k), Math.round(full / 2));
   assert(klaus);
@@ -1222,12 +1223,13 @@ test('Black Knights skills: Tactical Command, Ace, Code Bearer, Rapid Assault an
   E.attack(a, first.id, 5, 5);
   const after = E.preview(a, asahina.id, 5, 5);
   assert(!after.counterAllowed && after.crit > before.crit);
-  // Senba: unmoved since his last turn, the first attack against him each phase is cut by 40%.
+  // Senba: held on the preceding turn; only the first direct attack each round is reduced.
   const s = blank('eu'),
     senba = E.newUnit(s, T('cf', 'medium'), 'cf', 6, 5, 1, 'senba'),
     gun = E.newUnit(s, T('eu', 'support'), 'eu', 5, 5);
   const open = E.preview(s, gun.id, 6, 5).unit;
   senba.held = true;
+  senba.guardReady = true;
   assert(E.preview(s, gun.id, 6, 5).unit < open * 0.65);
   E.attack(s, gun.id, 6, 5);
   assert.equal(E.preview(s, gun.id, 6, 5).unit, open, 'the guard is spent');

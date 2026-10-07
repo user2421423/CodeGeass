@@ -167,6 +167,22 @@
   }
   // ======== Commanders (WC4 generals): signature abilities are data, read by the combat rules ========
   const NOFX = {};
+  // Calculated once: permanent personal stats and situational skills are displayed separately,
+  // but the existing combat pipeline can read both without applying either twice.
+  const COMMANDER_EFFECTS = Object.fromEntries(Object.entries(COMMANDERS).map(([id, c]) =>
+    [id, { ...(c.stats || {}), ...c.fx }]));
+  const COMMANDER_VERSION = 1;
+  function commanderStatsText(k) {
+    const st = COMMANDERS[k]?.stats || {}, out = [], pct = n => Math.round(n * 100);
+    if (st.dmg) out.push(`Damage +${pct(st.dmg)}%${st.attackOnly ? ' on attacks' : ''}`);
+    for (const [branch, n] of Object.entries(st.dmgBranch || {})) out.push(`${branch} damage +${pct(n)}%${st.attackOnly ? ' on attacks' : ''}`);
+    if (st.crit) out.push(`Critical chance +${pct(st.crit)} percentage points`);
+    if (st.critBonus) out.push(`Critical multiplier +${st.critBonus.toFixed(2)}`);
+    if (st.pen) out.push(`Armor penetration +${pct(st.pen)} percentage points`);
+    if (st.taken) out.push(`Damage taken −${pct(1 - st.taken)}%`);
+    if (st.counter) out.push(`Counter-fire +${pct(st.counter)}%`);
+    return out.join(' · ');
+  }
   // Flat index: 'armor.guns' → node, with its branch and id.
   const TECH_NODES = Object.fromEntries(
     Object.entries(TECH_TREE).flatMap(([b, tree]) =>
@@ -208,22 +224,27 @@
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
-    return (u?.cmd && COMMANDERS[u.cmd]?.fx) || NOFX;
+    return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
   function recruitPrice(k) {
     const a = COMMANDERS[k];
     return a?.recruit ?? (a?.stars >= 5 ? 400 : a?.stars >= 4 ? 300 : 200);
   }
   function defaultOfficer(k) {
-    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [] };
+    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], commanderVersion: COMMANDER_VERSION };
   }
   function cleanOfficer(k, rec) {
     const base = defaultOfficer(k);
     if (!rec) return base;
+    const ratings = { ...rec.ratings };
+    // Cornelia's old +2 skill movement becomes two Mobility stars, once per record.
+    if (k === 'cornelia' && !rec.commanderVersion && ratings.mobility != null)
+      ratings.mobility = Math.min(MAX_RATING, ratings.mobility + 2);
     return {
+      commanderVersion: COMMANDER_VERSION,
       rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, RANKS.length - 1),
       ratings: Object.fromEntries(
-        Object.keys(base.ratings).map(b => [b, clamp((rec.ratings?.[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
+        Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
       medals: (rec.medals || []).filter(m => MEDALS[m]),
     };
@@ -234,6 +255,13 @@
       profile.roster = {};
       for (const k of Object.values(STARTERS).flat()) profile.roster[k] = defaultOfficer(k);
     }
+    for (const [k, rec] of Object.entries(profile.roster))
+      if (COMMANDERS[k] && !rec?.commanderVersion) {
+        // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star.
+        if (k === 'cornelia') for (let star = 5; star <= Math.min(6, rec?.ratings?.mobility || 4); star++)
+          profile.tokens = (profile.tokens || 0) + STAR_COST[star];
+        profile.roster[k] = cleanOfficer(k, rec);
+      }
     return profile.roster;
   }
   function owns(profile, k) {
@@ -242,7 +270,8 @@
   function officer(g, k) {
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
-    return (g.officers[k] ||= defaultOfficer(k));
+    const rec = (g.officers[k] ||= defaultOfficer(k));
+    return rec.commanderVersion ? rec : (g.officers[k] = cleanOfficer(k, rec));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
@@ -283,7 +312,7 @@
   function moraleFloor(g, v) {
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
-      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id)) && dist(g, m, v) <= 1,
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id)) && dist(g, m, v) <= 1,
     )
       ? -1
       : -3;
@@ -511,19 +540,14 @@
   }
   function feintReason(g, u) {
     const action = COMMANDERS[u?.cmd]?.action;
-    if (!u || !action) return 'Only Julius, Leila and Xianglin have a command action';
-    return (
-      turnReason(g, u.side) ||
-      (u.morale <= -3 ? 'Unit is confused' : null) ||
-      (u.feintCD > 0 ? `Ready in ${u.feintCD} turn${u.feintCD > 1 ? 's' : ''}` : null) ||
-      (action.kind === 'command'
-        ? !commandTargets(g, u).length
-          ? 'No friendly unit within 2 hexes has acted'
-          : null
-        : !g.units.some(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2)
-          ? 'No enemy within 2 hexes'
-          : null)
-    );
+    if (!u || !action) return 'This commander has no command action';
+    const why = turnReason(g, u.side) || (u.hp <= 0 ? 'Unit destroyed' : atSea(g, u) ? 'Embarked units cannot use command actions' : u.morale <= -3 ? 'Unit is confused' : null)
+      || (u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
+    if (why) return why;
+    if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
+      ? 'No enemy within 2 hexes' : action.kind === 'command' ? 'No friendly unit within 2 hexes has acted'
+      : action.kind === 'withdraw' ? 'No friendly unit within 2 hexes has fired' : 'No enemy within 2 hexes';
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
   function applyProfile(g, profile = {}) {
@@ -851,6 +875,9 @@
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
     g.eliteDeployed ||= {};
+    for (const records of [g.officers, g.roster])
+      if (records) for (const [k, rec] of Object.entries(records))
+        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
@@ -879,6 +906,11 @@
       chain: 0,
       xp: 0,
       feintCD: 0,
+      held: false,
+      guardReady: false,
+      movedDistance: 0,
+      skillReposition: 0,
+      withdrawMove: false,
       elite: ELITE_TYPE_TO_ID[type] || null,
       eliteLevel: ELITE_TYPE_TO_ID[type] ? 1 : 0,
       eliteMoveAfterKill: false,
@@ -921,7 +953,7 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill)) return found;
+    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -931,8 +963,8 @@
       // the coast never ends their move. Warships only sail. Knightmares that did not just launch may board a carrier.
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
-      budget = ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
-      boards = !t.naval && u.deployedTurn !== g.turn,
+      budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
+      boards = !u.skillReposition && !t.naval && u.deployedTurn !== g.turn,
       costs = new Map([[key(start), 0]]),
       queue = [{ p: start, cost: 0 }];
     while (queue.length) {
@@ -941,7 +973,7 @@
       const { p, cost } = queue.splice(best, 1)[0];
       if (cost > costs.get(key(p))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n))) continue;
+        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n)) || (u.skillReposition && !t.naval && isSea(n))) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (occ && occ.side !== u.side) continue;
@@ -953,7 +985,9 @@
         if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
         // Embarking or landing takes the rest of the turn: allowed whenever any movement is left.
-        const nc = cross
+        const nc = u.skillReposition
+          ? cost + (isSea(n) ? 1 : terrainCost(g, u, n))
+          : cross
           ? budget
           : ship
             ? cost + 1
@@ -1060,6 +1094,11 @@
       u.r = dest.r;
       u.moved = u.attacked = true;
       u.held = false;
+      u.guardReady = false;
+      u.skillReposition = 0;
+      u.withdrawMove = false;
+      u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
+      u.lastTurnMoved = true;
       u.boardedTurn = g.turn;
       (carrier.cargo ||= []).push(u);
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} boards the Carrier-Battleship.`, u.side);
@@ -1069,6 +1108,11 @@
     u.r = dest.r;
     u.moved = true;
     u.held = false;
+    u.guardReady = false;
+    u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
+    u.lastTurnMoved = true;
+    u.skillReposition = 0;
+    u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
     if (!isSea(dest)) dest.owner = u.side;
@@ -1149,14 +1193,14 @@
     let bonus = 0;
     for (const a of g.units) {
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
-      if (a.cmd && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
     }
     return bonus;
   }
-  function power(g, u, target, st, counter = false) {
+  function power(g, u, target, st, counter = false, direct = true) {
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
       f = fx(u),
@@ -1182,7 +1226,7 @@
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
-    attack *= skillAttack(g, u, counter);
+    attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
     if (counter && ef.counter) attack *= 1 + ef.counter;
     if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
@@ -1212,7 +1256,7 @@
       friends(u.side, target, v => v.branch !== 'Artillery')
     )
       attack *= 1.2;
-    const pen = clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95);
+    const pen = armorPenetration(g, u);
     const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') : 35;
     attack *= 100 / (100 + armor * (1 - pen) * 2);
     if (target) {
@@ -1246,7 +1290,7 @@
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
-      attack *= skillDefense(g, target, counter);
+      attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
       const ground = tile(g, target.c, target.r);
       if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
@@ -1268,7 +1312,7 @@
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Chaos Mines and city-breaker commanders raise damage to city defenses.
     const ef = eliteFx(a),
-      raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0));
+      raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
           base *
@@ -1282,6 +1326,8 @@
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
     const counter =
       !followUp &&
+      !(f.timeStop && a.timeStopTurn !== g.turn) &&
+      !targetMarked(g, a, d).noCounter &&
       !!d &&
       !t.noCounter &&
       !ef.noCounter &&
@@ -1306,7 +1352,7 @@
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
       splash: (t.splash || 0) + (ef.splash || 0) + (t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
-      armorPen: clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95),
+      armorPen: armorPenetration(g, a),
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
@@ -1357,29 +1403,32 @@
       crit = random(g) < pr.crit,
       mult = (0.92 + random(g) * 0.16) * (crit ? pr.critMult : 1),
       hit = [];
+    const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
     a.attacked = true;
     a.moved = true;
+    a.skillReposition = 0;
+    a.withdrawMove = false;
     a.launched = null;
     let dmg = 0,
       sd = 0;
     if (d) {
       dmg = Math.round(pr.unit * mult);
+      consumeDefensiveSkills(g, d, a);
       d.hp = Math.max(0, d.hp - dmg);
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
-      if (fx(d).guard && d.held) d.guardStamp = guardStamp(g);
       d.struck = { turn: g.turn, side: a.side };
     }
     if (s && pr.shield) {
       sd = Math.min(s.shield, Math.round(pr.shield * mult));
       s.shield -= sd;
     }
-    if (f.terror && d && d.hp > 0) d.morale = Math.max(moraleFloor(g, d), d.morale - 1);
+    if (f.terror && d && d.hp > 0) lowerMorale(g, d, 1);
     const aef = eliteFx(a);
     if (aef.stun && d && d.hp > 0) {
       d.moved = true;
       d.attacked = true;
-      d.morale = Math.max(moraleFloor(g, d), d.morale - 1);
+      lowerMorale(g, d, 1);
     }
     let retaliation = 0;
     if (d && d.hp > 0 && pr.counterAllowed) {
@@ -1391,9 +1440,9 @@
     if (pr.splash) {
       for (const v of g.units) {
         if (v.hp <= 0 || !foe(g, v.side, a.side) || v.id === d?.id || dist(g, v, p) !== 1) continue;
-        const amount = Math.round(power(g, a, v, stationAt(g, v)) * pr.splash);
+        const amount = Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash);
         v.hp = Math.max(0, v.hp - amount);
-        v.morale = Math.max(moraleFloor(g, v), v.morale - 1);
+        lowerMorale(g, v, 1);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, a);
       }
@@ -1424,14 +1473,16 @@
     // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
     if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
       a.aceTurn = g.turn;
-      a.attacked = false;
-      breakthrough = true;
+      if (breakthrough) grantReposition(a, 2);
+      else { a.attacked = false; breakthrough = true; }
     }
-    if (a.hp > 0 && aef.moveAfterAttack) a.moved = false;
+    if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
     if (destroyed && a.hp > 0 && aef.moveAfterKill) {
       a.moved = false;
+      a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
     }
+    afterCommanderAttack(g, a, d, s, destroyed, timeStop);
     log(
       g,
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
@@ -1459,7 +1510,7 @@
       .filter(s => s.owner === side && !devastated(g, s))
       .reduce(
         (a, s) => ({
-          credits: a.credits + s.income,
+          credits: a.credits + Math.round(s.income * treasuryBonus(g, s)),
           industry: a.industry + s.industry,
           science: a.science + s.science,
         }),
@@ -1565,10 +1616,10 @@
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
-    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u);
+    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u), st = COMMANDERS[u.cmd]?.stats || {};
     return {
       hp: maxHP(u),
-      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1))),
+      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1)) * officerAttack(g, u) * (1 + (st.dmg || 0)) * (1 + (st.dmgBranch?.[t.branch] || 0))),
       armor: t.armor + s.armor,
       move: movement(g, u),
       min: r.min,
@@ -1583,8 +1634,9 @@
   }
   // Repairs restore 35% of the frame for a fifth of the unit's build price.
   function repairCost(u, g = null) {
-    const half = g && g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).repairHalf) ? 0.5 : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half * (g && logisticsNear(g, u) ? 0.7 : 1)));
+    const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
+    const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
+    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * (g && logisticsNear(g, u) ? 0.7 : 1)));
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
@@ -1834,31 +1886,42 @@
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
     return { ok: true };
   }
-  // Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem: −2 morale to enemies within 2 hexes.
-  // Zero's Tactical Command (kind 'command') instead lets a friendly unit that has acted move and attack again.
+  // Command actions share cooldown/range validation; only targeted actions require a picker.
+  function actionTargets(g, u) {
+    if (!u || !COMMANDERS[u.cmd]?.action) return [];
+    const kind = COMMANDERS[u.cmd].action.kind;
+    if (kind === 'command') return commandTargets(g, u);
+    return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
+      (kind === 'cleanse' ? v.side === u.side : kind === 'withdraw' ? v.id !== u.id && v.side === u.side && v.attacked && v.morale > -3
+        : foe(g, v.side, u.side)));
+  }
   function feint(g, id, targetId = null) {
-    const u = g.units.find(u => u.id === id);
-    const why = feintReason(g, u);
+    const u = g.units.find(v => v.id === id), why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
-    const action = COMMANDERS[u.cmd].action;
-    if (action.kind === 'command') {
-      const options = commandTargets(g, u),
-        v =
-          targetId == null
-            ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
-            : options.find(v => v.id === targetId);
-      if (!v) return { ok: false, reason: 'Choose a friendly unit within 2 hexes that has already acted' };
-      v.moved = v.attacked = false;
-      v.chain = 0;
+    const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
+    if (['command', 'designate', 'stratagem'].includes(action.kind)) {
+      const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
+        : options.find(v => v.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose a valid target within 2 hexes' };
+      if (action.kind === 'command') {
+        v.moved = v.attacked = false;
+        v.skillReposition = 0;
+        v.withdrawMove = false;
+        // Keep chain/ace/reposition stamps: an extra activation must not refresh once-per-turn skills.
+      } else addTargetMark(v, { side: u.side, source: u.id, range: 2,
+        damage: action.kind === 'designate' ? 0.2 : 0, noCounter: action.kind === 'stratagem' });
       u.feintCD = 3;
-      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} acts again.`, u.side);
-      return { ok: true, target: v.id };
+      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? 'acts again' : 'designated'}.`, u.side);
+      return { ok: true, target: v.id, affected: 1 };
     }
-    const victims = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2);
-    victims.forEach(v => (v.morale = Math.max(moraleFloor(g, v), v.morale - 2)));
+    for (const v of options) {
+      if (action.kind === 'cleanse') { v.morale = Math.max(0, v.morale); v.moraleWard = { side: u.side }; }
+      else if (action.kind === 'withdraw') { v.moved = false; v.withdrawMove = true; v.skillReposition = 0; }
+      else lowerMorale(g, v, 2);
+    }
     u.feintCD = 3;
-    log(g, `${COMMANDERS[u.cmd].action.verb} disrupts ${victims.length} enemy units.`, u.side);
-    return { ok: true, affected: victims.length };
+    log(g, `${action.verb} affects ${options.length} units.`, u.side);
+    return { ok: true, affected: options.length };
   }
 
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
@@ -1872,20 +1935,151 @@
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
   function commandTargets(g, u) {
     return g.units.filter(
-      v => v.hp > 0 && v.side === u.side && v.id !== u.id && (v.moved || v.attacked) && v.morale > -3 && dist(g, u, v) <= 2,
+      v => v.hp > 0 && v.side === u.side && v.id !== u.id && (v.moved || v.attacked) && !atSea(g, v) && v.morale > -3 && dist(g, u, v) <= 2,
     );
   }
   const skillNear = (g, u, flag, range, self = true) =>
     g.units.some(
-      v => v.hp > 0 && v.side === u.side && (self || v.id !== u.id) && fx(v)[flag] && dist(g, v, u) <= range,
+      v => v.hp > 0 && !atSea(g, v) && v.side === u.side && (self || v.id !== u.id) && fx(v)[flag] &&
+        (!v.auraDisrupted || !['orderCommander', 'screenedFire'].includes(flag)) && dist(g, v, u) <= range,
     );
+  function friendlyNeighbors(g, u, predicate = () => true) {
+    return g.units.filter(v => v.hp > 0 && !atSea(g, v) && v.side === u.side && v.id !== u.id && dist(g, u, v) === 1 && predicate(v));
+  }
+  function lowerMorale(g, u, steps) {
+    if (!u.moraleWard) u.morale = Math.max(moraleFloor(g, u), u.morale - steps);
+  }
+  function addTargetMark(u, mark) {
+    u.skillMarks ||= [];
+    u.skillMarks = u.skillMarks.filter(m => !(m.side === mark.side && m.source === mark.source));
+    u.skillMarks.push(mark);
+  }
+  function targetMarked(g, attacker, victim) {
+    let damage = 0, noCounter = false;
+    for (const m of victim?.skillMarks || []) {
+      if (m.side !== attacker.side) continue;
+      if (m.range) {
+        const source = g.units.find(v => v.id === m.source && v.hp > 0 && !atSea(g, v));
+        if (!source || dist(g, source, attacker) > m.range) continue;
+      }
+      damage = Math.max(damage, m.damage || 0);
+      noCounter ||= !!m.noCounter;
+    }
+    return { damage, noCounter };
+  }
+  function armorPenetration(g, u) {
+    const engineering = skillNear(g, u, 'engineeringPen', 2) ? 0.1 : 0;
+    return clamp(TYPES[u.type].pen + (fx(u).pen || 0) + (eliteFx(u).pen || 0) + engineering, 0, 0.95);
+  }
+  function commanderAttack(g, u, target, counter) {
+    const f = fx(u), friends = friendlyNeighbors(g, u);
+    let mult = 1;
+    if (counter) {
+      if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
+      return mult;
+    }
+    if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
+    if (f.loneRaider && !friends.length) mult *= 1 + f.loneRaider;
+    if (f.runCharge && u.movedDistance >= 2) mult *= 1 + f.runCharge;
+    if (f.combinedArms && friends.some(v => TYPES[v.type].branch !== TYPES[u.type].branch)) mult *= 1 + f.combinedArms;
+    if (TYPES[u.type].branch === 'Armor' && friends.some(v => TYPES[v.type].branch === 'Armor') && skillNear(g, u, 'orderCommander', 1)) mult *= 1.15;
+    if (!target) return mult;
+    if (f.duelist && target.cmd) mult *= 1 + f.duelist;
+    if (f.finisher && target.hp / maxHP(target) < 0.5) mult *= 1 + f.finisher;
+    if (f.opener && target.hp >= maxHP(target)) mult *= 1 + f.opener;
+    if (f.pursuit && target.lastTurnMoved) mult *= 1 + f.pursuit;
+    mult *= 1 + targetMarked(g, u, target).damage;
+    if (rangeOf(g, u).max > 1 && skillNear(g, u, 'screenedFire', 2) &&
+      g.units.some(v => v.hp > 0 && !atSea(g, v) && v.side === u.side && TYPES[v.type].branch !== 'Artillery' && dist(g, v, target) === 1)) mult *= 1.2;
+    return mult;
+  }
+  function bodyguarded(g, target) {
+    return !!target.cmd && skillNear(g, target, 'bodyguard', 1, false);
+  }
+  function commanderDefense(g, target, attacker, counter, direct) {
+    const f = fx(target), friends = friendlyNeighbors(g, target);
+    let mult = 1;
+    if (f.loneRisk && !friends.length) mult *= f.loneRisk;
+    if (f.steadyRanks && friends.length >= 2) mult *= f.steadyRanks;
+    if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
+    if (!counter && direct) {
+      if (f.foresight && target.foresightTurn !== g.turn) mult *= f.foresight;
+      if (f.liveOn && target.hp / maxHP(target) < 0.4 && target.liveOnTurn !== g.turn) mult *= f.liveOn;
+      if (bodyguarded(g, target) && target.bodyguardTurn !== g.turn) mult *= 0.8;
+    }
+    return mult;
+  }
+  function consumeDefensiveSkills(g, target, attacker) {
+    const f = fx(target);
+    if (f.guard && target.guardReady && target.held) target.guardStamp = guardStamp(g);
+    if (f.foresight) target.foresightTurn = g.turn;
+    if (f.liveOn && target.hp / maxHP(target) < 0.4) target.liveOnTurn = g.turn;
+    if (bodyguarded(g, target)) target.bodyguardTurn = g.turn;
+  }
+  function grantReposition(u, range) {
+    // Preserve a frame's unrestricted restored movement; a skill only fills a missing movement action.
+    if (u.moved) { u.moved = false; u.skillReposition = range; }
+  }
+  function afterCommanderAttack(g, a, d, city, destroyed, timeStop) {
+    const f = fx(a);
+    if (d?.hp > 0) {
+      if (f.targetMark) addTargetMark(d, { side: a.side, source: a.id, damage: f.targetMark });
+      if (f.intrigue && d.cmd) d.auraDisrupted = { side: a.side };
+    }
+    if (city && foe(g, city.owner, a.side)) {
+      if (f.focusBombard) {
+        const old = a.focusCity;
+        const count = old?.city === city.id && old.lastTurn >= g.turn - 1 ? Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) : 0;
+        a.focusCity = { city: city.id, count, lastTurn: g.turn };
+      }
+      if (f.siegeMark && a.siegeMarkTurn !== g.turn) {
+        city.bombardMark = { side: a.side, value: f.siegeMark };
+        a.siegeMarkTurn = g.turn;
+      }
+    } else if (f.focusBombard) delete a.focusCity;
+    if (timeStop) {
+      a.timeStopTurn = g.turn;
+      if (a.hp > 0) a.hp = Math.max(1, a.hp - Math.round(maxHP(a) * f.timeStop));
+    }
+    if (a.hp <= 0) return;
+    if (f.reposition && a.repositionTurn !== g.turn) { a.repositionTurn = g.turn; grantReposition(a, f.reposition); }
+    if (!destroyed) return;
+    if (f.killReposition && a.killRepositionTurn !== g.turn) { a.killRepositionTurn = g.turn; grantReposition(a, f.killReposition); }
+    if (f.killHeal && a.killHealTurn !== g.turn) { a.killHealTurn = g.turn; a.hp = Math.min(maxHP(a), a.hp + Math.round(maxHP(a) * f.killHeal)); }
+    if (f.assaultLeader && a.assaultLeaderTurn !== g.turn) {
+      a.assaultLeaderTurn = g.turn;
+      for (const v of friendlyNeighbors(g, a)) v.assaultInspired = { side: a.side, value: f.assaultLeader };
+    }
+  }
+  function bombardBonus(g, u, city) {
+    if (!city) return 1;
+    let mult = city.bombardMark?.side === u.side ? 1 + city.bombardMark.value : 1;
+    const old = u.focusCity;
+    if (fx(u).focusBombard && old?.city === city.id && old.lastTurn >= g.turn - 1)
+      mult *= 1 + Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) * fx(u).focusBombard;
+    return mult;
+  }
+  function treasuryBonus(g, city) {
+    const holder = g.units.find(u => u.hp > 0 && u.side === city.owner && u.c === city.c && u.r === city.r && fx(u).treasury);
+    return 1 + (holder ? fx(holder).treasury : 0);
+  }
+  function commanderStatusText(g, u) {
+    const out = [];
+    if (u.skillMarks?.length) out.push('Designated target');
+    if (u.auraDisrupted) out.push('Command damage aura suppressed');
+    if (u.moraleWard) out.push('Protected against morale disruption');
+    if (u.assaultInspired) out.push('Inspired: attack damage +15%');
+    if (!u.moved && u.skillReposition) out.push(`Reposition: up to ${u.skillReposition} hexes`);
+    if (!u.moved && u.withdrawMove) out.push('Withdrawal movement ready');
+    return out.join(' · ');
+  }
   // Tohdoh's Miracle Worker: 1 for units beside him; 2 for Tohdoh himself with two or more friendly units adjacent.
   function miracle(g, u) {
     if (fx(u).miracle)
       return g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, u) === 1).length >= 2 ? 2 : 0;
     return skillNear(g, u, 'miracle', 1, false) ? 1 : 0;
   }
-  const guardStamp = g => `${g.turn}:${g.phase}`;
+  const guardStamp = g => g.turn;
   // Attack multiplier: Miracle Worker counter-fire, Urabe's Final Stand, Tamaki's Reckless Charge.
   function skillAttack(g, u, counter) {
     const f = fx(u);
@@ -1895,11 +2089,11 @@
     return m;
   }
   // Damage-taken multiplier: Miracle Worker, Senba's Veteran's Guard, Katase's Prepared Position.
-  function skillDefense(g, target, counter) {
+  function skillDefense(g, target, counter, direct = true) {
     const tf = fx(target),
       ground = tile(g, target.c, target.r);
     let m = [1, 0.9, 0.8][miracle(g, target)];
-    if (tf.guard && !counter && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
+    if (tf.guard && !counter && direct && target.guardReady && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
     if (
       skillNear(g, target, 'prepared', 1) &&
       (ground?.terrain === 'mountain' || g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1))
@@ -1982,7 +2176,7 @@
     const d = depositOf(g, s),
       y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
     if (devastated(g, s)) return { credits: 0, industry: 0, science: 0, sakuradite: 0 };
-    return { credits: s.income + y.credits, industry: s.industry, science: s.science, sakuradite: y.sakuradite };
+    return { credits: Math.round(s.income * treasuryBonus(g, s)) + y.credits, industry: s.industry, science: s.science, sakuradite: y.sakuradite };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
   function seizeDeposit(g, u, p) {
@@ -2404,8 +2598,18 @@
       e.science += Math.round(inc.science * modifier);
       e.sakuradite = (e.sakuradite || 0) + Math.round(inc.sakuradite * modifier);
     }
+    for (const v of g.units) {
+      v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
+      for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired']) if (v[field]?.side === side) delete v[field];
+    }
+    for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
     for (const u of mine) {
+      u.lastTurnMoved = false;
+      u.guardReady = !!u.held;
+      u.movedDistance = 0;
+      u.skillReposition = 0;
+      u.withdrawMove = false;
       u.moved = false;
       u.attacked = false;
       u.chain = 0;
@@ -3245,6 +3449,9 @@
     ALLIES,
     serves,
     commandTargets,
+    actionTargets,
+    commanderStatsText,
+    commanderStatusText,
   };
   // Shared with the engine's own parts (engine/ai.js); not part of the game's API.
   Object.defineProperty(root.Knightmare, 'internal', {
@@ -3282,6 +3489,8 @@
       eliminatorUnlocked,
       feint,
       feintReason,
+      actionTargets,
+      rangeOf,
       fireFortress,
       fleijaCity,
       foe,

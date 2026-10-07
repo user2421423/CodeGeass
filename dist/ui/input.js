@@ -415,7 +415,7 @@ document.addEventListener('click', e => {
       break;
     case 'feint': {
       const u = selectedUnit();
-      if (u && C(u.cmd)?.action?.kind === 'command') commandDialog(u);
+      if (u && ['command', 'designate', 'stratagem'].includes(C(u.cmd)?.action?.kind)) commandDialog(u);
       else if (u) doAction(() => E.feint(game, u.id));
       break;
     }

@@ -39,7 +39,7 @@ async function endTurn(force = false) {
         toast('F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', true);
       if (token !== aiToken) return;
     }
-    const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).map(u => u.id),
+    const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).sort((a, b) => Number(['command', 'withdraw'].includes(C(a.cmd)?.action?.kind)) - Number(['command', 'withdraw'].includes(C(b.cmd)?.action?.kind))).map(u => u.id),
       minesBefore = (game.sites || []).map(d => d.owner);
     let quiet = 0;
     for (const id of ids) {
