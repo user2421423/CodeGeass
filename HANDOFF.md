@@ -40,12 +40,13 @@ screens in `dist/game.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balanc
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **45 Knightmare sprites (31 Conquest frames, 9
-Elite Forces, 5 campaign frames) and 58 commander portraits**, registered synchronously by `manifest.js`. Source provenance and preparation details are recorded in
-`ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
-workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art except the two
-campaign-only Japanese Army vehicles (tank and rocket artillery), which use their drawings; procedural art is otherwise
-only a runtime safety fallback.
+Published artwork is tracked and deployed from `dist/assets/art/`: **70 unit sprites and 58 commander portraits**,
+registered synchronously by `manifest.js`. Source provenance and preparation details are recorded in `ASSETS.md`
+and `sources.json`. The October 2026 completion pass adds Vercingetorix, Ahura Mazda, Canterbury, Siegfried,
+Portman/II, Japanese conventional vehicles and the newer amphibious/naval units; all three carrier factions share one
+insignia-free Britannian-derived carrier design. The ignored `dist/local-art/` directory remains only a local
+preparation/override workspace. Every current unit type and commander has published art; procedural art is now only
+a runtime safety fallback.
 To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
 ## 3. Code layout
