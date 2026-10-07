@@ -233,9 +233,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star,
   scaled by difficulty; progress in `profile.campaign`, per difficulty in `profile.campaignDifficulty`). Missions
   unlock in order. Ground-zero blasts kill outright (C.C.'s Code Bearer does not save her).
-- Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal keeps enemy units and city
-  defenses at full strength, but gives your ordinary starting formations +1 frame, selected difficult scenarios a
-  favorable force-count pass and 50% more starting resources. Normal does not alter mission turn limits. Missions
+- Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal keeps enemy units, city
+  defenses and authored formation stack sizes at full/original strength. Its easier balance comes from selected
+  difficult scenarios receiving a favorable force-count pass plus 50% more starting resources. Normal does not alter
+  mission turn limits. Missions
   whose objective is simply to hold through a given turn keep no separate failure timer. Hard and Challenge reuse
   Conquest's enemy research, upgrades, reinforcements, ranks and income.
 - Campaign maps keep the original movement, sea speed and AI search radii (`aiRange(g)`); the larger Conquest values
