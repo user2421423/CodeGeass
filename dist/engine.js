@@ -3002,8 +3002,8 @@
     u: 'urban',
     c: 'crater',
   };
-  const CONQUEST_MOVE_BONUS = 1,
-    SEA_MOVE = { conquest: 7, campaign: 5 };
+  const CONQUEST_MOVE_BONUS = 2,
+    SEA_MOVE = { conquest: 10, campaign: 5 };
   const isSea = t => t?.terrain === 'sea';
   function atSea(g, u) {
     return isSea(tile(g, u.c, u.r));
