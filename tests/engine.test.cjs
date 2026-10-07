@@ -458,6 +458,58 @@ test('AI navies: idle troops board a waiting carrier, which sails to an enemy co
   assert(events.some(e => e.kind === 'deploy'), 'the carrier launches its cargo');
   assert(g.units.includes(a) && g.units.includes(b) && a.c >= 16 && b.c >= 16, 'both land on the enemy coast');
 });
+test('AI theaters: objectives cluster into ranked fronts; an offensive gathers at its rally city, then attacks', () => {
+  const g = blank('eu', 40),
+    city = (id, name, c, r, owner) => ({ ...g.stations[0], id, name, c, r, owner, capital: false, capitalOf: null });
+  g.stations.push(city(3, 'Rally', 20, 5, 'britannia'), city(4, 'Brussels', 36, 2, 'eu'), city(5, 'Lyon', 37, 5, 'eu'));
+  g.phase = 'britannia';
+  const army = [0, 1, 2, 3, 4, 5].map(i => E.newUnit(g, T('britannia', 'medium'), 'britannia', 14 + (i % 3), 8 + Math.floor(i / 3)));
+  let plan = E.aiPlan(g, 'britannia');
+  const paris = plan.fronts.find(f => f.name === 'Paris');
+  assert(paris && paris.type === 'offensive' && paris.objectives.length === 3, 'Paris, Brussels and Lyon form one front');
+  assert(plan.fronts.some(f => f.name === 'Luoyang'), 'the distant Federation capital is a front of its own');
+  assert.equal(plan.fronts[0], paris, 'the nearer, richer front ranks first');
+  assert.equal(paris.rally.name, 'Rally');
+  assert.equal(paris.state, 'assembling');
+  assert(plan.reserve && plan.reserve.assigned > 0, 'a strategic reserve stays at Pendragon');
+  const mine = army.filter(u => plan.assign[u.id] === paris.id);
+  assert(mine.length >= 2);
+  const before = mine.map(u => E.distance(u, paris.rally, g));
+  for (const u of mine) E.aiOrder(g, u.id);
+  assert(mine.every((u, i) => E.distance(u, paris.rally, g) < before[i]), 'the front marches to its rally city first');
+  // Gathered at the rally: next turn the offensive opens, with the same units (sticky assignments) and a dispatch.
+  mine.forEach((u, i) => Object.assign(u, { c: 19 + (i % 3), r: 6 + Math.floor(i / 3), moved: false }));
+  g.turn++;
+  plan = E.aiPlan(g, 'britannia');
+  const again = plan.byId[paris.id];
+  assert.equal(again.state, 'attacking');
+  assert(mine.every(u => plan.assign[u.id] === paris.id), 'units keep their front');
+  assert(g.log.some(l => /forces massed at Rally open an offensive toward Paris/.test(l.text)));
+});
+test('AI theaters: a threatened capital is an emergency; factories build what their front needs', () => {
+  const g = blank('cf', 40);
+  g.phase = 'britannia';
+  for (let i = 0; i < 4; i++) E.newUnit(g, T('britannia', 'medium'), 'britannia', 20 + i, 20);
+  E.newUnit(g, T('eu', 'heavy'), 'eu', 6, 3, 3);
+  const plan = E.aiPlan(g, 'britannia'),
+    home = plan.fronts[0];
+  assert(home.emergency && home.type === 'defensive' && home.name === 'Pendragon');
+  assert.equal(plan.reserve.assigned, 0, 'the reserve is released to the emergency');
+  // An offensive against Armor with no guns of its own asks for artillery and assault frames.
+  const h = blank('cf', 40),
+    rally = { ...h.stations[0], id: 3, name: 'Rally', c: 30, r: 3, capital: false, capitalOf: null };
+  h.stations.push(rally);
+  h.phase = 'britannia';
+  for (let i = 0; i < 3; i++) E.newUnit(h, T('britannia', 'medium'), 'britannia', 24 + i, 8);
+  for (let i = 0; i < 3; i++) E.newUnit(h, T('eu', 'heavy'), 'eu', 37, 1 + i);
+  h.economy.britannia = { ...h.economy.britannia, credits: 9000, industry: 3000, sakuradite: 400 };
+  const front = E.aiPlan(h, 'britannia').fronts.find(f => f.name === 'Paris');
+  assert.deepEqual(front.need.slice(0, 2), ['siege', 'assault']);
+  const count = h.units.length;
+  E.aiProduction(h);
+  const built = h.units.slice(count).find(u => E.distance(u, rally, h) <= 1);
+  assert(built && front.need.slice(0, 3).includes(E.TYPES[built.type].cls), 'the rally city builds for its front');
+});
 test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Rations', () => {
   const g = blank(),
     julius = E.newUnit(g, T('britannia', 'medium'), 'britannia', 5, 5, 1, 'julius'),
