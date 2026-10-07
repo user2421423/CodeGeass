@@ -91,7 +91,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 
 | Key | Contents |
 |---|---|
-| `knightmare-conquest-profile` | The persistent **profile**: `tokens`, `wins`, `cleared` (`'conquest:world:<difficulty>': true`), `research`, `roster` (your commanders), `medals`, `elites`, `campaign` and `campaignDifficulty` (best stars). |
+| `knightmare-conquest-profile` | The persistent **profile**: `tokens`, `wins`, `cleared` (`'conquest:world:<difficulty>': true`), `research`, `roster` (your commanders), `medals`, `elites`, `campaign` (overall best stars), `campaignDifficulty` (per-difficulty best stars) and `campaignMilestones` (claimed 50% / 75% / 100% campaign rewards). |
 | `knightmare-conquest-save` | The current Conquest save. |
 | `knightmare-conquest-mission` | The campaign mission in progress (kept apart from the Conquest save). |
 | `knightmare-conquest-sound` | `'on'` / `'off'`. |
@@ -242,9 +242,13 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Conquest-only (`hasFleija`).
 - `campaign.js` builds a mission (`createMission(id)`), runs its events (dialogue queue, reinforcements, landslides,
   Sakuradite eruptions and F.L.E.I.J.A. blasts with a warning a turn ahead, Gefjun Disturber shutdowns, frame
-  upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star,
-  scaled by difficulty; progress in `profile.campaign`, per difficulty in `profile.campaignDifficulty`). Missions
-  unlock in order within a campaign; each campaign's first mission is always open. Ground-zero blasts kill outright
+  upgrades, city shields), decides victory and defeat and grades 3 stars. A 1★ clear still unlocks the next mission.
+  Each difficulty independently pays 60 tokens for its first clear and 30 per newly earned star, scaled by difficulty.
+  Overall mission performance pays targeted Elite fragments once across all difficulties: 2★ gives 4 and 3★ gives
+  another 10. Each campaign also has one-time star milestones at 50% (100 tokens), 75% (12 fragments for that
+  campaign's featured Elite) and 100% (200 tokens + 20 featured-Elite fragments). `profile.campaign` stores overall
+  best stars, `profile.campaignDifficulty` stores per-difficulty bests and `profile.campaignMilestones` stores claimed
+  milestones. Missions unlock in order within a campaign; each campaign's first mission is always open. Ground-zero blasts kill outright
   (C.C.'s Code Bearer does not save her). `remove: [commanders]` takes a unit off the field without a loss or a kill
   (Kallen's capture at Xiaopei).
 - Campaigns (`CAMPAIGNS` and `SEASONS` at the end of `missions.js`, assembled from mission ids so saved stars carry
