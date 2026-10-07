@@ -166,6 +166,51 @@ globalThis.KnightmareArtManifest = {
     },
     "elite_akatsuki_zikisan": {
       "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
+    },
+    "vercingetorix": {
+      "src": "units/vercingetorix-canon.svg"
+    },
+    "ahura_mazda": {
+      "src": "units/ahura-mazda-canon.svg"
+    },
+    "canterbury": {
+      "src": "units/canterbury-canon.svg"
+    },
+    "siegfried": {
+      "src": "units/siegfried-canon.svg"
+    },
+    "portman": {
+      "src": "units/portman-canon.svg"
+    },
+    "portman_ii": {
+      "src": "units/portman-ii-canon.svg"
+    },
+    "carrier_battleship": {
+      "src": "units/carrier-battleship-generic.svg"
+    },
+    "eu_carrier": {
+      "src": "units/carrier-battleship-generic.svg"
+    },
+    "cf_carrier": {
+      "src": "units/carrier-battleship-generic.svg"
+    },
+    "jp_tank": {
+      "src": "units/japanese-battle-tank.svg"
+    },
+    "jp_artillery": {
+      "src": "units/japanese-rocket-artillery.svg"
+    },
+    "panzer_frosch": {
+      "src": "units/panzer-frosch.svg"
+    },
+    "panzer_frosch_ii": {
+      "src": "units/panzer-frosch-ii.svg"
+    },
+    "shui_gun_ru": {
+      "src": "units/shui-gun-ru.svg"
+    },
+    "shui_gun_ru_ii": {
+      "src": "units/shui-gun-ru-ii.svg"
     }
   },
   "portraits": {
