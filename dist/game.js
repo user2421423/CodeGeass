@@ -1521,7 +1521,12 @@ function computeView() {
   const halfH = (rect.height - pad.top - pad.bottom) / 2 / scale,
     midY = pad.top + (rect.height - pad.top - pad.bottom) / 2;
   cam.y = WORLD_H <= 2 * halfH ? WORLD_H / 2 : E.clamp(cam.y, halfH - 40 / scale, WORLD_H - halfH + 40 / scale);
-  offset = { x: rect.width / 2 - cam.x * scale, y: midY - cam.y * scale };
+  // Whole device pixels, so the cached map layer lines up exactly wherever the camera stops.
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  offset = {
+    x: Math.round((rect.width / 2 - cam.x * scale) * dpr) / dpr,
+    y: Math.round((midY - cam.y * scale) * dpr) / dpr,
+  };
   return scale;
 }
 function centerOn(p) {
@@ -3033,41 +3038,72 @@ function drawFlash(x, y, radius, color, alpha) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 }
-function draw(time, dt) {
-  if (!canvas || !ctx) return;
-  const scale = computeView(),
-    { w, h } = mapSize,
-    dpr = Math.min(devicePixelRatio || 1, 2),
-    detail = R * scale >= 14;
-  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
+// Every copy of world x between left and right (the world map wraps east to west; a campaign battlefield does not).
+function copiesBetween(x, left, right) {
+  if (!wraps()) return [x];
+  const out = [];
+  for (let k = Math.floor((left - x) / WORLD_W); x + k * WORLD_W <= right; k++)
+    if (x + k * WORLD_W >= left) out.push(x + k * WORLD_W);
+  return out;
+}
+// Terrain, territory and coastlines only change when the camera moves or a hex changes hands or terrain, so they are
+// painted into an offscreen layer with a margin for panning and copied onto the map each frame.
+const MAP_LAYER_MARGIN = 200;
+let mapLayerCache = null;
+function mapLayerFresh(m, scale, dpr, w, h) {
+  if (!m || m.tiles !== game.tiles || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
+  const slack = MAP_LAYER_MARGIN - 16;
+  if (Math.abs(offset.x - m.x) > slack || Math.abs(offset.y - m.y) > slack) return false;
+  const tiles = game.tiles;
+  for (let i = 0; i < tiles.length; i++)
+    if (tiles[i].owner !== m.owners[i] || tiles[i].terrain !== m.terrains[i]) return false;
+  return true;
+}
+function mapLayer(scale, detail, dpr, w, h) {
+  if (mapLayerFresh(mapLayerCache, scale, dpr, w, h)) return mapLayerCache;
+  const M = MAP_LAYER_MARGIN,
+    layer = mapLayerCache?.canvas || document.createElement('canvas'),
+    width = Math.round((w + 2 * M) * dpr),
+    height = Math.round((h + 2 * M) * dpr);
+  if (layer.width !== width || layer.height !== height) {
+    layer.width = width;
+    layer.height = height;
   }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const wash = ctx.createLinearGradient(0, 0, 0, h);
-  wash.addColorStop(0, '#0d2a40');
-  wash.addColorStop(1, '#071623');
-  ctx.fillStyle = wash;
-  ctx.fillRect(0, 0, w, h);
-  const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };
-  shake = Math.max(0, shake - dt * 30);
-  ctx.save();
-  ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
-  ctx.scale(scale, scale);
-  const left = -offset.x / scale - R * 2,
-    right = (w - offset.x) / scale + R * 2,
-    top = -offset.y / scale - R * 2,
-    bottom = (h - offset.y) / scale + R * 2,
-    mid = (left + right) / 2;
-  // Every on-screen copy of world x (the world map wraps east to west; a campaign battlefield does not).
-  const copies = x => {
-    if (!wraps()) return [x];
-    const out = [];
-    for (let k = Math.floor((left - x) / WORLD_W); x + k * WORLD_W <= right; k++)
-      if (x + k * WORLD_W >= left) out.push(x + k * WORLD_W);
-    return out;
-  };
-  const visible = p => p.y >= top && p.y <= bottom;
+  const main = ctx;
+  ctx = layer.getContext('2d');
+  try {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.translate(offset.x + M, offset.y + M);
+    ctx.scale(scale, scale);
+    paintMapLayer(
+      scale,
+      detail,
+      (-M - offset.x) / scale - R * 2,
+      (w + M - offset.x) / scale + R * 2,
+      (-M - offset.y) / scale - R * 2,
+      (h + M - offset.y) / scale + R * 2,
+    );
+  } finally {
+    ctx = main;
+  }
+  return (mapLayerCache = {
+    canvas: layer,
+    tiles: game.tiles,
+    owners: game.tiles.map(t => t.owner),
+    terrains: game.tiles.map(t => t.terrain),
+    scale,
+    dpr,
+    w,
+    h,
+    x: offset.x,
+    y: offset.y,
+  });
+}
+function paintMapLayer(scale, detail, left, right, top, bottom) {
+  const copies = x => copiesBetween(x, left, right),
+    visible = p => p.y >= top && p.y <= bottom;
   // Terrain and territory.
   for (const t of game.tiles) {
     const c = hexCenter(t);
@@ -3118,6 +3154,44 @@ function draw(time, dt) {
         );
     }
   }
+}
+function draw(time, dt) {
+  if (!canvas || !ctx) return;
+  const scale = computeView(),
+    { w, h } = mapSize,
+    dpr = Math.min(devicePixelRatio || 1, 2),
+    detail = R * scale >= 14;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const wash = ctx.createLinearGradient(0, 0, 0, h);
+  wash.addColorStop(0, '#0d2a40');
+  wash.addColorStop(1, '#071623');
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, w, h);
+  const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };
+  shake = Math.max(0, shake - dt * 30);
+  // Terrain, territory and coastlines come from the cached layer, placed where the camera is now.
+  const layer = mapLayer(scale, detail, dpr, w, h);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(
+    layer.canvas,
+    Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
+    Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
+  );
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.save();
+  ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
+  ctx.scale(scale, scale);
+  const left = -offset.x / scale - R * 2,
+    right = (w - offset.x) / scale + R * 2,
+    top = -offset.y / scale - R * 2,
+    bottom = (h - offset.y) / scale + R * 2,
+    mid = (left + right) / 2;
+  const copies = x => copiesBetween(x, left, right);
+  const visible = p => p.y >= top && p.y <= bottom;
   // Move and attack overlays.
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
