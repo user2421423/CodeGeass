@@ -19,9 +19,9 @@ function play(g, turns) {
   return g;
 }
 
-test('Two seasons, each played from both sides; missions unlock in order within each campaign', () => {
+test('Three story arcs, each played from both sides; missions unlock in order within each campaign', () => {
   const count = Object.fromEntries(Object.entries(C.CAMPAIGNS).map(([k, c]) => [k, c.missions.length]));
-  assert.deepEqual(count, { bk_s1: 9, britannia_s1: 9, bk_r2: 10, britannia_r2: 10, eb_europe: 8, eu_europe: 8 });
+  assert.deepEqual(count, { bk_s1: 9, britannia_s1: 10, bk_r2: 12, britannia_r2: 11, eb_europe: 8, eu_europe: 8 });
   assert.deepEqual(Object.keys(C.SEASONS), ['1', '2', '3']);
   for (const c of Object.values(C.CAMPAIGNS)) assert(C.SEASONS[c.season] && E.FACTIONS[c.side]);
   assert.equal(new Set(ids).size, ids.length, 'every mission belongs to one campaign');
@@ -30,8 +30,33 @@ test('Two seasons, each played from both sides; missions unlock in order within 
   assert(C.unlocked({ campaign: { bk1: 1 } }, 'bk2'));
   assert.equal(C.next('bk3'), 'bk_yokosuka');
   assert.equal(C.next('bk4'), null, 'the Black Rebellion ends Season 1');
+  assert.equal(C.next('bk5'), 'bk_rescue', 'Babel Tower is followed by the Gallows rescue');
+  assert.equal(C.next('bk_yokosuka2'), 'bk_zhengzhou', 'Zhengzhou sits between Second Yokosuka and Xiaopei');
+  assert.equal(C.next('bk_geass'), 'bk8', 'Kagoshima comes before the Second Battle of Tokyo');
+  assert.equal(C.next('bk8'), 'bk7', 'Second Tokyo follows the Kagoshima landing');
+  assert.equal(C.next('br8'), 'br_kamejima', 'Kamejima bridges Second Tokyo and Emperor Lelouch');
   assert.equal(C.next('bk10'), null);
 });
+test('Restored canon battles build and use their intended story roles', () => {
+  const mef = C.createMission('br_mef', 3);
+  assert(mef.units.filter(u => u.type === 'bamides').length >= 4, 'Area 18 fields the Bamides gun line');
+  assert.equal(C.mission('bk5').title, 'Battle of Babel Tower');
+
+  const rescue = C.createMission('bk_rescue', 3),
+    gallows = rescue.stations.find(c => c.name === 'Execution Ground');
+  gallows.owner = 'bk';
+  E.hooks.capture(rescue, gallows, rescue.units.find(u => u.cmd === 'zero'), 'britannia');
+  assert(rescue.units.some(u => u.cmd === 'tohdoh'), 'capturing the gallows frees Tohdoh');
+  assert(rescue.campaign.fx.some(f => f.name === 'Collapsing execution platform'), 'Zero springs the execution-ground trap');
+
+  const zhengzhou = C.createMission('bk_zhengzhou', 3);
+  assert(zhengzhou.units.some(u => u.cmd === 'xingke' && u.type === 'elite_shen_hu'), 'Xingke pursues in the Shen Hu');
+
+  const kamejima = C.createMission('br_kamejima', 3);
+  assert(kamejima.units.some(u => u.cmd === 'suzaku' && u.type === 'elite_lancelot_albion'), 'Suzaku joins Lelouch at Kamejima');
+  assert(kamejima.stations.some(c => c.name === 'Thought Elevator'));
+});
+
 test('Season-split events: Gawain on Kamine, Kallen captured at Xiaopei, the Siegfried at the Geass Order', () => {
   const s = C.createMission('bk_shikine', 5),
     ruins = s.stations.find(c => c.name === 'Kamine Ruins');
