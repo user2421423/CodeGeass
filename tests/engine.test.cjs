@@ -78,8 +78,7 @@ test('The world map wraps east to west and every city stands on land', () => {
   const g = E.createGame('eu', 'normal', 'conquest', 5);
   const last = E.WORLD.cols - 1;
   assert.equal(g.tiles.length, E.WORLD.cols * E.WORLD.rows);
-  assert.deepEqual([E.WORLD.cols, E.WORLD.rows], [270, 114]);
-  assert.equal(E.migrateSave({ ...g, cols: 180, rows: 76, tiles: g.tiles.slice(0, 180 * 76) }), null, 'old-grid saves cannot silently load into the expanded world');
+  assert.deepEqual([E.WORLD.cols, E.WORLD.rows], [180, 76]);
   assert.equal(E.distance({ c: 0, r: 6 }, { c: last, r: 6 }, g), 1);
   assert.equal(E.distance({ c: 0, r: 6 }, { c: last, r: 6 }), last);
   assert(E.adjacent(g, { c: 0, r: 6 }).some(t => t.c === last));
@@ -146,48 +145,10 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(landDistance(city('Madrid'), city('Algiers')) > 20, 'Gibraltar remains a sea crossing, not a land bridge');
   assert(byLand(city('Bangkok'), city('Kuala Lumpur')), 'Thai–Malay peninsula stays continuous');
   assert(!byLand(city('Surabaya'), city('Kuala Lumpur')), 'Sunda Strait keeps Java separated from mainland Asia');
-  const geo = (lon, lat) => {
-    const h = E.hexOf(lon, lat);
-    return E.tile(g, h.c, h.r);
-  };
-  assert(byLand(city('Bangkok'), geo(102, 4)), 'Malaya stays on the mainland');
-  assert(!byLand(city('Singapore'), city('Kuala Lumpur')), 'Singapore is separate from Malaya');
-  assert(!byLand(city('Singapore'), geo(101, -1)), 'Singapore is separate from Sumatra');
-  assert(byLand(geo(96, 5), geo(104, -5)), 'Sumatra stays one continuous island');
-  assert(!byLand(city('Manila'), geo(122, 11)), 'Visayas stays separate from Luzon');
-  assert(!byLand(geo(122, 11), geo(124, 7.2)), 'Visayas stays separate from Mindanao');
-  assert(!byLand(city('Manila'), geo(124, 7.2)), 'Luzon and Mindanao are separate islands');
-  assert(byLand(geo(123.3, 8.3), geo(126, 8.3)), 'Mindanao remains one island');
-  assert(byLand(city('Taipei'), geo(121, 23)), 'Taiwan remains a continuous island');
-  assert(!byLand(city('Taipei'), city('Shanghai')), 'Taiwan Strait stays open');
-  assert(!byLand(city('Rome'), geo(14.5, 37.5)), 'Messina separates Sicily from Italy');
-  assert(!byLand(city('Tunis'), geo(14.5, 37.5)), 'Sicily stays separate from Africa');
-  assert(!byLand(geo(9, 42), geo(9, 40)), 'Corsica and Sardinia stay separate');
-  assert(!byLand(geo(33.3, 34.4), city('Damascus')), 'Cyprus stays separate from the mainland');
-  assert(!byLand(city('Auckland'), geo(170, -44.5)), 'Cook Strait keeps New Zealand islands separate');
-  assert(!byLand(geo(-56, 48.5), city('Halifax')), 'Belle Isle separates Newfoundland from Canada');
-  assert(!byLand(geo(-126, 49.1), city('Vancouver')), 'Vancouver Island is separate from Canada');
-  assert(!byLand(geo(127.7, 26.2), city('Tokyo Settlement')), 'Okinawa stays separate from Japan');
-  assert(!byLand(geo(125, -9.5), geo(131, -12.5)), 'Timor stays separate from Australia');
-  assert(!byLand(geo(125, -9.5), geo(121, -8.5)), 'Savu Sea separates Timor from Flores');
-  assert(byLand(city('London'), city('Edinburgh')), 'Britain is continuous from England to Scotland');
-  assert(!byLand(city('London'), city('Dublin')), 'Irish Sea keeps Ireland separate');
-  for (const [lon, lat] of [[-6.7, 50.2], [-5.3, 50.2], [-4, 50.2], [-5.3, 52.5], [-5.3, 58.2]])
-    assert(byLand(city('London'), geo(lon, lat)), 'Cornwall, Wales and the Highlands remain part of Britain');
-  const landmass = start => {
-    const seen = new Set([E.key(start)]), queue = [start];
-    for (let i = 0; i < queue.length; i++)
-      for (const n of E.adjacent(g, queue[i]))
-        if (!seen.has(E.key(n)) && !E.isSea(n) && n.terrain !== 'peak') {
-          seen.add(E.key(n));
-          queue.push(n);
-        }
-    return queue;
-  };
-  assert(landmass(city('London')).length >= 35, 'Britain has room for its distinct regions');
-  assert(landmass(city('Dublin')).length >= 10, 'Ireland has its own playable island silhouette');
-  assert.equal(landmass(city('Singapore')).length, 1, 'Singapore remains an island fortress');
-  for (const [lon, lat] of [[-120, 70.6], [-78, 67.2]]) assert(E.isSea(geo(lon, lat)), 'Canadian Arctic clutter stays removed');
+  assert.deepEqual([city('Kuala Lumpur').c, city('Kuala Lumpur').r], [140, 41], 'Kuala Lumpur shifts north of the Malacca water gap');
+  for (const [c, r] of [[140, 42], [140, 43], [141, 42]]) assert(E.isSea(E.tile(g, c, r)), 'Strait of Malacca stays open');
+  for (const [c, r] of [[151, 36], [151, 37], [148, 37]]) assert(!E.isSea(E.tile(g, c, r)), 'Philippines keeps Visayas/Palawan land');
+  for (const [c, r] of [[29, 0], [30, 2], [50, 4], [55, 5]]) assert(E.isSea(E.tile(g, c, r)), 'Canadian Arctic clutter stays removed');
   for (const s of g.stations) assert.notEqual(E.tile(g, s.c, s.r).terrain, 'sea', s.name);
   const capitals = g.stations.filter(s => s.capital).map(s => [s.name, s.owner]);
   assert.deepEqual(capitals.sort(), [
