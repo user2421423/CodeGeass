@@ -2172,6 +2172,7 @@
         [K, 'burai', 2, 5, 1, 'zero'],
         [K, 'elite_guren_mkii', 18, 9, 1, 'kallen'],
         [K, 'burai', 18, 8, 1, 'cc'],
+        ['cf', 'gun_ru', 19, 9, 1],
         [B, 'gloucester', 9, 5, 1, 'guilford'],
         [B, 'gloucester', 11, 4, 1],
         [B, 'gloucester', 12, 6, 1],
