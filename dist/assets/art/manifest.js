@@ -136,6 +136,36 @@ globalThis.KnightmareArtManifest = {
     },
     "zangetsu": {
       "src": "units/zangetsu-4e4cb3c3bd61.png"
+    },
+    "elite_alexander_liberte": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
+    },
+    "elite_leila_alexander": {
+      "src": "units/alexander-4b4929ebecea.png"
+    },
+    "elite_ryo_valiant": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
+    },
+    "elite_ayano_valiant": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
+    },
+    "elite_yukiya_valiant": {
+      "src": "units/alexander_mp-aba6042c8fcf.png"
+    },
+    "elite_shen_hu": {
+      "src": "units/shen_hu-761ab82d666e.png"
+    },
+    "elite_wang_hu": {
+      "src": "units/shen_hu-761ab82d666e.png"
+    },
+    "elite_chuyen": {
+      "src": "units/chuyen-427d2c85b500.png"
+    },
+    "elite_guren_type01": {
+      "src": "units/elite_guren_mkii-ae467a56c715.png"
+    },
+    "elite_akatsuki_zikisan": {
+      "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
     }
   },
   "portraits": {
