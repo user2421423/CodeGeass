@@ -45,13 +45,18 @@ def publish(source, output=PUBLIC):
             path = (source / relative).resolve()
             if source not in path.parents or not path.is_file():
                 raise ValueError(f'Missing or unsafe image: {relative}')
-            with Image.open(path) as image:
-                image.verify()
-            # Header/CRC verification alone can miss a truncated compressed image stream.
-            with Image.open(path) as image:
-                image.load()
             suffix = path.suffix.lower()
-            if suffix not in ('.png', '.jpg', '.jpeg', '.webp', '.gif'):
+            if suffix == '.svg':
+                text = path.read_text(encoding='utf8')
+                if '<svg' not in text or '</svg>' not in text:
+                    raise ValueError(f'Invalid SVG image: {relative}')
+            else:
+                with Image.open(path) as image:
+                    image.verify()
+                # Header/CRC verification alone can miss a truncated compressed image stream.
+                with Image.open(path) as image:
+                    image.load()
+            if suffix not in ('.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'):
                 raise ValueError(f'Unsupported processed image: {relative}')
             digest = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
             target = f'{kind}/{key}-{digest}{suffix}'
