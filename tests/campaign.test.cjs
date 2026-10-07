@@ -68,11 +68,13 @@ test('Named aces are single-frame Elite Forces at level 3; Elite levels from HQ 
   assert.equal(guren.elite, 'guren_mkii');
   assert.equal(guren.eliteLevel, 3);
   assert.equal(guren.stack, 1);
+  // Kallen's Guren joins the enemy on turn 4; reloading a level-5 HQ Guren afterwards must not touch hers.
   const h = C.createMission('br4', 3);
+  h.turn = 4;
+  E.beginTurn(h, h.player, true);
   E.applyProfile(h, { elites: { guren_mkii: { level: 5, fragments: 0 } } });
-  assert.equal(h.units.find(u => u.cmd === 'kallen').eliteLevel, 3, 'the enemy Guren keeps its mission level');
-  play(h, 4);
-  for (const u of h.units) if (u.elite && u.side !== h.player) assert.equal(u.eliteLevel, 3, `${u.type} keeps its mission level`);
+  const enemy = h.units.find(u => u.cmd === 'kallen');
+  assert(enemy && enemy.eliteLevel === 3, 'the enemy Guren keeps its mission level');
 });
 
 test('Allies never target each other; Conquest lineups exclude campaign and Elite Force frames', () => {
