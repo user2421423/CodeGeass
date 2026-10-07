@@ -600,6 +600,96 @@ test('Refineries extract 25/50/75/100% of a deposit; a level-3 refinery also exp
   assert(E.build(g, 0, 'refinery').ok);
   assert.equal(E.cityYield(g, g.stations[0]).sakuradite, Math.round(15 * 0.5));
 });
+test('Player city automation builds the exact queued unit and respects reserves', () => {
+  const g = blank(),
+    s = g.stations[0],
+    a = E.automationState(g),
+    queued = T('britannia', 'medium');
+  a.enabled = true;
+  a.autoUpgrade = false;
+  a.stack = 1;
+  a.reserve = { credits: 0, industry: 0, sakuradite: 0 };
+  E.setCityAutomation(g, s.id, { unit: queued });
+
+  const before = g.units.length,
+    report = E.runCityAutomation(g, 'britannia');
+  assert.equal(report.units, 1);
+  assert.equal(g.units.length, before + 1);
+  assert.equal(report.entries.find(e => e.kind === 'unit').type, queued, 'the city builds exactly the selected unit');
+  assert.equal(E.runCityAutomation(g, 'britannia').units, 0, 'one unit per city per turn still applies');
+
+  const waiting = blank(),
+    ws = waiting.stations[0],
+    aw = E.automationState(waiting);
+  ws.tier = 1;
+  aw.enabled = true;
+  aw.autoUpgrade = false;
+  aw.stack = 1;
+  aw.reserve = { credits: 0, industry: 0, sakuradite: 0 };
+  E.setCityAutomation(waiting, ws.id, { unit: T('britannia', 'heavy') });
+  assert.equal(E.runCityAutomation(waiting, 'britannia').units, 0, 'an unavailable queued unit waits instead of substituting another frame');
+
+  const held = blank(),
+    hs = held.stations[0],
+    ah = E.automationState(held),
+    money = held.economy.britannia;
+  ah.enabled = true;
+  ah.autoUpgrade = false;
+  ah.stack = 1;
+  ah.reserve = { credits: money.credits, industry: money.industry, sakuradite: money.sakuradite };
+  E.setCityAutomation(held, hs.id, { unit: T('britannia', 'medium') });
+  const blocked = E.runCityAutomation(held, 'britannia');
+  assert.equal(blocked.units, 0, 'the protected reserve blocks automatic spending');
+  assert.equal(money.credits, ah.reserve.credits);
+  assert.equal(money.industry, ah.reserve.industry);
+  assert.equal(money.sakuradite, ah.reserve.sakuradite);
+});
+
+test('Global auto-upgrades and bulk construction call the existing building gates', () => {
+  const g = blank(),
+    s = g.stations[0],
+    a = E.automationState(g);
+  a.enabled = true;
+  a.autoUpgrade = true;
+  a.reserve = { credits: 0, industry: 0, sakuradite: 0 };
+  Object.assign(s, { tier: 3, lab: 2, refinery: 3, portLevel: 3 });
+  Object.assign(g.economy.britannia, { credits: 10000, industry: 10000, sakuradite: 1000 });
+
+  g.turn = E.FLEIJA.labTurn - 1;
+  assert.equal(E.runCityAutomation(g, 'britannia').upgrades, 0);
+  assert.equal(s.lab, 2, 'automation cannot bypass the Lab III turn gate');
+
+  g.turn = E.FLEIJA.labTurn;
+  assert.equal(E.runCityAutomation(g, 'britannia').upgrades, 1);
+  assert.equal(s.lab, 3);
+
+  const queued = blank(),
+    qs = queued.stations[0],
+    aq = E.automationState(queued);
+  qs.tier = 1;
+  aq.enabled = true;
+  aq.autoUpgrade = true;
+  aq.reserve = { credits: 0, industry: 0, sakuradite: 0 };
+  Object.assign(queued.economy.britannia, { credits: 10000, industry: 10000, sakuradite: 1000 });
+  E.setCityAutomation(queued, qs.id, { unit: T('britannia', 'heavy') });
+  const qr = E.runCityAutomation(queued, 'britannia');
+  assert.equal(qr.upgrades, 1);
+  assert.equal(qs.tier, 2, 'a queued high-tier unit makes the global upgrader prioritize its factory requirement');
+  assert.equal(qr.units, 0, 'the exact queued unit still waits until its full requirement is met');
+
+  const b = blank();
+  Object.assign(b.economy.britannia, { credits: 10000, industry: 10000, sakuradite: 1000 });
+  const bulk = E.bulkCityUpgrade(b, 'britannia', 'factory');
+  assert.equal(bulk.upgrades, 0, 'a level-3 factory is already at the normal maximum');
+  b.stations[0].tier = 1;
+  const cost = E.buildCost(b.stations[0], 'factory');
+  const credits = b.economy.britannia.credits;
+  const built = E.bulkCityUpgrade(b, 'britannia', 'factory');
+  assert.equal(built.upgrades, 1);
+  assert.equal(b.stations[0].tier, 2);
+  assert.equal(b.economy.britannia.credits, credits - cost.credits);
+});
+
 test('Heavier frames cost Sakuradite by class; shortfalls name it', () => {
   const g = blank();
   for (const cls of ['scout', 'assault', 'light', 'support'])

@@ -59,6 +59,10 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
   frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
   deposit, repairs and reinforcement.
+- **Production Command (Conquest):** each city can queue one exact normal unit to auto-produce every turn, or stay
+  manual. Global controls handle building auto-upgrades, 1–3-frame formation size, bulk upgrades and protected
+  credit/industry/Sakuradite reserves. A queue waits if its chosen unit is unavailable rather than substituting another
+  frame, and all automated orders use the same legality checks as manual ones.
 - **Commanders (WC4 generals):** 35 named commanders (14 Britannian, 11 E.U., 10 Federation), each with one signature
   ability: Suzaku's *Live On*, Cornelia's *Witch of Britannia*, Bismarck's *Excalibur*, Julius Kingsley's *Geass
   Command*, Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and

@@ -169,6 +169,17 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Buildings, each to level 3: Knightmare factory (unlocks tiers, +10 industry, +60 defense), research lab
   (+8 research), and a Sakuradite refinery only where there is a deposit. One unit per city per turn; new units act
   next turn.
+- **Production Command (player Conquest only):** optional automation stored in `g.automation`. Each owned city has
+  exactly one local choice: an exact normal unit type to auto-produce every turn, or Off for manual production. There
+  are no per-city Balanced/Armor/Artillery/etc. policies and no per-city building toggles. Global settings control
+  automatic building upgrades, 1–3-frame formation size and protected resource reserves. If a queued unit needs a
+  higher factory or port, the global upgrader prioritizes that prerequisite; otherwise the queue simply waits and never
+  substitutes another unit. Automation runs after income is collected at the start of the player's turn and calls the
+  normal `buildReason/build` and `buyReason/recruit` paths, so Lab III timing, F.L.E.I.J.A. project locks, port
+  rules, factory tiers and the one-unit-per-city limit cannot be bypassed. Protected credit/industry/Sakuradite reserves
+  are checked before every purchase. Production Command can bulk-upgrade one factory/lab/refinery/port level in all
+  eligible cities, clear all unit queues, run configured production immediately, or set a one-click F.L.E.I.J.A.
+  reserve. One `AUTOMATED LOGISTICS` summary is logged/shown per run instead of per-city popups.
 - **Starting front-line pass:** Normal conquest now begins with 38 Britannian, 47 E.U. and 40 Federation field units,
   concentrated around North America/Atlantic, Area 11, Europe/Mediterranean, Siberia, China/Korea, India/Iran and
   Southeast Asia instead of trying to garrison all 149 cities.

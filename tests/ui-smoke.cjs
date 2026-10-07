@@ -95,6 +95,7 @@ const modal = () => node('modal-root').innerHTML;
     run(`setup={side:'${side}',difficulty:'normal'};newGame();draw(0,.016);drawMinimap();`);
     assert(node('app').innerHTML.includes('World War'));
     assert(node('app').innerHTML.includes('res-sakuradite'), 'the resource bar shows Sakuradite');
+    assert(node('app').innerHTML.includes('data-action="production"'), 'Conquest top bar exposes Production Command');
     assert.equal(run('game.player'), side);
     assert.equal(run('getSave().player'), side);
     run('nextFleet();updateSelection();');
@@ -140,17 +141,35 @@ const modal = () => node('modal-root').innerHTML;
     }
     run('selectStation(game.stations.find(s=>s.owner===game.player).id)');
     assert(node('side').innerHTML.includes('Knightmare factory'));
+    assert(node('side').innerHTML.includes('Auto-produce each turn'), 'owned city exposes an exact unit auto-production queue');
+    assert(node('side').innerHTML.includes('Off — manual production'));
+    run('productionDialog()');
+    assert(modal().includes('Production Command') && modal().includes('Protected resource reserve'));
+    assert(modal().includes('Clear all auto-production queues'));
+    run('closeModal()');
     run('helpDialog()');
     assert(modal().includes('War on a world of hexes'));
     assert(modal().includes('Japan holds 70'), 'field manual explains Sakuradite');
+    assert(modal().includes('Production Command'), 'field manual explains player city automation');
     assert(modal().includes(NOTICE), 'field manual shows the notice');
     run('menuDialog()');
     assert(modal().includes(NOTICE) && modal().includes('Credits'), 'game menu shows the notice and credits');
     run('closeModal()');
+    run(`(() => {
+      const a = E.automationState(game), s = capitalOf(game.player), type = E.typeFor(game.player, 'scout');
+      a.enabled = true; a.autoUpgrade = true; a.stack = 1;
+      a.reserve = { credits: 0, industry: 0, sakuradite: 0 };
+      E.setCityAutomation(game, s.id, { unit: type });
+      game.economy[game.player].credits = 100000; game.economy[game.player].industry = 100000;
+      game.economy[game.player].sakuradite = 10000;
+    })()`);
     await run('endTurn(true)');
     assert.equal(run('game.turn'), 2);
     assert.equal(run('game.phase'), side);
     assert.equal(run('getSave().turn'), 2);
+    assert.equal(run('game.automation.lastReport.upgrades'), 1, 'Production Command runs global upgrades after start-of-turn income');
+    assert.equal(run('game.automation.lastReport.units'), 1, 'the capital builds its exact queued unit');
+    assert.equal(run('capitalOf(game.player).lab'), 2, 'global auto-upgrade used the normal lab build rules');
     run('draw(16,.016)');
   }
   // F.L.E.I.J.A.: conquest-only Lab III gate, arsenal button, targeting, confirmation, your launch and a rival's.
