@@ -618,8 +618,13 @@
     unlocked,
     best,
     bestDifficulty,
+    starElite,
+    campaignElite,
+    campaignStars,
+    milestoneStatus,
     next,
     REWARD,
+    MILESTONES,
   };
   root.KnightmareCampaign = api;
   E.campaign = api;
