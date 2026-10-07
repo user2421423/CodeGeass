@@ -137,7 +137,8 @@ test('The world map wraps east to west and every city stands on land', () => {
   for (const name of ['Vancouver', 'Sao Paulo', 'Amsterdam', 'Dar es Salaam', 'Chengdu', 'Kuala Lumpur', 'Brisbane', 'Jerusalem'])
     assert(city(name), name + ' should be present in conquest');
   assert(g.units.every(u => E.isSea(E.tile(g, u.c, u.r)) === !!E.TYPES[u.type].naval), 'armies start on land, fleets at sea');
-  assert.deepEqual(g.startUnits, { britannia: 38, eu: 47, cf: 40 });
+  // Armies of 38, 47 and 40 formations, plus each power's fleet of four carriers and six amphibious formations.
+  assert.deepEqual(g.startUnits, { britannia: 48, eu: 57, cf: 50 });
   for (const [lon, lat, terrain, name] of [
     [10, 47, 'mountain', 'Alps'],
     [41, 43, 'mountain', 'Caucasus'],
