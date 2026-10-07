@@ -12,6 +12,58 @@
     camp.missions.forEach((m, i) => (ALL[m.id] = Object.assign(m, { campaign: cid, index: i })));
   const mission = id => ALL[id] || null;
 
+  // Story missions use the same three difficulty tiers as conquest, but Normal deliberately gives the player
+  // a larger safety margin than the original hand-tuned missions. Hard and Challenge reuse conquest's enemy
+  // research, unit-upgrade, reinforcement, commander-rank and income rules.
+  const DIFFICULTIES = {
+    normal: {
+      name: 'Normal',
+      level: 0,
+      tokens: 1,
+      playerStack: 1,
+      enemyHp: 0.8,
+      enemyShield: 0.75,
+      economy: 1.5,
+      extraTurns: 3,
+      desc: 'Forgiving story mode: stronger starting forces, weaker enemy formations and defenses, 50% more starting resources and three extra turns.',
+    },
+    hard: {
+      ...E.DIFFICULTIES.hard,
+      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank.',
+    },
+    challenge: {
+      ...E.DIFFICULTIES.challenge,
+      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%.',
+    },
+  };
+  const difficulty = id => DIFFICULTIES[id] || DIFFICULTIES.normal;
+  const UPGRADE = {
+    scout: 'assault',
+    assault: 'light',
+    raider: 'light',
+    light: 'medium',
+    medium: 'heavy',
+    heavy: 'super',
+    support: 'rocket',
+    rocket: 'siege',
+  };
+  function upgradedType(type, side, g) {
+    const t = E.TYPES[type],
+      next = t && UPGRADE[t.cls];
+    if (!t || !next || t.elite) return type;
+    return E.typeFor(side, next, g) || E.typeFor(t.side, next, g) || type;
+  }
+  function techUpToTier(tier) {
+    return Object.fromEntries(
+      Object.values(E.TECH_NODES)
+        .map(n => [n.id, n.tiers.filter(t => t <= tier).length])
+        .filter(([, l]) => l > 0),
+    );
+  }
+  function campaignTurnLimit(g, m = mission(g.campaign.id)) {
+    return g.campaign?.turnLimit ?? m?.lose?.turns ?? 0;
+  }
+
   // Star and win/lose conditions are small data objects; text() describes one for the briefing and results.
   const cityList = a => a.join(', ');
   const cmdList = a => a.map(k => E.COMMANDERS[k]?.short || k).join(' and ');
@@ -60,21 +112,57 @@
   // ======== Building a mission ========
   // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready }].
   function placeUnit(g, spec) {
-    const [side, kind, c, r, stack = 1, cmd = null, opts = {}] = spec;
-    const type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g);
+    const [side, kind, c, r, stack = 1, cmd = null, opts = {}] = spec,
+      d = difficulty(g.difficulty),
+      enemy = E.foe(g, side, g.player);
+    let type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g),
+      unitStack = stack;
+    if (!E.TYPES[type].elite) {
+      if (!enemy && side === g.player && d.playerStack) unitStack = Math.min(3, unitStack + d.playerStack);
+      if (enemy && d.level) {
+        const n = g.campaign.enemyPlaced++;
+        if (n % d.upgradeEvery === 0 && !(cmd && E.TYPES[type].cls === 'heavy')) type = upgradedType(type, side, g);
+        if (d.stack) unitStack = Math.min(3, unitStack + 1);
+      }
+    }
     const free = t =>
       t && !E.isSea(t) && !E.TERRAIN[t.terrain]?.blocked && !E.unitAt(g, t) && (!E.stationAt(g, t) || !E.foe(g, E.stationAt(g, t).owner, side));
     let at = E.tile(g, c, r);
     if (!free(at)) at = nearest(g, { c, r }, free);
     if (!at) return null;
-    const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : stack, cmd, opts.ready !== false);
+    if (cmd && enemy && d.ranks)
+      g.officers[cmd].rank = Math.min(E.RANKS.length - 1, E.defaultOfficer(cmd).rank + d.ranks);
+    const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : unitStack, cmd, opts.ready !== false);
     if (u.elite) u.eliteLevel = opts.level ?? 3;
     const hold = opts.hold ?? g.campaign.hold?.[side];
     if (hold != null && hold !== false) u.hold = { c: at.c, r: at.r, radius: hold };
     if (cmd) u.cmdRank = E.officer(g, cmd).rank;
     u.hp = E.maxHP(u);
+    if (enemy && d.enemyHp) u.hp = Math.max(1, Math.round(u.hp * d.enemyHp));
     if (!E.isSea(at)) at.owner = side;
     return u;
+  }
+
+  function addDifficultyReinforcements(g, d) {
+    if (!d.extraPer) return;
+    const enemies = g.units.filter(u => u.hp > 0 && E.foe(g, u.side, g.player) && !u.elite),
+      extra = Math.ceil(enemies.length / d.extraPer);
+    let made = 0;
+    for (let i = 0; i < enemies.length && made < extra; i++) {
+      const src = enemies[i],
+        spot = E.adjacent(g, src).find(
+          p =>
+            !E.isSea(p) &&
+            !E.TERRAIN[p.terrain]?.blocked &&
+            !E.unitAt(g, p) &&
+            (!E.stationAt(g, p) || !E.foe(g, E.stationAt(g, p).owner, src.side)),
+        );
+      if (!spot) continue;
+      const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, src.stack);
+      u.hp = E.maxHP(u);
+      if (!E.isSea(spot)) spot.owner = src.side;
+      made++;
+    }
   }
   function nearest(g, p, test) {
     const seen = new Set([E.key(p)]),
@@ -90,10 +178,12 @@
     }
     return null;
   }
-  function createMission(id, seed = 1357) {
+  function createMission(id, seed = 1357, mode = 'normal') {
     const m = mission(id);
     if (!m) throw new Error(`Unknown mission ${id}`);
-    const sides = m.sides,
+    const d = difficulty(mode),
+      difficultyId = DIFFICULTIES[mode] ? mode : 'normal',
+      sides = m.sides,
       cols = m.map[0].length,
       rows = m.map.length;
     const g = {
@@ -101,7 +191,7 @@
       version: 1,
       rulesVersion: E.RULES_VERSION,
       player: m.player,
-      difficulty: 'normal',
+      difficulty: difficultyId,
       mode: 'campaign',
       era: 'campaign',
       order: sides,
@@ -151,8 +241,25 @@
         fx: [],
         warnings: [],
         note: null,
+        enemyPlaced: 0,
+        turnLimit: (m.lose?.turns || 0) + (d.extraTurns || 0),
       },
     };
+    if (d.economy && g.economy[g.player]) {
+      g.economy[g.player].credits = Math.round(g.economy[g.player].credits * d.economy);
+      g.economy[g.player].industry = Math.round(g.economy[g.player].industry * d.economy);
+      g.economy[g.player].sakuradite = Math.round(g.economy[g.player].sakuradite * d.economy);
+    }
+    if (d.level) {
+      for (const side of sides.filter(side => E.foe(g, side, g.player))) {
+        g.tech[side] = techUpToTier(d.techTier);
+        if (g.economy[side]) {
+          g.economy[side].credits = Math.round(g.economy[side].credits * (d.income || 1));
+          g.economy[side].industry = Math.round(g.economy[side].industry * (d.income || 1));
+          g.economy[side].sakuradite = Math.round(g.economy[side].sakuradite * (d.income || 1));
+        }
+      }
+    }
     m.map.forEach((row, r) => {
       if (row.length !== cols) throw new Error(`${id}: map row ${r} has ${row.length} hexes, expected ${cols}`);
       for (let c = 0; c < cols; c++) g.tiles.push({ c, r, terrain: E.TERRAIN_CODES[row[c]] || 'plains', owner: null });
@@ -160,7 +267,8 @@
     for (const [name, c, r, owner, tier = 1, opts = {}] of m.cities) {
       const t = E.tile(g, c, r);
       if (!t || E.isSea(t) || E.TERRAIN[t.terrain]?.blocked) throw new Error(`${id}: ${name} is not on open land`);
-      const shield = opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
+      let shield = opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
+      if (E.foe(g, owner, g.player) && d.enemyShield) shield = Math.max(1, Math.round(shield * d.enemyShield));
       g.stations.push({
         id: g.stations.length,
         name,
@@ -185,6 +293,7 @@
       t.owner = owner;
     }
     for (const spec of m.units) placeUnit(g, spec);
+    addDifficultyReinforcements(g, d);
     fire(g, ev => ev.turn === 1 || ev.start);
     return g;
   }
@@ -297,17 +406,19 @@
       g.over = { winner: P, reason: m.victory || 'Mission accomplished.', stars: st.filter(Boolean).length, starList: st };
       return g.over;
     }
-    if (!reason && lose.turns && g.turn > lose.turns) reason = `Turn ${lose.turns} has passed. The mission has failed.`;
+    const limit = campaignTurnLimit(g, m);
+    if (!reason && limit && g.turn > limit) reason = `Turn ${limit} has passed. The mission has failed.`;
     if (reason) g.over = { winner: enemy, reason, stars: 0 };
     return g.over;
   }
   function objective(g) {
     const m = mission(g.campaign.id);
-    return `${g.campaign.note || m.objective}${m.lose?.turns ? ` Turn limit ${m.lose.turns}.` : ''}`;
+    const limit = campaignTurnLimit(g, m);
+    return `${g.campaign.note || m.objective}${limit ? ` Turn limit ${limit}.` : ''}`;
   }
   function title(g) {
     const m = mission(g.campaign.id);
-    return `${CAMPAIGNS[m.campaign].short} ${m.index + 1} · ${m.title}`;
+    return `${CAMPAIGNS[m.campaign].short} ${m.index + 1} · ${m.title} · ${difficulty(g.difficulty).name}`;
   }
   Object.assign(E.hooks, { turn: onTurn, capture: onCapture, kill: onKill, decide, objective, title });
 
@@ -316,25 +427,50 @@
   function best(profile, id) {
     return profile?.campaign?.[id] || 0;
   }
+  function bestDifficulty(profile, id, mode = 'normal') {
+    const perMission = profile?.campaignDifficulty?.[id];
+    if (perMission && Object.keys(perMission).length) return perMission[mode] || 0;
+    // Legacy profiles predate per-difficulty records; treat their old campaign score as a Normal clear only.
+    return mode === 'normal' ? best(profile, id) : 0;
+  }
   function unlocked(profile, id) {
     const m = mission(id);
     return !!m && (m.index === 0 || best(profile, CAMPAIGNS[m.campaign].missions[m.index - 1].id) > 0);
   }
   function reward(g, profile = {}) {
     if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [], stars: 0 };
-    const had = best(profile, g.campaign.id),
+    const d = difficulty(g.difficulty),
+      had = bestDifficulty(profile, g.campaign.id, g.difficulty),
       got = g.over.stars,
       parts = [];
-    if (!had) parts.push(['First clear', REWARD.first]);
+    if (!had) parts.push([`${d.name} first clear`, Math.round(REWARD.first * d.tokens)]);
     const fresh = Math.max(0, got - Math.max(had, 1));
-    if (fresh) parts.push([`${fresh} new star${fresh > 1 ? 's' : ''}`, fresh * REWARD.star]);
+    if (fresh)
+      parts.push([
+        `${fresh} new ${d.name} star${fresh > 1 ? 's' : ''}`,
+        Math.round(fresh * REWARD.star * d.tokens),
+      ]);
     return { total: parts.reduce((a, [, v]) => a + v, 0), parts, stars: got, first: !had, repeat: !parts.length };
   }
   function next(id) {
     const m = mission(id);
     return m ? CAMPAIGNS[m.campaign].missions[m.index + 1]?.id || null : null;
   }
-  const api = { CAMPAIGNS, mission, createMission, stars, text, holds, reward, unlocked, best, next, REWARD };
+  const api = {
+    CAMPAIGNS,
+    DIFFICULTIES,
+    mission,
+    createMission,
+    stars,
+    text,
+    holds,
+    reward,
+    unlocked,
+    best,
+    bestDifficulty,
+    next,
+    REWARD,
+  };
   root.KnightmareCampaign = api;
   E.campaign = api;
   if (typeof module !== 'undefined') module.exports = api;
