@@ -22,7 +22,7 @@ Knightmare Frames.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
 **Campaign:** three story arcs as WC4-style campaigns, each played from either side: Season 1 and R2 (Black Knights or
-Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 54 missions on
+Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 58 missions on
 hand-built tactical maps,
 reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (tested in `tests/campaign.test.cjs`);
 screens in `dist/game.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
@@ -128,21 +128,35 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - **Sea:** stepping from land onto a sea hex embarks the unit (ends its move). Embarked units sail 5 hexes (+1/+2
   with Naval Transports), cannot fire or counter-fire, take +50% damage (+25% with Landing Craft), cannot repair or
   reinforce. Landing on a coast takes a step and ends the move.
-- **Britannia's navy** (`NAVAL`, `navalTypes(g, side)`: Conquest only, built from a factory's Naval tab, outside the
-  ten-class lineups, `naval: 'amphibious' | 'ship'` on the frame):
-  - Portman (210/45/17) and Portman II (260/55/22, Aquatic Combat +15% when attacking from a sea hex): base move 1
-    (3 on land in Conquest) and sea move 6/7 from one pool (`reachable`: a sea hex costs `landMove`, a land hex
-    `terrain × seaMove`), so crossing the coast never ends the move and they can attack after landing. 10 at sea when
-    starting next to a friendly carrier. +25% damage against embarked transports and warships. `atSea()` is false
-    for naval frames: they fire and counter-fire at sea and take no transport penalty.
+- **Navies** (`NAVAL[side] = { amphibious, amphibious2, carrier }`, `navalTypes(g, side)`; Conquest only, outside the
+  ten-class lineups, `naval: 'amphibious' | 'ship'` on the frame). Every power's equivalent units share one stat block
+  (`AMPHIBIOUS`, `AMPHIBIOUS_II`, `CARRIER`); only names, models and art differ: Britannia's Portman, Portman II and
+  Dreadnought-class Carrier-Battleship, the E.U.'s Panzer-Frosch, Panzer-Frosch II and Charlemagne-class carrier, the
+  Federation's Shui Gun-Ru, Shui Gun-Ru II and Federation carrier. Each power starts with 4 carriers and 6 amphibious
+  formations (`NAVY_DATA`) and 4 ports (`PORT_DATA`: two level 2, two level 1).
+  - Amphibious (210/45/17; type II 260/55/22 with Aquatic Combat +15% from a sea hex): base move 1 (3 on land in
+    Conquest), sea move 6/7 from one pool (`reachable`: a sea hex costs `landMove`, a land hex `terrain × seaMove`),
+    so crossing the coast never ends the move. 10 at sea when starting next to a friendly carrier. +25% against
+    embarked transports and warships. `atSea()` is false for naval frames: they fire and counter-fire at sea.
   - Carrier-Battleship (520/82/44, range 1–2, move 10, sea only, one per build, cannot be reinforced): `capacity` 2.
-    Moving a Knightmare onto the carrier boards it (`move` returns `loaded`; the unit leaves `g.units` for
-    `ship.cargo` and its action ends). `deploy(g, shipId, i, c, r)` launches onto an empty, non-enemy land hex next to
-    the ship with a full move and attack (`deployedTurn`); a unit cannot launch on the turn it boarded
-    (`boardedTurn`) or board again after launching. Damage to the carrier spares its cargo; `kill()` of the carrier
-    destroys everything aboard. `allUnits(g)` includes cargo (used for commander-in-use checks).
-  - AI: a naval power keeps up to two carriers and a few Portmans at coastal cities; carriers sail to bombard
-    coasts (the AI does not load them) and AI units never pick an occupied hex, so they never board.
+    Moving a Knightmare onto it boards it (`move` returns `loaded`; the unit leaves `g.units` for `ship.cargo`, its
+    action ends). `deploy(g, shipId, i, c, r)` launches onto an empty, non-enemy land hex next to the ship with a full
+    move and attack; not on the boarding turn (`boardedTurn`), and no re-boarding after launching (`deployedTurn`).
+    Sinking the carrier destroys its cargo; damage does not. `allUnits(g)` includes cargo.
+  - Ports (`BUILDINGS.port`, `s.portLevel`, `s.portAt`, `s.portOwner`): a coastal city's port sits on one adjacent sea
+    hex (`portSite`). Level 1 builds amphibious frames, level 2 carriers (they appear on or beside the port hex);
+    naval units berthed there repair `PORT.repair` (10/20/30%, +10% for carriers with Damage Control). Capturing the
+    city leaves the port with its old owner while that owner's ship sits in it; `beginTurn` hands it over once clear.
+  - Naval research branch (`naval.*`): Naval Logistics (transports 6, then 7 with a level-3 port), Amphibious Systems
+    (+1 sea), Landing Craft (+25% instead of +50%), Naval Gunnery (+15% carrier damage), Damage Control, Rapid Launch
+    Systems (+10% on the first attack the turn a unit launches, level-3 port). `normalizeResearch` moves the old
+    `sakura.transport` / `sakura.landing` levels over (applied in `applyTech`, `research` and the UI's profile load).
+  - AI: ports (one level 2, up to three in all), a fleet of up to 4 carriers and 6 amphibious formations, and carrier
+    operations (`aiCarrier`): a carrier waits off a coast where troops with nothing to attack on their landmass (or
+    Infantry/Armor far from any target) gather; they board; once full or after three turns it sails for the best
+    landing hex (`landingScore`: on an enemy landmass, no more defenders within 3 than it carries, near an undefended
+    city) and `aiLaunch` puts every formation ashore and plays its turn. Damaged empty carriers go home to repair.
+    Hard and Challenge keep navies naval (amphibious frames upgrade to type II; reinforcement copies are land units).
 - **Strategic geography:** deterministic terrain anchors make the Alps/Carpathians, Caucasus, Urals, Zagros, Andes,
   Korea, Sahara/Arabia, Gobi/Taklamakan, Outback and Malay corridor meaningful. The Himalayas have an expanded
   impassable core with routes around the western/eastern ends.
@@ -271,13 +285,13 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   - Black Knights S1 (9): Shinjuku Ghetto, Lake Kawaguchi, Narita, Port Yokosuka, Rescue of Tohdoh, Shikine and Kamine
     Islands (the Gawain), Fukuoka Base (allied with Britannia against Sawasaki), Special Administrative Zone, Black
     Rebellion.
-  - Britannia S1 (9): Invasion of Japan, Shinjuku, Saitama, Narita, Port Yokosuka Blockade, Chofu Detention Center,
-    Shikine and Kamine, Fukuoka Base, Black Rebellion.
-  - Black Knights R2 (10): Return of Zero (Babel Tower and the prisoner rescue), Battle over the Pacific, Second Port
-    Yokosuka, Xiaopei, Mausoleum of the Eighty-Eight Emperors, Geass Order, Second Tokyo, Kagoshima, Mount Fuji,
-    Damocles.
-  - Britannia R2 (10): Return of the Black Knights, Pacific, Second Port Yokosuka, Xiaopei, Mausoleum, Kagoshima,
-    Second Tokyo, Emperor Lelouch, Mount Fuji, Damocles.
+  - Britannia S1 (10): Invasion of Japan, Shinjuku, the Middle Eastern Federation's last stand (Area 18), Saitama,
+    Narita, Port Yokosuka Blockade, Chofu Detention Center, Shikine and Kamine, Fukuoka Base, Black Rebellion.
+  - Black Knights R2 (12): Battle of Babel Tower, Black Knights' Rescue Operation, Battle over the Pacific, Second Port
+    Yokosuka, Skirmish at Zhengzhou, Xiaopei, Mausoleum of the Eighty-Eight Emperors, Geass Order, Kagoshima,
+    Second Tokyo, Mount Fuji, Damocles. Kagoshima now correctly precedes the Second Assault on Tokyo Settlement.
+  - Britannia R2 (11): Return of the Black Knights, Pacific, Second Port Yokosuka, Xiaopei, Mausoleum, Kagoshima,
+    Second Tokyo, Second Battle of Kamejima Island / Ragnarök, Emperor Lelouch, Mount Fuji, Damocles.
   - Euro Britannia (8): Narva, Slonim, European Front (`br6`, Kingsley's offensive), Coup at Sankt Petersburg (Shin
     against Suzaku), the Gallia Grande, Siege and Assault of Castle Weisswolf, the Fall of Europia (2018, Paris).
   - E.U. (8): Narva, Ryo's Ambush, Slonim (orbital drop), Defense of Warsaw, the Gallia Grande, Siege and Assault of
