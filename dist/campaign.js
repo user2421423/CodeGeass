@@ -352,7 +352,8 @@
       if (d > radius) continue;
       v.hp -= rings[d] >= 1 ? v.hp : Math.round(E.maxHP(v) * rings[d]);
       v.morale = Math.max(-3, v.morale - 2);
-      if (v.hp <= 0) E.kill(g, v, null);
+      // Ground zero erases everything, C.C.'s Code Bearer included (as F.L.E.I.J.A. does in Conquest).
+      if (v.hp <= 0) E.kill(g, v, null, rings[d] >= 1);
     }
     for (const t of E.within(g, center, b.terrainRadius ?? (b.terrain ? 1 : -1)))
       if (!E.isSea(t) && b.terrain) t.terrain = b.terrain;

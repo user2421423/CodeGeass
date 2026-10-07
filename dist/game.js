@@ -749,6 +749,12 @@ function claimReward() {
         diff = game.difficulty || 'normal';
       byDifficulty[diff] = Math.max(byDifficulty[diff] || 0, r.stars);
       (p.campaign ||= {})[id] = Math.max(legacyBest, r.stars);
+      // A first clear at each difficulty recovers fragments for the mission side's Elite Forces; the Black
+      // Knights' Elite Forces are earned only here.
+      if (r.first) {
+        game.eliteReward = E.eliteVictoryReward(game, {});
+        E.grantEliteFragments(p, game.eliteReward);
+      }
     }
     game.reward = r;
   } else if (game.over.winner === game.player) {
@@ -1291,7 +1297,7 @@ function missionResult() {
     diffRule = CP.DIFFICULTIES[game.difficulty] || CP.DIFFICULTIES.normal;
   modal.innerHTML = `<div class="overlay"><section class="dialog narrow mission-result" role="dialog" aria-modal="true" aria-label="Mission result"><div class="eyebrow">${esc(E.modeTitle(game))}</div><h2>${win ? 'Mission complete' : 'Mission failed'}</h2><div class="result-stars" aria-label="${got.filter(Boolean).length} of 3 stars">${got.map(on => `<span class="${on ? 'on' : ''}">★</span>`).join('')}</div><p>${esc(game.over.reason)}</p><ul class="star-list">${starGoals(m)
     .map((t, i) => `<li class="${got[i] ? 'done' : 'lost'}"><b>${got[i] ? '★' : '☆'}</b>${esc(t)}</li>`)
-    .join('')}</ul>${win ? (r.repeat ? `<div class="reward"><span class="label">No new ${esc(diffRule.name)} stars</span><small>Each star pays once per difficulty. Meet the goals you missed on ${esc(diffRule.name)} for ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens each.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${r.total}</b><small>${r.parts.map(([k, v]) => `${k} +${v}`).join(' · ')}</small></div>`) : ''}<div class="result-numbers"><div><b>${game.turn}</b><small>Turns</small></div><div><b>${cm.kills}</b><small>Enemy units destroyed</small></div><div><b>${cm.losses}</b><small>Units lost</small></div></div><div class="dialog-footer"><div><button data-action="close">Inspect the map</button><button data-action="campaign">Mission select</button></div><div><button data-action="mission-retry">${win ? 'Replay' : 'Retry'}</button>${next ? `<button class="primary" data-mission="${next}">Next mission</button>` : ''}</div></div></section></div>`;
+    .join('')}</ul>${win ? (r.repeat ? `<div class="reward"><span class="label">No new ${esc(diffRule.name)} stars</span><small>Each star pays once per difficulty. Meet the goals you missed on ${esc(diffRule.name)} for ${Math.round(CP.REWARD.star * diffRule.tokens)} command tokens each.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${r.total}</b><small>${r.parts.map(([k, v]) => `${k} +${v}`).join(' · ')}</small></div>`) : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k, v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}<div class="result-numbers"><div><b>${game.turn}</b><small>Turns</small></div><div><b>${cm.kills}</b><small>Enemy units destroyed</small></div><div><b>${cm.losses}</b><small>Units lost</small></div></div><div class="dialog-footer"><div><button data-action="close">Inspect the map</button><button data-action="campaign">Mission select</button></div><div><button data-action="mission-retry">${win ? 'Replay' : 'Retry'}</button>${next ? `<button class="primary" data-mission="${next}">Next mission</button>` : ''}</div></div></section></div>`;
   focusDialog();
 }
 
@@ -1997,11 +2003,11 @@ document.addEventListener('click', e => {
       break;
     case 'elite-forces':
       eliteBack = 'game';
-      eliteDialog(game.player === 'cf' ? 'black_knights' : 'britannia');
+      eliteDialog(game.player === 'bk' || game.player === 'jlf' ? 'black_knights' : game.player);
       break;
     case 'elite-forces-start':
       eliteBack = 'start';
-      eliteDialog(setup.side === 'cf' ? 'black_knights' : 'britannia');
+      eliteDialog(setup.side);
       break;
     case 'elite-close':
       if (eliteBack === 'start') startMenu();

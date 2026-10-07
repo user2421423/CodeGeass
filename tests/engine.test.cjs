@@ -53,7 +53,7 @@ const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
   assert.equal(Object.values(E.TYPES).filter(t => !t.elite && !t.campaign).length, 31);
-  assert.equal(Object.values(E.TYPES).filter(t => t.elite).length, 9);
+  assert.equal(Object.values(E.TYPES).filter(t => t.elite).length, 19);
   assert.equal(Object.values(E.TYPES).filter(t => t.campaign).length, 7);
   for (const side of E.MAJORS) {
     assert.deepEqual(Object.keys(E.ROSTER[side]).sort(), [...E.CLASS_ORDER].sort());
@@ -735,7 +735,9 @@ test('Rival powers aim warheads at the most valuable target and never at their o
 
 
 test('Elite Forces are persistent single-frame units with fragment progression', () => {
-  assert.equal(Object.keys(E.ELITE_FORCES).length, 9);
+  assert.equal(Object.keys(E.ELITE_FORCES).length, 19);
+  for (const side of ['britannia', 'eu', 'cf', 'bk'])
+    assert(Object.values(E.ELITE_FORCES).some(e => e.availableTo.includes(side)), `${side} has Elite Forces`);
   const p = {};
   const roster = E.eliteProfile(p);
   assert.equal(roster.cornelia_gloucester.fragments, E.ELITE_UNLOCK_FRAGMENTS);

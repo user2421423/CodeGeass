@@ -5143,6 +5143,9 @@
     convoyLand: 4,
     convoySea: 6,
   };
+  // Campaign battlefields are a few dozen hexes across and keep the original, tighter radii.
+  const AI_RANGE_CAMPAIGN = { threat: 3, capitalGuard: 8, cityGuard: 4, mineGuard: 5, enemyScan: 10, convoyLand: 2, convoySea: 6 },
+    aiRange = g => (g.mode === 'campaign' ? AI_RANGE_CAMPAIGN : AI_RANGE);
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
   function goalField(g, side) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
@@ -5240,7 +5243,7 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.filter(f => dist(g, f, s) <= AI_RANGE.threat).reduce((a, f) => a + f.stack, 0);
+      threat = s => foes.filter(f => dist(g, f, s) <= aiRange(g).threat).reduce((a, f) => a + f.stack, 0);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -5254,7 +5257,7 @@
     for (const { s, threat: t, capital } of cities) {
       const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
       const near = own
-        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? AI_RANGE.capitalGuard : AI_RANGE.cityGuard))
+        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
       for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
     }
@@ -5263,7 +5266,7 @@
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
-      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= AI_RANGE.mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
       for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
     }
     return taken;
@@ -5514,14 +5517,14 @@
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       });
-      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= AI_RANGE.enemyScan);
+      const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= aiRange(g).enemyScan);
       const old = { c: u.c, r: u.r };
       // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
       // count as an escort so follow-on waves do not get stranded waiting for a fresh three-unit convoy.
       const fromLand = !atSea(g, u),
         freeAllies = g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !memo.guards?.[v.id]),
-        landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= AI_RANGE.convoyLand).length,
-        seaEscort = freeAllies.filter(v => atSea(g, v) && dist(g, v, u) <= AI_RANGE.convoySea).length,
+        landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= aiRange(g).convoyLand).length,
+        seaEscort = freeAllies.filter(v => atSea(g, v) && dist(g, v, u) <= aiRange(g).convoySea).length,
         convoy = fromLand && !guard && (landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1)),
         currentField = fieldAt(old);
       const placeScore = p => {
@@ -5544,7 +5547,7 @@
         } else if (!fromLand) {
           sc += 90;
         } else if (!guard && !convoy && coastTile(g, p) && fieldAt(p) <= currentField) {
-          const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= AI_RANGE.convoyLand).length;
+          const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= aiRange(g).convoyLand).length;
           sc += 28 + Math.min(3, assembling) * 12;
         }
         if (TYPES[u.type].branch === 'Artillery') {

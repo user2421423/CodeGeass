@@ -89,8 +89,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 
 | Key | Contents |
 |---|---|
-| `knightmare-conquest-profile` | The persistent **profile**: `tokens`, `wins`, `cleared` (`'conquest:world:<difficulty>': true`), `research`, `roster` (your commanders), `medals`. |
-| `knightmare-conquest-save` | The current game save. |
+| `knightmare-conquest-profile` | The persistent **profile**: `tokens`, `wins`, `cleared` (`'conquest:world:<difficulty>': true`), `research`, `roster` (your commanders), `medals`, `elites`, `campaign` and `campaignDifficulty` (best stars). |
+| `knightmare-conquest-save` | The current Conquest save. |
+| `knightmare-conquest-mission` | The campaign mission in progress (kept apart from the Conquest save). |
 | `knightmare-conquest-sound` | `'on'` / `'off'`. |
 
 ## 4. Systems
@@ -204,10 +205,16 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
 
 ### Elite Forces
-- Nine persistent single-frame hero units (`ELITE_FORCES`, frames `elite_*`): Cornelia's Gloucester, Lancelot,
-  Guren Mk-II, Tohdoh's Gekka, Mordred, Gawain, Shinkirō, Lancelot Albion and Guren S.E.I.T.E.N. Unlocked and
-  levelled (1–5) in HQ with fragments earned from victories; signature abilities at Lv.3 and Lv.5; each deploys once
-  per operation from the factory's Elite Forces tab. `applyElites` applies your HQ levels to your own units only.
+- Nineteen persistent single-frame hero units (`ELITE_FORCES`, frames `elite_*`), one HQ tab per faction:
+  - Britannia (4): Cornelia's Gloucester (starter), Lancelot, Mordred, Lancelot Albion.
+  - E.U. (5): Leila's Alexander (starter), Akito's Alexander Liberte, and Ryo's, Ayano's and Yukiya's Valiants.
+  - Chinese Federation (5): Xu Lifeng's Chuyen (starter), Guren Type-01, Wang Hu, Akatsuki Zikisan, Shen Hu.
+  - Black Knights (5, `availableTo: ['bk']`): Guren Mk-II, Tohdoh's Gekka (starter), Gawain, Shinkirō, Guren
+    S.E.I.T.E.N. They fight in the Black Knights campaign; their fragments come from campaign first clears.
+- Unlocked and levelled (1–5) in HQ with fragments: a Conquest victory pays the winner's Elite Forces, and a first
+  campaign clear at each difficulty pays the mission side's. Signature abilities at Lv.3 and Lv.5; each deploys once
+  per Conquest operation from the factory's Elite Forces tab. `applyElites` applies HQ levels to your own units only.
+  The E.U. and Federation elites reuse existing Alexander, Shen Hu, Chuyen, Guren and Zikisan sprites.
 
 ### Campaign
 - Campaign-only sides `bk` (Order of the Black Knights, doctrine: +10% damage from forest, mountains or ruins) and
@@ -221,8 +228,14 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Conquest-only (`hasFleija`).
 - `campaign.js` builds a mission (`createMission(id)`), runs its events (dialogue queue, reinforcements, landslides,
   Sakuradite eruptions and F.L.E.I.J.A. blasts with a warning a turn ahead, Gefjun Disturber shutdowns, frame
-  upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star;
-  progress in `profile.campaign`). Missions unlock in order.
+  upgrades, city shields), decides victory and defeat, grades 3 stars and pays tokens (first clear 60, 30 per new star,
+  scaled by difficulty; progress in `profile.campaign`, per difficulty in `profile.campaignDifficulty`). Missions
+  unlock in order. Ground-zero blasts kill outright (C.C.'s Code Bearer does not save her).
+- Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal is a forgiving story mode
+  (your formations +1 frame, enemies at 80% integrity and 75% city defenses, 50% more starting resources, 3 extra
+  turns); Hard and Challenge reuse Conquest's enemy research, upgrades, reinforcements, ranks and income.
+- Campaign maps keep the original movement, sea speed and AI search radii (`aiRange(g)`); the larger Conquest values
+  apply to the 180 × 76 world only.
 - Screens (`game.js`, campaign section): a start-menu row opens mission select (tabs per campaign, locks, best
   stars), then a briefing (story, star goals, failure terms, forces, commanders, map preview). In a mission: a dialogue
   box plays `g.campaign.queue`, `campaignFeed()` turns `g.campaign.fx` into blast and Gefjun effects and flags new
