@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Rasterize hand-drawn continent outlines onto the Knightmare Conquest world hex grid.
 
-The grid is odd-r offset hexes, 180 columns x 76 rows, wrapping east-west. Each column spans 2 degrees of
-longitude; rows run from 74N to 54S in roughly 1.707-degree steps. Odd rows are shifted half a hex east.
+The grid is odd-r offset hexes, 270 columns x 114 rows, wrapping east-west. Each column spans 4/3 degrees of
+longitude; rows run from 74N to 54S in roughly 1.133-degree steps. Odd rows are shifted half a hex east.
 
 Output: a JS snippet (WORLD_ROWS) to paste into dist/engine/world.js, one string per row:
   . sea   p plains   f forest   m mountains   d desert   s snow/tundra   x impassable peaks / ice cap
@@ -14,11 +14,12 @@ close to the world map. FORCE_LAND / FORCE_SEA preserve small islands, isthmuses
 import math
 import sys
 
-COLS, ROWS = 180, 76
+COLS, ROWS = 270, 114
 LON0, LAT0 = -180.0, 74.0
 LAT_MIN = -54.0
 DLON = 360.0 / COLS
 DLAT = (LAT0 - LAT_MIN) / (ROWS - 1)
+LEGACY_COLS, LEGACY_ROWS = 180, 76
 
 
 def center(c, r):
@@ -160,6 +161,77 @@ LAND = [NORTH_AMERICA, BAFFIN, VICTORIA, BANKS, GREENLAND, ICELAND, CUBA, HISPAN
         MINDANAO, SUMATRA, JAVA, BORNEO, SULAWESI, NEW_GUINEA, AUSTRALIA, TASMANIA, NZ_NORTH, NZ_SOUTH]
 WATER = [BLACK_SEA, CASPIAN]
 
+# WC4-inspired British Isles: a modestly broader playable silhouette gives the Highlands, Wales, East Anglia,
+# southern England and Cornwall their own coastal hexes. Ireland remains across a navigable Irish Sea.
+# This region replaces the coarse-grid silhouette rather than inheriting its forced mainland/island shortcuts.
+BRITAIN_PLAYABLE = [
+    (-7.2, 50.3), (-5.2, 50.8), (-3.6, 50.5), (-1.8, 50.7), (0.5, 51.0), (1.7, 51.7),
+    (2.0, 52.6), (0.6, 53.4), (-0.5, 54.0), (-1.6, 55.0), (-2.0, 55.8), (-1.3, 56.8),
+    (-2.3, 57.6), (-3.5, 58.8), (-5.2, 59.5), (-7.2, 58.8), (-8.0, 57.6), (-7.2, 56.7),
+    (-6.1, 55.8), (-4.8, 55.5), (-4.1, 54.7), (-4.2, 53.8), (-5.8, 53.3), (-6.5, 52.5),
+    (-5.5, 51.9), (-4.0, 51.7), (-5.4, 51.2), (-7.5, 51.0),
+]
+IRELAND_PLAYABLE = [
+    (-7.8, 51.5), (-7.6, 52.6), (-7.3, 53.4), (-7.5, 54.1), (-8.1, 55.3), (-9.8, 55.8),
+    (-11.3, 55.0), (-12.0, 54.2), (-12.3, 53.2), (-11.6, 52.0), (-10.2, 51.4),
+]
+# Small but strategically legible islands that the coarse map could not show without accidental land bridges.
+EXTRA_ISLANDS = [
+    # Vancouver Island, Newfoundland, the Bahamas and the Greater Antilles.
+    [(-128.5, 50.7), (-126.0, 50.2), (-123.0, 48.5), (-124.3, 48.2), (-127.0, 49.1)],
+    [(-59.5, 47.5), (-58.0, 50.1), (-55.5, 51.5), (-53.0, 49.3), (-52.7, 46.8), (-55.5, 46.6)],
+    [(-79.0, 26.5), (-77.6, 27.2), (-77.0, 25.0), (-78.0, 24.0)],
+    [(-78.5, 18.5), (-76.3, 18.6), (-76.2, 17.7), (-78.1, 17.7)],
+    [(-67.3, 18.6), (-65.6, 18.6), (-65.6, 17.9), (-67.1, 17.9)],
+    # Mediterranean: Corsica, Sicily, Crete and Cyprus.
+    [(8.5, 43.0), (9.5, 43.0), (9.6, 41.3), (8.6, 41.3)],
+    [(12.4, 38.3), (15.3, 38.2), (15.2, 36.6), (13.3, 37.0)],
+    [(23.5, 35.7), (26.3, 35.6), (26.3, 34.9), (23.5, 34.9)],
+    [(32.1, 35.3), (34.7, 35.8), (34.4, 34.9), (32.1, 34.6)],
+    # Shikoku, Okinawa and the missing central Philippines.
+    [(132.0, 34.0), (134.8, 34.3), (134.6, 33.1), (132.4, 32.9)],
+    [(127.2, 25.8), (128.3, 27.0), (128.5, 26.2), (127.6, 25.7)],
+    [(121.6, 11.8), (122.9, 11.7), (122.5, 10.4), (121.7, 10.5)],
+    [(124.3, 12.6), (125.5, 12.5), (125.2, 10.4), (124.2, 10.0)],
+    # Indonesia: Bali, Flores, Sumba and Timor.
+    [(114.8, -8.0), (115.7, -8.0), (115.6, -8.9), (114.8, -8.7)],
+    [(119.4, -8.1), (123.5, -8.2), (123.0, -8.9), (119.5, -8.9)],
+    [(118.9, -9.2), (120.9, -9.3), (120.7, -10.1), (119.0, -9.8)],
+    [(123.2, -9.0), (127.0, -8.2), (127.4, -8.9), (124.0, -10.4)],
+]
+
+
+def legacy_hex_of(lon, lat):
+    """Project a point into the original grid so its deliberate coast/strait edits survive a resolution change."""
+    r = max(0, min(LEGACY_ROWS - 1, math.floor((LAT0 - lat) / (128 / 75) + 0.5)))
+    c = math.floor((lon - LON0) / 2 - 0.5 - 0.5 * (r & 1) + 0.5)
+    return c % LEGACY_COLS, r
+
+
+# Exact final edits on the new grid, expressed geographically so future resolution changes cannot strand cities.
+FINE_LAND = [
+    (-6.7, 50.2), (-5.3, 50.2), (-4.0, 50.2),  # Cornwall / Devon: the characteristic south-west arm.
+    (103.8, 1.35),  # Singapore: one island, below the end of Malaya.
+    (140.6, 35.7),  # Eastern Kanto: Tokyo gets a coastal city hex separate from the Fuji mine.
+    (125.3, 7.2),  # Southern Mindanao: join the eastern and western parts of the island.
+    (33.3, 34.4),  # Cyprus: a separate island south of the Turkish coast at the playable scale.
+]
+FINE_SEA = [
+    (34.0, 35.5),  # Cyprus' northern/eastern water gap: do not join it to southern Turkey.
+    (104.0, 2.64),  # Singapore Strait: separate the island from the Malay mainland.
+    (80.0, 9.5), (78.7, 8.4),  # Palk Strait / Gulf of Mannar: Sri Lanka remains separate from India.
+    (-57.3, 50.2), (-56.0, 50.2), (-54.7, 50.2), (-55.3, 51.35),  # Belle Isle: Newfoundland off Labrador.
+    (-124.7, 49.1), (-125.3, 50.2), (-126.7, 50.2), (-124.0, 48.0),  # Vancouver Island's mainland straits.
+    (123.3, -9.8),  # Savu Sea: Timor must not join Flores through an old coarse-grid island hex.
+    (174.0, -41.5), (173.3, -40.4),  # Cook Strait: New Zealand's two main islands remain separate.
+]
+FINE_TAIWAN = [(120.0, 22.0), (121.2, 22.0), (122.2, 25.4), (121.0, 25.6), (120.0, 23.8)]
+SEA_CHANNELS = [
+    [(-8, 35.5), (-5, 35.5), (-2, 35.5)],  # Gibraltar: Atlantic to Mediterranean.
+    [(42, 15), (43.5, 13), (44.5, 12), (48, 12)],  # Bab-el-Mandeb: Red Sea to Gulf of Aden.
+    [(16, 42), (18.5, 40.5), (19.5, 39)],  # Otranto: Adriatic to Ionian Sea.
+]
+
 # ---------------------------------------------------------------- biomes, painted in order (later wins)
 BIOMES = [
     # Forest belts (density keeps open routes between them).
@@ -222,7 +294,7 @@ PEAKS = [
 ICE_CAP = [(-42, 72), (-38, 68), (-44, 66), (-48, 70)]  # Greenland interior: impassable
 
 # Deterministic strategic terrain anchors. The biome polygons supply texture; these guarantee that major real-world
-# barriers remain legible and tactically meaningful on the 180 x 76 grid.
+# barriers remain legible and tactically meaningful on the current grid.
 FORCE_TERRAIN = {
     'm': [
         # Alps / Carpathians
@@ -235,6 +307,8 @@ FORCE_TERRAIN = {
         (-75, -5), (-73, -12), (-70, -20), (-69, -28), (-71, -35), (-72, -42),
         # Korea
         (127, 37), (128.5, 39),
+        # British Highlands and Welsh uplands, now large enough to show as distinct terrain.
+        (-5.3, 58.2), (-4.0, 57.1), (-5.3, 52.5),
     ],
     'd': [
         # Sahara / Arabia
@@ -326,7 +400,7 @@ FORCE_SEA = [
     (105.0, -4.5),  # Sunda Strait: keep Java separated from Sumatra/mainland Asia
 ]
 # Final coastline pass on exact hexes (column, row), applied after the lon/lat lists above. These edits prioritize
-# recognizable silhouettes and navigable strategic waterways at the 2-degree hex scale. Narrow real-world straits
+# recognizable silhouettes and navigable strategic waterways on the original 2-degree hex scale, reprojected onto the finer grid. Narrow real-world straits
 # are widened to at least one water hex where naval movement needs a route; tiny Arctic islands with no conquest
 # value are suppressed. Kyushu remains joined to Honshu at this resolution, while Hokkaido is kept separate.
 HEX_LAND = [
@@ -394,10 +468,40 @@ def build():
     for lon, lat in FORCE_SEA:
         c, r = hex_of(lon, lat)
         grid[r][c] = '.'
-    for c, r in HEX_LAND:
+    legacy_land, legacy_sea = set(HEX_LAND), set(HEX_SEA)
+    for r in range(ROWS):
+        for c in range(COLS):
+            lon, lat = center(c, r)
+            old_hex = legacy_hex_of(lon, lat)
+            if old_hex in legacy_land:
+                grid[r][c] = 'p'
+            if old_hex in legacy_sea:
+                grid[r][c] = '.'
+            if -15 <= lon <= 3 and 49.8 <= lat <= 61.5:
+                hits = sum(any(inside(p, lon + dx * DLON, lat + dy * DLAT)
+                               for p in [BRITAIN_PLAYABLE, IRELAND_PLAYABLE]) for dx, dy in samples)
+                grid[r][c] = 'p' if hits >= 3 or any(inside(p, lon, lat)
+                                                   for p in [BRITAIN_PLAYABLE, IRELAND_PLAYABLE]) else '.'
+            if any(inside(p, lon, lat) for p in EXTRA_ISLANDS):
+                grid[r][c] = 'p'
+            if 120 <= lon <= 124 and 21 <= lat <= 26:
+                grid[r][c] = 'p' if inside(FINE_TAIWAN, lon, lat) else '.'
+    for lon, lat in FINE_LAND:
+        c, r = hex_of(lon, lat)
         grid[r][c] = 'p'
-    for c, r in HEX_SEA:
+    for lon, lat in FINE_SEA:
+        c, r = hex_of(lon, lat)
         grid[r][c] = '.'
+    for channel in SEA_CHANNELS:
+        previous = None
+        for (x0, y0), (x1, y1) in zip(channel, channel[1:]):
+            steps = max(1, math.ceil(max(abs(x1 - x0) / DLON, abs(y1 - y0) / DLAT) * 4))
+            for i in range(steps + 1):
+                c, r = hex_of(x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps)
+                if previous and previous[0] != c and previous[1] != r:
+                    grid[r][previous[0]] = '.'  # Ensure an adjacent route when both offset axes round at once.
+                grid[r][c] = '.'
+                previous = (c, r)
     for r in range(ROWS):
         for c in range(COLS):
             if grid[r][c] == '.':
@@ -411,6 +515,11 @@ def build():
             c, r = hex_of(lon, lat)
             if grid[r][c] != '.':
                 grid[r][c] = code
+    legacy_peaks = {legacy_hex_of(lon, lat) for lon, lat in PEAKS + ICE_CAP}
+    for r in range(ROWS):
+        for c in range(COLS):
+            if grid[r][c] != '.' and legacy_hex_of(*center(c, r)) in legacy_peaks:
+                grid[r][c] = 'x'
     for lon, lat in PEAKS + ICE_CAP:
         c, r = hex_of(lon, lat)
         if grid[r][c] != '.':
@@ -422,7 +531,7 @@ def js_block(g):
     lines = [f'  // <world> Generated by tools/build_map.py: {COLS} x {ROWS} wrapping hexes, {DLON:g} degrees per column.',
              '  const WORLD_ROWS = [']
     lines += [f"    '{''.join(row)}'," for row in g]
-    lines += ['  ];', '  // </world>']
+    lines += ['  ];', f'  const WORLD = {{ cols: {COLS}, rows: {ROWS}, lon0: {LON0:g}, dlon: 360 / {COLS}, lat0: {LAT0:g}, dlat: 128 / {ROWS - 1} }};', '  // </world>']
     return '\n'.join(lines)
 
 
