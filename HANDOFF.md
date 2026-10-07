@@ -235,7 +235,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   unlock in order. Ground-zero blasts kill outright (C.C.'s Code Bearer does not save her).
 - Mission difficulty (`DIFFICULTIES` in `campaign.js`, chosen in the briefing): Normal keeps enemy units and city
   defenses at full strength, but gives your ordinary starting formations +1 frame, selected difficult scenarios a
-  favorable force-count pass, 50% more starting resources and 5 extra turns where a failure timer exists. Missions
+  favorable force-count pass and 50% more starting resources. Normal does not alter mission turn limits. Missions
   whose objective is simply to hold through a given turn keep no separate failure timer. Hard and Challenge reuse
   Conquest's enemy research, upgrades, reinforcements, ranks and income.
 - Campaign maps keep the original movement, sea speed and AI search radii (`aiRange(g)`); the larger Conquest values
