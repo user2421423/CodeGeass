@@ -3444,7 +3444,7 @@
   function hasOrders(g, u) {
     if (!u || !isReady(g, u)) return false;
     if (!u.attacked && targets(g, u).length) return true;
-    if (!u.moved && reachable(g, u).size) return true;
+    if (!u.moved && !u.goto && reachable(g, u).size) return true;
     if (!repairReason(g, u) || !reinforceReason(g, u)) return true;
     if (u.cargo?.some((c, i) => !deployReason(g, u, i))) return true;
     return !!COMMANDERS[u.cmd]?.action && !feintReason(g, u);
@@ -5694,6 +5694,100 @@
     return g;
   }
 
+  // ======== Standing orders ========
+  // A player's unit can be given a destination (u.goto). At the start of each of its side's turns it moves as far
+  // along the way as it can, until it arrives or the order is cancelled. Warships keep to the sea; other units take to
+  // the sea only when the destination lies across it (amphibious frames go either way). It never attacks on its own.
+  function gotoSurface(g, u, p) {
+    const t = TYPES[u.type];
+    if (t.naval === 'ship') return 'sea';
+    return !t.naval && !atSea(g, u) && massOf(g, u) === massOf(g, p) ? 'land' : null;
+  }
+  const routeField = (g, u, p) => goalField(g, u.side, [[p, 0]], gotoSurface(g, u, p));
+  function gotoReason(g, u, p) {
+    if (!u || u.hp <= 0) return 'Unavailable';
+    if (g.over) return 'Operation over';
+    if (u.side !== g.phase) return 'Not your unit';
+    const t = p && tile(g, p.c, p.r),
+      naval = TYPES[u.type].naval;
+    if (!t) return 'Choose a hex on the map';
+    if (TERRAIN[t.terrain]?.blocked) return 'Impassable terrain';
+    if (naval === 'ship' && !isSea(t)) return 'Warships stay at sea';
+    if (!naval && isSea(t)) return 'Choose a land hex';
+    if (t.c === u.c && t.r === u.r) return 'Already there';
+    return Number.isFinite(routeField(g, u, t)[u.r * g.cols + u.c]) ? null : 'No route there';
+  }
+  function setGoto(g, id, c, r) {
+    const u = g.units.find(v => v.id === id),
+      p = tile(g, c, r),
+      why = gotoReason(g, u, p);
+    if (why) return { ok: false, reason: why };
+    u.goto = { c: p.c, r: p.r };
+    return { ok: true, goto: u.goto };
+  }
+  function clearGoto(g, id) {
+    const u = g.units.find(v => v.id === id);
+    if (!u?.goto) return { ok: false, reason: 'No destination set' };
+    delete u.goto;
+    return { ok: true };
+  }
+  // Arrived: on the destination, or beside it when it cannot be entered (occupied, or an enemy city it cannot take).
+  function gotoDone(g, u, p) {
+    if (u.c === p.c && u.r === p.r) return true;
+    if (dist(g, u, p) > 1) return false;
+    const occ = unitAt(g, p),
+      st = stationAt(g, p);
+    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u)));
+  }
+  // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
+  // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex
+  // nearer this turn) and lost [id] (no route remains; order cancelled).
+  function runGotos(g, side) {
+    const report = { moved: [], arrived: [], blocked: [], lost: [] },
+      fields = new Map();
+    const orders = g.units
+      .filter(u => u.side === side && u.hp > 0 && u.goto)
+      .sort((a, b) => dist(g, a, a.goto) - dist(g, b, b.goto) || a.id - b.id);
+    for (const u of orders) {
+      if (g.over) break;
+      const dest = tile(g, u.goto.c, u.goto.r);
+      if (dest && gotoDone(g, u, dest)) {
+        report.arrived.push(u.id);
+        delete u.goto;
+        continue;
+      }
+      const surface = dest && gotoSurface(g, u, dest),
+        k = dest && `${dest.c},${dest.r},${surface}`;
+      if (dest && !fields.has(k)) fields.set(k, goalField(g, side, [[dest, 0]], surface));
+      const field = dest && fields.get(k),
+        cost = p => field[p.r * g.cols + p.c],
+        here = field ? cost(u) : Infinity;
+      if (!Number.isFinite(here)) {
+        report.lost.push(u.id);
+        delete u.goto;
+        continue;
+      }
+      let best = null;
+      for (const key of reachable(g, u).keys()) {
+        const [c, r] = key.split(',').map(Number),
+          p = tile(g, c, r),
+          v = cost(p);
+        if (unitAt(g, p) || !(v < here)) continue;
+        if (!best || v < best.v || (v === best.v && dist(g, p, dest) < dist(g, best.p, dest))) best = { p, v };
+      }
+      const m = best && move(g, u.id, best.p.c, best.p.r);
+      if (!m?.ok) {
+        report.blocked.push(u.id);
+        continue;
+      }
+      report.moved.push({ id: u.id, from: m.from, to: m.to, captured: m.captured, seized: m.seized, annexed: m.annexed });
+      if (gotoDone(g, u, dest)) {
+        report.arrived.push(u.id);
+        delete u.goto;
+      }
+    }
+    return report;
+  }
   // ======== AI ========
   // Strategic awareness is scaled for the 180 × 76 world. Combat ranges remain deliberately unchanged.
   const AI_RANGE = {
@@ -5719,8 +5813,9 @@
     return seeds;
   }
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
-  // `seeds` ([position, value] pairs) replaces the side-wide targets, e.g. with one front's objectives.
-  function goalField(g, side, seeds = null) {
+  // `seeds` ([position, value] pairs) replaces the side-wide targets, e.g. with one front's objectives; `only`
+  // ('land' or 'sea') keeps the paths on one surface.
+  function goalField(g, side, seeds = null, only = null) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
       hd = [],
       hi = [];
@@ -5794,7 +5889,7 @@
         const j = nb[k];
         if (j < 0) continue;
         const n = tiles[j];
-        if (TERRAIN[n.terrain]?.blocked) continue;
+        if (TERRAIN[n.terrain]?.blocked || (only && isSea(n) !== (only === 'sea'))) continue;
         const nd = d + (isSea(n) !== sea ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost);
         if (nd < field[j]) {
           field[j] = nd;
@@ -6858,6 +6953,10 @@
     aiPlan,
     unitStrength,
     FRONT,
+    gotoReason,
+    setGoto,
+    clearGoto,
+    runGotos,
     canCapture,
     // Sakuradite.
     SAKURADITE,

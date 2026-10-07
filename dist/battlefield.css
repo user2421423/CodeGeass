@@ -508,6 +508,9 @@ h3 {
   font-size: 12px;
   padding: 9px 12px;
 }
+.goto-line {
+  color: #ffd76a;
+}
 .dock-actions .fire-button {
   background: linear-gradient(#ac6452, #71372d);
   border: 1px solid #e6a176;

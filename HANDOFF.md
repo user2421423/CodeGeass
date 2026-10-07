@@ -353,6 +353,20 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   ×1.5 Hard, ×2 Challenge, +150 for the first win ever.
 - Difficulty works as in Galactic Command, applied to both rival powers and the neutrals.
 
+### Standing orders (player go-to)
+- `u.goto = { c, r }` (saved with the unit). `setGoto` / `clearGoto` / `gotoReason` validate: warships need a sea hex,
+  other non-amphibious units a land hex, and a route must exist (`goalField(g, side, [[dest, 0]], only)`).
+  Routes stay on land when the destination is on the unit's landmass, keep warships at sea, and may embark otherwise.
+- `runGotos(g, side)` runs in `endTurn` at the start of the player's turn, after city automation. Nearest orders go
+  first; each unit moves to the reachable free hex with the lowest route cost, never attacks, and the order ends on
+  arrival (or beside an occupied or defended destination). Its report (moved/arrived/blocked/lost) is animated and
+  toasted.
+- A unit on standing orders doesn't count as waiting for a manual move (`hasOrders`), so N and the end-turn
+  reminder skip it unless it can fire.
+- UI: `routing` (unit id) makes the next map click call `setGoto`. G or the dock/panel buttons enter it; Escape
+  cancels. The map shows a gold ⚑ badge, a dashed route and a destination marker; `gotoText` and `gotoReportText`
+  word it.
+
 ### AI
 - `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: the capital keeps 2–4 defenders), then in
   Conquest the theaters (`planFronts`). Campaign missions keep one side-wide `goalField`.
