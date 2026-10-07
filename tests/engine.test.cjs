@@ -701,3 +701,65 @@ test('Elite fragment rewards are slower for higher rarities', () => {
   const repeat = E.eliteVictoryReward(g, { cleared: { [E.operationKey(g)]: true } });
   assert(repeat.cornelia_gloucester > repeat.lancelot_albion);
 });
+test('Black Knights and JLF commanders are recruited in HQ and serve the Chinese Federation in Conquest', () => {
+  const p = { tokens: 5000, wins: 0 };
+  assert(E.recruitCommander(p, 'kallen').ok);
+  assert(E.recruitCommander(p, 'katase').ok);
+  assert(E.serves('kallen', 'cf') && E.serves('katase', 'cf'));
+  assert(!E.serves('kallen', 'britannia') && !E.serves('kallen', 'eu'));
+  const g = E.applyProfile(E.createGame('cf', 'normal', 'conquest', 7), p),
+    u = g.units.find(u => u.side === 'cf' && !u.cmd);
+  assert.equal(E.assignReason(g, u, 'kallen'), null);
+  assert(E.assign(g, u.id, 'kallen').ok);
+  const h = E.applyProfile(E.createGame('britannia', 'normal', 'conquest', 7), p);
+  assert.match(E.assignReason(h, h.units.find(u => u.side === 'britannia' && !u.cmd), 'katase'), /another faction/);
+});
+test('Black Knights skills: Tactical Command, Ace, Code Bearer, Rapid Assault and Veteran’s Guard', () => {
+  // Zero: a friendly unit within 2 hexes that has acted goes again; not Zero himself; then a 3-turn wait.
+  const g = blank('cf'),
+    zero = E.newUnit(g, T('cf', 'medium'), 'cf', 5, 5, 1, 'zero'),
+    ace = E.newUnit(g, T('cf', 'heavy'), 'cf', 6, 5);
+  assert.match(E.feintReason(g, zero), /No friendly unit/);
+  ace.moved = ace.attacked = true;
+  zero.moved = true;
+  assert.deepEqual(E.commandTargets(g, zero).map(v => v.id), [ace.id]);
+  assert.equal(E.feint(g, zero.id, ace.id).target, ace.id);
+  assert(!ace.moved && !ace.attacked);
+  assert.match(E.feintReason(g, zero), /Ready in 3/);
+  // Kallen: her first kill each turn grants another attack.
+  const k = blank('cf'),
+    kallen = E.newUnit(k, T('cf', 'support'), 'cf', 5, 5, 1, 'kallen');
+  E.newUnit(k, T('eu', 'scout'), 'eu', 6, 5).hp = 1;
+  assert(E.attack(k, kallen.id, 6, 5).destroyed);
+  assert.equal(kallen.attacked, false);
+  E.newUnit(k, T('eu', 'scout'), 'eu', 4, 5).hp = 1;
+  E.attack(k, kallen.id, 4, 5);
+  assert.equal(kallen.attacked, true, 'only once per turn');
+  // C.C.: a lethal blow leaves her at 1 HP once; F.L.E.I.J.A. spares no one.
+  const c = blank('eu'),
+    cc = E.newUnit(c, T('cf', 'scout'), 'cf', 6, 5, 1, 'cc');
+  cc.hp = 1;
+  E.attack(c, E.newUnit(c, T('eu', 'heavy'), 'eu', 5, 5, 3).id, 6, 5);
+  assert.equal(cc.hp, 1);
+  assert(cc.undyingUsed);
+  assert.equal(E.moraleFloor(c, cc), -2);
+  // Asahina: a target already hit this turn cannot counter him and he crits more often.
+  const a = blank('cf'),
+    first = E.newUnit(a, T('cf', 'support'), 'cf', 4, 5),
+    asahina = E.newUnit(a, T('cf', 'light'), 'cf', 6, 6, 1, 'asahina');
+  E.newUnit(a, T('eu', 'super'), 'eu', 5, 5, 3);
+  const before = E.preview(a, asahina.id, 5, 5);
+  assert(before.counterAllowed);
+  E.attack(a, first.id, 5, 5);
+  const after = E.preview(a, asahina.id, 5, 5);
+  assert(!after.counterAllowed && after.crit > before.crit);
+  // Senba: unmoved since his last turn, the first attack against him each phase is cut by 40%.
+  const s = blank('eu'),
+    senba = E.newUnit(s, T('cf', 'medium'), 'cf', 6, 5, 1, 'senba'),
+    gun = E.newUnit(s, T('eu', 'support'), 'eu', 5, 5);
+  const open = E.preview(s, gun.id, 6, 5).unit;
+  senba.held = true;
+  assert(E.preview(s, gun.id, 6, 5).unit < open * 0.65);
+  E.attack(s, gun.id, 6, 5);
+  assert.equal(E.preview(s, gun.id, 6, 5).unit, open, 'the guard is spent');
+});

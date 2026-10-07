@@ -1481,9 +1481,10 @@
       role: 'Artillery',
       hull: 'Strategic command',
       title: 'Founder of the Black Knights',
-      skill: 'Absolute Strategy',
-      desc: 'Command aura reaches 2 hexes and grants nearby units +15% damage.',
-      fx: { aura: { range: 2, value: 0.15 } },
+      skill: 'Tactical Command',
+      desc: 'Command action every 3 turns: a friendly unit within 2 hexes that has already acted may move and attack again (not his own unit). Command aura reaches 2 hexes with +10% damage.',
+      fx: { aura: { range: 2, value: 0.1 } },
+      action: { name: 'Tactical Command', verb: 'Zero’s Tactical Command', kind: 'command' },
       recruit: 400,
     },
     kallen: {
@@ -1496,8 +1497,8 @@
       hull: 'Black Knights ace',
       title: 'Captain of the Zero Squad',
       skill: 'Ace of the Black Knights',
-      desc: '+30% critical chance, +20% Armor damage and +15% armor penetration. Armor can fire again after a kill twice per turn.',
-      fx: { crit: 0.3, dmgBranch: { Armor: 0.2 }, pen: 0.15, refire: true },
+      desc: 'The first time her unit destroys an enemy each turn, it may attack again at once. +15% critical chance.',
+      fx: { ace: true, crit: 0.15 },
       recruit: 400,
     },
     tohdoh: {
@@ -1510,8 +1511,8 @@
       hull: 'Four Holy Swords command',
       title: 'Chief of Military Affairs',
       skill: 'Miracle Worker',
-      desc: '+15% damage and +35% counter-fire. His unit and adjacent friendly units take 10% less damage.',
-      fx: { dmg: 0.15, counter: 0.35, rearguard: 0.9 },
+      desc: 'Adjacent friendly units counter-fire 25% harder and take 10% less damage. With 2 or more friendly units beside him, his own unit counter-fires 40% harder and takes 20% less damage.',
+      fx: { miracle: true },
       recruit: 400,
     },
     cc: {
@@ -1523,9 +1524,9 @@
       role: 'Armor',
       hull: 'Black Knights command',
       title: 'Zero’s accomplice',
-      skill: 'Immortal Witch',
-      desc: 'Morale never falls below steady, takes 15% less damage and repairs 5% of its frame each turn.',
-      fx: { floor: 0, taken: 0.85, regen: 0.05 },
+      skill: 'Code Bearer',
+      desc: 'Never confused; her unit repairs 5% of its frame each turn. Once per operation, a blow that would destroy it leaves it at 1 HP instead.',
+      fx: { floor: -2, regen: 0.05, undying: true },
       recruit: 300,
     },
     ohgi: {
@@ -1537,9 +1538,9 @@
       role: 'Infantry',
       hull: 'Black Knights command',
       title: 'Second-in-command',
-      skill: 'Resistance Organizer',
-      desc: 'His unit and adjacent friendly units take 10% less damage. Nearby friendly units recover one extra morale step each turn.',
-      fx: { rearguard: 0.9, rally: 2 },
+      skill: 'Organizer',
+      desc: 'Adjacent friendly units recover a morale step each turn even when surrounded, and cannot fall below Low morale.',
+      fx: { organizer: true },
       recruit: 300,
     },
     chiba: {
@@ -1552,8 +1553,8 @@
       hull: 'Four Holy Swords',
       title: 'Fourth Squad commander',
       skill: 'Fourth Holy Sword',
-      desc: '+25% Infantry damage. Gains +10% damage for each other friendly unit next to the target, up to +30%.',
-      fx: { dmgBranch: { Infantry: 0.25 }, artist: 0.1 },
+      desc: '+12% damage and counter-fire for each other friendly unit next to the target, up to +36%.',
+      fx: { artist: 0.12 },
       recruit: 300,
     },
     asahina: {
@@ -1565,9 +1566,9 @@
       role: 'Armor',
       hull: 'Four Holy Swords',
       title: 'First Squad commander',
-      skill: 'First Holy Sword',
-      desc: '+20% damage when attacking and +15% critical chance.',
-      fx: { dmg: 0.2, attackOnly: true, crit: 0.15 },
+      skill: 'Rapid Assault',
+      desc: 'Attacking an enemy that has already been attacked this turn: +35% critical chance and no counter-fire.',
+      fx: { followUp: 0.35 },
       recruit: 300,
     },
     senba: {
@@ -1579,9 +1580,9 @@
       role: 'Infantry',
       hull: 'Four Holy Swords',
       title: 'Second Squad commander',
-      skill: 'Veteran Sword',
-      desc: '+30% counter-fire and takes 15% less damage.',
-      fx: { counter: 0.3, taken: 0.85 },
+      skill: 'Veteran’s Guard',
+      desc: 'If his unit did not move on its last turn, the first attack against it each turn deals 40% less damage.',
+      fx: { guard: 0.6 },
       recruit: 200,
     },
     urabe: {
@@ -1593,9 +1594,9 @@
       role: 'Infantry',
       hull: 'Four Holy Swords',
       title: 'Captain',
-      skill: 'Last Stand',
-      desc: 'Takes 30% less damage while below half frame and gains +25% counter-fire.',
-      fx: { belowHalf: 0.7, counter: 0.25 },
+      skill: 'Final Stand',
+      desc: 'Below 40% of its frame, his unit deals 50% more damage and counter-fire. When it is destroyed, friendly units within 2 hexes gain High morale.',
+      fx: { lastStand: 0.5, martyr: true },
       recruit: 200,
     },
     sugiyama: {
@@ -1607,9 +1608,9 @@
       role: 'Infantry',
       hull: 'Special Division',
       title: 'Special Division Captain',
-      skill: 'Special Division',
-      desc: 'Capturing a city restores 20% of the unit’s frame; takes 15% less damage on or next to friendly cities.',
-      fx: { captureHeal: 0.2, cityGuard: 0.85 },
+      skill: 'Special Operations',
+      desc: 'Capturing a city restores 25% of the unit’s frame and cuts a turn off the city’s battery recharge and F.L.E.I.J.A. devastation.',
+      fx: { captureHeal: 0.25, specialOps: true },
       recruit: 200,
     },
     minami: {
@@ -1621,9 +1622,9 @@
       role: 'Artillery',
       hull: 'Ikaruga command',
       title: 'Captain of the Ikaruga',
-      skill: 'Ikaruga Command',
-      desc: 'Command aura reaches 2 hexes and grants nearby units +10% damage.',
-      fx: { aura: { range: 2, value: 0.1 } },
+      skill: 'Ikaruga Fire Control',
+      desc: 'Friendly Artillery within 2 hexes of his unit gets +1 range.',
+      fx: { spotter: 2 },
       recruit: 200,
     },
     tamaki: {
@@ -1636,8 +1637,8 @@
       hull: 'Black Knights squadron',
       title: 'Squadron commander',
       skill: 'Reckless Charge',
-      desc: '+25% damage when attacking, but takes 15% more counter-fire.',
-      fx: { dmg: 0.25, attackOnly: true, counterTaken: 1.15 },
+      desc: 'His first attack after moving deals 35% more damage, but his unit takes 25% more counter-fire.',
+      fx: { charge: 0.35, counterTaken: 1.25 },
       recruit: 100,
     },
     katase: {
@@ -1649,9 +1650,9 @@
       role: 'Artillery',
       hull: 'JLF headquarters',
       title: 'Leader of the Japan Liberation Front',
-      skill: 'Mountain Fortress',
-      desc: 'Takes 20% less damage on or next to a friendly city. Nearby friendly units gain +10% damage.',
-      fx: { cityGuard: 0.8, aura: { range: 1, value: 0.1 } },
+      skill: 'Prepared Position',
+      desc: 'Friendly units within 1 hex take 15% less damage on mountains or next to a friendly city; friendly cities within 2 hexes restore 12% more defenses each turn.',
+      fx: { prepared: true },
       recruit: 300,
     },
     inoue: {
@@ -1664,8 +1665,8 @@
       hull: 'Resistance logistics',
       title: 'Resistance commander',
       skill: 'Resistance Logistics',
-      desc: 'While she commands, all repairs cost half; her unit repairs 5% of its frame each turn.',
-      fx: { repairHalf: true, regen: 0.05 },
+      desc: 'Friendly units within 2 hexes pay 30% less to repair and reinforce and repair 5% more at friendly cities.',
+      fx: { logistics: 2 },
       recruit: 100,
     },
     villetta: {
@@ -2298,10 +2299,15 @@
   function auraRange(a) {
     return fx(a).aura?.range || 1;
   }
-  // Lowest morale a unit can be pushed to: steady for commanders with a floor; Fernando's calm stops confusion.
+  // Lowest morale a unit can be pushed to: steady for commanders with a floor; Fernando's calm stops confusion and
+  // Ohgi's Organizer keeps adjacent units at Low or better.
   function moraleFloor(g, v) {
     if (fx(v).floor != null) return fx(v).floor;
-    return g.units.some(m => m.hp > 0 && m.side === v.side && fx(m).calm && dist(g, m, v) <= 1) ? -1 : -3;
+    return g.units.some(
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id)) && dist(g, m, v) <= 1,
+    )
+      ? -1
+      : -3;
   }
   // ---- HQ commanders: every action below works on the profile, outside or inside an operation ----
   function tokenShort(profile, cost) {
@@ -2445,7 +2451,7 @@
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
-      shortfall(funds(g, u.side), reinforceCost(u.type, g, u.side))
+      shortfall(funds(g, u.side), reinforceCost(u.type, g, u.side, u))
     );
   }
   function buyReason(g, s, type, stack = 1) {
@@ -2506,7 +2512,7 @@
     if (!u) return 'Select one of your units first';
     return (
       turnReason(g, u.side) ||
-      (a.side !== u.side ? 'Serves another faction' : null) ||
+      (!serves(k, u.side) ? 'Serves another faction' : null) ||
       (u.cmd ? 'Unit already has a commander' : null) ||
       shortfall(funds(g, u.side), { credits: a.cost })
     );
@@ -2518,7 +2524,13 @@
       turnReason(g, u.side) ||
       (u.morale <= -3 ? 'Unit is confused' : null) ||
       (u.feintCD > 0 ? `Ready in ${u.feintCD} turn${u.feintCD > 1 ? 's' : ''}` : null) ||
-      (!g.units.some(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2) ? 'No enemy within 2 hexes' : null)
+      (action.kind === 'command'
+        ? !commandTargets(g, u).length
+          ? 'No friendly unit within 2 hexes has acted'
+          : null
+        : !g.units.some(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2)
+          ? 'No enemy within 2 hexes'
+          : null)
     );
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
@@ -2900,7 +2912,11 @@
     const t = TYPES[u.type];
     return {
       min: t.min,
-      max: t.max + (eliteFx(u).range || 0) + (g && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0),
+      max:
+        t.max +
+        (eliteFx(u).range || 0) +
+        (g && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0) +
+        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0), // Minami's Ikaruga Fire Control
     };
   }
   function inRange(a, p, g) {
@@ -2939,6 +2955,7 @@
     u.c = dest.c;
     u.r = dest.r;
     u.moved = true;
+    u.held = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
     if (!isSea(dest)) dest.owner = u.side;
@@ -2958,6 +2975,11 @@
       fortify(g, s);
       claim(g, s, u.side);
       if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + maxHP(u) * fx(u).captureHeal);
+      // Sugiyama's Special Operations: a turn off the city's battery recharge and F.L.E.I.J.A. devastation.
+      if (fx(u).specialOps) {
+        if ((s.gunReady || 0) > g.turn) s.gunReady--;
+        if (devastated(g, s)) s.devastated--;
+      }
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
       hooks.capture?.(g, s, u, loser);
       // As in WC4, a power whose capital falls surrenders: its cities pass to the conqueror, its armies disband.
@@ -3033,6 +3055,7 @@
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
+    attack *= skillAttack(g, u, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
     if (counter && ef.counter) attack *= 1 + ef.counter;
     if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
@@ -3096,6 +3119,7 @@
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
+      attack *= skillDefense(g, target, counter);
       const ground = tile(g, target.c, target.r);
       if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= 1 + seaPenalty(g, target.side);
@@ -3127,10 +3151,23 @@
             raid,
         )
       : 0;
+    // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
+    const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
     const counter =
-      !!d && !t.noCounter && !ef.noCounter && d.morale > -3 && !atSea(g, d) && inRange(d, a, g) && hostileTarget(g, d, a);
+      !followUp &&
+      !!d &&
+      !t.noCounter &&
+      !ef.noCounter &&
+      d.morale > -3 &&
+      !atSea(g, d) &&
+      inRange(d, a, g) &&
+      hostileTarget(g, d, a);
     const crit = clamp(
-      t.crit + (f.crit || 0) + (wears(g, a, 'marksman') ? 0.08 : 0) + techValue(g, a.side, 'sakura.varis'),
+      t.crit +
+        (f.crit || 0) +
+        (followUp ? f.followUp : 0) +
+        (wears(g, a, 'marksman') ? 0.08 : 0) +
+        techValue(g, a.side, 'sakura.varis'),
       0,
       0.85,
     );
@@ -3145,9 +3182,18 @@
       armorPen: clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95),
     };
   }
-  function kill(g, v, attacker) {
+  // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
+  function kill(g, v, attacker, force = false) {
     if (v.hp > 0) return;
+    if (fx(v).undying && !v.undyingUsed && !force) {
+      v.hp = 1;
+      v.undyingUsed = true;
+      log(g, `${COMMANDERS[v.cmd].short} survives a lethal blow: Code Bearer.`, v.side);
+      return;
+    }
     v.hp = 0;
+    // Urabe's Final Stand: his fall rallies friendly units within 2 hexes to High morale.
+    if (fx(v).martyr) for (const w of g.units) if (w.hp > 0 && w.side === v.side && dist(g, w, v) <= 2) w.morale = 1;
     if (attacker) {
       if (attacker.cmd) {
         const k = attacker.cmd,
@@ -3187,6 +3233,9 @@
       dmg = Math.round(pr.unit * mult);
       d.hp = Math.max(0, d.hp - dmg);
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
+      // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
+      if (fx(d).guard && d.held) d.guardStamp = guardStamp(g);
+      d.struck = { turn: g.turn, side: a.side };
     }
     if (s && pr.shield) {
       sd = Math.min(s.shield, Math.round(pr.shield * mult));
@@ -3216,8 +3265,8 @@
         kill(g, v, a);
       }
     }
+    if (d && d.hp <= 0) kill(g, d, a);
     const destroyed = !!d && d.hp <= 0;
-    if (destroyed) kill(g, d, a);
     const eliteBreakthrough = !!aef.breakthrough,
       eliteRelentless = !!aef.relentless;
     let cap = f.refire || aef.refire ? 2 : 1;
@@ -3236,6 +3285,12 @@
       breakthrough = true;
     } else if (destroyed && a.hp > 0 && (TYPES[a.type].relentless || eliteRelentless)) {
       // Heavy and super-heavy frames always fire again after a kill, beyond the breakthrough cap.
+      a.attacked = false;
+      breakthrough = true;
+    }
+    // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
+    if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
+      a.aceTurn = g.turn;
       a.attacked = false;
       breakthrough = true;
     }
@@ -3382,14 +3437,16 @@
       max: r.max,
     };
   }
-  function reinforceCost(type, g = null, side = null) {
-    const p = price(type, 1, g, side);
-    return { credits: p.credits, industry: p.industry, sakuradite: p.sakuradite };
+  // u: the unit being reinforced, for Inoue's Resistance Logistics discount (30% off credits and industry).
+  function reinforceCost(type, g = null, side = null, u = null) {
+    const p = price(type, 1, g, side),
+      k = u && g && logisticsNear(g, u) ? 0.7 : 1;
+    return { credits: Math.round(p.credits * k), industry: Math.round(p.industry * k), sakuradite: p.sakuradite };
   }
   // Repairs restore 35% of the frame for a fifth of the unit's build price.
   function repairCost(u, g = null) {
     const half = g && g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).repairHalf) ? 0.5 : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half));
+    return Math.max(10, Math.round(baseRepairCost(u) * half * (g && logisticsNear(g, u) ? 0.7 : 1)));
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
@@ -3398,7 +3455,7 @@
     const u = g.units.find(u => u.id === id);
     const why = reinforceReason(g, u);
     if (why) return { ok: false, reason: why };
-    const cost = reinforceCost(u.type, g, u.side),
+    const cost = reinforceCost(u.type, g, u.side, u),
       e = funds(g, u.side);
     spend(e, cost);
     const old = maxHP(u);
@@ -3479,16 +3536,83 @@
     return { ok: true };
   }
   // Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem: −2 morale to enemies within 2 hexes.
-  function feint(g, id) {
+  // Zero's Tactical Command (kind 'command') instead lets a friendly unit that has acted move and attack again.
+  function feint(g, id, targetId = null) {
     const u = g.units.find(u => u.id === id);
     const why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
+    const action = COMMANDERS[u.cmd].action;
+    if (action.kind === 'command') {
+      const options = commandTargets(g, u),
+        v =
+          targetId == null
+            ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
+            : options.find(v => v.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose a friendly unit within 2 hexes that has already acted' };
+      v.moved = v.attacked = false;
+      v.chain = 0;
+      u.feintCD = 3;
+      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} acts again.`, u.side);
+      return { ok: true, target: v.id };
+    }
     const victims = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2);
     victims.forEach(v => (v.morale = Math.max(moraleFloor(g, v), v.morale - 2)));
     u.feintCD = 3;
     log(g, `${COMMANDERS[u.cmd].action.verb} disrupts ${victims.length} enemy units.`, u.side);
     return { ok: true, affected: victims.length };
   }
+
+  // ======== Black Knights and JLF commanders: allegiance and signature skills ========
+  // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
+  // Federation units. Skill numbers are first-pass balance guesses.
+  const ALLIES = { cf: ['bk', 'jlf'] };
+  function serves(k, side) {
+    const a = COMMANDERS[k];
+    return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
+  }
+  // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
+  function commandTargets(g, u) {
+    return g.units.filter(
+      v => v.hp > 0 && v.side === u.side && v.id !== u.id && (v.moved || v.attacked) && v.morale > -3 && dist(g, u, v) <= 2,
+    );
+  }
+  const skillNear = (g, u, flag, range, self = true) =>
+    g.units.some(
+      v => v.hp > 0 && v.side === u.side && (self || v.id !== u.id) && fx(v)[flag] && dist(g, v, u) <= range,
+    );
+  // Tohdoh's Miracle Worker: 1 for units beside him; 2 for Tohdoh himself with two or more friendly units adjacent.
+  function miracle(g, u) {
+    if (fx(u).miracle)
+      return g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, u) === 1).length >= 2 ? 2 : 0;
+    return skillNear(g, u, 'miracle', 1, false) ? 1 : 0;
+  }
+  const guardStamp = g => `${g.turn}:${g.phase}`;
+  // Attack multiplier: Miracle Worker counter-fire, Urabe's Final Stand, Tamaki's Reckless Charge.
+  function skillAttack(g, u, counter) {
+    const f = fx(u);
+    let m = counter ? [1, 1.25, 1.4][miracle(g, u)] : 1;
+    if (f.lastStand && u.hp / maxHP(u) < 0.4) m *= 1 + f.lastStand;
+    if (f.charge && !counter && u.moved && !u.chain) m *= 1 + f.charge;
+    return m;
+  }
+  // Damage-taken multiplier: Miracle Worker, Senba's Veteran's Guard, Katase's Prepared Position.
+  function skillDefense(g, target, counter) {
+    const tf = fx(target),
+      ground = tile(g, target.c, target.r);
+    let m = [1, 0.9, 0.8][miracle(g, target)];
+    if (tf.guard && !counter && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
+    if (
+      skillNear(g, target, 'prepared', 1) &&
+      (ground?.terrain === 'mountain' || g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1))
+    )
+      m *= 0.85;
+    return m;
+  }
+  // Inoue's Resistance Logistics (repair and reinforce discount, extra city repair) and Minami's spotting reach.
+  const logisticsNear = (g, u) =>
+    g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).logistics && dist(g, v, u) <= fx(v).logistics);
+  const spotted = (g, u) =>
+    g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).spotter && dist(g, v, u) <= fx(v).spotter);
 
   // ======== Sakuradite: the fourth resource, mined at a handful of deposits ========
   // Japan holds 70 of the world's 100 base output, as in the lore (nearly 70% of the world's Sakuradite). Outputs,
@@ -3853,7 +3977,7 @@
       if (v && !ring) {
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp });
         v.hp = 0;
-        kill(g, v, null);
+        kill(g, v, null, true);
         destroyed.push(v.id);
       } else if (v) {
         const left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * FLEIJA.ringHP)));
@@ -3972,6 +4096,7 @@
       u.attacked = false;
       u.chain = 0;
       u.eliteMoveAfterKill = false;
+      u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
@@ -3990,6 +4115,9 @@
       const auras = mine.filter(v => v.hp > 0 && v.cmd && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
+      // Ohgi's Organizer: the morale step comes even when surrounded.
+      else if (nearby >= 3 && mine.some(m => m.hp > 0 && m.id !== u.id && fx(m).organizer && dist(g, m, u) <= 1))
+        u.morale = Math.min(1, u.morale + 1);
       const t = tile(g, u.c, u.r),
         attrition = TERRAIN[t.terrain]?.attrition;
       if (attrition) {
@@ -3997,11 +4125,16 @@
         u.hp = Math.max(1, u.hp - Math.round(maxHP(u) * attrition * (1 - filler)));
       }
       const s = stationAt(g, u);
-      if (s?.owner === side) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.08));
+      if (s?.owner === side)
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * (0.08 + (logisticsNear(g, u) ? 0.05 : 0))));
     }
     g.strikes = [];
+    // Katase's Prepared Position: friendly cities within 2 hexes of his unit restore 12% more defenses.
+    const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);
     for (const s of g.stations) {
-      if (s.owner === side) s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * 0.12));
+      if (s.owner !== side) continue;
+      const rate = 0.12 + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
+      s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * rate));
     }
     strategicTurn(g, side);
     hooks.turn?.(g, side);
@@ -4907,7 +5040,7 @@
           !atSea(g, u),
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
-      const c = reinforceCost(u.type, g, side);
+      const c = reinforceCost(u.type, g, side, u);
       if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
     }
     // 5. Build: front-line factories first; stack up when the budget allows. A soft cap keeps armies manageable.
@@ -4956,7 +5089,8 @@
         const v = field[p.r * g.cols + p.c];
         return Number.isFinite(v) ? v : 60;
       };
-    if (COMMANDERS[u.cmd]?.action && !feintReason(g, u)) {
+    const action = COMMANDERS[u.cmd]?.action;
+    if (action && action.kind !== 'command' && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -5043,6 +5177,11 @@
       const a = attack(g, id, shot.p.c, shot.p.r);
       if (a.ok) events.push({ kind: 'attack', ...a, id });
       else break;
+    }
+    // Zero's Tactical Command, after his own orders: the strongest friendly unit that has acted goes again.
+    if (action?.kind === 'command' && !g.over && u.hp > 0 && !feintReason(g, u)) {
+      const r = feint(g, id);
+      if (r.ok) events.push({ kind: 'feint', id, affected: 1 }, ...aiOrder(g, r.target));
     }
     return events;
   }
@@ -5227,6 +5366,10 @@
     blastArea,
     targetName,
     aiLaunchTarget,
+    // Black Knights and JLF commanders.
+    ALLIES,
+    serves,
+    commandTargets,
   };
   if (typeof module !== 'undefined') module.exports = root.Knightmare;
 })(typeof window !== 'undefined' ? window : globalThis);
