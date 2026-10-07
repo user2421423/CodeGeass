@@ -167,28 +167,43 @@
       "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
     },
     "ahura_mazda": {
-      "src": "units/ahura_mazda-3d3a09cb258d.webp"
+      "src": "units/ahura_mazda-47f9274a15c5.png"
     },
     "canterbury": {
-      "src": "units/canterbury-9d1d46414366.webp"
+      "src": "units/canterbury-81423f12cb1a.png"
     },
     "siegfried": {
-      "src": "units/siegfried-3d64a2aa7be2.webp"
+      "src": "units/siegfried-400dc42b4f6a.png"
     },
     "portman": {
-      "src": "units/portman-b4211d14122a.webp"
+      "src": "units/portman-aef8fc6aad8d.png"
     },
     "portman_ii": {
-      "src": "units/portman_ii-fbc097994d6f.webp"
+      "src": "units/portman_ii-0a2b145551d7.png"
     },
     "carrier_battleship": {
-      "src": "units/generic_carrier-67018edf4e80.webp"
+      "src": "units/carrier_battleship-3d952e86c4cf.png"
     },
     "eu_carrier": {
-      "src": "units/generic_carrier-67018edf4e80.webp"
+      "src": "units/generic_carrier-bf5e0799d818.png"
     },
     "cf_carrier": {
-      "src": "units/generic_carrier-67018edf4e80.webp"
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
+    "jp_tank": {
+      "src": "units/jp_tank-43b67986614a.png"
+    },
+    "jp_artillery": {
+      "src": "units/jp_artillery-10554e398c8e.png"
+    },
+    "vercingetorix": {
+      "src": "units/vercingetorix-7d0301ba1c66.png"
+    },
+    "panzer_frosch": {
+      "src": "units/panzer_frosch-cc6c57921a5c.png"
+    },
+    "panzer_frosch_ii": {
+      "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
     }
   },
   "portraits": {

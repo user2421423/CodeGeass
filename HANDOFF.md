@@ -40,13 +40,12 @@ screens in `dist/ui/campaign-screens.js` (smoke-tested in `tests/ui-smoke.cjs`).
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **63 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 8 campaign frames, 5 naval frames) and 58 commander portraits**, registered
+Published artwork is tracked and deployed from `dist/assets/art/`: **68 Knightmare sprites (31 Conquest frames
+including the Bamides, 19 Elite Forces, 11 campaign frames, 7 naval frames) and 58 commander portraits**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
 workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art except
-Vercingetorix, the two campaign-only Japanese Army vehicles (tank and rocket artillery) and the E.U. and Federation
-amphibious frames (Panzer-Frosch, Shui Gun-Ru and their type IIs), which use their drawings; procedural art is otherwise
+the Federation's amphibious Shui Gun-Ru and Shui Gun-Ru II, which use their drawings; procedural art is otherwise
 only a runtime safety fallback.
 To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
@@ -275,7 +274,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   `jlf` (Japan Liberation Front, 10% less damage in forest or mountains), never in Conquest (`MAJORS` is unchanged).
 - Campaign-only frames (`campaign: true`): Burai, Akatsuki Flight-Enabled, Zangetsu, Raikō, Japanese battle tank and
   rocket artillery, Shen Hu, V.V.'s Siegfried, and Euro Britannia's Vercingetorix (Shin), Ahura Mazda (Ashley) and
-  Canterbury siege gun (Vercingetorix and the two Japanese vehicles are drawn art only).
+  Canterbury siege gun.
 - Campaign-only side `eb` (Euro Britannia, doctrine Knightly Orders: units led by a commander deal +10% damage), with
   `LINEUPS.eb` (Britannia's 2017 frames plus the Canterbury). Like `bk` and `jlf` it never appears in Conquest. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
   (120 HP / 28 attack / 7 armor / 2 move); Tohdoh's three-tank commander formation is the conventional force that can

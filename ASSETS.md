@@ -18,7 +18,7 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **63 Knightmare sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
+The game ships **68 Knightmare sprites and 58 commander portraits** in `dist/assets/art/`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
@@ -38,8 +38,13 @@ license does not license the studio artwork.
   (Gawain, Lancelot, Lancelot Albion) so every unit sprite has a transparent background. Burai and Raikō come from
   their wiki pages; Zangetsu and Shen Hu reuse earlier archive art; the Akatsuki Flight-Enabled shares the Air Glide
   render; Emperor Lelouch shares Zero's portrait.
-- Every Knightmare type and commander has published art except the campaign's Japanese Army tank and rocket
-  artillery, which use their drawings. Procedural drawings otherwise remain only as runtime safety fallbacks.
+- Owner-supplied artwork (added 2026-10-07 from the `feature/canon-unit-art-v2` branch; origin not recorded in this
+  repository) covers Vercingetorix, Ahura Mazda, Canterbury, Siegfried, Portman, Portman II, Panzer-Frosch,
+  Panzer-Frosch II, the Japanese Army tank and rocket artillery, Britannia's Carrier-Battleship and the generic carrier
+  shared by the E.U. and Federation. Backgrounds were removed with `tools/local_art_prepare.py`; the enclosed-gap seeds
+  are in `tools/art-backgrounds.json`.
+- Every Knightmare type and commander has published art except Shui Gun-Ru and Shui Gun-Ru II, which use their
+  drawings. Procedural drawings otherwise remain only as runtime safety fallbacks.
 
 ## Preparing and publishing art
 

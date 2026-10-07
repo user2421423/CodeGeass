@@ -729,70 +729,113 @@
     {
       "kind": "units",
       "id": "ahura_mazda",
-      "file": "units/ahura_mazda-3d3a09cb258d.webp",
+      "file": "units/ahura_mazda-47f9274a15c5.png",
       "page": "https://codegeass.fandom.com/wiki/Ahuramazda",
-      "image": "https://www.geass.jp/akito/img/kmf_Ahura.jpg",
-      "method": "Original transparent game sprite redrawn from official Ahuramazda reference art, preserving the red/gold armor and heavy arm-gun silhouette."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "canterbury",
-      "file": "units/canterbury-9d1d46414366.webp",
+      "file": "units/canterbury-81423f12cb1a.png",
       "page": "https://codegeass.fandom.com/wiki/Canterbury",
-      "image": "",
-      "method": "Original transparent game sprite based on the canonical Canterbury siege-KMF concept: low quadruped chassis with oversized VARIS siege cannon."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "siegfried",
-      "file": "units/siegfried-3d64a2aa7be2.webp",
+      "file": "units/siegfried-400dc42b4f6a.png",
       "page": "https://codegeass.fandom.com/wiki/Siegfried",
-      "image": "https://static.wikitide.net/geasswiki/e/e1/Siegfried_front_color_settei2.png",
-      "method": "Original transparent game sprite redrawn from canonical Siegfried settei/reference imagery, keeping the circular Knight Giga Fortress body and radial Slash Harkens."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "portman",
-      "file": "units/portman-b4211d14122a.webp",
+      "file": "units/portman-aef8fc6aad8d.png",
       "page": "https://codegeass.fandom.com/wiki/Portman",
-      "image": "https://static.wikitide.net/geasswiki/b/ba/Portman_front_color_settei.png",
-      "method": "Original transparent game sprite redrawn from canonical Portman front-color settei, keeping the hydro-jet/amphibious silhouette."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "portman_ii",
-      "file": "units/portman_ii-fbc097994d6f.webp",
+      "file": "units/portman_ii-0a2b145551d7.png",
       "page": "https://codegeass.fandom.com/wiki/Portman_Type_2",
-      "image": "https://static.wikitide.net/geasswiki/8/84/Portman_type_2_front_color_settei.png",
-      "method": "Original transparent game sprite redrawn from canonical Portman II settei, with the additional forearm turbines and heavier amphibious profile."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "carrier_battleship",
-      "file": "units/generic_carrier-67018edf4e80.webp",
+      "file": "units/carrier_battleship-3d952e86c4cf.png",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
-      "image": "",
-      "method": "Genericized Britannian-style carrier-battleship sprite: trimaran carrier silhouette retained, faction flags and insignia removed."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "eu_carrier",
-      "file": "units/generic_carrier-67018edf4e80.webp",
+      "file": "units/generic_carrier-bf5e0799d818.png",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
-      "image": "",
-      "method": "Reuses the genericized Britannian-style carrier-battleship sprite with all faction flags and insignia removed, per game naval standardization."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. Generic carrier shared by the E.U. and Federation."
     },
     {
       "kind": "units",
       "id": "cf_carrier",
-      "file": "units/generic_carrier-67018edf4e80.webp",
+      "file": "units/generic_carrier-bf5e0799d818.png",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
-      "image": "",
-      "method": "Reuses the genericized Britannian-style carrier-battleship sprite with all faction flags and insignia removed, per game naval standardization."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. Generic carrier shared by the E.U. and Federation."
+    },
+    {
+      "kind": "units",
+      "id": "jp_tank",
+      "file": "units/jp_tank-43b67986614a.png",
+      "page": null,
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
+    },
+    {
+      "kind": "units",
+      "id": "jp_artillery",
+      "file": "units/jp_artillery-10554e398c8e.png",
+      "page": null,
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
+    },
+    {
+      "kind": "units",
+      "id": "vercingetorix",
+      "file": "units/vercingetorix-7d0301ba1c66.png",
+      "page": "https://codegeass.fandom.com/wiki/Vercingetorix",
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
+    },
+    {
+      "kind": "units",
+      "id": "panzer_frosch",
+      "file": "units/panzer_frosch-cc6c57921a5c.png",
+      "page": null,
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
+    },
+    {
+      "kind": "units",
+      "id": "panzer_frosch_ii",
+      "file": "units/panzer_frosch_ii-ecb43e7e371a.png",
+      "page": null,
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     }
   ],
   "drawnFallbacks": {
-    "units": [],
+    "units": [
+      "shui_gun_ru",
+      "shui_gun_ru_ii"
+    ],
     "portraits": []
   }
 }

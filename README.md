@@ -120,7 +120,7 @@ node tools/validate_assets.cjs --tracked
 
 ## Publish artwork
 
-The live game ships 63 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
+The live game ships 68 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
 58 commander portraits. Credits and source provenance are in `ASSETS.md`
 and `dist/assets/art/sources.json`. To update the artwork from local raw inputs or a processed bundle:
 
