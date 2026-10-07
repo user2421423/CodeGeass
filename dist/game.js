@@ -459,7 +459,14 @@ function panel() {
         '',
       )}</div>${ours ? `<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', shipyardReason(s), 'Build a Knightmare unit', 'primary')}</div><p class="description">One unit per city per turn. New units act next turn. Garrisons repair 8% of their frame here each turn.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
   } else {
-    main = `<section>${unitPicker}<div class="empty-panel"><span class="eyebrow">Command the world</span><h3>Position.<br>Concentrate.<br>Break through.</h3><p class="description">Select a Knightmare to see its movement and attack range. Select a city to build new units.</p><div class="info-strip">Green hexes move, red hexes attack with one click. Moving onto a sea hex embarks a transport; sailing to a coast lands it. An Armor kill can refresh both actions.</div><button data-action="next">Select a ready unit</button></div></section>`;
+    const tileChoice = selection?.kind === 'tile' ? E.tile(game, selection.c, selection.r) : null;
+    if (tileChoice) {
+      const info = E.TERRAIN[tileChoice.terrain],
+        owner = tileChoice.owner ? F(tileChoice.owner) : null;
+      main = `<section>${unitPicker}<div class="side-title"><span class="label">Terrain · Hex ${tileChoice.c}, ${tileChoice.r}</span>${owner ? `<span class="chip" style="color:${owner.color}">${owner.short}</span>` : ''}</div><h2 class="unit-name">${esc(info.name)}</h2><p class="description">${esc(info.desc)}</p><div class="stat-grid"><div><span class="label">Movement cost</span><b>${info.blocked ? 'Impassable' : info.cost ?? (tileChoice.terrain === 'sea' ? 'Transport' : 1)}</b></div><div><span class="label">Control</span><b>${owner ? esc(owner.short) : 'Unclaimed'}</b></div></div>${tileChoice.terrain !== 'sea' && tileChoice.terrain !== 'peak' ? '<div class="info-strip">Julius and float units ignore terrain movement costs.</div>' : ''}</section>`;
+    } else {
+      main = `<section>${unitPicker}<div class="empty-panel"><span class="eyebrow">Command the world</span><h3>Position.<br>Concentrate.<br>Break through.</h3><p class="description">Select a Knightmare to see its movement and attack range. Select a city to build new units.</p><div class="info-strip">Green hexes move, red hexes attack with one click. Moving onto a sea hex embarks a transport; sailing to a coast lands it. An Armor kill can refresh both actions.</div><button data-action="next">Select a ready unit</button></div></section>`;
+    }
   }
   const selectedTile =
     selection?.kind === 'tile'
@@ -473,7 +480,7 @@ function panel() {
   if (u || s || m) return main;
   return (
     main +
-    `<section class="section-divider"><span class="label">${selectedTile ? 'Hex ' + selectedTile.c + ', ' + selectedTile.r : 'Theater intelligence'}</span><p class="description">${selectedTile ? terrainDescription(selectedTile) : 'Oceans separate the powers: embark Knightmares as transports to cross them.'}</p><label class="label" for="station-select">City directory</label><select class="select unit-select" id="station-select"><option value="">Inspect city…</option>${[
+    `<section class="section-divider"><span class="label">Theater intelligence</span>${selectedTile ? '' : '<p class="description">Oceans separate the powers: embark Knightmares as transports to cross them.</p>'}<label class="label" for="station-select">City directory</label><select class="select unit-select" id="station-select"><option value="">Inspect city…</option>${[
       ...game.stations,
     ]
       .sort((a, b) => (a.owner === game.player) - (b.owner === game.player) || a.name.localeCompare(b.name))
@@ -2250,6 +2257,12 @@ function dockHTML() {
   if (m) {
     const y = E.depositYield(game, m);
     return `<div class="dock-visual mine-visual">${ICONS.use('sakuradite', 'dock-mine')}<span class="faction-flag ${m.owner}">${F(m.owner).letter}</span></div><div class="dock-unit"><span class="label">Sakuradite mine · Refinery ${y.level}</span><strong>${esc(m.name)}</strong><p>+${y.sakuradite} Sakuradite${y.credits ? ` · +${y.credits} credits` : ''} a turn · base ${m.base}</p></div><div class="dock-actions"><button class="small" data-action="details">Mine details</button></div>`;
+  }
+  const tileChoice = selection?.kind === 'tile' ? E.tile(game, selection.c, selection.r) : null;
+  if (tileChoice) {
+    const info = E.TERRAIN[tileChoice.terrain],
+      owner = tileChoice.owner ? F(tileChoice.owner) : null;
+    return `<div class="dock-idle terrain-dock"><span class="label">Terrain · Hex ${tileChoice.c}, ${tileChoice.r}</span><strong>${esc(info.name)}</strong><p>${esc(info.desc)}${owner ? ` · ${esc(owner.short)} territory.` : ''}</p></div>`;
   }
   return `<div class="dock-idle"><span class="label">Army command</span><strong>Select a unit or city</strong><p>Click a Knightmare to move and attack. Click a city to build.</p></div><div class="dock-actions"><button class="small" data-action="next">Select a ready unit</button><button class="small ghost" data-action="details">Unit directory</button></div>`;
 }
