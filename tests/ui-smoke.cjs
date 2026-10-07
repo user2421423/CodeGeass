@@ -232,14 +232,14 @@ const modal = () => node('modal-root').innerHTML;
   // Campaign: factory catalogs deduplicate reused frames, team allies are not hostile, then normal mission flow.
   run('startMenu()');
   assert(modal().includes('data-action="campaign"'), 'the start menu offers the campaigns');
-  run("game=CP.createMission('eb_narva',1); setWorld(); render();");
+  run("game=window.KnightmareCampaign.createMission('eb_narva',1); setWorld(); render();");
   const ebCity = run("game.stations.find(s=>s.owner===game.player).id");
   run(`openShop(${ebCity},'Infantry')`);
   assert.equal((modal().match(/data-recruit="gloucester"/g) || []).length, 1, 'Euro Britannia shows Gloucester only once');
   run(`openShop(${ebCity},'Artillery')`);
   assert.equal((modal().match(/data-recruit="liverpool"/g) || []).length, 1, 'Euro Britannia shows Liverpool only once');
   assert.equal((modal().match(/data-recruit="canterbury"/g) || []).length, 1, 'Euro Britannia shows Canterbury only once');
-  run("game=CP.createMission('eb_fall',1); setWorld(); render();");
+  run("game=window.KnightmareCampaign.createMission('eb_fall',1); setWorld(); render();");
   assert.equal(run("hostileUnit(game.units.find(u=>u.side==='britannia'))"), false, 'campaign team ally has no hostile marker');
   assert.equal(run("hostileUnit(game.units.find(u=>u.side==='eu'))"), true, 'campaign enemy receives hostile marker');
   run('draw(72,.016)');
