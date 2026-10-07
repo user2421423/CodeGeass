@@ -326,25 +326,43 @@ FORCE_SEA = [
     (-3.0, 36.45), (-6.0, 34.75), (-4.0, 34.75), (-2.0, 34.75),  # Strait of Gibraltar / Alboran Sea
     (105.0, -4.5),  # Sunda Strait: keep Java separated from Sumatra/mainland Asia
 ]
-# Final coastline pass on exact hexes (column, row), applied after the lon/lat lists above. Each one fixes a silhouette
-# the raster cuts short or fills in. None may bridge a strait: Italy's heel (98,19)/(99,20) would touch Albania across
-# Otranto, India's tip (128,39) Sri Lanka, southern Sweden (96,11) Germany, western Kyushu (154,24) Korea, and (90,13)
-# joins the Low Countries rather than England (any south-east England hex touches France across Dover), so those
-# are left as sea; Kyushu stays joined to Honshu (the Kanmon link) because it cannot be split without cutting Korea.
+# Final coastline pass on exact hexes (column, row), applied after the lon/lat lists above. These edits prioritize
+# recognizable silhouettes and navigable strategic waterways at the 2-degree hex scale. Narrow real-world straits
+# are widened to at least one water hex where naval movement needs a route; tiny Arctic islands with no conquest
+# value are suppressed. Kyushu remains joined to Honshu at this resolution, while Hokkaido is kept separate.
 HEX_LAND = [
     (87, 14), (89, 10),  # Great Britain: Cornwall, north-east Scotland
     (154, 25), (157, 24), (160, 21),  # Japan: southern Kyushu, Shikoku/Kii, eastern Tohoku
+    (151, 36), (151, 37), (148, 37),  # Philippines: central Visayas and Palawan
+    (98, 19),  # Italy: Apulian heel (paired with the Otranto sea cut below)
     (124, 30), (129, 37),  # India: Gujarat, Tamil Nadu
     (85, 18), (84, 21), (86, 22),  # Iberia: Galicia, Portugal, the Algarve
     (152, 23),  # Korea: south-west coast
-    (100, 2),  # Scandinavia: northern Norway
+    (100, 2), (95, 10),  # Scandinavia/Denmark: northern Norway and Jutland
     (165, 63), (166, 59), (147, 62), (154, 51),  # Australia: Sydney, Brisbane, Perth, Darwin coasts
+    (56, 75),  # Tierra del Fuego / Cape Horn
 ]
 HEX_SEA = [
     (87, 15),  # a stray one-hex islet off Brittany that Cornwall would otherwise join to Britain
-    (160, 18),  # Tsugaru Strait: Hokkaido is its own island
+    (160, 18), (159, 19),  # Tsugaru Strait: fully separate Hokkaido from Honshu
     (92, 18),  # Iberia: an over-extended north-east coastal hex
+    (99, 19),  # Strait of Otranto: keep Italy's new heel separate from the Balkans
+    (94, 11),  # Danish Straits: connect the Baltic to the North Sea
+    (103, 19), (103, 20),  # Bosporus/Dardanelles: connect Black Sea to Mediterranean
+    (107, 27), (111, 34), (111, 35),  # Red Sea north extension and Bab-el-Mandeb
+    (115, 26),  # Persian Gulf: open the north-western gulf
+    (59, 11),  # Hudson Strait: connect Hudson Bay to the Atlantic
+    (140, 42), (140, 43), (141, 42),  # Strait of Malacca: separate Malaya/Singapore from Sumatra
     (158, 53),  # Gulf of Carpentaria
+    # Simplify the Canadian Arctic archipelago for gameplay: remove Banks, Victoria and Baffin islands.
+    (29, 0), (27, 1), (28, 1), (29, 1), (30, 1), (32, 1), (33, 1), (34, 1),
+    (35, 1), (36, 1), (37, 1), (38, 1), (30, 2), (31, 2), (32, 2), (33, 2),
+    (34, 2), (35, 2), (36, 2), (37, 2), (38, 2), (33, 3), (34, 3), (35, 3),
+    (36, 3), (48, 1), (49, 1), (50, 1), (51, 1), (52, 1), (48, 2), (49, 2),
+    (50, 2), (51, 2), (52, 2), (53, 2), (54, 2), (49, 3), (50, 3), (51, 3),
+    (52, 3), (53, 3), (54, 3), (55, 3), (50, 4), (51, 4), (52, 4), (53, 4),
+    (54, 4), (55, 4), (56, 4), (57, 4), (50, 5), (51, 5), (52, 5), (53, 5),
+    (54, 5), (55, 5), (56, 5), (57, 5), (54, 6), (55, 6), (56, 6), (57, 6),
 ]
 
 
