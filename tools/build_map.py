@@ -326,6 +326,26 @@ FORCE_SEA = [
     (-3.0, 36.45), (-6.0, 34.75), (-4.0, 34.75), (-2.0, 34.75),  # Strait of Gibraltar / Alboran Sea
     (105.0, -4.5),  # Sunda Strait: keep Java separated from Sumatra/mainland Asia
 ]
+# Final coastline pass on exact hexes (column, row), applied after the lon/lat lists above. Each one fixes a silhouette
+# the raster cuts short or fills in. None may bridge a strait: Italy's heel (98,19)/(99,20) would touch Albania across
+# Otranto, India's tip (128,39) Sri Lanka, southern Sweden (96,11) Germany, western Kyushu (154,24) Korea, and (90,13)
+# joins the Low Countries rather than England (any south-east England hex touches France across Dover), so those
+# are left as sea; Kyushu stays joined to Honshu (the Kanmon link) because it cannot be split without cutting Korea.
+HEX_LAND = [
+    (87, 14), (89, 10),  # Great Britain: Cornwall, north-east Scotland
+    (154, 25), (157, 24), (160, 21),  # Japan: southern Kyushu, Shikoku/Kii, eastern Tohoku
+    (124, 30), (129, 37),  # India: Gujarat, Tamil Nadu
+    (85, 18), (84, 21), (86, 22),  # Iberia: Galicia, Portugal, the Algarve
+    (152, 23),  # Korea: south-west coast
+    (100, 2),  # Scandinavia: northern Norway
+    (165, 63), (166, 59), (147, 62), (154, 51),  # Australia: Sydney, Brisbane, Perth, Darwin coasts
+]
+HEX_SEA = [
+    (87, 15),  # a stray one-hex islet off Brittany that Cornwall would otherwise join to Britain
+    (160, 18),  # Tsugaru Strait: Hokkaido is its own island
+    (92, 18),  # Iberia: an over-extended north-east coastal hex
+    (158, 53),  # Gulf of Carpentaria
+]
 
 
 def build():
@@ -342,6 +362,10 @@ def build():
         grid[r][c] = 'p'
     for lon, lat in FORCE_SEA:
         c, r = hex_of(lon, lat)
+        grid[r][c] = '.'
+    for c, r in HEX_LAND:
+        grid[r][c] = 'p'
+    for c, r in HEX_SEA:
         grid[r][c] = '.'
     for r in range(ROWS):
         for c in range(COLS):

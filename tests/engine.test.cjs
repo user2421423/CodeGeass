@@ -100,6 +100,8 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(!byLand(city('London'), city('Paris')));
   assert(!byLand(city('Seoul'), city('Fukuoka')));
   assert(byLand(city('Fukuoka'), city('Tokyo Settlement')));
+  assert(!byLand(city('Sapporo'), city('Tokyo Settlement')), 'the Tsugaru Strait makes Hokkaido an island');
+  assert(!byLand(city('Colombo'), city('Chennai')), 'Sri Lanka stays an island');
   assert(byLand(city('Moscow'), city('Beijing')));
   const landDistance = (a, b) => {
     const seen = new Set([E.key(a)]),
