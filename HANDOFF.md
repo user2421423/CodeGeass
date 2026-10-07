@@ -22,7 +22,7 @@ Knightmare Frames.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
 **Campaign:** three story arcs as WC4-style campaigns, each played from either side: Season 1 and R2 (Black Knights or
-Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 54 missions on
+Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 58 missions on
 hand-built tactical maps,
 reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (tested in `tests/campaign.test.cjs`);
 screens in `dist/game.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
@@ -281,13 +281,13 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   - Black Knights S1 (9): Shinjuku Ghetto, Lake Kawaguchi, Narita, Port Yokosuka, Rescue of Tohdoh, Shikine and Kamine
     Islands (the Gawain), Fukuoka Base (allied with Britannia against Sawasaki), Special Administrative Zone, Black
     Rebellion.
-  - Britannia S1 (9): Invasion of Japan, Shinjuku, Saitama, Narita, Port Yokosuka Blockade, Chofu Detention Center,
-    Shikine and Kamine, Fukuoka Base, Black Rebellion.
-  - Black Knights R2 (10): Return of Zero (Babel Tower and the prisoner rescue), Battle over the Pacific, Second Port
-    Yokosuka, Xiaopei, Mausoleum of the Eighty-Eight Emperors, Geass Order, Second Tokyo, Kagoshima, Mount Fuji,
-    Damocles.
-  - Britannia R2 (10): Return of the Black Knights, Pacific, Second Port Yokosuka, Xiaopei, Mausoleum, Kagoshima,
-    Second Tokyo, Emperor Lelouch, Mount Fuji, Damocles.
+  - Britannia S1 (10): Invasion of Japan, Shinjuku, the Middle Eastern Federation's last stand (Area 18), Saitama,
+    Narita, Port Yokosuka Blockade, Chofu Detention Center, Shikine and Kamine, Fukuoka Base, Black Rebellion.
+  - Black Knights R2 (12): Battle of Babel Tower, Black Knights' Rescue Operation, Battle over the Pacific, Second Port
+    Yokosuka, Skirmish at Zhengzhou, Xiaopei, Mausoleum of the Eighty-Eight Emperors, Geass Order, Kagoshima,
+    Second Tokyo, Mount Fuji, Damocles. Kagoshima now correctly precedes the Second Assault on Tokyo Settlement.
+  - Britannia R2 (11): Return of the Black Knights, Pacific, Second Port Yokosuka, Xiaopei, Mausoleum, Kagoshima,
+    Second Tokyo, Second Battle of Kamejima Island / Ragnarök, Emperor Lelouch, Mount Fuji, Damocles.
   - Euro Britannia (8): Narva, Slonim, European Front (`br6`, Kingsley's offensive), Coup at Sankt Petersburg (Shin
     against Suzaku), the Gallia Grande, Siege and Assault of Castle Weisswolf, the Fall of Europia (2018, Paris).
   - E.U. (8): Narva, Ryo's Ambush, Slonim (orbital drop), Defense of Warsaw, the Gallia Grande, Siege and Assault of
