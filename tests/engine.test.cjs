@@ -104,6 +104,30 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(!byLand(city('Sapporo'), city('Tokyo Settlement')), 'the Tsugaru Strait makes Hokkaido an island');
   assert(!byLand(city('Colombo'), city('Chennai')), 'Sri Lanka stays an island');
   assert(byLand(city('Moscow'), city('Beijing')));
+
+  // Strategic waterways must remain navigable for the naval layer.
+  const bySea = (a, b) => {
+    const seen = new Set([E.key(a)]),
+      queue = [E.tile(g, a.c, a.r)];
+    while (queue.length) {
+      const t = queue.shift();
+      if (t.c === b.c && t.r === b.r) return true;
+      for (const n of E.adjacent(g, t))
+        if (!seen.has(E.key(n)) && E.isSea(n)) {
+          seen.add(E.key(n));
+          queue.push(n);
+        }
+    }
+    return false;
+  };
+  const seaAt = (lon, lat) => {
+    const h = E.hexOf(lon, lat);
+    return E.tile(g, h.c, h.r);
+  };
+  assert(bySea(seaAt(38, 21), seaAt(48, 12)), 'Red Sea must open into the Gulf of Aden');
+  assert(bySea(seaAt(20, 58.5), seaAt(5, 55)), 'Baltic must open into the North Sea');
+  assert(bySea(seaAt(34, 43), seaAt(25, 38)), 'Black Sea must open into the Mediterranean');
+  assert(bySea(seaAt(-85, 58), seaAt(-60, 55)), 'Hudson Bay must open into the Atlantic');
   const landDistance = (a, b) => {
     const seen = new Set([E.key(a)]),
       queue = [[E.tile(g, a.c, a.r), 0]];
@@ -121,6 +145,10 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(landDistance(city('Madrid'), city('Algiers')) > 20, 'Gibraltar remains a sea crossing, not a land bridge');
   assert(byLand(city('Bangkok'), city('Kuala Lumpur')), 'Thai–Malay peninsula stays continuous');
   assert(!byLand(city('Surabaya'), city('Kuala Lumpur')), 'Sunda Strait keeps Java separated from mainland Asia');
+  assert.deepEqual([city('Kuala Lumpur').c, city('Kuala Lumpur').r], [140, 41], 'Kuala Lumpur shifts north of the Malacca water gap');
+  for (const [c, r] of [[140, 42], [140, 43], [141, 42]]) assert(E.isSea(E.tile(g, c, r)), 'Strait of Malacca stays open');
+  for (const [c, r] of [[151, 36], [151, 37], [148, 37]]) assert(!E.isSea(E.tile(g, c, r)), 'Philippines keeps Visayas/Palawan land');
+  for (const [c, r] of [[29, 0], [30, 2], [50, 4], [55, 5]]) assert(E.isSea(E.tile(g, c, r)), 'Canadian Arctic clutter stays removed');
   for (const s of g.stations) assert.notEqual(E.tile(g, s.c, s.r).terrain, 'sea', s.name);
   const capitals = g.stations.filter(s => s.capital).map(s => [s.name, s.owner]);
   assert.deepEqual(capitals.sort(), [
