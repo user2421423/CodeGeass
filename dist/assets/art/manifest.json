@@ -165,6 +165,33 @@
     },
     "elite_akatsuki_zikisan": {
       "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
+    },
+    "vercingetorix": {
+      "src": "units/vercingetorix-92a4a0e7e849.webp"
+    },
+    "ahura_mazda": {
+      "src": "units/ahura_mazda-3d3a09cb258d.webp"
+    },
+    "canterbury": {
+      "src": "units/canterbury-9d1d46414366.webp"
+    },
+    "siegfried": {
+      "src": "units/siegfried-3d64a2aa7be2.webp"
+    },
+    "portman": {
+      "src": "units/portman-b4211d14122a.webp"
+    },
+    "portman_ii": {
+      "src": "units/portman_ii-fbc097994d6f.webp"
+    },
+    "carrier_battleship": {
+      "src": "units/generic_carrier-67018edf4e80.webp"
+    },
+    "eu_carrier": {
+      "src": "units/generic_carrier-67018edf4e80.webp"
+    },
+    "cf_carrier": {
+      "src": "units/generic_carrier-67018edf4e80.webp"
     }
   },
   "portraits": {
