@@ -559,10 +559,17 @@ function projectPanel(s) {
     blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Only one charge may be ready per power.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
   return blocks.join('');
 }
-function automationPolicyOptions(selected) {
-  return Object.entries(E.AUTOMATION_POLICIES)
-    .map(([k, p]) => `<option value="${k}" ${selected === k ? 'selected' : ''}>${esc(p.name)}</option>`)
-    .join('');
+function automationUnitOptionsHTML(s, selected) {
+  const options = E.automationUnitOptions(game, s);
+  return [
+    '<option value="">Off — manual production</option>',
+    ...options.map(id => {
+      const t = E.TYPES[id],
+        kind = t.naval ? 'Naval' : t.branch,
+        req = t.naval ? `Port ${t.port}` : `Factory ${t.tier}`;
+      return `<option value="${id}" ${selected === id ? 'selected' : ''}>${esc(t.name)} · ${esc(kind)} · ${req}</option>`;
+    }),
+  ].join('');
 }
 function automationReportText(r) {
   if (!r) return '';
@@ -578,24 +585,31 @@ function automationReportText(r) {
 function cityAutomationPanel(s) {
   if (game.mode !== 'conquest' || s.owner !== game.player) return '';
   const a = E.automationState(game),
-    cfg = E.cityAutomation(game, s),
-    raw = a.cities?.[s.id] || {},
-    inheritedUpgrade = raw.autoUpgrade == null,
-    inheritedProduce = raw.autoProduce == null;
-  return `<div class="target-box"><span class="label">Production policy</span><select class="select" data-city-policy="${s.id}" ${!interactive() ? 'disabled' : ''}>${automationPolicyOptions(cfg.policy)}</select><small>${esc(E.AUTOMATION_POLICIES[cfg.policy].desc)}</small><label class="auto-check"><input type="checkbox" data-city-auto-upgrade="${s.id}" ${cfg.autoUpgrade ? 'checked' : ''} ${!interactive() ? 'disabled' : ''}> Auto-upgrade buildings${inheritedUpgrade ? ' · global' : ''}</label><label class="auto-check"><input type="checkbox" data-city-auto-produce="${s.id}" ${cfg.autoProduce ? 'checked' : ''} ${!interactive() ? 'disabled' : ''}> Auto-produce units${inheritedProduce ? ' · global' : ''}</label><small>${a.enabled ? 'Automation runs after income is collected at the start of your turn.' : 'Global automation is currently off. Configure it from Production Command.'}</small></div>`;
+    unit = E.cityAutomation(game, s).unit,
+    t = unit ? E.TYPES[unit] : null,
+    stack = t?.naval === 'ship' ? 1 : a.stack,
+    why = unit ? E.buyReason(game, s, unit, stack) : null,
+    status = !unit
+      ? 'No automatic unit queued for this city.'
+      : why
+        ? `Queued: ${t.name} ×${stack}. Waiting: ${why}.`
+        : `Queued: ${t.name} ×${stack}. Ready for the next automation run.`;
+  return `<div class="target-box"><span class="label">Auto-produce each turn</span><select class="select" data-city-unit="${s.id}" ${!interactive() ? 'disabled' : ''}>${automationUnitOptionsHTML(s, unit)}</select><small>${esc(status)}</small>${unit ? `<small>Current cost: ${costHTML(E.price(unit, stack, game, game.player))}. Formation size and resource reserves come from Production Command.</small>` : ''}<small>${a.enabled ? 'Runs after income is collected at the start of your turn.' : 'Automation is currently off globally. The queue will wait until Production Command is enabled.'}</small></div>`;
 }
 function productionDialog() {
   if (game.mode !== 'conquest') return;
   const a = E.automationState(game),
     owned = game.stations.filter(s => s.owner === game.player),
-    policies = Object.keys(E.AUTOMATION_POLICIES),
-    countsByPolicy = Object.fromEntries(policies.map(k => [k, 0]));
-  for (const s of owned) countsByPolicy[E.cityAutomation(game, s).policy]++;
-  const summary = policies
-    .filter(k => countsByPolicy[k])
-    .map(k => `${E.AUTOMATION_POLICIES[k].name} ${countsByPolicy[k]}`)
-    .join(' · ');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Production Command"><div class="dialog-head"><div><div class="eyebrow">Conquest logistics</div><h2>Production Command</h2><p>Automate administration without handing over strategy. Every purchase uses the normal city rules and stops before touching your protected reserves.</p></div><button class="small close" data-action="close">Close</button></div><div class="brief-grid"><div><div class="brief-block"><span class="label">Master automation</span><label class="auto-check"><input type="checkbox" data-automation-field="enabled" ${a.enabled ? 'checked' : ''}> Run configured city automation at the start of every player turn</label><label class="auto-check"><input type="checkbox" data-automation-field="autoUpgrade" ${a.autoUpgrade ? 'checked' : ''}> Auto-upgrade buildings by default</label><label class="auto-check"><input type="checkbox" data-automation-field="autoProduce" ${a.autoProduce ? 'checked' : ''}> Auto-produce units by default</label></div><div class="brief-block"><span class="label">Default policy</span><select class="select" data-automation-field="defaultPolicy">${automationPolicyOptions(a.defaultPolicy)}</select><p class="mode-note">Used by newly captured and otherwise unconfigured cities. Current mix: ${esc(summary || 'all manual')}.</p><div class="actions"><button data-action="automation-apply-all">Apply default policy to all ${owned.length} cities</button><button class="ghost" data-action="automation-clear-cities">Clear city overrides</button></div></div><div class="brief-block"><span class="label">Formation size</span><select class="select" data-automation-field="stack">${[1,2,3].map(n => `<option value="${n}" ${a.stack === n ? 'selected' : ''}>${n} frame${n > 1 ? 's' : ''} per automatic unit</option>`).join('')}</select><p class="mode-note">Automation never deploys Elite Forces or starts F.L.E.I.J.A./Eliminator projects.</p></div></div><div><div class="brief-block"><span class="label">Protected resource reserve</span><p>Automatic and bulk purchases are skipped if they would leave you below these values.</p><div class="stat-grid"><label><span class="label">Credits</span><input class="select" type="number" min="0" step="50" value="${a.reserve.credits}" data-automation-reserve="credits"></label><label><span class="label">Industry</span><input class="select" type="number" min="0" step="25" value="${a.reserve.industry}" data-automation-reserve="industry"></label><label><span class="label">Sakuradite</span><input class="select" type="number" min="0" step="5" value="${a.reserve.sakuradite}" data-automation-reserve="sakuradite"></label></div><div class="actions"><button data-action="automation-fleija-reserve">Protect one F.L.E.I.J.A. budget</button></div></div><div class="brief-block"><span class="label">Bulk construction now</span><p>Upgrade one level of the selected building in every eligible city, stopping at the reserve.</p><div class="actions"><button data-bulk-build="factory" ${!interactive() ? 'disabled' : ''}>Factories</button><button data-bulk-build="lab" ${!interactive() ? 'disabled' : ''}>Labs</button><button data-bulk-build="refinery" ${!interactive() ? 'disabled' : ''}>Refineries</button><button data-bulk-build="port" ${!interactive() ? 'disabled' : ''}>Ports</button></div></div>${a.lastReport ? `<div class="brief-block"><span class="label">Last logistics report · turn ${a.lastReport.turn}</span><p>${esc(automationReportText(a.lastReport))}</p></div>` : ''}</div></div><div class="dialog-footer"><small class="notice">Individual cities can override their policy and the two automation toggles from the city panel.</small><div><button data-action="automation-run" ${!interactive() ? 'disabled' : ''}>Run configured production now</button><button class="primary" data-action="close">Done</button></div></div></section></div>`;
+    queued = owned.map(s => ({ s, unit: E.cityAutomation(game, s).unit })).filter(x => x.unit),
+    countsByUnit = {};
+  for (const { unit } of queued) countsByUnit[unit] = (countsByUnit[unit] || 0) + 1;
+  const summary =
+    Object.entries(countsByUnit)
+      .sort((a, b) => b[1] - a[1] || E.TYPES[a[0]].name.localeCompare(E.TYPES[b[0]].name))
+      .slice(0, 8)
+      .map(([id, n]) => `${E.TYPES[id].short} ${n}`)
+      .join(' · ') || 'No city queues configured';
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Production Command"><div class="dialog-head"><div><div class="eyebrow">Conquest logistics</div><h2>Production Command</h2><p>Each city now has one simple automation choice: the exact unit it should try to produce every turn. Building upgrades and reserves stay under global command here.</p></div><button class="small close" data-action="close">Close</button></div><div class="brief-grid"><div><div class="brief-block"><span class="label">Master automation</span><label class="auto-check"><input type="checkbox" data-automation-field="enabled" ${a.enabled ? 'checked' : ''}> Run configured city queues at the start of every player turn</label><label class="auto-check"><input type="checkbox" data-automation-field="autoUpgrade" ${a.autoUpgrade ? 'checked' : ''}> Auto-upgrade buildings globally</label><p class="mode-note">If a queued unit needs a higher factory or port, automatic upgrades prioritize that requirement first. Otherwise upgrades follow the normal economic order.</p></div><div class="brief-block"><span class="label">City production queues</span><p><b>${queued.length} / ${owned.length}</b> owned cities currently have an automatic unit selected.</p><p class="mode-note">${esc(summary)}</p><div class="actions"><button class="ghost" data-action="automation-clear-cities">Clear all auto-production queues</button></div></div><div class="brief-block"><span class="label">Formation size</span><select class="select" data-automation-field="stack">${[1,2,3].map(n => `<option value="${n}" ${a.stack === n ? 'selected' : ''}>${n} frame${n > 1 ? 's' : ''} per automatic land/amphibious unit</option>`).join('')}</select><p class="mode-note">Carrier-Battleships are always built one at a time. Automation never deploys Elite Forces or starts F.L.E.I.J.A./Eliminator projects.</p></div></div><div><div class="brief-block"><span class="label">Protected resource reserve</span><p>Automatic and bulk purchases are skipped if they would leave you below these values.</p><div class="stat-grid"><label><span class="label">Credits</span><input class="select" type="number" min="0" step="50" value="${a.reserve.credits}" data-automation-reserve="credits"></label><label><span class="label">Industry</span><input class="select" type="number" min="0" step="25" value="${a.reserve.industry}" data-automation-reserve="industry"></label><label><span class="label">Sakuradite</span><input class="select" type="number" min="0" step="5" value="${a.reserve.sakuradite}" data-automation-reserve="sakuradite"></label></div><div class="actions"><button data-action="automation-fleija-reserve">Protect one F.L.E.I.J.A. budget</button></div></div><div class="brief-block"><span class="label">Bulk construction now</span><p>Upgrade one level of the selected building in every eligible city, stopping at the reserve.</p><div class="actions"><button data-bulk-build="factory" ${!interactive() ? 'disabled' : ''}>Factories</button><button data-bulk-build="lab" ${!interactive() ? 'disabled' : ''}>Labs</button><button data-bulk-build="refinery" ${!interactive() ? 'disabled' : ''}>Refineries</button><button data-bulk-build="port" ${!interactive() ? 'disabled' : ''}>Ports</button></div></div>${a.lastReport ? `<div class="brief-block"><span class="label">Last logistics report · turn ${a.lastReport.turn}</span><p>${esc(automationReportText(a.lastReport))}</p></div>` : ''}</div></div><div class="dialog-footer"><small class="notice">Choose each city's exact auto-produced unit from that city's panel. If it is temporarily unavailable, the queue waits rather than substituting another frame.</small><div><button data-action="automation-run" ${!interactive() ? 'disabled' : ''}>Run configured production now</button><button class="primary" data-action="close">Done</button></div></div></section></div>`;
   focusDialog();
 }
 function fortressPanel(s) {
