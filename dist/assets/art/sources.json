@@ -728,14 +728,6 @@
     },
     {
       "kind": "units",
-      "id": "vercingetorix",
-      "file": "units/vercingetorix-92a4a0e7e849.webp",
-      "page": "https://codegeass.fandom.com/wiki/Vercingetorix",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/a/ac/Verki.jpg/revision/latest?cb=20160304155817",
-      "method": "Original transparent game sprite redrawn from the canonical Vercingetorix design; reference used for silhouette, red/gold palette and four-legged high-speed form."
-    },
-    {
-      "kind": "units",
       "id": "ahura_mazda",
       "file": "units/ahura_mazda-3d3a09cb258d.webp",
       "page": "https://codegeass.fandom.com/wiki/Ahuramazda",
