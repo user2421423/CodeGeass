@@ -27,18 +27,21 @@ Knightmare Frames.
 **Campaign:** three story arcs as WC4-style campaigns, each played from either side: Season 1 and R2 (Black Knights or
 Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 58 missions on
 hand-built tactical maps,
-reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (tested in `tests/campaign.test.cjs`);
-screens in `dist/ui/campaign-screens.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
+reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (every mission is built and checked in
+`tests/core.test.cjs`); screens in `dist/ui/campaign-screens.js` (one mission boots in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
 
 ## 2. Running, testing and deploying
 
 - **Run locally:** serve `dist/` with any static server (`python3 -m http.server -d dist`) and open it.
-- **Tests (local only):** `node --test tests/*.test.cjs` (engine, campaign and artwork loading tests) and `node tests/ui-smoke.cjs`
-  (loads all UI scripts in a stubbed DOM and clicks through every dialog and a rival turn for all three powers).
-  Node 22. Node was not installed on the machine this was built on; the same tests were run through the macOS
+- **Tests:** a deliberately small (YAGNI) safety net, not a full rules suite. `node --test tests/core.test.cjs` checks
+  that Conquest starts coherently for every power, the core breakthrough and movement rules, that a rival AI turn runs,
+  and that every campaign mission builds with valid references. `node tests/ui-smoke.cjs` loads the scripts
+  `index.html` lists in a stubbed DOM, plays a turn for all three Conquest powers and boots a campaign mission.
+  `node tools/validate_assets.cjs --tracked` checks the published artwork. Node 22. Add a focused test only when a
+  rule is fragile enough to need one. Node was not installed on the machine this was built on; the same tests were run through the macOS
   JavaScriptCore shell (`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`) with a
   small `require` shim.
-- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` after engine, artwork-loading, UI smoke and tracked-asset checks pass.
+- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` after `core.test.cjs`, the UI smoke test and the tracked-asset check pass.
 - **Formatting:** Prettier with `.prettierrc` (`printWidth 120`, `singleQuote`, `arrowParens: avoid`).
 
 ### Artwork handoff status
@@ -67,7 +70,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | `dist/game.js` | Boots the UI once every `ui/*.js` file has loaded. |
 | `dist/style.css`, `dist/battlefield.css` | Base styles and the WC4 reskin from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
 | `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
-| `tests/` | `engine.test.cjs`, `campaign.test.cjs`, `art.test.cjs`, `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order) and `art_pipeline_test.py`. |
+| `tests/` | `core.test.cjs` (engine and campaign integrity) and `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order). |
 
 ### Engine conventions
 
@@ -446,8 +449,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 ## 5. Working with the owner
 
 - Treat the owner as the commander: carry out requests fully and report plainly what changed.
-- **Do not run tests or browser checks unless the owner asks.** Keep the test files consistent with rule changes
-  anyway, since the owner may ask for a test run.
+- **Do not run tests or browser checks unless the owner asks.** Keep `core.test.cjs` and `ui-smoke.cjs` passing when
+  rules change, since the owner may ask for a test run and deploys depend on them.
 - Commit each completed request (push once a remote exists; deploys happen from `main`).
 - Terminology: say **commanders** and **Knightmares / units**, not admirals or fleets. Britannia is the default side.
 - Keep explanations short and concrete; tables are welcome for lists of changes.
