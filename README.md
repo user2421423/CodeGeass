@@ -71,8 +71,11 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   frame, and all automated orders use the same legality checks as manual ones.
 - **Commanders (WC4 generals):** 58 named commanders (22 Britannian, 11 E.U., 10 Federation, 14 Black Knights and JLF
   who lead Federation units in Conquest, and the campaign-only Emperor Lelouch), each with one signature ability:
-  Suzaku's *Live On*, Cornelia's *Witch of Britannia*, Bismarck's *Excalibur*, Julius Kingsley's *Geass Command*,
-  Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and more.
+  Permanent combat modifiers are visible separately under **Base stats**. Cornelia's speed comes from Mobility 6,
+  while *Witch of Britannia* inspires adjacent allies after a kill. Bismarck anticipates the first attack each round;
+  Julius designates targets, Leila enables coordinated withdrawals, Jeremiah cancels morale disruption and Rolo
+  prevents counter-fire at an HP cost. Support, formation, pursuit, duel and siege skills give commanders distinct roles.
+  See [the full commander rework](docs/COMMANDER_REWORK.md) for the 58-commander roster and exact starting values.
   Operation commanders are fixed; your own commanders are recruited with command tokens, promoted through eleven ranks
   (frame 112%–160%), given branch stars (up to 6) and medals.
 - **HQ research with command tokens:** 40 technologies in six trees (Infantry, Armor, Artillery, Sakuradite, Naval,

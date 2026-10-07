@@ -37,6 +37,8 @@
     eliminatorUnlocked,
     feint,
     feintReason,
+    actionTargets,
+    rangeOf,
     fireFortress,
     fleijaCity,
     foe,
@@ -831,6 +833,14 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // Withdraw already-fired allies before Leila's own movement can take her out of range.
+    if (COMMANDERS[u.cmd]?.action?.kind === 'withdraw' && !feintReason(g, u)) {
+      const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);
+      if (r.ok) {
+        events.push({ kind: 'feint', id, affected: r.affected });
+        for (const friend of friends) events.push(...aiOrder(g, friend));
+      }
+    }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
     const steered = isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
     if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
@@ -847,7 +857,7 @@
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && action.kind !== 'command' && !feintReason(g, u)) {
+    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -895,6 +905,7 @@
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        if (COMMANDERS[u.cmd]?.fx.treasury && station?.owner === u.side) sc += 250 + station.income * 4;
         const mine = siteAt(g, p);
         if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
         sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : u.hold ? 0 : fieldAt(p) * 8;
@@ -921,6 +932,11 @@
           sc -= danger * 28;
           sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;
         } else sc -= nearestEnemy * 2;
+        const skill = COMMANDERS[u.cmd]?.fx || {};
+        const allies = freeAllies.filter(v => dist(g, v, p) <= 2);
+        if (skill.loneRaider) sc -= allies.filter(v => dist(g, v, p) === 1).length * 18;
+        if (skill.engineeringPen || skill.reassure || skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander)
+          sc += Math.min(4, allies.length) * 12;
         if (station?.owner === u.side && u.hp / maxHP(u) < 0.5) sc += 20;
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
         return sc;
@@ -931,10 +947,15 @@
         let sc = placeScore(p);
         u.c = p.c;
         u.r = p.r;
+        const oldDistance = u.movedDistance, oldMoved = u.moved;
+        u.movedDistance = (oldDistance || 0) + dist(g, old, p);
+        u.moved = true;
         reindex(g, u, old);
         const shot = choose();
         u.c = old.c;
         u.r = old.r;
+        u.movedDistance = oldDistance;
+        u.moved = oldMoved;
         reindex(g, u, p);
         if (shot) sc += shot.score * 0.6;
         if (sc > bestScore) {
@@ -949,6 +970,11 @@
         if (m.ok) events.push({ kind: 'move', ...m, id });
       }
     }
+    // Recheck after movement: a designation may only now be in range.
+    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+      const r = feint(g, id);
+      if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
+    }
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       const shot = choose();
       if (!shot) break;
@@ -956,10 +982,27 @@
       if (a.ok) events.push({ kind: 'attack', ...a, id });
       else break;
     }
-    // Zero's Tactical Command, after his own orders: the strongest friendly unit that has acted goes again.
+    // Spend restored movement on a safe hex, including withdrawal moves after firing.
+    if (!u.moved && (u.attacked || u.skillReposition || u.withdrawMove) && !g.over && u.hp > 0) {
+      const score = p => -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30;
+      const picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
+        .filter(p => !unitAt(g, p)).sort((a, b) => score(b) - score(a));
+      if (picks[0] && score(picks[0]) > score(u)) {
+        const m = move(g, id, picks[0].c, picks[0].r);
+        if (m.ok) events.push({ kind: 'move', ...m, id });
+      }
+    }
+    // Zero and Leila use their actions after allied orders. UI ordering puts them last.
     if (action?.kind === 'command' && !g.over && u.hp > 0 && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: 1 }, ...aiOrder(g, r.target));
+    }
+    if (action?.kind === 'withdraw' && !g.over && u.hp > 0 && !feintReason(g, u)) {
+      const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);
+      if (r.ok) {
+        events.push({ kind: 'feint', id, affected: r.affected });
+        for (const friend of friends) events.push(...aiOrder(g, friend));
+      }
     }
     return events;
   }

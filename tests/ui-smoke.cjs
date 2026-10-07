@@ -130,6 +130,20 @@ const modal = () => node('modal-root').innerHTML;
     assert(modal().includes('Your commander'));
     run(`generalDialog('${starter}')`);
     assert(modal().includes('Commander Info'));
+    if (['britannia', 'cf'].includes(side)) assert(modal().includes('Base stats'), 'permanent combat stats are distinct from the signature');
+    if (side === 'britannia') {
+      const snapshot = run('JSON.stringify(game)');
+      run(`game=E.createGame('britannia','normal','campaign',123);game.cols=game.rows=12;game.wrap=false;
+        game.tiles=Array.from({length:144},(_,n)=>({c:n%12,r:Math.floor(n/12),terrain:'plains'}));game.units=[];
+        game.phase=game.player='britannia';game.over=null;
+        E.newUnit(game,E.typeFor('britannia','light'),'britannia',5,5,1,'julius');
+        E.newUnit(game,E.typeFor('eu','light'),'eu',6,5);selection={kind:'unit',id:game.units[0].id};
+        commandDialog(selectedUnit());`);
+      assert(modal().includes('Designate an enemy') && modal().includes('data-command='));
+      run(`E.feint(game,selectedUnit().id,game.units[1].id);selection={kind:'unit',id:game.units[1].id};updateSelection();`);
+      assert(node('side').innerHTML.includes('Designated target'), 'temporary commander effects are visible on the target');
+      run(`game=${snapshot};setWorld();render();`);
+    }
     run(`archiveDialog('Artillery','${side}')`);
     assert(modal().includes(run(`E.TYPES[E.ROSTER['${side}'].siege].name`)));
     run('powersDialog()');
