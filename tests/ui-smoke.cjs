@@ -130,6 +130,10 @@ const modal = () => node('modal-root').innerHTML;
     run("openShop(game.stations.find(s=>s.owner===game.player&&s.tier>=3).id,'Armor')");
     assert(modal().includes('Roll out a Knightmare unit'));
     assert.equal((modal().match(/data-recruit=/g) || []).length, 4);
+    if (side === 'britannia') {
+      run("openShop(game.stations.find(s=>s.owner===game.player&&s.tier>=3).id,'Naval')");
+      assert(modal().includes('Carrier-Battleship') && modal().includes('Portman II'), 'Britannia builds a navy');
+    }
     for (const branch of ['Infantry', 'Artillery']) {
       run(`openShop(game.stations.find(s=>s.owner===game.player&&s.tier>=3).id,'${branch}')`);
       assert.equal((modal().match(/data-recruit=/g) || []).length, 3);

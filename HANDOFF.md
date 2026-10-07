@@ -125,9 +125,24 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   frame-specific base move is calculated (so special/elite frames scale too). Campaign maps keep their original
   movement values. Typical Conquest movement is Scout 5, Assault 4, Raider 6, Line 5, Mainline/Heavy 4,
   Super-heavy 3, Support 3, Rocket 4, Siege 2. Weapon ranges are unchanged.
-- **Sea:** stepping from land onto a sea hex embarks the unit (ends its move). Embarked units sail 7 hexes (+1/+2
+- **Sea:** stepping from land onto a sea hex embarks the unit (ends its move). Embarked units sail 5 hexes (+1/+2
   with Naval Transports), cannot fire or counter-fire, take +50% damage (+25% with Landing Craft), cannot repair or
   reinforce. Landing on a coast takes a step and ends the move.
+- **Britannia's navy** (`NAVAL`, `navalTypes(g, side)`: Conquest only, built from a factory's Naval tab, outside the
+  ten-class lineups, `naval: 'amphibious' | 'ship'` on the frame):
+  - Portman (210/45/17) and Portman II (260/55/22, Aquatic Combat +15% when attacking from a sea hex): base move 1
+    (3 on land in Conquest) and sea move 6/7 from one pool (`reachable`: a sea hex costs `landMove`, a land hex
+    `terrain × seaMove`), so crossing the coast never ends the move and they can attack after landing. 10 at sea when
+    starting next to a friendly carrier. +25% damage against embarked transports and warships. `atSea()` is false
+    for naval frames: they fire and counter-fire at sea and take no transport penalty.
+  - Carrier-Battleship (520/82/44, range 1–2, move 10, sea only, one per build, cannot be reinforced): `capacity` 2.
+    Moving a Knightmare onto the carrier boards it (`move` returns `loaded`; the unit leaves `g.units` for
+    `ship.cargo` and its action ends). `deploy(g, shipId, i, c, r)` launches onto an empty, non-enemy land hex next to
+    the ship with a full move and attack (`deployedTurn`); a unit cannot launch on the turn it boarded
+    (`boardedTurn`) or board again after launching. Damage to the carrier spares its cargo; `kill()` of the carrier
+    destroys everything aboard. `allUnits(g)` includes cargo (used for commander-in-use checks).
+  - AI: a naval power keeps up to two carriers and a few Portmans at coastal cities; carriers sail to bombard
+    coasts (the AI does not load them) and AI units never pick an occupied hex, so they never board.
 - **Strategic geography:** deterministic terrain anchors make the Alps/Carpathians, Caucasus, Urals, Zagros, Andes,
   Korea, Sahara/Arabia, Gobi/Taklamakan, Outback and Malay corridor meaningful. The Himalayas have an expanded
   impassable core with routes around the western/eastern ends.

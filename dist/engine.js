@@ -947,6 +947,40 @@
       campaign: true,
     },
     // Neutral garrisons: the Middle Eastern Federation's own frame.
+    // Britannia's navy (Conquest only, built from a factory's Naval tab; not part of the ten-class lineups).
+    portman: {
+      side: 'britannia',
+      cls: 'light',
+      naval: 'amphibious',
+      name: 'Portman',
+      model: 'Amphibious Knightmare Frame',
+      gen: '5th generation',
+      weapon: 'Torpedo launchers · twin claws',
+      lore: 'Britannia’s amphibious Knightmare: it fights in the water and climbs straight onto the beach. Weaker than a Sutherland on land.',
+      hp: 210, attack: 45, armor: 17, move: 1, seaMove: 6, min: 1, max: 1, crit: 0.08, pen: 0.15, cost: 120, industry: 30, tier: 1,
+    },
+    portman_ii: {
+      side: 'britannia',
+      cls: 'light',
+      naval: 'amphibious',
+      name: 'Portman II',
+      model: 'Amphibious Knightmare Frame',
+      gen: '6th generation',
+      weapon: 'Torpedoes · rapid-fire harpoon guns',
+      lore: 'The improved Portman: about a Sutherland’s match, and deadly in the water (Aquatic Combat).',
+      hp: 260, attack: 55, armor: 22, move: 1, seaMove: 7, min: 1, max: 1, crit: 0.1, pen: 0.2, aquatic: 0.15, cost: 175, industry: 45, tier: 2,
+    },
+    carrier_battleship: {
+      side: 'britannia',
+      cls: 'support',
+      naval: 'ship',
+      name: 'Carrier-Battleship',
+      model: 'Britannian Carrier-Battleship',
+      gen: 'Warship',
+      weapon: 'Main guns · missile batteries · Knightmare catapults',
+      lore: 'A Britannian warship that carries two Knightmare formations and launches them straight onto the beach (Rapid KMF Deployment).',
+      hp: 520, attack: 82, armor: 44, move: 10, min: 1, max: 2, capacity: 2, crit: 0.08, pen: 0.3, cost: 520, industry: 150, sakuradite: 25, tier: 3,
+    },
     bamides: {
       side: 'neutral',
       cls: 'heavy',
@@ -1026,7 +1060,7 @@
         side,
         Object.fromEntries(
           Object.entries(KNIGHTMARES)
-            .filter(([, k]) => k.side === side && !k.elite && !k.campaign)
+            .filter(([, k]) => k.side === side && !k.elite && !k.campaign && !k.naval)
             .map(([id, k]) => [k.cls, id]),
         ),
       ]),
@@ -2744,6 +2778,7 @@
     return (
       turnReason(g, u.side) ||
       (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
+      (isShip(u) ? 'Warships cannot be reinforced' : null) ||
       (u.stack >= 3 ? 'Already at 3 frames' : null) ||
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
@@ -2757,12 +2792,19 @@
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
-      (!(g.buildable?.[s.owner] || Object.values(lineupOf(g, s.owner))).includes(type) ? 'Not built by this faction' : null) ||
+      (!(g.buildable?.[s.owner] || [...Object.values(lineupOf(g, s.owner)), ...navalTypes(g, s.owner)]).includes(type)
+        ? 'Not built by this faction'
+        : null) ||
       cityBusyReason(g, s) ||
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
+      (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner).length ? 'No free land hex next to the city' : null) ||
+      (!recruitOptions(g, s, s.owner, type).length
+        ? t.naval === 'ship'
+          ? 'No free sea hex next to the city'
+          : 'No free land hex next to the city'
+        : null) ||
       shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
     );
   }
@@ -2804,7 +2846,7 @@
     const a = COMMANDERS[k];
     if (!a) return 'Unknown commander';
     if (!g.roster?.[k]) return `Not one of your commanders: recruit in HQ for ${recruitPrice(k)} command tokens`;
-    const busy = g.units.find(v => v.hp > 0 && v.personal && v.cmd === k);
+    const busy = allUnits(g).find(v => v.hp > 0 && v.personal && v.cmd === k);
     if (busy) return `Commanding ${TYPES[busy.type].short}`;
     if (!u) return 'Select one of your units first';
     return (
@@ -3076,10 +3118,26 @@
     c: 'crater',
   };
   const CONQUEST_MOVE_BONUS = 2,
-    SEA_MOVE = { conquest: 10, campaign: 5 };
+    SEA_MOVE = { conquest: 5, campaign: 5 },
+    CARRIER_ESCORT_SEA = 10; // a Portman that starts next to a friendly Carrier-Battleship swims this far
+  // Warships and amphibious frames, built only in Conquest.
+  const NAVAL = { britannia: ['portman', 'portman_ii', 'carrier_battleship'] };
+  const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : NAVAL[side] || []);
+  const isShip = u => TYPES[u?.type]?.naval === 'ship';
+  const canBoard = ship => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < TYPES[ship.type].capacity;
+  // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
+  const allUnits = g => g.units.flatMap(u => (u.cargo?.length ? [u, ...u.cargo] : [u]));
   const isSea = t => t?.terrain === 'sea';
+  // Embarked as a transport: a land unit on a sea hex. Warships and amphibious frames fight normally at sea.
   function atSea(g, u) {
-    return isSea(tile(g, u.c, u.r));
+    return isSea(tile(g, u.c, u.r)) && !TYPES[u.type].naval;
+  }
+  function amphibiousSea(g, u) {
+    const escort = adjacent(g, u).some(n => {
+      const v = unitAt(g, n);
+      return v && v.side === u.side && isShip(v);
+    });
+    return escort ? Math.max(CARRIER_ESCORT_SEA, TYPES[u.type].seaMove) : TYPES[u.type].seaMove;
   }
   // Embarked units take extra damage; Landing Craft halves the penalty.
   function seaPenalty(g, side) {
@@ -3182,9 +3240,17 @@
     const found = new Map();
     const ef = eliteFx(u);
     if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill)) return found;
-    const start = tile(g, u.c, u.r),
+    const t = TYPES[u.type],
+      start = tile(g, u.c, u.r),
       fromSea = isSea(start),
-      budget = fromSea ? seaMove(g, u) : movement(g, u),
+      ship = t.naval === 'ship',
+      amphibious = t.naval === 'amphibious',
+      // Amphibious frames spend one pool: a sea hex costs 1/seaMove of it, a land hex terrain/landMove, so crossing
+      // the coast never ends their move. Warships only sail. Knightmares that did not just launch may board a carrier.
+      landMove = movement(g, u),
+      seaMv = amphibious ? amphibiousSea(g, u) : 0,
+      budget = ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
+      boards = !t.naval && u.deployedTurn !== g.turn,
       costs = new Map([[key(start), 0]]),
       queue = [{ p: start, cost: 0 }];
     while (queue.length) {
@@ -3193,14 +3259,25 @@
       const { p, cost } = queue.splice(best, 1)[0];
       if (cost > costs.get(key(p))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked) continue;
+        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n))) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (occ && occ.side !== u.side) continue;
+        // Boarding a friendly Carrier-Battleship with room takes the rest of the turn, like embarking.
+        if (occ && boards && canBoard(occ)) {
+          if (cost < budget) found.set(key(n), budget);
+          continue;
+        }
         if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
-        const cross = isSea(n) !== fromSea;
+        const cross = !t.naval && isSea(n) !== fromSea;
         // Embarking or landing takes the rest of the turn: allowed whenever any movement is left.
-        const nc = cross ? budget : cost + terrainCost(g, u, n);
+        const nc = cross
+          ? budget
+          : ship
+            ? cost + 1
+            : amphibious
+              ? cost + (isSea(n) ? landMove : terrainCost(g, u, n) * seaMv)
+              : cost + terrainCost(g, u, n);
         if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(key(n)) ?? Infinity)) continue;
         costs.set(key(n), nc);
         if (!cross) queue.push({ p: n, cost: nc });
@@ -3217,7 +3294,7 @@
       max:
         t.max +
         (eliteFx(u).range || 0) +
-        (g && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0) +
+        (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0) +
         (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0), // Minami's Ikaruga Fire Control
     };
   }
@@ -3238,7 +3315,45 @@
     if (!u.attacked && targets(g, u).length) return true;
     if (!u.moved && reachable(g, u).size) return true;
     if (!repairReason(g, u) || !reinforceReason(g, u)) return true;
+    if (u.cargo?.some((c, i) => !deployReason(g, u, i))) return true;
     return !!COMMANDERS[u.cmd]?.action && !feintReason(g, u);
+  }
+  // Rapid KMF Deployment: a carried Knightmare launches onto an empty, non-enemy land hex next to its carrier with a
+  // full move and attack. Boarding ends a unit's action, and it cannot launch on the turn it boarded.
+  function deployTargets(g, ship) {
+    return adjacent(g, ship).filter(
+      t =>
+        !isSea(t) &&
+        !TERRAIN[t.terrain]?.blocked &&
+        !unitAt(g, t) &&
+        !(stationAt(g, t) && foe(g, stationAt(g, t).owner, ship.side)),
+    );
+  }
+  function deployReason(g, ship, i) {
+    const u = ship?.cargo?.[i];
+    if (!u) return 'No unit aboard';
+    return (
+      turnReason(g, ship.side) ||
+      (u.boardedTurn === g.turn ? 'Boarded this turn: it can launch next turn' : null) ||
+      (!deployTargets(g, ship).length ? 'No empty land hex next to the carrier' : null)
+    );
+  }
+  function deploy(g, shipId, i, c, r) {
+    const ship = g.units.find(v => v.id === shipId && v.hp > 0),
+      why = ship ? deployReason(g, ship, i) : 'Carrier not found';
+    if (why) return { ok: false, reason: why };
+    const t = deployTargets(g, ship).find(p => p.c === c && p.r === r);
+    if (!t) return { ok: false, reason: 'Choose an empty land hex next to the carrier.' };
+    const [u] = ship.cargo.splice(i, 1);
+    u.c = t.c;
+    u.r = t.r;
+    u.moved = u.attacked = false;
+    u.deployedTurn = g.turn;
+    g.units.push(u);
+    t.owner = u.side;
+    const seized = seizeDeposit(g, u, t);
+    log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} launches from the Carrier-Battleship.`, u.side);
+    return { ok: true, unit: u, to: { c: t.c, r: t.r }, seized };
   }
   // Embarked units cannot fire.
   function targets(g, u) {
@@ -3253,7 +3368,20 @@
     if (!u) return { ok: false, reason: 'Unit not found.' };
     const dest = tile(g, c, r);
     if (!dest || !reachable(g, u).has(key(dest))) return { ok: false, reason: 'That hex is not reachable this turn.' };
-    const from = { c: u.c, r: u.r };
+    const from = { c: u.c, r: u.r },
+      carrier = unitAt(g, dest);
+    // Boarding: the Knightmare goes aboard (off the map) and its action ends.
+    if (carrier && carrier !== u && carrier.side === u.side && canBoard(carrier)) {
+      g.units.splice(g.units.indexOf(u), 1);
+      u.c = dest.c;
+      u.r = dest.r;
+      u.moved = u.attacked = true;
+      u.held = false;
+      u.boardedTurn = g.turn;
+      (carrier.cargo ||= []).push(u);
+      log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} boards the Carrier-Battleship.`, u.side);
+      return { ok: true, from, to: { c: dest.c, r: dest.r }, loaded: carrier.id };
+    }
     u.c = dest.c;
     u.r = dest.r;
     u.moved = true;
@@ -3353,6 +3481,9 @@
     if (u.side === 'eu' && t.branch === 'Artillery') attack *= 1.1;
     if (u.side === 'bk' && ['forest', 'mountain', 'urban'].includes(tile(g, u.c, u.r)?.terrain)) attack *= 1.1;
     if (u.side === 'eb' && u.cmd) attack *= 1.1;
+    // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
+    if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
+    if (t.aquatic && isSea(tile(g, u.c, u.r))) attack *= 1 + t.aquatic;
     // Commander signature abilities (attacker side).
     if (f.dmg && strike) attack *= 1 + f.dmg;
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
@@ -3425,7 +3556,7 @@
       attack *= skillDefense(g, target, counter);
       const ground = tile(g, target.c, target.r);
       if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
-      if (isSea(ground)) attack *= 1 + seaPenalty(g, target.side);
+      if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
     }
     if (counter) attack *= t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 1 : 0.65;
@@ -3495,6 +3626,11 @@
       return;
     }
     v.hp = 0;
+    // A sunk Carrier-Battleship takes the Knightmares aboard down with it.
+    for (const c of v.cargo?.splice(0) || []) {
+      c.hp = 0;
+      kill(g, c, attacker, true);
+    }
     // Urabe's Final Stand: his fall rallies friendly units within 2 hexes to High morale.
     if (fx(v).martyr) for (const w of g.units) if (w.hp > 0 && w.side === v.side && dist(g, w, v) <= 2) w.morale = 1;
     if (attacker) {
@@ -3646,16 +3782,16 @@
     total.credits = Math.round(total.credits * refining);
     return total;
   }
-  // New units deploy on the city hex or a free land hex next to it.
-  function recruitOptions(g, s, side) {
+  // New units deploy on the city hex or a free land hex next to it; warships on a free sea hex next to it.
+  function recruitOptions(g, s, side, type = null) {
     if (s.owner !== side) return [];
+    const ship = TYPES[type]?.naval === 'ship';
     return [tile(g, s.c, s.r), ...adjacent(g, s)].filter(
       p =>
         p &&
-        !isSea(p) &&
-        !TERRAIN[p.terrain]?.blocked &&
+        (ship ? isSea(p) : !isSea(p) && !TERRAIN[p.terrain]?.blocked) &&
         !unitAt(g, p) &&
-        (!stationAt(g, p) || stationAt(g, p).owner === side),
+        (ship || !stationAt(g, p) || stationAt(g, p).owner === side),
     );
   }
   // The Federation's doctrine discounts its Infantry. Sakuradite is priced by class (SAKURADITE.cost).
@@ -3665,7 +3801,7 @@
     return {
       credits: Math.round(t.cost * (1 + 0.85 * (stack - 1)) * off),
       industry: Math.round(t.industry * (1 + 0.85 * (stack - 1)) * off),
-      sakuradite: Math.round((SAKURADITE.cost[t.cls] || 0) * (1 + 0.85 * (stack - 1)) * off),
+      sakuradite: Math.round((t.sakuradite ?? SAKURADITE.cost[t.cls] ?? 0) * (1 + 0.85 * (stack - 1)) * off),
     };
   }
   function canBuy(g, s, type, stack = 1) {
@@ -3675,7 +3811,7 @@
     const s = g.stations.find(s => s.id === stationId);
     const why = buyReason(g, s, type, stack);
     if (why) return { ok: false, reason: why };
-    const options = recruitOptions(g, s, s.owner);
+    const options = recruitOptions(g, s, s.owner, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     const cost = price(type, stack, g, s.owner);
@@ -5517,6 +5653,22 @@
     // 5. Build: front-line factories first; stack up when the budget allows. A soft cap keeps armies manageable.
     const cap = 14 + Math.round(bases.length * 0.9);
     let army = own().length;
+    // 4b. A naval power keeps a small fleet at its coastal cities: up to two Carrier-Battleships (sailed to bombard
+    // coasts; the AI does not load them) and a few Portmans.
+    const naval = navalTypes(g, side);
+    if (naval.length && g.turn >= 4)
+      for (const [type, most, chance] of [
+        ['carrier_battleship', 2, 0.25],
+        ['portman_ii', 3, 0.3],
+        ['portman', 2, 0.3],
+      ]) {
+        if (!naval.includes(type) || army >= cap || own().filter(u => u.type === type).length >= most) continue;
+        if (random(g) >= chance) continue;
+        const c = price(type, 1, g, side),
+          yard = bases.find(s => canBuy(g, s, type, 1));
+        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok)
+          army++;
+      }
     for (const [i, s] of bases.entries()) {
       if (army >= cap) break;
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
@@ -5587,15 +5739,19 @@
         })
         .sort((a, b) => b.score - a.score)[0];
     if (!u.moved && !u.attacked) {
-      const spots = [...reachable(g, u).keys()].map(k => {
-        const [c, r] = k.split(',').map(Number);
-        return tile(g, c, r);
-      });
+      // The AI never boards its own carriers (it does not plan launches), so occupied hexes are not destinations.
+      const spots = [...reachable(g, u).keys()]
+        .map(k => {
+          const [c, r] = k.split(',').map(Number);
+          return tile(g, c, r);
+        })
+        .filter(p => !unitAt(g, p));
       const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= aiRange(g).enemyScan);
       const old = { c: u.c, r: u.r };
       // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
       // count as an escort so follow-on waves do not get stranded waiting for a fresh three-unit convoy.
-      const fromLand = !atSea(g, u),
+      const naval = !!TYPES[u.type].naval,
+        fromLand = !naval && !atSea(g, u),
         freeAllies = g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && !memo.guards?.[v.id]),
         landGroup = freeAllies.filter(v => !atSea(g, v) && dist(g, v, u) <= aiRange(g).convoyLand).length,
         seaEscort = freeAllies.filter(v => atSea(g, v) && dist(g, v, u) <= aiRange(g).convoySea).length,
@@ -5615,11 +5771,13 @@
           nearestEnemy = Math.min(nearestEnemy, d);
           if (d <= 1) danger++;
         }
-        if (isSea(p)) {
+        if (isSea(p) && naval) {
+          sc -= danger * 20;
+        } else if (isSea(p)) {
           sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
           if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
         } else if (!fromLand) {
-          sc += 90;
+          sc += naval ? 30 : 90;
         } else if (!guard && !convoy && coastTile(g, p) && fieldAt(p) <= currentField) {
           const assembling = freeAllies.filter(v => !atSea(g, v) && dist(g, v, p) <= aiRange(g).convoyLand).length;
           sc += 28 + Math.min(3, assembling) * 12;
@@ -5673,6 +5831,12 @@
     FACTIONS,
     MAJORS,
     CLASSES,
+    NAVAL,
+    navalTypes,
+    allUnits,
+    deploy,
+    deployReason,
+    deployTargets,
     CLASS_ORDER,
     TYPES,
     ROSTER,
