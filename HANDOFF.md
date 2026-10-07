@@ -353,12 +353,54 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   ×1.5 Hard, ×2 Challenge, +150 for the first win ever.
 - Difficulty works as in Galactic Command, applied to both rival powers and the neutrals.
 
+### Standing orders (player go-to)
+- `u.goto = { c, r }` (saved with the unit). `setGoto` / `clearGoto` / `gotoReason` validate: warships need a sea hex,
+  other non-amphibious units a land hex, and a route must exist (`goalField(g, side, [[dest, 0]], only)`).
+  Routes stay on land when the destination is on the unit's landmass, keep warships at sea, and may embark otherwise.
+- `runGotos(g, side)` runs in `endTurn` at the start of the player's turn, after city automation. Nearest orders go
+  first; each unit moves to the reachable free hex with the lowest route cost, never attacks, and the order ends on
+  arrival (or beside an occupied or defended destination). Its report (moved/arrived/blocked/lost) is animated and
+  toasted.
+- A unit on standing orders doesn't count as waiting for a manual move (`hasOrders`), so N and the end-turn
+  reminder skip it unless it can fire.
+- UI: `routing` (unit id) makes the next map click call `setGoto`. G or the dock/panel buttons enter it; Escape
+  cancels. The map shows a gold ⚑ badge, a dashed route and a destination marker; `gotoText` and `gotoReportText`
+  word it.
+
 ### AI
+- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: the capital keeps 2–4 defenders), then in
+  Conquest the theaters (`planFronts`). Campaign missions keep one side-wide `goalField`.
+- **Theaters (Conquest):** `frontObjectives` collects enemy cities within 20 hexes of own cities or units, every
+  rival capital and F.L.E.I.J.A. project, Sakuradite mines (Fuji always), and own threatened cities, capital and
+  mines. Objectives within 16 hexes cluster into fronts. Front ids are the anchor objective's key and re-form around
+  old anchors, so they stay stable.
+  - Each front is scored (best objective + half the rest; values in `frontObjectives`, minus distance from own cities)
+    and sized (desired strength 1.5 × the enemy strength near its objectives; defensive fronts 1.2 × the menace less
+    garrisons). Priority is discounted when half the army could not meet the need.
+  - Strength is `unitStrength`: frames × health × generation, ×1.5 commanders, ×1.5 Elite Forces.
+  - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace) plus
+    the four best others. A 10% reserve waits at the capital and is released to any emergency.
+  - The rest of the army is split 50/25/15/10 by rank, capped by need. The front furthest below its target takes the
+    nearest free unit.
+  - Assignments are sticky for 4 turns (`g.ai[side].assignments`), unless the front is gone, the unit is 60+ hexes
+    away, or a vital emergency within 15 hexes needs it. Front states live in `g.ai[side].fronts`.
+  - Offensives stage at the own city nearest the target (the nearest coastal city when overseas) and stay
+    ASSEMBLING until half the assigned strength is there (or ahead of it), or for 3 turns. Then ATTACKING, back to
+    ASSEMBLING after losing 55% of the attack force. Opening an offensive on the player logs a dispatch.
+  - Each front has its own lazily built `goalField(g, side, seeds)`: the rally city while assembling, otherwise its
+    objectives (plus the enemy units menacing defended cities), and when attacking, other targets at +4 path cost.
+  - Units ahead of an assembling rally hold their ground. A front still gathering keeps its troops ashore; one bound
+    overseas lets a lone formation embark where no enemy is within 8 hexes.
+  - Carriers carry only formations whose fronts head for the same landmass; idle ones wait off the best overseas
+    rally city.
+  - Tunables are in `FRONT` (exported); `aiPlan`, `unitStrength` and `FRONT` are exported for tests.
 - `aiProduction`: batteries, repairs, saving for super-heavies, one building upgrade, reinforcements, then
-  front-line production up to a soft cap of 14 + 0.9 × cities units.
-- `aiOrder`: moves along a goal field (`goalField`: path cost over land and sea to the nearest wanted city, rival
-  capitals weighted extra), scores attacks, garrisons threatened cities (`assignGuards`: the capital keeps 2–4
-  defenders), and only embarks in convoys of three or more.
+  production up to a soft cap of 14 + 0.9 × cities units. Factories serving the front furthest below its need build
+  first, and put what that front asks for (`frontNeeds`: by the enemy's and its own composition) at the top of their
+  menu. Sakuradite held back for a project only blocks purchases that spend Sakuradite.
+- `aiOrder`: moves along the unit's front field, scores attacks, and otherwise embarks only in convoys.
+- In 25-turn all-AI simulations the Federation now survives to turn 25 in 11 of 12 games (it was always eliminated
+  before); the E.U. still leads. Balance is first-pass.
 - Balance is first-pass: in all-AI simulations any of the three powers can come out ahead depending on the seed.
 
 ## 5. Working with the owner

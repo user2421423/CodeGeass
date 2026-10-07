@@ -100,6 +100,12 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().player'), side);
     run('nextFleet();updateSelection();');
     assert(node('side').innerHTML.includes('Frame integrity'));
+    // Standing orders: the next map click sets the destination; the dock then offers to stop the auto-move.
+    run('startRouting()');
+    assert(node('map-banner').textContent.includes('Standing orders'), 'Set destination waits for a map click');
+    run('hover = game.tiles.find(t => E.distance(t, selectedUnit(), game) === 5 && !E.gotoReason(game, selectedUnit(), t)); draw(40, .016); activateHex(hover); draw(40, .016)');
+    assert(run('!!selectedUnit().goto') && node('selection-dock').innerHTML.includes('data-action="goto-cancel"'), 'the dock offers to stop the auto-move');
+    run('E.clearGoto(game, selectedUnit().id); updateSelection()');
     run('selectUnit(game.units.find(u=>u.side!==game.player&&u.hp>0).id)');
     run("researchDialog('infantry')");
     assert(modal().includes('Landspinner Tuning'));

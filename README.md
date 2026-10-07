@@ -55,6 +55,11 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   that fight at sea and cross the coast without stopping, and Carrier-Battleships whose two formations launch onto
   the beach ready to move and attack. Ports on coastal cities build and repair them; a Naval research branch improves
   them, and the AI carries out its own carrier invasions.
+- **Standing orders:** select a unit, choose Set destination (or press G) and click any hex. It moves toward it at
+  the start of each of your turns until it arrives; change the destination or stop it at any time on your turn.
+- **Theaters (Conquest AI):** each rival groups its objectives into fronts, ranks them, keeps armies on a front for
+  several turns, masses an offensive at a rally city before it attacks, holds a strategic reserve at its capital for
+  emergencies, and has its factories build what each front needs.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
   frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a

@@ -32,6 +32,7 @@ let detailOpen = false,
   shake = 0,
   strikeMode = false, // choosing a F.L.E.I.J.A. target
   deploying = null, // { ship, index }: choosing where a carried Knightmare lands
+  routing = null, // unit id: choosing the destination of its standing order
   flash = 0; // full-screen white-pink flash, 1 → 0
 const R = 43,
   SQ = Math.sqrt(3),
@@ -319,6 +320,29 @@ function act(attrs, label, why, detail = '', cls = '', showWhy = true) {
         : '';
   return `<button class="${cls}${why ? ' blocked' : ''}" ${attrs} ${why ? `disabled${isShortfall(why) ? '' : ` title="${esc(why)}"`}` : ''}>${label}${note}</button>`;
 }
+// Where a unit's standing order is taking it.
+function gotoText(u) {
+  const n = E.distance(u, u.goto, game);
+  return `Heading for ${E.targetName(game, E.tile(game, u.goto.c, u.goto.r))} · ${n} hex${n === 1 ? '' : 'es'} away`;
+}
+// Whether the unit can be sent to a hex (null) or why not; cached because the cursor asks every frame.
+let routeMemo = null;
+function routeWhy(u, p) {
+  const k = `${u.id}:${u.c},${u.r}:${p.c},${p.r}`;
+  if (routeMemo?.k !== k) routeMemo = { k, why: E.gotoReason(game, u, p) };
+  return routeMemo.why;
+}
+function gotoReportText(r) {
+  const n = (k, one, many) => (r[k].length ? `${r[k].length} ${r[k].length === 1 ? one : many}` : null);
+  return [
+    n('moved', 'unit advanced', 'units advanced'),
+    n('arrived', 'reached its destination', 'reached their destinations'),
+    n('blocked', 'could not advance', 'could not advance'),
+    n('lost', 'lost its route (order cancelled)', 'lost their routes (orders cancelled)'),
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
 function fireStatus(u) {
   if (E.atSea(game, u)) return 'Embarked · cannot fire';
   if (u.attacked) return 'Already fired';
@@ -370,15 +394,16 @@ function updateSelection() {
   );
   const u = selectedUnit();
   if (deploying && deploying.ship !== u?.id) deploying = null;
+  if (routing && (routing !== u?.id || !interactive())) routing = null;
   readyCache =
-    u && u.side === game.player
+    u && u.side === game.player && !routing
       ? deploying
         ? new Map(E.deployTargets(game, u).map(t => [E.key(t), 0]))
         : E.reachable(game, u)
       : new Map();
   const st = selectedStation();
   targetCache = new Set(
-    !deploying && u && u.side === game.player && !u.attacked && u.morale > -3
+    !deploying && !routing && u && u.side === game.player && !u.attacked && u.morale > -3
       ? E.targets(game, u).map(E.key)
       : st && st.owner === game.player && interactive()
         ? E.fortressTargets(game, st).map(E.key)
@@ -400,7 +425,9 @@ function updateSelection() {
         ? 'Operation concluded'
         : strikeMode
           ? 'F.L.E.I.J.A. armed · choose a target hex · Escape cancels'
-          : u?.side === game.player
+          : routing
+            ? `Standing orders · click the hex ${unitName(u)} should head for · Escape cancels`
+            : u?.side === game.player
             ? `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)} ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${u.morale <= -3 ? ' · In confusion' : !hasOrders(u) ? ' · Orders complete' : ''}`
             : selectedStation()
               ? `${selectedStation().name} · ${selectedStation().owner === game.player ? 'Open the factory to build Knightmares' : 'Break its defenses before capture'}`
@@ -448,7 +475,7 @@ function panel() {
       sea = E.atSea(game, u),
       us = E.unitStats(game, u),
       elite = u.elite && E.ELITE_FORCES[u.elite];
-    main = `<section>${unitPicker}<div class="side-title"><span class="label">${u.elite ? `Elite Force · Lv.${u.eliteLevel} · ${elite.rarity}` : `${t.branch} · ${t.role}`}</span><span class="chip" style="color:${F(u.side).color}">${F(u.side).short}</span></div>${ART.unit(u.type, 'panel-ship', u.side)}<h2 class="unit-name">${unitName(u)}</h2><p class="unit-model">${t.model} · ${t.gen}${a && t.cls === 'super' ? ` · ${t.name}` : ''}</p><p class="description">${t.desc}</p><p class="lore">${t.lore}</p>${sea ? `<div class="info-strip sea-strip">${ICONS.use('sea', 'cost-ico')} Embarked as a transport: cannot fire or counter-fire and takes ${Math.round(100 * (E.techLevel(game, u.side, 'sakura.landing') ? 0.25 : 0.5))}% extra damage. Sails ${E.seaMove(game, u)} hexes; landing ends the move.</div>` : ''}<div class="hp-row">${ICONS.hp(u.hp, E.maxHP(u), 'hp-ring-lg')}<span>Frame integrity</span><span class="mono">${Math.ceil(u.hp)} / ${E.maxHP(u)}</span></div><div class="stat-grid"><div><span class="label">${ICONS.use('atk')} Attack</span><b>${us.attack}</b></div><div><span class="label">${ICONS.use('def')} Armor</span><b>${us.armor}</b></div><div><span class="label">${ICONS.use('mov')} Move</span><b>${sea ? E.seaMove(game, u) : E.movement(game, u)}</b></div><div><span class="label">${ICONS.use('rng')} Range</span><b>${rangeText(u)}</b></div><div><span class="label">${u.elite ? 'Elite' : 'Frames'}</span><b>${u.elite ? `Lv.${u.eliteLevel}/${E.ELITE_MAX_LEVEL}` : `${u.stack}/3`}</b></div><div><span class="label">Veteran</span><b>${u.xp}/5</b></div></div><div class="status-line"><span class="status ${u.moved ? 'spent' : 'ready'}">${u.moved ? 'Moved' : 'Move ready'}</span><span class="status ${fireStatus(u) === 'Fire ready' ? 'ready' : 'spent'}">${fireStatus(u)}</span><span class="status">${moraleName(u.morale)}</span></div>${a ? commanderCard(u) : ''}${ours ? `<div class="actions">${!a ? act('data-action="assign"', 'Assign commander', phaseReason(), 'Choose a commander') : ''}${a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), a.action.kind === 'command' ? 'A unit within 2 hexes acts again' : '−2 morale · 2 hex radius', '', false) : ''}${u.elite ? '' : act('data-action="reinforce"', 'Add a frame', phaseReason() || E.reinforceReason(game, u), costHTML(E.reinforceCost(u.type, game, u.side, u)))}${act('data-action="repair"', 'Repair unit', phaseReason() || E.repairReason(game, u), '+35% frame · ' + costHTML({ credits: E.repairCost(u, game) }))}${act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), 'Finish this unit’s turn')}</div><p class="description" style="font-size:11px">${u.elite ? `${elite.skill}: ${u.eliteLevel >= 5 ? elite.lv5Text : u.eliteLevel >= 3 ? elite.lv3Text : 'Signature ability unlocks at Elite Lv.3.'} Elite Forces are unique single frames; repair requires a friendly city within 1 hex.` : 'Repair and reinforcement need a friendly city within 1 hex and use this unit’s turn.'}</p>` : ''}${st ? `<div class="section-divider"><span class="label">City beneath unit</span><div class="station-buttons"><button data-station="${st.id}">${st.name} · Factory ${st.tier}</button>${st.owner === game.player ? `<button data-shop="${st.id}" ${!interactive() ? 'disabled' : ''}>Factory</button>` : ''}</div></div>` : ''}${mine ? `<div class="section-divider"><span class="label">Sakuradite mine beneath unit</span><div class="station-buttons"><button data-site="${mine.id}">${esc(mine.name)} · ${F(mine.owner).short} · +${E.depositYield(game, mine).sakuradite} a turn</button></div></div>` : ''}${holdHTML(u)}</section>`;
+    main = `<section>${unitPicker}<div class="side-title"><span class="label">${u.elite ? `Elite Force · Lv.${u.eliteLevel} · ${elite.rarity}` : `${t.branch} · ${t.role}`}</span><span class="chip" style="color:${F(u.side).color}">${F(u.side).short}</span></div>${ART.unit(u.type, 'panel-ship', u.side)}<h2 class="unit-name">${unitName(u)}</h2><p class="unit-model">${t.model} · ${t.gen}${a && t.cls === 'super' ? ` · ${t.name}` : ''}</p><p class="description">${t.desc}</p><p class="lore">${t.lore}</p>${sea ? `<div class="info-strip sea-strip">${ICONS.use('sea', 'cost-ico')} Embarked as a transport: cannot fire or counter-fire and takes ${Math.round(100 * (E.techLevel(game, u.side, 'sakura.landing') ? 0.25 : 0.5))}% extra damage. Sails ${E.seaMove(game, u)} hexes; landing ends the move.</div>` : ''}<div class="hp-row">${ICONS.hp(u.hp, E.maxHP(u), 'hp-ring-lg')}<span>Frame integrity</span><span class="mono">${Math.ceil(u.hp)} / ${E.maxHP(u)}</span></div><div class="stat-grid"><div><span class="label">${ICONS.use('atk')} Attack</span><b>${us.attack}</b></div><div><span class="label">${ICONS.use('def')} Armor</span><b>${us.armor}</b></div><div><span class="label">${ICONS.use('mov')} Move</span><b>${sea ? E.seaMove(game, u) : E.movement(game, u)}</b></div><div><span class="label">${ICONS.use('rng')} Range</span><b>${rangeText(u)}</b></div><div><span class="label">${u.elite ? 'Elite' : 'Frames'}</span><b>${u.elite ? `Lv.${u.eliteLevel}/${E.ELITE_MAX_LEVEL}` : `${u.stack}/3`}</b></div><div><span class="label">Veteran</span><b>${u.xp}/5</b></div></div><div class="status-line"><span class="status ${u.moved ? 'spent' : 'ready'}">${u.moved ? 'Moved' : 'Move ready'}</span><span class="status ${fireStatus(u) === 'Fire ready' ? 'ready' : 'spent'}">${fireStatus(u)}</span><span class="status">${moraleName(u.morale)}</span></div>${a ? commanderCard(u) : ''}${ours ? `<div class="actions">${!a ? act('data-action="assign"', 'Assign commander', phaseReason(), 'Choose a commander') : ''}${a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), a.action.kind === 'command' ? 'A unit within 2 hexes acts again' : '−2 morale · 2 hex radius', '', false) : ''}${u.elite ? '' : act('data-action="reinforce"', 'Add a frame', phaseReason() || E.reinforceReason(game, u), costHTML(E.reinforceCost(u.type, game, u.side, u)))}${act('data-action="repair"', 'Repair unit', phaseReason() || E.repairReason(game, u), '+35% frame · ' + costHTML({ credits: E.repairCost(u, game) }))}${act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), 'Finish this unit’s turn')}</div><p class="description" style="font-size:11px">${u.elite ? `${elite.skill}: ${u.eliteLevel >= 5 ? elite.lv5Text : u.eliteLevel >= 3 ? elite.lv3Text : 'Signature ability unlocks at Elite Lv.3.'} Elite Forces are unique single frames; repair requires a friendly city within 1 hex.` : 'Repair and reinforcement need a friendly city within 1 hex and use this unit’s turn.'}</p>` : ''}${st ? `<div class="section-divider"><span class="label">City beneath unit</span><div class="station-buttons"><button data-station="${st.id}">${st.name} · Factory ${st.tier}</button>${st.owner === game.player ? `<button data-shop="${st.id}" ${!interactive() ? 'disabled' : ''}>Factory</button>` : ''}</div></div>` : ''}${mine ? `<div class="section-divider"><span class="label">Sakuradite mine beneath unit</span><div class="station-buttons"><button data-site="${mine.id}">${esc(mine.name)} · ${F(mine.owner).short} · +${E.depositYield(game, mine).sakuradite} a turn</button></div></div>` : ''}${gotoHTML(u)}${holdHTML(u)}</section>`;
   } else if (m) {
     const ours = m.owner === game.player;
     main = `<section>${unitPicker}<div class="side-title"><span class="label">Sakuradite mine</span><span class="chip" style="color:${F(m.owner).color}">${F(m.owner).short}</span></div><div class="mine-art">${ICONS.use('sakuradite', 'mine-icon')}</div><h2 class="unit-name">${esc(m.name)}</h2><p class="description">${m.base >= 30 ? 'The richest Sakuradite deposit on Earth. ' : ''}A mine has no defenses: move an Infantry or Armor unit onto it to seize it. Artillery cannot capture.</p>${depositBox(m)}<div class="buildings">${refineryRow(m, ours ? `data-refine="${m.id}"` : '', phaseReason() || E.refineReason(game, m))}</div></section>`;
@@ -501,6 +528,11 @@ function panel() {
   );
 }
 // A Carrier-Battleship's hold: each formation aboard launches onto an empty land hex next to the ship.
+// Standing orders in the unit panel: where the unit is heading, and the controls to change or stop it.
+function gotoHTML(u) {
+  if (u.side !== game.player) return '';
+  return `<div class="building"><span class="label">⚑ Standing orders</span><small>${u.goto ? `${esc(gotoText(u))}. It moves toward it at the start of each of your turns until it arrives; it never attacks on its own.` : 'Choose a hex and this unit moves toward it at the start of each of your turns (G).'}</small><div class="actions">${act('data-action="goto"', u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false)}${u.goto ? act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false) : ''}</div></div>`;
+}
 function holdHTML(u) {
   const t = E.TYPES[u.type];
   if (t.naval !== 'ship') return '';
@@ -654,6 +686,15 @@ function selectSite(id, center = false) {
   updateSelection();
   if (center) centerOn(d);
 }
+// Standing orders: the next map click sets the selected unit's destination.
+function startRouting() {
+  const u = selectedUnit();
+  if (!u || u.side !== game.player || !interactive()) return;
+  routing = routing === u.id ? null : u.id;
+  deploying = null;
+  updateSelection();
+  if (routing) toast(`Click the hex ${unitName(u)} should head for. Escape cancels.`);
+}
 function nextFleet() {
   const ready = ownUnits().filter(u => readyIds.has(u.id));
   if (!ready.length) {
@@ -788,7 +829,8 @@ async function endTurn(force = false) {
   }
   aiSide = null;
   if (token !== aiToken) return;
-  let armed = false;
+  let armed = false,
+    orders = null;
   if (!game.over) {
     game.turn++;
     const before = unitSnapshot(),
@@ -797,15 +839,23 @@ async function endTurn(force = false) {
     turnStartPopups(before, game.player);
     game.automationReport = game.mode === 'conquest' ? E.runCityAutomation(game, game.player) : null;
     armed = (game.arsenal?.[game.player] || 0) > warheads;
+    orders = E.runGotos(game, game.player);
+    for (const m of orders.moved)
+      effects.push({ kind: 'move', unitId: m.id, from: m.from, to: m.to, color: F(game.player).color, life: 0.6, max: 0.6 });
+    if (orders.moved.length) SFX.play('move', game.player);
   }
   render();
   save();
   campaignFeed(() => game.over && resultDialog());
-  const logistics = game.automationReport;
-  if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.`, true);
+  const logistics = game.automationReport,
+    standing = orders && gotoReportText(orders) ? ` Standing orders: ${gotoReportText(orders)}.` : '';
+  if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standing}`, true);
   else if (!game.over && logistics && (logistics.units || logistics.upgrades))
-    toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}`, true);
+    toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}${standing}`, true);
+  else if (!game.over && standing) toast(`Turn ${game.turn}.${standing}`, true);
   else if (!game.over) toast(`Turn ${game.turn}. Income collected; unit orders refreshed.`);
+  const annexed = orders?.moved.find(m => m.annexed)?.annexed;
+  if (annexed) annexNotice(annexed);
 }
 // A power's capital fell: it surrendered and its cities changed hands.
 function annexNotice(a) {
@@ -1197,7 +1247,7 @@ function fleijaManual() {
   return `The Sakuradite superweapon is conquest-only, not permanent HQ research. Research Lab III unlocks for every major power on turn ${f.labTurn}; a city with a level-${f.lab} lab can then build a warhead for ${c.credits} credits, ${c.industry} industry, ${c.science} research and ${c.sakuradite} Sakuradite over ${f.turns} turns and builds nothing else meanwhile. Every power is alerted when work begins, and capturing the city ends the project. Launch a finished warhead from the arsenal button at any hex, once a turn. Ground zero: every unit is erased, a city there is devastated for ${f.devastation} turns (no defenses, buildings back to level 0, no output) and the land becomes a crater. The ring around it: units are left at ${Math.round(f.ringHP * 100)}% with collapsed morale; cities lose their defenses and a level of every building. After the first successful detonation, level-${e.lab} labs can build a F.L.E.I.J.A. Eliminator for ${ec.credits} credits, ${ec.industry} industry, ${ec.science} research and ${ec.sakuradite} Sakuradite over ${e.turns} turns. One ready charge protects targets within ${e.range} hexes of its city and automatically neutralizes one incoming warhead; capturing or ruining that city destroys it. The blast itself spares no one, including your own forces.`;
 }
 function helpDialog() {
-  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="Field manual"><div class="dialog-head"><div><div class="eyebrow">Field manual</div><h2>War on a world of hexes</h2></div><button class="small close" data-action="help-close">Close</button></div><div class="help-grid"><div><b>Movement &amp; firing</b><p>Every unit can move once, then attack once per turn. Attacking ends its movement. Hostile formations use a bright red health ring; campaign allies do not. Your units that still have movement or an attack available make their existing health/token ring glow bright green, WC4-style. Select a unit, click a green hex to move, and click a red hex to attack at once; hover a red hex to see the expected damage. Undo (Z) returns a unit that moved but has not fired.</p></div><div><b>Three branches</b><p>As WC4's infantry, tanks and artillery, every Knightmare belongs to a branch. <b>Infantry</b>: cheap scouts, assault frames (+55% against Armor and city defenses) and five-hex raiders. <b>Armor</b>: line, mainline, heavy and super-heavy frames with breakthroughs. <b>Artillery</b>: fire support at range 1 and rocket and siege frames at exactly range 2. Artillery attacks draw no counter-fire and cannot capture cities.</p></div><div><b>Factions</b><p>Each power builds its own frames. ${E.MAJORS.map(side => `${F(side).short}: ${E.CLASS_ORDER.map(cls => E.TYPES[E.ROSTER[side][cls]].name).join(', ')}.`).join(' ')} Doctrines: Britannian Armor +8% damage, E.U. Artillery +10% damage, Federation Infantry 15% cheaper.</p></div><div><b>Oceans &amp; transports</b><p>The map wraps around the globe. A land unit with movement left may step onto a sea hex: it embarks as a transport and stops. Embarked units sail 5 hexes a turn (more with Naval Transports), cannot fire or counter-fire, and take 50% extra damage. Sailing onto a coast hex lands the unit and ends its move; landing on an undefended enemy city captures it.</p></div><div><b>Navies</b><p>In Conquest every power has the same navy under its own names (Britannia’s Portman, the E.U.’s Panzer-Frosch, the Federation’s Shui Gun-Ru, and each power’s Carrier-Battleship) and starts with four carriers and six amphibious formations. Amphibious Knightmares fight at sea, cross the coast without stopping and can attack after landing, but are weaker than a Sutherland on land (move 3 on land, 6 at sea, 10 beside a carrier; +25% against transports and warships; the type II adds +15% in the water). A Carrier-Battleship sails 10 hexes, fires at range 2 and carries two formations: boarding ends a unit’s turn, and a launched unit lands on an empty land hex next to the ship with a full move and attack, but not on the turn it boarded. A sunk carrier takes its cargo with it.</p></div><div><b>Ports</b><p>Coastal cities build a port on a sea hex beside them (⚓ on the map): level 1 builds amphibious Knightmares, level 2 Carrier-Battleships, and naval units berthed there repair 10%, 20% or 30% a turn. Level 3 enables the tier IV naval research. Taking a city does not take a port an enemy ship still holds: clear the ships out first. The Naval research branch improves transports (6, then 7 hexes), amphibious movement, landing craft, carrier gunnery and port repairs, and adds Rapid Launch Systems (+10% on the first attack after launching).</p></div><div><b>Capture cities &amp; capitals</b><p>Break a city's defenses and remove its garrison, then move an Infantry or Armor unit in. Cities produce credits, industry and research, and repair garrisons 8% each turn. As in WC4, when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to the conqueror and its armies disband. Lose your own capital and the war is lost.</p></div><div><b>Stacking &amp; breakthroughs</b><p>Build 1–3-frame units. Each extra frame adds 70% HP and 45% attack. After a kill, line and mainline frames may fire once more per turn; Cornelia, Gino and Ashley allow two. Heavy and super-heavy frames fire again after every kill, and their first kill also restores movement.</p></div><div><b>Commanders &amp; morale</b><p>Commanders lead units: each has one signature ability and branch ratings (up to 6 stars). Operation commanders come with the war and are fixed. Your commanders live in HQ → Commanders: two per faction to start (Suzaku and Cornelia, Leila and Akito, Xingke and Xianglin); recruit the rest with command tokens, promote them through eleven ranks (unit frame 112% to 160%), buy stars and wear medals. High morale gives +25% damage; low −25%, diminished −50%; confused units cannot act. Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem lower nearby enemy morale by 2; Zero's Tactical Command lets a friendly unit that has acted move and attack again. Black Knights and JLF commanders are recruited in HQ and serve the Chinese Federation in Conquest.</p></div><div><b>Terrain</b><p>Plains cost 1. Forests (−15% damage taken) and mountains (−25%) cost 2. Deserts cost 1 but drain 3% of a frame each turn; tundra costs 2 and drains 2.5%. The high Himalaya and the Greenland ice cap are impassable. Julius and float units ignore terrain costs.</p></div><div><b>Factories &amp; buildings</b><p>Each city builds one unit per turn; new units act next turn. Every city has a Knightmare factory (heavier frames at levels 2 and 3, +10 industry) and a research lab (+8 research). Research Lab III unlocks on turn ${E.FLEIJA.labTurn}; cities on a Sakuradite deposit also build a Sakuradite refinery. In Conquest, <b>Production Command</b> can auto-upgrade buildings globally and bulk-upgrade all eligible cities. Each individual city has one simple queue: choose the exact unit it should try to auto-produce each turn, or leave it off for manual production. If that unit is unavailable, the queue waits rather than substituting another frame. Automatic purchases use the same rules as manual orders and never spend below your protected credit, industry or Sakuradite reserves.</p></div><div><b>Sakuradite</b><p>${sakuraditeManual()}</p></div><div><b>F.L.E.I.J.A.</b><p>${fleijaManual()}</p></div><div><b>Fortress batteries</b><p>Capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo, Liaodong, Singapore, Panama, Pearl Harbor) carry a battery. Select your city and click a red hex to strike an enemy unit within 3 hexes for 40% of its frame. It recharges for 2 turns and is silenced while the city's defenses are down. Rivals fire theirs too.</p></div><div><b>Elite Forces</b><p>Elite Forces are persistent unique Knightmares developed in Command HQ with fragments. They deploy as one frame only, once per operation. Levels improve their base frame; signature abilities unlock at Lv.3 and reach their final form at Lv.5.</p></div><div><b>HQ research &amp; command tokens</b><p>As in World Conqueror 4, technology is researched at Command HQ with command tokens and kept across every operation and faction. The first win at each difficulty pays 250 + 150 tokens plus banked research, ×1.5 on Hard and ×2 on Challenge, with 150 more for your first win ever. Five trees (Infantry, Armor, Artillery, Sakuradite, Cities); higher tiers open after 2, 4 and 7 wins.</p></div><div><b>Difficulty</b><p>Conquest uses the three WC4-style tiers: Hard gives rival powers tier I–II research, upgrades half their units and adds reinforcements; Challenge gives them every technology, upgrades every formation, adds more reinforcements and raises rival income 25%. Story missions use the same Hard and Challenge escalation. Mission Normal keeps enemies, defenses and turn limits at full strength; it adds a few formations on your side, removes a few enemy ones and gives you 50% more starting resources.</p></div><div><b>Rival turns</b><p>Each rival power moves after you, in order. Moves off screen resolve instantly; press Skip to finish a rival turn at once. Rivals fight each other as well as you, and the neutral powers (Australia, the Middle Eastern Federation) only defend.</p></div></div><div class="info-strip">Controls: N cycles ready units · Click or Enter on a red hex attacks · Z undoes the last move · Escape clears the selection or closes a menu · Arrow keys move the hex cursor and Enter selects · Drag or WASD pans · Scroll / + / − zooms · 0 shows the world · H centers on your capital · Click the minimap to jump.</div><p style="font-size:12px">${NOTICE} Unit names and roles follow the <a href="https://codegeass.fandom.com/wiki/Knightmare_Frame" target="_blank" rel="noopener noreferrer">Code Geass wiki</a>; drawn artwork is original; published imagery is credited in the project’s ASSETS.md. Gameplay draws on <a href="https://apps.apple.com/sg/app/world-conqueror-4/id1258468290" target="_blank" rel="noopener noreferrer">EasyTech’s World Conqueror 4</a>. Numbers are adapted for this game.</p></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="Field manual"><div class="dialog-head"><div><div class="eyebrow">Field manual</div><h2>War on a world of hexes</h2></div><button class="small close" data-action="help-close">Close</button></div><div class="help-grid"><div><b>Movement &amp; firing</b><p>Every unit can move once, then attack once per turn. Attacking ends its movement. Hostile formations use a bright red health ring; campaign allies do not. Your units that still have movement or an attack available make their existing health/token ring glow bright green, WC4-style. Select a unit, click a green hex to move, and click a red hex to attack at once; hover a red hex to see the expected damage. Undo (Z) returns a unit that moved but has not fired.</p></div><div><b>Three branches</b><p>As WC4's infantry, tanks and artillery, every Knightmare belongs to a branch. <b>Infantry</b>: cheap scouts, assault frames (+55% against Armor and city defenses) and five-hex raiders. <b>Armor</b>: line, mainline, heavy and super-heavy frames with breakthroughs. <b>Artillery</b>: fire support at range 1 and rocket and siege frames at exactly range 2. Artillery attacks draw no counter-fire and cannot capture cities.</p></div><div><b>Factions</b><p>Each power builds its own frames. ${E.MAJORS.map(side => `${F(side).short}: ${E.CLASS_ORDER.map(cls => E.TYPES[E.ROSTER[side][cls]].name).join(', ')}.`).join(' ')} Doctrines: Britannian Armor +8% damage, E.U. Artillery +10% damage, Federation Infantry 15% cheaper.</p></div><div><b>Standing orders</b><p>Select one of your units and choose <b>Set destination</b> (or press G), then click any hex. At the start of each of your turns the unit moves as far toward it as it can, and the order ends when it arrives. It never attacks on its own, so you can still fire with it after it moves. Warships stay at sea, and other units take to the sea only when the destination lies across it. Change the destination or press <b>Stop auto-move</b> at any time during your turn, and it stays put next turn. Units on standing orders are skipped when you cycle through ready units unless they have a target in range.</p></div><div><b>Oceans &amp; transports</b><p>The map wraps around the globe. A land unit with movement left may step onto a sea hex: it embarks as a transport and stops. Embarked units sail 5 hexes a turn (more with Naval Transports), cannot fire or counter-fire, and take 50% extra damage. Sailing onto a coast hex lands the unit and ends its move; landing on an undefended enemy city captures it.</p></div><div><b>Navies</b><p>In Conquest every power has the same navy under its own names (Britannia’s Portman, the E.U.’s Panzer-Frosch, the Federation’s Shui Gun-Ru, and each power’s Carrier-Battleship) and starts with four carriers and six amphibious formations. Amphibious Knightmares fight at sea, cross the coast without stopping and can attack after landing, but are weaker than a Sutherland on land (move 3 on land, 6 at sea, 10 beside a carrier; +25% against transports and warships; the type II adds +15% in the water). A Carrier-Battleship sails 10 hexes, fires at range 2 and carries two formations: boarding ends a unit’s turn, and a launched unit lands on an empty land hex next to the ship with a full move and attack, but not on the turn it boarded. A sunk carrier takes its cargo with it.</p></div><div><b>Ports</b><p>Coastal cities build a port on a sea hex beside them (⚓ on the map): level 1 builds amphibious Knightmares, level 2 Carrier-Battleships, and naval units berthed there repair 10%, 20% or 30% a turn. Level 3 enables the tier IV naval research. Taking a city does not take a port an enemy ship still holds: clear the ships out first. The Naval research branch improves transports (6, then 7 hexes), amphibious movement, landing craft, carrier gunnery and port repairs, and adds Rapid Launch Systems (+10% on the first attack after launching).</p></div><div><b>Capture cities &amp; capitals</b><p>Break a city's defenses and remove its garrison, then move an Infantry or Armor unit in. Cities produce credits, industry and research, and repair garrisons 8% each turn. As in WC4, when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to the conqueror and its armies disband. Lose your own capital and the war is lost.</p></div><div><b>Stacking &amp; breakthroughs</b><p>Build 1–3-frame units. Each extra frame adds 70% HP and 45% attack. After a kill, line and mainline frames may fire once more per turn; Cornelia, Gino and Ashley allow two. Heavy and super-heavy frames fire again after every kill, and their first kill also restores movement.</p></div><div><b>Commanders &amp; morale</b><p>Commanders lead units: each has one signature ability and branch ratings (up to 6 stars). Operation commanders come with the war and are fixed. Your commanders live in HQ → Commanders: two per faction to start (Suzaku and Cornelia, Leila and Akito, Xingke and Xianglin); recruit the rest with command tokens, promote them through eleven ranks (unit frame 112% to 160%), buy stars and wear medals. High morale gives +25% damage; low −25%, diminished −50%; confused units cannot act. Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem lower nearby enemy morale by 2; Zero's Tactical Command lets a friendly unit that has acted move and attack again. Black Knights and JLF commanders are recruited in HQ and serve the Chinese Federation in Conquest.</p></div><div><b>Terrain</b><p>Plains cost 1. Forests (−15% damage taken) and mountains (−25%) cost 2. Deserts cost 1 but drain 3% of a frame each turn; tundra costs 2 and drains 2.5%. The high Himalaya and the Greenland ice cap are impassable. Julius and float units ignore terrain costs.</p></div><div><b>Factories &amp; buildings</b><p>Each city builds one unit per turn; new units act next turn. Every city has a Knightmare factory (heavier frames at levels 2 and 3, +10 industry) and a research lab (+8 research). Research Lab III unlocks on turn ${E.FLEIJA.labTurn}; cities on a Sakuradite deposit also build a Sakuradite refinery. In Conquest, <b>Production Command</b> can auto-upgrade buildings globally and bulk-upgrade all eligible cities. Each individual city has one simple queue: choose the exact unit it should try to auto-produce each turn, or leave it off for manual production. If that unit is unavailable, the queue waits rather than substituting another frame. Automatic purchases use the same rules as manual orders and never spend below your protected credit, industry or Sakuradite reserves.</p></div><div><b>Sakuradite</b><p>${sakuraditeManual()}</p></div><div><b>F.L.E.I.J.A.</b><p>${fleijaManual()}</p></div><div><b>Fortress batteries</b><p>Capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo, Liaodong, Singapore, Panama, Pearl Harbor) carry a battery. Select your city and click a red hex to strike an enemy unit within 3 hexes for 40% of its frame. It recharges for 2 turns and is silenced while the city's defenses are down. Rivals fire theirs too.</p></div><div><b>Elite Forces</b><p>Elite Forces are persistent unique Knightmares developed in Command HQ with fragments. They deploy as one frame only, once per operation. Levels improve their base frame; signature abilities unlock at Lv.3 and reach their final form at Lv.5.</p></div><div><b>HQ research &amp; command tokens</b><p>As in World Conqueror 4, technology is researched at Command HQ with command tokens and kept across every operation and faction. The first win at each difficulty pays 250 + 150 tokens plus banked research, ×1.5 on Hard and ×2 on Challenge, with 150 more for your first win ever. Five trees (Infantry, Armor, Artillery, Sakuradite, Cities); higher tiers open after 2, 4 and 7 wins.</p></div><div><b>Difficulty</b><p>Conquest uses the three WC4-style tiers: Hard gives rival powers tier I–II research, upgrades half their units and adds reinforcements; Challenge gives them every technology, upgrades every formation, adds more reinforcements and raises rival income 25%. Story missions use the same Hard and Challenge escalation. Mission Normal keeps enemies, defenses and turn limits at full strength; it adds a few formations on your side, removes a few enemy ones and gives you 50% more starting resources.</p></div><div><b>Rival turns</b><p>Each rival power moves after you, in order. Moves off screen resolve instantly; press Skip to finish a rival turn at once. Rivals fight each other as well as you, and the neutral powers (Australia, the Middle Eastern Federation) only defend.</p></div></div><div class="info-strip">Controls: N cycles ready units · Click or Enter on a red hex attacks · Z undoes the last move · G sets a unit's destination · Escape clears the selection or closes a menu · Arrow keys move the hex cursor and Enter selects · Drag or WASD pans · Scroll / + / − zooms · 0 shows the world · H centers on your capital · Click the minimap to jump.</div><p style="font-size:12px">${NOTICE} Unit names and roles follow the <a href="https://codegeass.fandom.com/wiki/Knightmare_Frame" target="_blank" rel="noopener noreferrer">Code Geass wiki</a>; drawn artwork is original; published imagery is credited in the project’s ASSETS.md. Gameplay draws on <a href="https://apps.apple.com/sg/app/world-conqueror-4/id1258468290" target="_blank" rel="noopener noreferrer">EasyTech’s World Conqueror 4</a>. Numbers are adapted for this game.</p></section></div>`;
   focusDialog();
 }
 function menuDialog() {
@@ -1557,6 +1607,17 @@ function activateHex(p) {
   const u = selectedUnit(),
     hit = E.unitAt(game, p),
     station = E.stationAt(game, p);
+  if (routing && u?.id === routing && interactive()) {
+    const r = E.setGoto(game, u.id, p.c, p.r);
+    if (!r.ok) {
+      toast(`${r.reason}. Choose another hex, or press Escape to cancel.`);
+      return;
+    }
+    routing = null;
+    refreshAndSave(true);
+    toast(`Standing orders: ${gotoText(u)}. It moves there at the start of each of your turns.`);
+    return;
+  }
   if (deploying && u?.id === deploying.ship && interactive()) {
     const r = readyCache.has(E.key(p)) ? E.deploy(game, deploying.ship, deploying.index, p.c, p.r) : null;
     deploying = null;
@@ -1634,7 +1695,7 @@ function attachMap() {
     }
     hover = hitHex(e.clientX, e.clientY);
     if (hover && !pointer?.dragged) {
-      canvas.style.cursor = strikeMode
+      canvas.style.cursor = strikeMode || routing
         ? 'crosshair'
         : readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
           ? 'pointer'
@@ -1654,6 +1715,12 @@ function attachMap() {
             : pr
               ? `Click to attack ${u ? E.TYPES[u.type].short : s.name} · ~${pr.unit || pr.shield} damage · ${pr.counterAllowed ? pr.counter + ' counter-fire' : 'no counter-fire'}`
               : `${s ? s.name + ' · ' : ''}${E.siteAt(game, hover) ? E.siteAt(game, hover).name + ' Sakuradite mine · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
+      if (routing && own) {
+        const why = routeWhy(own, hover);
+        $('map-caption').textContent = why
+          ? `Cannot head here: ${why}`
+          : `Head for ${E.targetName(game, hover)} · ${E.distance(own, hover, game)} hexes away`;
+      }
     }
   };
   canvas.onpointerup = e => {
@@ -2316,6 +2383,18 @@ document.addEventListener('click', e => {
       if (u) doAction(() => E.repair(game, u.id));
       break;
     }
+    case 'goto':
+      startRouting();
+      break;
+    case 'goto-cancel': {
+      const u = selectedUnit();
+      if (u && u.side === game.player && interactive() && E.clearGoto(game, u.id).ok) {
+        routing = null;
+        refreshAndSave(true);
+        toast('Auto-move stopped: the unit will not move on its own next turn.');
+      }
+      break;
+    }
     case 'wait': {
       const u = selectedUnit();
       if (u && u.side === game.player && interactive()) {
@@ -2380,10 +2459,15 @@ document.addEventListener('keydown', e => {
     undoMove();
   }
   if (k === 'h') centerOn(homeOf());
+  if (k === 'g') startRouting();
   if (k === 'escape' && strikeMode) {
     strikeMode = false;
     render();
     toast('Launch cancelled.');
+  } else if (k === 'escape' && routing) {
+    routing = null;
+    updateSelection();
+    toast('Destination unchanged.');
   } else if (k === 'escape') {
     selection = null;
     updateSelection();
@@ -2468,7 +2552,7 @@ function dockHTML() {
       a = C(u.cmd),
       ours = u.side === game.player,
       canUndo = ours && interactive() && undoStack.at(-1)?.unitId === u.id;
-    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}<span class="faction-flag ${u.side}">${F(u.side).letter}</span></div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}</span><strong>${unitName(u)}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div><p>${Math.ceil(u.hp)} / ${E.maxHP(u)} frame · ${moraleName(u.morale)}${ours ? ' · ' + fireStatus(u) : ''}</p></div><div class="dock-actions">${canUndo ? '<button class="small undo-button" data-action="undo">↶ Undo move</button>' : ''}<button class="small" data-action="details">${ours ? 'Orders & upgrades' : 'Unit details'}</button>${ours && !u.cmd ? '<button class="small" data-action="assign">Assign commander</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost') : ''}</div>`;
+    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}<span class="faction-flag ${u.side}">${F(u.side).letter}</span></div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}</span><strong>${unitName(u)}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div><p>${Math.ceil(u.hp)} / ${E.maxHP(u)} frame · ${moraleName(u.morale)}${ours ? ' · ' + fireStatus(u) : ''}</p>${ours && u.goto ? `<p class="goto-line">⚑ ${esc(gotoText(u))}</p>` : ''}</div><div class="dock-actions">${canUndo ? '<button class="small undo-button" data-action="undo">↶ Undo move</button>' : ''}<button class="small" data-action="details">${ours ? 'Orders & upgrades' : 'Unit details'}</button>${ours && !u.cmd ? '<button class="small" data-action="assign">Assign commander</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false) : ''}${ours && u.goto ? act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false) : ''}${ours ? act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost') : ''}</div>`;
   }
   if (s) {
     const ours = s.owner === game.player,
@@ -3246,6 +3330,7 @@ function draw(time, dt) {
       drawStackBars(u.stack, u.side);
       if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
+      if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);
       ctx.restore();
     }
   }
@@ -3293,6 +3378,21 @@ function draw(time, dt) {
         ctx.stroke();
       }
     }
+  // Standing orders: the selected unit's route to its destination, or the hex under the cursor while choosing one.
+  const routed = selectedUnit();
+  if (routed?.side === game.player && (routing ? hover : routed.goto)) {
+    const to = routing ? hover : routed.goto,
+      a = hexCenter(routed),
+      b = hexCenter(to),
+      bx = wrapNear(b.x, mid),
+      ok = !routing || !routeWhy(routed, hover);
+    drawLine(wrapNear(a.x, bx), a.y, bx, b.y, ok ? '#ffd76acc' : '#ff8a7a99', 1.6 / scale, [8, 6]);
+    hexPath(bx, b.y, R - 3);
+    ctx.strokeStyle = ok ? '#ffd76a' : '#ff8a7a';
+    ctx.lineWidth = 2.2 / Math.max(scale, 0.4);
+    ctx.stroke();
+    if (ok) outlinedText('⚑', bx, b.y + 6, 18, '#ffd76a', scale, 'Trebuchet MS', true);
+  }
   if (hover) {
     const p = hexCenter(hover),
       u = selectedUnit(),

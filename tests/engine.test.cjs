@@ -458,6 +458,111 @@ test('AI navies: idle troops board a waiting carrier, which sails to an enemy co
   assert(events.some(e => e.kind === 'deploy'), 'the carrier launches its cargo');
   assert(g.units.includes(a) && g.units.includes(b) && a.c >= 16 && b.c >= 16, 'both land on the enemy coast');
 });
+test('AI theaters: objectives cluster into ranked fronts; an offensive gathers at its rally city, then attacks', () => {
+  const g = blank('eu', 40),
+    city = (id, name, c, r, owner) => ({ ...g.stations[0], id, name, c, r, owner, capital: false, capitalOf: null });
+  g.stations.push(city(3, 'Rally', 20, 5, 'britannia'), city(4, 'Brussels', 36, 2, 'eu'), city(5, 'Lyon', 37, 5, 'eu'));
+  g.phase = 'britannia';
+  const army = [0, 1, 2, 3, 4, 5].map(i => E.newUnit(g, T('britannia', 'medium'), 'britannia', 14 + (i % 3), 8 + Math.floor(i / 3)));
+  let plan = E.aiPlan(g, 'britannia');
+  const paris = plan.fronts.find(f => f.name === 'Paris');
+  assert(paris && paris.type === 'offensive' && paris.objectives.length === 3, 'Paris, Brussels and Lyon form one front');
+  assert(plan.fronts.some(f => f.name === 'Luoyang'), 'the distant Federation capital is a front of its own');
+  assert.equal(plan.fronts[0], paris, 'the nearer, richer front ranks first');
+  assert.equal(paris.rally.name, 'Rally');
+  assert.equal(paris.state, 'assembling');
+  assert(plan.reserve && plan.reserve.assigned > 0, 'a strategic reserve stays at Pendragon');
+  const mine = army.filter(u => plan.assign[u.id] === paris.id);
+  assert(mine.length >= 2);
+  const before = mine.map(u => E.distance(u, paris.rally, g));
+  for (const u of mine) E.aiOrder(g, u.id);
+  assert(mine.every((u, i) => E.distance(u, paris.rally, g) < before[i]), 'the front marches to its rally city first');
+  // Gathered at the rally: next turn the offensive opens, with the same units (sticky assignments) and a dispatch.
+  mine.forEach((u, i) => Object.assign(u, { c: 19 + (i % 3), r: 6 + Math.floor(i / 3), moved: false }));
+  g.turn++;
+  plan = E.aiPlan(g, 'britannia');
+  const again = plan.byId[paris.id];
+  assert.equal(again.state, 'attacking');
+  assert(mine.every(u => plan.assign[u.id] === paris.id), 'units keep their front');
+  assert(g.log.some(l => /forces massed at Rally open an offensive toward Paris/.test(l.text)));
+});
+test('AI theaters: a threatened capital is an emergency; factories build what their front needs', () => {
+  const g = blank('cf', 40);
+  g.phase = 'britannia';
+  for (let i = 0; i < 4; i++) E.newUnit(g, T('britannia', 'medium'), 'britannia', 20 + i, 20);
+  E.newUnit(g, T('eu', 'heavy'), 'eu', 6, 3, 3);
+  const plan = E.aiPlan(g, 'britannia'),
+    home = plan.fronts[0];
+  assert(home.emergency && home.type === 'defensive' && home.name === 'Pendragon');
+  assert.equal(plan.reserve.assigned, 0, 'the reserve is released to the emergency');
+  // An offensive against Armor with no guns of its own asks for artillery and assault frames.
+  const h = blank('cf', 40),
+    rally = { ...h.stations[0], id: 3, name: 'Rally', c: 30, r: 3, capital: false, capitalOf: null };
+  h.stations.push(rally);
+  h.phase = 'britannia';
+  for (let i = 0; i < 3; i++) E.newUnit(h, T('britannia', 'medium'), 'britannia', 24 + i, 8);
+  for (let i = 0; i < 3; i++) E.newUnit(h, T('eu', 'heavy'), 'eu', 37, 1 + i);
+  h.economy.britannia = { ...h.economy.britannia, credits: 9000, industry: 3000, sakuradite: 400 };
+  const front = E.aiPlan(h, 'britannia').fronts.find(f => f.name === 'Paris');
+  assert.deepEqual(front.need.slice(0, 2), ['siege', 'assault']);
+  const count = h.units.length;
+  E.aiProduction(h);
+  const built = h.units.slice(count).find(u => E.distance(u, rally, h) <= 1);
+  assert(built && front.need.slice(0, 3).includes(E.TYPES[built.type].cls), 'the rally city builds for its front');
+});
+test('Standing orders: a unit marches to its destination over several turns, then the order ends', () => {
+  const g = blank('britannia', 30);
+  const u = E.newUnit(g, T('britannia', 'medium'), 'britannia', 4, 10);
+  assert.equal(E.gotoReason(g, u, E.tile(g, 4, 10)), 'Already there');
+  assert(E.setGoto(g, u.id, 24, 10).ok);
+  assert(!E.hasOrders(g, u), 'a unit on standing orders is not waiting for a manual move');
+  let turns = 0;
+  while (u.goto && turns < 10) {
+    const before = E.distance(u, { c: 24, r: 10 }, g);
+    E.beginTurn(g, 'britannia', false);
+    const r = E.runGotos(g, 'britannia');
+    assert(r.moved.some(m => m.id === u.id) && E.distance(u, { c: 24, r: 10 }, g) < before, 'it advances every turn');
+    turns++;
+  }
+  assert.deepEqual([u.c, u.r], [24, 10]);
+  assert(turns > 1 && !u.goto, 'arrived over several turns; the order is complete');
+  // Cancelled: next turn it stays put.
+  assert(E.setGoto(g, u.id, 4, 10).ok && E.clearGoto(g, u.id).ok);
+  E.beginTurn(g, 'britannia', false);
+  E.runGotos(g, 'britannia');
+  assert.deepEqual([u.c, u.r], [24, 10]);
+});
+test('Standing orders: land routes go round a bay, overseas ones embark; warships keep to the sea', () => {
+  const g = blank('britannia', 30);
+  // A bay cuts into the land from the north; its far shore is on the same landmass.
+  for (const t of g.tiles) if (t.c >= 12 && t.c <= 16 && t.r <= 20) t.terrain = 'sea';
+  const u = E.newUnit(g, T('britannia', 'medium'), 'britannia', 8, 5);
+  assert(E.setGoto(g, u.id, 20, 5).ok);
+  assert.equal(E.gotoReason(g, u, E.tile(g, 14, 5)), 'Choose a land hex');
+  for (let i = 0; i < 12 && u.goto; i++) {
+    E.beginTurn(g, 'britannia', false);
+    E.runGotos(g, 'britannia');
+    assert(!E.atSea(g, u), 'never takes to the sea for a destination on its own landmass');
+  }
+  assert.deepEqual([u.c, u.r], [20, 5]);
+  // An island across a channel: the unit embarks.
+  const h = blank('britannia', 30);
+  for (const t of h.tiles) if (t.c >= 12 && t.c <= 15) t.terrain = 'sea';
+  const v = E.newUnit(h, T('britannia', 'medium'), 'britannia', 10, 5),
+    ship = E.newUnit(h, 'carrier_battleship', 'britannia', 13, 20);
+  assert(E.setGoto(h, v.id, 18, 5).ok);
+  assert.equal(E.gotoReason(h, ship, E.tile(h, 18, 5)), 'Warships stay at sea');
+  assert(E.setGoto(h, ship.id, 13, 2).ok);
+  E.beginTurn(h, 'britannia', false);
+  E.runGotos(h, 'britannia');
+  assert(E.atSea(h, v), 'embarks toward the far shore');
+  assert(E.isSea(E.tile(h, ship.c, ship.r)) && ship.r < 20);
+  for (let i = 0; i < 4 && v.goto; i++) {
+    E.beginTurn(h, 'britannia', false);
+    E.runGotos(h, 'britannia');
+  }
+  assert.deepEqual([v.c, v.r], [18, 5]);
+});
 test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Rations', () => {
   const g = blank(),
     julius = E.newUnit(g, T('britannia', 'medium'), 'britannia', 5, 5, 1, 'julius'),
