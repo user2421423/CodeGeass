@@ -38,6 +38,12 @@ class ArtPipelineTest(unittest.TestCase):
         for kind in ('units', 'portraits'):
             for key, entry in manifest[kind].items():
                 with self.subTest(kind=kind, key=key):
+                    if entry['src'].endswith('.svg'):
+                        # Pillow cannot rasterize SVG; check it is a complete document, as publish_art.py does.
+                        text = (root / entry['src']).read_text(encoding='utf8')
+                        self.assertIn('<svg', text)
+                        self.assertIn('</svg>', text)
+                        continue
                     with Image.open(root / entry['src']) as image:
                         image.load()
                         self.assertGreater(image.width * image.height, 0)

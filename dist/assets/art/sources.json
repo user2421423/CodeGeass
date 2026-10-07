@@ -730,92 +730,92 @@
       "kind": "units",
       "id": "vercingetorix",
       "page": "https://codegeass.fandom.com/wiki/Vercingetorix",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/a/ac/Verki.jpg/revision/latest?cb=20160304155817",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "ahura_mazda",
       "page": "https://codegeass.fandom.com/wiki/Ahuramazda",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/6/65/Ahura.jpg/revision/latest?cb=20160304161754",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "canterbury",
       "page": "https://codegeass.fandom.com/wiki/Canterbury",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/1/17/Cantebury_Art.JPG/revision/latest?cb=20220102152945",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "siegfried",
       "page": "https://codegeass.fandom.com/wiki/Siegfried",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/0/05/Siegfried-Full.jpg/revision/latest?cb=20240417184426",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "portman",
       "page": "https://codegeass.fandom.com/wiki/Portman",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/7/74/Portman_-_Line_Art.jpg/revision/latest?cb=20091107162527",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "portman_ii",
       "page": "https://codegeass.fandom.com/wiki/Portman_Type_2",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/8/8b/Portman2-float.jpg/revision/latest?cb=20120229134856",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "carrier_battleship",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/a/a5/Britannia_carriership.jpg/revision/latest?cb=20111224132708",
-      "method": "Original vector sprite redrawn for the game from the cited Code Geass design reference."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "eu_carrier",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/a/a5/Britannia_carriership.jpg/revision/latest?cb=20111224132708",
-      "method": "Uses the same insignia-free Britannian-derived carrier vector as all carrier-battleships, per the standardized navy."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. Shared by the E.U. and Federation carriers."
     },
     {
       "kind": "units",
       "id": "cf_carrier",
       "page": "https://codegeass.fandom.com/wiki/Britannian_Carrier-Battleship",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/a/a5/Britannia_carriership.jpg/revision/latest?cb=20111224132708",
-      "method": "Uses the same insignia-free Britannian-derived carrier vector as all carrier-battleships, per the standardized navy."
+      "image": null,
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py. Shared by the E.U. and Federation carriers."
     },
     {
       "kind": "units",
       "id": "jp_tank",
       "page": null,
       "image": null,
-      "method": "Original game vector sprite for a conventional or game-original unit; no canon-specific external image claimed."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "jp_artillery",
       "page": null,
       "image": null,
-      "method": "Original game vector sprite for a conventional or game-original unit; no canon-specific external image claimed."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "panzer_frosch",
       "page": null,
       "image": null,
-      "method": "Original game vector sprite for a conventional or game-original unit; no canon-specific external image claimed."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",
       "id": "panzer_frosch_ii",
       "page": null,
       "image": null,
-      "method": "Original game vector sprite for a conventional or game-original unit; no canon-specific external image claimed."
+      "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); white background removed and trimmed with tools/local_art_prepare.py."
     },
     {
       "kind": "units",

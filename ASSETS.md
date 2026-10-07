@@ -38,7 +38,13 @@ license does not license the studio artwork.
   (Gawain, Lancelot, Lancelot Albion) so every unit sprite has a transparent background. Burai and Raikō come from
   their wiki pages; Zangetsu and Shen Hu reuse earlier archive art; the Akatsuki Flight-Enabled shares the Air Glide
   render; Emperor Lelouch shares Zero's portrait.
-- Every current unit type and commander now has published art. The October 2026 completion pass adds vector sprites for Vercingetorix, Ahura Mazda, Canterbury, Siegfried, Portman, Portman II, the conventional Japanese vehicles, and the newer amphibious/naval units. The three carrier-battleship factions deliberately share one insignia-free Britannian-derived carrier design. Procedural drawings remain only as runtime safety fallbacks if an image fails to load.
+- Every current unit type and commander now has published art. Owner-supplied artwork (added 2026-10-07; origin not
+  recorded in this repository) covers Vercingetorix, Ahura Mazda, Canterbury, Siegfried, Portman, Portman II,
+  Panzer-Frosch, Panzer-Frosch II, the two conventional Japanese vehicles and the carriers: Britannia's
+  Carrier-Battleship has its own design, and the E.U. and Federation carriers share one insignia-free generic carrier.
+  Backgrounds were removed with `tools/local_art_prepare.py` (enclosed-gap seeds are in `tools/art-backgrounds.json`).
+  Shui Gun-Ru and Shui Gun-Ru II still use the October 2026 vector sprites. Procedural drawings remain only as runtime
+  safety fallbacks if an image fails to load.
 
 ## Preparing and publishing art
 
