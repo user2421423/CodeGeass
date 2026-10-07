@@ -441,6 +441,28 @@ a {
 .target-box .label {
   color: #f1a297;
 }
+.auto-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #c9d3df;
+}
+.auto-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--own);
+}
+[aria-label='Production Command'] input.select {
+  width: 100%;
+  box-sizing: border-box;
+}
+[aria-label='Production Command'] .brief-block .actions {
+  margin-top: 12px;
+}
 .target-box h3 {
   font-size: 23px;
   margin: 8px 0;
