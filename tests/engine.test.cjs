@@ -53,7 +53,7 @@ const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
   assert.equal(Object.values(E.TYPES).filter(t => !t.elite && !t.campaign && !t.naval).length, 31);
-  assert.deepEqual(E.NAVAL.britannia, ['portman', 'portman_ii', 'carrier_battleship']);
+  assert.deepEqual(Object.values(E.NAVAL.britannia), ['portman', 'portman_ii', 'carrier_battleship']);
   assert.equal(Object.values(E.TYPES).filter(t => t.elite).length, 19);
   assert.equal(Object.values(E.TYPES).filter(t => t.campaign).length, 11);
   for (const side of E.MAJORS) {
@@ -383,6 +383,79 @@ test('Britannia’s navy: Portmans cross the coast without stopping; Carrier-Bat
   // Naval units are Conquest-only and stay out of the ten-class lineups.
   assert.equal(E.ROSTER.britannia.light, 'sutherland');
   assert.deepEqual(E.navalTypes({ mode: 'campaign' }, 'britannia'), []);
+});
+test('Every power has the same navy under its own names, and starts with four carriers and six amphibious formations', () => {
+  const stats = ['hp', 'attack', 'armor', 'move', 'seaMove', 'min', 'max', 'capacity', 'cost', 'industry', 'sakuradite', 'port', 'aquatic'];
+  for (const role of ['amphibious', 'amphibious2', 'carrier'])
+    for (const side of E.MAJORS) {
+      const t = E.TYPES[E.NAVAL[side][role]];
+      assert.equal(t.side, side);
+      for (const k of stats) assert.equal(t[k], E.TYPES[E.NAVAL.britannia[role]][k], `${side} ${role} ${k}`);
+    }
+  const g = E.createGame('britannia', 'normal', 'conquest', 5);
+  for (const side of E.MAJORS) {
+    const navy = role => g.units.filter(u => u.side === side && u.type === E.NAVAL[side][role]).length;
+    assert.equal(navy('carrier'), 4, side);
+    assert.equal(navy('amphibious') + navy('amphibious2'), 6, side);
+    assert(g.units.filter(u => u.side === side && E.TYPES[u.type].naval).every(u => E.isSea(E.tile(g, u.c, u.r))));
+    assert.equal(g.stations.filter(s => s.portLevel && s.portOwner === side).length, 4, `${side} ports`);
+  }
+});
+test('Ports: built on a sea hex beside a coastal city, they launch naval units, repair them, and must be cleared after the city falls', () => {
+  const g = blank('britannia', 14);
+  for (const t of g.tiles) if (t.c >= 7) t.terrain = 'sea';
+  const s = g.stations[0];
+  Object.assign(s, { c: 6, r: 6, capital: false, capitalOf: null });
+  Object.assign(g.stations[1], { c: 2, r: 0 });
+  Object.assign(g.stations[2], { c: 2, r: 13 });
+  assert.match(E.buyReason(g, s, 'portman', 1), /level-1 port/);
+  assert(E.build(g, s.id, 'port').ok);
+  const port = E.tile(g, s.portAt.c, s.portAt.r);
+  assert(E.isSea(port) && E.distance(port, s, g) === 1);
+  const pm = E.recruit(g, s.id, 'portman', 1);
+  assert(pm.ok && pm.unit.c === port.c && pm.unit.r === port.r, 'naval units are built at the port');
+  assert.match(E.buyReason(g, s, 'carrier_battleship', 1), /level-2 port/);
+  assert(E.build(g, s.id, 'port').ok);
+  pm.unit.hp = 100;
+  E.beginTurn(g, 'britannia', false);
+  assert.equal(pm.unit.hp, 100 + Math.round(E.maxHP(pm.unit) * E.PORT.repair[2]), 'a level-2 port repairs 20%');
+  // The E.U. takes the city, but the Portman still holds the port until it leaves.
+  s.shield = 0;
+  g.phase = 'eu';
+  const raider = E.newUnit(g, T('eu', 'light'), 'eu', 5, 6);
+  assert(E.move(g, raider.id, 6, 6).captured);
+  assert.equal(s.portOwner, 'britannia', 'a port with an enemy ship in it is not captured');
+  pm.unit.hp = 0;
+  E.beginTurn(g, 'eu', false);
+  assert.equal(s.portOwner, 'eu', 'once cleared, the port follows its city');
+});
+test('Naval research: logistics 6 then 7 (with a level-3 port), Landing Craft, and saved Sakuradite research moves over', () => {
+  const g = blank('britannia', 20);
+  for (const t of g.tiles) if (t.c >= 4 && t.c <= 14) t.terrain = 'sea';
+  const u = E.newUnit(g, T('britannia', 'light'), 'britannia', 6, 5);
+  g.tech.britannia['naval.logistics'] = 2;
+  assert(E.reachable(g, u).has('12,5') && !E.reachable(g, u).has('13,5'), 'six hexes without a level-3 port');
+  Object.assign(g.stations[0], { portLevel: 3, portAt: { c: 1, r: 1 }, portOwner: 'britannia' });
+  assert(E.reachable(g, u).has('13,5'), 'Advanced Naval Logistics: seven hexes');
+  assert.deepEqual(E.normalizeResearch({ 'sakura.transport': 2, 'sakura.landing': 1 }), { 'naval.logistics': 2, 'naval.landing': 1 });
+  assert(E.TECH_NODES['naval.launch'] && !E.TECH_NODES['sakura.transport']);
+});
+test('AI navies: idle troops board a waiting carrier, which sails to an enemy coast and launches them to fight', () => {
+  const g = blank('eu', 24);
+  for (const t of g.tiles) if (t.c >= 6 && t.c <= 15) t.terrain = 'sea';
+  // The west coast holds no city at all (troops near their capital would stay behind as its guards).
+  Object.assign(g.stations[0], { c: 21, r: 21 });
+  g.phase = 'britannia';
+  const cv = E.newUnit(g, 'carrier_battleship', 'britannia', 6, 5),
+    a = E.newUnit(g, T('britannia', 'light'), 'britannia', 5, 5),
+    b = E.newUnit(g, T('britannia', 'medium'), 'britannia', 5, 6);
+  for (const v of [cv, a, b]) E.aiOrder(g, v.id);
+  assert.equal(cv.cargo?.length, 2, 'both formations board');
+  g.turn++;
+  E.beginTurn(g, 'britannia', false);
+  const events = E.aiOrder(g, cv.id);
+  assert(events.some(e => e.kind === 'deploy'), 'the carrier launches its cargo');
+  assert(g.units.includes(a) && g.units.includes(b) && a.c >= 16 && b.c >= 16, 'both land on the enemy coast');
 });
 test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Rations', () => {
   const g = blank(),

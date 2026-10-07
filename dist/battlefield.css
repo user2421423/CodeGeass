@@ -3133,3 +3133,7 @@ button.danger:hover:not(:disabled) {
 .season-tab.active b {
   color: #f1d27a;
 }
+.warn-text {
+  display: block;
+  color: var(--red);
+}

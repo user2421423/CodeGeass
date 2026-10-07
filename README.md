@@ -51,8 +51,10 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
-- **Britannia's navy (Conquest):** amphibious Portmans fight at sea and cross the coast without stopping, and
-  Carrier-Battleships carry two formations that launch onto the beach ready to move and attack.
+- **Navies and ports (Conquest):** every power fields the same navy under its own names: amphibious Knightmares
+  that fight at sea and cross the coast without stopping, and Carrier-Battleships whose two formations launch onto
+  the beach ready to move and attack. Ports on coastal cities build and repair them; a Naval research branch improves
+  them, and the AI carries out its own carrier invasions.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
   frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
