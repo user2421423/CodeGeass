@@ -70,6 +70,10 @@ const ART = (() => {
     akatsuki_flight: { body: 'humanoid', bulk: 0.95, head: 'fin', shoulder: 'block', weapon: 'rifle', back: 'wings', main: '#5f8f86' },
     zangetsu: { body: 'humanoid', bulk: 1, head: 'fin', shoulder: 'block', weapon: 'katana', back: 'pods', main: '#272b35' },
     raiko: { body: 'tank', main: '#4b5040', trim: '#a8a07a' },
+    // Britannia's navy.
+    portman: { body: 'egg', main: '#4f6f8a', trim: '#d9b45a' },
+    portman_ii: { body: 'egg', main: '#3e5f7e', trim: '#e3c06a', glow: '#8ff7ff' },
+    carrier_battleship: { body: 'ship', main: '#6c5a8a', dark: '#2c2440', trim: '#e3c06a', glow: '#8ff7ff' },
     vercingetorix: { body: 'humanoid', bulk: 1.05, head: 'crest', shoulder: 'spike', weapon: 'axe', back: 'wings', main: '#d8b04a', dark: '#4a3412', trim: '#f4e2a0', glow: '#ff7a3a' },
     ahura_mazda: { body: 'giant', bulk: 1.3, head: 'mono', shoulder: 'wide', weapon: 'none', back: 'bigcannon', main: '#8e2f2f', dark: '#2a1010', trim: '#e0b45a', glow: '#ff5a3a' },
     canterbury: { body: 'tank', main: '#5a4a6a', trim: '#cdb0f0' },
@@ -465,7 +469,22 @@ const ART = (() => {
     svg += line(26, 62, 74, 62, c.trim, 1.6);
     return svg;
   }
-  const BODIES = { humanoid, giant: humanoid, insect, dome, box, egg, tank, tripod, fortress };
+  function ship(s, c) {
+    // Britannian Carrier-Battleship: a long hull, a Knightmare launch deck forward, the bridge and guns aft.
+    let svg = '';
+    svg += poly([[6, 64], [94, 64], [86, 80], [16, 80]], c.main, ink());
+    svg += poly([[16, 80], [86, 80], [84, 85], [18, 85]], c.deep, ink(0.9));
+    svg += poly([[8, 60], [58, 60], [58, 64], [6, 64]], c.light, ink(0.9));
+    svg += line(12, 62, 54, 62, c.trim, 1.4);
+    svg += poly([[58, 44], [80, 44], [84, 64], [56, 64]], c.dark, ink());
+    svg += poly([[63, 34], [75, 34], [77, 44], [61, 44]], c.main, ink());
+    svg += circle(69, 39, 1.8, c.glow, ink(0.6)) + line(68, 26, 68, 34, '#2b2f36', 1.6);
+    svg += `<rect x="84" y="56" width="9" height="5" rx="1.5" fill="${c.deep}" ${ink(0.9)}/>` + line(90, 57, 99, 53, '#2b2f36', 2.2);
+    svg += `<rect x="38" y="54" width="11" height="6" rx="1.5" fill="${c.deep}" ${ink(0.9)}/>` + line(40, 55, 27, 50, '#2b2f36', 2.4);
+    svg += line(16, 72, 84, 72, c.trim, 1.6);
+    return svg;
+  }
+  const BODIES = { humanoid, giant: humanoid, insect, dome, box, egg, tank, tripod, fortress, ship };
   const svgCache = new Map();
   function knightmareSVG(type, side) {
     const k = `${type}|${side}`;

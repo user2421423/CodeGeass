@@ -48,9 +48,11 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   **F.L.E.I.J.A. Eliminator** charge per power for 1,200 credits, 300 industry, 250 research and 100 Sakuradite over
   3 turns. The charge is tied to that city, protects targets within 2 hexes and automatically neutralizes one
   incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
-- **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 10 hexes a
+- **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
+- **Britannia's navy (Conquest):** amphibious Portmans fight at sea and cross the coast without stopping, and
+  Carrier-Battleships carry two formations that launch onto the beach ready to move and attack.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
   frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a

@@ -52,7 +52,8 @@ const mine = (owner, c = 6, r = 5, base = 40, refinery = 0) => ({
 });
 const T = (side, cls) => E.typeFor(side, cls);
 test('Each power fields ten Knightmares across the three branches', () => {
-  assert.equal(Object.values(E.TYPES).filter(t => !t.elite && !t.campaign).length, 31);
+  assert.equal(Object.values(E.TYPES).filter(t => !t.elite && !t.campaign && !t.naval).length, 31);
+  assert.deepEqual(E.NAVAL.britannia, ['portman', 'portman_ii', 'carrier_battleship']);
   assert.equal(Object.values(E.TYPES).filter(t => t.elite).length, 19);
   assert.equal(Object.values(E.TYPES).filter(t => t.campaign).length, 11);
   for (const side of E.MAJORS) {
@@ -169,7 +170,7 @@ test('Movement obeys terrain, occupancy and the one-move rule', () => {
 });
 test('Units embark onto the sea, sail as transports that cannot fire, and land on a coast', () => {
   const g = blank('britannia', 20);
-  for (const t of g.tiles) if (t.c >= 4 && t.c <= 14) t.terrain = 'sea';
+  for (const t of g.tiles) if (t.c >= 4 && t.c <= 9) t.terrain = 'sea';
   const u = E.newUnit(g, T('britannia', 'light'), 'britannia', 3, 5);
   const reach = E.reachable(g, u);
   assert(reach.has('4,5'), 'adjacent sea hex reachable');
@@ -179,16 +180,16 @@ test('Units embark onto the sea, sail as transports that cannot fire, and land o
   const raider = E.newUnit(g, T('eu', 'scout'), 'eu', 5, 5);
   assert.equal(E.targets(g, u).length, 0, 'embarked units cannot fire');
   raider.hp = 0;
-  // Next turn: sail ten hexes; landing takes a step and ends the move.
+  // Next turn: sail five hexes; landing takes a step and ends the move.
   E.beginTurn(g, 'britannia', false);
   const sail = E.reachable(g, u);
-  assert(sail.has('14,5') && !sail.has('15,5'), 'sails ten hexes');
-  assert(!sail.has('16,5'), 'cannot move beyond the ten-hex transport range');
-  assert(E.move(g, u.id, 14, 5).ok);
+  assert(sail.has('9,5'), 'sails five hexes');
+  assert(!sail.has('10,5'), 'cannot sail five hexes and land in the same turn');
+  assert(E.move(g, u.id, 9, 5).ok);
   E.beginTurn(g, 'britannia', false);
   const land = E.reachable(g, u);
-  assert(land.has('15,5'), 'lands on the coast');
-  assert(E.move(g, u.id, 15, 5).ok && !E.atSea(g, u));
+  assert(land.has('10,5'), 'lands on the coast');
+  assert(E.move(g, u.id, 10, 5).ok && !E.atSea(g, u));
   assert.equal(E.reachable(g, u).size, 0, 'landing ends the move');
   // An embarked unit takes 50% extra damage and gives no counter-fire.
   const g2 = blank();
@@ -333,6 +334,55 @@ test('Losing your own capital loses the war', () => {
   assert(E.move(g, u.id, 11, 0).ok);
   assert.equal(g.over.winner, 'britannia');
   assert.equal(E.missionReward(g).total, 0);
+});
+test('Britannia’s navy: Portmans cross the coast without stopping; Carrier-Battleships carry two formations and launch them ready to fight', () => {
+  const g = blank('britannia', 20);
+  for (const t of g.tiles) if (t.c >= 4 && t.c <= 12) t.terrain = 'sea';
+  // Portman: land move 3, sea move 6 from one pool; crossing the coast does not end the move.
+  const pm = E.newUnit(g, 'portman', 'britannia', 3, 5);
+  assert.equal(E.movement(g, pm), 3);
+  const reach = E.reachable(g, pm);
+  assert(reach.has('9,5') && !reach.has('10,5'), 'swims six sea hexes after entering the water');
+  const swimmer = E.newUnit(g, 'portman_ii', 'britannia', 8, 8),
+    transport = E.newUnit(g, T('eu', 'light'), 'eu', 8, 9);
+  assert(!E.atSea(g, swimmer) && E.atSea(g, transport), 'a Portman in the water is not a transport');
+  assert(E.targets(g, swimmer).some(p => p.c === 8 && p.r === 9), 'Portmans fight from the water');
+  const vsTransport = E.preview(g, swimmer.id, 8, 9);
+  assert(!vsTransport.counterAllowed);
+  transport.hp = 0;
+  // Carrier: boarding ends the action; no launch on the boarding turn; capacity 2.
+  const cv = E.newUnit(g, 'carrier_battleship', 'britannia', 4, 6),
+    a = E.newUnit(g, T('britannia', 'light'), 'britannia', 3, 6),
+    b = E.newUnit(g, T('britannia', 'assault'), 'britannia', 3, 7),
+    c = E.newUnit(g, T('britannia', 'scout'), 'britannia', 3, 4);
+  assert(E.reachable(g, a).has('4,6'));
+  assert.equal(E.move(g, a.id, 4, 6).loaded, cv.id);
+  assert(!g.units.includes(a) && cv.cargo.length === 1, 'boarding takes the unit off the map');
+  assert.match(E.deployReason(g, cv, 0), /Boarded this turn/);
+  assert.equal(E.move(g, b.id, 4, 6).loaded, cv.id);
+  assert(!E.reachable(g, c).has('4,6'), 'a full carrier takes no more');
+  // Next turn: the carrier sails (sea only), then launches a formation with a full move and attack.
+  g.turn++;
+  E.beginTurn(g, 'britannia', false);
+  const sail = E.reachable(g, cv);
+  assert(sail.has('12,6') && ![...sail.keys()].some(k => +k.split(',')[0] >= 13), 'warships only sail');
+  assert(E.move(g, cv.id, 12, 6).ok);
+  const spots = E.deployTargets(g, cv);
+  assert(spots.length && spots.every(t => !E.isSea(t) && !E.unitAt(g, t)));
+  assert(E.deploy(g, cv.id, 0, spots[0].c, spots[0].r).ok);
+  assert(!a.moved && !a.attacked && E.reachable(g, a).size > 0, 'Rapid KMF Deployment: a full move and attack');
+  assert(!E.reachable(g, a).has('12,6'), 'a launched unit cannot board again the same turn');
+  g.stations.push({ ...g.stations[0], id: g.stations.length, name: 'Enemy port', c: 13, r: 7, owner: 'eu', capital: false, capitalOf: null });
+  assert(!E.deployTargets(g, cv).some(t => t.c === 13 && t.r === 7), 'never onto an enemy city');
+  // A Portman beside a carrier swims 10; a sunk carrier takes its cargo with it.
+  const escort = E.newUnit(g, 'portman', 'britannia', 11, 6);
+  assert(E.reachable(g, escort).has('4,6'), 'escorting Portmans swim 10 (seven sea hexes here)');
+  cv.hp = 0;
+  E.kill(g, cv, null);
+  assert(b.hp === 0 && cv.cargo.length === 0);
+  // Naval units are Conquest-only and stay out of the ten-class lineups.
+  assert.equal(E.ROSTER.britannia.light, 'sutherland');
+  assert.deepEqual(E.navalTypes({ mode: 'campaign' }, 'britannia'), []);
 });
 test('Commander abilities: Geass Command, Live On, Excalibur, Old Soldier’s Rations', () => {
   const g = blank(),
