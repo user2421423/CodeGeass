@@ -1288,11 +1288,11 @@ h3 {
   background: linear-gradient(#3b836d, #1d4b3f) !important;
 }
 .faction-flag.britannia {
-  background: #2e1d52;
+  background: #5d1818;
   border-color: #e6c56a;
 }
 .faction-flag.eu {
-  background: #1a3266;
+  background: #214783;
   border-color: #d3dbe2;
 }
 .faction-flag.cf {
@@ -1652,10 +1652,10 @@ button.mini small {
   border-right: 2px solid #1d3d5e;
 }
 .general-info.britannia .gi-left {
-  background: radial-gradient(circle at 50% 40%, #e6c56a, #7b4fb3 60%, #2e1d52);
+  background: radial-gradient(circle at 50% 40%, #f0c76a, #b53838 60%, #5d1818);
 }
 .general-info.eu .gi-left {
-  background: radial-gradient(circle at 50% 40%, #9fd0ff, #2f5fb8 60%, #102a5a);
+  background: radial-gradient(circle at 50% 40%, #a9d0ff, #376fca 60%, #153b78);
 }
 .general-info.cf .gi-left {
   background: radial-gradient(circle at 50% 40%, #f2c14e, #b52a2a 60%, #4a0d0b);
@@ -2443,8 +2443,8 @@ button.mini small {
 
 /* ---- Knightmare Conquest: three powers, a world map with a minimap, sea transports ---- */
 :root {
-  --britannia: #c9a4ff;
-  --eu: #72b4ff;
+  --britannia: #e34b4b;
+  --eu: #4f8cff;
   --cf: #ff8c6e;
 }
 body,
@@ -2488,12 +2488,12 @@ body,
   color: #e5dcb4;
 }
 .faction.britannia.active {
-  background: linear-gradient(130deg, #4a3d63, #2a2346);
-  border-color: #c9a4ff;
+  background: linear-gradient(130deg, #63302f, #3a1717);
+  border-color: #e34b4b;
 }
 .faction.eu.active {
-  background: linear-gradient(130deg, #33476a, #1b2c4c);
-  border-color: #72b4ff;
+  background: linear-gradient(130deg, #315a92, #18345f);
+  border-color: #4f8cff;
 }
 .faction.cf.active {
   background: linear-gradient(130deg, #5e3a33, #3a1d1c);
