@@ -245,16 +245,37 @@ function generalsDialog(side = generalsSide) {
 }
 let archiveSide = null,
   archiveBack = 'game';
-function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
-  archiveSide = side;
+// Every non-Elite frame: the three powers' lineups, navies and campaign-only frames, then the campaign sides and neutrals.
+const ARCHIVE_SIDES = [...E.MAJORS, 'eb', 'bk', 'jlf', 'neutral'],
+  ARCHIVE_BRANCHES = [...BRANCH_LIST, 'Naval'];
+function archiveTypes(side, branch) {
+  if (branch === 'Naval') return E.NAVAL[side] ? [...new Set(Object.values(E.NAVAL[side]))] : [];
   // A faction may deliberately map several WC4 class slots to one Code Geass frame. Show each actual frame once.
-  const types = [...new Set(E.CLASS_ORDER.map(cls => E.ROSTER[side][cls]))].filter(k => k && E.TYPES[k].branch === branch);
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare archive"><div class="dialog-head"><div><div class="eyebrow">Order of battle</div><h2>Knightmare archive</h2><p>${F(side).name} frames. Values shown for one frame. <b>${F(side).doctrine}:</b> ${F(side).doctrineText}</p></div><button class="small close" data-action="archive-close">Close</button></div><div class="tabs">${E.MAJORS.map(s => `<button data-archive-side="${s}" class="${s === side ? 'active' : ''}">${F(s).short}</button>`).join('')}</div><div class="tabs">${BRANCH_LIST.map(b => `<button data-archive-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div class="cards">${types
+  const lineup = E.ROSTER[side] ? E.CLASS_ORDER.map(cls => E.ROSTER[side][cls]) : [],
+    own = Object.keys(E.TYPES).filter(k => E.TYPES[k].side === side && !E.TYPES[k].naval);
+  return [...new Set([...lineup, ...own])].filter(k => k && !E.TYPES[k].elite && E.TYPES[k].branch === branch);
+}
+function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
+  if (!ARCHIVE_SIDES.includes(side)) side = game.player;
+  archiveSide = side;
+  const branches = ARCHIVE_BRANCHES.filter(b => archiveTypes(side, b).length);
+  if (!branches.includes(branch)) branch = branches[0];
+  const types = archiveTypes(side, branch),
+    f = F(side),
+    note =
+      branch === 'Naval'
+        ? 'Navies are Conquest-only and built at ports. Every power’s equivalent units share the same numbers; only names and art differ.'
+        : E.MAJORS.includes(side)
+          ? 'Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Jabalpur-built Black Knights frames and the Burai Kai. Configurations are the game’s loadouts of a wiki frame. Campaign-only frames appear in story missions, not in Conquest factories.'
+          : E.ROSTER[side]
+            ? 'The frames this side fields in story missions, including those it shares with the major powers. Campaign-only frames are not built in Conquest.'
+            : 'Neutral garrisons and the Geass Order’s Siegfried. Campaign-only frames are not built in Conquest.';
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare archive"><div class="dialog-head"><div><div class="eyebrow">Order of battle</div><h2>Knightmare archive</h2><p>${f.name} frames. Values shown for one frame.${f.doctrine ? ` <b>${f.doctrine}:</b> ${f.doctrineText}` : ''}</p></div><button class="small close" data-action="archive-close">Close</button></div><div class="tabs">${ARCHIVE_SIDES.map(s => `<button data-archive-side="${s}" class="${s === side ? 'active' : ''}">${F(s).short}</button>`).join('')}</div><div class="tabs">${branches.map(b => `<button data-archive-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div class="cards">${types
     .map(k => {
       const t = E.TYPES[k];
-      return `<article class="unit-card">${ART.unit(k, 'catalog-ship', side)}<span class="unit-code">${t.role} · ${t.wc} · Tier ${t.tier}</span><h3>${t.name}</h3><span class="weapon-focus">${t.model} · ${t.gen}</span><p style="margin-top:10px">${t.desc}</p><p class="lore">${t.lore}<br><b>${t.weapon}</b></p><div class="unit-spec"><span>HP ${t.hp}</span><span>${ICONS.use('atk')}${t.attack}</span><span>${ICONS.use('def')}${t.armor}</span><span>${ICONS.use('mov')}${t.move}</span><span>${ICONS.use('rng')}${t.min === t.max ? t.max : t.min + '–' + t.max}</span></div><div class="cost">${costHTML(E.price(k, 1, game, side))}</div></article>`;
+      return `<article class="unit-card">${ART.unit(k, 'catalog-ship', side)}<span class="unit-code">${t.role} · ${t.wc} · Tier ${t.tier}${t.campaign ? ' · Campaign only' : ''}</span><h3>${t.name}</h3><span class="weapon-focus">${t.model} · ${t.gen}</span><p style="margin-top:10px">${t.desc}</p><p class="lore">${t.lore}<br><b>${t.weapon}</b></p><div class="unit-spec"><span>HP ${t.hp}</span><span>${ICONS.use('atk')}${t.attack}</span><span>${ICONS.use('def')}${t.armor}</span><span>${ICONS.use('mov')}${t.move}</span><span>${ICONS.use('rng')}${t.min === t.max ? t.max : t.min + '–' + t.max}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}${t.capacity ? `<span>Carries ${t.capacity}</span>` : ''}</div><div class="cost">${costHTML(E.price(k, 1, game, side))}</div></article>`;
     })
-    .join('')}</div><p class="description">Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Jabalpur-built Black Knights frames and the Burai Kai. Configurations are the game’s loadouts of a wiki frame.</p></section></div>`;
+    .join('')}</div><p class="description">${note}</p></section></div>`;
   focusDialog();
 }
 // A power's strategic weapons as intelligence sees them: projects under way and warheads ready.
