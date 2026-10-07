@@ -1,0 +1,90 @@
+name: Long-game balance simulation
+
+on:
+  push:
+    branches:
+      - feature/balance-simulations
+    paths:
+      - 'tools/balance_sim.cjs'
+      - 'dist/engine.js'
+      - 'dist/engine/**'
+      - '.github/workflows/balance-sim.yml'
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Runs per player/difficulty scenario'
+        required: true
+        default: '5'
+      max_turns:
+        description: 'Maximum turns per conquest'
+        required: true
+        default: '120'
+      players:
+        description: 'Comma-separated players'
+        required: true
+        default: 'britannia,eu,cf'
+      difficulties:
+        description: 'Comma-separated difficulties'
+        required: true
+        default: 'normal,hard,challenge'
+      seed:
+        description: 'Base deterministic seed'
+        required: true
+        default: '20261007'
+
+permissions:
+  contents: read
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Engine regression check
+        run: node --test tests/engine.test.cjs
+
+      - name: Run balance simulations
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RUNS="${{ inputs.runs }}"
+            MAX_TURNS="${{ inputs.max_turns }}"
+            PLAYERS="${{ inputs.players }}"
+            DIFFICULTIES="${{ inputs.difficulties }}"
+            SEED="${{ inputs.seed }}"
+          else
+            # Branch-push smoke run: enough to prove the harness still talks to
+            # the split engine correctly without spending minutes on every edit.
+            RUNS="1"
+            MAX_TURNS="12"
+            PLAYERS="britannia,eu,cf"
+            DIFFICULTIES="normal"
+            SEED="20261007"
+          fi
+
+          node tools/balance_sim.cjs \
+            --runs "$RUNS" \
+            --max-turns "$MAX_TURNS" \
+            --players "$PLAYERS" \
+            --difficulties "$DIFFICULTIES" \
+            --seed "$SEED" \
+            --output balance-results.json \
+            --summary balance-summary.md
+
+      - name: Add report to job summary
+        run: cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload balance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-simulation-report
+          path: |
+            balance-results.json
+            balance-summary.md
+          if-no-files-found: error
+          retention-days: 30
