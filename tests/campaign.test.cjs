@@ -152,7 +152,7 @@ test('Normal campaign keeps full enemy strength while using time and force-count
     hotel = g.stations.find(s => s.name === 'Convention Center Hotel');
   assert.equal(enemy.hp, E.maxHP(enemy), 'Normal enemies start at 100% HP');
   assert.equal(hotel.shield, 240, 'Normal enemy city defenses stay at 100%');
-  assert.equal(g.campaign.turnLimit, 19, 'a 14-turn mission gets five extra Normal turns');
+  assert.equal(g.campaign.turnLimit, 14, 'Normal keeps the mission’s original turn limit');
   assert.equal(g.units.filter(u => u.side === 'bk').length, 6, 'BK2 gets one extra player formation on Normal');
 
   const hold = C.createMission('br5', 12, 'normal');
