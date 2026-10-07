@@ -123,6 +123,12 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Hexes that would bridge a strait at 2° per hex are left out (Italy's heel, India's tip, southern Sweden, western
   Kyushu, the Low Countries' coast); Kyushu stays joined to Honshu. Regenerate with
   `python3 tools/build_map.py --inject dist/engine/world.js`.
+- Second coastline pass changes 26 hexes (17 sea to land, 9 land to sea): Singapore is a one-hex island separate
+  from both Malaya and Sumatra; the Malay peninsula extends south and Sumatra's northern/central spine shifts west
+  to preserve Malacca. Luzon, the central Visayas and Mindanao are separate island groups. Taiwan loses its artificial
+  eastern hex, with Taipei and its scout moved onto the actual island. Sicily is separated from Italy by Messina;
+  southern Baja is restored alongside an open Gulf of California. Newfoundland, Jamaica, Puerto Rico, Okinawa and
+  Timor are restored as separate islands. All 149 cities and the starting armies/ports are retained; only Taipei moves.
 - Plains 1; forest 2 (−15% damage); mountains 2 (−25%); desert 1 (3% attrition); tundra 2 (2.5% attrition);
   Himalaya and Greenland ice cap impassable. Julius and float units ignore movement costs.
 - **Movement rebalance for the denser world:** Conquest applies a +1 mobility bonus to every land unit after its
@@ -379,9 +385,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   sail + 1. Garrisons and defensive fronts both use it.
 - In Conquest, fortress cities (the strait guns) and level-2+ naval bases always keep one land defender. Warships are
   never picked as garrisons.
-- The geography pass opened the strategic straits (Malacca, Otranto, Danish Straits, Bosporus, Bab-el-Mandeb,
-  Hudson, Tsugaru). At this scale the Malacca gap leaves Singapore on the Sumatra landmass, so it's an island
-  fortress the AI holds, reinforces and attacks by sea.
+- The geography passes opened the strategic straits (Malacca, Otranto, Danish Straits, Bosporus, Bab-el-Mandeb,
+  Hudson, Tsugaru, Messina). Singapore is a separate one-hex island, so it is a coastal fortress the AI holds,
+  reinforces and attacks by sea; Kuala Lumpur remains connected to Bangkok by land.
 - **Theaters (Conquest):** `frontObjectives` collects enemy cities within 20 hexes of own cities or units, every
   rival capital and F.L.E.I.J.A. project, Sakuradite mines (Fuji always), and own threatened cities, capital and
   mines. Objectives within 16 hexes cluster into fronts. Front ids are the anchor objective's key and re-form around

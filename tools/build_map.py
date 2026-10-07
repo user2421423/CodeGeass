@@ -293,7 +293,6 @@ FORCE_LAND = [
     (-157.9, 21.3),  # Oahu (Pearl Harbor)
     (-9, 55.28), (-3.6, 52.16), (-1.8, 55.28), (-3.6, 58.4),  # Ireland, England, Scotland
     (133.2, 33.44),  # Kyushu joined to Honshu
-    (124.2, 24.08),  # Taiwan, set east of the strait
     (139.7, 35.7), (135.6, 34.8), (130.6, 32.8), (141.4, 43.1), (140.5, 39.5),  # Area 11
     (126.9, 37.5), (128.8, 35.6),  # Korea
     (121.5, 25), (120.9, 14.6), (125, 8),  # Taiwan, Luzon, Mindanao
@@ -341,6 +340,16 @@ HEX_LAND = [
     (100, 2), (95, 10),  # Scandinavia/Denmark: northern Norway and Jutland
     (165, 63), (166, 59), (147, 62), (154, 51),  # Australia: Sydney, Brisbane, Perth, Darwin coasts
     (56, 75),  # Tierra del Fuego / Cape Horn
+    # Second geography pass: keep narrow waterways open while restoring missing island silhouettes.
+    (140, 42),  # Southern Malaya: extend the peninsula toward the separate Singapore island.
+    (137, 40), (137, 41), (138, 42), (138, 43), (139, 44),  # Sumatra's Aceh-to-central spine, west of Malacca.
+    (150, 37),  # Panay: part of the separate central Visayas island group.
+    (153, 28),  # Okinawa: the largest Ryukyu island, separated from Japan and Taiwan.
+    (151, 49), (152, 49),  # Timor: a separate east-west island south of the Indonesian archipelago.
+    (61, 15), (62, 15),  # Newfoundland, separated from Labrador by the Strait of Belle Isle.
+    (50, 33), (56, 33),  # Jamaica and Puerto Rico: separate islands south/east of the Greater Antilles.
+    (97, 22),  # Sicily: extend the existing island south-east, away from Tunisia's city snap.
+    (34, 29), (34, 30),  # Southern Baja California: restore the taper into the Pacific.
 ]
 HEX_SEA = [
     (87, 15),  # a stray one-hex islet off Brittany that Cornwall would otherwise join to Britain
@@ -352,7 +361,11 @@ HEX_SEA = [
     (107, 27), (111, 34), (111, 35),  # Red Sea north extension and Bab-el-Mandeb
     (115, 26),  # Persian Gulf: open the north-western gulf
     (59, 11),  # Hudson Strait: connect Hudson Bay to the Atlantic
-    (140, 42), (140, 43), (141, 42),  # Strait of Malacca: separate Malaya/Singapore from Sumatra
+    (139, 42), (139, 43), (140, 43), (141, 42), (141, 44),  # Malacca and Singapore straits: all three landmasses stay separate.
+    (151, 36), (152, 38),  # Philippines: separate Luzon, the central Visayas, and Mindanao.
+    (151, 29),  # Taiwan: remove the artificial eastern Taipei hex; retain the real north-south island.
+    (97, 21),  # Strait of Messina: trim the Italian toe so the existing Sicily hex is a separate island.
+    (35, 28), (35, 29),  # Gulf of California: continuous water between Baja and mainland Mexico.
     (158, 53),  # Gulf of Carpentaria
     # Simplify the Canadian Arctic archipelago for gameplay: remove Banks, Victoria and Baffin islands.
     (29, 0), (27, 1), (28, 1), (29, 1), (30, 1), (32, 1), (33, 1), (34, 1),
