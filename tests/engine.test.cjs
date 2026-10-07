@@ -145,10 +145,21 @@ test('The world map wraps east to west and every city stands on land', () => {
   assert(landDistance(city('Madrid'), city('Algiers')) > 20, 'Gibraltar remains a sea crossing, not a land bridge');
   assert(byLand(city('Bangkok'), city('Kuala Lumpur')), 'Thai–Malay peninsula stays continuous');
   assert(!byLand(city('Surabaya'), city('Kuala Lumpur')), 'Sunda Strait keeps Java separated from mainland Asia');
-  assert.deepEqual([city('Kuala Lumpur').c, city('Kuala Lumpur').r], [140, 41], 'Kuala Lumpur shifts north of the Malacca water gap');
-  for (const [c, r] of [[140, 42], [140, 43], [141, 42]]) assert(E.isSea(E.tile(g, c, r)), 'Strait of Malacca stays open');
-  for (const [c, r] of [[151, 36], [151, 37], [148, 37]]) assert(!E.isSea(E.tile(g, c, r)), 'Philippines keeps Visayas/Palawan land');
-  for (const [c, r] of [[29, 0], [30, 2], [50, 4], [55, 5]]) assert(E.isSea(E.tile(g, c, r)), 'Canadian Arctic clutter stays removed');
+  const kl = E.hexOf(101.69, 3.14);
+  assert.deepEqual([city('Kuala Lumpur').c, city('Kuala Lumpur').r], [kl.c, kl.r], 'Kuala Lumpur stands on its own coordinates');
+  assert(bySea(seaAt(95, 7), seaAt(108, 6)), 'Strait of Malacca stays open');
+  assert(bySea(seaAt(50, 28.4), seaAt(62, 22)), 'Persian Gulf opens through Hormuz');
+  assert(bySea(seaAt(-12, 36), seaAt(3, 38.5)), 'Strait of Gibraltar stays open');
+  for (const [lon, lat] of [[123, 12.56], [124, 10.85], [118, 10.85]]) assert(!E.isSea(seaAt(lon, lat)), 'Philippines keeps Visayas/Palawan land');
+  for (const [lon, lat] of [[-121, 73], [-110, 71.5], [-72, 70.5]]) assert(E.isSea(seaAt(lon, lat)), 'Canadian Arctic clutter stays removed');
+  // WC4-style geography: Italy's islands, Korea's peninsula and the British Isles are recognizable.
+  for (const [lon, lat, name] of [[14.2, 37.5, 'Sicily'], [9.0, 40.0, 'Sardinia'], [9.1, 42.2, 'Corsica']]) {
+    assert(!E.isSea(seaAt(lon, lat)), name + ' is on the map');
+    assert(!byLand(seaAt(lon, lat), city('Rome')), name + ' is an island');
+  }
+  assert(byLand(city('Seoul'), city('Beijing')) && !byLand(city('Seoul'), city('Tokyo Settlement')), 'Korea is a peninsula');
+  assert(!byLand(city('Dublin'), city('London')), 'Ireland is an island');
+  assert(city('Edinburgh').r <= city('London').r - 4, 'Great Britain spans several rows');
   for (const s of g.stations) assert.notEqual(E.tile(g, s.c, s.r).terrain, 'sea', s.name);
   const capitals = g.stations.filter(s => s.capital).map(s => [s.name, s.owner]);
   assert.deepEqual(capitals.sort(), [
@@ -181,6 +192,22 @@ test('The world map wraps east to west and every city stands on land', () => {
     assert.equal(E.tile(g, h.c, h.r).terrain, terrain, name);
   }
   assert.deepEqual(g.order, ['eu', 'britannia', 'cf']);
+});
+test('The world projection gives Europe and East Asia more hexes per degree without tilting rows', () => {
+  for (let r = 0; r < E.WORLD.rows; r += 3)
+    for (let c = 0; c < E.WORLD.cols; c += 11) {
+      const p = E.lonLatOf({ c, r }),
+        h = E.hexOf(p.lon, p.lat);
+      assert.deepEqual([h.c, h.r], [c, r], 'lonLatOf inverts hexOf');
+    }
+  for (const lat of [60, 45, 30, 0, -30]) {
+    const rows = [-120, -40, 13, 80, 140].map(lon => E.hexOf(lon, lat).r);
+    assert(rows.every(r => r === rows[0]), `the ${lat}° parallel stays on one row`);
+  }
+  const span = (a, b) => E.hexOf(...b).c - E.hexOf(...a).c;
+  // 20 degrees of longitude: wider across Europe and Japan's latitudes than across the North Atlantic or the tropics.
+  assert(span([0, 48], [20, 48]) > span([-50, 48], [-30, 48]) * 2, 'Europe is wider than the Atlantic');
+  assert(span([120, 37], [140, 37]) > span([10, 0], [30, 0]), 'East Asia is wider than equatorial Africa');
 });
 test('Movement obeys terrain, occupancy and the one-move rule', () => {
   let g = blank();
