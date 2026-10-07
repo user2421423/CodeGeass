@@ -5,8 +5,8 @@ const ART = (() => {
   const INK = '#0b0d14';
   // Faction trims and sensor glows; a unit's own palette sets its armor colors.
   const FACTION_ART = {
-    britannia: { trim: '#e3c06a', glow: '#8ff7ff', flag: '#6a3fb5', flag2: '#e3c06a' },
-    eu: { trim: '#d7dde6', glow: '#ffd24a', flag: '#2f5fb8', flag2: '#f4d35e' },
+    britannia: { trim: '#e3c06a', glow: '#8ff7ff', flag: '#b52f35', flag2: '#e3c06a' },
+    eu: { trim: '#d7dde6', glow: '#ffd24a', flag: '#356fc8', flag2: '#f4d35e' },
     cf: { trim: '#f2c14e', glow: '#ff7a45', flag: '#b52a2a', flag2: '#f2c14e' },
     neutral: { trim: '#d8cfa6', glow: '#b8ff8a', flag: '#8a8466', flag2: '#e6dfc0' },
     bk: { trim: '#f0c94a', glow: '#ff5a5a', flag: '#1d1d24', flag2: '#f0c94a' },
@@ -561,8 +561,8 @@ const ART = (() => {
     rakshata: { hair: 'wavy', hc: '#2a1e1a', eye: '#4a7a8a', coat: '#f2f2ee', trim: '#c4442c', skin: '#c99a6c' },
   };
   const BACKDROP = {
-    britannia: ['#3a2a5c', '#b8963e'],
-    eu: ['#1d3359', '#6f8fbf'],
+    britannia: ['#5b1717', '#b8963e'],
+    eu: ['#173a70', '#6f9fdc'],
     cf: ['#5a1a1a', '#c49a3a'],
     bk: ['#16161c', '#c9a43a'],
     jlf: ['#26301c', '#8fa060'],
