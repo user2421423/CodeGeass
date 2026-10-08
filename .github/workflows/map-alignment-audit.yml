@@ -8,6 +8,8 @@ on:
       - tools/build_map.py
       - tools/data/map_locked.txt
       - dist/engine/world.js
+      - dist/engine.js
+      - tests/core.test.cjs
       - dist/ui/geography.js
       - dist/ui/renderer.js
       - dist/ui/view.js
@@ -45,14 +47,14 @@ jobs:
           import json
           j=json.load(open('docs/map-alignment-review.json'))
           assert j['summary']['hexes'] == 13680
-          assert j['summary']['high_confidence_mismatches'] == 73
+          assert j['summary']['high_confidence_mismatches'] == 65
           c=json.load(open('docs/map-coastline-centre-review.json'))
-          assert c['total_centre_conflicts'] == 483
+          assert c['total_centre_conflicts'] == 475
           assert c['by_category']['mixed_coast_hex'] == 410
           assert c['by_category']['sea_hex_on_geographic_land'] == 40
-          assert c['by_category']['land_hex_on_geographic_water'] == 33
+          assert c['by_category']['land_hex_on_geographic_water'] == 25
           assert j['approved_for_gameplay_edit'] is False
-          print('PASS: 73 strong conflicts, 483 centre mismatches classified after Newfoundland conversion')
+          print('PASS: 65 strong conflicts, 475 centre mismatches after nine reviewed terrain fixes')
           PY
           node - <<'JS'
           const assert=require('node:assert/strict');
@@ -61,6 +63,11 @@ jobs:
           assert.notEqual(tile(61,15).terrain,'sea', 'Newfoundland must be land');
           for (const [c,r] of [[106,26],[107,27],[111,35],[140,43],[142,46]])
             assert.equal(tile(c,r).terrain,'sea', 'Protected waterway must remain navigable');
+          for (const [c,r] of [[13,9],[168,9],[50,10],[49,12],[81,32],[113,51],[157,44],[49,31]]) {
+            assert.equal(tile(c,r).terrain,'sea', 'Reviewed coastal hex must be navigable water');
+            assert(!g.stations.some(s=>(s.c===c&&s.r===r)||(s.portAt?.c===c&&s.portAt?.r===r)));
+            assert(!g.units.some(u=>u.hp>0&&u.c===c&&u.r===r));
+          }
           assert.equal(g.stations.some(s=>s.c===61 && s.r===15),false);
           console.log('PASS: converted one low-risk land hex, strategic waterways unchanged');
           JS
