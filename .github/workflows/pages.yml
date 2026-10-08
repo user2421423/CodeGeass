@@ -30,6 +30,7 @@ jobs:
           node --test tests/core.test.cjs
           node tests/ui-smoke.cjs
           node tools/validate_assets.cjs --tracked
+          python3 tools/check_map.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

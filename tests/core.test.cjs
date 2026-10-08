@@ -64,6 +64,35 @@ test('Conquest initializes coherently for every playable power', () => {
   }
 });
 
+test('World map: islands, straits and joins that gameplay depends on', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 7);
+  const land = t => t.terrain !== 'sea';
+  // Every hex reachable from `from` over hexes passing `pass`.
+  const region = (from, pass) => {
+    const seen = new Set([E.key(from)]), queue = [from];
+    while (queue.length) for (const n of E.adjacent(g, queue.shift())) if (pass(n) && !seen.has(E.key(n))) seen.add(E.key(n)), queue.push(n);
+    return seen;
+  };
+  const city = name => g.stations.find(s => s.name === name);
+  const at = (c, r) => E.tile(g, c, r);
+  const linked = (a, b, pass) => region(a, pass).has(E.key(b));
+  assert(!linked(city('London'), city('Paris'), land), 'Great Britain is an island (Strait of Dover)');
+  assert(!linked(city('Dublin'), city('London'), land), 'Ireland is an island');
+  assert(linked(city('Rome'), at(96, 21), land), 'Sicily is joined to Italy (Strait of Messina closed)');
+  assert(linked(at(106, 18), at(102, 21), t => !land(t)), 'the Bosporus opens the Black Sea to the Aegean');
+  assert(linked(at(83, 21), at(92, 20), t => !land(t)), 'Strait of Gibraltar is open');
+  assert(linked(at(88, 14), at(91, 11), t => !land(t)), 'the English Channel reaches the North Sea');
+  assert(linked(at(97, 18), at(98, 22), t => !land(t)), 'the Adriatic opens to the Ionian Sea');
+  assert(linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Honshu is joined to Hokkaido');
+  assert(!linked(city('Tokyo Settlement'), city('Seoul'), land), 'Japan is not joined to Korea');
+  assert(!linked(city('Taipei'), city('Hong Kong'), land), 'Taiwan is an island');
+  // Every city stands within one hex of where its coordinates put it.
+  for (const [name, lon, lat] of require('../dist/engine/world.js').CITY_DATA) {
+    const s = city(name);
+    assert(s && E.distance(s, E.hexOf(lon, lat), g) <= 1, `${name} sits where its coordinates put it`);
+  }
+});
+
 test('Core combat keeps breakthrough and movement rules intact', () => {
   const g = blank();
 
