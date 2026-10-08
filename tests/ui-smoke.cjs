@@ -126,8 +126,15 @@ const modal = () => node('modal-root').innerHTML;
     game.units.splice(game.units.indexOf(passenger), 1);
     (ship.cargo ||= []).push(passenger);
   })()`);
+  run(`(function() {
+    const ship = game.units.find(u => u.id === ${carrierId});
+    const landing = E.adjacent(game, ship).find(t => !E.unitAt(game, t) && !E.stationAt(game, t));
+    if (!landing) throw new Error('No open adjacent hex in UI smoke fixture');
+    landing.terrain = 'plains';
+  })()`);
   run('updateSelection()');
   assert(node('side').innerHTML.includes('data-deploy="0"'), 'one launch choice per carried unit');
+  assert.equal(run('E.deployReason(game, selectedUnit(), 0)'), null, 'test fixture has a valid landing hex');
   clickAction({ deploy: '0' });
   assert.equal(run('deploying?.index'), 0, 'cargo picker starts landing-hex mode');
   assert(!node('side').innerHTML, 'cargo drawer closes when targeting the map');
