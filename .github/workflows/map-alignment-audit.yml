@@ -10,6 +10,8 @@ on:
       - dist/engine/world.js
       - dist/ui/geography.js
       - dist/ui/renderer.js
+      - dist/ui/view.js
+      - tests/ui-smoke.cjs
       - .github/workflows/map-alignment-audit.yml
   workflow_dispatch:
 permissions:
