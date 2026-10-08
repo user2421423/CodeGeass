@@ -1254,8 +1254,12 @@ function draw(time, dt) {
       u = selectedUnit(),
       hx = wrapNear(p.x, mid);
     hexPath(hx, p.y, R - 1);
-    ctx.strokeStyle = '#dcebe769';
-    ctx.lineWidth = 1.2 / scale;
+    // The vector coastline and playable hexes intentionally differ at some
+    // straits/islands. Hover colours always describe ACTUAL gameplay terrain:
+    // aqua = navigable sea; warm gold = traversable land.
+    const seaHex = E.isSea(hover);
+    ctx.strokeStyle = seaHex ? '#7cd8ffdb' : '#ffe1a0df';
+    ctx.lineWidth = 1.65 / Math.max(scale, 0.35);
     ctx.stroke();
     const pr = u && targetCache.has(E.key(hover)) ? E.preview(game, u.id, hover.c, hover.r) : null;
     if (pr) {
