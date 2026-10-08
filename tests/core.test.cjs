@@ -64,6 +64,35 @@ test('Conquest initializes coherently for every playable power', () => {
   }
 });
 
+test('World map: islands, straits and joins that gameplay depends on', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 7);
+  const land = t => t.terrain !== 'sea';
+  // Every hex reachable from `from` over hexes passing `pass`.
+  const region = (from, pass) => {
+    const seen = new Set([E.key(from)]), queue = [from];
+    while (queue.length) for (const n of E.adjacent(g, queue.shift())) if (pass(n) && !seen.has(E.key(n))) seen.add(E.key(n)), queue.push(n);
+    return seen;
+  };
+  const city = name => g.stations.find(s => s.name === name);
+  const at = (c, r) => E.tile(g, c, r);
+  const linked = (a, b, pass) => region(a, pass).has(E.key(b));
+  assert(!linked(city('London'), city('Paris'), land), 'Great Britain is an island (Strait of Dover)');
+  assert(!linked(city('Dublin'), city('London'), land), 'Ireland is an island');
+  assert(linked(city('Rome'), at(96, 21), land), 'Sicily is joined to Italy (Strait of Messina closed)');
+  assert(linked(at(106, 18), at(102, 21), t => !land(t)), 'the Bosporus opens the Black Sea to the Aegean');
+  assert(linked(at(83, 21), at(92, 20), t => !land(t)), 'Strait of Gibraltar is open');
+  assert(linked(at(88, 14), at(91, 11), t => !land(t)), 'the English Channel reaches the North Sea');
+  assert(linked(at(97, 18), at(98, 22), t => !land(t)), 'the Adriatic opens to the Ionian Sea');
+  assert(linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Honshu is joined to Hokkaido');
+  assert(!linked(city('Tokyo Settlement'), city('Seoul'), land), 'Japan is not joined to Korea');
+  assert(!linked(city('Taipei'), city('Hong Kong'), land), 'Taiwan is an island');
+  // Every city stands within one hex of where its coordinates put it.
+  for (const [name, lon, lat] of require('../dist/engine/world.js').CITY_DATA) {
+    const s = city(name);
+    assert(s && E.distance(s, E.hexOf(lon, lat), g) <= 1, `${name} sits where its coordinates put it`);
+  }
+});
+
 test('Core combat keeps breakthrough and movement rules intact', () => {
   const g = blank();
 
@@ -224,4 +253,58 @@ test('Leader crit chance and Tide of Iron protect low-HP damage', () => {
   const injured = a.hp;
   E.beginTurn(g, 'britannia', false);
   assert(a.hp > injured, 'Machinist restored some HP');
+});
+
+
+test('Carrier-Battleships cannot be assigned personal commanders', () => {
+  const g = blank();
+  const carrier = E.newUnit(g, E.NAVAL.britannia.carrier, 'britannia', 5, 5);
+  const k = Object.keys(E.COMMANDERS).find(k => E.serves(k, 'britannia'));
+  const credits = g.economy.britannia.credits;
+  assert.match(E.assignReason(g, carrier, k), /Carrier-Battleships cannot have commanders/);
+  assert.equal(E.assign(g, carrier.id, k).ok, false);
+  assert.equal(carrier.cmd, null);
+  assert.equal(g.economy.britannia.credits, credits);
+});
+
+test('A Knightmare can board and launch on the same turn with full actions', () => {
+  const g = blank();
+  E.tile(g, 5, 5).terrain = 'sea';
+  const ship = E.newUnit(g, E.NAVAL.britannia.carrier, 'britannia', 5, 5);
+  const scout = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 5, 6);
+  const board = E.move(g, scout.id, 5, 5);
+  assert.equal(board.ok, true);
+  assert.equal(board.loaded, ship.id);
+  assert.equal(ship.cargo[0].boardedTurn, g.turn);
+  assert.equal(E.deployReason(g, ship, 0), null);
+  const target = E.deployTargets(g, ship).find(p => p.c !== 5 || p.r !== 6);
+  assert(target);
+  const launch = E.deploy(g, ship.id, 0, target.c, target.r);
+  assert.equal(launch.ok, true);
+  assert.equal(launch.unit.moved, false);
+  assert.equal(launch.unit.attacked, false);
+  assert(E.reachable(g, launch.unit).size > 0);
+  assert.equal(E.reachable(g, launch.unit).has(E.key(ship)), false);
+});
+
+test('An amphibious sea-to-land movement refreshes both actions once per turn', () => {
+  const g = blank();
+  E.tile(g, 5, 5).terrain = 'sea';
+  E.tile(g, 5, 7).terrain = 'sea';
+  const u = E.newUnit(g, E.NAVAL.britannia.amphibious, 'britannia', 5, 5);
+  const first = E.move(g, u.id, 5, 6);
+  assert.equal(first.ok, true);
+  assert.equal(u.landingRefreshTurn, g.turn);
+  assert.equal(u.moved, false);
+  assert.equal(u.attacked, false);
+  assert(E.reachable(g, u).size > 0);
+  const target = E.newUnit(g, E.typeFor('eu','scout'), 'eu', 6, 6);
+  assert(E.targets(g, u).some(t => t.c === target.c && t.r === target.r));
+  assert.equal(E.attack(g, u.id, target.c, target.r).ok, true);
+  // Manually ready the unit to exercise the protection against a second refresh.
+  u.moved = u.attacked = false;
+  assert.equal(E.move(g, u.id, 5, 7).ok, true);
+  u.moved = u.attacked = false;
+  assert.equal(E.move(g, u.id, 5, 6).ok, true);
+  assert.equal(u.moved, true);
 });

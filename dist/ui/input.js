@@ -13,8 +13,6 @@ document.addEventListener('change', e => {
     if (missionBriefingId) briefingDialog(missionBriefingId);
     $('mission-difficulty-select')?.focus();
   }
-  if (id === 'fleet-select' && e.target.value) selectUnit(+e.target.value, true);
-  if (id === 'station-select' && e.target.value) selectStation(+e.target.value, true);
   if (id === 'stack-select') {
     shop.stack = +e.target.value;
     openShop(shop.station);
@@ -128,12 +126,17 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.deploy !== undefined) {
-    const u = selectedUnit();
-    if (u) {
-      deploying = { ship: u.id, index: +d.deploy };
-      updateSelection();
-      toast('Choose a green hex next to the carrier to launch.');
-    }
+    const u = selectedUnit(),
+      i = Number(d.deploy);
+    if (!interactive() || !u || u.side !== game.player || E.TYPES[u.type].naval !== 'ship') return;
+    const why = Number.isInteger(i) && i >= 0 ? E.deployReason(game, u, i) : 'Invalid cargo selection';
+    if (why) { toast(why); return; }
+    carrierHoldOpen = null;
+    detailOpen = false;
+    closeModal();
+    deploying = { ship: u.id, index: i };
+    updateSelection();
+    toast('Choose a green land hex next to the carrier to launch.');
     return;
   }
   if (d.recruit) {
@@ -263,7 +266,14 @@ document.addEventListener('click', e => {
   }
   switch (d.action) {
     case 'details':
-      detailOpen = !detailOpen;
+      if (selectedUnit()) {
+        carrierHoldOpen = null;
+        detailOpen = false;
+      } else if (selectedStation() || selectedSite()) {
+        detailOpen = !detailOpen;
+      } else {
+        detailOpen = false;
+      }
       updateSelection();
       break;
     case 'start-conquest':
@@ -389,6 +399,15 @@ document.addEventListener('click', e => {
       if (hqBack === 'start') startMenu();
       else closeModal();
       break;
+    case 'carrier-deploy': {
+      const u = selectedUnit();
+      if (u && u.side === game.player && E.TYPES[u.type].naval === 'ship' && interactive()) {
+        carrierHoldOpen = carrierHoldOpen === u.id ? null : u.id;
+        detailOpen = false;
+        updateSelection();
+      }
+      break;
+    }
     case 'admirals':
     case 'assign':
       admiralDialog();
@@ -449,7 +468,7 @@ document.addEventListener('click', e => {
     }
     case 'wait': {
       const u = selectedUnit();
-      if (u && u.side === game.player && interactive()) {
+      if (u && u.side === game.player && interactive() && !u.attacked) {
         u.moved = u.attacked = true;
         refreshAndSave();
         nextFleet();
@@ -510,8 +529,51 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     undoMove();
   }
-  if (k === 'h') centerOn(homeOf());
+  const u = selectedUnit(),
+    own = u && u.side === game.player && interactive() && !phaseReason();
+  if (k === 'h' && own && !u.attacked) {
+    e.preventDefault();
+    u.moved = u.attacked = true;
+    refreshAndSave();
+    nextFleet();
+    return;
+  }
+  if (k === 'a' && own && !u.cmd && E.TYPES[u.type].naval !== 'ship') {
+    e.preventDefault();
+    admiralDialog();
+    return;
+  }
+  if (k === 'f' && own && !u.elite && !E.reinforceReason(game, u)) {
+    e.preventDefault();
+    doAction(() => E.reinforce(game, u.id));
+    return;
+  }
+  if (k === 'r' && own && !E.repairReason(game, u)) {
+    e.preventDefault();
+    doAction(() => E.repair(game, u.id));
+    return;
+  }
+  if (k === 'c' && own && (u.goto || routing === u.id)) {
+    e.preventDefault();
+    routing = null;
+    if (u.goto) {
+      if (E.clearGoto(game, u.id).ok) {
+        refreshAndSave(true);
+        toast('Auto-move stopped.');
+      }
+    } else {
+      updateSelection();
+      toast('Destination selection cancelled.');
+    }
+    return;
+  }
   if (k === 'g') startRouting();
+  if (k === 'escape' && carrierHoldOpen != null) {
+    carrierHoldOpen = null;
+    detailOpen = false;
+    updateSelection();
+    return;
+  }
   if (k === 'escape' && strikeMode) {
     strikeMode = false;
     render();
@@ -527,12 +589,6 @@ document.addEventListener('keydown', e => {
   if (k === '+' || k === '=') changeZoom(1.2);
   if (k === '-') changeZoom(1 / 1.2);
   if (k === '0') zoom = ZOOM_MIN;
-  if (['w', 'a', 's', 'd'].includes(k)) {
-    e.preventDefault();
-    const step = 70 / (baseScale * zoom);
-    cam.x += k === 'a' ? -step : k === 'd' ? step : 0;
-    cam.y += k === 'w' ? -step : k === 's' ? step : 0;
-  }
   if (e.key.startsWith('Arrow')) {
     e.preventDefault();
     const p = hover || selectedUnit() || selectedStation() || homeOf();

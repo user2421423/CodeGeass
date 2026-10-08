@@ -28,7 +28,7 @@ def publish(source, output=PUBLIC):
     if not manifest_path.is_file():
         raise ValueError(f'No processed manifest at {manifest_path}. Run local_art_prepare.py first.')
     manifest = json.loads(manifest_path.read_text())
-    result = {'base': 'assets/art/', 'units': {}, 'portraits': {}}
+    result = {'base': 'assets/art/', **{kind: {} for kind in known}}
     copies = []
     for kind in known:
         for key, value in sorted(manifest.get(kind, {}).items()):

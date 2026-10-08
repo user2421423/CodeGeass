@@ -10,7 +10,7 @@
     ['Mount Fuji', 138.7, 35.36, 40, 1, 'mountain'],
     ['Hokkaido', 142.4, 43.1, 15, 0], // worked from Sapporo (both set just east of Sapporo, on Hokkaido's side of the Tsugaru Strait)
     ['Kyushu', 130.4, 33.6, 15, 0], // worked from Fukuoka
-    ['Stonehenge', -3.6, 52.2, 20, 1], // where Sakuradite was first found (wiki); worked from London
+    ['Stonehenge', -0.13, 51.51, 20, 1], // where Sakuradite was first found (wiki); worked from London, so on its hex
     ['Rocky Mountains', -106.5, 39, 10, 0],
     ['Qaidam Basin', 95, 37, 20, 1],
   ];
@@ -21,46 +21,46 @@
     '.........ssssss................................................sssxsssssssssss......................sssss...................sssssssssssssssssssssssssssssssssssssssssss.............',
     '.......ssssssssssssssssssssssssss..............................sssssssssssss.....................ssssssssss............sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
     'sss....sssssssssssssssssssssssssssssssssssssss............s....ssssssssxss.......................sssssssssssss..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
-    'pppp..ppppppppppppppppppppppppppppppppppppppsss.................sssxsss......ssspp.............pmpppfpfpppppp.pppppppppppppppppppppppppppppppppppppppppppppmmmmmmmmmmmpppppppppppppp',
+    'pppp..ppppppppppppppppppppppppppppppppppppppsss.................sssxsss.......sspp.............pmpppfpfpppppp.pppppppppppppppppppppppppppppppppppppppppppppmmmmmmmmmmmpppppppppppppp',
     'p......pppppppppppppppppppppppppppppppppppppps.......s..........ssssss.........ssp............pppppf.ffpfpppppppppppppppppppppppppppppppppppppppppppppppppppmmmmmppmmpmmpmpppppppppp',
     '.......ppppppmmmpmpppffppfpfppppppppppppppp........sss...........ssss.......................ppmppp..ffppppppppppppppppppmpppppppppppppppppppppppppppppppppppppmmppppmmpppppppppppp..',
     '.........pppppmpmmpmfffffppfppffpfpffpppppp........sssssss.........ss.......................pmpppff..ppppppfpppppppppppppmpppppppppppppppppppppppppppppppppppppppppppppp..pppppp....',
-    '..........pppp.......pfffpfmfmmffpffffppppp.......pppppppp.............................p....ppppppp..ppppppppffpfpfpfppmmpppppppppppppppppppppppppppppppppppppppp.......ppp.........',
-    '..........pp...........ppppmfmmmpppfffffpffpf.....ppppppppp............................ppp....pppp...ppppppppppfpffppffmppfpffpfpffffppppfffpffpfffppffpppffpppp........ppp.........',
+    '..........pppp.......pfffpfmfmmffpffffppppp.......pppppppp..................................ppppppp..ppppppppffpfpfpfppmmpppppppppppppppppppppppppppppppppppppppp.......ppp.........',
+    '..........pp...........ppppmfmmmpppfffffpffpf.....ppppppppp............................pp.....pppp...ppppppppppfpffppffmppfpffpfpffffppppfffpffpfffppffpppffpppp........ppp.........',
     '........p...............pppmfmmmppfpppfppfppppf...fpppppppp..........................p.pp...........ppfpppppppppppppppfmfpfpfffpffpffffppffffpfffpffffpfpffpfp.........ppp..........',
     '.........................pppmmmpmffpfpfpfpfpppfpffffpfppppppp........................pp.pp...pppfpppppfppppppppppppppppmpppppppppppppppppfpfppffffpppppfpffffppp........pp..........',
-    '.........................pppmmppmppfppffppffpfpfpppffppfpffff..........................pp..ppppffppppppppppppppppppppppmpppppppppppppmppppppppppppppppppppppppppp...................',
-    '..........................pppmmmpppppppppppfppppffpfffffppff...........................p..pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp.p..................',
+    '.........................pppmmppmppfppffppffpfpfpppffppfpffff........................p.ppp.ppppffppppppppppppppppppppppmpppppppppppppmppppppppppppppppppppppppppp...................',
+    '..........................pppmmmpppppppppppfppppffpfffffppff...............................ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp.p..................',
     '...........................pppmmmmppppppppppfppfpfppfffff................................pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp.p...................',
     '............................pppmmpmpppppppppppppppfffppff................................ppppmpmmmmppmmpppppppppppppppppppppppppppppppppppppppppppppppppppppppp.....................',
     '...........................ppppmmmmpppppppppppppppffpfpppp...............................ppppmpp.ppppppp..ppppppp...ppppppppppppppppppppppppdppppppppppppppppp..p...................',
-    '............................pppmpmpmppppppppppppppfffpp..............................ppppppp...pp.pppppp......mppp..pppddddppppppppmppppdddddddddddpppppppppp....pp.................',
-    '...........................ppppmmmmmmpppppppppfpppffpp...............................pppppp....pppp.ppp.p.pp..pmmm..pddddpdpppppppppppppdpppdddddddpppppppp.........................',
-    '............................ppppmmppmmpppppppfpfpffpf................................ppppp....p...p.pp..ppppppppppp..dddpddppppmdddddddppppddddppppppppppp......p...................',
-    '............................ppppmmmmmpppppppfpffffpf................................pppp........pp..p..ppppppppppp..pdddpdpppmmpddddpdppppppppppppppp...pm....ppp...................',
-    '.............................pppppdmmmppppppfpppffpf..................................pp...pppp.........ppp.pppppmmpppppppppmmppmmmmmpmpppppppppppppppp...p...ppp...................',
-    '.............................ppdpdmdmppppppfpfppffp......................................mmmmpp............ppppppmppppppppppppmmmmmmmmmmmmpppppppppppp..pp.ppppp....................',
+    '............................pppmpmpmppppppppppppppfffpp...............................ppppppp..pp..ppppp......mppp..pppddddppppppppmppppdddddddddddpppppppppp....pp.................',
+    '...........................ppppmmmmmmpppppppppfpppffpp...............................pppppp.....pp.pppp...pp..pmmm..pddddpdpppppppppppppdpppdddddddpppppppp.....p...................',
+    '............................ppppmmppmmpppppppfpfpffpf................................ppppp....p..pp.pp..ppppppppppp..dddpddppppmdddddddppppddddppppppppppp......p...................',
+    '............................ppppmmmmmpppppppfpffffpf.................................pppp.......p...p..ppppppppppp..pdddpdpppmmpddddpdppppppppppppppp...pm....ppp...................',
+    '.............................pppppdmmmppppppfpppffpf..................................pp...pppp.........ppp.pppppmmpppppppppmmppmmmmmpmpppppppppppppppp..mp...ppp...................',
+    '.............................ppdpdmdmppppppfpfppffp......................................mmmmpp............ppppppmppppppppppppmmmmmmmmmmmmpppppppppppp.....ppppp....................',
     '...............................ddpdmmpppppfpfppfpp...................................ppmpmpppppp............pppppmpmppdppdppppppxmmmmmmmpmpmpppppppppp.....ppp......................',
     '...............................pdpdddpppppffpffpp...................................pppppdddddddpp.ppppp..pppppdppmppdppddppppppxxxmmmpmmmxppppppppppp....p.........................',
-    '................................pppppppppppppp..pp...................................pdddddddddpdpdddddddpppddpddd..mmdddddpppppppmmxxmxmxmmmpppppppppp.............................',
+    '................................pppppppppppppp..pp...................................pdddddddddpdpdddddddp.pddpddd..mmdddddpppppppmmxxmxmxmmmpppppppppp.............................',
     '................................ppppmpppp.......p..................................ddddddddddddpdddddpdddp..dpdpdd..mmdpppdddpppppppmxmxmmmppppppppppp..............................',
     '.................................p.pppmpp........p.................................dddddddddpddddppddddpddp.pdddddpp...ppppdpdpppppppppppppppppppppppp..............................',
-    '.................................p.ppmmpp.........................................dddddddddddddpdddddpdpddp.ppdddddppp.....pppppppppppppppppppppppppp.pp............................',
+    '.................................p.ppmmpp.........................................dddddddddddddpdddddpdpddp.ppdddddppp.....pppppppppppppppppppppppppp.p.............................',
     '.....................................pmpp.......ppp...............................dddddddpdddddddpdpdddddddp.ddddddddppp....ppppppppppppfpffpppppppp..p.............................',
     '..........p..........................ppmp...pp...ppp.............................ddpddddddddddpddddddddddddp.ddddddddpp......ppppppppp.pfpfpfpppp...................................',
     '......................................ppmp..pp.......pp..........................pddddpdddddddddpppdddddddpdp.pdddddddp.......ppppppp...pffpffp.pp..................................',
     '......................................pppppppp...................................dppddddddddddddddddddpddddpp.pddddddp........ppppp.....ppfppff.......p.............................',
     '..........................................ppppp..................................pppppppppppppppppddddddddpppp..pdddp..........pppp.......fpfpfp......p.............................',
-    '...........................................ppppp.................................pppppppppppppppppppppppppppppp.pp.............ppp........fpfppf.....pp.............................',
+    '...........................................ppppp.................................pppppppppppppppppppppppppppppp.pp.............ppp........fpfppf......p.............................',
     '..............................................pp..................................ppppppppppppppppppppppppppmppp...............ppp.........p.fpfp......p............................',
-    '..............................................pp....ppp...........................pppppppppppppppppppppppppppmppppp............ppp.........f.pfp....p..p............................',
-    '................................................ppp.pppppppp.......................pppppppppppppppppppppppppmmmpppp.............p..........p..p.........p...........................',
+    '..............................................pp....ppp...........................pppppppppppppppppppppppppppmppppp............pp..........f.pfp.......p............................',
+    '................................................ppp.pppppppp.......................pppppppppppppppppppppppppmmmpppp.............p..........p..p........pp...........................',
     '.................................................ppppppppppp.......................pfpfffppppppppppppppppppppmppppp..............p.........f...........pp...........................',
     '...................................................pmmppppppppp......................pppppf.pfppppppppppppppppppppp.........................f.......p...............................',
     '...................................................mmppfffpfpppp..............................pffffffffpppppppppp.........................f.f.....pff...............................',
     '...................................................pppfpfffpfffpp..............................fpppppffpppppppppp..........................f.....ppff...............................',
     '..................................................pppffpfpffffffp.............................pfffpfpffppppppppp...........................f.f..ffpf..pf............................',
-    '..................................................mffffffffppffffpp............................pfpffpffffpppppp.............................ff...fff..ff....fp......................',
+    '..................................................mffffffffppffffpp............................pfpffpffffpppppp.............................ff...fff..f.....fp......................',
     '.................................................mmpffffppffffffppppp..........................pffffpfpfpppppp..............................ff...fff.pf....fffppp...................',
     '.................................................ppmmfpfpfffffpfffpppppp........................ppffffpppppppp...............................f........f......fffppp.................',
     '.................................................pmmfppppffffffppppppppp........................ppppppppppppp.................................ff..............fffpp.................',
@@ -144,9 +144,9 @@
     ['Nuuk', -51.7, 64.2, 'britannia', 1],
     // Europia United: Europe and Africa.
     ['Paris', 2.35, 48.85, 'eu', 3, true, true, 'Elysée Battery'],
-    ['London', -3.6, 52.2, 'eu', 3],
-    ['Edinburgh', -1.8, 55.3, 'eu', 1],
-    ['Dublin', -9, 55.3, 'eu', 1],
+    ['London', -0.13, 51.51, 'eu', 3],
+    ['Edinburgh', -3.19, 55.95, 'eu', 1],
+    ['Dublin', -6.26, 53.35, 'eu', 1],
     ['Reykjavik', -21.9, 64.1, 'eu', 1],
     ['Madrid', -3.7, 40.4, 'eu', 2],
     ['Gibraltar', -5.35, 36.14, 'eu', 1, false, true, 'Gibraltar Batteries'],
@@ -179,7 +179,7 @@
     ['Hong Kong', 114.2, 22.3, 'cf', 2],
     ['Chongqing', 106.5, 29.5, 'cf', 2],
     ['Liaodong', 123.4, 41.8, 'cf', 2, false, true, 'Liaodong Batteries'],
-    ['Seoul', 126.2, 39.4, 'cf', 1],
+    ['Seoul', 126.98, 37.57, 'cf', 1],
     ['Vladivostok', 131.9, 43.1, 'cf', 1],
     ['Ulaanbaatar', 106.9, 47.9, 'cf', 1],
     ['Urumqi', 87.6, 43.8, 'cf', 1],
@@ -193,14 +193,14 @@
     ['Jabalpur', 79.95, 23.2, 'cf', 2],
     ['Mumbai', 72.9, 19, 'cf', 2],
     ['Kolkata', 88.4, 22.6, 'cf', 1],
-    ['Chennai', 80.3, 13.1, 'cf', 1],
+    ['Chennai', 79.0, 12.6, 'cf', 1], // the coast hex west of real Chennai, which is sea at this scale
     ['Colombo', 79.9, 6.9, 'cf', 1],
     ['Yangon', 96.2, 16.8, 'cf', 1],
     ['Hanoi', 105.8, 21, 'cf', 1],
     ['Bangkok', 100.5, 13.75, 'cf', 1],
     ['Singapore', 103.8, 1.35, 'cf', 1, false, true, 'Singapore Batteries'],
     ['Jakarta', 106.8, -6.2, 'cf', 1],
-    ['Taipei', 124.2, 24.1, 'cf', 1],
+    ['Taipei', 122.0, 24.5, 'cf', 1], // on the island's northern hex
     ['Port Moresby', 147.2, -9.4, 'cf', 1],
     // Neutral powers: Australia and the Middle Eastern Federation.
     ['Sydney', 151.2, -33.9, 'neutral', 2],
@@ -302,6 +302,11 @@
     'Houston', 'Toronto', 'Sao Paulo', 'Hong Kong', 'Chongqing', 'Wuhan',
   ])
     CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 25, industry: 15, science: 4 };
+  // Land hexes no city's territory reaches (islands without a city), given to a power by hand: [column, row, owner].
+  // Exact hexes, so they follow the map in WORLD_ROWS.
+  const TERRITORY = [
+    [94, 20, 'eu'], // Sardinia
+  ];
   // [side, class, lon, lat, frames, commander]. Units snap to their nearest free land hex.
   const ARMY_DATA = [
     // Britannia: Pendragon, the Atlantic coast, South America, Area 11 and the Pacific.
@@ -484,6 +489,7 @@
     WORLD,
     CITY_DATA,
     CITY_TWEAKS,
+    TERRITORY,
     ARMY_DATA,
     GARRISONS,
     PORT_DATA,

@@ -10,8 +10,12 @@ Output: a JS snippet (WORLD_ROWS) to paste into dist/engine/world.js, one string
 Run:  python3 tools/build_map.py > /tmp/world.txt   (prints the JS block and an ASCII preview on stderr)
 Coastlines are hand-drawn for gameplay rather than GIS-precise, but the high-resolution raster keeps their shape
 close to the world map. FORCE_LAND / FORCE_SEA preserve small islands, isthmuses and important straits.
+The REDRAW regions are instead rasterized from real coastlines (Natural Earth, tools/data/coast.json, made by
+tools/prepare_coast.py): a hex there is land when LAND_SHARE of its area is land. FIX_LAND / FIX_SEA apply last.
 """
+import json
 import math
+import os
 import sys
 
 COLS, ROWS = 180, 76
@@ -293,7 +297,6 @@ FORCE_LAND = [
     (-157.9, 21.3),  # Oahu (Pearl Harbor)
     (-9, 55.28), (-3.6, 52.16), (-1.8, 55.28), (-3.6, 58.4),  # Ireland, England, Scotland
     (133.2, 33.44),  # Kyushu joined to Honshu
-    (124.2, 24.08),  # Taiwan, set east of the strait
     (139.7, 35.7), (135.6, 34.8), (130.6, 32.8), (141.4, 43.1), (140.5, 39.5),  # Area 11
     (126.9, 37.5), (128.8, 35.6),  # Korea
     (121.5, 25), (120.9, 14.6), (125, 8),  # Taiwan, Luzon, Mindanao
@@ -335,7 +338,7 @@ HEX_LAND = [
     (154, 25), (157, 24), (160, 21),  # Japan: southern Kyushu, Shikoku/Kii, eastern Tohoku
     (151, 36), (151, 37), (148, 37),  # Philippines: central Visayas and Palawan
     (98, 19),  # Italy: Apulian heel (paired with the Otranto sea cut below)
-    (124, 30), (129, 37),  # India: Gujarat, Tamil Nadu
+    (124, 30),  # India: Gujarat
     (85, 18), (84, 21), (86, 22),  # Iberia: Galicia, Portugal, the Algarve
     (152, 23),  # Korea: south-west coast
     (100, 2), (95, 10),  # Scandinavia/Denmark: northern Norway and Jutland
@@ -365,6 +368,98 @@ HEX_SEA = [
     (54, 5), (55, 5), (56, 5), (57, 5), (54, 6), (55, 6), (56, 6), (57, 6),
 ]
 
+# ---------------------------------------------------------------- regions redrawn from real coastlines
+# Each region is a set of hex rows with a longitude window per row band: (first row, last row, west lon, east lon).
+# A hex belongs to a region when its centre falls inside one band, and is land when at least `share` of its area is
+# land: lower for island chains, whose islands are narrower than a hex. Everything else keeps the hand-drawn raster.
+REDRAW = {
+    'british_isles': {'bands': [(8, 14, -11.0, 2.2)], 'share': 0.4},
+    # Europe's Mediterranean and Iberian coasts, the Adriatic, the Balkans, the Aegean and the Bosporus. Row 22
+    # (36.4N) is redrawn only east of 12E so the North African coast stays as it is.
+    'med_europe': {'bands': [(17, 21, -10.5, 30.5), (22, 22, 12.0, 30.5)], 'share': 0.4},
+    # 0.45 keeps Korea's south coast off the Kyushu hex next to it, so the Korea Strait stays open.
+    'korea': {'bands': [(19, 23, 124.0, 129.2)], 'share': 0.45},
+    'philippines': {'bands': [(31, 38, 116.5, 127.5), (39, 40, 119.0, 127.5)], 'share': 0.3},
+    'sulawesi': {'bands': [(42, 47, 119.0, 125.8)], 'share': 0.3},
+}
+
+
+def region_hexes(bands):
+    out = []
+    for r0, r1, w, e in bands:
+        for r in range(r0, r1 + 1):
+            for c in range(COLS):
+                if w <= center(c, r)[0] <= e:
+                    out.append((c, r))
+    return out
+
+
+def hex_samples(n=9):
+    # A lattice over one pointy-top hex in degrees: DLON wide, 2 * DLAT / 1.5 tall.
+    size = DLAT / 1.5
+    pts = []
+    for i in range(n):
+        for j in range(n):
+            x = -math.sqrt(3) / 2 + math.sqrt(3) * i / (n - 1)
+            y = -1 + 2 * j / (n - 1)
+            if abs(x) <= math.sqrt(3) / 2 + 1e-9 and abs(y) <= 1 - abs(x) / math.sqrt(3) + 1e-9:
+                pts.append((x * DLON / math.sqrt(3), y * size))
+    return pts
+
+
+def edge_index(rings, step=0.1):
+    # Coastline edges bucketed by latitude band, so a sample only tests edges that cross its own latitude.
+    index = {}
+    for ring in rings:
+        for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1]):
+            if y1 == y2:
+                continue
+            for b in range(math.floor(min(y1, y2) / step), math.floor(max(y1, y2) / step) + 1):
+                index.setdefault(b, []).append((x1, y1, x2, y2))
+    return index
+
+
+def land_share(index, lon, lat, samples, step=0.1):
+    # Even-odd ray cast east from each sample over every ring at once (land rings and lake holes alike).
+    hits = 0
+    for dx, dy in samples:
+        x, y = lon + dx, lat + dy
+        inside_any = False
+        for x1, y1, x2, y2 in index.get(math.floor(y / step), ()):
+            if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+                inside_any = not inside_any
+        hits += inside_any
+    return hits / len(samples)
+
+
+def redraw(grid):
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coast.json')
+    coast = json.load(open(path))
+    samples = hex_samples()
+    for name, region in REDRAW.items():
+        index = edge_index([[tuple(p) for p in ring] for ring in coast[name]])
+        for c, r in region_hexes(region['bands']):
+            lon, lat = center(c, r)
+            grid[r][c] = 'p' if land_share(index, lon, lat, samples) >= region['share'] else '.'
+
+
+# Final gameplay edits on exact hexes (column, row), applied after the redraw.
+FIX_LAND = [
+    (160, 19),  # Japan: join northern Honshu to Hokkaido
+    (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
+]
+FIX_SEA = [
+    (151, 29),  # Taiwan: the hex east of the island (Taipei moves onto the island)
+    (130, 36),  # India: the hex that stuck out east of Chennai
+    (90, 14),  # Strait of Dover: keep Great Britain an island
+    (86, 11),  # North Channel: keep Ireland an island
+    (103, 19), (103, 20),  # Bosporus and Dardanelles: the Black Sea opens to the Aegean
+    (98, 18),  # Dalmatian coast: keep the Adriatic one sea from Venice to the Strait of Otranto
+    (129, 37),  # India: southern Tamil Nadu, which made the tip too wide
+    (106, 26),  # Sinai: the Gulf of Suez; Africa and Asia now meet only by sea (armies embark to cross)
+    (77, 5),  # Iceland: the Westfjords
+]
+
 
 def build():
     grid = [['.'] * COLS for _ in range(ROWS)]
@@ -384,6 +479,11 @@ def build():
     for c, r in HEX_LAND:
         grid[r][c] = 'p'
     for c, r in HEX_SEA:
+        grid[r][c] = '.'
+    redraw(grid)
+    for c, r in FIX_LAND:
+        grid[r][c] = 'p'
+    for c, r in FIX_SEA:
         grid[r][c] = '.'
     for r in range(ROWS):
         for c in range(COLS):

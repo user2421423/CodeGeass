@@ -47,7 +47,9 @@ reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` 
 ### Artwork handoff status
 
 Published artwork is tracked and deployed from `dist/assets/art/`: **70 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames) and 58 commander portraits**, registered
+including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames), 58 commander portraits and 3 building
+pictures (`buildings/city` drawn for every city, `buildings/port` on every port hex, `buildings/mine` on every mine
+on its own hex and in the mine panel; `ART.drawBuilding` / `ART.building`)**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
 workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art; procedural art is
@@ -69,7 +71,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | `dist/ui/*.js` | The UI, as classic scripts sharing one global scope (load order matters only for code that runs at load time; the boot is last): `core.js` (state, constants, saving, modal helpers), `hud.js` (start screen, top bar, F.L.E.I.J.A. targeting, unit and city panels, orders, dock), `turns.js` (end turn, rival-turn playback with Skip, rewards, results), `dialogs.js` (factory, Elite Forces, HQ research, commanders, Commander Info, Knightmare archive, world powers, field manual), `campaign-screens.js`, `view.js` (camera, hit-testing, map input), `effects.js`, `input.js` (keyboard, buttons, WebMCP tools) and `renderer.js` (minimap, cached terrain layer, cities, units, overlays, frame loop). The terrain layer (`mapLayer`: terrain, territory, coastlines and borders) is redrawn only when the zoom, canvas size or a hex's `owner`/`terrain` changes, or the camera pans past its margin; anything else it draws needs `mapLayerCache = null` when it changes. |
 | `dist/game.js` | Boots the UI once every `ui/*.js` file has loaded. |
 | `dist/style.css`, `dist/battlefield.css` | Base styles and the WC4 reskin from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
-| `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
+| `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid, with `REDRAW` regions from real coastlines (`tools/data/coast.json`, see §Map); `tools/check_map.py` locks the rest; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
 | `tests/` | `core.test.cjs` (engine and campaign integrity) and `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order). |
 
 ### Engine conventions
@@ -126,6 +128,22 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Hexes that would bridge a strait at 2° per hex are left out (Italy's heel, India's tip, southern Sweden, western
   Kyushu, the Low Countries' coast); Kyushu stays joined to Honshu. Regenerate with
   `python3 tools/build_map.py --inject dist/engine/world.js`.
+- Real coastlines (`REDRAW` in `tools/build_map.py`): the British Isles, Europe's Mediterranean and Iberian coasts
+  (with the Adriatic, Balkans, Aegean and Bosporus), Korea, the Philippines and Sulawesi are rasterized from Natural
+  Earth 1:10m land outlines (public domain), clipped to those regions in `tools/data/coast.json` by
+  `tools/prepare_coast.py`. A hex there is land when a region-set share of its area is land (40% Europe, 45% Korea so
+  the Korea Strait stays open, 30% for the island chains), sampled on ~50 points per hex. They overwrite the
+  hand-drawn raster and `HEX_LAND`/`HEX_SEA` inside those regions. `FIX_LAND`/`FIX_SEA` apply last, for gameplay:
+  Honshu joined to Hokkaido, Calabria land so Sicily stays joined to Italy (Messina closed), sea at Dover, the North
+  Channel, the Bosporus/Dardanelles and the Dalmatian coast (so the Adriatic reaches Otranto), Taipei's old hex, the
+  hex east of Chennai and southern Tamil Nadu, Iceland's Westfjords, and the Gulf of Suez (106,26), so Africa and Asia
+  meet only by sea. Small Mediterranean islands drop out at these shares; Sardinia stays, given to the E.U. by
+  `TERRITORY` in `world.js` (land hexes no city's territory reaches, assigned by hand).
+- Map lock: `tools/data/map_locked.txt` is the approved map. `python3 tools/check_map.py` (run in CI) fails when a hex
+  outside the `REDRAW` regions and fix lists changes, or when `world.js` is out of date with `build_map.py`;
+  `--update` refreshes the lock after an approved change. `core.test.cjs` checks the islands, straits and joins
+  gameplay relies on, and that every city sits within one hex of its coordinates. To redraw another region from real
+  coastlines, add it to `REDRAW`, run `tools/prepare_coast.py` with ne_10m_land.geojson, then `build_map.py --inject`.
 - Plains 1; forest 2 (−15% damage); mountains 2 (−25%); desert 1 (3% attrition); tundra 2 (2.5% attrition);
   Himalaya and Greenland ice cap impassable. Julius and float units ignore movement costs.
 - **Movement rebalance for the denser world:** Conquest applies a +1 mobility bonus to every land unit after its

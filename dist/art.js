@@ -77,7 +77,7 @@ const ART = (() => {
   }
   // Public art is registered synchronously by assets/art/manifest.js, including when opened via file://.
   // Published and development assets are the only sprites for units and commanders.
-  const LOCAL = { units: {}, portraits: {}, base: 'local-art/', imgs: new Map() };
+  const LOCAL = { units: {}, portraits: {}, buildings: {}, base: 'local-art/', imgs: new Map() };
   function localEntry(kind, id) {
     const e = LOCAL[kind][id];
     return e ? (typeof e === 'string' ? { src: e } : e) : null;
@@ -86,7 +86,7 @@ const ART = (() => {
   function entries(values, base) {
     return Object.fromEntries(Object.entries(values || {}).flatMap(([id, value]) => {
       const e = typeof value === 'string' ? { src: value } : value;
-      if (!e || typeof e.src !== 'string' || !/^(units|portraits)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
+      if (!e || typeof e.src !== 'string' || !/^(units|portraits|buildings)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
       const focus = v => Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : undefined;
       return [[id, { src: e.src, base, fx: focus(e.fx), fy: focus(e.fy) }]];
     }));
@@ -104,7 +104,7 @@ const ART = (() => {
     }
     return !img.failed && img.complete && img.naturalWidth ? img : null;
   }
-  // The drawn SVG sits underneath and is hidden once the file loads; a missing file leaves the drawing in place.
+  // Never draw unit or portrait placeholders; city fallbacks are handled separately.
   // A missing or pending image remains blank; never show substitute illustrations.
   const withLocal = (kind, id, style = '') => {
     const e = localEntry(kind, id);
@@ -123,9 +123,10 @@ const ART = (() => {
       const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';
       LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base) };
       LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base) };
+      LOCAL.buildings = { ...(merge ? LOCAL.buildings : {}), ...entries(manifest?.buildings, base) };
       LOCAL.base = base;
       LOCAL.imgs.clear();
-      for (const kind of ['units', 'portraits']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
+      for (const kind of ['units', 'portraits', 'buildings']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
       api.onLocal?.();
     },
     citySVG,
@@ -135,7 +136,12 @@ const ART = (() => {
       return `<span class="ship-art unit-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     city(kind, side, extra = '') {
-      return `<span class="ship-art unit-art city-art ${extra}" aria-hidden="true">${citySVG(kind, side)}</span>`;
+      const e = localEntry('buildings', 'city'),
+        drawn = citySVG(kind, side);
+      const html = e
+        ? `${drawn}<img src="${escapeAttr(e.base + e.src)}" alt="" draggable="false" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.remove()">`
+        : drawn;
+      return `<span class="ship-art unit-art city-art${e ? ' local-art' : ''} ${extra}" aria-hidden="true">${html}</span>`;
     },
     portrait(k, extra = '') {
       const e = localEntry('portraits', k),
@@ -157,7 +163,22 @@ const ART = (() => {
       ctx.restore();
       return true;
     },
+    // HTML: a published building picture, or '' so the caller can show its own icon.
+    building(id, cls = '') {
+      const e = localEntry('buildings', id);
+      return e ? `<img class="${cls}" src="${escapeAttr(e.base + e.src)}" alt="" draggable="false">` : '';
+    },
+    // Published building art (one city, port and mine picture for every power) replaces the drawn cities; the owner
+    // shows in the map badge and territory. Drawn at width w, keeping the picture's proportions.
+    drawBuilding(ctx, id, x, y, w) {
+      const img = localImage('buildings', id);
+      if (!img) return false;
+      const h = (w * img.naturalHeight) / img.naturalWidth;
+      ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      return true;
+    },
     drawCity(ctx, kind, side, x, y, w) {
+      if (api.drawBuilding(ctx, 'city', x, y, w)) return true;
       const img = image(`c|${kind}|${side}`, citySVG(kind, side));
       if (!img) return false;
       ctx.drawImage(img, x - w / 2, y - w / 2, w, w);

@@ -30,6 +30,7 @@ let game = E.createGame('britannia'),
   minimapDirty = true,
   minimapBase = null;
 let detailOpen = false,
+  carrierHoldOpen = null, // Carrier-Battleship id with its cargo picker open
   saveOk = true,
   shake = 0,
   strikeMode = false, // choosing a F.L.E.I.J.A. target
@@ -122,12 +123,16 @@ function closeModal() {
 function capitalOf(side) {
   return game.stations.find(s => s.capitalOf === side && s.owner === side) || game.stations.find(s => s.owner === side);
 }
-// Where the ⌂ button and H key look: your capital, else your first city, else your commanders.
+// Where the map's ⌂ button looks: your capital, first city or commander.
 const homeOf = () => capitalOf(game.player) || ownUnits().find(u => u.cmd) || ownUnits()[0];
 function newGame() {
   aiToken++;
   hqBack = 'game';
   strikeMode = false;
+  carrierHoldOpen = null;
+  detailOpen = false;
+  deploying = null;
+  routing = null;
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0), loadProfile());
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };

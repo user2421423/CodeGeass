@@ -27,7 +27,7 @@ const env = {};
 vm.runInNewContext(fs.readFileSync(path.join(dist, 'assets/art/manifest.js'), 'utf8'), env);
 assert.equal(JSON.stringify(env.KnightmareArtManifest), JSON.stringify(manifest), 'JSON and startup art manifests differ');
 assert.equal(manifest.base, 'assets/art/');
-for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS]]) {
+for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS], ['buildings', { city: 1, port: 1, port_coastal: 1, mine: 1 }]]) {
   assert(manifest[kind] && typeof manifest[kind] === 'object');
   for (const [id, entry] of Object.entries(manifest[kind])) {
     assert(Object.hasOwn(known, id), `Unknown ${kind} id: ${id}`);
@@ -44,8 +44,9 @@ for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS]]) {
     for (const key of ['fx', 'fy']) if (typeof entry === 'object' && key in entry)
       assert(Number.isFinite(entry[key]) && entry[key] >= 0 && entry[key] <= 1, `Invalid portrait focus: ${id}.${key}`);
   }
-  assert.equal(Object.keys(manifest[kind]).length, Object.keys(known).length, `Missing real ${kind} artwork (no procedural fallback)`);
-  console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published (real art only).`);
+  if (kind === 'units' || kind === 'portraits')
+    assert.equal(Object.keys(manifest[kind]).length, Object.keys(known).length, `Missing real ${kind} artwork (no procedural fallback)`);
+  console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published${kind === 'buildings' ? '' : ' (real art only)'}.`);
 }
 for (const name of tracked) assert(!/^dist\/(?:local-art\/(?!README\.md$)|assets\/art\/raw\/)/.test(name), `Raw/local-only art would leak into Pages: ${name}`);
 console.log('PASS: public entrypoint, startup manifest, image paths, signatures, and deployment boundaries.');
