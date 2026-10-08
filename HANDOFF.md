@@ -176,7 +176,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   180/240/300 by tier, 400 for fortress cities, 600 for capitals.
 - Buildings, each to level 3: Knightmare factory (unlocks tiers, +10 industry, +60 defense), research lab
   (+8 research), and a Sakuradite refinery only where there is a deposit. One unit per city per turn; new units act
-  next turn.
+  next turn. `recruitOptions` deploys a new unit only on the city hex (a naval unit only on the port's sea hex), so a
+  unit standing there blocks production until it moves off (Elite Forces too). AI city guards stand beside their city
+  until an enemy comes within 2 hexes of it, so they leave the factory free. In the UI, clicking a selected unit that
+  stands on a city selects the city (and back), and the dock shows a City button for it.
 - **Production Command (player Conquest only):** optional automation stored in `g.automation`. Each owned city has
   exactly one local choice: an exact normal unit type to auto-produce every turn, or Off for manual production. There
   are no per-city Balanced/Armor/Artillery/etc. policies and no per-city building toggles. Global settings control

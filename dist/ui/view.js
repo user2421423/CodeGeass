@@ -178,7 +178,9 @@ function activateHex(p) {
     }
   }
   const mine = E.siteAt(game, p);
-  if (hit) selectUnit(hit.id);
+  // A unit on a city: clicking the selected unit again selects the city beneath it, and back.
+  if (hit && station && u?.id === hit.id) selectStation(station.id);
+  else if (hit) selectUnit(hit.id);
   else if (station) selectStation(station.id);
   else if (mine) selectSite(mine.id);
   else {

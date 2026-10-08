@@ -556,11 +556,7 @@
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner, type).length
-        ? t.naval
-          ? 'No free sea hex at the port'
-          : 'No free land hex next to the city'
-        : null) ||
+      (!recruitOptions(g, s, s.owner, type).length ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
     );
   }
@@ -1658,22 +1654,12 @@
     total.sakuradite = Math.round(total.sakuradite);
     return total;
   }
-  // New units deploy on the city hex or a free land hex next to it; naval units at the port or on the sea next to it.
+  // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
+  // there (as in WC4: move it off first).
   function recruitOptions(g, s, side, type = null) {
     if (s.owner !== side) return [];
-    if (TYPES[type]?.naval) {
-      if (!s.portAt) return [];
-      const port = tile(g, s.portAt.c, s.portAt.r);
-      return [port, ...adjacent(g, port)].filter(p => p && isSea(p) && !unitAt(g, p));
-    }
-    return [tile(g, s.c, s.r), ...adjacent(g, s)].filter(
-      p =>
-        p &&
-        !isSea(p) &&
-        !TERRAIN[p.terrain]?.blocked &&
-        !unitAt(g, p) &&
-        (!stationAt(g, p) || stationAt(g, p).owner === side),
-    );
+    const at = TYPES[type]?.naval ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
+    return at && !unitAt(g, at) ? [at] : [];
   }
   // The Federation's doctrine discounts its Infantry. Sakuradite is priced by class (SAKURADITE.cost).
   function price(type, stack = 1, g = null, side = null) {
@@ -1724,7 +1710,7 @@
       (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner).length ? 'No free land hex next to the city' : null) ||
+      (!recruitOptions(g, s, s.owner).length ? 'A unit is on the city' : null) ||
       shortfall(funds(g, s.owner), elitePrice(id, rec?.level || 1))
     );
   }
