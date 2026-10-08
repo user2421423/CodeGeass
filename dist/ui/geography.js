@@ -81,7 +81,7 @@ const GEOGRAPHY = (() => {
   function paint(destination, g, left, right, top, bottom, scale) {
     if (typeof document === 'undefined' || !document.createElement) return false;
     if (!bitmap) bitmap = document.createElement('canvas');
-    const pixelRatio = 0.58; // CSS pixels: independent of device DPR to bound panning cost.
+    const pixelRatio = 0.24; // CSS pixels: interpolate on upscale; bounds redraw cost while dragging.
     const width = Math.max(2, Math.min(1100, Math.ceil((right - left) * scale * pixelRatio)));
     const height = Math.max(2, Math.min(820, Math.ceil((bottom - top) * scale * pixelRatio)));
     if (bitmap.width !== width || bitmap.height !== height) {
@@ -133,13 +133,12 @@ const GEOGRAPHY = (() => {
         const green = (a.green * wa + b0.green * wb + c.green * wc + d.green * wd) * inverse;
         const blue = (a.blue * wa + b0.blue * wb + c.blue * wc + d.blue * wd) * inverse;
         // World-anchored, continuous low-relief shading and subtle paper grain.
-        const relief = Math.sin(wx * 0.017 + wy * 0.009) * 2.5 +
-          Math.sin(wx * 0.0045 - wy * 0.0065) * 4.2;
-        const grain = (Math.sin(wx * 0.191 + wy * 0.157) *
-          Math.sin(wx * 0.129 - wy * 0.211)) * 2.1;
+        const relief = Math.sin(wx * 0.0045 - wy * 0.0065) * 4.3;
+        const grain = (((Math.imul((wx / 13) | 0, 374761393) ^
+          Math.imul((wy / 13) | 0, 668265263)) & 255) - 127) * 0.012;
         const shallow = Math.max(0, 1 - Math.abs(land - 0.38) * 3) * (1 - alpha);
         const shore = Math.max(0, 1 - Math.abs(land - 0.5) * 12);
-        const oceanLight = Math.sin(wx * 0.006 + wy * 0.004) * 3;
+        const oceanLight = relief * 0.65;
         const shade = relief + grain;
         const i = 4 * (py * width + px);
         data[i] = clamp(27 * (1 - alpha) + red * alpha + shallow * 12 + shore * 13 + shade + oceanLight * (1 - alpha), 0, 255);
