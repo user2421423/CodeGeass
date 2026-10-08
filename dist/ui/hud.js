@@ -410,7 +410,8 @@ function holdHTML(u) {
           `<div class="building"><span class="label">${c.cmd ? esc(C(c.cmd).short) + ' · ' : ''}${esc(E.TYPES[c.type].short)} ×${c.stack}</span><small>${Math.round(c.hp)} / ${E.maxHP(c)} HP</small>${ours ? act(`data-deploy="${i}"`, deploying?.ship === u.id && deploying.index === i ? 'Choose a green hex' : 'Launch', E.deployReason(game, u, i), 'Rapid KMF Deployment: lands with a full move and attack') : ''}</div>`,
       )
       .join('');
-  return `<div class="section-divider"><span class="label">Hold · ${cargo.length} / ${t.capacity} formations</span>${rows || '<p class="description">Empty. Move a Knightmare onto the carrier to board it; boarding ends its turn.</p>'}<p class="description">A launched Knightmare lands on an empty land hex next to the ship and can move and attack at once, but not on the turn it boarded. If the carrier sinks, everything aboard is lost.</p></div>`;
+  const capacity = E.carrierCapacity(game, u);
+  return `<div class="section-divider"><span class="label">Hold · ${cargo.length} / ${capacity} formations</span>${rows || '<p class="description">Empty. Move a Knightmare onto the carrier to board it; boarding ends its turn.</p>'}<p class="description">A launched Knightmare lands on an empty land hex next to the ship and can move and attack at once, but not on the turn it boarded. If the carrier sinks, everything aboard is lost.</p></div>`;
 }
 function nearestCityName(u) {
   let best = null,
