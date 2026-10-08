@@ -1,15 +1,11 @@
 # Knightmare Conquest visual assets
 
-Every unit and commander has a drawn fallback in `dist/art.js`. Finished imported images can override these
-through the tracked `dist/assets/art/manifest.json` and its generated startup script:
+Every unit and commander displays its published image directly from `dist/assets/art/manifest.json`
+and its generated startup script. No procedural Knightmare or portrait substitutes are displayed:
 
-- **Knightmare Frames:** one parametric SVG rig (`SPECS`) with body plans (humanoid, giant, insect, dome, box, egg,
-  tank, tripod, fortress), heads, shoulders, weapons and back gear, painted per frame. Neutral garrisons are
-  repainted khaki.
+- **Knightmare Frames:** published sprites only; empty space until the image loads.
 - **Cities:** city, capital and fortress icons per faction.
-- **Commander portraits:** drawn busts (`LOOKS`: hair, eyes, uniform and accessories). They are original character
-  designs in each power's colors, not likenesses of the show's characters; the commander's name, rank and abilities
-  come from the engine.
+- **Commander portraits:** published character portraits only; no substitute faces.
 - **Map:** terrain, territory, borders and the minimap are painted on the canvas each frame.
 - **Icons** (`dist/icons.js`) are inline SVG.
 
@@ -45,7 +41,7 @@ license does not license the studio artwork.
   were removed with `tools/local_art_prepare.py`; the enclosed-gap seeds are in `tools/art-backgrounds.json`.
 - Shui Gun-Ru (green and red) and Shui Gun-Ru II (green and gold) are owner-supplied artwork (added 2026-10-07; origin
   not recorded). Their grey backdrop and floor shadow were removed by an edge flood fill of light neutral grey.
-- Every Knightmare type and commander has published art. Procedural drawings remain only as runtime safety fallbacks.
+- Every Knightmare type and commander has published art. Missing or failed image loads remain blank.
 
 ## Preparing and publishing art
 

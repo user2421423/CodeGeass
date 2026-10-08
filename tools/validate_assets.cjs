@@ -44,7 +44,8 @@ for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS]]) {
     for (const key of ['fx', 'fy']) if (typeof entry === 'object' && key in entry)
       assert(Number.isFinite(entry[key]) && entry[key] >= 0 && entry[key] <= 1, `Invalid portrait focus: ${id}.${key}`);
   }
-  console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published; remaining entries use drawn art.`);
+  assert.equal(Object.keys(manifest[kind]).length, Object.keys(known).length, `Missing real ${kind} artwork (no procedural fallback)`);
+  console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published (real art only).`);
 }
 for (const name of tracked) assert(!/^dist\/(?:local-art\/(?!README\.md$)|assets\/art\/raw\/)/.test(name), `Raw/local-only art would leak into Pages: ${name}`);
 console.log('PASS: public entrypoint, startup manifest, image paths, signatures, and deployment boundaries.');

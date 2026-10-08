@@ -966,8 +966,7 @@ function draw(time, dt) {
       ctx.shadowBlur = 5;
       ctx.shadowOffsetY = 4;
       for (let i = Math.min(u.stack - 1, 2); i >= 0; i--)
-        if (!ART.drawUnit(ctx, u.type, u.side, (i ? i * 7 * (flip ? -1 : 1) : 0) + (flip ? 4 : -4), -10 - i * 7, size * (i ? 0.86 : 1), size * (i ? 0.86 : 1), flip))
-          outlinedText(t.code, 0, 3, 13, F(u.side).color, scale);
+        ART.drawUnit(ctx, u.type, u.side, (i ? i * 7 * (flip ? -1 : 1) : 0) + (flip ? 4 : -4), -10 - i * 7, size * (i ? 0.86 : 1), size * (i ? 0.86 : 1), flip);
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
