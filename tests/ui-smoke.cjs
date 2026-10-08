@@ -144,15 +144,34 @@ const modal = () => node('modal-root').innerHTML;
   run(`selectUnit(${infantryId})`);
   run(`(function() { const u = game.units.find(v => v.id === ${infantryId}); u.moved = u.attacked = false; })()`);
   const dock = node('selection-dock').innerHTML;
-  for (const label of ['Assign (A)', 'Add frame (F)', 'Repair (R)', 'Hold (H)', 'Set destination (G)'])
+  for (const label of ['Assign', 'Add frame', 'Repair', 'Hold', 'Set destination'])
     assert(dock.includes(label), `bottom unit bar includes ${label}`);
   assert(!node('side').innerHTML, 'standard units do not open a duplicate right panel');
+  assert(!/\\([AFRGHC]\\)/.test(dock), 'button captions omit keyboard annotations');
+  assert(!dock.includes('Standing orders:'), 'dock hides redundant standing orders label');
+  run(`(function() {
+    const u = game.units.find(v => v.id === ${infantryId});
+    u.goto = E.adjacent(game, u)[0];
+  })()`);
+  run('updateSelection()');
+  assert(node('selection-dock').innerHTML.includes('Heading for'), 'brief destination shown');
+  assert(!node('selection-dock').innerHTML.includes('Standing orders:'), 'no redundant destination prefix');
   const keyboard = key => events.keydown({ key, target: { tagName: 'BODY', dataset: {} }, preventDefault() {} });
   const beforeCam = run('JSON.stringify(cam)');
   keyboard('w'); keyboard('s'); keyboard('d');
   assert.equal(run('JSON.stringify(cam)'), beforeCam, 'W/S/D do not pan the map');
+  keyboard('c');
+  assert.equal(run(`game.units.find(u => u.id === ${infantryId}).goto ?? null`), null, 'C clears standing orders');
   keyboard('a');
   assert(modal().includes('Unit commanders'), 'A opens commander assignment');
+  run('closeModal()');
+  run('helpDialog()');
+  const manual = modal();
+  for (const key of ['Assign commander', 'Add frame', 'Repair', 'Hold position', 'Set/change destination', 'Stop auto-move', 'Next ready unit']) {
+    assert(manual.includes(key), `manual documents ${key}`);
+  }
+  assert(!manual.includes('H centers on your capital'), 'manual removes obsolete H shortcut');
+  assert(!manual.includes('WASD pans'), 'manual removes obsolete WASD navigation');
   run('closeModal()');
   keyboard('h');
   assert.equal(run(`game.units.find(u => u.id === ${infantryId}).moved`), true, 'H holds the unit');

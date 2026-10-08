@@ -550,6 +550,20 @@ document.addEventListener('keydown', e => {
     doAction(() => E.repair(game, u.id));
     return;
   }
+  if (k === 'c' && own && (u.goto || routing === u.id)) {
+    e.preventDefault();
+    routing = null;
+    if (u.goto) {
+      if (E.clearGoto(game, u.id).ok) {
+        refreshAndSave(true);
+        toast('Auto-move stopped.');
+      }
+    } else {
+      updateSelection();
+      toast('Destination selection cancelled.');
+    }
+    return;
+  }
   if (k === 'g') startRouting();
   if (k === 'escape' && carrierHoldOpen != null) {
     carrierHoldOpen = null;
