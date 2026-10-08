@@ -102,6 +102,27 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().turn'), 2, `${side}: turn is saved`);
   }
 
+  // Carrier quick actions must present a cargo picker, never commander assignment.
+  run("newGame()");
+  const carrierId = run("game.units.find(u => u.side === game.player && E.TYPES[u.type].naval === 'ship')?.id");
+  assert(carrierId, 'Conquest starts with a friendly carrier');
+  run(`game.units.find(u => u.id === ${carrierId}).cargo = []`);
+  run(`selectUnit(${carrierId})`);
+  assert(node('selection-dock').innerHTML.includes('data-action="carrier-deploy"'), 'carrier has Deploy units button');
+  assert(!node('selection-dock').innerHTML.includes('data-action="assign"'), 'carrier cannot assign commanders');
+  run('carrierDeployDialog()');
+  assert(modal().includes('Carrier deployment') && modal().includes('No Knightmares aboard'), 'empty carrier explains boarding');
+  run(`(function() {
+    const ship = game.units.find(u => u.id === ${carrierId});
+    const passenger = game.units.find(u => u.side === game.player && !E.TYPES[u.type].naval);
+    if (!passenger) throw new Error('No infantry to test carrier cargo');
+    game.units.splice(game.units.indexOf(passenger), 1);
+    (ship.cargo ||= []).push(passenger);
+  })()`);
+  run('carrierDeployDialog()');
+  assert(modal().includes('data-deploy="0"'), 'carrier cargo list offers individual deployment');
+  run('closeModal()');
+
   run('startMenu();campaignDialog("bk_s1")');
   assert(modal().includes('data-mission="bk1"'), 'campaign menu renders');
 

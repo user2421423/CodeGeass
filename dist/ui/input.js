@@ -128,12 +128,15 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.deploy !== undefined) {
-    const u = selectedUnit();
-    if (u) {
-      deploying = { ship: u.id, index: +d.deploy };
-      updateSelection();
-      toast('Choose a green hex next to the carrier to launch.');
-    }
+    const u = selectedUnit(),
+      i = Number(d.deploy);
+    if (!interactive() || !u || u.side !== game.player || E.TYPES[u.type].naval !== 'ship') return;
+    const why = Number.isInteger(i) && i >= 0 ? E.deployReason(game, u, i) : 'Invalid cargo selection';
+    if (why) { toast(why); return; }
+    closeModal();
+    deploying = { ship: u.id, index: i };
+    updateSelection();
+    toast('Choose a green land hex next to the carrier to launch.');
     return;
   }
   if (d.recruit) {
@@ -388,6 +391,9 @@ document.addEventListener('click', e => {
     case 'generals-close':
       if (hqBack === 'start') startMenu();
       else closeModal();
+      break;
+    case 'carrier-deploy':
+      carrierDeployDialog();
       break;
     case 'admirals':
     case 'assign':
