@@ -123,6 +123,27 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain === 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 0, 'sea remains sea at its gameplay hex centre');
   assert(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return Math.abs(GEOGRAPHY.sample(game, p.x, p.y) - GEOGRAPHY.sample(game, p.x + WORLD_W, p.y)); })()`) < 1e-8, 'world atlas wraps without a seam');
 
+  // Shoreline city art is visual-only and must remain selectable even when
+  // its graphic sits slightly away from the tactical city hex centre.
+  const anchors = run(`(() => {
+    const names = Object.keys(CITY_SHORE_ANCHORS);
+    const moved = names.map(name => {
+      const city = game.stations.find(s => s.name === name);
+      if (!city) return { name, missing: true };
+      const original = hexCenter(city), visual = visualCityCenter(city);
+      return { name, delta: Math.hypot(original.x - visual.x, original.y - visual.y),
+        hit: hitVisualStationAtWorld(visual.x, visual.y, 1)?.id === city.id,
+        original: [city.c, city.r] };
+    });
+    return { count: names.length, moved, stations: game.stations.length };
+  })()`);
+  assert.equal(anchors.count, 23, 'every identified visually offshore city has a coastline anchor');
+  for (const city of anchors.moved) {
+    assert(!city.missing, `${city.name}: still exists as a gameplay station`);
+    assert(city.delta > 0 && city.delta < 43 * 0.72, `${city.name}: anchored within the original hex neighbourhood`);
+    assert(city.hit, `${city.name}: selecting the displaced visual city reaches its station`);
+  }
+
   for (const side of ['britannia', 'eu', 'cf']) {
     run(`setup={side:'${side}',difficulty:'normal'};newGame();draw(0,.016);drawMinimap();`);
     assert.equal(run('game.player'), side);
@@ -140,6 +161,12 @@ const modal = () => node('modal-root').innerHTML;
 
   run('startMission("bk1")');
   assert.equal(run('game.mode'), 'campaign');
+  assert(run(`(() => {
+    const city = game.stations[0];
+    const a = visualCityCenter(city), b = hexCenter(city);
+    return a.x === b.x && a.y === b.y;
+  })()`), 'campaign cities retain exact tactical sprite positions');
+
   assert(modal().includes('Mission dialogue'), 'campaign opening dialogue renders');
 
   run('talkNext(true);draw(16,.016);drawMinimap();');
