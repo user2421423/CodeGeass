@@ -167,11 +167,12 @@ function activateHex(p) {
         });
         if (result.loaded) selection = { kind: 'unit', id: result.loaded };
         refreshAndSave(!result.annexed);
-        if (result.loaded) toast('Aboard the Carrier-Battleship. It can launch next turn.');
+        if (result.loaded) toast('Aboard the Carrier-Battleship. It can launch immediately.');
         else if (result.annexed) annexNotice(result.annexed);
         else if (result.captured) toast(`${result.captured} captured. +40 credits.`);
         else if (result.seized) toast(`${result.seized} Sakuradite mine seized.`);
         else if (E.atSea(game, u) && !wasSea) toast('Embarked as a transport. Sail to a coast next turn to land.');
+        else if (wasSea && E.TYPES[u.type].naval === 'amphibious') toast('Amphibious landing! A fresh move and attack are available.');
         else if (wasSea) toast('Landed. The unit can fire next turn.');
         return;
       }

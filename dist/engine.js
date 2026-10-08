@@ -601,6 +601,7 @@
   function assignReason(g, u, k) {
     const a = COMMANDERS[k];
     if (!a) return 'Unknown commander';
+    if (u && isShip(u)) return 'Carrier-Battleships cannot have commanders';
     if (!g.roster?.[k]) return `Not one of your commanders: recruit in HQ for ${recruitPrice(k)} command tokens`;
     const busy = allUnits(g).find(v => v.hp > 0 && v.personal && v.cmd === k);
     if (busy) return `Commanding ${TYPES[busy.type].short}`;
@@ -1114,7 +1115,7 @@
     return !!COMMANDERS[u.cmd]?.action && !feintReason(g, u);
   }
   // Rapid KMF Deployment: a carried Knightmare launches onto an empty, non-enemy land hex next to its carrier with a
-  // full move and attack. Boarding ends a unit's action, and it cannot launch on the turn it boarded.
+  // full move and attack even on the turn it boarded. Deployment prevents reboarding this turn.
   function deployTargetsAt(g, p, side) {
     return adjacent(g, p).filter(
       t =>
@@ -1130,7 +1131,6 @@
     if (!u) return 'No unit aboard';
     return (
       turnReason(g, ship.side) ||
-      (u.boardedTurn === g.turn ? 'Boarded this turn: it can launch next turn' : null) ||
       (!deployTargets(g, ship).length ? 'No empty land hex next to the carrier' : null)
     );
   }
@@ -1194,9 +1194,18 @@
     u.c = dest.c;
     u.r = dest.r;
     u.moved = !retainMove;
+    // Amphibious units gain one full extra movement and attack after landing each turn.
+    // A per-turn stamp prevents unlimited actions by hopping across the coastline.
+    const freshLanding = t.naval === 'amphibious' && fromSea && !isSea(dest) && u.landingRefreshTurn !== g.turn;
+    if (freshLanding) {
+      u.landingRefreshTurn = g.turn;
+      u.moved = false;
+      u.attacked = false;
+      u.chain = 0;
+    }
     u.held = false;
     u.guardReady = false;
-    u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
+    u.movedDistance = freshLanding ? 0 : (u.movedDistance || 0) + dist(g, from, dest);
     u.lastTurnMoved = true;
     u.skillReposition = retainMove ? 1 : 0;
     u.withdrawMove = false;
