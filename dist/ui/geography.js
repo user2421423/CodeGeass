@@ -1,6 +1,4 @@
-/* Independent vector geography behind an entirely separate tactical hex overlay.
- * Geographic outlines come from the same map-builder source data already in this repo,
- * not from a blurred tile raster. All distances are in the game's world coordinates. */
+/* GSHHG unified global vector geography, drawn behind independent tactical hexes. */
 'use strict';
 const GEOGRAPHY = (() => {
   const VISUAL_WORLD = { cols: 180, rows: 76, latTop: 74, latSpan: 128 };
@@ -18,24 +16,13 @@ const GEOGRAPHY = (() => {
     return b;
   };
   const shape = points => ({ points: points.map(project), bounds: bbox(points.map(project)) });
+  // Every continent and inland lake comes from the same global dataset.
   const LAYERS = {
     land: GEOGRAPHY_SHAPES.land.map(shape),
     water: GEOGRAPHY_SHAPES.water.map(shape),
     biomes: GEOGRAPHY_SHAPES.biomes.map(([kind, intensity, points]) => ({
       kind, intensity, ...shape(points),
     })),
-    patches: GEOGRAPHY_SHAPES.patches.map(({ id, polys }) => {
-      const outlines = polys.map(shape);
-      const boxes = outlines.map(p => p.bounds);
-      const extent = [Infinity, Infinity, -Infinity, -Infinity];
-      for (const b of boxes) {
-        extent[0] = Math.min(extent[0], b[0]);
-        extent[1] = Math.min(extent[1], b[1]);
-        extent[2] = Math.max(extent[2], b[2]);
-        extent[3] = Math.max(extent[3], b[3]);
-      }
-      return { id, outlines, extent };
-    }),
   };
   function intersects(bounds, left, right, top, bottom) {
     return bounds[0] <= right && bounds[2] >= left && bounds[1] <= bottom && bounds[3] >= top;
@@ -72,7 +59,7 @@ const GEOGRAPHY = (() => {
     const ry = Math.max(R * 1.8, (bounds[3] - bounds[1]) * 0.72);
     const color = biomeColor[region.kind];
     if (!color) return;
-    const strength = (region.kind === 'm' ? 0.25 : region.kind === 'f' ? 0.22 : 0.45) * region.intensity;
+    const strength = (region.kind === 'm' ? 0.20 : region.kind === 'f' ? 0.20 : 0.29) * region.intensity;
     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
     gradient.addColorStop(0, `rgba(${color.join(',')},${strength.toFixed(3)})`);
     gradient.addColorStop(0.52, `rgba(${color.join(',')},${(strength * 0.65).toFixed(3)})`);
@@ -102,30 +89,57 @@ const GEOGRAPHY = (() => {
   // Political colour is a transparent wash clipped to the REAL geographic
   // silhouette, rather than a separately painted hex mosaic. Fill each faction
   // once (not once per hex), preventing overlapping alpha seams between tiles.
+  // Extend faction colours onto the true land silhouette even where the
+  // coarse gameplay grid treats a piece of coastline as sea. A multi-source
+  // flood is visual-only; no unit path, tile, or ownership value is changed.
+  let ownershipCache = null;
+  function coastlineOwners(g) {
+    const original = g.tiles.map(t => t.owner || (t.terrain === 'sea' ? null : 'neutral'));
+    if (ownershipCache && ownershipCache.tiles === g.tiles &&
+        original.every((o, i) => o === ownershipCache.original[i])) return ownershipCache.inferred;
+    const inferred = original.slice();
+    const dist = new Uint8Array(g.tiles.length);
+    dist.fill(255);
+    const queue = [];
+    for (let i = 0; i < g.tiles.length; i++) {
+      if (g.tiles[i].terrain === 'sea' || !original[i]) continue;
+      dist[i] = 0;
+      queue.push(i);
+    }
+    for (let head = 0; head < queue.length; head++) {
+      const i = queue[head];
+      if (dist[i] >= 4) continue;
+      for (const n of E.adjacent(g, g.tiles[i])) {
+        const ni = n.r * g.cols + n.c;
+        if (n.terrain !== 'sea' || dist[ni] <= dist[i] + 1) continue;
+        dist[ni] = dist[i] + 1;
+        inferred[ni] = inferred[i];
+        queue.push(ni);
+      }
+    }
+    ownershipCache = { tiles: g.tiles, original, inferred };
+    return inferred;
+  }
   function paintOwnership(ctx, g, landShapes, tiles, left, right, top, bottom) {
     ctx.save();
     if (paths(ctx, landShapes, left, right, top, bottom)) {
       ctx.clip();
+      const inferred = coastlineOwners(g);
       const factions = g.factions || E.FACTIONS;
-      const byOwner = new Map();
+      const groups = new Map();
       for (const t of tiles) {
-        if (!t.owner || t.terrain === 'sea') continue;
-        if (!byOwner.has(t.owner)) byOwner.set(t.owner, []);
-        byOwner.get(t.owner).push(t);
+        const owner = inferred[t.r * g.cols + t.c];
+        if (!owner) continue;
+        if (!groups.has(owner)) groups.set(owner, []);
+        groups.get(owner).push(t);
       }
-      ctx.globalAlpha = 0.51;
-      for (const [owner, owned] of byOwner) {
-        const color = (factions[owner] || E.FACTIONS[owner] || {}).color;
+      ctx.globalAlpha = 0.58;
+      for (const [owner, owned] of groups) {
+        const color = (factions[owner] || E.FACTIONS[owner] || E.FACTIONS.neutral).color;
         if (!color) continue;
         ctx.fillStyle = color;
         ctx.beginPath();
-        for (const t of owned) {
-          // Coastal visual polygons don't always coincide with playable hexes.
-          // Extend the ownership wash slightly, only to the shoreline; the
-          // geographical clip prevents colouring any actual water.
-          const onCoast = E.adjacent(g, t).some(n => n.terrain === 'sea');
-          tacticalHex(ctx, t, R * (onCoast ? 1.32 : 1.06));
-        }
+        for (const t of owned) tacticalHex(ctx, t, R + 1.2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -178,64 +192,6 @@ const GEOGRAPHY = (() => {
     ctx.restore();
   }
 
-  // Detailed coastline datasets are geographically clipped. A hard rectangular
-  // replacement at the source-data bounds created conspicuous seams through
-  // France, Anatolia and the Mediterranean. Alpha-feather that replacement
-  // over the lower-resolution map instead of overwriting it abruptly.
-  const patchSurfaces = new Map();
-  function paintPatch(ctx, patch, g, visibleTiles, sea, land, a, b, top, bottom, scale) {
-    const [x0, y0, x1, y1] = patch.extent;
-    if (!intersects(patch.extent, a, b, top, bottom)) return;
-    const width = x1 - x0, height = y1 - y0;
-    if (width < 1 || height < 1 || typeof document === 'undefined') return;
-    let canvas = patchSurfaces.get(patch.id);
-    if (!canvas) {
-      canvas = document.createElement('canvas');
-      patchSurfaces.set(patch.id, canvas);
-    }
-    const quality = 1;
-    const cw = Math.ceil(width * quality), ch = Math.ceil(height * quality);
-    if (canvas.width !== cw || canvas.height !== ch) {
-      canvas.width = cw;
-      canvas.height = ch;
-    }
-    const pctx = canvas.getContext && canvas.getContext('2d');
-    if (!pctx) return;
-    pctx.setTransform(1, 0, 0, 1, 0, 0);
-    pctx.clearRect(0, 0, cw, ch);
-    pctx.setTransform(quality, 0, 0, quality, -x0 * quality, -y0 * quality);
-    pctx.save();
-    pctx.fillStyle = sea;
-    pctx.fillRect(x0, y0, width, height);
-    pctx.fillStyle = land;
-    if (paths(pctx, patch.outlines, x0, x1, y0, y1)) pctx.fill();
-    paintBiomes(pctx, patch.outlines, x0, x1, y0, y1);
-    paintOwnership(pctx, g, patch.outlines, visibleTiles, x0, x1, y0, y1);
-    coast(pctx, patch.outlines, x0, x1, y0, y1, scale, patch.extent);
-    // Multiplying X and Y masks ensures corners fade as well. Most southern
-    // patch boundaries end at open water, so do not fade out island details
-    // such as Crete at the Mediterranean data boundary.
-    const fade = Math.min(R * 1.5, width / 5, height / 5);
-    pctx.globalCompositeOperation = 'destination-in';
-    const horizontal = pctx.createLinearGradient(x0, 0, x1, 0);
-    horizontal.addColorStop(0, 'rgba(255,255,255,0)');
-    horizontal.addColorStop(fade / width, '#fff');
-    horizontal.addColorStop(1 - fade / width, '#fff');
-    horizontal.addColorStop(1, 'rgba(255,255,255,0)');
-    pctx.fillStyle = horizontal;
-    pctx.fillRect(x0, y0, width, height);
-    const vertical = pctx.createLinearGradient(0, y0, 0, y1);
-    const southFade = patch.id === 'med_europe' ? Math.min(fade, R * 0.28) : fade;
-    vertical.addColorStop(0, 'rgba(255,255,255,0)');
-    vertical.addColorStop(fade / height, '#fff');
-    if (southFade) vertical.addColorStop(1 - southFade / height, '#fff');
-    vertical.addColorStop(1, southFade ? 'rgba(255,255,255,0)' : '#fff');
-    pctx.fillStyle = vertical;
-    pctx.fillRect(x0, y0, width, height);
-    pctx.restore();
-    ctx.drawImage(canvas, x0, y0, width, height);
-  }
-
   // Unconnected campaign battlefields have no global longitude/latitude basis.
   // They keep the original gameplay-based rendering until bespoke geographic
   // artwork is defined for those missions.
@@ -281,10 +237,7 @@ const GEOGRAPHY = (() => {
       paintOwnership(ctx, g, LAYERS.land, visibleTiles, a, b, top, bottom);
       coast(ctx, LAYERS.land, a, b, top, bottom, scale);
 
-      // Blend detailed geographic coastlines into the atlas without rectangular
-      // wipes, hard crop seams or a change to any tactical hex.
-      for (const patch of LAYERS.patches)
-        paintPatch(ctx, patch, g, visibleTiles, sea, land, a, b, top, bottom, scale);
+      // One land silhouette worldwide: no coastal cutout or second tint pass.
 
       // Inland seas and their outlines are geographically accurate holes in
       // the land layer, not water-coloured hexes painted on top.
