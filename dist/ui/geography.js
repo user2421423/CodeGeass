@@ -87,13 +87,13 @@ const GEOGRAPHY = (() => {
     ctx.restore();
   }
 
-  function tacticalHex(ctx, t) {
+  function tacticalHex(ctx, t, radius) {
     const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
     const y = R * 1.5 * t.r + R;
     for (let i = 0; i < 6; i++) {
       const a = (60 * i - 30) * Math.PI / 180;
-      const xx = x + (R + 0.9) * Math.cos(a);
-      const yy = y + (R + 0.9) * Math.sin(a);
+      const xx = x + radius * Math.cos(a);
+      const yy = y + radius * Math.sin(a);
       i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
     }
     ctx.closePath();
@@ -119,7 +119,13 @@ const GEOGRAPHY = (() => {
         if (!color) continue;
         ctx.fillStyle = color;
         ctx.beginPath();
-        for (const t of owned) tacticalHex(ctx, t);
+        for (const t of owned) {
+          // Coastal visual polygons don't always coincide with playable hexes.
+          // Extend the ownership wash slightly, only to the shoreline; the
+          // geographical clip prevents colouring any actual water.
+          const onCoast = E.adjacent(g, t).some(n => n.terrain === 'sea');
+          tacticalHex(ctx, t, R * (onCoast ? 1.32 : 1.06));
+        }
         ctx.fill();
       }
       ctx.globalAlpha = 1;
