@@ -862,6 +862,10 @@
       "city": {
         "original_sha256": "34ff4450d7001788803111b21190cb38cb7f3ae6cc48184782d94ce29d46ee69",
         "processing": "trimmed transparent margin, resized to 512 px, WebP q88"
+      },
+      "mine": {
+        "original_sha256": "3982906a81932a03348521da9d55c9243090da81ae11d4b7fa9a9b27f9b99faf",
+        "processing": "trimmed transparent margin, resized to 512 px, WebP q88"
       }
     }
   }

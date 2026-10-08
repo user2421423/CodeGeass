@@ -18,9 +18,10 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **70 Knightmare sprites, 58 commander portraits and 2 building pictures** in `dist/assets/art/`.
-The building pictures (`buildings/city` for every city, `buildings/port` for every port, both used for all three
-powers; the owner shows in the map badge) were supplied by the owner on 2026-10-08 as transparent WebP files and only
+The game ships **70 Knightmare sprites, 58 commander portraits and 3 building pictures** in `dist/assets/art/`.
+The building pictures (`buildings/city` for every city, `buildings/port` for every port, `buildings/mine` for every
+Sakuradite mine on its own hex, all used for all three powers; the owner shows in the map badge) were supplied by
+the owner on 2026-10-08 as transparent WebP files and only
 trimmed and resized to 512 px; their checksums are in `sources.json` under `buildings`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text

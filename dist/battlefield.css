@@ -2637,6 +2637,12 @@ table.powers .legend-dot {
   place-items: center;
   height: 110px;
 }
+.mine-art .mine-photo {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 6px #000a);
+}
 .mine-art .mine-icon {
   width: 92px;
   height: 92px;

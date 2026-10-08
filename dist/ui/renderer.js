@@ -529,14 +529,17 @@ function drawMine(d, owner, scale, time, occupied) {
     outlinedText(d.name, 0, 52, 10, '#ffc2e0', scale, 'Trebuchet MS', d.base >= 30);
     return;
   }
-  ctx.beginPath();
-  ctx.ellipse(0, 10, 27, 10, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#3a3036';
-  ctx.fill();
-  ctx.strokeStyle = F(owner).color;
-  ctx.lineWidth = Math.max(1.6, 1.4 / scale);
-  ctx.stroke();
-  drawCrystals(0, 9, 1, time);
+  // The published mine picture, else a drawn pit of crystals ringed in the owner's colour.
+  if (!ART.drawBuilding(ctx, 'mine', 0, -4, R * 2.05)) {
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 27, 10, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#3a3036';
+    ctx.fill();
+    ctx.strokeStyle = F(owner).color;
+    ctx.lineWidth = Math.max(1.6, 1.4 / scale);
+    ctx.stroke();
+    drawCrystals(0, 9, 1, time);
+  }
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i < level ? '#ff7ab8' : '#2a1d25';
     ctx.fillRect(20, 6 - i * 5, 4, 3);

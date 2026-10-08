@@ -751,7 +751,7 @@ const ART = (() => {
     // Called after a local manifest loads, so the UI can redraw (set by game.js).
     onLocal: null,
     // manifest: { base?, units: { <knightmare id>: 'units/x.png' }, portraits: { <commander id>: 'portraits/x.jpg' | { src, fx, fy } },
-    //   buildings: { city: 'buildings/x.webp', port: 'buildings/y.webp' } }
+    //   buildings: { city: 'buildings/x.webp', port: 'buildings/y.webp', mine: 'buildings/z.webp' } }
     useLocal(manifest, merge = false) {
       const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';
       LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base) };
@@ -808,7 +808,12 @@ const ART = (() => {
       ctx.restore();
       return true;
     },
-    // Published building art (one city and one port picture for every power) replaces the drawn cities; the owner
+    // HTML: a published building picture, or '' so the caller can show its own icon.
+    building(id, cls = '') {
+      const e = localEntry('buildings', id);
+      return e ? `<img class="${cls}" src="${escapeAttr(e.base + e.src)}" alt="" draggable="false">` : '';
+    },
+    // Published building art (one city, port and mine picture for every power) replaces the drawn cities; the owner
     // shows in the map badge and territory. Drawn at width w, keeping the picture's proportions.
     drawBuilding(ctx, id, x, y, w) {
       const img = localImage('buildings', id);

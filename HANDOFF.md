@@ -47,8 +47,9 @@ reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` 
 ### Artwork handoff status
 
 Published artwork is tracked and deployed from `dist/assets/art/`: **70 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames), 58 commander portraits and 2 building
-pictures (`buildings/city` drawn for every city, `buildings/port` on every port hex; `ART.drawBuilding`)**, registered
+including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames), 58 commander portraits and 3 building
+pictures (`buildings/city` drawn for every city, `buildings/port` on every port hex, `buildings/mine` on every mine
+on its own hex and in the mine panel; `ART.drawBuilding` / `ART.building`)**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
 workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art; procedural art is

@@ -26,7 +26,7 @@ def known_ids(dist=ROOT):
     return {
         'units': ids(frames, 'const KNIGHTMARES = {', 'const LINEUPS ='),
         'portraits': ids(commanders, 'const COMMANDERS = {', 'const RANKS'),
-        'buildings': ['city', 'port'],  # one picture each, used for every power
+        'buildings': ['city', 'port', 'mine'],  # one picture each, used for every power
     }
 
 

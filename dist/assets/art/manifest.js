@@ -395,6 +395,9 @@ globalThis.KnightmareArtManifest = {
     },
     "city": {
       "src": "buildings/city-3cbbc4be12c8.webp"
+    },
+    "mine": {
+      "src": "buildings/mine-522f3d1c7736.webp"
     }
   }
 };
