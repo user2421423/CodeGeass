@@ -144,7 +144,7 @@ const GEOGRAPHY = (() => {
   // flood is visual-only; no unit path, tile, or ownership value is changed.
   let ownershipCache = null;
   function coastlineOwners(g) {
-    const original = g.tiles.map(t => t.owner || (t.terrain === 'sea' ? null : 'neutral'));
+    const original = g.tiles.map(t => t.owner || null);
     if (ownershipCache && ownershipCache.tiles === g.tiles &&
         original.every((o, i) => o === ownershipCache.original[i])) return ownershipCache.inferred;
     const inferred = original.slice();
@@ -158,12 +158,14 @@ const GEOGRAPHY = (() => {
     }
     for (let head = 0; head < queue.length; head++) {
       const i = queue[head];
-      // Continue through every sea tile. Distant real-world islands may lie
-      // beyond four hexes from a playable land centre; keeping that cutoff
-      // left conspicuous uncoloured shorelines and islands.
+      // Fill unclaimed map-colour gaps from the nearest ACTUALLY owned hex.
+      // A null-owner land hex isn't a true neutral faction territory, so it
+      // must not be seeded as neutral and create pale holes on the map.
+      // Traverse unclaimed land as well as sea; preserve explicit neutral
+      // ownership and do not modify any gameplay tile.
       for (const n of E.adjacent(g, g.tiles[i])) {
         const ni = n.r * g.cols + n.c;
-        if (n.terrain !== 'sea' || dist[ni] <= dist[i] + 1) continue;
+        if (original[ni] || dist[ni] <= dist[i] + 1) continue;
         dist[ni] = dist[i] + 1;
         inferred[ni] = inferred[i];
         queue.push(ni);
