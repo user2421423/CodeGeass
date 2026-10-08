@@ -133,8 +133,33 @@ const GEOGRAPHY = (() => {
     ctx.restore();
   }
 
-  function coast(ctx, polygons, left, right, top, bottom, scale) {
-    if (!paths(ctx, polygons, left, right, top, bottom)) return;
+  // GIS coastline patches are clipped to rectangular source windows. Drawing
+  // every ring edge as coast would turn those artificial crop borders into
+  // ruler-straight shorelines across open water (e.g. the Mediterranean).
+  function coast(ctx, polygons, left, right, top, bottom, scale, crop = null) {
+    ctx.beginPath();
+    const alongCrop = (a, b) => {
+      if (!crop) return false;
+      const eps = 0.4;
+      return (
+        (Math.abs(a[0] - crop[0]) < eps && Math.abs(b[0] - crop[0]) < eps) ||
+        (Math.abs(a[0] - crop[2]) < eps && Math.abs(b[0] - crop[2]) < eps) ||
+        (Math.abs(a[1] - crop[1]) < eps && Math.abs(b[1] - crop[1]) < eps) ||
+        (Math.abs(a[1] - crop[3]) < eps && Math.abs(b[1] - crop[3]) < eps)
+      );
+    };
+    let segments = 0;
+    for (const poly of polygons) {
+      if (!intersects(poly.bounds, left, right, top, bottom)) continue;
+      for (let i = 0; i < poly.points.length; i++) {
+        const a = poly.points[i], b = poly.points[(i + 1) % poly.points.length];
+        if (alongCrop(a, b)) continue;
+        ctx.moveTo(a[0], a[1]);
+        ctx.lineTo(b[0], b[1]);
+        segments++;
+      }
+    }
+    if (!segments) return;
     ctx.strokeStyle = 'rgba(226,233,216,0.66)';
     ctx.lineWidth = 1 / Math.max(scale, 0.5);
     ctx.lineJoin = 'round';
@@ -186,7 +211,7 @@ const GEOGRAPHY = (() => {
     if (paths(pctx, patch.outlines, x0, x1, y0, y1)) pctx.fill();
     paintBiomes(pctx, patch.outlines, x0, x1, y0, y1);
     paintOwnership(pctx, g, patch.outlines, visibleTiles, x0, x1, y0, y1);
-    coast(pctx, patch.outlines, x0, x1, y0, y1, scale);
+    coast(pctx, patch.outlines, x0, x1, y0, y1, scale, patch.extent);
     // Multiplying X and Y masks ensures corners fade as well. Most southern
     // patch boundaries end at open water, so do not fade out island details
     // such as Crete at the Mediterranean data boundary.
@@ -200,7 +225,7 @@ const GEOGRAPHY = (() => {
     pctx.fillStyle = horizontal;
     pctx.fillRect(x0, y0, width, height);
     const vertical = pctx.createLinearGradient(0, y0, 0, y1);
-    const southFade = patch.id === 'med_europe' ? 0 : fade;
+    const southFade = patch.id === 'med_europe' ? Math.min(fade, R * 0.28) : fade;
     vertical.addColorStop(0, 'rgba(255,255,255,0)');
     vertical.addColorStop(fade / height, '#fff');
     if (southFade) vertical.addColorStop(1 - southFade / height, '#fff');
