@@ -70,6 +70,22 @@ const GEOGRAPHY = (() => {
     ctx.stroke();
   }
 
+  function paintBiomes(ctx, landShapes, left, right, top, bottom) {
+    ctx.save();
+    if (paths(ctx, landShapes, left, right, top, bottom)) {
+      ctx.clip();
+      for (const region of LAYERS.biomes) {
+        if (!intersects(region.bounds, left, right, top, bottom)) continue;
+        ctx.fillStyle = biomeColor[region.kind] || '#82938033';
+        ctx.globalAlpha = region.intensity;
+        ctx.beginPath();
+        polygon(ctx, region.points);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
   // Unconnected campaign battlefields have no global longitude/latitude basis.
   // They keep the original gameplay-based rendering until bespoke geographic
   // artwork is defined for those missions.
@@ -103,21 +119,9 @@ const GEOGRAPHY = (() => {
 
       ctx.fillStyle = land;
       if (paths(ctx, LAYERS.land, a, b, top, bottom)) ctx.fill();
-      // Biomes are geographical areas, not highlighted tactical hexagons.
-      ctx.save();
-      if (paths(ctx, LAYERS.land, a, b, top, bottom)) {
-        ctx.clip();
-        for (const region of LAYERS.biomes) {
-          if (!intersects(region.bounds, a, b, top, bottom)) continue;
-          ctx.fillStyle = biomeColor[region.kind] || '#82938033';
-          ctx.globalAlpha = region.intensity;
-          ctx.beginPath();
-          polygon(ctx, region.points);
-          ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-      }
-      ctx.restore();
+      // Geographical biome washes are clipped to vector land, not individual
+      // hexes. They are also repainted over high-detail coastal repair shapes.
+      paintBiomes(ctx, LAYERS.land, a, b, top, bottom);
       coast(ctx, LAYERS.land, a, b, top, bottom, scale);
 
       // Natural Earth coastal repairs are drawn as true vectors. Remove the
@@ -134,6 +138,7 @@ const GEOGRAPHY = (() => {
         ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
         ctx.fillStyle = land;
         if (paths(ctx, patch.outlines, a, b, top, bottom)) ctx.fill();
+        paintBiomes(ctx, patch.outlines, a, b, top, bottom);
         coast(ctx, patch.outlines, a, b, top, bottom, scale);
         ctx.restore();
       }
