@@ -155,6 +155,7 @@ function activateHex(p) {
       if (result.ok) {
         SFX.play('move', u.side);
         undoStack.push({ snapshot, unitId: u.id });
+        if (undoStack.length > 5) undoStack.shift(); // each snapshot is the whole game (~0.75 MB)
         effects.push({
           kind: 'move',
           unitId: u.id,

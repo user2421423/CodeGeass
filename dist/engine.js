@@ -656,10 +656,6 @@
     }
     return g;
   }
-  // Profiles are edited directly; the game never writes officer records back.
-  function exportProfile(g, profile = {}) {
-    return { ...profile };
-  }
   // Load HQ research into the player's side: frame bonuses keep each unit's damage, city defenses follow.
   function applyTech(g, research = {}) {
     g.tech ||= {};
@@ -945,14 +941,12 @@
         (1 + (u.hpTech || 0)),
     );
   }
-  // Version 2 replaced the frame lineup; version 3 added Sakuradite. Version 2 saves are upgraded (see upgradeSave);
-  // version 1 saves reference retired frames and are not carried forward.
+  // Version 3 added Sakuradite. Older saves were all made on the old 100 × 42 map and are rejected.
   const RULES_VERSION = 3;
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
-    if (g.rulesVersion === 2 && Array.isArray(g.stations) && Array.isArray(g.tiles)) upgradeSave(g);
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
     g.eliteDeployed ||= {};
@@ -1555,7 +1549,8 @@
     }
     let retaliation = 0;
     if (d && d.hp > 0 && pr.counterAllowed && !evadeCounter) {
-      retaliation = Math.round(pr.counter * (0.94 + random(g) * 0.12));
+      // Worked out after the hit, so a damaged defender returns weaker fire (attack scales with remaining frame).
+      retaliation = Math.round(power(g, d, a, stationAt(g, a), true) * (0.94 + random(g) * 0.12));
       a.hp = Math.max(0, a.hp - retaliation);
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
@@ -2264,7 +2259,7 @@
     allocation: { sites: ['Mount Fuji', 'Hokkaido', 'Kyushu'], share: 0.2 }, // each other power's share of Japan
     national: 5, // every surviving major power's own supply a turn, tied to no deposit (Conquest only)
   };
-  // Stockpiles and deposits for a new game (or a save from before Sakuradite).
+  // Stockpiles and deposits for a new game.
   function setupSakuradite(g) {
     for (const [side, e] of Object.entries(g.economy)) e.sakuradite ??= MAJORS.includes(side) ? SAKURADITE.start : 0;
     if (g.sites) return g;
@@ -2379,18 +2374,6 @@
     log(g, `${d.name}: Sakuradite refinery upgraded to level ${d.refinery}.`, d.owner);
     return { ok: true };
   }
-  // Version 1 saves: refineries away from a deposit become the credits they exported; deposits are placed.
-  function upgradeSave(g) {
-    const old = new Map(g.stations.map(s => [s.id, s.refinery || 0]));
-    g.stations.forEach(s => (s.refinery = 0));
-    setupSakuradite(g);
-    for (const s of g.stations)
-      if (depositOf(g, s)) s.refinery = Math.max(s.refinery, old.get(s.id));
-      else s.income += 15 * old.get(s.id);
-    g.rulesVersion = 3;
-    return g;
-  }
-
   // ======== F.L.E.I.J.A.: the Sakuradite superweapon ========
   // The high-resolution world uses roughly 200 km hexes. A warhead reaches two rings: the first is catastrophic,
   // while the second is a weaker blast fringe. Campaign maps can still pass an explicit radius to blastArea().
@@ -3616,7 +3599,6 @@
     equipMedal,
     unequipMedal,
     applyProfile,
-    exportProfile,
     shortfall,
     repairReason,
     reinforceReason,

@@ -85,9 +85,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Every player action has a `…Reason(g, …)` function returning `null` or a human-readable reason; the UI shows it on
   disabled buttons. Shortfalls read "Need N more credits / command tokens" and render as red costs instead.
 - Saves are gated by `RULES_VERSION` (currently 3) in `migrateSave`; bump it when save shape or rules change.
-  Version 2 replaced the frame lineup and version 3 added Sakuradite. Version 2 saves are upgraded by `upgradeSave`
-  (deposits placed, Sakuradite stockpiles added, refineries away from a deposit converted into the 15 credits a level
-  they used to export); version 1 saves reference retired frames and are rejected.
+  Version 3 added Sakuradite; every older save was made on the old 100 × 42 map and is rejected.
 - `createGame(player, difficulty, 'conquest', seed)`. Cities and armies are placed by longitude/latitude and snap to
   the nearest free land hex, so they can be edited without touching coordinates. The high-resolution conquest map rejects older 100 × 42 saves rather than misplacing them.
 - Commander abilities are data (`fx` on each commander: `dmg`, `dmgBranch`, `crit`, `move`, `taken`, `counter`,
@@ -263,7 +261,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   research for every power; it becomes buildable `research` (3) turns later, announced by `strategicTurn`. A level-3 lab builds a charge for 1,200 credits / 300 industry / 250 research /
   60 Sakuradite over 3 turns; a power holds at most `ELIMINATOR.max` (3) charges, ready or under construction, one
   per city (`sideEliminators`). The completed charge is tied to its city and automatically intercepts one enemy
-  warhead targeted within range 2; the attacking warhead and defensive charge are both consumed and no blast occurs.
+  warhead targeted within range 3; the attacking warhead and defensive charge are both consumed and no blast occurs.
   Capture, surrender or F.L.E.I.J.A. ruin destroys the project/charge. `eliminatorReason`, `startEliminator`,
   `eliminatorDefender` and `dropEliminator` implement it.
 - AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ground zero adds

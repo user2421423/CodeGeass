@@ -96,7 +96,6 @@ function saveProfile(p) {
 function save() {
   if (game.phase !== game.player) return;
   try {
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(E.exportProfile(game, loadProfile())));
     localStorage.setItem(saveKey(), JSON.stringify(game));
     saveOk = true;
   } catch (e) {

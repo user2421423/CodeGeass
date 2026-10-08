@@ -56,7 +56,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   level-3 lab can build a **F.L.E.I.J.A. Eliminator** charge for 1,200 credits, 300 industry, 250 research and
   60 Sakuradite over 3 turns; a power may hold up to three at once (ready or under construction), one per city. The
   AI builds them before anything else as soon as it can, and starts a new warhead as soon as it has fired the last.
-  Each charge is tied to its city, protects targets within 2 hexes and automatically neutralizes one
+  Each charge is tied to its city, protects targets within 3 hexes and automatically neutralizes one
   incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
