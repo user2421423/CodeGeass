@@ -682,8 +682,8 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   // At distant zoom levels the grid vanishes altogether; selection and
   // movement/attack ranges continue to use their original vivid hex outlines.
   if (detail) {
-    const strength = Math.min(0.14, Math.max(0.035, (R * scale - 12) / 260));
-    ctx.lineWidth = 0.58 / scale;
+    const strength = Math.min(0.065, Math.max(0.018, (R * scale - 12) / 520));
+    ctx.lineWidth = 0.48 / scale;
     for (const t of game.tiles) {
       const c = hexCenter(t);
       if (!visible(c)) continue;
