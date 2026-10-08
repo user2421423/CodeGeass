@@ -2,7 +2,7 @@ name: Apply and verify map rendering cache
 on:
   push:
     branches: [feature/map-rendering-overhaul]
-    paths: [tools/apply-map-perf-patch.py]
+    paths: [tools/map-performance.patch]
 permissions:
   contents: write
 jobs:
@@ -13,10 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install patch codec
-        run: python -m pip install brotli
       - name: Apply reviewed rendering patch
-        run: python tools/apply-map-perf-patch.py
+        run: patch -p1 --fuzz=0 < tools/map-performance.patch
       - name: Syntax, gameplay and map checks
         run: |
           node --check dist/ui/geography.js
