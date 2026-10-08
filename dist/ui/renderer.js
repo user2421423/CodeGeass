@@ -682,15 +682,20 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   // At distant zoom levels the grid vanishes altogether; selection and
   // movement/attack ranges continue to use their original vivid hex outlines.
   if (detail) {
-    const strength = Math.min(0.065, Math.max(0.018, (R * scale - 12) / 520));
-    ctx.lineWidth = 0.48 / scale;
+    // Tactical grid gains contrast as the camera zooms closer to individual hexes.
+    const hexPixels = R * scale;
+    const strength = hexPixels < 18 ? 0.025 :
+      hexPixels < 26 ? 0.045 + (hexPixels - 18) * 0.006 :
+      hexPixels < 38 ? 0.093 + (hexPixels - 26) * 0.008 :
+      Math.min(0.30, 0.189 + (hexPixels - 38) * 0.005);
+    ctx.lineWidth = (hexPixels >= 32 ? 0.82 : 0.55) / Math.max(scale, 0.25);
     for (const t of game.tiles) {
       const c = hexCenter(t);
       if (!visible(c)) continue;
       ctx.strokeStyle =
         t.terrain === 'sea'
-          ? `rgba(224,240,248,${(strength * 0.42).toFixed(3)})`
-          : `rgba(20,33,34,${strength.toFixed(3)})`;
+          ? `rgba(8,28,42,${(strength * 0.76).toFixed(3)})`
+          : `rgba(18,31,37,${strength.toFixed(3)})`;
       for (const x of copies(c.x)) {
         hexPath(x, c.y, R - 0.65);
         ctx.stroke();
