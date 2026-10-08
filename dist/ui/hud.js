@@ -270,7 +270,11 @@ function updateSelection() {
         : [],
   );
   minimapDirty = true;
-  const showSide = u ? carrierHoldOpen === u.id && E.TYPES[u.type].naval === 'ship' : detailOpen;
+  // Never open a sidebar for an empty selection or a terrain hex.
+  // City/mine details and the carrier cargo picker are the only allowed drawers.
+  const showSide = u
+    ? carrierHoldOpen === u.id && E.TYPES[u.type].naval === 'ship'
+    : Boolean(detailOpen && (st || selectedSite()));
   $('side').innerHTML = showSide
     ? '<button class="drawer-close small" data-action="details" aria-label="Close information panel">×</button>' + panel()
     : '';
@@ -356,38 +360,8 @@ function panel() {
       .join(
         '',
       )}</div>${ours ? `${cityAutomationPanel(s)}<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', shipyardReason(s), 'Build a Knightmare unit', 'primary')}</div><p class="description">One unit per city per turn. New units act next turn. Garrisons repair 8% of their frame here each turn.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
-  } else {
-    const tileChoice = selection?.kind === 'tile' ? E.tile(game, selection.c, selection.r) : null;
-    if (tileChoice) {
-      const info = E.TERRAIN[tileChoice.terrain],
-        owner = tileChoice.owner ? F(tileChoice.owner) : null;
-      main = `<section><div class="side-title"><span class="label">Terrain · Hex ${tileChoice.c}, ${tileChoice.r}</span>${owner ? `<span class="chip" style="color:${owner.color}">${owner.short}</span>` : ''}</div><h2 class="unit-name">${esc(info.name)}</h2><p class="description">${esc(info.desc)}</p>${ruinText(tileChoice, 'info-strip danger-strip')}<div class="stat-grid"><div><span class="label">Movement cost</span><b>${info.blocked ? 'Impassable' : info.cost ?? (tileChoice.terrain === 'sea' ? 'Transport' : 1)}</b></div><div><span class="label">Control</span><b>${owner ? esc(owner.short) : 'Unclaimed'}</b></div></div>${tileChoice.terrain !== 'sea' && tileChoice.terrain !== 'peak' ? '<div class="info-strip">Float units ignore terrain movement costs.</div>' : ''}</section>`;
-    } else {
-      main = `<section><div class="empty-panel"><span class="eyebrow">Command the world</span><h3>Position.<br>Concentrate.<br>Break through.</h3><p class="description">Select a Knightmare to see its movement and attack range. Select a city to build new units.</p><div class="info-strip">Green hexes move, red hexes attack with one click. Moving onto a sea hex embarks a transport; sailing to a coast lands it. An Armor kill can refresh both actions.</div><button data-action="next">Select a ready unit</button></div></section>`;
-    }
   }
-  const selectedTile =
-    selection?.kind === 'tile'
-      ? E.tile(game, selection.c, selection.r)
-      : u
-        ? E.tile(game, u.c, u.r)
-        : s
-          ? E.tile(game, s.c, s.r)
-          : null;
-  // A selected unit, city or mine gets the whole panel; hex details, the directory and dispatches show otherwise.
-  if (u || s || m) return main;
-  return (
-    main +
-    `<section class="section-divider"><span class="label">Theater intelligence</span>${selectedTile ? '' : '<p class="description">Oceans separate the powers: embark Knightmares as transports to cross them.</p>'}<label class="label" for="station-select">City directory</label><select class="select unit-select" id="station-select"><option value="">Inspect city…</option>${[
-      ...game.stations,
-    ]
-      .sort((a, b) => (a.owner === game.player) - (b.owner === game.player) || a.name.localeCompare(b.name))
-      .map(s => `<option value="${s.id}">${s.name} · ${F(s.owner).short}</option>`)
-      .join('')}</select></section><section class="section-divider dispatches"><span class="label">Dispatches</span>${game.log
-      .slice(0, 5)
-      .map(l => `<p class="dispatch" style="border-color:${F(l.side).color}"><b>T${l.turn}</b> ${esc(l.text)}</p>`)
-      .join('')}</section>`
-  );
+  return main;
 }
 // A Carrier-Battleship's hold: each formation aboard launches onto an empty land hex next to the ship.
 function holdHTML(u) {
@@ -650,5 +624,5 @@ function dockHTML() {
       owner = tileChoice.owner ? F(tileChoice.owner) : null;
     return `<div class="dock-idle terrain-dock"><span class="label">Terrain · Hex ${tileChoice.c}, ${tileChoice.r}</span><strong>${esc(info.name)}</strong><p>${esc(info.desc)}${owner ? ` · ${esc(owner.short)} territory.` : ''}</p>${ruinText(tileChoice)}</div>`;
   }
-  return `<div class="dock-idle"><span class="label">Army command</span><strong>Select a unit or city</strong><p>Click a Knightmare to move and attack. Click a city to build.</p></div><div class="dock-actions"><button class="small" data-action="next">Select a ready unit</button><button class="small ghost" data-action="details">World information</button></div>`;
+  return `<div class="dock-idle"><span class="label">Army command</span><strong>Select a unit or city</strong><p>Click a Knightmare to move and attack. Click a city to build.</p></div><div class="dock-actions"><button class="small" data-action="next">Select a ready unit</button></div>`;
 }

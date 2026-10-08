@@ -104,6 +104,8 @@ const modal = () => node('modal-root').innerHTML;
 
   // Unit actions belong to the bottom dock; the only unit drawer is carrier cargo.
   run('newGame()');
+  assert(!node('side').innerHTML, 'new conquest starts without the introductory sidebar');
+  assert(!node('selection-dock').innerHTML.includes('World information'), 'no World information opener in the bottom dock');
   const carrierId = run("game.units.find(u => u.side === game.player && E.TYPES[u.type].naval === 'ship')?.id");
   assert(carrierId, 'Conquest starts with a friendly carrier');
   run(`game.units.find(u => u.id === ${carrierId}).cargo = []`);
@@ -115,6 +117,17 @@ const modal = () => node('modal-root').innerHTML;
   const clickAction = data => events.click({
     target: { closest: selector => selector === 'button' ? { dataset: data, disabled: false, getAttribute: () => null } : null },
   });
+  // Neither empty selection nor a terrain hex can revive the deleted intro panel.
+  run('selection = null; detailOpen = true; updateSelection()');
+  assert(!node('side').innerHTML, 'empty selection does not show a sidebar');
+  assert.equal(run('panel()'), '', 'no introductory panel content remains');
+  clickAction({ action: 'details' });
+  assert.equal(run('detailOpen'), false, 'details cannot reopen intro on empty selection');
+  run("selection = { kind: 'tile', c: 0, r: 0 }; detailOpen = true; updateSelection()");
+  assert(!node('side').innerHTML, 'terrain selections do not show a duplicate sidebar');
+  clickAction({ action: 'details' });
+  assert(!node('side').innerHTML, 'details cannot open a terrain sidebar');
+  run(`selectUnit(${carrierId})`);
   clickAction({ action: 'carrier-deploy' });
   assert(node('side').innerHTML.includes('Deploy Knightmares'), 'deployment appears in sidebar, not centered modal');
   assert(node('side').innerHTML.includes('Empty. Move a Knightmare'), 'empty carrier explains boarding');
@@ -138,6 +151,26 @@ const modal = () => node('modal-root').innerHTML;
   clickAction({ deploy: '0' });
   assert.equal(run('deploying?.index'), 0, 'cargo picker starts landing-hex mode');
   assert(!node('side').innerHTML, 'cargo drawer closes when targeting the map');
+  // City and mine management remain accessible through explicit bottom-bar details.
+  const cityId = run("game.stations.find(s => s.owner === game.player)?.id");
+  assert(cityId != null, 'conquest has a friendly city');
+  run(`selectStation(${cityId})`);
+  assert(node('selection-dock').innerHTML.includes('City details'), 'city still offers its information panel');
+  assert(!node('side').innerHTML, 'city information remains closed until requested');
+  clickAction({ action: 'details' });
+  assert(node('side').innerHTML.includes('City defenses'), 'city details and management still open');
+  clickAction({ action: 'details' });
+  assert(!node('side').innerHTML, 'city details close cleanly');
+  const mineId = run("game.sites?.[0]?.id");
+  if (mineId != null) {
+    run(`selectSite(${mineId})`);
+    assert(node('selection-dock').innerHTML.includes('Mine details'), 'mine information button survives');
+    clickAction({ action: 'details' });
+    assert(node('side').innerHTML.includes('Sakuradite mine'), 'mine information still opens');
+    clickAction({ action: 'details' });
+    assert(!node('side').innerHTML, 'mine information closes cleanly');
+  }
+
 
   const infantryId = run("game.units.find(u => u.side === game.player && !E.TYPES[u.type].naval && !u.cmd)?.id");
   assert(infantryId, 'a normal uncommanded unit exists');

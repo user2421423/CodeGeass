@@ -13,7 +13,6 @@ document.addEventListener('change', e => {
     if (missionBriefingId) briefingDialog(missionBriefingId);
     $('mission-difficulty-select')?.focus();
   }
-  if (id === 'station-select' && e.target.value) selectStation(+e.target.value, true);
   if (id === 'stack-select') {
     shop.stack = +e.target.value;
     openShop(shop.station);
@@ -270,7 +269,11 @@ document.addEventListener('click', e => {
       if (selectedUnit()) {
         carrierHoldOpen = null;
         detailOpen = false;
-      } else detailOpen = !detailOpen;
+      } else if (selectedStation() || selectedSite()) {
+        detailOpen = !detailOpen;
+      } else {
+        detailOpen = false;
+      }
       updateSelection();
       break;
     case 'start-conquest':
