@@ -127,7 +127,7 @@ const GEOGRAPHY = (() => {
         const wc = rowWeight1 * (1 - fx1);
         const wd = rowWeight1 * fx1;
         const land = a.land * wa + b0.land * wb + c.land * wc + d.land * wd;
-        const alpha = smooth(clamp((land - 0.36) / 0.28, 0, 1));
+        const alpha = smooth(clamp((land - 0.43) / 0.14, 0, 1));
         const inverse = land ? 1 / land : 0;
         const red = (a.red * wa + b0.red * wb + c.red * wc + d.red * wd) * inverse;
         const green = (a.green * wa + b0.green * wb + c.green * wc + d.green * wd) * inverse;
