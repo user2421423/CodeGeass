@@ -178,7 +178,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   (+8 research), and a Sakuradite refinery only where there is a deposit. One unit per city per turn; new units act
   next turn. `recruitOptions` deploys a new unit only on the city hex (a naval unit only on the port's sea hex), so a
   unit standing there blocks production until it moves off (Elite Forces too). AI city guards stand beside their city
-  until an enemy comes within 2 hexes of it, so they leave the factory free. In the UI, clicking a selected unit that
+  until an enemy comes within 2 hexes of it, so they leave the factory free. Like a player, `aiProduction` step 1b
+  first gives every ready unit standing on one of its cities its normal orders (`aiOrder`), so the city can build the
+  same turn; the UI animates those moves from `g.vacated`. In the UI, clicking a selected unit that
   stands on a city selects the city (and back), and the dock shows a City button for it.
 - **Production Command (player Conquest only):** optional automation stored in `g.automation`. Each owned city has
   exactly one local choice: an exact normal unit type to auto-produce every turn, or Off for manual production. There

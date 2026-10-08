@@ -624,6 +624,15 @@
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
     }
     if (!builds) return;
+    // 1b. Clear the factories, as a player would: a ready unit standing on one of its cities carries out its orders
+    // first (a unit on the city hex blocks building there). Guards stay while an enemy is within 2 hexes. The UI
+    // plays these moves from g.vacated ({ id, orders }).
+    g.vacated = [];
+    for (const s of bases) {
+      const u = unitAt(g, s);
+      if (!u || u.side !== side || u.moved || !isReady(g, u) || foes.some(f => dist(g, f, s) <= 2)) continue;
+      g.vacated.push({ id: u.id, orders: aiOrder(g, u.id) });
+    }
     // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
     const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
     // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.

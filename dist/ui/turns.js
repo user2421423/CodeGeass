@@ -21,6 +21,13 @@ async function endTurn(force = false) {
     E.beginTurn(game, side, game.turn > 1);
     turnStartPopups(before, side);
     E.aiProduction(game);
+    // Units the rival moved off its cities so they could build.
+    for (const { id, orders } of game.vacated || [])
+      for (const o of orders) {
+        if (o.annexed) annexNotice(o.annexed);
+        if ((o.kind === 'move' || o.kind === 'deploy') && (onScreen(o.to) || onScreen(o.from)))
+          effects.push({ kind: 'move', unitId: o.kind === 'deploy' ? o.id : id, from: o.from, to: o.to, color: F(side).color, life: 0.5, max: 0.5 });
+      }
     (game.strikes || []).filter(s => onScreen(s.to)).forEach((s, i) => strikeEffects(s, i * 0.5));
     render();
     if (game.strikes?.some(s => onScreen(s.to)) && !skipAI) await pause(900);

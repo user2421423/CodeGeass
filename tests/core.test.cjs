@@ -122,6 +122,16 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
+test('A rival moves a unit off its city before building there, as a player would', () => {
+  const g = blank();
+  g.phase = 'eu';
+  const paris = g.stations.find(s => s.owner === 'eu');
+  const u = E.newUnit(g, E.typeFor('eu', 'light'), 'eu', paris.c, paris.r);
+  E.aiProduction(g);
+  assert(!(u.c === paris.c && u.r === paris.r), 'the unit stepped off the city');
+  assert.equal(paris.producedTurn, g.turn, 'and the city built this turn');
+});
+
 test('Every campaign mission builds with valid references', () => {
   const ids = Object.values(C.CAMPAIGNS).flatMap(c => c.missions.map(m => m.id));
   assert(ids.length > 0);
