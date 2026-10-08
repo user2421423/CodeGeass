@@ -948,7 +948,7 @@ function draw(time, dt) {
   // Each harbor is anchored to its water tile, but its causeway points toward its own
   // coastal city. World-wrap correction keeps the linkage short across the date line.
   const portVisuals = game.stations.filter(s => s.portLevel && s.portAt).map(s => {
-    const sea = hexCenter(s.portAt),
+    const sea = visualPortCenter(s),
       city = visualCityCenter(s),
       shoreX = wrapNear(city.x, sea.x),
       dx = shoreX - sea.x,
