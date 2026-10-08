@@ -144,6 +144,16 @@ const modal = () => node('modal-root').innerHTML;
     assert(city.hit, `${city.name}: selecting the displaced visual city reaches its station`);
   }
 
+  const harbor = run(`(() => {
+    const city = game.stations.find(s => s.name === 'Barcelona');
+    const actual = hexCenter(city.portAt);
+    const visual = visualPortCenter(city);
+    return {sea: E.isSea(E.tile(game, city.portAt.c, city.portAt.r)),
+      delta: Math.hypot(visual.x - actual.x, visual.y - actual.y)};
+  })()`);
+  assert(harbor.sea, 'Barcelona port remains a navigable gameplay sea hex');
+  assert(harbor.delta > 0 && harbor.delta < 43 * 0.5, 'Barcelona harbour artwork is only gently shifted to visual sea');
+
   for (const side of ['britannia', 'eu', 'cf']) {
     run(`setup={side:'${side}',difficulty:'normal'};newGame();draw(0,.016);drawMinimap();`);
     assert.equal(run('game.player'), side);
