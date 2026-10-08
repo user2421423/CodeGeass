@@ -276,8 +276,9 @@
     }
     for (const [k, rec] of Object.entries(profile.roster))
       if (COMMANDERS[k] && rec?.commanderVersion !== COMMANDER_VERSION) {
-        // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star.
-        if (k === 'cornelia') for (let star = 5; star <= Math.min(6, rec?.ratings?.mobility || 4); star++)
+        // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star. Only records from before
+        // versioning (no commanderVersion) paid for them; later version bumps must not refund again.
+        if (k === 'cornelia' && !rec?.commanderVersion) for (let star = 5; star <= Math.min(6, rec?.ratings?.mobility || 4); star++)
           profile.tokens = (profile.tokens || 0) + STAR_COST[star];
         profile.roster[k] = cleanOfficer(k, rec);
       }
