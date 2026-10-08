@@ -856,8 +856,10 @@
     "by": "owner",
     "files": {
       "port": {
-        "original_sha256": "9fbc6f5eed6bfcef4f9ae79af05cec877b31a2abb5c54fc4418b84a0b17861b3",
-        "processing": "trimmed transparent margin, resized to 512 px, WebP q88"
+        "original_sha256": "0e277488662dc568d8d795a9c41c3846c96fce0de08f1635f00772ca8196cb89",
+        "processed_sha256": "1200e80ad638f28c135102433e6f53d35e9af7a20bd253deff05e4f6bce00cd6",
+        "source": "Code Geass-inspired port artwork generated in this conversation on 2026-10-08",
+        "processing": "cropped transparent margins, resized to 128 × 128 for the map, WebP q65; old original port image retained under its old filename"
       },
       "city": {
         "original_sha256": "34ff4450d7001788803111b21190cb38cb7f3ae6cc48184782d94ce29d46ee69",
