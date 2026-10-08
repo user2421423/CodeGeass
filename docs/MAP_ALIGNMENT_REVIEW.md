@@ -12,20 +12,20 @@ used to draw the map*. Thresholds: recommend land only when visual land covers
 at least 80% of a currently sea hex; recommend sea only when land covers 18%
 or less of a currently land hex. Mixed coastal hexes are not conversion targets.
 The previous centre-point comparison marked 484, but that included legitimate
-partial coast hexes. **74** met the initial area criteria, of which **65 remain** after the Newfoundland correction and eight further coastal conversions:
+partial coast hexes. **74** met the initial area criteria, of which **59 remain** after the Newfoundland correction and fourteen further coastal conversions:
 
 | Region | Conflicts |
 |---|---:|
-| Arctic / high north | 43 |
-| Americas (excluding Arctic) | 5 |
+| Arctic / high north | 40 |
+| Americas (excluding Arctic) | 3 |
 | East Asia / Japan / Korea | 5 |
 | Africa | 2 |
 | Middle East / Arabian Peninsula | 3 |
 | Southeast Asia / Indonesia | 2 |
-| Australia / Pacific | 3 |
+| Australia / Pacific | 2 |
 | Other | 2 |
 | Siberia / Far East | 0 |
-| **Total remaining** | **65** |
+| **Total remaining** | **59** |
 
 City art alignment is another layer: **23 city gameplay centres** fall on
 visually painted water, including Singapore, Manila, Shanghai and Taipei.
@@ -74,15 +74,35 @@ adjustment without changing unit movement.
   intentionally navigable gameplay sea hexes. The visual atlas now draws
   **thin cartographically exaggerated water channels** along those passages;
   no gameplay movement logic changes.
-- The GSHHG centre-point audit now documents **475 remaining differences**,
-  of which **410 are mixed-coastline hexes** and **65 are strong conflicts**.
-  The 65 break down into 25 land gameplay hexes over visual water and
+- The GSHHG centre-point audit now documents **469 remaining differences**,
+  of which **410 are mixed-coastline hexes** and **59 are strong conflicts**.
+  The 59 break down into 19 land gameplay hexes over visual water and
   40 sea gameplay hexes over visual land. None is automatically eligible
   under city, port, route, polar and ownership protections.
-- Results: `docs/map-alignment-review.json` (65 strong conflicts) and
-  `docs/map-coastline-centre-review.json` (475 centre differences);
+- Results: `docs/map-alignment-review.json` (59 strong conflicts) and
+  `docs/map-coastline-centre-review.json` (469 centre differences);
   regenerate using `tools/map_alignment_audit.py` and
   `tools/audit_coastline_centres.py` respectively.
+
+## Stage 7 — Six additional high-confidence coastal water fixes
+
+The third small correction batch changes six more occupied-by-no-unit land
+hexes to navigable sea: (0,6) at the date line, (127,0) off northern Siberia,
+(158,1) off the Laptev coast, (55,8) and (56,8) on the Labrador coastline,
+and (156,63) at the Great Australian Bight. These are all over 82% mapped water.
+No starting units, cities, ports or explicitly protected straits use the tiles.
+
+The 180×76 gameplay map, source build overrides, locked map and legacy-save
+migration have been updated together. On a land/water flood-fill of the resulting
+map, **the sea component count remains 2 and the land component count remains
+31**. Previously occupied save-game hexes stay land until vacated.
+
+After this batch, there are **59 strong land/sea conflicts** and
+**469 centre-point disagreements**, including **410 mixed coastal hexes** that
+need not be converted. The remaining stronger conflicts include Japanese
+island overrides, Suez and Malacca's navigable sea, and the Aral Sea, Lake
+Victoria and Great Lakes inland-water cases, which cannot be converted
+casually because they create new isolated water components.
 
 ## Stage 6 — Eight safe coastal conversions (committed, pending final CI)
 
@@ -144,7 +164,7 @@ which intentionally has not moved.
 1. **Visual city alignments (23 corrected)** — inspect the committed art
    offsets at ordinary and close zoom for overlap/legibility. Gameplay hex
    centres remain fixed by design; no city data migration is required.
-2. **Owned gameplay land over geographic water (25 strong cases)** —
+2. **Owned gameplay land over geographic water (19 strong cases)** —
    inspect terrain, neighbouring navigation, unit placement and faction
    ownership individually before converting any tile.
 3. **Protected sea over geographic land (40 strong cases)** — improve visual

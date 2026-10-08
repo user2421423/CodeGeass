@@ -944,7 +944,8 @@
   // new-game map. Occupied legacy hexes stay playable until a new conquest;
   // never strand a unit or move a player-built site during migration.
   const COASTAL_SEA_FIXES = [[13, 9], [168, 9], [50, 10], [49, 12],
-    [81, 32], [113, 51], [157, 44], [49, 31]];
+    [81, 32], [113, 51], [157, 44], [49, 31],
+    [0, 6], [127, 0], [158, 1], [55, 8], [56, 8], [156, 63]];
   function migrateCoastalTerrain(g) {
     for (const [c, r] of COASTAL_SEA_FIXES) {
       const t = g.tiles[r * g.cols + c];

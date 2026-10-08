@@ -47,14 +47,14 @@ jobs:
           import json
           j=json.load(open('docs/map-alignment-review.json'))
           assert j['summary']['hexes'] == 13680
-          assert j['summary']['high_confidence_mismatches'] == 65
+          assert j['summary']['high_confidence_mismatches'] == 59
           c=json.load(open('docs/map-coastline-centre-review.json'))
-          assert c['total_centre_conflicts'] == 475
+          assert c['total_centre_conflicts'] == 469
           assert c['by_category']['mixed_coast_hex'] == 410
           assert c['by_category']['sea_hex_on_geographic_land'] == 40
-          assert c['by_category']['land_hex_on_geographic_water'] == 25
+          assert c['by_category']['land_hex_on_geographic_water'] == 19
           assert j['approved_for_gameplay_edit'] is False
-          print('PASS: 65 strong conflicts, 475 centre mismatches after nine reviewed terrain fixes')
+          print('PASS: 59 strong conflicts, 469 centre mismatches after fifteen reviewed terrain fixes')
           PY
           node - <<'JS'
           const assert=require('node:assert/strict');
@@ -63,7 +63,7 @@ jobs:
           assert.notEqual(tile(61,15).terrain,'sea', 'Newfoundland must be land');
           for (const [c,r] of [[106,26],[107,27],[111,35],[140,43],[142,46]])
             assert.equal(tile(c,r).terrain,'sea', 'Protected waterway must remain navigable');
-          for (const [c,r] of [[13,9],[168,9],[50,10],[49,12],[81,32],[113,51],[157,44],[49,31]]) {
+          for (const [c,r] of [[13,9],[168,9],[50,10],[49,12],[81,32],[113,51],[157,44],[49,31],[0,6],[127,0],[158,1],[55,8],[56,8],[156,63]]) {
             assert.equal(tile(c,r).terrain,'sea', 'Reviewed coastal hex must be navigable water');
             assert(!g.stations.some(s=>(s.c===c&&s.r===r)||(s.portAt?.c===c&&s.portAt?.r===r)));
             assert(!g.units.some(u=>u.hp>0&&u.c===c&&u.r===r));

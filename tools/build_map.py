@@ -450,6 +450,13 @@ FIX_LAND = [
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
 ]
 FIX_SEA = [
+    # 2026 area audit batch 3: six non-strategic, unit-free coastal hexes.
+    (0, 6),  # Verified coastal water: Dateline / Bering-facing coastline
+    (127, 0),  # Verified coastal water: Northern Siberian coast
+    (158, 1),  # Verified coastal water: Laptev Sea coastline
+    (55, 8),  # Verified coastal water: Labrador coast west
+    (56, 8),  # Verified coastal water: Labrador coast east
+    (156, 63),  # Verified coastal water: Great Australian Bight
     # Area-weighted visual/gameplay coast alignment: unoccupied, non-strategic
     # coastal spurs; preserve ports, cities and straits.
     (13, 9),  # Area-weighted Gulf of Alaska coastal spur

@@ -258,7 +258,8 @@ test('Leader crit chance and Tide of Iron protect low-HP damage', () => {
 
 test('Reviewed coastal conversions preserve naval routes, cities and existing occupied saves', () => {
   const changes = [[13, 9], [168, 9], [50, 10], [49, 12], [81, 32],
-    [113, 51], [157, 44], [49, 31]];
+    [113, 51], [157, 44], [49, 31], [0, 6], [127, 0],
+    [158, 1], [55, 8], [56, 8], [156, 63]];
   const game = E.createGame('britannia', 'normal', 'conquest', 123);
   for (const [c, r] of changes) {
     assert.equal(E.tile(game, c, r).terrain, 'sea', `(${c},${r}) must be navigable water`);
