@@ -4,7 +4,7 @@
   // The data lives in engine/frames.js, commanders.js, research.js and world.js, loaded before this file by index.html
   // and required here under Node. engine/ai.js loads afterwards and adds the AI.
   if (typeof module !== 'undefined')
-    for (const part of ['frames', 'commanders', 'research', 'world']) require(`./engine/${part}.js`);
+    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world']) require(`./engine/${part}.js`);
   const {
     // frames.js
     FACTIONS,
@@ -28,6 +28,7 @@
     PROMOTE_COST,
     MEDALS,
     RATINGS,
+    GENERIC_SKILLS,
     // research.js
     BRANCHES,
     BRANCH_NAMES,
@@ -38,6 +39,7 @@
     WORLD_ROWS,
     WORLD,
     CITY_DATA,
+    CITY_TWEAKS,
     ARMY_DATA,
     GARRISONS,
     PORT_DATA,
@@ -167,6 +169,22 @@
   }
   // ======== Commanders (WC4 generals): signature abilities are data, read by the combat rules ========
   const NOFX = {};
+  // Calculated once: permanent personal stats and situational skills are displayed separately,
+  // but the existing combat pipeline can read both without applying either twice.
+  const COMMANDER_EFFECTS = Object.fromEntries(Object.entries(COMMANDERS).map(([id, c]) =>
+    [id, { ...(c.stats || {}), ...c.fx }]));
+  const COMMANDER_VERSION = 2;
+  function commanderStatsText(k) {
+    const st = COMMANDERS[k]?.stats || {}, out = [], pct = n => Math.round(n * 100);
+    if (st.dmg) out.push(`Damage +${pct(st.dmg)}%${st.attackOnly ? ' on attacks' : ''}`);
+    for (const [branch, n] of Object.entries(st.dmgBranch || {})) out.push(`${branch} damage +${pct(n)}%${st.attackOnly ? ' on attacks' : ''}`);
+    if (st.crit) out.push(`Critical chance +${pct(st.crit)} percentage points`);
+    if (st.critBonus) out.push(`Critical multiplier +${st.critBonus.toFixed(2)}`);
+    if (st.pen) out.push(`Armor penetration +${pct(st.pen)} percentage points`);
+    if (st.taken) out.push(`Damage taken −${pct(1 - st.taken)}%`);
+    if (st.counter) out.push(`Counter-fire +${pct(st.counter)}%`);
+    return out.join(' · ');
+  }
   // Flat index: 'armor.guns' → node, with its branch and id.
   const TECH_NODES = Object.fromEntries(
     Object.entries(TECH_TREE).flatMap(([b, tree]) =>
@@ -180,7 +198,12 @@
     return BRANCHES[TYPES[type].branch];
   }
   // Research saved before the Naval branch existed moves to it.
-  const LEGACY_RESEARCH = { 'sakura.transport': 'naval.logistics', 'sakura.landing': 'naval.landing' };
+  const LEGACY_RESEARCH = {
+    'sakura.transport': 'naval.logistics',
+    'sakura.landing': 'naval.landing',
+    'infantry.armor': 'infantry.urban',
+    'artillery.armor': 'artillery.counterbattery',
+  };
   function normalizeResearch(research = {}) {
     const out = { ...(research || {}) };
     for (const [old, now] of Object.entries(LEGACY_RESEARCH))
@@ -188,6 +211,8 @@
         out[now] = Math.max(out[now] || 0, out[old]);
         delete out[old];
       }
+    for (const [id, level] of Object.entries(out))
+      if (TECH_NODES[id]) out[id] = Math.max(0, Math.min(level | 0, TECH_NODES[id].max));
     return out;
   }
   function techLevel(g, side, id) {
@@ -199,7 +224,12 @@
   }
   // Branch-wide tech for a unit, e.g. unitTech(g, u, 'guns') reads 'armor.guns' for a Sutherland.
   function unitTech(g, u, k) {
+    if (TYPES[u.type].naval) return 0;
     return techValue(g, u.side, `${branchOf(u.type)}.${k}`);
+  }
+  // Naval units use the Naval HP research instead of inheriting Armor/Artillery frames.
+  function hullTech(g, u) {
+    return unitTech(g, u, 'hull') + (TYPES[u.type].naval ? techValue(g, u.side, 'naval.hulls') : 0);
   }
 
   // ======== Commander development, as in WC4 ========
@@ -208,24 +238,34 @@
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
-    return (u?.cmd && COMMANDERS[u.cmd]?.fx) || NOFX;
+    return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
   function recruitPrice(k) {
     const a = COMMANDERS[k];
     return a?.recruit ?? (a?.stars >= 5 ? 400 : a?.stars >= 4 ? 300 : 200);
   }
+  // Rarity slots: 2★=0, 3★=1, 4★=2, 5★=3; all start empty.
+  function genericSlots(k) { return Math.max(0, Math.min(3, (COMMANDERS[k]?.stars || 2) - 2)); }
   function defaultOfficer(k) {
-    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [] };
+    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], generics: {}, commanderVersion: COMMANDER_VERSION };
   }
   function cleanOfficer(k, rec) {
     const base = defaultOfficer(k);
     if (!rec) return base;
+    const ratings = { ...rec.ratings };
+    // Cornelia's old +2 skill movement becomes two Mobility stars, once per record.
+    if (k === 'cornelia' && !rec.commanderVersion && ratings.mobility != null)
+      ratings.mobility = Math.min(MAX_RATING, ratings.mobility + 2);
     return {
+      commanderVersion: COMMANDER_VERSION,
       rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, RANKS.length - 1),
       ratings: Object.fromEntries(
-        Object.keys(base.ratings).map(b => [b, clamp((rec.ratings?.[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
+        Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
       medals: (rec.medals || []).filter(m => MEDALS[m]),
+      generics: Object.fromEntries(Object.entries(rec.generics || {})
+        .filter(([id, level]) => GENERIC_SKILLS[id] && Number.isInteger(level) && level >= 1 && level <= 5)
+        .slice(0, genericSlots(k))),
     };
   }
   // The persistent roster, created on first use: the two starters per faction.
@@ -234,6 +274,13 @@
       profile.roster = {};
       for (const k of Object.values(STARTERS).flat()) profile.roster[k] = defaultOfficer(k);
     }
+    for (const [k, rec] of Object.entries(profile.roster))
+      if (COMMANDERS[k] && rec?.commanderVersion !== COMMANDER_VERSION) {
+        // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star.
+        if (k === 'cornelia') for (let star = 5; star <= Math.min(6, rec?.ratings?.mobility || 4); star++)
+          profile.tokens = (profile.tokens || 0) + STAR_COST[star];
+        profile.roster[k] = cleanOfficer(k, rec);
+      }
     return profile.roster;
   }
   function owns(profile, k) {
@@ -242,12 +289,37 @@
   function officer(g, k) {
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
-    return (g.officers[k] ||= defaultOfficer(k));
+    const rec = (g.officers[k] ||= defaultOfficer(k));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
     if (!u?.cmd) return null;
     return (u.personal && g.roster?.[u.cmd]) || officer(g, u.cmd);
+  }
+  function genericLevel(g, u, id) {
+    const skill = GENERIC_SKILLS[id];
+    if (!skill || !u?.cmd || (skill.branch && TYPES[u.type].branch !== skill.branch)) return 0;
+    return officerOf(g, u)?.generics?.[id] || 0;
+  }
+  function genericDescription(id, level = 5) {
+    const s = GENERIC_SKILLS[id];
+    if (!s) return '';
+    const amount = Math.round(s.step * Math.max(1, Math.min(5, level)) * 100);
+    const branch = s.branch ? s.branch + ': ' : '';
+    const rule = {
+      crit: '+' + amount + ' percentage points critical chance',
+      damage: '+' + amount + '% attack damage',
+      avoid: amount + '% chance to prevent enemy counterattack',
+      counter: '+' + amount + '% counterattack damage',
+      defense: '-' + amount + '% incoming damage (all three branches)',
+      credits: '+' + amount + '% credits from occupied friendly city',
+      industry: '+' + amount + '% industry from occupied friendly city',
+      science: '+' + amount + '% research from occupied friendly city',
+      hpPenalty: 'Negates ' + amount + '% of attack loss caused by missing HP',
+      regen: 'Restores ' + amount + '% maximum HP at start of each turn',
+    };
+    return branch + (rule[s.kind] || '');
   }
   function wears(g, u, medal) {
     return !!officerOf(g, u)?.medals?.includes(medal);
@@ -283,7 +355,7 @@
   function moraleFloor(g, v) {
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
-      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id)) && dist(g, m, v) <= 1,
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id)) && dist(g, m, v) <= 1,
     )
       ? -1
       : -3;
@@ -348,6 +420,39 @@
     const o = roster(profile)[k];
     o.ratings[branch]++;
     return { ok: true, stars: o.ratings[branch] };
+  }
+  const GENERIC_COSTS = [0, 100, 120, 150, 200, 260];
+  const GENERIC_RESPEC_COST = 40;
+  function genericCost(level = 0) { return GENERIC_COSTS[level + 1] ?? Infinity; }
+  function genericReason(profile, k, id) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    if (!GENERIC_SKILLS[id]) return 'Unknown generic skill';
+    const o = roster(profile)[k], existing = o.generics?.[id] || 0;
+    if (existing >= 5) return 'Already Level 5';
+    if (!existing && Object.keys(o.generics || {}).length >= genericSlots(k)) return 'No empty generic skill slots';
+    return tokenShort(profile, genericCost(existing));
+  }
+  function buyGeneric(profile, k, id) {
+    const why = genericReason(profile, k, id);
+    if (why) return { ok: false, reason: why };
+    const o = roster(profile)[k], level = o.generics?.[id] || 0;
+    profile.tokens -= genericCost(level);
+    (o.generics ||= {})[id] = level + 1;
+    return { ok: true, level: level + 1 };
+  }
+  function removeGenericReason(profile, k, id) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    if (!roster(profile)[k].generics?.[id]) return 'Skill is not equipped';
+    return tokenShort(profile, GENERIC_RESPEC_COST);
+  }
+  function removeGeneric(profile, k, id) {
+    const why = removeGenericReason(profile, k, id);
+    if (why) return { ok: false, reason: why };
+    profile.tokens -= GENERIC_RESPEC_COST;
+    delete roster(profile)[k].generics[id];
+    return { ok: true };
   }
   function equipReason(profile, k, medal) {
     const why = ownedReason(profile, k);
@@ -511,19 +616,14 @@
   }
   function feintReason(g, u) {
     const action = COMMANDERS[u?.cmd]?.action;
-    if (!u || !action) return 'Only Julius, Leila and Xianglin have a command action';
-    return (
-      turnReason(g, u.side) ||
-      (u.morale <= -3 ? 'Unit is confused' : null) ||
-      (u.feintCD > 0 ? `Ready in ${u.feintCD} turn${u.feintCD > 1 ? 's' : ''}` : null) ||
-      (action.kind === 'command'
-        ? !commandTargets(g, u).length
-          ? 'No friendly unit within 2 hexes has acted'
-          : null
-        : !g.units.some(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2)
-          ? 'No enemy within 2 hexes'
-          : null)
-    );
+    if (!u || !action) return 'This commander has no command action';
+    const why = turnReason(g, u.side) || (u.hp <= 0 ? 'Unit destroyed' : atSea(g, u) ? 'Embarked units cannot use command actions' : u.morale <= -3 ? 'Unit is confused' : null)
+      || (u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
+    if (why) return why;
+    if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
+      ? 'No enemy within 2 hexes' : action.kind === 'command' ? 'No friendly unit within 2 hexes has acted'
+      : action.kind === 'withdraw' ? 'No friendly unit within 2 hexes has fired' : 'No enemy within 2 hexes';
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
   function applyProfile(g, profile = {}) {
@@ -567,10 +667,10 @@
         .filter(([id, l]) => TECH_NODES[id] && Number.isInteger(l) && l > 0)
         .map(([id, l]) => [id, Math.min(l, TECH_NODES[id].max)]),
     );
-    for (const u of g.units) {
+    for (const u of allUnits(g)) {
       if (u.side !== g.player) continue;
       const old = maxHP(u);
-      u.hpTech = unitTech(g, u, 'hull');
+      u.hpTech = hullTech(g, u);
       if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
     }
     g.stations.forEach(s => fortify(g, s));
@@ -598,11 +698,11 @@
     (profile.research ||= {})[id] = l + 1;
     return { ok: true, level: l + 1 };
   }
-  // Command tokens are paid only for the first victory at each difficulty (Hard ×1.5, Challenge ×2); the first
-  // victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
+  // Command tokens are paid only for the first victory with each faction at each difficulty (Hard ×1.5,
+  // Challenge ×2); the first victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
   const TOKEN_REWARD = { victory: 250, conquest: 150, first: 150, research: 5, researchCap: 300 };
   function operationKey(g) {
-    return `conquest:${g.era || 'world'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
+    return `conquest:${g.era || 'world'}:${g.player || 'britannia'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
   }
   function missionReward(g, wins = 0, cleared = {}) {
     if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [] };
@@ -803,7 +903,11 @@
   }
   const portAtHex = (g, p) => g.stations.find(s => s.portLevel && s.portAt && s.portAt.c === p.c && s.portAt.r === p.r) || null;
   const hasPort3 = (g, side) => g.stations.some(s => (s.portLevel || 0) >= 3 && s.portOwner === side);
-  const canBoard = ship => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < TYPES[ship.type].capacity;
+  function carrierCapacity(g, ship) {
+    if (!isShip(ship)) return 0;
+    return TYPES[ship.type].capacity + (techLevel(g, ship.side, 'naval.hangars') && hasPort3(g, ship.side) ? 1 : 0);
+  }
+  const canBoard = (g, ship) => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < carrierCapacity(g, ship);
   // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
   const allUnits = g => g.units.flatMap(u => (u.cargo?.length ? [u, ...u.cargo] : [u]));
   const isSea = t => t?.terrain === 'sea';
@@ -825,8 +929,8 @@
   }
   function seaMove(g, u) {
     const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
-    // Advanced Naval Logistics (the second level) works only for a power that holds a level-3 port.
-    return base + Math.min(techValue(g, u.side, 'naval.logistics'), hasPort3(g, u.side) ? 2 : 1);
+    // Naval Logistics raises transports from 5 to 6. Level II changes embark/landing tempo instead of adding speed.
+    return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
   }
 
   // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
@@ -851,6 +955,9 @@
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
     g.eliteDeployed ||= {};
+    for (const records of [g.officers, g.roster])
+      if (records) for (const [k, rec] of Object.entries(records))
+        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
@@ -879,11 +986,17 @@
       chain: 0,
       xp: 0,
       feintCD: 0,
+      held: false,
+      guardReady: false,
+      entrenched: false,
+      movedDistance: 0,
+      skillReposition: 0,
+      withdrawMove: false,
       elite: ELITE_TYPE_TO_ID[type] || null,
       eliteLevel: ELITE_TYPE_TO_ID[type] ? 1 : 0,
       eliteMoveAfterKill: false,
     };
-    u.hpTech = unitTech(g, u, 'hull');
+    u.hpTech = hullTech(g, u);
     u.hp = maxHP(u);
     g.units.push(u);
     return u;
@@ -892,13 +1005,13 @@
     const t = TYPES[u.type],
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
-    let n = t.move + unitTech(g, u, 'drives') + (eliteFx(u).move || 0);
+    let n = t.move + Math.min(1, unitTech(g, u, 'drives')) + (eliteFx(u).move || 0);
     if (g?.mode !== 'campaign') n += CONQUEST_MOVE_BONUS;
     // WC4-style Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
     n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
-    n += techLevel(g, u.side, 'sakura.float') >= 2 ? 1 : 0;
+    if (techLevel(g, u.side, 'sakura.float') >= 2 && (t.branch === 'Armor' || t.float || eliteFx(u).float)) n += 1;
     return n;
   }
   function terrainCost(g, u, t) {
@@ -921,49 +1034,57 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill)) return found;
+    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
       ship = t.naval === 'ship',
       amphibious = t.naval === 'amphibious',
-      // Amphibious frames spend one pool: a sea hex costs 1/seaMove of it, a land hex terrain/landMove, so crossing
-      // the coast never ends their move. Warships only sail. Knightmares that did not just launch may board a carrier.
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
-      budget = ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
-      boards = !t.naval && u.deployedTurn !== g.turn,
-      costs = new Map([[key(start), 0]]),
-      queue = [{ p: start, cost: 0 }];
+      budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
+      boards = !u.skillReposition && !t.naval && u.deployedTurn !== g.turn,
+      roughDiscount = !u.skillReposition && !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.drives') >= 2,
+      advancedLanding = !u.skillReposition && !t.naval && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
+      stateKey = (p, used) => `${key(p)}|${used ? 1 : 0}`,
+      costs = new Map([[stateKey(start, false), 0]]),
+      queue = [{ p: start, cost: 0, roughUsed: false }];
     while (queue.length) {
       let best = 0;
       for (let i = 1; i < queue.length; i++) if (queue[i].cost < queue[best].cost) best = i;
-      const { p, cost } = queue.splice(best, 1)[0];
-      if (cost > costs.get(key(p))) continue;
+      const { p, cost, roughUsed } = queue.splice(best, 1)[0];
+      if (cost > costs.get(stateKey(p, roughUsed))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n))) continue;
+        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (occ && occ.side !== u.side) continue;
-        // Boarding a friendly Carrier-Battleship with room takes the rest of the turn, like embarking.
-        if (occ && boards && canBoard(occ)) {
+        if (occ && boards && canBoard(g, occ)) {
           if (cost < budget) found.set(key(n), budget);
           continue;
         }
         if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
-        // Embarking or landing takes the rest of the turn: allowed whenever any movement is left.
-        const nc = cross
-          ? budget
+        let nextRough = roughUsed,
+          step = isSea(n) ? 1 : terrainCost(g, u, n);
+        if (roughDiscount && !roughUsed && !cross && step > 1) {
+          step--;
+          nextRough = true;
+        }
+        const nc = u.skillReposition
+          ? cost + step
+          : cross
+          ? advancedLanding ? cost + 1 : budget
           : ship
             ? cost + 1
             : amphibious
               ? cost + (isSea(n) ? landMove : terrainCost(g, u, n) * seaMv)
-              : cost + terrainCost(g, u, n);
-        if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(key(n)) ?? Infinity)) continue;
-        costs.set(key(n), nc);
-        if (!cross) queue.push({ p: n, cost: nc });
-        if (!occ && key(n) !== key(start)) found.set(key(n), nc);
+              : cost + step;
+        const sk = stateKey(n, nextRough);
+        if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
+        costs.set(sk, nc);
+        if (!cross) queue.push({ p: n, cost: nc, roughUsed: nextRough });
+        if (!occ && key(n) !== key(start)) found.set(key(n), Math.min(found.get(key(n)) ?? Infinity, nc));
       }
     }
     return found;
@@ -976,7 +1097,7 @@
       max:
         t.max +
         (eliteFx(u).range || 0) +
-        (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0) +
+        (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 && (u.movedDistance || 0) === 0 ? 1 : 0) +
         (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0), // Minami's Ikaruga Fire Control
     };
   }
@@ -1049,17 +1170,30 @@
   function move(g, id, c, r) {
     const u = g.units.find(u => u.id === id);
     if (!u) return { ok: false, reason: 'Unit not found.' };
-    const dest = tile(g, c, r);
-    if (!dest || !reachable(g, u).has(key(dest))) return { ok: false, reason: 'That hex is not reachable this turn.' };
+    const dest = tile(g, c, r),
+      reach = dest && reachable(g, u),
+      moveCost = dest && reach?.get(key(dest));
+    if (!dest || moveCost == null) return { ok: false, reason: 'That hex is not reachable this turn.' };
     const from = { c: u.c, r: u.r },
+      fromSea = isSea(tile(g, u.c, u.r)),
+      t = TYPES[u.type],
+      cross = !t.naval && isSea(dest) !== fromSea,
+      advancedLanding = cross && !u.skillReposition && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
+      moveBudget = fromSea ? seaMove(g, u) : movement(g, u),
+      retainMove = advancedLanding && moveBudget - moveCost >= 2,
       carrier = unitAt(g, dest);
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
-    if (carrier && carrier !== u && carrier.side === u.side && canBoard(carrier)) {
+    if (carrier && carrier !== u && carrier.side === u.side && canBoard(g, carrier)) {
       g.units.splice(g.units.indexOf(u), 1);
       u.c = dest.c;
       u.r = dest.r;
       u.moved = u.attacked = true;
       u.held = false;
+      u.guardReady = false;
+      u.skillReposition = 0;
+      u.withdrawMove = false;
+      u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
+      u.lastTurnMoved = true;
       u.boardedTurn = g.turn;
       (carrier.cargo ||= []).push(u);
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} boards the Carrier-Battleship.`, u.side);
@@ -1067,8 +1201,13 @@
     }
     u.c = dest.c;
     u.r = dest.r;
-    u.moved = true;
+    u.moved = !retainMove;
     u.held = false;
+    u.guardReady = false;
+    u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
+    u.lastTurnMoved = true;
+    u.skillReposition = retainMove ? 1 : 0;
+    u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
     if (!isSea(dest)) dest.owner = u.side;
@@ -1100,18 +1239,19 @@
       }
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
       hooks.capture?.(g, s, u, loser);
-      // As in WC4, a power whose capital falls surrenders: its cities pass to the conqueror, its armies disband.
-      if (s.capitalOf && s.capitalOf === loser && alive(g, loser)) {
-        award(g, u.side, 'star', `${s.name} captured`);
+      if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
+      // Conquest: a major power surrenders only when its last city falls; its armies disband. A capital is just its
+      // richest city.
+      if (g.mode !== 'campaign' && alive(g, loser) && !g.stations.some(c => c.owner === loser))
         annexed = surrender(g, loser, u.side, s);
-      }
     }
     const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
     return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, seized };
   }
-  function surrender(g, loser, winner, capital) {
-    (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: capital.name };
+  // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
+  function surrender(g, loser, winner, last) {
+    (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: last.name };
     let cities = 0,
       units = 0;
     for (const s of g.stations)
@@ -1138,24 +1278,24 @@
     annexStrategic(g, loser);
     log(
       g,
-      `${capital.name} has fallen. The ${FACTIONS[loser].name} surrenders to the ${FACTIONS[winner].name}: ${cities} cities annexed, ${units} units disbanded.`,
+      `${last.name}, the last city of the ${FACTIONS[loser].name}, has fallen. It surrenders to the ${FACTIONS[winner].name}: ${units} units disbanded.`,
       winner,
     );
-    return { loser, winner, cities, units, capital: capital.name };
+    return { loser, winner, cities, units, city: last.name };
   }
   // Command auras: every commander lifts adjacent friends by 8%; some reach farther or further.
   function auraBonus(g, u) {
     let bonus = 0;
     for (const a of g.units) {
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
-      if (a.cmd && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
     }
     return bonus;
   }
-  function power(g, u, target, st, counter = false) {
+  function power(g, u, target, st, counter = false, direct = true) {
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
       f = fx(u),
@@ -1163,7 +1303,9 @@
       strike = !counter || !f.attackOnly;
     let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1)) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
-    attack *= u.hp / maxHP(u) < 0.5 ? 0.72 : 1;
+    const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
+    const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
+    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill));
     attack *= 1 + auraBonus(g, u);
     // Faction doctrines.
     if (u.side === 'britannia' && t.branch === 'Armor') attack *= 1.08;
@@ -1172,8 +1314,12 @@
     if (u.side === 'eb' && u.cmd) attack *= 1.1;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
+    if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'naval.torpedoes');
     if (t.aquatic && isSea(tile(g, u.c, u.r))) attack *= 1 + t.aquatic;
-    if (t.naval === 'ship') attack *= 1 + techValue(g, u.side, 'naval.gunnery');
+    if (t.naval === 'ship') {
+      attack *= 1 + techValue(g, u.side, 'naval.gunnery');
+      if (counter) attack *= 1 + techValue(g, u.side, 'naval.firecontrol');
+    }
     // Rapid Launch Systems: the first attack on the turn a Knightmare launched from a carrier (needs a level-3 port).
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
     // Commander signature abilities (attacker side).
@@ -1181,7 +1327,10 @@
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
-    attack *= skillAttack(g, u, counter);
+    const attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
+    attack *= 1 + 0.06 * genericLevel(g, u, attackGeneric);
+    if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
+    attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
     if (counter && ef.counter) attack *= 1 + ef.counter;
     if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
@@ -1196,34 +1345,53 @@
     attack *= officerAttack(g, u);
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
-    if (t.branch === 'Infantry' && victim?.branch === 'Armor') attack *= 1 + techValue(g, u.side, 'infantry.harken');
-    if (t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
-    if (t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
+    if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
+    if (!t.naval && t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
+    if (!t.naval && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.drives') >= 2 && (u.movedDistance || 0) <= 1)
+      attack *= 1.1;
     const friends = (side, at, test) =>
       g.units.some(v => v.hp > 0 && v.side === side && v.id !== u.id && dist(g, v, at) === 1 && test(TYPES[v.type]));
     // Lance Formation and Factsphere Fire Control.
-    if (t.branch === 'Armor' && techLevel(g, u.side, 'armor.formation') >= 1 && friends(u.side, u, v => v.branch === 'Armor'))
-      attack *= 1.15;
+    if (!t.naval && t.branch === 'Armor' && techLevel(g, u.side, 'armor.formation') >= 1 && friends(u.side, u, v => v.branch === 'Armor' && !v.naval))
+      attack *= 1.12;
     if (
+      !t.naval &&
       t.branch === 'Artillery' &&
       target &&
       techLevel(g, u.side, 'artillery.fire') >= 1 &&
       friends(u.side, target, v => v.branch !== 'Artillery')
     )
       attack *= 1.2;
-    const pen = clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95);
-    const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') : 35;
+    const pen = armorPenetration(g, u, target);
+    const formationArmor =
+      target &&
+      !victim.naval &&
+      victim.branch === 'Armor' &&
+      techLevel(g, target.side, 'armor.formation') >= 1 &&
+      g.units.some(v => v.hp > 0 && v.side === target.side && v.id !== target.id && !TYPES[v.type].naval && TYPES[v.type].branch === 'Armor' && dist(g, v, target) === 1)
+        ? 5
+        : 0;
+    const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') + formationArmor : 35;
     attack *= 100 / (100 + armor * (1 - pen) * 2);
     if (target) {
       const tf = fx(target),
         nearCity = g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1);
       attack *= officerDefense(g, target);
-      if (t.branch === 'Artillery' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.blaze');
-      if (t.cls === 'siege' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.bulkheads');
+      attack *= 1 - 0.03 * genericLevel(g, target, 'fortification');
+      if (!victim.naval && t.branch === 'Artillery' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.blaze');
+      if (!victim.naval && t.cls === 'siege' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.bulkheads');
+      if (!victim.naval && victim.branch === 'Artillery' && !t.naval && t.branch === 'Artillery')
+        attack *= 1 - techValue(g, target.side, 'artillery.counterbattery');
+      const ground = tile(g, target.c, target.r);
+      if (!victim.naval && victim.branch === 'Infantry' && (ground.terrain === 'urban' || !!stationAt(g, target)))
+        attack *= 1 - techValue(g, target.side, 'infantry.urban');
+      if (!victim.naval && victim.branch === 'Infantry' && target.entrenched)
+        attack *= 1 - techValue(g, target.side, 'infantry.entrench');
       if (nearCity) attack *= 1 - techValue(g, target.side, 'cities.bunkers');
       attack *= 1 - techValue(g, target.side, 'sakura.blaze');
       // Factsphere Screen: Infantry shields neighbouring Artillery.
       if (
+        !victim.naval &&
         victim.branch === 'Artillery' &&
         techLevel(g, target.side, 'infantry.picket') >= 1 &&
         g.units.some(
@@ -1245,13 +1413,12 @@
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
-      attack *= skillDefense(g, target, counter);
-      const ground = tile(g, target.c, target.r);
+      attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
       if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
     }
-    if (counter) attack *= t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 1 : 0.65;
+    if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.85 : 0.65;
     return Math.max(1, Math.round(attack));
   }
   function preview(g, id, c, r) {
@@ -1267,7 +1434,7 @@
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Chaos Mines and city-breaker commanders raise damage to city defenses.
     const ef = eliteFx(a),
-      raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0));
+      raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
           base *
@@ -1281,6 +1448,8 @@
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
     const counter =
       !followUp &&
+      !(f.timeStop && a.timeStopTurn !== g.turn) &&
+      !targetMarked(g, a, d).noCounter &&
       !!d &&
       !t.noCounter &&
       !ef.noCounter &&
@@ -1291,11 +1460,12 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
+        0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
         (wears(g, a, 'marksman') ? 0.08 : 0) +
         techValue(g, a.side, 'sakura.varis'),
       0,
-      0.85,
+      1,
     );
     return {
       unit: unitDmg,
@@ -1304,8 +1474,8 @@
       counterAllowed: counter,
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
-      splash: (t.splash || 0) + (ef.splash || 0) + (t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
-      armorPen: clamp(t.pen + (f.pen || 0) + (ef.pen || 0), 0, 0.95),
+      splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
+      armorPen: armorPenetration(g, a, d),
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
@@ -1356,32 +1526,37 @@
       crit = random(g) < pr.crit,
       mult = (0.92 + random(g) * 0.16) * (crit ? pr.critMult : 1),
       hit = [];
+    const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
+    const avoidance = genericLevel(g, a, TYPES[a.type].branch === 'Armor' ? 'blitzkrieg' : 'guerrilla');
+    const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
     a.attacked = true;
     a.moved = true;
+    a.skillReposition = 0;
+    a.withdrawMove = false;
     a.launched = null;
     let dmg = 0,
       sd = 0;
     if (d) {
       dmg = Math.round(pr.unit * mult);
+      consumeDefensiveSkills(g, d, a);
       d.hp = Math.max(0, d.hp - dmg);
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
-      if (fx(d).guard && d.held) d.guardStamp = guardStamp(g);
       d.struck = { turn: g.turn, side: a.side };
     }
     if (s && pr.shield) {
       sd = Math.min(s.shield, Math.round(pr.shield * mult));
       s.shield -= sd;
     }
-    if (f.terror && d && d.hp > 0) d.morale = Math.max(moraleFloor(g, d), d.morale - 1);
+    if (f.terror && d && d.hp > 0) lowerMorale(g, d, 1);
     const aef = eliteFx(a);
     if (aef.stun && d && d.hp > 0) {
       d.moved = true;
       d.attacked = true;
-      d.morale = Math.max(moraleFloor(g, d), d.morale - 1);
+      lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    if (d && d.hp > 0 && pr.counterAllowed) {
+    if (d && d.hp > 0 && pr.counterAllowed && !evadeCounter) {
       retaliation = Math.round(pr.counter * (0.94 + random(g) * 0.12));
       a.hp = Math.max(0, a.hp - retaliation);
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
@@ -1390,9 +1565,9 @@
     if (pr.splash) {
       for (const v of g.units) {
         if (v.hp <= 0 || !foe(g, v.side, a.side) || v.id === d?.id || dist(g, v, p) !== 1) continue;
-        const amount = Math.round(power(g, a, v, stationAt(g, v)) * pr.splash);
+        const amount = Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash);
         v.hp = Math.max(0, v.hp - amount);
-        v.morale = Math.max(moraleFloor(g, v), v.morale - 1);
+        lowerMorale(g, v, 1);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, a);
       }
@@ -1404,7 +1579,7 @@
     let cap = f.refire || aef.refire ? 2 : 1;
     // Breakthrough Doctrine: a kill at the cap may still earn one more breakthrough.
     if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain === cap) {
-      const chance = techValue(g, a.side, 'armor.assault');
+      const chance = !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor' ? techValue(g, a.side, 'armor.assault') : 0;
       if (chance && random(g) < chance) cap++;
     }
     let breakthrough = false;
@@ -1420,17 +1595,30 @@
       a.attacked = false;
       breakthrough = true;
     }
+    if (
+      destroyed &&
+      a.hp > 0 &&
+      !TYPES[a.type].naval &&
+      TYPES[a.type].branch === 'Armor' &&
+      techLevel(g, a.side, 'armor.drives') >= 2 &&
+      a.overdriveTurn !== g.turn
+    ) {
+      a.overdriveTurn = g.turn;
+      grantReposition(a, 1);
+    }
     // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
     if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
       a.aceTurn = g.turn;
-      a.attacked = false;
-      breakthrough = true;
+      if (breakthrough) grantReposition(a, 2);
+      else { a.attacked = false; breakthrough = true; }
     }
-    if (a.hp > 0 && aef.moveAfterAttack) a.moved = false;
+    if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
     if (destroyed && a.hp > 0 && aef.moveAfterKill) {
       a.moved = false;
+      a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
     }
+    afterCommanderAttack(g, a, d, s, destroyed, timeStop);
     log(
       g,
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
@@ -1456,23 +1644,25 @@
     const refining = 1 + techValue(g, side, 'cities.refining');
     const total = g.stations
       .filter(s => s.owner === side && !devastated(g, s))
-      .reduce(
-        (a, s) => ({
-          credits: a.credits + s.income,
-          industry: a.industry + s.industry,
-          science: a.science + s.science,
-        }),
-        { credits: 0, industry: 0, science: 0 },
-      );
-    // Sakuradite deposits: extraction by refinery level; a level-3 refinery also exports for credits.
+      .reduce((a, s) => {
+        const stationed = g.units.find(u => u.hp > 0 && u.side === side && u.cmd && u.c === s.c && u.r === s.r);
+        const bonus = id => stationed ? 1 + 0.04 * genericLevel(g, stationed, id) : 1;
+        a.credits += Math.round(s.income * treasuryBonus(g, s) * bonus('economic_expert'));
+        a.industry += s.industry * (1 + techValue(g, side, 'cities.industry')) * bonus('industrial_expert');
+        a.science += s.science * bonus('technology_expert');
+        return a;
+      }, { credits: 0, industry: 0, science: 0 });
+    total.industry = Math.round(total.industry);
+    total.science = Math.round(total.science);
+    // Sakuradite deposits: extraction by refinery level, with Japan's output allocated among the powers; a level-3
+    // refinery also exports for credits.
     total.sakuradite = 0;
-    for (const d of g.sites || [])
-      if (depositOwner(g, d) === side) {
-        const y = depositYield(g, d);
-        total.sakuradite += y.sakuradite;
-        total.credits += y.credits;
-      }
-    total.credits = Math.round(total.credits * refining);
+    for (const d of g.sites || []) {
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining;
+      if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
+    }
+    if (g.mode !== 'campaign' && MAJORS.includes(side) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    total.sakuradite = Math.round(total.sakuradite);
     return total;
   }
   // New units deploy on the city hex or a free land hex next to it; naval units at the port or on the sea next to it.
@@ -1522,9 +1712,13 @@
 
   function elitePrice(id, level = 1) {
     const e = ELITE_FORCES[id], t = e && TYPES[e.type];
-    if (!t) return { credits: 0, industry: 0 };
+    if (!t) return { credits: 0, industry: 0, sakuradite: 0 };
     const premium = 1 + 0.04 * Math.max(0, level - 1);
-    return { credits: Math.round(t.cost * premium), industry: Math.round(t.industry * premium) };
+    return {
+      credits: Math.round(t.cost * premium),
+      industry: Math.round(t.industry * premium),
+      sakuradite: SAKURADITE.elite[e.rarity] ?? 0,
+    };
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
@@ -1551,8 +1745,7 @@
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
       cost = elitePrice(id, rec.level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    funds(g, s.owner).credits -= cost.credits;
-    funds(g, s.owner).industry -= cost.industry;
+    spend(funds(g, s.owner), cost);
     s.producedTurn = g.turn;
     g.eliteDeployed ||= {};
     g.eliteDeployed[id] = true;
@@ -1564,10 +1757,10 @@
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
-    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u);
+    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u), st = COMMANDERS[u.cmd]?.stats || {};
     return {
       hp: maxHP(u),
-      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1))),
+      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1)) * officerAttack(g, u) * (1 + (st.dmg || 0)) * (1 + (st.dmgBranch?.[t.branch] || 0))),
       armor: t.armor + s.armor,
       move: movement(g, u),
       min: r.min,
@@ -1582,8 +1775,9 @@
   }
   // Repairs restore 35% of the frame for a fifth of the unit's build price.
   function repairCost(u, g = null) {
-    const half = g && g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).repairHalf) ? 0.5 : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half * (g && logisticsNear(g, u) ? 0.7 : 1)));
+    const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
+    const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
+    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * (g && logisticsNear(g, u) ? 0.7 : 1)));
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
@@ -1833,31 +2027,42 @@
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
     return { ok: true };
   }
-  // Julius's Geass Command, Leila's wZERO Feint and Xianglin's Stratagem: −2 morale to enemies within 2 hexes.
-  // Zero's Tactical Command (kind 'command') instead lets a friendly unit that has acted move and attack again.
+  // Command actions share cooldown/range validation; only targeted actions require a picker.
+  function actionTargets(g, u) {
+    if (!u || !COMMANDERS[u.cmd]?.action) return [];
+    const kind = COMMANDERS[u.cmd].action.kind;
+    if (kind === 'command') return commandTargets(g, u);
+    return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
+      (kind === 'cleanse' ? v.side === u.side : kind === 'withdraw' ? v.id !== u.id && v.side === u.side && v.attacked && v.morale > -3
+        : foe(g, v.side, u.side)));
+  }
   function feint(g, id, targetId = null) {
-    const u = g.units.find(u => u.id === id);
-    const why = feintReason(g, u);
+    const u = g.units.find(v => v.id === id), why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
-    const action = COMMANDERS[u.cmd].action;
-    if (action.kind === 'command') {
-      const options = commandTargets(g, u),
-        v =
-          targetId == null
-            ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
-            : options.find(v => v.id === targetId);
-      if (!v) return { ok: false, reason: 'Choose a friendly unit within 2 hexes that has already acted' };
-      v.moved = v.attacked = false;
-      v.chain = 0;
+    const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
+    if (['command', 'designate', 'stratagem'].includes(action.kind)) {
+      const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
+        : options.find(v => v.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose a valid target within 2 hexes' };
+      if (action.kind === 'command') {
+        v.moved = v.attacked = false;
+        v.skillReposition = 0;
+        v.withdrawMove = false;
+        // Keep chain/ace/reposition stamps: an extra activation must not refresh once-per-turn skills.
+      } else addTargetMark(v, { side: u.side, source: u.id, range: 2,
+        damage: action.kind === 'designate' ? 0.2 : 0, noCounter: action.kind === 'stratagem' });
       u.feintCD = 3;
-      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} acts again.`, u.side);
-      return { ok: true, target: v.id };
+      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? 'acts again' : 'designated'}.`, u.side);
+      return { ok: true, target: v.id, affected: 1 };
     }
-    const victims = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, u, v) <= 2);
-    victims.forEach(v => (v.morale = Math.max(moraleFloor(g, v), v.morale - 2)));
+    for (const v of options) {
+      if (action.kind === 'cleanse') { v.morale = Math.max(0, v.morale); v.moraleWard = { side: u.side }; }
+      else if (action.kind === 'withdraw') { v.moved = false; v.withdrawMove = true; v.skillReposition = 0; }
+      else lowerMorale(g, v, 2);
+    }
     u.feintCD = 3;
-    log(g, `${COMMANDERS[u.cmd].action.verb} disrupts ${victims.length} enemy units.`, u.side);
-    return { ok: true, affected: victims.length };
+    log(g, `${action.verb} affects ${options.length} units.`, u.side);
+    return { ok: true, affected: options.length };
   }
 
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
@@ -1871,20 +2076,154 @@
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
   function commandTargets(g, u) {
     return g.units.filter(
-      v => v.hp > 0 && v.side === u.side && v.id !== u.id && (v.moved || v.attacked) && v.morale > -3 && dist(g, u, v) <= 2,
+      v => v.hp > 0 && v.side === u.side && v.id !== u.id && (v.moved || v.attacked) && !atSea(g, v) && v.morale > -3 && dist(g, u, v) <= 2,
     );
   }
   const skillNear = (g, u, flag, range, self = true) =>
     g.units.some(
-      v => v.hp > 0 && v.side === u.side && (self || v.id !== u.id) && fx(v)[flag] && dist(g, v, u) <= range,
+      v => v.hp > 0 && !atSea(g, v) && v.side === u.side && (self || v.id !== u.id) && fx(v)[flag] &&
+        (!v.auraDisrupted || !['orderCommander', 'screenedFire'].includes(flag)) && dist(g, v, u) <= range,
     );
+  function friendlyNeighbors(g, u, predicate = () => true) {
+    return g.units.filter(v => v.hp > 0 && !atSea(g, v) && v.side === u.side && v.id !== u.id && dist(g, u, v) === 1 && predicate(v));
+  }
+  function lowerMorale(g, u, steps) {
+    if (!u.moraleWard) u.morale = Math.max(moraleFloor(g, u), u.morale - steps);
+  }
+  function addTargetMark(u, mark) {
+    u.skillMarks ||= [];
+    u.skillMarks = u.skillMarks.filter(m => !(m.side === mark.side && m.source === mark.source));
+    u.skillMarks.push(mark);
+  }
+  function targetMarked(g, attacker, victim) {
+    let damage = 0, noCounter = false;
+    for (const m of victim?.skillMarks || []) {
+      if (m.side !== attacker.side) continue;
+      if (m.range) {
+        const source = g.units.find(v => v.id === m.source && v.hp > 0 && !atSea(g, v));
+        if (!source || dist(g, source, attacker) > m.range) continue;
+      }
+      damage = Math.max(damage, m.damage || 0);
+      noCounter ||= !!m.noCounter;
+    }
+    return { damage, noCounter };
+  }
+  function armorPenetration(g, u, target = null) {
+    const engineering = skillNear(g, u, 'engineeringPen', 2) ? 0.1 : 0,
+      harken = target && TYPES[u.type].branch === 'Infantry' && TYPES[target.type].branch === 'Armor'
+        ? techValue(g, u.side, 'infantry.harken')
+        : 0;
+    return clamp(TYPES[u.type].pen + (fx(u).pen || 0) + (eliteFx(u).pen || 0) + engineering + harken, 0, 0.95);
+  }
+  function commanderAttack(g, u, target, counter) {
+    const f = fx(u), friends = friendlyNeighbors(g, u);
+    let mult = 1;
+    if (counter) {
+      if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
+      return mult;
+    }
+    if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
+    if (f.loneRaider && !friends.length) mult *= 1 + f.loneRaider;
+    if (f.runCharge && u.movedDistance >= 2) mult *= 1 + f.runCharge;
+    if (f.combinedArms && friends.some(v => TYPES[v.type].branch !== TYPES[u.type].branch)) mult *= 1 + f.combinedArms;
+    if (TYPES[u.type].branch === 'Armor' && friends.some(v => TYPES[v.type].branch === 'Armor') && skillNear(g, u, 'orderCommander', 1)) mult *= 1.15;
+    if (!target) return mult;
+    if (f.duelist && target.cmd) mult *= 1 + f.duelist;
+    if (f.finisher && target.hp / maxHP(target) < 0.5) mult *= 1 + f.finisher;
+    if (f.opener && target.hp >= maxHP(target)) mult *= 1 + f.opener;
+    if (f.pursuit && target.lastTurnMoved) mult *= 1 + f.pursuit;
+    mult *= 1 + targetMarked(g, u, target).damage;
+    if (rangeOf(g, u).max > 1 && skillNear(g, u, 'screenedFire', 2) &&
+      g.units.some(v => v.hp > 0 && !atSea(g, v) && v.side === u.side && TYPES[v.type].branch !== 'Artillery' && dist(g, v, target) === 1)) mult *= 1.2;
+    return mult;
+  }
+  function bodyguarded(g, target) {
+    return !!target.cmd && skillNear(g, target, 'bodyguard', 1, false);
+  }
+  function commanderDefense(g, target, attacker, counter, direct) {
+    const f = fx(target), friends = friendlyNeighbors(g, target);
+    let mult = 1;
+    if (f.loneRisk && !friends.length) mult *= f.loneRisk;
+    if (f.steadyRanks && friends.length >= 2) mult *= f.steadyRanks;
+    if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
+    if (!counter && direct) {
+      if (f.foresight && target.foresightTurn !== g.turn) mult *= f.foresight;
+      if (f.liveOn && target.hp / maxHP(target) < 0.4 && target.liveOnTurn !== g.turn) mult *= f.liveOn;
+      if (bodyguarded(g, target) && target.bodyguardTurn !== g.turn) mult *= 0.8;
+    }
+    return mult;
+  }
+  function consumeDefensiveSkills(g, target, attacker) {
+    const f = fx(target);
+    if (f.guard && target.guardReady && target.held) target.guardStamp = guardStamp(g);
+    if (f.foresight) target.foresightTurn = g.turn;
+    if (f.liveOn && target.hp / maxHP(target) < 0.4) target.liveOnTurn = g.turn;
+    if (bodyguarded(g, target)) target.bodyguardTurn = g.turn;
+  }
+  function grantReposition(u, range) {
+    // Preserve a frame's unrestricted restored movement; a skill only fills a missing movement action.
+    if (u.moved) { u.moved = false; u.skillReposition = range; }
+  }
+  function afterCommanderAttack(g, a, d, city, destroyed, timeStop) {
+    const f = fx(a);
+    if (d?.hp > 0) {
+      if (f.targetMark) addTargetMark(d, { side: a.side, source: a.id, damage: f.targetMark });
+      if (f.intrigue && d.cmd) d.auraDisrupted = { side: a.side };
+    }
+    if (city && foe(g, city.owner, a.side)) {
+      if (f.focusBombard) {
+        const old = a.focusCity;
+        const count = old?.city === city.id && old.lastTurn >= g.turn - 1 ? Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) : 0;
+        a.focusCity = { city: city.id, count, lastTurn: g.turn };
+      }
+      if (f.siegeMark && a.siegeMarkTurn !== g.turn) {
+        city.bombardMark = { side: a.side, value: f.siegeMark };
+        a.siegeMarkTurn = g.turn;
+      }
+    } else if (f.focusBombard) delete a.focusCity;
+    if (timeStop) {
+      a.timeStopTurn = g.turn;
+      if (a.hp > 0) a.hp = Math.max(1, a.hp - Math.round(maxHP(a) * f.timeStop));
+    }
+    if (a.hp <= 0) return;
+    if (f.reposition && a.repositionTurn !== g.turn) { a.repositionTurn = g.turn; grantReposition(a, f.reposition); }
+    if (!destroyed) return;
+    if (f.killReposition && a.killRepositionTurn !== g.turn) { a.killRepositionTurn = g.turn; grantReposition(a, f.killReposition); }
+    if (f.killHeal && a.killHealTurn !== g.turn) { a.killHealTurn = g.turn; a.hp = Math.min(maxHP(a), a.hp + Math.round(maxHP(a) * f.killHeal)); }
+    if (f.assaultLeader && a.assaultLeaderTurn !== g.turn) {
+      a.assaultLeaderTurn = g.turn;
+      for (const v of friendlyNeighbors(g, a)) v.assaultInspired = { side: a.side, value: f.assaultLeader };
+    }
+  }
+  function bombardBonus(g, u, city) {
+    if (!city) return 1;
+    let mult = city.bombardMark?.side === u.side ? 1 + city.bombardMark.value : 1;
+    const old = u.focusCity;
+    if (fx(u).focusBombard && old?.city === city.id && old.lastTurn >= g.turn - 1)
+      mult *= 1 + Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) * fx(u).focusBombard;
+    return mult;
+  }
+  function treasuryBonus(g, city) {
+    const holder = g.units.find(u => u.hp > 0 && u.side === city.owner && u.c === city.c && u.r === city.r && fx(u).treasury);
+    return 1 + (holder ? fx(holder).treasury : 0);
+  }
+  function commanderStatusText(g, u) {
+    const out = [];
+    if (u.skillMarks?.length) out.push('Designated target');
+    if (u.auraDisrupted) out.push('Command damage aura suppressed');
+    if (u.moraleWard) out.push('Protected against morale disruption');
+    if (u.assaultInspired) out.push('Inspired: attack damage +15%');
+    if (!u.moved && u.skillReposition) out.push(`Reposition: up to ${u.skillReposition} hexes`);
+    if (!u.moved && u.withdrawMove) out.push('Withdrawal movement ready');
+    return out.join(' · ');
+  }
   // Tohdoh's Miracle Worker: 1 for units beside him; 2 for Tohdoh himself with two or more friendly units adjacent.
   function miracle(g, u) {
     if (fx(u).miracle)
       return g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, u) === 1).length >= 2 ? 2 : 0;
     return skillNear(g, u, 'miracle', 1, false) ? 1 : 0;
   }
-  const guardStamp = g => `${g.turn}:${g.phase}`;
+  const guardStamp = g => g.turn;
   // Attack multiplier: Miracle Worker counter-fire, Urabe's Final Stand, Tamaki's Reckless Charge.
   function skillAttack(g, u, counter) {
     const f = fx(u);
@@ -1894,11 +2233,11 @@
     return m;
   }
   // Damage-taken multiplier: Miracle Worker, Senba's Veteran's Guard, Katase's Prepared Position.
-  function skillDefense(g, target, counter) {
+  function skillDefense(g, target, counter, direct = true) {
     const tf = fx(target),
       ground = tile(g, target.c, target.r);
     let m = [1, 0.9, 0.8][miracle(g, target)];
-    if (tf.guard && !counter && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
+    if (tf.guard && !counter && direct && target.guardReady && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
     if (
       skillNear(g, target, 'prepared', 1) &&
       (ground?.terrain === 'mountain' || g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1))
@@ -1913,14 +2252,19 @@
     g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).spotter && dist(g, v, u) <= fx(v).spotter);
 
   // ======== Sakuradite: the fourth resource, mined at a handful of deposits ========
-  // Japan holds 70 of the world's 100 base output, as in the lore (nearly 70% of the world's Sakuradite). Outputs,
-  // extraction rates, the starting stockpile and prices are first-pass balance guesses.
+  // Japan holds 70 of the world's 120 base output, and its output is allocated internationally (episode 8): the power
+  // controlling a Japanese deposit keeps 60% and every other surviving major power receives 20%. The split, outputs,
+  // extraction rates, the starting stockpile and prices are balance values, not canon quantities.
   const SAKURADITE = {
-    start: 50,
+    start: 100,
     extraction: [0.25, 0.5, 0.75, 1], // share of a deposit's output by refinery level 0–3
     exportCredits: 15, // a level-3 refinery also exports for credits
-    // Per frame, by class; tier-1 classes need none. Extra frames follow the 85% rule.
-    cost: { raider: 5, medium: 5, rocket: 5, heavy: 10, siege: 10, super: 25 },
+    // Per frame, by class; basic classes need none (credits and industry cover them). Extra frames follow the 85% rule.
+    cost: { raider: 2, medium: 3, rocket: 3, heavy: 5, siege: 8, super: 10 },
+    // Elite Forces: one unique frame, priced by rarity whatever its Elite level.
+    elite: { Rare: 5, Epic: 10, Legendary: 15 },
+    allocation: { sites: ['Mount Fuji', 'Hokkaido', 'Kyushu'], share: 0.2 }, // each other power's share of Japan
+    national: 5, // every surviving major power's own supply a turn, tied to no deposit (Conquest only)
   };
   // Stockpiles and deposits for a new game (or a save from before Sakuradite).
   function setupSakuradite(g) {
@@ -1970,6 +2314,19 @@
       credits: rate && level >= 3 ? SAKURADITE.exportCredits : 0,
     };
   }
+  // Who receives a deposit's extraction this turn: its owner, or for a Japanese deposit held by a major power, the
+  // international allocation. Shares of powers that have surrendered stay with the controller. Unrounded.
+  function depositShares(g, d) {
+    const owner = depositOwner(g, d),
+      out = depositYield(g, d).sakuradite,
+      a = SAKURADITE.allocation;
+    if (!owner || !out) return {};
+    if (g.mode === 'campaign' || !a.sites.includes(d.name) || !alive(g, owner)) return { [owner]: out };
+    const others = MAJORS.filter(s => s !== owner && alive(g, s)),
+      shares = { [owner]: out * (1 - a.share * others.length) };
+    for (const s of others) shares[s] = out * a.share;
+    return shares;
+  }
   function spend(e, cost) {
     e.credits -= cost.credits || 0;
     e.industry -= cost.industry || 0;
@@ -1981,7 +2338,7 @@
     const d = depositOf(g, s),
       y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
     if (devastated(g, s)) return { credits: 0, industry: 0, science: 0, sakuradite: 0 };
-    return { credits: s.income + y.credits, industry: s.industry, science: s.science, sakuradite: y.sakuradite };
+    return { credits: Math.round(s.income * treasuryBonus(g, s)) + y.credits, industry: Math.round(s.industry * (1 + techValue(g, s.owner, 'cities.industry'))), science: s.science, sakuradite: y.sakuradite };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
   function seizeDeposit(g, u, p) {
@@ -2046,25 +2403,35 @@
     turns: 4, // construction time
     lab: 3, // research lab level needed
     labTurn: 15, // Research Lab III, and therefore the strategic-weapons program, opens in each conquest
-    devastation: 10, // turns a city at ground zero produces nothing
     ringHP: 0.1, // first ring: units are left with 10% of their frame
     outerHP: 0.55, // second ring: units are left with at most 55%
     outerShield: 0.35, // second-ring cities retain at most 35% of their defenses
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
-    aiRest: 8, // turns a rival waits after a launch before starting another warhead
   };
   const ELIMINATOR = {
     range: 3, // scaled with the denser world map; protects targets this many hexes from the city holding the charge
-    cost: { credits: 1200, industry: 300, science: 250, sakuradite: 100 },
+    cost: { credits: 1200, industry: 300, science: 250, sakuradite: 60 },
     turns: 3,
     lab: 3,
+    research: 3, // turns after the first detonation before Eliminators can be built
+    max: 3, // charges (ready or under construction) a power may hold at once, one per city
   };
+  // Older rules left a city at ground zero in ruins for some turns; saves can still hold such cities.
   const devastated = (g, x) => (x?.devastated || 0) > g.turn;
-  function eliminatorUnlocked(g) {
-    return !!g.fleijaDetonated || (g.log || []).some(l => String(l.text || '').startsWith('F.L.E.I.J.A. detonation'));
+  // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
+  function eliminatorTurn(g) {
+    const first = g.fleijaDetonated;
+    if (typeof first === 'number') return first + ELIMINATOR.research;
+    if (first || (g.log || []).some(l => String(l.text || '').startsWith('F.L.E.I.J.A. detonation'))) return 0;
+    return null;
   }
-  function sideEliminator(g, side) {
-    return g.stations.find(s => s.owner === side && ((s.eliminator || 0) > 0 || s.eliminatorProject?.side === side)) || null;
+  function eliminatorUnlocked(g) {
+    const at = eliminatorTurn(g);
+    return at != null && g.turn >= at;
+  }
+  // A power's cities holding an Eliminator charge or building one.
+  function sideEliminators(g, side) {
+    return g.stations.filter(s => s.owner === side && ((s.eliminator || 0) > 0 || s.eliminatorProject?.side === side));
   }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
@@ -2101,16 +2468,18 @@
   }
   function eliminatorReason(g, s) {
     if (!s) return 'Unavailable';
-    const existing = sideEliminator(g, s.owner);
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
-      (!eliminatorUnlocked(g) ? 'Available after the first F.L.E.I.J.A. detonation' : null) ||
+      (eliminatorTurn(g) == null
+        ? 'Available after the first F.L.E.I.J.A. detonation'
+        : !eliminatorUnlocked(g)
+          ? `Eliminator research completes on turn ${eliminatorTurn(g)}`
+          : null) ||
       cityBusyReason(g, s) ||
       ((s.lab || 0) < ELIMINATOR.lab ? `Requires research lab level ${ELIMINATOR.lab}` : null) ||
-      (existing
-        ? existing.eliminatorProject
-          ? `Eliminator already under construction in ${existing.name}`
-          : `Eliminator charge already ready in ${existing.name}`
+      ((s.eliminator || 0) > 0 ? 'This city already holds an Eliminator charge' : null) ||
+      (sideEliminators(g, s.owner).length >= ELIMINATOR.max
+        ? `At most ${ELIMINATOR.max} Eliminator charges at once (ready or under construction)`
         : null) ||
       shortfall(funds(g, s.owner), ELIMINATOR.cost)
     );
@@ -2151,6 +2520,10 @@
   }
   // Start of a power's turn: finished strategic projects come online; devastated cities stay without defenses.
   function strategicTurn(g, side) {
+    if (eliminatorTurn(g) === g.turn && !g.eliminatorAnnounced) {
+      g.eliminatorAnnounced = true;
+      log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
+    }
     for (const s of g.stations) {
       if (devastated(g, s)) s.shield = 0;
       if (s.project?.side === side && s.owner === side && s.project.ready <= g.turn) {
@@ -2192,7 +2565,6 @@
     if (g.over) return 'Operation over';
     if (g.phase !== side) return 'Not your turn';
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
-    if (g.launched?.[side] === g.turn) return 'One launch per turn';
     if (!g.stations.some(s => s.owner === side)) return 'No city to launch from';
     if (!p || !tile(g, p.c, p.r)) return 'Choose a target hex';
     return null;
@@ -2200,13 +2572,7 @@
   // The city's founding output and defenses: wrecked buildings never leave a city below them.
   function founding(s) {
     const row = CITY_DATA.find(r => r[0] === s.name);
-    if (!row) return { industry: 0, science: 0, maxShield: 0 };
-    const [, , , , tier, capital = false, fort = false] = row;
-    return {
-      industry: capital ? 30 : 6 * tier,
-      science: capital ? 10 : 1 + tier,
-      maxShield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
-    };
+    return row ? cityBase(row) : { income: 0, industry: 0, science: 0, maxShield: 0 };
   }
   // Knock down every building by `levels` (Infinity: back to level 0) with the output and defenses they added.
   function ruin(g, s, levels) {
@@ -2223,6 +2589,24 @@
     s.shield = 0;
     dropProject(g, s, 'destroyed');
     dropEliminator(g, s, 'destroyed');
+  }
+  // Ground zero erases a city for good: it leaves the map with its port, project and Eliminator charge, and its
+  // deposit is lost.
+  function destroyCity(g, s) {
+    dropProject(g, s, 'destroyed');
+    dropEliminator(g, s, 'destroyed');
+    const d = depositOf(g, s),
+      lost = d ? destroyDeposit(g, d) : null;
+    g.stations.splice(g.stations.indexOf(s), 1);
+    if (g.automation?.cities) delete g.automation.cities[s.id];
+    log(g, `${s.name} is erased by F.L.E.I.J.A. Nothing remains but a crater.`, s.owner);
+    return lost;
+  }
+  // A deposit at ground zero never produces again.
+  function destroyDeposit(g, d) {
+    g.sites.splice(g.sites.indexOf(d), 1);
+    log(g, `The ${d.name} Sakuradite deposit is destroyed and will never produce again.`, depositOwner(g, d) || g.phase);
+    return d.name;
   }
   // Detonation: everything at ground zero is erased, the ring is left at 10% with collapsed morale.
   function launch(g, side, c, r) {
@@ -2255,11 +2639,12 @@
         hit: [],
       };
     }
-    const unlocksEliminator = !eliminatorUnlocked(g);
+    const unlocksEliminator = eliminatorTurn(g) == null;
     const destroyed = [],
       crippled = [],
       damaged = [],
       cities = [],
+      depleted = [],
       hit = [];
     for (const t of blastArea(g, center)) {
       const blastDistance = dist(g, t, center),
@@ -2288,9 +2673,9 @@
       }
       if (s) {
         if (blastDistance === 0) {
-          ruin(g, s, Infinity);
-          s.devastated = g.turn + FLEIJA.devastation;
-          cities.push({ name: s.name, severity: 'ground', devastated: true });
+          const lost = destroyCity(g, s);
+          if (lost) depleted.push(lost);
+          cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
         } else if (ring) {
           ruin(g, s, 1);
           cities.push({ name: s.name, severity: 'inner', devastated: false });
@@ -2300,21 +2685,27 @@
         }
       }
       if (d) {
-        if (blastDistance === 0) {
-          d.refinery = 0;
-          d.devastated = g.turn + FLEIJA.devastation;
-        } else if (ring) d.refinery = Math.max(0, (d.refinery || 0) - 1);
+        if (blastDistance === 0) depleted.push(destroyDeposit(g, d));
+        else if (ring) d.refinery = Math.max(0, (d.refinery || 0) - 1);
       }
       if (blastDistance === 0 && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
     }
-    g.fleijaDetonated = true;
+    if (unlocksEliminator) g.fleijaDetonated = g.turn;
+    // A power whose last city was destroyed surrenders to the launcher.
+    const ground = cities.find(c => c.destroyed);
+    if (ground && ground.owner !== side && alive(g, ground.owner) && !g.stations.some(c => c.owner === ground.owner))
+      surrender(g, ground.owner, side, ground);
     log(
       g,
       `F.L.E.I.J.A. detonation at ${name}: ${destroyed.length} units erased, ${crippled.length} crippled, ${damaged.length} damaged${cities.length ? ', ' + cities.length + ' cities affected' : ''}.`,
       side,
     );
     if (unlocksEliminator)
-      log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
+      log(
+        g,
+        `INTELLIGENCE: every power begins F.L.E.I.J.A. Eliminator research; countermeasures are available from turn ${eliminatorTurn(g)}.`,
+        side,
+      );
     checkVictory(g);
     return {
       ok: true,
@@ -2326,8 +2717,10 @@
       crippled,
       damaged,
       cities,
+      depleted,
       hit,
       eliminatorUnlocked: unlocksEliminator,
+      eliminatorTurn: eliminatorTurn(g),
     };
   }
   // ---- Rival high command and F.L.E.I.J.A. ----
@@ -2337,6 +2730,29 @@
       g.stations
         .filter(s => s.owner === side && !cityBusyReason(g, s))
         .sort((a, b) => (b.lab || 0) - (a.lab || 0) || front(b) - front(a) || a.id - b.id)[0] || null
+    );
+  }
+  // Where a rival builds its next Eliminator: a free level-3-lab city outside the cover of its other charges, the
+  // capital first, then the richest. Null when there is none. `anyLab`: the best such city to raise a lab in instead.
+  function eliminatorCity(g, side, anyLab = false) {
+    const cover = sideEliminators(g, side);
+    return (
+      g.stations
+        .filter(
+          s =>
+            s.owner === side &&
+            !cityBusyReason(g, s) &&
+            !(s.eliminator > 0) &&
+            (anyLab || (s.lab || 0) >= ELIMINATOR.lab) &&
+            !cover.some(c => dist(g, c, s) <= ELIMINATOR.range),
+        )
+        .sort(
+          (a, b) =>
+            (anyLab ? (b.lab || 0) - (a.lab || 0) : 0) ||
+            Number(b.capitalOf === side) - Number(a.capitalOf === side) ||
+            b.income + b.industry - (a.income + a.industry) ||
+            a.id - b.id,
+        )[0] || null
     );
   }
   // The most valuable target that spares the launcher's own units and cities, or null below the threshold.
@@ -2367,15 +2783,24 @@
         if (v && rival(v.side))
           score +=
             price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (outer ? 0.35 : ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
-        // Cities are worth what the blast destroys (a ruin is worth nothing); a capital is worth more only when
-        // the launcher has troops close enough to take it afterwards.
+        // Cities are worth what the blast destroys: one at ground zero is erased with its output (and its owner
+        // surrenders if it was the last); a capital in the inner ring is worth more only when the launcher has troops
+        // close enough to take it afterwards.
+        const d = !ring && (siteAt(g, t) || (s && depositOf(g, s)));
+        if (d && rival(depositOwner(g, d))) score += 25 * d.base;
         if (s && rival(s.owner) && !devastated(g, s)) {
           const levels = (s.tier || 0) + (s.lab || 0) + (s.refinery || 0);
-          score += outer ? 15 * levels + s.shield * 0.08 : ring ? 40 * levels + s.shield * 0.2 : 150 + 100 * levels + s.shield * 0.5;
+          score += outer
+            ? 15 * levels + s.shield * 0.08
+            : ring
+              ? 40 * levels + s.shield * 0.2
+              : 300 + 100 * levels + s.shield * 0.5 + 5 * (s.income + s.industry + s.science);
+          if (!ring && MAJORS.includes(s.owner) && g.stations.filter(c => c.owner === s.owner).length === 1) score += 3000;
           if (s.project) score += 2000;
           if (s.eliminatorProject) score += 1600;
           if (
-            !ring &&
+            ring &&
+            !outer &&
             s.capitalOf === s.owner &&
             alive(g, s.owner) &&
             g.units.some(u => u.hp > 0 && u.side === side && canCapture(u) && dist(g, u, s) <= 4)
@@ -2393,6 +2818,13 @@
     return protectedBest && protectedBest.score >= FLEIJA.aiThreshold * 1.5 ? protectedBest.p : null;
   }
   function beginTurn(g, side, collect = true) {
+    // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
+    // The protection persists through rival turns, then ends when that power's next turn begins.
+    const outgoing = g.phase;
+    if (outgoing && outgoing !== side)
+      for (const u of g.units)
+        if (u.hp > 0 && u.side === outgoing && !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry')
+          u.entrenched = !u.lastTurnMoved;
     g.phase = side;
     if (collect) {
       const inc = income(g, side),
@@ -2403,8 +2835,19 @@
       e.science += Math.round(inc.science * modifier);
       e.sakuradite = (e.sakuradite || 0) + Math.round(inc.sakuradite * modifier);
     }
+    for (const v of g.units) {
+      v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
+      for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired']) if (v[field]?.side === side) delete v[field];
+    }
+    for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
     for (const u of mine) {
+      u.entrenched = false;
+      u.lastTurnMoved = false;
+      u.guardReady = !!u.held;
+      u.movedDistance = 0;
+      u.skillReposition = 0;
+      u.withdrawMove = false;
       u.moved = false;
       u.attacked = false;
       u.chain = 0;
@@ -2423,8 +2866,11 @@
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       }
       if (fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
+      const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];
+      const repairLevel = genericLevel(g, u, repairSkill);
+      if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       const energy = techValue(g, side, 'sakura.energy');
-      if (energy) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * energy));
+      if (energy && nearby === 0) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * energy));
       const auras = mine.filter(v => v.hp > 0 && v.cmd && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
@@ -2434,8 +2880,10 @@
       const t = tile(g, u.c, u.r),
         attrition = TERRAIN[t.terrain]?.attrition;
       if (attrition) {
-        const filler = TYPES[u.type].branch === 'Infantry' ? techValue(g, side, 'infantry.filler') : 0;
+        const filler = !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry' ? techValue(g, side, 'infantry.filler') : 0;
         u.hp = Math.max(1, u.hp - Math.round(maxHP(u) * attrition * (1 - filler)));
+        if (filler && (t.terrain === 'desert' || t.terrain === 'snow'))
+          u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.03));
       }
       const s = stationAt(g, u);
       if (s?.owner === side)
@@ -2454,7 +2902,7 @@
     const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const rate = 0.12 + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
+      const rate = 0.12 + techValue(g, side, 'cities.engineering') + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
       s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * rate));
     }
     strategicTurn(g, side);
@@ -2509,7 +2957,7 @@
     if (techLevel(g, s.owner, 'cities.overcharge') >= 2)
       for (const v of g.units) {
         if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
-        const amount = Math.round(fortressDamage(g, v, s.owner) * 0.5);
+        const amount = Math.round(fortressDamage(g, v, s.owner) * 0.4);
         v.hp = Math.max(0, v.hp - amount);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, null);
@@ -2528,18 +2976,19 @@
     }
     return g.over;
   }
-  // World conquest: hold every major capital (each rival surrenders when its capital falls), or hold the most
-  // cities at the armistice.
+  // World conquest: every rival surrenders (a power surrenders when it holds no city), or hold the most cities at the
+  // armistice.
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
-    if (fall) g.over = { winner: fall.by, reason: `${fall.city} has fallen. The ${FACTIONS[P].name} has surrendered.` };
+    if (fall)
+      g.over = { winner: fall.by, reason: `${fall.city}, your last city, has fallen. The ${FACTIONS[P].name} has surrendered.` };
     else if (!rivals.length)
       g.over = {
         winner: P,
-        reason: `Every rival capital flies the colors of the ${FACTIONS[P].name}. The world is yours.`,
+        reason: `Every rival power has surrendered to the ${FACTIONS[P].name}. The world is yours.`,
       };
     else if (g.turn > ARMISTICE) {
       const held = s => g.stations.filter(c => c.owner === s).length,
@@ -2555,16 +3004,27 @@
   }
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
-    const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => FACTIONS[s].capital);
+    const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
-      ? `Take ${rivals.join(' and ')} while holding ${FACTIONS[g.player].capital}. A power surrenders when its capital falls.`
-      : 'Every rival capital has fallen.';
+      ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
+      : 'Every rival power has surrendered.';
   }
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
     return 'World War · 2017 a.t.b.';
   }
 
+  // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.
+  function cityBase([name, , , , tier, capital = false, fort = false]) {
+    return {
+      maxShield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
+      // Capitals: 50 plus the 15 their old refinery exported (refineries now need a Sakuradite deposit).
+      income: capital ? 65 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
+      industry: capital ? 30 : 6 * tier,
+      science: capital ? 10 : 1 + tier,
+      ...CITY_TWEAKS[name],
+    };
+  }
   // ======== The world ========
   function hexOf(lon, lat) {
     const r = clamp(Math.round((WORLD.lat0 - lat) / WORLD.dlat), 0, WORLD.rows - 1),
@@ -2580,7 +3040,7 @@
       year: '2017 a.t.b.',
       desc: 'The Holy Britannian Empire holds the Americas, Area 11 and its Pacific bases; the Europia United holds Europe, Russia and Africa; the Chinese Federation holds Asia. Australia and the Middle Eastern Federation stand neutral.',
       rulesText:
-        'A power surrenders when its capital falls: its cities pass to the conqueror and its armies disband. Take every rival capital, or hold the most cities at the 120-turn armistice.',
+        'A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. Defeat every rival, or hold the most cities at the 120-turn armistice.',
     },
   };
 
@@ -2670,7 +3130,7 @@
     }
     for (const u of g.units)
       if (foes.includes(u.side)) {
-        u.hpTech = unitTech(g, u, 'hull');
+        u.hpTech = hullTech(g, u);
         u.hp = maxHP(u);
       }
     g.stations.forEach(st => fortify(g, st));
@@ -2754,14 +3214,10 @@
         capitalOf: capital ? owner : null,
         fort,
         gun: gun || null,
-        shield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
-        maxShield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
-        // Capitals: 50 plus the 15 their old refinery exported (refineries now need a Sakuradite deposit).
-        income: capital ? 65 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
-        industry: capital ? 30 : 6 * tier,
-        science: capital ? 10 : 1 + tier,
+        ...cityBase([name, lon, lat, owner, tier, capital, fort]),
         producedTurn: 0,
       };
+      s.shield = s.maxShield;
       at.terrain = 'plains';
       g.stations.push(s);
     }
@@ -3117,6 +3573,8 @@
     TECH_NODES,
     TECH_TIERS,
     TOKEN_REWARD,
+    normalizeResearch,
+    carrierCapacity,
     DIFFICULTIES,
     UPGRADE,
     operationKey,
@@ -3134,6 +3592,16 @@
     RANK_HP,
     PROMOTE_COST,
     MEDALS,
+    GENERIC_SKILLS,
+    GENERIC_RESPEC_COST,
+    genericSlots,
+    genericDescription,
+    genericLevel,
+    genericCost,
+    genericReason,
+    buyGeneric,
+    removeGenericReason,
+    removeGeneric,
     officer,
     medalSlots,
     moraleFloor,
@@ -3219,6 +3687,7 @@
     depositOwner,
     depositOf,
     depositYield,
+    depositShares,
     siteAt,
     cityYield,
     refineReason,
@@ -3228,6 +3697,7 @@
     ELIMINATOR,
     hasFleija,
     eliminatorUnlocked,
+    eliminatorTurn,
     eliminatorReason,
     startEliminator,
     eliminatorDefender,
@@ -3243,6 +3713,9 @@
     ALLIES,
     serves,
     commandTargets,
+    actionTargets,
+    commanderStatsText,
+    commanderStatusText,
   };
   // Shared with the engine's own parts (engine/ai.js); not part of the game's API.
   Object.defineProperty(root.Knightmare, 'internal', {
@@ -3267,6 +3740,7 @@
       buildReason,
       buildingLevel,
       canBoard,
+      carrierCapacity,
       canBuy,
       canCapture,
       deploy,
@@ -3280,6 +3754,8 @@
       eliminatorUnlocked,
       feint,
       feintReason,
+      actionTargets,
+      rangeOf,
       fireFortress,
       fleijaCity,
       foe,
@@ -3314,7 +3790,8 @@
       repairCost,
       seaMove,
       serves,
-      sideEliminator,
+      sideEliminators,
+      eliminatorCity,
       siteAt,
       startEliminator,
       startProject,

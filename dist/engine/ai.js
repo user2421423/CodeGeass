@@ -24,6 +24,7 @@
     buildReason,
     buildingLevel,
     canBoard,
+    carrierCapacity,
     canBuy,
     canCapture,
     deploy,
@@ -37,6 +38,8 @@
     eliminatorUnlocked,
     feint,
     feintReason,
+    actionTargets,
+    rangeOf,
     fireFortress,
     fleijaCity,
     foe,
@@ -71,7 +74,8 @@
     repairCost,
     seaMove,
     serves,
-    sideEliminator,
+    sideEliminators,
+    eliminatorCity,
     siteAt,
     startEliminator,
     startProject,
@@ -468,7 +472,7 @@
     return taken;
   }
   // Enemy high command, run once at the start of each AI turn before its units act: batteries, repairs, saving for
-  // super-heavies, upgrades, reinforcements, then stacked production up to a soft army cap.
+  // super-heavies, upgrades, reinforcements, then production that prefers 2- and 3-frame formations.
   const hostileMass = (g, side, mass) => g.stations.some(s => massOf(g, s) === mass && foe(g, s.owner, side));
   // Troops worth lifting: their front's goal (its rally city while assembling) lies on another landmass, or (no front)
   // nothing to attack on theirs; or (city-taking Infantry and Armor only) far from it (goal field 14+), unless they are
@@ -546,7 +550,7 @@
       return true;
     }
     const ready = cargo.some(c => c.boardedTurn !== g.turn);
-    if (ready && (cargo.length >= TYPES[u.type].capacity || job.wait >= 3)) {
+    if (ready && (cargo.length >= carrierCapacity(g, u) || job.wait >= 3)) {
       if (landing(tile(g, u.c, u.r)) == null) {
         const best = reach
           .map(p => ({ p, s: landing(p) }))
@@ -604,13 +608,14 @@
         if (shot.ok) g.strikes.push(shot);
       }
     }
-    // 0b. F.L.E.I.J.A.: launch a ready warhead at the most valuable target that spares its own units and cities
-    // (the UI plays g.launches).
+    // 0b. F.L.E.I.J.A.: launch every ready warhead, each at the most valuable target that spares its own units and
+    // cities (the UI plays g.launches).
     g.launches = [];
-    if ((g.arsenal?.[side] || 0) > 0) {
+    while ((g.arsenal?.[side] || 0) > 0 && !g.over) {
       const p = aiLaunchTarget(g, side),
         shot = p && launch(g, side, p.c, p.r);
-      if (shot?.ok) g.launches.push(shot);
+      if (!shot?.ok) break;
+      g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
     for (const u of own()
@@ -625,25 +630,25 @@
     if (!yard3.length || supers >= 2) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
       plan.saving = true;
-    // 2b. F.L.E.I.J.A. Eliminator: after the first detonation, rivals prioritize one defensive charge.
-    const defenseCity = eliminatorUnlocked(g) && !sideEliminator(g, side) ? fleijaCity(g, side, front) : null;
-    plan.eliminator =
-      !!defenseCity &&
-      ((e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite || income(g, side).sakuradite >= 10);
-    if (plan.eliminator && !eliminatorReason(g, defenseCity)) {
+    // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
+    // starting every charge they can afford (up to ELIMINATOR.max) and saving for the next one. With no free lab-3
+    // city outside their charges' cover, step 3 raises a lab for one (defensePrep).
+    const wantsDefense = () => eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
+    let defenseCity = null;
+    while (wantsDefense() && (defenseCity = eliminatorCity(g, side)) && !eliminatorReason(g, defenseCity)) {
       startEliminator(g, defenseCity.id);
-      plan.eliminator = false;
+      defenseCity = null;
     }
-    const defenseProject = g.stations.some(s => s.eliminatorProject?.side === side);
-    // 2c. F.L.E.I.J.A.: one warhead at a time. A power with the Sakuradite for it (or the income to gather it soon)
-    // keeps that Sakuradite back, then saves credits and industry and starts the project in its best-lab city.
+    plan.eliminator = !!defenseCity;
+    const defensePrep = wantsDefense() && !defenseCity ? eliminatorCity(g, side, true) : null;
+    // 2c. F.L.E.I.J.A.: one warhead at a time, started again as soon as the last one is fired. A power with the
+    // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
+    // and starts the project in its best-lab city.
     const warCity =
       !plan.eliminator &&
-      !defenseProject &&
       hasFleija(g, side) &&
       !g.stations.some(s => s.project?.side === side) &&
-      !(g.arsenal?.[side] > 0) &&
-      g.turn - (g.launched?.[side] ?? -Infinity) >= FLEIJA.aiRest
+      !(g.arsenal?.[side] > 0)
         ? fleijaCity(g, side, front)
         : null;
     plan.warhead = !!warCity && ((e.sakuradite || 0) >= FLEIJA.cost.sakuradite || income(g, side).sakuradite >= 15);
@@ -654,13 +659,16 @@
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     if (plan.eliminator || plan.warhead) plan.saving = false;
-    if (plan.saving) {
-      const yard = yard3.find(s => canBuy(g, s, superType, 1));
-      if (yard) {
-        recruit(g, yard.id, superType, 1);
-        plan.saving = false;
+    // The savings buy the largest super-heavy formation the treasury allows (canBuy includes the cost).
+    if (plan.saving)
+      for (const n of [3, 2, 1]) {
+        const yard = yard3.find(s => canBuy(g, s, superType, n));
+        if (yard) {
+          recruit(g, yard.id, superType, n);
+          plan.saving = false;
+          break;
+        }
       }
-    }
     const reserve = defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
       : warSaving
@@ -696,9 +704,11 @@
     // then the lowest-level factory or lab at the safest city.
     if (!plan.saving && g.turn >= 2) {
       let upgraded = false;
-      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player.
+      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player. A city that
+      // needs a lab for its next Eliminator comes first.
       const soon = g.turn >= FLEIJA.labTurn - 5,
-        prep = side !== g.player && MAJORS.includes(side) && soon ? fleijaCity(g, side, front) : null;
+        prep =
+          side !== g.player && MAJORS.includes(side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&
@@ -745,8 +755,7 @@
       if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
-    // putting what its front asks for at the top of its menu; stack up when the budget allows. A soft cap keeps armies
-    // manageable.
+    // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
     const serves = s =>
         (memo.fronts || [])
           .filter(f => f.assigned < f.desiredStrength && dist(g, s, f.rally || f.anchor) <= 25)
@@ -756,8 +765,6 @@
         return f ? (f.desiredStrength - f.assigned) * (0.5 + Math.max(0, f.score) / 100) : 0;
       },
       yards = bases.slice().sort((a, b) => urgency(b) - urgency(a));
-    const cap = 14 + Math.round(bases.length * 0.9);
-    let army = own().length;
     // 4b. Navy: one level-2 port for carriers and up to three ports in all (one port build a turn), then a fleet of up
     // to four Carrier-Battleships and six amphibious formations.
     const navy = g.mode !== 'campaign' && NAVAL[side];
@@ -780,18 +787,17 @@
         ['amphibious2', count('amphibious', 'amphibious2') < 6],
         ['amphibious', count('amphibious', 'amphibious2') < 6],
       ]) {
-        if (!short || army >= cap || random(g) >= 0.5) continue;
+        if (!short || random(g) >= 0.5) continue;
         const type = navy[role],
           c = price(type, 1, g, side),
           yard = bases.find(s => canBuy(g, s, type, 1));
-        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok) {
-          army++;
-          break;
-        }
+        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok) break;
       }
     }
-    for (const [i, s] of yards.entries()) {
-      if (army >= cap) break;
+    // Formations first: every factory builds a 3- or 2-frame formation when the treasury allows, taking a cheaper frame
+    // from its menu as a formation before settling for a lone frame. Only when no factory can afford any formation
+    // does the most urgent one build a single frame; otherwise the money is saved for formations.
+    const menuOf = s => {
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
@@ -799,29 +805,24 @@
             : s.tier === 2
               ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
               : ['light', 'support', 'assault', 'scout'],
-        need = (serves(s)?.need || []).filter(c => classes.includes(c));
-      const menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g));
-      const preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
-      const share = i === yards.length - 1 ? 1 : 0.6;
-      for (const type of [preferred, ...menu.filter(x => x !== preferred)]) {
-        let built = false;
-        for (let n = 3; n >= 1 && !built; n--) {
+        need = (serves(s)?.need || []).filter(c => classes.includes(c)),
+        menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g)),
+        preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
+      return [preferred, ...menu.filter(x => x !== preferred)];
+    };
+    // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
+    const tryBuild = (s, menu, sizes) => {
+      for (const type of menu)
+        for (const n of sizes) {
           const c = price(type, n, g, side);
-          // Single frames may use the whole budget; stacks only this factory's share of it.
-          if (
-            !canBuy(g, s, type, n) ||
-            !affordable(c) ||
-            !keepsHeavy(type, c) ||
-            (n > 1 && c.credits > spendable() * share)
-          )
-            continue;
-          recruit(g, s.id, type, n);
-          built = true;
-          army++;
+          if (canBuy(g, s, type, n) && affordable(c) && keepsHeavy(type, c) && recruit(g, s.id, type, n).ok) return true;
         }
-        if (built) break;
-      }
-    }
+      return false;
+    };
+    const menus = new Map(yards.map(s => [s, menuOf(s)]));
+    let formations = 0;
+    for (const s of yards) if (tryBuild(s, menus.get(s), [3, 2])) formations++;
+    if (!formations) for (const s of yards) if (tryBuild(s, menus.get(s), [1])) break;
   }
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
@@ -837,6 +838,14 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // Withdraw already-fired allies before Leila's own movement can take her out of range.
+    if (COMMANDERS[u.cmd]?.action?.kind === 'withdraw' && !feintReason(g, u)) {
+      const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);
+      if (r.ok) {
+        events.push({ kind: 'feint', id, affected: r.affected });
+        for (const friend of friends) events.push(...aiOrder(g, friend));
+      }
+    }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
     const steered = isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
     if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
@@ -847,13 +856,13 @@
         })
         .find(p => {
           const v = unitAt(g, p);
-          return v && v !== u && v.side === u.side && canBoard(v) && (!v.cargo?.length || sameLift(frontOf(g, memo, v.cargo[0]), front));
+          return v && v !== u && v.side === u.side && canBoard(g, v) && (!v.cargo?.length || sameLift(frontOf(g, memo, v.cargo[0]), front));
         });
       const m = berth && move(g, id, berth.c, berth.r);
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && action.kind !== 'command' && !feintReason(g, u)) {
+    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -901,6 +910,7 @@
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        if (COMMANDERS[u.cmd]?.fx.treasury && station?.owner === u.side) sc += 250 + station.income * 4;
         const mine = siteAt(g, p);
         if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
         sc -= guard ? dist(g, p, guard) * 30 - (p.c === guard.c && p.r === guard.r ? 25 : 0) : u.hold ? 0 : fieldAt(p) * 8;
@@ -927,6 +937,11 @@
           sc -= danger * 28;
           sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;
         } else sc -= nearestEnemy * 2;
+        const skill = COMMANDERS[u.cmd]?.fx || {};
+        const allies = freeAllies.filter(v => dist(g, v, p) <= 2);
+        if (skill.loneRaider) sc -= allies.filter(v => dist(g, v, p) === 1).length * 18;
+        if (skill.engineeringPen || skill.reassure || skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander)
+          sc += Math.min(4, allies.length) * 12;
         if (station?.owner === u.side && u.hp / maxHP(u) < 0.5) sc += 20;
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
         return sc;
@@ -937,10 +952,15 @@
         let sc = placeScore(p);
         u.c = p.c;
         u.r = p.r;
+        const oldDistance = u.movedDistance, oldMoved = u.moved;
+        u.movedDistance = (oldDistance || 0) + dist(g, old, p);
+        u.moved = true;
         reindex(g, u, old);
         const shot = choose();
         u.c = old.c;
         u.r = old.r;
+        u.movedDistance = oldDistance;
+        u.moved = oldMoved;
         reindex(g, u, p);
         if (shot) sc += shot.score * 0.6;
         if (sc > bestScore) {
@@ -955,6 +975,11 @@
         if (m.ok) events.push({ kind: 'move', ...m, id });
       }
     }
+    // Recheck after movement: a designation may only now be in range.
+    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+      const r = feint(g, id);
+      if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
+    }
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       const shot = choose();
       if (!shot) break;
@@ -962,10 +987,27 @@
       if (a.ok) events.push({ kind: 'attack', ...a, id });
       else break;
     }
-    // Zero's Tactical Command, after his own orders: the strongest friendly unit that has acted goes again.
+    // Spend restored movement on a safe hex, including withdrawal moves after firing.
+    if (!u.moved && (u.attacked || u.skillReposition || u.withdrawMove) && !g.over && u.hp > 0) {
+      const score = p => -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30;
+      const picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
+        .filter(p => !unitAt(g, p)).sort((a, b) => score(b) - score(a));
+      if (picks[0] && score(picks[0]) > score(u)) {
+        const m = move(g, id, picks[0].c, picks[0].r);
+        if (m.ok) events.push({ kind: 'move', ...m, id });
+      }
+    }
+    // Zero and Leila use their actions after allied orders. UI ordering puts them last.
     if (action?.kind === 'command' && !g.over && u.hp > 0 && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: 1 }, ...aiOrder(g, r.target));
+    }
+    if (action?.kind === 'withdraw' && !g.over && u.hp > 0 && !feintReason(g, u)) {
+      const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);
+      if (r.ok) {
+        events.push({ kind: 'feint', id, affected: r.affected });
+        for (const friend of friends) events.push(...aiOrder(g, friend));
+      }
     }
     return events;
   }

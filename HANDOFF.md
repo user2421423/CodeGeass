@@ -15,37 +15,42 @@ Britannian Empire, the Europia United and the Chinese Federation fight each othe
 Knightmare Frames.
 
 - Move each unit once and attack once per turn; click a green hex to move, a red hex to attack at once.
-- Units are 1–3 frames; commanders ride on units and give bonuses; morale, terrain and counter-fire matter.
+- Units are 1–3 frames; commanders ride on units and give bonuses; morale, terrain and counter-fire matter. As in WC4,
+  attack scales with remaining frame (`power()`: 40% + 60% × health, so 70% at half).
 - Capture cities for income, build Knightmares in city factories, upgrade cities, research HQ technology.
-- **WC4 surrender rule:** a power whose capital falls surrenders; its cities pass to the conqueror and its units
-  disband. Take every rival capital, or hold the most cities at the 120-turn armistice.
+- **Surrender at zero cities (Conquest):** a major power surrenders only when its last city falls (`move()` checks after
+  every capture; campaign missions never surrender). Its units disband, its mines and half its stockpiles pass to the
+  conqueror (`surrender`, `annexDeposits`, `annexStrategic`). A capital is just the richest city. Defeat every rival,
+  or hold the most cities at the 120-turn armistice; losing your last city loses the war.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
 **Campaign:** three story arcs as WC4-style campaigns, each played from either side: Season 1 and R2 (Black Knights or
 Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 58 missions on
 hand-built tactical maps,
-reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (tested in `tests/campaign.test.cjs`);
-screens in `dist/ui/campaign-screens.js` (smoke-tested in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
+reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (every mission is built and checked in
+`tests/core.test.cjs`); screens in `dist/ui/campaign-screens.js` (one mission boots in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
 
 ## 2. Running, testing and deploying
 
 - **Run locally:** serve `dist/` with any static server (`python3 -m http.server -d dist`) and open it.
-- **Tests (local only):** `node --test tests/*.test.cjs` (engine, campaign and artwork loading tests) and `node tests/ui-smoke.cjs`
-  (loads all UI scripts in a stubbed DOM and clicks through every dialog and a rival turn for all three powers).
-  Node 22. Node was not installed on the machine this was built on; the same tests were run through the macOS
+- **Tests:** a deliberately small (YAGNI) safety net, not a full rules suite. `node --test tests/core.test.cjs` checks
+  that Conquest starts coherently for every power, the core breakthrough and movement rules, that a rival AI turn runs,
+  and that every campaign mission builds with valid references. `node tests/ui-smoke.cjs` loads the scripts
+  `index.html` lists in a stubbed DOM, plays a turn for all three Conquest powers and boots a campaign mission.
+  `node tools/validate_assets.cjs --tracked` checks the published artwork. Node 22. Add a focused test only when a
+  rule is fragile enough to need one. Node was not installed on the machine this was built on; the same tests were run through the macOS
   JavaScriptCore shell (`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`) with a
   small `require` shim.
-- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` after engine, artwork-loading, UI smoke and tracked-asset checks pass.
+- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` after `core.test.cjs`, the UI smoke test and the tracked-asset check pass.
 - **Formatting:** Prettier with `.prettierrc` (`printWidth 120`, `singleQuote`, `arrowParens: avoid`).
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **68 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 11 campaign frames, 7 naval frames) and 58 commander portraits**, registered
+Published artwork is tracked and deployed from `dist/assets/art/`: **70 Knightmare sprites (31 Conquest frames
+including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames) and 58 commander portraits**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
-workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art except
-the Federation's amphibious Shui Gun-Ru and Shui Gun-Ru II, which use their drawings; procedural art is otherwise
+workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art; procedural art is
 only a runtime safety fallback.
 To add or replace public artwork, prepare it locally, run `tools/publish_art.py`, validate, commit and push.
 
@@ -55,7 +60,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 
 | File | Role |
 |---|---|
-| `dist/engine/frames.js`, `commanders.js`, `research.js`, `world.js` | Engine data only, published on `root.KnightmareData` (like `missions.js`): factions, Knightmare classes, frames, lineups and Elite Forces; commanders, ranks, medals and ratings; the HQ tech tree; the world map (`WORLD_ROWS`, generated by `tools/build_map.py`; currently 180 × 76), `CITY_DATA`, `ARMY_DATA`, `GARRISONS`, ports, fleets and Sakuradite deposits. |
+| `dist/engine/frames.js`, `commanders.js`, `research.js`, `world.js` | Engine data only, published on `root.KnightmareData` (like `missions.js`): factions, Knightmare classes, frames, lineups and Elite Forces; commanders, ranks, medals and ratings; the HQ tech tree; the world map (`WORLD_ROWS`, generated by `tools/build_map.py`; currently 180 × 76), `CITY_DATA`, `CITY_TWEAKS` (per-city balance overrides of starting income, industry and defenses, applied by `cityBase` in `engine.js`), `ARMY_DATA`, `GARRISONS`, ports, fleets and Sakuradite deposits. |
 | `dist/engine.js` | The deterministic rules engine (`window.Knightmare`, aliased `E` in the UI; `module.exports` for Node). No DOM. Reads the data files (requiring them under Node), then terrain, combat, sea transport, economy, Sakuradite, F.L.E.I.J.A., standing orders, pathfinding (`goalField`, `massOf`), profile/roster logic. Seeded LCG via `random(g)`. |
 | `dist/engine/ai.js` | The AI: rival high command (`aiProduction`), theaters (`aiPlan`, `FRONT`), carriers and unit orders (`aiOrder`). Loads after `engine.js` and adds its exports to `E`; it reads the rules it needs from `E.internal` (non-enumerable, not part of the API). Under Node, `engine.js` requires it, so `require('../dist/engine.js')` is the whole engine. |
 | `dist/art.js` | `ART`: procedural SVG for every Knightmare (`SPECS` body plans and paint), cities and original-design commander busts (`LOOKS`), cached as images for the canvas. Public images load synchronously from `assets/art/manifest.js`, built by `tools/publish_art.py`; drawn art remains the fallback. Optional localhost override: `local-art/manifest.json` (git-ignored folder `dist/local-art/`; `tools/local_art_prepare.py` turns raw files in `local-art/raw/` into game-ready images and runs `tools/local_art_manifest.py`) layers the owner's own files over the drawings via `ART.useLocal`. |
@@ -65,7 +70,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | `dist/game.js` | Boots the UI once every `ui/*.js` file has loaded. |
 | `dist/style.css`, `dist/battlefield.css` | Base styles and the WC4 reskin from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
 | `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
-| `tests/` | `engine.test.cjs`, `campaign.test.cjs`, `art.test.cjs`, `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order) and `art_pipeline_test.py`. |
+| `tests/` | `core.test.cjs` (engine and campaign integrity) and `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order). |
 
 ### Engine conventions
 
@@ -143,6 +148,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     so crossing the coast never ends the move. 10 at sea when starting next to a friendly carrier. +25% against
     embarked transports and warships. `atSea()` is false for naval frames: they fire and counter-fire at sea.
   - Carrier-Battleship (520/82/44, range 1–2, move 10, sea only, one per build, cannot be reinforced): `capacity` 2.
+    It is `cls: 'support'` but overrides the class's `noCounter`: any unit with the range returns its fire.
     Moving a Knightmare onto it boards it (`move` returns `loaded`; the unit leaves `g.units` for `ship.cargo`, its
     action ends). `deploy(g, shipId, i, c, r)` launches onto an empty, non-enemy land hex next to the ship with a full
     move and attack; not on the boarding turn (`boardedTurn`), and no re-boarding after launching (`deployedTurn`).
@@ -187,21 +193,36 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - **Starting front-line pass:** Normal conquest now begins with 38 Britannian, 47 E.U. and 40 Federation field units,
   concentrated around North America/Atlantic, Area 11, Europe/Mediterranean, Siberia, China/Korea, India/Iran and
   Southeast Asia instead of trying to garrison all 149 cities.
+- **Starting balance:** the E.U. starts with 53 formations, the Federation 55 and Britannia 48 (`g.startUnits`). `CITY_TWEAKS`
+  levels opening income at about 700 credits / 380 industry / 110 research for each power: ten secondary E.U. cities
+  yield 14 / 8 instead of 20 / 12 and thirty peripheral ones (Siberia, the North Atlantic, Africa) 8 / 4 / 1 instead of
+  12 / 6 / 2; eleven secondary Britannian cities and Hong Kong, Chongqing and Wuhan yield 25 / 15 / 4 instead of
+  20 / 12 / 3. The Federation's western and northeastern frontier
+  cities (Tehran 380, Kabul, Tashkent, Almaty, Urumqi, Ulaanbaatar, Harbin, Vladivostok 300) start with stronger defenses,
+  and five extra 2-frame formations hold those fronts.
 - **AI world-scale tuning:** threat/guard/search radii are enlarged for 180 × 76. Overseas offensives assemble nearby
   land units at coasts, count embarked escorts toward the convoy, reward coordinated embarkation and strongly prefer
   landing once a viable coast is reached. Sea transitions are also less over-penalized in the strategic goal field.
 
 ### Sakuradite (the fourth resource)
-- Engine block "Sakuradite" (above `beginTurn`): `SAKURADITE` (starting stockpile 50, extraction
-  `[0.25, 0.5, 0.75, 1]` by refinery level, 15 export credits at level 3, `cost` by class) and `RESOURCE_SITES`
-  (`[name, lon, lat, base, starting refinery, terrain]`). All numbers are first-pass.
+- Engine block "Sakuradite" (above `beginTurn`): `SAKURADITE` (starting stockpile 100, extraction
+  `[0.25, 0.5, 0.75, 1]` by refinery level, 15 export credits at level 3, `cost` by class — raider 2, medium and
+  rocket 3, heavy 5, siege 8, super 10 — `elite` by rarity 5/10/15, and `allocation`) and `RESOURCE_SITES`
+  (`[name, lon, lat, base, starting refinery, terrain]`). Frames can override the class cost with their own
+  `sakuradite` (Type II amphibious 3, Carrier-Battleship 15). All numbers are balance values.
+- International allocation: `depositShares(g, d)` splits a deposit's extraction. A Japanese deposit
+  (`SAKURADITE.allocation.sites`) held by a live major power gives 20% to each other surviving major and the rest
+  (60%) to the controller; a surrendered power's share stays with the controller; neutral-held deposits, other
+  deposits and campaign maps go wholly to the owner. `income()` sums the unrounded shares, adds
+  `SAKURADITE.national` (5 for every surviving major power in Conquest, tied to no deposit) and rounds once. Opening
+  income: 25 Britannia / 21 E.U. / 21 Federation.
 - `g.sites`: `{ id, name, c, r, base, city, owner?, refinery? }`. A deposit whose hex holds a city is worked from it
   (`city` = station id; the city's `refinery` building sets extraction and the deposit changes hands with the city).
   Otherwise it is a mine on its own hex (`city: null`, own `owner` and `refinery`), seized by Infantry or Armor moving
   onto it (`seizeDeposit`, called from `move()`; the result carries `seized`). Mines have no defenses.
 - Placement: Mount Fuji (40, set just west of Tokyo so it is its own mountain hex, refinery 1 at the start), Hokkaido
-  (15, Sapporo), Kyushu (15, Fukuoka), Stonehenge (10, London), Rocky Mountains (10, own hex), Qaidam Basin (10, own
-  hex). Japan = 70 of 100.
+  (15, Sapporo), Kyushu (15, Fukuoka), Stonehenge (20, London, refinery 1), Rocky Mountains (10, own hex), Qaidam Basin
+  (20, own hex, refinery 1). Japan = 70 of 120.
 - Economy: `economy[side].sakuradite`; `income()` adds `sakuradite`; `price()` adds `sakuradite` (by class, extra frames
   at 85%, the Federation's Infantry discount applies); `spend()` deducts every resource; `shortfall()` names
   Sakuradite. Helpers: `depositHost`, `depositOwner`, `depositOf(g, city)`, `siteAt`, `depositYield`, `cityYield`,
@@ -214,37 +235,44 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 2, `cost`
   1,800 credits / 450 industry / 300 research / 150 Sakuradite, `turns` 4, `lab` 3, `labTurn` 15,
-  `devastation` 10, inner-ring `ringHP` 0.1, outer-ring `outerHP` 0.55 and `outerShield` 0.35,
-  `aiThreshold` 1500, `aiRest` 8). Ground zero is erased, ring 1 is catastrophic, ring 2 is a weaker blast fringe.
+  inner-ring `ringHP` 0.1, outer-ring `outerHP` 0.55 and `outerShield` 0.35,
+  `aiThreshold` 1500). Ground zero is erased, ring 1 is catastrophic, ring 2 is a weaker blast fringe.
   The Eliminator protection radius is 3 on the high-resolution world.
 - Access: F.L.E.I.J.A. is conquest-only and has no HQ node. Research Lab III unlocks on turn 15 for every major power;
   `hasFleija(g, side)` uses that same universal turn gate, while `projectReason` still requires Lab III in the city.
 - State: `s.project = { side, started, ready }` on a city; `g.arsenal[side]` warheads; `g.launched[side]` the turn
-  of the last launch; `g.fleijaDetonated` unlocks countermeasures after the first successful blast;
+  of the last launch; `g.fleijaDetonated` is the turn of the first successful blast
+  (`true` in older saves) and `eliminatorTurn(g)` = that + `ELIMINATOR.research` (3);
   `s.eliminatorProject = { side, started, ready }` and `s.eliminator = 1` hold the defensive project/charge;
-  `s.devastated` / mine `d.devastated` = the turn output resumes; `g.launches` (this AI turn's strikes, played
+  `s.devastated` / mine `d.devastated` only survive in saves from the older ruin rules; `g.launches` (this AI turn's strikes, played
   by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
 - Rules: `projectReason`/`startProject` (logs the INTELLIGENCE line), `cityBusyReason` blocks units and buildings in
   a city with a project or in ruins, `strategicTurn` (called from `beginTurn`) completes warheads and keeps ruins at
   0 defenses, `dropProject` on capture, ruin or surrender (`annexStrategic` also empties the loser's arsenal).
-  `launchReason`/`launch(g, side, c, r)`: one a turn, from any owned city (the nearest is the visual origin).
-  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, city `ruin(…, Infinity)` +
-  10 turns devastated (owner unchanged), mine refinery 0, crater. Ring: units to 10% and their morale floor; cities
+  `launchReason`/`launch(g, side, c, r)`: no limit a turn, from any owned city (the nearest is the visual origin).
+  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, a city removed from
+  `g.stations` for good (`destroyCity`: project, Eliminator and automation entry dropped; its deposit too), a deposit
+  removed from `g.sites` (`destroyDeposit`; the result lists them in `depleted`), a permanent crater. A rival whose
+  last city was erased surrenders to the launcher. Ring: units to 10% and their morale floor; cities
   `ruin(…, 1)` (defenses 0, one level off each building and the output it added, never below founding values from
   `CITY_DATA`). A factory at level 0 is rebuilt for 110 credits / 25 industry.
-- F.L.E.I.J.A. Eliminator: `ELIMINATOR` is conquest-only and unlocks only after the first successful F.L.E.I.J.A.
-  detonation. A level-3 lab builds one charge per power for 1,200 credits / 300 industry / 250 research /
-  100 Sakuradite over 3 turns. The completed charge is tied to its city and automatically intercepts one enemy
+- F.L.E.I.J.A. Eliminator: `ELIMINATOR` is conquest-only. The first successful F.L.E.I.J.A. detonation starts its
+  research for every power; it becomes buildable `research` (3) turns later, announced by `strategicTurn`. A level-3 lab builds a charge for 1,200 credits / 300 industry / 250 research /
+  60 Sakuradite over 3 turns; a power holds at most `ELIMINATOR.max` (3) charges, ready or under construction, one
+  per city (`sideEliminators`). The completed charge is tied to its city and automatically intercepts one enemy
   warhead targeted within range 2; the attacking warhead and defensive charge are both consumed and no blast occurs.
   Capture, surrender or F.L.E.I.J.A. ruin destroys the project/charge. `eliminatorReason`, `startEliminator`,
   `eliminatorDefender` and `dropEliminator` implement it.
-- AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ruins score 0;
-  projects +2000; a live capital +1500 only with the launcher's capturing units within 4 hexes), skips any blast
-  touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches; step 2b starts one warhead
-  at a time in `fleijaCity` (best lab, then farthest from the enemy) once it holds the Sakuradite or earns 15+ a
-  turn, saving credits/industry when ready and waiting `aiRest` turns after a launch; step 3 begins preparing that
-  city's lab five turns before turn 15, but Lab III itself cannot be built before turn 15. After the first blast,
-  AI powers prioritize one Eliminator charge and reserve its Sakuradite before resuming warhead production.
+- AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ground zero adds
+  the city's output, +3000 if it is its owner's last city; ruins score 0; projects +2000; a live capital in the inner
+  ring +1500 only with the launcher's capturing units within 4 hexes), a rival deposit at ground zero 25 × its base,
+  skips any blast touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches every ready
+  warhead. Step 2b: once Eliminators are available, it starts every charge it can afford up to the cap in
+  `eliminatorCity` (a free lab-3 city outside its other charges' cover, capital first, then the richest) and saves for
+  the next one before anything else; with no such city, step 3 raises a lab in `eliminatorCity(g, side, true)` first.
+  Step 2c starts one warhead at a time in `fleijaCity` (best lab, then farthest from the enemy) once it holds the
+  Sakuradite or earns 15+ a turn, with no wait after a launch, saving credits/industry when ready; step 3 begins
+  preparing that city's lab five turns before turn 15, but Lab III itself cannot be built before turn 15.
   `aiLaunchTarget` prefers unprotected targets but will spend a warhead to burn an Eliminator protecting a target
   worth at least 1.5× the normal threshold. Rival strategic projects seed `goalField` at −8 (above capitals), attacks on them score
   +120 and a power guards its own project city like its capital.
@@ -267,6 +295,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Unlocked and levelled (1–5) in HQ with fragments: a Conquest victory pays the winner's Elite Forces, and a first
   campaign clear at each difficulty pays the mission side's. Signature abilities at Lv.3 and Lv.5; each deploys once
   per Conquest operation from the factory's Elite Forces tab. `applyElites` applies HQ levels to your own units only.
+  `elitePrice` adds Sakuradite by rarity (`SAKURADITE.elite`: Rare 5, Epic 10, Legendary 15), independent of level.
   The E.U. and Federation elites reuse existing Alexander, Shen Hu, Chuyen, Guren and Zikisan sprites.
 
 ### Campaign
@@ -276,7 +305,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   rocket artillery, Shen Hu, V.V.'s Siegfried, and Euro Britannia's Vercingetorix (Shin), Ahura Mazda (Ashley) and
   Canterbury siege gun.
 - Campaign-only side `eb` (Euro Britannia, doctrine Knightly Orders: units led by a commander deal +10% damage), with
-  `LINEUPS.eb` (Britannia's 2017 frames plus the Canterbury). Like `bk` and `jlf` it never appears in Conquest. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
+  `LINEUPS.eb` (Britannia's 2017 frames plus the Canterbury; three artillery frames: Liverpool, Sutherland Air, Canterbury). Like `bk` and `jlf` it never appears in Conquest. The 2010 Japanese battle tank is deliberately far weaker than even a Glasgow
   (120 HP / 28 attack / 7 armor / 2 move); Tohdoh's three-tank commander formation is the conventional force that can
   still contest a Knightmare unit. Named aces in missions are Elite Force frames at Elite level 3. `LINEUPS` gives the
   two new sides factory lineups; missions can override lineups (`g.lineup`) or restrict builds (`g.buildable`).
@@ -406,10 +435,12 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   - Carriers carry only formations whose fronts head for the same landmass; idle ones wait off the best overseas
     rally city.
   - Tunables are in `FRONT` (exported); `aiPlan`, `unitStrength` and `FRONT` are exported for tests.
-- `aiProduction`: batteries, repairs, saving for super-heavies, one building upgrade, reinforcements, then
-  production up to a soft cap of 14 + 0.9 × cities units. Factories serving the front furthest below its need build
-  first, and put what that front asks for (`frontNeeds`: by the enemy's and its own composition) at the top of their
-  menu. Sakuradite held back for a project only blocks purchases that spend Sakuradite.
+- `aiProduction`: batteries, repairs, saving for super-heavies (then the largest super-heavy formation affordable),
+  one building upgrade, reinforcements, then production with no army cap; the treasury is the limit. Factories
+  serving the front furthest below its need build first, and put what that front asks for (`frontNeeds`: by the
+  enemy's and its own composition) at the top of their menu. Each factory builds a 3- or 2-frame formation of the
+  first menu frame it can afford that way; a lone frame is built only when no factory can afford any formation that
+  turn (otherwise the money is saved). Sakuradite held back for a project only blocks purchases that spend Sakuradite.
 - `aiOrder`: moves along the unit's front field, scores attacks, and otherwise embarks only in convoys.
 - In 25-turn all-AI simulations the Federation now survives to turn 25 in 11 of 12 games (it was always eliminated
   before); the E.U. still leads. Balance is first-pass.
@@ -418,8 +449,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 ## 5. Working with the owner
 
 - Treat the owner as the commander: carry out requests fully and report plainly what changed.
-- **Do not run tests or browser checks unless the owner asks.** Keep the test files consistent with rule changes
-  anyway, since the owner may ask for a test run.
+- **Do not run tests or browser checks unless the owner asks.** Keep `core.test.cjs` and `ui-smoke.cjs` passing when
+  rules change, since the owner may ask for a test run and deploys depend on them.
 - Commit each completed request (push once a remote exists; deploys happen from `main`).
 - Terminology: say **commanders** and **Knightmares / units**, not admirals or fleets. Britannia is the default side.
 - Keep explanations short and concrete; tables are welcome for lists of changes.

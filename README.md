@@ -10,9 +10,10 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan) and
   Pacific bases; the E.U. holds Europe, Russia, Siberia and Africa; the Federation holds Asia from
   Tehran to Taipei. Australia and the Middle Eastern Federation are neutral and defend themselves.
-- **WC4 surrender rule:** when a power's capital falls (Pendragon, Paris, Luoyang) it surrenders: its cities pass to
-  the conqueror and its armies disband. Take every rival capital to win, or hold the most cities at the 120-turn
-  armistice. Lose your capital and the war is lost.
+- **Surrender at zero cities:** a power surrenders only when it has lost every city; its armies disband and its mines
+  and half its stockpiles pass to the conqueror. A capital (Pendragon, Paris, Luoyang) is its richest city, not a
+  knockout. Defeat every rival to win, or hold the most cities at the 120-turn armistice. Lose your last city and the
+  war is lost.
 - **Knightmares only, in three branches** (WC4's infantry, tanks and artillery), ten per power:
   | Branch | Class | Britannia | E.U. | Federation |
   |---|---|---|---|---|
@@ -30,23 +31,31 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   configuration (Close-Combat, Elite, Rocket, Missile, Heavy Weapons, Gun Battery) are the game's loadouts of a wiki
   frame. The Middle Eastern Federation garrisons field the Bamides.
 - **Doctrines:** Britannian Armor +8% damage; E.U. Artillery +10% damage; Federation Infantry 15% cheaper.
-- **Sakuradite, the fourth resource:** mined at six deposits. Japan holds 70 of the world's 100 base output, as in
-  the lore: the great mine on **Mount Fuji** (40 a turn, its own hex beside Tokyo), Hokkaido and Kyushu (15 each,
-  worked from Sapporo and Fukuoka); Stonehenge (worked from London), the Rocky Mountains and the Qaidam Basin yield
-  10. A refinery extracts 25% / 50% / 75% / 100% (+15 credits) of a deposit at levels 0–3. Mainline, raider and
-  rocket frames cost 5 Sakuradite a frame, heavy and siege 10, super-heavy 25; tier-I frames need none. Mines have no
-  defenses: Infantry or Armor seize one by moving onto it. Every power starts with 50. (First-pass numbers.)
+- **Sakuradite, the fourth resource:** mined at six deposits. Japan holds 70 of the world's 120 base output: the
+  great mine on **Mount Fuji** (40 a turn, its own hex beside Tokyo), Hokkaido and Kyushu (15 each, worked from
+  Sapporo and Fukuoka). Stonehenge (worked from London) and the Qaidam Basin yield 20 and start with a level-1
+  refinery; the Rocky Mountains yield 10. As in the lore, Japan's output is allocated internationally: the power
+  controlling a Japanese deposit keeps 60% of what it extracts and every other surviving major power receives 20%
+  (a surrendered power's share stays with the controller). Every surviving major power also draws 5 a turn of its
+  own, tied to no deposit. Opening income is about 25 Britannia / 21 E.U. / 21 Federation. A refinery extracts 25% / 50% / 75% / 100% (+15 credits) of a deposit at levels 0–3. Per frame:
+  raider 2, mainline and rocket 3, heavy 5, siege 8, super-heavy 10; Type II amphibious 3, Carrier-Battleship 15;
+  basic frames need none. Elite Forces cost 5 / 10 / 15 by rarity (Rare / Epic / Legendary), whatever their level.
+  Mines have no defenses: Infantry or Armor seize one by moving onto it. Every power starts with 100. (Balance
+  values, not canon quantities.)
 - **F.L.E.I.J.A., the superweapon:** conquest-only rather than permanent HQ research. Research Lab III unlocks for
   every major power on turn 15; a city with a level-3 lab can then build a warhead for 1,800 credits, 450 industry,
   300 research and 150 Sakuradite over 4 turns, building nothing else meanwhile. Every power
   is alerted ("INTELLIGENCE: Strategic weapons research detected in …") and the AI goes for that city; capturing it
-  ends the project. Launch from the arsenal button at any hex, once a turn: a full-screen warning, a white-pink
-  flash and an expanding sphere. Ground zero: every unit erased, a city devastated for 10 turns (no defenses,
-  buildings back to level 0, no output), the land turned into a crater. The ring: units left at 10% with collapsed
+  ends the project. Launch from the arsenal button at any hex, as many warheads a turn as you hold: a full-screen
+  warning, a white-pink flash and an expanding sphere. Ground zero: every unit erased, a city there destroyed for
+  good (a power that loses its last city this way surrenders to the launcher), a Sakuradite deposit there never
+  produces again, and the land turned into a permanent crater. The ring: units left at 10% with collapsed
   morale; cities lose their defenses and a level of every building. On the world map the blast is the target hex
-  plus one ring (a hex is ~330 km). After the first successful detonation, a level-3 lab can build one
-  **F.L.E.I.J.A. Eliminator** charge per power for 1,200 credits, 300 industry, 250 research and 100 Sakuradite over
-  3 turns. The charge is tied to that city, protects targets within 2 hexes and automatically neutralizes one
+  plus two rings. The first successful detonation starts Eliminator research for every power; 3 turns later a
+  level-3 lab can build a **F.L.E.I.J.A. Eliminator** charge for 1,200 credits, 300 industry, 250 research and
+  60 Sakuradite over 3 turns; a power may hold up to three at once (ready or under construction), one per city. The
+  AI builds them before anything else as soon as it can, and starts a new warhead as soon as it has fired the last.
+  Each charge is tied to its city, protects targets within 2 hexes and automatically neutralizes one
   incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
 - **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
@@ -70,8 +79,11 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   frame, and all automated orders use the same legality checks as manual ones.
 - **Commanders (WC4 generals):** 58 named commanders (22 Britannian, 11 E.U., 10 Federation, 14 Black Knights and JLF
   who lead Federation units in Conquest, and the campaign-only Emperor Lelouch), each with one signature ability:
-  Suzaku's *Live On*, Cornelia's *Witch of Britannia*, Bismarck's *Excalibur*, Julius Kingsley's *Geass Command*,
-  Leila's *wZERO Feint*, Akito's *Brain Raid*, Li Xingke's *Divine Tiger*, Zhou Xianglin's *Stratagem* and more.
+  Permanent combat modifiers are visible separately under **Base stats**. Cornelia's speed comes from Mobility 6,
+  while *Witch of Britannia* inspires adjacent allies after a kill. Bismarck anticipates the first attack each round;
+  Julius designates targets, Leila enables coordinated withdrawals, Jeremiah cancels morale disruption and Rolo
+  prevents counter-fire at an HP cost. Support, formation, pursuit, duel and siege skills give commanders distinct roles.
+  See [the full commander rework](docs/COMMANDER_REWORK.md) for the 58-commander roster and exact starting values.
   Operation commanders are fixed; your own commanders are recruited with command tokens, promoted through eleven ranks
   (frame 112%–160%), given branch stars (up to 6) and medals.
 - **HQ research with command tokens:** 40 technologies in six trees (Infantry, Armor, Artillery, Sakuradite, Naval,
@@ -110,17 +122,17 @@ Everything ships from `dist/` as plain scripts that `index.html` loads in order;
 
 ## Tests (optional)
 
-With Node.js 22:
+The repository keeps only a small YAGNI-focused safety net: core engine/campaign integrity, one UI smoke path, and validation of the public assets that actually deploy.
 
 ```sh
-node --test tests/*.test.cjs
+node --test tests/core.test.cjs
 node tests/ui-smoke.cjs
 node tools/validate_assets.cjs --tracked
 ```
 
 ## Publish artwork
 
-The live game ships 68 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
+The live game ships 70 finished Knightmare sprites (Conquest, Elite Forces, campaign and naval frames) and
 58 commander portraits. Credits and source provenance are in `ASSETS.md`
 and `dist/assets/art/sources.json`. To update the artwork from local raw inputs or a processed bundle:
 
