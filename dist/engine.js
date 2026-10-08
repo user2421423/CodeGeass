@@ -631,8 +631,8 @@
     (profile.research ||= {})[id] = l + 1;
     return { ok: true, level: l + 1 };
   }
-  // Command tokens are paid only for the first victory at each difficulty (Hard ×1.5, Challenge ×2); the first
-  // victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
+  // Command tokens are paid only for the first victory with each faction at each difficulty (Hard ×1.5,
+  // Challenge ×2); the first victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
   const TOKEN_REWARD = { victory: 250, conquest: 150, first: 150, research: 5, researchCap: 300 };
   function operationKey(g) {
     return `conquest:${g.era || 'world'}:${g.player || 'britannia'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
