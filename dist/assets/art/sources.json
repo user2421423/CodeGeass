@@ -868,6 +868,12 @@
       "mine": {
         "original_sha256": "3982906a81932a03348521da9d55c9243090da81ae11d4b7fa9a9b27f9b99faf",
         "processing": "trimmed transparent margin, resized to 512 px, WebP q88"
+      },
+      "port_coastal": {
+        "source": "Original detailed isometric harbor artwork generated for the user in this conversation and prepared as a cropped coastal facility",
+        "processing": "Removed enclosed foreground sea walls and ocean; feathered lower silhouette, resampled to 144×97 transparent WebP q45, keeps warehouses, command buildings, cranes and piers",
+        "purpose": "Coast-aligned map artwork; original full detailed port asset remains published for information panels",
+        "processed_sha256": "055d6c7d2dcb2e5fb76699e6af15cd1746bf41c6171c059a258a0fa96d09a9e3"
       }
     }
   }

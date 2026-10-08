@@ -27,7 +27,7 @@ const env = {};
 vm.runInNewContext(fs.readFileSync(path.join(dist, 'assets/art/manifest.js'), 'utf8'), env);
 assert.equal(JSON.stringify(env.KnightmareArtManifest), JSON.stringify(manifest), 'JSON and startup art manifests differ');
 assert.equal(manifest.base, 'assets/art/');
-for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS], ['buildings', { city: 1, port: 1, mine: 1 }]]) {
+for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS], ['buildings', { city: 1, port: 1, port_coastal: 1, mine: 1 }]]) {
   assert(manifest[kind] && typeof manifest[kind] === 'object');
   for (const [id, entry] of Object.entries(manifest[kind])) {
     assert(Object.hasOwn(known, id), `Unknown ${kind} id: ${id}`);

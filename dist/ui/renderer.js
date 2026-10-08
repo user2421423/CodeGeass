@@ -597,102 +597,28 @@ function drawFlash(x, y, radius, color, alpha) {
 // Map-sized harbor graphics are separate from the full port picture shown in panels.
 // The pier follows the actual coast; the compact facility is offset from the ship's
 // sea hex so its silhouette remains recognizable with a fleet docked there.
-function drawPortPier(p, x) {
-  const sx = x + p.ux * R * 0.18,
-    sy = p.sea.y + p.uy * R * 0.18,
-    ex = x + (p.shoreX - p.sea.x) - p.ux * R * 0.48,
-    ey = p.shoreY - p.uy * R * 0.48,
-    tx = -p.uy, ty = p.ux,
-    dx = p.ux * R * 0.18, dy = p.uy * R * 0.18;
+// Coastal docks use the published isometric image, not a cartoon Canvas tower.
+// Small causeways connect that shore image with its owning city even across the world seam.
+function drawPortCauseway(p, x) {
+  const seaX = x + p.ux * R * 0.42,
+    seaY = p.sea.y + p.uy * R * 0.42,
+    landX = x + (p.shoreX - p.sea.x) - p.ux * R * 0.44,
+    landY = p.shoreY - p.uy * R * 0.44;
   ctx.save();
   ctx.lineCap = 'butt';
   ctx.beginPath();
-  ctx.moveTo(sx, sy);
-  ctx.lineTo(ex, ey);
-  ctx.strokeStyle = '#0b2535';
-  ctx.lineWidth = 17;
-  ctx.stroke();
-  ctx.strokeStyle = '#879baa';
+  ctx.moveTo(seaX, seaY);
+  ctx.lineTo(landX, landY);
+  ctx.strokeStyle = '#203849';
   ctx.lineWidth = 11;
   ctx.stroke();
-  ctx.strokeStyle = '#c8b17a';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#aeb9b9';
+  ctx.lineWidth = 7;
   ctx.stroke();
-  // The short cross-pier is unmistakably a berth rather than another road.
-  const bx = sx + dx, by = sy + dy;
-  ctx.beginPath();
-  ctx.moveTo(bx - tx * R * 0.3, by - ty * R * 0.3);
-  ctx.lineTo(bx + tx * R * 0.3, by + ty * R * 0.3);
-  ctx.strokeStyle = '#142c3a';
-  ctx.lineWidth = 13;
-  ctx.stroke();
-  ctx.strokeStyle = '#a8b5b6';
-  ctx.lineWidth = 8;
-  ctx.stroke();
-  ctx.strokeStyle = '#e1c67f';
-  ctx.lineWidth = 1.3;
+  ctx.strokeStyle = '#e7c780';
+  ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
-}
-function drawPortFacility(p, x, scale) {
-  const tx = -p.uy, ty = p.ux,
-    fx = x + p.ux * R * 0.62 + tx * R * 0.37,
-    fy = p.sea.y + p.uy * R * 0.62 + ty * R * 0.37;
-  ctx.save();
-  // Keep the city core, its health bar and label legible.
-  const cityX = x + p.shoreX - p.sea.x;
-  ctx.beginPath();
-  ctx.rect(x - R * 2.3, p.sea.y - R * 2.3, R * 4.6, R * 4.6);
-  ctx.arc(cityX, p.shoreY - 6, R * 0.78, 0, Math.PI * 2);
-  ctx.clip('evenodd');
-  ctx.translate(fx, fy);
-  // Faceted waterside foundations and an angular warehouse.
-  ctx.fillStyle = '#102a3b';
-  ctx.beginPath();
-  ctx.ellipse(0, 11, 24, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(-23, 3); ctx.lineTo(-8, -5); ctx.lineTo(24, 1);
-  ctx.lineTo(10, 13); ctx.lineTo(-23, 10); ctx.closePath();
-  ctx.fillStyle = '#6f8592'; ctx.fill();
-  ctx.strokeStyle = '#e0bb68'; ctx.lineWidth = 1.5; ctx.stroke();
-  // Wide low dockside hangar: distinctly industrial, not another city.
-  ctx.fillStyle = '#b9c6c9';
-  ctx.fillRect(-19, -10, 25, 13);
-  ctx.fillStyle = '#233e55';
-  ctx.beginPath(); ctx.moveTo(-21, -10); ctx.lineTo(-14, -16);
-  ctx.lineTo(7, -16); ctx.lineTo(10, -10); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#d9bf80'; ctx.lineWidth = 1.3; ctx.stroke();
-  for (let i = 0; i < 3; i++) {
-    ctx.fillStyle = '#294b61';
-    ctx.fillRect(-15 + i * 8, -5, 5, 6);
-  }
-  // Command tower, elevated above the city-facing dock.
-  ctx.fillStyle = '#e0d8bf';
-  ctx.beginPath();
-  ctx.moveTo(7, 1); ctx.lineTo(7, -28); ctx.lineTo(21, -30);
-  ctx.lineTo(24, 1); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#3b5868'; ctx.lineWidth = 1.3; ctx.stroke();
-  ctx.fillStyle = '#21384d'; ctx.fillRect(6, -30, 18, 6);
-  ctx.fillStyle = '#69c5e4'; ctx.fillRect(9, -29, 12, 3);
-  ctx.fillStyle = '#d7b86c'; ctx.fillRect(19, -23, 2, 23);
-  ctx.beginPath(); ctx.moveTo(15, -31); ctx.lineTo(15, -41);
-  ctx.strokeStyle = '#d2b66e'; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = F(p.s.portOwner || p.s.owner).color;
-  ctx.fillRect(16, -39, 10, 6);
-  // Gantry crane and hanging hook on the opposite edge.
-  ctx.strokeStyle = '#e0bc72'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.moveTo(-20, -12); ctx.lineTo(-20, -29);
-  ctx.lineTo(2, -29); ctx.stroke();
-  ctx.lineWidth = 1.3; ctx.beginPath();
-  ctx.moveTo(-2, -29); ctx.lineTo(-2, -21); ctx.stroke();
-  ctx.fillStyle = '#e1bd70'; ctx.fillRect(-5, -21, 6, 3);
-  ctx.restore();
-  // Place owner and port-tier markers beside the shore structure, off the ship token.
-  for (let i = 0; i < p.s.portLevel; i++) {
-    ctx.fillStyle = '#e3c97f';
-    ctx.fillRect(fx - 5 + i * 5, fy + 15, 3, 3);
-  }
 }
 // Every copy of world x between left and right (the world map wraps east to west; a campaign battlefield does not).
 function copiesBetween(x, left, right) {
@@ -886,20 +812,34 @@ function draw(time, dt) {
             ? selection
             : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
-  // Harbor piers follow the shortest coastward direction on wrapping maps.
+  // Ports are drawn as shore-side additions rather than miniature offshore islands.
+  // The orientation is computed from the city to its port, preserving world wrapping.
   const portVisuals = game.stations.filter(s => s.portLevel && s.portAt).map(s => {
     const sea = hexCenter(s.portAt),
       shore = hexCenter(s),
       shoreX = wrapNear(shore.x, sea.x),
       dx = shoreX - sea.x,
       dy = shore.y - sea.y,
-      dist = Math.hypot(dx, dy) || 1;
-    return { s, sea, shoreX, shoreY: shore.y, ux: dx / dist, uy: dy / dist };
+      distance = Math.hypot(dx, dy) || 1,
+      ux = dx / distance,
+      uy = dy / distance,
+      // Prefer the upper (screen-far) side of the coastline to leave room for
+      // the ship token, health ring and city labels on the lower side.
+      side = ux >= 0 ? -1 : 1,
+      px = sea.x + ux * R * 0.46 - uy * side * R * 0.55,
+      py = sea.y + uy * R * 0.46 + ux * side * R * 0.55;
+    return { s, sea, shoreX, shoreY: shore.y, ux, uy, px, py };
   }).filter(p => visible(p.sea));
-  // Draw only slim physical piers under units; never a full harbor illustration under ship rings.
   for (const p of portVisuals) for (const x of copies(p.sea.x)) {
-    if (detail) drawPortPier(p, x);
-    else outlinedText('⚓', x, p.sea.y + 6, 12, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
+    if (!detail) {
+      outlinedText('⚓', x, p.sea.y + 5, 12, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
+      continue;
+    }
+    drawPortCauseway(p, x);
+    // Draw in the scenery layer so the neighboring city and every naval unit
+    // retain their complete silhouettes and selectable health rings.
+    const drawn = ART.drawBuilding(ctx, 'port_coastal', x + p.px - p.sea.x, p.py - 4, R * 2.15);
+    if (!drawn) outlinedText('⚓', x, p.sea.y + 6, 17, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
   }
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
@@ -1011,10 +951,6 @@ function draw(time, dt) {
       ctx.restore();
     }
   }
-  // Compact port command facilities are drawn beside the coastline after cities.
-  // Unit tokens render afterward, so neither ships nor their health rings are hidden.
-  if (detail) for (const p of portVisuals) for (const x of copies(p.sea.x))
-    drawPortFacility(p, x, scale);
   // Sakuradite: mines on their own hex, and a small crystal on cities that work a deposit.
   for (const d of game.sites || []) {
     const c = hexCenter(d);

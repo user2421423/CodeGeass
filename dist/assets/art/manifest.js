@@ -398,6 +398,9 @@ globalThis.KnightmareArtManifest = {
     },
     "mine": {
       "src": "buildings/mine-522f3d1c7736.webp"
+    },
+    "port_coastal": {
+      "src": "buildings/port-coastal-055d6c7d2dcb.webp"
     }
   }
 };
