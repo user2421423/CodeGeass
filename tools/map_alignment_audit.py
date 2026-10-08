@@ -129,10 +129,18 @@ for s in state['stations']:
     if offset>43*.72:
         raise RuntimeError(f'City {s["name"]} art moved too far from gameplay tile: {offset:.1f}')
 port_issues=[s['name'] for s in state['stations'] if s.get('portAt') and is_visual_land(s['portAt']['c'],s['portAt']['r'])]
+port_anchor_match=re.search(r'PORT_SHORE_ANCHORS = Object\.freeze\(\{ Barcelona: \[([-\d.]+),\s*([-\d.]+)\]',view_src)
+if port_anchor_match is None or set(port_issues)!={'Barcelona'}:
+    raise RuntimeError(f'Unexpected displaced port or missing visual anchor: {port_issues}')
+port_lon,port_lat=map(float,port_anchor_match.groups())
+port_point=Point(port_lon,port_lat)
+if any(land[int(i)].covers(port_point) for i in land_tree.query(port_point)) and not any(
+        water[int(i)].covers(port_point) for i in water_tree.query(port_point)):
+    raise RuntimeError('Barcelona harbour graphic is not over visual sea')
 report={'summary':{'hexes':len(state['tiles']),'high_confidence_mismatches':len(proposals),
         'needs_review':sum(p['needs_review'] for p in proposals),
         'region_counts':dict(Counter(p['region'] for p in proposals)),
-        'city_visual_water':len(city_issues),'city_visual_anchors_on_land':len(city_anchors),'port_visual_land':len(port_issues)},
+        'city_visual_water':len(city_issues),'city_visual_anchors_on_land':len(city_anchors),'port_visual_land':len(port_issues),'port_visual_anchor_on_water':True},
         'city_centres_on_visual_water':city_issues, 'port_centres_on_visual_land':port_issues,
         'proposals':proposals,'approved_for_gameplay_edit':False}
 out=ROOT/'docs/map-alignment-review.json'
