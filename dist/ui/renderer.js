@@ -660,39 +660,62 @@ function mapLayer(scale, detail, dpr, w, h) {
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
-  // Terrain and territory.
-  for (const t of game.tiles) {
-    const c = hexCenter(t);
-    if (!visible(c)) continue;
-    const meta = metaFor(t);
-    for (const x of copies(c.x)) {
-      hexPath(x, c.y, R + 0.5);
-      ctx.fillStyle = t.terrain === 'sea' && meta.coast ? '#1f5c80' : TERRAIN_FILL[t.terrain];
-      ctx.fill();
-      if (meta.tint && t.terrain !== 'sea') {
-        ctx.fillStyle = meta.tint > 0 ? `rgba(255,255,255,${meta.tint})` : `rgba(0,0,0,${-meta.tint})`;
+  // Geography is a continuous visual atlas. Hexes remain the *logical* map;
+  // they are not used as filled polygon art unless the device lacks ImageData.
+  const atlas = GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
+  if (!atlas) {
+    for (const t of game.tiles) {
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R + 0.5);
+        ctx.fillStyle = TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
-      }
-      if (t.owner && t.terrain !== 'sea') {
-        ctx.fillStyle = F(t.owner).color + '78';
-        ctx.fill();
-      }
-      if (detail) {
-        ctx.strokeStyle = t.terrain === 'sea' ? '#ffffff08' : '#00000018';
-        ctx.lineWidth = 0.6 / scale;
-        ctx.stroke();
-        terrainProps(t, x, c.y, scale);
+        if (t.owner && t.terrain !== 'sea') {
+          ctx.fillStyle = F(t.owner).color + '30';
+          ctx.fill();
+        }
       }
     }
   }
-  // Coastlines and territorial borders.
+  // A faint tactical grid is a separate *overlay*, not the map's terrain.
+  // At distant zoom levels the grid vanishes altogether; selection and
+  // movement/attack ranges continue to use their original vivid hex outlines.
+  if (detail) {
+    const strength = Math.min(0.14, Math.max(0.035, (R * scale - 12) / 260));
+    ctx.lineWidth = 0.58 / scale;
+    for (const t of game.tiles) {
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      ctx.strokeStyle =
+        t.terrain === 'sea'
+          ? `rgba(224,240,248,${(strength * 0.42).toFixed(3)})`
+          : `rgba(20,33,34,${strength.toFixed(3)})`;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R - 0.65);
+        ctx.stroke();
+      }
+    }
+    // Small icons read as relief on a real atlas rather than stamped hex fills.
+    if (R * scale >= 24)
+      for (const t of game.tiles) {
+        if (t.terrain === 'plains') continue;
+        const c = hexCenter(t);
+        if (!visible(c)) continue;
+        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : 0.43;
+        for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
+      }
+    ctx.globalAlpha = 1;
+  }
+  // Political borders are tactical information and still align to tile
+  // ownership. Coastlines are already smoothed by the visual atlas; drawing
+  // the old edge-by-edge hex coastline here would reintroduce the mosaic.
   for (const t of game.tiles) {
     if (t.terrain === 'sea') continue;
     const c = hexCenter(t);
     if (!visible(c)) continue;
     for (const n of metaFor(t).adj) {
-      const coast = n.terrain === 'sea';
-      if (!coast && n.owner === t.owner) continue;
+      if (n.terrain === 'sea' || n.owner === t.owner) continue;
       const q = hexCenter(n),
         qx = wrapNear(q.x, c.x),
         angle = Math.atan2(q.y - c.y, qx - c.x),
@@ -705,8 +728,8 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
           c.y + R * Math.sin(a),
           x + R * Math.cos(b),
           c.y + R * Math.sin(b),
-          coast ? '#e8f4f866' : t.owner ? F(t.owner).color + 'cc' : '#ffffff40',
-          (coast ? 1.4 : 2.4) / Math.max(scale, 0.35),
+          t.owner ? F(t.owner).color + '77' : '#ffffff35',
+          1.2 / Math.max(scale, 0.35),
         );
     }
   }
