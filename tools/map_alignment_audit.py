@@ -106,11 +106,33 @@ def is_visual_land(c,r):
     p=Point(*bm.center(c,r))
     return any(land[int(i)].covers(p) for i in land_tree.query(p)) and not any(water[int(i)].covers(p) for i in water_tree.query(p))
 city_issues=[s['name'] for s in state['stations'] if not is_visual_land(s['c'],s['r'])]
+# Render-time city offsets must cover the actual flagged set, lie ON GIS land,
+# and remain close enough to their original logical hex to select safely.
+import re
+view_src=(ROOT/'dist/ui/view.js').read_text()
+anchor_match=re.search(r'const CITY_SHORE_ANCHORS = Object.freeze\\((\\{.*?\\})\\);',view_src,re.S)
+if anchor_match is None:
+    raise RuntimeError('City visual shoreline anchor table missing')
+city_anchors=json.loads(anchor_match.group(1))
+if set(city_anchors)!=set(city_issues):
+    raise RuntimeError(f'Incorrect shoreline anchor cities: missing={set(city_issues)-set(city_anchors)}, extra={set(city_anchors)-set(city_issues)}')
+for s in state['stations']:
+    coords=city_anchors.get(s['name'])
+    if coords is None:continue
+    lon,lat=coords
+    point=Point(lon,lat)
+    if not (any(land[int(i)].covers(point) for i in land_tree.query(point))
+          and not any(water[int(i)].covers(point) for i in water_tree.query(point))):
+        raise RuntimeError(f'City {s["name"]} visual anchor is not geographic land: {coords}')
+    old_lon,old_lat=bm.center(s['c'],s['r'])
+    offset=((lon-old_lon)**2*(43*3**.5/2)**2+(lat-old_lat)**2*(43*1.5*75/128)**2)**.5
+    if offset>43*.72:
+        raise RuntimeError(f'City {s["name"]} art moved too far from gameplay tile: {offset:.1f}')
 port_issues=[s['name'] for s in state['stations'] if s.get('portAt') and is_visual_land(s['portAt']['c'],s['portAt']['r'])]
 report={'summary':{'hexes':len(state['tiles']),'high_confidence_mismatches':len(proposals),
         'needs_review':sum(p['needs_review'] for p in proposals),
         'region_counts':dict(Counter(p['region'] for p in proposals)),
-        'city_visual_water':len(city_issues),'port_visual_land':len(port_issues)},
+        'city_visual_water':len(city_issues),'city_visual_anchors_on_land':len(city_anchors),'port_visual_land':len(port_issues)},
         'city_centres_on_visual_water':city_issues, 'port_centres_on_visual_land':port_issues,
         'proposals':proposals,'approved_for_gameplay_edit':False}
 out=ROOT/'docs/map-alignment-review.json'
