@@ -390,13 +390,16 @@
   },
   "buildings": {
     "port": {
-      "src": "buildings/port-6eec63fdedb7.webp"
+      "src": "buildings/port-1200e80ad638.webp"
     },
     "city": {
       "src": "buildings/city-3cbbc4be12c8.webp"
     },
     "mine": {
       "src": "buildings/mine-522f3d1c7736.webp"
+    },
+    "port_coastal": {
+      "src": "buildings/port-coastal-055d6c7d2dcb.webp"
     }
   }
 }

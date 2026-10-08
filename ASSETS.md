@@ -1,15 +1,11 @@
 # Knightmare Conquest visual assets
 
-Every unit and commander has a drawn fallback in `dist/art.js`. Finished imported images can override these
-through the tracked `dist/assets/art/manifest.json` and its generated startup script:
+Every unit and commander displays its published image directly from `dist/assets/art/manifest.json`
+and its generated startup script. No procedural Knightmare or portrait substitutes are shown while images load:
 
-- **Knightmare Frames:** one parametric SVG rig (`SPECS`) with body plans (humanoid, giant, insect, dome, box, egg,
-  tank, tripod, fortress), heads, shoulders, weapons and back gear, painted per frame. Neutral garrisons are
-  repainted khaki.
-- **Cities:** city, capital and fortress icons per faction (fallback for the published city picture below).
-- **Commander portraits:** drawn busts (`LOOKS`: hair, eyes, uniform and accessories). They are original character
-  designs in each power's colors, not likenesses of the show's characters; the commander's name, rank and abilities
-  come from the engine.
+- **Knightmare Frames:** published sprites only; empty space until an image loads.
+- **Cities:** published city art, with faction-marked SVG icons as fallback.
+- **Commander portraits:** published portraits only; no generated substitute faces.
 - **Map:** terrain, territory, borders and the minimap are painted on the canvas each frame.
 - **Icons** (`dist/icons.js`) are inline SVG.
 
@@ -18,11 +14,8 @@ Unit, character and place names, roles and short lore notes follow the
 
 ## Published images
 
-The game ships **70 Knightmare sprites, 58 commander portraits and 3 building pictures** in `dist/assets/art/`.
-The building pictures (`buildings/city` for every city, `buildings/port` for every port, `buildings/mine` for every
-Sakuradite mine on its own hex, all used for all three powers; the owner shows in the map badge) were supplied by
-the owner on 2026-10-08 as transparent WebP files and only
-trimmed and resized to 512 px; their checksums are in `sources.json` under `buildings`. These include imagery
+The game ships **70 Knightmare sprites, 58 commander portraits and 4 published building pictures** in `dist/assets/art/`.
+The main city, port and Sakuradite mine images were supplied on 2026-10-08 and are shared across factions. A separate `port_coastal` image contains an isometric shore facility with warehouses, cranes and quays. It renders on the map beside coastal cities, replacing the simplistic procedural tower; the original port image remains available for information panels. City and mine images were trimmed and resized to 512 px; the upgraded port map icon is a separate, generated 128 px transparent WebP optimized for the small hex display. The previous port asset remains in the repository. Checksums and processing notes are in `sources.json` under `buildings`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
@@ -65,8 +58,8 @@ Run `python3 tools/publish_art.py` on the processed folder. It fully decodes ima
 IDs and finished `units/` or `portraits/` paths, preserves portrait focus, and copies only those files to
 `dist/assets/art/`. It writes matching JSON and JavaScript manifests. The game registers the public art before
 rendering menus, using relative URLs that work under `/CodeGeass/` and when opening `index.html` directly.
-On localhost, an optional local manifest can override individual public entries. Missing or failed images retain
-the drawings on the map and in menus.
+On localhost, an optional local manifest can override individual public entries. Missing or failed unit and
+commander images remain blank instead of showing generated art; city SVG fallback remains available.
 
 Before deployment, `node tools/validate_assets.cjs --tracked` checks the entrypoint, both manifests, image paths
 and signatures, known IDs, focus bounds, Git tracking, and exclusion of raw/local-only images. GitHub Actions runs
