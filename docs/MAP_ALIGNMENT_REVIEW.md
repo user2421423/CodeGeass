@@ -79,7 +79,7 @@ adjustment without changing unit movement.
   The 65 break down into 25 land gameplay hexes over visual water and
   40 sea gameplay hexes over visual land. None is automatically eligible
   under city, port, route, polar and ownership protections.
-- Results: `docs/map-alignment-review.json` (73 strong conflicts) and
+- Results: `docs/map-alignment-review.json` (65 strong conflicts) and
   `docs/map-coastline-centre-review.json` (475 centre differences);
   regenerate using `tools/map_alignment_audit.py` and
   `tools/audit_coastline_centres.py` respectively.
@@ -144,7 +144,7 @@ which intentionally has not moved.
 1. **Visual city alignments (23 corrected)** — inspect the committed art
    offsets at ordinary and close zoom for overlap/legibility. Gameplay hex
    centres remain fixed by design; no city data migration is required.
-2. **Owned gameplay land over geographic water (33 strong cases)** —
+2. **Owned gameplay land over geographic water (25 strong cases)** —
    inspect terrain, neighbouring navigation, unit placement and faction
    ownership individually before converting any tile.
 3. **Protected sea over geographic land (40 strong cases)** — improve visual
