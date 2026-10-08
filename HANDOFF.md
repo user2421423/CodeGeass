@@ -244,14 +244,17 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   of the last launch; `g.fleijaDetonated` is the turn of the first successful blast
   (`true` in older saves) and `eliminatorTurn(g)` = that + `ELIMINATOR.research` (3);
   `s.eliminatorProject = { side, started, ready }` and `s.eliminator = 1` hold the defensive project/charge;
-  `s.devastated` / mine `d.devastated` only survive in saves from the older ruin rules; `g.launches` (this AI turn's strikes, played
+  `g.ruins` lists the cities destroyed this conquest (`{ name, c, r, owner, capital, turn }`, drawn by the renderer and
+  described in the terrain panel); `g.launches` (this AI turn's strikes, played
   by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
 - Rules: `projectReason`/`startProject` (logs the INTELLIGENCE line), `cityBusyReason` blocks units and buildings in
-  a city with a project or in ruins, `strategicTurn` (called from `beginTurn`) completes warheads and keeps ruins at
-  0 defenses, `dropProject` on capture, ruin or surrender (`annexStrategic` also empties the loser's arsenal).
-  `launchReason`/`launch(g, side, c, r)`: no limit a turn, from any owned city (the nearest is the visual origin).
-  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, a city removed from
-  `g.stations` for good (`destroyCity`: project, Eliminator and automation entry dropped; its deposit too), a deposit
+  a city with a project, `strategicTurn` (called from `beginTurn`) completes warheads, `dropProject` on capture,
+  destruction or surrender (`annexStrategic` also empties the loser's arsenal).
+  `launchReason`/`launch(g, side, c, r)`: no limit a turn, from any owned city (the nearest is the visual origin);
+  a power cannot strike its own last city.
+  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, a city destroyed for
+  the rest of the conquest (`destroyCity`: it leaves `g.stations` and becomes an entry in `g.ruins`; project,
+  Eliminator and automation entry dropped; its deposit too), a deposit
   removed from `g.sites` (`destroyDeposit`; the result lists them in `depleted`), a permanent crater. A rival whose
   last city was erased surrenders to the launcher. Ring: units to 10% and their morale floor; cities
   `ruin(…, 1)` (defenses 0, one level off each building and the output it added, never below founding values from
@@ -264,7 +267,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Capture, surrender or F.L.E.I.J.A. ruin destroys the project/charge. `eliminatorReason`, `startEliminator`,
   `eliminatorDefender` and `dropEliminator` implement it.
 - AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ground zero adds
-  the city's output, +3000 if it is its owner's last city; ruins score 0; projects +2000; a live capital in the inner
+  the city's output, +3000 if it is its owner's last city; projects +2000; a live capital in the inner
   ring +1500 only with the launcher's capturing units within 4 hexes), a rival deposit at ground zero 25 × its base,
   skips any blast touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches every ready
   warhead. Step 2b: once Eliminators are available, it starts every charge it can afford up to the cap in

@@ -48,7 +48,8 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   is alerted ("INTELLIGENCE: Strategic weapons research detected in …") and the AI goes for that city; capturing it
   ends the project. Launch from the arsenal button at any hex, as many warheads a turn as you hold: a full-screen
   warning, a white-pink flash and an expanding sphere. Ground zero: every unit erased, a city there destroyed for
-  good (a power that loses its last city this way surrenders to the launcher), a Sakuradite deposit there never
+  the rest of the war, leaving only ruins on the map (a power that loses its last city this way surrenders to the
+  launcher; you cannot strike your own last city), a Sakuradite deposit there never
   produces again, and the land turned into a permanent crater. The ring: units left at 10% with collapsed
   morale; cities lose their defenses and a level of every building. On the world map the blast is the target hex
   plus two rings. The first successful detonation starts Eliminator research for every power; 3 turns later a

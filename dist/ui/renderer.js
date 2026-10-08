@@ -871,8 +871,25 @@ function draw(time, dt) {
           true,
         );
       }
-      if (E.devastated(game, s))
-        outlinedText(`RUINS · ${s.devastated - game.turn}`, 0, garrison ? 62 : 56, 9.5, '#ffb3d6', scale, 'Trebuchet MS', true);
+      ctx.restore();
+    }
+  }
+  // Cities destroyed by F.L.E.I.J.A.: a charred ring and the city's name for the rest of the conquest.
+  for (const ruin of game.ruins || []) {
+    const c = hexCenter(ruin);
+    if (!visible(c)) continue;
+    for (const x of copies(c.x)) {
+      ctx.save();
+      ctx.translate(x, c.y);
+      ctx.strokeStyle = 'rgba(255,154,213,0.75)';
+      ctx.lineWidth = Math.max(2, 1.6 / scale);
+      ctx.setLineDash([4 / scale, 3 / scale]);
+      ctx.beginPath();
+      ctx.arc(0, -4, R * 0.62, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (ruin.capital || R * scale >= 16)
+        outlinedText(`${ruin.name} · RUINS`, 0, 44, 10, '#ffb3d6', scale, 'Trebuchet MS', true);
       ctx.restore();
     }
   }

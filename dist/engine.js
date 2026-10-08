@@ -1232,11 +1232,8 @@
       fortify(g, s);
       claim(g, s, u.side);
       if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + maxHP(u) * fx(u).captureHeal);
-      // Sugiyama's Special Operations: a turn off the city's battery recharge and F.L.E.I.J.A. devastation.
-      if (fx(u).specialOps) {
-        if ((s.gunReady || 0) > g.turn) s.gunReady--;
-        if (devastated(g, s)) s.devastated--;
-      }
+      // Sugiyama's Special Operations: a turn off the city's battery recharge.
+      if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
       hooks.capture?.(g, s, u, loser);
       if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
@@ -1643,7 +1640,7 @@
   function income(g, side) {
     const refining = 1 + techValue(g, side, 'cities.refining');
     const total = g.stations
-      .filter(s => s.owner === side && !devastated(g, s))
+      .filter(s => s.owner === side)
       .reduce((a, s) => {
         const stationed = g.units.find(u => u.hp > 0 && u.side === side && u.cmd && u.c === s.c && u.r === s.r);
         const bonus = id => stationed ? 1 + 0.04 * genericLevel(g, stationed, id) : 1;
@@ -2306,7 +2303,7 @@
   function depositYield(g, d) {
     const host = depositHost(g, d),
       level = clamp(host?.refinery || 0, 0, 3),
-      rate = host && !devastated(g, host) ? SAKURADITE.extraction[level] : 0;
+      rate = host ? SAKURADITE.extraction[level] : 0;
     return {
       level,
       rate,
@@ -2337,7 +2334,6 @@
   function cityYield(g, s) {
     const d = depositOf(g, s),
       y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
-    if (devastated(g, s)) return { credits: 0, industry: 0, science: 0, sakuradite: 0 };
     return { credits: Math.round(s.income * treasuryBonus(g, s)) + y.credits, industry: Math.round(s.industry * (1 + techValue(g, s.owner, 'cities.industry'))), science: s.science, sakuradite: y.sakuradite };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
@@ -2416,8 +2412,6 @@
     research: 3, // turns after the first detonation before Eliminators can be built
     max: 3, // charges (ready or under construction) a power may hold at once, one per city
   };
-  // Older rules left a city at ground zero in ruins for some turns; saves can still hold such cities.
-  const devastated = (g, x) => (x?.devastated || 0) > g.turn;
   // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
   function eliminatorTurn(g) {
     const first = g.fleijaDetonated;
@@ -2438,13 +2432,11 @@
     return g.mode !== 'campaign' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
-    return devastated(g, s)
-      ? `Devastated by F.L.E.I.J.A. until turn ${s.devastated}`
-      : s.project
-        ? 'F.L.E.I.J.A. project under way'
-        : s.eliminatorProject
-          ? 'F.L.E.I.J.A. Eliminator project under way'
-          : null;
+    return s.project
+      ? 'F.L.E.I.J.A. project under way'
+      : s.eliminatorProject
+        ? 'F.L.E.I.J.A. Eliminator project under way'
+        : null;
   }
   function projectReason(g, s) {
     if (!s) return 'Unavailable';
@@ -2509,23 +2501,21 @@
       s.eliminator = 0;
     }
   }
-  // A surrendering power's projects and warheads are lost; its devastated cities stay without defenses.
+  // A surrendering power's projects and warheads are lost.
   function annexStrategic(g, loser) {
     for (const s of g.stations) {
       if (s.project?.side === loser) dropProject(g, s, 'surrender');
       if (s.eliminatorProject?.side === loser || s.eliminator) dropEliminator(g, s, 'surrender');
-      if (devastated(g, s)) s.shield = 0;
     }
     if (g.arsenal) g.arsenal[loser] = 0;
   }
-  // Start of a power's turn: finished strategic projects come online; devastated cities stay without defenses.
+  // Start of a power's turn: finished strategic projects come online.
   function strategicTurn(g, side) {
     if (eliminatorTurn(g) === g.turn && !g.eliminatorAnnounced) {
       g.eliminatorAnnounced = true;
       log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
     }
     for (const s of g.stations) {
-      if (devastated(g, s)) s.shield = 0;
       if (s.project?.side === side && s.owner === side && s.project.ready <= g.turn) {
         s.project = null;
         (g.arsenal ||= {})[side] = (g.arsenal[side] || 0) + 1;
@@ -2550,7 +2540,6 @@
             s.owner !== attacker &&
             MAJORS.includes(s.owner) &&
             (s.eliminator || 0) > 0 &&
-            !devastated(g, s) &&
             dist(g, s, p) <= ELIMINATOR.range,
         )
         .sort((a, b) => dist(g, a, p) - dist(g, b, p) || a.id - b.id)[0] || null
@@ -2567,6 +2556,8 @@
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
     if (!g.stations.some(s => s.owner === side)) return 'No city to launch from';
     if (!p || !tile(g, p.c, p.r)) return 'Choose a target hex';
+    if (stationAt(g, p)?.owner === side && g.stations.filter(s => s.owner === side).length === 1)
+      return 'That is your last city';
     return null;
   }
   // The city's founding output and defenses: wrecked buildings never leave a city below them.
@@ -2590,16 +2581,18 @@
     dropProject(g, s, 'destroyed');
     dropEliminator(g, s, 'destroyed');
   }
-  // Ground zero erases a city for good: it leaves the map with its port, project and Eliminator charge, and its
-  // deposit is lost.
+  // Ground zero destroys a city for the rest of the conquest: it stops being a city (no owner, output, port, project or
+  // Eliminator charge, and it cannot be captured or rebuilt) and its deposit is lost. Its ruins stay on the map
+  // (g.ruins) for the UI.
   function destroyCity(g, s) {
     dropProject(g, s, 'destroyed');
     dropEliminator(g, s, 'destroyed');
     const d = depositOf(g, s),
       lost = d ? destroyDeposit(g, d) : null;
+    (g.ruins ||= []).push({ name: s.name, c: s.c, r: s.r, owner: s.owner, capital: !!s.capital, turn: g.turn });
     g.stations.splice(g.stations.indexOf(s), 1);
     if (g.automation?.cities) delete g.automation.cities[s.id];
-    log(g, `${s.name} is erased by F.L.E.I.J.A. Nothing remains but a crater.`, s.owner);
+    log(g, `${s.name} is destroyed by F.L.E.I.J.A.: only ruins remain for the rest of the war.`, s.owner);
     return lost;
   }
   // A deposit at ground zero never produces again.
@@ -2678,10 +2671,10 @@
           cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
         } else if (ring) {
           ruin(g, s, 1);
-          cities.push({ name: s.name, severity: 'inner', devastated: false });
+          cities.push({ name: s.name, severity: 'inner' });
         } else {
           s.shield = Math.min(s.shield, Math.round(s.maxShield * FLEIJA.outerShield));
-          cities.push({ name: s.name, severity: 'outer', devastated: false });
+          cities.push({ name: s.name, severity: 'outer' });
         }
       }
       if (d) {
@@ -2788,7 +2781,7 @@
         // close enough to take it afterwards.
         const d = !ring && (siteAt(g, t) || (s && depositOf(g, s)));
         if (d && rival(depositOwner(g, d))) score += 25 * d.base;
-        if (s && rival(s.owner) && !devastated(g, s)) {
+        if (s && rival(s.owner)) {
           const levels = (s.tier || 0) + (s.lab || 0) + (s.refinery || 0);
           score += outer
             ? 15 * levels + s.shield * 0.08
@@ -3701,7 +3694,6 @@
     eliminatorReason,
     startEliminator,
     eliminatorDefender,
-    devastated,
     projectReason,
     startProject,
     launchReason,
