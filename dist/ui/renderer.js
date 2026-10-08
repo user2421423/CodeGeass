@@ -794,7 +794,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   // A faint tactical grid is a separate *overlay*, not the map's terrain.
   // At distant zoom levels the grid vanishes altogether; selection and
   // movement/attack ranges continue to use their original vivid hex outlines.
-  if (detail) {
+  if (detail && R * scale >= 22) {
     // Tactical grid gains contrast as the camera zooms closer to individual hexes.
     const hexPixels = R * scale;
     const strength = hexPixels < 18 ? 0.025 :
@@ -830,7 +830,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   // Political borders are tactical information and still align to tile
   // ownership. Coastlines are already smoothed by the visual atlas; drawing
   // the old edge-by-edge hex coastline here would reintroduce the mosaic.
-  for (const t of game.tiles) {
+  if (R * scale >= 22) for (const t of game.tiles) {
     if (t.terrain === 'sea') continue;
     const c = hexCenter(t);
     if (!visible(c)) continue;
