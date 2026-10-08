@@ -56,12 +56,77 @@ const GEOGRAPHY = (() => {
       }
     return count;
   }
+  // The map builder's biome polygons describe *regions*, not literal terrain
+  // boundaries. Rendering their hard-edged fills caused the giant triangular
+  // stripes across northern Europe. Instead use feathered geographic washes.
   const biomeColor = {
-    f: 'rgba(44,91,66,0.47)',
-    d: 'rgba(217,181,125,0.72)',
-    m: 'rgba(110,106,98,0.35)',
-    s: 'rgba(228,238,234,0.57)',
+    f: [46, 91, 65],
+    d: [218, 176, 107],
+    m: [96, 100, 87],
+    s: [228, 235, 231],
   };
+  function feather(ctx, region) {
+    const bounds = region.bounds;
+    const cx = (bounds[0] + bounds[2]) / 2, cy = (bounds[1] + bounds[3]) / 2;
+    const rx = Math.max(R * 1.8, (bounds[2] - bounds[0]) * 0.72);
+    const ry = Math.max(R * 1.8, (bounds[3] - bounds[1]) * 0.72);
+    const color = biomeColor[region.kind];
+    if (!color) return;
+    const strength = (region.kind === 'm' ? 0.25 : region.kind === 'f' ? 0.22 : 0.45) * region.intensity;
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+    gradient.addColorStop(0, `rgba(${color.join(',')},${strength.toFixed(3)})`);
+    gradient.addColorStop(0.52, `rgba(${color.join(',')},${(strength * 0.65).toFixed(3)})`);
+    gradient.addColorStop(1, `rgba(${color.join(',')},0)`);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(rx, ry);
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, 1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function tacticalHex(ctx, t) {
+    const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+    const y = R * 1.5 * t.r + R;
+    for (let i = 0; i < 6; i++) {
+      const a = (60 * i - 30) * Math.PI / 180;
+      const xx = x + (R + 0.9) * Math.cos(a);
+      const yy = y + (R + 0.9) * Math.sin(a);
+      i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
+    }
+    ctx.closePath();
+  }
+
+  // Political colour is a transparent wash clipped to the REAL geographic
+  // silhouette, rather than a separately painted hex mosaic. Fill each faction
+  // once (not once per hex), preventing overlapping alpha seams between tiles.
+  function paintOwnership(ctx, g, landShapes, tiles, left, right, top, bottom) {
+    ctx.save();
+    if (paths(ctx, landShapes, left, right, top, bottom)) {
+      ctx.clip();
+      const factions = g.factions || E.FACTIONS;
+      const byOwner = new Map();
+      for (const t of tiles) {
+        if (!t.owner || t.terrain === 'sea') continue;
+        if (!byOwner.has(t.owner)) byOwner.set(t.owner, []);
+        byOwner.get(t.owner).push(t);
+      }
+      ctx.globalAlpha = 0.51;
+      for (const [owner, owned] of byOwner) {
+        const color = (factions[owner] || E.FACTIONS[owner] || {}).color;
+        if (!color) continue;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (const t of owned) tacticalHex(ctx, t);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
   function coast(ctx, polygons, left, right, top, bottom, scale) {
     if (!paths(ctx, polygons, left, right, top, bottom)) return;
     ctx.strokeStyle = 'rgba(226,233,216,0.66)';
@@ -75,17 +140,13 @@ const GEOGRAPHY = (() => {
     if (paths(ctx, landShapes, left, right, top, bottom)) {
       ctx.clip();
       for (const region of LAYERS.biomes) {
-        if (!intersects(region.bounds, left, right, top, bottom)) continue;
-        ctx.fillStyle = biomeColor[region.kind] || '#82938033';
-        ctx.globalAlpha = region.intensity;
-        ctx.beginPath();
-        polygon(ctx, region.points);
-        ctx.fill();
+        // Region-wide bounds alone don't draw their underlying angular polygons.
+        if (intersects(region.bounds, left, right, top, bottom)) feather(ctx, region);
       }
-      ctx.globalAlpha = 1;
     }
     ctx.restore();
   }
+
   // Unconnected campaign battlefields have no global longitude/latitude basis.
   // They keep the original gameplay-based rendering until bespoke geographic
   // artwork is defined for those missions.
@@ -117,11 +178,18 @@ const GEOGRAPHY = (() => {
       ctx.translate(shift, 0);
       const a = left - shift, b = right - shift;
 
+      const visibleTiles = g.tiles.filter(t => {
+        const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+        const y = R * 1.5 * t.r + R;
+        return x >= a - R * 2 && x <= b + R * 2 &&
+          y >= top - R * 2 && y <= bottom + R * 2;
+      });
       ctx.fillStyle = land;
       if (paths(ctx, LAYERS.land, a, b, top, bottom)) ctx.fill();
       // Geographical biome washes are clipped to vector land, not individual
       // hexes. They are also repainted over high-detail coastal repair shapes.
       paintBiomes(ctx, LAYERS.land, a, b, top, bottom);
+      paintOwnership(ctx, g, LAYERS.land, visibleTiles, a, b, top, bottom);
       coast(ctx, LAYERS.land, a, b, top, bottom, scale);
 
       // Natural Earth coastal repairs are drawn as true vectors. Remove the
@@ -139,6 +207,7 @@ const GEOGRAPHY = (() => {
         ctx.fillStyle = land;
         if (paths(ctx, patch.outlines, a, b, top, bottom)) ctx.fill();
         paintBiomes(ctx, patch.outlines, a, b, top, bottom);
+        paintOwnership(ctx, g, patch.outlines, visibleTiles, a, b, top, bottom);
         coast(ctx, patch.outlines, a, b, top, bottom, scale);
         ctx.restore();
       }
