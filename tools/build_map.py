@@ -445,6 +445,7 @@ def redraw(grid):
 
 # Final gameplay edits on exact hexes (column, row), applied after the redraw.
 FIX_LAND = [
+    (61, 15),  # Newfoundland: GIS land-dominant hex, safe from city/port/route constraints
     (160, 19),  # Japan: join northern Honshu to Hokkaido
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
 ]
