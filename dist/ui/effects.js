@@ -50,31 +50,99 @@ function strikeEffects(s, delay = 0) {
   SFX.play('thor', game.phase, delay);
   setTimeout(() => bump(16), reducedMotion() ? 0 : delay * 1000 + 550);
 }
-function addCombatEffects(result, attacker) {
-  const side = attacker.side,
-    cls = E.TYPES[attacker.type].cls;
-  effects.push({
-    kind: 'beam',
-    heavy: ['heavy', 'super', 'siege'].includes(cls),
-    from: result.from,
-    to: result.to,
-    color: F(side).color,
-    life: 0.75,
-    max: 0.75,
-  });
-  SFX.play(SFX.weapon(cls), side);
-  if (result.crit) SFX.play('crit', side, 0.08);
-  if (result.destroyed) {
-    SFX.play('explosion', side, 0.2);
-    effects.push({ kind: 'boom', to: result.to, life: 1, max: 1 });
+// All weapon effects are cosmetic. Unit and terrain state live only in the engine.
+const COMBAT_VFX_LIMIT = 32;
+const VFX_WEAPONS = {
+  laser: { duration: 0.43, impact: 0.19, color: '#ffd88d' },
+  slash: { duration: 0.34, impact: 0.17, color: '#8ce9ff' },
+  cannon: { duration: 0.46, impact: 0.22, color: '#ffce83' },
+  railgun: { duration: 0.51, impact: 0.24, color: '#a5e8ff' },
+  rockets: { duration: 0.64, impact: 0.32, color: '#ffae72' },
+  beam: { duration: 0.56, impact: 0.34, color: '#b9a6ff' },
+  siege: { duration: 0.67, impact: 0.37, color: '#ecb7ff' },
+};
+// Killed units can disappear immediately after E.attack/E.aiOrder, before FX render.
+function combatVisualSnapshot() {
+  return new Map(game.units.filter(u => u.hp > 0).map(u => [
+    u.id, { id: u.id, type: u.type, side: u.side, stack: u.stack, c: u.c, r: u.r },
+  ]));
+}
+function pushCombatVfx(fx) {
+  const active = effects.filter(e => e.kind === 'shot' || e.kind === 'wreck' || e.kind === 'blast');
+  if (active.length >= COMBAT_VFX_LIMIT) {
+    const oldest = effects.findIndex(e => e.kind === 'shot' || e.kind === 'wreck' || e.kind === 'blast');
+    if (oldest !== -1) effects.splice(oldest, 1);
   }
-  bump((HEAVY_SHAKE[cls] || 0) + (result.crit ? 4 : 0) + (result.destroyed ? 4 : 0));
-  // Blue tag: city defenses knocked down.
-  if (result.shieldDamage) popup(result.to, `−${result.shieldDamage} DEF`, '#7cc8ff', { dy: 20, size: 14 });
+  effects.push(fx);
+}
+function queueCombatShot(from, to, weapon, side, options = {}) {
+  const spec = VFX_WEAPONS[weapon] || VFX_WEAPONS.cannon;
+  const compact = reducedMotion();
+  const duration = compact ? 0.18 : spec.duration;
+  const delay = options.delay || 0;
+  pushCombatVfx({
+    kind: 'shot', from: { c: from.c, r: from.r }, to: { c: to.c, r: to.r },
+    weapon, color: spec.color, side, crit: !!options.crit, counter: !!options.counter,
+    heavy: ['railgun', 'siege'].includes(weapon), shake: options.shake || 0,
+    delay, impact: compact ? 0.08 : spec.impact, duration,
+    life: duration + delay, max: duration + delay, shaken: false,
+  });
+}
+function spawnCombatWreck(unit, delay = 0) {
+  if (!unit || !onScreen(unit)) return;
+  const duration = reducedMotion() ? 0.4 : 3;
+  pushCombatVfx({ kind: 'wreck', to: { c: unit.c, r: unit.r }, type: unit.type,
+    side: unit.side, delay, duration, life: duration + delay, max: duration + delay });
+}
+function spawnCombatBlast(to, delay = 0, heavy = false) {
+  if (!onScreen(to)) return;
+  const duration = reducedMotion() ? 0.18 : 0.65;
+  pushCombatVfx({ kind: 'blast', to: { c: to.c, r: to.r }, delay, duration, heavy,
+    life: duration + delay, max: duration + delay });
+}
+function addCombatEffects(result, attacker, before = null) {
+  if (!result || !attacker || (skipAI && aiSide)) return;
+  const cls = E.TYPES[attacker.type].cls;
+  const weapon = SFX.weapon(cls);
+  const spec = VFX_WEAPONS[weapon] || VFX_WEAPONS.cannon;
+  const compact = reducedMotion();
+  const shown = onScreen(result.to) || onScreen(result.from);
+  const target = before && [...before.values()].find(u =>
+    u.c === result.to.c && u.r === result.to.r && u.side !== attacker.side);
+  if (shown) {
+    queueCombatShot(result.from, result.to, weapon, attacker.side, {
+      crit: result.crit, shake: (HEAVY_SHAKE[cls] || 0) + (result.crit ? 4 : 0) + (result.destroyed ? 4 : 0),
+    });
+    SFX.play(weapon, attacker.side);
+    if (result.crit) SFX.play('crit', attacker.side, compact ? 0.08 : spec.impact);
+    if (result.destroyed) {
+      SFX.play('explosion', attacker.side, compact ? 0.08 : spec.impact);
+      spawnCombatBlast(result.to, compact ? 0.08 : spec.impact, ['heavy', 'super', 'siege'].includes(cls));
+    }
+    if (result.counter && target) {
+      const counterWeapon = SFX.weapon(E.TYPES[target.type].cls), delay = compact ? 0.09 : spec.impact + 0.07;
+      queueCombatShot(result.to, result.from, counterWeapon, target.side, { counter: true, delay, shake: 1 });
+      SFX.play(counterWeapon, target.side, delay);
+    }
+  }
+  // Include splash kills and an attacker killed by counterfire, but not unrelated disbanded units.
+  if (before) {
+    const affected = new Set((result.hit || []).map(h => h.id));
+    if (result.counter) affected.add(attacker.id);
+    for (const id of affected) {
+      const previous = before.get(id);
+      if (!previous || !onScreen(previous)) continue;
+      if (id === target?.id && !result.destroyed) continue;
+      if (!game.units.some(u => u.id === id && u.hp > 0) &&
+        !effects.some(e => e.kind === 'wreck' && e.to.c === previous.c && e.to.r === previous.r))
+        spawnCombatWreck(previous, compact ? 0.08 : spec.impact);
+    }
+  }
+  if (result.shieldDamage) popup(result.to, '−' + result.shieldDamage + ' DEF', '#7cc8ff', { dy: 20, size: 14 });
   for (const h of result.hit || []) {
     const main = h.c === result.to.c && h.r === result.to.r;
-    if (main && result.crit) popup(h, `−${h.damage} CRIT!`, '#ff3b30', { size: 21, life: 1.9, pop: true });
+    if (main && result.crit) popup(h, '−' + h.damage + ' CRIT!', '#ff3b30', { size: 21, life: 1.9, pop: true });
     else popup(h, '−' + h.damage, main ? '#ffb3a3' : '#ff9a7a', { size: main ? 15 : 13 });
   }
-  if (result.counter) popup(result.from, `↩ −${result.counter}`, '#ffb3a3', { size: 13 });
+  if (result.counter) popup(result.from, '↩ −' + result.counter, '#ffb3a3', { size: 13 });
 }

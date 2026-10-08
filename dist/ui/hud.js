@@ -565,12 +565,13 @@ function attackHex(p) {
   const u = selectedUnit();
   if (!u || !p || !interactive()) return;
   const before = unitSnapshot(),
+    visuals = combatVisualSnapshot(),
     result = E.attack(game, u.id, p.c, p.r);
   if (!result.ok) {
     toast(result.reason);
     return;
   }
-  addCombatEffects(result, u);
+  addCombatEffects(result, u, visuals);
   moralePopups(before);
   refreshAndSave();
   if (result.breakthrough) toast('Breakthrough! This unit can act again.');

@@ -211,6 +211,18 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run(`game.units.find(u => u.id === ${infantryId}).attacked`), true, 'H consumes attack');
   assert(!node('side').innerHTML, 'holding a unit leaves the duplicate drawer closed');
 
+  // Validate combat visuals on the full UI without mutating saved game state.
+  run("setup={side:'britannia',difficulty:'normal'};newGame();");
+  assert.equal(run("typeof combatVisualSnapshot"), 'function');
+  assert.equal(run("typeof drawCombatShot"), 'function');
+  assert.equal(run("typeof drawCombatWreck"), 'function');
+  run("effects=[]; for(const weapon of Object.keys(VFX_WEAPONS)) queueCombatShot({c:1,r:1},{c:2,r:1},weapon,'britannia');");
+  assert.equal(run("effects.filter(e=>e.kind==='shot').length"), 7, 'all seven weapon visuals are queued');
+  run("draw(100,.016);");
+  run("effects=[];centerOn(game.units[0]);computeView();spawnCombatWreck(game.units[0]);");
+  assert.equal(run("effects.some(e=>e.kind==='wreck')"), true, 'destroyed units have transient wreckage');
+  run("draw(150,.016); effects=[];");
+
   run('startMenu();campaignDialog("bk_s1")');
   assert(modal().includes('data-mission="bk1"'), 'campaign menu renders');
 
