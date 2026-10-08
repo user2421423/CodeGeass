@@ -1,0 +1,35 @@
+name: Build unified global coastlines
+on:
+  push:
+    branches: [feature/map-rendering-overhaul]
+    paths:
+      - tools/export_geography.py
+      - .github/workflows/build-global-coastlines.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install coastline generator dependencies
+        run: python -m pip install "basemap>=2.0" "shapely>=2.0"
+      - name: Generate GSHHG global land and water
+        run: python tools/export_geography.py
+      - name: Verify generated browser syntax
+        run: node --check dist/ui/geography-data.js
+      - name: Commit generated coastline atlas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/ui/geography-data.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Use uniform high-resolution GSHHG coastlines worldwide"
+            git push origin HEAD:feature/map-rendering-overhaul
+          fi
