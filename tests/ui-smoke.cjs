@@ -102,26 +102,55 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().turn'), 2, `${side}: turn is saved`);
   }
 
-  // Carrier quick actions must present a cargo picker, never commander assignment.
-  run("newGame()");
+  // Unit actions belong to the bottom dock; the only unit drawer is carrier cargo.
+  run('newGame()');
   const carrierId = run("game.units.find(u => u.side === game.player && E.TYPES[u.type].naval === 'ship')?.id");
   assert(carrierId, 'Conquest starts with a friendly carrier');
   run(`game.units.find(u => u.id === ${carrierId}).cargo = []`);
   run(`selectUnit(${carrierId})`);
-  assert(node('selection-dock').innerHTML.includes('data-action="carrier-deploy"'), 'carrier has Deploy units button');
-  assert(!node('selection-dock').innerHTML.includes('data-action="assign"'), 'carrier cannot assign commanders');
-  run('carrierDeployDialog()');
-  assert(modal().includes('Carrier deployment') && modal().includes('No Knightmares aboard'), 'empty carrier explains boarding');
+  assert(node('selection-dock').innerHTML.includes('data-action="carrier-deploy"'), 'carrier has Deploy units');
+  assert(!node('selection-dock').innerHTML.includes('data-action="assign"'), 'carrier has no assign commander');
+  assert(!node('side').innerHTML.includes('Standing orders'), 'normal unit sidebar is suppressed');
+  assert(!node('selection-dock').innerHTML.includes('Orders & upgrades'), 'no duplicate unit details');
+  const clickAction = data => events.click({
+    target: { closest: selector => selector === 'button' ? { dataset: data, disabled: false, getAttribute: () => null } : null },
+  });
+  clickAction({ action: 'carrier-deploy' });
+  assert(node('side').innerHTML.includes('Deploy Knightmares'), 'deployment appears in sidebar, not centered modal');
+  assert(node('side').innerHTML.includes('Empty. Move a Knightmare'), 'empty carrier explains boarding');
+  assert(!modal().includes('Carrier deployment'), 'deployment does not open a modal');
   run(`(function() {
     const ship = game.units.find(u => u.id === ${carrierId});
     const passenger = game.units.find(u => u.side === game.player && !E.TYPES[u.type].naval);
-    if (!passenger) throw new Error('No infantry to test carrier cargo');
+    if (!passenger) throw new Error('No Knightmare for carrier test');
     game.units.splice(game.units.indexOf(passenger), 1);
     (ship.cargo ||= []).push(passenger);
   })()`);
-  run('carrierDeployDialog()');
-  assert(modal().includes('data-deploy="0"'), 'carrier cargo list offers individual deployment');
+  run('updateSelection()');
+  assert(node('side').innerHTML.includes('data-deploy="0"'), 'one launch choice per carried unit');
+  clickAction({ deploy: '0' });
+  assert.equal(run('deploying?.index'), 0, 'cargo picker starts landing-hex mode');
+  assert(!node('side').innerHTML, 'cargo drawer closes when targeting the map');
+
+  const infantryId = run("game.units.find(u => u.side === game.player && !E.TYPES[u.type].naval && !u.cmd)?.id");
+  assert(infantryId, 'a normal uncommanded unit exists');
+  run(`selectUnit(${infantryId})`);
+  run(`(function() { const u = game.units.find(v => v.id === ${infantryId}); u.moved = u.attacked = false; })()`);
+  const dock = node('selection-dock').innerHTML;
+  for (const label of ['Assign (A)', 'Add frame (F)', 'Repair (R)', 'Hold (H)', 'Set destination (G)'])
+    assert(dock.includes(label), `bottom unit bar includes ${label}`);
+  assert(!node('side').innerHTML, 'standard units do not open a duplicate right panel');
+  const keyboard = key => events.keydown({ key, target: { tagName: 'BODY', dataset: {} }, preventDefault() {} });
+  const beforeCam = run('JSON.stringify(cam)');
+  keyboard('w'); keyboard('s'); keyboard('d');
+  assert.equal(run('JSON.stringify(cam)'), beforeCam, 'W/S/D do not pan the map');
+  keyboard('a');
+  assert(modal().includes('Unit commanders'), 'A opens commander assignment');
   run('closeModal()');
+  keyboard('h');
+  assert.equal(run(`game.units.find(u => u.id === ${infantryId}).moved`), true, 'H holds the unit');
+  assert.equal(run(`game.units.find(u => u.id === ${infantryId}).attacked`), true, 'H consumes attack');
+  assert(!node('side').innerHTML, 'holding a unit leaves the duplicate drawer closed');
 
   run('startMenu();campaignDialog("bk_s1")');
   assert(modal().includes('data-mission="bk1"'), 'campaign menu renders');

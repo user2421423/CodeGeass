@@ -213,19 +213,6 @@ function commandDialog(u) {
   modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · every 3 turns</div><h2>${friendly ? 'Which unit acts again?' : 'Designate an enemy'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${v.cmd ? esc(C(v.cmd).short) + ' · ' : ''}${esc(E.TYPES[v.type].short)} ×${v.stack} · ${esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
   focusDialog();
 }
-// Select cargo before choosing a green deployment hex on the map.
-function carrierDeployDialog() {
-  const ship = selectedUnit();
-  if (!interactive() || !ship || ship.side !== game.player || E.TYPES[ship.type].naval !== 'ship') return;
-  const cargo = ship.cargo || [];
-  const cards = cargo.map((u, i) => {
-    const type = E.TYPES[u.type],
-      why = E.deployReason(game, ship, i);
-    return `<div class="building"><span class="label">${u.cmd ? esc(C(u.cmd).short) + ' · ' : ''}${esc(type.name)} ×${u.stack}</span><small>${Math.round(u.hp)} / ${E.maxHP(u)} HP · ${why ? esc(why) : 'Ready to launch this turn'}</small>${act(`data-deploy="${i}"`, 'Choose landing hex', why, 'Select an empty land hex beside the carrier', 'small')}</div>`;
-  }).join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Carrier deployment"><div class="dialog-head"><div><div class="eyebrow">Carrier-Battleship · ${cargo.length} / ${E.carrierCapacity(game, ship)}</div><h2>Deploy Knightmares</h2><p>Choose a formation, then select its green landing hex. It can move and attack immediately, including if it boarded this turn.</p></div><button class="small close" data-action="close">Close</button></div><div class="buildings">${cards || '<p class="description">No Knightmares aboard. Move a land unit onto the carrier to board it.</p>'}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
-  focusDialog();
-}
 function admiralDialog() {
   if (!interactive()) return;
   generalOpen = null;

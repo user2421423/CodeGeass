@@ -502,7 +502,7 @@ h3 {
   align-items: center;
   margin-left: 9px;
   flex-wrap: wrap;
-  max-width: 315px;
+  max-width: 440px;
 }
 .dock-actions button {
   font-size: 12px;
@@ -788,7 +788,7 @@ h3 {
     min-width: 170px;
   }
   .dock-actions {
-    max-width: 265px;
+    max-width: 380px;
   }
   .footer .end {
     min-width: 158px;
@@ -3145,4 +3145,14 @@ button.danger:hover:not(:disabled) {
 .warn-text {
   display: block;
   color: var(--red);
+}
+
+/* All unit orders are in the bottom bar; only carrier cargo opens the right drawer. */
+.unit-dock-actions { align-content: center; }
+.unit-dock-actions button { min-height: 31px; }
+.deployment-only h2 { margin: 4px 0 12px; font-size: 18px; }
+.deployment-only .section-divider { margin-top: 0; }
+@media (max-width: 760px) {
+  .unit-dock-actions { max-width: 205px; max-height: 165px; overflow-y: auto; }
+  .unit-dock-actions button { min-height: 28px; }
 }
