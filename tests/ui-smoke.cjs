@@ -89,6 +89,10 @@ const modal = () => node('modal-root').innerHTML;
 
 (async () => {
   assert(modal().includes('One world.'), 'start menu renders');
+  assert(run('GEOGRAPHY.shapes.land.length') >= 1000, 'unified global atlas has detailed land outlines');
+  assert(run('GEOGRAPHY.shapes.water.length') >= 1000, 'inland waters come from the same detailed source');
+  assert.equal(run('GEOGRAPHY.shapes.patches'), undefined, 'no separately coloured regional coastline patches');
+
   // Geography is visually interpolated separately from the immutable tactical hex map.
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 1, 'land remains land at its gameplay hex centre');
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain === 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 0, 'sea remains sea at its gameplay hex centre');
