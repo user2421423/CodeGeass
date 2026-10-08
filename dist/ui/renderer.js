@@ -700,9 +700,11 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     if (R * scale >= 24)
       for (const t of game.tiles) {
         if (t.terrain === 'plains') continue;
+        if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
+        if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
         const c = hexCenter(t);
         if (!visible(c)) continue;
-        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : 0.43;
+        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : game.wrap ? 0.24 : 0.43;
         for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
       }
     ctx.globalAlpha = 1;
