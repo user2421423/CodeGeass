@@ -12,20 +12,20 @@ used to draw the map*. Thresholds: recommend land only when visual land covers
 at least 80% of a currently sea hex; recommend sea only when land covers 18%
 or less of a currently land hex. Mixed coastal hexes are not conversion targets.
 The previous centre-point comparison marked 484, but that included legitimate
-partial coast hexes. **74** met the initial area criteria, of which **73 remain** after the approved Newfoundland correction:
+partial coast hexes. **74** met the initial area criteria, of which **65 remain** after the Newfoundland correction and eight further coastal conversions:
 
 | Region | Conflicts |
 |---|---:|
 | Arctic / high north | 43 |
-| Americas (excluding Arctic) | 9 |
+| Americas (excluding Arctic) | 5 |
 | East Asia / Japan / Korea | 5 |
-| Africa | 4 |
+| Africa | 2 |
 | Middle East / Arabian Peninsula | 3 |
-| Southeast Asia / Indonesia | 3 |
+| Southeast Asia / Indonesia | 2 |
 | Australia / Pacific | 3 |
 | Other | 2 |
-| Siberia / Far East | 1 |
-| **Total remaining** | **73** |
+| Siberia / Far East | 0 |
+| **Total remaining** | **65** |
 
 City art alignment is another layer: **23 city gameplay centres** fall on
 visually painted water, including Singapore, Manila, Shanghai and Taipei.
@@ -74,15 +74,48 @@ adjustment without changing unit movement.
   intentionally navigable gameplay sea hexes. The visual atlas now draws
   **thin cartographically exaggerated water channels** along those passages;
   no gameplay movement logic changes.
-- The GSHHG centre-point audit now documents **483 remaining differences**,
-  of which **410 are mixed-coastline hexes** and **73 are strong conflicts**.
-  The 73 break down into 33 land gameplay hexes over visual water and
+- The GSHHG centre-point audit now documents **475 remaining differences**,
+  of which **410 are mixed-coastline hexes** and **65 are strong conflicts**.
+  The 65 break down into 25 land gameplay hexes over visual water and
   40 sea gameplay hexes over visual land. None is automatically eligible
   under city, port, route, polar and ownership protections.
 - Results: `docs/map-alignment-review.json` (73 strong conflicts) and
-  `docs/map-coastline-centre-review.json` (483 centre differences);
+  `docs/map-coastline-centre-review.json` (475 centre differences);
   regenerate using `tools/map_alignment_audit.py` and
   `tools/audit_coastline_centres.py` respectively.
+
+## Stage 6 — Eight safe coastal conversions (committed, pending final CI)
+
+After the Newfoundland land correction, a dry-run full connectivity check was
+performed on eight non-polar, unoccupied, non-strategic land spurs that have
+18% or less high-detail geographic land coverage. All now become **sea** in
+the map source, generated conquest world and approved map lock:
+
+| Region | Hex | Original terrain | What changed |
+|---|---|---|---|
+| Gulf of Alaska | (13,9) | plains | sea |
+| Kamchatka | (168,9) | plains | sea |
+| Hudson Bay | (50,10) | plains | sea |
+| James Bay | (49,12) | forest | sea |
+| Caribbean near Cuba | (49,31) | plains | sea |
+| Mauritania Atlantic coast | (81,32) | plains | sea |
+| New Guinea north coast | (157,44) | plains | sea |
+| Madagascar north coast | (113,51) | plains | sea |
+
+Sea connectivity remains **two components**, and the major ocean component
+gains eight sea hexes. The number of land components is unchanged. No
+starting units, cities, ports, or designated strategic passages occupy
+these tiles. `E.migrateSave` updates unoccupied older-conquest tiles on
+load, removes their old land ownership, and leaves any player-occupied
+tile or built site unchanged rather than stranding units. Campaign tiles
+and previous version rules are not changed.
+
+After the nine cumulative terrain conversions, **65 strong area conflicts**
+and **475 centre-point land/sea discrepancies** remain, comprising 25
+playable-land/visual-water conflicts, 40 playable-sea/visual-land conflicts,
+and 410 mixed-coastline discrepancies. All stronger remaining conflicts
+require route, ownership, or special-terrain review rather than blind
+conversion.
 
 ## Stage 5 — City and harbour visual alignment (committed)
 
