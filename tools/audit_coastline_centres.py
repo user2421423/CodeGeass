@@ -10,18 +10,16 @@ from pathlib import Path
 import json
 from shapely.geometry import Point
 from shapely.strtree import STRtree
-from audit_map_alignment import (game_state, atlas_polygons, protect, polygon,
-                                 intersection_area, region, bm)
+from map_alignment_audit import (state, land as lands, water as lakes,
+    land_tree as land_index, water_tree as lake_index, protected,
+    hex_polygon as polygon, area as intersection_area, region, bm)
 ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument('--output',default='docs/map-coastline-centre-review.json')
     args=ap.parse_args()
-    state=game_state()
-    lands,lakes=atlas_polygons()
-    land_index,lake_index=STRtree(lands),STRtree(lakes)
-    protected=protect(state)
+    # Use the exact polygon index and protection set from the strong audit.
     records=[]
     for tile in state['tiles']:
         c,r=tile['c'],tile['r']
