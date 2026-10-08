@@ -3683,6 +3683,10 @@
     value: {
       COMMANDERS,
       ELIMINATOR,
+      TERRAIN,
+      cityBusyReason,
+      key,
+      shortfall,
       FACTIONS,
       FLEIJA,
       MAJORS,

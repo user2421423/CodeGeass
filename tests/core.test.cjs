@@ -132,6 +132,24 @@ test('A rival moves a unit off its city before building there, as a player would
   assert.equal(paris.producedTurn, g.turn, 'and the city built this turn');
 });
 
+test('A threatened rival city builds another defender; its defender stays beside it, or holds it when broke', () => {
+  const setup = credits => {
+    const g = blank();
+    g.phase = 'eu';
+    g.economy.eu.credits = credits;
+    const paris = g.stations.find(s => s.owner === 'eu');
+    const u = E.newUnit(g, E.typeFor('eu', 'light'), 'eu', paris.c, paris.r);
+    E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', paris.c - 2, paris.r);
+    E.aiProduction(g);
+    return { g, paris, u };
+  };
+  const rich = setup(5000);
+  assert.equal(E.distance(rich.u, rich.paris, rich.g), 1, 'the defender steps beside the city');
+  assert.equal(rich.paris.producedTurn, rich.g.turn, 'and the city builds another defender');
+  const broke = setup(0);
+  assert(broke.u.c === broke.paris.c && broke.u.r === broke.paris.r, 'with no money the defender holds the city');
+});
+
 test('Every campaign mission builds with valid references', () => {
   const ids = Object.values(C.CAMPAIGNS).flatMap(c => c.missions.map(m => m.id));
   assert(ids.length > 0);

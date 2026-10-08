@@ -6,6 +6,10 @@
   const {
     COMMANDERS,
     ELIMINATOR,
+    TERRAIN,
+    cityBusyReason,
+    key,
+    shortfall,
     FACTIONS,
     FLEIJA,
     MAJORS,
@@ -624,14 +628,26 @@
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
     }
     if (!builds) return;
-    // 1b. Clear the factories, as a player would: a ready unit standing on one of its cities carries out its orders
-    // first (a unit on the city hex blocks building there). Guards stay while an enemy is within 2 hexes. The UI
-    // plays these moves from g.vacated ({ id, orders }).
+    // 1b. Clear the factories, as a player would (a unit on the city hex blocks building there). A ready unit on a
+    // quiet city carries out its orders first. On a city with an enemy within 2 hexes, the defender steps beside it
+    // (best cover) so the city can build another defender, but only when the side can pay for a unit there;
+    // otherwise it holds the city. The UI plays these moves from g.vacated ({ id, orders }).
     g.vacated = [];
+    const cheapest = price(typeFor(side, 'scout', g), 1, g, side);
     for (const s of bases) {
       const u = unitAt(g, s);
-      if (!u || u.side !== side || u.moved || !isReady(g, u) || foes.some(f => dist(g, f, s) <= 2)) continue;
-      g.vacated.push({ id: u.id, orders: aiOrder(g, u.id) });
+      if (!u || u.side !== side || u.moved || !isReady(g, u)) continue;
+      if (!foes.some(f => dist(g, f, s) <= 2)) {
+        g.vacated.push({ id: u.id, orders: aiOrder(g, u.id) });
+        continue;
+      }
+      if (s.producedTurn === g.turn || cityBusyReason(g, s) || shortfall(e, cheapest)) continue;
+      const reach = reachable(g, u),
+        spot = adjacent(g, s)
+          .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
+          .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+      const m = spot && move(g, u.id, spot.c, spot.r);
+      if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
     // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
     const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
