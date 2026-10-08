@@ -1,0 +1,45 @@
+name: Hex geography alignment audit
+on:
+  push:
+    branches: [feature/map-hex-alignment]
+    paths:
+      - tools/map_alignment_audit.py
+      - .github/workflows/map-alignment-audit.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install analysis-only geometry dependency
+        run: python -m pip install shapely
+      - name: Reproduce hex coverage audit
+        run: python tools/map_alignment_audit.py
+      - name: Validate snapshot and gameplay tests
+        run: |
+          python tools/check_map.py
+          node --test tests/core.test.cjs
+          node tests/ui-smoke.cjs
+      - name: Assert dry run made no gameplay changes
+        run: |
+          git diff --exit-code -- dist/engine/world.js tools/build_map.py tools/data/map_locked.txt
+          python - <<'PY'
+          import json
+          j=json.load(open('docs/map-alignment-review.json'))
+          assert j['summary']['hexes'] == 13680
+          assert j['summary']['high_confidence_mismatches'] == 74
+          assert j['approved_for_gameplay_edit'] is False
+          print('PASS: 74 strong mismatches documented; gameplay map untouched')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: area-weighted-map-review
+          path: docs/map-alignment-review.json
