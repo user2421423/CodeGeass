@@ -147,6 +147,64 @@ const GEOGRAPHY = (() => {
     ctx.restore();
   }
 
+  // Detailed coastline datasets are geographically clipped. A hard rectangular
+  // replacement at the source-data bounds created conspicuous seams through
+  // France, Anatolia and the Mediterranean. Alpha-feather that replacement
+  // over the lower-resolution map instead of overwriting it abruptly.
+  const patchSurfaces = new Map();
+  function paintPatch(ctx, patch, g, visibleTiles, sea, land, a, b, top, bottom, scale) {
+    const [x0, y0, x1, y1] = patch.extent;
+    if (!intersects(patch.extent, a, b, top, bottom)) return;
+    const width = x1 - x0, height = y1 - y0;
+    if (width < 1 || height < 1 || typeof document === 'undefined') return;
+    let canvas = patchSurfaces.get(patch.id);
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      patchSurfaces.set(patch.id, canvas);
+    }
+    const quality = 1;
+    const cw = Math.ceil(width * quality), ch = Math.ceil(height * quality);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
+    const pctx = canvas.getContext && canvas.getContext('2d');
+    if (!pctx) return;
+    pctx.setTransform(1, 0, 0, 1, 0, 0);
+    pctx.clearRect(0, 0, cw, ch);
+    pctx.setTransform(quality, 0, 0, quality, -x0 * quality, -y0 * quality);
+    pctx.save();
+    pctx.fillStyle = sea;
+    pctx.fillRect(x0, y0, width, height);
+    pctx.fillStyle = land;
+    if (paths(pctx, patch.outlines, x0, x1, y0, y1)) pctx.fill();
+    paintBiomes(pctx, patch.outlines, x0, x1, y0, y1);
+    paintOwnership(pctx, g, patch.outlines, visibleTiles, x0, x1, y0, y1);
+    coast(pctx, patch.outlines, x0, x1, y0, y1, scale);
+    // Multiplying X and Y masks ensures corners fade as well. Most southern
+    // patch boundaries end at open water, so do not fade out island details
+    // such as Crete at the Mediterranean data boundary.
+    const fade = Math.min(R * 1.5, width / 5, height / 5);
+    pctx.globalCompositeOperation = 'destination-in';
+    const horizontal = pctx.createLinearGradient(x0, 0, x1, 0);
+    horizontal.addColorStop(0, 'rgba(255,255,255,0)');
+    horizontal.addColorStop(fade / width, '#fff');
+    horizontal.addColorStop(1 - fade / width, '#fff');
+    horizontal.addColorStop(1, 'rgba(255,255,255,0)');
+    pctx.fillStyle = horizontal;
+    pctx.fillRect(x0, y0, width, height);
+    const vertical = pctx.createLinearGradient(0, y0, 0, y1);
+    const southFade = patch.id === 'med_europe' ? 0 : fade;
+    vertical.addColorStop(0, 'rgba(255,255,255,0)');
+    vertical.addColorStop(fade / height, '#fff');
+    if (southFade) vertical.addColorStop(1 - southFade / height, '#fff');
+    vertical.addColorStop(1, southFade ? 'rgba(255,255,255,0)' : '#fff');
+    pctx.fillStyle = vertical;
+    pctx.fillRect(x0, y0, width, height);
+    pctx.restore();
+    ctx.drawImage(canvas, x0, y0, width, height);
+  }
+
   // Unconnected campaign battlefields have no global longitude/latitude basis.
   // They keep the original gameplay-based rendering until bespoke geographic
   // artwork is defined for those missions.
@@ -192,25 +250,10 @@ const GEOGRAPHY = (() => {
       paintOwnership(ctx, g, LAYERS.land, visibleTiles, a, b, top, bottom);
       coast(ctx, LAYERS.land, a, b, top, bottom, scale);
 
-      // Natural Earth coastal repairs are drawn as true vectors. Remove the
-      // coarse hand-drawn geography only INSIDE each patch rectangle, then
-      // insert its detailed shapes. No resampling or per-hex smoothing.
-      for (const patch of LAYERS.patches) {
-        const [x0, y0, x1, y1] = patch.extent;
-        if (!intersects(patch.extent, a, b, top, bottom)) continue;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x0, y0, x1 - x0, y1 - y0);
-        ctx.clip();
-        ctx.fillStyle = sea;
-        ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-        ctx.fillStyle = land;
-        if (paths(ctx, patch.outlines, a, b, top, bottom)) ctx.fill();
-        paintBiomes(ctx, patch.outlines, a, b, top, bottom);
-        paintOwnership(ctx, g, patch.outlines, visibleTiles, a, b, top, bottom);
-        coast(ctx, patch.outlines, a, b, top, bottom, scale);
-        ctx.restore();
-      }
+      // Blend detailed geographic coastlines into the atlas without rectangular
+      // wipes, hard crop seams or a change to any tactical hex.
+      for (const patch of LAYERS.patches)
+        paintPatch(ctx, patch, g, visibleTiles, sea, land, a, b, top, bottom, scale);
 
       // Inland seas and their outlines are geographically accurate holes in
       // the land layer, not water-coloured hexes painted on top.
