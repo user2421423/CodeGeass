@@ -594,32 +594,6 @@ function drawFlash(x, y, radius, color, alpha) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 }
-// Map-sized harbor graphics are separate from the full port picture shown in panels.
-// The pier follows the actual coast; the compact facility is offset from the ship's
-// sea hex so its silhouette remains recognizable with a fleet docked there.
-// Coastal docks use the published isometric image, not a cartoon Canvas tower.
-// Small causeways connect that shore image with its owning city even across the world seam.
-function drawPortCauseway(p, x) {
-  const seaX = x + p.ux * R * 0.42,
-    seaY = p.sea.y + p.uy * R * 0.42,
-    landX = x + (p.shoreX - p.sea.x) - p.ux * R * 0.44,
-    landY = p.shoreY - p.uy * R * 0.44;
-  ctx.save();
-  ctx.lineCap = 'butt';
-  ctx.beginPath();
-  ctx.moveTo(seaX, seaY);
-  ctx.lineTo(landX, landY);
-  ctx.strokeStyle = '#203849';
-  ctx.lineWidth = 11;
-  ctx.stroke();
-  ctx.strokeStyle = '#aeb9b9';
-  ctx.lineWidth = 7;
-  ctx.stroke();
-  ctx.strokeStyle = '#e7c780';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-}
 // Every copy of world x between left and right (the world map wraps east to west; a campaign battlefield does not).
 function copiesBetween(x, left, right) {
   if (!wraps()) return [x];
@@ -812,34 +786,20 @@ function draw(time, dt) {
             ? selection
             : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
-  // Ports are drawn as shore-side additions rather than miniature offshore islands.
-  // The orientation is computed from the city to its port, preserving world wrapping.
-  const portVisuals = game.stations.filter(s => s.portLevel && s.portAt).map(s => {
-    const sea = hexCenter(s.portAt),
-      shore = hexCenter(s),
-      shoreX = wrapNear(shore.x, sea.x),
-      dx = shoreX - sea.x,
-      dy = shore.y - sea.y,
-      distance = Math.hypot(dx, dy) || 1,
-      ux = dx / distance,
-      uy = dy / distance,
-      // Prefer the upper (screen-far) side of the coastline to leave room for
-      // the ship token, health ring and city labels on the lower side.
-      side = ux >= 0 ? -1 : 1,
-      px = sea.x + ux * R * 0.46 - uy * side * R * 0.55,
-      py = sea.y + uy * R * 0.46 + ux * side * R * 0.55;
-    return { s, sea, shoreX, shoreY: shore.y, ux, uy, px, py };
-  }).filter(p => visible(p.sea));
-  for (const p of portVisuals) for (const x of copies(p.sea.x)) {
-    if (!detail) {
-      outlinedText('⚓', x, p.sea.y + 5, 12, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
-      continue;
-    }
-    drawPortCauseway(p, x);
-    // Draw in the scenery layer so the neighboring city and every naval unit
-    // retain their complete silhouettes and selectable health rings.
-    const drawn = ART.drawBuilding(ctx, 'port_coastal', x + p.px - p.sea.x, p.py - 4, R * 2.15);
-    if (!drawn) outlinedText('⚓', x, p.sea.y + 6, 17, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
+  // Temporary low-profile marker until the replacement dock art is approved.
+  // Keep naval hexes unobstructed: cities and naval units render unchanged.
+  for (const s of game.stations) {
+    if (!s.portLevel || !s.portAt) continue;
+    const sea = hexCenter(s.portAt);
+    if (!visible(sea)) continue;
+    const shore = hexCenter(s);
+    const dx = wrapNear(shore.x, sea.x) - sea.x, dy = shore.y - sea.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const ox = dx / distance * R * 0.58;
+    const oy = dy / distance * R * 0.58;
+    for (const x of copies(sea.x))
+      outlinedText('⚓', x + ox, sea.y + oy + 4, detail ? 14 : 11,
+        F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
   }
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
