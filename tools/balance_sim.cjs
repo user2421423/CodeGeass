@@ -98,6 +98,20 @@ function snapshot(g) {
         },
       ]),
     ),
+    // Per-turn income, including Japan's Sakuradite allocation and the national supply.
+    income: Object.fromEntries(MAJORS.map(side => [side, E.alive(g, side) ? E.income(g, side) : null])),
+    strategic: Object.fromEntries(
+      MAJORS.map(side => [
+        side,
+        {
+          warheads: g.arsenal?.[side] || 0,
+          projects: g.stations.filter(s => s.project?.side === side).length,
+          eliminators: g.stations.filter(s => s.owner === side && (s.eliminator > 0 || s.eliminatorProject?.side === side))
+            .length,
+        },
+      ]),
+    ),
+    deposits: (g.sites || []).map(d => d.name),
     fallen: { ...(g.fallen || {}) },
   };
 }
@@ -108,6 +122,16 @@ function playSide(g, side, counters) {
   E.aiProduction(g);
   const after = activeUnits(g, side).length;
   counters.produced[side] += Math.max(0, after - before);
+  // F.L.E.I.J.A. strikes this turn (aiProduction fires every ready warhead and records them in g.launches).
+  for (const shot of g.launches || []) {
+    const s = counters.strikes[side];
+    s.launched++;
+    if (shot.intercepted) s.intercepted++;
+    s.citiesErased += shot.cities.filter(c => c.destroyed).length;
+    s.depositsDestroyed += shot.depleted?.length || 0;
+    s.unitsErased += shot.destroyed.length;
+    counters.strikeLog.push({ turn: g.turn, side, target: shot.name, intercepted: !!shot.intercepted, erased: shot.cities.filter(c => c.destroyed).map(c => c.name), depleted: shot.depleted || [] });
+  }
 
   const ids = g.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).map(u => u.id);
   for (const id of ids) {
@@ -134,6 +158,10 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns }) {
     moves: Object.fromEntries(MAJORS.map(s => [s, 0])),
     attacks: Object.fromEntries(MAJORS.map(s => [s, 0])),
     special: Object.fromEntries(MAJORS.map(s => [s, 0])),
+    strikes: Object.fromEntries(
+      MAJORS.map(s => [s, { launched: 0, intercepted: 0, citiesErased: 0, depositsDestroyed: 0, unitsErased: 0 }]),
+    ),
+    strikeLog: [],
   };
 
   // Turn 1 begins with the selected player's units already refreshed, exactly
@@ -219,6 +247,21 @@ function aggregate(results) {
           avgFinalStrength: Object.fromEntries(
             MAJORS.map(side => [side, +average(rows.map(r => r.final.strength[side] || 0)).toFixed(2)]),
           ),
+          avgStrikes: Object.fromEntries(
+            MAJORS.map(side => [
+              side,
+              Object.fromEntries(
+                ['launched', 'intercepted', 'citiesErased', 'depositsDestroyed'].map(k => [
+                  k,
+                  +average(rows.map(r => r.actions.strikes[side][k])).toFixed(2),
+                ]),
+              ),
+            ]),
+          ),
+          avgFirstStrikeTurn: +average(
+            rows.map(r => r.actions.strikeLog[0]?.turn).filter(t => t != null),
+          ).toFixed(2),
+          avgFinalDeposits: +average(rows.map(r => r.final.deposits.length)).toFixed(2),
         },
       ];
     }),
@@ -266,12 +309,28 @@ function markdown(report) {
     }
   lines.push(
     '',
+    '## F.L.E.I.J.A. (average per game)',
+    '',
+    '| Player | Difficulty | First strike turn | Launches B / E.U. / C.F. | Intercepted | Cities erased | Deposits destroyed | Deposits left |',
+    '|---|---:|---:|---:|---:|---:|---:|---:|',
+  );
+  for (const player of report.config.players)
+    for (const difficulty of report.config.difficulties) {
+      const a = report.aggregate[`${player}|${difficulty}`];
+      if (!a) continue;
+      const sum = k => +MAJORS.reduce((n, s) => n + a.avgStrikes[s][k], 0).toFixed(2);
+      lines.push(
+        `| ${player} | ${difficulty} | ${a.avgFirstStrikeTurn || '—'} | ${MAJORS.map(s => a.avgStrikes[s].launched).join(' / ')} | ${sum('intercepted')} | ${sum('citiesErased')} | ${sum('depositsDestroyed')} | ${a.avgFinalDeposits} |`,
+      );
+    }
+  lines.push(
+    '',
     '## Interpretation notes',
     '',
     '- **Normal** is the cleanest faction/AI balance signal because no faction receives difficulty bonuses.',
     '- **Hard/Challenge** measure how well each selected player faction survives against the live game\'s boosted rivals.',
-    '- A result can end before world conquest when the selected player capital falls, matching the actual game-over rule.',
-    '- Full per-run timelines, economies, force strength and action counts are in `balance-results.json`.',
+    '- A result can end before world conquest when the selected player loses its last city (by capture or a F.L.E.I.J.A. strike), matching the actual game-over rule.',
+    '- Full per-run timelines, economies, income, strategic weapons, force strength, action counts and every F.L.E.I.J.A. strike are in `balance-results.json`.',
     '',
   );
   return lines.join('\n');

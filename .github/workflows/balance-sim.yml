@@ -46,7 +46,7 @@ jobs:
           node-version: 22
 
       - name: Engine regression check
-        run: node --test tests/engine.test.cjs
+        run: node --test tests/core.test.cjs
 
       - name: Run balance simulations
         shell: bash
