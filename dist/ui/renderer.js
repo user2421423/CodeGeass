@@ -786,6 +786,30 @@ function draw(time, dt) {
             ? selection
             : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  // Ports sit between the coastline and their sea hex. Render beneath cities and fleets,
+  // keeping the wharves visible even while a ship is docked over the water.
+  for (const s of game.stations) {
+    if (!s.portLevel || !s.portAt) continue;
+    const c = hexCenter(s.portAt);
+    if (!visible(c)) continue;
+    const shore = hexCenter(s),
+      dx = wrapNear(shore.x, c.x) - c.x,
+      dy = shore.y - c.y,
+      distance = Math.hypot(dx, dy) || 1,
+      shift = Math.min(R * 0.26, distance * 0.16),
+      ox = (dx / distance) * shift,
+      oy = (dy / distance) * shift;
+    for (const x of copies(c.x)) {
+      const art = detail && ART.drawBuilding(ctx, 'port', x + ox, c.y + oy - 4, R * 2.1);
+      if (art) outlinedText('⚓', x - R * 0.65, c.y + 18, 13, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
+      else outlinedText('⚓', x, c.y + 6, detail ? 18 : 12, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
+      if (detail)
+        for (let i = 0; i < s.portLevel; i++) {
+          ctx.fillStyle = '#d8c581';
+          ctx.fillRect(x - 7 + i * 5, c.y + 19, 3, 3);
+        }
+    }
+  }
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
   for (const s of game.stations) {
@@ -894,23 +918,6 @@ function draw(time, dt) {
       if (ruin.capital || R * scale >= 16)
         outlinedText(`${ruin.name} · RUINS`, 0, 44, 10, '#ffb3d6', scale, 'Trebuchet MS', true);
       ctx.restore();
-    }
-  }
-  // Ports: the harbour picture on the port's sea hex (an anchor while it loads or when zoomed out), the holder's
-  // colours on the anchor badge, its level in pips. A ship berthed there is drawn over it.
-  for (const s of game.stations) {
-    if (!s.portLevel || !s.portAt) continue;
-    const c = hexCenter(s.portAt);
-    if (!visible(c)) continue;
-    for (const x of copies(c.x)) {
-      const art = detail && !E.unitAt(game, s.portAt) && ART.drawBuilding(ctx, 'port', x, c.y - 4, R * 1.7);
-      if (art) outlinedText('⚓', x - R * 0.62, c.y + 18, 13, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
-      else outlinedText('⚓', x, c.y + 6, detail ? 18 : 12, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
-      if (detail)
-        for (let i = 0; i < s.portLevel; i++) {
-          ctx.fillStyle = '#d8c581';
-          ctx.fillRect(x - 7 + i * 5, c.y + 14, 3, 3);
-        }
     }
   }
   // Sakuradite: mines on their own hex, and a small crystal on cities that work a deposit.
