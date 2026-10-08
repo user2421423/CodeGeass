@@ -40,6 +40,7 @@
     WORLD,
     CITY_DATA,
     CITY_TWEAKS,
+    TERRITORY,
     ARMY_DATA,
     GARRISONS,
     PORT_DATA,
@@ -3197,6 +3198,10 @@
           n.owner = f.owner;
           frontier.push({ t: n, owner: f.owner, d: f.d + 1 });
         }
+    }
+    for (const [c, r, owner] of TERRITORY) {
+      const t = tile(g, c, r);
+      if (t && freeLand(t)) t.owner = owner;
     }
     for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
       const at = nearest(

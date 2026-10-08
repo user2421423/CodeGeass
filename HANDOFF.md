@@ -133,8 +133,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   the Korea Strait stays open, 30% for the island chains), sampled on ~50 points per hex. They overwrite the
   hand-drawn raster and `HEX_LAND`/`HEX_SEA` inside those regions. `FIX_LAND`/`FIX_SEA` apply last, for gameplay:
   Honshu joined to Hokkaido, Calabria land so Sicily stays joined to Italy (Messina closed), sea at Dover, the North
-  Channel, the Bosporus/Dardanelles and the Dalmatian coast (so the Adriatic reaches Otranto), Taipei's old hex and
-  the hex east of Chennai. Small Mediterranean islands drop out at these shares; Sardinia stays.
+  Channel, the Bosporus/Dardanelles and the Dalmatian coast (so the Adriatic reaches Otranto), Taipei's old hex, the
+  hex east of Chennai and southern Tamil Nadu, Iceland's Westfjords, and the Gulf of Suez (106,26), so Africa and Asia
+  meet only by sea. Small Mediterranean islands drop out at these shares; Sardinia stays, given to the E.U. by
+  `TERRITORY` in `world.js` (land hexes no city's territory reaches, assigned by hand).
 - Map lock: `tools/data/map_locked.txt` is the approved map. `python3 tools/check_map.py` (run in CI) fails when a hex
   outside the `REDRAW` regions and fix lists changes, or when `world.js` is out of date with `build_map.py`;
   `--update` refreshes the lock after an approved change. `core.test.cjs` checks the islands, straits and joins

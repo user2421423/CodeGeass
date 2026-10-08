@@ -338,7 +338,7 @@ HEX_LAND = [
     (154, 25), (157, 24), (160, 21),  # Japan: southern Kyushu, Shikoku/Kii, eastern Tohoku
     (151, 36), (151, 37), (148, 37),  # Philippines: central Visayas and Palawan
     (98, 19),  # Italy: Apulian heel (paired with the Otranto sea cut below)
-    (124, 30), (129, 37),  # India: Gujarat, Tamil Nadu
+    (124, 30),  # India: Gujarat
     (85, 18), (84, 21), (86, 22),  # Iberia: Galicia, Portugal, the Algarve
     (152, 23),  # Korea: south-west coast
     (100, 2), (95, 10),  # Scandinavia/Denmark: northern Norway and Jutland
@@ -455,6 +455,9 @@ FIX_SEA = [
     (86, 11),  # North Channel: keep Ireland an island
     (103, 19), (103, 20),  # Bosporus and Dardanelles: the Black Sea opens to the Aegean
     (98, 18),  # Dalmatian coast: keep the Adriatic one sea from Venice to the Strait of Otranto
+    (129, 37),  # India: southern Tamil Nadu, which made the tip too wide
+    (106, 26),  # Sinai: the Gulf of Suez; Africa and Asia now meet only by sea (armies embark to cross)
+    (77, 5),  # Iceland: the Westfjords
 ]
 
 

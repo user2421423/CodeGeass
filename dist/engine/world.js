@@ -21,7 +21,7 @@
     '.........ssssss................................................sssxsssssssssss......................sssss...................sssssssssssssssssssssssssssssssssssssssssss.............',
     '.......ssssssssssssssssssssssssss..............................sssssssssssss.....................ssssssssss............sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
     'sss....sssssssssssssssssssssssssssssssssssssss............s....ssssssssxss.......................sssssssssssss..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss',
-    'pppp..ppppppppppppppppppppppppppppppppppppppsss.................sssxsss......ssspp.............pmpppfpfpppppp.pppppppppppppppppppppppppppppppppppppppppppppmmmmmmmmmmmpppppppppppppp',
+    'pppp..ppppppppppppppppppppppppppppppppppppppsss.................sssxsss.......sspp.............pmpppfpfpppppp.pppppppppppppppppppppppppppppppppppppppppppppmmmmmmmmmmmpppppppppppppp',
     'p......pppppppppppppppppppppppppppppppppppppps.......s..........ssssss.........ssp............pppppf.ffpfpppppppppppppppppppppppppppppppppppppppppppppppppppmmmmmppmmpmmpmpppppppppp',
     '.......ppppppmmmpmpppffppfpfppppppppppppppp........sss...........ssss.......................ppmppp..ffppppppppppppppppppmpppppppppppppppppppppppppppppppppppppmmppppmmpppppppppppp..',
     '.........pppppmpmmpmfffffppfppffpfpffpppppp........sssssss.........ss.......................pmpppff..ppppppfpppppppppppppmpppppppppppppppppppppppppppppppppppppppppppppp..pppppp....',
@@ -42,7 +42,7 @@
     '.............................ppdpdmdmppppppfpfppffp......................................mmmmpp............ppppppmppppppppppppmmmmmmmmmmmmpppppppppppp.....ppppp....................',
     '...............................ddpdmmpppppfpfppfpp...................................ppmpmpppppp............pppppmpmppdppdppppppxmmmmmmmpmpmpppppppppp.....ppp......................',
     '...............................pdpdddpppppffpffpp...................................pppppdddddddpp.ppppp..pppppdppmppdppddppppppxxxmmmpmmmxppppppppppp....p.........................',
-    '................................pppppppppppppp..pp...................................pdddddddddpdpdddddddpppddpddd..mmdddddpppppppmmxxmxmxmmmpppppppppp.............................',
+    '................................pppppppppppppp..pp...................................pdddddddddpdpdddddddp.pddpddd..mmdddddpppppppmmxxmxmxmmmpppppppppp.............................',
     '................................ppppmpppp.......p..................................ddddddddddddpdddddpdddp..dpdpdd..mmdpppdddpppppppmxmxmmmppppppppppp..............................',
     '.................................p.pppmpp........p.................................dddddddddpddddppddddpddp.pdddddpp...ppppdpdpppppppppppppppppppppppp..............................',
     '.................................p.ppmmpp.........................................dddddddddddddpdddddpdpddp.ppdddddppp.....pppppppppppppppppppppppppp.p.............................',
@@ -53,7 +53,7 @@
     '..........................................ppppp..................................pppppppppppppppppddddddddpppp..pdddp..........pppp.......fpfpfp......p.............................',
     '...........................................ppppp.................................pppppppppppppppppppppppppppppp.pp.............ppp........fpfppf......p.............................',
     '..............................................pp..................................ppppppppppppppppppppppppppmppp...............ppp.........p.fpfp......p............................',
-    '..............................................pp....ppp...........................pppppppppppppppppppppppppppmppppp............ppp.........f.pfp.......p............................',
+    '..............................................pp....ppp...........................pppppppppppppppppppppppppppmppppp............pp..........f.pfp.......p............................',
     '................................................ppp.pppppppp.......................pppppppppppppppppppppppppmmmpppp.............p..........p..p........pp...........................',
     '.................................................ppppppppppp.......................pfpfffppppppppppppppppppppmppppp..............p.........f...........pp...........................',
     '...................................................pmmppppppppp......................pppppf.pfppppppppppppppppppppp.........................f.......p...............................',
@@ -302,6 +302,11 @@
     'Houston', 'Toronto', 'Sao Paulo', 'Hong Kong', 'Chongqing', 'Wuhan',
   ])
     CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 25, industry: 15, science: 4 };
+  // Land hexes no city's territory reaches (islands without a city), given to a power by hand: [column, row, owner].
+  // Exact hexes, so they follow the map in WORLD_ROWS.
+  const TERRITORY = [
+    [94, 20, 'eu'], // Sardinia
+  ];
   // [side, class, lon, lat, frames, commander]. Units snap to their nearest free land hex.
   const ARMY_DATA = [
     // Britannia: Pendragon, the Atlantic coast, South America, Area 11 and the Pacific.
@@ -484,6 +489,7 @@
     WORLD,
     CITY_DATA,
     CITY_TWEAKS,
+    TERRITORY,
     ARMY_DATA,
     GARRISONS,
     PORT_DATA,
