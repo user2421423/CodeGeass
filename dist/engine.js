@@ -226,6 +226,10 @@
     if (TYPES[u.type].naval) return 0;
     return techValue(g, u.side, `${branchOf(u.type)}.${k}`);
   }
+  // Naval units use the Naval HP research instead of inheriting Armor/Artillery frames.
+  function hullTech(g, u) {
+    return unitTech(g, u, 'hull') + (TYPES[u.type].naval ? techValue(g, u.side, 'naval.hulls') : 0);
+  }
 
   // ======== Commander development, as in WC4 ========
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
@@ -600,10 +604,10 @@
         .filter(([id, l]) => TECH_NODES[id] && Number.isInteger(l) && l > 0)
         .map(([id, l]) => [id, Math.min(l, TECH_NODES[id].max)]),
     );
-    for (const u of g.units) {
+    for (const u of allUnits(g)) {
       if (u.side !== g.player) continue;
       const old = maxHP(u);
-      u.hpTech = unitTech(g, u, 'hull');
+      u.hpTech = hullTech(g, u);
       if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
     }
     g.stations.forEach(s => fortify(g, s));
@@ -921,6 +925,7 @@
       feintCD: 0,
       held: false,
       guardReady: false,
+      entrenched: false,
       movedDistance: 0,
       skillReposition: 0,
       withdrawMove: false,
@@ -928,7 +933,7 @@
       eliteLevel: ELITE_TYPE_TO_ID[type] ? 1 : 0,
       eliteMoveAfterKill: false,
     };
-    u.hpTech = unitTech(g, u, 'hull');
+    u.hpTech = hullTech(g, u);
     u.hp = maxHP(u);
     g.units.push(u);
     return u;
@@ -1246,8 +1251,12 @@
     if (u.side === 'eb' && u.cmd) attack *= 1.1;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
+    if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'naval.torpedoes');
     if (t.aquatic && isSea(tile(g, u.c, u.r))) attack *= 1 + t.aquatic;
-    if (t.naval === 'ship') attack *= 1 + techValue(g, u.side, 'naval.gunnery');
+    if (t.naval === 'ship') {
+      attack *= 1 + techValue(g, u.side, 'naval.gunnery');
+      if (counter) attack *= 1 + techValue(g, u.side, 'naval.firecontrol');
+    }
     // Rapid Launch Systems: the first attack on the turn a Knightmare launched from a carrier (needs a level-3 port).
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
     // Commander signature abilities (attacker side).
@@ -1309,6 +1318,8 @@
       const ground = tile(g, target.c, target.r);
       if (!victim.naval && victim.branch === 'Infantry' && (ground.terrain === 'urban' || !!stationAt(g, target)))
         attack *= 1 - techValue(g, target.side, 'infantry.urban');
+      if (!victim.naval && victim.branch === 'Infantry' && target.entrenched)
+        attack *= 1 - techValue(g, target.side, 'infantry.entrench');
       if (nearCity) attack *= 1 - techValue(g, target.side, 'cities.bunkers');
       attack *= 1 - techValue(g, target.side, 'sakura.blaze');
       // Factsphere Screen: Infantry shields neighbouring Artillery.
@@ -1566,7 +1577,7 @@
       .reduce(
         (a, s) => ({
           credits: a.credits + Math.round(s.income * treasuryBonus(g, s)),
-          industry: a.industry + s.industry,
+          industry: a.industry + Math.round(s.industry * (1 + techValue(g, side, 'cities.industry'))),
           science: a.science + s.science,
         }),
         { credits: 0, industry: 0, science: 0 },
@@ -2255,7 +2266,7 @@
     const d = depositOf(g, s),
       y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
     if (devastated(g, s)) return { credits: 0, industry: 0, science: 0, sakuradite: 0 };
-    return { credits: Math.round(s.income * treasuryBonus(g, s)) + y.credits, industry: s.industry, science: s.science, sakuradite: y.sakuradite };
+    return { credits: Math.round(s.income * treasuryBonus(g, s)) + y.credits, industry: Math.round(s.industry * (1 + techValue(g, s.owner, 'cities.industry'))), science: s.science, sakuradite: y.sakuradite };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
   function seizeDeposit(g, u, p) {
@@ -2735,6 +2746,13 @@
     return protectedBest && protectedBest.score >= FLEIJA.aiThreshold * 1.5 ? protectedBest.p : null;
   }
   function beginTurn(g, side, collect = true) {
+    // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
+    // The protection persists through rival turns, then ends when that power's next turn begins.
+    const outgoing = g.phase;
+    if (outgoing && outgoing !== side)
+      for (const u of g.units)
+        if (u.hp > 0 && u.side === outgoing && !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry')
+          u.entrenched = !u.lastTurnMoved;
     g.phase = side;
     if (collect) {
       const inc = income(g, side),
@@ -2752,6 +2770,7 @@
     for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
     for (const u of mine) {
+      u.entrenched = false;
       u.lastTurnMoved = false;
       u.guardReady = !!u.held;
       u.movedDistance = 0;
@@ -2808,7 +2827,7 @@
     const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const rate = 0.12 + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
+      const rate = 0.12 + techValue(g, side, 'cities.engineering') + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
       s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * rate));
     }
     strategicTurn(g, side);
@@ -3036,7 +3055,7 @@
     }
     for (const u of g.units)
       if (foes.includes(u.side)) {
-        u.hpTech = unitTech(g, u, 'hull');
+        u.hpTech = hullTech(g, u);
         u.hp = maxHP(u);
       }
     g.stations.forEach(st => fortify(g, st));
