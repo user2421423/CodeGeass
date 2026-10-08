@@ -197,7 +197,12 @@
     return BRANCHES[TYPES[type].branch];
   }
   // Research saved before the Naval branch existed moves to it.
-  const LEGACY_RESEARCH = { 'sakura.transport': 'naval.logistics', 'sakura.landing': 'naval.landing' };
+  const LEGACY_RESEARCH = {
+    'sakura.transport': 'naval.logistics',
+    'sakura.landing': 'naval.landing',
+    'infantry.armor': 'infantry.urban',
+    'artillery.armor': 'artillery.counterbattery',
+  };
   function normalizeResearch(research = {}) {
     const out = { ...(research || {}) };
     for (const [old, now] of Object.entries(LEGACY_RESEARCH))
@@ -205,6 +210,8 @@
         out[now] = Math.max(out[now] || 0, out[old]);
         delete out[old];
       }
+    for (const [id, level] of Object.entries(out))
+      if (TECH_NODES[id]) out[id] = Math.max(0, Math.min(level | 0, TECH_NODES[id].max));
     return out;
   }
   function techLevel(g, side, id) {
@@ -216,6 +223,7 @@
   }
   // Branch-wide tech for a unit, e.g. unitTech(g, u, 'guns') reads 'armor.guns' for a Sutherland.
   function unitTech(g, u, k) {
+    if (TYPES[u.type].naval) return 0;
     return techValue(g, u.side, `${branchOf(u.type)}.${k}`);
   }
 
@@ -627,7 +635,7 @@
   // victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
   const TOKEN_REWARD = { victory: 250, conquest: 150, first: 150, research: 5, researchCap: 300 };
   function operationKey(g) {
-    return `conquest:${g.era || 'world'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
+    return `conquest:${g.era || 'world'}:${g.player || 'britannia'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
   }
   function missionReward(g, wins = 0, cleared = {}) {
     if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [] };
@@ -828,7 +836,11 @@
   }
   const portAtHex = (g, p) => g.stations.find(s => s.portLevel && s.portAt && s.portAt.c === p.c && s.portAt.r === p.r) || null;
   const hasPort3 = (g, side) => g.stations.some(s => (s.portLevel || 0) >= 3 && s.portOwner === side);
-  const canBoard = ship => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < TYPES[ship.type].capacity;
+  function carrierCapacity(g, ship) {
+    if (!isShip(ship)) return 0;
+    return TYPES[ship.type].capacity + (techLevel(g, ship.side, 'naval.hangars') && hasPort3(g, ship.side) ? 1 : 0);
+  }
+  const canBoard = (g, ship) => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < carrierCapacity(g, ship);
   // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
   const allUnits = g => g.units.flatMap(u => (u.cargo?.length ? [u, ...u.cargo] : [u]));
   const isSea = t => t?.terrain === 'sea';
@@ -850,8 +862,8 @@
   }
   function seaMove(g, u) {
     const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
-    // Advanced Naval Logistics (the second level) works only for a power that holds a level-3 port.
-    return base + Math.min(techValue(g, u.side, 'naval.logistics'), hasPort3(g, u.side) ? 2 : 1);
+    // Naval Logistics raises transports from 5 to 6. Level II changes embark/landing tempo instead of adding speed.
+    return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
   }
 
   // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
@@ -925,13 +937,13 @@
     const t = TYPES[u.type],
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
-    let n = t.move + unitTech(g, u, 'drives') + (eliteFx(u).move || 0);
+    let n = t.move + Math.min(1, unitTech(g, u, 'drives')) + (eliteFx(u).move || 0);
     if (g?.mode !== 'campaign') n += CONQUEST_MOVE_BONUS;
     // WC4-style Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
     n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
-    n += techLevel(g, u.side, 'sakura.float') >= 2 ? 1 : 0;
+    if (techLevel(g, u.side, 'sakura.float') >= 2 && (t.branch === 'Armor' || t.float || eliteFx(u).float)) n += 1;
     return n;
   }
   function terrainCost(g, u, t) {
@@ -960,45 +972,51 @@
       fromSea = isSea(start),
       ship = t.naval === 'ship',
       amphibious = t.naval === 'amphibious',
-      // Amphibious frames spend one pool: a sea hex costs 1/seaMove of it, a land hex terrain/landMove, so crossing
-      // the coast never ends their move. Warships only sail. Knightmares that did not just launch may board a carrier.
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
       budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
       boards = !u.skillReposition && !t.naval && u.deployedTurn !== g.turn,
-      costs = new Map([[key(start), 0]]),
-      queue = [{ p: start, cost: 0 }];
+      roughDiscount = !u.skillReposition && !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.drives') >= 2,
+      advancedLanding = !u.skillReposition && !t.naval && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
+      stateKey = (p, used) => `${key(p)}|${used ? 1 : 0}`,
+      costs = new Map([[stateKey(start, false), 0]]),
+      queue = [{ p: start, cost: 0, roughUsed: false }];
     while (queue.length) {
       let best = 0;
       for (let i = 1; i < queue.length; i++) if (queue[i].cost < queue[best].cost) best = i;
-      const { p, cost } = queue.splice(best, 1)[0];
-      if (cost > costs.get(key(p))) continue;
+      const { p, cost, roughUsed } = queue.splice(best, 1)[0];
+      if (cost > costs.get(stateKey(p, roughUsed))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n)) || (u.skillReposition && !t.naval && isSea(n))) continue;
+        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (occ && occ.side !== u.side) continue;
-        // Boarding a friendly Carrier-Battleship with room takes the rest of the turn, like embarking.
-        if (occ && boards && canBoard(occ)) {
+        if (occ && boards && canBoard(g, occ)) {
           if (cost < budget) found.set(key(n), budget);
           continue;
         }
         if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
-        // Embarking or landing takes the rest of the turn: allowed whenever any movement is left.
+        let nextRough = roughUsed,
+          step = isSea(n) ? 1 : terrainCost(g, u, n);
+        if (roughDiscount && !roughUsed && !cross && step > 1) {
+          step--;
+          nextRough = true;
+        }
         const nc = u.skillReposition
-          ? cost + (isSea(n) ? 1 : terrainCost(g, u, n))
+          ? cost + step
           : cross
-          ? budget
+          ? advancedLanding ? cost + 1 : budget
           : ship
             ? cost + 1
             : amphibious
               ? cost + (isSea(n) ? landMove : terrainCost(g, u, n) * seaMv)
-              : cost + terrainCost(g, u, n);
-        if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(key(n)) ?? Infinity)) continue;
-        costs.set(key(n), nc);
-        if (!cross) queue.push({ p: n, cost: nc });
-        if (!occ && key(n) !== key(start)) found.set(key(n), nc);
+              : cost + step;
+        const sk = stateKey(n, nextRough);
+        if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
+        costs.set(sk, nc);
+        if (!cross) queue.push({ p: n, cost: nc, roughUsed: nextRough });
+        if (!occ && key(n) !== key(start)) found.set(key(n), Math.min(found.get(key(n)) ?? Infinity, nc));
       }
     }
     return found;
@@ -1011,7 +1029,7 @@
       max:
         t.max +
         (eliteFx(u).range || 0) +
-        (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 ? 1 : 0) +
+        (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 && (u.movedDistance || 0) === 0 ? 1 : 0) +
         (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0), // Minami's Ikaruga Fire Control
     };
   }
@@ -1084,12 +1102,20 @@
   function move(g, id, c, r) {
     const u = g.units.find(u => u.id === id);
     if (!u) return { ok: false, reason: 'Unit not found.' };
-    const dest = tile(g, c, r);
-    if (!dest || !reachable(g, u).has(key(dest))) return { ok: false, reason: 'That hex is not reachable this turn.' };
+    const dest = tile(g, c, r),
+      reach = dest && reachable(g, u),
+      moveCost = dest && reach?.get(key(dest));
+    if (!dest || moveCost == null) return { ok: false, reason: 'That hex is not reachable this turn.' };
     const from = { c: u.c, r: u.r },
+      fromSea = isSea(tile(g, u.c, u.r)),
+      t = TYPES[u.type],
+      cross = !t.naval && isSea(dest) !== fromSea,
+      advancedLanding = cross && !u.skillReposition && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
+      moveBudget = fromSea ? seaMove(g, u) : movement(g, u),
+      retainMove = advancedLanding && moveBudget - moveCost >= 2,
       carrier = unitAt(g, dest);
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
-    if (carrier && carrier !== u && carrier.side === u.side && canBoard(carrier)) {
+    if (carrier && carrier !== u && carrier.side === u.side && canBoard(g, carrier)) {
       g.units.splice(g.units.indexOf(u), 1);
       u.c = dest.c;
       u.r = dest.r;
@@ -1107,12 +1133,12 @@
     }
     u.c = dest.c;
     u.r = dest.r;
-    u.moved = true;
+    u.moved = !retainMove;
     u.held = false;
     u.guardReady = false;
     u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
     u.lastTurnMoved = true;
-    u.skillReposition = 0;
+    u.skillReposition = retainMove ? 1 : 0;
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
@@ -1244,34 +1270,50 @@
     attack *= officerAttack(g, u);
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
-    if (t.branch === 'Infantry' && victim?.branch === 'Armor') attack *= 1 + techValue(g, u.side, 'infantry.harken');
-    if (t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
-    if (t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
+    if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
+    if (!t.naval && t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
+    if (!t.naval && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.drives') >= 2 && (u.movedDistance || 0) <= 1)
+      attack *= 1.1;
     const friends = (side, at, test) =>
       g.units.some(v => v.hp > 0 && v.side === side && v.id !== u.id && dist(g, v, at) === 1 && test(TYPES[v.type]));
     // Lance Formation and Factsphere Fire Control.
-    if (t.branch === 'Armor' && techLevel(g, u.side, 'armor.formation') >= 1 && friends(u.side, u, v => v.branch === 'Armor'))
-      attack *= 1.15;
+    if (!t.naval && t.branch === 'Armor' && techLevel(g, u.side, 'armor.formation') >= 1 && friends(u.side, u, v => v.branch === 'Armor' && !v.naval))
+      attack *= 1.12;
     if (
+      !t.naval &&
       t.branch === 'Artillery' &&
       target &&
       techLevel(g, u.side, 'artillery.fire') >= 1 &&
       friends(u.side, target, v => v.branch !== 'Artillery')
     )
       attack *= 1.2;
-    const pen = armorPenetration(g, u);
-    const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') : 35;
+    const pen = armorPenetration(g, u, target);
+    const formationArmor =
+      target &&
+      !victim.naval &&
+      victim.branch === 'Armor' &&
+      techLevel(g, target.side, 'armor.formation') >= 1 &&
+      g.units.some(v => v.hp > 0 && v.side === target.side && v.id !== target.id && !TYPES[v.type].naval && TYPES[v.type].branch === 'Armor' && dist(g, v, target) === 1)
+        ? 5
+        : 0;
+    const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') + formationArmor : 35;
     attack *= 100 / (100 + armor * (1 - pen) * 2);
     if (target) {
       const tf = fx(target),
         nearCity = g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1);
       attack *= officerDefense(g, target);
-      if (t.branch === 'Artillery' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.blaze');
-      if (t.cls === 'siege' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.bulkheads');
+      if (!victim.naval && t.branch === 'Artillery' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.blaze');
+      if (!victim.naval && t.cls === 'siege' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.bulkheads');
+      if (!victim.naval && victim.branch === 'Artillery' && !t.naval && t.branch === 'Artillery')
+        attack *= 1 - techValue(g, target.side, 'artillery.counterbattery');
+      const ground = tile(g, target.c, target.r);
+      if (!victim.naval && victim.branch === 'Infantry' && (ground.terrain === 'urban' || !!stationAt(g, target)))
+        attack *= 1 - techValue(g, target.side, 'infantry.urban');
       if (nearCity) attack *= 1 - techValue(g, target.side, 'cities.bunkers');
       attack *= 1 - techValue(g, target.side, 'sakura.blaze');
       // Factsphere Screen: Infantry shields neighbouring Artillery.
       if (
+        !victim.naval &&
         victim.branch === 'Artillery' &&
         techLevel(g, target.side, 'infantry.picket') >= 1 &&
         g.units.some(
@@ -1294,12 +1336,11 @@
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
-      const ground = tile(g, target.c, target.r);
       if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
     }
-    if (counter) attack *= t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 1 : 0.65;
+    if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.85 : 0.65;
     return Math.max(1, Math.round(attack));
   }
   function preview(g, id, c, r) {
@@ -1354,8 +1395,8 @@
       counterAllowed: counter,
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
-      splash: (t.splash || 0) + (ef.splash || 0) + (t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
-      armorPen: armorPenetration(g, a),
+      splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
+      armorPen: armorPenetration(g, a, d),
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
@@ -1457,7 +1498,7 @@
     let cap = f.refire || aef.refire ? 2 : 1;
     // Breakthrough Doctrine: a kill at the cap may still earn one more breakthrough.
     if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain === cap) {
-      const chance = techValue(g, a.side, 'armor.assault');
+      const chance = !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor' ? techValue(g, a.side, 'armor.assault') : 0;
       if (chance && random(g) < chance) cap++;
     }
     let breakthrough = false;
@@ -1472,6 +1513,17 @@
       // Heavy and super-heavy frames always fire again after a kill, beyond the breakthrough cap.
       a.attacked = false;
       breakthrough = true;
+    }
+    if (
+      destroyed &&
+      a.hp > 0 &&
+      !TYPES[a.type].naval &&
+      TYPES[a.type].branch === 'Armor' &&
+      techLevel(g, a.side, 'armor.drives') >= 2 &&
+      a.overdriveTurn !== g.turn
+    ) {
+      a.overdriveTurn = g.turn;
+      grantReposition(a, 1);
     }
     // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
     if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
@@ -1523,12 +1575,11 @@
     // refinery also exports for credits.
     total.sakuradite = 0;
     for (const d of g.sites || []) {
-      total.sakuradite += depositShares(g, d)[side] || 0;
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining;
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
     if (g.mode !== 'campaign' && MAJORS.includes(side) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
-    total.credits = Math.round(total.credits * refining);
     return total;
   }
   // New units deploy on the city hex or a free land hex next to it; naval units at the port or on the sea next to it.
@@ -1974,9 +2025,12 @@
     }
     return { damage, noCounter };
   }
-  function armorPenetration(g, u) {
-    const engineering = skillNear(g, u, 'engineeringPen', 2) ? 0.1 : 0;
-    return clamp(TYPES[u.type].pen + (fx(u).pen || 0) + (eliteFx(u).pen || 0) + engineering, 0, 0.95);
+  function armorPenetration(g, u, target = null) {
+    const engineering = skillNear(g, u, 'engineeringPen', 2) ? 0.1 : 0,
+      harken = target && TYPES[u.type].branch === 'Infantry' && TYPES[target.type].branch === 'Armor'
+        ? techValue(g, u.side, 'infantry.harken')
+        : 0;
+    return clamp(TYPES[u.type].pen + (fx(u).pen || 0) + (eliteFx(u).pen || 0) + engineering + harken, 0, 0.95);
   }
   function commanderAttack(g, u, target, counter) {
     const f = fx(u), friends = friendlyNeighbors(g, u);
@@ -2722,7 +2776,7 @@
       }
       if (fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
       const energy = techValue(g, side, 'sakura.energy');
-      if (energy) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * energy));
+      if (energy && nearby === 0) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * energy));
       const auras = mine.filter(v => v.hp > 0 && v.cmd && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
@@ -2732,8 +2786,10 @@
       const t = tile(g, u.c, u.r),
         attrition = TERRAIN[t.terrain]?.attrition;
       if (attrition) {
-        const filler = TYPES[u.type].branch === 'Infantry' ? techValue(g, side, 'infantry.filler') : 0;
+        const filler = !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry' ? techValue(g, side, 'infantry.filler') : 0;
         u.hp = Math.max(1, u.hp - Math.round(maxHP(u) * attrition * (1 - filler)));
+        if (filler && (t.terrain === 'desert' || t.terrain === 'snow'))
+          u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.03));
       }
       const s = stationAt(g, u);
       if (s?.owner === side)
@@ -2807,7 +2863,7 @@
     if (techLevel(g, s.owner, 'cities.overcharge') >= 2)
       for (const v of g.units) {
         if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
-        const amount = Math.round(fortressDamage(g, v, s.owner) * 0.5);
+        const amount = Math.round(fortressDamage(g, v, s.owner) * 0.4);
         v.hp = Math.max(0, v.hp - amount);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, null);
@@ -3423,6 +3479,8 @@
     TECH_NODES,
     TECH_TIERS,
     TOKEN_REWARD,
+    normalizeResearch,
+    carrierCapacity,
     DIFFICULTIES,
     UPGRADE,
     operationKey,
@@ -3578,6 +3636,7 @@
       buildReason,
       buildingLevel,
       canBoard,
+      carrierCapacity,
       canBuy,
       canCapture,
       deploy,
