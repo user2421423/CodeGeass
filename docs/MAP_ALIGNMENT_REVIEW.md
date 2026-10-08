@@ -1,6 +1,6 @@
 # Code Geass conquest map: coastline / gameplay hex alignment
 
-Status: **review required; no gameplay tiles converted**. Independent branch from
+Status: **first protected correction batch committed; further regional review required**. Independent branch from
 `feature/map-rendering-overhaul`: `feature/map-hex-alignment`.
 Do not merge this branch until protected strategic passages, city/port positions,
 initial units, save migration and AI naval routes have been checked.
@@ -12,12 +12,12 @@ used to draw the map*. Thresholds: recommend land only when visual land covers
 at least 80% of a currently sea hex; recommend sea only when land covers 18%
 or less of a currently land hex. Mixed coastal hexes are not conversion targets.
 The previous centre-point comparison marked 484, but that included legitimate
-partial coast hexes. **74** meet the stronger area criteria:
+partial coast hexes. **74** met the initial area criteria, of which **73 remain** after the approved Newfoundland correction:
 
 | Region | Conflicts |
 |---|---:|
 | Arctic / high north | 43 |
-| Americas (excluding Arctic) | 10 |
+| Americas (excluding Arctic) | 9 |
 | East Asia / Japan / Korea | 5 |
 | Africa | 4 |
 | Middle East / Arabian Peninsula | 3 |
@@ -25,7 +25,7 @@ partial coast hexes. **74** meet the stronger area criteria:
 | Australia / Pacific | 3 |
 | Other | 2 |
 | Siberia / Far East | 1 |
-| **Total** | **74** |
+| **Total remaining** | **73** |
 
 City art alignment is another layer: **23 city gameplay centres** fall on
 visually painted water, including Singapore, Manila, Shanghai and Taipei.
@@ -56,25 +56,51 @@ because the existing game intentionally suppresses minor Arctic islands.
 | (142,46) | Sunda / Java | Sea | 95.3% | **Keep water**; preserve open strait |
 | (157,44) | West New Guinea | Owned land | 9.9% | **Review conversion** after verifying ownership and adjacent routes |
 | (119,17) | Central Asia near Caspian | Owned land | 0.01% | **Review conversion** and ownership migration |
-| (61,15) | Newfoundland area | Sea | 92.2% | Candidate land; check coast, shipping and placement before approval |
+| (61,15) | Newfoundland area | **Plains (converted)** | 92.2% | **Applied**; city-free, no starting units, sea connectivity preserved |
 
 Protected sea hexes with high geographic land coverage should remain sea
 but receive visibly navigable corridors (cartographic exaggeration). Likewise,
 coastal city sprites may need a visual placement offset or localized shoreline
 adjustment without changing unit movement.
 
-## Stage 4 — Dry-run validation before any map mutation
+## Stage 4 — First correction applied; remaining work
 
-Applying the **only initially unprotected, unowned, non-polar candidate**
-(61,15), in a *hypothetical* graph audit:
-- Current: 9,287 water hexes; 2 water components; largest contains 9,276.
-- Hypothetical: 9,286 water hexes; 2 components; largest contains 9,275.
-- No existing port or city tile is converted.
-- **This is not a gameplay patch. No changes have been applied.**
+- The only low-risk candidate `(61,15)` on Newfoundland is now **land**
+  in the generated world and map lock (previously sea).
+- Water connectivity: **2 sea components before and after**, largest sea
+  component 9,276 → 9,275 after the one-tile conversion.
+- No station, port, or starting unit occupied the edited tile.
+- Suez, northern Red Sea, Bab-el-Mandeb, Malacca and Sunda retain their
+  intentionally navigable gameplay sea hexes. The visual atlas now draws
+  **thin cartographically exaggerated water channels** along those passages;
+  no gameplay movement logic changes.
+- The GSHHG centre-point audit now documents **483 remaining differences**,
+  of which **410 are mixed-coastline hexes** and **73 are strong conflicts**.
+  The 73 break down into 33 land gameplay hexes over visual water and
+  40 sea gameplay hexes over visual land. None is automatically eligible
+  under city, port, route, polar and ownership protections.
+- Results: `docs/map-alignment-review.json` (73 strong conflicts) and
+  `docs/map-coastline-centre-review.json` (483 centre differences);
+  regenerate using `tools/map_alignment_audit.py` and
+  `tools/audit_coastline_centres.py` respectively.
 
-Once decisions are approved, use `tools/build_map.py` source-of-truth
-overrides, regenerate `dist/engine/world.js`, migrate/validate saves,
-update the map lock with the specific approved positions, then run
-`tools/check_map.py`, gameplay tests, port/naval pathing tests, AI
-conquest checks, and the area-weighted audit again. Do not silently
-override existing `FIX_SEA` passages.
+## Remaining regional work
+
+1. **City visual alignments (23 flagged)** — prioritize Singapore, Manila,
+   Shanghai, Taipei, Sydney and Pearl Harbor. Move the visual city anchor or
+   locally correct the shoreline; do not remove the land hex from beneath a city.
+   Ensure mouse hit-testing and city labels continue to follow the visual anchor.
+2. **Owned gameplay land over geographic water (33 strong cases)** —
+   inspect terrain, neighbouring navigation, unit placement and faction
+   ownership individually before converting any tile.
+3. **Protected sea over geographic land (40 strong cases)** — improve visual
+   coastlines/channel exaggeration or preserve intentional arctic simplifications.
+   Do not block established waterways.
+4. **Mixed-coastline remainder (410 cases)** — these are not necessarily errors.
+   Keep the exact vector coast, but display enough tactical information to make
+   movement/embarkation unambiguous when a tile is hovered or selected.
+
+For future gameplay conversions, adjust `tools/build_map.py` source-of-truth
+overrides, regenerate `dist/engine/world.js`, update the approved map lock
+and explicitly validate city placements, saved-game compatibility, naval
+pathfinding and conquest AI. Do not blindly convert all mismatches.
