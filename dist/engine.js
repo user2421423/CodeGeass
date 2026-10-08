@@ -4,7 +4,7 @@
   // The data lives in engine/frames.js, commanders.js, research.js and world.js, loaded before this file by index.html
   // and required here under Node. engine/ai.js loads afterwards and adds the AI.
   if (typeof module !== 'undefined')
-    for (const part of ['frames', 'commanders', 'research', 'world']) require(`./engine/${part}.js`);
+    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world']) require(`./engine/${part}.js`);
   const {
     // frames.js
     FACTIONS,
@@ -28,6 +28,7 @@
     PROMOTE_COST,
     MEDALS,
     RATINGS,
+    GENERIC_SKILLS,
     // research.js
     BRANCHES,
     BRANCH_NAMES,
@@ -172,7 +173,7 @@
   // but the existing combat pipeline can read both without applying either twice.
   const COMMANDER_EFFECTS = Object.fromEntries(Object.entries(COMMANDERS).map(([id, c]) =>
     [id, { ...(c.stats || {}), ...c.fx }]));
-  const COMMANDER_VERSION = 1;
+  const COMMANDER_VERSION = 2;
   function commanderStatsText(k) {
     const st = COMMANDERS[k]?.stats || {}, out = [], pct = n => Math.round(n * 100);
     if (st.dmg) out.push(`Damage +${pct(st.dmg)}%${st.attackOnly ? ' on attacks' : ''}`);
@@ -243,8 +244,10 @@
     const a = COMMANDERS[k];
     return a?.recruit ?? (a?.stars >= 5 ? 400 : a?.stars >= 4 ? 300 : 200);
   }
+  // Rarity slots: 2★=0, 3★=1, 4★=2, 5★=3; all start empty.
+  function genericSlots(k) { return Math.max(0, Math.min(3, (COMMANDERS[k]?.stars || 2) - 2)); }
   function defaultOfficer(k) {
-    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], commanderVersion: COMMANDER_VERSION };
+    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], generics: {}, commanderVersion: COMMANDER_VERSION };
   }
   function cleanOfficer(k, rec) {
     const base = defaultOfficer(k);
@@ -260,6 +263,9 @@
         Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
       medals: (rec.medals || []).filter(m => MEDALS[m]),
+      generics: Object.fromEntries(Object.entries(rec.generics || {})
+        .filter(([id, level]) => GENERIC_SKILLS[id] && Number.isInteger(level) && level >= 1 && level <= 5)
+        .slice(0, genericSlots(k))),
     };
   }
   // The persistent roster, created on first use: the two starters per faction.
@@ -269,7 +275,7 @@
       for (const k of Object.values(STARTERS).flat()) profile.roster[k] = defaultOfficer(k);
     }
     for (const [k, rec] of Object.entries(profile.roster))
-      if (COMMANDERS[k] && !rec?.commanderVersion) {
+      if (COMMANDERS[k] && rec?.commanderVersion !== COMMANDER_VERSION) {
         // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star.
         if (k === 'cornelia') for (let star = 5; star <= Math.min(6, rec?.ratings?.mobility || 4); star++)
           profile.tokens = (profile.tokens || 0) + STAR_COST[star];
@@ -284,12 +290,36 @@
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
-    return rec.commanderVersion ? rec : (g.officers[k] = cleanOfficer(k, rec));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
     if (!u?.cmd) return null;
     return (u.personal && g.roster?.[u.cmd]) || officer(g, u.cmd);
+  }
+  function genericLevel(g, u, id) {
+    const skill = GENERIC_SKILLS[id];
+    if (!skill || !u?.cmd || (skill.branch && TYPES[u.type].branch !== skill.branch)) return 0;
+    return officerOf(g, u)?.generics?.[id] || 0;
+  }
+  function genericDescription(id, level = 5) {
+    const s = GENERIC_SKILLS[id];
+    if (!s) return '';
+    const amount = Math.round(s.step * Math.max(1, Math.min(5, level)) * 100);
+    const branch = s.branch ? s.branch + ': ' : '';
+    const rule = {
+      crit: '+' + amount + ' percentage points critical chance',
+      damage: '+' + amount + '% attack damage',
+      avoid: amount + '% chance to prevent enemy counterattack',
+      counter: '+' + amount + '% counterattack damage',
+      defense: '-' + amount + '% incoming damage (all three branches)',
+      credits: '+' + amount + '% credits from occupied friendly city',
+      industry: '+' + amount + '% industry from occupied friendly city',
+      science: '+' + amount + '% research from occupied friendly city',
+      hpPenalty: 'Negates ' + amount + '% of attack loss caused by missing HP',
+      regen: 'Restores ' + amount + '% maximum HP at start of each turn',
+    };
+    return branch + (rule[s.kind] || '');
   }
   function wears(g, u, medal) {
     return !!officerOf(g, u)?.medals?.includes(medal);
@@ -390,6 +420,39 @@
     const o = roster(profile)[k];
     o.ratings[branch]++;
     return { ok: true, stars: o.ratings[branch] };
+  }
+  const GENERIC_COSTS = [0, 100, 120, 150, 200, 260];
+  const GENERIC_RESPEC_COST = 40;
+  function genericCost(level = 0) { return GENERIC_COSTS[level + 1] ?? Infinity; }
+  function genericReason(profile, k, id) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    if (!GENERIC_SKILLS[id]) return 'Unknown generic skill';
+    const o = roster(profile)[k], existing = o.generics?.[id] || 0;
+    if (existing >= 5) return 'Already Level 5';
+    if (!existing && Object.keys(o.generics || {}).length >= genericSlots(k)) return 'No empty generic skill slots';
+    return tokenShort(profile, genericCost(existing));
+  }
+  function buyGeneric(profile, k, id) {
+    const why = genericReason(profile, k, id);
+    if (why) return { ok: false, reason: why };
+    const o = roster(profile)[k], level = o.generics?.[id] || 0;
+    profile.tokens -= genericCost(level);
+    (o.generics ||= {})[id] = level + 1;
+    return { ok: true, level: level + 1 };
+  }
+  function removeGenericReason(profile, k, id) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    if (!roster(profile)[k].generics?.[id]) return 'Skill is not equipped';
+    return tokenShort(profile, GENERIC_RESPEC_COST);
+  }
+  function removeGeneric(profile, k, id) {
+    const why = removeGenericReason(profile, k, id);
+    if (why) return { ok: false, reason: why };
+    profile.tokens -= GENERIC_RESPEC_COST;
+    delete roster(profile)[k].generics[id];
+    return { ok: true };
   }
   function equipReason(profile, k, medal) {
     const why = ownedReason(profile, k);
@@ -1240,9 +1303,9 @@
       strike = !counter || !f.attackOnly;
     let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1)) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
-    // As in World Conqueror, a damaged unit hits for less in proportion to its remaining frame, down to 40% when
-    // nearly destroyed (70% at half).
-    attack *= 0.4 + 0.6 * clamp(u.hp / maxHP(u), 0, 1);
+    const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
+    const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
+    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill));
     attack *= 1 + auraBonus(g, u);
     // Faction doctrines.
     if (u.side === 'britannia' && t.branch === 'Armor') attack *= 1.08;
@@ -1264,6 +1327,9 @@
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
+    const attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
+    attack *= 1 + 0.06 * genericLevel(g, u, attackGeneric);
+    if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
     attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
     if (counter && ef.counter) attack *= 1 + ef.counter;
@@ -1311,6 +1377,7 @@
       const tf = fx(target),
         nearCity = g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1);
       attack *= officerDefense(g, target);
+      attack *= 1 - 0.03 * genericLevel(g, target, 'fortification');
       if (!victim.naval && t.branch === 'Artillery' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.blaze');
       if (!victim.naval && t.cls === 'siege' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.bulkheads');
       if (!victim.naval && victim.branch === 'Artillery' && !t.naval && t.branch === 'Artillery')
@@ -1393,11 +1460,12 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
+        0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
         (wears(g, a, 'marksman') ? 0.08 : 0) +
         techValue(g, a.side, 'sakura.varis'),
       0,
-      0.85,
+      1,
     );
     return {
       unit: unitDmg,
@@ -1459,6 +1527,8 @@
       mult = (0.92 + random(g) * 0.16) * (crit ? pr.critMult : 1),
       hit = [];
     const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
+    const avoidance = genericLevel(g, a, TYPES[a.type].branch === 'Armor' ? 'blitzkrieg' : 'guerrilla');
+    const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
     a.attacked = true;
     a.moved = true;
     a.skillReposition = 0;
@@ -1486,7 +1556,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    if (d && d.hp > 0 && pr.counterAllowed) {
+    if (d && d.hp > 0 && pr.counterAllowed && !evadeCounter) {
       retaliation = Math.round(pr.counter * (0.94 + random(g) * 0.12));
       a.hp = Math.max(0, a.hp - retaliation);
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
@@ -1574,14 +1644,16 @@
     const refining = 1 + techValue(g, side, 'cities.refining');
     const total = g.stations
       .filter(s => s.owner === side && !devastated(g, s))
-      .reduce(
-        (a, s) => ({
-          credits: a.credits + Math.round(s.income * treasuryBonus(g, s)),
-          industry: a.industry + Math.round(s.industry * (1 + techValue(g, side, 'cities.industry'))),
-          science: a.science + s.science,
-        }),
-        { credits: 0, industry: 0, science: 0 },
-      );
+      .reduce((a, s) => {
+        const stationed = g.units.find(u => u.hp > 0 && u.side === side && u.cmd && u.c === s.c && u.r === s.r);
+        const bonus = id => stationed ? 1 + 0.04 * genericLevel(g, stationed, id) : 1;
+        a.credits += Math.round(s.income * treasuryBonus(g, s) * bonus('economic_expert'));
+        a.industry += s.industry * (1 + techValue(g, side, 'cities.industry')) * bonus('industrial_expert');
+        a.science += s.science * bonus('technology_expert');
+        return a;
+      }, { credits: 0, industry: 0, science: 0 });
+    total.industry = Math.round(total.industry);
+    total.science = Math.round(total.science);
     // Sakuradite deposits: extraction by refinery level, with Japan's output allocated among the powers; a level-3
     // refinery also exports for credits.
     total.sakuradite = 0;
@@ -2794,6 +2866,9 @@
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       }
       if (fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
+      const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];
+      const repairLevel = genericLevel(g, u, repairSkill);
+      if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       const energy = techValue(g, side, 'sakura.energy');
       if (energy && nearby === 0) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * energy));
       const auras = mine.filter(v => v.hp > 0 && v.cmd && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
@@ -3517,6 +3592,16 @@
     RANK_HP,
     PROMOTE_COST,
     MEDALS,
+    GENERIC_SKILLS,
+    GENERIC_RESPEC_COST,
+    genericSlots,
+    genericDescription,
+    genericLevel,
+    genericCost,
+    genericReason,
+    buyGeneric,
+    removeGenericReason,
+    removeGeneric,
     officer,
     medalSlots,
     moraleFloor,

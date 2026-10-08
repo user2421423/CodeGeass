@@ -202,6 +202,8 @@ document.addEventListener('click', e => {
   const hqOrder =
     (d.recruitAdmiral && (p => E.recruitCommander(p, d.recruitAdmiral))) ||
     (d.buyStar && (p => E.buyStar(p, d.officer, d.buyStar))) ||
+    (d.buyGeneric && (p => E.buyGeneric(p, d.officer, d.buyGeneric))) ||
+    (d.removeGeneric && (p => E.removeGeneric(p, d.officer, d.removeGeneric))) ||
     (d.promote && (p => E.promote(p, d.promote))) ||
     (d.equip && (p => E.equipMedal(p, d.officer, d.equip))) ||
     (d.unequip && (p => E.unequipMedal(p, d.officer, d.unequip)));
@@ -228,6 +230,10 @@ document.addEventListener('click', e => {
         ? `${C(k).name} joins your commanders.`
         : d.buyStar
           ? `${name}: ${r.stars}★ ${E.BRANCH_NAMES[d.buyStar]}.`
+          : d.buyGeneric
+            ? `${name}: ${E.GENERIC_SKILLS[d.buyGeneric].name} Lv.${r.level}.`
+            : d.removeGeneric
+              ? `${name}: ${E.GENERIC_SKILLS[d.removeGeneric].name} replaced.`
           : d.promote
             ? `${name} promoted to ${E.RANKS[r.rank]}.`
             : `${name}'s medals updated.`,

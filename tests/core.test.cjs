@@ -128,3 +128,47 @@ test('Every campaign mission builds with valid references', () => {
     }
   }
 });
+
+test('Generic rarity slots, purchases, upgrades, replacements and save migration', () => {
+  const p = { tokens: 20000 };
+  E.roster(p);
+  assert.equal(Object.keys(E.GENERIC_SKILLS).length, 19);
+  for (const [k, a] of Object.entries(E.COMMANDERS))
+    assert.equal(E.genericSlots(k), Math.max(0, a.stars - 2));
+  assert.deepEqual(E.roster(p).suzaku.generics, {});
+  assert.equal(E.buyGeneric(p, 'suzaku', 'armor_leader').level, 1);
+  assert.equal(E.buyGeneric(p, 'suzaku', 'armor_leader').level, 2);
+  assert.equal(E.buyGeneric(p, 'suzaku', 'armored_assault').level, 1);
+  assert.equal(E.buyGeneric(p, 'suzaku', 'fortification').level, 1);
+  assert.equal(E.buyGeneric(p, 'suzaku', 'crossfire').ok, false);
+  assert.equal(E.removeGeneric(p, 'suzaku', 'fortification').ok, true);
+  assert.equal(E.buyGeneric(p, 'suzaku', 'crossfire').level, 1);
+  const old = E.roster({ roster: { suzaku: { rank: 1, ratings: { ...E.roster(p).suzaku.ratings }, medals: [], commanderVersion: 1 } }, tokens: 0 });
+  assert.deepEqual(old.suzaku.generics, {});
+});
+test('Leader crit chance and Tide of Iron protect low-HP damage', () => {
+  const g = blank(), p = { tokens: 20000 };
+  E.roster(p);
+  for (let i = 0; i < 5; i++) {
+    E.buyGeneric(p, 'suzaku', 'armor_leader');
+    E.buyGeneric(p, 'suzaku', 'tide_of_iron');
+    E.buyGeneric(p, 'suzaku', 'machinist');
+  }
+  E.applyProfile(g, p);
+  const a = E.newUnit(g, E.typeFor('britannia', 'heavy'), 'britannia', 5, 5, 1, 'suzaku');
+  a.personal = true;
+  E.applyRoster(g, p);
+  E.newUnit(g, E.typeFor('eu', 'heavy'), 'eu', 6, 5);
+  const withSkill = E.preview(g, a.id, 6, 5).crit;
+  delete g.roster.suzaku.generics.armor_leader;
+  const withoutSkill = E.preview(g, a.id, 6, 5).crit;
+  g.roster.suzaku.generics.armor_leader = 5;
+  assert(withSkill - withoutSkill > 0.29);
+  const full = E.preview(g, a.id, 6, 5).unit;
+  a.hp = Math.round(E.maxHP(a) * 0.2);
+  assert.equal(E.preview(g, a.id, 6, 5).unit, full);
+  a.hp -= 30;
+  const injured = a.hp;
+  E.beginTurn(g, 'britannia', false);
+  assert(a.hp > injured, 'Machinist restored some HP');
+});
