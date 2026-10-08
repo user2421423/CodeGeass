@@ -93,6 +93,31 @@ const modal = () => node('modal-root').innerHTML;
   assert(run('GEOGRAPHY.shapes.water.length') >= 1000, 'inland waters come from the same detailed source');
   assert.equal(run('GEOGRAPHY.shapes.patches'), undefined, 'no separately coloured regional coastline patches');
 
+  // Regression for the empty Path2D at the smallest zoom level.
+  class TestPath2D {
+    constructor() { this.points = 0; }
+    moveTo() { this.points++; }
+    lineTo() { this.points++; }
+    closePath() {}
+    addPath(p) { this.points += p.points; }
+  }
+  let overviewLandFills = 0;
+  const paintContext = new Proxy({
+    fill(p) { if (p instanceof TestPath2D && p.points > 0) overviewLandFills++; },
+    createLinearGradient() { return { addColorStop() {} }; },
+    createRadialGradient() { return { addColorStop() {} }; },
+  }, { get: (o, k) => o[k] || (() => {}) });
+  const tinyLand = [[[0, 28], [8, 28], [8, 35], [0, 35]]];
+  const makeAtlas = new Function('R', 'SQ', 'WORLD_W', 'WORLD_H', 'Path2D', 'GEOGRAPHY_SHAPES', 'E', 'document',
+    fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8') + '\nreturn GEOGRAPHY;');
+  const atlas = makeAtlas(43, Math.sqrt(3), Math.sqrt(3) * 43 * 180, 43 * (1.5 * 75 + 2), TestPath2D,
+    { land: tinyLand, water: [], biomes: [] }, { FACTIONS: {}, adjacent: () => [] },
+    { createElement: () => ({ getContext: () => paintContext }) });
+  const emptyHexes = Array.from({ length: 180 * 76 }, (_, i) => ({ c: i % 180, r: Math.floor(i / 180), terrain: 'sea', owner: null }));
+  atlas.paint(paintContext, { wrap: true, cols: 180, rows: 76, tiles: emptyHexes },
+    0, 43 * Math.sqrt(3) * 180, 0, 43 * 1.5 * 76, 0.12);
+  assert(overviewLandFills > 0, 'maximum zoom-out must draw land with Path2D.addPath');
+
   // Geography is visually interpolated separately from the immutable tactical hex map.
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 1, 'land remains land at its gameplay hex centre');
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain === 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 0, 'sea remains sea at its gameplay hex centre');
