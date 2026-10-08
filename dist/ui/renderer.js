@@ -949,7 +949,7 @@ function draw(time, dt) {
   // coastal city. World-wrap correction keeps the linkage short across the date line.
   const portVisuals = game.stations.filter(s => s.portLevel && s.portAt).map(s => {
     const sea = hexCenter(s.portAt),
-      city = hexCenter(s),
+      city = visualCityCenter(s),
       shoreX = wrapNear(city.x, sea.x),
       dx = shoreX - sea.x,
       dy = city.y - sea.y,
@@ -989,7 +989,7 @@ function draw(time, dt) {
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
   for (const s of game.stations) {
-    const c = hexCenter(s);
+    const c = visualCityCenter(s);
     if (!visible(c)) continue;
     const garrison = E.unitAt(game, s),
       kind = cityKind(s);
@@ -1079,7 +1079,7 @@ function draw(time, dt) {
   }
   // Cities destroyed by F.L.E.I.J.A.: a charred ring and the city's name for the rest of the conquest.
   for (const ruin of game.ruins || []) {
-    const c = hexCenter(ruin);
+    const c = visualCityCenter(ruin);
     if (!visible(c)) continue;
     for (const x of copies(c.x)) {
       ctx.save();
