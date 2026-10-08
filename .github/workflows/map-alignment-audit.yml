@@ -9,6 +9,7 @@ on:
       - tools/data/map_locked.txt
       - dist/engine/world.js
       - dist/ui/geography.js
+      - dist/ui/renderer.js
       - .github/workflows/map-alignment-audit.yml
   workflow_dispatch:
 permissions:
