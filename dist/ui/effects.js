@@ -68,9 +68,9 @@ function combatVisualSnapshot() {
   ]));
 }
 function pushCombatVfx(fx) {
-  const active = effects.filter(e => e.kind === 'shot' || e.kind === 'wreck');
+  const active = effects.filter(e => e.kind === 'shot' || e.kind === 'wreck' || e.kind === 'blast');
   if (active.length >= COMBAT_VFX_LIMIT) {
-    const oldest = effects.findIndex(e => e.kind === 'shot' || e.kind === 'wreck');
+    const oldest = effects.findIndex(e => e.kind === 'shot' || e.kind === 'wreck' || e.kind === 'blast');
     if (oldest !== -1) effects.splice(oldest, 1);
   }
   effects.push(fx);
@@ -94,6 +94,12 @@ function spawnCombatWreck(unit, delay = 0) {
   pushCombatVfx({ kind: 'wreck', to: { c: unit.c, r: unit.r }, type: unit.type,
     side: unit.side, delay, duration, life: duration + delay, max: duration + delay });
 }
+function spawnCombatBlast(to, delay = 0, heavy = false) {
+  if (!onScreen(to)) return;
+  const duration = reducedMotion() ? 0.18 : 0.65;
+  pushCombatVfx({ kind: 'blast', to: { c: to.c, r: to.r }, delay, duration, heavy,
+    life: duration + delay, max: duration + delay });
+}
 function addCombatEffects(result, attacker, before = null) {
   if (!result || !attacker || (skipAI && aiSide)) return;
   const cls = E.TYPES[attacker.type].cls;
@@ -109,7 +115,10 @@ function addCombatEffects(result, attacker, before = null) {
     });
     SFX.play(weapon, attacker.side);
     if (result.crit) SFX.play('crit', attacker.side, compact ? 0.08 : spec.impact);
-    if (result.destroyed) SFX.play('explosion', attacker.side, compact ? 0.08 : spec.impact);
+    if (result.destroyed) {
+      SFX.play('explosion', attacker.side, compact ? 0.08 : spec.impact);
+      spawnCombatBlast(result.to, compact ? 0.08 : spec.impact, ['heavy', 'super', 'siege'].includes(cls));
+    }
     if (result.counter && target) {
       const counterWeapon = SFX.weapon(E.TYPES[target.type].cls), delay = compact ? 0.09 : spec.impact + 0.07;
       queueCombatShot(result.to, result.from, counterWeapon, target.side, { counter: true, delay, shake: 1 });
@@ -123,7 +132,9 @@ function addCombatEffects(result, attacker, before = null) {
     for (const id of affected) {
       const previous = before.get(id);
       if (!previous || !onScreen(previous)) continue;
-      if (!game.units.some(u => u.id === id && u.hp > 0))
+      if (id === target?.id && !result.destroyed) continue;
+      if (!game.units.some(u => u.id === id && u.hp > 0) &&
+        !effects.some(e => e.kind === 'wreck' && e.to.c === previous.c && e.to.r === previous.r))
         spawnCombatWreck(previous, compact ? 0.08 : spec.impact);
     }
   }

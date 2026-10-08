@@ -717,6 +717,30 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
       combatVfxImpact(tx + nx * (i === 1 ? -11 : 12), ty + ny * (i === 1 ? -11 : 12),
         age - e.impact - i * 0.065, '#ffc07a', 0.6, scale, compact);
 }
+function drawCombatBlast(e, x, y, scale) {
+  const age = e.max - e.life - e.delay;
+  if (age < 0 || age > e.duration) return;
+  const compact = reducedMotion(), t = age / e.duration;
+  const strength = e.heavy ? 1.4 : 1;
+  ctx.save();
+  ctx.globalAlpha *= (1 - t) * (1 - t);
+  drawFlash(x, y - 5, (24 + t * 52) * strength, 'rgba(255,132,54,0.8)', 1);
+  drawFlash(x, y - 6, (10 + t * 26) * strength, 'rgba(255,239,179,0.95)', 0.9);
+  ctx.strokeStyle = '#ffc083';
+  ctx.lineWidth = 3 / Math.max(scale, 0.6);
+  ctx.beginPath();
+  ctx.arc(x, y - 5, (12 + t * 38) * strength, 0, Math.PI * 2);
+  ctx.stroke();
+  if (!compact) {
+    for (let i = 0; i < 10; i++) {
+      const angle = i * 2.39996, radius = (10 + t * 49) * strength;
+      const px = x + Math.cos(angle) * radius, py = y - 5 + Math.sin(angle) * radius * 0.65;
+      combatVfxLine(px, py, px + Math.cos(angle) * 9, py + Math.sin(angle) * 9,
+        i % 2 ? '#ffa951' : '#55565a', 2 / Math.max(scale, 0.6));
+    }
+  }
+  ctx.restore();
+}
 function drawCombatWreck(e, x, y) {
   const age = e.max - e.life - e.delay;
   if (age < 0 || age > e.duration) return;
@@ -1222,6 +1246,9 @@ function draw(time, dt) {
         bump(e.shake);
       }
       drawCombatShot(e, ax, a0.y, bx, b0.y, scale);
+    } else if (e.kind === 'blast') {
+      ctx.globalAlpha = 1;
+      drawCombatBlast(e, bx, b0.y, scale);
     } else if (e.kind === 'wreck') {
       ctx.globalAlpha = 1;
       drawCombatWreck(e, bx, b0.y);
