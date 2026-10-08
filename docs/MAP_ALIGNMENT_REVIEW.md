@@ -84,12 +84,33 @@ adjustment without changing unit movement.
   regenerate using `tools/map_alignment_audit.py` and
   `tools/audit_coastline_centres.py` respectively.
 
+## Stage 5 — City and harbour visual alignment (committed)
+
+All **23 flagged city centres** now have small shoreline art anchors positioned
+on the detailed GSHHG land geometry. The adjustments range from roughly
+1.5 to 27 map-space pixels, always within 0.72 of a logical hex radius.
+The gameplay stations are **not relocated**: ownership, tile movement,
+garrisons, recruitment, city defence and save files still use the original
+(c,r) coordinates. Hovering/clicking artwork that extends into an adjacent
+hex selects the intended city unless that click is a valid move/attack or hits
+an intervening unit. Port causeways attach to the visual city artwork.
+
+Barcelona's harbour has a separate `visualPortCenter` 3-pixel correction
+onto geographic water, without changing its playable sea hex. City artwork
+for campaign missions is unchanged.
+
+Both corrections are guarded by `tests/ui-smoke.cjs` and the geographic
+audit: all 23 city anchors must fall inside land, remain within 0.72R of their
+gameplay hex centres and be selectable; the Barcelona harbour visual anchor
+must lie on sea. A remaining centre-point audit conflict **does not mean a
+city graphic is still offshore**—it evaluates the fixed gameplay hex centre,
+which intentionally has not moved.
+
 ## Remaining regional work
 
-1. **City visual alignments (23 flagged)** — prioritize Singapore, Manila,
-   Shanghai, Taipei, Sydney and Pearl Harbor. Move the visual city anchor or
-   locally correct the shoreline; do not remove the land hex from beneath a city.
-   Ensure mouse hit-testing and city labels continue to follow the visual anchor.
+1. **Visual city alignments (23 corrected)** — inspect the committed art
+   offsets at ordinary and close zoom for overlap/legibility. Gameplay hex
+   centres remain fixed by design; no city data migration is required.
 2. **Owned gameplay land over geographic water (33 strong cases)** —
    inspect terrain, neighbouring navigation, unit placement and faction
    ownership individually before converting any tile.
