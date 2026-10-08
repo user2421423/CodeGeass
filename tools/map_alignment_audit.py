@@ -110,7 +110,7 @@ city_issues=[s['name'] for s in state['stations'] if not is_visual_land(s['c'],s
 # and remain close enough to their original logical hex to select safely.
 import re
 view_src=(ROOT/'dist/ui/view.js').read_text()
-anchor_match=re.search(r'const CITY_SHORE_ANCHORS = Object.freeze\\((\\{.*?\\})\\);',view_src,re.S)
+anchor_match=re.search(r'const CITY_SHORE_ANCHORS = Object\.freeze\((\{.*?\})\);',view_src,re.S)
 if anchor_match is None:
     raise RuntimeError('City visual shoreline anchor table missing')
 city_anchors=json.loads(anchor_match.group(1))
