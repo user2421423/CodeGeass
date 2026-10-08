@@ -254,3 +254,36 @@ test('Leader crit chance and Tide of Iron protect low-HP damage', () => {
   E.beginTurn(g, 'britannia', false);
   assert(a.hp > injured, 'Machinist restored some HP');
 });
+
+
+test('Reviewed coastal conversions preserve naval routes, cities and existing occupied saves', () => {
+  const changes = [[13, 9], [168, 9], [50, 10], [49, 12], [81, 32],
+    [113, 51], [157, 44], [49, 31]];
+  const game = E.createGame('britannia', 'normal', 'conquest', 123);
+  for (const [c, r] of changes) {
+    assert.equal(E.tile(game, c, r).terrain, 'sea', `(${c},${r}) must be navigable water`);
+    assert(!game.stations.some(s => (s.c === c && s.r === r) ||
+      (s.portAt?.c === c && s.portAt?.r === r)), 'No city or port may be converted');
+    assert(!game.units.some(u => u.c === c && u.r === r), 'No starting unit may be stranded');
+  }
+  for (const [c, r] of [[106, 26], [107, 27], [111, 35], [140, 43], [142, 46]])
+    assert.equal(E.tile(game, c, r).terrain, 'sea', 'Protected straits remain water');
+
+  const old = structuredClone(game);
+  for (const [c, r] of changes) {
+    const tile = E.tile(old, c, r);
+    tile.terrain = 'plains';
+    tile.owner = 'britannia';
+  }
+  E.tile(old, 61, 15).terrain = 'sea';
+  const occupied = old.units[0], [c, r] = changes[0];
+  occupied.c = c;
+  occupied.r = r;
+  assert.equal(E.migrateSave(old), old);
+  assert.equal(E.tile(old, c, r).terrain, 'plains', 'Do not strand a unit in a legacy save');
+  for (const [cx, ry] of changes.slice(1)) {
+    assert.equal(E.tile(old, cx, ry).terrain, 'sea', 'Unoccupied legacy coastal land migrates');
+    assert.equal(E.tile(old, cx, ry).owner, null, 'Water hexes must not retain land ownership');
+  }
+  assert.notEqual(E.tile(old, 61, 15).terrain, 'sea', 'Previous Newfoundland fix migrates');
+});
