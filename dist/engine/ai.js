@@ -24,6 +24,7 @@
     buildReason,
     buildingLevel,
     canBoard,
+    carrierCapacity,
     canBuy,
     canCapture,
     deploy,
@@ -549,7 +550,7 @@
       return true;
     }
     const ready = cargo.some(c => c.boardedTurn !== g.turn);
-    if (ready && (cargo.length >= TYPES[u.type].capacity || job.wait >= 3)) {
+    if (ready && (cargo.length >= carrierCapacity(g, u) || job.wait >= 3)) {
       if (landing(tile(g, u.c, u.r)) == null) {
         const best = reach
           .map(p => ({ p, s: landing(p) }))
@@ -855,7 +856,7 @@
         })
         .find(p => {
           const v = unitAt(g, p);
-          return v && v !== u && v.side === u.side && canBoard(v) && (!v.cargo?.length || sameLift(frontOf(g, memo, v.cargo[0]), front));
+          return v && v !== u && v.side === u.side && canBoard(g, v) && (!v.cargo?.length || sameLift(frontOf(g, memo, v.cargo[0]), front));
         });
       const m = berth && move(g, id, berth.c, berth.r);
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
