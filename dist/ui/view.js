@@ -115,6 +115,21 @@ function visualCityCenter(station) {
     return tactical;
   return { x: wrapNear(x, tactical.x), y };
 }
+// Barcelona's playable harbour is water, but its centre overlays a small
+// GSHHG land fringe. Shift harbour art alone by ~3 world pixels onto water.
+const PORT_SHORE_ANCHORS = Object.freeze({ Barcelona: [3.0487, 39.9301] });
+function visualPortCenter(station) {
+  if (!station.portAt) return null;
+  const tactical = hexCenter(station.portAt);
+  if (!wraps()) return tactical;
+  const p = PORT_SHORE_ANCHORS[station.name];
+  if (!p) return tactical;
+  const x = R + (p[0] + 179) * (SQ * R / 2);
+  const y = R + (74 - p[1]) * (1.5 * R * 75 / 128);
+  if (Math.hypot(wrapNear(x, tactical.x) - tactical.x, y - tactical.y) > R * 0.5)
+    return tactical;
+  return { x: wrapNear(x, tactical.x), y };
+}
 // Used only to make visually displaced city sprites selectable. Hex targets,
 // deployments, combat and unit hits always use the original tactical hitHex.
 function hitVisualStationAtWorld(x, y, scale) {
