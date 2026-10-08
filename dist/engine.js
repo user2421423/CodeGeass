@@ -940,12 +940,36 @@
   }
   // Version 3 added Sakuradite. Older saves were all made on the old 100 × 42 map and are rejected.
   const RULES_VERSION = 3;
+  // 2026 coastline alignment: retain old saves while matching the revised
+  // new-game map. Occupied legacy hexes stay playable until a new conquest;
+  // never strand a unit or move a player-built site during migration.
+  const COASTAL_SEA_FIXES = [[13, 9], [168, 9], [50, 10], [49, 12],
+    [81, 32], [113, 51], [157, 44], [49, 31]];
+  function migrateCoastalTerrain(g) {
+    for (const [c, r] of COASTAL_SEA_FIXES) {
+      const t = g.tiles[r * g.cols + c];
+      if (!t || t.terrain === 'sea') continue;
+      if (g.units.some(u => u.hp > 0 && u.c === c && u.r === r)) continue;
+      if (g.stations?.some(s => (s.c === c && s.r === r) ||
+        (s.portAt?.c === c && s.portAt?.r === r))) continue;
+      if (g.sites?.some(site => site.c === c && site.r === r)) continue;
+      t.terrain = 'sea';
+      t.owner = null;
+    }
+    // Newfoundland was restored as land by the previous correction batch.
+    const t = g.tiles[15 * g.cols + 61];
+    if (t && t.terrain === 'sea' &&
+        !g.units.some(u => u.hp > 0 && u.c === 61 && u.r === 15)) {
+      t.terrain = 'plains';
+    }
+  }
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
+    if (g.mode !== 'campaign') migrateCoastalTerrain(g);
     g.eliteDeployed ||= {};
     for (const records of [g.officers, g.roster])
       if (records) for (const [k, rec] of Object.entries(records))
