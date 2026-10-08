@@ -615,6 +615,119 @@ function mapLayerFresh(m, scale, dpr, w, h) {
     if (tiles[i].owner !== m.owners[i] || tiles[i].terrain !== m.terrains[i]) return false;
   return true;
 }
+// Camera-independent cache of *complete* terrain tiles, including grid,
+// ownership borders and relief. Reusing the whole base map prevents the 30-50ms
+// canvas path rebuild which was still happening after geography was cached.
+const MAP_ATLAS_TILE = 960;
+const MAP_ATLAS_PAD = 5;
+const mapAtlasTiles = new Map();
+const mapAtlasWarmQueue = [];
+const mapAtlasWarmKeys = new Set();
+let mapAtlasIdlePending = false;
+let mapAtlasGeneration = 0;
+let mapAtlasState = { tiles: null, owners: [], terrains: [], scale: null };
+function refreshMapAtlas(scale) {
+  let changed = mapAtlasState.tiles !== game.tiles || mapAtlasState.scale !== scale;
+  if (!changed) for (let i = 0; i < game.tiles.length; i++) {
+    const t = game.tiles[i];
+    if (mapAtlasState.owners[i] !== t.owner || mapAtlasState.terrains[i] !== t.terrain) {
+      changed = true; break;
+    }
+  }
+  if (!changed) return;
+  mapAtlasTiles.clear();
+  mapAtlasWarmQueue.length = 0;
+  mapAtlasWarmKeys.clear();
+  mapAtlasGeneration++;
+  mapAtlasState = {
+    tiles: game.tiles,
+    scale,
+    owners: game.tiles.map(t => t.owner),
+    terrains: game.tiles.map(t => t.terrain),
+  };
+}
+function completeMapTile(tx, ty, scale, detail) {
+  const key = tx + ',' + ty;
+  let item = mapAtlasTiles.get(key);
+  if (item) {
+    mapAtlasTiles.delete(key);
+    mapAtlasTiles.set(key, item);
+    return item;
+  }
+  const worldX = tx * MAP_ATLAS_TILE, worldY = ty * MAP_ATLAS_TILE;
+  const width = Math.min(MAP_ATLAS_TILE, WORLD_W - worldX);
+  const height = Math.min(MAP_ATLAS_TILE, WORLD_H - worldY);
+  const quality = Math.max(0.55, Math.min(1, scale * 1.35));
+  const c = document.createElement('canvas');
+  c.width = Math.ceil((width + 2 * MAP_ATLAS_PAD) * quality);
+  c.height = Math.ceil((height + 2 * MAP_ATLAS_PAD) * quality);
+  const oldCtx = ctx;
+  ctx = c.getContext('2d');
+  try {
+    ctx.setTransform(quality, 0, 0, quality,
+      (-worldX + MAP_ATLAS_PAD) * quality,
+      (-worldY + MAP_ATLAS_PAD) * quality);
+    paintMapLayer(scale, detail,
+      worldX - MAP_ATLAS_PAD, worldX + width + MAP_ATLAS_PAD,
+      worldY - MAP_ATLAS_PAD, worldY + height + MAP_ATLAS_PAD);
+  } finally {
+    ctx = oldCtx;
+  }
+  item = { canvas: c, worldX, worldY, width, height, quality };
+  mapAtlasTiles.set(key, item);
+  while (mapAtlasTiles.size > 72) mapAtlasTiles.delete(mapAtlasTiles.keys().next().value);
+  return item;
+}
+// Build the next ring of map tiles during browser idle time, before camera
+// dragging reaches it. One tile per idle turn bounds main-thread work; actual
+// rendering never waits for prefetch if the player moves faster than idle work.
+function scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow) {
+  if (typeof requestIdleCallback !== 'function') return;
+  const maxC = Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1;
+  const maxR = Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1;
+  for (let r = Math.max(0, firstRow - 1); r <= Math.min(maxR, lastRow + 1); r++)
+    for (let c = Math.max(0, firstCol - 1); c <= Math.min(maxC, lastCol + 1); c++) {
+      if (c >= firstCol && c <= lastCol && r >= firstRow && r <= lastRow) continue;
+      const key = c + ',' + r;
+      if (mapAtlasTiles.has(key) || mapAtlasWarmKeys.has(key)) continue;
+      mapAtlasWarmKeys.add(key);
+      mapAtlasWarmQueue.push({ c, r, scale, detail, generation: mapAtlasGeneration });
+    }
+  if (mapAtlasIdlePending || !mapAtlasWarmQueue.length) return;
+  mapAtlasIdlePending = true;
+  function warm(deadline) {
+    if (mapAtlasWarmQueue.length && deadline.timeRemaining() > 8) {
+      const job = mapAtlasWarmQueue.shift();
+      mapAtlasWarmKeys.delete(job.c + ',' + job.r);
+      if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale)
+        completeMapTile(job.c, job.r, job.scale, job.detail);
+    }
+    if (mapAtlasWarmQueue.length) requestIdleCallback(warm);
+    else mapAtlasIdlePending = false;
+  }
+  requestIdleCallback(warm);
+}
+function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
+  refreshMapAtlas(scale);
+  const firstRow = Math.max(0, Math.floor(top / MAP_ATLAS_TILE));
+  const lastRow = Math.min(Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1, Math.floor(bottom / MAP_ATLAS_TILE));
+  for (let k = Math.floor(left / WORLD_W) - 1; k <= Math.ceil(right / WORLD_W); k++) {
+    const shift = k * WORLD_W;
+    const a = left - shift, b = right - shift;
+    if (b <= 0 || a >= WORLD_W) continue;
+    const firstCol = Math.max(0, Math.floor(a / MAP_ATLAS_TILE));
+    const lastCol = Math.min(Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1, Math.floor(b / MAP_ATLAS_TILE));
+    for (let row = firstRow; row <= lastRow; row++)
+      for (let col = firstCol; col <= lastCol; col++) {
+        const t = completeMapTile(col, row, scale, detail);
+        const pad = MAP_ATLAS_PAD * t.quality;
+        ctx.drawImage(t.canvas, pad, pad, t.width * t.quality, t.height * t.quality,
+          t.worldX + shift, t.worldY, t.width, t.height);
+      }
+    if (firstCol <= lastCol && firstRow <= lastRow)
+      scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow);
+  }
+}
 function mapLayer(scale, detail, dpr, w, h) {
   if (mapLayerFresh(mapLayerCache, scale, dpr, w, h)) return mapLayerCache;
   const M = MAP_LAYER_MARGIN,
@@ -633,14 +746,14 @@ function mapLayer(scale, detail, dpr, w, h) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.translate(offset.x + M, offset.y + M);
     ctx.scale(scale, scale);
-    paintMapLayer(
-      scale,
-      detail,
-      (-M - offset.x) / scale - R * 2,
-      (w + M - offset.x) / scale + R * 2,
-      (-M - offset.y) / scale - R * 2,
-      (h + M - offset.y) / scale + R * 2,
-    );
+    const left = (-M - offset.x) / scale - R * 2;
+    const right = (w + M - offset.x) / scale + R * 2;
+    const top = (-M - offset.y) / scale - R * 2;
+    const bottom = (h + M - offset.y) / scale + R * 2;
+    // Very distant views use the low-resolution overview directly; otherwise
+    // cache geography AND its tactical overlay in world-anchored chunks.
+    if (game.wrap && scale >= 0.33) drawMapFromAtlas(scale, detail, left, right, top, bottom);
+    else paintMapLayer(scale, detail, left, right, top, bottom);
   } finally {
     ctx = main;
   }
@@ -759,15 +872,31 @@ function draw(time, dt) {
   ctx.fillRect(0, 0, w, h);
   const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };
   shake = Math.max(0, shake - dt * 30);
-  // Terrain, territory and coastlines come from the cached layer, placed where the camera is now.
-  const layer = mapLayer(scale, detail, dpr, w, h);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(
-    layer.canvas,
-    Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
-    Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
-  );
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Draw already-baked world atlas tiles directly at camera position. Avoid
+  // rebuilding a full screen-sized canvas each time the camera crosses its
+  // margin; that expensive copy was the remaining source of dragging stutter.
+  if (game.wrap && scale >= 0.33) {
+    ctx.save();
+    ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
+    ctx.scale(scale, scale);
+    drawMapFromAtlas(scale, detail,
+      -offset.x / scale - R * 2,
+      (w - offset.x) / scale + R * 2,
+      -offset.y / scale - R * 2,
+      (h - offset.y) / scale + R * 2);
+    ctx.restore();
+  } else {
+    // Campaign battlefields and far strategic zoom retain their existing
+    // cached layer; selection/attack effects remain independent in either path.
+    const layer = mapLayer(scale, detail, dpr, w, h);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(
+      layer.canvas,
+      Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
+      Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
+    );
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
   ctx.save();
   ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
   ctx.scale(scale, scale);
