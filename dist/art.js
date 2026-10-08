@@ -822,19 +822,6 @@ const ART = (() => {
       ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
       return true;
     },
-    // Reuse one port image for two map-depth passes. Cropping the source keeps the
-    // docks and coastal structures aligned, without loading or duplicating textures.
-    drawBuildingLayer(ctx, id, x, y, w, layer) {
-      const img = localImage('buildings', id);
-      if (!img || (layer !== 'basin' && layer !== 'shore')) return false;
-      const nw = img.naturalWidth, nh = img.naturalHeight,
-        cut = Math.max(1, Math.min(nh - 1, Math.round(nh * 0.49))),
-        start = layer === 'shore' ? 0 : cut,
-        count = layer === 'shore' ? cut : nh - cut,
-        height = (w * nh) / nw;
-      ctx.drawImage(img, 0, start, nw, count, x - w / 2, y - height / 2 + (height * start) / nh, w, (height * count) / nh);
-      return true;
-    },
     drawCity(ctx, kind, side, x, y, w) {
       if (api.drawBuilding(ctx, 'city', x, y, w)) return true;
       const img = image(`c|${kind}|${side}`, citySVG(kind, side));
