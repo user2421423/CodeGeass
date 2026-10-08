@@ -450,6 +450,17 @@ FIX_LAND = [
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
 ]
 FIX_SEA = [
+    # Area-weighted visual/gameplay coast alignment: unoccupied, non-strategic
+    # coastal spurs; preserve ports, cities and straits.
+    (13, 9),  # Area-weighted Gulf of Alaska coastal spur
+    (168, 9),  # Area-weighted Kamchatka coast
+    (50, 10),  # Area-weighted Hudson Bay coast
+    (49, 12),  # Area-weighted James Bay
+    (81, 32),  # Area-weighted Mauritania Atlantic coast
+    (113, 51),  # Area-weighted Madagascar north coast
+    (157, 44),  # Area-weighted New Guinea north coast
+    (49, 31),  # Area-weighted Cuba coastal extension
+
     (151, 29),  # Taiwan: the hex east of the island (Taipei moves onto the island)
     (130, 36),  # India: the hex that stuck out east of Chennai
     (90, 14),  # Strait of Dover: keep Great Britain an island
