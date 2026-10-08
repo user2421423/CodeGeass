@@ -811,28 +811,45 @@ function draw(time, dt) {
             ? selection
             : null;
   if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
-  // Ports sit between the coastline and their sea hex. Render beneath cities and fleets,
-  // keeping the wharves visible even while a ship is docked over the water.
-  for (const s of game.stations) {
-    if (!s.portLevel || !s.portAt) continue;
-    const c = hexCenter(s.portAt);
-    if (!visible(c)) continue;
-    const shore = hexCenter(s),
-      dx = wrapNear(shore.x, c.x) - c.x,
-      dy = shore.y - c.y,
+  // Each harbor is anchored to its water tile, but its causeway points toward its own
+  // coastal city. World-wrap correction keeps the linkage short across the date line.
+  const portVisuals = game.stations.filter(s => s.portLevel && s.portAt).map(s => {
+    const sea = hexCenter(s.portAt),
+      city = hexCenter(s),
+      shoreX = wrapNear(city.x, sea.x),
+      dx = shoreX - sea.x,
+      dy = city.y - sea.y,
       distance = Math.hypot(dx, dy) || 1,
-      shift = Math.min(R * 0.26, distance * 0.16),
-      ox = (dx / distance) * shift,
-      oy = (dy / distance) * shift;
-    for (const x of copies(c.x)) {
-      const art = detail && ART.drawBuilding(ctx, 'port', x + ox, c.y + oy - 4, R * 2.1);
-      if (art) outlinedText('⚓', x - R * 0.65, c.y + 18, 13, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
-      else outlinedText('⚓', x, c.y + 6, detail ? 18 : 12, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
-      if (detail)
-        for (let i = 0; i < s.portLevel; i++) {
-          ctx.fillStyle = '#d8c581';
-          ctx.fillRect(x - 7 + i * 5, c.y + 19, 3, 3);
-        }
+      ux = dx / distance,
+      uy = dy / distance;
+    return { s, sea, shoreX, shoreY: city.y, ux, uy, px: sea.x + ux * R * 0.11, py: sea.y + uy * R * 0.11 - 4 };
+  }).filter(p => visible(p.sea));
+  // Background pass: narrow pier reaches the shore, and the lower harbor basin is
+  // under buildings and all units. Ship silhouettes do not erase the dock facilities.
+  for (const p of portVisuals) {
+    for (const x of copies(p.sea.x)) {
+      if (detail) {
+        const landX = x + p.shoreX - p.sea.x,
+          startX = x + p.ux * R * 0.12,
+          startY = p.sea.y + p.uy * R * 0.12,
+          endX = landX - p.ux * R * 0.55,
+          endY = p.shoreY - p.uy * R * 0.55;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = '#102a38';
+        ctx.lineWidth = 17;
+        ctx.stroke();
+        ctx.strokeStyle = '#9ba9a7';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        ctx.strokeStyle = '#d8b978';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ART.drawBuildingLayer(ctx, 'port', x + p.ux * R * 0.11, p.py, R * 2.1, 'basin');
+      } else {
+        outlinedText('⚓', x, p.sea.y + 6, 12, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
+      }
     }
   }
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
@@ -943,6 +960,29 @@ function draw(time, dt) {
       if (ruin.capital || R * scale >= 16)
         outlinedText(`${ruin.name} · RUINS`, 0, 44, 10, '#ffb3d6', scale, 'Trebuchet MS', true);
       ctx.restore();
+    }
+  }
+  // Foreground pass: coastal towers stay visible over city-edge scenery, while
+  // city centers are masked and the later unit pass remains completely on top.
+  if (detail) for (const p of portVisuals) {
+    for (const x of copies(p.sea.x)) {
+      ctx.save();
+      const landX = x + p.shoreX - p.sea.x;
+      ctx.beginPath();
+      ctx.rect(x - R * 2, p.sea.y - R * 2, R * 4, R * 4);
+      ctx.arc(landX, p.shoreY - 6, R * 0.83, 0, Math.PI * 2);
+      ctx.clip('evenodd');
+      const drawn = ART.drawBuildingLayer(ctx, 'port', x + p.ux * R * 0.11, p.py, R * 2.1, 'shore');
+      ctx.restore();
+      if (drawn) {
+        outlinedText('⚓', x - R * 0.73, p.sea.y + R * 0.44, 12, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
+        for (let i = 0; i < p.s.portLevel; i++) {
+          ctx.fillStyle = '#d8c581';
+          ctx.fillRect(x + R * 0.41 + i * 5, p.sea.y + R * 0.58, 3, 3);
+        }
+      } else {
+        outlinedText('⚓', x, p.sea.y + 6, 18, F(p.s.portOwner || p.s.owner).color, scale, 'Trebuchet MS', true);
+      }
     }
   }
   // Sakuradite: mines on their own hex, and a small crystal on cities that work a deposit.
