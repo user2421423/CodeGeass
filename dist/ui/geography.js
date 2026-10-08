@@ -74,8 +74,19 @@ const GEOGRAPHY = (() => {
     if (!compiled) ctx.beginPath();
     for (const s of shapes) {
       if (!intersects(s.bounds, left, right, top, bottom)) continue;
-      if (compiled && s.path) combined.addPath(s.path);
-      else polygon(ctx, s.points);
+      if (compiled) {
+        if (s.path) combined.addPath(s.path);
+        else {
+          // Overview polygons are simplified without precompiled paths.
+          // They must be appended to the Path2D we actually fill/clip;
+          // writing them into ctx made the overview land disappear.
+          const pts = s.points;
+          if (pts.length < 3) continue;
+          combined.moveTo(pts[0][0], pts[0][1]);
+          for (let i = 1; i < pts.length; i++) combined.lineTo(pts[i][0], pts[i][1]);
+          combined.closePath();
+        }
+      } else polygon(ctx, s.points);
       count++;
     }
     return count ? (compiled ? combined : true) : null;
