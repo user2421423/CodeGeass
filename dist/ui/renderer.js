@@ -893,13 +893,16 @@ function draw(time, dt) {
       ctx.restore();
     }
   }
-  // Ports: an anchor on the port's sea hex in the holder's colors, its level in pips.
+  // Ports: the harbour picture on the port's sea hex (an anchor while it loads or when zoomed out), the holder's
+  // colours on the anchor badge, its level in pips. A ship berthed there is drawn over it.
   for (const s of game.stations) {
     if (!s.portLevel || !s.portAt) continue;
     const c = hexCenter(s.portAt);
     if (!visible(c)) continue;
     for (const x of copies(c.x)) {
-      outlinedText('⚓', x, c.y + 6, detail ? 18 : 12, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
+      const art = detail && !E.unitAt(game, s.portAt) && ART.drawBuilding(ctx, 'port', x, c.y - 4, R * 1.7);
+      if (art) outlinedText('⚓', x - R * 0.62, c.y + 18, 13, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
+      else outlinedText('⚓', x, c.y + 6, detail ? 18 : 12, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
       if (detail)
         for (let i = 0; i < s.portLevel; i++) {
           ctx.fillStyle = '#d8c581';

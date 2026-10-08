@@ -850,5 +850,19 @@
   "drawnFallbacks": {
     "units": [],
     "portraits": []
+  },
+  "buildings": {
+    "supplied": "2026-10-08",
+    "by": "owner",
+    "files": {
+      "port": {
+        "original_sha256": "9fbc6f5eed6bfcef4f9ae79af05cec877b31a2abb5c54fc4418b84a0b17861b3",
+        "processing": "trimmed transparent margin, resized to 512 px, WebP q88"
+      },
+      "city": {
+        "original_sha256": "34ff4450d7001788803111b21190cb38cb7f3ae6cc48184782d94ce29d46ee69",
+        "processing": "trimmed transparent margin, resized to 512 px, WebP q88"
+      }
+    }
   }
 }

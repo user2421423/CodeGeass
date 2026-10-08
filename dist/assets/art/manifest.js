@@ -388,5 +388,13 @@ globalThis.KnightmareArtManifest = {
     "zhaohao": {
       "src": "portraits/zhaohao-f75b0bf42b4c.jpg"
     }
+  },
+  "buildings": {
+    "port": {
+      "src": "buildings/port-6eec63fdedb7.webp"
+    },
+    "city": {
+      "src": "buildings/city-3cbbc4be12c8.webp"
+    }
   }
 };

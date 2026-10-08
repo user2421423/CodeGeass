@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write dist/local-art/manifest.json from the files in dist/local-art/units and dist/local-art/portraits.
+"""Write dist/local-art/manifest.json from the files in dist/local-art/units, portraits and buildings.
 
 A file's name (without extension) must be a Knightmare id (units/) or a commander id (portraits/), as listed in
 dist/engine/frames.js and commanders.js. Existing focus settings ("fx"/"fy") in the manifest are kept. Prints the
@@ -26,6 +26,7 @@ def known_ids(dist=ROOT):
     return {
         'units': ids(frames, 'const KNIGHTMARES = {', 'const LINEUPS ='),
         'portraits': ids(commanders, 'const COMMANDERS = {', 'const RANKS'),
+        'buildings': ['city', 'port'],  # one picture each, used for every power
     }
 
 
@@ -34,7 +35,7 @@ def main(art=ART):
     path = os.path.join(art, 'manifest.json')
     old = json.load(open(path)) if os.path.exists(path) else {}
     manifest = {}
-    for kind in ('units', 'portraits'):
+    for kind in known:
         manifest[kind] = {}
         folder = os.path.join(art, kind)
         files = sorted(os.listdir(folder)) if os.path.isdir(folder) else []

@@ -707,7 +707,7 @@ const ART = (() => {
   }
   // Public art is registered synchronously by assets/art/manifest.js, including when opened via file://.
   // Local overrides remain optional. Missing or failed images keep the drawn fallback.
-  const LOCAL = { units: {}, portraits: {}, base: 'local-art/', imgs: new Map() };
+  const LOCAL = { units: {}, portraits: {}, buildings: {}, base: 'local-art/', imgs: new Map() };
   function localEntry(kind, id) {
     const e = LOCAL[kind][id];
     return e ? (typeof e === 'string' ? { src: e } : e) : null;
@@ -716,7 +716,7 @@ const ART = (() => {
   function entries(values, base) {
     return Object.fromEntries(Object.entries(values || {}).flatMap(([id, value]) => {
       const e = typeof value === 'string' ? { src: value } : value;
-      if (!e || typeof e.src !== 'string' || !/^(units|portraits)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
+      if (!e || typeof e.src !== 'string' || !/^(units|portraits|buildings)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
       const focus = v => Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : undefined;
       return [[id, { src: e.src, base, fx: focus(e.fx), fy: focus(e.fy) }]];
     }));
@@ -750,14 +750,16 @@ const ART = (() => {
     LOOKS,
     // Called after a local manifest loads, so the UI can redraw (set by game.js).
     onLocal: null,
-    // manifest: { base?, units: { <knightmare id>: 'units/x.png' }, portraits: { <commander id>: 'portraits/x.jpg' | { src, fx, fy } } }
+    // manifest: { base?, units: { <knightmare id>: 'units/x.png' }, portraits: { <commander id>: 'portraits/x.jpg' | { src, fx, fy } },
+    //   buildings: { city: 'buildings/x.webp', port: 'buildings/y.webp' } }
     useLocal(manifest, merge = false) {
       const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';
       LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base) };
       LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base) };
+      LOCAL.buildings = { ...(merge ? LOCAL.buildings : {}), ...entries(manifest?.buildings, base) };
       LOCAL.base = base;
       LOCAL.imgs.clear();
-      for (const kind of ['units', 'portraits']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
+      for (const kind of ['units', 'portraits', 'buildings']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
       api.onLocal?.();
     },
     // Register which faction builds each type and which faction each commander serves (from the engine).
@@ -774,7 +776,8 @@ const ART = (() => {
       return `<span class="ship-art unit-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     city(kind, side, extra = '') {
-      return `<span class="ship-art unit-art city-art ${extra}" aria-hidden="true">${citySVG(kind, side)}</span>`;
+      const l = withLocal('buildings', 'city', citySVG(kind, side));
+      return `<span class="ship-art unit-art city-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     portrait(k, extra = '') {
       const e = localEntry('portraits', k),
@@ -805,7 +808,17 @@ const ART = (() => {
       ctx.restore();
       return true;
     },
+    // Published building art (one city and one port picture for every power) replaces the drawn cities; the owner
+    // shows in the map badge and territory. Drawn at width w, keeping the picture's proportions.
+    drawBuilding(ctx, id, x, y, w) {
+      const img = localImage('buildings', id);
+      if (!img) return false;
+      const h = (w * img.naturalHeight) / img.naturalWidth;
+      ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+      return true;
+    },
     drawCity(ctx, kind, side, x, y, w) {
+      if (api.drawBuilding(ctx, 'city', x, y, w)) return true;
       const img = image(`c|${kind}|${side}`, citySVG(kind, side));
       if (!img) return false;
       ctx.drawImage(img, x - w / 2, y - w / 2, w, w);
