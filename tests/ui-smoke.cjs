@@ -165,6 +165,14 @@ const modal = () => node('modal-root').innerHTML;
     'ambiguous coast hexes must display a clear gameplay-surface badge');
   assert(renderingText.includes('ctx.setLineDash([5 / scale, 4 / scale])'),
     'a conflicting coastline gets a visible dashed tactical boundary');
+  const markerStart = renderingText.indexOf('const coastalExceptions = [');
+  assert(markerStart >= 0, 'reviewed coastline exceptions must be visibly marked');
+  const markerBlock = renderingText.slice(markerStart, renderingText.indexOf('];', markerStart));
+  const markerEntries = markerBlock.match(/\[\d+,\d+\]/g) || [];
+  assert.equal(markerEntries.length, 16, '15 non-Arctic exceptions plus Cornwall get subtle high-zoom markers');
+  for (const coords of ['[87,14]', '[106,26]', '[111,35]', '[140,43]', '[142,46]'])
+    assert(markerEntries.includes(coords), coords + ' must display a terrain warning marker');
+
 
   // Shoreline city art is visual-only and must remain selectable even when
   // its graphic sits slightly away from the tactical city hex centre.
