@@ -136,68 +136,201 @@ const GEOGRAPHY = (() => {
     ctx.closePath();
   }
 
-  // Political colour is a transparent wash clipped to the REAL geographic
-  // silhouette, rather than a separately painted hex mosaic. Fill each faction
-  // once (not once per hex), preventing overlapping alpha seams between tiles.
-  // Extend faction colours onto the true land silhouette even where the
-  // coarse gameplay grid treats a piece of coastline as sea. A multi-source
-  // flood is visual-only; no unit path, tile, or ownership value is changed.
+  // Political tint follows the actual playable LAND owners. A sea hex must
+  // not carry faction colour across a strait merely because an unlimited BFS
+  // reached it first. Uniform geographic islands (e.g. Borneo) are tinted as
+  // complete polygons, eliminating political hex seams and wrong-colour gaps.
   let ownershipCache = null;
+  let islandOwnerCache = null;
+  function pointWithinShape(shape, x, y) {
+    const b = shape.bounds;
+    if (x < b[0] || x > b[2] || y < b[1] || y > b[3]) return false;
+    const points = shape.points;
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const a = points[i], z = points[j];
+      if ((a[1] > y) !== (z[1] > y) &&
+          x < (z[0] - a[0]) * (y - a[1]) / (z[1] - a[1]) + a[0])
+        inside = !inside;
+    }
+    return inside;
+  }
   function coastlineOwners(g) {
     const original = g.tiles.map(t => t.owner || null);
     if (ownershipCache && ownershipCache.tiles === g.tiles &&
-        original.every((o, i) => o === ownershipCache.original[i])) return ownershipCache.inferred;
+        original.every((o, i) => o === ownershipCache.original[i])) return ownershipCache;
     const inferred = original.slice();
     const dist = new Uint16Array(g.tiles.length);
     dist.fill(65535);
-    const queue = [];
+    const queue = [], seeds = [];
     for (let i = 0; i < g.tiles.length; i++) {
-      if (g.tiles[i].terrain === 'sea' || !original[i]) continue;
+      const t = g.tiles[i];
+      if (t.terrain === 'sea' || !original[i]) continue;
       dist[i] = 0;
       queue.push(i);
+      seeds.push({ x: SQ * R * (t.c + 0.5 * (t.r & 1)) + R,
+        y: R * 1.5 * t.r + R, owner: original[i], c: t.c, r: t.r });
     }
+    // Unowned playable land may inherit a nearby colour; water receives at
+    // most one ring of local coastal colour, never long-distance ocean flood.
     for (let head = 0; head < queue.length; head++) {
-      const i = queue[head];
-      // Fill unclaimed map-colour gaps from the nearest ACTUALLY owned hex.
-      // A null-owner land hex isn't a true neutral faction territory, so it
-      // must not be seeded as neutral and create pale holes on the map.
-      // Traverse unclaimed land as well as sea; preserve explicit neutral
-      // ownership and do not modify any gameplay tile.
-      for (const n of E.adjacent(g, g.tiles[i])) {
+      const i = queue[head], t = g.tiles[i];
+      if (dist[i] >= 3) continue;
+      for (const n of E.adjacent(g, t)) {
         const ni = n.r * g.cols + n.c;
         if (original[ni] || dist[ni] <= dist[i] + 1) continue;
+        if (n.terrain === 'sea' && dist[i] >= 1) continue;
         dist[ni] = dist[i] + 1;
         inferred[ni] = inferred[i];
         queue.push(ni);
       }
     }
-    ownershipCache = { tiles: g.tiles, original, inferred };
-    return inferred;
+    ownershipCache = { tiles: g.tiles, original, inferred, seeds };
+    islandOwnerCache = null;
+    return ownershipCache;
+  }
+  function homogeneousLandShapes(g) {
+    const data = coastlineOwners(g);
+    if (islandOwnerCache && islandOwnerCache.source === data) return islandOwnerCache.owners;
+    const owners = LAYERS.land.map(shape => {
+      let owner = null, found = false;
+      for (const seed of data.seeds) {
+        if (!pointWithinShape(shape, seed.x, seed.y)) continue;
+        if (found && seed.owner !== owner) return null;
+        found = true;
+        owner = seed.owner;
+      }
+      if (found) return owner;
+      // Tiny Indonesian islands have no tactical land-centre at this scale.
+      // Infer only from nearby playable INDONESIAN land, not from Australia or
+      // the Philippines across open water. Never hardcode a permanent owner:
+      // the island changes colour if neighbouring playable land is captured.
+      const x = (shape.bounds[0] + shape.bounds[2]) / 2;
+      const y = (shape.bounds[1] + shape.bounds[3]) / 2;
+      const lon = (x - R) * 2 / (SQ * R) - 179;
+      const lat = 74 - (y - R) * 128 / (1.5 * R * 75);
+      const indonesia = (ln, lt) =>
+        (ln >= 94 && ln <= 108 && lt >= -8 && lt <= 7.5) ||
+        (ln >= 106 && ln <= 119.5 && lt >= -11.5 && lt <= 6) ||
+        (ln >= 118 && ln <= 134 && lt >= -11.5 && lt <= 4.5) ||
+        (ln >= 133 && ln <= 142 && lt >= -11.5 && lt <= 3);
+      if (!indonesia(lon, lat)) return null;
+      let closest = null, distance = (R * 9) ** 2;
+      for (const seed of data.seeds) {
+        const sourceLon = (seed.x - R) * 2 / (SQ * R) - 179;
+        const sourceLat = 74 - (seed.y - R) * 128 / (1.5 * R * 75);
+        if (!indonesia(sourceLon, sourceLat)) continue;
+        const d = (seed.x - x) ** 2 + (seed.y - y) ** 2;
+        if (d < distance) { closest = seed.owner; distance = d; }
+      }
+      return closest;
+    });
+    islandOwnerCache = { source: data, owners };
+    return owners;
+  }
+  function nearbyOwnedLand(g, x, y, c, r) {
+    let winner = null, nearest = Infinity;
+    for (let rr = Math.max(0, r - 3); rr <= Math.min(g.rows - 1, r + 3); rr++) {
+      for (let cc = c - 3; cc <= c + 3; cc++) {
+        const col = (cc + g.cols) % g.cols;
+        const tile = g.tiles[rr * g.cols + col];
+        if (!tile || tile.terrain === 'sea' || !tile.owner) continue;
+        // The tested cc is unwrapped intentionally around the dateline.
+        const dx = SQ * R * (cc + 0.5 * (rr & 1)) + R - x;
+        const dy = R * 1.5 * rr + R - y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < nearest) { nearest = d2; winner = tile.owner; }
+      }
+    }
+    return nearest <= (R * 5) ** 2 ? winner : null;
+  }
+  function tacticalHex(ctx, t, radius) {
+    const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+    const y = R * 1.5 * t.r + R;
+    for (let i = 0; i < 6; i++) {
+      const a = (60 * i - 30) * Math.PI / 180;
+      const xx = x + radius * Math.cos(a), yy = y + radius * Math.sin(a);
+      i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
+    }
+    ctx.closePath();
+  }
+  function tacticalSector(ctx, t, i, radius) {
+    const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+    const y = R * 1.5 * t.r + R;
+    const a = (60 * i - 30) * Math.PI / 180;
+    const b = (60 * i + 30) * Math.PI / 180;
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + radius * Math.cos(a), y + radius * Math.sin(a));
+    ctx.lineTo(x + radius * Math.cos(b), y + radius * Math.sin(b));
+    ctx.closePath();
+  }
+  // Exposed for geographic regression tests: sample a unified island owner
+  // without taking ownership from arbitrary sea tiles or distant factions.
+  function islandOwnerAt(g, lon, lat) {
+    const x = px(lon), y = py(lat);
+    const owners = homogeneousLandShapes(g);
+    for (let i = 0; i < LAYERS.land.length; i++)
+      if (pointWithinShape(LAYERS.land[i], x, y)) return owners[i];
+    return null;
   }
   function paintOwnership(ctx, g, landShapes, tiles, left, right, top, bottom) {
+    const wholeOwners = homogeneousLandShapes(g);
+    const whole = new Map(), contested = [];
+    for (let i = 0; i < landShapes.length; i++) {
+      const shape = landShapes[i];
+      if (!intersects(shape.bounds, left, right, top, bottom)) continue;
+      const owner = wholeOwners[i];
+      if (owner) {
+        if (!whole.has(owner)) whole.set(owner, []);
+        whole.get(owner).push(shape);
+      } else contested.push(shape);
+    }
+    const factions = g.factions || E.FACTIONS;
     ctx.save();
-    const clip = paths(ctx, landShapes, left, right, top, bottom);
-    if (clip) {
-      clipPath(ctx, clip);
-      const inferred = coastlineOwners(g);
-      const factions = g.factions || E.FACTIONS;
-      const groups = new Map();
-      for (const t of tiles) {
-        const owner = inferred[t.r * g.cols + t.c];
-        if (!owner) continue;
-        if (!groups.has(owner)) groups.set(owner, []);
-        groups.get(owner).push(t);
+    ctx.globalAlpha = 0.58;
+    for (const [owner, shapes] of whole) {
+      const color = (factions[owner] || E.FACTIONS[owner] || E.FACTIONS.neutral).color;
+      if (!color) continue;
+      ctx.fillStyle = color;
+      fillPath(ctx, paths(ctx, shapes, left, right, top, bottom));
+    }
+    ctx.restore();
+    if (!contested.length) return;
+    ctx.save();
+    const clip = paths(ctx, contested, left, right, top, bottom);
+    if (!clip) { ctx.restore(); return; }
+    clipPath(ctx, clip);
+    const { inferred } = coastlineOwners(g);
+    const groups = new Map();
+    const add = (owner, t, sector) => {
+      if (!owner) return;
+      if (!groups.has(owner)) groups.set(owner, []);
+      groups.get(owner).push({ t, sector });
+    };
+    for (const t of tiles) {
+      if (t.terrain !== 'sea') {
+        add(t.owner || inferred[t.r * g.cols + t.c], t, -1);
+        continue;
       }
-      ctx.globalAlpha = 0.58;
-      for (const [owner, owned] of groups) {
-        const color = (factions[owner] || E.FACTIONS[owner] || E.FACTIONS.neutral).color;
-        if (!color) continue;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        for (const t of owned) tacticalHex(ctx, t, R + 1.2);
-        ctx.fill();
+      const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+      const y = R * 1.5 * t.r + R;
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        const owner = nearbyOwnedLand(g, x + R * 0.5 * Math.cos(a),
+          y + R * 0.5 * Math.sin(a), t.c, t.r);
+        add(owner || inferred[t.r * g.cols + t.c], t, i);
       }
-      ctx.globalAlpha = 1;
+    }
+    ctx.globalAlpha = 0.58;
+    for (const [owner, entries] of groups) {
+      const color = (factions[owner] || E.FACTIONS[owner] || E.FACTIONS.neutral).color;
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      for (const entry of entries)
+        if (entry.sector < 0) tacticalHex(ctx, entry.t, R + 0.5);
+        else tacticalSector(ctx, entry.t, entry.sector, R + 0.5);
+      ctx.fill();
     }
     ctx.restore();
   }
@@ -357,6 +490,7 @@ const GEOGRAPHY = (() => {
       atlasTiles.clear();
       overviewCache.version = -1;
       ownershipCache = null;
+      islandOwnerCache = null;
       atlasVersion++;
       stats.invalidations++;
     }
@@ -520,5 +654,5 @@ const GEOGRAPHY = (() => {
     const t = g.tiles[r * g.cols + c];
     return t && t.terrain !== 'sea' ? 1 : 0;
   }
-  return { paint, sample, visualLandAt, visualMixedHex, shapes: LAYERS, cacheStats };
+  return { paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, shapes: LAYERS, cacheStats };
 })();
