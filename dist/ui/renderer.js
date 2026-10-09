@@ -1249,6 +1249,34 @@ function draw(time, dt) {
     ctx.stroke();
     if (ok) outlinedText('⚑', bx, b.y + 6, 18, '#ffd76a', scale, 'Trebuchet MS', true);
   }
+  // Subtle permanent markers for the already-reviewed coastline exceptions.
+  // Players can spot mixed land/sea semantics before hovering, without
+  // cluttering the map with markers over 400 ordinary coastal hexes.
+  // The Arctic is intentionally excluded.
+  if (game.wrap && R * scale >= 27) {
+    const coastalExceptions = [
+      [87,14], [158,21], [160,21], [159,23], [157,24],
+      [106,26], [107,27], [10,31], [133,31], [111,35],
+      [140,43], [142,46], [96,50], [166,59], [147,62], [56,75],
+    ];
+    for (const [c,r] of coastalExceptions) {
+      const t = E.tile(game, c, r);
+      if (!t) continue;
+      const p = hexCenter(t);
+      if (!visible(p)) continue;
+      for (const x of copies(p.x)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + R * 0.48, p.y - R * 0.37, 3.1 / scale, 0, Math.PI * 2);
+        ctx.fillStyle = E.isSea(t) ? 'rgba(108,214,255,0.8)' : 'rgba(255,216,129,0.78)';
+        ctx.fill();
+        ctx.lineWidth = 0.85 / scale;
+        ctx.strokeStyle = '#0d293bc5';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
   if (hover) {
     const p = hexCenter(hover),
       u = selectedUnit(),
