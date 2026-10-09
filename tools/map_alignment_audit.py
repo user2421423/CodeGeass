@@ -29,7 +29,7 @@ def rings(label):
         if not p.is_valid:p=make_valid(p)
         if not p.is_empty and p.area > 0.00000001:polygons.append(p)
     return polygons
-land,water=rings('land'),rings('water')
+land,water=rings('land'),[]  # Align with atlas: no inland-lake water shapes
 land_tree, water_tree = STRtree(land), STRtree(water)
 
 def neighbours(c,r):
