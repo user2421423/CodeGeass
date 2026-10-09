@@ -50,14 +50,14 @@ jobs:
           import json
           j=json.load(open('docs/map-alignment-review.json'))
           assert j['summary']['hexes'] == 13680
-          assert j['summary']['high_confidence_mismatches'] <= 59
+          assert j['summary']['high_confidence_mismatches'] == 56
           c=json.load(open('docs/map-coastline-centre-review.json'))
-          assert c['total_centre_conflicts'] <= 469
-          assert c['by_category']['mixed_coast_hex'] <= 410
-          assert c['by_category']['sea_hex_on_geographic_land'] <= 40
-          assert c['by_category']['land_hex_on_geographic_water'] <= 19
+          assert c['total_centre_conflicts'] == 412
+          assert c['by_category']['mixed_coast_hex'] == 356
+          assert c['by_category']['sea_hex_on_geographic_land'] == 41
+          assert c['by_category']['land_hex_on_geographic_water'] == 15
           assert j['approved_for_gameplay_edit'] is False
-          print('PASS: 59 strong conflicts, 469 centre mismatches after fifteen reviewed terrain fixes')
+          print('PASS: 56 strong conflicts, 412 centre mismatches after lakes removed')
           PY
           node tools/audit_inland_seas.cjs
           node - <<'JS'
