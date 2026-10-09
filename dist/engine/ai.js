@@ -739,12 +739,12 @@
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
     }
+    g.vacated = [];
     if (!builds) return;
     // 1b. Clear the factories, as a player would (a unit on the city hex blocks building there). A ready unit on a
     // quiet city carries out its orders first. On a city with an enemy within 2 hexes, the defender steps beside it
     // (best cover) so the city can build another defender, but only when the side can pay for a unit there;
     // otherwise it holds the city. The UI plays these moves from g.vacated ({ id, orders }).
-    g.vacated = [];
     const cheapest = price(typeFor(side, 'scout', g), 1, g, side);
     for (const s of bases) {
       const u = unitAt(g, s);
@@ -762,7 +762,8 @@
       if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
     // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
-    const supers = own().filter(u => TYPES[u.type].cls === 'super').length;
+    // Count the side's actual super-heavy frame: some campaign lineups field a siege or assault frame in that slot.
+    const supers = own().filter(u => u.type === superType || TYPES[u.type].cls === 'super').length;
     // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.
     if (!yard3.length || supers >= 2) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
@@ -834,7 +835,7 @@
       e.industry - (c.industry || 0) >= reserveInd &&
       (!c.sakuradite || (e.sakuradite || 0) - c.sakuradite >= reserveSak);
     // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
-    const heavySak = yard3.length ? price(typeFor(side, 'heavy'), 1, g, side).sakuradite : 0;
+    const heavySak = yard3.length ? price(typeFor(side, 'heavy', g), 1, g, side).sakuradite : 0;
     const keepsHeavy = (type, c) =>
       !c.sakuradite || TYPES[type].tier >= 3 || (e.sakuradite || 0) - c.sakuradite >= heavySak;
     // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),

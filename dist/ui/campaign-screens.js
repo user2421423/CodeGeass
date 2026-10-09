@@ -142,15 +142,11 @@ function startMission(id, difficulty = missionDifficulty) {
   const CP = E.campaign;
   if (!CP?.mission(id)) return;
   missionDifficulty = CP.DIFFICULTIES[difficulty] ? difficulty : 'normal';
-  aiToken++;
-  hqBack = 'game';
-  strikeMode = false;
+  resetSession();
   campaignTab = CP.mission(id).campaign;
   game = E.applyProfile(CP.createMission(id, Date.now() >>> 0, missionDifficulty), loadProfile());
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
-  undoStack = [];
-  effects = [];
   zoom = homeZoom();
   closeModal();
   render();
@@ -161,15 +157,11 @@ function startMission(id, difficulty = missionDifficulty) {
 // A saved conquest or mission picks up where it stopped, with any unread dialogue and its result screen.
 function loadGame(s) {
   if (!s) return;
-  aiToken++;
-  hqBack = 'game';
-  strikeMode = false;
+  resetSession();
   game = E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
   setWorld();
   selection = null;
-  undoStack = [];
-  effects = [];
   zoom = homeZoom();
   closeModal();
   render();

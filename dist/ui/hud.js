@@ -20,12 +20,10 @@ const FACTION_BLURB = {
 function startMenu() {
   // Leaving a mission (it stays saved) puts the world map back behind the menu.
   if (game.mode === 'campaign') {
-    aiToken++;
+    resetSession();
     game = E.createGame('britannia');
     setWorld();
     selection = null;
-    undoStack = [];
-    effects = [];
     zoom = 3.2;
     render();
   }
@@ -89,7 +87,14 @@ async function fleijaSequence(target, side, name, fire = null, resolved = null) 
   SFX.play('fleija', side);
   zoom = Math.max(zoom, 3.2);
   centerOn(target);
+  const token = aiToken;
   await pause(2000);
+  if (token !== aiToken) {
+    // A new or loaded game replaced this one during the warning: drop the rest of the sequence.
+    alert.classList.remove('show');
+    alert.hidden = true;
+    return resolved;
+  }
   const result = fire ? fire() : resolved;
   if (result?.intercepted) {
     alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Countermeasure engaged</span><b>F.L.E.I.J.A. eliminated</b><span class="fleija-impact">${esc(result.eliminatorCity)}</span><small>${esc(F(result.defender).name)}</small></div>`;
@@ -376,7 +381,7 @@ function panel() {
     const ours = s.owner === game.player,
       deposit = E.depositOf(game, s),
       yields = E.cityYield(game, s);
-    main = `<section><div class="side-title"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'}</span><span class="chip" style="color:${F(s.owner).color}">${F(s.owner).short}</span></div>${ART.city(cityKind(s), s.owner, 'panel-ship')}<h2 class="unit-name">${s.name}</h2><p class="description">${s.capitalOf && E.alive(game, s.capitalOf) && s.owner === s.capitalOf ? `Capital of the ${F(s.owner).name}. If it falls, the whole power surrenders.` : s.fort ? `Fortified city with a battery covering ${E.fortressRange(game, s)} hexes.` : 'Capture and hold cities to fund your army.'}</p><div class="hp-row"><span>City defenses</span><span class="mono">${Math.ceil(s.shield)} / ${s.maxShield}</span></div><div class="bar"><i style="width:${(s.shield / s.maxShield) * 100}%;background:${F(s.owner).color}"></i></div><div class="stat-grid"><div><span class="label">${ICONS.use('credits')} Credits</span><b>+${yields.credits}</b></div><div><span class="label">${ICONS.use('industry')} Industry</span><b>+${yields.industry}</b></div><div><span class="label">${ICONS.use('research')} Research</span><b>+${yields.science}</b></div>${deposit ? `<div><span class="label">${ICONS.use('sakuradite')} Sakuradite</span><b>+${yields.sakuradite}</b></div>` : ''}</div>${deposit ? depositBox(deposit) : ''}${projectPanel(s)}${fortressPanel(s)}<div class="buildings">${Object.entries(
+    main = `<section><div class="side-title"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'}</span><span class="chip" style="color:${F(s.owner).color}">${F(s.owner).short}</span></div>${ART.city(cityKind(s), s.owner, 'panel-ship')}<h2 class="unit-name">${s.name}</h2><p class="description">${s.capitalOf && E.alive(game, s.capitalOf) && s.owner === s.capitalOf ? `Capital of the ${F(s.owner).name}. If it falls, the whole power surrenders.` : s.fort ? `Fortified city with a battery covering ${E.fortressRange(game, s)} hexes.` : 'Capture and hold cities to fund your army.'}</p><div class="hp-row"><span>City defenses</span><span class="mono">${Math.ceil(s.shield)} / ${s.maxShield}</span></div><div class="bar"><i style="width:${(s.maxShield ? s.shield / s.maxShield : 0) * 100}%;background:${F(s.owner).color}"></i></div><div class="stat-grid"><div><span class="label">${ICONS.use('credits')} Credits</span><b>+${yields.credits}</b></div><div><span class="label">${ICONS.use('industry')} Industry</span><b>+${yields.industry}</b></div><div><span class="label">${ICONS.use('research')} Research</span><b>+${yields.science}</b></div>${deposit ? `<div><span class="label">${ICONS.use('sakuradite')} Sakuradite</span><b>+${yields.sakuradite}</b></div>` : ''}</div>${deposit ? depositBox(deposit) : ''}${projectPanel(s)}${fortressPanel(s)}<div class="buildings">${Object.entries(
       E.BUILDINGS,
     )
       .filter(([k]) => (k !== 'refinery' || deposit) && (k !== 'port' || E.portSite(game, s)))
@@ -639,7 +644,7 @@ function dockHTML() {
   if (s) {
     const ours = s.owner === game.player,
       y = E.cityYield(game, s);
-    return `<div class="dock-visual">${ART.city(cityKind(s), s.owner)}<span class="faction-flag ${s.owner}">${F(s.owner).letter}</span></div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.shield / s.maxShield) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', shipyardReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
+    return `<div class="dock-visual">${ART.city(cityKind(s), s.owner)}<span class="faction-flag ${s.owner}">${F(s.owner).letter}</span></div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.maxShield ? s.shield / s.maxShield : 0) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', shipyardReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
   }
   const m = selectedSite();
   if (m) {

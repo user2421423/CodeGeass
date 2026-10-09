@@ -136,19 +136,26 @@ function capitalOf(side) {
 }
 // Where the map's ⌂ button looks: your capital, first city or commander.
 const homeOf = () => capitalOf(game.player) || ownUnits().find(u => u.cmd) || ownUnits()[0];
-function newGame() {
+// Everything tied to the game being replaced: an unfinished rival turn (aiToken aborts it), its Skip state,
+// open drawers, targeting modes, undo history and in-flight effects.
+function resetSession() {
   aiToken++;
+  aiSide = null;
+  skipAI = false;
   hqBack = 'game';
   strikeMode = false;
   carrierHoldOpen = null;
   detailOpen = false;
   deploying = null;
   routing = null;
+  undoStack = [];
+  effects = [];
+}
+function newGame() {
+  resetSession();
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0), loadProfile());
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
-  undoStack = [];
-  effects = [];
   zoom = 3.2;
   closeModal();
   render();

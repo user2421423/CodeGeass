@@ -1620,7 +1620,7 @@
       map: FUJI,
       cities: [
         ['Ikaruga', 2, 6, K, 2, { fort: true, gun: 'Ikaruga' }],
-        ['Fuji Sakuradite Mine', 11, 8, B, 1],
+        ['Fuji Sakuradite Mine', 11, 8, K, 1],
         ['Avalon Landing', 19, 5, B, 3, { fort: true, gun: 'Avalon' }],
       ],
       economy: { britannia: 500 },
@@ -1740,7 +1740,7 @@
           capture: `Generator ${p}`,
           by: B,
           say: [[null, `Generator ${p} destroyed. Damocles’s Blaze Luminous flickers.`]],
-          shield: { city: 'Damocles', max: 1500, value: 0 },
+          shield: { city: 'Damocles', cut: 375 },
         })),
         ...[
           [2, 12, 8],
@@ -2391,7 +2391,7 @@
         [B, 'sutherland', 16, 2, 1, null, { skipNormal: true }],
       ],
       objective: 'Break into the Chofu Detention Center to free Tohdoh, then reach the escape route. Zero must survive.',
-      win: [{ capture: ['Chofu Detention Center'] }, { reach: ['Escape Route'] }],
+      win: [{ capture: ['Chofu Detention Center'] }, { reach: ['Escape Route'], by: 'tohdoh' }],
       lose: { cmd: ['zero', 'tohdoh'], turns: 14 },
       stars: [{ turns: 9 }, { alive: ['chiba', 'asahina', 'senba', 'urabe'] }],
       victory: 'Tohdoh and the Four Holy Swords join the Black Knights. Britannia has made a dangerous enemy.',

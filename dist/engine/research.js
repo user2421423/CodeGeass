@@ -333,7 +333,7 @@
           tiers: [4],
           costs: [380],
           req: ['launch', 1],
-          text: () => 'Carrier-Battleship capacity +1 (2 → 3 formations; needs a level-3 port)',
+          text: () => 'Carrier-Battleship capacity +1 (2 → 3 formations)',
         },
       },
     },

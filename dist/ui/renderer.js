@@ -162,8 +162,12 @@ function frame(time) {
   draw(time, dt);
   drawMinimap();
   if (effects.length > 0 || shake > 0 || flash > 0) {
-    mapFramePending = true;
-    requestAnimationFrame(frame);
+    // draw() may already have queued the next frame (bump() calls requestMapFrame); a second
+    // callback per vsync would advance every effect twice as fast.
+    if (!mapFramePending) {
+      mapFramePending = true;
+      requestAnimationFrame(frame);
+    }
   } else if (mapAnimating()) {
     // Slow decorative glows need fewer redraws than movement/combat; input always wakes immediately.
     mapPulseTimer = setTimeout(() => {
@@ -887,9 +891,12 @@ function completeMapTile(tx, ty, scale, detail) {
     ctx.setTransform(quality, 0, 0, quality,
       (-worldX + MAP_ATLAS_PAD) * quality,
       (-worldY + MAP_ATLAS_PAD) * quality);
+    // Culling is by hex centre, so reach one hex beyond the tile: a hex straddling the
+    // edge must be painted into both neighbouring tiles (the canvas clips the rest).
+    const reach = MAP_ATLAS_PAD + R * 2;
     paintMapLayer(scale, detail,
-      worldX - MAP_ATLAS_PAD, worldX + width + MAP_ATLAS_PAD,
-      worldY - MAP_ATLAS_PAD, worldY + height + MAP_ATLAS_PAD);
+      worldX - reach, worldX + width + reach,
+      worldY - reach, worldY + height + reach);
   } finally {
     ctx = oldCtx;
   }
@@ -1221,7 +1228,7 @@ function draw(time, dt) {
       ctx.fillStyle = '#071623';
       ctx.fillRect(-20, 27, 40, 4);
       ctx.fillStyle = s.shield > 0 ? '#9fd8ff' : '#ff6a5a';
-      ctx.fillRect(-20, 27, (40 * s.shield) / s.maxShield, 4);
+      ctx.fillRect(-20, 27, s.maxShield ? (40 * s.shield) / s.maxShield : 0, 4);
       const showCityName =
         s.id === pickedCity ||
         s.capital ||
