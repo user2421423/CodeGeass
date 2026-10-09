@@ -23,3 +23,8 @@ const japan=g.tiles.filter(t=>t.c>=149&&t.c<=163&&t.r>=15&&t.r<=30);
 const cities=g.stations.filter(s=>/Tokyo|Kyoto|Sapporo|Fukuoka|Nagoya|Osaka|Hiroshima|Kobe/.test(s.name));
 console.log('JAPAN LAND TILES',JSON.stringify(japan.filter(x=>x.terrain!=='sea').map(t=>[t.c,t.r,t.terrain])));
 console.log('JAPAN CITIES',JSON.stringify(cities.map(s=>[s.name,s.c,s.r])));
+
+const assert=require('node:assert/strict');
+assert.equal(groups.length,1, 'Only the connected world ocean remains navigable');
+assert(groups[0].length>9000, 'The world ocean remains continuous');
+assert.equal(E.tile(g,160,19).terrain,'sea','Tsugaru remains navigable');
