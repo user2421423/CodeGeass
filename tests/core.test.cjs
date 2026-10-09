@@ -314,3 +314,26 @@ test('Caspian inland water is land and Tsugaru separates Hokkaido from Honshu', 
   }
   assert.equal(E.tile(old,160,19).terrain,'sea');
 });
+
+
+test('Every Indonesian island starts as Federation territory, without changing the Philippines', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const bands = [[94,107.9,-7.8,7.5], [106,119.5,-11.5,8],
+    [118,134,-11.5,4.5], [133,141.9,-11.5,3]];
+  const land = g.tiles.filter(t => {
+    const lon = -180 + 2 * (t.c + 0.5 * (t.r & 1));
+    const lat = 74 - t.r * (128 / 75);
+    return t.terrain !== 'sea' &&
+      bands.some(([west,east,south,north]) =>
+        lon >= west && lon <= east && lat >= south && lat <= north);
+  });
+  assert(land.length >= 35, 'audit a meaningful number of island land hexes');
+  for (const t of land)
+    assert.equal(t.owner, 'cf', `Indonesian land (${t.c},${t.r}) must start as Federation`);
+  assert.equal(g.stations.find(s=>s.name==='Manila').owner, 'britannia',
+    'Indonesian assignment cannot change the Philippines');
+  for (const name of ['Jakarta','Surabaya','Singapore','Kuala Lumpur']) {
+    const city = g.stations.find(s => s.name === name);
+    assert.equal(city?.owner, 'cf', name+' stays Federation');
+  }
+});
