@@ -90,7 +90,7 @@ const modal = () => node('modal-root').innerHTML;
 (async () => {
   assert(modal().includes('One world.'), 'start menu renders');
   assert(run('GEOGRAPHY.shapes.land.length') >= 1000, 'unified global atlas has detailed land outlines');
-  assert(run('GEOGRAPHY.shapes.water.length') >= 1000, 'inland waters come from the same detailed source');
+  assert.equal(run('GEOGRAPHY.shapes.water.length'), 0, 'no inland water shapes are painted');
   assert.equal(run('GEOGRAPHY.shapes.patches'), undefined, 'no separately coloured regional coastline patches');
 
   // Regression for the empty Path2D at the smallest zoom level.
