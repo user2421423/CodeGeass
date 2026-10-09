@@ -445,11 +445,25 @@ def redraw(grid):
 
 # Final gameplay edits on exact hexes (column, row), applied after the redraw.
 FIX_LAND = [
+    # Fill landlocked Caspian Sea: no playable inland lakes.
+    (113, 17),
+    (114, 17),
+    (114, 18),
+    (115, 17),
+    (115, 18),
+    (114, 19),
+    (115, 19),
+    (115, 20),
+    (116, 20),
+    (115, 21),
+    (114, 21),
+
     (61, 15),  # Newfoundland: GIS land-dominant hex, safe from city/port/route constraints
-    (160, 19),  # Japan: join northern Honshu to Hokkaido
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
 ]
 FIX_SEA = [
+    (160, 19),  # Tsugaru Strait: separate Hokkaido and Honshu
+
     # 2026 area audit batch 3: six non-strategic, unit-free coastal hexes.
     (0, 6),  # Verified coastal water: Dateline / Bering-facing coastline
     (127, 0),  # Verified coastal water: Northern Siberian coast
