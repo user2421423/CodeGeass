@@ -137,12 +137,43 @@ port_point=Point(port_lon,port_lat)
 if any(land[int(i)].covers(port_point) for i in land_tree.query(port_point)) and not any(
         water[int(i)].covers(port_point) for i in water_tree.query(port_point)):
     raise RuntimeError('Barcelona harbour graphic is not over visual sea')
+# The remaining non-Arctic high-confidence cases have all been reviewed:
+# protected city approaches, intentionally widened strategic water passages,
+# island/coastal compromises at this hex resolution. A new unexplained
+# non-Arctic mismatch must fail CI instead of silently becoming normal.
+ACCEPTED_NON_ARCTIC = {
+    (158,21): 'Tokyo coastal land approach',
+    (160,21): 'East Honshu protected land extension',
+    (159,23): 'Tokyo coastal land approach',
+    (157,24): 'Kyoto/Shikoku land connection',
+    (106,26): 'Suez navigable sea',
+    (107,27): 'Northern Red Sea navigable passage',
+    (10,31): 'Pearl Harbor city and starting unit',
+    (133,31): 'Kolkata coast and city',
+    (111,35): 'Bab-el-Mandeb navigable sea',
+    (140,43): 'Malacca navigable sea',
+    (142,46): 'Sunda navigable sea',
+    (96,50): 'Luanda coastal city',
+    (166,59): 'Brisbane coastal city and starting unit',
+    (147,62): 'Perth coastal city and starting unit',
+    (56,75): 'Tierra del Fuego southern land exception',
+}
+non_arctic = {(p['c'],p['r']):p for p in proposals if p['region'] != 'Arctic / high north'}
+unreviewed=set(non_arctic)-set(ACCEPTED_NON_ARCTIC)
+if unreviewed:
+    raise RuntimeError('New non-Arctic strong coast mismatch needs review: '+repr(sorted(unreviewed)))
+if any(not p['needs_review'] for p in non_arctic.values()):
+    raise RuntimeError('Unprotected high-confidence geography/gameplay mismatch')
+
 report={'summary':{'hexes':len(state['tiles']),'high_confidence_mismatches':len(proposals),
         'needs_review':sum(p['needs_review'] for p in proposals),
+        'non_arctic_reviewed':len(non_arctic),
+        'unreviewed_non_arctic':len(unreviewed),
         'region_counts':dict(Counter(p['region'] for p in proposals)),
         'city_visual_water':len(city_issues),'city_visual_anchors_on_land':len(city_anchors),'port_visual_land':len(port_issues),'port_visual_anchor_on_water':True},
         'city_centres_on_visual_water':city_issues, 'port_centres_on_visual_land':port_issues,
-        'proposals':proposals,'approved_for_gameplay_edit':False}
+        'proposals':proposals,'accepted_non_arctic':{f'{col},{row}':why for (col,row),why in ACCEPTED_NON_ARCTIC.items()},
+        'approved_for_gameplay_edit':False}
 out=ROOT/'docs/map-alignment-review.json'
 out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(report,indent=2)+'\n')
