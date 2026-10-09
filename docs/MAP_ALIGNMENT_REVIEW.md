@@ -209,3 +209,29 @@ out of scope. The actionable non-Arctic strong conflict count is
 356 mixed coastal hexes, 15 playable-land/visual-water hexes, and
 41 playable-sea/visual-land hexes. These numbers differ from
 prior stages because the lake-water visual layer is no longer drawn.
+
+## Stage 9 — Final non-Arctic exceptions and gameplay clarity
+
+The 56 strong geographical mismatches break down into **41 Arctic
+exceptions** (explicitly excluded by user preference) and **15 reviewed
+non-Arctic exceptions**, all at intentionally protected gameplay hexes.
+Those cases are enumerated by coordinate and reason in
+`tools/map_alignment_audit.py`. The GIS audit now **fails** if any new,
+unreviewed strong non-Arctic case appears. The 15 protected exceptions
+include Tokyo/Honshu/Kyoto, Suez/Red Sea/Bab-el-Mandeb,
+Singapore/Malacca/Sunda, Pearl Harbor, Kolkata, Luanda, Brisbane,
+Perth and southern Tierra del Fuego.
+
+At the more common mixed coastal hexes, the renderer now checks the
+GSHHG land shape only when a hex is hovered, caches the result, and
+labels a real **SEA HEX** or **LAND HEX** when the underlying tactical
+classification differs from the graphic. No extra map polygons are
+drawn; therefore this cannot reintroduce regional tint discoloration.
+This information is strictly visual; no change to movement or combat.
+
+The remaining 356 mixed coastal centre differences are **not 356
+additional gameplay errors**. At a 180 × 76 hex resolution, some
+geographic land/sea mixing is unavoidable. This completes the approved
+non-Arctic map-alignment scope without forcing deliberate strategic
+naval passages or city hexes into geographically but tactically
+incorrect categories. The Arctic remains excluded.
