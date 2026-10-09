@@ -83,7 +83,7 @@ test('World map: islands, straits and joins that gameplay depends on', () => {
   assert(linked(at(83, 21), at(92, 20), t => !land(t)), 'Strait of Gibraltar is open');
   assert(linked(at(88, 14), at(91, 11), t => !land(t)), 'the English Channel reaches the North Sea');
   assert(linked(at(97, 18), at(98, 22), t => !land(t)), 'the Adriatic opens to the Ionian Sea');
-  assert(linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Honshu is joined to Hokkaido');
+  assert(!linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Hokkaido is separated from Honshu by Tsugaru Strait');
   assert(!linked(city('Tokyo Settlement'), city('Seoul'), land), 'Japan is not joined to Korea');
   assert(!linked(city('Taipei'), city('Hong Kong'), land), 'Taiwan is an island');
   // Every city stands within one hex of where its coordinates put it.
