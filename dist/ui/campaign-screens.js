@@ -49,7 +49,7 @@ function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
     profile = loadProfile(),
     saved = getSave(CAMPAIGN_KEY),
-    resume = saved && !saved.over && CP.mission(saved.campaign?.id);
+    resume = saved && (!saved.over || !saved.rewardClaimed) && CP.mission(saved.campaign?.id);
   campaignTab = CP.CAMPAIGNS[cid] ? cid : Object.keys(CP.CAMPAIGNS)[0];
   const camp = CP.CAMPAIGNS[campaignTab],
     season = CP.SEASONS?.[camp.season] || { name: camp.name, short: camp.short },
@@ -179,6 +179,8 @@ function loadGame(s) {
 // Campaign events reach the screen here: blasts and Gefjun Disturbers play on the map, new warnings are flagged,
 // then the queued dialogue runs and `then` follows it.
 function campaignFeed(then = null) {
+  // Commit terminal rewards before victory dialogue can be interrupted or reloaded.
+  if (game.over) claimReward();
   const cm = game.campaign;
   if (!cm) return then?.();
   const fx = cm.fx.splice(0),

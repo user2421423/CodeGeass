@@ -633,7 +633,7 @@
   function applyElites(g, profile = {}) {
     const records = eliteProfile(profile);
     g.eliteDeployed ||= {};
-    for (const u of g.units) {
+    for (const u of allUnits(g)) {
       // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
       if (!u.elite || u.side !== g.player) continue;
       const old = maxHP(u),
@@ -646,7 +646,7 @@
   // Refresh your commanders inside an operation, e.g. after an HQ promotion; personal units keep their damage.
   function applyRoster(g, profile = {}) {
     g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
-    for (const u of g.units) {
+    for (const u of allUnits(g)) {
       if (!u.cmd) continue;
       const old = maxHP(u);
       u.cmdRank = officerOf(g, u).rank;
@@ -1035,17 +1035,45 @@
       amphibious = t.naval === 'amphibious',
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
-      budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? t.move : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
+      budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? landMove : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
       boards = !u.skillReposition && !t.naval && u.deployedTurn !== g.turn,
       roughDiscount = !u.skillReposition && !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.drives') >= 2,
       advancedLanding = !u.skillReposition && !t.naval && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
       stateKey = (p, used) => `${key(p)}|${used ? 1 : 0}`,
       costs = new Map([[stateKey(start, false), 0]]),
-      queue = [{ p: start, cost: 0, roughUsed: false }];
+      queue = [{ p: start, cost: 0, roughUsed: false, order: 0 }];
+    let nextOrder = 1;
+    const before = (a, b) => a.cost < b.cost || (a.cost === b.cost && a.order < b.order);
+    const push = entry => {
+      entry.order = nextOrder++;
+      let i = queue.length;
+      queue.push(entry);
+      while (i > 0) {
+        const parent = (i - 1) >> 1;
+        if (!before(entry, queue[parent])) break;
+        queue[i] = queue[parent];
+        i = parent;
+      }
+      queue[i] = entry;
+    };
+    const pop = () => {
+      const first = queue[0], last = queue.pop();
+      if (queue.length) {
+        let i = 0;
+        for (;;) {
+          const left = i * 2 + 1, right = left + 1;
+          if (left >= queue.length) break;
+          const child = right < queue.length && before(queue[right], queue[left]) ? right : left;
+          if (!before(queue[child], last)) break;
+          queue[i] = queue[child];
+          i = child;
+        }
+        queue[i] = last;
+      }
+      return first;
+    };
     while (queue.length) {
-      let best = 0;
-      for (let i = 1; i < queue.length; i++) if (queue[i].cost < queue[best].cost) best = i;
-      const { p, cost, roughUsed } = queue.splice(best, 1)[0];
+      const { p, cost, roughUsed } = pop();
       if (cost > costs.get(stateKey(p, roughUsed))) continue;
       for (const n of adjacent(g, p)) {
         if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
@@ -1076,7 +1104,7 @@
         const sk = stateKey(n, nextRough);
         if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
         costs.set(sk, nc);
-        if (!cross) queue.push({ p: n, cost: nc, roughUsed: nextRough });
+        if (!cross) push({ p: n, cost: nc, roughUsed: nextRough });
         if (!occ && key(n) !== key(start)) found.set(key(n), Math.min(found.get(key(n)) ?? Infinity, nc));
       }
     }
@@ -1250,6 +1278,8 @@
   // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
   function surrender(g, loser, winner, last) {
     (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: last.name };
+    // Clear strategic defenses while any remaining cities still identify their original owner.
+    annexStrategic(g, loser);
     let cities = 0,
       units = 0;
     for (const s of g.stations)
@@ -1273,7 +1303,6 @@
     w.industry += Math.round(e.industry / 2);
     e.credits = e.industry = 0;
     annexDeposits(g, loser, winner);
-    annexStrategic(g, loser);
     log(
       g,
       `${last.name}, the last city of the ${FACTIONS[loser].name}, has fallen. It surrenders to the ${FACTIONS[winner].name}: ${units} units disbanded.`,
@@ -1496,10 +1525,14 @@
     if (attacker) {
       if (attacker.cmd) {
         const k = attacker.cmd,
-          tally = (g.missionKills ||= {});
+          tally = (g.missionKills ||= {}),
+          instances = (g.missionCommanderKills ||= {}),
+          instance = `${attacker.side}:${k}:${attacker.personal ? 'personal' : 'operation'}`;
         tally[k] = (tally[k] || 0) + 1;
+        // Legacy aggregate tallies cannot distinguish officer instances; never inherit another one's kills.
+        instances[instance] = (instances[instance] || 0) + 1;
         if (v.cmd) award(g, attacker.side, 'valor', `${COMMANDERS[k].short} defeated ${COMMANDERS[v.cmd].short}`);
-        if (tally[k] === 5) award(g, attacker.side, 'marksman', `${COMMANDERS[k].short} destroyed 5 units`);
+        if (instances[instance] === 5) award(g, attacker.side, 'marksman', `${COMMANDERS[k].short} destroyed 5 units`);
       }
       attacker.kills++;
       attacker.xp = Math.min(5, attacker.xp + 1);
@@ -1527,6 +1560,10 @@
     const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
     const avoidance = genericLevel(g, a, TYPES[a.type].branch === 'Armor' ? 'blitzkrieg' : 'guerrilla');
     const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
+    // A volley has one firing state: retaliation and kill rewards cannot change later splash hits.
+    const splashHits = pr.splash ? g.units
+      .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1)
+      .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
     a.attacked = true;
     a.moved = true;
     a.skillReposition = 0;
@@ -1561,10 +1598,9 @@
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
     }
-    if (pr.splash) {
-      for (const v of g.units) {
-        if (v.hp <= 0 || !foe(g, v.side, a.side) || v.id === d?.id || dist(g, v, p) !== 1) continue;
-        const amount = Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash);
+    if (splashHits.length) {
+      for (const { unit: v, amount } of splashHits) {
+        if (v.hp <= 0) continue;
         v.hp = Math.max(0, v.hp - amount);
         lowerMorale(g, v, 1);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
@@ -1644,11 +1680,10 @@
     const total = g.stations
       .filter(s => s.owner === side)
       .reduce((a, s) => {
-        const stationed = g.units.find(u => u.hp > 0 && u.side === side && u.cmd && u.c === s.c && u.r === s.r);
-        const bonus = id => stationed ? 1 + 0.04 * genericLevel(g, stationed, id) : 1;
-        a.credits += Math.round(s.income * treasuryBonus(g, s) * bonus('economic_expert'));
-        a.industry += s.industry * (1 + techValue(g, side, 'cities.industry')) * bonus('industrial_expert');
-        a.science += s.science * bonus('technology_expert');
+        const y = cityOutput(g, s);
+        a.credits += y.credits;
+        a.industry += y.industry;
+        a.science += y.science;
         return a;
       }, { credits: 0, industry: 0, science: 0 });
     total.industry = Math.round(total.industry);
@@ -2323,10 +2358,20 @@
     if (cost.sakuradite) e.sakuradite = (e.sakuradite || 0) - cost.sakuradite;
   }
   // A city's output per turn, with the deposit it works.
+  function cityOutput(g, s) {
+    const stationed = g.units.find(u => u.hp > 0 && u.side === s.owner && u.cmd && u.c === s.c && u.r === s.r),
+      bonus = id => stationed ? 1 + 0.04 * genericLevel(g, stationed, id) : 1;
+    return {
+      credits: Math.round(s.income * treasuryBonus(g, s) * bonus('economic_expert')),
+      industry: s.industry * (1 + techValue(g, s.owner, 'cities.industry')) * bonus('industrial_expert'),
+      science: s.science * bonus('technology_expert'),
+    };
+  }
   function cityYield(g, s) {
     const d = depositOf(g, s),
-      y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 };
-    return { credits: Math.round(s.income * treasuryBonus(g, s)) + y.credits, industry: Math.round(s.industry * (1 + techValue(g, s.owner, 'cities.industry'))), science: s.science, sakuradite: y.sakuradite };
+      y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 },
+      output = cityOutput(g, s);
+    return { credits: output.credits + y.credits, industry: Math.round(output.industry), science: Math.round(output.science), sakuradite: y.sakuradite };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
   function seizeDeposit(g, u, p) {
@@ -2485,7 +2530,7 @@
   function annexStrategic(g, loser) {
     for (const s of g.stations) {
       if (s.project?.side === loser) dropProject(g, s, 'surrender');
-      if (s.eliminatorProject?.side === loser || s.eliminator) dropEliminator(g, s, 'surrender');
+      if (s.eliminatorProject?.side === loser || (s.owner === loser && s.eliminator)) dropEliminator(g, s, 'surrender');
     }
     if (g.arsenal) g.arsenal[loser] = 0;
   }
@@ -2808,7 +2853,7 @@
       e.science += Math.round(inc.science * modifier);
       e.sakuradite = (e.sakuradite || 0) + Math.round(inc.sakuradite * modifier);
     }
-    for (const v of g.units) {
+    for (const v of allUnits(g)) {
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
       for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired']) if (v[field]?.side === side) delete v[field];
     }
@@ -2925,7 +2970,6 @@
     foe.morale = Math.max(moraleFloor(g, foe), foe.morale - 1);
     s.gunReady = g.turn + fortressRecharge(g, s);
     log(g, `${name} strikes ${TYPES[foe.type].short} for ${damage}.`, s.owner);
-    const destroyed = foe.hp <= 0;
     // Battery Overcharge II: the blast also catches enemy units next to the target.
     if (techLevel(g, s.owner, 'cities.overcharge') >= 2)
       for (const v of g.units) {
@@ -2936,6 +2980,7 @@
         kill(g, v, null);
       }
     kill(g, foe, null);
+    const destroyed = foe.hp <= 0;
     checkVictory(g);
     return { ok: true, name, from: { c: s.c, r: s.r }, to: { c: foe.c, r: foe.r }, id: foe.id, damage, destroyed, hit };
   }
@@ -3361,13 +3406,13 @@
     m = new Int32Array(g.tiles.length).fill(-1);
     let id = 0;
     for (const t of g.tiles) {
-      if (isSea(t) || m[t.r * g.cols + t.c] >= 0) continue;
+      if (isSea(t) || TERRAIN[t.terrain]?.blocked || m[t.r * g.cols + t.c] >= 0) continue;
       const q = [t];
       m[t.r * g.cols + t.c] = id;
       while (q.length) {
         const x = q.pop();
         for (const n of adjacent(g, x))
-          if (!isSea(n) && m[n.r * g.cols + n.c] < 0) {
+          if (!isSea(n) && !TERRAIN[n.terrain]?.blocked && m[n.r * g.cols + n.c] < 0) {
             m[n.r * g.cols + n.c] = id;
             q.push(n);
           }
@@ -3385,9 +3430,15 @@
   function gotoSurface(g, u, p) {
     const t = TYPES[u.type];
     if (t.naval === 'ship') return 'sea';
-    return !t.naval && !atSea(g, u) && massOf(g, u) === massOf(g, p) ? 'land' : null;
+    return !t.naval && !atSea(g, u) && massOf(g, u) >= 0 && massOf(g, u) === massOf(g, p) ? 'land' : null;
   }
-  const routeField = (g, u, p) => goalField(g, u.side, [[p, 0]], gotoSurface(g, u, p));
+  function routeField(g, u, p) {
+    const surface = gotoSurface(g, u, p),
+      field = goalField(g, u.side, [[p, 0]], surface);
+    // A stale map component or an impassable land route must not prevent a viable coastal journey.
+    return surface === 'land' && !Number.isFinite(field[u.r * g.cols + u.c])
+      ? goalField(g, u.side, [[p, 0]]) : field;
+  }
   function gotoReason(g, u, p) {
     if (!u || u.hp <= 0) return 'Unavailable';
     if (g.over) return 'Operation over';
@@ -3443,8 +3494,13 @@
       const surface = dest && gotoSurface(g, u, dest),
         k = dest && `${dest.c},${dest.r},${surface}`;
       if (dest && !fields.has(k)) fields.set(k, goalField(g, side, [[dest, 0]], surface));
-      const field = dest && fields.get(k),
-        cost = p => field[p.r * g.cols + p.c],
+      let field = dest && fields.get(k);
+      if (surface === 'land' && field && !Number.isFinite(field[u.r * g.cols + u.c])) {
+        const fallbackKey = `${dest.c},${dest.r},null`;
+        if (!fields.has(fallbackKey)) fields.set(fallbackKey, goalField(g, side, [[dest, 0]]));
+        field = fields.get(fallbackKey);
+      }
+      const cost = p => field[p.r * g.cols + p.c],
         here = field ? cost(u) : Infinity;
       if (!Number.isFinite(here)) {
         report.lost.push(u.id);

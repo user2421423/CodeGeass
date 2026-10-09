@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 
 const nodes = new Map();
 const events = {};
+const eventListeners = {};
 const storage = {};
 const registered = [];
 
@@ -48,7 +49,10 @@ const document = {
   getElementById: node,
   documentElement: node('root'),
   body: node('body'),
-  addEventListener: (k, fn) => (events[k] = fn),
+  addEventListener: (k, fn) => {
+    (eventListeners[k] ||= []).push(fn);
+    events[k] = event => eventListeners[k].forEach(listener => listener(event));
+  },
   querySelectorAll() { return []; },
   createElement: () => node('scratch-' + serial++),
   modelContext: { registerTool: t => registered.push(t) },

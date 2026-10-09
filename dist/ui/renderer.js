@@ -123,13 +123,74 @@ function drawLine(x, y, tx, ty, color, width = 1, dash = []) {
   ctx.stroke();
   ctx.setLineDash([]);
 }
+let mapFramePending = false,
+  mapFrameDirty = true,
+  mapHasPulse = false,
+  mapRenderRevision = 0,
+  mapPulseTimer = null;
+// State changes invalidate the static layer; selection/camera events only wake the renderer.
+function requestMapFrame() {
+  mapFrameDirty = true;
+  if (mapPulseTimer !== null) {
+    clearTimeout(mapPulseTimer);
+    mapPulseTimer = null;
+  }
+  if (mapFramePending || document.hidden) return;
+  mapFramePending = true;
+  requestAnimationFrame(frame);
+}
+function invalidateMapRender() {
+  mapRenderRevision++;
+  minimapDirty = true;
+  requestMapFrame();
+}
+ART.onImageReady = requestMapFrame;
+function mapAnimating() {
+  const dialogOpen = modal.children ? modal.children.length > 0 : !!modal.innerHTML;
+  return effects.length > 0 || shake > 0 || flash > 0 || (!dialogOpen && !reducedMotion() && mapHasPulse);
+}
 function frame(time) {
+  mapFramePending = false;
+  if (document.hidden) {
+    lastTime = 0;
+    return;
+  }
+  if (!mapFrameDirty && !mapAnimating()) return;
+  mapFrameDirty = false;
   const dt = Math.min(0.05, (time - lastTime) / 1000 || 0.016);
   lastTime = time;
   draw(time, dt);
   drawMinimap();
-  requestAnimationFrame(frame);
+  if (effects.length > 0 || shake > 0 || flash > 0) {
+    mapFramePending = true;
+    requestAnimationFrame(frame);
+  } else if (mapAnimating()) {
+    // Slow decorative glows need fewer redraws than movement/combat; input always wakes immediately.
+    mapPulseTimer = setTimeout(() => {
+      mapPulseTimer = null;
+      if (!document.hidden && !mapFramePending) {
+        mapFramePending = true;
+        requestAnimationFrame(frame);
+      }
+    }, 25);
+  } else lastTime = 0;
 }
+// Capture listeners schedule after the actual event handlers have updated camera/hover state.
+for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'keydown', 'click', 'load'])
+  document.addEventListener(type, requestMapFrame, { capture: true, passive: true });
+if (typeof window.addEventListener === 'function')
+  window.addEventListener('resize', requestMapFrame, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (mapPulseTimer !== null) {
+    clearTimeout(mapPulseTimer);
+    mapPulseTimer = null;
+  }
+  lastTime = 0;
+  if (!document.hidden) requestMapFrame();
+});
+// Keep the backdrop current when dialogs change, but freeze decorative glows behind them.
+if (typeof MutationObserver === 'function')
+  new MutationObserver(requestMapFrame).observe(modal, { childList: true, subtree: true, attributes: true });
 // ======== Map renderer ========
 const PLATE = {
   neutral: { light: '#7a7462', mid: '#45402f', dark: '#25221a', trim: '#e6dfc0', bar: '#c9c2a2' },
@@ -780,12 +841,9 @@ function copiesBetween(x, left, right) {
 const MAP_LAYER_MARGIN = 200;
 let mapLayerCache = null;
 function mapLayerFresh(m, scale, dpr, w, h) {
-  if (!m || m.tiles !== game.tiles || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
+  if (!m || m.tiles !== game.tiles || m.revision !== mapRenderRevision || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
   const slack = MAP_LAYER_MARGIN - 16;
   if (Math.abs(offset.x - m.x) > slack || Math.abs(offset.y - m.y) > slack) return false;
-  const tiles = game.tiles;
-  for (let i = 0; i < tiles.length; i++)
-    if (tiles[i].owner !== m.owners[i] || tiles[i].terrain !== m.terrains[i]) return false;
   return true;
 }
 function mapLayer(scale, detail, dpr, w, h) {
@@ -820,8 +878,7 @@ function mapLayer(scale, detail, dpr, w, h) {
   return (mapLayerCache = {
     canvas: layer,
     tiles: game.tiles,
-    owners: game.tiles.map(t => t.owner),
-    terrains: game.tiles.map(t => t.terrain),
+    revision: mapRenderRevision,
     scale,
     dpr,
     w,
@@ -886,6 +943,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
 }
 function draw(time, dt) {
   if (!canvas || !ctx) return;
+  mapHasPulse = false;
   const scale = computeView(),
     { w, h } = mapSize,
     dpr = Math.min(devicePixelRatio || 1, 2),
@@ -958,7 +1016,10 @@ function draw(time, dt) {
           : selection?.kind === 'tile'
             ? selection
             : null;
-  if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  if (selTile) for (const x of copies(hexCenter(selTile).x)) {
+    if (visible(hexCenter(selTile))) mapHasPulse = true;
+    selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  }
   // Temporary low-profile marker until the replacement dock art is approved.
   // Keep naval hexes unobstructed: cities and naval units render unchanged.
   for (const s of game.stations) {
@@ -1101,8 +1162,13 @@ function draw(time, dt) {
           ctx.fillRect(-8, -8, 16, 16);
           ctx.strokeRect(-8, -8, 16, 16);
         }
-      } else if (d.city == null) drawMine(d, owner, scale, time, !!E.unitAt(game, d));
-      else drawCrystals(-28, -12, 0.5, time);
+      } else if (d.city == null) {
+        mapHasPulse = true;
+        drawMine(d, owner, scale, time, !!E.unitAt(game, d));
+      } else {
+        mapHasPulse = true;
+        drawCrystals(-28, -12, 0.5, time);
+      }
       ctx.restore();
     }
   }
@@ -1116,6 +1182,7 @@ function draw(time, dt) {
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
     for (const x of copies(base.x)) {
+      if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
       if (!detail) {
@@ -1164,7 +1231,10 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
-    for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
+    for (const x of copies(p.x)) {
+      if (visible(p)) mapHasPulse = true;
+      drawCrosshair({ x, y: p.y }, time, scale);
+    }
   }
   // Campaign warnings: the hexes a scripted strike will hit next turn.
   for (const w of game.campaign?.warnings || []) {
@@ -1172,6 +1242,7 @@ function draw(time, dt) {
     for (const t of E.within(game, w, w.radius)) {
       const q = hexCenter(t);
       for (const x of copies(q.x)) {
+        if (visible(q)) mapHasPulse = true;
         hexPath(x, q.y, R - 2);
         ctx.fillStyle = `rgba(255,70,110,${0.14 + 0.14 * pulse})`;
         ctx.fill();
@@ -1190,6 +1261,7 @@ function draw(time, dt) {
         zero = t.c === hover.c && t.r === hover.r,
         pulse = 0.5 + 0.5 * Math.sin(time / 180);
       for (const x of copies(q.x)) {
+        if (visible(q)) mapHasPulse = true;
         hexPath(x, q.y, R - 1.5);
         ctx.fillStyle = zero ? `rgba(255,120,190,${0.45 + 0.2 * pulse})` : 'rgba(255,150,205,0.28)';
         ctx.fill();

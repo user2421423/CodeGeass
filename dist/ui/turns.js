@@ -56,6 +56,7 @@ async function endTurn(force = false) {
       before = unitSnapshot();
       const visuals = combatVisualSnapshot();
       const orders = E.aiOrder(game, id);
+      invalidateUIState();
       const seen = orders.some(o => onScreen(o.to) || onScreen(o.from));
       if (seen) moralePopups(before);
       for (const o of orders) {
@@ -123,7 +124,19 @@ function annexNotice(a) {
 // When an operation ends, its medals join the profile's medal case and a win pays command tokens, exactly once.
 function claimReward() {
   if (!game.over || game.rewardClaimed) return;
-  const p = loadProfile();
+  // Persist the claim identity before touching the profile, so a failed operation-save
+  // after a successful profile write can recover without paying twice.
+  game.rewardClaimId ||= `${game.mode}:${game.player}:${game.campaign?.id || 'world'}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+  if (!save()) return false;
+  const p = loadProfile(), claims = (p.rewardClaims ||= {}), prior = claims[game.rewardClaimId];
+  if (prior) {
+    game.reward = prior.reward;
+    if (prior.eliteReward) game.eliteReward = prior.eliteReward;
+    game.rewardClaimed = true;
+    undoStack = [];
+    save();
+    return true;
+  }
   p.medals = [...(p.medals || []), ...(game.medalsEarned || []).map(m => m.id)];
   if (game.mode === 'campaign') {
     const CP = E.campaign,
@@ -171,12 +184,15 @@ function claimReward() {
     }
     game.reward = r;
   }
+  claims[game.rewardClaimId] = { reward: game.reward || null, eliteReward: game.eliteReward || null };
+  if (!saveProfile(p)) {
+    toast('Rewards are pending because command records could not be saved. Keep this operation and retry its result screen.', true);
+    return false;
+  }
   game.rewardClaimed = true;
   undoStack = [];
-  saveProfile(p);
-  try {
-    localStorage.setItem(saveKey(), JSON.stringify(game));
-  } catch (e) {}
+  save();
+  return true;
 }
 function resultDialog() {
   claimReward();

@@ -29,6 +29,13 @@ let game = E.createGame('britannia'),
   targetCache = new Set(),
   minimapDirty = true,
   minimapBase = null;
+let uiActionBusy = false,
+  uiStateRevision = 0;
+function invalidateUIState() {
+  uiStateRevision++;
+  routeMemo = null;
+  if (typeof invalidateMapRender === 'function') invalidateMapRender();
+}
 let detailOpen = false,
   carrierHoldOpen = null, // Carrier-Battleship id with its cargo picker open
   saveOk = true,
@@ -67,7 +74,7 @@ const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
   selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
   selectedSite = () => (selection?.kind === 'site' ? game.sites?.find(d => d.id === selection.id) || null : null);
-const interactive = () => !game.over && game.phase === game.player;
+const interactive = () => !uiActionBusy && !game.over && game.phase === game.player;
 const F = side => game.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral,
   C = k => E.COMMANDERS[k];
 function toast(text, long = false) {
@@ -90,18 +97,22 @@ function loadProfile() {
 function saveProfile(p) {
   try {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+    return true;
   } catch (e) {
     toast('This browser could not save your command records.');
+    return false;
   }
 }
 function save() {
-  if (game.phase !== game.player) return;
+  if (game.phase !== game.player && !game.over) return false;
   try {
     localStorage.setItem(saveKey(), JSON.stringify(game));
     saveOk = true;
+    return true;
   } catch (e) {
     saveOk = false;
     toast('This browser could not save progress. Keep this tab open.');
+    return false;
   }
 }
 function getSave(key = SAVE_KEY) {

@@ -57,6 +57,7 @@ function conquestReward(difficulty, profile) {
   return Math.round((t.victory + t.conquest) * scale) + (profile.wins || 0 ? 0 : t.first);
 }
 function render() {
+  invalidateUIState();
   const mapFocused = !!canvas && document.activeElement === canvas;
   document.documentElement.style.setProperty('--own', F(game.player).color);
   const e = game.economy[game.player],
@@ -138,16 +139,30 @@ function confirmLaunch(p) {
     name = E.targetName(game, p),
     defense = E.eliminatorDefender(game, game.player, p),
     rows = Object.entries(tally)
-      .map(([side, k]) => `<li><b style="color:${F(side).color}">${F(side).short}</b> ${k.erased} erased · ${k.crippled} crippled</li>`)
+      .map(([side, k]) => `<li><b style="color:${F(side).color}">${F(side).short}</b> ${k.erased} erased · ${k.crippled} crippled · ${k.damaged} damaged</li>`)
       .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => !c.ring) ? ` and ${esc(cities.find(c => !c.ring).s.name)} is destroyed for the rest of the war` : ''}${E.siteAt(game, p) || (cities.some(c => !c.ring) && E.depositOf(game, cities.find(c => !c.ring).s)) ? '; the Sakuradite deposit there will never produce again' : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.ring) ? `; ${cities.filter(c => c.ring).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.ring).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}${defense ? `<div class="info-strip">F.L.E.I.J.A. Eliminator coverage detected from ${esc(defense.name)}. This warhead will be neutralized and consume its one defensive charge.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => c.distance === 0) ? ` and ${esc(cities.find(c => c.distance === 0).s.name)} is destroyed for the rest of the war` : ''}${E.siteAt(game, p) || (cities.some(c => c.distance === 0) && E.depositOf(game, cities.find(c => c.distance === 0).s)) ? '; the Sakuradite deposit there will never produce again' : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.distance === 1) ? `; ${cities.filter(c => c.distance === 1).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.distance === 1).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.${cities.some(c => c.distance > 1) ? ` Outer ring: ${cities.filter(c => c.distance > 1).map(c => esc(c.s.name)).join(' and ')} retain at most ${Math.round(E.FLEIJA.outerShield * 100)}% defenses.` : ''}</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}${defense ? `<div class="info-strip">F.L.E.I.J.A. Eliminator coverage detected from ${esc(defense.name)}. This warhead will be neutralized and consume its one defensive charge.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
   focusDialog();
 }
 async function launchAt(p) {
+  if (!interactive()) return;
+  uiActionBusy = true;
+  undoStack = [];
+  invalidateUIState();
   closeModal();
   strikeMode = false;
-  const name = E.targetName(game, p),
-    result = await fleijaSequence(p, game.player, name, () => E.launch(game, game.player, p.c, p.r));
+  const operation = game, token = aiToken, name = E.targetName(game, p);
+  let result;
+  try {
+    result = await fleijaSequence(p, operation.player, name, () => {
+      if (game !== operation || token !== aiToken) return { ok: false, reason: 'Operation changed.' };
+      return E.launch(operation, operation.player, p.c, p.r);
+    });
+  } finally {
+    uiActionBusy = false;
+    invalidateUIState();
+  }
+  if (game !== operation || token !== aiToken) return;
   if (!result?.ok) {
     toast(result?.reason || 'Launch failed.');
     render();
@@ -165,7 +180,7 @@ async function launchAt(p) {
 }
 // Why the player cannot act right now (rival phase or finished operation).
 function phaseReason() {
-  return game.over ? 'Operation over' : game.phase !== game.player ? `${F(game.phase).short} turn` : null;
+  return uiActionBusy ? 'Strategic weapon resolving' : game.over ? 'Operation over' : game.phase !== game.player ? `${F(game.phase).short} turn` : null;
 }
 // A button that explains itself: when the order is unavailable its reason replaces the cost line.
 // A lack of funds is shown by the cost itself, with the missing resources in red.
@@ -188,7 +203,7 @@ function gotoText(u) {
 // Whether the unit can be sent to a hex (null) or why not; cached because the cursor asks every frame.
 let routeMemo = null;
 function routeWhy(u, p) {
-  const k = `${u.id}:${u.c},${u.r}:${p.c},${p.r}`;
+  const k = `${uiStateRevision}:${u.id}:${u.c},${u.r}:${p.c},${p.r}`;
   if (routeMemo?.k !== k) routeMemo = { k, why: E.gotoReason(game, u, p) };
   return routeMemo.why;
 }
@@ -203,11 +218,14 @@ function gotoReportText(r) {
     .filter(Boolean)
     .join(', ');
 }
+let fireStatusMemo = new Map(), fireStatusRevision = -1;
 function fireStatus(u) {
   if (E.atSea(game, u)) return 'Embarked · cannot fire';
   if (u.attacked) return 'Already fired';
   if (u.morale <= -3) return 'Confused · cannot act';
-  if (u.side === game.player && !E.targets(game, u).length) return 'No target in range';
+  if (fireStatusRevision !== uiStateRevision) { fireStatusMemo.clear(); fireStatusRevision = uiStateRevision; }
+  if (!fireStatusMemo.has(u.id)) fireStatusMemo.set(u.id, E.targets(game, u).length);
+  if (u.side === game.player && !fireStatusMemo.get(u.id)) return 'No target in range';
   return 'Fire ready';
 }
 function rangeText(u) {
@@ -242,34 +260,41 @@ function unitName(u) {
   return u.elite ? t.name : a && t.cls === 'super' ? a.hull : t.name;
 }
 // Units that still have an order besides holding position, refreshed whenever the selection or map changes.
-let readyIds = new Set();
+let readyIds = new Set(), readyRevision = -1, selectionCacheKey = null;
 function hasOrders(u) {
   return game.phase === game.player ? readyIds.has(u.id) : !u.attacked;
 }
 function updateSelection() {
-  readyIds = new Set(
-    ownUnits()
-      .filter(u => E.hasOrders(game, u))
-      .map(u => u.id),
-  );
+  if (readyRevision !== uiStateRevision) {
+    readyIds = new Set(
+      ownUnits()
+        .filter(u => E.hasOrders(game, u))
+        .map(u => u.id),
+    );
+    readyRevision = uiStateRevision;
+  }
   const u = selectedUnit();
   if (deploying && deploying.ship !== u?.id) deploying = null;
   if (routing && (routing !== u?.id || !interactive())) routing = null;
-  readyCache =
-    u && u.side === game.player && !routing
-      ? deploying
-        ? new Map(E.deployTargets(game, u).map(t => [E.key(t), 0]))
-        : E.reachable(game, u)
-      : new Map();
   const st = selectedStation();
-  targetCache = new Set(
-    !deploying && !routing && u && u.side === game.player && !u.attacked && u.morale > -3
-      ? E.targets(game, u).map(E.key)
-      : st && st.owner === game.player && interactive()
-        ? E.fortressTargets(game, st).map(E.key)
-        : [],
-  );
-  minimapDirty = true;
+  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${deploying?.ship}:${interactive()}`;
+  if (selectionCacheKey !== cacheKey) {
+    readyCache =
+      u && u.side === game.player && interactive() && !routing
+        ? deploying
+          ? new Map(E.deployTargets(game, u).map(t => [E.key(t), 0]))
+          : E.reachable(game, u)
+        : new Map();
+    targetCache = new Set(
+      interactive() && !deploying && !routing && u && u.side === game.player && !u.attacked && u.morale > -3
+        ? E.targets(game, u).map(E.key)
+        : st && st.owner === game.player && interactive()
+          ? E.fortressTargets(game, st).map(E.key)
+          : [],
+    );
+    selectionCacheKey = cacheKey;
+  }
+  if (typeof requestMapFrame === 'function') requestMapFrame();
   // Never open a sidebar for an empty selection or a terrain hex.
   // City/mine details and the carrier cargo picker are the only allowed drawers.
   const showSide = u

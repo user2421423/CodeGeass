@@ -68,6 +68,7 @@ const ART = (() => {
     let img = images.get(keyName);
     if (!img) {
       img = new Image();
+      img.onload = () => api.onImageReady?.();
       img.src =
         'data:image/svg+xml;charset=utf-8,' +
         encodeURIComponent(svg.replace('<svg ', '<svg width="200" height="200" '));
@@ -98,7 +99,11 @@ const ART = (() => {
     let img = LOCAL.imgs.get(k);
     if (!img) {
       img = new Image();
-      img.onerror = () => (img.failed = true);
+      img.onload = () => api.onImageReady?.();
+      img.onerror = () => {
+        img.failed = true;
+        api.onImageReady?.();
+      };
       img.src = e.base + e.src;
       LOCAL.imgs.set(k, img);
     }
@@ -118,6 +123,7 @@ const ART = (() => {
   const api = {
     FACTION_ART,
     onLocal: null,
+    onImageReady: null,
     // Register and preload the real image files, without generated fallback portraits or sprites.
     useLocal(manifest, merge = false) {
       const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';

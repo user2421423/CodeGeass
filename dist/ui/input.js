@@ -2,6 +2,7 @@
 'use strict';
 let helpBack = 'game';
 document.addEventListener('change', e => {
+  if (uiActionBusy) return;
   const id = e.target.id;
   if (id === 'difficulty-select') {
     setup.difficulty = e.target.value;
@@ -18,11 +19,15 @@ document.addEventListener('change', e => {
     openShop(shop.station);
   }
   if (e.target.dataset.cityUnit) {
+    undoStack = [];
+    invalidateUIState();
     E.setCityAutomation(game, +e.target.dataset.cityUnit, { unit: e.target.value || null });
     save();
     updateSelection();
   }
   if (e.target.dataset.automationField) {
+    undoStack = [];
+    invalidateUIState();
     const a = E.automationState(game),
       field = e.target.dataset.automationField;
     if (field === 'enabled' || field === 'autoUpgrade') a[field] = e.target.checked;
@@ -32,6 +37,8 @@ document.addEventListener('change', e => {
     productionDialog();
   }
   if (e.target.dataset.automationReserve) {
+    undoStack = [];
+    invalidateUIState();
     const a = E.automationState(game),
       key = e.target.dataset.automationReserve;
     a.reserve[key] = Math.max(0, Math.floor(+e.target.value || 0));
@@ -41,6 +48,7 @@ document.addEventListener('change', e => {
   }
 });
 document.addEventListener('click', e => {
+  if (uiActionBusy) return;
   const portrait = e.target.closest('[data-general]');
   if (portrait && !e.target.closest('button')) {
     generalDialog(portrait.dataset.general, portrait.dataset.personal === '1');
@@ -150,6 +158,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.bulkBuild) {
+    undoStack = [];
     const r = E.bulkCityUpgrade(game, game.player, d.bulkBuild);
     if (r.reason) toast(r.reason);
     else {
@@ -325,6 +334,8 @@ document.addEventListener('click', e => {
       productionDialog();
       break;
     case 'automation-clear-cities': {
+      undoStack = [];
+      invalidateUIState();
       E.automationState(game).cities = {};
       save();
       productionDialog();
@@ -332,6 +343,8 @@ document.addEventListener('click', e => {
       break;
     }
     case 'automation-fleija-reserve': {
+      undoStack = [];
+      invalidateUIState();
       const a = E.automationState(game);
       a.reserve.credits = E.FLEIJA.cost.credits;
       a.reserve.industry = E.FLEIJA.cost.industry;
@@ -342,6 +355,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'automation-run': {
+      undoStack = [];
       const r = E.runCityAutomation(game, game.player, { force: true });
       render();
       save();
@@ -461,7 +475,7 @@ document.addEventListener('click', e => {
       const u = selectedUnit();
       if (u && u.side === game.player && interactive() && E.clearGoto(game, u.id).ok) {
         routing = null;
-        refreshAndSave(true);
+        refreshAndSave();
         toast('Auto-move stopped: the unit will not move on its own next turn.');
       }
       break;
@@ -491,6 +505,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
+  if (uiActionBusy) { e.preventDefault(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.general) {
     e.preventDefault();
     generalDialog(e.target.dataset.general, e.target.dataset.personal === '1');
@@ -515,7 +530,11 @@ document.addEventListener('keydown', e => {
       else if (modal.querySelector('[data-back="campaign"]')) campaignDialog();
       else if (helpBack === 'start' && modal.querySelector('[aria-label="Field manual"]')) startMenu();
       else if (archiveBack === 'start' && modal.querySelector('[aria-label="Knightmare archive"]')) startMenu();
-      else closeModal();
+      else {
+        const close = modal.querySelector('[data-action="research-close"],[data-action="elite-close"],[data-action="generals-close"],[data-action="general-close"]');
+        if (close) close.click();
+        else closeModal();
+      }
     }
     return;
   }
@@ -558,7 +577,7 @@ document.addEventListener('keydown', e => {
     routing = null;
     if (u.goto) {
       if (E.clearGoto(game, u.id).ok) {
-        refreshAndSave(true);
+        refreshAndSave();
         toast('Auto-move stopped.');
       }
     } else {

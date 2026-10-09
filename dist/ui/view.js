@@ -39,6 +39,7 @@ function centerOn(p) {
   if (!p || !canvas) return;
   const c = hexCenter(p);
   cam = { x: c.x, y: c.y };
+  if (typeof requestMapFrame === 'function') requestMapFrame();
 }
 function toWorld(clientX, clientY) {
   const rect = canvas.getBoundingClientRect(),
@@ -92,6 +93,7 @@ function changeZoom(factor, anchor) {
     cam.y = before.y - (anchor.y - midY) / newScale;
   }
   computeView();
+  if (typeof requestMapFrame === 'function') requestMapFrame();
 }
 function fireFortressAt(s, p) {
   const before = unitSnapshot(),
@@ -125,7 +127,7 @@ function activateHex(p) {
       return;
     }
     routing = null;
-    refreshAndSave(true);
+    refreshAndSave();
     toast(`Standing orders: ${gotoText(u)}. It moves there at the start of each of your turns.`);
     return;
   }
