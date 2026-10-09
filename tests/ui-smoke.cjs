@@ -117,6 +117,16 @@ const modal = () => node('modal-root').innerHTML;
   atlas.paint(paintContext, { wrap: true, cols: 180, rows: 76, tiles: emptyHexes },
     0, 43 * Math.sqrt(3) * 180, 0, 43 * 1.5 * 76, 0.12);
   assert(overviewLandFills > 0, 'maximum zoom-out must draw land with Path2D.addPath');
+  const point = (lon,lat) => [
+    (lon + 180) * Math.sqrt(3) * 43 / 2 + 43 - Math.sqrt(3) * 43 / 2,
+    43 + (74 - lat) * 1.5 * 43 * 75 / 128,
+  ];
+  const landPoint = point(4, 32), seaPoint = point(15, 32);
+  assert.equal(atlas.visualLandAt(...landPoint), true, 'actual GSHHG land classification is accessible');
+  assert.equal(atlas.visualLandAt(...seaPoint), false, 'visual shoreline excludes the surrounding sea');
+  assert.equal(atlas.visualLandAt(landPoint[0] + Math.sqrt(3) * 43 * 180, landPoint[1]), true,
+    'visual land classification respects horizontal world wrap');
+
 
   // Geography is visually interpolated separately from the immutable tactical hex map.
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 1, 'land remains land at its gameplay hex centre');
