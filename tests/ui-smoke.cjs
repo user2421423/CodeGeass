@@ -91,6 +91,17 @@ const modal = () => node('modal-root').innerHTML;
   assert(modal().includes('One world.'), 'start menu renders');
   assert(run('GEOGRAPHY.shapes.land.length') >= 1000, 'unified global atlas has detailed land outlines');
   assert.equal(run('GEOGRAPHY.shapes.water.length'), 0, 'no inland water shapes are painted');
+  // Regression for the long outlined artefact crossing the Red Sea: only a
+  // short geographically clipped Suez Canal may be painted by hand. Natural
+  // waterways must come from GSHHG and not from decorative polylines.
+  const geographicPainter = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
+  assert(!geographicPainter.includes('NAVIGABLE_WATERWAYS'), 'remove manually outlined sea-route overlays');
+  assert(!geographicPainter.includes('paintWaterways('), 'no legacy double-stroked waterway painter');
+  assert(geographicPainter.includes('clipPath(ctx, landClip)'),
+    'Suez canal cut must be clipped to geographic land only');
+  assert(geographicPainter.includes('if (!overview) paintSuezCanal('),
+    'short Suez canal stays a detailed-zoom feature');
+
   assert.equal(run('GEOGRAPHY.shapes.patches'), undefined, 'no separately coloured regional coastline patches');
 
   // Regression for the empty Path2D at the smallest zoom level.
