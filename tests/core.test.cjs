@@ -83,7 +83,7 @@ test('World map: islands, straits and joins that gameplay depends on', () => {
   assert(linked(at(83, 21), at(92, 20), t => !land(t)), 'Strait of Gibraltar is open');
   assert(linked(at(88, 14), at(91, 11), t => !land(t)), 'the English Channel reaches the North Sea');
   assert(linked(at(97, 18), at(98, 22), t => !land(t)), 'the Adriatic opens to the Ionian Sea');
-  assert(linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Honshu is joined to Hokkaido');
+  assert(!linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Hokkaido is separated from Honshu by Tsugaru Strait');
   assert(!linked(city('Tokyo Settlement'), city('Seoul'), land), 'Japan is not joined to Korea');
   assert(!linked(city('Taipei'), city('Hong Kong'), land), 'Taiwan is an island');
   // Every city stands within one hex of where its coordinates put it.
@@ -307,4 +307,86 @@ test('An amphibious sea-to-land movement refreshes both actions once per turn', 
   u.moved = u.attacked = false;
   assert.equal(E.move(g, u.id, 5, 6).ok, true);
   assert.equal(u.moved, true);
+});
+
+test('Reviewed coastal conversions preserve naval routes, cities and existing occupied saves', () => {
+  const changes = [[13, 9], [168, 9], [50, 10], [49, 12], [81, 32],
+    [113, 51], [157, 44], [49, 31], [0, 6], [127, 0],
+    [158, 1], [55, 8], [56, 8], [156, 63]];
+  const game = E.createGame('britannia', 'normal', 'conquest', 123);
+  for (const [c, r] of changes) {
+    assert.equal(E.tile(game, c, r).terrain, 'sea', `(${c},${r}) must be navigable water`);
+    assert(!game.stations.some(s => (s.c === c && s.r === r) ||
+      (s.portAt?.c === c && s.portAt?.r === r)), 'No city or port may be converted');
+    assert(!game.units.some(u => u.c === c && u.r === r), 'No starting unit may be stranded');
+  }
+  for (const [c, r] of [[106, 26], [107, 27], [111, 35], [140, 43], [142, 46]])
+    assert.equal(E.tile(game, c, r).terrain, 'sea', 'Protected straits remain water');
+
+  const old = structuredClone(game);
+  for (const [c, r] of changes) {
+    const tile = E.tile(old, c, r);
+    tile.terrain = 'plains';
+    tile.owner = 'britannia';
+  }
+  E.tile(old, 61, 15).terrain = 'sea';
+  const occupied = old.units[0], [c, r] = changes[0];
+  occupied.c = c;
+  occupied.r = r;
+  assert.equal(E.migrateSave(old), old);
+  assert.equal(E.tile(old, c, r).terrain, 'plains', 'Do not strand a unit in a legacy save');
+  for (const [cx, ry] of changes.slice(1)) {
+    assert.equal(E.tile(old, cx, ry).terrain, 'sea', 'Unoccupied legacy coastal land migrates');
+    assert.equal(E.tile(old, cx, ry).owner, null, 'Water hexes must not retain land ownership');
+  }
+  assert.notEqual(E.tile(old, 61, 15).terrain, 'sea', 'Previous Newfoundland fix migrates');
+});
+
+test('Caspian inland water is land and Tsugaru separates Hokkaido from Honshu', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const caspian = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21]];
+  for (const [c,r] of caspian) assert.notEqual(E.tile(g,c,r).terrain,'sea');
+  assert.equal(E.tile(g,160,19).terrain,'sea', 'Tsugaru is navigable water');
+  const tokyo=g.stations.find(s=>s.name==='Tokyo Settlement');
+  const sapporo=g.stations.find(s=>s.name==='Sapporo');
+  const q=[E.tile(g,tokyo.c,tokyo.r)], seen=new Set();
+  for(let i=0;i<q.length;i++){
+    const t=q[i], key=`${t.c},${t.r}`;
+    if(seen.has(key)) continue;seen.add(key);
+    for(const n of E.adjacent(g,t))
+      if(n.terrain!=='sea'&&!seen.has(`${n.c},${n.r}`))q.push(n);
+  }
+  assert(!seen.has(`${sapporo.c},${sapporo.r}`), 'Hokkaido requires sea crossing');
+  const old=structuredClone(g);
+  for(const [c,r] of caspian){const t=E.tile(old,c,r);t.terrain='sea';t.owner=null;}
+  E.tile(old,160,19).terrain='plains';E.tile(old,160,19).owner='britannia';
+  assert.equal(E.migrateSave(old),old);
+  for(const [c,r] of caspian) {
+    const t=E.tile(old,c,r);assert.equal(t.terrain,'plains');
+    assert(t.owner,'Migrated lake adopts nearby territorial ownership');
+  }
+  assert.equal(E.tile(old,160,19).terrain,'sea');
+});
+
+
+test('Every Indonesian island starts as Federation territory, without changing the Philippines', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const bands = [[94,107.9,-7.8,7.5], [106,119.5,-11.5,8],
+    [118,134,-11.5,4.5], [133,141.9,-11.5,3]];
+  const land = g.tiles.filter(t => {
+    const lon = -180 + 2 * (t.c + 0.5 * (t.r & 1));
+    const lat = 74 - t.r * (128 / 75);
+    return t.terrain !== 'sea' &&
+      bands.some(([west,east,south,north]) =>
+        lon >= west && lon <= east && lat >= south && lat <= north);
+  });
+  assert(land.length >= 35, 'audit a meaningful number of island land hexes');
+  for (const t of land)
+    assert.equal(t.owner, 'cf', `Indonesian land (${t.c},${t.r}) must start as Federation`);
+  assert.equal(g.stations.find(s=>s.name==='Manila').owner, 'britannia',
+    'Indonesian assignment cannot change the Philippines');
+  for (const name of ['Jakarta','Surabaya','Singapore','Kuala Lumpur']) {
+    const city = g.stations.find(s => s.name === name);
+    assert.equal(city?.owner, 'cf', name+' stays Federation');
+  }
 });

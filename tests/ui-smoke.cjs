@@ -93,6 +93,121 @@ const modal = () => node('modal-root').innerHTML;
 
 (async () => {
   assert(modal().includes('One world.'), 'start menu renders');
+  assert(run('GEOGRAPHY.shapes.land.length') >= 1000, 'unified global atlas has detailed land outlines');
+  assert.equal(run('GEOGRAPHY.shapes.water.length'), 0, 'no inland water shapes are painted');
+  // Regression for the long outlined artefact crossing the Red Sea: only a
+  // short geographically clipped Suez Canal may be painted by hand. Natural
+  // waterways must come from GSHHG and not from decorative polylines.
+  const geographicPainter = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
+  assert(!geographicPainter.includes('NAVIGABLE_WATERWAYS'), 'remove manually outlined sea-route overlays');
+  assert(!geographicPainter.includes('paintWaterways('), 'no legacy double-stroked waterway painter');
+  assert(geographicPainter.includes('clipPath(ctx, landClip)'),
+    'Suez canal cut must be clipped to geographic land only');
+  assert(geographicPainter.includes('if (!overview) paintSuezCanal('),
+    'short Suez canal stays a detailed-zoom feature');
+
+  assert.equal(run('GEOGRAPHY.shapes.patches'), undefined, 'no separately coloured regional coastline patches');
+
+  // Regression for the empty Path2D at the smallest zoom level.
+  class TestPath2D {
+    constructor() { this.points = 0; }
+    moveTo() { this.points++; }
+    lineTo() { this.points++; }
+    closePath() {}
+    addPath(p) { this.points += p.points; }
+  }
+  let overviewLandFills = 0;
+  const paintContext = new Proxy({
+    fill(p) { if (p instanceof TestPath2D && p.points > 0) overviewLandFills++; },
+    createLinearGradient() { return { addColorStop() {} }; },
+    createRadialGradient() { return { addColorStop() {} }; },
+  }, { get: (o, k) => o[k] || (() => {}) });
+  const tinyLand = [[[0, 28], [8, 28], [8, 35], [0, 35]]];
+  const makeAtlas = new Function('R', 'SQ', 'WORLD_W', 'WORLD_H', 'Path2D', 'GEOGRAPHY_SHAPES', 'E', 'document',
+    fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8') + '\nreturn GEOGRAPHY;');
+  const atlas = makeAtlas(43, Math.sqrt(3), Math.sqrt(3) * 43 * 180, 43 * (1.5 * 75 + 2), TestPath2D,
+    { land: tinyLand, water: [], biomes: [] }, { FACTIONS: {}, adjacent: () => [] },
+    { createElement: () => ({ getContext: () => paintContext }) });
+  const emptyHexes = Array.from({ length: 180 * 76 }, (_, i) => ({ c: i % 180, r: Math.floor(i / 180), terrain: 'sea', owner: null }));
+  atlas.paint(paintContext, { wrap: true, cols: 180, rows: 76, tiles: emptyHexes },
+    0, 43 * Math.sqrt(3) * 180, 0, 43 * 1.5 * 76, 0.12);
+  assert(overviewLandFills > 0, 'maximum zoom-out must draw land with Path2D.addPath');
+  const point = (lon,lat) => [
+    (lon + 180) * Math.sqrt(3) * 43 / 2 + 43 - Math.sqrt(3) * 43 / 2,
+    43 + (74 - lat) * 1.5 * 43 * 75 / 128,
+  ];
+  const landPoint = point(4, 32), seaPoint = point(15, 32);
+  assert.equal(atlas.visualLandAt(...landPoint), true, 'actual GSHHG land classification is accessible');
+  assert.equal(atlas.visualLandAt(...seaPoint), false, 'visual shoreline excludes the surrounding sea');
+  assert.equal(atlas.visualLandAt(landPoint[0] + Math.sqrt(3) * 43 * 180, landPoint[1]), true,
+    'visual land classification respects horizontal world wrap');
+  assert.equal(typeof atlas.visualMixedHex, 'function', 'coastal hex visual mixing is queryable');
+  assert.equal(atlas.visualMixedHex(-1, 14), false, 'out-of-range queries are harmless');
+  assert.equal(atlas.visualMixedHex(87, 14), false,
+    'mock atlas without Cornwall is not accidentally marked mixed');
+
+
+  // Geography is visually interpolated separately from the immutable tactical hex map.
+  assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 1, 'land remains land at its gameplay hex centre');
+  assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain === 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 0, 'sea remains sea at its gameplay hex centre');
+  assert(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return Math.abs(GEOGRAPHY.sample(game, p.x, p.y) - GEOGRAPHY.sample(game, p.x + WORLD_W, p.y)); })()`) < 1e-8, 'world atlas wraps without a seam');
+
+  // Real GIS contours: Indonesian islands must use Federation gameplay
+  // ownership, not a neutral/Britannian tint propagated through sea tiles.
+  const politicalIslands = run("({Sumatra:GEOGRAPHY.islandOwnerAt(game,101,0),Java:GEOGRAPHY.islandOwnerAt(game,111,-7),Borneo:GEOGRAPHY.islandOwnerAt(game,114,0),Papua:GEOGRAPHY.islandOwnerAt(game,134,-3),Egypt:GEOGRAPHY.islandOwnerAt(game,30,25)})");
+  for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
+    assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');
+  assert.equal(politicalIslands.Egypt, 'eu', 'Egypt land polygon must tint E.U., not neutral Arabia');
+  assert.equal(run("E.tile(game,87,14).terrain"), 'sea', 'Cornwall fringe remains navigable ocean');
+  assert.equal(run("GEOGRAPHY.visualMixedHex(87,14)"), true, 'Cornwall misleading sea/land hex is flagged');
+  const conquestTint = run("(() => { const t=game.tiles.find(t=>t.c>=146&&t.c<=149&&t.r>=42&&t.r<=45&&t.terrain!=='sea'); const previous=t.owner; t.owner='britannia'; game.mapRevision=(game.mapRevision||0)+1; const captured=GEOGRAPHY.islandOwnerAt(game,114,0); t.owner=previous; game.mapRevision++; const restored=GEOGRAPHY.islandOwnerAt(game,114,0); return {captured,restored}; })()");
+  assert.equal(conquestTint.captured, null, 'a captured Borneo tile must remove the uniform Federation tint');
+  assert.equal(conquestTint.restored, 'cf', 'restored Borneo regains uniform Federation tint');
+
+  const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
+  assert(renderingText.includes('SEA · NAVIGABLE') && renderingText.includes('LAND · WALKABLE'),
+    'ambiguous coast hexes must display a clear gameplay-surface badge');
+  assert(renderingText.includes('ctx.setLineDash([5 / scale, 4 / scale])'),
+    'a conflicting coastline gets a visible dashed tactical boundary');
+  const markerStart = renderingText.indexOf('const coastalExceptions = [');
+  assert(markerStart >= 0, 'reviewed coastline exceptions must be visibly marked');
+  const markerBlock = renderingText.slice(markerStart, renderingText.indexOf('];', markerStart));
+  const markerEntries = markerBlock.match(/\[\d+,\d+\]/g) || [];
+  assert.equal(markerEntries.length, 16, '15 non-Arctic exceptions plus Cornwall get subtle high-zoom markers');
+  for (const coords of ['[87,14]', '[106,26]', '[111,35]', '[140,43]', '[142,46]'])
+    assert(markerEntries.includes(coords), coords + ' must display a terrain warning marker');
+
+
+  // Shoreline city art is visual-only and must remain selectable even when
+  // its graphic sits slightly away from the tactical city hex centre.
+  const anchors = run(`(() => {
+    const names = Object.keys(CITY_SHORE_ANCHORS);
+    const moved = names.map(name => {
+      const city = game.stations.find(s => s.name === name);
+      if (!city) return { name, missing: true };
+      const original = hexCenter(city), visual = visualCityCenter(city);
+      return { name, delta: Math.hypot(original.x - visual.x, original.y - visual.y),
+        hit: hitVisualStationAtWorld(visual.x, visual.y, 1)?.id === city.id,
+        original: [city.c, city.r] };
+    });
+    return { count: names.length, moved, stations: game.stations.length };
+  })()`);
+  assert.equal(anchors.count, 19, 'every identified visually offshore city has a coastline anchor');
+  for (const city of anchors.moved) {
+    assert(!city.missing, `${city.name}: still exists as a gameplay station`);
+    assert(city.delta > 0 && city.delta < 43 * 0.72, `${city.name}: anchored within the original hex neighbourhood`);
+    assert(city.hit, `${city.name}: selecting the displaced visual city reaches its station`);
+  }
+
+  const harbor = run(`(() => {
+    const city = game.stations.find(s => s.name === 'Barcelona');
+    const actual = hexCenter(city.portAt);
+    const visual = visualPortCenter(city);
+    return {sea: E.isSea(E.tile(game, city.portAt.c, city.portAt.r)),
+      delta: Math.hypot(visual.x - actual.x, visual.y - actual.y)};
+  })()`);
+  assert(harbor.sea, 'Barcelona port remains a navigable gameplay sea hex');
+  assert(harbor.delta > 0 && harbor.delta < 43 * 0.5, 'Barcelona harbour artwork is only gently shifted to visual sea');
 
   for (const side of ['britannia', 'eu', 'cf']) {
     run(`setup={side:'${side}',difficulty:'normal'};newGame();draw(0,.016);drawMinimap();`);
@@ -232,6 +347,12 @@ const modal = () => node('modal-root').innerHTML;
 
   run('startMission("bk1")');
   assert.equal(run('game.mode'), 'campaign');
+  assert(run(`(() => {
+    const city = game.stations[0];
+    const a = visualCityCenter(city), b = hexCenter(city);
+    return a.x === b.x && a.y === b.y;
+  })()`), 'campaign cities retain exact tactical sprite positions');
+
   assert(modal().includes('Mission dialogue'), 'campaign opening dialogue renders');
 
   run('talkNext(true);draw(16,.016);drawMinimap();');

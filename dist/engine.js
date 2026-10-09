@@ -905,6 +905,17 @@
   const canBoard = (g, ship) => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < carrierCapacity(g, ship);
   // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
   const allUnits = g => g.units.flatMap(u => (u.cargo?.length ? [u, ...u.cargo] : [u]));
+  // Single source of truth for visual geography invalidation. Only actual tile changes advance it.
+  function setTileOwner(g, t, owner) {
+    if (t.owner === owner) return;
+    t.owner = owner;
+    g.mapRevision = (g.mapRevision || 0) + 1;
+  }
+  function setTileTerrain(g, t, terrain) {
+    if (t.terrain === terrain) return;
+    t.terrain = terrain;
+    g.mapRevision = (g.mapRevision || 0) + 1;
+  }
   const isSea = t => t?.terrain === 'sea';
   // Embarked as a transport: a land unit on a sea hex. Warships and amphibious frames fight normally at sea.
   function atSea(g, u) {
@@ -941,12 +952,73 @@
   }
   // Version 3 added Sakuradite. Older saves were all made on the old 100 × 42 map and are rejected.
   const RULES_VERSION = 3;
+  // 2026 coastline alignment: retain old saves while matching the revised
+  // new-game map. Occupied legacy hexes stay playable until a new conquest;
+  // never strand a unit or move a player-built site during migration.
+  const COASTAL_SEA_FIXES = [[13, 9], [168, 9], [50, 10], [49, 12],
+    [81, 32], [113, 51], [157, 44], [49, 31],
+    [0, 6], [127, 0], [158, 1], [55, 8], [56, 8], [156, 63],
+    [141, 44]];  // Malacca: only unoccupied legacy land becomes water
+  // The Caspian was the sole isolated sea component. Legacy saves migrate
+  // it to traversable land, preserving occupied old tiles and player-built sites.
+  const CASPIAN_LAND_FIXES = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21]];
+  const TSUGARU_STRAIT = [160, 19];
+  function coastalTileOccupied(g, c, r) {
+    return g.units.some(u => u.hp > 0 && u.c === c && u.r === r) ||
+      g.stations?.some(s => (s.c === c && s.r === r) ||
+        (s.portAt?.c === c && s.portAt?.r === r)) ||
+      g.sites?.some(site => site.c === c && site.r === r);
+  }
+  function migrateCoastalTerrain(g) {
+    for (const [c, r] of COASTAL_SEA_FIXES) {
+      const t = g.tiles[r * g.cols + c];
+      if (!t || t.terrain === 'sea') continue;
+      if (g.units.some(u => u.hp > 0 && u.c === c && u.r === r)) continue;
+      if (g.stations?.some(s => (s.c === c && s.r === r) ||
+        (s.portAt?.c === c && s.portAt?.r === r))) continue;
+      if (g.sites?.some(site => site.c === c && site.r === r)) continue;
+      setTileTerrain(g, t, 'sea');
+      setTileOwner(g, t, null);
+    }
+    const [tc, tr] = TSUGARU_STRAIT;
+    const strait = g.tiles[tr * g.cols + tc];
+    if (strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
+      setTileTerrain(g, strait, 'sea');
+      setTileOwner(g, strait, null);
+    }
+    const filled = [];
+    for (const [c, r] of CASPIAN_LAND_FIXES) {
+      const t = g.tiles[r * g.cols + c];
+      if (!t || t.terrain !== 'sea' || coastalTileOccupied(g, c, r)) continue;
+      setTileTerrain(g, t, 'plains');
+      setTileOwner(g, t, null);
+      filled.push(t);
+    }
+    // Carry over the saved political situation rather than assigning a
+    // new game faction. Progress from neighbouring owned land inward.
+    for (let pass = 0; pass < CASPIAN_LAND_FIXES.length; pass++) {
+      let changed = false;
+      for (const t of filled) {
+        if (t.owner) continue;
+        const n = adjacent(g, t).find(n => n.terrain !== 'sea' && n.owner);
+        if (n) { setTileOwner(g, t, n.owner); changed = true; }
+      }
+      if (!changed) break;
+    }
+    // Newfoundland was restored as land by the previous correction batch.
+    const t = g.tiles[15 * g.cols + 61];
+    if (t && t.terrain === 'sea' &&
+        !g.units.some(u => u.hp > 0 && u.c === 61 && u.r === 15)) {
+      setTileTerrain(g, t, 'plains');
+    }
+  }
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
+    if (g.mode !== 'campaign') migrateCoastalTerrain(g);
     g.eliteDeployed ||= {};
     for (const records of [g.officers, g.roster])
       if (records) for (const [k, rec] of Object.entries(records))
@@ -1174,7 +1246,7 @@
     u.moved = u.attacked = false;
     u.deployedTurn = u.launched = g.turn;
     g.units.push(u);
-    t.owner = u.side;
+    setTileOwner(g, t, u.side);
     const seized = seizeDeposit(g, u, t);
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} launches from the Carrier-Battleship.`, u.side);
     return { ok: true, unit: u, to: { c: t.c, r: t.r }, seized };
@@ -1185,7 +1257,7 @@
     return within(g, u, rangeOf(g, u).max).filter(p => inRange(u, p, g) && hostileTarget(g, u, p));
   }
   function claim(g, p, owner) {
-    for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)]) if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) t.owner = owner;
+    for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)]) if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileOwner(g, t, owner);
   }
   function move(g, id, c, r) {
     const u = g.units.find(u => u.id === id);
@@ -1239,7 +1311,7 @@
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
-    if (!isSea(dest)) dest.owner = u.side;
+    if (!isSea(dest)) setTileOwner(g, dest, u.side);
     const s = stationAt(g, u);
     let captured = null,
       annexed = null;
@@ -1291,7 +1363,7 @@
         fortify(g, s);
         cities++;
       }
-    for (const t of g.tiles) if (t.owner === loser) t.owner = winner;
+    for (const t of g.tiles) if (t.owner === loser) setTileOwner(g, t, winner);
     for (const v of g.units)
       if (v.hp > 0 && v.side === loser) {
         v.hp = 0;
@@ -2309,7 +2381,7 @@
       const open = n => !isSea(n) && !TERRAIN[n.terrain]?.blocked && !stationAt(g, n),
         at = open(t) ? t : nearest(g, t, open);
       if (!at) continue;
-      if (terrain) at.terrain = terrain;
+      if (terrain) setTileTerrain(g, at, terrain);
       g.sites.push({ id, name, c: at.c, r: at.r, base, city: null, owner: at.owner || 'neutral', refinery: level });
     }
     return g;
@@ -2706,7 +2778,7 @@
         if (blastDistance === 0) depleted.push(destroyDeposit(g, d));
         else if (ring) d.refinery = Math.max(0, (d.refinery || 0) - 1);
       }
-      if (blastDistance === 0 && !isSea(t) && !TERRAIN[t.terrain]?.blocked) t.terrain = 'crater';
+      if (blastDistance === 0 && !isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileTerrain(g, t, 'crater');
     }
     if (unlocksEliminator) g.fleijaDetonated = g.turn;
     // A power whose last city was destroyed surrenders to the launcher.
@@ -3238,26 +3310,46 @@
         producedTurn: 0,
       };
       s.shield = s.maxShield;
-      at.terrain = 'plains';
+      setTileTerrain(g, at, 'plains');
       g.stations.push(s);
     }
     // Territory: each land hex belongs to the nearest city over land. Radius 11 preserves the old geographic reach on the denser map.
     const frontier = g.stations.map(s => ({ t: tile(g, s.c, s.r), owner: s.owner, d: 0 })),
       seenT = new Set(frontier.map(f => key(f.t)));
-    for (const f of frontier) f.t.owner = f.owner;
+    for (const f of frontier) setTileOwner(g, f.t, f.owner);
     while (frontier.length) {
       const f = frontier.shift();
       if (f.d >= 11) continue;
       for (const n of adjacent(g, f.t))
         if (!seenT.has(key(n)) && freeLand(n)) {
           seenT.add(key(n));
-          n.owner = f.owner;
+          setTileOwner(g, n, f.owner);
           frontier.push({ t: n, owner: f.owner, d: f.d + 1 });
         }
     }
     for (const [c, r, owner] of TERRITORY) {
       const t = tile(g, c, r);
-      if (t && freeLand(t)) t.owner = owner;
+      if (t && freeLand(t)) setTileOwner(g, t, owner);
+    }
+    // Indonesia (including Borneo and its smaller islands) is entirely Chinese
+    // Federation at the start of conquest. City-based land floodfill sometimes
+    // assigned parts of Borneo to the Philippine/Britannian frontier or left
+    // remote islands unowned. Correct GAME ownership here, not just the tint.
+    // The geographic windows contain land belonging to the Indonesian
+    // archipelago; unplayable ocean hexes are never assigned ownership.
+    const indonesiaBands = [
+      [94, 107.9, -7.8, 7.5],   // Sumatra and the western archipelago
+      [106, 119.5, -11.5, 8],  // Java, Borneo and western Lesser Sunda
+      [118, 134, -11.5, 4.5],  // Sulawesi, Lesser Sunda and Maluku
+      [133, 141.9, -11.5, 3], // western New Guinea / Indonesian Papua
+    ];
+    for (const t of g.tiles) {
+      if (isSea(t)) continue;
+      const lon = WORLD.lon0 + WORLD.dlon * (t.c + 0.5 * (t.r & 1));
+      const lat = WORLD.lat0 - WORLD.dlat * t.r;
+      if (indonesiaBands.some(([west, east, south, north]) =>
+          lon >= west && lon <= east && lat >= south && lat <= north))
+        setTileOwner(g, t, 'cf');
     }
     for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
       const at = nearest(

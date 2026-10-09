@@ -3,7 +3,7 @@
 const HEAVY_SHAKE = { siege: 10, heavy: 6, super: 7, rocket: 4, medium: 2.5, light: 1.5 };
 function bump(amount) {
   if (!reducedMotion()) shake = Math.max(shake, amount);
-  requestMapFrame();
+  if (typeof requestMapFrame === 'function') requestMapFrame();
 }
 function popup(at, text, color, opts = {}) {
   const life = opts.life || 1.6;
@@ -18,7 +18,7 @@ function popup(at, text, color, opts = {}) {
     size: opts.size || 14,
     pop: !!opts.pop,
   });
-  requestMapFrame();
+  if (typeof requestMapFrame === 'function') requestMapFrame();
 }
 function unitSnapshot() {
   return new Map(game.units.filter(u => u.hp > 0).map(u => [u.id, { hp: u.hp, morale: u.morale }]));

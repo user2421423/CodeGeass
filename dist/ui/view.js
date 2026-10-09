@@ -4,6 +4,133 @@
 function hexCenter(p) {
   return { x: SQ * R * (p.c + 0.5 * (p.r & 1)) + R, y: R * 1.5 * p.r + R };
 }
+// Visual-only shoreline anchors for cities whose *gameplay hex centres* fall
+// on GSHHG water. These are small local movements onto the nearby coast,
+// not changes to their tile, garrison, capture, port, or save coordinates.
+// Map projection matches GEOGRAPHY.project; campaign boards are untouched.
+const CITY_SHORE_ANCHORS = Object.freeze({
+  "Rio de Janeiro": [
+    -44.113,
+    -23.167
+  ],
+  "Pearl Harbor": [
+    -158.031,
+    21.331
+  ],
+  "Manila": [
+    121.943,
+    14.21
+  ],
+  "Auckland": [
+    174.381,
+    -36.713
+  ],
+  "Reykjavik": [
+    -20.943,
+    63.817
+  ],
+  "Gibraltar": [
+    -4.985,
+    36.49
+  ],
+  "Stockholm": [
+    17.923,
+    58.825
+  ],
+  "Lagos": [
+    5.057,
+    5.79
+  ],
+  "Cape Town": [
+    18.17,
+    -33.35
+  ],
+  "Yangon": [
+    97.595,
+    16.052
+  ],
+  "Singapore": [
+    104.17,
+    0.835
+  ],
+  "Taipei": [
+    121.861,
+    24.587
+  ],
+  "Sydney": [
+    151.587,
+    -33.203
+  ],
+  "Melbourne": [
+    145,
+    -38.48
+  ],
+  "Perth": [
+    115.589,
+    -31.473
+  ],
+  "Darwin": [
+    130.16,
+    -13.04
+  ],
+  "Houston": [
+    -95.015,
+    29.664
+  ],
+  "Montevideo": [
+    -57.222,
+    -35.319
+  ],
+  "Brisbane": [
+    153.429,
+    -27.132
+  ]
+});
+function visualCityCenter(station) {
+  const tactical = hexCenter(station);
+  if (!wraps()) return tactical;
+  const point = CITY_SHORE_ANCHORS[station.name];
+  if (!point) return tactical;
+  const x = R + (point[0] + 179) * (SQ * R / 2);
+  const y = R + (74 - point[1]) * (1.5 * R * 75 / 128);
+  // Never let a mistaken data entry displace a city outside its tactical
+  // hex neighbourhood; the logical station remains at its original centre.
+  if (Math.hypot(wrapNear(x, tactical.x) - tactical.x, y - tactical.y) > R * 0.72)
+    return tactical;
+  return { x: wrapNear(x, tactical.x), y };
+}
+// Barcelona's playable harbour is water, but its centre overlays a small
+// GSHHG land fringe. Shift harbour art alone by ~3 world pixels onto water.
+const PORT_SHORE_ANCHORS = Object.freeze({ Barcelona: [3.0487, 39.9301] });
+function visualPortCenter(station) {
+  if (!station.portAt) return null;
+  const tactical = hexCenter(station.portAt);
+  if (!wraps()) return tactical;
+  const p = PORT_SHORE_ANCHORS[station.name];
+  if (!p) return tactical;
+  const x = R + (p[0] + 179) * (SQ * R / 2);
+  const y = R + (74 - p[1]) * (1.5 * R * 75 / 128);
+  if (Math.hypot(wrapNear(x, tactical.x) - tactical.x, y - tactical.y) > R * 0.5)
+    return tactical;
+  return { x: wrapNear(x, tactical.x), y };
+}
+// Used only to make visually displaced city sprites selectable. Hex targets,
+// deployments, combat and unit hits always use the original tactical hitHex.
+function hitVisualStationAtWorld(x, y, scale) {
+  if (!wraps() || R * scale < 14) return null;
+  let nearest = null, best = R * 0.46;
+  for (const station of game.stations) {
+    if (!CITY_SHORE_ANCHORS[station.name]) continue;
+    const c = visualCityCenter(station);
+    const dist = Math.hypot(wrapNear(c.x, x) - x, c.y - y);
+    if (dist < best) { nearest = station; best = dist; }
+  }
+  return nearest;
+}
+function hitVisualStation(clientX, clientY) {
+  const p = toWorld(clientX, clientY);
+  return hitVisualStationAtWorld(p.x, p.y, p.scale);
+}
 // The copy of world x closest to ref.
 function wrapNear(x, ref) {
   return wraps() ? x + Math.round((ref - x) / WORLD_W) * WORLD_W : x;
@@ -244,9 +371,15 @@ function attachMap() {
     if (pointer && !pointer.dragged) {
       // A click on a commander's map portrait opens Commander Info, unless it lands on a move or attack hex.
       const p = hitHex(e.clientX, e.clientY),
-        pin = hitPin(e.clientX, e.clientY);
-      if (pin && !strikeMode && !(p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)))))
+        pin = hitPin(e.clientX, e.clientY),
+        visualCity = hitVisualStation(e.clientX, e.clientY),
+        isAction = p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)));
+      if (pin && !strikeMode && !isAction)
         generalDialog(pin.cmd, !!pin.personal);
+      else if (visualCity && !strikeMode && !routing && !deploying &&
+               !isAction && !(p && E.unitAt(game, p)) &&
+               (!p || E.stationAt(game, p)?.id !== visualCity.id))
+        selectStation(visualCity.id);
       else activateHex(p);
     }
     pointer = null;

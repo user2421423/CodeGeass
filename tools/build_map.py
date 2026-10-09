@@ -445,10 +445,45 @@ def redraw(grid):
 
 # Final gameplay edits on exact hexes (column, row), applied after the redraw.
 FIX_LAND = [
-    (160, 19),  # Japan: join northern Honshu to Hokkaido
+    # Fill landlocked Caspian Sea: no playable inland lakes.
+    (113, 17),
+    (114, 17),
+    (114, 18),
+    (115, 17),
+    (115, 18),
+    (114, 19),
+    (115, 19),
+    (115, 20),
+    (116, 20),
+    (115, 21),
+    (114, 21),
+
+    (61, 15),  # Newfoundland: GIS land-dominant hex, safe from city/port/route constraints
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
 ]
 FIX_SEA = [
+    (141, 44),  # Malacca: separate Sumatra from Singapore and keep navigable sea
+
+    (160, 19),  # Tsugaru Strait: separate Hokkaido and Honshu
+
+    # 2026 area audit batch 3: six non-strategic, unit-free coastal hexes.
+    (0, 6),  # Verified coastal water: Dateline / Bering-facing coastline
+    (127, 0),  # Verified coastal water: Northern Siberian coast
+    (158, 1),  # Verified coastal water: Laptev Sea coastline
+    (55, 8),  # Verified coastal water: Labrador coast west
+    (56, 8),  # Verified coastal water: Labrador coast east
+    (156, 63),  # Verified coastal water: Great Australian Bight
+    # Area-weighted visual/gameplay coast alignment: unoccupied, non-strategic
+    # coastal spurs; preserve ports, cities and straits.
+    (13, 9),  # Area-weighted Gulf of Alaska coastal spur
+    (168, 9),  # Area-weighted Kamchatka coast
+    (50, 10),  # Area-weighted Hudson Bay coast
+    (49, 12),  # Area-weighted James Bay
+    (81, 32),  # Area-weighted Mauritania Atlantic coast
+    (113, 51),  # Area-weighted Madagascar north coast
+    (157, 44),  # Area-weighted New Guinea north coast
+    (49, 31),  # Area-weighted Cuba coastal extension
+
     (151, 29),  # Taiwan: the hex east of the island (Taipei moves onto the island)
     (130, 36),  # India: the hex that stuck out east of Chennai
     (90, 14),  # Strait of Dover: keep Great Britain an island

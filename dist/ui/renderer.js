@@ -172,7 +172,7 @@ function frame(time) {
         mapFramePending = true;
         requestAnimationFrame(frame);
       }
-    }, 25);
+    }, 80);
   } else lastTime = 0;
 }
 // Capture listeners schedule after the actual event handlers have updated camera/hover state.
@@ -841,10 +841,112 @@ function copiesBetween(x, left, right) {
 const MAP_LAYER_MARGIN = 200;
 let mapLayerCache = null;
 function mapLayerFresh(m, scale, dpr, w, h) {
-  if (!m || m.tiles !== game.tiles || m.revision !== mapRenderRevision || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
+  if (!m || m.tiles !== game.tiles || m.revision !== (game.mapRevision || 0) ||
+      m.renderRevision !== mapRenderRevision || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
   const slack = MAP_LAYER_MARGIN - 16;
-  if (Math.abs(offset.x - m.x) > slack || Math.abs(offset.y - m.y) > slack) return false;
-  return true;
+  return Math.abs(offset.x - m.x) <= slack && Math.abs(offset.y - m.y) <= slack;
+}
+// Camera-independent cache of *complete* terrain tiles, including grid,
+// ownership borders and relief. Reusing the whole base map prevents the 30-50ms
+// canvas path rebuild which was still happening after geography was cached.
+const MAP_ATLAS_TILE = 960;
+const MAP_ATLAS_PAD = 5;
+const mapAtlasTiles = new Map();
+const mapAtlasWarmQueue = [];
+const mapAtlasWarmKeys = new Set();
+let mapAtlasIdlePending = false;
+let mapAtlasGeneration = 0;
+let mapAtlasState = { tiles: null, revision: -1, scale: null };
+function refreshMapAtlas(scale) {
+  const revision = game.mapRevision || 0;
+  if (mapAtlasState.tiles === game.tiles && mapAtlasState.revision === revision && mapAtlasState.scale === scale) return;
+  mapAtlasTiles.clear();
+  mapAtlasWarmQueue.length = 0;
+  mapAtlasWarmKeys.clear();
+  mapAtlasGeneration++;
+  mapAtlasState = { tiles: game.tiles, revision, scale };
+}
+function completeMapTile(tx, ty, scale, detail) {
+  const key = tx + ',' + ty;
+  let item = mapAtlasTiles.get(key);
+  if (item) {
+    mapAtlasTiles.delete(key);
+    mapAtlasTiles.set(key, item);
+    return item;
+  }
+  const worldX = tx * MAP_ATLAS_TILE, worldY = ty * MAP_ATLAS_TILE;
+  const width = Math.min(MAP_ATLAS_TILE, WORLD_W - worldX);
+  const height = Math.min(MAP_ATLAS_TILE, WORLD_H - worldY);
+  const quality = Math.max(0.55, Math.min(1, scale * 1.35));
+  const c = document.createElement('canvas');
+  c.width = Math.ceil((width + 2 * MAP_ATLAS_PAD) * quality);
+  c.height = Math.ceil((height + 2 * MAP_ATLAS_PAD) * quality);
+  const oldCtx = ctx;
+  ctx = c.getContext('2d');
+  try {
+    ctx.setTransform(quality, 0, 0, quality,
+      (-worldX + MAP_ATLAS_PAD) * quality,
+      (-worldY + MAP_ATLAS_PAD) * quality);
+    paintMapLayer(scale, detail,
+      worldX - MAP_ATLAS_PAD, worldX + width + MAP_ATLAS_PAD,
+      worldY - MAP_ATLAS_PAD, worldY + height + MAP_ATLAS_PAD);
+  } finally {
+    ctx = oldCtx;
+  }
+  item = { canvas: c, worldX, worldY, width, height, quality };
+  mapAtlasTiles.set(key, item);
+  while (mapAtlasTiles.size > 72) mapAtlasTiles.delete(mapAtlasTiles.keys().next().value);
+  return item;
+}
+// Build the next ring of map tiles during browser idle time, before camera
+// dragging reaches it. One tile per idle turn bounds main-thread work; actual
+// rendering never waits for prefetch if the player moves faster than idle work.
+function scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow) {
+  if (typeof requestIdleCallback !== 'function') return;
+  const maxC = Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1;
+  const maxR = Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1;
+  for (let r = Math.max(0, firstRow - 1); r <= Math.min(maxR, lastRow + 1); r++)
+    for (let c = Math.max(0, firstCol - 1); c <= Math.min(maxC, lastCol + 1); c++) {
+      if (c >= firstCol && c <= lastCol && r >= firstRow && r <= lastRow) continue;
+      const key = c + ',' + r;
+      if (mapAtlasTiles.has(key) || mapAtlasWarmKeys.has(key)) continue;
+      mapAtlasWarmKeys.add(key);
+      mapAtlasWarmQueue.push({ c, r, scale, detail, generation: mapAtlasGeneration });
+    }
+  if (mapAtlasIdlePending || !mapAtlasWarmQueue.length) return;
+  mapAtlasIdlePending = true;
+  function warm(deadline) {
+    if (mapAtlasWarmQueue.length && deadline.timeRemaining() > 8) {
+      const job = mapAtlasWarmQueue.shift();
+      mapAtlasWarmKeys.delete(job.c + ',' + job.r);
+      if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale)
+        completeMapTile(job.c, job.r, job.scale, job.detail);
+    }
+    if (mapAtlasWarmQueue.length) requestIdleCallback(warm);
+    else mapAtlasIdlePending = false;
+  }
+  requestIdleCallback(warm);
+}
+function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
+  refreshMapAtlas(scale);
+  const firstRow = Math.max(0, Math.floor(top / MAP_ATLAS_TILE));
+  const lastRow = Math.min(Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1, Math.floor(bottom / MAP_ATLAS_TILE));
+  for (let k = Math.floor(left / WORLD_W) - 1; k <= Math.ceil(right / WORLD_W); k++) {
+    const shift = k * WORLD_W;
+    const a = left - shift, b = right - shift;
+    if (b <= 0 || a >= WORLD_W) continue;
+    const firstCol = Math.max(0, Math.floor(a / MAP_ATLAS_TILE));
+    const lastCol = Math.min(Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1, Math.floor(b / MAP_ATLAS_TILE));
+    for (let row = firstRow; row <= lastRow; row++)
+      for (let col = firstCol; col <= lastCol; col++) {
+        const t = completeMapTile(col, row, scale, detail);
+        const pad = MAP_ATLAS_PAD * t.quality;
+        ctx.drawImage(t.canvas, pad, pad, t.width * t.quality, t.height * t.quality,
+          t.worldX + shift, t.worldY, t.width, t.height);
+      }
+    if (firstCol <= lastCol && firstRow <= lastRow)
+      scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow);
+  }
 }
 function mapLayer(scale, detail, dpr, w, h) {
   if (mapLayerFresh(mapLayerCache, scale, dpr, w, h)) return mapLayerCache;
@@ -864,21 +966,22 @@ function mapLayer(scale, detail, dpr, w, h) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.translate(offset.x + M, offset.y + M);
     ctx.scale(scale, scale);
-    paintMapLayer(
-      scale,
-      detail,
-      (-M - offset.x) / scale - R * 2,
-      (w + M - offset.x) / scale + R * 2,
-      (-M - offset.y) / scale - R * 2,
-      (h + M - offset.y) / scale + R * 2,
-    );
+    const left = (-M - offset.x) / scale - R * 2;
+    const right = (w + M - offset.x) / scale + R * 2;
+    const top = (-M - offset.y) / scale - R * 2;
+    const bottom = (h + M - offset.y) / scale + R * 2;
+    // Very distant views use the low-resolution overview directly; otherwise
+    // cache geography AND its tactical overlay in world-anchored chunks.
+    if (game.wrap && scale >= 0.33) drawMapFromAtlas(scale, detail, left, right, top, bottom);
+    else paintMapLayer(scale, detail, left, right, top, bottom);
   } finally {
     ctx = main;
   }
   return (mapLayerCache = {
     canvas: layer,
     tiles: game.tiles,
-    revision: mapRenderRevision,
+    revision: game.mapRevision || 0,
+    renderRevision: mapRenderRevision,
     scale,
     dpr,
     w,
@@ -890,39 +993,69 @@ function mapLayer(scale, detail, dpr, w, h) {
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
-  // Terrain and territory.
-  for (const t of game.tiles) {
-    const c = hexCenter(t);
-    if (!visible(c)) continue;
-    const meta = metaFor(t);
-    for (const x of copies(c.x)) {
-      hexPath(x, c.y, R + 0.5);
-      ctx.fillStyle = t.terrain === 'sea' && meta.coast ? '#1f5c80' : TERRAIN_FILL[t.terrain];
-      ctx.fill();
-      if (meta.tint && t.terrain !== 'sea') {
-        ctx.fillStyle = meta.tint > 0 ? `rgba(255,255,255,${meta.tint})` : `rgba(0,0,0,${-meta.tint})`;
+  // Geography is a continuous visual atlas. Hexes remain the *logical* map;
+  // they are not used as filled polygon art unless the device lacks ImageData.
+  const atlas = GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
+  if (!atlas) {
+    for (const t of game.tiles) {
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R + 0.5);
+        ctx.fillStyle = TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
-      }
-      if (t.owner && t.terrain !== 'sea') {
-        ctx.fillStyle = F(t.owner).color + '78';
-        ctx.fill();
-      }
-      if (detail) {
-        ctx.strokeStyle = t.terrain === 'sea' ? '#ffffff08' : '#00000018';
-        ctx.lineWidth = 0.6 / scale;
-        ctx.stroke();
-        terrainProps(t, x, c.y, scale);
+        if (t.owner && t.terrain !== 'sea') {
+          ctx.fillStyle = F(t.owner).color + '30';
+          ctx.fill();
+        }
       }
     }
   }
-  // Coastlines and territorial borders.
-  for (const t of game.tiles) {
+  // A faint tactical grid is a separate *overlay*, not the map's terrain.
+  // At distant zoom levels the grid vanishes altogether; selection and
+  // movement/attack ranges continue to use their original vivid hex outlines.
+  if (detail && R * scale >= 22) {
+    // Tactical grid gains contrast as the camera zooms closer to individual hexes.
+    const hexPixels = R * scale;
+    const strength = hexPixels < 18 ? 0.025 :
+      hexPixels < 26 ? 0.045 + (hexPixels - 18) * 0.006 :
+      hexPixels < 38 ? 0.093 + (hexPixels - 26) * 0.008 :
+      Math.min(0.30, 0.189 + (hexPixels - 38) * 0.005);
+    ctx.lineWidth = (hexPixels >= 32 ? 0.82 : 0.55) / Math.max(scale, 0.25);
+    for (const t of game.tiles) {
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      ctx.strokeStyle =
+        t.terrain === 'sea'
+          ? `rgba(8,28,42,${(strength * 0.76).toFixed(3)})`
+          : `rgba(18,31,37,${strength.toFixed(3)})`;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R - 0.65);
+        ctx.stroke();
+      }
+    }
+    // Small icons read as relief on a real atlas rather than stamped hex fills.
+    if (R * scale >= 24)
+      for (const t of game.tiles) {
+        if (t.terrain === 'plains') continue;
+        if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
+        if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
+        const c = hexCenter(t);
+        if (!visible(c)) continue;
+        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : game.wrap ? 0.24 : 0.43;
+        for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
+      }
+    ctx.globalAlpha = 1;
+  }
+  // Political borders are tactical information and still align to tile
+  // ownership. Coastlines are already smoothed by the visual atlas; drawing
+  // the old edge-by-edge hex coastline here would reintroduce the mosaic.
+  if (R * scale >= 22) for (const t of game.tiles) {
     if (t.terrain === 'sea') continue;
     const c = hexCenter(t);
     if (!visible(c)) continue;
     for (const n of metaFor(t).adj) {
-      const coast = n.terrain === 'sea';
-      if (!coast && n.owner === t.owner) continue;
+      if (n.terrain === 'sea' || n.owner === t.owner) continue;
       const q = hexCenter(n),
         qx = wrapNear(q.x, c.x),
         angle = Math.atan2(q.y - c.y, qx - c.x),
@@ -935,8 +1068,8 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
           c.y + R * Math.sin(a),
           x + R * Math.cos(b),
           c.y + R * Math.sin(b),
-          coast ? '#e8f4f866' : t.owner ? F(t.owner).color + 'cc' : '#ffffff40',
-          (coast ? 1.4 : 2.4) / Math.max(scale, 0.35),
+          t.owner ? F(t.owner).color + '77' : '#ffffff35',
+          1.2 / Math.max(scale, 0.35),
         );
     }
   }
@@ -960,15 +1093,31 @@ function draw(time, dt) {
   ctx.fillRect(0, 0, w, h);
   const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };
   shake = Math.max(0, shake - dt * 30);
-  // Terrain, territory and coastlines come from the cached layer, placed where the camera is now.
-  const layer = mapLayer(scale, detail, dpr, w, h);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(
-    layer.canvas,
-    Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
-    Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
-  );
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Draw already-baked world atlas tiles directly at camera position. Avoid
+  // rebuilding a full screen-sized canvas each time the camera crosses its
+  // margin; that expensive copy was the remaining source of dragging stutter.
+  if (game.wrap && scale >= 0.33) {
+    ctx.save();
+    ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
+    ctx.scale(scale, scale);
+    drawMapFromAtlas(scale, detail,
+      -offset.x / scale - R * 2,
+      (w - offset.x) / scale + R * 2,
+      -offset.y / scale - R * 2,
+      (h - offset.y) / scale + R * 2);
+    ctx.restore();
+  } else {
+    // Campaign battlefields and far strategic zoom retain their existing
+    // cached layer; selection/attack effects remain independent in either path.
+    const layer = mapLayer(scale, detail, dpr, w, h);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(
+      layer.canvas,
+      Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
+      Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
+    );
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
   ctx.save();
   ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
   ctx.scale(scale, scale);
@@ -1016,17 +1165,17 @@ function draw(time, dt) {
           : selection?.kind === 'tile'
             ? selection
             : null;
-  if (selTile) for (const x of copies(hexCenter(selTile).x)) {
+  if (selTile) {
     if (visible(hexCenter(selTile))) mapHasPulse = true;
-    selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+    for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
   }
   // Temporary low-profile marker until the replacement dock art is approved.
   // Keep naval hexes unobstructed: cities and naval units render unchanged.
   for (const s of game.stations) {
     if (!s.portLevel || !s.portAt) continue;
-    const sea = hexCenter(s.portAt);
+    const sea = visualPortCenter(s);
     if (!visible(sea)) continue;
-    const shore = hexCenter(s);
+    const shore = visualCityCenter(s);
     const dx = wrapNear(shore.x, sea.x) - sea.x, dy = shore.y - sea.y;
     const distance = Math.hypot(dx, dy) || 1;
     const ox = dx / distance * R * 0.58;
@@ -1038,7 +1187,7 @@ function draw(time, dt) {
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
   for (const s of game.stations) {
-    const c = hexCenter(s);
+    const c = visualCityCenter(s);
     if (!visible(c)) continue;
     const garrison = E.unitAt(game, s),
       kind = cityKind(s);
@@ -1097,6 +1246,7 @@ function draw(time, dt) {
       }
       // Strategic projects: pink for F.L.E.I.J.A., cyan for the one-charge Eliminator.
       if (s.project) {
+        mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 300);
         ctx.strokeStyle = `rgba(255,95,174,${0.45 + 0.5 * pulse})`;
         ctx.lineWidth = Math.max(2.5, 2 / scale);
@@ -1106,6 +1256,7 @@ function draw(time, dt) {
         outlinedText(`F.L.E.I.J.A. · ${Math.max(0, s.project.ready - game.turn)}`, 0, -R - 4, 10, '#ff9fd0', scale, 'Trebuchet MS', true);
       }
       if (s.eliminatorProject || s.eliminator) {
+        mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 260);
         ctx.strokeStyle = `rgba(130,225,255,${0.5 + 0.45 * pulse})`;
         ctx.lineWidth = Math.max(2.2, 1.8 / scale);
@@ -1128,7 +1279,7 @@ function draw(time, dt) {
   }
   // Cities destroyed by F.L.E.I.J.A.: a charred ring and the city's name for the rest of the conquest.
   for (const ruin of game.ruins || []) {
-    const c = hexCenter(ruin);
+    const c = visualCityCenter(ruin);
     if (!visible(c)) continue;
     for (const x of copies(c.x)) {
       ctx.save();
@@ -1191,6 +1342,7 @@ function draw(time, dt) {
         ctx.fillStyle = PLATE[u.side].light;
         ctx.fill();
         if (readyUnit(u)) {
+          mapHasPulse = true;
           const pulse = 0.82 + 0.18 * Math.sin(time / 210);
           ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
           ctx.shadowBlur = 9;
@@ -1231,13 +1383,12 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
-    for (const x of copies(p.x)) {
-      if (visible(p)) mapHasPulse = true;
-      drawCrosshair({ x, y: p.y }, time, scale);
-    }
+    if (visible(p)) mapHasPulse = true;
+    for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
   }
   // Campaign warnings: the hexes a scripted strike will hit next turn.
   for (const w of game.campaign?.warnings || []) {
+    mapHasPulse = true;
     const pulse = 0.5 + 0.5 * Math.sin(time / 220);
     for (const t of E.within(game, w, w.radius)) {
       const q = hexCenter(t);
@@ -1255,7 +1406,8 @@ function draw(time, dt) {
     for (const x of copies(q.x)) outlinedText(`⚠ ${w.label || 'Danger'}`, x, q.y - R * 0.9, 13, '#ffd0dc', scale, 'Trebuchet MS', true);
   }
   // F.L.E.I.J.A. targeting: the blast under the cursor, ground zero brighter than the ring.
-  if (hover && strikeMode)
+  if (hover && strikeMode) {
+    mapHasPulse = true;
     for (const t of E.blastArea(game, hover)) {
       const q = hexCenter(t),
         zero = t.c === hover.c && t.r === hover.r,
@@ -1270,6 +1422,7 @@ function draw(time, dt) {
         ctx.stroke();
       }
     }
+  }
   // Standing orders: the selected unit's route to its destination, or the hex under the cursor while choosing one.
   const routed = selectedUnit();
   if (routed?.side === game.player && (routing ? hover : routed.goto)) {
@@ -1285,14 +1438,77 @@ function draw(time, dt) {
     ctx.stroke();
     if (ok) outlinedText('⚑', bx, b.y + 6, 18, '#ffd76a', scale, 'Trebuchet MS', true);
   }
+  // Subtle permanent markers for the already-reviewed coastline exceptions.
+  // Players can spot mixed land/sea semantics before hovering, without
+  // cluttering the map with markers over 400 ordinary coastal hexes.
+  // The Arctic is intentionally excluded.
+  if (game.wrap && R * scale >= 27) {
+    const coastalExceptions = [
+      [87,14], [158,21], [160,21], [159,23], [157,24],
+      [106,26], [107,27], [10,31], [133,31], [111,35],
+      [140,43], [142,46], [96,50], [166,59], [147,62], [56,75],
+    ];
+    for (const [c,r] of coastalExceptions) {
+      const t = E.tile(game, c, r);
+      if (!t) continue;
+      const p = hexCenter(t);
+      if (!visible(p)) continue;
+      for (const x of copies(p.x)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + R * 0.48, p.y - R * 0.37, 3.1 / scale, 0, Math.PI * 2);
+        ctx.fillStyle = E.isSea(t) ? 'rgba(108,214,255,0.8)' : 'rgba(255,216,129,0.78)';
+        ctx.fill();
+        ctx.lineWidth = 0.85 / scale;
+        ctx.strokeStyle = '#0d293bc5';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
   if (hover) {
     const p = hexCenter(hover),
       u = selectedUnit(),
       hx = wrapNear(p.x, mid);
     hexPath(hx, p.y, R - 1);
-    ctx.strokeStyle = '#dcebe769';
-    ctx.lineWidth = 1.2 / scale;
+    // The vector coastline and playable hexes intentionally differ at some
+    // straits/islands. Hover colours always describe ACTUAL gameplay terrain:
+    // aqua = navigable sea; warm gold = traversable land.
+    const seaHex = E.isSea(hover);
+    ctx.strokeStyle = seaHex ? '#7cd8ffdb' : '#ffe1a0df';
+    ctx.lineWidth = 1.65 / Math.max(scale, 0.35);
     ctx.stroke();
+    // Realistic coastlines can cover a minority of a playable hex. When the
+    // two maps disagree at this hex centre, label the ACTUAL gameplay terrain
+    // so sea movement and landing decisions are never visually ambiguous.
+    const visuallyMixed = game.wrap && R * scale >= 16 &&
+      (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r));
+    if (visuallyMixed) {
+      // A sea tile behind geographic land should never look walkable.
+      // Paint the TRUE tactical type on hover and use a legible pixel-size
+      // badge rather than the old tiny map-scaled caption.
+      ctx.save();
+      hexPath(hx, p.y, R - 1);
+      ctx.fillStyle = seaHex ? 'rgba(42,154,225,0.19)' : 'rgba(245,197,91,0.15)';
+      ctx.fill();
+      ctx.setLineDash([5 / scale, 4 / scale]);
+      ctx.strokeStyle = seaHex ? '#89e1ff' : '#ffe19a';
+      ctx.lineWidth = 2 / Math.max(scale, 0.4);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.translate(hx, p.y + R * 0.7);
+      ctx.scale(1 / scale, 1 / scale);
+      ctx.fillStyle = seaHex ? 'rgba(9,42,62,0.95)' : 'rgba(62,48,26,0.95)';
+      ctx.fillRect(-61, -10, 122, 21);
+      ctx.strokeStyle = seaHex ? '#75d5ff' : '#ffd27d';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-61, -10, 122, 21);
+      ctx.font = 'bold 11px Trebuchet MS, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(seaHex ? 'SEA · NAVIGABLE' : 'LAND · WALKABLE', 0, 5);
+      ctx.restore();
+    }
     const pr = u && targetCache.has(E.key(hover)) ? E.preview(game, u.id, hover.c, hover.r) : null;
     if (pr) {
       const a = hexCenter(u);
