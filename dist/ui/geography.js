@@ -462,6 +462,35 @@ const GEOGRAPHY = (() => {
   // Read-only instrumentation used by rendering performance regression checks.
   function cacheStats() { return { ...stats, tiles: atlasTiles.size }; }
 
+  // A cheap, cached point-in-polygon check for the few hovered gameplay hexes.
+  // Unlike GEOGRAPHY.sample, this is the *visual* shoreline classification.
+  // Used for an on-demand label when geographic art and tactical hex disagree.
+  const visualCentreCache = new Map();
+  function visualLandAt(x, y) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+    const worldX = ((x % WORLD_W) + WORLD_W) % WORLD_W;
+    const key = `${Math.round(worldX)}:${Math.round(y)}`;
+    if (visualCentreCache.has(key)) return visualCentreCache.get(key);
+    let land = false;
+    for (const shape of LAYERS.land) {
+      const b = shape.bounds;
+      if (worldX < b[0] || worldX > b[2] || y < b[1] || y > b[3]) continue;
+      const points = shape.points;
+      let inside = false;
+      for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        const a = points[i], z = points[j];
+        if ((a[1] > y) !== (z[1] > y) &&
+            worldX < (z[0] - a[0]) * (y - a[1]) / (z[1] - a[1]) + a[0])
+          inside = !inside;
+      }
+      if (inside) { land = true; break; }
+    }
+    // Bound memory even when a player explores thousands of distinct hexes.
+    if (visualCentreCache.size > 1500) visualCentreCache.clear();
+    visualCentreCache.set(key, land);
+    return land;
+  }
+
   // Classification is a diagnostic of the tactical layer only; the painter
   // above intentionally does NOT use it to draw the map's coastlines.
   function sample(g, x, y) {
@@ -472,5 +501,5 @@ const GEOGRAPHY = (() => {
     const t = g.tiles[r * g.cols + c];
     return t && t.terrain !== 'sea' ? 1 : 0;
   }
-  return { paint, sample, shapes: LAYERS, cacheStats };
+  return { paint, sample, visualLandAt, shapes: LAYERS, cacheStats };
 })();
