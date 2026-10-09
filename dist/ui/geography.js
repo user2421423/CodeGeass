@@ -228,21 +228,59 @@ const GEOGRAPHY = (() => {
     islandOwnerCache = { source: data, owners };
     return owners;
   }
-  function nearbyOwnedLand(g, x, y, c, r) {
-    let winner = null, nearest = Infinity;
+  // The Red Sea is one to two coarse tiles wide. Political colour must be
+  // sampled from the SAME shore, not copied across navigable sea to the
+  // opposite continent. The centreline is a visual inference boundary only.
+  const RED_SEA_AXIS = [
+    [11.5, 44.0], [13.5, 42.7], [17.0, 40.2],
+    [22.0, 37.2], [27.0, 34.7], [31.5, 32.6],
+  ];
+  function redSeaBank(x, y) {
+    const lon = (x - R) * 2 / (SQ * R) - 179;
+    const lat = 74 - (y - R) * 128 / (1.5 * R * 75);
+    if (lat < 11.5 || lat > 31.5) return 0;
+    let middle = RED_SEA_AXIS[RED_SEA_AXIS.length - 1][1];
+    for (let i = 1; i < RED_SEA_AXIS.length; i++) {
+      const south = RED_SEA_AXIS[i - 1], north = RED_SEA_AXIS[i];
+      if (lat > north[0]) continue;
+      const t = (lat - south[0]) / (north[0] - south[0]);
+      middle = south[1] + (north[1] - south[1]) * t;
+      break;
+    }
+    if (Math.abs(lon - middle) > 7) return 0;
+    return lon < middle ? -1 : 1;
+  }
+  // Reuse each coastal hex's nearest playable land candidates across its
+  // six wedge draws. This avoids the old six repeated 7x7 tile scans.
+  function coastalLandCandidates(g, c, r) {
+    const data = coastlineOwners(g);
+    data.coastalCandidates ||= new Map();
+    const key = r * g.cols + c;
+    if (data.coastalCandidates.has(key)) return data.coastalCandidates.get(key);
+    const land = [];
     for (let rr = Math.max(0, r - 3); rr <= Math.min(g.rows - 1, r + 3); rr++) {
       for (let cc = c - 3; cc <= c + 3; cc++) {
         const col = (cc + g.cols) % g.cols;
-        const tile = g.tiles[rr * g.cols + col];
-        if (!tile || tile.terrain === 'sea' || !tile.owner) continue;
-        // The tested cc is unwrapped intentionally around the dateline.
-        const dx = SQ * R * (cc + 0.5 * (rr & 1)) + R - x;
-        const dy = R * 1.5 * rr + R - y;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < nearest) { nearest = d2; winner = tile.owner; }
+        const t = g.tiles[rr * g.cols + col];
+        if (!t || t.terrain === 'sea' || !t.owner) continue;
+        land.push({ owner: t.owner,
+          x: SQ * R * (cc + 0.5 * (rr & 1)) + R,
+          y: R * 1.5 * rr + R });
       }
     }
-    return nearest <= (R * 5) ** 2 ? winner : null;
+    data.coastalCandidates.set(key, land);
+    return land;
+  }
+  function nearbyOwnedLand(g, x, y, c, r) {
+    let winner = null, nearest = (R * 5) ** 2;
+    const bank = redSeaBank(x, y);
+    for (const seed of coastalLandCandidates(g, c, r)) {
+      if (bank && redSeaBank(seed.x, seed.y) !== bank) continue;
+      const dx = seed.x - x, dy = seed.y - y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < nearest) { nearest = d2; winner = seed.owner; }
+    }
+    return winner;
   }
   function tacticalHex(ctx, t, radius) {
     const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
@@ -318,7 +356,9 @@ const GEOGRAPHY = (() => {
         const a = i * Math.PI / 3;
         const owner = nearbyOwnedLand(g, x + R * 0.5 * Math.cos(a),
           y + R * 0.5 * Math.sin(a), t.c, t.r);
-        add(owner || inferred[t.r * g.cols + t.c], t, i);
+        // A playable sea tile has no political owner. Never reuse a
+        // cross-channel sea-flood colour if there is no local land owner.
+        add(owner, t, i);
       }
     }
     ctx.globalAlpha = 0.58;
