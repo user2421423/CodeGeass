@@ -148,6 +148,24 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run(`(() => { const t = game.tiles.find(t => t.terrain === 'sea'); const p = hexCenter(t); return GEOGRAPHY.sample(game, p.x, p.y); })()`), 0, 'sea remains sea at its gameplay hex centre');
   assert(run(`(() => { const t = game.tiles.find(t => t.terrain !== 'sea'); const p = hexCenter(t); return Math.abs(GEOGRAPHY.sample(game, p.x, p.y) - GEOGRAPHY.sample(game, p.x + WORLD_W, p.y)); })()`) < 1e-8, 'world atlas wraps without a seam');
 
+  // Real GIS contours: Indonesian islands must use Federation gameplay
+  // ownership, not a neutral/Britannian tint propagated through sea tiles.
+  const politicalIslands = run("({Sumatra:GEOGRAPHY.islandOwnerAt(game,101,0),Java:GEOGRAPHY.islandOwnerAt(game,111,-7),Borneo:GEOGRAPHY.islandOwnerAt(game,114,0),Papua:GEOGRAPHY.islandOwnerAt(game,134,-3),Egypt:GEOGRAPHY.islandOwnerAt(game,30,25)})");
+  for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
+    assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');
+  assert.equal(politicalIslands.Egypt, 'eu', 'Egypt land polygon must tint E.U., not neutral Arabia');
+  assert.equal(run("E.tile(game,87,14).terrain"), 'sea', 'Cornwall fringe remains navigable ocean');
+  assert.equal(run("GEOGRAPHY.visualMixedHex(87,14)"), true, 'Cornwall misleading sea/land hex is flagged');
+  const conquestTint = run("(() => { const t=game.tiles.find(t=>t.c>=146&&t.c<=149&&t.r>=42&&t.r<=45&&t.terrain!=='sea'); const previous=t.owner; t.owner='britannia'; const captured=GEOGRAPHY.islandOwnerAt(game,114,0); t.owner=previous; const restored=GEOGRAPHY.islandOwnerAt(game,114,0); return {captured,restored}; })()");
+  assert.equal(conquestTint.captured, null, 'a captured Borneo tile must remove the uniform Federation tint');
+  assert.equal(conquestTint.restored, 'cf', 'restored Borneo regains uniform Federation tint');
+
+  const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
+  assert(renderingText.includes('SEA · NAVIGABLE') && renderingText.includes('LAND · WALKABLE'),
+    'ambiguous coast hexes must display a clear gameplay-surface badge');
+  assert(renderingText.includes('ctx.setLineDash([5 / scale, 4 / scale])'),
+    'a conflicting coastline gets a visible dashed tactical boundary');
+
   // Shoreline city art is visual-only and must remain selectable even when
   // its graphic sits slightly away from the tactical city hex centre.
   const anchors = run(`(() => {
