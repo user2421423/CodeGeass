@@ -1264,10 +1264,34 @@ function draw(time, dt) {
     // Realistic coastlines can cover a minority of a playable hex. When the
     // two maps disagree at this hex centre, label the ACTUAL gameplay terrain
     // so sea movement and landing decisions are never visually ambiguous.
-    if (game.wrap && R * scale >= 16 &&
-        (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r)))
-      outlinedText(seaHex ? 'SEA HEX' : 'LAND HEX', hx, p.y + R * 0.70, 10,
-        seaHex ? '#b9ebff' : '#ffe1a0', scale, 'Trebuchet MS', true);
+    const visuallyMixed = game.wrap && R * scale >= 16 &&
+      (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r));
+    if (visuallyMixed) {
+      // A sea tile behind geographic land should never look walkable.
+      // Paint the TRUE tactical type on hover and use a legible pixel-size
+      // badge rather than the old tiny map-scaled caption.
+      ctx.save();
+      hexPath(hx, p.y, R - 1);
+      ctx.fillStyle = seaHex ? 'rgba(42,154,225,0.19)' : 'rgba(245,197,91,0.15)';
+      ctx.fill();
+      ctx.setLineDash([5 / scale, 4 / scale]);
+      ctx.strokeStyle = seaHex ? '#89e1ff' : '#ffe19a';
+      ctx.lineWidth = 2 / Math.max(scale, 0.4);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.translate(hx, p.y + R * 0.7);
+      ctx.scale(1 / scale, 1 / scale);
+      ctx.fillStyle = seaHex ? 'rgba(9,42,62,0.95)' : 'rgba(62,48,26,0.95)';
+      ctx.fillRect(-61, -10, 122, 21);
+      ctx.strokeStyle = seaHex ? '#75d5ff' : '#ffd27d';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-61, -10, 122, 21);
+      ctx.font = 'bold 11px Trebuchet MS, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(seaHex ? 'SEA · NAVIGABLE' : 'LAND · WALKABLE', 0, 5);
+      ctx.restore();
+    }
     const pr = u && targetCache.has(E.key(hover)) ? E.preview(game, u.id, hover.c, hover.r) : null;
     if (pr) {
       const a = hexCenter(u);
