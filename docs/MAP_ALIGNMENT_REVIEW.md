@@ -198,3 +198,14 @@ destination requiring sea transport. Other Japanese city hexes are
 kept intact to protect city placement and garrisons.
 
 The Arctic is out of scope for any further coastline alignment.
+
+### Verified geographic audit after Stage 8
+
+With inland-lake holes removed and Tsugaru open, the area-weighted
+audit identifies **56 strong conflicts**, including **41 in the Arctic**.
+Per user direction, Arctic coastlines and islands are explicitly
+out of scope. The actionable non-Arctic strong conflict count is
+**15**. The centre-point audit now has **412 mismatches**:
+356 mixed coastal hexes, 15 playable-land/visual-water hexes, and
+41 playable-sea/visual-land hexes. These numbers differ from
+prior stages because the lake-water visual layer is no longer drawn.
