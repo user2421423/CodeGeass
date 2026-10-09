@@ -17,5 +17,5 @@ jobs:
           tar --exclude='.git' --exclude=review -czf review/codegeass-map-review.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
-          name: codegeass-map-browser-review
+          name: codegeass-map-final-browser-review
           path: review/codegeass-map-review.tar.gz
