@@ -235,3 +235,28 @@ geographic land/sea mixing is unavoidable. This completes the approved
 non-Arctic map-alignment scope without forcing deliberate strategic
 naval passages or city hexes into geographically but tactically
 incorrect categories. The Arctic remains excluded.
+
+## Stage 10 — Red Sea artefact and Indonesian ownership corrections
+
+The long outlined waterway visible off Sinai and down the Red Sea was
+not an actual coastline. It came from `paintWaterways`, an old visual
+overlay that drew 7–9 world-pixel lines (with lighter double outlines)
+across the real Red Sea, Bab-el-Mandeb, Strait of Malacca and Sunda.
+These four real-water overlays are removed. Only a short,
+**land-clipped**, borderless 3.2-pixel Suez Canal cut remains; navigable
+gameplay hexes and coastlines are otherwise unchanged.
+
+Indonesian land hexes are now explicitly owned by the Chinese Federation
+on **new conquest starts**, including Sumatra, Java, Borneo, Sulawesi,
+Lesser Sunda, Maluku and western Papua. The city-radius political
+flood-fill could previously assign parts of unseeded islands to other
+factions. This correction sets gameplay ownership before units are
+deployed, not merely an overlay colour. The Philippines and naval
+terrain are unaffected. Already-progressed conquest saves are not
+retroactively overwritten, to avoid deleting players' captures.
+
+Finally the coastal hover warning samples seven interior positions, not
+only the tile centre. This catches visually mixed cases such as the
+southwestern British Isles where a real sea tile contains part of
+the high-resolution land silhouette, without falsely converting a
+navigable sea hex into land. Results are memoized by hex.
