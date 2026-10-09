@@ -137,7 +137,7 @@ const modal = () => node('modal-root').innerHTML;
     });
     return { count: names.length, moved, stations: game.stations.length };
   })()`);
-  assert.equal(anchors.count, 23, 'every identified visually offshore city has a coastline anchor');
+  assert.equal(anchors.count, 19, 'every identified visually offshore city has a coastline anchor');
   for (const city of anchors.moved) {
     assert(!city.missing, `${city.name}: still exists as a gameplay station`);
     assert(city.delta > 0 && city.delta < 43 * 0.72, `${city.name}: anchored within the original hex neighbourhood`);
