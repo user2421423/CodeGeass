@@ -236,42 +236,35 @@ const GEOGRAPHY = (() => {
     ctx.restore();
   }
 
-  // Narrow real-world passages are intentionally widened on the tactical
-  // grid to keep fleets navigable. Give those *existing sea hexes* a matching
-  // geographic-looking channel instead of falsely converting them to land.
-  // These decorative strokes never change terrain, movement, or ownership.
-  const NAVIGABLE_WATERWAYS = [
-    // Suez Canal and Gulf of Suez (historically a very narrow connection).
-    { name: 'Suez', width: 7, points: [[32.3, 31.6], [32.55, 30.4], [32.6, 29.9], [33.3, 29.2]] },
-    // Northern Red Sea and Bab-el-Mandeb.
-    { name: 'Red Sea', width: 7, points: [[33.3, 29.2], [34.4, 27.5], [36.0, 24.5]] },
-    { name: 'Bab-el-Mandeb', width: 8, points: [[42.4, 13.7], [43.0, 13.4], [43.7, 12.6], [44.5, 12.3]] },
-    // Singapore's city/port remains on its existing gameplay tile.
-    { name: 'Malacca', width: 9, points: [[99.2, 6.6], [100.3, 4.8], [101.2, 2.8], [102.1, 1.0], [103.5, 0.0]] },
-    { name: 'Sunda', width: 8, points: [[104.3, -4.2], [105.2, -5.0], [105.7, -5.6], [106.8, -6.1]] },
-  ].map(route => {
-    const points = route.points.map(project);
-    return { ...route, points, bounds: bbox(points) };
-  });
-  function paintWaterways(ctx, left, right, top, bottom) {
+  // Suez is the one significant man-made channel missing from the vector
+  // coastline. The Red Sea, Bab-el-Mandeb, Malacca and Sunda are already
+  // geographic water, so broad outlined strokes there produced a spurious
+  // elongated blue/pale line through the real seas.
+  //
+  // Only cut a short, subtle canal through *geographic land*, without a
+  // contrasting double outline. Gameplay sea hexes and naval routes are
+  // controlled by WORLD_ROWS and are intentionally unaffected here.
+  const SUEZ_CANAL = [
+    [32.35, 31.25], [32.40, 30.84], [32.46, 30.42], [32.55, 29.95],
+  ].map(project);
+  const SUEZ_BOUNDS = bbox(SUEZ_CANAL);
+  function paintSuezCanal(ctx, landShapes, left, right, top, bottom) {
+    if (!intersects(SUEZ_BOUNDS, left - 4, right + 4, top - 4, bottom + 4)) return;
+    // This prevents any artificial line from appearing inside the real
+    // Mediterranean, Gulf of Suez or Red Sea water polygons.
+    const landClip = paths(ctx, landShapes, left, right, top, bottom);
+    if (!landClip) return;
     ctx.save();
+    clipPath(ctx, landClip);
+    ctx.beginPath();
+    ctx.moveTo(SUEZ_CANAL[0][0], SUEZ_CANAL[0][1]);
+    for (let i = 1; i < SUEZ_CANAL.length; i++)
+      ctx.lineTo(SUEZ_CANAL[i][0], SUEZ_CANAL[i][1]);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    for (const route of NAVIGABLE_WATERWAYS) {
-      if (!intersects(route.bounds, left - 12, right + 12, top - 12, bottom + 12)) continue;
-      const points = route.points;
-      if (points.length < 2) continue;
-      ctx.beginPath();
-      ctx.moveTo(points[0][0], points[0][1]);
-      for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
-      // A narrow shoreline outline keeps the channel legible over faction tint.
-      ctx.strokeStyle = 'rgba(221,226,202,0.54)';
-      ctx.lineWidth = route.width + 2;
-      ctx.stroke();
-      ctx.strokeStyle = '#184b68';
-      ctx.lineWidth = route.width;
-      ctx.stroke();
-    }
+    ctx.strokeStyle = '#194b69';
+    ctx.lineWidth = 3.2;
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -329,7 +322,7 @@ const GEOGRAPHY = (() => {
       ctx.fillStyle = sea;
       fillPath(ctx, paths(ctx, waterShapes, a, b, top, bottom));
       coast(ctx, waterShapes, a, b, top, bottom, scale);
-      if (!overview) paintWaterways(ctx, a, b, top, bottom);
+      if (!overview) paintSuezCanal(ctx, landShapes, a, b, top, bottom);
       ctx.restore();
     }
     ctx.restore();
