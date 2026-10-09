@@ -698,6 +698,7 @@ const ART = (() => {
     let img = images.get(keyName);
     if (!img) {
       img = new Image();
+      img.onload = () => api.onImageReady?.();
       img.src =
         'data:image/svg+xml;charset=utf-8,' +
         encodeURIComponent(svg.replace('<svg ', keyName.startsWith('p|') ? '<svg width="120" height="160" ' : '<svg width="200" height="200" '));
@@ -728,7 +729,11 @@ const ART = (() => {
     let img = LOCAL.imgs.get(k);
     if (!img) {
       img = new Image();
-      img.onerror = () => (img.failed = true);
+      img.onload = () => api.onImageReady?.();
+      img.onerror = () => {
+        img.failed = true;
+        api.onImageReady?.();
+      };
       img.src = e.base + e.src;
       LOCAL.imgs.set(k, img);
     }
