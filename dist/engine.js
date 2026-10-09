@@ -907,12 +907,12 @@
   // Single source of truth for visual geography invalidation. Only actual tile changes advance it.
   function setTileOwner(g, t, owner) {
     if (t.owner === owner) return;
-    setTileOwner(g, t, owner);
+    t.owner = owner;
     g.mapRevision = (g.mapRevision || 0) + 1;
   }
   function setTileTerrain(g, t, terrain) {
     if (t.terrain === terrain) return;
-    setTileTerrain(g, t, terrain);
+    t.terrain = terrain;
     g.mapRevision = (g.mapRevision || 0) + 1;
   }
   const isSea = t => t?.terrain === 'sea';
