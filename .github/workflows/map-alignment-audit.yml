@@ -50,6 +50,8 @@ jobs:
           import json
           j=json.load(open('docs/map-alignment-review.json'))
           assert j['summary']['hexes'] == 13680
+          assert j['summary']['unreviewed_non_arctic'] == 0
+          assert j['summary']['non_arctic_reviewed'] == 15
           assert j['summary']['high_confidence_mismatches'] == 56
           c=json.load(open('docs/map-coastline-centre-review.json'))
           assert c['total_centre_conflicts'] == 412
