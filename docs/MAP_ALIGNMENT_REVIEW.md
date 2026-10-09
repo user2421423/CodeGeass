@@ -260,3 +260,54 @@ only the tile centre. This catches visually mixed cases such as the
 southwestern British Isles where a real sea tile contains part of
 the high-resolution land silhouette, without falsely converting a
 navigable sea hex into land. Results are memoized by hex.
+
+## Stage 11 — Final political tint and protected-coast QA
+
+**Corrected the renderer, not the underlying campaign map.** Political
+colours originate with actual *playable land* ownership. The former
+unrestricted sea-hex ownership flood has been bounded to the immediate
+shoreline, so faction colours cannot spread across the Red Sea, Malacca
+or other open water. Complete geographic island polygons whose
+playable land shares one faction receive a single, smooth tint rather
+than several competing inferred sea-hex fills. Contested mainland
+polygons use adjacent actual land owners and localized coastal sectors.
+
+Small Indonesian islands with no playable land-hex centre derive their
+display colour from the *nearest Indonesian playable land owner*, not
+Australia or the Philippines. This is intentionally dynamic: captures
+update the display; it does **not** permanently hardcode Federation
+ownership during an ongoing conquest. All Indonesian playable land
+continues to start as Federation territory under the previous game
+ownership correction.
+
+The 15 documented strong non-Arctic gameplay/geography exceptions
+plus misleading Cornwall sea hex (87,14) now receive a very small
+high-zoom sea/land marker. Hovering mixed coastline hexes overlays a
+subtle tactical surface tint and a readable **SEA · NAVIGABLE** or
+**LAND · WALKABLE** badge. This is visual-only; Suez, Bab-el-Mandeb,
+Malacca, Sunda, Japan and the other protected hex classifications
+are unchanged.
+
+### Verification
+
+- Headless Chromium visual checks across Indonesia/Borneo, Suez,
+  Red Sea/northeast Africa, Cornwall, Japan, Pearl Harbor, Kolkata,
+  Luanda, Perth, Brisbane, Malacca, Sunda and Tierra del Fuego;
+  no JavaScript page errors.
+- Geographic island-owner samples: Sumatra, Java, Borneo and western
+  Papua tint Federation; Egypt tints E.U. as expected. A simulated
+  Borneo capture removes the all-Federation island tint, and restoring
+  ownership restores it.
+- Cornwall (87,14) remains an ocean gameplay hex, is detected as a
+  visually mixed coastline, and displays a clear sea warning.
+- All 14 core tests, UI smoke, geography audit, map lock/integrity,
+  and protected-waterway checks passed.
+- In the browser sample, cached panning took approximately 1–2 ms per
+  draw. Initial rendering of a new region still costs more (up to
+  roughly 250 ms in this test), so this is not a claim that all first
+  renders are instantaneous.
+
+Known, deliberate exceptions: Arctic geographic compromises are
+excluded as requested; inland lakes are absent as requested; the
+15 protected strong non-Arctic exceptions and mixed coastline hexes
+retain their navigable/land gameplay rules.
