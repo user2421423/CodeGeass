@@ -462,6 +462,8 @@ FIX_LAND = [
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
 ]
 FIX_SEA = [
+    (141, 44),  # Malacca: separate Sumatra from Singapore and keep navigable sea
+
     (160, 19),  # Tsugaru Strait: separate Hokkaido and Honshu
 
     # 2026 area audit batch 3: six non-strategic, unit-free coastal hexes.
