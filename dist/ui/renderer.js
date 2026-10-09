@@ -1264,7 +1264,8 @@ function draw(time, dt) {
     // Realistic coastlines can cover a minority of a playable hex. When the
     // two maps disagree at this hex centre, label the ACTUAL gameplay terrain
     // so sea movement and landing decisions are never visually ambiguous.
-    if (game.wrap && R * scale >= 16 && GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex)
+    if (game.wrap && R * scale >= 16 &&
+        (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r)))
       outlinedText(seaHex ? 'SEA HEX' : 'LAND HEX', hx, p.y + R * 0.70, 10,
         seaHex ? '#b9ebff' : '#ffe1a0', scale, 'Trebuchet MS', true);
     const pr = u && targetCache.has(E.key(hover)) ? E.preview(game, u.id, hover.c, hover.r) : null;
