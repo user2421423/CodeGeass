@@ -946,6 +946,16 @@
   const COASTAL_SEA_FIXES = [[13, 9], [168, 9], [50, 10], [49, 12],
     [81, 32], [113, 51], [157, 44], [49, 31],
     [0, 6], [127, 0], [158, 1], [55, 8], [56, 8], [156, 63]];
+  // The Caspian was the sole isolated sea component. Legacy saves migrate
+  // it to traversable land, preserving occupied old tiles and player-built sites.
+  const CASPIAN_LAND_FIXES = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21]];
+  const TSUGARU_STRAIT = [160, 19];
+  function coastalTileOccupied(g, c, r) {
+    return g.units.some(u => u.hp > 0 && u.c === c && u.r === r) ||
+      g.stations?.some(s => (s.c === c && s.r === r) ||
+        (s.portAt?.c === c && s.portAt?.r === r)) ||
+      g.sites?.some(site => site.c === c && site.r === r);
+  }
   function migrateCoastalTerrain(g) {
     for (const [c, r] of COASTAL_SEA_FIXES) {
       const t = g.tiles[r * g.cols + c];
@@ -956,6 +966,31 @@
       if (g.sites?.some(site => site.c === c && site.r === r)) continue;
       t.terrain = 'sea';
       t.owner = null;
+    }
+    const [tc, tr] = TSUGARU_STRAIT;
+    const strait = g.tiles[tr * g.cols + tc];
+    if (strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
+      strait.terrain = 'sea';
+      strait.owner = null;
+    }
+    const filled = [];
+    for (const [c, r] of CASPIAN_LAND_FIXES) {
+      const t = g.tiles[r * g.cols + c];
+      if (!t || t.terrain !== 'sea' || coastalTileOccupied(g, c, r)) continue;
+      t.terrain = 'plains';
+      t.owner = null;
+      filled.push(t);
+    }
+    // Carry over the saved political situation rather than assigning a
+    // new game faction. Progress from neighbouring owned land inward.
+    for (let pass = 0; pass < CASPIAN_LAND_FIXES.length; pass++) {
+      let changed = false;
+      for (const t of filled) {
+        if (t.owner) continue;
+        const n = adjacent(g, t).find(n => n.terrain !== 'sea' && n.owner);
+        if (n) { t.owner = n.owner; changed = true; }
+      }
+      if (!changed) break;
     }
     // Newfoundland was restored as land by the previous correction batch.
     const t = g.tiles[15 * g.cols + 61];
