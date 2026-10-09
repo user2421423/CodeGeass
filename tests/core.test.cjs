@@ -288,3 +288,29 @@ test('Reviewed coastal conversions preserve naval routes, cities and existing oc
   }
   assert.notEqual(E.tile(old, 61, 15).terrain, 'sea', 'Previous Newfoundland fix migrates');
 });
+
+test('Caspian inland water is land and Tsugaru separates Hokkaido from Honshu', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const caspian = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21]];
+  for (const [c,r] of caspian) assert.notEqual(E.tile(g,c,r).terrain,'sea');
+  assert.equal(E.tile(g,160,19).terrain,'sea', 'Tsugaru is navigable water');
+  const tokyo=g.stations.find(s=>s.name==='Tokyo Settlement');
+  const sapporo=g.stations.find(s=>s.name==='Sapporo');
+  const q=[E.tile(g,tokyo.c,tokyo.r)], seen=new Set();
+  for(let i=0;i<q.length;i++){
+    const t=q[i], key=`${t.c},${t.r}`;
+    if(seen.has(key)) continue;seen.add(key);
+    for(const n of E.adjacent(g,t))
+      if(n.terrain!=='sea'&&!seen.has(`${n.c},${n.r}`))q.push(n);
+  }
+  assert(!seen.has(`${sapporo.c},${sapporo.r}`), 'Hokkaido requires sea crossing');
+  const old=structuredClone(g);
+  for(const [c,r] of caspian){const t=E.tile(old,c,r);t.terrain='sea';t.owner=null;}
+  E.tile(old,160,19).terrain='plains';E.tile(old,160,19).owner='britannia';
+  assert.equal(E.migrateSave(old),old);
+  for(const [c,r] of caspian) {
+    const t=E.tile(old,c,r);assert.equal(t.terrain,'plains');
+    assert(t.owner,'Migrated lake adopts nearby territorial ownership');
+  }
+  assert.equal(E.tile(old,160,19).terrain,'sea');
+});
