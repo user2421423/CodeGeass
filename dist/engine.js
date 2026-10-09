@@ -3263,6 +3263,26 @@
       const t = tile(g, c, r);
       if (t && freeLand(t)) t.owner = owner;
     }
+    // Indonesia (including Borneo and its smaller islands) is entirely Chinese
+    // Federation at the start of conquest. City-based land floodfill sometimes
+    // assigned parts of Borneo to the Philippine/Britannian frontier or left
+    // remote islands unowned. Correct GAME ownership here, not just the tint.
+    // The geographic windows contain land belonging to the Indonesian
+    // archipelago; unplayable ocean hexes are never assigned ownership.
+    const indonesiaBands = [
+      [94, 107.9, -7.8, 7.5],   // Sumatra and the western archipelago
+      [106, 119.5, -11.5, 8],  // Java, Borneo and western Lesser Sunda
+      [118, 134, -11.5, 4.5],  // Sulawesi, Lesser Sunda and Maluku
+      [133, 141.9, -11.5, 3], // western New Guinea / Indonesian Papua
+    ];
+    for (const t of g.tiles) {
+      if (isSea(t)) continue;
+      const lon = WORLD.lon0 + WORLD.dlon * (t.c + 0.5 * (t.r & 1));
+      const lat = WORLD.lat0 - WORLD.dlat * t.r;
+      if (indonesiaBands.some(([west, east, south, north]) =>
+          lon >= west && lon <= east && lat >= south && lat <= north))
+        t.owner = 'cf';
+    }
     for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
       const at = nearest(
         g,
