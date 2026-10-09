@@ -311,3 +311,59 @@ Known, deliberate exceptions: Arctic geographic compromises are
 excluded as requested; inland lakes are absent as requested; the
 15 protected strong non-Arctic exceptions and mixed coastline hexes
 retain their navigable/land gameplay rules.
+
+## Stage 12 — Red Sea bank-colour correction and worldwide static map review
+
+**User requested no tests.** These corrections were made by reviewing
+the coastline painter, world rows, hex adjacency and prior GIS audit.
+No core tests, UI smoke tests, simulations, or browser test runs were
+initiated for this round.
+
+### Red Sea / northeast Africa — painter correction
+
+The world map already has a genuine Suez–Red Sea–Bab-el-Mandeb ocean
+barrier: sea hexes (106,26), (107,27) and (111,35) are preserved.
+The static land-adjacency walk found no land-only route Cairo→Riyadh
+or Khartoum→Sana'a. The screenshot defect was **political fill**, not
+a missing water tile.
+
+The coast painter used to infer the nearest land owner across water.
+This could project E.U. blue onto the neutral Arabian shore or neutral
+tint onto E.U.-owned northeast Africa. Shoreline inference now uses
+a narrow Red Sea centreline to distinguish its African and Arabian
+banks, samples local playable land on the **same bank**, drops the
+fallback of assigning a sea tile's inferred faction to the other shore,
+and caches candidate coastal land tiles to avoid repeated scans.
+No gameplay faction assignment is hardcoded in the painter; captures
+still update the tint.
+
+### Malacca — one unexpected gameplay land bridge
+
+The global static pass found an incidental Singapore–Sumatra land-only
+path (141,43)→(141,44)→(140,44) across the Strait of Malacca.
+Converted only the intervening (141,44) forest tile to navigable sea,
+retaining the Singapore playable city hex (141,43) and the Sumatra
+land hex (140,44). Suez and all other protected passages were left
+as they were. Updated `tools/build_map.py`, the generated
+`WORLD_ROWS`, the map lock and the existing safe-save migration list.
+An occupied older-save hex is not converted, protecting units/sites.
+The new sea hex is a strategic coastline exaggeration and can look
+partly like land at this global map resolution; the existing playable
+sea hover warning applies.
+
+### Whole-world static review
+
+Inspected all 180×76 = 13,680 encoded gameplay tiles and the
+registered 15 protected non-Arctic geographic exceptions, including
+Japan/Hokkaido, British Isles, Mediterranean, Suez/Red Sea, Malacca,
+Sunda, Taiwan/Korea Straits, Indonesia and southern Africa.
+Current encoded world has 9,291 water hexes in **one continuous
+navigable ocean component** and 4,389 land hexes split into 33
+components (islands included). Africa and Arabia are disconnected
+for land travel; London–Paris and Dublin–London remain disconnected
+for land movement. Arctic changes and inland lakes remain excluded
+per user preference.
+
+This is a **source/topology inspection, not a gameplay playtest**;
+visual appearance, spawn placements and save migration have not
+been newly regression-tested at user request.
