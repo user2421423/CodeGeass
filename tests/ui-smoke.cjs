@@ -137,6 +137,10 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(atlas.visualLandAt(...seaPoint), false, 'visual shoreline excludes the surrounding sea');
   assert.equal(atlas.visualLandAt(landPoint[0] + Math.sqrt(3) * 43 * 180, landPoint[1]), true,
     'visual land classification respects horizontal world wrap');
+  assert.equal(typeof atlas.visualMixedHex, 'function', 'coastal hex visual mixing is queryable');
+  assert.equal(atlas.visualMixedHex(-1, 14), false, 'out-of-range queries are harmless');
+  assert.equal(atlas.visualMixedHex(87, 14), false,
+    'mock atlas without Cornwall is not accidentally marked mixed');
 
 
   // Geography is visually interpolated separately from the immutable tactical hex map.
