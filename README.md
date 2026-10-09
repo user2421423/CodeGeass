@@ -71,8 +71,8 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   several turns, masses an offensive at a rally city before it attacks, holds a strategic reserve at its capital for
   emergencies, and has its factories build what each front needs.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
-  move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
-  frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
+  move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (60 damage + 10% of target maximum HP, no cap;
+  range 2, or 3 with Battery Overcharge; always 2-turn recharge), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
   deposit, repairs and reinforcement.
 - **Production Command (Conquest):** each city can queue one exact normal unit to auto-produce every turn, or stay
   manual. Global controls handle building auto-upgrades, 1–3-frame formation size, bulk upgrades and protected

@@ -2927,13 +2927,16 @@
     hooks.turn?.(g, side);
     checkVictory(g);
   }
-  // Fortress batteries: fired by the owner, range 3, then two turns to recharge.
-  const FORTRESS_GUN = { range: 3, recharge: 2, share: 0.4 };
+  // Fortress batteries: range 2 (3 with Overcharge), then always two turns to recharge.
+  const FORTRESS_GUN = { range: 2, recharge: 2, fixed: 60, share: 0.1 };
   function fortressName(s) {
     return s.gun || `${s.name} battery`;
   }
   function fortressRecharge(g, s) {
-    return FORTRESS_GUN.recharge - (techLevel(g, s.owner, 'cities.overcharge') >= 1 ? 1 : 0);
+    return FORTRESS_GUN.recharge;
+  }
+  function fortressRange(g, s) {
+    return FORTRESS_GUN.range + (techLevel(g, s.owner, 'cities.overcharge') >= 1 ? 1 : 0);
   }
   function fortressReady(g, s) {
     return !!s?.fort && s.owner === g.phase && !g.over && s.shield > 0 && (s.gunReady || 0) <= g.turn;
@@ -2943,8 +2946,7 @@
     return Math.max(
       1,
       Math.round(
-        maxHP(foe) *
-          FORTRESS_GUN.share *
+        (FORTRESS_GUN.fixed + maxHP(foe) * FORTRESS_GUN.share) *
           (1 + techValue(g, owner, 'cities.battery')) *
           (TYPES[foe.type].branch === 'Armor' ? 1 - techValue(g, foe.side, 'armor.bulkheads') : 1),
       ),
@@ -2952,7 +2954,7 @@
   }
   function fortressTargets(g, s) {
     if (!fortressReady(g, s)) return [];
-    return within(g, s, FORTRESS_GUN.range)
+    return within(g, s, fortressRange(g, s))
       .map(p => unitAt(g, p))
       .filter(u => u && foe(g, u.side, s.owner))
       .map(u => tile(g, u.c, u.r));
@@ -2961,8 +2963,8 @@
     const s = g.stations.find(s => s.id === id);
     if (!fortressReady(g, s)) return { ok: false, reason: 'The battery is not ready.' };
     const foe = unitAt(g, { c, r });
-    if (!foe || !isFoe(g, foe.side, s.owner) || dist(g, s, foe) > FORTRESS_GUN.range)
-      return { ok: false, reason: 'No enemy unit within 3 hexes of the city.' };
+    if (!foe || !isFoe(g, foe.side, s.owner) || dist(g, s, foe) > fortressRange(g, s))
+      return { ok: false, reason: `No enemy unit within ${fortressRange(g, s)} hexes of the city.` };
     const damage = fortressDamage(g, foe, s.owner),
       name = fortressName(s),
       hit = [];
@@ -3620,6 +3622,7 @@
     applyTech,
     missionReward,
     fortressRecharge,
+    fortressRange,
     rangeOf,
     RANKS,
     RANK_HP,

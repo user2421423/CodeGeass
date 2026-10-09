@@ -309,7 +309,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Eliminator projects/ready charges use cyan map rings; protected launch confirmations warn that the warhead will be
   consumed, and `fleijaSequence` shows a separate "F.L.E.I.J.A. eliminated" interception state instead of a blast.
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
-  Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
+  Liaodong, Singapore, Panama, Pearl Harbor): range 2 (+1 with Battery Overcharge), 60 + 10% of the target's maximum HP with no cap, always 2-turn recharge. Fortifications research adds 100 city defense HP per level (up to +500).
 
 ### Elite Forces
 - Nineteen persistent single-frame hero units (`ELITE_FORCES`, frames `elite_*`), one HQ tab per faction:

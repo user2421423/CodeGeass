@@ -343,7 +343,7 @@
       nodes: {
         fort: {
           name: 'Fortifications',
-          values: [20, 45, 80, 120, 160],
+          values: [100, 200, 300, 400, 500],
           tiers: [1, 2, 2, 3, 4],
           costs: [40, 80, 140, 220, 360],
           text: v => `+${v} defense on your cities`,
@@ -392,8 +392,8 @@
           req: ['battery', 2],
           text: v =>
             v === 1
-              ? 'Fortress batteries recharge 1 turn faster'
-              : 'Fortress battery blasts hit enemies next to the target for 40%',
+              ? 'Fortress battery range +1 hex (2 → 3); recharge stays 2 turns'
+              : 'Fortress battery range +1 hex and blasts hit enemies next to the target for 40%; recharge stays 2 turns',
         },
       },
     },
