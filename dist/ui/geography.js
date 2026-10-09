@@ -235,7 +235,7 @@ const GEOGRAPHY = (() => {
     [11.5, 44.0], [13.5, 42.7], [17.0, 40.2],
     [22.0, 37.2], [27.0, 34.7], [31.5, 32.6],
   ];
-  function redSeaBank(x, y) {
+  function redSeaBank(x, y, allowInland = false) {
     const lon = (x - R) * 2 / (SQ * R) - 179;
     const lat = 74 - (y - R) * 128 / (1.5 * R * 75);
     if (lat < 11.5 || lat > 31.5) return 0;
@@ -247,7 +247,7 @@ const GEOGRAPHY = (() => {
       middle = south[1] + (north[1] - south[1]) * t;
       break;
     }
-    if (Math.abs(lon - middle) > 7) return 0;
+    if (!allowInland && Math.abs(lon - middle) > 7) return 0;
     return lon < middle ? -1 : 1;
   }
   // Reuse each coastal hex's nearest playable land candidates across its
@@ -275,7 +275,9 @@ const GEOGRAPHY = (() => {
     let winner = null, nearest = (R * 5) ** 2;
     const bank = redSeaBank(x, y);
     for (const seed of coastalLandCandidates(g, c, r)) {
-      if (bank && redSeaBank(seed.x, seed.y) !== bank) continue;
+      // The nearest same-shore playable land may lie further inland than
+      // the narrow coastal band; keep it eligible without crossing the sea.
+      if (bank && redSeaBank(seed.x, seed.y, true) !== bank) continue;
       const dx = seed.x - x, dy = seed.y - y;
       const d2 = dx * dx + dy * dy;
       if (d2 < nearest) { nearest = d2; winner = seed.owner; }
