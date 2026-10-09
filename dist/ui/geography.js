@@ -484,6 +484,32 @@ const GEOGRAPHY = (() => {
     return land;
   }
 
+  // A hex can be visually mixed even when its *centre* is correctly
+  // classified. Check six points safely inside the playable hex as well:
+  // Cornwall (87,14), island shelves and narrow straits otherwise appear as
+  // plain ocean while containing visible land. Memoize per hex for smooth pan.
+  const mixedHexCache = new Map();
+  function visualMixedHex(c, r) {
+    if (!Number.isInteger(c) || !Number.isInteger(r) ||
+        c < 0 || c >= VISUAL_WORLD.cols || r < 0 || r >= VISUAL_WORLD.rows) return false;
+    const key = r * VISUAL_WORLD.cols + c;
+    if (mixedHexCache.has(key)) return mixedHexCache.get(key);
+    const x = SQ * R * (c + 0.5 * (r & 1)) + R;
+    const y = R * 1.5 * r + R;
+    const first = visualLandAt(x, y);
+    let mixed = false;
+    for (let i = 0; i < 6; i++) {
+      const a = (60 * i - 30) * Math.PI / 180;
+      if (visualLandAt(x + Math.cos(a) * R * 0.80,
+                       y + Math.sin(a) * R * 0.80) !== first) {
+        mixed = true;
+        break;
+      }
+    }
+    mixedHexCache.set(key, mixed);
+    return mixed;
+  }
+
   // Classification is a diagnostic of the tactical layer only; the painter
   // above intentionally does NOT use it to draw the map's coastlines.
   function sample(g, x, y) {
@@ -494,5 +520,5 @@ const GEOGRAPHY = (() => {
     const t = g.tiles[r * g.cols + c];
     return t && t.terrain !== 'sea' ? 1 : 0;
   }
-  return { paint, sample, visualLandAt, shapes: LAYERS, cacheStats };
+  return { paint, sample, visualLandAt, visualMixedHex, shapes: LAYERS, cacheStats };
 })();
