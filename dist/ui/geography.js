@@ -33,7 +33,7 @@ const GEOGRAPHY = (() => {
   // Every continent and inland lake comes from the same global dataset.
   const LAYERS = {
     land: GEOGRAPHY_SHAPES.land.map(shape),
-    water: GEOGRAPHY_SHAPES.water.map(shape),
+    water: [], // No inland water holes; Black Sea remains open ocean.
     biomes: GEOGRAPHY_SHAPES.biomes.map(([kind, intensity, points]) => ({
       kind, intensity, ...shape(points),
     })),
