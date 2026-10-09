@@ -25,10 +25,6 @@ const CITY_SHORE_ANCHORS = Object.freeze({
     174.381,
     -36.713
   ],
-  "St. Petersburg": [
-    30.881,
-    60.331
-  ],
   "Reykjavik": [
     -20.943,
     63.817
@@ -48,10 +44,6 @@ const CITY_SHORE_ANCHORS = Object.freeze({
   "Cape Town": [
     18.17,
     -33.35
-  ],
-  "Shanghai": [
-    119.96,
-    31.403
   ],
   "Yangon": [
     97.595,
@@ -85,17 +77,9 @@ const CITY_SHORE_ANCHORS = Object.freeze({
     -95.015,
     29.664
   ],
-  "Toronto": [
-    -79.02,
-    43.245
-  ],
   "Montevideo": [
     -57.222,
     -35.319
-  ],
-  "Guangzhou": [
-    113.032,
-    22.824
   ],
   "Brisbane": [
     153.429,
