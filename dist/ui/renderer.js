@@ -123,13 +123,74 @@ function drawLine(x, y, tx, ty, color, width = 1, dash = []) {
   ctx.stroke();
   ctx.setLineDash([]);
 }
+let mapFramePending = false,
+  mapFrameDirty = true,
+  mapHasPulse = false,
+  mapRenderRevision = 0,
+  mapPulseTimer = null;
+// State changes invalidate the static layer; selection/camera events only wake the renderer.
+function requestMapFrame() {
+  mapFrameDirty = true;
+  if (mapPulseTimer !== null) {
+    clearTimeout(mapPulseTimer);
+    mapPulseTimer = null;
+  }
+  if (mapFramePending || document.hidden) return;
+  mapFramePending = true;
+  requestAnimationFrame(frame);
+}
+function invalidateMapRender() {
+  mapRenderRevision++;
+  minimapDirty = true;
+  requestMapFrame();
+}
+ART.onImageReady = requestMapFrame;
+function mapAnimating() {
+  const dialogOpen = modal.children ? modal.children.length > 0 : !!modal.innerHTML;
+  return effects.length > 0 || shake > 0 || flash > 0 || (!dialogOpen && !reducedMotion() && mapHasPulse);
+}
 function frame(time) {
+  mapFramePending = false;
+  if (document.hidden) {
+    lastTime = 0;
+    return;
+  }
+  if (!mapFrameDirty && !mapAnimating()) return;
+  mapFrameDirty = false;
   const dt = Math.min(0.05, (time - lastTime) / 1000 || 0.016);
   lastTime = time;
   draw(time, dt);
   drawMinimap();
-  requestAnimationFrame(frame);
+  if (effects.length > 0 || shake > 0 || flash > 0) {
+    mapFramePending = true;
+    requestAnimationFrame(frame);
+  } else if (mapAnimating()) {
+    // Slow decorative glows need fewer redraws than movement/combat; input always wakes immediately.
+    mapPulseTimer = setTimeout(() => {
+      mapPulseTimer = null;
+      if (!document.hidden && !mapFramePending) {
+        mapFramePending = true;
+        requestAnimationFrame(frame);
+      }
+    }, 80);
+  } else lastTime = 0;
 }
+// Capture listeners schedule after the actual event handlers have updated camera/hover state.
+for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'keydown', 'click', 'load'])
+  document.addEventListener(type, requestMapFrame, { capture: true, passive: true });
+if (typeof window.addEventListener === 'function')
+  window.addEventListener('resize', requestMapFrame, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (mapPulseTimer !== null) {
+    clearTimeout(mapPulseTimer);
+    mapPulseTimer = null;
+  }
+  lastTime = 0;
+  if (!document.hidden) requestMapFrame();
+});
+// Keep the backdrop current when dialogs change, but freeze decorative glows behind them.
+if (typeof MutationObserver === 'function')
+  new MutationObserver(requestMapFrame).observe(modal, { childList: true, subtree: true, attributes: true });
 // ======== Map renderer ========
 const PLATE = {
   neutral: { light: '#7a7462', mid: '#45402f', dark: '#25221a', trim: '#e6dfc0', bar: '#c9c2a2' },
@@ -607,13 +668,10 @@ function copiesBetween(x, left, right) {
 const MAP_LAYER_MARGIN = 200;
 let mapLayerCache = null;
 function mapLayerFresh(m, scale, dpr, w, h) {
-  if (!m || m.tiles !== game.tiles || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
+  if (!m || m.tiles !== game.tiles || m.revision !== (game.mapRevision || 0) ||
+      m.renderRevision !== mapRenderRevision || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
   const slack = MAP_LAYER_MARGIN - 16;
-  if (Math.abs(offset.x - m.x) > slack || Math.abs(offset.y - m.y) > slack) return false;
-  const tiles = game.tiles;
-  for (let i = 0; i < tiles.length; i++)
-    if (tiles[i].owner !== m.owners[i] || tiles[i].terrain !== m.terrains[i]) return false;
-  return true;
+  return Math.abs(offset.x - m.x) <= slack && Math.abs(offset.y - m.y) <= slack;
 }
 // Camera-independent cache of *complete* terrain tiles, including grid,
 // ownership borders and relief. Reusing the whole base map prevents the 30-50ms
@@ -625,26 +683,15 @@ const mapAtlasWarmQueue = [];
 const mapAtlasWarmKeys = new Set();
 let mapAtlasIdlePending = false;
 let mapAtlasGeneration = 0;
-let mapAtlasState = { tiles: null, owners: [], terrains: [], scale: null };
+let mapAtlasState = { tiles: null, revision: -1, scale: null };
 function refreshMapAtlas(scale) {
-  let changed = mapAtlasState.tiles !== game.tiles || mapAtlasState.scale !== scale;
-  if (!changed) for (let i = 0; i < game.tiles.length; i++) {
-    const t = game.tiles[i];
-    if (mapAtlasState.owners[i] !== t.owner || mapAtlasState.terrains[i] !== t.terrain) {
-      changed = true; break;
-    }
-  }
-  if (!changed) return;
+  const revision = game.mapRevision || 0;
+  if (mapAtlasState.tiles === game.tiles && mapAtlasState.revision === revision && mapAtlasState.scale === scale) return;
   mapAtlasTiles.clear();
   mapAtlasWarmQueue.length = 0;
   mapAtlasWarmKeys.clear();
   mapAtlasGeneration++;
-  mapAtlasState = {
-    tiles: game.tiles,
-    scale,
-    owners: game.tiles.map(t => t.owner),
-    terrains: game.tiles.map(t => t.terrain),
-  };
+  mapAtlasState = { tiles: game.tiles, revision, scale };
 }
 function completeMapTile(tx, ty, scale, detail) {
   const key = tx + ',' + ty;
@@ -760,8 +807,8 @@ function mapLayer(scale, detail, dpr, w, h) {
   return (mapLayerCache = {
     canvas: layer,
     tiles: game.tiles,
-    owners: game.tiles.map(t => t.owner),
-    terrains: game.tiles.map(t => t.terrain),
+    revision: game.mapRevision || 0,
+    renderRevision: mapRenderRevision,
     scale,
     dpr,
     w,
@@ -856,6 +903,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
 }
 function draw(time, dt) {
   if (!canvas || !ctx) return;
+  mapHasPulse = false;
   const scale = computeView(),
     { w, h } = mapSize,
     dpr = Math.min(devicePixelRatio || 1, 2),
@@ -944,7 +992,10 @@ function draw(time, dt) {
           : selection?.kind === 'tile'
             ? selection
             : null;
-  if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  if (selTile) {
+    if (visible(hexCenter(selTile))) mapHasPulse = true;
+    for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  }
   // Each harbor is anchored to its water tile, but its causeway points toward its own
   // coastal city. World-wrap correction keeps the linkage short across the date line.
   const portVisuals = game.stations.filter(s => s.portLevel && s.portAt).map(s => {
@@ -1048,6 +1099,7 @@ function draw(time, dt) {
       }
       // Strategic projects: pink for F.L.E.I.J.A., cyan for the one-charge Eliminator.
       if (s.project) {
+        mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 300);
         ctx.strokeStyle = `rgba(255,95,174,${0.45 + 0.5 * pulse})`;
         ctx.lineWidth = Math.max(2.5, 2 / scale);
@@ -1057,6 +1109,7 @@ function draw(time, dt) {
         outlinedText(`F.L.E.I.J.A. · ${Math.max(0, s.project.ready - game.turn)}`, 0, -R - 4, 10, '#ff9fd0', scale, 'Trebuchet MS', true);
       }
       if (s.eliminatorProject || s.eliminator) {
+        mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 260);
         ctx.strokeStyle = `rgba(130,225,255,${0.5 + 0.45 * pulse})`;
         ctx.lineWidth = Math.max(2.2, 1.8 / scale);
@@ -1159,6 +1212,7 @@ function draw(time, dt) {
         ctx.fillStyle = PLATE[u.side].light;
         ctx.fill();
         if (readyUnit(u)) {
+          mapHasPulse = true;
           const pulse = 0.82 + 0.18 * Math.sin(time / 210);
           ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
           ctx.shadowBlur = 9;
@@ -1200,10 +1254,12 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
+    if (visible(p)) mapHasPulse = true;
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
   }
   // Campaign warnings: the hexes a scripted strike will hit next turn.
   for (const w of game.campaign?.warnings || []) {
+    mapHasPulse = true;
     const pulse = 0.5 + 0.5 * Math.sin(time / 220);
     for (const t of E.within(game, w, w.radius)) {
       const q = hexCenter(t);
@@ -1220,7 +1276,8 @@ function draw(time, dt) {
     for (const x of copies(q.x)) outlinedText(`⚠ ${w.label || 'Danger'}`, x, q.y - R * 0.9, 13, '#ffd0dc', scale, 'Trebuchet MS', true);
   }
   // F.L.E.I.J.A. targeting: the blast under the cursor, ground zero brighter than the ring.
-  if (hover && strikeMode)
+  if (hover && strikeMode) {
+    mapHasPulse = true;
     for (const t of E.blastArea(game, hover)) {
       const q = hexCenter(t),
         zero = t.c === hover.c && t.r === hover.r,
@@ -1234,6 +1291,7 @@ function draw(time, dt) {
         ctx.stroke();
       }
     }
+  }
   // Standing orders: the selected unit's route to its destination, or the hex under the cursor while choosing one.
   const routed = selectedUnit();
   if (routed?.side === game.player && (routing ? hover : routed.goto)) {

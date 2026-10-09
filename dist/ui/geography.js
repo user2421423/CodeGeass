@@ -156,9 +156,10 @@ const GEOGRAPHY = (() => {
     return inside;
   }
   function coastlineOwners(g) {
+    const revision = g.mapRevision || 0;
+    if (ownershipCache && ownershipCache.tiles === g.tiles && ownershipCache.revision === revision)
+      return ownershipCache;
     const original = g.tiles.map(t => t.owner || null);
-    if (ownershipCache && ownershipCache.tiles === g.tiles &&
-        original.every((o, i) => o === ownershipCache.original[i])) return ownershipCache;
     const inferred = original.slice();
     const dist = new Uint16Array(g.tiles.length);
     dist.fill(65535);
@@ -185,7 +186,7 @@ const GEOGRAPHY = (() => {
         queue.push(ni);
       }
     }
-    ownershipCache = { tiles: g.tiles, original, inferred, seeds };
+    ownershipCache = { tiles: g.tiles, revision, original, inferred, seeds };
     islandOwnerCache = null;
     return ownershipCache;
   }
@@ -509,27 +510,16 @@ const GEOGRAPHY = (() => {
   // camera margin was crossed (typically >100 ms on ordinary hardware).
   // Reuse geography tiles across redraws and zooms; keep the tactical overlay
   // in the existing renderer so selection remains sharp.
-  const TILE = 960;
-  const TILE_PADDING = 4;
-  const MAX_CACHED_TILES = 36;
-  const atlasTiles = new Map();
+  // The complete-map atlas in renderer.js is the sole high-detail tile cache.
+  // Geography only retains the inexpensive low-resolution world overview.
   const overviewCache = { canvas: null, game: null, version: -1 };
-  let lastMap = null, lastOwners = [], lastTerrain = [], atlasVersion = 0;
+  let lastMap = null, lastRevision = -1, atlasVersion = 0;
   const stats = { hits: 0, misses: 0, invalidations: 0 };
   function mapVersion(g) {
-    let changed = lastMap !== g.tiles || lastOwners.length !== g.tiles.length;
-    if (!changed) for (let i = 0; i < g.tiles.length; i++) {
-      const t = g.tiles[i];
-      if (lastOwners[i] !== t.owner || lastTerrain[i] !== t.terrain) {
-        changed = true;
-        break;
-      }
-    }
-    if (changed) {
+    const revision = g.mapRevision || 0;
+    if (lastMap !== g.tiles || lastRevision !== revision) {
       lastMap = g.tiles;
-      lastOwners = g.tiles.map(t => t.owner);
-      lastTerrain = g.tiles.map(t => t.terrain);
-      atlasTiles.clear();
+      lastRevision = revision;
       overviewCache.version = -1;
       ownershipCache = null;
       islandOwnerCache = null;
@@ -539,36 +529,6 @@ const GEOGRAPHY = (() => {
     return atlasVersion;
   }
   const makeCanvas = () => document.createElement('canvas');
-  function cachedTile(g, tx, ty, quality) {
-    const key = `${atlasVersion}/${quality}/${tx}/${ty}`;
-    let entry = atlasTiles.get(key);
-    if (entry) {
-      atlasTiles.delete(key);
-      atlasTiles.set(key, entry);
-      stats.hits++;
-      return entry;
-    }
-    const x = tx * TILE, y = ty * TILE;
-    const width = Math.min(TILE, WORLD_W - x);
-    const height = Math.min(TILE, WORLD_H - y);
-    const canvas = makeCanvas();
-    canvas.width = Math.ceil((width + 2 * TILE_PADDING) * quality);
-    canvas.height = Math.ceil((height + 2 * TILE_PADDING) * quality);
-    const c = canvas.getContext('2d');
-    if (!c) return null;
-    c.setTransform(quality, 0, 0, quality,
-      -(x - TILE_PADDING) * quality, -(y - TILE_PADDING) * quality);
-    paintRaw(c, g, x - TILE_PADDING, x + width + TILE_PADDING,
-      y - TILE_PADDING, y + height + TILE_PADDING, 0.8);
-    entry = { canvas, x, y, width, height, quality };
-    atlasTiles.set(key, entry);
-    stats.misses++;
-    if (atlasTiles.size > MAX_CACHED_TILES) {
-      const oldest = atlasTiles.keys().next().value;
-      atlasTiles.delete(oldest);
-    }
-    return entry;
-  }
   function paintOverview(ctx, g, left, right, top, bottom) {
     if (overviewCache.version !== atlasVersion || overviewCache.game !== g) {
       const canvas = overviewCache.canvas || makeCanvas();
@@ -596,40 +556,12 @@ const GEOGRAPHY = (() => {
     if (typeof document === 'undefined' || typeof document.createElement !== 'function' ||
         typeof ctx.drawImage !== 'function') return paintRaw(ctx, g, left, right, top, bottom, scale);
     mapVersion(g);
-    // At strategic world zoom, use a single overview image instead of
-    // instantiating and constantly evicting the entire 70+ tile atlas.
     if (scale < 0.33) return paintOverview(ctx, g, left, right, top, bottom);
-    // Outside the geographic data (above 74 N / below 54 S), retain ocean.
-    const ocean = ctx.createLinearGradient(0, 0, 0, R * 1.5 * g.rows);
-    ocean.addColorStop(0, '#205372');
-    ocean.addColorStop(0.55, '#154665');
-    ocean.addColorStop(1, '#103d5b');
-    ctx.fillStyle = ocean;
-    ctx.fillRect(left, top, right - left, bottom - top);
-    const quality = scale >= 0.85 ? 1 : 0.72;
-    const maxTx = Math.ceil(WORLD_W / TILE) - 1;
-    const maxTy = Math.ceil(WORLD_H / TILE) - 1;
-    const topRow = Math.max(0, Math.floor(top / TILE));
-    const bottomRow = Math.min(maxTy, Math.floor(bottom / TILE));
-    for (let k = Math.floor(left / WORLD_W) - 1; k <= Math.ceil(right / WORLD_W); k++) {
-      const shift = k * WORLD_W;
-      const a = left - shift, b = right - shift;
-      if (b <= 0 || a >= WORLD_W) continue;
-      const start = Math.max(0, Math.floor(a / TILE));
-      const end = Math.min(maxTx, Math.floor(b / TILE));
-      for (let ty = topRow; ty <= bottomRow; ty++)
-        for (let tx = start; tx <= end; tx++) {
-          const tile = cachedTile(g, tx, ty, quality);
-          if (!tile) continue;
-          const q = quality, pad = TILE_PADDING * q;
-          ctx.drawImage(tile.canvas, pad, pad, tile.width * q, tile.height * q,
-            tile.x + shift, tile.y, tile.width, tile.height);
-        }
-    }
-    return true;
+    // Called while painting a complete-map atlas tile; do not build a second atlas.
+    return paintRaw(ctx, g, left, right, top, bottom, scale);
   }
   // Read-only instrumentation used by rendering performance regression checks.
-  function cacheStats() { return { ...stats, tiles: atlasTiles.size }; }
+  function cacheStats() { return { ...stats, tiles: 0 }; }
 
   // A cheap, cached point-in-polygon check for the few hovered gameplay hexes.
   // Unlike GEOGRAPHY.sample, this is the *visual* shoreline classification.

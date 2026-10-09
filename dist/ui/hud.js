@@ -294,6 +294,8 @@ function updateSelection() {
               : selectedSite()
                 ? `${selectedSite().name} · Sakuradite mine · ${selectedSite().owner === game.player ? 'Upgrade its refinery to extract more' : 'Move Infantry or Armor onto it to seize it'}`
                 : 'Select a Knightmare to reveal movement and firing range.';
+  // AI playback and async game-state changes are not necessarily user input events.
+  if (typeof requestMapFrame === 'function') requestMapFrame();
 }
 function moraleName(n) {
   return n >= 1
