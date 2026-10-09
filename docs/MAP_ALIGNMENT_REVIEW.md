@@ -178,3 +178,23 @@ For future gameplay conversions, adjust `tools/build_map.py` source-of-truth
 overrides, regenerate `dist/engine/world.js`, update the approved map lock
 and explicitly validate city placements, saved-game compatibility, naval
 pathfinding and conquest AI. Do not blindly convert all mismatches.
+
+## Stage 8 — No inland lakes, Japan Tsugaru Strait open
+
+Inland lakes are deliberately absent: the GSHHG geographic renderer no
+longer paints inland-water holes. This includes the Great Lakes, Lake
+Victoria, Aral Sea, and Caspian Sea. The Black Sea remains ocean-linked
+water through the Turkish Straits.
+
+The Caspian's only isolated naval component (11 sea hexes) has been
+converted into plains. Existing conquest saves migrate unoccupied
+Caspian water to land with neighbouring faction ownership, but preserve
+tiles occupied by ships, units, ports or built sites. Campaign mode
+is unaffected.
+
+At (160,19), the artificial Honshu–Hokkaido land bridge is converted to
+a sea hex, keeping the Tsugaru Strait navigable and Sapporo an island
+destination requiring sea transport. Other Japanese city hexes are
+kept intact to protect city placement and garrisons.
+
+The Arctic is out of scope for any further coastline alignment.
