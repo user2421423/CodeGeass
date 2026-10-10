@@ -283,6 +283,39 @@ const modal = () => node('modal-root').innerHTML;
   assert(node('side').innerHTML.includes('City defenses'), 'city details and management still open');
   clickAction({ action: 'details' });
   assert(!node('side').innerHTML, 'city details close cleanly');
+  // Fully upgraded buildings must not offer clickable upgrade orders.
+  // This covers city factories and the separate Sakuradite-mine refinery UI.
+  const buildingButtons = run(`(() => {
+    const city = game.stations.find(s => s.owner === game.player);
+    const beforeTier = city.tier, beforeSelection = selection;
+    try {
+      selection = { kind: 'station', id: city.id };
+      city.tier = 3;
+      const maxCity = panel();
+      city.tier = 2;
+      const upgradableCity = panel();
+      const maxRefinery = refineryRow({ refinery: 3 }, 'data-refine="12"', null);
+      const upgradableRefinery = refineryRow({ refinery: 2 }, 'data-refine="12"', null);
+      return { maxCity, upgradableCity, maxRefinery, upgradableRefinery };
+    } finally {
+      city.tier = beforeTier;
+      selection = beforeSelection;
+    }
+  })()`);
+  assert(buildingButtons.maxCity.includes('<button class="small" disabled>Maximum level</button>'),
+    'level-3 city buildings display a native disabled Maximum level control');
+  assert(!buildingButtons.maxCity.includes('data-build="factory"'),
+    'fully upgraded factories no longer offer an upgrade action');
+  assert(buildingButtons.upgradableCity.includes('data-build="factory"') &&
+    buildingButtons.upgradableCity.includes('Upgrade to level 3'),
+    'level-2 city buildings retain their normal upgrade action');
+  assert(buildingButtons.maxRefinery.includes('<button class="small" disabled>Maximum level</button>') &&
+    !buildingButtons.maxRefinery.includes('data-refine='),
+    'level-3 standalone mine refineries have no clickable upgrade action');
+  assert(buildingButtons.upgradableRefinery.includes('data-refine="12"') &&
+    buildingButtons.upgradableRefinery.includes('Upgrade to level 3'),
+    'level-2 standalone refineries remain upgradeable');
+
   const mineId = run("game.sites?.[0]?.id");
   if (mineId != null) {
     run(`selectSite(${mineId})`);

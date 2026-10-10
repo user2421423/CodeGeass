@@ -121,9 +121,9 @@
   }
   // ======== Theaters ========
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
-  // units keep their front for `sticky` turns, an offensive gathers within `rally` hexes of its rally city before it
-  // attacks (or after `wait` turns), and `reserve` of the army's strength waits at the capital.
-  const FRONT = { radius: 16, near: 20, max: 4, sticky: 4, far: 60, rally: 4, reserve: 0.1, wait: 3, pull: 15, stray: 4, floor: 0.25 };
+  // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
+  // (or after `wait` turns). Garrisons and defensive fronts respond to threats; no army is held in strategic reserve.
+  const FRONT = { radius: 16, near: 20, max: 4, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
     const t = TYPES[u.type];
@@ -162,9 +162,9 @@
     }
     return list;
   }
-  // Clusters objectives into fronts, scores and sizes them against the enemy strength there, assigns the army (sticky,
-  // emergencies and strength deficits first, a strategic reserve kept back), moves offensives between ASSEMBLING and
-  // ATTACKING, and builds one goal field per front. Persistent state lives in g.ai[side].fronts and .assignments.
+  // Clusters objectives into fronts, scores them against enemy strength, and assigns non-garrison units
+  // to offensive or defensive theaters, prioritizing emergencies and force deficits. No strategic reserve
+  // is maintained. Front states and assignments persist in g.ai[side].fronts and .assignments.
   function planFronts(g, side, memo) {
     const R = aiRange(g),
       state = ((g.ai ||= {})[side] ||= { saving: false }),
@@ -194,10 +194,7 @@
       fronts.push(f);
     }
     // 2. Score and size: objective values, minus distance from the nearest own city; enemy strength sets the force needed.
-    // Garrisons are excluded from the mobile field army but count toward its 10% defensive reserve.
-    const army = sum(units),
-      garrisonStrength = sum(g.units.filter(u => u.hp > 0 && u.side === side && memo.guards[u.id])),
-      reserveTarget = FRONT.reserve * (army + garrisonStrength);
+    const army = sum(units);
     for (const f of fronts) {
       const attack = f.objectives.filter(o => !o.defend),
         defend = f.objectives.filter(o => o.defend),
@@ -238,24 +235,11 @@
     fronts = fronts
       .sort((a, b) => b.emergency - a.emergency || b.priority - a.priority || (a.id < b.id ? -1 : 1))
       .filter((f, i, all) => f.emergency || i - all.filter(e => e.emergency).length < FRONT.max);
-    const byId = Object.fromEntries(fronts.map(f => [f.id, f])),
-      capital =
-        own.find(s => s.capitalOf === side) ||
-        own.slice().sort((a, b) => b.tier - a.tier || (b.factory || 0) - (a.factory || 0) || a.id - b.id)[0],
-      reserve = capital && {
-        id: 'reserve',
-        side,
-        type: 'reserve',
-        name: capital.name,
-        anchor: capital,
-        objectives: [{ c: capital.c, r: capital.r, seed: 0 }],
-        assigned: 0,
-        desiredStrength: Math.max(0, reserveTarget - garrisonStrength),
-        score: 0,
-      };
-    if (reserve) byId.reserve = reserve;
-    // 3. Sticky assignments hold unless the front is gone, the unit has served its turns, drifted extremely far, or a
-    // vital emergency nearby (any emergency, for the reserve) needs it.
+    // Garrisons have already been excluded from the deployable field army.
+    // All remaining formations can reinforce offensives or defensive fronts as needed.
+    const byId = Object.fromEntries(fronts.map(f => [f.id, f]));
+    // 3. Sticky assignments persist unless the front disappears, its term ends, the unit
+    // drifts far away, or a nearby vital emergency demands redeployment.
     const assign = {},
       emergencies = fronts.filter(f => f.emergency),
       give = (u, f) => {
@@ -266,17 +250,15 @@
     for (const u of units) {
       const a = sticky[u.id],
         f = a && byId[a.front];
-      // Reassess the mobile reserve on every turn; an old reserve assignment must
-      // not trap a unit at the capital after garrisons or defense fronts fill the quota.
-      if (!f || f === reserve) continue;
+      if (!f) continue;
       const pulled = emergencies.some(e => e !== f && e.vital && dist(g, at(u), e.anchor) <= FRONT.pull);
       if (!pulled && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
     }
-    // 4. Targets: emergencies get their full need and the reserve its share; the rest of the army splits 50/25/15/10 by
-    // front rank, a front never taking more than it needs (the surplus flows to the others).
+    // 4. Emergency fronts get priority; remaining forces are shared across both
+    // offensive and routine defensive fronts by priority and actual strength need.
     const open = fronts.filter(f => !f.emergency),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
-    let pot = army - (reserve?.desiredStrength || 0),
+    let pot = army,
       left = open;
     // A vital emergency (capital, F.L.E.I.J.A. project) may claim everything it needs; any other at most a fifth.
     for (const f of emergencies) pot -= f.target = f.vital ? f.desiredStrength : Math.min(f.desiredStrength, army * 0.2);
@@ -291,8 +273,8 @@
       for (const f of capped) pot -= f.target = f.desiredStrength;
       left = left.filter(f => !capped.includes(f));
     }
-    // The pool goes to emergencies, then the reserve, then whichever front is furthest below its target; each front
-    // takes the nearest free unit (a little nearer if it served there before). Leftovers join the nearest front.
+    // The pool goes to emergencies first, then the fronts furthest below their
+    // targets. Leftover units join an active front, preferably an offensive.
     const pool = units.filter(u => !assign[u.id]),
       take = (f, range = Infinity) => {
         let best = null,
@@ -309,58 +291,19 @@
         return !!best;
       };
     for (const f of emergencies) while (f.assigned < f.target && take(f, FRONT.pull + 10));
-    // Ordinary defensive fronts also count toward the same reserve, so commit
-    // their allocated defenders before deciding if more troops should stay home.
-    for (const f of fronts.filter(f => f.type === 'defensive' && !f.emergency))
-      while (f.assigned < f.target && take(f, FRONT.pull + 10));
-    if (reserve) {
-      const plannedReserve = reserve.desiredStrength,
-        frontDefense = fronts.filter(f => f.type === 'defensive').reduce((total, f) => total + f.assigned, 0);
-      // The 10% is a combined peacetime target, not 10% on top of garrisons and
-      // active defensive fronts. Actual threats may legitimately exceed it.
-      reserve.desiredStrength = Math.max(0, reserveTarget - garrisonStrength - frontDefense);
-      // Return any no-longer-needed reserve budget to offensive fronts.
-      let freed = plannedReserve - reserve.desiredStrength;
-      for (const f of fronts.filter(f => f.type === 'offensive')) {
-        if (freed <= 0) break;
-        const extra = Math.min(freed, Math.max(0, f.desiredStrength - f.target));
-        f.target += extra;
-        freed -= extra;
-      }
-      while (reserve.assigned < reserve.desiredStrength && take(reserve, 25));
+     for (;;) {
+      const needy = fronts.filter(f => f.assigned < f.target)
+        .sort((a, b) => b.target - b.assigned - (a.target - a.assigned));
+      if (!needy.some(f => take(f))) break;
     }
-    for (;;) {
-      const f = fronts.filter(f => f.assigned < f.target).sort((a, b) => b.target - b.assigned - (a.target - a.assigned))[0];
-      if (!f || !take(f)) break;
-    }
+    // If targets are already filled, prefer sending extra strength to an
+    // offensive instead of accumulating units in routine defensive positions.
+    const offensive = fronts.filter(f => f.type === 'offensive' || f.emergency),
+      overflow = offensive.length ? offensive : fronts;
     for (const u of pool) {
       if (assign[u.id]) continue;
-      // Avoid piling surplus troops onto a defensive front already at strength.
-      // Once fronts have met their needs, favor active offensives over quiet defenses.
-      const understrength = fronts.filter(f => f.assigned < f.desiredStrength),
-        offensives = fronts.filter(f => f.type === 'offensive'),
-        choices = understrength.length ? understrength : offensives.length ? offensives : fronts,
-        f = byDist(at(u), choices)[0] || reserve;
+      const f = byDist(at(u), overflow)[0];
       if (f) give(u, f);
-    }
-    if (reserve) {
-      // Final assignments can exceed a front's target because units are indivisible,
-      // or previously assigned defenders stay with their front. Reconcile against
-      // actual defense strength and release an unnecessary capital reserve.
-      const finalDefenders = fronts.filter(f => f.type === 'defensive').reduce((n, f) => n + f.assigned, 0),
-        needed = Math.max(0, reserveTarget - garrisonStrength - finalDefenders);
-      reserve.desiredStrength = needed;
-      if (reserve.assigned > needed) {
-        const offensives = fronts.filter(f => f.type === 'offensive');
-        for (const u of units.filter(u => assign[u.id] === reserve.id)) {
-          if (reserve.assigned <= needed || !offensives.length) break;
-          // Preserve one defender when releasing it would undershoot the target.
-          if (reserve.assigned - unitStrength(u) < needed - 1e-6) continue;
-          const f = byDist(at(u), offensives)[0];
-          reserve.assigned -= unitStrength(u);
-          give(u, f);
-        }
-      }
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
     // ATTACKING; an attack that has lost over half its force falls back to regroup. Defensive fronts hold.
@@ -395,7 +338,7 @@
     // otherwise the objectives, and for threatened own cities the enemy units menacing them. An attacking front also
     // takes targets of opportunity, but only those `stray` path cost nearer than its own.
     const elsewhere = goalSeeds(g, side).map(([p, d]) => [p, d + FRONT.stray]);
-    for (const f of [...fronts, ...(reserve ? [reserve] : [])]) {
+    for (const f of fronts) {
       const seeds = (f.seeds =
         f.state === 'assembling'
           ? [[f.rally, 0]]
@@ -408,7 +351,7 @@
     }
     // Idle carriers wait off the rally city of the best offensive across the sea.
     const lift = fronts.find(f => f.overseas && f.rally);
-    Object.assign(memo, { fronts, byId, assign, fields: {}, reserve, staging: lift?.rally || null });
+    Object.assign(memo, { fronts, byId, assign, fields: {}, staging: lift?.rally || null });
   }
   // Already nearer an assembling front's target than its rally city is, on the rally's landmass.
   const aheadOfRally = (g, f, p) => massOf(g, p) === massOf(g, f.rally) && dist(g, p, f.anchor) < dist(g, f.rally, f.anchor);
@@ -429,8 +372,7 @@
       },
       enemy = mix((f.enemies || []).filter(u => !isShip(u))),
       ours = mix(mine);
-    if (f.type === 'reserve') return ['heavy', 'medium', 'rocket'];
-    const need = f.overseas
+     const need = f.overseas
       ? ['raider', 'medium', 'assault', 'heavy']
       : f.type === 'defensive'
         ? ['heavy', 'rocket', 'medium', 'support']
@@ -441,14 +383,16 @@
       need.unshift(f.type === 'offensive' && f.objectives.some(o => o.fortified) ? 'siege' : 'rocket');
     return [...new Set(need)];
   }
-  // The front (or reserve) a unit serves; formations raised after the plan join the nearest front still short of strength.
+  // The active front a unit serves; newly raised formations reinforce understrength fronts.
   function frontOf(g, memo, u) {
     if (!memo?.byId || !u || memo.guards?.[u.id] || memo.recoveries?.has(u.id) || isShip(u) || u.hold) return null;
     if (!(u.id in memo.assign)) {
-      const short = memo.fronts.filter(f => f.assigned < f.desiredStrength),
-        f = (short.length ? short : memo.fronts)
+      const short = memo.fronts.filter(f => f.assigned < (f.target ?? f.desiredStrength)),
+        offensive = memo.fronts.filter(f => f.type === 'offensive' || f.emergency),
+        candidates = short.length ? short : offensive.length ? offensive : memo.fronts,
+        f = candidates
           .slice()
-          .sort((a, b) => dist(g, u, a.anchor) - dist(g, u, b.anchor) || (a.id < b.id ? -1 : 1))[0] || memo.reserve;
+          .sort((a, b) => dist(g, u, a.anchor) - dist(g, u, b.anchor) || (a.id < b.id ? -1 : 1))[0];
       memo.assign[u.id] = f?.id ?? null;
       if (f) {
         f.assigned += unitStrength(u);
@@ -457,10 +401,10 @@
     }
     return memo.byId[memo.assign[u.id]] || null;
   }
-  // The goal field a unit follows: its front's; guards lean on the reserve's and warships on the main front's; else the
-  // side-wide field. Fields are built on first use.
+  // The goal field a unit follows: the assigned front's. Guards and
+  // unassigned units use the side-wide field; unassigned warships may use the leading front.
   function fieldFor(g, memo, u) {
-    const f = frontOf(g, memo, u) || (isShip(u) ? memo.fronts?.[0] : memo.reserve);
+    const f = frontOf(g, memo, u) || (isShip(u) ? memo.fronts?.[0] : null);
     let field = null;
     return p => {
       field ||= (f && (memo.fields[f.id] ||= goalField(g, f.side, f.seeds))) || (memo.field ||= goalField(g, u.side));
@@ -511,14 +455,20 @@
     }
     return (direct ? f.stack : 0) + cargo;
   }
-  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
-  // to enemies within five hexes (or a landing's reach, see threatTo) and draw defenders from proportionally larger
-  // strategic radii. In Conquest, fortress cities and naval bases also keep one defender. Returns { unitId: city }.
+  // Garrison duty: the capital seeks two defenders (four when threatened).
+  // Threatened cities, fortress cities, major ports, and mines draw defenders independently
+  // of front assignments; nearby enemies are marked as urgent. No reserve quota applies.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0);
+      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
+      urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
+      guard = (u, post, emergency = false) => {
+        if (taken[u.id]) return false;
+        taken[u.id] = { ...post, emergency };
+        return true;
+      };
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -534,26 +484,35 @@
       const near = own
         .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+      let assigned = 0;
+      for (const u of near) {
+        if (assigned >= need) break;
+        if (guard(u, { c: s.c, r: s.r, id: s.id }, urgent(s, t))) assigned++;
+      }
     }
-    // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
-    // empty, even in quiet times.
+    // Strongholds (Conquest): fortress cities and level-2+ naval bases
+    // each request one available land defender, independently of front strength.
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
-        const u = own
+        for (const u of own
           .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
-          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
-        if (u) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)) {
+          if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
+        }
       }
-    // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
+    // Own mines: major deposits seek one guard; threatened mines can draw up to two defenders.
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
       const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
+      let assigned = 0;
+      for (const u of near) {
+        if (assigned >= need) break;
+        if (guard(u, { c: d.c, r: d.r, site: d.id }, urgent(d, t))) assigned++;
+      }
     }
     return taken;
   }
@@ -799,7 +758,18 @@
       const u = unitAt(g, s);
       if (!u || u.side !== side || u.moved || !isReady(g, u)) continue;
       if (!foes.some(f => dist(g, f, s) <= 2)) {
-        g.vacated.push({ id: u.id, orders: aiOrder(g, u.id) });
+        const orders = aiOrder(g, u.id);
+        // Without a dedicated garrison, the unit may not have a local
+        // objective. It must still clear the city's production hex.
+        if (u.c === s.c && u.r === s.r && !u.moved) {
+          const reach = reachable(g, u);
+          const spot = adjacent(g, s)
+            .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
+            .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+          const moveOut = spot && move(g, u.id, spot.c, spot.r);
+          if (moveOut?.ok) orders.push({ kind: 'move', ...moveOut, id: u.id });
+        }
+        g.vacated.push({ id: u.id, orders });
         continue;
       }
       if (s.producedTurn === g.turn || cityBusyReason(g, s) || shortfall(e, cheapest)) continue;
@@ -1025,7 +995,7 @@
     // Include new recruits as they are produced, so simultaneous factories
     // cannot all oversupply the same front based on an outdated plan snapshot.
     const superDemand = f => {
-      if (!f || f.overseas || f.type === 'reserve') return false;
+      if (!f || f.overseas) return false;
       const enemies = f.enemies || [],
         armored = enemies.filter(u => TYPES[u.type].branch === 'Armor')
           .reduce((total, u) => total + unitStrength(u), 0),

@@ -216,59 +216,56 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
-test('Capital garrisons and defensive fronts count toward the shared ten-percent reserve', () => {
+test('AI has no strategic reserve and continues assigning garrisons and fronts', () => {
+  assert.equal(Object.hasOwn(E.FRONT, 'reserve'), false, 'there is no strategic reserve setting');
   for (const side of E.MAJORS) {
-    const g = E.createGame('britannia', 'normal', 'conquest', 123);
-    const memo = E.aiPlan(g, side);
-    const guards = g.units.filter(u => u.hp > 0 && u.side === side && memo.guards[u.id])
-      .reduce((n, u) => n + E.unitStrength(u), 0);
-    const mobile = E.internal.allUnits(g)
-      .filter(u => u.hp > 0 && u.side === side && !E.internal.isShip(u) &&
-        !u.hold && !memo.guards[u.id] && !memo.recoveries?.has(u.id))
-      .reduce((n, u) => n + E.unitStrength(u), 0);
-    const defenders = memo.fronts.filter(f => f.type === 'defensive')
-      .reduce((n, f) => n + f.assigned, 0);
-    const expected = Math.max(0, E.FRONT.reserve * (mobile + guards) - guards - defenders);
-    assert(Math.abs(memo.reserve.desiredStrength - expected) < 1e-6,
-      side + ': additional capital reserve must subtract garrisons and defensive fronts');
-    assert.equal(memo.reserve.desiredStrength, 0,
-      side + ': starting garrisons already cover the ten-percent reserve');
+    for (const quiet of [false, true]) {
+      const g = E.createGame('britannia', 'normal', 'conquest', 123);
+      if (quiet) g.units = g.units.filter(u => u.side === side);
+      const memo = E.aiPlan(g, side);
+      assert.equal(memo.reserve, undefined, 'no synthetic strategic reserve front');
+      assert.equal(memo.byId.reserve, undefined, 'no reserve in active front registry');
+      assert(!Object.values(memo.assign).includes('reserve'), 'no units assigned to reserve');
+      assert(Object.keys(memo.guards).length > 0, 'city guards still operate');
+      assert(memo.fronts.every(f => f.type === 'offensive' || f.type === 'defensive'),
+        'all strategic assignments serve a real front');
+    }
   }
 });
 
-function noGarrisonReserveScenario() {
-  const g = blank('britannia', 40);
+test('Routine capital garrisons may use the available army without a reserve cap', () => {
+  const g = blank();
   g.phase = 'eu';
-  for (const s of g.stations) { s.capitalOf = null; s.capital = false; }
-  return g;
-}
-
-test('An unguarded quiet army still allocates a ten-percent mobile reserve', () => {
-  const g = noGarrisonReserveScenario();
-  for (let c = 10; c < 30; c++)
-    E.newUnit(g, E.typeFor('eu', 'light'), 'eu', c, 15);
+  const capital = g.stations.find(s => s.owner === 'eu');
+  const scout = E.typeFor('eu', 'scout');
+  const a = E.newUnit(g, scout, 'eu', capital.c, capital.r);
+  const b = E.newUnit(g, scout, 'eu', capital.c - 1, capital.r);
   const memo = E.aiPlan(g, 'eu');
-  assert.equal(Object.keys(memo.guards).length, 0);
-  assert.equal(memo.reserve.desiredStrength, 2, '20 equal-strength frames keep two in reserve');
-  assert(memo.reserve.assigned >= memo.reserve.desiredStrength);
+  assert.equal(memo.guards[a.id]?.id, capital.id);
+  assert.equal(memo.guards[b.id]?.id, capital.id);
+  assert.equal(memo.reserve, undefined);
 });
 
-test('Threat-driven defensive fronts replace, rather than add to, the mobile reserve', () => {
-  const g = noGarrisonReserveScenario();
-  for (let c = 16; c < 30; c++)
-    for (let r = 2; r <= 3; r++)
-      E.newUnit(g, E.typeFor('eu', 'light'), 'eu', c, r);
-  E.newUnit(g, E.typeFor('britannia', 'heavy'), 'britannia', 37, 0);
+test('Saved obsolete reserve assignments are released to live fronts', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const side = 'eu', unit = g.units.find(u => u.side === side && !E.TYPES[u.type].naval);
+  g.ai ||= {};
+  g.ai[side] ||= {};
+  g.ai[side].assignments = { [unit.id]: { front: 'reserve', since: g.turn } };
+  const memo = E.aiPlan(g, side);
+  assert.notEqual(memo.assign[unit.id], 'reserve');
+  assert.equal(memo.byId.reserve, undefined);
+});
+
+test('A city under immediate threat still receives an urgent garrison', () => {
+  const g = blank();
+  g.phase = 'eu';
+  const city = g.stations.find(s => s.owner === 'eu');
+  const defender = E.newUnit(g, E.typeFor('eu', 'light'), 'eu', city.c, city.r);
+  E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', city.c - 2, city.r);
   const memo = E.aiPlan(g, 'eu');
-  assert.equal(Object.keys(memo.guards).length, 0);
-  const defensiveStrength = memo.fronts.filter(f => f.type === 'defensive')
-    .reduce((n, f) => n + f.assigned, 0);
-  assert(defensiveStrength > 0, 'threatened city receives a defensive front');
-  const expected = Math.max(0, 28 * E.FRONT.reserve - defensiveStrength);
-  assert(Math.abs(memo.reserve.desiredStrength - expected) < 1e-6,
-    'defensive-front assignments reduce the extra capital reserve');
-  assert(memo.reserve.assigned >= memo.reserve.desiredStrength,
-    'remaining reserve is still filled where possible');
+  assert.equal(memo.guards[defender.id]?.emergency, true,
+    'an immediately threatened city keeps its defender without a reserve quota');
 });
 
 test('AI chooses super-heavy units from armored-front demand without waiting for cooldown', () => {
