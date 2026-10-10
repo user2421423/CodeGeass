@@ -272,9 +272,14 @@
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
     }
-    if (s && pr.shield) {
-      sd = Math.min(s.shield, Math.round(pr.shield * mult));
-      s.shield -= sd;
+    if (s && foe(g, s.owner, a.side)) {
+      // Even after the defenses reach zero, another successful city assault
+      // keeps its next regeneration suppressed.
+      s.attackedSinceRegen = true;
+      if (pr.shield) {
+        sd = Math.min(s.shield, Math.round(pr.shield * mult));
+        s.shield -= sd;
+      }
     }
     if (f.terror && d && d.hp > 0) lowerMorale(g, d, 1);
     const aef = eliteFx(a);

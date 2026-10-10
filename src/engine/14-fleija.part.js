@@ -279,9 +279,11 @@
           cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
         } else if (ring) {
           ruin(g, s, 1);
+          s.attackedSinceRegen = true;
           cities.push({ name: s.name, severity: 'inner' });
         } else {
           s.shield = Math.min(s.shield, Math.round(s.maxShield * FLEIJA.outerShield));
+          s.attackedSinceRegen = true;
           cities.push({ name: s.name, severity: 'outer' });
         }
       }

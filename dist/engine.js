@@ -1840,9 +1840,14 @@
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
     }
-    if (s && pr.shield) {
-      sd = Math.min(s.shield, Math.round(pr.shield * mult));
-      s.shield -= sd;
+    if (s && foe(g, s.owner, a.side)) {
+      // Even after the defenses reach zero, another successful city assault
+      // keeps its next regeneration suppressed.
+      s.attackedSinceRegen = true;
+      if (pr.shield) {
+        sd = Math.min(s.shield, Math.round(pr.shield * mult));
+        s.shield -= sd;
+      }
     }
     if (f.terror && d && d.hp > 0) lowerMorale(g, d, 1);
     const aef = eliteFx(a);
@@ -2982,9 +2987,11 @@
           cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
         } else if (ring) {
           ruin(g, s, 1);
+          s.attackedSinceRegen = true;
           cities.push({ name: s.name, severity: 'inner' });
         } else {
           s.shield = Math.min(s.shield, Math.round(s.maxShield * FLEIJA.outerShield));
+          s.attackedSinceRegen = true;
           cities.push({ name: s.name, severity: 'outer' });
         }
       }
@@ -3189,9 +3196,11 @@
         if (filler && (t.terrain === 'desert' || t.terrain === 'snow'))
           u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.03));
       }
+      // City occupancy no longer heals frames by itself. Inoue's separate
+      // Resistance Logistics bonus still applies to friendly city garrisons.
       const s = stationAt(g, u);
-      if (s?.owner === side)
-        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * (0.08 + (logisticsNear(g, u) ? 0.05 : 0))));
+      if (s?.owner === side && logisticsNear(g, u))
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       const port = TYPES[u.type].naval && portAtHex(g, u);
       if (port && port.portOwner === side)
         u.hp = Math.min(
@@ -3207,7 +3216,11 @@
     for (const s of g.stations) {
       if (s.owner !== side) continue;
       const rate = 0.12 + techValue(g, side, 'cities.engineering') + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
-      s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * rate));
+      // Consume this marker at the owner's next regeneration. A hit by any
+      // rival phase is counted once, even when factions take turns in one round.
+      const recovery = s.attackedSinceRegen ? rate * 0.5 : rate;
+      s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * recovery));
+      delete s.attackedSinceRegen;
     }
     strategicTurn(g, side);
     hooks.turn?.(g, side);
