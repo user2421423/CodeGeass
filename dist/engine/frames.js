@@ -71,7 +71,7 @@
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },
   };
   const MAJORS = ['britannia', 'eu', 'cf'];
-  // ======== Knightmare classes: three branches, as infantry, armor and artillery ========
+  // ======== Knightmare classes: infantry, armor and artillery branches ========
   const CLASSES = {
     scout: {
       branch: 'Infantry',

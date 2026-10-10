@@ -88,7 +88,7 @@
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 
-  // ======== Elite Forces: persistent persistent unique units ========
+  // ======== Elite Forces: persistent unique units ========
   const ELITE_TYPE_TO_ID = Object.fromEntries(Object.entries(ELITE_FORCES).map(([id, e]) => [e.type, id]));
   function eliteProfile(profile = {}) {
     profile.elites ||= {};

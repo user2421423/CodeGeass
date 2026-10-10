@@ -1,6 +1,6 @@
 # Knightmare Conquest
 
-A browser turn-based hex strategy game inspired by classic hex-based strategy games, themed on **Code Geass**. Three powers
+A browser-based turn-based hex strategy game themed on **Code Geass**. Three powers
 fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **Europia United (E.U.)** and the
 **Chinese Federation**. It is a sister project of *Galactic Command* (the LOGH game) and keeps the same systems.
 

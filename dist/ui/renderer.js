@@ -426,7 +426,7 @@ function drawEstimate(p, pr, scale) {
   ctx.fillText(text, 0, -9);
   ctx.restore();
 }
-// Faction base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
+// Base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
 function drawPlate(u, scale, sea, time = 0) {
   const c = PLATE[u.side],
     cy = 14,
