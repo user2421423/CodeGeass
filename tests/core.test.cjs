@@ -500,6 +500,43 @@ test('Every campaign mission builds with valid references', () => {
   }
 });
 
+test('Campaign deadline takes precedence over an otherwise completed objective', () => {
+  const complete = g => {
+    g.stations.find(s => s.name === 'G-1 Base').owner = g.player;
+    return g;
+  };
+  const onTime = complete(C.createMission('bk1', 7));
+  onTime.turn = onTime.campaign.turnLimit;
+  assert.equal(E.hooks.decide(onTime).winner, onTime.player, 'completion on the final turn counts');
+
+  const late = complete(C.createMission('bk1', 7));
+  late.turn = late.campaign.turnLimit + 1;
+  const result = E.hooks.decide(late);
+  assert.notEqual(result.winner, late.player, 'completion after the deadline must fail');
+  assert.match(result.reason, /Turn \d+ has passed/);
+  assert.equal(result.stars, 0, 'a late finish cannot collect stars');
+});
+
+test('Campaign progression and rewards honor one-time stars across difficulties', () => {
+  const g = C.createMission('bk1', 7);
+  g.stations.find(s => s.name === 'G-1 Base').owner = g.player;
+  assert.equal(E.hooks.decide(g).stars, 3);
+  const initial = C.reward(g, {});
+  assert.equal(initial.total, C.REWARD.first + 2 * C.REWARD.star);
+  assert(initial.fragments[C.starElite('bk1')] > 0, 'two- and three-star Elite fragments granted');
+
+  const profile = {
+    campaign: { bk1: 3 },
+    campaignDifficulty: { bk1: { normal: 3 } },
+  };
+  assert(C.unlocked(profile, C.next('bk1')), 'clearing the mission unlocks the next');
+  assert.equal(C.reward(g, profile).repeat, true, 'normal difficulty cannot pay a second time');
+  g.difficulty = 'hard';
+  const hard = C.reward(g, profile);
+  assert(hard.total > 0, 'hard difficulty has a separate first-clear payout');
+  assert.deepEqual(hard.fragments, {}, 'overall Elite performance fragments are not farmable');
+});
+
 test('Generic rarity slots, purchases, upgrades, replacements and save migration', () => {
   const p = { tokens: 20000 };
   E.roster(p);
