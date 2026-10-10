@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Fail if the map in dist/engine/world.js changed outside the hexes that are allowed to change.
 
-tools/data/map_locked.txt is the approved map, one row per line. Only hexes in build_map.py's REDRAW regions and its
-FIX_LAND / FIX_SEA lists may differ from it; anything else is an accidental edit. After approving a map change,
+tools/data/map_locked.txt is the approved map, one row per line. Only hexes in build_map.py's REDRAW regions, its
+FIX_LAND / FIX_SEA lists and the coast hexes (tools/data/coast_hexes.json) may differ from it; anything else is an
+accidental edit. After approving a map change,
 refresh the lock:  python3 tools/check_map.py --update
 Also fails if world.js is out of date with build_map.py (run build_map.py --inject). Needs only the standard library.
 """
+import json
 import os
 import re
 import sys
@@ -20,7 +22,7 @@ WORLD = os.path.join(HERE, '..', 'dist', 'engine', 'world.js')
 
 def world_rows():
     src = open(WORLD).read()
-    return re.findall(r"'([.pfmdsx]+)'", src.split('// <world>')[1].split('// </world>')[0])
+    return re.findall(r"'([.a-z]+)'", src.split('// <world>')[1].split('// </world>')[0])
 
 
 def main():
@@ -32,6 +34,9 @@ def main():
     locked = open(LOCK).read().split()
     allowed = {h for region in bm.REDRAW.values() for h in bm.region_hexes(region['bands'])}
     allowed |= set(bm.FIX_LAND) | set(bm.FIX_SEA)
+    # Coast hexes come from tools/coast_hexes.py (tools/data/coast_hexes.json), regenerated from the drawn coastline.
+    if os.path.exists(bm.COAST_HEXES):
+        allowed |= {tuple(h) for h in json.load(open(bm.COAST_HEXES))['hexes']}
     stray = [(c, r) for r in range(bm.ROWS) for c in range(bm.COLS)
              if rows[r][c] != locked[r][c] and (c, r) not in allowed]
     built = [''.join(row) for row in bm.build()]
