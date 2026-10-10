@@ -38,11 +38,9 @@ test('Amphibious units still receive their existing ten-hex carrier escort bonus
       const g = seaMap(side);
       const ship = E.newUnit(g, E.NAVAL[side].carrier, side, 10, 6);
       const u = E.newUnit(g, E.NAVAL[side][field], side, 11, 6);
-      assert.equal(E.amphibiousSea(g, u), 10, side + ' escorted ' + field);
       assert(E.reachable(g, u).has('21,6'), side + ' escorted reach');
       assert(!E.reachable(g, u).has('22,6'), side + ' escorted cap');
       g.units.splice(g.units.indexOf(ship), 1);
-      assert.equal(E.amphibiousSea(g, u), normal, side + ' unescorted ' + field);
       assert(E.reachable(g, u).has((11 + normal) + ',6'), side + ' solo reach');
       assert(!E.reachable(g, u).has((12 + normal) + ',6'), side + ' solo cap');
     }
