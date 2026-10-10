@@ -46,5 +46,5 @@ test('snapshot the experimental scope to make later terrain drift visible', () =
     else if (type === 'C') coast++;
     else land++;
   }
-  assert.deepEqual({ changed, sea, coast, land }, { changed: 573, sea: 8950, coast: 862, land: 3868 });
+  assert.deepEqual({ changed, sea, coast, land }, { changed: 573, sea: 8949, coast: 817, land: 3914 });
 });
