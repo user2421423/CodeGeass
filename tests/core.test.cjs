@@ -249,15 +249,16 @@ test('AI uses idle factories for single-frame units after larger formations', ()
   const single = E.price(scout, 1, g, side);
 
   // Restrict the test to one affordable frame type and clear deployment spaces.
-  // The budget buys a three-frame formation and one more Scout, but not a
-  // second multi-frame formation. This used to leave the latter factory idle.
+  // The budget buys a three-frame formation and one more Scout, plus the
+  // ordinary 60-credit reserve. A second multi-frame formation is unaffordable.
+  // The old logic left the latter factory idle even with this spendable budget.
   g.phase = side;
   g.turn = 1;
   g.units = [];
   g.ai = { [side]: { saving: false } };
   g.buildable = { ...g.buildable, [side]: [scout] };
   g.economy[side] = {
-    credits: triple.credits + single.credits,
+    credits: triple.credits + single.credits + 60,
     industry: triple.industry + single.industry,
     science: 0,
     sakuradite: 0,
@@ -271,7 +272,7 @@ test('AI uses idle factories for single-frame units after larger formations', ()
     'another factory should build one frame even after a three-frame purchase');
   assert.equal(new Set(built.map(u => `${u.c},${u.r}`)).size, 2,
     'each unit was built at a different factory');
-  assert.equal(g.economy[side].credits, 0, 'spends only the affordable remaining credits');
+  assert.equal(g.economy[side].credits, 60, 'preserves the normal 60-credit reserve');
   assert.equal(g.economy[side].industry, 0, 'spends only the affordable remaining industry');
 });
 
