@@ -1057,23 +1057,23 @@
       setTileTerrain(g, t, 'plains');
     }
   }
-  // New Zealand's South Island is separated from Auckland by Cook Strait.
-  // The city-based land flood-fill cannot reach these eight land/coast tiles.
-  // Attach previously unowned tiles to whichever side controls Auckland, so
-  // new conquests and older saves use the same province/capture semantics.
+  // Christchurch owns unclaimed South Island land in new conquests.
+  // Older saves without Christchurch still attach those tiles to Auckland.
+  // Never overwrite tiles already owned or conquered.
   const NZ_SOUTH_ISLAND = [
     [175, 68], [176, 68], [173, 69], [174, 69],
     [175, 69], [173, 70], [174, 70], [175, 70],
   ];
   function attachUnclaimedNewZealand(g) {
-    const auckland = g.stations.find(s => s.name === 'Auckland');
-    if (!auckland?.owner) return;
+    const anchor = g.stations.find(s => s.name === 'Christchurch') ||
+      g.stations.find(s => s.name === 'Auckland');
+    if (!anchor?.owner) return;
     for (const [c, r] of NZ_SOUTH_ISLAND) {
       const t = tile(g, c, r);
       // Never overwrite territory that changed hands during an existing game.
       if (!t || isSea(t) || t.owner || t.provinceCity != null) continue;
-      setTileOwner(g, t, auckland.owner);
-      t.provinceCity = auckland.id;
+      setTileOwner(g, t, anchor.owner);
+      t.provinceCity = anchor.id;
     }
   }
   // Each painted conquest land hex is permanently attached to one city. Existing ownership

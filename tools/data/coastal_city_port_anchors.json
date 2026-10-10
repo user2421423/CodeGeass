@@ -1,5 +1,5 @@
 {
-  "description": "Baseline conquest city and starting port anchors from main c2c3c4f999d91b1558afa09df557f327d18f7e30, before experimental 20-80 coastal overlay; restore these terrain codes and placements unchanged.",
+  "description": "Baseline conquest city and starting port anchors from main c2c3c4f999d91b1558afa09df557f327d18f7e30, before experimental 20-80 coastal overlay; restore these terrain codes and placements unchanged. Historical retired city anchors are intentionally retained to avoid unrelated coastline changes.",
   "cities": [
     {
       "name": "Pendragon",
@@ -893,6 +893,210 @@
       "name": "Sanaa",
       "c": 112,
       "r": 34,
+      "terrain": "p"
+    },
+    {
+      "name": "Calgary",
+      "c": 32,
+      "r": 13,
+      "terrain": "m"
+    },
+    {
+      "name": "Kansas City",
+      "c": 42,
+      "r": 20,
+      "terrain": "p"
+    },
+    {
+      "name": "Atlanta",
+      "c": 47,
+      "r": 24,
+      "terrain": "f"
+    },
+    {
+      "name": "Monterrey",
+      "c": 39,
+      "r": 28,
+      "terrain": "p"
+    },
+    {
+      "name": "Guatemala City",
+      "c": 44,
+      "r": 35,
+      "terrain": "p"
+    },
+    {
+      "name": "Saskatoon",
+      "c": 36,
+      "r": 13,
+      "terrain": "p"
+    },
+    {
+      "name": "Belém",
+      "c": 64,
+      "r": 44,
+      "terrain": "f"
+    },
+    {
+      "name": "Cuiabá",
+      "c": 61,
+      "r": 52,
+      "terrain": "p"
+    },
+    {
+      "name": "La Paz",
+      "c": 55,
+      "r": 53,
+      "terrain": "m"
+    },
+    {
+      "name": "Iquitos",
+      "c": 53,
+      "r": 46,
+      "terrain": "f"
+    },
+    {
+      "name": "Asunción",
+      "c": 61,
+      "r": 58,
+      "terrain": "p"
+    },
+    {
+      "name": "Punta Arenas",
+      "c": 54,
+      "r": 74,
+      "terrain": "p"
+    },
+    {
+      "name": "Puerto Montt",
+      "c": 54,
+      "r": 68,
+      "terrain": "m"
+    },
+    {
+      "name": "Salvador",
+      "c": 69,
+      "r": 51,
+      "terrain": "p"
+    },
+    {
+      "name": "Christchurch",
+      "c": 176,
+      "r": 68,
+      "terrain": "p"
+    },
+    {
+      "name": "Samara",
+      "c": 115,
+      "r": 12,
+      "terrain": "p"
+    },
+    {
+      "name": "Omsk",
+      "c": 126,
+      "r": 11,
+      "terrain": "f"
+    },
+    {
+      "name": "Krasnoyarsk",
+      "c": 135,
+      "r": 11,
+      "terrain": "p"
+    },
+    {
+      "name": "N'Djamena",
+      "c": 97,
+      "r": 36,
+      "terrain": "p"
+    },
+    {
+      "name": "Niamey",
+      "c": 90,
+      "r": 35,
+      "terrain": "p"
+    },
+    {
+      "name": "Kano",
+      "c": 94,
+      "r": 36,
+      "terrain": "p"
+    },
+    {
+      "name": "Kisangani",
+      "c": 102,
+      "r": 43,
+      "terrain": "f"
+    },
+    {
+      "name": "Bangui",
+      "c": 98,
+      "r": 41,
+      "terrain": "f"
+    },
+    {
+      "name": "Lusaka",
+      "c": 104,
+      "r": 52,
+      "terrain": "p"
+    },
+    {
+      "name": "Windhoek",
+      "c": 98,
+      "r": 57,
+      "terrain": "d"
+    },
+    {
+      "name": "Lahore",
+      "c": 126,
+      "r": 25,
+      "terrain": "p"
+    },
+    {
+      "name": "Hyderabad",
+      "c": 128,
+      "r": 33,
+      "terrain": "p"
+    },
+    {
+      "name": "Mashhad",
+      "c": 119,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Lanzhou",
+      "c": 141,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Pontianak",
+      "c": 144,
+      "r": 43,
+      "terrain": "f"
+    },
+    {
+      "name": "Makassar",
+      "c": 149,
+      "r": 45,
+      "terrain": "p"
+    },
+    {
+      "name": "Jayapura",
+      "c": 158,
+      "r": 45,
+      "terrain": "p"
+    },
+    {
+      "name": "Jeddah",
+      "c": 109,
+      "r": 31,
+      "terrain": "d"
+    },
+    {
+      "name": "Dubai",
+      "c": 117,
+      "r": 29,
       "terrain": "p"
     }
   ],
