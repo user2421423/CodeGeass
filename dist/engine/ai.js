@@ -764,11 +764,11 @@
       const m = spot && move(g, u.id, spot.c, spot.r);
       if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
-    // 2. Decide whether to save for a super-heavy (at most two alive, needs a level-3 factory).
-    // Count the side's actual super-heavy frame: some campaign lineups field a siege or assault frame in that slot.
-    const supers = own().filter(u => u.type === superType || TYPES[u.type].cls === 'super').length;
+    // 2. Decide whether to save for a super-heavy (requires a level-3 factory).
+    // There is no unit-count limit: the AI can keep producing super-heavy formations
+    // whenever its factories and resources support them.
     // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.
-    if (!yard3.length || supers >= 2) plan.saving = false;
+    if (!yard3.length) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
       plan.saving = true;
     // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
