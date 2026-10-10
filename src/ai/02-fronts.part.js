@@ -1,7 +1,7 @@
   // ======== Theaters ========
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
-  // units keep their front for `sticky` turns, an offensive gathers within `rally` hexes of its rally city before it
-  // attacks (or after `wait` turns), and `reserve` of the army's strength waits at the capital.
+  // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
+  // (or after `wait` turns). `reserve` is the total routine defense share, including garrisons and defensive fronts.
   const FRONT = { radius: 16, near: 20, max: 4, sticky: 4, far: 60, rally: 4, reserve: 0.1, wait: 3, pull: 15, stray: 4, floor: 0.25 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
@@ -114,6 +114,16 @@
     fronts = fronts
       .sort((a, b) => b.emergency - a.emergency || b.priority - a.priority || (a.id < b.id ? -1 : 1))
       .filter((f, i, all) => f.emergency || i - all.filter(e => e.emergency).length < FRONT.max);
+    // One peacetime defensive allocation: garrisons, routine defensive
+    // fronts and the mobile reserve all share 10% of available ground strength.
+    // Genuine emergencies can exceed that allocation.
+    const guardedStrength = sum(allUnits(g).filter(u => u.hp > 0 && u.side === side && memo.guards[u.id]));
+    let uncommittedDefense = Math.max(0, FRONT.reserve * (army + guardedStrength) - guardedStrength);
+    for (const f of fronts) {
+      if (f.type !== 'defensive' || f.emergency) continue;
+      f.target = Math.min(f.desiredStrength, uncommittedDefense);
+      uncommittedDefense -= f.target;
+    }
     const byId = Object.fromEntries(fronts.map(f => [f.id, f])),
       capital =
         own.find(s => s.capitalOf === side) ||
@@ -126,7 +136,7 @@
         anchor: capital,
         objectives: [{ c: capital.c, r: capital.r, seed: 0 }],
         assigned: 0,
-        desiredStrength: FRONT.reserve * army,
+        desiredStrength: uncommittedDefense,
         score: 0,
       };
     if (reserve) byId.reserve = reserve;
@@ -134,6 +144,11 @@
     // vital emergency nearby (any emergency, for the reserve) needs it.
     const assign = {},
       emergencies = fronts.filter(f => f.emergency),
+      fitsDefense = (u, f) => {
+        const maximum = f === reserve ? f.desiredStrength :
+          f.type === 'defensive' && !f.emergency ? f.target : Infinity;
+        return f.assigned + unitStrength(u) <= maximum + 1e-9;
+      },
       give = (u, f) => {
         assign[u.id] = f.id;
         f.assigned += unitStrength(u);
@@ -145,13 +160,14 @@
       if (!f) continue;
       const pulled =
         f === reserve ? emergencies.length > 0 : emergencies.some(e => e !== f && e.vital && dist(g, at(u), e.anchor) <= FRONT.pull);
-      if (!pulled && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
+      if (!pulled && fitsDefense(u, f) && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
     }
     // 4. Targets: emergencies get their full need and the reserve its share; the rest of the army splits 50/25/15/10 by
     // front rank, a front never taking more than it needs (the surplus flows to the others).
-    const open = fronts.filter(f => !f.emergency),
+    const open = fronts.filter(f => !f.emergency && f.type === 'offensive'),
+      routineDefense = fronts.reduce((a, f) => a + (f.type === 'defensive' && !f.emergency ? f.target : 0), 0),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
-    let pot = army - (reserve?.desiredStrength || 0),
+    let pot = army - (reserve?.desiredStrength || 0) - routineDefense,
       left = open;
     // A vital emergency (capital, F.L.E.I.J.A. project) may claim everything it needs; any other at most a fifth.
     for (const f of emergencies) pot -= f.target = f.vital ? f.desiredStrength : Math.min(f.desiredStrength, army * 0.2);
@@ -173,7 +189,7 @@
         let best = null,
           bd = Infinity;
         for (const u of pool) {
-          if (assign[u.id]) continue;
+          if (assign[u.id] || !fitsDefense(u, f)) continue;
           const d = dist(g, at(u), f.anchor) - (sticky[u.id]?.front === f.id ? 10 : 0);
           if (d <= range && (d < bd || (d === bd && u.id < best.id))) {
             bd = d;
@@ -186,12 +202,16 @@
     for (const f of emergencies) while (f.assigned < f.target && take(f, FRONT.pull + 10));
     if (reserve) while (reserve.assigned < reserve.desiredStrength && take(reserve, 25));
     for (;;) {
-      const f = fronts.filter(f => f.assigned < f.target).sort((a, b) => b.target - b.assigned - (a.target - a.assigned))[0];
-      if (!f || !take(f)) break;
+      const needy = fronts.filter(f => f.assigned < f.target)
+        .sort((a, b) => b.target - b.assigned - (a.target - a.assigned));
+      if (!needy.some(f => take(f))) break;
     }
+    // Remaining formations reinforce offensives or genuine emergencies,
+    // never routine defensive fronts already covered by the 10% allocation.
+    const deployable = fronts.filter(f => f.type === 'offensive' || f.emergency);
     for (const u of pool) {
       if (assign[u.id]) continue;
-      const f = byDist(at(u), fronts)[0] || reserve;
+      const f = byDist(at(u), deployable)[0];
       if (f) give(u, f);
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
@@ -343,6 +363,6 @@
     }
     return (direct ? f.stack : 0) + cargo;
   }
-  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
-  // to enemies within five hexes (or a landing's reach, see threatTo) and draw defenders from proportionally larger
-  // strategic radii. In Conquest, fortress cities and naval bases also keep one defender. Returns { unitId: city }.
+  // Garrison duty: the capital seeks two defenders (four when threatened), but routine guards share
+  // the 10% defense budget with defensive fronts and the mobile reserve. Nearby enemies within four hexes
+  // warrant extra emergency guards. Fortress cities and major naval bases seek one guard when budget allows.

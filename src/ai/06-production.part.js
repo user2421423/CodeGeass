@@ -52,7 +52,18 @@
       const u = unitAt(g, s);
       if (!u || u.side !== side || u.moved || !isReady(g, u)) continue;
       if (!foes.some(f => dist(g, f, s) <= 2)) {
-        g.vacated.push({ id: u.id, orders: aiOrder(g, u.id) });
+        const orders = aiOrder(g, u.id);
+        // Without a dedicated garrison, the unit may not have a local
+        // objective. It must still clear the city's production hex.
+        if (u.c === s.c && u.r === s.r && !u.moved) {
+          const reach = reachable(g, u);
+          const spot = adjacent(g, s)
+            .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
+            .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+          const moveOut = spot && move(g, u.id, spot.c, spot.r);
+          if (moveOut?.ok) orders.push({ kind: 'move', ...moveOut, id: u.id });
+        }
+        g.vacated.push({ id: u.id, orders });
         continue;
       }
       if (s.producedTurn === g.turn || cityBusyReason(g, s) || shortfall(e, cheapest)) continue;
@@ -298,9 +309,9 @@
         }
       }
     }
-    // Formations first: every factory builds a 3- or 2-frame formation when the treasury allows, taking a cheaper frame
-    // from its menu as a formation before settling for a lone frame. Only when no factory can afford any formation
-    // does the most urgent one build a single frame; otherwise the money is saved for formations.
+    // Formations first: every factory tries a 3- or 2-frame formation before
+    // unfilled factories may produce an affordable single-frame unit. A successful
+    // formation elsewhere must not block production at an otherwise idle factory.
     const menuOf = s => {
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
@@ -324,7 +335,9 @@
       return false;
     };
     const menus = new Map(yards.map(s => [s, menuOf(s)]));
-    let formations = 0;
-    for (const s of yards) if (tryBuild(s, menus.get(s), [3, 2])) formations++;
-    if (!formations) for (const s of yards) if (tryBuild(s, menus.get(s), [1])) break;
+    for (const s of yards) tryBuild(s, menus.get(s), [3, 2]);
+    // Only factories that have not produced this turn get the single-frame
+    // fallback. Respect the same affordability and reserve checks as above.
+    for (const s of yards)
+      if (s.producedTurn !== g.turn) tryBuild(s, menus.get(s), [1]);
   }

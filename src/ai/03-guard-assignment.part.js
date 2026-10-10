@@ -2,7 +2,18 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0);
+      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
+      routineBudget = g.mode === 'campaign' ? Infinity :
+        FRONT.reserve * own.reduce((a, u) => a + unitStrength(u), 0);
+    let routineStrength = 0;
+    const urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
+      guard = (u, post, emergency = false) => {
+        if (taken[u.id]) return false;
+        if (!emergency && routineStrength + unitStrength(u) > routineBudget + 1e-9) return false;
+        taken[u.id] = { ...post, emergency };
+        if (!emergency) routineStrength += unitStrength(u);
+        return true;
+      };
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -18,26 +29,35 @@
       const near = own
         .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+      let assigned = 0;
+      for (const u of near) {
+        if (assigned >= need) break;
+        if (guard(u, { c: s.c, r: s.r, id: s.id }, urgent(s, t))) assigned++;
+      }
     }
-    // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
-    // empty, even in quiet times.
+    // Strongholds (Conquest): fortress cities at straits and level-2+ naval bases
+    // request a guard, but cannot exceed the shared routine-defense budget.
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
-        const u = own
+        for (const u of own
           .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
-          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
-        if (u) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)) {
+          if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
+        }
       }
-    // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
+    // Own mines: major deposits request one routine guard; imminent attacks can trigger up to two emergency guards.
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
       const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
+      let assigned = 0;
+      for (const u of near) {
+        if (assigned >= need) break;
+        if (guard(u, { c: d.c, r: d.r, site: d.id }, urgent(d, t))) assigned++;
+      }
     }
     return taken;
   }
