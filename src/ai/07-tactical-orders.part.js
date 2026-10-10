@@ -100,7 +100,7 @@
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && foe(g, station.owner, u.side) && !isShip(u) &&
-          (station.shield === 0 || navalCityAssault(g, u))
+          (station.shield === 0 || TYPES[u.type].naval === 'amphibious' || atSea(g, u))
           ? 400 + (station.capitalOf ? 600 : 0) : 0;
         if (COMMANDERS[u.cmd]?.fx.treasury && station?.owner === u.side) sc += 250 + station.income * 4;
         const mine = siteAt(g, p);
