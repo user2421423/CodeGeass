@@ -264,8 +264,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   at 85%, the Federation's Infantry discount applies); `spend()` deducts every resource; `shortfall()` names
   Sakuradite. Helpers: `depositHost`, `depositOwner`, `depositOf(g, city)`, `siteAt`, `depositYield`, `cityYield`,
   `refineReason`/`refine` (mines on their own hex). A surrendering power's mines and half its stockpile pass on.
-- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` keeps a guard on Fuji and up to
-  two on any threatened mine; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
+- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` requests a guard on Fuji within the shared reserve and up to
+  two on a threatened mine (imminent attacks may bypass the peacetime budget); moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
   turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavy saving only
   starts with the Sakuradite in hand; tier-I frames are fallbacks when Sakuradite runs short.
 
