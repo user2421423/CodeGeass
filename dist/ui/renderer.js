@@ -19,6 +19,7 @@ function attachMinimap() {
 }
 const MINI_TERRAIN = {
   sea: '#16405e',
+  coast: '#3e7a78',
   plains: '#6f8a4b',
   forest: '#4a6e3f',
   mountain: '#7e7460',
@@ -207,6 +208,7 @@ const PLATE = {
 };
 const TERRAIN_FILL = {
   sea: '#174a6c',
+  coast: '#4c8a7d',
   plains: '#7b9852',
   forest: '#567f45',
   mountain: '#8d826a',
@@ -1137,19 +1139,21 @@ function draw(time, dt) {
     mid = (left + right) / 2;
   const copies = x => copiesBetween(x, left, right);
   const visible = p => p.y >= top && p.y <= bottom;
-  // Move and attack overlays.
+  // Move and attack overlays. Blue marks water for the moving unit: open sea, or a coast hex a warship sails into.
+  const movingShip = E.TYPES[selectedUnit()?.type]?.naval === 'ship';
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
       t = E.tile(game, cc, rr),
-      c = hexCenter(t);
+      c = hexCenter(t),
+      water = E.isSea(t) || (movingShip && E.isCoast(t));
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
-      ctx.fillStyle = t.terrain === 'sea' ? '#4fb6ff40' : '#3ddc7a40';
+      ctx.fillStyle = water ? '#4fb6ff40' : '#3ddc7a40';
       ctx.fill();
-      ctx.strokeStyle = t.terrain === 'sea' ? '#9fd8ffcc' : '#6dffa5cc';
+      ctx.strokeStyle = water ? '#9fd8ffcc' : '#6dffa5cc';
       ctx.lineWidth = 1.4 / Math.max(scale, 0.4);
       ctx.stroke();
-      if (t.terrain === 'sea' && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
+      if (water && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
     }
   }
   for (const k of targetCache) {
@@ -1453,7 +1457,7 @@ function draw(time, dt) {
   // The Arctic is intentionally excluded.
   if (game.wrap && R * scale >= 27) {
     const coastalExceptions = [
-      [87,14], [158,21], [160,21], [159,23], [157,24],
+      [158,21], [160,21], [159,23], [157,24],
       [106,26], [10,31], [133,31],
       [140,43], [142,46], [96,50], [166,59], [147,62], [56,75],
     ];
@@ -1483,14 +1487,16 @@ function draw(time, dt) {
     // The vector coastline and playable hexes intentionally differ at some
     // straits/islands. Hover colours always describe ACTUAL gameplay terrain:
     // aqua = navigable sea; warm gold = traversable land.
-    const seaHex = E.isSea(hover);
-    ctx.strokeStyle = seaHex ? '#7cd8ffdb' : '#ffe1a0df';
+    const seaHex = E.isSea(hover),
+      coastHex = E.isCoast(hover);
+    // Coast hexes are both: a sea-green outline, and never the mixed-terrain tint (they are meant to be mixed).
+    ctx.strokeStyle = coastHex ? '#9ff0d2df' : seaHex ? '#7cd8ffdb' : '#ffe1a0df';
     ctx.lineWidth = 1.65 / Math.max(scale, 0.35);
     ctx.stroke();
     // Realistic coastlines can cover a minority of a playable hex. When the
     // two maps disagree at this hex centre, label the ACTUAL gameplay terrain
     // so sea movement and landing decisions are never visually ambiguous.
-    const visuallyMixed = game.wrap && R * scale >= 16 &&
+    const visuallyMixed = !coastHex && game.wrap && R * scale >= 16 &&
       (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r));
     if (visuallyMixed) {
       // A sea tile behind geographic land should never look walkable.

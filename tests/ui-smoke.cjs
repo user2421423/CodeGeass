@@ -158,7 +158,8 @@ const modal = () => node('modal-root').innerHTML;
   for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
     assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');
   assert.equal(politicalIslands.Egypt, 'eu', 'Egypt land polygon must tint E.U., not neutral Arabia');
-  assert.equal(run("E.tile(game,87,14).terrain"), 'sea', 'Cornwall fringe remains navigable ocean');
+  assert.equal(run("E.tile(game,87,14).terrain"), 'coast', 'Cornwall is a coast hex: land for troops');
+  assert.equal(run("E.navigable(E.tile(game,87,14))"), true, 'Cornwall coast stays navigable for warships');
   assert.equal(run("GEOGRAPHY.visualMixedHex(87,14)"), true, 'Cornwall misleading sea/land hex is flagged');
   const conquestTint = run("(() => { const t=game.tiles.find(t=>t.c>=146&&t.c<=149&&t.r>=42&&t.r<=45&&t.terrain!=='sea'); const previous=t.owner; t.owner='britannia'; game.mapRevision=(game.mapRevision||0)+1; const captured=GEOGRAPHY.islandOwnerAt(game,114,0); t.owner=previous; game.mapRevision++; const restored=GEOGRAPHY.islandOwnerAt(game,114,0); return {captured,restored}; })()");
   assert.equal(conquestTint.captured, null, 'a captured Borneo tile must remove the uniform Federation tint');
@@ -175,8 +176,8 @@ const modal = () => node('modal-root').innerHTML;
   assert(markerStart >= 0, 'reviewed coastline exceptions must be visibly marked');
   const markerBlock = renderingText.slice(markerStart, renderingText.indexOf('];', markerStart));
   const markerEntries = markerBlock.match(/\[\d+,\d+\]/g) || [];
-  assert.equal(markerEntries.length, 14, '13 non-Arctic exceptions plus Cornwall get subtle high-zoom markers');
-  for (const coords of ['[87,14]', '[106,26]', '[140,43]', '[142,46]'])
+  assert.equal(markerEntries.length, 13, '13 non-Arctic exceptions get subtle high-zoom markers (Cornwall is a coast hex now)');
+  for (const coords of ['[106,26]', '[140,43]', '[142,46]'])
     assert(markerEntries.includes(coords), coords + ' must display a terrain warning marker');
 
 

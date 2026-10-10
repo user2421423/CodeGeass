@@ -6,6 +6,7 @@ longitude; rows run from 74N to 54S in roughly 1.707-degree steps. Odd rows are 
 
 Output: a JS snippet (WORLD_ROWS) to paste into dist/engine/world.js, one string per row:
   . sea   p plains   f forest   m mountains   d desert   s snow/tundra   x impassable peaks / ice cap
+  w coast (part land, part water; listed in tools/data/coast_hexes.json by tools/coast_hexes.py)
 
 Run:  python3 tools/build_map.py > /tmp/world.txt   (prints the JS block and an ASCII preview on stderr)
 Coastlines are hand-drawn for gameplay rather than GIS-precise, but the high-resolution raster keeps their shape
@@ -498,7 +499,10 @@ FIX_SEA = [
 ]
 
 
-def build():
+COAST_HEXES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coast_hexes.json')
+
+
+def build(coast=True):
     grid = [['.'] * COLS for _ in range(ROWS)]
     samples = [(0, 0)] + [(0.42 * math.cos(a), 0.42 * math.sin(a)) for a in [i * math.pi / 3 for i in range(6)]]
     for r in range(ROWS):
@@ -539,6 +543,10 @@ def build():
         c, r = hex_of(lon, lat)
         if grid[r][c] != '.':
             grid[r][c] = 'x'
+    # Coast hexes (w), chosen from the drawn GSHHG coastline by tools/coast_hexes.py, apply last.
+    if coast and os.path.exists(COAST_HEXES):
+        for c, r in json.load(open(COAST_HEXES))['hexes']:
+            grid[r][c] = 'w'
     return grid
 
 

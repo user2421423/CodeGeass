@@ -55,6 +55,7 @@
     income,
     isReady,
     isSea,
+    navigable,
     isShip,
     launch,
     log,
@@ -616,7 +617,8 @@
   // rally city of the best offensive across the sea. One carrier serves one front. Returns false when there is nothing
   // to do, so the generic orders use it as a gunship.
   function seaCoasts(g, memo) {
-    return memo.coasts ||= g.tiles.filter(p => isSea(p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
+    // Where a carrier can wait off a shore: open water or a coast hex, next to land troops can reach.
+    return memo.coasts ||= g.tiles.filter(p => navigable(p) && !stationAt(g, p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
   }
   function aiCarrier(g, u, memo, events, fieldAt) {
     const bound = u.cargo?.length ? frontOf(g, memo, u.cargo[0]) : null,

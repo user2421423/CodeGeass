@@ -139,6 +139,13 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   hex east of Chennai and southern Tamil Nadu, Iceland's Westfjords, and the Gulf of Suez (106,26), so Africa and Asia
   meet only by sea. Small Mediterranean islands drop out at these shares; Sardinia stays, given to the E.U. by
   `TERRITORY` in `world.js` (land hexes no city's territory reaches, assigned by hand).
+- Coast hexes (`w` in `WORLD_ROWS`, terrain `coast`): part land, part water. Land units stand and fight there as on
+  land (an embarked unit that reaches one lands; nobody embarks onto one), warships sail through them (never into a
+  city, and they do not claim the hex), one unit per hex. `tools/coast_hexes.py` picks them from the drawn GSHHG
+  coastline (sea hexes at least 15% land, land hexes under 50% land), skipping cities, ports, mines, starting units,
+  the deliberate fix lists and the strategic straits, and only where the hex touches one stretch of shore, so coast
+  never joins landmasses or opens a channel. `build_map.py` applies `tools/data/coast_hexes.json` last; older saves
+  pick the hexes up in `migrateCoastalTerrain`. Cities, mines and starting armies are placed on solid land only.
 - Map lock: `tools/data/map_locked.txt` is the approved map. `python3 tools/check_map.py` (run in CI) fails when a hex
   outside the `REDRAW` regions and fix lists changes, or when `world.js` is out of date with `build_map.py`;
   `--update` refreshes the lock after an approved change. `core.test.cjs` checks the islands, straits and joins
