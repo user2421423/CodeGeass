@@ -341,7 +341,8 @@
     }
     // A front that drops out of the plan keeps its state for three turns in case it returns.
     for (const [id, st] of Object.entries(saved)) if (g.turn - (st.seen ?? st.since) > 3) delete saved[id];
-    const living = new Set(allUnits(g).map(u => u.id));
+    // Destroyed units drop their assignment too (compact saves leave them out entirely).
+    const living = new Set(allUnits(g).filter(u => u.hp > 0).map(u => u.id));
     for (const id of Object.keys(sticky)) if (!living.has(+id)) delete sticky[id];
     // 6. One goal field per front (built when a unit first asks): an assembling offensive pulls toward its rally city;
     // otherwise the objectives, and for threatened own cities the enemy units menacing them. An attacking front also

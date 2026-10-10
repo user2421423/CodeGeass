@@ -511,3 +511,29 @@ test('The world map has coast hexes and older saves pick them up on load', () =>
   E.migrateSave(old);
   assert.equal(old.tiles.filter(t => t.terrain === 'coast').length, coast.length);
 });
+
+test('Compact saves keep the whole game except destroyed units, at a fraction of the size', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 7);
+  for (let round = 0; round < 6; round++) {
+    for (const side of g.order) {
+      if (g.over || !E.alive(g, side)) continue;
+      E.beginTurn(g, side, g.turn > 1);
+      E.aiProduction(g);
+      for (const u of g.units.filter(u => u.hp > 0 && u.side === side)) if (u.hp > 0) E.aiOrder(g, u.id);
+    }
+    g.turn++;
+  }
+  // Make sure the save carries a crater, a destroyed unit and a hex owned away from its starting faction.
+  E.tile(g, 120, 20).terrain = 'crater';
+  g.units.find(u => u.hp > 0 && u.side === 'eu').hp = 0;
+  const full = JSON.stringify(g),
+    packed = JSON.stringify(E.packSave(g));
+  assert(packed.length * 5 < full.length, `compact save ${packed.length} vs full ${full.length}`);
+  const back = E.unpackSave(JSON.parse(packed));
+  const expected = JSON.parse(full);
+  expected.units = expected.units.filter(u => u.hp > 0);
+  assert.deepEqual(back, expected, 'unpacking restores every field, hex and living unit');
+  assert.equal(E.migrateSave(JSON.parse(packed)).tiles.length, g.tiles.length, 'a compact save loads like any other');
+  // Campaign saves are small maps and stay whole.
+  assert.equal(E.packSave({ ...g, mode: 'campaign' }).tiles, g.tiles);
+});
