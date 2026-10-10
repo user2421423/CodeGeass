@@ -216,6 +216,61 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
+test('Capital garrisons and defensive fronts count toward the shared ten-percent reserve', () => {
+  for (const side of E.MAJORS) {
+    const g = E.createGame('britannia', 'normal', 'conquest', 123);
+    const memo = E.aiPlan(g, side);
+    const guards = g.units.filter(u => u.hp > 0 && u.side === side && memo.guards[u.id])
+      .reduce((n, u) => n + E.unitStrength(u), 0);
+    const mobile = E.internal.allUnits(g)
+      .filter(u => u.hp > 0 && u.side === side && !E.internal.isShip(u) &&
+        !u.hold && !memo.guards[u.id] && !memo.recoveries?.has(u.id))
+      .reduce((n, u) => n + E.unitStrength(u), 0);
+    const defenders = memo.fronts.filter(f => f.type === 'defensive')
+      .reduce((n, f) => n + f.assigned, 0);
+    const expected = Math.max(0, E.FRONT.reserve * (mobile + guards) - guards - defenders);
+    assert(Math.abs(memo.reserve.desiredStrength - expected) < 1e-6,
+      side + ': additional capital reserve must subtract garrisons and defensive fronts');
+    assert.equal(memo.reserve.desiredStrength, 0,
+      side + ': starting garrisons already cover the ten-percent reserve');
+  }
+});
+
+function noGarrisonReserveScenario() {
+  const g = blank('britannia', 40);
+  g.phase = 'eu';
+  for (const s of g.stations) { s.capitalOf = null; s.capital = false; }
+  return g;
+}
+
+test('An unguarded quiet army still allocates a ten-percent mobile reserve', () => {
+  const g = noGarrisonReserveScenario();
+  for (let c = 10; c < 30; c++)
+    E.newUnit(g, E.typeFor('eu', 'light'), 'eu', c, 15);
+  const memo = E.aiPlan(g, 'eu');
+  assert.equal(Object.keys(memo.guards).length, 0);
+  assert.equal(memo.reserve.desiredStrength, 2, '20 equal-strength frames keep two in reserve');
+  assert(memo.reserve.assigned >= memo.reserve.desiredStrength);
+});
+
+test('Threat-driven defensive fronts replace, rather than add to, the mobile reserve', () => {
+  const g = noGarrisonReserveScenario();
+  for (let c = 16; c < 30; c++)
+    for (let r = 2; r <= 3; r++)
+      E.newUnit(g, E.typeFor('eu', 'light'), 'eu', c, r);
+  E.newUnit(g, E.typeFor('britannia', 'heavy'), 'britannia', 37, 0);
+  const memo = E.aiPlan(g, 'eu');
+  assert.equal(Object.keys(memo.guards).length, 0);
+  const defensiveStrength = memo.fronts.filter(f => f.type === 'defensive')
+    .reduce((n, f) => n + f.assigned, 0);
+  assert(defensiveStrength > 0, 'threatened city receives a defensive front');
+  const expected = Math.max(0, 28 * E.FRONT.reserve - defensiveStrength);
+  assert(Math.abs(memo.reserve.desiredStrength - expected) < 1e-6,
+    'defensive-front assignments reduce the extra capital reserve');
+  assert(memo.reserve.assigned >= memo.reserve.desiredStrength,
+    'remaining reserve is still filled where possible');
+});
+
 test('AI may build a super-heavy even when it already fields more than two', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 123);
   const side = 'eu', superType = E.typeFor(side, 'super', g);

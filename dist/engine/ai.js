@@ -194,7 +194,10 @@
       fronts.push(f);
     }
     // 2. Score and size: objective values, minus distance from the nearest own city; enemy strength sets the force needed.
-    const army = sum(units);
+    // Garrisons are excluded from the mobile field army but count toward its 10% defensive reserve.
+    const army = sum(units),
+      garrisonStrength = sum(g.units.filter(u => u.hp > 0 && u.side === side && memo.guards[u.id])),
+      reserveTarget = FRONT.reserve * (army + garrisonStrength);
     for (const f of fronts) {
       const attack = f.objectives.filter(o => !o.defend),
         defend = f.objectives.filter(o => o.defend),
@@ -247,7 +250,7 @@
         anchor: capital,
         objectives: [{ c: capital.c, r: capital.r, seed: 0 }],
         assigned: 0,
-        desiredStrength: FRONT.reserve * army,
+        desiredStrength: Math.max(0, reserveTarget - garrisonStrength),
         score: 0,
       };
     if (reserve) byId.reserve = reserve;
@@ -263,9 +266,10 @@
     for (const u of units) {
       const a = sticky[u.id],
         f = a && byId[a.front];
-      if (!f) continue;
-      const pulled =
-        f === reserve ? emergencies.length > 0 : emergencies.some(e => e !== f && e.vital && dist(g, at(u), e.anchor) <= FRONT.pull);
+      // Reassess the mobile reserve on every turn; an old reserve assignment must
+      // not trap a unit at the capital after garrisons or defense fronts fill the quota.
+      if (!f || f === reserve) continue;
+      const pulled = emergencies.some(e => e !== f && e.vital && dist(g, at(u), e.anchor) <= FRONT.pull);
       if (!pulled && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
     }
     // 4. Targets: emergencies get their full need and the reserve its share; the rest of the army splits 50/25/15/10 by
@@ -305,15 +309,58 @@
         return !!best;
       };
     for (const f of emergencies) while (f.assigned < f.target && take(f, FRONT.pull + 10));
-    if (reserve) while (reserve.assigned < reserve.desiredStrength && take(reserve, 25));
+    // Ordinary defensive fronts also count toward the same reserve, so commit
+    // their allocated defenders before deciding if more troops should stay home.
+    for (const f of fronts.filter(f => f.type === 'defensive' && !f.emergency))
+      while (f.assigned < f.target && take(f, FRONT.pull + 10));
+    if (reserve) {
+      const plannedReserve = reserve.desiredStrength,
+        frontDefense = fronts.filter(f => f.type === 'defensive').reduce((total, f) => total + f.assigned, 0);
+      // The 10% is a combined peacetime target, not 10% on top of garrisons and
+      // active defensive fronts. Actual threats may legitimately exceed it.
+      reserve.desiredStrength = Math.max(0, reserveTarget - garrisonStrength - frontDefense);
+      // Return any no-longer-needed reserve budget to offensive fronts.
+      let freed = plannedReserve - reserve.desiredStrength;
+      for (const f of fronts.filter(f => f.type === 'offensive')) {
+        if (freed <= 0) break;
+        const extra = Math.min(freed, Math.max(0, f.desiredStrength - f.target));
+        f.target += extra;
+        freed -= extra;
+      }
+      while (reserve.assigned < reserve.desiredStrength && take(reserve, 25));
+    }
     for (;;) {
       const f = fronts.filter(f => f.assigned < f.target).sort((a, b) => b.target - b.assigned - (a.target - a.assigned))[0];
       if (!f || !take(f)) break;
     }
     for (const u of pool) {
       if (assign[u.id]) continue;
-      const f = byDist(at(u), fronts)[0] || reserve;
+      // Avoid piling surplus troops onto a defensive front already at strength.
+      // Once fronts have met their needs, favor active offensives over quiet defenses.
+      const understrength = fronts.filter(f => f.assigned < f.desiredStrength),
+        offensives = fronts.filter(f => f.type === 'offensive'),
+        choices = understrength.length ? understrength : offensives.length ? offensives : fronts,
+        f = byDist(at(u), choices)[0] || reserve;
       if (f) give(u, f);
+    }
+    if (reserve) {
+      // Final assignments can exceed a front's target because units are indivisible,
+      // or previously assigned defenders stay with their front. Reconcile against
+      // actual defense strength and release an unnecessary capital reserve.
+      const finalDefenders = fronts.filter(f => f.type === 'defensive').reduce((n, f) => n + f.assigned, 0),
+        needed = Math.max(0, reserveTarget - garrisonStrength - finalDefenders);
+      reserve.desiredStrength = needed;
+      if (reserve.assigned > needed) {
+        const offensives = fronts.filter(f => f.type === 'offensive');
+        for (const u of units.filter(u => assign[u.id] === reserve.id)) {
+          if (reserve.assigned <= needed || !offensives.length) break;
+          // Preserve one defender when releasing it would undershoot the target.
+          if (reserve.assigned - unitStrength(u) < needed - 1e-6) continue;
+          const f = byDist(at(u), offensives)[0];
+          reserve.assigned -= unitStrength(u);
+          give(u, f);
+        }
+      }
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
     // ATTACKING; an attack that has lost over half its force falls back to regroup. Defensive fronts hold.

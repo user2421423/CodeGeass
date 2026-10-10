@@ -460,7 +460,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     garrisons). Priority is discounted when half the army could not meet the need.
   - Strength is `unitStrength`: frames × health × generation, ×1.5 commanders, ×1.5 Elite Forces.
   - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace) plus
-    the four best others. A 10% reserve waits at the capital and is released to any emergency.
+    the four best others. The 10% strategic defensive target includes existing garrisons and units assigned to
+    defensive fronts; only the uncovered portion becomes a mobile capital reserve. Threatened cities and critical
+    defenses can exceed 10%, but the AI does not keep an additional 10% at the capital on top of them.
   - The rest of the army is split 50/25/15/10 by rank, capped by need. The front furthest below its target takes the
     nearest free unit.
   - Assignments are sticky for 4 turns (`g.ai[side].assignments`), unless the front is gone, the unit is 60+ hexes
