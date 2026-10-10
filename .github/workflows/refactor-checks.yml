@@ -22,5 +22,6 @@ jobs:
       - name: Run UI, assets and map checks
         run: |
           node tests/ui-smoke.cjs
+          node tests/camera-zoom.test.cjs
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
