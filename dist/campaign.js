@@ -29,10 +29,12 @@
     },
     hard: {
       ...E.DIFFICULTIES.hard,
+      ranks: 1, // Preserve campaign's original commander progression.
       desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank.',
     },
     challenge: {
       ...E.DIFFICULTIES.challenge,
+      ranks: 2, // Conquest uses maximum rank; campaigns retain +2.
       desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%.',
     },
   };

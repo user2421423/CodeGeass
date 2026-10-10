@@ -29,9 +29,9 @@
       techTier: 2,
       upgradeEvery: 2,
       extraPer: 4,
-      ranks: 1,
+      ranks: 3,
       income: 1,
-      desc: 'Rival powers have all tier I–II research, half their units are upgraded a class and there are more of them.',
+      desc: 'Rival powers have all tier I–II research, half their units are upgraded a class and there are more of them. Enemy commanders gain three ranks.',
     },
     challenge: {
       name: 'Challenge',
@@ -41,9 +41,9 @@
       upgradeEvery: 1,
       extraPer: 2,
       stack: true,
-      ranks: 2,
+      ranks: RANKS.length - 1, // Every starting rank reaches Marshal.
       income: 1.25,
-      desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell.',
+      desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
   };
   // One class up within each branch: a scout becomes an assault frame, a line frame a mainline frame, and so on.
