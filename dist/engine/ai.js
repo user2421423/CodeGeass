@@ -121,8 +121,8 @@
   }
   // ======== Theaters ========
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
-  // units keep their front for `sticky` turns, an offensive gathers within `rally` hexes of its rally city before it
-  // attacks (or after `wait` turns), and `reserve` of the army's strength waits at the capital.
+  // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
+  // (or after `wait` turns). `reserve` is the total routine defense share, including garrisons and defensive fronts.
   const FRONT = { radius: 16, near: 20, max: 4, sticky: 4, far: 60, rally: 4, reserve: 0.1, wait: 3, pull: 15, stray: 4, floor: 0.25 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
@@ -484,9 +484,9 @@
     }
     return (direct ? f.stack : 0) + cargo;
   }
-  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
-  // to enemies within five hexes (or a landing's reach, see threatTo) and draw defenders from proportionally larger
-  // strategic radii. In Conquest, fortress cities and naval bases also keep one defender. Returns { unitId: city }.
+  // Garrison duty: the capital seeks two defenders (four when threatened), but routine guards share
+  // the 10% defense budget with defensive fronts and the mobile reserve. Nearby enemies within four hexes
+  // warrant extra emergency guards. Fortress cities and major naval bases seek one guard when budget allows.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
@@ -524,8 +524,8 @@
         if (guard(u, { c: s.c, r: s.r, id: s.id }, urgent(s, t))) assigned++;
       }
     }
-    // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
-    // empty, even in quiet times.
+    // Strongholds (Conquest): fortress cities at straits and level-2+ naval bases
+    // request a guard, but cannot exceed the shared routine-defense budget.
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
@@ -536,7 +536,7 @@
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
         }
       }
-    // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
+    // Own mines: major deposits request one routine guard; imminent attacks can trigger up to two emergency guards.
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
