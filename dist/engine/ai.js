@@ -530,9 +530,6 @@
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
-        const u = own
-          .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
-          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
         for (const u of own
           .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
           .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)) {
