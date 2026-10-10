@@ -605,7 +605,7 @@
       .filter(v => v.hp > 0 && foe(g, v.side, side) && !isShip(v) && !atSea(g, v) && dist(g, v, t) <= 3)
       .reduce((a, v) => a + v.stack, 0);
     if (threat > strength) return null;
-    const prize = g.stations.some(s => foe(g, s.owner, side) && !unitAt(g, s) && s.shield <= 60 && dist(g, s, t) <= 2);
+    const prize = g.stations.some(s => foe(g, s.owner, side) && !unitAt(g, s) && dist(g, s, t) <= 2);
     return fieldAt(t) + threat * 3 - (prize ? 25 : 0);
   }
   // Launch every ready formation onto the best landing hex (toward its front, which may be a friendly rally city), then
@@ -615,7 +615,7 @@
     for (let i = (ship.cargo?.length || 0) - 1; i >= 0; i--) {
       if (deployReason(g, ship, i)) continue;
       const strength = ship.cargo.reduce((a, c) => a + c.stack, 0),
-        spot = deployTargets(g, ship)
+        spot = deployTargets(g, ship, i)
           .map(t => ({ t, s: landingScore(g, ship.side, t, strength + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
           .filter(o => o.s != null)
           .sort((a, b) => a.s - b.s)[0]?.t;
@@ -656,7 +656,7 @@
       danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
       strength = cargo.reduce((a, c) => a + c.stack, 0),
       landing = p => {
-        const scores = deployTargetsAt(g, p, u.side)
+        const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
           .map(t => landingScore(g, u.side, t, strength, fieldAt, masses))
           .filter(v => v != null);
         return scores.length ? Math.min(...scores) + danger(p) * 2 : null;
@@ -1166,7 +1166,9 @@
         currentField = fieldAt(old);
       const placeScore = p => {
         const station = stationAt(g, p);
-        let sc = station && foe(g, station.owner, u.side) && station.shield === 0 ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        let sc = station && foe(g, station.owner, u.side) && !isShip(u) &&
+          (station.shield === 0 || navalCityAssault(g, u))
+          ? 400 + (station.capitalOf ? 600 : 0) : 0;
         if (COMMANDERS[u.cmd]?.fx.treasury && station?.owner === u.side) sc += 250 + station.income * 4;
         const mine = siteAt(g, p);
         if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;
