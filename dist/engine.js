@@ -543,7 +543,9 @@
       shortfall(funds(g, u.side), reinforceCost(u.type, g, u.side, u))
     );
   }
-  function buyReason(g, s, type, stack = 1) {
+  // `vacating` lets the AI validate a replacement before moving the current garrison.
+  // Every other recruitment rule still applies; the actual purchase requires an empty hex.
+  function buyReason(g, s, type, stack = 1, vacating = null) {
     const t = TYPES[type];
     if (!t || !s) return 'Unavailable';
     return (
@@ -559,7 +561,8 @@
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner, type).length ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
+      (!recruitOptions(g, s, s.owner, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
+        ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
     );
   }
@@ -1554,13 +1557,23 @@
     }
     return bonus;
   }
+  // Permanent frame/commander strength shared by the dock and combat. Situational
+  // modifiers (morale, health, terrain, targets and auras) remain in power().
+  function intrinsicAttack(g, u, counter = false) {
+    const t = TYPES[u.type], f = fx(u), strike = !counter || !f.attackOnly,
+      attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
+    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1));
+    if (f.dmg && strike) attack *= 1 + f.dmg;
+    if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
+    return attack * officerAttack(g, u) * (1 + 0.06 * genericLevel(g, u, attackGeneric));
+  }
   function power(g, u, target, st, counter = false, direct = true) {
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
       f = fx(u),
       ef = eliteFx(u),
       strike = !counter || !f.attackOnly;
-    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1)) * (1 + 0.07 * Math.min(5, u.xp));
+    let attack = intrinsicAttack(g, u, counter) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
@@ -1582,12 +1595,8 @@
     // Rapid Launch Systems: the first attack on the turn a Knightmare launched from a carrier (needs a level-3 port).
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
     // Commander signature abilities (attacker side).
-    if (f.dmg && strike) attack *= 1 + f.dmg;
-    if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
-    const attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
-    attack *= 1 + 0.06 * genericLevel(g, u, attackGeneric);
     if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
     attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
@@ -1601,7 +1610,6 @@
         f.artist *
           Math.min(3, g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, target) === 1).length);
     if (t.boarding && (target ? victim.branch === 'Armor' : !!st)) attack *= 1.55;
-    attack *= officerAttack(g, u);
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
@@ -1949,8 +1957,8 @@
       sakuradite: Math.round((t.sakuradite ?? SAKURADITE.cost[t.cls] ?? 0) * (1 + 0.85 * (stack - 1)) * off),
     };
   }
-  function canBuy(g, s, type, stack = 1) {
-    return !buyReason(g, s, type, stack);
+  function canBuy(g, s, type, stack = 1, vacating = null) {
+    return !buyReason(g, s, type, stack, vacating);
   }
   function recruit(g, stationId, type, stack = 1, position) {
     const s = g.stations.find(s => s.id === stationId);
@@ -2015,12 +2023,14 @@
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
-    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u), st = COMMANDERS[u.cmd]?.stats || {};
+    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u);
     return {
       hp: maxHP(u),
-      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1)) * officerAttack(g, u) * (1 + (st.dmg || 0)) * (1 + (st.dmgBranch?.[t.branch] || 0))),
+      attack: Math.round(intrinsicAttack(g, u)),
       armor: t.armor + s.armor,
-      move: movement(g, u),
+      move: isSea(tile(g, u.c, u.r))
+        ? t.naval === 'amphibious' ? amphibiousSea(g, u) : atSea(g, u) ? seaMove(g, u) : movement(g, u)
+        : movement(g, u),
       min: r.min,
       max: r.max,
     };
@@ -2099,6 +2109,27 @@
     if (kind === 'port') return { credits: 140 * (l + 1), industry: 35 * (l + 1) };
     return { credits: 120 * (l + 1), industry: 30 * (l + 1) };
   }
+  // Remember each city's output before building contributions, including custom campaign cities.
+  // World-city data also recovers the foundation in older saves whose factories were already damaged.
+  // The foundation can be negative: some starting factories have less output than upgrades add.
+  function buildingFoundation(g, s) {
+    if (s.buildingFoundation) return s.buildingFoundation;
+    const row = g.mode !== 'campaign' && CITY_DATA.find(r => r[0] === s.name),
+      base = row ? cityBase(row) : s,
+      tier = row ? row[4] : s.tier || 0,
+      lab = row ? row[5] ? 1 : 0 : s.lab || 0;
+    return s.buildingFoundation ||= {
+      industry: base.industry - 10 * tier,
+      science: base.science - 8 * lab,
+      maxShield: base.maxShield - (row ? 0 : s.fortBonus || 0) - 60 * tier,
+    };
+  }
+  function syncBuildings(g, s) {
+    const base = buildingFoundation(g, s);
+    s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
+    s.science = Math.max(0, base.science + 8 * (s.lab || 0));
+    s.maxShield = Math.max(0, base.maxShield + 60 * (s.tier || 0) + (s.fortBonus || 0));
+  }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),
       b = BUILDINGS[kind];
@@ -2106,6 +2137,7 @@
     if (why) return { ok: false, reason: why };
     const cost = buildCost(s, kind),
       e = funds(g, s.owner);
+    buildingFoundation(g, s);
     spend(e, cost);
     if (kind === 'port' && !s.portAt) {
       const t = portSite(g, s);
@@ -2114,10 +2146,9 @@
     }
     s[b.field] = buildingLevel(s, kind) + 1;
     if (kind === 'factory') {
-      s.industry += 10;
-      s.maxShield += 60;
+      syncBuildings(g, s);
       s.shield = Math.min(s.maxShield, s.shield + 60);
-    } else if (kind === 'lab') s.science += 8;
+    } else if (kind === 'lab') syncBuildings(g, s);
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };
   }
@@ -2820,23 +2851,16 @@
       return 'That is your last city';
     return null;
   }
-  // The city's founding output and defenses: wrecked buildings never leave a city below them.
-  function founding(s) {
-    const row = CITY_DATA.find(r => r[0] === s.name);
-    return row ? cityBase(row) : { income: 0, industry: 0, science: 0, maxShield: 0 };
-  }
   // Knock down every building by `levels` (Infinity: back to level 0) with the output and defenses they added.
   function ruin(g, s, levels) {
-    const base = founding(s),
-      lostFactory = Math.min(levels, s.tier || 0),
+    buildingFoundation(g, s);
+    const lostFactory = Math.min(levels, s.tier || 0),
       lostLab = Math.min(levels, s.lab || 0);
     s.tier = (s.tier || 0) - lostFactory;
     s.lab = (s.lab || 0) - lostLab;
     s.refinery = Math.max(0, (s.refinery || 0) - levels);
     s.portLevel = Math.max(0, (s.portLevel || 0) - levels);
-    s.industry = Math.max(Math.min(base.industry, s.industry), s.industry - 10 * lostFactory);
-    s.science = Math.max(Math.min(base.science, s.science), s.science - 8 * lostLab);
-    s.maxShield = Math.max(Math.min(base.maxShield + (s.fortBonus || 0), s.maxShield), s.maxShield - 60 * lostFactory);
+    syncBuildings(g, s);
     s.shield = 0;
     dropProject(g, s, 'destroyed');
     dropEliminator(g, s, 'destroyed');
@@ -3211,7 +3235,7 @@
       name = fortressName(s),
       hit = [];
     foe.hp = Math.max(0, foe.hp - damage);
-    foe.morale = Math.max(moraleFloor(g, foe), foe.morale - 1);
+    lowerMorale(g, foe, 1);
     s.gunReady = g.turn + fortressRecharge(g, s);
     log(g, `${name} strikes ${TYPES[foe.type].short} for ${damage}.`, s.owner);
     // Battery Overcharge II: the blast also catches enemy units next to the target.
@@ -3580,7 +3604,15 @@
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
   // `seeds` ([position, value] pairs) replaces the side-wide targets, e.g. with one front's objectives; `only`
   // ('land' or 'sea') keeps the paths on one surface.
-  function goalField(g, side, seeds = null, only = null) {
+  // Optional unit routing excludes hexes that reachable()/move() cannot traverse.
+  // An inaccessible goal can still seed an approach: standing orders finish beside it.
+  function routePassable(g, u, p) {
+    const t = TYPES[u.type], st = stationAt(g, p), occ = unitAt(g, p);
+    if (t.naval === 'ship' && (!navigable(p) || st)) return false;
+    if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) return false;
+    return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
+  }
+  function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
       hd = [],
       hi = [];
@@ -3648,15 +3680,17 @@
     while (hd.length) {
       const d = hd[0],
         i = pop();
-      if (d > field[i]) continue;
+      if (d > field[i] || d >= maxCost) continue;
       const sea = isSea(tiles[i]);
       for (let k = i * 6; k < i * 6 + 6; k++) {
         const j = nb[k];
         if (j < 0) continue;
         const n = tiles[j];
         if (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n))) continue;
-        const nd = d + (only === 'sea' ? 1 : (isSea(n) !== sea ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost));
-        if (nd < field[j]) {
+        if (unit && !routePassable(g, unit, n)) continue;
+        const step = unit ? isSea(tiles[i]) ? 1 : terrainCost(g, unit, tiles[i]) : isSea(n) ? 1 : TERRAIN[n.terrain].cost;
+        const nd = d + (only === 'sea' ? 1 : (isSea(n) !== sea ? 4 : 0) + step);
+        if (nd <= maxCost && nd < field[j]) {
           field[j] = nd;
           push(j, nd);
         }
@@ -3708,12 +3742,13 @@
     if (t.naval === 'ship') return 'sea';
     return !t.naval && !atSea(g, u) && massOf(g, u) >= 0 && massOf(g, u) === massOf(g, p) ? 'land' : null;
   }
-  function routeField(g, u, p) {
+  function routeField(g, u, p, avoidBlockers = true) {
     const surface = gotoSurface(g, u, p),
-      field = goalField(g, u.side, [[p, 0]], surface);
+      field = goalField(g, u.side, [[p, 0]], surface, avoidBlockers ? u : null);
     // A stale map component or an impassable land route must not prevent a viable coastal journey.
-    return surface === 'land' && !Number.isFinite(field[u.r * g.cols + u.c])
-      ? goalField(g, u.side, [[p, 0]]) : field;
+    return surface === 'land' && !Number.isFinite(field[u.r * g.cols + u.c]) &&
+      (!avoidBlockers || !Number.isFinite(goalField(g, u.side, [[p, 0]], surface)[u.r * g.cols + u.c]))
+      ? goalField(g, u.side, [[p, 0]], null, avoidBlockers ? u : null) : field;
   }
   function gotoReason(g, u, p) {
     if (!u || u.hp <= 0) return 'Unavailable';
@@ -3726,7 +3761,8 @@
     if (naval === 'ship' && (!navigable(t) || stationAt(g, t))) return 'Warships stay at sea';
     if (!naval && isSea(t)) return 'Choose a land hex';
     if (t.c === u.c && t.r === u.r) return 'Already there';
-    return Number.isFinite(routeField(g, u, t)[u.r * g.cols + u.c]) ? null : 'No route there';
+    // Temporary occupancy or defenses may clear before the unit arrives.
+    return Number.isFinite(routeField(g, u, t, false)[u.r * g.cols + u.c]) ? null : 'No route there';
   }
   function setGoto(g, id, c, r) {
     const u = g.units.find(v => v.id === id),
@@ -3752,7 +3788,7 @@
   }
   // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
   // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex
-  // nearer this turn) and lost [id] (no route remains; order cancelled).
+  // farther along its legal route this turn) and lost [id] (no terrain route remains; order cancelled).
   function runGotos(g, side) {
     const report = { moved: [], arrived: [], blocked: [], lost: [] },
       fields = new Map();
@@ -3767,20 +3803,18 @@
         delete u.goto;
         continue;
       }
-      const surface = dest && gotoSurface(g, u, dest),
-        k = dest && `${dest.c},${dest.r},${surface}`;
-      if (dest && !fields.has(k)) fields.set(k, goalField(g, side, [[dest, 0]], surface));
-      let field = dest && fields.get(k);
-      if (surface === 'land' && field && !Number.isFinite(field[u.r * g.cols + u.c])) {
-        const fallbackKey = `${dest.c},${dest.r},null`;
-        if (!fields.has(fallbackKey)) fields.set(fallbackKey, goalField(g, side, [[dest, 0]]));
-        field = fields.get(fallbackKey);
-      }
+      // Replan separately for this unit against the live board, after earlier orders move.
+      const field = dest && routeField(g, u, dest);
       const cost = p => field[p.r * g.cols + p.c],
         here = field ? cost(u) : Infinity;
       if (!Number.isFinite(here)) {
-        report.lost.push(u.id);
-        delete u.goto;
+        const k = dest && `${dest.c},${dest.r},${gotoSurface(g, u, dest)}`;
+        if (dest && !fields.has(k)) fields.set(k, routeField(g, u, dest, false));
+        if (dest && Number.isFinite(fields.get(k)[u.r * g.cols + u.c])) report.blocked.push(u.id);
+        else {
+          report.lost.push(u.id);
+          delete u.goto;
+        }
         continue;
       }
       let best = null;

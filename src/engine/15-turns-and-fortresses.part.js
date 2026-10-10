@@ -226,7 +226,7 @@
       name = fortressName(s),
       hit = [];
     foe.hp = Math.max(0, foe.hp - damage);
-    foe.morale = Math.max(moraleFloor(g, foe), foe.morale - 1);
+    lowerMorale(g, foe, 1);
     s.gunReady = g.turn + fortressRecharge(g, s);
     log(g, `${name} strikes ${TYPES[foe.type].short} for ${damage}.`, s.owner);
     // Battery Overcharge II: the blast also catches enemy units next to the target.

@@ -40,8 +40,8 @@
       sakuradite: Math.round((t.sakuradite ?? SAKURADITE.cost[t.cls] ?? 0) * (1 + 0.85 * (stack - 1)) * off),
     };
   }
-  function canBuy(g, s, type, stack = 1) {
-    return !buyReason(g, s, type, stack);
+  function canBuy(g, s, type, stack = 1, vacating = null) {
+    return !buyReason(g, s, type, stack, vacating);
   }
   function recruit(g, stationId, type, stack = 1, position) {
     const s = g.stations.find(s => s.id === stationId);
@@ -106,12 +106,14 @@
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
-    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u), st = COMMANDERS[u.cmd]?.stats || {};
+    const t = TYPES[u.type], s = eliteScale(u), r = rangeOf(g, u);
     return {
       hp: maxHP(u),
-      attack: Math.round(t.attack * s.attack * (1 + 0.45 * (u.stack - 1)) * officerAttack(g, u) * (1 + (st.dmg || 0)) * (1 + (st.dmgBranch?.[t.branch] || 0))),
+      attack: Math.round(intrinsicAttack(g, u)),
       armor: t.armor + s.armor,
-      move: movement(g, u),
+      move: isSea(tile(g, u.c, u.r))
+        ? t.naval === 'amphibious' ? amphibiousSea(g, u) : atSea(g, u) ? seaMove(g, u) : movement(g, u)
+        : movement(g, u),
       min: r.min,
       max: r.max,
     };
@@ -190,6 +192,27 @@
     if (kind === 'port') return { credits: 140 * (l + 1), industry: 35 * (l + 1) };
     return { credits: 120 * (l + 1), industry: 30 * (l + 1) };
   }
+  // Remember each city's output before building contributions, including custom campaign cities.
+  // World-city data also recovers the foundation in older saves whose factories were already damaged.
+  // The foundation can be negative: some starting factories have less output than upgrades add.
+  function buildingFoundation(g, s) {
+    if (s.buildingFoundation) return s.buildingFoundation;
+    const row = g.mode !== 'campaign' && CITY_DATA.find(r => r[0] === s.name),
+      base = row ? cityBase(row) : s,
+      tier = row ? row[4] : s.tier || 0,
+      lab = row ? row[5] ? 1 : 0 : s.lab || 0;
+    return s.buildingFoundation ||= {
+      industry: base.industry - 10 * tier,
+      science: base.science - 8 * lab,
+      maxShield: base.maxShield - (row ? 0 : s.fortBonus || 0) - 60 * tier,
+    };
+  }
+  function syncBuildings(g, s) {
+    const base = buildingFoundation(g, s);
+    s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
+    s.science = Math.max(0, base.science + 8 * (s.lab || 0));
+    s.maxShield = Math.max(0, base.maxShield + 60 * (s.tier || 0) + (s.fortBonus || 0));
+  }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),
       b = BUILDINGS[kind];
@@ -197,6 +220,7 @@
     if (why) return { ok: false, reason: why };
     const cost = buildCost(s, kind),
       e = funds(g, s.owner);
+    buildingFoundation(g, s);
     spend(e, cost);
     if (kind === 'port' && !s.portAt) {
       const t = portSite(g, s);
@@ -205,10 +229,9 @@
     }
     s[b.field] = buildingLevel(s, kind) + 1;
     if (kind === 'factory') {
-      s.industry += 10;
-      s.maxShield += 60;
+      syncBuildings(g, s);
       s.shield = Math.min(s.maxShield, s.shield + 60);
-    } else if (kind === 'lab') s.science += 8;
+    } else if (kind === 'lab') syncBuildings(g, s);
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };
   }

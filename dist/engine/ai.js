@@ -469,6 +469,18 @@
         taken[u.id] = { ...post, emergency };
         return true;
       };
+    const routes = new Map(),
+      nearby = (post, radius) => own
+        .filter(u => !taken[u.id] && dist(g, u, post) <= radius)
+        .map(u => {
+          const key = `${post.c},${post.r},${u.type},${radius}`;
+          // A guard cannot be selected beyond this cost, so do not scan the whole world for each post/type.
+          if (!routes.has(key)) routes.set(key, goalField(g, side, [[post, 0]], TYPES[u.type].naval === 'amphibious' ? null : 'land', u, radius));
+          return { u, cost: routes.get(key)[u.r * g.cols + u.c] };
+        })
+        .filter(p => Number.isFinite(p.cost) && p.cost <= radius)
+        .sort((a, b) => a.cost - b.cost || a.u.id - b.u.id)
+        .map(p => p.u);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -481,9 +493,7 @@
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
       const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
-      const near = own
-        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
-        .sort((a, b) => dist(g, a, s) - dist(g, b, s));
+      const near = nearby(s, capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard);
       let assigned = 0;
       for (const u of near) {
         if (assigned >= need) break;
@@ -496,9 +506,7 @@
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
-        for (const u of own
-          .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
-          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)) {
+        for (const u of nearby(s, aiRange(g).cityGuard)) {
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
         }
       }
@@ -507,7 +515,7 @@
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
-      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      const near = nearby(d, aiRange(g).mineGuard);
       let assigned = 0;
       for (const u of near) {
         if (assigned >= need) break;
@@ -750,10 +758,9 @@
     g.vacated = [];
     if (!builds) return;
     // 1b. Clear the factories, as a player would (a unit on the city hex blocks building there). A ready unit on a
-    // quiet city carries out its orders first. On a city with an enemy within 2 hexes, the defender steps beside it
-    // (best cover) so the city can build another defender, but only when the side can pay for a unit there;
-    // otherwise it holds the city. The UI plays these moves from g.vacated ({ id, orders }).
-    const cheapest = price(typeFor(side, 'scout', g), 1, g, side);
+    // quiet city carries out its orders first. Threatened cities clear their garrison only in tryBuild,
+    // immediately before a replacement is purchased with the final resource reserves applied.
+    // The UI plays these moves from g.vacated ({ id, orders }).
     for (const s of bases) {
       const u = unitAt(g, s);
       if (!u || u.side !== side || u.moved || !isReady(g, u)) continue;
@@ -772,13 +779,6 @@
         g.vacated.push({ id: u.id, orders });
         continue;
       }
-      if (s.producedTurn === g.turn || cityBusyReason(g, s) || shortfall(e, cheapest)) continue;
-      const reach = reachable(g, u),
-        spot = adjacent(g, s)
-          .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
-          .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
-      const m = spot && move(g, u.id, spot.c, spot.r);
-      if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
     // 2. Super-heavy production is now a normal factory choice, evaluated by
     // local battlefield demand. Retire legacy savings/cooldown flags in old saves.
@@ -886,7 +886,10 @@
           TYPES[u.type].branch !== 'Infantry' &&
           u.hp / maxHP(u) >= 0.7 &&
           nearFriendlyCity(g, u) &&
-          !atSea(g, u),
+          !atSea(g, u) &&
+          // Keep the garrison's move available until replacement recruitment is decided.
+          !(stationAt(g, u)?.owner === side && front(u) <= 2 &&
+            stationAt(g, u).producedTurn !== g.turn && !cityBusyReason(g, stationAt(g, u))),
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side, u);
@@ -1030,6 +1033,12 @@
     };
     // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
     const tryBuild = (s, menu, sizes) => {
+      const defender = unitAt(g, s),
+        vacating = defender?.side === side && isReady(g, defender) && !defender.moved && front(s) <= 2 ? defender : null,
+        reach = vacating && reachable(g, vacating),
+        spot = reach && adjacent(g, s)
+          .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
+          .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
       for (const type of menu)
         for (const n of sizes) {
           const c = price(type, n, g, side);
@@ -1037,7 +1046,15 @@
               (!superDemand(serves(s)) ||
                 spendable() - c.credits < ordinaryBudget.credits ||
                 e.industry - reserveInd - c.industry < ordinaryBudget.industry)) continue;
-          if (canBuy(g, s, type, n) && affordable(c) && keepsHeavy(type, c) && recruit(g, s.id, type, n).ok) return true;
+          if (!canBuy(g, s, type, n, spot ? vacating : null) || !affordable(c) || !keepsHeavy(type, c)) continue;
+          if (vacating) {
+            if (!spot) continue;
+            const m = move(g, vacating.id, spot.c, spot.r);
+            if (!m.ok) continue;
+            g.vacated.push({ id: vacating.id, orders: [{ kind: 'move', ...m, id: vacating.id }] });
+          }
+          // No other spending occurs between validating the replacement, clearing the city and recruiting.
+          if (recruit(g, s.id, type, n).ok) return true;
         }
       return false;
     };
@@ -1123,7 +1140,8 @@
           return { p, score };
         })
         .sort((a, b) => b.score - a.score)[0];
-    if (!u.moved && !u.attacked && !steered) {
+    const maneuver = () => {
+      if (u.moved || u.attacked || steered) return;
       // Boarding is decided above (idle troops and waiting carriers), so occupied hexes are not destinations here.
       const spots = [...reachable(g, u).keys()]
         .map(k => {
@@ -1217,13 +1235,15 @@
         const m = move(g, id, best.c, best.r);
         if (m.ok) events.push({ kind: 'move', ...m, id });
       }
-    }
-    // Recheck after movement: a designation may only now be in range.
-    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
-      const r = feint(g, id);
-      if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
-    }
+    };
+    // Reevaluate positioning after each kill that restores movement/refire, within a bounded action budget.
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
+      maneuver();
+      // A designation may only now be in range.
+      if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+        const r = feint(g, id);
+        if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
+      }
       const shot = choose();
       if (!shot) break;
       const a = attack(g, id, shot.p.c, shot.p.r);

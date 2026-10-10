@@ -12,7 +12,15 @@
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
   // `seeds` ([position, value] pairs) replaces the side-wide targets, e.g. with one front's objectives; `only`
   // ('land' or 'sea') keeps the paths on one surface.
-  function goalField(g, side, seeds = null, only = null) {
+  // Optional unit routing excludes hexes that reachable()/move() cannot traverse.
+  // An inaccessible goal can still seed an approach: standing orders finish beside it.
+  function routePassable(g, u, p) {
+    const t = TYPES[u.type], st = stationAt(g, p), occ = unitAt(g, p);
+    if (t.naval === 'ship' && (!navigable(p) || st)) return false;
+    if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) return false;
+    return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
+  }
+  function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
       hd = [],
       hi = [];
@@ -80,15 +88,17 @@
     while (hd.length) {
       const d = hd[0],
         i = pop();
-      if (d > field[i]) continue;
+      if (d > field[i] || d >= maxCost) continue;
       const sea = isSea(tiles[i]);
       for (let k = i * 6; k < i * 6 + 6; k++) {
         const j = nb[k];
         if (j < 0) continue;
         const n = tiles[j];
         if (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n))) continue;
-        const nd = d + (only === 'sea' ? 1 : (isSea(n) !== sea ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost));
-        if (nd < field[j]) {
+        if (unit && !routePassable(g, unit, n)) continue;
+        const step = unit ? isSea(tiles[i]) ? 1 : terrainCost(g, unit, tiles[i]) : isSea(n) ? 1 : TERRAIN[n.terrain].cost;
+        const nd = d + (only === 'sea' ? 1 : (isSea(n) !== sea ? 4 : 0) + step);
+        if (nd <= maxCost && nd < field[j]) {
           field[j] = nd;
           push(j, nd);
         }

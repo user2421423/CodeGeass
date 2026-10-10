@@ -16,4 +16,4 @@ The sections are **lexically shared source fragments**, not independent JavaScri
 
 Deployment continues to serve `dist/index.html` and its existing scripts. There are no changes to browser script order, globals, game rules, mission IDs, or save formats; generated production files are initially byte-for-byte identical to the originals. Large generated vector coastline data in `dist/ui/geography-data.js` is intentionally not split: its load-time optimization is a separate performance task.
 
-To validate: `node --test tests/core.test.cjs tests/source-parts.test.cjs`, `node tests/ui-smoke.cjs`, `node tools/validate_assets.cjs --tracked`, and `python3 tools/check_map.py`.
+To validate: `node --test tests/*.test.cjs`, `node tests/ui-smoke.cjs`, `node tools/validate_assets.cjs --tracked`, and `python3 tools/check_map.py`.

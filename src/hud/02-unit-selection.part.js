@@ -70,7 +70,7 @@ function costHTML(c, all = false) {
 function statRow(u, t) {
   const range = rangeText(u),
     s = E.unitStats(game, u);
-  return `<span class="stat" title="Attack">${ICONS.use('atk')}${s.attack}</span><span class="stat" title="Armor">${ICONS.use('def')}${s.armor}</span><span class="stat" title="Movement">${ICONS.use('mov')}${E.atSea(game, u) ? E.seaMove(game, u) : s.move}</span><span class="stat" title="Range">${ICONS.use('rng')}${range}</span>`;
+  return `<span class="stat" title="Attack">${ICONS.use('atk')}${s.attack}</span><span class="stat" title="Armor">${ICONS.use('def')}${s.armor}</span><span class="stat" title="Movement">${ICONS.use('mov')}${s.move}</span><span class="stat" title="Range">${ICONS.use('rng')}${range}</span>`;
 }
 // A unit's display name: a commander's signature frame shows on super-heavy units, as LOGH flagships did.
 function unitName(u) {

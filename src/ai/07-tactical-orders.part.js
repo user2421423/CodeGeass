@@ -73,7 +73,8 @@
           return { p, score };
         })
         .sort((a, b) => b.score - a.score)[0];
-    if (!u.moved && !u.attacked && !steered) {
+    const maneuver = () => {
+      if (u.moved || u.attacked || steered) return;
       // Boarding is decided above (idle troops and waiting carriers), so occupied hexes are not destinations here.
       const spots = [...reachable(g, u).keys()]
         .map(k => {
@@ -167,13 +168,15 @@
         const m = move(g, id, best.c, best.r);
         if (m.ok) events.push({ kind: 'move', ...m, id });
       }
-    }
-    // Recheck after movement: a designation may only now be in range.
-    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
-      const r = feint(g, id);
-      if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
-    }
+    };
+    // Reevaluate positioning after each kill that restores movement/refire, within a bounded action budget.
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
+      maneuver();
+      // A designation may only now be in range.
+      if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+        const r = feint(g, id);
+        if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
+      }
       const shot = choose();
       if (!shot) break;
       const a = attack(g, id, shot.p.c, shot.p.r);

@@ -9,13 +9,23 @@
     }
     return bonus;
   }
+  // Permanent frame/commander strength shared by the dock and combat. Situational
+  // modifiers (morale, health, terrain, targets and auras) remain in power().
+  function intrinsicAttack(g, u, counter = false) {
+    const t = TYPES[u.type], f = fx(u), strike = !counter || !f.attackOnly,
+      attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
+    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1));
+    if (f.dmg && strike) attack *= 1 + f.dmg;
+    if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
+    return attack * officerAttack(g, u) * (1 + 0.06 * genericLevel(g, u, attackGeneric));
+  }
   function power(g, u, target, st, counter = false, direct = true) {
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
       f = fx(u),
       ef = eliteFx(u),
       strike = !counter || !f.attackOnly;
-    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1)) * (1 + 0.07 * Math.min(5, u.xp));
+    let attack = intrinsicAttack(g, u, counter) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
@@ -37,12 +47,8 @@
     // Rapid Launch Systems: the first attack on the turn a Knightmare launched from a carrier (needs a level-3 port).
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
     // Commander signature abilities (attacker side).
-    if (f.dmg && strike) attack *= 1 + f.dmg;
-    if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
     if (counter && f.counter) attack *= 1 + f.counter;
-    const attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
-    attack *= 1 + 0.06 * genericLevel(g, u, attackGeneric);
     if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
     attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
@@ -56,7 +62,6 @@
         f.artist *
           Math.min(3, g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, target) === 1).length);
     if (t.boarding && (target ? victim.branch === 'Armor' : !!st)) attack *= 1.55;
-    attack *= officerAttack(g, u);
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');

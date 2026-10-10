@@ -7,12 +7,13 @@
     if (t.naval === 'ship') return 'sea';
     return !t.naval && !atSea(g, u) && massOf(g, u) >= 0 && massOf(g, u) === massOf(g, p) ? 'land' : null;
   }
-  function routeField(g, u, p) {
+  function routeField(g, u, p, avoidBlockers = true) {
     const surface = gotoSurface(g, u, p),
-      field = goalField(g, u.side, [[p, 0]], surface);
+      field = goalField(g, u.side, [[p, 0]], surface, avoidBlockers ? u : null);
     // A stale map component or an impassable land route must not prevent a viable coastal journey.
-    return surface === 'land' && !Number.isFinite(field[u.r * g.cols + u.c])
-      ? goalField(g, u.side, [[p, 0]]) : field;
+    return surface === 'land' && !Number.isFinite(field[u.r * g.cols + u.c]) &&
+      (!avoidBlockers || !Number.isFinite(goalField(g, u.side, [[p, 0]], surface)[u.r * g.cols + u.c]))
+      ? goalField(g, u.side, [[p, 0]], null, avoidBlockers ? u : null) : field;
   }
   function gotoReason(g, u, p) {
     if (!u || u.hp <= 0) return 'Unavailable';
@@ -25,7 +26,8 @@
     if (naval === 'ship' && (!navigable(t) || stationAt(g, t))) return 'Warships stay at sea';
     if (!naval && isSea(t)) return 'Choose a land hex';
     if (t.c === u.c && t.r === u.r) return 'Already there';
-    return Number.isFinite(routeField(g, u, t)[u.r * g.cols + u.c]) ? null : 'No route there';
+    // Temporary occupancy or defenses may clear before the unit arrives.
+    return Number.isFinite(routeField(g, u, t, false)[u.r * g.cols + u.c]) ? null : 'No route there';
   }
   function setGoto(g, id, c, r) {
     const u = g.units.find(v => v.id === id),
@@ -51,7 +53,7 @@
   }
   // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
   // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex
-  // nearer this turn) and lost [id] (no route remains; order cancelled).
+  // farther along its legal route this turn) and lost [id] (no terrain route remains; order cancelled).
   function runGotos(g, side) {
     const report = { moved: [], arrived: [], blocked: [], lost: [] },
       fields = new Map();
@@ -66,20 +68,18 @@
         delete u.goto;
         continue;
       }
-      const surface = dest && gotoSurface(g, u, dest),
-        k = dest && `${dest.c},${dest.r},${surface}`;
-      if (dest && !fields.has(k)) fields.set(k, goalField(g, side, [[dest, 0]], surface));
-      let field = dest && fields.get(k);
-      if (surface === 'land' && field && !Number.isFinite(field[u.r * g.cols + u.c])) {
-        const fallbackKey = `${dest.c},${dest.r},null`;
-        if (!fields.has(fallbackKey)) fields.set(fallbackKey, goalField(g, side, [[dest, 0]]));
-        field = fields.get(fallbackKey);
-      }
+      // Replan separately for this unit against the live board, after earlier orders move.
+      const field = dest && routeField(g, u, dest);
       const cost = p => field[p.r * g.cols + p.c],
         here = field ? cost(u) : Infinity;
       if (!Number.isFinite(here)) {
-        report.lost.push(u.id);
-        delete u.goto;
+        const k = dest && `${dest.c},${dest.r},${gotoSurface(g, u, dest)}`;
+        if (dest && !fields.has(k)) fields.set(k, routeField(g, u, dest, false));
+        if (dest && Number.isFinite(fields.get(k)[u.r * g.cols + u.c])) report.blocked.push(u.id);
+        else {
+          report.lost.push(u.id);
+          delete u.goto;
+        }
         continue;
       }
       let best = null;

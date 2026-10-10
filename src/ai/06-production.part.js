@@ -43,10 +43,9 @@
     g.vacated = [];
     if (!builds) return;
     // 1b. Clear the factories, as a player would (a unit on the city hex blocks building there). A ready unit on a
-    // quiet city carries out its orders first. On a city with an enemy within 2 hexes, the defender steps beside it
-    // (best cover) so the city can build another defender, but only when the side can pay for a unit there;
-    // otherwise it holds the city. The UI plays these moves from g.vacated ({ id, orders }).
-    const cheapest = price(typeFor(side, 'scout', g), 1, g, side);
+    // quiet city carries out its orders first. Threatened cities clear their garrison only in tryBuild,
+    // immediately before a replacement is purchased with the final resource reserves applied.
+    // The UI plays these moves from g.vacated ({ id, orders }).
     for (const s of bases) {
       const u = unitAt(g, s);
       if (!u || u.side !== side || u.moved || !isReady(g, u)) continue;
@@ -65,13 +64,6 @@
         g.vacated.push({ id: u.id, orders });
         continue;
       }
-      if (s.producedTurn === g.turn || cityBusyReason(g, s) || shortfall(e, cheapest)) continue;
-      const reach = reachable(g, u),
-        spot = adjacent(g, s)
-          .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
-          .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
-      const m = spot && move(g, u.id, spot.c, spot.r);
-      if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
     // 2. Super-heavy production is now a normal factory choice, evaluated by
     // local battlefield demand. Retire legacy savings/cooldown flags in old saves.
@@ -179,7 +171,10 @@
           TYPES[u.type].branch !== 'Infantry' &&
           u.hp / maxHP(u) >= 0.7 &&
           nearFriendlyCity(g, u) &&
-          !atSea(g, u),
+          !atSea(g, u) &&
+          // Keep the garrison's move available until replacement recruitment is decided.
+          !(stationAt(g, u)?.owner === side && front(u) <= 2 &&
+            stationAt(g, u).producedTurn !== g.turn && !cityBusyReason(g, stationAt(g, u))),
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side, u);
@@ -323,6 +318,12 @@
     };
     // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
     const tryBuild = (s, menu, sizes) => {
+      const defender = unitAt(g, s),
+        vacating = defender?.side === side && isReady(g, defender) && !defender.moved && front(s) <= 2 ? defender : null,
+        reach = vacating && reachable(g, vacating),
+        spot = reach && adjacent(g, s)
+          .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
+          .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
       for (const type of menu)
         for (const n of sizes) {
           const c = price(type, n, g, side);
@@ -330,7 +331,15 @@
               (!superDemand(serves(s)) ||
                 spendable() - c.credits < ordinaryBudget.credits ||
                 e.industry - reserveInd - c.industry < ordinaryBudget.industry)) continue;
-          if (canBuy(g, s, type, n) && affordable(c) && keepsHeavy(type, c) && recruit(g, s.id, type, n).ok) return true;
+          if (!canBuy(g, s, type, n, spot ? vacating : null) || !affordable(c) || !keepsHeavy(type, c)) continue;
+          if (vacating) {
+            if (!spot) continue;
+            const m = move(g, vacating.id, spot.c, spot.r);
+            if (!m.ok) continue;
+            g.vacated.push({ id: vacating.id, orders: [{ kind: 'move', ...m, id: vacating.id }] });
+          }
+          // No other spending occurs between validating the replacement, clearing the city and recruiting.
+          if (recruit(g, s.id, type, n).ok) return true;
         }
       return false;
     };

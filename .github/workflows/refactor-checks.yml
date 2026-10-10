@@ -18,7 +18,7 @@ jobs:
       - name: Verify source sections rebuild production code
         run: node tools/build_sources.cjs --check
       - name: Run core and source checks
-        run: node --test tests/core.test.cjs tests/source-parts.test.cjs
+        run: node --test tests/*.test.cjs
       - name: Run UI, assets and map checks
         run: |
           node tests/ui-smoke.cjs

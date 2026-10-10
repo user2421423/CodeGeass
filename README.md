@@ -127,7 +127,7 @@ Everything ships from `dist/` as plain scripts that `index.html` loads in order;
 The repository keeps only a small YAGNI-focused safety net: core engine/campaign integrity, one UI smoke path, and validation of the public assets that actually deploy.
 
 ```sh
-node --test tests/core.test.cjs
+node --test tests/*.test.cjs
 node tests/ui-smoke.cjs
 node tools/validate_assets.cjs --tracked
 ```

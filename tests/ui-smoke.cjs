@@ -239,6 +239,40 @@ const modal = () => node('modal-root').innerHTML;
   const clickAction = data => events.click({
     target: { closest: selector => selector === 'button' ? { dataset: data, disabled: false, getAttribute: () => null } : null },
   });
+  // An occupying unit must not hide standalone mine management.
+  const occupiedMine = run(`(() => {
+    const mine = game.sites.find(d => d.city == null && d.name === 'Mount Fuji');
+    if (!mine) throw new Error('Mount Fuji fixture missing');
+    mine.owner = game.player;
+    mine.refinery = 0;
+    let guard = E.unitAt(game, mine);
+    if (!guard) guard = E.newUnit(game, E.typeFor(game.player, 'light'), game.player, mine.c, mine.r);
+    guard.side = game.player;
+    guard.moved = guard.attacked = true;
+    routing = null; deploying = null;
+    game.economy[game.player].credits = game.economy[game.player].industry = 5000;
+    selectUnit(guard.id);
+    return { id: mine.id, unit: guard.id, c: mine.c, r: mine.r };
+  })()`);
+  assert(node('selection-dock').innerHTML.includes(`data-site="${occupiedMine.id}"`), 'occupied mine offers a Mine button');
+  run(`activateHex(E.tile(game, ${occupiedMine.c}, ${occupiedMine.r}))`);
+  assert.equal(run('selection.kind'), 'site', 'clicking a selected mine guard selects its mine');
+  run(`activateHex(E.tile(game, ${occupiedMine.c}, ${occupiedMine.r}))`);
+  assert.equal(run('selection.id'), occupiedMine.unit, 'another click selects the guard again');
+  clickAction({ site: String(occupiedMine.id) });
+  assert.equal(run('selection.kind'), 'site', 'dock Mine button selects the mine');
+  clickAction({ action: 'details' });
+  assert(node('side').innerHTML.includes(`data-refine="${occupiedMine.id}"`), 'occupied mine opens its refinery upgrade');
+  clickAction({ refine: String(occupiedMine.id) });
+  assert.equal(run(`game.sites.find(d => d.id === ${occupiedMine.id}).refinery`), 1, 'refinery purchase succeeds with its spent guard in place');
+  assert.equal(run(`E.unitAt(game, E.tile(game, ${occupiedMine.c}, ${occupiedMine.r})).id`), occupiedMine.unit);
+  const capitalText = run(`(() => {
+    const capital = game.stations.find(s => s.capitalOf === game.player && s.owner === game.player);
+    selection = { kind: 'station', id: capital.id };
+    return panel();
+  })()`);
+  assert(capitalText.includes('A power surrenders when it loses its last city.'), 'capital details describe the actual surrender rule');
+  assert(!capitalText.includes('If it falls, the whole power surrenders.'), 'capital capture does not falsely promise surrender');
   // Neither empty selection nor a terrain hex can revive the deleted intro panel.
   run('selection = null; detailOpen = true; updateSelection()');
   assert(!node('side').innerHTML, 'empty selection does not show a sidebar');

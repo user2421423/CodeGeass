@@ -168,23 +168,16 @@
       return 'That is your last city';
     return null;
   }
-  // The city's founding output and defenses: wrecked buildings never leave a city below them.
-  function founding(s) {
-    const row = CITY_DATA.find(r => r[0] === s.name);
-    return row ? cityBase(row) : { income: 0, industry: 0, science: 0, maxShield: 0 };
-  }
   // Knock down every building by `levels` (Infinity: back to level 0) with the output and defenses they added.
   function ruin(g, s, levels) {
-    const base = founding(s),
-      lostFactory = Math.min(levels, s.tier || 0),
+    buildingFoundation(g, s);
+    const lostFactory = Math.min(levels, s.tier || 0),
       lostLab = Math.min(levels, s.lab || 0);
     s.tier = (s.tier || 0) - lostFactory;
     s.lab = (s.lab || 0) - lostLab;
     s.refinery = Math.max(0, (s.refinery || 0) - levels);
     s.portLevel = Math.max(0, (s.portLevel || 0) - levels);
-    s.industry = Math.max(Math.min(base.industry, s.industry), s.industry - 10 * lostFactory);
-    s.science = Math.max(Math.min(base.science, s.science), s.science - 8 * lostLab);
-    s.maxShield = Math.max(Math.min(base.maxShield + (s.fortBonus || 0), s.maxShield), s.maxShield - 60 * lostFactory);
+    syncBuildings(g, s);
     s.shield = 0;
     dropProject(g, s, 'destroyed');
     dropEliminator(g, s, 'destroyed');

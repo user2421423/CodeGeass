@@ -9,6 +9,18 @@
         taken[u.id] = { ...post, emergency };
         return true;
       };
+    const routes = new Map(),
+      nearby = (post, radius) => own
+        .filter(u => !taken[u.id] && dist(g, u, post) <= radius)
+        .map(u => {
+          const key = `${post.c},${post.r},${u.type},${radius}`;
+          // A guard cannot be selected beyond this cost, so do not scan the whole world for each post/type.
+          if (!routes.has(key)) routes.set(key, goalField(g, side, [[post, 0]], TYPES[u.type].naval === 'amphibious' ? null : 'land', u, radius));
+          return { u, cost: routes.get(key)[u.r * g.cols + u.c] };
+        })
+        .filter(p => Number.isFinite(p.cost) && p.cost <= radius)
+        .sort((a, b) => a.cost - b.cost || a.u.id - b.u.id)
+        .map(p => p.u);
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -21,9 +33,7 @@
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
       const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
-      const near = own
-        .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
-        .sort((a, b) => dist(g, a, s) - dist(g, b, s));
+      const near = nearby(s, capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard);
       let assigned = 0;
       for (const u of near) {
         if (assigned >= need) break;
@@ -36,9 +46,7 @@
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
-        for (const u of own
-          .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
-          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)) {
+        for (const u of nearby(s, aiRange(g).cityGuard)) {
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
         }
       }
@@ -47,7 +55,7 @@
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
-      const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
+      const near = nearby(d, aiRange(g).mineGuard);
       let assigned = 0;
       for (const u of near) {
         if (assigned >= need) break;

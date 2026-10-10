@@ -51,7 +51,9 @@
       shortfall(funds(g, u.side), reinforceCost(u.type, g, u.side, u))
     );
   }
-  function buyReason(g, s, type, stack = 1) {
+  // `vacating` lets the AI validate a replacement before moving the current garrison.
+  // Every other recruitment rule still applies; the actual purchase requires an empty hex.
+  function buyReason(g, s, type, stack = 1, vacating = null) {
     const t = TYPES[type];
     if (!t || !s) return 'Unavailable';
     return (
@@ -67,7 +69,8 @@
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner, type).length ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
+      (!recruitOptions(g, s, s.owner, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
+        ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
     );
   }
