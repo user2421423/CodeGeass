@@ -77,10 +77,6 @@ const CITY_SHORE_ANCHORS = Object.freeze({
     -95.015,
     29.664
   ],
-  "Montevideo": [
-    -57.222,
-    -35.319
-  ],
   "Brisbane": [
     153.429,
     -27.132
