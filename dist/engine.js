@@ -836,6 +836,12 @@
   // ======== Terrain ========
   const TERRAIN = {
     sea: { name: 'Ocean', desc: 'Units embark as transports: they cannot attack and take 50% extra damage.' },
+    // Shoreline hexes that are part land, part water: land for land units, open water for warships (one unit per hex).
+    coast: {
+      name: 'Coast',
+      cost: 1,
+      desc: 'Movement cost 1. Shore and shallows: land units stand and fight here as on land, and warships can sail through.',
+    },
     plains: { name: 'Plains', cost: 1, desc: 'Movement cost 1. No terrain defense or attrition.' },
     forest: { name: 'Forest', cost: 2, cover: 0.15, desc: 'Movement cost 2. Incoming damage reduced by 15%.' },
     mountain: { name: 'Mountains', cost: 2, cover: 0.25, desc: 'Movement cost 2. Incoming damage reduced by 25%.' },
@@ -870,6 +876,7 @@
     x: 'peak',
     u: 'urban',
     c: 'crater',
+    w: 'coast',
   };
   const CONQUEST_MOVE_BONUS = 2,
     SEA_MOVE = { conquest: 5, campaign: 5 },
@@ -890,7 +897,7 @@
     return (
       adjacent(g, s)
         .filter(t => isSea(t) && !taken.has(key(t)))
-        .sort((a, b) => adjacent(g, b).filter(isSea).length - adjacent(g, a).filter(isSea).length || a.r - b.r || a.c - b.c)[0] ||
+        .sort((a, b) => adjacent(g, b).filter(navigable).length - adjacent(g, a).filter(navigable).length || a.r - b.r || a.c - b.c)[0] ||
       null
     );
   }
@@ -922,6 +929,9 @@
     g.mapRevision = (g.mapRevision || 0) + 1;
   }
   const isSea = t => t?.terrain === 'sea';
+  // Coast hexes count as land for land units (isSea is false) and as water for warships.
+  const isCoast = t => t?.terrain === 'coast';
+  const navigable = t => isSea(t) || isCoast(t);
   // Embarked as a transport: a land unit on a sea hex. Warships and amphibious frames fight normally at sea.
   function atSea(g, u) {
     return isSea(tile(g, u.c, u.r)) && !TYPES[u.type].naval;
@@ -1001,6 +1011,15 @@
       setTileTerrain(g, t, 'plains');
       setTileOwner(g, t, null);
       filled.push(t);
+    }
+    // Coast hexes (part land, part water) arrived after older saves were made. A sea hex turned coast
+    // inherits a neighbouring owner; craters and other later terrain changes are kept.
+    const KEEP = new Set(['coast', 'crater', 'urban', 'peak']);
+    for (const t of g.tiles) {
+      if (WORLD_ROWS[t.r]?.[t.c] !== 'w' || KEEP.has(t.terrain)) continue;
+      const wasSea = t.terrain === 'sea';
+      setTileTerrain(g, t, 'coast');
+      if (wasSea) filled.push(t);
     }
     // Carry over the saved political situation rather than assigning a
     // new game faction. Progress from neighbouring owned land inward.
@@ -1161,9 +1180,10 @@
       const { p, cost, roughUsed } = pop();
       if (cost > costs.get(stateKey(p, roughUsed))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked || (ship && !isSea(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
+        if (TERRAIN[n.terrain]?.blocked || (ship && !navigable(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
+        if (ship && st) continue;
         if (occ && occ.side !== u.side) continue;
         if (occ && boards && canBoard(g, occ)) {
           if (cost < budget) found.set(key(n), budget);
@@ -1329,7 +1349,7 @@
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
-    if (!isSea(dest)) setTileOwner(g, dest, u.side);
+    if (!isSea(dest) && t.naval !== 'ship') setTileOwner(g, dest, u.side);
     const s = stationAt(g, u);
     let captured = null,
       annexed = null;
@@ -2400,7 +2420,7 @@
         g.sites.push({ id, name, c: city.c, r: city.r, base, city: city.id });
         continue;
       }
-      const open = n => !isSea(n) && !TERRAIN[n.terrain]?.blocked && !stationAt(g, n),
+      const open = n => !navigable(n) && !TERRAIN[n.terrain]?.blocked && !stationAt(g, n),
         at = open(t) ? t : nearest(g, t, open);
       if (!at) continue;
       if (terrain) setTileTerrain(g, at, terrain);
@@ -2800,7 +2820,7 @@
         if (blastDistance === 0) depleted.push(destroyDeposit(g, d));
         else if (ring) d.refinery = Math.max(0, (d.refinery || 0) - 1);
       }
-      if (blastDistance === 0 && !isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileTerrain(g, t, 'crater');
+      if (blastDistance === 0 && !navigable(t) && !TERRAIN[t.terrain]?.blocked) setTileTerrain(g, t, 'crater');
     }
     if (unlocksEliminator) g.fleijaDetonated = g.turn;
     // A power whose last city was destroyed surrenders to the launcher.
@@ -3313,8 +3333,10 @@
       for (let c = 0; c < g.cols; c++)
         g.tiles.push({ c, r, terrain: TERRAIN_CODES[WORLD_ROWS[r]?.[c]] || 'sea', owner: null });
     const freeLand = t => !isSea(t) && !TERRAIN[t.terrain].blocked;
+    // Cities, mines and starting armies stand on solid land, never on a coast hex.
+    const solidLand = t => freeLand(t) && !isCoast(t);
     for (const [name, lon, lat, owner, tier, capital = false, fort = false, gun] of CITY_DATA) {
-      const at = nearest(g, hexOf(lon, lat), t => freeLand(t) && !stationAt(g, t));
+      const at = nearest(g, hexOf(lon, lat), t => solidLand(t) && !stationAt(g, t));
       const s = {
         id: g.stations.length,
         name,
@@ -3377,7 +3399,7 @@
       const at = nearest(
         g,
         hexOf(lon, lat),
-        t => freeLand(t) && !unitAt(g, t) && (!stationAt(g, t) || stationAt(g, t).owner === side),
+        t => solidLand(t) && !unitAt(g, t) && (!stationAt(g, t) || stationAt(g, t).owner === side),
       );
       if (at) newUnit(g, typeFor(side, cls), side, at.c, at.r, stack, cmd || null);
     }
@@ -3494,8 +3516,8 @@
         const j = nb[k];
         if (j < 0) continue;
         const n = tiles[j];
-        if (TERRAIN[n.terrain]?.blocked || (only && isSea(n) !== (only === 'sea'))) continue;
-        const nd = d + (isSea(n) !== sea ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost);
+        if (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n))) continue;
+        const nd = d + (only === 'sea' ? 1 : (isSea(n) !== sea ? 4 : 0) + (isSea(n) ? 1 : TERRAIN[n.terrain].cost));
         if (nd < field[j]) {
           field[j] = nd;
           push(j, nd);
@@ -3563,7 +3585,7 @@
       naval = TYPES[u.type].naval;
     if (!t) return 'Choose a hex on the map';
     if (TERRAIN[t.terrain]?.blocked) return 'Impassable terrain';
-    if (naval === 'ship' && !isSea(t)) return 'Warships stay at sea';
+    if (naval === 'ship' && (!navigable(t) || stationAt(g, t))) return 'Warships stay at sea';
     if (!naval && isSea(t)) return 'Choose a land hex';
     if (t.c === u.c && t.r === u.r) return 'Already there';
     return Number.isFinite(routeField(g, u, t)[u.r * g.cols + u.c]) ? null : 'No route there';
@@ -3803,6 +3825,8 @@
     seaMove,
     atSea,
     isSea,
+    isCoast,
+    navigable,
     reachable,
     hasOrders,
     targets,
@@ -3921,6 +3945,8 @@
       income,
       isReady,
       isSea,
+      isCoast,
+      navigable,
       isShip,
       launch,
       log,

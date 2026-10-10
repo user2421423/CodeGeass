@@ -392,3 +392,56 @@ test('Every Indonesian island starts as Federation territory, without changing t
     assert.equal(city?.owner, 'cf', name+' stays Federation');
   }
 });
+
+test('Coast hexes are land for land units and water for warships, one unit per hex', () => {
+  const g = blank();
+  // Column 4 is open sea, column 5 is coast, the rest is plains.
+  for (let r = 0; r < 12; r++) {
+    E.tile(g, 4, r).terrain = 'sea';
+    E.tile(g, 5, r).terrain = 'coast';
+  }
+  const scout = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 6, 5);
+  // A land unit walks onto the coast as land: it keeps its fire and claims the hex.
+  assert(E.reachable(g, scout).has('5,5'));
+  assert.equal(E.move(g, scout.id, 5, 5).ok, true);
+  assert.equal(E.atSea(g, scout), false);
+  assert.equal(E.tile(g, 5, 5).owner, 'britannia');
+  // An embarked unit that reaches the coast lands there (and the landing ends its move).
+  const raft = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 4, 8);
+  assert.equal(E.atSea(g, raft), true);
+  assert(E.reachable(g, raft).has('5,8'));
+  assert.equal(E.move(g, raft.id, 5, 8).ok, true);
+  assert.equal(E.atSea(g, raft), false);
+  // Warships sail sea and coast, never onto plains or into a city, and do not claim the coast.
+  const ship = E.newUnit(g, E.NAVAL.britannia.carrier, 'britannia', 4, 2);
+  const reach = E.reachable(g, ship);
+  assert(reach.has('5,2') && !reach.has('6,2'));
+  assert.equal(E.move(g, ship.id, 5, 2).ok, true);
+  assert.equal(E.tile(g, 5, 2).owner, null);
+  g.stations.push({ id: 999, name: 'Shore Town', c: 5, r: 3, owner: 'britannia', tier: 1, shield: 0, maxShield: 120 });
+  ship.moved = false;
+  assert(!E.reachable(g, ship).has('5,3'), 'warships never enter a city hex');
+  // One unit per hex: a ship on the coast blocks troops, and a Knightmare stepping onto its own carrier boards it.
+  const other = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 6, 2);
+  assert.equal(E.move(g, other.id, 5, 2).loaded, ship.id);
+  assert.equal(E.unitAt(g, { c: 5, r: 2 }), ship);
+  // A Knightmare launches from the carrier onto a free coast hex.
+  assert(E.deployTargets(g, ship).some(p => p.terrain === 'coast'));
+  // A Portman's sea-to-coast move is a landing: its once-per-turn refresh applies.
+  const portman = E.newUnit(g, E.NAVAL.britannia.amphibious, 'britannia', 4, 10);
+  assert.equal(E.move(g, portman.id, 5, 10).ok, true);
+  assert.equal(portman.landingRefreshTurn, g.turn);
+  assert.equal(portman.moved, false);
+});
+
+test('The world map has coast hexes and older saves pick them up on load', () => {
+  const game = E.createGame('britannia', 'normal', 'conquest', 123);
+  const coast = game.tiles.filter(t => t.terrain === 'coast');
+  assert(coast.length > 300, 'coast hexes along the world shoreline');
+  assert(!game.stations.some(s => E.tile(game, s.c, s.r).terrain === 'coast'), 'cities stand on solid land');
+  assert(!game.stations.some(s => s.portAt && E.tile(game, s.portAt.c, s.portAt.r).terrain !== 'sea'), 'ports stay at sea');
+  const old = structuredClone(game);
+  for (const t of old.tiles) if (t.terrain === 'coast') t.terrain = 'sea';
+  E.migrateSave(old);
+  assert.equal(old.tiles.filter(t => t.terrain === 'coast').length, coast.length);
+});
