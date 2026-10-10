@@ -812,6 +812,11 @@
       c.credits <= spendable() &&
       e.industry - (c.industry || 0) >= reserveInd &&
       (!c.sakuradite || (e.sakuradite || 0) - c.sakuradite >= reserveSak);
+    // Preserve an ordinary formation budget when making optional investments;
+    // the recruitment pass itself remains free to use that budget.
+    const developmentAffordable = c => affordable(c) &&
+      spendable() - c.credits >= ordinaryBudget.credits &&
+      e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry;
     // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
     const heavySak = yard3.length ? price(typeFor(side, 'heavy', g), 1, g, side).sakuradite : 0;
     const keepsHeavy = (type, c) =>
@@ -831,13 +836,13 @@
         ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= FLEIJA.labTurn)
       ) {
         const cost = buildCost(prep, 'lab');
-        if (spendable() - cost.credits >= 100 && affordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
+        if (spendable() - cost.credits >= 100 && developmentAffordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
       }
       for (const d of (g.sites || []).filter(d => depositOwner(g, d) === side).sort((a, b) => b.base - a.base)) {
         const host = depositHost(g, d),
           cost = buildCost(host, 'refinery');
         if (upgraded) break;
-        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !affordable(cost)) continue;
+        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !developmentAffordable(cost)) continue;
         upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
         if (upgraded) break;
       }
@@ -850,7 +855,7 @@
         !upgraded &&
         pick &&
         spendable() - buildCost(pick.s, pick.kind).credits >= 250 &&
-        affordable(buildCost(pick.s, pick.kind))
+        developmentAffordable(buildCost(pick.s, pick.kind))
       )
         build(g, pick.s.id, pick.kind);
     }
@@ -868,7 +873,7 @@
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side, u);
-      if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
+      if (developmentAffordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
     // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
