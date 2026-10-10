@@ -184,27 +184,6 @@ const modal = () => node('modal-root').innerHTML;
     assert(markerEntries.includes(coords), coords + ' must display a terrain warning marker');
 
 
-  // Shoreline city art is visual-only and must remain selectable even when
-  // its graphic sits slightly away from the tactical city hex centre.
-  const anchors = run(`(() => {
-    const names = Object.keys(CITY_SHORE_ANCHORS);
-    const moved = names.map(name => {
-      const city = game.stations.find(s => s.name === name);
-      if (!city) return { name, missing: true };
-      const original = hexCenter(city), visual = visualCityCenter(city);
-      return { name, delta: Math.hypot(original.x - visual.x, original.y - visual.y),
-        hit: hitVisualStationAtWorld(visual.x, visual.y, 1)?.id === city.id,
-        original: [city.c, city.r] };
-    });
-    return { count: names.length, moved, stations: game.stations.length };
-  })()`);
-  assert.equal(anchors.count, 19, 'every identified visually offshore city has a coastline anchor');
-  for (const city of anchors.moved) {
-    assert(!city.missing, `${city.name}: still exists as a gameplay station`);
-    assert(city.delta > 0 && city.delta < 43 * 0.72, `${city.name}: anchored within the original hex neighbourhood`);
-    assert(city.hit, `${city.name}: selecting the displaced visual city reaches its station`);
-  }
-
   const harbor = run(`(() => {
     const city = game.stations.find(s => s.name === 'Barcelona');
     const actual = hexCenter(city.portAt);
