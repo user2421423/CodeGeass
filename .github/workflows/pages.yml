@@ -27,6 +27,7 @@ jobs:
           node-version: 22
       - name: Run essential regression checks
         run: |
+          node tools/build_sources.cjs --check
           node --test tests/core.test.cjs
           node tests/ui-smoke.cjs
           node tools/validate_assets.cjs --tracked
