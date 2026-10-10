@@ -335,8 +335,30 @@
     }
     for (const u of pool) {
       if (assign[u.id]) continue;
-      const f = byDist(at(u), fronts)[0] || reserve;
+      // Avoid piling surplus troops onto a defensive front already at strength.
+      // Once fronts have met their needs, favor active offensives over quiet defenses.
+      const understrength = fronts.filter(f => f.assigned < f.desiredStrength),
+        offensives = fronts.filter(f => f.type === 'offensive'),
+        choices = understrength.length ? understrength : offensives.length ? offensives : fronts,
+        f = byDist(at(u), choices)[0] || reserve;
       if (f) give(u, f);
+    }
+    if (reserve) {
+      // Final assignments can exceed a front's target because units are indivisible,
+      // or previously assigned defenders stay with their front. Reconcile against
+      // actual defense strength and release an unnecessary capital reserve.
+      const finalDefenders = fronts.filter(f => f.type === 'defensive').reduce((n, f) => n + f.assigned, 0),
+        needed = Math.max(0, reserveTarget - garrisonStrength - finalDefenders);
+      reserve.desiredStrength = needed;
+      if (reserve.assigned > needed) {
+        const offensives = fronts.filter(f => f.type === 'offensive');
+        for (const u of units.filter(u => assign[u.id] === reserve.id)) {
+          if (reserve.assigned <= needed || !offensives.length) break;
+          const f = byDist(at(u), offensives)[0];
+          reserve.assigned -= unitStrength(u);
+          give(u, f);
+        }
+      }
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
     // ATTACKING; an attack that has lost over half its force falls back to regroup. Defensive fronts hold.
