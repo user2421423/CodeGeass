@@ -266,8 +266,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   `refineReason`/`refine` (mines on their own hex). A surrendering power's mines and half its stockpile pass on.
 - AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` keeps a guard on Fuji and up to
   two on any threatened mine; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
-  turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavy saving only
-  starts with the Sakuradite in hand; tier-I frames are fallbacks when Sakuradite runs short.
+  turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavies are
+  regular level-3 factory choices when armored or fortified fronts need them, with a protected ordinary unit
+  budget rather than a separate saving chance or purchase cooldown. Tier-I frames remain fallbacks when Sakuradite runs short.
 
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 2, `cost`
@@ -475,12 +476,14 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   - Carriers carry only formations whose fronts head for the same landmass; idle ones wait off the best overseas
     rally city.
   - Tunables are in `FRONT` (exported); `aiPlan`, `unitStrength` and `FRONT` are exported for tests.
-- `aiProduction`: batteries, repairs, saving for super-heavies (then the largest super-heavy formation affordable),
-  one building upgrade, reinforcements, then production with no army cap; the treasury is the limit. Factories
-  serving the front furthest below its need build first, and put what that front asks for (`frontNeeds`: by the
-  enemy's and its own composition) at the top of their menu. Each factory builds a 3- or 2-frame formation of the
-  first menu frame it can afford that way; a lone frame is built only when no factory can afford any formation that
-  turn (otherwise the money is saved). Sakuradite held back for a project only blocks purchases that spend Sakuradite.
+- `aiProduction`: batteries, repairs, strategic-weapon planning, upgrades, reinforcements, and front-driven
+  factory production with no fixed army or super-heavy ownership cap. Super-heavy frames join ordinary level-3
+  menus for understrength fronts facing armored/high-tier forces or fortified objectives, scaled to local demand.
+  They obey the same 3-, 2- and 1-frame buying passes and must leave a two-frame Scout budget available.
+  Optional upgrades and reinforcements also preserve that ordinary recruitment budget. Factories serving the
+  largest front deficits build first, with `frontNeeds` setting the normal class preference. Each factory
+  tries a 3- or 2-frame formation first, then any factory still idle may build an affordable single frame.
+  Sakuradite reserved for strategic projects only blocks purchases requiring Sakuradite.
 - `aiOrder`: moves along the unit's front field, scores attacks, and otherwise embarks only in convoys.
 - In 25-turn all-AI simulations the Federation now survives to turn 25 in 11 of 12 games (it was always eliminated
   before); the E.U. still leads. Balance is first-pass.
