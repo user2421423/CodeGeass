@@ -320,8 +320,10 @@ test('Reviewed coastal conversions preserve naval routes, cities and existing oc
       (s.portAt?.c === c && s.portAt?.r === r)), 'No city or port may be converted');
     assert(!game.units.some(u => u.c === c && u.r === r), 'No starting unit may be stranded');
   }
-  for (const [c, r] of [[106, 26], [107, 27], [111, 35], [140, 43], [142, 46]])
+  for (const [c, r] of [[106, 26], [111, 36], [140, 43], [142, 46]])
     assert.equal(E.tile(game, c, r).terrain, 'sea', 'Protected straits remain water');
+  for (const [c, r] of [[107, 27], [111, 34], [111, 35]])
+    assert.notEqual(E.tile(game, c, r).terrain, 'sea', 'Red Sea coast hexes are land');
 
   const old = structuredClone(game);
   for (const [c, r] of changes) {

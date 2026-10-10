@@ -175,8 +175,8 @@ const modal = () => node('modal-root').innerHTML;
   assert(markerStart >= 0, 'reviewed coastline exceptions must be visibly marked');
   const markerBlock = renderingText.slice(markerStart, renderingText.indexOf('];', markerStart));
   const markerEntries = markerBlock.match(/\[\d+,\d+\]/g) || [];
-  assert.equal(markerEntries.length, 16, '15 non-Arctic exceptions plus Cornwall get subtle high-zoom markers');
-  for (const coords of ['[87,14]', '[106,26]', '[111,35]', '[140,43]', '[142,46]'])
+  assert.equal(markerEntries.length, 14, '13 non-Arctic exceptions plus Cornwall get subtle high-zoom markers');
+  for (const coords of ['[87,14]', '[106,26]', '[140,43]', '[142,46]'])
     assert(markerEntries.includes(coords), coords + ' must display a terrain warning marker');
 
 
