@@ -6,24 +6,34 @@ const path = require('node:path');
 const E = require('../dist/engine.js');
 const root = path.join(__dirname, '..');
 const anchors = JSON.parse(fs.readFileSync(path.join(root, 'tools/data/coastal_city_port_anchors.json'), 'utf8'));
-const world = require('../dist/engine/world.js').WORLD_ROWS;
+const worldData = require('../dist/engine/world.js');
+const world = worldData.WORLD_ROWS;
+const activeCities = new Set(worldData.CITY_DATA.map(([name]) => name));
+const historicalAnchors = new Set(anchors.cities.slice(0, 149).map(entry => entry.name));
 const original = fs.readFileSync(path.join(root, 'tools/data/map_locked.txt'), 'utf8').trim().split('\n');
 
-test('city and starting port terrain remains exactly as before 20-80% reclassification', () => {
-  assert.equal(anchors.cities.length, 149);
+test('historic city/port terrain stays fixed and all new city terrain anchors are valid', () => {
+  assert.equal(anchors.cities.length, 183);
+  assert.equal(activeCities.size, 168);
+  assert.equal(historicalAnchors.size, 149);
   assert.equal(anchors.ports.length, 12);
   for (const entry of [...anchors.cities, ...anchors.ports]) {
     assert.equal(world[entry.r][entry.c], entry.terrain, 'terrain changed at ' + entry.name);
-    assert.equal(original[entry.r][entry.c], entry.terrain, 'baseline mismatch: ' + entry.name);
+    // The locked pre-overlay baseline predates the 34 newly added cities.
+    // Retired city anchors remain for coastline stability, but are not game cities.
+    if (historicalAnchors.has(entry.name) || anchors.ports.includes(entry))
+      assert.equal(original[entry.r][entry.c], entry.terrain, 'baseline mismatch: ' + entry.name);
   }
 });
 
-test('all cities and all original ports retain identical starting coordinates on all conquest difficulties', () => {
+test('all active cities and all original ports retain pinned positions on all conquest difficulties', () => {
+  const liveAnchors = anchors.cities.filter(entry => activeCities.has(entry.name));
+  assert.equal(liveAnchors.length, 168);
   for (const player of E.MAJORS) for (const difficulty of ['normal', 'hard', 'challenge']) {
     const g = E.createGame(player, difficulty, 'conquest', 246801);
-    assert.equal(g.stations.length, anchors.cities.length);
+    assert.equal(g.stations.length, liveAnchors.length);
     const cities = new Map(g.stations.map(s => [s.name, s]));
-    for (const expected of anchors.cities) {
+    for (const expected of liveAnchors) {
       const actual = cities.get(expected.name);
       assert(actual, 'city missing: ' + expected.name);
       assert.deepEqual([actual.c, actual.r], [expected.c, expected.r], 'city moved: ' + expected.name);
