@@ -42,3 +42,27 @@ test('all cities and all original ports retain identical starting coordinates on
     assert.deepEqual([pearl.portAt.c, pearl.portAt.r], [10, 30]);
   }
 });
+
+
+test('all twelve original starting ports remain connected through navigable hexes', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 246801);
+  const stations = new Map(g.stations.map(s => [s.name, s]));
+  const start = stations.get(anchors.ports[0].name).portAt;
+  const queue = [start], visited = new Set([start.c + ',' + start.r]);
+  const isWater = t => t && (t.terrain === 'sea' || t.terrain === 'coast');
+  const adjacent = (c, r) => {
+    const q = c - Math.floor(r / 2);
+    return [[1, 0], [-1, 0], [0, 1], [0, -1], [1, -1], [-1, 1]]
+      .map(([dq, dr]) => E.tile(g, q + dq + Math.floor((r + dr) / 2), r + dr))
+      .filter(isWater);
+  };
+  for (let i = 0; i < queue.length; i++) {
+    for (const t of adjacent(queue[i].c, queue[i].r)) {
+      const k = t.c + ',' + t.r;
+      if (!visited.has(k)) { visited.add(k); queue.push(t); }
+    }
+  }
+  for (const p of anchors.ports) {
+    assert(visited.has(p.c + ',' + p.r), 'isolated naval access to port: ' + p.name);
+  }
+});
