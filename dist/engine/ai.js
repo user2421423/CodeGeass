@@ -793,7 +793,18 @@
       const u = unitAt(g, s);
       if (!u || u.side !== side || u.moved || !isReady(g, u)) continue;
       if (!foes.some(f => dist(g, f, s) <= 2)) {
-        g.vacated.push({ id: u.id, orders: aiOrder(g, u.id) });
+        const orders = aiOrder(g, u.id);
+        // Without a dedicated garrison, the unit may not have a local
+        // objective. It must still clear the city's production hex.
+        if (u.c === s.c && u.r === s.r && !u.moved) {
+          const reach = reachable(g, u);
+          const spot = adjacent(g, s)
+            .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
+            .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+          const moveOut = spot && move(g, u.id, spot.c, spot.r);
+          if (moveOut?.ok) orders.push({ kind: 'move', ...moveOut, id: u.id });
+        }
+        g.vacated.push({ id: u.id, orders });
         continue;
       }
       if (s.producedTurn === g.turn || cityBusyReason(g, s) || shortfall(e, cheapest)) continue;
