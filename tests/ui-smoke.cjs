@@ -361,6 +361,11 @@ const modal = () => node('modal-root').innerHTML;
   run('talkNext(true);draw(16,.016);drawMinimap();');
   assert(node('app').innerHTML.includes('Shinjuku Ghetto'), 'campaign HUD renders');
   assert.equal(run('getSave(CAMPAIGN_KEY).mode'), 'campaign', 'campaign uses its own save slot');
+  assert.equal(run('goalState({alive:["tohdoh"]})'), 'todo',
+    'a scripted survivor who has not spawned is pending, not lost');
+  run('game.campaign.killed.push("tohdoh")');
+  assert.equal(run('goalState({alive:["tohdoh"]})'), 'lost',
+    'a defeated required survivor is marked lost');
 
   console.log('PASS: scripts load, all three conquest factions complete a turn, and a campaign mission boots.');
 })().catch(err => {
