@@ -288,6 +288,24 @@ const modal = () => node('modal-root').innerHTML;
   assert(node('side').innerHTML.includes('Deploy Knightmares'), 'deployment appears in sidebar, not centered modal');
   assert(node('side').innerHTML.includes('Empty. Move a Knightmare'), 'empty carrier explains boarding');
   assert(!modal().includes('Carrier deployment'), 'deployment does not open a modal');
+  // D toggles exactly the same carrier drawer as its dock button.
+  const carrierKey = (key, tagName = 'BODY', repeat = false) => {
+    let prevented = false;
+    events.keydown({ key, repeat, target: { tagName, dataset: {} }, preventDefault() { prevented = true; } });
+    return prevented;
+  };
+  assert.equal(carrierKey('d'), true, 'D is handled for a selected friendly carrier');
+  assert(!node('side').innerHTML.includes('Deploy Knightmares'), 'D closes the open carrier drawer');
+  assert.equal(carrierKey('D'), true, 'uppercase D is recognized');
+  assert(node('side').innerHTML.includes('Deploy Knightmares'), 'D reopens carrier deployment');
+  assert.equal(carrierKey('d', 'INPUT'), false, 'D does not intercept typing in inputs');
+  assert(node('side').innerHTML.includes('Deploy Knightmares'), 'typing does not change the carrier drawer');
+  carrierKey('d', 'BODY', true);
+  assert(node('side').innerHTML.includes('Deploy Knightmares'), 'held D does not repeatedly toggle the drawer');
+  run('helpDialog()');
+  assert.equal(carrierKey('d'), false, 'D does not open deployment over a modal');
+  run('closeModal()');
+  assert(node('side').innerHTML.includes('Deploy Knightmares'), 'closing the modal preserves the carrier drawer');
   run(`(function() {
     const ship = game.units.find(u => u.id === ${carrierId});
     const passenger = game.units.find(u => u.side === game.player && !E.TYPES[u.type].naval);
@@ -382,6 +400,7 @@ const modal = () => node('modal-root').innerHTML;
   const beforeCam = run('JSON.stringify(cam)');
   keyboard('w'); keyboard('s'); keyboard('d');
   assert.equal(run('JSON.stringify(cam)'), beforeCam, 'W/S/D do not pan the map');
+  assert.equal(run('carrierHoldOpen'), null, 'D does not open deployment for a non-carrier');
   keyboard('c');
   assert.equal(run(`game.units.find(u => u.id === ${infantryId}).goto ?? null`), null, 'C clears standing orders');
   keyboard('a');
@@ -389,7 +408,7 @@ const modal = () => node('modal-root').innerHTML;
   run('closeModal()');
   run('helpDialog()');
   const manual = modal();
-  for (const key of ['Assign commander', 'Add frame', 'Repair', 'Hold position', 'Set/change destination', 'Stop auto-move', 'Next ready unit']) {
+  for (const key of ['Assign commander', 'Deploy carrier units', 'Add frame', 'Repair', 'Hold position', 'Set/change destination', 'Stop auto-move', 'Next ready unit']) {
     assert(manual.includes(key), `manual documents ${key}`);
   }
   assert(!manual.includes('H centers on your capital'), 'manual removes obsolete H shortcut');
