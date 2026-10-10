@@ -188,8 +188,11 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     (+1 sea), Landing Craft (+25% instead of +50%), Naval Gunnery (+15% carrier damage), Damage Control, Rapid Launch
     Systems (+10% on the first attack the turn a unit launches, level-3 port). `normalizeResearch` moves the old
     `sakura.transport` / `sakura.landing` levels over (applied in `applyTech`, `research` and the UI's profile load).
-  - AI: ports (one level 2, up to three in all), a fleet of up to 4 carriers and 6 amphibious formations, and carrier
-    operations (`aiCarrier`): a carrier waits off a coast where troops with nothing to attack on their landmass (or
+  - AI: naval demand scales with exposed coastal cities, overseas fronts and nearby hostile naval forces.
+    There are no fixed carrier, amphibious or port-count caps. Coastal cities gain new ports to cover additional
+    theaters, and the AI upgrades existing ports to levels 2 and 3 when justified. Navy purchases preserve enough
+    credits and industry for a two-frame Scout formation, and available ports can recruit in parallel each turn.
+    Carrier operations (`aiCarrier`): a carrier waits off a coast where troops with nothing to attack on their landmass (or
     Infantry/Armor far from any target) gather; they board; once full or after three turns it sails for the best
     landing hex (`landingScore`: on an enemy landmass, no more defenders within 3 than it carries, near an undefended
     city) and `aiLaunch` puts every formation ashore and plays its turn. Damaged empty carriers go home to repair.
