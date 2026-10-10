@@ -235,6 +235,16 @@
     fronts = fronts
       .sort((a, b) => b.emergency - a.emergency || b.priority - a.priority || (a.id < b.id ? -1 : 1))
       .filter((f, i, all) => f.emergency || i - all.filter(e => e.emergency).length < FRONT.max);
+    // One peacetime defensive allocation: garrisons, routine defensive
+    // fronts and the mobile reserve all share 10% of available ground strength.
+    // Genuine emergencies can exceed that allocation.
+    const guardedStrength = sum(allUnits(g).filter(u => u.hp > 0 && u.side === side && memo.guards[u.id]));
+    let uncommittedDefense = Math.max(0, FRONT.reserve * (army + guardedStrength) - guardedStrength);
+    for (const f of fronts) {
+      if (f.type !== 'defensive' || f.emergency) continue;
+      f.target = Math.min(f.desiredStrength, uncommittedDefense);
+      uncommittedDefense -= f.target;
+    }
     const byId = Object.fromEntries(fronts.map(f => [f.id, f])),
       capital =
         own.find(s => s.capitalOf === side) ||
@@ -247,7 +257,7 @@
         anchor: capital,
         objectives: [{ c: capital.c, r: capital.r, seed: 0 }],
         assigned: 0,
-        desiredStrength: FRONT.reserve * army,
+        desiredStrength: uncommittedDefense,
         score: 0,
       };
     if (reserve) byId.reserve = reserve;
@@ -255,6 +265,11 @@
     // vital emergency nearby (any emergency, for the reserve) needs it.
     const assign = {},
       emergencies = fronts.filter(f => f.emergency),
+      fitsDefense = (u, f) => {
+        const maximum = f === reserve ? f.desiredStrength :
+          f.type === 'defensive' && !f.emergency ? f.target : Infinity;
+        return f.assigned + unitStrength(u) <= maximum + 1e-9;
+      },
       give = (u, f) => {
         assign[u.id] = f.id;
         f.assigned += unitStrength(u);
@@ -266,13 +281,14 @@
       if (!f) continue;
       const pulled =
         f === reserve ? emergencies.length > 0 : emergencies.some(e => e !== f && e.vital && dist(g, at(u), e.anchor) <= FRONT.pull);
-      if (!pulled && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
+      if (!pulled && fitsDefense(u, f) && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
     }
     // 4. Targets: emergencies get their full need and the reserve its share; the rest of the army splits 50/25/15/10 by
     // front rank, a front never taking more than it needs (the surplus flows to the others).
-    const open = fronts.filter(f => !f.emergency),
+    const open = fronts.filter(f => !f.emergency && f.type === 'offensive'),
+      routineDefense = fronts.reduce((a, f) => a + (f.type === 'defensive' && !f.emergency ? f.target : 0), 0),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
-    let pot = army - (reserve?.desiredStrength || 0),
+    let pot = army - (reserve?.desiredStrength || 0) - routineDefense,
       left = open;
     // A vital emergency (capital, F.L.E.I.J.A. project) may claim everything it needs; any other at most a fifth.
     for (const f of emergencies) pot -= f.target = f.vital ? f.desiredStrength : Math.min(f.desiredStrength, army * 0.2);
@@ -294,7 +310,7 @@
         let best = null,
           bd = Infinity;
         for (const u of pool) {
-          if (assign[u.id]) continue;
+          if (assign[u.id] || !fitsDefense(u, f)) continue;
           const d = dist(g, at(u), f.anchor) - (sticky[u.id]?.front === f.id ? 10 : 0);
           if (d <= range && (d < bd || (d === bd && u.id < best.id))) {
             bd = d;
@@ -307,12 +323,16 @@
     for (const f of emergencies) while (f.assigned < f.target && take(f, FRONT.pull + 10));
     if (reserve) while (reserve.assigned < reserve.desiredStrength && take(reserve, 25));
     for (;;) {
-      const f = fronts.filter(f => f.assigned < f.target).sort((a, b) => b.target - b.assigned - (a.target - a.assigned))[0];
-      if (!f || !take(f)) break;
+      const needy = fronts.filter(f => f.assigned < f.target)
+        .sort((a, b) => b.target - b.assigned - (a.target - a.assigned));
+      if (!needy.some(f => take(f))) break;
     }
+    // Remaining formations reinforce offensives or genuine emergencies,
+    // never routine defensive fronts already covered by the 10% allocation.
+    const deployable = fronts.filter(f => f.type === 'offensive' || f.emergency);
     for (const u of pool) {
       if (assign[u.id]) continue;
-      const f = byDist(at(u), fronts)[0] || reserve;
+      const f = byDist(at(u), deployable)[0];
       if (f) give(u, f);
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
@@ -471,7 +491,18 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0);
+      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
+      routineBudget = g.mode === 'campaign' ? Infinity :
+        FRONT.reserve * own.reduce((a, u) => a + unitStrength(u), 0);
+    let routineStrength = 0;
+    const urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
+      guard = (u, post, emergency = false) => {
+        if (taken[u.id]) return false;
+        if (!emergency && routineStrength + unitStrength(u) > routineBudget + 1e-9) return false;
+        taken[u.id] = { ...post, emergency };
+        if (!emergency) routineStrength += unitStrength(u);
+        return true;
+      };
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -487,7 +518,11 @@
       const near = own
         .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+      let assigned = 0;
+      for (const u of near) {
+        if (assigned >= need) break;
+        if (guard(u, { c: s.c, r: s.r, id: s.id }, urgent(s, t))) assigned++;
+      }
     }
     // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
     // empty, even in quiet times.
@@ -498,7 +533,11 @@
         const u = own
           .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
           .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
-        if (u) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+        for (const u of own
+          .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
+          .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)) {
+          if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
+        }
       }
     // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
     for (const d of g.sites || []) {
@@ -506,7 +545,11 @@
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
       const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
+      let assigned = 0;
+      for (const u of near) {
+        if (assigned >= need) break;
+        if (guard(u, { c: d.c, r: d.r, site: d.id }, urgent(d, t))) assigned++;
+      }
     }
     return taken;
   }
