@@ -47,7 +47,7 @@ let detailOpen = false,
 const R = 43,
   SQ = Math.sqrt(3),
   ZOOM_MIN = 1,
-  ZOOM_MAX = 7,
+  ZOOM_MAX = 24, // Close inspection: 3.4x the previous maximum map magnification.
   count = n => Math.round(n).toLocaleString('en-US'),
   esc = s =>
     String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
