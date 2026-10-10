@@ -1223,8 +1223,9 @@ function draw(time, dt) {
     if (visible(hexCenter(selTile))) mapHasPulse = true;
     for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
   }
-  // Temporary low-profile marker until the replacement dock art is approved.
-  // Keep naval hexes unobstructed: cities and naval units render unchanged.
+  // Ports: the owner's harbour picture on the port's sea hex, nudged toward its city, with a ⚓ in the holder's
+  // colour. It is drawn before cities and units, so a ship in port sits on top. Far out, the picture would be
+  // too small to read, so only the ⚓ marks the port.
   for (const s of game.stations) {
     if (!s.portLevel || !s.portAt) continue;
     const sea = visualPortCenter(s);
@@ -1232,11 +1233,12 @@ function draw(time, dt) {
     const shore = visualCityCenter(s);
     const dx = wrapNear(shore.x, sea.x) - sea.x, dy = shore.y - sea.y;
     const distance = Math.hypot(dx, dy) || 1;
-    const ox = dx / distance * R * 0.58;
-    const oy = dy / distance * R * 0.58;
-    for (const x of copies(sea.x))
-      outlinedText('⚓', x + ox, sea.y + oy + 4, detail ? 14 : 11,
-        F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
+    const ux = dx / distance, uy = dy / distance, holder = F(s.portOwner || s.owner).color;
+    for (const x of copies(sea.x)) {
+      if (detail && ART.drawBuilding(ctx, 'port', x + ux * R * 0.15, sea.y + uy * R * 0.15, R * 1.75))
+        outlinedText('⚓', x + R * 0.62, sea.y - R * 0.5, 12, holder, scale, 'Trebuchet MS', true);
+      else outlinedText('⚓', x + ux * R * 0.58, sea.y + uy * R * 0.58 + 4, detail ? 14 : 11, holder, scale, 'Trebuchet MS', true);
+    }
   }
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
