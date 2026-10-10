@@ -216,6 +216,40 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
+test('AI shares its 10% routine defense allocation across garrisons, fronts and reserve', () => {
+  const strength = list => list.reduce((total, u) => total + E.unitStrength(u), 0);
+  for (const side of E.MAJORS) {
+    for (const quiet of [false, true]) {
+      const g = E.createGame('britannia', 'normal', 'conquest', 123);
+      if (quiet) g.units = g.units.filter(u => u.side === side);
+      const memo = E.aiPlan(g, side);
+      const field = g.units.filter(u => u.hp > 0 && u.side === side &&
+        !E.internal.isShip(u) && !E.internal.atSea(g, u));
+      const normalGuards = field.filter(u => memo.guards[u.id] && !memo.guards[u.id].emergency);
+      const reserve = field.filter(u => memo.assign[u.id] === 'reserve');
+      const defense = field.filter(u => memo.fronts.some(f =>
+        f.type === 'defensive' && !f.emergency && memo.assign[u.id] === f.id));
+      const total = strength(normalGuards) + strength(reserve) + strength(defense);
+      assert(total <= E.FRONT.reserve * strength(field) + 1e-9,
+        `${side} ${quiet ? 'quiet' : 'contested'}: routine defense (${total}) must be within 10% of all ground strength`);
+      for (const front of memo.fronts.filter(f => f.type === 'defensive' && !f.emergency))
+        assert(front.assigned <= front.target + 1e-9,
+          `${side}: routine defensive front must not bypass the shared budget`);
+    }
+  }
+});
+
+test('A city under immediate threat can draw emergency guards beyond the routine defense budget', () => {
+  const g = blank();
+  g.phase = 'eu';
+  const city = g.stations.find(s => s.owner === 'eu');
+  const defender = E.newUnit(g, E.typeFor('eu', 'light'), 'eu', city.c, city.r);
+  E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', city.c - 2, city.r);
+  const memo = E.aiPlan(g, 'eu');
+  assert.equal(memo.guards[defender.id]?.emergency, true,
+    'an immediately threatened city can pull defenders even if one exceeds the 10% routine allocation');
+});
+
 test('AI may build a super-heavy even when it already fields more than two', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 123);
   const side = 'eu', superType = E.typeFor(side, 'super', g);
