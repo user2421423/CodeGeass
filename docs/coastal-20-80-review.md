@@ -49,3 +49,30 @@ Keep this experimental branch separate. Confirm acceptable handling of strategic
 - `node tests/ui-smoke.cjs`
 
 For per-tile changes and contact points see `tools/data/coastal_20_80_changes.json`.
+
+## Post-classification city, port and resource-placement assessment
+
+A static replay of the game's actual `createGame` nearest-solid-land placement and
+`portSite` (requires adjacent **pure sea**, not merely navigable coast) found:
+
+- **49 of 149 starting city positions relocate** compared with `main`.
+- **5 of 12 starting ports cannot be placed at all**: Gibraltar, Barcelona, Shanghai, Singapore, Mumbai.
+- The **Pearl Harbor** city relocates from **(10,31) in Hawaii to (11,9) near Alaska**;
+  its port likewise moves from (10,30) to (12,10). The Hawaiian island's hex
+  is only about **5% land**, below the universal 20% minimum.
+- **Mount Fuji and Kyushu Sakuradite mine sites relocate**, weakening their geographic identity.
+- Other representative city movements include Kyoto (157,23) → (159,21),
+  Fukuoka (155,24) → (153,20), Taipei (150,29) → (149,27),
+  Jakarta (142,47) → (142,46), and Singapore (141,43) → (140,43).
+- 156 ground/naval starting-unit records can still find terrain-valid placement
+  using the current nearest-tile fallbacks, but this alone does not establish
+  sensible force geography.
+
+These are **confirmed blockers to merging the experiment**. A strict uniform terrain
+threshold cannot represent very small inhabited islands as land. Supporting them
+would require separate city/island mechanics or intentional exceptions, rather
+than merely adjusting the threshold. Changing ports to support navigable coast
+would address five missing ports but needs collision/combat/naval deployment tests.
+
+Run `node tools/audit_coastal_starting_positions.cjs` to reproduce city/port
+and representative island checks against the committed experimental map.
