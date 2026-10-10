@@ -56,7 +56,7 @@ A static replay of the game's actual `createGame` nearest-solid-land placement a
 `portSite` (requires adjacent **pure sea**, not merely navigable coast) found:
 
 - **49 of 149 starting city positions relocate** compared with `main`.
-- **5 of 12 starting ports cannot be placed at all**: Gibraltar, Barcelona, Shanghai, Singapore, Mumbai.
+- **Static-only placement replay estimated 5 missing ports, but the actual game runtime confirms 3 of 12 missing starting ports:** Shanghai, Singapore, and Mumbai. Gibraltar and Barcelona still receive port sites in the running engine.
 - The **Pearl Harbor** city relocates from **(10,31) in Hawaii to (11,9) near Alaska**;
   its port likewise moves from (10,30) to (12,10). The Hawaiian island's hex
   is only about **5% land**, below the universal 20% minimum.
@@ -68,7 +68,7 @@ A static replay of the game's actual `createGame` nearest-solid-land placement a
   using the current nearest-tile fallbacks, but this alone does not establish
   sensible force geography.
 
-These are **confirmed blockers to merging the experiment**. A strict uniform terrain
+The actual runtime confirms missing ports. The estimated 49 city moves above come from a static replay of the nearest-solid-land logic, not a full side-by-side execution of the two branches. These are **blockers to merging the experiment**. A strict uniform terrain
 threshold cannot represent very small inhabited islands as land. Supporting them
 would require separate city/island mechanics or intentional exceptions, rather
 than merely adjusting the threshold. Changing ports to support navigable coast
@@ -76,3 +76,22 @@ would address five missing ports but needs collision/combat/naval deployment tes
 
 Run `node tools/audit_coastal_starting_positions.cjs` to reproduce city/port
 and representative island checks against the committed experimental map.
+
+## Automated validation (GitHub Actions)
+
+Branch-specific workflow: [Coastal 20-80 experiment checks](https://github.com/user2421423/CodeGeass/actions/workflows/coastal-20-80-experiment.yml).
+
+Initial run: [#38050226177](https://github.com/user2421423/CodeGeass/actions/runs/38050226177).
+
+- **PASS:** `rebuild_coastal_20_80.py --check` reproduces the atlas classification.
+- **PASS:** `check_map.py` and `build_sources.cjs --check` confirm map/code synchronization.
+- **FAIL:** core game regressions: **63 tests passed, 6 failed**. The failures are expected *evidence of unacceptable gameplay regressions*, not reasons to weaken existing tests:
+  1. Great Britain is no longer a distinct island at Dover.
+  2. Existing coastal conversion test no longer finds its protected sea passage.
+  3. Hokkaido no longer requires crossing open sea via the Tsugaru Strait.
+  4. New Zealand's South Island loses playable land at (173,69).
+  5. The old-save New Zealand ownership migration check fails.
+  6. New Zealand South Island ownership fails on Challenge difficulty.
+- **RUNTIME WARNING:** starting port sites disappear from Shanghai, Singapore and Mumbai.
+
+Keep the failing checks intact until map mechanics and strategic movement boundaries are explicitly solved.
