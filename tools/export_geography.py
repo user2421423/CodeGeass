@@ -7,7 +7,6 @@ No game engine, tile, ownership or terrain data is changed.
 """
 from pathlib import Path
 import json
-import re
 from shapely.geometry import Polygon
 from mpl_toolkits.basemap import Basemap
 
@@ -28,10 +27,12 @@ def rings(polygons, tolerance=0.025):
     return output
 
 previous = map_data.read_text()
-match = re.search(r'"biomes":(\[.*?\]),"patches":', previous)
-if not match:
+# Carry the hand-drawn biome shapes over: decode the JSON array that follows "biomes":
+# (whatever key, if any, comes after it), so the script can run again on its own output.
+start = previous.find('"biomes":')
+if start < 0:
     raise RuntimeError("Expected previous biome shapes in geography data")
-biomes = json.loads(match.group(1))
+biomes, _ = json.JSONDecoder().raw_decode(previous, start + len('"biomes":'))
 data = {"land": rings(m.landpolygons), "water": rings(m.lakepolygons),
         "biomes": biomes}
 prefix = (

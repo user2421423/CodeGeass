@@ -123,6 +123,28 @@ function getSave(key = SAVE_KEY) {
   } catch (e) {}
   return null;
 }
+// A stored operation this version cannot load (older rules or map): kept until the player chooses to replace it.
+function unreadableSave(key = SAVE_KEY) {
+  try {
+    return !!localStorage.getItem(key) && !getSave(key);
+  } catch (e) {
+    return false;
+  }
+}
+// Each mode has one save slot. Starting over replaces it, so confirm first when it holds an unfinished or
+// unreadable operation. `cancel` is the action that returns to where the player came from.
+let pendingReplace = null;
+function confirmReplace(key, cancel, then) {
+  const s = getSave(key),
+    unreadable = unreadableSave(key);
+  if (!unreadable && (!s || s.over)) return then();
+  pendingReplace = then;
+  const what = unreadable
+    ? 'The saved operation is from an older version of the game and can no longer be loaded.'
+    : `Your ${s.mode === 'campaign' ? 'mission' : 'conquest'} in progress (turn ${s.turn}) will be lost.`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Replace saved operation"><div class="eyebrow">Saved operation</div><h2>Start over?</h2><p>${what} Starting now replaces it.</p><div class="dialog-footer"><button data-action="${cancel}">Keep it</button><button class="primary" data-action="replace-confirm">Start over</button></div></section></div>`;
+  focusDialog();
+}
 function focusDialog() {
   setTimeout(() => modal.querySelector('button:not(:disabled),select,input:not(:disabled)')?.focus(), 15);
 }

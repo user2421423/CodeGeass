@@ -1036,6 +1036,11 @@
         u.eliteLevel ||= 1;
         g.eliteDeployed[elite] = true;
       }
+      // Older saves left carried units at the hex where they boarded.
+      for (const c of u.cargo || []) {
+        c.c = u.c;
+        c.r = u.r;
+      }
     }
     return g;
   }
@@ -1298,6 +1303,11 @@
     }
     u.c = dest.c;
     u.r = dest.r;
+    // Units aboard a Carrier-Battleship travel with it (rallies and other distance rules read their position).
+    for (const c of u.cargo || []) {
+      c.c = dest.c;
+      c.r = dest.r;
+    }
     u.moved = !retainMove;
     // Amphibious units gain one full extra movement and attack after landing each turn.
     // A per-turn stamp prevents unlimited actions by hopping across the coastline.

@@ -141,8 +141,11 @@ function claimReward() {
   if (!game.over || game.rewardClaimed) return;
   // Persist the claim identity before touching the profile, so a failed operation-save
   // after a successful profile write can recover without paying twice.
-  game.rewardClaimId ||= `${game.mode}:${game.player}:${game.campaign?.id || 'world'}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-  if (!save()) return false;
+  // Derived from the finished game itself (its seed advances with every random roll), so a reload of an older save
+  // that replays to the same result finds the same claim and never pays twice, even if the operation save failed.
+  game.rewardClaimId ||= `${game.mode}:${game.player}:${game.campaign?.id || 'world'}:${game.difficulty || ''}:${game.turn}:${game.seed}`;
+  // Best effort: a full browser store must not withhold the reward; the profile records the claim either way.
+  save();
   const p = loadProfile(), claims = (p.rewardClaims ||= {}), prior = claims[game.rewardClaimId];
   if (prior) {
     game.reward = prior.reward;
