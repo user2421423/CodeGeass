@@ -1,7 +1,7 @@
 name: Build unified global coastlines
 on:
   push:
-    branches: [feature/map-rendering-overhaul]
+    branches: [main]
     paths:
       - tools/export_geography.py
       - .github/workflows/build-global-coastlines.yml
@@ -31,5 +31,5 @@ jobs:
           git add dist/ui/geography-data.js
           if ! git diff --cached --quiet; then
             git commit -m "Use uniform high-resolution GSHHG coastlines worldwide"
-            git push origin HEAD:feature/map-rendering-overhaul
+            git push origin HEAD:${GITHUB_REF_NAME}
           fi

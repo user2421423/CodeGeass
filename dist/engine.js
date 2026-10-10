@@ -519,6 +519,7 @@
   }
   function repairReason(g, u) {
     if (!u) return 'Select a unit';
+    if (u.hp <= 0) return 'Unit destroyed';
     return (
       turnReason(g, u.side) ||
       actedReason(u) ||
@@ -530,6 +531,7 @@
   }
   function reinforceReason(g, u) {
     if (!u) return 'Select a unit';
+    if (u.hp <= 0) return 'Unit destroyed';
     return (
       turnReason(g, u.side) ||
       (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
@@ -601,6 +603,7 @@
   function assignReason(g, u, k) {
     const a = COMMANDERS[k];
     if (!a) return 'Unknown commander';
+    if (u && u.hp <= 0) return 'Unit destroyed';
     if (u && isShip(u)) return 'Carrier-Battleships cannot have commanders';
     if (!g.roster?.[k]) return `Not one of your commanders: recruit in HQ for ${recruitPrice(k)} command tokens`;
     const busy = allUnits(g).find(v => v.hp > 0 && v.personal && v.cmd === k);
@@ -633,6 +636,8 @@
   function applyElites(g, profile = {}) {
     const records = eliteProfile(profile);
     g.eliteDeployed ||= {};
+    // Kept on the game so Elite Forces that join mid-operation (campaign spawns and upgrades) use the same levels.
+    g.eliteLevels = Object.fromEntries(Object.entries(records).filter(([, r]) => r?.level).map(([id, r]) => [id, r.level]));
     for (const u of allUnits(g)) {
       // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
       if (!u.elite || u.side !== g.player) continue;
@@ -900,7 +905,7 @@
   const hasPort3 = (g, side) => g.stations.some(s => (s.portLevel || 0) >= 3 && s.portOwner === side);
   function carrierCapacity(g, ship) {
     if (!isShip(ship)) return 0;
-    return TYPES[ship.type].capacity + (techLevel(g, ship.side, 'naval.hangars') && hasPort3(g, ship.side) ? 1 : 0);
+    return TYPES[ship.type].capacity + (techLevel(g, ship.side, 'naval.hangars') ? 1 : 0);
   }
   const canBoard = (g, ship) => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < carrierCapacity(g, ship);
   // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
@@ -1030,6 +1035,11 @@
         u.elite = elite;
         u.eliteLevel ||= 1;
         g.eliteDeployed[elite] = true;
+      }
+      // Older saves left carried units at the hex where they boarded.
+      for (const c of u.cargo || []) {
+        c.c = u.c;
+        c.r = u.r;
       }
     }
     return g;
@@ -1293,6 +1303,11 @@
     }
     u.c = dest.c;
     u.r = dest.r;
+    // Units aboard a Carrier-Battleship travel with it (rallies and other distance rules read their position).
+    for (const c of u.cargo || []) {
+      c.c = dest.c;
+      c.r = dest.r;
+    }
     u.moved = !retainMove;
     // Amphibious units gain one full extra movement and attack after landing each turn.
     // A per-turn stamp prevents unlimited actions by hopping across the coastline.
@@ -1332,7 +1347,7 @@
       funds(g, u.side).credits += 40;
       fortify(g, s);
       claim(g, s, u.side);
-      if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + maxHP(u) * fx(u).captureHeal);
+      if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
       // Sugiyama's Special Operations: a turn off the city's battery recharge.
       if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
@@ -1367,6 +1382,7 @@
     for (const v of g.units)
       if (v.hp > 0 && v.side === loser) {
         v.hp = 0;
+        kill(g, v, null, true); // also sinks the Knightmares aboard a Carrier-Battleship
         units++;
       }
     const e = funds(g, loser),
@@ -1578,7 +1594,8 @@
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
-  function kill(g, v, attacker, force = false) {
+  // by: the side responsible when there is no attacking unit (a city battery).
+  function kill(g, v, attacker, force = false, by = null) {
     if (v.hp > 0) return;
     if (fx(v).undying && !v.undyingUsed && !force) {
       v.hp = 1;
@@ -1611,7 +1628,7 @@
       attacker.morale = clamp(attacker.morale + 1, -3, 1);
     }
     if (v.cmd) log(g, `${COMMANDERS[v.cmd].short}'s unit is lost.`, v.side);
-    hooks.kill?.(g, v, attacker);
+    hooks.kill?.(g, v, attacker, by);
   }
   function attack(g, id, c, r) {
     const a = g.units.find(u => u.id === id);
@@ -1822,6 +1839,7 @@
     if (!e || !s) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      cityBusyReason(g, s) ||
       (!e.availableTo.includes(s.owner) ? 'This Elite Force is not available to this faction' : null) ||
       (!rec?.level ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
@@ -2029,7 +2047,8 @@
   function automationReserveAllows(g, side, cost = {}, reserve = null) {
     const e = funds(g, side),
       r = reserve || automationState(g).reserve;
-    return ['credits', 'industry', 'sakuradite'].every(k => (e?.[k] || 0) - (cost[k] || 0) >= (r?.[k] || 0));
+    // A reserve only guards resources this order spends: low Sakuradite must not stop a frame that costs none.
+    return ['credits', 'industry', 'sakuradite'].every(k => !cost[k] || (e?.[k] || 0) - cost[k] >= (r?.[k] || 0));
   }
   function automationUpgradeOrder(g, s, unit) {
     const t = TYPES[unit];
@@ -3051,9 +3070,9 @@
         const amount = Math.round(fortressDamage(g, v, s.owner) * 0.4);
         v.hp = Math.max(0, v.hp - amount);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
-        kill(g, v, null);
+        kill(g, v, null, false, s.owner);
       }
-    kill(g, foe, null);
+    kill(g, foe, null, false, s.owner);
     const destroyed = foe.hp <= 0;
     checkVictory(g);
     return { ok: true, name, from: { c: s.c, r: s.r }, to: { c: foe.c, r: foe.r }, id: foe.id, damage, destroyed, hit };
@@ -3632,6 +3651,8 @@
     portSite,
     normalizeResearch,
     allUnits,
+    setTileOwner,
+    setTileTerrain,
     deploy,
     deployReason,
     deployTargets,

@@ -1,7 +1,7 @@
 name: Hex geography alignment audit
 on:
   push:
-    branches: [feature/map-hex-alignment]
+    branches: [main]
     paths:
       - tools/audit_inland_seas.cjs
       - tools/map_alignment_audit.py

@@ -262,7 +262,7 @@ document.addEventListener('click', e => {
   }
   if (d.campaignTab) return campaignDialog(d.campaignTab);
   if (d.mission) return briefingDialog(d.mission);
-  if (d.startMission) return startMission(d.startMission);
+  if (d.startMission) return confirmReplace(CAMPAIGN_KEY, 'campaign', () => startMission(d.startMission));
   if (d.admiral) {
     const u = selectedUnit(),
       r = u ? E.assign(game, u.id, d.admiral) : { ok: false, reason: 'Select a unit first.' };
@@ -286,8 +286,14 @@ document.addEventListener('click', e => {
       updateSelection();
       break;
     case 'start-conquest':
-      newGame();
+      confirmReplace(SAVE_KEY, 'new', newGame);
       break;
+    case 'replace-confirm': {
+      const then = pendingReplace;
+      pendingReplace = null;
+      then?.();
+      break;
+    }
     case 'continue':
       loadGame(getSave());
       break;
@@ -303,9 +309,12 @@ document.addEventListener('click', e => {
     case 'briefing':
       briefingDialog(game.campaign.id, true);
       break;
-    case 'mission-retry':
-      startMission(game.campaign.id, game.difficulty || 'normal');
+    case 'mission-retry': {
+      const id = game.campaign.id,
+        difficulty = game.difficulty || 'normal';
+      confirmReplace(CAMPAIGN_KEY, 'close', () => startMission(id, difficulty));
       break;
+    }
     case 'talk-next':
     case 'talk-skip':
       talkNext(d.action === 'talk-skip');

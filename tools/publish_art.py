@@ -28,7 +28,12 @@ def publish(source, output=PUBLIC):
     if not manifest_path.is_file():
         raise ValueError(f'No processed manifest at {manifest_path}. Run local_art_prepare.py first.')
     manifest = json.loads(manifest_path.read_text())
-    result = {'base': 'assets/art/', **{kind: {} for kind in known}}
+    # Merge into the published manifest: a local folder holding only some finished images updates
+    # those entries and keeps every other published one (validate_assets.cjs requires full coverage).
+    public_path = output / 'manifest.json'
+    previous = json.loads(public_path.read_text()) if public_path.is_file() else {}
+    result = {'base': 'assets/art/', **{kind: {k: v for k, v in previous.get(kind, {}).items() if k in known[kind]}
+                                       for kind in known}}
     copies = []
     for kind in known:
         for key, value in sorted(manifest.get(kind, {}).items()):
@@ -66,6 +71,13 @@ def publish(source, output=PUBLIC):
     for source_file, target in copies:
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source_file, target)
+    # Remove published images that a new version replaced and nothing references any more.
+    referenced = {entry['src'] for kind in known for entry in result[kind].values()}
+    for kind in known:
+        for entry in previous.get(kind, {}).values():
+            old = (output / entry.get('src', '')).resolve()
+            if entry.get('src') not in referenced and output in old.parents and old.is_file():
+                old.unlink()
     payload = json.dumps(result, indent=2, ensure_ascii=True)
     (output / 'manifest.json').write_text(payload + '\n')
     (output / 'manifest.js').write_text(PREFIX + 'globalThis.KnightmareArtManifest = ' + payload + ';\n')

@@ -17,65 +17,80 @@ async function endTurn(force = false) {
   for (const side of game.order.slice(1)) {
     if (!E.alive(game, side) || game.over) continue;
     aiSide = side;
-    let before = unitSnapshot();
-    E.beginTurn(game, side, game.turn > 1);
-    turnStartPopups(before, side);
-    E.aiProduction(game);
-    // Units the rival moved off its cities so they could build.
-    for (const { id, orders } of game.vacated || [])
-      for (const o of orders) {
-        if (o.annexed) annexNotice(o.annexed);
-        if ((o.kind === 'move' || o.kind === 'deploy') && (onScreen(o.to) || onScreen(o.from)))
-          effects.push({ kind: 'move', unitId: o.kind === 'deploy' ? o.id : id, from: o.from, to: o.to, color: F(side).color, life: 0.5, max: 0.5 });
-      }
-    (game.strikes || []).filter(s => onScreen(s.to)).forEach((s, i) => strikeEffects(s, i * 0.5));
-    render();
-    if (game.strikes?.some(s => onScreen(s.to)) && !skipAI) await pause(900);
-    // F.L.E.I.J.A.: every power hears of a new project; a launch always plays in full, even when skipping.
-    for (const s of game.stations) {
-      if (s.project?.side === side && s.project.started === game.turn)
-        toast(`INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, true);
-      if (s.eliminatorProject?.side === side && s.eliminatorProject.started === game.turn)
-        toast(`INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, true);
-    }
-    for (const shot of game.launches || []) {
-      await fleijaSequence(shot.to, side, shot.name, null, shot);
-      if (shot.intercepted)
-        toast(`F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`, true);
-      else if (shot.eliminatorUnlocked)
-        toast(`F.L.E.I.J.A. Eliminator research begins; countermeasures are available from turn ${shot.eliminatorTurn}.`, true);
-      if (token !== aiToken) return;
-    }
-    const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).sort((a, b) => Number(['command', 'withdraw'].includes(C(a.cmd)?.action?.kind)) - Number(['command', 'withdraw'].includes(C(b.cmd)?.action?.kind))).map(u => u.id),
-      minesBefore = (game.sites || []).map(d => d.owner);
-    let quiet = 0;
-    for (const id of ids) {
-      if (token !== aiToken || game.over) break;
-      const u = game.units.find(u => u.id === id);
-      if (!u || u.hp <= 0) continue;
-      before = unitSnapshot();
-      const visuals = combatVisualSnapshot();
-      const orders = E.aiOrder(game, id);
-      invalidateUIState();
-      const seen = orders.some(o => onScreen(o.to) || onScreen(o.from));
-      if (seen) moralePopups(before);
-      for (const o of orders) {
-        if (o.annexed) annexNotice(o.annexed);
-        if (!seen) continue;
-        if (o.kind === 'attack') addCombatEffects(o, u, visuals);
-        else if (o.kind === 'move' || o.kind === 'deploy') {
-          SFX.play('move', side);
-          effects.push({ kind: 'move', unitId: o.kind === 'deploy' ? o.id : id, from: o.from, to: o.to, color: F(side).color, life: 0.5, max: 0.5 });
+    try {
+      let before = unitSnapshot();
+      E.beginTurn(game, side, game.turn > 1);
+      turnStartPopups(before, side);
+      E.aiProduction(game);
+      // Units the rival moved off its cities so they could build.
+      for (const { id, orders } of game.vacated || [])
+        for (const o of orders) {
+          if (o.annexed) annexNotice(o.annexed);
+          if ((o.kind === 'move' || o.kind === 'deploy') && (onScreen(o.to) || onScreen(o.from)))
+            effects.push({ kind: 'move', unitId: o.kind === 'deploy' ? o.id : id, from: o.from, to: o.to, color: F(side).color, life: 0.5, max: 0.5 });
         }
+      (game.strikes || []).filter(s => onScreen(s.to)).forEach((s, i) => strikeEffects(s, i * 0.5));
+      render();
+      if (game.strikes?.some(s => onScreen(s.to)) && !skipAI) await pause(900);
+      // F.L.E.I.J.A.: every power hears of a new project; a launch always plays in full, even when skipping.
+      for (const s of game.stations) {
+        if (s.project?.side === side && s.project.started === game.turn)
+          toast(`INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, true);
+        if (s.eliminatorProject?.side === side && s.eliminatorProject.started === game.turn)
+          toast(`INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, true);
       }
-      if (seen && !skipAI) {
-        updateSelection();
-        await pause(orders.some(o => o.kind === 'attack') ? 420 : 160);
-      } else if (++quiet % 12 === 0) await pause(0);
+      for (const shot of game.launches || []) {
+        await fleijaSequence(shot.to, side, shot.name, null, shot);
+        if (shot.intercepted)
+          toast(`F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`, true);
+        else if (shot.eliminatorUnlocked)
+          toast(`F.L.E.I.J.A. Eliminator research begins; countermeasures are available from turn ${shot.eliminatorTurn}.`, true);
+        if (token !== aiToken) return;
+      }
+      const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).sort((a, b) => Number(['command', 'withdraw'].includes(C(a.cmd)?.action?.kind)) - Number(['command', 'withdraw'].includes(C(b.cmd)?.action?.kind))).map(u => u.id),
+        minesBefore = (game.sites || []).map(d => d.owner);
+      let quiet = 0;
+      for (const id of ids) {
+        if (token !== aiToken || game.over) break;
+        const u = game.units.find(u => u.id === id);
+        if (!u || u.hp <= 0) continue;
+        before = unitSnapshot();
+        const visuals = combatVisualSnapshot();
+        let orders;
+        try {
+          orders = E.aiOrder(game, id);
+        } catch (err) {
+          // One unit's failed order must not stall the whole rival turn.
+          console.error(`Rival order failed for unit ${id}`, err);
+          continue;
+        }
+        invalidateUIState();
+        const seen = orders.some(o => onScreen(o.to) || onScreen(o.from));
+        if (seen) moralePopups(before);
+        for (const o of orders) {
+          if (o.annexed) annexNotice(o.annexed);
+          if (!seen) continue;
+          if (o.kind === 'attack') addCombatEffects(o, u, visuals);
+          else if (o.kind === 'move' || o.kind === 'deploy') {
+            SFX.play('move', side);
+            effects.push({ kind: 'move', unitId: o.kind === 'deploy' ? o.id : id, from: o.from, to: o.to, color: F(side).color, life: 0.5, max: 0.5 });
+          }
+        }
+        if (seen && !skipAI) {
+          updateSelection();
+          await pause(orders.some(o => o.kind === 'attack') ? 420 : 160);
+        } else if (++quiet % 12 === 0) await pause(0);
+      }
+      if (token !== aiToken) return;
+      const lost = (game.sites || []).filter((d, i) => minesBefore[i] === game.player && d.owner !== game.player);
+      if (lost.length)
+        toast(`${lost.map(d => d.name).join(' and ')} Sakuradite mine${lost.length > 1 ? 's' : ''} seized by the ${F(side).short}.`, true);
+    } catch (err) {
+      // A rival turn that throws ends early instead of leaving the player locked out; play moves on.
+      if (token !== aiToken) return;
+      console.error(`Rival turn failed for ${side}`, err);
+      toast(`The ${F(side).short} turn hit an error and ended early.`, true);
     }
-    const lost = (game.sites || []).filter((d, i) => minesBefore[i] === game.player && d.owner !== game.player);
-    if (lost.length)
-      toast(`${lost.map(d => d.name).join(' and ')} Sakuradite mine${lost.length > 1 ? 's' : ''} seized by the ${F(side).short}.`, true);
     if (token !== aiToken) return;
     if (game.over) break;
   }
@@ -126,8 +141,11 @@ function claimReward() {
   if (!game.over || game.rewardClaimed) return;
   // Persist the claim identity before touching the profile, so a failed operation-save
   // after a successful profile write can recover without paying twice.
-  game.rewardClaimId ||= `${game.mode}:${game.player}:${game.campaign?.id || 'world'}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-  if (!save()) return false;
+  // Derived from the finished game itself (its seed advances with every random roll), so a reload of an older save
+  // that replays to the same result finds the same claim and never pays twice, even if the operation save failed.
+  game.rewardClaimId ||= `${game.mode}:${game.player}:${game.campaign?.id || 'world'}:${game.difficulty || ''}:${game.turn}:${game.seed}`;
+  // Best effort: a full browser store must not withhold the reward; the profile records the claim either way.
+  save();
   const p = loadProfile(), claims = (p.rewardClaims ||= {}), prior = claims[game.rewardClaimId];
   if (prior) {
     game.reward = prior.reward;

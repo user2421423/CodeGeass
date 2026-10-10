@@ -123,6 +123,28 @@ function getSave(key = SAVE_KEY) {
   } catch (e) {}
   return null;
 }
+// A stored operation this version cannot load (older rules or map): kept until the player chooses to replace it.
+function unreadableSave(key = SAVE_KEY) {
+  try {
+    return !!localStorage.getItem(key) && !getSave(key);
+  } catch (e) {
+    return false;
+  }
+}
+// Each mode has one save slot. Starting over replaces it, so confirm first when it holds an unfinished or
+// unreadable operation. `cancel` is the action that returns to where the player came from.
+let pendingReplace = null;
+function confirmReplace(key, cancel, then) {
+  const s = getSave(key),
+    unreadable = unreadableSave(key);
+  if (!unreadable && (!s || s.over)) return then();
+  pendingReplace = then;
+  const what = unreadable
+    ? 'The saved operation is from an older version of the game and can no longer be loaded.'
+    : `Your ${s.mode === 'campaign' ? 'mission' : 'conquest'} in progress (turn ${s.turn}) will be lost.`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Replace saved operation"><div class="eyebrow">Saved operation</div><h2>Start over?</h2><p>${what} Starting now replaces it.</p><div class="dialog-footer"><button data-action="${cancel}">Keep it</button><button class="primary" data-action="replace-confirm">Start over</button></div></section></div>`;
+  focusDialog();
+}
 function focusDialog() {
   setTimeout(() => modal.querySelector('button:not(:disabled),select,input:not(:disabled)')?.focus(), 15);
 }
@@ -136,19 +158,26 @@ function capitalOf(side) {
 }
 // Where the map's ⌂ button looks: your capital, first city or commander.
 const homeOf = () => capitalOf(game.player) || ownUnits().find(u => u.cmd) || ownUnits()[0];
-function newGame() {
+// Everything tied to the game being replaced: an unfinished rival turn (aiToken aborts it), its Skip state,
+// open drawers, targeting modes, undo history and in-flight effects.
+function resetSession() {
   aiToken++;
+  aiSide = null;
+  skipAI = false;
   hqBack = 'game';
   strikeMode = false;
   carrierHoldOpen = null;
   detailOpen = false;
   deploying = null;
   routing = null;
+  undoStack = [];
+  effects = [];
+}
+function newGame() {
+  resetSession();
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0), loadProfile());
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
-  undoStack = [];
-  effects = [];
   zoom = 3.2;
   closeModal();
   render();
