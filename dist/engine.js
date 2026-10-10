@@ -1432,7 +1432,14 @@
         fortify(g, s);
         cities++;
       }
-    for (const t of g.tiles) if (t.owner === loser) setTileOwner(g, t, winner);
+    // Any land formerly attached to an already destroyed city now belongs to
+    // a surviving city of the conqueror, so later captures can still transfer it.
+    const winnerCities = new Set(g.stations.filter(s => s.owner === winner).map(s => s.id));
+    for (const t of g.tiles) if (t.owner === loser) {
+      setTileOwner(g, t, winner);
+      if (!winnerCities.has(t.provinceCity)) delete t.provinceCity;
+    }
+    if (g.mode !== 'campaign') assignCityProvinces(g);
     for (const v of g.units)
       if (v.hp > 0 && v.side === loser) {
         v.hp = 0;
@@ -2761,6 +2768,13 @@
       lost = d ? destroyDeposit(g, d) : null;
     (g.ruins ||= []).push({ name: s.name, c: s.c, r: s.r, owner: s.owner, capital: !!s.capital, turn: g.turn });
     g.stations.splice(g.stations.indexOf(s), 1);
+    if (g.mode !== 'campaign') {
+      // Its province does not become an unclaimable ghost region. Remaining
+      // cities of the same faction inherit the land without changing its color.
+      // If this was the last city, surrender will attach it to the victor.
+      for (const t of g.tiles) if (t.provinceCity === s.id) delete t.provinceCity;
+      assignCityProvinces(g);
+    }
     if (g.automation?.cities) delete g.automation.cities[s.id];
     log(g, `${s.name} is destroyed by F.L.E.I.J.A.: only ruins remain for the rest of the war.`, s.owner);
     return lost;
