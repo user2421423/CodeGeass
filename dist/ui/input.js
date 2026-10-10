@@ -422,15 +422,9 @@ document.addEventListener('click', e => {
       if (hqBack === 'start') startMenu();
       else closeModal();
       break;
-    case 'carrier-deploy': {
-      const u = selectedUnit();
-      if (u && u.side === game.player && E.TYPES[u.type].naval === 'ship' && interactive()) {
-        carrierHoldOpen = carrierHoldOpen === u.id ? null : u.id;
-        detailOpen = false;
-        updateSelection();
-      }
+    case 'carrier-deploy':
+      toggleCarrierDeployment();
       break;
-    }
     case 'admirals':
     case 'assign':
       admiralDialog();
@@ -510,6 +504,14 @@ document.addEventListener('click', e => {
       break;
   }
 });
+// Both the dock button and D use the same carrier deployment drawer.
+function toggleCarrierDeployment() {
+  const u = selectedUnit();
+  if (!u || u.side !== game.player || E.TYPES[u.type].naval !== 'ship' || !interactive()) return;
+  carrierHoldOpen = carrierHoldOpen === u.id ? null : u.id;
+  detailOpen = false;
+  updateSelection();
+}
 document.addEventListener('keydown', e => {
   if (uiActionBusy) { e.preventDefault(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.general) {
@@ -556,6 +558,11 @@ document.addEventListener('keydown', e => {
   }
   const u = selectedUnit(),
     own = u && u.side === game.player && interactive() && !phaseReason();
+  if (k === 'd' && own && E.TYPES[u.type].naval === 'ship') {
+    e.preventDefault();
+    if (!e.repeat) toggleCarrierDeployment();
+    return;
+  }
   if (k === 'h' && own && !u.attacked) {
     e.preventDefault();
     u.moved = u.attacked = true;
