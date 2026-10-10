@@ -426,14 +426,16 @@
     if (!reason && lost) reason = `${lost} has fallen. The mission has failed.`;
     if (!reason && !g.units.some(u => u.hp > 0 && u.side === P) && !g.stations.some(s => s.owner === P))
       reason = 'Every one of your units has been destroyed.';
+    // The deadline is a failure condition, not a bonus objective: a late capture or kill
+    // cannot rescue an expired mission (including saves resumed from an older rules version).
+    const limit = campaignTurnLimit(g, m);
+    if (!reason && limit && g.turn > limit) reason = `Turn ${limit} has passed. The mission has failed.`;
     const won = asList(m.win).every(c => holds(g, c));
     if (!reason && won) {
       const st = stars(g);
       g.over = { winner: P, reason: m.victory || 'Mission accomplished.', stars: st.filter(Boolean).length, starList: st };
       return g.over;
     }
-    const limit = campaignTurnLimit(g, m);
-    if (!reason && limit && g.turn > limit) reason = `Turn ${limit} has passed. The mission has failed.`;
     if (reason) g.over = { winner: enemy, reason, stars: 0 };
     return g.over;
   }
