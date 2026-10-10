@@ -22,7 +22,13 @@ function starGoals(m) {
 // A star goal during play: kept so far, done, still to do, or missed for good.
 function goalState(c) {
   const held = E.campaign.holds(game, c);
-  if (c.turns || c.losses != null || c.alive || c.keep) return held ? 'kept' : 'lost';
+  // A survivor can arrive later through a scripted rescue or reinforcement. Do not
+  // mark that star as irretrievably lost before the commander has even appeared.
+  if (c.alive) {
+    if (held) return 'kept';
+    return asList(c.alive).some(k => game.campaign?.killed?.includes(k)) ? 'lost' : 'todo';
+  }
+  if (c.turns || c.losses != null || c.keep) return held ? 'kept' : 'lost';
   return held ? 'done' : 'todo';
 }
 const goalMark = st => (st === 'done' ? '✓' : st === 'lost' ? '✗' : '★');
