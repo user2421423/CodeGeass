@@ -1004,6 +1004,8 @@
   }
   function migrateCoastalTerrain(g) {
     for (const [c, r] of COASTAL_SEA_FIXES) {
+      // Historical sea fixes must not undo the newly approved 20/80 coastline.
+      if (WORLD_ROWS[r]?.[c] !== '.') continue;
       const t = g.tiles[r * g.cols + c];
       if (!t || t.terrain === 'sea') continue;
       if (g.units.some(u => u.hp > 0 && u.c === c && u.r === r)) continue;
@@ -1015,12 +1017,13 @@
     }
     const [tc, tr] = TSUGARU_STRAIT;
     const strait = g.tiles[tr * g.cols + tc];
-    if (strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
+    if (WORLD_ROWS[tr]?.[tc] === '.' && strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
       setTileTerrain(g, strait, 'sea');
       setTileOwner(g, strait, null);
     }
     const filled = [];
     for (const [c, r] of CASPIAN_LAND_FIXES) {
+      if ('.w'.includes(WORLD_ROWS[r]?.[c])) continue;
       const t = g.tiles[r * g.cols + c];
       if (!t || t.terrain !== 'sea' || coastalTileOccupied(g, c, r)) continue;
       setTileTerrain(g, t, 'plains');
@@ -1049,7 +1052,7 @@
     }
     // Newfoundland was restored as land by the previous correction batch.
     const t = g.tiles[15 * g.cols + 61];
-    if (t && t.terrain === 'sea' &&
+    if (t && !'.w'.includes(WORLD_ROWS[15]?.[61]) && t.terrain === 'sea' &&
         !g.units.some(u => u.hp > 0 && u.c === 61 && u.r === 15)) {
       setTileTerrain(g, t, 'plains');
     }

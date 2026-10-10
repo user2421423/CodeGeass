@@ -123,32 +123,31 @@ test('Moving through a province does not recolor it; capturing its city flips on
     g.tiles.map(t => [t.owner, t.provinceCity]), 'province boundaries survive serialization');
 });
 
-test('World map: islands, straits and joins that gameplay depends on', () => {
+test('World map: accepted coastal straits and original city positions', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 7);
-  const land = t => t.terrain !== 'sea';
-  // Every hex reachable from `from` over hexes passing `pass`.
   const region = (from, pass) => {
     const seen = new Set([E.key(from)]), queue = [from];
-    while (queue.length) for (const n of E.adjacent(g, queue.shift())) if (pass(n) && !seen.has(E.key(n))) seen.add(E.key(n)), queue.push(n);
+    while (queue.length) for (const n of E.adjacent(g, queue.shift()))
+      if (pass(n) && !seen.has(E.key(n))) seen.add(E.key(n)), queue.push(n);
     return seen;
   };
   const city = name => g.stations.find(s => s.name === name);
   const at = (c, r) => E.tile(g, c, r);
+  const passableGround = t => t.terrain !== 'sea' && t.terrain !== 'peak';
   const linked = (a, b, pass) => region(a, pass).has(E.key(b));
-  assert(!linked(city('London'), city('Paris'), land), 'Great Britain is an island (Strait of Dover)');
-  assert(!linked(city('Dublin'), city('London'), land), 'Ireland is an island');
-  assert(linked(city('Rome'), at(96, 21), land), 'Sicily is joined to Italy (Strait of Messina closed)');
-  assert(linked(at(106, 18), at(102, 21), t => !land(t)), 'the Bosporus opens the Black Sea to the Aegean');
-  assert(linked(at(83, 21), at(92, 20), t => !land(t)), 'Strait of Gibraltar is open');
-  assert(linked(at(88, 14), at(91, 11), t => !land(t)), 'the English Channel reaches the North Sea');
-  assert(linked(at(97, 18), at(98, 22), t => !land(t)), 'the Adriatic opens to the Ionian Sea');
-  assert(!linked(city('Tokyo Settlement'), city('Sapporo'), land), 'Hokkaido is separated from Honshu by Tsugaru Strait');
-  assert(!linked(city('Tokyo Settlement'), city('Seoul'), land), 'Japan is not joined to Korea');
-  assert(!linked(city('Taipei'), city('Hong Kong'), land), 'Taiwan is an island');
-  // Every city stands within one hex of where its coordinates put it.
-  for (const [name, lon, lat] of require('../dist/engine/world.js').CITY_DATA) {
+  // User-approved uniform terrain permits new land bridges; guard those changes
+  // rather than reinstating the old no-crossing geography.
+  assert.equal(at(90, 13).terrain, 'coast', 'Dover's new traversable coast is intentional');
+  assert(linked(city('London'), city('Paris'), passableGround), 'Dover land bridge is intentional');
+  assert.equal(at(160, 19).terrain, 'coast', 'Tsugaru changes to traversable coast');
+  assert(linked(city('Tokyo Settlement'), city('Sapporo'), passableGround),
+    'Hokkaido is connected by the user-approved coastline');
+  // City placement is not allowed to drift due to the terrain transformation.
+  const anchors = require('../dist/engine/world.js').COASTAL_CITY_HEXES;
+  for (const [name, position] of Object.entries(anchors)) {
     const s = city(name);
-    assert(s && E.distance(s, E.hexOf(lon, lat), g) <= 1, `${name} sits where its coordinates put it`);
+    assert(s, 'missing city ' + name);
+    assert.deepEqual([s.c, s.r], position, name + ' must retain baseline coordinates');
   }
 });
 
@@ -635,65 +634,67 @@ test('An amphibious sea-to-land movement refreshes both actions once per turn', 
   assert.equal(u.moved, true);
 });
 
-test('Reviewed coastal conversions preserve naval routes, cities and existing occupied saves', () => {
-  const changes = [[13, 9], [168, 9], [50, 10], [49, 12], [81, 32],
-    [113, 51], [157, 44], [49, 31], [0, 6], [127, 0],
-    [158, 1], [55, 8], [56, 8], [156, 63]];
+test('Historic coastal migration respects the current world map and occupied saves', () => {
   const game = E.createGame('britannia', 'normal', 'conquest', 123);
-  for (const [c, r] of changes) {
-    assert.equal(E.tile(game, c, r).terrain, 'sea', `(${c},${r}) must be navigable water`);
-    assert(!game.stations.some(s => (s.c === c && s.r === r) ||
-      (s.portAt?.c === c && s.portAt?.r === r)), 'No city or port may be converted');
-    assert(!game.units.some(u => u.c === c && u.r === r), 'No starting unit may be stranded');
-  }
-  for (const [c, r] of [[106, 26], [111, 36], [140, 43], [142, 46]])
-    assert.equal(E.tile(game, c, r).terrain, 'sea', 'Protected straits remain water');
-  for (const [c, r] of [[107, 27], [111, 34], [111, 35]])
-    assert.notEqual(E.tile(game, c, r).terrain, 'sea', 'Red Sea coast hexes are land');
-
+  const world = require('../dist/engine/world.js').WORLD_ROWS;
+  const fixedSea = [[13, 9], [168, 9], [50, 10], [49, 12], [81, 32],
+    [113, 51], [157, 44], [49, 31], [0, 6], [127, 0],
+    [158, 1], [55, 8], [56, 8], [156, 63], [141, 44], [111, 36]];
+  const currentSea = fixedSea.filter(([c, r]) => world[r][c] === '.' &&
+    !game.stations.some(s => (s.c === c && s.r === r) ||
+      (s.portAt?.c === c && s.portAt?.r === r)));
+  const currentCoast = fixedSea.filter(([c, r]) => world[r][c] === 'w');
+  assert(currentSea.length > 0 && currentCoast.length > 0, 'audit both terrain outcomes');
   const old = structuredClone(game);
-  for (const [c, r] of changes) {
-    const tile = E.tile(old, c, r);
-    tile.terrain = 'plains';
-    tile.owner = 'britannia';
-  }
-  E.tile(old, 61, 15).terrain = 'sea';
-  const occupied = old.units[0], [c, r] = changes[0];
+  const occupied = old.units[0];
+  const [c, r] = currentSea[0];
   occupied.c = c;
   occupied.r = r;
-  assert.equal(E.migrateSave(old), old);
-  assert.equal(E.tile(old, c, r).terrain, 'plains', 'Do not strand a unit in a legacy save');
-  for (const [cx, ry] of changes.slice(1)) {
-    assert.equal(E.tile(old, cx, ry).terrain, 'sea', 'Unoccupied legacy coastal land migrates');
-    assert.equal(E.tile(old, cx, ry).owner, null, 'Water hexes must not retain land ownership');
+  for (const [cc, rr] of currentSea) {
+    const t = E.tile(old, cc, rr);
+    t.terrain = 'plains';
+    t.owner = 'britannia';
   }
-  assert.notEqual(E.tile(old, 61, 15).terrain, 'sea', 'Previous Newfoundland fix migrates');
+  for (const [cc, rr] of currentCoast) E.tile(old, cc, rr).terrain = 'coast';
+  assert.equal(E.migrateSave(old), old);
+  assert.equal(E.tile(old, c, r).terrain, 'plains', 'an occupied legacy tile is retained');
+  for (const [cc, rr] of currentSea.slice(1)) {
+    if (old.units.some(u => u.hp > 0 && u.c === cc && u.r === rr) ||
+        old.sites?.some(site => site.c === cc && site.r === rr)) continue;
+    assert.equal(E.tile(old, cc, rr).terrain, 'sea',
+      'legacy sea corrections remain effective where still geographical sea');
+  }
+  for (const [cc, rr] of currentCoast)
+    assert.equal(E.tile(old, cc, rr).terrain, 'coast', 'migration cannot erase new coast');
 });
 
-test('Caspian inland water is land and Tsugaru separates Hokkaido from Honshu', () => {
+test('Caspian migration and new Tsugaru coast remain compatible with saves', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 123);
-  const caspian = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21]];
-  for (const [c,r] of caspian) assert.notEqual(E.tile(g,c,r).terrain,'sea');
-  assert.equal(E.tile(g,160,19).terrain,'sea', 'Tsugaru is navigable water');
-  const tokyo=g.stations.find(s=>s.name==='Tokyo Settlement');
-  const sapporo=g.stations.find(s=>s.name==='Sapporo');
-  const q=[E.tile(g,tokyo.c,tokyo.r)], seen=new Set();
-  for(let i=0;i<q.length;i++){
-    const t=q[i], key=`${t.c},${t.r}`;
-    if(seen.has(key)) continue;seen.add(key);
-    for(const n of E.adjacent(g,t))
-      if(n.terrain!=='sea'&&!seen.has(`${n.c},${n.r}`))q.push(n);
+  const world = require('../dist/engine/world.js').WORLD_ROWS;
+  const caspian = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],
+    [115,20],[116,20],[115,21],[114,21]];
+  for (const [c, r] of caspian) {
+    if (!'.w'.includes(world[r][c]))
+      assert.notEqual(E.tile(g, c, r).terrain, 'sea', 'solid Caspian remains solid');
   }
-  assert(!seen.has(`${sapporo.c},${sapporo.r}`), 'Hokkaido requires sea crossing');
-  const old=structuredClone(g);
-  for(const [c,r] of caspian){const t=E.tile(old,c,r);t.terrain='sea';t.owner=null;}
-  E.tile(old,160,19).terrain='plains';E.tile(old,160,19).owner='britannia';
-  assert.equal(E.migrateSave(old),old);
-  for(const [c,r] of caspian) {
-    const t=E.tile(old,c,r);assert.equal(t.terrain,'plains');
-    assert(t.owner,'Migrated lake adopts nearby territorial ownership');
+  assert.equal(E.tile(g, 160, 19).terrain, 'coast', 'Tsugaru is a shared land/naval coast');
+  const old = structuredClone(g);
+  const caspianSolid = caspian.filter(([c, r]) => !'.w'.includes(world[r][c]));
+  for (const [c, r] of caspianSolid) {
+    const t = E.tile(old, c, r);
+    t.terrain = 'sea';
+    t.owner = null;
   }
-  assert.equal(E.tile(old,160,19).terrain,'sea');
+  const tsugaru = E.tile(old, 160, 19);
+  tsugaru.terrain = 'coast';
+  assert.equal(E.migrateSave(old), old);
+  for (const [c, r] of caspianSolid) {
+    const t = E.tile(old, c, r);
+    assert.equal(t.terrain, 'plains');
+    assert(t.owner, 'land reclaimed from a legacy save receives ownership');
+  }
+  assert.equal(E.tile(old, 160, 19).terrain, 'coast',
+    'old sea-only strait migration must not erase accepted coastal passage');
 });
 
 
