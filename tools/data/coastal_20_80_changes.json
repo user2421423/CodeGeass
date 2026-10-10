@@ -1118,15 +1118,6 @@
    "latitude": 68.88
   },
   {
-   "c": 106,
-   "r": 3,
-   "from": "s",
-   "to": "w",
-   "land_percent": 73.6,
-   "longitude": 34,
-   "latitude": 68.88
-  },
-  {
    "c": 112,
    "r": 3,
    "from": "w",
@@ -1586,30 +1577,12 @@
    "latitude": 63.76
   },
   {
-   "c": 64,
-   "r": 6,
-   "from": "s",
-   "to": "w",
-   "land_percent": 54.1,
-   "longitude": -51,
-   "latitude": 63.76
-  },
-  {
    "c": 69,
    "r": 6,
    "from": "s",
    "to": "w",
    "land_percent": 50,
    "longitude": -41,
-   "latitude": 63.76
-  },
-  {
-   "c": 79,
-   "r": 6,
-   "from": "s",
-   "to": "w",
-   "land_percent": 48.4,
-   "longitude": -21,
    "latitude": 63.76
   },
   {
@@ -1838,15 +1811,6 @@
    "latitude": 60.347
   },
   {
-   "c": 102,
-   "r": 8,
-   "from": "p",
-   "to": "w",
-   "land_percent": 64.4,
-   "longitude": 25,
-   "latitude": 60.347
-  },
-  {
    "c": 103,
    "r": 8,
    "from": "p",
@@ -1970,15 +1934,6 @@
    "to": "w",
    "land_percent": 26.8,
    "longitude": 10,
-   "latitude": 58.64
-  },
-  {
-   "c": 98,
-   "r": 9,
-   "from": "p",
-   "to": "w",
-   "land_percent": 26.4,
-   "longitude": 18,
    "latitude": 58.64
   },
   {
@@ -2171,15 +2126,6 @@
    "latitude": 55.227
   },
   {
-   "c": 87,
-   "r": 11,
-   "from": "p",
-   "to": "w",
-   "land_percent": 74.1,
-   "longitude": -4,
-   "latitude": 55.227
-  },
-  {
    "c": 88,
    "r": 11,
    "from": "p",
@@ -2333,15 +2279,6 @@
    "latitude": 53.52
   },
   {
-   "c": 169,
-   "r": 12,
-   "from": "p",
-   "to": "w",
-   "land_percent": 76.6,
-   "longitude": 159,
-   "latitude": 53.52
-  },
-  {
    "c": 60,
    "r": 13,
    "from": "f",
@@ -2366,15 +2303,6 @@
    "to": "w",
    "land_percent": 21.3,
    "longitude": 2,
-   "latitude": 51.813
-  },
-  {
-   "c": 91,
-   "r": 13,
-   "from": "p",
-   "to": "w",
-   "land_percent": 52,
-   "longitude": 4,
    "latitude": 51.813
   },
   {
@@ -2576,15 +2504,6 @@
    "latitude": 44.987
   },
   {
-   "c": 57,
-   "r": 17,
-   "from": "p",
-   "to": "w",
-   "land_percent": 69,
-   "longitude": -64,
-   "latitude": 44.987
-  },
-  {
    "c": 95,
    "r": 17,
    "from": "p",
@@ -2762,24 +2681,6 @@
    "to": "w",
    "land_percent": 65.5,
    "longitude": -72,
-   "latitude": 41.573
-  },
-  {
-   "c": 90,
-   "r": 19,
-   "from": "p",
-   "to": "w",
-   "land_percent": 63.7,
-   "longitude": 2,
-   "latitude": 41.573
-  },
-  {
-   "c": 96,
-   "r": 19,
-   "from": "p",
-   "to": "w",
-   "land_percent": 78.3,
-   "longitude": 14,
    "latitude": 41.573
   },
   {
@@ -2999,15 +2900,6 @@
    "latitude": 38.16
   },
   {
-   "c": 152,
-   "r": 21,
-   "from": "p",
-   "to": "w",
-   "land_percent": 70.9,
-   "longitude": 126,
-   "latitude": 38.16
-  },
-  {
    "c": 153,
    "r": 21,
    "from": "m",
@@ -3041,33 +2933,6 @@
    "to": ".",
    "land_percent": 19.8,
    "longitude": -7,
-   "latitude": 36.453
-  },
-  {
-   "c": 87,
-   "r": 22,
-   "from": "p",
-   "to": "w",
-   "land_percent": 56.8,
-   "longitude": -5,
-   "latitude": 36.453
-  },
-  {
-   "c": 88,
-   "r": 22,
-   "from": ".",
-   "to": "w",
-   "land_percent": 32.9,
-   "longitude": -3,
-   "latitude": 36.453
-  },
-  {
-   "c": 91,
-   "r": 22,
-   "from": "p",
-   "to": "w",
-   "land_percent": 66.5,
-   "longitude": 3,
    "latitude": 36.453
   },
   {
@@ -3233,15 +3098,6 @@
    "latitude": 34.747
   },
   {
-   "c": 157,
-   "r": 23,
-   "from": "p",
-   "to": "w",
-   "land_percent": 78.5,
-   "longitude": 136,
-   "latitude": 34.747
-  },
-  {
    "c": 158,
    "r": 23,
    "from": "p",
@@ -3266,24 +3122,6 @@
    "to": "w",
    "land_percent": 70.4,
    "longitude": -117,
-   "latitude": 33.04
-  },
-  {
-   "c": 95,
-   "r": 24,
-   "from": "p",
-   "to": "w",
-   "land_percent": 73.6,
-   "longitude": 11,
-   "latitude": 33.04
-  },
-  {
-   "c": 155,
-   "r": 24,
-   "from": "p",
-   "to": "w",
-   "land_percent": 73.8,
-   "longitude": 131,
    "latitude": 33.04
   },
   {
@@ -3377,15 +3215,6 @@
    "latitude": 31.333
   },
   {
-   "c": 150,
-   "r": 25,
-   "from": ".",
-   "to": "w",
-   "land_percent": 25.8,
-   "longitude": 122,
-   "latitude": 31.333
-  },
-  {
    "c": 154,
    "r": 25,
    "from": "p",
@@ -3401,15 +3230,6 @@
    "to": "w",
    "land_percent": 53.1,
    "longitude": -115,
-   "latitude": 29.627
-  },
-  {
-   "c": 42,
-   "r": 26,
-   "from": "p",
-   "to": "w",
-   "land_percent": 70.7,
-   "longitude": -95,
    "latitude": 29.627
   },
   {
@@ -3557,24 +3377,6 @@
    "latitude": 24.507
   },
   {
-   "c": 150,
-   "r": 29,
-   "from": "p",
-   "to": "w",
-   "land_percent": 31.1,
-   "longitude": 122,
-   "latitude": 24.507
-  },
-  {
-   "c": 48,
-   "r": 30,
-   "from": "p",
-   "to": "w",
-   "land_percent": 32.6,
-   "longitude": -83,
-   "latitude": 22.8
-  },
-  {
    "c": 49,
    "r": 30,
    "from": "p",
@@ -3611,15 +3413,6 @@
    "latitude": 22.8
   },
   {
-   "c": 119,
-   "r": 30,
-   "from": "p",
-   "to": "w",
-   "land_percent": 65,
-   "longitude": 59,
-   "latitude": 22.8
-  },
-  {
    "c": 124,
    "r": 30,
    "from": "p",
@@ -3635,15 +3428,6 @@
    "to": "w",
    "land_percent": 75.1,
    "longitude": 91,
-   "latitude": 22.8
-  },
-  {
-   "c": 147,
-   "r": 30,
-   "from": "p",
-   "to": "w",
-   "land_percent": 57.7,
-   "longitude": 115,
    "latitude": 22.8
   },
   {
@@ -3663,15 +3447,6 @@
    "land_percent": 45.5,
    "longitude": 121,
    "latitude": 22.8
-  },
-  {
-   "c": 10,
-   "r": 31,
-   "from": "p",
-   "to": ".",
-   "land_percent": 5,
-   "longitude": -158,
-   "latitude": 21.093
   },
   {
    "c": 36,
@@ -3791,15 +3566,6 @@
    "latitude": 19.387
   },
   {
-   "c": 126,
-   "r": 32,
-   "from": "p",
-   "to": "w",
-   "land_percent": 61.8,
-   "longitude": 73,
-   "latitude": 19.387
-  },
-  {
    "c": 132,
    "r": 32,
    "from": "p",
@@ -3890,15 +3656,6 @@
    "latitude": 15.973
   },
   {
-   "c": 138,
-   "r": 34,
-   "from": "f",
-   "to": "w",
-   "land_percent": 24,
-   "longitude": 97,
-   "latitude": 15.973
-  },
-  {
    "c": 144,
    "r": 34,
    "from": "w",
@@ -3950,15 +3707,6 @@
    "to": ".",
    "land_percent": 19.7,
    "longitude": 120,
-   "latitude": 14.267
-  },
-  {
-   "c": 150,
-   "r": 35,
-   "from": "p",
-   "to": "w",
-   "land_percent": 44.9,
-   "longitude": 122,
    "latitude": 14.267
   },
   {
@@ -4160,15 +3908,6 @@
    "latitude": 9.147
   },
   {
-   "c": 50,
-   "r": 38,
-   "from": "p",
-   "to": "w",
-   "land_percent": 40.5,
-   "longitude": -79,
-   "latitude": 9.147
-  },
-  {
    "c": 51,
    "r": 38,
    "from": ".",
@@ -4268,15 +4007,6 @@
    "latitude": 7.44
   },
   {
-   "c": 129,
-   "r": 39,
-   "from": "p",
-   "to": "w",
-   "land_percent": 60,
-   "longitude": 80,
-   "latitude": 7.44
-  },
-  {
    "c": 139,
    "r": 39,
    "from": "f",
@@ -4328,24 +4058,6 @@
    "to": "w",
    "land_percent": 61.9,
    "longitude": -55,
-   "latitude": 5.733
-  },
-  {
-   "c": 89,
-   "r": 40,
-   "from": "p",
-   "to": "w",
-   "land_percent": 78.7,
-   "longitude": -1,
-   "latitude": 5.733
-  },
-  {
-   "c": 92,
-   "r": 40,
-   "from": "p",
-   "to": "w",
-   "land_percent": 49.6,
-   "longitude": 5,
    "latitude": 5.733
   },
   {
@@ -4445,15 +4157,6 @@
    "to": "p",
    "land_percent": 92.1,
    "longitude": 102,
-   "latitude": 0.613
-  },
-  {
-   "c": 141,
-   "r": 43,
-   "from": "f",
-   "to": "w",
-   "land_percent": 25.8,
-   "longitude": 104,
    "latitude": 0.613
   },
   {
@@ -4700,15 +4403,6 @@
    "latitude": -6.213
   },
   {
-   "c": 142,
-   "r": 47,
-   "from": "f",
-   "to": "w",
-   "land_percent": 41.4,
-   "longitude": 106,
-   "latitude": -6.213
-  },
-  {
    "c": 143,
    "r": 47,
    "from": "f",
@@ -4763,15 +4457,6 @@
    "latitude": -7.92
   },
   {
-   "c": 72,
-   "r": 48,
-   "from": "p",
-   "to": "w",
-   "land_percent": 55.2,
-   "longitude": -35,
-   "latitude": -7.92
-  },
-  {
    "c": 109,
    "r": 48,
    "from": "p",
@@ -4805,15 +4490,6 @@
    "to": "w",
    "land_percent": 66,
    "longitude": 111,
-   "latitude": -7.92
-  },
-  {
-   "c": 146,
-   "r": 48,
-   "from": "p",
-   "to": "w",
-   "land_percent": 59.8,
-   "longitude": 113,
    "latitude": -7.92
   },
   {
@@ -4916,24 +4592,6 @@
    "latitude": -9.627
   },
   {
-   "c": 163,
-   "r": 49,
-   "from": "f",
-   "to": "w",
-   "land_percent": 68.5,
-   "longitude": 148,
-   "latitude": -9.627
-  },
-  {
-   "c": 51,
-   "r": 50,
-   "from": "p",
-   "to": "w",
-   "land_percent": 73.9,
-   "longitude": -77,
-   "latitude": -11.333
-  },
-  {
    "c": 96,
    "r": 50,
    "from": "w",
@@ -4949,15 +4607,6 @@
    "to": "w",
    "land_percent": 76.9,
    "longitude": -76,
-   "latitude": -13.04
-  },
-  {
-   "c": 154,
-   "r": 51,
-   "from": "p",
-   "to": "w",
-   "land_percent": 36.7,
-   "longitude": 130,
    "latitude": -13.04
   },
   {
@@ -5114,15 +4763,6 @@
    "latitude": -23.28
   },
   {
-   "c": 67,
-   "r": 57,
-   "from": "p",
-   "to": "w",
-   "land_percent": 36.6,
-   "longitude": -44,
-   "latitude": -23.28
-  },
-  {
    "c": 68,
    "r": 57,
    "from": "w",
@@ -5204,15 +4844,6 @@
    "latitude": -26.693
   },
   {
-   "c": 166,
-   "r": 59,
-   "from": "p",
-   "to": ".",
-   "land_percent": 4.9,
-   "longitude": 154,
-   "latitude": -26.693
-  },
-  {
    "c": 54,
    "r": 60,
    "from": "p",
@@ -5267,15 +4898,6 @@
    "latitude": -31.813
   },
   {
-   "c": 147,
-   "r": 62,
-   "from": "p",
-   "to": ".",
-   "land_percent": 15.5,
-   "longitude": 115,
-   "latitude": -31.813
-  },
-  {
    "c": 153,
    "r": 62,
    "from": "p",
@@ -5292,15 +4914,6 @@
    "land_percent": 66.5,
    "longitude": 133,
    "latitude": -31.813
-  },
-  {
-   "c": 98,
-   "r": 63,
-   "from": "p",
-   "to": "w",
-   "land_percent": 33,
-   "longitude": 18,
-   "latitude": -33.52
   },
   {
    "c": 102,
@@ -5339,15 +4952,6 @@
    "latitude": -33.52
   },
   {
-   "c": 165,
-   "r": 63,
-   "from": "p",
-   "to": "w",
-   "land_percent": 23.4,
-   "longitude": 152,
-   "latitude": -33.52
-  },
-  {
    "c": 53,
    "r": 64,
    "from": "w",
@@ -5357,39 +4961,12 @@
    "latitude": -35.227
   },
   {
-   "c": 61,
-   "r": 64,
-   "from": "p",
-   "to": "w",
-   "land_percent": 37.1,
-   "longitude": -57,
-   "latitude": -35.227
-  },
-  {
-   "c": 159,
-   "r": 64,
-   "from": "p",
-   "to": "w",
-   "land_percent": 66.9,
-   "longitude": 139,
-   "latitude": -35.227
-  },
-  {
    "c": 159,
    "r": 65,
    "from": "p",
    "to": "w",
    "land_percent": 57.4,
    "longitude": 140,
-   "latitude": -36.933
-  },
-  {
-   "c": 176,
-   "r": 65,
-   "from": "p",
-   "to": "w",
-   "land_percent": 21,
-   "longitude": 174,
    "latitude": -36.933
   },
   {
@@ -5417,15 +4994,6 @@
    "to": "w",
    "land_percent": 50.4,
    "longitude": -59,
-   "latitude": -38.64
-  },
-  {
-   "c": 162,
-   "r": 66,
-   "from": "p",
-   "to": "w",
-   "land_percent": 34.3,
-   "longitude": 145,
    "latitude": -38.64
   },
   {
@@ -5594,9 +5162,9 @@
  "topology": {
   "land": {
    "component_count_before": 32,
-   "component_count_after": 22,
+   "component_count_after": 23,
    "largest_before": 2775,
-   "largest_after": 2804,
+   "largest_after": 2802,
    "bridge_candidate_tiles": [
     [
      31,
@@ -5724,11 +5292,12 @@
   },
   "water": {
    "component_count_before": 1,
-   "component_count_after": 1,
+   "component_count_after": 2,
    "largest_before": 9471,
-   "largest_after": 9812,
+   "largest_after": 9764,
    "bridge_candidate_tiles": [],
    "cut_candidate_tiles": []
   }
- }
+ },
+ "notes": "Audit reflects experimental global 20-80 classification with original 149 city + 12 starting port terrain/locations pinned. Only those city/port hexes are exempt."
 }
