@@ -354,6 +354,8 @@
         const offensives = fronts.filter(f => f.type === 'offensive');
         for (const u of units.filter(u => assign[u.id] === reserve.id)) {
           if (reserve.assigned <= needed || !offensives.length) break;
+          // Keep the last defender if dropping it would undershoot the target.
+          if (reserve.assigned - unitStrength(u) < needed - 1e-6) continue;
           const f = byDist(at(u), offensives)[0];
           reserve.assigned -= unitStrength(u);
           give(u, f);
@@ -509,14 +511,25 @@
     }
     return (direct ? f.stack : 0) + cargo;
   }
-  // Garrison duty: the capital always keeps two defenders (four when threatened); on the denser world, cities react
-  // to enemies within five hexes (or a landing's reach, see threatTo) and draw defenders from proportionally larger
-  // strategic radii. In Conquest, fortress cities and naval bases also keep one defender. Returns { unitId: city }.
+  // Garrison duty: quiet capitals, fortresses, naval bases and major mines share
+  // the 10% strategic defense budget. When actually threatened, capitals can call
+  // for four defenders and cities/mines can request extra forces beyond that budget.
+  // Returns { unitId: city }.
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0);
+      threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
+      guardBudget = FRONT.reserve * own.reduce((total, u) => total + unitStrength(u), 0);
+    let guardedStrength = 0;
+    const guard = (u, duty, emergency = false) => {
+      if (!u || taken[u.id]) return false;
+      const strength = unitStrength(u);
+      if (!emergency && guardedStrength + strength > guardBudget + 1e-6) return false;
+      taken[u.id] = duty;
+      guardedStrength += strength;
+      return true;
+    };
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
     const cities = g.stations
       .filter(s => s.owner === side)
@@ -532,10 +545,10 @@
       const near = own
         .filter(u => !taken[u.id] && dist(g, u, s) <= (capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard))
         .sort((a, b) => dist(g, a, s) - dist(g, b, s));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+      for (const u of near.slice(0, need)) guard(u, { c: s.c, r: s.r, id: s.id }, t > 0);
     }
-    // Strongholds (Conquest): the fortress cities that guard the straits, and level-2+ naval bases, are never left
-    // empty, even in quiet times.
+    // Strongholds (Conquest): cover strategic straits and level-2+ naval bases
+    // while the shared peacetime defensive budget has room.
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
@@ -543,7 +556,7 @@
         const u = own
           .filter(u => !taken[u.id] && dist(g, u, s) <= aiRange(g).cityGuard)
           .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0];
-        if (u) taken[u.id] = { c: s.c, r: s.r, id: s.id };
+        if (u) guard(u, { c: s.c, r: s.r, id: s.id });
       }
     // Own mines: Mount Fuji always keeps a guard; any threatened mine draws up to two.
     for (const d of g.sites || []) {
@@ -551,7 +564,7 @@
       const t = threat(d),
         need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
       const near = own.filter(u => !taken[u.id] && dist(g, u, d) <= aiRange(g).mineGuard).sort((a, b) => dist(g, a, d) - dist(g, b, d));
-      for (const u of near.slice(0, need)) taken[u.id] = { c: d.c, r: d.r, site: d.id };
+      for (const u of near.slice(0, need)) guard(u, { c: d.c, r: d.r, site: d.id }, t > 0);
     }
     return taken;
   }
