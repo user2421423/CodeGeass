@@ -69,8 +69,9 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 - **Standing orders:** select a unit, choose Set destination (or press G) and click any hex. It moves toward it at
   the start of each of your turns until it arrives; change the destination or stop it at any time on your turn.
 - **Theaters (Conquest AI):** each rival groups its objectives into fronts, ranks them, keeps armies on a front for
-  several turns, masses an offensive at a rally city before it attacks, holds a strategic reserve at its capital for
-  emergencies, and has its factories build what each front needs.
+  several turns, masses an offensive at a rally city before it attacks, counts garrisons and defensive fronts toward
+  a shared 10% strategic-defense target (keeping an additional capital reserve only if needed), and has its factories
+  build what each front needs.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (60 damage + 10% of target maximum HP, no cap;
   range 2, or 3 with Battery Overcharge; always 2-turn recharge), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
