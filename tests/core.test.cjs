@@ -64,6 +64,65 @@ test('Conquest initializes coherently for every playable power', () => {
   }
 });
 
+test('Every painted conquest hex belongs to one fixed city province', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 9);
+  const cities = new Map(g.stations.map(s => [s.id, s]));
+  for (const t of g.tiles) {
+    if (t.terrain === 'sea') {
+      assert.equal(t.provinceCity, undefined, 'sea never belongs to a city province');
+      continue;
+    }
+    if (t.owner) {
+      assert.notEqual(t.provinceCity, undefined, 'painted land must have a city');
+      assert.equal(cities.get(t.provinceCity)?.owner, t.owner,
+        'initial province city must control its land');
+    }
+  }
+  const paris = g.stations.find(s => s.name === 'Paris');
+  assert(g.tiles.filter(t => t.provinceCity === paris.id).length > 7,
+    'city provinces include more than the old seven-hex capture radius');
+  const legacy = structuredClone(g);
+  for (const t of legacy.tiles) delete t.provinceCity;
+  assert.equal(E.migrateSave(legacy), legacy);
+  assert(legacy.tiles.every(t => t.terrain === 'sea' || !t.owner || t.provinceCity != null),
+    'old saves acquire stable province assignments');
+});
+
+test('Moving through a province does not recolor it; capturing its city flips only that province', () => {
+  const g = blank();
+  const paris = g.stations.find(s => s.owner === 'eu');
+  const otherCity = { ...paris, id: 3, name: 'Other E.U. City', c: 7, r: 0,
+    capital: false, capitalOf: null };
+  g.stations.push(otherCity);
+  const owned = (c, r, city) => {
+    const t = E.tile(g, c, r);
+    t.owner = city.owner;
+    t.provinceCity = city.id;
+    return t;
+  };
+  const walked = owned(5, 5, paris);
+  const mover = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 5, 4);
+  assert.equal(E.move(g, mover.id, 5, 5).ok, true);
+  assert.equal(walked.owner, 'eu', 'ordinary movement cannot repaint enemy territory');
+
+  const parisProvince = [[11, 0], [10, 0], [11, 1], [9, 1]].map(([c, r]) => owned(c, r, paris));
+  const neighboringProvince = owned(10, 1, otherCity); // Adjacent to Paris, but not its province
+  const remoteProvince = owned(7, 1, otherCity);
+  paris.shield = 0;
+  const invader = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 10, 0);
+  const capture = E.move(g, invader.id, paris.c, paris.r);
+  assert.equal(capture.ok, true);
+  assert.equal(capture.captured, paris.name);
+  assert(parisProvince.every(t => t.owner === 'britannia'));
+  assert.equal(walked.owner, 'britannia', 'even a remote hex of Paris province flips');
+  assert.equal(neighboringProvince.owner, 'eu', 'adjacent city province must remain E.U.');
+  assert.equal(remoteProvince.owner, 'eu');
+  assert.equal(otherCity.owner, 'eu', 'other city is not captured');
+  const saved = structuredClone(g);
+  assert.deepEqual(saved.tiles.map(t => [t.owner, t.provinceCity]),
+    g.tiles.map(t => [t.owner, t.provinceCity]), 'province boundaries survive serialization');
+});
+
 test('World map: islands, straits and joins that gameplay depends on', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 7);
   const land = t => t.terrain !== 'sea';
@@ -118,6 +177,9 @@ test('Core combat keeps breakthrough and movement rules intact', () => {
 test('F.L.E.I.J.A. leaves a city at ground zero as ruins, destroys its deposit and forces its owner to surrender', () => {
   const g = blank();
   const paris = g.stations.find(s => s.owner === 'eu');
+  const inherited = E.tile(g, paris.c - 1, paris.r);
+  inherited.owner = 'eu';
+  inherited.provinceCity = paris.id;
   g.sites = [{ id: 0, name: 'Paris Field', c: paris.c, r: paris.r, base: 20, city: paris.id }];
   g.arsenal = { britannia: 1 };
   const r = E.launch(g, 'britannia', paris.c, paris.r);
@@ -127,6 +189,9 @@ test('F.L.E.I.J.A. leaves a city at ground zero as ruins, destroys its deposit a
   assert.deepEqual(r.depleted, ['Paris Field']);
   assert.equal(g.sites.length, 0);
   assert.equal(g.fallen.eu.by, 'britannia');
+  assert.equal(inherited.owner, 'britannia', 'surrender transfers an orphaned province');
+  assert.equal(inherited.provinceCity, g.stations.find(s => s.owner === 'britannia').id,
+    'orphaned province becomes attached to a living city');
   assert.equal(E.tile(g, paris.c, paris.r).terrain, 'crater');
 });
 
@@ -279,8 +344,11 @@ test('A Knightmare can board and launch on the same turn with full actions', () 
   assert.equal(E.deployReason(g, ship, 0), null);
   const target = E.deployTargets(g, ship).find(p => p.c !== 5 || p.r !== 6);
   assert(target);
+  const landingTile = E.tile(g, target.c, target.r);
+  landingTile.owner = 'eu';
   const launch = E.deploy(g, ship.id, 0, target.c, target.r);
   assert.equal(launch.ok, true);
+  assert.equal(landingTile.owner, 'eu', 'unopposed carrier landing cannot repaint territory');
   assert.equal(launch.unit.moved, false);
   assert.equal(launch.unit.attacked, false);
   assert(E.reachable(g, launch.unit).size > 0);
