@@ -10,7 +10,9 @@ const SOUTH_ISLAND = [
 
 function verifySouthIsland(g, owner = 'britannia') {
   const auckland = g.stations.find(s => s.name === 'Auckland');
-  assert(auckland, 'Auckland must exist');
+  const christchurch = g.stations.find(s => s.name === 'Christchurch');
+  assert(auckland && christchurch, 'Both islands must have a city');
+  let southern = 0;
   for (const [c, r] of SOUTH_ISLAND) {
     const tile = E.tile(g, c, r);
     assert(tile, c + ',' + r + ' must exist');
@@ -20,8 +22,10 @@ function verifySouthIsland(g, owner = 'britannia') {
       continue;
     }
     assert.equal(tile.owner, owner, c + ',' + r + ' should follow Auckland ownership');
-    assert.equal(tile.provinceCity, auckland.id, c + ',' + r + ' must be an Auckland province');
+    assert([auckland.id, christchurch.id].includes(tile.provinceCity), c + ',' + r + ' needs New Zealand province');
+    if (tile.provinceCity === christchurch.id) southern++;
   }
+  assert(southern > 0, 'Christchurch needs a South Island province');
 }
 
 test('Every starting conquest owns the full New Zealand South Island', () => {
@@ -34,7 +38,9 @@ test('Every starting conquest owns the full New Zealand South Island', () => {
 test('New Zealand repair migrates old saves without erasing captures', () => {
   const game = E.createGame('eu', 'normal', 'conquest', 7);
   const auckland = game.stations.find(s => s.name === 'Auckland');
-  auckland.owner = 'eu'; // Auckland may already have been captured.
+  auckland.owner = 'eu'; // Both New Zealand cities may already have been captured.
+  const christchurch = game.stations.find(s => s.name === 'Christchurch');
+  christchurch.owner = 'eu';
   for (const [c, r] of SOUTH_ISLAND) {
     const tile = E.tile(game, c, r);
     if (tile.terrain !== 'sea') {
@@ -44,7 +50,7 @@ test('New Zealand repair migrates old saves without erasing captures', () => {
   }
   const retained = E.tile(game, 175, 70);
   retained.owner = 'cf'; // Respect territory already reassigned by a past game.
-  retained.provinceCity = auckland.id;
+  retained.provinceCity = christchurch.id;
 
   const restored = E.migrateSave(E.packSave(game));
   assert(restored, 'saved game must load');
@@ -55,7 +61,7 @@ test('New Zealand repair migrates old saves without erasing captures', () => {
       assert.equal(tile.provinceCity, undefined);
     } else {
       assert.equal(tile.owner, c === 175 && r === 70 ? 'cf' : 'eu');
-      assert.equal(tile.provinceCity, auckland.id);
+      assert.equal(tile.provinceCity, christchurch.id);
     }
   }
   // Migration must be idempotent and not replace real player changes.
