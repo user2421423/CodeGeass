@@ -101,7 +101,6 @@
     ['Pendragon', -117, 37.5, 'britannia', 3, true, true, 'Pendragon Hadron Battery'],
     ['Seattle', -122.3, 47.6, 'britannia', 2],
     ['Denver', -105, 39.7, 'britannia', 1],
-    ['Dallas', -96.8, 32.8, 'britannia', 2],
     ['Chicago', -87.6, 41.9, 'britannia', 2],
     ['New York', -74, 40.7, 'britannia', 3],
     ['Miami', -80.2, 25.8, 'britannia', 1],
@@ -129,7 +128,6 @@
     // Russia, Siberia and the Balkans: E.U. territory in 2017 (Britannia only takes them in 2018).
     ['St. Petersburg', 30.3, 59.9, 'eu', 3, false, true, 'Catherine Palace Battery'],
     ['Moscow', 37.6, 55.75, 'eu', 3],
-    ['Riga', 24.1, 56.9, 'eu', 1],
     ['Minsk', 27.6, 53.9, 'eu', 2],
     ['Kiev', 30.5, 50.45, 'eu', 2],
     ['Bucharest', 27.5, 44.3, 'eu', 1],
@@ -210,11 +208,9 @@
     ['Baghdad', 44.4, 33.3, 'neutral', 2],
     ['Riyadh', 46.7, 24.7, 'neutral', 1],
     ['Damascus', 36.3, 33.5, 'neutral', 1],
-    ['Muscat', 58.4, 23.6, 'neutral', 1],
 
     // Strategic city expansion: secondary regional centres. Existing cities stay first so their map placement is stable.
     // Holy Britannian Empire.
-    ['Vancouver', -123.1, 49.3, 'britannia', 1],
     ['San Francisco', -122.4, 37.8, 'britannia', 2],
     ['Los Angeles', -118.2, 34.1, 'britannia', 2],
     ['Houston', -95.4, 29.8, 'britannia', 2],
@@ -225,34 +221,24 @@
     ['Caracas', -66.9, 10.5, 'britannia', 1],
     ['Brasilia', -47.9, -15.8, 'britannia', 1],
     ['Sao Paulo', -46.6, -23.5, 'britannia', 2],
-    ['Montevideo', -56.2, -34.9, 'britannia', 1],
 
     // Europia United.
-    ['Lisbon', -9.1, 38.7, 'eu', 1],
     ['Barcelona', 2.2, 41.4, 'eu', 2],
     ['Amsterdam', 4.9, 52.4, 'eu', 2],
-    ['Prague', 14.4, 50.1, 'eu', 1],
-    ['Budapest', 19, 47.5, 'eu', 1],
-    ['Sofia', 23.3, 42.7, 'eu', 1],
     ['Helsinki', 24.9, 60.2, 'eu', 1],
-    ['Tunis', 10.2, 36.8, 'eu', 1],
     ['Casablanca', -7.6, 33.6, 'eu', 1],
-    ['Accra', -0.2, 5.6, 'eu', 1],
     ['Luanda', 13.2, -8.8, 'eu', 1],
     ['Dar es Salaam', 39.2, -6.8, 'eu', 1],
-    ['Maputo', 32.6, -25.9, 'eu', 1],
 
     // Chinese Federation.
     ['Harbin', 126.6, 45.8, 'cf', 1],
     ['Xian', 108.9, 34.3, 'cf', 2],
     ['Chengdu', 104.1, 30.7, 'cf', 2],
     ['Wuhan', 114.3, 30.6, 'cf', 2],
-    ['Nanjing', 118.8, 32.1, 'cf', 2],
     ['Guangzhou', 113.3, 23.1, 'cf', 2],
     ['Kunming', 102.8, 25, 'cf', 1],
     ['Kathmandu', 85.3, 27.7, 'cf', 1],
     ['Dhaka', 90.4, 23.8, 'cf', 1],
-    ['Mandalay', 96.1, 21.9, 'cf', 1],
     ['Ho Chi Minh City', 106.7, 10.8, 'cf', 1],
     ['Kuala Lumpur', 102.0, 4.0, 'cf', 1],
     ['Surabaya', 112.8, -7.3, 'cf', 1],
@@ -260,7 +246,6 @@
     // Neutral Australia and Middle Eastern Federation.
     ['Brisbane', 153, -27.5, 'neutral', 1],
     ['Adelaide', 138.6, -34.9, 'neutral', 1],
-    ['Jerusalem', 35.2, 31.8, 'neutral', 1],
     ['Sanaa', 44.2, 15.4, 'neutral', 1],
   ];
   // Balance overrides of a city's starting output and defenses (by name; see cityBase in engine.js). They bring the
@@ -292,8 +277,8 @@
   for (const name of [
     'Volgograd', 'Yekaterinburg', 'Novosibirsk', 'Irkutsk', 'Yakutsk', 'Petropavlovsk', 'Murmansk',
     'Reykjavik', 'Dublin', 'Edinburgh', 'Oslo', 'Stockholm', 'Helsinki',
-    'Algiers', 'Tripoli', 'Tunis', 'Casablanca', 'Dakar', 'Bamako', 'Lagos', 'Accra', 'Khartoum', 'Addis Ababa',
-    'Kinshasa', 'Luanda', 'Nairobi', 'Dar es Salaam', 'Maputo', 'Cape Town', 'Antananarivo',
+    'Algiers', 'Tripoli', 'Casablanca', 'Dakar', 'Bamako', 'Lagos', 'Khartoum', 'Addis Ababa',
+    'Kinshasa', 'Luanda', 'Nairobi', 'Dar es Salaam', 'Cape Town', 'Antananarivo',
   ])
     CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 8, industry: 4, science: 1 };
   // Britannia's secondary cities, and three of the Federation's.
@@ -458,10 +443,8 @@
     ['Baghdad', 'bamides', 2],
     ['Riyadh', 'bamides', 1],
     ['Damascus', 'glasgow', 2],
-    ['Muscat', 'glasgow', 1],
     ['Brisbane', 'glasgow', 1],
     ['Adelaide', 'glasgow', 1],
-    ['Jerusalem', 'bamides', 1],
     ['Sanaa', 'bamides', 1],
   ];
   // Starting ports (city, level) and fleets ([side, role, lon, lat, frames]). The fleets are equal in value; only where
@@ -483,7 +466,7 @@
     ['cf', 'amphibious', 89, 19, 2], ['cf', 'amphibious2', 99, 5, 1], ['cf', 'amphibious', 68, 23, 2],
   ];
   // Fixed starting placements: retain pre-experiment cities/ports even when adjacent coastline changes.
-  const COASTAL_CITY_HEXES = {"Pendragon":[31,21],"Seattle":[28,15],"Denver":[37,20],"Dallas":[41,24],"Chicago":[45,19],"New York":[52,20],"Miami":[49,28],"Winnipeg":[41,14],"Halifax":[57,17],"Anchorage":[14,7],"Mexico City":[40,32],"Panama":[50,38],"Bogota":[52,41],"Lima":[51,50],"Manaus":[59,45],"Recife":[72,48],"Rio de Janeiro":[67,57],"Buenos Aires":[60,64],"Santiago":[54,63],"Pearl Harbor":[10,31],"Manila":[150,35],"Auckland":[176,65],"Tokyo Settlement":[159,22],"Kyoto":[157,23],"Fukuoka":[155,24],"Sapporo":[161,18],"St. Petersburg":[105,8],"Moscow":[108,11],"Riga":[102,10],"Minsk":[103,12],"Kiev":[105,14],"Bucharest":[103,17],"Istanbul":[105,20],"Tbilisi":[111,19],"Volgograd":[111,15],"Yekaterinburg":[120,10],"Novosibirsk":[130,11],"Irkutsk":[141,13],"Yakutsk":[154,7],"Petropavlovsk":[169,12],"Nuuk":[64,6],"Paris":[90,15],"London":[89,13],"Edinburgh":[87,11],"Dublin":[86,12],"Reykjavik":[79,6],"Madrid":[88,20],"Gibraltar":[87,22],"Rome":[96,19],"Berlin":[96,13],"Vienna":[97,15],"Warsaw":[100,13],"Stockholm":[98,9],"Oslo":[95,8],"Murmansk":[106,3],"Athens":[100,21],"Belgrade":[99,17],"Cairo":[105,26],"Algiers":[91,22],"Tripoli":[95,24],"Dakar":[81,35],"Bamako":[86,36],"Lagos":[92,40],"Khartoum":[106,34],"Addis Ababa":[109,38],"Kinshasa":[97,46],"Nairobi":[108,44],"Johannesburg":[103,59],"Cape Town":[98,63],"Antananarivo":[113,54],"Luoyang":[145,23],"Beijing":[148,20],"Shanghai":[149,25],"Hong Kong":[147,30],"Chongqing":[143,26],"Liaodong":[151,19],"Seoul":[152,21],"Vladivostok":[155,18],"Ulaanbaatar":[142,15],"Urumqi":[133,18],"Lhasa":[136,26],"Almaty":[128,18],"Tashkent":[124,19],"Kabul":[124,23],"Tehran":[115,22],"Karachi":[123,29],"Delhi":[128,27],"Jabalpur":[129,30],"Mumbai":[126,32],"Kolkata":[134,30],"Chennai":[129,36],"Colombo":[129,39],"Yangon":[138,34],"Hanoi":[142,31],"Bangkok":[139,35],"Singapore":[141,43],"Jakarta":[142,47],"Taipei":[150,29],"Port Moresby":[163,49],"Sydney":[165,63],"Melbourne":[162,66],"Perth":[147,62],"Darwin":[154,51],"Baghdad":[112,24],"Riyadh":[112,29],"Damascus":[108,24],"Muscat":[119,30],"Vancouver":[28,14],"San Francisco":[28,21],"Los Angeles":[30,23],"Houston":[42,26],"Toronto":[50,18],"Montreal":[52,17],"Havana":[48,30],"Quito":[50,43],"Caracas":[57,38],"Brasilia":[65,53],"Sao Paulo":[66,57],"Montevideo":[61,64],"Lisbon":[85,21],"Barcelona":[90,19],"Amsterdam":[91,13],"Prague":[97,14],"Budapest":[99,16],"Sofia":[101,18],"Helsinki":[102,8],"Tunis":[94,22],"Casablanca":[86,24],"Accra":[89,40],"Luanda":[96,49],"Dar es Salaam":[108,47],"Maputo":[105,59],"Harbin":[152,17],"Xian":[143,23],"Chengdu":[141,25],"Wuhan":[146,25],"Nanjing":[148,25],"Guangzhou":[146,30],"Kunming":[140,29],"Kathmandu":[132,27],"Dhaka":[134,29],"Mandalay":[137,31],"Ho Chi Minh City":[142,37],"Kuala Lumpur":[140,41],"Surabaya":[146,48],"Brisbane":[166,59],"Adelaide":[159,64],"Jerusalem":[107,25],"Sanaa":[112,34]};
+  const COASTAL_CITY_HEXES = {"Pendragon":[31,21],"Seattle":[28,15],"Denver":[37,20],"Chicago":[45,19],"New York":[52,20],"Miami":[49,28],"Winnipeg":[41,14],"Halifax":[57,17],"Anchorage":[14,7],"Mexico City":[40,32],"Panama":[50,38],"Bogota":[52,41],"Lima":[51,50],"Manaus":[59,45],"Recife":[72,48],"Rio de Janeiro":[67,57],"Buenos Aires":[60,64],"Santiago":[54,63],"Pearl Harbor":[10,31],"Manila":[150,35],"Auckland":[176,65],"Tokyo Settlement":[159,22],"Kyoto":[157,23],"Fukuoka":[155,24],"Sapporo":[161,18],"St. Petersburg":[105,8],"Moscow":[108,11],"Minsk":[103,12],"Kiev":[105,14],"Bucharest":[103,17],"Istanbul":[105,20],"Tbilisi":[111,19],"Volgograd":[111,15],"Yekaterinburg":[120,10],"Novosibirsk":[130,11],"Irkutsk":[141,13],"Yakutsk":[154,7],"Petropavlovsk":[169,12],"Nuuk":[64,6],"Paris":[90,15],"London":[89,13],"Edinburgh":[87,11],"Dublin":[86,12],"Reykjavik":[79,6],"Madrid":[88,20],"Gibraltar":[87,22],"Rome":[96,19],"Berlin":[96,13],"Vienna":[97,15],"Warsaw":[100,13],"Stockholm":[98,9],"Oslo":[95,8],"Murmansk":[106,3],"Athens":[100,21],"Belgrade":[99,17],"Cairo":[105,26],"Algiers":[91,22],"Tripoli":[95,24],"Dakar":[81,35],"Bamako":[86,36],"Lagos":[92,40],"Khartoum":[106,34],"Addis Ababa":[109,38],"Kinshasa":[97,46],"Nairobi":[108,44],"Johannesburg":[103,59],"Cape Town":[98,63],"Antananarivo":[113,54],"Luoyang":[145,23],"Beijing":[148,20],"Shanghai":[149,25],"Hong Kong":[147,30],"Chongqing":[143,26],"Liaodong":[151,19],"Seoul":[152,21],"Vladivostok":[155,18],"Ulaanbaatar":[142,15],"Urumqi":[133,18],"Lhasa":[136,26],"Almaty":[128,18],"Tashkent":[124,19],"Kabul":[124,23],"Tehran":[115,22],"Karachi":[123,29],"Delhi":[128,27],"Jabalpur":[129,30],"Mumbai":[126,32],"Kolkata":[134,30],"Chennai":[129,36],"Colombo":[129,39],"Yangon":[138,34],"Hanoi":[142,31],"Bangkok":[139,35],"Singapore":[141,43],"Jakarta":[142,47],"Taipei":[150,29],"Port Moresby":[163,49],"Sydney":[165,63],"Melbourne":[162,66],"Perth":[147,62],"Darwin":[154,51],"Baghdad":[112,24],"Riyadh":[112,29],"Damascus":[108,24],"San Francisco":[28,21],"Los Angeles":[30,23],"Houston":[42,26],"Toronto":[50,18],"Montreal":[52,17],"Havana":[48,30],"Quito":[50,43],"Caracas":[57,38],"Brasilia":[65,53],"Sao Paulo":[66,57],"Barcelona":[90,19],"Amsterdam":[91,13],"Helsinki":[102,8],"Casablanca":[86,24],"Luanda":[96,49],"Dar es Salaam":[108,47],"Harbin":[152,17],"Xian":[143,23],"Chengdu":[141,25],"Wuhan":[146,25],"Guangzhou":[146,30],"Kunming":[140,29],"Kathmandu":[132,27],"Dhaka":[134,29],"Ho Chi Minh City":[142,37],"Kuala Lumpur":[140,41],"Surabaya":[146,48],"Brisbane":[166,59],"Adelaide":[159,64],"Sanaa":[112,34]};
   const COASTAL_PORT_HEXES = {"Pearl Harbor":[10,30],"New York":[52,21],"Kyoto":[157,22],"Los Angeles":[30,24],"London":[90,12],"Gibraltar":[88,22],"Barcelona":[91,20],"Athens":[100,22],"Shanghai":[150,25],"Singapore":[142,42],"Hong Kong":[147,31],"Mumbai":[125,32]};
   const data = (root.KnightmareData ||= {});
   Object.assign(data, {
