@@ -41,9 +41,9 @@ test('snapshot the experimental scope to make later terrain drift visible', () =
   let changed = 0, sea = 0, coast = 0, land = 0;
   for (let r = 0; r < 76; r++) for (let c = 0; c < 180; c++) {
     if (world[r][c] !== baseline[r][c]) changed++;
-    const type = rule.rows[r][c];
-    if (type === 'S') sea++;
-    else if (type === 'C') coast++;
+    const type = world[r][c];
+    if (type === '.') sea++;
+    else if (type === 'w') coast++;
     else land++;
   }
   assert.deepEqual({ changed, sea, coast, land }, { changed: 573, sea: 8949, coast: 817, land: 3914 });
