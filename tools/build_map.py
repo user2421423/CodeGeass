@@ -500,6 +500,7 @@ FIX_SEA = [
 
 
 COAST_HEXES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coast_hexes.json')
+COASTAL_20_80 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coastal_20_80.json')
 
 
 def build(coast=True):
@@ -547,6 +548,24 @@ def build(coast=True):
     if coast and os.path.exists(COAST_HEXES):
         for c, r in json.load(open(COAST_HEXES))['hexes']:
             grid[r][c] = 'w'
+    # Experimental coastline review: exact 20/80% classification for EVERY tile,
+    # applied after ALL legacy terrain overrides. None of the old strategic,
+    # station or port exemptions can veto this layer.
+    if coast and os.path.exists(COASTAL_20_80):
+        rule = json.load(open(COASTAL_20_80))
+        if rule['cols'] != COLS or len(rule['rows']) != ROWS or any(len(row) != COLS for row in rule['rows']):
+            raise ValueError('Bad coastal_20_80.json map dimensions')
+        for r, row in enumerate(rule['rows']):
+            for c, category in enumerate(row):
+                if category == 'S':
+                    grid[r][c] = '.'
+                elif category == 'C':
+                    grid[r][c] = 'w'
+                elif category == 'L':
+                    if grid[r][c] in '.w':
+                        grid[r][c] = 'p'
+                else:
+                    raise ValueError(f'Invalid 20/80 coastal category {category!r} at {(c, r)}')
     return grid
 
 
