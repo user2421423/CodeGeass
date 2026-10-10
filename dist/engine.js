@@ -1225,7 +1225,9 @@
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
     let n = t.move + Math.min(1, unitTech(g, u, 'drives')) + (eliteFx(u).move || 0);
-    if (g?.mode !== 'campaign') n += CONQUEST_MOVE_BONUS;
+    // Carrier-Battleships use their listed 10-hex movement; the +2 Conquest
+    // bonus applies to land and amphibious formations, not warships.
+    if (g?.mode !== 'campaign' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
     // Commander Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
     n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
     n += wears(g, u, 'star') ? 1 : 0;
