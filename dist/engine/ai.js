@@ -960,11 +960,13 @@
         .sort((a, b) => b.score - a.score || a.s.id - b.s.id);
       // Upgrade existing carrier berths before adding capacity. One port reaches
       // level 3 so landing tech and higher-tier naval research are usable.
-      const portToUpgrade = carrierPorts.length < desiredCarrierPorts
-        ? ports.filter(s => s.portLevel === 1 && !buildReason(g, s, 'port'))[0]
-        : g.turn >= 3 && !ports.some(s => s.portLevel >= 3)
+      const portToUpgrade =
+        (carrierPorts.length < desiredCarrierPorts
+          ? ports.find(s => s.portLevel === 1 && !buildReason(g, s, 'port'))
+          : null) ||
+        (g.turn >= 3 && !ports.some(s => s.portLevel >= 3)
           ? carrierPorts.find(s => !buildReason(g, s, 'port'))
-          : null;
+          : null);
       const portToBuild = portToUpgrade ||
         (ports.length < desiredPorts ? portCandidates[0]?.s : null);
       if (portToBuild) {
