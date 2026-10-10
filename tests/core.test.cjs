@@ -216,6 +216,31 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
+test('AI may build a super-heavy even when it already fields more than two', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const side = 'eu', superType = E.typeFor(side, 'super', g);
+  g.phase = side;
+  g.turn = 8;
+  g.ai = { [side]: { saving: true } };
+  g.economy[side] = { credits: 20000, industry: 20000, science: 100, sakuradite: 2000 };
+
+  // The special super-heavy saving step previously stopped whenever two existed.
+  const available = g.tiles
+    .filter(t => t.terrain !== 'sea' && t.owner === side &&
+      !E.unitAt(g, t) && !g.stations.some(s => s.c === t.c && s.r === t.r))
+    .slice(0, 3);
+  assert.equal(available.length, 3, 'test needs three empty land tiles');
+  for (const t of available) E.newUnit(g, superType, side, t.c, t.r);
+  const before = g.units.filter(u => u.hp > 0 && u.side === side && u.type === superType).length;
+  assert(before > 2, 'the AI already has more than two super-heavies');
+  assert(g.stations.some(s => s.owner === side && s.tier >= 3 &&
+    E.canBuy(g, s, superType, 1)), 'a level-3 factory must have capacity');
+
+  E.aiProduction(g);
+  const after = g.units.filter(u => u.hp > 0 && u.side === side && u.type === superType).length;
+  assert(after > before, 'AI must not stop producing super-heavies at two');
+});
+
 test('A rival moves a unit off its city before building there, as a player would', () => {
   const g = blank();
   g.phase = 'eu';
