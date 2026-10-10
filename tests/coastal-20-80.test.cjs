@@ -10,8 +10,10 @@ const source = fs.readFileSync(path.join(root, 'dist/engine/world.js'), 'utf8');
 const part = source.split('// <world>')[1].split('// </world>')[0];
 const world = [...part.matchAll(/'([.a-z]+)'/g)].map(m => m[1]);
 const baseline = fs.readFileSync(path.join(root, 'tools/data/map_locked.txt'), 'utf8').trim().split('\n');
+const anchors = JSON.parse(fs.readFileSync(path.join(root, 'tools/data/coastal_city_port_anchors.json'), 'utf8'));
+const protectedHexes = new Map([...anchors.cities, ...anchors.ports].map(e => [e.c + ',' + e.r, e.terrain]));
 
-test('uniform geographic 20/80 terrain classification covers all hexes, without exemptions', () => {
+test('20/80 classification applies everywhere except city and starting port anchors', () => {
   assert.equal(world.length, 76);
   assert.equal(rule.rows.length, 76);
   assert.equal(rule.cols, 180);
@@ -22,6 +24,11 @@ test('uniform geographic 20/80 terrain classification covers all hexes, without 
     for (let c = 0; c < 180; c++) {
       const category = rule.rows[r][c];
       const terrain = world[r][c];
+      const pinned = protectedHexes.get(c + ',' + r);
+      if (pinned) {
+        assert.equal(terrain, pinned, 'city/port tile must retain original terrain at ' + c + ',' + r);
+        continue;
+      }
       assert(['S', 'C', 'L'].includes(category), 'unknown category at ' + c + ',' + r);
       if (category === 'S') assert.equal(terrain, '.', 'sea expected at ' + c + ',' + r);
       else if (category === 'C') assert.equal(terrain, 'w', 'coast expected at ' + c + ',' + r);
@@ -39,5 +46,5 @@ test('snapshot the experimental scope to make later terrain drift visible', () =
     else if (type === 'C') coast++;
     else land++;
   }
-  assert.deepEqual({ changed, sea, coast, land }, { changed: 621, sea: 8950, coast: 862, land: 3868 });
+  assert.deepEqual({ changed, sea, coast, land }, { changed: 573, sea: 8950, coast: 862, land: 3868 });
 });

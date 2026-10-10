@@ -58,6 +58,16 @@
   const PORT = { repair: [0, 0.1, 0.2, 0.3] };
   function portSite(g, s) {
     if (s.portAt) return tile(g, s.portAt.c, s.portAt.r);
+    // Baseline starting ports must stay on their exact original hexes.
+    // Non-starting ports retain the normal neighbour-selection rules.
+    const anchored = COASTAL_PORT_HEXES[s.name];
+    if (anchored) {
+      const fixed = tile(g, anchored[0], anchored[1]);
+      if (!fixed || !isSea(fixed) || !adjacent(g, s).includes(fixed) ||
+          g.stations.some(o => o !== s && o.portAt && key(o.portAt) === key(fixed)))
+        throw new Error('Unavailable fixed starting port for ' + s.name);
+      return fixed;
+    }
     const taken = new Set(g.stations.filter(o => o.portAt).map(o => key(o.portAt)));
     return (
       adjacent(g, s)

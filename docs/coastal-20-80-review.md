@@ -95,3 +95,25 @@ Initial run: [#38050226177](https://github.com/user2421423/CodeGeass/actions/run
 - **RUNTIME WARNING:** starting port sites disappear from Shanghai, Singapore and Mumbai.
 
 Keep the failing checks intact until map mechanics and strategic movement boundaries are explicitly solved.
+
+
+## City and port preservation revision (feature/coastal-20-80-world-audit)
+
+The city/port relocation problem is explicitly corrected without reverting the global 20–80% map.
+Using the original `main` conquest city/port placement order, we created
+`tools/data/coastal_city_port_anchors.json` containing **149 city placements and 12 port placements**.
+The experimental `build_map.py` overlays those 161 old terrain codes *after* the 20–80%
+classification, and the engine locks each of these locations when creating a new game.
+Only **48 hexes** needed their terrain restored; all other coastline changes remain
+unrestricted, including Panama and every geographic/strategic strait crossover.
+
+The new expected change count is **573** rather than 621; there are **8949 sea,
+817 coast and 3914 solid land hexes**.
+Existing land bridges and the previously reported New Zealand / strait regressions
+are intentionally not addressed, by user request.
+
+`tests/coastal-city-port-pins.test.cjs` checks that all 149 cities and all 12 ports
+match their fixed coordinates on every player/difficulty combination; existing
+terrain-classification tests now recognize *only* city/port exceptions.
+The earlier warning about missing ports should be treated as historical:
+this revision targets preserving all 12 original port coordinates.

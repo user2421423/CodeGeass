@@ -501,6 +501,7 @@ FIX_SEA = [
 
 COAST_HEXES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coast_hexes.json')
 COASTAL_20_80 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coastal_20_80.json')
+COASTAL_CITY_PORTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'coastal_city_port_anchors.json')
 
 
 def build(coast=True):
@@ -566,6 +567,12 @@ def build(coast=True):
                         grid[r][c] = 'p'
                 else:
                     raise ValueError(f'Invalid 20/80 coastal category {category!r} at {(c, r)}')
+    # Cities and existing starting ports are the ONLY 20/80 geography exceptions:
+    # use the original map's hex codes to preserve every starting placement.
+    if coast and os.path.exists(COASTAL_CITY_PORTS):
+        anchor = json.load(open(COASTAL_CITY_PORTS))
+        for entry in anchor['cities'] + anchor['ports']:
+            grid[entry['r']][entry['c']] = entry['terrain']
     return grid
 
 
