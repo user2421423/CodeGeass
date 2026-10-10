@@ -282,12 +282,12 @@ function updateSelection() {
   if (deploying && deploying.ship !== u?.id) deploying = null;
   if (routing && (routing !== u?.id || !interactive())) routing = null;
   const st = selectedStation();
-  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${deploying?.ship}:${interactive()}`;
+  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${deploying?.ship}:${deploying?.index}:${interactive()}`;
   if (selectionCacheKey !== cacheKey) {
     readyCache =
       u && u.side === game.player && interactive() && !routing
         ? deploying
-          ? new Map(E.deployTargets(game, u).map(t => [E.key(t), 0]))
+          ? new Map(E.deployTargets(game, u, deploying.index).map(t => [E.key(t), 0]))
           : E.reachable(game, u)
         : new Map();
     targetCache = new Set(
