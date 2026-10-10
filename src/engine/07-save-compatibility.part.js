@@ -69,6 +69,7 @@
     if (!g.units.every(u => TYPES[u.type])) return null;
     if (g.mode !== 'campaign') {
       migrateCoastalTerrain(g);
+      attachUnclaimedNewZealand(g);
       // Older saves have no province IDs. Bind their existing painted land to
       // its closest still-controlled city, without resetting conquest progress.
       assignCityProvinces(g);

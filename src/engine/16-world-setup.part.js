@@ -243,6 +243,7 @@
         if (n) { setTileOwner(g, t, n.owner); changed = true; }
       }
     }
+    attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
     for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
       const at = nearest(

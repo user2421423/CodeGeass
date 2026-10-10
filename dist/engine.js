@@ -1042,6 +1042,25 @@
       setTileTerrain(g, t, 'plains');
     }
   }
+  // New Zealand's South Island is separated from Auckland by Cook Strait.
+  // The city-based land flood-fill cannot reach these eight land/coast tiles.
+  // Attach previously unowned tiles to whichever side controls Auckland, so
+  // new conquests and older saves use the same province/capture semantics.
+  const NZ_SOUTH_ISLAND = [
+    [175, 68], [176, 68], [173, 69], [174, 69],
+    [175, 69], [173, 70], [174, 70], [175, 70],
+  ];
+  function attachUnclaimedNewZealand(g) {
+    const auckland = g.stations.find(s => s.name === 'Auckland');
+    if (!auckland?.owner) return;
+    for (const [c, r] of NZ_SOUTH_ISLAND) {
+      const t = tile(g, c, r);
+      // Never overwrite territory that changed hands during an existing game.
+      if (!t || isSea(t) || t.owner || t.provinceCity != null) continue;
+      setTileOwner(g, t, auckland.owner);
+      t.provinceCity = auckland.id;
+    }
+  }
   // Each painted conquest land hex is permanently attached to one city. Existing ownership
   // determines its initial faction; the closest city of that faction becomes its province
   // center. This keeps historical borders and Indonesia's intentional overrides intact.
@@ -1144,6 +1163,7 @@
     if (!g.units.every(u => TYPES[u.type])) return null;
     if (g.mode !== 'campaign') {
       migrateCoastalTerrain(g);
+      attachUnclaimedNewZealand(g);
       // Older saves have no province IDs. Bind their existing painted land to
       // its closest still-controlled city, without resetting conquest progress.
       assignCityProvinces(g);
@@ -3556,6 +3576,7 @@
         if (n) { setTileOwner(g, t, n.owner); changed = true; }
       }
     }
+    attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
     for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
       const at = nearest(
