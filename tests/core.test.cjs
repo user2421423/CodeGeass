@@ -137,7 +137,7 @@ test('World map: accepted coastal straits and original city positions', () => {
   const linked = (a, b, pass) => region(a, pass).has(E.key(b));
   // User-approved uniform terrain permits new land bridges; guard those changes
   // rather than reinstating the old no-crossing geography.
-  assert.equal(at(90, 13).terrain, 'coast', 'Dover's new traversable coast is intentional');
+  assert.equal(at(90, 13).terrain, 'coast', 'The new Dover coastal crossing is intentional');
   assert(linked(city('London'), city('Paris'), passableGround), 'Dover land bridge is intentional');
   assert.equal(at(160, 19).terrain, 'coast', 'Tsugaru changes to traversable coast');
   assert(linked(city('Tokyo Settlement'), city('Sapporo'), passableGround),
