@@ -8,13 +8,12 @@
         for (const u of foes) best = Math.min(best, dist(g, u, p));
         return best;
       },
-      plan = ((g.ai ||= {})[side] ||= { saving: false }),
+      plan = ((g.ai ||= {})[side] ||= {}),
       memo = aiPlan(g, side),
       builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side);
     const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
     const yard3 = bases.filter(s => s.tier >= 3);
-    const superType = typeFor(side, 'super', g),
-      superPrice = price(superType, 1, g, side);
+    const superType = typeFor(side, 'super', g);
     // 0. Fire every ready battery at the strongest enemy unit in range (the UI animates g.strikes).
     g.strikes = [];
     for (const s of bases) {
@@ -74,17 +73,11 @@
       const m = spot && move(g, u.id, spot.c, spot.r);
       if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
-    // 2. Save for super-heavy formations only from the surplus after keeping enough
-    // credits and industry for an ordinary two-frame Scout formation. There is no
-    // limit on how many super-heavies a faction may own, but stagger the priority
-    // purchases so frontline factories still build other classes.
+    // 2. Super-heavy production is now a normal factory choice, evaluated by
+    // local battlefield demand. Retire legacy savings/cooldown flags in old saves.
+    delete plan.saving;
+    delete plan.lastSuperTurn;
     const ordinaryBudget = price(typeFor(side, 'scout', g), 2, g, side);
-    const superCooldown = g.turn - (plan.lastSuperTurn ?? -Infinity) < 3;
-    // Only start saving once Sakuradite is in hand; never lock the treasury when
-    // there is no eligible factory or during the post-purchase cooldown.
-    if (!yard3.length || superCooldown) plan.saving = false;
-    else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
-      plan.saving = true;
     // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
     // starting every charge they can afford (up to ELIMINATOR.max) and saving for the next one. With no free lab-3
     // city outside their charges' cover, step 3 raises a lab for one (defensePrep).
@@ -113,56 +106,34 @@
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
-    if (plan.eliminator || plan.warhead) plan.saving = false;
-    // Buy the largest affordable super-heavy while still funding normal troops.
-    // Keep this budget even when only one factory is available: later turns can
-    // spend it after the priority purchase's cooldown.
-    if (plan.saving)
-      for (const n of [3, 2, 1]) {
-        const cost = price(superType, n, g, side);
-        if (e.credits - cost.credits < ordinaryBudget.credits ||
-            e.industry - cost.industry < ordinaryBudget.industry) continue;
-        const yard = yard3.find(s => canBuy(g, s, superType, n));
-        if (yard && recruit(g, yard.id, superType, n).ok) {
-          plan.lastSuperTurn = g.turn;
-          plan.saving = false;
-          break;
-        }
-      }
+    // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
     const reserve = defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
-      : warSaving
-        ? Math.min(e.credits, FLEIJA.cost.credits)
-        : plan.saving
-          ? Math.min(superPrice.credits, Math.max(0, e.credits - ordinaryBudget.credits))
-          : 60;
+      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
     const reserveInd = defenseSaving
       ? Math.min(e.industry, ELIMINATOR.cost.industry)
-      : warSaving
-        ? Math.min(e.industry, FLEIJA.cost.industry)
-        : plan.saving
-          ? Math.min(superPrice.industry, Math.max(0, e.industry - ordinaryBudget.industry))
-          : 0;
+      : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
     const reserveSak = plan.eliminator
       ? ELIMINATOR.cost.sakuradite
-      : plan.warhead
-        ? FLEIJA.cost.sakuradite
-        : plan.saving
-          ? superPrice.sakuradite
-          : 0;
+      : plan.warhead ? FLEIJA.cost.sakuradite : 0;
     const spendable = () => Math.max(0, e.credits - reserve);
     // Sakuradite held back for a project only blocks purchases that spend Sakuradite.
     const affordable = c =>
       c.credits <= spendable() &&
       e.industry - (c.industry || 0) >= reserveInd &&
       (!c.sakuradite || (e.sakuradite || 0) - c.sakuradite >= reserveSak);
+    // Preserve an ordinary formation budget when making optional investments;
+    // the recruitment pass itself remains free to use that budget.
+    const developmentAffordable = c => affordable(c) &&
+      spendable() - c.credits >= ordinaryBudget.credits &&
+      e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry;
     // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
     const heavySak = yard3.length ? price(typeFor(side, 'heavy', g), 1, g, side).sakuradite : 0;
     const keepsHeavy = (type, c) =>
       !c.sakuradite || TYPES[type].tier >= 3 || (e.sakuradite || 0) - c.sakuradite >= heavySak;
     // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),
     // then the lowest-level factory or lab at the safest city.
-    if (!plan.saving && g.turn >= 2) {
+    if (g.turn >= 2) {
       let upgraded = false;
       // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player. A city that
       // needs a lab for its next Eliminator comes first.
@@ -175,13 +146,13 @@
         ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= FLEIJA.labTurn)
       ) {
         const cost = buildCost(prep, 'lab');
-        if (spendable() - cost.credits >= 100 && affordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
+        if (spendable() - cost.credits >= 100 && developmentAffordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
       }
       for (const d of (g.sites || []).filter(d => depositOwner(g, d) === side).sort((a, b) => b.base - a.base)) {
         const host = depositHost(g, d),
           cost = buildCost(host, 'refinery');
         if (upgraded) break;
-        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !affordable(cost)) continue;
+        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !developmentAffordable(cost)) continue;
         upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
         if (upgraded) break;
       }
@@ -194,7 +165,7 @@
         !upgraded &&
         pick &&
         spendable() - buildCost(pick.s, pick.kind).credits >= 250 &&
-        affordable(buildCost(pick.s, pick.kind))
+        developmentAffordable(buildCost(pick.s, pick.kind))
       )
         build(g, pick.s.id, pick.kind);
     }
@@ -212,7 +183,7 @@
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side, u);
-      if (affordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
+      if (developmentAffordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
     // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
@@ -312,6 +283,27 @@
     // Formations first: every factory tries a 3- or 2-frame formation before
     // unfilled factories may produce an affordable single-frame unit. A successful
     // formation elsewhere must not block production at an otherwise idle factory.
+    // Super-heavy demand is proportional to the actual armored/high-tier threat
+    // at an understrength front. There is no arbitrary ownership or turn cap.
+    // Include new recruits as they are produced, so simultaneous factories
+    // cannot all oversupply the same front based on an outdated plan snapshot.
+    const superDemand = f => {
+      if (!f || f.overseas) return false;
+      const enemies = f.enemies || [],
+        armored = enemies.filter(u => TYPES[u.type].branch === 'Armor')
+          .reduce((total, u) => total + unitStrength(u), 0),
+        elite = enemies.filter(u => (TYPES[u.type].tier || 1) >= 3)
+          .reduce((total, u) => total + unitStrength(u), 0),
+        fortified = f.type === 'offensive' && f.objectives.some(o => o.fortified);
+      if (armored < 3 && elite < 3 && !fortified) return false;
+      const desired = Math.min(f.desiredStrength * 0.35,
+          Math.max(fortified ? 3 : 0, armored * 0.6 + elite * 0.3)),
+        existing = own().filter(u => u.type === superType &&
+          (memo.assign?.[u.id] === f.id ||
+            (!memo.assign?.[u.id] && dist(g, u, f.anchor) <= 25)))
+          .reduce((total, u) => total + unitStrength(u), 0);
+      return existing < desired;
+    };
     const menuOf = s => {
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
@@ -323,13 +315,21 @@
         need = (serves(s)?.need || []).filter(c => classes.includes(c)),
         menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g)),
         preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
-      return [preferred, ...menu.filter(x => x !== preferred)];
+      // Super-heavy competes in the same formation-size and affordability passes
+      // when demanded, instead of being purchased by a separate saving routine.
+      return s.tier >= 3 && superDemand(serves(s))
+        ? [superType, preferred, ...menu.filter(x => x !== preferred)]
+        : [preferred, ...menu.filter(x => x !== preferred)];
     };
     // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
     const tryBuild = (s, menu, sizes) => {
       for (const type of menu)
         for (const n of sizes) {
           const c = price(type, n, g, side);
+          if (type === superType &&
+              (!superDemand(serves(s)) ||
+                spendable() - c.credits < ordinaryBudget.credits ||
+                e.industry - reserveInd - c.industry < ordinaryBudget.industry)) continue;
           if (canBuy(g, s, type, n) && affordable(c) && keepsHeavy(type, c) && recruit(g, s.id, type, n).ok) return true;
         }
       return false;

@@ -268,29 +268,62 @@ test('A city under immediate threat still receives an urgent garrison', () => {
     'an immediately threatened city keeps its defender without a reserve quota');
 });
 
-test('AI may build a super-heavy even when it already fields more than two', () => {
+test('AI chooses super-heavy units from armored-front demand without waiting for cooldown', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 123);
   const side = 'eu', superType = E.typeFor(side, 'super', g);
   g.phase = side;
   g.turn = 8;
-  g.ai = { [side]: { saving: true } };
-  g.economy[side] = { credits: 20000, industry: 20000, science: 100, sakuradite: 2000 };
+  // Legacy values from existing saves must not restrict modern production.
+  g.ai = { [side]: { saving: false, lastSuperTurn: 7 } };
+  g.economy[side] = { credits: 20000, industry: 20000, science: 200, sakuradite: 3000 };
 
-  // The special super-heavy saving step previously stopped whenever two existed.
-  const available = g.tiles
-    .filter(t => t.terrain !== 'sea' && t.owner === side &&
-      !E.unitAt(g, t) && !g.stations.some(s => s.c === t.c && s.r === t.r))
-    .slice(0, 3);
-  assert.equal(available.length, 3, 'test needs three empty land tiles');
-  for (const t of available) E.newUnit(g, superType, side, t.c, t.r);
-  const before = g.units.filter(u => u.hp > 0 && u.side === side && u.type === superType).length;
-  assert(before > 2, 'the AI already has more than two super-heavies');
-  assert(g.stations.some(s => s.owner === side && s.tier >= 3 &&
-    E.canBuy(g, s, superType, 1)), 'a level-3 factory must have capacity');
-
+  const before = new Set(g.units.map(u => u.id));
   E.aiProduction(g);
-  const after = g.units.filter(u => u.hp > 0 && u.side === side && u.type === superType).length;
-  assert(after > before, 'AI must not stop producing super-heavies at two');
+  const produced = g.units.filter(u => u.side === side && !before.has(u.id));
+
+  assert(produced.some(u => u.type === superType),
+    'battlefield demand should build super-heavies without a special savings flag or cooldown');
+  assert(produced.some(u => u.type !== superType),
+    'ordinary unit production continues beside super-heavies');
+  assert.equal(g.ai[side].saving, undefined, 'legacy savings flag is cleared');
+  assert.equal(g.ai[side].lastSuperTurn, undefined, 'legacy cooldown is cleared');
+});
+
+test('Expensive super-heavy options do not starve affordable regular troops', () => {
+  const side = 'eu';
+  for (const [credits, industry] of [[250, 300], [1000, 90]]) {
+    const g = E.createGame('britannia', 'normal', 'conquest', 123);
+    g.phase = side;
+    g.turn = 8;
+    g.ai = { [side]: { saving: true } };
+    g.economy[side] = { credits, industry, science: 100, sakuradite: 3000 };
+    const before = new Set(g.units.map(u => u.id));
+
+    E.aiProduction(g);
+    const produced = g.units.filter(u => u.side === side && !before.has(u.id));
+    assert(produced.some(u => E.TYPES[u.type].cls !== 'super'),
+      `must produce ordinary troops with a limited budget (credits=${credits}, industry=${industry})`);
+    assert(!produced.some(u => E.TYPES[u.type].cls === 'super'),
+      'cannot spend ordinary troop budget on unaffordable super-heavy frames');
+    assert.equal(g.ai[side].saving, undefined);
+  }
+});
+
+test('AI does not prioritize super-heavy units when no front needs them', () => {
+  const side = 'eu';
+  const g = blank();
+  g.phase = side;
+  g.turn = 8;
+  g.units = [];
+  for (const s of g.stations) s.owner = side;
+  g.economy[side] = { credits: 20000, industry: 20000, science: 100, sakuradite: 3000 };
+  const before = new Set(g.units.map(u => u.id));
+  E.aiProduction(g);
+  const produced = g.units.filter(u => u.side === side && !before.has(u.id));
+
+  assert(produced.some(u => E.TYPES[u.type].cls !== 'super'), 'ordinary recruitment still works');
+  assert(!produced.some(u => E.TYPES[u.type].cls === 'super'),
+    'no super-heavy units when there are no enemy fronts, armored threats, or fortifications');
 });
 
 test('AI uses idle factories for single-frame units after larger formations', () => {
@@ -326,52 +359,6 @@ test('AI uses idle factories for single-frame units after larger formations', ()
     'each unit was built at a different factory');
   assert.equal(g.economy[side].credits, 60, 'preserves the normal 60-credit reserve');
   assert.equal(g.economy[side].industry, 0, 'spends only the affordable remaining industry');
-});
-
-test('Saving for a super-heavy does not starve ordinary unit production', () => {
-  const side = 'eu';
-  for (const [credits, industry] of [[250, 300], [1000, 90]]) {
-    const g = E.createGame('britannia', 'normal', 'conquest', 123);
-    g.phase = side;
-    g.turn = 8;
-    g.ai = { [side]: { saving: true } };
-    g.economy[side] = { credits, industry, science: 100, sakuradite: 3000 };
-    const before = new Set(g.units.map(u => u.id));
-
-    E.aiProduction(g);
-    const newUnits = g.units.filter(u => u.side === side && !before.has(u.id));
-    assert(newUnits.some(u => E.TYPES[u.type].cls !== 'super'),
-      `AI must produce ordinary units while saving for a super-heavy (credits=${credits}, industry=${industry})`);
-    assert.equal(g.ai[side].saving, true, 'super-heavy savings plan can continue alongside normal production');
-  }
-});
-
-test('Super-heavy priority leaves budget for mixed troops and does not repeat next turn', () => {
-  const side = 'eu';
-  const g = E.createGame('britannia', 'normal', 'conquest', 123);
-  const superType = E.typeFor(side, 'super', g);
-  g.phase = side;
-  g.turn = 8;
-  g.ai = { [side]: { saving: true } };
-  g.economy[side] = { credits: 20000, industry: 20000, science: 100, sakuradite: 3000 };
-
-  const before = new Set(g.units.map(u => u.id));
-  E.aiProduction(g);
-  const created = g.units.filter(u => u.side === side && !before.has(u.id));
-  assert(created.some(u => u.type === superType), 'super-heavy remains available when affordable');
-  assert(created.some(u => u.type !== superType), 'ordinary formations are still produced in the same turn');
-  assert.equal(g.ai[side].lastSuperTurn, 8);
-
-  g.turn = 9;
-  g.ai[side].saving = true; // A stale saving plan must not bypass the cooldown.
-  g.economy[side] = { credits: 20000, industry: 20000, science: 100, sakuradite: 3000 };
-  const nextBefore = new Set(g.units.map(u => u.id));
-  E.aiProduction(g);
-  const nextCreated = g.units.filter(u => u.side === side && !nextBefore.has(u.id));
-  assert(nextCreated.some(u => u.type !== superType), 'ordinary production continues on the following turn');
-  assert(!nextCreated.some(u => u.type === superType),
-    'priority super-heavy purchases must not monopolize consecutive turns');
-  assert.equal(g.ai[side].saving, false, 'cooldown clears a stale super-heavy savings plan');
 });
 
 // A rich naval threat scenario must allow naval growth beyond the old fixed caps.
