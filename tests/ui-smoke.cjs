@@ -165,8 +165,10 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(conquestTint.restored, 'cf', 'restored Borneo regains uniform Federation tint');
 
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
-  assert(renderingText.includes('SEA · NAVIGABLE') && renderingText.includes('LAND · WALKABLE'),
-    'ambiguous coast hexes must display a clear gameplay-surface badge');
+  assert(renderingText.includes('rgba(42,154,225,0.19)') && renderingText.includes('rgba(245,197,91,0.15)'),
+    'ambiguous coast hexes are tinted with their true gameplay terrain on hover');
+  assert(!renderingText.includes('SEA · NAVIGABLE') && !renderingText.includes('LAND · WALKABLE'),
+    'the hover terrain badge was removed at the owner\'s request');
   assert(renderingText.includes('ctx.setLineDash([5 / scale, 4 / scale])'),
     'a conflicting coastline gets a visible dashed tactical boundary');
   const markerStart = renderingText.indexOf('const coastalExceptions = [');

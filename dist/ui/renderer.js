@@ -947,9 +947,11 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     for (let row = firstRow; row <= lastRow; row++)
       for (let col = firstCol; col <= lastCol; col++) {
         const t = completeMapTile(col, row, scale, detail);
-        const pad = MAP_ATLAS_PAD * t.quality;
-        ctx.drawImage(t.canvas, pad, pad, t.width * t.quality, t.height * t.quality,
-          t.worldX + shift, t.worldY, t.width, t.height);
+        // Draw each tile with its painted padding so neighbours overlap: abutting at a
+        // fractional pixel edge left a faint hairline along every tile seam.
+        const pad = MAP_ATLAS_PAD;
+        ctx.drawImage(t.canvas, 0, 0, (t.width + 2 * pad) * t.quality, (t.height + 2 * pad) * t.quality,
+          t.worldX + shift - pad, t.worldY - pad, t.width + 2 * pad, t.height + 2 * pad);
       }
     if (firstCol <= lastCol && firstRow <= lastRow)
       scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow);
@@ -1492,8 +1494,7 @@ function draw(time, dt) {
       (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r));
     if (visuallyMixed) {
       // A sea tile behind geographic land should never look walkable.
-      // Paint the TRUE tactical type on hover and use a legible pixel-size
-      // badge rather than the old tiny map-scaled caption.
+      // Tint the hex with its TRUE tactical type on hover.
       ctx.save();
       hexPath(hx, p.y, R - 1);
       ctx.fillStyle = seaHex ? 'rgba(42,154,225,0.19)' : 'rgba(245,197,91,0.15)';
@@ -1503,17 +1504,6 @@ function draw(time, dt) {
       ctx.lineWidth = 2 / Math.max(scale, 0.4);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.translate(hx, p.y + R * 0.7);
-      ctx.scale(1 / scale, 1 / scale);
-      ctx.fillStyle = seaHex ? 'rgba(9,42,62,0.95)' : 'rgba(62,48,26,0.95)';
-      ctx.fillRect(-61, -10, 122, 21);
-      ctx.strokeStyle = seaHex ? '#75d5ff' : '#ffd27d';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(-61, -10, 122, 21);
-      ctx.font = 'bold 11px Trebuchet MS, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(seaHex ? 'SEA · NAVIGABLE' : 'LAND · WALKABLE', 0, 5);
       ctx.restore();
     }
     const pr = u && targetCache.has(E.key(hover)) ? E.preview(game, u.id, hover.c, hover.r) : null;
