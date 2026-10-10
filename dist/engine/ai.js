@@ -915,33 +915,88 @@
         return f ? (f.desiredStrength - f.assigned) * (0.5 + Math.max(0, f.score) / 100) : 0;
       },
       yards = bases.slice().sort((a, b) => urgency(b) - urgency(a));
-    // 4b. Navy: one level-2 port for carriers and up to three ports in all (one port build a turn), then a fleet of up
-    // to four Carrier-Battleships and six amphibious formations.
+    // 4b. Navy: fleet and port construction scale with coastal exposure, enemy naval
+    // threats and overseas fronts rather than arbitrary per-faction ship/port caps.
+    // Spending on the fleet must still leave a normal two-frame Scout formation
+    // affordable, so coastal construction cannot starve the field army.
     const navy = g.mode !== 'campaign' && NAVAL[side];
     if (navy) {
       const coastal = bases.filter(s => portSite(g, s)),
-        ports = coastal.filter(s => s.portLevel && s.portOwner === side),
-        pick = !ports.some(s => s.portLevel >= 2)
-          ? ports.sort((a, b) => b.portLevel - a.portLevel || front(b) - front(a))[0] ||
-            coastal.sort((a, b) => front(b) - front(a))[0]
-          : ports.length < Math.min(3, coastal.length)
-            ? coastal.filter(s => !s.portLevel).sort((a, b) => front(a) - front(b))[0]
-            : null;
-      if (pick && !buildReason(g, pick, 'port')) {
-        const cost = buildCost(pick, 'port');
-        if (spendable() - cost.credits >= 150 && affordable(cost)) build(g, pick.id, 'port');
+        availableFleet = own().filter(u => !!TYPES[u.type].naval),
+        navalThreats = foes.filter(u => TYPES[u.type].naval &&
+          coastal.some(s => dist(g, s, u) <= aiRange(g).enemyScan)),
+        invasions = (memo.fronts || []).filter(f => f.overseas && f.type === 'offensive'),
+        invasionIds = new Set(invasions.map(f => f.id)),
+        invasionTroops = own().filter(u => !TYPES[u.type].naval && invasionIds.has(memo.assign?.[u.id])).length,
+        desiredCarriers = coastal.length
+          ? Math.ceil(coastal.length / 12) + Math.ceil(invasionTroops / 7) + Math.ceil(navalThreats.length / 3)
+          : 0,
+        desiredAmphibious = coastal.length
+          ? Math.ceil(coastal.length / 9) + Math.ceil(invasionTroops / 5) + Math.ceil(navalThreats.length / 2)
+          : 0,
+        desiredPorts = Math.max(invasions.length, Math.ceil((desiredCarriers + desiredAmphibious) / 4)),
+        desiredCarrierPorts = Math.ceil(desiredCarriers / 3),
+        navyAffordable = c => affordable(c) &&
+          spendable() - c.credits >= ordinaryBudget.credits &&
+          e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry,
+        ownedPorts = () => coastal.filter(s => s.portLevel && s.portOwner === side),
+        fleetCount = (...roles) => availableFleet.filter(u => roles.some(r => u.type === navy[r])).length;
+
+      const ports = ownedPorts();
+      const carrierPorts = ports.filter(s => s.portLevel >= 2);
+      // More distant ports extend support to additional coastlines, and forward
+      // rally cities get priority when several coastal cities are available.
+      const portCandidates = coastal
+        .filter(s => !s.portLevel && !buildReason(g, s, 'port'))
+        .map(s => {
+          const separation = ports.length ? Math.min(...ports.map(p => dist(g, s, p))) : 99;
+          const invasionPriority = invasions.length
+            ? Math.max(...invasions.map(f => Math.max(0, 20 - dist(g, s, f.rally || f.anchor))))
+            : 0;
+          const threatPriority = navalThreats.some(u => dist(g, s, u) <= aiRange(g).threat * 2) ? 15 : 0;
+          return { s, separation, score: Math.min(30, separation) * 2 + invasionPriority + threatPriority };
+        })
+        .filter(o => o.separation >= 6 || !ports.length)
+        .sort((a, b) => b.score - a.score || a.s.id - b.s.id);
+      // Upgrade existing carrier berths before adding capacity. One port reaches
+      // level 3 so landing tech and higher-tier naval research are usable.
+      const portToUpgrade =
+        (carrierPorts.length < desiredCarrierPorts
+          ? ports.find(s => s.portLevel === 1 && !buildReason(g, s, 'port'))
+          : null) ||
+        (g.turn >= 3 && !ports.some(s => s.portLevel >= 3)
+          ? carrierPorts.find(s => !buildReason(g, s, 'port'))
+          : null);
+      const portToBuild = portToUpgrade ||
+        (ports.length < desiredPorts ? portCandidates[0]?.s : null);
+      if (portToBuild) {
+        const cost = buildCost(portToBuild, 'port');
+        if (navyAffordable(cost) && spendable() - cost.credits >= ordinaryBudget.credits + 100)
+          build(g, portToBuild.id, 'port');
       }
-      const count = (...roles) => own().filter(u => roles.some(r => u.type === navy[r])).length;
-      for (const [role, short] of [
-        ['carrier', count('carrier') < 4],
-        ['amphibious2', count('amphibious', 'amphibious2') < 6],
-        ['amphibious', count('amphibious', 'amphibious2') < 6],
-      ]) {
-        if (!short || random(g) >= 0.5) continue;
-        const type = navy[role],
-          c = price(type, 1, g, side),
-          yard = bases.find(s => canBuy(g, s, type, 1));
-        if (yard && affordable(c) && keepsHeavy(type, c) && recruit(g, yard.id, type, 1).ok) break;
+
+      // Every available berth may recruit when the navy is undersized. Balance
+      // carriers against amphibious formations by proportional shortage, not a
+      // static fleet ceiling. Port availability and the treasury remain limits.
+      for (const port of ownedPorts().sort((a, b) => front(a) - front(b))) {
+        const carriers = fleetCount('carrier'),
+          amph = fleetCount('amphibious', 'amphibious2'),
+          carrierGap = desiredCarriers - carriers,
+          amphGap = desiredAmphibious - amph;
+        if (carrierGap <= 0 && amphGap <= 0) break;
+        const carrierFirst = carrierGap > 0 &&
+          (amphGap <= 0 || carrierGap / Math.max(1, desiredCarriers) >= amphGap / Math.max(1, desiredAmphibious));
+        const roles = carrierFirst ? ['carrier', 'amphibious2', 'amphibious'] :
+          ['amphibious2', 'amphibious', 'carrier'];
+        for (const role of roles) {
+          if ((role === 'carrier' && carrierGap <= 0) || (role !== 'carrier' && amphGap <= 0)) continue;
+          const type = navy[role], cost = price(type, 1, g, side);
+          if (navyAffordable(cost) && canBuy(g, port, type, 1) && recruit(g, port.id, type, 1).ok) {
+            // Count against demand immediately, even if other ports build this turn.
+            availableFleet.push(g.units[g.units.length - 1]);
+            break;
+          }
+        }
       }
     }
     // Formations first: every factory builds a 3- or 2-frame formation when the treasury allows, taking a cheaper frame
