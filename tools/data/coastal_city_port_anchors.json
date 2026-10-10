@@ -1,0 +1,973 @@
+{
+  "description": "Baseline conquest city and starting port anchors from main c2c3c4f999d91b1558afa09df557f327d18f7e30, before experimental 20-80 coastal overlay; restore these terrain codes and placements unchanged.",
+  "cities": [
+    {
+      "name": "Pendragon",
+      "c": 31,
+      "r": 21,
+      "terrain": "p"
+    },
+    {
+      "name": "Seattle",
+      "c": 28,
+      "r": 15,
+      "terrain": "p"
+    },
+    {
+      "name": "Denver",
+      "c": 37,
+      "r": 20,
+      "terrain": "m"
+    },
+    {
+      "name": "Dallas",
+      "c": 41,
+      "r": 24,
+      "terrain": "p"
+    },
+    {
+      "name": "Chicago",
+      "c": 45,
+      "r": 19,
+      "terrain": "p"
+    },
+    {
+      "name": "New York",
+      "c": 52,
+      "r": 20,
+      "terrain": "f"
+    },
+    {
+      "name": "Miami",
+      "c": 49,
+      "r": 28,
+      "terrain": "p"
+    },
+    {
+      "name": "Winnipeg",
+      "c": 41,
+      "r": 14,
+      "terrain": "p"
+    },
+    {
+      "name": "Halifax",
+      "c": 57,
+      "r": 17,
+      "terrain": "p"
+    },
+    {
+      "name": "Anchorage",
+      "c": 14,
+      "r": 7,
+      "terrain": "m"
+    },
+    {
+      "name": "Mexico City",
+      "c": 40,
+      "r": 32,
+      "terrain": "m"
+    },
+    {
+      "name": "Panama",
+      "c": 50,
+      "r": 38,
+      "terrain": "p"
+    },
+    {
+      "name": "Bogota",
+      "c": 52,
+      "r": 41,
+      "terrain": "m"
+    },
+    {
+      "name": "Lima",
+      "c": 51,
+      "r": 50,
+      "terrain": "p"
+    },
+    {
+      "name": "Manaus",
+      "c": 59,
+      "r": 45,
+      "terrain": "f"
+    },
+    {
+      "name": "Recife",
+      "c": 72,
+      "r": 48,
+      "terrain": "p"
+    },
+    {
+      "name": "Rio de Janeiro",
+      "c": 67,
+      "r": 57,
+      "terrain": "p"
+    },
+    {
+      "name": "Buenos Aires",
+      "c": 60,
+      "r": 64,
+      "terrain": "p"
+    },
+    {
+      "name": "Santiago",
+      "c": 54,
+      "r": 63,
+      "terrain": "m"
+    },
+    {
+      "name": "Pearl Harbor",
+      "c": 10,
+      "r": 31,
+      "terrain": "p"
+    },
+    {
+      "name": "Manila",
+      "c": 150,
+      "r": 35,
+      "terrain": "p"
+    },
+    {
+      "name": "Auckland",
+      "c": 176,
+      "r": 65,
+      "terrain": "p"
+    },
+    {
+      "name": "Tokyo Settlement",
+      "c": 159,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Kyoto",
+      "c": 157,
+      "r": 23,
+      "terrain": "p"
+    },
+    {
+      "name": "Fukuoka",
+      "c": 155,
+      "r": 24,
+      "terrain": "p"
+    },
+    {
+      "name": "Sapporo",
+      "c": 161,
+      "r": 18,
+      "terrain": "p"
+    },
+    {
+      "name": "St. Petersburg",
+      "c": 105,
+      "r": 8,
+      "terrain": "p"
+    },
+    {
+      "name": "Moscow",
+      "c": 108,
+      "r": 11,
+      "terrain": "p"
+    },
+    {
+      "name": "Riga",
+      "c": 102,
+      "r": 10,
+      "terrain": "p"
+    },
+    {
+      "name": "Minsk",
+      "c": 103,
+      "r": 12,
+      "terrain": "p"
+    },
+    {
+      "name": "Kiev",
+      "c": 105,
+      "r": 14,
+      "terrain": "p"
+    },
+    {
+      "name": "Bucharest",
+      "c": 103,
+      "r": 17,
+      "terrain": "p"
+    },
+    {
+      "name": "Istanbul",
+      "c": 105,
+      "r": 20,
+      "terrain": "p"
+    },
+    {
+      "name": "Tbilisi",
+      "c": 111,
+      "r": 19,
+      "terrain": "m"
+    },
+    {
+      "name": "Volgograd",
+      "c": 111,
+      "r": 15,
+      "terrain": "p"
+    },
+    {
+      "name": "Yekaterinburg",
+      "c": 120,
+      "r": 10,
+      "terrain": "p"
+    },
+    {
+      "name": "Novosibirsk",
+      "c": 130,
+      "r": 11,
+      "terrain": "p"
+    },
+    {
+      "name": "Irkutsk",
+      "c": 141,
+      "r": 13,
+      "terrain": "p"
+    },
+    {
+      "name": "Yakutsk",
+      "c": 154,
+      "r": 7,
+      "terrain": "p"
+    },
+    {
+      "name": "Petropavlovsk",
+      "c": 169,
+      "r": 12,
+      "terrain": "p"
+    },
+    {
+      "name": "Nuuk",
+      "c": 64,
+      "r": 6,
+      "terrain": "s"
+    },
+    {
+      "name": "Paris",
+      "c": 90,
+      "r": 15,
+      "terrain": "p"
+    },
+    {
+      "name": "London",
+      "c": 89,
+      "r": 13,
+      "terrain": "p"
+    },
+    {
+      "name": "Edinburgh",
+      "c": 87,
+      "r": 11,
+      "terrain": "p"
+    },
+    {
+      "name": "Dublin",
+      "c": 86,
+      "r": 12,
+      "terrain": "p"
+    },
+    {
+      "name": "Reykjavik",
+      "c": 79,
+      "r": 6,
+      "terrain": "s"
+    },
+    {
+      "name": "Madrid",
+      "c": 88,
+      "r": 20,
+      "terrain": "p"
+    },
+    {
+      "name": "Gibraltar",
+      "c": 87,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Rome",
+      "c": 96,
+      "r": 19,
+      "terrain": "p"
+    },
+    {
+      "name": "Berlin",
+      "c": 96,
+      "r": 13,
+      "terrain": "f"
+    },
+    {
+      "name": "Vienna",
+      "c": 97,
+      "r": 15,
+      "terrain": "p"
+    },
+    {
+      "name": "Warsaw",
+      "c": 100,
+      "r": 13,
+      "terrain": "p"
+    },
+    {
+      "name": "Stockholm",
+      "c": 98,
+      "r": 9,
+      "terrain": "p"
+    },
+    {
+      "name": "Oslo",
+      "c": 95,
+      "r": 8,
+      "terrain": "p"
+    },
+    {
+      "name": "Murmansk",
+      "c": 106,
+      "r": 3,
+      "terrain": "s"
+    },
+    {
+      "name": "Athens",
+      "c": 100,
+      "r": 21,
+      "terrain": "p"
+    },
+    {
+      "name": "Belgrade",
+      "c": 99,
+      "r": 17,
+      "terrain": "p"
+    },
+    {
+      "name": "Cairo",
+      "c": 105,
+      "r": 26,
+      "terrain": "p"
+    },
+    {
+      "name": "Algiers",
+      "c": 91,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Tripoli",
+      "c": 95,
+      "r": 24,
+      "terrain": "p"
+    },
+    {
+      "name": "Dakar",
+      "c": 81,
+      "r": 35,
+      "terrain": "p"
+    },
+    {
+      "name": "Bamako",
+      "c": 86,
+      "r": 36,
+      "terrain": "p"
+    },
+    {
+      "name": "Lagos",
+      "c": 92,
+      "r": 40,
+      "terrain": "p"
+    },
+    {
+      "name": "Khartoum",
+      "c": 106,
+      "r": 34,
+      "terrain": "p"
+    },
+    {
+      "name": "Addis Ababa",
+      "c": 109,
+      "r": 38,
+      "terrain": "m"
+    },
+    {
+      "name": "Kinshasa",
+      "c": 97,
+      "r": 46,
+      "terrain": "p"
+    },
+    {
+      "name": "Nairobi",
+      "c": 108,
+      "r": 44,
+      "terrain": "p"
+    },
+    {
+      "name": "Johannesburg",
+      "c": 103,
+      "r": 59,
+      "terrain": "p"
+    },
+    {
+      "name": "Cape Town",
+      "c": 98,
+      "r": 63,
+      "terrain": "p"
+    },
+    {
+      "name": "Antananarivo",
+      "c": 113,
+      "r": 54,
+      "terrain": "p"
+    },
+    {
+      "name": "Luoyang",
+      "c": 145,
+      "r": 23,
+      "terrain": "p"
+    },
+    {
+      "name": "Beijing",
+      "c": 148,
+      "r": 20,
+      "terrain": "p"
+    },
+    {
+      "name": "Shanghai",
+      "c": 149,
+      "r": 25,
+      "terrain": "p"
+    },
+    {
+      "name": "Hong Kong",
+      "c": 147,
+      "r": 30,
+      "terrain": "p"
+    },
+    {
+      "name": "Chongqing",
+      "c": 143,
+      "r": 26,
+      "terrain": "p"
+    },
+    {
+      "name": "Liaodong",
+      "c": 151,
+      "r": 19,
+      "terrain": "p"
+    },
+    {
+      "name": "Seoul",
+      "c": 152,
+      "r": 21,
+      "terrain": "p"
+    },
+    {
+      "name": "Vladivostok",
+      "c": 155,
+      "r": 18,
+      "terrain": "p"
+    },
+    {
+      "name": "Ulaanbaatar",
+      "c": 142,
+      "r": 15,
+      "terrain": "p"
+    },
+    {
+      "name": "Urumqi",
+      "c": 133,
+      "r": 18,
+      "terrain": "p"
+    },
+    {
+      "name": "Lhasa",
+      "c": 136,
+      "r": 26,
+      "terrain": "m"
+    },
+    {
+      "name": "Almaty",
+      "c": 128,
+      "r": 18,
+      "terrain": "p"
+    },
+    {
+      "name": "Tashkent",
+      "c": 124,
+      "r": 19,
+      "terrain": "p"
+    },
+    {
+      "name": "Kabul",
+      "c": 124,
+      "r": 23,
+      "terrain": "p"
+    },
+    {
+      "name": "Tehran",
+      "c": 115,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Karachi",
+      "c": 123,
+      "r": 29,
+      "terrain": "p"
+    },
+    {
+      "name": "Delhi",
+      "c": 128,
+      "r": 27,
+      "terrain": "p"
+    },
+    {
+      "name": "Jabalpur",
+      "c": 129,
+      "r": 30,
+      "terrain": "p"
+    },
+    {
+      "name": "Mumbai",
+      "c": 126,
+      "r": 32,
+      "terrain": "p"
+    },
+    {
+      "name": "Kolkata",
+      "c": 134,
+      "r": 30,
+      "terrain": "p"
+    },
+    {
+      "name": "Chennai",
+      "c": 129,
+      "r": 36,
+      "terrain": "p"
+    },
+    {
+      "name": "Colombo",
+      "c": 129,
+      "r": 39,
+      "terrain": "p"
+    },
+    {
+      "name": "Yangon",
+      "c": 138,
+      "r": 34,
+      "terrain": "f"
+    },
+    {
+      "name": "Hanoi",
+      "c": 142,
+      "r": 31,
+      "terrain": "p"
+    },
+    {
+      "name": "Bangkok",
+      "c": 139,
+      "r": 35,
+      "terrain": "p"
+    },
+    {
+      "name": "Singapore",
+      "c": 141,
+      "r": 43,
+      "terrain": "f"
+    },
+    {
+      "name": "Jakarta",
+      "c": 142,
+      "r": 47,
+      "terrain": "f"
+    },
+    {
+      "name": "Taipei",
+      "c": 150,
+      "r": 29,
+      "terrain": "p"
+    },
+    {
+      "name": "Port Moresby",
+      "c": 163,
+      "r": 49,
+      "terrain": "f"
+    },
+    {
+      "name": "Sydney",
+      "c": 165,
+      "r": 63,
+      "terrain": "p"
+    },
+    {
+      "name": "Melbourne",
+      "c": 162,
+      "r": 66,
+      "terrain": "p"
+    },
+    {
+      "name": "Perth",
+      "c": 147,
+      "r": 62,
+      "terrain": "p"
+    },
+    {
+      "name": "Darwin",
+      "c": 154,
+      "r": 51,
+      "terrain": "p"
+    },
+    {
+      "name": "Baghdad",
+      "c": 112,
+      "r": 24,
+      "terrain": "p"
+    },
+    {
+      "name": "Riyadh",
+      "c": 112,
+      "r": 29,
+      "terrain": "d"
+    },
+    {
+      "name": "Damascus",
+      "c": 108,
+      "r": 24,
+      "terrain": "p"
+    },
+    {
+      "name": "Muscat",
+      "c": 119,
+      "r": 30,
+      "terrain": "p"
+    },
+    {
+      "name": "Vancouver",
+      "c": 28,
+      "r": 14,
+      "terrain": "p"
+    },
+    {
+      "name": "San Francisco",
+      "c": 28,
+      "r": 21,
+      "terrain": "p"
+    },
+    {
+      "name": "Los Angeles",
+      "c": 30,
+      "r": 23,
+      "terrain": "p"
+    },
+    {
+      "name": "Houston",
+      "c": 42,
+      "r": 26,
+      "terrain": "p"
+    },
+    {
+      "name": "Toronto",
+      "c": 50,
+      "r": 18,
+      "terrain": "f"
+    },
+    {
+      "name": "Montreal",
+      "c": 52,
+      "r": 17,
+      "terrain": "p"
+    },
+    {
+      "name": "Havana",
+      "c": 48,
+      "r": 30,
+      "terrain": "p"
+    },
+    {
+      "name": "Quito",
+      "c": 50,
+      "r": 43,
+      "terrain": "p"
+    },
+    {
+      "name": "Caracas",
+      "c": 57,
+      "r": 38,
+      "terrain": "p"
+    },
+    {
+      "name": "Brasilia",
+      "c": 65,
+      "r": 53,
+      "terrain": "p"
+    },
+    {
+      "name": "Sao Paulo",
+      "c": 66,
+      "r": 57,
+      "terrain": "p"
+    },
+    {
+      "name": "Montevideo",
+      "c": 61,
+      "r": 64,
+      "terrain": "p"
+    },
+    {
+      "name": "Lisbon",
+      "c": 85,
+      "r": 21,
+      "terrain": "p"
+    },
+    {
+      "name": "Barcelona",
+      "c": 90,
+      "r": 19,
+      "terrain": "p"
+    },
+    {
+      "name": "Amsterdam",
+      "c": 91,
+      "r": 13,
+      "terrain": "p"
+    },
+    {
+      "name": "Prague",
+      "c": 97,
+      "r": 14,
+      "terrain": "p"
+    },
+    {
+      "name": "Budapest",
+      "c": 99,
+      "r": 16,
+      "terrain": "p"
+    },
+    {
+      "name": "Sofia",
+      "c": 101,
+      "r": 18,
+      "terrain": "p"
+    },
+    {
+      "name": "Helsinki",
+      "c": 102,
+      "r": 8,
+      "terrain": "p"
+    },
+    {
+      "name": "Tunis",
+      "c": 94,
+      "r": 22,
+      "terrain": "p"
+    },
+    {
+      "name": "Casablanca",
+      "c": 86,
+      "r": 24,
+      "terrain": "p"
+    },
+    {
+      "name": "Accra",
+      "c": 89,
+      "r": 40,
+      "terrain": "p"
+    },
+    {
+      "name": "Luanda",
+      "c": 96,
+      "r": 49,
+      "terrain": "p"
+    },
+    {
+      "name": "Dar es Salaam",
+      "c": 108,
+      "r": 47,
+      "terrain": "p"
+    },
+    {
+      "name": "Maputo",
+      "c": 105,
+      "r": 59,
+      "terrain": "p"
+    },
+    {
+      "name": "Harbin",
+      "c": 152,
+      "r": 17,
+      "terrain": "p"
+    },
+    {
+      "name": "Xian",
+      "c": 143,
+      "r": 23,
+      "terrain": "p"
+    },
+    {
+      "name": "Chengdu",
+      "c": 141,
+      "r": 25,
+      "terrain": "p"
+    },
+    {
+      "name": "Wuhan",
+      "c": 146,
+      "r": 25,
+      "terrain": "p"
+    },
+    {
+      "name": "Nanjing",
+      "c": 148,
+      "r": 25,
+      "terrain": "p"
+    },
+    {
+      "name": "Guangzhou",
+      "c": 146,
+      "r": 30,
+      "terrain": "p"
+    },
+    {
+      "name": "Kunming",
+      "c": 140,
+      "r": 29,
+      "terrain": "p"
+    },
+    {
+      "name": "Kathmandu",
+      "c": 132,
+      "r": 27,
+      "terrain": "m"
+    },
+    {
+      "name": "Dhaka",
+      "c": 134,
+      "r": 29,
+      "terrain": "p"
+    },
+    {
+      "name": "Mandalay",
+      "c": 137,
+      "r": 31,
+      "terrain": "p"
+    },
+    {
+      "name": "Ho Chi Minh City",
+      "c": 142,
+      "r": 37,
+      "terrain": "f"
+    },
+    {
+      "name": "Kuala Lumpur",
+      "c": 140,
+      "r": 41,
+      "terrain": "f"
+    },
+    {
+      "name": "Surabaya",
+      "c": 146,
+      "r": 48,
+      "terrain": "p"
+    },
+    {
+      "name": "Brisbane",
+      "c": 166,
+      "r": 59,
+      "terrain": "p"
+    },
+    {
+      "name": "Adelaide",
+      "c": 159,
+      "r": 64,
+      "terrain": "p"
+    },
+    {
+      "name": "Jerusalem",
+      "c": 107,
+      "r": 25,
+      "terrain": "p"
+    },
+    {
+      "name": "Sanaa",
+      "c": 112,
+      "r": 34,
+      "terrain": "p"
+    }
+  ],
+  "ports": [
+    {
+      "name": "Pearl Harbor",
+      "c": 10,
+      "r": 30,
+      "terrain": "."
+    },
+    {
+      "name": "New York",
+      "c": 52,
+      "r": 21,
+      "terrain": "."
+    },
+    {
+      "name": "Kyoto",
+      "c": 157,
+      "r": 22,
+      "terrain": "."
+    },
+    {
+      "name": "Los Angeles",
+      "c": 30,
+      "r": 24,
+      "terrain": "."
+    },
+    {
+      "name": "London",
+      "c": 90,
+      "r": 12,
+      "terrain": "."
+    },
+    {
+      "name": "Gibraltar",
+      "c": 88,
+      "r": 22,
+      "terrain": "."
+    },
+    {
+      "name": "Barcelona",
+      "c": 91,
+      "r": 20,
+      "terrain": "."
+    },
+    {
+      "name": "Athens",
+      "c": 100,
+      "r": 22,
+      "terrain": "."
+    },
+    {
+      "name": "Shanghai",
+      "c": 150,
+      "r": 25,
+      "terrain": "."
+    },
+    {
+      "name": "Singapore",
+      "c": 142,
+      "r": 42,
+      "terrain": "."
+    },
+    {
+      "name": "Hong Kong",
+      "c": 147,
+      "r": 31,
+      "terrain": "."
+    },
+    {
+      "name": "Mumbai",
+      "c": 125,
+      "r": 32,
+      "terrain": "."
+    }
+  ]
+}

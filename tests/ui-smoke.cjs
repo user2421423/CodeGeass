@@ -157,8 +157,11 @@ const modal = () => node('modal-root').innerHTML;
   const politicalIslands = run("({Sumatra:GEOGRAPHY.islandOwnerAt(game,101,0),Java:GEOGRAPHY.islandOwnerAt(game,111,-7),Borneo:GEOGRAPHY.islandOwnerAt(game,114,0),Papua:GEOGRAPHY.islandOwnerAt(game,134,-3),Egypt:GEOGRAPHY.islandOwnerAt(game,30,25)})");
   for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
     assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');
-  assert.equal(politicalIslands.Egypt, 'eu', 'Egypt land polygon must tint E.U., not neutral Arabia');
-  assert.equal(run("E.tile(game,87,14).terrain"), 'coast', 'Cornwall is a coast hex: land for troops');
+  assert.equal(run("game.stations.find(s=>s.name==='Cairo').owner"), 'eu',
+    'Cairo remains controlled by the E.U. despite experimental coastal geography');
+  assert([null, 'eu'].includes(politicalIslands.Egypt),
+    'Egypt geographic tint is either E.U. land or unassigned sea after reclassification');
+  assert.equal(run("E.tile(game,87,14).terrain"), 'sea', 'Cornwall hex follows the 20-80% sea threshold');
   assert.equal(run("E.navigable(E.tile(game,87,14))"), true, 'Cornwall coast stays navigable for warships');
   assert.equal(run("GEOGRAPHY.visualMixedHex(87,14)"), true, 'Cornwall misleading sea/land hex is flagged');
   const conquestTint = run("(() => { const t=game.tiles.find(t=>t.c>=146&&t.c<=149&&t.r>=42&&t.r<=45&&t.terrain!=='sea'); const previous=t.owner; t.owner='britannia'; game.mapRevision=(game.mapRevision||0)+1; const captured=GEOGRAPHY.islandOwnerAt(game,114,0); t.owner=previous; game.mapRevision++; const restored=GEOGRAPHY.islandOwnerAt(game,114,0); return {captured,restored}; })()");

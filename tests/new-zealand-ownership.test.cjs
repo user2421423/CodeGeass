@@ -13,7 +13,12 @@ function verifySouthIsland(g, owner = 'britannia') {
   assert(auckland, 'Auckland must exist');
   for (const [c, r] of SOUTH_ISLAND) {
     const tile = E.tile(g, c, r);
-    assert(tile && tile.terrain !== 'sea', c + ',' + r + ' must remain playable land');
+    assert(tile, c + ',' + r + ' must exist');
+    if (tile.terrain === 'sea') {
+      assert.equal(tile.owner, null, c + ',' + r + ' sea must not be painted');
+      assert.equal(tile.provinceCity, undefined, c + ',' + r + ' sea has no province');
+      continue;
+    }
     assert.equal(tile.owner, owner, c + ',' + r + ' should follow Auckland ownership');
     assert.equal(tile.provinceCity, auckland.id, c + ',' + r + ' must be an Auckland province');
   }
@@ -32,8 +37,10 @@ test('New Zealand repair migrates old saves without erasing captures', () => {
   auckland.owner = 'eu'; // Auckland may already have been captured.
   for (const [c, r] of SOUTH_ISLAND) {
     const tile = E.tile(game, c, r);
-    tile.owner = null; // Reproduce the prior disconnected-island bug.
-    delete tile.provinceCity;
+    if (tile.terrain !== 'sea') {
+      tile.owner = null; // Reproduce the prior disconnected-island bug on playable tiles.
+      delete tile.provinceCity;
+    }
   }
   const retained = E.tile(game, 175, 70);
   retained.owner = 'cf'; // Respect territory already reassigned by a past game.
@@ -43,8 +50,13 @@ test('New Zealand repair migrates old saves without erasing captures', () => {
   assert(restored, 'saved game must load');
   for (const [c, r] of SOUTH_ISLAND) {
     const tile = E.tile(restored, c, r);
-    assert.equal(tile.owner, c === 175 && r === 70 ? 'cf' : 'eu');
-    assert.equal(tile.provinceCity, auckland.id);
+    if (tile.terrain === 'sea') {
+      assert.equal(tile.owner, null);
+      assert.equal(tile.provinceCity, undefined);
+    } else {
+      assert.equal(tile.owner, c === 175 && r === 70 ? 'cf' : 'eu');
+      assert.equal(tile.provinceCity, auckland.id);
+    }
   }
   // Migration must be idempotent and not replace real player changes.
   E.migrateSave(restored);

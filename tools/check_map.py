@@ -2,7 +2,7 @@
 """Fail if the map in dist/engine/world.js changed outside the hexes that are allowed to change.
 
 tools/data/map_locked.txt is the approved map, one row per line. Only hexes in build_map.py's REDRAW regions, its
-FIX_LAND / FIX_SEA lists and the coast hexes (tools/data/coast_hexes.json) may differ from it; anything else is an
+FIX_LAND / FIX_SEA lists, experimental 20/80 overlay, and the coast hexes (tools/data/coast_hexes.json) may differ from it; anything else is an
 accidental edit. After approving a map change,
 refresh the lock:  python3 tools/check_map.py --update
 Also fails if world.js is out of date with build_map.py (run build_map.py --inject). Needs only the standard library.
@@ -37,6 +37,18 @@ def main():
     # Coast hexes come from tools/coast_hexes.py (tools/data/coast_hexes.json), regenerated from the drawn coastline.
     if os.path.exists(bm.COAST_HEXES):
         allowed |= {tuple(h) for h in json.load(open(bm.COAST_HEXES))['hexes']}
+    # 20/80 coast overlay is a deliberate, reviewable exception to the old map
+    # lock. Only explicitly classified differences are permitted; the build()
+    # equality assertion below still rejects any unexpected world.js edit.
+    if os.path.exists(bm.COASTAL_20_80):
+        rule = json.load(open(bm.COASTAL_20_80))['rows']
+        for r in range(bm.ROWS):
+            for c in range(bm.COLS):
+                category = rule[r][c]
+                expected = ('.' if category == 'S' else 'w' if category == 'C'
+                            else locked[r][c] if locked[r][c] not in '.w' else 'p')
+                if expected != locked[r][c]:
+                    allowed.add((c, r))
     stray = [(c, r) for r in range(bm.ROWS) for c in range(bm.COLS)
              if rows[r][c] != locked[r][c] and (c, r) not in allowed]
     built = [''.join(row) for row in bm.build()]

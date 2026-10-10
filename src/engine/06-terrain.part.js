@@ -58,6 +58,16 @@
   const PORT = { repair: [0, 0.1, 0.2, 0.3] };
   function portSite(g, s) {
     if (s.portAt) return tile(g, s.portAt.c, s.portAt.r);
+    // Baseline starting ports must stay on their exact original hexes.
+    // Non-starting ports retain the normal neighbour-selection rules.
+    const anchored = COASTAL_PORT_HEXES[s.name];
+    if (anchored) {
+      const fixed = tile(g, anchored[0], anchored[1]);
+      if (!fixed || !isSea(fixed) || !adjacent(g, s).includes(fixed) ||
+          g.stations.some(o => o !== s && o.portAt && key(o.portAt) === key(fixed)))
+        throw new Error('Unavailable fixed starting port for ' + s.name);
+      return fixed;
+    }
     const taken = new Set(g.stations.filter(o => o.portAt).map(o => key(o.portAt)));
     return (
       adjacent(g, s)
@@ -154,6 +164,8 @@
   }
   function migrateCoastalTerrain(g) {
     for (const [c, r] of COASTAL_SEA_FIXES) {
+      // Historical sea fixes must not undo the newly approved 20/80 coastline.
+      if (WORLD_ROWS[r]?.[c] !== '.') continue;
       const t = g.tiles[r * g.cols + c];
       if (!t || t.terrain === 'sea') continue;
       if (g.units.some(u => u.hp > 0 && u.c === c && u.r === r)) continue;
@@ -165,12 +177,13 @@
     }
     const [tc, tr] = TSUGARU_STRAIT;
     const strait = g.tiles[tr * g.cols + tc];
-    if (strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
+    if (WORLD_ROWS[tr]?.[tc] === '.' && strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
       setTileTerrain(g, strait, 'sea');
       setTileOwner(g, strait, null);
     }
     const filled = [];
     for (const [c, r] of CASPIAN_LAND_FIXES) {
+      if ('.w'.includes(WORLD_ROWS[r]?.[c])) continue;
       const t = g.tiles[r * g.cols + c];
       if (!t || t.terrain !== 'sea' || coastalTileOccupied(g, c, r)) continue;
       setTileTerrain(g, t, 'plains');
@@ -199,7 +212,7 @@
     }
     // Newfoundland was restored as land by the previous correction batch.
     const t = g.tiles[15 * g.cols + 61];
-    if (t && t.terrain === 'sea' &&
+    if (t && !'.w'.includes(WORLD_ROWS[15]?.[61]) && t.terrain === 'sea' &&
         !g.units.some(u => u.hp > 0 && u.c === 61 && u.r === 15)) {
       setTileTerrain(g, t, 'plains');
     }

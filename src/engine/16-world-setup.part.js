@@ -175,7 +175,11 @@
     // Cities, mines and starting armies stand on solid land, never on a coast hex.
     const solidLand = t => freeLand(t) && !isCoast(t);
     for (const [name, lon, lat, owner, tier, capital = false, fort = false, gun] of CITY_DATA) {
-      const at = nearest(g, hexOf(lon, lat), t => solidLand(t) && !stationAt(g, t));
+      const fixed = COASTAL_CITY_HEXES[name];
+      const at = fixed ? tile(g, fixed[0], fixed[1]) :
+        nearest(g, hexOf(lon, lat), t => solidLand(t) && !stationAt(g, t));
+      if (!at || !solidLand(at) || stationAt(g, at))
+        throw new Error('Unavailable fixed starting city for ' + name);
       const s = {
         id: g.stations.length,
         name,

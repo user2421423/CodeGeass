@@ -45,6 +45,8 @@
     GARRISONS,
     PORT_DATA,
     NAVY_DATA,
+    COASTAL_CITY_HEXES,
+    COASTAL_PORT_HEXES,
   } = root.KnightmareData;
   const TYPES = Object.fromEntries(
     Object.entries(KNIGHTMARES).map(([id, k]) => {
