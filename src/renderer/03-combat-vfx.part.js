@@ -55,6 +55,20 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
     if (!compact) combatVfxSparks(sx, sy, 17 * strength, '#fff4dd', alpha, 6);
     ctx.restore();
   }
+  // Counterfire is announced at the defending unit, not mistaken for a second attack.
+  if (e.counter && age < (compact ? 0.14 : 0.28)) {
+    const fade = Math.max(0, 1 - age / (compact ? 0.14 : 0.28));
+    ctx.save();
+    ctx.globalAlpha *= fade;
+    ctx.strokeStyle = '#99eeff';
+    ctx.lineWidth = 2.3 / Math.max(scale, 0.6);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 12 + age * 42, 0, Math.PI * 2);
+    ctx.stroke();
+    if (!compact) outlinedText('COUNTER', sx + nx * 14, sy + ny * 14 - 27,
+      10, '#c4f7ff', scale, 'Trebuchet MS', true);
+    ctx.restore();
+  }
   if (e.weapon === 'slash') {
     if (age < 0.27) {
       const progress = age / 0.27;
@@ -77,6 +91,16 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
       segment(0, 1, 13 * power, e.color, 20);
       segment(0, 1, 5 * power, '#f2e8ff', 7);
       segment(0, 1, 2.5 * power, '#ffffff');
+      // Siege cannons fire a broader, twin-edged lance; ordinary beams remain narrow.
+      if (e.weapon === 'siege' && !compact) {
+        const spread = 8 * power;
+        combatVfxLine(sx + nx * spread, sy + ny * spread,
+          tx + nx * spread * 0.2, ty + ny * spread * 0.2,
+          '#e4aeff', 2 / Math.max(scale, 0.6), 7);
+        combatVfxLine(sx - nx * spread, sy - ny * spread,
+          tx - nx * spread * 0.2, ty - ny * spread * 0.2,
+          '#e4aeff', 2 / Math.max(scale, 0.6), 7);
+      }
       ctx.restore();
     }
   } else if (e.weapon === 'railgun') {
@@ -115,6 +139,17 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
     }
   }
   combatVfxImpact(tx, ty, age - e.impact, e.color, e.crit ? power * 1.4 : power, scale, compact);
+  if (e.crit && age >= e.impact && age < e.impact + (compact ? 0.1 : 0.28)) {
+    const progress = (age - e.impact) / (compact ? 0.1 : 0.28);
+    ctx.save();
+    ctx.globalAlpha *= (1 - progress) * 0.9;
+    ctx.strokeStyle = '#ffe98a';
+    ctx.lineWidth = 4 / Math.max(scale, 0.6);
+    ctx.beginPath();
+    ctx.arc(tx, ty, 16 + 36 * progress, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   if (e.weapon === 'rockets' && !compact)
     for (let i = 1; i < 3; i++)
       combatVfxImpact(tx + nx * (i === 1 ? -11 : 12), ty + ny * (i === 1 ? -11 : 12),
@@ -135,6 +170,12 @@ function drawCombatBlast(e, x, y, scale) {
   ctx.arc(x, y - 5, (12 + t * 38) * strength, 0, Math.PI * 2);
   ctx.stroke();
   if (!compact) {
+    // A bright secondary shockwave and debris make lethal hits read at every zoom.
+    ctx.strokeStyle = 'rgba(255,233,183,0.92)';
+    ctx.lineWidth = 1.8 / Math.max(scale, 0.6);
+    ctx.beginPath();
+    ctx.arc(x, y - 5, (18 + t * 57) * strength, 0, Math.PI * 2);
+    ctx.stroke();
     for (let i = 0; i < 10; i++) {
       const angle = i * 2.39996, radius = (10 + t * 49) * strength;
       const px = x + Math.cos(angle) * radius, py = y - 5 + Math.sin(angle) * radius * 0.65;
