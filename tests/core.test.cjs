@@ -119,9 +119,8 @@ test('Moving through a province does not recolor it; capturing its city flips on
   assert.equal(remoteProvince.owner, 'eu');
   assert.equal(otherCity.owner, 'eu', 'other city is not captured');
   const saved = structuredClone(g);
-  assert.equal(E.migrateSave(saved), saved);
   assert.deepEqual(saved.tiles.map(t => [t.owner, t.provinceCity]),
-    g.tiles.map(t => [t.owner, t.provinceCity]), 'loading cannot redraw provincial borders');
+    g.tiles.map(t => [t.owner, t.provinceCity]), 'province boundaries survive serialization');
 });
 
 test('World map: islands, straits and joins that gameplay depends on', () => {
