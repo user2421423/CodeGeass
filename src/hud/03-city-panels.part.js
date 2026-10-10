@@ -29,7 +29,7 @@ function allocationText(d) {
 }
 function refineryRow(host, attrs, why) {
   const l = host.refinery || 0;
-  return `<div class="building"><span class="label">${ICONS.use('refinery')} ${E.BUILDINGS.refinery.name}</span><span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${E.BUILDINGS.refinery.desc}</small>${attrs ? act(attrs, l >= 3 ? 'Maximum level' : (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), l >= 3 ? null : why, costHTML(E.buildCost(host, 'refinery')), 'small') : ''}</div>`;
+  return `<div class="building"><span class="label">${ICONS.use('refinery')} ${E.BUILDINGS.refinery.name}</span><span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${E.BUILDINGS.refinery.desc}</small>${attrs ? (l >= 3 ? '<button class="small" disabled>Maximum level</button>' : act(attrs, (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), why, costHTML(E.buildCost(host, 'refinery')), 'small')) : ''}</div>`;
 }
 function panel() {
   const u = selectedUnit(), s = selectedStation(), m = selectedSite();
@@ -52,7 +52,7 @@ function panel() {
       .filter(([k]) => (k !== 'refinery' || deposit) && (k !== 'port' || E.portSite(game, s)))
       .map(([k, b]) => {
         const l = E.buildingLevel(s, k);
-        return `<div class="building"><span class="label">${k === 'port' ? '⚓' : ICONS.use(k === 'factory' ? 'factory' : k === 'lab' ? 'research' : 'refinery')} ${b.name}</span>${k === 'port' && l && s.portOwner !== s.owner ? `<small class="warn-text">Held by the ${esc(F(s.portOwner).short)} fleet: clear its ships out to use the port.</small>` : ''}<span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${b.desc}</small>${ours ? act(`data-build="${k}" data-station-id="${s.id}"`, l >= 3 ? 'Maximum level' : (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), l >= 3 ? null : phaseReason() || E.buildReason(game, s, k), costHTML(E.buildCost(s, k)), 'small') : ''}</div>`;
+        return `<div class="building"><span class="label">${k === 'port' ? '⚓' : ICONS.use(k === 'factory' ? 'factory' : k === 'lab' ? 'research' : 'refinery')} ${b.name}</span>${k === 'port' && l && s.portOwner !== s.owner ? `<small class="warn-text">Held by the ${esc(F(s.portOwner).short)} fleet: clear its ships out to use the port.</small>` : ''}<span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${b.desc}</small>${ours ? (l >= 3 ? '<button class="small" disabled>Maximum level</button>' : act(`data-build="${k}" data-station-id="${s.id}"`, (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), phaseReason() || E.buildReason(game, s, k), costHTML(E.buildCost(s, k)), 'small')) : ''}</div>`;
       })
       .join(
         '',
