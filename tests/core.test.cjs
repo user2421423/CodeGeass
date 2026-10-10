@@ -139,7 +139,7 @@ test('World map: accepted coastal straits and original city positions', () => {
   // rather than reinstating the old no-crossing geography.
   assert.equal(at(90, 13).terrain, 'coast', 'The new Dover coastal crossing is intentional');
   assert(linked(city('London'), city('Paris'), passableGround), 'Dover land bridge is intentional');
-  assert.equal(at(160, 19).terrain, 'coast', 'Tsugaru changes to traversable coast');
+  assert.equal(at(160, 19).terrain, 'sea', 'Tsugaru remains water, but another coastal connection reaches Hokkaido');
   assert(linked(city('Tokyo Settlement'), city('Sapporo'), passableGround),
     'Hokkaido is connected by the user-approved coastline');
   // City placement is not allowed to drift due to the terrain transformation.
@@ -677,7 +677,7 @@ test('Caspian migration and new Tsugaru coast remain compatible with saves', () 
     if (!'.w'.includes(world[r][c]))
       assert.notEqual(E.tile(g, c, r).terrain, 'sea', 'solid Caspian remains solid');
   }
-  assert.equal(E.tile(g, 160, 19).terrain, 'coast', 'Tsugaru is a shared land/naval coast');
+  assert.equal(E.tile(g, 160, 19).terrain, 'sea', 'Tsugaru remains open water');
   const old = structuredClone(g);
   const caspianSolid = caspian.filter(([c, r]) => !'.w'.includes(world[r][c]));
   for (const [c, r] of caspianSolid) {
@@ -686,15 +686,15 @@ test('Caspian migration and new Tsugaru coast remain compatible with saves', () 
     t.owner = null;
   }
   const tsugaru = E.tile(old, 160, 19);
-  tsugaru.terrain = 'coast';
+  tsugaru.terrain = 'plains';
   assert.equal(E.migrateSave(old), old);
   for (const [c, r] of caspianSolid) {
     const t = E.tile(old, c, r);
     assert.equal(t.terrain, 'plains');
     assert(t.owner, 'land reclaimed from a legacy save receives ownership');
   }
-  assert.equal(E.tile(old, 160, 19).terrain, 'coast',
-    'old sea-only strait migration must not erase accepted coastal passage');
+  assert.equal(E.tile(old, 160, 19).terrain, 'sea',
+    'legacy land in the actual sea channel migrates back to water');
 });
 
 
