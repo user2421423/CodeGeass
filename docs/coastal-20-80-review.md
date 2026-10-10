@@ -2,13 +2,13 @@
 
 Source branch: `feature/coastal-20-80-world-audit` based on `c2c3c4f999d91b1558afa09df557f327d18f7e30`.
 
-**Status: Experimental. NOT approved for merge into main.** The purpose is to expose gameplay implications of applying geography uniformly without legacy protection rules.
+**Status: Experimental. Cities and ports protected; other geography regressions accepted by user. Not yet merged into main.** The purpose is to expose gameplay implications of applying geography uniformly without legacy protection rules.
 
 ## Method and implementation
 
-Each of the 13,680 hexes is clipped against the project's GSHHG land polygons (dist/ui/geography-data.js). Coverage below 20% becomes sea (`.`); 20–80% inclusive becomes coast (`w`); above 80% becomes land (preserves existing land biome where possible, otherwise becomes plains). The new classification is applied **after** the previous coastline, `HEX_*` and `FIX_*` rules; they do not veto it. Both source and built game map reflect the experimental result. No files on `main` are modified.
+Each of the 13,680 hexes is clipped against the project's GSHHG land polygons (dist/ui/geography-data.js). Coverage below 20% becomes sea (`.`); 20–80% inclusive becomes coast (`w`); above 80% becomes land (preserves existing land biome where possible, otherwise becomes plains). The geographic classification overrides legacy `HEX_*` and `FIX_*` rules. **Afterward, the original city and starting port hex codes are restored as the sole exemptions.** Both source and built game map reflect the experimental result. No files on `main` are modified.
 
-Baseline-to-experiment tile changes: **621** of 13,680. Result totals: **8,950 sea, 862 coast, 3,868 land**. In particular 144 existing sea hexes become traversable by ground units (108 coast, 36 solid land); 381 formerly non-navigable land hexes or other solids become navigable (coast/sea).
+Original unrestricted pass: **621** changes. Current city/port-preserving result: **573** changes, with **8949 sea, 817 coast and 3914 land** hexes. The separate original coastline connectivity rules remain overridden.
 
 ## Topology audit before implementation
 
@@ -16,8 +16,8 @@ Hex grid adjacency is six-sided, odd-r offset, east–west wrapping. Land traver
 
 | Network | Baseline connected components | Experiment connected components |
 |:---|---:|---:|
-| Ground | **32** | **22** |
-| Naval | **1** | **1** |
+| Ground | **32** | **23** |
+| Naval | **1** | **2** |
 
 **The naval component count staying at one does NOT prove narrow waterways remain viable.** Existing routes can be severely changed even when open-ocean navigation is still globally connected. Potentially significant topology changes:
 
@@ -29,7 +29,7 @@ Hex grid adjacency is six-sided, odd-r offset, east–west wrapping. Land traver
 - **Panama**: (49,38), (50,38), (49,39), (50,39), (51,38) become coast, allowing warships to cross coast-marked land around the isthmus.
 - **Suez / Bab-el-Mandeb / Gibraltar / Hormuz / Korea**: tile-level navigability changes, with coastal cells possibly bridging shores that should remain separated.
 
-## Starting placements and other player impact
+## Initial unrestricted-pass placements (historical; corrected below)
 
 46 intended city coordinates switch terrain class under the rule, including **Pearl Harbor (10,31) and Perth (147,62) changing from land to sea**; these will snap to other locations under the game's nearest-solid-land placement logic. Other affected named city coordinates include Reykjavik, Stockholm, Edinburgh, Gibraltar, Athens, Istanbul, Manila, Singapore, Jakarta, Shanghai, Taipei, Cape Town, Sydney, Melbourne, Montevideo and Auckland. A new game's cities and port sites must be checked after the changes; a visually valid land percentage does not ensure a well-placed settlement.
 
@@ -97,7 +97,7 @@ Initial run: [#38050226177](https://github.com/user2421423/CodeGeass/actions/run
 Keep the failing checks intact until map mechanics and strategic movement boundaries are explicitly solved.
 
 
-## City and port preservation revision (feature/coastal-20-80-world-audit)
+## City and port preservation revision
 
 The city/port relocation problem is explicitly corrected without reverting the global 20–80% map.
 Using the original `main` conquest city/port placement order, we created
@@ -107,8 +107,7 @@ classification, and the engine locks each of these locations when creating a new
 Only **48 hexes** needed their terrain restored; all other coastline changes remain
 unrestricted, including Panama and every geographic/strategic strait crossover.
 
-The new expected change count is **573** rather than 621; there are **8949 sea,
-817 coast and 3914 solid land hexes**.
+The new expected change count is **573** rather than 621; there are **8949 sea, 817 coast and 3914 solid land hexes**.
 Existing land bridges and the previously reported New Zealand / strait regressions
 are intentionally not addressed, by user request.
 
@@ -117,3 +116,7 @@ match their fixed coordinates on every player/difficulty combination; existing
 terrain-classification tests now recognize *only* city/port exceptions.
 The earlier warning about missing ports should be treated as historical:
 this revision targets preserving all 12 original port coordinates.
+
+## Updated topology after protecting city/port hexes
+
+Final terrain totals: {"sea":8949,"coast":817,"land":3914}. Final land components: 32 → 23; naval components: 1 → 2. The authoritative per-hex list and topology are in `tools/data/coastal_20_80_changes.json` and represent the **573-hex** protected-city/port variant.
