@@ -764,11 +764,15 @@
       const m = spot && move(g, u.id, spot.c, spot.r);
       if (m?.ok) g.vacated.push({ id: u.id, orders: [{ kind: 'move', ...m, id: u.id }] });
     }
-    // 2. Decide whether to save for a super-heavy (requires a level-3 factory).
-    // There is no unit-count limit: the AI can keep producing super-heavy formations
-    // whenever its factories and resources support them.
-    // Only start saving once the Sakuradite for it is in hand, so credits are not hoarded for a frame it cannot pay.
-    if (!yard3.length) plan.saving = false;
+    // 2. Save for super-heavy formations only from the surplus after keeping enough
+    // credits and industry for an ordinary two-frame Scout formation. There is no
+    // limit on how many super-heavies a faction may own, but stagger the priority
+    // purchases so frontline factories still build other classes.
+    const ordinaryBudget = price(typeFor(side, 'scout', g), 2, g, side);
+    const superCooldown = g.turn - (plan.lastSuperTurn ?? -Infinity) < 3;
+    // Only start saving once Sakuradite is in hand; never lock the treasury when
+    // there is no eligible factory or during the post-purchase cooldown.
+    if (!yard3.length || superCooldown) plan.saving = false;
     else if (!plan.saving && g.turn >= 3 && (e.sakuradite || 0) >= superPrice.sakuradite && random(g) < 0.35)
       plan.saving = true;
     // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
@@ -800,12 +804,17 @@
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     if (plan.eliminator || plan.warhead) plan.saving = false;
-    // The savings buy the largest super-heavy formation the treasury allows (canBuy includes the cost).
+    // Buy the largest affordable super-heavy while still funding normal troops.
+    // Keep this budget even when only one factory is available: later turns can
+    // spend it after the priority purchase's cooldown.
     if (plan.saving)
       for (const n of [3, 2, 1]) {
+        const cost = price(superType, n, g, side);
+        if (e.credits - cost.credits < ordinaryBudget.credits ||
+            e.industry - cost.industry < ordinaryBudget.industry) continue;
         const yard = yard3.find(s => canBuy(g, s, superType, n));
-        if (yard) {
-          recruit(g, yard.id, superType, n);
+        if (yard && recruit(g, yard.id, superType, n).ok) {
+          plan.lastSuperTurn = g.turn;
           plan.saving = false;
           break;
         }
@@ -815,14 +824,14 @@
       : warSaving
         ? Math.min(e.credits, FLEIJA.cost.credits)
         : plan.saving
-          ? Math.min(e.credits, superPrice.credits)
+          ? Math.min(superPrice.credits, Math.max(0, e.credits - ordinaryBudget.credits))
           : 60;
     const reserveInd = defenseSaving
       ? Math.min(e.industry, ELIMINATOR.cost.industry)
       : warSaving
         ? Math.min(e.industry, FLEIJA.cost.industry)
         : plan.saving
-          ? Math.min(e.industry, superPrice.industry)
+          ? Math.min(superPrice.industry, Math.max(0, e.industry - ordinaryBudget.industry))
           : 0;
     const reserveSak = plan.eliminator
       ? ELIMINATOR.cost.sakuradite
