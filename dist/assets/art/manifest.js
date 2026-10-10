@@ -391,7 +391,7 @@ globalThis.KnightmareArtManifest = {
   },
   "buildings": {
     "port": {
-      "src": "buildings/port-1200e80ad638.webp"
+      "src": "buildings/port-db6e061d4503.webp"
     },
     "city": {
       "src": "buildings/city-3cbbc4be12c8.webp"

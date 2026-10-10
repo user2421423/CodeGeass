@@ -15,7 +15,7 @@ Unit, character and place names, roles and short lore notes follow the
 ## Published images
 
 The game ships **70 Knightmare sprites, 58 commander portraits and 4 published building pictures** in `dist/assets/art/`.
-The main city, port and Sakuradite mine images were supplied on 2026-10-08 and are shared across factions. A separate `port_coastal` image contains an isometric shore facility with warehouses, cranes and quays. It renders on the map beside coastal cities, replacing the simplistic procedural tower; the original port image remains available for information panels. City and mine images were trimmed and resized to 512 px; the upgraded port map icon is a separate, generated 128 px transparent WebP optimized for the small hex display. The previous port asset remains in the repository. Checksums and processing notes are in `sources.json` under `buildings`. These include imagery
+The city and Sakuradite mine images were supplied on 2026-10-08 and the port image (a pier with a crane and harbour office) on 2026-10-10; all are shared across factions. The port picture is drawn on every port's sea hex, nudged toward its city, with a ⚓ in the holder's colour (only the ⚓ shows when the map is zoomed far out). A separate `port_coastal` image (an isometric shore facility) is published but not currently drawn. All three main pictures were trimmed and resized to 512 px. Checksums and processing notes are in `sources.json` under `buildings`. These include imagery
 from Code Geass anime/design material and manga, cropped or isolated for in-game use. They remain the property
 of their respective copyright holders, including the Code Geass production rights holders. The wiki's text
 license does not license the studio artwork.
