@@ -1,5 +1,5 @@
 /* Knightmare Conquest campaigns: story missions on hand-built tactical maps, scripted with events and graded with
-   WC4-style stars. Loads after engine.js and plugs into its rule hooks; Conquest never touches this file. */
+   mastery stars. Loads after engine.js and plugs into its rule hooks; Conquest never touches this file. */
 (function (root) {
   'use strict';
   const E = root.Knightmare || (typeof require === 'function' ? require('./engine.js') : null);
@@ -51,7 +51,11 @@
     const t = E.TYPES[type],
       next = t && UPGRADE[t.cls];
     if (!t || !next || t.elite) return type;
-    return E.typeFor(side, next, g) || E.typeFor(t.side, next, g) || type;
+    // A side without its own roster (neutral) would fall back to Britannian frames: use the frame's own faction.
+    // An "upgrade" must not be a weaker frame, which some shared campaign lineups would otherwise give.
+    const stronger = u => u && E.TYPES[u] && E.TYPES[u].hp >= t.hp && E.TYPES[u].attack >= t.attack;
+    const candidates = [E.ROSTER[side] || g?.lineup?.[side] ? E.typeFor(side, next, g) : null, E.typeFor(t.side, next, g)];
+    return candidates.find(stronger) || type;
   }
   function techUpToTier(tier) {
     return Object.fromEntries(
@@ -75,16 +79,19 @@
     if (c.alive) return `${cmdList(c.alive)} must survive`;
     if (c.capture) return `Capture ${cityList(c.capture)}`;
     if (c.keep) return `Never lose ${cityList(c.keep)}`;
-    if (c.reach) return `Reach ${cityList(c.reach)}`;
+    if (c.reach) return `Reach ${cityList(c.reach)}${c.by ? ` with ${cmdList([c.by])}` : ''}`;
     if (c.destroy) return `Destroy every ${c.destroy.map(s => E.FACTIONS[s]?.short || s).join(' and ')} unit`;
     if (c.kills) return `Destroy ${c.kills} enemy units`;
     if (c.hold) return `Hold out until the end of turn ${c.hold}`;
+    if (c.turn) return `Hold until turn ${c.turn}`;
     return '';
   }
   const asList = x => (Array.isArray(x) ? x : x ? [x] : []);
   const friendly = (g, side) => side === g.player || !E.foe(g, side, g.player);
   const cityByName = (g, name) => g.stations.find(s => s.name === name);
   const unitWith = (g, k) => g.units.find(u => u.hp > 0 && u.cmd === k);
+  // Your Elite Forces use your HQ level (as E.applyElites does on load); others use the mission's level, or 3.
+  const eliteLevelFor = (g, side, elite, level) => (side === g.player && g.eliteLevels?.[elite]) || level || 3;
   // One condition, checked against the live game.
   function holds(g, c) {
     const cm = g.campaign;
@@ -96,7 +103,7 @@
     if (c.keep) return c.keep.every(n => !cm.lostCities.includes(n));
     if (c.reach) return c.reach.every(n => {
       const s = cityByName(g, n);
-      return s && g.units.some(u => u.hp > 0 && u.side === g.player && u.c === s.c && u.r === s.r);
+      return s && g.units.some(u => u.hp > 0 && u.side === g.player && u.c === s.c && u.r === s.r && (!c.by || u.cmd === c.by));
     });
     if (c.destroy) return !g.units.some(u => u.hp > 0 && c.destroy.includes(u.side));
     if (c.kills) return cm.kills >= c.kills;
@@ -135,13 +142,13 @@
     if (cmd && enemy && d.ranks)
       g.officers[cmd].rank = Math.min(E.RANKS.length - 1, E.defaultOfficer(cmd).rank + d.ranks);
     const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : unitStack, cmd, opts.ready !== false);
-    if (u.elite) u.eliteLevel = opts.level ?? 3;
+    if (u.elite) u.eliteLevel = eliteLevelFor(g, side, u.elite, opts.level);
     const hold = opts.hold ?? g.campaign.hold?.[side];
     if (hold != null && hold !== false) u.hold = { c: at.c, r: at.r, radius: hold };
     if (cmd) u.cmdRank = E.officer(g, cmd).rank;
     u.hp = E.maxHP(u);
     if (enemy && d.enemyHp) u.hp = Math.max(1, Math.round(u.hp * d.enemyHp));
-    if (!E.isSea(at)) at.owner = side;
+    if (!E.isSea(at)) E.setTileOwner(g, at, side);
     return u;
   }
 
@@ -162,7 +169,7 @@
       if (!spot) continue;
       const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, src.stack);
       u.hp = E.maxHP(u);
-      if (!E.isSea(spot)) spot.owner = src.side;
+      if (!E.isSea(spot)) E.setTileOwner(g, spot, src.side);
       made++;
     }
   }
@@ -336,7 +343,7 @@
         elite = Object.entries(E.ELITE_FORCES).find(([, e]) => e.type === up.type)?.[0] || null;
       u.type = up.type;
       u.elite = elite;
-      u.eliteLevel = elite ? up.level ?? u.eliteLevel ?? 3 : 0;
+      u.eliteLevel = elite ? eliteLevelFor(g, u.side, elite, up.level ?? (u.eliteLevel || 3)) : 0;
       u.stack = elite ? 1 : u.stack;
       u.hp = Math.max(1, E.maxHP(u) - lost);
     }
@@ -344,6 +351,8 @@
       const s = cityByName(g, sh.city);
       if (!s) continue;
       if (sh.max != null) s.maxShield = sh.max;
+      // cut: permanently weakens the barrier (its maximum and current strength) by that much.
+      if (sh.cut) s.maxShield = Math.max(0, s.maxShield - sh.cut);
       s.shield = Math.min(s.maxShield, sh.value ?? s.shield);
     }
   }
@@ -362,7 +371,7 @@
       if (v.hp <= 0) E.kill(g, v, null, rings[d] >= 1);
     }
     for (const t of E.within(g, center, b.terrainRadius ?? (b.terrain ? 1 : -1)))
-      if (!E.isSea(t) && b.terrain) t.terrain = b.terrain;
+      if (!E.isSea(t) && b.terrain) E.setTileTerrain(g, t, b.terrain);
     for (const s of g.stations) if (E.distance(center, s, g) <= radius && !b.sides) s.shield = 0;
     g.campaign.warnings = g.campaign.warnings.filter(w => w.c !== b.c || w.r !== b.r);
     g.campaign.fx.push({ kind: 'blast', c: b.c, r: b.r, radius, color: b.color || '#ffd6f0', name: b.name || '' });
@@ -371,13 +380,23 @@
   function stun(g, s) {
     const center = { c: s.c, r: s.r };
     for (const v of g.units)
-      if (v.hp > 0 && (!s.sides || s.sides.includes(v.side)) && E.distance(center, v, g) <= (s.radius ?? 2)) v.morale = -3;
+      if (v.hp > 0 && (!s.sides || s.sides.includes(v.side)) && E.distance(center, v, g) <= (s.radius ?? 2)) {
+        v.morale = -3;
+        // A side still to act this round would recover a step at its turn start; onTurn re-applies the stun then.
+        if (v.side !== g.phase) v.stunTurn = g.turn;
+      }
     g.campaign.fx.push({ kind: 'stun', c: s.c, r: s.r, radius: s.radius ?? 2, color: '#8fe3ff', name: s.name || 'Gefjun Disturber' });
   }
 
   // ======== Hooks ========
   function onTurn(g, side) {
-    if (g.mode !== 'campaign' || side !== g.player) return;
+    if (g.mode !== 'campaign') return;
+    for (const v of g.units)
+      if (v.side === side && v.stunTurn != null) {
+        if (v.hp > 0 && v.stunTurn === g.turn) v.morale = -3;
+        delete v.stunTurn;
+      }
+    if (side !== g.player) return;
     fire(g, ev => ev.turn === g.turn);
   }
   function onCapture(g, s, u, loser) {
@@ -386,11 +405,11 @@
       g.campaign.lostCities.push(s.name);
     fire(g, ev => ev.capture === s.name && (!ev.by || ev.by === u.side));
   }
-  function onKill(g, v, attacker) {
+  function onKill(g, v, attacker, by) {
     if (g.mode !== 'campaign') return;
     const cm = g.campaign;
     if (v.side === g.player) cm.losses++;
-    else if (attacker && attacker.side === g.player) cm.kills++;
+    else if ((attacker ? attacker.side : by) === g.player) cm.kills++;
     if (v.cmd && !cm.killed.includes(v.cmd)) cm.killed.push(v.cmd);
     if (v.cmd) fire(g, ev => ev.killed === v.cmd);
   }

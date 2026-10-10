@@ -7,4 +7,4 @@ ART.onLocal = () => {
 render();
 startMenu();
 registerTools();
-requestAnimationFrame(frame);
+requestMapFrame();

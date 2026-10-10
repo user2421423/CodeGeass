@@ -502,7 +502,7 @@ h3 {
   align-items: center;
   margin-left: 9px;
   flex-wrap: wrap;
-  max-width: 315px;
+  max-width: 320px;
 }
 .dock-actions button {
   font-size: 12px;
@@ -788,7 +788,7 @@ h3 {
     min-width: 170px;
   }
   .dock-actions {
-    max-width: 265px;
+    max-width: 320px;
   }
   .footer .end {
     min-width: 158px;
@@ -1187,7 +1187,7 @@ h3 {
   gap: 6px 10px;
 }
 
-/* ---- WC4 iconography: resource tokens, stat glyphs, hull rings, undo ---- */
+/* ---- Battlefield iconography: resource tokens, stat glyphs, hull rings, undo ---- */
 .ico {
   display: inline-block;
   width: 1.3em;
@@ -1604,7 +1604,7 @@ button.mini small {
   }
 }
 
-/* ---- General Info (WC4-style officer card) ---- */
+/* ---- General Info (officer card) ---- */
 [data-general] {
   cursor: pointer;
 }
@@ -2091,11 +2091,6 @@ button.mini small {
 }
 .locked-officer h3 {
   color: #c9c2a0;
-}
-.portrait-art.generated > svg {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 .officer-section {
   margin: 18px 0 8px;
@@ -2637,6 +2632,12 @@ table.powers .legend-dot {
   place-items: center;
   height: 110px;
 }
+.mine-art .mine-photo {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 6px #000a);
+}
 .mine-art .mine-icon {
   width: 92px;
   height: 92px;
@@ -3139,4 +3140,41 @@ button.danger:hover:not(:disabled) {
 .warn-text {
   display: block;
   color: var(--red);
+}
+
+/* Restore the compact pre-shortcut-label unit dock; keep controls accessible. */
+.selection-dock:has(.unit-dock-actions) {
+  gap: 9px;
+  padding-right: 10px;
+}
+.selection-dock:has(.unit-dock-actions) .dock-unit {
+  min-width: 175px;
+  max-width: 215px;
+}
+.unit-dock-actions {
+  max-width: 320px;
+  margin-left: 3px;
+  gap: 5px;
+  align-content: center;
+}
+.unit-dock-actions button {
+  font-size: 11px;
+  padding: 7px 9px;
+  min-height: 30px;
+}
+@media (max-width: 1100px) {
+  .unit-dock-actions { max-width: 300px; }
+}
+@media (max-width: 760px) {
+  .selection-dock:has(.unit-dock-actions) .dock-unit {
+    min-width: 0;
+    max-width: none;
+  }
+}
+/* All unit orders are in the bottom bar; only carrier cargo opens the right drawer. */
+.deployment-only h2 { margin: 4px 0 12px; font-size: 18px; }
+.deployment-only .section-divider { margin-top: 0; }
+@media (max-width: 760px) {
+  .unit-dock-actions { max-width: 205px; max-height: 165px; overflow-y: auto; }
+  .unit-dock-actions button { min-height: 28px; }
 }

@@ -1,20 +1,21 @@
 # Knightmare Conquest
 
-A browser turn-based hex strategy game in the style of **World Conqueror 4**, themed on **Code Geass**. Three powers
+A browser-based turn-based hex strategy game themed on **Code Geass**. Three powers
 fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **Europia United (E.U.)** and the
 **Chinese Federation**. It is a sister project of *Galactic Command* (the LOGH game) and keeps the same systems.
 
 ## Features
 
-- **Conquest on a full world map:** 180 × 76 hexes (13,680 total) that wrap east–west around the globe, 149 cities, much finer WC4-style coastlines, strategically anchored mountain/desert bottlenecks, oceans, forests,
+- **Conquest on a full world map:** 180 × 76 hexes (13,680 total) that wrap east–west around the globe, 149 cities, much finer coastlines, strategically anchored mountain/desert bottlenecks, oceans, forests,
   mountains, deserts, tundra and the impassable Himalaya. Britannia holds the Americas, Area 11 (Japan) and
   Pacific bases; the E.U. holds Europe, Russia, Siberia and Africa; the Federation holds Asia from
   Tehran to Taipei. Australia and the Middle Eastern Federation are neutral and defend themselves.
+- **City-controlled provinces:** each initially owned land hex is permanently assigned to the nearest city of its starting faction. Capturing a city transfers its entire province, not neighboring cities' land; moving a unit or landing from a carrier does not repaint hexes. Destroyed cities pass their provinces to another surviving friendly city, and surrender transfers remaining territory to the victor. Previously saved conquests acquire city provinces on load.
 - **Surrender at zero cities:** a power surrenders only when it has lost every city; its armies disband and its mines
   and half its stockpiles pass to the conqueror. A capital (Pendragon, Paris, Luoyang) is its richest city, not a
   knockout. Defeat every rival to win, or hold the most cities at the 120-turn armistice. Lose your last city and the
   war is lost.
-- **Knightmares only, in three branches** (WC4's infantry, tanks and artillery), ten per power:
+- **Knightmares only, in three branches** (infantry, armor and artillery), ten per power:
   | Branch | Class | Britannia | E.U. | Federation |
   |---|---|---|---|---|
   | Infantry | Scout | Glasgow | Alexander Drone | Gun-Ru |
@@ -48,16 +49,17 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   is alerted ("INTELLIGENCE: Strategic weapons research detected in …") and the AI goes for that city; capturing it
   ends the project. Launch from the arsenal button at any hex, as many warheads a turn as you hold: a full-screen
   warning, a white-pink flash and an expanding sphere. Ground zero: every unit erased, a city there destroyed for
-  good (a power that loses its last city this way surrenders to the launcher), a Sakuradite deposit there never
+  the rest of the war, leaving only ruins on the map (a power that loses its last city this way surrenders to the
+  launcher; you cannot strike your own last city), a Sakuradite deposit there never
   produces again, and the land turned into a permanent crater. The ring: units left at 10% with collapsed
   morale; cities lose their defenses and a level of every building. On the world map the blast is the target hex
   plus two rings. The first successful detonation starts Eliminator research for every power; 3 turns later a
   level-3 lab can build a **F.L.E.I.J.A. Eliminator** charge for 1,200 credits, 300 industry, 250 research and
   60 Sakuradite over 3 turns; a power may hold up to three at once (ready or under construction), one per city. The
   AI builds them before anything else as soon as it can, and starts a new warhead as soon as it has fired the last.
-  Each charge is tied to its city, protects targets within 2 hexes and automatically neutralizes one
+  Each charge is tied to its city, protects targets within 3 hexes and automatically neutralizes one
   incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
-- **Sea transport (WC4-style):** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
+- **Sea transport:** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
 - **Navies and ports (Conquest):** every power fields the same navy under its own names: amphibious Knightmares
@@ -66,18 +68,18 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
   them, and the AI carries out its own carrier invasions.
 - **Standing orders:** select a unit, choose Set destination (or press G) and click any hex. It moves toward it at
   the start of each of your turns until it arrives; change the destination or stop it at any time on your turn.
-- **Theaters (Conquest AI):** each rival groups its objectives into fronts, ranks them, keeps armies on a front for
-  several turns, masses an offensive at a rally city before it attacks, holds a strategic reserve at its capital for
-  emergencies, and has its factories build what each front needs.
+- **Theaters (Conquest AI):** each rival groups objectives into fronts, ranks them, retains armies on a front for
+  several turns, and masses offensives at rally cities. Garrisons protect key locations; all remaining field units
+  serve active offensive or defensive fronts. There is no strategic reserve or percentage cap on defenders.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
-  move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (40% of a
-  frame, range 3), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
+  move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (60 damage + 10% of target maximum HP, no cap;
+  range 2, or 3 with Battery Overcharge; always 2-turn recharge), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
   deposit, repairs and reinforcement.
 - **Production Command (Conquest):** each city can queue one exact normal unit to auto-produce every turn, or stay
   manual. Global controls handle building auto-upgrades, 1–3-frame formation size, bulk upgrades and protected
   credit/industry/Sakuradite reserves. A queue waits if its chosen unit is unavailable rather than substituting another
   frame, and all automated orders use the same legality checks as manual ones.
-- **Commanders (WC4 generals):** 58 named commanders (22 Britannian, 11 E.U., 10 Federation, 14 Black Knights and JLF
+- **Commanders:** 58 named commanders (22 Britannian, 11 E.U., 10 Federation, 14 Black Knights and JLF
   who lead Federation units in Conquest, and the campaign-only Emperor Lelouch), each with one signature ability:
   Permanent combat modifiers are visible separately under **Base stats**. Cornelia's speed comes from Mobility 6,
   while *Witch of Britannia* inspires adjacent allies after a kill. Bismarck anticipates the first attack each round;
@@ -91,7 +93,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 - **Difficulty:** Normal, Hard and Challenge, as in Galactic Command (rival research, upgraded and extra units,
   higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.
 - **Campaign mastery rewards:** 1★ still clears a mission and unlocks the next. Reaching 2★ and 3★ for the first time across any difficulty awards story-relevant Elite Force fragments, while each difficulty keeps its own token rewards. Every campaign also pays one-time rewards at 50%, 75% and 100% of its total stars.
-- **Presentation:** WC4-style HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
+- **Presentation:** strategy HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
   minimap, procedural terrain, drawn fallbacks for every Knightmare and commander, published image support, synthesized sound, camera shake.
 - **Published artwork:** finished sprites and portraits live in tracked `dist/assets/art/`. The startup manifest loads
   before the UI, with drawn art for missing or failed images. Raw downloads remain ignored. See **Publish artwork** below.
@@ -160,4 +162,4 @@ in `dist/engine/world.js` (`python3 tools/build_map.py --inject dist/engine/worl
 the grid to a PNG (needs Pillow).
 
 Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; drawn artwork is
-original and generated in code; imported images are credited in ASSETS.md. Gameplay draws on EasyTech's World Conqueror 4.
+original and generated in code; imported images are credited in ASSETS.md.

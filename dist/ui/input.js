@@ -2,6 +2,7 @@
 'use strict';
 let helpBack = 'game';
 document.addEventListener('change', e => {
+  if (uiActionBusy) return;
   const id = e.target.id;
   if (id === 'difficulty-select') {
     setup.difficulty = e.target.value;
@@ -13,18 +14,20 @@ document.addEventListener('change', e => {
     if (missionBriefingId) briefingDialog(missionBriefingId);
     $('mission-difficulty-select')?.focus();
   }
-  if (id === 'fleet-select' && e.target.value) selectUnit(+e.target.value, true);
-  if (id === 'station-select' && e.target.value) selectStation(+e.target.value, true);
   if (id === 'stack-select') {
     shop.stack = +e.target.value;
     openShop(shop.station);
   }
   if (e.target.dataset.cityUnit) {
+    undoStack = [];
+    invalidateUIState();
     E.setCityAutomation(game, +e.target.dataset.cityUnit, { unit: e.target.value || null });
     save();
     updateSelection();
   }
   if (e.target.dataset.automationField) {
+    undoStack = [];
+    invalidateUIState();
     const a = E.automationState(game),
       field = e.target.dataset.automationField;
     if (field === 'enabled' || field === 'autoUpgrade') a[field] = e.target.checked;
@@ -34,6 +37,8 @@ document.addEventListener('change', e => {
     productionDialog();
   }
   if (e.target.dataset.automationReserve) {
+    undoStack = [];
+    invalidateUIState();
     const a = E.automationState(game),
       key = e.target.dataset.automationReserve;
     a.reserve[key] = Math.max(0, Math.floor(+e.target.value || 0));
@@ -43,6 +48,7 @@ document.addEventListener('change', e => {
   }
 });
 document.addEventListener('click', e => {
+  if (uiActionBusy) return;
   const portrait = e.target.closest('[data-general]');
   if (portrait && !e.target.closest('button')) {
     generalDialog(portrait.dataset.general, portrait.dataset.personal === '1');
@@ -128,12 +134,17 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.deploy !== undefined) {
-    const u = selectedUnit();
-    if (u) {
-      deploying = { ship: u.id, index: +d.deploy };
-      updateSelection();
-      toast('Choose a green hex next to the carrier to launch.');
-    }
+    const u = selectedUnit(),
+      i = Number(d.deploy);
+    if (!interactive() || !u || u.side !== game.player || E.TYPES[u.type].naval !== 'ship') return;
+    const why = Number.isInteger(i) && i >= 0 ? E.deployReason(game, u, i) : 'Invalid cargo selection';
+    if (why) { toast(why); return; }
+    carrierHoldOpen = null;
+    detailOpen = false;
+    closeModal();
+    deploying = { ship: u.id, index: i };
+    updateSelection();
+    toast('Choose a green land hex next to the carrier to launch.');
     return;
   }
   if (d.recruit) {
@@ -147,6 +158,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.bulkBuild) {
+    undoStack = [];
     const r = E.bulkCityUpgrade(game, game.player, d.bulkBuild);
     if (r.reason) toast(r.reason);
     else {
@@ -250,7 +262,7 @@ document.addEventListener('click', e => {
   }
   if (d.campaignTab) return campaignDialog(d.campaignTab);
   if (d.mission) return briefingDialog(d.mission);
-  if (d.startMission) return startMission(d.startMission);
+  if (d.startMission) return confirmReplace(CAMPAIGN_KEY, 'campaign', () => startMission(d.startMission));
   if (d.admiral) {
     const u = selectedUnit(),
       r = u ? E.assign(game, u.id, d.admiral) : { ok: false, reason: 'Select a unit first.' };
@@ -263,12 +275,25 @@ document.addEventListener('click', e => {
   }
   switch (d.action) {
     case 'details':
-      detailOpen = !detailOpen;
+      if (selectedUnit()) {
+        carrierHoldOpen = null;
+        detailOpen = false;
+      } else if (selectedStation() || selectedSite()) {
+        detailOpen = !detailOpen;
+      } else {
+        detailOpen = false;
+      }
       updateSelection();
       break;
     case 'start-conquest':
-      newGame();
+      confirmReplace(SAVE_KEY, 'new', newGame);
       break;
+    case 'replace-confirm': {
+      const then = pendingReplace;
+      pendingReplace = null;
+      then?.();
+      break;
+    }
     case 'continue':
       loadGame(getSave());
       break;
@@ -284,9 +309,12 @@ document.addEventListener('click', e => {
     case 'briefing':
       briefingDialog(game.campaign.id, true);
       break;
-    case 'mission-retry':
-      startMission(game.campaign.id, game.difficulty || 'normal');
+    case 'mission-retry': {
+      const id = game.campaign.id,
+        difficulty = game.difficulty || 'normal';
+      confirmReplace(CAMPAIGN_KEY, 'close', () => startMission(id, difficulty));
       break;
+    }
     case 'talk-next':
     case 'talk-skip':
       talkNext(d.action === 'talk-skip');
@@ -315,6 +343,8 @@ document.addEventListener('click', e => {
       productionDialog();
       break;
     case 'automation-clear-cities': {
+      undoStack = [];
+      invalidateUIState();
       E.automationState(game).cities = {};
       save();
       productionDialog();
@@ -322,6 +352,8 @@ document.addEventListener('click', e => {
       break;
     }
     case 'automation-fleija-reserve': {
+      undoStack = [];
+      invalidateUIState();
       const a = E.automationState(game);
       a.reserve.credits = E.FLEIJA.cost.credits;
       a.reserve.industry = E.FLEIJA.cost.industry;
@@ -332,6 +364,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'automation-run': {
+      undoStack = [];
       const r = E.runCityAutomation(game, game.player, { force: true });
       render();
       save();
@@ -389,6 +422,15 @@ document.addEventListener('click', e => {
       if (hqBack === 'start') startMenu();
       else closeModal();
       break;
+    case 'carrier-deploy': {
+      const u = selectedUnit();
+      if (u && u.side === game.player && E.TYPES[u.type].naval === 'ship' && interactive()) {
+        carrierHoldOpen = carrierHoldOpen === u.id ? null : u.id;
+        detailOpen = false;
+        updateSelection();
+      }
+      break;
+    }
     case 'admirals':
     case 'assign':
       admiralDialog();
@@ -410,9 +452,6 @@ document.addEventListener('click', e => {
       break;
     case 'end-confirm':
       endTurn(true);
-      break;
-    case 'skip-ai':
-      skipAI = true;
       break;
     case 'fleija':
       strikeMode = !strikeMode && interactive();
@@ -442,14 +481,14 @@ document.addEventListener('click', e => {
       const u = selectedUnit();
       if (u && u.side === game.player && interactive() && E.clearGoto(game, u.id).ok) {
         routing = null;
-        refreshAndSave(true);
+        refreshAndSave();
         toast('Auto-move stopped: the unit will not move on its own next turn.');
       }
       break;
     }
     case 'wait': {
       const u = selectedUnit();
-      if (u && u.side === game.player && interactive()) {
+      if (u && u.side === game.player && interactive() && !u.attacked) {
         u.moved = u.attacked = true;
         refreshAndSave();
         nextFleet();
@@ -472,6 +511,7 @@ document.addEventListener('click', e => {
   }
 });
 document.addEventListener('keydown', e => {
+  if (uiActionBusy) { e.preventDefault(); return; }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.general) {
     e.preventDefault();
     generalDialog(e.target.dataset.general, e.target.dataset.personal === '1');
@@ -496,7 +536,11 @@ document.addEventListener('keydown', e => {
       else if (modal.querySelector('[data-back="campaign"]')) campaignDialog();
       else if (helpBack === 'start' && modal.querySelector('[aria-label="Field manual"]')) startMenu();
       else if (archiveBack === 'start' && modal.querySelector('[aria-label="Knightmare archive"]')) startMenu();
-      else closeModal();
+      else {
+        const close = modal.querySelector('[data-action="research-close"],[data-action="elite-close"],[data-action="generals-close"],[data-action="general-close"]');
+        if (close) close.click();
+        else closeModal();
+      }
     }
     return;
   }
@@ -510,8 +554,51 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     undoMove();
   }
-  if (k === 'h') centerOn(homeOf());
+  const u = selectedUnit(),
+    own = u && u.side === game.player && interactive() && !phaseReason();
+  if (k === 'h' && own && !u.attacked) {
+    e.preventDefault();
+    u.moved = u.attacked = true;
+    refreshAndSave();
+    nextFleet();
+    return;
+  }
+  if (k === 'a' && own && !u.cmd && E.TYPES[u.type].naval !== 'ship') {
+    e.preventDefault();
+    admiralDialog();
+    return;
+  }
+  if (k === 'f' && own && !u.elite && !E.reinforceReason(game, u)) {
+    e.preventDefault();
+    doAction(() => E.reinforce(game, u.id));
+    return;
+  }
+  if (k === 'r' && own && !E.repairReason(game, u)) {
+    e.preventDefault();
+    doAction(() => E.repair(game, u.id));
+    return;
+  }
+  if (k === 'c' && own && (u.goto || routing === u.id)) {
+    e.preventDefault();
+    routing = null;
+    if (u.goto) {
+      if (E.clearGoto(game, u.id).ok) {
+        refreshAndSave();
+        toast('Auto-move stopped.');
+      }
+    } else {
+      updateSelection();
+      toast('Destination selection cancelled.');
+    }
+    return;
+  }
   if (k === 'g') startRouting();
+  if (k === 'escape' && carrierHoldOpen != null) {
+    carrierHoldOpen = null;
+    detailOpen = false;
+    updateSelection();
+    return;
+  }
   if (k === 'escape' && strikeMode) {
     strikeMode = false;
     render();
@@ -527,12 +614,6 @@ document.addEventListener('keydown', e => {
   if (k === '+' || k === '=') changeZoom(1.2);
   if (k === '-') changeZoom(1 / 1.2);
   if (k === '0') zoom = ZOOM_MIN;
-  if (['w', 'a', 's', 'd'].includes(k)) {
-    e.preventDefault();
-    const step = 70 / (baseScale * zoom);
-    cam.x += k === 'a' ? -step : k === 'd' ? step : 0;
-    cam.y += k === 'w' ? -step : k === 's' ? step : 0;
-  }
   if (e.key.startsWith('Arrow')) {
     e.preventDefault();
     const p = hover || selectedUnit() || selectedStation() || homeOf();

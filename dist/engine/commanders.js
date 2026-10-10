@@ -649,7 +649,7 @@
       hull: 'Special Division',
       title: 'Special Division Captain',
       skill: 'Special Operations',
-      desc: 'Capturing a city restores 25% of the unit’s frame and cuts a turn off the city’s battery recharge and F.L.E.I.J.A. devastation.',
+      desc: 'Capturing a city restores 25% of the unit’s frame and cuts a turn off the city’s battery recharge.',
       fx: { captureHeal: 0.25, specialOps: true },
       recruit: 200,
     },

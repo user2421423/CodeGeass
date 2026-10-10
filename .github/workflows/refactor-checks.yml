@@ -1,0 +1,26 @@
+name: Refactor regressions
+on:
+  push:
+    branches: ['refactor/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify source sections rebuild production code
+        run: node tools/build_sources.cjs --check
+      - name: Run core and source checks
+        run: node --test tests/core.test.cjs tests/source-parts.test.cjs
+      - name: Run UI, assets and map checks
+        run: |
+          node tests/ui-smoke.cjs
+          node tools/validate_assets.cjs --tracked
+          python3 tools/check_map.py

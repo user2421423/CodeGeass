@@ -9,13 +9,13 @@ organised, every system built so far, and the working conventions the owner expe
 
 ## 1. Premise
 
-Knightmare Conquest is a browser turn-based hex strategy game in the style of **World Conqueror 4** (EasyTech),
+Knightmare Conquest is a browser-based turn-based hex strategy game,
 themed on **Code Geass**. For now it has one mode, **Conquest**: a full world map in 2017 a.t.b. where the Holy
 Britannian Empire, the Europia United and the Chinese Federation fight each other (and the neutral powers) with
 Knightmare Frames.
 
 - Move each unit once and attack once per turn; click a green hex to move, a red hex to attack at once.
-- Units are 1–3 frames; commanders ride on units and give bonuses; morale, terrain and counter-fire matter. As in WC4,
+- Units are 1–3 frames; commanders ride on units and give bonuses; morale, terrain and counter-fire matter. As in traditional hex strategy games,
   attack scales with remaining frame (`power()`: 40% + 60% × health, so 70% at half).
 - Capture cities for income, build Knightmares in city factories, upgrade cities, research HQ technology.
 - **Surrender at zero cities (Conquest):** a major power surrenders only when its last city falls (`move()` checks after
@@ -24,7 +24,7 @@ Knightmare Frames.
   or hold the most cities at the 120-turn armistice; losing your last city loses the war.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
-**Campaign:** three story arcs as WC4-style campaigns, each played from either side: Season 1 and R2 (Black Knights or
+**Campaign:** three story arcs as mission-based campaigns, each played from either side: Season 1 and R2 (Black Knights or
 Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 58 missions on
 hand-built tactical maps,
 reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (every mission is built and checked in
@@ -47,7 +47,9 @@ reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` 
 ### Artwork handoff status
 
 Published artwork is tracked and deployed from `dist/assets/art/`: **70 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames) and 58 commander portraits**, registered
+including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames), 58 commander portraits and 3 building
+pictures (`buildings/city` drawn for every city, `buildings/port` on every port hex, `buildings/mine` on every mine
+on its own hex and in the mine panel; `ART.drawBuilding` / `ART.building`)**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
 `ASSETS.md` and `sources.json`. The ignored `dist/local-art/` directory is only a local preparation/override
 workspace and is never required by GitHub Pages. Every Knightmare type and commander has published art; procedural art is
@@ -68,13 +70,13 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | `dist/audio.js` | `SFX`: Web Audio synthesized sounds per class and faction voice, Landspinner movement, MVS slash, batteries, the F.L.E.I.J.A. detonation. |
 | `dist/ui/*.js` | The UI, as classic scripts sharing one global scope (load order matters only for code that runs at load time; the boot is last): `core.js` (state, constants, saving, modal helpers), `hud.js` (start screen, top bar, F.L.E.I.J.A. targeting, unit and city panels, orders, dock), `turns.js` (end turn, rival-turn playback with Skip, rewards, results), `dialogs.js` (factory, Elite Forces, HQ research, commanders, Commander Info, Knightmare archive, world powers, field manual), `campaign-screens.js`, `view.js` (camera, hit-testing, map input), `effects.js`, `input.js` (keyboard, buttons, WebMCP tools) and `renderer.js` (minimap, cached terrain layer, cities, units, overlays, frame loop). The terrain layer (`mapLayer`: terrain, territory, coastlines and borders) is redrawn only when the zoom, canvas size or a hex's `owner`/`terrain` changes, or the camera pans past its margin; anything else it draws needs `mapLayerCache = null` when it changes. |
 | `dist/game.js` | Boots the UI once every `ui/*.js` file has loaded. |
-| `dist/style.css`, `dist/battlefield.css` | Base styles and the WC4 reskin from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
-| `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
+| `dist/style.css`, `dist/battlefield.css` | Base styles and the strategy HUD carried over from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
+| `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid, with `REDRAW` regions from real coastlines (`tools/data/coast.json`, see §Map); `tools/check_map.py` locks the rest; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
 | `tests/` | `core.test.cjs` (engine and campaign integrity) and `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order). |
 
 ### Engine conventions
 
-- Game state `g` is plain JSON (saved whole to `localStorage`). Key fields: `game: 'knightmare'`, `rulesVersion`,
+- Game state `g` is plain JSON, saved to `localStorage` (conquest saves in compact form, see below). Key fields: `game: 'knightmare'`, `rulesVersion`,
   `player`, `order` (turn order, player first), `phase`, `turn`, `wrap`, `cols/rows`, `tiles`, `units`, `stations`
   (the cities), `economy`, `tech` (per side), `officers` (operation commanders), `roster` (copy of your commanders),
   `fallen` (surrendered powers), `difficulty`, `log`, `over`.
@@ -85,9 +87,11 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Every player action has a `…Reason(g, …)` function returning `null` or a human-readable reason; the UI shows it on
   disabled buttons. Shortfalls read "Need N more credits / command tokens" and render as red costs instead.
 - Saves are gated by `RULES_VERSION` (currently 3) in `migrateSave`; bump it when save shape or rules change.
-  Version 2 replaced the frame lineup and version 3 added Sakuradite. Version 2 saves are upgraded by `upgradeSave`
-  (deposits placed, Sakuradite stockpiles added, refineries away from a deposit converted into the 15 credits a level
-  they used to export); version 1 saves reference retired frames and are rejected.
+- Compact conquest saves (`E.packSave` / `E.unpackSave`, used by `save()`, `getSave()` and undo): terrain is stored only
+  where it differs from `WORLD_ROWS`, every other per-hex field (`owner`, `provinceCity`, any new one) as runs in map
+  order (`[value, count]`, or `[count]` where absent), and destroyed units are dropped. About 7x smaller (≈0.9 MB →
+  ≈0.12 MB). `migrateSave` unpacks first, so full-format saves still load. Campaign saves stay whole (small maps).
+  Version 3 added Sakuradite; every older save was made on the old 100 × 42 map and is rejected.
 - `createGame(player, difficulty, 'conquest', seed)`. Cities and armies are placed by longitude/latitude and snap to
   the nearest free land hex, so they can be edited without touching coordinates. The high-resolution conquest map rejects older 100 × 42 saves rather than misplacing them.
 - Commander abilities are data (`fx` on each commander: `dmg`, `dmgBranch`, `crit`, `move`, `taken`, `counter`,
@@ -120,7 +124,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - 1–3 frames per unit (+70% HP, +45% attack per extra frame; each extra frame costs 85%). Veterancy 0–5 from kills.
 
 ### Map, terrain and the sea
-- 180 × 76 wrapping hexes (2° per column, 74°N to 54°S; 13,680 hexes total), generated by `tools/build_map.py`. The denser grid keeps coastlines, islands and straits much closer to the WC4 world-map feel.
+- 180 × 76 wrapping hexes (2° per column, 74°N to 54°S; 13,680 hexes total), generated by `tools/build_map.py`. The denser grid represents coastlines, islands and straits more faithfully.
 - Coastline pass (`HEX_LAND` / `HEX_SEA` in `tools/build_map.py`, exact hexes applied after the lon/lat lists): Cornwall
   and north-east Scotland, southern Kyushu, Shikoku/Kii and eastern Tohoku, Gujarat and Tamil Nadu, Galicia, Portugal and
   the Algarve, Korea's south-west coast, northern Norway and four Australian coasts are land; the Tsugaru Strait
@@ -128,6 +132,29 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Hexes that would bridge a strait at 2° per hex are left out (Italy's heel, India's tip, southern Sweden, western
   Kyushu, the Low Countries' coast); Kyushu stays joined to Honshu. Regenerate with
   `python3 tools/build_map.py --inject dist/engine/world.js`.
+- Real coastlines (`REDRAW` in `tools/build_map.py`): the British Isles, Europe's Mediterranean and Iberian coasts
+  (with the Adriatic, Balkans, Aegean and Bosporus), Korea, the Philippines and Sulawesi are rasterized from Natural
+  Earth 1:10m land outlines (public domain), clipped to those regions in `tools/data/coast.json` by
+  `tools/prepare_coast.py`. A hex there is land when a region-set share of its area is land (40% Europe, 45% Korea so
+  the Korea Strait stays open, 30% for the island chains), sampled on ~50 points per hex. They overwrite the
+  hand-drawn raster and `HEX_LAND`/`HEX_SEA` inside those regions. `FIX_LAND`/`FIX_SEA` apply last, for gameplay:
+  Honshu joined to Hokkaido, Calabria land so Sicily stays joined to Italy (Messina closed), sea at Dover, the North
+  Channel, the Bosporus/Dardanelles and the Dalmatian coast (so the Adriatic reaches Otranto), Taipei's old hex, the
+  hex east of Chennai and southern Tamil Nadu, Iceland's Westfjords, and the Gulf of Suez (106,26), so Africa and Asia
+  meet only by sea. Small Mediterranean islands drop out at these shares; Sardinia stays, given to the E.U. by
+  `TERRITORY` in `world.js` (land hexes no city's territory reaches, assigned by hand).
+- Coast hexes (`w` in `WORLD_ROWS`, terrain `coast`): part land, part water. Land units stand and fight there as on
+  land (an embarked unit that reaches one lands; nobody embarks onto one), warships sail through them (never into a
+  city), one unit per hex. Coast land belongs to a city province like any other land hex. `tools/coast_hexes.py` picks them from the drawn GSHHG
+  coastline (sea hexes at least 15% land, land hexes under 50% land), skipping cities, ports, mines, starting units,
+  the deliberate fix lists and the strategic straits, and only where the hex touches one stretch of shore, so coast
+  never joins landmasses or opens a channel. `build_map.py` applies `tools/data/coast_hexes.json` last; older saves
+  pick the hexes up in `migrateCoastalTerrain`. Cities, mines and starting armies are placed on solid land only.
+- Map lock: `tools/data/map_locked.txt` is the approved map. `python3 tools/check_map.py` (run in CI) fails when a hex
+  outside the `REDRAW` regions and fix lists changes, or when `world.js` is out of date with `build_map.py`;
+  `--update` refreshes the lock after an approved change. `core.test.cjs` checks the islands, straits and joins
+  gameplay relies on, and that every city sits within one hex of its coordinates. To redraw another region from real
+  coastlines, add it to `REDRAW`, run `tools/prepare_coast.py` with ne_10m_land.geojson, then `build_map.py --inject`.
 - Plains 1; forest 2 (−15% damage); mountains 2 (−25%); desert 1 (3% attrition); tundra 2 (2.5% attrition);
   Himalaya and Greenland ice cap impassable. Julius and float units ignore movement costs.
 - **Movement rebalance for the denser world:** Conquest applies a +1 mobility bonus to every land unit after its
@@ -161,8 +188,11 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     (+1 sea), Landing Craft (+25% instead of +50%), Naval Gunnery (+15% carrier damage), Damage Control, Rapid Launch
     Systems (+10% on the first attack the turn a unit launches, level-3 port). `normalizeResearch` moves the old
     `sakura.transport` / `sakura.landing` levels over (applied in `applyTech`, `research` and the UI's profile load).
-  - AI: ports (one level 2, up to three in all), a fleet of up to 4 carriers and 6 amphibious formations, and carrier
-    operations (`aiCarrier`): a carrier waits off a coast where troops with nothing to attack on their landmass (or
+  - AI: naval demand scales with exposed coastal cities, overseas fronts and nearby hostile naval forces.
+    There are no fixed carrier, amphibious or port-count caps. Coastal cities gain new ports to cover additional
+    theaters, and the AI upgrades existing ports to levels 2 and 3 when justified. Navy purchases preserve enough
+    credits and industry for a two-frame Scout formation, and available ports can recruit in parallel each turn.
+    Carrier operations (`aiCarrier`): a carrier waits off a coast where troops with nothing to attack on their landmass (or
     Infantry/Armor far from any target) gather; they board; once full or after three turns it sails for the best
     landing hex (`landingScore`: on an enemy landmass, no more defenders within 3 than it carries, near an undefended
     city) and `aiLaunch` puts every formation ashore and plays its turn. Damaged empty carriers go home to repair.
@@ -178,7 +208,14 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   180/240/300 by tier, 400 for fortress cities, 600 for capitals.
 - Buildings, each to level 3: Knightmare factory (unlocks tiers, +10 industry, +60 defense), research lab
   (+8 research), and a Sakuradite refinery only where there is a deposit. One unit per city per turn; new units act
-  next turn.
+  next turn. `recruitOptions` deploys a new unit only on the city hex (a naval unit only on the port's sea hex), so a
+  unit standing there blocks production until it moves off (Elite Forces too). AI city guards stand beside their city
+  until an enemy comes within 2 hexes of it, so they leave the factory free. Like a player, `aiProduction` step 1b
+  first clears its factories: a ready unit standing on a quiet city gets its normal orders (`aiOrder`); on a city with
+  an enemy within 2 hexes it steps to the best-cover hex beside it so the city can build another defender, but only
+  when the side can pay for its cheapest unit (otherwise it holds the city). The UI animates these moves from
+  `g.vacated`. In the UI, clicking a selected unit that
+  stands on a city selects the city (and back), and the dock shows a City button for it.
 - **Production Command (player Conquest only):** optional automation stored in `g.automation`. Each owned city has
   exactly one local choice: an exact normal unit type to auto-produce every turn, or Off for manual production. There
   are no per-city Balanced/Armor/Artillery/etc. policies and no per-city building toggles. Global settings control
@@ -227,10 +264,11 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   at 85%, the Federation's Infantry discount applies); `spend()` deducts every resource; `shortfall()` names
   Sakuradite. Helpers: `depositHost`, `depositOwner`, `depositOf(g, city)`, `siteAt`, `depositYield`, `cityYield`,
   `refineReason`/`refine` (mines on their own hex). A surrendering power's mines and half its stockpile pass on.
-- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` keeps a guard on Fuji and up to
-  two on any threatened mine; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
-  turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavy saving only
-  starts with the Sakuradite in hand; tier-I frames are fallbacks when Sakuradite runs short.
+- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` requests a guard at Fuji and up to
+  two at each threatened mine, subject to nearby available troops; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
+  turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavies are
+  regular level-3 factory choices when armored or fortified fronts need them, with a protected ordinary-unit
+  budget rather than a separate saving chance or purchase cooldown. Tier-I frames remain fallbacks when Sakuradite runs short.
 
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 2, `cost`
@@ -244,14 +282,17 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   of the last launch; `g.fleijaDetonated` is the turn of the first successful blast
   (`true` in older saves) and `eliminatorTurn(g)` = that + `ELIMINATOR.research` (3);
   `s.eliminatorProject = { side, started, ready }` and `s.eliminator = 1` hold the defensive project/charge;
-  `s.devastated` / mine `d.devastated` only survive in saves from the older ruin rules; `g.launches` (this AI turn's strikes, played
+  `g.ruins` lists the cities destroyed this conquest (`{ name, c, r, owner, capital, turn }`, drawn by the renderer and
+  described in the terrain panel); `g.launches` (this AI turn's strikes, played
   by the UI like `g.strikes`). Tile terrain `crater` (movement 2, no cover).
 - Rules: `projectReason`/`startProject` (logs the INTELLIGENCE line), `cityBusyReason` blocks units and buildings in
-  a city with a project or in ruins, `strategicTurn` (called from `beginTurn`) completes warheads and keeps ruins at
-  0 defenses, `dropProject` on capture, ruin or surrender (`annexStrategic` also empties the loser's arsenal).
-  `launchReason`/`launch(g, side, c, r)`: no limit a turn, from any owned city (the nearest is the visual origin).
-  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, a city removed from
-  `g.stations` for good (`destroyCity`: project, Eliminator and automation entry dropped; its deposit too), a deposit
+  a city with a project, `strategicTurn` (called from `beginTurn`) completes warheads, `dropProject` on capture,
+  destruction or surrender (`annexStrategic` also empties the loser's arsenal).
+  `launchReason`/`launch(g, side, c, r)`: no limit a turn, from any owned city (the nearest is the visual origin);
+  a power cannot strike its own last city.
+  `blastArea(g, p, radius)` is the target plus `radius` rings. Ground zero: units killed, a city destroyed for
+  the rest of the conquest (`destroyCity`: it leaves `g.stations` and becomes an entry in `g.ruins`; project,
+  Eliminator and automation entry dropped; its deposit too), a deposit
   removed from `g.sites` (`destroyDeposit`; the result lists them in `depleted`), a permanent crater. A rival whose
   last city was erased surrenders to the launcher. Ring: units to 10% and their morale floor; cities
   `ruin(…, 1)` (defenses 0, one level off each building and the output it added, never below founding values from
@@ -260,11 +301,11 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   research for every power; it becomes buildable `research` (3) turns later, announced by `strategicTurn`. A level-3 lab builds a charge for 1,200 credits / 300 industry / 250 research /
   60 Sakuradite over 3 turns; a power holds at most `ELIMINATOR.max` (3) charges, ready or under construction, one
   per city (`sideEliminators`). The completed charge is tied to its city and automatically intercepts one enemy
-  warhead targeted within range 2; the attacking warhead and defensive charge are both consumed and no blast occurs.
+  warhead targeted within range 3; the attacking warhead and defensive charge are both consumed and no blast occurs.
   Capture, surrender or F.L.E.I.J.A. ruin destroys the project/charge. `eliminatorReason`, `startEliminator`,
   `eliminatorDefender` and `dropEliminator` implement it.
 - AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ground zero adds
-  the city's output, +3000 if it is its owner's last city; ruins score 0; projects +2000; a live capital in the inner
+  the city's output, +3000 if it is its owner's last city; projects +2000; a live capital in the inner
   ring +1500 only with the launcher's capturing units within 4 hexes), a rival deposit at ground zero 25 × its base,
   skips any blast touching its own units or cities and fires at 1500+. `aiProduction` step 0b launches every ready
   warhead. Step 2b: once Eliminators are available, it starts every charge it can afford up to the cap in
@@ -283,7 +324,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   Eliminator projects/ready charges use cyan map rings; protected launch confirmations warn that the warhead will be
   consumed, and `fleijaSequence` shows a separate "F.L.E.I.J.A. eliminated" interception state instead of a blast.
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
-  Liaodong, Singapore, Panama, Pearl Harbor): range 3, 40% of the target's frame, 2-turn recharge.
+  Liaodong, Singapore, Panama, Pearl Harbor): range 2 (+1 with Battery Overcharge), 60 + 10% of the target's maximum HP with no cap, always 2-turn recharge. Fortifications research adds 100 city defense HP per level (up to +500).
 
 ### Elite Forces
 - Nineteen persistent single-frame hero units (`ELITE_FORCES`, frames `elite_*`), one HQ tab per faction:
@@ -401,13 +442,15 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   word it.
 
 ### AI
-- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: the capital keeps 2–4 defenders), then in
-  Conquest the theaters (`planFronts`). Campaign missions keep one side-wide `goalField`.
+- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: capital seeks 2 defenders,
+  4 when threatened), then Conquest theaters (`planFronts`). Campaign missions keep one side-wide
+  `goalField`. There is no separate strategic reserve or fixed percentage budget for routine defense.
 - Threats (`threatTo`): any enemy within 5 hexes. In Conquest a coastal city or mine is also threatened by a loaded
   carrier within its sail + 1, an amphibious frame within its sea move + 1, or an embarked transport within its
   sail + 1. Garrisons and defensive fronts both use it.
-- In Conquest, fortress cities (the strait guns) and level-2+ naval bases always keep one land defender. Warships are
-  never picked as garrisons.
+- In Conquest, fortress cities (the strait guns) and level-2+ naval bases request one land
+  defender if one is available nearby. Warships are never picked as garrisons. Threatened cities
+  and mines receive additional guards based on enemy threats and available troops.
 - The geography pass opened the strategic straits (Malacca, Otranto, Danish Straits, Bosporus, Bab-el-Mandeb,
   Hudson, Tsugaru). At this scale the Malacca gap leaves Singapore on the Sumatra landmass, so it's an island
   fortress the AI holds, reinforces and attacks by sea.
@@ -419,8 +462,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     and sized (desired strength 1.5 × the enemy strength near its objectives; defensive fronts 1.2 × the menace less
     garrisons). Priority is discounted when half the army could not meet the need.
   - Strength is `unitStrength`: frames × health × generation, ×1.5 commanders, ×1.5 Elite Forces.
-  - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace) plus
-    the four best others. A 10% reserve waits at the capital and is released to any emergency.
+  - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace)
+    plus the four best others. Garrisons are assigned locally first; all other deployable ground strength
+    is assigned to offensive or defensive fronts according to threat, priority and military need.
+    **There is no strategic reserve and no percentage limit on garrisons or defensive fronts.**
   - The rest of the army is split 50/25/15/10 by rank, capped by need. The front furthest below its target takes the
     nearest free unit.
   - Assignments are sticky for 4 turns (`g.ai[side].assignments`), unless the front is gone, the unit is 60+ hexes
@@ -435,12 +480,14 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   - Carriers carry only formations whose fronts head for the same landmass; idle ones wait off the best overseas
     rally city.
   - Tunables are in `FRONT` (exported); `aiPlan`, `unitStrength` and `FRONT` are exported for tests.
-- `aiProduction`: batteries, repairs, saving for super-heavies (then the largest super-heavy formation affordable),
-  one building upgrade, reinforcements, then production with no army cap; the treasury is the limit. Factories
-  serving the front furthest below its need build first, and put what that front asks for (`frontNeeds`: by the
-  enemy's and its own composition) at the top of their menu. Each factory builds a 3- or 2-frame formation of the
-  first menu frame it can afford that way; a lone frame is built only when no factory can afford any formation that
-  turn (otherwise the money is saved). Sakuradite held back for a project only blocks purchases that spend Sakuradite.
+- `aiProduction`: batteries, repairs, strategic-weapon planning, upgrades, reinforcements, and front-driven
+  factory production with no fixed army or super-heavy ownership cap. Super-heavy frames join ordinary level-3
+  menus for understrength fronts facing armored/high-tier forces or fortified objectives, scaled to local demand.
+  They obey the same 3-, 2- and 1-frame buying passes and must leave a two-frame Scout budget available.
+  Optional upgrades and reinforcements also preserve that ordinary recruitment budget. Factories serving the
+  largest front deficits build first, with `frontNeeds` setting the normal class preference. Each factory
+  tries a 3- or 2-frame formation first, then any factory still idle may build an affordable single frame.
+  Sakuradite reserved for strategic projects only blocks purchases requiring Sakuradite.
 - `aiOrder`: moves along the unit's front field, scores attacks, and otherwise embarks only in convoys.
 - In 25-turn all-AI simulations the Federation now survives to turn 25 in 11 of 12 games (it was always eliminated
   before); the E.U. still leads. Balance is first-pass.

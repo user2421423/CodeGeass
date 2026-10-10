@@ -49,7 +49,7 @@ function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
     profile = loadProfile(),
     saved = getSave(CAMPAIGN_KEY),
-    resume = saved && !saved.over && CP.mission(saved.campaign?.id);
+    resume = saved && (!saved.over || !saved.rewardClaimed) && CP.mission(saved.campaign?.id);
   campaignTab = CP.CAMPAIGNS[cid] ? cid : Object.keys(CP.CAMPAIGNS)[0];
   const camp = CP.CAMPAIGNS[campaignTab],
     season = CP.SEASONS?.[camp.season] || { name: camp.name, short: camp.short },
@@ -66,7 +66,7 @@ function campaignDialog(cid = campaignTab) {
         return `${m.claimed ? '✓' : m.reached ? '◆' : '○'} ${m.stars}★: ${prize}`;
       })
       .join(' · ');
-  // WC4-style: pick a season first, then the side you play it from.
+  // Campaign selection: pick a season first, then the side you play it from.
   const seasonTabs = Object.entries(CP.SEASONS || {})
     .map(([n, s]) => {
       const [k] = camps.find(([, c]) => String(c.season) === n && c.side === camp.side) || camps.find(([, c]) => String(c.season) === n);
@@ -142,15 +142,11 @@ function startMission(id, difficulty = missionDifficulty) {
   const CP = E.campaign;
   if (!CP?.mission(id)) return;
   missionDifficulty = CP.DIFFICULTIES[difficulty] ? difficulty : 'normal';
-  aiToken++;
-  hqBack = 'game';
-  strikeMode = false;
+  resetSession();
   campaignTab = CP.mission(id).campaign;
   game = E.applyProfile(CP.createMission(id, Date.now() >>> 0, missionDifficulty), loadProfile());
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
-  undoStack = [];
-  effects = [];
   zoom = homeZoom();
   closeModal();
   render();
@@ -161,15 +157,11 @@ function startMission(id, difficulty = missionDifficulty) {
 // A saved conquest or mission picks up where it stopped, with any unread dialogue and its result screen.
 function loadGame(s) {
   if (!s) return;
-  aiToken++;
-  hqBack = 'game';
-  strikeMode = false;
+  resetSession();
   game = E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
   setWorld();
   selection = null;
-  undoStack = [];
-  effects = [];
   zoom = homeZoom();
   closeModal();
   render();
@@ -179,6 +171,8 @@ function loadGame(s) {
 // Campaign events reach the screen here: blasts and Gefjun Disturbers play on the map, new warnings are flagged,
 // then the queued dialogue runs and `then` follows it.
 function campaignFeed(then = null) {
+  // Commit terminal rewards before victory dialogue can be interrupted or reloaded.
+  if (game.over) claimReward();
   const cm = game.campaign;
   if (!cm) return then?.();
   const fx = cm.fx.splice(0),

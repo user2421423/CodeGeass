@@ -1,4 +1,4 @@
-/* WC4-style HUD iconography for Knightmare Conquest: one inline SVG sprite, referenced with <use>. */
+/* Hex-strategy HUD iconography for Knightmare Conquest: one inline SVG sprite, referenced with <use>. */
 const ICONS = (() => {
   const gear = (() => {
     const cx = 13,
@@ -48,7 +48,7 @@ const ICONS = (() => {
       <polygon points="${hex(16, 15.6, 14)}" fill="url(#ig-bronze)" stroke="#3a220a" stroke-width="1"/>
       <polygon points="${hex(16, 15.6, 10)}" fill="#2a3f5c" stroke="#f1cf73" stroke-width="1"/>
       <polygon points="${star(16, 15.8, 7, 3)}" fill="url(#ig-gold)" stroke="#6b3f05" stroke-width=".6"/>`,
-    // WC4-style gold coin with an embossed dollar sign.
+    // Gold resource coin with an embossed dollar sign.
     credits: `<circle cx="16" cy="16.6" r="14" fill="#6b4208"/>
       <circle cx="16" cy="15.4" r="14" fill="url(#ig-gold)" stroke="#5c3a08" stroke-width="1"/>
       <circle cx="16" cy="15.4" r="10.6" fill="url(#ig-gold-in)" stroke="#fff3c4" stroke-opacity=".75" stroke-width=".9"/>

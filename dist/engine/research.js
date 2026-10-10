@@ -2,7 +2,7 @@
    Data only; read by engine.js. */
 (function (root) {
   'use strict';
-  // HQ technology, as in World Conqueror 4: bought with command tokens earned by winning operations, kept in the
+  // HQ technology: bought with command tokens earned by winning operations, kept in the
   // player's profile across every operation and faction. Each level unlocks at a tier gated by total victories.
   const BRANCHES = { Infantry: 'infantry', Armor: 'armor', Artillery: 'artillery' };
   const BRANCH_NAMES = { infantry: 'Infantry', armor: 'Armor', artillery: 'Artillery', mobility: 'Mobility' };
@@ -333,7 +333,7 @@
           tiers: [4],
           costs: [380],
           req: ['launch', 1],
-          text: () => 'Carrier-Battleship capacity +1 (2 → 3 formations; needs a level-3 port)',
+          text: () => 'Carrier-Battleship capacity +1 (2 → 3 formations)',
         },
       },
     },
@@ -343,7 +343,7 @@
       nodes: {
         fort: {
           name: 'Fortifications',
-          values: [20, 45, 80, 120, 160],
+          values: [100, 200, 300, 400, 500],
           tiers: [1, 2, 2, 3, 4],
           costs: [40, 80, 140, 220, 360],
           text: v => `+${v} defense on your cities`,
@@ -392,8 +392,8 @@
           req: ['battery', 2],
           text: v =>
             v === 1
-              ? 'Fortress batteries recharge 1 turn faster'
-              : 'Fortress battery blasts hit enemies next to the target for 40%',
+              ? 'Fortress battery range +1 hex (2 → 3); recharge stays 2 turns'
+              : 'Fortress battery range +1 hex and blasts hit enemies next to the target for 40%; recharge stays 2 turns',
         },
       },
     },

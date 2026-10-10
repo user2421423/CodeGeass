@@ -19,6 +19,7 @@ function attachMinimap() {
 }
 const MINI_TERRAIN = {
   sea: '#16405e',
+  coast: '#3e7a78',
   plains: '#6f8a4b',
   forest: '#4a6e3f',
   mountain: '#7e7460',
@@ -123,13 +124,78 @@ function drawLine(x, y, tx, ty, color, width = 1, dash = []) {
   ctx.stroke();
   ctx.setLineDash([]);
 }
+let mapFramePending = false,
+  mapFrameDirty = true,
+  mapHasPulse = false,
+  mapRenderRevision = 0,
+  mapPulseTimer = null;
+// State changes invalidate the static layer; selection/camera events only wake the renderer.
+function requestMapFrame() {
+  mapFrameDirty = true;
+  if (mapPulseTimer !== null) {
+    clearTimeout(mapPulseTimer);
+    mapPulseTimer = null;
+  }
+  if (mapFramePending || document.hidden) return;
+  mapFramePending = true;
+  requestAnimationFrame(frame);
+}
+function invalidateMapRender() {
+  mapRenderRevision++;
+  minimapDirty = true;
+  requestMapFrame();
+}
+ART.onImageReady = requestMapFrame;
+function mapAnimating() {
+  const dialogOpen = modal.children ? modal.children.length > 0 : !!modal.innerHTML;
+  return effects.length > 0 || shake > 0 || flash > 0 || (!dialogOpen && !reducedMotion() && mapHasPulse);
+}
 function frame(time) {
+  mapFramePending = false;
+  if (document.hidden) {
+    lastTime = 0;
+    return;
+  }
+  if (!mapFrameDirty && !mapAnimating()) return;
+  mapFrameDirty = false;
   const dt = Math.min(0.05, (time - lastTime) / 1000 || 0.016);
   lastTime = time;
   draw(time, dt);
   drawMinimap();
-  requestAnimationFrame(frame);
+  if (effects.length > 0 || shake > 0 || flash > 0) {
+    // draw() may already have queued the next frame (bump() calls requestMapFrame); a second
+    // callback per vsync would advance every effect twice as fast.
+    if (!mapFramePending) {
+      mapFramePending = true;
+      requestAnimationFrame(frame);
+    }
+  } else if (mapAnimating()) {
+    // Slow decorative glows need fewer redraws than movement/combat; input always wakes immediately.
+    mapPulseTimer = setTimeout(() => {
+      mapPulseTimer = null;
+      if (!document.hidden && !mapFramePending) {
+        mapFramePending = true;
+        requestAnimationFrame(frame);
+      }
+    }, 80);
+  } else lastTime = 0;
 }
+// Capture listeners schedule after the actual event handlers have updated camera/hover state.
+for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel', 'keydown', 'click', 'load'])
+  document.addEventListener(type, requestMapFrame, { capture: true, passive: true });
+if (typeof window.addEventListener === 'function')
+  window.addEventListener('resize', requestMapFrame, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (mapPulseTimer !== null) {
+    clearTimeout(mapPulseTimer);
+    mapPulseTimer = null;
+  }
+  lastTime = 0;
+  if (!document.hidden) requestMapFrame();
+});
+// Keep the backdrop current when dialogs change, but freeze decorative glows behind them.
+if (typeof MutationObserver === 'function')
+  new MutationObserver(requestMapFrame).observe(modal, { childList: true, subtree: true, attributes: true });
 // ======== Map renderer ========
 const PLATE = {
   neutral: { light: '#7a7462', mid: '#45402f', dark: '#25221a', trim: '#e6dfc0', bar: '#c9c2a2' },
@@ -142,6 +208,7 @@ const PLATE = {
 };
 const TERRAIN_FILL = {
   sea: '#174a6c',
+  coast: '#4c8a7d',
   plains: '#7b9852',
   forest: '#567f45',
   mountain: '#8d826a',
@@ -359,7 +426,7 @@ function drawEstimate(p, pr, scale) {
   ctx.fillText(text, 0, -9);
   ctx.restore();
 }
-// WC4 base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
+// Base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
 function drawPlate(u, scale, sea, time = 0) {
   const c = PLATE[u.side],
     cy = 14,
@@ -453,7 +520,7 @@ function drawStackBars(n, side) {
     ctx.fillRect(x, y, w, 1.2);
   }
 }
-// WC4 commander pin: the commander's framed portrait standing above the unit, with rank stars.
+// Commander portrait pin: the commander's framed portrait standing above the unit, with rank stars.
 function drawAdmiralPin(u, p, scale, sel) {
   const a = C(u.cmd);
   ctx.save();
@@ -529,14 +596,17 @@ function drawMine(d, owner, scale, time, occupied) {
     outlinedText(d.name, 0, 52, 10, '#ffc2e0', scale, 'Trebuchet MS', d.base >= 30);
     return;
   }
-  ctx.beginPath();
-  ctx.ellipse(0, 10, 27, 10, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#3a3036';
-  ctx.fill();
-  ctx.strokeStyle = F(owner).color;
-  ctx.lineWidth = Math.max(1.6, 1.4 / scale);
-  ctx.stroke();
-  drawCrystals(0, 9, 1, time);
+  // The published mine picture, else a drawn pit of crystals ringed in the owner's colour.
+  if (!ART.drawBuilding(ctx, 'mine', 0, -4, R * 2.05)) {
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 27, 10, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#3a3036';
+    ctx.fill();
+    ctx.strokeStyle = F(owner).color;
+    ctx.lineWidth = Math.max(1.6, 1.4 / scale);
+    ctx.stroke();
+    drawCrystals(0, 9, 1, time);
+  }
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i < level ? '#ff7ab8' : '#2a1d25';
     ctx.fillRect(20, 6 - i * 5, 4, 3);
@@ -591,6 +661,179 @@ function drawFlash(x, y, radius, color, alpha) {
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fill();
 }
+// Combat FX draw on the existing canvas, not on extra layers, DOM nodes or engine units.
+function combatVfxLine(x, y, tx, ty, color, width, blur = 0) {
+  ctx.save();
+  if (blur) { ctx.shadowColor = color; ctx.shadowBlur = blur; }
+  drawLine(x, y, tx, ty, color, width);
+  ctx.restore();
+}
+function combatVfxSparks(x, y, radius, color, fade = 1, count = 7) {
+  ctx.save();
+  ctx.globalAlpha *= Math.max(0, fade);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < count; i++) {
+    const a = i * Math.PI * 2 / count + 0.19;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(a) * radius * 0.2, y + Math.sin(a) * radius * 0.2);
+    ctx.lineTo(x + Math.cos(a) * radius * (0.78 + 0.07 * (i % 3)), y + Math.sin(a) * radius * (0.78 + 0.07 * (i % 3)));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function combatVfxImpact(x, y, elapsed, color, strength, scale, compact) {
+  const length = compact ? 0.1 : 0.27;
+  if (elapsed < 0 || elapsed >= length) return;
+  const t = elapsed / length, fade = (1 - t) * (1 - t);
+  ctx.save();
+  ctx.globalAlpha *= fade;
+  drawFlash(x, y, (19 + 25 * t) * strength, color, 0.9);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5 * strength / Math.max(scale, 0.6);
+  ctx.beginPath();
+  ctx.arc(x, y, (10 + 27 * t) * strength, 0, Math.PI * 2);
+  ctx.stroke();
+  if (!compact) combatVfxSparks(x, y, (19 + 22 * t) * strength, '#fff2d2', 0.85, 9);
+  ctx.restore();
+}
+function drawCombatShot(e, ax, ay, bx, by, scale) {
+  const age = e.max - e.life - e.delay;
+  if (age < 0 || age > e.duration) return;
+  const compact = reducedMotion();
+  const length = Math.hypot(bx - ax, by - ay) || 1;
+  const ux = (bx - ax) / length, uy = (by - ay) / length, nx = -uy, ny = ux;
+  const sx = ax + ux * 14, sy = ay + uy * 14 - 9, tx = bx, ty = by - 4;
+  const power = e.heavy ? 1.55 : 1;
+  function segment(tail, head, width, color, blur = 0) {
+    combatVfxLine(sx + (tx - sx) * tail, sy + (ty - sy) * tail,
+      sx + (tx - sx) * head, sy + (ty - sy) * head,
+      color, width / Math.max(scale, 0.6), blur);
+  }
+  function muzzle(start, duration, strength) {
+    if (age < start || age > start + duration) return;
+    const alpha = 1 - (age - start) / duration;
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    drawFlash(sx, sy, 20 * strength, e.color, 0.95);
+    if (!compact) combatVfxSparks(sx, sy, 17 * strength, '#fff4dd', alpha, 6);
+    ctx.restore();
+  }
+  if (e.weapon === 'slash') {
+    if (age < 0.27) {
+      const progress = age / 0.27;
+      ctx.save();
+      ctx.globalAlpha *= Math.max(0, 1 - progress * 0.8);
+      ctx.shadowColor = '#79d8ff';
+      ctx.shadowBlur = 15;
+      ctx.strokeStyle = '#a5edff';
+      ctx.lineWidth = 6 / Math.max(scale, 0.6);
+      ctx.beginPath();
+      ctx.arc(tx, ty, 24, Math.PI * (0.9 - progress * 0.35), Math.PI * (1.95 + progress * 0.4));
+      ctx.stroke();
+      ctx.restore();
+    }
+  } else if (e.weapon === 'beam' || e.weapon === 'siege') {
+    muzzle(0.07, 0.18, power);
+    if (age > 0.12 && age < 0.42) {
+      ctx.save();
+      ctx.globalAlpha *= Math.min(1, (age - 0.12) / 0.06, (0.42 - age) / 0.09);
+      segment(0, 1, 13 * power, e.color, 20);
+      segment(0, 1, 5 * power, '#f2e8ff', 7);
+      segment(0, 1, 2.5 * power, '#ffffff');
+      ctx.restore();
+    }
+  } else if (e.weapon === 'railgun') {
+    muzzle(0.025, 0.13, 1.5);
+    const t = (age - 0.065) / 0.17;
+    if (t > 0 && t < 1) {
+      segment(Math.max(0, t - 0.37), t, 11, '#80d9ff', 18);
+      segment(Math.max(0, t - 0.37), t, 3.6, '#ffffff');
+    }
+  } else if (e.weapon === 'rockets') {
+    for (let i = 0; i < (compact ? 1 : 3); i++) {
+      const start = 0.03 + i * 0.065, t = (age - start) / 0.28;
+      muzzle(start, 0.085, 0.72);
+      if (t <= 0 || t >= 1) continue;
+      const sideways = (i - 1) * 12 * Math.sin(Math.PI * t);
+      const x = sx + (tx - sx) * t + nx * sideways,
+        y = sy + (ty - sy) * t + ny * sideways - 10 * Math.sin(Math.PI * t);
+      combatVfxLine(x - ux * 18, y - uy * 18, x, y, '#929ca1', 5 / Math.max(scale, 0.6));
+      combatVfxSparks(x, y, 6, '#fff2bd', 0.9, 4);
+    }
+  } else if (e.weapon === 'laser') {
+    for (let i = 0; i < (compact ? 1 : 3); i++) {
+      const start = 0.03 + i * 0.065, t = (age - start) / 0.15;
+      muzzle(start, 0.07, 0.75);
+      if (t > 0 && t < 1) {
+        segment(Math.max(0, t - 0.2), t, 3, '#ffbd55', 6);
+        segment(Math.max(0, t - 0.2), t, 1.25, '#fff5d8');
+      }
+    }
+  } else {
+    muzzle(0.015, 0.14, 1.1);
+    const t = (age - 0.07) / 0.15;
+    if (t > 0 && t < 1) {
+      segment(Math.max(0, t - 0.2), t, 5.5, '#ffa855', 11);
+      segment(Math.max(0, t - 0.2), t, 2, '#fff8e4');
+    }
+  }
+  combatVfxImpact(tx, ty, age - e.impact, e.color, e.crit ? power * 1.4 : power, scale, compact);
+  if (e.weapon === 'rockets' && !compact)
+    for (let i = 1; i < 3; i++)
+      combatVfxImpact(tx + nx * (i === 1 ? -11 : 12), ty + ny * (i === 1 ? -11 : 12),
+        age - e.impact - i * 0.065, '#ffc07a', 0.6, scale, compact);
+}
+function drawCombatBlast(e, x, y, scale) {
+  const age = e.max - e.life - e.delay;
+  if (age < 0 || age > e.duration) return;
+  const compact = reducedMotion(), t = age / e.duration;
+  const strength = e.heavy ? 1.4 : 1;
+  ctx.save();
+  ctx.globalAlpha *= (1 - t) * (1 - t);
+  drawFlash(x, y - 5, (24 + t * 52) * strength, 'rgba(255,132,54,0.8)', 1);
+  drawFlash(x, y - 6, (10 + t * 26) * strength, 'rgba(255,239,179,0.95)', 0.9);
+  ctx.strokeStyle = '#ffc083';
+  ctx.lineWidth = 3 / Math.max(scale, 0.6);
+  ctx.beginPath();
+  ctx.arc(x, y - 5, (12 + t * 38) * strength, 0, Math.PI * 2);
+  ctx.stroke();
+  if (!compact) {
+    for (let i = 0; i < 10; i++) {
+      const angle = i * 2.39996, radius = (10 + t * 49) * strength;
+      const px = x + Math.cos(angle) * radius, py = y - 5 + Math.sin(angle) * radius * 0.65;
+      combatVfxLine(px, py, px + Math.cos(angle) * 9, py + Math.sin(angle) * 9,
+        i % 2 ? '#ffa951' : '#55565a', 2 / Math.max(scale, 0.6));
+    }
+  }
+  ctx.restore();
+}
+function drawCombatWreck(e, x, y) {
+  const age = e.max - e.life - e.delay;
+  if (age < 0 || age > e.duration) return;
+  const compact = reducedMotion();
+  ctx.save();
+  ctx.globalAlpha *= Math.min(1, e.life / Math.min(0.9, e.duration));
+  ctx.translate(x, y);
+  ctx.rotate(0.12);
+  ctx.filter = 'grayscale(1) brightness(0.27) sepia(0.5)';
+  ART.drawUnit(ctx, e.type, e.side, 0, 0, R * 1.65, R * 1.65);
+  ctx.filter = 'none';
+  if (!compact) {
+    const heat = Math.max(0, 1 - age / 1.5);
+    drawFlash(0, 6, 17, 'rgba(255,122,43,0.5)', heat * 0.85);
+    for (let i = 0; i < 5; i++) {
+      const rise = age * (17 + i * 4);
+      const xx = Math.sin(i * 3 + age * 2) * 8 + i * 2 - 4;
+      ctx.fillStyle = 'rgba(58,58,62,0.48)';
+      ctx.beginPath();
+      ctx.arc(xx, -7 - rise, 5 + age * (3 + i % 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 // Every copy of world x between left and right (the world map wraps east to west; a campaign battlefield does not).
 function copiesBetween(x, left, right) {
   if (!wraps()) return [x];
@@ -604,13 +847,117 @@ function copiesBetween(x, left, right) {
 const MAP_LAYER_MARGIN = 200;
 let mapLayerCache = null;
 function mapLayerFresh(m, scale, dpr, w, h) {
-  if (!m || m.tiles !== game.tiles || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
+  if (!m || m.tiles !== game.tiles || m.revision !== (game.mapRevision || 0) ||
+      m.renderRevision !== mapRenderRevision || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
   const slack = MAP_LAYER_MARGIN - 16;
-  if (Math.abs(offset.x - m.x) > slack || Math.abs(offset.y - m.y) > slack) return false;
-  const tiles = game.tiles;
-  for (let i = 0; i < tiles.length; i++)
-    if (tiles[i].owner !== m.owners[i] || tiles[i].terrain !== m.terrains[i]) return false;
-  return true;
+  return Math.abs(offset.x - m.x) <= slack && Math.abs(offset.y - m.y) <= slack;
+}
+// Camera-independent cache of *complete* terrain tiles, including grid,
+// ownership borders and relief. Reusing the whole base map prevents the 30-50ms
+// canvas path rebuild which was still happening after geography was cached.
+const MAP_ATLAS_TILE = 960;
+const MAP_ATLAS_PAD = 5;
+const mapAtlasTiles = new Map();
+const mapAtlasWarmQueue = [];
+const mapAtlasWarmKeys = new Set();
+let mapAtlasIdlePending = false;
+let mapAtlasGeneration = 0;
+let mapAtlasState = { tiles: null, revision: -1, scale: null };
+function refreshMapAtlas(scale) {
+  const revision = game.mapRevision || 0;
+  if (mapAtlasState.tiles === game.tiles && mapAtlasState.revision === revision && mapAtlasState.scale === scale) return;
+  mapAtlasTiles.clear();
+  mapAtlasWarmQueue.length = 0;
+  mapAtlasWarmKeys.clear();
+  mapAtlasGeneration++;
+  mapAtlasState = { tiles: game.tiles, revision, scale };
+}
+function completeMapTile(tx, ty, scale, detail) {
+  const key = tx + ',' + ty;
+  let item = mapAtlasTiles.get(key);
+  if (item) {
+    mapAtlasTiles.delete(key);
+    mapAtlasTiles.set(key, item);
+    return item;
+  }
+  const worldX = tx * MAP_ATLAS_TILE, worldY = ty * MAP_ATLAS_TILE;
+  const width = Math.min(MAP_ATLAS_TILE, WORLD_W - worldX);
+  const height = Math.min(MAP_ATLAS_TILE, WORLD_H - worldY);
+  const quality = Math.max(0.55, Math.min(1, scale * 1.35));
+  const c = document.createElement('canvas');
+  c.width = Math.ceil((width + 2 * MAP_ATLAS_PAD) * quality);
+  c.height = Math.ceil((height + 2 * MAP_ATLAS_PAD) * quality);
+  const oldCtx = ctx;
+  ctx = c.getContext('2d');
+  try {
+    ctx.setTransform(quality, 0, 0, quality,
+      (-worldX + MAP_ATLAS_PAD) * quality,
+      (-worldY + MAP_ATLAS_PAD) * quality);
+    // Culling is by hex centre, so reach one hex beyond the tile: a hex straddling the
+    // edge must be painted into both neighbouring tiles (the canvas clips the rest).
+    const reach = MAP_ATLAS_PAD + R * 2;
+    paintMapLayer(scale, detail,
+      worldX - reach, worldX + width + reach,
+      worldY - reach, worldY + height + reach);
+  } finally {
+    ctx = oldCtx;
+  }
+  item = { canvas: c, worldX, worldY, width, height, quality };
+  mapAtlasTiles.set(key, item);
+  while (mapAtlasTiles.size > 72) mapAtlasTiles.delete(mapAtlasTiles.keys().next().value);
+  return item;
+}
+// Build the next ring of map tiles during browser idle time, before camera
+// dragging reaches it. One tile per idle turn bounds main-thread work; actual
+// rendering never waits for prefetch if the player moves faster than idle work.
+function scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow) {
+  if (typeof requestIdleCallback !== 'function') return;
+  const maxC = Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1;
+  const maxR = Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1;
+  for (let r = Math.max(0, firstRow - 1); r <= Math.min(maxR, lastRow + 1); r++)
+    for (let c = Math.max(0, firstCol - 1); c <= Math.min(maxC, lastCol + 1); c++) {
+      if (c >= firstCol && c <= lastCol && r >= firstRow && r <= lastRow) continue;
+      const key = c + ',' + r;
+      if (mapAtlasTiles.has(key) || mapAtlasWarmKeys.has(key)) continue;
+      mapAtlasWarmKeys.add(key);
+      mapAtlasWarmQueue.push({ c, r, scale, detail, generation: mapAtlasGeneration });
+    }
+  if (mapAtlasIdlePending || !mapAtlasWarmQueue.length) return;
+  mapAtlasIdlePending = true;
+  function warm(deadline) {
+    if (mapAtlasWarmQueue.length && deadline.timeRemaining() > 8) {
+      const job = mapAtlasWarmQueue.shift();
+      mapAtlasWarmKeys.delete(job.c + ',' + job.r);
+      if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale)
+        completeMapTile(job.c, job.r, job.scale, job.detail);
+    }
+    if (mapAtlasWarmQueue.length) requestIdleCallback(warm);
+    else mapAtlasIdlePending = false;
+  }
+  requestIdleCallback(warm);
+}
+function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
+  refreshMapAtlas(scale);
+  const firstRow = Math.max(0, Math.floor(top / MAP_ATLAS_TILE));
+  const lastRow = Math.min(Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1, Math.floor(bottom / MAP_ATLAS_TILE));
+  for (let k = Math.floor(left / WORLD_W) - 1; k <= Math.ceil(right / WORLD_W); k++) {
+    const shift = k * WORLD_W;
+    const a = left - shift, b = right - shift;
+    if (b <= 0 || a >= WORLD_W) continue;
+    const firstCol = Math.max(0, Math.floor(a / MAP_ATLAS_TILE));
+    const lastCol = Math.min(Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1, Math.floor(b / MAP_ATLAS_TILE));
+    for (let row = firstRow; row <= lastRow; row++)
+      for (let col = firstCol; col <= lastCol; col++) {
+        const t = completeMapTile(col, row, scale, detail);
+        // Draw each tile with its painted padding so neighbours overlap: abutting at a
+        // fractional pixel edge left a faint hairline along every tile seam.
+        const pad = MAP_ATLAS_PAD;
+        ctx.drawImage(t.canvas, 0, 0, (t.width + 2 * pad) * t.quality, (t.height + 2 * pad) * t.quality,
+          t.worldX + shift - pad, t.worldY - pad, t.width + 2 * pad, t.height + 2 * pad);
+      }
+    if (firstCol <= lastCol && firstRow <= lastRow)
+      scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow);
+  }
 }
 function mapLayer(scale, detail, dpr, w, h) {
   if (mapLayerFresh(mapLayerCache, scale, dpr, w, h)) return mapLayerCache;
@@ -630,22 +977,22 @@ function mapLayer(scale, detail, dpr, w, h) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.translate(offset.x + M, offset.y + M);
     ctx.scale(scale, scale);
-    paintMapLayer(
-      scale,
-      detail,
-      (-M - offset.x) / scale - R * 2,
-      (w + M - offset.x) / scale + R * 2,
-      (-M - offset.y) / scale - R * 2,
-      (h + M - offset.y) / scale + R * 2,
-    );
+    const left = (-M - offset.x) / scale - R * 2;
+    const right = (w + M - offset.x) / scale + R * 2;
+    const top = (-M - offset.y) / scale - R * 2;
+    const bottom = (h + M - offset.y) / scale + R * 2;
+    // Very distant views use the low-resolution overview directly; otherwise
+    // cache geography AND its tactical overlay in world-anchored chunks.
+    if (game.wrap && scale >= 0.33) drawMapFromAtlas(scale, detail, left, right, top, bottom);
+    else paintMapLayer(scale, detail, left, right, top, bottom);
   } finally {
     ctx = main;
   }
   return (mapLayerCache = {
     canvas: layer,
     tiles: game.tiles,
-    owners: game.tiles.map(t => t.owner),
-    terrains: game.tiles.map(t => t.terrain),
+    revision: game.mapRevision || 0,
+    renderRevision: mapRenderRevision,
     scale,
     dpr,
     w,
@@ -657,39 +1004,69 @@ function mapLayer(scale, detail, dpr, w, h) {
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
-  // Terrain and territory.
-  for (const t of game.tiles) {
-    const c = hexCenter(t);
-    if (!visible(c)) continue;
-    const meta = metaFor(t);
-    for (const x of copies(c.x)) {
-      hexPath(x, c.y, R + 0.5);
-      ctx.fillStyle = t.terrain === 'sea' && meta.coast ? '#1f5c80' : TERRAIN_FILL[t.terrain];
-      ctx.fill();
-      if (meta.tint && t.terrain !== 'sea') {
-        ctx.fillStyle = meta.tint > 0 ? `rgba(255,255,255,${meta.tint})` : `rgba(0,0,0,${-meta.tint})`;
+  // Geography is a continuous visual atlas. Hexes remain the *logical* map;
+  // they are not used as filled polygon art unless the device lacks ImageData.
+  const atlas = GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
+  if (!atlas) {
+    for (const t of game.tiles) {
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R + 0.5);
+        ctx.fillStyle = TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
-      }
-      if (t.owner && t.terrain !== 'sea') {
-        ctx.fillStyle = F(t.owner).color + '78';
-        ctx.fill();
-      }
-      if (detail) {
-        ctx.strokeStyle = t.terrain === 'sea' ? '#ffffff08' : '#00000018';
-        ctx.lineWidth = 0.6 / scale;
-        ctx.stroke();
-        terrainProps(t, x, c.y, scale);
+        if (t.owner && t.terrain !== 'sea') {
+          ctx.fillStyle = F(t.owner).color + '30';
+          ctx.fill();
+        }
       }
     }
   }
-  // Coastlines and territorial borders.
-  for (const t of game.tiles) {
+  // A faint tactical grid is a separate *overlay*, not the map's terrain.
+  // At distant zoom levels the grid vanishes altogether; selection and
+  // movement/attack ranges continue to use their original vivid hex outlines.
+  if (detail && R * scale >= 22) {
+    // Tactical grid gains contrast as the camera zooms closer to individual hexes.
+    const hexPixels = R * scale;
+    const strength = hexPixels < 18 ? 0.025 :
+      hexPixels < 26 ? 0.045 + (hexPixels - 18) * 0.006 :
+      hexPixels < 38 ? 0.093 + (hexPixels - 26) * 0.008 :
+      Math.min(0.30, 0.189 + (hexPixels - 38) * 0.005);
+    ctx.lineWidth = (hexPixels >= 32 ? 0.82 : 0.55) / Math.max(scale, 0.25);
+    for (const t of game.tiles) {
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      ctx.strokeStyle =
+        t.terrain === 'sea'
+          ? `rgba(8,28,42,${(strength * 0.76).toFixed(3)})`
+          : `rgba(18,31,37,${strength.toFixed(3)})`;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R - 0.65);
+        ctx.stroke();
+      }
+    }
+    // Small icons read as relief on a real atlas rather than stamped hex fills.
+    if (R * scale >= 24)
+      for (const t of game.tiles) {
+        if (t.terrain === 'plains') continue;
+        if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
+        if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
+        const c = hexCenter(t);
+        if (!visible(c)) continue;
+        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : game.wrap ? 0.24 : 0.43;
+        for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
+      }
+    ctx.globalAlpha = 1;
+  }
+  // Political borders are tactical information and still align to tile
+  // ownership. Coastlines are already smoothed by the visual atlas; drawing
+  // the old edge-by-edge hex coastline here would reintroduce the mosaic.
+  if (R * scale >= 22) for (const t of game.tiles) {
     if (t.terrain === 'sea') continue;
     const c = hexCenter(t);
     if (!visible(c)) continue;
     for (const n of metaFor(t).adj) {
-      const coast = n.terrain === 'sea';
-      if (!coast && n.owner === t.owner) continue;
+      if (n.terrain === 'sea' || n.owner === t.owner) continue;
       const q = hexCenter(n),
         qx = wrapNear(q.x, c.x),
         angle = Math.atan2(q.y - c.y, qx - c.x),
@@ -702,14 +1079,15 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
           c.y + R * Math.sin(a),
           x + R * Math.cos(b),
           c.y + R * Math.sin(b),
-          coast ? '#e8f4f866' : t.owner ? F(t.owner).color + 'cc' : '#ffffff40',
-          (coast ? 1.4 : 2.4) / Math.max(scale, 0.35),
+          t.owner ? F(t.owner).color + '77' : '#ffffff35',
+          1.2 / Math.max(scale, 0.35),
         );
     }
   }
 }
 function draw(time, dt) {
   if (!canvas || !ctx) return;
+  mapHasPulse = false;
   const scale = computeView(),
     { w, h } = mapSize,
     dpr = Math.min(devicePixelRatio || 1, 2),
@@ -726,15 +1104,31 @@ function draw(time, dt) {
   ctx.fillRect(0, 0, w, h);
   const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };
   shake = Math.max(0, shake - dt * 30);
-  // Terrain, territory and coastlines come from the cached layer, placed where the camera is now.
-  const layer = mapLayer(scale, detail, dpr, w, h);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(
-    layer.canvas,
-    Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
-    Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
-  );
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Draw already-baked world atlas tiles directly at camera position. Avoid
+  // rebuilding a full screen-sized canvas each time the camera crosses its
+  // margin; that expensive copy was the remaining source of dragging stutter.
+  if (game.wrap && scale >= 0.33) {
+    ctx.save();
+    ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
+    ctx.scale(scale, scale);
+    drawMapFromAtlas(scale, detail,
+      -offset.x / scale - R * 2,
+      (w - offset.x) / scale + R * 2,
+      -offset.y / scale - R * 2,
+      (h - offset.y) / scale + R * 2);
+    ctx.restore();
+  } else {
+    // Campaign battlefields and far strategic zoom retain their existing
+    // cached layer; selection/attack effects remain independent in either path.
+    const layer = mapLayer(scale, detail, dpr, w, h);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(
+      layer.canvas,
+      Math.round((offset.x - layer.x - MAP_LAYER_MARGIN + jolt.x) * dpr),
+      Math.round((offset.y - layer.y - MAP_LAYER_MARGIN + jolt.y) * dpr),
+    );
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
   ctx.save();
   ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
   ctx.scale(scale, scale);
@@ -745,19 +1139,21 @@ function draw(time, dt) {
     mid = (left + right) / 2;
   const copies = x => copiesBetween(x, left, right);
   const visible = p => p.y >= top && p.y <= bottom;
-  // Move and attack overlays.
+  // Move and attack overlays. Blue marks water for the moving unit: open sea, or a coast hex a warship sails into.
+  const movingShip = E.TYPES[selectedUnit()?.type]?.naval === 'ship';
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
       t = E.tile(game, cc, rr),
-      c = hexCenter(t);
+      c = hexCenter(t),
+      water = E.isSea(t) || (movingShip && E.isCoast(t));
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
-      ctx.fillStyle = t.terrain === 'sea' ? '#4fb6ff40' : '#3ddc7a40';
+      ctx.fillStyle = water ? '#4fb6ff40' : '#3ddc7a40';
       ctx.fill();
-      ctx.strokeStyle = t.terrain === 'sea' ? '#9fd8ffcc' : '#6dffa5cc';
+      ctx.strokeStyle = water ? '#9fd8ffcc' : '#6dffa5cc';
       ctx.lineWidth = 1.4 / Math.max(scale, 0.4);
       ctx.stroke();
-      if (t.terrain === 'sea' && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
+      if (water && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
     }
   }
   for (const k of targetCache) {
@@ -782,11 +1178,29 @@ function draw(time, dt) {
           : selection?.kind === 'tile'
             ? selection
             : null;
-  if (selTile) for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  if (selTile) {
+    if (visible(hexCenter(selTile))) mapHasPulse = true;
+    for (const x of copies(hexCenter(selTile).x)) selectedHex({ x, y: hexCenter(selTile).y }, time, scale);
+  }
+  // Temporary low-profile marker until the replacement dock art is approved.
+  // Keep naval hexes unobstructed: cities and naval units render unchanged.
+  for (const s of game.stations) {
+    if (!s.portLevel || !s.portAt) continue;
+    const sea = visualPortCenter(s);
+    if (!visible(sea)) continue;
+    const shore = visualCityCenter(s);
+    const dx = wrapNear(shore.x, sea.x) - sea.x, dy = shore.y - sea.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const ox = dx / distance * R * 0.58;
+    const oy = dy / distance * R * 0.58;
+    for (const x of copies(sea.x))
+      outlinedText('⚓', x + ox, sea.y + oy + 4, detail ? 14 : 11,
+        F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
+  }
   // Cities. Labels scale by strategic importance so dense Europe/China remain readable.
   const pickedCity = selectedStation()?.id;
   for (const s of game.stations) {
-    const c = hexCenter(s);
+    const c = visualCityCenter(s);
     if (!visible(c)) continue;
     const garrison = E.unitAt(game, s),
       kind = cityKind(s);
@@ -820,7 +1234,7 @@ function draw(time, dt) {
       ctx.fillStyle = '#071623';
       ctx.fillRect(-20, 27, 40, 4);
       ctx.fillStyle = s.shield > 0 ? '#9fd8ff' : '#ff6a5a';
-      ctx.fillRect(-20, 27, (40 * s.shield) / s.maxShield, 4);
+      ctx.fillRect(-20, 27, s.maxShield ? (40 * s.shield) / s.maxShield : 0, 4);
       const showCityName =
         s.id === pickedCity ||
         s.capital ||
@@ -845,6 +1259,7 @@ function draw(time, dt) {
       }
       // Strategic projects: pink for F.L.E.I.J.A., cyan for the one-charge Eliminator.
       if (s.project) {
+        mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 300);
         ctx.strokeStyle = `rgba(255,95,174,${0.45 + 0.5 * pulse})`;
         ctx.lineWidth = Math.max(2.5, 2 / scale);
@@ -854,6 +1269,7 @@ function draw(time, dt) {
         outlinedText(`F.L.E.I.J.A. · ${Math.max(0, s.project.ready - game.turn)}`, 0, -R - 4, 10, '#ff9fd0', scale, 'Trebuchet MS', true);
       }
       if (s.eliminatorProject || s.eliminator) {
+        mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 260);
         ctx.strokeStyle = `rgba(130,225,255,${0.5 + 0.45 * pulse})`;
         ctx.lineWidth = Math.max(2.2, 1.8 / scale);
@@ -871,23 +1287,26 @@ function draw(time, dt) {
           true,
         );
       }
-      if (E.devastated(game, s))
-        outlinedText(`RUINS · ${s.devastated - game.turn}`, 0, garrison ? 62 : 56, 9.5, '#ffb3d6', scale, 'Trebuchet MS', true);
       ctx.restore();
     }
   }
-  // Ports: an anchor on the port's sea hex in the holder's colors, its level in pips.
-  for (const s of game.stations) {
-    if (!s.portLevel || !s.portAt) continue;
-    const c = hexCenter(s.portAt);
+  // Cities destroyed by F.L.E.I.J.A.: a charred ring and the city's name for the rest of the conquest.
+  for (const ruin of game.ruins || []) {
+    const c = visualCityCenter(ruin);
     if (!visible(c)) continue;
     for (const x of copies(c.x)) {
-      outlinedText('⚓', x, c.y + 6, detail ? 18 : 12, F(s.portOwner || s.owner).color, scale, 'Trebuchet MS', true);
-      if (detail)
-        for (let i = 0; i < s.portLevel; i++) {
-          ctx.fillStyle = '#d8c581';
-          ctx.fillRect(x - 7 + i * 5, c.y + 14, 3, 3);
-        }
+      ctx.save();
+      ctx.translate(x, c.y);
+      ctx.strokeStyle = 'rgba(255,154,213,0.75)';
+      ctx.lineWidth = Math.max(2, 1.6 / scale);
+      ctx.setLineDash([4 / scale, 3 / scale]);
+      ctx.beginPath();
+      ctx.arc(0, -4, R * 0.62, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (ruin.capital || R * scale >= 16)
+        outlinedText(`${ruin.name} · RUINS`, 0, 44, 10, '#ffb3d6', scale, 'Trebuchet MS', true);
+      ctx.restore();
     }
   }
   // Sakuradite: mines on their own hex, and a small crystal on cities that work a deposit.
@@ -907,12 +1326,17 @@ function draw(time, dt) {
           ctx.fillRect(-8, -8, 16, 16);
           ctx.strokeRect(-8, -8, 16, 16);
         }
-      } else if (d.city == null) drawMine(d, owner, scale, time, !!E.unitAt(game, d));
-      else drawCrystals(-28, -12, 0.5, time);
+      } else if (d.city == null) {
+        mapHasPulse = true;
+        drawMine(d, owner, scale, time, !!E.unitAt(game, d));
+      } else {
+        mapHasPulse = true;
+        drawCrystals(-28, -12, 0.5, time);
+      }
       ctx.restore();
     }
   }
-  // WC4-style tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
+  // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
   for (const u of living) {
     const base = animatedPosition(u);
@@ -922,6 +1346,7 @@ function draw(time, dt) {
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
     for (const x of copies(base.x)) {
+      if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
       if (!detail) {
@@ -930,6 +1355,7 @@ function draw(time, dt) {
         ctx.fillStyle = PLATE[u.side].light;
         ctx.fill();
         if (readyUnit(u)) {
+          mapHasPulse = true;
           const pulse = 0.82 + 0.18 * Math.sin(time / 210);
           ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
           ctx.shadowBlur = 9;
@@ -949,8 +1375,7 @@ function draw(time, dt) {
       ctx.shadowBlur = 5;
       ctx.shadowOffsetY = 4;
       for (let i = Math.min(u.stack - 1, 2); i >= 0; i--)
-        if (!ART.drawUnit(ctx, u.type, u.side, (i ? i * 7 * (flip ? -1 : 1) : 0) + (flip ? 4 : -4), -10 - i * 7, size * (i ? 0.86 : 1), size * (i ? 0.86 : 1), flip))
-          outlinedText(t.code, 0, 3, 13, F(u.side).color, scale);
+        ART.drawUnit(ctx, u.type, u.side, (i ? i * 7 * (flip ? -1 : 1) : 0) + (flip ? 4 : -4), -10 - i * 7, size * (i ? 0.86 : 1), size * (i ? 0.86 : 1), flip);
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
@@ -971,14 +1396,17 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
+    if (visible(p)) mapHasPulse = true;
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
   }
   // Campaign warnings: the hexes a scripted strike will hit next turn.
   for (const w of game.campaign?.warnings || []) {
+    mapHasPulse = true;
     const pulse = 0.5 + 0.5 * Math.sin(time / 220);
     for (const t of E.within(game, w, w.radius)) {
       const q = hexCenter(t);
       for (const x of copies(q.x)) {
+        if (visible(q)) mapHasPulse = true;
         hexPath(x, q.y, R - 2);
         ctx.fillStyle = `rgba(255,70,110,${0.14 + 0.14 * pulse})`;
         ctx.fill();
@@ -991,12 +1419,14 @@ function draw(time, dt) {
     for (const x of copies(q.x)) outlinedText(`⚠ ${w.label || 'Danger'}`, x, q.y - R * 0.9, 13, '#ffd0dc', scale, 'Trebuchet MS', true);
   }
   // F.L.E.I.J.A. targeting: the blast under the cursor, ground zero brighter than the ring.
-  if (hover && strikeMode)
+  if (hover && strikeMode) {
+    mapHasPulse = true;
     for (const t of E.blastArea(game, hover)) {
       const q = hexCenter(t),
         zero = t.c === hover.c && t.r === hover.r,
         pulse = 0.5 + 0.5 * Math.sin(time / 180);
       for (const x of copies(q.x)) {
+        if (visible(q)) mapHasPulse = true;
         hexPath(x, q.y, R - 1.5);
         ctx.fillStyle = zero ? `rgba(255,120,190,${0.45 + 0.2 * pulse})` : 'rgba(255,150,205,0.28)';
         ctx.fill();
@@ -1005,6 +1435,7 @@ function draw(time, dt) {
         ctx.stroke();
       }
     }
+  }
   // Standing orders: the selected unit's route to its destination, or the hex under the cursor while choosing one.
   const routed = selectedUnit();
   if (routed?.side === game.player && (routing ? hover : routed.goto)) {
@@ -1020,14 +1451,67 @@ function draw(time, dt) {
     ctx.stroke();
     if (ok) outlinedText('⚑', bx, b.y + 6, 18, '#ffd76a', scale, 'Trebuchet MS', true);
   }
+  // Subtle permanent markers for the already-reviewed coastline exceptions.
+  // Players can spot mixed land/sea semantics before hovering, without
+  // cluttering the map with markers over 400 ordinary coastal hexes.
+  // The Arctic is intentionally excluded.
+  if (game.wrap && R * scale >= 27) {
+    const coastalExceptions = [
+      [158,21], [160,21], [159,23], [157,24],
+      [106,26], [10,31], [133,31],
+      [140,43], [142,46], [96,50], [166,59], [147,62], [56,75],
+    ];
+    for (const [c,r] of coastalExceptions) {
+      const t = E.tile(game, c, r);
+      if (!t) continue;
+      const p = hexCenter(t);
+      if (!visible(p)) continue;
+      for (const x of copies(p.x)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + R * 0.48, p.y - R * 0.37, 3.1 / scale, 0, Math.PI * 2);
+        ctx.fillStyle = E.isSea(t) ? 'rgba(108,214,255,0.8)' : 'rgba(255,216,129,0.78)';
+        ctx.fill();
+        ctx.lineWidth = 0.85 / scale;
+        ctx.strokeStyle = '#0d293bc5';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
   if (hover) {
     const p = hexCenter(hover),
       u = selectedUnit(),
       hx = wrapNear(p.x, mid);
     hexPath(hx, p.y, R - 1);
-    ctx.strokeStyle = '#dcebe769';
-    ctx.lineWidth = 1.2 / scale;
+    // The vector coastline and playable hexes intentionally differ at some
+    // straits/islands. Hover colours always describe ACTUAL gameplay terrain:
+    // aqua = navigable sea; warm gold = traversable land.
+    const seaHex = E.isSea(hover),
+      coastHex = E.isCoast(hover);
+    // Coast hexes are both: a sea-green outline, and never the mixed-terrain tint (they are meant to be mixed).
+    ctx.strokeStyle = coastHex ? '#9ff0d2df' : seaHex ? '#7cd8ffdb' : '#ffe1a0df';
+    ctx.lineWidth = 1.65 / Math.max(scale, 0.35);
     ctx.stroke();
+    // Realistic coastlines can cover a minority of a playable hex. When the
+    // two maps disagree at this hex centre, label the ACTUAL gameplay terrain
+    // so sea movement and landing decisions are never visually ambiguous.
+    const visuallyMixed = !coastHex && game.wrap && R * scale >= 16 &&
+      (GEOGRAPHY.visualLandAt(p.x, p.y) === seaHex || GEOGRAPHY.visualMixedHex(hover.c, hover.r));
+    if (visuallyMixed) {
+      // A sea tile behind geographic land should never look walkable.
+      // Tint the hex with its TRUE tactical type on hover.
+      ctx.save();
+      hexPath(hx, p.y, R - 1);
+      ctx.fillStyle = seaHex ? 'rgba(42,154,225,0.19)' : 'rgba(245,197,91,0.15)';
+      ctx.fill();
+      ctx.setLineDash([5 / scale, 4 / scale]);
+      ctx.strokeStyle = seaHex ? '#89e1ff' : '#ffe19a';
+      ctx.lineWidth = 2 / Math.max(scale, 0.4);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
     const pr = u && targetCache.has(E.key(hover)) ? E.preview(game, u.id, hover.c, hover.r) : null;
     if (pr) {
       const a = hexCenter(u);
@@ -1043,7 +1527,20 @@ function draw(time, dt) {
       ax = a0 ? wrapNear(a0.x, bx) : 0,
       fade = Math.max(0, e.life / e.max);
     ctx.globalAlpha = fade;
-    if (e.kind === 'beam') {
+    if (e.kind === 'shot') {
+      ctx.globalAlpha = 1;
+      if (!e.shaken && e.max - e.life >= e.delay + e.impact) {
+        e.shaken = true;
+        bump(e.shake);
+      }
+      drawCombatShot(e, ax, a0.y, bx, b0.y, scale);
+    } else if (e.kind === 'blast') {
+      ctx.globalAlpha = 1;
+      drawCombatBlast(e, bx, b0.y, scale);
+    } else if (e.kind === 'wreck') {
+      ctx.globalAlpha = 1;
+      drawCombatWreck(e, bx, b0.y);
+    } else if (e.kind === 'beam') {
       drawLine(ax, a0.y, bx, b0.y, e.color, (e.heavy ? 9 : 4) / Math.max(scale, 0.5));
       drawLine(ax, a0.y, bx, b0.y, '#fff6dd', (e.heavy ? 3.2 : 1.6) / Math.max(scale, 0.5));
       drawFlash(bx, b0.y, 30 + (1 - fade) * 30, 'rgba(255,190,90,0.6)', 0.9);
