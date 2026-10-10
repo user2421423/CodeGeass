@@ -1039,13 +1039,49 @@
       setTileTerrain(g, t, 'plains');
     }
   }
+  // Each painted conquest land hex is permanently attached to one city. Existing ownership
+  // determines its initial faction; the closest city of that faction becomes its province
+  // center. This keeps historical borders and Indonesia's intentional overrides intact.
+  // City IDs (unlike array indices) survive captures and F.L.E.I.J.A. removals.
+  function assignCityProvinces(g) {
+    const byOwner = new Map();
+    for (const s of g.stations) {
+      if (!byOwner.has(s.owner)) byOwner.set(s.owner, []);
+      byOwner.get(s.owner).push(s);
+    }
+    for (const t of g.tiles) {
+      if (isSea(t)) {
+        delete t.provinceCity;
+        continue;
+      }
+      // A previously assigned province must not be reassigned after its city
+      // changes hands. This also keeps province borders stable across saves.
+      if (t.provinceCity != null || !t.owner) continue;
+      const cities = byOwner.get(t.owner) || [];
+      let nearestCity = null, nearestDistance = Infinity;
+      for (const s of cities) {
+        const d = dist(g, s, t);
+        if (d < nearestDistance || (d === nearestDistance && s.id < nearestCity.id)) {
+          nearestCity = s;
+          nearestDistance = d;
+        }
+      }
+      if (nearestCity) t.provinceCity = nearestCity.id;
+    }
+  }
+
   function migrateSave(g) {
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
-    if (g.mode !== 'campaign') migrateCoastalTerrain(g);
+    if (g.mode !== 'campaign') {
+      migrateCoastalTerrain(g);
+      // Older saves have no province IDs. Bind their existing painted land to
+      // its closest still-controlled city, without resetting conquest progress.
+      assignCityProvinces(g);
+    }
     g.eliteDeployed ||= {};
     for (const records of [g.officers, g.roster])
       if (records) for (const [k, rec] of Object.entries(records))
@@ -1279,7 +1315,7 @@
     u.moved = u.attacked = false;
     u.deployedTurn = u.launched = g.turn;
     g.units.push(u);
-    setTileOwner(g, t, u.side);
+    // Land ownership is controlled exclusively through cities, not troop landings.
     const seized = seizeDeposit(g, u, t);
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} launches from the Carrier-Battleship.`, u.side);
     return { ok: true, unit: u, to: { c: t.c, r: t.r }, seized };
@@ -1290,7 +1326,22 @@
     return within(g, u, rangeOf(g, u).max).filter(p => inRange(u, p, g) && hostileTarget(g, u, p));
   }
   function claim(g, p, owner) {
-    for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)]) if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileOwner(g, t, owner);
+    if (g.mode !== 'campaign') {
+      // Capturing a city transfers its entire fixed province, not the nearby
+      // provinces and not just the seven hexes immediately around the city.
+      let changed = 0;
+      for (const t of g.tiles)
+        if (!isSea(t) && t.provinceCity === p.id) {
+          setTileOwner(g, t, owner);
+          changed++;
+        }
+      // Custom maps and old standalone tests may not have city provinces.
+      if (!changed) setTileOwner(g, tile(g, p.c, p.r), owner);
+      return;
+    }
+    // Campaign missions use small tactical maps, not the conquest province map.
+    for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)])
+      if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileOwner(g, t, owner);
   }
   function move(g, id, c, r) {
     const u = g.units.find(u => u.id === id);
@@ -1349,7 +1400,7 @@
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
-    if (!isSea(dest) && t.naval !== 'ship') setTileOwner(g, dest, u.side);
+    // Moving through enemy or neutral territory never changes its map color.
     const s = stationAt(g, u);
     let captured = null,
       annexed = null;
@@ -1401,7 +1452,14 @@
         fortify(g, s);
         cities++;
       }
-    for (const t of g.tiles) if (t.owner === loser) setTileOwner(g, t, winner);
+    // Any land formerly attached to an already destroyed city now belongs to
+    // a surviving city of the conqueror, so later captures can still transfer it.
+    const winnerCities = new Set(g.stations.filter(s => s.owner === winner).map(s => s.id));
+    for (const t of g.tiles) if (t.owner === loser) {
+      setTileOwner(g, t, winner);
+      if (!winnerCities.has(t.provinceCity)) delete t.provinceCity;
+    }
+    if (g.mode !== 'campaign') assignCityProvinces(g);
     for (const v of g.units)
       if (v.hp > 0 && v.side === loser) {
         v.hp = 0;
@@ -2730,6 +2788,13 @@
       lost = d ? destroyDeposit(g, d) : null;
     (g.ruins ||= []).push({ name: s.name, c: s.c, r: s.r, owner: s.owner, capital: !!s.capital, turn: g.turn });
     g.stations.splice(g.stations.indexOf(s), 1);
+    if (g.mode !== 'campaign') {
+      // Its province does not become an unclaimable ghost region. Remaining
+      // cities of the same faction inherit the land without changing its color.
+      // If this was the last city, surrender will attach it to the victor.
+      for (const t of g.tiles) if (t.provinceCity === s.id) delete t.provinceCity;
+      assignCityProvinces(g);
+    }
     if (g.automation?.cities) delete g.automation.cities[s.id];
     log(g, `${s.name} is destroyed by F.L.E.I.J.A.: only ruins remain for the rest of the war.`, s.owner);
     return lost;
@@ -3395,6 +3460,16 @@
           lon >= west && lon <= east && lat >= south && lat <= north))
         setTileOwner(g, t, 'cf');
     }
+    // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.
+    for (let pass = 0, changed = true; changed && pass < 4; pass++) {
+      changed = false;
+      for (const t of g.tiles) {
+        if (!isCoast(t) || t.owner) continue;
+        const n = adjacent(g, t).find(n => !isSea(n) && n.owner);
+        if (n) { setTileOwner(g, t, n.owner); changed = true; }
+      }
+    }
+    assignCityProvinces(g);
     for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
       const at = nearest(
         g,
