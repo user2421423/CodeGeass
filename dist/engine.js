@@ -1243,7 +1243,12 @@
     return TERRAIN[t.terrain]?.cost || 1;
   }
   function canCapture(u) {
-    return TYPES[u.type].branch !== 'Artillery';
+    return TYPES[u.type].naval !== 'ship' && TYPES[u.type].branch !== 'Artillery';
+  }
+  // Amphibious frames and embarked transports may capture an empty enemy city
+  // even when its shields have not yet been reduced to zero.
+  function navalCityAssault(g, u) {
+    return TYPES[u.type].naval === 'amphibious' || atSea(g, u);
   }
   function isReady(g, u) {
     return !g.over && g.phase === u.side && u.hp > 0 && u.morale > -3;
@@ -1257,6 +1262,7 @@
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
+      navalAssault = t.naval === 'amphibious' || (!t.naval && fromSea),
       ship = t.naval === 'ship',
       amphibious = t.naval === 'amphibious',
       landMove = movement(g, u),
@@ -1311,7 +1317,7 @@
           if (cost < budget) found.set(key(n), budget);
           continue;
         }
-        if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) continue;
+        if (st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalAssault)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
         let nextRough = roughUsed,
           step = isSea(n) ? 1 : terrainCost(g, u, n);
@@ -1369,31 +1375,27 @@
     if (u.cargo?.some((c, i) => !deployReason(g, u, i))) return true;
     return !!COMMANDERS[u.cmd]?.action && !feintReason(g, u);
   }
-  // Rapid KMF Deployment: a carried Knightmare launches onto an empty, non-enemy land hex next to its carrier with a
-  // full move and attack even on the turn it boarded. Deployment prevents reboarding this turn.
-  function deployTargetsAt(g, p, side) {
-    return adjacent(g, p).filter(
-      t =>
-        !isSea(t) &&
-        !TERRAIN[t.terrain]?.blocked &&
-        !unitAt(g, t) &&
-        !(stationAt(g, t) && foe(g, stationAt(g, t).owner, side)),
+  // Carrier cargo can land on an empty enemy city, but cannot displace a garrison.
+  function deployTargetsAt(g, p, side, carriesTroops = false) {
+    return adjacent(g, p).filter(t =>
+      !isSea(t) && !TERRAIN[t.terrain]?.blocked && !unitAt(g, t) &&
+      (carriesTroops || !stationAt(g, t) || !foe(g, stationAt(g, t).owner, side)),
     );
   }
-  const deployTargets = (g, ship) => deployTargetsAt(g, ship, ship.side);
+  const deployTargets = (g, ship, i = 0) => deployTargetsAt(g, ship, ship.side, !!ship.cargo?.[i]);
   function deployReason(g, ship, i) {
     const u = ship?.cargo?.[i];
     if (!u) return 'No unit aboard';
     return (
       turnReason(g, ship.side) ||
-      (!deployTargets(g, ship).length ? 'No empty land hex next to the carrier' : null)
+      (!deployTargets(g, ship, i).length ? 'No empty land hex next to the carrier' : null)
     );
   }
   function deploy(g, shipId, i, c, r) {
     const ship = g.units.find(v => v.id === shipId && v.hp > 0),
       why = ship ? deployReason(g, ship, i) : 'Carrier not found';
     if (why) return { ok: false, reason: why };
-    const t = deployTargets(g, ship).find(p => p.c === c && p.r === r);
+    const t = deployTargets(g, ship, i).find(p => p.c === c && p.r === r);
     if (!t) return { ok: false, reason: 'Choose an empty land hex next to the carrier.' };
     const [u] = ship.cargo.splice(i, 1);
     u.c = t.c;
@@ -1401,10 +1403,12 @@
     u.moved = u.attacked = false;
     u.deployedTurn = u.launched = g.turn;
     g.units.push(u);
-    // Land ownership is controlled exclusively through cities, not troop landings.
+    // Only city captures transfer territory; ordinary landings cannot repaint it.
+    const { captured, annexed } = captureCity(g, u, true);
     const seized = seizeDeposit(g, u, t);
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} launches from the Carrier-Battleship.`, u.side);
-    return { ok: true, unit: u, to: { c: t.c, r: t.r }, seized };
+    checkVictory(g);
+    return { ok: true, unit: u, to: { c: t.c, r: t.r }, captured, annexed, seized };
   }
   // Embarked units cannot fire.
   function targets(g, u) {
@@ -1428,6 +1432,35 @@
     // Campaign missions use small tactical maps, not the conquest province map.
     for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)])
       if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileOwner(g, t, owner);
+  }
+  // All ways of taking a city use the same province, port, rewards and surrender path.
+  function captureCity(g, u, navalLanding = false) {
+    const s = stationAt(g, u);
+    if (!s || !foe(g, s.owner, u.side) ||
+      !(canCapture(u) || navalLanding) || (s.shield > 0 && !navalLanding))
+      return { captured: null, annexed: null };
+    const loser = s.owner;
+    s.owner = u.side;
+    s.shield = 0;
+    if (s.portAt) {
+      const holder = unitAt(g, s.portAt);
+      if (!holder || !foe(g, holder.side, u.side)) s.portOwner = u.side;
+    }
+    s.capturedTurn = g.turn;
+    dropProject(g, s, 'captured');
+    dropEliminator(g, s, 'captured');
+    u.morale = 1;
+    funds(g, u.side).credits += 40;
+    fortify(g, s);
+    claim(g, s, u.side);
+    if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
+    if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
+    log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
+    hooks.capture?.(g, s, u, loser);
+    if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
+    const annexed = g.mode !== 'campaign' && alive(g, loser) && !g.stations.some(c => c.owner === loser)
+      ? surrender(g, loser, u.side, s) : null;
+    return { captured: s.name, annexed };
   }
   function move(g, id, c, r) {
     const u = g.units.find(u => u.id === id);
@@ -1487,37 +1520,7 @@
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
     // Moving through enemy or neutral territory never changes its map color.
-    const s = stationAt(g, u);
-    let captured = null,
-      annexed = null;
-    if (s && foe(g, s.owner, u.side) && canCapture(u)) {
-      const loser = s.owner;
-      s.owner = u.side;
-      s.shield = 0;
-      // Capturing the city does not take a port that an enemy ship still holds; it must be cleared first.
-      if (s.portAt) {
-        const holder = unitAt(g, s.portAt);
-        if (!holder || !foe(g, holder.side, u.side)) s.portOwner = u.side;
-      }
-      s.capturedTurn = g.turn;
-      dropProject(g, s, 'captured');
-      dropEliminator(g, s, 'captured');
-      captured = s.name;
-      u.morale = 1;
-      funds(g, u.side).credits += 40;
-      fortify(g, s);
-      claim(g, s, u.side);
-      if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
-      // Sugiyama's Special Operations: a turn off the city's battery recharge.
-      if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
-      log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
-      hooks.capture?.(g, s, u, loser);
-      if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-      // Conquest: a major power surrenders only when its last city falls; its armies disband. A capital is just its
-      // richest city.
-      if (g.mode !== 'campaign' && alive(g, loser) && !g.stations.some(c => c.owner === loser))
-        annexed = surrender(g, loser, u.side, s);
-    }
+    const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
     const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
     return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, seized };
