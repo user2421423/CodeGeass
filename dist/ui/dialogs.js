@@ -236,7 +236,7 @@ function officerCard(k, own) {
       '',
     )}</div>${o.medals.length ? `<p class="officer-line">🎖 ${o.medals.map(m => E.MEDALS[m].name).join(', ')}</p>` : ''}<div class="officer-actions">${busy ? `<button class="small" disabled>Commanding ${E.TYPES[busy.type].short}</button>` : act(`data-admiral="${k}"`, 'Assign to selected unit', E.assignReason(game, own, k), costHTML({ credits: a.cost }))}</div></section>`;
 }
-// HQ → Commanders, as in WC4: your persistent roster for each faction, and the commanders still to recruit.
+// HQ → Commanders: your persistent roster for each faction, and the commanders still to recruit.
 let generalsSide = 'britannia';
 function generalsDialog(side = generalsSide) {
   generalsSide = side;
@@ -266,7 +266,7 @@ const ARCHIVE_SIDES = [...E.MAJORS, 'eb', 'bk', 'jlf', 'neutral'],
   ARCHIVE_BRANCHES = [...BRANCH_LIST, 'Naval'];
 function archiveTypes(side, branch) {
   if (branch === 'Naval') return E.NAVAL[side] ? [...new Set(Object.values(E.NAVAL[side]))] : [];
-  // A faction may deliberately map several WC4 class slots to one Code Geass frame. Show each actual frame once.
+  // A faction may deliberately map several standard class slots to one Code Geass frame. Show each actual frame once.
   const lineup = E.ROSTER[side] ? E.CLASS_ORDER.map(cls => E.ROSTER[side][cls]) : [],
     own = Object.keys(E.TYPES).filter(k => E.TYPES[k].side === side && !E.TYPES[k].naval);
   return [...new Set([...lineup, ...own])].filter(k => k && !E.TYPES[k].elite && E.TYPES[k].branch === branch);
@@ -373,6 +373,6 @@ function helpDialog() {
   focusDialog();
 }
 function menuDialog() {
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Game menu"><div class="eyebrow">Command headquarters</div><h2>Your orders, Commander.</h2><p>Your current operation is saved automatically in this browser.</p><div class="credits"><span class="label">Credits</span><p class="notice">${NOTICE}</p><p class="notice">Free, non-commercial fan game. Unit and character names follow the Code Geass wiki; drawn artwork is original, with published imagery credited in the project’s ASSETS.md. Gameplay draws on EasyTech’s World Conqueror 4.</p></div><div class="dialog-footer"><div><button class="primary" data-action="close">Resume</button>${game.mode === 'campaign' ? '<button data-action="mission-retry">Restart mission</button><button data-action="campaign">Mission select</button><button data-action="new">Main menu</button>' : '<button data-action="new">New operation</button>'}<button data-action="help">Field manual</button></div></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Game menu"><div class="eyebrow">Command headquarters</div><h2>Your orders, Commander.</h2><p>Your current operation is saved automatically in this browser.</p><div class="credits"><span class="label">Credits</span><p class="notice">${NOTICE}</p><p class="notice">Free, non-commercial fan game. Unit and character names follow the Code Geass wiki; drawn artwork is original, with published imagery credited in the project’s ASSETS.md.</p></div><div class="dialog-footer"><div><button class="primary" data-action="close">Resume</button>${game.mode === 'campaign' ? '<button data-action="mission-retry">Restart mission</button><button data-action="campaign">Mission select</button><button data-action="new">Main menu</button>' : '<button data-action="new">New operation</button>'}<button data-action="help">Field manual</button></div></div></section></div>`;
   focusDialog();
 }

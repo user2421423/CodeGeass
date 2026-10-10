@@ -1187,7 +1187,7 @@ h3 {
   gap: 6px 10px;
 }
 
-/* ---- WC4 iconography: resource tokens, stat glyphs, hull rings, undo ---- */
+/* ---- Battlefield iconography: resource tokens, stat glyphs, hull rings, undo ---- */
 .ico {
   display: inline-block;
   width: 1.3em;
@@ -1604,7 +1604,7 @@ button.mini small {
   }
 }
 
-/* ---- General Info (WC4-style officer card) ---- */
+/* ---- General Info (officer card) ---- */
 [data-general] {
   cursor: pointer;
 }

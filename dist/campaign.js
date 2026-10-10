@@ -1,5 +1,5 @@
 /* Knightmare Conquest campaigns: story missions on hand-built tactical maps, scripted with events and graded with
-   WC4-style stars. Loads after engine.js and plugs into its rule hooks; Conquest never touches this file. */
+   mastery stars. Loads after engine.js and plugs into its rule hooks; Conquest never touches this file. */
 (function (root) {
   'use strict';
   const E = root.Knightmare || (typeof require === 'function' ? require('./engine.js') : null);

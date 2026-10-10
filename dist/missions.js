@@ -4280,7 +4280,7 @@
     },
   ];
 
-  // Two seasons, as WC4 splits its campaigns: Lelouch of the Rebellion (2010–2017) and R2 (2018), each played from
+  // Two story seasons: Lelouch of the Rebellion (2010–2017) and R2 (2018), each played from
   // the Black Knights' side and from Britannia's. Mission ids are kept so saved stars carry over.
   const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
@@ -4346,7 +4346,7 @@
       missions: pick(['eu_narva', 'eu_ambush', 'eu_slonim', 'eu_front', 'eu_ark', 'eu_weisswolf', 'eu_assault', 'eu_paris']),
     },
   };
-  // The story arcs as WC4-style campaigns, each played from either side: the two seasons and Akito the Exiled's war in Europe.
+  // The story arcs as mission-based campaigns, each played from either side: the two seasons and Akito the Exiled's war in Europe.
   const SEASONS = {
     1: { name: 'Lelouch of the Rebellion', short: 'Season 1', years: '2010–2017 a.t.b.' },
     2: { name: 'Lelouch of the Rebellion R2', short: 'R2', years: '2018 a.t.b.' },

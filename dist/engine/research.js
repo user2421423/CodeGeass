@@ -2,7 +2,7 @@
    Data only; read by engine.js. */
 (function (root) {
   'use strict';
-  // HQ technology, as in World Conqueror 4: bought with command tokens earned by winning operations, kept in the
+  // HQ technology: bought with command tokens earned by winning operations, kept in the
   // player's profile across every operation and faction. Each level unlocks at a tier gated by total victories.
   const BRANCHES = { Infantry: 'infantry', Armor: 'armor', Artillery: 'artillery' };
   const BRANCH_NAMES = { infantry: 'Infantry', armor: 'Armor', artillery: 'Artillery', mobility: 'Mobility' };
