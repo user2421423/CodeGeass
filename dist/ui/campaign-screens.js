@@ -66,7 +66,7 @@ function campaignDialog(cid = campaignTab) {
         return `${m.claimed ? '✓' : m.reached ? '◆' : '○'} ${m.stars}★: ${prize}`;
       })
       .join(' · ');
-  // WC4-style: pick a season first, then the side you play it from.
+  // Campaign selection: pick a season first, then the side you play it from.
   const seasonTabs = Object.entries(CP.SEASONS || {})
     .map(([n, s]) => {
       const [k] = camps.find(([, c]) => String(c.season) === n && c.side === camp.side) || camps.find(([, c]) => String(c.season) === n);

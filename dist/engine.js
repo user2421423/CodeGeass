@@ -88,7 +88,7 @@
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 
-  // ======== Elite Forces: persistent WC4-style unique units ========
+  // ======== Elite Forces: persistent persistent unique units ========
   const ELITE_TYPE_TO_ID = Object.fromEntries(Object.entries(ELITE_FORCES).map(([id, e]) => [e.type, id]));
   function eliteProfile(profile = {}) {
     profile.elites ||= {};
@@ -168,7 +168,7 @@
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }
-  // ======== Commanders (WC4 generals): signature abilities are data, read by the combat rules ========
+  // ======== Commanders (recruitable officers): signature abilities are data, read by the combat rules ========
   const NOFX = {};
   // Calculated once: permanent personal stats and situational skills are displayed separately,
   // but the existing combat pipeline can read both without applying either twice.
@@ -233,7 +233,7 @@
     return unitTech(g, u, 'hull') + (TYPES[u.type].naval ? techValue(g, u.side, 'naval.hulls') : 0);
   }
 
-  // ======== Commander development, as in WC4 ========
+  // ======== Commander development ========
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
@@ -400,7 +400,7 @@
     o.rank++;
     return { ok: true, rank: o.rank };
   }
-  // As in WC4, command tokens (the medals of this game) buy extra branch stars, up to six.
+  // Command tokens (the medals of this game) buy extra branch stars, up to six.
   const MAX_RATING = 6;
   const STAR_COST = [0, 0, 0, 60, 120, 220, 360];
   function starCost(profile, k, branch) {
@@ -1203,7 +1203,7 @@
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
     let n = t.move + Math.min(1, unitTech(g, u, 'drives')) + (eliteFx(u).move || 0);
     if (g?.mode !== 'campaign') n += CONQUEST_MOVE_BONUS;
-    // WC4-style Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
+    // Commander Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
     n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
@@ -1933,7 +1933,7 @@
     return total;
   }
   // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
-  // there (as in WC4: move it off first).
+  // there (move it off first).
   function recruitOptions(g, s, side, type = null) {
     if (s.owner !== side) return [];
     const at = TYPES[type]?.naval ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
@@ -3306,7 +3306,7 @@
     },
   };
 
-  // Operation difficulty, as in WC4. Normal is the operation as designed. Hard gives every rival power all tier I–II
+  // Operation difficulty. Normal is the operation as designed. Hard gives every rival power all tier I–II
   // HQ research, upgrades every other enemy unit one class and adds one unit per four. Challenge gives them all
   // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
   const DIFFICULTIES = {

@@ -426,7 +426,7 @@ function drawEstimate(p, pr, scale) {
   ctx.fillText(text, 0, -9);
   ctx.restore();
 }
-// WC4 base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
+// Faction base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
 function drawPlate(u, scale, sea, time = 0) {
   const c = PLATE[u.side],
     cy = 14,
@@ -520,7 +520,7 @@ function drawStackBars(n, side) {
     ctx.fillRect(x, y, w, 1.2);
   }
 }
-// WC4 commander pin: the commander's framed portrait standing above the unit, with rank stars.
+// Commander portrait pin: the commander's framed portrait standing above the unit, with rank stars.
 function drawAdmiralPin(u, p, scale, sel) {
   const a = C(u.cmd);
   ctx.save();
@@ -1336,7 +1336,7 @@ function draw(time, dt) {
       ctx.restore();
     }
   }
-  // WC4-style tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
+  // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
   for (const u of living) {
     const base = animatedPosition(u);
