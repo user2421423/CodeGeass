@@ -287,6 +287,82 @@ test('Super-heavy priority leaves budget for mixed troops and does not repeat ne
   assert.equal(g.ai[side].saving, false, 'cooldown clears a stale super-heavy savings plan');
 });
 
+// A rich naval threat scenario must allow naval growth beyond the old fixed caps.
+function navalPressureScenario() {
+  const side = 'eu';
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  g.phase = side;
+  g.turn = 8;
+  g.economy[side] = { credits: 80000, industry: 30000, science: 200, sakuradite: 3000 };
+  const coast = g.stations.filter(s => s.owner === side && E.internal.portSite(g, s));
+  const enemyCarrier = E.internal.NAVAL.britannia.carrier;
+  const threatenedSea = g.tiles.filter(t => t.terrain === 'sea' && !E.unitAt(g, t) &&
+    coast.some(s => E.internal.dist(g, s, t) <= 16) &&
+    !coast.some(s => s.portAt?.c === t.c && s.portAt?.r === t.r));
+  assert(threatenedSea.length >= 30, 'scenario needs enough coastal sea hexes');
+  for (const t of threatenedSea.slice(0, 30))
+    E.newUnit(g, enemyCarrier, 'britannia', t.c, t.r);
+  const slots = g.tiles.filter(t => t.terrain === 'sea' && !E.unitAt(g, t) &&
+    !coast.some(s => s.portAt?.c === t.c && s.portAt?.r === t.r));
+  const navy = E.internal.NAVAL[side];
+  let index = 0;
+  const add = (role, n) => {
+    assert(slots.length - index >= n, 'scenario requires free sea hexes');
+    for (let i = 0; i < n; i++) {
+      const t = slots[index++];
+      E.newUnit(g, navy[role], side, t.c, t.r);
+    }
+  };
+  return { g, side, navy, coast, add };
+}
+
+test('AI carrier fleet may grow beyond four ships when naval threats justify it', () => {
+  const { g, side, navy, add } = navalPressureScenario();
+  add('carrier', 5);
+  add('amphibious', 30);
+  const existing = new Set(g.units.map(u => u.id));
+  assert(g.units.filter(u => u.side === side && u.type === navy.carrier).length > 4);
+  E.aiProduction(g);
+  const produced = g.units.filter(u => u.side === side && !existing.has(u.id));
+  assert(produced.some(u => u.type === navy.carrier), 'more carriers are built despite existing fleet >4');
+  assert(produced.some(u => !E.TYPES[u.type].naval), 'land production is still funded');
+});
+
+test('AI amphibious fleet may grow beyond six formations when naval threats justify it', () => {
+  const { g, side, navy, add } = navalPressureScenario();
+  add('carrier', 30);
+  add('amphibious', 7);
+  const existing = new Set(g.units.map(u => u.id));
+  assert(g.units.filter(u => u.side === side && u.type === navy.amphibious).length > 6);
+  E.aiProduction(g);
+  const produced = g.units.filter(u => u.side === side && !existing.has(u.id));
+  assert(produced.some(u => u.type === navy.amphibious || u.type === navy.amphibious2),
+    'more amphibious formations are built despite existing fleet >6');
+  assert(produced.some(u => !E.TYPES[u.type].naval), 'land production is still funded');
+});
+
+test('AI expands past three ports when needed and upgrades ports to level three', () => {
+  const { g, side, coast } = navalPressureScenario();
+  const ports = coast.filter(s => s.portLevel && s.portOwner === side);
+  assert(ports.length > 3, 'scenario starts with more than three ports');
+  for (const port of ports) port.portLevel = 3;
+  E.aiProduction(g);
+  assert(coast.filter(s => s.portLevel && s.portOwner === side).length > ports.length,
+    'AI expands port network past old fixed cap in naval emergency');
+
+  // With no major naval emergency, the AI must also finish an existing level-2
+  // port instead of leaving every port permanently below level 3.
+  const quiet = E.createGame('britannia', 'normal', 'conquest', 123);
+  quiet.phase = side;
+  quiet.turn = 8;
+  quiet.economy[side] = { credits: 80000, industry: 30000, science: 200, sakuradite: 3000 };
+  const current = quiet.stations.filter(s => s.owner === side && s.portLevel && s.portOwner === side);
+  assert(current.length > 0);
+  for (const port of current) port.portLevel = 2;
+  E.aiProduction(quiet);
+  assert(current.some(s => s.portLevel === 3), 'AI upgrades an existing port to level 3');
+});
+
 test('A rival moves a unit off its city before building there, as a player would', () => {
   const g = blank();
   g.phase = 'eu';
