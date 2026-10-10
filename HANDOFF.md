@@ -264,8 +264,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   at 85%, the Federation's Infantry discount applies); `spend()` deducts every resource; `shortfall()` names
   Sakuradite. Helpers: `depositHost`, `depositOwner`, `depositOf(g, city)`, `siteAt`, `depositYield`, `cityYield`,
   `refineReason`/`refine` (mines on their own hex). A surrendering power's mines and half its stockpile pass on.
-- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` requests a guard on Fuji within the shared reserve and up to
-  two on a threatened mine (imminent attacks may bypass the peacetime budget); moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
+- AI: mines seed `goalField` (Fuji −5, nearly a capital's −6; others −1); `assignGuards` requests a guard at Fuji and up to
+  two at each threatened mine, subject to nearby available troops rather than a percentage quota; moving onto a rival mine scores +550 (Fuji) / +250; refinery upgrades come first each
   turn; lighter frames leave Sakuradite for one heavy frame once a level-3 factory exists; super-heavy saving only
   starts with the Sakuradite in hand; tier-I frames are fallbacks when Sakuradite runs short.
 
@@ -441,15 +441,15 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   word it.
 
 ### AI
-- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: capital seeks 2–4 defenders
-  within the shared peacetime budget), then Conquest theaters (`planFronts`). Campaign missions keep one
-  side-wide `goalField`.
+- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: capital seeks 2 defenders,
+  4 when threatened), then Conquest theaters (`planFronts`). Campaign missions keep one side-wide
+  `goalField`. There is no separate strategic reserve or fixed percentage budget for routine defense.
 - Threats (`threatTo`): any enemy within 5 hexes. In Conquest a coastal city or mine is also threatened by a loaded
   carrier within its sail + 1, an amphibious frame within its sea move + 1, or an embarked transport within its
   sail + 1. Garrisons and defensive fronts both use it.
-- In Conquest, fortress cities (the strait guns) and level-2+ naval bases request one land defender
-  within the shared budget. Warships are never picked as garrisons; genuinely imminent enemy threats
-  can override the peacetime budget.
+- In Conquest, fortress cities (the strait guns) and level-2+ naval bases request one land
+  defender if one is available nearby. Warships are never picked as garrisons. Threatened cities
+  and mines receive additional guards based on enemy threats and available troops.
 - The geography pass opened the strategic straits (Malacca, Otranto, Danish Straits, Bosporus, Bab-el-Mandeb,
   Hudson, Tsugaru). At this scale the Malacca gap leaves Singapore on the Sumatra landmass, so it's an island
   fortress the AI holds, reinforces and attacks by sea.
@@ -462,9 +462,9 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     garrisons). Priority is discounted when half the army could not meet the need.
   - Strength is `unitStrength`: frames × health × generation, ×1.5 commanders, ×1.5 Elite Forces.
   - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace)
-    plus the four best others. The 10% strength allocation is **shared** between routine city/mine garrisons,
-    routine defensive fronts, and whatever remains as mobile capital reserve; these no longer stack.
-    Emergency city guards or genuinely threatened defensive fronts may draw extra troops so the AI can survive attacks.
+    plus the four best others. Garrisons are assigned locally first; all other deployable ground strength
+    is assigned to offensive or defensive fronts according to threat, priority and military need.
+    **There is no strategic reserve and no percentage limit on garrisons or defensive fronts.**
   - The rest of the army is split 50/25/15/10 by rank, capped by need. The front furthest below its target takes the
     nearest free unit.
   - Assignments are sticky for 4 turns (`g.ai[side].assignments`), unless the front is gone, the unit is 60+ hexes

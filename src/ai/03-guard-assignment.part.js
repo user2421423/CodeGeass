@@ -3,15 +3,10 @@
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
       threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
-      routineBudget = g.mode === 'campaign' ? Infinity :
-        FRONT.reserve * own.reduce((a, u) => a + unitStrength(u), 0);
-    let routineStrength = 0;
-    const urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
+      urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
       guard = (u, post, emergency = false) => {
         if (taken[u.id]) return false;
-        if (!emergency && routineStrength + unitStrength(u) > routineBudget + 1e-9) return false;
         taken[u.id] = { ...post, emergency };
-        if (!emergency) routineStrength += unitStrength(u);
         return true;
       };
     // A city building a F.L.E.I.J.A. warhead is guarded like the capital.
@@ -35,8 +30,8 @@
         if (guard(u, { c: s.c, r: s.r, id: s.id }, urgent(s, t))) assigned++;
       }
     }
-    // Strongholds (Conquest): fortress cities at straits and level-2+ naval bases
-    // request a guard, but cannot exceed the shared routine-defense budget.
+    // Strongholds (Conquest): fortress cities and level-2+ naval bases
+    // each request one available land defender, independently of front strength.
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
@@ -47,7 +42,7 @@
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
         }
       }
-    // Own mines: major deposits request one routine guard; imminent attacks can trigger up to two emergency guards.
+    // Own mines: major deposits seek one guard; threatened mines can draw up to two defenders.
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),

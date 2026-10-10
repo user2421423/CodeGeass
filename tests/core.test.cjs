@@ -216,30 +216,48 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
-test('AI shares its 10% routine defense allocation across garrisons, fronts and reserve', () => {
-  const strength = list => list.reduce((total, u) => total + E.unitStrength(u), 0);
+test('AI has no strategic reserve and continues assigning garrisons and fronts', () => {
+  assert.equal(Object.hasOwn(E.FRONT, 'reserve'), false, 'there is no strategic reserve setting');
   for (const side of E.MAJORS) {
     for (const quiet of [false, true]) {
       const g = E.createGame('britannia', 'normal', 'conquest', 123);
       if (quiet) g.units = g.units.filter(u => u.side === side);
       const memo = E.aiPlan(g, side);
-      const field = g.units.filter(u => u.hp > 0 && u.side === side &&
-        !E.internal.isShip(u) && !E.internal.atSea(g, u));
-      const normalGuards = field.filter(u => memo.guards[u.id] && !memo.guards[u.id].emergency);
-      const reserve = field.filter(u => memo.assign[u.id] === 'reserve');
-      const defense = field.filter(u => memo.fronts.some(f =>
-        f.type === 'defensive' && !f.emergency && memo.assign[u.id] === f.id));
-      const total = strength(normalGuards) + strength(reserve) + strength(defense);
-      assert(total <= E.FRONT.reserve * strength(field) + 1e-9,
-        `${side} ${quiet ? 'quiet' : 'contested'}: routine defense (${total}) must be within 10% of all ground strength`);
-      for (const front of memo.fronts.filter(f => f.type === 'defensive' && !f.emergency))
-        assert(front.assigned <= front.target + 1e-9,
-          `${side}: routine defensive front must not bypass the shared budget`);
+      assert.equal(memo.reserve, undefined, 'no synthetic strategic reserve front');
+      assert.equal(memo.byId.reserve, undefined, 'no reserve in active front registry');
+      assert(!Object.values(memo.assign).includes('reserve'), 'no units assigned to reserve');
+      assert(Object.keys(memo.guards).length > 0, 'city guards still operate');
+      assert(memo.fronts.every(f => f.type === 'offensive' || f.type === 'defensive'),
+        'all strategic assignments serve a real front');
     }
   }
 });
 
-test('A city under immediate threat can draw emergency guards beyond the routine defense budget', () => {
+test('Routine capital garrisons may use the available army without a reserve cap', () => {
+  const g = blank();
+  g.phase = 'eu';
+  const capital = g.stations.find(s => s.owner === 'eu');
+  const scout = E.typeFor('eu', 'scout');
+  const a = E.newUnit(g, scout, 'eu', capital.c, capital.r);
+  const b = E.newUnit(g, scout, 'eu', capital.c - 1, capital.r);
+  const memo = E.aiPlan(g, 'eu');
+  assert.equal(memo.guards[a.id]?.id, capital.id);
+  assert.equal(memo.guards[b.id]?.id, capital.id);
+  assert.equal(memo.reserve, undefined);
+});
+
+test('Saved obsolete reserve assignments are released to live fronts', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const side = 'eu', unit = g.units.find(u => u.side === side && !E.TYPES[u.type].naval);
+  g.ai ||= {};
+  g.ai[side] ||= {};
+  g.ai[side].assignments = { [unit.id]: { front: 'reserve', since: g.turn } };
+  const memo = E.aiPlan(g, side);
+  assert.notEqual(memo.assign[unit.id], 'reserve');
+  assert.equal(memo.byId.reserve, undefined);
+});
+
+test('A city under immediate threat still receives an urgent garrison', () => {
   const g = blank();
   g.phase = 'eu';
   const city = g.stations.find(s => s.owner === 'eu');
@@ -247,7 +265,7 @@ test('A city under immediate threat can draw emergency guards beyond the routine
   E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', city.c - 2, city.r);
   const memo = E.aiPlan(g, 'eu');
   assert.equal(memo.guards[defender.id]?.emergency, true,
-    'an immediately threatened city can pull defenders even if one exceeds the 10% routine allocation');
+    'an immediately threatened city keeps its defender without a reserve quota');
 });
 
 test('AI may build a super-heavy even when it already fields more than two', () => {
