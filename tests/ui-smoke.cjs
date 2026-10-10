@@ -161,7 +161,7 @@ const modal = () => node('modal-root').innerHTML;
     'Cairo remains controlled by the E.U. despite experimental coastal geography');
   assert([null, 'eu'].includes(politicalIslands.Egypt),
     'Egypt geographic tint is either E.U. land or unassigned sea after reclassification');
-  assert.equal(run("E.tile(game,87,14).terrain"), 'coast', 'Cornwall is a coast hex: land for troops');
+  assert.equal(run("E.tile(game,87,14).terrain"), 'sea', 'Cornwall hex follows the 20-80% sea threshold');
   assert.equal(run("E.navigable(E.tile(game,87,14))"), true, 'Cornwall coast stays navigable for warships');
   assert.equal(run("GEOGRAPHY.visualMixedHex(87,14)"), true, 'Cornwall misleading sea/land hex is flagged');
   const conquestTint = run("(() => { const t=game.tiles.find(t=>t.c>=146&&t.c<=149&&t.r>=42&&t.r<=45&&t.terrain!=='sea'); const previous=t.owner; t.owner='britannia'; game.mapRevision=(game.mapRevision||0)+1; const captured=GEOGRAPHY.islandOwnerAt(game,114,0); t.owner=previous; game.mapRevision++; const restored=GEOGRAPHY.islandOwnerAt(game,114,0); return {captured,restored}; })()");
