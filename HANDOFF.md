@@ -441,13 +441,15 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   word it.
 
 ### AI
-- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: the capital keeps 2–4 defenders), then in
-  Conquest the theaters (`planFronts`). Campaign missions keep one side-wide `goalField`.
+- `aiPlan(g, side)` runs once per AI turn: garrisons (`assignGuards`: capital seeks 2–4 defenders
+  within the shared peacetime budget), then Conquest theaters (`planFronts`). Campaign missions keep one
+  side-wide `goalField`.
 - Threats (`threatTo`): any enemy within 5 hexes. In Conquest a coastal city or mine is also threatened by a loaded
   carrier within its sail + 1, an amphibious frame within its sea move + 1, or an embarked transport within its
   sail + 1. Garrisons and defensive fronts both use it.
-- In Conquest, fortress cities (the strait guns) and level-2+ naval bases always keep one land defender. Warships are
-  never picked as garrisons.
+- In Conquest, fortress cities (the strait guns) and level-2+ naval bases request one land defender
+  within the shared budget. Warships are never picked as garrisons; genuinely imminent enemy threats
+  can override the peacetime budget.
 - The geography pass opened the strategic straits (Malacca, Otranto, Danish Straits, Bosporus, Bab-el-Mandeb,
   Hudson, Tsugaru). At this scale the Malacca gap leaves Singapore on the Sumatra landmass, so it's an island
   fortress the AI holds, reinforces and attacks by sea.
@@ -459,8 +461,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
     and sized (desired strength 1.5 × the enemy strength near its objectives; defensive fronts 1.2 × the menace less
     garrisons). Priority is discounted when half the army could not meet the need.
   - Strength is `unitStrength`: frames × health × generation, ×1.5 commanders, ×1.5 Elite Forces.
-  - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace) plus
-    the four best others. A 10% reserve waits at the capital and is released to any emergency.
+  - Fighting fronts: every emergency (threatened capital/project, or a defensive front under 60% of its menace)
+    plus the four best others. The 10% strength allocation is **shared** between routine city/mine garrisons,
+    routine defensive fronts, and whatever remains as mobile capital reserve; these no longer stack.
+    Emergency city guards or genuinely threatened defensive fronts may draw extra troops so the AI can survive attacks.
   - The rest of the army is split 50/25/15/10 by rank, capped by need. The front furthest below its target takes the
     nearest free unit.
   - Assignments are sticky for 4 turns (`g.ai[side].assignments`), unless the front is gone, the unit is 60+ hexes
