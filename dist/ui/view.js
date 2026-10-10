@@ -392,7 +392,12 @@ function attachMap() {
   canvas.onwheel = e => {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
-    changeZoom(e.deltaY < 0 ? 1.1 : 1 / 1.1, { x: e.clientX - rect.left, y: e.clientY - rect.top });
+    // Standard mouse wheels zoom quickly; small trackpad deltas remain smooth.
+    // Delta units vary between pixels, lines and pages across browsers.
+    const pixels = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? rect.height : 1);
+    if (!Number.isFinite(pixels) || !pixels) return;
+    const step = E.clamp(pixels, -240, 240);
+    changeZoom(Math.exp(-step / 500), { x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
   canvas.oncontextmenu = e => e.preventDefault();
 }
