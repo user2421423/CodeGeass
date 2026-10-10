@@ -352,7 +352,6 @@ HEX_SEA = [
     (99, 19),  # Strait of Otranto: keep Italy's new heel separate from the Balkans
     (94, 11),  # Danish Straits: connect the Baltic to the North Sea
     (103, 19), (103, 20),  # Bosporus/Dardanelles: connect Black Sea to Mediterranean
-    (107, 27), (111, 34), (111, 35),  # Red Sea north extension and Bab-el-Mandeb
     (115, 26),  # Persian Gulf: open the north-western gulf
     (59, 11),  # Hudson Strait: connect Hudson Bay to the Atlantic
     (140, 42), (140, 43), (141, 42),  # Strait of Malacca: separate Malaya/Singapore from Sumatra
@@ -460,8 +459,11 @@ FIX_LAND = [
 
     (61, 15),  # Newfoundland: GIS land-dominant hex, safe from city/port/route constraints
     (97, 20),  # Italy: Calabria, so Sicily stays joined to the mainland (the Strait of Messina is closed)
+    (107, 27),  # Red Sea: the Egyptian coast hex north of Hurghada is land
+    (111, 34), (111, 35),  # Red Sea: the Yemeni Tihama coast is land
 ]
 FIX_SEA = [
+    (111, 36),  # Bab-el-Mandeb: the strait itself is sea
     (141, 44),  # Malacca: separate Sumatra from Singapore and keep navigable sea
 
     (160, 19),  # Tsugaru Strait: separate Hokkaido and Honshu

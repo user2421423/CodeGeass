@@ -963,10 +963,13 @@
   const COASTAL_SEA_FIXES = [[13, 9], [168, 9], [50, 10], [49, 12],
     [81, 32], [113, 51], [157, 44], [49, 31],
     [0, 6], [127, 0], [158, 1], [55, 8], [56, 8], [156, 63],
-    [141, 44]];  // Malacca: only unoccupied legacy land becomes water
+    [141, 44],  // Malacca: only unoccupied legacy land becomes water
+    [111, 36]];  // Bab-el-Mandeb
   // The Caspian was the sole isolated sea component. Legacy saves migrate
   // it to traversable land, preserving occupied old tiles and player-built sites.
-  const CASPIAN_LAND_FIXES = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21]];
+  // Red Sea coast hexes (Egypt 107,27; Yemen 111,34 and 111,35) became land the same way.
+  const CASPIAN_LAND_FIXES = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21],
+    [107,27], [111,34], [111,35]];
   const TSUGARU_STRAIT = [160, 19];
   function coastalTileOccupied(g, c, r) {
     return g.units.some(u => u.hp > 0 && u.c === c && u.r === r) ||

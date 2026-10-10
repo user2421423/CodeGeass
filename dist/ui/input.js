@@ -453,9 +453,6 @@ document.addEventListener('click', e => {
     case 'end-confirm':
       endTurn(true);
       break;
-    case 'skip-ai':
-      skipAI = true;
-      break;
     case 'fleija':
       strikeMode = !strikeMode && interactive();
       render();

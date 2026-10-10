@@ -13,7 +13,8 @@ async function endTurn(force = false) {
   strikeMode = false;
   save();
   const token = ++aiToken;
-  skipAI = false;
+  // Rival turns always play at full speed (no per-move pauses or combat animations).
+  skipAI = true;
   for (const side of game.order.slice(1)) {
     if (!E.alive(game, side) || game.over) continue;
     aiSide = side;
