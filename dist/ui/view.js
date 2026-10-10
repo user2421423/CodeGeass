@@ -265,7 +265,7 @@ function activateHex(p) {
       SFX.play('move', u.side);
       selection = { kind: 'unit', id: r.unit.id };
       refreshAndSave();
-      toast(r.seized ? `Launched onto ${r.seized}. The mine is yours.` : 'Launched. It can move and attack this turn.');
+      toast(r.captured ? `Launched and captured ${r.captured}!` : r.seized ? `Launched onto ${r.seized}. The mine is yours.` : 'Launched. It can move and attack this turn.');
       return;
     }
     if (r) toast(r.reason);
