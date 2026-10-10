@@ -612,7 +612,7 @@ function attackHex(p) {
 function undoMove() {
   if (!interactive() || !undoStack.length) return;
   const { snapshot, unitId } = undoStack.pop();
-  game = JSON.parse(snapshot);
+  game = E.unpackSave(JSON.parse(snapshot));
   effects = effects.filter(e => e.kind !== 'move');
   selection = { kind: 'unit', id: unitId };
   render();

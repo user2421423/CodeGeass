@@ -76,7 +76,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 
 ### Engine conventions
 
-- Game state `g` is plain JSON (saved whole to `localStorage`). Key fields: `game: 'knightmare'`, `rulesVersion`,
+- Game state `g` is plain JSON, saved to `localStorage` (conquest saves in compact form, see below). Key fields: `game: 'knightmare'`, `rulesVersion`,
   `player`, `order` (turn order, player first), `phase`, `turn`, `wrap`, `cols/rows`, `tiles`, `units`, `stations`
   (the cities), `economy`, `tech` (per side), `officers` (operation commanders), `roster` (copy of your commanders),
   `fallen` (surrendered powers), `difficulty`, `log`, `over`.
@@ -87,6 +87,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 - Every player action has a `…Reason(g, …)` function returning `null` or a human-readable reason; the UI shows it on
   disabled buttons. Shortfalls read "Need N more credits / command tokens" and render as red costs instead.
 - Saves are gated by `RULES_VERSION` (currently 3) in `migrateSave`; bump it when save shape or rules change.
+- Compact conquest saves (`E.packSave` / `E.unpackSave`, used by `save()`, `getSave()` and undo): terrain is stored only
+  where it differs from `WORLD_ROWS`, every other per-hex field (`owner`, `provinceCity`, any new one) as runs in map
+  order (`[value, count]`, or `[count]` where absent), and destroyed units are dropped. About 7x smaller (≈0.9 MB →
+  ≈0.12 MB). `migrateSave` unpacks first, so full-format saves still load. Campaign saves stay whole (small maps).
   Version 3 added Sakuradite; every older save was made on the old 100 × 42 map and is rejected.
 - `createGame(player, difficulty, 'conquest', seed)`. Cities and armies are placed by longitude/latitude and snap to
   the nearest free land hex, so they can be edited without touching coordinates. The high-resolution conquest map rejects older 100 × 42 saves rather than misplacing them.

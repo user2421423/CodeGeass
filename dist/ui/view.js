@@ -278,13 +278,13 @@ function activateHex(p) {
       return;
     }
     if (readyCache.has(E.key(p))) {
-      const snapshot = JSON.stringify(game),
+      const snapshot = JSON.stringify(E.packSave(game)),
         wasSea = E.atSea(game, u),
         result = E.move(game, u.id, p.c, p.r);
       if (result.ok) {
         SFX.play('move', u.side);
         undoStack.push({ snapshot, unitId: u.id });
-        if (undoStack.length > 5) undoStack.shift(); // each snapshot is the whole game (~0.75 MB)
+        if (undoStack.length > 5) undoStack.shift(); // each snapshot is a compact save (~0.1 MB)
         effects.push({
           kind: 'move',
           unitId: u.id,

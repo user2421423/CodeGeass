@@ -106,7 +106,7 @@ function saveProfile(p) {
 function save() {
   if (game.phase !== game.player && !game.over) return false;
   try {
-    localStorage.setItem(saveKey(), JSON.stringify(game));
+    localStorage.setItem(saveKey(), JSON.stringify(E.packSave(game)));
     saveOk = true;
     return true;
   } catch (e) {
@@ -117,7 +117,7 @@ function save() {
 }
 function getSave(key = SAVE_KEY) {
   try {
-    const g = JSON.parse(localStorage.getItem(key));
+    const g = E.unpackSave(JSON.parse(localStorage.getItem(key)));
     if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player])
       return E.migrateSave(g);
   } catch (e) {}
