@@ -6,7 +6,9 @@ function bump(amount) {
   if (typeof requestMapFrame === 'function') requestMapFrame();
 }
 function popup(at, text, color, opts = {}) {
-  const life = opts.life || 1.6;
+  const duration = opts.life || 1.6;
+  const delay = Math.max(0, opts.delay || 0);
+  const life = duration + delay;
   effects.push({
     kind: 'text',
     to: { c: at.c, r: at.r },
@@ -14,6 +16,8 @@ function popup(at, text, color, opts = {}) {
     color,
     life,
     max: life,
+    duration,
+    delay,
     dy: opts.dy || 0,
     size: opts.size || 14,
     pop: !!opts.pop,
@@ -109,26 +113,32 @@ function addCombatEffects(result, attacker, before = null) {
   const weapon = SFX.weapon(cls);
   const spec = VFX_WEAPONS[weapon] || VFX_WEAPONS.cannon;
   const compact = reducedMotion();
+  const impactAt = compact ? 0.08 : spec.impact;
   const shown = onScreen(result.to) || onScreen(result.from);
   const target = before && [...before.values()].find(u =>
     u.c === result.to.c && u.r === result.to.r && u.side !== attacker.side);
+  const counterWeapon = result.counter && target ? SFX.weapon(E.TYPES[target.type].cls) : null;
+  const counterDelay = counterWeapon ? (compact ? 0.09 : spec.impact + 0.07) : 0;
+  const counterImpactAt = counterWeapon
+    ? counterDelay + (compact ? 0.08 : (VFX_WEAPONS[counterWeapon] || VFX_WEAPONS.cannon).impact)
+    : 0;
   if (shown) {
     queueCombatShot(result.from, result.to, weapon, attacker.side, {
       crit: result.crit, shake: (HEAVY_SHAKE[cls] || 0) + (result.crit ? 4 : 0) + (result.destroyed ? 4 : 0),
     });
     SFX.play(weapon, attacker.side);
-    if (result.crit) SFX.play('crit', attacker.side, compact ? 0.08 : spec.impact);
+    if (result.crit) SFX.play('crit', attacker.side, impactAt);
     if (result.destroyed) {
-      SFX.play('explosion', attacker.side, compact ? 0.08 : spec.impact);
-      spawnCombatBlast(result.to, compact ? 0.08 : spec.impact, ['heavy', 'super', 'siege'].includes(cls));
+      SFX.play('explosion', attacker.side, impactAt);
+      spawnCombatBlast(result.to, impactAt, ['heavy', 'super', 'siege'].includes(cls));
     }
-    if (result.counter && target) {
-      const counterWeapon = SFX.weapon(E.TYPES[target.type].cls), delay = compact ? 0.09 : spec.impact + 0.07;
-      queueCombatShot(result.to, result.from, counterWeapon, target.side, { counter: true, delay, shake: 1 });
-      SFX.play(counterWeapon, target.side, delay);
+    if (counterWeapon) {
+      queueCombatShot(result.to, result.from, counterWeapon, target.side,
+        { counter: true, delay: counterDelay, shake: 1.5 });
+      SFX.play(counterWeapon, target.side, counterDelay);
     }
   }
-  // Include splash kills and an attacker killed by counterfire, but not unrelated disbanded units.
+  // Splash fatalities and counterfire losses use their own hit times and locations.
   if (before) {
     const affected = new Set((result.hit || []).map(h => h.id));
     if (result.counter) affected.add(attacker.id);
@@ -136,16 +146,25 @@ function addCombatEffects(result, attacker, before = null) {
       const previous = before.get(id);
       if (!previous || !onScreen(previous)) continue;
       if (id === target?.id && !result.destroyed) continue;
-      if (!game.units.some(u => u.id === id && u.hp > 0) &&
-        !effects.some(e => e.kind === 'wreck' && e.to.c === previous.c && e.to.r === previous.r))
-        spawnCombatWreck(previous, compact ? 0.08 : spec.impact);
+      if (game.units.some(u => u.id === id && u.hp > 0)) continue;
+      const killedByCounter = id === attacker.id;
+      const destructionAt = killedByCounter ? counterImpactAt : impactAt;
+      if (!effects.some(e => e.kind === 'wreck' && e.to.c === previous.c && e.to.r === previous.r))
+        spawnCombatWreck(previous, destructionAt);
+      // The main victim already received an explosion; give splash and counterfire kills one too.
+      if (shown && (killedByCounter || id !== target?.id))
+        spawnCombatBlast(previous, destructionAt, false);
     }
   }
-  if (result.shieldDamage) popup(result.to, '−' + result.shieldDamage + ' DEF', '#7cc8ff', { dy: 20, size: 14 });
+  if (result.shieldDamage) popup(result.to, '−' + result.shieldDamage + ' DEF', '#7cc8ff',
+    { dy: 20, size: 14, delay: impactAt });
   for (const h of result.hit || []) {
     const main = h.c === result.to.c && h.r === result.to.r;
-    if (main && result.crit) popup(h, '−' + h.damage + ' CRIT!', '#ff3b30', { size: 21, life: 1.9, pop: true });
-    else popup(h, '−' + h.damage, main ? '#ffb3a3' : '#ff9a7a', { size: main ? 15 : 13 });
+    if (main && result.crit) popup(h, '−' + h.damage + ' CRIT!', '#ffefad',
+      { size: 21, life: 1.9, pop: true, delay: impactAt });
+    else popup(h, '−' + h.damage, main ? '#ffb3a3' : '#ff9a7a',
+      { size: main ? 16 : 13, delay: impactAt, dy: main ? 0 : -12 });
   }
-  if (result.counter) popup(result.from, '↩ −' + result.counter, '#ffb3a3', { size: 13 });
+  if (result.counter) popup(result.from, 'COUNTER −' + result.counter, '#9deaff',
+    { size: 16, life: 1.8, pop: true, delay: counterImpactAt });
 }

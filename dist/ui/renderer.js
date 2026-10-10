@@ -719,6 +719,20 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
     if (!compact) combatVfxSparks(sx, sy, 17 * strength, '#fff4dd', alpha, 6);
     ctx.restore();
   }
+  // Counterfire is announced at the defending unit, not mistaken for a second attack.
+  if (e.counter && age < (compact ? 0.14 : 0.28)) {
+    const fade = Math.max(0, 1 - age / (compact ? 0.14 : 0.28));
+    ctx.save();
+    ctx.globalAlpha *= fade;
+    ctx.strokeStyle = '#99eeff';
+    ctx.lineWidth = 2.3 / Math.max(scale, 0.6);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 12 + age * 42, 0, Math.PI * 2);
+    ctx.stroke();
+    if (!compact) outlinedText('COUNTER', sx + nx * 14, sy + ny * 14 - 27,
+      10, '#c4f7ff', scale, 'Trebuchet MS', true);
+    ctx.restore();
+  }
   if (e.weapon === 'slash') {
     if (age < 0.27) {
       const progress = age / 0.27;
@@ -741,6 +755,16 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
       segment(0, 1, 13 * power, e.color, 20);
       segment(0, 1, 5 * power, '#f2e8ff', 7);
       segment(0, 1, 2.5 * power, '#ffffff');
+      // Siege cannons fire a broader, twin-edged lance; ordinary beams remain narrow.
+      if (e.weapon === 'siege' && !compact) {
+        const spread = 8 * power;
+        combatVfxLine(sx + nx * spread, sy + ny * spread,
+          tx + nx * spread * 0.2, ty + ny * spread * 0.2,
+          '#e4aeff', 2 / Math.max(scale, 0.6), 7);
+        combatVfxLine(sx - nx * spread, sy - ny * spread,
+          tx - nx * spread * 0.2, ty - ny * spread * 0.2,
+          '#e4aeff', 2 / Math.max(scale, 0.6), 7);
+      }
       ctx.restore();
     }
   } else if (e.weapon === 'railgun') {
@@ -779,6 +803,17 @@ function drawCombatShot(e, ax, ay, bx, by, scale) {
     }
   }
   combatVfxImpact(tx, ty, age - e.impact, e.color, e.crit ? power * 1.4 : power, scale, compact);
+  if (e.crit && age >= e.impact && age < e.impact + (compact ? 0.1 : 0.28)) {
+    const progress = (age - e.impact) / (compact ? 0.1 : 0.28);
+    ctx.save();
+    ctx.globalAlpha *= (1 - progress) * 0.9;
+    ctx.strokeStyle = '#ffe98a';
+    ctx.lineWidth = 4 / Math.max(scale, 0.6);
+    ctx.beginPath();
+    ctx.arc(tx, ty, 16 + 36 * progress, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   if (e.weapon === 'rockets' && !compact)
     for (let i = 1; i < 3; i++)
       combatVfxImpact(tx + nx * (i === 1 ? -11 : 12), ty + ny * (i === 1 ? -11 : 12),
@@ -799,6 +834,12 @@ function drawCombatBlast(e, x, y, scale) {
   ctx.arc(x, y - 5, (12 + t * 38) * strength, 0, Math.PI * 2);
   ctx.stroke();
   if (!compact) {
+    // A bright secondary shockwave and debris make lethal hits read at every zoom.
+    ctx.strokeStyle = 'rgba(255,233,183,0.92)';
+    ctx.lineWidth = 1.8 / Math.max(scale, 0.6);
+    ctx.beginPath();
+    ctx.arc(x, y - 5, (18 + t * 57) * strength, 0, Math.PI * 2);
+    ctx.stroke();
     for (let i = 0; i < 10; i++) {
       const angle = i * 2.39996, radius = (10 + t * 49) * strength;
       const px = x + Math.cos(angle) * radius, py = y - 5 + Math.sin(angle) * radius * 0.65;
@@ -1584,9 +1625,16 @@ function draw(time, dt) {
     } else if (e.kind === 'move') {
       drawLine(ax, a0.y, bx, b0.y, e.color, 2 / scale, [7, 6]);
     } else if (e.kind === 'text') {
-      const age = 1 - fade,
-        pop = e.pop ? 1 + Math.max(0, 1 - age * 7) * 0.7 : 1;
-      outlinedText(e.text, bx, b0.y - 28 - age * 28 - (e.dy || 0), (e.size || 14) * pop, e.color, scale, 'Trebuchet MS', true);
+      // Damage, defense and counter labels appear when the projectile actually lands.
+      const elapsed = e.max - e.life - (e.delay || 0);
+      if (elapsed >= 0) {
+        const duration = e.duration || e.max;
+        const age = Math.min(1, elapsed / duration);
+        ctx.globalAlpha = Math.max(0, 1 - age);
+        const pop = e.pop ? 1 + Math.max(0, 1 - age * 7) * 0.7 : 1;
+        outlinedText(e.text, bx, b0.y - 28 - age * 28 - (e.dy || 0),
+          (e.size || 14) * pop, e.color, scale, 'Trebuchet MS', true);
+      }
     }
     ctx.globalAlpha = 1;
   }

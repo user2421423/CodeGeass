@@ -497,9 +497,16 @@ function draw(time, dt) {
     } else if (e.kind === 'move') {
       drawLine(ax, a0.y, bx, b0.y, e.color, 2 / scale, [7, 6]);
     } else if (e.kind === 'text') {
-      const age = 1 - fade,
-        pop = e.pop ? 1 + Math.max(0, 1 - age * 7) * 0.7 : 1;
-      outlinedText(e.text, bx, b0.y - 28 - age * 28 - (e.dy || 0), (e.size || 14) * pop, e.color, scale, 'Trebuchet MS', true);
+      // Damage, defense and counter labels appear when the projectile actually lands.
+      const elapsed = e.max - e.life - (e.delay || 0);
+      if (elapsed >= 0) {
+        const duration = e.duration || e.max;
+        const age = Math.min(1, elapsed / duration);
+        ctx.globalAlpha = Math.max(0, 1 - age);
+        const pop = e.pop ? 1 + Math.max(0, 1 - age * 7) * 0.7 : 1;
+        outlinedText(e.text, bx, b0.y - 28 - age * 28 - (e.dy || 0),
+          (e.size || 14) * pop, e.color, scale, 'Trebuchet MS', true);
+      }
     }
     ctx.globalAlpha = 1;
   }
