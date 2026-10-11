@@ -357,7 +357,7 @@ test('Army group orders assign actual unit destinations, not just visual labels'
   assert.equal(japan.orderGroup(g, 'invalid-id', t).ok, false);
 });
 
-test('Alliance changes exactly once on turn 10 and faction victory goals differ', () => {
+test('Alliance ends on turn 10 but every faction shares the 44-city conquest objective', () => {
   const g = japan.create('britannia', 'normal', 11);
   g.turn = 9;
   assert.equal(japan.onTurn(g), false);
@@ -367,17 +367,37 @@ test('Alliance changes exactly once on turn 10 and faction victory goals differ'
   assert.equal(E.foe(g, 'britannia', 'bk'), true);
   assert.equal(japan.onTurn(g), false);
   assert.equal(g.scenario.phase, 'three-way-war');
-  assert.notEqual(japan.objective(g, 'britannia'), japan.objective(g, 'cf'));
-  assert.notEqual(japan.objective(g, 'bk'), japan.objective(g, 'britannia'));
+  for (const side of japan.sides) {
+    assert.match(japan.objective(g, side), /Conquer all 44 Japanese cities/);
+    assert.ok(japan.objective(g, side).includes(
+      g.stations.filter(s => s.owner === side).length + '/44 controlled'));
+  }
+  assert.equal(g.scenario.turnLimit, undefined);
 });
 
-test('Controlling required regional strongholds actually wins a scenario', () => {
-  const g = japan.create('cf', 'normal', 11);
-  g.turn = 14;
-  g.scenario.phase = 'three-way-war';
-  for (const s of g.stations) s.owner = 'cf';
-  assert.equal(E.checkVictory(g).winner, 'cf');
+test('Only complete ownership of all 44 cities can win Japan Scenario', () => {
+  for (const side of japan.sides) {
+    const g = japan.create(side, 'normal', 11);
+    g.turn = 1;
+    for (const city of g.stations) city.owner = side;
+    assert.equal(japan.winner(g)?.winner, side, 'Winning is possible whenever all cities are owned');
+    assert.equal(E.checkVictory(g)?.winner, side);
+  }
 });
+
+test('Strategic city thresholds and turns 60+ no longer end an incomplete conquest', () => {
+  const g = japan.create('cf', 'normal', 11);
+  for (const city of g.stations) city.owner = 'cf';
+  city(g, 'Sapporo').owner = 'britannia';
+  for (const turn of [9, 60, 61, 120, 200]) {
+    g.turn = turn;
+    assert.equal(japan.winner(g), null, '43 of 44 cities is not victory');
+    assert.equal(E.checkVictory(g), null, 'No score-based or turn-based victory');
+  }
+  city(g, 'Sapporo').owner = 'neutral';
+  assert.equal(E.checkVictory(g), null, 'Single surviving faction does not win without all 44 cities');
+});
+
 
 test('Scenario defeat does not assign victory to an arbitrary survivor', () => {
   const g = japan.create('bk', 'normal', 11);
