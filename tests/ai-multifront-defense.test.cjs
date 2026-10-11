@@ -107,19 +107,21 @@ test('alert target allocations are nonnegative and bounded by the shared army ca
     army * E.FRONT.alertShare + 1e-8);
 });
 
-test('a threatened mainland limits expedition targets without deleting land offensives', () => {
+test('projected multi-sector pressure on a capital caps offensive commitments for every faction', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 123);
   g.phase = 'cf';
   const memo = E.aiPlan(g, 'cf');
   const mobile = g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval &&
     !memo.guards[u.id] && !u.hold && !memo.recoveries?.has(u.id))
     .reduce((n,u) => n + E.unitStrength(u),0);
-  const expedition = memo.fronts.filter(f => f.type === 'offensive' && f.overseas);
-  const alerts = memo.fronts.filter(f => f.type === 'alert' && f.menace > 0);
-  assert(alerts.length >= 2, 'opening China has distinct threatened homeland sectors');
-  assert(expedition.length > 0, 'China starts with an amphibious opportunity');
-  assert(expedition.every(f => f.target <= mobile * E.FRONT.exposedExpeditionShare + 1e-8),
-    'no remote expedition may monopolize army deployment while several border sectors are exposed');
-  assert(memo.fronts.some(f => f.type === 'offensive' && !f.overseas),
-    'land offensives remain available while an expedition is capped');
+  assert(memo.fronts.some(f => f.projectedVital && f.projectedMenace > 0),
+    'there is an expected two-turn approach toward an important capital');
+  assert(memo.fronts.filter(f => f.type === 'alert').length >= 2,
+    'defensive coverage uses multiple sectors');
+  const assaults = memo.fronts.filter(f => f.type === 'offensive');
+  assert(assaults.length > 0, 'there are still real offensives');
+  assert(assaults.every(f => f.target <= mobile * E.FRONT.capitalCrisisOffenseShare + 1e-8),
+    'an exposed capital prevents one invasion from monopolizing the army');
+  assert(memo.fronts.filter(f => f.type === 'alert')
+    .reduce((n,f) => n+f.target,0) <= mobile*E.FRONT.capitalCrisisAlertShare+1e-8);
 });

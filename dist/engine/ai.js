@@ -123,7 +123,7 @@
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
   // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
   // (or after `wait` turns). Garrisons and defensive fronts respond to threats; no army is held in strategic reserve.
-  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65, exposedExpeditionShare: 0.17, normalExpeditionShare: 0.4 };
+  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65, capitalCrisisAlertShare: 0.42, capitalCrisisOffenseShare: 0.27, normalExpeditionShare: 0.4 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
     const t = TYPES[u.type];
@@ -246,6 +246,7 @@
       f.projectedCities = projected.filter(o => o.city).length;
       const bestAttack = attack.length ? Math.max(...attack.map(o => o.value)) : 0;
       f.vital = imminent.some(o => o.vital);
+      f.projectedVital = projected.some(o => o.vital);
       f.enemies = enemies;
       f.enemyStrength = sum(enemies);
       // Only a legal attack on the next enemy turn may trigger a defensive emergency.
@@ -260,9 +261,19 @@
           imminent.some(o => dist(g, u, o) <= R.threat))),
         garrison = sum(g.units.filter(u => memo.guards[u.id] &&
           imminent.some(o => dist(g, u, o) <= R.threat)));
+      // Enemy formations outside the two-turn attack window still matter when
+      // planning cover for a capital. They are not legal immediate attackers.
+      f.stagingMenace = defend.length ? foes.reduce((total, v) => {
+        const distance = Math.min(...defend.map(o => dist(g, v, o)));
+        const weight = distance <= R.threat ? 0 :
+          distance <= R.threat * 2 ? 0.4 :
+            distance <= R.enemyScan ? 0.18 : 0;
+        return total + weight * (unitStrength(v) + sum(v.cargo || []));
+      }, 0) : 0;
       f.immediateMenace = immediateMenace;
       f.projectedMenace = projectedMenace;
-      f.menace = immediateMenace + projectedMenace * FRONT.approachingWeight;
+      f.menace = immediateMenace + projectedMenace * FRONT.approachingWeight +
+        f.stagingMenace * 0.35;
       f.present = present;
       // Readiness of friendly troops already stationed in this particular sector,
       // not soldiers on the other side of a continent-wide defensive cluster.
@@ -271,7 +282,7 @@
       f.localGarrison = sum(g.units.filter(u => memo.guards[u.id] &&
         defend.some(o => dist(g, u, o) <= R.threat)));
       f.pressure = f.immediateMenace * 1.6 + f.projectedMenace +
-        Math.max(0, f.enemyStrength - f.localStrength) * 0.4;
+        f.stagingMenace * 0.6 + Math.max(0, f.enemyStrength - f.localStrength) * 0.4;
       const shortage = immediateMenace > 0 && present < immediateMenace * FRONT.emergencyRatio;
       f.emergency = f.vital || shortage;
       // A future threat may create an alert, never a full theater-wide holding order.
@@ -283,6 +294,7 @@
         ? Math.max(2, immediateMenace * 1.2 - garrison)
         : f.type === 'alert'
           ? Math.max(2, f.immediateMenace * 1.2 + f.projectedMenace * 0.9 +
+            f.stagingMenace * 0.45 + (f.projectedVital ? 5 : 0) +
             Math.max(0, f.enemyStrength - f.localStrength) * 0.5 -
             f.localGarrison * 0.25)
           : Math.max(3, f.enemyStrength * 1.5 + attack.length * 0.5);
@@ -296,7 +308,7 @@
           Math.min(24, Math.max(0, f.immediateCities - 1) * FRONT.multiCityBonus)
         : f.type === 'alert'
           ? 24 + Math.min(32, f.pressure * 2) + (f.immediateCities ? 10 : 0) +
-            (f.vital ? 10 : 0)
+            (f.projectedVital ? 12 : 0) + (f.vital ? 10 : 0)
           : attackValue || 12;
       f.score = Math.round(emphasis - Math.max(0, home - 8) * 1.2);
       f.name = f.type === 'offensive'
@@ -350,8 +362,10 @@
     // 4. Emergency fronts get priority; remaining forces are shared across both
     // offensive and routine defensive fronts by priority and actual strength need.
     const alerts = fronts.filter(f => f.type === 'alert'),
-      exposed = fronts.filter(f => f.menace > 0 && f.type !== 'offensive').length >= 2,
-      expeditionLimit = army * (exposed ? FRONT.exposedExpeditionShare : FRONT.normalExpeditionShare),
+      // A projected attack on a capital across several sectors is a genuine
+      // strategic crisis even though it must not force every local front to hold.
+      capitalCrisis = alerts.length >= 2 && fronts.some(f => f.projectedVital && f.projectedMenace > 0),
+      expeditionLimit = army * FRONT.normalExpeditionShare,
       open = fronts.filter(f => f.type === 'offensive' || (f.type === 'defensive' && !f.emergency)),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
     let pot = army,
@@ -371,7 +385,8 @@
     }
     // All alert-only fronts share a bounded field-army budget. This is staging,
     // not a permanent reserve or an excuse to halt nearby offensives.
-    const alertPool = Math.min(pot, army * FRONT.alertShare);
+    const alertPool = Math.min(pot, army *
+      (capitalCrisis ? FRONT.capitalCrisisAlertShare : FRONT.alertShare));
     // Weighted, capacity-constrained division: an inland capital warning cannot
     // monopolize cover while exposed border sectors are left without a formation.
     const pending = alerts.slice();
@@ -406,17 +421,18 @@
       for (const f of capped) pot -= f.target = f.desiredStrength;
       left = left.filter(f => !capped.includes(f));
     }
-    // A remote amphibious expedition cannot claim most of the field army while
-    // multiple homeland sectors are exposed. Carry excess allocation forward to
-    // nearby land offensives instead of making defensive cities pay for the invasion.
+    // While the capital is under projected multi-sector pressure, even a land
+    // offensive close to home cannot monopolize the mobilized field army. In
+    // ordinary periods only long-distance amphibious offensives are constrained.
+    const offensiveLimit = capitalCrisis ? army * FRONT.capitalCrisisOffenseShare : expeditionLimit;
     let reclaimed = 0;
-    for (const f of open) if (f.overseas && f.target > expeditionLimit) {
-      reclaimed += f.target - expeditionLimit;
-      f.target = expeditionLimit;
+    for (const f of open) if (f.type === 'offensive' &&
+      (capitalCrisis || f.overseas) && f.target > offensiveLimit) {
+      reclaimed += f.target - offensiveLimit;
+      f.target = offensiveLimit;
     }
-    const landOffensives = open.filter(f => f.type === 'offensive' && !f.overseas);
-    if (reclaimed > 0 && landOffensives.length)
-      for (const f of landOffensives) {
+    if (reclaimed > 0 && !capitalCrisis)
+      for (const f of open.filter(f => f.type === 'offensive' && !f.overseas)) {
         const grant = Math.min(reclaimed, Math.max(0, f.desiredStrength - f.target));
         f.target += grant;
         reclaimed -= grant;
@@ -449,7 +465,8 @@
     // offensive instead of accumulating units in routine defensive positions.
     const offensive = fronts.filter(f => f.type === 'offensive' && !f.overseas),
       localDefense = fronts.filter(f => f.type === 'alert' || f.emergency),
-      overflow = offensive.length ? offensive : localDefense.length ? localDefense : fronts;
+      overflow = capitalCrisis && localDefense.length
+        ? localDefense : offensive.length ? offensive : localDefense.length ? localDefense : fronts;
     for (const u of pool) {
       if (assign[u.id]) continue;
       const local = byDist(at(u), localDefense)[0],
