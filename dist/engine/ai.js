@@ -112,9 +112,13 @@
     let memo = aiMemo.get(g);
     if (!memo) aiMemo.set(g, (memo = {}));
     if (!memo[side] || memo[side].turn !== g.turn) {
-      memo[side] = { turn: g.turn, guards: assignGuards(g, side) };
-      planRecovery(g, side, memo[side]);
+      // Japan Scenario is an all-out city offensive: no guards, defensive
+      // fronts, recovery retreats or offensive assembly delays.
+      const rush = g.mode === 'scenario';
+      memo[side] = { turn: g.turn, guards: rush ? {} : assignGuards(g, side) };
+      if (!rush) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
+      else if (rush) planScenarioOffense(g, side, memo[side]);
       else planFronts(g, side, memo[side]);
     }
     return memo[side];
@@ -128,6 +132,66 @@
   function unitStrength(u) {
     const t = TYPES[u.type];
     return u.stack * Math.max(0.2, u.hp / maxHP(u)) * (1 + 0.25 * ((t.tier || 1) - 1)) * (u.cmd ? 1.5 : 1) * (t.elite ? 1.5 : 1);
+  }
+  // Japan Scenario: pursue every hostile city, starting with the nearest.
+  // One city per objective lets different columns exploit nearby openings.
+  // Landmass crossing adds a travel penalty so an unreachable city just across
+  // a strait does not distract troops from a reachable city on their island.
+  function scenarioCityCost(g, u, f) {
+    return dist(g, u, f.anchor) + (f.masses.has(massOf(g, u)) ? 0 : 8);
+  }
+  function planScenarioOffense(g, side, memo) {
+    const own = g.stations.filter(s => s.owner === side),
+      troops = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold),
+      enemies = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      fronts = g.stations.filter(s => foe(g, s.owner, side)).map(s => {
+        const opponents = enemies.filter(u => dist(g, u, s) <= 6),
+          mass = massOf(g, s),
+          local = own.filter(c => massOf(g, c) === mass),
+          coast = own.filter(c => coastTile(g, c)),
+          rally = (local.length ? local : coast).slice()
+            .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0] || null,
+          opposition = opponents.reduce((total, u) => total + unitStrength(u), 0);
+        return {
+          id: 'j' + s.id, side, anchor: s, name: s.name,
+          type: 'offensive', state: 'attacking', overseas: !local.length,
+          rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0,
+            fortified: !!s.shield }], enemies: opponents, enemyStrength: opposition,
+          desiredStrength: Math.max(3, opposition * 1.3 + (s.shield ? 2 : 0)),
+          assigned: 0, friendlyStrength: 0, target: 0, masses: new Set([mass]),
+          seeds: [[s, 0]], score: 1, priority: 1,
+        };
+      }),
+      assign = {};
+    // Reconsider targets every turn instead of anchoring forces to old fronts.
+    // Distance takes precedence over city tier, capital status or shield.
+    for (const u of troops) {
+      const f = fronts.slice().sort((a, b) =>
+        scenarioCityCost(g, u, a) - scenarioCityCost(g, u, b) ||
+        a.anchor.id - b.anchor.id)[0];
+      if (!f) continue;
+      assign[u.id] = f.id;
+      f.assigned += unitStrength(u);
+    }
+    for (const f of fronts) {
+      f.friendlyStrength = f.assigned;
+      f.target = f.desiredStrength;
+      f.need = frontNeeds(f, troops.filter(u => assign[u.id] === f.id));
+    }
+    // Put the most accessible objectives first for factories and idle fleets.
+    fronts.sort((a, b) => {
+      const nearest = f => Math.min(...(troops.length ? troops : own)
+        .map(u => scenarioCityCost(g, u, f)), Infinity);
+      return nearest(a) - nearest(b) || a.anchor.id - b.anchor.id;
+    });
+    const state = ((g.ai ||= {})[side] ||= { saving: false });
+    state.assignments = Object.fromEntries(Object.entries(assign).map(([id, front]) =>
+      [id, { front, since: g.turn }]));
+    Object.assign(memo, {
+      fronts, byId: Object.fromEntries(fronts.map(f => [f.id, f])),
+      assign, fields: {},
+      staging: fronts.find(f => f.overseas && f.assigned > 0 && f.rally)?.rally || null,
+    });
   }
   // What a side cares about this turn: enemy cities near its territory, every rival capital and F.L.E.I.J.A. project,
   // Sakuradite mines, and its own threatened cities, capital and mines. `value` scores the front, `seed` feeds its field.
@@ -386,6 +450,23 @@
   // The active front a unit serves; newly raised formations reinforce understrength fronts.
   function frontOf(g, memo, u) {
     if (!memo?.byId || !u || memo.guards?.[u.id] || memo.recoveries?.has(u.id) || isShip(u) || u.hold) return null;
+    // Once a city falls, redirect the remaining attacking units immediately
+    // instead of marching toward a city that is already theirs until next turn.
+    if (g.mode === 'scenario') {
+      const assigned = memo.byId[memo.assign[u.id]];
+      if (!assigned || !foe(g, assigned.anchor.owner, u.side)) {
+        const f = memo.fronts.filter(v => foe(g, v.anchor.owner, u.side))
+          .sort((a, b) => scenarioCityCost(g, u, a) - scenarioCityCost(g, u, b) ||
+            a.anchor.id - b.anchor.id)[0];
+        memo.assign[u.id] = f?.id ?? null;
+        if (f) {
+          f.assigned += unitStrength(u);
+          ((g.ai ||= {})[u.side] ||= {}).assignments ||= {};
+          g.ai[u.side].assignments[u.id] = { front: f.id, since: g.turn };
+        }
+      }
+      return memo.byId[memo.assign[u.id]] || null;
+    }
     if (!(u.id in memo.assign)) {
       const short = memo.fronts.filter(f => f.assigned < (f.target ?? f.desiredStrength)),
         offensive = memo.fronts.filter(f => f.type === 'offensive' || f.emergency),
@@ -750,7 +831,7 @@
       g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
-    for (const u of own()
+    for (const u of (g.mode === 'scenario' ? [] : own())
       .filter(u => u.hp / maxHP(u) < (memo.recoveries?.has(u.id) ? 0.7 : 0.55) && nearFriendlyCity(g, u) && !atSea(g, u))
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
@@ -1132,7 +1213,9 @@
             pr.unit +
             pr.shield * 0.7 +
             (d && pr.unit >= d.hp ? 130 : 0) +
-            (s ? 35 : 0) +
+            (s ? (g.mode === 'scenario'
+              ? 170 + (front?.anchor.id === s.id ? 80 : 0)
+              : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) -
