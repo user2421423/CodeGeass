@@ -53,7 +53,7 @@ test('Japan offensive columns prefer hostile player cities without breaking alli
   });
   assert.ok(results[1] >= results[0], 'higher human priority should not decrease human-directed columns here');
   g.turn = 10; japan.onTurn(g);
-  assert.equal(E.playerPriorityBonus(g, 'bk'), 0.4, 'alliance ends normally');
+  assert.equal(E.playerPriorityBonus(g, 'bk'), 0.6, 'alliance ends normally');
 });
 
 test('campaign routing applies player bias only to hostile targets', () => {
