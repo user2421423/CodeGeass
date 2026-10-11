@@ -260,6 +260,7 @@ document.addEventListener('click', e => {
     generalsDialog(d.generalsSide);
     return;
   }
+  if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
   if (d.campaignTab) return campaignDialog(d.campaignTab);
   if (d.mission) return briefingDialog(d.mission);
   if (d.startMission) return confirmReplace(CAMPAIGN_KEY, 'campaign', () => startMission(d.startMission));
@@ -284,6 +285,15 @@ document.addEventListener('click', e => {
         detailOpen = false;
       }
       updateSelection();
+      break;
+    case 'scenario':
+      scenarioDialog();
+      break;
+    case 'scenario-close':
+      startMenu();
+      break;
+    case 'start-scenario':
+      startScenario();
       break;
     case 'start-conquest':
       confirmReplace(SAVE_KEY, 'new', newGame);
@@ -534,7 +544,7 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'Escape' && !modal.querySelector('[aria-label="Operation setup"]')) {
       if (modal.querySelector('[aria-label="Mission dialogue"]')) talkNext(true);
-      else if (modal.querySelector('[aria-label="Campaigns"]')) startMenu();
+      else if (modal.querySelector('[aria-label="Campaigns"], [aria-label="Scenario selection"]')) startMenu();
       else if (modal.querySelector('[data-back="campaign"]')) campaignDialog();
       else if (helpBack === 'start' && modal.querySelector('[aria-label="Field manual"]')) startMenu();
       else if (archiveBack === 'start' && modal.querySelector('[aria-label="Knightmare archive"]')) startMenu();
