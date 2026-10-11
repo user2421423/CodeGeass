@@ -1,0 +1,94 @@
+name: Delete a branch (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Exact branch name (without refs/heads/)'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type DELETE, a space, and the exact branch name'
+        required: true
+        type: string
+      allow_unmerged:
+        description: 'Allow deletion of a branch containing commits not in the default branch'
+        required: true
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Preview and validate without actually deleting'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: branch-deletion
+  cancel-in-progress: false
+
+jobs:
+  delete_branch:
+    name: Validate request and optionally delete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check safeguards and delete only when explicitly requested
+        uses: actions/github-script@v9
+        env:
+          TARGET_BRANCH: ${{ inputs.branch }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          ALLOW_UNMERGED: ${{ inputs.allow_unmerged }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        with:
+          script: |
+            const branch = process.env.TARGET_BRANCH;
+            const confirmation = process.env.CONFIRMATION;
+            const allowUnmerged = process.env.ALLOW_UNMERGED === 'true';
+            const dryRun = process.env.DRY_RUN === 'true';
+            const defaultBranch = context.payload.repository?.default_branch;
+            const { owner, repo } = context.repo;
+
+            if (!defaultBranch || context.ref !== `refs/heads/${defaultBranch}`) {
+              throw new Error('Run this workflow on the default branch only.');
+            }
+            if (!branch || branch !== branch.trim() || branch.startsWith('refs/') || /[\r\n]/.test(branch)) {
+              throw new Error('Enter a single exact, valid branch name without refs/heads/.');
+            }
+            if (branch === defaultBranch || ['main', 'master', 'gh-pages'].includes(branch)
+                || branch.startsWith('release/') || branch.startsWith('production/')) {
+              throw new Error(`Refusing to delete a core, deployment, or release branch: ${branch}`);
+            }
+            if (confirmation !== `DELETE ${branch}`) {
+              throw new Error(`Confirmation must be exactly: DELETE ${branch}`);
+            }
+
+            const target = (await github.rest.repos.getBranch({ owner, repo, branch })).data;
+            if (target.protected) {
+              throw new Error(`GitHub reports this branch is protected: ${branch}`);
+            }
+            const targetSha = target.commit.sha;
+            const base = (await github.rest.repos.getBranch({
+              owner, repo, branch: defaultBranch
+            })).data;
+            const comparison = (await github.rest.repos.compareCommitsWithBasehead({
+              owner, repo, basehead: `${base.commit.sha}...${targetSha}`
+            })).data;
+            const uniqueCommits = comparison.ahead_by;
+            core.info(`${branch}: ${uniqueCommits} commit(s) ahead of ${defaultBranch}.`);
+
+            if (uniqueCommits > 0 && !allowUnmerged) {
+              throw new Error('Branch has commits not in the default branch. Set allow_unmerged=true to override.');
+            }
+            if (dryRun) {
+              core.notice(`DRY RUN: ${branch} passed the checks; it was NOT deleted.`);
+              return;
+            }
+
+            const rechecked = (await github.rest.repos.getBranch({ owner, repo, branch })).data;
+            if (rechecked.protected || rechecked.commit.sha !== targetSha) {
+              throw new Error('Branch protection or tip changed during validation. Refusing deletion.');
+            }
+            await github.rest.git.deleteRef({ owner, repo, ref: `heads/${branch}` });
+            core.notice(`Deleted branch ${branch} at ${targetSha}.`);
