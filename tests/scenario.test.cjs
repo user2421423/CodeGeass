@@ -22,14 +22,14 @@ function landReachable(g, origin, destination) {
   return false;
 }
 
-test('Japan concentrates the island chain into a detailed 152 × 42 regional theatre', () => {
+test('Japan uses a tightly cropped north-up regional map with unchanged island connectivity', () => {
   const g = japan.create('britannia', 'normal', 11);
   assert.equal(g.mode, 'scenario');
   assert.equal(g.wrap, false);
-  assert.equal(g.cols, 152);
-  assert.equal(g.rows, 42);
-  assert.equal(g.tiles.length, 6384);
-  assert.equal(g.scenario.projection.angle, 48);
+  assert.equal(g.cols, 110);
+  assert.equal(g.rows, 84);
+  assert.equal(g.tiles.length, 9240);
+  assert.equal(g.scenario.projection.angle, 0);
   assert.equal(g.stations.length, 44);
   assert.equal(new Set(g.stations.map(s => E.key(s))).size, 44);
   assert.equal(new Set(g.units.map(u => E.key(u))).size, g.units.length);
@@ -42,14 +42,23 @@ test('Japan concentrates the island chain into a detailed 152 × 42 regional the
   assert.ok(g.tiles.every(t => t.terrain === 'sea' || (t.owner && t.provinceCity != null)));
 });
 
-test('Regional map removes most deep-ocean cells without losing Japanese land', () => {
+test('North-up Japan grid crops the offshore margins without losing Japanese land', () => {
   const g = japan.create('britannia', 'normal', 11);
   const land = g.tiles.filter(t => t.terrain !== 'sea').length;
   const sea = g.tiles.length - land;
-  assert.ok(land >= 1350, 'detailed islands retain at least 1350 land hexes');
-  assert.ok(land / g.tiles.length > 0.20, 'regional island land share exceeds 20%');
-  assert.ok(sea < 5000, 'fewer than 5000 ocean hexes remain');
+  assert.ok(land >= 1250, 'north-up islands retain more than 1250 land hexes');
+  assert.ok(land / g.tiles.length > 0.14, 'cropped land share exceeds the old full rectangle');
+  assert.ok(sea < 8000, 'ocean boundaries are cropped tighter than the original board');
   assert.equal(g.stations.length, 44, 'all original Japan cities remain present');
+});
+
+test('North-up layout places Hokkaido above Honshu and Kyushu below it', () => {
+  const g = japan.create('cf', 'normal', 11);
+  assert.equal(g.scenario.projection.angle, 0);
+  assert.ok(city(g, 'Sapporo').r < city(g, 'Tokyo Settlement').r);
+  assert.ok(city(g, 'Tokyo Settlement').r < city(g, 'Kagoshima').r);
+  assert.ok(city(g, 'Fukuoka').c < city(g, 'Tokyo Settlement').c);
+  assert.ok(city(g, 'Tokyo Settlement').c < city(g, 'Kushiro').c);
 });
 
 test('Takamatsu stays on Shikoku, straits and other islands are not accidental land bridges', () => {
@@ -58,7 +67,7 @@ test('Takamatsu stays on Shikoku, straits and other islands are not accidental l
   assert.equal(landReachable(g, 'Takamatsu', 'Kobe'), false);
   assert.equal(landReachable(g, 'Kitakyushu', 'Shimonoseki'), false);
   assert.equal(landReachable(g, 'Sapporo', 'Aomori'), false);
-  assert.equal(E.tile(g, 31, 16).terrain, 'sea');
+  assert.equal(E.tile(g, 11, 64).terrain, 'sea');
 });
 
 test('All Kyushu cities, provinces and shoreline hexes start as Chinese Federation land', () => {
@@ -129,7 +138,7 @@ test('Scenario initialization never constructs a disposable world conquest', () 
   const before = E.createGame;
   E.createGame = () => { throw Error('Unexpected world initialization'); };
   try {
-    assert.equal(japan.create('bk').tiles.length, 6384);
+    assert.equal(japan.create('bk').tiles.length, 9240);
   } finally {
     E.createGame = before;
   }

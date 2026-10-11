@@ -5,14 +5,15 @@
 (function (root) {
   'use strict';
   const E = root.Knightmare || (typeof require === 'function' ? require('./engine.js') : null);
-  // Compact, rotated regional board: the southwest-to-northeast island chain
-  // fills the map rather than wasting an ocean-filled latitude/longitude box.
+  // North-up, tightly cropped Japan theatre. Keep full-resolution
+  // Conquest coastlines but do not rotate the tactical islands.
   const MASK_COLS = 112, MASK_ROWS = 88;
-  const COLS = 152, ROWS = 42;
+  const COLS = 110, ROWS = 84;
+  // Original NOAA mask bounds stay fixed; scenario viewport is tighter.
   const BOUNDS = { west: 126.5, east: 146.5, north: 45.8, south: 29.0 };
   const PROJECTION = {
-    centerLon:136.5, centerLat:37, angle:48,
-    uMin:-8.1, uMax:11.3, vMin:-3.8, vMax:2.8,
+    centerLon: 137.65, centerLat: 38.1, angle: 0,
+    uMin: -6.61, uMax: 6.65, vMin: -7.60, vMax: 7.65,
   };
   const theta=PROJECTION.angle*Math.PI/180, X=Math.cos(theta), Y=Math.sin(theta),
     K=Math.cos(PROJECTION.centerLat*Math.PI/180);
@@ -246,13 +247,16 @@
         mask[sourceR*MASK_COLS+sourceC];
       return {c,r,owner:null,terrain:dry?landscape(lon,lat,c,r):'sea'};
     });
-    // At this resolution the Seto Inland Sea narrows to a single hex where
-    // the Yamaguchi shore touches Shikoku. Preserve water (no land bridge).
-    const seto=E.tile(g,31,16);
-    if(!seto||seto.terrain==='sea')throw new Error('Seto Sea alignment changed');
-    seto.terrain='sea';
-    const kanmon=E.tile(g,locate(130.89,34.01));
-    if(kanmon&&kanmon.terrain!=='sea')kanmon.terrain='sea';
+    // Keep the historically navigable Kanmon Strait between Honshu and
+    // Kyushu. Indices from the old rotated map are deliberately not reused.
+    // At this coarse tactical scale Kitakyushu and Shimonoseki touch.
+    // Leave their separate city hexes intact while opening a sea channel
+    // one hex north of the Kitakyushu shoreline.
+    const channel=locate(130.95,33.99);
+    const kanmon=E.tile(g,channel.c,channel.r);
+    if(!kanmon || kanmon.terrain==='sea')
+      throw new Error('North-up Kanmon channel anchor moved');
+    kanmon.terrain='sea';
     // Coast tiles support naval movement and amphibious landings.
     for (const t of g.tiles)
       if (t.terrain!=='sea' && E.adjacent(g,t).some(n=>n.terrain==='sea')) t.terrain='coast';

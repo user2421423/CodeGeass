@@ -172,15 +172,13 @@ Before launching, choose Britannia, the Black Knights or the Chinese Federation,
 and choose Normal, Hard or Challenge difficulty. There is no battle save/resume: Conquest and
 Campaign saves are not affected and persistent HQ upgrades are not applied.
 
-- **Map:** 152 × 42 tactical hexes (6,384) on a land-focused 48°-rotated
-  Japan theatre: Honshu, Hokkaido, Shikoku and Kyushu fill a wide operational
-  board instead of a mostly empty latitude/longitude ocean rectangle.
-  The land share is about 23%, up from 11%, with more land hexes in absolute
-  terms. The same detailed GSHHG coastlines as Conquest remain visible.
-  The hex grid is displayed only near shore, while naval movement remains
-  available on deep-water tiles. Faction ownership colours still cover land,
-  and all 44 cities, the Kyushu–Honshu Kanmon Strait and Shikoku's separation
-  remain intact.
+- **Map:** North-up, unrotated Japan on a tighter 110 × 84 tactical grid
+  (9,240 hexes, approximately 1,341 land). The four main Japanese islands
+  and selected Japanese offshore islets use detailed GSHHG coastlines.
+  Korea, Russia, and other non-Japanese polygons are excluded from Scenario
+  Mode without changing the global Conquest map. Only near-coastal sea hexes
+  show grid lines; deep water remains navigable by fleets. Faction territorial
+  colors, all 44 cities, and the navigable Kanmon Strait remain intact.
 - **Starting factions:** Britannia 31 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
   Chinese Federation 8 cities / 29 units. All cities and land on Kyushu begin Chinese.
   This includes 14 naval and 48 land formations.

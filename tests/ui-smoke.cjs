@@ -178,6 +178,17 @@ const modal = () => node('modal-root').innerHTML;
     return GEOGRAPHY.paint(painter,g,0,SQ*R*(g.cols+1),0,R*1.5*(g.rows+1),0.85);
   })()`);
   assert.equal(japanAtlas, true, 'scenario painting uses the geographic Japan coastline');
+  const japanLandCheck = run(`({
+    honshu:GEOGRAPHY.japanLandAt(139.69,35.68),
+    kyushu:GEOGRAPHY.japanLandAt(130.71,32.80),
+    shikoku:GEOGRAPHY.japanLandAt(133.53,33.56),
+    hokkaido:GEOGRAPHY.japanLandAt(141.35,43.06),
+    korea:GEOGRAPHY.japanLandAt(129.07,35.18),
+    russia:GEOGRAPHY.japanLandAt(131.89,43.12)
+  })`);
+  assert.deepEqual({ ...japanLandCheck }, {
+    honshu:true,kyushu:true,shikoku:true,hokkaido:true,korea:false,russia:false
+  }, 'scenario should draw Japanese islands only, not Korea or Russia');
   const regionSource = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');

@@ -555,6 +555,28 @@ const GEOGRAPHY = (() => {
   // the SAME GSHHG coastline used by Conquest into those hex coordinates, then
   // clip province tint to geographic land. The grid stays the source of truth
   // for movement, capture, ports and combat, not for the visual shoreline.
+  // Regional scenarios depict Japan only. The global GSHHG atlas also
+  // contains Korea, Russia, China and nearby foreign islands; clipping by
+  // viewport alone must never allow those polygons into this scenario.
+  // Match the four principal Japanese islands and selected Japanese islets
+  // to their original atlas polygons using points known to be on each island.
+  const JAPAN_ISLAND_ANCHORS = [
+    [139.69, 35.68], // Honshu (Tokyo)
+    [141.35, 43.06], // Hokkaido (Sapporo)
+    [130.71, 32.80], // Kyushu (Kumamoto)
+    [133.53, 33.56], // Shikoku (Kochi)
+    [134.87, 34.37], // Awaji
+    [138.32, 38.06], // Sado
+    [133.25, 36.25], // Oki
+    [130.52, 30.34], // Yakushima
+    [141.25, 45.18], // Rishiri
+  ];
+  const JAPAN_LAND = LAYERS.land.filter(shape =>
+    JAPAN_ISLAND_ANCHORS.some(([lon, lat]) =>
+      pointWithinShape(shape, px(lon), py(lat))));
+  function japanLandAt(lon, lat) {
+    return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
+  }
   let japanColorCache = null;
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
@@ -596,9 +618,8 @@ const GEOGRAPHY = (() => {
     if (g.mode !== 'scenario' || g.scenario?.id !== 'invasion-japan') return false;
     const p = g.scenario.projection;
     if (!p) return false;
-    // GSHHG stores all coastlines in the Conquest map's projected coordinates.
-    // Rotate the same shapes to match the compact southwest-to-northeast Japan
-    // theatre instead of stretching the islands inside an ocean rectangle.
+    // Reproject the same GSHHG atlas into the north-up Japan theatre.
+    // The political and tactical layers share this zero-rotation projection.
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -625,7 +646,7 @@ const GEOGRAPHY = (() => {
       Math.max(...corners.map(t => t[1])) + 10,
     ];
     const [a, b, c, d] = bounds;
-    const shapes = LAYERS.land.filter(shape =>
+    const shapes = JAPAN_LAND.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
     const sea = ctx.createLinearGradient(0, top, 0, bottom);
@@ -754,5 +775,5 @@ const GEOGRAPHY = (() => {
     const t = g.tiles[r * g.cols + c];
     return t && t.terrain !== 'sea' ? 1 : 0;
   }
-  return { paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, shapes: LAYERS, cacheStats };
+  return { paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, japanLandAt, shapes: LAYERS, cacheStats };
 })();
