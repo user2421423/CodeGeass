@@ -58,7 +58,8 @@
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     const cost = price(type, stack, g, s.owner);
     spend(funds(g, s.owner), cost);
-    s.producedTurn = g.turn;
+    if (TYPES[type].naval) s.portProducedTurn = g.turn;
+    else s.producedTurn = g.turn;
     const u = newUnit(g, type, s.owner, p.c, p.r, stack, null, false);
     log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u };

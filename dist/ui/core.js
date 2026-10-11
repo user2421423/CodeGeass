@@ -73,7 +73,10 @@ const SAVE_KEY = 'knightmare-conquest-save',
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
   selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
-  selectedSite = () => (selection?.kind === 'site' ? game.sites?.find(d => d.id === selection.id) || null : null);
+  selectedSite = () => (selection?.kind === 'site' ? game.sites?.find(d => d.id === selection.id) || null : null),
+  // A built port is selected through its own hex and builds naval units separately from the city factory.
+  selectedPort = () =>
+    selection?.kind === 'port' ? game.stations.find(s => s.id === selection.id && s.portLevel && s.portAt) || null : null;
 const interactive = () => !uiActionBusy && !game.over && game.phase === game.player;
 const F = side => game.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral,
   C = k => E.COMMANDERS[k];

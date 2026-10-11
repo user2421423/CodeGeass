@@ -101,6 +101,8 @@ function draw(time, dt) {
       ? selectedUnit()
       : selection?.kind === 'station'
         ? selectedStation()
+        : selection?.kind === 'port'
+          ? selectedPort()?.portAt
         : selection?.kind === 'site'
           ? selectedSite()
           : selection?.kind === 'tile'

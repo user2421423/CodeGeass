@@ -68,7 +68,10 @@
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
-      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      // The city factory and its port are separate yards: each launches one unit a turn.
+      (t.naval
+        ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
+        : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, s.owner, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, s.owner), price(type, stack, g, s.owner))

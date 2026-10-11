@@ -349,7 +349,7 @@
         s.owner = winner;
         if (s.portAt) s.portOwner = winner;
         s.shield = Math.round(s.maxShield * 0.5);
-        s.producedTurn = g.turn;
+        s.producedTurn = s.portProducedTurn = g.turn;
         fortify(g, s);
         cities++;
       }

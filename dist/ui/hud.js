@@ -372,7 +372,7 @@ function refineryRow(host, attrs, why) {
   return `<div class="building"><span class="label">${ICONS.use('refinery')} ${E.BUILDINGS.refinery.name}</span><span class="level">${'▮'.repeat(l)}${'▯'.repeat(3 - l)}</span><small>${E.BUILDINGS.refinery.desc}</small>${attrs ? (l >= 3 ? '<button class="small" disabled>Maximum level</button>' : act(attrs, (l ? 'Upgrade to level ' : 'Build level ') + (l + 1), why, costHTML(E.buildCost(host, 'refinery')), 'small')) : ''}</div>`;
 }
 function panel() {
-  const u = selectedUnit(), s = selectedStation(), m = selectedSite();
+  const u = selectedUnit(), s = selectedStation(), m = selectedSite(), pt = selectedPort();
   // Unit commands are bottom-only. Carrier hold is the one focused unit drawer.
   if (u) return carrierHoldOpen === u.id && E.TYPES[u.type].naval === 'ship'
     ? `<section class="deployment-only"><h2>Deploy Knightmares</h2>${holdHTML(u)}</section>`
@@ -396,7 +396,11 @@ function panel() {
       })
       .join(
         '',
-      )}</div>${ours ? `${cityAutomationPanel(s)}<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', shipyardReason(s), 'Build a Knightmare unit', 'primary')}</div><p class="description">One unit per city per turn. New units act next turn. Garrisons repair 8% of their frame here each turn.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
+      )}</div>${ours ? `${cityAutomationPanel(s)}<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', factoryReason(s), 'Build a Knightmare unit', 'primary')}${s.portLevel && s.portAt ? `<button class="small" data-port="${s.id}">⚓ Port</button>` : ''}</div><p class="description">One unit per city factory per turn${s.portLevel && s.portAt ? ', plus one naval unit from the port: select the ⚓ port hex to build ships' : ''}. New units act next turn. Garrisons repair 8% of their frame here each turn.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
+  } else if (pt) {
+    const ours = pt.owner === game.player,
+      holder = pt.portOwner || pt.owner;
+    main = `<section><div class="side-title"><span class="label">⚓ Port · Level ${pt.portLevel}</span><span class="chip" style="color:${factionUIColor(holder)}">${F(holder).short}</span></div><div class="mine-art">${ART.building('port', 'mine-photo') || ''}</div><h2 class="unit-name">Port of ${esc(pt.name)}</h2>${holder !== pt.owner ? `<p class="warn-text">Held by the ${esc(F(holder).short)} fleet: clear its ships out to use the port.</p>` : ''}<p class="description">${ours ? `The port builds naval units on this hex, separately from ${esc(pt.name)}'s factory: one a turn, so the city can still build a Knightmare the same turn. Amphibious Knightmares need a level-1 port, Carrier-Battleships level 2; upgrade the port in the city panel.` : `The harbour of ${esc(pt.name)}. Capturing the city takes the port with it.`}</p><div class="actions">${ours ? act(`data-shop-port="${pt.id}"`, 'Open shipyard', portReason(pt), 'Build a naval unit', 'primary') : ''}<button class="small" data-station="${pt.id}">City</button></div></section>`;
   }
   return main;
 }
@@ -430,13 +434,21 @@ function nearestCityName(u) {
 function cityKind(s) {
   return s.capital ? 'capital' : s.fort ? 'fortress' : 'city';
 }
-function shipyardReason(s) {
+function factoryReason(s) {
   return (
     phaseReason() ||
     (s.producedTurn === game.turn ? 'Already built here this turn' : null) ||
-    (!E.recruitOptions(game, s, game.player).length && !(s.portAt && E.recruitOptions(game, s, game.player, E.NAVAL[game.player]?.amphibious).length)
-      ? 'A unit is on the city'
-      : null)
+    (!E.recruitOptions(game, s, game.player).length ? 'A unit is on the city' : null)
+  );
+}
+// The port is its own yard: one naval unit a turn, launched onto the empty port hex.
+function portReason(s) {
+  return (
+    phaseReason() ||
+    (s.portOwner !== s.owner ? 'An enemy fleet holds the port' : null) ||
+    (!E.navalTypes(game, game.player).length ? 'This power has no navy' : null) ||
+    (s.portProducedTurn === game.turn ? 'This port already launched a unit this turn' : null) ||
+    (E.unitAt(game, s.portAt) ? 'A unit is on the port' : null)
   );
 }
 // Strategic projects at a city: F.L.E.I.J.A. offense and the one-charge Eliminator defense.
@@ -553,6 +565,15 @@ function selectStation(id, center = false) {
   updateSelection();
   if (center) centerOn(s);
 }
+function selectPort(id, center = false) {
+  deploying = null;
+  carrierHoldOpen = null;
+  const s = game.stations.find(v => v.id === id && v.portLevel && v.portAt);
+  if (!s) return;
+  selection = { kind: 'port', id };
+  updateSelection();
+  if (center) centerOn(s.portAt);
+}
 function selectSite(id, center = false) {
   carrierHoldOpen = null;
   const d = game.sites?.find(v => v.id === id);
@@ -650,8 +671,11 @@ function dockHTML() {
   if (s) {
     const ours = s.owner === game.player,
       y = E.cityYield(game, s);
-    return `<div class="dock-visual">${ART.city(cityKind(s), s.owner)}<span class="faction-flag ${s.owner}">${F(s.owner).letter}</span></div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.maxShield ? s.shield / s.maxShield : 0) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', shipyardReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
+    return `<div class="dock-visual">${ART.city(cityKind(s), s.owner)}<span class="faction-flag ${s.owner}">${F(s.owner).letter}</span></div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.maxShield ? s.shield / s.maxShield : 0) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', factoryReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
   }
+  const pt = selectedPort();
+  if (pt)
+    return `<div class="dock-visual mine-visual">${ART.building('port', 'dock-mine') || '⚓'}<span class="faction-flag ${pt.owner}">${F(pt.owner).letter}</span></div><div class="dock-unit"><span class="label">Port · Level ${pt.portLevel}</span><strong>Port of ${esc(pt.name)}</strong><p>One naval unit a turn, separate from the city factory.</p></div><div class="dock-actions">${pt.owner === game.player ? act(`data-shop-port="${pt.id}"`, 'Shipyard', portReason(pt), '', 'primary') : ''}<button class="small" data-action="details">Port details</button></div>`;
   const m = selectedSite();
   if (m) {
     const y = E.depositYield(game, m);
