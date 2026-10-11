@@ -176,9 +176,12 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
       if (!visible(c)) continue;
       for (const x of copies(c.x)) {
         hexPath(x, c.y, R + 0.5);
-        ctx.fillStyle = TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
+        // If vector geography is unavailable, scenario land still uses the
+        // controlling nation's colour rather than biome swatches.
+        ctx.fillStyle = game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
+          ? F(t.owner).color : TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
-        if (t.owner && t.terrain !== 'sea') {
+        if (game.mode !== 'scenario' && t.owner && t.terrain !== 'sea') {
           ctx.fillStyle = F(t.owner).color + '30';
           ctx.fill();
         }
