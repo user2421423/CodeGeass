@@ -267,6 +267,18 @@
         if (cmd && g.officers[cmd]) {unit.cmdRank=g.officers[cmd].rank;unit.hp=E.maxHP(unit);}
       }
     }
+    // The same three Sakuradite deposits as the world game, tied to local cities.
+    // Their output makes Mount Fuji, Sapporo and Fukuoka strategically important.
+    for(const [name,cityName,base,refinery] of [
+      ['Mount Fuji','Mount Fuji',40,1],
+      ['Hokkaido','Sapporo',15,0],
+      ['Kyushu','Fukuoka',15,0]
+    ]) {
+      const station=g.stations.find(s=>s.name===cityName);
+      if(!station)throw new Error('Missing Sakuradite site '+cityName);
+      station.refinery=refinery;
+      g.sites.push({id:g.sites.length,name,c:station.c,r:station.r,base,city:station.id});
+    }
     // Port hexes must be adjacent sea and not already occupied by another port.
     const portTaken=new Set();
     for(const [name,level] of Object.entries(PORTS)){
