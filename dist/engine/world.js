@@ -458,16 +458,17 @@
     ['eu', 'light', 104.3, 52.3, 1],
 
     // Chinese Federation: the China/Area 11 front, India, Central Asia, Iran and Southeast Asia.
+    // Four existing formations move to the western and northeastern fronts; the army size stays unchanged.
     ['cf', 'medium', 121.5, 31.2, 2],
     ['cf', 'rocket', 118.8, 32.1, 1],
     ['cf', 'light', 113.3, 23.1, 2],
     ['cf', 'heavy', 126.2, 39.4, 2],
     ['cf', 'medium', 126.6, 45.8, 2],
-    ['cf', 'medium', 77.2, 28.6, 2],
-    ['cf', 'support', 88.4, 22.6, 1],
+    ['cf', 'medium', 68, 40.8, 2],
+    ['cf', 'support', 61, 36.45, 1],
     ['cf', 'light', 76.9, 43.2, 1],
-    ['cf', 'light', 105.8, 21, 2],
-    ['cf', 'medium', 103.8, 1.35, 2],
+    ['cf', 'light', 129, 44.98, 2],
+    ['cf', 'medium', 127.4, 48.5, 2],
     ['cf', 'heavy', 51.4, 35.7, 2],
     // Western and Central Asian front against the E.U.'s Caucasus and Siberia; the northeast against Siberia and Area 11.
     ['cf', 'assault', 47, 37.5, 2],

@@ -31,11 +31,6 @@
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill));
     attack *= 1 + auraBonus(g, u);
-    // Faction doctrines.
-    if (u.side === 'britannia' && t.branch === 'Armor') attack *= 1.08;
-    if (u.side === 'eu' && t.branch === 'Artillery') attack *= 1.1;
-    if (u.side === 'bk' && ['forest', 'mountain', 'urban'].includes(tile(g, u.c, u.r)?.terrain)) attack *= 1.1;
-    if (u.side === 'eb' && u.cmd) attack *= 1.1;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
     if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'naval.torpedoes');
@@ -133,7 +128,6 @@
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
-      if (target.side === 'jlf' && (ground.terrain === 'forest' || ground.terrain === 'mountain')) attack *= 0.9;
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
     }
