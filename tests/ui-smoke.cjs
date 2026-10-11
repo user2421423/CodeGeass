@@ -490,6 +490,15 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run("effects.some(e=>e.kind==='wreck')"), true, 'destroyed units have transient wreckage');
   run("draw(150,.016); effects=[];");
 
+  // Scenario has individual unit controls but no Army Groups navigation tab.
+  run("startScenario('cf');draw(16,.016);drawMinimap();");
+  assert.equal(run('game.mode'),'scenario');
+  assert(!node('app').innerHTML.includes('data-action="scenario-armies"'),
+    'remove Army Groups from the scenario top navigation');
+  assert(node('app').innerHTML.includes('data-action="archive"'),
+    'the Units tab remains present');
+  run('newGame()');
+
   run('startMenu();campaignDialog("bk_s1")');
   assert(modal().includes('data-mission="bk1"'), 'campaign menu renders');
 

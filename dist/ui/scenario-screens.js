@@ -68,7 +68,7 @@ function startScenario(side=scenarioSide) {
   closeModal();
   render();
   centerOn(focus || selectedUnit() || homeOf());
-  toast('Japan scenario loaded. Use Army Groups to move formations together. No progress is saved.',true);
+  toast('Japan scenario loaded. Select units on the map to command them. No progress is saved.',true);
 }
 
 function scenarioGroupsDialog() {
