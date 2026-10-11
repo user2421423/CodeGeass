@@ -1171,6 +1171,17 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     }
   }
 }
+// Only tint hexes while a movement range is shown. Do not change the
+// faction-coloured geographic map or the terrain's movement/navigation rules.
+const MOVE_TILE_STYLES = Object.freeze({
+  land: Object.freeze({ fill: '#3ddc7a40', stroke: '#6dffa5cc' }),
+  coast: Object.freeze({ fill: '#13dac673', stroke: '#53ffebf0' }),
+  sea: Object.freeze({ fill: '#4fb6ff40', stroke: '#9fd8ffcc' }),
+});
+function movementTileStyle(t) {
+  return MOVE_TILE_STYLES[E.isSea(t) ? 'sea' : E.isCoast(t) ? 'coast' : 'land'];
+}
+
 function draw(time, dt) {
   if (!canvas || !ctx) return;
   mapHasPulse = false;
@@ -1227,21 +1238,23 @@ function draw(time, dt) {
   const visible = p => p.y >= top && p.y <= bottom;
   // Strategic country names sit over the political land, but beneath units, cities and selections.
   TERRITORY_LABELS.draw(ctx, game, scale, WORLD_W, left, right, top, bottom, copiesBetween);
-  // Move and attack overlays. Blue marks water for the moving unit: open sea, or a coast hex a warship sails into.
+  // Terrain-specific movement highlights in every game mode:
+  // green = ordinary land, cyan = amphibious coastline, blue = open sea.
   const movingShip = E.TYPES[selectedUnit()?.type]?.naval === 'ship';
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
       t = E.tile(game, cc, rr),
       c = hexCenter(t),
-      water = E.isSea(t) || (movingShip && E.isCoast(t));
+      style = movementTileStyle(t),
+      naval = E.isSea(t) || (movingShip && E.isCoast(t));
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
-      ctx.fillStyle = water ? '#4fb6ff40' : '#3ddc7a40';
+      ctx.fillStyle = style.fill;
       ctx.fill();
-      ctx.strokeStyle = water ? '#9fd8ffcc' : '#6dffa5cc';
+      ctx.strokeStyle = style.stroke;
       ctx.lineWidth = 1.4 / Math.max(scale, 0.4);
       ctx.stroke();
-      if (water && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
+      if (naval && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
     }
   }
   for (const k of targetCache) {

@@ -489,6 +489,22 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run("effects.some(e=>e.kind==='wreck')"), true, 'destroyed units have transient wreckage');
   run("draw(150,.016); effects=[];");
 
+  // Movement highlights distinguish genuinely navigable coast from inland
+  // land and open sea, regardless of the currently selected faction or mode.
+  const inlandStyle = run("movementTileStyle({terrain:'plains'})");
+  const coastStyle = run("movementTileStyle({terrain:'coast'})");
+  const seaStyle = run("movementTileStyle({terrain:'sea'})");
+  assert.notEqual(coastStyle.fill, inlandStyle.fill);
+  assert.notEqual(coastStyle.stroke, inlandStyle.stroke);
+  assert.notEqual(coastStyle.fill, seaStyle.fill);
+  assert.notEqual(coastStyle.stroke, seaStyle.stroke);
+  assert.equal(run("movementTileStyle({terrain:'forest'}).fill"), inlandStyle.fill,
+    'other land terrain uses the normal green movement highlight');
+  assert.equal(run("movementTileStyle({terrain:'coast'}).fill"), coastStyle.fill,
+    'coast highlights apply to any selected unit, including land units');
+  assert(node('app').innerHTML.includes('Cyan: coast (land + ships)'),
+    'in-game movement guide explains the cyan coast highlight');
+
   // Scenario has individual unit controls but no Army Groups navigation tab.
   run("startScenario('cf');draw(16,.016);drawMinimap();");
   assert.equal(run('game.mode'),'scenario');
