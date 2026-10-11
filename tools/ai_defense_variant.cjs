@@ -9,8 +9,6 @@ if(kind==='priorLatest') {
   fs.writeFileSync('dist/engine.js',execFileSync('git',['show',
     '0ec982bf966c313ae8e82d4cb160c2aafd5e8fbe:dist/engine.js'],{encoding:'utf8'}));
 }
-else if(kind==='priorPhase')
-  ai=execFileSync('git',['show','764cbb85a907b02c7c560275d99b5c419b22edcf:dist/engine/ai.js'],{encoding:'utf8'});
 else if(kind==='baseline')
   ai=execFileSync('git',['show','d4dcd3469f7d14d8a2edcef016be16247c8054e6:dist/engine/ai.js'],{encoding:'utf8'});
 else if(kind==='noRetreat'){

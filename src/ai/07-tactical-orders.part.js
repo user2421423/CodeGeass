@@ -61,10 +61,6 @@
           const d = unitAt(g, p),
             s = stationAt(g, p),
             pr = preview(g, id, p.c, p.r);
-          // Never throw away an already wounded formation for a counterattack
-          // that will kill it without eliminating the defender. Preserve
-          // decisive killing blows and attacks on undefended objectives.
-          if (d && pr.counter >= u.hp * 0.9 && pr.unit < d.hp) return null;
           const score =
             pr.unit +
             pr.shield * 0.7 +
@@ -76,7 +72,6 @@
             pr.counter * 0.5;
           return { p, score };
         })
-        .filter(Boolean)
         .sort((a, b) => b.score - a.score)[0];
     const maneuver = () => {
       if (u.moved || u.attacked || steered) return;
@@ -117,17 +112,12 @@
         sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
         let nearestEnemy = 15,
-          danger = 0,
-          incomingThreats = 0;
+          danger = 0;
         for (const v of enemies) {
           const d = dist(g, v, p);
           nearestEnemy = Math.min(nearestEnemy, d);
           if (d <= 1) danger++;
-          // Injured formations should look for a safer tile rather than
-          // following the shortest path into overlapping enemy fire arcs.
-          if (d <= rangeOf(g, v).max + Math.min(2, E.movement(g, v))) incomingThreats++;
         }
-        if (u.hp / maxHP(u) < 0.35) sc -= incomingThreats * 28;
         if (isSea(p) && naval) {
           sc -= danger * 20;
         } else if (isSea(p)) {

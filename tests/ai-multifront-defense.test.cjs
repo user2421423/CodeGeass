@@ -255,21 +255,3 @@ test('outnumbered frontier detachments select an uncontested same-landmass fallb
   assert.equal(retreat.state, 'regrouping');
   assert(retreat.fallback && retreat.seeds.some(([p]) => p === retreat.fallback));
 });
-
-test('a nearly destroyed frame declines a suicidal nonlethal counterattack', () => {
-  const {g} = setup({ nearby:true });
-  const target = g.units.find(u => u.side === 'eu');
-  assert(target);
-  const attacker = E.newUnit(g, E.typeFor('cf', 'light', g),
-    'cf', target.c - 1, target.r);
-  attacker.hp = 0.1;
-  const forecast = E.preview(g, attacker.id, target.c, target.r);
-  assert(forecast.counter >= attacker.hp && forecast.unit < target.hp,
-    'fixture must be a losing trade to test the decision');
-  // Already moved: tactical AI can still fire, but cannot relocate to a
-  // different position to avoid the counterattack in this fixture.
-  attacker.moved = true;
-  const events = E.aiOrder(g, attacker.id);
-  assert(!events.some(e => e.kind === 'attack'),
-    'do not trade a wounded formation for partial damage');
-});
