@@ -123,7 +123,7 @@
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
   // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
   // (or after `wait` turns). Garrisons and defensive fronts respond to threats; no army is held in strategic reserve.
-  const FRONT = { radius: 16, near: 20, max: 4, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2 };
+  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
     const t = TYPES[u.type];
@@ -149,6 +149,16 @@
       army = g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       near = p => own.some(s => dist(g, s, p) <= FRONT.near) || army.some(u => dist(g, u, p) <= FRONT.near),
+      // An expensive enemy capital or mine is worth pursuing only if a feasible
+      // regional land approach or a loaded expedition actually exists.
+      operational = p => {
+        if (!near(p)) return false;
+        const mass = massOf(g, p);
+        if (mass >= 0 && (own.some(s => dist(g, s, p) <= FRONT.near && massOf(g, s) === mass) ||
+          army.some(u => dist(g, u, p) <= FRONT.near && massOf(g, u) === mass))) return true;
+        return g.units.some(u => u.hp > 0 && u.side === side && isShip(u) &&
+          u.cargo?.length && dist(g, u, p) <= FRONT.near);
+      },
       warning = p => {
         let immediate = false, projected = false;
         for (const f of foes) {
@@ -162,7 +172,7 @@
       if (foe(g, s.owner, side)) {
         const project = s.project || s.eliminatorProject,
           capital = s.capitalOf && alive(g, s.owner);
-        if (!project && !capital && !near(s)) continue;
+        if (!operational(s)) continue;
         const [value, seed] = project ? [100, -8] : capital ? [70, -6] : s.owner === 'neutral' ? [8, 1] : s.tier >= 3 ? [20, -1] : [10, 0];
         list.push({ key: 's' + s.id, c: s.c, r: s.r, name: s.name, owner: s.owner, value, seed, fortified: value >= 20 });
       } else if (s.owner === side) {
@@ -177,7 +187,7 @@
     for (const d of g.sites || []) {
       if (d.city != null) continue;
       const major = d.base >= 30;
-      if (foe(g, d.owner, side) && (major || near(d)))
+      if (foe(g, d.owner, side) && operational(d))
         list.push({ key: 'm' + d.id, c: d.c, r: d.r, name: d.name, value: major ? 40 : 10, seed: major ? -5 : -1 });
       else if (d.owner === side && major) {
         const w = warning(d);
@@ -213,7 +223,9 @@
       if (o.front) continue;
       const f = { id: o.key, side, anchor: o, objectives: [], assigned: 0 };
       for (const q of objectives)
-        if (!q.front && !!q.defend === !!o.defend && dist(g, q, o) <= FRONT.radius) {
+        if (!q.front && !!q.defend === !!o.defend &&
+          dist(g, q, o) <= (o.defend ? FRONT.defenseRadius : FRONT.radius) &&
+          (!o.defend || massOf(g, q) === massOf(g, o))) {
           q.front = f;
           f.objectives.push(q);
         }
@@ -252,6 +264,14 @@
       f.projectedMenace = projectedMenace;
       f.menace = immediateMenace + projectedMenace * FRONT.approachingWeight;
       f.present = present;
+      // Readiness of friendly troops already stationed in this particular sector,
+      // not soldiers on the other side of a continent-wide defensive cluster.
+      f.localStrength = sum(g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u) &&
+        defend.some(o => dist(g, u, o) <= R.threat)));
+      f.localGarrison = sum(g.units.filter(u => memo.guards[u.id] &&
+        defend.some(o => dist(g, u, o) <= R.threat)));
+      f.pressure = f.immediateMenace * 1.6 + f.projectedMenace +
+        Math.max(0, f.enemyStrength - f.localStrength) * 0.4;
       const shortage = immediateMenace > 0 && present < immediateMenace * FRONT.emergencyRatio;
       f.emergency = f.vital || shortage;
       // A future threat may create an alert, never a full theater-wide holding order.
@@ -262,7 +282,9 @@
       f.desiredStrength = f.type === 'defensive'
         ? Math.max(2, immediateMenace * 1.2 - garrison)
         : f.type === 'alert'
-          ? Math.max(1, f.menace * 0.6)
+          ? Math.max(2, f.immediateMenace * 1.2 + f.projectedMenace * 0.9 +
+            Math.max(0, f.enemyStrength - f.localStrength) * 0.5 -
+            f.localGarrison * 0.25)
           : Math.max(3, f.enemyStrength * 1.5 + attack.length * 0.5);
       // A long list of projected endangered cities cannot drown out a major offensive.
       const imminentValue = imminent.length
@@ -273,7 +295,8 @@
         ? Math.max(imminentValue, 20) +
           Math.min(24, Math.max(0, f.immediateCities - 1) * FRONT.multiCityBonus)
         : f.type === 'alert'
-          ? 30 + Math.min(14, f.projectedCities * 2) + (f.immediateCities ? 8 : 0)
+          ? 24 + Math.min(32, f.pressure * 2) + (f.immediateCities ? 10 : 0) +
+            (f.vital ? 10 : 0)
           : attackValue || 12;
       f.score = Math.round(emphasis - Math.max(0, home - 8) * 1.2);
       f.name = f.type === 'offensive'
@@ -330,23 +353,47 @@
       open = fronts.filter(f => f.type === 'offensive' || (f.type === 'defensive' && !f.emergency)),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
     let pot = army,
+      emergencyPool = army * FRONT.emergencyCombinedShare,
       left = open;
     // Non-vital emergencies receive a threat-proportional 20-35% of the available field
     // army. Garrison units are not included, and competing fronts cannot overcommit it.
     for (const f of emergencies) {
       const shortage = Math.max(0, f.immediateMenace - f.present) / Math.max(1, f.immediateMenace);
       const share = FRONT.emergencyMinShare + (FRONT.emergencyMaxShare - FRONT.emergencyMinShare) * shortage;
-      f.target = Math.min(f.desiredStrength, f.vital ? army : army * share, pot);
+      // Multiple unrelated emergencies cannot consume the whole field army.
+      // Critical capitals may still claim the full remaining mobile force.
+      f.target = Math.min(f.desiredStrength, f.vital ? army : army * share,
+        f.vital ? pot : emergencyPool, pot);
       pot -= f.target;
+      emergencyPool -= f.target;
     }
     // All alert-only fronts share a bounded field-army budget. This is staging,
     // not a permanent reserve or an excuse to halt nearby offensives.
-    let alertPool = Math.min(pot, army * FRONT.alertShare);
-    for (const f of alerts) {
-      f.target = Math.min(f.desiredStrength, alertPool);
-      alertPool -= f.target;
-      pot -= f.target;
+    const alertPool = Math.min(pot, army * FRONT.alertShare);
+    // Weighted, capacity-constrained division: an inland capital warning cannot
+    // monopolize cover while exposed border sectors are left without a formation.
+    const pending = alerts.slice();
+    let remaining = alertPool;
+    for (const f of alerts) f.target = 0;
+    while (pending.length && remaining > 1e-6) {
+      const weights = pending.map(f => Math.max(1, f.priority) * Math.max(1, f.desiredStrength));
+      const total = weights.reduce((sum, n) => sum + n, 0);
+      const capped = pending.filter((f, i) =>
+        f.desiredStrength - f.target <= remaining * weights[i] / total + 1e-9);
+      if (!capped.length) {
+        for (let i = 0; i < pending.length; i++)
+          pending[i].target += remaining * weights[i] / total;
+        remaining = 0;
+        break;
+      }
+      for (const f of capped) {
+        const grant = f.desiredStrength - f.target;
+        f.target += grant;
+        remaining -= grant;
+        pending.splice(pending.indexOf(f), 1);
+      }
     }
+    pot -= alertPool - remaining;
     while (left.length) {
       const w = left.reduce((a, f) => a + weight.get(f), 0),
         capped = left.filter(f => f.desiredStrength <= (pot * weight.get(f)) / w);

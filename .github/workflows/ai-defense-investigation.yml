@@ -22,9 +22,9 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [baseline, alert25]
+        variant: [previous25, regional]
         player: [britannia, eu, cf]
-        seed: [777, 13579, 24680, 123457]
+        seed: [42, 20261007, 777, 13579]
     steps:
       - uses: actions/checkout@v4
         with:
