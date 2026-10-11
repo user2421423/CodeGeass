@@ -40,11 +40,17 @@
     ['Oita',131.61,33.24,'britannia',1], ['Kumamoto',130.71,32.80,'britannia',2],
     ['Miyazaki',131.42,31.91,'britannia',1], ['Kagoshima',130.56,31.60,'britannia',2]
   ];
-  const BASE = {
-    britannia: { credits: 900, industry: 380, science: 40, sakuradite: 150 },
-    bk:         { credits: 480, industry: 180, science: 25, sakuradite: 120 },
-    cf:         { credits: 800, industry: 320, science: 35, sakuradite: 150 }
+  // Normal-mode opening income targets. Reserves are calculated from actual
+  // game income, rather than entered separately, to guarantee a two-turn buffer.
+  const INCOME_TARGETS = {
+    britannia: { credits: 400, industry: 220, science: 42, sakuradite: 28 },
+    bk:         { credits: 200, industry: 115, science: 24, sakuradite: 18 },
+    cf:         { credits: 270, industry: 155, science: 28, sakuradite: 22 },
   };
+  // City production is deliberately smaller than Conquest city production.
+  // The remainder is off-map war financing, so Britannia's 35 cities don't
+  // overwhelm the four-city invasion economy from turn one.
+  const CITY_OUTPUT_FACTOR = 0.4;
   const ARMY_GROUPS = [
     // [side, staging city, class, formations, commander (optional)]
     // Fourteen land formations + six naval formations = exactly twenty starting units.
@@ -194,12 +200,16 @@
     g.teams={britannia:'defenders',bk:'defenders',cf:'invaders'};
     g.economy={};
     g.tech={};
-    for (const side of SIDES) {g.economy[side]={...BASE[side]};g.tech[side]={};}
+    for (const side of SIDES) {
+      g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};
+      g.tech[side]={};
+    }
     g.economy.neutral={credits:0,industry:0,science:0,sakuradite:0};
     g.tech.neutral={};
     g.factions={bk:E.FACTIONS.bk};
     g.lineup={bk:E.ROSTER.bk};
-    g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,phase:'opening',groups:[]};
+    g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,
+      phase:'opening',groups:[],funding:{}};
     g.tiles=mask.map((dry,i)=>{
       const c=i%COLS,r=(i/COLS)|0,
         lat=BOUNDS.north-r*(BOUNDS.north-BOUNDS.south)/(ROWS-1),
@@ -228,8 +238,9 @@
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,
         lab:0,refinery:0,shield,maxShield:shield,
-        income:capital?48:tier===3?30:tier===2?20:12,
-        industry:capital?25:6*tier,science:1+tier,producedTurn:0};
+        income:Math.round((capital?48:tier===3?30:tier===2?20:12)*CITY_OUTPUT_FACTOR),
+        industry:Math.round((capital?25:6*tier)*CITY_OUTPUT_FACTOR),
+        science:Math.round((1+tier)*CITY_OUTPUT_FACTOR),producedTurn:0};
       g.stations.push(s);
       at.terrain='plains';
     }
@@ -305,16 +316,26 @@
       }
       g.scenario.groups.push(fleet);
     }
-    // Difficulty makes rival starting formations and resources stronger.
+    // Fixed external war support tops up actual city/deposit income to the
+    // target opening rates. It remains fixed thereafter; city captures and
+    // upgrades change earned income normally. Higher difficulties strengthen
+    // rival income as well as their initial land formations.
+    for(const side of SIDES) {
+      const factor=side===player ? 1 : difficulty==='challenge' ? 1.6 :
+        difficulty==='hard' ? 1.3 : 1;
+      const base=E.income(g,side),target=INCOME_TARGETS[side];
+      g.scenario.funding[side]=Object.fromEntries(
+        Object.entries(target).map(([resource,value])=>
+          [resource,Math.round(value*factor)-base[resource]]));
+      const actual=E.income(g,side);
+      for(const resource of Object.keys(target))
+        g.economy[side][resource]=actual[resource]*2;
+    }
     if(difficulty!=='normal'){
       const challenge=difficulty==='challenge';
-      for(const side of SIDES.filter(s=>s!==player)){
-        const scale=challenge?1.6:1.3;
-        g.economy[side].credits=Math.round(g.economy[side].credits*scale);
-        g.economy[side].industry=Math.round(g.economy[side].industry*scale);
+      for(const side of SIDES.filter(s=>s!==player))
         for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).entries())
           if(challenge||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
-      }
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Chinese Federation forces have landed in northern Kyushu. Britannia and the Black Knights are temporarily allied.',player);
