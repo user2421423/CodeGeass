@@ -28,7 +28,7 @@ function scenarioDialog() {
     '<canvas id="scenario-preview-map" class="scenario-preview-map" aria-label="Japan scenario map preview with starting territories and units"></canvas>'+
     '<div class="choice-grid three">'+cards+'</div>'+
     '<div class="dialog-footer"><small class="notice">'+model.cols+' × '+model.rows+' hexes · '+preview.stations.length+' cities · '+preview.units.length+
-    ' formations · No saves. Stage one: geography and starting forces. The turn-10 betrayal is not implemented yet.</small>'+
+    ' formations · No saves. Stage one: geography and starting forces. Britannia and the Black Knights split on turn 10.</small>'+
     '<button class="primary" data-action="start-scenario">Command '+E.FACTIONS[scenarioSide].short+'</button></div>'+
     '</section></div>';
   const canvas=modal.querySelector('#scenario-preview-map');
