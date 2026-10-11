@@ -4,16 +4,15 @@
 
 Branch: `feature/player-target-priority-all-modes-20261011` (based on `main` at `56351a818b0addc2bf46704331080602c9b9ae24`).
 
-The same configurable `g.aiPlayerPriorityBonus` applies to all game modes, but at each mode's existing decision points:
+The configurable `g.aiPlayerPriorityBonus` applies **only to Conquest and Scenario**, at each mode's existing decision points. **Campaign/Story Mode is unchanged**, irrespective of the configured bonus:
 
 - **Conquest:** Increase *offensive* front priority proportional to the share of that front's objective value owned by the player, then bias active attack pathfields toward player-owned objectives. Never bias defensive emergency priorities.
 - **Scenario:** Reduce effective travel cost to hostile player-owned cities by dividing by `1 + bonus`, retaining target caps, column persistence, terrain-aware routing and the opening Britannia–Black Knights alliance.
-- **Campaign:** Bias target-distance seeds toward hostile player-owned stations and mines.
-- **All three:** Multiply a legal, available tactical target's existing expected-value score by `1 + bonus` if its defender or city belongs to the hostile player. This does not modify actual attack damage or legality.
+- **Conquest and Scenario only:** Multiply a legal, available tactical target's existing expected-value score by `1 + bonus` if its defender or city belongs to the hostile player. This does not modify actual attack damage or legality.
 
 Default is 60%, after testing. Set `g.aiPlayerPriorityBonus=0` to reproduce baseline behavior or 0.2 / 0.4 / 0.6 / 1 for 20 / 40 / 60 / 100%. The range is clamped to 0–1. Allied factions receive no bonus.
 
-No changes to unit stats, resources, diplomacy, map geography, or starting rosters.
+No changes to unit stats, resources, diplomacy, map geography, starting rosters, **or any Story Mode AI decision**.
 
 ## Method
 
@@ -57,32 +56,18 @@ No AI order errors. Note the non-monotonic city captures despite increasing play
 
 No AI order errors. At 100%, rivals hit China hardest, but this did not prevent all Chinese expansion.
 
-### Campaign — three story missions (`bk1`, `br1`, `eu_narva`), seeds 19 and 91, eight-round maximum
-
-Totals across six games per bonus. Missions can end before round eight. Player mission outcomes cannot be compared directly to an actual human playing a mission.
-
-| Bonus | Rival attacks on player | Player damage | Player defeats |
-|---:|---:|---:|---:|
-| 0% | 167 | 9,342 | 3 |
-| 20% | 171 | 9,474 | 3 |
-| 40% | 172 | 9,433 | 3 |
-| 60% | 174 | 8,709 | 3 |
-| 100% | 190 | 9,963 | 3 |
-
-No AI order errors. Campaign target preference has limited room to alter high-level faction selection when a mission has only one enemy.
-
 ## Interpretation
 
-- **Strongest player focus:** 100% consistently produced the highest attack count in all four batches above, but has a risk of overconcentrating on the player to the detriment of a strategically superior rival target.
+- **Strongest player focus:** 100% consistently produced the highest attack count in all three simulation batches above, but has a risk of overconcentrating on the player to the detriment of a strategically superior rival target.
 - **Provisional experiment default: 60%.** In the four-round Conquest run it achieved almost all the 100% setting's targeting pressure. It offers a lower risk of forced dogpiling.
-- **Not yet proven for long-term balance:** Short tests cannot establish win-rate effects, capture efficiency, or overall campaign difficulty. Before merging, test longer seeds and all playable player factions, including cases where multiple AI rivals share a front and where the player is weaker than an AI power.
+- **Not yet proven for long-term balance:** Short tests cannot establish win-rate effects, capture efficiency, or long-term difficulty. Before merging, test longer seeds and all playable player factions, including cases where multiple AI rivals share a front and where the player is weaker than an AI power.
 - Avoid interpreting added attacks as equivalent to added territory captured.
 
 ## Reproduction
 
 ```sh
 node --test tests/player-target-priority.test.cjs
-node tools/simulate-player-priority.cjs --modes=conquest,scenario,campaign --bonuses=0,20,40,60,100 --seeds=19,91 --rounds=8
+node tools/simulate-player-priority.cjs --modes=conquest,scenario --bonuses=0,20,40,60,100 --seeds=19,91 --rounds=8
 ```
 
-The simulator prints one `SIM_RESULT` per run and a grouped `SIM_SUMMARY` at the end. For the longer campaign and China player variants, use `--player=cf` or `--mission=eu_narva`. Set larger `--rounds` for extended balance evaluation.
+The simulator prints one `SIM_RESULT` per run and a grouped `SIM_SUMMARY` at the end. For China player variants, use `--player=cf`. Set larger `--rounds` for extended balance evaluation. The regression test explicitly verifies that Campaign/Story Mode's AI target fields remain unchanged at every bonus level.
