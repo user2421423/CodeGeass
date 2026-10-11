@@ -106,12 +106,12 @@
     aiRange = g => (g.mode === 'campaign' ? AI_RANGE_CAMPAIGN : AI_RANGE);
   const aiMemo = new WeakMap();
   const threatMemo = new WeakMap();
-  // Experimental, faction-neutral targeting preference, used by Conquest, Scenario and Campaign.
+  // Experimental, faction-neutral targeting preference, used ONLY in Conquest and Scenario.
   // Override on each game (e.g. g.aiPlayerPriorityBonus = 0 for baseline simulations).
   // It changes decisions, never unit stats, income, diplomacy, legal movement or fog of war.
   const PLAYER_PRIORITY_DEFAULT = 0.6;
   function playerPriorityBonus(g, side) {
-    if (!g?.player || side === g.player || !foe(g, g.player, side)) return 0;
+    if (!['conquest', 'scenario'].includes(g?.mode) || !g.player || side === g.player || !foe(g, g.player, side)) return 0;
     const value = Number(g.aiPlayerPriorityBonus ?? PLAYER_PRIORITY_DEFAULT);
     return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : PLAYER_PRIORITY_DEFAULT;
   }
@@ -134,7 +134,7 @@
       const rush = g.mode === 'scenario';
       memo[side] = { turn: g.turn, guards: rush ? {} : assignGuards(g, side) };
       if (!rush) planRecovery(g, side, memo[side]);
-      if (g.mode === 'campaign') memo[side].field = goalField(g, side, playerPrioritySeeds(g, side));
+      if (g.mode === 'campaign') memo[side].field = goalField(g, side);
       else if (rush) planScenarioOffense(g, side, memo[side]);
       else planFronts(g, side, memo[side]);
     }
@@ -1364,8 +1364,8 @@
             (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) -
             pr.counter * 0.5;
-          // Against equally attractive legal targets, prefer damage to the
-          // human empire. Zero bonus is bit-for-bit identical to old scoring.
+          // Conquest/Scenario only: prefer legal attacks on hostile player targets.
+          // Story/Campaign uses the original target score (bonus = 0).
           const humanTarget = playerPriorityTarget(g, u.side, d?.side) ||
             playerPriorityTarget(g, u.side, s?.owner);
           return { p, score: humanTarget ? score * (1 + playerPriorityBonus(g, u.side)) : score };
