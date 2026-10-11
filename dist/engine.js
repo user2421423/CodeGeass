@@ -827,7 +827,7 @@
     return g.economy[side];
   }
   function alive(g, side) {
-    return (g?.mode === 'campaign' ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
+    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
   }
   // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
   function foe(g, a, b) {
@@ -3319,6 +3319,22 @@
   // armistice.
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
+    if (g.mode === 'scenario') {
+      const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
+      if (!contenders.includes(g.player)) {
+        g.over = {winner: contenders[0] || 'draw', reason: 'Your last Japanese stronghold has fallen.'};
+      } else if (contenders.length === 1) {
+        g.over = {winner: contenders[0], reason: 'The invasion of Japan is over. One power controls every remaining stronghold.'};
+      } else if (g.turn > (g.scenario?.turnLimit || 60)) {
+        const score = s => g.stations.filter(c => c.owner === s).reduce((n,c) => n+c.tier,0);
+        const best = Math.max(...contenders.map(score));
+        const leaders = contenders.filter(s => score(s) === best);
+        g.over = {winner: leaders.length === 1 ? leaders[0] : 'draw',
+          reason: 'The regional war ends after 60 turns. Strategic city scores: ' +
+            contenders.map(s => (FACTIONS[s]?.short || s) + ' ' + score(s)).join(' · ') + '.'};
+      }
+      return g.over;
+    }
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -3343,6 +3359,8 @@
   }
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
+    if (g.mode === 'scenario')
+      return 'The Invasion of Japan · hold your strongholds and capture enemy cities. Britannia and the Black Knights begin allied.';
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
@@ -3350,6 +3368,7 @@
   }
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
+    if (g?.mode === 'scenario') return g.scenario?.title || 'Scenario · Japan';
     return 'World War · 2017 a.t.b.';
   }
 
