@@ -381,22 +381,26 @@ const GEOGRAPHY = (() => {
   // GIS coastline patches are clipped to rectangular source windows. Drawing
   // every ring edge as coast would turn those artificial crop borders into
   // ruler-straight shorelines across open water (e.g. the Mediterranean).
+  // Three restrained coastline strokes follow the accurate source polygons:
+  // cool coastal shelf, dark land-water edge, and a narrow light rim.
   function coast(ctx, polygons, left, right, top, bottom, scale, crop = null) {
-    if (!FAST_PATH) {
-      ctx.beginPath();
-      for (const p of polygons) if (intersects(p.bounds, left, right, top, bottom)) {
-        polygon(ctx, p.points);
-      }
-      ctx.strokeStyle = 'rgba(226,233,216,0.66)';
-      ctx.lineWidth = 1 / Math.max(scale, 0.5);
-      ctx.stroke();
-      return;
-    }
-    const result = paths(ctx, polygons, left, right, top, bottom);
-    if (!result) return;
-    ctx.strokeStyle = 'rgba(226,233,216,0.66)';
-    ctx.lineWidth = 1 / Math.max(scale, 0.5);
-    result === true ? ctx.stroke() : ctx.stroke(result);
+    const line = paths(ctx, polygons, left, right, top, bottom);
+    if (!line) return;
+    const stroke = () => line === true ? ctx.stroke() : ctx.stroke(line);
+    const pixel = 1 / Math.max(scale, 0.5);
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(43,111,136,0.26)';
+    ctx.lineWidth = 7 * pixel;
+    stroke();
+    ctx.strokeStyle = 'rgba(26,51,65,0.52)';
+    ctx.lineWidth = 2.5 * pixel;
+    stroke();
+    ctx.strokeStyle = 'rgba(226,238,222,0.83)';
+    ctx.lineWidth = 0.95 * pixel;
+    stroke();
+    ctx.restore();
   }
 
   function paintBiomes(ctx, landShapes, left, right, top, bottom) {
@@ -408,6 +412,64 @@ const GEOGRAPHY = (() => {
         // Region-wide bounds alone don't draw their underlying angular polygons.
         if (intersects(region.bounds, left, right, top, bottom)) feather(ctx, region);
       }
+    }
+    ctx.restore();
+  }
+
+  // Map-only mountain relief. Geographic range centerlines are clipped to
+  // the existing land polygons; neither elevation nor game hexes change.
+  const RELIEF_RANGES = [
+    [[-122,55],[-119,48],[-115,42],[-111,37],[-107,32]], // Rockies
+    [[-81,35],[-79,39],[-75,43]],                          // Appalachians
+    [[-74,7],[-76,-3],[-75,-12],[-70,-22],[-69,-32],[-72,-43]], // Andes
+    [[-9,31],[-5,33],[1,34]],                             // Atlas
+    [[-1,42.7],[2,42.6]],                                 // Pyrenees
+    [[6,45.8],[10,46.5],[14,47.2]],                       // Alps
+    [[39,43],[44,43],[49,42.7]],                          // Caucasus
+    [[59,65],[59,59],[58,53]],                            // Urals
+    [[70,35],[77,33],[84,29],[91,28],[96,29]],           // Himalaya
+    [[68,43],[76,42],[83,43]],                            // Tien Shan
+    [[36,13],[38,6],[36,-3]],                             // East African highlands
+    [[135.5,34.7],[137.7,36.1],[139.2,37.7]],            // Japanese Alps
+    [[142,42.7],[142.8,44.2]],                            // Hokkaido
+    [[130.8,31.4],[131,33]],                              // Kyushu
+    [[147,-24],[149,-32],[148,-37]],                      // Great Dividing Range
+  ].map(coords => {
+    const points = coords.map(project);
+    return { points, bounds: bbox(points) };
+  });
+  function ridgePath(ctx, points) {
+    ctx.beginPath();
+    ctx.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length - 1; i++) {
+      const a = points[i], b = points[i + 1];
+      ctx.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+    }
+    const end = points[points.length - 1];
+    ctx.lineTo(end[0], end[1]);
+  }
+  function paintRidges(ctx, landShapes, left, right, top, bottom, transformScale = 1) {
+    const active = RELIEF_RANGES.filter(r =>
+      intersects(r.bounds, left - 16, right + 16, top - 16, bottom + 16));
+    if (!active.length) return;
+    const landClip = paths(ctx, landShapes, left, right, top, bottom);
+    if (!landClip) return;
+    ctx.save();
+    clipPath(ctx, landClip);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const width = 1 / Math.max(1, transformScale);
+    for (const r of active) {
+      ridgePath(ctx, r.points);
+      ctx.strokeStyle = 'rgba(23,46,45,0.18)';
+      ctx.lineWidth = 21 * width;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(35,55,54,0.20)';
+      ctx.lineWidth = 8 * width;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(233,239,219,0.28)';
+      ctx.lineWidth = 2.3 * width;
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -489,6 +551,7 @@ const GEOGRAPHY = (() => {
       // hexes. They are also repainted over high-detail coastal repair shapes.
       paintBiomes(ctx, landShapes, a, b, top, bottom);
       paintOwnership(ctx, g, landShapes, visibleTiles, a, b, top, bottom);
+      if (!overview) paintRidges(ctx, landShapes, a, b, top, bottom);
       coast(ctx, landShapes, a, b, top, bottom, scale);
 
       // One land silhouette worldwide: no coastal cutout or second tint pass.
@@ -692,6 +755,12 @@ const GEOGRAPHY = (() => {
         ctx.fill();
       }
     }
+    ctx.restore();
+
+    // Apply the same restrained relief to Japan using the scenario projection.
+    ctx.save();
+    ctx.transform(A, C, B, D, tx, ty);
+    paintRidges(ctx, shapes, a, b, c, d, Math.hypot(A, C));
     ctx.restore();
 
     // Shoreline strokes follow actual Japan, not hex edges.
