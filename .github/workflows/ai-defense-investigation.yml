@@ -6,6 +6,7 @@ on:
       - '.github/workflows/ai-defense-investigation.yml'
       - 'tools/ai_defense_variant.cjs'
       - 'src/ai/02-fronts.part.js'
+      - 'src/ai/03-guard-assignment.part.js'
       - 'src/ai/06-production.part.js'
       - 'src/engine/15-turns-and-fortresses.part.js'
       - 'dist/engine.js'
@@ -25,7 +26,7 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [regional, redeploy]
+        variant: [baseline, redeploy]
         player: [britannia, eu, cf]
         seed: [42, 20261007, 777, 13579]
     steps:

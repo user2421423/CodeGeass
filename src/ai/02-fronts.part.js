@@ -2,7 +2,7 @@
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
   // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
   // (or after `wait` turns). Garrisons and defensive fronts respond to threats; no army is held in strategic reserve.
-  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65, capitalCrisisAlertShare: 0.42, capitalCrisisOffenseShare: 0.27, normalExpeditionShare: 0.4 };
+  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65, capitalCrisisAlertShare: 0.42, capitalCrisisOffenseShare: 0.27, normalExpeditionShare: 0.4, retreatRatio: 0.35 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
     const t = TYPES[u.type];
@@ -103,7 +103,17 @@
     const at = u => host[u.id] || u,
       units = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold && !memo.guards[u.id] && !memo.recoveries?.has(u.id)),
       sum = list => list.reduce((a, u) => a + unitStrength(u), 0),
-      byDist = (p, list) => list.slice().sort((a, b) => dist(g, a.anchor || a, p) - dist(g, b.anchor || b, p) || (a.id < b.id ? -1 : 1));
+      byDist = (p, list) => list.slice().sort((a, b) => dist(g, a.anchor || a, p) - dist(g, b.anchor || b, p) || (a.id < b.id ? -1 : 1)),
+      // Lower bound on arrival time, not actual pathfinding. Incompatible landmasses
+      // cannot reinforce one another overland; overseas units stage at coastal rallies.
+      travelTurns = (u, f) => {
+        const from = at(u), destination = f.rally || f.anchor;
+        if (!from || !destination || atSea(g, from) ||
+            massOf(g, from) < 0 || massOf(g, from) !== massOf(g, destination))
+          return Infinity;
+        return Math.ceil(Math.max(0, dist(g, from, destination) - FRONT.rally) /
+          Math.max(1, E.movement(g, u)));
+      };
     // 1. Cluster: existing fronts re-form around their old anchors so ids stay stable from turn to turn.
     const objectives = frontObjectives(g, side).sort(
       (a, b) => !!saved[b.key] - !!saved[a.key] || b.value - a.value || (a.key < b.key ? -1 : 1),
@@ -217,6 +227,23 @@
         f.overseas = !land.length;
         f.rally = byDist(f.anchor, land.length ? land : own.filter(s => coastTile(g, s)))[0] || null;
       }
+      // Track what can plausibly arrive within a tactical window. Distant
+      // assignments still exist, but are not usable as near-term defenders.
+      f.availableTwo = sum(units.filter(u => travelTurns(u, f) <= 2));
+      f.availableFour = sum(units.filter(u => travelTurns(u, f) <= 4));
+      f.arrivingTwo = 0;
+      f.arrivingFour = 0;
+      // Preserve local garrisons while allowing an overwhelmed mobile field
+      // detachment to fall back to an uncontested friendly city on the same landmass.
+      const retreatOptions = f.type === 'defensive' && !f.vital && f.immediateMenace >= 8 &&
+        f.localStrength > 0 && f.localStrength < f.immediateMenace * FRONT.retreatRatio
+        ? own.filter(s => massOf(g, s) === massOf(g, f.anchor) &&
+            dist(g, s, f.anchor) >= 4 && dist(g, s, f.anchor) <= 18 &&
+            !foes.some(v => dist(g, v, s) <= R.threat))
+          .sort((a, b) => dist(g, a, f.anchor) - dist(g, b, f.anchor) || a.id - b.id)
+        : [];
+      f.fallback = retreatOptions[0] || null;
+      f.withdraw = !!f.fallback;
       // Priority: the score, discounted (down to `floor`) when half the army could not field the force it needs.
       f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength));
     }
@@ -240,6 +267,9 @@
       give = (u, f) => {
         assign[u.id] = f.id;
         f.assigned += unitStrength(u);
+        const eta = travelTurns(u, f);
+        if (eta <= 2) f.arrivingTwo += unitStrength(u);
+        if (eta <= 4) f.arrivingFour += unitStrength(u);
         if (sticky[u.id]?.front !== f.id) sticky[u.id] = { front: f.id, since: g.turn };
       };
     for (const u of units) {
@@ -342,8 +372,11 @@
           bd = Infinity;
         for (const u of pool) {
           if (assign[u.id]) continue;
-          const d = dist(g, at(u), f.anchor) - (sticky[u.id]?.front === f.id ? 10 : 0);
-          if (d <= range && (d < bd || (d === bd && u.id < best.id))) {
+          const eta = travelTurns(u, f);
+          if (eta > 4 || dist(g, at(u), f.anchor) > range) continue;
+          const d = eta * 6 + dist(g, at(u), f.anchor) * 0.2 -
+            (sticky[u.id]?.front === f.id ? 2 : 0);
+          if (d < bd || (d === bd && (!best || u.id < best.id))) {
             bd = d;
             best = u;
           }
@@ -351,10 +384,10 @@
         if (best) give(best, f);
         return !!best;
       };
-    for (const f of emergencies) while (f.assigned < f.target && take(f, FRONT.pull + 10));
-     for (;;) {
-      const needy = fronts.filter(f => f.assigned < f.target)
-        .sort((a, b) => b.target - b.assigned - (a.target - a.assigned));
+    for (const f of emergencies) while (f.arrivingFour < f.target && take(f, FRONT.pull + 10));
+    for (;;) {
+      const needy = fronts.filter(f => f.arrivingFour < f.target)
+        .sort((a, b) => b.target - b.arrivingFour - (a.target - a.arrivingFour));
       if (!needy.some(f => take(f))) break;
     }
     // If targets are already filled, prefer sending extra strength to an
@@ -365,8 +398,10 @@
         ? localDefense : offensive.length ? offensive : localDefense.length ? localDefense : fronts;
     for (const u of pool) {
       if (assign[u.id]) continue;
-      const local = byDist(at(u), localDefense)[0],
-        preferred = byDist(at(u), overflow)[0],
+      const reachableDefense = localDefense.filter(f => travelTurns(u, f) <= 6),
+        reachableOverflow = overflow.filter(f => travelTurns(u, f) <= 10),
+        local = byDist(at(u), reachableDefense)[0],
+        preferred = byDist(at(u), reachableOverflow)[0],
         nearbyCover = local && local.assigned < local.target &&
           (!preferred || dist(g, at(u), local.anchor) + FRONT.pull < dist(g, at(u), preferred.anchor));
       const pick = nearbyCover ? local : preferred;
@@ -384,12 +419,19 @@
           if (st.state !== v) Object.assign(st, { state: v, since: g.turn });
         };
       if (f.type !== 'offensive' || !f.rally)
-        set(f.type === 'defensive' ? 'holding' : f.type === 'alert' ? 'alert' : 'attacking');
+        set(f.withdraw ? 'regrouping' :
+          f.type === 'defensive' ? 'holding' : f.type === 'alert' ? 'alert' : 'attacking');
       else {
         if (st.state === 'holding' || st.state === 'alert') set('assembling');
         f.readyStrength = sum(mine.filter(u => dist(g, at(u), f.rally) <= FRONT.rally || aheadOfRally(g, f, at(u))));
         f.attackThreshold = Math.max(2, Math.min(f.desiredStrength * 0.8, f.assigned * 0.5));
-        if (st.state === 'assembling' && (f.readyStrength >= f.attackThreshold || g.turn - st.since >= FRONT.wait)) {
+        // Waiting alone does not make an army ready. After a short staging
+        // period a smaller assault is allowed only when it can overpower its
+        // nearby opposition; otherwise keep gathering instead of feeding units in.
+        const limitedAssault = g.turn - st.since >= FRONT.wait &&
+          f.readyStrength >= Math.max(1, f.assigned * 0.35) &&
+          f.readyStrength >= f.enemyStrength * 1.2;
+        if (st.state === 'assembling' && (f.readyStrength >= f.attackThreshold || limitedAssault)) {
           set('attacking');
           st.force = f.assigned;
           if (side !== g.player && f.objectives.some(o => o.owner === g.player))
@@ -412,6 +454,8 @@
       const seeds = (f.seeds =
         f.state === 'assembling'
           ? [[f.rally, 0]]
+          : f.state === 'regrouping'
+            ? [[f.fallback, -2]]
           : f.type === 'alert'
             ? f.objectives.filter(o => o.defend).map(o => [o, o.immediate ? -5 : -3])
             : f.objectives.flatMap(o =>

@@ -185,3 +185,42 @@ test('capital crises cannot create negative targets on other defensive fronts', 
     .reduce((sum, u) => sum + E.unitStrength(u), 0);
   assert(memo.fronts.reduce((sum, f) => sum + f.target, 0) <= mobile + 1e-8);
 });
+
+test('fronts report usable one-to-four-turn strength rather than distant assigned strength', () => {
+  const { g } = setup({ nearby: true, defenders: 4 });
+  const memo = E.aiPlan(g, 'cf');
+  for (const f of memo.fronts) {
+    assert(Number.isFinite(f.availableTwo) && Number.isFinite(f.availableFour));
+    assert(f.availableTwo <= f.availableFour + 1e-8);
+    assert(f.arrivingTwo <= f.arrivingFour + 1e-8);
+    assert(f.arrivingFour <= f.assigned + 1e-8);
+  }
+});
+
+test('overwhelmed noncapital theaters never withdraw their fixed capital garrisons', () => {
+  const { g } = setup({ nearby: true, defenders: 2 });
+  const memo = E.aiPlan(g, 'cf');
+  for (const f of memo.fronts.filter(f => f.withdraw)) {
+    assert.equal(f.type, 'defensive');
+    assert.equal(f.vital, false);
+    assert(f.fallback);
+    assert.equal(f.state, 'regrouping');
+    assert(f.seeds.some(([p]) => p === f.fallback));
+  }
+  const guards = Object.keys(memo.guards).map(Number);
+  assert(guards.every(id => memo.assign[id] === undefined));
+});
+
+test('offensives may not launch solely because their assembly timer expires', () => {
+  const { g } = setup({enemyCity: true, defenders: 4});
+  const memo = E.aiPlan(g, 'cf');
+  const offensive = memo.fronts.find(f => f.type === 'offensive' && f.rally);
+  assert(offensive, 'there should be an active real offensive');
+  const st = g.ai.cf.fronts[offensive.id];
+  assert(st);
+  if (offensive.state === 'assembling')
+    assert(offensive.readyStrength < offensive.attackThreshold &&
+      (g.turn - st.since < E.FRONT.wait ||
+        offensive.readyStrength < Math.max(1, offensive.assigned * 0.35) ||
+        offensive.readyStrength < offensive.enemyStrength * 1.2));
+});

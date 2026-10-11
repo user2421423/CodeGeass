@@ -182,15 +182,42 @@
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
     // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
-    const serves = s =>
-        (memo.fronts || [])
-          .filter(f => f.assigned < f.desiredStrength && dist(g, s, f.rally || f.anchor) <= 25)
-          .sort((a, b) => dist(g, s, a.rally || a.anchor) - dist(g, s, b.rally || b.anchor))[0],
-      urgency = s => {
-        const f = serves(s);
-        return f ? (f.desiredStrength - f.assigned) * (0.5 + Math.max(0, f.score) / 100) : 0;
+    const yardFront = new Map(),
+      // Factories must reinforce a front they can actually reach. Deficits use
+      // near-term arrivals rather than distant assigned troops that will not
+      // defend the city in the next few turns.
+      factoryETA = (s, f) => {
+        const target = f.rally || f.anchor;
+        if (!target || massOf(g, s) < 0 || massOf(g, s) !== massOf(g, target))
+          return Infinity;
+        return Math.ceil(dist(g, s, target) / 4);
       },
-      yards = bases.slice().sort((a, b) => urgency(b) - urgency(a));
+      serves = s => {
+        if (!yardFront.has(s.id)) {
+          const chosen = (memo.fronts || [])
+            .map(f => ({ f, eta: factoryETA(s, f),
+              gap: Math.max(0, f.desiredStrength - (f.arrivingFour || 0)) }))
+            .filter(x => x.eta <= 5 && x.gap > 0)
+            .sort((a, b) =>
+              b.gap * (1 + (b.f.type === 'defensive' ? 0.8 : 0.1)) /
+                (1 + b.eta * 0.4) -
+              a.gap * (1 + (a.f.type === 'defensive' ? 0.8 : 0.1)) /
+                (1 + a.eta * 0.4) || a.eta - b.eta)[0];
+          yardFront.set(s.id, chosen || null);
+        }
+        return yardFront.get(s.id)?.f || null;
+      },
+      urgency = s => {
+        const chosen = yardFront.get(s.id);
+        const f = serves(s);
+        const eta = chosen?.eta ?? factoryETA(s, f || { anchor: s });
+        const nearbyThreat = foes.some(u => dist(g, u, s) <= aiRange(g).threat) ? 8 : 0;
+        return nearbyThreat + (f
+          ? Math.max(0, f.desiredStrength - (f.arrivingFour || 0)) *
+              (0.5 + Math.max(0, f.score) / 100) / (1 + eta * 0.35)
+          : 0);
+      },
+      yards = bases.slice().sort((a, b) => urgency(b) - urgency(a) || a.id - b.id);
     // 4b. Navy: fleet and port construction scale with coastal exposure, enemy naval
     // threats and overseas fronts rather than arbitrary per-faction ship/port caps.
     // Spending on the fleet must still leave a normal two-frame Scout formation
