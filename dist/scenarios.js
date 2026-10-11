@@ -37,8 +37,8 @@
     ['Yamaguchi',131.47,34.18,'britannia',1], ['Shimonoseki',130.94,33.96,'britannia',1],
     ['Kitakyushu',130.88,33.88,'cf',2,true], ['Fukuoka',130.40,33.59,'cf',3,true],
     ['Nagasaki',129.88,32.75,'cf',2], ['Sasebo',129.72,33.16,'cf',1],
-    ['Oita',131.61,33.24,'britannia',1], ['Kumamoto',130.71,32.80,'britannia',2],
-    ['Miyazaki',131.42,31.91,'britannia',1], ['Kagoshima',130.56,31.60,'britannia',2]
+    ['Oita',131.61,33.24,'cf',1], ['Kumamoto',130.71,32.80,'cf',2],
+    ['Miyazaki',131.42,31.91,'cf',1], ['Kagoshima',130.56,31.60,'cf',2]
   ];
   // Normal-mode opening income targets. China and the Black Knights receive
   // roughly 300 credits per turn, but less Sakuradite than before.
@@ -65,8 +65,8 @@
     ['britannia','Osaka','rocket',1],
     ['britannia','Hiroshima','light',1],
     ['britannia','Shimonoseki','assault',2],
-    ['britannia','Kumamoto','medium',1],
-    ['britannia','Kagoshima','light',1],
+    ['britannia','Okayama','medium',1],
+    ['britannia','Yamaguchi','light',1],
     ['britannia','Sendai','medium',1],
     ['britannia','Sapporo','light',1],
     ['bk','Kyoto','medium',3,'zero'],
@@ -212,7 +212,7 @@
     g.factions={bk:E.FACTIONS.bk};
     g.lineup={bk:E.ROSTER.bk};
     g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,
-      phase:'opening',groups:[],funding:{}};
+      phase:'opening',groups:[],funding:{},bounds:BOUNDS};
     g.tiles=mask.map((dry,i)=>{
       const c=i%COLS,r=(i/COLS)|0,
         lat=BOUNDS.north-r*(BOUNDS.north-BOUNDS.south)/(ROWS-1),
@@ -229,7 +229,12 @@
       if (t.terrain!=='sea' && E.adjacent(g,t).some(n=>n.terrain==='sea')) t.terrain='coast';
     const hokkaidoStart=nearest(g,locate(141.35,43.06),t=>t.terrain!=='sea',4);
     const shikokuStart=nearest(g,locate(132.77,33.84),t=>t.terrain!=='sea',4);
-    const islandTiles={hokkaido:component(g,hokkaidoStart),shikoku:component(g,shikokuStart)};
+    const kyushuStart=nearest(g,locate(130.71,32.80),t=>t.terrain!=='sea',4);
+    const islandTiles={
+      hokkaido:component(g,hokkaidoStart),
+      shikoku:component(g,shikokuStart),
+      kyushu:component(g,kyushuStart),
+    };
     for (const [name,lon,lat,owner,tier,fort=false] of CITIES) {
       const required=islandTiles[islandNames[name]];
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea' &&
@@ -247,16 +252,34 @@
       g.stations.push(s);
       at.terrain='plains';
     }
-    // Preserve city-based regions; sea stays unowned and is not accidentally recolored.
-    for (const t of g.tiles) {
-      if (t.terrain==='sea')continue;
+    // Province assignment stays on the same island. In particular, the
+    // Kanmon Strait may not allow a Shimonoseki province to own Kyushu.
+    // This is tactical ownership, independent of the new geographic art.
+    const islandByHex=new Map();
+    let componentId=0;
+    for(const t of g.tiles){
+      if(t.terrain==='sea'||islandByHex.has(E.key(t)))continue;
+      for(const key of component(g,t))islandByHex.set(key,componentId);
+      componentId++;
+    }
+    const islandCities=new Map();
+    for(const city of g.stations){
+      const id=islandByHex.get(E.key(city));
+      if(!islandCities.has(id))islandCities.set(id,[]);
+      islandCities.get(id).push(city);
+    }
+    for(const t of g.tiles){
+      if(t.terrain==='sea')continue;
+      const candidates=islandCities.get(islandByHex.get(E.key(t)))||g.stations;
       let city=null,d=Infinity;
-      for (const s of g.stations) {
+      for(const s of candidates){
         const v=E.distance(t,s,g);
-        if(v<d) {d=v;city=s;}
+        if(v<d){d=v;city=s;}
       }
       if(city){t.owner=city.owner;t.provinceCity=city.id;}
     }
+    if([...islandTiles.kyushu].some(key=>!g.tiles.find(t=>E.key(t)===key&&t.owner==='cf')))
+      throw new Error('All of Kyushu must be controlled by the Chinese Federation');
     // Each staging command becomes a real, clickable army group with owned unit IDs.
     // Multiple branches staged at the same city belong to the same formation.
     const groupMap=new Map();
