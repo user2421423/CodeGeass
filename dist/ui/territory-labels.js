@@ -1,7 +1,7 @@
 /* Strategic world-map country labels. Visual only; ownership and game rules are unchanged. */
 'use strict';
 const TERRITORY_LABELS = (() => {
-  const ANGLES = [-0.58, -0.36, -0.18, 0, 0.18, 0.36, 0.58];
+  const ANGLES = [-0.52, -0.26, 0, 0.26, 0.52];
   const STEP = R * 0.72;
   let cached = null;
 
@@ -83,19 +83,55 @@ const TERRITORY_LABELS = (() => {
           group.push(neighbor);
         }
       }
-      if (group.length >= 24) regions.push({ side: tile.owner, tiles: group });
+      if (group.length >= 100) regions.push({ side: tile.owner, tiles: group });
+    }
+    // Large realms joined by a narrow isthmus (the Americas, or Eurasia and
+    // Africa) deserve a name on each continent. Separate their northern and
+    // southern theaters by latitude without changing the actual ownership.
+    const zones = [];
+    for (const region of regions) {
+      const ys = region.tiles.map(t => R * 1.5 * t.r + R);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      if (region.tiles.length < 400 || maxY - minY < 2350) {
+        zones.push(region);
+        continue;
+      }
+      let a = minY + (maxY - minY) * 0.26, b = minY + (maxY - minY) * 0.74;
+      for (let rep = 0; rep < 9; rep++) {
+        let sa = 0, na = 0, sb = 0, nb = 0;
+        for (const y of ys) {
+          if (Math.abs(y - a) <= Math.abs(y - b)) { sa += y; na++; }
+          else { sb += y; nb++; }
+        }
+        if (na && nb) { a = sa / na; b = sb / nb; }
+      }
+      const split = (a + b) / 2;
+      const upper = region.tiles.filter(t => R * 1.5 * t.r + R <= split);
+      const lower = region.tiles.filter(t => R * 1.5 * t.r + R > split);
+      if (upper.length >= 160 && lower.length >= 160) {
+        zones.push({ side: region.side, tiles: upper }, { side: region.side, tiles: lower });
+      } else zones.push(region);
     }
     const labels = [];
-    for (const region of regions) {
-      let best = null, bestScore = 0;
-      const count = Math.min(95, region.tiles.length);
+    for (const region of zones) {
+      let best = null, bestScore = -Infinity;
+      const meanY = region.tiles.reduce((sum, t) => sum + R * 1.5 * t.r + R, 0) / region.tiles.length;
+      const regionHexes = new Set(region.tiles.map(t => t.r * g.cols + t.c));
+      const stations = g.stations.filter(s => s.owner === region.side && regionHexes.has(s.r * g.cols + s.c));
+      const cityY = stations.length ?
+        stations.reduce((sum, s) => sum + R * 1.5 * s.r + R, 0) / stations.length : meanY;
+      const preferredY = meanY * 0.35 + cityY * 0.65;
+      const count = Math.min(55, region.tiles.length);
       for (let i = 0; i < count; i++) {
         const tile = region.tiles[Math.floor(i * region.tiles.length / count)];
         const p = hexCenter(tile);
         for (const angle of ANGLES) {
           const candidate = corridor(g, p, region.side, angle, worldWidth);
           if (!candidate) continue;
-          const score = candidate.span * (1 - 0.09 * Math.abs(angle));
+          // Cap the reward for width so immense empty Arctic strips don't beat
+          // broad territory nearer the country's cities and population.
+          const score = Math.min(candidate.span, R * 60) -
+            Math.abs(candidate.y - preferredY) * 2.5 - 180 * Math.abs(angle);
           if (score > bestScore) { best = candidate; bestScore = score; }
         }
       }
