@@ -18,7 +18,7 @@ function scenarioDialog() {
     const cities=preview.stations.filter(c=>c.owner===s).length;
     const units=preview.units.filter(u=>u.side===s).length;
     return '<button class="faction '+s+(s===scenarioSide?' active':'')+'" data-scenario-faction="'+s+'">'+
-      '<span class="label" style="color:'+owner.color+'">'+owner.short+'</span>'+
+      '<span class="label" style="color:'+(s==='bk'?'#f0c94a':owner.color)+'">'+owner.short+'</span>'+
       '<h3>'+owner.name+'</h3><p>'+SCENARIO_BLURBS[s]+'</p>'+
       '<p class="doctrine">'+cities+' cities · '+units+' starting formations</p>'+
       '<span class="select-mark">'+(s===scenarioSide?'✓ Selected':'Select faction')+'</span></button>';

@@ -90,6 +90,14 @@ test('All Kyushu cities, provinces and shoreline hexes start as Chinese Federati
   assert.deepEqual(g.scenario.bounds, japan.bounds);
 });
 
+test('Black Knights use near-black political colouring with a gold UI accent', () => {
+  const g = japan.create('bk', 'normal', 17);
+  assert.equal(E.FACTIONS.bk.color, '#18181f');
+  assert.equal(g.factions.bk.color, '#18181f');
+  assert.ok(g.tiles.some(t => t.owner === 'bk'),
+    'Black Knight territorial provinces remain identifiable');
+});
+
 test('All three playable factions share one map, can act and have the expected forces', () => {
   const expected = { britannia: [31, 20], bk: [5, 13], cf: [8, 29] };
   const starts = [];

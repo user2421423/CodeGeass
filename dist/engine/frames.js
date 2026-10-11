@@ -33,7 +33,7 @@
       name: 'Order of the Black Knights',
       short: 'Black Knights',
       adj: 'Black Knight',
-      color: '#f0c94a',
+      color: '#18181f', // Black Knights' political territory and unit allegiance.
       letter: 'K',
       capital: 'Hōrai Island',
       campaign: true,
