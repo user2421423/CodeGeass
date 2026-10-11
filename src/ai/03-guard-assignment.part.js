@@ -2,10 +2,14 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
+      // A network of isolated city guards can consume almost the entire army.
+      // Preserve a mobile field force in Conquest; capitals and active projects
+      // take priority when the available static-defense allocation fills.
+      maxGuards = g.mode === 'campaign' ? Infinity : Math.max(4, Math.floor(own.length * 0.45)),
       threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
       urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
       guard = (u, post, emergency = false) => {
-        if (taken[u.id]) return false;
+        if (taken[u.id] || Object.keys(taken).length >= maxGuards) return false;
         taken[u.id] = { ...post, emergency };
         return true;
       };

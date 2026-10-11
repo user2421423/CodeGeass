@@ -293,3 +293,17 @@ test('a single scout threatening a capital does not suspend strategic savings', 
   E.aiProduction(g);
   assert.equal(g.ai.cf.conventionalCrisis, false);
 });
+
+test('Conquest guard commitments are capped while keeping capitals protected', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  for (const side of E.MAJORS) {
+    const memo = E.aiPlan(g, side);
+    const land = g.units.filter(u => u.hp > 0 && u.side === side &&
+      !E.internal.isShip(u) && !E.internal.atSea(g, u));
+    assert(Object.keys(memo.guards).length <= Math.max(4, Math.floor(land.length * 0.45)));
+    const capital = g.stations.find(s => s.capitalOf === side);
+    assert(capital);
+    assert(Object.values(memo.guards).some(x => x.id === capital.id),
+      'critical capitals retain static protection');
+  }
+});
