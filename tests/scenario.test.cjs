@@ -101,6 +101,44 @@ test('Nine legal ports, fourteen waterborne formations and Japanese Sakuradite s
   assert.ok(E.income(g, 'cf').sakuradite > 0);
 });
 
+test('Opening economy: Britannia leads and stockpiles are exactly two turns of income', () => {
+  const normal = {
+    britannia: { credits: 400, industry: 220, science: 42, sakuradite: 28 },
+    bk:         { credits: 200, industry: 115, science: 24, sakuradite: 18 },
+    cf:         { credits: 270, industry: 155, science: 28, sakuradite: 22 },
+  };
+  for (const player of japan.sides) {
+    for (const difficulty of ['normal', 'hard', 'challenge']) {
+      const g = japan.create(player, difficulty, 11);
+      for (const side of japan.sides) {
+        const factor = side === player ? 1 : difficulty === 'challenge' ? 1.6 :
+          difficulty === 'hard' ? 1.3 : 1;
+        const expected = Object.fromEntries(
+          Object.entries(normal[side]).map(([resource, amount]) =>
+            [resource, Math.round(amount * factor)]));
+        assert.deepEqual(E.income(g, side), expected);
+        for (const [resource, amount] of Object.entries(expected))
+          assert.equal(g.economy[side][resource], 2 * amount);
+      }
+    }
+  }
+});
+
+test('Captured cities change income and preserve fixed command funding', () => {
+  const g = japan.create('cf', 'normal', 11);
+  const beforeBritannia = E.income(g, 'britannia');
+  const beforeChina = E.income(g, 'cf');
+  const hiroshima = city(g, 'Hiroshima');
+  hiroshima.owner = 'cf';
+  const afterBritannia = E.income(g, 'britannia');
+  const afterChina = E.income(g, 'cf');
+  assert.ok(afterBritannia.credits < beforeBritannia.credits);
+  assert.ok(afterBritannia.industry < beforeBritannia.industry);
+  assert.ok(afterChina.credits > beforeChina.credits);
+  assert.ok(afterChina.industry > beforeChina.industry);
+  assert.deepEqual(g.scenario.funding.cf, { ...g.scenario.funding.cf });
+});
+
 test('Difficulty selector changes rival formation strength while preserving the map', () => {
   const normal = japan.create('bk', 'normal', 11);
   const hard = japan.create('bk', 'hard', 11);
