@@ -98,9 +98,11 @@ async function endTurn(force = false) {
   aiSide = null;
   if (token !== aiToken) return;
   let armed = false,
-    orders = null;
+    orders = null,
+    scenarioNotice = false;
   if (!game.over) {
     game.turn++;
+    scenarioNotice = game.mode === 'scenario' && E.scenarios?.japan?.onTurn(game);
     const before = unitSnapshot(),
       warheads = game.arsenal?.[game.player] || 0;
     E.beginTurn(game, game.player, true);
@@ -117,7 +119,8 @@ async function endTurn(force = false) {
   campaignFeed(() => game.over && resultDialog());
   const logistics = game.automationReport,
     standing = orders && gotoReportText(orders) ? ` Standing orders: ${gotoReportText(orders)}.` : '';
-  if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standing}`, true);
+  if (scenarioNotice) toast('Turn 10: the Britannia–Black Knights alliance has collapsed. All three powers are now hostile.', true);
+  else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standing}`, true);
   else if (!game.over && logistics && (logistics.units || logistics.upgrades))
     toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}${standing}`, true);
   else if (!game.over && standing) toast(`Turn ${game.turn}.${standing}`, true);
