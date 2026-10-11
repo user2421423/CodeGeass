@@ -52,7 +52,7 @@ test('four existing Chinese Federation formations redeploy without changing the 
   ];
   for (const player of E.MAJORS) {
     const g = E.createGame(player, 'normal', 'conquest', 42);
-    assert.equal(g.units.filter(u => u.side === 'cf').length, 55);
+    assert.equal(g.units.filter(u => u.side === 'cf').length, 63);
     assert.equal(g.units.filter(u => u.side === 'britannia').length, 48);
     assert.equal(g.units.filter(u => u.side === 'eu').length, 53);
     for (const [lon, lat, klass, stack] of expected) {
@@ -67,4 +67,29 @@ test('four existing Chinese Federation formations redeploy without changing the 
       assert.equal(unit.stack, stack);
     }
   }
+});
+
+test('eight two-frame Chinese frontline reinforcements spawn in their planned regions', () => {
+  const points = [
+    [54.8, 34.8, 'heavy'], [65.7, 39.5, 'rocket'],
+    [72.7, 42.4, 'medium'], [130.8, 46.2, 'heavy'],
+    [56.5, 38.7, 'medium'], [68.2, 38.8, 'rocket'],
+    [128.2, 48.3, 'heavy'], [123.2, 42.4, 'medium'],
+  ];
+  const g = E.createGame('cf', 'normal', 'conquest', 42);
+  const army = g.units.filter(u => u.side === 'cf' && !E.internal.isShip(u));
+  assert.equal(army.length, 59, 'Chinese non-ship formations (including amphibious)');
+  assert.equal(army.reduce((n, u) => n + u.stack, 0), 102, 'Chinese non-ship frames (including amphibious)');
+  const matched = new Set();
+  for (const [lon, lat, klass] of points) {
+    const target = E.hexOf(lon, lat);
+    const candidates = army.filter(u => !matched.has(u.id) &&
+      u.type === E.typeFor('cf', klass) && u.stack === 2)
+      .sort((a,b) => E.internal.dist(g,a,target) - E.internal.dist(g,b,target));
+    const u = candidates[0];
+    assert.ok(u && E.internal.dist(g,u,target) <= 4,
+      'Missing '+klass+' reinforcement near '+lon+','+lat);
+    matched.add(u.id);
+  }
+  assert.equal(matched.size, 8, 'all eight positions have distinct formations');
 });
