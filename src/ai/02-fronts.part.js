@@ -170,7 +170,7 @@
         (imminent.length && worth(imminent) >= bestAttack))
         ? 'defensive' : attack.length ? 'offensive' : 'alert';
       f.desiredStrength = f.type === 'defensive'
-        ? Math.max(2, immediateMenace * 1.2 +
+        ? Math.max(f.vital ? 8 : 2, immediateMenace * 1.2 +
             (f.vital ? projectedMenace * 0.8 + f.stagingMenace * 0.45 : 0) -
             garrison * (f.vital ? 0.5 : 1))
         : f.type === 'alert'
