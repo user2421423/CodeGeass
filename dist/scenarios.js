@@ -364,7 +364,7 @@
           if(challenge||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
-    E.log(g,'Chinese Federation forces have landed in northern Kyushu. Britannia and the Black Knights are temporarily allied.',player);
+    E.log(g,'Chinese Federation forces control Kyushu. Britannia and the Black Knights are temporarily allied.',player);
     return g;
   }
   // The opening alliance ends at turn 10. Later work can add story/dialogue and reinforcement events.
