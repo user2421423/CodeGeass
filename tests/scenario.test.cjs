@@ -51,7 +51,7 @@ test('Takamatsu stays on Shikoku, straits and other islands are not accidental l
 });
 
 test('All three playable factions share one map, can act and have the expected forces', () => {
-  const expected = { britannia: [35, 38], bk: [5, 13], cf: [4, 29] };
+  const expected = { britannia: [35, 20], bk: [5, 13], cf: [4, 29] };
   const starts = [];
   for (const player of japan.sides) {
     const g = japan.create(player, 'normal', 11);
@@ -62,7 +62,9 @@ test('All three playable factions share one map, can act and have the expected f
     assert.equal(E.foe(g, 'britannia', 'bk'), false);
     assert.equal(E.foe(g, 'britannia', 'cf'), true);
     assert.equal(E.foe(g, 'bk', 'cf'), true);
-    assert.equal(g.units.length, 80);
+    assert.equal(g.units.length, 62);
+    assert.equal(g.startUnits.britannia, 20);
+    assert.equal(g.units.filter(u => u.side === 'britannia' && E.TYPES[u.type].naval).length, 6);
     for (const side of japan.sides)
       assert.deepEqual([
         g.stations.filter(s => s.owner === side).length,
