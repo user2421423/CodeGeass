@@ -125,3 +125,26 @@ test('projected multi-sector pressure on a capital caps offensive commitments fo
   assert(memo.fronts.filter(f => f.type === 'alert')
     .reduce((n,f) => n+f.target,0) <= mobile*E.FRONT.capitalCrisisAlertShare+1e-8);
 });
+
+test('an immediate capital attack retains crisis reinforcements instead of shrinking to two frames', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  g.phase = 'cf';
+  const capital = g.stations.find(s => s.capitalOf === 'cf');
+  assert(capital);
+  for(let i = 0; i < 4; i++)
+    E.newUnit(g, E.typeFor('britannia', 'heavy', g), 'britannia',
+      capital.c + 3 + i % 2, capital.r + Math.floor(i / 2));
+  const memo = E.aiPlan(g, 'cf');
+  const crisis = memo.fronts.find(f => f.objectives.some(o => o.name === capital.name));
+  assert(crisis, 'capital remains an active defensive sector');
+  assert.equal(crisis.type, 'defensive');
+  assert.equal(crisis.vital, true);
+  assert(crisis.immediateMenace > 0);
+  assert(crisis.desiredStrength > 2, 'capital cover must incorporate next-wave arrivals');
+  const army = E.internal.allUnits(g).filter(u => u.side === 'cf' && !E.internal.isShip(u) &&
+    !memo.guards[u.id] && !u.hold && !memo.recoveries?.has(u.id))
+    .reduce((n,u)=>n + E.unitStrength(u), 0);
+  assert(memo.fronts.filter(f => f.type === 'offensive')
+    .every(f => f.target <= army * E.FRONT.capitalCrisisOffenseShare + 1e-8),
+    'an immediate, vital threat keeps other offensives within the crisis budget');
+});

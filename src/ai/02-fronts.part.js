@@ -170,7 +170,9 @@
         (imminent.length && worth(imminent) >= bestAttack))
         ? 'defensive' : attack.length ? 'offensive' : 'alert';
       f.desiredStrength = f.type === 'defensive'
-        ? Math.max(2, immediateMenace * 1.2 - garrison)
+        ? Math.max(2, immediateMenace * 1.2 +
+            (f.vital ? projectedMenace * 0.8 + f.stagingMenace * 0.45 : 0) -
+            garrison * (f.vital ? 0.5 : 1))
         : f.type === 'alert'
           ? Math.max(2, f.immediateMenace * 1.2 + f.projectedMenace * 0.9 +
             f.stagingMenace * 0.45 + (f.projectedVital ? 5 : 0) +
@@ -243,7 +245,9 @@
     const alerts = fronts.filter(f => f.type === 'alert'),
       // A projected attack on a capital across several sectors is a genuine
       // strategic crisis even though it must not force every local front to hold.
-      capitalCrisis = alerts.length >= 2 && fronts.some(f => f.projectedVital && f.projectedMenace > 0),
+      capitalCrisis = alerts.length + emergencies.length >= 2 &&
+        fronts.some(f => (f.projectedVital && f.projectedMenace > 0) ||
+          (f.vital && f.immediateMenace > 0)),
       expeditionLimit = army * FRONT.normalExpeditionShare,
       open = fronts.filter(f => f.type === 'offensive' || (f.type === 'defensive' && !f.emergency)),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
