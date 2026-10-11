@@ -49,7 +49,8 @@
         dist(g, p, f.anchor) <= SCENARIO_COLUMN.exploitRadius)) turns -= 2.5;
       else turns -= 0.5;
     }
-    return Math.max(0, turns);
+    // Player-owned cities are worth the extra operational travel time; a zero bonus keeps nearest-city ordering.
+    return Math.max(0, turns) / (1 + (playerPriorityTarget(g, u.side, f.anchor.owner) ? playerPriorityBonus(g, u.side) : 0));
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
@@ -389,7 +390,12 @@
       f.fallback = retreatOptions[0] || null;
       f.withdraw = !!f.fallback;
       // Priority: the score, discounted (down to `floor`) when half the army could not field the force it needs.
-      f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength));
+      // Offensives gain priority in proportion to the share of their objective value the human player owns.
+      const attackingValue = worth(attack),
+        playerValue = worth(attack.filter(o => playerPriorityTarget(g, side, o.owner))),
+        playerShare = f.type === 'offensive' && attackingValue ? playerValue / attackingValue : 0;
+      f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength)) *
+        (1 + playerPriorityBonus(g, side) * playerShare);
     }
     // Every immediate defensive emergency is active. Among routine theaters,
     // protect at least two offensive slots so density of alert cities cannot crowd
@@ -593,7 +599,7 @@
     // 6. One goal field per front (built when a unit first asks): an assembling offensive pulls toward its rally city;
     // otherwise the objectives, and for threatened own cities the enemy units menacing them. An attacking front also
     // takes targets of opportunity, but only those `stray` path cost nearer than its own.
-    const elsewhere = goalSeeds(g, side).map(([p, d]) => [p, d + FRONT.stray]);
+    const elsewhere = playerPrioritySeeds(g, side).map(([p, d]) => [p, d + FRONT.stray]);
     for (const f of fronts) {
       const seeds = (f.seeds =
         f.state === 'assembling'
@@ -610,7 +616,7 @@
                   : [[o, o.seed]],
               ));
       f.masses = new Set(seeds.map(([p]) => massOf(g, p)).filter(m => m >= 0));
-      if (f.state === 'attacking') f.seeds = [...seeds, ...elsewhere];
+      if (f.state === 'attacking') f.seeds = [...playerPrioritySeeds(g, side, seeds), ...elsewhere];
       f.need = frontNeeds(f, units.filter(u => assign[u.id] === f.id));
     }
     // Idle carriers wait off the rally city of the best offensive across the sea.

@@ -106,6 +106,24 @@
     aiRange = g => (g.mode === 'campaign' ? AI_RANGE_CAMPAIGN : AI_RANGE);
   const aiMemo = new WeakMap();
   const threatMemo = new WeakMap();
+  // Faction-neutral targeting preference for the human player, used ONLY in Conquest and Scenario, at every
+  // difficulty. A bonus of 1 doubles the weight of hostile player targets; set g.aiPlayerPriorityBonus (0-1) per game
+  // to override it (0 reproduces the old targeting). It changes decisions only, never unit stats, income, diplomacy,
+  // legal movement or fog of war, and allies of the player never receive it.
+  const PLAYER_PRIORITY_DEFAULT = 1;
+  function playerPriorityBonus(g, side) {
+    if (!['conquest', 'scenario'].includes(g?.mode) || !g.player || side === g.player || !foe(g, g.player, side)) return 0;
+    const value = Number(g.aiPlayerPriorityBonus ?? PLAYER_PRIORITY_DEFAULT);
+    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : PLAYER_PRIORITY_DEFAULT;
+  }
+  function playerPriorityTarget(g, side, owner) {
+    return owner === g.player && owner !== side && foe(g, owner, side);
+  }
+  function playerPrioritySeeds(g, side, seeds = goalSeeds(g, side)) {
+    const bonus = playerPriorityBonus(g, side);
+    if (!bonus) return seeds;
+    return seeds.map(([p, cost]) => [p, playerPriorityTarget(g, side, p.owner) ? cost - 6 * bonus : cost]);
+  }
   // Each AI turn starts with a plan: garrisons, then (Conquest) the theaters it fights in. Campaign battlefields are a
   // single theater and keep one side-wide goal field.
   function aiPlan(g, side) {
@@ -174,7 +192,8 @@
         dist(g, p, f.anchor) <= SCENARIO_COLUMN.exploitRadius)) turns -= 2.5;
       else turns -= 0.5;
     }
-    return Math.max(0, turns);
+    // Player-owned cities are worth the extra operational travel time; a zero bonus keeps nearest-city ordering.
+    return Math.max(0, turns) / (1 + (playerPriorityTarget(g, u.side, f.anchor.owner) ? playerPriorityBonus(g, u.side) : 0));
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
@@ -514,7 +533,12 @@
       f.fallback = retreatOptions[0] || null;
       f.withdraw = !!f.fallback;
       // Priority: the score, discounted (down to `floor`) when half the army could not field the force it needs.
-      f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength));
+      // Offensives gain priority in proportion to the share of their objective value the human player owns.
+      const attackingValue = worth(attack),
+        playerValue = worth(attack.filter(o => playerPriorityTarget(g, side, o.owner))),
+        playerShare = f.type === 'offensive' && attackingValue ? playerValue / attackingValue : 0;
+      f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength)) *
+        (1 + playerPriorityBonus(g, side) * playerShare);
     }
     // Every immediate defensive emergency is active. Among routine theaters,
     // protect at least two offensive slots so density of alert cities cannot crowd
@@ -718,7 +742,7 @@
     // 6. One goal field per front (built when a unit first asks): an assembling offensive pulls toward its rally city;
     // otherwise the objectives, and for threatened own cities the enemy units menacing them. An attacking front also
     // takes targets of opportunity, but only those `stray` path cost nearer than its own.
-    const elsewhere = goalSeeds(g, side).map(([p, d]) => [p, d + FRONT.stray]);
+    const elsewhere = playerPrioritySeeds(g, side).map(([p, d]) => [p, d + FRONT.stray]);
     for (const f of fronts) {
       const seeds = (f.seeds =
         f.state === 'assembling'
@@ -735,7 +759,7 @@
                   : [[o, o.seed]],
               ));
       f.masses = new Set(seeds.map(([p]) => massOf(g, p)).filter(m => m >= 0));
-      if (f.state === 'attacking') f.seeds = [...seeds, ...elsewhere];
+      if (f.state === 'attacking') f.seeds = [...playerPrioritySeeds(g, side, seeds), ...elsewhere];
       f.need = frontNeeds(f, units.filter(u => assign[u.id] === f.id));
     }
     // Idle carriers wait off the rally city of the best offensive across the sea.
@@ -1613,7 +1637,9 @@
             (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) -
             pr.counter * 0.5;
-          return { p, score };
+          // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
+          const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);
+          return { p, score: humanTarget ? score * (1 + playerPriorityBonus(g, u.side)) : score };
         })
         .sort((a, b) => b.score - a.score)[0];
     const maneuver = () => {
@@ -1771,5 +1797,5 @@
     }
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT });
+  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);

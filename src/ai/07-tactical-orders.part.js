@@ -87,7 +87,9 @@
             (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) -
             pr.counter * 0.5;
-          return { p, score };
+          // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
+          const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);
+          return { p, score: humanTarget ? score * (1 + playerPriorityBonus(g, u.side)) : score };
         })
         .sort((a, b) => b.score - a.score)[0];
     const maneuver = () => {
@@ -245,5 +247,5 @@
     }
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT });
+  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);

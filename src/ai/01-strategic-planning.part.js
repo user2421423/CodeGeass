@@ -14,6 +14,24 @@
     aiRange = g => (g.mode === 'campaign' ? AI_RANGE_CAMPAIGN : AI_RANGE);
   const aiMemo = new WeakMap();
   const threatMemo = new WeakMap();
+  // Faction-neutral targeting preference for the human player, used ONLY in Conquest and Scenario, at every
+  // difficulty. A bonus of 1 doubles the weight of hostile player targets; set g.aiPlayerPriorityBonus (0-1) per game
+  // to override it (0 reproduces the old targeting). It changes decisions only, never unit stats, income, diplomacy,
+  // legal movement or fog of war, and allies of the player never receive it.
+  const PLAYER_PRIORITY_DEFAULT = 1;
+  function playerPriorityBonus(g, side) {
+    if (!['conquest', 'scenario'].includes(g?.mode) || !g.player || side === g.player || !foe(g, g.player, side)) return 0;
+    const value = Number(g.aiPlayerPriorityBonus ?? PLAYER_PRIORITY_DEFAULT);
+    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : PLAYER_PRIORITY_DEFAULT;
+  }
+  function playerPriorityTarget(g, side, owner) {
+    return owner === g.player && owner !== side && foe(g, owner, side);
+  }
+  function playerPrioritySeeds(g, side, seeds = goalSeeds(g, side)) {
+    const bonus = playerPriorityBonus(g, side);
+    if (!bonus) return seeds;
+    return seeds.map(([p, cost]) => [p, playerPriorityTarget(g, side, p.owner) ? cost - 6 * bonus : cost]);
+  }
   // Each AI turn starts with a plan: garrisons, then (Conquest) the theaters it fights in. Campaign battlefields are a
   // single theater and keep one side-wide goal field.
   function aiPlan(g, side) {
