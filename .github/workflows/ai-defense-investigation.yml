@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [baseline, previous, alert15, alert25]
+        variant: [alert15, alert25]
         player: [britannia, eu, cf]
         seed: [42, 20261007, 92831, 314159]
     steps:

@@ -92,7 +92,7 @@
       if (o.front) continue;
       const f = { id: o.key, side, anchor: o, objectives: [], assigned: 0 };
       for (const q of objectives)
-        if (!q.front && dist(g, q, o) <= FRONT.radius) {
+        if (!q.front && !!q.defend === !!o.defend && dist(g, q, o) <= FRONT.radius) {
           q.front = f;
           f.objectives.push(q);
         }
@@ -151,7 +151,9 @@
       const emphasis = f.type === 'defensive'
         ? Math.max(imminentValue, 20) +
           Math.min(24, Math.max(0, f.immediateCities - 1) * FRONT.multiCityBonus)
-        : attackValue || 12;
+        : f.type === 'alert'
+          ? 30 + Math.min(14, f.projectedCities * 2) + (f.immediateCities ? 8 : 0)
+          : attackValue || 12;
       f.score = Math.round(emphasis - Math.max(0, home - 8) * 1.2);
       f.name = f.type === 'offensive'
         ? attack.reduce((a, o) => o.value > a.value ? o : a).name : f.anchor.name;
@@ -170,10 +172,16 @@
       // Priority: the score, discounted (down to `floor`) when half the army could not field the force it needs.
       f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength));
     }
-    // Every emergency, plus the `max` best other fronts.
-    fronts = fronts
-      .sort((a, b) => b.emergency - a.emergency || b.priority - a.priority || (a.id < b.id ? -1 : 1))
-      .filter((f, i, all) => f.emergency || i - all.filter(e => e.emergency).length < FRONT.max);
+    // Every immediate defensive emergency is active. Among routine theaters,
+    // protect at least two offensive slots so density of alert cities cannot crowd
+    // all campaigns out of the theater planner.
+    const rank = (a, b) => b.priority - a.priority || (a.id < b.id ? -1 : 1);
+    const urgent = fronts.filter(f => f.type === 'defensive' && f.emergency).sort(rank);
+    const routine = fronts.filter(f => !(f.type === 'defensive' && f.emergency)).sort(rank);
+    const attacks = routine.filter(f => f.type === 'offensive').slice(0, Math.min(2, FRONT.max));
+    const rest = routine.filter(f => !attacks.includes(f)).slice(0, FRONT.max - attacks.length);
+    fronts = [...urgent, ...attacks, ...rest].sort((a, b) =>
+      (b.type === 'defensive' && b.emergency) - (a.type === 'defensive' && a.emergency) || rank(a, b));
     // Garrisons have already been excluded from the deployable field army.
     // All remaining formations can reinforce offensives or defensive fronts as needed.
     const byId = Object.fromEntries(fronts.map(f => [f.id, f]));
@@ -301,7 +309,7 @@
         f.state === 'assembling'
           ? [[f.rally, 0]]
           : f.type === 'alert'
-            ? [...elsewhere, [f.anchor, 8]]
+            ? f.objectives.filter(o => o.defend).map(o => [o, o.immediate ? -5 : -3])
             : f.objectives.flatMap(o =>
                 o.defend
                   ? o.immediate && f.type === 'defensive'

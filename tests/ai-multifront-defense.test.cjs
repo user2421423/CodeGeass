@@ -57,15 +57,19 @@ test('near-term legal attacks trigger genuine emergency holding and strength cap
   assert(f.target <= deployable * E.FRONT.emergencyMaxShare + 1e-9);
   assert(memo.fronts.reduce((total,x)=>total+(x.target||0),0) <= deployable + 1e-9);
 });
-test('alert forecasts do not erase nearby enemy-city offensive objectives', () => {
+test('separate alert detachments preserve adjacent offensive theaters', () => {
   const {memo} = setup({enemyCity:true});
-  const f = border(memo);
-  assert.ok(f);
-  assert.equal(f.type, 'offensive');
-  assert.equal(f.posture, 'alert');
-  assert.notEqual(f.state, 'holding');
-  assert(f.objectives.some(o => o.name === 'Forward objective'));
-  assert(f.seeds.some(([p]) => p.name === 'Forward objective') || f.state === 'assembling');
+  const cover = border(memo);
+  const assault = memo.fronts.find(f => f.type === 'offensive' &&
+    f.objectives.some(o => o.name === 'Forward objective'));
+  assert.ok(cover, 'threatened border city gets its own theater');
+  assert.ok(assault, 'enemy objective remains an active offensive theater');
+  assert.equal(cover.type, 'alert');
+  assert.equal(cover.state, 'alert');
+  assert.notEqual(assault.state, 'holding');
+  assert(cover.seeds.some(([p]) => p.name === 'Border A'),
+    'alert units stage near endangered friendly cities, not distant enemy capitals');
+  assert(assault.seeds.some(([p]) => p.name === 'Forward objective') || assault.state === 'assembling');
 });
 test('alert-only theater budgets are shared and capped at fifteen percent', () => {
   const {memo, g}=setup();
