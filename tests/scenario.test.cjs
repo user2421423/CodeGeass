@@ -420,10 +420,11 @@ test('Japan AI attacks every hostile city without assigning guards or defensive 
       for (const u of g.units.filter(u => u.side === side && !E.TYPES[u.type].naval)) {
         const front = memo.byId[memo.assign[u.id]];
         assert.ok(front, 'Every land formation must receive an attack target');
-        const cost = s => E.internal.dist(g, u, s) +
-          (E.internal.massOf(g, u) === E.internal.massOf(g, s) ? 0 : 8);
-        assert.equal(cost(front.anchor), Math.min(...enemies.map(cost)),
-          'Land formations should target the closest hostile city, allowing for water crossings');
+        const route = E.goalField(g, side, [[front.anchor, 0]]);
+        const cost = route[u.r * g.cols + u.c];
+        assert.ok(Number.isFinite(cost), 'An offensive city must be reachable by actual terrain/sea routes');
+        assert.ok(front.members.includes(u.id), 'Formation belongs to its selected attacking column');
+        assert.ok(front.members.length <= 5, 'Do not crowd more than five formations into an attack column');
       }
     }
   }
@@ -442,6 +443,54 @@ test('Japan AI immediately retargets after its nearest enemy city is captured', 
   assert.notEqual(memo.assign[unit.id], previous,
     'A newly captured city must not absorb the rest of the attacking column');
   assert.ok(E.foe(g, memo.byId[memo.assign[unit.id]].anchor.owner, 'cf'));
+});
+
+test('Japan offensive columns saturate targets, use real routes and persist across turns', () => {
+  const g = japan.create('britannia', 'normal', 91);
+  E.beginTurn(g, 'cf', false);
+  const first = E.aiPlan(g, 'cf');
+  const active = first.fronts.filter(f => f.members.length > 0);
+  assert.ok(active.length >= 2, 'Do not funnel every formation into the nearest city');
+  assert.ok(active.every(f => f.members.length <= 5));
+  assert.ok(active.every(f => f.type === 'offensive' && f.state === 'attacking'));
+  assert.ok(g.ai.cf.columns && Object.keys(g.ai.cf.columns).length === active.length,
+    'Persistent column allocations should be stored in AI state');
+  const original = { ...first.assign };
+  g.turn++;
+  E.beginTurn(g, 'cf', true);
+  const second = E.aiPlan(g, 'cf');
+  assert.ok(Object.keys(original).filter(id => original[id] === second.assign[id]).length >=
+    Object.keys(original).length * 0.5, 'Columns should not thrash between objectives');
+});
+
+test('Japan fortress assaults sequence artillery before capture units', () => {
+  const g = japan.create('britannia', 'normal', 91);
+  const guns = g.units.find(u => u.side === 'cf' && E.TYPES[u.type].branch === 'Artillery');
+  const raiders = g.units.find(u => u.side === 'cf' &&
+    E.TYPES[u.type].branch === 'Infantry');
+  assert.ok(guns && raiders);
+  assert.ok(E.aiOrderPriority(g, guns) < E.aiOrderPriority(g, raiders));
+  E.beginTurn(g, 'cf', false);
+  const memo = E.aiPlan(g, 'cf');
+  const strongholds = memo.fronts.filter(f => f.fortified && f.assigned > 0);
+  for (const f of strongholds)
+    assert.ok(f.need.includes('siege') || f.need.includes('rocket'));
+});
+
+test('Captured enemy cities become short-lived breakthrough opportunities', () => {
+  const g = japan.create('britannia', 'normal', 92);
+  E.beginTurn(g, 'cf', false);
+  const memo = E.aiPlan(g, 'cf');
+  const unit = g.units.find(u => u.side === 'cf' && !E.TYPES[u.type].naval);
+  const front = memo.byId[memo.assign[unit.id]];
+  front.anchor.owner = 'cf';
+  E.aiOrder(g, unit.id);
+  assert.ok(g.ai.cf.recentCaptures.some(p => p.id === front.anchor.id && p.turn === g.turn),
+    'Capture must register for nearby exploitation');
+  g.turn += 3;
+  E.beginTurn(g, 'cf', true);
+  E.aiPlan(g, 'cf');
+  assert.equal(g.ai.cf.recentCaptures.length, 0, 'Breakthrough window must expire');
 });
 
 test('Both AI enemies can produce and act without crashing in all three modes', () => {
