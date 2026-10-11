@@ -398,7 +398,7 @@
       // Priority: the score, discounted (down to `floor`) when half the army could not field the force it needs.
       const attackingValue = worth(attack);
       const playerValue = worth(attack.filter(o => playerPriorityTarget(g, side, o.owner)));
-      const playerShare = attackingValue ? playerValue / attackingValue : 0;
+      const playerShare = f.type === 'offensive' && attackingValue ? playerValue / attackingValue : 0;
       f.priority = f.score * Math.min(1, Math.max(FRONT.floor, (army * 0.5) / f.desiredStrength))
         * (1 + playerPriorityBonus(g, side) * playerShare);
     }
