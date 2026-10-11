@@ -283,11 +283,9 @@
     ["Jeddah", 39.17, 21.54, 'neutral', 1],
     ["Dubai", 55.27, 25.2, 'neutral', 1],
   ];
-  // Balance overrides of a city's starting output and defenses (by name; see cityBase in engine.js). They bring the
-  // three powers' starting income roughly level (about 705 credits, 380 industry and 110 research each): secondary and
-  // peripheral E.U. cities yield less, Britannia's and the Federation's secondary cities more. The Federation's western
-  // and northeastern frontier cities also start with stronger defenses to slow the first E.U. and Britannian
-  // breakthroughs.
+  // Starting city output overrides (see cityBase in engine.js) keep the powers' opening
+  // economies close: Britannia 815/438/129, E.U. 811/432/126, Federation 820/439/127
+  // (credits/industry/research). Existing fortified frontier defenses remain unchanged.
   const CITY_TWEAKS = {
     Madrid: { income: 14, industry: 8 },
     Barcelona: { income: 14, industry: 8 },
@@ -311,17 +309,26 @@
   // E.U. Siberia, the North Atlantic and Africa.
   for (const name of [
     'Volgograd', 'Yekaterinburg', 'Novosibirsk', 'Irkutsk', 'Yakutsk', 'Petropavlovsk', 'Murmansk',
-    'Reykjavik', 'Dublin', 'Edinburgh', 'Oslo', 'Stockholm', 'Helsinki',
-    'Algiers', 'Tripoli', 'Casablanca', 'Dakar', 'Bamako', 'Lagos', 'Khartoum', 'Addis Ababa',
-    'Kinshasa', 'Luanda', 'Nairobi', 'Dar es Salaam', 'Cape Town', 'Antananarivo',
+    'Reykjavik',
+    'Algiers', 'Tripoli', 'Dakar', 'Bamako', 'Khartoum', 'Addis Ababa',
+    'Luanda', 'Dar es Salaam', 'Antananarivo',
   ])
     CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 8, industry: 4, science: 1 };
   // Britannia's secondary cities, and three of the Federation's.
   for (const name of [
-    'Seattle', 'Dallas', 'Chicago', 'Mexico City', 'Rio de Janeiro', 'Buenos Aires', 'San Francisco', 'Los Angeles',
-    'Houston', 'Toronto', 'Sao Paulo', 'Hong Kong', 'Chongqing', 'Wuhan',
+    'Dallas', 'Mexico City',
+    'Sao Paulo', 'Hong Kong', 'Chongqing', 'Wuhan',
   ])
     CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 25, industry: 15, science: 4 };
+  // Economic parity: make selected E.U. centers productive without raising exposed frontiers.
+  for (const name of [
+    'Edinburgh', 'Dublin', 'Oslo', 'Stockholm', 'Helsinki',
+    'Casablanca', 'Lagos', 'Kinshasa', 'Nairobi', 'Cape Town',
+  ])
+    CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 15, industry: 8, science: 2 };
+  // Strengthen the Federation's interior core, rather than its vulnerable border cities.
+  for (const name of ['Delhi', 'Chengdu', 'Xian', 'Guangzhou'])
+    CITY_TWEAKS[name] = { ...CITY_TWEAKS[name], income: 30, industry: 16, science: 4 };
   // Land hexes no city's territory reaches (islands without a city), given to a power by hand: [column, row, owner].
   // Exact hexes, so they follow the map in WORLD_ROWS.
   const TERRITORY = [

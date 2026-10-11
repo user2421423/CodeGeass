@@ -1,0 +1,43 @@
+name: Conquest balance - 50 turns
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/engine/world.js'
+      - 'tools/balance_sim.cjs'
+      - 'tests/conquest-economy-parity.test.cjs'
+      - '.github/workflows/conquest-balance-50.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulate:
+    name: ${{ matrix.player }} seed ${{ matrix.seed }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        player: [britannia, eu, cf]
+        seed: [42, 20261007]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check opening economy
+        run: node --test tests/conquest-economy-parity.test.cjs
+      - name: Run 50-turn all-AI simulation
+        run: |
+          node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 10,20,30,40,50 --output balance-results.json --summary balance-summary.md --quiet
+      - name: Summarize result
+        run: cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: conquest-${{ matrix.player }}-${{ matrix.seed }}
+          path: |
+            balance-results.json
+            balance-summary.md
+          if-no-files-found: error
+          retention-days: 14
