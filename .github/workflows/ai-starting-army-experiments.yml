@@ -1,0 +1,51 @@
+name: Conquest Chinese starting army experiments
+on:
+  push:
+    branches: ['feature/ai-multifront-defense-20261011']
+    paths:
+      - '.github/workflows/ai-starting-army-experiments.yml'
+      - 'tools/ai_starting_forces_variant.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: ${{ matrix.variant }} / ${{ matrix.player }} / ${{ matrix.seed }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        variant: [A, B, C, D]
+        player: [britannia, eu, cf]
+        seed: [42, 20261007, 777, 13579]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify baseline bundles and regressions
+        run: |
+          node tools/build_sources.cjs --check
+          node --test tests/*.test.cjs
+      - name: Apply simulation-only starting army deployment
+        run: node tools/ai_starting_forces_variant.cjs "${{ matrix.variant }}"
+      - name: Check initial Chinese army
+        run: |
+          node -e "const E=require('./dist/engine.js');const g=E.createGame('cf','normal','conquest',123);const land=g.units.filter(u=>u.side==='cf'&&!E.internal.isShip(u));const frames=land.reduce((n,u)=>n+u.stack,0);const expect={A:[45,76],B:[45,76],C:[49,84],D:[53,92]}['${{ matrix.variant }}'];if(land.length!==expect[0]||frames!==expect[1]){console.error({actual:[land.length,frames],expected:expect});process.exit(1)}console.log('ARMY INITIAL VERIFIED',land.length,frames);"
+      - name: Run 50-turn all-AI Conquest
+        run: |
+          node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 5,10,15,20,25,30,35,40,45,50 --output balance-results.json --summary balance-summary.md --quiet --equal-ai
+      - name: Publish metrics
+        run: |
+          cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
+          node -e "const r=require('./balance-results.json').results[0];console.log('STARTING ARMY EXPERIMENT '+JSON.stringify({variant:'${{ matrix.variant }}',seed:r.seed,order:r.player,first:r.start,final:r.final,timeline:r.timeline.map(t=>({turn:t.turn,cities:t.cities,strength:t.strength,units:t.units})),attacks:r.actions.pairAttacks,transfers:r.actions.pairTransfers}));"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: starting-army-${{ matrix.variant }}-${{ matrix.player }}-${{ matrix.seed }}
+          path: |
+            balance-results.json
+            balance-summary.md
+          if-no-files-found: error
+          retention-days: 14
