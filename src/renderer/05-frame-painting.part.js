@@ -11,9 +11,8 @@ function draw(time, dt) {
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const wash = ctx.createLinearGradient(0, 0, 0, h);
-  // Neutral backdrop beyond the scenario cutout, never unplayable ocean.
-  wash.addColorStop(0, game.mode === 'scenario' ? '#10161c' : '#0d2a40');
-  wash.addColorStop(1, game.mode === 'scenario' ? '#070c12' : '#071623');
+  wash.addColorStop(0, '#0d2a40');
+  wash.addColorStop(1, '#071623');
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, w, h);
   const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };

@@ -260,23 +260,6 @@
       throw new Error('A scenario naval unit is outside the coastal sea network');
     g.scenario.coastalSea={width:NAVAL_COASTAL_WIDTH,active,excluded};
   }
-  // World coordinates use the same 43px hex radius as the UI. Gameplay
-  // coordinates stay untouched; only the camera and previews use this crop.
-  function visibleTheatreBounds(g) {
-    const R=43, SQ=Math.sqrt(3), halfX=SQ*R/2;
-    let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
-    for(const t of g.tiles) {
-      if(t.terrain==='offmap')continue;
-      const x=SQ*R*(t.c+.5*(t.r&1))+R,y=1.5*R*t.r+R;
-      left=Math.min(left,x-halfX);right=Math.max(right,x+halfX);
-      top=Math.min(top,y-R);bottom=Math.max(bottom,y+R);
-    }
-    if(!Number.isFinite(left))throw new Error('Japan theatre has no visible tiles');
-    // Small breathing room prevents edge hexes touching the screen frame.
-    const pad=R*.6;
-    left-=pad;right+=pad;top-=pad;bottom+=pad;
-    return {left,right,top,bottom,width:right-left,height:bottom-top};
-  }
   function create(player='britannia',difficulty='normal',seed=246801) {
     if (!SIDES.includes(player)) throw new Error('Unsupported scenario faction: '+player);
     // Dedicated lightweight initializer: do not generate the 13,680-hex conquest world,
@@ -451,7 +434,6 @@
     // Trim the playable AND visible map to Japan plus four coastal rings.
     // The geography painter clips the offmap tiles rather than coloring them.
     restrictNavalTheatre(g);
-    g.scenario.viewBounds=visibleTheatreBounds(g);
     // Fixed external war support tops up actual city/deposit income to the
     // target opening rates. It remains fixed thereafter; city captures and
     // upgrades change earned income normally. Higher difficulties strengthen

@@ -5,9 +5,9 @@ function attachMinimap() {
   const mini = $('minimap');
   if (!mini) return;
   const jump = e => {
-    const rect = mini.getBoundingClientRect(), bounds = mapViewBounds(game);
-    cam.x = bounds.left + ((e.clientX - rect.left) / rect.width) * bounds.width;
-    cam.y = bounds.top + ((e.clientY - rect.top) / rect.height) * bounds.height;
+    const rect = mini.getBoundingClientRect();
+    cam.x = ((e.clientX - rect.left) / rect.width) * WORLD_W;
+    cam.y = ((e.clientY - rect.top) / rect.height) * WORLD_H;
   };
   mini.onpointerdown = e => {
     jump(e);
@@ -32,9 +32,8 @@ const MINI_TERRAIN = {
 function drawMinimap() {
   const mini = $('minimap');
   if (!mini || typeof document.createElement !== 'function') return;
-  const bounds = mapViewBounds(game),
-    w = mini.clientWidth || 220,
-    h = Math.round((w * bounds.height) / bounds.width),
+  const w = mini.clientWidth || 220,
+    h = Math.round((w * WORLD_H) / WORLD_W),
     dpr = Math.min(devicePixelRatio || 1, 2);
   if (mini.width !== Math.round(w * dpr) || mini.height !== Math.round(h * dpr)) {
     mini.width = Math.round(w * dpr);
@@ -56,20 +55,18 @@ function drawMinimap() {
   m.drawImage(minimapBase, 0, 0);
   // Viewport frame, drawn twice when it straddles the date line.
   const scale = baseScale * zoom,
-    vw = (mapSize.w / scale) * (mini.width / bounds.width),
-    vh = (mapSize.h / scale) * (mini.height / bounds.height),
-    vx = ((-offset.x / scale) - bounds.left) * (mini.width / bounds.width),
-    vy = ((-offset.y / scale) - bounds.top) * (mini.height / bounds.height);
+    vw = (mapSize.w / scale) * (mini.width / WORLD_W),
+    vh = (mapSize.h / scale) * (mini.height / WORLD_H),
+    vx = (-offset.x / scale) * (mini.width / WORLD_W),
+    vy = (-offset.y / scale) * (mini.height / WORLD_H);
   m.strokeStyle = '#ffe9a0';
   m.lineWidth = 1.5 * dpr;
   for (const shift of wraps() ? [-mini.width, 0, mini.width] : [0]) m.strokeRect(vx + shift, vy, vw, vh);
 }
 // Terrain, territory, cities, mines and units on a small canvas: the minimap, and the map in a mission briefing.
 function paintMap(b, g, width, height, dpr, allUnits = false) {
-  const bounds = mapViewBounds(g),
-    sx = width / bounds.width,
-    sy = height / bounds.height,
-    pixel = p => ({x:(p.x-bounds.left)*sx,y:(p.y-bounds.top)*sy}),
+  const sx = width / mapW(g),
+    sy = height / mapH(g),
     col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
   b.fillStyle = g.mode === 'scenario' ? '#0d1218' : '#0d2b40';
   b.fillRect(0, 0, width, height);
@@ -79,41 +76,40 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   if (regional) {
     b.save();
     b.scale(sx, sy);
-    b.translate(-bounds.left, -bounds.top);
-    GEOGRAPHY.paint(b, g, bounds.left, bounds.right, bounds.top, bounds.bottom, Math.min(sx, sy));
+    GEOGRAPHY.paint(b, g, 0, mapW(g), 0, mapH(g), Math.min(sx, sy));
     b.restore();
   } else for (const t of g.tiles) {
-    const p = pixel(hexCenter(t));
+    const p = hexCenter(t);
     b.fillStyle = MINI_TERRAIN[t.terrain];
-    b.fillRect(p.x - R * sx, p.y - R * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
+    b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
     if (t.owner && t.terrain !== 'sea') {
       b.fillStyle = col(t.owner) + '88';
-      b.fillRect(p.x - R * sx, p.y - R * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
+      b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
     }
   }
   for (const s of g.stations) {
-    const p = pixel(hexCenter(s));
+    const p = hexCenter(s);
     b.fillStyle = s.capital ? '#ffffff' : col(s.owner);
     const z = (s.capital ? 3.4 : allUnits ? 5 : s.tier >= 3 ? 2.4 : s.tier >= 2 ? 1.8 : 1.2) * dpr;
-    b.fillRect(p.x - z / 2, p.y - z / 2, z, z);
+    b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
   }
   for (const d of g.sites || [])
     if (d.city == null) {
-      const p = pixel(hexCenter(d)),
+      const p = hexCenter(d),
         z = 2.6 * dpr;
       b.fillStyle = '#ff6fb5';
-      b.fillRect(p.x - z / 2, p.y - z / 2, z, z);
+      b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
     }
   for (const u of g.units)
     if (u.hp > 0 && (allUnits || u.side === g.player)) {
-      const p = pixel(hexCenter(u)),
+      const p = hexCenter(u),
         z = (allUnits ? 3.5 : 2) * dpr;
       if (allUnits) {
         b.fillStyle = '#000';
-        b.fillRect(p.x - z / 2 - dpr, p.y - z / 2 - dpr, z + 2 * dpr, z + 2 * dpr);
+        b.fillRect(p.x * sx - z / 2 - dpr, p.y * sy - z / 2 - dpr, z + 2 * dpr, z + 2 * dpr);
       }
       b.fillStyle = allUnits ? col(u.side) : '#7dffb0';
-      b.fillRect(p.x - z / 2, p.y - z / 2, z, z);
+      b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
     }
 }
 function hexPath(x, y, r) {

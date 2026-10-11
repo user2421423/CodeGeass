@@ -77,23 +77,6 @@ test('Every visible sea hex is within four hexes of Japanese land', () => {
     depth[t.r * g.cols + t.c] > 4));
 });
 
-test('Visible Japan bounds contain every playable hex and unchanged city position', () => {
-  const g = japan.create('cf', 'normal', 19);
-  const b = g.scenario.viewBounds, radius = 43, stride = Math.sqrt(3)*radius;
-  assert.ok(b && b.width > 0 && b.height > 0);
-  assert.equal(b.width, b.right-b.left);
-  assert.equal(b.height, b.bottom-b.top);
-  for(const t of g.tiles.filter(t=>t.terrain!=='offmap')) {
-    const x=stride*(t.c+.5*(t.r&1))+radius,y=1.5*radius*t.r+radius;
-    assert.ok(x-stride/2>b.left && x+stride/2<b.right);
-    assert.ok(y-radius>b.top && y+radius<b.bottom);
-  }
-  assert.ok(g.stations.every(s=>{
-    const x=stride*(s.c+.5*(s.r&1))+radius,y=1.5*radius*s.r+radius;
-    return x>b.left && x<b.right && y>b.top && y<b.bottom;
-  }));
-});
-
 test('North-up layout places Hokkaido above Honshu and Kyushu below it', () => {
   const g = japan.create('cf', 'normal', 11);
   assert.equal(g.scenario.projection.angle, 0);
