@@ -68,3 +68,27 @@ test('four existing Chinese Federation formations redeploy without changing the 
     }
   }
 });
+
+test('five frontier redeployments preserve the Chinese starting army size', () => {
+  const placements = [
+    [63.5, 36.5, 'heavy', 2],
+    [75.2, 40.6, 'rocket', 1],
+    [132.0, 45.5, 'medium', 2],
+    [128.1, 44.4, 'support', 2],
+    [50.5, 32.7, 'light', 1],
+  ];
+  for (const player of E.MAJORS) {
+    const g = E.createGame(player, 'normal', 'conquest', 42);
+    assert.equal(g.units.filter(u => u.side === 'cf').length, 55);
+    assert.equal(g.units.filter(u => u.side === 'britannia').length, 48);
+    assert.equal(g.units.filter(u => u.side === 'eu').length, 53);
+    for (const [lon, lat, cls, stack] of placements) {
+      const hex = E.hexOf(lon, lat);
+      const unit = E.unitAt(g, E.tile(g, hex.c, hex.r));
+      assert.ok(unit, cls + ': missing Chinese formation at ' + lon + ',' + lat);
+      assert.equal(unit.side, 'cf');
+      assert.equal(unit.type, E.typeFor('cf', cls));
+      assert.equal(unit.stack, stack);
+    }
+  }
+});
