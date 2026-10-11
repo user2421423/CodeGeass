@@ -43,7 +43,9 @@ async function endTurn() {
           toast(`F.L.E.I.J.A. Eliminator research begins; countermeasures are available from turn ${shot.eliminatorTurn}.`, true);
         if (token !== aiToken) return;
       }
-      const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).sort((a, b) => Number(['command', 'withdraw'].includes(C(a.cmd)?.action?.kind)) - Number(['command', 'withdraw'].includes(C(b.cmd)?.action?.kind))).map(u => u.id),
+      const ids = game.units.filter(u => u.hp > 0 && u.side === side && !u.attacked)
+        .sort((a, b) => E.aiOrderPriority(game, a) - E.aiOrderPriority(game, b) || a.id - b.id)
+        .map(u => u.id),
         minesBefore = (game.sites || []).map(d => d.owner);
       let quiet = 0;
       for (const id of ids) {

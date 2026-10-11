@@ -1,6 +1,18 @@
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
+  // Scenario unit sequence: batteries suppress shields before armor breaks
+  // defenders and fast capture troops exploit the opening. Leaders act last.
+  function aiOrderPriority(g, u) {
+    const commander = ['command', 'withdraw'].includes(COMMANDERS[u.cmd]?.action?.kind);
+    if (commander) return 9;
+    if (g.mode !== 'scenario') return 1;
+    const type = TYPES[u.type];
+    if (type.branch === 'Artillery') return 0;
+    if (type.branch === 'Armor' || type.cls === 'assault') return 2;
+    if (canCapture(u) && (type.move >= 4 || type.cls === 'raider')) return 4;
+    return 3;
+  }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
@@ -66,7 +78,10 @@
             pr.shield * 0.7 +
             (d && pr.unit >= d.hp ? 130 : 0) +
             (s ? (g.mode === 'scenario'
-              ? 170 + (front?.anchor.id === s.id ? 80 : 0)
+              ? 170 + (front?.anchor.id === s.id ? 80 : 0) +
+                (s.shield > 0 && TYPES[u.type].branch === 'Artillery'
+                  ? Math.min(100, pr.shield * 1.8) : 0) +
+                (s.shield <= 0 && canCapture(u) ? 150 : 0)
               : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
@@ -114,6 +129,24 @@
           guardBonus = !onGuard ? 0 : guard.id != null && !enemies.some(v => dist(g, v, guard) <= 2) ? -40 : 25;
         sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
+        if (g.mode === 'scenario' && front) {
+          // Columns converge without waiting or retreating: a modest cohesion
+          // bonus cannot outweigh movement toward the enemy objective.
+          const mates = (memo.columns?.[front.id] || [])
+            .filter(id => id !== u.id).map(id => g.units.find(v => v.id === id))
+            .filter(v => v && v.hp > 0);
+          if (mates.length && fieldAt(p) > 1) {
+            const nearest = Math.min(...mates.map(v => dist(g, p, v)));
+            sc += Math.min(2, mates.filter(v => dist(g, p, v) <= 3).length) * 8;
+            sc -= Math.min(18, Math.max(0, nearest - 6) * 3);
+          }
+          const fast = canCapture(u) && (TYPES[u.type].move >= 4 ||
+            TYPES[u.type].cls === 'raider');
+          if (fast && station && foe(g, station.owner, u.side) &&
+            !unitAt(g, station) && station.shield <= Math.max(120, station.maxShield * 0.55) &&
+            (g.ai?.[u.side]?.recentCaptures || []).some(q => g.turn - q.turn <= 2 &&
+              dist(g, q, station) <= 9)) sc += 130;
+        }
         let nearestEnemy = 15,
           danger = 0;
         for (const v of enemies) {
@@ -212,5 +245,5 @@
     }
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiPlan, unitStrength, FRONT });
+  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT });
 })(typeof window !== 'undefined' ? window : globalThis);

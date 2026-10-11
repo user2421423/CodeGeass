@@ -183,13 +183,27 @@
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
     // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
-    const serves = s =>
-        (memo.fronts || [])
-          .filter(f => f.assigned < f.desiredStrength && dist(g, s, f.rally || f.anchor) <= 25)
-          .sort((a, b) => dist(g, s, a.rally || a.anchor) - dist(g, s, b.rally || b.anchor))[0],
+    const serves = s => {
+        if (g.mode !== 'scenario')
+          return (memo.fronts || [])
+            .filter(f => f.assigned < f.desiredStrength && dist(g, s, f.rally || f.anchor) <= 25)
+            .sort((a, b) => dist(g, s, a.rally || a.anchor) - dist(g, s, b.rally || b.anchor))[0];
+        const needing = memo.fronts.filter(f => f.assigned < f.desiredStrength);
+        const choices = needing.length ? needing : memo.fronts;
+        // Reinforcements march toward an active, understrength attack instead
+        // of a generic nearest enemy or a rear-area defensive requirement.
+        return choices.slice().sort((a, b) => {
+          const cost = f => scenarioRouteField(g, f)[s.r * g.cols + s.c];
+          return cost(a) - cost(b) || a.anchor.id - b.anchor.id;
+        })[0];
+      },
       urgency = s => {
         const f = serves(s);
-        return f ? (f.desiredStrength - f.assigned) * (0.5 + Math.max(0, f.score) / 100) : 0;
+        if (!f) return 0;
+        const shortage = Math.max(0, f.desiredStrength - f.assigned);
+        return g.mode === 'scenario'
+          ? shortage * 3 - Math.min(20, scenarioRouteField(g, f)[s.r * g.cols + s.c] / 4)
+          : shortage * (0.5 + Math.max(0, f.score) / 100);
       },
       yards = bases.slice().sort((a, b) => urgency(b) - urgency(a));
     // 4b. Navy: fleet and port construction scale with coastal exposure, enemy naval
@@ -202,7 +216,8 @@
         availableFleet = own().filter(u => !!TYPES[u.type].naval),
         navalThreats = foes.filter(u => TYPES[u.type].naval &&
           coastal.some(s => dist(g, s, u) <= aiRange(g).enemyScan)),
-        invasions = (memo.fronts || []).filter(f => f.overseas && f.type === 'offensive'),
+        invasions = (memo.fronts || []).filter(f => f.overseas && f.type === 'offensive' &&
+          (g.mode !== 'scenario' || f.assigned > 0)),
         invasionIds = new Set(invasions.map(f => f.id)),
         invasionTroops = own().filter(u => !TYPES[u.type].naval && invasionIds.has(memo.assign?.[u.id])).length,
         desiredCarriers = coastal.length
@@ -310,7 +325,10 @@
               : ['light', 'support', 'assault', 'scout'],
         need = (serves(s)?.need || []).filter(c => classes.includes(c)),
         menu = [...need, ...classes.filter(c => !need.includes(c))].map(cls => typeFor(side, cls, g)),
-        preferred = menu[Math.floor(random(g) * Math.min(menu.length, 3))];
+        // Scenario factories obey the assault column's requested unit mix.
+        // Other modes retain their existing randomized menu preference.
+        preferred = g.mode === 'scenario' && need.length ? menu[0] :
+          menu[Math.floor(random(g) * Math.min(menu.length, 3))];
       // Super-heavy competes in the same formation-size and affordability passes
       // when demanded, instead of being purchased by a separate saving routine.
       return s.tier >= 3 && superDemand(serves(s))
