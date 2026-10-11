@@ -991,19 +991,6 @@
     }
     plan.eliminator = !!defenseCity;
     const defensePrep = wantsDefense() && !defenseCity ? eliminatorCity(g, side, true) : null;
-    // Prepare at least one lab to cover the capital *before* Eliminator research
-    // completes. Otherwise all available charges can be built far away, leaving
-    // a strategically critical city completely exposed to later warheads.
-    const capital = g.stations.find(s => s.owner === side && s.capitalOf === side),
-      capitalProtected = capital && sideEliminators(g, side).some(s =>
-        dist(g, s, capital) <= ELIMINATOR.range),
-      capitalPrep = capital && !capitalProtected && g.turn >= FLEIJA.labTurn - 5
-        ? g.stations.filter(s => s.owner === side && !cityBusyReason(g, s) &&
-            !s.eliminator && (s.lab || 0) < ELIMINATOR.lab &&
-            dist(g, s, capital) <= ELIMINATOR.range)
-          .sort((a, b) => (b.lab || 0) - (a.lab || 0) ||
-            dist(g, a, capital) - dist(g, b, capital) || a.id - b.id)[0]
-        : null;
     // 2c. F.L.E.I.J.A.: one warhead at a time, started again as soon as the last one is fired. A power with the
     // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
     // and starts the project in its best-lab city.
@@ -1054,9 +1041,7 @@
       // needs a lab for its next Eliminator comes first.
       const soon = g.turn >= FLEIJA.labTurn - 5,
         prep =
-          side !== g.player && MAJORS.includes(side)
-            ? capitalPrep || defensePrep || (soon ? fleijaCity(g, side, front) : null)
-            : null;
+          side !== g.player && MAJORS.includes(side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&
