@@ -4,8 +4,11 @@ const fs=require('node:fs');
 const {execFileSync}=require('node:child_process');
 const kind=process.argv[2],file='dist/engine/ai.js';
 let ai=fs.readFileSync(file,'utf8');
-if(kind==='previousRegional')
-  ai=execFileSync('git',['show','344e44f2288d5493ad06b7415d9a7db075d5e54e:dist/engine/ai.js'],{encoding:'utf8'});
+if(kind==='priorLatest') {
+  ai=execFileSync('git',['show','0ec982bf966c313ae8e82d4cb160c2aafd5e8fbe:dist/engine/ai.js'],{encoding:'utf8'});
+  fs.writeFileSync('dist/engine.js',execFileSync('git',['show',
+    '0ec982bf966c313ae8e82d4cb160c2aafd5e8fbe:dist/engine.js'],{encoding:'utf8'}));
+}
 else if(kind==='previous')
   ai=execFileSync('git',['show','b62b70db0e52084a088fc89a593a20373cbfb788:dist/engine/ai.js'],{encoding:'utf8'});
 else if(kind==='alert15'){

@@ -6,6 +6,9 @@ on:
       - '.github/workflows/ai-defense-investigation.yml'
       - 'tools/ai_defense_variant.cjs'
       - 'src/ai/02-fronts.part.js'
+      - 'src/ai/06-production.part.js'
+      - 'src/engine/15-turns-and-fortresses.part.js'
+      - 'dist/engine.js'
       - 'dist/engine/ai.js'
       - 'tools/balance_sim.cjs'
       - 'tests/ai-multifront-defense.test.cjs'
@@ -22,7 +25,7 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [previousRegional, regional]
+        variant: [priorLatest, regional]
         player: [britannia, eu, cf]
         seed: [24680, 123457, 8675309, 314159]
     steps:

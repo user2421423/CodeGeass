@@ -5,6 +5,9 @@ on:
     paths:
       - 'dist/engine/world.js'
       - 'src/ai/02-fronts.part.js'
+      - 'src/ai/06-production.part.js'
+      - 'src/engine/15-turns-and-fortresses.part.js'
+      - 'dist/engine.js'
       - 'dist/engine/ai.js'
       - 'tests/ai-multifront-defense.test.cjs'
       - 'tests/core.test.cjs'
