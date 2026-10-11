@@ -77,20 +77,38 @@ test('Every visible sea hex is within four hexes of Japanese land', () => {
     depth[t.r * g.cols + t.c] > 4));
 });
 
-test('Japan shoreline distinguishes coast from inland without moving sea tiles', () => {
+test('Japan coast is genuinely mixed land/water, not every land hex beside sea', () => {
   const g=japan.create('cf','normal',19);
   const coastalCities=g.stations.filter(s=>E.adjacent(g,s).some(t=>t.terrain==='sea'));
   assert.ok(coastalCities.length>=20,'scenario contains substantial coastal settlements');
-  for(const s of coastalCities)
-    assert.equal(E.tile(g,s.c,s.r).terrain,'coast',s.name+' must remain coastal');
-  for(const t of g.tiles.filter(t=>t.owner)){
-    if(E.adjacent(g,t).some(n=>n.terrain==='sea'))
-      assert.equal(t.terrain,'coast','shoreline '+E.key(t));
-  }
-  assert.ok(g.tiles.filter(t=>t.terrain==='coast').length>=450);
+  // The original classifier incorrectly marked almost 300 completely dry or
+  // ocean-covered source-mask hexes as navigable coast.
+  const coast=g.tiles.filter(t=>t.terrain==='coast');
+  assert.ok(coast.length>=150 && coast.length<=250,'only mixed shoreline is coast');
+  for(const [c,r] of [[82,2],[83,3],[85,5]])
+    assert.notEqual(E.tile(g,c,r).terrain,'coast','dry source-mask hex '+c+','+r);
   assert.equal(g.tiles.filter(t=>t.terrain==='sea').length,1628);
   for(const s of g.stations.filter(s=>s.portAt))
     assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea');
+});
+
+test('Japan coastline follows the visible vector atlas when available', () => {
+  const prior=globalThis.GEOGRAPHY;
+  try {
+    // A synthetic all-land atlas cannot contain genuinely mixed coastal hexes.
+    // The test also proves that using a different sampler leaves the tactical
+    // land/sea mask and all nine ports unchanged.
+    globalThis.GEOGRAPHY={japanLandAt:()=>true};
+    const g=japan.create('cf','normal',19);
+    assert.equal(g.tiles.filter(t=>t.terrain==='coast').length,0);
+    assert.equal(g.tiles.filter(t=>t.terrain==='sea').length,1628);
+    assert.equal(g.stations.filter(s=>s.portAt).length,9);
+    for(const s of g.stations.filter(s=>s.portAt))
+      assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea');
+  } finally {
+    if(prior===undefined)delete globalThis.GEOGRAPHY;
+    else globalThis.GEOGRAPHY=prior;
+  }
 });
 
 test('North-up layout places Hokkaido above Honshu and Kyushu below it', () => {

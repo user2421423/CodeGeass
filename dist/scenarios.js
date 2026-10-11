@@ -180,19 +180,24 @@
     const c=Math.round((lon-BOUNDS.west)*(MASK_COLS-1)/(BOUNDS.east-BOUNDS.west)-.5*(r&1));
     return r>=0&&r<MASK_ROWS&&c>=0&&c<MASK_COLS&&!!mask[r*MASK_COLS+c];
   }
-  function shorelineLandFraction(mask,t){
+  function shorelineLandFraction(landAt,t){
     const p=geographicAt(t.c,t.r),
       lonStep=(PROJECTION.uMax-PROJECTION.uMin)/(COLS-1)/K,
       latStep=(PROJECTION.vMax-PROJECTION.vMin)/(ROWS-1);
     let land=0;
     for(const [dx,dy] of SHORE_SAMPLES)
-      if(japanDryAt(mask,p.lon+lonStep*dx/Math.sqrt(3),
+      if(landAt(p.lon+lonStep*dx/Math.sqrt(3),
         p.lat-latStep*dy/1.5))land++;
     return land/SHORE_SAMPLES.length;
   }
   function classifyJapanCoast(g,mask){
-    // Shoreline-adjacent land remains amphibiously accessible. A nearby
-    // land hex also becomes coast if samples show at least 20% sea coverage.
+    // Mixed-terrain coast must match the actual shoreline, not merely touch a
+    // tactical sea hex. The browser shares the detailed GSHHG land polygons
+    // with the map painter; headless tests fall back to the source landmask.
+    const landAt=typeof GEOGRAPHY!=='undefined' &&
+      typeof GEOGRAPHY.japanLandAt==='function'
+        ? GEOGRAPHY.japanLandAt
+        : (lon,lat)=>japanDryAt(mask,lon,lat);
     const depth=new Int8Array(g.tiles.length).fill(-1),queue=[];
     for(const t of g.tiles) if(t.terrain==='sea'){
       depth[t.r*g.cols+t.c]=0;queue.push(t);
@@ -209,8 +214,11 @@
     for(const t of g.tiles){
       if(t.terrain==='sea')continue;
       const d=depth[t.r*g.cols+t.c];
-      if(d===1 || (d===2 && shorelineLandFraction(mask,t)<=.8))
-        t.terrain='coast';
+      if(d!==1 && d!==2)continue;
+      const dry=shorelineLandFraction(landAt,t);
+      // Only a genuinely mixed 20–80% land/water hex is navigable coast.
+      // A fully dry hex beside tactical sea remains its original land terrain.
+      if(dry>=.2 && dry<=.8)t.terrain='coast';
     }
   }
   const islandNames = {
