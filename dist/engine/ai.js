@@ -149,6 +149,13 @@
       army = g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       near = p => own.some(s => dist(g, s, p) <= FRONT.near) || army.some(u => dist(g, u, p) <= FRONT.near),
+      cities = Object.fromEntries(MAJORS.map(faction =>
+        [faction, g.stations.filter(s => s.owner === faction).length])),
+      lead = Math.max(1, ...MAJORS.filter(faction => alive(g, faction)).map(faction => cities[faction])),
+      // Every faction considers a stronger surviving rival the greater long-run threat.
+      // This discourages two great powers from continually devouring a losing third.
+      rivalWeight = owner => !MAJORS.includes(owner) ? 1 :
+        Math.max(0.35, Math.pow((cities[owner] || 0) / lead, 3.5)),
       // An expensive enemy capital or mine is worth pursuing only if a feasible
       // regional land approach or a loaded expedition actually exists.
       operational = p => {
@@ -174,7 +181,9 @@
           capital = s.capitalOf && alive(g, s.owner);
         if (!operational(s)) continue;
         const [value, seed] = project ? [100, -8] : capital ? [70, -6] : s.owner === 'neutral' ? [8, 1] : s.tier >= 3 ? [20, -1] : [10, 0];
-        list.push({ key: 's' + s.id, c: s.c, r: s.r, name: s.name, owner: s.owner, value, seed, fortified: value >= 20 });
+        list.push({ key: 's' + s.id, c: s.c, r: s.r, name: s.name, owner: s.owner,
+          value: project ? value : Math.max(6, Math.round(value * rivalWeight(s.owner))),
+          seed, fortified: value >= 20 });
       } else if (s.owner === side) {
         const vital = s.capitalOf === side || s.project?.side === side || s.eliminatorProject?.side === side;
         const w = warning(s);
@@ -188,7 +197,9 @@
       if (d.city != null) continue;
       const major = d.base >= 30;
       if (foe(g, d.owner, side) && operational(d))
-        list.push({ key: 'm' + d.id, c: d.c, r: d.r, name: d.name, value: major ? 40 : 10, seed: major ? -5 : -1 });
+        list.push({ key: 'm' + d.id, c: d.c, r: d.r, name: d.name,
+          value: Math.max(6, Math.round((major ? 40 : 10) * rivalWeight(d.owner))),
+          seed: major ? -5 : -1 });
       else if (d.owner === side && major) {
         const w = warning(d);
         if (w.immediate || w.projected)

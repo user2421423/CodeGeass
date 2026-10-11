@@ -22,9 +22,9 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [previous25, regional]
+        variant: [previousRegional, regional]
         player: [britannia, eu, cf]
-        seed: [42, 20261007, 777, 13579]
+        seed: [24680, 123457, 8675309, 314159]
     steps:
       - uses: actions/checkout@v4
         with:

@@ -148,3 +148,20 @@ test('an immediate capital attack retains crisis reinforcements instead of shrin
     .every(f => f.target <= army * E.FRONT.capitalCrisisOffenseShare + 1e-8),
     'an immediate, vital threat keeps other offensives within the crisis budget');
 });
+
+test('major-power objective values respond to overall rival strength', () => {
+  const {g, memo} = setup({enemyCity: true});
+  const first = memo.fronts.flatMap(f => f.objectives)
+    .find(o => o.name === 'Forward objective');
+  assert(first);
+  for(let i = 0; i < 5; i++)
+    g.stations.push({ ...g.stations.find(s => s.name === 'EuroCity'),
+      id: 100 + i, capitalOf: null, name: 'Distant E.U. city '+i,
+      c: 30 + i, r: 2 });
+  const other = { ...g, ai: {}, stations: g.stations.slice(), units: g.units.slice() };
+  const stronger = E.aiPlan(other, 'cf').fronts.flatMap(f => f.objectives)
+    .find(o => o.name === 'Forward objective');
+  assert(stronger);
+  assert(stronger.value > first.value,
+    'nearby enemy cities gain strategic weight when their owner becomes the strongest power');
+});
