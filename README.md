@@ -218,20 +218,27 @@ results do not apply to the newer economic balance**.
 
 | Starting economy (per turn) | Britannia | China | Black Knights |
 | --- | ---: | ---: | ---: |
-| Credits | 400 | 270 | 200 |
-| Industry | 220 | 155 | 115 |
-| Research | 42 | 28 | 24 |
-| Sakuradite | 28 | 22 | 18 |
+| Credits | 400 | 320 | 300 |
+| Industry | 220 | 185 | 175 |
+| Research | 42 | 34 | 32 |
+| Sakuradite | 28 | 15 | 12 |
 
-All initial resource stockpiles equal exactly **two turns of starting income**
-(credits: 800 / 540 / 400; industry: 440 / 310 / 230;
-research: 84 / 56 / 48; Sakuradite: 56 / 44 / 36).
+Starting stockpiles equal **four turns of China's income** and **two turns
+for Britannia and the Black Knights**, across all four resources:
+
+| Initial stockpile | Britannia | China | Black Knights |
+| --- | ---: | ---: | ---: |
+| Credits | 800 | 1,280 | 600 |
+| Industry | 440 | 740 | 350 |
+| Research | 84 | 136 | 64 |
+| Sakuradite | 56 | 60 | 24 |
 Japan city production runs at 40% of the base Conquest city yield; fixed
 faction command funding brings total opening income to the targets above.
 Unlike a flat income override, losing or capturing cities changes actual
 income, while the external budget does not automatically follow captured
 cities. Hard and Challenge increase rival income and starting stockpiles
-together, preserving the 2× rule at every difficulty.
+together, preserving the four-turn Chinese reserve and two-turn reserves
+for the other factions at every difficulty.
 
 These values have passed scenario economic and capture regression tests,
 but **full-length balance simulations of the revised economy have not yet
