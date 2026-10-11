@@ -496,6 +496,8 @@ const modal = () => node('modal-root').innerHTML;
     'remove Army Groups from the scenario top navigation');
   assert(node('app').innerHTML.includes('data-action="archive"'),
     'the Units tab remains present');
+  assert(!node('app').innerHTML.includes('class="map-legend"'),
+    'scenario map omits the faction-colour legend entirely');
   run('newGame()');
 
   run('startMenu();campaignDialog("bk_s1")');
