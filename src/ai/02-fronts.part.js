@@ -272,8 +272,10 @@
       const share = FRONT.emergencyMinShare + (FRONT.emergencyMaxShare - FRONT.emergencyMinShare) * shortage;
       // Multiple unrelated emergencies cannot consume the whole field army.
       // Critical capitals may still claim the full remaining mobile force.
-      f.target = Math.min(f.desiredStrength, f.vital ? army : army * share,
-        f.vital ? pot : emergencyPool, pot);
+      // A vital capital may use more than the shared emergency quota. Never let
+      // that deficit turn the following non-vital front's target negative.
+      f.target = Math.max(0, Math.min(f.desiredStrength, f.vital ? army : army * share,
+        f.vital ? pot : Math.max(0, emergencyPool), pot));
       pot -= f.target;
       emergencyPool -= f.target;
     }

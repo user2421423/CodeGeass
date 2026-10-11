@@ -165,3 +165,22 @@ test('major-power objective values respond to overall rival strength', () => {
   assert(stronger.value > first.value,
     'nearby enemy cities gain strategic weight when their owner becomes the strongest power');
 });
+
+// Regression: a capital emergency can exhaust the shared quota before ordinary
+// border emergencies are allocated. Their targets must never become negative.
+test('capital crises cannot create negative targets on other defensive fronts', () => {
+  const { g } = setup({ nearby: true, defenders: 12 });
+  const capital = g.stations.find(s => s.capitalOf === 'cf');
+  assert(capital);
+  for (let i = 0; i < 8; i++)
+    E.newUnit(g, E.typeFor('eu', 'heavy', g), 'eu',
+      capital.c + 5 + i % 2, capital.r - 2 + Math.floor(i / 2));
+  const memo = E.aiPlan(g, 'cf');
+  assert(memo.fronts.some(f => f.vital && f.emergency),
+    'capital must be in a genuine immediate crisis');
+  assert(memo.fronts.every(f => Number.isFinite(f.target) && f.target >= 0),
+    'every front receives a nonnegative reinforcement target');
+  const mobile = g.units.filter(u => u.side === 'cf' && !memo.guards[u.id])
+    .reduce((sum, u) => sum + E.unitStrength(u), 0);
+  assert(memo.fronts.reduce((sum, f) => sum + f.target, 0) <= mobile + 1e-8);
+});
