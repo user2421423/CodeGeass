@@ -275,6 +275,13 @@ test('AI chooses super-heavy units from armored-front demand without waiting for
   // Legacy values from existing saves must not restrict modern production.
   g.ai = { [side]: { saving: false, lastSuperTurn: 7 } };
   g.economy[side] = { credits: 20000, industry: 20000, science: 200, sakuradite: 3000 };
+  // The regional planner ignores distant threats. Put armored opponents near a
+  // real E.U. city to test front-based super-heavy demand, not global map noise.
+  const frontline = g.stations.find(s => s.capitalOf === side);
+  assert(frontline, 'E.U. capital must exist in the conquest fixture');
+  for (let i = 0; i < 6; i++)
+    E.newUnit(g, E.typeFor('britannia', 'heavy', g), 'britannia',
+      frontline.c + 2 + i % 2, frontline.r + Math.floor(i / 2));
 
   const before = new Set(g.units.map(u => u.id));
   E.aiProduction(g);
