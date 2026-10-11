@@ -30,7 +30,7 @@ function scenario({ twoCities = true, seaBarrier = false, attackers = 3 } = {}) 
   unit('cf', 'medium', 9, 9);
   // Additional mobile troops keep emergency allocation observable after capital guards.
   for (let i = 0; i < 8; i++) unit('cf', 'scout', 3 + i % 4, 14 + Math.floor(i / 4));
-  for (let i = 0; i < attackers; i++) unit('eu', 'medium', 27 + i, 11 + i % 2);
+  for (let i = 0; i < attackers; i++) unit('eu', 'medium', 25 + i, 11 + i % 2);
   return { g, memo: E.aiPlan(g, 'cf') };
 }
 const defensive = memo => memo.fronts.find(f => f.objectives.some(o => o.name === 'Border A'));
