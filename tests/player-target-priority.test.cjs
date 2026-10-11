@@ -56,16 +56,22 @@ test('Japan offensive columns prefer hostile player cities without breaking alli
   assert.equal(E.playerPriorityBonus(g, 'bk'), 0.6, 'alliance ends normally');
 });
 
-test('campaign routing applies player bias only to hostile targets', () => {
-  const missionId = E.campaign.CAMPAIGNS.bk_s1.missions[0].id;
-  const g = E.campaign.createMission(missionId, 19, 'normal');
-  const side = g.order.find(s => s !== g.player && E.foe(g, s, g.player));
-  assert.ok(side);
-  const original = E.internal.goalSeeds(g, side);
-  g.aiPlayerPriorityBonus = 0;
-  assert.deepEqual(E.playerPrioritySeeds(g, side), original);
-  g.aiPlayerPriorityBonus = 1;
-  const revised = E.playerPrioritySeeds(g, side);
-  assert.ok(revised.some(([s, cost], i) => s.owner === g.player && cost === original[i][1] - 6));
-  assert.equal(E.aiPlan(g, side).field.length, g.tiles.length);
+test('Campaign/Story AI never receives a player priority bonus, even when configured to 100%', () => {
+  for (const missionId of [
+    E.campaign.CAMPAIGNS.bk_s1.missions[0].id,
+    E.campaign.CAMPAIGNS.britannia_s1.missions[0].id,
+    E.campaign.CAMPAIGNS.eu_europe.missions[0].id,
+  ]) {
+    for (const bonus of [0, 0.6, 1]) {
+      const g = E.campaign.createMission(missionId, 19, 'normal');
+      g.aiPlayerPriorityBonus = bonus;
+      const side = g.order.find(s => s !== g.player && E.foe(g, s, g.player));
+      assert.ok(side);
+      assert.equal(E.playerPriorityBonus(g, side), 0);
+      assert.deepEqual(E.playerPrioritySeeds(g, side), E.internal.goalSeeds(g, side));
+      const plan = E.aiPlan(g, side);
+      assert.deepEqual(Array.from(plan.field), Array.from(E.goalField(g, side)),
+        'Campaign route scores must match the original engine exactly');
+    }
+  }
 });
