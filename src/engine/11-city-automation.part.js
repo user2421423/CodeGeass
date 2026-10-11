@@ -108,7 +108,7 @@
           }
         }
       }
-      if (!unit || s.producedTurn === g.turn) continue;
+      if (!unit || (TYPES[unit].naval ? s.portProducedTurn : s.producedTurn) === g.turn) continue;
       const t = TYPES[unit],
         stack = t.naval === 'ship' ? 1 : a.stack,
         cost = price(unit, stack, g, side);

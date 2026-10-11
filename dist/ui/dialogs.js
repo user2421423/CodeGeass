@@ -3,18 +3,17 @@
 const BRANCH_LIST = ['Infantry', 'Armor', 'Artillery'];
 const ELITE_FACTORY_TAB = 'Elite Forces',
   NAVAL_TAB = 'Naval';
-// The factory tabs: the three branches, a Naval tab for a power with a navy (Conquest), and Elite Forces.
-const shopTabs = () => [
-  ...BRANCH_LIST,
-  ...(E.navalTypes(game, game.player).length ? [NAVAL_TAB] : []),
-  ...(game.mode === 'campaign' ? [] : [ELITE_FACTORY_TAB]),
-];
+// The city factory's tabs: the three branches and Elite Forces. Naval units are built at the port (its own
+// shipyard, NAVAL_TAB only), which has a separate one-unit-per-turn slot.
+const shopTabs = (port = false) =>
+  port ? [NAVAL_TAB] : [...BRANCH_LIST, ...(game.mode === 'campaign' ? [] : [ELITE_FACTORY_TAB])];
 function openShop(id, branch = shop.branch) {
   const s = game.stations.find(s => s.id === id);
   if (!s || s.owner !== game.player || !interactive()) return;
   shop.station = id;
   shop.branch = branch;
   if (branch === ELITE_FACTORY_TAB) return openEliteShop(id);
+  const port = branch === NAVAL_TAB;
   const free = E.recruitOptions(game, s, game.player);
   const lineup = E.lineupOf(game, game.player),
     catalog =
@@ -26,7 +25,7 @@ function openShop(id, branch = shop.branch) {
     types = [...new Set(catalog)].filter(
       k => k && (branch === NAVAL_TAB ? E.TYPES[k].naval : E.TYPES[k].branch === branch && !E.TYPES[k].naval),
     );
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare factory"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${s.name} · Factory level ${s.tier}</div><h2>Roll out a Knightmare unit</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${shopTabs().map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : branch === NAVAL_TAB ? '<p class="description">Naval units are built on the city’s port hex, which must be empty: amphibious Knightmares need a level-1 port, Carrier-Battleships level 2. Build or upgrade the port in the city panel.</p>' : !free.length ? '<div class="info-strip">A unit is on the city. Move it off to build here.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city hex and act next turn; nothing is built while a unit stands on it. Tier II and III frames also cost Sakuradite.</p>'}<div class="cards">${types
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="${port ? 'Port shipyard' : 'Knightmare factory'}"><div class="dialog-head"><div><div class="eyebrow">${F(s.owner).name} · ${port ? `Port of ${s.name} · Port level ${s.portLevel || 0}` : `${s.name} · Factory level ${s.tier}`}</div><h2>${port ? 'Launch a naval unit' : 'Roll out a Knightmare unit'}</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${shopTabs(port).map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${port ? (s.portProducedTurn === game.turn ? '<div class="info-strip">This port has launched its unit for this turn.</div>' : '<p class="description">Naval units launch onto this port hex, which must be empty: amphibious Knightmares need a level-1 port, Carrier-Battleships level 2. One a turn, separate from the city factory.</p>') : s.producedTurn === game.turn ? '<div class="info-strip">This factory has finished production for this turn.</div>' : !free.length ? '<div class="info-strip">A unit is on the city. Move it off to build here.</div>' : '<p class="description">One unit per city per turn. New units deploy on the city hex and act next turn; nothing is built while a unit stands on it. Tier II and III frames also cost Sakuradite.</p>'}<div class="cards">${types
     .map(k => {
       const t = E.TYPES[k],
         n = t.naval === 'ship' ? 1 : shop.stack,

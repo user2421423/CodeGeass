@@ -313,12 +313,15 @@ function activateHex(p) {
       }
     }
   }
-  const mine = E.siteAt(game, p);
-  // Repeated clicks toggle an occupying unit and its city or standalone mine.
+  const mine = E.siteAt(game, p),
+    port = !station && game.stations.find(s => s.portLevel && s.portAt?.c === p.c && s.portAt?.r === p.r);
+  // Repeated clicks toggle an occupying unit and its city, port or standalone mine.
   if (hit && station && u?.id === hit.id) selectStation(station.id);
+  else if (hit && port && u?.id === hit.id) selectPort(port.id);
   else if (hit && mine && u?.id === hit.id) selectSite(mine.id);
   else if (hit) selectUnit(hit.id);
   else if (station) selectStation(station.id);
+  else if (port) selectPort(port.id);
   else if (mine) selectSite(mine.id);
   else {
     selection = { kind: 'tile', c: p.c, r: p.r };

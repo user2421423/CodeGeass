@@ -562,7 +562,10 @@
       (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
-      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      // The city factory and its port are separate yards: each launches one unit a turn.
+      (t.naval
+        ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
+        : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, s.owner, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
@@ -1557,7 +1560,7 @@
         s.owner = winner;
         if (s.portAt) s.portOwner = winner;
         s.shield = Math.round(s.maxShield * 0.5);
-        s.producedTurn = g.turn;
+        s.producedTurn = s.portProducedTurn = g.turn;
         fortify(g, s);
         cities++;
       }
@@ -2017,7 +2020,8 @@
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     const cost = price(type, stack, g, s.owner);
     spend(funds(g, s.owner), cost);
-    s.producedTurn = g.turn;
+    if (TYPES[type].naval) s.portProducedTurn = g.turn;
+    else s.producedTurn = g.turn;
     const u = newUnit(g, type, s.owner, p.c, p.r, stack, null, false);
     log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u };
@@ -2310,7 +2314,7 @@
           }
         }
       }
-      if (!unit || s.producedTurn === g.turn) continue;
+      if (!unit || (TYPES[unit].naval ? s.portProducedTurn : s.producedTurn) === g.turn) continue;
       const t = TYPES[unit],
         stack = t.naval === 'ship' ? 1 : a.stack,
         cost = price(unit, stack, g, side);

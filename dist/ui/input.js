@@ -105,7 +105,15 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.shop) {
-    openShop(+d.shop);
+    openShop(+d.shop, shop.branch === NAVAL_TAB ? BRANCH_LIST[0] : shop.branch);
+    return;
+  }
+  if (d.shopPort) {
+    openShop(+d.shopPort, NAVAL_TAB);
+    return;
+  }
+  if (d.port) {
+    selectPort(+d.port, true);
     return;
   }
   if (d.branch) {
@@ -287,7 +295,7 @@ document.addEventListener('click', e => {
       if (selectedUnit()) {
         carrierHoldOpen = null;
         detailOpen = false;
-      } else if (selectedStation() || selectedSite()) {
+      } else if (selectedStation() || selectedSite() || selectedPort()) {
         detailOpen = !detailOpen;
       } else {
         detailOpen = false;

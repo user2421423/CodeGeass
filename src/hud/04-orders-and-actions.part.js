@@ -17,6 +17,15 @@ function selectStation(id, center = false) {
   updateSelection();
   if (center) centerOn(s);
 }
+function selectPort(id, center = false) {
+  deploying = null;
+  carrierHoldOpen = null;
+  const s = game.stations.find(v => v.id === id && v.portLevel && v.portAt);
+  if (!s) return;
+  selection = { kind: 'port', id };
+  updateSelection();
+  if (center) centerOn(s.portAt);
+}
 function selectSite(id, center = false) {
   carrierHoldOpen = null;
   const d = game.sites?.find(v => v.id === id);

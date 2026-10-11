@@ -803,3 +803,32 @@ test('Compact saves keep the whole game except destroyed units, at a fraction of
   // Campaign saves are small maps and stay whole.
   assert.equal(E.packSave({ ...g, mode: 'campaign' }).tiles, g.tiles);
 });
+
+test('A city factory and its port each build one unit a turn, independently', () => {
+  const withPort = (g, id) => {
+    Object.assign(g.economy[g.player], { credits: 1e6, industry: 1e6, sakuradite: 1e6 });
+    const s = id != null ? g.stations.find(v => v.id === id) : g.stations.find(s => s.owner === g.player &&
+      (s.portLevel || E.portSite(g, s)) && E.recruitOptions(g, s, g.player).length &&
+      (s.portLevel || E.build(g, s.id, 'port').ok) && !E.unitAt(g, s.portAt));
+    if (s && !s.portLevel) E.build(g, s.id, 'port');
+    return s;
+  };
+  const g = E.createGame('britannia', 'normal', 'conquest', 42);
+  const side = g.player;
+  const s = withPort(g);
+  assert.ok(s?.portLevel && s.portAt, 'a player city with a free port');
+  const land = E.lineupOf(g, side).scout, amphibious = E.NAVAL[side].amphibious;
+  assert.equal(E.recruit(g, s.id, land, 1).ok, true, 'city factory builds');
+  assert.equal(E.buyReason(g, s, land, 1), 'Already built here this turn');
+  assert.equal(E.buyReason(g, s, amphibious, 1), null, 'port is still free after the city built');
+  const ship = E.recruit(g, s.id, amphibious, 1);
+  assert.equal(ship.ok, true, 'port builds the same turn');
+  assert.deepEqual({ c: ship.unit.c, r: ship.unit.r }, { c: s.portAt.c, r: s.portAt.r });
+  ship.unit.c = ship.unit.r = -99; // clear the port hex so only the per-turn rule can block it
+  E.internal.reindex?.(g, ship.unit, s.portAt);
+  assert.equal(E.buyReason(g, s, amphibious, 1), 'This port already launched a unit this turn');
+  // Building at the port first leaves the city factory free too.
+  const t = E.createGame('britannia', 'normal', 'conquest', 42), c = withPort(t, s.id);
+  assert.equal(E.recruit(t, c.id, amphibious, 1).ok, true);
+  assert.equal(E.buyReason(t, c, land, 1), null);
+});
