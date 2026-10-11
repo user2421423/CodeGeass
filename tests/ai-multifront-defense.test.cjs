@@ -282,3 +282,14 @@ test('emergency mobilization protects an ordinary recruiting budget', () => {
   E.aiProduction(g);
   assert.equal(g.ai.cf.conventionalCrisis, true);
 });
+
+test('a single scout threatening a capital does not suspend strategic savings', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  g.phase = 'cf';
+  const capital = g.stations.find(s => s.capitalOf === 'cf');
+  g.units = g.units.filter(u => u.side !== 'britannia');
+  E.newUnit(g, E.typeFor('britannia', 'scout', g), 'britannia',
+    capital.c + 2, capital.r);
+  E.aiProduction(g);
+  assert.equal(g.ai.cf.conventionalCrisis, false);
+});

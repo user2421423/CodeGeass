@@ -102,7 +102,7 @@
       // that is still several turns from completion. Guarantee a conventional
       // recruiting budget while strategic development continues if affordable.
       conventionalCrisis = g.mode !== 'campaign' && (memo.fronts || []).some(f =>
-        f.type === 'defensive' && f.emergency && f.immediateMenace > 0 &&
+        f.type === 'defensive' && f.emergency && f.immediateMenace >= 5 &&
         f.arrivingTwo < f.immediateMenace * 0.75);
     plan.conventionalCrisis = conventionalCrisis;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
