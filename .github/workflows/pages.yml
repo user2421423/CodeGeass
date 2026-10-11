@@ -8,7 +8,7 @@ on:
   # workflow_run uses the workflow definition on main, so main's game stays live.
   workflow_run:
     workflows: ['Refactor regressions']
-    branches: ['experiment/japan-hd-156x120']
+    branches: ['experiment/japan-hd-156x120', 'experiment/visual-map-overhaul-20261011']
     types: [completed]
 
 permissions:
@@ -65,6 +65,28 @@ jobs:
           git -C hd-source rev-parse HEAD > dist/previews/japan-hd/preview-commit.txt
           test -f dist/index.html
           test -f dist/previews/japan-hd/index.html
+      # Keep the visual-map experiment alongside main and the Japan HD preview.
+      # The game loads assets relatively, so each preview is self-contained.
+      - name: Checkout visual map experiment
+        uses: actions/checkout@v4
+        with:
+          ref: experiment/visual-map-overhaul-20261011
+          path: visual-map-source
+          persist-credentials: false
+      - name: Verify visual map preview
+        working-directory: visual-map-source
+        run: |
+          node tools/build_sources.cjs --check
+          node --test tests/*.test.cjs
+          node tests/ui-smoke.cjs
+      - name: Add isolated visual map preview
+        run: |
+          test -f visual-map-source/dist/index.html
+          mkdir -p dist/previews/visual-map
+          cp -a visual-map-source/dist/. dist/previews/visual-map/
+          git -C visual-map-source rev-parse HEAD > dist/previews/visual-map/preview-commit.txt
+          test -f dist/index.html
+          test -f dist/previews/visual-map/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
