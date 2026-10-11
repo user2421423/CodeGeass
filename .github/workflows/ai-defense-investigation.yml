@@ -1,4 +1,4 @@
-name: Conquest geopolitical counterfactuals
+name: Defensive AI three-state comparison
 on:
   push:
     branches: ['feature/ai-multifront-defense-20261011']
@@ -26,9 +26,9 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [geopoliticsControl, rivalry4, rivalry12]
+        variant: [baseline, redeploy]
         player: [britannia, eu, cf]
-        seed: [314159, 271828]
+        seed: [42, 20261007, 777, 13579, 314159, 271828]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,12 +46,10 @@ jobs:
         run: |
           node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 5,10,15,20,25,30,35,40,45,50 --output balance-results.json --summary balance-summary.md --quiet --equal-ai
       - name: Publish run summary
-        run: |
-          cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
-          node -e "const r=require('./balance-results.json').results[0]; console.log('PAIRWISE '+JSON.stringify({seed:r.seed,order:r.player,cities:r.final.cities,attacks:r.actions.pairAttacks,transfers:r.actions.pairTransfers}));"
+        run: cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: geopolitical-${{ matrix.variant }}-${{ matrix.player }}-${{ matrix.seed }}
+          name: triage-${{ matrix.variant }}-${{ matrix.player }}-${{ matrix.seed }}
           path: |
             balance-results.json
             balance-summary.md
