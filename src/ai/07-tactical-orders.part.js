@@ -127,7 +127,10 @@
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) +
-            (focus?.id === d?.id ? 110 : 0) -
+            // Support a killable common target, not an isolated assault that
+            // diverts the front from capturing cities or finishing other kills.
+            (focus?.id === d?.id && pr.unit > 0 &&
+              (pr.unit >= d.hp || d.hp <= pr.unit * 2) ? 65 : 0) -
             pr.counter * 0.5;
           return { p, score };
         })
@@ -170,11 +173,6 @@
           guardBonus = !onGuard ? 0 : guard.id != null && !enemies.some(v => dist(g, v, guard) <= 2) ? -40 : 25;
         sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
-        // Reinforce a nearby combined attack, without sending units across a
-        // region or overriding a friendly city capture opportunity.
-        if (focus && !guard && !station && massOf(g, p) === massOf(g, focus) &&
-            dist(g, p, focus) <= 8)
-          sc += Math.max(0, 7 - dist(g, p, focus)) * 13;
         let nearestEnemy = 15,
           danger = 0;
         for (const v of enemies) {

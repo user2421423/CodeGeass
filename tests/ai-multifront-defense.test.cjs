@@ -294,3 +294,17 @@ test('a solo raider or unit from another front never creates a fictitious combin
     }};
   assert.equal(E.aiCoordinationTarget(g, memo, raider, front), null);
 });
+
+test('the coordination system never recruits guards or alters planning assignments', () => {
+  const {g} = setup({enemyCity:true, nearby:true});
+  const memo=E.aiPlan(g,'cf');
+  const guards=Object.keys(memo.guards);
+  const assignments=JSON.stringify(memo.assign);
+  for(const u of g.units.filter(u=>u.side==='cf')) {
+    const f=memo.byId?.[memo.assign?.[u.id]];
+    E.aiCoordinationTarget(g,memo,u,f);
+  }
+  assert.deepEqual(Object.keys(memo.guards),guards);
+  assert.equal(JSON.stringify(memo.assign),assignments);
+  assert.equal(E.aiCoordinationTarget({...g,mode:'campaign'},memo,g.units.find(u=>u.side==='cf'),{id:'x',state:'holding'}),null);
+});
