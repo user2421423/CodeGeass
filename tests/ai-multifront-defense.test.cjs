@@ -169,12 +169,13 @@ test('major-power objective values respond to overall rival strength', () => {
 // Regression: a capital emergency can exhaust the shared quota before ordinary
 // border emergencies are allocated. Their targets must never become negative.
 test('capital crises cannot create negative targets on other defensive fronts', () => {
-  const { g } = setup({ nearby: true, defenders: 12 });
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  g.phase = 'cf';
   const capital = g.stations.find(s => s.capitalOf === 'cf');
   assert(capital);
-  for (let i = 0; i < 8; i++)
-    E.newUnit(g, E.typeFor('eu', 'heavy', g), 'eu',
-      capital.c + 5 + i % 2, capital.r - 2 + Math.floor(i / 2));
+  for (let i = 0; i < 4; i++)
+    E.newUnit(g, E.typeFor('britannia', 'heavy', g), 'britannia',
+      capital.c + 3 + i % 2, capital.r + Math.floor(i / 2));
   const memo = E.aiPlan(g, 'cf');
   assert(memo.fronts.some(f => f.vital && f.emergency),
     'capital must be in a genuine immediate crisis');
