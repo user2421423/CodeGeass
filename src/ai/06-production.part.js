@@ -97,27 +97,14 @@
       plan.warhead = false;
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
-      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite,
-      // A nearby, genuinely dangerous enemy cannot be countered by a warhead
-      // that is still several turns from completion. Guarantee a conventional
-      // recruiting budget while strategic development continues if affordable.
-      conventionalCrisis = g.mode !== 'campaign' && (memo.fronts || []).some(f =>
-        f.type === 'defensive' && f.emergency && f.immediateMenace >= 5 &&
-        f.arrivingTwo < f.immediateMenace * 0.75);
-    plan.conventionalCrisis = conventionalCrisis;
+      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
-    const strategicReserve = defenseSaving
+    const reserve = defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
-      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60,
-      strategicReserveInd = defenseSaving
-        ? Math.min(e.industry, ELIMINATOR.cost.industry)
-        : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
-    const reserve = conventionalCrisis
-        ? Math.min(strategicReserve, Math.max(0, e.credits - ordinaryBudget.credits))
-        : strategicReserve,
-      reserveInd = conventionalCrisis
-        ? Math.min(strategicReserveInd, Math.max(0, e.industry - ordinaryBudget.industry))
-        : strategicReserveInd;
+      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
+    const reserveInd = defenseSaving
+      ? Math.min(e.industry, ELIMINATOR.cost.industry)
+      : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
     const reserveSak = plan.eliminator
       ? ELIMINATOR.cost.sakuradite
       : plan.warhead ? FLEIJA.cost.sakuradite : 0;

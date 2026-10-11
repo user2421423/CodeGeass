@@ -703,14 +703,10 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      // A network of isolated city guards can consume almost the entire army.
-      // Preserve a mobile field force in Conquest; capitals and active projects
-      // take priority when the available static-defense allocation fills.
-      maxGuards = g.mode === 'campaign' ? Infinity : Math.max(4, Math.floor(own.length * 0.45)),
       threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
       urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
       guard = (u, post, emergency = false) => {
-        if (taken[u.id] || Object.keys(taken).length >= maxGuards) return false;
+        if (taken[u.id]) return false;
         taken[u.id] = { ...post, emergency };
         return true;
       };
@@ -737,11 +733,7 @@
       .filter(c => c.capital || c.threat > 0)
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
-      // Conquest needs a mobile field army: cap noncapital city guards and
-      // leave real emergencies under protection. Campaign guard behavior is unchanged.
-      const need = g.mode === 'campaign'
-        ? capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2))
-        : capital ? (t > 0 ? 3 : 2) : Math.min(2, Math.max(1, Math.ceil(t / 3)));
+      const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
       const near = nearby(s, capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard);
       let assigned = 0;
       for (const u of near) {
@@ -754,9 +746,6 @@
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
-        // Quiet strongholds are covered by the mobile army, not a fixed
-        // garrison that can never join a counteroffensive.
-        if (threat(s) <= 0 && !foes.some(f => approachingThreat(g, f, s))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
         for (const u of nearby(s, aiRange(g).cityGuard)) {
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
@@ -766,10 +755,7 @@
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
-        // Unthreatened mines no longer permanently immobilize a formation.
-        // Defend them with fixed troops once an attack becomes possible.
-        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) :
-          g.mode === 'campaign' && d.base >= 30 ? 1 : 0;
+        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
       const near = nearby(d, aiRange(g).mineGuard);
       let assigned = 0;
       for (const u of near) {
@@ -1067,27 +1053,14 @@
       plan.warhead = false;
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
-      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite,
-      // A nearby, genuinely dangerous enemy cannot be countered by a warhead
-      // that is still several turns from completion. Guarantee a conventional
-      // recruiting budget while strategic development continues if affordable.
-      conventionalCrisis = g.mode !== 'campaign' && (memo.fronts || []).some(f =>
-        f.type === 'defensive' && f.emergency && f.immediateMenace >= 5 &&
-        f.arrivingTwo < f.immediateMenace * 0.75);
-    plan.conventionalCrisis = conventionalCrisis;
+      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
-    const strategicReserve = defenseSaving
+    const reserve = defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
-      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60,
-      strategicReserveInd = defenseSaving
-        ? Math.min(e.industry, ELIMINATOR.cost.industry)
-        : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
-    const reserve = conventionalCrisis
-        ? Math.min(strategicReserve, Math.max(0, e.credits - ordinaryBudget.credits))
-        : strategicReserve,
-      reserveInd = conventionalCrisis
-        ? Math.min(strategicReserveInd, Math.max(0, e.industry - ordinaryBudget.industry))
-        : strategicReserveInd;
+      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
+    const reserveInd = defenseSaving
+      ? Math.min(e.industry, ELIMINATOR.cost.industry)
+      : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
     const reserveSak = plan.eliminator
       ? ELIMINATOR.cost.sakuradite
       : plan.warhead ? FLEIJA.cost.sakuradite : 0;
@@ -1423,6 +1396,10 @@
           const d = unitAt(g, p),
             s = stationAt(g, p),
             pr = preview(g, id, p.c, p.r);
+          // Never throw away an already wounded formation for a counterattack
+          // that will kill it without eliminating the defender. Preserve
+          // decisive killing blows and attacks on undefended objectives.
+          if (d && pr.counter >= u.hp * 0.9 && pr.unit < d.hp) return null;
           const score =
             pr.unit +
             pr.shield * 0.7 +
@@ -1434,6 +1411,7 @@
             pr.counter * 0.5;
           return { p, score };
         })
+        .filter(Boolean)
         .sort((a, b) => b.score - a.score)[0];
     const maneuver = () => {
       if (u.moved || u.attacked || steered) return;
@@ -1474,12 +1452,17 @@
         sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
         let nearestEnemy = 15,
-          danger = 0;
+          danger = 0,
+          incomingThreats = 0;
         for (const v of enemies) {
           const d = dist(g, v, p);
           nearestEnemy = Math.min(nearestEnemy, d);
           if (d <= 1) danger++;
+          // Injured formations should look for a safer tile rather than
+          // following the shortest path into overlapping enemy fire arcs.
+          if (d <= rangeOf(g, v).max + Math.min(2, E.movement(g, v))) incomingThreats++;
         }
+        if (u.hp / maxHP(u) < 0.35) sc -= incomingThreats * 28;
         if (isSea(p) && naval) {
           sc -= danger * 20;
         } else if (isSea(p)) {

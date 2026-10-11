@@ -256,54 +256,20 @@ test('outnumbered frontier detachments select an uncontested same-landmass fallb
   assert(retreat.fallback && retreat.seeds.some(([p]) => p === retreat.fallback));
 });
 
-test('quiet Conquest strongholds and major mines do not freeze mobile formations', () => {
-  const { g } = setup();
-  const safe = g.stations.find(s => s.name === 'Capital');
-  safe.fort = true;
-  g.sites.push({ id: 1234, owner: 'cf', name: 'Safe Mine', base: 40,
-    c: 5, r: 15, city: null });
-  const clone = { ...g, ai: {}, stations: g.stations.slice(),
-    sites: g.sites.slice(), units: g.units.slice() };
-  const memo = E.aiPlan(clone, 'cf');
-  assert(Object.values(memo.guards || {}).every(g =>
-    g.site !== 1234), 'a safe deposit should not consume a permanent field-army guard');
-  assert(Object.values(memo.guards || {}).some(g => g.id === safe.id),
-    'the national capital remains protected');
-});
-
-test('emergency mobilization protects an ordinary recruiting budget', () => {
-  const g = E.createGame('britannia', 'normal', 'conquest', 123);
-  g.phase = 'cf';
-  const capital = g.stations.find(s => s.capitalOf === 'cf');
-  assert(capital);
-  for (let i = 0; i < 6; i++)
-    E.newUnit(g, E.typeFor('britannia', 'heavy', g), 'britannia',
-      capital.c + 2 + (i % 2), capital.r + Math.floor(i / 2));
-  E.aiProduction(g);
-  assert.equal(g.ai.cf.conventionalCrisis, true);
-});
-
-test('a single scout threatening a capital does not suspend strategic savings', () => {
-  const g = E.createGame('britannia', 'normal', 'conquest', 123);
-  g.phase = 'cf';
-  const capital = g.stations.find(s => s.capitalOf === 'cf');
-  g.units = g.units.filter(u => u.side !== 'britannia');
-  E.newUnit(g, E.typeFor('britannia', 'scout', g), 'britannia',
-    capital.c + 2, capital.r);
-  E.aiProduction(g);
-  assert.equal(g.ai.cf.conventionalCrisis, false);
-});
-
-test('Conquest guard commitments are capped while keeping capitals protected', () => {
-  const g = E.createGame('britannia', 'normal', 'conquest', 123);
-  for (const side of E.MAJORS) {
-    const memo = E.aiPlan(g, side);
-    const land = g.units.filter(u => u.hp > 0 && u.side === side &&
-      !E.internal.isShip(u) && !E.internal.atSea(g, u));
-    assert(Object.keys(memo.guards).length <= Math.max(4, Math.floor(land.length * 0.45)));
-    const capital = g.stations.find(s => s.capitalOf === side);
-    assert(capital);
-    assert(Object.values(memo.guards).some(x => x.id === capital.id),
-      'critical capitals retain static protection');
-  }
+test('a nearly destroyed frame declines a suicidal nonlethal counterattack', () => {
+  const {g} = setup({ nearby:true });
+  const target = g.units.find(u => u.side === 'eu');
+  assert(target);
+  const attacker = E.newUnit(g, E.typeFor('cf', 'light', g),
+    'cf', target.c - 1, target.r);
+  attacker.hp = 0.1;
+  const forecast = E.preview(g, attacker.id, target.c, target.r);
+  assert(forecast.counter >= attacker.hp && forecast.unit < target.hp,
+    'fixture must be a losing trade to test the decision');
+  // Already moved: tactical AI can still fire, but cannot relocate to a
+  // different position to avoid the counterattack in this fixture.
+  attacker.moved = true;
+  const events = E.aiOrder(g, attacker.id);
+  assert(!events.some(e => e.kind === 'attack'),
+    'do not trade a wounded formation for partial damage');
 });

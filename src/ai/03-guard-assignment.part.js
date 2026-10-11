@@ -2,14 +2,10 @@
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       taken = {},
-      // A network of isolated city guards can consume almost the entire army.
-      // Preserve a mobile field force in Conquest; capitals and active projects
-      // take priority when the available static-defense allocation fills.
-      maxGuards = g.mode === 'campaign' ? Infinity : Math.max(4, Math.floor(own.length * 0.45)),
       threat = s => foes.reduce((a, f) => a + threatTo(g, f, s), 0),
       urgent = (p, t) => t > 0 && foes.some(f => dist(g, f, p) <= 4),
       guard = (u, post, emergency = false) => {
-        if (taken[u.id] || Object.keys(taken).length >= maxGuards) return false;
+        if (taken[u.id]) return false;
         taken[u.id] = { ...post, emergency };
         return true;
       };
@@ -36,11 +32,7 @@
       .filter(c => c.capital || c.threat > 0)
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
-      // Conquest needs a mobile field army: cap noncapital city guards and
-      // leave real emergencies under protection. Campaign guard behavior is unchanged.
-      const need = g.mode === 'campaign'
-        ? capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2))
-        : capital ? (t > 0 ? 3 : 2) : Math.min(2, Math.max(1, Math.ceil(t / 3)));
+      const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
       const near = nearby(s, capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard);
       let assigned = 0;
       for (const u of near) {
@@ -53,9 +45,6 @@
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
-        // Quiet strongholds are covered by the mobile army, not a fixed
-        // garrison that can never join a counteroffensive.
-        if (threat(s) <= 0 && !foes.some(f => approachingThreat(g, f, s))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
         for (const u of nearby(s, aiRange(g).cityGuard)) {
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
@@ -65,10 +54,7 @@
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
-        // Unthreatened mines no longer permanently immobilize a formation.
-        // Defend them with fixed troops once an attack becomes possible.
-        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) :
-          g.mode === 'campaign' && d.base >= 30 ? 1 : 0;
+        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
       const near = nearby(d, aiRange(g).mineGuard);
       let assigned = 0;
       for (const u of near) {
