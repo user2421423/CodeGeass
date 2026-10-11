@@ -255,3 +255,42 @@ test('outnumbered frontier detachments select an uncontested same-landmass fallb
   assert.equal(retreat.state, 'regrouping');
   assert(retreat.fallback && retreat.seeds.some(([p]) => p === retreat.fallback));
 });
+
+test('coordinated fire selects a common, reachable target only for a real mobile group', () => {
+  const { g } = setup();
+  g.units = [];
+  g.nextId = 1;
+  const ally1 = E.newUnit(g, E.typeFor('cf', 'medium', g), 'cf', 11, 10);
+  const ally2 = E.newUnit(g, E.typeFor('cf', 'medium', g), 'cf', 12, 11);
+  const enemy = E.newUnit(g, E.typeFor('eu', 'medium', g), 'eu', 12, 10);
+  const front = { id: 'counterattack', state: 'holding', type: 'defensive' };
+  const memo = { guards: {}, recoveries: new Map(), assign: {
+    [ally1.id]: front.id, [ally2.id]: front.id,
+  }};
+  const focused = E.aiCoordinationTarget(g, memo, ally1, front);
+  assert.equal(focused?.id, enemy.id, 'two nearby mobile attackers select the same enemy');
+  assert.equal(E.aiCoordinationTarget(g, memo, ally2, front)?.id, enemy.id);
+  assert.equal(g.ai.cf.tacticalFocus[front.id].target, enemy.id);
+  // A dedicated garrison may never be redirected by the shared target.
+  const guarded = { ...memo, guards: { [ally2.id]: { c: 13, r: 10, id: 1 } },
+    assign: { [ally1.id]: front.id, [ally2.id]: front.id } };
+  assert.equal(E.aiCoordinationTarget(g, guarded, ally2, front), null);
+  assert.equal(E.aiCoordinationTarget(g, memo, ally1, { ...front, state: 'assembling' }), null);
+  enemy.hp = 0;
+  assert.equal(E.aiCoordinationTarget(g, memo, ally1, front), null,
+    'a destroyed target is immediately abandoned');
+});
+
+test('a solo raider or unit from another front never creates a fictitious combined attack', () => {
+  const { g } = setup();
+  g.units = [];
+  g.nextId = 1;
+  const raider = E.newUnit(g, E.typeFor('cf', 'medium', g), 'cf', 11, 10);
+  const elsewhere = E.newUnit(g, E.typeFor('cf', 'medium', g), 'cf', 12, 11);
+  E.newUnit(g, E.typeFor('eu', 'medium', g), 'eu', 12, 10);
+  const front = { id: 'east', state: 'attacking', type: 'offensive' },
+    memo = { guards: {}, recoveries: new Map(), assign: {
+      [raider.id]: 'east', [elsewhere.id]: 'west',
+    }};
+  assert.equal(E.aiCoordinationTarget(g, memo, raider, front), null);
+});

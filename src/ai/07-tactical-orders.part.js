@@ -1,6 +1,63 @@
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
+  // Active fronts share a short-lived priority target. The coordinator does not
+  // allocate new troops, move guards, or override recovery/assembly orders.
+  // Only existing mobile formations on the same front count toward a local attack.
+  function aiCoordinationTarget(g, memo, u, front) {
+    if (g.mode !== 'conquest' || !front ||
+      (front.state !== 'attacking' && front.state !== 'holding') ||
+      memo.guards?.[u.id] || memo.recoveries?.has(u.id) ||
+      isShip(u) || atSea(g, u) || u.hold) return null;
+    const available = g.units.filter(v => v.hp > 0 && v.side === u.side &&
+      !isShip(v) && !atSea(g, v) && !v.hold && !v.attacked &&
+      !memo.guards?.[v.id] && !memo.recoveries?.has(v.id) &&
+      memo.assign?.[v.id] === front.id);
+    const state = ((g.ai ||= {})[u.side] ||= {});
+    const orders = (state.tacticalFocus ||= {});
+    const saved = orders[front.id];
+    const old = saved && g.units.find(v => v.id === saved.target &&
+      v.hp > 0 && foe(g, v.side, u.side));
+    // Maintain an operational objective for up to three turns, even after the
+    // first ally fires. Each unit joins only if it is in this local battle.
+    if (old && g.turn - saved.since <= 2 && !atSea(g, old)) {
+      return dist(g, u, old) <= 9 && massOf(g, u) === massOf(g, old) ? old : null;
+    }
+    if (available.length < 2) return null;
+    const candidates = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) &&
+      v.side !== 'neutral' && !isShip(v) && !atSea(g, v) &&
+      massOf(g, v) === massOf(g, u) && dist(g, u, v) <= 9)
+      .sort((a, b) => dist(g, u, a) - dist(g, u, b) || a.id - b.id)
+      .slice(0, 12);
+    let best = null, bestScore = -Infinity;
+    for (const enemy of candidates) {
+      const supporting = available.filter(v => massOf(g, v) === massOf(g, enemy) &&
+        dist(g, v, enemy) <= rangeOf(g, v).max + Math.min(2, E.movement(g, v)));
+      if (supporting.length < 2) continue;
+      let shooters = 0, expectedDamage = 0;
+      for (const ally of supporting) {
+        if (!isReady(g, ally) ||
+          dist(g, ally, enemy) > rangeOf(g, ally).max ||
+          !targets(g, ally).some(p => p.c === enemy.c && p.r === enemy.r)) continue;
+        shooters++;
+        expectedDamage += Math.max(0, preview(g, ally.id, enemy.c, enemy.r).unit);
+      }
+      // Require an actual opening: theoretical reach alone is not an attack plan.
+      if (!shooters || expectedDamage <= 0) continue;
+      const score = Math.min(4, supporting.length) * 24 + shooters * 18 +
+        (expectedDamage >= enemy.hp ? 170 : expectedDamage >= enemy.hp * 0.65 ? 90 : 0) +
+        Math.max(0, 1 - enemy.hp / maxHP(enemy)) * 65 +
+        (enemy.cmd ? 35 : 0) -
+        Math.min(...supporting.map(v => dist(g, v, enemy))) * 7;
+      if (score > bestScore || (score === bestScore && (!best || enemy.id < best.id))) {
+        best = enemy;
+        bestScore = score;
+      }
+    }
+    if (!best) return null;
+    orders[front.id] = { target: best.id, since: g.turn };
+    return best;
+  }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
@@ -12,6 +69,7 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    const focus = aiCoordinationTarget(g, memo, u, front);
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
@@ -68,7 +126,8 @@
             (s ? 35 : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
-            (d?.cmd ? 30 : 0) -
+            (d?.cmd ? 30 : 0) +
+            (focus?.id === d?.id ? 110 : 0) -
             pr.counter * 0.5;
           return { p, score };
         })
@@ -111,6 +170,11 @@
           guardBonus = !onGuard ? 0 : guard.id != null && !enemies.some(v => dist(g, v, guard) <= 2) ? -40 : 25;
         sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
+        // Reinforce a nearby combined attack, without sending units across a
+        // region or overriding a friendly city capture opportunity.
+        if (focus && !guard && !station && massOf(g, p) === massOf(g, focus) &&
+            dist(g, p, focus) <= 8)
+          sc += Math.max(0, 7 - dist(g, p, focus)) * 13;
         let nearestEnemy = 15,
           danger = 0;
         for (const v of enemies) {
@@ -209,5 +273,5 @@
     }
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiPlan, unitStrength, FRONT });
+  Object.assign(E, { aiProduction, aiOrder, aiPlan, aiCoordinationTarget, unitStrength, FRONT });
 })(typeof window !== 'undefined' ? window : globalThis);
