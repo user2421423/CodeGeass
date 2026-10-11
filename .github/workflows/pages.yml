@@ -8,7 +8,7 @@ on:
   # workflow_run uses the workflow definition on main, so main's game stays live.
   workflow_run:
     workflows: ['Refactor regressions']
-    branches: ['experiment/japan-no-hokkaido-rotate-25']
+    branches: ['experiment/japan-no-hokkaido-rotate-25', 'experiment/japan-hd-156x120']
     types: [completed]
 
 permissions:
@@ -62,6 +62,26 @@ jobs:
           git -C preview-source rev-parse HEAD > dist/previews/japan25/preview-commit.txt
           test -f dist/index.html
           test -f dist/previews/japan25/index.html
+      - name: Checkout high-resolution Japan experiment
+        uses: actions/checkout@v4
+        with:
+          ref: experiment/japan-hd-156x120
+          path: hd-source
+          persist-credentials: false
+      - name: Verify Japan HD scenario
+        working-directory: hd-source
+        run: |
+          node tools/build_sources.cjs --check
+          node --test tests/scenario.test.cjs
+      - name: Add isolated Japan HD preview
+        run: |
+          test -f hd-source/dist/index.html
+          mkdir -p dist/previews/japan-hd
+          cp -a hd-source/dist/. dist/previews/japan-hd/
+          git -C hd-source rev-parse HEAD > dist/previews/japan-hd/preview-commit.txt
+          test -f dist/index.html
+          test -f dist/previews/japan25/index.html
+          test -f dist/previews/japan-hd/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
