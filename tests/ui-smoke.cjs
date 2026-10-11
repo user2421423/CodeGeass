@@ -193,7 +193,15 @@ const modal = () => node('modal-root').innerHTML;
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');
 
+  const scenarioCamera = fs.readFileSync(path.join(__dirname, '../dist/ui/core.js'), 'utf8');
+  const scenarioLaunch = fs.readFileSync(path.join(__dirname, '../dist/ui/scenario-screens.js'), 'utf8');
+  assert(scenarioCamera.includes("game.mode === 'scenario' ? 2.15"),
+    'scenarios should open 72% closer than the former 1.25 zoom');
+  assert(scenarioLaunch.includes("britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'"),
+    'the opening camera must center on each chosen faction');
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
+  assert(renderingText.includes("t.terrain === 'offmap') return false"),
+    'deep-ocean tiles must not render a playable tactical grid');
   assert(renderingText.includes('rgba(42,154,225,0.19)') && renderingText.includes('rgba(245,197,91,0.15)'),
     'ambiguous coast hexes are tinted with their true gameplay terrain on hover');
   assert(!renderingText.includes('SEA · NAVIGABLE') && !renderingText.includes('LAND · WALKABLE'),

@@ -193,7 +193,7 @@ function hitHex(clientX, clientY) {
     const c0 = Math.round((x - R) / (SQ * R) - 0.5 * (r & 1));
     for (let c = c0 - 1; c <= c0 + 1; c++) {
       const t = E.tile(game, c, r);
-      if (!t) continue;
+      if (!t || (game.mode==='scenario' && t.terrain==='offmap')) continue;
       const p = hexCenter(t),
         d = Math.hypot(wrapNear(p.x, x) - x, p.y - y);
       if (d < best) {

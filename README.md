@@ -176,9 +176,13 @@ Campaign saves are not affected and persistent HQ upgrades are not applied.
   (9,240 hexes, approximately 1,341 land). The four main Japanese islands
   and selected Japanese offshore islets use detailed GSHHG coastlines.
   Korea, Russia, and other non-Japanese polygons are excluded from Scenario
-  Mode without changing the global Conquest map. Only near-coastal sea hexes
-  show grid lines; deep water remains navigable by fleets. Faction territorial
-  colors, all 44 cities, and the navigable Kanmon Strait remain intact.
+  Mode without changing the global Conquest map. Scenario Mode starts
+  zoomed in on the selected faction (Nagoya for Britannia, Kyoto for the
+  Black Knights, Fukuoka for China). Exactly five rings of coastal sea hexes
+  remain playable: 1,933 navigable sea tiles connect all nine ports and 14
+  starting naval formations; 5,966 deep-ocean tiles become impassable
+  background. Faction territorial colors, all 44 cities, and the navigable
+  Kanmon Strait remain intact.
 - **Starting factions:** Britannia 31 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
   Chinese Federation 8 cities / 29 units. All cities and land on Kyushu begin Chinese.
   This includes 14 naval and 48 land formations.

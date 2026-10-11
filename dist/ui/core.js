@@ -58,7 +58,7 @@ const NOTICE =
 const mapW = g => SQ * R * (g.cols + (g.wrap ? 0 : 0.6)),
   mapH = g => R * 1.5 * (g.rows - 1) + 2 * R,
   wraps = () => !!game.wrap,
-  homeZoom = () => (wraps() ? 3.2 : 1.25);
+  homeZoom = () => (game.mode === 'scenario' ? 2.15 : wraps() ? 3.2 : 1.25);
 let WORLD_W, WORLD_H;
 function setWorld() {
   WORLD_W = mapW(game);

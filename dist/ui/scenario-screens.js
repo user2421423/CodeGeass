@@ -55,12 +55,19 @@ function startScenario(side=scenarioSide) {
   game=E.scenarios.japan.create(side,scenarioDifficulty,Date.now()>>>0);
   scenarioRoutingGroup=null;
   setWorld();
-  selection={kind:'unit',id:game.units.find(u=>u.side===game.player && u.cmd)?.id ||
-    game.units.find(u=>u.side===game.player)?.id};
+  // Start inside each faction's theatre instead of fitting empty sea.
+  // Nagoya frames the Tokyo–Osaka defense, Kyoto the Black Knight enclaves,
+  // and Fukuoka the Chinese invasion and Kanmon crossing.
+  const focusName={britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'}[side];
+  const focus=game.stations.find(s=>s.name===focusName) ||
+    game.stations.find(s=>s.owner===side);
+  const units=game.units.filter(u=>u.side===side && u.hp>0)
+    .sort((a,b)=>E.distance(a,focus,game)-E.distance(b,focus,game));
+  selection={kind:'unit',id:units[0]?.id};
   zoom=homeZoom();
   closeModal();
   render();
-  centerOn(selectedUnit() || homeOf());
+  centerOn(focus || selectedUnit() || homeOf());
   toast('Japan scenario loaded. Use Army Groups to move formations together. No progress is saved.',true);
 }
 

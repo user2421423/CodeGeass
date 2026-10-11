@@ -13,7 +13,7 @@ function landReachable(g, origin, destination) {
     if (E.key(queue[i]) === E.key(finish)) return true;
     for (const n of E.adjacent(g, queue[i])) {
       const key = E.key(n);
-      if (n.terrain !== 'sea' && !seen.has(key)) {
+      if (n.terrain !== 'sea' && !E.TERRAIN[n.terrain]?.blocked && !seen.has(key)) {
         seen.add(key);
         queue.push(n);
       }
@@ -39,16 +39,19 @@ test('Japan uses a tightly cropped north-up regional map with unchanged island c
   assert.ok(g.tiles.some(t => t.terrain === 'sea'));
   assert.ok(g.stations.every(s => E.tile(g, s.c, s.r).terrain !== 'sea'));
   assert.ok(g.units.every(u => E.TYPES[u.type].naval || E.tile(g, u.c, u.r).terrain !== 'sea'));
-  assert.ok(g.tiles.every(t => t.terrain === 'sea' || (t.owner && t.provinceCity != null)));
+  assert.ok(g.tiles.every(t => t.terrain === 'sea' || t.terrain === 'offmap' || (t.owner && t.provinceCity != null)));
 });
 
 test('North-up Japan grid crops the offshore margins without losing Japanese land', () => {
   const g = japan.create('britannia', 'normal', 11);
-  const land = g.tiles.filter(t => t.terrain !== 'sea').length;
-  const sea = g.tiles.length - land;
+  const land = g.tiles.filter(t => t.owner && !E.TERRAIN[t.terrain]?.blocked).length;
+  const sea = g.tiles.filter(t => t.terrain === 'sea').length;
+  const offmap = g.tiles.filter(t => t.terrain === 'offmap').length;
   assert.ok(land >= 1250, 'north-up islands retain more than 1250 land hexes');
   assert.ok(land / g.tiles.length > 0.14, 'cropped land share exceeds the old full rectangle');
-  assert.ok(sea < 8000, 'ocean boundaries are cropped tighter than the original board');
+  assert.equal(sea, 1933, 'only the five coastal rings are navigable');
+  assert.equal(offmap, 5966, 'deep-ocean cells are deactivated');
+  assert.equal(g.scenario.coastalSea.width, 5);
   assert.equal(g.stations.length, 44, 'all original Japan cities remain present');
 });
 
@@ -84,7 +87,7 @@ test('All Kyushu cities, provinces and shoreline hexes start as Chinese Federati
     assert.equal(g.stations[t.provinceCity].owner, 'cf');
     for (const n of E.adjacent(g, t)) {
       const key = E.key(n);
-      if (n.terrain !== 'sea' && !seen.has(key)) {
+      if (n.terrain !== 'sea' && !E.TERRAIN[n.terrain]?.blocked && !seen.has(key)) {
         seen.add(key);
         queue.push(n);
       }
@@ -141,6 +144,37 @@ test('Scenario initialization never constructs a disposable world conquest', () 
     assert.equal(japan.create('bk').tiles.length, 9240);
   } finally {
     E.createGame = before;
+  }
+});
+
+test('Nine ports and all starting fleets share a connected coastal sea network', () => {
+  const g = japan.create('cf', 'normal', 19);
+  const sea = g.tiles.filter(t => t.terrain === 'sea');
+  const queue = [sea[0]], seen = new Set([E.key(sea[0])]);
+  for (let i = 0; i < queue.length; i++)
+    for (const n of E.adjacent(g,queue[i])) {
+      const k=E.key(n);
+      if(n.terrain==='sea'&&!seen.has(k)){seen.add(k);queue.push(n);}
+    }
+  assert.equal(seen.size,sea.length);
+  for(const station of g.stations.filter(s=>s.portAt))
+    assert.ok(seen.has(E.key(station.portAt)),station.name+' harbor is accessible');
+  for(const unit of g.units.filter(u=>E.TYPES[u.type].naval))
+    assert.ok(seen.has(E.key(unit)),'fleet can reach other coastal seas');
+});
+
+test('Removed deep sea is not navigable by ships or amphibious units', () => {
+  const g = japan.create('cf', 'normal', 19);
+  const deep = g.tiles.find(t => t.terrain === 'offmap');
+  assert.ok(deep);
+  assert.equal(E.TERRAIN.offmap.blocked,true);
+  assert.equal(E.navigable(deep),false);
+  const ship = g.units.find(u=>u.side==='cf' && E.TYPES[u.type].naval==='ship');
+  assert.ok(ship);
+  assert.equal(E.setGoto(g,ship.id,deep.c,deep.r).ok,false);
+  for(const key of E.reachable(g,ship).keys()){
+    const [c,r] = key.split(',').map(Number);
+    assert.notEqual(E.tile(g,c,r).terrain,'offmap');
   }
 });
 

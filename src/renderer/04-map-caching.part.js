@@ -169,6 +169,7 @@ function mapLayer(scale, detail, dpr, w, h) {
 // land-focused regional maps; fleets can still cross the smooth blue water.
 let scenarioSeaCache = { tiles:null,revision:-1,shown:null };
 function scenarioSeaHexVisible(t) {
+  if (game.mode === 'scenario' && t.terrain === 'offmap') return false;
   if (game.mode !== 'scenario' || game.scenario?.id !== 'invasion-japan' ||
       t.terrain !== 'sea') return true;
   const revision = game.mapRevision || 0;
@@ -210,8 +211,9 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
         hexPath(x, c.y, R + 0.5);
         // If vector geography is unavailable, scenario land still uses the
         // controlling nation's colour rather than biome swatches.
-        ctx.fillStyle = game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
-          ? F(t.owner).color : TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
+        ctx.fillStyle = t.terrain === 'offmap' ? '#174663' :
+          game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
+            ? F(t.owner).color : TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
         if (game.mode !== 'scenario' && t.owner && t.terrain !== 'sea') {
           ctx.fillStyle = F(t.owner).color + '30';

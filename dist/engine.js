@@ -841,6 +841,9 @@
   // ======== Terrain ========
   const TERRAIN = {
     sea: { name: 'Ocean', desc: 'Units embark as transports: they cannot attack and take 50% extra damage.' },
+    // Scenario-only blue background water. Not a playable hex: no warship,
+    // transport, amphibious landing or movement can enter this area.
+    offmap: { name: 'Open ocean (off map)', blocked: true, desc: 'Outside the active Japan naval theatre.' },
     // Shoreline hexes that are part land, part water: land for land units, open water for warships (one unit per hex).
     coast: {
       name: 'Coast',

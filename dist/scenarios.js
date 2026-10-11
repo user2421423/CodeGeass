@@ -207,6 +207,50 @@
     if(assigned)group.destination={c:point.c,r:point.r};
     return {ok:assigned>0,assigned,failed,reason:assigned?'': 'No group unit can reach that hex'};
   }
+  // Only five sea hexes beyond the Japanese coastline are playable.
+  // This removes deep-ocean movement without removing the blue geographic
+  // backdrop. All nine designated ports and starting fleets stay inside the
+  // single continuous connected sea network.
+  const NAVAL_COASTAL_WIDTH = 5;
+  function restrictNavalTheatre(g) {
+    const cols=g.cols,N=g.tiles.length,depth=new Int16Array(N).fill(-1),queue=[];
+    for(const t of g.tiles) if(t.terrain!=='sea') {
+      depth[t.r*cols+t.c]=0;queue.push(t);
+    }
+    for(let i=0;i<queue.length;i++){
+      const t=queue[i],d=depth[t.r*cols+t.c];
+      if(d>=NAVAL_COASTAL_WIDTH)continue;
+      for(const n of E.adjacent(g,t)){
+        const j=n.r*cols+n.c;
+        if(n.terrain!=='sea'||depth[j]>=0)continue;
+        depth[j]=d+1;queue.push(n);
+      }
+    }
+    let active=0,excluded=0,first=null;
+    for(let i=0;i<N;i++){
+      const t=g.tiles[i];
+      if(t.terrain!=='sea')continue;
+      if(depth[i]>0 && depth[i]<=NAVAL_COASTAL_WIDTH){
+        active++;if(!first)first=t;
+      }else{t.terrain='offmap';excluded++;}
+    }
+    if(!first)throw new Error('Japan has no navigable coastal water');
+    const connected=new Set([E.key(first)]),todo=[first];
+    for(let i=0;i<todo.length;i++)
+      for(const n of E.adjacent(g,todo[i])){
+        const k=E.key(n);
+        if(n.terrain==='sea'&&!connected.has(k)){connected.add(k);todo.push(n);}
+      }
+    if(connected.size!==active)
+      throw new Error('Japan coastal sea must remain one connected naval theatre');
+    const ports=g.stations.filter(s=>s.portAt);
+    if(ports.some(s=>!connected.has(E.key(s.portAt))))
+      throw new Error('A scenario port is isolated from the connected coastal sea');
+    if(g.units.some(u=>E.TYPES[u.type].naval &&
+      !connected.has(E.key(u))))
+      throw new Error('A scenario naval unit is outside the coastal sea network');
+    g.scenario.coastalSea={width:NAVAL_COASTAL_WIDTH,active,excluded};
+  }
   function create(player='britannia',difficulty='normal',seed=246801) {
     if (!SIDES.includes(player)) throw new Error('Unsupported scenario faction: '+player);
     // Dedicated lightweight initializer: do not generate the 13,680-hex conquest world,
@@ -378,6 +422,9 @@
       }
       g.scenario.groups.push(fleet);
     }
+    // All naval units, harbor hexes and the Japan coastline have been placed;
+    // remove the rest of the world ocean from the *playable* tile network.
+    restrictNavalTheatre(g);
     // Fixed external war support tops up actual city/deposit income to the
     // target opening rates. It remains fixed thereafter; city captures and
     // upgrades change earned income normally. Higher difficulties strengthen
