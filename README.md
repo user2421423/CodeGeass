@@ -165,24 +165,34 @@ Unofficial fan game based on Code Geass. Unit and character names follow the Cod
 original and generated in code; imported images are credited in ASSETS.md.
 
 
-## Scenario Mode (feature branch, first playable slice)
+## Scenario Mode (feature branch: Japan invasion)
 
-The **Invasion of Japan** is a new single-session regional war, launched using **Scenarios** in the main menu.
-It is distinct from Campaign and Conquest. The faction-selection screen shows a map preview before launch.
+The **Invasion of Japan** is a self-contained regional war opened from **Scenarios** in the main menu.
+Before launching, choose Britannia, the Black Knights or the Chinese Federation, inspect the map,
+and choose Normal, Hard or Challenge difficulty. There is no battle save/resume: Conquest and
+Campaign saves are not affected and persistent HQ upgrades are not applied.
 
-- **Map:** a geographically grounded 112 × 88 hex map of Japan (9,856 hexes), using a packed
-  GSHHS Japanese-island landmask. There are 44 regional cities with city-based territorial ownership.
-- **Playable sides:** Holy Britannian Empire (35 cities, 32 formations), Black Knights
-  (5 cities, 13 formations), and Chinese Federation (4 cities, 21 formations). All sides
-  share the same map and starting positions; selecting a side changes only who you command.
-- **Diplomacy:** Britannia and the Black Knights begin allied against the Chinese Federation.
-  Their alliance dissolves at the beginning of turn 10. The diplomacy switch is functional;
-  cutscenes, additional uprisings, and campaign-specific reinforcements are future stages.
-- **Rules:** existing turn-based combat and AI, separate 60-turn regional victory scoring.
-  The first implementation has no save/resume, persistent HQ progression, or scenario rewards.
-  Conquest and Campaign saves are never touched by starting or playing this mode.
-- **Next development steps:** review terrain and army placement in-game, add naval invasion fleets
-  and supply routes, further differentiate economic balance and objectives, then simulate full
-  50–60-turn campaigns from all three perspectives.
+- **Map:** 112 × 88 hexes (9,856), including a fully decoded Japanese landmask, 44
+  geographically placed cities, terrain zones matching the principal Japanese mountain
+  belts and plains, and city-owned provinces. Takamatsu is anchored on Shikoku;
+  the Kanmon Strait separates Kyushu and Honshu as navigable water.
+- **Starting factions:** Britannia 35 cities / 38 units, Black Knights 5 cities / 13 units,
+  Chinese Federation 4 cities / 29 units. This includes 14 naval units and 66 land units.
+- **Naval infrastructure:** 9 coastal ports, 14 starting warships/amphibious Knightmares;
+  Mount Fuji, Sapporo and Fukuoka work Japan's three Sakuradite deposits.
+- **Army groups:** 26 named starting army groups and fleets. During a scenario, open
+  **Army Groups** to locate a formation or set a shared map-click destination for all
+  reachable member units. Group orders use the normal standing-order route rules.
+- **Diplomacy:** Britannia and the Black Knights begin allied. At the start of turn 10
+  their alliance ends and all three powers become hostile.
+- **Objectives:** faction-specific strategic stronghold and territorial goals, with
+  a 60-turn regional score fallback. AI income and rival stacks scale by difficulty.
+- **Implementation:** a dedicated regional-game initializer does not build the full
+  Conquest world first. Scenario runs do not save or grant persistent profile rewards.
 
-Basic automated coverage lives in tests/scenario.test.cjs.
+**Still to develop:** new scripted battles and uprisings, naval supply and reinforcement
+routes (starting fleets are implemented), full economic and military balancing, extended
+50–60-turn AI simulations, browser performance profiling, and final UX polish. This branch
+must be reconciled with the latest main before any merge.
+
+Automated regression coverage: `tests/scenario.test.cjs`.
