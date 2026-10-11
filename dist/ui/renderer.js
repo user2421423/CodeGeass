@@ -68,7 +68,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   const sx = width / mapW(g),
     sy = height / mapH(g),
     col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
-  b.fillStyle = '#0d2b40';
+  b.fillStyle = g.mode === 'scenario' ? '#0d1218' : '#0d2b40';
   b.fillRect(0, 0, width, height);
   // Scenario previews and minimaps use the same real Japanese silhouette as
   // the main map, not low-resolution rectangles of terrain colours.
@@ -1050,38 +1050,10 @@ function mapLayer(scale, detail, dpr, w, h) {
     y: offset.y,
   });
 }
-// Deep sea remains navigable but does not need tactical hex outlines. The
-// Japan theatre exposes only a couple of coastal water rings, like WC4's
-// land-focused regional maps; fleets can still cross the smooth blue water.
-let scenarioSeaCache = { tiles:null,revision:-1,shown:null };
+// Tactical outlines follow the same visible four-ring scenario boundary.
 function scenarioSeaHexVisible(t) {
   if (game.mode === 'scenario' && t.terrain === 'offmap') return false;
-  if (game.mode !== 'scenario' || game.scenario?.id !== 'invasion-japan' ||
-      t.terrain !== 'sea') return true;
-  const revision = game.mapRevision || 0;
-  if (scenarioSeaCache.tiles !== game.tiles || scenarioSeaCache.revision !== revision) {
-    const seen = new Uint8Array(game.tiles.length), queue = [];
-    for (const cell of game.tiles) if (cell.terrain !== 'sea') {
-      const id = cell.r * game.cols + cell.c;
-      seen[id] = 1;
-      queue.push([cell, 0]);
-    }
-    const shown = new Set();
-    for (let i = 0; i < queue.length; i++) {
-      const [cell, depth] = queue[i];
-      if (depth >= 2) continue;
-      for (const next of E.adjacent(game, cell)) {
-        if (next.terrain !== 'sea') continue;
-        const id = next.r * game.cols + next.c;
-        if (seen[id]) continue;
-        seen[id] = 1;
-        shown.add(id);
-        queue.push([next, depth + 1]);
-      }
-    }
-    scenarioSeaCache = { tiles:game.tiles, revision, shown };
-  }
-  return scenarioSeaCache.shown.has(t.r * game.cols + t.c);
+  return true;
 }
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
@@ -1092,13 +1064,12 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   if (!atlas) {
     for (const t of game.tiles) {
       const c = hexCenter(t);
-      if (!visible(c)) continue;
+      if (!visible(c) || (game.mode === 'scenario' && t.terrain === 'offmap')) continue;
       for (const x of copies(c.x)) {
         hexPath(x, c.y, R + 0.5);
         // If vector geography is unavailable, scenario land still uses the
         // controlling nation's colour rather than biome swatches.
-        ctx.fillStyle = t.terrain === 'offmap' ? '#174663' :
-          game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
+        ctx.fillStyle = game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
             ? F(t.owner).color : TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
         if (game.mode !== 'scenario' && t.owner && t.terrain !== 'sea') {
@@ -1148,7 +1119,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   // ownership. Coastlines are already smoothed by the visual atlas; drawing
   // the old edge-by-edge hex coastline here would reintroduce the mosaic.
   if (R * scale >= 22) for (const t of game.tiles) {
-    if (t.terrain === 'sea') continue;
+    if (t.terrain === 'sea' || t.terrain === 'offmap') continue;
     const c = hexCenter(t);
     if (!visible(c)) continue;
     for (const n of metaFor(t).adj) {
@@ -1184,8 +1155,9 @@ function draw(time, dt) {
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const wash = ctx.createLinearGradient(0, 0, 0, h);
-  wash.addColorStop(0, '#0d2a40');
-  wash.addColorStop(1, '#071623');
+  // Neutral backdrop beyond the scenario cutout, never unplayable ocean.
+  wash.addColorStop(0, game.mode === 'scenario' ? '#10161c' : '#0d2a40');
+  wash.addColorStop(1, game.mode === 'scenario' ? '#070c12' : '#071623');
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, w, h);
   const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };

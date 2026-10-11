@@ -218,11 +218,9 @@
     if(assigned)group.destination={c:point.c,r:point.r};
     return {ok:assigned>0,assigned,failed,reason:assigned?'': 'No group unit can reach that hex'};
   }
-  // Only five sea hexes beyond the Japanese coastline are playable.
-  // This removes deep-ocean movement without removing the blue geographic
-  // backdrop. All nine designated ports and starting fleets stay inside the
-  // single continuous connected sea network.
-  const NAVAL_COASTAL_WIDTH = 5;
+  // Both the visible map and naval movement stop four hexes offshore.
+  // Existing Japanese ports and the connected coastal sea remain playable.
+  const NAVAL_COASTAL_WIDTH = 4;
   function restrictNavalTheatre(g) {
     const cols=g.cols,N=g.tiles.length,depth=new Int16Array(N).fill(-1),queue=[];
     for(const t of g.tiles) if(t.terrain!=='sea') {
@@ -433,8 +431,8 @@
       }
       g.scenario.groups.push(fleet);
     }
-    // All naval units, harbor hexes and the Japan coastline have been placed;
-    // remove the rest of the world ocean from the *playable* tile network.
+    // Trim the playable AND visible map to Japan plus four coastal rings.
+    // The geography painter clips the offmap tiles rather than coloring them.
     restrictNavalTheatre(g);
     // Fixed external war support tops up actual city/deposit income to the
     // target opening rates. It remains fixed thereafter; city captures and

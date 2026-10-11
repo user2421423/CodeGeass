@@ -49,10 +49,32 @@ test('North-up Japan grid crops the offshore margins without losing Japanese lan
   const offmap = g.tiles.filter(t => t.terrain === 'offmap').length;
   assert.ok(land >= 1250, 'north-up islands retain more than 1250 land hexes');
   assert.ok(land / g.tiles.length > 0.14, 'cropped land share exceeds the old full rectangle');
-  assert.equal(sea, 1933, 'only the five coastal rings are navigable');
-  assert.equal(offmap, 5966, 'deep-ocean cells are deactivated');
-  assert.equal(g.scenario.coastalSea.width, 5);
+  assert.equal(sea, 1628, 'only the four coastal rings are navigable');
+  assert.equal(offmap, 6271, 'deep-ocean cells are excluded from play and visuals');
+  assert.equal(g.scenario.coastalSea.width, 4);
   assert.equal(g.stations.length, 44, 'all original Japan cities remain present');
+});
+
+test('Every visible sea hex is within four hexes of Japanese land', () => {
+  const g = japan.create('cf', 'normal', 19);
+  const depth = new Int16Array(g.tiles.length).fill(-1), queue = [];
+  for (const tile of g.tiles) if (tile.owner) {
+    depth[tile.r * g.cols + tile.c] = 0;
+    queue.push(tile);
+  }
+  for (let i = 0; i < queue.length; i++) {
+    const tile = queue[i], d = depth[tile.r * g.cols + tile.c];
+    for (const n of E.adjacent(g, tile)) {
+      const key = n.r * g.cols + n.c;
+      if (depth[key] === -1 && (n.terrain === 'sea' || n.terrain === 'offmap')) {
+        depth[key] = d + 1; queue.push(n);
+      }
+    }
+  }
+  assert.ok(g.tiles.filter(t => t.terrain === 'sea').every(t =>
+    depth[t.r * g.cols + t.c] > 0 && depth[t.r * g.cols + t.c] <= 4));
+  assert.ok(g.tiles.filter(t => t.terrain === 'offmap').every(t =>
+    depth[t.r * g.cols + t.c] > 4));
 });
 
 test('North-up layout places Hokkaido above Honshu and Kyushu below it', () => {

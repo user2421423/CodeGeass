@@ -178,6 +178,24 @@ const modal = () => node('modal-root').innerHTML;
     return GEOGRAPHY.paint(painter,g,0,SQ*R*(g.cols+1),0,R*1.5*(g.rows+1),0.85);
   })()`);
   assert.equal(japanAtlas, true, 'scenario painting uses the geographic Japan coastline');
+  // In the Canvas path fallback the first clip is the union of all and only
+  // the visible scenario hexes; no deep-ocean hex enters the painted atlas.
+  const maskClip = run(`(() => {
+    const g = E.scenarios.japan.create('cf', 'normal', 17);
+    const ctx = document.createElement('canvas').getContext('2d');
+    const originalMove = ctx.moveTo, originalClip = ctx.clip;
+    let moves = 0, firstClipMoves = null;
+    ctx.moveTo = (...args) => { moves++; originalMove(...args); };
+    ctx.clip = (...args) => {
+      if (firstClipMoves === null) firstClipMoves = moves;
+      originalClip(...args);
+    };
+    try { GEOGRAPHY.paint(ctx, g, 0, SQ*R*(g.cols+1), 0, R*1.5*(g.rows+1), 0.85); }
+    finally { ctx.moveTo = originalMove; ctx.clip = originalClip; }
+    return { firstClipMoves, visible: g.tiles.filter(t=>t.terrain!=='offmap').length };
+  })()`);
+  assert.equal(maskClip.firstClipMoves, maskClip.visible,
+    'the first Japan clip must exclude every offmap ocean hex');
   const japanLandCheck = run(`({
     honshu:GEOGRAPHY.japanLandAt(139.69,35.68),
     kyushu:GEOGRAPHY.japanLandAt(130.71,32.80),
