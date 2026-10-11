@@ -126,6 +126,7 @@ test('Opening economy: Britannia leads and stockpiles are exactly two turns of i
 
 test('Captured cities change income and preserve fixed command funding', () => {
   const g = japan.create('cf', 'normal', 11);
+  const fundingBefore = { ...g.scenario.funding.cf };
   const beforeBritannia = E.income(g, 'britannia');
   const beforeChina = E.income(g, 'cf');
   const hiroshima = city(g, 'Hiroshima');
@@ -136,7 +137,7 @@ test('Captured cities change income and preserve fixed command funding', () => {
   assert.ok(afterBritannia.industry < beforeBritannia.industry);
   assert.ok(afterChina.credits > beforeChina.credits);
   assert.ok(afterChina.industry > beforeChina.industry);
-  assert.deepEqual(g.scenario.funding.cf, { ...g.scenario.funding.cf });
+  assert.deepEqual(g.scenario.funding.cf, fundingBefore);
 });
 
 test('Difficulty selector changes rival formation strength while preserving the map', () => {
