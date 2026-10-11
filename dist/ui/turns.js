@@ -139,6 +139,7 @@ function annexNotice(a) {
 }
 // When an operation ends, its medals join the profile's medal case and a win pays command tokens, exactly once.
 function claimReward() {
+  if (game.mode === 'scenario') return; // Scenario runs do not alter the persistent profile in stage one.
   if (!game.over || game.rewardClaimed) return;
   // Persist the claim identity before touching the profile, so a failed operation-save
   // after a successful profile write can recover without paying twice.
@@ -214,6 +215,17 @@ function claimReward() {
   return true;
 }
 function resultDialog() {
+  if (game.mode === 'scenario') {
+    if (!game.over) return;
+    const won=game.over.winner===game.player;
+    modal.innerHTML='<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Scenario result">'+
+      '<div class="eyebrow">Japan scenario</div><h2>'+(won?'Victory in Japan':'Scenario concluded')+'</h2>'+
+      '<p>'+esc(game.over.reason)+'</p><p class="description">This was a single-session scenario. No save or campaign rewards are written.</p>'+
+      '<div class="dialog-footer"><button data-action="close">Inspect map</button><button class="primary" data-action="scenario">Play again</button></div>'+
+      '</section></div>';
+    focusDialog();
+    return;
+  }
   claimReward();
   if (game.mode === 'campaign') return missionResult();
   const win = game.over.winner === game.player,
