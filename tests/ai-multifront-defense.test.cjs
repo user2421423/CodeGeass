@@ -96,7 +96,7 @@ test('separated endangered cities form local defensive sectors', () => {
   const memo2 = E.aiPlan(copy, 'cf');
   const sectors = memo2.fronts.filter(f => f.type === 'alert' || f.type === 'defensive');
   assert(sectors.every(f => f.objectives.filter(o => o.defend).every(o =>
-    E.dist(copy, o, f.anchor) <= E.FRONT.defenseRadius)));
+    E.internal.dist(copy, o, f.anchor) <= E.FRONT.defenseRadius)));
 });
 test('alert target allocations are nonnegative and bounded by the shared army cap', () => {
   const {g, memo} = setup({ enemyCity: true });
