@@ -685,7 +685,7 @@
     const threat = g.units
       .filter(v => v.hp > 0 && foe(g, v.side, side) && !isShip(v) && !atSea(g, v) && dist(g, v, t) <= 3)
       .reduce((a, v) => a + v.stack, 0);
-    if (threat > strength) return null;
+    if (threat > strength * (g.mode === 'scenario' ? 1.5 : 1)) return null;
     const prize = g.stations.some(s => foe(g, s.owner, side) && !unitAt(g, s) && dist(g, s, t) <= 2);
     return fieldAt(t) + threat * 3 - (prize ? 25 : 0);
   }
@@ -1246,7 +1246,8 @@
         // formation cross where no enemy is near.
         ashore = front && front.state !== 'attacking' && front.masses?.has(massOf(g, u)),
         safe = front && !enemies.some(v => dist(g, v, u) <= aiRange(g).enemyScan / 2),
-        convoy = fromLand && !guard && !ashore && (landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
+        convoy = fromLand && !guard && !ashore &&
+          (g.mode === 'scenario' || landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
         currentField = fieldAt(old);
       const placeScore = p => {
         const station = stationAt(g, p);
