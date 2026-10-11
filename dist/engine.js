@@ -3323,39 +3323,28 @@
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     if (g.mode === 'scenario') {
-      const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
+      const conquest = root.Knightmare.scenarios?.japan?.winner(g),
+        contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       if (!contenders.includes(g.player)) {
-        // The player has lost, but two surviving rivals are still fighting:
-        // do not misleadingly award the war to the first faction in turn order.
-        // If one power really remains, that power is the actual victor.
-        const soleVictor = contenders.length === 1 ? contenders[0] : null;
+        // Player defeat can end their run, but award no faction a victory
+        // until that faction controls every Japanese city.
+        const soleVictor = conquest?.winner || null;
         g.over = {
           winner: soleVictor,
           eliminated: true,
           eliminatedBy: g.fallen?.[g.player]?.by || null,
           reason: soleVictor
             ? 'Your last Japanese stronghold has fallen. The ' + FACTIONS[soleVictor].name +
-              ' is the last surviving power.'
-            : 'Your last Japanese stronghold has fallen. ' +
-              'The war continues between ' +
-              contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
+              ' has conquered every city in Japan.'
+            : contenders.length === 1
+              ? 'Your last Japanese stronghold has fallen. The surviving power has not yet conquered every Japanese city.'
+              : 'Your last Japanese stronghold has fallen. ' +
+                'The war continues between ' +
+                contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
         };
         return g.over;
       }
-      // Resolve the player's elimination first, even if the surviving nation
-      // already holds enough objectives. It must remain a defeat for the player.
-      const objectiveWin = root.Knightmare.scenarios?.japan?.winner(g);
-      if (objectiveWin) {g.over=objectiveWin;return g.over;}
-      if (contenders.length === 1) {
-        g.over = {winner: contenders[0], reason: 'The invasion of Japan is over. One power controls every remaining stronghold.'};
-      } else if (g.turn > (g.scenario?.turnLimit || 60)) {
-        const score = s => g.stations.filter(c => c.owner === s).reduce((n,c) => n+c.tier,0);
-        const best = Math.max(...contenders.map(score));
-        const leaders = contenders.filter(s => score(s) === best);
-        g.over = {winner: leaders.length === 1 ? leaders[0] : 'draw',
-          reason: 'The regional war ends after 60 turns. Strategic city scores: ' +
-            contenders.map(s => (FACTIONS[s]?.short || s) + ' ' + score(s)).join(' · ') + '.'};
-      }
+      if (conquest) g.over = conquest;
       return g.over;
     }
     const P = g.player,
