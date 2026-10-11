@@ -543,7 +543,7 @@
         set(f.withdraw ? 'regrouping' :
           f.type === 'defensive' ? 'holding' : f.type === 'alert' ? 'alert' : 'attacking');
       else {
-        if (st.state === 'holding' || st.state === 'alert') set('assembling');
+        if (st.state === 'holding' || st.state === 'alert' || st.state === 'regrouping') set('assembling');
         f.readyStrength = sum(mine.filter(u => dist(g, at(u), f.rally) <= FRONT.rally || aheadOfRally(g, f, at(u))));
         f.attackThreshold = Math.max(2, Math.min(f.desiredStrength * 0.8, f.assigned * 0.5));
         // Waiting alone does not make an army ready. After a short staging

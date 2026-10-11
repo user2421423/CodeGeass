@@ -224,3 +224,18 @@ test('offensives may not launch solely because their assembly timer expires', ()
         offensive.readyStrength < Math.max(1, offensive.assigned * 0.35) ||
         offensive.readyStrength < offensive.enemyStrength * 1.2));
 });
+
+test('a recovered defensive regrouping theater can resume its offensive', () => {
+  const { g, memo } = setup({ enemyCity: true });
+  const assault = memo.fronts.find(f => f.type === 'offensive');
+  assert(assault);
+  const state = { ...g.ai.cf, fronts: { [assault.id]: {
+    state: 'regrouping', since: g.turn - 8,
+  } }, assignments: {} };
+  const fresh = { ...g, ai: { cf: state }, units: g.units.slice(), stations: g.stations.slice() };
+  const updated = E.aiPlan(fresh, 'cf');
+  const active = updated.fronts.find(f => f.id === assault.id);
+  assert(active);
+  assert.equal(active.type, 'offensive');
+  assert.notEqual(active.state, 'regrouping');
+});
