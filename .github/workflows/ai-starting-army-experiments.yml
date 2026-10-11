@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/ai-starting-army-experiments.yml'
       - 'tools/ai_starting_forces_variant.cjs'
+      - 'dist/engine/world.js'
+      - 'tests/faction-doctrine-and-redeployment.test.cjs'
   workflow_dispatch:
 permissions:
   contents: read
