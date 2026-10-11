@@ -47,18 +47,19 @@
   };
   const ARMY_GROUPS = [
     // [side, staging city, class, formations, commander (optional)]
-    ['britannia','Tokyo Settlement','medium',4,'suzaku'],
-    ['britannia','Tokyo Settlement','heavy',2,'cornelia'],
-    ['britannia','Yokohama','assault',3,'guilford'],
-    ['britannia','Osaka','medium',4,'darlton'],
-    ['britannia','Osaka','rocket',2],
-    ['britannia','Hiroshima','light',3],
-    ['britannia','Shimonoseki','assault',3],
-    ['britannia','Kumamoto','medium',3],
-    ['britannia','Kagoshima','light',2],
-    ['britannia','Sendai','medium',2],
-    ['britannia','Sapporo','light',2],
-    ['britannia','Nagoya','rocket',2],
+    // Fourteen land formations + six naval formations = exactly twenty starting units.
+    // Hold the Tokyo/Osaka industrial core and the Kanmon line; leave reserves spread thin.
+    ['britannia','Tokyo Settlement','medium',2,'suzaku'],
+    ['britannia','Tokyo Settlement','heavy',1,'cornelia'],
+    ['britannia','Yokohama','assault',1,'guilford'],
+    ['britannia','Osaka','medium',2,'darlton'],
+    ['britannia','Osaka','rocket',1],
+    ['britannia','Hiroshima','light',1],
+    ['britannia','Shimonoseki','assault',2],
+    ['britannia','Kumamoto','medium',1],
+    ['britannia','Kagoshima','light',1],
+    ['britannia','Sendai','medium',1],
+    ['britannia','Sapporo','light',1],
     ['bk','Kyoto','medium',3,'zero'],
     ['bk','Kyoto','assault',2,'kallen'],
     ['bk','Nara','light',2,'tohdoh'],
