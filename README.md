@@ -210,8 +210,29 @@ The remaining four trials ended with the selected BK/Chinese player eliminated w
 Britannia held most of the Japanese cities; these are **not** proof of an overall Britannian
 victory, because the current scenario engine closes a session on player elimination.
 
-Initial income remains strongly tilted toward Britannia: 554 credits / 301 industry,
-versus BK 96 / 49 and CF 100 / 55. **Reducing starting units alone is not enough to
-balance this scenario.** Follow-up balance work should assess production scaling,
-regional reinforcements and Black Knight survivability. Long-run player-controlled
-balance and human performance have not been validated.
+The previous (pre-rebalance) starting income was 554 credits / 301 industry for
+Britannia, versus BK 96 / 49 and CF 100 / 55. Those **historical simulation
+results do not apply to the newer economic balance**.
+
+### Japan scenario economy (Normal difficulty)
+
+| Starting economy (per turn) | Britannia | China | Black Knights |
+| --- | ---: | ---: | ---: |
+| Credits | 400 | 270 | 200 |
+| Industry | 220 | 155 | 115 |
+| Research | 42 | 28 | 24 |
+| Sakuradite | 28 | 22 | 18 |
+
+All initial resource stockpiles equal exactly **two turns of starting income**
+(credits: 800 / 540 / 400; industry: 440 / 310 / 230;
+research: 84 / 56 / 48; Sakuradite: 56 / 44 / 36).
+Japan city production runs at 40% of the base Conquest city yield; fixed
+faction command funding brings total opening income to the targets above.
+Unlike a flat income override, losing or capturing cities changes actual
+income, while the external budget does not automatically follow captured
+cities. Hard and Challenge increase rival income and starting stockpiles
+together, preserving the 2× rule at every difficulty.
+
+These values have passed scenario economic and capture regression tests,
+but **full-length balance simulations of the revised economy have not yet
+been performed**.
