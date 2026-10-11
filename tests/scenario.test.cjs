@@ -185,6 +185,30 @@ test('Controlling required regional strongholds actually wins a scenario', () =>
   assert.equal(E.checkVictory(g).winner, 'cf');
 });
 
+test('Scenario defeat does not assign victory to an arbitrary survivor', () => {
+  const g = japan.create('bk', 'normal', 11);
+  g.turn = 11;
+  for (const s of g.stations)
+    if (s.owner === 'bk') s.owner = 'cf';
+  // China leads overwhelmingly, but Britannia is still alive and neither
+  // side has secured the whole war. The eliminated player has merely lost.
+  const result = E.checkVictory(g);
+  assert.equal(result.eliminated, true);
+  assert.equal(result.winner, null);
+  assert.ok(result.reason.includes('war continues'));
+  assert.ok(result.reason.includes(E.FACTIONS.cf.name));
+  assert.ok(result.reason.includes(E.FACTIONS.britannia.name));
+});
+
+test('Scenario defeat names the real winner if one power remains', () => {
+  const g = japan.create('bk', 'normal', 11);
+  g.turn = 11;
+  for (const s of g.stations) s.owner = 'cf';
+  const result = E.checkVictory(g);
+  assert.equal(result.eliminated, true);
+  assert.equal(result.winner, 'cf');
+});
+
 test('Both AI enemies can produce and act without crashing in all three modes', () => {
   for (const player of japan.sides) {
     const g = japan.create(player, 'normal', 21);
