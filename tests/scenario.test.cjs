@@ -50,8 +50,37 @@ test('Takamatsu stays on Shikoku, straits and other islands are not accidental l
   assert.equal(E.tile(g, 24, 61).terrain, 'sea');
 });
 
+test('All Kyushu cities, provinces and shoreline hexes start as Chinese Federation land', () => {
+  const g = japan.create('cf', 'normal', 23);
+  const kyushuNames = ['Kitakyushu','Fukuoka','Nagasaki','Sasebo',
+    'Oita','Kumamoto','Miyazaki','Kagoshima'];
+  for (const name of kyushuNames)
+    assert.equal(city(g, name).owner, 'cf', name + ' should be Chinese');
+  const first = city(g, 'Kumamoto'), queue = [E.tile(g, first.c, first.r)],
+    seen = new Set([E.key(first)]);
+  for (let i = 0; i < queue.length; i++) {
+    const t = queue[i];
+    assert.equal(t.owner, 'cf', 'Kyushu hex ' + E.key(t));
+    assert.equal(g.stations[t.provinceCity].owner, 'cf');
+    for (const n of E.adjacent(g, t)) {
+      const key = E.key(n);
+      if (n.terrain !== 'sea' && !seen.has(key)) {
+        seen.add(key);
+        queue.push(n);
+      }
+    }
+  }
+  assert.ok(queue.length > 100, 'test traverses the entire Kyushu landmass');
+  assert.equal(landReachable(g, 'Kumamoto', 'Shimonoseki'), false,
+    'Kanmon Strait still prevents accidental land movement');
+  assert.ok(g.units.filter(u => u.side === 'britannia' && !E.TYPES[u.type].naval)
+    .every(u => E.tile(g, u.c, u.r).owner === 'britannia'),
+    'Britannian starting troops remain outside Chinese territory');
+  assert.deepEqual(g.scenario.bounds, japan.bounds);
+});
+
 test('All three playable factions share one map, can act and have the expected forces', () => {
-  const expected = { britannia: [35, 20], bk: [5, 13], cf: [4, 29] };
+  const expected = { britannia: [31, 20], bk: [5, 13], cf: [8, 29] };
   const starts = [];
   for (const player of japan.sides) {
     const g = japan.create(player, 'normal', 11);
