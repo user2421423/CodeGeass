@@ -60,6 +60,9 @@ const document = {
 
 const env = {
   document,
+  // Node's vm sandbox does not expose browser atob or Node Buffer.
+  // Scenarios decode the same packed landmask with atob in real browsers.
+  atob: value => Buffer.from(value, 'base64').toString('latin1'),
   localStorage: {
     getItem: k => storage[k] ?? null,
     setItem: (k, v) => (storage[k] = String(v)),
