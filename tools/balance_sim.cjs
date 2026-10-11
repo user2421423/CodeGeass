@@ -166,8 +166,18 @@ function playSide(g, side, counters) {
     if (g.over) break;
     const u = g.units.find(v => v.id === id);
     if (!u || u.hp <= 0 || u.side !== side) continue;
+    const before = new Map(g.units.filter(v => v.hp > 0 && v.side !== side)
+      .map(v => [v.c + ',' + v.r, v.side]));
     const events = E.aiOrder(g, id) || [];
     for (const event of events) {
+      if (event.kind === 'attack' && event.to) {
+        const defender = before.get(event.to.c + ',' + event.to.r);
+        if (defender && MAJORS.includes(defender)) {
+          const pair = [side, defender].sort().join('-');
+          counters.pairAttacks[pair] = (counters.pairAttacks[pair] || 0) + 1;
+          counters.pairDamage[pair] = (counters.pairDamage[pair] || 0) + Math.max(0, event.damage || 0);
+        }
+      }
       if (event.kind === 'move' || event.kind === 'deploy') counters.moves[side]++;
       else if (event.kind === 'attack') counters.attacks[side]++;
       else if (event.kind === 'feint') counters.special[side]++;
@@ -185,6 +195,9 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
   const start = snapshot(g);
   const counters = {
     produced: Object.fromEntries(MAJORS.map(s => [s, 0])),
+    pairAttacks: {},
+    pairDamage: {},
+    pairTransfers: {},
     moves: Object.fromEntries(MAJORS.map(s => [s, 0])),
     attacks: Object.fromEntries(MAJORS.map(s => [s, 0])),
     special: Object.fromEntries(MAJORS.map(s => [s, 0])),
@@ -212,6 +225,10 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
     for (const city of g.stations) {
       const from = previousOwners.get(city.id);
       if (from !== city.owner) {
+        if (MAJORS.includes(from) && MAJORS.includes(city.owner)) {
+          const pair = [from, city.owner].sort().join('-');
+          counters.pairTransfers[pair] = (counters.pairTransfers[pair] || 0) + 1;
+        }
         counters.cityTransfers.push({ turn: g.turn, city: city.name, from, to: city.owner });
         previousOwners.set(city.id, city.owner);
       }
