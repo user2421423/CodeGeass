@@ -19,7 +19,7 @@ jobs:
       matrix:
         variant: [A, B, C, D]
         player: [britannia, eu, cf]
-        seed: [42, 20261007, 777, 13579]
+        seed: [314159, 271828]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
