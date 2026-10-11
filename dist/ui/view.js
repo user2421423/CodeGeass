@@ -139,17 +139,24 @@ function computeView() {
   const rect = canvas.getBoundingClientRect();
   mapSize = { w: rect.width, h: rect.height };
   const pad = viewPad();
-  const fitH = (rect.height - pad.top - pad.bottom) / WORLD_H;
-  baseScale = Math.max(0.05, wraps() ? fitH : Math.min(fitH, (rect.width - 40) / WORLD_W));
+  // Crop the viewport to the visible regional theatre, not the full grid.
+  const bounds = typeof mapViewBounds === 'function' ? mapViewBounds(game) :
+    {left:0,top:0,right:WORLD_W,bottom:WORLD_H,width:WORLD_W,height:WORLD_H};
+  const fitH = (rect.height - pad.top - pad.bottom) / bounds.height;
+  baseScale = Math.max(0.05, wraps() ? fitH : Math.min(fitH, (rect.width - 40) / bounds.width));
   const scale = baseScale * zoom;
   if (wraps()) cam.x = ((cam.x % WORLD_W) + WORLD_W) % WORLD_W;
   else {
     const halfW = rect.width / 2 / scale;
-    cam.x = WORLD_W <= 2 * halfW ? WORLD_W / 2 : E.clamp(cam.x, halfW - 40 / scale, WORLD_W - halfW + 40 / scale);
+    cam.x = bounds.width <= 2 * halfW
+      ? (bounds.left + bounds.right) / 2
+      : E.clamp(cam.x, bounds.left + halfW - 40 / scale, bounds.right - halfW + 40 / scale);
   }
   const halfH = (rect.height - pad.top - pad.bottom) / 2 / scale,
     midY = pad.top + (rect.height - pad.top - pad.bottom) / 2;
-  cam.y = WORLD_H <= 2 * halfH ? WORLD_H / 2 : E.clamp(cam.y, halfH - 40 / scale, WORLD_H - halfH + 40 / scale);
+  cam.y = bounds.height <= 2 * halfH
+    ? (bounds.top + bounds.bottom) / 2
+    : E.clamp(cam.y, bounds.top + halfH - 40 / scale, bounds.bottom - halfH + 40 / scale);
   // Whole device pixels, so the cached map layer lines up exactly wherever the camera stops.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   offset = {

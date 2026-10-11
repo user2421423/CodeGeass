@@ -211,6 +211,13 @@ const modal = () => node('modal-root').innerHTML;
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');
 
+  const theatreFraming = run(`(() => {
+    const g=E.scenarios.japan.create('cf','normal',17), b=mapViewBounds(g);
+    return {bounds:!!b,width:b.width,height:b.height,
+      sea:g.tiles.filter(t=>t.terrain==='sea').length};
+  })()`);
+  assert(theatreFraming.bounds && theatreFraming.width>0 && theatreFraming.height>0);
+  assert.equal(theatreFraming.sea,1628,'visible water remains four coastal rings');
   const scenarioCamera = fs.readFileSync(path.join(__dirname, '../dist/ui/core.js'), 'utf8');
   const scenarioLaunch = fs.readFileSync(path.join(__dirname, '../dist/ui/scenario-screens.js'), 'utf8');
   assert(scenarioCamera.includes("game.mode === 'scenario' ? 2.15"),
