@@ -20,9 +20,13 @@
     let memo = aiMemo.get(g);
     if (!memo) aiMemo.set(g, (memo = {}));
     if (!memo[side] || memo[side].turn !== g.turn) {
-      memo[side] = { turn: g.turn, guards: assignGuards(g, side) };
-      planRecovery(g, side, memo[side]);
+      // Japan Scenario is an all-out city offensive: no guards, defensive
+      // fronts, recovery retreats or offensive assembly delays.
+      const rush = g.mode === 'scenario';
+      memo[side] = { turn: g.turn, guards: rush ? {} : assignGuards(g, side) };
+      if (!rush) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
+      else if (rush) planScenarioOffense(g, side, memo[side]);
       else planFronts(g, side, memo[side]);
     }
     return memo[side];

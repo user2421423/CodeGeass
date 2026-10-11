@@ -65,7 +65,9 @@
             pr.unit +
             pr.shield * 0.7 +
             (d && pr.unit >= d.hp ? 130 : 0) +
-            (s ? 35 : 0) +
+            (s ? (g.mode === 'scenario'
+              ? 170 + (front?.anchor.id === s.id ? 80 : 0)
+              : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
             (d?.cmd ? 30 : 0) -
@@ -95,7 +97,8 @@
         // formation cross where no enemy is near.
         ashore = front && front.state !== 'attacking' && front.masses?.has(massOf(g, u)),
         safe = front && !enemies.some(v => dist(g, v, u) <= aiRange(g).enemyScan / 2),
-        convoy = fromLand && !guard && !ashore && (landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
+        convoy = fromLand && !guard && !ashore &&
+          (g.mode === 'scenario' || landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
         currentField = fieldAt(old);
       const placeScore = p => {
         const station = stationAt(g, p);

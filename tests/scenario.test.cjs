@@ -380,6 +380,47 @@ test('Scenario defeat names the real winner if one power remains', () => {
   assert.equal(result.winner, 'cf');
 });
 
+test('Japan AI attacks every hostile city without assigning guards or defensive fronts', () => {
+  for (const player of japan.sides) {
+    const g = japan.create(player, 'normal', 19);
+    for (const side of g.order.filter(s => s !== player)) {
+      E.beginTurn(g, side, false);
+      const memo = E.aiPlan(g, side);
+      const enemies = g.stations.filter(s => E.foe(g, s.owner, side));
+      assert.deepEqual(memo.guards, {}, 'Scenario AI must never assign garrisons');
+      assert.equal(memo.recoveries, undefined, 'Scenario AI must not retreat wounded commanders');
+      assert.equal(memo.fronts.length, enemies.length, 'Each hostile city should remain an objective');
+      assert.ok(memo.fronts.every(f =>
+        f.type === 'offensive' && f.state === 'attacking' &&
+        f.objectives.length === 1 && E.foe(g, f.anchor.owner, side)),
+      'No defensive, holding or assembling fronts are allowed');
+      for (const u of g.units.filter(u => u.side === side && !E.TYPES[u.type].naval)) {
+        const front = memo.byId[memo.assign[u.id]];
+        assert.ok(front, 'Every land formation must receive an attack target');
+        const cost = s => E.internal.dist(g, u, s) +
+          (E.internal.massOf(g, u) === E.internal.massOf(g, s) ? 0 : 8);
+        assert.equal(cost(front.anchor), Math.min(...enemies.map(cost)),
+          'Land formations should target the closest hostile city, allowing for water crossings');
+      }
+    }
+  }
+});
+
+test('Japan AI immediately retargets after its nearest enemy city is captured', () => {
+  const g = japan.create('britannia', 'normal', 19);
+  E.beginTurn(g, 'cf', false);
+  const memo = E.aiPlan(g, 'cf');
+  const unit = g.units.find(u => u.side === 'cf' && !E.TYPES[u.type].naval);
+  assert.ok(unit);
+  const previous = memo.assign[unit.id];
+  const conquered = memo.byId[previous].anchor;
+  conquered.owner = 'cf';
+  E.aiOrder(g, unit.id);
+  assert.notEqual(memo.assign[unit.id], previous,
+    'A newly captured city must not absorb the rest of the attacking column');
+  assert.ok(E.foe(g, memo.byId[memo.assign[unit.id]].anchor.owner, 'cf'));
+});
+
 test('Both AI enemies can produce and act without crashing in all three modes', () => {
   for (const player of japan.sides) {
     const g = japan.create(player, 'normal', 21);
