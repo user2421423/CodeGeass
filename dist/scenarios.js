@@ -166,6 +166,53 @@
     if(lat>40.5 && lowland<0.6) return variation<0.49?'forest':'plains';
     return 'plains';
   }
+  // Re-evaluate existing dry hexes against Japan's source shoreline.
+  // Preserve the original land/sea mask and narrow Kanmon Strait exactly.
+  const SHORE_SAMPLES=[[0,0]];
+  for(const radius of [0.42,0.84])
+    for(let k=0;k<12;k++){
+      const angle=Math.PI*k/6, edgeAngle=Math.PI/3*Math.round(angle/(Math.PI/3));
+      const extent=Math.cos(Math.PI/6)/Math.cos(angle-edgeAngle);
+      SHORE_SAMPLES.push([radius*extent*Math.cos(angle),radius*extent*Math.sin(angle)]);
+    }
+  function japanDryAt(mask,lon,lat){
+    const r=Math.round((BOUNDS.north-lat)*(MASK_ROWS-1)/(BOUNDS.north-BOUNDS.south));
+    const c=Math.round((lon-BOUNDS.west)*(MASK_COLS-1)/(BOUNDS.east-BOUNDS.west)-.5*(r&1));
+    return r>=0&&r<MASK_ROWS&&c>=0&&c<MASK_COLS&&!!mask[r*MASK_COLS+c];
+  }
+  function shorelineLandFraction(mask,t){
+    const p=geographicAt(t.c,t.r),
+      lonStep=(PROJECTION.uMax-PROJECTION.uMin)/(COLS-1)/K,
+      latStep=(PROJECTION.vMax-PROJECTION.vMin)/(ROWS-1);
+    let land=0;
+    for(const [dx,dy] of SHORE_SAMPLES)
+      if(japanDryAt(mask,p.lon+lonStep*dx/Math.sqrt(3),
+        p.lat-latStep*dy/1.5))land++;
+    return land/SHORE_SAMPLES.length;
+  }
+  function classifyJapanCoast(g,mask){
+    // Shoreline-adjacent land remains amphibiously accessible. A nearby
+    // land hex also becomes coast if samples show at least 20% sea coverage.
+    const depth=new Int8Array(g.tiles.length).fill(-1),queue=[];
+    for(const t of g.tiles) if(t.terrain==='sea'){
+      depth[t.r*g.cols+t.c]=0;queue.push(t);
+    }
+    for(let i=0;i<queue.length;i++){
+      const t=queue[i],d=depth[t.r*g.cols+t.c];
+      if(d>=2)continue;
+      for(const n of E.adjacent(g,t)){
+        const k=n.r*g.cols+n.c;
+        if(depth[k]>=0)continue;
+        depth[k]=d+1;queue.push(n);
+      }
+    }
+    for(const t of g.tiles){
+      if(t.terrain==='sea')continue;
+      const d=depth[t.r*g.cols+t.c];
+      if(d===1 || (d===2 && shorelineLandFraction(mask,t)<=.8))
+        t.terrain='coast';
+    }
+  }
   const islandNames = {
     'Sapporo':'hokkaido','Hakodate':'hokkaido','Asahikawa':'hokkaido','Kushiro':'hokkaido',
     'Takamatsu':'shikoku','Matsuyama':'shikoku','Kochi':'shikoku',
@@ -310,9 +357,8 @@
     if(!kanmon || kanmon.terrain==='sea')
       throw new Error('North-up Kanmon channel anchor moved');
     kanmon.terrain='sea';
-    // Coast tiles support naval movement and amphibious landings.
-    for (const t of g.tiles)
-      if (t.terrain!=='sea' && E.adjacent(g,t).some(n=>n.terrain==='sea')) t.terrain='coast';
+    // Recompute mixed coastal hexes before city and island assignments.
+    classifyJapanCoast(g,mask);
     const hokkaidoStart=nearest(g,locate(141.35,43.06),t=>t.terrain!=='sea',4);
     const shikokuStart=nearest(g,locate(132.77,33.84),t=>t.terrain!=='sea',4);
     const kyushuStart=nearest(g,locate(130.71,32.80),t=>t.terrain!=='sea',4);
@@ -336,7 +382,9 @@
         industry:Math.round((capital?25:6*tier)*CITY_OUTPUT_FACTOR),
         science:Math.round((1+tier)*CITY_OUTPUT_FACTOR),producedTurn:0};
       g.stations.push(s);
-      at.terrain='plains';
+      // A coastal city remains coastal instead of becoming impassable inland
+      // terrain for amphibious and harbor operations.
+      if(at.terrain!=='coast')at.terrain='plains';
     }
     // Province assignment stays on the same island. In particular, the
     // Kanmon Strait may not allow a Shimonoseki province to own Kyushu.

@@ -77,6 +77,22 @@ test('Every visible sea hex is within four hexes of Japanese land', () => {
     depth[t.r * g.cols + t.c] > 4));
 });
 
+test('Japan shoreline distinguishes coast from inland without moving sea tiles', () => {
+  const g=japan.create('cf','normal',19);
+  const coastalCities=g.stations.filter(s=>E.adjacent(g,s).some(t=>t.terrain==='sea'));
+  assert.ok(coastalCities.length>=20,'scenario contains substantial coastal settlements');
+  for(const s of coastalCities)
+    assert.equal(E.tile(g,s.c,s.r).terrain,'coast',s.name+' must remain coastal');
+  for(const t of g.tiles.filter(t=>t.owner)){
+    if(E.adjacent(g,t).some(n=>n.terrain==='sea'))
+      assert.equal(t.terrain,'coast','shoreline '+E.key(t));
+  }
+  assert.ok(g.tiles.filter(t=>t.terrain==='coast').length>=450);
+  assert.equal(g.tiles.filter(t=>t.terrain==='sea').length,1628);
+  for(const s of g.stations.filter(s=>s.portAt))
+    assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea');
+});
+
 test('North-up layout places Hokkaido above Honshu and Kyushu below it', () => {
   const g = japan.create('cf', 'normal', 11);
   assert.equal(g.scenario.projection.angle, 0);
