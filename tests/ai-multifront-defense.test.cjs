@@ -20,7 +20,7 @@ function setup({ barrier = false, nearby = false, enemyCity = false, defenders =
   city('cf', 'Capital', 4, 17, true);
   city('cf', 'Border A', 16, 11);
   city('cf', 'Border B', 18, 14);
-  if (enemyCity) city('eu', 'Forward objective', 21, 15);
+  if (enemyCity) city('eu', 'Forward objective', 17, 18);
   city('eu', 'EuroCity', 34, 11, true);
   city('britannia', 'BritCity', 2, 2, true);
   const unit = (side, cls, c, r) => E.newUnit(g, E.typeFor(side, cls), side, c, r);
