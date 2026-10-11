@@ -160,7 +160,17 @@
     E.log(g,'Chinese Federation forces have landed in northern Kyushu. Britannia and the Black Knights are temporarily allied.',player);
     return g;
   }
-  const api={id:'invasion-japan',title:'The Invasion of Japan',cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,create};
+  // The opening alliance ends at turn 10. Later work can add story/dialogue and reinforcement events.
+  function onTurn(g) {
+    if (g.mode !== 'scenario' || g.scenario?.id !== 'invasion-japan' ||
+        g.turn < 10 || g.scenario.phase !== 'opening') return false;
+    g.teams = null;
+    g.scenario.phase = 'three-way-war';
+    g.mapRevision = (g.mapRevision || 0) + 1;
+    E.log(g, 'Turn 10: the temporary Britannia–Black Knights alliance collapses. All three powers are now at war.', g.player);
+    return true;
+  }
+  const api={id:'invasion-japan',title:'The Invasion of Japan',cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,create,onTurn};
   E.scenarios={...(E.scenarios||{}),japan:api};
   if (typeof module!=='undefined') module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
