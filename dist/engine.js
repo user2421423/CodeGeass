@@ -900,7 +900,7 @@
     if (s.portAt) return tile(g, s.portAt.c, s.portAt.r);
     // Baseline starting ports must stay on their exact original hexes.
     // Non-starting ports retain the normal neighbour-selection rules.
-    const anchored = COASTAL_PORT_HEXES[s.name];
+    const anchored = g.mode === 'conquest' ? COASTAL_PORT_HEXES[s.name] : null;
     if (anchored) {
       const fixed = tile(g, anchored[0], anchored[1]);
       if (!fixed || !isSea(fixed) || !adjacent(g, s).includes(fixed) ||
@@ -3320,6 +3320,8 @@
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     if (g.mode === 'scenario') {
+      const objectiveWin = root.Knightmare.scenarios?.japan?.winner(g);
+      if (objectiveWin) {g.over=objectiveWin;return g.over;}
       const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       if (!contenders.includes(g.player)) {
         g.over = {winner: contenders[0] || 'draw', reason: 'Your last Japanese stronghold has fallen.'};
@@ -3360,7 +3362,8 @@
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
     if (g.mode === 'scenario')
-      return 'The Invasion of Japan · hold your strongholds and capture enemy cities. Britannia and the Black Knights begin allied.';
+      return (root.Knightmare.scenarios?.japan?.objective(g) || 'Secure Japan') +
+        (g.scenario?.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.');
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
