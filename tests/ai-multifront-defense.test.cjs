@@ -71,7 +71,7 @@ test('separate alert detachments preserve adjacent offensive theaters', () => {
     'alert units stage near endangered friendly cities, not distant enemy capitals');
   assert(assault.seeds.some(([p]) => p.name === 'Forward objective') || assault.state === 'assembling');
 });
-test('alert-only theater budgets are shared and capped at fifteen percent', () => {
+test('alert-only theater budgets are shared and capped at twenty-five percent', () => {
   const {memo, g}=setup();
   const deployable = g.units.filter(u=>u.side==='cf'&&!memo.guards[u.id])
     .reduce((n,u)=>n+E.unitStrength(u),0);
