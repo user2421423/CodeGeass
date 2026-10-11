@@ -1180,6 +1180,8 @@ function draw(time, dt) {
     mid = (left + right) / 2;
   const copies = x => copiesBetween(x, left, right);
   const visible = p => p.y >= top && p.y <= bottom;
+  // Strategic country names sit over the political land, but beneath units, cities and selections.
+  TERRITORY_LABELS.draw(ctx, game, scale, WORLD_W, left, right, top, bottom, copiesBetween);
   // Move and attack overlays. Blue marks water for the moving unit: open sea, or a coast hex a warship sails into.
   const movingShip = E.TYPES[selectedUnit()?.type]?.naval === 'ship';
   for (const k of readyCache.keys()) {
