@@ -172,11 +172,15 @@ Before launching, choose Britannia, the Black Knights or the Chinese Federation,
 and choose Normal, Hard or Challenge difficulty. There is no battle save/resume: Conquest and
 Campaign saves are not affected and persistent HQ upgrades are not applied.
 
-- **Map:** 112 × 88 tactical hexes (9,856) underlying the same GSHHG geographic
-  coastline used by Conquest, with faction-colored provinces and 44 cities.
-  Mountain and lowland terrain remains relevant to movement and combat rather than
-  being painted as a patchwork of terrain-colored hexes. Takamatsu is anchored on Shikoku;
-  the Kanmon Strait separates Kyushu and Honshu as navigable water.
+- **Map:** 152 × 42 tactical hexes (6,384) on a land-focused 48°-rotated
+  Japan theatre: Honshu, Hokkaido, Shikoku and Kyushu fill a wide operational
+  board instead of a mostly empty latitude/longitude ocean rectangle.
+  The land share is about 23%, up from 11%, with more land hexes in absolute
+  terms. The same detailed GSHHG coastlines as Conquest remain visible.
+  The hex grid is displayed only near shore, while naval movement remains
+  available on deep-water tiles. Faction ownership colours still cover land,
+  and all 44 cities, the Kyushu–Honshu Kanmon Strait and Shikoku's separation
+  remain intact.
 - **Starting factions:** Britannia 31 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
   Chinese Federation 8 cities / 29 units. All cities and land on Kyushu begin Chinese.
   This includes 14 naval and 48 land formations.
@@ -194,8 +198,7 @@ Campaign saves are not affected and persistent HQ upgrades are not applied.
 
 **Still to develop:** new scripted battles and uprisings, naval supply and reinforcement
 routes (starting fleets are implemented), full economic and military balancing, extended
-50–60-turn AI simulations, browser performance profiling, and final UX polish. This branch
-must be reconciled with the latest main before any merge.
+50–60-turn AI simulations, browser performance profiling, and final UX polish.
 
 Automated regression coverage: `tests/scenario.test.cjs`.
 

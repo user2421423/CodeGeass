@@ -594,18 +594,40 @@ const GEOGRAPHY = (() => {
   }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || g.scenario?.id !== 'invasion-japan') return false;
-    const b = g.scenario.bounds;
-    if (!b) return false;
-    // Longitude/latitude -> world GSHHG -> local Japan hex grid. A single
-    // affine transform preserves the detailed silhouettes and peninsulas.
-    const sx = SQ * R * (g.cols - 1) / (px(b.east) - px(b.west));
-    const sy = 1.5 * R * (g.rows - 1) / (py(b.south) - py(b.north));
-    const tx = R - sx * px(b.west), ty = R - sy * py(b.north);
-    const a = (left - tx) / sx, c = (right - tx) / sx,
-      d = (top - ty) / sy, e = (bottom - ty) / sy;
-    const shapes = LAYERS.land.filter(shape => intersects(shape.bounds, a, c, d, e));
+    const p = g.scenario.projection;
+    if (!p) return false;
+    // GSHHG stores all coastlines in the Conquest map's projected coordinates.
+    // Rotate the same shapes to match the compact southwest-to-northeast Japan
+    // theatre instead of stretching the islands inside an ocean rectangle.
+    const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
+      k = Math.cos(p.centerLat * Math.PI / 180);
+    const ox = px(p.centerLon), oy = py(p.centerLat),
+      dx = px(p.centerLon + 1) - ox, dy = py(p.centerLat + 1) - oy;
+    const wx = SQ * R * (g.cols - 1) / (p.uMax - p.uMin),
+      hy = 1.5 * R * (g.rows - 1) / (p.vMax - p.vMin);
+    const A = wx * X * k / dx, B = wx * Y / dy,
+      C = hy * Y * k / dx, D = -hy * X / dy,
+      tx = R - wx * p.uMin - A * ox - B * oy,
+      ty = R + hy * p.vMax - C * ox - D * oy;
+    const det = A * D - B * C;
+    const invA = D / det, invB = -B / det,
+      invC = -C / det, invD = A / det,
+      invX = (B * ty - D * tx) / det,
+      invY = (C * tx - A * ty) / det;
+    const inv = (x, y) => [invA * x + invB * y + invX,
+      invC * x + invD * y + invY];
+    const corners = [inv(left, top), inv(right, top),
+      inv(left, bottom), inv(right, bottom)];
+    const bounds = [
+      Math.min(...corners.map(t => t[0])) - 10,
+      Math.max(...corners.map(t => t[0])) + 10,
+      Math.min(...corners.map(t => t[1])) - 10,
+      Math.max(...corners.map(t => t[1])) + 10,
+    ];
+    const [a, b, c, d] = bounds;
+    const shapes = LAYERS.land.filter(shape =>
+      intersects(shape.bounds, a, b, c, d));
 
-    // Continuous ocean and GSHHG land replace the old coloured hex mosaic.
     const sea = ctx.createLinearGradient(0, top, 0, bottom);
     sea.addColorStop(0, '#205372');
     sea.addColorStop(1, '#103d5b');
@@ -613,24 +635,22 @@ const GEOGRAPHY = (() => {
     ctx.fillRect(left, top, right - left, bottom - top);
     if (!shapes.length) return true;
 
+    // Continuous geographic land silhouette, regardless of the tactical
+    // tiles' sea/land categorization along bays and narrow straits.
     ctx.save();
-    ctx.translate(tx, ty);
-    ctx.scale(sx, sy);
+    ctx.transform(A, C, B, D, tx, ty);
     ctx.fillStyle = '#91a799';
-    fillPath(ctx, paths(ctx, shapes, a, c, d, e));
+    fillPath(ctx, paths(ctx, shapes, a, b, c, d));
     ctx.restore();
 
-    // The political paint is clipped to the real Japanese shoreline. Draw
-    // faction polygons in tactical coordinates while keeping that geo clip.
+    // Draw only faction ownership INSIDE the geographic coast polygons.
     ctx.save();
-    ctx.translate(tx, ty);
-    ctx.scale(sx, sy);
-    const clip = paths(ctx, shapes, a, c, d, e);
+    ctx.transform(A, C, B, D, tx, ty);
+    const clip = paths(ctx, shapes, a, b, c, d);
     if (clip) {
       clipPath(ctx, clip);
-      ctx.scale(1 / sx, 1 / sy);
-      ctx.translate(-tx, -ty);
-      ctx.globalAlpha = 0.72;
+      ctx.transform(invA, invC, invB, invD, invX, invY);
+      ctx.globalAlpha = 0.86;
       for (const [side, tiles] of japanColorGroups(g)) {
         const faction = g.factions?.[side] || E.FACTIONS[side];
         if (!faction?.color) continue;
@@ -641,19 +661,18 @@ const GEOGRAPHY = (() => {
           const y = R * 1.5 * t.r + R;
           if (x < left - R * 2 || x > right + R * 2 ||
               y < top - R * 2 || y > bottom + R * 2) continue;
-          tacticalHex(ctx, t, R + 0.8);
+          tacticalHex(ctx, t, R + .8);
         }
         ctx.fill();
       }
     }
     ctx.restore();
 
-    // Crisp shore outlines use the same source paths as Conquest; the width
-    // is normalized for the local map's much greater geographic magnification.
+    // Shoreline strokes follow actual Japan, not hex edges.
     ctx.save();
-    ctx.translate(tx, ty);
-    ctx.scale(sx, sy);
-    coast(ctx, shapes, a, c, d, e, scale * Math.min(sx, sy));
+    ctx.transform(A, C, B, D, tx, ty);
+    coast(ctx, shapes, a, b, c, d,
+      Math.max(0.5, scale * Math.hypot(A, C)));
     ctx.restore();
     return true;
   }

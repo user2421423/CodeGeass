@@ -164,6 +164,38 @@ function mapLayer(scale, detail, dpr, w, h) {
     y: offset.y,
   });
 }
+// Deep sea remains navigable but does not need tactical hex outlines. The
+// Japan theatre exposes only a couple of coastal water rings, like WC4's
+// land-focused regional maps; fleets can still cross the smooth blue water.
+let scenarioSeaCache = { tiles:null,revision:-1,shown:null };
+function scenarioSeaHexVisible(t) {
+  if (game.mode !== 'scenario' || game.scenario?.id !== 'invasion-japan' ||
+      t.terrain !== 'sea') return true;
+  const revision = game.mapRevision || 0;
+  if (scenarioSeaCache.tiles !== game.tiles || scenarioSeaCache.revision !== revision) {
+    const seen = new Uint8Array(game.tiles.length), queue = [];
+    for (const cell of game.tiles) if (cell.terrain !== 'sea') {
+      const id = cell.r * game.cols + cell.c;
+      seen[id] = 1;
+      queue.push([cell, 0]);
+    }
+    const shown = new Set();
+    for (let i = 0; i < queue.length; i++) {
+      const [cell, depth] = queue[i];
+      if (depth >= 2) continue;
+      for (const next of E.adjacent(game, cell)) {
+        if (next.terrain !== 'sea') continue;
+        const id = next.r * game.cols + next.c;
+        if (seen[id]) continue;
+        seen[id] = 1;
+        shown.add(id);
+        queue.push([next, depth + 1]);
+      }
+    }
+    scenarioSeaCache = { tiles:game.tiles, revision, shown };
+  }
+  return scenarioSeaCache.shown.has(t.r * game.cols + t.c);
+}
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
@@ -201,7 +233,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     ctx.lineWidth = (hexPixels >= 32 ? 0.82 : 0.55) / Math.max(scale, 0.25);
     for (const t of game.tiles) {
       const c = hexCenter(t);
-      if (!visible(c)) continue;
+      if (!visible(c) || !scenarioSeaHexVisible(t)) continue;
       ctx.strokeStyle =
         t.terrain === 'sea'
           ? `rgba(8,28,42,${(strength * 0.76).toFixed(3)})`
@@ -214,7 +246,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     // Small icons read as relief on a real atlas rather than stamped hex fills.
     if (R * scale >= 24)
       for (const t of game.tiles) {
-        if (t.terrain === 'plains') continue;
+        if (t.terrain === 'plains' || !scenarioSeaHexVisible(t)) continue;
         if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
         if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
         const c = hexCenter(t);

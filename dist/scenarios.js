@@ -5,8 +5,26 @@
 (function (root) {
   'use strict';
   const E = root.Knightmare || (typeof require === 'function' ? require('./engine.js') : null);
-  const COLS = 112, ROWS = 88;
+  // Compact, rotated regional board: the southwest-to-northeast island chain
+  // fills the map rather than wasting an ocean-filled latitude/longitude box.
+  const MASK_COLS = 112, MASK_ROWS = 88;
+  const COLS = 152, ROWS = 42;
   const BOUNDS = { west: 126.5, east: 146.5, north: 45.8, south: 29.0 };
+  const PROJECTION = {
+    centerLon:136.5, centerLat:37, angle:48,
+    uMin:-8.1, uMax:11.3, vMin:-3.8, vMax:2.8,
+  };
+  const theta=PROJECTION.angle*Math.PI/180, X=Math.cos(theta), Y=Math.sin(theta),
+    K=Math.cos(PROJECTION.centerLat*Math.PI/180);
+  function uv(lon,lat) {
+    const x=(lon-PROJECTION.centerLon)*K,y=lat-PROJECTION.centerLat;
+    return {u:x*X+y*Y,v:-x*Y+y*X};
+  }
+  function geographicAt(c,r) {
+    const u=PROJECTION.uMin+(c+.5*(r&1))*(PROJECTION.uMax-PROJECTION.uMin)/(COLS-1),
+      v=PROJECTION.vMax-r*(PROJECTION.vMax-PROJECTION.vMin)/(ROWS-1);
+    return {lon:PROJECTION.centerLon+(u*X-v*Y)/K,lat:PROJECTION.centerLat+u*Y+v*X};
+  }
   const LAND_BITS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAE8AAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAfwAAAAAAAAAAAAAAAAB/gABAAAAAAAAAAAAAAH/gAIAAAAAAAAAAAAAA//4QAAAAAAAAAAAAAAD///AAAAAAAAAAAAAAA///4AAAAAAAAAAAAAAB///4AAAAAAAAAAAAAEH///QAAAAAAAAAAAAAP///8AAAAAAAAAAAAAB///gAAAAAAAAAAAAAAP//8AAAAAAAAAAAAAADnD/AAAAAAAAAAAAAAAOAB8AAAAAAAAAAAAAAAcABgAAAAAAAAAAAAAAA+AAAAAAAAAAAAAAAAAHIAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAHgAAAAAAAAAAAAAAAABiAAAAAAAAAAAAAAAAAGIAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAP+AAAAAAAAAAAAAAAAAf+AAAAAAAAAAAAAAAAB/4AAAAAAAAAAAAAAAAH/wAAAAAAAAAAAAAAAAf/AAAAAAAAAAAAAAAAA/+AAAAAAAAAAAAAAAAH/wAAAAAAAAAAAAAAAAf/AAAAAAAAAAAAAAAAD/wAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAB/4AAAAAAAAAAAAAAAAH/wAAAAAAAAAAAAAAAg/4AAAAAAAAAAAAAAACD/gAAAAAAAAAAAAAAAR/8AAAAAAAAAAAAAAAAH/4AAAAAAAAAAAAAAEB//gAAAAAAAAAAAAABwH/+AAAAAAAAAAAAAAED//wAAAAAAAAAAAAAAZ///AAAAAAAAAAAAAAB///4AAAAAAAAAAAAAAP///gAAAAAAAAAAAAAD///8AAAAAAAAAAAAAAP///4AAAAAAAAAAAAAB////gAAAAAAAAAAAAAD////AAAAAAAAAAAMH8///8wAAAAAAAAAAB//////nAAAAAAAAAAAf/////w4AAAAAAAAAAD///+/5AAAAAAAAAAAA////2/MAAAAAAAAAAAH/+A/kAAAAAAAAAAAAF/4An/AAAAAAAAAAAAAfyD6fwAAAAAAAAAAAACzEfj8AAAAAAAAAAAAIYAf/HwAAAAAAAAAAAALiH/wcAAAAAAAAAAAAB/4/iAAAAAAAAAAAAAA//h4AAAAAAAAAAAAAAA7/ngAAAAAAAAAAAAAABP8MAAAAAAAAAAAAAAABfwAAAAAAAAAAAAAAAAN+AAAAAAAAAAAAAAAAAn4AAAAAAAAAAAAAAAAD/AAAAAAAAAAAAAAAAAH8AAAAAAAAAAAAAAAAAbwAAAAAAAAAAAAAAAAAvAAAAAAAAAAAAAAAAAOwAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
   // The original packed mask was missing its last 24 (ocean-only) bytes.
   // Pad explicitly and check the 112 × 88 bit length so truncated geography never silently loads.
@@ -85,14 +103,17 @@
   ];
   function landMask() {
     const bytes = (typeof atob === 'function' ? atob(LAND_BITS_COMPLETE) : Buffer.from(LAND_BITS_COMPLETE, 'base64').toString('latin1')) + '\0'.repeat(24);
-    if (bytes.length !== COLS * ROWS / 8) throw new Error('Japan landmask must contain exactly 1,232 bytes');
-    const mask = [];
-    for (let i=0;i<COLS*ROWS;i++) mask.push(!!(bytes.charCodeAt(i >> 3) & (128 >> (i & 7))));
+    if (bytes.length !== MASK_COLS * MASK_ROWS / 8)
+      throw new Error('Japan source landmask must contain exactly 1,232 bytes');
+    const mask=[];
+    for (let i=0;i<MASK_COLS*MASK_ROWS;i++)
+      mask.push(!!(bytes.charCodeAt(i>>3)&(128>>(i&7))));
     return mask;
   }
   function locate(lon,lat) {
-    const r = Math.max(0, Math.min(ROWS-1, Math.round((BOUNDS.north-lat)*(ROWS-1)/(BOUNDS.north-BOUNDS.south))));
-    const c = Math.max(0, Math.min(COLS-1, Math.round((lon-BOUNDS.west)*(COLS-1)/(BOUNDS.east-BOUNDS.west)-0.5*(r&1))));
+    const {u,v}=uv(lon,lat);
+    const r=Math.max(0,Math.min(ROWS-1,Math.round((PROJECTION.vMax-v)*(ROWS-1)/(PROJECTION.vMax-PROJECTION.vMin))));
+    const c=Math.max(0,Math.min(COLS-1,Math.round((u-PROJECTION.uMin)*(COLS-1)/(PROJECTION.uMax-PROJECTION.uMin)-.5*(r&1))));
     return {c,r};
   }
   function nearest(g, point, eligible, radius=12) {
@@ -136,6 +157,9 @@
   const islandNames = {
     'Sapporo':'hokkaido','Hakodate':'hokkaido','Asahikawa':'hokkaido','Kushiro':'hokkaido',
     'Takamatsu':'shikoku','Matsuyama':'shikoku','Kochi':'shikoku',
+    'Kitakyushu':'kyushu','Fukuoka':'kyushu','Nagasaki':'kyushu',
+    'Sasebo':'kyushu','Oita':'kyushu','Kumamoto':'kyushu',
+    'Miyazaki':'kyushu','Kagoshima':'kyushu',
   };
   function component(g, start) {
     const seen = new Set(), queue = [start];
@@ -212,18 +236,23 @@
     g.factions={bk:E.FACTIONS.bk};
     g.lineup={bk:E.ROSTER.bk};
     g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,
-      phase:'opening',groups:[],funding:{},bounds:BOUNDS};
-    g.tiles=mask.map((dry,i)=>{
-      const c=i%COLS,r=(i/COLS)|0,
-        lat=BOUNDS.north-r*(BOUNDS.north-BOUNDS.south)/(ROWS-1),
-        lon=BOUNDS.west+(c+.5*(r&1))*(BOUNDS.east-BOUNDS.west)/(COLS-1);
+      phase:'opening',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
+    // Sample the same geographic NOAA landmask into a higher-detail grid.
+    g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
+      const c=i%COLS,r=(i/COLS)|0,{lon,lat}=geographicAt(c,r),
+        sourceR=Math.round((BOUNDS.north-lat)*(MASK_ROWS-1)/(BOUNDS.north-BOUNDS.south)),
+        sourceC=Math.round((lon-BOUNDS.west)*(MASK_COLS-1)/(BOUNDS.east-BOUNDS.west)-.5*(sourceR&1));
+      const dry=sourceR>=0&&sourceR<MASK_ROWS&&sourceC>=0&&sourceC<MASK_COLS&&
+        mask[sourceR*MASK_COLS+sourceC];
       return {c,r,owner:null,terrain:dry?landscape(lon,lat,c,r):'sea'};
     });
-    // A 20-km hex otherwise bridges the 600-m Kanmon Strait between
-    // Kitakyushu and Shimonoseki. Open a navigable channel explicitly.
-    const kanmon=E.tile(g,24,61);
-    if(!kanmon || kanmon.terrain==='sea')throw new Error('Kanmon coast anchor changed');
-    kanmon.terrain='sea';
+    // At this resolution the Seto Inland Sea narrows to a single hex where
+    // the Yamaguchi shore touches Shikoku. Preserve water (no land bridge).
+    const seto=E.tile(g,31,16);
+    if(!seto||seto.terrain==='sea')throw new Error('Seto Sea alignment changed');
+    seto.terrain='sea';
+    const kanmon=E.tile(g,locate(130.89,34.01));
+    if(kanmon&&kanmon.terrain!=='sea')kanmon.terrain='sea';
     // Coast tiles support naval movement and amphibious landings.
     for (const t of g.tiles)
       if (t.terrain!=='sea' && E.adjacent(g,t).some(n=>n.terrain==='sea')) t.terrain='coast';
@@ -324,8 +353,11 @@
       if(!city)throw new Error('Missing scenario port city '+name);
       const at=E.adjacent(g,city).filter(t=>t.terrain==='sea'&&!portTaken.has(E.key(t)))
         .sort((a,b)=>E.adjacent(g,b).filter(t=>t.terrain==='sea').length-
-            E.adjacent(g,a).filter(t=>t.terrain==='sea').length)[0];
-      if(!at)continue; // Inland cities cannot host ports at this resolution.
+            E.adjacent(g,a).filter(t=>t.terrain==='sea').length)[0]
+        // Detailed islands have inland harbors like Hiroshima, one extra
+        // hex back from the coast. Keep the designated operational port.
+        ||nearest(g,city,t=>t.terrain==='sea'&&!portTaken.has(E.key(t)),4);
+      if(!at)throw new Error('No navigable harbor near '+name);
       city.portAt={c:at.c,r:at.r};city.portLevel=level;city.portOwner=city.owner;
       portTaken.add(E.key(at));
     }
