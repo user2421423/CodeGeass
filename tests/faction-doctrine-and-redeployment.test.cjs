@@ -102,8 +102,8 @@ test('eight two-frame Chinese frontline reinforcements spawn in their planned re
   ];
   const g = E.createGame('cf', 'normal', 'conquest', 42);
   const army = g.units.filter(u => u.side === 'cf' && !E.internal.isShip(u));
-  assert.equal(army.length, 53, 'Chinese land formations');
-  assert.equal(army.reduce((n, u) => n + u.stack, 0), 92, 'Chinese land frames');
+  assert.equal(army.length, 59, 'Chinese non-ship formations (including amphibious)');
+  assert.equal(army.reduce((n, u) => n + u.stack, 0), 102, 'Chinese non-ship frames (including amphibious)');
   const matched = new Set();
   for (const [lon, lat, klass] of points) {
     const target = E.hexOf(lon, lat);
