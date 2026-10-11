@@ -60,7 +60,7 @@
     if (s.portAt) return tile(g, s.portAt.c, s.portAt.r);
     // Baseline starting ports must stay on their exact original hexes.
     // Non-starting ports retain the normal neighbour-selection rules.
-    const anchored = COASTAL_PORT_HEXES[s.name];
+    const anchored = g.mode === 'conquest' ? COASTAL_PORT_HEXES[s.name] : null;
     if (anchored) {
       const fixed = tile(g, anchored[0], anchored[1]);
       if (!fixed || !isSea(fixed) || !adjacent(g, s).includes(fixed) ||

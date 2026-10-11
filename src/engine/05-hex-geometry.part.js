@@ -94,7 +94,7 @@
     return g.economy[side];
   }
   function alive(g, side) {
-    return (g?.mode === 'campaign' ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
+    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
   }
   // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
   function foe(g, a, b) {

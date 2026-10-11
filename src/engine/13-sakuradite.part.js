@@ -69,7 +69,7 @@
       a = SAKURADITE.allocation;
     if (!owner || !out) return {};
     if (g.mode === 'campaign' || !a.sites.includes(d.name) || !alive(g, owner)) return { [owner]: out };
-    const others = MAJORS.filter(s => s !== owner && alive(g, s)),
+    const others = (g.mode === 'scenario' ? g.order : MAJORS).filter(s => s !== owner && alive(g, s)),
       shares = { [owner]: out * (1 - a.share * others.length) };
     for (const s of others) shares[s] = out * a.share;
     return shares;

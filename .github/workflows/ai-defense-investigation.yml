@@ -1,16 +1,17 @@
-name: Defensive AI controlled investigation
+name: Defensive AI three-state comparison
 on:
   push:
     branches: ['feature/ai-multifront-defense-20261011']
     paths:
       - '.github/workflows/ai-defense-investigation.yml'
       - 'tools/ai_defense_variant.cjs'
+      - 'src/ai/02-fronts.part.js'
+      - 'dist/engine/ai.js'
       - 'tools/balance_sim.cjs'
+      - 'tests/ai-multifront-defense.test.cjs'
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   compare:
     name: ${{ matrix.variant }} / ${{ matrix.player }} / ${{ matrix.seed }}
@@ -20,7 +21,7 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [baseline, full, no-multicity, no-forecast, old-emergency]
+        variant: [baseline, previous, alert15, alert25]
         player: [britannia, eu, cf]
         seed: [42, 20261007, 92831, 314159]
     steps:
@@ -30,7 +31,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply controlled AI ablation
+      - name: Check rebuilt bundles and regressions
+        run: |
+          node tools/build_sources.cjs --check
+          node --test tests/*.test.cjs
+      - name: Apply controlled AI variant
         run: node tools/ai_defense_variant.cjs "${{ matrix.variant }}"
       - name: Simulate 50 turns
         run: |
@@ -39,7 +44,7 @@ jobs:
         run: cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: diagnosis-${{ matrix.variant }}-${{ matrix.player }}-${{ matrix.seed }}
+          name: triage-${{ matrix.variant }}-${{ matrix.player }}-${{ matrix.seed }}
           path: |
             balance-results.json
             balance-summary.md

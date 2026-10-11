@@ -104,6 +104,7 @@ function saveProfile(p) {
   }
 }
 function save() {
+  if (game.mode === 'scenario') return false; // Single-session mode: never overwrite conquest or campaign saves.
   if (game.phase !== game.player && !game.over) return false;
   try {
     localStorage.setItem(saveKey(), JSON.stringify(E.packSave(game)));

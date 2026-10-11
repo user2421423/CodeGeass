@@ -231,6 +231,16 @@ function fireFortressAt(s, p) {
 }
 function activateHex(p) {
   if (!p) return;
+  if (scenarioRoutingGroup && game.mode === 'scenario' && interactive()) {
+    const result=E.scenarios.japan.orderGroup(game,scenarioRoutingGroup,p);
+    if(result.ok) {
+      scenarioRoutingGroup=null;
+      refreshAndSave();
+      toast('Army group: '+result.assigned+' destinations assigned'+
+        (result.failed?' · '+result.failed+' units could not route':'')+'.',true);
+    } else toast(result.reason+' · Choose another hex or press Escape.',true);
+    return;
+  }
   if (strikeMode) {
     if (interactive()) confirmLaunch(p);
     return;

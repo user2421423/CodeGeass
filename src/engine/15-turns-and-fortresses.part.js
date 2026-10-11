@@ -263,6 +263,42 @@
   // armistice.
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
+    if (g.mode === 'scenario') {
+      const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
+      if (!contenders.includes(g.player)) {
+        // The player has lost, but two surviving rivals are still fighting:
+        // do not misleadingly award the war to the first faction in turn order.
+        // If one power really remains, that power is the actual victor.
+        const soleVictor = contenders.length === 1 ? contenders[0] : null;
+        g.over = {
+          winner: soleVictor,
+          eliminated: true,
+          eliminatedBy: g.fallen?.[g.player]?.by || null,
+          reason: soleVictor
+            ? 'Your last Japanese stronghold has fallen. The ' + FACTIONS[soleVictor].name +
+              ' is the last surviving power.'
+            : 'Your last Japanese stronghold has fallen. ' +
+              'The war continues between ' +
+              contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
+        };
+        return g.over;
+      }
+      // Resolve the player's elimination first, even if the surviving nation
+      // already holds enough objectives. It must remain a defeat for the player.
+      const objectiveWin = root.Knightmare.scenarios?.japan?.winner(g);
+      if (objectiveWin) {g.over=objectiveWin;return g.over;}
+      if (contenders.length === 1) {
+        g.over = {winner: contenders[0], reason: 'The invasion of Japan is over. One power controls every remaining stronghold.'};
+      } else if (g.turn > (g.scenario?.turnLimit || 60)) {
+        const score = s => g.stations.filter(c => c.owner === s).reduce((n,c) => n+c.tier,0);
+        const best = Math.max(...contenders.map(score));
+        const leaders = contenders.filter(s => score(s) === best);
+        g.over = {winner: leaders.length === 1 ? leaders[0] : 'draw',
+          reason: 'The regional war ends after 60 turns. Strategic city scores: ' +
+            contenders.map(s => (FACTIONS[s]?.short || s) + ' ' + score(s)).join(' · ') + '.'};
+      }
+      return g.over;
+    }
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -287,6 +323,9 @@
   }
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
+    if (g.mode === 'scenario')
+      return (root.Knightmare.scenarios?.japan?.objective(g) || 'Secure Japan') +
+        (g.scenario?.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.');
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
@@ -294,6 +333,7 @@
   }
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
+    if (g?.mode === 'scenario') return g.scenario?.title || 'Scenario · Japan';
     return 'World War · 2017 a.t.b.';
   }
 
