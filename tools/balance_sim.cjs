@@ -124,6 +124,22 @@ function playSide(g, side, counters) {
   E.aiProduction(g);
   const after = activeUnits(g, side).length;
   counters.produced[side] += Math.max(0, after - before);
+  // Capture the existing per-turn plan without recalculating it or changing AI decisions.
+  if ((g.turn <= 5 || g.turn % 5 === 0) && typeof E.aiPlan === 'function') {
+    const plan = E.aiPlan(g, side);
+    counters.frontLog.push({
+      turn: g.turn, side, units: activeUnits(g, side).length,
+      cityCount: g.stations.filter(s => s.owner === side).length,
+      fronts: (plan.fronts || []).map(f => ({
+        name: f.name, type: f.type, state: f.state, emergency: !!f.emergency,
+        vital: !!f.vital, endangeredCities: f.endangeredCities || 0,
+        menace: +(f.menace || 0).toFixed(2), present: +(f.present || 0).toFixed(2),
+        desired: +f.desiredStrength.toFixed(2), assigned: +f.assigned.toFixed(2),
+        target: +(f.target || 0).toFixed(2), priority: +f.priority.toFixed(2),
+        objectives: f.objectives.map(o => ({ name: o.name, defend: !!o.defend })),
+      })),
+    });
+  }
   // F.L.E.I.J.A. strikes this turn (aiProduction fires every ready warhead and records them in g.launches).
   for (const shot of g.launches || []) {
     const s = counters.strikes[side];
@@ -166,7 +182,10 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
       MAJORS.map(s => [s, { launched: 0, intercepted: 0, citiesErased: 0, depositsDestroyed: 0, unitsErased: 0 }]),
     ),
     strikeLog: [],
+    frontLog: [],
+    cityTransfers: [],
   };
+  const previousOwners = new Map(g.stations.map(s => [s.id, s.owner]));
 
   // Turn 1 begins with the selected player's units already refreshed, exactly
   // like the browser game. Rivals call beginTurn(..., false) before acting.
@@ -179,6 +198,14 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
       if (!g.over) playSide(g, side, counters);
     }
 
+    // Log territorial transfers so regional collapses can be distinguished from nuclear erasures.
+    for (const city of g.stations) {
+      const from = previousOwners.get(city.id);
+      if (from !== city.owner) {
+        counters.cityTransfers.push({ turn: g.turn, city: city.name, from, to: city.owner });
+        previousOwners.set(city.id, city.owner);
+      }
+    }
     if (wanted.has(g.turn)) timeline.push(snapshot(g));
     if (g.over) break;
 
