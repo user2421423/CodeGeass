@@ -292,11 +292,6 @@
   ];
   const PORTS = { 'Fukuoka':2,'Kitakyushu':2,'Nagasaki':2,'Sasebo':1,
     'Yokohama':2,'Kobe':2,'Osaka':2,'Shimonoseki':1,'Hiroshima':1 };
-  const OBJECTIVES = {
-    britannia: 'Secure Tokyo, Osaka and Fukuoka, and hold at least 60% of Japan’s strategic city value.',
-    bk: 'Secure Tokyo and Kyoto, and control at least 50% of Japan’s strategic city value.',
-    cf: 'Capture Tokyo and Osaka, hold Fukuoka, and control at least 55% of strategic city value.'
-  };
   function buildGroups(g) {
     return g.scenario.groups || [];
   }
@@ -385,7 +380,7 @@
     g.tech.neutral={};
     g.factions={bk:E.FACTIONS.bk};
     g.lineup={bk:E.ROSTER.bk};
-    g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,
+    g.scenario={id:'invasion-japan',title:'The Invasion of Japan',
       phase:'opening',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
     // Sample the same geographic NOAA landmask into a higher-detail grid.
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
@@ -570,21 +565,17 @@
   function strategicScore(g,side){
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
-  function objective(g,side=g.player){return OBJECTIVES[side]||'Hold strategic Japanese cities.';}
+  function objective(g,side=g.player){
+    return 'Conquer all '+CITIES.length+' Japanese cities ('+
+      g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).';
+  }
   function winner(g){
-    if(g.mode!=='scenario')return null;
-    const total=g.stations.reduce((n,s)=>n+s.tier,0);
-    const has=(name,side)=>g.stations.some(s=>s.name===name&&s.owner===side);
-    for(const side of SIDES) {
-      if(g.turn<10 || !g.stations.some(s=>s.owner===side))continue;
-      const required=side==='britannia'
-        ? ['Tokyo Settlement','Osaka','Fukuoka']
-        : side==='bk' ? ['Tokyo Settlement','Kyoto'] :
-          ['Tokyo Settlement','Osaka','Fukuoka'];
-      const fraction=side==='britannia'?.60:side==='bk'?.50:.55;
-      if(required.every(n=>has(n,side)) && strategicScore(g,side)>=total*fraction)
-        return {winner:side,reason:E.FACTIONS[side].name+' has achieved its strategic objectives in Japan.'};
-    }
+    if(g.mode!=='scenario' || g.scenario?.id!=='invasion-japan' ||
+       g.stations.length!==CITIES.length)return null;
+    for(const side of SIDES)
+      if(g.stations.every(s=>s.owner===side))
+        return {winner:side,reason:E.FACTIONS[side].name+' has conquered all '+
+          CITIES.length+' cities in Japan.'};
     return null;
   }
   const api={id:'invasion-japan',title:'The Invasion of Japan',cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,create,onTurn,objective,winner,strategicScore,orderGroup};
