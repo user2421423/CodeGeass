@@ -101,11 +101,11 @@ test('Nine legal ports, fourteen waterborne formations and Japanese Sakuradite s
   assert.ok(E.income(g, 'cf').sakuradite > 0);
 });
 
-test('Opening economy: Britannia leads and stockpiles are exactly two turns of income', () => {
+test('Opening economy: China and Black Knights earn around 300 credits and China holds four turns of reserves', () => {
   const normal = {
     britannia: { credits: 400, industry: 220, science: 42, sakuradite: 28 },
-    bk:         { credits: 200, industry: 115, science: 24, sakuradite: 18 },
-    cf:         { credits: 270, industry: 155, science: 28, sakuradite: 22 },
+    bk:         { credits: 300, industry: 175, science: 32, sakuradite: 12 },
+    cf:         { credits: 320, industry: 185, science: 34, sakuradite: 15 },
   };
   for (const player of japan.sides) {
     for (const difficulty of ['normal', 'hard', 'challenge']) {
@@ -118,7 +118,7 @@ test('Opening economy: Britannia leads and stockpiles are exactly two turns of i
             [resource, Math.round(amount * factor)]));
         assert.deepEqual(E.income(g, side), expected);
         for (const [resource, amount] of Object.entries(expected))
-          assert.equal(g.economy[side][resource], 2 * amount);
+          assert.equal(g.economy[side][resource], (side === 'cf' ? 4 : 2) * amount);
       }
     }
   }
