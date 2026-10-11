@@ -733,7 +733,11 @@
       .filter(c => c.capital || c.threat > 0)
       .sort((a, b) => b.capital - a.capital || b.s.tier - a.s.tier || b.threat - a.threat);
     for (const { s, threat: t, capital } of cities) {
-      const need = capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2));
+      // Conquest needs a mobile field army: cap noncapital city guards and
+      // leave real emergencies under protection. Campaign guard behavior is unchanged.
+      const need = g.mode === 'campaign'
+        ? capital ? (t > 0 ? 4 : 2) : Math.min(3, Math.ceil(t / 2))
+        : capital ? (t > 0 ? 3 : 2) : Math.min(2, Math.max(1, Math.ceil(t / 3)));
       const near = nearby(s, capital ? aiRange(g).capitalGuard : aiRange(g).cityGuard);
       let assigned = 0;
       for (const u of near) {
@@ -746,6 +750,9 @@
     if (g.mode !== 'campaign')
       for (const s of g.stations) {
         if (s.owner !== side || !(s.fort || (s.portLevel >= 2 && s.portOwner === side))) continue;
+        // Quiet strongholds are covered by the mobile army, not a fixed
+        // garrison that can never join a counteroffensive.
+        if (threat(s) <= 0 && !foes.some(f => approachingThreat(g, f, s))) continue;
         if (Object.values(taken).some(t => t.id === s.id)) continue;
         for (const u of nearby(s, aiRange(g).cityGuard)) {
           if (guard(u, { c: s.c, r: s.r, id: s.id })) break;
@@ -755,7 +762,10 @@
     for (const d of g.sites || []) {
       if (d.city != null || d.owner !== side) continue;
       const t = threat(d),
-        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) : d.base >= 30 ? 1 : 0;
+        // Unthreatened mines no longer permanently immobilize a formation.
+        // Defend them with fixed troops once an attack becomes possible.
+        need = t > 0 ? Math.min(2, Math.ceil(t / 2)) :
+          g.mode === 'campaign' && d.base >= 30 ? 1 : 0;
       const near = nearby(d, aiRange(g).mineGuard);
       let assigned = 0;
       for (const u of near) {
@@ -1053,14 +1063,27 @@
       plan.warhead = false;
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
-      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
+      warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite,
+      // A nearby, genuinely dangerous enemy cannot be countered by a warhead
+      // that is still several turns from completion. Guarantee a conventional
+      // recruiting budget while strategic development continues if affordable.
+      conventionalCrisis = g.mode !== 'campaign' && (memo.fronts || []).some(f =>
+        f.type === 'defensive' && f.emergency && f.immediateMenace > 0 &&
+        f.arrivingTwo < f.immediateMenace * 0.75);
+    plan.conventionalCrisis = conventionalCrisis;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
-    const reserve = defenseSaving
+    const strategicReserve = defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
-      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
-    const reserveInd = defenseSaving
-      ? Math.min(e.industry, ELIMINATOR.cost.industry)
-      : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
+      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60,
+      strategicReserveInd = defenseSaving
+        ? Math.min(e.industry, ELIMINATOR.cost.industry)
+        : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
+    const reserve = conventionalCrisis
+        ? Math.min(strategicReserve, Math.max(0, e.credits - ordinaryBudget.credits))
+        : strategicReserve,
+      reserveInd = conventionalCrisis
+        ? Math.min(strategicReserveInd, Math.max(0, e.industry - ordinaryBudget.industry))
+        : strategicReserveInd;
     const reserveSak = plan.eliminator
       ? ELIMINATOR.cost.sakuradite
       : plan.warhead ? FLEIJA.cost.sakuradite : 0;

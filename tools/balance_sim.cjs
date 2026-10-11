@@ -129,6 +129,11 @@ function playSide(g, side, counters) {
     const plan = E.aiPlan(g, side);
     counters.frontLog.push({
       turn: g.turn, side, units: activeUnits(g, side).length,
+      guards: Object.keys(plan.guards || {}).length,
+      recoveries: plan.recoveries?.size || 0,
+      availableMobile: activeUnits(g, side).filter(u => !plan.guards?.[u.id] &&
+        !plan.recoveries?.has(u.id) && !E.internal.isShip(u)).length,
+      conventionalCrisis: !!g.ai?.[side]?.conventionalCrisis,
       cityCount: g.stations.filter(s => s.owner === side).length,
       fronts: (plan.fronts || []).map(f => ({
         name: f.name, type: f.type, state: f.state, emergency: !!f.emergency,

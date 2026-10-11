@@ -255,3 +255,30 @@ test('outnumbered frontier detachments select an uncontested same-landmass fallb
   assert.equal(retreat.state, 'regrouping');
   assert(retreat.fallback && retreat.seeds.some(([p]) => p === retreat.fallback));
 });
+
+test('quiet Conquest strongholds and major mines do not freeze mobile formations', () => {
+  const { g } = setup();
+  const safe = g.stations.find(s => s.name === 'Capital');
+  safe.fort = true;
+  g.sites.push({ id: 1234, owner: 'cf', name: 'Safe Mine', base: 40,
+    c: 5, r: 15, city: null });
+  const clone = { ...g, ai: {}, stations: g.stations.slice(),
+    sites: g.sites.slice(), units: g.units.slice() };
+  const memo = E.aiPlan(clone, 'cf');
+  assert(Object.values(memo.guards || {}).every(g =>
+    g.site !== 1234), 'a safe deposit should not consume a permanent field-army guard');
+  assert(Object.values(memo.guards || {}).some(g => g.id === safe.id),
+    'the national capital remains protected');
+});
+
+test('emergency mobilization protects an ordinary recruiting budget', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  g.phase = 'cf';
+  const capital = g.stations.find(s => s.capitalOf === 'cf');
+  assert(capital);
+  for (let i = 0; i < 6; i++)
+    E.newUnit(g, E.typeFor('britannia', 'heavy', g), 'britannia',
+      capital.c + 2 + (i % 2), capital.r + Math.floor(i / 2));
+  E.aiProduction(g);
+  assert.equal(g.ai.cf.conventionalCrisis, true);
+});
