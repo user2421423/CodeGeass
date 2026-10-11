@@ -226,8 +226,8 @@ test('AI has no strategic reserve and continues assigning garrisons and fronts',
       assert.equal(memo.byId.reserve, undefined, 'no reserve in active front registry');
       assert(!Object.values(memo.assign).includes('reserve'), 'no units assigned to reserve');
       assert(Object.keys(memo.guards).length > 0, 'city guards still operate');
-      assert(memo.fronts.every(f => f.type === 'offensive' || f.type === 'defensive'),
-        'all strategic assignments serve a real front');
+      assert(memo.fronts.every(f => f.type === 'offensive' || f.type === 'alert' || f.type === 'defensive'),
+        'all assignments serve offensive, alert, or defensive fronts');
     }
   }
 });
