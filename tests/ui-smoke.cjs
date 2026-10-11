@@ -168,6 +168,17 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(conquestTint.captured, null, 'a captured Borneo tile must remove the uniform Federation tint');
   assert.equal(conquestTint.restored, 'cf', 'restored Borneo regains uniform Federation tint');
 
+  // Regional scenarios use the Conquest GSHHG atlas, not a terrain hex mosaic.
+  const japanAtlas = run(`(() => {
+    const g=E.scenarios.japan.create('cf','normal',17);
+    const painter=document.createElement('canvas').getContext('2d');
+    return GEOGRAPHY.paint(painter,g,0,SQ*R*(g.cols+1),0,R*1.5*(g.rows+1),0.85);
+  })()`);
+  assert.equal(japanAtlas, true, 'scenario painting uses the geographic Japan coastline');
+  const regionSource = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
+  assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
+    'Japan faction ownership is clipped to the realistic island outlines');
+
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
   assert(renderingText.includes('rgba(42,154,225,0.19)') && renderingText.includes('rgba(245,197,91,0.15)'),
     'ambiguous coast hexes are tinted with their true gameplay terrain on hover');
