@@ -11,6 +11,14 @@ if(kind==='priorLatest') {
 }
 else if(kind==='priorPhase')
   ai=execFileSync('git',['show','764cbb85a907b02c7c560275d99b5c419b22edcf:dist/engine/ai.js'],{encoding:'utf8'});
+else if(kind==='noGuards' || kind==='noCrisis') {
+  const source=kind==='noGuards'?'src/ai/03-guard-assignment.part.js':'src/ai/06-production.part.js',
+    current=fs.readFileSync(source,'utf8'),
+    previous=execFileSync('git',['show',
+      '764cbb85a907b02c7c560275d99b5c419b22edcf:'+source],{encoding:'utf8'});
+  if(ai.split(current).length!==2)throw Error('Cannot isolate '+kind);
+  ai=ai.replace(current,previous);
+}
 else if(kind==='baseline')
   ai=execFileSync('git',['show','d4dcd3469f7d14d8a2edcef016be16247c8054e6:dist/engine/ai.js'],{encoding:'utf8'});
 else if(kind==='noRetreat'){
