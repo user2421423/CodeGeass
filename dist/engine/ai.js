@@ -869,7 +869,7 @@
     // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
     // starting every charge they can afford (up to ELIMINATOR.max) and saving for the next one. With no free lab-3
     // city outside their charges' cover, step 3 raises a lab for one (defensePrep).
-    const wantsDefense = () => eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
+    const wantsDefense = () => g.mode !== 'scenario' && eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
     let defenseCity = null;
     while (wantsDefense() && (defenseCity = eliminatorCity(g, side)) && !eliminatorReason(g, defenseCity)) {
       startEliminator(g, defenseCity.id);
@@ -881,7 +881,7 @@
     // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
     // and starts the project in its best-lab city.
     const warCity =
-      !plan.eliminator &&
+      g.mode !== 'scenario' && !plan.eliminator &&
       hasFleija(g, side) &&
       !g.stations.some(s => s.project?.side === side) &&
       !(g.arsenal?.[side] > 0)
@@ -945,7 +945,8 @@
         if (upgraded) break;
       }
       const options = bases
-        .flatMap(s => ['factory', 'lab'].map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
+        .flatMap(s => (g.mode === 'scenario' ? ['factory'] : ['factory', 'lab'])
+          .map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
         .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < FLEIJA.labTurn))
         .sort((a, b) => a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
       const pick = options[0];
