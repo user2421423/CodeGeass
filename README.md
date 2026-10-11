@@ -240,6 +240,10 @@ cities. Hard and Challenge increase rival income and starting stockpiles
 together, preserving the four-turn Chinese reserve and two-turn reserves
 for the other factions at every difficulty.
 
-These values have passed scenario economic and capture regression tests,
-but **full-length balance simulations of the revised economy have not yet
-been performed**.
+These values passed all scenario economic and capture regression checks.
+Two preliminary 60-turn AI-vs-AI simulations of the revised economy finished
+successfully: the Britannia-selected seed 101 game ended with a Britannian
+armistice victory (32 cities at turn 60); the China-selected seed 202 game
+ended with a Chinese strategic victory (30 cities at turn 60). These are
+early smoke/balance indicators only: a larger multi-seed sample, including
+Black Knights games, is still needed before calling the scenario balanced.
