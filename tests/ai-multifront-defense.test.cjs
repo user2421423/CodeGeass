@@ -111,7 +111,7 @@ test('projected multi-sector pressure on a capital caps offensive commitments fo
   const g = E.createGame('britannia', 'normal', 'conquest', 123);
   g.phase = 'cf';
   const memo = E.aiPlan(g, 'cf');
-  const mobile = g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval &&
+  const mobile = E.internal.allUnits(g).filter(u => u.side === 'cf' && !E.internal.isShip(u) &&
     !memo.guards[u.id] && !u.hold && !memo.recoveries?.has(u.id))
     .reduce((n,u) => n + E.unitStrength(u),0);
   assert(memo.fronts.some(f => f.projectedVital && f.projectedMenace > 0),
