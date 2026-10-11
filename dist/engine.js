@@ -3327,8 +3327,6 @@
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     if (g.mode === 'scenario') {
-      const objectiveWin = root.Knightmare.scenarios?.japan?.winner(g);
-      if (objectiveWin) {g.over=objectiveWin;return g.over;}
       const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       if (!contenders.includes(g.player)) {
         // The player has lost, but two surviving rivals are still fighting:
@@ -3346,7 +3344,12 @@
               'The war continues between ' +
               contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
         };
-      } else if (contenders.length === 1) {
+      }
+      // Resolve the player's elimination first, even if the surviving nation
+      // already holds enough objectives. It must remain a defeat for the player.
+      const objectiveWin = root.Knightmare.scenarios?.japan?.winner(g);
+      if (objectiveWin) {g.over=objectiveWin;return g.over;}
+      if (contenders.length === 1) {
         g.over = {winner: contenders[0], reason: 'The invasion of Japan is over. One power controls every remaining stronghold.'};
       } else if (g.turn > (g.scenario?.turnLimit || 60)) {
         const score = s => g.stations.filter(c => c.owner === s).reduce((n,c) => n+c.tier,0);
