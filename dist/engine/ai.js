@@ -109,7 +109,7 @@
   // Experimental, faction-neutral targeting preference, used by Conquest, Scenario and Campaign.
   // Override on each game (e.g. g.aiPlayerPriorityBonus = 0 for baseline simulations).
   // It changes decisions, never unit stats, income, diplomacy, legal movement or fog of war.
-  const PLAYER_PRIORITY_DEFAULT = 0.4;
+  const PLAYER_PRIORITY_DEFAULT = 0.6;
   function playerPriorityBonus(g, side) {
     if (!g?.player || side === g.player || !foe(g, g.player, side)) return 0;
     const value = Number(g.aiPlayerPriorityBonus ?? PLAYER_PRIORITY_DEFAULT);
