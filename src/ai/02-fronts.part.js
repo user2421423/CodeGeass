@@ -63,8 +63,7 @@
       Number.isFinite(scenarioTravel(g, u, f)));
     if (!fronts.length) return null;
     const understrength = fronts.filter(f => f.members.length < SCENARIO_COLUMN.maxUnits &&
-      (f.assigned < f.desiredStrength ||
-        (f.members.length < 3 && (f.anchor.shield > 0 || unitAt(g, f.anchor)))));
+      f.assigned < f.desiredStrength);
     const withRoom = fronts.filter(f => f.members.length < SCENARIO_COLUMN.maxUnits);
     const candidates = understrength.length ? understrength : withRoom.length ? withRoom : fronts;
     // Keep a column intact unless its target falls or a substantially
