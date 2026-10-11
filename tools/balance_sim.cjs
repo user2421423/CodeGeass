@@ -28,6 +28,7 @@ function parseArgs(argv) {
     output: 'balance-results.json',
     summary: 'balance-summary.md',
     quiet: false,
+    equalAi: false,
   };
   const value = flag => {
     const i = argv.indexOf(flag);
@@ -53,6 +54,7 @@ function parseArgs(argv) {
   if (value('--output')) out.output = value('--output');
   if (value('--summary')) out.summary = value('--summary');
   out.quiet = argv.includes('--quiet');
+  out.equalAi = argv.includes('--equal-ai');
   for (const p of out.players) if (!MAJORS.includes(p)) throw new Error(`Unknown player faction: ${p}`);
   for (const d of out.difficulties) if (!DIFFICULTIES.includes(d)) throw new Error(`Unknown difficulty: ${d}`);
   out.snapshots = [...new Set(out.snapshots)].sort((a, b) => a - b);
@@ -147,9 +149,11 @@ function playSide(g, side, counters) {
   }
 }
 
-function simulate({ player, difficulty, seed, maxTurns, snapshotTurns }) {
+function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi = false }) {
   const started = process.hrtime.bigint();
   const g = E.createGame(player, difficulty, 'conquest', seed >>> 0);
+  // Use rival AI preparation rules for every power in an observer simulation.
+  if (equalAi) g.player = '__observer__';
   const wanted = new Set(snapshotTurns);
   const timeline = [];
   const start = snapshot(g);
@@ -167,7 +171,7 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns }) {
   // Turn 1 begins with the selected player's units already refreshed, exactly
   // like the browser game. Rivals call beginTurn(..., false) before acting.
   while (!g.over && g.turn <= maxTurns) {
-    playSide(g, g.player, counters);
+    playSide(g, g.order[0], counters);
 
     for (const side of g.order.slice(1)) {
       if (g.over || !E.alive(g, side)) continue;
@@ -180,7 +184,7 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns }) {
 
     g.turn++;
     // This also resolves the live game's 120-turn armistice when turn 121 begins.
-    E.beginTurn(g, g.player, true);
+    E.beginTurn(g, g.order[0], true);
   }
 
   const end = snapshot(g);
@@ -280,7 +284,9 @@ function markdown(report) {
     '',
     `Runs per scenario: **${report.config.runs}** · Max turns: **${report.config.maxTurns}** · Base seed: **${report.config.seed}**`,
     '',
-    '> Every faction is AI-controlled. Difficulty matches the live game: the selected player faction is unboosted while its rivals receive Hard/Challenge bonuses.',
+    report.config.equalAi
+      ? '> Every faction uses identical rival AI preparation rules (observer simulation; no player-specific AI exemptions). Normal difficulty has no faction bonuses.'
+      : '> Every faction is AI-controlled. Difficulty matches the live game: the selected player faction is unboosted while its rivals receive Hard/Challenge bonuses.',
     '',
     '| Player | Difficulty | Games | Player wins | Avg turns | B wins | E.U. wins | C.F. wins | Draw | Unresolved |',
     '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|',
@@ -358,6 +364,7 @@ function main() {
           seed,
           maxTurns: config.maxTurns,
           snapshotTurns: config.snapshots,
+          equalAi: config.equalAi,
         });
         results.push(result);
         done++;

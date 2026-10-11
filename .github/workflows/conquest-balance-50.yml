@@ -30,7 +30,7 @@ jobs:
         run: node --test tests/conquest-economy-parity.test.cjs
       - name: Run 50-turn all-AI simulation
         run: |
-          node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 10,20,30,40,50 --output balance-results.json --summary balance-summary.md --quiet
+          node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 10,20,30,40,50 --output balance-results.json --summary balance-summary.md --quiet --equal-ai
       - name: Summarize result
         run: cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
