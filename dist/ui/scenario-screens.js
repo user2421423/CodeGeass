@@ -4,9 +4,9 @@ let scenarioSide = 'britannia';
 let scenarioDifficulty = 'normal';
 let scenarioRoutingGroup = null;
 const SCENARIO_BLURBS = {
-  britannia: 'Defend Area 11 and contain the Chinese landings while cooperating temporarily with the Black Knights.',
+  britannia: 'Defend Honshu and contain the Chinese Federation at the Kanmon Strait while cooperating temporarily with the Black Knights.',
   bk: 'Command Zero’s resistance enclaves in central Japan. For now the Black Knights are temporarily allied to Britannia.',
-  cf: 'Expand the Kyushu beachhead and break through toward Honshu with the Federation invasion armies.'
+  cf: 'Command all of Kyushu as the Federation invasion base and push north into Honshu.'
 };
 function scenarioDialog() {
   const model=E.scenarios?.japan;
@@ -36,7 +36,7 @@ function scenarioDialog() {
     '</select><p class="mode-note">Hard and Challenge strengthen rival starting formations and income.</p>'+
     '</div><div><label>Alliance</label><p>Britannia and the Black Knights are allied until turn 10.</p></div></div>'+
     '<div class="dialog-footer"><small class="notice">'+model.cols+' × '+model.rows+' hexes · '+preview.stations.length+' cities · '+preview.units.length+
-    ' formations · No saves. Stage one: geography and starting forces. Britannia and the Black Knights split on turn 10.</small>'+
+    ' formations · No saves. Accurate coastlines and regional armies. Britannia and the Black Knights split on turn 10.</small>'+
     '<button class="primary" data-action="start-scenario">Command '+E.FACTIONS[scenarioSide].short+'</button></div>'+
     '</section></div>';
   const canvas=modal.querySelector('#scenario-preview-map');
