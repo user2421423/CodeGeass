@@ -5,66 +5,155 @@ const E = require('../dist/engine.js');
 require('../dist/engine/ai.js');
 const japan = require('../dist/scenarios.js');
 
-test('Japan scenario generates consistent 112 x 88 terrain and a complete city ownership map', () => {
+const city = (g, name) => g.stations.find(s => s.name === name);
+function landReachable(g, origin, destination) {
+  const start = city(g, origin), finish = city(g, destination);
+  const seen = new Set([E.key(start)]), queue = [start];
+  for (let i = 0; i < queue.length; i++) {
+    if (E.key(queue[i]) === E.key(finish)) return true;
+    for (const n of E.adjacent(g, queue[i])) {
+      const key = E.key(n);
+      if (n.terrain !== 'sea' && !seen.has(key)) {
+        seen.add(key);
+        queue.push(n);
+      }
+    }
+  }
+  return false;
+}
+
+test('Japan fills all 9,856 hexes, preserves geographic terrain and places cities legally', () => {
   const g = japan.create('britannia', 'normal', 11);
   assert.equal(g.mode, 'scenario');
   assert.equal(g.wrap, false);
   assert.equal(g.cols, 112);
   assert.equal(g.rows, 88);
-  assert.equal(g.tiles.length, 112 * 88);
-  assert.ok(g.tiles.some(t => t.terrain === 'sea'));
-  assert.ok(g.tiles.some(t => t.terrain !== 'sea'));
+  assert.equal(g.tiles.length, 9856);
   assert.equal(g.stations.length, 44);
-  assert.equal(new Set(g.stations.map(s => s.c + ':' + s.r)).size, g.stations.length);
-  assert.equal(new Set(g.units.map(u => u.c + ':' + u.r)).size, g.units.length);
+  assert.equal(new Set(g.stations.map(s => E.key(s))).size, 44);
+  assert.equal(new Set(g.units.map(u => E.key(u))).size, g.units.length);
+  assert.ok(g.tiles.some(t => t.terrain === 'mountain'));
+  assert.ok(g.tiles.some(t => t.terrain === 'forest'));
+  assert.ok(g.tiles.some(t => t.terrain === 'coast'));
+  assert.ok(g.tiles.some(t => t.terrain === 'sea'));
   assert.ok(g.stations.every(s => E.tile(g, s.c, s.r).terrain !== 'sea'));
-  assert.ok(g.units.every(u => E.tile(g,u.c,u.r).terrain !== 'sea'));
-  assert.ok(g.tiles.filter(t=>t.terrain!=='sea').every(t=>t.provinceCity != null && t.owner));
+  assert.ok(g.units.every(u => E.TYPES[u.type].naval || E.tile(g, u.c, u.r).terrain !== 'sea'));
+  assert.ok(g.tiles.every(t => t.terrain === 'sea' || (t.owner && t.provinceCity != null)));
 });
 
-test('All three playable factions use the same starting map and distinct forces', () => {
-  const expected = {britannia: [35,32], bk:[5,13], cf:[4,21]};
-  const origins=[];
-  for (const side of japan.sides) {
-    const g=japan.create(side,'normal',11);
-    assert.equal(g.player,side);
-    assert.equal(g.order[0],side);
+test('Takamatsu stays on Shikoku, straits and other islands are not accidental land bridges', () => {
+  const g = japan.create('britannia', 'normal', 22);
+  assert.equal(landReachable(g, 'Takamatsu', 'Matsuyama'), true);
+  assert.equal(landReachable(g, 'Takamatsu', 'Kobe'), false);
+  assert.equal(landReachable(g, 'Kitakyushu', 'Shimonoseki'), false);
+  assert.equal(landReachable(g, 'Sapporo', 'Aomori'), false);
+  assert.equal(E.tile(g, 24, 61).terrain, 'sea');
+});
+
+test('All three playable factions share one map, can act and have the expected forces', () => {
+  const expected = { britannia: [35, 38], bk: [5, 13], cf: [4, 29] };
+  const starts = [];
+  for (const player of japan.sides) {
+    const g = japan.create(player, 'normal', 11);
+    assert.equal(g.player, player);
+    assert.equal(g.order[0], player);
     assert.deepEqual(new Set(g.order), new Set(japan.sides));
-    assert.equal(E.alive(g, 'bk'),true);
-    assert.equal(E.foe(g,'britannia','bk'),false);
-    assert.equal(E.foe(g,'britannia','cf'),true);
-    assert.equal(E.foe(g,'bk','cf'),true);
-    for(const s of japan.sides){
-      assert.deepEqual([g.stations.filter(c=>c.owner===s).length,
-        g.units.filter(u=>u.side===s).length], expected[s]);
+    assert.equal(E.alive(g, 'bk'), true);
+    assert.equal(E.foe(g, 'britannia', 'bk'), false);
+    assert.equal(E.foe(g, 'britannia', 'cf'), true);
+    assert.equal(E.foe(g, 'bk', 'cf'), true);
+    assert.equal(g.units.length, 80);
+    for (const side of japan.sides)
+      assert.deepEqual([
+        g.stations.filter(s => s.owner === side).length,
+        g.units.filter(u => u.side === side).length
+      ], expected[side]);
+    starts.push(g.tiles.map(t => t.terrain).join(','));
+    assert.equal(E.checkVictory(g), null);
+  }
+  assert.equal(starts[0], starts[1]);
+  assert.equal(starts[1], starts[2]);
+});
+
+test('Scenario initialization never constructs a disposable world conquest', () => {
+  const before = E.createGame;
+  E.createGame = () => { throw Error('Unexpected world initialization'); };
+  try {
+    assert.equal(japan.create('bk').tiles.length, 9856);
+  } finally {
+    E.createGame = before;
+  }
+});
+
+test('Nine legal ports, fourteen waterborne formations and Japanese Sakuradite sites', () => {
+  const g = japan.create('cf');
+  const ports = g.stations.filter(s => s.portAt);
+  assert.equal(ports.length, 9);
+  assert.equal(new Set(ports.map(s => E.key(s.portAt))).size, ports.length);
+  assert.ok(ports.every(s => E.tile(g, s.portAt.c, s.portAt.r).terrain === 'sea'));
+  const ships = g.units.filter(u => E.TYPES[u.type].naval);
+  assert.equal(ships.length, 14);
+  assert.ok(ships.every(u => E.tile(g, u.c, u.r).terrain === 'sea'));
+  assert.deepEqual(g.sites.map(d => d.name), ['Mount Fuji', 'Hokkaido', 'Kyushu']);
+  assert.ok(E.income(g, 'bk').sakuradite > 0);
+  assert.ok(E.income(g, 'cf').sakuradite > 0);
+});
+
+test('Difficulty selector changes rival formation strength while preserving the map', () => {
+  const normal = japan.create('bk', 'normal', 11);
+  const hard = japan.create('bk', 'hard', 11);
+  const challenge = japan.create('bk', 'challenge', 11);
+  const strength = g => g.units.filter(u => u.side !== g.player).reduce((n, u) => n + u.stack, 0);
+  assert.ok(strength(hard) > strength(normal));
+  assert.ok(strength(challenge) > strength(hard));
+  assert.deepEqual(normal.stations.map(s => E.key(s)), hard.stations.map(s => E.key(s)));
+});
+
+test('Army group orders assign actual unit destinations, not just visual labels', () => {
+  const g = japan.create('bk', 'normal', 11);
+  assert.ok(g.scenario.groups.length >= 20);
+  const group = g.scenario.groups.find(x => x.side === 'bk' && x.origin === 'Kyoto');
+  assert.ok(group);
+  const t = city(g, 'Tokyo Settlement');
+  const result = japan.orderGroup(g, group.id, t);
+  assert.equal(result.ok, true);
+  assert.ok(result.assigned > 0);
+  assert.ok(group.units.some(id => g.units.find(u => u.id === id)?.goto));
+  assert.equal(japan.orderGroup(g, 'invalid-id', t).ok, false);
+});
+
+test('Alliance changes exactly once on turn 10 and faction victory goals differ', () => {
+  const g = japan.create('britannia', 'normal', 11);
+  g.turn = 9;
+  assert.equal(japan.onTurn(g), false);
+  assert.equal(E.foe(g, 'britannia', 'bk'), false);
+  g.turn = 10;
+  assert.equal(japan.onTurn(g), true);
+  assert.equal(E.foe(g, 'britannia', 'bk'), true);
+  assert.equal(japan.onTurn(g), false);
+  assert.equal(g.scenario.phase, 'three-way-war');
+  assert.notEqual(japan.objective(g, 'britannia'), japan.objective(g, 'cf'));
+  assert.notEqual(japan.objective(g, 'bk'), japan.objective(g, 'britannia'));
+});
+
+test('Controlling required regional strongholds actually wins a scenario', () => {
+  const g = japan.create('cf', 'normal', 11);
+  g.turn = 14;
+  g.scenario.phase = 'three-way-war';
+  for (const s of g.stations) s.owner = 'cf';
+  assert.equal(E.checkVictory(g).winner, 'cf');
+});
+
+test('Both AI enemies can produce and act without crashing in all three modes', () => {
+  for (const player of japan.sides) {
+    const g = japan.create(player, 'normal', 21);
+    for (const side of g.order.slice(1)) {
+      E.beginTurn(g, side, false);
+      E.aiProduction(g);
+      for (const id of g.units.filter(u => u.hp > 0 && u.side === side).map(u => u.id))
+        E.aiOrder(g, id);
     }
-    origins.push(g.tiles.map(t=>t.terrain).join(','));
-    assert.equal(E.checkVictory(g),null);
+    E.beginTurn(g, g.player, true);
+    assert.equal(E.checkVictory(g), null);
   }
-  assert.equal(origins[0],origins[1]);
-  assert.equal(origins[0],origins[2]);
-});
-
-test('The temporary alliance breaks exactly once on turn 10', () => {
-  const g=japan.create('britannia','normal',11);
-  g.turn=9;
-  assert.equal(japan.onTurn(g),false);
-  assert.equal(E.foe(g,'britannia','bk'),false);
-  g.turn=10;
-  assert.equal(japan.onTurn(g),true);
-  assert.equal(E.foe(g,'britannia','bk'),true);
-  assert.equal(japan.onTurn(g),false);
-  assert.equal(g.scenario.phase,'three-way-war');
-});
-
-test('Non-player scenario factions can resolve their first AI turns', () => {
-  const g=japan.create('bk','normal',21);
-  for(const side of g.order.slice(1)){
-    E.beginTurn(g,side,false);
-    E.aiProduction(g);
-    const ids=g.units.filter(u=>u.hp>0 && u.side===side).map(u=>u.id);
-    for(const id of ids) E.aiOrder(g,id);
-  }
-  E.beginTurn(g,g.player,true);
-  assert.equal(E.checkVictory(g),null);
 });
