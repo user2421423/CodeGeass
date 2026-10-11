@@ -45,6 +45,18 @@ test('All three playable factions use the same starting map and distinct forces'
   assert.equal(origins[0],origins[2]);
 });
 
+test('The temporary alliance breaks exactly once on turn 10', () => {
+  const g=japan.create('britannia','normal',11);
+  g.turn=9;
+  assert.equal(japan.onTurn(g),false);
+  assert.equal(E.foe(g,'britannia','bk'),false);
+  g.turn=10;
+  assert.equal(japan.onTurn(g),true);
+  assert.equal(E.foe(g,'britannia','bk'),true);
+  assert.equal(japan.onTurn(g),false);
+  assert.equal(g.scenario.phase,'three-way-war');
+});
+
 test('Non-player scenario factions can resolve their first AI turns', () => {
   const g=japan.create('bk','normal',21);
   for(const side of g.order.slice(1)){
