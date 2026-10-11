@@ -123,7 +123,7 @@
   // Objectives within `radius` hexes form one front. Every emergency and the `max` best other fronts are fought at once,
   // units keep their front for `sticky` turns, and an offensive gathers within `rally` hexes before attacking
   // (or after `wait` turns). Garrisons and defensive fronts respond to threats; no army is held in strategic reserve.
-  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65 };
+  const FRONT = { radius: 16, defenseRadius: 7, near: 14, max: 6, sticky: 4, far: 60, rally: 4, wait: 3, pull: 15, stray: 4, floor: 0.25, emergencyRatio: 1, emergencyMinShare: 0.2, emergencyMaxShare: 0.35, approachingWeight: 0.6, multiCityBonus: 12, alertShare: 0.25, alertRecovery: 2, emergencyCombinedShare: 0.65, exposedExpeditionShare: 0.17, normalExpeditionShare: 0.4 };
   // Planning strength of a formation: frames in the stack, health and generation; commanders and Elite Forces count more.
   function unitStrength(u) {
     const t = TYPES[u.type];
@@ -350,6 +350,8 @@
     // 4. Emergency fronts get priority; remaining forces are shared across both
     // offensive and routine defensive fronts by priority and actual strength need.
     const alerts = fronts.filter(f => f.type === 'alert'),
+      exposed = fronts.filter(f => f.menace > 0 && f.type !== 'offensive').length >= 2,
+      expeditionLimit = army * (exposed ? FRONT.exposedExpeditionShare : FRONT.normalExpeditionShare),
       open = fronts.filter(f => f.type === 'offensive' || (f.type === 'defensive' && !f.emergency)),
       weight = new Map(open.map((f, i) => [f, [0.5, 0.25, 0.15, 0.1][i] || 0.1]));
     let pot = army,
@@ -404,8 +406,24 @@
       for (const f of capped) pot -= f.target = f.desiredStrength;
       left = left.filter(f => !capped.includes(f));
     }
+    // A remote amphibious expedition cannot claim most of the field army while
+    // multiple homeland sectors are exposed. Carry excess allocation forward to
+    // nearby land offensives instead of making defensive cities pay for the invasion.
+    let reclaimed = 0;
+    for (const f of open) if (f.overseas && f.target > expeditionLimit) {
+      reclaimed += f.target - expeditionLimit;
+      f.target = expeditionLimit;
+    }
+    const landOffensives = open.filter(f => f.type === 'offensive' && !f.overseas);
+    if (reclaimed > 0 && landOffensives.length)
+      for (const f of landOffensives) {
+        const grant = Math.min(reclaimed, Math.max(0, f.desiredStrength - f.target));
+        f.target += grant;
+        reclaimed -= grant;
+        if (reclaimed <= 0) break;
+      }
     // The pool goes to emergencies first, then the fronts furthest below their
-    // targets. Leftover units join an active front, preferably an offensive.
+    // targets. Leftover units join active fronts, respecting expedition caps.
     const pool = units.filter(u => !assign[u.id]),
       take = (f, range = Infinity) => {
         let best = null,
@@ -429,12 +447,17 @@
     }
     // If targets are already filled, prefer sending extra strength to an
     // offensive instead of accumulating units in routine defensive positions.
-    const offensive = fronts.filter(f => f.type === 'offensive' || f.emergency),
-      overflow = offensive.length ? offensive : fronts;
+    const offensive = fronts.filter(f => f.type === 'offensive' && !f.overseas),
+      localDefense = fronts.filter(f => f.type === 'alert' || f.emergency),
+      overflow = offensive.length ? offensive : localDefense.length ? localDefense : fronts;
     for (const u of pool) {
       if (assign[u.id]) continue;
-      const f = byDist(at(u), overflow)[0];
-      if (f) give(u, f);
+      const local = byDist(at(u), localDefense)[0],
+        preferred = byDist(at(u), overflow)[0],
+        nearbyCover = local && local.assigned < local.target &&
+          (!preferred || dist(g, at(u), local.anchor) + FRONT.pull < dist(g, at(u), preferred.anchor));
+      const pick = nearbyCover ? local : preferred;
+      if (pick) give(u, pick);
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
     // ATTACKING; an attack that has lost over half its force falls back to regroup. Defensive fronts hold.
