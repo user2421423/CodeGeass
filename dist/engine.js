@@ -1983,6 +1983,13 @@
     }
     if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
+    // Regional operations receive fixed off-map military funding in addition
+    // to city output. Captured cities still add (or remove) their normal
+    // earnings. Do not give stipends to eliminated powers.
+    const support = g.mode === 'scenario' && alive(g, side) &&
+      g.stations.some(s => s.owner === side) ? g.scenario?.funding?.[side] : null;
+    if (support) for (const resource of ['credits','industry','science','sakuradite'])
+      total[resource] += support[resource] || 0;
     return total;
   }
   // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
