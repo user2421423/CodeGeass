@@ -8,6 +8,9 @@
   const COLS = 112, ROWS = 88;
   const BOUNDS = { west: 126.5, east: 146.5, north: 45.8, south: 29.0 };
   const LAND_BITS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAE8AAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAAAAHwAAAAAAAAAAAAAAAAAfwAAAAAAAAAAAAAAAAB/gABAAAAAAAAAAAAAAH/gAIAAAAAAAAAAAAAA//4QAAAAAAAAAAAAAAD///AAAAAAAAAAAAAAA///4AAAAAAAAAAAAAAB///4AAAAAAAAAAAAAEH///QAAAAAAAAAAAAAP///8AAAAAAAAAAAAAB///gAAAAAAAAAAAAAAP//8AAAAAAAAAAAAAADnD/AAAAAAAAAAAAAAAOAB8AAAAAAAAAAAAAAAcABgAAAAAAAAAAAAAAA+AAAAAAAAAAAAAAAAAHIAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAHgAAAAAAAAAAAAAAAABiAAAAAAAAAAAAAAAAAGIAAAAAAAAAAAAAAAAAfgAAAAAAAAAAAAAAAAP+AAAAAAAAAAAAAAAAAf+AAAAAAAAAAAAAAAAB/4AAAAAAAAAAAAAAAAH/wAAAAAAAAAAAAAAAAf/AAAAAAAAAAAAAAAAA/+AAAAAAAAAAAAAAAAH/wAAAAAAAAAAAAAAAAf/AAAAAAAAAAAAAAAAD/wAAAAAAAAAAAAAAAAP/AAAAAAAAAAAAAAAAB/4AAAAAAAAAAAAAAAAH/wAAAAAAAAAAAAAAAg/4AAAAAAAAAAAAAAACD/gAAAAAAAAAAAAAAAR/8AAAAAAAAAAAAAAAAH/4AAAAAAAAAAAAAAEB//gAAAAAAAAAAAAABwH/+AAAAAAAAAAAAAAED//wAAAAAAAAAAAAAAZ///AAAAAAAAAAAAAAB///4AAAAAAAAAAAAAAP///gAAAAAAAAAAAAAD///8AAAAAAAAAAAAAAP///4AAAAAAAAAAAAAB////gAAAAAAAAAAAAAD////AAAAAAAAAAAMH8///8wAAAAAAAAAAB//////nAAAAAAAAAAAf/////w4AAAAAAAAAAD///+/5AAAAAAAAAAAA////2/MAAAAAAAAAAAH/+A/kAAAAAAAAAAAAF/4An/AAAAAAAAAAAAAfyD6fwAAAAAAAAAAAACzEfj8AAAAAAAAAAAAIYAf/HwAAAAAAAAAAAALiH/wcAAAAAAAAAAAAB/4/iAAAAAAAAAAAAAA//h4AAAAAAAAAAAAAAA7/ngAAAAAAAAAAAAAABP8MAAAAAAAAAAAAAAABfwAAAAAAAAAAAAAAAAN+AAAAAAAAAAAAAAAAAn4AAAAAAAAAAAAAAAAD/AAAAAAAAAAAAAAAAAH8AAAAAAAAAAAAAAAAAbwAAAAAAAAAAAAAAAAAvAAAAAAAAAAAAAAAAAOwAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+  // The original packed mask was missing its last 24 (ocean-only) bytes.
+  // Pad explicitly and check the 112 × 88 bit length so truncated geography never silently loads.
+  const LAND_BITS_COMPLETE = LAND_BITS + 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
   const SIDES = ['britannia', 'bk', 'cf'];
   // [city, longitude, latitude, owner, tier, fortress]; each is snapped to dry land.
   const CITIES = [
@@ -71,7 +74,8 @@
     ['cf','Sasebo','scout',3],
   ];
   function landMask() {
-    const bytes = typeof atob === 'function' ? atob(LAND_BITS) : Buffer.from(LAND_BITS, 'base64').toString('latin1');
+    const bytes = typeof atob === 'function' ? atob(LAND_BITS_COMPLETE) : Buffer.from(LAND_BITS_COMPLETE, 'base64').toString('latin1');
+    if (bytes.length !== COLS * ROWS / 8) throw new Error('Japan landmask must contain exactly 1,232 bytes');
     const mask = [];
     for (let i=0;i<COLS*ROWS;i++) mask.push(!!(bytes.charCodeAt(i >> 3) & (128 >> (i & 7))));
     return mask;
@@ -92,16 +96,100 @@
       }
     return best;
   }
+
+  // Approximate mountain corridors rather than the old random scatter of mountain tiles.
+  // These zones represent Hokkaido's central range, Tohoku spine, Japan's central Alps,
+  // the Kii mountains, Shikoku's interior and the volcanic spine of Kyushu.
+  const RIDGES = [
+    [142.8,43.8,1.1,0.85],[143.4,42.9,1.25,0.85],
+    [140.65,39.5,0.65,1.45],[140.55,37.5,0.55,1.1],
+    [138.15,36.3,1.15,0.85],[137.15,35.65,1.15,0.85],
+    [136.1,34.4,0.75,0.48],[133.45,33.65,1.18,0.48],
+    [131.05,32.2,0.75,0.95],
+  ];
+  const LOWLANDS = [
+    [139.7,35.75,0.88,0.65],[136.9,35.1,0.7,0.48],
+    [135.55,34.7,0.85,0.5],[130.65,33.65,0.68,0.45],
+    [141.3,43.05,0.77,0.6],[140.85,38.3,0.55,0.55],
+  ];
+  function landscape(lon,lat,c,r) {
+    const ellipses = (list, factor) => Math.max(0,...list.map(([x,y,dx,dy]) =>
+      Math.exp(-(((lon-x)/dx)**2+((lat-y)/dy)**2)*factor)));
+    const mountain = ellipses(RIDGES,1.6);
+    const lowland = ellipses(LOWLANDS,1.7);
+    const variation = ((c*11+r*17+(c*r)%19)%29)/29;
+    if(mountain>0.60 && lowland<0.52) return 'mountain';
+    if(mountain>0.26 && lowland<0.74) return variation<0.79?'forest':'mountain';
+    if(lat>40.5 && lowland<0.6) return variation<0.49?'forest':'plains';
+    return 'plains';
+  }
+  const islandNames = {
+    'Sapporo':'hokkaido','Hakodate':'hokkaido','Asahikawa':'hokkaido','Kushiro':'hokkaido',
+    'Takamatsu':'shikoku','Matsuyama':'shikoku','Kochi':'shikoku',
+  };
+  function component(g, start) {
+    const seen = new Set(), queue = [start];
+    if(!start) return seen;
+    seen.add(E.key(start));
+    for(let i=0;i<queue.length;i++)
+      for(const t of E.adjacent(g,queue[i])) {
+        const k=E.key(t);
+        if(t.terrain!=='sea' && !seen.has(k)){seen.add(k);queue.push(t);}
+      }
+    return seen;
+  }
+  const NAVAL_START = [
+    // side, port, unit model, count; naval forces begin at sea, never on cities.
+    ['cf','Fukuoka','cf_carrier',2],
+    ['cf','Kitakyushu','shui_gun_ru_ii',3],
+    ['cf','Nagasaki','shui_gun_ru',3],
+    ['britannia','Yokohama','carrier_battleship',1],
+    ['britannia','Kobe','portman_ii',2],
+    ['britannia','Shimonoseki','portman',2],
+    ['britannia','Osaka','carrier_battleship',1],
+  ];
+  const PORTS = { 'Fukuoka':2,'Kitakyushu':2,'Nagasaki':2,'Sasebo':1,
+    'Yokohama':2,'Kobe':2,'Osaka':2,'Shimonoseki':1,'Hiroshima':1 };
+  const OBJECTIVES = {
+    britannia: 'Secure Tokyo, Osaka and Fukuoka, and hold at least 60% of Japan’s strategic city value.',
+    bk: 'Secure Tokyo and Kyoto, and control at least 50% of Japan’s strategic city value.',
+    cf: 'Capture Tokyo and Osaka, hold Fukuoka, and control at least 55% of strategic city value.'
+  };
+  function buildGroups(g) {
+    return g.scenario.groups || [];
+  }
+  function orderGroup(g, id, point) {
+    if(g.mode!=='scenario' || g.phase!==g.player) return {ok:false,reason:'Not your turn'};
+    const group=buildGroups(g).find(v=>v.id===id&&v.side===g.player);
+    if(!group)return {ok:false,reason:'Army group not found'};
+    let assigned=0,failed=0;
+    for(const unitId of group.units){
+      const u=g.units.find(v=>v.id===unitId && v.hp>0 && v.side===g.player);
+      if(!u)continue;
+      const res=E.setGoto(g,u.id,point.c,point.r);
+      if(res.ok)assigned++;else failed++;
+    }
+    if(assigned)group.destination={c:point.c,r:point.r};
+    return {ok:assigned>0,assigned,failed,reason:assigned?'': 'No group unit can reach that hex'};
+  }
   function create(player='britannia',difficulty='normal',seed=246801) {
     if (!SIDES.includes(player)) throw new Error('Unsupported scenario faction: '+player);
-    // Reuse initialized engine state, but replace the world geography and all world-war entities.
-    const g=E.createGame('britannia',difficulty,'conquest',seed);
+    // Dedicated lightweight initializer: do not generate the 13,680-hex conquest world,
+    // global cities or world-army order of battle merely to discard it.
+    if(!E.DIFFICULTIES[difficulty])difficulty='normal';
+    const g={
+      game:'knightmare',version:1,rulesVersion:E.RULES_VERSION,player,difficulty,
+      mode:'scenario',era:'invasion-japan',order:[player,...SIDES.filter(s=>s!==player)],
+      seed,wrap:false,cols:COLS,rows:ROWS,turn:1,phase:player,nextId:1,
+      tiles:[],units:[],stations:[],sites:[],log:[],strikes:[],launches:[],
+      fallen:{},economy:{},tech:{},officers:Object.fromEntries(
+        Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
+      roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,
+      eliteDeployed:{},arsenal:{britannia:0,bk:0,cf:0},
+      automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}}
+    };
     const mask=landMask();
-    g.mode='scenario';g.era='invasion-japan';g.wrap=false;g.cols=COLS;g.rows=ROWS;
-    g.player=player;g.phase=player;g.order=[player,...SIDES.filter(s=>s!==player)];
-    g.turn=1;g.over=null;g.fallen={};g.nextId=1;g.mapRevision=0;
-    g.stations=[];g.units=[];g.sites=[];g.strikes=[];g.launches=[];
-    g.arsenal={britannia:0,bk:0,cf:0};
+    g.mapRevision=0;
     g.teams={britannia:'defenders',bk:'defenders',cf:'invaders'};
     g.economy={};
     g.tech={};
@@ -110,17 +198,28 @@
     g.tech.neutral={};
     g.factions={bk:E.FACTIONS.bk};
     g.lineup={bk:E.ROSTER.bk};
-    g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,phase:'opening'};
+    g.scenario={id:'invasion-japan',title:'The Invasion of Japan',turnLimit:60,phase:'opening',groups:[]};
     g.tiles=mask.map((dry,i)=>{
-      const c=i%COLS,r=(i/COLS)|0;
-      const hill=(c*17+r*11+((c*r)%13))%23;
-      return {c,r,owner:null,terrain:dry?(hill<5?'mountain':hill<12?'forest':'plains'):'sea'};
+      const c=i%COLS,r=(i/COLS)|0,
+        lat=BOUNDS.north-r*(BOUNDS.north-BOUNDS.south)/(ROWS-1),
+        lon=BOUNDS.west+(c+.5*(r&1))*(BOUNDS.east-BOUNDS.west)/(COLS-1);
+      return {c,r,owner:null,terrain:dry?landscape(lon,lat,c,r):'sea'};
     });
+    // A 20-km hex otherwise bridges the 600-m Kanmon Strait between
+    // Kitakyushu and Shimonoseki. Open a navigable channel explicitly.
+    const kanmon=E.tile(g,24,61);
+    if(!kanmon || kanmon.terrain==='sea')throw new Error('Kanmon coast anchor changed');
+    kanmon.terrain='sea';
     // Coast tiles support naval movement and amphibious landings.
     for (const t of g.tiles)
       if (t.terrain!=='sea' && E.adjacent(g,t).some(n=>n.terrain==='sea')) t.terrain='coast';
+    const hokkaidoStart=nearest(g,locate(141.35,43.06),t=>t.terrain!=='sea',4);
+    const shikokuStart=nearest(g,locate(132.77,33.84),t=>t.terrain!=='sea',4);
+    const islandTiles={hokkaido:component(g,hokkaidoStart),shikoku:component(g,shikokuStart)};
     for (const [name,lon,lat,owner,tier,fort=false] of CITIES) {
-      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea' && !g.stations.some(s=>s.c===t.c && s.r===t.r),8);
+      const required=islandTiles[islandNames[name]];
+      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea' &&
+        (!required||required.has(E.key(t))) && !g.stations.some(s=>s.c===t.c && s.r===t.r),8);
       if (!at) throw new Error('No playable Japan land tile near '+name);
       const capital=name==='Tokyo Settlement' || name==='Kyoto' || name==='Fukuoka';
       const shield=fort?400:120+60*tier;
@@ -143,6 +242,17 @@
       }
       if(city){t.owner=city.owner;t.provinceCity=city.id;}
     }
+    // Each staging command becomes a real, clickable army group with owned unit IDs.
+    // Multiple branches staged at the same city belong to the same formation.
+    const groupMap=new Map();
+    const groupFor=(side,cityName)=>{
+      const key=side+':'+cityName;
+      if(!groupMap.has(key)) {
+        const gr={id:'army-'+groupMap.size,side,name:cityName+' Command',origin:cityName,units:[]};
+        groupMap.set(key,gr);g.scenario.groups.push(gr);
+      }
+      return groupMap.get(key);
+    };
     for (const [side,cityName,cls,count,commander] of ARMY_GROUPS) {
       const city=g.stations.find(s=>s.name===cityName);
       if (!city) throw new Error('Missing army staging city '+cityName);
@@ -153,7 +263,44 @@
         const type=E.typeFor(side,cls,g);
         const cmd=i===0 && commander?commander:null;
         const unit=E.newUnit(g,type,side,at.c,at.r,i===0?2:1,cmd);
+        groupFor(side,cityName).units.push(unit.id);
         if (cmd && g.officers[cmd]) {unit.cmdRank=g.officers[cmd].rank;unit.hp=E.maxHP(unit);}
+      }
+    }
+    // Port hexes must be adjacent sea and not already occupied by another port.
+    const portTaken=new Set();
+    for(const [name,level] of Object.entries(PORTS)){
+      const city=g.stations.find(s=>s.name===name);
+      if(!city)throw new Error('Missing scenario port city '+name);
+      const at=E.adjacent(g,city).filter(t=>t.terrain==='sea'&&!portTaken.has(E.key(t)))
+        .sort((a,b)=>E.adjacent(g,b).filter(t=>t.terrain==='sea').length-
+            E.adjacent(g,a).filter(t=>t.terrain==='sea').length)[0];
+      if(!at)continue; // Inland cities cannot host ports at this resolution.
+      city.portAt={c:at.c,r:at.r};city.portLevel=level;city.portOwner=city.owner;
+      portTaken.add(E.key(at));
+    }
+    for(const [side,cityName,type,count] of NAVAL_START){
+      if(!E.TYPES[type] || !E.TYPES[type].naval)throw new Error('Unknown naval model '+type);
+      const city=g.stations.find(s=>s.name===cityName);
+      if(!city)throw new Error('Missing naval staging city '+cityName);
+      const fleet={id:'fleet-'+g.scenario.groups.length,side,name:cityName+' Fleet',origin:cityName,units:[]};
+      for(let i=0;i<count;i++){
+        const at=nearest(g,city,t=>t.terrain==='sea'&&!E.unitAt(g,t) &&
+          !g.stations.some(s=>s.portAt?.c===t.c&&s.portAt?.r===t.r),9);
+        if(!at)throw new Error('No sea staging tile near '+cityName);
+        fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
+      }
+      g.scenario.groups.push(fleet);
+    }
+    // Difficulty makes rival starting formations and resources stronger.
+    if(difficulty!=='normal'){
+      const challenge=difficulty==='challenge';
+      for(const side of SIDES.filter(s=>s!==player)){
+        const scale=challenge?1.6:1.3;
+        g.economy[side].credits=Math.round(g.economy[side].credits*scale);
+        g.economy[side].industry=Math.round(g.economy[side].industry*scale);
+        for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).entries())
+          if(challenge||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
       }
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
@@ -170,7 +317,27 @@
     E.log(g, 'Turn 10: the temporary Britannia–Black Knights alliance collapses. All three powers are now at war.', g.player);
     return true;
   }
-  const api={id:'invasion-japan',title:'The Invasion of Japan',cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,create,onTurn};
+  function strategicScore(g,side){
+    return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
+  }
+  function objective(g,side=g.player){return OBJECTIVES[side]||'Hold strategic Japanese cities.';}
+  function winner(g){
+    if(g.mode!=='scenario')return null;
+    const total=g.stations.reduce((n,s)=>n+s.tier,0);
+    const has=(name,side)=>g.stations.some(s=>s.name===name&&s.owner===side);
+    for(const side of SIDES) {
+      if(g.turn<10 || !g.stations.some(s=>s.owner===side))continue;
+      const required=side==='britannia'
+        ? ['Tokyo Settlement','Osaka','Fukuoka']
+        : side==='bk' ? ['Tokyo Settlement','Kyoto'] :
+          ['Tokyo Settlement','Osaka','Fukuoka'];
+      const fraction=side==='britannia'?.60:side==='bk'?.50:.55;
+      if(required.every(n=>has(n,side)) && strategicScore(g,side)>=total*fraction)
+        return {winner:side,reason:E.FACTIONS[side].name+' has achieved its strategic objectives in Japan.'};
+    }
+    return null;
+  }
+  const api={id:'invasion-japan',title:'The Invasion of Japan',cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,create,onTurn,objective,winner,strategicScore,orderGroup};
   E.scenarios={...(E.scenarios||{}),japan:api};
   if (typeof module!=='undefined') module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
