@@ -9,6 +9,7 @@ on:
       - 'dist/engine/ai.js'
       - 'tools/balance_sim.cjs'
       - 'tests/ai-multifront-defense.test.cjs'
+      - 'tests/core.test.cjs'
   workflow_dispatch:
 permissions:
   contents: read
