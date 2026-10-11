@@ -11,6 +11,19 @@ if(kind==='priorLatest') {
 }
 else if(kind==='baseline')
   ai=execFileSync('git',['show','d4dcd3469f7d14d8a2edcef016be16247c8054e6:dist/engine/ai.js'],{encoding:'utf8'});
+else if(kind==='noRetreat'){
+  const anchor='retreatRatio: 0.35';
+  if(ai.split(anchor).length!==2)throw Error('Missing retreat threshold');
+  ai=ai.replace(anchor,'retreatRatio: 0.08');
+}
+else if(kind==='noProduction'){
+  const path='src/ai/06-production.part.js',
+    current=fs.readFileSync(path,'utf8'),
+    baseline=execFileSync('git',['show',
+      'd4dcd3469f7d14d8a2edcef016be16247c8054e6:'+path],{encoding:'utf8'});
+  if(ai.split(current).length!==2)throw Error('Cannot isolate production AI');
+  ai=ai.replace(current,baseline);
+}
 else if(kind==='previous')
   ai=execFileSync('git',['show','b62b70db0e52084a088fc89a593a20373cbfb788:dist/engine/ai.js'],{encoding:'utf8'});
 else if(kind==='alert15'){
