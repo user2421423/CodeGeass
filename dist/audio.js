@@ -4,12 +4,13 @@ const SFX = (() => {
   let ac = null,
     master = null,
     noiseBuffer = null,
-    enabled = true;
+    enabled = true,
+    aiTurn = false;
   try {
     enabled = localStorage.getItem(KEY) !== 'off';
   } catch (e) {}
   function ensure() {
-    if (!enabled) return null;
+    if (!enabled || aiTurn) return null;
     const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
     if (!AC) return null;
     if (!ac) {
@@ -184,12 +185,21 @@ const SFX = (() => {
   // Browsers only start audio after a user gesture.
   if (typeof document !== 'undefined' && typeof window !== 'undefined' && window.addEventListener)
     window.addEventListener('pointerdown', () => ensure(), { once: true });
+  function updateMaster() {
+    // Silence both newly requested sounds and sounds still decaying from the previous turn.
+    if (master) master.gain.value = enabled && !aiTurn ? 0.5 : 0;
+  }
   return {
     get enabled() {
       return enabled;
     },
+    setAiTurn(active) {
+      aiTurn = !!active;
+      updateMaster();
+    },
     toggle() {
       enabled = !enabled;
+      updateMaster();
       try {
         localStorage.setItem(KEY, enabled ? 'on' : 'off');
       } catch (e) {}

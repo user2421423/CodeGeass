@@ -465,9 +465,6 @@ document.addEventListener('click', e => {
     case 'end':
       endTurn();
       break;
-    case 'end-confirm':
-      endTurn(true);
-      break;
     case 'fleija':
       strikeMode = !strikeMode && interactive();
       render();
@@ -569,6 +566,11 @@ document.addEventListener('keydown', e => {
   }
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
   const k = e.key.toLowerCase();
+  if (k === 'e' && !e.altKey && !e.ctrlKey && !e.metaKey && interactive()) {
+    e.preventDefault();
+    if (!e.repeat) endTurn();
+    return;
+  }
   if (k === 'n') {
     e.preventDefault();
     nextFleet();

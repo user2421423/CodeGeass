@@ -165,6 +165,7 @@ function resetSession() {
   aiToken++;
   aiSide = null;
   skipAI = false;
+  SFX.setAiTurn(false);
   hqBack = 'game';
   strikeMode = false;
   carrierHoldOpen = null;

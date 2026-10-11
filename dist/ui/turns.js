@@ -1,13 +1,7 @@
 /* Knightmare Conquest UI: Ending a turn: rival-turn playback with Skip, surrender notices, rewards and the result screen. */
 'use strict';
-async function endTurn(force = false) {
+async function endTurn() {
   if (!interactive()) return;
-  const ready = ownUnits().filter(u => E.hasOrders(game, u)).length;
-  if (ready && !force) {
-    modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="End turn"><div class="eyebrow">Review orders</div><h2>${ready} units still have orders.</h2><p>You can end the turn now and leave them holding position, or return to issue their orders.</p><div class="dialog-footer"><button data-action="close">Return to the map</button><button class="primary" data-action="end-confirm">End turn</button></div></section></div>`;
-    focusDialog();
-    return;
-  }
   closeModal();
   undoStack = [];
   strikeMode = false;
@@ -15,6 +9,7 @@ async function endTurn(force = false) {
   const token = ++aiToken;
   // Rival turns always play at full speed (no per-move pauses or combat animations).
   skipAI = true;
+  SFX.setAiTurn(true);
   for (const side of game.order.slice(1)) {
     if (!E.alive(game, side) || game.over) continue;
     aiSide = side;
@@ -97,6 +92,7 @@ async function endTurn(force = false) {
   }
   aiSide = null;
   if (token !== aiToken) return;
+  SFX.setAiTurn(false);
   let armed = false,
     orders = null,
     scenarioNotice = false;

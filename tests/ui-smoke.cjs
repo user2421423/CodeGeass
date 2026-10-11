@@ -287,11 +287,28 @@ const modal = () => node('modal-root').innerHTML;
     assert.equal(run('getSave().player'), side);
     assert(node('app').innerHTML.includes('World War'), `${side}: conquest HUD renders`);
 
-    await run('endTurn(true)');
+    await run('endTurn()');
     assert.equal(run('game.turn'), 2, `${side}: one complete turn resolves`);
     assert.equal(run('game.phase'), side, `${side}: control returns to the player`);
     assert.equal(run('getSave().turn'), 2, `${side}: turn is saved`);
   }
+
+  // Ending a turn never asks for confirmation, even if unspent orders remain.
+  run('newGame()');
+  assert(run('ownUnits().filter(u => E.hasOrders(game, u)).length') > 0,
+    'conquest begins with orders that previously triggered the review dialog');
+  run('globalThis.__audioTransitions = []; globalThis.__origSetAiTurn = SFX.setAiTurn; SFX.setAiTurn = x => { __audioTransitions.push(x); __origSetAiTurn(x); };');
+  await run('endTurn()');
+  assert.equal(run('game.turn'), 2, 'unconfirmed end turn advances immediately');
+  assert(!modal().includes('Review orders'), 'the review-orders screen never appears');
+  assert.deepEqual([...run('__audioTransitions')], [true, false], 'AI is muted only during rival playback');
+  run('SFX.setAiTurn = __origSetAiTurn; delete globalThis.__origSetAiTurn; delete globalThis.__audioTransitions;');
+
+  run('startScenario("cf")');
+  await run('endTurn()');
+  assert.equal(run('game.turn'), 2, 'scenario also ends its turn without confirmation');
+  assert.equal(run('game.phase'), 'cf', 'scenario hands control back to the player');
+  assert(!modal().includes('Review orders'), 'scenario never opens the review dialog');
 
   // Unit actions belong to the bottom dock; the only unit drawer is carrier cargo.
   run('newGame()');
@@ -363,6 +380,16 @@ const modal = () => node('modal-root').innerHTML;
     events.keydown({ key, repeat, target: { tagName, dataset: {} }, preventDefault() { prevented = true; } });
     return prevented;
   };
+  // E uses the same immediate end-turn action as the button, but not while typing or in a dialog.
+  run('globalThis.__realEndTurn = endTurn; globalThis.__endKeyCount = 0; endTurn = () => { __endKeyCount++; };');
+  assert.equal(carrierKey('e'), true, 'E is recognized as the end-turn shortcut');
+  assert.equal(carrierKey('E'), true, 'uppercase E also works');
+  assert.equal(carrierKey('e', 'BODY', true), true, 'repeated E is consumed');
+  assert.equal(carrierKey('e', 'INPUT'), false, 'typing E in an input is not intercepted');
+  assert.equal(run('__endKeyCount'), 2, 'holding E does not end multiple turns');
+  run('helpDialog()');
+  assert.equal(carrierKey('e'), false, 'E is disabled while a dialog is open');
+  run('closeModal(); endTurn = __realEndTurn; delete globalThis.__realEndTurn; delete globalThis.__endKeyCount;');
   assert.equal(carrierKey('d'), true, 'D is handled for a selected friendly carrier');
   assert(!node('side').innerHTML.includes('Deploy Knightmares'), 'D closes the open carrier drawer');
   assert.equal(carrierKey('D'), true, 'uppercase D is recognized');
@@ -549,7 +576,11 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run('goalState({alive:["tohdoh"]})'), 'lost',
     'a defeated required survivor is marked lost');
 
-  console.log('PASS: scripts load, all three conquest factions complete a turn, and a campaign mission boots.');
+  await run('endTurn()');
+  assert(!modal().includes('Review orders'), 'campaign missions also bypass the orders confirmation');
+  assert(run('game.turn >= 2 || !!game.over'), 'campaign turn resolves or the mission ends');
+
+  console.log('PASS: conquest, scenario and campaign end turns without dialogs; E shortcut and AI mute verified.');
 })().catch(err => {
   console.error(err);
   process.exitCode = 1;
