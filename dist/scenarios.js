@@ -94,13 +94,24 @@
     ['bk','Narita','scout',2,'ohgi'],
     ['bk','Nagano','medium',2],
     ['bk','Matsue','assault',2],
-    ['cf','Fukuoka','medium',4,'xingke'],
-    ['cf','Fukuoka','assault',4],
-    ['cf','Kitakyushu','medium',3,'xianglin'],
-    ['cf','Kitakyushu','rocket',2],
-    ['cf','Nagasaki','light',3],
-    ['cf','Nagasaki','support',2],
-    ['cf','Sasebo','scout',3],
+    // Spread the expeditionary corps across all eight friendly Kyushu cities.
+    // Keep the 21 land formations and their class mix, without stacking at the ports.
+    ['cf','Fukuoka','medium',2,'xingke'],
+    ['cf','Fukuoka','assault',1],
+    ['cf','Kitakyushu','medium',2,'xianglin'],
+    ['cf','Kitakyushu','rocket',1],
+    ['cf','Nagasaki','light',2],
+    ['cf','Nagasaki','support',1],
+    ['cf','Sasebo','scout',2],
+    ['cf','Oita','medium',1],
+    ['cf','Oita','support',1],
+    ['cf','Kumamoto','medium',2],
+    ['cf','Kumamoto','assault',1],
+    ['cf','Miyazaki','assault',1],
+    ['cf','Miyazaki','scout',1],
+    ['cf','Kagoshima','assault',1],
+    ['cf','Kagoshima','rocket',1],
+    ['cf','Kagoshima','light',1],
   ];
   function landMask() {
     const bytes = (typeof atob === 'function' ? atob(LAND_BITS_COMPLETE) : Buffer.from(LAND_BITS_COMPLETE, 'base64').toString('latin1')) + '\0'.repeat(24);

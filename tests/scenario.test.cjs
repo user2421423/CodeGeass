@@ -102,6 +102,30 @@ test('All Kyushu cities, provinces and shoreline hexes start as Chinese Federati
   assert.deepEqual(g.scenario.bounds, japan.bounds);
 });
 
+
+test('Chinese invasion formations cover all eight Kyushu cities without changing army size', () => {
+  const g = japan.create('cf', 'normal', 11);
+  const groups = g.scenario.groups.filter(gr => gr.side === 'cf' && gr.id.startsWith('army-'));
+  const cities = ['Kitakyushu', 'Fukuoka', 'Nagasaki', 'Sasebo',
+    'Oita', 'Kumamoto', 'Miyazaki', 'Kagoshima'];
+  assert.deepEqual(groups.map(gr => gr.origin).sort(), cities.sort());
+  assert.ok(groups.every(gr => gr.units.length >= 2 && gr.units.length <= 3),
+    'no Chinese city concentrates more than three starting land units');
+  const land = g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval);
+  assert.equal(land.length, 21);
+  assert.equal(new Set(groups.flatMap(gr => gr.units)).size, land.length);
+  for (const group of groups) {
+    const origin = city(g, group.origin);
+    for (const id of group.units) {
+      const unit = land.find(u => u.id === id);
+      assert.ok(unit, 'army-group IDs must refer to Chinese land units');
+      assert.equal(E.tile(g, unit.c, unit.r).owner, 'cf');
+      assert.ok(E.distance(unit, origin, g) <= 3,
+        group.origin + ' formations should remain near their staging city');
+    }
+  }
+});
+
 test('Black Knights use near-black political colouring with a gold UI accent', () => {
   const g = japan.create('bk', 'normal', 17);
   assert.equal(E.FACTIONS.bk.color, '#18181f');
