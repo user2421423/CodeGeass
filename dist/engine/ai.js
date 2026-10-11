@@ -153,29 +153,93 @@
   }
   // Japan Scenario: offensive columns follow real terrain and naval routes.
   // These distance fields persist for the lifetime of a map; captures change
-  // ownership, not terrain. A new map instance gets a fresh cache.
+  // ownership, not terrain. A new map instance gets a fresh cache. Travel
+  // estimates are cached per turn, keyed by unit, position and target.
   const scenarioRoutes = new WeakMap();
-  const SCENARIO_COLUMN = { maxUnits: 5, switchMargin: 1.35, exploitTurns: 2, exploitRadius: 9 };
-  function scenarioRouteField(g, f) {
+  // With only one or two hostile cities left, columns may grow to `finalUnits` to finish the war.
+  const SCENARIO_COLUMN = { maxUnits: 5, finalUnits: 10, switchMargin: 1.35, exploitTurns: 2, exploitRadius: 9 };
+  function scenarioCache(g) {
     let cache = scenarioRoutes.get(g);
     if (!cache || cache.tiles !== g.tiles) {
-      cache = { tiles: g.tiles, fields: new Map() };
+      cache = { tiles: g.tiles, fields: new Map(), beaches: new Map() };
       scenarioRoutes.set(g, cache);
     }
-    let field = cache.fields.get(f.anchor.id);
-    if (!field) {
-      field = goalField(g, f.side, [[f.anchor, 0]]);
-      cache.fields.set(f.anchor.id, field);
+    return cache;
+  }
+  // 'mixed': goalField's combined land/sea costs; 'land': marches only; 'sea': water hexes
+  // seeded from the shore next to the target's landmass (null when it has no reachable shore).
+  function scenarioRouteField(g, f, surface = 'mixed') {
+    const cache = scenarioCache(g), id = f.anchor.id + ':' + surface;
+    if (cache.fields.has(id)) return cache.fields.get(id);
+    let field;
+    if (surface === 'mixed') field = goalField(g, f.side, [[f.anchor, 0]]);
+    else if (surface === 'land') field = goalField(g, f.side, [[f.anchor, 0]], 'land');
+    else {
+      const land = scenarioRouteField(g, f, 'land'),
+        targetMass = massOf(g, f.anchor),
+        shore = g.tiles.filter(p => navigable(p) && !stationAt(g, p)).flatMap(p => {
+          const approaches = adjacent(g, p).filter(n =>
+            !isSea(n) && massOf(g, n) === targetMass && Number.isFinite(land[n.r * g.cols + n.c]));
+          return approaches.length ? [[p, 4 + Math.min(...approaches.map(n => land[n.r * g.cols + n.c]))]] : [];
+        });
+      field = shore.length ? goalField(g, f.side, shore, 'sea') : null;
     }
+    cache.fields.set(id, field);
     return field;
   }
+  // Sea hexes touching a landmass, each paired with the land hex an army embarks from.
+  function scenarioBeaches(g, mass) {
+    const cache = scenarioCache(g);
+    if (cache.beaches.has(mass)) return cache.beaches.get(mass);
+    const beaches = g.tiles.filter(p => navigable(p) && !stationAt(g, p))
+      .flatMap(p => adjacent(g, p).filter(n => !isSea(n) && massOf(g, n) === mass).map(n => ({ sea: p, land: n })));
+    cache.beaches.set(mass, beaches);
+    return beaches;
+  }
+  // Estimated movement turns for a unit (or, for a city, a generic 4-move army) to reach a front's
+  // target: land marches by land, other islands by embarking, crossing at the unit's own sea speed
+  // and landing. Do not assume hex distance.
   function scenarioTravel(g, u, f) {
-    const cost = scenarioRouteField(g, f)[u.r * g.cols + u.c];
-    if (!Number.isFinite(cost)) return Infinity;
-    // A route estimates movement turns, with terrain and changes between
-    // land/sea already priced by goalField. Do not assume hex distance.
-    const speed = u.type ? Math.max(1, E.movement(g, u)) : 4;
-    return cost / speed;
+    const index = u.r * g.cols + u.c;
+    if (!u.type) {
+      const cost = scenarioRouteField(g, f)[index];
+      return Number.isFinite(cost) ? cost / 4 : Infinity;
+    }
+    const cache = scenarioCache(g);
+    if (cache.travelTurn !== g.turn) {
+      cache.travelTurn = g.turn;
+      cache.travel = new Map();
+    }
+    const speed = Math.max(1, E.movement(g, u)),
+      key = [u.id, u.side, u.type, u.c, u.r, speed, f.anchor.id].join(':');
+    if (cache.travel.has(key)) return cache.travel.get(key);
+    const done = cost => (cache.travel.set(key, cost), cost);
+    const type = TYPES[u.type],
+      srcMass = massOf(g, u),
+      ship = type.naval === 'ship',
+      afloat = ship || isSea(tile(g, u.c, u.r));
+    if (!afloat && srcMass === massOf(g, f.anchor)) {
+      const cost = scenarioRouteField(g, f, 'land')[index];
+      return done(Number.isFinite(cost) ? cost / speed : Infinity);
+    }
+    const water = scenarioRouteField(g, f, 'sea');
+    if (!water) return done(Infinity);
+    const seaSpeed = ship ? speed
+      : type.naval === 'amphibious' ? Math.max(1, amphibiousSea(g, u)) : Math.max(1, seaMove(g, u));
+    if (afloat) {
+      const cost = water[index];
+      return done(Number.isFinite(cost) ? cost / seaSpeed + (ship ? 0.8 : 1) : Infinity);
+    }
+    let best = Infinity;
+    for (const edge of scenarioBeaches(g, srcMass)) {
+      const seaCost = water[edge.sea.r * g.cols + edge.sea.c];
+      if (!Number.isFinite(seaCost)) continue;
+      // Landmass connectivity guarantees an inland approach; embarking, the crossing and landing take time.
+      const approach = (dist(g, u, edge.land) * 1.25) / speed,
+        crossing = type.naval === 'amphibious' ? 0.65 : 1.7;
+      best = Math.min(best, approach + seaCost / seaSpeed + crossing);
+    }
+    return done(best);
   }
   // Capturing a city opens a short breakthrough window for raiders and other
   // fast capture-capable units against nearby unguarded, weakened cities.
@@ -206,9 +270,10 @@
     const fronts = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
       Number.isFinite(scenarioTravel(g, u, f)));
     if (!fronts.length) return null;
-    const understrength = fronts.filter(f => f.members.length < SCENARIO_COLUMN.maxUnits &&
+    const limit = memo.fronts.length <= 2 ? SCENARIO_COLUMN.finalUnits : SCENARIO_COLUMN.maxUnits;
+    const understrength = fronts.filter(f => f.members.length < limit &&
       f.assigned < f.desiredStrength);
-    const withRoom = fronts.filter(f => f.members.length < SCENARIO_COLUMN.maxUnits);
+    const withRoom = fronts.filter(f => f.members.length < limit);
     const candidates = understrength.length ? understrength : withRoom.length ? withRoom : fronts;
     // Keep a column intact unless its target falls or a substantially
     // better attack opens. This is not a defensive staging requirement.
@@ -1343,13 +1408,15 @@
       },
       // Japan Scenario: reinforcements march toward an active, understrength attack along
       // real terrain and naval routes instead of a generic nearest enemy or a rear-area defense.
+      // A capture-capable unit standing at the factory estimates the real land or sea route,
+      // so island factories can reinforce overseas columns.
       scenarioServes = s => {
         const needing = memo.fronts.filter(f => f.assigned < f.desiredStrength);
         const choices = needing.length ? needing : memo.fronts;
-        return choices.slice().sort((a, b) => {
-          const cost = f => scenarioRouteField(g, f)[s.r * g.cols + s.c];
-          return cost(a) - cost(b) || a.anchor.id - b.anchor.id;
-        })[0];
+        const sample = allUnits(g).find(u => u.side === side && u.hp > 0 && canCapture(u) && !isShip(u)),
+          proxy = sample && { ...sample, id: 'factory:' + s.id, c: s.c, r: s.r },
+          route = f => scenarioTravel(g, proxy || s, f);
+        return choices.slice().sort((a, b) => route(a) - route(b) || a.anchor.id - b.anchor.id)[0];
       },
       scenarioUrgency = s => {
         const f = scenarioServes(s);
