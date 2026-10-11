@@ -239,3 +239,19 @@ test('a recovered defensive regrouping theater can resume its offensive', () => 
   assert.equal(active.type, 'offensive');
   assert.notEqual(active.state, 'regrouping');
 });
+
+test('outnumbered frontier detachments select an uncontested same-landmass fallback', () => {
+  const { g } = setup({ nearby: true, defenders: 1 });
+  for (let i = 0; i < 12; i++)
+    E.newUnit(g, E.typeFor('eu', 'heavy', g), 'eu',
+      20 + i % 3, 8 + Math.floor(i / 3));
+  // The setup has already planned this turn, so force a new memo on a fresh object.
+  const fresh = { ...g, ai: {}, units: g.units.slice(), stations: g.stations.slice() };
+  const memo = E.aiPlan(fresh, 'cf');
+  const retreat = memo.fronts.find(f => f.withdraw);
+  assert(retreat, 'a badly outnumbered noncapital front should choose to regroup');
+  assert.equal(retreat.type, 'defensive');
+  assert.equal(retreat.vital, false);
+  assert.equal(retreat.state, 'regrouping');
+  assert(retreat.fallback && retreat.seeds.some(([p]) => p === retreat.fallback));
+});

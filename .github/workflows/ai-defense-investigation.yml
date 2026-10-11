@@ -26,9 +26,9 @@ jobs:
       fail-fast: false
       max-parallel: 12
       matrix:
-        variant: [baseline, redeploy, noRetreat, noProduction]
+        variant: [baseline, redeploy]
         player: [britannia, eu, cf]
-        seed: [42, 20261007, 777, 13579]
+        seed: [42, 20261007, 777, 13579, 314159, 271828]
     steps:
       - uses: actions/checkout@v4
         with:
