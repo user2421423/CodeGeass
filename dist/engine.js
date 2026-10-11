@@ -3344,6 +3344,7 @@
               'The war continues between ' +
               contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
         };
+        return g.over;
       }
       // Resolve the player's elimination first, even if the surviving nation
       // already holds enough objectives. It must remain a defeat for the player.
