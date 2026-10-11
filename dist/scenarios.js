@@ -40,13 +40,16 @@
     ['Oita',131.61,33.24,'britannia',1], ['Kumamoto',130.71,32.80,'britannia',2],
     ['Miyazaki',131.42,31.91,'britannia',1], ['Kagoshima',130.56,31.60,'britannia',2]
   ];
-  // Normal-mode opening income targets. Reserves are calculated from actual
-  // game income, rather than entered separately, to guarantee a two-turn buffer.
+  // Normal-mode opening income targets. China and the Black Knights receive
+  // roughly 300 credits per turn, but less Sakuradite than before.
   const INCOME_TARGETS = {
     britannia: { credits: 400, industry: 220, science: 42, sakuradite: 28 },
-    bk:         { credits: 200, industry: 115, science: 24, sakuradite: 18 },
-    cf:         { credits: 270, industry: 155, science: 28, sakuradite: 22 },
+    bk:         { credits: 300, industry: 175, science: 32, sakuradite: 12 },
+    cf:         { credits: 320, industry: 185, science: 34, sakuradite: 15 },
   };
+  // China's expeditionary war chest is four turns of income; the other
+  // factions begin with two turns. Apply after difficulty adjustments.
+  const STARTING_RESERVE_TURNS = { britannia: 2, bk: 2, cf: 4 };
   // City production is deliberately smaller than Conquest city production.
   // The remainder is off-map war financing, so Britannia's 35 cities don't
   // overwhelm the four-city invasion economy from turn one.
@@ -329,7 +332,7 @@
           [resource,Math.round(value*factor)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(target))
-        g.economy[side][resource]=actual[resource]*2;
+        g.economy[side][resource]=actual[resource]*STARTING_RESERVE_TURNS[side];
     }
     if(difficulty!=='normal'){
       const challenge=difficulty==='challenge';
