@@ -165,19 +165,21 @@ Unofficial fan game based on Code Geass. Unit and character names follow the Cod
 original and generated in code; imported images are credited in ASSETS.md.
 
 
-## Scenario Mode (feature branch: Japan invasion)
+## Scenario Mode: Japan invasion
 
 The **Invasion of Japan** is a self-contained regional war opened from **Scenarios** in the main menu.
 Before launching, choose Britannia, the Black Knights or the Chinese Federation, inspect the map,
 and choose Normal, Hard or Challenge difficulty. There is no battle save/resume: Conquest and
 Campaign saves are not affected and persistent HQ upgrades are not applied.
 
-- **Map:** 112 × 88 hexes (9,856), including a fully decoded Japanese landmask, 44
-  geographically placed cities, terrain zones matching the principal Japanese mountain
-  belts and plains, and city-owned provinces. Takamatsu is anchored on Shikoku;
+- **Map:** 112 × 88 tactical hexes (9,856) underlying the same GSHHG geographic
+  coastline used by Conquest, with faction-colored provinces and 44 cities.
+  Mountain and lowland terrain remains relevant to movement and combat rather than
+  being painted as a patchwork of terrain-colored hexes. Takamatsu is anchored on Shikoku;
   the Kanmon Strait separates Kyushu and Honshu as navigable water.
-- **Starting factions:** Britannia 35 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
-  Chinese Federation 4 cities / 29 units. This includes 14 naval units and 66 land units.
+- **Starting factions:** Britannia 31 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
+  Chinese Federation 8 cities / 29 units. All cities and land on Kyushu begin Chinese.
+  This includes 14 naval and 48 land formations.
 - **Naval infrastructure:** 9 coastal ports, 14 starting warships/amphibious Knightmares;
   Mount Fuji, Sapporo and Fukuoka work Japan's three Sakuradite deposits.
 - **Army groups:** 26 named starting army groups and fleets. During a scenario, open
