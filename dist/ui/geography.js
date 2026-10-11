@@ -614,27 +614,6 @@ const GEOGRAPHY = (() => {
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
   }
-  // The scenario must not paint its full rectangular ocean behind Japan.
-  // Cache a Path2D cutout of playable land and the four coastal sea rings;
-  // the fallback path supports browsers/tests without Path2D.
-  let japanTheatreMask = { tiles: null, revision: -1, path: null };
-  function clipJapanTheatre(ctx, g) {
-    const revision = g.mapRevision || 0;
-    if (typeof Path2D !== 'undefined') {
-      if (japanTheatreMask.tiles !== g.tiles || japanTheatreMask.revision !== revision) {
-        const path = new Path2D();
-        for (const tile of g.tiles)
-          if (tile.terrain !== 'offmap') tacticalHex(path, tile, R + 0.45);
-        japanTheatreMask = { tiles: g.tiles, revision, path };
-      }
-      ctx.clip(japanTheatreMask.path);
-    } else {
-      ctx.beginPath();
-      for (const tile of g.tiles)
-        if (tile.terrain !== 'offmap') tacticalHex(ctx, tile, R + 0.45);
-      ctx.clip();
-    }
-  }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || g.scenario?.id !== 'invasion-japan') return false;
     const p = g.scenario.projection;
@@ -670,15 +649,12 @@ const GEOGRAPHY = (() => {
     const shapes = JAPAN_LAND.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
-    // Clip before painting water, even when this viewport contains no land.
-    ctx.save();
-    clipJapanTheatre(ctx, g);
     const sea = ctx.createLinearGradient(0, top, 0, bottom);
     sea.addColorStop(0, '#205372');
     sea.addColorStop(1, '#103d5b');
     ctx.fillStyle = sea;
     ctx.fillRect(left, top, right - left, bottom - top);
-    if (!shapes.length) { ctx.restore(); return true; }
+    if (!shapes.length) return true;
 
     // Continuous geographic land silhouette, regardless of the tactical
     // tiles' sea/land categorization along bays and narrow straits.
@@ -719,7 +695,6 @@ const GEOGRAPHY = (() => {
     coast(ctx, shapes, a, b, c, d,
       Math.max(0.5, scale * Math.hypot(A, C)));
     ctx.restore();
-    ctx.restore(); // End the theatre clipping without clipping UI overlays
     return true;
   }
   function paint(ctx, g, left, right, top, bottom, scale) {

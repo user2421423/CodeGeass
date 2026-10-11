@@ -50,7 +50,7 @@ test('North-up Japan grid crops the offshore margins without losing Japanese lan
   assert.ok(land >= 1250, 'north-up islands retain more than 1250 land hexes');
   assert.ok(land / g.tiles.length > 0.14, 'cropped land share exceeds the old full rectangle');
   assert.equal(sea, 1628, 'only the four coastal rings are navigable');
-  assert.equal(offmap, 6271, 'deep-ocean cells are excluded from play and visuals');
+  assert.equal(offmap, 6271, 'deep-ocean cells are excluded from navigation');
   assert.equal(g.scenario.coastalSea.width, 4);
   assert.equal(g.stations.length, 44, 'all original Japan cities remain present');
 });

@@ -178,24 +178,23 @@ const modal = () => node('modal-root').innerHTML;
     return GEOGRAPHY.paint(painter,g,0,SQ*R*(g.cols+1),0,R*1.5*(g.rows+1),0.85);
   })()`);
   assert.equal(japanAtlas, true, 'scenario painting uses the geographic Japan coastline');
-  // In the Canvas path fallback the first clip is the union of all and only
-  // the visible scenario hexes; no deep-ocean hex enters the painted atlas.
-  const maskClip = run(`(() => {
-    const g = E.scenarios.japan.create('cf', 'normal', 17);
-    const ctx = document.createElement('canvas').getContext('2d');
-    const originalMove = ctx.moveTo, originalClip = ctx.clip;
-    let moves = 0, firstClipMoves = null;
-    ctx.moveTo = (...args) => { moves++; originalMove(...args); };
-    ctx.clip = (...args) => {
-      if (firstClipMoves === null) firstClipMoves = moves;
-      originalClip(...args);
-    };
-    try { GEOGRAPHY.paint(ctx, g, 0, SQ*R*(g.cols+1), 0, R*1.5*(g.rows+1), 0.85); }
-    finally { ctx.moveTo = originalMove; ctx.clip = originalClip; }
-    return { firstClipMoves, visible: g.tiles.filter(t=>t.terrain!=='offmap').length };
+  // The scenario still draws a continuous ocean background. The coastal
+  // gameplay limit must not impose a jagged geographic clipping mask.
+  const oceanPainting = run(`(() => {
+    const g=E.scenarios.japan.create('cf','normal',17);
+    const painter=document.createElement('canvas').getContext('2d');
+    const oldFill=painter.fillRect, oldClip=painter.clip;
+    const events=[];
+    painter.fillRect=(...args)=>{events.push('fill');oldFill(...args);};
+    painter.clip=(...args)=>{events.push('clip');oldClip(...args);};
+    try { GEOGRAPHY.paint(painter,g,0,SQ*R*(g.cols+1),0,R*1.5*(g.rows+1),.85); }
+    finally { painter.fillRect=oldFill; painter.clip=oldClip; }
+    return events;
   })()`);
-  assert.equal(maskClip.firstClipMoves, maskClip.visible,
-    'the first Japan clip must exclude every offmap ocean hex');
+  assert.equal(oceanPainting[0],'fill',
+    'render unbroken ocean before clipping to Japanese land outlines');
+  assert(!fs.readFileSync(path.join(__dirname,'../dist/ui/geography.js'),'utf8')
+    .includes('clipJapanTheatre'), 'remove the jagged Japan theatre mask');
   const japanLandCheck = run(`({
     honshu:GEOGRAPHY.japanLandAt(139.69,35.68),
     kyushu:GEOGRAPHY.japanLandAt(130.71,32.80),

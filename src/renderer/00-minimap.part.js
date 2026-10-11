@@ -68,7 +68,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   const sx = width / mapW(g),
     sy = height / mapH(g),
     col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
-  b.fillStyle = g.mode === 'scenario' ? '#0d1218' : '#0d2b40';
+  b.fillStyle = '#0d2b40';
   b.fillRect(0, 0, width, height);
   // Scenario previews and minimaps use the same real Japanese silhouette as
   // the main map, not low-resolution rectangles of terrain colours.

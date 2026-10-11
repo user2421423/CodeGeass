@@ -265,8 +265,8 @@
     if(assigned)group.destination={c:point.c,r:point.r};
     return {ok:assigned>0,assigned,failed,reason:assigned?'': 'No group unit can reach that hex'};
   }
-  // Both the visible map and naval movement stop four hexes offshore.
-  // Existing Japanese ports and the connected coastal sea remain playable.
+  // Naval movement stops four hexes offshore. Retain a continuous blue
+  // geographic ocean background even where the hex grid is unplayable.
   const NAVAL_COASTAL_WIDTH = 4;
   function restrictNavalTheatre(g) {
     const cols=g.cols,N=g.tiles.length,depth=new Int16Array(N).fill(-1),queue=[];
@@ -479,8 +479,7 @@
       }
       g.scenario.groups.push(fleet);
     }
-    // Trim the playable AND visible map to Japan plus four coastal rings.
-    // The geography painter clips the offmap tiles rather than coloring them.
+    // Limit playable naval hexes without cropping the visual ocean.
     restrictNavalTheatre(g);
     // Fixed external war support tops up actual city/deposit income to the
     // target opening rates. It remains fixed thereafter; city captures and
