@@ -1,9 +1,16 @@
 name: Conquest balance - 50 turns
 on:
   push:
-    branches: [main]
+    branches: [main, 'feature/ai-multifront-defense-20261011']
     paths:
       - 'dist/engine/world.js'
+      - 'src/ai/02-fronts.part.js'
+      - 'src/ai/06-production.part.js'
+      - 'src/engine/15-turns-and-fortresses.part.js'
+      - 'dist/engine.js'
+      - 'dist/engine/ai.js'
+      - 'tests/ai-multifront-defense.test.cjs'
+      - 'tests/core.test.cjs'
       - 'tools/balance_sim.cjs'
       - 'tests/conquest-economy-parity.test.cjs'
       - '.github/workflows/conquest-balance-50.yml'
@@ -26,8 +33,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check opening economy
-        run: node --test tests/conquest-economy-parity.test.cjs
+      - name: Check source bundles and defensive AI regression
+        run: |
+          node tools/build_sources.cjs --check
+          node --test tests/*.test.cjs
       - name: Run 50-turn all-AI simulation
         run: |
           node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 10,20,30,40,50 --output balance-results.json --summary balance-summary.md --quiet --equal-ai

@@ -1,0 +1,57 @@
+name: Defensive AI three-state comparison
+on:
+  push:
+    branches: ['feature/ai-multifront-defense-20261011']
+    paths:
+      - '.github/workflows/ai-defense-investigation.yml'
+      - 'tools/ai_defense_variant.cjs'
+      - 'src/ai/02-fronts.part.js'
+      - 'src/ai/03-guard-assignment.part.js'
+      - 'src/ai/06-production.part.js'
+      - 'src/engine/15-turns-and-fortresses.part.js'
+      - 'dist/engine.js'
+      - 'dist/engine/ai.js'
+      - 'tools/balance_sim.cjs'
+      - 'tests/ai-multifront-defense.test.cjs'
+      - 'tests/core.test.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: ${{ matrix.variant }} / ${{ matrix.player }} / ${{ matrix.seed }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        variant: [baseline, redeploy]
+        player: [britannia, eu, cf]
+        seed: [42, 20261007, 777, 13579, 314159, 271828]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check rebuilt bundles and regressions
+        run: |
+          node tools/build_sources.cjs --check
+          node --test tests/*.test.cjs
+      - name: Apply controlled AI variant
+        run: node tools/ai_defense_variant.cjs "${{ matrix.variant }}"
+      - name: Simulate 50 turns
+        run: |
+          node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 5,10,15,20,25,30,35,40,45,50 --output balance-results.json --summary balance-summary.md --quiet --equal-ai
+      - name: Publish run summary
+        run: cat balance-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: triage-${{ matrix.variant }}-${{ matrix.player }}-${{ matrix.seed }}
+          path: |
+            balance-results.json
+            balance-summary.md
+          if-no-files-found: error
+          retention-days: 14

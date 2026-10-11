@@ -124,6 +124,32 @@ function playSide(g, side, counters) {
   E.aiProduction(g);
   const after = activeUnits(g, side).length;
   counters.produced[side] += Math.max(0, after - before);
+  // Capture the existing per-turn plan without recalculating it or changing AI decisions.
+  if ((g.turn <= 5 || g.turn % 5 === 0) && typeof E.aiPlan === 'function') {
+    const plan = E.aiPlan(g, side);
+    counters.frontLog.push({
+      turn: g.turn, side, units: activeUnits(g, side).length,
+      guards: Object.keys(plan.guards || {}).length,
+      recoveries: plan.recoveries?.size || 0,
+      availableMobile: activeUnits(g, side).filter(u => !plan.guards?.[u.id] &&
+        !plan.recoveries?.has(u.id) && !E.internal.isShip(u)).length,
+      conventionalCrisis: !!g.ai?.[side]?.conventionalCrisis,
+      cityCount: g.stations.filter(s => s.owner === side).length,
+      fronts: (plan.fronts || []).map(f => ({
+        name: f.name, type: f.type, state: f.state, emergency: !!f.emergency,
+        vital: !!f.vital, endangeredCities: f.endangeredCities || 0,
+        menace: +(f.menace || 0).toFixed(2), present: +(f.present || 0).toFixed(2),
+        desired: +f.desiredStrength.toFixed(2), assigned: +f.assigned.toFixed(2),
+        arrivingTwo: +(f.arrivingTwo || 0).toFixed(2),
+        arrivingFour: +(f.arrivingFour || 0).toFixed(2),
+        availableFour: +(f.availableFour || 0).toFixed(2),
+        regrouping: !!f.withdraw, fallback: f.fallback?.name || null,
+        readyStrength: +(f.readyStrength || 0).toFixed(2),
+        target: +(f.target || 0).toFixed(2), priority: +f.priority.toFixed(2),
+        objectives: f.objectives.map(o => ({ name: o.name, defend: !!o.defend })),
+      })),
+    });
+  }
   // F.L.E.I.J.A. strikes this turn (aiProduction fires every ready warhead and records them in g.launches).
   for (const shot of g.launches || []) {
     const s = counters.strikes[side];
@@ -140,8 +166,18 @@ function playSide(g, side, counters) {
     if (g.over) break;
     const u = g.units.find(v => v.id === id);
     if (!u || u.hp <= 0 || u.side !== side) continue;
+    const before = new Map(g.units.filter(v => v.hp > 0 && v.side !== side)
+      .map(v => [v.c + ',' + v.r, v.side]));
     const events = E.aiOrder(g, id) || [];
     for (const event of events) {
+      if (event.kind === 'attack' && event.to) {
+        const defender = before.get(event.to.c + ',' + event.to.r);
+        if (defender && MAJORS.includes(defender)) {
+          const pair = [side, defender].sort().join('-');
+          counters.pairAttacks[pair] = (counters.pairAttacks[pair] || 0) + 1;
+          counters.pairDamage[pair] = (counters.pairDamage[pair] || 0) + Math.max(0, event.damage || 0);
+        }
+      }
       if (event.kind === 'move' || event.kind === 'deploy') counters.moves[side]++;
       else if (event.kind === 'attack') counters.attacks[side]++;
       else if (event.kind === 'feint') counters.special[side]++;
@@ -159,6 +195,9 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
   const start = snapshot(g);
   const counters = {
     produced: Object.fromEntries(MAJORS.map(s => [s, 0])),
+    pairAttacks: {},
+    pairDamage: {},
+    pairTransfers: {},
     moves: Object.fromEntries(MAJORS.map(s => [s, 0])),
     attacks: Object.fromEntries(MAJORS.map(s => [s, 0])),
     special: Object.fromEntries(MAJORS.map(s => [s, 0])),
@@ -166,7 +205,10 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
       MAJORS.map(s => [s, { launched: 0, intercepted: 0, citiesErased: 0, depositsDestroyed: 0, unitsErased: 0 }]),
     ),
     strikeLog: [],
+    frontLog: [],
+    cityTransfers: [],
   };
+  const previousOwners = new Map(g.stations.map(s => [s.id, s.owner]));
 
   // Turn 1 begins with the selected player's units already refreshed, exactly
   // like the browser game. Rivals call beginTurn(..., false) before acting.
@@ -179,6 +221,18 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
       if (!g.over) playSide(g, side, counters);
     }
 
+    // Log territorial transfers so regional collapses can be distinguished from nuclear erasures.
+    for (const city of g.stations) {
+      const from = previousOwners.get(city.id);
+      if (from !== city.owner) {
+        if (MAJORS.includes(from) && MAJORS.includes(city.owner)) {
+          const pair = [from, city.owner].sort().join('-');
+          counters.pairTransfers[pair] = (counters.pairTransfers[pair] || 0) + 1;
+        }
+        counters.cityTransfers.push({ turn: g.turn, city: city.name, from, to: city.owner });
+        previousOwners.set(city.id, city.owner);
+      }
+    }
     if (wanted.has(g.turn)) timeline.push(snapshot(g));
     if (g.over) break;
 
