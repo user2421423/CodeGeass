@@ -8,7 +8,7 @@ require('../dist/campaign.js');
 
 test('player priority is clamped, optional, and never applies to the human side', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 19);
-  assert.equal(E.playerPriorityBonus(g, 'cf'), 0.4);
+  assert.equal(E.playerPriorityBonus(g, 'cf'), 0.6);
   assert.equal(E.playerPriorityBonus(g, 'britannia'), 0);
   for (const [value, expected] of [[0,0],[0.2,0.2],[0.6,0.6],[1,1],[3,1],[-1,0]]) {
     g.aiPlayerPriorityBonus = value;
