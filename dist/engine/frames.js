@@ -11,8 +11,6 @@
       color: '#e34b4b',
       letter: 'B',
       capital: 'Pendragon',
-      doctrine: 'Knightmare Supremacy',
-      doctrineText: 'Armor-branch Knightmares deal +8% damage.',
     },
     eu: {
       name: 'Europia United',
@@ -21,8 +19,6 @@
       color: '#4f8cff',
       letter: 'E',
       capital: 'Paris',
-      doctrine: 'Firepower Doctrine',
-      doctrineText: 'Artillery-branch Knightmares deal +10% damage.',
     },
     cf: {
       name: 'Chinese Federation',
@@ -31,8 +27,6 @@
       color: '#ff8c6e',
       letter: 'C',
       capital: 'Luoyang',
-      doctrine: 'Strength in Numbers',
-      doctrineText: 'Infantry-branch Knightmares cost 15% less.',
     },
     // Campaign-only sides: they never appear in Conquest.
     bk: {
@@ -42,8 +36,6 @@
       color: '#f0c94a',
       letter: 'K',
       capital: 'Hōrai Island',
-      doctrine: 'Guerrilla Tactics',
-      doctrineText: 'Knightmares fighting from forest, mountains or city ruins deal +10% damage.',
       campaign: true,
     },
     jlf: {
@@ -53,8 +45,6 @@
       color: '#86d17c',
       letter: 'J',
       capital: 'Mount Narita',
-      doctrine: 'Mountain Fortress',
-      doctrineText: 'Units in forest or mountains take 10% less damage.',
       campaign: true,
     },
     eb: {
@@ -64,8 +54,6 @@
       color: '#a77be8',
       letter: 'Æ',
       capital: 'Sankt Petersburg',
-      doctrine: 'Knightly Orders',
-      doctrineText: 'Units led by a commander deal +10% damage.',
       campaign: true,
     },
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },

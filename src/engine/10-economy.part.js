@@ -30,14 +30,13 @@
     const at = TYPES[type]?.naval ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
     return at && !unitAt(g, at) ? [at] : [];
   }
-  // The Federation's doctrine discounts its Infantry. Sakuradite is priced by class (SAKURADITE.cost).
+  // Unit prices depend on the frame and stack size, not faction.
   function price(type, stack = 1, g = null, side = null) {
-    const t = TYPES[type],
-      off = (side || t.side) === 'cf' && t.branch === 'Infantry' ? 0.85 : 1;
+    const t = TYPES[type];
     return {
-      credits: Math.round(t.cost * (1 + 0.85 * (stack - 1)) * off),
-      industry: Math.round(t.industry * (1 + 0.85 * (stack - 1)) * off),
-      sakuradite: Math.round((t.sakuradite ?? SAKURADITE.cost[t.cls] ?? 0) * (1 + 0.85 * (stack - 1)) * off),
+      credits: Math.round(t.cost * (1 + 0.85 * (stack - 1))),
+      industry: Math.round(t.industry * (1 + 0.85 * (stack - 1))),
+      sakuradite: Math.round((t.sakuradite ?? SAKURADITE.cost[t.cls] ?? 0) * (1 + 0.85 * (stack - 1))),
     };
   }
   function canBuy(g, s, type, stack = 1, vacating = null) {
