@@ -3060,13 +3060,24 @@
     return (
       g.stations
         .filter(s => s.owner === side && !cityBusyReason(g, s))
-        .sort((a, b) => (b.lab || 0) - (a.lab || 0) || front(b) - front(a) || a.id - b.id)[0] || null
+        .sort((a, b) => (b.lab || 0) - (a.lab || 0) ||
+          Number(a.capitalOf === side) - Number(b.capitalOf === side) ||
+          front(b) - front(a) || a.id - b.id)[0] || null
     );
   }
   // Where a rival builds its next Eliminator: a free level-3-lab city outside the cover of its other charges, the
   // capital first, then the richest. Null when there is none. `anyLab`: the best such city to raise a lab in instead.
   function eliminatorCity(g, side, anyLab = false) {
     const cover = sideEliminators(g, side);
+    const critical = g.stations.filter(s => s.owner === side &&
+      !cover.some(c => dist(g, c, s) <= ELIMINATOR.range));
+    // A charge should protect valuable targets, not simply occupy a rich lab.
+    // The capital is worth more because one accurate warhead can erase it forever.
+    const value = s => s.capitalOf === side ? 1000 :
+      s.project?.side === side ? 250 :
+      40 + s.income + s.industry + (s.lab || 0) * 30;
+    const protection = s => critical.reduce((n, t) =>
+      n + (dist(g, s, t) <= ELIMINATOR.range ? value(t) : 0), 0);
     return (
       g.stations
         .filter(
@@ -3079,8 +3090,8 @@
         )
         .sort(
           (a, b) =>
+            protection(b) - protection(a) ||
             (anyLab ? (b.lab || 0) - (a.lab || 0) : 0) ||
-            Number(b.capitalOf === side) - Number(a.capitalOf === side) ||
             b.income + b.industry - (a.income + a.industry) ||
             a.id - b.id,
         )[0] || null

@@ -165,3 +165,24 @@ test('major-power objective values respond to overall rival strength', () => {
   assert(stronger.value > first.value,
     'nearby enemy cities gain strategic weight when their owner becomes the strongest power');
 });
+
+test('Eliminator preparation protects the capital even when other level-3 labs exist', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 123);
+  const side = 'cf', capital = g.stations.find(s => s.owner === side && s.capitalOf === side);
+  assert(capital);
+  g.phase = side;
+  g.turn = 16;
+  capital.lab = 2;
+  for(const s of g.stations) if(s.owner === side && s !== capital) s.lab = 3;
+  g.economy[side] = {credits: 20000, industry: 20000, science: 5000, sakuradite: 3000};
+  E.aiProduction(g);
+  assert.equal(capital.lab, 3,
+    'build a capital-covering lab instead of relying on remote ready laboratories');
+  g.turn = 27;
+  g.fleijaDetonated = 22;
+  g.phase = side;
+  E.aiProduction(g);
+  assert(g.stations.some(s => s.owner === side && s.eliminatorProject?.side === side &&
+    E.internal.dist(g, s, capital) <= E.ELIMINATOR.range),
+    'first available charge is developed inside interception range of the capital');
+});
