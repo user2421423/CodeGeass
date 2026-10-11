@@ -176,7 +176,7 @@ Campaign saves are not affected and persistent HQ upgrades are not applied.
   geographically placed cities, terrain zones matching the principal Japanese mountain
   belts and plains, and city-owned provinces. Takamatsu is anchored on Shikoku;
   the Kanmon Strait separates Kyushu and Honshu as navigable water.
-- **Starting factions:** Britannia 35 cities / 38 units, Black Knights 5 cities / 13 units,
+- **Starting factions:** Britannia 35 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
   Chinese Federation 4 cities / 29 units. This includes 14 naval units and 66 land units.
 - **Naval infrastructure:** 9 coastal ports, 14 starting warships/amphibious Knightmares;
   Mount Fuji, Sapporo and Fukuoka work Japan's three Sakuradite deposits.
@@ -196,3 +196,22 @@ routes (starting fleets are implemented), full economic and military balancing, 
 must be reconciled with the latest main before any merge.
 
 Automated regression coverage: `tests/scenario.test.cjs`.
+
+### Japan starting-force balance check
+
+Britannia's opening formations were reduced from **38 to 20 total**, retaining six naval
+formations, four key named commanders and fourteen land formations. The Black Knights
+remain on 13 and the Chinese Federation on 29 (62 formations total).
+
+A baseline set of seven deterministic Normal-difficulty AI-vs-AI runs using multiple
+seeds and player perspectives was completed after this change. In the three trials where
+Britannia was the selected side, it met its victory requirements on turns 32, 38 and 47.
+The remaining four trials ended with the selected BK/Chinese player eliminated while
+Britannia held most of the Japanese cities; these are **not** proof of an overall Britannian
+victory, because the current scenario engine closes a session on player elimination.
+
+Initial income remains strongly tilted toward Britannia: 554 credits / 301 industry,
+versus BK 96 / 49 and CF 100 / 55. **Reducing starting units alone is not enough to
+balance this scenario.** Follow-up balance work should assess production scaling,
+regional reinforcements and Black Knight survivability. Long-run player-controlled
+balance and human performance have not been validated.
