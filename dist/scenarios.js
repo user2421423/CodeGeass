@@ -221,6 +221,47 @@
       if(dry>=.2 && dry<=.8)t.terrain='coast';
     }
   }
+  // Manual Japan-terrain review (2026-10-11, 110 x 84 north-up grid).
+  // 169 explicit visual-coastline corrections from the per-hex audit.
+  // Land entries use local biome; coast means mixed amphibious ground; sea is navigable.
+  // Thirty additional flagged hexes are deliberately unchanged to preserve the
+  // four main islands' separation, operational ports, fleets and starting armies.
+  // Coordinates are [column, row], zero-based, NOT flattened world-grid indices.
+  const MANUAL_JAPAN_TERRAIN = {
+  coast: [
+    [80,2],[86,4],[89,7],[93,8],[104,8],[103,9],[101,10],[103,10],[102,11],[73,13],[78,13],[106,13],
+    [72,14],[103,14],[104,14],[105,14],[96,15],[97,15],[98,15],[99,15],[100,15],[101,15],[71,16],[94,16],
+    [95,16],[68,17],[72,18],[78,18],[92,18],[71,19],[74,20],[75,20],[91,20],[76,21],[79,24],[78,25],
+    [75,26],[76,26],[70,27],[78,27],[79,28],[68,32],[69,32],[83,34],[82,36],[80,37],[66,39],[79,39],
+    [66,40],[58,42],[60,42],[65,42],[59,43],[62,43],[75,43],[50,45],[76,45],[59,46],[48,47],[56,47],
+    [75,48],[48,49],[74,49],[74,50],[46,51],[73,51],[26,52],[73,52],[43,53],[44,54],[69,55],[73,55],
+    [69,56],[21,57],[68,57],[20,58],[64,58],[18,59],[61,59],[68,59],[16,60],[17,60],[51,60],[52,60],
+    [14,61],[31,61],[47,61],[48,61],[12,62],[13,62],[26,62],[38,62],[19,63],[34,63],[13,64],[15,64],
+    [16,64],[17,64],[25,64],[26,64],[27,64],[35,64],[38,64],[18,65],[38,65],[7,66],[3,67],[15,67],
+    [27,67],[30,67],[32,67],[41,67],[26,68],[32,68],[2,69],[7,70],[18,70],[3,71],[15,73],[15,74],
+    [14,75],[6,76],[8,77],[9,77],[6,78],[10,78],
+  ],
+  sea: [
+    [109,7],[108,8],[97,9],[104,12],[93,17],[72,23],[76,41],[76,42],[25,55],[32,55],[39,55],[72,57],
+    [49,60],[59,60],[50,61],[51,61],[3,65],[44,65],[19,67],[1,68],[17,69],[6,72],[7,72],[5,73],
+    [6,74],[14,78],[12,79],[11,82],
+  ],
+  land: [
+    [103,13],[95,15],[69,17],[77,24],[81,36],[62,44],[75,47],[70,55],[63,59],[48,62],[38,63],[43,66],
+    [9,72],[10,76],[7,78],
+  ],
+  };
+  function applyManualJapanTerrain(g) {
+    for (const [kind, positions] of Object.entries(MANUAL_JAPAN_TERRAIN)) {
+      for (const [c, r] of positions) {
+        const t = E.tile(g, c, r);
+        if (!t) throw new Error('Out-of-bounds Japan terrain override: '+c+','+r);
+        const p = geographicAt(c, r);
+        t.terrain = kind === 'land' ? landscape(p.lon, p.lat, c, r) : kind;
+      }
+    }
+  }
+
   const islandNames = {
     'Sapporo':'hokkaido','Hakodate':'hokkaido','Asahikawa':'hokkaido','Kushiro':'hokkaido',
     'Takamatsu':'shikoku','Matsuyama':'shikoku','Kochi':'shikoku',
@@ -367,6 +408,8 @@
     kanmon.terrain='sea';
     // Recompute mixed coastal hexes before city and island assignments.
     classifyJapanCoast(g,mask);
+    // Apply audited per-hex fixes before island components, cities, ports and armies.
+    applyManualJapanTerrain(g);
     const hokkaidoStart=nearest(g,locate(141.35,43.06),t=>t.terrain!=='sea',4);
     const shikokuStart=nearest(g,locate(132.77,33.84),t=>t.terrain!=='sea',4);
     const kyushuStart=nearest(g,locate(130.71,32.80),t=>t.terrain!=='sea',4);
