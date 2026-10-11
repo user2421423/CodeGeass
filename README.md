@@ -163,3 +163,26 @@ the grid to a PNG (needs Pillow).
 
 Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; drawn artwork is
 original and generated in code; imported images are credited in ASSETS.md.
+
+
+## Scenario Mode (feature branch, first playable slice)
+
+The **Invasion of Japan** is a new single-session regional war, launched using **Scenarios** in the main menu.
+It is distinct from Campaign and Conquest. The faction-selection screen shows a map preview before launch.
+
+- **Map:** a geographically grounded 112 × 88 hex map of Japan (9,856 hexes), using a packed
+  GSHHS Japanese-island landmask. There are 44 regional cities with city-based territorial ownership.
+- **Playable sides:** Holy Britannian Empire (35 cities, 32 formations), Black Knights
+  (5 cities, 13 formations), and Chinese Federation (4 cities, 21 formations). All sides
+  share the same map and starting positions; selecting a side changes only who you command.
+- **Diplomacy:** Britannia and the Black Knights begin allied against the Chinese Federation.
+  Their alliance dissolves at the beginning of turn 10. The diplomacy switch is functional;
+  cutscenes, additional uprisings, and campaign-specific reinforcements are future stages.
+- **Rules:** existing turn-based combat and AI, separate 60-turn regional victory scoring.
+  The first implementation has no save/resume, persistent HQ progression, or scenario rewards.
+  Conquest and Campaign saves are never touched by starting or playing this mode.
+- **Next development steps:** review terrain and army placement in-game, add naval invasion fleets
+  and supply routes, further differentiate economic balance and objectives, then simulate full
+  50–60-turn campaigns from all three perspectives.
+
+Basic automated coverage lives in tests/scenario.test.cjs.
