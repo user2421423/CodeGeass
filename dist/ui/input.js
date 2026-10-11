@@ -9,6 +9,12 @@ document.addEventListener('change', e => {
     startMenu();
     $('difficulty-select')?.focus();
   }
+  if (id === 'scenario-difficulty') {
+    scenarioDifficulty = E.DIFFICULTIES[e.target.value] ? e.target.value : 'normal';
+    scenarioDialog();
+    $('scenario-difficulty')?.focus();
+    return;
+  }
   if (id === 'mission-difficulty-select') {
     missionDifficulty = E.campaign?.DIFFICULTIES?.[e.target.value] ? e.target.value : 'normal';
     if (missionBriefingId) briefingDialog(missionBriefingId);
@@ -261,6 +267,8 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
+  if (d.scenarioGroupRoute) { scenarioGroupStart(d.scenarioGroupRoute); return; }
+  if (d.scenarioGroupFocus) { scenarioGroupFocus(d.scenarioGroupFocus); return; }
   if (d.campaignTab) return campaignDialog(d.campaignTab);
   if (d.mission) return briefingDialog(d.mission);
   if (d.startMission) return confirmReplace(CAMPAIGN_KEY, 'campaign', () => startMission(d.startMission));
@@ -288,6 +296,9 @@ document.addEventListener('click', e => {
       break;
     case 'scenario':
       scenarioDialog();
+      break;
+    case 'scenario-armies':
+      scenarioGroupsDialog();
       break;
     case 'scenario-close':
       startMenu();
@@ -610,6 +621,11 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (k === 'g') startRouting();
+  if (k === 'escape' && scenarioRoutingGroup) {
+    scenarioRoutingGroup=null;
+    toast('Army-group destination selection cancelled.');
+    return;
+  }
   if (k === 'escape' && carrierHoldOpen != null) {
     carrierHoldOpen = null;
     detailOpen = false;
