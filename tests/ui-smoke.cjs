@@ -184,6 +184,32 @@ const modal = () => node('modal-root').innerHTML;
     assert(markerEntries.includes(coords), coords + ' must display a terrain warning marker');
 
 
+  // Country names follow the conquered land, not hard-coded map coordinates.
+  assert(renderingText.includes('TERRITORY_LABELS.draw('),
+    'the world renderer overlays strategic names underneath tactical markers');
+  const politicalNames = run('TERRITORY_LABELS.layout(game, WORLD_W).map(x => ({side:x.side, tiles:x.tiles, span:x.span}))');
+  for (const side of ['britannia', 'eu', 'cf'])
+    assert(politicalNames.some(l => l.side === side), side + ' has a strategic country label');
+  assert(politicalNames.filter(l => l.side === 'britannia').length >= 2,
+    'Britannia receives separate North and South American labels');
+  assert(politicalNames.filter(l => l.side === 'eu').length >= 2,
+    'Europia receives separate Eurasian and African labels');
+  assert(run(`TERRITORY_LABELS.layout(game, WORLD_W).every(l =>
+    [0.15, 0.3, 0.5, 0.7, 0.85].every(t => TERRITORY_LABELS.ownedAt(game,
+      l.x + Math.cos(l.angle) * l.span * (t - 0.5),
+      l.y + Math.sin(l.angle) * l.span * (t - 0.5), l.side, WORLD_W)))`),
+    'every country name crosses only land that its faction controls');
+  assert.equal(run('TERRITORY_LABELS.layout({...game,wrap:false,mode:"campaign"}, WORLD_W).length'), 0,
+    'campaign battlefields do not receive world-war labels');
+  assert(run(`(() => {
+    const first = TERRITORY_LABELS.layout(game, WORLD_W);
+    const rev = game.mapRevision;
+    game.mapRevision = rev + 1;
+    const refreshed = TERRITORY_LABELS.layout(game, WORLD_W);
+    game.mapRevision = rev;
+    return refreshed !== first && TERRITORY_LABELS.layout(game, WORLD_W) !== refreshed;
+  })()`), 'a captured province invalidates label positions');
+
   const harbor = run(`(() => {
     const city = game.stations.find(s => s.name === 'Barcelona');
     const actual = hexCenter(city.portAt);
