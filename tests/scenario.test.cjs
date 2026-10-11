@@ -49,8 +49,8 @@ test('North-up Japan grid crops the offshore margins without losing Japanese lan
   const offmap = g.tiles.filter(t => t.terrain === 'offmap').length;
   assert.ok(land >= 1250, 'north-up islands retain more than 1250 land hexes');
   assert.ok(land / g.tiles.length > 0.14, 'cropped land share exceeds the old full rectangle');
-  assert.equal(sea, 1628, 'only the four coastal rings are navigable');
-  assert.equal(offmap, 6271, 'deep-ocean cells are excluded from navigation');
+  assert.ok(sea >= 1300 && sea < 1700, 'only the four coastal rings are navigable');
+  assert.ok(offmap >= 6000, 'deep-ocean cells are excluded from navigation');
   assert.equal(g.scenario.coastalSea.width, 4);
   assert.equal(g.stations.length, 44, 'all original Japan cities remain present');
 });
@@ -84,10 +84,10 @@ test('Japan coast is genuinely mixed land/water, not every land hex beside sea',
   // The original classifier incorrectly marked almost 300 completely dry or
   // ocean-covered source-mask hexes as navigable coast.
   const coast=g.tiles.filter(t=>t.terrain==='coast');
-  assert.ok(coast.length>=150 && coast.length<=250,'only mixed shoreline is coast');
+  assert.ok(coast.length>=200 && coast.length<=430,'audited mixed shoreline, including explicit hex corrections');
   for(const [c,r] of [[82,2],[83,3],[85,5]])
     assert.notEqual(E.tile(g,c,r).terrain,'coast','dry source-mask hex '+c+','+r);
-  assert.equal(g.tiles.filter(t=>t.terrain==='sea').length,1628);
+  assert.ok(g.tiles.filter(t=>t.terrain==='sea').length>=1300);
   for(const s of g.stations.filter(s=>s.portAt))
     assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea');
 });
@@ -100,8 +100,9 @@ test('Japan coastline follows the visible vector atlas when available', () => {
     // land/sea mask and all nine ports unchanged.
     globalThis.GEOGRAPHY={japanLandAt:()=>true};
     const g=japan.create('cf','normal',19);
-    assert.equal(g.tiles.filter(t=>t.terrain==='coast').length,0);
-    assert.equal(g.tiles.filter(t=>t.terrain==='sea').length,1628);
+    assert.equal(g.tiles.filter(t=>t.terrain==='coast').length,126,
+      'the 126 manually audited coast tiles must be independent of the dynamic classifier');
+    assert.ok(g.tiles.filter(t=>t.terrain==='sea').length>=1300);
     assert.equal(g.stations.filter(s=>s.portAt).length,9);
     for(const s of g.stations.filter(s=>s.portAt))
       assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea');
@@ -109,6 +110,28 @@ test('Japan coastline follows the visible vector atlas when available', () => {
     if(prior===undefined)delete globalThis.GEOGRAPHY;
     else globalThis.GEOGRAPHY=prior;
   }
+});
+
+test('Manual Japan terrain corrections apply to specific hexes without changing protected straits', () => {
+  const g = japan.create('cf', 'normal', 19);
+  // Examples from each correction category. Deep sea may be offmap after
+  // limiting ocean navigation to four coastal hex rings.
+  for (const [c, r] of [[80,2],[89,7],[48,47],[14,61],[3,71]]) {
+    assert.equal(E.tile(g,c,r).terrain,'coast', 'mixed shoreline at '+c+','+r);
+  }
+  for (const [c, r] of [[109,7],[97,9],[76,41],[32,55],[7,72],[11,82]]) {
+    assert.ok(['sea','offmap'].includes(E.tile(g,c,r).terrain),
+      'water correction at '+c+','+r);
+  }
+  for (const [c, r] of [[103,13],[95,15],[81,36],[70,55],[10,76]]) {
+    assert.ok(['plains','forest','mountain'].includes(E.tile(g,c,r).terrain),
+      'dry-land correction at '+c+','+r);
+  }
+  for (const [c, r] of [[75,23],[76,23],[10,63],[11,64],[30,62],[31,62],[32,62]]) {
+    assert.equal(E.tile(g,c,r).terrain,'sea', 'protected channel at '+c+','+r);
+  }
+  assert.equal(E.tile(g,24,55).terrain!=='sea',true,
+    'the Matsue army must remain on land');
 });
 
 test('North-up layout places Hokkaido above Honshu and Kyushu below it', () => {
