@@ -54,47 +54,55 @@ function terrainProps(t, x, y, scale) {
   if (R * scale < 13) return;
   const h = k => hash01(t.c, t.r, k);
   if (t.terrain === 'forest') {
-    for (let i = 0; i < 4; i++) {
-      const tx = x + (h(i) - 0.5) * R * 1.1,
-        ty = y + (h(i + 9) - 0.5) * R * 0.9;
-      ctx.fillStyle = '#2f5a2e';
+    // Clusters of softly shaded crowns rather than isolated triangular trees.
+    for (let i = 0; i < 5; i++) {
+      const xx = x + (h(i + 3) - 0.5) * R * 1.28;
+      const yy = y + (h(i + 13) - 0.5) * R * 0.95;
+      const rr = 5 + h(i + 21) * 5;
+      ctx.fillStyle = 'rgba(16,49,34,0.28)';
       ctx.beginPath();
-      ctx.moveTo(tx, ty - 12);
-      ctx.lineTo(tx + 7, ty + 4);
-      ctx.lineTo(tx - 7, ty + 4);
-      ctx.closePath();
+      ctx.ellipse(xx + 2, yy + 3, rr * 1.1, rr * 0.55, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#3f7339';
+      ctx.fillStyle = i % 2 ? 'rgba(30,76,46,0.65)' : 'rgba(50,98,57,0.58)';
       ctx.beginPath();
-      ctx.moveTo(tx, ty - 9);
-      ctx.lineTo(tx + 4, ty + 1);
-      ctx.lineTo(tx - 4, ty + 1);
-      ctx.closePath();
+      ctx.ellipse(xx, yy, rr, rr * 0.75, h(i + 30) - 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(185,205,149,0.24)';
+      ctx.beginPath();
+      ctx.ellipse(xx - rr * 0.25, yy - rr * 0.22, rr * 0.38, rr * 0.20, 0, 0, Math.PI * 2);
       ctx.fill();
     }
   } else if (t.terrain === 'mountain' || t.terrain === 'peak') {
-    const big = t.terrain === 'peak' ? 1.35 : 1;
-    for (const [dx, s] of [
-      [-10, 0.8],
-      [8, 1],
-    ]) {
-      const px = x + dx,
-        hgt = 22 * s * big,
-        w = 15 * s * big;
-      ctx.fillStyle = t.terrain === 'peak' ? '#3e3a44' : '#6d6352';
+    // Curved ridge profiles read as relief rather than triangular map symbols.
+    const high = t.terrain === 'peak' ? 1.3 : 1;
+    for (let i = 0; i < 2; i++) {
+      const xx = x + (i ? 8 : -11), yy = y + (i ? 5 : 2);
+      const ht = (19 + h(i + 4) * 10) * high;
+      const wd = (20 + h(i + 8) * 5) * high;
+      ctx.fillStyle = 'rgba(30,43,41,0.52)';
       ctx.beginPath();
-      ctx.moveTo(px, y - hgt + 8);
-      ctx.lineTo(px + w, y + 10);
-      ctx.lineTo(px - w, y + 10);
+      ctx.moveTo(xx - wd, yy + 8);
+      ctx.quadraticCurveTo(xx - wd * .65, yy - ht * .45, xx - 3, yy - ht);
+      ctx.quadraticCurveTo(xx + 3, yy - ht * .92, xx + wd, yy + 9);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = '#f2f5f7';
+      ctx.fillStyle = 'rgba(208,219,199,0.44)';
       ctx.beginPath();
-      ctx.moveTo(px, y - hgt + 8);
-      ctx.lineTo(px + w * 0.35, y - hgt * 0.45 + 8);
-      ctx.lineTo(px - w * 0.35, y - hgt * 0.45 + 8);
+      ctx.moveTo(xx - 3, yy - ht);
+      ctx.quadraticCurveTo(xx - wd * .28, yy - ht * .43, xx - wd * .6, yy + 5);
+      ctx.quadraticCurveTo(xx - wd * .22, yy - ht * .07, xx + 1, yy - ht * .63);
       ctx.closePath();
       ctx.fill();
+      if (t.terrain === 'peak') {
+        ctx.fillStyle = 'rgba(244,247,240,0.75)';
+        ctx.beginPath();
+        ctx.moveTo(xx - 3, yy - ht);
+        ctx.lineTo(xx - wd * .32, yy - ht * .46);
+        ctx.lineTo(xx, yy - ht * .55);
+        ctx.lineTo(xx + wd * .24, yy - ht * .34);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
   } else if (t.terrain === 'desert') {
     ctx.strokeStyle = '#b89c62';

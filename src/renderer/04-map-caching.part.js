@@ -245,43 +245,42 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
         ctx.stroke();
       }
     }
-    // Small icons read as relief on a real atlas rather than stamped hex fills.
-    if (R * scale >= 24)
+    // Strategic zoom stays clean; richer cached relief appears closer in.
+    if (hexPixels >= 24)
       for (const t of game.tiles) {
         if (t.terrain === 'plains' || !scenarioSeaHexVisible(t)) continue;
-        if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
-        if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
-        const c = hexCenter(t);
-        if (!visible(c)) continue;
-        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : game.wrap ? 0.24 : 0.43;
-        for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
+        if (game.wrap) {
+          if (hexPixels < 34 || !['mountain', 'peak', 'crater', 'urban'].includes(t.terrain)) continue;
+          if (hexPixels < 42 && (t.terrain === 'crater' || t.terrain === 'urban')) continue;
+        }
+        const point = hexCenter(t);
+        if (!visible(point)) continue;
+        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? .82 : game.wrap ? .40 : .60;
+        for (const x of copies(point.x)) terrainProps(t, x, point.y, scale);
       }
     ctx.globalAlpha = 1;
   }
-  // Political borders are tactical information and still align to tile
-  // ownership. Coastlines are already smoothed by the visual atlas; drawing
-  // the old edge-by-edge hex coastline here would reintroduce the mosaic.
-  if (R * scale >= 22) for (const t of game.tiles) {
-    if (t.terrain === 'sea') continue;
-    const c = hexCenter(t);
-    if (!visible(c)) continue;
+  // Draw each national frontier once with dark contrast and a faction rim.
+  // Coastlines remain geographic vectors; these edges only show ownership.
+  if (R * scale >= 19) for (const t of game.tiles) {
+    if (t.terrain === 'sea' || t.terrain === 'offmap') continue;
+    const center = hexCenter(t);
+    if (center.y < top - R || center.y > bottom + R) continue;
     for (const n of metaFor(t).adj) {
-      if (n.terrain === 'sea' || n.owner === t.owner) continue;
-      const q = hexCenter(n),
-        qx = wrapNear(q.x, c.x),
-        angle = Math.atan2(q.y - c.y, qx - c.x),
-        i = Math.round(angle / (Math.PI / 3)),
-        a = ((i * 60 - 30) * Math.PI) / 180,
-        b = ((i * 60 + 30) * Math.PI) / 180;
-      for (const x of copies(c.x))
-        drawLine(
-          x + R * Math.cos(a),
-          c.y + R * Math.sin(a),
-          x + R * Math.cos(b),
-          c.y + R * Math.sin(b),
-          t.owner ? F(t.owner).color + '77' : '#ffffff35',
-          1.2 / Math.max(scale, 0.35),
-        );
+      if (n.terrain === 'sea' || n.terrain === 'offmap' || n.owner === t.owner) continue;
+      if (n.r < t.r || (n.r === t.r && n.c < t.c)) continue;
+      const q = hexCenter(n), nearX = wrapNear(q.x, center.x);
+      const angle = Math.atan2(q.y - center.y, nearX - center.x);
+      const edge = Math.round(angle / (Math.PI / 3));
+      const a = ((edge * 60 - 30) * Math.PI) / 180;
+      const b = ((edge * 60 + 30) * Math.PI) / 180;
+      for (const x of copies(center.x)) {
+        const ax = x + R * Math.cos(a), ay = center.y + R * Math.sin(a);
+        const bx = x + R * Math.cos(b), by = center.y + R * Math.sin(b);
+        drawLine(ax, ay, bx, by, '#0b1823be', 3.2 / Math.max(scale, .35));
+        drawLine(ax, ay, bx, by, t.owner ? F(t.owner).color + 'cc' : '#e1e3d28c',
+          1.35 / Math.max(scale, .35));
+      }
     }
   }
 }
