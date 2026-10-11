@@ -3331,7 +3331,21 @@
       if (objectiveWin) {g.over=objectiveWin;return g.over;}
       const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       if (!contenders.includes(g.player)) {
-        g.over = {winner: contenders[0] || 'draw', reason: 'Your last Japanese stronghold has fallen.'};
+        // The player has lost, but two surviving rivals are still fighting:
+        // do not misleadingly award the war to the first faction in turn order.
+        // If one power really remains, that power is the actual victor.
+        const soleVictor = contenders.length === 1 ? contenders[0] : null;
+        g.over = {
+          winner: soleVictor,
+          eliminated: true,
+          eliminatedBy: g.fallen?.[g.player]?.by || null,
+          reason: soleVictor
+            ? 'Your last Japanese stronghold has fallen. The ' + FACTIONS[soleVictor].name +
+              ' is the last surviving power.'
+            : 'Your last Japanese stronghold has fallen. ' +
+              'The war continues between ' +
+              contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
+        };
       } else if (contenders.length === 1) {
         g.over = {winner: contenders[0], reason: 'The invasion of Japan is over. One power controls every remaining stronghold.'};
       } else if (g.turn > (g.scenario?.turnLimit || 60)) {
