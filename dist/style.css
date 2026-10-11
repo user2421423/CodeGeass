@@ -1259,3 +1259,40 @@ a {
     transition: none !important;
   }
 }
+
+/* Scenario-select: strategic preview and compact three-power chooser. */
+.scenario-select .scenario-preview-map {
+  display: block;
+  width: 100%;
+  height: clamp(260px, 37vh, 390px);
+  border: 1px solid #48647b;
+  border-radius: 8px;
+  background: #0d2b40;
+  margin: 15px 0 8px;
+}
+.scenario-select .choice-grid {
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 12px;
+  margin: 14px 0 20px;
+}
+.scenario-select .faction {
+  padding: 14px;
+}
+.scenario-select .faction h3 {
+  font-size: 18px;
+  margin: 8px 0;
+}
+.scenario-select .faction p {
+  font-size: 12px;
+}
+.scenario-select .faction.bk {
+  border-top-color: #f0c94a;
+}
+@media(max-width: 760px) {
+  .scenario-select .choice-grid {
+    grid-template-columns: 1fr;
+  }
+  .scenario-select .scenario-preview-map {
+    height: 245px;
+  }
+}

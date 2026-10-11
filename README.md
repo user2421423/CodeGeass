@@ -163,3 +163,87 @@ the grid to a PNG (needs Pillow).
 
 Unofficial fan game based on Code Geass. Unit and character names follow the Code Geass wiki; drawn artwork is
 original and generated in code; imported images are credited in ASSETS.md.
+
+
+## Scenario Mode (feature branch: Japan invasion)
+
+The **Invasion of Japan** is a self-contained regional war opened from **Scenarios** in the main menu.
+Before launching, choose Britannia, the Black Knights or the Chinese Federation, inspect the map,
+and choose Normal, Hard or Challenge difficulty. There is no battle save/resume: Conquest and
+Campaign saves are not affected and persistent HQ upgrades are not applied.
+
+- **Map:** 112 × 88 hexes (9,856), including a fully decoded Japanese landmask, 44
+  geographically placed cities, terrain zones matching the principal Japanese mountain
+  belts and plains, and city-owned provinces. Takamatsu is anchored on Shikoku;
+  the Kanmon Strait separates Kyushu and Honshu as navigable water.
+- **Starting factions:** Britannia 35 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
+  Chinese Federation 4 cities / 29 units. This includes 14 naval units and 66 land units.
+- **Naval infrastructure:** 9 coastal ports, 14 starting warships/amphibious Knightmares;
+  Mount Fuji, Sapporo and Fukuoka work Japan's three Sakuradite deposits.
+- **Army groups:** 26 named starting army groups and fleets. During a scenario, open
+  **Army Groups** to locate a formation or set a shared map-click destination for all
+  reachable member units. Group orders use the normal standing-order route rules.
+- **Diplomacy:** Britannia and the Black Knights begin allied. At the start of turn 10
+  their alliance ends and all three powers become hostile.
+- **Objectives:** faction-specific strategic stronghold and territorial goals, with
+  a 60-turn regional score fallback. AI income and rival stacks scale by difficulty.
+- **Implementation:** a dedicated regional-game initializer does not build the full
+  Conquest world first. Scenario runs do not save or grant persistent profile rewards.
+
+**Still to develop:** new scripted battles and uprisings, naval supply and reinforcement
+routes (starting fleets are implemented), full economic and military balancing, extended
+50–60-turn AI simulations, browser performance profiling, and final UX polish. This branch
+must be reconciled with the latest main before any merge.
+
+Automated regression coverage: `tests/scenario.test.cjs`.
+
+### Japan starting-force balance check
+
+Britannia's opening formations were reduced from **38 to 20 total**, retaining six naval
+formations, four key named commanders and fourteen land formations. The Black Knights
+remain on 13 and the Chinese Federation on 29 (62 formations total).
+
+A baseline set of seven deterministic Normal-difficulty AI-vs-AI runs using multiple
+seeds and player perspectives was completed after this change. In the three trials where
+Britannia was the selected side, it met its victory requirements on turns 32, 38 and 47.
+The remaining four trials ended with the selected BK/Chinese player eliminated while
+Britannia held most of the Japanese cities; these are **not** proof of an overall Britannian
+victory, because the current scenario engine closes a session on player elimination.
+
+The previous (pre-rebalance) starting income was 554 credits / 301 industry for
+Britannia, versus BK 96 / 49 and CF 100 / 55. Those **historical simulation
+results do not apply to the newer economic balance**.
+
+### Japan scenario economy (Normal difficulty)
+
+| Starting economy (per turn) | Britannia | China | Black Knights |
+| --- | ---: | ---: | ---: |
+| Credits | 400 | 320 | 300 |
+| Industry | 220 | 185 | 175 |
+| Research | 42 | 34 | 32 |
+| Sakuradite | 28 | 15 | 12 |
+
+Starting stockpiles equal **four turns of China's income** and **two turns
+for Britannia and the Black Knights**, across all four resources:
+
+| Initial stockpile | Britannia | China | Black Knights |
+| --- | ---: | ---: | ---: |
+| Credits | 800 | 1,280 | 600 |
+| Industry | 440 | 740 | 350 |
+| Research | 84 | 136 | 64 |
+| Sakuradite | 56 | 60 | 24 |
+Japan city production runs at 40% of the base Conquest city yield; fixed
+faction command funding brings total opening income to the targets above.
+Unlike a flat income override, losing or capturing cities changes actual
+income, while the external budget does not automatically follow captured
+cities. Hard and Challenge increase rival income and starting stockpiles
+together, preserving the four-turn Chinese reserve and two-turn reserves
+for the other factions at every difficulty.
+
+These values passed all scenario economic and capture regression checks.
+Two preliminary 60-turn AI-vs-AI simulations of the revised economy finished
+successfully: the Britannia-selected seed 101 game ended with a Britannian
+armistice victory (32 cities at turn 60); the China-selected seed 202 game
+ended with a Chinese strategic victory (30 cities at turn 60). These are
+early smoke/balance indicators only: a larger multi-seed sample, including
+Black Knights games, is still needed before calling the scenario balanced.

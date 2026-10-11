@@ -10,7 +10,7 @@ let campaignTab = 'bk_s1',
 function turnLimit() {
   return game.mode === 'campaign'
     ? game.campaign?.turnLimit ?? E.campaign.mission(game.campaign.id)?.lose?.turns ?? 0
-    : E.ARMISTICE;
+    : game.mode === 'scenario' ? (game.scenario?.turnLimit || 60) : E.ARMISTICE;
 }
 function starRow(n) {
   return `<span class="stars" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join('')}</span>`;

@@ -827,7 +827,7 @@
     return g.economy[side];
   }
   function alive(g, side) {
-    return (g?.mode === 'campaign' ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
+    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
   }
   // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
   function foe(g, a, b) {
@@ -900,7 +900,7 @@
     if (s.portAt) return tile(g, s.portAt.c, s.portAt.r);
     // Baseline starting ports must stay on their exact original hexes.
     // Non-starting ports retain the normal neighbour-selection rules.
-    const anchored = COASTAL_PORT_HEXES[s.name];
+    const anchored = g.mode === 'conquest' ? COASTAL_PORT_HEXES[s.name] : null;
     if (anchored) {
       const fixed = tile(g, anchored[0], anchored[1]);
       if (!fixed || !isSea(fixed) || !adjacent(g, s).includes(fixed) ||
@@ -1975,8 +1975,15 @@
       total.sakuradite += (depositShares(g, d)[side] || 0) * refining;
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
-    if (g.mode !== 'campaign' && MAJORS.includes(side) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
+    // Regional operations receive fixed off-map military funding in addition
+    // to city output. Captured cities still add (or remove) their normal
+    // earnings. Do not give stipends to eliminated powers.
+    const support = g.mode === 'scenario' && alive(g, side) &&
+      g.stations.some(s => s.owner === side) ? g.scenario?.funding?.[side] : null;
+    if (support) for (const resource of ['credits','industry','science','sakuradite'])
+      total[resource] += support[resource] || 0;
     return total;
   }
   // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
@@ -2650,7 +2657,7 @@
       a = SAKURADITE.allocation;
     if (!owner || !out) return {};
     if (g.mode === 'campaign' || !a.sites.includes(d.name) || !alive(g, owner)) return { [owner]: out };
-    const others = MAJORS.filter(s => s !== owner && alive(g, s)),
+    const others = (g.mode === 'scenario' ? g.order : MAJORS).filter(s => s !== owner && alive(g, s)),
       shares = { [owner]: out * (1 - a.share * others.length) };
     for (const s of others) shares[s] = out * a.share;
     return shares;
@@ -3312,6 +3319,42 @@
   // armistice.
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
+    if (g.mode === 'scenario') {
+      const contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
+      if (!contenders.includes(g.player)) {
+        // The player has lost, but two surviving rivals are still fighting:
+        // do not misleadingly award the war to the first faction in turn order.
+        // If one power really remains, that power is the actual victor.
+        const soleVictor = contenders.length === 1 ? contenders[0] : null;
+        g.over = {
+          winner: soleVictor,
+          eliminated: true,
+          eliminatedBy: g.fallen?.[g.player]?.by || null,
+          reason: soleVictor
+            ? 'Your last Japanese stronghold has fallen. The ' + FACTIONS[soleVictor].name +
+              ' is the last surviving power.'
+            : 'Your last Japanese stronghold has fallen. ' +
+              'The war continues between ' +
+              contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
+        };
+        return g.over;
+      }
+      // Resolve the player's elimination first, even if the surviving nation
+      // already holds enough objectives. It must remain a defeat for the player.
+      const objectiveWin = root.Knightmare.scenarios?.japan?.winner(g);
+      if (objectiveWin) {g.over=objectiveWin;return g.over;}
+      if (contenders.length === 1) {
+        g.over = {winner: contenders[0], reason: 'The invasion of Japan is over. One power controls every remaining stronghold.'};
+      } else if (g.turn > (g.scenario?.turnLimit || 60)) {
+        const score = s => g.stations.filter(c => c.owner === s).reduce((n,c) => n+c.tier,0);
+        const best = Math.max(...contenders.map(score));
+        const leaders = contenders.filter(s => score(s) === best);
+        g.over = {winner: leaders.length === 1 ? leaders[0] : 'draw',
+          reason: 'The regional war ends after 60 turns. Strategic city scores: ' +
+            contenders.map(s => (FACTIONS[s]?.short || s) + ' ' + score(s)).join(' · ') + '.'};
+      }
+      return g.over;
+    }
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -3336,6 +3379,9 @@
   }
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
+    if (g.mode === 'scenario')
+      return (root.Knightmare.scenarios?.japan?.objective(g) || 'Secure Japan') +
+        (g.scenario?.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.');
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
@@ -3343,6 +3389,7 @@
   }
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
+    if (g?.mode === 'scenario') return g.scenario?.title || 'Scenario · Japan';
     return 'World War · 2017 a.t.b.';
   }
 
