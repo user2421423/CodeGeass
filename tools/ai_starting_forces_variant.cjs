@@ -2,10 +2,15 @@
 'use strict';
 // Simulation-only starting army experiment. Does not change source map or game builds.
 const fs = require('node:fs');
+const {execFileSync} = require('node:child_process');
 const variant = process.argv[2];
 if (!['A','B','C','D'].includes(variant)) throw Error('Unknown deployment experiment: ' + variant);
 const file = 'dist/engine/world.js';
-const original = fs.readFileSync(file,'utf8');
+// Reproduce the original A/B/C/D comparison against the exact pre-reinforcement
+// starting world, even after +8 becomes the live deployment.
+const original = execFileSync('git',
+  ['show','0935ba19ba4c43984e3d0fdd27c40b0775340c38:dist/engine/world.js'],
+  {encoding:'utf8'});
 const key = 'const ARMY_DATA = [';
 const begin = original.indexOf(key);
 const end = original.indexOf('\n  ];', begin);
