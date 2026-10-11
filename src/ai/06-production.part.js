@@ -195,13 +195,15 @@
       },
       // Japan Scenario: reinforcements march toward an active, understrength attack along
       // real terrain and naval routes instead of a generic nearest enemy or a rear-area defense.
+      // A capture-capable unit standing at the factory estimates the real land or sea route,
+      // so island factories can reinforce overseas columns.
       scenarioServes = s => {
         const needing = memo.fronts.filter(f => f.assigned < f.desiredStrength);
         const choices = needing.length ? needing : memo.fronts;
-        return choices.slice().sort((a, b) => {
-          const cost = f => scenarioRouteField(g, f)[s.r * g.cols + s.c];
-          return cost(a) - cost(b) || a.anchor.id - b.anchor.id;
-        })[0];
+        const sample = allUnits(g).find(u => u.side === side && u.hp > 0 && canCapture(u) && !isShip(u)),
+          proxy = sample && { ...sample, id: 'factory:' + s.id, c: s.c, r: s.r },
+          route = f => scenarioTravel(g, proxy || s, f);
+        return choices.slice().sort((a, b) => route(a) - route(b) || a.anchor.id - b.anchor.id)[0];
       },
       scenarioUrgency = s => {
         const f = scenarioServes(s);

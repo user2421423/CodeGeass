@@ -526,3 +526,27 @@ test('Both AI enemies can produce and act without crashing in all three modes', 
     assert.equal(E.checkVictory(g), null);
   }
 });
+
+test('Scenario AI plans and produces when a faction holds cities but has no troops', () => {
+  const g = japan.create('britannia', 'normal', 1205);
+  for (const u of g.units.filter(u => u.side === 'cf')) u.hp = 0;
+  E.beginTurn(g, 'cf', false);
+  assert.ok(g.stations.some(s => s.owner === 'cf'));
+  assert.doesNotThrow(() => E.aiPlan(g, 'cf'));
+  assert.doesNotThrow(() => E.aiProduction(g, 'cf'));
+});
+
+test('Scenario endgame columns grow past five formations when two hostile cities remain', () => {
+  const g = japan.create('britannia', 'normal', 1204);
+  g.turn = 11;
+  japan.onTurn(g);
+  const survivors = g.stations.filter(s => s.owner === 'britannia').slice(0, 2);
+  for (const s of g.stations) s.owner = 'cf';
+  for (const s of survivors) s.owner = 'britannia';
+  E.beginTurn(g, 'cf', false);
+  const memo = E.aiPlan(g, 'cf');
+  assert.equal(memo.fronts.length, 2);
+  // The former five-unit cap starved the second city while surplus troops piled onto the first.
+  const smallest = Math.min(...memo.fronts.map(f => f.members.length));
+  assert.ok(smallest > 5, 'smallest final column: ' + smallest);
+});
