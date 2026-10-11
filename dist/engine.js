@@ -1981,7 +1981,7 @@
       total.sakuradite += (depositShares(g, d)[side] || 0) * refining;
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
-    if (g.mode !== 'campaign' && MAJORS.includes(side) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
     return total;
   }
@@ -2657,7 +2657,7 @@
       a = SAKURADITE.allocation;
     if (!owner || !out) return {};
     if (g.mode === 'campaign' || !a.sites.includes(d.name) || !alive(g, owner)) return { [owner]: out };
-    const others = MAJORS.filter(s => s !== owner && alive(g, s)),
+    const others = (g.mode === 'scenario' ? g.order : MAJORS).filter(s => s !== owner && alive(g, s)),
       shares = { [owner]: out * (1 - a.share * others.length) };
     for (const s of others) shares[s] = out * a.share;
     return shares;
