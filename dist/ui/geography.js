@@ -1,4 +1,4 @@
-/* GSHHG unified global vector geography, drawn behind independent tactical hexes. */
+/* GSHHG global geography and Natural Earth 1:10m Japan scenario coastline; gameplay hexes stay independent. */
 'use strict';
 const GEOGRAPHY = (() => {
   const VISUAL_WORLD = { cols: 180, rows: 76, latTop: 74, latSpan: 128 };
@@ -571,9 +571,14 @@ const GEOGRAPHY = (() => {
     [130.52, 30.34], // Yakushima
     [141.25, 45.18], // Rishiri
   ];
-  const JAPAN_LAND = LAYERS.land.filter(shape =>
-    JAPAN_ISLAND_ANCHORS.some(([lon, lat]) =>
-      pointWithinShape(shape, px(lon), py(lat))));
+  // Paint the Japan scenario using dedicated high-resolution Natural Earth 1:10m
+  // polygons; keep the GSHHG atlas fallback for isolated tests without the asset.
+  // Shoreline and gameplay coastal classification use the same polygon set.
+  const JAPAN_LAND = typeof JAPAN_SHAPES !== 'undefined' && JAPAN_SHAPES.length
+    ? JAPAN_SHAPES.map(shape)
+    : LAYERS.land.filter(shape =>
+      JAPAN_ISLAND_ANCHORS.some(([lon, lat]) =>
+        pointWithinShape(shape, px(lon), py(lat))));
   function japanLandAt(lon, lat) {
     return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }

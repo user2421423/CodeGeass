@@ -171,7 +171,18 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(conquestTint.captured, null, 'a captured Borneo tile must remove the uniform Federation tint');
   assert.equal(conquestTint.restored, 'cf', 'restored Borneo regains uniform Federation tint');
 
-  // Regional scenarios use the Conquest GSHHG atlas, not a terrain hex mosaic.
+  // Japan uses detailed, curated island polygons, with no neighbouring states.
+  const japanDetail = run('JAPAN_SHAPES.map(shape => shape.length)');
+  assert.equal(japanDetail.length, 9, 'retain the nine existing Japanese island shapes');
+  assert(japanDetail.reduce((sum,n) => sum + n, 0) >= 4700,
+    'Natural Earth 1:10m provides substantially more coastline points');
+  assert(japanDetail.some(n => n >= 2400), 'Honshu has the new detailed coastline');
+  assert(japanDetail.some(n => n >= 450 && n <= 600), 'Shikoku has the new detailed coastline');
+  assert(scripts.indexOf('ui/geography-data.js') < scripts.indexOf('ui/japan-coastlines.js') &&
+    scripts.indexOf('ui/japan-coastlines.js') < scripts.indexOf('ui/geography.js'),
+    'Japanese coastline asset loads before the geography painter');
+
+  // Regional scenarios use the higher-detail Natural Earth Japan-only atlas, not a terrain hex mosaic.
   const japanAtlas = run(`(() => {
     const g=E.scenarios.japan.create('cf','normal',17);
     const painter=document.createElement('canvas').getContext('2d');
