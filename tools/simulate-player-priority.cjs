@@ -2,27 +2,24 @@
 'use strict';
 // Headless, all-AI, paired-seed comparison. The player-designated faction is
 // ALSO AI-controlled for a fair benchmark; this is not a human-skill test.
-// Usage: node tools/simulate-player-priority.cjs --modes=conquest,scenario,campaign --bonuses=0,20,40,60,100 --seeds=19,91 --rounds=8
+// Usage: node tools/simulate-player-priority.cjs --modes=conquest,scenario --bonuses=0,20,40,60,100 --seeds=19,91 --rounds=8
 const E = require('../dist/engine.js');
 require('../dist/engine/ai.js');
 const japan = require('../dist/scenarios.js');
-require('../dist/campaign.js');
 
 const options = Object.fromEntries(process.argv.slice(2).filter(x => x.startsWith('--'))
   .map(x => x.slice(2).split(/=(.*)/s).slice(0,2)));
 const csv = (name, fallback) => (options[name] || fallback).split(',').map(x => x.trim()).filter(Boolean);
-const modes = csv('modes','conquest,scenario,campaign');
+const modes = csv('modes','conquest,scenario');
 const bonuses = csv('bonuses','0,20,40,60,100').map(Number);
 const seeds = csv('seeds','19,91').map(Number);
 const rounds = Math.min(120, Math.max(1, Number(options.rounds || 8)));
 const player = options.player || 'britannia';
-const mission = options.mission || 'bk1';
 if (bonuses.some(x => !Number.isFinite(x) || x < 0 || x > 100) ||
-    seeds.some(x => !Number.isInteger(x)) || modes.some(x => !['conquest','scenario','campaign'].includes(x)))
+    seeds.some(x => !Number.isInteger(x)) || modes.some(x => !['conquest','scenario'].includes(x)))
   throw new Error('Invalid modes, bonus percentages or seeds');
 function create(mode,seed) {
   if(mode==='scenario') return japan.create(player,'normal',seed);
-  if(mode==='campaign') return E.campaign.createMission(mission,seed,'normal');
   return E.createGame(player,'normal','conquest',seed);
 }
 function snapshot(g) {
@@ -48,7 +45,7 @@ function run(mode,seed,bonus) {
       E.beginTurn(g,side,round>1);
       if(g.over)break;
       E.aiProduction(g);
-      if(side!==g.player&&g.mode!=='campaign'){
+      if(side!==g.player){
         const plan=E.aiPlan(g,side);
         for(const f of plan.fronts||[])if(f.type==='offensive'){
           const weight=f.assigned||0;
