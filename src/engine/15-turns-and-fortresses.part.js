@@ -13,6 +13,8 @@
   // capital first, then the richest. Null when there is none. `anyLab`: the best such city to raise a lab in instead.
   function eliminatorCity(g, side, anyLab = false) {
     const cover = sideEliminators(g, side);
+    const capital = g.stations.find(s => s.owner === side && s.capitalOf === side),
+      unshieldedCapital = !!capital && !cover.some(c => dist(g, c, capital) <= ELIMINATOR.range);
     const critical = g.stations.filter(s => s.owner === side &&
       !cover.some(c => dist(g, c, s) <= ELIMINATOR.range));
     // A charge should protect valuable targets, not simply occupy a rich lab.
@@ -34,6 +36,8 @@
         )
         .sort(
           (a, b) =>
+            (unshieldedCapital ? Number(dist(g, b, capital) <= ELIMINATOR.range) -
+              Number(dist(g, a, capital) <= ELIMINATOR.range) : 0) ||
             protection(b) - protection(a) ||
             (anyLab ? (b.lab || 0) - (a.lab || 0) : 0) ||
             b.income + b.industry - (a.income + a.industry) ||
