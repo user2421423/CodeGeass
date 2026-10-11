@@ -70,7 +70,15 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
     col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
   b.fillStyle = '#0d2b40';
   b.fillRect(0, 0, width, height);
-  for (const t of g.tiles) {
+  // Scenario previews and minimaps use the same real Japanese silhouette as
+  // the main map, not low-resolution rectangles of terrain colours.
+  const regional = g.mode === 'scenario' && g.scenario?.id === 'invasion-japan';
+  if (regional) {
+    b.save();
+    b.scale(sx, sy);
+    GEOGRAPHY.paint(b, g, 0, mapW(g), 0, mapH(g), Math.min(sx, sy));
+    b.restore();
+  } else for (const t of g.tiles) {
     const p = hexCenter(t);
     b.fillStyle = MINI_TERRAIN[t.terrain];
     b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
