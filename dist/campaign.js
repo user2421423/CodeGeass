@@ -314,8 +314,10 @@
         warnings: [],
         note: null,
         enemyPlaced: 0,
-        eliteSelections: {},
-        eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s)])),
+        ...(difficultyId === 'elite' ? {
+          eliteSelections: {},
+          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s)])),
+        } : {}),
         turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
       },
     };
