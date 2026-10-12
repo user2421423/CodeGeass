@@ -137,6 +137,7 @@
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
+      delete u.expForeknowledge;
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
