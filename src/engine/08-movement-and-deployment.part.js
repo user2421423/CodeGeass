@@ -71,7 +71,7 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -261,7 +261,7 @@
       !(canCapture(u) || navalLanding) || (s.shield > 0 && !navalLanding))
       return { captured: null, annexed: null };
     const loser = s.owner;
-    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*(s.income||0));s.expTaxUntil=g.turn+2;}
+    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
     delete s.expSupplyBlocked;delete s.expDecree;
     s.owner = u.side;
     s.shield = 0;
