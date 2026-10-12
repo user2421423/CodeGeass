@@ -3662,19 +3662,18 @@
   // at factory Tier II or higher. Elite rivals retain their extra Tier III hubs.
   // Use the ordinary building calculations so displayed tier, yields and shields
   // agree; a raw change to s.tier would leave these statistics out of sync.
+  function raiseFactoryTier(g, s, tier) {
+    if (s.tier >= tier) return;
+    const oldShield = s.shield, oldMaxShield = s.maxShield;
+    buildingFoundation(g, s); // Snapshot the original city's foundation.
+    s.tier = tier;
+    syncBuildings(g, s);
+    // Preserve existing damage while repairing the capacity from the new tier.
+    s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
+  }
   function prepareEliteConquestFactories(g) {
     if (!eliteConquest(g)) return;
-    const raiseFactory = (s, tier) => {
-      if (s.tier >= tier) return;
-      const oldShield = s.shield, oldMaxShield = s.maxShield;
-      buildingFoundation(g, s); // Snapshot the original city's Tier-I/II foundations.
-      s.tier = tier;
-      syncBuildings(g, s);
-      // Equivalent to buying the missing factory upgrades: newly gained
-      // shield capacity starts repaired, while existing damage stays intact.
-      s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
-    };
-    for (const s of g.stations) raiseFactory(s, 2);
+    for (const s of g.stations) raiseFactoryTier(g, s, 2);
     for (const side of MAJORS.filter(s => s !== g.player)) {
       const cities = g.stations.filter(s => s.owner === side);
       const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
@@ -3683,7 +3682,7 @@
       let advanced = cities.filter(s => s.tier >= 3).length;
       for (const s of nearFront) {
         if (advanced >= Math.max(6, Math.ceil(cities.length / 8))) break;
-        if (s.tier < 3) { raiseFactory(s, 3); advanced++; }
+        if (s.tier < 3) { raiseFactoryTier(g, s, 3); advanced++; }
       }
     }
   }
@@ -4285,6 +4284,7 @@
     log,
     maxHP,
     hullTech,
+    raiseFactoryTier,
     migrateSave,
     newUnit,
     movement,
