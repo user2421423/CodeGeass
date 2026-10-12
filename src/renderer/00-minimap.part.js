@@ -72,7 +72,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   b.fillRect(0, 0, width, height);
   // Scenario previews and minimaps use the same real Japanese silhouette as
   // the main map, not low-resolution rectangles of terrain colours.
-  const regional = g.mode === 'scenario' && g.scenario?.id === 'invasion-japan';
+  const regional = g.mode === 'scenario' && !!g.scenario?.projection;
   if (regional) {
     b.save();
     b.scale(sx, sy);

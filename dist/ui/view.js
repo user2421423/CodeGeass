@@ -243,7 +243,7 @@ function activateHex(p) {
     return;
   }
   if (scenarioRoutingGroup && game.mode === 'scenario' && interactive()) {
-    const result=E.scenarios.japan.orderGroup(game,scenarioRoutingGroup,p);
+    const result=E.scenarioOf(game).orderGroup(game,scenarioRoutingGroup,p);
     if(result.ok) {
       scenarioRoutingGroup=null;
       refreshAndSave();

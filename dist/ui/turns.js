@@ -105,7 +105,7 @@ async function endTurn() {
     scenarioNotice = false;
   if (!game.over) {
     game.turn++;
-    scenarioNotice = game.mode === 'scenario' && (E.scenarios?.byId?.[game.scenario?.id] || E.scenarios?.japan)?.onTurn(game);
+    scenarioNotice = game.mode === 'scenario' && E.scenarioOf(game)?.onTurn(game);
     const before = unitSnapshot(),
       warheads = game.arsenal?.[game.player] || 0;
     E.beginTurn(game, game.player, true);
@@ -224,7 +224,7 @@ function resultDialog() {
     const won=game.over.winner===game.player;
     const lost=!!game.over.eliminated;
     modal.innerHTML='<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Scenario result">'+
-      '<div class="eyebrow">Japan scenario</div><h2>'+(won?'Victory in Japan':lost?'Defeat in Japan':'Scenario concluded')+'</h2>'+
+      '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
       '<p>'+esc(game.over.reason)+'</p><p class="description">This was a single-session scenario. No save or campaign rewards are written.</p>'+
       '<div class="dialog-footer"><button data-action="close">Inspect map</button><button class="primary" data-action="scenario">Play again</button></div>'+
       '</section></div>';

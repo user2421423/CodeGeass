@@ -161,7 +161,7 @@
     return stationAt(g, p)?.name || siteAt(g, p)?.name || (near ? `near ${near.name}` : `hex ${p.c},${p.r}`);
   }
   function launchReason(g, side, p) {
-    if (g.mode === 'scenario') return 'F.L.E.I.J.A. is unavailable in Japan Scenario';
+    if (g.mode === 'scenario') return 'F.L.E.I.J.A. is unavailable in regional scenarios';
     if (g.over) return 'Operation over';
     if (g.phase !== side) return 'Not your turn';
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';

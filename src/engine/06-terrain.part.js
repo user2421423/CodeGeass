@@ -54,6 +54,7 @@
     britannia: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
     eu: { amphibious: 'panzer_frosch', amphibious2: 'panzer_frosch_ii', carrier: 'eu_carrier' },
     cf: { amphibious: 'shui_gun_ru', amphibious2: 'shui_gun_ru_ii', carrier: 'cf_carrier' },
+    eb: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
   };
   const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : Object.values(NAVAL[side] || {}));
   const isShip = u => TYPES[u?.type]?.naval === 'ship';
