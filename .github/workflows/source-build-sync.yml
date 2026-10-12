@@ -17,7 +17,7 @@ jobs:
           node-version: '22'
       - name: Confirm generated JavaScript matches source
         run: node tools/build_sources.cjs --check
-      - name: Run existing core and scenario checks
-        run: node --test tests/core.test.cjs tests/scenario.test.cjs
+      - name: Run all engine, conquest, scenario and art regressions
+        run: node --test tests/*.test.cjs
       - name: Run existing UI smoke checks
         run: node tests/ui-smoke.cjs
