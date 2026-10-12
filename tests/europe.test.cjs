@@ -40,6 +40,16 @@ test('European hex audit excludes Africa and Anatolia but preserves European sho
       (lon+13)*g.cols/60-.5-.5*(r&1))));
     return E.tile(g,c,r);
   };
+  const landNear=(lon,lat,range=1)=>{
+    const center=tileAt(lon,lat);
+    return g.tiles.some(t=>Math.abs(t.c-center.c)<=range&&
+      Math.abs(t.r-center.r)<=range&&!['sea','offmap'].includes(t.terrain));
+  };
+  for(const [name,lon,lat] of [
+    ['Ibiza (Balearics)',1.1,39.0],['Sardinia',9.05,40.05],
+    ['Sicily',14.1,37.7],['Crete',24.9,35.2],['Rhodes',27.5,36.2]
+  ]) assert.ok(landNear(lon,lat),name+' should retain playable European land');
+
   // Inspected landmarks: cities, peninsulas and European Mediterranean islands.
   for(const [name,lon,lat] of [
     ['Paris',2.35,48.86],['Madrid',-3.7,40.42],['Lisbon',-9.14,38.72],
@@ -53,8 +63,8 @@ test('European hex audit excludes Africa and Anatolia but preserves European sho
     ['Ankara',32.85,39.92],['Izmir',27.14,38.42],
     ['Antalya',30.7,36.9],['Trabzon',39.72,41.0],
     ['Batumi',41.6,41.65]
-  ]) assert.ok(['sea','offmap'].includes(tileAt(lon,lat).terrain),
-    name+' must not become a European land province');
+  ]) assert.equal(tileAt(lon,lat).terrain,'offmap',
+    name+' must be outside both European land and navigable sea');
 
   let shore=0;
   for(const t of g.tiles){
