@@ -134,7 +134,7 @@
       // needs a lab for its next Eliminator comes first.
       const soon = g.turn >= FLEIJA.labTurn - 5,
         prep =
-          side !== g.player && MAJORS.includes(side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
+          side !== g.player && isMajor(g, side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&
@@ -330,7 +330,7 @@
           if (eliteScenario(g)) {
             const id = Object.keys(ELITE_FORCES).find(k => {
               const e = ELITE_FORCES[k], t = TYPES[e.type];
-              return e.availableTo.includes(side) &&
+              return (e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'))) &&
                 (role === 'carrier' ? t.naval === 'ship' : t.naval === 'amphibious');
             });
             if (!id) continue;
@@ -417,7 +417,7 @@
           return value + ((s.id * 13 + g.turn * 7 + hash) % 13) / 6;
         };
         return (eliteCampaign ? g.campaign?.eliteRosters?.[side] || [] : Object.keys(ELITE_FORCES))
-          .filter(id => (eliteCampaign || ELITE_FORCES[id].availableTo.includes(side)) &&
+          .filter(id => (eliteCampaign || ELITE_FORCES[id].availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && ELITE_FORCES[id].availableTo.includes('britannia'))) &&
             !TYPES[ELITE_FORCES[id].type].naval &&
             TYPES[ELITE_FORCES[id].type].tier <= s.tier)
           .sort((a, b) => score(b) - score(a) || a.localeCompare(b));

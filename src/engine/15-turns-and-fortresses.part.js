@@ -32,7 +32,7 @@
   }
   // The most valuable target that spares the launcher's own units and cities, or null below the threshold.
   function aiLaunchTarget(g, side) {
-    const rival = s => !!s && s !== side && s !== 'neutral',
+    const rival = s => !!s && s !== 'neutral' && foe(g, s, side),
       seen = new Set();
     let best = null,
       protectedBest = null;
@@ -51,7 +51,8 @@
           outer = blastDistance > 1,
           v = unitAt(g, t),
           s = stationAt(g, t);
-        if ((v && !foe(g, v.side, side)) || (s && !foe(g, s.owner, side))) {
+        if ((v && !foe(g, v.side, side)) || (s && !foe(g, s.owner, side)) ||
+            (g.era === 'ufn2018' && siteAt(g, t) && !foe(g, depositOwner(g, siteAt(g, t)), side))) {
           safe = false;
           break;
         }

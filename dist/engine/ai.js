@@ -14,6 +14,8 @@
     FACTIONS,
     FLEIJA,
     MAJORS,
+    powersOf,
+    isMajor,
     NAVAL,
     TYPES,
     adjacent,
@@ -387,12 +389,12 @@
       army = g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       near = p => own.some(s => dist(g, s, p) <= FRONT.near) || army.some(u => dist(g, u, p) <= FRONT.near),
-      cities = Object.fromEntries(MAJORS.map(faction =>
+      cities = Object.fromEntries(powersOf(g).map(faction =>
         [faction, g.stations.filter(s => s.owner === faction).length])),
-      lead = Math.max(1, ...MAJORS.filter(faction => alive(g, faction)).map(faction => cities[faction])),
+      lead = Math.max(1, ...powersOf(g).filter(faction => alive(g, faction)).map(faction => cities[faction])),
       // Every faction considers a stronger surviving rival the greater long-run threat.
       // This discourages two great powers from continually devouring a losing third.
-      rivalWeight = owner => !MAJORS.includes(owner) ? 1 :
+      rivalWeight = owner => !isMajor(g, owner) ? 1 :
         Math.max(0.35, Math.pow((cities[owner] || 0) / lead, 3.5)),
       // An expensive enemy capital or mine is worth pursuing only if a feasible
       // regional land approach or a loaded expedition actually exists.
@@ -799,7 +801,7 @@
           set('attacking');
           st.force = f.assigned;
           if (side !== g.player && f.objectives.some(o => o.owner === g.player))
-            log(g, `${FACTIONS[side].short} forces massed at ${f.rally.name} open an offensive toward ${f.name}.`, side);
+            log(g, `${(g.factions?.[side] || FACTIONS[side]).short} forces massed at ${f.rally.name} open an offensive toward ${f.name}.`, side);
         } else if (st.state === 'attacking' && g.turn - st.since >= 2 && f.assigned < (st.force || 0) * 0.45) set('assembling');
       }
       f.state = st.state;
@@ -1425,7 +1427,7 @@
       // needs a lab for its next Eliminator comes first.
       const soon = g.turn >= FLEIJA.labTurn - 5,
         prep =
-          side !== g.player && MAJORS.includes(side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
+          side !== g.player && isMajor(g, side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&
@@ -1621,7 +1623,7 @@
           if (eliteScenario(g)) {
             const id = Object.keys(ELITE_FORCES).find(k => {
               const e = ELITE_FORCES[k], t = TYPES[e.type];
-              return e.availableTo.includes(side) &&
+              return (e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'))) &&
                 (role === 'carrier' ? t.naval === 'ship' : t.naval === 'amphibious');
             });
             if (!id) continue;
@@ -1708,7 +1710,7 @@
           return value + ((s.id * 13 + g.turn * 7 + hash) % 13) / 6;
         };
         return (eliteCampaign ? g.campaign?.eliteRosters?.[side] || [] : Object.keys(ELITE_FORCES))
-          .filter(id => (eliteCampaign || ELITE_FORCES[id].availableTo.includes(side)) &&
+          .filter(id => (eliteCampaign || ELITE_FORCES[id].availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && ELITE_FORCES[id].availableTo.includes('britannia'))) &&
             !TYPES[ELITE_FORCES[id].type].naval &&
             TYPES[ELITE_FORCES[id].type].tier <= s.tier)
           .sort((a, b) => score(b) - score(a) || a.localeCompare(b));

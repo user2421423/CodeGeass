@@ -168,7 +168,7 @@
       rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
     return Object.fromEntries(
       Object.entries(ELITE_FORCES)
-        .filter(([, e]) => !e.scenarioOnly && e.availableTo.includes(g.player))
+        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && g.player === 'eb' && e.availableTo.includes('britannia'))))
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }
@@ -1222,7 +1222,7 @@
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
         if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && ((eliteConquest(g) && COMMANDERS[k].side !== g.player) ||
+          which === 'officers' && ((eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
               (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
@@ -2138,7 +2138,7 @@
     const e = ELITE_FORCES[id];
     if (!e) return false;
     const roster = eliteCampaign(g) && g.campaign?.eliteRosters?.[side];
-    return roster ? roster.includes(id) : e.availableTo.includes(side);
+    return roster ? roster.includes(id) : e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
@@ -3422,7 +3422,7 @@
   }
   // The most valuable target that spares the launcher's own units and cities, or null below the threshold.
   function aiLaunchTarget(g, side) {
-    const rival = s => !!s && s !== side && s !== 'neutral',
+    const rival = s => !!s && s !== 'neutral' && foe(g, s, side),
       seen = new Set();
     let best = null,
       protectedBest = null;
@@ -3441,7 +3441,8 @@
           outer = blastDistance > 1,
           v = unitAt(g, t),
           s = stationAt(g, t);
-        if ((v && !foe(g, v.side, side)) || (s && !foe(g, s.owner, side))) {
+        if ((v && !foe(g, v.side, side)) || (s && !foe(g, s.owner, side)) ||
+            (g.era === 'ufn2018' && siteAt(g, t) && !foe(g, depositOwner(g, siteAt(g, t)), side))) {
           safe = false;
           break;
         }
@@ -3903,7 +3904,7 @@
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
+      if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
       if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
@@ -4749,6 +4750,8 @@
       FACTIONS,
       FLEIJA,
       MAJORS,
+      powersOf,
+      isMajor,
       NAVAL,
       TYPES,
       adjacent,

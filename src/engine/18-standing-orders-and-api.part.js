@@ -377,6 +377,8 @@
       FACTIONS,
       FLEIJA,
       MAJORS,
+      powersOf,
+      isMajor,
       NAVAL,
       TYPES,
       adjacent,
