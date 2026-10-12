@@ -6,6 +6,7 @@
   const {
     COMMANDERS,
     ELIMINATOR,
+    ELITE_FORCES,
     TERRAIN,
     cityBusyReason,
     key,
@@ -35,6 +36,9 @@
     deployReason,
     deployTargets,
     deployTargetsAt,
+    aiEliteRecruitReason,
+    recruitAIElite,
+    elitePrice,
     depositHost,
     depositOwner,
     dist,
@@ -1562,6 +1566,22 @@
       return existing < desired;
     };
     const menuOf = s => {
+      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+        const needed = serves(s)?.need || [];
+        // Prioritize the front's requested classes, cycling equivalent elites
+        // by city and turn; duplicate AI elites are deliberately permitted.
+        return Object.keys(ELITE_FORCES)
+          .filter(id => ELITE_FORCES[id].availableTo.includes(side))
+          .sort((a, b) => {
+            const priority = id => {
+              const t = TYPES[ELITE_FORCES[id].type], rank = needed.indexOf(t.cls);
+              return (rank < 0 ? 10 : rank) * 10 + (t.tier > s.tier ? 2 : 0);
+            };
+            return priority(a) - priority(b) ||
+              ((s.id + g.turn + a.length) % 7) - ((s.id + g.turn + b.length) % 7) ||
+              a.localeCompare(b);
+          });
+      }
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
@@ -1589,6 +1609,20 @@
         spot = reach && adjacent(g, s)
           .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
           .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+        for (const id of menu) {
+          const cost = elitePrice(id, 1);
+          if (!affordable(cost) || aiEliteRecruitReason(g, s, id, spot ? vacating : null)) continue;
+          if (vacating) {
+            if (!spot) continue;
+            const m = move(g, vacating.id, spot.c, spot.r);
+            if (!m.ok) continue;
+            g.vacated.push({ id: vacating.id, orders: [{ kind: 'move', ...m, id: vacating.id }] });
+          }
+          if (recruitAIElite(g, s.id, id).ok) return true;
+        }
+        return false;
+      }
       for (const type of menu)
         for (const n of sizes) {
           const c = price(type, n, g, side);
