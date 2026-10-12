@@ -31,7 +31,7 @@ function scenarioDialog() {
     '<div class="choice-grid three">'+cards+'</div>'+
     '<div class="setup-row"><div><label for="scenario-difficulty">Difficulty</label>'+
     '<select id="scenario-difficulty" class="select">'+
-    Object.entries(E.DIFFICULTIES).map(([id,d])=>'<option value="'+id+'"'+
+    Object.entries(E.DIFFICULTIES).filter(([id])=>id!=='elite').map(([id,d])=>'<option value="'+id+'"'+
       (scenarioDifficulty===id?' selected':'')+'>'+d.name+'</option>').join('')+
     '</select><p class="mode-note">Hard and Challenge strengthen rival starting formations and income.</p>'+
     '</div><div><label>Alliance</label><p>Britannia and the Black Knights are allied until turn 10.</p></div></div>'+
