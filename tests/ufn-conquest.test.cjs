@@ -168,3 +168,21 @@ test('All four difficulties initialize 2018 and retain their own expected Elite 
       }
     }
 });
+
+test('Independent allied Sakuradite mines cannot be seized during military passage', () => {
+  const g = E.createGame('britannia', 'normal', 'conquest', 456, 'ufn2018');
+  g.units = [];
+  g.sites = [];
+  const home = g.stations.find(s => s.name === 'Pendragon');
+  const walkable = t => t && !['sea','peak','mountain'].includes(t.terrain) && !E.stationAt(g, t);
+  const mine = E.adjacent(g,home).find(t => walkable(t) && E.adjacent(g,t).some(walkable));
+  assert.ok(mine, 'Adjacent test mine must have a passable approach');
+  const from = E.adjacent(g,mine).find(walkable);
+  assert.ok(from);
+  g.sites.push({ id: 9000, name: 'Allied test mine', c: mine.c, r: mine.r, city: null, owner: 'eb', refinery: 1, base: 20 });
+  const u = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', from.c, from.r, 1);
+  const r = E.move(g, u.id, mine.c, mine.r);
+  assert.equal(r.ok, true, r.reason);
+  assert.equal(g.sites[0].owner, 'eb');
+  assert.equal(r.seized, null);
+});

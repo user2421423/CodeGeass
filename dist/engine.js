@@ -3011,7 +3011,7 @@
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
   function seizeDeposit(g, u, p) {
     const d = siteAt(g, p);
-    if (!d || d.owner === u.side || !canCapture(u)) return null;
+    if (!d || !foe(g, d.owner, u.side) || !canCapture(u)) return null;
     const loser = d.owner;
     d.owner = u.side;
     log(
