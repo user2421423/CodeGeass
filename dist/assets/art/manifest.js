@@ -38,14 +38,17 @@ globalThis.KnightmareArtManifest = {
     "bamides": {
       "src": "units/bamides-112358cce84d.png"
     },
+    "bk_amphibious": {
+      "src": "units/burai-6f5b891028e0.png"
+    },
+    "bk_amphibious_ii": {
+      "src": "units/gekka-6c896ee459cb.png"
+    },
     "bk_carrier": {
       "src": "units/generic_carrier-bf5e0799d818.png"
     },
     "brighton": {
       "src": "units/brighton-4bb8a725ddf1.png"
-    },
-    "bk_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
     },
     "burai": {
       "src": "units/burai-6f5b891028e0.png"
@@ -102,7 +105,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/hummel_battery-11b7539ef1e2.png"
     },
     "elite_japan_bk_amphibious": {
-      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
+      "src": "units/gekka-6c896ee459cb.png"
     },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
