@@ -161,6 +161,11 @@ test('Elite Division Japan equips all three powers with single-frame elites and 
       const formations=g.units.filter(u=>u.side===side);
       assert.equal(formations.length,28);
       for(const u of formations){
+        if(E.TYPES[u.type].naval==='ship'){
+          assert.ok(!u.elite,'Carrier-battleships must remain regular');
+          assert.equal(u.stack,1);
+          continue;
+        }
         assert.ok(u.elite,E.TYPES[u.type]?.name+' must be elite');
         assert.ok(E.TYPES[u.type]?.elite,u.type+' is an elite type');
         assert.equal(u.stack,1,'elites never start in multi-frame stacks');
@@ -172,7 +177,8 @@ test('Elite Division Japan equips all three powers with single-frame elites and 
     }
     const euShips=g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
     assert.equal(euShips.length,1);
-    assert.equal(euShips[0].elite,'japan_eu_carrier');
+    assert.ok(!euShips[0].elite);
+    assert.equal(euShips[0].type,'eu_carrier');
     assert.equal(E.TYPES[euShips[0].type].side,'eu');
     assert.ok(g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='amphibious')
       .every(u=>u.elite==='panzer_frosch_ii'));
@@ -182,7 +188,7 @@ test('Elite Division Japan equips all three powers with single-frame elites and 
   }
 });
 
-test('Elite Division AI has legal repeatable EU elite factory and shipyard production', () => {
+test('Elite Division AI produces elite land forces and regular ships', () => {
   const g=division.create('britannia','elite',72);
   // Remove the opening city garrison to make the factory deployment hex available.
   const s=city(g,'Sendai'), eu='eu', id='leila_alexander';
@@ -206,14 +212,13 @@ test('Elite Division AI has legal repeatable EU elite factory and shipyard produ
   assert.equal(E.recruitAIElite(g,s.id,id).ok,true);
   const port=city(g,'Sapporo');
   g.units=g.units.filter(u=>!(u.c===port.portAt.c&&u.r===port.portAt.r));
-  assert.equal(E.aiEliteRecruitReason(g,port,'japan_eu_carrier'),null);
-  const navy=E.recruitAIElite(g,port.id,'japan_eu_carrier');
-  assert.equal(navy.ok,true);
+  const navy=E.recruit(g,port.id,'eu_carrier',1);
+  assert.equal(navy.ok,true,navy.reason);
   assert.equal(E.TYPES[navy.unit.type].naval,'ship');
-  assert.equal(navy.unit.eliteLevel,1);
+  assert.ok(!navy.unit.elite);
 });
 
-test('Elite Division player obeys HQ unlock, once-per-type and scenario-only carrier rules', () => {
+test('Elite Division player uses HQ unlocks for land units and regular naval shipyards', () => {
   const g=division.create('eu','elite',73), s=city(g,'Sendai'), id='leila_alexander';
   g.units=g.units.filter(u=>!(u.c===s.c&&u.r===s.r));
   g.economy.eu={credits:100000,industry:100000,science:100000,sakuradite:100000};
@@ -229,15 +234,18 @@ test('Elite Division player obeys HQ unlock, once-per-type and scenario-only car
   assert.match(E.eliteDeployReason(g,another,id,profile),/Already deployed/);
   const port=city(g,'Sapporo');
   g.units=g.units.filter(u=>!(u.c===port.portAt.c&&u.r===port.portAt.r));
-  assert.equal(E.eliteDeployReason(g,port,'japan_eu_carrier',{}),null);
-  assert.equal(E.deployElite(g,port.id,'japan_eu_carrier',{}).ok,true);
+  const navy=E.recruit(g,port.id,'eu_carrier',1);
+  assert.equal(navy.ok,true,navy.reason);
+  assert.ok(!navy.unit.elite);
 });
 
 test('Existing Invasion retains its Black Knights Elite roster and no Europia units', () => {
   const g=invasion.create('bk','elite',74);
   assert.deepEqual(invasion.sides,['britannia','bk','cf']);
   assert.ok(g.units.every(u=>u.side!=='eu'));
-  assert.ok(g.units.every(u=>u.elite&&E.TYPES[u.type].elite&&u.stack===1));
-  assert.ok(g.units.filter(u=>E.TYPES[u.type].naval==='ship'&&u.side==='bk')
-    .every(u=>u.elite==='japan_bk_carrier'));
+  assert.ok(g.units.every(u=>u.stack===1));
+  assert.ok(g.units.filter(u=>E.TYPES[u.type].naval!=='ship')
+    .every(u=>u.elite&&E.TYPES[u.type].elite));
+  assert.ok(g.units.filter(u=>E.TYPES[u.type].naval==='ship').every(u=>!u.elite));
+  assert.ok(E.navalTypes(g,'bk').includes('bk_carrier'));
 });
