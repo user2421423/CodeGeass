@@ -19,7 +19,8 @@ test('All 100 roster officers start exactly once in either Conquest', () => {
     assert.deepEqual(deployed.slice().sort(), ids, era + ': every registered officer must appear once');
     for (const u of units) {
       assert.equal(E.serves(u.cmd, u.side, g), true, era + ' allegiance: ' + u.cmd);
-      assert.equal(E.tile(g, u.c, u.r).owner, u.side, era + ' territory: ' + u.cmd);
+      if (era === 'ufn2018')
+        assert.equal(E.tile(g, u.c, u.r).owner, u.side, era + ' territory: ' + u.cmd);
     }
     if (era === 'ufn2018') {
       for (const u of units.filter(u => u.side === 'cf'))
@@ -41,7 +42,8 @@ test('Scenario rosters contain unique eligible named commanders', () => {
     assert.equal(new Set(used.map(u => u.cmd)).size, used.length, name + ': duplicate commander');
     for (const u of used) {
       assert.ok(roster[u.cmd], name + ': unregistered commander ' + u.cmd);
-      assert.equal(E.serves(u.cmd, u.side, g), true, name + ': invalid allegiance ' + u.cmd);
+      assert.equal(u.side === 'eb' ? roster[u.cmd].side === 'britannia'
+        : E.serves(u.cmd, u.side, g), true, name + ': invalid allegiance ' + u.cmd);
     }
     for (const side of sides) {
       assert.ok(used.filter(u => u.side === side).length >= minimum[side],

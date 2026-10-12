@@ -45,8 +45,8 @@ test('All three factions begin with real territory, armies, fleets and commander
       assert.equal(g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).length,24);
       assert.equal(g.units.filter(u=>u.side===side&&E.TYPES[u.type].naval).length,4);
       const named=g.units.filter(u=>u.side===side&&u.cmd);
-      assert.equal(named.length,4,side+' receives four named commanders');
-      assert.equal(new Set(named.map(u=>u.cmd)).size,4);
+      assert.equal(named.length,9,side+' receives nine named commanders');
+      assert.equal(new Set(named.map(u=>u.cmd)).size,9);
       assert.ok(named.every(u=>E.COMMANDERS[u.cmd]?.side===side));
       assert.equal(g.startUnits[side],28);
       assert.ok(g.stations.some(s=>s.owner===side&&s.portAt&&s.portOwner===side),

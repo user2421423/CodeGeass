@@ -921,6 +921,13 @@
       }
       used.add(id);
     }
+    // Preserve free formations for attaching purchased HQ officers. A complete
+    // starting cast must not disable the ordinary commander-assignment mechanic.
+    if (is2018) armies.push(
+      ['cf','medium',113.5,34,1,null,'bk'],
+      ['cf','assault',20.5,51.9,1,null,'bk'],
+      ['cf','rocket',36.6,-1.5,1,null,'bk']
+    );
     if (used.size !== Object.keys(roster).length)
       throw new Error('Not every ' + era + ' commander has a starting deployment');
     return armies;
