@@ -5,6 +5,7 @@ async function endTurn() {
   closeModal();
   undoStack = [];
   strikeMode = false;
+  armyGroupRouting = null;
   save();
   const token = ++aiToken;
   // Rival turns always play at full speed (no per-move pauses or combat animations).
