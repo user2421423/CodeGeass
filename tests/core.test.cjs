@@ -650,6 +650,33 @@ test('Carrier-Battleships cannot be assigned personal commanders', () => {
   assert.equal(g.economy.britannia.credits, credits);
 });
 
+// Empty carriers fetch troops before escorting; escorting is the idle fallback.
+function escortBoard() {
+  const g = blank('britannia', 24);
+  for (const t of g.tiles) if (t.c >= 5 && t.c <= 18) t.terrain = 'sea';
+  const loaded = E.newUnit(g, E.NAVAL.britannia.carrier, 'britannia', 5, 10);
+  const rider = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 4, 10);
+  assert.equal(E.move(g, rider.id, 5, 10).ok, true);
+  const empty = E.newUnit(g, E.NAVAL.britannia.carrier, 'britannia', 10, 15);
+  E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 21, 12);
+  return { g, loaded, empty };
+}
+
+test('An empty carrier fetches distant troops instead of escorting a loaded carrier', () => {
+  const { g, empty } = escortBoard();
+  const troops = E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 2, 22);
+  E.newUnit(g, E.typeFor('britannia', 'scout'), 'britannia', 3, 22);
+  const before = E.distance(empty, troops, g);
+  E.aiOrder(g, empty.id);
+  assert(E.distance(empty, troops, g) < before, 'carrier heads toward troops that need a lift');
+});
+
+test('With no troops to fetch, an empty carrier escorts a nearby loaded carrier', () => {
+  const { g, loaded, empty } = escortBoard();
+  E.aiOrder(g, empty.id);
+  assert(E.distance(empty, loaded, g) <= 2, 'carrier joins the loaded carrier');
+});
+
 test('A Knightmare can board and launch on the same turn with full actions', () => {
   const g = blank();
   E.tile(g, 5, 5).terrain = 'sea';

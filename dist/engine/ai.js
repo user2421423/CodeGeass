@@ -1163,30 +1163,26 @@
     return memo.coasts ||= g.tiles.filter(p => navigable(p) && !stationAt(g, p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
   }
   function aiCarrier(g, u, memo, events, fieldAt) {
-    // Empty carrier-battleships can escort loaded vessels if no nearby troops
-    // need boarding. This also supports future dedicated escort hulls.
+    // Escorting is a fallback: a transport only escorts once the boarding
+    // planner below finds no troops anywhere that need a lift and no staging
+    // area. Hulls without capacity (future dedicated escorts) always escort.
     const canTransport = TYPES[u.type]?.capacity > 0;
-    const availableBoarders = canTransport && !u.cargo?.length && g.units.some(v =>
-      v.side === u.side && v.hp > 0 && !isShip(v) && !atSea(g, v) &&
-      dist(g, v, u) <= 3 && wantsLift(g, v, memo));
-    if (!canTransport || (!u.cargo?.length && !availableBoarders)) {
-      const leaders = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
+    const escort = () => {
+      const leader = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
         isShip(v) && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
-        dist(g, v, u) <= 8).sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id);
-      const leader = leaders[0];
-      if (leader && dist(g, u, leader) > 2) {
-      const choices = [...reachable(g, u).keys()].map(k => {
+        dist(g, v, u) <= 8).sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id)[0];
+      if (!leader || dist(g, u, leader) <= 2) return false;
+      const choice = [...reachable(g, u).keys()].map(k => {
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       }).filter(p => navigable(p) && !unitAt(g, p) && dist(g, p, leader) < dist(g, u, leader))
-        .sort((a, b) => dist(g, a, leader) - dist(g, b, leader) || a.r - b.r || a.c - b.c);
-        if (choices.length) {
-          const m = move(g, u.id, choices[0].c, choices[0].r);
-          if (m.ok) { events.push({ kind: 'move', ...m, id: u.id }); return true; }
-        }
-      }
-      if (!canTransport) return false;
-    }
+        .sort((a, b) => dist(g, a, leader) - dist(g, b, leader) || a.r - b.r || a.c - b.c)[0];
+      const m = choice && move(g, u.id, choice.c, choice.r);
+      if (!m?.ok) return false;
+      events.push({ kind: 'move', ...m, id: u.id });
+      return true;
+    };
+    if (!canTransport) return escort();
     const bound = u.cargo?.length ? frontOf(g, memo, u.cargo[0]) : null,
       masses = bound?.masses || null;
     if (bound) fieldAt = fieldFor(g, memo, u.cargo[0]);
@@ -1272,7 +1268,7 @@
     );
     if (!riders.length) {
       const stage = !cargo.length && memo.staging;
-      if (!stage) return cargo.length > 0;
+      if (!stage) return cargo.length > 0 || escort();
       if (dist(g, u, stage) > 2) {
         const land = goalField(g, u.side, [[stage, 0]], 'land');
         followSea(coastSeeds(land, FRONT.rally));
