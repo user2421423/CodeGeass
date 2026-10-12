@@ -573,8 +573,9 @@ test('Commander branch stars add +5 flat base attack per star across combat bran
     const g = blank();
     const type = E.typeFor('britannia', cls);
     const attacker = E.newUnit(g, type, 'britannia', 5, 5);
-    E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 6, 5);
-    const uncommandedDamage = E.preview(g, attacker.id, 6, 5)?.unit;
+    const targetRow = 5 + E.TYPES[type].min; // Rockets require range 2; scouts and mainline use range 1.
+    E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 5, targetRow);
+    const uncommandedDamage = E.preview(g, attacker.id, 5, targetRow)?.unit;
     assert(uncommandedDamage > 0, `${cls}: ordinary unit should deal damage`);
 
     // Suzaku's signature affects crits and defense, not the raw previewed attack.
@@ -584,7 +585,7 @@ test('Commander branch stars add +5 flat base attack per star across combat bran
     const baseAttack = E.TYPES[type].attack;
     for (let stars = 1; stars <= 6; stars++) {
       officer.ratings[branch] = stars;
-      const actual = E.preview(g, attacker.id, 6, 5)?.unit;
+      const actual = E.preview(g, attacker.id, 5, targetRow)?.unit;
       const expected = Math.round(uncommandedDamage * (baseAttack + 5 * stars) / baseAttack);
       assert(Math.abs(actual - expected) <= 2,
         `${cls} ${stars}★: expected +${stars * 5} base attack; got damage ${actual}, expected ~${expected}`);
