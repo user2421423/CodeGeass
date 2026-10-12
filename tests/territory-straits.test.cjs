@@ -84,8 +84,10 @@ for (const [era, northAfrica, gibraltarOwner] of [
     for (const [c, r] of [[86,23],[87,23],[89,25]]) {
       assert.equal(E.tile(g, c, r).owner, northAfrica,
         'Moroccan bank ' + c + ',' + r);
-      assert.notEqual(E.tile(g, c, r).provinceCity, gibraltar.id,
-        'Moroccan bank must not be Gibraltar province ' + c + ',' + r);
+      // In 2017 both shores share the same E.U. owner, so an old Gibraltar
+      // province ID can be legitimate. In 2018 they are opposing factions.
+      if (era === 'ufn2018') assert.notEqual(E.tile(g, c, r).provinceCity, gibraltar.id,
+        'Britannian Morocco must not belong to Gibraltar province ' + c + ',' + r);
     }
     if (era === 'ufn2018') {
       const corridor = g.tiles.filter(t => t.terrain !== 'sea' &&
