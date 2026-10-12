@@ -1053,14 +1053,15 @@
       return goalField(recoveryBoard, side, seeds, 'land');
     };
     for (const u of own) {
-      const ratio = u.hp / maxHP(u), active = saved[u.id];
+      const ratio = u.hp / maxHP(u), active = saved[u.id],
+        critical = !!u.cmd && localThreat(g, u, u) >= u.hp * 0.75;
       const essential = cities.some(s => dist(g, u, s) <= 1 && !secure(s) &&
         !own.some(v => v.id !== u.id && !isShip(v) && v.hp / maxHP(v) >= 0.4 && dist(g, v, s) <= 2));
-      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || memo.guards[u.id] || essential || ratio >= 0.7) {
+      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || memo.guards[u.id] || essential || (ratio >= 0.7 && !critical)) {
         delete saved[u.id];
         continue;
       }
-      if (!active && ratio >= 0.35) continue;
+      if (!active && ratio >= 0.35 && !critical) continue;
       const seedsFor = s => [tile(g, s.c, s.r), ...adjacent(g, s)]
         .filter(p => !isSea(p) && !TERRAIN[p.terrain]?.blocked && (!stationAt(g, p) || stationAt(g, p).owner === side) && (!unitAt(g, p) || unitAt(g, p).id === u.id))
         .map(p => [p, 0]),
@@ -1138,11 +1139,31 @@
     return memo.coasts ||= g.tiles.filter(p => navigable(p) && !stationAt(g, p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
   }
   function aiCarrier(g, u, memo, events, fieldAt) {
+    // Non-carrier warships act as opportunistic escorts for nearby loaded carriers.
+    // Staying beside a carrier is optional; combat and legal movement still govern.
+    if (carrierCapacity(g, u) <= 0) {
+      const leaders = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
+        isShip(v) && carrierCapacity(g, v) > 0 && v.cargo?.length &&
+        dist(g, v, u) <= 8).sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id);
+      const leader = leaders[0];
+      if (!leader || dist(g, u, leader) <= 2) return false;
+      const choices = [...reachable(g, u).keys()].map(k => {
+        const [c, r] = k.split(',').map(Number);
+        return tile(g, c, r);
+      }).filter(p => navigable(p) && !unitAt(g, p) && dist(g, p, leader) < dist(g, u, leader))
+        .sort((a, b) => dist(g, a, leader) - dist(g, b, leader) || a.r - b.r || a.c - b.c);
+      if (!choices.length) return false;
+      const m = move(g, u.id, choices[0].c, choices[0].r);
+      if (m.ok) { events.push({ kind: 'move', ...m, id: u.id }); return true; }
+      return false;
+    }
     const bound = u.cargo?.length ? frontOf(g, memo, u.cargo[0]) : null,
       masses = bound?.masses || null;
     if (bound) fieldAt = fieldFor(g, memo, u.cargo[0]);
     const fleet = (((g.ai ||= {})[u.side] ||= {}).fleet ||= {}),
       job = (fleet[u.id] ||= { wait: 0 }),
+      teams = (memo.navalTeams ||= {}),
+      team = bound ? (teams[bound.id] ||= { landing: null }) : null,
       cargo = u.cargo || [],
       reach = [...reachable(g, u).keys()]
         .map(k => {
@@ -1158,10 +1179,14 @@
       danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
       strength = cargo.reduce((a, c) => a + c.stack, 0),
       landing = p => {
+        // Count only a nearby loaded carrier as prospective same-wave support.
+        const support = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
+          carrierCapacity(g, v) > 0 && v.cargo?.length && dist(g, v, p) <= 3)
+          .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
         const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
-          .map(t => landingScore(g, u.side, t, strength, fieldAt, masses))
+          .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses))
           .filter(v => v != null);
-        return scores.length ? Math.min(...scores) + danger(p) * 2 : null;
+        return scores.length ? Math.min(...scores) + danger(p) * 2 + (team?.landing ? Math.min(30, dist(g, p, team.landing) * 4) : 0) : null;
       };
     const here = tile(g, u.c, u.r),
       // The route is sea-only even when its goal is a city or troops ashore. Include
@@ -1191,7 +1216,9 @@
       if (landing(tile(g, u.c, u.r)) == null) {
         // Seed feasible landing positions, then route through navigable water rather
         // than following a land shortcut in the formation's strategic goal field.
-        const seeds = seaCoasts(g, memo).map(p => [p, landing(p)]).filter(([, score]) => score != null);
+        const seeds = seaCoasts(g, memo).map(p => [p, landing(p)]).filter(([, score]) => score != null)
+          .sort((a, b) => a[1] - b[1] || a[0].r - b[0].r || a[0].c - b[0].c);
+        if (team && seeds.length) team.landing = seeds[0][0];
         followSea(seeds);
       }
       if (landing(tile(g, u.c, u.r)) != null) aiLaunch(g, u, events, fieldAt, masses);
@@ -1690,6 +1717,83 @@
         if (s.producedTurn !== g.turn) tryBuild(s, menus.get(s), [1]);
     }
   }
+  // Local, bounded tactical assessments shared by AI selection and execution.
+  function commanderValue(g, v) {
+    if (!v?.cmd) return 0;
+    const o = E.officerOf(g, v), rank = o?.rank || 0;
+    const mobility = Math.max(0, E.movement(g, v) - (TYPES[v.type]?.move || 0));
+    return Math.min(150, 30 + rank * 13 + mobility * 7 + Math.max(0, maxHP(v) - 110) * 0.09);
+  }
+  function localThreat(g, u, p) {
+    let expected = 0;
+    for (const v of g.units) {
+      if (v.hp <= 0 || !foe(g, v.side, u.side) || atSea(g, v)) continue;
+      const d = dist(g, v, p);
+      if (d > 7) continue;
+      const r = rangeOf(g, v).max;
+      if (d <= r + Math.min(3, E.movement(g, v))) {
+        const attack = TYPES[v.type]?.attack || 0;
+        expected += attack * (1 + 0.35 * Math.max(0, v.stack - 1)) * (d <= r ? 0.7 : 0.35);
+      }
+    }
+    return expected;
+  }
+  function focusValue(g, u, enemy, initial, memo) {
+    if (!enemy || enemy.hp <= 0) return 0;
+    let potential = initial.unit, helpers = 0;
+    for (const v of g.units) {
+      if (helpers >= 7) break;
+      if (v.id === u.id || v.side !== u.side || v.hp <= 0 || v.attacked || v.morale <= -3 ||
+          dist(g, v, enemy) > Math.min(6, rangeOf(g, v).max)) continue;
+      const shot = preview(g, v.id, enemy.c, enemy.r);
+      if (!shot || shot.unit <= 0) continue;
+      potential += shot.unit;
+      helpers++;
+    }
+    const marked = memo.focusTargets?.get(enemy.id);
+    const feasible = helpers && potential >= enemy.hp * 0.92;
+    return (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
+      (marked?.turn === g.turn && dist(g, u, enemy) <= 6 ? 62 : 0) -
+      (initial.counter > u.hp * 0.8 ? 55 : 0);
+  }
+  function trafficBoost(g, u, memo) {
+    if (u.hold || memo.guards?.[u.id] || u.moved) return 0;
+    let followers = 0;
+    for (const v of g.units) {
+      if (v.side === u.side && v.id !== u.id && v.hp > 0 && !v.hold &&
+          !memo.guards?.[v.id] && !v.moved && dist(g, v, u) <= 2) followers++;
+      if (followers >= 4) break;
+    }
+    return Math.min(1.2, followers * 0.35);
+  }
+  function aiNextActor(g, ids, start) {
+    if (start >= ids.length) return start;
+    const first = g.units.find(v => v.id === ids[start]);
+    if (!first) return start;
+    const memo = aiPlan(g, first.side);
+    memo.actors ||= new Map(g.units.map(u => [u.id, u]));
+    let selected = start, best = -Infinity;
+    for (let i = start; i < Math.min(ids.length, start + 16); i++) {
+      const u = memo.actors.get(ids[i]);
+      if (!u || u.hp <= 0 || u.attacked || !isReady(g, u)) continue;
+      let score = -aiOrderPriority(g, u) * 32 + trafficBoost(g, u, memo) * 24;
+      for (const p of targets(g, u).slice(0, 12)) {
+        const shot = preview(g, u.id, p.c, p.r);
+        if (!shot) continue;
+        const enemy = unitAt(g, p), city = stationAt(g, p);
+        const value = shot.unit + shot.shield * 0.6 - shot.counter * 0.45 +
+          (enemy && shot.unit >= enemy.hp ? 135 : 0) +
+          (enemy ? commanderValue(g, enemy) + focusValue(g, u, enemy, shot, memo) : 0) +
+          (city && foe(g, city.owner, u.side) && city.shield <= shot.shield ? 65 : 0);
+        score = Math.max(score, value - aiOrderPriority(g, u) * 14);
+      }
+      if (score > best || (score === best && ids[i] < ids[selected])) {
+        best = score;
+        selected = i;
+      }
+    }
+    return selected;
+  }
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
@@ -1706,12 +1810,12 @@
       : type.branch === 'Armor' || type.cls === 'assault' ? 2
       : canCapture(u) && (type.move >= 4 || type.cls === 'raider') ? 4
       : 3;
-    if (g.mode === 'scenario') return tactical;
+    if (g.mode === 'scenario') return tactical - trafficBoost(g, u, aiPlan(g, u.side));
     const memo = aiPlan(g, u.side),
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
       emergency = memo.guards?.[u.id]?.emergency ||
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
-    return emergency ? tactical - 10 : tactical;
+    return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
@@ -1785,7 +1889,7 @@
               : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
-            (d?.cmd ? 30 : 0) -
+            (d ? commanderValue(g, d) + focusValue(g, u, d, pr, memo) : 0) -
             pr.counter * 0.5;
           // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
           const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);
@@ -1878,6 +1982,12 @@
           sc += Math.min(4, allies.length) * 12;
         if (station?.owner === u.side && u.hp / maxHP(u) < 0.5) sc += 20;
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
+        if (u.cmd && !u.attacked)
+          sc -= Math.min(95, localThreat(g, u, p) * 0.36);
+        if (!guard && !u.hold && !station && !isSea(p) &&
+            adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
+            freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
+          sc -= 24; // avoid parking in the only route through a narrow pass
         return sc;
       };
       let best = null,
@@ -1919,8 +2029,17 @@
       }
       const shot = choose();
       if (!shot) break;
+      const target = unitAt(g, shot.p);
       const a = attack(g, id, shot.p.c, shot.p.r);
-      if (a.ok) events.push({ kind: 'attack', ...a, id });
+      if (a.ok) {
+        events.push({ kind: 'attack', ...a, id });
+        if (target) {
+          memo.focusTargets ||= new Map();
+          memo.focusTargets.delete(target.id);
+          if (target.hp > 0) memo.focusTargets.set(target.id, { turn: g.turn });
+        }
+        memo.focusCache?.clear();
+      }
       else break;
     }
     // Spend restored movement on a safe hex, including withdrawal moves after firing.
@@ -1947,5 +2066,5 @@
     }
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
+  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);
