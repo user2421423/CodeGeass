@@ -162,7 +162,7 @@
     const state = ((g.ai ||= {})[side] ||= {}),
       own = g.stations.filter(s => s.owner === side),
       carried = new Map(),
-      troops = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold),
+      troops = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold && !memo.guards?.[u.id]),
       enemies = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral');
     for (const ship of g.units) for (const cargo of ship.cargo || [])
       carried.set(cargo.id, ship);
