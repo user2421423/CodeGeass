@@ -187,7 +187,8 @@
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),10);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
-        const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,i===0?2:1,cmd);
+        const stack=side==='eb'?(i===0?3:2):(i===0?2:1);
+        const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,stack,cmd);
         group(side,name).units.push(u.id);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
       }
