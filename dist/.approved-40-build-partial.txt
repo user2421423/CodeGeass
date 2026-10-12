@@ -1,0 +1,1224 @@
+/* Knightmare Conquest: deterministic hex rules for a Code Geass world war. No UI or network dependencies. */
+(function (root) {
+  'use strict';
+  // The data lives in engine/frames.js, commanders.js, research.js and world.js, loaded before this file by index.html
+  // and required here under Node. engine/ai.js loads afterwards and adds the AI.
+  if (typeof module !== 'undefined')
+    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world']) require(`./engine/${part}.js`);
+  const {
+    // frames.js
+    FACTIONS,
+    MAJORS,
+    CLASSES,
+    CLASS_ORDER,
+    AMPHIBIOUS,
+    AMPHIBIOUS_II,
+    CARRIER,
+    KNIGHTMARES,
+    LINEUPS,
+    ELITE_MAX_LEVEL,
+    ELITE_UNLOCK_FRAGMENTS,
+    ELITE_UPGRADE_FRAGMENTS,
+    ELITE_LEVEL_SCALE,
+    ELITE_FORCES,
+    // commanders.js
+    COMMANDERS,
+    RANKS,
+    RANK_HP,
+    PROMOTE_COST,
+    MEDALS,
+    RATINGS,
+    GENERIC_SKILLS,
+    // research.js
+    BRANCHES,
+    BRANCH_NAMES,
+    TECH_TIERS,
+    TECH_TREE,
+    // world.js
+    RESOURCE_SITES,
+    WORLD_ROWS,
+    WORLD,
+    CITY_DATA,
+    CITY_TWEAKS,
+    TERRITORY,
+    ARMY_DATA,
+    GARRISONS,
+    PORT_DATA,
+    NAVY_DATA,
+    COASTAL_CITY_HEXES,
+    COASTAL_PORT_HEXES,
+  } = root.KnightmareData;
+  const TYPES = Object.fromEntries(
+    Object.entries(KNIGHTMARES).map(([id, k]) => {
+      const c = CLASSES[k.cls];
+      return [
+        id,
+        {
+          ...c,
+          ...k,
+          id,
+          short: k.name,
+          code: k.name
+            .replace(/[^A-Za-z ]/g, '')
+            .split(' ')
+            .map(w => w[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+          desc: k.desc || `${c.rule}${k.float ? ' Integrated Float System: ignores terrain movement costs.' : ''}`,
+        },
+      ];
+    }),
+  );
+  const ROSTER = {
+    ...Object.fromEntries(
+      MAJORS.map(side => [
+        side,
+        Object.fromEntries(
+          Object.entries(KNIGHTMARES)
+            .filter(([, k]) => k.side === side && !k.elite && !k.campaign && !k.naval)
+            .map(([id, k]) => [k.cls, id]),
+        ),
+      ]),
+    ),
+    ...LINEUPS,
+  };
+  function typeFor(side, cls, g = null) {
+    return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
+  }
+  function lineupOf(g, side) {
+    return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
+  }
+
+  // ======== Elite Forces: persistent unique units ========
+  const ELITE_TYPE_TO_ID = Object.fromEntries(Object.entries(ELITE_FORCES).map(([id, e]) => [e.type, id]));
+  function eliteProfile(profile = {}) {
+    profile.elites ||= {};
+    for (const [id, e] of Object.entries(ELITE_FORCES)) {
+      const rec = profile.elites[id] || {};
+      profile.elites[id] = {
+        level: Math.max(0, Math.min(ELITE_MAX_LEVEL, Number.isInteger(rec.level) ? rec.level : 0)),
+        fragments: Math.max(0, Number.isFinite(rec.fragments) ? Math.floor(rec.fragments) : e.starter ? ELITE_UNLOCK_FRAGMENTS : 0),
+      };
+    }
+    return profile.elites;
+  }
+  function eliteRecord(profile, id) {
+    return ELITE_FORCES[id] ? eliteProfile(profile)[id] : null;
+  }
+  function eliteScale(u) {
+    if (!u?.elite) return ELITE_LEVEL_SCALE[1];
+    return ELITE_LEVEL_SCALE[Math.max(1, Math.min(ELITE_MAX_LEVEL, u.eliteLevel || 1))];
+  }
+  function eliteFx(u) {
+    const e = u?.elite && ELITE_FORCES[u.elite];
+    if (!e || (u.eliteLevel || 1) < 3) return {};
+    return (u.eliteLevel || 1) >= 5 ? { ...e.lv3, ...e.lv5 } : e.lv3;
+  }
+  function eliteStats(id, level = 1) {
+    const e = ELITE_FORCES[id], t = e && TYPES[e.type];
+    if (!e || !t) return null;
+    level = Math.max(1, Math.min(ELITE_MAX_LEVEL, level | 0));
+    const s = ELITE_LEVEL_SCALE[level],
+      ef = level >= 5 ? { ...e.lv3, ...e.lv5 } : level >= 3 ? e.lv3 : {};
+    return {
+      hp: Math.round(t.hp * s.hp),
+      attack: Math.round(t.attack * s.attack),
+      armor: t.armor + s.armor,
+      move: t.move + (ef.move || 0),
+      min: t.min,
+      max: t.max + (ef.range || 0),
+    };
+  }
+  function eliteUpgradeReason(profile, id) {
+    const e = ELITE_FORCES[id], rec = e && eliteRecord(profile, id);
+    if (!rec) return 'Unknown Elite Force';
+    if (rec.level >= ELITE_MAX_LEVEL) return 'Maximum Elite level reached';
+    const next = rec.level + 1,
+      cost = ELITE_UPGRADE_FRAGMENTS[next];
+    return rec.fragments < cost
+      ? `Need ${cost - rec.fragments} more ${TYPES[e.type].name} fragments`
+      : null;
+  }
+  function upgradeElite(profile, id) {
+    const why = eliteUpgradeReason(profile, id);
+    if (why) return { ok: false, reason: why };
+    const rec = eliteRecord(profile, id),
+      next = rec.level + 1,
+      cost = ELITE_UPGRADE_FRAGMENTS[next];
+    rec.fragments -= cost;
+    rec.level = next;
+    return { ok: true, level: rec.level, fragments: rec.fragments, cost };
+  }
+  function grantEliteFragments(profile, awards = {}) {
+    const records = eliteProfile(profile);
+    for (const [id, amount] of Object.entries(awards))
+      if (records[id] && amount > 0) records[id].fragments += Math.floor(amount);
+    return records;
+  }
+  // Fragment drops are deterministic: first clears pay more; rarity controls acquisition speed rather than raw strength.
+  function eliteVictoryReward(g, profile = {}) {
+    if (!g || g.over?.winner !== g.player) return {};
+    const first = !(profile.cleared || {})[operationKey(g)],
+      base = first
+        ? ({ normal: 12, hard: 18, challenge: 24 }[g.difficulty] || 12)
+        : ({ normal: 5, hard: 8, challenge: 12 }[g.difficulty] || 5),
+      rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
+    return Object.fromEntries(
+      Object.entries(ELITE_FORCES)
+        .filter(([, e]) => e.availableTo.includes(g.player))
+        .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
+    );
+  }
+  // ======== Commanders (recruitable officers): signature abilities are data, read by the combat rules ========
+  const NOFX = {};
+  // Calculated once: permanent personal stats and situational skills are displayed separately,
+  // but the existing combat pipeline can read both without applying either twice.
+  const COMMANDER_EFFECTS = Object.fromEntries(Object.entries(COMMANDERS).map(([id, c]) =>
+    [id, { ...(c.stats || {}), ...c.fx }]));
+  const COMMANDER_VERSION = 2;
+  function commanderStatsText(k) {
+    const st = COMMANDERS[k]?.stats || {}, out = [], pct = n => Math.round(n * 100);
+    if (st.dmg) out.push(`Damage +${pct(st.dmg)}%${st.attackOnly ? ' on attacks' : ''}`);
+    for (const [branch, n] of Object.entries(st.dmgBranch || {})) out.push(`${branch} damage +${pct(n)}%${st.attackOnly ? ' on attacks' : ''}`);
+    if (st.crit) out.push(`Critical chance +${pct(st.crit)} percentage points`);
+    if (st.critBonus) out.push(`Critical multiplier +${st.critBonus.toFixed(2)}`);
+    if (st.pen) out.push(`Armor penetration +${pct(st.pen)} percentage points`);
+    if (st.taken) out.push(`Damage taken −${pct(1 - st.taken)}%`);
+    if (st.counter) out.push(`Counter-fire +${pct(st.counter)}%`);
+    return out.join(' · ');
+  }
+  // Flat index: 'armor.guns' → node, with its branch and id.
+  const TECH_NODES = Object.fromEntries(
+    Object.entries(TECH_TREE).flatMap(([b, tree]) =>
+      Object.entries(tree.nodes).map(([k, n]) => [
+        `${b}.${k}`,
+        { ...n, id: `${b}.${k}`, branch: b, max: n.values.length },
+      ]),
+    ),
+  );
+  function branchOf(type) {
+    return BRANCHES[TYPES[type].branch];
+  }
+  // Research saved before the Naval branch existed moves to it.
+  const LEGACY_RESEARCH = {
+    'sakura.transport': 'naval.logistics',
+    'sakura.landing': 'naval.landing',
+    'infantry.armor': 'infantry.urban',
+    'artillery.armor': 'artillery.counterbattery',
+  };
+  function normalizeResearch(research = {}) {
+    const out = { ...(research || {}) };
+    for (const [old, now] of Object.entries(LEGACY_RESEARCH))
+      if (out[old]) {
+        out[now] = Math.max(out[now] || 0, out[old]);
+        delete out[old];
+      }
+    for (const [id, level] of Object.entries(out))
+      if (TECH_NODES[id]) out[id] = Math.max(0, Math.min(level | 0, TECH_NODES[id].max));
+    return out;
+  }
+  function techLevel(g, side, id) {
+    return g?.tech?.[side]?.[id] || 0;
+  }
+  function techValue(g, side, id) {
+    const l = techLevel(g, side, id);
+    return l ? TECH_NODES[id].values[l - 1] : 0;
+  }
+  // Branch-wide tech for a unit, e.g. unitTech(g, u, 'guns') reads 'armor.guns' for a Sutherland.
+  function unitTech(g, u, k) {
+    if (TYPES[u.type].naval) return 0;
+    return techValue(g, u.side, `${branchOf(u.type)}.${k}`);
+  }
+  // Naval units use the Naval HP research instead of inheriting Armor/Artillery frames.
+  function hullTech(g, u) {
+    return unitTech(g, u, 'hull') + (TYPES[u.type].naval ? techValue(g, u.side, 'naval.hulls') : 0);
+  }
+
+  // ======== Commander development ========
+  // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
+  // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
+  // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
+  const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
+  const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
+  function fx(u) {
+    return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
+  }
+  function recruitPrice(k) {
+    const a = COMMANDERS[k];
+    return a?.recruit ?? (a?.stars >= 5 ? 400 : a?.stars >= 4 ? 300 : 200);
+  }
+  // Rarity slots: 2★=0, 3★=1, 4★=2, 5★=3; all start empty.
+  function genericSlots(k) { return Math.max(0, Math.min(3, (COMMANDERS[k]?.stars || 2) - 2)); }
+  function defaultOfficer(k) {
+    return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], generics: {}, commanderVersion: COMMANDER_VERSION };
+  }
+  function cleanOfficer(k, rec, rankCap = HQ_RANK_CAP) {
+    const base = defaultOfficer(k);
+    if (!rec) return base;
+    const ratings = { ...rec.ratings };
+    // Cornelia's old +2 skill movement becomes two Mobility stars, once per record.
+    if (k === 'cornelia' && !rec.commanderVersion && ratings.mobility != null)
+      ratings.mobility = Math.min(MAX_RATING, ratings.mobility + 2);
+    return {
+      commanderVersion: COMMANDER_VERSION,
+      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, rankCap),
+      ratings: Object.fromEntries(
+        Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
+      ),
+      medals: (rec.medals || []).filter(m => MEDALS[m]),
+      generics: Object.fromEntries(Object.entries(rec.generics || {})
+        .filter(([id, level]) => GENERIC_SKILLS[id] && Number.isInteger(level) && level >= 1 && level <= 5)
+        .slice(0, genericSlots(k))),
+    };
+  }
+  // The persistent roster, created on first use: the two starters per faction.
+  function roster(profile) {
+    if (!profile.roster) {
+      profile.roster = {};
+      for (const k of Object.values(STARTERS).flat()) profile.roster[k] = defaultOfficer(k);
+    }
+    for (const [k, rec] of Object.entries(profile.roster))
+      if (COMMANDERS[k] && rec?.commanderVersion !== COMMANDER_VERSION) {
+        // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star. Only records from before
+        // versioning (no commanderVersion) paid for them; later version bumps must not refund again.
+        if (k === 'cornelia' && !rec?.commanderVersion) for (let star = 5; star <= Math.min(6, rec?.ratings?.mobility || 4); star++)
+          profile.tokens = (profile.tokens || 0) + STAR_COST[star];
+        profile.roster[k] = cleanOfficer(k, rec);
+      }
+    return profile.roster;
+  }
+  function owns(profile, k) {
+    return !!roster(profile)[k];
+  }
+  function officer(g, k) {
+    if (!k || !COMMANDERS[k]) return null;
+    g.officers ||= {};
+    const rec = (g.officers[k] ||= defaultOfficer(k));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
+      eliteConquest(g) && COMMANDERS[k].side !== g.player ? RANKS.length - 1 : HQ_RANK_CAP));
+  }
+  // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
+  function officerOf(g, u) {
+    if (!u?.cmd) return null;
+    return (u.personal && g.roster?.[u.cmd]) || officer(g, u.cmd);
+  }
+  function genericLevel(g, u, id) {
+    const skill = GENERIC_SKILLS[id];
+    if (!skill || !u?.cmd || (skill.branch && TYPES[u.type].branch !== skill.branch)) return 0;
+    return officerOf(g, u)?.generics?.[id] || 0;
+  }
+  function genericDescription(id, level = 5) {
+    const s = GENERIC_SKILLS[id];
+    if (!s) return '';
+    const amount = Math.round(s.step * Math.max(1, Math.min(5, level)) * 100);
+    const branch = s.branch ? s.branch + ': ' : '';
+    const rule = {
+      crit: '+' + amount + ' percentage points critical chance',
+      damage: '+' + amount + '% attack damage',
+      avoid: amount + '% chance to prevent enemy counterattack',
+      counter: '+' + amount + '% counterattack damage',
+      defense: '-' + amount + '% incoming damage (all three branches)',
+      credits: '+' + amount + '% credits from occupied friendly city',
+      industry: '+' + amount + '% industry from occupied friendly city',
+      science: '+' + amount + '% research from occupied friendly city',
+      hpPenalty: 'Negates ' + amount + '% of attack loss caused by missing HP',
+      regen: 'Restores ' + amount + '% maximum HP at start of each turn',
+    };
+    return branch + (rule[s.kind] || '');
+  }
+  function wears(g, u, medal) {
+    return !!officerOf(g, u)?.medals?.includes(medal);
+  }
+  function medalSlots(o) {
+    return 1 + Math.floor(o.rank / 4);
+  }
+  // Each combat-branch star contributes +5 flat base attack (1★ = +5, 6★ = +30).
+  // The bonus is applied before Elite Force and formation multipliers, not as a percentage.
+  function officerBaseAttack(g, u) {
+    if (!u.cmd) return 0;
+    return 5 * (officerOf(g, u).ratings[branchOf(u.type)] || 3);
+  }
+  // Commander medals still multiply attack; defensive branch-star scaling is unchanged.
+  function officerAttack(g, u) {
+    if (!u.cmd) return 1;
+    return (wears(g, u, 'valor') ? 1.08 : 1) *
+      (wears(g, u, 'campaign') ? 1.04 : 1);
+  }
+  function officerDefense(g, u) {
+    if (!u.cmd) return 1;
+    const o = officerOf(g, u);
+    return Math.max(
+      0.5,
+      (1 - 0.03 * ((o.ratings[branchOf(u.type)] || 3) - 3)) *
+        (wears(g, u, 'laurel') ? 0.92 : 1) *
+        (wears(g, u, 'campaign') ? 0.96 : 1),
+    );
+  }
+  function auraRange(a) {
+    return fx(a).aura?.range || 1;
+  }
+  // Lowest morale a unit can be pushed to: steady for commanders with a floor; Fernando's calm stops confusion and
+  // Ohgi's Organizer keeps adjacent units at Low or better.
+  function moraleFloor(g, v) {
+    if (fx(v).floor != null) return fx(v).floor;
+    return g.units.some(
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=2)) && dist(g, m, v) <= 2,
+    )
+      ? -1
+      : -3;
+  }
+  // ---- HQ commanders: every action below works on the profile, outside or inside an operation ----
+  function tokenShort(profile, cost) {
+    const have = profile?.tokens || 0;
+    return cost > have ? `Need ${cost - have} more command tokens` : null;
+  }
+  function recruitReason(profile, k) {
+    if (!COMMANDERS[k]) return 'Unknown commander';
+    if (owns(profile, k)) return 'Already one of your commanders';
+    return tokenShort(profile, recruitPrice(k));
+  }
+  function recruitCommander(profile, k) {
+    const why = recruitReason(profile, k);
+    if (why) return { ok: false, reason: why };
+    profile.tokens -= recruitPrice(k);
+    roster(profile)[k] = defaultOfficer(k);
+    return { ok: true };
+  }
+  function ownedReason(profile, k) {
+    if (!COMMANDERS[k]) return 'Unknown commander';
+    return owns(profile, k) ? null : `Recruit for ${recruitPrice(k)} command tokens first`;
+  }
+  function promoteCost(o) {
+    return PROMOTE_COST[o.rank + 1] ?? Infinity;
+  }
+  function promoteReason(profile, k) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    const o = roster(profile)[k];
+    return o.rank >= HQ_RANK_CAP ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
+  }
+  function promote(profile, k) {
+    const why = promoteReason(profile, k);
+    if (why) return { ok: false, reason: why };
+    const o = roster(profile)[k];
+    profile.tokens -= promoteCost(o);
+    o.rank++;
+    return { ok: true, rank: o.rank };
+  }
+  // Command tokens (the medals of this game) buy extra branch stars, up to six.
+  const MAX_RATING = 6;
+  const STAR_COST = [0, 0, 0, 60, 120, 220, 360];
+  function starCost(profile, k, branch) {
+    const o = roster(profile)[k] || defaultOfficer(k);
+    return STAR_COST[(o.ratings[branch] || 0) + 1] ?? Infinity;
+  }
+  function starReason(profile, k, branch) {
+    if (!BRANCH_NAMES[branch]) return 'Unknown branch';
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    return (roster(profile)[k].ratings[branch] || 0) >= MAX_RATING
+      ? `Already ${MAX_RATING} stars`
+      : tokenShort(profile, starCost(profile, k, branch));
+  }
+  function buyStar(profile, k, branch) {
+    const why = starReason(profile, k, branch);
+    if (why) return { ok: false, reason: why };
+    profile.tokens -= starCost(profile, k, branch);
+    const o = roster(profile)[k];
+    o.ratings[branch]++;
+    return { ok: true, stars: o.ratings[branch] };
+  }
+  const GENERIC_COSTS = [0, 100, 120, 150, 200, 260];
+  const GENERIC_RESPEC_COST = 40;
+  function genericCost(level = 0) { return GENERIC_COSTS[level + 1] ?? Infinity; }
+  function genericReason(profile, k, id) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    if (!GENERIC_SKILLS[id]) return 'Unknown generic skill';
+    const o = roster(profile)[k], existing = o.generics?.[id] || 0;
+    if (existing >= 5) return 'Already Level 5';
+    if (!existing && Object.keys(o.generics || {}).length >= genericSlots(k)) return 'No empty generic skill slots';
+    return tokenShort(profile, genericCost(existing));
+  }
+  function buyGeneric(profile, k, id) {
+    const why = genericReason(profile, k, id);
+    if (why) return { ok: false, reason: why };
+    const o = roster(profile)[k], level = o.generics?.[id] || 0;
+    profile.tokens -= genericCost(level);
+    (o.generics ||= {})[id] = level + 1;
+    return { ok: true, level: level + 1 };
+  }
+  function removeGenericReason(profile, k, id) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    if (!roster(profile)[k].generics?.[id]) return 'Skill is not equipped';
+    return tokenShort(profile, GENERIC_RESPEC_COST);
+  }
+  function removeGeneric(profile, k, id) {
+    const why = removeGenericReason(profile, k, id);
+    if (why) return { ok: false, reason: why };
+    profile.tokens -= GENERIC_RESPEC_COST;
+    delete roster(profile)[k].generics[id];
+    return { ok: true };
+  }
+  function equipReason(profile, k, medal) {
+    const why = ownedReason(profile, k);
+    if (why) return why;
+    const o = roster(profile)[k];
+    return (
+      (!(profile.medals || []).includes(medal) ? 'Not in your medal case' : null) ||
+      (o.medals.includes(medal) ? 'Already wearing this medal' : null) ||
+      (o.medals.length >= medalSlots(o) ? `All ${medalSlots(o)} medal slots in use` : null)
+    );
+  }
+  function equipMedal(profile, k, medal) {
+    const why = equipReason(profile, k, medal);
+    if (why) return { ok: false, reason: why };
+    profile.medals.splice(profile.medals.indexOf(medal), 1);
+    roster(profile)[k].medals.push(medal);
+    return { ok: true };
+  }
+  function unequipMedal(profile, k, medal) {
+    const why = ownedReason(profile, k);
+    if (why) return { ok: false, reason: why };
+    const o = roster(profile)[k],
+      i = o.medals.indexOf(medal);
+    if (i < 0) return { ok: false, reason: 'Not wearing that medal' };
+    o.medals.splice(i, 1);
+    (profile.medals ||= []).push(medal);
+    return { ok: true };
+  }
+  function award(g, side, id, reason) {
+    if (side !== g.player || !MEDALS[id]) return;
+    (g.medalInventory ||= []).push(id);
+    (g.medalsEarned ||= []).push({ id, reason, turn: g.turn });
+    log(g, `${MEDALS[id].name} awarded: ${reason}.`, side);
+  }
+
+  // ======== Reasons an order is unavailable (null when it is allowed) ========
+  function shortfall(e, cost) {
+    const need = [
+      ['credits', 'credits'],
+      ['industry', 'industry'],
+      ['science', 'research'],
+      ['sakuradite', 'Sakuradite'],
+    ]
+      .filter(([k]) => (cost[k] || 0) > (e?.[k] || 0))
+      .map(([k, label]) => `${Math.ceil(cost[k] - (e?.[k] || 0))} more ${label}`);
+    return need.length ? 'Need ' + need.join(' and ') : null;
+  }
+  function turnReason(g, side) {
+    return g.over ? 'Operation over' : g.phase !== side ? 'Not your turn' : null;
+  }
+  function actedReason(u) {
+    return u.morale <= -3
+      ? 'Unit is confused'
+      : u.attacked
+        ? 'Already fired'
+        : u.moved
+          ? 'Already moved this turn'
+          : null;
+  }
+  function nearFriendlyCity(g, u) {
+    return g.stations.some(s => s.owner === u.side && dist(g, s, u) <= 1);
+  }
+  function repairReason(g, u) {
+    if (!u) return 'Select a unit';
+    if (u.hp <= 0) return 'Unit destroyed';
+    return (
+      turnReason(g, u.side) ||
+      actedReason(u) ||
+      (atSea(g, u) ? 'Embarked at sea' : null) ||
+      (u.hp >= maxHP(u) ? 'Frame already intact' : null) ||
+      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
+      (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
+      shortfall(funds(g, u.side), { credits: repairCost(u, g) })
+    );
+  }
+  function reinforceReason(g, u) {
+    if (!u) return 'Select a unit';
+    if (u.hp <= 0) return 'Unit destroyed';
+    return (
+      turnReason(g, u.side) ||
+      (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
+      (isShip(u) ? 'Warships cannot be reinforced' : null) ||
+      (u.stack >= 3 ? 'Already at 3 frames' : null) ||
+      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
+      actedReason(u) ||
+      (atSea(g, u) ? 'Embarked at sea' : null) ||
+      (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
+      shortfall(funds(g, u.side), reinforceCost(u.type, g, u.side, u))
+    );
+  }
+  // `vacating` lets the AI validate a replacement before moving the current garrison.
+  // Every other recruitment rule still applies; the actual purchase requires an empty hex.
+  function buyReason(g, s, type, stack = 1, vacating = null) {
+    const t = TYPES[type];
+    if (!t || !s) return 'Unavailable';
+    const producer = t.naval ? (s.portOwner || s.owner) : s.owner;
+    return (
+      (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
+      (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
+      (eliteConquest(g) && s.owner !== g.player && !t.naval ? 'Rival factories can only produce Elite Forces' : null) ||
+      (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
+        ? 'Not built by this faction'
+        : null) ||
+      (!t.naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
+      (t.naval && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
+      (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
+      (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
+      (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
+      // The city factory and its port are separate yards: each launches one unit a turn.
+      (t.naval
+        ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
+        : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
+        ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
+      shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer),s))
+    );
+  }
+  function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}
+  function buildReason(g, s, kind) {
+    if (!s || !BUILDINGS[kind]) return 'Unavailable';
+    return (
+      (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
+      (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
+      (kind === 'lab' && buildingLevel(s, kind) === 2 && g.turn < FLEIJA.labTurn
+        ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}`
+        : null) ||
+      (kind === 'refinery' && !depositOf(g, s) ? 'No Sakuradite deposit here' : null) ||
+      (kind === 'port' && g.mode === 'campaign' ? 'No ports in story missions' : null) ||
+      (kind === 'port' && !portSite(g, s) ? 'Not a coastal city' : null) ||
+      (kind === 'port' && s.portLevel && s.portOwner !== s.owner ? 'An enemy fleet holds the port' : null) ||
+      cityBusyReason(g, s) ||
+      shortfall(funds(g, s.owner), decreePrice(buildCost(s, kind),s))
+    );
+  }
+  // HQ research works on the persistent profile: { tokens, wins, research: { 'armor.guns': 2, ... } }.
+  function researchReason(profile, id) {
+    const n = TECH_NODES[id];
+    if (!n) return 'Unavailable';
+    const research = normalizeResearch(profile?.research),
+      l = research[id] || 0;
+    if (l >= n.max) return 'Fully researched';
+    const tier = n.tiers[l],
+      wins = profile?.wins || 0;
+    if (wins < TECH_TIERS[tier])
+      return `Tier ${tier}: win ${TECH_TIERS[tier] - wins} more operation${TECH_TIERS[tier] - wins > 1 ? 's' : ''}`;
+    if (n.req) {
+      const [k, need] = n.req,
+        rid = `${n.branch}.${k}`;
+      if ((research[rid] || 0) < need) return `Requires ${TECH_NODES[rid].name} ${ROMAN[need]}`;
+    }
+    const cost = researchCost(id, l),
+      have = profile?.tokens || 0;
+    return cost > have ? `Need ${cost - have} more command tokens` : null;
+  }
+  // Only your own commanders can be assigned; the operation's commanders stay on the units they came with.
+  function assignReason(g, u, k) {
+    const a = COMMANDERS[k];
+    if (!a) return 'Unknown commander';
+    if (u && u.hp <= 0) return 'Unit destroyed';
+    if (u && isShip(u)) return 'Carrier-Battleships cannot have commanders';
+    if (!g.roster?.[k]) return `Not one of your commanders: recruit in HQ for ${recruitPrice(k)} command tokens`;
+    const busy = allUnits(g).find(v => v.hp > 0 && v.personal && v.cmd === k);
+    if (busy) return `Commanding ${TYPES[busy.type].short}`;
+    if (!u) return 'Select one of your units first';
+    return (
+      turnReason(g, u.side) ||
+      (!serves(k, u.side) ? 'Serves another faction' : null) ||
+      (u.cmd ? 'Unit already has a commander' : null) ||
+      shortfall(funds(g, u.side), { credits: a.cost })
+    );
+  }
+  function feintReason(g, u) {
+    const action = COMMANDERS[u?.cmd]?.action;
+    if (!u || !action) return 'This commander has no command action';
+    const why = turnReason(g, u.side) || (u.hp <= 0 ? 'Unit destroyed' : atSea(g, u) ? 'Embarked units cannot use command actions' : u.morale <= -3 ? 'Unit is confused' : null)
+      || (u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
+    if (why) return why;
+    if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    if (action.kind === 'special') return actionTargets(g,u).length ? null : 'No eligible targets in range';
+    return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
+      ? 'No enemy within 2 hexes' : action.kind === 'command' ? 'No friendly unit within 2 hexes has acted'
+      : action.kind === 'withdraw' ? 'No friendly unit within 2 hexes has fired' : 'No enemy within 2 hexes';
+  }
+  // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
+  function applyProfile(g, profile = {}) {
+    applyRoster(g, profile);
+    applyElites(g, profile);
+    return applyTech(g, profile?.research);
+  }
+  function applyElites(g, profile = {}) {
+    const records = eliteProfile(profile);
+    g.eliteDeployed ||= {};
+    // Kept on the game so Elite Forces that join mid-operation (campaign spawns and upgrades) use the same levels.
+    g.eliteLevels = Object.fromEntries(Object.entries(records).filter(([, r]) => r?.level).map(([id, r]) => [id, r.level]));
+    for (const u of allUnits(g)) {
+      // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
+      if (!u.elite || u.side !== g.player) continue;
+      const old = maxHP(u),
+        rec = records[u.elite];
+      if (rec?.level) u.eliteLevel = rec.level;
+      if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+    }
+    return g;
+  }
+  // Refresh your commanders inside an operation, e.g. after an HQ promotion; personal units keep their damage.
+  function applyRoster(g, profile = {}) {
+    g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
+    for (const u of allUnits(g)) {
+      if (!u.cmd) continue;
+      const old = maxHP(u);
+      u.cmdRank = officerOf(g, u).rank;
+      if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+    }
+    return g;
+  }
+  // Load HQ research into the player's side: frame bonuses keep each unit's damage, city defenses follow.
+  function applyTech(g, research = {}) {
+    g.tech ||= {};
+    g.tech[g.player] = Object.fromEntries(
+      Object.entries(normalizeResearch(research))
+        .filter(([id, l]) => TECH_NODES[id] && Number.isInteger(l) && l > 0)
+        .map(([id, l]) => [id, Math.min(l, TECH_NODES[id].max)]),
+    );
+    for (const u of allUnits(g)) {
+      if (u.side !== g.player) continue;
+      const old = maxHP(u);
+      u.hpTech = hullTech(g, u);
+      if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+    }
+    g.stations.forEach(s => fortify(g, s));
+    return g;
+  }
+  // Fortification research raises the defenses of cities its owner holds.
+  function fortify(g, s) {
+    const bonus = techValue(g, s.owner, 'cities.fort'),
+      old = s.fortBonus || 0;
+    if (bonus === old) return;
+    s.maxShield += bonus - old;
+    s.shield = clamp(s.shield + Math.max(0, bonus - old), 0, s.maxShield);
+    s.fortBonus = bonus;
+  }
+  const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+  function researchCost(id, level = 0) {
+    return TECH_NODES[id]?.costs[level] ?? Infinity;
+  }
+  function research(profile, id) {
+    const why = researchReason(profile, id);
+    if (why) return { ok: false, reason: why };
+    profile.research = normalizeResearch(profile.research);
+    const l = profile.research?.[id] || 0;
+    profile.tokens -= researchCost(id, l);
+    (profile.research ||= {})[id] = l + 1;
+    return { ok: true, level: l + 1 };
+  }
+  // Command tokens are paid only for the first victory with each faction at each difficulty (Hard ×1.5,
+  // Challenge ×2); the first victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
+  const TOKEN_REWARD = { victory: 250, conquest: 150, first: 150, research: 5, researchCap: 300 };
+  function operationKey(g) {
+    return `conquest:${g.era || 'world'}:${g.player || 'britannia'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
+  }
+  function missionReward(g, wins = 0, cleared = {}) {
+    if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [] };
+    if (cleared[operationKey(g)]) return { total: 0, parts: [], repeat: true };
+    const parts = [
+      ['Victory', TOKEN_REWARD.victory],
+      ['World conquest', TOKEN_REWARD.conquest],
+    ];
+    const banked = Math.min(
+      TOKEN_REWARD.researchCap,
+      Math.floor((funds(g, g.player)?.science || 0) / TOKEN_REWARD.research),
+    );
+    if (banked) parts.push(['Banked research', banked]);
+    const scale = DIFFICULTIES[g.difficulty]?.tokens || 1;
+    if (scale !== 1) parts.push([`${DIFFICULTIES[g.difficulty].name} ×${scale}`, 0]);
+    let total = Math.round(parts.reduce((a, [, v]) => a + v, 0) * scale);
+    if (!wins) {
+      parts.push(['First victory', TOKEN_REWARD.first]);
+      total += TOKEN_REWARD.first;
+    }
+    return { total, parts };
+  }
+
+  // ======== Hex geometry: odd-r offset rows; world maps wrap east to west ========
+  const DIRS = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+    [1, -1],
+    [-1, 1],
+  ];
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const axial = p => ({ q: p.c - Math.floor(p.r / 2), r: p.r });
+  function hexDistance(a, b) {
+    a = axial(a);
+    b = axial(b);
+    return (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.q + a.r - b.q - b.r)) / 2;
+  }
+  // Pass g for wrapped maps: the shortest way round the world counts.
+  function distance(a, b, g = null) {
+    const d = hexDistance(a, b);
+    if (!g?.wrap) return d;
+    const W = g.cols;
+    return Math.min(d, hexDistance(a, { c: b.c + W, r: b.r }), hexDistance(a, { c: b.c - W, r: b.r }));
+  }
+  const dist = (g, a, b) => distance(a, b, g);
+  const key = p => p.c + ',' + p.r;
+  function tile(g, c, r) {
+    if (r < 0 || r >= g.rows) return null;
+    if (g.wrap) c = ((c % g.cols) + g.cols) % g.cols;
+    else if (c < 0 || c >= g.cols) return null;
+    return g.tiles[r * g.cols + c] || null;
+  }
+  function adjacent(g, p) {
+    const a = axial(p);
+    return DIRS.map(d => {
+      const r = a.r + d[1],
+        c = a.q + d[0] + Math.floor(r / 2);
+      return tile(g, c, r);
+    }).filter(Boolean);
+  }
+  // Every tile within n hexes of p (including p).
+  function within(g, p, n) {
+    const out = [],
+      a = axial(p);
+    for (let dq = -n; dq <= n; dq++)
+      for (let dr = Math.max(-n, -dq - n); dr <= Math.min(n, -dq + n); dr++) {
+        const r = a.r + dr,
+          c = a.q + dq + Math.floor(r / 2),
+          t = tile(g, c, r);
+        if (t) out.push(t);
+      }
+    return out;
+  }
+  // Occupancy indexes: rebuilt when the unit list grows or a stale entry is found; move() keeps them current.
+  const unitIndex = new WeakMap(),
+    cityIndex = new WeakMap();
+  function indexUnits(g) {
+    const m = new Map();
+    for (const u of g.units) if (u.hp > 0) m.set(key(u), u);
+    const idx = { len: g.units.length, map: m };
+    unitIndex.set(g.units, idx);
+    return idx;
+  }
+  function unitAt(g, p) {
+    let idx = unitIndex.get(g.units);
+    if (!idx || idx.len !== g.units.length) idx = indexUnits(g);
+    const k = key(p);
+    let u = idx.map.get(k);
+    if (u && (u.hp <= 0 || u.c !== p.c || u.r !== p.r)) u = indexUnits(g).map.get(k);
+    return u || null;
+  }
+  function reindex(g, u, from) {
+    const idx = unitIndex.get(g.units);
+    if (!idx) return;
+    if (from && idx.map.get(key(from)) === u) idx.map.delete(key(from));
+    if (u.hp > 0) idx.map.set(key(u), u);
+  }
+  function stationAt(g, p) {
+    let idx = cityIndex.get(g.stations);
+    if (!idx || idx.len !== g.stations.length) {
+      idx = { len: g.stations.length, map: new Map(g.stations.map(s => [key(s), s])) };
+      cityIndex.set(g.stations, idx);
+    }
+    return idx.map.get(key(p)) || null;
+  }
+  function random(g) {
+    g.seed = (Math.imul(g.seed, 1664525) + 1013904223) >>> 0;
+    return g.seed / 4294967296;
+  }
+  function log(g, text, side) {
+    g.log.unshift({ turn: g.turn, text, side: side || g.phase });
+    g.log = g.log.slice(0, 40);
+  }
+  function funds(g, side) {
+    return g.economy[side];
+  }
+  function alive(g, side) {
+    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
+  }
+  // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
+  function foe(g, a, b) {
+    return a !== b && !(g?.teams?.[a] && g.teams[a] === g.teams[b]);
+  }
+  const isFoe = foe;
+  // Optional rule hooks, set by the campaign module (dist/campaign.js): turn(g, side), capture(g, city, unit),
+  // kill(g, victim, attacker), decide(g), objective(g), title(g).
+  const hooks = {};
+
+  // ======== Terrain ========
+  const TERRAIN = {
+    sea: { name: 'Ocean', desc: 'Units embark as transports: they cannot attack and take 50% extra damage.' },
+    // Scenario-only blue background water. Not a playable hex: no warship,
+    // transport, amphibious landing or movement can enter this area.
+    offmap: { name: 'Open ocean (off map)', blocked: true, desc: 'Outside the active Japan naval theatre.' },
+    // Shoreline hexes that are part land, part water: land for land units, open water for warships (one unit per hex).
+    coast: {
+      name: 'Coast',
+      cost: 1,
+      desc: 'Movement cost 1. Shore and shallows: land units stand and fight here as on land, and warships can sail through.',
+    },
+    plains: { name: 'Plains', cost: 1, desc: 'Movement cost 1. No terrain defense or attrition.' },
+    forest: { name: 'Forest', cost: 2, cover: 0.15, desc: 'Movement cost 2. Incoming damage reduced by 15%.' },
+    mountain: { name: 'Mountains', cost: 2, cover: 0.25, desc: 'Movement cost 2. Incoming damage reduced by 25%.' },
+    desert: {
+      name: 'Desert',
+      cost: 1,
+      attrition: 0.03,
+      desc: 'Movement cost 1. Heat strains Energy Fillers: units lose 3% of their frame each turn they start here.',
+    },
+    snow: {
+      name: 'Tundra',
+      cost: 2,
+      attrition: 0.025,
+      desc: 'Movement cost 2. Units lose 2.5% of their frame each turn they start here.',
+    },
+    peak: { name: 'Impassable peaks', blocked: true, desc: 'The high Himalaya and the Greenland ice cap: impassable.' },
+    // City ruins appear on campaign maps only.
+    urban: { name: 'City ruins', cost: 1, cover: 0.2, desc: 'Movement cost 1. Buildings and rubble cut incoming damage by 20%.' },
+    crater: {
+      name: 'F.L.E.I.J.A. crater',
+      cost: 2,
+      desc: 'Movement cost 2. A F.L.E.I.J.A. warhead erased everything here and glassed the ground pink and white.',
+    },
+  };
+  const TERRAIN_CODES = {
+    '.': 'sea',
+    p: 'plains',
+    f: 'forest',
+    m: 'mountain',
+    d: 'desert',
+    s: 'snow',
+    x: 'peak',
+    u: 'urban',
+    c: 'crater',
+    w: 'coast',
+  };
+  const CONQUEST_MOVE_BONUS = 2,
+    SEA_MOVE = { conquest: 5, campaign: 5 },
+    CARRIER_ESCORT_SEA = 10; // a Portman that starts next to a friendly Carrier-Battleship swims this far
+  // Warships and amphibious frames, built only in Conquest.
+  const NAVAL = {
+    britannia: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
+    eu: { amphibious: 'panzer_frosch', amphibious2: 'panzer_frosch_ii', carrier: 'eu_carrier' },
+    cf: { amphibious: 'shui_gun_ru', amphibious2: 'shui_gun_ru_ii', carrier: 'cf_carrier' },
+  };
+  const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : Object.values(NAVAL[side] || {}));
+  const isShip = u => TYPES[u?.type]?.naval === 'ship';
+  // Ports: a city building on one sea hex beside the city (repair: PORT.repair by level).
+  const PORT = { repair: [0, 0.1, 0.2, 0.3] };
+  function portSite(g, s) {
+    if (s.portAt) return tile(g, s.portAt.c, s.portAt.r);
+    // Baseline starting ports must stay on their exact original hexes.
+    // Non-starting ports retain the normal neighbour-selection rules.
+    const anchored = g.mode === 'conquest' ? COASTAL_PORT_HEXES[s.name] : null;
+    if (anchored) {
+      const fixed = tile(g, anchored[0], anchored[1]);
+      if (!fixed || !isSea(fixed) || !adjacent(g, s).includes(fixed) ||
+          g.stations.some(o => o !== s && o.portAt && key(o.portAt) === key(fixed)))
+        throw new Error('Unavailable fixed starting port for ' + s.name);
+      return fixed;
+    }
+    const taken = new Set(g.stations.filter(o => o.portAt).map(o => key(o.portAt)));
+    return (
+      adjacent(g, s)
+        .filter(t => isSea(t) && !taken.has(key(t)))
+        .sort((a, b) => adjacent(g, b).filter(navigable).length - adjacent(g, a).filter(navigable).length || a.r - b.r || a.c - b.c)[0] ||
+      null
+    );
+  }
+  function openPort(g, s, level) {
+    const t = portSite(g, s);
+    if (!t) return;
+    s.portAt = { c: t.c, r: t.r };
+    s.portLevel = level;
+    s.portOwner = s.owner;
+  }
+  const portAtHex = (g, p) => g.stations.find(s => s.portLevel && s.portAt && s.portAt.c === p.c && s.portAt.r === p.r) || null;
+  const hasPort3 = (g, side) => g.stations.some(s => (s.portLevel || 0) >= 3 && s.portOwner === side);
+  function carrierCapacity(g, ship) {
+    if (!isShip(ship)) return 0;
+    return TYPES[ship.type].capacity + (techLevel(g, ship.side, 'naval.hangars') ? 1 : 0);
+  }
+  const canBoard = (g, ship) => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < carrierCapacity(g, ship);
+  // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
+  const allUnits = g => g.units.flatMap(u => (u.cargo?.length ? [u, ...u.cargo] : [u]));
+  // Single source of truth for visual geography invalidation. Only actual tile changes advance it.
+  function setTileOwner(g, t, owner) {
+    if (t.owner === owner) return;
+    t.owner = owner;
+    g.mapRevision = (g.mapRevision || 0) + 1;
+  }
+  function setTileTerrain(g, t, terrain) {
+    if (t.terrain === terrain) return;
+    t.terrain = terrain;
+    g.mapRevision = (g.mapRevision || 0) + 1;
+  }
+  const isSea = t => t?.terrain === 'sea';
+  // Coast hexes count as land for land units (isSea is false) and as water for warships.
+  const isCoast = t => t?.terrain === 'coast';
+  const navigable = t => isSea(t) || isCoast(t);
+  // Embarked as a transport: a land unit on a sea hex. Warships and amphibious frames fight normally at sea.
+  function atSea(g, u) {
+    return isSea(tile(g, u.c, u.r)) && !TYPES[u.type].naval;
+  }
+  function amphibiousSea(g, u) {
+    const escort = adjacent(g, u).some(n => {
+      const v = unitAt(g, n);
+      return v && v.side === u.side && isShip(v);
+    });
+    const sea = TYPES[u.type].seaMove + techValue(g, u.side, 'naval.amphibious');
+    return escort ? Math.max(CARRIER_ESCORT_SEA, sea) : sea;
+  }
+  // Embarked units take extra damage; Landing Craft halves the penalty.
+  function seaPenalty(g, side) {
+    return techLevel(g, side, 'naval.landing') ? 0.25 : 0.5;
+  }
+  function seaMove(g, u) {
+    const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
+    // Naval Logistics raises transports from 5 to 6. Level II changes embark/landing tempo instead of adding speed.
+    return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
+  }
+
+  // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Marshal).
+  function maxHP(u) {
+    const es = eliteScale(u);
+    return Math.round(
+      TYPES[u.type].hp *
+        es.hp *
+        (1 + 0.7 * (u.stack - 1)) *
+        (u.cmdRank == null ? 1 : RANK_HP[u.cmdRank] || 1) *
+        (1 + (u.hpTech || 0)),
+    );
+  }
+  // Version 3 added Sakuradite. Older saves were all made on the old 100 × 42 map and are rejected.
+  const RULES_VERSION = 3;
+  // 2026 coastline alignment: retain old saves while matching the revised
+  // new-game map. Occupied legacy hexes stay playable until a new conquest;
+  // never strand a unit or move a player-built site during migration.
+  const COASTAL_SEA_FIXES = [[13, 9], [168, 9], [50, 10], [49, 12],
+    [81, 32], [113, 51], [157, 44], [49, 31],
+    [0, 6], [127, 0], [158, 1], [55, 8], [56, 8], [156, 63],
+    [141, 44],  // Malacca: only unoccupied legacy land becomes water
+    [111, 36]];  // Bab-el-Mandeb
+  // The Caspian was the sole isolated sea component. Legacy saves migrate
+  // it to traversable land, preserving occupied old tiles and player-built sites.
+  // Red Sea coast hexes (Egypt 107,27; Yemen 111,34 and 111,35) became land the same way.
+  const CASPIAN_LAND_FIXES = [[113,17],[114,17],[114,18],[115,17],[115,18],[114,19],[115,19],[115,20],[116,20],[115,21],[114,21],
+    [107,27], [111,34], [111,35]];
+  const TSUGARU_STRAIT = [160, 19];
+  function coastalTileOccupied(g, c, r) {
+    return g.units.some(u => u.hp > 0 && u.c === c && u.r === r) ||
+      g.stations?.some(s => (s.c === c && s.r === r) ||
+        (s.portAt?.c === c && s.portAt?.r === r)) ||
+      g.sites?.some(site => site.c === c && site.r === r);
+  }
+  function migrateCoastalTerrain(g) {
+    for (const [c, r] of COASTAL_SEA_FIXES) {
+      // Historical sea fixes must not undo the newly approved 20/80 coastline.
+      if (WORLD_ROWS[r]?.[c] !== '.') continue;
+      const t = g.tiles[r * g.cols + c];
+      if (!t || t.terrain === 'sea') continue;
+      if (g.units.some(u => u.hp > 0 && u.c === c && u.r === r)) continue;
+      if (g.stations?.some(s => (s.c === c && s.r === r) ||
+        (s.portAt?.c === c && s.portAt?.r === r))) continue;
+      if (g.sites?.some(site => site.c === c && site.r === r)) continue;
+      setTileTerrain(g, t, 'sea');
+      setTileOwner(g, t, null);
+    }
+    const [tc, tr] = TSUGARU_STRAIT;
+    const strait = g.tiles[tr * g.cols + tc];
+    if (WORLD_ROWS[tr]?.[tc] === '.' && strait && strait.terrain !== 'sea' && !coastalTileOccupied(g, tc, tr)) {
+      setTileTerrain(g, strait, 'sea');
+      setTileOwner(g, strait, null);
+    }
+    const filled = [];
+    for (const [c, r] of CASPIAN_LAND_FIXES) {
+      if ('.w'.includes(WORLD_ROWS[r]?.[c])) continue;
+      const t = g.tiles[r * g.cols + c];
+      if (!t || t.terrain !== 'sea' || coastalTileOccupied(g, c, r)) continue;
+      setTileTerrain(g, t, 'plains');
+      setTileOwner(g, t, null);
+      filled.push(t);
+    }
+    // Coast hexes (part land, part water) arrived after older saves were made. A sea hex turned coast
+    // inherits a neighbouring owner; craters and other later terrain changes are kept.
+    const KEEP = new Set(['coast', 'crater', 'urban', 'peak']);
+    for (const t of g.tiles) {
+      if (WORLD_ROWS[t.r]?.[t.c] !== 'w' || KEEP.has(t.terrain)) continue;
+      const wasSea = t.terrain === 'sea';
+      setTileTerrain(g, t, 'coast');
+      if (wasSea) filled.push(t);
+    }
+    // Carry over the saved political situation rather than assigning a
+    // new game faction. Progress from neighbouring owned land inward.
+    for (let pass = 0; pass < CASPIAN_LAND_FIXES.length; pass++) {
+      let changed = false;
+      for (const t of filled) {
+        if (t.owner) continue;
+        const n = adjacent(g, t).find(n => n.terrain !== 'sea' && n.owner);
+        if (n) { setTileOwner(g, t, n.owner); changed = true; }
+      }
+      if (!changed) break;
+    }
+    // Newfoundland was restored as land by the previous correction batch.
+    const t = g.tiles[15 * g.cols + 61];
+    if (t && !'.w'.includes(WORLD_ROWS[15]?.[61]) && t.terrain === 'sea' &&
+        !g.units.some(u => u.hp > 0 && u.c === 61 && u.r === 15)) {
+      setTileTerrain(g, t, 'plains');
+    }
+  }
+  // Christchurch owns unclaimed South Island land in new conquests.
+  // Older saves without Christchurch still attach those tiles to Auckland.
+  // Never overwrite tiles already owned or conquered.
+  const NZ_SOUTH_ISLAND = [
+    [175, 68], [176, 68], [173, 69], [174, 69],
+    [175, 69], [173, 70], [174, 70], [175, 70],
+  ];
+  function attachUnclaimedNewZealand(g) {
+    const anchor = g.stations.find(s => s.name === 'Christchurch') ||
+      g.stations.find(s => s.name === 'Auckland');
+    if (!anchor?.owner) return;
+    for (const [c, r] of NZ_SOUTH_ISLAND) {
+      const t = tile(g, c, r);
+      // Never overwrite territory that changed hands during an existing game.
+      if (!t || isSea(t) || t.owner || t.provinceCity != null) continue;
+      setTileOwner(g, t, anchor.owner);
+      t.provinceCity = anchor.id;
+    }
+  }
+  // Each painted conquest land hex is permanently attached to one city. Existing ownership
+  // determines its initial faction; the closest city of that faction becomes its province
+  // center. This keeps historical borders and Indonesia's intentional overrides intact.
+  // City IDs (unlike array indices) survive captures and F.L.E.I.J.A. removals.
+  function assignCityProvinces(g) {
+    const byOwner = new Map();
+    for (const s of g.stations) {
+      if (!byOwner.has(s.owner)) byOwner.set(s.owner, []);
+      byOwner.get(s.owner).push(s);
+    }
+    for (const t of g.tiles) {
+      if (isSea(t)) {
+        delete t.provinceCity;
+        continue;
+      }
+      // A previously assigned province must not be reassigned after its city
+      // changes hands. This also keeps province borders stable across saves.
+      if (t.provinceCity != null || !t.owner) continue;
+      const cities = byOwner.get(t.owner) || [];
+      let nearestCity = null, nearestDistance = Infinity;
+      for (const s of cities) {
+        const d = dist(g, s, t);
+        if (d < nearestDistance || (d === nearestDistance && s.id < nearestCity.id)) {
+          nearestCity = s;
+          nearestDistance = d;
+        }
+      }
+      if (nearestCity) t.provinceCity = nearestCity.id;
+    }
+  }
+
+  // ======== Compact saves ========
+  // A conquest save stores the world as changes from the starting map instead of all 13,680 hexes: terrain that
+  // differs from WORLD_ROWS, and every other per-hex field (owner, provinceCity, any future one) as runs over the
+  // hexes in map order: [value, count], or [count] where the field is absent. Destroyed units are dropped (nothing
+  // reads them; unit ids keep counting from g.nextId). Campaign maps are small and their saves stay whole.
+  // unpackSave turns either kind back into a full game; migrateSave then runs as usual.
+  const SAVE_PACK = 1;
+  const baseTerrain = (c, r) => TERRAIN_CODES[WORLD_ROWS[r]?.[c]] || 'sea';
+  function packSave(g) {
+    if (g.mode === 'campaign' || g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== g.cols * g.rows)
+      return g;
+    const { tiles, units, ...rest } = g;
+    const fields = [...new Set(tiles.flatMap(t => Object.keys(t)))].filter(k => k !== 'c' && k !== 'r' && k !== 'terrain');
+    const runs = {};
+    for (const f of fields) {
+      const out = (runs[f] = []);
+      let value, has, n = 0;
+      for (const t of tiles) {
+        const h = f in t;
+        if (n && h === has && t[f] === value) n++;
+        else {
+          if (n) out.push(has ? [value, n] : [n]);
+          value = t[f];
+          has = h;
+          n = 1;
+        }
+      }
+      if (n) out.push(has ? [value, n] : [n]);
+    }
+    return {
+      ...rest,
+      units: units.filter(u => u.hp > 0),
+      packedTiles: {
+        v: SAVE_PACK,
+        terrain: tiles.flatMap((t, i) => (t.terrain !== baseTerrain(t.c, t.r) ? [[i, t.terrain]] : [])),
+        fields: runs,
+      },
+    };
+  }
+  function unpackSave(p) {
+    if (!p?.packedTiles) return p;
+    const { packedTiles: pk, ...g } = p;
+    if (pk.v !== SAVE_PACK || !(g.cols > 0 && g.rows > 0)) return null;
+    const n = g.cols * g.rows,
+      tiles = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const c = i % g.cols,
+        r = (i / g.cols) | 0;
+      tiles[i] = { c, r, terrain: baseTerrain(c, r) };
+    }
+    for (const [i, terrain] of pk.terrain || []) if (tiles[i]) tiles[i].terrain = terrain;
+    for (const [f, list] of Object.entries(pk.fields || {})) {
+      let i = 0;
+      for (const run of list) {
+        const count = run.length === 1 ? run[0] : run[1];
+        if (run.length === 2) for (let k = i; k < Math.min(n, i + count); k++) tiles[k][f] = run[0];
+        i += count;
+      }
+    }
+    g.tiles = tiles;
+    return g;
+  }
+  function migrateSave(g) {
+    g = unpackSave(g);
+    if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
+    if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
+    if (g.rulesVersion !== RULES_VERSION) return null;
+    if (!g.units.every(u => TYPES[u.type])) return null;
+    if (g.mode !== 'campaign') {
+      migrateCoastalTerrain(g);
+      attachUnclaimedNewZealand(g);
+      // Older saves have no province IDs. Bind their existing painted land to
+      // its closest still-controlled city, without resetting conquest progress.
+      assignCityProvinces(g);
+    }
+    g.eliteDeployed ||= {};
+    for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
+      if (records) for (const [k, rec] of Object.entries(records))
+        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
+          which === 'officers' && eliteConquest(g) && COMMANDERS[k].side !== g.player
+            ? RANKS.length - 1 : HQ_RANK_CAP);
+    if (g.mode !== 'campaign') automationState(g);
+    for (const u of g.units) {
+      const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
+      if (elite) {
+        u.elite = elite;
+        u.eliteLevel ||= 1;
+        if (!eliteConquest(g) || !u.eliteStart) g.eliteDeployed[elite] = true;
+      }
+      // Older saves left carried units at the hex where they boarded.
+      for (const c of u.cargo || []) {
+        c.c = u.c;
+        c.r = u.r;
+      }
+    }
+    return g;
+  }
