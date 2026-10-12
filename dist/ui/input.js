@@ -4,6 +4,12 @@ let helpBack = 'game';
 document.addEventListener('change', e => {
   if (uiActionBusy) return;
   const id = e.target.id;
+  if (id === 'conquest-select') {
+    setup.conquest = E.CONQUESTS[e.target.value] ? e.target.value : 'world';
+    if (!E.CONQUESTS[setup.conquest].selectable.includes(setup.side)) setup.side = E.CONQUESTS[setup.conquest].selectable[0];
+    startMenu();
+    return;
+  }
   if (id === 'difficulty-select') {
     setup.difficulty = e.target.value;
     startMenu();
@@ -354,7 +360,7 @@ document.addEventListener('click', e => {
       startScenario();
       break;
     case 'start-conquest':
-      confirmReplace(SAVE_KEY, 'new', newGame);
+      confirmReplace(chosenSaveKey(), 'new', newGame);
       break;
     case 'replace-confirm': {
       const then = pendingReplace;
@@ -363,7 +369,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'continue':
-      loadGame(getSave());
+      loadGame(getSave(chosenSaveKey()));
       break;
     case 'continue-mission':
       loadGame(getSave(CAMPAIGN_KEY));

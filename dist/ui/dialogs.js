@@ -69,7 +69,7 @@ function openEliteShop(id, navalOnly = false) {
     const e = E.ELITE_FORCES[k], t = E.TYPES[e.type];
     const allowed = game.mode === 'campaign' && game.difficulty === 'elite'
       ? game.campaign?.eliteRosters?.[game.player]?.includes(k)
-      : e.availableTo.includes(game.player);
+      : e.availableTo.includes(game.player) || (game.era === 'ufn2018' && game.player === 'eb' && e.availableTo.includes('britannia'));
     return allowed && !!t.naval === navalOnly &&
       (!e.scenarioOnly || (game.mode === 'scenario' && game.difficulty === 'elite'));
   });
@@ -247,7 +247,7 @@ function admiralDialog() {
   hqBack = 'game';
   const u = selectedUnit(),
     own = u?.side === game.player ? u : null,
-    mine = Object.keys(game.roster || {}).filter(k => E.serves(k, game.player)),
+    mine = Object.keys(game.roster || {}).filter(k => E.serves(k, game.player, game)),
     scenario = game.units.filter(v => v.hp > 0 && v.side === game.player && v.cmd && !v.personal);
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Unit commanders"><div class="dialog-head"><div><div class="eyebrow">High command · ${F(game.player).name}</div><h2>Commanders</h2><p>${costHTML({ credits: game.economy[game.player].credits }, true)} available · ${own && !own.cmd && E.TYPES[own.type].naval !== 'ship' ? 'Assign one of your commanders to ' + E.TYPES[own.type].name + ' ×' + own.stack : 'Select one of your units without a commander to assign one.'}</p></div><button class="small close" data-action="close">Close</button></div><div class="info-strip">Your commanders are yours to keep: assign them to any unit in any operation, even beside the operation's own version, and develop them in HQ → Commanders. Operation commanders come with the war and cannot be upgraded.</div><h3 class="officer-section">Your commanders · ${mine.length}</h3><div class="admiral-grid officers">${mine.map(k => officerCard(k, own)).join('') || '<p class="description">No commanders for this faction yet. Recruit them in HQ → Commanders.</p>'}</div>${scenario.length ? `<h3 class="officer-section">Operation commanders</h3><div class="scenario-commanders">${scenario.map(v => `<div class="scenario-chip">${generalPortrait(v.cmd, 'chip-portrait', false)}<span><b>${C(v.cmd).short}</b><small>${E.TYPES[v.type].short} ×${v.stack} · ${E.RANKS[E.officerOf(game, v).rank]}</small></span></div>`).join('')}</div>` : ''}<div class="dialog-footer"><button data-action="generals">HQ commanders · upgrade &amp; recruit</button></div></section></div>`;
   focusDialog();
@@ -309,7 +309,7 @@ function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
     note =
       branch === 'Naval'
         ? 'Navies are Conquest-only and built at ports. Every power’s equivalent units share the same numbers; only names and art differ.'
-        : E.MAJORS.includes(side)
+        : E.isMajor(game, side)
           ? 'Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Jabalpur-built Black Knights frames and the Burai Kai. Configurations are the game’s loadouts of a wiki frame. Campaign-only frames appear in story missions, not in Conquest factories.'
           : E.ROSTER[side]
             ? 'The frames this side fields in story missions, including those it shares with the major powers. Campaign-only frames are not built in Conquest.'
@@ -339,12 +339,12 @@ function strategicText(side) {
 }
 // The war at a glance: each power's cities, income, army and capital.
 function powersDialog() {
-  const rows = E.MAJORS.map(side => {
+  const rows = (game.majors || E.MAJORS).map(side => {
     const inc = E.income(game, side),
       cities = game.stations.filter(s => s.owner === side).length,
       army = game.units.filter(u => u.hp > 0 && u.side === side).length,
       fall = game.fallen?.[side];
-    return `<tr class="${side === game.player ? 'mine' : ''}"><td><span class="legend-dot" style="background:${F(side).color}"></span> ${F(side).name}</td><td>${fall ? `Surrendered to the ${F(fall.by).short} (turn ${fall.turn})` : F(side).capital}</td><td>${cities}</td><td>${fall ? '—' : '+' + inc.credits}</td><td>${fall ? '—' : '+' + inc.sakuradite}</td><td>${fall ? '—' : strategicText(side)}</td><td>${army}</td></tr>`;
+    return `<tr class="${side === game.player ? 'mine' : ''}"><td><span class="legend-dot" style="background:${F(side).color}"></span> ${F(side).name}</td><td>${fall ? `Surrendered to the ${F(fall.by).short} (turn ${fall.turn})` : F(side).capital}${game.era === 'ufn2018' ? `<small> · ${side === 'cf' ? 'Hostile to both Britannian powers' : 'Allied with ' + F(side === 'eb' ? 'britannia' : 'eb').short}</small>` : ''}</td><td>${cities}</td><td>${fall ? '—' : '+' + inc.credits}</td><td>${fall ? '—' : '+' + inc.sakuradite}</td><td>${fall ? '—' : strategicText(side)}</td><td>${army}</td></tr>`;
   }).join('');
   const neutral = game.stations.filter(s => s.owner === 'neutral').length;
   // Who works each Sakuradite deposit.
@@ -355,7 +355,7 @@ function powersDialog() {
       return `<span class="deposit-chip" style="border-color:${F(owner).color}">${ICONS.use('sakuradite', 'cost-ico')} ${esc(d.name)} <small>${host} · ${F(owner).short} · +${E.depositYield(game, d).sakuradite}</small></span>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="World powers"><div class="dialog-head"><div><div class="eyebrow">Turn ${game.turn} of ${E.ARMISTICE}</div><h2>World powers</h2></div><button class="small close" data-action="close">Close</button></div><table class="powers"><thead><tr><th>Power</th><th>Capital</th><th>Cities</th><th>Income</th><th>Sakuradite</th><th>Strategic</th><th>Units</th></tr></thead><tbody>${rows}<tr><td><span class="legend-dot" style="background:#d8cfa6"></span> Neutral powers</td><td>Australia · Middle East</td><td>${neutral}</td><td>—</td><td>—</td><td>—</td><td>${game.units.filter(u => u.hp > 0 && u.side === 'neutral').length}</td></tr></tbody></table>${deposits ? `<span class="label">Sakuradite deposits</span><div class="deposit-list">${deposits}</div>` : ''}<p class="description">A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. Capitals are the richest cities, not a knockout. Win when every rival has surrendered, or by holding the most cities at the ${E.ARMISTICE}-turn armistice.</p></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="World powers"><div class="dialog-head"><div><div class="eyebrow">Turn ${game.turn} of ${E.ARMISTICE}</div><h2>World powers</h2></div><button class="small close" data-action="close">Close</button></div><table class="powers"><thead><tr><th>Power</th><th>Capital</th><th>Cities</th><th>Income</th><th>Sakuradite</th><th>Strategic</th><th>Units</th></tr></thead><tbody>${rows}<tr><td><span class="legend-dot" style="background:#d8cfa6"></span> Neutral powers</td><td>${game.era === 'ufn2018' ? 'Australia · neutral' : 'Australia · Middle East'}</td><td>${neutral}</td><td>—</td><td>—</td><td>—</td><td>${game.units.filter(u => u.hp > 0 && u.side === 'neutral').length}</td></tr></tbody></table>${deposits ? `<span class="label">Sakuradite deposits</span><div class="deposit-list">${deposits}</div>` : ''}<p class="description">${game.era === 'ufn2018' ? 'Britannia and Euro Britannia are permanent allies with independent armies and economies. The U.F.N. fights both. Australia is neutral and never required for victory. Coalition city totals decide the 120-turn armistice; ties are draws.' : `A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. Capitals are the richest cities, not a knockout. Win when every rival has surrendered, or by holding the most cities at the ${E.ARMISTICE}-turn armistice.`}</p></section></div>`;
   focusDialog();
 }
 // The field manual's Sakuradite entry, built from the engine's numbers.
