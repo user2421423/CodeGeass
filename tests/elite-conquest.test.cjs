@@ -154,7 +154,7 @@ test('Elite-only ranks persist across save and load while player commander cap s
   const hostile = Object.keys(E.COMMANDERS).find(id => E.COMMANDERS[id].side === 'eu');
   assert.equal(saved.officers[hostile].rank, E.RANKS.length - 1);
   assert.equal(saved.officers.suzaku.rank, E.defaultOfficer('suzaku').rank);
-  const profile = { tokens: 100000, roster: {} };
+  const profile = { tokens: 100000 };
   E.roster(profile).suzaku.rank = E.PROMOTE_COST.length - 1;
   assert.equal(E.promoteReason(profile, 'suzaku'), 'Highest rank reached');
 });
