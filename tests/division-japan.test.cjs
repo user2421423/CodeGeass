@@ -38,17 +38,17 @@ test('All three factions begin with real territory, armies, fleets and commander
     assert.equal(g.stations.length,44);
     assert.equal(g.tiles.length,9240);
     assert.deepEqual(new Set(g.order),new Set(division.sides));
-    assert.equal(g.units.length,84);
-    assert.equal(new Set(g.units.map(u=>E.key(u))).size,84,'no overlapping starting units');
+    assert.equal(g.units.length,92);
+    assert.equal(new Set(g.units.map(u=>E.key(u))).size,92,'no overlapping starting units');
     for(const side of division.sides){
       assert.equal(g.stations.filter(s=>s.owner===side).length,expected[side]);
-      assert.equal(g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).length,24);
+      assert.equal(g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).length,side==='britannia'?32:24);
       assert.equal(g.units.filter(u=>u.side===side&&E.TYPES[u.type].naval).length,4);
       const named=g.units.filter(u=>u.side===side&&u.cmd);
       assert.equal(named.length,9,side+' receives nine named commanders');
       assert.equal(new Set(named.map(u=>u.cmd)).size,9);
       assert.ok(named.every(u=>E.COMMANDERS[u.cmd]?.side===side));
-      assert.equal(g.startUnits[side],28);
+      assert.equal(g.startUnits[side],side==='britannia'?36:28);
       assert.ok(g.stations.some(s=>s.owner===side&&s.portAt&&s.portOwner===side),
         side+' needs a functional controlled shipyard');
     }
@@ -68,6 +68,38 @@ test('All three factions begin with real territory, armies, fleets and commander
     assert.ok(E.income(g,'britannia').industry>E.income(g,'eu').industry,
       'Britannia has stronger industry despite fewer cities than China');
   }
+});
+
+test('Normal Division gives Britannia eight balanced reinforcements and a third reserve turn only', () => {
+  for (const player of division.sides) {
+    const g=division.create(player,'normal',125);
+    const britannia=g.units.filter(u=>u.side==='britannia'&&!E.TYPES[u.type].naval);
+    const reinforced=['Saitama','Yokohama','Kobe','Wakayama'];
+    for(const name of reinforced) {
+      const group=g.scenario.groups.find(gr=>gr.side==='britannia' && gr.origin===name && gr.units.length===2);
+      assert.ok(group,'two defensive formations at '+name);
+    }
+    assert.equal(britannia.length,32);
+    assert.equal(g.economy.britannia.credits,E.income(g,'britannia').credits*3);
+    assert.equal(g.economy.eu.credits,E.income(g,'eu').credits*3);
+    assert.equal(g.economy.cf.credits,E.income(g,'cf').credits*3);
+    const plan=E.aiPlan(g,'britannia');
+    const guardIds=Object.keys(plan.guards);
+    assert.ok(guardIds.length>=6 && guardIds.length<=12,'dedicated frontline defenders');
+    assert.ok(guardIds.every(id=>britannia.some(u=>u.id===Number(id))));
+    assert.ok(guardIds.every(id=>!plan.assign[id]),'garrisons are withheld from offensives');
+    assert.deepEqual(E.aiPlan(g,'eu').guards,{});
+    assert.deepEqual(E.aiPlan(g,'cf').guards,{});
+  }
+  for (const difficulty of ['hard','challenge','elite']) {
+    const g=division.create('britannia',difficulty,126);
+    assert.equal(g.units.length,84,'other difficulties keep previous unit count');
+    assert.equal(g.startUnits.britannia,28);
+    assert.equal(g.economy.britannia.credits,E.income(g,'britannia').credits*2);
+    assert.deepEqual(E.aiPlan(g,'britannia').guards,{});
+  }
+  const old=invasion.create('britannia','normal',127);
+  assert.deepEqual(E.aiPlan(old,'britannia').guards,{},'original Japan AI unaffected');
 });
 
 test('The three fronts reflect the approved political boundaries', () => {
