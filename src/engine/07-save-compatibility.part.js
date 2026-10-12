@@ -74,6 +74,29 @@
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
+    // Preserve saves containing retired scenario-only Elite carrier-battleships.
+    const legacyCarriers = {
+      elite_europe_eu_carrier: 'eu_carrier',
+      elite_europe_eb_carrier: 'carrier_battleship',
+      elite_japan_britannia_carrier: 'carrier_battleship',
+      elite_japan_eu_carrier: 'eu_carrier',
+      elite_japan_cf_carrier: 'cf_carrier',
+      elite_japan_bk_carrier: 'bk_carrier',
+    };
+    for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
+      if (!legacyCarriers[u.type]) continue;
+      u.type = legacyCarriers[u.type];
+      delete u.elite;
+      delete u.eliteLevel;
+      delete u.eliteStart;
+      u.stack = 1;
+      u.hp = Math.min(u.hp, maxHP(u));
+    }
+    if (g.scenario?.eliteRosters) for (const side of Object.keys(g.scenario.eliteRosters))
+      g.scenario.eliteRosters[side] = (g.scenario.eliteRosters[side] || [])
+        .filter(id => !!ELITE_FORCES[id]);
+    if (g.eliteDeployed) for (const id of Object.keys(g.eliteDeployed))
+      if (/(?:japan|europe)_.*_carrier/.test(id)) delete g.eliteDeployed[id];
     if (!g.units.every(u => TYPES[u.type])) return null;
     if (g.mode === 'conquest') {
       const cfg = CONQUESTS[g.era || 'world'];
