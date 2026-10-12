@@ -69,7 +69,7 @@ function openEliteShop(id, navalOnly = false) {
     const e = E.ELITE_FORCES[k], t = E.TYPES[e.type];
     const allowed = game.mode === 'campaign' && game.difficulty === 'elite'
       ? game.campaign?.eliteRosters?.[game.player]?.includes(k)
-      : e.availableTo.includes(game.player);
+      : E.eliteEligible(game, game.player, k);
     return allowed && !!t.naval === navalOnly &&
       (!e.scenarioOnly || (game.mode === 'scenario' && game.difficulty === 'elite'));
   });
@@ -90,7 +90,7 @@ function openEliteShop(id, navalOnly = false) {
   }).join('');
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Elite Force ${navalOnly ? 'shipyard' : 'factory'}"><div class="dialog-head"><div><div class="eyebrow">${F(owner).name} · ${s.name} · ${navalOnly ? `Port level ${s.portLevel || 0}` : `Factory level ${s.tier}`}</div><h2>Deploy ${navalOnly ? 'Naval Elite Forces' : 'an Elite Force'}</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${tabs}</div><div><span class="label">Unique frames · ×1 only</span></div></div><div class="info-strip">${game.mode === 'campaign' && game.difficulty === 'elite'
     ? 'Elite Campaign: only HQ-unlocked Elite Forces can be recruited. Every deployment is Lv.1, one frame, once per type per mission across all owned factories; starting and scripted elites do not use this allowance.'
-    : navalOnly ? 'Amphibious elites require HQ unlocks; Japan Elite carrier-battleships are operation-only and need no persistent unlock. They launch from an empty friendly port and use the ordinary carrier deployment mechanics.' : 'Players must unlock this Elite Force in HQ first, including on Elite Conquest. Deploy it once per operation using this city\'s factory slot.'}</div><div class="cards">${cards || '<p class="description">No Elite Forces are currently available to this faction.</p>'}</div></section></div>`;
+    : navalOnly ? 'Amphibious elites require HQ unlocks; scenario-only Elite carriers are available without HQ unlocks and use standard cargo rules.' : 'HQ-unlocked Elite Forces can be deployed once per operation. Euro Britannia borrows Britannian Elite Forces only in the European War.'}</div><div class="cards">${cards || '<p class="description">No Elite Forces are currently available to this faction.</p>'}</div></section></div>`;
   focusDialog();
 }
 let eliteBack = 'game',
