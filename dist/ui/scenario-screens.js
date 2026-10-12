@@ -133,6 +133,7 @@ function scenarioGroupsDialog() {
   const groups=game.scenario.groups.filter(gr=>gr.side===game.player);
   const rows=groups.map(gr=>{
     const units=gr.units.map(id=>game.units.find(u=>u.id===id)).filter(u=>u&&u.hp>0);
+    const editable=E.armyGroup(game,gr.editableId);
     const destination=gr.destination?' · Destination '+gr.destination.c+','+gr.destination.r:'';
     return '<div class="conquest-row scenario-army-row"><div>'+
       '<label>'+units.length+' operational formations'+destination+'</label>'+
@@ -140,7 +141,8 @@ function scenarioGroupsDialog() {
       '<p class="mode-note">'+units.map(u=>esc(E.TYPES[u.type].name)).slice(0,6).join(' · ')+
       (units.length>6?' · …':'')+'</p></div>'+
       '<div class="scenario-group-buttons"><button data-scenario-group-focus="'+gr.id+'">Locate</button>'+
-      '<button class="primary" data-scenario-group-route="'+gr.id+'"'+(!units.length?' disabled':'')+'>Set destination</button></div>'+
+      '<button class="small" data-scenario-group-import="'+gr.id+'">'+(editable?'Manage editable group':'Make editable group')+'</button>'+ 
+      (editable?'':'<button class="primary" data-scenario-group-route="'+gr.id+'"'+(!units.length?' disabled':'')+'>Set destination</button>')+'</div>'+
       '</div>';
   }).join('');
   modal.innerHTML='<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Scenario army groups">'+
@@ -148,7 +150,7 @@ function scenarioGroupsDialog() {
     '<h2>Army Groups & Fleets</h2><p>Group orders assign standing destinations to each reachable formation. '+
     'They advance at the beginning of each of your turns.</p></div>'+
     '<button class="small close" data-action="close">Return</button></div>'+
-    rows+'<div class="dialog-footer"><small>Choose another destination to replace a group order.</small></div>'+
+    rows+'<div class="dialog-footer"><small>Import a starting formation to add, remove, and direct its units using the full Army Groups controls.</small><button data-action="army-groups">Army Groups</button></div>'+
     '</section></div>';
   focusDialog();
 }
@@ -166,4 +168,27 @@ function scenarioGroupStart(id) {
   deploying=null;
   closeModal();
   toast('Click a destination hex for the selected army group. Press Escape to cancel.',true);
+}
+
+function scenarioGroupImport(id) {
+  if (game.mode !== 'scenario' || !interactive()) return;
+  const staging = game.scenario?.groups?.find(gr => gr.id === id && gr.side === game.player);
+  if (!staging) return;
+  const existing = E.armyGroup(game, staging.editableId);
+  if (existing) return armyGroupsDialog(existing.id);
+  const created = E.createArmyGroup(game);
+  if (!created.ok) return toast(created.reason);
+  const group = created.group;
+  group.name = staging.name;
+  const members = staging.units.filter(unitId =>
+    game.units.some(u => u.id === unitId && u.hp > 0 && u.side === game.player));
+  let assigned = 0;
+  for (const unitId of members.slice(0, 24))
+    if (E.addArmyGroupUnit(game, group.id, unitId).ok) assigned++;
+  if (staging.destination) E.orderArmyGroup(game, group.id, staging.destination.c, staging.destination.r);
+  staging.editableId = group.id;
+  refreshAndSave();
+  armyGroupsDialog(group.id);
+  toast(group.name + ': ' + assigned + ' formations imported' +
+    (members.length > 24 ? ' · 24-unit group limit reached' : '') + '.');
 }

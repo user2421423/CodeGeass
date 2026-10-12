@@ -1,4 +1,4 @@
-/* Player-defined operational groups for world conquest.
+/* Player-defined operational groups for world conquest and regional scenarios.
    Groups issue ordinary standing orders and never bypass movement, combat or capture rules.
    Source of truth: this standalone extension; loaded after engine.js. */
 (function (E) {
@@ -9,7 +9,7 @@
   const groups = g => (g.armyGroups ||= []);
   const find = (g, id) => groups(g).find(v => v.id === id && v.side === g.player);
   function canEdit(g) {
-    if (g.mode !== 'conquest') return 'Available in world conquest only';
+    if (g.mode !== 'conquest' && g.mode !== 'scenario') return 'Available in conquest or scenarios only';
     if (g.over) return 'Operation over';
     if (g.phase !== g.player) return 'Not your turn';
     return null;
@@ -175,7 +175,7 @@
     return false;
   }
   function planConquests(g, side) {
-    if (g.mode !== 'conquest' || g.over || g.phase !== side || side !== g.player) return;
+    if ((g.mode !== 'conquest' && g.mode !== 'scenario') || g.over || g.phase !== side || side !== g.player) return;
     prune(g);
     const cities = g.stations.filter(s => foeSide(g, s.owner, side) &&
       E.tile(g, s.c, s.r) && !E.TERRAIN[E.tile(g, s.c, s.r).terrain]?.blocked);

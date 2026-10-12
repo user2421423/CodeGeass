@@ -325,6 +325,7 @@ document.addEventListener('click', e => {
     else toast(result.reason);
     return;
   }
+  if (d.scenarioGroupImport) { scenarioGroupImport(d.scenarioGroupImport); return; }
   if (d.scenarioGroupRoute) { scenarioGroupStart(d.scenarioGroupRoute); return; }
   if (d.scenarioGroupFocus) { scenarioGroupFocus(d.scenarioGroupFocus); return; }
   if (d.campaignTab) return campaignDialog(d.campaignTab);

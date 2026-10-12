@@ -654,11 +654,28 @@ const modal = () => node('modal-root').innerHTML;
   assert(node('app').innerHTML.includes('Cyan: coast (land + ships)'),
     'in-game movement guide explains the cyan coast highlight');
 
-  // Scenario has individual unit controls but no Army Groups navigation tab.
+  // Scenarios now share the full player-operated conquest army group controls.
   run("startScenario('cf');draw(16,.016);drawMinimap();");
   assert.equal(run('game.mode'),'scenario');
-  assert(!node('app').innerHTML.includes('data-action="scenario-armies"'),
-    'remove Army Groups from the scenario top navigation');
+  assert(node('app').innerHTML.includes('data-action="army-groups"'),
+    'scenario top navigation exposes editable Army Groups');
+  assert(node('selection-dock').innerHTML.includes('data-action="army-groups"'),
+    'scenario units can be assigned through their dock');
+  run('armyGroupsDialog()');
+  assert(modal().includes('Browse starting formations & fleets'),
+    'scenario army group dialog links to its original formation roster');
+  run('armyGroupCreate()');
+  assert.equal(run('game.armyGroups.length'), 1, 'player can create an army group in scenario mode');
+  run('scenarioGroupsDialog()');
+  assert(modal().includes('data-scenario-group-import='),
+    'starting scenario formations can be imported into editable groups');
+  run('scenarioGroupImport(game.scenario.groups.find(v => v.side === game.player).id)');
+  assert.equal(run('game.armyGroups.length'), 2,
+    'importing a starting formation creates a managed group');
+  assert(modal().includes('Stance:'), 'imported group exposes editable stance controls');
+  run('armyGroupStartRouting(game.armyGroups[0].id)');
+  assert.equal(run('armyGroupRouting'), 1, 'scenario army group can enter destination selection');
+  run('armyGroupRouting = null');
   assert(node('app').innerHTML.includes('data-action="archive"'),
     'the Units tab remains present');
   assert(!node('app').innerHTML.includes('class="map-legend"'),
