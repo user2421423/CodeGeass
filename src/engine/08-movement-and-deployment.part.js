@@ -40,6 +40,7 @@
     if (g?.mode !== 'campaign' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
+    if(u.expJammedActive)n=Math.max(1,n-2);
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
     if (techLevel(g, u.side, 'sakura.float') >= 2 && (t.branch === 'Armor' || t.float || eliteFx(u).float)) n += 1;
@@ -48,7 +49,7 @@
   function terrainCost(g, u, t) {
     if (isSea(t)) return 1;
     const type = TYPES[u.type];
-    if (fx(u).ignoreTerrain || type.float || eliteFx(u).float) return 1;
+    if (fx(u).ignoreTerrain || u.expRetrofit || type.float || eliteFx(u).float) return 1;
     if (type.branch === 'Armor' && techLevel(g, u.side, 'sakura.float') >= 1) return 1;
     const nav = type.branch === 'Infantry' ? techLevel(g, u.side, 'infantry.nav') : 0;
     if (nav >= 2 || (nav >= 1 && (t.terrain === 'forest' || t.terrain === 'mountain'))) return 1;
@@ -70,7 +71,7 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -164,7 +165,7 @@
         t.max +
         (eliteFx(u).range || 0) +
         (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 && (u.movedDistance || 0) === 0 ? 1 : 0) +
-        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0), // Minami's Ikaruga Fire Control
+        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0) + (u.expNavalRelay ? 1 : 0), // Minami's Ikaruga Fire Control
     };
   }
   function inRange(a, p, g) {
@@ -260,6 +261,8 @@
       !(canCapture(u) || navalLanding) || (s.shield > 0 && !navalLanding))
       return { captured: null, annexed: null };
     const loser = s.owner;
+    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*(s.income||0));s.expTaxUntil=g.turn+2;}
+    delete s.expSupplyBlocked;delete s.expDecree;
     s.owner = u.side;
     s.shield = 0;
     s.capturedTurn = g.turn;
@@ -330,6 +333,8 @@
     u.held = false;
     u.guardReady = false;
     u.movedDistance = freshLanding ? 0 : (u.movedDistance || 0) + dist(g, from, dest);
+    if(fromSea&&!isSea(dest))u.expLandedTurn=g.turn;
+    if(u.expRetrofit){u.expRetrofitStrike=u.movedDistance>=3;delete u.expRetrofit;}
     u.lastTurnMoved = true;
     u.skillReposition = retainMove ? 1 : 0;
     u.withdrawMove = false;
@@ -339,6 +344,7 @@
     const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
     const portCaptured = capturePort(g, u);
     const seized = seizeDeposit(g, u, dest);
+    newcomerOverwatch(g,u);
     checkVictory(g);
     return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, portCaptured, seized };
   }
