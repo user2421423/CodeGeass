@@ -39,6 +39,19 @@ function openShop(id, branch = shop.branch) {
   focusDialog();
 }
 
+// The elite's mechanical category comes from its actual class, not its freely
+// worded role (such as "Elite Ace" or "Elite Command").
+const ELITE_CLASS_LABELS = {
+  scout: 'Scout Infantry', assault: 'Assault Infantry', raider: 'Raider Infantry',
+  light: 'Light Armor', medium: 'Medium Armor', heavy: 'Heavy Armor',
+  super: 'Super-heavy Armor', support: 'Support Artillery',
+  rocket: 'Rocket Artillery', siege: 'Siege Artillery',
+};
+function eliteClassLabel(t) {
+  if (t.naval === 'amphibious') return 'Amphibious';
+  if (t.naval === 'ship') return 'Naval Ship';
+  return ELITE_CLASS_LABELS[t.cls] || `${t.branch} · ${t.cls}`;
+}
 function openEliteShop(id, navalOnly = false) {
   const s = game.stations.find(v => v.id === id),
     owner = navalOnly ? (s?.portOwner || s?.owner) : s?.owner;
@@ -64,7 +77,7 @@ function openEliteShop(id, navalOnly = false) {
       cost = E.elitePrice(k, level),
       why = E.eliteDeployReason(game, s, k, p),
       ability = t.naval ? e.lv3Text : rec.level >= 5 ? e.lv5Text : rec.level >= 3 ? e.lv3Text : 'Signature ability unlocks at Elite Lv.3.';
-    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${e.rarity} · ${rec.level ? `Elite Lv.${rec.level}` : 'Locked'} · unique ×1</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${ability}</p><p class="lore">${t.weapon}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}<span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="cost">${costHTML(cost)}</div>${act(`data-elite-deploy="${k}"`, rec.level ? 'Deploy elite' : 'Locked', why, rec.level ? 'Once per operation · one unique frame' : `Fragments ${rec.fragments}/${E.ELITE_UNLOCK_FRAGMENTS}`)}</article>`;
+    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${eliteClassLabel(t)} · ${e.rarity} · ${rec.level ? `Elite Lv.${rec.level}` : 'Locked'} · unique ×1</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${ability}</p><p class="lore">${t.weapon}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}<span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="cost">${costHTML(cost)}</div>${act(`data-elite-deploy="${k}"`, rec.level ? 'Deploy elite' : 'Locked', why, rec.level ? 'Once per operation · one unique frame' : `Fragments ${rec.fragments}/${E.ELITE_UNLOCK_FRAGMENTS}`)}</article>`;
   }).join('');
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Elite Force ${navalOnly ? 'shipyard' : 'factory'}"><div class="dialog-head"><div><div class="eyebrow">${F(owner).name} · ${s.name} · ${navalOnly ? `Port level ${s.portLevel || 0}` : `Factory level ${s.tier}`}</div><h2>Deploy ${navalOnly ? 'Elite Amphibious' : 'an Elite Force'}</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${tabs}</div><div><span class="label">Unique frames · ×1 only</span></div></div><div class="info-strip">${navalOnly ? 'Unlock this Elite Force in HQ first. Amphibious elites launch on an empty friendly port hex using its independent production slot. Their normal Type II mechanics are unchanged, with no extra elite abilities.' : 'Players must unlock this Elite Force in HQ first, including on Elite Conquest. Deploy it once per operation using this city\'s factory slot.'}</div><div class="cards">${cards || '<p class="description">No Elite Forces are currently available to this faction.</p>'}</div></section></div>`;
   focusDialog();
@@ -93,7 +106,7 @@ function eliteDialog(faction = eliteFaction) {
       cost = rec.level >= E.ELITE_MAX_LEVEL ? 0 : E.ELITE_UPGRADE_FRAGMENTS[next],
       why = E.eliteUpgradeReason(p, k),
       label = rec.level === 0 ? 'Unlock' : rec.level >= E.ELITE_MAX_LEVEL ? 'Maximum level' : `Upgrade to Lv.${next}`;
-    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${e.rarity} · ${rec.level ? `Lv.${rec.level}/${E.ELITE_MAX_LEVEL}` : 'Locked'}</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${rec.level >= 5 ? e.lv5Text : rec.level >= 3 ? e.lv3Text : e.lv3Text}</p><p class="lore">Lv.5: ${e.lv5Text}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span><span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="elite-fragments"><b>${rec.fragments}</b> fragments${cost ? ` · ${cost} needed for ${rec.level ? 'next level' : 'unlock'}` : ''}</div>${act(`data-elite-upgrade="${k}"`, label, why, cost ? `Spend ${cost} fragments` : '', '', false)}</article>`;
+    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${eliteClassLabel(t)} · ${e.rarity} · ${rec.level ? `Lv.${rec.level}/${E.ELITE_MAX_LEVEL}` : 'Locked'}</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${rec.level >= 5 ? e.lv5Text : rec.level >= 3 ? e.lv3Text : e.lv3Text}</p><p class="lore">Lv.5: ${e.lv5Text}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span><span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="elite-fragments"><b>${rec.fragments}</b> fragments${cost ? ` · ${cost} needed for ${rec.level ? 'next level' : 'unlock'}` : ''}</div>${act(`data-elite-upgrade="${k}"`, label, why, cost ? `Spend ${cost} fragments` : '', '', false)}</article>`;
   }).join('');
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Elite Forces HQ"><div class="dialog-head"><div><div class="eyebrow">Command HQ · persistent across operations</div><h2>Elite Forces</h2><p>Collect fragments → unlock a unique Knightmare → raise it to Elite Lv.5. Signature abilities unlock at Lv.3 and reach their final form at Lv.5.</p></div><button class="small close" data-action="elite-close">Close</button></div><div class="tabs">${tabs}</div><div class="info-strip">Each unlocked Elite Force may deploy only once per operation and always fights as a single unique frame. Cornelia's Gloucester, Leila's Alexander, Chuyen and Tohdoh's Gekka begin with the 30 fragments needed to unlock.</div><div class="cards">${cards}</div></section></div>`;
   focusDialog();
