@@ -66,13 +66,14 @@
   // starting formations. Preplaced elite frames never consume it.
   function convertConquestEliteStarts(g) {
     if (!eliteConquest(g)) return;
-    const used = {};
+    const used = {},
+      landElites = Object.entries(ELITE_FORCES).filter(([, e]) => !TYPES[e.type].naval);
     for (const u of g.units) {
       const original = TYPES[u.type];
       if (!original || original.naval) continue; // ships/amphibious unchanged
-      const faction = Object.entries(ELITE_FORCES).filter(([, e]) => e.availableTo.includes(u.side));
+      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side));
       // Neutral guards use elite templates but keep their neutral allegiance.
-      const pool = faction.length ? faction : Object.entries(ELITE_FORCES);
+      const pool = faction.length ? faction : landElites;
       const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
       const sameBranch = pool.filter(([, e]) => TYPES[e.type].branch === original.branch);
       const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
