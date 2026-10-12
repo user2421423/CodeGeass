@@ -159,16 +159,20 @@
       if(p.lon<29.2)return p.lat<40.65;
       return p.lat<41.55+0.07*(p.lon-29.2);
     }
+    const excludedLand=new Uint8Array(g.tiles.length);
     for(let i=0;i<g.tiles.length;i++){
       const t=g.tiles[i];
       if(t.terrain!=='sea'&&(excludedRegions.has(rawComponents[i])||
-          (rawComponents[i]===mainland&&anatolianLand(geo(t.c,t.r)))))
-        t.terrain='sea';
+          (rawComponents[i]===mainland&&anatolianLand(geo(t.c,t.r))))){
+        excludedLand[i]=1;
+        t.terrain='sea'; // Temporarily water for city/army placement.
+      }
     }
-    // Every actual land-to-water edge is coastal. The previous <=2 test
-    // mislabelled peninsulas and narrow islands with 3-5 sea neighbours.
+    // Every genuine land-to-sea edge is coastal, including island tips.
+    // A theatre-border cut is NOT a new navigable shoreline.
     for(const t of g.tiles)if(t.terrain!=='sea'){
-      if(E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+      if(E.adjacent(g,t).some(n=>n.terrain==='sea'&&
+          !excludedLand[n.r*COLS+n.c]))t.terrain='coast';
     }
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
@@ -277,7 +281,8 @@
       }
     }
     for(const t of g.tiles)if(t.terrain==='sea'&&
-      (depth[t.r*COLS+t.c]<0||depth[t.r*COLS+t.c]>5))t.terrain='offmap';
+      (excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
+       depth[t.r*COLS+t.c]>5))t.terrain='offmap';
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
