@@ -38,6 +38,7 @@ function selectSite(id, center = false) {
 function startRouting() {
   const u = selectedUnit();
   if (!u || u.side !== game.player || !interactive()) return;
+  armyGroupRouting = null;
   routing = routing === u.id ? null : u.id;
   deploying = null;
   carrierHoldOpen = null;
