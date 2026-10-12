@@ -32,14 +32,14 @@
           "Edinburgh": "cf",
           "Dublin": "cf",
           "Reykjavik": "cf",
-          "Berlin": "cf",
-          "Amsterdam": "cf",
+          "Berlin": "eb",
+          "Amsterdam": "eb",
           "Oslo": "cf",
           "Stockholm": "cf",
           "Helsinki": "cf",
           "Murmansk": "cf",
-          "Minsk": "cf",
-          "Kiev": "cf",
+          "Minsk": "eb",
+          "Kiev": "eb",
           "Kinshasa": "cf",
           "Kisangani": "cf",
           "St. Petersburg": "eb",
@@ -89,7 +89,7 @@
           "Brisbane": "neutral",
           "Adelaide": "neutral"
     },
-    expectedCities: { britannia: 71, eb: 19, cf: 72, neutral: 6 },
+    expectedCities: { britannia: 71, eb: 23, cf: 68, neutral: 6 },
     armies: [
   [
     "britannia",
@@ -580,8 +580,8 @@
   [
     "cf",
     "super",
-    13.4,
-    52.5,
+    19.1,
+    51.8,
     1,
     "akito",
     "eu"
@@ -607,8 +607,8 @@
   [
     "cf",
     "rocket",
-    27.6,
-    53.9,
+    22.2,
+    53.2,
     2,
     "ayano",
     "eu"
@@ -616,8 +616,8 @@
   [
     "cf",
     "medium",
-    30.5,
-    50.45,
+    24.1,
+    50.7,
     2
   ],
   [
@@ -637,8 +637,8 @@
   [
     "cf",
     "support",
-    4.9,
-    52.4,
+    -1,
+    53.5,
     2
   ],
   [
@@ -878,16 +878,20 @@
     }[army[2]+','+army[3]];
     if (p) [army[2],army[3]] = p;
   }
+  // The U.F.N. retains Warsaw as a salient; its formations formerly based in
+  // Amsterdam, Berlin, Minsk and Kiev deploy on allied ground instead.
+  // Four existing Euro Britannian reinforcements garrison those cities,
+  // preserving its 44-unit starting force without increasing troop numbers.
   // Double Euro Britannia's 19 original land formations to 38.
   // Nine reinforce its new western holdings; ten reinforce the eastern front.
   const euroReinforcements = [
-    ['super',2.35,48.85,1], ['heavy',2.9,49.4,2],
-    ['rocket',3.9,47.9,2], ['support',1.8,50,2],
+    ['super',2.35,48.85,1], ['heavy',4.9,52.4,2],
+    ['rocket',13.4,52.5,2], ['support',1.8,50,2],
     ['heavy',-3.7,40.4,2], ['medium',-4.4,40.8,2],
     ['assault',2.2,41.4,2], ['rocket',1.5,42.3,2],
     ['scout',-5.35,36.14,2],
     ['super',31.3,59.9,1], ['heavy',37.6,55.75,2],
-    ['heavy',30,45,2], ['medium',43,49,2], ['medium',50,55,2],
+    ['heavy',30,45,2], ['medium',30.5,50.45,2], ['medium',27.6,53.9,2],
     ['rocket',55,53,2], ['support',61,56,2], ['light',82,55,2],
     ['assault',104,52,2], ['siege',29,42,1]
   ];

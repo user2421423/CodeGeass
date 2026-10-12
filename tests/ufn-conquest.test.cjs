@@ -7,7 +7,7 @@ const CONFIG = E.CONQUESTS.ufn2018;
 const SIDES = ['britannia', 'eb', 'cf'];
 const totals = g => Object.fromEntries([...SIDES, 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length]));
 
-test('2018 uses exactly 168 cities and the revised 71/19/72/6 partition with three capitals', () => {
+test('2018 uses exactly 168 cities and the revised 71/23/68/6 partition with three capitals', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 707, 'ufn2018');
   assert.equal(g.cols, 180);
   assert.equal(g.rows, 76);
@@ -270,11 +270,11 @@ test('2017 Chinese Federation fields only Chinese equipment and commanders',()=>
   assert.equal(E.eliteEligible(g,'cf','shen_hu'),true);
   assert.deepEqual(E.lineupOf(ufn,'cf'),E.LINEUPS.bk);
 });
-test('2018 Euro Britannia receives France and Iberia and doubles starting units',()=>{
-  assert.deepEqual(CONFIG.expectedCities,{britannia:71,eb:19,cf:72,neutral:6});
+test('2018 Euro Britannia controls the continental corridor with unchanged army size',()=>{
+  assert.deepEqual(CONFIG.expectedCities,{britannia:71,eb:23,cf:68,neutral:6});
   for(const difficulty of ['normal','hard','challenge','elite']){
     const g=E.createGame('eb',difficulty,'conquest',72,'ufn2018');
-    for(const name of ['Paris','Madrid','Barcelona','Gibraltar']){
+    for(const name of ['Paris','Madrid','Barcelona','Gibraltar','Amsterdam','Berlin','Minsk','Kiev']){
       const city=g.stations.find(s=>s.name===name);
       assert.equal(city.owner,'eb',name);
       assert.equal(E.tile(g,city.c,city.r).owner,'eb');
@@ -287,4 +287,49 @@ test('2018 Euro Britannia receives France and Iberia and doubles starting units'
   assert.equal(all.filter(u=>!E.TYPES[u.type].naval).length,38);
   for(const u of all.filter(u=>!E.TYPES[u.type].naval))
     assert.equal(E.tile(g,u.c,u.r).owner,'eb','Euro Britannian deployment '+u.type);
+});
+
+test('2018 Warsaw U.F.N. salient and African division remain intact',()=>{
+  const g=E.createGame('cf','normal','conquest',707,'ufn2018');
+  const owners={
+    Warsaw:'cf',Vienna:'cf',Rome:'cf',Belgrade:'cf',Athens:'cf',
+    London:'cf',Edinburgh:'cf',Dublin:'cf',Oslo:'cf',Stockholm:'cf',
+    Amsterdam:'eb',Berlin:'eb',Minsk:'eb',Kiev:'eb',
+    'St. Petersburg':'eb',Moscow:'eb',Paris:'eb',
+    Casablanca:'britannia',Algiers:'britannia',Cairo:'britannia',
+    Dakar:'britannia',Lagos:'britannia',Khartoum:'britannia',
+    Johannesburg:'britannia','Cape Town':'britannia',
+    Kinshasa:'cf',Kisangani:'cf',Bangui:'cf',Nairobi:'cf',
+    'Addis Ababa':'cf','Dar es Salaam':'cf',Lusaka:'cf',Antananarivo:'cf',
+  };
+  for(const [name,side] of Object.entries(owners)){
+    const city=g.stations.find(s=>s.name===name);
+    assert.ok(city,name);
+    assert.equal(city.owner,side,name+' must have expected starting owner');
+    assert.equal(E.tile(g,city.c,city.r).owner,side,name+' city control hex');
+  }
+});
+
+test('2018 land starts and higher-difficulty reinforcements remain in own territory',()=>{
+  assert.equal(CONFIG.armies.filter(a=>a[0]==='eb').length + CONFIG.navy.filter(a=>a[0]==='eb').length,44);
+  for(const difficulty of ['normal','hard','challenge','elite'])
+    for(const player of SIDES){
+      const g=E.createGame(player,difficulty,'conquest',707,'ufn2018');
+      const occupied=new Set();
+      for(const u of g.units.filter(u=>!E.TYPES[u.type].naval)){
+        const tile=E.tile(g,u.c,u.r);
+        assert.equal(tile.owner,u.side,difficulty+'/'+player+' '+u.type+' on '+u.c+','+u.r);
+        const k=u.c+','+u.r;
+        assert.equal(occupied.has(k),false,'overlapping deployment '+k);
+        occupied.add(k);
+      }
+      for(const name of ['Amsterdam','Berlin','Minsk','Kiev']){
+        const city=g.stations.find(s=>s.name===name);
+        assert.equal(g.units.some(u=>u.side==='eb'&&u.c===city.c&&u.r===city.r),true,
+          difficulty+'/'+player+' Euro Britannian garrison '+name);
+      }
+      if(difficulty==='normal'||player==='eb')
+        assert.equal(g.units.filter(u=>u.side==='eb').length,44,
+          'Euro Britannia base force should not grow; AI difficulty reinforcements are separate');
+    }
 });

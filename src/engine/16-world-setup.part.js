@@ -169,6 +169,7 @@
             !isSea(p) &&
             !TERRAIN[p.terrain]?.blocked &&
             !unitAt(g, p) &&
+            (g.era !== 'ufn2018' || p.owner === src.side) &&
             (!stationAt(g, p) || stationAt(g, p).owner === src.side),
         );
       if (!spot) continue;
