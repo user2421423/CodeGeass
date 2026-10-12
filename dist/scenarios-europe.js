@@ -150,7 +150,7 @@
     const mainland=rawRegions.indexOf(rawRegions.reduce((best,r)=>
       r.size>best.size?r:best,rawRegions[0]));
     const excludedRegions=new Set(rawRegions.flatMap((region,id)=>
-      id!==mainland&&region.maxLat<39&&region.minLon<12&&region.maxLon>-7?[id]:[]));
+      id!==mainland&&region.maxLat<38&&region.minLon<12&&region.maxLon>-7?[id]:[]));
     function anatolianLand(p){
       // West of the Bosporus (European Thrace) remains in the theatre.
       // Beyond it, the Black Sea / Caucasus boundary excludes Asia.
