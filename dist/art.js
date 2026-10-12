@@ -78,32 +78,29 @@ const ART = (() => {
   }
   // Public art is registered synchronously by assets/art/manifest.js, including when opened via file://.
   // Published and development assets are the only sprites for units and commanders.
+  // New elite variants share the published image of their underlying standard frame.
+  const ELITE_ART_ALIASES = {
+    elite_vincent_ward: 'vincent_ward',
+    elite_sutherland_air: 'sutherland_air',
+    elite_hummel_battery: 'hummel_battery',
+    elite_akatsuki_missile: 'akatsuki_missile',
+    elite_akatsuki_heavy: 'akatsuki_heavy',
+    elite_portman_ii: 'portman_ii',
+    elite_panzer_frosch_ii: 'panzer_frosch_ii',
+    elite_shui_gun_ru_ii: 'shui_gun_ru_ii',
+  };
   const LOCAL = { units: {}, portraits: {}, buildings: {}, base: 'local-art/', imgs: new Map() };
   function localEntry(kind, id) {
     const e = LOCAL[kind][id];
     return e ? (typeof e === 'string' ? { src: e } : e) : null;
   }
   const escapeAttr = value => String(value).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[c]);
-  // Approved newcomer portraits temporarily use sourced HTTPS images when no vetted local
-  // copy is available. Keep the original 58 portraits and every unit sprite strictly local.
-  function entries(values, base, kind) {
-    const trustedHosts = new Set([
-      'static.zerochan.net', 's1.zerochan.net', 'geass.jp', 'hobbyjapan.co.jp',
-      'ogre.natalie.mu', 'ami.animecharactersdatabase.com',
-      'www.animecharactersdatabase.com', 'shikimori.io', 'livedoor.blogimg.jp',
-      'i.pinimg.com', 'storage.moegirl.org.cn', 'www.newton.com.tw',
-      'safebooru.org', 'cdn.anime-planet.com', 'wallpaper.forfun.com',
-    ]);
+  function entries(values, base) {
     return Object.fromEntries(Object.entries(values || {}).flatMap(([id, value]) => {
       const e = typeof value === 'string' ? { src: value } : value;
-      if (!e || typeof e.src !== 'string') return [];
-      const local = /^(units|portraits|buildings)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src);
-      const remote = kind === 'portraits' && /^https:\/\//i.test(e.src) &&
-        /^https:\/\/[^/?#]+\/.+\.(png|jpe?g|webp)(?:\?[^#]*)?$/i.test(e.src) &&
-        trustedHosts.has(e.src.match(/^https:\/\/([^/?#]+)/i)?.[1]?.toLowerCase());
-      if (!local && !remote) return [];
+      if (!e || typeof e.src !== 'string' || !/^(units|portraits|buildings)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
       const focus = v => Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : undefined;
-      return [[id, { src: e.src, base: remote ? '' : base, fx: focus(e.fx), fy: focus(e.fy) }]];
+      return [[id, { src: e.src, base, fx: focus(e.fx), fy: focus(e.fy) }]];
     }));
   }
   function localImage(kind, id) {
@@ -141,9 +138,9 @@ const ART = (() => {
     // Register and preload the real image files, without generated fallback portraits or sprites.
     useLocal(manifest, merge = false) {
       const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';
-      LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base, 'units') };
-      LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base, 'portraits') };
-      LOCAL.buildings = { ...(merge ? LOCAL.buildings : {}), ...entries(manifest?.buildings, base, 'buildings') };
+      LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base) };
+      LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base) };
+      LOCAL.buildings = { ...(merge ? LOCAL.buildings : {}), ...entries(manifest?.buildings, base) };
       LOCAL.base = base;
       LOCAL.imgs.clear();
       for (const kind of ['units', 'portraits', 'buildings']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
@@ -152,7 +149,7 @@ const ART = (() => {
     citySVG,
     // HTML: a Knightmare for panels and cards.
     unit(type, extra = '', side) {
-      const l = withLocal('units', type);
+      const l = withLocal('units', ELITE_ART_ALIASES[type] || type);
       return `<span class="ship-art unit-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     city(kind, side, extra = '') {
@@ -171,7 +168,7 @@ const ART = (() => {
     },
     // Canvas: draw a cached image centered at (x, y); false while the image is still decoding.
     drawUnit(ctx, type, side, x, y, w, h = w, flip = false) {
-      const local = localImage('units', type);
+      const local = localImage('units', ELITE_ART_ALIASES[type] || type);
       if (!local) return false;
       const r = Math.min(w / local.naturalWidth, h / local.naturalHeight),
         dw = local.naturalWidth * r,
