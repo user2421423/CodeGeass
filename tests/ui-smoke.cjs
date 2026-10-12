@@ -683,6 +683,57 @@ const modal = () => node('modal-root').innerHTML;
     'the Units tab remains present');
   assert(!node('app').innerHTML.includes('class="map-legend"'),
     'scenario map omits the faction-colour legend entirely');
+  // Shift-click should multi-select friendly Knightmares in Scenarios, with the
+  // same toggle behavior as Conquest, and pass every selected ID to Army Groups.
+  run("startScenario('cf');");
+  const scenarioShiftClick = run(`(() => {
+    const friendly = game.units.filter(u => u.side === game.player && u.hp > 0).slice(0, 3);
+    const oldHitHex = hitHex, oldHitPin = hitPin, oldHitCity = hitVisualStation;
+    let target = friendly[1];
+    try {
+      selectUnit(friendly[0].id);
+      hitHex = () => ({ c: target.c, r: target.r });
+      hitPin = () => null;
+      hitVisualStation = () => null;
+      const shiftClick = unit => {
+        target = unit;
+        const event = { button: 0, pointerType: 'mouse', pointerId: 42,
+          clientX: 240, clientY: 240, shiftKey: true };
+        canvas.onpointerdown(event);
+        canvas.onpointerup(event);
+      };
+      shiftClick(friendly[1]);
+      shiftClick(friendly[2]);
+      const added = [...multiSelectedIds];
+      const forGroup = selectedArmyIds();
+      shiftClick(friendly[1]);
+      const toggled = [...multiSelectedIds];
+      shiftClick(friendly[1]);
+      return { expected: friendly.map(u => u.id), added, forGroup, toggled,
+        readded: selectedArmyIds() };
+    } finally {
+      hitHex = oldHitHex;
+      hitPin = oldHitPin;
+      hitVisualStation = oldHitCity;
+    }
+  })()`);
+  const byId = ids => [...ids].sort((a, b) => a - b);
+  assert.deepEqual(byId(scenarioShiftClick.added), byId(scenarioShiftClick.expected),
+    'Shift-click in Scenario mode adds friendly formations to the selection');
+  assert.deepEqual(byId(scenarioShiftClick.forGroup), byId(scenarioShiftClick.expected),
+    'Army Groups receives all selected scenario formations');
+  assert.deepEqual(byId(scenarioShiftClick.toggled),
+    byId(scenarioShiftClick.expected.filter(id => id !== scenarioShiftClick.expected[1])),
+    'Shift-click again deselects a scenario formation');
+  assert.deepEqual(byId(scenarioShiftClick.readded), byId(scenarioShiftClick.expected),
+    'Shift-click can reselect a previously removed scenario formation');
+  run('armyGroupCreate()');
+  assert.deepEqual(byId(run('game.armyGroups[0].units')), byId(scenarioShiftClick.expected),
+    'creating a scenario army group assigns all Shift-clicked units');
+  const groupRenderer = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
+  assert.equal((groupRenderer.match(/game.mode === 'conquest' \\|\\| game.mode === 'scenario'/g) || []).length, 2,
+    'scenario army group membership and objective markers both render on the map');
+
   run('newGame()');
 
   run('startMenu();campaignDialog("bk_s1")');
