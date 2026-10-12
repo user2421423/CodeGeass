@@ -38,27 +38,27 @@
   const LAND = Object.freeze({
     britannia: [
       ['Tokyo Settlement','medium',2,'suzaku'],['Tokyo Settlement','heavy',2,'cornelia'],
-      ['Nagoya','assault',2,'guilford'],['Nagoya','medium',2],
-      ['Kyoto','medium',2,'darlton'],['Kyoto','light',2],
-      ['Osaka','rocket',2],['Osaka','heavy',2],
-      ['Kanazawa','medium',2],['Kanazawa','support',2],
+      ['Nagoya','assault',2,'guilford'],['Nagoya','medium',2,'villetta'],
+      ['Kyoto','medium',2,'darlton'],['Kyoto','light',2,'gino'],
+      ['Osaka','rocket',2,'cecile'],['Osaka','heavy',2,'jeremiah'],
+      ['Kanazawa','medium',2,'kewell'],['Kanazawa','support',2],
       ['Shizuoka','light',2],['Shizuoka','scout',2],
     ],
     eu: [
-      ['Sapporo','medium',2,'leila'],['Sapporo','support',2],
-      ['Sendai','assault',2,'akito'],['Sendai','medium',2],
-      ['Niigata','medium',2,'ryo'],['Niigata','rocket',2],
-      ['Aomori','scout',2,'ayano'],['Aomori','assault',2],
+      ['Sapporo','medium',2,'leila'],['Sapporo','support',2,'anna'],
+      ['Sendai','assault',2,'akito'],['Sendai','medium',2,'oscar'],
+      ['Niigata','medium',2,'ryo'],['Niigata','rocket',2,'yukiya'],
+      ['Aomori','scout',2,'ayano'],['Aomori','assault',2,'klaus'],
       ['Chiba','assault',2],['Chiba','medium',2],
-      ['Narita','rocket',2],['Narita','light',2],
+      ['Narita','rocket',2,'ferilli'],['Narita','light',2],
     ],
     cf: [
       ['Hiroshima','medium',2,'xingke'],['Hiroshima','assault',2],
-      ['Shimonoseki','medium',2,'xianglin'],['Shimonoseki','rocket',2],
+      ['Shimonoseki','medium',2,'xianglin'],['Shimonoseki','rocket',2,'chaojielun'],
       ['Okayama','medium',2,'honggu'],['Okayama','scout',2],
-      ['Matsue','support',2],['Matsue','assault',2],
-      ['Fukuoka','heavy',2,'cao'],['Fukuoka','medium',2],
-      ['Kumamoto','light',2],['Kumamoto','rocket',2],
+      ['Matsue','support',2,'huangqian'],['Matsue','assault',2],
+      ['Fukuoka','heavy',2,'cao'],['Fukuoka','medium',2,'sawasaki'],
+      ['Kumamoto','light',2,'ren'],['Kumamoto','rocket',2,'vritra'],
     ]
   });
   const NAVY = Object.freeze({

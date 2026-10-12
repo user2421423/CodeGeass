@@ -95,7 +95,7 @@
   ];
   const SAWASAKI = { cf: { name: 'Sawasaki’s Federation Army', short: 'Sawasaki', adj: 'Federation' } };
   const FUKUOKA_CF = [
-    ['cf', 'gun_ru', 10, 5, 2, 'cao', { hold: 1 }],
+    ['cf', 'gun_ru', 10, 5, 2, 'sawasaki', { hold: 1 }],
     ['cf', 'gun_ru', 8, 4, 2],
     ['cf', 'gun_ru', 12, 4, 2],
     ['cf', 'gun_ru', 7, 3, 2, null, { hold: 1 }],
@@ -121,7 +121,7 @@
   ];
   const FUKUOKA_REINFORCE = {
     turn: 4,
-    say: [['cao', 'More Federation troops are ashore. Hold the base at any cost!']],
+    say: [['sawasaki', 'More Federation troops are ashore. Hold the base at any cost!']],
     spawn: [
       ['cf', 'gun_ru', 15, 2, 2],
       ['cf', 'gun_ru', 16, 3, 2],
