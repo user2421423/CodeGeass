@@ -14,7 +14,7 @@
   function intrinsicAttack(g, u, counter = false) {
     const t = TYPES[u.type], f = fx(u), strike = !counter || !f.attackOnly,
       attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
-    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1));
+    let attack = (t.attack + officerBaseAttack(g, u)) * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1));
     if (f.dmg && strike) attack *= 1 + f.dmg;
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     return attack * officerAttack(g, u) * (1 + 0.06 * genericLevel(g, u, attackGeneric));
@@ -27,6 +27,7 @@
       strike = !counter || !f.attackOnly;
     let attack = intrinsicAttack(g, u, counter) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
+    if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill));
@@ -125,6 +126,7 @@
       if (tf.belowHalf && target.hp / maxHP(target) < 0.5) attack *= tf.belowHalf;
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
+      if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
@@ -173,6 +175,7 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
+        (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
         (wears(g, a, 'marksman') ? 0.08 : 0) +
@@ -275,7 +278,10 @@
         s.shield -= sd;
       }
     }
-    if (f.terror && d && d.hp > 0) lowerMorale(g, d, 1);
+    if (f.terror && d && d.hp > 0) {
+      lowerMorale(g, d, 1);
+      if (f.terrorWeaken) d.despairWeakened = { side: a.side, value: Math.max(d.despairWeakened?.value || 0, f.terrorWeaken) };
+    }
     const aef = eliteFx(a);
     if (aef.stun && d && d.hp > 0) {
       d.moved = true;

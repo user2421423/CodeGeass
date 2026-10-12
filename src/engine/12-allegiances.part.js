@@ -56,12 +56,16 @@
       return mult;
     }
     if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
+    if (!u.cmd && skillNear(g, u, 'commanderlessAttack', 1, false)) mult *= 1.1;
+    if (TYPES[u.type].branch === 'Infantry' && skillNear(g, u, 'infantryCommand', 1, false)) mult *= 1.15;
+    if (TYPES[u.type].branch === 'Armor' && skillNear(g, u, 'armorLeader', 2, false)) mult *= 1.1;
     if (f.loneRaider && !friends.length) mult *= 1 + f.loneRaider;
     if (f.runCharge && u.movedDistance >= 2) mult *= 1 + f.runCharge;
     if (f.combinedArms && friends.some(v => TYPES[v.type].branch !== TYPES[u.type].branch)) mult *= 1 + f.combinedArms;
     if (TYPES[u.type].branch === 'Armor' && friends.some(v => TYPES[v.type].branch === 'Armor') && skillNear(g, u, 'orderCommander', 1)) mult *= 1.15;
     if (!target) return mult;
     if (f.duelist && target.cmd) mult *= 1 + f.duelist;
+    if (f.intrigueBonus && target.cmd) mult *= 1 + f.intrigueBonus;
     if (f.finisher && target.hp / maxHP(target) < 0.5) mult *= 1 + f.finisher;
     if (f.opener && target.hp >= maxHP(target)) mult *= 1 + f.opener;
     if (f.pursuit && target.lastTurnMoved) mult *= 1 + f.pursuit;
@@ -74,15 +78,18 @@
     return !!target.cmd && skillNear(g, target, 'bodyguard', 1, false);
   }
   function commanderDefense(g, target, attacker, counter, direct) {
-    const f = fx(target), friends = friendlyNeighbors(g, target);
-    let mult = 1;
+    const f = fx(target), friends = friendlyNeighbors(g, target),
+      guarded = bodyguarded(g, target);
+    let mult = guarded ? 0.9 : 1;
+    if (skillNear(g, target, 'calmDefense', 1)) mult *= 0.9;
+    if (target.guardReady && target.held && skillNear(g, target, 'veteranSupport', 1, false)) mult *= 0.9;
     if (f.loneRisk && !friends.length) mult *= f.loneRisk;
     if (f.steadyRanks && friends.length >= 2) mult *= f.steadyRanks;
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {
       if (f.foresight && target.foresightTurn !== g.turn) mult *= f.foresight;
       if (f.liveOn && target.hp / maxHP(target) < 0.4 && target.liveOnTurn !== g.turn) mult *= f.liveOn;
-      if (bodyguarded(g, target) && target.bodyguardTurn !== g.turn) mult *= 0.8;
+      if (guarded && target.bodyguardTurn !== g.turn) mult *= 0.8;
     }
     return mult;
   }
@@ -125,7 +132,10 @@
     if (f.killHeal && a.killHealTurn !== g.turn) { a.killHealTurn = g.turn; a.hp = Math.min(maxHP(a), a.hp + Math.round(maxHP(a) * f.killHeal)); }
     if (f.assaultLeader && a.assaultLeaderTurn !== g.turn) {
       a.assaultLeaderTurn = g.turn;
-      for (const v of friendlyNeighbors(g, a)) v.assaultInspired = { side: a.side, value: f.assaultLeader };
+      for (const v of g.units) {
+        if (v.hp <= 0 || atSea(g, v) || v.side !== a.side || v.id === a.id || dist(g, a, v) > (f.assaultRange || 1)) continue;
+        v.assaultInspired = { side: a.side, value: Math.max(v.assaultInspired?.value || 0, f.assaultLeader) };
+      }
     }
   }
   function bombardBonus(g, u, city) {
@@ -145,7 +155,8 @@
     if (u.skillMarks?.length) out.push('Designated target');
     if (u.auraDisrupted) out.push('Command damage aura suppressed');
     if (u.moraleWard) out.push('Protected against morale disruption');
-    if (u.assaultInspired) out.push('Inspired: attack damage +15%');
+    if (u.assaultInspired) out.push(`Inspired: attack damage +${Math.round(u.assaultInspired.value * 100)}%`);
+    if (u.despairWeakened) out.push(`Despair: damage dealt −${Math.round(u.despairWeakened.value * 100)}%`);
     if (!u.moved && u.skillReposition) out.push(`Reposition: up to ${u.skillReposition} hexes`);
     if (!u.moved && u.withdrawMove) out.push('Withdrawal movement ready');
     return out.join(' · ');

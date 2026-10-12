@@ -112,7 +112,7 @@
     }
     for (const v of allUnits(g)) {
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
-      for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired']) if (v[field]?.side === side) delete v[field];
+      for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired', 'despairWeakened']) if (v[field]?.side === side) delete v[field];
     }
     for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
@@ -174,11 +174,13 @@
     }
     // Captured port control persists after the occupying ship sails away.
     g.strikes = [];
-    // Katase's Prepared Position: friendly cities within 2 hexes of his unit restore 12% more defenses.
+    // Katase boosts nearby city defense recovery by 25 percentage points; Gao Hai boosts the city he occupies by 15.
     const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const rate = 0.12 + techValue(g, side, 'cities.engineering') + (prepared.some(m => dist(g, m, s) <= 2) ? 0.12 : 0);
+      const palaceTreasury = mine.some(m => fx(m).treasury && m.c === s.c && m.r === s.r);
+      const rate = 0.12 + techValue(g, side, 'cities.engineering') +
+        (prepared.some(m => dist(g, m, s) <= 2) ? 0.25 : 0) + (palaceTreasury ? 0.15 : 0);
       // Consume this marker at the owner's next regeneration. A hit by any
       // rival phase is counted once, even when factions take turns in one round.
       const recovery = s.attackedSinceRegen ? rate * 0.5 : rate;
