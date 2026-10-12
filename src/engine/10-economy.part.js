@@ -7,6 +7,7 @@
         const y = cityOutput(g, s);
         a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
+        if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).royalCompassion))a.credits+=Math.round(y.credits*.15);
         a.industry += y.industry;
         a.science += y.science;
         return a;
@@ -169,7 +170,8 @@
   function repairCost(u, g = null) {
     const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * (g && logisticsNear(g, u) ? 0.7 : 1)));
+    const camelot = g && u.elite && !TYPES[u.type].naval && skillNear(g, u, 'combatEngineering', 2) ? 0.8 : 1;
+    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot * (g && logisticsNear(g, u) ? 0.7 : 1)));
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
