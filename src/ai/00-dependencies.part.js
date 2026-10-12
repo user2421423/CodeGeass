@@ -6,6 +6,7 @@
   const {
     COMMANDERS,
     ELIMINATOR,
+    ELITE_FORCES,
     TERRAIN,
     cityBusyReason,
     key,
@@ -35,6 +36,9 @@
     deployReason,
     deployTargets,
     deployTargetsAt,
+    aiEliteRecruitReason,
+    recruitAIElite,
+    elitePrice,
     depositHost,
     depositOwner,
     dist,
