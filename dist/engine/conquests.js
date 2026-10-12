@@ -866,6 +866,74 @@
     garrisons: [["Sydney","sutherland",2],["Melbourne","glasgow",1],["Perth","glasgow",1],["Darwin","glasgow",1],["Brisbane","glasgow",1],["Adelaide","glasgow",1]],
     initialTreasury: { britannia: { credits: 380, industry: 155, science: 30 }, eb: { credits: 210, industry: 85, science: 18 }, cf: { credits: 900, industry: 400, science: 70 } },
   };
+
+  // Every eligible roster officer receives one named starting command in each
+  // Conquest. Prefer existing anonymous formations; only create fresh formations
+  // if a coalition has more officers than deployed units (the 2018 U.F.N.).
+  // Keep this deterministic: it must not consume the game's combat RNG.
+  function fillRosterCommands(armies, era) {
+    const roster = root.KnightmareData.COMMANDERS;
+    const is2018 = era === 'ufn2018';
+    const euro = new Set(['julius','shin','ashley','manfredi','farnese','augustus','kewell','norland']);
+    const ownerOf = (id, officer) => is2018
+      ? (officer.side === 'britannia' ? (euro.has(id) ? 'eb' : 'britannia') : 'cf')
+      : (officer.side === 'britannia' ? 'britannia' : officer.side === 'eu' ? 'eu' : 'cf');
+    // Correct legacy 2018 assignments: the E.U.'s Klaus and Oscar cannot
+    // command Euro Britannian units; both belong to the U.F.N. instead.
+    if (is2018) for (const unit of armies)
+      if (unit[0] === 'eb' && ['klaus','oscar'].includes(unit[5])) unit.splice(5, 2);
+    const used = new Set();
+    for (const entry of armies) {
+      const id = entry[5];
+      if (!id) continue;
+      if (!roster[id] || ownerOf(id, roster[id]) !== entry[0] || used.has(id))
+        throw new Error('Invalid ' + era + ' starting officer: ' + entry[0] + ' / ' + id);
+      used.add(id);
+    }
+    const fits = (kind, role) => ({
+      Armor: ['super','heavy','medium','raider'],
+      Infantry: ['assault','light','scout'],
+      Artillery: ['rocket','siege','support']
+    }[role] || []).includes(kind);
+    const origins = Object.fromEntries([...new Set(armies.map(a => a[0]))]
+      .map(side => [side, armies.filter(a => a[0] === side).map(a => [a[2],a[3]])]));
+    const created = {};
+    for (const [id, officer] of Object.entries(roster)) {
+      if (used.has(id)) continue;
+      const side = ownerOf(id, officer);
+      const slots = armies.filter(a => a[0] === side && !a[5]);
+      const available = slots.find(a => fits(a[1], officer.role)) || slots[0];
+      if (available) {
+        available[5] = id;
+      } else {
+        const points = origins[side] || [];
+        if (!points.length) throw new Error('No ' + era + ' staging points for ' + side);
+        const n = created[side] || 0;
+        const base = points[(n * 7 + Math.floor(n / 3)) % points.length];
+        const offset = [[0.8,0.6],[-0.8,0.5],[1.5,-0.4],[-1.4,-0.4],[0.6,-1.2],[-0.5,1.4]][n % 6];
+        const cls = officer.role === 'Artillery' ? 'rocket'
+          : officer.role === 'Infantry' ? 'assault' : 'medium';
+        const entry = [side, cls, Math.max(-179.5,Math.min(179.5,base[0]+offset[0])),
+          Math.max(-70,Math.min(70,base[1]+offset[1])), 1, id];
+        if (is2018 && side === 'cf') entry.push('bk');
+        armies.push(entry);
+        created[side] = n + 1;
+      }
+      used.add(id);
+    }
+    // Preserve free formations for attaching purchased HQ officers. A complete
+    // starting cast must not disable the ordinary commander-assignment mechanic.
+    if (is2018) armies.push(
+      ['cf','medium',113.5,34,1,null,'bk'],
+      ['cf','assault',20.5,51.9,1,null,'bk'],
+      ['cf','rocket',36.6,-1.5,1,null,'bk']
+    );
+    if (used.size !== Object.keys(roster).length)
+      throw new Error('Not every ' + era + ' commander has a starting deployment');
+    return armies;
+  }
+  fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
+  fillRosterCommands(ufn2018.armies, 'ufn2018');
   const CONQUESTS = {
     world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null, expectedCities: { britannia: 51, eu: 58, cf: 47, neutral: 12 } },
     ufn2018,
