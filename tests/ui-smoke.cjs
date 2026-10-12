@@ -246,14 +246,28 @@ const modal = () => node('modal-root').innerHTML;
     try {
       game = E.scenarios.europe.create('eb', 'normal', 17);
       const europe = homeZoom();
+      const europeLimit = turnLimit();
+      const europeTurnLabel = 'Turn ' + game.turn +
+        (turnLimit() ? ' / ' + turnLimit() : '');
       game = E.scenarios.japan.create('britannia', 'normal', 17);
-      return { europe, japan: homeZoom() };
+      const japan = homeZoom(), japanLimit = turnLimit();
+      game.scenario.turnLimit = 42;
+      const explicitLimit = turnLimit();
+      return { europe, japan, europeLimit, europeTurnLabel, japanLimit, explicitLimit };
     } finally { game = prior; }
   })()`);
   assert.equal(scenarioZooms.europe, 5.4,
     'the European War should open close enough to show Knightmare sprites');
   assert.equal(scenarioZooms.japan, 2.15,
     'Japan scenario opening camera must remain unchanged');
+  assert.equal(scenarioZooms.europeLimit, 0,
+    'European War has no 60-turn deadline');
+  assert.equal(scenarioZooms.europeTurnLabel, 'Turn 1',
+    'European War header should not show Turn 1 / 60');
+  assert.equal(scenarioZooms.japanLimit, 60,
+    'Japan scenarios retain the existing turn counter');
+  assert.equal(scenarioZooms.explicitLimit, 42,
+    'an explicit scenario turn limit must still appear in the UI');
   assert(scenarioLaunch.includes("britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'"),
     'the opening camera must center on each chosen faction');
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
