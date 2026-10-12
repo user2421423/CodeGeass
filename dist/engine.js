@@ -2128,7 +2128,7 @@
       (naval && (!s.portAt || (s.portLevel || 0) < t.port)
         ? `Requires port level ${t.port}` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
-      (naval ? s.portProducedTurn === g.turn : s.producedTurn === g.turn
+      ((naval ? s.portProducedTurn : s.producedTurn) === g.turn
         ? 'Already produced here this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
@@ -3754,6 +3754,7 @@
       u.eliteStart = true;
       u.stack = u.side === g.player ? 1
         : old.naval ? u.stack : Math.min(3, (u.stack || 1) + 1);
+      if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);
     }
