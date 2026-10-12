@@ -731,7 +731,7 @@ const modal = () => node('modal-root').innerHTML;
   assert.deepEqual(byId(run('game.armyGroups[0].units')), byId(scenarioShiftClick.expected),
     'creating a scenario army group assigns all Shift-clicked units');
   const groupRenderer = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
-  assert.equal((groupRenderer.match(/game.mode === 'conquest' \\|\\| game.mode === 'scenario'/g) || []).length, 2,
+  assert.equal(groupRenderer.split("game.mode === 'conquest' || game.mode === 'scenario'").length - 1, 2,
     'scenario army group membership and objective markers both render on the map');
 
   run('newGame()');
