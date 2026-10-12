@@ -189,6 +189,24 @@ test('Core combat keeps breakthrough and movement rules intact', () => {
   assert(E.reachable(g, line).size > 0, 'the line frame can move after its killing shot');
 });
 
+test('Artillery splash causes HP damage without lowering adjacent targets morale', () => {
+  const g = blank();
+  const artillery = E.newUnit(g, E.typeFor('britannia', 'rocket'), 'britannia', 4, 4);
+  const primary = E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 4, 6, 3);
+  const neighbor = E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 5, 6, 3);
+  primary.morale = 0;
+  neighbor.morale = 0;
+  const before = neighbor.hp;
+  assert.equal(E.distance(g, primary, neighbor), 1, 'second target must be within the splash radius');
+  const result = E.attack(g, artillery.id, primary.c, primary.r);
+  assert.equal(result.ok, true, result.reason);
+  assert.ok(result.hit.some(v => v.id === neighbor.id && v.damage > 0),
+    'adjacent target should still receive splash damage');
+  assert.ok(neighbor.hp < before, 'splash must continue reducing HP');
+  assert.equal(neighbor.morale, 0, 'splash must not reduce morale');
+  assert.equal(primary.morale, 0, 'ordinary primary hit must not reduce morale either');
+});
+
 test('Repeat attacks do not restore movement already spent or extend the attack cap', () => {
   const g = blank();
   const line = E.newUnit(g, E.typeFor('britannia', 'light'), 'britannia', 4, 4);
