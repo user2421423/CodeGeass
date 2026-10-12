@@ -75,27 +75,26 @@
   const CITY_OUTPUT_FACTOR = 0.4;
   const ARMY_GROUPS = [
     // [side, staging city, class, formations, commander (optional)]
-    // Fourteen land formations + six naval formations = exactly twenty starting units.
-    // Hold the Tokyo/Osaka industrial core and the Kanmon line; leave reserves spread thin.
-    ['britannia','Tokyo Settlement','medium',2,'suzaku'],
+    // Leave exactly two Britannian defenders by Tokyo and two Black Knights by
+    // Kyoto; mass all other land formations on western Honshu facing Kyushu.
+    ['britannia','Tokyo Settlement','medium',1,'suzaku'],
     ['britannia','Tokyo Settlement','heavy',1,'cornelia'],
-    ['britannia','Yokohama','assault',1,'guilford'],
-    ['britannia','Osaka','medium',2,'darlton'],
-    ['britannia','Osaka','rocket',1],
-    ['britannia','Hiroshima','light',1],
     ['britannia','Shimonoseki','assault',2],
-    ['britannia','Okayama','medium',1],
+    ['britannia','Shimonoseki','medium',2,'darlton'],
+    ['britannia','Shimonoseki','light',1],
+    ['britannia','Yamaguchi','medium',2],
+    ['britannia','Yamaguchi','rocket',1],
     ['britannia','Yamaguchi','light',1],
-    ['britannia','Sendai','medium',1],
-    ['britannia','Sapporo','light',1],
-    ['bk','Kyoto','medium',3,'zero'],
-    ['bk','Kyoto','assault',2,'kallen'],
-    ['bk','Nara','light',2,'tohdoh'],
-    ['bk','Narita','scout',2,'ohgi'],
-    ['bk','Nagano','medium',2],
-    ['bk','Matsue','assault',2],
-    // Spread the expeditionary corps across all eight friendly Kyushu cities.
-    // Keep the 21 land formations and their class mix, without stacking at the ports.
+    ['britannia','Hiroshima','assault',1,'guilford'],
+    ['britannia','Hiroshima','medium',1],
+    ['britannia','Hiroshima','light',1],
+    ['bk','Kyoto','medium',1,'zero'],
+    ['bk','Kyoto','assault',1,'kallen'],
+    ['bk','Matsue','medium',4],
+    ['bk','Matsue','assault',3],
+    ['bk','Matsue','light',2,'tohdoh'],
+    ['bk','Matsue','scout',2,'ohgi'],
+    // Keep China's expeditionary army spread across its eight Kyushu cities.
     ['cf','Fukuoka','medium',2,'xingke'],
     ['cf','Fukuoka','assault',1],
     ['cf','Kitakyushu','medium',2,'xianglin'],
