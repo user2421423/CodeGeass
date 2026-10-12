@@ -4,7 +4,7 @@
   const ALLIES = { cf: ['bk', 'jlf'] };
   function serves(k, side) {
     const a = COMMANDERS[k];
-    return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
+    return !!a && (a.side === side || (a.side === 'guest' && ['britannia','eu','cf'].includes(side)) || !!ALLIES[side]?.includes(a.side));
   }
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
   function commandTargets(g, u) {
