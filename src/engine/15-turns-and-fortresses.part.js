@@ -144,6 +144,13 @@
       else if (u.morale > desired) u.morale--;
       if (nearby >= 2) u.morale = Math.min(u.morale, desired);
       // Engineers within 2 hexes reassure: one extra morale step and 5% of the frame.
+
+      // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
+      if (mine.some(m => m.hp > 0 && fx(m).royalCompassion && dist(g, m, u) <= 2))
+        u.morale = Math.min(1, u.morale + 1);
+      // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
+      if (u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       if (mine.some(m => m.hp > 0 && fx(m).reassure && dist(g, m, u) <= 2)) {
         u.morale = Math.min(1, u.morale + 1);
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
