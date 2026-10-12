@@ -105,7 +105,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.shop) {
-    openShop(+d.shop, shop.branch === NAVAL_TAB ? BRANCH_LIST[0] : shop.branch);
+    openShop(+d.shop, (shop.branch === NAVAL_TAB || shop.branch === ELITE_NAVAL_TAB) ? BRANCH_LIST[0] : shop.branch);
     return;
   }
   if (d.shopPort) {
