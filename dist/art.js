@@ -78,6 +78,17 @@ const ART = (() => {
   }
   // Public art is registered synchronously by assets/art/manifest.js, including when opened via file://.
   // Published and development assets are the only sprites for units and commanders.
+  // New elite variants share the published image of their underlying standard frame.
+  const ELITE_ART_ALIASES = {
+    elite_vincent_ward: 'vincent_ward',
+    elite_sutherland_air: 'sutherland_air',
+    elite_hummel_battery: 'hummel_battery',
+    elite_akatsuki_missile: 'akatsuki_missile',
+    elite_akatsuki_heavy: 'akatsuki_heavy',
+    elite_portman_ii: 'portman_ii',
+    elite_panzer_frosch_ii: 'panzer_frosch_ii',
+    elite_shui_gun_ru_ii: 'shui_gun_ru_ii',
+  };
   const LOCAL = { units: {}, portraits: {}, buildings: {}, base: 'local-art/', imgs: new Map() };
   function localEntry(kind, id) {
     const e = LOCAL[kind][id];
@@ -138,7 +149,7 @@ const ART = (() => {
     citySVG,
     // HTML: a Knightmare for panels and cards.
     unit(type, extra = '', side) {
-      const l = withLocal('units', type);
+      const l = withLocal('units', ELITE_ART_ALIASES[type] || type);
       return `<span class="ship-art unit-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
     },
     city(kind, side, extra = '') {
@@ -157,7 +168,7 @@ const ART = (() => {
     },
     // Canvas: draw a cached image centered at (x, y); false while the image is still decoding.
     drawUnit(ctx, type, side, x, y, w, h = w, flip = false) {
-      const local = localImage('units', type);
+      const local = localImage('units', ELITE_ART_ALIASES[type] || type);
       if (!local) return false;
       const r = Math.min(w / local.naturalWidth, h / local.naturalHeight),
         dw = local.naturalWidth * r,
