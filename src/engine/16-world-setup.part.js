@@ -62,6 +62,13 @@
   function eliteConquest(g) {
     return g?.mode === 'conquest' && g.difficulty === 'elite';
   }
+  function eliteScenario(g) {
+    return g?.mode === 'scenario' && g?.scenario?.id === 'invasion-japan' &&
+      g.difficulty === 'elite';
+  }
+  function eliteAIProduction(g) {
+    return eliteConquest(g) || eliteScenario(g);
+  }
   // The player's unique factory deployment allowance is separate from
   // starting formations. Preplaced elite frames never consume it.
   function convertConquestEliteStarts(g) {
@@ -155,9 +162,7 @@
   // at factory Tier II or higher. Elite rivals retain their extra Tier III hubs.
   // Use the ordinary building calculations so displayed tier, yields and shields
   // agree; a raw change to s.tier would leave these statistics out of sync.
-  function prepareEliteConquestFactories(g) {
-    if (!eliteConquest(g)) return;
-    const raiseFactory = (s, tier) => {
+  function raiseFactoryTier(g, s, tier) {
       if (s.tier >= tier) return;
       const oldShield = s.shield, oldMaxShield = s.maxShield;
       buildingFoundation(g, s); // Snapshot the original city's Tier-I/II foundations.
@@ -166,8 +171,10 @@
       // Equivalent to buying the missing factory upgrades: newly gained
       // shield capacity starts repaired, while existing damage stays intact.
       s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
-    };
-    for (const s of g.stations) raiseFactory(s, 2);
+  }
+  function prepareEliteConquestFactories(g) {
+    if (!eliteConquest(g)) return;
+    for (const s of g.stations) raiseFactoryTier(g, s, 2);
     for (const side of MAJORS.filter(s => s !== g.player)) {
       const cities = g.stations.filter(s => s.owner === side);
       const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
@@ -176,9 +183,83 @@
       let advanced = cities.filter(s => s.tier >= 3).length;
       for (const s of nearFront) {
         if (advanced >= Math.max(6, Math.ceil(cities.length / 8))) break;
-        if (s.tier < 3) { raiseFactory(s, 3); advanced++; }
+        if (s.tier < 3) { raiseFactoryTier(g, s, 3); advanced++; }
       }
     }
+  }
+  // Elite Japan reuses Elite Conquest's frame conversion philosophy without
+  // importing any persistent HQ research or commander upgrades. Starting units
+  // are always Level 1; HQ unlocks only matter at the player's factory.
+  function prepareEliteJapan(g) {
+    if (!eliteScenario(g)) return g;
+    const sides = ['britannia', 'bk', 'cf'];
+    const signature = {
+      suzaku: 'lancelot', cornelia: 'cornelia_gloucester',
+      kallen: 'guren_mkii', zero: 'shinkiro',
+      tohdoh: 'tohdoh_gekka', xingke: 'shen_hu',
+    };
+    for (const side of sides.filter(s => s !== g.player)) {
+      g.tech[side] = techUpToTier(4);
+    }
+    // Keep the theatre's original output foundations before using the engine's
+    // standard synchronization, even when a Japan city shares a world city name.
+    for (const s of g.stations) {
+      s.buildingFoundation ||= {
+        industry: s.industry - 10 * s.tier,
+        science: s.science - 8 * (s.lab || 0),
+        maxShield: s.maxShield - (s.fortBonus || 0) - 60 * s.tier,
+      };
+      raiseFactoryTier(g, s, 2);
+    }
+    for (const side of sides.filter(s => s !== g.player)) {
+      const own = g.stations.filter(s => s.owner === side),
+        enemies = g.stations.filter(s => s.owner !== side && sides.includes(s.owner)),
+        nearestEnemy = s => Math.min(...enemies.map(other => dist(g, s, other)));
+      const candidates = own.slice().sort((a, b) => nearestEnemy(a) - nearestEnemy(b) || a.id - b.id);
+      const target = Math.max(1, Math.ceil(own.length / 8));
+      let upgraded = own.filter(s => s.tier >= 3).length;
+      for (const s of candidates) {
+        if (upgraded >= target) break;
+        if (s.tier < 3) { raiseFactoryTier(g, s, 3); upgraded++; }
+      }
+    }
+    for (const [id, rec] of Object.entries(g.officers))
+      if (COMMANDERS[id]?.side !== g.player) rec.rank = RANKS.length - 1;
+    const used = {};
+    for (const u of g.units) {
+      const old = TYPES[u.type];
+      if (!old) throw new Error('Unknown Japan starting unit ' + u.type);
+      let id = null;
+      if (old.naval === 'ship') {
+        id = { britannia:'japan_britannia_carrier', cf:'japan_cf_carrier',
+          bk:'japan_bk_carrier' }[u.side];
+      } else if (old.naval === 'amphibious') {
+        id = { britannia:'portman_ii', cf:'shui_gun_ru_ii',
+          bk:'japan_bk_amphibious' }[u.side];
+      } else {
+        const pool = Object.entries(ELITE_FORCES).filter(([, e]) =>
+          !e.scenarioOnly && !TYPES[e.type].naval && e.availableTo.includes(u.side));
+        const byClass = pool.filter(([, e]) => TYPES[e.type].cls === old.cls),
+          byBranch = pool.filter(([, e]) => TYPES[e.type].branch === old.branch),
+          choices = byClass.length ? byClass : byBranch.length ? byBranch : pool;
+        if (!choices.length) throw new Error('Missing Japan Elite roster for ' + u.side);
+        id = u.cmd && signature[u.cmd] && ELITE_FORCES[signature[u.cmd]]?.availableTo.includes(u.side)
+          ? signature[u.cmd] : choices[(used[u.side + ':' + old.cls] || 0) % choices.length][0];
+        used[u.side + ':' + old.cls] = (used[u.side + ':' + old.cls] || 0) + 1;
+      }
+      if (!ELITE_FORCES[id]) throw new Error('Missing Japan naval Elite Force for ' + u.side);
+      u.type = ELITE_FORCES[id].type;
+      u.elite = id;
+      u.eliteLevel = 1;
+      u.eliteStart = true;
+      u.stack = u.side === g.player ? 1
+        : old.naval ? u.stack : Math.min(3, (u.stack || 1) + 1);
+      if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
+      u.hpTech = hullTech(g, u);
+      u.hp = maxHP(u);
+    }
+    for (const s of g.stations) fortify(g, s);
+    return g;
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
   function nearest(g, p, test) {

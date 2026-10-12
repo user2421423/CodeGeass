@@ -38,6 +38,8 @@
     deployTargetsAt,
     aiEliteRecruitReason,
     recruitAIElite,
+    eliteAIProduction,
+    eliteScenario,
     elitePrice,
     depositHost,
     depositOwner,
@@ -1460,7 +1462,10 @@
     // threats and overseas fronts rather than arbitrary per-faction ship/port caps.
     // Spending on the fleet must still leave a normal two-frame Scout formation
     // affordable, so coastal construction cannot starve the field army.
-    const navy = g.mode !== 'campaign' && NAVAL[side];
+    const navy = g.mode !== 'campaign' && (NAVAL[side] || (eliteScenario(g) && side === 'bk' ? {
+      amphibious: 'elite_japan_bk_amphibious', amphibious2: 'elite_japan_bk_amphibious',
+      carrier: 'elite_japan_bk_carrier',
+    } : null));
     if (navy) {
       const coastal = [
           ...bases.filter(s => portSite(g, s)),
@@ -1486,7 +1491,9 @@
           spendable() - c.credits >= ordinaryBudget.credits &&
           e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry,
         ownedPorts = () => coastal.filter(s => s.portLevel && (s.portOwner || s.owner) === side),
-        fleetCount = (...roles) => availableFleet.filter(u => roles.some(r => u.type === navy[r])).length;
+        fleetCount = (...roles) => availableFleet.filter(u => eliteScenario(g)
+          ? roles.some(r => r === 'carrier' ? TYPES[u.type].naval === 'ship' : TYPES[u.type].naval === 'amphibious')
+          : roles.some(r => u.type === navy[r])).length;
 
       const ports = ownedPorts();
       const carrierPorts = ports.filter(s => s.portLevel >= 2);
@@ -1536,11 +1543,25 @@
           ['amphibious2', 'amphibious', 'carrier'];
         for (const role of roles) {
           if ((role === 'carrier' && carrierGap <= 0) || (role !== 'carrier' && amphGap <= 0)) continue;
-          const type = navy[role], cost = price(type, 1, g, side);
-          if (navyAffordable(cost) && canBuy(g, port, type, 1) && recruit(g, port.id, type, 1).ok) {
-            // Count against demand immediately, even if other ports build this turn.
-            availableFleet.push(g.units[g.units.length - 1]);
-            break;
+          if (eliteScenario(g)) {
+            const id = Object.keys(ELITE_FORCES).find(k => {
+              const e = ELITE_FORCES[k], t = TYPES[e.type];
+              return e.availableTo.includes(side) &&
+                (role === 'carrier' ? t.naval === 'ship' : t.naval === 'amphibious');
+            });
+            if (!id) continue;
+            const cost = elitePrice(id, 1);
+            if (navyAffordable(cost) && !aiEliteRecruitReason(g, port, id) &&
+                recruitAIElite(g, port.id, id).ok) {
+              availableFleet.push(g.units[g.units.length - 1]);
+              break;
+            }
+          } else {
+            const type = navy[role], cost = price(type, 1, g, side);
+            if (navyAffordable(cost) && canBuy(g, port, type, 1) && recruit(g, port.id, type, 1).ok) {
+              availableFleet.push(g.units[g.units.length - 1]);
+              break;
+            }
           }
         }
       }
@@ -1570,7 +1591,7 @@
       return existing < desired;
     };
     const menuOf = s => {
-      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+      if (eliteAIProduction(g)) {
         const theater = serves(s),
           needed = theater?.need || [],
           anchor = theater?.rally || theater?.anchor || s,
@@ -1644,7 +1665,7 @@
         spot = reach && adjacent(g, s)
           .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
           .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
-      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+      if (eliteAIProduction(g)) {
         for (const id of menu) {
           const cost = elitePrice(id, 1);
           if (!affordable(cost) || aiEliteRecruitReason(g, s, id, spot ? vacating : null)) continue;
@@ -1677,7 +1698,7 @@
         }
       return false;
     };
-    if (g.mode === 'conquest' && g.difficulty === 'elite') {
+    if (eliteAIProduction(g)) {
       // Re-evaluate after each successful purchase: elite role shortages and
       // production diversity change as new units join the theater.
       for (const s of yards) tryBuild(s, menuOf(s), [1]);
