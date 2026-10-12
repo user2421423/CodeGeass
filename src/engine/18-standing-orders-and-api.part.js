@@ -138,6 +138,8 @@
     elitePrice,
     eliteDeployReason,
     deployElite,
+    aiEliteRecruitReason,
+    recruitAIElite,
     unitStats,
     applyElites,
     lineupOf,
