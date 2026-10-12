@@ -84,12 +84,26 @@ const ART = (() => {
     return e ? (typeof e === 'string' ? { src: e } : e) : null;
   }
   const escapeAttr = value => String(value).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[c]);
-  function entries(values, base) {
+  // Approved newcomer portraits temporarily use sourced HTTPS images when no vetted local
+  // copy is available. Keep the original 58 portraits and every unit sprite strictly local.
+  function entries(values, base, kind) {
+    const trustedHosts = new Set([
+      'static.zerochan.net', 's1.zerochan.net', 'geass.jp', 'hobbyjapan.co.jp',
+      'ogre.natalie.mu', 'ami.animecharactersdatabase.com',
+      'www.animecharactersdatabase.com', 'shikimori.io', 'livedoor.blogimg.jp',
+      'i.pinimg.com', 'storage.moegirl.org.cn', 'www.newton.com.tw',
+      'safebooru.org', 'cdn.anime-planet.com', 'wallpaper.forfun.com',
+    ]);
     return Object.fromEntries(Object.entries(values || {}).flatMap(([id, value]) => {
       const e = typeof value === 'string' ? { src: value } : value;
-      if (!e || typeof e.src !== 'string' || !/^(units|portraits|buildings)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src)) return [];
+      if (!e || typeof e.src !== 'string') return [];
+      const local = /^(units|portraits|buildings)\/[\w-]+\.(png|jpe?g|webp|gif|svg)$/i.test(e.src);
+      const remote = kind === 'portraits' && /^https:\/\//i.test(e.src) &&
+        /^https:\/\/[^/?#]+\/.+\.(png|jpe?g|webp)(?:\?[^#]*)?$/i.test(e.src) &&
+        trustedHosts.has(e.src.match(/^https:\/\/([^/?#]+)/i)?.[1]?.toLowerCase());
+      if (!local && !remote) return [];
       const focus = v => Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : undefined;
-      return [[id, { src: e.src, base, fx: focus(e.fx), fy: focus(e.fy) }]];
+      return [[id, { src: e.src, base: remote ? '' : base, fx: focus(e.fx), fy: focus(e.fy) }]];
     }));
   }
   function localImage(kind, id) {
@@ -127,9 +141,9 @@ const ART = (() => {
     // Register and preload the real image files, without generated fallback portraits or sprites.
     useLocal(manifest, merge = false) {
       const base = /^(?:[\w-]+\/)+$/.test(manifest?.base || '') ? manifest.base : 'local-art/';
-      LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base) };
-      LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base) };
-      LOCAL.buildings = { ...(merge ? LOCAL.buildings : {}), ...entries(manifest?.buildings, base) };
+      LOCAL.units = { ...(merge ? LOCAL.units : {}), ...entries(manifest?.units, base, 'units') };
+      LOCAL.portraits = { ...(merge ? LOCAL.portraits : {}), ...entries(manifest?.portraits, base, 'portraits') };
+      LOCAL.buildings = { ...(merge ? LOCAL.buildings : {}), ...entries(manifest?.buildings, base, 'buildings') };
       LOCAL.base = base;
       LOCAL.imgs.clear();
       for (const kind of ['units', 'portraits', 'buildings']) for (const id of Object.keys(LOCAL[kind])) localImage(kind, id);
