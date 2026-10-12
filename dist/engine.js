@@ -2124,7 +2124,8 @@
   function eliteEligible(g, side, id) {
     const e = ELITE_FORCES[id];
     if (!e) return false;
-    const roster = eliteCampaign(g) && g.campaign?.eliteRosters?.[side];
+    const roster = eliteCampaign(g) ? g.campaign?.eliteRosters?.[side] :
+      g?.scenario?.id === 'european-war' ? g.scenario.eliteRosters?.[side] : null;
     return roster ? roster.includes(id) : e.availableTo.includes(side);
   }
   function eliteDeployReason(g, s, id, profile = {}) {
@@ -2140,7 +2141,7 @@
       (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
       (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
-      (e.scenarioOnly && !eliteScenario(g) ? 'Available only in Elite Japan' : null) ||
+      (e.scenarioOnly && !eliteScenario(g) ? 'Available only in the relevant Elite scenario' : null) ||
       (!availableLevel ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (naval && (!s.portAt || (s.portLevel || 0) < t.port) ? `Requires a level-${t.port} port` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
@@ -2185,7 +2186,7 @@
       producer = naval ? (s.portOwner || s.owner) : s.owner;
     if (producer === g.player || !eliteEligible(g, producer, id) ||
         (eliteConquest(g) && (naval || !MAJORS.includes(producer))) ||
-        (eliteScenario(g) && !['britannia', 'bk', 'cf'].includes(producer)) ||
+        (eliteScenario(g) && !g.order.includes(producer)) ||
         (eliteCampaign(g) && (naval || (!foe(g, producer, g.player) &&
           !g.campaign?.production?.includes(producer)))) ||
         (e.scenarioOnly && !eliteScenario(g)))
