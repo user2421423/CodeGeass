@@ -230,6 +230,10 @@ const modal = () => node('modal-root').innerHTML;
     honshu:true,kyushu:true,shikoku:true,hokkaido:true,korea:false,russia:false
   }, 'scenario should draw Japanese islands only, not Korea or Russia');
   const regionSource = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
+  assert(regionSource.includes("const europeOnly = g.scenario.id === 'european-war'") &&
+    regionSource.includes('if (!europeOnly) {') &&
+    regionSource.includes("g.scenario?.id === 'european-war' ? 1 : 2"),
+    'Europe-only atlas must hide extra-continental silhouettes and limit coastal colour bleed');
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');
 
