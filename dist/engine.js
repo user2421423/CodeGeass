@@ -3793,7 +3793,8 @@
     return g?.mode === 'campaign' && g.difficulty === 'elite';
   }
   function eliteScenario(g) {
-    return g?.mode === 'scenario' && g?.scenario?.id === 'invasion-japan' &&
+    return g?.mode === 'scenario' &&
+      ['invasion-japan', 'european-war'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -3920,7 +3921,7 @@
   // importing any persistent HQ research or commander upgrades. Starting units
   // use Level 1 frames, except AI starting commanders on Level 5; HQ unlocks only matter at the player's factory.
   function prepareEliteJapan(g) {
-    if (!eliteScenario(g)) return g;
+    if (!eliteScenario(g) || g.scenario?.id !== 'invasion-japan') return g;
     const sides = ['britannia', 'bk', 'cf'];
     const signature = {
       suzaku: 'lancelot', cornelia: 'cornelia_gloucester',
@@ -3987,6 +3988,82 @@
       u.hp = maxHP(u);
     }
     for (const s of g.stations) fortify(g, s);
+    return g;
+  }
+  // Elite European War uses its own two-faction roster instead of modifying the
+  // historical Japan roster or Britannian unlock eligibility in other modes.
+  function prepareEliteEurope(g) {
+    if (!eliteScenario(g) || g.scenario?.id !== 'european-war') return g;
+    const sides = ['eu', 'eb'];
+    const signatures = {
+      leila: 'leila_alexander', akito: 'akito_liberte',
+      ryo: 'ryo_valiant', ayano: 'ayano_valiant',
+      yukiya: 'yukiya_valiant', smilas: 'hummel_battery',
+      shin: 'lancelot', julius: 'mordred',
+      ashley: 'vincent_ward', manfredi: 'cornelia_gloucester',
+    };
+    const naval = {
+      eu: {ship:'europe_eu_carrier',amphibious:'panzer_frosch_ii'},
+      eb: {ship:'europe_eb_carrier',amphibious:'portman_ii'},
+    };
+    // Preserve this map's smaller city yields before raising factory tiers.
+    for (const s of g.stations) {
+      s.buildingFoundation ||= {
+        industry: s.industry - 10 * s.tier,
+        science: s.science - 8 * (s.lab || 0),
+        maxShield: s.maxShield - (s.fortBonus || 0) - 60 * s.tier,
+      };
+      raiseFactoryTier(g, s, 2);
+    }
+    for (const side of sides.filter(side => side !== g.player)) {
+      g.tech[side] = techUpToTier(4);
+      const own = g.stations.filter(s => s.owner === side);
+      const rivals = g.stations.filter(s => s.owner !== side && sides.includes(s.owner));
+      const distanceToEnemy = s => Math.min(...rivals.map(other => dist(g, s, other)));
+      const byFront = own.slice().sort((a,b) =>
+        distanceToEnemy(a) - distanceToEnemy(b) || a.id - b.id);
+      const advanced = Math.max(1, Math.ceil(own.length / 8));
+      let tier3 = own.filter(s => s.tier >= 3).length;
+      for (const s of byFront) {
+        if (tier3 >= advanced) break;
+        if (s.tier < 3) { raiseFactoryTier(g, s, 3); tier3++; }
+      }
+    }
+    // Only the actual rival officers deployed in this theatre become Supreme
+    // Commanders. Euro Britannian commanders retain their global data-side.
+    for (const u of g.units)
+      if (u.cmd && u.side !== g.player && g.officers[u.cmd])
+        g.officers[u.cmd].rank = RANKS.length - 1;
+    const used = {};
+    for (const u of g.units) {
+      const old = TYPES[u.type];
+      if (!old) throw new Error('Unknown European War starting unit '+u.type);
+      const roster = g.scenario.eliteRosters[u.side] || [];
+      let id = old.naval ? naval[u.side]?.[old.naval] : null;
+      if (!old.naval) {
+        const pool = roster.filter(id => !TYPES[ELITE_FORCES[id]?.type]?.naval);
+        const sameClass = pool.filter(id => TYPES[ELITE_FORCES[id].type].cls === old.cls);
+        const sameBranch = pool.filter(id => TYPES[ELITE_FORCES[id].type].branch === old.branch);
+        const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
+        if (!choices.length) throw new Error('Missing European Elite Force for '+u.side);
+        const signature = signatures[u.cmd];
+        const n = u.side+':'+old.cls;
+        id = signature && roster.includes(signature)
+          ? signature : choices[(used[n] || 0) % choices.length];
+        used[n] = (used[n] || 0) + 1;
+      }
+      if (!id || !roster.includes(id) || !ELITE_FORCES[id])
+        throw new Error('Missing European naval/land Elite Force for '+u.side+': '+u.type);
+      u.type = ELITE_FORCES[id].type;
+      u.elite = id;
+      u.eliteLevel = u.cmd && u.side !== g.player ? 5 : 1;
+      u.eliteStart = true;
+      u.stack = 1;
+      if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
+      u.hpTech = hullTech(g,u);
+      u.hp = maxHP(u);
+    }
+    for (const s of g.stations) fortify(g,s);
     return g;
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
