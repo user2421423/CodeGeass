@@ -35,6 +35,14 @@
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
+      if (recovery.tactical) {
+        const p = tile(g, recovery.tactical.c, recovery.tactical.r);
+        if (p && !unitAt(g, p) && reachable(g, u).has(key(p))) {
+          const m = move(g, id, p.c, p.r);
+          if (m.ok) events.push({ kind: 'move', ...m, id });
+        }
+        return events;
+      }
       const field = recovery.field,
         value = p => field[p.r * g.cols + p.c] + g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && !atSea(g, v) && dist(g, v, p) <= rangeOf(g, v).max).length * 8
           - (p.c === recovery.city.c && p.r === recovery.city.r ? 2 : 0),
