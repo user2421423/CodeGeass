@@ -340,11 +340,12 @@
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
+    newcomerOverwatch(g,u);
+    if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true};}
     // Moving through enemy or neutral territory never changes its map color.
     const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
     const portCaptured = capturePort(g, u);
     const seized = seizeDeposit(g, u, dest);
-    newcomerOverwatch(g,u);
     checkVictory(g);
     return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, portCaptured, seized };
   }
