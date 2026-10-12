@@ -268,6 +268,7 @@
         for (const friend of friends) events.push(...aiOrder(g, friend));
       }
     }
+    memo.focusCache?.clear();
     return events;
   }
   Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });

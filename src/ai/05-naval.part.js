@@ -47,9 +47,9 @@
   function aiCarrier(g, u, memo, events, fieldAt) {
     // Non-carrier warships act as opportunistic escorts for nearby loaded carriers.
     // Staying beside a carrier is optional; combat and legal movement still govern.
-    if (carrierCapacity(g, u) <= 0) {
+    if (!(TYPES[u.type]?.capacity > 0)) {
       const leaders = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
-        isShip(v) && carrierCapacity(g, v) > 0 && v.cargo?.length &&
+        isShip(v) && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
         dist(g, v, u) <= 8).sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id);
       const leader = leaders[0];
       if (!leader || dist(g, u, leader) <= 2) return false;
@@ -85,7 +85,7 @@
       danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
       strength = cargo.reduce((a, c) => a + c.stack, 0),
       landingSupport = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
-        carrierCapacity(g, v) > 0 && v.cargo?.length),
+        TYPES[v.type]?.capacity > 0 && v.cargo?.length),
       landing = p => {
         // Count only a nearby loaded carrier as prospective same-wave support.
         const support = landingSupport.filter(v => dist(g, v, p) <= 3)
