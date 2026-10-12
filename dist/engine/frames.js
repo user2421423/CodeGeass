@@ -879,6 +879,37 @@
       lore: 'A veteran Shui Gun-Ru II retaining its standard amphibious systems.',
     },
 
+    // Japan Elite naval variants are operation-only. Their statistics, movement,
+    // cargo and port requirements are inherited verbatim from existing hulls.
+    elite_japan_britannia_carrier: {
+      ...CARRIER, side: 'britannia', elite: true, scenarioOnly: true,
+      name: 'Elite Carrier-Battleship', model: 'Dreadnought-class Carrier-Battleship',
+      gen: 'Warship', role: 'Elite carrier-battleship',
+      weapon: 'Main guns · missile batteries · Knightmare catapults',
+      lore: 'A veteran Britannian carrier retaining the normal carrier deployment rules.',
+    },
+    elite_japan_cf_carrier: {
+      ...CARRIER, side: 'cf', elite: true, scenarioOnly: true,
+      name: 'Federation Elite Carrier-Battleship', model: 'Federation Carrier-Battleship',
+      gen: 'Warship', role: 'Elite carrier-battleship',
+      weapon: 'Heavy guns · missile batteries · Knightmare catapults',
+      lore: 'A veteran Federation carrier retaining its regular embarked-Knightmare capacity.',
+    },
+    elite_japan_bk_carrier: {
+      ...CARRIER, side: 'bk', elite: true, scenarioOnly: true,
+      name: 'Black Knights Elite Carrier-Battleship', model: 'Liberation fleet carrier',
+      gen: 'Warship', role: 'Elite carrier-battleship',
+      weapon: 'Main guns · missile batteries · Knightmare catapults',
+      lore: 'A Black Knights carrier using the existing carrier deployment mechanics.',
+    },
+    elite_japan_bk_amphibious: {
+      ...AMPHIBIOUS_II, side: 'bk', elite: true, scenarioOnly: true,
+      name: 'Black Knights Amphibious II Elite', model: 'Liberation fleet amphibious Knightmare',
+      gen: '6th generation', role: 'Elite amphibious',
+      weapon: 'Heavy torpedoes · twin cannons',
+      lore: 'Black Knights amphibious forces using standard Type II equipment and aquatic scaling.',
+    },
+
     // Campaign-only frames (campaign: true): the Black Knights' and JLF's own machines and Shen Hu, placed by
     // missions and never part of Conquest lineups. Missions field the named aces as Elite Force frames.
     burai: {
@@ -1356,6 +1387,35 @@
       skill: 'Standard Type II amphibious loadout',
       lv3Text: 'No special ability; standard Elite Lv.3 stats only.',
       lv5Text: 'No special ability; standard Elite Lv.5 stats only.',
+      lv3: {}, lv5: {},
+    },
+    // Mission-specific fleet models are not persistent HQ unlocks.
+    japan_britannia_carrier: {
+      type: 'elite_japan_britannia_carrier', faction: 'britannia', availableTo: ['britannia'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
+      lv3Text: 'Carries and deploys two Knightmare formations normally.',
+      lv5Text: 'Carries and deploys two Knightmare formations normally.',
+      lv3: {}, lv5: {},
+    },
+    japan_cf_carrier: {
+      type: 'elite_japan_cf_carrier', faction: 'cf', availableTo: ['cf'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
+      lv3Text: 'Carries and deploys two Knightmare formations normally.',
+      lv5Text: 'Carries and deploys two Knightmare formations normally.',
+      lv3: {}, lv5: {},
+    },
+    japan_bk_carrier: {
+      type: 'elite_japan_bk_carrier', faction: 'black_knights', availableTo: ['bk'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
+      lv3Text: 'Carries and deploys two Knightmare formations normally.',
+      lv5Text: 'Carries and deploys two Knightmare formations normally.',
+      lv3: {}, lv5: {},
+    },
+    japan_bk_amphibious: {
+      type: 'elite_japan_bk_amphibious', faction: 'black_knights', availableTo: ['bk'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard Type II amphibious loadout',
+      lv3Text: 'Standard Type II aquatic combat; no extra ability.',
+      lv5Text: 'Standard Type II aquatic combat; no extra ability.',
       lv3: {}, lv5: {},
     },
   };
