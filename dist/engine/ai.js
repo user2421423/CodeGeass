@@ -1570,17 +1570,19 @@
         const needed = serves(s)?.need || [];
         // Prioritize the front's requested classes, cycling equivalent elites
         // by city and turn; duplicate AI elites are deliberately permitted.
-        return Object.keys(ELITE_FORCES)
+        const ranked = Object.keys(ELITE_FORCES)
           .filter(id => ELITE_FORCES[id].availableTo.includes(side))
           .sort((a, b) => {
             const priority = id => {
               const t = TYPES[ELITE_FORCES[id].type], rank = needed.indexOf(t.cls);
               return (rank < 0 ? 10 : rank) * 10 + (t.tier > s.tier ? 2 : 0);
             };
-            return priority(a) - priority(b) ||
-              ((s.id + g.turn + a.length) % 7) - ((s.id + g.turn + b.length) % 7) ||
-              a.localeCompare(b);
+            return priority(a) - priority(b) || a.localeCompare(b);
           });
+        // Rotate the leading choice across cities and turns so an elite army
+        // actually fields multiple distinctive models rather than one spammed ace.
+        const offset = (s.id + g.turn) % ranked.length;
+        return [...ranked.slice(offset), ...ranked.slice(0, offset)];
       }
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
