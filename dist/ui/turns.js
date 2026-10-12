@@ -108,10 +108,7 @@ async function endTurn() {
     turnStartPopups(before, game.player);
     game.automationReport = game.mode === 'conquest' ? E.runCityAutomation(game, game.player) : null;
     armed = (game.arsenal?.[game.player] || 0) > warheads;
-    orders = E.runGotos(game, game.player);
-    for (const m of orders.moved)
-      effects.push({ kind: 'move', unitId: m.id, from: m.from, to: m.to, color: F(game.player).color, life: 0.6, max: 0.6 });
-    if (orders.moved.length) SFX.play('move', game.player);
+    orders = runPlayerAutomatedOrders();
   }
   render();
   save();
