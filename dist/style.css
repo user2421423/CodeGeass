@@ -1309,3 +1309,8 @@ a {
     height: 245px;
   }
 }
+
+/* Authentic U.F.N. standard in the 2018 conquest card and city thumbnails. */
+.faction.ufn-2018 { border-top-color: #f8cf32; }
+.ufn-start-flag { display: block; width: 108px; max-width: 44%; margin: 9px 0 6px; line-height: 0; border: 1px solid #d2a82b; box-shadow: 0 2px 7px #0007; }
+.ufn-start-flag svg, .ufn-city-flag svg { display: block; width: 100%; height: auto; }

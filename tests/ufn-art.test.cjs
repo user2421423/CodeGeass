@@ -17,8 +17,10 @@ const ART = context.testArt;
 test('U.F.N. flag and palette are distinct from 2017 Chinese Federation', () => {
   const flag = ART.ufnFlagSVG();
   assert.match(flag, /United Federation of Nations flag/);
-  for (const color of ['#11151a', '#f6cf67', '#37bfa9']) assert.ok(flag.includes(color));
-  assert.equal(ART.FACTION_ART.ufn.flag, '#11151a');
+  for (const color of ['#f8cf32', '#e70701', '#ffffff', '#187abd', '#5bc5e5', '#adecfd']) assert.ok(flag.includes(color));
+  assert.match(flag, /viewBox="0 0 831 594"/);
+  assert.doesNotMatch(flag, /Q26 0 49 5/);
+  assert.equal(ART.FACTION_ART.ufn.flag, '#f8cf32');
   assert.equal(ART.FACTION_ART.cf.flag, '#b52a2a');
   assert.notEqual(ART.citySVG('capital', 'ufn'), ART.citySVG('capital', 'cf'));
 });
@@ -29,6 +31,7 @@ test('U.F.N. city flag overlays the generic picture and does not render for Chin
   assert.equal(ART.drawFlag(ctx, 'ufn', 5, -20, 32), true);
   assert.equal(calls.length, 1);
   assert.equal(calls[0][3], 32);
+  assert.ok(Math.abs(calls[0][4] - 32 * 594 / 831) < 0.01);
   assert.match(decodeURIComponent(calls[0][0].src), /United Federation of Nations flag/);
   assert.equal(ART.drawFlag(ctx, 'cf', 5, -20, 32), false);
   assert.equal(calls.length, 1);
