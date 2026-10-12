@@ -60,7 +60,10 @@ const NOTICE =
 const mapW = g => SQ * R * (g.cols + (g.wrap ? 0 : 0.6)),
   mapH = g => R * 1.5 * (g.rows - 1) + 2 * R,
   wraps = () => !!game.wrap,
-  homeZoom = () => (game.mode === 'scenario' ? 2.15 : wraps() ? 3.2 : 1.25);
+  homeZoom = () => (game.mode === 'scenario' ?
+    // Europe needs a closer opening camera to make its 120 × 80 battlefront
+    // legible. Japan retains its established 2.15 strategic opening zoom.
+    (game.scenario?.id === 'european-war' ? 5.4 : 2.15) : wraps() ? 3.2 : 1.25);
 let WORLD_W, WORLD_H;
 function setWorld() {
   WORLD_W = mapW(game);
