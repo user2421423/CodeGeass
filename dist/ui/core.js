@@ -7,6 +7,7 @@ const E = Knightmare,
   modal = $('modal-root');
 let game = E.createGame('britannia'),
   selection = null,
+  multiSelectedIds = new Set(), // Shift-clicked friendly formations
   undoStack = [],
   hover = null,
   canvas,
@@ -177,6 +178,7 @@ function resetSession() {
   deploying = null;
   routing = null;
   armyGroupRouting = null;
+  multiSelectedIds.clear();
   undoStack = [];
   effects = [];
 }
