@@ -123,7 +123,11 @@
       if(sea>0&&sea<=2)t.terrain='coast';
     }
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
+      // Harbour cities must have an adjacent sea hex: preserve actual port
+      // accessibility rather than linking city and shipyard across two hexes.
+      const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
+        (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place European city '+name);
       const capital=name==='Paris'||name==='St Petersburg';
