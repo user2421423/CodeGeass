@@ -43,20 +43,39 @@ jobs:
           node tests/ui-smoke.cjs
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
+      # Preview branches are optional: removed experiments must never block
+      # deployment of the tested main game.
+      - name: Check optional preview branches
+        id: previews
+        shell: bash
+        run: |
+          if git ls-remote --exit-code --heads origin "experiment/japan-hd-156x120" >/dev/null 2>&1; then
+            echo "japan_hd=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "japan_hd=false" >> "$GITHUB_OUTPUT"
+          fi
+          if git ls-remote --exit-code --heads origin "experiment/visual-map-overhaul-20261011" >/dev/null 2>&1; then
+            echo "visual_map=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "visual_map=false" >> "$GITHUB_OUTPUT"
+          fi
       # Preview builds are isolated inside dist, with their own relative assets.
       # Never replace the main game's index.html or scripts.
       - name: Checkout high-resolution Japan experiment
+        if: steps.previews.outputs.japan_hd == 'true'
         uses: actions/checkout@v4
         with:
           ref: experiment/japan-hd-156x120
           path: hd-source
           persist-credentials: false
       - name: Verify Japan HD scenario
+        if: steps.previews.outputs.japan_hd == 'true'
         working-directory: hd-source
         run: |
           node tools/build_sources.cjs --check
           node --test tests/scenario.test.cjs
       - name: Add isolated Japan HD preview
+        if: steps.previews.outputs.japan_hd == 'true'
         run: |
           test -f hd-source/dist/index.html
           mkdir -p dist/previews/japan-hd
@@ -67,18 +86,21 @@ jobs:
       # Keep the visual-map experiment alongside main and the Japan HD preview.
       # The game loads assets relatively, so each preview is self-contained.
       - name: Checkout visual map experiment
+        if: steps.previews.outputs.visual_map == 'true'
         uses: actions/checkout@v4
         with:
           ref: experiment/visual-map-overhaul-20261011
           path: visual-map-source
           persist-credentials: false
       - name: Verify visual map preview
+        if: steps.previews.outputs.visual_map == 'true'
         working-directory: visual-map-source
         run: |
           node tools/build_sources.cjs --check
           node --test tests/*.test.cjs
           node tests/ui-smoke.cjs
       - name: Add isolated visual map preview
+        if: steps.previews.outputs.visual_map == 'true'
         run: |
           test -f visual-map-source/dist/index.html
           mkdir -p dist/previews/visual-map
