@@ -80,12 +80,6 @@ globalThis.KnightmareArtManifest = {
     "elite_cornelia_gloucester": {
       "src": "units/elite_cornelia_gloucester-e760719b1694.png"
     },
-    "elite_europe_eb_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "elite_europe_eu_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
     "elite_gawain": {
       "src": "units/elite_gawain-7a674202b272.png"
     },
@@ -103,18 +97,6 @@ globalThis.KnightmareArtManifest = {
     },
     "elite_japan_bk_amphibious": {
       "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
-    },
-    "elite_japan_bk_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "elite_japan_britannia_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "elite_japan_cf_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "elite_japan_eu_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
     },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
