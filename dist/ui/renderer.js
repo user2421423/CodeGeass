@@ -211,6 +211,8 @@ const PLATE = {
   eu: { light: '#4778cc', mid: '#214783', dark: '#0d244d', trim: '#dbe5ef', bar: '#c9d3dd' },
   cf: { light: '#ad3a33', mid: '#5c1512', dark: '#330806', trim: '#f2c14e', bar: '#e0b24a' },
   bk: { light: '#44434f', mid: '#1f1e27', dark: '#0c0b10', trim: '#f0c94a', bar: '#e6c048' },
+  // U.F.N. military tokens: charcoal-black and gold, distinct from political teal.
+  ufn: { light: '#454b49', mid: '#202521', dark: '#0a1010', trim: '#f6cf67', bar: '#eec35f' },
   jlf: { light: '#4c8550', mid: '#224a28', dark: '#0f2613', trim: '#d4ebbd', bar: '#a9d68f' },
   eb: { light: '#6e4fa8', mid: '#3a2466', dark: '#1a0f33', trim: '#e3c06a', bar: '#cdb0f0' },
 };
@@ -436,7 +438,7 @@ function drawEstimate(p, pr, scale) {
 }
 // Base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
 function drawPlate(u, scale, sea, time = 0) {
-  const c = PLATE[u.side],
+  const c = PLATE[artSide(u.side)],
     cy = 14,
     rx = 31,
     ry = 18,
@@ -513,7 +515,7 @@ function readyUnit(u) {
 }
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
 function drawStackBars(n, side) {
-  const c = PLATE[side],
+  const c = PLATE[artSide(side)],
     w = 9,
     gap = 3,
     total = n * w + (n - 1) * gap,
@@ -547,12 +549,12 @@ function drawAdmiralPin(u, p, scale, sel) {
   const sp = ART.portraitSprite(u.cmd, w, h);
   if (sp) ctx.drawImage(sp.img, sp.sx, sp.sy, sp.sw, sp.sh, -w / 2, -h / 2, w, h);
   else outlinedText('★', 0, 4, 14, '#e9c366', scale);
-  ctx.strokeStyle = sel ? '#3ff2c4' : PLATE[u.side].trim;
+  ctx.strokeStyle = sel ? '#3ff2c4' : PLATE[artSide(u.side)].trim;
   ctx.lineWidth = 1.8;
   ctx.strokeRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2);
-  ctx.fillStyle = PLATE[u.side].mid;
+  ctx.fillStyle = PLATE[artSide(u.side)].mid;
   ctx.fillRect(-w / 2 - 2, h / 2 + 1, w + 4, 7);
-  ctx.strokeStyle = PLATE[u.side].trim;
+  ctx.strokeStyle = PLATE[artSide(u.side)].trim;
   ctx.lineWidth = 0.8;
   ctx.strokeRect(-w / 2 - 2, h / 2 + 1, w + 4, 7);
   for (let i = 0; i < a.stars; i++) {
@@ -629,9 +631,9 @@ function mapBadge(x, y, side, scale) {
   ctx.translate(x, y);
   ctx.beginPath();
   ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.fillStyle = PLATE[side].mid;
+  ctx.fillStyle = PLATE[artSide(side)].mid;
   ctx.fill();
-  ctx.strokeStyle = PLATE[side].trim;
+  ctx.strokeStyle = PLATE[artSide(side)].trim;
   ctx.lineWidth = 1.4 / scale;
   ctx.stroke();
   ctx.font = `bold ${Math.max(9, 8 / scale)}px Georgia`;
@@ -1331,11 +1333,13 @@ function draw(time, dt) {
       }
       ctx.globalAlpha = garrison ? 0.78 : 1;
       const size = s.capital ? R * 2.3 : s.fort ? R * 2.05 : R * 1.85;
-      if (!ART.drawCity(ctx, kind, s.owner, 0, -6, size)) {
+      if (!ART.drawCity(ctx, kind, artSide(s.owner), 0, -6, size)) {
         ctx.fillStyle = F(s.owner).color;
         ctx.fillRect(-14, -14, 28, 28);
       }
       ctx.globalAlpha = 1;
+      // Flag remains visible above the shared published building image.
+      ART.drawFlag(ctx, artSide(s.owner), size * 0.10, -size * 0.64, size * (s.capital ? 0.54 : 0.45));
       ctx.fillStyle = '#071623';
       ctx.fillRect(-20, 27, 40, 4);
       ctx.fillStyle = s.shield > 0 ? '#9fd8ff' : '#ff6a5a';
@@ -1465,7 +1469,7 @@ function draw(time, dt) {
       if (!detail) {
         ctx.beginPath();
         ctx.arc(0, 0, 15, 0, Math.PI * 2);
-        ctx.fillStyle = PLATE[u.side].light;
+        ctx.fillStyle = PLATE[artSide(u.side)].light;
         ctx.fill();
         if (readyUnit(u)) {
           mapHasPulse = true;
@@ -1473,7 +1477,7 @@ function draw(time, dt) {
           ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
           ctx.shadowBlur = 9;
         }
-        ctx.strokeStyle = sel || multi ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[u.side].trim;
+        ctx.strokeStyle = sel || multi ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[artSide(u.side)].trim;
         ctx.lineWidth = 3 / Math.max(scale, 0.3);
         ctx.stroke();
         ctx.shadowBlur = 0;
@@ -1501,6 +1505,20 @@ function draw(time, dt) {
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
       drawStackBars(u.stack, u.side);
+      if (artSide(u.side) === 'ufn') {
+        // Golden federation crest visible over the unchanged Black Knights KMF.
+        ctx.beginPath();
+        ctx.arc(30, 16, 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#101516';
+        ctx.fill();
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#f6cf67';
+        ctx.stroke();
+        ctx.font = 'bold 12px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f6cf67';
+        ctx.fillText('U', 30, 20);
+      }
       if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);

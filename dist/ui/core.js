@@ -86,6 +86,8 @@ const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player
 const interactive = () => !uiActionBusy && !game.over && game.phase === game.player;
 const F = side => game.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral,
   C = k => E.COMMANDERS[k];
+// 2018-only visual alias: territory and save identifiers remain unchanged.
+const artSide = side => game?.mode === 'conquest' && game.era === 'ufn2018' && side === 'cf' ? 'ufn' : side;
 function toast(text, long = false) {
   $('toast').textContent = text;
   $('toast').classList.add('show');

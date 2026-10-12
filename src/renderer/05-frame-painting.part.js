@@ -158,11 +158,13 @@ function draw(time, dt) {
       }
       ctx.globalAlpha = garrison ? 0.78 : 1;
       const size = s.capital ? R * 2.3 : s.fort ? R * 2.05 : R * 1.85;
-      if (!ART.drawCity(ctx, kind, s.owner, 0, -6, size)) {
+      if (!ART.drawCity(ctx, kind, artSide(s.owner), 0, -6, size)) {
         ctx.fillStyle = F(s.owner).color;
         ctx.fillRect(-14, -14, 28, 28);
       }
       ctx.globalAlpha = 1;
+      // Flag remains visible above the shared published building image.
+      ART.drawFlag(ctx, artSide(s.owner), size * 0.10, -size * 0.64, size * (s.capital ? 0.54 : 0.45));
       ctx.fillStyle = '#071623';
       ctx.fillRect(-20, 27, 40, 4);
       ctx.fillStyle = s.shield > 0 ? '#9fd8ff' : '#ff6a5a';
@@ -292,7 +294,7 @@ function draw(time, dt) {
       if (!detail) {
         ctx.beginPath();
         ctx.arc(0, 0, 15, 0, Math.PI * 2);
-        ctx.fillStyle = PLATE[u.side].light;
+        ctx.fillStyle = PLATE[artSide(u.side)].light;
         ctx.fill();
         if (readyUnit(u)) {
           mapHasPulse = true;
@@ -300,7 +302,7 @@ function draw(time, dt) {
           ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
           ctx.shadowBlur = 9;
         }
-        ctx.strokeStyle = sel || multi ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[u.side].trim;
+        ctx.strokeStyle = sel || multi ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[artSide(u.side)].trim;
         ctx.lineWidth = 3 / Math.max(scale, 0.3);
         ctx.stroke();
         ctx.shadowBlur = 0;
@@ -328,6 +330,20 @@ function draw(time, dt) {
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
       drawStackBars(u.stack, u.side);
+      if (artSide(u.side) === 'ufn') {
+        // Golden federation crest visible over the unchanged Black Knights KMF.
+        ctx.beginPath();
+        ctx.arc(30, 16, 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#101516';
+        ctx.fill();
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#f6cf67';
+        ctx.stroke();
+        ctx.font = 'bold 12px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f6cf67';
+        ctx.fillText('U', 30, 20);
+      }
       if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);

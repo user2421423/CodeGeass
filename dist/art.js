@@ -7,6 +7,7 @@ const ART = (() => {
     cf: { trim: '#f2c14e', glow: '#ff7a45', flag: '#b52a2a', flag2: '#f2c14e' },
     neutral: { trim: '#d8cfa6', glow: '#b8ff8a', flag: '#8a8466', flag2: '#e6dfc0' },
     bk: { trim: '#f0c94a', glow: '#ff5a5a', flag: '#1d1d24', flag2: '#f0c94a' },
+    ufn: { trim: '#f6cf67', glow: '#37bfa9', flag: '#11151a', flag2: '#f6cf67' },
     jlf: { trim: '#c9d6a0', glow: '#9fff7a', flag: '#3d4a2c', flag2: '#d8e2b0' },
     eb: { trim: '#e3c06a', glow: '#d2a8ff', flag: '#4b2a7a', flag2: '#e3c06a' },
   };
@@ -16,10 +17,20 @@ const ART = (() => {
     `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" ${extra}/>`;
   const circle = (x, y, r, fill, extra = '') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" ${extra}/>`;
   const ink = (w = 1.3) => `stroke="${INK}" stroke-width="${w}" stroke-linejoin="round"`;
+  // Distinct U.F.N. standard: black field, golden U and teal federation stripe.
+  function ufnFlagSVG() {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 60" aria-label="United Federation of Nations flag">' +
+      '<path d="M3 5 Q26 0 49 5 T93 5 L93 54 Q68 49 48 54 T3 54Z" fill="#11151a" stroke="#f6cf67" stroke-width="4"/>' +
+      '<path d="M9 47 Q48 42 87 47" fill="none" stroke="#37bfa9" stroke-width="4"/>' +
+      '<circle cx="48" cy="29" r="20" fill="#182520" stroke="#f6cf67" stroke-width="3"/>' +
+      '<path d="M38 20V32Q38 42 48 42T58 32V20" fill="none" stroke="#f6cf67" stroke-width="6" stroke-linecap="round"/>' +
+      '<circle cx="48" cy="11" r="2.4" fill="#37bfa9"/>' +
+      '</svg>';
+  }
   // ---- Cities ----
   function citySVG(kind, side) {
     const f = FACTION_ART[side] || FACTION_ART.neutral,
-      wall = side === 'neutral' ? '#c9b98c' : side === 'cf' ? '#cdbfae' : side === 'eu' ? '#cfd3da' : '#d8d2e6',
+      wall = side === 'neutral' ? '#c9b98c' : side === 'ufn' ? '#9da39b' : side === 'cf' ? '#cdbfae' : side === 'eu' ? '#cfd3da' : '#d8d2e6',
       roof = f.flag,
       win = '#ffe9a8';
     const towers = (list, base) =>
@@ -154,6 +165,7 @@ const ART = (() => {
       api.onLocal?.();
     },
     citySVG,
+    ufnFlagSVG,
     // HTML: a Knightmare for panels and cards.
     unit(type, extra = '', side) {
       const l = withLocal('units', ELITE_ART_ALIASES[type] || type);
@@ -165,7 +177,11 @@ const ART = (() => {
       const html = e
         ? `${drawn}<img src="${escapeAttr(e.base + e.src)}" alt="" draggable="false" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.remove()">`
         : drawn;
-      return `<span class="ship-art unit-art city-art${e ? ' local-art' : ''} ${extra}" aria-hidden="true">${html}</span>`;
+      // Overlay the standard even when the shared city picture loads.
+      const banner = side === 'ufn'
+        ? `<span class="ufn-city-flag" style="position:absolute;top:1%;right:3%;width:40%;pointer-events:none">${ufnFlagSVG()}</span>`
+        : '';
+      return `<span class="ship-art unit-art city-art${e ? ' local-art' : ''} ${extra}" style="${banner ? 'position:relative' : ''}" aria-hidden="true">${html}${banner}</span>`;
     },
     portrait(k, extra = '') {
       const e = localEntry('portraits', k),
@@ -208,6 +224,22 @@ const ART = (() => {
       ctx.drawImage(img, x - w / 2, y - w / 2, w, w);
       return true;
     },
+    drawFlag(ctx, side, x, y, w) {
+      if (side !== 'ufn') return false;
+      const img = image('flag|ufn', ufnFlagSVG());
+      if (!img) return false;
+      const h = w * 0.625;
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = '#f6cf67';
+      ctx.lineWidth = 2;
+      ctx.moveTo(x - 3, y - 2);
+      ctx.lineTo(x - 3, y + h + 9);
+      ctx.stroke();
+      ctx.drawImage(img, x, y, w, h);
+      ctx.restore();
+      return true;
+    },
     portraitImage(k) {
       return localImage('portraits', k);
     },
@@ -232,6 +264,7 @@ const ART = (() => {
     // Unit and portrait assets preload in useLocal(); these three symbols are still drawn.
     preload(sides) {
       for (const s of sides) for (const kind of ['city', 'capital', 'fortress']) image(`c|${kind}|${s}`, citySVG(kind, s));
+      image('flag|ufn', ufnFlagSVG());
     },
   };
   if (typeof globalThis !== 'undefined' && globalThis.KnightmareArtManifest) api.useLocal(globalThis.KnightmareArtManifest);
@@ -246,4 +279,4 @@ const ART = (() => {
       .catch(() => {});
   return api;
 })();
-ART.preload(['britannia', 'eu', 'cf', 'neutral', 'bk', 'jlf', 'eb']);
+ART.preload(['britannia', 'eu', 'cf', 'neutral', 'bk', 'jlf', 'eb', 'ufn']);

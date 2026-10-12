@@ -1,0 +1,49 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const root = path.join(__dirname, '..');
+const read = name => fs.readFileSync(path.join(root, name), 'utf8');
+class FakeImage {
+  constructor() { this.complete = true; this.naturalWidth = 200; this.naturalHeight = 200; }
+  set src(v) { this._src = v; }
+  get src() { return this._src; }
+}
+const context = vm.createContext({ Image: FakeImage });
+vm.runInContext(read('dist/art.js') + '\n globalThis.testArt = ART;', context);
+const ART = context.testArt;
+test('U.F.N. flag and palette are distinct from 2017 Chinese Federation', () => {
+  const flag = ART.ufnFlagSVG();
+  assert.match(flag, /United Federation of Nations flag/);
+  for (const color of ['#11151a', '#f6cf67', '#37bfa9']) assert.ok(flag.includes(color));
+  assert.equal(ART.FACTION_ART.ufn.flag, '#11151a');
+  assert.equal(ART.FACTION_ART.cf.flag, '#b52a2a');
+  assert.notEqual(ART.citySVG('capital', 'ufn'), ART.citySVG('capital', 'cf'));
+});
+test('U.F.N. city flag overlays the generic picture and does not render for China', () => {
+  const calls = [];
+  const ctx = { save() {}, restore() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
+    drawImage(...args) { calls.push(args); } };
+  assert.equal(ART.drawFlag(ctx, 'ufn', 5, -20, 32), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][3], 32);
+  assert.match(decodeURIComponent(calls[0][0].src), /United Federation of Nations flag/);
+  assert.equal(ART.drawFlag(ctx, 'cf', 5, -20, 32), false);
+  assert.equal(calls.length, 1);
+  assert.match(ART.city('city', 'ufn'), /ufn-city-flag/);
+  assert.doesNotMatch(ART.city('city', 'cf'), /ufn-city-flag/);
+});
+test('Conquest-only art alias preserves political teal and other factions', () => {
+  const core = read('dist/ui/core.js');
+  const map = read('src/renderer/01-map-primitives.part.js');
+  const paint = read('src/renderer/05-frame-painting.part.js');
+  assert.match(core, /game\.era === 'ufn2018' && side === 'cf' \? 'ufn' : side/);
+  assert.match(map, /ufn: \{ light: '#454b49'.*trim: '#f6cf67'/);
+  assert.match(map, /PLATE\[artSide\(u\.side\)\]/);
+  assert.match(paint, /ART\.drawFlag\(ctx, artSide\(s\.owner\)/);
+  assert.match(paint, /ART\.drawCity\(ctx, kind, artSide\(s\.owner\)/);
+  assert.match(paint, /artSide\(u\.side\) === 'ufn'/);
+  assert.match(read('dist/engine/conquests.js'), /color: '#37bfa9'/);
+});
