@@ -398,11 +398,6 @@ globalThis.KnightmareArtManifest = {
       "fx": 0.5,
       "fy": 0.5
     },
-    "orpheus": {
-      "src": "portraits/orpheus-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
     "marrybell": {
       "src": "portraits/marrybell-approved.jpg",
       "fx": 0.5,
@@ -413,23 +408,8 @@ globalThis.KnightmareArtManifest = {
       "fx": 0.5,
       "fy": 0.5
     },
-    "ash": {
-      "src": "portraits/ash-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
     "sakuya": {
       "src": "portraits/sakuya-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "shalio": {
-      "src": "portraits/shalio-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "shamna": {
-      "src": "portraits/shamna-approved.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
