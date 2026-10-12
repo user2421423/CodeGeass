@@ -32,6 +32,46 @@ test('Europe scenario is a standalone, detailed, non-wrapping 44-city theatre',(
   assert.ok(g.stations.every(s=>E.tile(g,s.c,s.r).terrain!=='sea'));
 });
 
+test('European hex audit excludes Africa and Anatolia but preserves European shores and islands',()=>{
+  const g=europe.create('eu','normal',121);
+  const tileAt=(lon,lat)=>{
+    const r=Math.max(0,Math.min(g.rows-1,Math.round((72-lat)*g.rows/38-.5)));
+    const c=Math.max(0,Math.min(g.cols-1,Math.round(
+      (lon+13)*g.cols/60-.5-.5*(r&1))));
+    return E.tile(g,c,r);
+  };
+  // Inspected landmarks: cities, peninsulas and European Mediterranean islands.
+  for(const [name,lon,lat] of [
+    ['Paris',2.35,48.86],['Madrid',-3.7,40.42],['Lisbon',-9.14,38.72],
+    ['London',-.13,51.51],['Rome',12.5,41.9],['Naples',14.27,40.85],
+    ['Berlin',13.4,52.52],['Warsaw',21,52.23],['Moscow',37.62,55.75],
+    ['Sardinia',9.05,40.05],['Sicily',14.1,37.7],['Crete',24.9,35.45],
+  ]) assert.notEqual(tileAt(lon,lat).terrain,'offmap',name+' should be inside the map');
+
+  for(const [name,lon,lat] of [
+    ['Algiers',3.1,36.75],['Tunis',10.2,36.8],
+    ['Ankara',32.85,39.92],['Izmir',27.14,38.42],
+    ['Antalya',30.7,36.9],['Trabzon',39.72,41.0],
+    ['Batumi',41.6,41.65]
+  ]) assert.ok(['sea','offmap'].includes(tileAt(lon,lat).terrain),
+    name+' must not become a European land province');
+
+  let shore=0;
+  for(const t of g.tiles){
+    if(t.terrain==='sea'||t.terrain==='offmap')continue;
+    assert.ok(t.owner==='eu'||t.owner==='eb','no unowned European land');
+    const neighbors=E.adjacent(g,t);
+    const touchesSea=neighbors.some(n=>n.terrain==='sea');
+    assert.equal(t.terrain==='coast',touchesSea,
+      'shoreline classification must match real adjacent water at '+t.c+','+t.r);
+    if(touchesSea)shore++;
+  }
+  assert.ok(shore>400,'European islands, bays and peninsulas must all be coastal');
+  assert.equal(g.stations.length,44);
+  assert.equal(g.stations.filter(s=>s.portAt&&
+    E.tile(g,s.portAt.c,s.portAt.r).terrain==='sea').length,13);
+});
+
 test('Europe and Japan remain independent scenario registrations',()=>{
   const japan=E.scenarios.japan;
   assert.ok(japan);
