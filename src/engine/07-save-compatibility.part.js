@@ -75,9 +75,11 @@
       assignCityProvinces(g);
     }
     g.eliteDeployed ||= {};
-    for (const records of [g.officers, g.roster])
+    for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
-        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec);
+        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
+          which === 'officers' && eliteConquest(g) && COMMANDERS[k].side !== g.player
+            ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
