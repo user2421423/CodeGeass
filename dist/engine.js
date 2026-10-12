@@ -1212,11 +1212,17 @@
               (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
-    for (const u of g.units) {
+    for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
+        // Elite Forces are single frames; older saves let rival elites carry up to three.
+        if (u.stack > 1 && u.hp > 0) {
+          const share = u.hp / maxHP(u);
+          u.stack = 1;
+          u.hp = Math.max(1, Math.round(share * maxHP(u)));
+        }
         if ((!eliteConquest(g) && !eliteCampaign(g)) || !u.eliteStart && !eliteCampaign(g))
           g.eliteDeployed[elite] = true; // Scripted campaign elites never spend the player's recruit allowance.
       }
@@ -1235,7 +1241,7 @@
       side,
       c,
       r,
-      stack,
+      stack: ELITE_TYPE_TO_ID[type] ? 1 : stack, // Elite Forces are always single frames, for every side.
       hp: 0,
       morale: 0,
       moved: !ready,
@@ -2792,6 +2798,7 @@
       }
       case 'margaret':{
         const cost=reinforceCost(v.type,g,v.side,v),bank=funds(g,v.side);
+        if(v.elite)return {ok:false,reason:'Elite Forces are single frames and cannot be reinforced.'};
         if(v.stack>=3||shortfall(bank,cost))return {ok:false,reason:'Cannot afford this reinforcement.'};
         const old=maxHP(v);spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
       }
@@ -3750,7 +3757,7 @@
       ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
       income: 1.25,
       preserveNaval: true,
-      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
     },
     hard: {
       name: 'Hard',
@@ -3810,8 +3817,7 @@
       u.elite = id;
       u.eliteLevel = 1;
       u.eliteStart = true;
-      // Challenge grants additional frames to starting enemy formations, not the player's.
-      u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
+      u.stack = 1; // Elite Forces are single frames on every side, AI included.
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);
     }
@@ -3852,7 +3858,7 @@
       if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
-      if (d.stack) u.stack = Math.min(3, u.stack + 1);
+      if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
     });
     // Reinforcements: copies of existing enemy units (never super-heavies) on free land hexes beside them.
     const extra = Math.ceil(enemyUnits.length / d.extraPer),
@@ -3972,8 +3978,7 @@
       u.elite = id;
       u.eliteLevel = 1;
       u.eliteStart = true;
-      u.stack = u.side === g.player ? 1
-        : old.naval ? u.stack : Math.min(3, (u.stack || 1) + 1);
+      u.stack = 1; // Elite Forces are single frames on every side, AI included.
       if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);

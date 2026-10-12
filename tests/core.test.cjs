@@ -650,6 +650,20 @@ test('Carrier-Battleships cannot be assigned personal commanders', () => {
   assert.equal(g.economy.britannia.credits, credits);
 });
 
+test('Elite Forces are single frames on every side, including old saves', () => {
+  const g = E.createGame('britannia', 'elite', 'conquest', 42);
+  const elites = g.units.filter(u => u.elite && u.hp > 0);
+  assert(elites.some(u => u.side !== g.player), 'rival elites exist');
+  assert.deepEqual(elites.filter(u => u.stack !== 1).map(u => u.side + ':' + u.type), []);
+  assert.equal(E.newUnit(g, Object.values(E.ELITE_FORCES)[0].type, 'eu', 0, 0, 3).stack, 1);
+  const rival = elites.find(u => u.side !== g.player), single = E.maxHP(rival);
+  rival.stack = 3;
+  rival.hp = Math.round(E.maxHP(rival) / 2);
+  const loaded = E.migrateSave(JSON.parse(JSON.stringify(g))).units.find(u => u.id === rival.id);
+  assert.equal(loaded.stack, 1);
+  assert.equal(loaded.hp, Math.round(single / 2), 'keeps its share of health');
+});
+
 // Empty carriers fetch troops before escorting; escorting is the idle fallback.
 function escortBoard() {
   const g = blank('britannia', 24);

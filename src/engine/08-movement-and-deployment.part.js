@@ -5,7 +5,7 @@
       side,
       c,
       r,
-      stack,
+      stack: ELITE_TYPE_TO_ID[type] ? 1 : stack, // Elite Forces are always single frames, for every side.
       hp: 0,
       morale: 0,
       moved: !ready,

@@ -39,6 +39,7 @@
       }
       case 'margaret':{
         const cost=reinforceCost(v.type,g,v.side,v),bank=funds(g,v.side);
+        if(v.elite)return {ok:false,reason:'Elite Forces are single frames and cannot be reinforced.'};
         if(v.stack>=3||shortfall(bank,cost))return {ok:false,reason:'Cannot afford this reinforcement.'};
         const old=maxHP(v);spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
       }

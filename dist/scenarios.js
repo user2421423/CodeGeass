@@ -545,7 +545,7 @@
     if(difficulty!=='normal'&&difficulty!=='elite'){
       const challenge=difficulty==='challenge';
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).entries())
+        for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval&&!u.elite).entries())
           if(challenge||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));

@@ -82,11 +82,17 @@
               (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
-    for (const u of g.units) {
+    for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
+        // Elite Forces are single frames; older saves let rival elites carry up to three.
+        if (u.stack > 1 && u.hp > 0) {
+          const share = u.hp / maxHP(u);
+          u.stack = 1;
+          u.hp = Math.max(1, Math.round(share * maxHP(u)));
+        }
         if ((!eliteConquest(g) && !eliteCampaign(g)) || !u.eliteStart && !eliteCampaign(g))
           g.eliteDeployed[elite] = true; // Scripted campaign elites never spend the player's recruit allowance.
       }

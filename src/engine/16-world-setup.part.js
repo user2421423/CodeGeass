@@ -33,7 +33,7 @@
       ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
       income: 1.25,
       preserveNaval: true,
-      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
     },
     hard: {
       name: 'Hard',
@@ -93,8 +93,7 @@
       u.elite = id;
       u.eliteLevel = 1;
       u.eliteStart = true;
-      // Challenge grants additional frames to starting enemy formations, not the player's.
-      u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
+      u.stack = 1; // Elite Forces are single frames on every side, AI included.
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);
     }
@@ -135,7 +134,7 @@
       if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
-      if (d.stack) u.stack = Math.min(3, u.stack + 1);
+      if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
     });
     // Reinforcements: copies of existing enemy units (never super-heavies) on free land hexes beside them.
     const extra = Math.ceil(enemyUnits.length / d.extraPer),
@@ -255,8 +254,7 @@
       u.elite = id;
       u.eliteLevel = 1;
       u.eliteStart = true;
-      u.stack = u.side === g.player ? 1
-        : old.naval ? u.stack : Math.min(3, (u.stack || 1) + 1);
+      u.stack = 1; // Elite Forces are single frames on every side, AI included.
       if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);
