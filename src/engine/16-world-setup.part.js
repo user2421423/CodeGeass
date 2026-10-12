@@ -668,7 +668,7 @@
     }
     for (const [side, role, lon, lat, stack] of (cfg.navy || NAVY_DATA)) {
       const at = nearest(g, hexOf(lon, lat), t => isSea(t) && !unitAt(g, t));
-      if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
+      if (at) newUnit(g, navalRoster(g, side)[role], side, at.c, at.r, stack);
     }
     setupSakuradite(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
