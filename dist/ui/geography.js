@@ -620,7 +620,7 @@ const GEOGRAPHY = (() => {
     return groups;
   }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
-    if (g.mode !== 'scenario' || g.scenario?.id !== 'invasion-japan') return false;
+    if (g.mode !== 'scenario' || !['invasion-japan','european-war'].includes(g.scenario?.id)) return false;
     const p = g.scenario.projection;
     if (!p) return false;
     // Reproject the same GSHHG atlas into the north-up Japan theatre.
@@ -651,7 +651,8 @@ const GEOGRAPHY = (() => {
       Math.max(...corners.map(t => t[1])) + 10,
     ];
     const [a, b, c, d] = bounds;
-    const shapes = JAPAN_LAND.filter(shape =>
+    const source = g.scenario.id === 'invasion-japan' ? JAPAN_LAND : LAYERS.land;
+    const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
     const sea = ctx.createLinearGradient(0, top, 0, bottom);
