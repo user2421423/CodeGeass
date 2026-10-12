@@ -249,16 +249,51 @@ const modal = () => node('modal-root').innerHTML;
     honshu:true,kyushu:true,shikoku:true,hokkaido:true,korea:false,russia:false
   }, 'scenario should draw Japanese islands only, not Korea or Russia');
   const regionSource = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
+  assert(regionSource.includes("const europeOnly = g.scenario.id === 'european-war'") &&
+    regionSource.includes('if (!europeOnly) {') &&
+    regionSource.includes("g.scenario?.id === 'european-war' ? 1 : 2"),
+    'Europe-only atlas must hide extra-continental silhouettes and limit coastal colour bleed');
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');
 
   const scenarioCamera = fs.readFileSync(path.join(__dirname, '../dist/ui/core.js'), 'utf8');
   const scenarioLaunch = fs.readFileSync(path.join(__dirname, '../dist/ui/scenario-screens.js'), 'utf8');
-  assert(scenarioCamera.includes("game.mode === 'scenario' ? 2.15"),
-    'scenarios should open 72% closer than the former 1.25 zoom');
+  assert(scenarioCamera.includes("game.scenario?.id === 'european-war' ? 5.4 : 2.15"),
+    'Europe uses a tactical opening camera while Japan retains its existing zoom');
+  const scenarioZooms = run(`(() => {
+    const prior = game;
+    try {
+      game = E.scenarios.europe.create('eb', 'normal', 17);
+      const europe = homeZoom();
+      const europeLimit = turnLimit();
+      const europeTurnLabel = 'Turn ' + game.turn +
+        (turnLimit() ? ' / ' + turnLimit() : '');
+      game = E.scenarios.japan.create('britannia', 'normal', 17);
+      const japan = homeZoom(), japanLimit = turnLimit();
+      game.scenario.turnLimit = 42;
+      const explicitLimit = turnLimit();
+      return { europe, japan, europeLimit, europeTurnLabel, japanLimit, explicitLimit };
+    } finally { game = prior; }
+  })()`);
+  assert.equal(scenarioZooms.europe, 5.4,
+    'the European War should open close enough to show Knightmare sprites');
+  assert.equal(scenarioZooms.japan, 2.15,
+    'Japan scenario opening camera must remain unchanged');
+  assert.equal(scenarioZooms.europeLimit, 0,
+    'European War has no 60-turn deadline');
+  assert.equal(scenarioZooms.europeTurnLabel, 'Turn 1',
+    'European War header should not show Turn 1 / 60');
+  assert.equal(scenarioZooms.japanLimit, 60,
+    'Japan scenarios retain the existing turn counter');
+  assert.equal(scenarioZooms.explicitLimit, 42,
+    'an explicit scenario turn limit must still appear in the UI');
   assert(scenarioLaunch.includes("britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'"),
     'the opening camera must center on each chosen faction');
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
+  assert(renderingText.includes("Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)") &&
+    renderingText.includes("Math.max(15, 5 / scale)") &&
+    renderingText.includes("if (europeOverview && u.cmd)"),
+    'Europe strategic view needs legible cities, formations and commander markers');
   assert(renderingText.includes("t.terrain === 'offmap') return false"),
     'deep-ocean tiles must not render a playable tactical grid');
   assert(renderingText.includes('rgba(42,154,225,0.19)') && renderingText.includes('rgba(245,197,91,0.15)'),

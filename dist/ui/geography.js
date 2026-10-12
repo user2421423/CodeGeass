@@ -634,7 +634,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= 2) continue;
+      if (depth[j] >= (g.scenario?.id === 'european-war' ? 1 : 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -684,7 +684,8 @@ const GEOGRAPHY = (() => {
       Math.max(...corners.map(t => t[1])) + 10,
     ];
     const [a, b, c, d] = bounds;
-    const source = g.scenario.id === 'european-war' ? LAYERS.land : JAPAN_LAND; // both Japan scenarios
+    const europeOnly = g.scenario.id === 'european-war';
+    const source = europeOnly ? LAYERS.land : JAPAN_LAND; // both Japan scenarios
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -695,13 +696,17 @@ const GEOGRAPHY = (() => {
     ctx.fillRect(left, top, right - left, bottom - top);
     if (!shapes.length) return true;
 
-    // Continuous geographic land silhouette, regardless of the tactical
-    // tiles' sea/land categorization along bays and narrow straits.
-    ctx.save();
-    ctx.transform(A, C, B, D, tx, ty);
-    ctx.fillStyle = '#91a799';
-    fillPath(ctx, paths(ctx, shapes, a, b, c, d));
-    ctx.restore();
+    // Japan keeps its geographic land silhouette. Europe is deliberately
+    // Europe-only: do not draw the GSHHG outline of Africa, Anatolia or the
+    // Middle East just because they share a large global land polygon.
+    // Europe is painted below solely where European tactical provinces exist.
+    if (!europeOnly) {
+      ctx.save();
+      ctx.transform(A, C, B, D, tx, ty);
+      ctx.fillStyle = '#91a799';
+      fillPath(ctx, paths(ctx, shapes, a, b, c, d));
+      ctx.restore();
+    }
 
     // Draw only faction ownership INSIDE the geographic coast polygons.
     ctx.save();
@@ -728,12 +733,16 @@ const GEOGRAPHY = (() => {
     }
     ctx.restore();
 
-    // Shoreline strokes follow actual Japan, not hex edges.
-    ctx.save();
-    ctx.transform(A, C, B, D, tx, ty);
-    coast(ctx, shapes, a, b, c, d,
-      Math.max(0.5, scale * Math.hypot(A, C)));
-    ctx.restore();
+    // Only Japan draws unfiltered global-coast strokes; Europe's coastline
+    // is the exact edge of its geographically clipped European political
+    // fill. Unfiltered strokes would reintroduce African/Asian outlines.
+    if (!europeOnly) {
+      ctx.save();
+      ctx.transform(A, C, B, D, tx, ty);
+      coast(ctx, shapes, a, b, c, d,
+        Math.max(0.5, scale * Math.hypot(A, C)));
+      ctx.restore();
+    }
     return true;
   }
   function paint(ctx, g, left, right, top, bottom, scale) {

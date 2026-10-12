@@ -126,10 +126,53 @@
       const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
       return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
     });
-    // Only genuine shore hexes become mixed naval-and-land terrain.
+    // The packed continental coastline includes the African coast and Asian
+    // Anatolia. Audit its connected landmasses BEFORE allocating city provinces:
+    // islands such as Sicily, Sardinia, Corsica and Crete must remain playable.
+    const rawComponents=new Int16Array(g.tiles.length).fill(-1),rawRegions=[];
+    for(let i=0;i<g.tiles.length;i++){
+      if(g.tiles[i].terrain==='sea'||rawComponents[i]>=0)continue;
+      const q=[g.tiles[i]],id=rawRegions.length;
+      rawComponents[i]=id;
+      let minLon=Infinity,maxLon=-Infinity,maxLat=-Infinity;
+      for(let k=0;k<q.length;k++){
+        const t=q[k],p=geo(t.c,t.r);
+        minLon=Math.min(minLon,p.lon);maxLon=Math.max(maxLon,p.lon);
+        maxLat=Math.max(maxLat,p.lat);
+        for(const n of E.adjacent(g,t)){
+          const j=n.r*COLS+n.c;
+          if(n.terrain==='sea'||rawComponents[j]>=0)continue;
+          rawComponents[j]=id;q.push(n);
+        }
+      }
+      rawRegions.push({size:q.length,minLon,maxLon,maxLat});
+    }
+    const mainland=rawRegions.indexOf(rawRegions.reduce((best,r)=>
+      r.size>best.size?r:best,rawRegions[0]));
+    const excludedRegions=new Set(rawRegions.flatMap((region,id)=>
+      id!==mainland&&region.maxLat<38&&region.minLon<12&&region.maxLon>-7?[id]:[]));
+    function anatolianLand(p){
+      // West of the Bosporus (European Thrace) remains in the theatre.
+      // Beyond it, the Black Sea / Caucasus boundary excludes Asia.
+      if(p.lon<26.5)return false;
+      if(p.lon<28)return p.lat<40.25;
+      if(p.lon<29.2)return p.lat<40.65;
+      return p.lat<41.55+0.07*(p.lon-29.2);
+    }
+    const excludedLand=new Uint8Array(g.tiles.length);
+    for(let i=0;i<g.tiles.length;i++){
+      const t=g.tiles[i];
+      if(t.terrain!=='sea'&&(excludedRegions.has(rawComponents[i])||
+          (rawComponents[i]===mainland&&anatolianLand(geo(t.c,t.r))))){
+        excludedLand[i]=1;
+        t.terrain='sea'; // Temporarily water for city/army placement.
+      }
+    }
+    // Every genuine land-to-sea edge is coastal, including island tips.
+    // A theatre-border cut is NOT a new navigable shoreline.
     for(const t of g.tiles)if(t.terrain!=='sea'){
-      const sea=E.adjacent(g,t).filter(n=>n.terrain==='sea').length;
-      if(sea>0&&sea<=2)t.terrain='coast';
+      if(E.adjacent(g,t).some(n=>n.terrain==='sea'&&
+          !excludedLand[n.r*COLS+n.c]))t.terrain='coast';
     }
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
@@ -238,7 +281,8 @@
       }
     }
     for(const t of g.tiles)if(t.terrain==='sea'&&
-      (depth[t.r*COLS+t.c]<0||depth[t.r*COLS+t.c]>5))t.terrain='offmap';
+      (excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
+       depth[t.r*COLS+t.c]>5))t.terrain='offmap';
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
