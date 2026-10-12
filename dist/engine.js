@@ -4292,6 +4292,49 @@
           lon >= west && lon <= east && lat >= south && lat <= north))
         setTileOwner(g, t, 'cf');
     }
+    // Political borders near narrow straits cannot be determined by an unconstrained
+    // nearest-city flood: coastal gameplay hexes can touch across separate landmasses.
+    // These fixed geographic regions only establish the INITIAL map; later captures
+    // and loaded saves continue to use their actual tile and city ownership.
+    const mainlandAustralia = [
+      [113.6,-22],[114,-26.2],[115,-29.5],[115.7,-32],[115,-33.6],
+      [117.9,-35.1],[123.5,-33.9],[129,-31.6],[132,-32],[135.3,-34.6],
+      [137.7,-33],[138.1,-35.6],[140.5,-38],[143.6,-38.8],
+      [146.3,-39.1],[150,-37.5],[151.2,-33.9],[153.1,-30],
+      [153.6,-28.2],[153.1,-25],[150.8,-22.6],[149.2,-21],
+      [146.8,-19.2],[145.8,-16.9],[145.3,-14.9],
+      [143.5,-12],[142.5,-10.7],[141.6,-12.8],[141.4,-16.5],
+      [140.8,-17.5],[139.3,-17.4],[137,-15.9],[135.9,-14.9],
+      [136.7,-12.2],[132.6,-11.5],[130.8,-12.4],[129.5,-15],
+      [127.2,-13.9],[125,-15.5],[122.2,-17.9],[118.8,-20.3],
+      [114.5,-21.8]
+    ];
+    // Southern shores of the Persian Gulf and the Arabian Peninsula; the
+    // opposite shore of the gulf remains Iranian/Chinese Federation territory.
+    const arabianPeninsula = [
+      [34,31],[37,34],[41,35],[44.5,35.5],[47.3,31.7],
+      [49,29.4],[50,27.5],[52.5,26.4],[55.5,25.2],
+      [58,24.9],[61,23],[59,18],[56,17],[51,12],
+      [45,12],[41,14],[39,17],[37,21],[35,27]
+    ];
+    function insidePolygon(lon, lat, polygon) {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const a = polygon[i], b = polygon[j];
+        if ((a[1] > lat) !== (b[1] > lat) &&
+            lon < (b[0] - a[0]) * (lat - a[1]) / (b[1] - a[1]) + a[0])
+          inside = !inside;
+      }
+      return inside;
+    }
+    for (const t of g.tiles) {
+      if (isSea(t)) continue;
+      const lon = WORLD.lon0 + WORLD.dlon * (t.c + 0.5 + 0.5 * (t.r & 1));
+      const lat = WORLD.lat0 - WORLD.dlat * t.r;
+      if (insidePolygon(lon, lat, mainlandAustralia)) setTileOwner(g, t, 'neutral');
+      else if (insidePolygon(lon, lat, arabianPeninsula))
+        setTileOwner(g, t, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
+    }
     // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.
     for (let pass = 0, changed = true; changed && pass < 4; pass++) {
       changed = false;

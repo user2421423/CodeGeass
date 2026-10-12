@@ -272,13 +272,32 @@ const GEOGRAPHY = (() => {
     data.coastalCandidates.set(key, land);
     return land;
   }
+  // Opposite shores of the Persian Gulf can fall in the same coarse 7×7
+  // tactical neighborhood; nearest-by-distance alone paints Iranian colour
+  // onto neutral/2018 Britannian Arabia (or vice versa).
+  const PERSIAN_GULF_CENTER = [[47,30.4],[49,29.1],[51,27.8],[53.5,26.7],[56,25.7],[58,25.2]];
+  function persianGulfBank(x, y) {
+    const lon = (x - R) * 2 / (SQ * R) - 179;
+    const lat = 74 - (y - R) * 128 / (1.5 * R * 75);
+    if (lon < 47 || lon > 58 || lat < 23 || lat > 32) return 0;
+    for (let i = 1; i < PERSIAN_GULF_CENTER.length; i++) {
+      const a = PERSIAN_GULF_CENTER[i - 1], b = PERSIAN_GULF_CENTER[i];
+      if (lon > b[0]) continue;
+      const mid = a[1] + (lon - a[0]) / (b[0] - a[0]) * (b[1] - a[1]);
+      if (Math.abs(lat - mid) > 3.25) return 0;
+      return lat < mid ? -1 : 1;
+    }
+    return 0;
+  }
   function nearbyOwnedLand(g, x, y, c, r) {
     let winner = null, nearest = (R * 5) ** 2;
     const bank = redSeaBank(x, y);
+    const gulfBank = persianGulfBank(x, y);
     for (const seed of coastalLandCandidates(g, c, r)) {
       // The nearest same-shore playable land may lie further inland than
       // the narrow coastal band; keep it eligible without crossing the sea.
       if (bank && redSeaBank(seed.x, seed.y, true) !== bank) continue;
+      if (gulfBank && persianGulfBank(seed.x, seed.y) !== gulfBank) continue;
       const dx = seed.x - x, dy = seed.y - y;
       const d2 = dx * dx + dy * dy;
       if (d2 < nearest) { nearest = d2; winner = seed.owner; }
