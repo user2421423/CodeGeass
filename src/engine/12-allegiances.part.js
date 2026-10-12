@@ -1,10 +1,10 @@
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
   // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
   // Federation units. Skill numbers are first-pass balance guesses.
-  const ALLIES = { cf: ['bk', 'jlf'] };
+  const ALLIES = { cf: ['bk', 'jlf'], bk: ['jlf'] };
   function serves(k, side) {
     const a = COMMANDERS[k];
-    return !!a && (a.side === side || (a.side === 'guest' && ['britannia','eu','cf'].includes(side)) || !!ALLIES[side]?.includes(a.side));
+    return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
   }
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
   function commandTargets(g, u) {
