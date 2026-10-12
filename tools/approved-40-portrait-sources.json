@@ -2,7 +2,7 @@
   "updated": "2026-10-12",
   "policy": "Local portraits only: never resolve runtime artwork from external sites.",
   "status": "complete",
-  "count": 38,
+  "count": 41,
   "characters": [
     {
       "id": "marianne",
@@ -192,6 +192,21 @@
     {
       "id": "zidien",
       "src": "portraits/zidien-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "euphemia",
+      "src": "portraits/euphemia-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "cecile",
+      "src": "portraits/cecile-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "eduardo",
+      "src": "portraits/eduardo-approved.jpg",
       "status": "local"
     }
   ]
