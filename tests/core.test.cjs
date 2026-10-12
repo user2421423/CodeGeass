@@ -568,6 +568,30 @@ test('Commander ranks grant up to double HP and every Mobility star grants one m
   }
 });
 
+test('Commander branch stars add +5 flat base attack per star across combat branches', () => {
+  for (const cls of ['scout', 'mainline', 'rocket']) {
+    const g = blank();
+    const type = E.typeFor('britannia', cls);
+    const attacker = E.newUnit(g, type, 'britannia', 5, 5);
+    E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 6, 5);
+    const uncommandedDamage = E.preview(g, attacker.id, 6, 5)?.unit;
+    assert(uncommandedDamage > 0, `${cls}: ordinary unit should deal damage`);
+
+    // Suzaku's signature affects crits and defense, not the raw previewed attack.
+    attacker.cmd = 'suzaku';
+    const officer = E.officer(g, 'suzaku');
+    const branch = E.branchOf(type);
+    const baseAttack = E.TYPES[type].attack;
+    for (let stars = 1; stars <= 6; stars++) {
+      officer.ratings[branch] = stars;
+      const actual = E.preview(g, attacker.id, 6, 5)?.unit;
+      const expected = Math.round(uncommandedDamage * (baseAttack + 5 * stars) / baseAttack);
+      assert(Math.abs(actual - expected) <= 2,
+        `${cls} ${stars}★: expected +${stars * 5} base attack; got damage ${actual}, expected ~${expected}`);
+    }
+  }
+});
+
 test('Generic rarity slots, purchases, upgrades, replacements and save migration', () => {
   const p = { tokens: 20000 };
   E.roster(p);
