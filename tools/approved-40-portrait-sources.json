@@ -2,7 +2,7 @@
   "updated": "2026-10-12",
   "policy": "Local portraits only: never resolve runtime artwork from external sites.",
   "status": "complete",
-  "count": 39,
+  "count": 35,
   "characters": [
     {
       "id": "marianne",
@@ -12,11 +12,6 @@
     {
       "id": "oldrin",
       "src": "portraits/oldrin-approved.jpg",
-      "status": "local"
-    },
-    {
-      "id": "orpheus",
-      "src": "portraits/orpheus-approved.jpg",
       "status": "local"
     },
     {
@@ -30,23 +25,8 @@
       "status": "local"
     },
     {
-      "id": "ash",
-      "src": "portraits/ash-approved.jpg",
-      "status": "local"
-    },
-    {
       "id": "sakuya",
       "src": "portraits/sakuya-approved.jpg",
-      "status": "local"
-    },
-    {
-      "id": "shalio",
-      "src": "portraits/shalio-approved.jpg",
-      "status": "local"
-    },
-    {
-      "id": "shamna",
-      "src": "portraits/shamna-approved.jpg",
       "status": "local"
     },
     {
