@@ -321,7 +321,6 @@
       for (const { unit: v, amount } of splashHits) {
         if (v.hp <= 0) continue;
         v.hp = Math.max(0, v.hp - amount);
-        lowerMorale(g, v, 1);
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, a);
       }
