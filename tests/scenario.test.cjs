@@ -269,6 +269,24 @@ test('All three playable factions share one map, can act and have the expected f
   assert.equal(starts[1], starts[2]);
 });
 
+test('Black Knights Guren Type-01 is a Raider Infantry Elite', () => {
+  assert.equal(E.TYPES.elite_guren_type01.cls, 'raider');
+  assert.equal(E.ELITE_FORCES.guren_type01.availableTo.includes('bk'), true);
+});
+
+test('Elite Japan leaves all carrier-battleships regular', () => {
+  for (const player of japan.sides) {
+    const normal = japan.create(player, 'normal', 11);
+    const elite = japan.create(player, 'elite', 11);
+    const ships = g => g.units.filter(u => E.TYPES[u.type].naval === 'ship')
+      .map(u => [u.side, u.type]).sort((a,b) => a.join(':').localeCompare(b.join(':')));
+    assert.deepEqual(ships(elite), ships(normal));
+    assert.ok(elite.units.filter(u => E.TYPES[u.type].naval === 'ship')
+      .every(u => !u.elite && !u.eliteStart));
+    assert.ok(E.navalTypes(elite, 'bk').includes('bk_carrier'));
+  }
+});
+
 test('Elite Japan starts every AI commander in a Level 5 elite frame', () => {
   for (const player of japan.sides) {
     const g = japan.create(player, 'elite', 11);
