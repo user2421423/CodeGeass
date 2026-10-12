@@ -7,7 +7,7 @@ const CONFIG = E.CONQUESTS.ufn2018;
 const SIDES = ['britannia', 'eb', 'cf'];
 const totals = g => Object.fromEntries([...SIDES, 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length]));
 
-test('2018 uses exactly 168 cities and the approved 75/15/72/6 partition with three capitals', () => {
+test('2018 uses exactly 168 cities and the revised 71/19/72/6 partition with three capitals', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 707, 'ufn2018');
   assert.equal(g.cols, 180);
   assert.equal(g.rows, 76);
@@ -247,4 +247,44 @@ test('2018 U.F.N. Elite starts, factory restrictions and AI pools remain Black K
     }
   const world = E.createGame('cf', 'elite', 'conquest', 11);
   assert.equal(E.eliteEligible(world, 'cf', 'shen_hu'), true, '2017 Chinese Federation elite unchanged');
+});
+
+test('2017 Chinese Federation fields only Chinese equipment and commanders',()=>{
+  const g=E.createGame('cf','normal','conquest',42);
+  const ufn=E.createGame('cf','normal','conquest',42,'ufn2018');
+  assert.deepEqual(E.lineupOf(g,'cf'), E.LINEUPS.cf2017);
+  assert.equal(Object.keys(E.LINEUPS.cf2017).length,10);
+  for(const [cls,type] of Object.entries(E.LINEUPS.cf2017)){
+    assert.equal(E.typeFor('cf',cls,g),type);
+    assert.equal(E.TYPES[type].cls,cls);
+  }
+  for(const unit of g.units.filter(u=>u.side==='cf'&&!E.TYPES[u.type].naval)){
+    assert.ok(Object.values(E.LINEUPS.cf2017).includes(unit.type),'Chinese 2017 KMF '+unit.type);
+    if(unit.cmd)assert.equal(E.COMMANDERS[unit.cmd].side,'cf','2017 China officer '+unit.cmd);
+  }
+  for(const id of Object.keys(E.COMMANDERS).filter(id=>['bk','jlf'].includes(E.COMMANDERS[id].side))){
+    assert.equal(E.serves(id,'cf',g),false);
+    assert.equal(E.serves(id,'cf',ufn),true);
+  }
+  assert.equal(E.eliteEligible(g,'cf','akatsuki_heavy'),false);
+  assert.equal(E.eliteEligible(g,'cf','shen_hu'),true);
+  assert.deepEqual(E.lineupOf(ufn,'cf'),E.LINEUPS.bk);
+});
+test('2018 Euro Britannia receives France and Iberia and doubles starting units',()=>{
+  assert.deepEqual(CONFIG.expectedCities,{britannia:71,eb:19,cf:72,neutral:6});
+  for(const difficulty of ['normal','hard','challenge','elite']){
+    const g=E.createGame('eb',difficulty,'conquest',72,'ufn2018');
+    for(const name of ['Paris','Madrid','Barcelona','Gibraltar']){
+      const city=g.stations.find(s=>s.name===name);
+      assert.equal(city.owner,'eb',name);
+      assert.equal(E.tile(g,city.c,city.r).owner,'eb');
+    }
+  }
+  const g=E.createGame('eb','normal','conquest',72,'ufn2018');
+  const all=g.units.filter(u=>u.side==='eb');
+  assert.equal(all.length,44);
+  assert.equal(all.filter(u=>E.TYPES[u.type].naval).length,6);
+  assert.equal(all.filter(u=>!E.TYPES[u.type].naval).length,38);
+  for(const u of all.filter(u=>!E.TYPES[u.type].naval))
+    assert.equal(E.tile(g,u.c,u.r).owner,'eb','Euro Britannian deployment '+u.type);
 });

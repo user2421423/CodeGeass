@@ -90,6 +90,7 @@
       g?.scenario?.id === 'european-war' ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
     if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
+    if (worldChina(g, side)) return ['chuyen','wang_hu','shen_hu','shui_gun_ru_ii','japan_cf_carrier'].includes(id);
     return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {

@@ -57,10 +57,10 @@
           "Istanbul": "eb",
           "Tbilisi": "eb",
           "Nuuk": "eb",
-          "Paris": "britannia",
-          "Madrid": "britannia",
-          "Gibraltar": "britannia",
-          "Barcelona": "britannia",
+          "Paris": "eb",
+          "Madrid": "eb",
+          "Gibraltar": "eb",
+          "Barcelona": "eb",
           "Cairo": "britannia",
           "Algiers": "britannia",
           "Tripoli": "britannia",
@@ -89,7 +89,7 @@
           "Brisbane": "neutral",
           "Adelaide": "neutral"
     },
-    expectedCities: { britannia: 75, eb: 15, cf: 72, neutral: 6 },
+    expectedCities: { britannia: 71, eb: 19, cf: 72, neutral: 6 },
     armies: [
   [
     "britannia",
@@ -867,6 +867,37 @@
     initialTreasury: { britannia: { credits: 380, industry: 155, science: 30 }, eb: { credits: 210, industry: 85, science: 18 }, cf: { credits: 900, industry: 400, science: 70 } },
   };
 
+
+  // France and Iberia are now Euro Britannian. Rebase the Britannian
+  // forces previously stationed there to the remaining African holdings.
+  for (const army of ufn2018.armies) {
+    if (army[0] !== 'britannia') continue;
+    const p = {
+      '2.35,48.85':[3,36.7], '-3.7,40.4':[-7.6,33.6],
+      '2.2,41.4':[13.2,32.9], '-5.35,36.14':[10,33.3]
+    }[army[2]+','+army[3]];
+    if (p) [army[2],army[3]] = p;
+  }
+  // Double Euro Britannia's 19 original land formations to 38.
+  // Nine reinforce its new western holdings; ten reinforce the eastern front.
+  const euroReinforcements = [
+    ['super',2.35,48.85,1], ['heavy',2.9,49.4,2],
+    ['rocket',3.9,47.9,2], ['support',1.8,50,2],
+    ['heavy',-3.7,40.4,2], ['medium',-4.4,40.8,2],
+    ['assault',2.2,41.4,2], ['rocket',1.5,42.3,2],
+    ['scout',-5.35,36.14,2],
+    ['super',31.3,59.9,1], ['heavy',37.6,55.75,2],
+    ['heavy',30,45,2], ['medium',43,49,2], ['medium',50,55,2],
+    ['rocket',55,53,2], ['support',61,56,2], ['light',82,55,2],
+    ['assault',104,52,2], ['siege',29,42,1]
+  ];
+  ufn2018.armies.push(...euroReinforcements.map(([kind,lon,lat,stack]) => ['eb',kind,lon,lat,stack]));
+  // Double its navy from three to six formations, including Atlantic patrols.
+  ufn2018.navy.push(
+    ['eb','carrier',-8.5,47,1], ['eb','carrier',28.9,42,1],
+    ['eb','amphibious2',-5.5,35.7,1]
+  );
+
   // Every eligible roster officer receives one named starting command in each
   // Conquest. Prefer existing anonymous formations; only create fresh formations
   // if a coalition has more officers than deployed units (the 2018 U.F.N.).
@@ -877,11 +908,12 @@
     const euro = new Set(['julius','shin','ashley','manfredi','farnese','augustus','kewell','norland']);
     const ownerOf = (id, officer) => is2018
       ? (officer.side === 'britannia' ? (euro.has(id) ? 'eb' : 'britannia') : 'cf')
-      : (officer.side === 'britannia' ? 'britannia' : officer.side === 'eu' ? 'eu' : 'cf');
+      : officer.side;
     // Correct legacy 2018 assignments: the E.U.'s Klaus and Oscar cannot
     // command Euro Britannian units; both belong to the U.F.N. instead.
     if (is2018) for (const unit of armies)
       if (unit[0] === 'eb' && ['klaus','oscar'].includes(unit[5])) unit.splice(5, 2);
+    const availableOfficers = Object.entries(roster).filter(([, officer]) => is2018 || ['britannia','eu','cf'].includes(officer.side));
     const used = new Set();
     for (const entry of armies) {
       const id = entry[5];
@@ -898,7 +930,7 @@
     const origins = Object.fromEntries([...new Set(armies.map(a => a[0]))]
       .map(side => [side, armies.filter(a => a[0] === side).map(a => [a[2],a[3]])]));
     const created = {};
-    for (const [id, officer] of Object.entries(roster)) {
+    for (const [id, officer] of availableOfficers) {
       if (used.has(id)) continue;
       const side = ownerOf(id, officer);
       const slots = armies.filter(a => a[0] === side && !a[5]);
@@ -928,7 +960,7 @@
       ['cf','assault',20.5,51.9,1,null,'bk'],
       ['cf','rocket',36.6,-1.5,1,null,'bk']
     );
-    if (used.size !== Object.keys(roster).length)
+    if (used.size !== availableOfficers.length)
       throw new Error('Not every ' + era + ' commander has a starting deployment');
     return armies;
   }

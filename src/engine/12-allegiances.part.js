@@ -1,7 +1,7 @@
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
-  // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
-  // Federation units. Skill numbers are first-pass balance guesses.
-  const ALLIES = { cf: ['bk', 'jlf'], bk: ['jlf'] };
+  // Only the 2018 U.F.N. coalition may field Black Knights and JLF
+  // commanders; the 2017 Chinese Federation is independent.
+  const ALLIES = { bk: ['jlf'] };
   function serves(k, side, g = null) {
     const a = COMMANDERS[k];
     // In 2018, former E.U. and Black Knights commanders serve the united federation.

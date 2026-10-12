@@ -77,7 +77,7 @@
         side,
         Object.fromEntries(
           Object.entries(KNIGHTMARES)
-            .filter(([, k]) => k.side === side && !k.elite && !k.campaign && !k.naval)
+            .filter(([, k]) => k.side === side && !k.elite && !k.campaign && !k.naval && !k.worldOnly)
             .map(([id, k]) => [k.cls, id]),
         ),
       ]),
@@ -90,12 +90,17 @@
   function ufnBlackKnights(g, side) {
     return g?.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf';
   }
+  function worldChina(g, side) {
+    return g?.mode === 'conquest' && g.era === 'world' && side === 'cf';
+  }
   function typeFor(side, cls, g = null) {
     if (ufnBlackKnights(g, side)) return ROSTER.bk[cls] || ROSTER.cf[cls];
+    if (worldChina(g, side)) return LINEUPS.cf2017[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
     if (ufnBlackKnights(g, side)) return { ...ROSTER.bk };
+    if (worldChina(g, side)) return { ...LINEUPS.cf2017 };
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 

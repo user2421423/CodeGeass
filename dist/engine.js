@@ -77,7 +77,7 @@
         side,
         Object.fromEntries(
           Object.entries(KNIGHTMARES)
-            .filter(([, k]) => k.side === side && !k.elite && !k.campaign && !k.naval)
+            .filter(([, k]) => k.side === side && !k.elite && !k.campaign && !k.naval && !k.worldOnly)
             .map(([id, k]) => [k.cls, id]),
         ),
       ]),
@@ -90,12 +90,17 @@
   function ufnBlackKnights(g, side) {
     return g?.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf';
   }
+  function worldChina(g, side) {
+    return g?.mode === 'conquest' && g.era === 'world' && side === 'cf';
+  }
   function typeFor(side, cls, g = null) {
     if (ufnBlackKnights(g, side)) return ROSTER.bk[cls] || ROSTER.cf[cls];
+    if (worldChina(g, side)) return LINEUPS.cf2017[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
     if (ufnBlackKnights(g, side)) return { ...ROSTER.bk };
+    if (worldChina(g, side)) return { ...LINEUPS.cf2017 };
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 
@@ -176,7 +181,7 @@
       rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
     return Object.fromEntries(
       Object.entries(ELITE_FORCES)
-        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && ((g.player === 'eb' && e.availableTo.includes('britannia')) || (g.player === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))))))
+        .filter(([id, e]) => !e.scenarioOnly && eliteEligible(g, g.player, id))
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }
@@ -2161,6 +2166,7 @@
       g?.scenario?.id === 'european-war' ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
     if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
+    if (worldChina(g, side)) return ['chuyen','wang_hu','shen_hu','shui_gun_ru_ii','japan_cf_carrier'].includes(id);
     return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
@@ -2597,9 +2603,9 @@
   }
 
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
-  // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
-  // Federation units. Skill numbers are first-pass balance guesses.
-  const ALLIES = { cf: ['bk', 'jlf'], bk: ['jlf'] };
+  // Only the 2018 U.F.N. coalition may field Black Knights and JLF
+  // commanders; the 2017 Chinese Federation is independent.
+  const ALLIES = { bk: ['jlf'] };
   function serves(k, side, g = null) {
     const a = COMMANDERS[k];
     // In 2018, former E.U. and Black Knights commanders serve the united federation.

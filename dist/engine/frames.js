@@ -543,6 +543,26 @@
     },
 
 
+
+    // World War 2017 Federation-only Gun-Ru and Chuyen configurations.
+    // Not part of the Black Knights 2018 U.F.N. equipment lineup.
+    gun_ru_assault: { side:'cf', cls:'assault', worldOnly:true, name:'Gun-Ru Assault', model:'TQ-19/A', gen:'4th generation',
+      weapon:'Reinforced shoulder cannons', lore:'Federation assault conversion of the indigenous Gun-Ru.' },
+    gun_ru_light: { side:'cf', cls:'light', worldOnly:true, name:'Gun-Ru Mobile', model:'TQ-19/L', gen:'4th generation',
+      weapon:'Light cannons · mobility kit', lore:'Faster Federation field conversion of the Gun-Ru.' },
+    chuyen_medium: { side:'cf', cls:'medium', worldOnly:true, name:'Chuyen Line Model', model:'XT-401/M', gen:'7th-generation equivalent',
+      weapon:'Polearm · reinforced armor', lore:'Federation mainline Chuyen adapted for prolonged fighting.' },
+    chuyen_heavy: { side:'cf', cls:'heavy', worldOnly:true, name:'Chuyen Heavy', model:'XT-401/H', gen:'7th-generation equivalent',
+      weapon:'Heavy polearm · shield emitters', lore:'Reinforced Federation Chuyen for heavy assault formations.' },
+    chuyen_super: { side:'cf', cls:'super', worldOnly:true, name:'Chuyen Command', model:'XT-401/S', gen:'7th-generation equivalent',
+      weapon:'High-output polearm · command array', lore:'Limited-production Federation command Chuyen.' },
+    gun_ru_support: { side:'cf', cls:'support', worldOnly:true, name:'Gun-Ru Support', model:'TQ-19/F', gen:'4th generation',
+      weapon:'Support cannon · targeting datalink', lore:'Indigenous Federation Gun-Ru adapted to cover advancing formations.' },
+    gun_ru_rocket: { side:'cf', cls:'rocket', worldOnly:true, name:'Gun-Ru Rocket Artillery', model:'TQ-19/R', gen:'4th generation',
+      weapon:'Missile rack · shoulder guns', lore:'Gun-Ru-based Federation rocket battery.' },
+    gun_ru_siege: { side:'cf', cls:'siege', worldOnly:true, name:'Gun-Ru Siege Battery', model:'TQ-19/S', gen:'4th generation',
+      weapon:'Heavy siege cannon · stabilizers', lore:'Federation heavy artillery built around the Gun-Ru chassis.' },
+
     // E.U. persistent Elite Force variants. These reuse the established Alexander family art,
     // but have their own stats and fragment progression.
     elite_alexander_liberte: {
@@ -1156,6 +1176,14 @@
   // Campaign-only sides build these lineups (sharing some frames with the Federation); missions may override any
   // side's lineup in g.lineup.
   const LINEUPS = {
+    // The 2017 Chinese Federation uses only native frames. The U.F.N.
+    // retains its existing Black Knights lineup for 2018.
+    cf2017: {
+      scout:'gun_ru', assault:'gun_ru_assault', raider:'chuyen',
+      light:'gun_ru_light', medium:'chuyen_medium', heavy:'chuyen_heavy',
+      super:'chuyen_super', support:'gun_ru_support',
+      rocket:'gun_ru_rocket', siege:'gun_ru_siege'
+    },
     bk: {
       scout: 'burai',
       assault: 'burai_kai',
