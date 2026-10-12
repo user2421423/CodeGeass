@@ -7,6 +7,25 @@
   function lonLatOf(p) {
     return { lon: WORLD.lon0 + (p.c + 0.5 + 0.5 * (p.r & 1)) * WORLD.dlon, lat: WORLD.lat0 - p.r * WORLD.dlat };
   }
+  // The 2° Cape York coastal hex overlaps Australian land, but falls outside
+  // the simplified mainland point mask. The nearest-city flood wrongly gives
+  // that one hex to Port Moresby across Torres Strait. It must be neutral.
+  // The same correction applies to legacy saves while Australia's six cities
+  // remain neutral; legitimate Australian conquests must not be overwritten.
+  function repairCapeYorkOwnership(g) {
+    if (g.mode !== 'conquest' || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return false;
+    const cape = tile(g, 161, 50);
+    if (!cape || isSea(cape) || cape.owner !== 'cf' ||
+        tile(g, 160, 51)?.owner !== 'neutral' || tile(g, 161, 52)?.owner !== 'neutral') return false;
+    const australianCities = ['Sydney', 'Melbourne', 'Perth', 'Darwin', 'Brisbane', 'Adelaide'];
+    if (!australianCities.every(name => g.stations.some(s => s.name === name && s.owner === 'neutral')))
+      return false;
+    setTileOwner(g, cape, 'neutral');
+    // Legacy compact saves may still attach the hex to a Papua province;
+    // assignCityProvinces will reconcile the owner and province ID.
+    delete cape.provinceCity;
+    return true;
+  }
   const ERAS = {
     world: {
       name: 'World War · 2017 a.t.b.',
@@ -535,6 +554,7 @@
       else if (insidePolygon(lon, lat, arabianPeninsula))
         setTileOwner(g, t, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
     }
+    repairCapeYorkOwnership(g);
     // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.
     for (let pass = 0, changed = true; changed && pass < 4; pass++) {
       changed = false;

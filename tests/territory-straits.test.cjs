@@ -31,6 +31,10 @@ for (const [era, arabia] of [['world', 'neutral'], ['ufn2018', 'britannia']]) {
     for (const [lon, lat] of [[46,25],[48,22],[53,23],[55,20],[43,19]]) {
       assert.equal(ownerAt(g, lon, lat), arabia, 'Arabia ' + lon + ',' + lat);
     }
+    assert.equal(E.tile(g, 161, 50).owner, 'neutral',
+      'Cape York must remain Australian, not cross-allocated to New Guinea');
+    assert.equal(E.tile(g, 160, 49).owner, 'cf',
+      'The opposite shore on New Guinea stays Federation-controlled');
     const cities = Object.fromEntries(g.stations.map(s => [s.name,s.owner]));
     assert.equal(cities.Darwin, 'neutral');
     assert.equal(cities.Brisbane, 'neutral');
@@ -48,3 +52,21 @@ test('Strait shoreline coloring checks the bank of the Persian Gulf, not only di
   assert.match(geo, /function persianGulfBank\(/);
   assert.match(geo, /gulfBank && persianGulfBank\(seed\.x, seed\.y\) !== gulfBank/);
 });
+
+for (const era of ['world', 'ufn2018']) {
+  test(era + ': existing saves repair Cape York without resetting conquered Australian cities', () => {
+    const legacy = E.createGame('britannia', 'normal', 'conquest', 1234, era);
+    E.setTileOwner(legacy, E.tile(legacy, 161, 50), 'cf');
+    const loaded = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(legacy))));
+    assert.ok(loaded);
+    assert.equal(E.tile(loaded, 161, 50).owner, 'neutral');
+
+    const conquered = E.createGame('britannia', 'normal', 'conquest', 1234, era);
+    E.setTileOwner(conquered, E.tile(conquered, 161, 50), 'cf');
+    conquered.stations.find(s => s.name === 'Darwin').owner = 'cf';
+    const savedConquest = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(conquered))));
+    assert.ok(savedConquest);
+    assert.equal(E.tile(savedConquest, 161, 50).owner, 'cf',
+      'real Australian conquest is not reset');
+  });
+}

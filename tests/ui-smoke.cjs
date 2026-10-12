@@ -169,6 +169,10 @@ const modal = () => node('modal-root').innerHTML;
 
   // Real GIS contours: Indonesian islands must use Federation gameplay
   // ownership, not a neutral/Britannian tint propagated through sea tiles.
+  assert.equal(run("E.tile(game,161,50).owner"), 'neutral',
+    'Cape York gameplay seed stays Australian');
+  assert.equal(run("GEOGRAPHY.islandOwnerAt(game,142,-13)"), 'neutral',
+    'Cape York geographic land shape is uniformly neutral instead of Federation-coloured');
   const politicalIslands = run("({Sumatra:GEOGRAPHY.islandOwnerAt(game,101,0),Java:GEOGRAPHY.islandOwnerAt(game,111,-7),Borneo:GEOGRAPHY.islandOwnerAt(game,114,0),Papua:GEOGRAPHY.islandOwnerAt(game,134,-3),Egypt:GEOGRAPHY.islandOwnerAt(game,30,25)})");
   for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
     assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');
