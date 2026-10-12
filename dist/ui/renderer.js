@@ -1441,6 +1441,11 @@ function draw(time, dt) {
       ctx.restore();
     }
   }
+  // Compact group numbers and objective flags stay visible at strategic zoom.
+  const groupColors = ['#ffd36e', '#62d9fa', '#ff91c4', '#aff29f', '#cbb1ff', '#ffa876'];
+  const groupMembership = new Map();
+  if (game.mode === 'conquest') for (const gr of game.armyGroups || [])
+    if (gr.side === game.player) for (const id of gr.units) groupMembership.set(id, gr);
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
   for (const u of living) {
@@ -1448,6 +1453,9 @@ function draw(time, dt) {
     if (!visible(base)) continue;
     const t = E.TYPES[u.type],
       sel = selection?.kind === 'unit' && selection.id === u.id,
+      multi = multiSelectedIds.has(u.id),
+      group = groupMembership.get(u.id),
+      groupColor = groupColors[((group?.id || 1) - 1) % groupColors.length],
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
     for (const x of copies(base.x)) {
@@ -1465,14 +1473,22 @@ function draw(time, dt) {
           ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
           ctx.shadowBlur = 9;
         }
-        ctx.strokeStyle = sel ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[u.side].trim;
+        ctx.strokeStyle = sel || multi ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[u.side].trim;
         ctx.lineWidth = 3 / Math.max(scale, 0.3);
         ctx.stroke();
         ctx.shadowBlur = 0;
+        if (group && u.side === game.player) outlinedText('G' + group.id, -18, -13, 11, groupColor, scale, 'Trebuchet MS', true);
         ctx.restore();
         continue;
       }
       drawPlate(u, scale, sea, time);
+      if (multi) {
+        ctx.beginPath();
+        ctx.arc(0, 0, 22, 0, Math.PI * 2);
+        ctx.strokeStyle = '#3ff2c4';
+        ctx.lineWidth = 3 / Math.max(scale, 0.4);
+        ctx.stroke();
+      }
       ctx.globalAlpha = spent ? 0.6 : 1;
       const size = t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
@@ -1488,6 +1504,7 @@ function draw(time, dt) {
       if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);
+      if (group && u.side === game.player) outlinedText('G' + group.id, -30, 17, 15, groupColor, scale, 'Trebuchet MS', true);
       ctx.restore();
     }
   }
@@ -1539,6 +1556,25 @@ function draw(time, dt) {
         ctx.lineWidth = 1.6 / Math.max(scale, 0.4);
         ctx.stroke();
       }
+    }
+  }
+  // Persistent group objective markers, including when no member is individually selected.
+  if (game.mode === 'conquest') for (const gr of game.armyGroups || []) {
+    if (gr.side !== game.player || !gr.destination) continue;
+    const center = hexCenter(gr.destination);
+    if (!visible(center)) continue;
+    const tone = groupColors[(gr.id - 1) % groupColors.length];
+    for (const x of copies(center.x)) {
+      ctx.save();
+      ctx.setLineDash([7 / Math.max(scale, 0.35), 5 / Math.max(scale, 0.35)]);
+      hexPath(x, center.y, R * 0.79);
+      ctx.strokeStyle = tone;
+      ctx.lineWidth = 2.5 / Math.max(scale, 0.4);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      outlinedText('G' + gr.id + ' ' + (gr.stance === 'defend' ? 'DEF' : gr.stance === 'assault' ? 'ATK' : 'ADV'),
+        x, center.y - R * 0.55, 15, tone, scale, 'Trebuchet MS', true);
+      ctx.restore();
     }
   }
   // Standing orders: the selected unit's route to its destination, or the hex under the cursor while choosing one.
