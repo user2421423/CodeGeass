@@ -235,11 +235,28 @@ const modal = () => node('modal-root').innerHTML;
 
   const scenarioCamera = fs.readFileSync(path.join(__dirname, '../dist/ui/core.js'), 'utf8');
   const scenarioLaunch = fs.readFileSync(path.join(__dirname, '../dist/ui/scenario-screens.js'), 'utf8');
-  assert(scenarioCamera.includes("game.mode === 'scenario' ? 2.15"),
-    'scenarios should open 72% closer than the former 1.25 zoom');
+  assert(scenarioCamera.includes("game.scenario?.id === 'european-war' ? 5.4 : 2.15"),
+    'Europe uses a tactical opening camera while Japan retains its existing zoom');
+  const scenarioZooms = run(`(() => {
+    const prior = game;
+    try {
+      game = E.scenarios.europe.create('eb', 'normal', 17);
+      const europe = homeZoom();
+      game = E.scenarios.japan.create('britannia', 'normal', 17);
+      return { europe, japan: homeZoom() };
+    } finally { game = prior; }
+  })()`);
+  assert.equal(scenarioZooms.europe, 5.4,
+    'the European War should open close enough to show Knightmare sprites');
+  assert.equal(scenarioZooms.japan, 2.15,
+    'Japan scenario opening camera must remain unchanged');
   assert(scenarioLaunch.includes("britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'"),
     'the opening camera must center on each chosen faction');
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
+  assert(renderingText.includes("Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)") &&
+    renderingText.includes("Math.max(15, 5 / scale)") &&
+    renderingText.includes("if (europeOverview && u.cmd)"),
+    'Europe strategic view needs legible cities, formations and commander markers');
   assert(renderingText.includes("t.terrain === 'offmap') return false"),
     'deep-ocean tiles must not render a playable tactical grid');
   assert(renderingText.includes('rgba(42,154,225,0.19)') && renderingText.includes('rgba(245,197,91,0.15)'),
