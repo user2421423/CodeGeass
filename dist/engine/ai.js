@@ -1787,13 +1787,20 @@
     if (u.hold || memo.guards?.[u.id] || u.moved) return 0;
     memo.trafficCache ||= new Map();
     if (memo.trafficCache.has(u.id)) return memo.trafficCache.get(u.id);
+    // A unit at the head of a column acts before nearby followers whose
+    // route cost is higher. This clears occupied tiles without displacing guards.
+    const front = memo.assign?.[u.id], route = fieldFor(g, memo, u);
+    const position = route(u);
     let followers = 0;
     for (const v of g.units) {
-      if (v.side === u.side && v.id !== u.id && v.hp > 0 && !v.hold &&
-          !memo.guards?.[v.id] && !v.moved && dist(g, v, u) <= 2) followers++;
+      if (v.side !== u.side || v.id === u.id || v.hp <= 0 || v.hold ||
+          memo.guards?.[v.id] || v.moved || dist(g, v, u) > 2) continue;
+      if (front != null && memo.assign?.[v.id] != null && memo.assign[v.id] !== front) continue;
+      if (route(v) + 0.1 < position) continue;
+      followers++;
       if (followers >= 4) break;
     }
-    const value = Math.min(1.2, followers * 0.35);
+    const value = Math.min(1.6, followers * 0.45);
     memo.trafficCache.set(u.id, value);
     return value;
   }
@@ -2020,7 +2027,7 @@
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
         if (u.cmd && !u.attacked)
           sc -= Math.min(95, localThreat(g, u, p) * 0.36);
-        if (!guard && !u.hold && !station && !isSea(p) &&
+        if (TYPES[u.type].branch === 'Artillery' && !guard && !u.hold && !station && !isSea(p) &&
             adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
             freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
           sc -= 24; // avoid parking in the only route through a narrow pass
