@@ -337,6 +337,10 @@
     value: {
       COMMANDERS,
       ELIMINATOR,
+      ELITE_FORCES,
+      aiEliteRecruitReason,
+      recruitAIElite,
+      elitePrice,
       TERRAIN,
       cityBusyReason,
       key,
