@@ -49,7 +49,11 @@ async function endTurn() {
         .map(u => u.id),
         minesBefore = (game.sites || []).map(d => d.owner);
       let quiet = 0;
-      for (const id of ids) {
+      for (let step = 0; step < ids.length; step++) {
+        // Bounded reprioritization after earlier orders change the actual board.
+        const next = E.aiNextActor(game, ids, step);
+        if (next !== step) [ids[step], ids[next]] = [ids[next], ids[step]];
+        const id = ids[step];
         if (token !== aiToken || game.over) break;
         const u = game.units.find(u => u.id === id);
         if (!u || u.hp <= 0) continue;

@@ -21,11 +21,15 @@
   // give each its full turn.
   function aiLaunch(g, ship, events, fieldAt, masses) {
     const landed = [];
+    const supportingCargo = g.units.filter(v => v.id !== ship.id && v.side === ship.side &&
+      v.hp > 0 && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
+      dist(g, v, ship) <= 3).reduce((a, v) =>
+        a + v.cargo.reduce((sum, u) => sum + u.stack, 0), 0);
     for (let i = (ship.cargo?.length || 0) - 1; i >= 0; i--) {
       if (deployReason(g, ship, i)) continue;
       const strength = ship.cargo.reduce((a, c) => a + c.stack, 0),
         spot = deployTargets(g, ship, i)
-          .map(t => ({ t, s: landingScore(g, ship.side, t, strength + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
+          .map(t => ({ t, s: landingScore(g, ship.side, t, strength + supportingCargo + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
           .filter(o => o.s != null)
           .sort((a, b) => a.s - b.s)[0]?.t;
       if (!spot) break;
@@ -45,11 +49,37 @@
     return memo.coasts ||= g.tiles.filter(p => navigable(p) && !stationAt(g, p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
   }
   function aiCarrier(g, u, memo, events, fieldAt) {
+    // Empty carrier-battleships can escort loaded vessels if no nearby troops
+    // need boarding. This also supports future dedicated escort hulls.
+    const canTransport = TYPES[u.type]?.capacity > 0;
+    const availableBoarders = canTransport && !u.cargo?.length && g.units.some(v =>
+      v.side === u.side && v.hp > 0 && !isShip(v) && !atSea(g, v) &&
+      dist(g, v, u) <= 3 && wantsLift(g, v, memo));
+    if (!canTransport || (!u.cargo?.length && !availableBoarders)) {
+      const leaders = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
+        isShip(v) && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
+        dist(g, v, u) <= 8).sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id);
+      const leader = leaders[0];
+      if (leader && dist(g, u, leader) > 2) {
+      const choices = [...reachable(g, u).keys()].map(k => {
+        const [c, r] = k.split(',').map(Number);
+        return tile(g, c, r);
+      }).filter(p => navigable(p) && !unitAt(g, p) && dist(g, p, leader) < dist(g, u, leader))
+        .sort((a, b) => dist(g, a, leader) - dist(g, b, leader) || a.r - b.r || a.c - b.c);
+        if (choices.length) {
+          const m = move(g, u.id, choices[0].c, choices[0].r);
+          if (m.ok) { events.push({ kind: 'move', ...m, id: u.id }); return true; }
+        }
+      }
+      if (!canTransport) return false;
+    }
     const bound = u.cargo?.length ? frontOf(g, memo, u.cargo[0]) : null,
       masses = bound?.masses || null;
     if (bound) fieldAt = fieldFor(g, memo, u.cargo[0]);
     const fleet = (((g.ai ||= {})[u.side] ||= {}).fleet ||= {}),
       job = (fleet[u.id] ||= { wait: 0 }),
+      teams = (memo.navalTeams ||= {}),
+      team = bound ? (teams[bound.id] ||= { landing: null }) : null,
       cargo = u.cargo || [],
       reach = [...reachable(g, u).keys()]
         .map(k => {
@@ -64,11 +94,16 @@
       },
       danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
       strength = cargo.reduce((a, c) => a + c.stack, 0),
+      landingSupport = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
+        TYPES[v.type]?.capacity > 0 && v.cargo?.length),
       landing = p => {
+        // Count only a nearby loaded carrier as prospective same-wave support.
+        const support = landingSupport.filter(v => dist(g, v, p) <= 3)
+          .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
         const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
-          .map(t => landingScore(g, u.side, t, strength, fieldAt, masses))
+          .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses))
           .filter(v => v != null);
-        return scores.length ? Math.min(...scores) + danger(p) * 2 : null;
+        return scores.length ? Math.min(...scores) + danger(p) * 2 + (team?.landing ? Math.min(30, dist(g, p, team.landing) * 4) : 0) : null;
       };
     const here = tile(g, u.c, u.r),
       // The route is sea-only even when its goal is a city or troops ashore. Include
@@ -98,8 +133,20 @@
       if (landing(tile(g, u.c, u.r)) == null) {
         // Seed feasible landing positions, then route through navigable water rather
         // than following a land shortcut in the formation's strategic goal field.
-        const seeds = seaCoasts(g, memo).map(p => [p, landing(p)]).filter(([, score]) => score != null);
+        const seeds = seaCoasts(g, memo).map(p => [p, landing(p)]).filter(([, score]) => score != null)
+          .sort((a, b) => a[1] - b[1] || a[0].r - b[0].r || a[0].c - b[0].c);
+        if (team && seeds.length) team.landing = seeds[0][0];
         followSea(seeds);
+      }
+      // Briefly assemble a nearby second landing wave instead of drip-feeding
+      // lone transports. Five turns is a hard wait cap, not a required formation.
+      const catchingUp = landingSupport.some(v => {
+        const d = dist(g, v, u);
+        return d > 3 && d <= 6;
+      });
+      if (catchingUp && job.wait < 5 && landing(tile(g, u.c, u.r)) != null) {
+        job.wait++;
+        return true;
       }
       if (landing(tile(g, u.c, u.r)) != null) aiLaunch(g, u, events, fieldAt, masses);
       if (!u.cargo.length) job.wait = 0;

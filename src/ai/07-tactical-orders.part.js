@@ -14,12 +14,12 @@
       : type.branch === 'Armor' || type.cls === 'assault' ? 2
       : canCapture(u) && (type.move >= 4 || type.cls === 'raider') ? 4
       : 3;
-    if (g.mode === 'scenario') return tactical;
+    if (g.mode === 'scenario') return tactical - trafficBoost(g, u, aiPlan(g, u.side));
     const memo = aiPlan(g, u.side),
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
       emergency = memo.guards?.[u.id]?.emergency ||
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
-    return emergency ? tactical - 10 : tactical;
+    return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
@@ -35,6 +35,14 @@
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
+      if (recovery.tactical) {
+        const p = tile(g, recovery.tactical.c, recovery.tactical.r);
+        if (p && !unitAt(g, p) && reachable(g, u).has(key(p))) {
+          const m = move(g, id, p.c, p.r);
+          if (m.ok) events.push({ kind: 'move', ...m, id });
+        }
+        return events;
+      }
       const field = recovery.field,
         value = p => field[p.r * g.cols + p.c] + g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && !atSea(g, v) && dist(g, v, p) <= rangeOf(g, v).max).length * 8
           - (p.c === recovery.city.c && p.r === recovery.city.r ? 2 : 0),
@@ -98,7 +106,7 @@
               : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
-            (d?.cmd ? 30 : 0) -
+            (d ? commanderValue(g, d) + focusValue(g, u, d, pr, memo) : 0) -
             pr.counter * 0.5;
           // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
           const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);
@@ -191,6 +199,12 @@
           sc += Math.min(4, allies.length) * 12;
         if (station?.owner === u.side && u.hp / maxHP(u) < 0.5) sc += 20;
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
+        if (u.cmd && !u.attacked)
+          sc -= Math.min(95, localThreat(g, u, p) * 0.36);
+        if (TYPES[u.type].branch === 'Artillery' && !guard && !u.hold && !station && !isSea(p) &&
+            adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
+            freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
+          sc -= 24; // avoid parking in the only route through a narrow pass
         return sc;
       };
       let best = null,
@@ -232,8 +246,17 @@
       }
       const shot = choose();
       if (!shot) break;
+      const target = unitAt(g, shot.p);
       const a = attack(g, id, shot.p.c, shot.p.r);
-      if (a.ok) events.push({ kind: 'attack', ...a, id });
+      if (a.ok) {
+        events.push({ kind: 'attack', ...a, id });
+        if (target) {
+          memo.focusTargets ||= new Map();
+          memo.focusTargets.delete(target.id);
+          if (target.hp > 0) memo.focusTargets.set(target.id, { turn: g.turn });
+        }
+        memo.focusCache?.clear();
+      }
       else break;
     }
     // Spend restored movement on a safe hex, including withdrawal moves after firing.
@@ -258,7 +281,9 @@
         for (const friend of friends) events.push(...aiOrder(g, friend));
       }
     }
+    memo.focusCache?.clear();
+    memo.trafficCache?.clear();
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
+  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);
