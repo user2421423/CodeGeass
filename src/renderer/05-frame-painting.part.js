@@ -143,7 +143,12 @@ function draw(time, dt) {
         ctx.fillStyle = F(s.owner).color;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2 / scale;
-        const z = s.capital ? 30 : 20;
+        // Europe opens as a continental campaign: keep its settlements visible
+        // as readable screen-sized markers when the player zooms back out.
+        const europeOverview = game.scenario?.id === 'european-war';
+        const z = europeOverview
+          ? Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)
+          : s.capital ? 30 : 20;
         ctx.fillRect(-z / 2, -z / 2, z, z);
         ctx.strokeRect(-z / 2, -z / 2, z, z);
         if (s.project) {
@@ -151,8 +156,10 @@ function draw(time, dt) {
           ctx.lineWidth = 4 / scale;
           ctx.strokeRect(-z / 2 - 7, -z / 2 - 7, z + 14, z + 14);
         }
-        if ((s.capital || (s.fort && R * scale > 10)) && R * scale > 7)
-          outlinedText(s.name, 0, 34, 11, s.capital ? '#fff6d6' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
+        if ((s.capital || (s.fort && R * scale > 10)) &&
+            (europeOverview || R * scale > 7))
+          outlinedText(s.name, 0, europeOverview ? Math.max(34, z / 2 + 13 / scale) : 34,
+            11, s.capital ? '#fff6d6' : '#eef0dd', scale, 'Trebuchet MS', s.capital);
         ctx.restore();
         continue;
       }
@@ -293,7 +300,9 @@ function draw(time, dt) {
       ctx.translate(x, base.y);
       if (!detail) {
         ctx.beginPath();
-        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        const europeOverview = game.scenario?.id === 'european-war';
+        const radius = europeOverview ? Math.max(15, 5 / scale) : 15;
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
         ctx.fillStyle = PLATE[artSide(u.side)].light;
         ctx.fill();
         if (readyUnit(u)) {
@@ -306,6 +315,14 @@ function draw(time, dt) {
         ctx.lineWidth = 3 / Math.max(scale, 0.3);
         ctx.stroke();
         ctx.shadowBlur = 0;
+        // Gold commander pip distinguishes named officers from ordinary
+        // formations while preserving the familiar side-coloured unit rings.
+        if (europeOverview && u.cmd) {
+          ctx.beginPath();
+          ctx.arc(0, -radius - 2.5 / scale, 2.1 / scale, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffe3a0';
+          ctx.fill();
+        }
         if (group && u.side === game.player) outlinedText('G' + group.id, -18, -13, 11, groupColor, scale, 'Trebuchet MS', true);
         ctx.restore();
         continue;
