@@ -1,7 +1,7 @@
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
   // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
   // Federation units. Skill numbers are first-pass balance guesses.
-  const ALLIES = { cf: ['bk', 'jlf'] };
+  const ALLIES = { cf: ['bk', 'jlf'], bk: ['jlf'] };
   function serves(k, side) {
     const a = COMMANDERS[k];
     return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
@@ -140,11 +140,12 @@
   }
   function bombardBonus(g, u, city) {
     if (!city) return 1;
+    const raiko=TYPES[u.type].branch==='Artillery'&&skillNear(g,u,'raikoCity',2)?1.15:1;
     let mult = city.bombardMark?.side === u.side ? 1 + city.bombardMark.value : 1;
     const old = u.focusCity;
     if (fx(u).focusBombard && old?.city === city.id && old.lastTurn >= g.turn - 1)
       mult *= 1 + Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) * fx(u).focusBombard;
-    return mult;
+    return mult*raiko;
   }
   function treasuryBonus(g, city) {
     const holder = g.units.find(u => u.hp > 0 && u.side === city.owner && u.c === city.c && u.r === city.r && fx(u).treasury);

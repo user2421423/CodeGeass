@@ -1,0 +1,218 @@
+{
+  "updated": "2026-10-12",
+  "policy": "Local portraits only: never resolve runtime artwork from external sites.",
+  "status": "complete",
+  "count": 42,
+  "characters": [
+    {
+      "id": "marianne",
+      "src": "portraits/marianne-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "oldrin",
+      "src": "portraits/oldrin-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "marrybell",
+      "src": "portraits/marrybell-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "norland",
+      "src": "portraits/norland-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "sakuya",
+      "src": "portraits/sakuya-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "kaguya",
+      "src": "portraits/kaguya-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "charles",
+      "src": "portraits/charles-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "lloyd",
+      "src": "portraits/lloyd-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "pierre",
+      "src": "portraits/pierre-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "sophie",
+      "src": "portraits/sophie-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "sarah",
+      "src": "portraits/sarah-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "olivia",
+      "src": "portraits/olivia-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "margaret",
+      "src": "portraits/margaret-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "hilda",
+      "src": "portraits/hilda-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "chloe",
+      "src": "portraits/chloe-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "kate",
+      "src": "portraits/kate-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "joe",
+      "src": "portraits/joe-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "tianzi",
+      "src": "portraits/tianzi-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "ren",
+      "src": "portraits/ren-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "xiawang",
+      "src": "portraits/xiawang-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "chengzhong",
+      "src": "portraits/chengzhong-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "huangqian",
+      "src": "portraits/huangqian-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "sawasaki",
+      "src": "portraits/sawasaki-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "diethard",
+      "src": "portraits/diethard-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "sayoko",
+      "src": "portraits/sayoko-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "benio",
+      "src": "portraits/benio-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "kinoshita",
+      "src": "portraits/kinoshita-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "kizuna",
+      "src": "portraits/kizuna-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "toruyoshida",
+      "src": "portraits/toruyoshida-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "savitri",
+      "src": "portraits/savitri-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "kirihara",
+      "src": "portraits/kirihara-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "mutsuki",
+      "src": "portraits/mutsuki-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "ichijiku",
+      "src": "portraits/ichijiku-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "ayame",
+      "src": "portraits/ayame-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "indira",
+      "src": "portraits/indira-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "chaojielun",
+      "src": "portraits/chaojielun-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "vritra",
+      "src": "portraits/vritra-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "zidien",
+      "src": "portraits/zidien-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "euphemia",
+      "src": "portraits/euphemia-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "cecile",
+      "src": "portraits/cecile-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "eduardo",
+      "src": "portraits/eduardo-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "ferilli",
+      "src": "portraits/ferilli-approved.jpg",
+      "status": "local"
+    }
+  ]
+}

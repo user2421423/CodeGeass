@@ -71,6 +71,9 @@ function game(index) {
   let winner = null, winTurn = null;
   for (let turn = 1; turn <= maxTurns; turn++) {
     g.turn = turn;
+    // Same per-turn scenario hook as the game (dist/ui/turns.js): ends the
+    // Britannia–Black Knights alliance at turn 10.
+    japan.onTurn(g);
     for (const side of g.order) {
       if (!E.alive(g, side)) continue;
       if (!(turn === 1 && side === g.order[0]))

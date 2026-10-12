@@ -3,6 +3,7 @@
   function eliteProfile(profile = {}) {
     profile.elites ||= {};
     for (const [id, e] of Object.entries(ELITE_FORCES)) {
+      if (e.scenarioOnly) continue; // Mission ships never enter persistent HQ data.
       const rec = profile.elites[id] || {};
       profile.elites[id] = {
         level: Math.max(0, Math.min(ELITE_MAX_LEVEL, Number.isInteger(rec.level) ? rec.level : 0)),
@@ -12,7 +13,7 @@
     return profile.elites;
   }
   function eliteRecord(profile, id) {
-    return ELITE_FORCES[id] ? eliteProfile(profile)[id] : null;
+    return ELITE_FORCES[id] && !ELITE_FORCES[id].scenarioOnly ? eliteProfile(profile)[id] : null;
   }
   function eliteScale(u) {
     if (!u?.elite) return ELITE_LEVEL_SCALE[1];
@@ -74,7 +75,7 @@
       rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
     return Object.fromEntries(
       Object.entries(ELITE_FORCES)
-        .filter(([, e]) => e.availableTo.includes(g.player))
+        .filter(([, e]) => !e.scenarioOnly && e.availableTo.includes(g.player))
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }

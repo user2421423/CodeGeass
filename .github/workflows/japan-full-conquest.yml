@@ -11,6 +11,10 @@ on:
       - 'tools/japan_conquest_sim.cjs'
       - '.github/workflows/japan-full-conquest.yml'
   workflow_dispatch:
+    inputs:
+      seed:
+        description: Base seed for the 45 matched games
+        default: '246801'
 permissions:
   contents: read
 jobs:
@@ -55,7 +59,7 @@ jobs:
           fi
           BENCHMARK_VERSION="${{ matrix.version }}" node tools/japan_conquest_sim.cjs \
             --runs 15 --offset $((15 * ${{ matrix.shard }})) --max-turns 150 \
-            --seed 246801 --output "$GITHUB_WORKSPACE/results-${{ matrix.version }}-${{ matrix.shard }}.json"
+            --seed ${{ inputs.seed || '246801' }} --output "$GITHUB_WORKSPACE/results-${{ matrix.version }}-${{ matrix.shard }}.json"
       - uses: actions/upload-artifact@v4
         with:
           name: japan-${{ matrix.version }}-${{ matrix.shard }}

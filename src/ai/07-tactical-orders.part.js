@@ -55,6 +55,11 @@
       }
       return events;
     }
+    // Trigger available newcomer abilities for AI-led armies, rather than leaving them player-only.
+    if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!feintReason(g,u)) {
+      const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
+      if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
+    }
     // Withdraw already-fired allies before Leila's own movement can take her out of range.
     if (COMMANDERS[u.cmd]?.action?.kind === 'withdraw' && !feintReason(g, u)) {
       const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);

@@ -550,7 +550,7 @@ test('Commander ranks grant up to double HP and every Mobility star grants one m
     u.elite = null;
     u.eliteLevel = 0;
   }
-  const rankMultipliers = [1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0];
+  const rankMultipliers = [1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0, 2.08, 2.16];
   assert.deepEqual(E.RANK_HP, rankMultipliers);
   const baseHP = E.maxHP(ordinary);
   for (let rank = 0; rank < rankMultipliers.length; rank++) {
@@ -558,6 +558,7 @@ test('Commander ranks grant up to double HP and every Mobility star grants one m
     assert.equal(E.maxHP(commander), Math.round(baseHP * rankMultipliers[rank]),
       `rank ${rank} must use its HP multiplier`);
   }
+  commander.cmdRank = 10; // Marshal remains the player's highest HQ rank.
   assert.equal(E.maxHP(commander), baseHP * 2, 'Marshal must double the base unit HP');
 
   const uncommandedMovement = E.movement(g, ordinary);

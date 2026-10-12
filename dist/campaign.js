@@ -12,9 +12,8 @@
     camp.missions.forEach((m, i) => (ALL[m.id] = Object.assign(m, { campaign: cid, index: i })));
   const mission = id => ALL[id] || null;
 
-  // Story missions use the same three difficulty tiers as conquest, but Normal deliberately gives the player
-  // a larger safety margin than the original hand-tuned missions. Hard and Challenge reuse conquest's enemy
-  // research, unit-upgrade, reinforcement, commander-rank and income rules.
+  // Elite Campaign inherits Challenge but converts all combatants to one-frame Elite Forces.
+  // Normal, Hard and Challenge retain their original rules.
   const DIFFICULTIES = {
     normal: {
       name: 'Normal',
@@ -36,6 +35,12 @@
       ...E.DIFFICULTIES.challenge,
       ranks: 2, // Conquest uses maximum rank; campaigns retain +2.
       desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%.',
+    },
+    elite: {
+      ...E.DIFFICULTIES.challenge,
+      name: 'Elite', level: 3, tokens: 2.5, ranks: E.RANKS.length - 1,
+      stack: false, extraTurns: 0,
+      desc: 'Challenge research, economy and reinforcements, but only one-frame Elite Forces. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
     },
   };
   const difficulty = id => DIFFICULTIES[id] || DIFFICULTIES.normal;
@@ -92,8 +97,59 @@
   const friendly = (g, side) => side === g.player || !E.foe(g, side, g.player);
   const cityByName = (g, name) => g.stations.find(s => s.name === name);
   const unitWith = (g, k) => g.units.find(u => u.hp > 0 && u.cmd === k);
-  // Your Elite Forces use your HQ level (as E.applyElites does on load); others use the mission's level, or 3.
-  const eliteLevelFor = (g, side, elite, level) => (side === g.player && g.eliteLevels?.[elite]) || level || 3;
+  // Explicit temporary faction-to-roster fallbacks, limited to Elite Campaign.
+  const ELITE_ROSTER_FALLBACKS = Object.freeze({
+    eb: 'britannia', // Euro Britannia
+    jlf: 'bk',        // Japanese Liberation Front
+    neutral: 'britannia', // Interim special-garrison roster
+  });
+  const COMMANDER_ELITES = Object.freeze({
+    suzaku: 'lancelot', cornelia: 'cornelia_gloucester', kallen: 'guren_mkii',
+    tohdoh: 'tohdoh_gekka', xingke: 'shen_hu', lelouch: 'gawain',
+    anya: 'mordred', akito: 'akito_liberte', leila: 'leila_alexander',
+    ryo: 'ryo_valiant', ayano: 'ayano_valiant', yukiya: 'yukiya_valiant',
+  });
+  const isEliteCampaign = g => g.mode === 'campaign' && g.difficulty === 'elite';
+  function eliteRoster(side, g = null) {
+    const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
+      const e = E.ELITE_FORCES[id];
+      return e.availableTo.includes(owner) && !E.TYPES[e.type].naval;
+    });
+    const own = available(side);
+    if (own.length) return own;
+    // Neutral story armies borrow their actual teammate's roster when one exists;
+    // fixed JLF and Euro Britannia fallbacks take precedence over team mapping.
+    const teammate = side === 'neutral' && g?.teams?.[side]
+      ? g.order.find(s => s !== side && g.teams[s] === g.teams[side] && available(s).length)
+      : null;
+    return available(teammate || ELITE_ROSTER_FALLBACKS[side] || 'britannia');
+  }
+  function eliteType(g, side, type, cmd = null) {
+    const original = E.TYPES[type], pool = g.campaign.eliteRosters[side] || eliteRoster(side, g);
+    if (!pool.length) throw new Error(`Missing elite roster for ${side}`);
+    const current = pool.find(id => E.ELITE_FORCES[id].type === type);
+    if (current) return current;
+    let preferred = COMMANDER_ELITES[cmd];
+    const model = (original?.name || '') + ' ' + type;
+    if (cmd === 'suzaku' && /albion/i.test(model)) preferred = 'lancelot_albion';
+    if (cmd === 'kallen' && /seiten|eight.elements/i.test(model)) preferred = 'guren_seiten';
+    if (cmd === 'lelouch' && /shinkiro/i.test(model)) preferred = 'shinkiro';
+    if (preferred && pool.includes(preferred)) return preferred;
+    const cls = pool.filter(id => E.TYPES[E.ELITE_FORCES[id].type].cls === original?.cls);
+    const branch = pool.filter(id => E.TYPES[E.ELITE_FORCES[id].type].branch === original?.branch);
+    const choices = cls.length ? cls : branch.length ? branch : pool;
+    const used = (g.campaign.eliteSelections[side] ||= {});
+    const key = original?.cls || original?.branch || 'other';
+    const selected = choices[(used[key] || 0) % choices.length];
+    used[key] = (used[key] || 0) + 1;
+    return selected;
+  }
+  // HQ level applies to legacy Campaign, but only unlocks recruitment on Elite.
+  const eliteLevelFor = (g, side, elite, level) =>
+    isEliteCampaign(g) ? (side === g.player ? 1 : 3) :
+      (side === g.player && g.eliteLevels?.[elite]) || level || 3;
+  const campaignEliteLevel = (g, side, cmd, special = false) =>
+    side === g.player ? 1 : E.foe(g, side, g.player) && (cmd || special) ? 5 : 3;
   // One condition, checked against the live game.
   function holds(g, c) {
     const cm = g.campaign;
@@ -141,10 +197,22 @@
     let at = E.tile(g, c, r);
     if (!free(at)) at = nearest(g, { c, r }, free);
     if (!at) return null;
+    if (isEliteCampaign(g) && cmd && unitWith(g, cmd)) return null;
+    const special = !!E.TYPES[type].elite || ['siegfried', 'raiko', 'canterbury'].includes(type) ||
+      !!opts.special || !!opts.unique || opts.level === 5;
+    if (isEliteCampaign(g)) {
+      type = E.ELITE_FORCES[eliteType(g, side, type, cmd)].type;
+      unitStack = 1;
+    }
     if (cmd && enemy && d.ranks)
-      g.officers[cmd].rank = Math.min(E.RANKS.length - 1, E.defaultOfficer(cmd).rank + d.ranks);
+      g.officers[cmd].rank = isEliteCampaign(g) ? E.RANKS.length - 1 :
+        Math.min(E.RANKS.length - 1, E.defaultOfficer(cmd).rank + d.ranks);
     const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : unitStack, cmd, opts.ready !== false);
-    if (u.elite) u.eliteLevel = eliteLevelFor(g, side, u.elite, opts.level);
+    if (u.elite) {
+      u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, side, cmd, special) :
+        eliteLevelFor(g, side, u.elite, opts.level);
+      if (isEliteCampaign(g)) u.eliteStart = true;
+    }
     const hold = opts.hold ?? g.campaign.hold?.[side];
     if (hold != null && hold !== false) u.hold = { c: at.c, r: at.r, radius: hold };
     if (cmd) u.cmdRank = E.officer(g, cmd).rank;
@@ -156,7 +224,7 @@
 
   function addDifficultyReinforcements(g, d) {
     if (!d.extraPer) return;
-    const enemies = g.units.filter(u => u.hp > 0 && E.foe(g, u.side, g.player) && !u.elite),
+    const enemies = g.units.filter(u => u.hp > 0 && E.foe(g, u.side, g.player) && (isEliteCampaign(g) || !u.elite)),
       extra = Math.ceil(enemies.length / d.extraPer);
     let made = 0;
     for (let i = 0; i < enemies.length && made < extra; i++) {
@@ -169,7 +237,8 @@
             (!E.stationAt(g, p) || !E.foe(g, E.stationAt(g, p).owner, src.side)),
         );
       if (!spot) continue;
-      const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, src.stack);
+      const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, isEliteCampaign(g) ? 1 : src.stack);
+      if (isEliteCampaign(g)) { u.eliteLevel = 3; u.eliteStart = true; }
       u.hp = E.maxHP(u);
       if (!E.isSea(spot)) E.setTileOwner(g, spot, src.side);
       made++;
@@ -253,6 +322,10 @@
         warnings: [],
         note: null,
         enemyPlaced: 0,
+        ...(difficultyId === 'elite' ? {
+          eliteSelections: {},
+          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s, { teams: m.teams, order: sides })])),
+        } : {}),
         turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
       },
     };
@@ -303,6 +376,11 @@
       for (const n of E.within(g, t, 2)) if (!E.isSea(n) && !E.TERRAIN[n.terrain]?.blocked && !n.owner) n.owner = owner;
       t.owner = owner;
     }
+    // Existing Tier-I factories cannot produce any current land Elite Force.
+    // Bring Elite-only missions up to the minimum legal tier (as Elite Conquest does);
+    // no new cities are added and higher-tier elites still require Tier III.
+    if (isEliteCampaign(g))
+      for (const station of g.stations) E.raiseFactoryTier(g, station, 2);
     for (const spec of m.units) placeUnit(g, spec);
     addDifficultyReinforcements(g, d);
     fire(g, ev => ev.turn === 1 || ev.start);
@@ -343,10 +421,14 @@
       if (!u) continue;
       const lost = E.maxHP(u) - u.hp,
         elite = Object.entries(E.ELITE_FORCES).find(([, e]) => e.type === up.type)?.[0] || null;
-      u.type = up.type;
-      u.elite = elite;
-      u.eliteLevel = elite ? eliteLevelFor(g, u.side, elite, up.level ?? (u.eliteLevel || 3)) : 0;
-      u.stack = elite ? 1 : u.stack;
+      const replacement = isEliteCampaign(g) ? eliteType(g, u.side, up.type, u.cmd) : elite;
+      u.type = replacement ? E.ELITE_FORCES[replacement].type : up.type;
+      u.elite = replacement;
+      u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, u.side, u.cmd, true) :
+        replacement ? eliteLevelFor(g, u.side, replacement, up.level ?? (u.eliteLevel || 3)) : 0;
+      u.stack = replacement ? 1 : u.stack;
+      if (isEliteCampaign(g)) u.eliteStart = true;
+      if (isEliteCampaign(g)) u.hpTech = E.hullTech(g, u);
       u.hp = Math.max(1, E.maxHP(u) - lost);
     }
     for (const sh of asList(ev.shield)) {
@@ -592,7 +674,7 @@
       ]);
 
     // These are overall mission achievements, not per-difficulty farming: earn them once, even if the first 3-star
-    // result is on Hard or Challenge.
+    // result is on Hard, Challenge or Elite.
     const elite = starElite(g.campaign.id);
     if (oldOverall < 2 && newOverall >= 2)
       addFragments(elite, REWARD.twoStarFragments, '2★ performance');

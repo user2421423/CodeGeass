@@ -19,6 +19,7 @@ const BUNDLES = {
     "src/engine/10-economy.part.js",
     "src/engine/11-city-automation.part.js",
     "src/engine/12-allegiances.part.js",
+    "src/engine/12-approved-skills.part.js",
     "src/engine/13-sakuradite.part.js",
     "src/engine/14-fleija.part.js",
     "src/engine/15-turns-and-fortresses.part.js",

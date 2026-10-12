@@ -7,10 +7,14 @@ const ELITE_FACTORY_TAB = 'Elite Forces',
 // The city factory's tabs: the three branches and Elite Forces. Naval units are built at the port (its own
 // shipyard, NAVAL_TAB only), which has a separate one-unit-per-turn slot.
 const shopTabs = (port = false) =>
-  port ? [NAVAL_TAB, ...(game.mode === 'campaign' ? [] : [ELITE_NAVAL_TAB])] : [...BRANCH_LIST, ...(game.mode === 'campaign' ? [] : [ELITE_FACTORY_TAB])];
+  game.mode === 'campaign' && game.difficulty === 'elite'
+    ? (port ? [] : [ELITE_FACTORY_TAB])
+    : port ? [NAVAL_TAB, ...(game.mode === 'campaign' ? [] : [ELITE_NAVAL_TAB])]
+      : [...BRANCH_LIST, ...(game.mode === 'campaign' ? [] : [ELITE_FACTORY_TAB])];
 function openShop(id, branch = shop.branch) {
   const s = game.stations.find(s => s.id === id);
   if (!s || !interactive() || ((branch === NAVAL_TAB || branch === ELITE_NAVAL_TAB) ? (s.portOwner || s.owner) !== game.player : s.owner !== game.player)) return;
+  if (game.mode === 'campaign' && game.difficulty === 'elite') branch = ELITE_FACTORY_TAB;
   shop.station = id;
   shop.branch = branch;
   if (branch === ELITE_FACTORY_TAB || branch === ELITE_NAVAL_TAB) return openEliteShop(id, branch === ELITE_NAVAL_TAB);
@@ -63,23 +67,30 @@ function openEliteShop(id, navalOnly = false) {
   saveProfile(p);
   const ids = Object.keys(E.ELITE_FORCES).filter(k => {
     const e = E.ELITE_FORCES[k], t = E.TYPES[e.type];
-    return e.availableTo.includes(game.player) && !!t.naval === navalOnly;
+    const allowed = game.mode === 'campaign' && game.difficulty === 'elite'
+      ? game.campaign?.eliteRosters?.[game.player]?.includes(k)
+      : e.availableTo.includes(game.player);
+    return allowed && !!t.naval === navalOnly &&
+      (!e.scenarioOnly || (game.mode === 'scenario' && game.difficulty === 'elite'));
   });
   const tabs = shopTabs(navalOnly)
     .map(b => `<button data-branch="${b}" class="${b === shop.branch ? 'active' : ''}">${b}</button>`)
     .join('');
   const cards = ids.map(k => {
     const e = E.ELITE_FORCES[k],
-      rec = E.eliteRecord(p, k),
-      level = Math.max(1, rec.level || 1),
+      rec = e.scenarioOnly && game.mode === 'scenario' && game.difficulty === 'elite'
+        ? { level: 1, fragments: 0 } : E.eliteRecord(p, k),
+      level = game.mode === 'campaign' && game.difficulty === 'elite' ? 1 : Math.max(1, rec?.level || 1),
       stats = E.eliteStats(k, level),
       t = E.TYPES[e.type],
       cost = E.elitePrice(k, level),
       why = E.eliteDeployReason(game, s, k, p),
-      ability = t.naval ? e.lv3Text : rec.level >= 5 ? e.lv5Text : rec.level >= 3 ? e.lv3Text : 'Signature ability unlocks at Elite Lv.3.';
-    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${eliteClassLabel(t)} · ${e.rarity} · ${rec.level ? `Elite Lv.${rec.level}` : 'Locked'} · unique ×1</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${ability}</p><p class="lore">${t.weapon}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}<span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="cost">${costHTML(cost)}</div>${act(`data-elite-deploy="${k}"`, rec.level ? 'Deploy elite' : 'Locked', why, rec.level ? 'Once per operation · one unique frame' : `Fragments ${rec.fragments}/${E.ELITE_UNLOCK_FRAGMENTS}`)}</article>`;
+      ability = t.naval ? e.lv3Text : level >= 5 ? e.lv5Text : level >= 3 ? e.lv3Text : 'Signature ability unlocks at Elite Lv.3.';
+    return `<article class="unit-card elite-card ${rec?.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${eliteClassLabel(t)} · ${e.rarity} · ${rec?.level ? `Elite Lv.${level}` : 'Locked'} · unique ×1</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${ability}</p><p class="lore">${t.weapon}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}<span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="cost">${costHTML(cost)}</div>${act(`data-elite-deploy="${k}"`, rec?.level ? 'Deploy elite' : 'Locked', why, rec?.level ? 'Once per operation · one unique frame' : `Fragments ${rec?.fragments}/${E.ELITE_UNLOCK_FRAGMENTS}`)}</article>`;
   }).join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Elite Force ${navalOnly ? 'shipyard' : 'factory'}"><div class="dialog-head"><div><div class="eyebrow">${F(owner).name} · ${s.name} · ${navalOnly ? `Port level ${s.portLevel || 0}` : `Factory level ${s.tier}`}</div><h2>Deploy ${navalOnly ? 'Elite Amphibious' : 'an Elite Force'}</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${tabs}</div><div><span class="label">Unique frames · ×1 only</span></div></div><div class="info-strip">${navalOnly ? 'Unlock this Elite Force in HQ first. Amphibious elites launch on an empty friendly port hex using its independent production slot. Their normal Type II mechanics are unchanged, with no extra elite abilities.' : 'Players must unlock this Elite Force in HQ first, including on Elite Conquest. Deploy it once per operation using this city\'s factory slot.'}</div><div class="cards">${cards || '<p class="description">No Elite Forces are currently available to this faction.</p>'}</div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Elite Force ${navalOnly ? 'shipyard' : 'factory'}"><div class="dialog-head"><div><div class="eyebrow">${F(owner).name} · ${s.name} · ${navalOnly ? `Port level ${s.portLevel || 0}` : `Factory level ${s.tier}`}</div><h2>Deploy ${navalOnly ? 'Naval Elite Forces' : 'an Elite Force'}</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${tabs}</div><div><span class="label">Unique frames · ×1 only</span></div></div><div class="info-strip">${game.mode === 'campaign' && game.difficulty === 'elite'
+    ? 'Elite Campaign: only HQ-unlocked Elite Forces can be recruited. Every deployment is Lv.1, one frame, once per type per mission across all owned factories; starting and scripted elites do not use this allowance.'
+    : navalOnly ? 'Amphibious elites require HQ unlocks; Japan Elite carrier-battleships are operation-only and need no persistent unlock. They launch from an empty friendly port and use the ordinary carrier deployment mechanics.' : 'Players must unlock this Elite Force in HQ first, including on Elite Conquest. Deploy it once per operation using this city\'s factory slot.'}</div><div class="cards">${cards || '<p class="description">No Elite Forces are currently available to this faction.</p>'}</div></section></div>`;
   focusDialog();
 }
 let eliteBack = 'game',
@@ -89,7 +100,7 @@ function eliteDialog(faction = eliteFaction) {
   const p = loadProfile();
   E.eliteProfile(p);
   saveProfile(p);
-  const ids = Object.keys(E.ELITE_FORCES).filter(k => E.ELITE_FORCES[k].faction === faction);
+  const ids = Object.keys(E.ELITE_FORCES).filter(k => !E.ELITE_FORCES[k].scenarioOnly && E.ELITE_FORCES[k].faction === faction);
   const tabs = [
     ['britannia', 'Britannia'],
     ['eu', 'E.U.'],
@@ -226,8 +237,8 @@ function commanderCard(u) {
 // In an operation: assign your commanders to units. Operation commanders are listed but stay where they are.
 // Friendly activation and enemy designation use the same explicit target picker.
 function commandDialog(u) {
-  const action = C(u.cmd).action, options = E.actionTargets(game, u), friendly = action.kind === 'command';
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · every 3 turns</div><h2>${friendly ? 'Which unit acts again?' : 'Designate an enemy'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${v.cmd ? esc(C(v.cmd).short) + ' · ' : ''}${esc(E.TYPES[v.type].short)} ×${v.stack} · ${esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
+  const action = C(u.cmd).action, options = E.actionTargets(game, u), friendly = action.kind === 'command'||(action.kind==='special'&&!['enemy','enemyCommander'].includes(action.target));
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · every ${action.cooldown||3} turns</div><h2>${friendly ? 'Select a friendly unit' : 'Designate an enemy'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${v.cmd ? esc(C(v.cmd).short) + ' · ' : ''}${esc(E.TYPES[v.type].short)} ×${v.stack} · ${esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
   focusDialog();
 }
 function admiralDialog() {

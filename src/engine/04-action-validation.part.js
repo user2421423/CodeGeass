@@ -33,6 +33,7 @@
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (u.hp >= maxHP(u) ? 'Frame already intact' : null) ||
+      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
       (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
       shortfall(funds(g, u.side), { credits: repairCost(u, g) })
     );
@@ -45,6 +46,7 @@
       (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
       (isShip(u) ? 'Warships cannot be reinforced' : null) ||
       (u.stack >= 3 ? 'Already at 3 frames' : null) ||
+      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
@@ -60,11 +62,13 @@
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
-      (eliteConquest(g) && s.owner !== g.player && !t.naval ? 'Rival factories can only produce Elite Forces' : null) ||
+      (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
+      (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) || !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
         : null) ||
       (!t.naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
       (t.naval && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
       (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
@@ -75,14 +79,16 @@
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), price(type, stack, g, producer))
+      shortfall(funds(g, producer), TYPES[type].naval ? price(type,stack,g,producer) : decreePrice(price(type,stack,g,producer),s))
     );
   }
+  function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}
   function buildReason(g, s, kind) {
     if (!s || !BUILDINGS[kind]) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
+      (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
       (kind === 'lab' && buildingLevel(s, kind) === 2 && g.turn < FLEIJA.labTurn
         ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}`
         : null) ||
@@ -91,7 +97,7 @@
       (kind === 'port' && !portSite(g, s) ? 'Not a coastal city' : null) ||
       (kind === 'port' && s.portLevel && s.portOwner !== s.owner ? 'An enemy fleet holds the port' : null) ||
       cityBusyReason(g, s) ||
-      shortfall(funds(g, s.owner), buildCost(s, kind))
+      shortfall(funds(g, s.owner), decreePrice(buildCost(s, kind),s))
     );
   }
   // HQ research works on the persistent profile: { tokens, wins, research: { 'armor.guns': 2, ... } }.
@@ -138,6 +144,7 @@
       || (u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
     if (why) return why;
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    if (action.kind === 'special') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
       ? 'No enemy within 2 hexes' : action.kind === 'command' ? 'No friendly unit within 2 hexes has acted'
       : action.kind === 'withdraw' ? 'No friendly unit within 2 hexes has fired' : 'No enemy within 2 hexes';
@@ -155,7 +162,7 @@
     g.eliteLevels = Object.fromEntries(Object.entries(records).filter(([, r]) => r?.level).map(([id, r]) => [id, r.level]));
     for (const u of allUnits(g)) {
       // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
-      if (!u.elite || u.side !== g.player) continue;
+      if (!u.elite || u.side !== g.player || eliteCampaign(g)) continue;
       const old = maxHP(u),
         rec = records[u.elite];
       if (rec?.level) u.eliteLevel = rec.level;
