@@ -1227,7 +1227,10 @@
       },
       plan = ((g.ai ||= {})[side] ||= {}),
       memo = aiPlan(g, side),
-      builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side);
+      eliteCampaign = g.mode === 'campaign' && g.difficulty === 'elite',
+      eliteAI = eliteCampaign || (g.mode === 'conquest' && g.difficulty === 'elite'),
+      builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side) ||
+        (eliteCampaign && foe(g, side, g.player));
     const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
     const yard3 = bases.filter(s => s.tier >= 3);
     const superType = typeFor(side, 'super', g);
@@ -1316,7 +1319,7 @@
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
-    const reserve = defenseSaving
+    const reserve = eliteCampaign ? 0 : defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
       : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
     const reserveInd = defenseSaving
@@ -1570,7 +1573,7 @@
       return existing < desired;
     };
     const menuOf = s => {
-      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+      if (eliteAI) {
         const theater = serves(s),
           needed = theater?.need || [],
           anchor = theater?.rally || theater?.anchor || s,
@@ -1611,8 +1614,8 @@
           const hash = [...id].reduce((v, ch) => v + ch.charCodeAt(0), 0);
           return value + ((s.id * 13 + g.turn * 7 + hash) % 13) / 6;
         };
-        return Object.keys(ELITE_FORCES)
-          .filter(id => ELITE_FORCES[id].availableTo.includes(side) &&
+        return (eliteCampaign ? g.campaign?.eliteRosters?.[side] || [] : Object.keys(ELITE_FORCES))
+          .filter(id => (eliteCampaign || ELITE_FORCES[id].availableTo.includes(side)) &&
             !TYPES[ELITE_FORCES[id].type].naval &&
             TYPES[ELITE_FORCES[id].type].tier <= s.tier)
           .sort((a, b) => score(b) - score(a) || a.localeCompare(b));
@@ -1644,9 +1647,9 @@
         spot = reach && adjacent(g, s)
           .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
           .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
-      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+      if (eliteAI) {
         for (const id of menu) {
-          const cost = elitePrice(id, 1);
+          const cost = elitePrice(id, eliteCampaign ? 3 : 1);
           if (!affordable(cost) || aiEliteRecruitReason(g, s, id, spot ? vacating : null)) continue;
           if (vacating) {
             if (!spot) continue;
@@ -1677,7 +1680,7 @@
         }
       return false;
     };
-    if (g.mode === 'conquest' && g.difficulty === 'elite') {
+    if (eliteAI) {
       // Re-evaluate after each successful purchase: elite role shortages and
       // production diversity change as new units join the theater.
       for (const s of yards) tryBuild(s, menuOf(s), [1]);
