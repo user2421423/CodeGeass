@@ -83,7 +83,7 @@
     for (const u of g.units) {
       const original = TYPES[u.type];
       if (!original || original.naval) continue; // ships/amphibious unchanged
-      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side) || (g.era === 'ufn2018' && u.side === 'eb' && e.availableTo.includes('britannia')));
+      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side) || (g.era === 'ufn2018' && ((u.side === 'eb' && e.availableTo.includes('britannia')) || (u.side === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk'))))));
       // Neutral guards use elite templates but keep their neutral allegiance.
       const pool = faction.length ? faction : landElites;
       const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);

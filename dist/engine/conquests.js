@@ -867,7 +867,7 @@
     initialTreasury: { britannia: { credits: 380, industry: 155, science: 30 }, eb: { credits: 210, industry: 85, science: 18 }, cf: { credits: 900, industry: 400, science: 70 } },
   };
   const CONQUESTS = {
-    world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null },
+    world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null, expectedCities: { britannia: 51, eu: 58, cf: 47, neutral: 12 } },
     ufn2018,
   };
   (root.KnightmareData ||= {}).CONQUESTS = CONQUESTS;
