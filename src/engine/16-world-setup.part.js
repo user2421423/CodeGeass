@@ -22,6 +22,12 @@
   // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
   const DIFFICULTIES = {
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
+    elite: {
+      name: 'Elite',
+      level: 0,
+      tokens: 2.5,
+      desc: 'Every starting land unit becomes an Elite Force, including yours. Rival factories repeatedly build faction elites; you can deploy one of each elite and also build normal units. Ships and amphibious units are unchanged.',
+    },
     hard: {
       name: 'Hard',
       level: 1,
@@ -46,6 +52,34 @@
       desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
   };
+  function eliteConquest(g) {
+    return g?.mode === 'conquest' && g.difficulty === 'elite';
+  }
+  // The player's unique factory deployment allowance is separate from
+  // starting formations. Preplaced elite frames never consume it.
+  function convertConquestEliteStarts(g) {
+    if (!eliteConquest(g)) return;
+    const used = {};
+    for (const u of g.units) {
+      const original = TYPES[u.type];
+      if (!original || original.naval) continue; // ships/amphibious unchanged
+      const faction = Object.entries(ELITE_FORCES).filter(([, e]) => e.availableTo.includes(u.side));
+      // Neutral guards use elite templates but keep their neutral allegiance.
+      const pool = faction.length ? faction : Object.entries(ELITE_FORCES);
+      const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
+      const sameBranch = pool.filter(([, e]) => TYPES[e.type].branch === original.branch);
+      const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
+      const id = choices[(used[u.side] || 0) % choices.length][0];
+      used[u.side] = (used[u.side] || 0) + 1;
+      u.type = ELITE_FORCES[id].type;
+      u.elite = id;
+      u.eliteLevel = 1;
+      u.eliteStart = true;
+      u.stack = 1;
+      u.hpTech = hullTech(g, u);
+      u.hp = maxHP(u);
+    }
+  }
   // One class up within each branch: a scout becomes an assault frame, a line frame a mainline frame, and so on.
   const UPGRADE = {
     scout: 'assault',
@@ -270,6 +304,7 @@
       if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
     }
     setupSakuradite(g);
+    convertConquestEliteStarts(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
     for (const u of g.units)
       if (u.cmd) {
