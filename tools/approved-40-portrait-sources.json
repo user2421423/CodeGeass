@@ -190,15 +190,15 @@
     },
     {
       "id": "kinoshita",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_linked",
+      "image": "https://www.animecharactersdatabase.com/images%20of/Kinoshita/from/Code%20Geass%20Lelouch%20of%20the%20Rebellion%20R2/uploads/chars/9180-809532539.jpg",
+      "page": "https://www.animecharactersdatabase.com/characters.php?id=69077"
     },
     {
       "id": "kizuna",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_linked",
+      "image": "https://www.animecharactersdatabase.com/uploads/chars/9180-821342004.jpg",
+      "page": "https://www.animecharactersdatabase.com/characters.php?id=69034"
     },
     {
       "id": "toruyoshida",
