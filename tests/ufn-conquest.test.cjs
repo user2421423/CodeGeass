@@ -201,11 +201,11 @@ test('2018 U.F.N. builds only Black Knights Knightmares, including older saves a
     assert.ok(available, 'U.F.N. has a usable factory');
     assert.match(E.buyReason(state, available, 'gun_ru', 1) || '', /Not built by this faction/);
     assert.match(E.buyReason(state, available, 'alexander', 1) || '', /Not built by this faction/);
-    assert.notMatch(E.buyReason(state, available, 'burai', 1) || '', /Not built by this faction/);
+    assert.equal(/Not built by this faction/.test(E.buyReason(state, available, 'burai', 1) || ''), false);
   }
   const world = E.createGame('cf', 'normal', 'conquest', 2028);
-  assert.equal(E.typeFor('cf', 'scout', world), E.LINEUPS.cf.scout);
-  assert.equal(E.lineupOf(world, 'cf').scout, E.LINEUPS.cf.scout);
+  assert.equal(E.typeFor('cf', 'scout', world), E.ROSTER.cf.scout);
+  assert.equal(E.lineupOf(world, 'cf').scout, E.ROSTER.cf.scout);
 });
 
 test('2018 U.F.N. commanders from all three factions serve Black Knights units', () => {
