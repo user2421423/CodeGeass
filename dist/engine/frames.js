@@ -899,6 +899,22 @@
       lore: 'A veteran Shui Gun-Ru II retaining its standard amphibious systems.',
     },
 
+    // Black Knights naval conversions use existing Burai and Gekka art.
+    // These are game-specific amphibious variants, not new canonical KMF models.
+    bk_amphibious: {
+      ...AMPHIBIOUS, side: 'bk',
+      name: 'Burai Amphibious I', model: 'Type-1R Marine Conversion',
+      gen: '4th generation', role: 'Amphibious I',
+      weapon: 'Sealed rifle · torpedo pods · waterjets',
+      lore: 'Black Knights coastal adaptation of the Burai for sea crossings and landings.',
+    },
+    bk_amphibious_ii: {
+      ...AMPHIBIOUS_II, side: 'bk',
+      name: 'Gekka Amphibious II', model: 'Gekka Marine Conversion',
+      gen: '7th-generation equivalent', role: 'Amphibious II',
+      weapon: 'Torpedo pods · naval propulsion · close-combat armament',
+      lore: 'A Gekka-based Black Knights marine conversion with the standard Type II aquatic bonus.',
+    },
     // Ordinary Black Knights fleet carrier, replacing the former scenario-only Elite hull.
     bk_carrier: {
       ...CARRIER, side: 'bk',
@@ -909,10 +925,10 @@
     },
     elite_japan_bk_amphibious: {
       ...AMPHIBIOUS_II, side: 'bk', elite: true, scenarioOnly: true,
-      name: 'Black Knights Amphibious II Elite', model: 'Liberation fleet amphibious Knightmare',
-      gen: '6th generation', role: 'Elite amphibious',
-      weapon: 'Heavy torpedoes · twin cannons',
-      lore: 'Black Knights amphibious forces using standard Type II equipment and aquatic scaling.',
+      name: 'Gekka Amphibious II Elite', model: 'Gekka Marine Elite Conversion',
+      gen: '7th-generation equivalent', role: 'Elite amphibious',
+      weapon: 'Heavy torpedoes · close-combat armament · waterjets',
+      lore: 'An elite Black Knights Gekka marine conversion retaining Type II amphibious stats and aquatic scaling.',
     },
 
     // Campaign-only frames (campaign: true): the Black Knights' and JLF's own machines and Shen Hu, placed by
