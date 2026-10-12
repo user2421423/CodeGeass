@@ -350,22 +350,44 @@
     };
     const menuOf = s => {
       if (g.mode === 'conquest' && g.difficulty === 'elite') {
-        const needed = serves(s)?.need || [];
-        // Prioritize the front's requested classes, cycling equivalent elites
-        // by city and turn; duplicate AI elites are deliberately permitted.
-        const ranked = Object.keys(ELITE_FORCES)
-          .filter(id => ELITE_FORCES[id].availableTo.includes(side))
-          .sort((a, b) => {
-            const priority = id => {
-              const t = TYPES[ELITE_FORCES[id].type], rank = needed.indexOf(t.cls);
-              return (rank < 0 ? 10 : rank) * 10 + (t.tier > s.tier ? 2 : 0);
-            };
-            return priority(a) - priority(b) || a.localeCompare(b);
-          });
-        // Rotate the leading choice across cities and turns so an elite army
-        // actually fields multiple distinctive models rather than one spammed ace.
-        const offset = (s.id + g.turn) % ranked.length;
-        return [...ranked.slice(offset), ...ranked.slice(0, offset)];
+        const theater = serves(s),
+          needed = theater?.need || [],
+          anchor = theater?.rally || theater?.anchor || s,
+          enemy = (theater?.enemies?.length ? theater.enemies : foes.filter(u => dist(g, u, s) <= 9))
+            .filter(u => !TYPES[u.type].naval),
+          ally = own().filter(u => !TYPES[u.type].naval && dist(g, u, anchor) <= 10),
+          branchCount = branch => ally.filter(u => TYPES[u.type].branch === branch).length,
+          enemyCount = branch => enemy.filter(u => TYPES[u.type].branch === branch).length,
+          attacked = enemy.some(u => dist(g, u, s) <= 3),
+          defensive = attacked || theater?.type === 'defensive',
+          fortified = theater?.type === 'offensive' && (theater.objectives || []).some(o => o.fortified);
+        // Prefer classes requested by an actual front. Adjust for missing
+        // artillery/infantry/armor, enemy threats and fortified objectives.
+        // The small per-factory tie break prevents identical spam from every city.
+        const score = id => {
+          const t = TYPES[ELITE_FORCES[id].type],
+            rank = needed.indexOf(t.cls),
+            total = Math.max(1, ally.length),
+            desired = t.branch === 'Armor' ? 0.50 : t.branch === 'Artillery' ? 0.25 : 0.25,
+            scarcity = desired - branchCount(t.branch) / total;
+          let value = (rank < 0 ? 0 : 36 - rank * 4) + scarcity * 28;
+          if (fortified && t.branch === 'Artillery') value += 25;
+          if (fortified && t.cls === 'super') value += 11;
+          if (defensive && t.branch === 'Armor') value += 9;
+          if (defensive && t.branch === 'Infantry') value += 5;
+          if (enemyCount('Armor') > enemyCount('Infantry') && t.cls === 'super') value += 12;
+          if (enemyCount('Infantry') > enemyCount('Armor') && t.branch === 'Artillery') value += 12;
+          if (enemyCount('Artillery') && (t.cls === 'raider' || t.cls === 'assault')) value += 10;
+          if (!theater && !attacked && t.branch === 'Infantry') value += 4;
+          // Premium frames against active threats; lighter forces for quiet fronts.
+          if (enemy.length || fortified) value += t.tier * 2;
+          const hash = [...id].reduce((v, ch) => v + ch.charCodeAt(0), 0);
+          return value + ((s.id * 13 + g.turn * 7 + hash) % 13) / 6;
+        };
+        return Object.keys(ELITE_FORCES)
+          .filter(id => ELITE_FORCES[id].availableTo.includes(side) &&
+            TYPES[ELITE_FORCES[id].type].tier <= s.tier)
+          .sort((a, b) => score(b) - score(a) || a.localeCompare(b));
       }
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
