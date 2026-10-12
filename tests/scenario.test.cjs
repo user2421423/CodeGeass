@@ -205,6 +205,35 @@ test('Chinese invasion formations cover all eight Kyushu cities without changing
   }
 });
 
+test('Japan defender armies move closer to China while leaving two capital units each', () => {
+  for (const player of japan.sides) {
+    const g = japan.create(player, 'normal', 41);
+    const frontline = city(g, 'Kitakyushu');
+    for (const [side, capitalName, expectedForward, forwardCities] of [
+      ['britannia', 'Tokyo Settlement', 12, ['Shimonoseki', 'Yamaguchi', 'Hiroshima']],
+      ['bk', 'Kyoto', 11, ['Matsue']],
+    ]) {
+      const capital = city(g, capitalName);
+      const land = g.units.filter(u => u.side === side && !E.TYPES[u.type].naval);
+      const defenders = land.filter(u => E.distance(u, capital, g) <= 1);
+      const forward = land.filter(u => !defenders.includes(u));
+      assert.equal(defenders.length, 2, side + ' must retain exactly two capital defenders');
+      assert.equal(forward.length, expectedForward, side + ' must keep its full land army');
+      assert.ok(forward.every(u =>
+        E.distance(u, frontline, g) + 10 < E.distance(capital, frontline, g)),
+      side + ' forward units must be substantially closer to China than their capital');
+      assert.ok(land.every(u => E.tile(g, u.c, u.r).owner === side),
+        side + ' troops must deploy on their own territory');
+      const origins = g.scenario.groups
+        .filter(gr => gr.side === side && gr.id.startsWith('army-'))
+        .map(gr => gr.origin).sort();
+      assert.deepEqual(origins, [capitalName, ...forwardCities].sort());
+    }
+    assert.equal(g.units.filter(u => E.TYPES[u.type].naval).length, 14,
+      'forward land deployments must not change the fleets');
+  }
+});
+
 test('Black Knights use near-black political colouring with a gold UI accent', () => {
   const g = japan.create('bk', 'normal', 17);
   assert.equal(E.FACTIONS.bk.color, '#18181f');
