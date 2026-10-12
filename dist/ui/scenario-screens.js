@@ -23,7 +23,6 @@ function scenarioDialog() {
   if (!model) return;
   if(!model.sides.includes(scenarioSide))scenarioSide=model.sides[0];
   const japan = scenarioKey === 'japan';
-  if(!japan && scenarioDifficulty === 'elite')scenarioDifficulty='normal';
   const preview = model.create(scenarioSide,'normal',246801);
   const choices = [
     ['japan','The Invasion of Japan','44 cities · 3 sides'],
@@ -44,7 +43,7 @@ function scenarioDialog() {
       '<span class="select-mark">'+(s===scenarioSide?'✓ Selected':'Select faction')+'</span></button>';
   }).join('');
   const difficulties = Object.entries(E.DIFFICULTIES)
-    .filter(([id])=>['normal','hard','challenge',...(japan?['elite']:[])].includes(id))
+    .filter(([id])=>['normal','hard','challenge','elite'].includes(id))
     .sort((a,b)=>['normal','hard','challenge','elite'].indexOf(a[0])-
       ['normal','hard','challenge','elite'].indexOf(b[0]))
     .map(([id,d])=>'<option value="'+id+'"'+
@@ -60,9 +59,11 @@ function scenarioDialog() {
     '<div class="choice-grid '+(japan?'three':'two')+'">'+cards+'</div>'+
     '<div class="setup-row"><div><label for="scenario-difficulty">Difficulty</label>'+
     '<select id="scenario-difficulty" class="select">'+difficulties+'</select>'+
-    '<p class="mode-note">'+(japan&&scenarioDifficulty==='elite'?
-      'Elite Japan retains its advanced starting formations and elite production rules.':
-      'Hard and Challenge strengthen rival armies and income.')+'</p></div>'+
+    '<p class="mode-note">'+(scenarioDifficulty==='elite'
+      ? (japan
+        ? 'Elite Japan: single-frame starting elites; rival commanders start at Lv.5 with Supreme Commander rank. AI factories produce unlimited elite reinforcements.'
+        : 'Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.')
+      : 'Hard and Challenge strengthen rival armies and income.')+'</p></div>'+
     '<div><label>Strategic situation</label><p>'+(japan?
       'Britannia and Black Knights remain allied through turn 9.':
       'Both sides are hostile from turn 1. Europia United has the larger industrial economy; Euro Britannia begins with a heavier eastern field army.')+
