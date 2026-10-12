@@ -56,7 +56,7 @@
     return TERRAIN[t.terrain]?.cost || 1;
   }
   function canCapture(u) {
-    return TYPES[u.type].naval !== 'ship' && TYPES[u.type].branch !== 'Artillery';
+    return TYPES[u.type].naval !== 'ship';
   }
   // Amphibious frames and embarked transports may capture an empty enemy city
   // even when its shields have not yet been reduced to zero.

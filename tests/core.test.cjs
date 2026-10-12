@@ -139,6 +139,32 @@ test('Moving through a province does not recolor it; capturing its city flips on
     g.tiles.map(t => [t.owner, t.provinceCity]), 'province boundaries survive serialization');
 });
 
+test('Artillery can capture shieldless enemy cities but cannot bypass active shields', () => {
+  const g = blank();
+  const enemyCity = g.stations.find(s => s.owner === 'eu');
+  const artillery = E.newUnit(g, E.typeFor('britannia', 'rocket'), 'britannia', enemyCity.c - 1, enemyCity.r);
+  assert.equal(E.TYPES[artillery.type].branch, 'Artillery');
+  assert.equal(E.canCapture(artillery), true);
+  assert.equal(E.reachable(g, artillery).has(E.key(enemyCity)), false,
+    'city shields must still prevent an artillery capture');
+  assert.equal(E.move(g, artillery.id, enemyCity.c, enemyCity.r).ok, false);
+  enemyCity.shield = 0;
+  assert.equal(E.reachable(g, artillery).has(E.key(enemyCity)), true);
+  const moved = E.move(g, artillery.id, enemyCity.c, enemyCity.r);
+  assert.equal(moved.ok, true);
+  assert.equal(moved.captured, enemyCity.name);
+  assert.equal(enemyCity.owner, 'britannia');
+  assert.equal(E.tile(g, enemyCity.c, enemyCity.r).owner, 'britannia');
+
+  // All artillery types inherit the same capture rule; ships remain excluded.
+  for (const [type, stats] of Object.entries(E.TYPES)) {
+    if (stats.branch === 'Artillery' && stats.naval !== 'ship')
+      assert.equal(E.canCapture({ type }), true, `${type} should capture cities`);
+    if (stats.naval === 'ship')
+      assert.equal(E.canCapture({ type }), false, `${type} should not capture cities`);
+  }
+});
+
 test('World map: accepted coastal straits and original city positions', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 7);
   const region = (from, pass) => {
