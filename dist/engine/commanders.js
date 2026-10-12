@@ -881,6 +881,9 @@
     chaojielun: {"name":"Chao Jie Lun","short":"Chao","side":"cf","stars":4,"cost":145,"role":"Artillery","hull":"Federation command uplink","skill":"Combined Arms Command","desc":"Armor and Artillery allies within 2 hexes gain +15% attack damage against enemies adjacent to friendly Infantry.","fx":{"combinedFront":0.15},"title":"Chinese Federation General","recruit":300},
     vritra: {"name":"Vritra Mahat","short":"Vritra","side":"cf","stars":3,"cost":100,"role":"Artillery","hull":"Shen Hu research uplink","skill":"Experimental Penetrators","desc":"Nearby friendly elite Knightmare units gain +12 percentage points of armor penetration on attacks.","fx":{"elitePenSupport":0.12},"title":"Shen Hu Research Scientist","recruit":200},
     zidien: {"name":"Zi Dien","short":"Zi Dien","side":"cf","stars":4,"cost":145,"role":"Armor","hull":"Gekka Shiden","skill":"Shadow Ambush","desc":"His first attack against an enemy commander after moving at least 2 hexes that turn deals +25% damage and ignores half of terrain cover.","fx":{"ziAmbush":0.25},"title":"Chinese-born Peace Mark Knightmare Pilot","recruit":300},
+    euphemia: {"name":"Euphemia li Britannia","short":"Euphemia","side":"britannia","stars":4,"cost":145,"role":"Infantry","hull":"Administrative command","skill":"Royal Compassion","desc":"Nearby allied units gain +1 morale step at the start of their turn (maximum Inspired); her occupied friendly city produces +15% credits.","fx":{"royalCompassion":true},"title":"Third Princess of Britannia","recruit":300},
+    cecile: {"name":"Cécile Croomy","short":"Cécile","side":"britannia","stars":4,"cost":145,"role":"Artillery","hull":"Camelot support frame","skill":"Combat Engineering","desc":"Nearby allied elite Knightmares regenerate 5% max HP per turn and receive a 20% discount on field repairs.","fx":{"combatEngineering":true},"title":"Camelot Development Engineer","recruit":300},
+    eduardo: {"name":"Eduardo Golsaldia","short":"Eduardo","side":"eu","stars":4,"cost":150,"role":"Armor","hull":"Georgian command frame","skill":"Black Sea Fox","desc":"Friendly units within 2 hexes defending mountain hexes take 15% less direct damage and counterattack for +25% damage.","fx":{"blackSeaFox":true},"title":"Georgian Army General","recruit":300},
   };
   const RANKS = [
     'Second Lieutenant',
@@ -1010,6 +1013,9 @@
     chaojielun: {"infantry":3,"armor":4,"artillery":5,"mobility":2},
     vritra: {"infantry":2,"armor":3,"artillery":4,"mobility":2},
     zidien: {"infantry":4,"armor":5,"artillery":2,"mobility":5},
+    euphemia: {"infantry":4,"armor":3,"artillery":3,"mobility":2},
+    cecile: {"infantry":3,"armor":4,"artillery":5,"mobility":2},
+    eduardo: {"infantry":4,"armor":5,"artillery":4,"mobility":3},
   };
   const data = (root.KnightmareData ||= {});
   Object.assign(data, {
