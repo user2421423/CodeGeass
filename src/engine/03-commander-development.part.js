@@ -2,6 +2,7 @@
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
+  const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
     return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
@@ -15,7 +16,7 @@
   function defaultOfficer(k) {
     return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], generics: {}, commanderVersion: COMMANDER_VERSION };
   }
-  function cleanOfficer(k, rec) {
+  function cleanOfficer(k, rec, rankCap = HQ_RANK_CAP) {
     const base = defaultOfficer(k);
     if (!rec) return base;
     const ratings = { ...rec.ratings };
@@ -24,7 +25,7 @@
       ratings.mobility = Math.min(MAX_RATING, ratings.mobility + 2);
     return {
       commanderVersion: COMMANDER_VERSION,
-      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, RANKS.length - 1),
+      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, rankCap),
       ratings: Object.fromEntries(
         Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
@@ -57,7 +58,8 @@
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
-    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
+      eliteConquest(g) && COMMANDERS[k].side !== g.player ? RANKS.length - 1 : HQ_RANK_CAP));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
@@ -155,7 +157,7 @@
     const why = ownedReason(profile, k);
     if (why) return why;
     const o = roster(profile)[k];
-    return o.rank >= RANKS.length - 1 ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
+    return o.rank >= HQ_RANK_CAP ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
   }
   function promote(profile, k) {
     const why = promoteReason(profile, k);
