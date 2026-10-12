@@ -878,6 +878,9 @@
     ichijiku: {"name":"Ichijiku Hinata","short":"Ichijiku","side":"bk","stars":3,"cost":100,"role":"Artillery","hull":"Command frame","skill":"Radar Calibration","desc":"Every 3 turns mark enemy within 3 hexes so allied artillery ignores its terrain defense until end of turn.","fx":{},"title":"Black Knights","recruit":200,"action":{"name":"Radar Calibration","verb":"Radar Calibration","kind":"special","target":"enemy","range":3,"cooldown":3,"desc":"Every 3 turns mark enemy within 3 hexes so allied artillery ignores its terrain defense until end of turn."}},
     ayame: {"name":"Ayame Futaba","short":"Ayame","side":"bk","stars":3,"cost":100,"role":"Infantry","hull":"Command frame","skill":"Defensive Systems","desc":"Friendly units within 2 hexes take 15% less damage from ranged attacks.","fx":{"rangeShield":true},"title":"Black Knights","recruit":200},
     indira: {"name":"Indira Tharoor","short":"Indira","side":"bk","stars":3,"cost":100,"role":"Infantry","hull":"Command frame","skill":"Pinning Maneuver","desc":"Every 3 turns immobilize enemy adjacent to both friendly infantry and armor; enemy can still fight.","fx":{},"title":"Black Knights","recruit":200,"action":{"name":"Pinning Maneuver","verb":"Pinning Maneuver","kind":"special","target":"enemy","range":2,"cooldown":3,"desc":"Every 3 turns immobilize enemy adjacent to both friendly infantry and armor; enemy can still fight."}},
+    chaojielun: {"name":"Chao Jie Lun","short":"Chao","side":"cf","stars":4,"cost":145,"role":"Artillery","hull":"Federation command uplink","skill":"Combined Arms Command","desc":"Armor and Artillery allies within 2 hexes gain +15% attack damage against enemies adjacent to friendly Infantry.","fx":{"combinedFront":0.15},"title":"Chinese Federation General","recruit":300},
+    vritra: {"name":"Vritra Mahat","short":"Vritra","side":"cf","stars":3,"cost":100,"role":"Artillery","hull":"Shen Hu research uplink","skill":"Experimental Penetrators","desc":"Nearby friendly elite Knightmare units gain +12 percentage points of armor penetration on attacks.","fx":{"elitePenSupport":0.12},"title":"Shen Hu Research Scientist","recruit":200},
+    zidien: {"name":"Zi Dien","short":"Zi Dien","side":"cf","stars":4,"cost":145,"role":"Armor","hull":"Gekka Shiden","skill":"Shadow Ambush","desc":"His first attack against an enemy commander after moving at least 2 hexes that turn deals +25% damage and ignores half of terrain cover.","fx":{"ziAmbush":0.25},"title":"Chinese-born Peace Mark Knightmare Pilot","recruit":300},
   };
   const RANKS = [
     'Second Lieutenant',
@@ -1004,6 +1007,9 @@
     ichijiku: {"infantry":3,"armor":3,"artillery":3,"mobility":2},
     ayame: {"infantry":3,"armor":3,"artillery":3,"mobility":4},
     indira: {"infantry":3,"armor":3,"artillery":3,"mobility":4},
+    chaojielun: {"infantry":3,"armor":4,"artillery":5,"mobility":2},
+    vritra: {"infantry":2,"armor":3,"artillery":4,"mobility":2},
+    zidien: {"infantry":4,"armor":5,"artillery":2,"mobility":5},
   };
   const data = (root.KnightmareData ||= {});
   Object.assign(data, {
