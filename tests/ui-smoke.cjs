@@ -188,6 +188,9 @@ const modal = () => node('modal-root').innerHTML;
   const japanIn2018 = run("(() => { const g=E.createGame('britannia','normal','conquest',909,'ufn2018'); return [GEOGRAPHY.islandOwnerAt(g,127.97,26.47),GEOGRAPHY.islandOwnerAt(g,134.84,34.4),GEOGRAPHY.islandOwnerAt(g,139.7,35.7)]; })()");
   assert.equal(JSON.stringify(japanIn2018), JSON.stringify(['britannia','britannia','britannia']),
     '2018 retains Japan ownership on both small and large islands');
+  // The Soya Strait cannot paint Russian Sakhalin as an extension of Area 11.
+  assert.equal(run("GEOGRAPHY.islandOwnerAt(game,142.8,49.3)"), 'eu',
+    'Sakhalin should have the Russian/E.U. political tint');
   const politicalIslands = run("({Sumatra:GEOGRAPHY.islandOwnerAt(game,101,0),Java:GEOGRAPHY.islandOwnerAt(game,111,-7),Borneo:GEOGRAPHY.islandOwnerAt(game,114,0),Papua:GEOGRAPHY.islandOwnerAt(game,134,-3),Egypt:GEOGRAPHY.islandOwnerAt(game,30,25)})");
   for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
     assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');
