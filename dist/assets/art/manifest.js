@@ -542,6 +542,16 @@ globalThis.KnightmareArtManifest = {
       "src": "https://cdn.anime-planet.com/characters/primary/ayame-futaba-1.webp?t=1672865558",
       "fx": 0.5,
       "fy": 0.23
+    },
+    "kinoshita": {
+      "src": "https://www.animecharactersdatabase.com/images%20of/Kinoshita/from/Code%20Geass%20Lelouch%20of%20the%20Rebellion%20R2/uploads/chars/9180-809532539.jpg",
+      "fx": 0.5,
+      "fy": 0.23
+    },
+    "kizuna": {
+      "src": "https://www.animecharactersdatabase.com/uploads/chars/9180-821342004.jpg",
+      "fx": 0.5,
+      "fy": 0.23
     }
   },
   "buildings": {
