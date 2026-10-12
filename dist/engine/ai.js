@@ -1609,6 +1609,7 @@
         };
         return Object.keys(ELITE_FORCES)
           .filter(id => ELITE_FORCES[id].availableTo.includes(side) &&
+            !TYPES[ELITE_FORCES[id].type].naval &&
             TYPES[ELITE_FORCES[id].type].tier <= s.tier)
           .sort((a, b) => score(b) - score(a) || a.localeCompare(b));
       }
