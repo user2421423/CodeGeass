@@ -2,7 +2,7 @@
   "updated": "2026-10-12",
   "policy": "Local portraits only: never resolve runtime artwork from external sites.",
   "status": "complete",
-  "count": 35,
+  "count": 38,
   "characters": [
     {
       "id": "marianne",
@@ -177,6 +177,21 @@
     {
       "id": "indira",
       "src": "portraits/indira-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "chaojielun",
+      "src": "portraits/chaojielun-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "vritra",
+      "src": "portraits/vritra-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "zidien",
+      "src": "portraits/zidien-approved.jpg",
       "status": "local"
     }
   ]
