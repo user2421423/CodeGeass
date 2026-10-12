@@ -185,8 +185,61 @@ test('Core combat keeps breakthrough and movement rules intact', () => {
   const lineHit = E.attack(g, line.id, secondVictim.c, secondVictim.r);
   assert(lineHit.ok && lineHit.destroyed);
   assert.equal(line.attacked, false, 'line frame gets its normal breakthrough shot');
-  assert.equal(line.moved, true, 'ordinary breakthrough does not also restore movement');
+  assert.equal(line.moved, false, 'breakthrough preserves movement that was unused before firing');
+  assert(E.reachable(g, line).size > 0, 'the line frame can move after its killing shot');
+});
+
+test('Repeat attacks do not restore movement already spent or extend the attack cap', () => {
+  const g = blank();
+  const line = E.newUnit(g, E.typeFor('britannia', 'light'), 'britannia', 4, 4);
+  const first = E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 5, 4);
+  const second = E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 4, 5);
+  first.hp = second.hp = 1;
+  assert.equal(E.attack(g, line.id, first.c, first.r).destroyed, true);
+  assert.equal(line.moved, false, 'the first breakthrough kill preserves unused movement');
+  assert.equal(E.attack(g, line.id, second.c, second.r).destroyed, true);
+  assert.equal(line.attacked, true, 'the normal breakthrough attack limit remains enforced');
+  assert.equal(line.moved, true, 'the final attack consumes movement without another refreshed shot');
   assert.equal(E.reachable(g, line).size, 0);
+
+  const movedGame = blank();
+  const movedLine = E.newUnit(movedGame, E.typeFor('britannia', 'light'), 'britannia', 4, 4);
+  const victim = E.newUnit(movedGame, E.typeFor('eu', 'scout'), 'eu', 6, 4);
+  victim.hp = 1;
+  assert.equal(E.move(movedGame, movedLine.id, 5, 4).ok, true);
+  assert.equal(movedLine.moved, true);
+  assert.equal(E.attack(movedGame, movedLine.id, victim.c, victim.r).destroyed, true);
+  assert.equal(movedLine.attacked, false, 'the killing attack still permits a second shot');
+  assert.equal(movedLine.moved, true, 'movement spent before the shot is not restored');
+  assert.equal(E.reachable(movedGame, movedLine).size, 0);
+});
+
+test('Nonlethal or non-repeat attacks consume movement and limited reposition remains limited', () => {
+  const g = blank();
+  const line = E.newUnit(g, E.typeFor('britannia', 'light'), 'britannia', 4, 4);
+  const survivor = E.newUnit(g, E.typeFor('eu', 'scout'), 'eu', 5, 4);
+  survivor.hp = 100000;
+  assert.equal(E.attack(g, line.id, survivor.c, survivor.r).destroyed, false);
+  assert.equal(line.moved, true, 'missing a kill ends normal movement');
+  assert.equal(line.attacked, true);
+
+  const artilleryGame = blank();
+  const artillery = E.newUnit(artilleryGame, E.typeFor('britannia', 'rocket'), 'britannia', 4, 4);
+  const victim = E.newUnit(artilleryGame, E.typeFor('eu', 'scout'), 'eu', 4, 6);
+  victim.hp = 1;
+  assert.equal(E.attack(artilleryGame, artillery.id, victim.c, victim.r).destroyed, true);
+  assert.equal(artillery.attacked, true, 'a unit with no repeat-attack effect is spent');
+  assert.equal(artillery.moved, true);
+
+  const limitedGame = blank();
+  const limited = E.newUnit(limitedGame, E.typeFor('britannia', 'light'), 'britannia', 4, 4);
+  const limitedVictim = E.newUnit(limitedGame, E.typeFor('eu', 'scout'), 'eu', 5, 4);
+  limitedVictim.hp = 1;
+  limited.skillReposition = 1;
+  assert.equal(E.attack(limitedGame, limited.id, limitedVictim.c, limitedVictim.r).destroyed, true);
+  assert.equal(limited.moved, false);
+  assert.equal(limited.skillReposition, 1, 'the killing shot must not upgrade a limited reposition to a full move');
+  assert.equal(E.reachable(limitedGame, limited).has(E.key(E.tile(limitedGame, 4, 6))), false);
 });
 
 test('F.L.E.I.J.A. leaves a city at ground zero as ruins, destroys its deposit and forces its owner to surrender', () => {

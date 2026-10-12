@@ -269,6 +269,11 @@
     const splashHits = pr.splash ? g.units
       .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1)
       .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
+    // Keep track of any unused movement before firing; a kill that earns another attack
+    // should not consume it. Limited skill repositioning must stay limited.
+    const movementBeforeAttack = !a.moved
+      ? { skillReposition: a.skillReposition || 0, withdrawMove: !!a.withdrawMove }
+      : null;
     a.attacked = true;
     a.moved = true;
     a.skillReposition = 0;
@@ -369,6 +374,21 @@
       a.eliteMoveAfterKill = true;
     }
     afterCommanderAttack(g,a,d,s,destroyed,timeStop);
+    // Preserve the movement that was already available when a killing attack
+    // refreshes another shot. Do not grant an extra move to a unit that had
+    // spent it; existing Relentless, elite and commander rewards still apply.
+    if (destroyed && a.hp > 0 && !a.attacked && movementBeforeAttack) {
+      a.moved = false;
+      if (!(TYPES[a.type].relentless || eliteRelentless || aef.moveAfterAttack || aef.moveAfterKill)) {
+        if (!movementBeforeAttack.skillReposition && !movementBeforeAttack.withdrawMove) {
+          a.skillReposition = 0;
+          a.withdrawMove = false;
+        } else {
+          a.skillReposition = Math.max(a.skillReposition, movementBeforeAttack.skillReposition);
+          a.withdrawMove ||= movementBeforeAttack.withdrawMove;
+        }
+      }
+    }
     if(f.dashStrike)a.expDashTurn=g.turn;
     if(f.ziAmbush&&d?.cmd&&a.movedDistance>=2&&a.expZiAmbushTurn!==g.turn)a.expZiAmbushTurn=g.turn;
     if(f.highland)a.expHighlandTurn=g.turn;
