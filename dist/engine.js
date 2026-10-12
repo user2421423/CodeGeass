@@ -4752,6 +4752,7 @@
       ELIMINATOR,
       ELITE_FORCES,
       aiEliteRecruitReason,
+      eliteEligible,
       recruitAIElite,
       eliteAIProduction,
       eliteScenario,
