@@ -31,6 +31,24 @@
         continue;
       }
       if (!active && ratio >= 0.35 && !critical) continue;
+      // If no secure repair route exists, a commander facing lethal local damage
+      // may take a legal safer hex. This is a fallback of the existing recovery
+      // planner, not a competing campaign retreat/front system.
+      const localCover = () => {
+        if (!critical || u.moved || u.attacked) return false;
+        const current = localThreat(g, u, u);
+        const options = [...reachable(g, u).keys()].map(k => {
+          const [c, r] = k.split(',').map(Number);
+          return tile(g, c, r);
+        }).filter(p => p && !isSea(p) && !unitAt(g, p))
+          .map(p => ({ p, risk: localThreat(g, u, p) }))
+          .sort((a, b) => a.risk - b.risk || dist(g, a.p, u) - dist(g, b.p, u) ||
+            a.p.r - b.p.r || a.p.c - b.p.c);
+        if (!options.length || options[0].risk >= current * 0.8) return false;
+        recoveries.set(u.id, { tactical: { c: options[0].p.c, r: options[0].p.r } });
+        return true;
+      };
+
       const seedsFor = s => [tile(g, s.c, s.r), ...adjacent(g, s)]
         .filter(p => !isSea(p) && !TERRAIN[p.terrain]?.blocked && (!stationAt(g, p) || stationAt(g, p).owner === side) && (!unitAt(g, p) || unitAt(g, p).id === u.id))
         .map(p => [p, 0]),
@@ -39,9 +57,9 @@
       let city = previous, field = previous && landRoute(seedsFor(previous));
       if (!field || !Number.isFinite(field[u.r * g.cols + u.c])) {
         const seeds = candidates.flatMap(seedsFor);
-        if (!seeds.length) { delete saved[u.id]; continue; }
+        if (!seeds.length) { if (!localCover()) delete saved[u.id]; continue; }
         const route = landRoute(seeds);
-        if (!Number.isFinite(route[u.r * g.cols + u.c])) { delete saved[u.id]; continue; }
+        if (!Number.isFinite(route[u.r * g.cols + u.c])) { if (!localCover()) delete saved[u.id]; continue; }
         // Select the repair city by land route distance from this formation.
         const fromUnit = landRoute([[u, 0]]);
         city = candidates.slice().sort((a, b) => {
@@ -50,7 +68,7 @@
         })[0];
         field = city && landRoute(seedsFor(city));
       }
-      if (!city || !Number.isFinite(field[u.r * g.cols + u.c])) { delete saved[u.id]; continue; }
+      if (!city || !Number.isFinite(field[u.r * g.cols + u.c])) { if (!localCover()) delete saved[u.id]; continue; }
       saved[u.id] = { city: city.id, since: active?.since ?? g.turn };
       recoveries.set(u.id, { city, field });
     }
