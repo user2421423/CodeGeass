@@ -269,6 +269,7 @@
       }
     }
     memo.focusCache?.clear();
+    memo.trafficCache?.clear();
     return events;
   }
   Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });

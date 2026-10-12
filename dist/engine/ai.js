@@ -1775,13 +1775,17 @@
   }
   function trafficBoost(g, u, memo) {
     if (u.hold || memo.guards?.[u.id] || u.moved) return 0;
+    memo.trafficCache ||= new Map();
+    if (memo.trafficCache.has(u.id)) return memo.trafficCache.get(u.id);
     let followers = 0;
     for (const v of g.units) {
       if (v.side === u.side && v.id !== u.id && v.hp > 0 && !v.hold &&
           !memo.guards?.[v.id] && !v.moved && dist(g, v, u) <= 2) followers++;
       if (followers >= 4) break;
     }
-    return Math.min(1.2, followers * 0.35);
+    const value = Math.min(1.2, followers * 0.35);
+    memo.trafficCache.set(u.id, value);
+    return value;
   }
   function aiNextActor(g, ids, start) {
     if (start >= ids.length) return start;
@@ -1793,7 +1797,10 @@
     for (let i = start; i < Math.min(ids.length, start + 16); i++) {
       const u = memo.actors.get(ids[i]);
       if (!u || u.hp <= 0 || u.attacked || !isReady(g, u)) continue;
-      let score = -aiOrderPriority(g, u) * 32 + trafficBoost(g, u, memo) * 24;
+      const priority = aiOrderPriority(g, u);
+      // Defensive emergencies remain authoritative over opportunistic attacks.
+      let score = priority < -2 ? 1500 - priority * 20 :
+        -priority * 32 + trafficBoost(g, u, memo) * 24;
       for (const p of targets(g, u).slice(0, 12)) {
         const shot = preview(g, u.id, p.c, p.r);
         if (!shot) continue;
@@ -1802,7 +1809,9 @@
           (enemy && shot.unit >= enemy.hp ? 135 : 0) +
           (enemy ? commanderValue(g, enemy) + focusValue(g, u, enemy, shot, memo) : 0) +
           (city && foe(g, city.owner, u.side) && city.shield <= shot.shield ? 65 : 0);
-        score = Math.max(score, value - aiOrderPriority(g, u) * 14);
+        const human = playerPriorityTarget(g, u.side, enemy?.side) ||
+          playerPriorityTarget(g, u.side, city?.owner);
+        score = Math.max(score, (human ? value * (1 + playerPriorityBonus(g, u.side)) : value) - priority * 14);
       }
       if (score > best || (score === best && ids[i] < ids[selected])) {
         best = score;
@@ -2082,6 +2091,7 @@
       }
     }
     memo.focusCache?.clear();
+    memo.trafficCache?.clear();
     return events;
   }
   Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
