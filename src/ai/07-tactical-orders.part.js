@@ -1,17 +1,25 @@
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
-  // Scenario unit sequence: batteries suppress shields before armor breaks
-  // defenders and fast capture troops exploit the opening. Leaders act last.
+  // Scenario and Conquest resolve attacks in tactical order: batteries suppress shields,
+  // armor and assault units defeat defenders, then fast troops capture opened cities.
+  // Command and withdrawal leaders act last so their actions can coordinate allies.
+  // In Conquest, formations responding to an immediate defensive emergency act first.
   function aiOrderPriority(g, u) {
     const commander = ['command', 'withdraw'].includes(COMMANDERS[u.cmd]?.action?.kind);
-    if (commander) return 9;
-    if (g.mode !== 'scenario') return 1;
+    if (g.mode !== 'scenario' && g.mode !== 'conquest') return commander ? 9 : 1;
     const type = TYPES[u.type];
-    if (type.branch === 'Artillery') return 0;
-    if (type.branch === 'Armor' || type.cls === 'assault') return 2;
-    if (canCapture(u) && (type.move >= 4 || type.cls === 'raider')) return 4;
-    return 3;
+    const tactical = commander ? 9
+      : type.branch === 'Artillery' ? 0
+      : type.branch === 'Armor' || type.cls === 'assault' ? 2
+      : canCapture(u) && (type.move >= 4 || type.cls === 'raider') ? 4
+      : 3;
+    if (g.mode === 'scenario') return tactical;
+    const memo = aiPlan(g, u.side),
+      assignedFront = memo.byId?.[memo.assign?.[u.id]],
+      emergency = memo.guards?.[u.id]?.emergency ||
+        (assignedFront?.type === 'defensive' && assignedFront.emergency);
+    return emergency ? tactical - 10 : tactical;
   }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);

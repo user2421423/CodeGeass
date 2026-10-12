@@ -2831,6 +2831,7 @@
   };
   // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
   function eliminatorTurn(g) {
+    if (g.mode === 'scenario') return null; // Japan requires all cities to remain capturable.
     const first = g.fleijaDetonated;
     if (typeof first === 'number') return first + ELIMINATOR.research;
     if (first || (g.log || []).some(l => String(l.text || '').startsWith('F.L.E.I.J.A. detonation'))) return 0;
@@ -2846,7 +2847,7 @@
   }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
-    return g.mode !== 'campaign' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
+    return g.mode === 'conquest' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -2928,6 +2929,7 @@
   }
   // Start of a power's turn: finished strategic projects come online.
   function strategicTurn(g, side) {
+    if (g.mode === 'scenario') return; // Suppress saved projects in Japan.
     if (eliminatorTurn(g) === g.turn && !g.eliminatorAnnounced) {
       g.eliminatorAnnounced = true;
       log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
@@ -2968,6 +2970,7 @@
     return stationAt(g, p)?.name || siteAt(g, p)?.name || (near ? `near ${near.name}` : `hex ${p.c},${p.r}`);
   }
   function launchReason(g, side, p) {
+    if (g.mode === 'scenario') return 'F.L.E.I.J.A. is unavailable in Japan Scenario';
     if (g.over) return 'Operation over';
     if (g.phase !== side) return 'Not your turn';
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
@@ -3252,6 +3255,11 @@
       for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired', 'despairWeakened']) if (v[field]?.side === side) delete v[field];
     }
     for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
+    // Off-map passengers have no terrain, morale or healing effects, but their
+    // commander action cooldown advances on their faction's turn.
+    for (const ship of g.units) if (ship.side === side)
+      for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
+        passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
     for (const u of mine) {
       u.entrenched = false;
@@ -3852,7 +3860,7 @@
   function routePassable(g, u, p) {
     const t = TYPES[u.type], st = stationAt(g, p), occ = unitAt(g, p);
     if (t.naval === 'ship' && (!navigable(p) || st)) return false;
-    if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) return false;
+    if (st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalCityAssault(g, u))) return false;
     return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
   }
   function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity) {
@@ -4027,7 +4035,7 @@
     if (dist(g, u, p) > 1) return false;
     const occ = unitAt(g, p),
       st = stationAt(g, p);
-    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u)));
+    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalCityAssault(g, u)));
   }
   // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
   // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex

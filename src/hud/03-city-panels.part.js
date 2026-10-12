@@ -113,6 +113,7 @@ function portReason(s) {
 }
 // Strategic projects at a city: F.L.E.I.J.A. offense and the one-charge Eliminator defense.
 function projectPanel(s) {
+  if (game.mode === 'scenario') return '';
   const ours = s.owner === game.player,
     p = s.project,
     ep = s.eliminatorProject;
