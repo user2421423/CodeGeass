@@ -269,6 +269,22 @@ test('All three playable factions share one map, can act and have the expected f
   assert.equal(starts[1], starts[2]);
 });
 
+test('Elite Japan starts every AI commander in a Level 5 elite frame', () => {
+  for (const player of japan.sides) {
+    const g = japan.create(player, 'elite', 11);
+    const aiCommanders = g.units.filter(u => u.cmd && u.side !== player);
+    assert(aiCommanders.length > 0, 'expected AI starting commanders');
+    for (const u of aiCommanders) {
+      assert(E.TYPES[u.type].elite, `${u.cmd} needs an elite frame`);
+      assert.equal(u.eliteLevel, 5, `${u.cmd} should start at elite Level 5`);
+      assert.equal(u.eliteStart, true);
+    }
+    for (const u of g.units.filter(u => u.side === player || !u.cmd)) {
+      assert.equal(u.eliteLevel, 1, `non-AI-commander ${u.id} should remain Level 1`);
+    }
+  }
+});
+
 test('Scenario initialization never constructs a disposable world conquest', () => {
   const before = E.createGame;
   E.createGame = () => { throw Error('Unexpected world initialization'); };

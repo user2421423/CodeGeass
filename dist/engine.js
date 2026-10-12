@@ -3750,7 +3750,7 @@
       ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
       income: 1.25,
       preserveNaval: true,
-      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
     },
     hard: {
       name: 'Hard',
@@ -3808,7 +3808,7 @@
       used[u.side] = (used[u.side] || 0) + 1;
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      u.eliteLevel = 1;
+      u.eliteLevel = u.cmd && u.side !== g.player ? 5 : 1;
       u.eliteStart = true;
       // Challenge grants additional frames to starting enemy formations, not the player's.
       u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
@@ -3909,7 +3909,7 @@
   }
   // Elite Japan reuses Elite Conquest's frame conversion philosophy without
   // importing any persistent HQ research or commander upgrades. Starting units
-  // are always Level 1; HQ unlocks only matter at the player's factory.
+  // use Level 1 frames, except AI starting commanders on Level 5; HQ unlocks only matter at the player's factory.
   function prepareEliteJapan(g) {
     if (!eliteScenario(g)) return g;
     const sides = ['britannia', 'bk', 'cf'];
@@ -3970,7 +3970,7 @@
       if (!ELITE_FORCES[id]) throw new Error('Missing Japan naval Elite Force for ' + u.side);
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      u.eliteLevel = 1;
+      u.eliteLevel = u.cmd && u.side !== g.player ? 5 : 1;
       u.eliteStart = true;
       u.stack = u.side === g.player ? 1
         : old.naval ? u.stack : Math.min(3, (u.stack || 1) + 1);

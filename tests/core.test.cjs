@@ -64,6 +64,22 @@ test('Conquest initializes coherently for every playable power', () => {
   }
 });
 
+test('Elite Conquest starts AI commanders in Level 5 elite frames only', () => {
+  for (const player of ['britannia', 'cf']) {
+    const g = E.createGame(player, 'elite', 'conquest', 7);
+    const aiCommanders = g.units.filter(u => u.cmd && u.side !== player);
+    assert(aiCommanders.length > 0, 'expected AI starting commanders');
+    for (const u of aiCommanders) {
+      assert(E.TYPES[u.type].elite, `${u.cmd} needs an elite frame`);
+      assert.equal(u.eliteLevel, 5, `${u.cmd} should start at elite Level 5`);
+      assert.equal(u.eliteStart, true);
+    }
+    for (const u of g.units.filter(u => u.elite && (u.side === player || !u.cmd))) {
+      assert.equal(u.eliteLevel, 1, `non-AI-commander ${u.id} should remain Level 1`);
+    }
+  }
+});
+
 test('Every painted conquest hex belongs to one fixed city province', () => {
   const g = E.createGame('britannia', 'normal', 'conquest', 9);
   const cities = new Map(g.stations.map(s => [s.id, s]));
