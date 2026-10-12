@@ -55,8 +55,11 @@
     eu: { amphibious: 'panzer_frosch', amphibious2: 'panzer_frosch_ii', carrier: 'eu_carrier' },
     cf: { amphibious: 'shui_gun_ru', amphibious2: 'shui_gun_ru_ii', carrier: 'cf_carrier' },
     eb: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
+    bk: { amphibious: 'bk_amphibious', amphibious2: 'bk_amphibious_ii', carrier: 'bk_carrier' },
   };
-  const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : Object.values(NAVAL[side] || (eliteScenario(g) && side === 'bk' ? { carrier: 'bk_carrier' } : {})));
+  // The 2018 U.F.N. army uses Black Knights equipment, including its naval roster.
+  const navalRoster = (g, side) => ufnBlackKnights(g, side) ? NAVAL.bk : NAVAL[side];
+  const navalTypes = (g, side) => g?.mode === 'campaign' ? [] : Object.values(navalRoster(g, side) || {});
   const isShip = u => TYPES[u?.type]?.naval === 'ship';
   // Ports: a city building on one sea hex beside the city (repair: PORT.repair by level).
   const PORT = { repair: [0, 0.1, 0.2, 0.3] };
