@@ -562,6 +562,21 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/indira-approved.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "chaojielun": {
+      "src": "portraits/chaojielun-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "vritra": {
+      "src": "portraits/vritra-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "zidien": {
+      "src": "portraits/zidien-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     }
   },
   "buildings": {
