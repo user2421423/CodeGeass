@@ -640,6 +640,14 @@
         if (n) { setTileOwner(g, t, n.owner); changed = true; }
       }
     }
+    // At 2-degree resolution a few UAE/Omani southern-shore coastal centres
+    // lie north of the Arabian polygon. They remain on Dubai's bank even when
+    // the Gulf shoreline barrier prevents Iran's city flood crossing water.
+    for (const [c, r] of [[117,28],[118,28],[119,28]]) {
+      const shore = tile(g, c, r);
+      if (shore && !isSea(shore))
+        setTileOwner(g, shore, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
+    }
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
     for (const [side, cls, lon, lat, stack, cmd, frameSource] of (cfg.armies || ARMY_DATA)) {
