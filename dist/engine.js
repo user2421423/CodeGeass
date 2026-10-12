@@ -4425,6 +4425,8 @@
       ELITE_FORCES,
       aiEliteRecruitReason,
       recruitAIElite,
+      eliteAIProduction,
+      eliteScenario,
       elitePrice,
       TERRAIN,
       cityBusyReason,
