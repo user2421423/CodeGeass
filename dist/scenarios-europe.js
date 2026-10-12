@@ -111,9 +111,9 @@
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
       eu:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('eu')).concat('europe_eu_carrier'),
+        E.ELITE_FORCES[id].availableTo.includes('eu')),
       eb:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('britannia')).concat('europe_eb_carrier')
+        E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
     const packed=root.EUROPE_LAND_BITS || (typeof require==='function'?
       require('./europe-landmask.js'):null);
