@@ -163,12 +163,12 @@
     if (enabled) gr.stance = 'advance'; // no automatic attacks in this order
     return { ok: true };
   }
-  function suspendConquestUnit(g, id) {
+  function suspendConquestUnit(g, id, preserveGoto = false) {
     for (const gr of groups(g)) {
       if (!gr.autoConquer || !gr.units.includes(id)) continue;
       (gr.manualOverrides ||= {})[id] = true;
       const u = g.units.find(v => v.id === id);
-      if (matches(u, gr.autoRouted?.[id])) delete u.goto;
+      if (!preserveGoto && matches(u, gr.autoRouted?.[id])) delete u.goto;
       if (gr.autoRouted) delete gr.autoRouted[id];
       return true;
     }
