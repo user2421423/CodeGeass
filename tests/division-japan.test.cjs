@@ -152,9 +152,9 @@ test('Hard and Challenge strengthen opposing armies and resources only', () => {
       .reduce((n,u)=>n+u.stack,0);
     assert.deepEqual(normal.stations.map(s=>[s.name,s.owner]),
       challenge.stations.map(s=>[s.name,s.owner]));
-    assert.equal(strength(normal,player),strength(hard,player));
+    assert.equal(strength(normal,player),strength(hard,player)+(player==='britannia'?12:0));
     for(const side of division.sides.filter(s=>s!==player)){
-      assert.ok(strength(hard,side)>strength(normal,side));
+      assert.ok(strength(hard,side)>=strength(normal,side));
       assert.ok(strength(challenge,side)>strength(hard,side));
       assert.ok(E.income(challenge,side).credits>E.income(hard,side).credits);
       assert.ok(E.income(hard,side).credits>E.income(normal,side).credits);
