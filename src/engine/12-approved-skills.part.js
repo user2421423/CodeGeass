@@ -70,6 +70,13 @@
     if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=1.25;
     if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
       !g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&dist(g,v,target)===1))m*=1.25;
+    // Chao's combined-arms doctrine is granted only to nearby ranged/armored allies
+    // attacking a target screened by friendly infantry. Multiple copies never stack.
+    if(!counter&&target&&['Armor','Artillery'].includes(TYPES[u.type].branch)&&
+      g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).combinedFront&&dist(g,v,u)<=2)&&
+      g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&TYPES[v.type].branch==='Infantry'&&dist(g,v,target)===1))m*=1.15;
+    // Zi Dien's movement-triggered raid may activate once per turn against a commander.
+    if(!counter&&f.ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
     if(!counter&&u.expRetrofitStrike)m*=1.1;
     if(!counter&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
     return m;
