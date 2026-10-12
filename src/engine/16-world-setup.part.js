@@ -150,25 +150,33 @@
       }
     g.stations.forEach(st => fortify(g, st));
   }
-  // Elite rivals begin with advanced factories on several fronts, rather than
-  // ignoring normal factory-tier requirements. Player-owned cities are untouched.
+  // All Elite Conquest cities (including the player's and neutral cities) start
+  // at factory Tier II or higher. Elite rivals retain their extra Tier III hubs.
+  // Use the ordinary building calculations so displayed tier, yields and shields
+  // agree; a raw change to s.tier would leave these statistics out of sync.
   function prepareEliteConquestFactories(g) {
     if (!eliteConquest(g)) return;
+    const raiseFactory = (s, tier) => {
+      if (s.tier >= tier) return;
+      const oldShield = s.shield, oldMaxShield = s.maxShield;
+      buildingFoundation(g, s); // Snapshot the original city's Tier-I/II foundations.
+      s.tier = tier;
+      syncBuildings(g, s);
+      // Equivalent to buying the missing factory upgrades: newly gained
+      // shield capacity starts repaired, while existing damage stays intact.
+      s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
+    };
+    for (const s of g.stations) raiseFactory(s, 2);
     for (const side of MAJORS.filter(s => s !== g.player)) {
       const cities = g.stations.filter(s => s.owner === side);
       const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
       const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
       const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
-      const ensure = (tier, target) => {
-        let count = cities.filter(s => s.tier >= tier).length;
-        for (const s of nearFront) {
-          if (count >= target) break;
-          if (s.tier < tier) { s.tier = tier; count++; }
-        }
-      };
-      ensure(3, Math.max(6, Math.ceil(cities.length / 8)));
-      // E.U. and Chinese elites start at factory Tier II; do not strand their Tier-I cities.
-      ensure(2, cities.length);
+      let advanced = cities.filter(s => s.tier >= 3).length;
+      for (const s of nearFront) {
+        if (advanced >= Math.max(6, Math.ceil(cities.length / 8))) break;
+        if (s.tier < 3) { raiseFactory(s, 3); advanced++; }
+      }
     }
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
