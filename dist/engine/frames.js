@@ -881,6 +881,20 @@
 
     // Japan Elite naval variants are operation-only. Their statistics, movement,
     // cargo and port requirements are inherited verbatim from existing hulls.
+    elite_europe_eu_carrier: {
+      ...CARRIER, side: 'eu', elite: true, scenarioOnly: true,
+      name: 'E.U. Elite Carrier-Battleship', model: 'Charlemagne-class Carrier-Battleship',
+      gen: 'Warship', role: 'Elite carrier-battleship',
+      weapon: 'Railgun turrets · missiles · Knightmare catapults',
+      lore: 'An experienced European carrier retaining its ordinary Knightmare deployment capabilities.',
+    },
+    elite_europe_eb_carrier: {
+      ...CARRIER, side: 'eb', elite: true, scenarioOnly: true,
+      name: 'Euro Britannian Elite Carrier-Battleship', model: 'Dreadnought-class Carrier-Battleship',
+      gen: 'Warship', role: 'Elite carrier-battleship',
+      weapon: 'Main guns · missile batteries · Knightmare catapults',
+      lore: 'An elite Euro Britannian warship retaining standard carrier deployment rules.',
+    },
     elite_japan_britannia_carrier: {
       ...CARRIER, side: 'britannia', elite: true, scenarioOnly: true,
       name: 'Elite Carrier-Battleship', model: 'Dreadnought-class Carrier-Battleship',
@@ -1387,6 +1401,22 @@
       skill: 'Standard Type II amphibious loadout',
       lv3Text: 'No special ability; standard Elite Lv.3 stats only.',
       lv5Text: 'No special ability; standard Elite Lv.5 stats only.',
+      lv3: {}, lv5: {},
+    },
+    // The European War has dedicated, operation-only fleet carrier variants.
+    // Neither grants a permanent unlock nor changes any Japan fleet type.
+    europe_eu_carrier: {
+      type: 'elite_europe_eu_carrier', faction: 'eu', availableTo: ['eu'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
+      lv3Text: 'Standard carrier deployment; two embarked Knightmare formations.',
+      lv5Text: 'Standard carrier deployment; two embarked Knightmare formations.',
+      lv3: {}, lv5: {},
+    },
+    europe_eb_carrier: {
+      type: 'elite_europe_eb_carrier', faction: 'eb', availableTo: ['eb'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
+      lv3Text: 'Standard carrier deployment; two embarked Knightmare formations.',
+      lv5Text: 'Standard carrier deployment; two embarked Knightmare formations.',
       lv3: {}, lv5: {},
     },
     // Mission-specific fleet models are not persistent HQ unlocks.
