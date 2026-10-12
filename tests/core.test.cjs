@@ -197,7 +197,7 @@ test('Artillery splash causes HP damage without lowering adjacent targets morale
   primary.morale = 0;
   neighbor.morale = 0;
   const before = neighbor.hp;
-  assert.equal(E.distance(g, primary, neighbor), 1, 'second target must be within the splash radius');
+  assert.equal(E.distance(primary, neighbor, g), 1, 'second target must be within the splash radius');
   const result = E.attack(g, artillery.id, primary.c, primary.r);
   assert.equal(result.ok, true, result.reason);
   assert.ok(result.hit.some(v => v.id === neighbor.id && v.damage > 0),
