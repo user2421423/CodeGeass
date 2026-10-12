@@ -75,7 +75,7 @@
       rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
     return Object.fromEntries(
       Object.entries(ELITE_FORCES)
-        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && g.player === 'eb' && e.availableTo.includes('britannia'))))
+        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && ((g.player === 'eb' && e.availableTo.includes('britannia')) || (g.player === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))))))
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }

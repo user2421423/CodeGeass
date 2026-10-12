@@ -168,7 +168,7 @@
       rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
     return Object.fromEntries(
       Object.entries(ELITE_FORCES)
-        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && g.player === 'eb' && e.availableTo.includes('britannia'))))
+        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && ((g.player === 'eb' && e.availableTo.includes('britannia')) || (g.player === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))))))
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }
@@ -2138,7 +2138,7 @@
     const e = ELITE_FORCES[id];
     if (!e) return false;
     const roster = eliteCampaign(g) && g.campaign?.eliteRosters?.[side];
-    return roster ? roster.includes(id) : e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
+    return roster ? roster.includes(id) : e.availableTo.includes(side) || (g.era === 'ufn2018' && ((side === 'eb' && e.availableTo.includes('britannia')) || (side === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
@@ -4193,13 +4193,13 @@
     }
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
-    for (const [side, cls, lon, lat, stack, cmd] of (cfg.armies || ARMY_DATA)) {
+    for (const [side, cls, lon, lat, stack, cmd, frameSource] of (cfg.armies || ARMY_DATA)) {
       const at = nearest(
         g,
         hexOf(lon, lat),
         t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
       );
-      if (at) newUnit(g, typeFor(side, cls), side, at.c, at.r, stack, cmd || null);
+      if (at) newUnit(g, typeFor(frameSource || side, cls), side, at.c, at.r, stack, cmd || null);
     }
     for (const [city, type, stack] of (cfg.garrisons || GARRISONS)) {
       const s = g.stations.find(s => s.name === city);

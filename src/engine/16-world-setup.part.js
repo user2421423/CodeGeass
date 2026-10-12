@@ -422,13 +422,13 @@
     }
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
-    for (const [side, cls, lon, lat, stack, cmd] of (cfg.armies || ARMY_DATA)) {
+    for (const [side, cls, lon, lat, stack, cmd, frameSource] of (cfg.armies || ARMY_DATA)) {
       const at = nearest(
         g,
         hexOf(lon, lat),
         t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
       );
-      if (at) newUnit(g, typeFor(side, cls), side, at.c, at.r, stack, cmd || null);
+      if (at) newUnit(g, typeFor(frameSource || side, cls), side, at.c, at.r, stack, cmd || null);
     }
     for (const [city, type, stack] of (cfg.garrisons || GARRISONS)) {
       const s = g.stations.find(s => s.name === city);
