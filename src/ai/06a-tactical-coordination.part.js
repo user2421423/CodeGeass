@@ -21,6 +21,9 @@
   }
   function focusValue(g, u, enemy, initial, memo) {
     if (!enemy || enemy.hp <= 0) return 0;
+    memo.focusCache ||= new Map();
+    const k = enemy.id + ':' + enemy.hp + ':' + u.id + ':' + u.c + ':' + u.r;
+    if (memo.focusCache.has(k)) return memo.focusCache.get(k);
     let potential = initial.unit, helpers = 0;
     for (const v of g.units) {
       if (helpers >= 7) break;
@@ -33,9 +36,12 @@
     }
     const marked = memo.focusTargets?.get(enemy.id);
     const feasible = helpers && potential >= enemy.hp * 0.92;
-    return (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
+    const value = (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
       (marked?.turn === g.turn && dist(g, u, enemy) <= 6 ? 62 : 0) -
       (initial.counter > u.hp * 0.8 ? 55 : 0);
+    if (memo.focusCache.size > 500) memo.focusCache.clear();
+    memo.focusCache.set(k, value);
+    return value;
   }
   function trafficBoost(g, u, memo) {
     if (u.hold || memo.guards?.[u.id] || u.moved) return 0;

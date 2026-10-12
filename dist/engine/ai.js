@@ -1178,10 +1178,11 @@
       },
       danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
       strength = cargo.reduce((a, c) => a + c.stack, 0),
+      landingSupport = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
+        carrierCapacity(g, v) > 0 && v.cargo?.length),
       landing = p => {
         // Count only a nearby loaded carrier as prospective same-wave support.
-        const support = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
-          carrierCapacity(g, v) > 0 && v.cargo?.length && dist(g, v, p) <= 3)
+        const support = landingSupport.filter(v => dist(g, v, p) <= 3)
           .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
         const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
           .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses))
@@ -1220,6 +1221,16 @@
           .sort((a, b) => a[1] - b[1] || a[0].r - b[0].r || a[0].c - b[0].c);
         if (team && seeds.length) team.landing = seeds[0][0];
         followSea(seeds);
+      }
+      // Briefly assemble a nearby second landing wave instead of drip-feeding
+      // lone transports. Five turns is a hard wait cap, not a required formation.
+      const catchingUp = landingSupport.some(v => {
+        const d = dist(g, v, u);
+        return d > 3 && d <= 6;
+      });
+      if (catchingUp && job.wait < 5 && landing(tile(g, u.c, u.r)) != null) {
+        job.wait++;
+        return true;
       }
       if (landing(tile(g, u.c, u.r)) != null) aiLaunch(g, u, events, fieldAt, masses);
       if (!u.cargo.length) job.wait = 0;
@@ -1740,6 +1751,9 @@
   }
   function focusValue(g, u, enemy, initial, memo) {
     if (!enemy || enemy.hp <= 0) return 0;
+    memo.focusCache ||= new Map();
+    const k = enemy.id + ':' + enemy.hp + ':' + u.id + ':' + u.c + ':' + u.r;
+    if (memo.focusCache.has(k)) return memo.focusCache.get(k);
     let potential = initial.unit, helpers = 0;
     for (const v of g.units) {
       if (helpers >= 7) break;
@@ -1752,9 +1766,12 @@
     }
     const marked = memo.focusTargets?.get(enemy.id);
     const feasible = helpers && potential >= enemy.hp * 0.92;
-    return (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
+    const value = (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
       (marked?.turn === g.turn && dist(g, u, enemy) <= 6 ? 62 : 0) -
       (initial.counter > u.hp * 0.8 ? 55 : 0);
+    if (memo.focusCache.size > 500) memo.focusCache.clear();
+    memo.focusCache.set(k, value);
+    return value;
   }
   function trafficBoost(g, u, memo) {
     if (u.hold || memo.guards?.[u.id] || u.moved) return 0;
