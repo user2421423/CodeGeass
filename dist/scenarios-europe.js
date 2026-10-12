@@ -87,7 +87,7 @@
   }
   function create(player='eu',difficulty='normal',seed=201701){
     if(!SIDES.includes(player))throw Error('Unsupported European War faction: '+player);
-    if(!['normal','hard','challenge'].includes(difficulty))difficulty='normal';
+    if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
     const g={
       game:'knightmare',version:1,rulesVersion:E.RULES_VERSION,player,difficulty,
       mode:'scenario',era:'european-war',order:[player,...SIDES.filter(s=>s!==player)],
@@ -106,6 +106,15 @@
     }
     g.scenario={id:'european-war',key:'europe',title:'The European War',
       phase:'continental-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
+    // Euro Britannia uses compatible Britannian Elite Forces for this
+    // scenario only. No global HQ, Conquest, or Japan access is changed.
+    const eliteIds=Object.keys(E.ELITE_FORCES);
+    g.scenario.eliteRosters={
+      eu:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
+        E.ELITE_FORCES[id].availableTo.includes('eu')).concat('europe_eu_carrier'),
+      eb:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
+        E.ELITE_FORCES[id].availableTo.includes('britannia')).concat('europe_eb_carrier')
+    };
     const packed=root.EUROPE_LAND_BITS || (typeof require==='function'?
       require('./europe-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.EUROPE_LAND_BITS;
@@ -230,8 +239,9 @@
     }
     for(const t of g.tiles)if(t.terrain==='sea'&&
       (depth[t.r*COLS+t.c]<0||depth[t.r*COLS+t.c]>5))t.terrain='offmap';
+    if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='challenge'?1.6:
+      const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
@@ -241,7 +251,7 @@
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*(side==='eu'?2:3);
     }
-    if(difficulty!=='normal'){
+    if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
         for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
