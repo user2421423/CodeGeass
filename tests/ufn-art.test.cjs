@@ -61,3 +61,16 @@ test('Regular Black Knights carrier renders the same published sprite as other c
   assert.match(blackKnights, /generic_carrier-bf5e0799d818\.png/);
   assert.match(blackKnights, /<img src=/, 'the Black Knights carrier needs visible published art');
 });
+
+test('Burai and Gekka sprites for Black Knights amphibious regular and Elite units', () => {
+  ART.useLocal(JSON.parse(read('dist/assets/art/manifest.json')));
+  for (const [id, filename] of [
+    ['bk_amphibious', 'burai-6f5b891028e0.png'],
+    ['bk_amphibious_ii', 'gekka-6c896ee459cb.png'],
+    ['elite_japan_bk_amphibious', 'gekka-6c896ee459cb.png'],
+  ]) {
+    const rendered = ART.unit(id, '', 'bk');
+    assert.ok(rendered.includes(filename), id + ' must use the approved sprite');
+    assert.match(rendered, /<img src=/, id + ' has visible art');
+  }
+});
