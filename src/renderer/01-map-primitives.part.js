@@ -230,8 +230,8 @@ function drawEstimate(p, pr, scale) {
   ctx.fillText(text, 0, -9);
   ctx.restore();
 }
-// Base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
-function drawPlate(u, scale, sea, time = 0) {
+// One allegiance-colored health ring around each faction plate; embarked units ride a transport hull.
+function drawPlate(u, scale, sea, time = 0, highlighted = false) {
   const c = PLATE[artSide(u.side)],
     cy = 14,
     rx = 31,
@@ -247,9 +247,6 @@ function drawPlate(u, scale, sea, time = 0) {
     ctx.closePath();
     ctx.fillStyle = '#5d6873';
     ctx.fill();
-    ctx.strokeStyle = c.trim;
-    ctx.lineWidth = Math.max(2, 1.6 / scale);
-    ctx.stroke();
     ctx.fillStyle = '#3b444d';
     ctx.fillRect(-30, cy - 10, 22, 7);
     ctx.strokeStyle = '#ffffff55';
@@ -273,34 +270,36 @@ function drawPlate(u, scale, sea, time = 0) {
     ctx.ellipse(0, cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.fillStyle = g;
     ctx.fill();
-    ctx.strokeStyle = c.trim;
-    ctx.lineWidth = Math.max(2, 1.6 / scale);
-    ctx.stroke();
   }
-  const hostile = hostileUnit(u),
+  const ringColor = unitRingColor(u),
     ready = readyUnit(u),
     pulse = 0.82 + 0.18 * Math.sin(time / 210);
-  if (ready) {
-    ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
-    ctx.shadowBlur = 13;
+  if (ready || highlighted) {
+    ctx.shadowColor = `rgba(255,210,108,${(highlighted ? 0.92 : 0.7) * pulse})`;
+    ctx.shadowBlur = highlighted ? 16 : 12;
   }
   ctx.beginPath();
-  ctx.ellipse(0, cy, rx + 6, ry + 6, 0, 0, Math.PI * 2);
-  ctx.strokeStyle = hostile ? '#420710e8' : '#061019e0';
-  ctx.lineWidth = Math.max(4.2, 3.2 / scale);
+  ctx.ellipse(0, cy, rx + 2, ry + 2, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#0c1924e0';
+  ctx.lineWidth = Math.max(4, 3.4 / scale);
   ctx.stroke();
   if (f > 0) {
     ctx.beginPath();
-    ctx.ellipse(0, cy, rx + 6, ry + 6, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
-    ctx.strokeStyle = hostile ? '#ff334d' : ICONS.hpColor(f);
-    ctx.lineWidth = Math.max(2.8, 2.2 / scale);
+    ctx.ellipse(0, cy, rx + 2, ry + 2, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = Math.max(3.8, 3 / scale);
     ctx.stroke();
   }
   ctx.shadowBlur = 0;
   ctx.restore();
 }
-// A high-contrast outer ring makes hostile formations readable at a glance regardless of faction color.
-// Team allies in campaign missions are not marked: hostility follows the engine's foe/team rules.
+// Color reflects allegiance; arc length independently shows remaining frame integrity.
+// Neutral garrisons are not allied even though the engine treats them as attackable foes.
+function unitRingColor(u) {
+  if (u.side === 'neutral') return '#9ca3af';
+  return hostileUnit(u) ? '#ff334d' : '#f2c76a';
+}
+// Campaign/scenario allies and the 2018 Britannian coalition share a team in the engine.
 function hostileUnit(u) {
   return !!u && E.foe(game, game.player, u.side);
 }

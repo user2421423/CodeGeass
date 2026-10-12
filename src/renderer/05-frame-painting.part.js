@@ -296,28 +296,28 @@ function draw(time, dt) {
         ctx.arc(0, 0, 15, 0, Math.PI * 2);
         ctx.fillStyle = PLATE[artSide(u.side)].light;
         ctx.fill();
-        if (readyUnit(u)) {
-          mapHasPulse = true;
+        if (readyUnit(u) || sel || multi) {
+          if (readyUnit(u)) mapHasPulse = true;
           const pulse = 0.82 + 0.18 * Math.sin(time / 210);
-          ctx.shadowColor = `rgba(32,245,138,${0.92 * pulse})`;
-          ctx.shadowBlur = 9;
+          ctx.shadowColor = `rgba(255,210,108,${(sel || multi ? 0.92 : 0.7) * pulse})`;
+          ctx.shadowBlur = sel || multi ? 12 : 9;
         }
-        ctx.strokeStyle = sel || multi ? '#3ff2c4' : hostileUnit(u) ? '#ff334d' : PLATE[artSide(u.side)].trim;
+        const integrity = Math.max(0, Math.min(1, u.hp / E.maxHP(u)));
+        ctx.strokeStyle = '#0c1924e0';
         ctx.lineWidth = 3 / Math.max(scale, 0.3);
         ctx.stroke();
+        if (integrity > 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 15, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
+          ctx.strokeStyle = unitRingColor(u);
+          ctx.stroke();
+        }
         ctx.shadowBlur = 0;
         if (group && u.side === game.player) outlinedText('G' + group.id, -18, -13, 11, groupColor, scale, 'Trebuchet MS', true);
         ctx.restore();
         continue;
       }
-      drawPlate(u, scale, sea, time);
-      if (multi) {
-        ctx.beginPath();
-        ctx.arc(0, 0, 22, 0, Math.PI * 2);
-        ctx.strokeStyle = '#3ff2c4';
-        ctx.lineWidth = 3 / Math.max(scale, 0.4);
-        ctx.stroke();
-      }
+      drawPlate(u, scale, sea, time, sel || multi);
       ctx.globalAlpha = spent ? 0.6 : 1;
       const size = t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
