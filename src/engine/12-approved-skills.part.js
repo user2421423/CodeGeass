@@ -79,6 +79,9 @@
     if(!counter&&f.ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
     if(!counter&&u.expRetrofitStrike)m*=1.1;
     if(!counter&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
+    // Eduardo: mountain defenders counterstrike harder under nearby Georgian command.
+    if(counter&&tile(g,u.c,u.r)?.terrain==='mountain'&&
+      g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).blackSeaFox&&dist(g,v,u)<=2))m*=1.25;
     return m;
   }
   function newcomerDefense(g,target,attacker,counter,direct){
@@ -86,6 +89,9 @@
     if(g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
     if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=.8;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
+    // Eduardo: improved defensive deployment on mountain hexes.
+    if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
+      g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).blackSeaFox&&dist(g,v,target)<=2))m*=.85;
     if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
     if(target.forcedOffensive&&counter)m*=1.2;
     return m;
