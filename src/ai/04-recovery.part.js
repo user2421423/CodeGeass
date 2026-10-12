@@ -22,14 +22,15 @@
       return goalField(recoveryBoard, side, seeds, 'land');
     };
     for (const u of own) {
-      const ratio = u.hp / maxHP(u), active = saved[u.id];
+      const ratio = u.hp / maxHP(u), active = saved[u.id],
+        critical = !!u.cmd && localThreat(g, u, u) >= u.hp * 0.75;
       const essential = cities.some(s => dist(g, u, s) <= 1 && !secure(s) &&
         !own.some(v => v.id !== u.id && !isShip(v) && v.hp / maxHP(v) >= 0.4 && dist(g, v, s) <= 2));
-      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || memo.guards[u.id] || essential || ratio >= 0.7) {
+      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || memo.guards[u.id] || essential || (ratio >= 0.7 && !critical)) {
         delete saved[u.id];
         continue;
       }
-      if (!active && ratio >= 0.35) continue;
+      if (!active && ratio >= 0.35 && !critical) continue;
       const seedsFor = s => [tile(g, s.c, s.r), ...adjacent(g, s)]
         .filter(p => !isSea(p) && !TERRAIN[p.terrain]?.blocked && (!stationAt(g, p) || stationAt(g, p).owner === side) && (!unitAt(g, p) || unitAt(g, p).id === u.id))
         .map(p => [p, 0]),
