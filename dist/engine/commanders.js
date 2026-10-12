@@ -857,7 +857,7 @@
     'General',
     'Marshal',
   ];
-  const RANK_HP = [1.12, 1.16, 1.2, 1.24, 1.28, 1.33, 1.38, 1.43, 1.48, 1.54, 1.6];
+  const RANK_HP = [1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0];
   // Tokens to reach each rank.
   const PROMOTE_COST = [0, 50, 80, 120, 160, 220, 280, 350, 430, 520, 650];
   const MEDALS = {

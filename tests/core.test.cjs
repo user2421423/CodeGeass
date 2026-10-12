@@ -540,6 +540,34 @@ test('Campaign progression and rewards honor one-time stars across difficulties'
   assert.deepEqual(hard.fragments, {}, 'overall Elite performance fragments are not farmable');
 });
 
+test('Commander ranks grant up to double HP and every Mobility star grants one movement', () => {
+  const g = blank();
+  const type = E.typeFor('britannia', 'scout');
+  const ordinary = E.newUnit(g, type, 'britannia', 2, 2);
+  const commander = E.newUnit(g, type, 'britannia', 3, 2, 1, 'suzaku');
+  for (const u of [ordinary, commander]) {
+    u.hpTech = 0;
+    u.elite = null;
+    u.eliteLevel = 0;
+  }
+  const rankMultipliers = [1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0];
+  assert.deepEqual(E.RANK_HP, rankMultipliers);
+  const baseHP = E.maxHP(ordinary);
+  for (let rank = 0; rank < rankMultipliers.length; rank++) {
+    commander.cmdRank = rank;
+    assert.equal(E.maxHP(commander), Math.round(baseHP * rankMultipliers[rank]),
+      `rank ${rank} must use its HP multiplier`);
+  }
+  assert.equal(E.maxHP(commander), baseHP * 2, 'Marshal must double the base unit HP');
+
+  const uncommandedMovement = E.movement(g, ordinary);
+  for (let stars = 1; stars <= 6; stars++) {
+    g.officers.suzaku.ratings.mobility = stars;
+    assert.equal(E.movement(g, commander) - uncommandedMovement, stars,
+      `${stars} Mobility stars must add ${stars} movement`);
+  }
+});
+
 test('Generic rarity slots, purchases, upgrades, replacements and save migration', () => {
   const p = { tokens: 20000 };
   E.roster(p);

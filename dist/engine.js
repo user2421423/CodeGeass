@@ -975,7 +975,7 @@
     return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
   }
 
-  // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
+  // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Marshal).
   function maxHP(u) {
     const es = eliteScale(u);
     return Math.round(
@@ -1249,8 +1249,8 @@
     // Carrier-Battleships use their listed 10-hex movement; the +2 Conquest
     // bonus applies to land and amphibious formations, not warships.
     if (g?.mode !== 'campaign' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
-    // Commander Mobility rating. 1–2★ = +0, 3★ = +1, 4★ = +2, 5★ = +3, 6★ = +4 movement.
-    n += mobilityStars >= 3 ? mobilityStars - 2 : 0;
+    // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
+    n += mobilityStars;
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
     if (techLevel(g, u.side, 'sakura.float') >= 2 && (t.branch === 'Armor' || t.float || eliteFx(u).float)) n += 1;

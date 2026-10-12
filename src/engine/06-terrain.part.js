@@ -132,7 +132,7 @@
     return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
   }
 
-  // An admiral's rank sets the frame bonus of the unit they command (112% for a Second Lieutenant to 160%).
+  // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Marshal).
   function maxHP(u) {
     const es = eliteScale(u);
     return Math.round(
