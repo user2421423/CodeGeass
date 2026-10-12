@@ -299,7 +299,7 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/farnese-a73888e2a52c.webp"
     },
     "fernando": {
-      "src": "portraits/fernando-refresh-2d7ea8212b93.jpg",
+      "src": "portraits/fernando-final-b01f1d94c091.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -346,7 +346,7 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/lelouch-78b808b17079.webp"
     },
     "lifeng": {
-      "src": "portraits/lifeng-refresh-79984cb8c241.jpg",
+      "src": "portraits/lifeng-final-91d94de97e5f.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -357,7 +357,7 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/manfredi-57a7bea25a0a.webp"
     },
     "marirrosa": {
-      "src": "portraits/marirrosa-refresh-25472460a1b3.jpg",
+      "src": "portraits/marirrosa-final-1ffe904a9d33.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -588,7 +588,7 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "ren": {
-      "src": "portraits/ren-refresh-f97cdf8df562.jpg",
+      "src": "portraits/ren-final-2e19f4a9d63a.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -608,7 +608,7 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "indira": {
-      "src": "portraits/indira-refresh-d3c637c4c9f2.jpg",
+      "src": "portraits/indira-final-d524640da092.jpg",
       "fx": 0.5,
       "fy": 0.5
     },

@@ -57,10 +57,12 @@
     },
     {
       "id": "indira",
-      "filename": "dist/assets/art/portraits/indira-refresh-d3c637c4c9f2.jpg",
-      "source": "local pre-existing portrait from main",
-      "method": "provisional named card retaining the source torso; accurate facial art not independently verified",
-      "verification": "needs verified face artwork"
+      "filename": "dist/assets/art/portraits/indira-final-d524640da092.jpg",
+      "source": "https://static.wikitide.net/geasswiki/5/5f/Indira_tharoor_lost_stories_infobox_color_full_body.png",
+      "method": "Published full-color Indira Tharoor full-body character render from Code Geass: Lost Stories / Pure Almaria; cropped around his real face and shoulders. Original headless crop superseded.",
+      "verification": "color illustration directly attributed to named character; cropped at head/shoulders; no invented features",
+      "previousFile": "dist/assets/art/portraits/indira-refresh-d3c637c4c9f2.jpg",
+      "status": "published color source"
     },
     {
       "id": "vritra",
@@ -92,31 +94,39 @@
     },
     {
       "id": "fernando",
-      "filename": "dist/assets/art/portraits/fernando-refresh-2d7ea8212b93.jpg",
-      "source": "local pre-existing portrait from main",
-      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
-      "verification": "identity retained; original colors unavailable"
+      "filename": "dist/assets/art/portraits/fernando-final-b01f1d94c091.jpg",
+      "source": "dist/assets/art/portraits/fernando-web.jpg",
+      "method": "Fan colorization of authentic Fernando Noriega monochrome manga illustration; brown hair, skin, green uniform, color palette interpretive—not a claim of official canon colors.",
+      "verification": "authentic named black-and-white character art; hand-selected fan color palette, not official palette",
+      "previousFile": "dist/assets/art/portraits/fernando-refresh-2d7ea8212b93.jpg",
+      "status": "fan-colorized from original monochrome source"
     },
     {
       "id": "marirrosa",
-      "filename": "dist/assets/art/portraits/marirrosa-refresh-25472460a1b3.jpg",
-      "source": "local pre-existing portrait from main",
-      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
-      "verification": "identity retained; original colors unavailable"
+      "filename": "dist/assets/art/portraits/marirrosa-final-1ffe904a9d33.jpg",
+      "source": "https://static.wikitide.net/geasswiki/0/0a/Marirrosa_noriega_o2_photo_novel_color_image.png",
+      "method": "Published full-color Marirrosa Noriega photo-novel illustration; cropped to a recognisable face, consistent with original character.",
+      "verification": "color illustration directly attributed to named character; cropped at head/shoulders; no invented features",
+      "previousFile": "dist/assets/art/portraits/marirrosa-refresh-25472460a1b3.jpg",
+      "status": "published color source"
     },
     {
       "id": "lifeng",
-      "filename": "dist/assets/art/portraits/lifeng-refresh-79984cb8c241.jpg",
-      "source": "local pre-existing portrait from main",
-      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
-      "verification": "identity retained; original colors unavailable"
+      "filename": "dist/assets/art/portraits/lifeng-final-91d94de97e5f.jpg",
+      "source": "dist/assets/art/portraits/lifeng-1a1927a55740.jpg",
+      "method": "Fan colorization of authentic Xu Lifeng monochrome manga illustration; brown hair, warm skin and red/blue martial outfit, palette interpretive—not official canon colors.",
+      "verification": "authentic named black-and-white character art; hand-selected fan color palette, not official palette",
+      "previousFile": "dist/assets/art/portraits/lifeng-refresh-79984cb8c241.jpg",
+      "status": "fan-colorized from original monochrome source"
     },
     {
       "id": "ren",
-      "filename": "dist/assets/art/portraits/ren-refresh-f97cdf8df562.jpg",
-      "source": "local pre-existing portrait from main",
-      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
-      "verification": "identity retained; original colors unavailable"
+      "filename": "dist/assets/art/portraits/ren-final-2e19f4a9d63a.jpg",
+      "source": "dist/assets/art/portraits/ren-approved.jpg",
+      "method": "Fan colorization of authentic Colonel Ren monochrome manga illustration; black hair, olive military cap and tunic, palette interpretive—not official canon colors.",
+      "verification": "authentic named black-and-white character art; hand-selected fan color palette, not official palette",
+      "previousFile": "dist/assets/art/portraits/ren-refresh-f97cdf8df562.jpg",
+      "status": "fan-colorized from original monochrome source"
     },
     {
       "id": "nonette",
@@ -174,5 +184,25 @@
       "method": "reframed/upscaled crop from existing local character art, 320x320 JPEG",
       "verification": "visual crop checked; identity sourced from associated named artwork"
     }
-  ]
+  ],
+  "secondPass": {
+    "date": "2026-10-12",
+    "updated": [
+      "indira",
+      "marirrosa",
+      "fernando",
+      "lifeng",
+      "ren"
+    ],
+    "verifiedColorOriginals": [
+      "indira",
+      "marirrosa"
+    ],
+    "fanColorizedOriginals": [
+      "fernando",
+      "lifeng",
+      "ren"
+    ],
+    "notes": "All five now have faces in locally hosted 320x320 colored JPEGs; fan-colorized portraits preserve the identity of original manga art, but their color schemes are not officially verified."
+  }
 }
