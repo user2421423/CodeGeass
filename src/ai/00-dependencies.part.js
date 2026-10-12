@@ -38,6 +38,8 @@
     deployTargetsAt,
     aiEliteRecruitReason,
     recruitAIElite,
+    eliteAIProduction,
+    eliteScenario,
     elitePrice,
     depositHost,
     depositOwner,
