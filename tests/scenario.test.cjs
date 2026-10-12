@@ -292,6 +292,24 @@ test('All three playable factions share one map, can act and have the expected f
   assert.equal(starts[1], starts[2]);
 });
 
+test('Black Knights can recruit Burai and Gekka amphibious types in Japan', () => {
+  const expected = ['bk_amphibious', 'bk_amphibious_ii', 'bk_carrier'];
+  for (const difficulty of ['normal', 'hard', 'challenge', 'elite']) {
+    const g = japan.create('bk', difficulty, 18);
+    assert.deepEqual(E.navalTypes(g, 'bk'), expected);
+    const [burai, gekka] = expected.map(id => E.TYPES[id]);
+    assert.equal(burai.side, 'bk');
+    assert.equal(gekka.side, 'bk');
+    assert.equal(burai.naval, 'amphibious');
+    assert.equal(gekka.naval, 'amphibious');
+    assert.equal(burai.hp, 210);
+    assert.equal(gekka.hp, 260);
+    assert.equal(E.TYPES.elite_japan_bk_amphibious.naval, 'amphibious');
+    assert.equal(E.ELITE_FORCES.japan_bk_amphibious.availableTo.includes('bk'), true);
+    assert.equal(E.eliteEligible(g, 'bk', 'japan_bk_amphibious'), true);
+  }
+});
+
 test('Black Knights Guren Type-01 is a Raider Infantry Elite', () => {
   assert.equal(E.TYPES.elite_guren_type01.cls, 'raider');
   assert.equal(E.ELITE_FORCES.guren_type01.availableTo.includes('bk'), true);
