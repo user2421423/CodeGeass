@@ -62,6 +62,9 @@
   function eliteConquest(g) {
     return g?.mode === 'conquest' && g.difficulty === 'elite';
   }
+  function eliteCampaign(g) {
+    return g?.mode === 'campaign' && g.difficulty === 'elite';
+  }
   function eliteScenario(g) {
     return g?.mode === 'scenario' && g?.scenario?.id === 'invasion-japan' &&
       g.difficulty === 'elite';

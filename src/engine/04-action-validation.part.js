@@ -62,6 +62,7 @@
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
+      (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
       (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) || !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
@@ -161,7 +162,7 @@
     g.eliteLevels = Object.fromEntries(Object.entries(records).filter(([, r]) => r?.level).map(([id, r]) => [id, r.level]));
     for (const u of allUnits(g)) {
       // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
-      if (!u.elite || u.side !== g.player) continue;
+      if (!u.elite || u.side !== g.player || eliteCampaign(g)) continue;
       const old = maxHP(u),
         rec = records[u.elite];
       if (rec?.level) u.eliteLevel = rec.level;

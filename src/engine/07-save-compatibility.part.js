@@ -78,7 +78,8 @@
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
         if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && eliteConquest(g) && COMMANDERS[k].side !== g.player
+          which === 'officers' && ((eliteConquest(g) && COMMANDERS[k].side !== g.player) ||
+              (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
@@ -86,7 +87,8 @@
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
-        if (!eliteConquest(g) || !u.eliteStart) g.eliteDeployed[elite] = true;
+        if ((!eliteConquest(g) && !eliteCampaign(g)) || !u.eliteStart && !eliteCampaign(g))
+          g.eliteDeployed[elite] = true; // Scripted campaign elites never spend the player's recruit allowance.
       }
       // Older saves left carried units at the hex where they boarded.
       for (const c of u.cargo || []) {

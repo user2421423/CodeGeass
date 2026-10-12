@@ -59,7 +59,9 @@
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
     return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
-      eliteAIProduction(g) && COMMANDERS[k].side !== g.player ? RANKS.length - 1 : HQ_RANK_CAP));
+      (eliteAIProduction(g) && COMMANDERS[k].side !== g.player) ||
+        (eliteCampaign(g) && g.units?.some(u => u.cmd === k && foe(g, u.side, g.player)))
+          ? RANKS.length - 1 : HQ_RANK_CAP));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {

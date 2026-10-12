@@ -279,6 +279,8 @@
     random,
     log,
     maxHP,
+    hullTech,
+    raiseFactoryTier,
     migrateSave,
     newUnit,
     movement,

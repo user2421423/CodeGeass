@@ -297,7 +297,9 @@
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
     return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
-      eliteAIProduction(g) && COMMANDERS[k].side !== g.player ? RANKS.length - 1 : HQ_RANK_CAP));
+      (eliteAIProduction(g) && COMMANDERS[k].side !== g.player) ||
+        (eliteCampaign(g) && g.units?.some(u => u.cmd === k && foe(g, u.side, g.player)))
+          ? RANKS.length - 1 : HQ_RANK_CAP));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
@@ -561,6 +563,7 @@
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
+      (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
       (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) || !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
@@ -660,7 +663,7 @@
     g.eliteLevels = Object.fromEntries(Object.entries(records).filter(([, r]) => r?.level).map(([id, r]) => [id, r.level]));
     for (const u of allUnits(g)) {
       // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
-      if (!u.elite || u.side !== g.player) continue;
+      if (!u.elite || u.side !== g.player || eliteCampaign(g)) continue;
       const old = maxHP(u),
         rec = records[u.elite];
       if (rec?.level) u.eliteLevel = rec.level;
@@ -1205,7 +1208,8 @@
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
         if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && eliteConquest(g) && COMMANDERS[k].side !== g.player
+          which === 'officers' && ((eliteConquest(g) && COMMANDERS[k].side !== g.player) ||
+              (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
@@ -1213,7 +1217,8 @@
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
-        if (!eliteConquest(g) || !u.eliteStart) g.eliteDeployed[elite] = true;
+        if ((!eliteConquest(g) && !eliteCampaign(g)) || !u.eliteStart && !eliteCampaign(g))
+          g.eliteDeployed[elite] = true; // Scripted campaign elites never spend the player's recruit allowance.
       }
       // Older saves left carried units at the hex where they boarded.
       for (const c of u.cargo || []) {
@@ -2107,6 +2112,14 @@
   }
   // Land elites use a city factory; amphibious elites use the independently owned
   // port and its separate one-unit-per-turn shipyard slot.
+  // Mission-owned roster snapshots provide an explicit, save-safe borrowing map.
+  // Outside Elite Campaign, ordinary faction unlock/recruit rules remain unchanged.
+  function eliteEligible(g, side, id) {
+    const e = ELITE_FORCES[id];
+    if (!e) return false;
+    const roster = eliteCampaign(g) && g.campaign?.eliteRosters?.[side];
+    return roster ? roster.includes(id) : e.availableTo.includes(side);
+  }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
       rec = e && eliteRecord(profile, id),
@@ -2119,7 +2132,7 @@
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
       (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
-      (!e.availableTo.includes(producer) ? 'This Elite Force is not available to this faction' : null) ||
+      (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
       (e.scenarioOnly && !eliteScenario(g) ? 'Available only in Elite Japan' : null) ||
       (!availableLevel ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (naval && (!s.portAt || (s.portLevel || 0) < t.port) ? `Requires a level-${t.port} port` : null) ||
@@ -2129,7 +2142,7 @@
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, availableLevel || 1))
+      shortfall(funds(g, producer), elitePrice(id, eliteCampaign(g) ? 1 : availableLevel || 1))
     );
   }
   function deployElite(g, stationId, id, profile = {}, position) {
@@ -2142,7 +2155,7 @@
       rec = e.scenarioOnly && eliteScenario(g) ? { level: 1 } : eliteRecord(profile, id),
       options = recruitOptions(g, s, producer, e.type),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = elitePrice(id, rec.level);
+      cost = elitePrice(id, eliteCampaign(g) ? 1 : rec.level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
@@ -2151,21 +2164,23 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = rec.level;
+    u.eliteLevel = eliteCampaign(g) ? 1 : rec.level;
     u.hp = maxHP(u);
-    log(g, `${t.name} · Elite Lv.${rec.level} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
+    log(g, `${t.name} · Elite Lv.${u.eliteLevel} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };
   }
   // Rival factories can repeat Elite Forces indefinitely, but each frame must
   // satisfy its factory tier just as it does for a player.
   function aiEliteRecruitReason(g, s, id, vacating = null) {
     const e = ELITE_FORCES[id], t = e && TYPES[e.type];
-    if (!eliteAIProduction(g) || !s || !e || !t) return 'Not an Elite AI operation';
+    if ((!eliteAIProduction(g) && !eliteCampaign(g)) || !s || !e || !t) return 'Not an Elite AI operation';
     const naval = !!t.naval,
       producer = naval ? (s.portOwner || s.owner) : s.owner;
-    if (producer === g.player || !e.availableTo.includes(producer) ||
+    if (producer === g.player || !eliteEligible(g, producer, id) ||
         (eliteConquest(g) && (naval || !MAJORS.includes(producer))) ||
         (eliteScenario(g) && !['britannia', 'bk', 'cf'].includes(producer)) ||
+        (eliteCampaign(g) && (naval || (!foe(g, producer, g.player) &&
+          !g.campaign?.production?.includes(producer)))) ||
         (e.scenarioOnly && !eliteScenario(g)))
       return 'Not an eligible Elite AI factory or port';
     return (
@@ -2179,7 +2194,7 @@
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
         ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, 1))
+      shortfall(funds(g, producer), elitePrice(id, eliteCampaign(g) ? 3 : 1))
     );
   }
   function recruitAIElite(g, stationId, id) {
@@ -2189,13 +2204,16 @@
     const e = ELITE_FORCES[id], t = TYPES[e.type],
       producer = t.naval ? (s.portOwner || s.owner) : s.owner,
       p = recruitOptions(g, s, producer, e.type)[0],
-      cost = elitePrice(id, 1);
+      level = eliteCampaign(g) ? 3 : 1,
+      cost = elitePrice(id, level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
-    log(g, `${t.name} · Elite Lv.1 deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
+    u.eliteLevel = level;
+    u.hp = maxHP(u);
+    log(g, `${t.name} · Elite Lv.${level} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
@@ -3761,6 +3779,9 @@
   function eliteConquest(g) {
     return g?.mode === 'conquest' && g.difficulty === 'elite';
   }
+  function eliteCampaign(g) {
+    return g?.mode === 'campaign' && g.difficulty === 'elite';
+  }
   function eliteScenario(g) {
     return g?.mode === 'scenario' && g?.scenario?.id === 'invasion-japan' &&
       g.difficulty === 'elite';
@@ -4560,6 +4581,8 @@
     random,
     log,
     maxHP,
+    hullTech,
+    raiseFactoryTier,
     migrateSave,
     newUnit,
     movement,
