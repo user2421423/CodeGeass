@@ -80,7 +80,8 @@
       attack *= 1.2;
     const pen = Math.min(.95,armorPenetration(g,u,target)
       +(u.expCalibration?.15:0)
-      +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0));
+      +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0)
+      +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.12:0));
     const formationArmor =
       target &&
       !victim.naval &&
@@ -137,7 +138,7 @@
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else {
-        const bypass=(u.forcedOffensive?.3:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0);
+        const bypass=(u.forcedOffensive?.3:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.5:0);
         attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
       }
     }
@@ -366,6 +367,7 @@
     }
     afterCommanderAttack(g,a,d,s,destroyed,timeStop);
     if(f.dashStrike)a.expDashTurn=g.turn;
+    if(f.ziAmbush&&d?.cmd&&a.movedDistance>=2&&a.expZiAmbushTurn!==g.turn)a.expZiAmbushTurn=g.turn;
     if(f.highland)a.expHighlandTurn=g.turn;
     if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
