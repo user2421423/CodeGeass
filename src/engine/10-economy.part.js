@@ -113,8 +113,8 @@
     log(g, `${TYPES[e.type].name} · Elite Lv.${level} deploys at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u, cost };
   }
-  // Rival factories may repeat elites indefinitely in Elite Conquest. Factory
-  // tier is waived for the AI so even tier-I cities can build faction elites.
+  // Rival factories can repeat Elite Forces indefinitely, but each frame must
+  // satisfy its factory tier just as it does for a player.
   function aiEliteRecruitReason(g, s, id, vacating = null) {
     const e = ELITE_FORCES[id];
     if (!eliteConquest(g) || !s || !e || s.owner === g.player ||
@@ -123,6 +123,7 @@
     return (
       turnReason(g, s.owner) ||
       cityBusyReason(g, s) ||
+      (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, s.owner).length && !(vacating && unitAt(g, s) === vacating)
         ? 'A unit is on the city' : null) ||
