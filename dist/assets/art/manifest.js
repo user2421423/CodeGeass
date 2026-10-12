@@ -80,6 +80,12 @@ globalThis.KnightmareArtManifest = {
     "elite_cornelia_gloucester": {
       "src": "units/elite_cornelia_gloucester-e760719b1694.png"
     },
+    "elite_europe_eb_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
+    "elite_europe_eu_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
     "elite_gawain": {
       "src": "units/elite_gawain-7a674202b272.png"
     },
