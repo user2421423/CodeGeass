@@ -60,8 +60,7 @@
     const orders = g.units
       // Never rerun a standing order after a unit has moved manually or by automation this turn.
       // Some elite/mobility skills refresh u.moved; autoOrderTurn closes that loophole.
-      .filter(u => u.side === side && u.hp > 0 && u.goto && !u.moved && u.autoOrderTurn !== g.turn &&
-        !(g.armyGroups || []).some(gr => gr.stance === 'defend' && gr.side === side && gr.units.includes(u.id)))
+      .filter(u => u.side === side && u.hp > 0 && u.goto && !u.moved && u.autoOrderTurn !== g.turn)
       .sort((a, b) => dist(g, a, a.goto) - dist(g, b, b.goto) || a.id - b.id);
     for (const u of orders) {
       if (g.over) break;
