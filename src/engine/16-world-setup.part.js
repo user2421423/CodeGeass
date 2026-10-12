@@ -24,9 +24,16 @@
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
     elite: {
       name: 'Elite',
-      level: 0,
+      level: 3,
       tokens: 2.5,
-      desc: 'Every starting land unit becomes an Elite Force, including yours. Rival factories repeatedly build faction elites; you can deploy one of each elite and also build normal units. Ships and amphibious units are unchanged.',
+      techTier: 4,
+      upgradeEvery: 1,
+      extraPer: 2,
+      stack: true,
+      ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
+      income: 1.25,
+      preserveNaval: true,
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
     },
     hard: {
       name: 'Hard',
@@ -47,7 +54,7 @@
       upgradeEvery: 1,
       extraPer: 2,
       stack: true,
-      ranks: RANKS.length - 1, // Every starting rank reaches Marshal.
+      ranks: PROMOTE_COST.length - 1, // Every starting rank reaches Marshal.
       income: 1.25,
       desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
@@ -75,7 +82,8 @@
       u.elite = id;
       u.eliteLevel = 1;
       u.eliteStart = true;
-      u.stack = 1;
+      // Challenge grants additional frames to starting enemy formations, not the player's.
+      u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);
     }
@@ -107,13 +115,13 @@
   }
   function harden(g, d) {
     const foes = [...MAJORS, 'neutral'].filter(side => side !== g.player),
-      enemyUnits = g.units.filter(u => foes.includes(u.side));
+      enemyUnits = g.units.filter(u => foes.includes(u.side) && (!d.preserveNaval || !TYPES[u.type].naval));
     for (const side of foes) {
       g.tech[side] = techUpToTier(d.techTier);
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if (a.side !== g.player) g.officers[k].rank = Math.min(RANKS.length - 1, g.officers[k].rank + d.ranks);
+      if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
       if (d.stack) u.stack = Math.min(3, u.stack + 1);
@@ -141,6 +149,26 @@
         u.hp = maxHP(u);
       }
     g.stations.forEach(st => fortify(g, st));
+  }
+  // Elite rivals begin with advanced factories on several fronts, rather than
+  // ignoring normal factory-tier requirements. Player-owned cities are untouched.
+  function prepareEliteConquestFactories(g) {
+    if (!eliteConquest(g)) return;
+    for (const side of MAJORS.filter(s => s !== g.player)) {
+      const cities = g.stations.filter(s => s.owner === side);
+      const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
+      const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
+      const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
+      const ensure = (tier, target) => {
+        let count = cities.filter(s => s.tier >= tier).length;
+        for (const s of nearFront) {
+          if (count >= target) break;
+          if (s.tier < tier) { s.tier = tier; count++; }
+        }
+      };
+      ensure(3, Math.max(6, Math.ceil(cities.length / 8)));
+      ensure(2, Math.max(18, Math.ceil(cities.length / 3)));
+    }
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
   function nearest(g, p, test) {
@@ -304,8 +332,9 @@
       if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
     }
     setupSakuradite(g);
-    convertConquestEliteStarts(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
+    convertConquestEliteStarts(g); // Also converts every Challenge-style land reinforcement.
+    prepareEliteConquestFactories(g);
     for (const u of g.units)
       if (u.cmd) {
         u.cmdRank = g.officers[u.cmd].rank;
