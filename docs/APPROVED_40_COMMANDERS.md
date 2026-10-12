@@ -1,46 +1,37 @@
-# Approved 40 commanders — implementation branch
+# Commander expansion — 39 approved additions (local-art build)
 
-Branch: `feature/approved-40-commanders-20261012`. Based on `main` on 12 October 2026. **Do not merge without playtesting.**
+Branch: `feature/approved-40-commanders-20261012` (historical branch name retained). Based on `main`; **not merged**.
 
-## Scope
+## Scope and roster
 
-- All 40 user-approved additional commander records, for 98 total (58 pre-existing + 40 new).
-- Existing 58 commander definitions and base ratings remain byte-for-byte identical.
-- The 40 additions have assigned stars, recruit costs, branches, mobility ratings, signature skills and active commands.
-- Branch-local support for interception, overwatch, targeting/jamming, morale effects, city economy/sabotage, reinforcement, elite modification, defensive fire, combined-arm encirclement and AI ability use.
-- Faction support for the approved independent/guest characters in Conquest HQ. These are recruits available to three major powers; they are not a new playable country.
-- Corrected special cases: Xia Wang must be city-capturing infantry; Shamna protection expires at recipient turn; Tianzi discount only for land purchases; Sarah jamming blocks after-attack reposition; border captures grant Xia Wang the city-output-based windfall.
+- **97 total commanders:** 58 existing commanders plus 39 approved additions.
+- Xu Xinfeng was explicitly removed from the commander roster, base ratings, portrait manifest and expansion source catalogue. His now-unused Crimson Dynasty skill logic was also removed.
+- Every pre-existing commander record and rating remains unchanged.
+- All retained newcomers have their previously defined recruitment, faction, ratings and signature skills.
+- Gameplay changes are isolated to this feature branch.
 
-## Artwork status
+## Portraits: entirely self-contained
 
-33 / 40 new commander portrait URLs are indexed in `tools/approved-40-portrait-sources.json`.
-They are **provisional HTTPS hotlinks**, not local copies, because the available GitHub file interface could not import binary artwork. External hosts can refuse hotlinking or remove images. The existing 58 portraits remain local and unchanged.
+- All **39 new portraits** are checked-in JPEGs at `dist/assets/art/portraits/<commander-id>-approved.jpg`.
+- All **58 existing portraits** remain checked in as they were before the expansion.
+- `dist/assets/art/manifest.json` and its companion `manifest.js` have **97 local relative portrait paths**, none HTTP(S).
+- `dist/art.js` was restored to the original **local-only image loader** from `main`; its temporary remote-host whitelist and hotlink support have been removed.
+- `tools/approved-40-portrait-sources.json` has been rewritten to contain **39 local artwork paths**, no external links.
+- Images are 256×256 JPEG thumbnail crops of researched character source imagery, so some may need further visual review or adjustment. Source resolution varies, particularly for minor-character anime stills. Remote hosts are not contacted at runtime.
+- Pre-existing `dist/assets/art/sources.json` retains original provenance URLs as static build/reference metadata; those URLs are **not runtime asset dependencies**. Original artwork may have third-party copyright or license restrictions; confirm permissions before public distribution.
 
-Still requiring confirmed portraits:
-- Pierre Anou
-- Xu Xinfeng
-- Colonel Ren
-- Cheng Zhong
-- Huang Qian
-- Mutsuki Minase
-- Indira Tharoor
+## Checks performed
 
-Do not substitute a different character's portrait simply to fill a blank slot. For robust Pages hosting, replace provisional links with properly sourced and appropriately licensed local assets, then rebuild the art manifest using the usual art pipeline.
-
-## Checks completed
-
-- Browser-facing JavaScript bundles `dist/engine.js` and `dist/engine/ai.js` parse.
-- All engine data modules + game engine + AI execute in an isolated JS environment; `createGame('britannia','normal')` succeeds.
-- A newly created Conquest game has 98 officers, 176 starting units, and 168 cities.
-- Four active newcomer skills (Shalio, Chloe, Tianzi, Cheng Zhong) were exercised in a smoke check; each returned `ok: true`.
-- Existing 58 commander entries and starting ratings were compared against `main` and found unchanged.
-- No new test files were added.
+- All 97 portrait entries were verified against the Git tree: all files exist as non-empty local binaries.
+- Full executable `dist/` JS, CSS, HTML and art manifests were scanned for URL references. The only HTTP(S) text in runtime files is the non-network XML namespace `http://www.w3.org/2000/svg`, while a comment in `dist/ui/japan-coastlines.js` mentions its upstream data source.
+- Original 58 commander records and ratings were previously compared against `main` and found unmodified.
+- Engine and AI bundles previously passed syntax and a Conquest initialization smoke check. A post-update roster/art verification is recommended before merge.
+- No new test files added.
 
 ## Remaining release checks
 
-- Browser-based playtest in Conquest and scenario modes, especially overwatch, support-fire timing, AI tactical selection, save/load and city capture.
-- Confirm each remote portrait actually loads in the target browser. Missing or blocked sources currently leave blank portrait slots.
-- Audit some obscure spinoff character references and default faction assignments for historical scenario dates before applying scenario-specific placements.
-- Consider tuning new skills after combat simulation; these are first-pass starting values, not measured balance outcomes.
+- Browser visual audit of all 39 portrait crops, including character identification.
+- Playtest active signature skills and AI tactical use in Conquest and scenarios.
+- Validate offline asset loading in a fresh browser and confirm existing saves behave correctly.
 
-`main` is unchanged. This branch is intentionally separate for review.
+`main` is unchanged; this branch has not been merged.
