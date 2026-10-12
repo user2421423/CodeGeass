@@ -27,7 +27,6 @@ jobs:
         run: |
           node --test tests/*.test.cjs
           node tests/ui-smoke.cjs
-          node tests/camera-zoom.test.cjs
           node tools/validate_assets.cjs --tracked
       - name: Report experimental city and port displacement
         if: always()

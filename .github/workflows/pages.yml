@@ -41,7 +41,6 @@ jobs:
           node tools/build_sources.cjs --check
           node --test tests/*.test.cjs
           node tests/ui-smoke.cjs
-          node tests/camera-zoom.test.cjs
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
       # Preview builds are isolated inside dist, with their own relative assets.
