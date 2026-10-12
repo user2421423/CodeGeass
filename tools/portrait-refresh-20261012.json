@@ -1,0 +1,178 @@
+{
+  "date": "2026-10-12",
+  "branch": "feature/commander-portrait-audit-fixes-20261012",
+  "baseCommit": "6b138e8f236bd4a6fed4677f37e055bb7991c1b5",
+  "localOnly": true,
+  "totalUpdated": 24,
+  "totalCommanders": 100,
+  "portraits": [
+    {
+      "id": "sarah",
+      "filename": "dist/assets/art/portraits/sarah-refresh-4c51f8e6d0ab.jpg",
+      "source": "https://www.zerochan.net/2002206",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "olivia",
+      "filename": "dist/assets/art/portraits/olivia-refresh-2f1e372a9dc9.jpg",
+      "source": "https://www.zerochan.net/2002206",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "hilda",
+      "filename": "dist/assets/art/portraits/hilda-refresh-b57bc0692f04.jpg",
+      "source": "https://www.zerochan.net/2002163",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "chloe",
+      "filename": "dist/assets/art/portraits/chloe-refresh-d8293febfba0.jpg",
+      "source": "https://www.zerochan.net/2002163",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "kate",
+      "filename": "dist/assets/art/portraits/kate-refresh-1a0672cb00ee.jpg",
+      "source": "https://www.zerochan.net/2002205",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "sophie",
+      "filename": "dist/assets/art/portraits/sophie-refresh-3b9c8edc0fa9.jpg",
+      "source": "https://www.zerochan.net/2002205",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "joe",
+      "filename": "dist/assets/art/portraits/joe-refresh-e2b9f2e9d77e.jpg",
+      "source": "https://www.zerochan.net/2002205",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "indira",
+      "filename": "dist/assets/art/portraits/indira-refresh-d3c637c4c9f2.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "provisional named card retaining the source torso; accurate facial art not independently verified",
+      "verification": "needs verified face artwork"
+    },
+    {
+      "id": "vritra",
+      "filename": "dist/assets/art/portraits/vritra-refresh-d2607d7191e8.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/9/96/Vritra.jpg",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "zidien",
+      "filename": "dist/assets/art/portraits/zidien-refresh-3325e363809d.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/3/33/Story_chara_00920.png",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "ichijiku",
+      "filename": "dist/assets/art/portraits/ichijiku-refresh-10ba9de893f3.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/5/59/Bscap908.jpg",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "zero",
+      "filename": "dist/assets/art/portraits/zero-refresh-5e68a46b6a02.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/c/c0/Zero.jpg",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "fernando",
+      "filename": "dist/assets/art/portraits/fernando-refresh-2d7ea8212b93.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
+      "verification": "identity retained; original colors unavailable"
+    },
+    {
+      "id": "marirrosa",
+      "filename": "dist/assets/art/portraits/marirrosa-refresh-25472460a1b3.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
+      "verification": "identity retained; original colors unavailable"
+    },
+    {
+      "id": "lifeng",
+      "filename": "dist/assets/art/portraits/lifeng-refresh-79984cb8c241.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
+      "verification": "identity retained; original colors unavailable"
+    },
+    {
+      "id": "ren",
+      "filename": "dist/assets/art/portraits/ren-refresh-f97cdf8df562.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "hand-tinted crop from existing monochrome manga art (colors are interpretive, not verified official palette)",
+      "verification": "identity retained; original colors unavailable"
+    },
+    {
+      "id": "nonette",
+      "filename": "dist/assets/art/portraits/nonette-refresh-42facc7ea99a.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/9/94/Nonette_Enneagram.webp",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "oldrin",
+      "filename": "dist/assets/art/portraits/oldrin-refresh-b33a49d280cd.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/5/57/Story_chara_00912.png",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "marrybell",
+      "filename": "dist/assets/art/portraits/marrybell-refresh-962936f51e21.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/d/d1/Story_chara_00913.png",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "benio",
+      "filename": "dist/assets/art/portraits/benio-refresh-076b7fd513c3.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/b/b7/Benio_loststories.jpg",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "tianzi",
+      "filename": "dist/assets/art/portraits/tianzi-refresh-6aa745de9b46.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "reframed/upscaled crop from existing local character art, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "pierre",
+      "filename": "dist/assets/art/portraits/pierre-refresh-d5bfdf09658e.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/a/aa/Pierre_Anou.jpg",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "chengzhong",
+      "filename": "dist/assets/art/portraits/chengzhong-refresh-1b388877574b.jpg",
+      "source": "https://static.wikia.nocookie.net/codegeass/images/5/5d/High_Eunuch_-_Cheng_Zhong.JPG",
+      "method": "reframed crop from authenticated published character artwork, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    },
+    {
+      "id": "huangqian",
+      "filename": "dist/assets/art/portraits/huangqian-refresh-7cefebccc304.jpg",
+      "source": "local pre-existing portrait from main",
+      "method": "reframed/upscaled crop from existing local character art, 320x320 JPEG",
+      "verification": "visual crop checked; identity sourced from associated named artwork"
+    }
+  ]
+}
