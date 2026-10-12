@@ -140,10 +140,11 @@
     let memo = aiMemo.get(g);
     if (!memo) aiMemo.set(g, (memo = {}));
     if (!memo[side] || memo[side].turn !== g.turn) {
-      // Japan Scenario is an all-out city offensive: no guards, defensive
-      // fronts, recovery retreats or offensive assembly delays.
+      // Most scenarios are all-out city offensives. On Normal Division Japan,
+      // Britannia retains local defenders for both exposed fronts.
       const rush = g.mode === 'scenario';
-      memo[side] = { turn: g.turn, guards: rush ? {} : assignGuards(g, side) };
+      memo[side] = { turn: g.turn, guards: rush
+        ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
       if (!rush) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
       else if (rush) planScenarioOffense(g, side, memo[side]);
@@ -315,7 +316,7 @@
     const state = ((g.ai ||= {})[side] ||= {}),
       own = g.stations.filter(s => s.owner === side),
       carried = new Map(),
-      troops = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold),
+      troops = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold && !memo.guards?.[u.id]),
       enemies = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral');
     for (const ship of g.units) for (const cargo of ship.cargo || [])
       carried.set(cargo.id, ship);
@@ -966,6 +967,35 @@
   // Garrison duty: the capital seeks two defenders (four when threatened).
   // Threatened cities, fortress cities, major ports, and mines draw defenders independently
   // of front assignments; nearby enemies are marked as urgent. No reserve quota applies.
+  // Normal Division of Japan: Britannia must screen both Kanto and western Honshu.
+  // Unlike the other Japan scenarios, these defenders keep a local post while
+  // the rest of the army can counterattack; a lost city releases its guards.
+  function assignDivisionBritanniaGuards(g, side) {
+    if (g.mode !== 'scenario' || g.scenario?.id !== 'division-japan' ||
+        g.difficulty !== 'normal' || side !== 'britannia') return {};
+    const own = g.units.filter(u => u.hp > 0 && u.side === side &&
+      !atSea(g, u) && !isShip(u) && !u.hold),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      taken = {},
+      // Reserve no more than 12 of 32 starting formations for local defense.
+      posts = [
+        ['Tokyo Settlement', 3, 7], ['Osaka', 3, 7],
+        ['Saitama', 2, 6], ['Kobe', 2, 6],
+        ['Yokohama', 1, 6], ['Kyoto', 1, 6]
+      ];
+    for (const [name, need, radius] of posts) {
+      const s = g.stations.find(city => city.name === name && city.owner === side);
+      if (!s || (g.turn > 3 && !foes.some(u => dist(g, u, s) <= 9))) continue;
+      const candidates = own.filter(u => !taken[u.id] &&
+        massOf(g, u) === massOf(g, s) && dist(g, u, s) <= radius)
+        .sort((a, b) => dist(g, a, s) - dist(g, b, s) ||
+          Number(!!a.cmd) - Number(!!b.cmd) || a.id - b.id);
+      for (const u of candidates.slice(0, need))
+        taken[u.id] = { c: s.c, r: s.r, id: s.id,
+          emergency: foes.some(f => dist(g, f, s) <= 4) };
+    }
+    return taken;
+  }
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
