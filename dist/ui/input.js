@@ -277,7 +277,6 @@ document.addEventListener('click', e => {
   if (d.scenarioKind) {
     scenarioKind=d.scenarioKind;
     scenarioSide='britannia';
-    if(scenarioKind==='division-japan'&&scenarioDifficulty==='elite')scenarioDifficulty='challenge';
     scenarioDialog();return;
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
