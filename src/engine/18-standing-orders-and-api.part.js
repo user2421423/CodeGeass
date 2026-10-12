@@ -58,12 +58,19 @@
     const report = { moved: [], arrived: [], blocked: [], lost: [] },
       fields = new Map();
     const orders = g.units
-      .filter(u => u.side === side && u.hp > 0 && u.goto)
+      // Never rerun a standing order after a unit has moved manually or by automation this turn.
+      // Some elite/mobility skills refresh u.moved; autoOrderTurn closes that loophole.
+      .filter(u => u.side === side && u.hp > 0 && u.goto && !u.moved && u.autoOrderTurn !== g.turn &&
+        !(g.armyGroups || []).some(gr => gr.stance === 'defend' && gr.side === side && gr.units.includes(u.id)))
       .sort((a, b) => dist(g, a, a.goto) - dist(g, b, b.goto) || a.id - b.id);
     for (const u of orders) {
       if (g.over) break;
       const dest = tile(g, u.goto.c, u.goto.r);
-      if (dest && gotoDone(g, u, dest)) {
+      const assault = (g.armyGroups || []).some(gr => gr.stance === 'assault' && gr.side === side && gr.units.includes(u.id));
+      const defendedObjective = assault && dest && dist(g, u, dest) <= 1 &&
+        ((unitAt(g, dest) && unitAt(g, dest) !== u && foe(g, unitAt(g, dest).side, side)) ||
+         (stationAt(g, dest) && foe(g, stationAt(g, dest).owner, side) && stationAt(g, dest).shield > 0));
+      if (dest && gotoDone(g, u, dest) && !defendedObjective) {
         report.arrived.push(u.id);
         delete u.goto;
         continue;
@@ -92,11 +99,16 @@
       }
       const m = best && move(g, u.id, best.p.c, best.p.r);
       if (!m?.ok) {
+        // Assault orders persist when adjacent to an enemy-held objective.
+        if (defendedObjective) continue;
         report.blocked.push(u.id);
         continue;
       }
+      u.autoOrderTurn = g.turn;
       report.moved.push({ id: u.id, from: m.from, to: m.to, captured: m.captured, seized: m.seized, annexed: m.annexed });
-      if (gotoDone(g, u, dest)) {
+      if (gotoDone(g, u, dest) && !(assault && dest && dist(g, u, dest) <= 1 &&
+        ((unitAt(g, dest) && unitAt(g, dest) !== u && foe(g, unitAt(g, dest).side, side)) ||
+         (stationAt(g, dest) && foe(g, stationAt(g, dest).owner, side) && stationAt(g, dest).shield > 0)))) {
         report.arrived.push(u.id);
         delete u.goto;
       }
