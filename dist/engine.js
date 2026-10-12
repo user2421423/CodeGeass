@@ -1653,7 +1653,6 @@
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.5&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
     attack *= 1 + auraBonus(g, u);
-    if(u.expGambit&&target?.cmd)attack/=1+auraBonus(g,u);
     attack *= newcomerAttack(g,u,target,counter);
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
@@ -1701,8 +1700,7 @@
     )
       attack *= 1.2;
     const pen = Math.min(.95,armorPenetration(g,u,target)
-      +(u.expCalibration?.15:0)+(u.expGambit&&target?.cmd?.25:0)
-      +(counter&&fx(u).phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn?.15:0)
+      +(u.expCalibration?.15:0)
       +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0));
     const formationArmor =
       target &&
@@ -1756,7 +1754,7 @@
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       attack *= skillDefense(g,target,counter,direct) *
-        ((u.expGambit&&target?.cmd)||(fx(u).deepCover&&target?.cmd&&!g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&dist(g,u,v)<=2)) ? 1 : commanderDefense(g,target,u,counter,direct)) *
+        commanderDefense(g,target,u,counter,direct) *
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else {
@@ -1928,7 +1926,6 @@
       // Worked out after the hit, so a damaged defender returns weaker fire (attack scales with remaining frame).
       retaliation = Math.round(power(g, d, a, stationAt(g, a), true) * (0.94 + random(g) * 0.12));
       a.hp = Math.max(0, a.hp - retaliation);
-      if(fx(d).phoenixReversal)d.expPhoenixTurn=g.turn;
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
     }
@@ -1990,13 +1987,11 @@
     }
     afterCommanderAttack(g,a,d,s,destroyed,timeStop);
     if(f.dashStrike)a.expDashTurn=g.turn;
-    if(f.deepCover)a.expDeepTurn=g.turn;
     if(f.highland)a.expHighlandTurn=g.turn;
     if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
     if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
     if(a.expCalibration){a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));delete a.expCalibration;}
-    if(a.expGambit&&d?.cmd)delete a.expGambit;
     if(a.forcedOffensive)delete a.forcedOffensive;
     if(a.expRetrofitStrike)delete a.expRetrofitStrike;
     if(a.expNavalRelay)delete a.expNavalRelay;
@@ -2510,10 +2505,10 @@
   // ======== Black Knights and JLF commanders: allegiance and signature skills ========
   // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
   // Federation units. Skill numbers are first-pass balance guesses.
-  const ALLIES = { cf: ['bk', 'jlf'] };
+  const ALLIES = { cf: ['bk', 'jlf'], bk: ['jlf'] };
   function serves(k, side) {
     const a = COMMANDERS[k];
-    return !!a && (a.side === side || (a.side === 'guest' && ['britannia','eu','cf'].includes(side)) || !!ALLIES[side]?.includes(a.side));
+    return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
   }
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
   function commandTargets(g, u) {
@@ -2730,8 +2725,6 @@
       case 'marrybell':v.forcedOffensive=true;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
-      case 'shalio':u.expGambit=true;break;
-      case 'shamna':v.expForeknowledge=true;break;
       case 'charles':v.feintCD=Math.max(0,(v.feintCD||0)-2);break;
       case 'lloyd':v.expCalibration=true;break;
       case 'sophie':{
@@ -2775,9 +2768,6 @@
   function newcomerAttack(g,u,target,counter){
     const f=fx(u),terrain=tile(g,u.c,u.r);let m=1;
     if(!counter&&f.dashStrike&&u.movedDistance>=3&&u.expDashTurn!==g.turn)m*=1.3;
-    if(!counter&&f.deepCover&&target?.cmd&&u.expDeepTurn!==g.turn&&
-      !g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&dist(g,u,v)<=2))m*=1.35;
-    if(counter&&f.phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn)m*=1.4;
     if(!counter&&f.highland&&terrain?.terrain==='mountain'&&u.expHighlandTurn!==g.turn)m*=1.25;
     if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=1.25;
     if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
@@ -2796,7 +2786,6 @@
     return m;
   }
   function newcomerIntercept(g,target,amount){
-    if(target.expForeknowledge&&amount>=target.hp){delete target.expForeknowledge;amount=Math.max(0,target.hp-1);}
     const guard=g.units.find(v=>v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
     if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
     if(target.expAfterimage)delete target.expAfterimage;
@@ -3433,7 +3422,6 @@
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
-      delete u.expForeknowledge;
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
