@@ -289,8 +289,12 @@ function activateHex(p) {
         result = E.move(game, u.id, p.c, p.r);
       if (result.ok) {
         SFX.play('move', u.side);
-        undoStack.push({ snapshot, unitId: u.id });
-        if (undoStack.length > 5) undoStack.shift(); // each snapshot is a compact save (~0.1 MB)
+        // Entering a city or seizing a port commits occupation and clears prior undo history.
+        const irreversible = !!E.stationAt(game, p) || !!result.captured || !!result.annexed || !!result.portCaptured;
+        if (!irreversible) {
+          undoStack.push({ snapshot, unitId: u.id });
+          if (undoStack.length > 5) undoStack.shift(); // each snapshot is a compact save (~0.1 MB)
+        }
         effects.push({
           kind: 'move',
           unitId: u.id,
@@ -301,10 +305,11 @@ function activateHex(p) {
           max: 0.45,
         });
         if (result.loaded) selection = { kind: 'unit', id: result.loaded };
-        refreshAndSave(!result.annexed);
+        refreshAndSave(!irreversible);
         if (result.loaded) toast('Aboard the Carrier-Battleship. It can launch immediately.');
         else if (result.annexed) annexNotice(result.annexed);
         else if (result.captured) toast(`${result.captured} captured. +40 credits.`);
+        else if (result.portCaptured) toast(`Port of ${result.portCaptured} captured. City ownership unchanged.`);
         else if (result.seized) toast(`${result.seized} Sakuradite mine seized.`);
         else if (E.atSea(game, u) && !wasSea) toast('Embarked as a transport. Sail to a coast next turn to land.');
         else if (wasSea && E.TYPES[u.type].naval === 'amphibious') toast('Amphibious landing! A fresh move and attack are available.');

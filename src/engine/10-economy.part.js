@@ -33,7 +33,7 @@
   // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
   // there (move it off first).
   function recruitOptions(g, s, side, type = null) {
-    if (s.owner !== side) return [];
+    if ((TYPES[type]?.naval ? s.portOwner || s.owner : s.owner) !== side) return [];
     const at = TYPES[type]?.naval ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
     return at && !unitAt(g, at) ? [at] : [];
   }
@@ -53,15 +53,16 @@
     const s = g.stations.find(s => s.id === stationId);
     const why = buyReason(g, s, type, stack);
     if (why) return { ok: false, reason: why };
-    const options = recruitOptions(g, s, s.owner, type);
+    const producer = TYPES[type].naval ? (s.portOwner || s.owner) : s.owner;
+    const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    const cost = price(type, stack, g, s.owner);
-    spend(funds(g, s.owner), cost);
+    const cost = price(type, stack, g, producer);
+    spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
-    const u = newUnit(g, type, s.owner, p.c, p.r, stack, null, false);
-    log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, s.owner);
+    const u = newUnit(g, type, producer, p.c, p.r, stack, null, false);
+    log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u };
   }
 

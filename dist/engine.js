@@ -550,25 +550,25 @@
   function buyReason(g, s, type, stack = 1, vacating = null) {
     const t = TYPES[type];
     if (!t || !s) return 'Unavailable';
+    const producer = t.naval ? (s.portOwner || s.owner) : s.owner;
     return (
-      (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
-      (!(g.buildable?.[s.owner] || [...Object.values(lineupOf(g, s.owner)), ...navalTypes(g, s.owner)]).includes(type)
+      (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
         : null) ||
-      cityBusyReason(g, s) ||
+      (!t.naval ? cityBusyReason(g, s) : null) ||
       (t.naval && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
-      (t.naval && s.portOwner !== s.owner ? 'An enemy fleet holds the port' : null) ||
-      (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
+      (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       // The city factory and its port are separate yards: each launches one unit a turn.
       (t.naval
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
+      (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
+      shortfall(funds(g, producer), price(type, stack, g, producer))
     );
   }
   function buildReason(g, s, kind) {
@@ -1456,7 +1456,15 @@
     for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)])
       if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileOwner(g, t, owner);
   }
-  // All ways of taking a city use the same province, port, rewards and surrender path.
+  // A port is seized by entering its water hex, independently of its city and territory.
+  function capturePort(g, u) {
+    const s = portAtHex(g, u);
+    if (!s || !foe(g, s.portOwner || s.owner, u.side)) return null;
+    s.portOwner = u.side;
+    log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures the port of ${s.name}.`, u.side);
+    return s.name;
+  }
+  // City capture changes provinces, but does not automatically transfer ports.
   function captureCity(g, u, navalLanding = false) {
     const s = stationAt(g, u);
     if (!s || !foe(g, s.owner, u.side) ||
@@ -1465,10 +1473,6 @@
     const loser = s.owner;
     s.owner = u.side;
     s.shield = 0;
-    if (s.portAt) {
-      const holder = unitAt(g, s.portAt);
-      if (!holder || !foe(g, holder.side, u.side)) s.portOwner = u.side;
-    }
     s.capturedTurn = g.turn;
     dropProject(g, s, 'captured');
     dropEliminator(g, s, 'captured');
@@ -1544,9 +1548,10 @@
     reindex(g, u, from);
     // Moving through enemy or neutral territory never changes its map color.
     const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
+    const portCaptured = capturePort(g, u);
     const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
-    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, seized };
+    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, portCaptured, seized };
   }
   // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
   function surrender(g, loser, winner, last) {
@@ -1555,15 +1560,17 @@
     annexStrategic(g, loser);
     let cities = 0,
       units = 0;
-    for (const s of g.stations)
+    for (const s of g.stations) {
+      // Defeated powers cannot keep ports, but third-party harbour control survives.
+      if (s.portAt && s.portOwner === loser) s.portOwner = winner;
       if (s.owner === loser) {
         s.owner = winner;
-        if (s.portAt) s.portOwner = winner;
         s.shield = Math.round(s.maxShield * 0.5);
         s.producedTurn = s.portProducedTurn = g.turn;
         fortify(g, s);
         cities++;
       }
+    }
     // Any land formerly attached to an already destroyed city now belongs to
     // a surviving city of the conqueror, so later captures can still transfer it.
     const winnerCities = new Set(g.stations.filter(s => s.owner === winner).map(s => s.id));
@@ -1995,7 +2002,7 @@
   // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
   // there (move it off first).
   function recruitOptions(g, s, side, type = null) {
-    if (s.owner !== side) return [];
+    if ((TYPES[type]?.naval ? s.portOwner || s.owner : s.owner) !== side) return [];
     const at = TYPES[type]?.naval ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
     return at && !unitAt(g, at) ? [at] : [];
   }
@@ -2015,15 +2022,16 @@
     const s = g.stations.find(s => s.id === stationId);
     const why = buyReason(g, s, type, stack);
     if (why) return { ok: false, reason: why };
-    const options = recruitOptions(g, s, s.owner, type);
+    const producer = TYPES[type].naval ? (s.portOwner || s.owner) : s.owner;
+    const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    const cost = price(type, stack, g, s.owner);
-    spend(funds(g, s.owner), cost);
+    const cost = price(type, stack, g, producer);
+    spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
-    const u = newUnit(g, type, s.owner, p.c, p.r, stack, null, false);
-    log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, s.owner);
+    const u = newUnit(g, type, producer, p.c, p.r, stack, null, false);
+    log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u };
   }
 
@@ -3235,8 +3243,7 @@
           u.hp + Math.round(maxHP(u) * (PORT.repair[port.portLevel] + (isShip(u) ? techValue(g, side, 'naval.damage') : 0))),
         );
     }
-    for (const s of g.stations)
-      if (s.portAt && s.portOwner !== s.owner && unitAt(g, s.portAt)?.side !== s.portOwner) s.portOwner = s.owner;
+    // Captured port control persists after the occupying ship sails away.
     g.strikes = [];
     // Katase's Prepared Position: friendly cities within 2 hexes of his unit restore 12% more defenses.
     const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);

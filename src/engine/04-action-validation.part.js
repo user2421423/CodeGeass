@@ -56,25 +56,25 @@
   function buyReason(g, s, type, stack = 1, vacating = null) {
     const t = TYPES[type];
     if (!t || !s) return 'Unavailable';
+    const producer = t.naval ? (s.portOwner || s.owner) : s.owner;
     return (
-      (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
+      (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
-      (!(g.buildable?.[s.owner] || [...Object.values(lineupOf(g, s.owner)), ...navalTypes(g, s.owner)]).includes(type)
+      (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
         : null) ||
-      cityBusyReason(g, s) ||
+      (!t.naval ? cityBusyReason(g, s) : null) ||
       (t.naval && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
-      (t.naval && s.portOwner !== s.owner ? 'An enemy fleet holds the port' : null) ||
-      (s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
+      (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       // The city factory and its port are separate yards: each launches one unit a turn.
       (t.naval
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
+      (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, s.owner), price(type, stack, g, s.owner))
+      shortfall(funds(g, producer), price(type, stack, g, producer))
     );
   }
   function buildReason(g, s, kind) {

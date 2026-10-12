@@ -172,8 +172,7 @@
           u.hp + Math.round(maxHP(u) * (PORT.repair[port.portLevel] + (isShip(u) ? techValue(g, side, 'naval.damage') : 0))),
         );
     }
-    for (const s of g.stations)
-      if (s.portAt && s.portOwner !== s.owner && unitAt(g, s.portAt)?.side !== s.portOwner) s.portOwner = s.owner;
+    // Captured port control persists after the occupying ship sails away.
     g.strikes = [];
     // Katase's Prepared Position: friendly cities within 2 hexes of his unit restore 12% more defenses.
     const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);

@@ -1295,7 +1295,7 @@ function draw(time, dt) {
     const shore = visualCityCenter(s);
     const dx = wrapNear(shore.x, sea.x) - sea.x, dy = shore.y - sea.y;
     const distance = Math.hypot(dx, dy) || 1;
-    const ux = dx / distance, uy = dy / distance, holder = F(s.portOwner || s.owner).color;
+    const ux = dx / distance, uy = dy / distance, holder = F(s.owner).color; // Port occupation does not change map colors.
     for (const x of copies(sea.x)) {
       if (detail && ART.drawBuilding(ctx, 'port', x + ux * R * 0.15, sea.y + uy * R * 0.15, R * 1.75))
         outlinedText('⚓', x + R * 0.62, sea.y - R * 0.5, 12, holder, scale, 'Trebuchet MS', true);

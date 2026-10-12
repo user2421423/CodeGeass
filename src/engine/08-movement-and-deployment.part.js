@@ -245,7 +245,15 @@
     for (const t of [tile(g, p.c, p.r), ...adjacent(g, p)])
       if (!isSea(t) && !TERRAIN[t.terrain]?.blocked) setTileOwner(g, t, owner);
   }
-  // All ways of taking a city use the same province, port, rewards and surrender path.
+  // A port is seized by entering its water hex, independently of its city and territory.
+  function capturePort(g, u) {
+    const s = portAtHex(g, u);
+    if (!s || !foe(g, s.portOwner || s.owner, u.side)) return null;
+    s.portOwner = u.side;
+    log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures the port of ${s.name}.`, u.side);
+    return s.name;
+  }
+  // City capture changes provinces, but does not automatically transfer ports.
   function captureCity(g, u, navalLanding = false) {
     const s = stationAt(g, u);
     if (!s || !foe(g, s.owner, u.side) ||
@@ -254,10 +262,6 @@
     const loser = s.owner;
     s.owner = u.side;
     s.shield = 0;
-    if (s.portAt) {
-      const holder = unitAt(g, s.portAt);
-      if (!holder || !foe(g, holder.side, u.side)) s.portOwner = u.side;
-    }
     s.capturedTurn = g.turn;
     dropProject(g, s, 'captured');
     dropEliminator(g, s, 'captured');
@@ -333,9 +337,10 @@
     reindex(g, u, from);
     // Moving through enemy or neutral territory never changes its map color.
     const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
+    const portCaptured = capturePort(g, u);
     const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
-    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, seized };
+    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, portCaptured, seized };
   }
   // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
   function surrender(g, loser, winner, last) {
@@ -344,15 +349,17 @@
     annexStrategic(g, loser);
     let cities = 0,
       units = 0;
-    for (const s of g.stations)
+    for (const s of g.stations) {
+      // Defeated powers cannot keep ports, but third-party harbour control survives.
+      if (s.portAt && s.portOwner === loser) s.portOwner = winner;
       if (s.owner === loser) {
         s.owner = winner;
-        if (s.portAt) s.portOwner = winner;
         s.shield = Math.round(s.maxShield * 0.5);
         s.producedTurn = s.portProducedTurn = g.turn;
         fortify(g, s);
         cities++;
       }
+    }
     // Any land formerly attached to an already destroyed city now belongs to
     // a surviving city of the conqueror, so later captures can still transfer it.
     const winnerCities = new Set(g.stations.filter(s => s.owner === winner).map(s => s.id));
