@@ -26,6 +26,33 @@
     delete cape.provinceCity;
     return true;
   }
+  // Repair pre-audit saves only where the ORIGINAL incorrect province and
+  // city ownership still exist. Do not reset territory that was truly captured.
+  function repairLegacyRegionalZones(g) {
+    if (g.mode !== 'conquest' || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return;
+    const city = name => g.stations.find(s => s.name === name);
+    const is2018 = g.era === 'ufn2018';
+    const iraq = is2018 ? 'britannia' : 'neutral';
+    const europe = is2018 ? 'eb' : 'eu';
+    const oldGulf = is2018 ? 'britannia' : 'neutral';
+    const baghdad = city('Baghdad'), tbilisi = city('Tbilisi');
+    const northernIraq = tile(g, 110, 22);
+    if (baghdad?.owner === iraq && tbilisi?.owner === europe &&
+        northernIraq?.owner === europe && northernIraq.provinceCity === tbilisi.id) {
+      setTileOwner(g, northernIraq, iraq);
+      delete northernIraq.provinceCity;
+    }
+    const dubai = city('Dubai'), tehran = city('Tehran');
+    if (dubai?.owner !== oldGulf || tehran?.owner !== 'cf') return;
+    const misplaced = [[116,26],[117,26],[118,26],[119,26],
+      [115,27],[116,27],[117,27],[118,27],[119,27]];
+    for (const [c,r] of misplaced) {
+      const t = tile(g, c, r);
+      if (t?.owner !== oldGulf || t.provinceCity !== dubai.id) continue;
+      setTileOwner(g, t, 'cf');
+      delete t.provinceCity;
+    }
+  }
   const ERAS = {
     world: {
       name: 'World War · 2017 a.t.b.',
@@ -169,7 +196,6 @@
             !isSea(p) &&
             !TERRAIN[p.terrain]?.blocked &&
             !unitAt(g, p) &&
-            (g.era !== 'ufn2018' || p.owner === src.side) &&
             (!stationAt(g, p) || stationAt(g, p).owner === src.side),
         );
       if (!spot) continue;
@@ -554,6 +580,29 @@
       if (insidePolygon(lon, lat, mainlandAustralia)) setTileOwner(g, t, 'neutral');
       else if (insidePolygon(lon, lat, arabianPeninsula))
         setTileOwner(g, t, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
+    }
+    // Political province audit: the global radius-11 flood must not let
+    // Caucasian cities annex northern Iraq or Dubai claim Iran's north shore.
+    // These controls are applied BEFORE city-province IDs are assigned, in
+    // both eras. Territory subsequently changes only through city captures.
+    const iraqBorder = [
+      [39,34], [40,36.7], [42.7,37.5], [44.5,37.3],
+      [46.1,36.3], [47.5,34.7], [48.5,32],
+      [47.9,29.6], [46,29.2], [43,30], [41,31.5], [39,33]
+    ];
+    const iranGulfShore = [
+      [49.4,31.5], [50,29.5], [51.8,28.0], [53.3,27.2],
+      [54.9,27], [56.3,27], [57.7,27],
+      [60.5,27], [61.8,28.5], [61,32], [49.4,32]
+    ];
+    for (const t of g.tiles) {
+      if (isSea(t)) continue;
+      const lon = WORLD.lon0 + WORLD.dlon * (t.c + 0.5 + 0.5 * (t.r & 1));
+      const lat = WORLD.lat0 - WORLD.dlat * t.r;
+      if (insidePolygon(lon, lat, iraqBorder))
+        setTileOwner(g, t, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
+      else if (insidePolygon(lon, lat, iranGulfShore))
+        setTileOwner(g, t, 'cf');
     }
     repairCapeYorkOwnership(g);
     // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.

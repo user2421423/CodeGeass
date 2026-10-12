@@ -173,6 +173,21 @@ const modal = () => node('modal-root').innerHTML;
     'Cape York gameplay seed stays Australian');
   assert.equal(run("GEOGRAPHY.islandOwnerAt(game,142,-13)"), 'neutral',
     'Cape York geographic land shape is uniformly neutral instead of Federation-coloured');
+  // Detailed land shapes with no land-hex centre must follow THEIR Japanese
+  // mainland side, not the closer Korean or Chinese coast across sea.
+  for (const [name,lon,lat] of [
+    ['Tokyo',139.7,35.7], ['Kyushu',130.7,33.1], ['Shikoku',133.5,33.5],
+    ['Hokkaido',141.3,43.1], ['Okinawa',127.97,26.47],
+    ['Amami',129.43,28.32], ['Awaji',134.84,34.4], ['Oki',133.28,36.26]
+  ]) assert.equal(run(`GEOGRAPHY.islandOwnerAt(game,${lon},${lat})`), 'britannia',
+    'Japan visual city zone: ' + name);
+  assert.equal(run("GEOGRAPHY.islandOwnerAt(game,126.55,33.38)"), null,
+    'Jeju must not inherit the nearby Japanese island tint');
+  assert.equal(run("GEOGRAPHY.islandOwnerAt(game,128.61,34.87)"), null,
+    'Korean coastal islands must not inherit Japanese ownership');
+  const japanIn2018 = run("(() => { const g=E.createGame('britannia','normal','conquest',909,'ufn2018'); return [GEOGRAPHY.islandOwnerAt(g,127.97,26.47),GEOGRAPHY.islandOwnerAt(g,134.84,34.4),GEOGRAPHY.islandOwnerAt(g,139.7,35.7)]; })()");
+  assert.equal(JSON.stringify(japanIn2018), JSON.stringify(['britannia','britannia','britannia']),
+    '2018 retains Japan ownership on both small and large islands');
   const politicalIslands = run("({Sumatra:GEOGRAPHY.islandOwnerAt(game,101,0),Java:GEOGRAPHY.islandOwnerAt(game,111,-7),Borneo:GEOGRAPHY.islandOwnerAt(game,114,0),Papua:GEOGRAPHY.islandOwnerAt(game,134,-3),Egypt:GEOGRAPHY.islandOwnerAt(game,30,25)})");
   for (const name of ['Sumatra', 'Java', 'Borneo', 'Papua'])
     assert.equal(politicalIslands[name], 'cf', name + ' has a continuous Federation-owned polygon');

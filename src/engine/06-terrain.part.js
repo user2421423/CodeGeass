@@ -245,29 +245,60 @@
   // center. This keeps historical borders and Indonesia's intentional overrides intact.
   // City IDs (unlike array indices) survive captures and F.L.E.I.J.A. removals.
   function assignCityProvinces(g) {
-    const byOwner = new Map();
+    // City influence follows same-faction playable LAND, not a direct line
+    // through oceans. This also repairs detached provinces in older saves.
+    const components = new Int32Array(g.tiles.length);
+    components.fill(-1);
+    let nextComponent = 0;
+    for (let i = 0; i < g.tiles.length; i++) {
+      const source = g.tiles[i];
+      if (isSea(source) || !source.owner || components[i] >= 0) continue;
+      const queue = [source], owner = source.owner;
+      components[i] = nextComponent;
+      for (let head = 0; head < queue.length; head++)
+        for (const n of adjacent(g, queue[head])) {
+          const k = n.r * g.cols + n.c;
+          if (isSea(n) || n.owner !== owner || components[k] >= 0) continue;
+          components[k] = nextComponent;
+          queue.push(n);
+        }
+      nextComponent++;
+    }
+    const byOwner = new Map(), byComponent = new Map();
+    const cityById = new Map(g.stations.map(s => [s.id, s]));
     for (const s of g.stations) {
       if (!byOwner.has(s.owner)) byOwner.set(s.owner, []);
       byOwner.get(s.owner).push(s);
+      const component = components[s.r * g.cols + s.c];
+      if (component < 0) continue;
+      if (!byComponent.has(component)) byComponent.set(component, []);
+      byComponent.get(component).push(s);
     }
     for (const t of g.tiles) {
-      if (isSea(t)) {
+      if (isSea(t) || !t.owner) {
         delete t.provinceCity;
         continue;
       }
-      // A previously assigned province must not be reassigned after its city
-      // changes hands. This also keeps province borders stable across saves.
-      if (t.provinceCity != null || !t.owner) continue;
-      const cities = byOwner.get(t.owner) || [];
+      const component = components[t.r * g.cols + t.c];
+      const local = byComponent.get(component);
+      const cities = local?.length ? local : (byOwner.get(t.owner) || []);
+      const previous = cityById.get(t.provinceCity);
+      // Capture retains the fixed province unless it points across water to
+      // another landmass which has its own city of the same owner.
+      if (previous && previous.owner === t.owner &&
+          (!local?.length || components[previous.r * g.cols + previous.c] === component))
+        continue;
       let nearestCity = null, nearestDistance = Infinity;
       for (const s of cities) {
         const d = dist(g, s, t);
-        if (d < nearestDistance || (d === nearestDistance && s.id < nearestCity.id)) {
+        if (d < nearestDistance || (d === nearestDistance &&
+            (nearestCity === null || s.id < nearestCity.id))) {
           nearestCity = s;
           nearestDistance = d;
         }
       }
       if (nearestCity) t.provinceCity = nearestCity.id;
+      else delete t.provinceCity;
     }
   }
 

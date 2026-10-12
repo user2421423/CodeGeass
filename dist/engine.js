@@ -1120,29 +1120,60 @@
   // center. This keeps historical borders and Indonesia's intentional overrides intact.
   // City IDs (unlike array indices) survive captures and F.L.E.I.J.A. removals.
   function assignCityProvinces(g) {
-    const byOwner = new Map();
+    // City influence follows same-faction playable LAND, not a direct line
+    // through oceans. This also repairs detached provinces in older saves.
+    const components = new Int32Array(g.tiles.length);
+    components.fill(-1);
+    let nextComponent = 0;
+    for (let i = 0; i < g.tiles.length; i++) {
+      const source = g.tiles[i];
+      if (isSea(source) || !source.owner || components[i] >= 0) continue;
+      const queue = [source], owner = source.owner;
+      components[i] = nextComponent;
+      for (let head = 0; head < queue.length; head++)
+        for (const n of adjacent(g, queue[head])) {
+          const k = n.r * g.cols + n.c;
+          if (isSea(n) || n.owner !== owner || components[k] >= 0) continue;
+          components[k] = nextComponent;
+          queue.push(n);
+        }
+      nextComponent++;
+    }
+    const byOwner = new Map(), byComponent = new Map();
+    const cityById = new Map(g.stations.map(s => [s.id, s]));
     for (const s of g.stations) {
       if (!byOwner.has(s.owner)) byOwner.set(s.owner, []);
       byOwner.get(s.owner).push(s);
+      const component = components[s.r * g.cols + s.c];
+      if (component < 0) continue;
+      if (!byComponent.has(component)) byComponent.set(component, []);
+      byComponent.get(component).push(s);
     }
     for (const t of g.tiles) {
-      if (isSea(t)) {
+      if (isSea(t) || !t.owner) {
         delete t.provinceCity;
         continue;
       }
-      // A previously assigned province must not be reassigned after its city
-      // changes hands. This also keeps province borders stable across saves.
-      if (t.provinceCity != null || !t.owner) continue;
-      const cities = byOwner.get(t.owner) || [];
+      const component = components[t.r * g.cols + t.c];
+      const local = byComponent.get(component);
+      const cities = local?.length ? local : (byOwner.get(t.owner) || []);
+      const previous = cityById.get(t.provinceCity);
+      // Capture retains the fixed province unless it points across water to
+      // another landmass which has its own city of the same owner.
+      if (previous && previous.owner === t.owner &&
+          (!local?.length || components[previous.r * g.cols + previous.c] === component))
+        continue;
       let nearestCity = null, nearestDistance = Infinity;
       for (const s of cities) {
         const d = dist(g, s, t);
-        if (d < nearestDistance || (d === nearestDistance && s.id < nearestCity.id)) {
+        if (d < nearestDistance || (d === nearestDistance &&
+            (nearestCity === null || s.id < nearestCity.id))) {
           nearestCity = s;
           nearestDistance = d;
         }
       }
       if (nearestCity) t.provinceCity = nearestCity.id;
+      else delete t.provinceCity;
     }
   }
 
@@ -1236,6 +1267,7 @@
       migrateCoastalTerrain(g);
       attachUnclaimedNewZealand(g);
       repairCapeYorkOwnership(g);
+      repairLegacyRegionalZones(g);
       // Older saves have no province IDs. Bind their existing painted land to
       // its closest still-controlled city, without resetting conquest progress.
       assignCityProvinces(g);
@@ -3839,6 +3871,33 @@
     delete cape.provinceCity;
     return true;
   }
+  // Repair pre-audit saves only where the ORIGINAL incorrect province and
+  // city ownership still exist. Do not reset territory that was truly captured.
+  function repairLegacyRegionalZones(g) {
+    if (g.mode !== 'conquest' || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return;
+    const city = name => g.stations.find(s => s.name === name);
+    const is2018 = g.era === 'ufn2018';
+    const iraq = is2018 ? 'britannia' : 'neutral';
+    const europe = is2018 ? 'eb' : 'eu';
+    const oldGulf = is2018 ? 'britannia' : 'neutral';
+    const baghdad = city('Baghdad'), tbilisi = city('Tbilisi');
+    const northernIraq = tile(g, 110, 22);
+    if (baghdad?.owner === iraq && tbilisi?.owner === europe &&
+        northernIraq?.owner === europe && northernIraq.provinceCity === tbilisi.id) {
+      setTileOwner(g, northernIraq, iraq);
+      delete northernIraq.provinceCity;
+    }
+    const dubai = city('Dubai'), tehran = city('Tehran');
+    if (dubai?.owner !== oldGulf || tehran?.owner !== 'cf') return;
+    const misplaced = [[116,26],[117,26],[118,26],[119,26],
+      [115,27],[116,27],[117,27],[118,27],[119,27]];
+    for (const [c,r] of misplaced) {
+      const t = tile(g, c, r);
+      if (t?.owner !== oldGulf || t.provinceCity !== dubai.id) continue;
+      setTileOwner(g, t, 'cf');
+      delete t.provinceCity;
+    }
+  }
   const ERAS = {
     world: {
       name: 'World War · 2017 a.t.b.',
@@ -3982,7 +4041,6 @@
             !isSea(p) &&
             !TERRAIN[p.terrain]?.blocked &&
             !unitAt(g, p) &&
-            (g.era !== 'ufn2018' || p.owner === src.side) &&
             (!stationAt(g, p) || stationAt(g, p).owner === src.side),
         );
       if (!spot) continue;
@@ -4367,6 +4425,29 @@
       if (insidePolygon(lon, lat, mainlandAustralia)) setTileOwner(g, t, 'neutral');
       else if (insidePolygon(lon, lat, arabianPeninsula))
         setTileOwner(g, t, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
+    }
+    // Political province audit: the global radius-11 flood must not let
+    // Caucasian cities annex northern Iraq or Dubai claim Iran's north shore.
+    // These controls are applied BEFORE city-province IDs are assigned, in
+    // both eras. Territory subsequently changes only through city captures.
+    const iraqBorder = [
+      [39,34], [40,36.7], [42.7,37.5], [44.5,37.3],
+      [46.1,36.3], [47.5,34.7], [48.5,32],
+      [47.9,29.6], [46,29.2], [43,30], [41,31.5], [39,33]
+    ];
+    const iranGulfShore = [
+      [49.4,31.5], [50,29.5], [51.8,28.0], [53.3,27.2],
+      [54.9,27], [56.3,27], [57.7,27],
+      [60.5,27], [61.8,28.5], [61,32], [49.4,32]
+    ];
+    for (const t of g.tiles) {
+      if (isSea(t)) continue;
+      const lon = WORLD.lon0 + WORLD.dlon * (t.c + 0.5 + 0.5 * (t.r & 1));
+      const lat = WORLD.lat0 - WORLD.dlat * t.r;
+      if (insidePolygon(lon, lat, iraqBorder))
+        setTileOwner(g, t, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
+      else if (insidePolygon(lon, lat, iranGulfShore))
+        setTileOwner(g, t, 'cf');
     }
     repairCapeYorkOwnership(g);
     // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.

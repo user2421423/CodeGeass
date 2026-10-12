@@ -215,12 +215,26 @@ const GEOGRAPHY = (() => {
         (ln >= 106 && ln <= 119.5 && lt >= -11.5 && lt <= 6) ||
         (ln >= 118 && ln <= 134 && lt >= -11.5 && lt <= 4.5) ||
         (ln >= 133 && ln <= 142 && lt >= -11.5 && lt <= 3);
-      if (!indonesia(lon, lat)) return null;
-      let closest = null, distance = (R * 9) ** 2;
+      // The same gap occurs on small Japanese islands without a playable
+      // land-centre: their pixels otherwise inherit Chinese/Korean coastal
+      // colour across open sea, even though every Japan city is Britannian.
+      // Restrict this inference to Japanese islets (not Jeju/Geoje/Ulleungdo)
+      // and follow the current owner of Japanese MAINLAND tiles after captures.
+      const japanIslet = (ln, lt) =>
+        (ln >= 123.8 && ln <= 132 && lt >= 24 && lt < 30) ||
+        (ln >= 129.1 && ln <= 149 && lt >= 30 && lt <= 46 &&
+          !(ln < 131.7 && lt >= 35.4 && lt <= 41.8));
+      const japanese = !indonesia(lon, lat) && japanIslet(lon, lat);
+      if (!indonesia(lon, lat) && !japanese) return null;
+      const japanCoreSeed = (ln, lt) =>
+        (ln >= 130.5 && ln <= 146 && lt >= 31 && lt <= 46 &&
+          ((ln >= 137) || (ln >= 131 && lt <= 35.5)));
+      let closest = null, distance = (R * (japanese ? 12 : 9)) ** 2;
       for (const seed of data.seeds) {
         const sourceLon = (seed.x - R) * 2 / (SQ * R) - 179;
         const sourceLat = 74 - (seed.y - R) * 128 / (1.5 * R * 75);
-        if (!indonesia(sourceLon, sourceLat)) continue;
+        if (japanese ? !japanCoreSeed(sourceLon, sourceLat)
+          : !indonesia(sourceLon, sourceLat)) continue;
         const d = (seed.x - x) ** 2 + (seed.y - y) ** 2;
         if (d < distance) { closest = seed.owner; distance = d; }
       }
