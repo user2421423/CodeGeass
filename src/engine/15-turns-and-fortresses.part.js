@@ -96,6 +96,8 @@
     // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
+    if(outgoing){for(const v of g.units)if(v.side===outgoing)delete v.expSilenced;
+      for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing)delete station.expSupplyBlocked;}
     if (outgoing && outgoing !== side)
       for (const u of g.units)
         if (u.hp > 0 && u.side === outgoing && !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry')
@@ -130,10 +132,16 @@
       u.withdrawMove = false;
       u.moved = false;
       u.attacked = false;
+      u.expDisabledActive=!!u.expDisabledNext;delete u.expDisabledNext;
+      u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
+      u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
+      if(u.expDisabledActive){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
+      delete u.expOverwatch;delete u.expLink;
       u.chain = 0;
       u.eliteMoveAfterKill = false;
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
+      u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
@@ -141,6 +149,13 @@
       else if (u.morale > desired) u.morale--;
       if (nearby >= 2) u.morale = Math.min(u.morale, desired);
       // Engineers within 2 hexes reassure: one extra morale step and 5% of the frame.
+
+      // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
+      if (mine.some(m => m.hp > 0 && fx(m).royalCompassion && dist(g, m, u) <= 2))
+        u.morale = Math.min(1, u.morale + 1);
+      // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
+      if (u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       if (mine.some(m => m.hp > 0 && fx(m).reassure && dist(g, m, u) <= 2)) {
         u.morale = Math.min(1, u.morale + 1);
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
@@ -185,7 +200,7 @@
       if (s.owner !== side) continue;
       const palaceTreasury = mine.some(m => fx(m).treasury && m.c === s.c && m.r === s.r);
       const rate = 0.12 + techValue(g, side, 'cities.engineering') +
-        (prepared.some(m => dist(g, m, s) <= 2) ? 0.25 : 0) + (palaceTreasury ? 0.15 : 0);
+        (prepared.some(m => dist(g, m, s) <= 2) ? 0.25 : 0) + (palaceTreasury ? 0.15 : 0) + (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=2)?.12:0);
       // Consume this marker at the owner's next regeneration. A hit by any
       // rival phase is counted once, even when factions take turns in one round.
       const recovery = s.attackedSinceRegen ? rate * 0.5 : rate;

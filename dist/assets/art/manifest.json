@@ -422,6 +422,216 @@
     },
     "zhaohao": {
       "src": "portraits/zhaohao-f75b0bf42b4c.jpg"
+    },
+    "marianne": {
+      "src": "portraits/marianne-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "oldrin": {
+      "src": "portraits/oldrin-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "marrybell": {
+      "src": "portraits/marrybell-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "norland": {
+      "src": "portraits/norland-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "sakuya": {
+      "src": "portraits/sakuya-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "kaguya": {
+      "src": "portraits/kaguya-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "charles": {
+      "src": "portraits/charles-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "lloyd": {
+      "src": "portraits/lloyd-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "sophie": {
+      "src": "portraits/sophie-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "sarah": {
+      "src": "portraits/sarah-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "olivia": {
+      "src": "portraits/olivia-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "margaret": {
+      "src": "portraits/margaret-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "hilda": {
+      "src": "portraits/hilda-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "chloe": {
+      "src": "portraits/chloe-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "kate": {
+      "src": "portraits/kate-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "joe": {
+      "src": "portraits/joe-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "tianzi": {
+      "src": "portraits/tianzi-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "xiawang": {
+      "src": "portraits/xiawang-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "sawasaki": {
+      "src": "portraits/sawasaki-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "diethard": {
+      "src": "portraits/diethard-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "sayoko": {
+      "src": "portraits/sayoko-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "benio": {
+      "src": "portraits/benio-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "toruyoshida": {
+      "src": "portraits/toruyoshida-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "savitri": {
+      "src": "portraits/savitri-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "kirihara": {
+      "src": "portraits/kirihara-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "ichijiku": {
+      "src": "portraits/ichijiku-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "ayame": {
+      "src": "portraits/ayame-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "kinoshita": {
+      "src": "portraits/kinoshita-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "kizuna": {
+      "src": "portraits/kizuna-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "pierre": {
+      "src": "portraits/pierre-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "ren": {
+      "src": "portraits/ren-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "chengzhong": {
+      "src": "portraits/chengzhong-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "huangqian": {
+      "src": "portraits/huangqian-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "mutsuki": {
+      "src": "portraits/mutsuki-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "indira": {
+      "src": "portraits/indira-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "chaojielun": {
+      "src": "portraits/chaojielun-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "vritra": {
+      "src": "portraits/vritra-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "zidien": {
+      "src": "portraits/zidien-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "euphemia": {
+      "src": "portraits/euphemia-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "cecile": {
+      "src": "portraits/cecile-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "eduardo": {
+      "src": "portraits/eduardo-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "ferilli": {
+      "src": "portraits/ferilli-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     }
   },
   "buildings": {

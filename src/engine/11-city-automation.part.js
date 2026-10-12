@@ -168,6 +168,7 @@
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
     if (kind === 'command') return commandTargets(g, u);
+    if (kind === 'special') return newcomerTargets(g,u);
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
       (kind === 'cleanse' ? v.side === u.side : kind === 'withdraw' ? v.id !== u.id && v.side === u.side && v.attacked && v.morale > -3
         : foe(g, v.side, u.side)));
@@ -176,6 +177,7 @@
     const u = g.units.find(v => v.id === id), why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
+    if (action.kind === 'special') return newcomerUse(g,u,targetId);
     if (['command', 'designate', 'stratagem'].includes(action.kind)) {
       const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
         : options.find(v => v.id === targetId);

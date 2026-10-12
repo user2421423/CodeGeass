@@ -30,8 +30,9 @@
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
-    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill));
+    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.5&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
     attack *= 1 + auraBonus(g, u);
+    attack *= newcomerAttack(g,u,target,counter);
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
     if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'naval.torpedoes');
@@ -77,7 +78,10 @@
       friends(u.side, target, v => v.branch !== 'Artillery')
     )
       attack *= 1.2;
-    const pen = armorPenetration(g, u, target);
+    const pen = Math.min(.95,armorPenetration(g,u,target)
+      +(u.expCalibration?.15:0)
+      +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0)
+      +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.12:0));
     const formationArmor =
       target &&
       !victim.naval &&
@@ -129,9 +133,14 @@
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
-      attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
+      attack *= skillDefense(g,target,counter,direct) *
+        commanderDefense(g,target,u,counter,direct) *
+        newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
-      else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
+      else {
+        const bypass=(u.forcedOffensive?.3:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.5:0);
+        attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
+      }
     }
     if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.85 : 0.65;
     return Math.max(1, Math.round(attack));
@@ -164,6 +173,7 @@
     const counter =
       !followUp &&
       !(f.timeStop && a.timeStopTurn !== g.turn) &&
+      !(f.dashStrike&&a.movedDistance>=3&&a.expDashTurn!==g.turn) &&
       !targetMarked(g, a, d).noCounter &&
       !!d &&
       !t.noCounter &&
@@ -175,6 +185,7 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
+        (a.expCalibration ? .25 : 0) +
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
@@ -191,7 +202,10 @@
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
       splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
-      armorPen: armorPenetration(g, a, d),
+      armorPen: Math.min(.95,armorPenetration(g,a,d)
+        +(a.expCalibration?.15:0)
+        +(fx(a).diagnosis&&d&&a.expDiagnosisId===d.id?.1*(a.expDiagnosisCount||0):0)
+        +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.12:0)),
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
@@ -229,6 +243,7 @@
       attacker.morale = clamp(attacker.morale + 1, -3, 1);
     }
     if (v.cmd) log(g, `${COMMANDERS[v.cmd].short}'s unit is lost.`, v.side);
+    newcomerKilled(g,v,attacker);
     hooks.kill?.(g, v, attacker, by);
   }
   function attack(g, id, c, r) {
@@ -262,12 +277,13 @@
     let dmg = 0,
       sd = 0;
     if (d) {
-      dmg = Math.round(pr.unit * mult);
+      dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       consumeDefensiveSkills(g, d, a);
       d.hp = Math.max(0, d.hp - dmg);
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
+      if(d.skillMarks?.length)d.skillMarks=d.skillMarks.filter(m=>m.side!==a.side||!m.uses);
     }
     if (s && foe(g, s.owner, a.side)) {
       // Even after the defenses reach zero, another successful city assault
@@ -306,6 +322,7 @@
       }
     }
     if (d && d.hp <= 0) kill(g, d, a);
+    if(d)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     const eliteBreakthrough = !!aef.breakthrough,
       eliteRelentless = !!aef.relentless;
@@ -351,7 +368,20 @@
       a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
     }
-    afterCommanderAttack(g, a, d, s, destroyed, timeStop);
+    afterCommanderAttack(g,a,d,s,destroyed,timeStop);
+    if(f.dashStrike)a.expDashTurn=g.turn;
+    if(f.ziAmbush&&d?.cmd&&a.movedDistance>=2&&a.expZiAmbushTurn!==g.turn)a.expZiAmbushTurn=g.turn;
+    if(f.highland)a.expHighlandTurn=g.turn;
+    if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
+    if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
+    if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
+    if(a.expCalibration){a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));delete a.expCalibration;}
+    if(a.forcedOffensive)delete a.forcedOffensive;
+    if(a.expRetrofitStrike)delete a.expRetrofitStrike;
+    if(a.expNavalRelay)delete a.expNavalRelay;
+    if(a.expBreach&&destroyed&&d&&!unitAt(g,d)&&(!stationAt(g,d)||stationAt(g,d).shield<=0)){
+      const old={c:a.c,r:a.r};a.c=d.c;a.r=d.r;reindex(g,a,old);captureCity(g,a);delete a.expBreach;
+    }
     log(
       g,
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,

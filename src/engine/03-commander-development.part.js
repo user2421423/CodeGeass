@@ -5,7 +5,7 @@
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
-    return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
+    return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
   function recruitPrice(k) {
     const a = COMMANDERS[k];
@@ -126,7 +126,7 @@
   function moraleFloor(g, v) {
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
-      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id)) && dist(g, m, v) <= 1,
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=2)) && dist(g, m, v) <= 2,
     )
       ? -1
       : -3;

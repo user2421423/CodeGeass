@@ -228,8 +228,8 @@ function commanderCard(u) {
 // In an operation: assign your commanders to units. Operation commanders are listed but stay where they are.
 // Friendly activation and enemy designation use the same explicit target picker.
 function commandDialog(u) {
-  const action = C(u.cmd).action, options = E.actionTargets(game, u), friendly = action.kind === 'command';
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · every 3 turns</div><h2>${friendly ? 'Which unit acts again?' : 'Designate an enemy'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${v.cmd ? esc(C(v.cmd).short) + ' · ' : ''}${esc(E.TYPES[v.type].short)} ×${v.stack} · ${esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
+  const action = C(u.cmd).action, options = E.actionTargets(game, u), friendly = action.kind === 'command'||(action.kind==='special'&&!['enemy','enemyCommander'].includes(action.target));
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · every ${action.cooldown||3} turns</div><h2>${friendly ? 'Select a friendly unit' : 'Designate an enemy'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${v.cmd ? esc(C(v.cmd).short) + ' · ' : ''}${esc(E.TYPES[v.type].short)} ×${v.stack} · ${esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
   focusDialog();
 }
 function admiralDialog() {
