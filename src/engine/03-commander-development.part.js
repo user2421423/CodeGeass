@@ -5,7 +5,7 @@
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
-    return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
+    return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
   function recruitPrice(k) {
     const a = COMMANDERS[k];
