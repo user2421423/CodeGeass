@@ -186,3 +186,65 @@ test('Independent allied Sakuradite mines cannot be seized during military passa
   assert.equal(g.sites[0].owner, 'eb');
   assert.equal(r.seized, null);
 });
+
+test('2018 U.F.N. builds only Black Knights Knightmares, including older saves and opening armies', () => {
+  const expected = new Set(Object.values(E.LINEUPS.bk));
+  const g = E.createGame('cf', 'normal', 'conquest', 2028, 'ufn2018');
+  const old = E.migrateSave(E.packSave(g));
+  for (const state of [g, old]) {
+    assert.deepEqual(E.lineupOf(state, 'cf'), E.LINEUPS.bk);
+    for (const [cls, type] of Object.entries(E.LINEUPS.bk))
+      assert.equal(E.typeFor('cf', cls, state), type, 'U.F.N. '+cls);
+    for (const u of state.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval))
+      assert.ok(expected.has(u.type), 'Non-Black-Knights opening KMF: '+u.type);
+    const available = state.stations.find(s => s.owner === 'cf' && s.tier >= 1 && !E.unitAt(state, s));
+    assert.ok(available, 'U.F.N. has a usable factory');
+    assert.match(E.buyReason(state, available, 'gun_ru', 1) || '', /Not built by this faction/);
+    assert.match(E.buyReason(state, available, 'alexander', 1) || '', /Not built by this faction/);
+    assert.notMatch(E.buyReason(state, available, 'burai', 1) || '', /Not built by this faction/);
+  }
+  const world = E.createGame('cf', 'normal', 'conquest', 2028);
+  assert.equal(E.typeFor('cf', 'scout', world), E.LINEUPS.cf.scout);
+  assert.equal(E.lineupOf(world, 'cf').scout, E.LINEUPS.cf.scout);
+});
+
+test('2018 U.F.N. commanders from all three factions serve Black Knights units', () => {
+  const g = E.createGame('cf', 'normal', 'conquest', 122, 'ufn2018');
+  const commanders = Object.entries(E.COMMANDERS);
+  for (const side of ['cf','bk','eu']) {
+    const [id] = commanders.find(([, a]) => a.side === side) || [];
+    assert.ok(id, 'Commander for '+side);
+    assert.equal(E.serves(id, 'cf', g), true, 'U.F.N. commander '+side);
+    const u = g.units.find(u => u.side === 'cf' && !u.cmd && !E.TYPES[u.type].naval);
+    assert.ok(u);
+    g.roster[id] = E.defaultOfficer(id);
+    g.economy.cf.credits = 100000;
+    assert.equal(E.assignReason(g, u, id), null, 'Commander assignment '+id);
+  }
+  const britannian = commanders.find(([, a]) => a.side === 'britannia')[0];
+  assert.equal(E.serves(britannian, 'cf', g), false);
+  const world = E.createGame('cf', 'normal', 'conquest', 122);
+  const european = commanders.find(([, a]) => a.side === 'eu')[0];
+  assert.equal(E.serves(european, 'cf', world), false);
+});
+
+test('2018 U.F.N. Elite starts, factory restrictions and AI pools remain Black Knights-only', () => {
+  for (const side of ['cf','britannia'])
+    for (const difficulty of ['hard','challenge','elite']) {
+      const g = E.createGame(side, difficulty, 'conquest', 31337, 'ufn2018');
+      const bk = new Set(Object.values(E.LINEUPS.bk));
+      for (const u of g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval)) {
+        if (difficulty === 'elite') {
+          assert.ok(u.elite, 'Elite frame required');
+          assert.equal(E.ELITE_FORCES[u.elite].faction, 'black_knights', 'Non-Black-Knights Elite: '+u.elite);
+        } else {
+          assert.ok(bk.has(u.type), 'Non-Black-Knights Hard/Challenge KMF: '+u.type);
+        }
+      }
+      assert.equal(E.eliteEligible(g, 'cf', 'guren_mkii'), true);
+      assert.equal(E.eliteEligible(g, 'cf', 'shen_hu'), false);
+      assert.equal(E.eliteEligible(g, 'cf', 'akito_liberte'), false);
+    }
+  const world = E.createGame('cf', 'elite', 'conquest', 11);
+  assert.equal(E.eliteEligible(world, 'cf', 'shen_hu'), true, '2017 Chinese Federation elite unchanged');
+});

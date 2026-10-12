@@ -69,7 +69,7 @@ function openEliteShop(id, navalOnly = false) {
     const e = E.ELITE_FORCES[k], t = E.TYPES[e.type];
     const allowed = game.mode === 'campaign' && game.difficulty === 'elite'
       ? game.campaign?.eliteRosters?.[game.player]?.includes(k)
-      : e.availableTo.includes(game.player) || (game.era === 'ufn2018' && ((game.player === 'eb' && e.availableTo.includes('britannia')) || (game.player === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))));
+      : E.eliteEligible(game, game.player, k);
     return allowed && !!t.naval === navalOnly &&
       (!e.scenarioOnly || (game.mode === 'scenario' && game.difficulty === 'elite'));
   });

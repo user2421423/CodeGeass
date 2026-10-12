@@ -39,6 +39,7 @@
     deployTargets,
     deployTargetsAt,
     aiEliteRecruitReason,
+    eliteEligible,
     recruitAIElite,
     eliteAIProduction,
     eliteScenario,
@@ -1623,7 +1624,7 @@
           if (eliteScenario(g)) {
             const id = Object.keys(ELITE_FORCES).find(k => {
               const e = ELITE_FORCES[k], t = TYPES[e.type];
-              return (e.availableTo.includes(side) || (g.era === 'ufn2018' && ((side === 'eb' && e.availableTo.includes('britannia')) || (side === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))))) &&
+              return eliteEligible(g, side, k) &&
                 (role === 'carrier' ? t.naval === 'ship' : t.naval === 'amphibious');
             });
             if (!id) continue;
@@ -1710,7 +1711,7 @@
           return value + ((s.id * 13 + g.turn * 7 + hash) % 13) / 6;
         };
         return (eliteCampaign ? g.campaign?.eliteRosters?.[side] || [] : Object.keys(ELITE_FORCES))
-          .filter(id => (eliteCampaign || ELITE_FORCES[id].availableTo.includes(side) || (g.era === 'ufn2018' && ((side === 'eb' && ELITE_FORCES[id].availableTo.includes('britannia')) || (side === 'cf' && (ELITE_FORCES[id].availableTo.includes('eu') || ELITE_FORCES[id].availableTo.includes('bk')))))) &&
+          .filter(id => eliteEligible(g, side, id) &&
             !TYPES[ELITE_FORCES[id].type].naval &&
             TYPES[ELITE_FORCES[id].type].tier <= s.tier)
           .sort((a, b) => score(b) - score(a) || a.localeCompare(b));

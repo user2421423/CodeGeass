@@ -83,7 +83,7 @@
     for (const u of g.units) {
       const original = TYPES[u.type];
       if (!original || original.naval) continue; // ships/amphibious unchanged
-      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side) || (g.era === 'ufn2018' && ((u.side === 'eb' && e.availableTo.includes('britannia')) || (u.side === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk'))))));
+      const faction = landElites.filter(([id]) => eliteEligible(g, u.side, id));
       // Neutral guards use elite templates but keep their neutral allegiance.
       const pool = faction.length ? faction : landElites;
       const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
@@ -111,12 +111,13 @@
     support: 'rocket',
     rocket: 'siege',
   };
-  function upgradeType(type) {
+  function upgradeType(type, side = null, g = null) {
     const t = TYPES[type],
       next = UPGRADE[t.cls];
     if (t.naval) return t.naval === 'amphibious' && NAVAL[t.side] ? NAVAL[t.side].amphibious2 : type;
     if (!next || t.side === 'neutral') return type;
-    return typeFor(t.side, next);
+    // Challenge/Hard reinforcement upgrades must respect the U.F.N. lineup.
+    return typeFor(ufnBlackKnights(g, side) ? side : t.side, next, g);
   }
   function techUpToTier(tier) {
     return Object.fromEntries(
@@ -135,7 +136,7 @@
     for (const [k, a] of Object.entries(COMMANDERS))
       if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
-      if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
+      if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type, u.side, g);
       if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
     });
     // Reinforcements: copies of existing enemy units (never super-heavies) on free land hexes beside them.
@@ -151,7 +152,7 @@
             (!stationAt(g, p) || stationAt(g, p).owner === src.side),
         );
       if (!spot) continue;
-      const type = TYPES[src.type].cls === 'super' ? typeFor(src.side, 'heavy') : src.type;
+      const type = TYPES[src.type].cls === 'super' ? typeFor(src.side, 'heavy', g) : src.type;
       newUnit(g, type, src.side, spot.c, spot.r, src.stack);
       n++;
     }
@@ -428,7 +429,7 @@
         hexOf(lon, lat),
         t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
       );
-      if (at) newUnit(g, typeFor(frameSource || side, cls), side, at.c, at.r, stack, cmd || null);
+      if (at) newUnit(g, typeFor(ufnBlackKnights(g, side) ? 'bk' : (frameSource || side), cls, g), side, at.c, at.r, stack, cmd || null);
     }
     for (const [city, type, stack] of (cfg.garrisons || GARRISONS)) {
       const s = g.stations.find(s => s.name === city);

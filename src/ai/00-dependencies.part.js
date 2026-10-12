@@ -39,6 +39,7 @@
     deployTargets,
     deployTargetsAt,
     aiEliteRecruitReason,
+    eliteEligible,
     recruitAIElite,
     eliteAIProduction,
     eliteScenario,

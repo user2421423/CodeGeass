@@ -84,10 +84,18 @@
     ),
     ...LINEUPS,
   };
+  // The 2018 U.F.N. has the Black Knights' complete field lineup, not
+  // separate Chinese Federation or E.U. factory inventories. This reads the
+  // scenario ID, so it also applies to saves made before the roster change.
+  function ufnBlackKnights(g, side) {
+    return g?.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf';
+  }
   function typeFor(side, cls, g = null) {
+    if (ufnBlackKnights(g, side)) return ROSTER.bk[cls] || ROSTER.cf[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
+    if (ufnBlackKnights(g, side)) return { ...ROSTER.bk };
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 

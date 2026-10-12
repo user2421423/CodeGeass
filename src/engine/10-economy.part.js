@@ -87,7 +87,9 @@
     const e = ELITE_FORCES[id];
     if (!e) return false;
     const roster = eliteCampaign(g) && g.campaign?.eliteRosters?.[side];
-    return roster ? roster.includes(id) : e.availableTo.includes(side) || (g.era === 'ufn2018' && ((side === 'eb' && e.availableTo.includes('britannia')) || (side === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))));
+    if (roster) return roster.includes(id);
+    if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
+    return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
