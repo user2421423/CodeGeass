@@ -884,6 +884,7 @@
     euphemia: {"name":"Euphemia li Britannia","short":"Euphemia","side":"britannia","stars":4,"cost":145,"role":"Infantry","hull":"Administrative command","skill":"Royal Compassion","desc":"Nearby allied units gain +1 morale step at the start of their turn (maximum Inspired); her occupied friendly city produces +15% credits.","fx":{"royalCompassion":true},"title":"Third Princess of Britannia","recruit":300},
     cecile: {"name":"Cécile Croomy","short":"Cécile","side":"britannia","stars":4,"cost":145,"role":"Artillery","hull":"Camelot support frame","skill":"Combat Engineering","desc":"Nearby allied elite Knightmares regenerate 5% max HP per turn and receive a 20% discount on field repairs.","fx":{"combatEngineering":true},"title":"Camelot Development Engineer","recruit":300},
     eduardo: {"name":"Eduardo Golsaldia","short":"Eduardo","side":"eu","stars":4,"cost":150,"role":"Armor","hull":"Georgian command frame","skill":"Black Sea Fox","desc":"Friendly units within 2 hexes defending mountain hexes take 15% less direct damage and counterattack for +25% damage.","fx":{"blackSeaFox":true},"title":"Georgian Army General","recruit":300},
+    ferilli: {"name":"Ferilli Baltrow","short":"Ferilli","side":"eu","stars":3,"cost":110,"role":"Artillery","hull":"W-0 operations support","skill":"Counterfire Routing","desc":"Friendly land units within 2 hexes (including her own) take 20% less enemy counterattack damage when initiating attacks.","fx":{"counterfireRouting":0.2},"title":"W-0 Technical Support","recruit":200},
   };
   const RANKS = [
     'Second Lieutenant',
@@ -1016,6 +1017,7 @@
     euphemia: {"infantry":4,"armor":3,"artillery":3,"mobility":2},
     cecile: {"infantry":3,"armor":4,"artillery":5,"mobility":2},
     eduardo: {"infantry":4,"armor":5,"artillery":4,"mobility":3},
+    ferilli: {"infantry":2,"armor":3,"artillery":4,"mobility":3},
   };
   const data = (root.KnightmareData ||= {});
   Object.assign(data, {
