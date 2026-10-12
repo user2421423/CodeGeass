@@ -28,6 +28,27 @@
   }
   // Repair pre-audit saves only where the ORIGINAL incorrect province and
   // city ownership still exist. Do not reset territory that was truly captured.
+  // Sakhalin is Russian territory, NOT an extension of Britannian
+  // Hokkaido. At the 2-degree resolution coast hexes physically touch across
+  // the Soya Strait, allowing Sapporo's starting flood to annex the island.
+  // Initial games explicitly assign the five Sakhalin hexes; legacy saves are
+  // repaired only when their old Sapporo province remains unchanged.
+  function repairSakhalinTerritory(g, initial = false) {
+    if (g.mode !== 'conquest' || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return;
+    const russian = g.era === 'ufn2018' ? 'eb' : 'eu';
+    const sapporo = g.stations.find(s => s.name === 'Sapporo');
+    const petropavlovsk = g.stations.find(s => s.name === 'Petropavlovsk');
+    if (!initial && (sapporo?.owner !== 'britannia' || petropavlovsk?.owner !== russian))
+      return;
+    for (const id of SAKHALIN_WORLD_HEXES) {
+      const [c,r] = id.split(',').map(Number), t = tile(g, c, r);
+      if (!t || isSea(t)) continue;
+      if (!initial && !(t.owner === 'britannia' && t.provinceCity === sapporo.id))
+        continue;
+      setTileOwner(g, t, russian);
+      delete t.provinceCity;
+    }
+  }
   function repairLegacyRegionalZones(g) {
     if (g.mode !== 'conquest' || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return;
     const city = name => g.stations.find(s => s.name === name);
@@ -510,7 +531,7 @@
       const f = frontier.shift();
       if (f.d >= 11) continue;
       for (const n of adjacent(g, f.t))
-        if (!seenT.has(key(n)) && freeLand(n)) {
+        if (!seenT.has(key(n)) && freeLand(n) && !crossesWorldPoliticalStrait(g, f.t, n)) {
           seenT.add(key(n));
           setTileOwner(g, n, f.owner);
           frontier.push({ t: n, owner: f.owner, d: f.d + 1 });
@@ -607,14 +628,25 @@
         setTileOwner(g, t, 'cf');
     }
     repairCapeYorkOwnership(g);
+    // This runs after regional ownership masks and before coastal infill.
+    repairSakhalinTerritory(g, true);
     // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.
     for (let pass = 0, changed = true; changed && pass < 4; pass++) {
       changed = false;
       for (const t of g.tiles) {
         if (!isCoast(t) || t.owner) continue;
-        const n = adjacent(g, t).find(n => !isSea(n) && n.owner);
+        const n = adjacent(g, t).find(n => !isSea(n) && n.owner &&
+          !crossesWorldPoliticalStrait(g, t, n));
         if (n) { setTileOwner(g, t, n.owner); changed = true; }
       }
+    }
+    // At 2-degree resolution a few UAE/Omani southern-shore coastal centres
+    // lie north of the Arabian polygon. They remain on Dubai's bank even when
+    // the Gulf shoreline barrier prevents Iran's city flood crossing water.
+    for (const [c, r] of [[117,28],[118,28],[119,28]]) {
+      const shore = tile(g, c, r);
+      if (shore && !isSea(shore))
+        setTileOwner(g, shore, cfg.id === 'ufn2018' ? 'britannia' : 'neutral');
     }
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);

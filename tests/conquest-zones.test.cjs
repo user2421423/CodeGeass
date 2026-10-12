@@ -126,3 +126,35 @@ for (const [era, north, gulf] of [['world', 'eu', 'neutral'],
     assert.equal(E.tile(resumed, 116, 26).owner, gulf);
   });
 }
+
+for (const [era, sakhalinOwner] of [['world', 'eu'], ['ufn2018', 'eb']]) {
+  test(era + ': Sakhalin remains Russian, separated from Britannian Hokkaido', () => {
+    const g = E.createGame('britannia', 'normal', 'conquest', 1011, era);
+    const sapporo = g.stations.find(s => s.name === 'Sapporo');
+    for (const [c,r] of [[161,12],[160,13],[161,14],[160,15],[161,16]]) {
+      const t = E.tile(g,c,r);
+      assert.notEqual(t.terrain,'sea','Sakhalin coastal hex '+c+','+r);
+      assert.equal(t.owner,sakhalinOwner,'Russian Sakhalin '+c+','+r);
+      assert.notEqual(t.provinceCity,sapporo.id,'Sapporo cannot annex Sakhalin');
+    }
+    assert.equal(E.tile(g,161,18).owner,'britannia','Hokkaido remains Britannian');
+    const legacy = E.createGame('britannia','normal','conquest',1011,era);
+    for (const [c,r] of [[161,12],[160,13],[161,14],[160,15],[161,16]]) {
+      const t = E.tile(legacy,c,r);
+      E.setTileOwner(legacy,t,'britannia');
+      t.provinceCity=sapporo.id;
+    }
+    const repaired = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(legacy))));
+    assert.ok(repaired);
+    for (const [c,r] of [[161,12],[160,13],[161,14],[160,15],[161,16]])
+      assert.equal(E.tile(repaired,c,r).owner,sakhalinOwner,'legacy strait repair');
+    // Real conquests are not reverted after the Russian city changes hands.
+    const captured = E.createGame('britannia','normal','conquest',1011,era);
+    captured.stations.find(s=>s.name==='Petropavlovsk').owner='britannia';
+    E.setTileOwner(captured,E.tile(captured,161,14),'britannia');
+    E.tile(captured,161,14).provinceCity=
+      captured.stations.find(s=>s.name==='Petropavlovsk').id;
+    const resumed = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(captured))));
+    assert.equal(E.tile(resumed,161,14).owner,'britannia','legitimate capture preserved');
+  });
+}

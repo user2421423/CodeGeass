@@ -111,6 +111,7 @@
       migrateCoastalTerrain(g);
       attachUnclaimedNewZealand(g);
       repairCapeYorkOwnership(g);
+      repairSakhalinTerritory(g);
       repairLegacyRegionalZones(g);
       // Older saves have no province IDs. Bind their existing painted land to
       // its closest still-controlled city, without resetting conquest progress.
