@@ -83,14 +83,16 @@
       rec = e && eliteRecord(profile, id),
       t = e && TYPES[e.type];
     if (!e || !s || !t) return 'Unavailable';
-    const naval = t.naval === 'amphibious',
-      producer = naval ? (s.portOwner || s.owner) : s.owner;
+    const naval = !!t.naval,
+      producer = naval ? (s.portOwner || s.owner) : s.owner,
+      availableLevel = e.scenarioOnly && eliteScenario(g) ? 1 : rec?.level;
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
       (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
       (!e.availableTo.includes(producer) ? 'This Elite Force is not available to this faction' : null) ||
-      (!rec?.level ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
+      (e.scenarioOnly && !eliteScenario(g) ? 'Available only in Elite Japan' : null) ||
+      (!availableLevel ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (naval && (!s.portAt || (s.portLevel || 0) < t.port) ? `Requires a level-${t.port} port` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
@@ -98,7 +100,7 @@
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, rec?.level || 1))
+      shortfall(funds(g, producer), elitePrice(id, availableLevel || 1))
     );
   }
   function deployElite(g, stationId, id, profile = {}, position) {
@@ -108,7 +110,7 @@
     const e = ELITE_FORCES[id],
       t = TYPES[e.type],
       producer = t.naval ? (s.portOwner || s.owner) : s.owner,
-      rec = eliteRecord(profile, id),
+      rec = e.scenarioOnly && eliteScenario(g) ? { level: 1 } : eliteRecord(profile, id),
       options = recruitOptions(g, s, producer, e.type),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
       cost = elitePrice(id, rec.level);
@@ -128,31 +130,43 @@
   // Rival factories can repeat Elite Forces indefinitely, but each frame must
   // satisfy its factory tier just as it does for a player.
   function aiEliteRecruitReason(g, s, id, vacating = null) {
-    const e = ELITE_FORCES[id];
-    if (!eliteConquest(g) || !s || !e || TYPES[e.type].naval || s.owner === g.player ||
-        !MAJORS.includes(s.owner) || !e.availableTo.includes(s.owner))
-      return 'Not an AI elite factory in Elite Conquest';
+    const e = ELITE_FORCES[id], t = e && TYPES[e.type];
+    if (!eliteAIProduction(g) || !s || !e || !t) return 'Not an Elite AI operation';
+    const naval = !!t.naval,
+      producer = naval ? (s.portOwner || s.owner) : s.owner;
+    if (producer === g.player || !e.availableTo.includes(producer) ||
+        (eliteConquest(g) && (naval || !MAJORS.includes(producer))) ||
+        (eliteScenario(g) && !['britannia', 'bk', 'cf'].includes(producer)) ||
+        (e.scenarioOnly && !eliteScenario(g)))
+      return 'Not an eligible Elite AI factory or port';
     return (
-      turnReason(g, s.owner) ||
-      cityBusyReason(g, s) ||
-      (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
-      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
-      (!recruitOptions(g, s, s.owner).length && !(vacating && unitAt(g, s) === vacating)
-        ? 'A unit is on the city' : null) ||
-      shortfall(funds(g, s.owner), elitePrice(id, 1))
+      turnReason(g, producer) ||
+      (!naval ? cityBusyReason(g, s) : null) ||
+      (naval && (!s.portAt || (s.portLevel || 0) < t.port)
+        ? `Requires port level ${t.port}` : null) ||
+      (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
+      ((naval ? s.portProducedTurn : s.producedTurn) === g.turn
+        ? 'Already produced here this turn' : null) ||
+      (!recruitOptions(g, s, producer, e.type).length &&
+        !(vacating && !naval && unitAt(g, s) === vacating)
+        ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
+      shortfall(funds(g, producer), elitePrice(id, 1))
     );
   }
   function recruitAIElite(g, stationId, id) {
     const s = g.stations.find(v => v.id === stationId);
     const why = aiEliteRecruitReason(g, s, id);
     if (why) return { ok: false, reason: why };
-    const p = recruitOptions(g, s, s.owner)[0],
-      e = ELITE_FORCES[id],
+    const e = ELITE_FORCES[id], t = TYPES[e.type],
+      producer = t.naval ? (s.portOwner || s.owner) : s.owner,
+      p = recruitOptions(g, s, producer, e.type)[0],
       cost = elitePrice(id, 1);
-    spend(funds(g, s.owner), cost);
-    s.producedTurn = g.turn;
-    const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
-    log(g, `${TYPES[e.type].name} · Elite Lv.1 deploys at ${s.name}. Ready next turn.`, s.owner);
+    if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
+    spend(funds(g, producer), cost);
+    if (t.naval) s.portProducedTurn = g.turn;
+    else s.producedTurn = g.turn;
+    const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
+    log(g, `${t.name} · Elite Lv.1 deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
