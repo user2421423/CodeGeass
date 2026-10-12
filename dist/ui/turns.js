@@ -225,7 +225,7 @@ function resultDialog() {
     const lost=!!game.over.eliminated;
     modal.innerHTML='<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Scenario result">'+
       '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
-      '<p>'+esc(game.over.reason)+'</p><p class="description">This was a single-session scenario. No save or campaign rewards are written.</p>'+
+      '<p>'+esc(game.over.reason)+'</p><p class="description">Scenarios do not award campaign or HQ rewards.</p>'+
       '<div class="dialog-footer"><button data-action="close">Inspect map</button><button class="primary" data-action="scenario">Play again</button></div>'+
       '</section></div>';
     focusDialog();

@@ -164,8 +164,14 @@ function startMission(id, difficulty = missionDifficulty) {
 function loadGame(s) {
   if (!s) return;
   resetSession();
-  game = E.applyProfile(s, loadProfile());
+  // Regional scenarios never import HQ research, commander ranks or elite levels.
+  game = s.mode === 'scenario' ? s : E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
+  if (game.mode === 'scenario') {
+    scenarioKind = game.scenario.id;
+    scenarioSide = game.player;
+    scenarioDifficulty = game.difficulty || 'normal';
+  }
   setWorld();
   selection = null;
   zoom = homeZoom();

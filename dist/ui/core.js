@@ -67,11 +67,12 @@ function setWorld() {
   WORLD_H = mapH(game);
 }
 setWorld();
-// A campaign mission saves apart from your conquest, so neither replaces the other.
+// Conquest, campaign missions and regional scenarios each have their own slot, so none replaces another.
 const SAVE_KEY = 'knightmare-conquest-save',
   CAMPAIGN_KEY = 'knightmare-conquest-mission',
+  SCENARIO_KEY = 'knightmare-conquest-scenario',
   PROFILE_KEY = 'knightmare-conquest-profile',
-  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : SAVE_KEY);
+  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? SCENARIO_KEY : SAVE_KEY);
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
   selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
@@ -109,7 +110,6 @@ function saveProfile(p) {
   }
 }
 function save() {
-  if (game.mode === 'scenario') return false; // Single-session mode: never overwrite conquest or campaign saves.
   if (game.phase !== game.player && !game.over) return false;
   try {
     localStorage.setItem(saveKey(), JSON.stringify(E.packSave(game)));
@@ -147,7 +147,9 @@ function confirmReplace(key, cancel, then) {
   pendingReplace = then;
   const what = unreadable
     ? 'The saved operation is from an older version of the game and can no longer be loaded.'
-    : `Your ${s.mode === 'campaign' ? 'mission' : 'conquest'} in progress (turn ${s.turn}) will be lost.`;
+    : s.mode === 'scenario'
+      ? `Your game of ${s.scenario?.title || 'this scenario'} in progress (turn ${s.turn}) will be lost.`
+      : `Your ${s.mode === 'campaign' ? 'mission' : 'conquest'} in progress (turn ${s.turn}) will be lost.`;
   modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Replace saved operation"><div class="eyebrow">Saved operation</div><h2>Start over?</h2><p>${what} Starting now replaces it.</p><div class="dialog-footer"><button data-action="${cancel}">Keep it</button><button class="primary" data-action="replace-confirm">Start over</button></div></section></div>`;
   focusDialog();
 }

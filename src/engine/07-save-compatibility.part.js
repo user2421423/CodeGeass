@@ -7,10 +7,15 @@
   const SAVE_PACK = 1;
   const baseTerrain = (c, r) => TERRAIN_CODES[WORLD_ROWS[r]?.[c]] || 'sea';
   function packSave(g) {
-    if (g.mode === 'campaign' || g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== g.cols * g.rows)
+    // Regional scenarios have their own map, so their terrain is packed with the other tile fields
+    // instead of as differences from the world map.
+    const regional = g.mode === 'scenario';
+    if (g.mode === 'campaign' || (!regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows)) ||
+        g.tiles?.length !== g.cols * g.rows)
       return g;
     const { tiles, units, ...rest } = g;
-    const fields = [...new Set(tiles.flatMap(t => Object.keys(t)))].filter(k => k !== 'c' && k !== 'r' && k !== 'terrain');
+    const fields = [...new Set(tiles.flatMap(t => Object.keys(t)))]
+      .filter(k => k !== 'c' && k !== 'r' && (regional || k !== 'terrain'));
     const runs = {};
     for (const f of fields) {
       const out = (runs[f] = []);
@@ -32,7 +37,7 @@
       units: units.filter(u => u.hp > 0),
       packedTiles: {
         v: SAVE_PACK,
-        terrain: tiles.flatMap((t, i) => (t.terrain !== baseTerrain(t.c, t.r) ? [[i, t.terrain]] : [])),
+        terrain: regional ? [] : tiles.flatMap((t, i) => (t.terrain !== baseTerrain(t.c, t.r) ? [[i, t.terrain]] : [])),
         fields: runs,
       },
     };
@@ -46,7 +51,7 @@
     for (let i = 0; i < n; i++) {
       const c = i % g.cols,
         r = (i / g.cols) | 0;
-      tiles[i] = { c, r, terrain: baseTerrain(c, r) };
+      tiles[i] = { c, r, terrain: g.mode === 'scenario' ? 'sea' : baseTerrain(c, r) };
     }
     for (const [i, terrain] of pk.terrain || []) if (tiles[i]) tiles[i].terrain = terrain;
     for (const [f, list] of Object.entries(pk.fields || {})) {
@@ -63,11 +68,14 @@
   function migrateSave(g) {
     g = unpackSave(g);
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    const regional = g.mode === 'scenario';
+    // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
+    if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
-    if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
+    if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
-    if (g.mode !== 'campaign') {
+    if (g.mode !== 'campaign' && !regional) {
       migrateCoastalTerrain(g);
       attachUnclaimedNewZealand(g);
       // Older saves have no province IDs. Bind their existing painted land to
@@ -93,8 +101,11 @@
           u.stack = 1;
           u.hp = Math.max(1, Math.round(share * maxHP(u)));
         }
-        if ((!eliteConquest(g) && !eliteCampaign(g)) || !u.eliteStart && !eliteCampaign(g))
-          g.eliteDeployed[elite] = true; // Scripted campaign elites never spend the player's recruit allowance.
+        // Scripted campaign elites and preplaced Elite Conquest/scenario starts never spend the player's
+        // recruit allowance; in scenarios only the player's own deployments count.
+        const preplaced = (eliteConquest(g) || eliteScenario(g)) && u.eliteStart;
+        if (!eliteCampaign(g) && !preplaced && (!regional || u.side === g.player))
+          g.eliteDeployed[elite] = true;
       }
       // Older saves left carried units at the hex where they boarded.
       for (const c of u.cargo || []) {

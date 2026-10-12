@@ -56,6 +56,7 @@ function scenarioDialog() {
   if (!model) return;
   if (!model.sides.includes(scenarioSide)) scenarioSide = model.sides[0];
   const text = SCENARIO_TEXT[scenarioKind] || SCENARIO_TEXT['invasion-japan'];
+  const saved = getSave(SCENARIO_KEY), resume = saved && !saved.over && scenarioModel(saved.scenario?.id);
   const preview = model.create(scenarioSide,scenarioDifficulty,246801);
   const choices = SCENARIO_KINDS.filter(([id])=>E.scenarios?.byId?.[id]).map(([id,title,note])=>
     '<button class="small'+(id===scenarioKind?' active':'')+
@@ -81,6 +82,9 @@ function scenarioDialog() {
     '<div class="dialog-head"><div><div class="eyebrow">Scenario Mode · '+text.era+'</div>'+
     '<h2>'+model.title+'</h2><p>'+text.intro+'</p><div class="scenario-choices">'+choices+'</div>'+
     '</div><button class="small close" data-action="scenario-close">Back</button></div>'+
+    (resume ? '<div class="conquest-row"><div><label>Saved scenario</label><h3 class="conquest-title">'+esc(resume.title)+'</h3>'+
+      '<p class="mode-note">'+E.FACTIONS[saved.player].name+' · '+(E.DIFFICULTIES[saved.difficulty]?.name || 'Normal')+' · turn '+saved.turn+'</p></div>'+
+      '<button class="primary" data-action="continue-scenario">Continue</button></div>' : '')+
     '<canvas id="scenario-preview-map" class="scenario-preview-map" aria-label="Regional scenario preview with cities and armies"></canvas>'+
     '<div class="choice-grid '+(model.sides.length===2?'two':'three')+'">'+cards+'</div>'+
     '<div class="setup-row"><div><label for="scenario-difficulty">Difficulty</label>'+
@@ -89,7 +93,7 @@ function scenarioDialog() {
     '<div><label>Opening diplomacy</label><p>'+text.diplomacy+'</p></div></div>'+
     '<div class="dialog-footer"><small class="notice">'+model.cols+' × '+model.rows+
       ' hexes · '+preview.stations.length+' cities · '+preview.units.length+
-      ' starting formations · Standalone play, no saves. Total conquest victory.</small>'+
+      ' starting formations · Saved automatically in its own scenario slot. Total conquest victory.</small>'+
       '<button class="primary" data-action="start-scenario">Command '+E.FACTIONS[scenarioSide].short+'</button></div>'+
     '</section></div>';
   const canvas=modal.querySelector('#scenario-preview-map');
@@ -120,7 +124,8 @@ function startScenario(side=scenarioSide) {
   closeModal();
   render();
   centerOn(focus||selectedUnit()||homeOf());
-  toast(model.title+' loaded. All enemy cities must fall. No progress is saved.',true);
+  save();
+  toast(model.title+' loaded. All enemy cities must fall. Progress saves automatically each turn.',true);
 }
 
 function scenarioGroupsDialog() {

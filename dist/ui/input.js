@@ -356,7 +356,10 @@ document.addEventListener('click', e => {
       startMenu();
       break;
     case 'start-scenario':
-      startScenario();
+      confirmReplace(SCENARIO_KEY, 'scenario', () => startScenario());
+      break;
+    case 'continue-scenario':
+      loadGame(getSave(SCENARIO_KEY));
       break;
     case 'start-conquest':
       confirmReplace(SAVE_KEY, 'new', newGame);

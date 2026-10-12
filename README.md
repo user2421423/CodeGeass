@@ -6,11 +6,15 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu offers two independent, single-session campaigns. Neither overwrites
-persistent Conquest progress, and both use standard strategic AI and city-based province capture.
+The **Scenarios** menu offers three independent regional wars. A scenario saves automatically
+each turn in its own slot (one scenario at a time), so it never overwrites Conquest or Campaign
+progress, and it does not import or award HQ research, commander ranks or rewards. All use the
+standard strategic AI and city-based province capture.
 
 - **The Invasion of Japan** (110 × 84 hexes): the established Britannia,
   Black Knights and Chinese Federation scenario, including the turn-10 alliance change.
+- **The Division of Japan** (110 × 84 hexes, alternate 2017): Britannia, Europia United and
+  the Chinese Federation hold Japan's centre, north and west and are at war from turn 1.
 - **The European War** (120 × 80 hexes, 2017 a.t.b.): an alternate continental war
   inspired by *Akito the Exiled*. Europia United controls 28 western/central European cities;
   Euro Britannia controls 16 cities in eastern Europe, western Russia and the Black Sea

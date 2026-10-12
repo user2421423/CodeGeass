@@ -595,3 +595,35 @@ test('Scenario endgame columns grow past five formations when two hostile cities
   const smallest = Math.min(...memo.fronts.map(f => f.members.length));
   assert.ok(smallest > 5, 'smallest final column: ' + smallest);
 });
+
+test('Regional scenarios save, reload and keep playing identically', () => {
+  require('../dist/scenarios-division-japan.js');
+  require('../dist/europe-landmask.js');
+  require('../dist/scenarios-europe.js');
+  const live = g => JSON.parse(JSON.stringify({ ...g, units: g.units.filter(u => u.hp > 0) }));
+  const playRivals = g => {
+    for (const side of g.order.slice(1)) {
+      if (!E.alive(g, side) || g.over) continue;
+      E.beginTurn(g, side, true);
+      E.aiProduction(g);
+      for (const u of g.units.filter(u => u.hp > 0 && u.side === side)) if (u.hp > 0) E.aiOrder(g, u.id);
+    }
+    g.turn++;
+    E.beginTurn(g, g.player, true);
+  };
+  for (const id of ['invasion-japan', 'division-japan', 'european-war']) {
+    const model = E.scenarios.byId[id];
+    const g = model.create(model.sides[1], 'elite', 99);
+    playRivals(g);
+    const packed = JSON.stringify(E.packSave(g));
+    assert(packed.length < 200000, id + ' packs its regional map');
+    const back = E.migrateSave(JSON.parse(packed));
+    assert(back, id + ' save loads');
+    assert.deepEqual(back.eliteDeployed, {}, id + ' starting elites keep the player allowance');
+    E.migrateSave(g);
+    assert.deepEqual(live(back), live(g), id + ' reloads unchanged');
+    playRivals(g);
+    playRivals(back);
+    assert.deepEqual(live(back), live(g), id + ' plays on identically after reload');
+  }
+});
