@@ -266,8 +266,10 @@ test('2017 Chinese Federation fields only Chinese equipment and commanders',()=>
     assert.equal(E.serves(id,'cf',g),false);
     assert.equal(E.serves(id,'cf',ufn),true);
   }
-  assert.equal(E.eliteEligible(g,'cf','akatsuki_heavy'),false);
-  assert.equal(E.eliteEligible(g,'cf','shen_hu'),true);
+  for (const id of ['chuyen','wang_hu','shen_hu','akatsuki_zikisan','akatsuki_missile','akatsuki_heavy','shui_gun_ru_ii'])
+    assert.equal(E.eliteEligible(g,'cf',id),true,'2017 Chinese Elite unavailable: '+id);
+  for (const id of ['guren_type01','guren_mkii','gawain'])
+    assert.equal(E.eliteEligible(g,'cf',id),false,'2017 must exclude Black Knights Elite: '+id);
   assert.deepEqual(E.lineupOf(ufn,'cf'),E.LINEUPS.bk);
 });
 test('2018 Euro Britannia controls the continental corridor with unchanged army size',()=>{
