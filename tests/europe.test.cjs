@@ -133,3 +133,25 @@ test('Army-group orders enforce player side and turn',()=>{
   g.phase='eb';
   assert.equal(europe.orderGroup(g,friendly.id,{c:1,r:1}).ok,false);
 });
+
+test('Euro Britannia fields stronger initial armies to compensate for E.U. industry',()=>{
+  const g=europe.create('eu','normal',9);
+  const stacks=side=>g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval)
+    .reduce((total,u)=>total+u.stack,0);
+  assert.ok(stacks('eb')>stacks('eu')*1.35,
+    'Eastern field army must outweigh the more industrialized E.U. defence');
+});
+
+test('Both sides can produce their own faction-specific reinforcements',()=>{
+  for(const side of europe.sides){
+    const g=europe.create(side,'normal',15);
+    const type=E.typeFor(side,'scout',g);
+    const city=g.stations.find(s=>s.owner===side&&s.tier>=E.TYPES[type].tier&&
+      !E.unitAt(g,s));
+    assert.ok(city,'no unoccupied factory for '+side);
+    const created=E.recruit(g,city.id,type,1);
+    assert.equal(created.ok,true,created.reason);
+    assert.equal(created.unit.side,side);
+    assert.equal(created.unit.type,type);
+  }
+});
