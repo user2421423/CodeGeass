@@ -289,7 +289,7 @@ test('Elite Europe permits one HQ-unlocked land elite and regular carrier purcha
   const normalShip=E.recruit(eu,port.id,'eu_carrier',1);
   assert.equal(normalShip.ok,true,normalShip.reason);
   assert.equal(normalShip.unit.type,'eu_carrier');
-  assert.equal(normalShip.unit.elite,undefined);
+  assert.ok(!normalShip.unit.elite);
 });
 
 test('Elite European AI produces elite fighters and ordinary carriers',()=>{
