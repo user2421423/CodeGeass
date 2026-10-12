@@ -548,6 +548,7 @@ document.addEventListener('click', e => {
     case 'goto-cancel': {
       const u = selectedUnit();
       if (u && u.side === game.player && interactive() && E.clearGoto(game, u.id).ok) {
+        E.suspendArmyGroupConquestUnit(game, u.id);
         routing = null;
         refreshAndSave();
         toast('Auto-move stopped: the unit will not move on its own next turn.');
@@ -669,6 +670,7 @@ document.addEventListener('keydown', e => {
     routing = null;
     if (u.goto) {
       if (E.clearGoto(game, u.id).ok) {
+        E.suspendArmyGroupConquestUnit(game, u.id);
         refreshAndSave();
         toast('Auto-move stopped.');
       }
