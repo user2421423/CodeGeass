@@ -47,6 +47,8 @@ test('Conquest-only art alias preserves political teal and other factions', () =
   assert.match(map, /PLATE\[artSide\(u\.side\)\]/);
   assert.match(paint, /ART\.drawFlag\(ctx, artSide\(s\.owner\)/);
   assert.match(paint, /ART\.drawCity\(ctx, kind, artSide\(s\.owner\)/);
-  assert.match(paint, /artSide\(u\.side\) === 'ufn'/);
+  // Units use the U.F.N. palette through their shared art alias; there is no
+  // separate U crest over the model after the unit-ring cleanup.
+  assert.match(paint, /PLATE\[artSide\(u\.side\)\]\.light/);
   assert.match(read('dist/engine/conquests.js'), /color: '#37bfa9'/);
 });
