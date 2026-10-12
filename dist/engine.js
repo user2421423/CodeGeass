@@ -242,7 +242,7 @@
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
-    return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
+    return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
   function recruitPrice(k) {
     const a = COMMANDERS[k];
@@ -363,7 +363,7 @@
   function moraleFloor(g, v) {
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
-      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id)) && dist(g, m, v) <= 1,
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=2)) && dist(g, m, v) <= 2,
     )
       ? -1
       : -3;
@@ -531,6 +531,7 @@
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (u.hp >= maxHP(u) ? 'Frame already intact' : null) ||
+      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
       (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
       shortfall(funds(g, u.side), { credits: repairCost(u, g) })
     );
@@ -543,6 +544,7 @@
       (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
       (isShip(u) ? 'Warships cannot be reinforced' : null) ||
       (u.stack >= 3 ? 'Already at 3 frames' : null) ||
+      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
       actedReason(u) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
@@ -563,6 +565,7 @@
         ? 'Not built by this faction'
         : null) ||
       (!t.naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
       (t.naval && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
       (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
@@ -573,14 +576,16 @@
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), price(type, stack, g, producer))
+      shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer),s))
     );
   }
+  function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}
   function buildReason(g, s, kind) {
     if (!s || !BUILDINGS[kind]) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
+      (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
       (kind === 'lab' && buildingLevel(s, kind) === 2 && g.turn < FLEIJA.labTurn
         ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}`
         : null) ||
@@ -589,7 +594,7 @@
       (kind === 'port' && !portSite(g, s) ? 'Not a coastal city' : null) ||
       (kind === 'port' && s.portLevel && s.portOwner !== s.owner ? 'An enemy fleet holds the port' : null) ||
       cityBusyReason(g, s) ||
-      shortfall(funds(g, s.owner), buildCost(s, kind))
+      shortfall(funds(g, s.owner), decreePrice(buildCost(s, kind),s))
     );
   }
   // HQ research works on the persistent profile: { tokens, wins, research: { 'armor.guns': 2, ... } }.
@@ -636,6 +641,7 @@
       || (u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
     if (why) return why;
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    if (action.kind === 'special') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
       ? 'No enemy within 2 hexes' : action.kind === 'command' ? 'No friendly unit within 2 hexes has acted'
       : action.kind === 'withdraw' ? 'No friendly unit within 2 hexes has fired' : 'No enemy within 2 hexes';
@@ -1258,6 +1264,7 @@
     if (g?.mode !== 'campaign' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
+    if(u.expJammedActive)n=Math.max(1,n-2);
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
     if (techLevel(g, u.side, 'sakura.float') >= 2 && (t.branch === 'Armor' || t.float || eliteFx(u).float)) n += 1;
@@ -1266,7 +1273,7 @@
   function terrainCost(g, u, t) {
     if (isSea(t)) return 1;
     const type = TYPES[u.type];
-    if (fx(u).ignoreTerrain || type.float || eliteFx(u).float) return 1;
+    if (fx(u).ignoreTerrain || u.expRetrofit || type.float || eliteFx(u).float) return 1;
     if (type.branch === 'Armor' && techLevel(g, u.side, 'sakura.float') >= 1) return 1;
     const nav = type.branch === 'Infantry' ? techLevel(g, u.side, 'infantry.nav') : 0;
     if (nav >= 2 || (nav >= 1 && (t.terrain === 'forest' || t.terrain === 'mountain'))) return 1;
@@ -1288,7 +1295,7 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -1382,7 +1389,7 @@
         t.max +
         (eliteFx(u).range || 0) +
         (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 && (u.movedDistance || 0) === 0 ? 1 : 0) +
-        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0), // Minami's Ikaruga Fire Control
+        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0) + (u.expNavalRelay ? 1 : 0), // Minami's Ikaruga Fire Control
     };
   }
   function inRange(a, p, g) {
@@ -1478,6 +1485,8 @@
       !(canCapture(u) || navalLanding) || (s.shield > 0 && !navalLanding))
       return { captured: null, annexed: null };
     const loser = s.owner;
+    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*(s.income||0));s.expTaxUntil=g.turn+2;}
+    delete s.expSupplyBlocked;delete s.expDecree;
     s.owner = u.side;
     s.shield = 0;
     s.capturedTurn = g.turn;
@@ -1548,11 +1557,15 @@
     u.held = false;
     u.guardReady = false;
     u.movedDistance = freshLanding ? 0 : (u.movedDistance || 0) + dist(g, from, dest);
+    if(fromSea&&!isSea(dest))u.expLandedTurn=g.turn;
+    if(u.expRetrofit){u.expRetrofitStrike=u.movedDistance>=3;delete u.expRetrofit;}
     u.lastTurnMoved = true;
     u.skillReposition = retainMove ? 1 : 0;
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
+    newcomerOverwatch(g,u);
+    if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true};}
     // Moving through enemy or neutral territory never changes its map color.
     const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
     const portCaptured = capturePort(g, u);
@@ -1638,8 +1651,10 @@
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
-    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill));
+    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.5&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
     attack *= 1 + auraBonus(g, u);
+    if(u.expGambit&&target?.cmd)attack/=1+auraBonus(g,u);
+    attack *= newcomerAttack(g,u,target,counter);
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
     if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'naval.torpedoes');
@@ -1685,7 +1700,10 @@
       friends(u.side, target, v => v.branch !== 'Artillery')
     )
       attack *= 1.2;
-    const pen = armorPenetration(g, u, target);
+    const pen = Math.min(.95,armorPenetration(g,u,target)
+      +(u.expCalibration?.15:0)+(u.expGambit&&target?.cmd?.25:0)
+      +(counter&&fx(u).phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn?.15:0)
+      +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0));
     const formationArmor =
       target &&
       !victim.naval &&
@@ -1737,9 +1755,14 @@
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
-      attack *= skillDefense(g, target, counter, direct) * commanderDefense(g, target, u, counter, direct);
+      attack *= skillDefense(g,target,counter,direct) *
+        ((u.expGambit&&target?.cmd)||(fx(u).deepCover&&target?.cmd&&!g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&dist(g,u,v)<=2)) ? 1 : commanderDefense(g,target,u,counter,direct)) *
+        newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
-      else attack *= 1 - (TERRAIN[ground.terrain]?.cover || 0);
+      else {
+        const bypass=(u.forcedOffensive?.3:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0);
+        attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
+      }
     }
     if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.85 : 0.65;
     return Math.max(1, Math.round(attack));
@@ -1772,6 +1795,7 @@
     const counter =
       !followUp &&
       !(f.timeStop && a.timeStopTurn !== g.turn) &&
+      !(f.dashStrike&&a.movedDistance>=3&&a.expDashTurn!==g.turn) &&
       !targetMarked(g, a, d).noCounter &&
       !!d &&
       !t.noCounter &&
@@ -1783,6 +1807,7 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
+        (a.expCalibration ? .25 : 0) +
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
@@ -1837,6 +1862,7 @@
       attacker.morale = clamp(attacker.morale + 1, -3, 1);
     }
     if (v.cmd) log(g, `${COMMANDERS[v.cmd].short}'s unit is lost.`, v.side);
+    newcomerKilled(g,v,attacker);
     hooks.kill?.(g, v, attacker, by);
   }
   function attack(g, id, c, r) {
@@ -1870,12 +1896,13 @@
     let dmg = 0,
       sd = 0;
     if (d) {
-      dmg = Math.round(pr.unit * mult);
+      dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       consumeDefensiveSkills(g, d, a);
       d.hp = Math.max(0, d.hp - dmg);
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
+      if(d.skillMarks?.length)d.skillMarks=d.skillMarks.filter(m=>m.side!==a.side||!m.uses);
     }
     if (s && foe(g, s.owner, a.side)) {
       // Even after the defenses reach zero, another successful city assault
@@ -1901,6 +1928,7 @@
       // Worked out after the hit, so a damaged defender returns weaker fire (attack scales with remaining frame).
       retaliation = Math.round(power(g, d, a, stationAt(g, a), true) * (0.94 + random(g) * 0.12));
       a.hp = Math.max(0, a.hp - retaliation);
+      if(fx(d).phoenixReversal)d.expPhoenixTurn=g.turn;
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
     }
@@ -1914,6 +1942,7 @@
       }
     }
     if (d && d.hp <= 0) kill(g, d, a);
+    if(d)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     const eliteBreakthrough = !!aef.breakthrough,
       eliteRelentless = !!aef.relentless;
@@ -1959,7 +1988,21 @@
       a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
     }
-    afterCommanderAttack(g, a, d, s, destroyed, timeStop);
+    afterCommanderAttack(g,a,d,s,destroyed,timeStop);
+    if(f.dashStrike)a.expDashTurn=g.turn;
+    if(f.deepCover)a.expDeepTurn=g.turn;
+    if(f.highland)a.expHighlandTurn=g.turn;
+    if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
+    if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
+    if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
+    if(a.expCalibration){a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));delete a.expCalibration;}
+    if(a.expGambit&&d?.cmd)delete a.expGambit;
+    if(a.forcedOffensive)delete a.forcedOffensive;
+    if(a.expRetrofitStrike)delete a.expRetrofitStrike;
+    if(a.expNavalRelay)delete a.expNavalRelay;
+    if(a.expBreach&&destroyed&&d&&!unitAt(g,d)&&(!stationAt(g,d)||stationAt(g,d).shield<=0)){
+      const old={c:a.c,r:a.r};a.c=d.c;a.r=d.r;reindex(g,a,old);captureCity(g,a);delete a.expBreach;
+    }
     log(
       g,
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
@@ -1987,7 +2030,8 @@
       .filter(s => s.owner === side)
       .reduce((a, s) => {
         const y = cityOutput(g, s);
-        a.credits += y.credits;
+        a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1);
+        if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
         a.industry += y.industry;
         a.science += y.science;
         return a;
@@ -1998,7 +2042,7 @@
     // refinery also exports for credits.
     total.sakuradite = 0;
     for (const d of g.sites || []) {
-      total.sakuradite += (depositShares(g, d)[side] || 0) * refining;
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.2:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
     if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
@@ -2039,7 +2083,8 @@
     const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    const cost = price(type, stack, g, producer);
+    const cost = decreePrice(price(type, stack, g, producer),s);
+    if(s.expDecree&&!TYPES[type].naval)delete s.expDecree;
     spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -2239,8 +2284,9 @@
       b = BUILDINGS[kind];
     const why = buildReason(g, s, kind);
     if (why) return { ok: false, reason: why };
-    const cost = buildCost(s, kind),
+    const cost = decreePrice(buildCost(s, kind),s),
       e = funds(g, s.owner);
+    if(s.expDecree)delete s.expDecree;
     buildingFoundation(g, s);
     spend(e, cost);
     if (kind === 'port' && !s.portAt) {
@@ -2426,6 +2472,7 @@
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
     if (kind === 'command') return commandTargets(g, u);
+    if (kind === 'special') return newcomerTargets(g,u);
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
       (kind === 'cleanse' ? v.side === u.side : kind === 'withdraw' ? v.id !== u.id && v.side === u.side && v.attacked && v.morale > -3
         : foe(g, v.side, u.side)));
@@ -2434,6 +2481,7 @@
     const u = g.units.find(v => v.id === id), why = feintReason(g, u);
     if (why) return { ok: false, reason: why };
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
+    if (action.kind === 'special') return newcomerUse(g,u,targetId);
     if (['command', 'designate', 'stratagem'].includes(action.kind)) {
       const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
         : options.find(v => v.id === targetId);
@@ -2465,7 +2513,7 @@
   const ALLIES = { cf: ['bk', 'jlf'] };
   function serves(k, side) {
     const a = COMMANDERS[k];
-    return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
+    return !!a && (a.side === side || (a.side === 'guest' && ['britannia','eu','cf'].includes(side)) || !!ALLIES[side]?.includes(a.side));
   }
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
   function commandTargets(g, u) {
@@ -2601,11 +2649,12 @@
   }
   function bombardBonus(g, u, city) {
     if (!city) return 1;
+    const raiko=TYPES[u.type].branch==='Artillery'&&skillNear(g,u,'raikoCity',2)?1.15:1;
     let mult = city.bombardMark?.side === u.side ? 1 + city.bombardMark.value : 1;
     const old = u.focusCity;
     if (fx(u).focusBombard && old?.city === city.id && old.lastTurn >= g.turn - 1)
       mult *= 1 + Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) * fx(u).focusBombard;
-    return mult;
+    return mult*raiko;
   }
   function treasuryBonus(g, city) {
     const holder = g.units.find(u => u.hp > 0 && u.side === city.owner && u.c === city.c && u.r === city.r && fx(u).treasury);
@@ -2656,6 +2705,128 @@
   const spotted = (g, u) =>
     g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).spotter && dist(g, v, u) <= fx(v).spotter);
 
+  // Approved newcomers: active powers and reactive combat effects.
+  // Existing commanders retain their original skill definitions and mechanics.
+  function newcomerTargets(g,u){
+    const a=COMMANDERS[u?.cmd]?.action,k=a?.target,range=a?.range||0;
+    if(!k)return [];
+    if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
+      ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
+      : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=2):true));
+    return g.units.filter(v=>v.hp>0&&!atSea(g,v)&&dist(g,u,v)<=range&&(
+      ['enemy','enemyCommander'].includes(k)
+        ? foe(g,v.side,u.side)&&(k!=='enemyCommander'||!!v.cmd)&&
+          (u.cmd!=='indira'||['Infantry','Armor'].every(b=>g.units.some(x=>x.hp>0&&x.side===u.side&&TYPES[x.type].branch===b&&dist(g,x,v)===1)))
+        : v.id!==u.id&&v.side===u.side&&(k==='ally'||k==='commander'&&!!COMMANDERS[v.cmd]?.action||
+          k==='elite'&&!!v.elite||k==='ship'&&isShip(v)||k==='wounded'&&v.hp<maxHP(v)||
+          k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3)
+    ));
+  }
+  function newcomerUse(g,u,targetId){
+    const choices=newcomerTargets(g,u),v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
+    if(!v)return {ok:false,reason:'No eligible target within range.'};
+    const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
+    switch(u.cmd){
+      case 'marrybell':v.forcedOffensive=true;break;
+      case 'norland':v.expOverwatch=true;break;
+      case 'sakuya':v.expDisabledNext=true;break;
+      case 'shalio':u.expGambit=true;break;
+      case 'shamna':v.expForeknowledge=true;break;
+      case 'charles':v.feintCD=Math.max(0,(v.feintCD||0)-2);break;
+      case 'lloyd':v.expCalibration=true;break;
+      case 'sophie':{
+        const w=nearby(w=>w.id!==v.id&&dist(g,u,w)<=2&&dist(g,v,w)<=2);
+        if(!w)return {ok:false,reason:'Need two friendly formations within 2 hexes.'};
+        v.expLink={partner:w.id};w.expLink={partner:v.id};break;
+      }
+      case 'sarah':v.expJammedNext=true;break;
+      case 'olivia':{
+        const w=nearby(w=>w.id!==v.id&&!isShip(w)&&!isShip(v)&&!atSea(g,w)&&!atSea(g,v)&&dist(g,w,v)===1&&dist(g,u,w)<=2);
+        if(!w)return {ok:false,reason:'Need two adjacent friendly land units.'};
+        const p={c:v.c,r:v.r},q={c:w.c,r:w.r};
+        v.c=q.c;v.r=q.r;w.c=p.c;w.r=p.r;reindex(g,v,p);reindex(g,w,q);break;
+      }
+      case 'margaret':{
+        const cost=reinforceCost(v.type,g,v.side,v),bank=funds(g,v.side);
+        if(v.stack>=3||shortfall(bank,cost))return {ok:false,reason:'Cannot afford this reinforcement.'};
+        const old=maxHP(v);spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
+      }
+      case 'chloe':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.2));break;
+      case 'tianzi':{
+        const city=g.stations.filter(s=>s.owner===u.side&&dist(g,u,s)<=3).sort((a,b)=>dist(g,u,a)-dist(g,u,b))[0];
+        if(!city)return {ok:false,reason:'No friendly city in range.'};city.expDecree=true;break;
+      }
+      case 'chengzhong':{
+        const city=g.stations.filter(s=>foe(g,s.owner,u.side)&&dist(g,u,s)<=2).sort((a,b)=>dist(g,u,a)-dist(g,u,b))[0];
+        if(!city)return {ok:false,reason:'No enemy city in range.'};city.expSupplyBlocked={owner:city.owner};break;
+      }
+      case 'diethard':addTargetMark(v,{side:u.side,source:u.id,damage:.2,uses:1});break;
+      case 'kinoshita':v.expBreach=true;break;
+      case 'savitri':v.expRetrofit=true;break;
+      case 'mutsuki':v.expNavalRelay=true;break;
+      case 'ichijiku':v.expRadar={side:u.side};break;
+      case 'indira':v.expPinnedNext=true;break;
+      default:return {ok:false,reason:'Unknown approved signature action.'};
+    }
+    u.feintCD=COMMANDERS[u.cmd].action.cooldown||3;
+    log(g,COMMANDERS[u.cmd].short+' uses '+COMMANDERS[u.cmd].skill+'.',u.side);
+    return {ok:true,target:v.id,affected:1};
+  }
+  function newcomerAttack(g,u,target,counter){
+    const f=fx(u),terrain=tile(g,u.c,u.r);let m=1;
+    if(!counter&&f.dashStrike&&u.movedDistance>=3&&u.expDashTurn!==g.turn)m*=1.3;
+    if(!counter&&f.deepCover&&target?.cmd&&u.expDeepTurn!==g.turn&&
+      !g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&dist(g,u,v)<=2))m*=1.35;
+    if(counter&&f.phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn)m*=1.4;
+    if(!counter&&f.highland&&terrain?.terrain==='mountain'&&u.expHighlandTurn!==g.turn)m*=1.25;
+    if(!counter&&f.crimson&&target&&stationAt(g,target))m*=1.2;
+    if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=1.25;
+    if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
+      !g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&dist(g,v,target)===1))m*=1.25;
+    if(!counter&&u.expRetrofitStrike)m*=1.1;
+    if(!counter&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
+    return m;
+  }
+  function newcomerDefense(g,target,attacker,counter,direct){
+    let m=1;
+    if(g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
+    if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=.8;
+    if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
+    if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
+    if(target.forcedOffensive&&counter)m*=1.2;
+    return m;
+  }
+  function newcomerIntercept(g,target,amount){
+    if(target.expForeknowledge&&amount>=target.hp){delete target.expForeknowledge;amount=Math.max(0,target.hp-1);}
+    const guard=g.units.find(v=>v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
+    if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
+    if(target.expAfterimage)delete target.expAfterimage;
+    return amount;
+  }
+  function newcomerSupport(g,defender,attacker){
+    if(!defender||attacker.hp<=0)return;
+    const assists=g.units.filter(v=>v.hp>0&&v.side===defender.side&&v.id!==defender.id&&!atSea(g,v)&&inRange(v,attacker,g)&&
+      (v.expLink?.partner===defender.id&&v.expLinkTurn!==g.turn||
+       fx(v).relief&&v.expReliefTurn!==g.turn&&dist(g,v,defender)<=2));
+    const unit=assists.sort((a,b)=>b.hp-a.hp)[0];if(!unit)return;
+    const n=Math.max(1,Math.round(power(g,unit,attacker,stationAt(g,attacker),true)*(fx(unit).relief?.6:.5)));
+    attacker.hp=Math.max(0,attacker.hp-n);
+    if(fx(unit).relief)unit.expReliefTurn=g.turn;else unit.expLinkTurn=g.turn;
+    kill(g,attacker,unit);
+  }
+  function newcomerOverwatch(g,moved){
+    const guards=g.units.filter(v=>v.hp>0&&v.expOverwatch&&foe(g,v.side,moved.side)&&!atSea(g,v)&&inRange(v,moved,g));
+    for(const u of guards){if(moved.hp<=0)break;delete u.expOverwatch;
+      const amount=Math.max(1,Math.round(power(g,u,moved,stationAt(g,moved))*.6));
+      moved.hp=Math.max(0,moved.hp-newcomerIntercept(g,moved,amount));kill(g,moved,u);}
+  }
+  function newcomerKilled(g,v,attacker){
+    if(!attacker)return;
+    for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&u.expSalvageTurn!==g.turn&&dist(g,u,v)<=2){
+      funds(g,u.side).industry+=Math.min(15,Math.round(price(v.type,v.stack,g,v.side).industry*.1));
+      u.expSalvageTurn=g.turn;break;
+    }
+  }
   // ======== Sakuradite: the fourth resource, mined at a handful of deposits ========
   // Japan holds 70 of the world's 120 base output, and its output is allocated internationally (episode 8): the power
   // controlling a Japanese deposit keeps 60% and every other surviving major power receives 20%. The split, outputs,
@@ -3222,6 +3393,8 @@
     // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
+    if(outgoing){for(const v of g.units)if(v.side===outgoing)delete v.expSilenced;
+      for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing)delete station.expSupplyBlocked;}
     if (outgoing && outgoing !== side)
       for (const u of g.units)
         if (u.hp > 0 && u.side === outgoing && !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry')
@@ -3251,10 +3424,16 @@
       u.withdrawMove = false;
       u.moved = false;
       u.attacked = false;
+      u.expDisabledActive=!!u.expDisabledNext;delete u.expDisabledNext;
+      u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
+      u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
+      if(u.expDisabledActive){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
+      delete u.expOverwatch;delete u.expLink;
       u.chain = 0;
       u.eliteMoveAfterKill = false;
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
+      u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
@@ -3306,7 +3485,7 @@
       if (s.owner !== side) continue;
       const palaceTreasury = mine.some(m => fx(m).treasury && m.c === s.c && m.r === s.r);
       const rate = 0.12 + techValue(g, side, 'cities.engineering') +
-        (prepared.some(m => dist(g, m, s) <= 2) ? 0.25 : 0) + (palaceTreasury ? 0.15 : 0);
+        (prepared.some(m => dist(g, m, s) <= 2) ? 0.25 : 0) + (palaceTreasury ? 0.15 : 0) + (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=2)?.12:0);
       // Consume this marker at the owner's next regeneration. A hit by any
       // rival phase is counted once, even when factions take turns in one round.
       const recovery = s.attackedSinceRegen ? rate * 0.5 : rate;
