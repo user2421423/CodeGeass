@@ -2,6 +2,9 @@
 globalThis.KnightmareArtManifest = {
   "base": "assets/art/",
   "units": {
+    "ahura_mazda": {
+      "src": "units/ahura_mazda-47f9274a15c5.png"
+    },
     "akatsuki": {
       "src": "units/akatsuki-11240620a78b.png"
     },
@@ -44,7 +47,34 @@ globalThis.KnightmareArtManifest = {
     "burai_kai": {
       "src": "units/burai_kai-8b9e363ea1c1.png"
     },
+    "canterbury": {
+      "src": "units/canterbury-81423f12cb1a.png"
+    },
+    "carrier_battleship": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
+    "cf_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
     "chuyen": {
+      "src": "units/chuyen-427d2c85b500.png"
+    },
+    "elite_akatsuki_heavy": {
+      "src": "units/akatsuki_heavy-7c180ab2623f.png"
+    },
+    "elite_akatsuki_missile": {
+      "src": "units/akatsuki_missile-0231df0f89b3.png"
+    },
+    "elite_akatsuki_zikisan": {
+      "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
+    },
+    "elite_alexander_liberte": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
+    },
+    "elite_ayano_valiant": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
+    },
+    "elite_chuyen": {
       "src": "units/chuyen-427d2c85b500.png"
     },
     "elite_cornelia_gloucester": {
@@ -59,26 +89,77 @@ globalThis.KnightmareArtManifest = {
     "elite_guren_seiten": {
       "src": "units/elite_guren_seiten.webp"
     },
+    "elite_guren_type01": {
+      "src": "units/elite_guren_mkii-ae467a56c715.png"
+    },
+    "elite_hummel_battery": {
+      "src": "units/hummel_battery-11b7539ef1e2.png"
+    },
+    "elite_japan_bk_amphibious": {
+      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
+    },
+    "elite_japan_bk_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
+    "elite_japan_britannia_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
+    "elite_japan_cf_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
     },
     "elite_lancelot_albion": {
       "src": "units/elite_lancelot_albion-8650bf95c9be.png"
     },
+    "elite_leila_alexander": {
+      "src": "units/alexander-4b4929ebecea.png"
+    },
     "elite_mordred": {
       "src": "units/elite_mordred-86a54d5a327a.png"
+    },
+    "elite_panzer_frosch_ii": {
+      "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
+    },
+    "elite_portman_ii": {
+      "src": "units/portman_ii-0a2b145551d7.png"
+    },
+    "elite_ryo_valiant": {
+      "src": "units/alexander_elite-da3094ec72b4.png"
+    },
+    "elite_shen_hu": {
+      "src": "units/shen_hu-761ab82d666e.png"
     },
     "elite_shinkiro": {
       "src": "units/elite_shinkiro-5874485eb1c1.png"
     },
+    "elite_shui_gun_ru_ii": {
+      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
+    },
+    "elite_sutherland_air": {
+      "src": "units/sutherland_air-cc57c87d038f.png"
+    },
     "elite_tohdoh_gekka": {
       "src": "units/elite_tohdoh_gekka-4dfd9d98b2b6.png"
+    },
+    "elite_vincent_ward": {
+      "src": "units/vincent_ward-474e03b4ee9c.png"
+    },
+    "elite_wang_hu": {
+      "src": "units/shen_hu-761ab82d666e.png"
+    },
+    "elite_yukiya_valiant": {
+      "src": "units/alexander_mp-aba6042c8fcf.png"
     },
     "estrella": {
       "src": "units/estrella-892bfb12bb42.png"
     },
     "estrella_cc": {
       "src": "units/estrella_cc-4ebf772963e3.png"
+    },
+    "eu_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
     },
     "gardmare": {
       "src": "units/gardmare-f06f450a0f42.png"
@@ -107,8 +188,20 @@ globalThis.KnightmareArtManifest = {
     "hummel_battery": {
       "src": "units/hummel_battery-11b7539ef1e2.png"
     },
+    "jp_artillery": {
+      "src": "units/jp_artillery-10554e398c8e.png"
+    },
+    "jp_tank": {
+      "src": "units/jp_tank-43b67986614a.png"
+    },
     "liverpool": {
       "src": "units/liverpool-040286c14865.png"
+    },
+    "panzer_frosch": {
+      "src": "units/panzer_frosch-cc6c57921a5c.png"
+    },
+    "panzer_frosch_ii": {
+      "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
     },
     "panzer_hummel": {
       "src": "units/panzer_hummel-4c9a513db11b.png"
@@ -116,17 +209,35 @@ globalThis.KnightmareArtManifest = {
     "panzer_wespe": {
       "src": "units/panzer_wespe-87f95d6c1bbd.png"
     },
+    "portman": {
+      "src": "units/portman-aef8fc6aad8d.png"
+    },
+    "portman_ii": {
+      "src": "units/portman_ii-0a2b145551d7.png"
+    },
     "raiko": {
       "src": "units/raiko-9403f454e0ce.png"
     },
     "shen_hu": {
       "src": "units/shen_hu-761ab82d666e.png"
     },
+    "shui_gun_ru": {
+      "src": "units/shui_gun_ru-9ec996b824ab.png"
+    },
+    "shui_gun_ru_ii": {
+      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
+    },
+    "siegfried": {
+      "src": "units/siegfried-400dc42b4f6a.png"
+    },
     "sutherland": {
       "src": "units/sutherland-4273fc3f9125.png"
     },
     "sutherland_air": {
       "src": "units/sutherland_air-cc57c87d038f.png"
+    },
+    "vercingetorix": {
+      "src": "units/vercingetorix-7d0301ba1c66.png"
     },
     "vincent_commander": {
       "src": "units/vincent_commander-d4d91fbcf7f5.png"
@@ -136,81 +247,6 @@ globalThis.KnightmareArtManifest = {
     },
     "zangetsu": {
       "src": "units/zangetsu-4e4cb3c3bd61.png"
-    },
-    "elite_alexander_liberte": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
-    },
-    "elite_leila_alexander": {
-      "src": "units/alexander-4b4929ebecea.png"
-    },
-    "elite_ryo_valiant": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
-    },
-    "elite_ayano_valiant": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
-    },
-    "elite_yukiya_valiant": {
-      "src": "units/alexander_mp-aba6042c8fcf.png"
-    },
-    "elite_shen_hu": {
-      "src": "units/shen_hu-761ab82d666e.png"
-    },
-    "elite_wang_hu": {
-      "src": "units/shen_hu-761ab82d666e.png"
-    },
-    "elite_chuyen": {
-      "src": "units/chuyen-427d2c85b500.png"
-    },
-    "elite_guren_type01": {
-      "src": "units/elite_guren_mkii-ae467a56c715.png"
-    },
-    "elite_akatsuki_zikisan": {
-      "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
-    },
-    "ahura_mazda": {
-      "src": "units/ahura_mazda-47f9274a15c5.png"
-    },
-    "canterbury": {
-      "src": "units/canterbury-81423f12cb1a.png"
-    },
-    "siegfried": {
-      "src": "units/siegfried-400dc42b4f6a.png"
-    },
-    "portman": {
-      "src": "units/portman-aef8fc6aad8d.png"
-    },
-    "portman_ii": {
-      "src": "units/portman_ii-0a2b145551d7.png"
-    },
-    "carrier_battleship": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "eu_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "cf_carrier": {
-      "src": "units/generic_carrier-bf5e0799d818.png"
-    },
-    "jp_tank": {
-      "src": "units/jp_tank-43b67986614a.png"
-    },
-    "jp_artillery": {
-      "src": "units/jp_artillery-10554e398c8e.png"
-    },
-    "vercingetorix": {
-      "src": "units/vercingetorix-7d0301ba1c66.png"
-    },
-    "panzer_frosch": {
-      "src": "units/panzer_frosch-cc6c57921a5c.png"
-    },
-    "panzer_frosch_ii": {
-      "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
-    },
-    "shui_gun_ru": {
-      "src": "units/shui_gun_ru-9ec996b824ab.png"
-    },
-    "shui_gun_ru_ii": {
-      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
     }
   },
   "portraits": {
