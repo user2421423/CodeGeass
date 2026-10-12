@@ -272,6 +272,13 @@
     // The Soya/La Perouse Strait separates Russian Sakhalin from Area 11.
     if (isSakhalinWorldHex(a) !== isSakhalinWorldHex(b) &&
         (isSakhalinWorldHex(a) || isSakhalinWorldHex(b))) return true;
+    // Gibraltar (87,22) is on Iberia; coastal tiles (86,23) and (87,23)
+    // are on Morocco. The coarse hex grid makes them adjacent across water.
+    // Treat that contact as a strait for province/starting ownership only:
+    // military movement and naval passage remain governed by terrain.
+    const gibraltar = t => t.c === 87 && t.r === 22;
+    const morocco = t => t.r === 23 && (t.c === 86 || t.c === 87);
+    if ((gibraltar(a) && morocco(b)) || (gibraltar(b) && morocco(a))) return true;
     const aa = persianGulfPoliticalBank(a), bb = persianGulfPoliticalBank(b);
     return aa !== 0 && bb !== 0 && aa !== bb;
   }

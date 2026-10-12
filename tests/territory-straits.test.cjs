@@ -70,3 +70,56 @@ for (const era of ['world', 'ufn2018']) {
       'real Australian conquest is not reset');
   });
 }
+
+// The 2-degree playable grid connects Gibraltar's Iberian city hex directly
+// to Moroccan coast hexes. That is a real strait, not a land frontier.
+for (const [era, northAfrica, gibraltarOwner] of [
+  ['world', 'eu', 'eu'],
+  ['ufn2018', 'britannia', 'eb'],
+]) {
+  test(era + ': Gibraltar does not annex the Moroccan shoreline or Sahara', () => {
+    const g = E.createGame('britannia', 'normal', 'conquest', 1234, era);
+    const gibraltar = g.stations.find(s => s.name === 'Gibraltar');
+    assert.equal(E.tile(g, 87, 22).owner, gibraltarOwner);
+    for (const [c, r] of [[86,23],[87,23],[89,25]]) {
+      assert.equal(E.tile(g, c, r).owner, northAfrica,
+        'Moroccan bank ' + c + ',' + r);
+      assert.notEqual(E.tile(g, c, r).provinceCity, gibraltar.id,
+        'Moroccan bank must not be Gibraltar province ' + c + ',' + r);
+    }
+    if (era === 'ufn2018') {
+      const corridor = g.tiles.filter(t => t.terrain !== 'sea' &&
+        t.c >= 85 && t.c <= 94 && t.r >= 23 && t.r <= 35 && t.owner === 'eb');
+      assert.equal(corridor.length, 0,
+        'Euro Britannia must not have a narrow strip through North Africa');
+    }
+  });
+}
+
+test('2018 old Gibraltar corridor is repaired without undoing real African captures', () => {
+  const legacy = E.createGame('britannia', 'normal', 'conquest', 1234, 'ufn2018');
+  const gibraltar = legacy.stations.find(s => s.name === 'Gibraltar');
+  for (const [c,r] of [[86,23],[87,23],[89,25],[90,28]]) {
+    const t = E.tile(legacy, c, r);
+    if (t.terrain === 'sea') continue;
+    E.setTileOwner(legacy, t, 'eb');
+    t.provinceCity = gibraltar.id;
+  }
+  const restored = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(legacy))));
+  assert.ok(restored);
+  for (const [c,r] of [[86,23],[87,23],[89,25],[90,28]]) {
+    const t = E.tile(restored, c, r);
+    if (t.terrain === 'sea') continue;
+    assert.equal(t.owner, 'britannia', 'repair Gibraltar spill at ' + c + ',' + r);
+    assert.notEqual(t.provinceCity, gibraltar.id);
+  }
+
+  const captured = E.createGame('britannia', 'normal', 'conquest', 1234, 'ufn2018');
+  const casablanca = captured.stations.find(s => s.name === 'Casablanca');
+  casablanca.owner = 'eb';
+  E.setTileOwner(captured, E.tile(captured, casablanca.c, casablanca.r), 'eb');
+  const legitimate = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(captured))));
+  assert.ok(legitimate);
+  assert.equal(legitimate.stations.find(s => s.name === 'Casablanca').owner, 'eb');
+  assert.equal(E.tile(legitimate, casablanca.c, casablanca.r).owner, 'eb');
+});

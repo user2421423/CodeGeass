@@ -49,8 +49,30 @@
       delete t.provinceCity;
     }
   }
+  // Correct pre-fix 2018 saves that still have Gibraltar's Euro-Britannian
+  // province running through western Morocco and the Sahara. A tile is repaired
+  // only if it remains tied to Gibraltar (or has no old province ID), while
+  // both neighbouring African cities still belong to Britannia. Captured
+  // African cities and their genuine Euro-Britannian provinces are preserved.
+  function repairGibraltarAfricanCorridor(g) {
+    if (g.mode !== 'conquest' || g.era !== 'ufn2018' ||
+        g.cols !== WORLD.cols || g.rows !== WORLD.rows) return;
+    const city = name => g.stations.find(s => s.name === name);
+    const gibraltar = city('Gibraltar');
+    if (gibraltar?.owner !== 'eb' ||
+        city('Casablanca')?.owner !== 'britannia' ||
+        city('Algiers')?.owner !== 'britannia') return;
+    for (const t of g.tiles) {
+      if (isSea(t) || t.owner !== 'eb' ||
+          t.c < 85 || t.c > 94 || t.r < 23 || t.r > 35 ||
+          (t.provinceCity != null && t.provinceCity !== gibraltar.id)) continue;
+      setTileOwner(g, t, 'britannia');
+      delete t.provinceCity;
+    }
+  }
   function repairLegacyRegionalZones(g) {
     if (g.mode !== 'conquest' || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return;
+    repairGibraltarAfricanCorridor(g);
     const city = name => g.stations.find(s => s.name === name);
     const is2018 = g.era === 'ufn2018';
     const iraq = is2018 ? 'britannia' : 'neutral';
@@ -630,6 +652,7 @@
     repairCapeYorkOwnership(g);
     // This runs after regional ownership masks and before coastal infill.
     repairSakhalinTerritory(g, true);
+    repairGibraltarAfricanCorridor(g);
     // A coast hex beyond the cities' reach follows the land it borders, so shores never stand out unowned.
     for (let pass = 0, changed = true; changed && pass < 4; pass++) {
       changed = false;
