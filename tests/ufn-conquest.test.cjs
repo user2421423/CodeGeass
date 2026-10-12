@@ -65,6 +65,19 @@ test('The three playable factions have distinct administrations and a single sta
   }
 });
 
+test('2018 U.F.N. navy uses Black Knights Burai, Gekka and carrier equipment', () => {
+  for (const difficulty of ['normal', 'elite']) {
+    const ufn = E.createGame('cf', difficulty, 'conquest', 37, 'ufn2018');
+    assert.deepEqual(E.navalTypes(ufn, 'cf'), ['bk_amphibious', 'bk_amphibious_ii', 'bk_carrier']);
+    const startingFleet = ufn.units.filter(u => u.side === 'cf' && E.TYPES[u.type].naval);
+    assert.ok(startingFleet.length > 0);
+    assert.ok(startingFleet.every(u => E.TYPES[u.type].side === 'bk'));
+    assert.ok(startingFleet.some(u => u.type === 'bk_carrier'));
+  }
+  const world = E.createGame('cf', 'normal', 'conquest', 37);
+  assert.deepEqual(E.navalTypes(world, 'cf'), ['shui_gun_ru', 'shui_gun_ru_ii', 'cf_carrier']);
+});
+
 test('2017 world conquest and its alliance-free diplomacy remain unchanged', () => {
   const g = E.createGame('cf', 'normal', 'conquest', 99);
   assert.equal(g.era, 'world');
