@@ -1,0 +1,77 @@
+  // Local, bounded tactical assessments shared by AI selection and execution.
+  function commanderValue(g, v) {
+    if (!v?.cmd) return 0;
+    const o = E.officerOf(g, v), rank = o?.rank || 0;
+    const mobility = Math.max(0, E.movement(g, v) - (TYPES[v.type]?.move || 0));
+    return Math.min(150, 30 + rank * 13 + mobility * 7 + Math.max(0, maxHP(v) - 110) * 0.09);
+  }
+  function localThreat(g, u, p) {
+    let expected = 0;
+    for (const v of g.units) {
+      if (v.hp <= 0 || !foe(g, v.side, u.side) || atSea(g, v)) continue;
+      const d = dist(g, v, p);
+      if (d > 7) continue;
+      const r = rangeOf(g, v).max;
+      if (d <= r + Math.min(3, E.movement(g, v))) {
+        const attack = TYPES[v.type]?.attack || 0;
+        expected += attack * (1 + 0.35 * Math.max(0, v.stack - 1)) * (d <= r ? 0.7 : 0.35);
+      }
+    }
+    return expected;
+  }
+  function focusValue(g, u, enemy, initial, memo) {
+    if (!enemy || enemy.hp <= 0) return 0;
+    let potential = initial.unit, helpers = 0;
+    for (const v of g.units) {
+      if (helpers >= 7) break;
+      if (v.id === u.id || v.side !== u.side || v.hp <= 0 || v.attacked || v.morale <= -3 ||
+          dist(g, v, enemy) > Math.min(6, rangeOf(g, v).max)) continue;
+      const shot = preview(g, v.id, enemy.c, enemy.r);
+      if (!shot || shot.unit <= 0) continue;
+      potential += shot.unit;
+      helpers++;
+    }
+    const marked = memo.focusTargets?.get(enemy.id);
+    const feasible = helpers && potential >= enemy.hp * 0.92;
+    return (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
+      (marked?.turn === g.turn && dist(g, u, enemy) <= 6 ? 62 : 0) -
+      (initial.counter > u.hp * 0.8 ? 55 : 0);
+  }
+  function trafficBoost(g, u, memo) {
+    if (u.hold || memo.guards?.[u.id] || u.moved) return 0;
+    let followers = 0;
+    for (const v of g.units) {
+      if (v.side === u.side && v.id !== u.id && v.hp > 0 && !v.hold &&
+          !memo.guards?.[v.id] && !v.moved && dist(g, v, u) <= 2) followers++;
+      if (followers >= 4) break;
+    }
+    return Math.min(1.2, followers * 0.35);
+  }
+  function aiNextActor(g, ids, start) {
+    if (start >= ids.length) return start;
+    const first = g.units.find(v => v.id === ids[start]);
+    if (!first) return start;
+    const memo = aiPlan(g, first.side);
+    memo.actors ||= new Map(g.units.map(u => [u.id, u]));
+    let selected = start, best = -Infinity;
+    for (let i = start; i < Math.min(ids.length, start + 16); i++) {
+      const u = memo.actors.get(ids[i]);
+      if (!u || u.hp <= 0 || u.attacked || !isReady(g, u)) continue;
+      let score = -aiOrderPriority(g, u) * 32 + trafficBoost(g, u, memo) * 24;
+      for (const p of targets(g, u).slice(0, 12)) {
+        const shot = preview(g, u.id, p.c, p.r);
+        if (!shot) continue;
+        const enemy = unitAt(g, p), city = stationAt(g, p);
+        const value = shot.unit + shot.shield * 0.6 - shot.counter * 0.45 +
+          (enemy && shot.unit >= enemy.hp ? 135 : 0) +
+          (enemy ? commanderValue(g, enemy) + focusValue(g, u, enemy, shot, memo) : 0) +
+          (city && foe(g, city.owner, u.side) && city.shield <= shot.shield ? 65 : 0);
+        score = Math.max(score, value - aiOrderPriority(g, u) * 14);
+      }
+      if (score > best || (score === best && ids[i] < ids[selected])) {
+        best = score;
+        selected = i;
+      }
+    }
+    return selected;
+  }
