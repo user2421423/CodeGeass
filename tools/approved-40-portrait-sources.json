@@ -1,252 +1,203 @@
 {
-  "notes": "39 sourced character images, all unverified for successful hotlink/download; image identities for six newly researched characters were established by labeled page/infobox/gallery. One missing: Xu Xinfeng. Do not substitute his daughter Xu Lifeng. No binary assets imported.",
   "updated": "2026-10-12",
-  "commanders": [
+  "policy": "Local portraits only: never resolve runtime artwork from external sites.",
+  "status": "complete",
+  "count": 39,
+  "characters": [
     {
       "id": "marianne",
-      "status": "externally_linked",
-      "image": "https://livedoor.blogimg.jp/robosoku/imgs/f/f/ffe7b550.jpg",
-      "page": "https://blog.livedoor.jp/robosoku/archives/60005622.html"
+      "src": "portraits/marianne-approved.jpg",
+      "status": "local"
     },
     {
       "id": "oldrin",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Oldrin.Zevon.1024.1866177.webp",
-      "page": "https://www.zerochan.net/1866177"
+      "src": "portraits/oldrin-approved.jpg",
+      "status": "local"
     },
     {
       "id": "orpheus",
-      "status": "externally_linked",
-      "image": "https://hobbyjapan.co.jp/codegeass/season1/imgs/20140902.png",
-      "page": "https://hobbyjapan.co.jp/codegeass/season1/index.html"
+      "src": "portraits/orpheus-approved.jpg",
+      "status": "local"
     },
     {
       "id": "marrybell",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Marrybell.mel.Britannia.full.1868197.jpg",
-      "page": "https://www.zerochan.net/1868197"
+      "src": "portraits/marrybell-approved.jpg",
+      "status": "local"
     },
     {
       "id": "norland",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Noland.von.Luneberg.full.4192524.png",
-      "page": "https://www.zerochan.net/4192524"
+      "src": "portraits/norland-approved.jpg",
+      "status": "local"
     },
     {
       "id": "ash",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Ash.%28CODE.GEASS%29.full.4193271.png",
-      "page": "https://www.zerochan.net/4193271"
+      "src": "portraits/ash-approved.jpg",
+      "status": "local"
     },
     {
       "id": "sakuya",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Sumeragi.Sakuya.full.4193276.png",
-      "page": "https://www.zerochan.net/4193276"
+      "src": "portraits/sakuya-approved.jpg",
+      "status": "local"
     },
     {
       "id": "shalio",
-      "status": "externally_linked",
-      "image": "https://ogre.natalie.mu/media/pp/static/eiga/r-geass/chara07.jpg",
-      "page": "https://natalie.mu/eiga/pp/r-geass"
+      "src": "portraits/shalio-approved.jpg",
+      "status": "local"
     },
     {
       "id": "shamna",
-      "status": "externally_linked",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/38889-89983542.png",
-      "page": "https://www.animecharactersdatabase.com/characters.php?id=138895"
+      "src": "portraits/shamna-approved.jpg",
+      "status": "local"
     },
     {
       "id": "kaguya",
-      "status": "externally_linked",
-      "image": "https://shikimori.io/system/user_images_h/original/ca45d170bbe6af50e91f5b8d/187dd4c94f53c406b610bdc5dd371111e529aeffaf8f8f65e43df7aeb901abf2.jpg",
-      "page": "https://shikimori.one/characters/1865-kaguya-sumeragi"
+      "src": "portraits/kaguya-approved.jpg",
+      "status": "local"
     },
     {
       "id": "charles",
-      "status": "externally_linked",
-      "image": "https://i.pinimg.com/736x/e8/95/4c/e8954c8826f0d7a1e179635e9a50c3a9.jpg",
-      "page": "https://ru.pinterest.com/pin/388857749098726628/"
+      "src": "portraits/charles-approved.jpg",
+      "status": "local"
     },
     {
       "id": "lloyd",
-      "status": "externally_linked",
-      "image": "https://storage.moegirl.org.cn/moegirl/commons/4/41/%E5%AB%8C%E5%BC%83.jpg",
-      "page": "https://zh.moegirl.org.cn/"
+      "src": "portraits/lloyd-approved.jpg",
+      "status": "local"
     },
     {
       "id": "pierre",
-      "status": "externally_sourced_not_downloaded",
-      "image": "https://www.behindthevoiceactors.com/_img/chars/thumbs/pierre-anou-code-geass-akito-the-exiled-26.3_thumb.jpg",
-      "page": "https://www.behindthevoiceactors.com/tv-shows/Code-Geass-Akito-the-Exiled/Pierre-Anou/",
-      "identity_verified_by_label": true
+      "src": "portraits/pierre-approved.jpg",
+      "status": "local"
     },
     {
       "id": "sophie",
-      "status": "externally_linked",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/6186-1931053390.jpg",
-      "page": "https://www.animecharactersdatabase.com/characters.php?id=50753"
+      "src": "portraits/sophie-approved.jpg",
+      "status": "local"
     },
     {
       "id": "sarah",
-      "status": "externally_linked",
-      "image": "https://www.newton.com.tw/img/4/38b/nBnauI2NxEWOmhDZmBTM1MGNhFjMxUjNwkzYzMzMjBDM2ImN0IjNmNjNhZzLtVGdp9yYpB3LltWahJ2Lt92YuUHZpFmYuMmczdWbp9yL6MHc0RHa.jpg",
-      "page": "https://www.newton.com.tw/wiki/Code%20Geass%20%E4%BA%A1%E5%9C%8B%E7%9A%84%E9%98%BF%E5%9F%BA%E5%BE%B7"
+      "src": "portraits/sarah-approved.jpg",
+      "status": "local"
     },
     {
       "id": "olivia",
-      "status": "externally_linked",
-      "image": "https://geass.jp/akito/img/chara_Olivia.jpg",
-      "page": "https://geass.jp/akito/chara_Olivia.html"
+      "src": "portraits/olivia-approved.jpg",
+      "status": "local"
     },
     {
       "id": "margaret",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Margaret.Walpole.full.4390785.png",
-      "page": "https://www.zerochan.net/4390785"
+      "src": "portraits/margaret-approved.jpg",
+      "status": "local"
     },
     {
       "id": "hilda",
-      "status": "externally_linked",
-      "image": "https://www.newton.com.tw/img/9/391/nBnauUjYkhzMyATO3Q2YwgzM1YTY2QDN4Y2N2MTMzkTMxIjYyYmYmNDNyUzLtVGdp9yYpB3LltWahJ2Lt92YuUHZpFmYuMmczdWbp9yL6MHc0RHa.jpg",
-      "page": "https://www.newton.com.tw/wiki/Code%20Geass%20%E4%BA%A1%E5%9C%8B%E7%9A%84%E9%98%BF%E5%9F%BA%E5%BE%B7"
+      "src": "portraits/hilda-approved.jpg",
+      "status": "local"
     },
     {
       "id": "chloe",
-      "status": "externally_linked",
-      "image": "https://geass.jp/akito/img/chara_Chloe.jpg",
-      "page": "https://geass.jp/akito/chara_Chloe.html"
+      "src": "portraits/chloe-approved.jpg",
+      "status": "local"
     },
     {
       "id": "kate",
-      "status": "externally_linked",
-      "image": "https://www.newton.com.tw/img/8/6ab/nBnauE2MxETOhNDN1QzNiRzYiV2MmhzMxQDN2EzM5czMjZWY2MzNmBjZ5czLtVGdp9yYpB3LltWahJ2Lt92YuUHZpFmYuMmczdWbp9yL6MHc0RHa.jpg",
-      "page": "https://www.newton.com.tw/wiki/Code%20Geass%20%E4%BA%A1%E5%9C%8B%E7%9A%84%E9%98%BF%E5%9F%BA%E5%BE%B7"
+      "src": "portraits/kate-approved.jpg",
+      "status": "local"
     },
     {
       "id": "joe",
-      "status": "externally_linked",
-      "image": "https://s1.zerochan.net/Code.Geass%3A.Boukoku.no.Akito.600.2002205.jpg",
-      "page": "https://www.zerochan.net/2002205"
+      "src": "portraits/joe-approved.jpg",
+      "status": "local"
     },
     {
       "id": "tianzi",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Tian-zi.full.4580066.png",
-      "page": "https://www.zerochan.net/4580066"
-    },
-    {
-      "id": "xinfeng",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "src": "portraits/tianzi-approved.jpg",
+      "status": "local"
     },
     {
       "id": "ren",
-      "status": "externally_sourced_not_downloaded",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/0/04/Colonel_ren.jpg/revision/latest/scale-to-width-down/268?cb=20211221141358",
-      "page": "https://codegeass.fandom.com/wiki/Colonel_Ren",
-      "identity_verified_by_label": true
+      "src": "portraits/ren-approved.jpg",
+      "status": "local"
     },
     {
       "id": "xiawang",
-      "status": "externally_linked",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/9180-610081857.jpg",
-      "page": "https://www.animecharactersdatabase.com/photo.php?imgid=65145&type_id=1"
+      "src": "portraits/xiawang-approved.jpg",
+      "status": "local"
     },
     {
       "id": "chengzhong",
-      "status": "externally_sourced_not_downloaded",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/5/5d/High_Eunuch_-_Cheng_Zhong.JPG/revision/latest/scale-to-width-down/200?cb=20120125020522",
-      "page": "https://codegeass.fandom.com/wiki/High_Eunuchs",
-      "identity_verified_by_label": true
+      "src": "portraits/chengzhong-approved.jpg",
+      "status": "local"
     },
     {
       "id": "huangqian",
-      "status": "externally_sourced_not_downloaded",
-      "image": "https://static.wikitide.net/geasswiki/6/60/Huang_qian_r2_portrait.png",
-      "page": "https://geass.miraheze.org/wiki/High_Eunuchs",
-      "identity_verified_by_label": true
+      "src": "portraits/huangqian-approved.jpg",
+      "status": "local"
     },
     {
       "id": "sawasaki",
-      "status": "externally_linked",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/9180-1880971738.jpg",
-      "page": "https://www.animecharactersdatabase.com/cn/image.php?imgid=64538&type_id=1"
+      "src": "portraits/sawasaki-approved.jpg",
+      "status": "local"
     },
     {
       "id": "diethard",
-      "status": "externally_linked",
-      "image": "https://safebooru.org/images/4559/a34741be8c818509351e34b075b961b2a0a7d26f.png",
-      "page": "https://safebooru.org/index.php?id=4753132&page=post&s=view"
+      "src": "portraits/diethard-approved.jpg",
+      "status": "local"
     },
     {
       "id": "sayoko",
-      "status": "externally_linked",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/9180-1365414251.jpg",
-      "page": "https://www.animecharactersdatabase.com/image.php?imgid=64499&type_id=1"
+      "src": "portraits/sayoko-approved.jpg",
+      "status": "local"
     },
     {
       "id": "benio",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Benio.Akagi.1024.4573859.webp",
-      "page": "https://www.zerochan.net/4573859"
+      "src": "portraits/benio-approved.jpg",
+      "status": "local"
     },
     {
       "id": "kinoshita",
-      "status": "externally_linked",
-      "image": "https://www.animecharactersdatabase.com/images%20of/Kinoshita/from/Code%20Geass%20Lelouch%20of%20the%20Rebellion%20R2/uploads/chars/9180-809532539.jpg",
-      "page": "https://www.animecharactersdatabase.com/characters.php?id=69077"
+      "src": "portraits/kinoshita-approved.jpg",
+      "status": "local"
     },
     {
       "id": "kizuna",
-      "status": "externally_linked",
-      "image": "https://www.animecharactersdatabase.com/uploads/chars/9180-821342004.jpg",
-      "page": "https://www.animecharactersdatabase.com/characters.php?id=69034"
+      "src": "portraits/kizuna-approved.jpg",
+      "status": "local"
     },
     {
       "id": "toruyoshida",
-      "status": "externally_linked",
-      "image": "https://www.animecharactersdatabase.com/images%20of/Toru%20Yoshida/from/Code%20Geass%20Lelouch%20of%20the%20Rebellion/uploads/chars/9180-88886476.png",
-      "page": "https://www.animecharactersdatabase.com/characters.php?id=68976"
+      "src": "portraits/toruyoshida-approved.jpg",
+      "status": "local"
     },
     {
       "id": "savitri",
-      "status": "externally_linked",
-      "image": "https://static.zerochan.net/Kagari.Savitri.full.4256299.png",
-      "page": "https://www.zerochan.net/4256299"
+      "src": "portraits/savitri-approved.jpg",
+      "status": "local"
     },
     {
       "id": "kirihara",
-      "status": "externally_linked",
-      "image": "https://ami.animecharactersdatabase.com/uploads/chars/9180-926657038.jpg",
-      "page": "https://www.animecharactersdatabase.com/jp/image.php?imgid=64651&type_id=1"
+      "src": "portraits/kirihara-approved.jpg",
+      "status": "local"
     },
     {
       "id": "mutsuki",
-      "status": "externally_sourced_not_downloaded",
-      "image": "https://s4.anilist.co/file/anilistcdn/character/large/49167.jpg",
-      "page": "https://myotakuworld.com/character/mutsuki-minase",
-      "identity_verified_by_label": true
+      "src": "portraits/mutsuki-approved.jpg",
+      "status": "local"
     },
     {
       "id": "ichijiku",
-      "status": "externally_linked",
-      "image": "https://wallpaper.forfun.com/fetch/2c/2cdb854dd3d983abff96c623e2ef0d37.jpeg",
-      "page": "https://fr.wallpaper.mob.org/image/anime-code_geass-ichijiku_hinata-kaname_ohgi-mary_code_geass-mutsuki_minase-nina_einstein-shinichiro_tamaki-711123.html"
+      "src": "portraits/ichijiku-approved.jpg",
+      "status": "local"
     },
     {
       "id": "ayame",
-      "status": "externally_linked",
-      "image": "https://cdn.anime-planet.com/characters/primary/ayame-futaba-1.webp?t=1672865558",
-      "page": "https://www.anime-planet.com/characters/ayame-futaba"
+      "src": "portraits/ayame-approved.jpg",
+      "status": "local"
     },
     {
       "id": "indira",
-      "status": "externally_sourced_not_downloaded",
-      "image": "https://static.wikitide.net/geasswiki/5/5f/Indira_tharoor_lost_stories_infobox_color_full_body.png",
-      "page": "https://geass.miraheze.org/wiki/Indira_Tharoor",
-      "identity_verified_by_label": true
+      "src": "portraits/indira-approved.jpg",
+      "status": "local"
     }
   ]
 }
