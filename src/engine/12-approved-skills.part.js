@@ -73,7 +73,7 @@
     if(counter&&f.phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn)m*=1.4;
     if(!counter&&f.highland&&terrain?.terrain==='mountain'&&u.expHighlandTurn!==g.turn)m*=1.25;
     if(!counter&&f.crimson&&target&&stationAt(g,target))m*=1.2;
-    if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.coast)m*=1.25;
+    if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=1.25;
     if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
       !g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&dist(g,v,target)===1))m*=1.25;
     if(!counter&&u.expRetrofitStrike)m*=1.1;
