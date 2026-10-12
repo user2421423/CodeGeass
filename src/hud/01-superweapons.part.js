@@ -1,4 +1,5 @@
 function arsenalButton() {
+  if (game.mode === 'scenario') return '';
   const n = game.arsenal?.[game.player] || 0;
   if (!n) return '';
   const why = phaseReason();
