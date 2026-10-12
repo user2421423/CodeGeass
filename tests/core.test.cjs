@@ -569,7 +569,7 @@ test('Commander ranks grant up to double HP and every Mobility star grants one m
 });
 
 test('Commander branch stars add +5 flat base attack per star across combat branches', () => {
-  for (const cls of ['scout', 'mainline', 'rocket']) {
+  for (const cls of ['scout', 'medium', 'rocket']) {
     const g = blank();
     const type = E.typeFor('britannia', cls);
     const attacker = E.newUnit(g, type, 'britannia', 5, 5);
