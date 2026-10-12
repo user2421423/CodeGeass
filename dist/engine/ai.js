@@ -1057,7 +1057,7 @@
         critical = !!u.cmd && localThreat(g, u, u) >= u.hp * 0.75;
       const essential = cities.some(s => dist(g, u, s) <= 1 && !secure(s) &&
         !own.some(v => v.id !== u.id && !isShip(v) && v.hp / maxHP(v) >= 0.4 && dist(g, v, s) <= 2));
-      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || memo.guards[u.id] || essential || (ratio >= 0.7 && !critical)) {
+      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || (memo.guards[u.id]?.emergency || (memo.guards[u.id] && !critical)) || essential || (ratio >= 0.7 && !critical)) {
         delete saved[u.id];
         continue;
       }
@@ -1115,11 +1115,15 @@
   // give each its full turn.
   function aiLaunch(g, ship, events, fieldAt, masses) {
     const landed = [];
+    const supportingCargo = g.units.filter(v => v.id !== ship.id && v.side === ship.side &&
+      v.hp > 0 && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
+      dist(g, v, ship) <= 3).reduce((a, v) =>
+        a + v.cargo.reduce((sum, u) => sum + u.stack, 0), 0);
     for (let i = (ship.cargo?.length || 0) - 1; i >= 0; i--) {
       if (deployReason(g, ship, i)) continue;
       const strength = ship.cargo.reduce((a, c) => a + c.stack, 0),
         spot = deployTargets(g, ship, i)
-          .map(t => ({ t, s: landingScore(g, ship.side, t, strength + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
+          .map(t => ({ t, s: landingScore(g, ship.side, t, strength + supportingCargo + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
           .filter(o => o.s != null)
           .sort((a, b) => a.s - b.s)[0]?.t;
       if (!spot) break;

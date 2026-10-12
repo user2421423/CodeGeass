@@ -26,7 +26,7 @@
         critical = !!u.cmd && localThreat(g, u, u) >= u.hp * 0.75;
       const essential = cities.some(s => dist(g, u, s) <= 1 && !secure(s) &&
         !own.some(v => v.id !== u.id && !isShip(v) && v.hp / maxHP(v) >= 0.4 && dist(g, v, s) <= 2));
-      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || memo.guards[u.id] || essential || (ratio >= 0.7 && !critical)) {
+      if (!(u.cmd || u.elite) || isSea(tile(g, u.c, u.r)) || u.hold || (memo.guards[u.id]?.emergency || (memo.guards[u.id] && !critical)) || essential || (ratio >= 0.7 && !critical)) {
         delete saved[u.id];
         continue;
       }

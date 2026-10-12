@@ -21,11 +21,15 @@
   // give each its full turn.
   function aiLaunch(g, ship, events, fieldAt, masses) {
     const landed = [];
+    const supportingCargo = g.units.filter(v => v.id !== ship.id && v.side === ship.side &&
+      v.hp > 0 && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
+      dist(g, v, ship) <= 3).reduce((a, v) =>
+        a + v.cargo.reduce((sum, u) => sum + u.stack, 0), 0);
     for (let i = (ship.cargo?.length || 0) - 1; i >= 0; i--) {
       if (deployReason(g, ship, i)) continue;
       const strength = ship.cargo.reduce((a, c) => a + c.stack, 0),
         spot = deployTargets(g, ship, i)
-          .map(t => ({ t, s: landingScore(g, ship.side, t, strength + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
+          .map(t => ({ t, s: landingScore(g, ship.side, t, strength + supportingCargo + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
           .filter(o => o.s != null)
           .sort((a, b) => a.s - b.s)[0]?.t;
       if (!spot) break;
