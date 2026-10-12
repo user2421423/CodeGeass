@@ -280,7 +280,7 @@ function draw(time, dt) {
   // Compact group numbers and objective flags stay visible at strategic zoom.
   const groupColors = ['#ffd36e', '#62d9fa', '#ff91c4', '#aff29f', '#cbb1ff', '#ffa876'];
   const groupMembership = new Map();
-  if (game.mode === 'conquest') for (const gr of game.armyGroups || [])
+  if (game.mode === 'conquest' || game.mode === 'scenario') for (const gr of game.armyGroups || [])
     if (gr.side === game.player) for (const id of gr.units) groupMembership.set(id, gr);
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
@@ -405,7 +405,7 @@ function draw(time, dt) {
     }
   }
   // Persistent group objective markers, including when no member is individually selected.
-  if (game.mode === 'conquest') for (const gr of game.armyGroups || []) {
+  if (game.mode === 'conquest' || game.mode === 'scenario') for (const gr of game.armyGroups || []) {
     if (gr.side !== game.player || !gr.destination) continue;
     const center = hexCenter(gr.destination);
     if (!visible(center)) continue;
