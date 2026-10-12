@@ -1,6 +1,7 @@
 /* Scenario Mode: choose a regional war and faction, preview the real starting map. */
 'use strict';
 let scenarioSide = 'britannia';
+let scenarioKind = 'invasion-japan';
 let scenarioDifficulty = 'normal';
 let scenarioRoutingGroup = null;
 const SCENARIO_BLURBS = {
@@ -8,8 +9,13 @@ const SCENARIO_BLURBS = {
   bk: 'Command Zero’s resistance enclaves in central Japan. For now the Black Knights are temporarily allied to Britannia.',
   cf: 'Command all of Kyushu as the Federation invasion base and push north into Honshu.'
 };
+const DIVISION_BLURBS = {
+  britannia: 'Hold the industrial heartland and Mount Fuji while defending against enemies to the north and west.',
+  eu: 'Fight south from Hokkaido and Tohoku, or break out of the Chiba–Narita bridgehead beside Tokyo.',
+  cf: 'Command western Honshu, Shikoku and Kyushu. Exploit strategic depth, multiple ports and your broad army front.'
+};
 function scenarioDialog() {
-  const model=E.scenarios?.japan;
+  const model=E.scenarios?.byId?.[scenarioKind] || E.scenarios?.japan;
   if(!model) return;
   if(!model.sides.includes(scenarioSide))scenarioSide='britannia';
   const preview=model.create(scenarioSide,'normal',246801);
@@ -19,27 +25,36 @@ function scenarioDialog() {
     const units=preview.units.filter(u=>u.side===s).length;
     return '<button class="faction '+s+(s===scenarioSide?' active':'')+'" data-scenario-faction="'+s+'">'+
       '<span class="label" style="color:'+(s==='bk'?'#f0c94a':owner.color)+'">'+owner.short+'</span>'+
-      '<h3>'+owner.name+'</h3><p>'+SCENARIO_BLURBS[s]+'</p>'+
+      '<h3>'+owner.name+'</h3><p>'+(scenarioKind==='division-japan'?DIVISION_BLURBS:SCENARIO_BLURBS)[s]+'</p>'+
       '<p class="doctrine">'+cities+' cities · '+units+' starting formations</p>'+
       '<span class="select-mark">'+(s===scenarioSide?'✓ Selected':'Select faction')+'</span></button>';
   }).join('');
   modal.innerHTML='<div class="overlay"><section class="dialog wide scenario-select" role="dialog" aria-modal="true" aria-label="Scenario selection">'+
     '<div class="dialog-head"><div><div class="eyebrow">Scenario Mode · Japan · 2017 a.t.b.</div>'+
-    '<h2>The Invasion of Japan</h2><p>Three playable powers on a regional hex map. Choose a faction and inspect its starting territory and armies.</p>'+
+    '<h2>'+model.title+'</h2><p>Three playable powers on the 44-city regional map. Choose a war and your faction.</p>'+
     '</div><button class="small close" data-action="scenario-close">Back</button></div>'+
     '<canvas id="scenario-preview-map" class="scenario-preview-map" aria-label="Japan scenario map preview with starting territories and units"></canvas>'+
+    '<div class="choice-grid two">'+
+    ['invasion-japan','division-japan'].map(id=>'<button class="faction'+(scenarioKind===id?' active':'')+'" data-scenario-kind="'+id+'">'+
+      '<h3>'+(id==='division-japan'?'The Division of Japan':'The Invasion of Japan')+'</h3><p>'+
+      (id==='division-japan'?'Alternate 2017: Britannia, Europia and China fight from the first turn.':'China invades Kyushu; Britannia and the Black Knights temporarily cooperate.')+
+      '</p><span class="select-mark">'+(scenarioKind===id?'✓ Selected':'Select scenario')+'</span></button>').join('')+'</div>'+ 
     '<div class="choice-grid three">'+cards+'</div>'+
     '<div class="setup-row"><div><label for="scenario-difficulty">Difficulty</label>'+
     '<select id="scenario-difficulty" class="select">'+
-    Object.entries(E.DIFFICULTIES).filter(([id])=>['normal','hard','challenge','elite'].includes(id))
+    Object.entries(E.DIFFICULTIES).filter(([id])=>['normal','hard','challenge','elite'].includes(id) &&
+      (scenarioKind!=='division-japan'||id!=='elite'))
       .sort((a,b)=>['normal','hard','challenge','elite'].indexOf(a[0])-['normal','hard','challenge','elite'].indexOf(b[0])).map(([id,d])=>'<option value="'+id+'"'+
       (scenarioDifficulty===id?' selected':'')+'>'+d.name+'</option>').join('')+
-    '</select><p class="mode-note">'+(scenarioDifficulty==='elite'
+    '</select><p class="mode-note">'+(scenarioDifficulty==='elite' && scenarioKind==='invasion-japan'
       ? 'All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.'
       : 'Hard and Challenge strengthen rival starting formations and income.')+'</p>'+
-    '</div><div><label>Alliance</label><p>Britannia and the Black Knights are allied until turn 10.</p></div></div>'+
+    '</div><div><label>Opening diplomacy</label><p>'+(scenarioKind==='division-japan'
+      ? 'No alliances: all three powers are hostile from turn 1.'
+      : 'Britannia and the Black Knights are allied until turn 10.')+'</p></div></div>'+
     '<div class="dialog-footer"><small class="notice">'+model.cols+' × '+model.rows+' hexes · '+preview.stations.length+' cities · '+preview.units.length+
-    ' formations · No saves. Accurate coastlines and regional armies. Britannia and the Black Knights split on turn 10.</small>'+
+    ' formations · No saves. Accurate coastlines and regional armies. '+
+    (scenarioKind==='division-japan'?'Three-way war from turn 1; conquer all 44 cities.':'Britannia and the Black Knights split on turn 10.')+'</small>'+
     '<button class="primary" data-action="start-scenario">Command '+E.FACTIONS[scenarioSide].short+'</button></div>'+
     '</section></div>';
   const canvas=modal.querySelector('#scenario-preview-map');
@@ -53,15 +68,18 @@ function scenarioDialog() {
   focusDialog();
 }
 function startScenario(side=scenarioSide) {
-  if(!E.scenarios?.japan?.sides.includes(side))return;
+  const model=E.scenarios?.byId?.[scenarioKind] || E.scenarios?.japan;
+  if(!model?.sides.includes(side))return;
   resetSession();
-  game=E.scenarios.japan.create(side,scenarioDifficulty,Date.now()>>>0);
+  game=model.create(side,scenarioDifficulty,Date.now()>>>0);
   scenarioRoutingGroup=null;
   setWorld();
   // Start inside each faction's theatre instead of fitting empty sea.
   // Nagoya frames the Tokyo–Osaka defense, Kyoto the Black Knight enclaves,
   // and Fukuoka the Chinese invasion and Kanmon crossing.
-  const focusName={britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'}[side];
+  const focusName=(scenarioKind==='division-japan'
+    ? {britannia:'Nagoya',eu:'Sendai',cf:'Hiroshima'}
+    : {britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'})[side];
   const focus=game.stations.find(s=>s.name===focusName) ||
     game.stations.find(s=>s.owner===side);
   const units=game.units.filter(u=>u.side===side && u.hp>0)
@@ -71,7 +89,7 @@ function startScenario(side=scenarioSide) {
   closeModal();
   render();
   centerOn(focus || selectedUnit() || homeOf());
-  toast('Japan scenario loaded. Select units on the map to command them. No progress is saved.',true);
+  toast(model.title+' loaded. Select units on the map to command them. No progress is saved.',true);
 }
 
 function scenarioGroupsDialog() {

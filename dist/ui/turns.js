@@ -105,7 +105,7 @@ async function endTurn() {
     scenarioNotice = false;
   if (!game.over) {
     game.turn++;
-    scenarioNotice = game.mode === 'scenario' && E.scenarios?.japan?.onTurn(game);
+    scenarioNotice = game.mode === 'scenario' && E.scenarios?.byId?.[game.scenario?.id]?.onTurn(game);
     const before = unitSnapshot(),
       warheads = game.arsenal?.[game.player] || 0;
     E.beginTurn(game, game.player, true);
