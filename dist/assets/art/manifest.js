@@ -305,7 +305,9 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/farnese-a73888e2a52c.webp"
     },
     "fernando": {
-      "src": "portraits/fernando-web.jpg"
+      "src": "portraits/fernando-final-b01f1d94c091.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     },
     "gaohai": {
       "src": "portraits/gaohai-8c82ae4c950e.jpg"
@@ -350,7 +352,9 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/lelouch-78b808b17079.webp"
     },
     "lifeng": {
-      "src": "portraits/lifeng-1a1927a55740.jpg"
+      "src": "portraits/lifeng-final-91d94de97e5f.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     },
     "luciano": {
       "src": "portraits/luciano-e90561c6a0a0.jpg"
@@ -359,7 +363,9 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/manfredi-57a7bea25a0a.webp"
     },
     "marirrosa": {
-      "src": "portraits/marirrosa-d49e1554e510.jpg"
+      "src": "portraits/marirrosa-final-1ffe904a9d33.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     },
     "meiling": {
       "src": "portraits/meiling-53c77f6ca5a5.jpg"
@@ -371,7 +377,9 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/monica-1648578c93a5.webp"
     },
     "nonette": {
-      "src": "portraits/nonette-edf81d950570.webp"
+      "src": "portraits/nonette-refresh-42facc7ea99a.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     },
     "ohgi": {
       "src": "portraits/ohgi-3135b3a335e2.webp"
@@ -428,7 +436,9 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/yukiya-222f726c4d9a.jpg"
     },
     "zero": {
-      "src": "portraits/zero-78b808b17079.webp"
+      "src": "portraits/zero-refresh-5e68a46b6a02.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     },
     "zhaohao": {
       "src": "portraits/zhaohao-f75b0bf42b4c.jpg"
@@ -439,12 +449,12 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "oldrin": {
-      "src": "portraits/oldrin-approved.jpg",
+      "src": "portraits/oldrin-refresh-b33a49d280cd.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "marrybell": {
-      "src": "portraits/marrybell-approved.jpg",
+      "src": "portraits/marrybell-refresh-962936f51e21.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -474,17 +484,17 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "sophie": {
-      "src": "portraits/sophie-approved.jpg",
+      "src": "portraits/sophie-refresh-3b9c8edc0fa9.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "sarah": {
-      "src": "portraits/sarah-approved.jpg",
+      "src": "portraits/sarah-refresh-4c51f8e6d0ab.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "olivia": {
-      "src": "portraits/olivia-approved.jpg",
+      "src": "portraits/olivia-refresh-2f1e372a9dc9.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -494,27 +504,27 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "hilda": {
-      "src": "portraits/hilda-approved.jpg",
+      "src": "portraits/hilda-refresh-b57bc0692f04.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "chloe": {
-      "src": "portraits/chloe-approved.jpg",
+      "src": "portraits/chloe-refresh-d8293febfba0.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "kate": {
-      "src": "portraits/kate-approved.jpg",
+      "src": "portraits/kate-refresh-1a0672cb00ee.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "joe": {
-      "src": "portraits/joe-approved.jpg",
+      "src": "portraits/joe-refresh-e2b9f2e9d77e.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "tianzi": {
-      "src": "portraits/tianzi-approved.jpg",
+      "src": "portraits/tianzi-refresh-6aa745de9b46.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -539,7 +549,7 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "benio": {
-      "src": "portraits/benio-approved.jpg",
+      "src": "portraits/benio-refresh-076b7fd513c3.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -559,7 +569,7 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "ichijiku": {
-      "src": "portraits/ichijiku-approved.jpg",
+      "src": "portraits/ichijiku-refresh-10ba9de893f3.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -579,22 +589,22 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "pierre": {
-      "src": "portraits/pierre-approved.jpg",
+      "src": "portraits/pierre-refresh-d5bfdf09658e.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "ren": {
-      "src": "portraits/ren-approved.jpg",
+      "src": "portraits/ren-final-2e19f4a9d63a.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "chengzhong": {
-      "src": "portraits/chengzhong-approved.jpg",
+      "src": "portraits/chengzhong-refresh-1b388877574b.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "huangqian": {
-      "src": "portraits/huangqian-approved.jpg",
+      "src": "portraits/huangqian-refresh-7cefebccc304.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -604,7 +614,7 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "indira": {
-      "src": "portraits/indira-approved.jpg",
+      "src": "portraits/indira-final-d524640da092.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -614,12 +624,12 @@ globalThis.KnightmareArtManifest = {
       "fy": 0.5
     },
     "vritra": {
-      "src": "portraits/vritra-approved.jpg",
+      "src": "portraits/vritra-refresh-d2607d7191e8.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
     "zidien": {
-      "src": "portraits/zidien-approved.jpg",
+      "src": "portraits/zidien-refresh-3325e363809d.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
