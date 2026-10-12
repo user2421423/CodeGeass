@@ -25,13 +25,13 @@ standard strategic AI and city-based province capture.
   higher initial economic income; Euro Britannia fields concentrated eastern spearheads
   and a larger starting treasury. The only victory condition is ownership of **all 44 cities**,
   with no scripted deadline. Normal, Hard, Challenge and **Elite** are available.
-  In Elite, every starting European army and fleet is a one-frame Elite Force at
+  In Elite, starting land and amphibious formations become one-frame Elite Forces at
   Lv.1 except opposing named commanders, who start at Lv.5 with Supreme Commander
   rank. The AI inherits Challenge-grade research, improved factories, enhanced
   income and unrestricted Lv.1 elite reinforcement production. Euro Britannia
   borrows Britannian Elite Forces **only for this scenario**; the E.U. uses its own
   Elite Forces. Players can deploy HQ-unlocked elites once per type per operation,
-  with Elite scenario carriers available at Lv.1 without a permanent unlock.
+  while Carrier-Battleships remain ordinary ships rather than Elite Forces.
 
 `dist/scenarios-europe.js` holds the self-contained scenario rules and
 `dist/europe-landmask.js` contains a packed 120 × 80 European tactical coastline.
