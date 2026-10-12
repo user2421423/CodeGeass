@@ -6,9 +6,19 @@ const E = require('../dist/engine.js');
 function ownerAt(g, lon, lat) {
   const r = Math.round((74 - lat) / (128 / 75));
   const c = Math.round((lon + 180) / 2 - 0.5 - 0.5 * (r & 1));
-  const t = E.tile(g, c, r);
-  assert.ok(t && t.terrain !== 'sea', 'expected playable land at ' + lon + ',' + lat);
-  return t.owner;
+  // Some real-world locations fall in coastal sea cells at the 2° tactical
+  // resolution. Inspect the nearest playable land hex instead of requiring
+  // the requested lon/lat to have a solid-land centre.
+  const candidates = [];
+  for (let dr = -2; dr <= 2; dr++)
+    for (let dc = -2; dc <= 2; dc++) {
+      const t = E.tile(g, c + dc, r + dr);
+      if (t && t.terrain !== 'sea')
+        candidates.push({ t, d: dc * dc + dr * dr });
+    }
+  candidates.sort((a, b) => a.d - b.d);
+  assert.ok(candidates.length, 'expected nearby playable land at ' + lon + ',' + lat);
+  return candidates[0].t.owner;
 }
 
 for (const [era, arabia] of [['world', 'neutral'], ['ufn2018', 'britannia']]) {
