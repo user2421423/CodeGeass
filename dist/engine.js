@@ -576,7 +576,7 @@
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer),s))
+      shortfall(funds(g, producer), TYPES[type].naval ? price(type,stack,g,producer) : decreePrice(price(type,stack,g,producer),s))
     );
   }
   function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}
@@ -1295,7 +1295,7 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -1485,7 +1485,7 @@
       !(canCapture(u) || navalLanding) || (s.shield > 0 && !navalLanding))
       return { captured: null, annexed: null };
     const loser = s.owner;
-    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*(s.income||0));s.expTaxUntil=g.turn+2;}
+    if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
     delete s.expSupplyBlocked;delete s.expDecree;
     s.owner = u.side;
     s.shield = 0;
@@ -3434,6 +3434,7 @@
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
+      delete u.expForeknowledge;
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
       desired = Math.max(moraleFloor(g, u), desired);
