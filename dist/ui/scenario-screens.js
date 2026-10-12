@@ -31,9 +31,12 @@ function scenarioDialog() {
     '<div class="choice-grid three">'+cards+'</div>'+
     '<div class="setup-row"><div><label for="scenario-difficulty">Difficulty</label>'+
     '<select id="scenario-difficulty" class="select">'+
-    Object.entries(E.DIFFICULTIES).filter(([id])=>id!=='elite').map(([id,d])=>'<option value="'+id+'"'+
+    Object.entries(E.DIFFICULTIES).filter(([id])=>['normal','hard','challenge','elite'].includes(id))
+      .sort((a,b)=>['normal','hard','challenge','elite'].indexOf(a[0])-['normal','hard','challenge','elite'].indexOf(b[0])).map(([id,d])=>'<option value="'+id+'"'+
       (scenarioDifficulty===id?' selected':'')+'>'+d.name+'</option>').join('')+
-    '</select><p class="mode-note">Hard and Challenge strengthen rival starting formations and income.</p>'+
+    '</select><p class="mode-note">'+(scenarioDifficulty==='elite'
+      ? 'All starting armies and fleets are Elite Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.'
+      : 'Hard and Challenge strengthen rival starting formations and income.')+'</p>'+
     '</div><div><label>Alliance</label><p>Britannia and the Black Knights are allied until turn 10.</p></div></div>'+
     '<div class="dialog-footer"><small class="notice">'+model.cols+' × '+model.rows+' hexes · '+preview.stations.length+' cities · '+preview.units.length+
     ' formations · No saves. Accurate coastlines and regional armies. Britannia and the Black Knights split on turn 10.</small>'+

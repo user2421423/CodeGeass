@@ -526,22 +526,23 @@
     }
     // Limit playable naval hexes without cropping the visual ocean.
     restrictNavalTheatre(g);
+    if (difficulty === 'elite') E.prepareEliteJapan(g);
     // Fixed external war support tops up actual city/deposit income to the
     // target opening rates. It remains fixed thereafter; city captures and
     // upgrades change earned income normally. Higher difficulties strengthen
     // rival income as well as their initial land formations.
     for(const side of SIDES) {
-      const factor=side===player ? 1 : difficulty==='challenge' ? 1.6 :
+      const factor=side===player ? 1 : (difficulty==='challenge'||difficulty==='elite') ? 1.6 :
         difficulty==='hard' ? 1.3 : 1;
       const base=E.income(g,side),target=INCOME_TARGETS[side];
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(target).map(([resource,value])=>
-          [resource,Math.round(value*factor)-base[resource]]));
+          [resource,difficulty==='elite' ? Math.max(0,Math.round(value*factor)-base[resource]) : Math.round(value*factor)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(target))
         g.economy[side][resource]=actual[resource]*STARTING_RESERVE_TURNS[side];
     }
-    if(difficulty!=='normal'){
+    if(difficulty!=='normal'&&difficulty!=='elite'){
       const challenge=difficulty==='challenge';
       for(const side of SIDES.filter(s=>s!==player))
         for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).entries())
