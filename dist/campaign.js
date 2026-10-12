@@ -415,7 +415,7 @@
         replacement ? eliteLevelFor(g, u.side, replacement, up.level ?? (u.eliteLevel || 3)) : 0;
       u.stack = replacement ? 1 : u.stack;
       if (isEliteCampaign(g)) u.eliteStart = true;
-      u.hpTech = E.hullTech(g, u);
+      if (isEliteCampaign(g)) u.hpTech = E.hullTech(g, u);
       u.hp = Math.max(1, E.maxHP(u) - lost);
     }
     for (const sh of asList(ev.shield)) {
