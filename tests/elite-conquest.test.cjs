@@ -11,32 +11,55 @@ function clearCity(g, s) {
   g.units = g.units.filter(u => u.c !== s.c || u.r !== s.r);
 }
 
-test('Elite is selectable and replaces all initial nonnaval forces, including player and neutral guards', () => {
+test('Elite inherits Challenge enemy bonuses, converts every land reinforcement and keeps naval units intact', () => {
   assert.equal(E.DIFFICULTIES.elite.name, 'Elite');
+  const marshal = E.PROMOTE_COST.length - 1;
+  assert.equal(E.RANKS[E.RANKS.length - 1], 'Supreme Commander');
+  assert.equal(E.RANKS.length - 1, marshal + 2);
   for (const side of E.MAJORS) {
     const normal = E.createGame(side, 'normal', 'conquest', 20261012);
+    const challenge = E.createGame(side, 'challenge', 'conquest', 20261012);
     const g = E.createGame(side, 'elite', 'conquest', 20261012);
-    assert.equal(g.units.length, normal.units.length);
+    assert(g.units.length > normal.units.length, 'Challenge-style reinforcements exist');
     assert.deepEqual(g.stations.map(s => s.owner), normal.stations.map(s => s.owner));
-    assert.deepEqual(g.units.map(u => [u.id, u.c, u.r, u.side]), normal.units.map(u => [u.id, u.c, u.r, u.side]));
-    for (let i = 0; i < g.units.length; i++) {
-      const u = g.units[i], before = normal.units[i];
+    const originalById = new Map(normal.units.map(u => [u.id, u]));
+    for (const [id, cmd] of Object.entries(E.COMMANDERS)) {
+      const mine = cmd.side === side;
+      assert.equal(g.officers[id].rank, mine ? E.defaultOfficer(id).rank : E.RANKS.length - 1);
+      assert.equal(challenge.officers[id].rank, mine ? E.defaultOfficer(id).rank : marshal);
+    }
+    for (const foe of [...E.MAJORS, 'neutral'].filter(s => s !== side)) {
+      assert.deepEqual(g.tech[foe], challenge.tech[foe], 'Challenge maximum research');
+      assert.equal(g.economy[foe].credits, challenge.economy[foe].credits,
+        'Challenge 25% initial treasury bonus');
+    }
+    for (const before of normal.units) {
+      const u = g.units.find(v => v.id === before.id);
+      assert(u, 'original unit retained: ' + before.id);
+      assert.deepEqual([u.c, u.r, u.side], [before.c, before.r, before.side]);
       if (E.TYPES[before.type].naval) {
-        assert.equal(u.type, before.type, 'navy and amphibious types do not change');
-        assert.equal(u.stack, before.stack, 'navy/amphibious stacks do not change');
+        assert.equal(u.type, before.type, 'ships and amphibious types unchanged');
+        assert.equal(u.stack, before.stack, 'ships and amphibious stacks unchanged');
       } else {
-        assert(E.TYPES[u.type].elite, 'all land units must use elite frames: ' + before.side);
+        assert(E.TYPES[u.type].elite, 'all starting land units must be elite');
         assert(u.elite && u.eliteStart);
         assert.equal(u.eliteLevel, 1);
-        assert.equal(u.stack, 1);
+        assert.equal(u.stack, before.side === side ? 1 : Math.min(3, before.stack + 1),
+          'Challenge added frames apply to AI elites');
         assert.equal(u.hp, E.maxHP(u));
         if (E.MAJORS.includes(u.side))
-          assert(E.ELITE_FORCES[u.elite].availableTo.includes(u.side), 'starting elite belongs to faction');
+          assert(E.ELITE_FORCES[u.elite].availableTo.includes(u.side));
       }
     }
-    assert(g.units.some(u => u.side === side && u.eliteStart));
-    assert(g.units.some(u => u.side === 'neutral' && u.eliteStart));
-    assert.deepEqual(g.eliteDeployed, {}, 'starting elites do not consume player factory allowances');
+    for (const u of g.units.filter(u => !originalById.has(u.id)))
+      assert(E.TYPES[u.type].elite && u.eliteStart && u.side !== side,
+        'Challenge-style reinforcements are hostile land elites');
+    for (const foe of E.MAJORS.filter(x => x !== side)) {
+      const cities = g.stations.filter(s => s.owner === foe);
+      assert(cities.filter(s => s.tier >= 3).length >= 6, 'advanced AI elite factories');
+      assert(cities.every(s => s.tier >= 2), 'AI factories have at least one available elite');
+    }
+    assert.deepEqual(g.eliteDeployed, {}, 'starting elites do not consume the player factory limit');
   }
 });
 
@@ -106,4 +129,32 @@ test('Normal and Challenge rules are unaffected by the Elite difficulty', () => 
     assert(g.units.some(u => !E.TYPES[u.type].naval && !E.TYPES[u.type].elite));
     assert.equal(E.aiEliteRecruitReason(g, g.stations.find(s => s.owner === 'eu'), 'leila_alexander') !== null, true);
   }
+});
+
+test('AI cannot manufacture a Tier-III elite in a Tier-I factory', () => {
+  const g = E.createGame('britannia', 'elite', 'conquest', 200);
+  g.phase = 'cf';
+  rich(g, 'cf');
+  const low = g.stations.find(s => s.owner === 'cf' && s.tier === 2);
+  assert(low, 'need a medium-tier Chinese factory');
+  clearCity(g, low);
+  low.tier = 1;
+  assert.match(E.aiEliteRecruitReason(g, low, 'shen_hu'), /Requires factory level 3/);
+  assert.equal(E.recruitAIElite(g, low.id, 'shen_hu').ok, false);
+  const advanced = g.stations.find(s => s.owner === 'cf' && s.tier >= 3);
+  clearCity(g, advanced);
+  assert.equal(E.aiEliteRecruitReason(g, advanced, 'shen_hu'), null);
+  assert(E.recruitAIElite(g, advanced.id, 'shen_hu').ok);
+});
+
+test('Elite-only ranks persist across save and load while player commander cap stays Marshal', () => {
+  const g = E.createGame('britannia', 'elite', 'conquest', 203);
+  const saved = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(g))));
+  assert(saved);
+  const hostile = Object.keys(E.COMMANDERS).find(id => E.COMMANDERS[id].side === 'eu');
+  assert.equal(saved.officers[hostile].rank, E.RANKS.length - 1);
+  assert.equal(saved.officers.suzaku.rank, E.defaultOfficer('suzaku').rank);
+  const profile = { tokens: 100000, roster: {} };
+  E.roster(profile).suzaku.rank = E.PROMOTE_COST.length - 1;
+  assert.equal(E.promoteReason(profile, 'suzaku'), 'Highest rank reached');
 });
