@@ -23,8 +23,6 @@
       case 'marrybell':v.forcedOffensive=true;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
-      case 'shalio':u.expGambit=true;break;
-      case 'shamna':v.expForeknowledge=true;break;
       case 'charles':v.feintCD=Math.max(0,(v.feintCD||0)-2);break;
       case 'lloyd':v.expCalibration=true;break;
       case 'sophie':{
@@ -68,9 +66,6 @@
   function newcomerAttack(g,u,target,counter){
     const f=fx(u),terrain=tile(g,u.c,u.r);let m=1;
     if(!counter&&f.dashStrike&&u.movedDistance>=3&&u.expDashTurn!==g.turn)m*=1.3;
-    if(!counter&&f.deepCover&&target?.cmd&&u.expDeepTurn!==g.turn&&
-      !g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&dist(g,u,v)<=2))m*=1.35;
-    if(counter&&f.phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn)m*=1.4;
     if(!counter&&f.highland&&terrain?.terrain==='mountain'&&u.expHighlandTurn!==g.turn)m*=1.25;
     if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=1.25;
     if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
@@ -89,7 +84,6 @@
     return m;
   }
   function newcomerIntercept(g,target,amount){
-    if(target.expForeknowledge&&amount>=target.hp){delete target.expForeknowledge;amount=Math.max(0,target.hp-1);}
     const guard=g.units.find(v=>v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
     if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
     if(target.expAfterimage)delete target.expAfterimage;
