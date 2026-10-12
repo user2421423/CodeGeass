@@ -285,11 +285,10 @@
     for (const u of g.units) {
       const old = TYPES[u.type];
       if (!old) throw new Error('Unknown Japan starting unit ' + u.type);
+      // Elite scenarios retain ordinary carriers, including cargo rules.
+      if (old.naval === 'ship') continue;
       let id = null;
-      if (old.naval === 'ship') {
-        id = { britannia:'japan_britannia_carrier', cf:'japan_cf_carrier',
-          bk:'japan_bk_carrier', eu:'japan_eu_carrier' }[u.side];
-      } else if (old.naval === 'amphibious') {
+      if (old.naval === 'amphibious') {
         id = { britannia:'portman_ii', cf:'shui_gun_ru_ii',
           bk:'japan_bk_amphibious', eu:'panzer_frosch_ii' }[u.side];
       } else {
@@ -329,8 +328,8 @@
       ashley: 'vincent_ward', manfredi: 'cornelia_gloucester',
     };
     const naval = {
-      eu: {ship:'europe_eu_carrier',amphibious:'panzer_frosch_ii'},
-      eb: {ship:'europe_eb_carrier',amphibious:'portman_ii'},
+      eu: {amphibious:'panzer_frosch_ii'},
+      eb: {amphibious:'portman_ii'},
     };
     // Preserve this map's smaller city yields before raising factory tiers.
     for (const s of g.stations) {
@@ -364,6 +363,8 @@
     for (const u of g.units) {
       const old = TYPES[u.type];
       if (!old) throw new Error('Unknown European War starting unit '+u.type);
+      // Carrier-battleships remain ordinary hulls even on Elite difficulty.
+      if (old.naval === 'ship') continue;
       const roster = g.scenario.eliteRosters[u.side] || [];
       let id = old.naval ? naval[u.side]?.[old.naval] : null;
       if (!old.naval) {
