@@ -577,6 +577,21 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/zidien-approved.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "euphemia": {
+      "src": "portraits/euphemia-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "cecile": {
+      "src": "portraits/cecile-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "eduardo": {
+      "src": "portraits/eduardo-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     }
   },
   "buildings": {
