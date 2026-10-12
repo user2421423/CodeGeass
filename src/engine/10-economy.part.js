@@ -5,7 +5,8 @@
       .filter(s => s.owner === side)
       .reduce((a, s) => {
         const y = cityOutput(g, s);
-        a.credits += y.credits;
+        a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1);
+        if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
         a.industry += y.industry;
         a.science += y.science;
         return a;
@@ -16,7 +17,7 @@
     // refinery also exports for credits.
     total.sakuradite = 0;
     for (const d of g.sites || []) {
-      total.sakuradite += (depositShares(g, d)[side] || 0) * refining;
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.2:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
     if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
@@ -57,7 +58,8 @@
     const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    const cost = price(type, stack, g, producer);
+    const cost = decreePrice(price(type, stack, g, producer),s);
+    if(s.expDecree&&!TYPES[type].naval)delete s.expDecree;
     spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -257,8 +259,9 @@
       b = BUILDINGS[kind];
     const why = buildReason(g, s, kind);
     if (why) return { ok: false, reason: why };
-    const cost = buildCost(s, kind),
+    const cost = decreePrice(buildCost(s, kind),s),
       e = funds(g, s.owner);
+    if(s.expDecree)delete s.expDecree;
     buildingFoundation(g, s);
     spend(e, cost);
     if (kind === 'port' && !s.portAt) {
