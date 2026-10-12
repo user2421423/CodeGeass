@@ -289,8 +289,9 @@ function activateHex(p) {
         result = E.move(game, u.id, p.c, p.r);
       if (result.ok) {
         SFX.play('move', u.side);
-        // Entering a city or seizing a port commits occupation and clears prior undo history.
-        const irreversible = !!E.stationAt(game, p) || !!result.captured || !!result.annexed || !!result.portCaptured;
+        // Occupation and carrier boarding are strategic actions, not reversible moves.
+        // A mine capture must also clear all older snapshots, just like a city or port.
+        const irreversible = !!E.stationAt(game, p) || !!result.captured || !!result.annexed || !!result.portCaptured || !!result.seized || !!result.loaded;
         if (!irreversible) {
           undoStack.push({ snapshot, unitId: u.id });
           if (undoStack.length > 5) undoStack.shift(); // each snapshot is a compact save (~0.1 MB)

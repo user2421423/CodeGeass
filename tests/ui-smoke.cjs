@@ -325,6 +325,43 @@ const modal = () => node('modal-root').innerHTML;
   const clickAction = data => events.click({
     target: { closest: selector => selector === 'button' ? { dataset: data, disabled: false, getAttribute: () => null } : null },
   });
+  // Undo remains visible but disabled unless the selected unit has a reversible move.
+  assert.match(node('selection-dock').innerHTML,
+    /data-action="undo"[^>]*disabled[^>]*>↶ Undo locked<\/button>/,
+    'Undo is visibly locked when there is no reversible move');
+  assert(node('selection-dock').innerHTML.includes('No reversible move'),
+    'disabled Undo explains why occupation and carrier actions cannot be reversed');
+  run(`undoStack = [{ unitId: ${carrierId}, snapshot: JSON.stringify(E.packSave(game)) }]; updateSelection();`);
+  assert.match(node('selection-dock').innerHTML,
+    /data-action="undo"[^>]*>↶ Undo<\/button>/,
+    'Undo becomes an enabled button after ordinary movement');
+  assert(!/data-action="undo"[^>]*disabled/.test(node('selection-dock').innerHTML));
+  run('undoStack = []; updateSelection()');
+
+  // Exercise the real map-click UI path with each movement result. Prior movement
+  // snapshots must be erased by mine capture and carrier boarding, not restored.
+  const simulateUndoOutcome = outcome => run(`(() => {
+    const unit = game.units.find(v => v.hp > 0 && v.side === game.player && !E.TYPES[v.type].naval);
+    if (!unit) throw new Error('Undo fixture needs a land unit');
+    selectUnit(unit.id);
+    const target = game.tiles.find(p => !E.stationAt(game, p) && !E.siteAt(game, p) && !E.unitAt(game, p));
+    const originalMove = E.move;
+    undoStack = [{ snapshot: JSON.stringify(E.packSave(game)), unitId: unit.id }];
+    readyCache = new Map([[E.key(target), 1]]);
+    targetCache.clear();
+    E.move = () => ({ ok: true, from: { c: unit.c, r: unit.r }, to: target, ...${JSON.stringify(outcome)} });
+    try { activateHex(target); return undoStack.length; }
+    finally { E.move = originalMove; }
+  })()`);
+  assert.equal(simulateUndoOutcome({ seized: 'Mount Fuji' }), 0,
+    'capturing a Sakuradite mine destroys all older movement undo history');
+  assert.match(node('selection-dock').innerHTML, /Undo locked<\/button>/);
+  assert.equal(simulateUndoOutcome({ loaded: carrierId }), 0,
+    'boarding a Carrier-Battleship destroys all older movement undo history');
+  assert.match(node('selection-dock').innerHTML, /Undo locked<\/button>/);
+  assert.equal(simulateUndoOutcome({}), 2,
+    'ordinary movement still remains undoable and retains previous reversible steps');
+  run('undoStack = []; readyCache.clear(); updateSelection()');
   // An occupying unit must not hide standalone mine management.
   const occupiedMine = run(`(() => {
     const mine = game.sites.find(d => d.city == null && d.name === 'Mount Fuji');
@@ -421,6 +458,14 @@ const modal = () => node('modal-root').innerHTML;
   clickAction({ deploy: '0' });
   assert.equal(run('deploying?.index'), 0, 'cargo picker starts landing-hex mode');
   assert(!node('side').innerHTML, 'cargo drawer closes when targeting the map');
+  const launchHex = run(`E.deployTargets(game, game.units.find(u => u.id === ${carrierId}), 0)[0]`);
+  assert(launchHex, 'carrier has a valid deployment hex for the undo test');
+  run('undoStack = [{snapshot: JSON.stringify(E.packSave(game)), unitId: selectedUnit().id}]');
+  run(`activateHex(E.tile(game, ${launchHex.c}, ${launchHex.r}))`);
+  assert.equal(run('undoStack.length'), 0,
+    'deploying carrier cargo irreversibly clears the preceding movement history');
+  assert.match(node('selection-dock').innerHTML, /Undo locked<\/button>/,
+    'the deployed unit shows undo as unavailable');
   // City and mine management remain accessible through explicit bottom-bar details.
   const cityId = run("game.stations.find(s => s.owner === game.player)?.id");
   assert(cityId != null, 'conquest has a friendly city');
