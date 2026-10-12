@@ -7,6 +7,7 @@
   const COMMANDERS = {
     suzaku: {
       name: 'Suzaku Kururugi',
+      storyTier: 1,
       short: 'Suzaku',
       side: 'britannia',
       stars: 5,
@@ -21,6 +22,7 @@
     },
     cornelia: {
       name: 'Cornelia li Britannia',
+      storyTier: 1,
       short: 'Cornelia',
       side: 'britannia',
       stars: 5,
@@ -34,6 +36,7 @@
     },
     bismarck: {
       name: 'Bismarck Waldstein',
+      storyTier: 2,
       short: 'Bismarck',
       side: 'britannia',
       stars: 5,
@@ -48,6 +51,7 @@
     },
     julius: {
       name: 'Julius Kingsley',
+      storyTier: 2,
       short: 'Julius',
       side: 'britannia',
       stars: 5,
@@ -63,6 +67,7 @@
     },
     schneizel: {
       name: 'Schneizel el Britannia',
+      storyTier: 1,
       short: 'Schneizel',
       side: 'britannia',
       stars: 4,
@@ -77,6 +82,7 @@
     },
     gino: {
       name: 'Gino Weinberg',
+      storyTier: 2,
       short: 'Gino',
       side: 'britannia',
       stars: 4,
@@ -92,6 +98,7 @@
     },
     anya: {
       name: 'Anya Alstreim',
+      storyTier: 2,
       short: 'Anya',
       side: 'britannia',
       stars: 4,
@@ -107,6 +114,7 @@
     },
     luciano: {
       name: 'Luciano Bradley',
+      storyTier: 3,
       short: 'Luciano',
       side: 'britannia',
       stars: 4,
@@ -122,6 +130,7 @@
     },
     jeremiah: {
       name: 'Jeremiah Gottwald',
+      storyTier: 1,
       short: 'Jeremiah',
       side: 'britannia',
       stars: 4,
@@ -138,6 +147,7 @@
     },
     shin: {
       name: 'Shin Hyuga Shaing',
+      storyTier: 1,
       short: 'Shin',
       side: 'britannia',
       stars: 4,
@@ -152,6 +162,7 @@
     },
     rolo: {
       name: 'Rolo Lamperouge',
+      storyTier: 1,
       short: 'Rolo',
       side: 'britannia',
       stars: 4,
@@ -166,6 +177,7 @@
     },
     guilford: {
       name: 'Gilbert G.P. Guilford',
+      storyTier: 2,
       short: 'Guilford',
       side: 'britannia',
       stars: 3,
@@ -180,6 +192,7 @@
     },
     darlton: {
       name: 'Andreas Darlton',
+      storyTier: 2,
       short: 'Darlton',
       side: 'britannia',
       stars: 3,
@@ -195,6 +208,7 @@
     },
     ashley: {
       name: 'Ashley Ashra',
+      storyTier: 2,
       short: 'Ashley',
       side: 'britannia',
       stars: 3,
@@ -210,6 +224,7 @@
     },
     leila: {
       name: 'Leila Malcal',
+      storyTier: 1,
       short: 'Leila',
       side: 'eu',
       stars: 5,
@@ -224,6 +239,7 @@
     },
     akito: {
       name: 'Akito Hyuga',
+      storyTier: 1,
       short: 'Akito',
       side: 'eu',
       stars: 5,
@@ -238,6 +254,7 @@
     },
     ryo: {
       name: 'Ryo Sayama',
+      storyTier: 2,
       short: 'Ryo',
       side: 'eu',
       stars: 4,
@@ -253,6 +270,7 @@
     },
     ayano: {
       name: 'Ayano Kosaka',
+      storyTier: 2,
       short: 'Ayano',
       side: 'eu',
       stars: 4,
@@ -268,6 +286,7 @@
     },
     yukiya: {
       name: 'Yukiya Naruse',
+      storyTier: 2,
       short: 'Yukiya',
       side: 'eu',
       stars: 3,
@@ -283,6 +302,7 @@
     },
     oscar: {
       name: 'Oscar Hammel',
+      storyTier: 3,
       short: 'Oscar',
       side: 'eu',
       stars: 3,
@@ -297,6 +317,7 @@
     },
     klaus: {
       name: 'Klaus Warwick',
+      storyTier: 2,
       short: 'Klaus',
       side: 'eu',
       stars: 3,
@@ -311,6 +332,7 @@
     },
     anna: {
       name: 'Anna Clément',
+      storyTier: 2,
       short: 'Anna',
       side: 'eu',
       stars: 3,
@@ -325,6 +347,7 @@
     },
     smilas: {
       name: 'Gene Smilas',
+      storyTier: 2,
       short: 'Smilas',
       side: 'eu',
       stars: 4,
@@ -340,6 +363,7 @@
     },
     fernando: {
       name: 'Fernando Noriega',
+      storyTier: 3,
       short: 'Fernando',
       side: 'eu',
       stars: 3,
@@ -354,6 +378,7 @@
     },
     marirrosa: {
       name: 'Marirrosa Noriega',
+      storyTier: 3,
       short: 'Marirrosa',
       side: 'eu',
       stars: 3,
@@ -368,6 +393,7 @@
     },
     xingke: {
       name: 'Li Xingke',
+      storyTier: 1,
       short: 'Xingke',
       side: 'cf',
       stars: 5,
@@ -382,6 +408,7 @@
     },
     xianglin: {
       name: 'Zhou Xianglin',
+      storyTier: 2,
       short: 'Xianglin',
       side: 'cf',
       stars: 4,
@@ -396,6 +423,7 @@
     },
     honggu: {
       name: 'Hong Gu',
+      storyTier: 3,
       short: 'Hong Gu',
       side: 'cf',
       stars: 3,
@@ -411,6 +439,7 @@
     },
     cao: {
       name: 'General Cao',
+      storyTier: 3,
       short: 'Cao',
       side: 'cf',
       stars: 3,
@@ -425,6 +454,7 @@
     },
     gaohai: {
       name: 'Gao Hai',
+      storyTier: 3,
       short: 'Gao Hai',
       side: 'cf',
       stars: 3,
@@ -439,6 +469,7 @@
     },
     zhaohao: {
       name: 'Zhao Hao',
+      storyTier: 3,
       short: 'Zhao Hao',
       side: 'cf',
       stars: 3,
@@ -453,6 +484,7 @@
     },
     leifeng: {
       name: 'Chao Lei Feng',
+      storyTier: 3,
       short: 'Lei Feng',
       side: 'cf',
       stars: 4,
@@ -468,6 +500,7 @@
     },
     meiling: {
       name: 'Chao Meiling',
+      storyTier: 3,
       short: 'Meiling',
       side: 'cf',
       stars: 3,
@@ -482,6 +515,7 @@
     },
     lifeng: {
       name: 'Xu Lifeng',
+      storyTier: 3,
       short: 'Lifeng',
       side: 'cf',
       stars: 3,
@@ -497,6 +531,7 @@
     },
     rakshata: {
       name: 'Rakshata Chawla',
+      storyTier: 2,
       short: 'Rakshata',
       side: 'cf',
       stars: 4,
@@ -513,6 +548,7 @@
     // ======== Commander expansion: Black Knights, JLF and additional Britannian officers ========
     zero: {
       name: 'Lelouch vi Britannia / Zero',
+      storyTier: 1,
       short: 'Zero',
       side: 'bk',
       stars: 5,
@@ -528,6 +564,7 @@
     },
     kallen: {
       name: 'Kallen Kōzuki',
+      storyTier: 1,
       short: 'Kallen',
       side: 'bk',
       stars: 5,
@@ -543,6 +580,7 @@
     },
     tohdoh: {
       name: 'Kyoshiro Tohdoh',
+      storyTier: 2,
       short: 'Tohdoh',
       side: 'bk',
       stars: 5,
@@ -557,6 +595,7 @@
     },
     cc: {
       name: 'C.C.',
+      storyTier: 1,
       short: 'C.C.',
       side: 'bk',
       stars: 4,
@@ -571,6 +610,7 @@
     },
     ohgi: {
       name: 'Kaname Ohgi',
+      storyTier: 1,
       short: 'Ohgi',
       side: 'bk',
       stars: 4,
@@ -585,6 +625,7 @@
     },
     chiba: {
       name: 'Nagisa Chiba',
+      storyTier: 2,
       short: 'Chiba',
       side: 'bk',
       stars: 4,
@@ -599,6 +640,7 @@
     },
     asahina: {
       name: 'Shōgo Asahina',
+      storyTier: 2,
       short: 'Asahina',
       side: 'bk',
       stars: 4,
@@ -613,6 +655,7 @@
     },
     senba: {
       name: 'Ryōga Senba',
+      storyTier: 3,
       short: 'Senba',
       side: 'bk',
       stars: 3,
@@ -627,6 +670,7 @@
     },
     urabe: {
       name: 'Kōsetsu Urabe',
+      storyTier: 2,
       short: 'Urabe',
       side: 'bk',
       stars: 3,
@@ -641,6 +685,7 @@
     },
     sugiyama: {
       name: 'Kento Sugiyama',
+      storyTier: 3,
       short: 'Sugiyama',
       side: 'bk',
       stars: 3,
@@ -655,6 +700,7 @@
     },
     minami: {
       name: 'Yoshitaka Minami',
+      storyTier: 3,
       short: 'Minami',
       side: 'bk',
       stars: 3,
@@ -669,6 +715,7 @@
     },
     tamaki: {
       name: 'Shinichirō Tamaki',
+      storyTier: 2,
       short: 'Tamaki',
       side: 'bk',
       stars: 2,
@@ -683,6 +730,7 @@
     },
     katase: {
       name: 'Tatewaki Katase',
+      storyTier: 3,
       short: 'Katase',
       side: 'jlf',
       stars: 4,
@@ -697,6 +745,7 @@
     },
     inoue: {
       name: 'Naomi Inoue',
+      storyTier: 3,
       short: 'Inoue',
       side: 'bk',
       stars: 2,
@@ -711,6 +760,7 @@
     },
     villetta: {
       name: 'Villetta Nu',
+      storyTier: 2,
       short: 'Villetta',
       side: 'britannia',
       stars: 3,
@@ -726,6 +776,7 @@
     },
     kewell: {
       name: 'Kewell Soresi',
+      storyTier: 3,
       short: 'Kewell',
       side: 'britannia',
       stars: 3,
@@ -741,6 +792,7 @@
     },
     monica: {
       name: 'Monica Krushevsky',
+      storyTier: 3,
       short: 'Monica',
       side: 'britannia',
       stars: 4,
@@ -756,6 +808,7 @@
     },
     dorothea: {
       name: 'Dorothea Ernst',
+      storyTier: 3,
       short: 'Dorothea',
       side: 'britannia',
       stars: 4,
@@ -771,6 +824,7 @@
     },
     nonette: {
       name: 'Nonette Enneagram',
+      storyTier: 3,
       short: 'Nonette',
       side: 'britannia',
       stars: 4,
@@ -786,6 +840,7 @@
     },
     manfredi: {
       name: 'Michele Manfredi',
+      storyTier: 2,
       short: 'Manfredi',
       side: 'britannia',
       stars: 5,
@@ -801,6 +856,7 @@
     },
     farnese: {
       name: 'Andrea Farnese',
+      storyTier: 3,
       short: 'Farnese',
       side: 'britannia',
       stars: 4,
@@ -816,6 +872,7 @@
     },
     augustus: {
       name: 'Michael Augustus',
+      storyTier: 3,
       short: 'Augustus',
       side: 'britannia',
       stars: 3,
@@ -830,6 +887,7 @@
     },
     lelouch: {
       name: 'Lelouch vi Britannia',
+      storyTier: 1,
       short: 'Lelouch',
       side: 'britannia',
       stars: 5,
