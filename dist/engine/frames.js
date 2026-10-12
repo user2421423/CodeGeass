@@ -1158,7 +1158,7 @@
       type: 'elite_cornelia_gloucester', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare', starter: true,
       skill: 'Royal Guard Raid',
       lv3Text: '+25% damage on or next to a friendly city while raiding.',
-      lv5Text: '+40% city-position damage; a kill restores the raider's movement.',
+      lv5Text: '+40% city-position damage; a kill restores movement.',
       lv3: { cityAttack: 0.25 }, lv5: { cityAttack: 0.40, moveAfterKill: true },
     },
     lancelot: {
