@@ -231,6 +231,17 @@ function fireFortressAt(s, p) {
 }
 function activateHex(p) {
   if (!p) return;
+  if (armyGroupRouting && game.mode === 'conquest' && interactive()) {
+    const id = armyGroupRouting;
+    const result = E.orderArmyGroup(game, id, p.c, p.r);
+    if (result.ok) {
+      armyGroupRouting = null;
+      refreshAndSave();
+      toast('Army group objective set: ' + result.assigned + ' units ordered' +
+        (result.failed ? ' · ' + result.failed + ' units have no route' : '') + '.', true);
+    } else toast(result.reason + '. Choose another hex or press Escape.', true);
+    return;
+  }
   if (scenarioRoutingGroup && game.mode === 'scenario' && interactive()) {
     const result=E.scenarios.japan.orderGroup(game,scenarioRoutingGroup,p);
     if(result.ok) {
@@ -355,7 +366,7 @@ function attachMap() {
     }
     hover = hitHex(e.clientX, e.clientY);
     if (hover && !pointer?.dragged) {
-      canvas.style.cursor = strikeMode || routing
+      canvas.style.cursor = strikeMode || routing || armyGroupRouting
         ? 'crosshair'
         : readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
           ? 'pointer'
@@ -375,7 +386,9 @@ function attachMap() {
             : pr
               ? `Click to attack ${u ? E.TYPES[u.type].short : s.name} · ~${pr.unit || pr.shield} damage · ${pr.counterAllowed ? pr.counter + ' counter-fire' : 'no counter-fire'}`
               : `${s ? s.name + ' · ' : ''}${E.siteAt(game, hover) ? E.siteAt(game, hover).name + ' Sakuradite mine · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
-      if (routing && own) {
+      if (armyGroupRouting) {
+        $('map-caption').textContent = 'Army group destination · click a traversable hex, or Escape to cancel';
+      } else if (routing && own) {
         const why = routeWhy(own, hover);
         $('map-caption').textContent = why
           ? `Cannot head here: ${why}`
@@ -390,9 +403,11 @@ function attachMap() {
         pin = hitPin(e.clientX, e.clientY),
         visualCity = hitVisualStation(e.clientX, e.clientY),
         isAction = p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)));
-      if (pin && !strikeMode && !isAction)
+      if (pin && !strikeMode && !armyGroupRouting && !isAction)
         generalDialog(pin.cmd, !!pin.personal);
-      else if (visualCity && !strikeMode && !routing && !deploying &&
+      else if (armyGroupRouting && visualCity)
+        activateHex(E.tile(game, visualCity.c, visualCity.r));
+      else if (visualCity && !strikeMode && !routing && !armyGroupRouting && !deploying &&
                !isAction && !(p && E.unitAt(game, p)) &&
                (!p || E.stationAt(game, p)?.id !== visualCity.id))
         selectStation(visualCity.id);
