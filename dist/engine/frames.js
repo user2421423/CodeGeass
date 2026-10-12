@@ -222,7 +222,7 @@
       pen: 0.55,
       noCounter: true,
       splash: 0.45,
-      rule: 'Range 2 salvos; cannot fire at adjacent targets. 45% splash and morale loss to enemies next to the target. No counter-fire.',
+      rule: 'Range 2 salvos; cannot fire at adjacent targets. 45% splash damage to enemies next to the target. No counter-fire.',
     },
     siege: {
       branch: 'Artillery',
