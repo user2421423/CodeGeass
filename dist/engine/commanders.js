@@ -856,8 +856,10 @@
     'Lieutenant General',
     'General',
     'Marshal',
+    'Grand Marshal', // Elite Conquest AI only
+    'Supreme Commander', // Elite Conquest AI only
   ];
-  const RANK_HP = [1.12, 1.16, 1.2, 1.24, 1.28, 1.33, 1.38, 1.43, 1.48, 1.54, 1.6];
+  const RANK_HP = [1.12, 1.16, 1.2, 1.24, 1.28, 1.33, 1.38, 1.43, 1.48, 1.54, 1.6, 1.68, 1.76];
   // Tokens to reach each rank.
   const PROMOTE_COST = [0, 50, 80, 120, 160, 220, 280, 350, 430, 520, 650];
   const MEDALS = {
