@@ -45,23 +45,29 @@
     return memo.coasts ||= g.tiles.filter(p => navigable(p) && !stationAt(g, p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
   }
   function aiCarrier(g, u, memo, events, fieldAt) {
-    // Non-carrier warships act as opportunistic escorts for nearby loaded carriers.
-    // Staying beside a carrier is optional; combat and legal movement still govern.
-    if (!(TYPES[u.type]?.capacity > 0)) {
+    // Empty carrier-battleships can escort loaded vessels if no nearby troops
+    // need boarding. This also supports future dedicated escort hulls.
+    const canTransport = TYPES[u.type]?.capacity > 0;
+    const availableBoarders = canTransport && !u.cargo?.length && g.units.some(v =>
+      v.side === u.side && v.hp > 0 && !isShip(v) && !atSea(g, v) &&
+      dist(g, v, u) <= 3 && wantsLift(g, v, memo));
+    if (!canTransport || (!u.cargo?.length && !availableBoarders)) {
       const leaders = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
         isShip(v) && TYPES[v.type]?.capacity > 0 && v.cargo?.length &&
         dist(g, v, u) <= 8).sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id);
       const leader = leaders[0];
-      if (!leader || dist(g, u, leader) <= 2) return false;
+      if (leader && dist(g, u, leader) > 2) {
       const choices = [...reachable(g, u).keys()].map(k => {
         const [c, r] = k.split(',').map(Number);
         return tile(g, c, r);
       }).filter(p => navigable(p) && !unitAt(g, p) && dist(g, p, leader) < dist(g, u, leader))
         .sort((a, b) => dist(g, a, leader) - dist(g, b, leader) || a.r - b.r || a.c - b.c);
-      if (!choices.length) return false;
-      const m = move(g, u.id, choices[0].c, choices[0].r);
-      if (m.ok) { events.push({ kind: 'move', ...m, id: u.id }); return true; }
-      return false;
+        if (choices.length) {
+          const m = move(g, u.id, choices[0].c, choices[0].r);
+          if (m.ok) { events.push({ kind: 'move', ...m, id: u.id }); return true; }
+        }
+      }
+      if (!canTransport) return false;
     }
     const bound = u.cargo?.length ? frontOf(g, memo, u.cargo[0]) : null,
       masses = bound?.masses || null;
