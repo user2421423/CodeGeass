@@ -239,6 +239,7 @@
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
+  const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
     return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
@@ -252,7 +253,7 @@
   function defaultOfficer(k) {
     return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], generics: {}, commanderVersion: COMMANDER_VERSION };
   }
-  function cleanOfficer(k, rec) {
+  function cleanOfficer(k, rec, rankCap = HQ_RANK_CAP) {
     const base = defaultOfficer(k);
     if (!rec) return base;
     const ratings = { ...rec.ratings };
@@ -261,7 +262,7 @@
       ratings.mobility = Math.min(MAX_RATING, ratings.mobility + 2);
     return {
       commanderVersion: COMMANDER_VERSION,
-      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, RANKS.length - 1),
+      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, rankCap),
       ratings: Object.fromEntries(
         Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
@@ -294,7 +295,8 @@
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
-    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
+      eliteConquest(g) && COMMANDERS[k].side !== g.player ? RANKS.length - 1 : HQ_RANK_CAP));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
@@ -392,7 +394,7 @@
     const why = ownedReason(profile, k);
     if (why) return why;
     const o = roster(profile)[k];
-    return o.rank >= RANKS.length - 1 ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
+    return o.rank >= HQ_RANK_CAP ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
   }
   function promote(profile, k) {
     const why = promoteReason(profile, k);
@@ -1191,9 +1193,11 @@
       assignCityProvinces(g);
     }
     g.eliteDeployed ||= {};
-    for (const records of [g.officers, g.roster])
+    for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
-        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec);
+        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
+          which === 'officers' && eliteConquest(g) && COMMANDERS[k].side !== g.player
+            ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
@@ -2076,8 +2080,8 @@
     log(g, `${TYPES[e.type].name} · Elite Lv.${level} deploys at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u, cost };
   }
-  // Rival factories may repeat elites indefinitely in Elite Conquest. Factory
-  // tier is waived for the AI so even tier-I cities can build faction elites.
+  // Rival factories can repeat Elite Forces indefinitely, but each frame must
+  // satisfy its factory tier just as it does for a player.
   function aiEliteRecruitReason(g, s, id, vacating = null) {
     const e = ELITE_FORCES[id];
     if (!eliteConquest(g) || !s || !e || s.owner === g.player ||
@@ -2086,6 +2090,7 @@
     return (
       turnReason(g, s.owner) ||
       cityBusyReason(g, s) ||
+      (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, s.owner).length && !(vacating && unitAt(g, s) === vacating)
         ? 'A unit is on the city' : null) ||
@@ -3457,9 +3462,16 @@
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
     elite: {
       name: 'Elite',
-      level: 0,
+      level: 3,
       tokens: 2.5,
-      desc: 'Every starting land unit becomes an Elite Force, including yours. Rival factories repeatedly build faction elites; you can deploy one of each elite and also build normal units. Ships and amphibious units are unchanged.',
+      techTier: 4,
+      upgradeEvery: 1,
+      extraPer: 2,
+      stack: true,
+      ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
+      income: 1.25,
+      preserveNaval: true,
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
     },
     hard: {
       name: 'Hard',
@@ -3480,7 +3492,7 @@
       upgradeEvery: 1,
       extraPer: 2,
       stack: true,
-      ranks: RANKS.length - 1, // Every starting rank reaches Marshal.
+      ranks: PROMOTE_COST.length - 1, // Every starting rank reaches Marshal.
       income: 1.25,
       desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
@@ -3508,7 +3520,8 @@
       u.elite = id;
       u.eliteLevel = 1;
       u.eliteStart = true;
-      u.stack = 1;
+      // Challenge grants additional frames to starting enemy formations, not the player's.
+      u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
       u.hpTech = hullTech(g, u);
       u.hp = maxHP(u);
     }
@@ -3540,13 +3553,13 @@
   }
   function harden(g, d) {
     const foes = [...MAJORS, 'neutral'].filter(side => side !== g.player),
-      enemyUnits = g.units.filter(u => foes.includes(u.side));
+      enemyUnits = g.units.filter(u => foes.includes(u.side) && (!d.preserveNaval || !TYPES[u.type].naval));
     for (const side of foes) {
       g.tech[side] = techUpToTier(d.techTier);
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if (a.side !== g.player) g.officers[k].rank = Math.min(RANKS.length - 1, g.officers[k].rank + d.ranks);
+      if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
       if (d.stack) u.stack = Math.min(3, u.stack + 1);
@@ -3574,6 +3587,27 @@
         u.hp = maxHP(u);
       }
     g.stations.forEach(st => fortify(g, st));
+  }
+  // Elite rivals begin with advanced factories on several fronts, rather than
+  // ignoring normal factory-tier requirements. Player-owned cities are untouched.
+  function prepareEliteConquestFactories(g) {
+    if (!eliteConquest(g)) return;
+    for (const side of MAJORS.filter(s => s !== g.player)) {
+      const cities = g.stations.filter(s => s.owner === side);
+      const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
+      const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
+      const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
+      const ensure = (tier, target) => {
+        let count = cities.filter(s => s.tier >= tier).length;
+        for (const s of nearFront) {
+          if (count >= target) break;
+          if (s.tier < tier) { s.tier = tier; count++; }
+        }
+      };
+      ensure(3, Math.max(6, Math.ceil(cities.length / 8)));
+      // E.U. and Chinese elites start at factory Tier II; do not strand their Tier-I cities.
+      ensure(2, cities.length);
+    }
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
   function nearest(g, p, test) {
@@ -3737,8 +3771,9 @@
       if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
     }
     setupSakuradite(g);
-    convertConquestEliteStarts(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
+    convertConquestEliteStarts(g); // Also converts every Challenge-style land reinforcement.
+    prepareEliteConquestFactories(g);
     for (const u of g.units)
       if (u.cmd) {
         u.cmdRank = g.officers[u.cmd].rank;
