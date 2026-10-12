@@ -202,7 +202,10 @@
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
       splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
-      armorPen: armorPenetration(g, a, d),
+      armorPen: Math.min(.95,armorPenetration(g,a,d)
+        +(a.expCalibration?.15:0)
+        +(fx(a).diagnosis&&d&&a.expDiagnosisId===d.id?.1*(a.expDiagnosisCount||0):0)
+        +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.12:0)),
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
