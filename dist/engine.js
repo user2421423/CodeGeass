@@ -2032,6 +2032,7 @@
         const y = cityOutput(g, s);
         a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
+        if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).royalCompassion))a.credits+=Math.round(y.credits*.15);
         a.industry += y.industry;
         a.science += y.science;
         return a;
@@ -2194,7 +2195,8 @@
   function repairCost(u, g = null) {
     const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * (g && logisticsNear(g, u) ? 0.7 : 1)));
+    const camelot = g && u.elite && !TYPES[u.type].naval && skillNear(g, u, 'combatEngineering', 2) ? 0.8 : 1;
+    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot * (g && logisticsNear(g, u) ? 0.7 : 1)));
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
@@ -2786,6 +2788,9 @@
     if(!counter&&f.ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
     if(!counter&&u.expRetrofitStrike)m*=1.1;
     if(!counter&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
+    // Eduardo: mountain defenders counterstrike harder under nearby Georgian command.
+    if(counter&&tile(g,u.c,u.r)?.terrain==='mountain'&&
+      g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).blackSeaFox&&dist(g,v,u)<=2))m*=1.25;
     return m;
   }
   function newcomerDefense(g,target,attacker,counter,direct){
@@ -2793,6 +2798,9 @@
     if(g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
     if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=.8;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
+    // Eduardo: improved defensive deployment on mountain hexes.
+    if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
+      g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).blackSeaFox&&dist(g,v,target)<=2))m*=.85;
     if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
     if(target.forcedOffensive&&counter)m*=1.2;
     return m;
@@ -3441,6 +3449,12 @@
       else if (u.morale > desired) u.morale--;
       if (nearby >= 2) u.morale = Math.min(u.morale, desired);
       // Engineers within 2 hexes reassure: one extra morale step and 5% of the frame.
+      // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
+      if (mine.some(m => m.hp > 0 && fx(m).royalCompassion && dist(g, m, u) <= 2))
+        u.morale = Math.min(1, u.morale + 1);
+      // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
+      if (u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       if (mine.some(m => m.hp > 0 && fx(m).reassure && dist(g, m, u) <= 2)) {
         u.morale = Math.min(1, u.morale + 1);
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
