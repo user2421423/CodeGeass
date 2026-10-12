@@ -274,6 +274,7 @@ document.addEventListener('click', e => {
     generalsDialog(d.generalsSide);
     return;
   }
+  if (d.scenarioModel) { scenarioKey=d.scenarioModel; scenarioSide=scenarioModel().sides[0]; scenarioDialog(); return; }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
