@@ -158,3 +158,19 @@ test('Elite-only ranks persist across save and load while player commander cap s
   E.roster(profile).suzaku.rank = E.PROMOTE_COST.length - 1;
   assert.equal(E.promoteReason(profile, 'suzaku'), 'Highest rank reached');
 });
+
+test('Front-aware Elite production fields multiple faction elites rather than a single spammed model', () => {
+  for (const side of E.MAJORS) {
+    const g = E.createGame(E.MAJORS.find(x => x !== side), 'elite', 'conquest', 44);
+    g.phase = side;
+    rich(g, side);
+    for (const s of g.stations.filter(s => s.owner === side)) clearCity(g, s);
+    const before = new Set(g.units.map(u => u.id));
+    E.aiProduction(g);
+    const ground = g.units.filter(u => u.side === side && !before.has(u.id) && !E.TYPES[u.type].naval);
+    assert(ground.length >= 10, side + ': expected substantial recruitment in resource-rich simulation');
+    assert(ground.every(u => E.TYPES[u.type].elite), side + ': no ordinary ground recruits');
+    assert(new Set(ground.map(u => u.elite)).size >= 3,
+      side + ': the production director must recruit multiple elite types');
+  }
+});
