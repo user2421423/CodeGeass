@@ -109,11 +109,13 @@ const ICONS = (() => {
     use(name, cls = '', title = '') {
       return `<svg class="ico ico-${name} ${cls}" viewBox="0 0 32 32"${title ? ` role="img" aria-label="${title}"` : ' aria-hidden="true"'}>${title ? `<title>${title}</title>` : ''}<use href="#ico-${name}"/></svg>`;
     },
-    // Circular frame-integrity gauge: green → yellow → red.
+    // Health gauge: the ring shows the HP fraction, while the center shows remaining HP.
     hp(hp, max, cls = '') {
       const f = Math.max(0, Math.min(1, hp / max)),
-        c = 2 * Math.PI * 15;
-      return `<svg class="hp-ring ${cls}" viewBox="0 0 36 36" role="img" aria-label="Frame integrity ${Math.round(f * 100)}%"><circle cx="18" cy="18" r="15" fill="#08141c" stroke="#24333b" stroke-width="4"/><circle cx="18" cy="18" r="15" fill="none" stroke="${hpColor(f)}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(f * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 18 18)"/><text x="18" y="21.5" text-anchor="middle">${Math.round(f * 100)}</text></svg>`;
+        c = 2 * Math.PI * 15,
+        remaining = Math.max(0, Math.ceil(hp)),
+        fontSize = remaining >= 10000 ? 6 : remaining >= 1000 ? 8 : 10;
+      return `<svg class="hp-ring ${cls}" viewBox="0 0 36 36" role="img" aria-label="Health ${remaining} of ${Math.ceil(max)} HP"><circle cx="18" cy="18" r="15" fill="#08141c" stroke="#24333b" stroke-width="4"/><circle cx="18" cy="18" r="15" fill="none" stroke="${hpColor(f)}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(f * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 18 18)"/><text x="18" y="21.5" text-anchor="middle" style="font-size:${fontSize}px">${remaining}</text></svg>`;
     },
   };
 })();
