@@ -32,7 +32,6 @@
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.5&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
     attack *= 1 + auraBonus(g, u);
-    if(u.expGambit&&target?.cmd)attack/=1+auraBonus(g,u);
     attack *= newcomerAttack(g,u,target,counter);
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
@@ -80,8 +79,7 @@
     )
       attack *= 1.2;
     const pen = Math.min(.95,armorPenetration(g,u,target)
-      +(u.expCalibration?.15:0)+(u.expGambit&&target?.cmd?.25:0)
-      +(counter&&fx(u).phoenixReversal&&target?.cmd&&u.expPhoenixTurn!==g.turn?.15:0)
+      +(u.expCalibration?.15:0)
       +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0));
     const formationArmor =
       target &&
@@ -135,7 +133,7 @@
       if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       attack *= skillDefense(g,target,counter,direct) *
-        ((u.expGambit&&target?.cmd)||(fx(u).deepCover&&target?.cmd&&!g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&dist(g,u,v)<=2)) ? 1 : commanderDefense(g,target,u,counter,direct)) *
+        commanderDefense(g,target,u,counter,direct) *
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else {
@@ -307,7 +305,6 @@
       // Worked out after the hit, so a damaged defender returns weaker fire (attack scales with remaining frame).
       retaliation = Math.round(power(g, d, a, stationAt(g, a), true) * (0.94 + random(g) * 0.12));
       a.hp = Math.max(0, a.hp - retaliation);
-      if(fx(d).phoenixReversal)d.expPhoenixTurn=g.turn;
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
     }
@@ -369,13 +366,11 @@
     }
     afterCommanderAttack(g,a,d,s,destroyed,timeStop);
     if(f.dashStrike)a.expDashTurn=g.turn;
-    if(f.deepCover)a.expDeepTurn=g.turn;
     if(f.highland)a.expHighlandTurn=g.turn;
     if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
     if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
     if(a.expCalibration){a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));delete a.expCalibration;}
-    if(a.expGambit&&d?.cmd)delete a.expGambit;
     if(a.forcedOffensive)delete a.forcedOffensive;
     if(a.expRetrofitStrike)delete a.expRetrofitStrike;
     if(a.expNavalRelay)delete a.expNavalRelay;
