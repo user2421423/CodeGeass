@@ -680,14 +680,14 @@
     elite_guren_type01: {
       side: 'cf',
       elite: true,
-      cls: 'assault',
+      cls: 'raider',
       role: 'Elite prototype',
       name: 'Guren Type-01',
       model: 'Type-01',
       gen: '7th-generation equivalent',
       weapon: 'Fork Knife · Grenade Launcher · Slash Harken',
       lore: "Rakshata's Jabalpur-built predecessor to the Guren Type-02, produced in small numbers before the Black Knights' famous machine.",
-      desc: 'Prototype assault elite. Jabalpur Prototype becomes active at Elite Lv.3.',
+      desc: 'Prototype raider elite. Jabalpur Prototype becomes active at Elite Lv.3.',
       hp: 305, attack: 72, armor: 28, move: 4, min: 1, max: 1, cost: 285, industry: 70, tier: 2, crit: 0.19, pen: 0.48,
     },
     elite_akatsuki_zikisan: {
@@ -899,49 +899,13 @@
       lore: 'A veteran Shui Gun-Ru II retaining its standard amphibious systems.',
     },
 
-    // Japan Elite naval variants are operation-only. Their statistics, movement,
-    // cargo and port requirements are inherited verbatim from existing hulls.
-    elite_europe_eu_carrier: {
-      ...CARRIER, side: 'eu', elite: true, scenarioOnly: true,
-      name: 'E.U. Elite Carrier-Battleship', model: 'Charlemagne-class Carrier-Battleship',
-      gen: 'Warship', role: 'Elite carrier-battleship',
-      weapon: 'Railgun turrets · missiles · Knightmare catapults',
-      lore: 'An experienced European carrier retaining its ordinary Knightmare deployment capabilities.',
-    },
-    elite_europe_eb_carrier: {
-      ...CARRIER, side: 'eb', elite: true, scenarioOnly: true,
-      name: 'Euro Britannian Elite Carrier-Battleship', model: 'Dreadnought-class Carrier-Battleship',
-      gen: 'Warship', role: 'Elite carrier-battleship',
+    // Ordinary Black Knights fleet carrier, replacing the former scenario-only Elite hull.
+    bk_carrier: {
+      ...CARRIER, side: 'bk',
+      name: 'Carrier-Battleship', model: 'Liberation fleet carrier',
+      gen: 'Warship', role: 'Carrier-battleship',
       weapon: 'Main guns · missile batteries · Knightmare catapults',
-      lore: 'An elite Euro Britannian warship retaining standard carrier deployment rules.',
-    },
-    elite_japan_britannia_carrier: {
-      ...CARRIER, side: 'britannia', elite: true, scenarioOnly: true,
-      name: 'Elite Carrier-Battleship', model: 'Dreadnought-class Carrier-Battleship',
-      gen: 'Warship', role: 'Elite carrier-battleship',
-      weapon: 'Main guns · missile batteries · Knightmare catapults',
-      lore: 'A veteran Britannian carrier retaining the normal carrier deployment rules.',
-    },
-    elite_japan_eu_carrier: {
-      ...CARRIER, side: 'eu', elite: true, scenarioOnly: true,
-      name: 'E.U. Elite Carrier-Battleship', model: 'Charlemagne-class Carrier-Battleship',
-      gen: 'Warship', role: 'Elite carrier-battleship',
-      weapon: 'Railgun turrets · missile batteries · Knightmare catapults',
-      lore: 'A veteran Europia United carrier retaining standard Knightmare deployment mechanics.',
-    },
-    elite_japan_cf_carrier: {
-      ...CARRIER, side: 'cf', elite: true, scenarioOnly: true,
-      name: 'Federation Elite Carrier-Battleship', model: 'Federation Carrier-Battleship',
-      gen: 'Warship', role: 'Elite carrier-battleship',
-      weapon: 'Heavy guns · missile batteries · Knightmare catapults',
-      lore: 'A veteran Federation carrier retaining its regular embarked-Knightmare capacity.',
-    },
-    elite_japan_bk_carrier: {
-      ...CARRIER, side: 'bk', elite: true, scenarioOnly: true,
-      name: 'Black Knights Elite Carrier-Battleship', model: 'Liberation fleet carrier',
-      gen: 'Warship', role: 'Elite carrier-battleship',
-      weapon: 'Main guns · missile batteries · Knightmare catapults',
-      lore: 'A Black Knights carrier using the existing carrier deployment mechanics.',
+      lore: 'Black Knights carrier with standard cargo, movement and launch rules.',
     },
     elite_japan_bk_amphibious: {
       ...AMPHIBIOUS_II, side: 'bk', elite: true, scenarioOnly: true,
@@ -1436,51 +1400,6 @@
       skill: 'Standard Type II amphibious loadout',
       lv3Text: 'No special ability; standard Elite Lv.3 stats only.',
       lv5Text: 'No special ability; standard Elite Lv.5 stats only.',
-      lv3: {}, lv5: {},
-    },
-    // The European War has dedicated, operation-only fleet carrier variants.
-    // Neither grants a permanent unlock nor changes any Japan fleet type.
-    europe_eu_carrier: {
-      type: 'elite_europe_eu_carrier', faction: 'eu', availableTo: ['eu'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
-      lv3Text: 'Standard carrier deployment; two embarked Knightmare formations.',
-      lv5Text: 'Standard carrier deployment; two embarked Knightmare formations.',
-      lv3: {}, lv5: {},
-    },
-    europe_eb_carrier: {
-      type: 'elite_europe_eb_carrier', faction: 'eb', availableTo: ['eb'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
-      lv3Text: 'Standard carrier deployment; two embarked Knightmare formations.',
-      lv5Text: 'Standard carrier deployment; two embarked Knightmare formations.',
-      lv3: {}, lv5: {},
-    },
-    // Mission-specific fleet models are not persistent HQ unlocks.
-    japan_britannia_carrier: {
-      type: 'elite_japan_britannia_carrier', faction: 'britannia', availableTo: ['britannia'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
-      lv3Text: 'Carries and deploys two Knightmare formations normally.',
-      lv5Text: 'Carries and deploys two Knightmare formations normally.',
-      lv3: {}, lv5: {},
-    },
-    japan_eu_carrier: {
-      type: 'elite_japan_eu_carrier', faction: 'eu', availableTo: ['eu'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
-      lv3Text: 'Carries and deploys two Knightmare formations normally.',
-      lv5Text: 'Carries and deploys two Knightmare formations normally.',
-      lv3: {}, lv5: {},
-    },
-    japan_cf_carrier: {
-      type: 'elite_japan_cf_carrier', faction: 'cf', availableTo: ['cf'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
-      lv3Text: 'Carries and deploys two Knightmare formations normally.',
-      lv5Text: 'Carries and deploys two Knightmare formations normally.',
-      lv3: {}, lv5: {},
-    },
-    japan_bk_carrier: {
-      type: 'elite_japan_bk_carrier', faction: 'black_knights', availableTo: ['bk'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
-      lv3Text: 'Carries and deploys two Knightmare formations normally.',
-      lv5Text: 'Carries and deploys two Knightmare formations normally.',
       lv3: {}, lv5: {},
     },
     japan_bk_amphibious: {
