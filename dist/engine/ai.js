@@ -1544,7 +1544,7 @@
     // affordable, so coastal construction cannot starve the field army.
     const navy = g.mode !== 'campaign' && (NAVAL[side] || (eliteScenario(g) && side === 'bk' ? {
       amphibious: 'elite_japan_bk_amphibious', amphibious2: 'elite_japan_bk_amphibious',
-      carrier: 'elite_japan_bk_carrier',
+      carrier: 'bk_carrier',
     } : null));
     if (navy) {
       const coastal = [
@@ -1623,7 +1623,7 @@
           ['amphibious2', 'amphibious', 'carrier'];
         for (const role of roles) {
           if ((role === 'carrier' && carrierGap <= 0) || (role !== 'carrier' && amphGap <= 0)) continue;
-          if (eliteScenario(g)) {
+          if (eliteScenario(g) && role !== 'carrier') {
             const id = Object.keys(ELITE_FORCES).find(k => {
               const e = ELITE_FORCES[k], t = TYPES[e.type];
               return eliteEligible(g, side, k) &&
