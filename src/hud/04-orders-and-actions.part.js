@@ -1,4 +1,5 @@
 function selectUnit(id, center = false) {
+  multiSelectedIds.clear();
   deploying = null;
   carrierHoldOpen = null;
   detailOpen = false;
@@ -9,6 +10,7 @@ function selectUnit(id, center = false) {
   if (center) centerOn(u);
 }
 function selectStation(id, center = false) {
+  multiSelectedIds.clear();
   deploying = null;
   carrierHoldOpen = null;
   const s = game.stations.find(v => v.id === id);
@@ -18,6 +20,7 @@ function selectStation(id, center = false) {
   if (center) centerOn(s);
 }
 function selectPort(id, center = false) {
+  multiSelectedIds.clear();
   deploying = null;
   carrierHoldOpen = null;
   const s = game.stations.find(v => v.id === id && v.portLevel && v.portAt);
@@ -27,6 +30,7 @@ function selectPort(id, center = false) {
   if (center) centerOn(s.portAt);
 }
 function selectSite(id, center = false) {
+  multiSelectedIds.clear();
   carrierHoldOpen = null;
   const d = game.sites?.find(v => v.id === id);
   if (!d) return;
@@ -38,6 +42,7 @@ function selectSite(id, center = false) {
 function startRouting() {
   const u = selectedUnit();
   if (!u || u.side !== game.player || !interactive()) return;
+  armyGroupRouting = null;
   routing = routing === u.id ? null : u.id;
   deploying = null;
   carrierHoldOpen = null;
