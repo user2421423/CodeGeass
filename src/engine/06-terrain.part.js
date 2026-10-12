@@ -244,6 +244,34 @@
   // determines its initial faction; the closest city of that faction becomes its province
   // center. This keeps historical borders and Indonesia's intentional overrides intact.
   // City IDs (unlike array indices) survive captures and F.L.E.I.J.A. removals.
+  // A coarse navigable coastline can touch the opposite bank of a real sea.
+  // Province and starting-territory floods must not walk across that contact.
+  // This changes POLITICAL adjacency only; movement/naval terrain is unchanged.
+  const SAKHALIN_WORLD_HEXES = new Set(['161,12','160,13','161,14','160,15','161,16']);
+  function isSakhalinWorldHex(t) {
+    return !!t && SAKHALIN_WORLD_HEXES.has(t.c + ',' + t.r);
+  }
+  function persianGulfPoliticalBank(t) {
+    const lon = WORLD.lon0 + WORLD.dlon * (t.c + 0.5 * (t.r & 1));
+    const lat = WORLD.lat0 - WORLD.dlat * t.r;
+    const axis = [[47,30.4],[49,29.1],[51,27.8],[53.5,26.7],[56,25.7],[58,25.2]];
+    if (lon < 47 || lon > 58 || lat < 23 || lat > 32) return 0;
+    for (let i = 1; i < axis.length; i++) {
+      if (lon > axis[i][0]) continue;
+      const a = axis[i - 1], b = axis[i];
+      const middle = a[1] + (lon - a[0]) * (b[1] - a[1]) / (b[0] - a[0]);
+      return Math.abs(lat - middle) <= 3.25 ? (lat < middle ? -1 : 1) : 0;
+    }
+    return 0;
+  }
+  function crossesWorldPoliticalStrait(g, a, b) {
+    if (!a || !b || g.cols !== WORLD.cols || g.rows !== WORLD.rows) return false;
+    // The Soya/La Perouse Strait separates Russian Sakhalin from Area 11.
+    if (isSakhalinWorldHex(a) !== isSakhalinWorldHex(b) &&
+        (isSakhalinWorldHex(a) || isSakhalinWorldHex(b))) return true;
+    const aa = persianGulfPoliticalBank(a), bb = persianGulfPoliticalBank(b);
+    return aa !== 0 && bb !== 0 && aa !== bb;
+  }
   function assignCityProvinces(g) {
     // City influence follows same-faction playable LAND, not a direct line
     // through oceans. This also repairs detached provinces in older saves.
@@ -258,7 +286,8 @@
       for (let head = 0; head < queue.length; head++)
         for (const n of adjacent(g, queue[head])) {
           const k = n.r * g.cols + n.c;
-          if (isSea(n) || n.owner !== owner || components[k] >= 0) continue;
+          if (isSea(n) || n.owner !== owner || components[k] >= 0 ||
+              crossesWorldPoliticalStrait(g, queue[head], n)) continue;
           components[k] = nextComponent;
           queue.push(n);
         }
