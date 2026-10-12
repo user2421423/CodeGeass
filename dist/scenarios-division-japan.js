@@ -98,9 +98,8 @@
   }
   function create(player='britannia',difficulty='normal',seed=246801) {
     if (!SIDES.includes(player)) throw new Error('Unsupported Division of Japan faction: '+player);
-    // Elite is intentionally confined to the previously approved Invasion of
-    // Japan variant; do not silently apply its Black Knights-specific rules here.
-    if (!['normal','hard','challenge'].includes(difficulty)) difficulty='normal';
+    // Elite uses the same conversion and AI rules as the Invasion variant.
+    if (!['normal','hard','challenge','elite'].includes(difficulty)) difficulty='normal';
     const g=japan.create('britannia','normal',seed);
     const cityByName=new Map(g.stations.map(s=>[s.name,s]));
     g.player=player;
@@ -186,10 +185,14 @@
           name:cityName+' Fleet',origin:cityName,units:[unit.id]});
       }
 
+    // Same Elite Japan upgrade, research, single-frame and commander rules;
+    // the three-way scenario provides its own E.U. roster and coastal deployments.
+    if (difficulty === 'elite') E.prepareEliteJapan(g);
+
     // Same difficulty convention as the original: rivals receive stronger
     // economy and stacks on Hard/Challenge, with no hidden player penalty.
     for(const side of SIDES) {
-      const factor=side===player?1:difficulty==='challenge'?1.6:difficulty==='hard'?1.3:1;
+      const factor=side===player?1:(difficulty==='challenge'||difficulty==='elite')?1.6:difficulty==='hard'?1.3:1;
       const before=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(Object.entries(INCOME_TARGETS[side])
         .map(([resource,target])=>[resource,Math.max(0,Math.round(target*factor)-before[resource])]));
@@ -197,7 +200,7 @@
       for(const resource of Object.keys(actual))
         g.economy[side][resource]=actual[resource]*RESERVES[side];
     }
-    if(difficulty!=='normal')
+    if(difficulty!=='normal' && difficulty!=='elite')
       for(const side of SIDES.filter(s=>s!==player))
         for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).entries())
           if(difficulty==='challenge'||i%2===0) {

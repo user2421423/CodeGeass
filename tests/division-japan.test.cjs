@@ -142,3 +142,102 @@ test('Scenario AI can plan, produce and act as either opposing power', () => {
     }
   }
 });
+
+test('Elite Division Japan equips all three powers with single-frame elites and commanders at correct levels', () => {
+  const expectedSignature={
+    suzaku:'lancelot', cornelia:'cornelia_gloucester', xingke:'shen_hu',
+    leila:'leila_alexander', akito:'akito_liberte',
+    ryo:'ryo_valiant', ayano:'ayano_valiant'
+  };
+  for(const player of division.sides){
+    const g=division.create(player,'elite',71);
+    assert.equal(g.difficulty,'elite');
+    assert.deepEqual(new Set(g.order),new Set(['britannia','eu','cf']));
+    assert.equal(g.units.length,84);
+    assert.ok(g.stations.every(s=>s.tier>=2),'elite starts with upgraded factories');
+    for(const side of division.sides){
+      if(side!==player)
+        assert.ok(Object.keys(g.tech[side]).length>0,side+' has full research');
+      const formations=g.units.filter(u=>u.side===side);
+      assert.equal(formations.length,28);
+      for(const u of formations){
+        assert.ok(u.elite,E.TYPES[u.type]?.name+' must be elite');
+        assert.ok(E.TYPES[u.type]?.elite,u.type+' is an elite type');
+        assert.equal(u.stack,1,'elites never start in multi-frame stacks');
+        assert.equal(u.eliteStart,true);
+        assert.equal(u.eliteLevel,side!==player && u.cmd?5:1);
+        if(u.cmd && expectedSignature[u.cmd])
+          assert.equal(u.elite,expectedSignature[u.cmd],u.cmd+' signature');
+      }
+    }
+    const euShips=g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
+    assert.equal(euShips.length,1);
+    assert.equal(euShips[0].elite,'japan_eu_carrier');
+    assert.equal(E.TYPES[euShips[0].type].side,'eu');
+    assert.ok(g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='amphibious')
+      .every(u=>u.elite==='panzer_frosch_ii'));
+    assert.equal(E.checkVictory(g),null);
+    for(const side of division.sides.filter(s=>s!==player))
+      assert.equal(E.foe(g,player,side),true);
+  }
+});
+
+test('Elite Division AI has legal repeatable EU elite factory and shipyard production', () => {
+  const g=division.create('britannia','elite',72);
+  // Remove the opening city garrison to make the factory deployment hex available.
+  const s=city(g,'Sendai'), eu='eu', id='leila_alexander';
+  g.units=g.units.filter(u=>!(u.c===s.c&&u.r===s.r));
+  g.economy[eu]={credits:100000,industry:100000,science:100000,sakuradite:100000};
+  E.beginTurn(g,eu,false);
+  assert.equal(E.aiEliteRecruitReason(g,s,id),null);
+  const first=E.recruitAIElite(g,s.id,id);
+  assert.equal(first.ok,true);
+  assert.equal(first.unit.elite,id);
+  assert.equal(first.unit.eliteLevel,1);
+  assert.equal(first.unit.stack,1);
+  assert.equal(first.unit.side,'eu');
+  assert.equal(g.eliteDeployed[id],undefined,'AI has no once-per-elite limit');
+  // One deployment per factory/turn still applies.
+  assert.notEqual(E.aiEliteRecruitReason(g,s,id),null);
+  g.units=g.units.filter(u=>u.id!==first.unit.id);
+  g.turn+=1;
+  E.beginTurn(g,eu,false);
+  assert.equal(E.aiEliteRecruitReason(g,s,id),null);
+  assert.equal(E.recruitAIElite(g,s.id,id).ok,true);
+  const port=city(g,'Sapporo');
+  g.units=g.units.filter(u=>!(u.c===port.portAt.c&&u.r===port.portAt.r));
+  assert.equal(E.aiEliteRecruitReason(g,port,'japan_eu_carrier'),null);
+  const navy=E.recruitAIElite(g,port.id,'japan_eu_carrier');
+  assert.equal(navy.ok,true);
+  assert.equal(E.TYPES[navy.unit.type].naval,'ship');
+  assert.equal(navy.unit.eliteLevel,1);
+});
+
+test('Elite Division player obeys HQ unlock, once-per-type and scenario-only carrier rules', () => {
+  const g=division.create('eu','elite',73), s=city(g,'Sendai'), id='leila_alexander';
+  g.units=g.units.filter(u=>!(u.c===s.c&&u.r===s.r));
+  g.economy.eu={credits:100000,industry:100000,science:100000,sakuradite:100000};
+  assert.match(E.eliteDeployReason(g,s,id,{}),/Locked/);
+  const profile={elites:{[id]:{level:1,fragments:0}}};
+  assert.equal(E.eliteDeployReason(g,s,id,profile),null);
+  const first=E.deployElite(g,s.id,id,profile);
+  assert.equal(first.ok,true);
+  assert.equal(first.unit.eliteLevel,1);
+  assert.equal(first.unit.stack,1);
+  assert.ok(g.eliteDeployed[id]);
+  const another=city(g,'Niigata');
+  assert.match(E.eliteDeployReason(g,another,id,profile),/Already deployed/);
+  const port=city(g,'Sapporo');
+  g.units=g.units.filter(u=>!(u.c===port.portAt.c&&u.r===port.portAt.r));
+  assert.equal(E.eliteDeployReason(g,port,'japan_eu_carrier',{}),null);
+  assert.equal(E.deployElite(g,port.id,'japan_eu_carrier',{}).ok,true);
+});
+
+test('Existing Invasion retains its Black Knights Elite roster and no Europia units', () => {
+  const g=invasion.create('bk','elite',74);
+  assert.deepEqual(invasion.sides,['britannia','bk','cf']);
+  assert.ok(g.units.every(u=>u.side!=='eu'));
+  assert.ok(g.units.every(u=>u.elite&&E.TYPES[u.type].elite&&u.stack===1));
+  assert.ok(g.units.filter(u=>E.TYPES[u.type].naval==='ship'&&u.side==='bk')
+    .every(u=>u.elite==='japan_bk_carrier'));
+});
