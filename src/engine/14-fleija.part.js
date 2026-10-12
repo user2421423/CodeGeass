@@ -6,7 +6,8 @@
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
     lab: 3, // research lab level needed
-    labTurn: 15, // Research Lab III, and therefore the strategic-weapons program, opens in each conquest
+    labTurn: 15, // 2017 World War: Research Lab III and F.L.E.I.J.A. unlock
+    ufnLabTurn: 5, // 2018 Rise of the U.F.N.: earlier strategic-weapons unlock
     ringHP: 0.1, // first ring: units are left with 10% of their frame
     outerHP: 0.55, // second ring: units are left with at most 55%
     outerShield: 0.35, // second-ring cities retain at most 35% of their defenses
@@ -22,7 +23,7 @@
   };
   // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
   function eliminatorTurn(g) {
-    if (g.mode === 'scenario') return null; // Japan requires all cities to remain capturable.
+    if (g.mode === 'scenario') return null; // All regional scenarios keep every city capturable.
     const first = g.fleijaDetonated;
     if (typeof first === 'number') return first + ELIMINATOR.research;
     if (first || (g.log || []).some(l => String(l.text || '').startsWith('F.L.E.I.J.A. detonation'))) return 0;
@@ -36,9 +37,12 @@
   function sideEliminators(g, side) {
     return g.stations.filter(s => s.owner === side && ((s.eliminator || 0) > 0 || s.eliminatorProject?.side === side));
   }
-  // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
+  // F.L.E.I.J.A. is conquest-only. All major powers share their conquest's Lab III gate.
+  function fleijaLabTurn(g) {
+    return g.mode === 'conquest' && g.era === 'ufn2018' ? FLEIJA.ufnLabTurn : FLEIJA.labTurn;
+  }
   function hasFleija(g, side) {
-    return g.mode === 'conquest' && isMajor(g, side) && g.turn >= FLEIJA.labTurn;
+    return g.mode === 'conquest' && isMajor(g, side) && g.turn >= fleijaLabTurn(g);
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -51,7 +55,9 @@
     if (!s) return 'Unavailable';
     return (
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
-      (!hasFleija(g, s.owner) ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}` : null) ||
+      (!hasFleija(g, s.owner) ? (g.mode !== 'conquest'
+        ? 'F.L.E.I.J.A. is unavailable outside conquests'
+        : `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`) : null) ||
       cityBusyReason(g, s) ||
       ((s.lab || 0) < FLEIJA.lab ? `Requires research lab level ${FLEIJA.lab}` : null) ||
       shortfall(funds(g, s.owner), FLEIJA.cost)
@@ -120,7 +126,7 @@
   }
   // Start of a power's turn: finished strategic projects come online.
   function strategicTurn(g, side) {
-    if (g.mode === 'scenario') return; // Suppress saved projects in Japan.
+    if (g.mode === 'scenario') return; // Suppress even saved projects in every regional scenario.
     if (eliminatorTurn(g) === g.turn && !g.eliminatorAnnounced) {
       g.eliminatorAnnounced = true;
       log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);

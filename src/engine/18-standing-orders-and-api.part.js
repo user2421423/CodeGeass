@@ -342,6 +342,7 @@
     // F.L.E.I.J.A.
     FLEIJA,
     ELIMINATOR,
+    fleijaLabTurn,
     hasFleija,
     eliminatorUnlocked,
     eliminatorTurn,
@@ -381,6 +382,7 @@
       shortfall,
       FACTIONS,
       FLEIJA,
+      fleijaLabTurn,
       MAJORS,
       powersOf,
       isMajor,

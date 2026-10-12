@@ -13,6 +13,7 @@
     shortfall,
     FACTIONS,
     FLEIJA,
+    fleijaLabTurn,
     MAJORS,
     powersOf,
     isMajor,

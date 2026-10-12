@@ -130,15 +130,16 @@
     // then the lowest-level factory or lab at the safest city.
     if (g.turn >= 2) {
       let upgraded = false;
-      // Rivals can prepare Labs I-II before turn 15, but Lab III obeys the same turn gate as the player. A city that
-      // needs a lab for its next Eliminator comes first.
-      const soon = g.turn >= FLEIJA.labTurn - 5,
+      // Rivals can prepare Labs I-II early, but Lab III obeys the current conquest's gate.
+      // A city that needs a lab for its next Eliminator comes first.
+      const unlockTurn = fleijaLabTurn(g),
+        soon = g.turn >= unlockTurn - 5,
         prep =
           side !== g.player && isMajor(g, side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&
-        ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= FLEIJA.labTurn)
+        ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= unlockTurn)
       ) {
         const cost = buildCost(prep, 'lab');
         if (spendable() - cost.credits >= 100 && developmentAffordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
@@ -154,7 +155,7 @@
       const options = bases
         .flatMap(s => (g.mode === 'scenario' ? ['factory'] : ['factory', 'lab'])
           .map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
-        .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < FLEIJA.labTurn))
+        .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < unlockTurn))
         .sort((a, b) => a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
       const pick = options[0];
       if (

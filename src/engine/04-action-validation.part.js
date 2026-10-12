@@ -89,8 +89,8 @@
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       (buildingLevel(s, kind) >= 3 ? 'Maximum level' : null) ||
       (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
-      (kind === 'lab' && buildingLevel(s, kind) === 2 && g.turn < FLEIJA.labTurn
-        ? `Research lab level 3 unlocks on turn ${FLEIJA.labTurn}`
+      (kind === 'lab' && buildingLevel(s, kind) === 2 && g.turn < fleijaLabTurn(g)
+        ? `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`
         : null) ||
       (kind === 'refinery' && !depositOf(g, s) ? 'No Sakuradite deposit here' : null) ||
       (kind === 'port' && g.mode === 'campaign' ? 'No ports in story missions' : null) ||
