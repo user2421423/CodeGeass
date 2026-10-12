@@ -331,15 +331,17 @@
   function medalSlots(o) {
     return 1 + Math.floor(o.rank / 4);
   }
-  // Damage dealt and taken by a commander's unit: branch rating and medals.
+  // Each combat-branch star contributes +5 flat base attack (1★ = +5, 6★ = +30).
+  // The bonus is applied before Elite Force and formation multipliers, not as a percentage.
+  function officerBaseAttack(g, u) {
+    if (!u.cmd) return 0;
+    return 5 * (officerOf(g, u).ratings[branchOf(u.type)] || 3);
+  }
+  // Commander medals still multiply attack; defensive branch-star scaling is unchanged.
   function officerAttack(g, u) {
     if (!u.cmd) return 1;
-    const o = officerOf(g, u);
-    return (
-      (1 + 0.04 * ((o.ratings[branchOf(u.type)] || 3) - 3)) *
-      (wears(g, u, 'valor') ? 1.08 : 1) *
-      (wears(g, u, 'campaign') ? 1.04 : 1)
-    );
+    return (wears(g, u, 'valor') ? 1.08 : 1) *
+      (wears(g, u, 'campaign') ? 1.04 : 1);
   }
   function officerDefense(g, u) {
     if (!u.cmd) return 1;
@@ -1615,7 +1617,7 @@
   function intrinsicAttack(g, u, counter = false) {
     const t = TYPES[u.type], f = fx(u), strike = !counter || !f.attackOnly,
       attackGeneric = { Infantry: 'raider', Armor: 'armored_assault', Artillery: 'accuracy' }[t.branch];
-    let attack = t.attack * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1));
+    let attack = (t.attack + officerBaseAttack(g, u)) * eliteScale(u).attack * (1 + 0.45 * (u.stack - 1));
     if (f.dmg && strike) attack *= 1 + f.dmg;
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     return attack * officerAttack(g, u) * (1 + 0.06 * genericLevel(g, u, attackGeneric));
