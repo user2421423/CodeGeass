@@ -38,6 +38,9 @@ globalThis.KnightmareArtManifest = {
     "bamides": {
       "src": "units/bamides-112358cce84d.png"
     },
+    "bk_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
     "brighton": {
       "src": "units/brighton-4bb8a725ddf1.png"
     },
