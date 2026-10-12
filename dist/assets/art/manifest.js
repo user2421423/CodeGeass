@@ -256,6 +256,30 @@ globalThis.KnightmareArtManifest = {
     },
     "zangetsu": {
       "src": "units/zangetsu-4e4cb3c3bd61.png"
+    },
+    "gun_ru_assault": {
+      "src": "units/gun_ru-e7776a73350d.png"
+    },
+    "gun_ru_light": {
+      "src": "units/gun_ru-e7776a73350d.png"
+    },
+    "gun_ru_support": {
+      "src": "units/gun_ru-e7776a73350d.png"
+    },
+    "gun_ru_rocket": {
+      "src": "units/gun_ru-e7776a73350d.png"
+    },
+    "gun_ru_siege": {
+      "src": "units/gun_ru-e7776a73350d.png"
+    },
+    "chuyen_medium": {
+      "src": "units/chuyen-427d2c85b500.png"
+    },
+    "chuyen_heavy": {
+      "src": "units/chuyen-427d2c85b500.png"
+    },
+    "chuyen_super": {
+      "src": "units/chuyen-427d2c85b500.png"
     }
   },
   "portraits": {
