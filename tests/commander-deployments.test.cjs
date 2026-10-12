@@ -9,14 +9,15 @@ const division = require('../dist/scenarios-division-japan.js');
 require('../dist/europe-landmask.js');
 const europe = require('../dist/scenarios-europe.js');
 
-test('All 100 roster officers start exactly once in either Conquest', () => {
+test('2017 deploys its own three factions; 2018 deploys all 100 coalition officers', () => {
   const ids = Object.keys(roster).sort();
   assert.equal(ids.length, 100);
   for (const [era, side] of [['world', 'britannia'], ['ufn2018', 'cf']]) {
     const g = E.createGame(side, 'normal', 'conquest', 101, era);
     const units = g.units.filter(u => u.cmd);
     const deployed = units.map(u => u.cmd);
-    assert.deepEqual(deployed.slice().sort(), ids, era + ': every registered officer must appear once');
+    const expected = era === 'ufn2018' ? ids : ids.filter(id => ['britannia','eu','cf'].includes(roster[id].side));
+    assert.deepEqual(deployed.slice().sort(), expected, era + ': only era-eligible officers deploy exactly once');
     for (const u of units) {
       assert.equal(E.serves(u.cmd, u.side, g), true, era + ' allegiance: ' + u.cmd);
       if (era === 'ufn2018')
