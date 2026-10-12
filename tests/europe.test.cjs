@@ -155,3 +155,100 @@ test('Both sides can produce their own faction-specific reinforcements',()=>{
     assert.equal(created.unit.type,type);
   }
 });
+
+test('Elite Europe replaces every army and naval formation with one elite frame',()=>{
+  for(const side of europe.sides){
+    const g=europe.create(side,'elite',24);
+    assert.equal(g.difficulty,'elite');
+    assert.equal(g.units.length,100);
+    assert.ok(g.units.every(u=>u.eliteStart&&u.elite&&u.stack===1&&u.hp===E.maxHP(u)));
+    assert.ok(g.units.filter(u=>u.side===side).every(u=>u.eliteLevel===1));
+    assert.ok(g.units.filter(u=>u.side!==side&&!u.cmd).every(u=>u.eliteLevel===1));
+    const enemyCommanders=g.units.filter(u=>u.side!==side&&u.cmd);
+    assert.ok(enemyCommanders.length>=4);
+    assert.ok(enemyCommanders.every(u=>u.eliteLevel===5&&
+      u.cmdRank===E.RANKS.length-1&&g.officers[u.cmd].rank===E.RANKS.length-1));
+    assert.ok(g.stations.every(s=>s.tier>=2));
+    assert.ok(g.stations.some(s=>s.owner!==side&&s.tier===3));
+    assert.ok(Object.keys(g.tech[g.order[1]]).length>20);
+  }
+});
+
+test('Named commanders receive their Europe-specific Elite signature frames',()=>{
+  const eu=europe.create('eb','elite',11);
+  const assigned=new Map(eu.units.filter(u=>u.cmd).map(u=>[u.cmd,u.elite]));
+  for(const [cmd,id] of Object.entries({
+    leila:'leila_alexander',akito:'akito_liberte',ryo:'ryo_valiant',
+    ayano:'ayano_valiant',yukiya:'yukiya_valiant',smilas:'hummel_battery',
+    shin:'lancelot',julius:'mordred',ashley:'vincent_ward',
+    manfredi:'cornelia_gloucester'
+  }))assert.equal(assigned.get(cmd),id,'Wrong starting frame for '+cmd);
+});
+
+test('Elite Europe lends Britannian units to Euro Britannia without global leaks',()=>{
+  const euro=europe.create('eb','elite',11);
+  assert.ok(E.eliteEligible(euro,'eb','lancelot'));
+  assert.ok(E.eliteEligible(euro,'eb','mordred'));
+  assert.equal(E.eliteEligible(euro,'eb','akito_liberte'),false);
+  assert.equal(E.eliteEligible(euro,'eu','lancelot'),false);
+  assert.equal(E.eliteEligible(euro,'eu','leila_alexander'),true);
+  assert.equal(E.eliteEligible(euro,'eb','japan_britannia_carrier'),false);
+  assert.equal(E.eliteEligible(euro,'eu','europe_eb_carrier'),false);
+  const world=E.createGame('britannia','normal');
+  assert.equal(E.eliteEligible(world,'eb','lancelot'),false);
+  const japan=E.scenarios.japan.create('britannia','elite',11);
+  assert.equal(E.eliteEligible(japan,'eb','lancelot'),false);
+  assert.equal(E.eliteEligible(japan,'britannia','europe_eb_carrier'),false);
+  assert.equal(japan.units.some(u=>u.elite==='europe_eb_carrier'),false);
+});
+
+test('European Elite carrier variants retain naval movement and cargo rules',()=>{
+  const g=europe.create('eu','elite',10);
+  assert.equal(E.TYPES.elite_europe_eu_carrier.naval,'ship');
+  assert.equal(E.TYPES.elite_europe_eb_carrier.naval,'ship');
+  const fleets=g.units.filter(u=>E.TYPES[u.type].naval==='ship');
+  assert.ok(fleets.some(u=>u.side==='eu'&&u.elite==='europe_eu_carrier'));
+  assert.ok(fleets.some(u=>u.side==='eb'&&u.elite==='europe_eb_carrier'));
+  assert.ok(fleets.every(u=>u.eliteLevel===1&&u.stack===1));
+});
+
+test('Elite Europe permits one HQ-unlocked player elite per type and free scenario carriers',()=>{
+  const g=europe.create('eb','elite',55);
+  const type='lancelot', profile={elites:{}};
+  const city=g.stations.find(s=>s.owner==='eb'&&s.tier>=E.TYPES[E.ELITE_FORCES[type].type].tier&&
+    !E.unitAt(g,s));
+  assert.ok(city,'requires an empty Euro Britannian factory');
+  assert.match(E.eliteDeployReason(g,city,type,profile),/Locked/i);
+  E.eliteProfile(profile);
+  profile.elites[type].level=1;
+  const first=E.deployElite(g,city.id,type,profile);
+  assert.equal(first.ok,true,first.reason);
+  assert.equal(first.unit.side,'eb');
+  assert.equal(first.unit.elite,type);
+  assert.equal(first.unit.eliteLevel,1);
+  assert.equal(first.unit.stack,1);
+  assert.equal(g.eliteDeployed[type],true);
+  assert.match(E.eliteDeployReason(g,city,type,profile),/Already deployed/i);
+  const eu=europe.create('eu','elite',33);
+  const port=eu.stations.find(s=>s.owner==='eu'&&s.portLevel>=2&&s.portAt&&
+    !E.unitAt(eu,s.portAt));
+  assert.ok(port);
+  const free=E.deployElite(eu,port.id,'europe_eu_carrier',{});
+  assert.equal(free.ok,true,free.reason);
+  assert.equal(free.unit.elite,'europe_eu_carrier');
+  assert.equal(free.unit.eliteLevel,1);
+});
+
+test('Elite European AI can repeatedly produce Lv.1 elites and never normal formations',()=>{
+  for(const player of europe.sides){
+    const g=europe.create(player,'elite',34),enemy=player==='eu'?'eb':'eu';
+    g.phase=enemy;
+    const before=g.units.length;
+    assert.doesNotThrow(()=>E.aiPlan(g,enemy));
+    assert.doesNotThrow(()=>E.aiProduction(g));
+    const produced=g.units.slice(before);
+    assert.ok(produced.length>0,'AI should build elite reinforcements');
+    assert.ok(produced.every(u=>u.elite&&u.eliteLevel===1&&u.stack===1));
+    assert.ok(produced.every(u=>E.eliteEligible(g,enemy,u.elite)));
+  }
+});
