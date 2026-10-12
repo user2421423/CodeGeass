@@ -194,6 +194,7 @@
         spot = adjacent(g, src).find(
           p =>
             !isSea(p) &&
+            p.owner === src.side &&
             !TERRAIN[p.terrain]?.blocked &&
             !unitAt(g, p) &&
             (!stationAt(g, p) || stationAt(g, p).owner === src.side),
