@@ -114,12 +114,13 @@ async function endTurn() {
   save();
   campaignFeed(() => game.over && resultDialog());
   const logistics = game.automationReport,
-    standing = orders && gotoReportText(orders) ? ` Standing orders: ${gotoReportText(orders)}.` : '';
+    standing = orders ? [gotoReportText(orders), orders.fired?.length ? `${orders.fired.length} army-group attack${orders.fired.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') : '';
+  const standingSummary = standing ? ` Standing orders: ${standing}.` : '';
   if (scenarioNotice) toast('Turn 10: the Britannia–Black Knights alliance has collapsed. All three powers are now hostile.', true);
-  else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standing}`, true);
+  else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standingSummary}`, true);
   else if (!game.over && logistics && (logistics.units || logistics.upgrades))
-    toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}${standing}`, true);
-  else if (!game.over && standing) toast(`Turn ${game.turn}.${standing}`, true);
+    toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}${standingSummary}`, true);
+  else if (!game.over && standing) toast(`Turn ${game.turn}.${standingSummary}`, true);
   else if (!game.over) toast(`Turn ${game.turn}. Income collected; unit orders refreshed.`);
   const annexed = orders?.moved.find(m => m.annexed)?.annexed;
   if (annexed) annexNotice(annexed);
