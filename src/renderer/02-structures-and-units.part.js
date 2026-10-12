@@ -63,9 +63,9 @@ function mapBadge(x, y, side, scale) {
   ctx.translate(x, y);
   ctx.beginPath();
   ctx.arc(0, 0, radius, 0, Math.PI * 2);
-  ctx.fillStyle = PLATE[side].mid;
+  ctx.fillStyle = PLATE[artSide(side)].mid;
   ctx.fill();
-  ctx.strokeStyle = PLATE[side].trim;
+  ctx.strokeStyle = PLATE[artSide(side)].trim;
   ctx.lineWidth = 1.4 / scale;
   ctx.stroke();
   ctx.font = `bold ${Math.max(9, 8 / scale)}px Georgia`;

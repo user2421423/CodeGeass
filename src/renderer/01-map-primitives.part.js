@@ -5,6 +5,8 @@ const PLATE = {
   eu: { light: '#4778cc', mid: '#214783', dark: '#0d244d', trim: '#dbe5ef', bar: '#c9d3dd' },
   cf: { light: '#ad3a33', mid: '#5c1512', dark: '#330806', trim: '#f2c14e', bar: '#e0b24a' },
   bk: { light: '#44434f', mid: '#1f1e27', dark: '#0c0b10', trim: '#f0c94a', bar: '#e6c048' },
+  // U.F.N. military tokens: charcoal-black and gold, distinct from political teal.
+  ufn: { light: '#454b49', mid: '#202521', dark: '#0a1010', trim: '#f6cf67', bar: '#eec35f' },
   jlf: { light: '#4c8550', mid: '#224a28', dark: '#0f2613', trim: '#d4ebbd', bar: '#a9d68f' },
   eb: { light: '#6e4fa8', mid: '#3a2466', dark: '#1a0f33', trim: '#e3c06a', bar: '#cdb0f0' },
 };
@@ -230,7 +232,7 @@ function drawEstimate(p, pr, scale) {
 }
 // Base token in faction colors, ringed by frame integrity. Embarked units ride a transport hull.
 function drawPlate(u, scale, sea, time = 0) {
-  const c = PLATE[u.side],
+  const c = PLATE[artSide(u.side)],
     cy = 14,
     rx = 31,
     ry = 18,
@@ -307,7 +309,7 @@ function readyUnit(u) {
 }
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
 function drawStackBars(n, side) {
-  const c = PLATE[side],
+  const c = PLATE[artSide(side)],
     w = 9,
     gap = 3,
     total = n * w + (n - 1) * gap,
@@ -341,12 +343,12 @@ function drawAdmiralPin(u, p, scale, sel) {
   const sp = ART.portraitSprite(u.cmd, w, h);
   if (sp) ctx.drawImage(sp.img, sp.sx, sp.sy, sp.sw, sp.sh, -w / 2, -h / 2, w, h);
   else outlinedText('★', 0, 4, 14, '#e9c366', scale);
-  ctx.strokeStyle = sel ? '#3ff2c4' : PLATE[u.side].trim;
+  ctx.strokeStyle = sel ? '#3ff2c4' : PLATE[artSide(u.side)].trim;
   ctx.lineWidth = 1.8;
   ctx.strokeRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2);
-  ctx.fillStyle = PLATE[u.side].mid;
+  ctx.fillStyle = PLATE[artSide(u.side)].mid;
   ctx.fillRect(-w / 2 - 2, h / 2 + 1, w + 4, 7);
-  ctx.strokeStyle = PLATE[u.side].trim;
+  ctx.strokeStyle = PLATE[artSide(u.side)].trim;
   ctx.lineWidth = 0.8;
   ctx.strokeRect(-w / 2 - 2, h / 2 + 1, w + 4, 7);
   for (let i = 0; i < a.stars; i++) {
