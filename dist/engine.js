@@ -1199,7 +1199,7 @@
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
-        g.eliteDeployed[elite] = true;
+        if (!eliteConquest(g) || !u.eliteStart) g.eliteDeployed[elite] = true;
       }
       // Older saves left carried units at the hex where they boarded.
       for (const c of u.cargo || []) {
@@ -2045,7 +2045,7 @@
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       cityBusyReason(g, s) ||
       (!e.availableTo.includes(s.owner) ? 'This Elite Force is not available to this faction' : null) ||
-      (!rec?.level ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
+      (!rec?.level && !eliteConquest(g) ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
@@ -2061,7 +2061,8 @@
       rec = eliteRecord(profile, id),
       options = recruitOptions(g, s, s.owner),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = elitePrice(id, rec.level);
+      level = Math.max(1, rec.level || 1),
+      cost = elitePrice(id, level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     spend(funds(g, s.owner), cost);
     s.producedTurn = g.turn;
@@ -2069,9 +2070,38 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = rec.level;
+    u.eliteLevel = level;
     u.hp = maxHP(u);
-    log(g, `${TYPES[e.type].name} · Elite Lv.${rec.level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    log(g, `${TYPES[e.type].name} · Elite Lv.${level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    return { ok: true, unit: u, cost };
+  }
+  // Rival factories may repeat elites indefinitely in Elite Conquest. Factory
+  // tier is waived for the AI so even tier-I cities can build faction elites.
+  function aiEliteRecruitReason(g, s, id, vacating = null) {
+    const e = ELITE_FORCES[id];
+    if (!eliteConquest(g) || !s || !e || s.owner === g.player ||
+        !MAJORS.includes(s.owner) || !e.availableTo.includes(s.owner))
+      return 'Not an AI elite factory in Elite Conquest';
+    return (
+      turnReason(g, s.owner) ||
+      cityBusyReason(g, s) ||
+      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      (!recruitOptions(g, s, s.owner).length && !(vacating && unitAt(g, s) === vacating)
+        ? 'A unit is on the city' : null) ||
+      shortfall(funds(g, s.owner), elitePrice(id, 1))
+    );
+  }
+  function recruitAIElite(g, stationId, id) {
+    const s = g.stations.find(v => v.id === stationId);
+    const why = aiEliteRecruitReason(g, s, id);
+    if (why) return { ok: false, reason: why };
+    const p = recruitOptions(g, s, s.owner)[0],
+      e = ELITE_FORCES[id],
+      cost = elitePrice(id, 1);
+    spend(funds(g, s.owner), cost);
+    s.producedTurn = g.turn;
+    const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
+    log(g, `${TYPES[e.type].name} · Elite Lv.1 deploys at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
@@ -3424,6 +3454,12 @@
   // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
   const DIFFICULTIES = {
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
+    elite: {
+      name: 'Elite',
+      level: 0,
+      tokens: 2.5,
+      desc: 'Every starting land unit becomes an Elite Force, including yours. Rival factories repeatedly build faction elites; you can deploy one of each elite and also build normal units. Ships and amphibious units are unchanged.',
+    },
     hard: {
       name: 'Hard',
       level: 1,
@@ -3448,6 +3484,34 @@
       desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
   };
+  function eliteConquest(g) {
+    return g?.mode === 'conquest' && g.difficulty === 'elite';
+  }
+  // The player's unique factory deployment allowance is separate from
+  // starting formations. Preplaced elite frames never consume it.
+  function convertConquestEliteStarts(g) {
+    if (!eliteConquest(g)) return;
+    const used = {};
+    for (const u of g.units) {
+      const original = TYPES[u.type];
+      if (!original || original.naval) continue; // ships/amphibious unchanged
+      const faction = Object.entries(ELITE_FORCES).filter(([, e]) => e.availableTo.includes(u.side));
+      // Neutral guards use elite templates but keep their neutral allegiance.
+      const pool = faction.length ? faction : Object.entries(ELITE_FORCES);
+      const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
+      const sameBranch = pool.filter(([, e]) => TYPES[e.type].branch === original.branch);
+      const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
+      const id = choices[(used[u.side] || 0) % choices.length][0];
+      used[u.side] = (used[u.side] || 0) + 1;
+      u.type = ELITE_FORCES[id].type;
+      u.elite = id;
+      u.eliteLevel = 1;
+      u.eliteStart = true;
+      u.stack = 1;
+      u.hpTech = hullTech(g, u);
+      u.hp = maxHP(u);
+    }
+  }
   // One class up within each branch: a scout becomes an assault frame, a line frame a mainline frame, and so on.
   const UPGRADE = {
     scout: 'assault',
@@ -3672,6 +3736,7 @@
       if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
     }
     setupSakuradite(g);
+    convertConquestEliteStarts(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
     for (const u of g.units)
       if (u.cmd) {
@@ -3967,6 +4032,8 @@
     elitePrice,
     eliteDeployReason,
     deployElite,
+    aiEliteRecruitReason,
+    recruitAIElite,
     unitStats,
     applyElites,
     lineupOf,
