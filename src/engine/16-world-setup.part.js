@@ -167,7 +167,8 @@
         }
       };
       ensure(3, Math.max(6, Math.ceil(cities.length / 8)));
-      ensure(2, Math.max(18, Math.ceil(cities.length / 3)));
+      // E.U. and Chinese elites start at factory Tier II; do not strand their Tier-I cities.
+      ensure(2, cities.length);
     }
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
