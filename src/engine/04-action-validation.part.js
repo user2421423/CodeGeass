@@ -63,7 +63,7 @@
       (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
       (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
-      (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) || !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
+      (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) ? t.naval !== 'ship' : !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
         : null) ||
