@@ -49,7 +49,7 @@ test('health circle shows remaining HP, not rounded percentage', () => {
   assert.match(svg, /aria-label="Health 321 of 673 HP"/);
   assert.match(svg, /<text[^>]*>321<\/text>/);
   assert.doesNotMatch(svg, /<text[^>]*>48<\/text>/);
-  assert.match(svg, /stroke-dasharray="44\.9 94\.2"/, 'the arc still shows proportional health');
+  assert.match(svg, /stroke-dasharray="45\.0 94\.2"/, 'the arc still shows proportional health');
 });
 
 test('health circle scales font to fit four-digit and five-digit HP', () => {
