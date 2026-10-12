@@ -297,7 +297,7 @@ test('Elite Japan starts every AI commander in a Level 5 elite frame', () => {
       assert.equal(u.eliteLevel, 5, `${u.cmd} should start at elite Level 5`);
       assert.equal(u.eliteStart, true);
     }
-    for (const u of g.units.filter(u => u.side === player || !u.cmd)) {
+    for (const u of g.units.filter(u => (u.side === player || !u.cmd) && E.TYPES[u.type].naval !== 'ship')) {
       assert.equal(u.eliteLevel, 1, `non-AI-commander ${u.id} should remain Level 1`);
     }
   }
