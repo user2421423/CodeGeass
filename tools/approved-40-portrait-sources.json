@@ -2,7 +2,7 @@
   "updated": "2026-10-12",
   "policy": "Local portraits only: never resolve runtime artwork from external sites.",
   "status": "complete",
-  "count": 41,
+  "count": 42,
   "characters": [
     {
       "id": "marianne",
@@ -207,6 +207,11 @@
     {
       "id": "eduardo",
       "src": "portraits/eduardo-approved.jpg",
+      "status": "local"
+    },
+    {
+      "id": "ferilli",
+      "src": "portraits/ferilli-approved.jpg",
       "status": "local"
     }
   ]

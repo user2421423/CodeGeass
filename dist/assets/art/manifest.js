@@ -592,6 +592,11 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/eduardo-approved.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "ferilli": {
+      "src": "portraits/ferilli-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     }
   },
   "buildings": {
