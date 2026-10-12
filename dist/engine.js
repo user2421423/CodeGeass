@@ -578,7 +578,7 @@
       (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
       (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
-      (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) || !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
+      (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) ? t.naval !== 'ship' : !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
         : null) ||
@@ -931,7 +931,7 @@
     cf: { amphibious: 'shui_gun_ru', amphibious2: 'shui_gun_ru_ii', carrier: 'cf_carrier' },
     eb: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
   };
-  const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : Object.values(NAVAL[side] || {}));
+  const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : Object.values(NAVAL[side] || (eliteScenario(g) && side === 'bk' ? { carrier: 'bk_carrier' } : {})));
   const isShip = u => TYPES[u?.type]?.naval === 'ship';
   // Ports: a city building on one sea hex beside the city (repair: PORT.repair by level).
   const PORT = { repair: [0, 0.1, 0.2, 0.3] };
@@ -1253,6 +1253,29 @@
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
+    // Preserve saves containing retired scenario-only Elite carrier-battleships.
+    const legacyCarriers = {
+      elite_europe_eu_carrier: 'eu_carrier',
+      elite_europe_eb_carrier: 'carrier_battleship',
+      elite_japan_britannia_carrier: 'carrier_battleship',
+      elite_japan_eu_carrier: 'eu_carrier',
+      elite_japan_cf_carrier: 'cf_carrier',
+      elite_japan_bk_carrier: 'bk_carrier',
+    };
+    for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
+      if (!legacyCarriers[u.type]) continue;
+      u.type = legacyCarriers[u.type];
+      delete u.elite;
+      delete u.eliteLevel;
+      delete u.eliteStart;
+      u.stack = 1;
+      u.hp = Math.min(u.hp, maxHP(u));
+    }
+    if (g.scenario?.eliteRosters) for (const side of Object.keys(g.scenario.eliteRosters))
+      g.scenario.eliteRosters[side] = (g.scenario.eliteRosters[side] || [])
+        .filter(id => !!ELITE_FORCES[id]);
+    if (g.eliteDeployed) for (const id of Object.keys(g.eliteDeployed))
+      if (/(?:japan|europe)_.*_carrier/.test(id)) delete g.eliteDeployed[id];
     if (!g.units.every(u => TYPES[u.type])) return null;
     if (g.mode === 'conquest') {
       const cfg = CONQUESTS[g.era || 'world'];
@@ -2198,7 +2221,6 @@
       g?.scenario?.id === 'european-war' ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
     if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
-    if (worldChina(g, side)) return ['chuyen','wang_hu','shen_hu','shui_gun_ru_ii','japan_cf_carrier'].includes(id);
     return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
@@ -4130,11 +4152,10 @@
     for (const u of g.units) {
       const old = TYPES[u.type];
       if (!old) throw new Error('Unknown Japan starting unit ' + u.type);
+      // Elite scenarios retain ordinary carriers, including cargo rules.
+      if (old.naval === 'ship') continue;
       let id = null;
-      if (old.naval === 'ship') {
-        id = { britannia:'japan_britannia_carrier', cf:'japan_cf_carrier',
-          bk:'japan_bk_carrier', eu:'japan_eu_carrier' }[u.side];
-      } else if (old.naval === 'amphibious') {
+      if (old.naval === 'amphibious') {
         id = { britannia:'portman_ii', cf:'shui_gun_ru_ii',
           bk:'japan_bk_amphibious', eu:'panzer_frosch_ii' }[u.side];
       } else {
@@ -4174,8 +4195,8 @@
       ashley: 'vincent_ward', manfredi: 'cornelia_gloucester',
     };
     const naval = {
-      eu: {ship:'europe_eu_carrier',amphibious:'panzer_frosch_ii'},
-      eb: {ship:'europe_eb_carrier',amphibious:'portman_ii'},
+      eu: {amphibious:'panzer_frosch_ii'},
+      eb: {amphibious:'portman_ii'},
     };
     // Preserve this map's smaller city yields before raising factory tiers.
     for (const s of g.stations) {
@@ -4209,6 +4230,8 @@
     for (const u of g.units) {
       const old = TYPES[u.type];
       if (!old) throw new Error('Unknown European War starting unit '+u.type);
+      // Carrier-battleships remain ordinary hulls even on Elite difficulty.
+      if (old.naval === 'ship') continue;
       const roster = g.scenario.eliteRosters[u.side] || [];
       let id = old.naval ? naval[u.side]?.[old.naval] : null;
       if (!old.naval) {
