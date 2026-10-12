@@ -206,14 +206,18 @@ test('Both sides can produce their own faction-specific reinforcements',()=>{
   }
 });
 
-test('Elite Europe replaces every army and naval formation with one elite frame',()=>{
+test('Elite Europe converts land and amphibious units while keeping regular carrier-battleships',()=>{
   for(const side of europe.sides){
     const g=europe.create(side,'elite',24);
     assert.equal(g.difficulty,'elite');
     assert.equal(g.units.length,100);
-    assert.ok(g.units.every(u=>u.eliteStart&&u.elite&&u.stack===1&&u.hp===E.maxHP(u)));
-    assert.ok(g.units.filter(u=>u.side===side).every(u=>u.eliteLevel===1));
-    assert.ok(g.units.filter(u=>u.side!==side&&!u.cmd).every(u=>u.eliteLevel===1));
+    assert.ok(g.units.every(u=>u.stack===1&&u.hp===E.maxHP(u)));
+    const fighters=g.units.filter(u=>E.TYPES[u.type].naval!=='ship');
+    const carriers=g.units.filter(u=>E.TYPES[u.type].naval==='ship');
+    assert.ok(fighters.every(u=>u.eliteStart&&u.elite));
+    assert.ok(carriers.length>0&&carriers.every(u=>!u.elite&&!u.eliteStart));
+    assert.ok(fighters.filter(u=>u.side===side).every(u=>u.eliteLevel===1));
+    assert.ok(fighters.filter(u=>u.side!==side&&!u.cmd).every(u=>u.eliteLevel===1));
     const enemyCommanders=g.units.filter(u=>u.side!==side&&u.cmd);
     assert.ok(enemyCommanders.length>=4);
     assert.ok(enemyCommanders.every(u=>u.eliteLevel===5&&
@@ -242,27 +246,23 @@ test('Elite Europe lends Britannian units to Euro Britannia without global leaks
   assert.equal(E.eliteEligible(euro,'eb','akito_liberte'),false);
   assert.equal(E.eliteEligible(euro,'eu','lancelot'),false);
   assert.equal(E.eliteEligible(euro,'eu','leila_alexander'),true);
-  assert.equal(E.eliteEligible(euro,'eb','japan_britannia_carrier'),false);
-  assert.equal(E.eliteEligible(euro,'eu','europe_eb_carrier'),false);
+  assert.equal(Object.keys(E.ELITE_FORCES).some(id=>id.endsWith('_carrier')),false);
   const world=E.createGame('britannia','normal');
   assert.equal(E.eliteEligible(world,'eb','lancelot'),false);
   const japan=E.scenarios.japan.create('britannia','elite',11);
   assert.equal(E.eliteEligible(japan,'eb','lancelot'),false);
-  assert.equal(E.eliteEligible(japan,'britannia','europe_eb_carrier'),false);
-  assert.equal(japan.units.some(u=>u.elite==='europe_eb_carrier'),false);
+  assert.ok(japan.units.filter(u=>E.TYPES[u.type].naval==='ship').every(u=>!u.elite));
 });
 
-test('European Elite carrier variants retain naval movement and cargo rules',()=>{
-  const g=europe.create('eu','elite',10);
-  assert.equal(E.TYPES.elite_europe_eu_carrier.naval,'ship');
-  assert.equal(E.TYPES.elite_europe_eb_carrier.naval,'ship');
-  const fleets=g.units.filter(u=>E.TYPES[u.type].naval==='ship');
-  assert.ok(fleets.some(u=>u.side==='eu'&&u.elite==='europe_eu_carrier'));
-  assert.ok(fleets.some(u=>u.side==='eb'&&u.elite==='europe_eb_carrier'));
-  assert.ok(fleets.every(u=>u.eliteLevel===1&&u.stack===1));
+test('Elite European carriers retain regular hull types and transport capacity',()=>{
+  const g=europe.create('eu','elite',10), normal=europe.create('eu','normal',10);
+  const fleet=x=>x.units.filter(u=>E.TYPES[u.type].naval==='ship');
+  assert.ok(fleet(g).length>0);
+  assert.deepEqual(fleet(g).map(u=>[u.side,u.type]).sort(),fleet(normal).map(u=>[u.side,u.type]).sort());
+  assert.ok(fleet(g).every(u=>!u.elite&&u.stack===1&&E.carrierCapacity(g,u)>=2));
 });
 
-test('Elite Europe permits one HQ-unlocked player elite per type and free scenario carriers',()=>{
+test('Elite Europe permits one HQ-unlocked land elite and regular carrier purchase',()=>{
   const g=europe.create('eb','elite',55);
   const type='lancelot', profile={elites:{}};
   const city=g.stations.find(s=>s.owner==='eb'&&s.tier>=E.TYPES[E.ELITE_FORCES[type].type].tier&&
@@ -283,13 +283,16 @@ test('Elite Europe permits one HQ-unlocked player elite per type and free scenar
   const port=eu.stations.find(s=>s.owner==='eu'&&s.portLevel>=2&&s.portAt&&
     !E.unitAt(eu,s.portAt));
   assert.ok(port);
-  const free=E.deployElite(eu,port.id,'europe_eu_carrier',{});
-  assert.equal(free.ok,true,free.reason);
-  assert.equal(free.unit.elite,'europe_eu_carrier');
-  assert.equal(free.unit.eliteLevel,1);
+  eu.economy.eu.credits=10000;
+  eu.economy.eu.industry=10000;
+  eu.economy.eu.sakuradite=1000;
+  const normalShip=E.recruit(eu,port.id,'eu_carrier',1);
+  assert.equal(normalShip.ok,true,normalShip.reason);
+  assert.equal(normalShip.unit.type,'eu_carrier');
+  assert.equal(normalShip.unit.elite,undefined);
 });
 
-test('Elite European AI can repeatedly produce Lv.1 elites and never normal formations',()=>{
+test('Elite European AI produces elite fighters and ordinary carriers',()=>{
   for(const player of europe.sides){
     const g=europe.create(player,'elite',34),enemy=player==='eu'?'eb':'eu';
     g.phase=enemy;
@@ -298,7 +301,29 @@ test('Elite European AI can repeatedly produce Lv.1 elites and never normal form
     assert.doesNotThrow(()=>E.aiProduction(g));
     const produced=g.units.slice(before);
     assert.ok(produced.length>0,'AI should build elite reinforcements');
-    assert.ok(produced.every(u=>u.elite&&u.eliteLevel===1&&u.stack===1));
-    assert.ok(produced.every(u=>E.eliteEligible(g,enemy,u.elite)));
+    assert.ok(produced.every(u=>u.stack===1));
+    assert.ok(produced.filter(u=>E.TYPES[u.type].naval==='ship').every(u=>!u.elite));
+    assert.ok(produced.filter(u=>E.TYPES[u.type].naval!=='ship').every(u=>
+      u.elite&&u.eliteLevel===1&&E.eliteEligible(g,enemy,u.elite)));
   }
+});
+
+test('Previously saved Elite carrier variants migrate to regular hulls',()=>{
+  const g=europe.create('eu','elite',21);
+  const ship=g.units.find(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
+  assert.ok(ship);
+  ship.type='elite_europe_eu_carrier';
+  ship.elite='europe_eu_carrier';
+  ship.eliteLevel=1;
+  ship.eliteStart=true;
+  g.scenario.eliteRosters.eu.push('europe_eu_carrier');
+  g.eliteDeployed.europe_eu_carrier=true;
+  const saved=E.migrateSave(E.packSave(g));
+  assert.ok(saved,'legacy Elite carrier saves should still load');
+  const hull=saved.units.find(u=>u.id===ship.id);
+  assert.equal(hull.type,'eu_carrier');
+  assert.equal(hull.elite,undefined);
+  assert.equal(hull.eliteLevel,undefined);
+  assert.equal(saved.scenario.eliteRosters.eu.includes('europe_eu_carrier'),false);
+  assert.equal(saved.eliteDeployed.europe_eu_carrier,undefined);
 });
