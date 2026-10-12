@@ -72,7 +72,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   b.fillRect(0, 0, width, height);
   // Scenario previews and minimaps use the same real Japanese silhouette as
   // the main map, not low-resolution rectangles of terrain colours.
-  const regional = g.mode === 'scenario' && g.scenario?.id === 'invasion-japan';
+  const regional = g.mode === 'scenario' && !!g.scenario?.projection;
   if (regional) {
     b.save();
     b.scale(sx, sy);
@@ -1056,7 +1056,7 @@ function mapLayer(scale, detail, dpr, w, h) {
 let scenarioSeaCache = { tiles:null,revision:-1,shown:null };
 function scenarioSeaHexVisible(t) {
   if (game.mode === 'scenario' && t.terrain === 'offmap') return false;
-  if (game.mode !== 'scenario' || game.scenario?.id !== 'invasion-japan' ||
+  if (game.mode !== 'scenario' || !game.scenario?.projection ||
       t.terrain !== 'sea') return true;
   const revision = game.mapRevision || 0;
   if (scenarioSeaCache.tiles !== game.tiles || scenarioSeaCache.revision !== revision) {
