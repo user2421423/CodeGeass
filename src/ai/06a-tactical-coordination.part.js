@@ -47,13 +47,20 @@
     if (u.hold || memo.guards?.[u.id] || u.moved) return 0;
     memo.trafficCache ||= new Map();
     if (memo.trafficCache.has(u.id)) return memo.trafficCache.get(u.id);
+    // A unit at the head of a column acts before nearby followers whose
+    // route cost is higher. This clears occupied tiles without displacing guards.
+    const front = memo.assign?.[u.id], route = fieldFor(g, memo, u);
+    const position = route(u);
     let followers = 0;
     for (const v of g.units) {
-      if (v.side === u.side && v.id !== u.id && v.hp > 0 && !v.hold &&
-          !memo.guards?.[v.id] && !v.moved && dist(g, v, u) <= 2) followers++;
+      if (v.side !== u.side || v.id === u.id || v.hp <= 0 || v.hold ||
+          memo.guards?.[v.id] || v.moved || dist(g, v, u) > 2) continue;
+      if (front != null && memo.assign?.[v.id] != null && memo.assign[v.id] !== front) continue;
+      if (route(v) + 0.1 < position) continue;
+      followers++;
       if (followers >= 4) break;
     }
-    const value = Math.min(1.2, followers * 0.35);
+    const value = Math.min(1.6, followers * 0.45);
     memo.trafficCache.set(u.id, value);
     return value;
   }
