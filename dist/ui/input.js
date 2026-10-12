@@ -276,6 +276,12 @@ document.addEventListener('click', e => {
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
+  if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
+  if (d.armyStance) {
+    const [id, stance] = d.armyStance.split(':');
+    armyGroupSetStance(+id, stance);
+    return;
+  }
   if (d.armyRoute) { armyGroupStartRouting(+d.armyRoute); return; }
   if (d.armyFocus) { armyGroupFocus(+d.armyFocus); return; }
   if (d.armyNearby) { armyGroupAddNearby(+d.armyNearby); return; }
@@ -520,6 +526,9 @@ document.addEventListener('click', e => {
       if (u) doAction(() => E.repair(game, u.id));
       break;
     }
+    case 'do-all-orders':
+      executeAllOrdersNow();
+      break;
     case 'army-groups':
       armyGroupsDialog();
       break;
