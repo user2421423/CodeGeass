@@ -274,6 +274,12 @@ document.addEventListener('click', e => {
     generalsDialog(d.generalsSide);
     return;
   }
+  if (d.scenarioKind) {
+    scenarioKind=d.scenarioKind;
+    scenarioSide='britannia';
+    if(scenarioKind==='division-japan'&&scenarioDifficulty==='elite')scenarioDifficulty='challenge';
+    scenarioDialog();return;
+  }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }

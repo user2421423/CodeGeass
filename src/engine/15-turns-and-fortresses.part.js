@@ -285,7 +285,7 @@
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     if (g.mode === 'scenario') {
-      const conquest = root.Knightmare.scenarios?.japan?.winner(g),
+      const conquest = (root.Knightmare.scenarios?.byId?.[g.scenario?.id] || root.Knightmare.scenarios?.japan)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       if (!contenders.includes(g.player)) {
         // Player defeat can end their run, but award no faction a victory
@@ -334,7 +334,7 @@
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
     if (g.mode === 'scenario')
-      return (root.Knightmare.scenarios?.japan?.objective(g) || 'Secure Japan') +
+      return ((root.Knightmare.scenarios?.byId?.[g.scenario?.id] || root.Knightmare.scenarios?.japan)?.objective(g) || 'Secure Japan') +
         (g.scenario?.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.');
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length

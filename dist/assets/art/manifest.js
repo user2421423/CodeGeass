@@ -107,6 +107,9 @@ globalThis.KnightmareArtManifest = {
     "elite_japan_cf_carrier": {
       "src": "units/generic_carrier-bf5e0799d818.png"
     },
+    "elite_japan_eu_carrier": {
+      "src": "units/generic_carrier-bf5e0799d818.png"
+    },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
     },

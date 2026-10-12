@@ -888,6 +888,13 @@
       weapon: 'Main guns · missile batteries · Knightmare catapults',
       lore: 'A veteran Britannian carrier retaining the normal carrier deployment rules.',
     },
+    elite_japan_eu_carrier: {
+      ...CARRIER, side: 'eu', elite: true, scenarioOnly: true,
+      name: 'E.U. Elite Carrier-Battleship', model: 'Charlemagne-class Carrier-Battleship',
+      gen: 'Warship', role: 'Elite carrier-battleship',
+      weapon: 'Railgun turrets · missile batteries · Knightmare catapults',
+      lore: 'A veteran Europia United carrier retaining standard Knightmare deployment mechanics.',
+    },
     elite_japan_cf_carrier: {
       ...CARRIER, side: 'cf', elite: true, scenarioOnly: true,
       name: 'Federation Elite Carrier-Battleship', model: 'Federation Carrier-Battleship',
@@ -1392,6 +1399,13 @@
     // Mission-specific fleet models are not persistent HQ unlocks.
     japan_britannia_carrier: {
       type: 'elite_japan_britannia_carrier', faction: 'britannia', availableTo: ['britannia'],
+      rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
+      lv3Text: 'Carries and deploys two Knightmare formations normally.',
+      lv5Text: 'Carries and deploys two Knightmare formations normally.',
+      lv3: {}, lv5: {},
+    },
+    japan_eu_carrier: {
+      type: 'elite_japan_eu_carrier', faction: 'eu', availableTo: ['eu'],
       rarity: 'Rare', scenarioOnly: true, skill: 'Standard carrier operations',
       lv3Text: 'Carries and deploys two Knightmare formations normally.',
       lv5Text: 'Carries and deploys two Knightmare formations normally.',

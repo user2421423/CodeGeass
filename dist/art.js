@@ -89,6 +89,7 @@ const ART = (() => {
     elite_panzer_frosch_ii: 'panzer_frosch_ii',
     elite_shui_gun_ru_ii: 'shui_gun_ru_ii',
     elite_japan_britannia_carrier: 'carrier_battleship',
+    elite_japan_eu_carrier: 'eu_carrier',
     elite_japan_cf_carrier: 'cf_carrier',
     elite_japan_bk_carrier: 'cf_carrier',
     elite_japan_bk_amphibious: 'shui_gun_ru_ii',

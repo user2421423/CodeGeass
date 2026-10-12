@@ -147,7 +147,7 @@
       producer = naval ? (s.portOwner || s.owner) : s.owner;
     if (producer === g.player || !eliteEligible(g, producer, id) ||
         (eliteConquest(g) && (naval || !MAJORS.includes(producer))) ||
-        (eliteScenario(g) && !['britannia', 'bk', 'cf'].includes(producer)) ||
+        (eliteScenario(g) && !g.order.includes(producer)) ||
         (eliteCampaign(g) && (naval || (!foe(g, producer, g.player) &&
           !g.campaign?.production?.includes(producer)))) ||
         (e.scenarioOnly && !eliteScenario(g)))

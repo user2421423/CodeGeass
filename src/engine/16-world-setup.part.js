@@ -66,7 +66,7 @@
     return g?.mode === 'campaign' && g.difficulty === 'elite';
   }
   function eliteScenario(g) {
-    return g?.mode === 'scenario' && g?.scenario?.id === 'invasion-japan' &&
+    return g?.mode === 'scenario' && ['invasion-japan', 'division-japan'].includes(g?.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -194,11 +194,13 @@
   // use Level 1 frames, except AI starting commanders on Level 5; HQ unlocks only matter at the player's factory.
   function prepareEliteJapan(g) {
     if (!eliteScenario(g)) return g;
-    const sides = ['britannia', 'bk', 'cf'];
+    const sides = g.order; // Use this scenario's playable allegiances.
     const signature = {
       suzaku: 'lancelot', cornelia: 'cornelia_gloucester',
       kallen: 'guren_mkii', zero: 'shinkiro',
       tohdoh: 'tohdoh_gekka', xingke: 'shen_hu',
+      leila: 'leila_alexander', akito: 'akito_liberte',
+      ryo: 'ryo_valiant', ayano: 'ayano_valiant',
     };
     for (const side of sides.filter(s => s !== g.player)) {
       g.tech[side] = techUpToTier(4);
@@ -234,10 +236,10 @@
       let id = null;
       if (old.naval === 'ship') {
         id = { britannia:'japan_britannia_carrier', cf:'japan_cf_carrier',
-          bk:'japan_bk_carrier' }[u.side];
+          bk:'japan_bk_carrier', eu:'japan_eu_carrier' }[u.side];
       } else if (old.naval === 'amphibious') {
         id = { britannia:'portman_ii', cf:'shui_gun_ru_ii',
-          bk:'japan_bk_amphibious' }[u.side];
+          bk:'japan_bk_amphibious', eu:'panzer_frosch_ii' }[u.side];
       } else {
         const pool = Object.entries(ELITE_FORCES).filter(([, e]) =>
           !e.scenarioOnly && !TYPES[e.type].naval && e.availableTo.includes(u.side));
