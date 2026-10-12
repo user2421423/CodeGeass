@@ -188,7 +188,7 @@
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
         if (u.cmd && !u.attacked)
           sc -= Math.min(95, localThreat(g, u, p) * 0.36);
-        if (!guard && !u.hold && !station && !isSea(p) &&
+        if (TYPES[u.type].branch === 'Artillery' && !guard && !u.hold && !station && !isSea(p) &&
             adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
             freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
           sc -= 24; // avoid parking in the only route through a narrow pass
