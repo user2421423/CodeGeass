@@ -324,7 +324,7 @@
         enemyPlaced: 0,
         ...(difficultyId === 'elite' ? {
           eliteSelections: {},
-          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s, g)])),
+          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s, { teams: m.teams, order: sides })])),
         } : {}),
         turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
       },
