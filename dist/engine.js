@@ -239,6 +239,7 @@
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
+  const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
   const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
   function fx(u) {
     return (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
@@ -252,7 +253,7 @@
   function defaultOfficer(k) {
     return { rank: COMMANDERS[k].stars >= 5 ? 1 : 0, ratings: { ...RATINGS[k] }, medals: [], generics: {}, commanderVersion: COMMANDER_VERSION };
   }
-  function cleanOfficer(k, rec) {
+  function cleanOfficer(k, rec, rankCap = HQ_RANK_CAP) {
     const base = defaultOfficer(k);
     if (!rec) return base;
     const ratings = { ...rec.ratings };
@@ -261,7 +262,7 @@
       ratings.mobility = Math.min(MAX_RATING, ratings.mobility + 2);
     return {
       commanderVersion: COMMANDER_VERSION,
-      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, RANKS.length - 1),
+      rank: clamp(Number.isInteger(rec.rank) ? rec.rank : base.rank, 0, rankCap),
       ratings: Object.fromEntries(
         Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
@@ -294,7 +295,8 @@
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
-    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
+      eliteConquest(g) && COMMANDERS[k].side !== g.player ? RANKS.length - 1 : HQ_RANK_CAP));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
@@ -394,7 +396,7 @@
     const why = ownedReason(profile, k);
     if (why) return why;
     const o = roster(profile)[k];
-    return o.rank >= RANKS.length - 1 ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
+    return o.rank >= HQ_RANK_CAP ? 'Highest rank reached' : tokenShort(profile, promoteCost(o));
   }
   function promote(profile, k) {
     const why = promoteReason(profile, k);
@@ -556,6 +558,7 @@
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
+      (eliteConquest(g) && s.owner !== g.player && !t.naval ? 'Rival factories can only produce Elite Forces' : null) ||
       (!(g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)]).includes(type)
         ? 'Not built by this faction'
         : null) ||
@@ -1192,16 +1195,18 @@
       assignCityProvinces(g);
     }
     g.eliteDeployed ||= {};
-    for (const records of [g.officers, g.roster])
+    for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
-        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec);
+        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
+          which === 'officers' && eliteConquest(g) && COMMANDERS[k].side !== g.player
+            ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units) {
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
-        g.eliteDeployed[elite] = true;
+        if (!eliteConquest(g) || !u.eliteStart) g.eliteDeployed[elite] = true;
       }
       // Older saves left carried units at the hex where they boarded.
       for (const c of u.cargo || []) {
@@ -2061,7 +2066,7 @@
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       cityBusyReason(g, s) ||
       (!e.availableTo.includes(s.owner) ? 'This Elite Force is not available to this faction' : null) ||
-      (!rec?.level ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
+      (!rec?.level && !eliteConquest(g) ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
@@ -2077,7 +2082,8 @@
       rec = eliteRecord(profile, id),
       options = recruitOptions(g, s, s.owner),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = elitePrice(id, rec.level);
+      level = Math.max(1, rec.level || 1),
+      cost = elitePrice(id, level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     spend(funds(g, s.owner), cost);
     s.producedTurn = g.turn;
@@ -2085,9 +2091,39 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = rec.level;
+    u.eliteLevel = level;
     u.hp = maxHP(u);
-    log(g, `${TYPES[e.type].name} · Elite Lv.${rec.level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    log(g, `${TYPES[e.type].name} · Elite Lv.${level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    return { ok: true, unit: u, cost };
+  }
+  // Rival factories can repeat Elite Forces indefinitely, but each frame must
+  // satisfy its factory tier just as it does for a player.
+  function aiEliteRecruitReason(g, s, id, vacating = null) {
+    const e = ELITE_FORCES[id];
+    if (!eliteConquest(g) || !s || !e || s.owner === g.player ||
+        !MAJORS.includes(s.owner) || !e.availableTo.includes(s.owner))
+      return 'Not an AI elite factory in Elite Conquest';
+    return (
+      turnReason(g, s.owner) ||
+      cityBusyReason(g, s) ||
+      (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
+      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      (!recruitOptions(g, s, s.owner).length && !(vacating && unitAt(g, s) === vacating)
+        ? 'A unit is on the city' : null) ||
+      shortfall(funds(g, s.owner), elitePrice(id, 1))
+    );
+  }
+  function recruitAIElite(g, stationId, id) {
+    const s = g.stations.find(v => v.id === stationId);
+    const why = aiEliteRecruitReason(g, s, id);
+    if (why) return { ok: false, reason: why };
+    const p = recruitOptions(g, s, s.owner)[0],
+      e = ELITE_FORCES[id],
+      cost = elitePrice(id, 1);
+    spend(funds(g, s.owner), cost);
+    s.producedTurn = g.turn;
+    const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
+    log(g, `${TYPES[e.type].name} · Elite Lv.1 deploys at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
@@ -3452,6 +3488,19 @@
   // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
   const DIFFICULTIES = {
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
+    elite: {
+      name: 'Elite',
+      level: 3,
+      tokens: 2.5,
+      techTier: 4,
+      upgradeEvery: 1,
+      extraPer: 2,
+      stack: true,
+      ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
+      income: 1.25,
+      preserveNaval: true,
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+    },
     hard: {
       name: 'Hard',
       level: 1,
@@ -3471,11 +3520,40 @@
       upgradeEvery: 1,
       extraPer: 2,
       stack: true,
-      ranks: RANKS.length - 1, // Every starting rank reaches Marshal.
+      ranks: PROMOTE_COST.length - 1, // Every starting rank reaches Marshal.
       income: 1.25,
       desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
   };
+  function eliteConquest(g) {
+    return g?.mode === 'conquest' && g.difficulty === 'elite';
+  }
+  // The player's unique factory deployment allowance is separate from
+  // starting formations. Preplaced elite frames never consume it.
+  function convertConquestEliteStarts(g) {
+    if (!eliteConquest(g)) return;
+    const used = {};
+    for (const u of g.units) {
+      const original = TYPES[u.type];
+      if (!original || original.naval) continue; // ships/amphibious unchanged
+      const faction = Object.entries(ELITE_FORCES).filter(([, e]) => e.availableTo.includes(u.side));
+      // Neutral guards use elite templates but keep their neutral allegiance.
+      const pool = faction.length ? faction : Object.entries(ELITE_FORCES);
+      const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
+      const sameBranch = pool.filter(([, e]) => TYPES[e.type].branch === original.branch);
+      const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
+      const id = choices[(used[u.side] || 0) % choices.length][0];
+      used[u.side] = (used[u.side] || 0) + 1;
+      u.type = ELITE_FORCES[id].type;
+      u.elite = id;
+      u.eliteLevel = 1;
+      u.eliteStart = true;
+      // Challenge grants additional frames to starting enemy formations, not the player's.
+      u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
+      u.hpTech = hullTech(g, u);
+      u.hp = maxHP(u);
+    }
+  }
   // One class up within each branch: a scout becomes an assault frame, a line frame a mainline frame, and so on.
   const UPGRADE = {
     scout: 'assault',
@@ -3503,13 +3581,13 @@
   }
   function harden(g, d) {
     const foes = [...MAJORS, 'neutral'].filter(side => side !== g.player),
-      enemyUnits = g.units.filter(u => foes.includes(u.side));
+      enemyUnits = g.units.filter(u => foes.includes(u.side) && (!d.preserveNaval || !TYPES[u.type].naval));
     for (const side of foes) {
       g.tech[side] = techUpToTier(d.techTier);
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if (a.side !== g.player) g.officers[k].rank = Math.min(RANKS.length - 1, g.officers[k].rank + d.ranks);
+      if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
       if (d.stack) u.stack = Math.min(3, u.stack + 1);
@@ -3537,6 +3615,35 @@
         u.hp = maxHP(u);
       }
     g.stations.forEach(st => fortify(g, st));
+  }
+  // All Elite Conquest cities (including the player's and neutral cities) start
+  // at factory Tier II or higher. Elite rivals retain their extra Tier III hubs.
+  // Use the ordinary building calculations so displayed tier, yields and shields
+  // agree; a raw change to s.tier would leave these statistics out of sync.
+  function prepareEliteConquestFactories(g) {
+    if (!eliteConquest(g)) return;
+    const raiseFactory = (s, tier) => {
+      if (s.tier >= tier) return;
+      const oldShield = s.shield, oldMaxShield = s.maxShield;
+      buildingFoundation(g, s); // Snapshot the original city's Tier-I/II foundations.
+      s.tier = tier;
+      syncBuildings(g, s);
+      // Equivalent to buying the missing factory upgrades: newly gained
+      // shield capacity starts repaired, while existing damage stays intact.
+      s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
+    };
+    for (const s of g.stations) raiseFactory(s, 2);
+    for (const side of MAJORS.filter(s => s !== g.player)) {
+      const cities = g.stations.filter(s => s.owner === side);
+      const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
+      const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
+      const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
+      let advanced = cities.filter(s => s.tier >= 3).length;
+      for (const s of nearFront) {
+        if (advanced >= Math.max(6, Math.ceil(cities.length / 8))) break;
+        if (s.tier < 3) { raiseFactory(s, 3); advanced++; }
+      }
+    }
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
   function nearest(g, p, test) {
@@ -3701,6 +3808,8 @@
     }
     setupSakuradite(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
+    convertConquestEliteStarts(g); // Also converts every Challenge-style land reinforcement.
+    prepareEliteConquestFactories(g);
     for (const u of g.units)
       if (u.cmd) {
         u.cmdRank = g.officers[u.cmd].rank;
@@ -3995,6 +4104,8 @@
     elitePrice,
     eliteDeployReason,
     deployElite,
+    aiEliteRecruitReason,
+    recruitAIElite,
     unitStats,
     applyElites,
     lineupOf,
@@ -4192,6 +4303,10 @@
     value: {
       COMMANDERS,
       ELIMINATOR,
+      ELITE_FORCES,
+      aiEliteRecruitReason,
+      recruitAIElite,
+      elitePrice,
       TERRAIN,
       cityBusyReason,
       key,

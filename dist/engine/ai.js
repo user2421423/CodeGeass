@@ -6,6 +6,7 @@
   const {
     COMMANDERS,
     ELIMINATOR,
+    ELITE_FORCES,
     TERRAIN,
     cityBusyReason,
     key,
@@ -35,6 +36,9 @@
     deployReason,
     deployTargets,
     deployTargetsAt,
+    aiEliteRecruitReason,
+    recruitAIElite,
+    elitePrice,
     depositHost,
     depositOwner,
     dist,
@@ -1562,6 +1566,52 @@
       return existing < desired;
     };
     const menuOf = s => {
+      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+        const theater = serves(s),
+          needed = theater?.need || [],
+          anchor = theater?.rally || theater?.anchor || s,
+          enemy = (theater?.enemies?.length ? theater.enemies : foes.filter(u => dist(g, u, s) <= 9))
+            .filter(u => !TYPES[u.type].naval),
+          ally = own().filter(u => !TYPES[u.type].naval && dist(g, u, anchor) <= 10),
+          branchCount = branch => ally.filter(u => TYPES[u.type].branch === branch).length,
+          enemyCount = branch => enemy.filter(u => TYPES[u.type].branch === branch).length,
+          attacked = enemy.some(u => dist(g, u, s) <= 3),
+          defensive = attacked || theater?.type === 'defensive',
+          fortified = theater?.type === 'offensive' && (theater.objectives || []).some(o => o.fortified);
+        // Prefer classes requested by an actual front. Adjust for missing
+        // artillery/infantry/armor, enemy threats and fortified objectives.
+        // The small per-factory tie break prevents identical spam from every city.
+        const score = id => {
+          const t = TYPES[ELITE_FORCES[id].type],
+            rank = needed.indexOf(t.cls),
+            total = Math.max(1, ally.length),
+            desired = t.branch === 'Armor' ? 0.50 : t.branch === 'Artillery' ? 0.25 : 0.25,
+            scarcity = desired - branchCount(t.branch) / total;
+          let value = (rank < 0 ? 0 : 36 - rank * 4) + scarcity * 28;
+          if (fortified && t.branch === 'Artillery') value += 25;
+          if (fortified && t.cls === 'super') value += 11;
+          if (defensive && t.branch === 'Armor') value += 9;
+          if (defensive && t.branch === 'Infantry') value += 5;
+          if (enemyCount('Armor') > enemyCount('Infantry') && t.cls === 'super') value += 12;
+          if (enemyCount('Infantry') > enemyCount('Armor') && t.branch === 'Artillery') value += 12;
+          if (enemyCount('Artillery') && (t.cls === 'raider' || t.cls === 'assault')) value += 10;
+          if (!theater && !attacked && t.branch === 'Infantry') value += 4;
+          // Never ignore a front's demand, but avoid filling an entire theater
+          // with the first highly rated unit. Recent builds count, not the
+          // diverse historical starting army; revisit demand after each build.
+          const alreadyBuilt = own().filter(u => u.elite === id && !u.eliteStart).length;
+          value -= Math.min(42, alreadyBuilt * 10);
+          if (s.tier >= 3 && t.tier >= 3) value += 12;
+          // Premium frames against active threats; lighter forces for quiet fronts.
+          if (enemy.length || fortified) value += t.tier * 2;
+          const hash = [...id].reduce((v, ch) => v + ch.charCodeAt(0), 0);
+          return value + ((s.id * 13 + g.turn * 7 + hash) % 13) / 6;
+        };
+        return Object.keys(ELITE_FORCES)
+          .filter(id => ELITE_FORCES[id].availableTo.includes(side) &&
+            TYPES[ELITE_FORCES[id].type].tier <= s.tier)
+          .sort((a, b) => score(b) - score(a) || a.localeCompare(b));
+      }
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
@@ -1589,6 +1639,20 @@
         spot = reach && adjacent(g, s)
           .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
           .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+      if (g.mode === 'conquest' && g.difficulty === 'elite') {
+        for (const id of menu) {
+          const cost = elitePrice(id, 1);
+          if (!affordable(cost) || aiEliteRecruitReason(g, s, id, spot ? vacating : null)) continue;
+          if (vacating) {
+            if (!spot) continue;
+            const m = move(g, vacating.id, spot.c, spot.r);
+            if (!m.ok) continue;
+            g.vacated.push({ id: vacating.id, orders: [{ kind: 'move', ...m, id: vacating.id }] });
+          }
+          if (recruitAIElite(g, s.id, id).ok) return true;
+        }
+        return false;
+      }
       for (const type of menu)
         for (const n of sizes) {
           const c = price(type, n, g, side);
@@ -1608,12 +1672,18 @@
         }
       return false;
     };
-    const menus = new Map(yards.map(s => [s, menuOf(s)]));
-    for (const s of yards) tryBuild(s, menus.get(s), [3, 2]);
-    // Only factories that have not produced this turn get the single-frame
-    // fallback. Respect the same affordability and reserve checks as above.
-    for (const s of yards)
-      if (s.producedTurn !== g.turn) tryBuild(s, menus.get(s), [1]);
+    if (g.mode === 'conquest' && g.difficulty === 'elite') {
+      // Re-evaluate after each successful purchase: elite role shortages and
+      // production diversity change as new units join the theater.
+      for (const s of yards) tryBuild(s, menuOf(s), [1]);
+    } else {
+      const menus = new Map(yards.map(s => [s, menuOf(s)]));
+      for (const s of yards) tryBuild(s, menus.get(s), [3, 2]);
+      // Only factories that have not produced this turn get the single-frame
+      // fallback. Respect the same affordability and reserve checks as above.
+      for (const s of yards)
+        if (s.producedTurn !== g.turn) tryBuild(s, menus.get(s), [1]);
+    }
   }
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);

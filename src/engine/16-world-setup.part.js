@@ -22,6 +22,19 @@
   // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
   const DIFFICULTIES = {
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
+    elite: {
+      name: 'Elite',
+      level: 3,
+      tokens: 2.5,
+      techTier: 4,
+      upgradeEvery: 1,
+      extraPer: 2,
+      stack: true,
+      ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
+      income: 1.25,
+      preserveNaval: true,
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+    },
     hard: {
       name: 'Hard',
       level: 1,
@@ -41,11 +54,40 @@
       upgradeEvery: 1,
       extraPer: 2,
       stack: true,
-      ranks: RANKS.length - 1, // Every starting rank reaches Marshal.
+      ranks: PROMOTE_COST.length - 1, // Every starting rank reaches Marshal.
       income: 1.25,
       desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
     },
   };
+  function eliteConquest(g) {
+    return g?.mode === 'conquest' && g.difficulty === 'elite';
+  }
+  // The player's unique factory deployment allowance is separate from
+  // starting formations. Preplaced elite frames never consume it.
+  function convertConquestEliteStarts(g) {
+    if (!eliteConquest(g)) return;
+    const used = {};
+    for (const u of g.units) {
+      const original = TYPES[u.type];
+      if (!original || original.naval) continue; // ships/amphibious unchanged
+      const faction = Object.entries(ELITE_FORCES).filter(([, e]) => e.availableTo.includes(u.side));
+      // Neutral guards use elite templates but keep their neutral allegiance.
+      const pool = faction.length ? faction : Object.entries(ELITE_FORCES);
+      const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
+      const sameBranch = pool.filter(([, e]) => TYPES[e.type].branch === original.branch);
+      const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
+      const id = choices[(used[u.side] || 0) % choices.length][0];
+      used[u.side] = (used[u.side] || 0) + 1;
+      u.type = ELITE_FORCES[id].type;
+      u.elite = id;
+      u.eliteLevel = 1;
+      u.eliteStart = true;
+      // Challenge grants additional frames to starting enemy formations, not the player's.
+      u.stack = u.side === g.player ? 1 : Math.max(1, Math.min(3, u.stack || 1));
+      u.hpTech = hullTech(g, u);
+      u.hp = maxHP(u);
+    }
+  }
   // One class up within each branch: a scout becomes an assault frame, a line frame a mainline frame, and so on.
   const UPGRADE = {
     scout: 'assault',
@@ -73,13 +115,13 @@
   }
   function harden(g, d) {
     const foes = [...MAJORS, 'neutral'].filter(side => side !== g.player),
-      enemyUnits = g.units.filter(u => foes.includes(u.side));
+      enemyUnits = g.units.filter(u => foes.includes(u.side) && (!d.preserveNaval || !TYPES[u.type].naval));
     for (const side of foes) {
       g.tech[side] = techUpToTier(d.techTier);
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if (a.side !== g.player) g.officers[k].rank = Math.min(RANKS.length - 1, g.officers[k].rank + d.ranks);
+      if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
       if (d.stack) u.stack = Math.min(3, u.stack + 1);
@@ -107,6 +149,35 @@
         u.hp = maxHP(u);
       }
     g.stations.forEach(st => fortify(g, st));
+  }
+  // All Elite Conquest cities (including the player's and neutral cities) start
+  // at factory Tier II or higher. Elite rivals retain their extra Tier III hubs.
+  // Use the ordinary building calculations so displayed tier, yields and shields
+  // agree; a raw change to s.tier would leave these statistics out of sync.
+  function prepareEliteConquestFactories(g) {
+    if (!eliteConquest(g)) return;
+    const raiseFactory = (s, tier) => {
+      if (s.tier >= tier) return;
+      const oldShield = s.shield, oldMaxShield = s.maxShield;
+      buildingFoundation(g, s); // Snapshot the original city's Tier-I/II foundations.
+      s.tier = tier;
+      syncBuildings(g, s);
+      // Equivalent to buying the missing factory upgrades: newly gained
+      // shield capacity starts repaired, while existing damage stays intact.
+      s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
+    };
+    for (const s of g.stations) raiseFactory(s, 2);
+    for (const side of MAJORS.filter(s => s !== g.player)) {
+      const cities = g.stations.filter(s => s.owner === side);
+      const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
+      const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
+      const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
+      let advanced = cities.filter(s => s.tier >= 3).length;
+      for (const s of nearFront) {
+        if (advanced >= Math.max(6, Math.ceil(cities.length / 8))) break;
+        if (s.tier < 3) { raiseFactory(s, 3); advanced++; }
+      }
+    }
   }
   // Nearest tile to p (breadth-first, wrapping) that passes test.
   function nearest(g, p, test) {
@@ -271,6 +342,8 @@
     }
     setupSakuradite(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
+    convertConquestEliteStarts(g); // Also converts every Challenge-style land reinforcement.
+    prepareEliteConquestFactories(g);
     for (const u of g.units)
       if (u.cmd) {
         u.cmdRank = g.officers[u.cmd].rank;

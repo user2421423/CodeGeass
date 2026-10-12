@@ -84,7 +84,7 @@
       (g.over ? 'Operation over' : s.owner !== g.phase ? 'Not your city' : null) ||
       cityBusyReason(g, s) ||
       (!e.availableTo.includes(s.owner) ? 'This Elite Force is not available to this faction' : null) ||
-      (!rec?.level ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
+      (!rec?.level && !eliteConquest(g) ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
       (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
       (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
@@ -100,7 +100,8 @@
       rec = eliteRecord(profile, id),
       options = recruitOptions(g, s, s.owner),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = elitePrice(id, rec.level);
+      level = Math.max(1, rec.level || 1),
+      cost = elitePrice(id, level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     spend(funds(g, s.owner), cost);
     s.producedTurn = g.turn;
@@ -108,9 +109,39 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = rec.level;
+    u.eliteLevel = level;
     u.hp = maxHP(u);
-    log(g, `${TYPES[e.type].name} · Elite Lv.${rec.level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    log(g, `${TYPES[e.type].name} · Elite Lv.${level} deploys at ${s.name}. Ready next turn.`, s.owner);
+    return { ok: true, unit: u, cost };
+  }
+  // Rival factories can repeat Elite Forces indefinitely, but each frame must
+  // satisfy its factory tier just as it does for a player.
+  function aiEliteRecruitReason(g, s, id, vacating = null) {
+    const e = ELITE_FORCES[id];
+    if (!eliteConquest(g) || !s || !e || s.owner === g.player ||
+        !MAJORS.includes(s.owner) || !e.availableTo.includes(s.owner))
+      return 'Not an AI elite factory in Elite Conquest';
+    return (
+      turnReason(g, s.owner) ||
+      cityBusyReason(g, s) ||
+      (s.tier < TYPES[e.type].tier ? `Requires factory level ${TYPES[e.type].tier}` : null) ||
+      (s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      (!recruitOptions(g, s, s.owner).length && !(vacating && unitAt(g, s) === vacating)
+        ? 'A unit is on the city' : null) ||
+      shortfall(funds(g, s.owner), elitePrice(id, 1))
+    );
+  }
+  function recruitAIElite(g, stationId, id) {
+    const s = g.stations.find(v => v.id === stationId);
+    const why = aiEliteRecruitReason(g, s, id);
+    if (why) return { ok: false, reason: why };
+    const p = recruitOptions(g, s, s.owner)[0],
+      e = ELITE_FORCES[id],
+      cost = elitePrice(id, 1);
+    spend(funds(g, s.owner), cost);
+    s.producedTurn = g.turn;
+    const u = newUnit(g, e.type, s.owner, p.c, p.r, 1, null, false);
+    log(g, `${TYPES[e.type].name} · Elite Lv.1 deploys at ${s.name}. Ready next turn.`, s.owner);
     return { ok: true, unit: u, cost };
   }
   function unitStats(g, u) {
