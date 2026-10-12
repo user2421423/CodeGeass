@@ -368,6 +368,11 @@
       for (const n of E.within(g, t, 2)) if (!E.isSea(n) && !E.TERRAIN[n.terrain]?.blocked && !n.owner) n.owner = owner;
       t.owner = owner;
     }
+    // Existing Tier-I factories cannot produce any current land Elite Force.
+    // Bring Elite-only missions up to the minimum legal tier (as Elite Conquest does);
+    // no new cities are added and higher-tier elites still require Tier III.
+    if (isEliteCampaign(g))
+      for (const station of g.stations) E.raiseFactoryTier(g, station, 2);
     for (const spec of m.units) placeUnit(g, spec);
     addDifficultyReinforcements(g, d);
     fire(g, ev => ev.turn === 1 || ev.start);
