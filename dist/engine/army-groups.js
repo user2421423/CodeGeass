@@ -18,7 +18,9 @@
     const seen = new Set();
     for (const gr of groups(g)) {
       gr.units = (gr.units || []).filter(id => {
-        const alive = g.units.some(u => u.id === id && u.hp > 0 && u.side === gr.side);
+        // Keep members aboard carriers: they retain their IDs and rejoin the map when deployed.
+        const alive = g.units.some(u => (u.id === id && u.hp > 0 && u.side === gr.side) ||
+          (u.cargo || []).some(v => v.id === id && v.hp > 0 && v.side === gr.side));
         if (!alive || seen.has(id)) return false;
         seen.add(id);
         return true;
