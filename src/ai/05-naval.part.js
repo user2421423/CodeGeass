@@ -48,6 +48,7 @@
     // Where a carrier can wait off a shore: open water or a coast hex, next to land troops can reach.
     return memo.coasts ||= g.tiles.filter(p => navigable(p) && !stationAt(g, p) && adjacent(g, p).some(n => !isSea(n) && !TERRAIN[n.terrain]?.blocked));
   }
+  const WAVE_WAIT = 2; // turns a loaded carrier may hold on a beach for a second wave
   function aiCarrier(g, u, memo, events, fieldAt) {
     // Escorting is a fallback: a transport only escorts once the boarding
     // planner below finds no troops anywhere that need a lift and no staging
@@ -134,17 +135,26 @@
         if (team && seeds.length) team.landing = seeds[0][0];
         followSea(seeds);
       }
-      // Briefly assemble a nearby second landing wave instead of drip-feeding
-      // lone transports. Five turns is a hard wait cap, not a required formation.
-      const catchingUp = landingSupport.some(v => {
-        const d = dist(g, v, u);
-        return d > 3 && d <= 6;
-      });
-      if (catchingUp && job.wait < 5 && landing(tile(g, u.c, u.r)) != null) {
-        job.wait++;
+      // Briefly hold for a second wave bound for the same front instead of
+      // drip-feeding lone transports. Only on a quiet beach, only while that
+      // carrier keeps closing in, and never while it is itself holding (so two
+      // carriers cannot wait on each other). The wave timer is separate from
+      // the boarding timer and capped at WAVE_WAIT turns.
+      const spot = tile(g, u.c, u.r), // after any move above
+        atBeach = landing(spot) != null,
+        wave = atBeach && !danger(spot) && (job.waveWait || 0) < WAVE_WAIT && landingSupport
+          .filter(v => isShip(v) && !fleet[v.id]?.waveWait && sameLift(frontOf(g, memo, v.cargo[0]), bound))
+          .map(v => ({ v, d: dist(g, v, u) }))
+          .filter(({ v, d }) => d > 3 && d <= 6 && !(job.waveGap?.id === v.id && d >= job.waveGap.d))
+          .sort((a, b) => a.d - b.d || a.v.id - b.v.id)[0];
+      if (wave) {
+        job.waveWait = (job.waveWait || 0) + 1;
+        job.waveGap = { id: wave.v.id, d: wave.d };
         return true;
       }
-      if (landing(tile(g, u.c, u.r)) != null) aiLaunch(g, u, events, fieldAt, masses);
+      job.waveWait = 0;
+      delete job.waveGap;
+      if (atBeach) aiLaunch(g, u, events, fieldAt, masses);
       if (!u.cargo.length) job.wait = 0;
       return true;
     }
