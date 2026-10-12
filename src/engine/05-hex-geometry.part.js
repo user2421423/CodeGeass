@@ -93,8 +93,11 @@
   function funds(g, side) {
     return g.economy[side];
   }
+  function powersOf(g) { return g?.mode === 'conquest' && Array.isArray(g.majors) ? g.majors : MAJORS; }
+  function isMajor(g, side) { return powersOf(g).includes(side); }
+  function hostilePowers(g, side) { return powersOf(g).filter(other => other !== side && foe(g, other, side)); }
   function alive(g, side) {
-    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
+    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : powersOf(g).includes(side)) && !g.fallen?.[side];
   }
   // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
   function foe(g, a, b) {

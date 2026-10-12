@@ -124,6 +124,10 @@
   root.Knightmare = {
     FACTIONS,
     MAJORS,
+    CONQUESTS,
+    powersOf,
+    hostilePowers,
+    isMajor,
     CLASSES,
     NAVAL,
     PORT,

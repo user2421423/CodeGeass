@@ -67,6 +67,15 @@
     if (g.mode !== 'campaign' && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
+    if (g.mode === 'conquest') {
+      const cfg = CONQUESTS[g.era || 'world'];
+      if (!cfg) return null;
+      g.era = cfg.id;
+      g.majors = [...cfg.majors];
+      g.teams = { ...cfg.teams };
+      g.factions = cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null;
+      if (!cfg.selectable.includes(g.player)) return null;
+    }
     if (g.mode !== 'campaign') {
       migrateCoastalTerrain(g);
       attachUnclaimedNewZealand(g);

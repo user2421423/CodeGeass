@@ -21,7 +21,7 @@
       total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.2:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
-    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
     // Regional operations receive fixed off-map military funding in addition
     // to city output. Captured cities still add (or remove) their normal
@@ -146,7 +146,7 @@
     const naval = !!t.naval,
       producer = naval ? (s.portOwner || s.owner) : s.owner;
     if (producer === g.player || !eliteEligible(g, producer, id) ||
-        (eliteConquest(g) && (naval || !MAJORS.includes(producer))) ||
+        (eliteConquest(g) && (naval || !isMajor(g, producer))) ||
         (eliteScenario(g) && !['britannia', 'bk', 'cf'].includes(producer)) ||
         (eliteCampaign(g) && (naval || (!foe(g, producer, g.player) &&
           !g.campaign?.production?.includes(producer)))) ||

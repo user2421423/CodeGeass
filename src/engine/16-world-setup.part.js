@@ -17,6 +17,8 @@
     },
   };
 
+  ERAS.ufn2018 = { ...CONQUESTS.ufn2018, name: CONQUESTS.ufn2018.title };
+
   // Operation difficulty. Normal is the operation as designed. Hard gives every rival power all tier I–II
   // HQ research, upgrades every other enemy unit one class and adds one unit per four. Challenge gives them all
   // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
@@ -81,7 +83,7 @@
     for (const u of g.units) {
       const original = TYPES[u.type];
       if (!original || original.naval) continue; // ships/amphibious unchanged
-      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side));
+      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side) || (g.era === 'ufn2018' && u.side === 'eb' && e.availableTo.includes('britannia')));
       // Neutral guards use elite templates but keep their neutral allegiance.
       const pool = faction.length ? faction : landElites;
       const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
@@ -124,7 +126,7 @@
     );
   }
   function harden(g, d) {
-    const foes = [...MAJORS, 'neutral'].filter(side => side !== g.player),
+    const foes = [...powersOf(g), 'neutral'].filter(side => side !== g.player),
       enemyUnits = g.units.filter(u => foes.includes(u.side) && (!d.preserveNaval || !TYPES[u.type].naval));
     for (const side of foes) {
       g.tech[side] = techUpToTier(d.techTier);
@@ -177,9 +179,9 @@
   function prepareEliteConquestFactories(g) {
     if (!eliteConquest(g)) return;
     for (const s of g.stations) raiseFactoryTier(g, s, 2);
-    for (const side of MAJORS.filter(s => s !== g.player)) {
+    for (const side of powersOf(g).filter(s => s !== g.player)) {
       const cities = g.stations.filter(s => s.owner === side);
-      const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
+      const enemies = g.stations.filter(s => foe(g, s.owner, side) && isMajor(g, s.owner));
       const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
       const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
       let advanced = cities.filter(s => s.tier >= 3).length;
@@ -279,8 +281,10 @@
     return null;
   }
   // mode: 'conquest' (the world war). The player's faction acts first; rivals follow in a fixed order.
-  function createGame(player = 'britannia', difficulty = 'normal', mode = 'conquest', seed = 246801) {
-    if (!MAJORS.includes(player)) player = 'britannia';
+  function createGame(player = 'britannia', difficulty = 'normal', mode = 'conquest', seed = 246801, conquest = 'world') {
+    const cfg = CONQUESTS[conquest] || CONQUESTS.world;
+    const majors = cfg.majors;
+    if (!cfg.selectable.includes(player)) player = 'britannia';
     const g = {
       game: 'knightmare',
       version: 1,
@@ -288,8 +292,11 @@
       player,
       difficulty,
       mode: 'conquest',
-      era: 'world',
-      order: [player, ...MAJORS.filter(s => s !== player)],
+      era: cfg.id,
+      majors: [...majors],
+      teams: { ...cfg.teams },
+      factions: cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null,
+      order: [player, ...majors.filter(s => s !== player)],
       seed,
       wrap: true,
       cols: WORLD.cols,
@@ -304,9 +311,9 @@
       strikes: [],
       fallen: {},
       economy: Object.fromEntries(
-        [...MAJORS, 'neutral'].map(s => [s, { credits: s === 'neutral' ? 0 : 500, industry: 200, science: 40 }]),
+        [...majors, 'neutral'].map(s => [s, { credits: s === 'neutral' ? 0 : 500, industry: 200, science: 40, ...(cfg.initialTreasury?.[s] || {}) }]),
       ),
-      tech: { britannia: {}, eu: {}, cf: {}, neutral: {} },
+      tech: Object.fromEntries([...majors, 'neutral'].map(s => [s, {}])),
       officers: Object.fromEntries(Object.keys(COMMANDERS).map(k => [k, defaultOfficer(k)])),
       roster: {},
       medalInventory: [],
@@ -328,7 +335,9 @@
     const freeLand = t => !isSea(t) && !TERRAIN[t.terrain].blocked;
     // Cities, mines and starting armies stand on solid land, never on a coast hex.
     const solidLand = t => freeLand(t) && !isCoast(t);
-    for (const [name, lon, lat, owner, tier, capital = false, fort = false, gun] of CITY_DATA) {
+    for (const [name, lon, lat, oldOwner, tier, oldCapital = false, fort = false, gun] of CITY_DATA) {
+      const owner = cfg.ownership?.[name] || oldOwner;
+      const capital = cfg.id === 'ufn2018' ? ['Pendragon', 'St. Petersburg', 'Luoyang'].includes(name) : oldCapital;
       const fixed = COASTAL_CITY_HEXES[name];
       const at = fixed ? tile(g, fixed[0], fixed[1]) :
         nearest(g, hexOf(lon, lat), t => solidLand(t) && !stationAt(g, t));
@@ -350,9 +359,19 @@
         ...cityBase([name, lon, lat, owner, tier, capital, fort]),
         producedTurn: 0,
       };
+      // Occupied Russian/Siberian administrations are less productive than developed Britannian cores.
+      if (cfg.id === 'ufn2018' && owner === 'eb' && name !== 'St. Petersburg') {
+        s.income = Math.round(s.income * 0.75);
+        s.industry = Math.round(s.industry * 0.75);
+      }
       s.shield = s.maxShield;
       setTileTerrain(g, at, 'plains');
       g.stations.push(s);
+    }
+    if (cfg.expectedCities) {
+      const actual = Object.fromEntries([...majors, 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length]));
+      if (g.stations.length !== 168 || Object.keys(cfg.expectedCities).some(side => actual[side] !== cfg.expectedCities[side]))
+        throw new Error('Invalid 2018 conquest territory: ' + JSON.stringify(actual));
     }
     // Territory: each land hex belongs to the nearest city over land. Radius 11 preserves the old geographic reach on the denser map.
     const frontier = g.stations.map(s => ({ t: tile(g, s.c, s.r), owner: s.owner, d: 0 })),
@@ -370,7 +389,7 @@
     }
     for (const [c, r, owner] of TERRITORY) {
       const t = tile(g, c, r);
-      if (t && freeLand(t)) setTileOwner(g, t, owner);
+      if (t && freeLand(t)) setTileOwner(g, t, cfg.id === 'ufn2018' && owner === 'eu' ? 'cf' : owner);
     }
     // Indonesia (including Borneo and its smaller islands) is entirely Chinese
     // Federation at the start of conquest. City-based land floodfill sometimes
@@ -403,15 +422,15 @@
     }
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
-    for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
+    for (const [side, cls, lon, lat, stack, cmd] of (cfg.armies || ARMY_DATA)) {
       const at = nearest(
         g,
         hexOf(lon, lat),
-        t => solidLand(t) && !unitAt(g, t) && (!stationAt(g, t) || stationAt(g, t).owner === side),
+        t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
       );
       if (at) newUnit(g, typeFor(side, cls), side, at.c, at.r, stack, cmd || null);
     }
-    for (const [city, type, stack] of GARRISONS) {
+    for (const [city, type, stack] of (cfg.garrisons || GARRISONS)) {
       const s = g.stations.find(s => s.name === city);
       newUnit(g, type, 'neutral', s.c, s.r, stack);
     }
@@ -419,7 +438,7 @@
       const s = g.stations.find(s => s.name === city);
       if (s) openPort(g, s, level);
     }
-    for (const [side, role, lon, lat, stack] of NAVY_DATA) {
+    for (const [side, role, lon, lat, stack] of (cfg.navy || NAVY_DATA)) {
       const at = nearest(g, hexOf(lon, lat), t => isSea(t) && !unitAt(g, t));
       if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
     }
@@ -432,9 +451,9 @@
         u.cmdRank = g.officers[u.cmd].rank;
         u.hp = maxHP(u);
       }
-    g.startUnits = Object.fromEntries(MAJORS.map(s => [s, g.units.filter(u => u.side === s).length]));
-    log(g, ERAS.world.desc, player);
-    log(g, ERAS.world.rulesText, player);
+    g.startUnits = Object.fromEntries(majors.map(s => [s, g.units.filter(u => u.side === s).length]));
+    log(g, (ERAS[cfg.id] || ERAS.world).desc, player);
+    log(g, (ERAS[cfg.id] || ERAS.world).rulesText, player);
     return g;
   }
 

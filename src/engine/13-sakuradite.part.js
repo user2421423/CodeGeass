@@ -15,7 +15,7 @@
   };
   // Stockpiles and deposits for a new game.
   function setupSakuradite(g) {
-    for (const [side, e] of Object.entries(g.economy)) e.sakuradite ??= MAJORS.includes(side) ? SAKURADITE.start : 0;
+    for (const [side, e] of Object.entries(g.economy)) e.sakuradite ??= isMajor(g, side) ? SAKURADITE.start : 0;
     if (g.sites) return g;
     g.sites = [];
     for (const [name, lon, lat, base, level, terrain] of RESOURCE_SITES) {
@@ -69,7 +69,7 @@
       a = SAKURADITE.allocation;
     if (!owner || !out) return {};
     if (g.mode === 'campaign' || !a.sites.includes(d.name) || !alive(g, owner)) return { [owner]: out };
-    const others = (g.mode === 'scenario' ? g.order : MAJORS).filter(s => s !== owner && alive(g, s)),
+    const others = (g.mode === 'scenario' ? g.order : powersOf(g)).filter(s => s !== owner && alive(g, s)),
       shares = { [owner]: out * (1 - a.share * others.length) };
     for (const s of others) shares[s] = out * a.share;
     return shares;
