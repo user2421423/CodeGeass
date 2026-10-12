@@ -28,7 +28,7 @@
     // 0b. F.L.E.I.J.A.: launch every ready warhead, each at the most valuable target that spares its own units and
     // cities (the UI plays g.launches).
     g.launches = [];
-    while ((g.arsenal?.[side] || 0) > 0 && !g.over) {
+    while (g.mode !== 'scenario' && (g.arsenal?.[side] || 0) > 0 && !g.over) {
       const p = aiLaunchTarget(g, side),
         shot = p && launch(g, side, p.c, p.r);
       if (!shot?.ok) break;
