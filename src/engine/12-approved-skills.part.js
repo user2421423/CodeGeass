@@ -94,6 +94,11 @@
       g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).blackSeaFox&&dist(g,v,target)<=2))m*=.85;
     if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
     if(target.forcedOffensive&&counter)m*=1.2;
+
+    // Ferilli's W-0 telemetry prevents avoidable losses to retaliatory fire.
+    // Passive, non-stacking, and deliberately separate from Sophie's support attacks.
+    if(counter&&direct&&target&&!TYPES[target.type].naval&&
+      g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).counterfireRouting&&dist(g,v,target)<=2))m*=.8;
     return m;
   }
   function newcomerIntercept(g,target,amount){
