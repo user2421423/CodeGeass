@@ -968,6 +968,22 @@
       throw new Error('Not every ' + era + ' commander has a starting deployment');
     return armies;
   }
+  // 2017 only: transfer 32 EU land formations from interior garrisons to the
+  // contiguous Chinese Federation frontier, from the Caucasus to eastern Siberia.
+  // Retain 11 western/EU-capital, wZERO and African reserves. Naval units are unchanged.
+  const worldEuReserves = new Set(["heavy:30.3:59.9","super:2.35:48.85","rocket:0.5:48","medium:-3.6:52.2","support:-5.35:36.1","raider:21:52.2","rocket:18.5:51","medium:23:54","light:20.5:44.8","heavy:31.2:30","scout:-17.4:14.7"]);
+  const worldEuFrontierHexes = [[111,20],[112,19],[112,17],[114,18],[114,16],[115,15],[112,15],[117,14],[118,15],[118,13],[120,13],[122,12],[124,12],[126,12],[128,12],[127,10],[130,12],[132,12],[134,12],[135,11],[137,12],[139,12],[141,12],[144,12],[146,12],[148,10],[151,11],[153,11],[155,11],[157,12],[158,10],[159,9]];
+  let worldEuRebased = 0;
+  for (const army of root.KnightmareData.ARMY_DATA) {
+    if (army[0] !== 'eu' || worldEuReserves.has(`${army[1]}:${army[2]}:${army[3]}`)) continue;
+    const pos = worldEuFrontierHexes[worldEuRebased++];
+    if (!pos) throw new Error('Exceeded 2017 EU China-border deployment slots');
+    const [c, r] = pos;
+    army[2] = -180 + (c + 0.5 + 0.5 * (r & 1)) * 2;
+    army[3] = 74 - r * (128 / 75);
+  }
+  if (worldEuRebased !== worldEuFrontierHexes.length)
+    throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
   const CONQUESTS = {
