@@ -4,6 +4,33 @@ function armyGroupMember(id) {
   return game.units.find(u => u.id === id && u.hp > 0) ||
     game.units.flatMap(u => u.cargo || []).find(u => u.id === id && u.hp > 0) || null;
 }
+function selectedArmyIds() {
+  const chosen = selectedUnit();
+  if (multiSelectedIds.size) return [...multiSelectedIds].filter(id =>
+    game.units.some(u => u.id === id && u.hp > 0 && u.side === game.player));
+  return chosen?.side === game.player ? [chosen.id] : [];
+}
+
+function armyGroupAddSelection(groupId) {
+  if (!interactive()) return;
+  let added = 0, skipped = 0;
+  for (const id of selectedArmyIds()) {
+    const r = E.addArmyGroupUnit(game, groupId, id);
+    if (r.ok) added++;
+    else skipped++;
+  }
+  if (added) refreshAndSave();
+  armyGroupsDialog(groupId);
+  toast(added + ' selected units assigned' + (skipped ? ' · ' + skipped + ' skipped' : '') + '.');
+}
+
+function armyGroupSetStance(groupId, stance) {
+  const r = E.setArmyGroupStance(game, groupId, stance);
+  if (!r.ok) return toast(r.reason);
+  refreshAndSave();
+  armyGroupsDialog(groupId);
+  toast('Stance set to ' + E.ARMY_GROUP_STANCES[stance] + '.');
+}
 function armyGroupForUnit(id) {
   return E.armyGroups(game).find(gr => gr.units.includes(id)) || null;
 }
@@ -26,13 +53,14 @@ function armyGroupsDialog(editId = null) {
   const gr = editId == null ? null : E.armyGroup(game, editId);
   const selected = selectedUnit();
   const chosen = selected?.side === game.player ? selected : null;
+  const chosenIds = selectedArmyIds();
   let content = '';
   if (!gr) {
     content = groups.length ? groups.map(v => {
       const live = v.units.map(armyGroupMember).filter(Boolean);
-      const selectedCanJoin = chosen && !v.units.includes(chosen.id);
-      return `<div class="conquest-row scenario-army-row"><div><label>${live.length} unit${live.length === 1 ? '' : 's'} · ${esc(armyGroupDestination(v))}</label><h3 class="conquest-title">${esc(armyGroupLabel(v))}</h3><p class="mode-note">${live.slice(0,5).map(u => esc(E.TYPES[u.type].name)).join(' · ')}${live.length > 5 ? ' · …' : ''}</p></div><div class="scenario-group-buttons"><button class="small" data-army-focus="${v.id}">Locate</button><button data-army-edit="${v.id}">Manage</button>${selectedCanJoin ? `<button class="small" data-army-add="${v.id}:${chosen.id}">Add selected</button>` : ''}<button class="primary" data-army-route="${v.id}">Set objective</button></div></div>`;
-    }).join('') : '<p>No army groups yet. Create one from your selected Knightmare, or create an empty group first.</p>';
+      const selectedCanJoin = chosenIds.some(id => !v.units.includes(id));
+      return `<div class="conquest-row scenario-army-row"><div><label>${live.length} unit${live.length === 1 ? '' : 's'} · ${esc(E.ARMY_GROUP_STANCES[v.stance || 'advance'])} · ${esc(armyGroupDestination(v))}</label><h3 class="conquest-title">${esc(armyGroupLabel(v))}</h3><p class="mode-note">${live.slice(0,5).map(u => esc(E.TYPES[u.type].name)).join(' · ')}${live.length > 5 ? ' · …' : ''}</p></div><div class="scenario-group-buttons"><button class="small" data-army-focus="${v.id}">Locate</button><button data-army-edit="${v.id}">Manage</button>${selectedCanJoin ? `<button class="small" data-army-add-selection="${v.id}">Add selected (${chosenIds.length})</button>` : ''}<button class="primary" data-army-route="${v.id}">Set objective</button></div></div>`;
+    }).join('') : '<p>No army groups yet. Shift-click your Knightmares on the map to select multiple formations, then create a group.</p>';
   } else {
     const live = gr.units.map(armyGroupMember).filter(Boolean);
     const anchor = live[0] || chosen || game.stations.find(s => s.owner === game.player);
@@ -41,19 +69,21 @@ function armyGroupsDialog(editId = null) {
       .sort((a,b) => (anchor ? E.distance(a, anchor, game) - E.distance(b, anchor, game) : 0) || a.id - b.id)
       .slice(0,48);
     const row = u => `<div class="conquest-row scenario-army-row"><div><label>${esc(F(u.side).short)} · ${u.c},${u.r}${!game.units.includes(u) ? ' · Aboard carrier' : ''}${u.cmd ? ' · ' + esc(C(u.cmd)?.short || u.cmd) : ''}</label><strong>${esc(unitName(u))} ×${u.stack}</strong></div><div><button class="small" data-army-${gr.units.includes(u.id) ? 'remove' : 'add'}="${gr.id}:${u.id}">${gr.units.includes(u.id) ? 'Remove' : 'Add'}</button></div></div>`;
-    content = `<div class="conquest-row"><div><label>Current objective</label><h3 class="conquest-title">${esc(armyGroupDestination(gr))}</h3><p class="mode-note">${live.length}/24 units. Units continue to be selectable and controllable individually; manually changing a unit's standing order overrides its group destination until the next group order.</p></div><div class="scenario-group-buttons"><button class="primary" data-army-route="${gr.id}">Set objective</button>${gr.destination ? `<button data-army-cancel="${gr.id}">Cancel group order</button>` : ''}</div></div><div class="dialog-head"><div><h3>Assigned units</h3><p>${live.length ? 'Remove a unit without affecting the rest of the group.' : 'Choose units below to build this group.'}</p></div></div><div style="max-height:30vh;overflow-y:auto">${live.map(row).join('') || '<p class="mode-note">None assigned.</p>'}</div><div class="dialog-head"><div><h3>Available Knightmares</h3><p>Nearest available units are listed first. Use Add nearby for units within five hexes of the first member.</p></div><button class="small" data-army-nearby="${gr.id}">Add nearby</button></div><div style="max-height:29vh;overflow-y:auto">${available.map(row).join('') || '<p class="mode-note">No available units.</p>'}</div><div class="dialog-footer"><button class="ghost" data-army-disband="${gr.id}">Disband group</button><button data-action="army-groups">Back to groups</button></div>`;
+    content = `<div class="conquest-row"><div><label>Current objective</label><h3 class="conquest-title">${esc(armyGroupDestination(gr))}</h3><p class="mode-note">${live.length}/24 units. Units continue to be selectable and controllable individually; manually changing a unit's standing order overrides its group destination until the next group order.</p></div><div class="scenario-group-buttons"><button class="primary" data-army-route="${gr.id}">Set objective</button>${gr.destination ? `<button data-army-cancel="${gr.id}">Cancel group order</button>` : ''}</div></div><div class="dialog-head"><div><h3>Stance: ${esc(E.ARMY_GROUP_STANCES[gr.stance || 'advance'])}</h3><p>Advance moves only · Defend holds and fires · Assault advances and fires.</p></div><div class="scenario-group-buttons">${Object.entries(E.ARMY_GROUP_STANCES).map(([stance, title]) => `<button class="${(gr.stance || 'advance') === stance ? 'primary' : 'small'}" data-army-stance="${gr.id}:${stance}" ${!interactive() ? 'disabled' : ''}>${title}</button>`).join('')}</div></div><div class="dialog-head"><div><h3>Assigned units</h3><p>${live.length ? 'Remove a unit without affecting the rest of the group.' : 'Choose units below to build this group.'}</p></div></div><div style="max-height:30vh;overflow-y:auto">${live.map(row).join('') || '<p class="mode-note">None assigned.</p>'}</div><div class="dialog-head"><div><h3>Available Knightmares</h3><p>Nearest available units are listed first. Use Add nearby for units within five hexes of the first member.</p></div><div class="scenario-group-buttons"><button class="small" data-army-add-selection="${gr.id}" ${!chosenIds.length || !interactive() ? 'disabled' : ''}>Add selected (${chosenIds.length})</button><button class="small" data-army-nearby="${gr.id}">Add nearby</button></div></div><div style="max-height:29vh;overflow-y:auto">${available.map(row).join('') || '<p class="mode-note">No available units.</p>'}</div><div class="dialog-footer"><button class="ghost" data-army-disband="${gr.id}">Disband group</button><button data-action="army-groups">Back to groups</button></div>`;
   }
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Army groups"><div class="dialog-head"><div><div class="eyebrow">World conquest · Operational command</div><h2>${gr ? esc(armyGroupLabel(gr)) : 'Army Groups'}</h2><p>Organize up to 12 groups of 24 formations. Select a map destination to issue standing orders. Units advance at the beginning of your turns, but never attack automatically.</p></div><button class="small close" data-action="close">Close</button></div>${content}${gr ? '' : `<div class="dialog-footer"><button class="primary" data-action="army-create" ${!interactive() ? 'disabled' : ''}>Create army group${chosen ? ' with selected unit' : ''}</button></div>`}</section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Army groups"><div class="dialog-head"><div><div class="eyebrow">World conquest · Operational command</div><h2>${gr ? esc(armyGroupLabel(gr)) : 'Army Groups'}</h2><p>Shift-click Knightmares to multi-select. Advance moves only; Defend holds and fires; Assault advances and fires. Orders execute at turn start or when you click Do all orders now.</p></div><button class="small close" data-action="close">Close</button></div>${content}${gr ? '' : `<div class="dialog-footer"><button class="primary" data-action="army-create" ${!interactive() ? 'disabled' : ''}>Create army group${chosen ? ' with selected unit' : ''}</button></div>`}</section></div>`;
   focusDialog();
 }
 
 function armyGroupCreate() {
   const u = selectedUnit();
-  const r = E.createArmyGroup(game, u?.side === game.player ? u.id : null);
+  const chosen = selectedArmyIds();
+  const r = E.createArmyGroup(game, chosen[0] || null);
   if (!r.ok) return toast(r.reason);
+  for (const id of chosen.slice(1, 24)) E.addArmyGroupUnit(game, r.group.id, id);
   refreshAndSave();
   armyGroupsDialog(r.group.id);
-  toast(armyGroupLabel(r.group) + ' formed.');
+  toast(armyGroupLabel(r.group) + ' formed with ' + r.group.units.length + ' units.');
 }
 
 function armyGroupStartRouting(id) {
