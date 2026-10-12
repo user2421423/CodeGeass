@@ -83,7 +83,7 @@
   function newcomerDefense(g,target,attacker,counter,direct){
     let m=1;
     if(g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
-    if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.coast)m*=.8;
+    if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=.8;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
     if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
     if(target.forcedOffensive&&counter)m*=1.2;
