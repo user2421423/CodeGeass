@@ -156,11 +156,23 @@
     }
     gr.autoConquer = !!enabled;
     gr.autoRouted = {};
+    gr.manualOverrides = {};
     gr.destination = null;
     gr.targetStationId = null;
     gr.autoStatus = enabled ? 'Choosing a city' : '';
     if (enabled) gr.stance = 'advance'; // no automatic attacks in this order
     return { ok: true };
+  }
+  function suspendConquestUnit(g, id) {
+    for (const gr of groups(g)) {
+      if (!gr.autoConquer || !gr.units.includes(id)) continue;
+      (gr.manualOverrides ||= {})[id] = true;
+      const u = g.units.find(v => v.id === id);
+      if (matches(u, gr.autoRouted?.[id])) delete u.goto;
+      if (gr.autoRouted) delete gr.autoRouted[id];
+      return true;
+    }
+    return false;
   }
   function planConquests(g, side) {
     if (g.mode !== 'conquest' || g.over || g.phase !== side || side !== g.player) return;
@@ -168,46 +180,59 @@
     const cities = g.stations.filter(s => foeSide(g, s.owner, side) &&
       E.tile(g, s.c, s.r) && !E.TERRAIN[E.tile(g, s.c, s.r).terrain]?.blocked);
     const reserved = new Set();
-    const active = groups(g).filter(gr => gr.side === side && gr.autoConquer).sort((a,b)=>a.id-b.id);
+    const active = groups(g).filter(gr => gr.side === side && gr.autoConquer).sort((a, b) => a.id - b.id);
     for (const gr of active) {
-      const members = gr.units.map(id => g.units.find(u => u.id === id && u.hp > 0 && u.side === side)).filter(Boolean);
-      const eligible = members.filter(u => E.canCapture(u) && E.TYPES[u.type].naval !== 'ship' &&
-        (!u.goto || matches(u, gr.autoRouted?.[u.id])));
-      if (!eligible.length) { gr.autoStatus = 'Waiting for capturable units or manual orders'; continue; }
-      const possible = cities.map(s => {
-        const routes = eligible.filter(u => u.c === s.c && u.r === s.r ||
-          !E.gotoReason(g, u, E.tile(g, s.c, s.r)));
-        return { s, routes, score: routes.length ? Math.min(...routes.map(u => E.distance(u, s, g))) +
-          (reserved.has(s.id) ? 250 : 0) : Infinity };
-      }).filter(v=>Number.isFinite(v.score))
-        .sort((x,y)=>x.score-y.score || x.s.id-y.s.id);
-      const current = possible.find(v => v.s.id === gr.targetStationId && !reserved.has(v.s.id));
-      const choice = current || possible[0];
-      if (!choice) {
+      const members = gr.units.map(id => g.units.find(u => u.id === id && u.hp > 0 && u.side === side)).filter(Boolean),
+        manual = gr.manualOverrides || {},
+        prior = (gr.autoRouted ||= {}),
+        available = members.filter(u => !manual[u.id] && (!u.goto || matches(u, prior[u.id]))),
+        capturers = available.filter(u => E.canCapture(u) && E.TYPES[u.type].naval !== 'ship');
+      if (!capturers.length) {
+        gr.autoStatus = 'Waiting for capturable units or manual orders';
+        continue;
+      }
+      // Keep the previous objective while it remains hostile and unclaimed by
+      // another group. Only perform costly route searches when selecting a new city.
+      let city = cities.find(s => s.id === gr.targetStationId && !reserved.has(s.id));
+      if (!city) {
+        const choices = cities.map(s => ({
+          s,
+          score: Math.min(...capturers.map(u => E.distance(u, s, g))) +
+            (reserved.has(s.id) ? 250 : 0),
+        })).sort((a, b) => a.score - b.score || String(a.s.id).localeCompare(String(b.s.id)));
+        // Usually the nearest feasible target wins; unreachable terrain does not
+        // lead to futile repeated moves. The exact engine remains authoritative.
+        for (const v of choices) {
+          const p = E.tile(g, v.s.c, v.s.r);
+          if (capturers.some(u => (u.c === p.c && u.r === p.r) || !E.gotoReason(g, u, p))) {
+            city = v.s;
+            break;
+          }
+        }
+      }
+      if (!city) {
         gr.autoStatus = cities.length ? 'Blocked: no reachable enemy city' : 'No remaining enemy cities';
         gr.targetStationId = null;
         gr.destination = null;
         continue;
       }
-      const city = choice.s, goal = { c: city.c, r: city.r };
       reserved.add(city.id);
-      const prior = gr.autoRouted || {};
-      for (const u of members) {
-        const wasOurs = matches(u, prior[u.id]);
-        if (u.goto && !wasOurs) continue; // manual unit destination wins
-        if (u.goto && wasOurs && !matches(u, goal)) delete u.goto;
-        if (u.c === goal.c && u.r === goal.r) { delete u.goto; delete prior[u.id]; continue; }
+      const goal = { c: city.c, r: city.r };
+      for (const u of available) {
+        if (matches(u, goal)) { prior[u.id] = goal; continue; }
+        if (u.goto && matches(u, prior[u.id])) delete u.goto;
+        if (u.c === goal.c && u.r === goal.r) { delete prior[u.id]; continue; }
+        // Non-capturing supporting units are moved too, where terrain allows.
         if (E.gotoReason(g, u, E.tile(g, goal.c, goal.r))) continue;
-        const r = E.setGoto(g, u.id, goal.c, goal.r);
-        if (r.ok) prior[u.id] = goal;
+        if (E.setGoto(g, u.id, goal.c, goal.r).ok) prior[u.id] = goal;
       }
-      gr.autoRouted = prior;
       gr.destination = goal;
       gr.targetStationId = city.id;
-      const defended = city.shield > 0 || !!E.unitAt(g, goal) && E.unitAt(g, goal).side !== side;
-      const near = eligible.some(u => E.distance(u, goal, g) <= 1);
+      const occupant = E.unitAt(g, goal);
+      const defended = city.shield > 0 || !!occupant && E.foe(g, occupant.side, side);
+      const near = capturers.some(u => E.distance(u, goal, g) <= 1);
       gr.autoStatus = defended && near ? 'Combat required (manual attacks)' :
-        members.some(u => matches(u, goal) && !u.moved) ? 'Advancing' : 'Waiting or blocked';
+        available.some(u => matches(u, goal) && !u.moved) ? 'Advancing' : 'Waiting or blocked';
     }
   }
   function foeSide(g, owner, side) {
@@ -246,6 +271,7 @@
     }
     return report;
   }
+  E.suspendArmyGroupConquestUnit = suspendConquestUnit;
   E.setArmyGroupConquest = setConquest;
   E.planArmyGroupConquest = planConquests;
   E.ARMY_GROUP_STANCES = STANCES;
