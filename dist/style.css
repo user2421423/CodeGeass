@@ -1275,6 +1275,18 @@ a {
   gap: 12px;
   margin: 14px 0 20px;
 }
+.scenario-select .choice-grid.two {
+  grid-template-columns: repeat(2, minmax(0,1fr));
+}
+.scenario-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.scenario-select .faction.eb {
+  border-top-color: #a77be8;
+}
 .scenario-select .faction {
   padding: 14px;
 }
@@ -1289,7 +1301,8 @@ a {
   border-top-color: #f0c94a;
 }
 @media(max-width: 760px) {
-  .scenario-select .choice-grid {
+  .scenario-select .choice-grid,
+  .scenario-select .choice-grid.two {
     grid-template-columns: 1fr;
   }
   .scenario-select .scenario-preview-map {
