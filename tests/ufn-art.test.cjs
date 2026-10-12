@@ -52,3 +52,12 @@ test('Conquest-only art alias preserves political teal and other factions', () =
   assert.match(paint, /PLATE\[artSide\(u\.side\)\]\.light/);
   assert.match(read('dist/engine/conquests.js'), /color: '#37bfa9'/);
 });
+
+test('Regular Black Knights carrier renders the same published sprite as other carriers', () => {
+  ART.useLocal(JSON.parse(read('dist/assets/art/manifest.json')));
+  const standard = ART.unit('cf_carrier', '', 'cf');
+  const blackKnights = ART.unit('bk_carrier', '', 'bk');
+  assert.match(standard, /generic_carrier-bf5e0799d818\.png/);
+  assert.match(blackKnights, /generic_carrier-bf5e0799d818\.png/);
+  assert.match(blackKnights, /<img src=/, 'the Black Knights carrier needs visible published art');
+});
