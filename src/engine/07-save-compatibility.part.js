@@ -84,7 +84,7 @@
       if (elite) {
         u.elite = elite;
         u.eliteLevel ||= 1;
-        g.eliteDeployed[elite] = true;
+        if (!eliteConquest(g) || !u.eliteStart) g.eliteDeployed[elite] = true;
       }
       // Older saves left carried units at the hex where they boarded.
       for (const c of u.cargo || []) {
