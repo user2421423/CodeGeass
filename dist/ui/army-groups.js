@@ -123,3 +123,38 @@ function armyGroupAddNearby(id) {
   armyGroupsDialog(id);
   toast(added ? added + ' nearby units added.' : 'No unassigned units within five hexes.');
 }
+
+function runPlayerAutomatedOrders() {
+  const combatBefore = combatVisualSnapshot();
+  const orders = E.runGotos(game, game.player);
+  for (const m of orders.moved) {
+    effects.push({ kind: 'move', unitId: m.id, from: m.from, to: m.to,
+      color: F(game.player).color, life: 0.6, max: 0.6 });
+  }
+  if (orders.moved.length) SFX.play('move', game.player);
+  const fire = E.runArmyGroupFire(game, game.player);
+  orders.fired = fire.fired;
+  for (const shot of fire.fired) {
+    const attacker = game.units.find(u => u.id === shot.id && u.hp > 0);
+    if (attacker) addCombatEffects(shot, attacker, combatBefore);
+  }
+  return orders;
+}
+
+function executeAllOrdersNow() {
+  if (!interactive()) return;
+  if (armyGroupRouting || routing || scenarioRoutingGroup || strikeMode || deploying) {
+    toast('Finish or cancel destination targeting before executing orders.');
+    return;
+  }
+  // Auto-movement uses the same rules as turn-start orders and cannot be undone.
+  undoStack = [];
+  const report = runPlayerAutomatedOrders();
+  const moved = report.moved.length, fired = report.fired.length;
+  refreshAndSave();
+  const annexed = report.moved.find(m => m.annexed)?.annexed;
+  if (annexed) annexNotice(annexed);
+  if (moved || fired)
+    toast('Orders executed: ' + moved + ' units moved, ' + fired + ' attacks. Each automated movement/attack is limited to once per turn.', true);
+  else toast('No eligible orders: units have already moved, fired, reached their destinations, or are blocked.');
+}
