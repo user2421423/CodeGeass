@@ -245,7 +245,11 @@
     // affordable, so coastal construction cannot starve the field army.
     const navy = g.mode !== 'campaign' && NAVAL[side];
     if (navy) {
-      const coastal = bases.filter(s => portSite(g, s)),
+      const coastal = [
+          ...bases.filter(s => portSite(g, s)),
+          // Captured shipyards remain available while their cities are still enemy-held.
+          ...g.stations.filter(s => s.owner !== side && s.portAt && s.portLevel && (s.portOwner || s.owner) === side),
+        ],
         availableFleet = own().filter(u => !!TYPES[u.type].naval),
         navalThreats = foes.filter(u => TYPES[u.type].naval &&
           coastal.some(s => dist(g, s, u) <= aiRange(g).enemyScan)),
@@ -264,7 +268,7 @@
         navyAffordable = c => affordable(c) &&
           spendable() - c.credits >= ordinaryBudget.credits &&
           e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry,
-        ownedPorts = () => coastal.filter(s => s.portLevel && s.portOwner === side),
+        ownedPorts = () => coastal.filter(s => s.portLevel && (s.portOwner || s.owner) === side),
         fleetCount = (...roles) => availableFleet.filter(u => roles.some(r => u.type === navy[r])).length;
 
       const ports = ownedPorts();

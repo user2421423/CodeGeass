@@ -115,6 +115,11 @@
       for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired', 'despairWeakened']) if (v[field]?.side === side) delete v[field];
     }
     for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
+    // Off-map passengers have no terrain, morale or healing effects, but their
+    // commander action cooldown advances on their faction's turn.
+    for (const ship of g.units) if (ship.side === side)
+      for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
+        passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
     for (const u of mine) {
       u.entrenched = false;

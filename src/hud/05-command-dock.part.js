@@ -20,7 +20,7 @@ function dockHTML() {
   }
   const pt = selectedPort();
   if (pt)
-    return `<div class="dock-visual mine-visual">${ART.building('port', 'dock-mine') || '⚓'}<span class="faction-flag ${pt.owner}">${F(pt.owner).letter}</span></div><div class="dock-unit"><span class="label">Port · Level ${pt.portLevel}</span><strong>Port of ${esc(pt.name)}</strong><p>One naval unit a turn, separate from the city factory.</p></div><div class="dock-actions">${pt.owner === game.player ? act(`data-shop-port="${pt.id}"`, 'Shipyard', portReason(pt), '', 'primary') : ''}<button class="small" data-action="details">Port details</button></div>`;
+    return `<div class="dock-visual mine-visual">${ART.building('port', 'dock-mine') || '⚓'}<span class="faction-flag ${pt.portOwner || pt.owner}">${F(pt.portOwner || pt.owner).letter}</span></div><div class="dock-unit"><span class="label">Port · Level ${pt.portLevel}</span><strong>Port of ${esc(pt.name)}</strong><p>One naval unit a turn, separate from the city factory.</p></div><div class="dock-actions">${(pt.portOwner || pt.owner) === game.player ? act(`data-shop-port="${pt.id}"`, 'Shipyard', portReason(pt), '', 'primary') : ''}<button class="small" data-action="details">Port details</button></div>`;
   const m = selectedSite();
   if (m) {
     const y = E.depositYield(game, m);

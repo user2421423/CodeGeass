@@ -22,6 +22,7 @@
   };
   // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
   function eliminatorTurn(g) {
+    if (g.mode === 'scenario') return null; // Japan requires all cities to remain capturable.
     const first = g.fleijaDetonated;
     if (typeof first === 'number') return first + ELIMINATOR.research;
     if (first || (g.log || []).some(l => String(l.text || '').startsWith('F.L.E.I.J.A. detonation'))) return 0;
@@ -37,7 +38,7 @@
   }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
-    return g.mode !== 'campaign' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
+    return g.mode === 'conquest' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -119,6 +120,7 @@
   }
   // Start of a power's turn: finished strategic projects come online.
   function strategicTurn(g, side) {
+    if (g.mode === 'scenario') return; // Suppress saved projects in Japan.
     if (eliminatorTurn(g) === g.turn && !g.eliminatorAnnounced) {
       g.eliminatorAnnounced = true;
       log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
@@ -159,6 +161,7 @@
     return stationAt(g, p)?.name || siteAt(g, p)?.name || (near ? `near ${near.name}` : `hex ${p.c},${p.r}`);
   }
   function launchReason(g, side, p) {
+    if (g.mode === 'scenario') return 'F.L.E.I.J.A. is unavailable in Japan Scenario';
     if (g.over) return 'Operation over';
     if (g.phase !== side) return 'Not your turn';
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';

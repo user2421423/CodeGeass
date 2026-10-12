@@ -17,7 +17,7 @@
   function routePassable(g, u, p) {
     const t = TYPES[u.type], st = stationAt(g, p), occ = unitAt(g, p);
     if (t.naval === 'ship' && (!navigable(p) || st)) return false;
-    if (st && foe(g, st.owner, u.side) && (st.shield > 0 || !canCapture(u))) return false;
+    if (st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalCityAssault(g, u))) return false;
     return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
   }
   function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity) {
