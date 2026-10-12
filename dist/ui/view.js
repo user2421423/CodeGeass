@@ -407,7 +407,8 @@ function attachMap() {
         visualCity = hitVisualStation(e.clientX, e.clientY),
         isAction = p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)));
       const targetUnit = p && E.unitAt(game, p);
-      if (pointer.shift && interactive() && game.mode === 'conquest' && targetUnit?.side === game.player &&
+      if (pointer.shift && interactive() && (game.mode === 'conquest' || game.mode === 'scenario') &&
+          targetUnit?.side === game.player &&
           !routing && !armyGroupRouting && !scenarioRoutingGroup && !strikeMode && !deploying) {
         if (!multiSelectedIds.size && selectedUnit()?.side === game.player) multiSelectedIds.add(selectedUnit().id);
         if (multiSelectedIds.has(targetUnit.id)) multiSelectedIds.delete(targetUnit.id);
