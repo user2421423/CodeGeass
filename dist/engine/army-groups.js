@@ -38,7 +38,7 @@
     if (firstUnitId != null && !first) return { ok: false, reason: 'Unit unavailable' };
     g.nextArmyGroupId = Math.max(g.nextArmyGroupId || 1, ...groups(g).map(gr => gr.id + 1), 1);
     const id = g.nextArmyGroupId++;
-    const group = { id, side: g.player, name: 'Army Group ' + id, units: [], destination: null };
+    const group = { id, side: g.player, name: 'Army Group ' + id, units: [], destination: null, stance: 'advance' };
     groups(g).push(group);
     if (first) add(g, id, first.id);
     return { ok: true, group };
@@ -57,7 +57,7 @@
     }
     group.units.push(unitId);
     let routed = false;
-    if (group.destination) {
+    if (group.destination && group.stance !== 'defend') {
       if (u.c === group.destination.c && u.r === group.destination.r) {
         delete u.goto;
         routed = true;
@@ -90,7 +90,7 @@
     if (members.length && !ready.length)
       return { ok: false, reason: 'No group unit has a route to that destination', failed: rejected.length };
     for (const u of ready) {
-      if (u.c === c && u.r === r) delete u.goto;
+      if (u.c === c && u.r === r || group.stance === 'defend') delete u.goto;
       else E.setGoto(g, u.id, c, r);
     }
     group.destination = { c: p.c, r: p.r };
@@ -111,6 +111,67 @@
     g.armyGroups = groups(g).filter(gr => gr !== group);
     return { ok: true };
   }
+  const STANCES = Object.freeze({
+    advance: 'Advance',
+    defend: 'Defend',
+    assault: 'Assault',
+  });
+  // Advance = movement alone. Defend = hold and engage reachable hostiles.
+  // Assault = movement followed by legal fire, retaining enemy objectives until captured.
+  function setStance(g, groupId, stance) {
+    const why = canEdit(g), group = find(g, groupId);
+    if (why || !group) return { ok: false, reason: why || 'Army group not found' };
+    if (!Object.hasOwn(STANCES, stance)) return { ok: false, reason: 'Unknown group stance' };
+    if (stance === (group.stance || 'advance')) return { ok: true, unchanged: true };
+    const prior = group.destination;
+    if (stance === 'defend') {
+      for (const id of group.units) clearMatchingOrder(g, g.units.find(u => u.id === id), prior);
+    } else if (prior) {
+      for (const id of group.units) {
+        const u = g.units.find(v => v.id === id && v.hp > 0 && v.side === g.player);
+        if (!u) continue;
+        if (u.c === prior.c && u.r === prior.r) delete u.goto;
+        else E.setGoto(g, u.id, prior.c, prior.r);
+      }
+    }
+    group.stance = stance;
+    return { ok: true, stance };
+  }
+  function runFire(g, side) {
+    const report = { fired: [], failed: [] };
+    if (g.over || g.phase !== side) return report;
+    const shooting = [];
+    for (const gr of groups(g)) {
+      if (gr.side !== side || !['defend', 'assault'].includes(gr.stance)) continue;
+      for (const id of gr.units) {
+        const u = g.units.find(v => v.id === id && v.hp > 0 && v.side === side);
+        if (u) shooting.push({ u, gr });
+      }
+    }
+    for (const { u, gr } of shooting) {
+      if (g.over) break;
+      if (u.attacked || u.morale <= -3 || u.autoFireTurn === g.turn) continue;
+      const targets = E.targets(g, u);
+      if (!targets.length) continue;
+      const goal = gr.destination;
+      const ranked = targets.map(p => {
+        const enemy = E.unitAt(g, p), station = E.stationAt(g, p);
+        return { p, score: (goal && p.c === goal.c && p.r === goal.r ? 1000 : 0) +
+            (enemy ? 150 + (1 - enemy.hp / Math.max(1, E.maxHP(enemy))) * 30 : station ? 65 : 0) -
+            (goal ? E.distance(p, goal, g) : E.distance(p, u, g)) };
+      }).sort((a,b) => b.score - a.score || a.p.r - b.p.r || a.p.c - b.p.c);
+      const p = ranked[0].p;
+      const attack = E.attack(g, u.id, p.c, p.r);
+      if (attack.ok) {
+        u.autoFireTurn = g.turn;
+        report.fired.push({ id: u.id, ...attack });
+      } else report.failed.push(u.id);
+    }
+    return report;
+  }
+  E.ARMY_GROUP_STANCES = STANCES;
+  E.setArmyGroupStance = setStance;
+  E.runArmyGroupFire = runFire;
   E.armyGroups = groups;
   E.armyGroup = find;
   E.armyGroupPrune = prune;
