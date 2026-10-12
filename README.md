@@ -4,6 +4,30 @@ A browser-based turn-based hex strategy game themed on **Code Geass**. Three pow
 fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **Europia United (E.U.)** and the
 **Chinese Federation**. It is a sister project of *Galactic Command* (the LOGH game) and keeps the same systems.
 
+## Regional scenarios
+
+The **Scenarios** menu offers two independent, single-session campaigns. Neither overwrites
+persistent Conquest progress, and both use standard strategic AI and city-based province capture.
+
+- **The Invasion of Japan** (110 × 84 hexes): the established Britannia,
+  Black Knights and Chinese Federation scenario, including the turn-10 alliance change.
+- **The European War** (120 × 80 hexes, 2017 a.t.b.): an alternate continental war
+  inspired by *Akito the Exiled*. Europia United controls 28 western/central European cities;
+  Euro Britannia controls 16 cities in eastern Europe, western Russia and the Black Sea
+  theatre. Both powers are playable and hostile from the outset. The regional map has its
+  own coastline, forests, mountains, city provinces, naval ports and starting fleets.
+  A hundred starting formations include Leila, Akito, Ryo, Ayano, Yukiya and Smilas
+  against Shin, Julius Kingsley, Ashley and Manfredi. The E.U. has more cities and
+  higher initial economic income; Euro Britannia fields concentrated eastern spearheads
+  and a larger starting treasury. The only victory condition is ownership of **all 44 cities**,
+  with no scripted deadline. Normal, Hard and Challenge are available.
+
+`dist/scenarios-europe.js` holds the self-contained scenario rules and
+`dist/europe-landmask.js` contains a packed 120 × 80 European tactical coastline.
+The landscape was sampled from the repository's pre-existing world geography and
+European coastal polygon data; it does not request external mapping services.
+Run `node --test tests/europe.test.cjs` to test its configuration and rules.
+
 ## Features
 
 - **Conquest on a full world map:** 180 × 76 hexes (13,680 total) that wrap east–west around the globe, 168 cities, much finer coastlines, strategically anchored mountain/desert bottlenecks, oceans, forests,
