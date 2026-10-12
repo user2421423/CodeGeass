@@ -912,6 +912,7 @@
     britannia: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
     eu: { amphibious: 'panzer_frosch', amphibious2: 'panzer_frosch_ii', carrier: 'eu_carrier' },
     cf: { amphibious: 'shui_gun_ru', amphibious2: 'shui_gun_ru_ii', carrier: 'cf_carrier' },
+    eb: { amphibious: 'portman', amphibious2: 'portman_ii', carrier: 'carrier_battleship' },
   };
   const navalTypes = (g, side) => (g?.mode === 'campaign' ? [] : Object.values(NAVAL[side] || {}));
   const isShip = u => TYPES[u?.type]?.naval === 'ship';
@@ -3649,7 +3650,8 @@
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     if (g.mode === 'scenario') {
-      const conquest = root.Knightmare.scenarios?.japan?.winner(g),
+      const theatre = root.Knightmare.scenarios?.[g.scenario?.key || 'japan'],
+        conquest = theatre?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       if (!contenders.includes(g.player)) {
         // Player defeat can end their run, but award no faction a victory
@@ -3660,10 +3662,10 @@
           eliminated: true,
           eliminatedBy: g.fallen?.[g.player]?.by || null,
           reason: soleVictor
-            ? 'Your last Japanese stronghold has fallen. The ' + FACTIONS[soleVictor].name +
-              ' has conquered every city in Japan.'
+            ? 'Your last stronghold in this theatre has fallen. The ' + FACTIONS[soleVictor].name +
+              ' has conquered every city in the theatre.'
             : contenders.length === 1
-              ? 'Your last Japanese stronghold has fallen. The surviving power has not yet conquered every Japanese city.'
+              ? 'Your last Japanese stronghold has fallen. The surviving power has not yet conquered every city in this theatre.'
               : 'Your last Japanese stronghold has fallen. ' +
                 'The war continues between ' +
                 contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
@@ -3698,8 +3700,9 @@
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
     if (g.mode === 'scenario')
-      return (root.Knightmare.scenarios?.japan?.objective(g) || 'Secure Japan') +
-        (g.scenario?.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.');
+      return (root.Knightmare.scenarios?.[g.scenario?.key || 'japan']?.objective(g) || 'Conquer every enemy city') +
+        (g.scenario?.id === 'invasion-japan' ?
+          (g.scenario.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.') : '');
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
