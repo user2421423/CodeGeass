@@ -275,6 +275,38 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
+  if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
+  if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
+  if (d.armyStance) {
+    const [id, stance] = d.armyStance.split(':');
+    armyGroupSetStance(+id, stance);
+    return;
+  }
+  if (d.armyRoute) { armyGroupStartRouting(+d.armyRoute); return; }
+  if (d.armyFocus) { armyGroupFocus(+d.armyFocus); return; }
+  if (d.armyNearby) { armyGroupAddNearby(+d.armyNearby); return; }
+  if (d.armyAdd || d.armyRemove) {
+    const [groupId, unitId] = (d.armyAdd || d.armyRemove).split(':').map(Number);
+    const result = d.armyAdd ? E.addArmyGroupUnit(game, groupId, unitId) : E.removeArmyGroupUnit(game, groupId, unitId);
+    if (result.ok) {
+      refreshAndSave();
+      armyGroupsDialog(groupId);
+      toast(d.armyAdd ? 'Knightmare assigned to army group.' : 'Knightmare removed from army group.');
+    } else toast(result.reason);
+    return;
+  }
+  if (d.armyCancel) {
+    const result = E.cancelArmyGroup(game, +d.armyCancel);
+    if (result.ok) { refreshAndSave(); armyGroupsDialog(+d.armyCancel); }
+    else toast(result.reason);
+    return;
+  }
+  if (d.armyDisband) {
+    const result = E.disbandArmyGroup(game, +d.armyDisband);
+    if (result.ok) { refreshAndSave(); armyGroupsDialog(); toast('Army group disbanded.'); }
+    else toast(result.reason);
+    return;
+  }
   if (d.scenarioGroupRoute) { scenarioGroupStart(d.scenarioGroupRoute); return; }
   if (d.scenarioGroupFocus) { scenarioGroupFocus(d.scenarioGroupFocus); return; }
   if (d.campaignTab) return campaignDialog(d.campaignTab);
@@ -494,6 +526,15 @@ document.addEventListener('click', e => {
       if (u) doAction(() => E.repair(game, u.id));
       break;
     }
+    case 'do-all-orders':
+      executeAllOrdersNow();
+      break;
+    case 'army-groups':
+      armyGroupsDialog();
+      break;
+    case 'army-create':
+      armyGroupCreate();
+      break;
     case 'goto':
       startRouting();
       break;
@@ -631,6 +672,12 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (k === 'g') startRouting();
+  if (k === 'escape' && armyGroupRouting) {
+    armyGroupRouting = null;
+    updateSelection();
+    toast('Army group objective selection cancelled.');
+    return;
+  }
   if (k === 'escape' && scenarioRoutingGroup) {
     scenarioRoutingGroup=null;
     toast('Army-group destination selection cancelled.');

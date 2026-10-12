@@ -7,6 +7,7 @@ const E = Knightmare,
   modal = $('modal-root');
 let game = E.createGame('britannia'),
   selection = null,
+  multiSelectedIds = new Set(), // Shift-clicked friendly formations
   undoStack = [],
   hover = null,
   canvas,
@@ -42,6 +43,7 @@ let detailOpen = false,
   shake = 0,
   strikeMode = false, // choosing a F.L.E.I.J.A. target
   deploying = null, // { ship, index }: choosing where a carried Knightmare lands
+  armyGroupRouting = null, // army group id: choosing its shared destination
   routing = null, // unit id: choosing the destination of its standing order
   flash = 0; // full-screen white-pink flash, 1 → 0
 const R = 43,
@@ -175,6 +177,8 @@ function resetSession() {
   detailOpen = false;
   deploying = null;
   routing = null;
+  armyGroupRouting = null;
+  multiSelectedIds.clear();
   undoStack = [];
   effects = [];
 }
