@@ -16,6 +16,7 @@ function armyGroupDestination(gr) {
 
 function armyGroupsDialog(editId = null) {
   if (game.mode !== 'conquest') return;
+  armyGroupRouting = null;
   E.armyGroupPrune(game);
   const groups = E.armyGroups(game);
   const gr = editId == null ? null : E.armyGroup(game, editId);
