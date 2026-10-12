@@ -34,6 +34,7 @@ const BUNDLES = {
     "src/ai/04-recovery.part.js",
     "src/ai/05-naval.part.js",
     "src/ai/06-production.part.js",
+    "src/ai/06a-tactical-coordination.part.js",
     "src/ai/07-tactical-orders.part.js"
   ],
   "dist/missions.js": [
