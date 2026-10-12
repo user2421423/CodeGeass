@@ -38,7 +38,7 @@
   }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
-    return g.mode === 'conquest' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
+    return g.mode === 'conquest' && isMajor(g, side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -147,8 +147,8 @@
       g.stations
         .filter(
           s =>
-            s.owner !== attacker &&
-            MAJORS.includes(s.owner) &&
+            foe(g, s.owner, attacker) &&
+            isMajor(g, s.owner) &&
             (s.eliminator || 0) > 0 &&
             dist(g, s, p) <= ELIMINATOR.range,
         )
@@ -167,6 +167,13 @@
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
     if (!g.stations.some(s => s.owner === side)) return 'No city to launch from';
     if (!p || !tile(g, p.c, p.r)) return 'Choose a target hex';
+    // No allied or own casualties, property damage, mine loss or city destruction anywhere in the blast radius.
+    if (g.era === 'ufn2018' && blastArea(g, p).some(t => {
+      const v = unitAt(g, t), city = stationAt(g, t), mine = siteAt(g, t);
+      return (v && !foe(g, v.side, side)) ||
+        (city && !foe(g, city.owner, side)) ||
+        (mine && !foe(g, depositOwner(g, mine), side));
+    })) return 'F.L.E.I.J.A. blast would harm friendly or allied forces, territory or facilities';
     if (stationAt(g, p)?.owner === side && g.stations.filter(s => s.owner === side).length === 1)
       return 'That is your last city';
     return null;

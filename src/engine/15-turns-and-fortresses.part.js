@@ -32,7 +32,7 @@
   }
   // The most valuable target that spares the launcher's own units and cities, or null below the threshold.
   function aiLaunchTarget(g, side) {
-    const rival = s => !!s && s !== side && s !== 'neutral',
+    const rival = s => !!s && s !== 'neutral' && foe(g, s, side),
       seen = new Set();
     let best = null,
       protectedBest = null;
@@ -51,7 +51,8 @@
           outer = blastDistance > 1,
           v = unitAt(g, t),
           s = stationAt(g, t);
-        if (v?.side === side || s?.owner === side) {
+        if ((v && !foe(g, v.side, side)) || (s && !foe(g, s.owner, side)) ||
+            (g.era === 'ufn2018' && siteAt(g, t) && !foe(g, depositOwner(g, siteAt(g, t)), side))) {
           safe = false;
           break;
         }
@@ -70,7 +71,7 @@
             : ring
               ? 40 * levels + s.shield * 0.2
               : 300 + 100 * levels + s.shield * 0.5 + 5 * (s.income + s.industry + s.science);
-          if (!ring && MAJORS.includes(s.owner) && g.stations.filter(c => c.owner === s.owner).length === 1) score += 3000;
+          if (!ring && isMajor(g, s.owner) && g.stations.filter(c => c.owner === s.owner).length === 1) score += 3000;
           if (s.project) score += 2000;
           if (s.eliminatorProject) score += 1600;
           if (
@@ -314,6 +315,23 @@
       if (conquest) g.over = conquest;
       return g.over;
     }
+    if (g.era === 'ufn2018') {
+      const britannian = g.stations.filter(s => s.owner === 'britannia' || s.owner === 'eb').length;
+      const ufn = g.stations.filter(s => s.owner === 'cf').length;
+      const britPlayer = g.player === 'britannia' || g.player === 'eb';
+      const coalitionWinner = britPlayer ? g.player : 'britannia';
+      if (!ufn || !britannian || g.turn > ARMISTICE) {
+        const winningTeam = !ufn ? 'britannian' : !britannian ? 'ufn' : britannian === ufn ? 'draw' : britannian > ufn ? 'britannian' : 'ufn';
+        g.over = {
+          winner: winningTeam === 'draw' ? 'draw' : winningTeam === 'ufn' ? 'cf' : coalitionWinner,
+          team: winningTeam,
+          reason: !ufn ? 'The U.F.N. has surrendered. The Britannian alliance is victorious.'
+            : !britannian ? 'Both Britannian powers have surrendered. The U.F.N. is victorious.'
+            : `The ${ARMISTICE}-turn armistice: Britannian alliance ${britannian} cities; U.F.N. ${ufn} cities.${winningTeam === 'draw' ? ' A tie is a draw.' : ''}`,
+        };
+      }
+      return g.over;
+    }
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -343,6 +361,9 @@
         (g.scenario?.id === 'invasion-japan' ?
           (g.scenario.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.')
           : g.scenario?.id === 'division-japan' ? ' · All three powers are at war.' : '');
+    if (g.era === 'ufn2018') return g.player === 'cf'
+      ? 'Defeat both Britannian powers. Australia is not a victory target.'
+      : 'Fight alongside the other Britannian power to eliminate the U.F.N. Australia is not a victory target.';
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
@@ -351,7 +372,7 @@
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
     if (g?.mode === 'scenario') return g.scenario?.title || 'Scenario · Japan';
-    return 'World War · 2017 a.t.b.';
+    return g?.era === 'ufn2018' ? 'Rise of the U.F.N. · 2018 a.t.b.' : 'World War · 2017 a.t.b.';
   }
 
   // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.

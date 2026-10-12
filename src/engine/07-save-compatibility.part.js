@@ -75,6 +75,15 @@
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
+    if (g.mode === 'conquest') {
+      const cfg = CONQUESTS[g.era || 'world'];
+      if (!cfg) return null;
+      g.era = cfg.id;
+      g.majors = [...cfg.majors];
+      g.teams = { ...cfg.teams };
+      g.factions = cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null;
+      if (!cfg.selectable.includes(g.player)) return null;
+    }
     if (g.mode !== 'campaign' && !regional) {
       migrateCoastalTerrain(g);
       attachUnclaimedNewZealand(g);
@@ -86,7 +95,7 @@
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
         if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && ((eliteConquest(g) && COMMANDERS[k].side !== g.player) ||
+          which === 'officers' && ((eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
               (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);

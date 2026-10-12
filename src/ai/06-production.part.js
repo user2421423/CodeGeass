@@ -134,7 +134,7 @@
       // needs a lab for its next Eliminator comes first.
       const soon = g.turn >= FLEIJA.labTurn - 5,
         prep =
-          side !== g.player && MAJORS.includes(side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
+          side !== g.player && isMajor(g, side) ? defensePrep || (soon ? fleijaCity(g, side, front) : null) : null;
       if (
         prep &&
         (prep.lab || 0) < FLEIJA.lab &&

@@ -4,7 +4,7 @@
   // The data lives in engine/frames.js, commanders.js, research.js and world.js, loaded before this file by index.html
   // and required here under Node. engine/ai.js loads afterwards and adds the AI.
   if (typeof module !== 'undefined')
-    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world']) require(`./engine/${part}.js`);
+    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world', 'conquests']) require(`./engine/${part}.js`);
   const {
     // frames.js
     FACTIONS,
@@ -47,6 +47,7 @@
     NAVY_DATA,
     COASTAL_CITY_HEXES,
     COASTAL_PORT_HEXES,
+    CONQUESTS,
   } = root.KnightmareData;
   const TYPES = Object.fromEntries(
     Object.entries(KNIGHTMARES).map(([id, k]) => {
@@ -83,10 +84,18 @@
     ),
     ...LINEUPS,
   };
+  // The 2018 U.F.N. has the Black Knights' complete field lineup, not
+  // separate Chinese Federation or E.U. factory inventories. This reads the
+  // scenario ID, so it also applies to saves made before the roster change.
+  function ufnBlackKnights(g, side) {
+    return g?.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf';
+  }
   function typeFor(side, cls, g = null) {
+    if (ufnBlackKnights(g, side)) return ROSTER.bk[cls] || ROSTER.cf[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
+    if (ufnBlackKnights(g, side)) return { ...ROSTER.bk };
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 
@@ -167,7 +176,7 @@
       rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
     return Object.fromEntries(
       Object.entries(ELITE_FORCES)
-        .filter(([, e]) => !e.scenarioOnly && e.availableTo.includes(g.player))
+        .filter(([, e]) => !e.scenarioOnly && (e.availableTo.includes(g.player) || (g.era === 'ufn2018' && ((g.player === 'eb' && e.availableTo.includes('britannia')) || (g.player === 'cf' && (e.availableTo.includes('eu') || e.availableTo.includes('bk')))))))
         .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
     );
   }
@@ -633,7 +642,7 @@
     if (!u) return 'Select one of your units first';
     return (
       turnReason(g, u.side) ||
-      (!serves(k, u.side) ? 'Serves another faction' : null) ||
+      (!serves(k, u.side, g) ? 'Serves another faction' : null) ||
       (u.cmd ? 'Unit already has a commander' : null) ||
       shortfall(funds(g, u.side), { credits: a.cost })
     );
@@ -844,8 +853,11 @@
   function funds(g, side) {
     return g.economy[side];
   }
+  function powersOf(g) { return g?.mode === 'conquest' && Array.isArray(g.majors) ? g.majors : MAJORS; }
+  function isMajor(g, side) { return powersOf(g).includes(side); }
+  function hostilePowers(g, side) { return powersOf(g).filter(other => other !== side && foe(g, other, side)); }
   function alive(g, side) {
-    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : MAJORS.includes(side)) && !g.fallen?.[side];
+    return ((g?.mode === 'campaign' || g?.mode === 'scenario') ? (g.order || []).includes(side) : powersOf(g).includes(side)) && !g.fallen?.[side];
   }
   // Whether two sides fight each other. Campaign missions may ally sides into teams (g.teams); Conquest has none.
   function foe(g, a, b) {
@@ -1206,6 +1218,15 @@
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
     if (!g.units.every(u => TYPES[u.type])) return null;
+    if (g.mode === 'conquest') {
+      const cfg = CONQUESTS[g.era || 'world'];
+      if (!cfg) return null;
+      g.era = cfg.id;
+      g.majors = [...cfg.majors];
+      g.teams = { ...cfg.teams };
+      g.factions = cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null;
+      if (!cfg.selectable.includes(g.player)) return null;
+    }
     if (g.mode !== 'campaign' && !regional) {
       migrateCoastalTerrain(g);
       attachUnclaimedNewZealand(g);
@@ -1217,7 +1238,7 @@
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
         if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && ((eliteConquest(g) && COMMANDERS[k].side !== g.player) ||
+          which === 'officers' && ((eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
               (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
             ? RANKS.length - 1 : HQ_RANK_CAP);
     if (g.mode !== 'campaign') automationState(g);
@@ -2070,7 +2091,7 @@
       total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.2:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
-    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : MAJORS.includes(side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
     // Regional operations receive fixed off-map military funding in addition
     // to city output. Captured cities still add (or remove) their normal
@@ -2137,7 +2158,9 @@
     if (!e) return false;
     const roster = eliteCampaign(g) ? g.campaign?.eliteRosters?.[side] :
       g?.scenario?.id === 'european-war' ? g.scenario.eliteRosters?.[side] : null;
-    return roster ? roster.includes(id) : e.availableTo.includes(side);
+    if (roster) return roster.includes(id);
+    if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
+    return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
@@ -2196,7 +2219,7 @@
     const naval = !!t.naval,
       producer = naval ? (s.portOwner || s.owner) : s.owner;
     if (producer === g.player || !eliteEligible(g, producer, id) ||
-        (eliteConquest(g) && (naval || !MAJORS.includes(producer))) ||
+        (eliteConquest(g) && (naval || !isMajor(g, producer))) ||
         (eliteScenario(g) && !g.order.includes(producer)) ||
         (eliteCampaign(g) && (naval || (!foe(g, producer, g.player) &&
           !g.campaign?.production?.includes(producer)))) ||
@@ -2576,8 +2599,13 @@
   // In Conquest the Chinese Federation commands the Black Knights and the JLF: recruit them in HQ, assign them to
   // Federation units. Skill numbers are first-pass balance guesses.
   const ALLIES = { cf: ['bk', 'jlf'], bk: ['jlf'] };
-  function serves(k, side) {
+  function serves(k, side, g = null) {
     const a = COMMANDERS[k];
+    // In 2018, former E.U. and Black Knights commanders serve the united federation.
+    if (g?.mode === 'conquest' && g.era === 'ufn2018') {
+      if (side === 'cf' && ['cf', 'eu', 'bk', 'jlf'].includes(a?.side)) return true;
+      if (side === 'eb' && ['eb', 'britannia'].includes(a?.side)) return true;
+    }
     return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
   }
   // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
@@ -2921,7 +2949,7 @@
   };
   // Stockpiles and deposits for a new game.
   function setupSakuradite(g) {
-    for (const [side, e] of Object.entries(g.economy)) e.sakuradite ??= MAJORS.includes(side) ? SAKURADITE.start : 0;
+    for (const [side, e] of Object.entries(g.economy)) e.sakuradite ??= isMajor(g, side) ? SAKURADITE.start : 0;
     if (g.sites) return g;
     g.sites = [];
     for (const [name, lon, lat, base, level, terrain] of RESOURCE_SITES) {
@@ -2975,7 +3003,7 @@
       a = SAKURADITE.allocation;
     if (!owner || !out) return {};
     if (g.mode === 'campaign' || !a.sites.includes(d.name) || !alive(g, owner)) return { [owner]: out };
-    const others = (g.mode === 'scenario' ? g.order : MAJORS).filter(s => s !== owner && alive(g, s)),
+    const others = (g.mode === 'scenario' ? g.order : powersOf(g)).filter(s => s !== owner && alive(g, s)),
       shares = { [owner]: out * (1 - a.share * others.length) };
     for (const s of others) shares[s] = out * a.share;
     return shares;
@@ -3005,7 +3033,7 @@
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.
   function seizeDeposit(g, u, p) {
     const d = siteAt(g, p);
-    if (!d || d.owner === u.side || !canCapture(u)) return null;
+    if (!d || !foe(g, d.owner, u.side) || !canCapture(u)) return null;
     const loser = d.owner;
     d.owner = u.side;
     log(
@@ -3084,7 +3112,7 @@
   }
   // F.L.E.I.J.A. is conquest-only: every major power gets the same strategic-weapons window once Lab III opens.
   function hasFleija(g, side) {
-    return g.mode === 'conquest' && MAJORS.includes(side) && g.turn >= FLEIJA.labTurn;
+    return g.mode === 'conquest' && isMajor(g, side) && g.turn >= FLEIJA.labTurn;
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -3193,8 +3221,8 @@
       g.stations
         .filter(
           s =>
-            s.owner !== attacker &&
-            MAJORS.includes(s.owner) &&
+            foe(g, s.owner, attacker) &&
+            isMajor(g, s.owner) &&
             (s.eliminator || 0) > 0 &&
             dist(g, s, p) <= ELIMINATOR.range,
         )
@@ -3213,6 +3241,13 @@
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
     if (!g.stations.some(s => s.owner === side)) return 'No city to launch from';
     if (!p || !tile(g, p.c, p.r)) return 'Choose a target hex';
+    // No allied or own casualties, property damage, mine loss or city destruction anywhere in the blast radius.
+    if (g.era === 'ufn2018' && blastArea(g, p).some(t => {
+      const v = unitAt(g, t), city = stationAt(g, t), mine = siteAt(g, t);
+      return (v && !foe(g, v.side, side)) ||
+        (city && !foe(g, city.owner, side)) ||
+        (mine && !foe(g, depositOwner(g, mine), side));
+    })) return 'F.L.E.I.J.A. blast would harm friendly or allied forces, territory or facilities';
     if (stationAt(g, p)?.owner === side && g.stations.filter(s => s.owner === side).length === 1)
       return 'That is your last city';
     return null;
@@ -3409,7 +3444,7 @@
   }
   // The most valuable target that spares the launcher's own units and cities, or null below the threshold.
   function aiLaunchTarget(g, side) {
-    const rival = s => !!s && s !== side && s !== 'neutral',
+    const rival = s => !!s && s !== 'neutral' && foe(g, s, side),
       seen = new Set();
     let best = null,
       protectedBest = null;
@@ -3428,7 +3463,8 @@
           outer = blastDistance > 1,
           v = unitAt(g, t),
           s = stationAt(g, t);
-        if (v?.side === side || s?.owner === side) {
+        if ((v && !foe(g, v.side, side)) || (s && !foe(g, s.owner, side)) ||
+            (g.era === 'ufn2018' && siteAt(g, t) && !foe(g, depositOwner(g, siteAt(g, t)), side))) {
           safe = false;
           break;
         }
@@ -3447,7 +3483,7 @@
             : ring
               ? 40 * levels + s.shield * 0.2
               : 300 + 100 * levels + s.shield * 0.5 + 5 * (s.income + s.industry + s.science);
-          if (!ring && MAJORS.includes(s.owner) && g.stations.filter(c => c.owner === s.owner).length === 1) score += 3000;
+          if (!ring && isMajor(g, s.owner) && g.stations.filter(c => c.owner === s.owner).length === 1) score += 3000;
           if (s.project) score += 2000;
           if (s.eliminatorProject) score += 1600;
           if (
@@ -3691,6 +3727,23 @@
       if (conquest) g.over = conquest;
       return g.over;
     }
+    if (g.era === 'ufn2018') {
+      const britannian = g.stations.filter(s => s.owner === 'britannia' || s.owner === 'eb').length;
+      const ufn = g.stations.filter(s => s.owner === 'cf').length;
+      const britPlayer = g.player === 'britannia' || g.player === 'eb';
+      const coalitionWinner = britPlayer ? g.player : 'britannia';
+      if (!ufn || !britannian || g.turn > ARMISTICE) {
+        const winningTeam = !ufn ? 'britannian' : !britannian ? 'ufn' : britannian === ufn ? 'draw' : britannian > ufn ? 'britannian' : 'ufn';
+        g.over = {
+          winner: winningTeam === 'draw' ? 'draw' : winningTeam === 'ufn' ? 'cf' : coalitionWinner,
+          team: winningTeam,
+          reason: !ufn ? 'The U.F.N. has surrendered. The Britannian alliance is victorious.'
+            : !britannian ? 'Both Britannian powers have surrendered. The U.F.N. is victorious.'
+            : `The ${ARMISTICE}-turn armistice: Britannian alliance ${britannian} cities; U.F.N. ${ufn} cities.${winningTeam === 'draw' ? ' A tie is a draw.' : ''}`,
+        };
+      }
+      return g.over;
+    }
     const P = g.player,
       fall = g.fallen?.[P],
       rivals = MAJORS.filter(s => s !== P && alive(g, s));
@@ -3720,6 +3773,9 @@
         (g.scenario?.id === 'invasion-japan' ?
           (g.scenario.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.')
           : g.scenario?.id === 'division-japan' ? ' · All three powers are at war.' : '');
+    if (g.era === 'ufn2018') return g.player === 'cf'
+      ? 'Defeat both Britannian powers. Australia is not a victory target.'
+      : 'Fight alongside the other Britannian power to eliminate the U.F.N. Australia is not a victory target.';
     const rivals = MAJORS.filter(s => s !== g.player && alive(g, s)).map(s => `the ${FACTIONS[s].short}`);
     return rivals.length
       ? `Defeat ${rivals.join(' and ')}. A power surrenders only when it has lost every city.`
@@ -3728,7 +3784,7 @@
   function modeTitle(g) {
     if (g?.mode === 'campaign' && hooks.title) return hooks.title(g);
     if (g?.mode === 'scenario') return g.scenario?.title || 'Scenario · Japan';
-    return 'World War · 2017 a.t.b.';
+    return g?.era === 'ufn2018' ? 'Rise of the U.F.N. · 2018 a.t.b.' : 'World War · 2017 a.t.b.';
   }
 
   // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.
@@ -3760,6 +3816,8 @@
         'A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. Defeat every rival, or hold the most cities at the 120-turn armistice.',
     },
   };
+
+  ERAS.ufn2018 = { ...CONQUESTS.ufn2018, name: CONQUESTS.ufn2018.title };
 
   // Operation difficulty. Normal is the operation as designed. Hard gives every rival power all tier I–II
   // HQ research, upgrades every other enemy unit one class and adds one unit per four. Challenge gives them all
@@ -3826,7 +3884,7 @@
     for (const u of g.units) {
       const original = TYPES[u.type];
       if (!original || original.naval) continue; // ships/amphibious unchanged
-      const faction = landElites.filter(([, e]) => e.availableTo.includes(u.side));
+      const faction = landElites.filter(([id]) => eliteEligible(g, u.side, id));
       // Neutral guards use elite templates but keep their neutral allegiance.
       const pool = faction.length ? faction : landElites;
       const sameClass = pool.filter(([, e]) => TYPES[e.type].cls === original.cls);
@@ -3854,12 +3912,13 @@
     support: 'rocket',
     rocket: 'siege',
   };
-  function upgradeType(type) {
+  function upgradeType(type, side = null, g = null) {
     const t = TYPES[type],
       next = UPGRADE[t.cls];
     if (t.naval) return t.naval === 'amphibious' && NAVAL[t.side] ? NAVAL[t.side].amphibious2 : type;
     if (!next || t.side === 'neutral') return type;
-    return typeFor(t.side, next);
+    // Challenge/Hard reinforcement upgrades must respect the U.F.N. lineup.
+    return typeFor(ufnBlackKnights(g, side) ? side : t.side, next, g);
   }
   function techUpToTier(tier) {
     return Object.fromEntries(
@@ -3869,16 +3928,16 @@
     );
   }
   function harden(g, d) {
-    const foes = [...MAJORS, 'neutral'].filter(side => side !== g.player),
+    const foes = [...powersOf(g), 'neutral'].filter(side => side !== g.player),
       enemyUnits = g.units.filter(u => foes.includes(u.side) && (!d.preserveNaval || !TYPES[u.type].naval));
     for (const side of foes) {
       g.tech[side] = techUpToTier(d.techTier);
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if (a.side !== g.player) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
+      if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
-      if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type);
+      if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type, u.side, g);
       if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
     });
     // Reinforcements: copies of existing enemy units (never super-heavies) on free land hexes beside them.
@@ -3894,7 +3953,7 @@
             (!stationAt(g, p) || stationAt(g, p).owner === src.side),
         );
       if (!spot) continue;
-      const type = TYPES[src.type].cls === 'super' ? typeFor(src.side, 'heavy') : src.type;
+      const type = TYPES[src.type].cls === 'super' ? typeFor(src.side, 'heavy', g) : src.type;
       newUnit(g, type, src.side, spot.c, spot.r, src.stack);
       n++;
     }
@@ -3922,9 +3981,9 @@
   function prepareEliteConquestFactories(g) {
     if (!eliteConquest(g)) return;
     for (const s of g.stations) raiseFactoryTier(g, s, 2);
-    for (const side of MAJORS.filter(s => s !== g.player)) {
+    for (const side of powersOf(g).filter(s => s !== g.player)) {
       const cities = g.stations.filter(s => s.owner === side);
-      const enemies = g.stations.filter(s => s.owner !== side && MAJORS.includes(s.owner));
+      const enemies = g.stations.filter(s => foe(g, s.owner, side) && isMajor(g, s.owner));
       const closest = s => Math.min(...enemies.map(other => dist(g, s, other)));
       const nearFront = cities.slice().sort((a, b) => closest(a) - closest(b) || a.id - b.id);
       let advanced = cities.filter(s => s.tier >= 3).length;
@@ -4103,8 +4162,10 @@
     return null;
   }
   // mode: 'conquest' (the world war). The player's faction acts first; rivals follow in a fixed order.
-  function createGame(player = 'britannia', difficulty = 'normal', mode = 'conquest', seed = 246801) {
-    if (!MAJORS.includes(player)) player = 'britannia';
+  function createGame(player = 'britannia', difficulty = 'normal', mode = 'conquest', seed = 246801, conquest = 'world') {
+    const cfg = CONQUESTS[conquest] || CONQUESTS.world;
+    const majors = cfg.majors;
+    if (!cfg.selectable.includes(player)) player = 'britannia';
     const g = {
       game: 'knightmare',
       version: 1,
@@ -4112,8 +4173,11 @@
       player,
       difficulty,
       mode: 'conquest',
-      era: 'world',
-      order: [player, ...MAJORS.filter(s => s !== player)],
+      era: cfg.id,
+      majors: [...majors],
+      teams: { ...cfg.teams },
+      factions: cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null,
+      order: [player, ...majors.filter(s => s !== player)],
       seed,
       wrap: true,
       cols: WORLD.cols,
@@ -4128,9 +4192,9 @@
       strikes: [],
       fallen: {},
       economy: Object.fromEntries(
-        [...MAJORS, 'neutral'].map(s => [s, { credits: s === 'neutral' ? 0 : 500, industry: 200, science: 40 }]),
+        [...majors, 'neutral'].map(s => [s, { credits: s === 'neutral' ? 0 : 500, industry: 200, science: 40, ...(cfg.initialTreasury?.[s] || {}) }]),
       ),
-      tech: { britannia: {}, eu: {}, cf: {}, neutral: {} },
+      tech: Object.fromEntries([...majors, 'neutral'].map(s => [s, {}])),
       officers: Object.fromEntries(Object.keys(COMMANDERS).map(k => [k, defaultOfficer(k)])),
       roster: {},
       medalInventory: [],
@@ -4152,7 +4216,9 @@
     const freeLand = t => !isSea(t) && !TERRAIN[t.terrain].blocked;
     // Cities, mines and starting armies stand on solid land, never on a coast hex.
     const solidLand = t => freeLand(t) && !isCoast(t);
-    for (const [name, lon, lat, owner, tier, capital = false, fort = false, gun] of CITY_DATA) {
+    for (const [name, lon, lat, oldOwner, tier, oldCapital = false, fort = false, gun] of CITY_DATA) {
+      const owner = cfg.ownership?.[name] || oldOwner;
+      const capital = cfg.id === 'ufn2018' ? ['Pendragon', 'St. Petersburg', 'Luoyang'].includes(name) : oldCapital;
       const fixed = COASTAL_CITY_HEXES[name];
       const at = fixed ? tile(g, fixed[0], fixed[1]) :
         nearest(g, hexOf(lon, lat), t => solidLand(t) && !stationAt(g, t));
@@ -4174,9 +4240,19 @@
         ...cityBase([name, lon, lat, owner, tier, capital, fort]),
         producedTurn: 0,
       };
+      // Occupied Russian/Siberian administrations are less productive than developed Britannian cores.
+      if (cfg.id === 'ufn2018' && owner === 'eb' && name !== 'St. Petersburg') {
+        s.income = Math.round(s.income * 0.75);
+        s.industry = Math.round(s.industry * 0.75);
+      }
       s.shield = s.maxShield;
       setTileTerrain(g, at, 'plains');
       g.stations.push(s);
+    }
+    if (cfg.expectedCities) {
+      const actual = Object.fromEntries([...majors, 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length]));
+      if (g.stations.length !== 168 || Object.keys(cfg.expectedCities).some(side => actual[side] !== cfg.expectedCities[side]))
+        throw new Error('Invalid 2018 conquest territory: ' + JSON.stringify(actual));
     }
     // Territory: each land hex belongs to the nearest city over land. Radius 11 preserves the old geographic reach on the denser map.
     const frontier = g.stations.map(s => ({ t: tile(g, s.c, s.r), owner: s.owner, d: 0 })),
@@ -4194,7 +4270,7 @@
     }
     for (const [c, r, owner] of TERRITORY) {
       const t = tile(g, c, r);
-      if (t && freeLand(t)) setTileOwner(g, t, owner);
+      if (t && freeLand(t)) setTileOwner(g, t, cfg.id === 'ufn2018' && owner === 'eu' ? 'cf' : owner);
     }
     // Indonesia (including Borneo and its smaller islands) is entirely Chinese
     // Federation at the start of conquest. City-based land floodfill sometimes
@@ -4227,15 +4303,15 @@
     }
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
-    for (const [side, cls, lon, lat, stack, cmd] of ARMY_DATA) {
+    for (const [side, cls, lon, lat, stack, cmd, frameSource] of (cfg.armies || ARMY_DATA)) {
       const at = nearest(
         g,
         hexOf(lon, lat),
-        t => solidLand(t) && !unitAt(g, t) && (!stationAt(g, t) || stationAt(g, t).owner === side),
+        t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
       );
-      if (at) newUnit(g, typeFor(side, cls), side, at.c, at.r, stack, cmd || null);
+      if (at) newUnit(g, typeFor(ufnBlackKnights(g, side) ? 'bk' : (frameSource || side), cls, g), side, at.c, at.r, stack, cmd || null);
     }
-    for (const [city, type, stack] of GARRISONS) {
+    for (const [city, type, stack] of (cfg.garrisons || GARRISONS)) {
       const s = g.stations.find(s => s.name === city);
       newUnit(g, type, 'neutral', s.c, s.r, stack);
     }
@@ -4243,7 +4319,7 @@
       const s = g.stations.find(s => s.name === city);
       if (s) openPort(g, s, level);
     }
-    for (const [side, role, lon, lat, stack] of NAVY_DATA) {
+    for (const [side, role, lon, lat, stack] of (cfg.navy || NAVY_DATA)) {
       const at = nearest(g, hexOf(lon, lat), t => isSea(t) && !unitAt(g, t));
       if (at) newUnit(g, NAVAL[side][role], side, at.c, at.r, stack);
     }
@@ -4256,9 +4332,9 @@
         u.cmdRank = g.officers[u.cmd].rank;
         u.hp = maxHP(u);
       }
-    g.startUnits = Object.fromEntries(MAJORS.map(s => [s, g.units.filter(u => u.side === s).length]));
-    log(g, ERAS.world.desc, player);
-    log(g, ERAS.world.rulesText, player);
+    g.startUnits = Object.fromEntries(majors.map(s => [s, g.units.filter(u => u.side === s).length]));
+    log(g, (ERAS[cfg.id] || ERAS.world).desc, player);
+    log(g, (ERAS[cfg.id] || ERAS.world).rulesText, player);
     return g;
   }
 
@@ -4531,6 +4607,10 @@
   root.Knightmare = {
     FACTIONS,
     MAJORS,
+    CONQUESTS,
+    powersOf,
+    hostilePowers,
+    isMajor,
     CLASSES,
     NAVAL,
     PORT,
@@ -4563,6 +4643,7 @@
     elitePrice,
     eliteEligible,
     eliteDeployReason,
+    eliteEligible,
     deployElite,
     aiEliteRecruitReason,
     recruitAIElite,
@@ -4784,6 +4865,8 @@
       FACTIONS,
       FLEIJA,
       MAJORS,
+      powersOf,
+      isMajor,
       NAVAL,
       TYPES,
       adjacent,

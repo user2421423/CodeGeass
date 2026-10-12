@@ -4,7 +4,7 @@
   // The data lives in engine/frames.js, commanders.js, research.js and world.js, loaded before this file by index.html
   // and required here under Node. engine/ai.js loads afterwards and adds the AI.
   if (typeof module !== 'undefined')
-    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world']) require(`./engine/${part}.js`);
+    for (const part of ['frames', 'commanders', 'generic-skills', 'research', 'world', 'conquests']) require(`./engine/${part}.js`);
   const {
     // frames.js
     FACTIONS,
@@ -47,6 +47,7 @@
     NAVY_DATA,
     COASTAL_CITY_HEXES,
     COASTAL_PORT_HEXES,
+    CONQUESTS,
   } = root.KnightmareData;
   const TYPES = Object.fromEntries(
     Object.entries(KNIGHTMARES).map(([id, k]) => {
@@ -83,10 +84,18 @@
     ),
     ...LINEUPS,
   };
+  // The 2018 U.F.N. has the Black Knights' complete field lineup, not
+  // separate Chinese Federation or E.U. factory inventories. This reads the
+  // scenario ID, so it also applies to saves made before the roster change.
+  function ufnBlackKnights(g, side) {
+    return g?.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf';
+  }
   function typeFor(side, cls, g = null) {
+    if (ufnBlackKnights(g, side)) return ROSTER.bk[cls] || ROSTER.cf[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
+    if (ufnBlackKnights(g, side)) return { ...ROSTER.bk };
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
   }
 

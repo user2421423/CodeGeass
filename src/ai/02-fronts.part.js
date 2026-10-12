@@ -238,12 +238,12 @@
       army = g.units.filter(u => u.hp > 0 && u.side === side && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
       near = p => own.some(s => dist(g, s, p) <= FRONT.near) || army.some(u => dist(g, u, p) <= FRONT.near),
-      cities = Object.fromEntries(MAJORS.map(faction =>
+      cities = Object.fromEntries(powersOf(g).map(faction =>
         [faction, g.stations.filter(s => s.owner === faction).length])),
-      lead = Math.max(1, ...MAJORS.filter(faction => alive(g, faction)).map(faction => cities[faction])),
+      lead = Math.max(1, ...powersOf(g).filter(faction => alive(g, faction)).map(faction => cities[faction])),
       // Every faction considers a stronger surviving rival the greater long-run threat.
       // This discourages two great powers from continually devouring a losing third.
-      rivalWeight = owner => !MAJORS.includes(owner) ? 1 :
+      rivalWeight = owner => !isMajor(g, owner) ? 1 :
         Math.max(0.35, Math.pow((cities[owner] || 0) / lead, 3.5)),
       // An expensive enemy capital or mine is worth pursuing only if a feasible
       // regional land approach or a loaded expedition actually exists.
@@ -650,7 +650,7 @@
           set('attacking');
           st.force = f.assigned;
           if (side !== g.player && f.objectives.some(o => o.owner === g.player))
-            log(g, `${FACTIONS[side].short} forces massed at ${f.rally.name} open an offensive toward ${f.name}.`, side);
+            log(g, `${(g.factions?.[side] || FACTIONS[side]).short} forces massed at ${f.rally.name} open an offensive toward ${f.name}.`, side);
         } else if (st.state === 'attacking' && g.turn - st.since >= 2 && f.assigned < (st.force || 0) * 0.45) set('assembling');
       }
       f.state = st.state;

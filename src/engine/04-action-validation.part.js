@@ -132,7 +132,7 @@
     if (!u) return 'Select one of your units first';
     return (
       turnReason(g, u.side) ||
-      (!serves(k, u.side) ? 'Serves another faction' : null) ||
+      (!serves(k, u.side, g) ? 'Serves another faction' : null) ||
       (u.cmd ? 'Unit already has a commander' : null) ||
       shortfall(funds(g, u.side), { credits: a.cost })
     );

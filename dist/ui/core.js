@@ -18,7 +18,7 @@ let game = E.createGame('britannia'),
   offset = { x: 0, y: 0 },
   mapSize = { w: 0, h: 0 },
   effects = [],
-  setup = { side: 'britannia', difficulty: 'normal' },
+  setup = { side: 'britannia', difficulty: 'normal', conquest: 'world' },
   shop = { station: null, branch: 'Infantry', stack: 1 },
   lastTime = 0,
   toastTimer,
@@ -69,10 +69,13 @@ function setWorld() {
 setWorld();
 // Conquest, campaign missions and regional scenarios each have their own slot, so none replaces another.
 const SAVE_KEY = 'knightmare-conquest-save',
+  UFN_SAVE_KEY = 'knightmare-ufn2018-save',
+  chosenSaveKey = () => setup.conquest === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY,
   CAMPAIGN_KEY = 'knightmare-conquest-mission',
   SCENARIO_KEY = 'knightmare-conquest-scenario',
   PROFILE_KEY = 'knightmare-conquest-profile',
-  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? SCENARIO_KEY : SAVE_KEY);
+  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? SCENARIO_KEY
+    : game.era === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY);
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
   selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
@@ -186,7 +189,7 @@ function resetSession() {
 }
 function newGame() {
   resetSession();
-  game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0), loadProfile());
+  game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0, setup.conquest), loadProfile());
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
   zoom = 3.2;
