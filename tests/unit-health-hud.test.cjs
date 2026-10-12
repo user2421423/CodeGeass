@@ -38,6 +38,7 @@ function dock(naval, branch = 'Armor') {
     moraleName: () => 'Steady',
     fireStatus: () => 'Already fired',
     armyGroupForUnit: () => null,
+    routing: null, phaseReason: () => null,
     interactive: () => false, undoStack: [], act: () => '',
     esc: s => s,
   };
