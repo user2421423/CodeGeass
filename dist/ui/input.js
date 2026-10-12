@@ -282,6 +282,13 @@ document.addEventListener('click', e => {
     armyGroupSetStance(+id, stance);
     return;
   }
+  if (d.armyConquer) {
+    const id = +d.armyConquer, gr = E.armyGroup(game, id);
+    const r = E.setArmyGroupConquest(game, id, !gr?.autoConquer);
+    if (!r.ok) toast(r.reason);
+    else { E.planArmyGroupConquest(game, game.player); refreshAndSave(); armyGroupsDialog(id); }
+    return;
+  }
   if (d.armyRoute) { armyGroupStartRouting(+d.armyRoute); return; }
   if (d.armyFocus) { armyGroupFocus(+d.armyFocus); return; }
   if (d.armyNearby) { armyGroupAddNearby(+d.armyNearby); return; }

@@ -93,12 +93,14 @@
       if (u.c === c && u.r === r || group.stance === 'defend') delete u.goto;
       else E.setGoto(g, u.id, c, r);
     }
+    if (group.autoConquer) { group.autoConquer = false; group.autoRouted = {}; group.targetStationId = null; }
     group.destination = { c: p.c, r: p.r };
     return { ok: true, assigned: ready.length, failed: rejected.length };
   }
   function cancel(g, groupId) {
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
+    if (group.autoConquer) return setConquest(g, groupId, false);
     if (!group.destination) return { ok: false, reason: 'No objective set' };
     for (const id of group.units) clearMatchingOrder(g, g.units.find(u => u.id === id), group.destination);
     group.destination = null;
@@ -107,6 +109,7 @@
   function disband(g, groupId) {
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
+    if (group.autoConquer) setConquest(g, groupId, false);
     if (group.destination) cancel(g, groupId);
     g.armyGroups = groups(g).filter(gr => gr !== group);
     return { ok: true };
@@ -122,6 +125,7 @@
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
     if (!Object.hasOwn(STANCES, stance)) return { ok: false, reason: 'Unknown group stance' };
+    if (group.autoConquer && stance !== 'advance') return { ok: false, reason: 'Stop automated conquest before enabling automatic fire' };
     if (stance === (group.stance || 'advance')) return { ok: true, unchanged: true };
     const prior = group.destination;
     if (stance === 'defend') {
@@ -137,12 +141,85 @@
     group.stance = stance;
     return { ok: true, stance };
   }
+
+  // Optional late-game conquest automation. This only assigns ordinary standing
+  // destinations; all movement, capture legality and action budgets remain in E.runGotos.
+  const matches = (u, p) => !!u?.goto && !!p && u.goto.c === p.c && u.goto.r === p.r;
+  function setConquest(g, groupId, enabled) {
+    const why = canEdit(g), gr = find(g, groupId);
+    if (why || !gr) return { ok: false, reason: why || 'Army group not found' };
+    if (!!gr.autoConquer === !!enabled) return { ok: true, unchanged: true };
+    const old = gr.destination;
+    for (const id of gr.units) {
+      const u = g.units.find(v => v.id === id);
+      if (matches(u, gr.autoRouted?.[id]) || (enabled && matches(u, old))) delete u.goto;
+    }
+    gr.autoConquer = !!enabled;
+    gr.autoRouted = {};
+    gr.destination = null;
+    gr.targetStationId = null;
+    gr.autoStatus = enabled ? 'Choosing a city' : '';
+    if (enabled) gr.stance = 'advance'; // no automatic attacks in this order
+    return { ok: true };
+  }
+  function planConquests(g, side) {
+    if (g.mode !== 'conquest' || g.over || g.phase !== side || side !== g.player) return;
+    prune(g);
+    const cities = g.stations.filter(s => foeSide(g, s.owner, side) &&
+      E.tile(g, s.c, s.r) && !E.TERRAIN[E.tile(g, s.c, s.r).terrain]?.blocked);
+    const reserved = new Set();
+    const active = groups(g).filter(gr => gr.side === side && gr.autoConquer).sort((a,b)=>a.id-b.id);
+    for (const gr of active) {
+      const members = gr.units.map(id => g.units.find(u => u.id === id && u.hp > 0 && u.side === side)).filter(Boolean);
+      const eligible = members.filter(u => E.canCapture(u) && E.TYPES[u.type].naval !== 'ship' &&
+        (!u.goto || matches(u, gr.autoRouted?.[u.id])));
+      if (!eligible.length) { gr.autoStatus = 'Waiting for capturable units or manual orders'; continue; }
+      const possible = cities.map(s => {
+        const routes = eligible.filter(u => u.c === s.c && u.r === s.r ||
+          !E.gotoReason(g, u, E.tile(g, s.c, s.r)));
+        return { s, routes, score: routes.length ? Math.min(...routes.map(u => E.distance(u, s, g))) +
+          (reserved.has(s.id) ? 250 : 0) : Infinity };
+      }).filter(v=>Number.isFinite(v.score))
+        .sort((x,y)=>x.score-y.score || x.s.id-y.s.id);
+      const current = possible.find(v => v.s.id === gr.targetStationId && !reserved.has(v.s.id));
+      const choice = current || possible[0];
+      if (!choice) {
+        gr.autoStatus = cities.length ? 'Blocked: no reachable enemy city' : 'No remaining enemy cities';
+        gr.targetStationId = null;
+        gr.destination = null;
+        continue;
+      }
+      const city = choice.s, goal = { c: city.c, r: city.r };
+      reserved.add(city.id);
+      const prior = gr.autoRouted || {};
+      for (const u of members) {
+        const wasOurs = matches(u, prior[u.id]);
+        if (u.goto && !wasOurs) continue; // manual unit destination wins
+        if (u.goto && wasOurs && !matches(u, goal)) delete u.goto;
+        if (u.c === goal.c && u.r === goal.r) { delete u.goto; delete prior[u.id]; continue; }
+        if (E.gotoReason(g, u, E.tile(g, goal.c, goal.r))) continue;
+        const r = E.setGoto(g, u.id, goal.c, goal.r);
+        if (r.ok) prior[u.id] = goal;
+      }
+      gr.autoRouted = prior;
+      gr.destination = goal;
+      gr.targetStationId = city.id;
+      const defended = city.shield > 0 || !!E.unitAt(g, goal) && E.unitAt(g, goal).side !== side;
+      const near = eligible.some(u => E.distance(u, goal, g) <= 1);
+      gr.autoStatus = defended && near ? 'Combat required (manual attacks)' :
+        members.some(u => matches(u, goal) && !u.moved) ? 'Advancing' : 'Waiting or blocked';
+    }
+  }
+  function foeSide(g, owner, side) {
+    return owner != null && owner !== side && E.foe(g, owner, side);
+  }
+
   function runFire(g, side) {
     const report = { fired: [], failed: [] };
     if (g.over || g.phase !== side) return report;
     const shooting = [];
     for (const gr of groups(g)) {
-      if (gr.side !== side || !['defend', 'assault'].includes(gr.stance)) continue;
+      if (gr.side !== side || gr.autoConquer || !['defend', 'assault'].includes(gr.stance)) continue;
       for (const id of gr.units) {
         const u = g.units.find(v => v.id === id && v.hp > 0 && v.side === side);
         if (u) shooting.push({ u, gr });
@@ -169,6 +246,8 @@
     }
     return report;
   }
+  E.setArmyGroupConquest = setConquest;
+  E.planArmyGroupConquest = planConquests;
   E.ARMY_GROUP_STANCES = STANCES;
   E.setArmyGroupStance = setStance;
   E.runArmyGroupFire = runFire;
