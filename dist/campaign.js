@@ -110,15 +110,22 @@
     ryo: 'ryo_valiant', ayano: 'ayano_valiant', yukiya: 'yukiya_valiant',
   });
   const isEliteCampaign = g => g.mode === 'campaign' && g.difficulty === 'elite';
-  function eliteRoster(side) {
+  function eliteRoster(side, g = null) {
     const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
       const e = E.ELITE_FORCES[id];
       return e.availableTo.includes(owner) && !E.TYPES[e.type].naval;
     });
-    return available(side).length ? available(side) : available(ELITE_ROSTER_FALLBACKS[side] || 'britannia');
+    const own = available(side);
+    if (own.length) return own;
+    // Neutral story armies borrow their actual teammate's roster when one exists;
+    // fixed JLF and Euro Britannia fallbacks take precedence over team mapping.
+    const teammate = side === 'neutral' && g?.teams?.[side]
+      ? g.order.find(s => s !== side && g.teams[s] === g.teams[side] && available(s).length)
+      : null;
+    return available(teammate || ELITE_ROSTER_FALLBACKS[side] || 'britannia');
   }
   function eliteType(g, side, type, cmd = null) {
-    const original = E.TYPES[type], pool = g.campaign.eliteRosters[side] || eliteRoster(side);
+    const original = E.TYPES[type], pool = g.campaign.eliteRosters[side] || eliteRoster(side, g);
     if (!pool.length) throw new Error(`Missing elite roster for ${side}`);
     const current = pool.find(id => E.ELITE_FORCES[id].type === type);
     if (current) return current;
@@ -191,7 +198,8 @@
     if (!free(at)) at = nearest(g, { c, r }, free);
     if (!at) return null;
     if (isEliteCampaign(g) && cmd && unitWith(g, cmd)) return null;
-    const special = !!E.TYPES[type].elite || !!opts.special || !!opts.unique || opts.level === 5;
+    const special = !!E.TYPES[type].elite || ['siegfried', 'raiko', 'canterbury'].includes(type) ||
+      !!opts.special || !!opts.unique || opts.level === 5;
     if (isEliteCampaign(g)) {
       type = E.ELITE_FORCES[eliteType(g, side, type, cmd)].type;
       unitStack = 1;
@@ -316,7 +324,7 @@
         enemyPlaced: 0,
         ...(difficultyId === 'elite' ? {
           eliteSelections: {},
-          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s)])),
+          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s, g)])),
         } : {}),
         turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
       },
