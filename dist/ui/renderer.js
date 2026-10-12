@@ -1504,20 +1504,6 @@ function draw(time, dt) {
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
       drawStackBars(u.stack, u.side);
-      if (artSide(u.side) === 'ufn') {
-        // Golden federation crest visible over the unchanged Black Knights KMF.
-        ctx.beginPath();
-        ctx.arc(30, 16, 9, 0, Math.PI * 2);
-        ctx.fillStyle = '#101516';
-        ctx.fill();
-        ctx.lineWidth = 1.8;
-        ctx.strokeStyle = '#f6cf67';
-        ctx.stroke();
-        ctx.font = 'bold 12px Georgia, serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#f6cf67';
-        ctx.fillText('U', 30, 20);
-      }
       if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);

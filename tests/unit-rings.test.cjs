@@ -63,3 +63,14 @@ test('zoomed-out units use allegiance-colored HP arcs without a separate selecti
   assert.match(renderer, /ctx\.strokeStyle = unitRingColor\(u\);/);
   assert.doesNotMatch(renderer, /ctx\.arc\(0, 0, 22, 0, Math\.PI \* 2\)/);
 });
+
+test('2018 U.F.N. units do not draw a separate U allegiance crest', () => {
+  assert.doesNotMatch(renderer, /if\s*\(artSide\(u\.side\) === 'ufn'\)/,
+    'Unit painting must not add a dedicated U.F.N. badge');
+  assert.doesNotMatch(renderer, /ctx\.fillText\('U',\s*30,\s*20\)/,
+    'The U insignia and surrounding medallion must both be absent');
+  assert.match(renderer, /drawPlate\(u, scale, sea, time, sel \|\| multi\);/,
+    'The original unit plate and allegiance/health ring stay intact');
+  assert.match(renderer, /drawStackBars\(u\.stack, u\.side\);/,
+    'Strength bars stay intact');
+});
