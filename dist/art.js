@@ -100,6 +100,7 @@ const ART = (() => {
     elite_japan_eu_carrier: 'eu_carrier',
     elite_japan_cf_carrier: 'cf_carrier',
     elite_japan_bk_carrier: 'cf_carrier',
+    bk_carrier: 'cf_carrier', // Regular Black Knights carrier uses the published generic carrier sprite.
     elite_japan_bk_amphibious: 'shui_gun_ru_ii',
   };
   const LOCAL = { units: {}, portraits: {}, buildings: {}, base: 'local-art/', imgs: new Map() };
