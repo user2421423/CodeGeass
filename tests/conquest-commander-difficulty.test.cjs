@@ -5,7 +5,7 @@ require('../dist/missions.js');
 const C = require('../dist/campaign.js');
 
 test('Conquest commander ranks scale by difficulty without buffing player commanders', () => {
-  const maxRank = E.RANKS.length - 1;
+  const maxRank = E.PROMOTE_COST.length - 1; // Marshal: Elite adds two AI-only ranks.
   for (const mode of ['normal', 'hard', 'challenge']) {
     const g = E.createGame('britannia', mode, 'conquest', 41);
     for (const [id, commander] of Object.entries(E.COMMANDERS)) {
