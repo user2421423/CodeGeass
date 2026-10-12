@@ -270,6 +270,7 @@ function activateHex(p) {
       toast(`${r.reason}. Choose another hex, or press Escape to cancel.`);
       return;
     }
+    E.suspendArmyGroupConquestUnit(game, u.id, true);
     routing = null;
     refreshAndSave();
     toast(`Standing orders: ${gotoText(u)}. It moves there at the start of each of your turns.`);
@@ -300,6 +301,7 @@ function activateHex(p) {
         result = E.move(game, u.id, p.c, p.r);
       if (result.ok) {
         SFX.play('move', u.side);
+        E.suspendArmyGroupConquestUnit(game, u.id);
         // Occupation and carrier boarding are strategic actions, not reversible moves.
         // A mine capture must also clear all older snapshots, just like a city or port.
         const irreversible = !!E.stationAt(game, p) || !!result.captured || !!result.annexed || !!result.portCaptured || !!result.seized || !!result.loaded;
