@@ -281,6 +281,7 @@
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
+      if(d.skillMarks?.length)d.skillMarks=d.skillMarks.filter(m=>m.side!==a.side||!m.uses);
     }
     if (s && foe(g, s.owner, a.side)) {
       // Even after the defenses reach zero, another successful city assault
