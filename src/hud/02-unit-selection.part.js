@@ -96,16 +96,16 @@ function updateSelection() {
   if (deploying && deploying.ship !== u?.id) deploying = null;
   if (routing && (routing !== u?.id || !interactive())) routing = null;
   const st = selectedStation();
-  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${deploying?.ship}:${deploying?.index}:${interactive()}`;
+  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${armyGroupRouting}:${deploying?.ship}:${deploying?.index}:${interactive()}`;
   if (selectionCacheKey !== cacheKey) {
     readyCache =
-      u && u.side === game.player && interactive() && !routing
+      u && u.side === game.player && interactive() && !routing && !armyGroupRouting
         ? deploying
           ? new Map(E.deployTargets(game, u, deploying.index).map(t => [E.key(t), 0]))
           : E.reachable(game, u)
         : new Map();
     targetCache = new Set(
-      interactive() && !deploying && !routing && u && u.side === game.player && !u.attacked && u.morale > -3
+      interactive() && !deploying && !routing && !armyGroupRouting && u && u.side === game.player && !u.attacked && u.morale > -3
         ? E.targets(game, u).map(E.key)
         : st && st.owner === game.player && interactive()
           ? E.fortressTargets(game, st).map(E.key)
@@ -135,6 +135,8 @@ function updateSelection() {
         ? 'Operation concluded'
         : strikeMode
           ? 'F.L.E.I.J.A. armed · choose a target hex · Escape cancels'
+          : armyGroupRouting
+            ? `Army group · click a destination hex · Escape cancels`
           : routing
             ? `Standing orders · click the hex ${unitName(u)} should head for · Escape cancels`
             : u?.side === game.player
