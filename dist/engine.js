@@ -4052,6 +4052,13 @@
         delete u.goto;
         continue;
       }
+      // A hostile, occupied or shielded objective may be unenterable this turn.
+      // Hold the Assault order for bombardment rather than canceling an otherwise valid objective.
+      // Amphibious units that can legally enter the tile still proceed with their capture.
+      if (defendedObjective && !reachable(g, u).has(key(dest))) {
+        report.blocked.push(u.id);
+        continue;
+      }
       // Replan separately for this unit against the live board, after earlier orders move.
       const field = dest && routeField(g, u, dest);
       const cost = p => field[p.r * g.cols + p.c],
