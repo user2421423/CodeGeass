@@ -96,6 +96,18 @@ const modal = () => node('modal-root').innerHTML;
 
 (async () => {
   assert(modal().includes('One world.'), 'start menu renders');
+  // 2018 alone shows the U.F.N. standard, keeping its existing portrait.
+  run("setup.conquest = 'ufn2018'; setup.side = 'cf'; startMenu();");
+  const ufnCard = modal().split('<button class="faction cf ufn-2018')[1]?.split('</button>')[0];
+  assert(ufnCard, 'U.F.N. selection card renders in 2018');
+  assert(ufnCard.includes('class="ufn-start-flag"'), '2018 card shows dedicated flag');
+  assert(ufnCard.includes('United Federation of Nations flag'), 'correct U.F.N. standard is shown');
+  assert(ufnCard.includes('class="portrait-art'), 'existing commander portrait remains visible');
+  assert(ufnCard.includes('Black Knights Knightmares'), '2018 U.F.N. unit roster described correctly');
+  assert.equal((modal().match(/class="ufn-start-flag"/g) || []).length, 1, 'only the U.F.N. card has the flag');
+  run("setup.conquest = 'world'; setup.side = 'britannia'; startMenu();");
+  assert(!modal().includes('class="ufn-start-flag"'), '2017 selection menu has no U.F.N. flag');
+  assert(modal().includes('The Vermillion Forbidden City'), '2017 Chinese Federation is unchanged');
   assert(run('GEOGRAPHY.shapes.land.length') >= 1000, 'unified global atlas has detailed land outlines');
   assert.equal(run('GEOGRAPHY.shapes.water.length'), 0, 'no inland water shapes are painted');
   // Regression for the long outlined artefact crossing the Red Sea: only a

@@ -3185,3 +3185,33 @@ button.danger:hover:not(:disabled) {
   .unit-dock-actions { max-width: 205px; max-height: 165px; overflow-y: auto; }
   .unit-dock-actions button { min-height: 28px; }
 }
+
+/* 2018 U.F.N. setup card: show its standard above the existing commander portrait. */
+.choice-grid.three .faction.ufn-2018 {
+  border-top-color: #f6cf67;
+}
+.choice-grid.three .faction.ufn-2018.active {
+  background: linear-gradient(130deg, #263c37, #14272b);
+  border-color: #f6cf67;
+}
+.choice-grid.three .faction.ufn-2018 .ufn-start-flag {
+  position: absolute;
+  z-index: 2;
+  top: 13px;
+  left: 12px;
+  display: block;
+  width: 78px;
+  aspect-ratio: 8 / 5;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 8px #000b);
+}
+.choice-grid.three .faction.ufn-2018 .ufn-start-flag svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 760px) {
+  .choice-grid.three .faction.ufn-2018 {
+    padding-top: 79px;
+  }
+}
