@@ -1,5 +1,5 @@
 {
-  "notes": "Candidate portrait sources researched online. HTTPS hotlinks are provisional and may be unavailable; do not mistake these URLs for locally published art. Images belong to their respective copyright holders. Missing entries need further artwork research.",
+  "notes": "39 sourced character images, all unverified for successful hotlink/download; image identities for six newly researched characters were established by labeled page/infobox/gallery. One missing: Xu Xinfeng. Do not substitute his daughter Xu Lifeng. No binary assets imported.",
   "updated": "2026-10-12",
   "commanders": [
     {
@@ -76,9 +76,10 @@
     },
     {
       "id": "pierre",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_sourced_not_downloaded",
+      "image": "https://www.behindthevoiceactors.com/_img/chars/thumbs/pierre-anou-code-geass-akito-the-exiled-26.3_thumb.jpg",
+      "page": "https://www.behindthevoiceactors.com/tv-shows/Code-Geass-Akito-the-Exiled/Pierre-Anou/",
+      "identity_verified_by_label": true
     },
     {
       "id": "sophie",
@@ -142,9 +143,10 @@
     },
     {
       "id": "ren",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_sourced_not_downloaded",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/0/04/Colonel_ren.jpg/revision/latest/scale-to-width-down/268?cb=20211221141358",
+      "page": "https://codegeass.fandom.com/wiki/Colonel_Ren",
+      "identity_verified_by_label": true
     },
     {
       "id": "xiawang",
@@ -154,15 +156,17 @@
     },
     {
       "id": "chengzhong",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_sourced_not_downloaded",
+      "image": "https://static.wikia.nocookie.net/codegeass/images/5/5d/High_Eunuch_-_Cheng_Zhong.JPG/revision/latest/scale-to-width-down/200?cb=20120125020522",
+      "page": "https://codegeass.fandom.com/wiki/High_Eunuchs",
+      "identity_verified_by_label": true
     },
     {
       "id": "huangqian",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_sourced_not_downloaded",
+      "image": "https://static.wikitide.net/geasswiki/6/60/Huang_qian_r2_portrait.png",
+      "page": "https://geass.miraheze.org/wiki/High_Eunuchs",
+      "identity_verified_by_label": true
     },
     {
       "id": "sawasaki",
@@ -220,9 +224,10 @@
     },
     {
       "id": "mutsuki",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_sourced_not_downloaded",
+      "image": "https://s4.anilist.co/file/anilistcdn/character/large/49167.jpg",
+      "page": "https://myotakuworld.com/character/mutsuki-minase",
+      "identity_verified_by_label": true
     },
     {
       "id": "ichijiku",
@@ -238,9 +243,10 @@
     },
     {
       "id": "indira",
-      "status": "portrait_pending",
-      "image": null,
-      "page": null
+      "status": "externally_sourced_not_downloaded",
+      "image": "https://static.wikitide.net/geasswiki/5/5f/Indira_tharoor_lost_stories_infobox_color_full_body.png",
+      "page": "https://geass.miraheze.org/wiki/Indira_Tharoor",
+      "identity_verified_by_label": true
     }
   ]
 }
