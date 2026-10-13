@@ -143,7 +143,8 @@ function toggleStrategicOverlay() {
   if (game.mode !== 'conquest' && game.mode !== 'scenario') return;
   strategicOverlay = !strategicOverlay;
   requestMapFrame(); // Draw over the existing atlas; do not invalidate terrain/map cache.
-  if (modal.querySelector('[aria-label="Army groups"]')) armyGroupsDialog(activeArmyGroupId);
+  if (modal.querySelector('[aria-label="Army groups"]') || modal.innerHTML.includes('aria-label="Army groups"'))
+    armyGroupsDialog(activeArmyGroupId);
   else toast('Strategic overlay ' + (strategicOverlay ? 'enabled' : 'disabled') + ' (V).');
 }
 
