@@ -769,13 +769,13 @@ const GEOGRAPHY = (() => {
     // full grid dimensions, unlike the Japan/Europe projection. Apply the
     // exact map transform so the geographic atlas sits beneath the same hexes
     // used for city positions, terrain, movement and fleet routes.
-    const bounds = g.scenario.bounds;
-    const A = australia ? SQ * R * g.cols / (bounds.east - bounds.west) / dx : wx * X * k / dx;
+    const australiaBounds = g.scenario.bounds;
+    const A = australia ? SQ * R * g.cols / (australiaBounds.east - australiaBounds.west) / dx : wx * X * k / dx;
     const B = australia ? 0 : wx * Y / dy;
     const C = australia ? 0 : hy * Y * k / dx;
-    const D = australia ? -1.5 * R * g.rows / (bounds.north - bounds.south) / dy : -hy * X / dy;
-    const tx = australia ? R - SQ * R * .5 - A * px(bounds.west) : R - wx * p.uMin - A * ox - B * oy;
-    const ty = australia ? R - 1.5 * R * .5 - D * py(bounds.north) : R + hy * p.vMax - C * ox - D * oy;
+    const D = australia ? -1.5 * R * g.rows / (australiaBounds.north - australiaBounds.south) / dy : -hy * X / dy;
+    const tx = australia ? R - SQ * R * .5 - A * px(australiaBounds.west) : R - wx * p.uMin - A * ox - B * oy;
+    const ty = australia ? R - 1.5 * R * .5 - D * py(australiaBounds.north) : R + hy * p.vMax - C * ox - D * oy;
     const det = A * D - B * C;
     const invA = D / det, invB = -B / det,
       invC = -C / det, invD = A / det,
