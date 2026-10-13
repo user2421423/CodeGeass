@@ -145,7 +145,7 @@ function draw(time, dt) {
         ctx.lineWidth = 2 / scale;
         // Europe opens as a continental campaign: keep its settlements visible
         // as readable screen-sized markers when the player zooms back out.
-        const europeOverview = game.scenario?.id === 'european-war';
+        const europeOverview = ['european-war','operation-stonehenge'].includes(game.scenario?.id);
         const z = europeOverview
           ? Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)
           : s.capital ? 30 : 20;
@@ -328,7 +328,7 @@ function draw(time, dt) {
       ctx.translate(x, base.y);
       if (!detail) {
         ctx.beginPath();
-        const europeOverview = game.scenario?.id === 'european-war';
+        const europeOverview = ['european-war','operation-stonehenge'].includes(game.scenario?.id);
         const radius = europeOverview ? Math.max(15, 5 / scale) : 15;
         ctx.arc(0, 0, radius, 0, Math.PI * 2);
         ctx.fillStyle = PLATE[artSide(u.side)].light;

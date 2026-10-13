@@ -588,7 +588,7 @@ const GEOGRAPHY = (() => {
   // the SAME GSHHG coastline used by Conquest into those hex coordinates, then
   // clip province tint to geographic land. The grid stays the source of truth
   // for movement, capture, ports and combat, not for the visual shoreline.
-  // Regional scenarios depict Japan only. The global GSHHG atlas also
+  // Japanese regional scenarios select islands only. The global GSHHG atlas also
   // contains Korea, Russia, China and nearby foreign islands; clipping by
   // viewport alone must never allow those polygons into this scenario.
   // Match the four principal Japanese islands and selected Japanese islets
@@ -616,6 +616,10 @@ const GEOGRAPHY = (() => {
     return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }
   let japanColorCache = null;
+  // European regional operations share the continental political shoreline.
+  function europeanRegion(g) {
+    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge';
+  }
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
     if (japanColorCache?.tiles === g.tiles && japanColorCache.revision === revision)
@@ -634,7 +638,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= (g.scenario?.id === 'european-war' ? 1 : 2)) continue;
+      if (depth[j] >= (europeanRegion(g) ? 1 : 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -759,7 +763,7 @@ const GEOGRAPHY = (() => {
       Math.max(...corners.map(t => t[1])) + 10,
     ];
     const [a, b, c, d] = bounds;
-    const europeOnly = g.scenario.id === 'european-war';
+    const europeOnly = europeanRegion(g);
     const source = europeOnly ? LAYERS.land : JAPAN_LAND; // both Japan scenarios
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
