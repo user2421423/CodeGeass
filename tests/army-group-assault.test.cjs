@@ -46,7 +46,7 @@ function automate(g) {
   E.planArmyGroupAssault(g,g.player);
   const fire=E.runArmyGroupFire(g,g.player);
   E.planArmyGroupAssault(g,g.player);
-  const follow=E.runGotos(g,g.player);
+  const follow=E.runGotos(g,g.player,{assaultOnly:true});
   E.planArmyGroupAssault(g,g.player);
   return {moves:first.moved.concat(follow.moved),shots:fire.fired};
 }
