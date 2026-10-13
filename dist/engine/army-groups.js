@@ -358,6 +358,19 @@
       if(sameHex(p,u)||!E.gotoReason(g,u,p))return p;
     return null;
   }
+  function consolidate(g,gr,city,units){
+    const op=gr.operation, reserved=new Set();
+    const priority={heavy:0,mainline:1,assault:2,raider:3,artillery:4,naval:5};
+    for(const u of units.slice().sort((a,b)=>priority[unitRole(a)]-priority[unitRole(b)]||a.id-b.id)){
+      clearPlanned(g,gr,u);
+      if(manual(g,gr,u)||sameHex(u,city))continue;
+      const p=stage(g,u,city,reserved,op);
+      if(!p)continue;
+      reserved.add(hkey(p));
+      op.staging[u.id]={c:p.c,r:p.r};
+      if(E.distance(u,city,g)>2)routeMember(g,gr,u,p);
+    }
+  }
   function planGroupAssault(g,gr) {
     if (!gr || gr.stance!=='assault' || g.over || g.phase!==gr.side) return null;
     const units=live(g,gr);
@@ -365,8 +378,8 @@
     const old=gr.operation, oldCity=old && g.stations.find(s=>s.id===old.targetCityId);
     if(oldCity && !foeSide(g,oldCity.owner,gr.side)){
       if(old.phase!=='consolidating'){
-        for(const u of units)clearPlanned(g,gr,u);
         old.phase='consolidating';
+        consolidate(g,gr,oldCity,units);
         gr.autoStatus='Consolidating at '+oldCity.name;
         if(!gr.autoConquer)gr.destination=null;
         return old;
