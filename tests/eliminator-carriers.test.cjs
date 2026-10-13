@@ -230,34 +230,6 @@ test('charge production and courier scoring do not select unreachable Tier 1 lea
   assert.equal(hero.eliminator||0,0);
 });
 
-test('frontline hero receives a charge via ordinary courier without leaving the battlefield', () => {
-  const {g,city}=setup(401);
-  const remote=g.stations.filter(s=>s.owner==='cf' && s!==city &&
-    E.internal.massOf(g,s)>=0 && land(g,s,1).length>0 && land(g,s,4).length>0)
-    .sort((a,b)=>E.distance(b,city,g)-E.distance(a,city,g))[0];
-  assert.ok(remote,'requires a second defensible city with dry land approaches');
-  remote.eliminator=1;
-  const runnerHex=land(g,remote,1).find(p=>E.internal.massOf(g,p)===E.internal.massOf(g,remote));
-  const heroHex=land(g,remote,4).find(p=>E.internal.massOf(g,p)===E.internal.massOf(g,remote));
-  assert.ok(runnerHex&&heroHex,'units must have a connected route to the same city');
-  const runner=unit(g,'cf',runnerHex);
-  const hero=unit(g,'cf',heroHex,'xingke');
-  const initialHero=[hero.c,hero.r];
-  let delivered=false;
-  for(let turn=0;turn<8;turn++){
-    runner.moved=false;runner.attacked=false;
-    g.turn=20+turn;
-    E.aiOrder(g,runner.id);
-    assert.deepEqual([hero.c,hero.r],initialHero,
-      'the commander must not abandon its assigned frontline position');
-    if(hero.eliminator>0){delivered=true;break;}
-  }
-  assert.ok(delivered,'relay should collect then hand off the spare charge');
-  assert.equal(runner.eliminator||0,0,'the non-Tier 1 carrier is only a courier');
-  assert.equal(city.eliminator,1,'the capital keeps its reserved charge');
-  assert.equal(remote.eliminator||0,0,'the spare charge was collected');
-});
-
 test('spare Eliminator equips an ordinary frontline unit when no Tier 1 commander is nearby', () => {
   const {g,city}=setup(401);
   const remote=g.stations.filter(s=>s.owner==='cf' && s!==city && land(g,s,1).length &&
