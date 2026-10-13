@@ -37,7 +37,8 @@ let cells=0;
 const cutsCount=Object.fromEntries(cuts.map(([name])=>[name,0]));
 for(let r=0;r<H;r++)for(let c=0;c<W;c++){
  const x=115.5+(c+.5*(r&1)+.5)*DX,y=21.2-(r+.5)*DY;
- if(![land(x,y),land(x+.024,y),land(x-.024,y),land(x,y+.022),land(x,y-.022)].some(Boolean))continue;
+ const filledLake=(c===40&&r===48)||(c===62&&r===93);
+ if(!filledLake&&![land(x,y),land(x+.024,y),land(x-.024,y),land(x,y+.022),land(x,y-.022)].some(Boolean))continue;
  const cut=cuts.find(([,fn])=>fn(x,y));
  if(cut){cutsCount[cut[0]]++;continue;}
  const i=r*W+c;bytes[i>>3]|=128>>(i&7);cells++;
