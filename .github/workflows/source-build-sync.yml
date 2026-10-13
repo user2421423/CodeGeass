@@ -21,3 +21,5 @@ jobs:
         run: node --test tests/*.test.cjs
       - name: Run existing UI smoke checks
         run: node tests/ui-smoke.cjs
+      - name: Audit Australia's 12,144 hexes, ports and vector coastline
+        run: node tools/australia_hex_audit.cjs
