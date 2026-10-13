@@ -269,11 +269,11 @@ const modal = () => node('modal-root').innerHTML;
     try {
       game = E.scenarios.europe.create('eb', 'normal', 17);
       const europe = homeZoom();
-      game = E.scenarios.stonehenge.create('britannia', 'normal', 17);
-      const stonehenge = homeZoom();
       const europeLimit = turnLimit();
       const europeTurnLabel = 'Turn ' + game.turn +
         (turnLimit() ? ' / ' + turnLimit() : '');
+      game = E.scenarios.stonehenge.create('britannia', 'normal', 17);
+      const stonehenge = homeZoom();
       game = E.scenarios.japan.create('britannia', 'normal', 17);
       const japan = homeZoom(), japanLimit = turnLimit();
       game.scenario.turnLimit = 42;

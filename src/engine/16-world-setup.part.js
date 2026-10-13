@@ -158,7 +158,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'operation-stonehenge'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -361,9 +361,10 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','operation-stonehenge'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge'].includes(g.scenario?.id)) return g;
     const sides = g.scenario.id === 'operation-stonehenge' ? ['britannia','eb','eu'] :
-      g.scenario.id === 'bering-strait' ? ['britannia','eu'] : ['eu','eb'];
+      g.scenario.id === 'bering-strait' ? ['britannia','eu'] :
+      g.scenario.id === 'conquest-indochina' ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',
@@ -374,6 +375,7 @@
     };
     const naval = {
       eu: {amphibious:'panzer_frosch_ii'},
+      cf: {amphibious:'shui_gun_ru_ii'},
       eb: {amphibious:'portman_ii'},
       britannia: {amphibious:'portman_ii'},
     };

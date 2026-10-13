@@ -8,10 +8,18 @@ const SCENARIO_KINDS = [
   ['invasion-japan','The Invasion of Japan','44 cities · 3 sides'],
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
-  ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['operation-stonehenge','Operation Stonehenge','54 cities · 3 sides']
+  ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
+  ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
+  ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
+  ['war-for-australia','The War for Australia','48 cities · 3 sides']
 ];
 const SCENARIO_BLURBS = {
+  'war-for-australia': {
+    britannia: 'Hold Sydney, Melbourne, Brisbane and Australia’s eastern industrial heartland. Counter northern advances and Western amphibious landings.',
+    cf: 'Push south from Darwin through the Outback, fight for Cape York, and launch amphibious assaults on the eastern and western coasts.',
+    eu: 'Defend Perth and Adelaide, exploit the southern coastal corridor, and launch carrier-led landings to outflank eastern strongholds.'
+  },
   'invasion-japan': {
     britannia: 'Defend Honshu and contain the Chinese Federation at the Kanmon Strait while cooperating temporarily with the Black Knights.',
     bk: 'Command Zero’s resistance enclaves in central Japan. For now the Black Knights are temporarily allied to Britannia.',
@@ -31,12 +39,34 @@ const SCENARIO_BLURBS = {
     eb: 'Strike west from Russia and eastern Europe with a powerful independent land army. Coordinate victory with Britannia.',
     eu: 'Defend the Channel, western ports and industrial heartland while also resisting the eastern Euro Britannian offensive.'
   },
+  'conquest-indochina': {
+    britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
+    cf: 'Invade south through northern Vietnam, Yunnan and mountain corridors toward Laos.'
+  },
+  'philippines-invasion': {
+    britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
+    cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
+  },
+  'philippines-invasion': {
+    era: 'Philippine Archipelago · Alternate 2017',
+    intro: 'Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.',
+    diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
+    elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
+    focus: {britannia:'Koror',cf:'Manila'}
+  },
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
     eu: 'Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases.'
   }
 };
 const SCENARIO_TEXT = {
+  'war-for-australia': {
+    era: 'Australia · Alternate 2018',
+    intro: 'Britannia holds the east, China the north, and Europia the west. Three-way continental and naval war. Conquer every rival city.',
+    diplomacy: 'All three powers are enemies from turn 1. No alliances, scripted diplomacy, or turn limit.',
+    elite: 'Elite Australia: rivals gain 60% extra turn income and veteran three-frame land formations; all sides use their established faction units and commander rosters.',
+    focus: {britannia:'Sydney',cf:'Darwin',eu:'Perth'}
+  },
   'invasion-japan': {
     era: 'Japan · 2017 a.t.b.',
     intro: 'Three playable powers in the Japanese theatre, with an alliance that ends on turn 10.',
@@ -64,6 +94,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Britannia and Euro Britannia are permanent allies with separate economies, forces and commanders. Coalition victory requires the complete defeat of the E.U.',
     elite: 'Elite Stonehenge: land and amphibious forces start as Lv.1 Elite Forces, with AI rival commanders at Lv.5. Carrier-battleships remain conventional. HQ unlock rules apply.',
     focus: {britannia:'Galway',eb:'Minsk',eu:'Paris'}
+  },
+  'conquest-indochina': {
+    era: 'Indochina · Alternate 2017',
+    intro: 'The Chinese Federation invades Britannian mainland Southeast Asia. Capture all 44 cities to win.',
+    diplomacy: 'Hostile from turn 1. F.L.E.I.J.A. is disabled; there is no scripted deadline.',
+    elite: 'Elite Indochina replaces land and amphibious formations with faction Elite Forces; carriers remain conventional.',
+    focus: {britannia:'Vinh',cf:'Hanoi'}
   },
   'bering-strait': {
     era: 'Bering Strait · Alternate 2017',
