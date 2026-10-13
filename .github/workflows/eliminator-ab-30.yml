@@ -1,4 +1,4 @@
-name: Eliminator relay 30-pair comparison against latest main
+name: Eliminator strategic AI 30-pair comparison
 on:
   push:
     branches: ['feature/eliminator-strategic-ai']
@@ -85,7 +85,7 @@ jobs:
           const fs=require('node:fs');
           const f=JSON.parse(fs.readFileSync('feature.json'));
           const b=JSON.parse(fs.readFileSync('baseline.json'));
-          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','interceptionRate','chargesStarted','pickedUp','carrierTier1','carrierOther','carrierLosses','avgCarried','avgWaiting','cityProtectionRate','weightedProtectionRate','armyProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtStart','commandsAliveAtEnd','relayStarted','relayDelivered','relayFailed','avgRelayDeliveryTurns','elapsedMs','played','finalCities','actions'];
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','interceptionRate','chargesStarted','pickedUp','carrierTier1','carrierOther','carrierLosses','avgCarried','avgWaiting','cityProtectionRate','weightedProtectionRate','armyProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtStart','commandsAliveAtEnd','elapsedMs','played','finalCities','actions'];
           const comparison=Object.fromEntries(keys.map(k=>[k,{baseline:b[k],feature:f[k]}]));
           const report={mode:f.mode,seed:f.seed,turns:f.maxTurns,comparison};
           fs.writeFileSync('comparison.json',JSON.stringify(report,null,2));
