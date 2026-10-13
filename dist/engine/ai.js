@@ -2374,7 +2374,7 @@
           sc -= Math.min(95, localThreat(g, u, p) * 0.36);
         // Mobile Eliminators follow the shifting warfront, covering valuable cities AND troop stacks.
         // A capped bonus preserves combat objectives and permits Tier 1 carriers to attack normally.
-        sc += eliminatorMobileCoverBonus(g, u, p, enemies);
+        sc += eliminatorMobileCoverBonus(g, u, p, enemies, memo);
         if (TYPES[u.type].branch === 'Artillery' && !guard && !u.hold && !station && !isSea(p) &&
             adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
             freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
