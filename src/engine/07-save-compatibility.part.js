@@ -1,3 +1,57 @@
+
+  // Event-driven War Report. Aggregates survive when detailed event history is capped.
+  const WAR_EVENT_LIMIT=2500;
+  function warSides(g){return [...new Set([...(g.order||[]),...(g.majors||[]),
+    ...g.stations.map(s=>s.owner),...g.units.map(u=>u.side)])].filter(s=>s&&s!=='neutral');}
+  function warSnapshot(g,turn){const sides={};for(const side of warSides(g)){
+    const e=g.economy?.[side]||{};
+    sides[side]={cities:g.stations.filter(s=>s.owner===side).length,
+      units:g.units.filter(u=>u.hp>0&&u.side===side).length,
+      credits:e.credits||0,industry:e.industry||0,science:e.science||0,sakuradite:e.sakuradite||0};}
+    return {turn,sides};}
+  function ensureWarReport(g){if(!g.warReport||!Array.isArray(g.warReport.events)||!Array.isArray(g.warReport.snapshots))
+    g.warReport={version:1,since:g.turn||1,legacy:(g.turn||1)>1,
+      lastCompleted:Math.max(0,(g.turn||1)-1),events:[],turns:{},groups:{},
+      snapshots:[warSnapshot(g,Math.max(0,(g.turn||1)-1))]};
+    return g.warReport;}
+  function warCounters(r,turn,side){const row=(r.turns[turn] ||= {});
+    return(row[side] ||= {citiesCaptured:0,citiesLost:0,enemiesDestroyed:0,unitsLost:0,
+      unitsProduced:0,inflicted:0,received:0,commandersLost:0,invasionsWon:0,invasionsLost:0,
+      fleijaLaunched:0,fleijaIntercepted:0,
+      income:{credits:0,industry:0,science:0,sakuradite:0},
+      spending:{credits:0,industry:0,science:0,sakuradite:0}});}
+  function warGroup(g,u){const x=u&&(g.armyGroups||[]).find(a=>a.side===u.side&&a.units?.includes(u.id));
+    return x?String(x.id):null;}
+  function recordWarEvent(g,kind,side,data={}){if(!g||g.warReportMuted)return;
+    const r=ensureWarReport(g),e={turn:g.turn,side,kind,...data};
+    r.events.push(e);if(r.events.length>WAR_EVENT_LIMIT)r.events.splice(0,r.events.length-WAR_EVENT_LIMIT);
+    const x=warCounters(r,g.turn,side),other=data.targetSide||data.previousOwner||data.unitSide;
+    if(kind==='cityCaptured'){x.citiesCaptured++;
+      if(other&&other!==side)warCounters(r,g.turn,other).citiesLost++;
+      if(data.naval)x.invasionsWon++;
+    }else if(kind==='cityDestroyed')warCounters(r,g.turn,data.owner||side).citiesLost++;
+    else if(kind==='unitDestroyed'){const loss=other&&other!==side?warCounters(r,g.turn,other):x;
+      loss.unitsLost++;if(data.commander)loss.commandersLost++;
+      if(data.invasion)loss.invasionsLost++;
+      if(data.byCombat&&other&&other!==side)x.enemiesDestroyed++;
+    }else if(kind==='unitProduced')x.unitsProduced++;
+    else if(kind==='damage'){const n=Math.max(0,Math.round(data.value||0));x.inflicted+=n;
+      if(other&&other!==side)warCounters(r,g.turn,other).received+=n;
+    }else if(kind==='fleijaLaunch'){x.fleijaLaunched++;
+      if(data.intercepted&&data.defender)warCounters(r,g.turn,data.defender).fleijaIntercepted++;
+    }else if(kind==='income'||kind==='spending'){
+      for(const k of Object.keys(x[kind]))x[kind][k]+=Math.max(0,Math.round(data[k]||0));}
+    if(data.group!=null&&['cityCaptured','unitDestroyed','damage'].includes(kind)){
+      const key=side+':'+data.group,a=(r.groups[key] ||= {side,id:data.group,cities:0,kills:0,damage:0});
+      if(kind==='cityCaptured')a.cities++;
+      if(kind==='unitDestroyed'&&data.byCombat)a.kills++;
+      if(kind==='damage')a.damage+=Math.max(0,Math.round(data.value||0));}}
+  function warSpend(g,side,cost,purpose='military'){if(cost)
+    recordWarEvent(g,'spending',side,{purpose,credits:cost.credits||0,
+      industry:cost.industry||0,science:cost.science||0,sakuradite:cost.sakuradite||0});}
+  function finishWarTurn(g,turn=g.turn){const r=ensureWarReport(g);
+    if(turn>r.lastCompleted){r.snapshots.push(warSnapshot(g,turn));r.lastCompleted=turn;}
+    return r;}
   // ======== Compact saves ========
   // A conquest save stores the world as changes from the starting map instead of all 13,680 hexes: terrain that
   // differs from WORLD_ROWS, and every other per-hex field (owner, provinceCity, any future one) as runs over the

@@ -108,6 +108,9 @@
       e.industry += Math.round(inc.industry * modifier);
       e.science += Math.round(inc.science * modifier);
       e.sakuradite = (e.sakuradite || 0) + Math.round(inc.sakuradite * modifier);
+      recordWarEvent(g,'income',side,{credits:Math.round(inc.credits*modifier),
+        industry:Math.round(inc.industry*modifier),science:Math.round(inc.science*modifier),
+        sakuradite:Math.round(inc.sakuradite*modifier)});
     }
     for (const v of allUnits(g)) {
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
@@ -249,7 +252,9 @@
     const damage = fortressDamage(g, foe, s.owner),
       name = fortressName(s),
       hit = [];
+    const priorHP=foe.hp;
     foe.hp = Math.max(0, foe.hp - damage);
+    recordWarEvent(g,'damage',s.owner,{targetSide:foe.side,value:priorHP-foe.hp,city:s.name});
     lowerMorale(g, foe, 1);
     s.gunReady = g.turn + fortressRecharge(g, s);
     log(g, `${name} strikes ${TYPES[foe.type].short} for ${damage}.`, s.owner);
@@ -258,7 +263,9 @@
       for (const v of g.units) {
         if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
         const amount = Math.round(fortressDamage(g, v, s.owner) * 0.4);
+        const priorHP=v.hp;
         v.hp = Math.max(0, v.hp - amount);
+        recordWarEvent(g,'damage',s.owner,{targetSide:v.side,value:priorHP-v.hp,city:s.name});
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, null, false, s.owner);
       }

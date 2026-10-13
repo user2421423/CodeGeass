@@ -1216,6 +1216,60 @@
     }
   }
 
+
+  // Event-driven War Report. Aggregates survive when detailed event history is capped.
+  const WAR_EVENT_LIMIT=2500;
+  function warSides(g){return [...new Set([...(g.order||[]),...(g.majors||[]),
+    ...g.stations.map(s=>s.owner),...g.units.map(u=>u.side)])].filter(s=>s&&s!=='neutral');}
+  function warSnapshot(g,turn){const sides={};for(const side of warSides(g)){
+    const e=g.economy?.[side]||{};
+    sides[side]={cities:g.stations.filter(s=>s.owner===side).length,
+      units:g.units.filter(u=>u.hp>0&&u.side===side).length,
+      credits:e.credits||0,industry:e.industry||0,science:e.science||0,sakuradite:e.sakuradite||0};}
+    return {turn,sides};}
+  function ensureWarReport(g){if(!g.warReport||!Array.isArray(g.warReport.events)||!Array.isArray(g.warReport.snapshots))
+    g.warReport={version:1,since:g.turn||1,legacy:(g.turn||1)>1,
+      lastCompleted:Math.max(0,(g.turn||1)-1),events:[],turns:{},groups:{},
+      snapshots:[warSnapshot(g,Math.max(0,(g.turn||1)-1))]};
+    return g.warReport;}
+  function warCounters(r,turn,side){const row=(r.turns[turn] ||= {});
+    return(row[side] ||= {citiesCaptured:0,citiesLost:0,enemiesDestroyed:0,unitsLost:0,
+      unitsProduced:0,inflicted:0,received:0,commandersLost:0,invasionsWon:0,invasionsLost:0,
+      fleijaLaunched:0,fleijaIntercepted:0,
+      income:{credits:0,industry:0,science:0,sakuradite:0},
+      spending:{credits:0,industry:0,science:0,sakuradite:0}});}
+  function warGroup(g,u){const x=u&&(g.armyGroups||[]).find(a=>a.side===u.side&&a.units?.includes(u.id));
+    return x?String(x.id):null;}
+  function recordWarEvent(g,kind,side,data={}){if(!g||g.warReportMuted)return;
+    const r=ensureWarReport(g),e={turn:g.turn,side,kind,...data};
+    r.events.push(e);if(r.events.length>WAR_EVENT_LIMIT)r.events.splice(0,r.events.length-WAR_EVENT_LIMIT);
+    const x=warCounters(r,g.turn,side),other=data.targetSide||data.previousOwner||data.unitSide;
+    if(kind==='cityCaptured'){x.citiesCaptured++;
+      if(other&&other!==side)warCounters(r,g.turn,other).citiesLost++;
+      if(data.naval)x.invasionsWon++;
+    }else if(kind==='cityDestroyed')warCounters(r,g.turn,data.owner||side).citiesLost++;
+    else if(kind==='unitDestroyed'){const loss=other&&other!==side?warCounters(r,g.turn,other):x;
+      loss.unitsLost++;if(data.commander)loss.commandersLost++;
+      if(data.invasion)loss.invasionsLost++;
+      if(data.byCombat&&other&&other!==side)x.enemiesDestroyed++;
+    }else if(kind==='unitProduced')x.unitsProduced++;
+    else if(kind==='damage'){const n=Math.max(0,Math.round(data.value||0));x.inflicted+=n;
+      if(other&&other!==side)warCounters(r,g.turn,other).received+=n;
+    }else if(kind==='fleijaLaunch'){x.fleijaLaunched++;
+      if(data.intercepted&&data.defender)warCounters(r,g.turn,data.defender).fleijaIntercepted++;
+    }else if(kind==='income'||kind==='spending'){
+      for(const k of Object.keys(x[kind]))x[kind][k]+=Math.max(0,Math.round(data[k]||0));}
+    if(data.group!=null&&['cityCaptured','unitDestroyed','damage'].includes(kind)){
+      const key=side+':'+data.group,a=(r.groups[key] ||= {side,id:data.group,cities:0,kills:0,damage:0});
+      if(kind==='cityCaptured')a.cities++;
+      if(kind==='unitDestroyed'&&data.byCombat)a.kills++;
+      if(kind==='damage')a.damage+=Math.max(0,Math.round(data.value||0));}}
+  function warSpend(g,side,cost,purpose='military'){if(cost)
+    recordWarEvent(g,'spending',side,{purpose,credits:cost.credits||0,
+      industry:cost.industry||0,science:cost.science||0,sakuradite:cost.sakuradite||0});}
+  function finishWarTurn(g,turn=g.turn){const r=ensureWarReport(g);
+    if(turn>r.lastCompleted){r.snapshots.push(warSnapshot(g,turn));r.lastCompleted=turn;}
+    return r;}
   // ======== Compact saves ========
   // A conquest save stores the world as changes from the starting map instead of all 13,680 hexes: terrain that
   // differs from WORLD_ROWS, and every other per-hex field (owner, provinceCity, any future one) as runs over the
@@ -1432,6 +1486,7 @@
     u.hpTech = hullTech(g, u);
     u.hp = maxHP(u);
     g.units.push(u);
+    if(g.warReport)recordWarEvent(g,'unitProduced',side,{unitId:u.id,unitType:type});
     return u;
   }
   function movement(g, u) {
@@ -1654,7 +1709,9 @@
   function capturePort(g, u) {
     const s = portAtHex(g, u);
     if (!s || !foe(g, s.portOwner || s.owner, u.side)) return null;
-    s.portOwner = u.side;
+    const previousOwner=s.portOwner||s.owner;
+    s.portOwner=u.side;
+    recordWarEvent(g,'portCaptured',u.side,{cityId:s.id,city:s.name,previousOwner,unitId:u.id});
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures the port of ${s.name}.`, u.side);
     return s.name;
   }
@@ -1668,6 +1725,8 @@
     if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
     delete s.expSupplyBlocked;delete s.expDecree;
     s.owner = u.side;
+    recordWarEvent(g,'cityCaptured',u.side,{cityId:s.id,city:s.name,previousOwner:loser,
+      unitId:u.id,commander:u.cmd||null,naval:!!navalLanding,group:warGroup(g,u)});
     s.shield = 0;
     s.capturedTurn = g.turn;
     dropProject(g, s, 'captured');
@@ -1756,6 +1815,7 @@
   // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
   function surrender(g, loser, winner, last) {
     (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: last.name };
+    recordWarEvent(g,'surrender',winner,{loser,city:last.name});
     // Clear strategic defenses while any remaining cities still identify their original owner.
     annexStrategic(g, loser);
     let cities = 0,
@@ -2020,6 +2080,10 @@
       return;
     }
     v.hp = 0;
+    if(!v.warCounted){v.warCounted=true;
+      recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
+        unitSide:v.side,commander:v.cmd||null,byCombat:!!attacker||!!by,
+        group:warGroup(g,attacker),invasion:!!v.landingRefreshTurn&&v.landingRefreshTurn===g.turn});}
     // A sunk Carrier-Battleship takes the Knightmares aboard down with it.
     for (const c of v.cargo?.splice(0) || []) {
       c.hp = 0;
@@ -2085,7 +2149,9 @@
     if (d) {
       dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       consumeDefensiveSkills(g, d, a);
+      const priorHP=d.hp;
       d.hp = Math.max(0, d.hp - dmg);
+      recordWarEvent(g,'damage',a.side,{targetSide:d.side,value:priorHP-d.hp,unitId:a.id,group:warGroup(g,a)});
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
@@ -2114,14 +2180,18 @@
     if (d && d.hp > 0 && pr.counterAllowed && !evadeCounter) {
       // Worked out after the hit, so a damaged defender returns weaker fire (attack scales with remaining frame).
       retaliation = Math.round(power(g, d, a, stationAt(g, a), true) * (0.94 + random(g) * 0.12));
+      const priorHP=a.hp;
       a.hp = Math.max(0, a.hp - retaliation);
+      recordWarEvent(g,'damage',d.side,{targetSide:a.side,value:priorHP-a.hp,unitId:d.id,group:warGroup(g,d)});
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
     }
     if (splashHits.length) {
       for (const { unit: v, amount } of splashHits) {
         if (v.hp <= 0) continue;
+        const priorHP=v.hp;
         v.hp = Math.max(0, v.hp - amount);
+        recordWarEvent(g,'damage',a.side,{targetSide:v.side,value:priorHP-v.hp,unitId:a.id,group:warGroup(g,a)});
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, a);
       }
@@ -2285,6 +2355,7 @@
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     const cost = decreePrice(price(type, stack, g, producer),s);
     if(s.expDecree&&!TYPES[type].naval)delete s.expDecree;
+    warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -2353,6 +2424,7 @@
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
       cost = elitePrice(id, eliteCampaign(g) ? 1 : rec.level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
+    warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -2403,6 +2475,7 @@
       level = eliteCampaign(g) ? 3 : 1,
       cost = elitePrice(id, level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
+    warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -2447,6 +2520,7 @@
     if (why) return { ok: false, reason: why };
     const cost = reinforceCost(u.type, g, u.side, u),
       e = funds(g, u.side);
+    warSpend(g,u.side,cost,'reinforcement');
     spend(e, cost);
     const old = maxHP(u);
     u.stack++;
@@ -2460,6 +2534,7 @@
     const why = repairReason(g, u);
     if (why) return { ok: false, reason: why };
     const cost = repairCost(u, g);
+    warSpend(g,u.side,{credits:cost},'repair');
     funds(g, u.side).credits -= cost;
     const amount = Math.min(maxHP(u) - u.hp, Math.round(maxHP(u) * 0.35));
     u.hp += amount;
@@ -2530,6 +2605,7 @@
       e = funds(g, s.owner);
     if(s.expDecree)delete s.expDecree;
     buildingFoundation(g, s);
+    warSpend(g,s.owner,cost,'construction');
     spend(e, cost);
     if (kind === 'port' && !s.portAt) {
       const t = portSite(g, s);
@@ -3323,6 +3399,7 @@
     const s = g.stations.find(s => s.id === id),
       why = projectReason(g, s);
     if (why) return { ok: false, reason: why };
+    warSpend(g,s.owner,FLEIJA.cost,'F.L.E.I.J.A.');
     spend(funds(g, s.owner), FLEIJA.cost);
     s.project = { side: s.owner, started: g.turn, ready: g.turn + FLEIJA.turns };
     log(g, `INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, s.owner);
@@ -3350,6 +3427,7 @@
     const s = g.stations.find(s => s.id === id),
       why = eliminatorReason(g, s);
     if (why) return { ok: false, reason: why };
+    warSpend(g,s.owner,ELIMINATOR.cost,'Eliminator');
     spend(funds(g, s.owner), ELIMINATOR.cost);
     s.eliminatorProject = { side: s.owner, started: g.turn, ready: g.turn + ELIMINATOR.turns };
     // Defensive project locations are classified, unlike offensive warhead production.
@@ -3463,6 +3541,7 @@
     dropEliminator(g, s, 'destroyed');
     const d = depositOf(g, s),
       lost = d ? destroyDeposit(g, d) : null;
+    recordWarEvent(g,'cityDestroyed',s.owner,{cityId:s.id,city:s.name,owner:s.owner});
     (g.ruins ||= []).push({ name: s.name, c: s.c, r: s.r, owner: s.owner, capital: !!s.capital, turn: g.turn });
     g.stations.splice(g.stations.indexOf(s), 1);
     if (g.mode !== 'campaign') {
@@ -3494,6 +3573,7 @@
     g.arsenal[side]--;
     (g.launched ||= {})[side] = g.turn;
     const defense = eliminatorDefender(g, side, center);
+    recordWarEvent(g,'fleijaLaunch',side,{city:name,c,r,intercepted:!!defense,defender:defense?.owner||null});
     if (defense) {
       // A charge completing this turn can defend before its owner's phase begins.
       // Two turns of research + two of production therefore beat the second warhead.
@@ -3712,6 +3792,9 @@
       e.industry += Math.round(inc.industry * modifier);
       e.science += Math.round(inc.science * modifier);
       e.sakuradite = (e.sakuradite || 0) + Math.round(inc.sakuradite * modifier);
+      recordWarEvent(g,'income',side,{credits:Math.round(inc.credits*modifier),
+        industry:Math.round(inc.industry*modifier),science:Math.round(inc.science*modifier),
+        sakuradite:Math.round(inc.sakuradite*modifier)});
     }
     for (const v of allUnits(g)) {
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
@@ -3853,7 +3936,9 @@
     const damage = fortressDamage(g, foe, s.owner),
       name = fortressName(s),
       hit = [];
+    const priorHP=foe.hp;
     foe.hp = Math.max(0, foe.hp - damage);
+    recordWarEvent(g,'damage',s.owner,{targetSide:foe.side,value:priorHP-foe.hp,city:s.name});
     lowerMorale(g, foe, 1);
     s.gunReady = g.turn + fortressRecharge(g, s);
     log(g, `${name} strikes ${TYPES[foe.type].short} for ${damage}.`, s.owner);
@@ -3862,7 +3947,9 @@
       for (const v of g.units) {
         if (v.hp <= 0 || !isFoe(g, v.side, s.owner) || v.id === foe.id || dist(g, v, foe) !== 1) continue;
         const amount = Math.round(fortressDamage(g, v, s.owner) * 0.4);
+        const priorHP=v.hp;
         v.hp = Math.max(0, v.hp - amount);
+        recordWarEvent(g,'damage',s.owner,{targetSide:v.side,value:priorHP-v.hp,city:s.name});
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, null, false, s.owner);
       }
@@ -4688,6 +4775,7 @@
     g.startUnits = Object.fromEntries(majors.map(s => [s, g.units.filter(u => u.side === s).length]));
     log(g, (ERAS[cfg.id] || ERAS.world).desc, player);
     log(g, (ERAS[cfg.id] || ERAS.world).rulesText, player);
+    ensureWarReport(g);
     return g;
   }
 
@@ -5135,6 +5223,9 @@
     navigable,
     packSave,
     unpackSave,
+    ensureWarReport,
+    recordWarEvent,
+    finishWarTurn,
     reachable,
     hasOrders,
     targets,

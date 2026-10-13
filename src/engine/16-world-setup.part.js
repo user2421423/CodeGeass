@@ -700,6 +700,7 @@
     g.startUnits = Object.fromEntries(majors.map(s => [s, g.units.filter(u => u.side === s).length]));
     log(g, (ERAS[cfg.id] || ERAS.world).desc, player);
     log(g, (ERAS[cfg.id] || ERAS.world).rulesText, player);
+    ensureWarReport(g);
     return g;
   }
 

@@ -95,6 +95,7 @@
     const s = g.stations.find(s => s.id === id),
       why = projectReason(g, s);
     if (why) return { ok: false, reason: why };
+    warSpend(g,s.owner,FLEIJA.cost,'F.L.E.I.J.A.');
     spend(funds(g, s.owner), FLEIJA.cost);
     s.project = { side: s.owner, started: g.turn, ready: g.turn + FLEIJA.turns };
     log(g, `INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, s.owner);
@@ -122,6 +123,7 @@
     const s = g.stations.find(s => s.id === id),
       why = eliminatorReason(g, s);
     if (why) return { ok: false, reason: why };
+    warSpend(g,s.owner,ELIMINATOR.cost,'Eliminator');
     spend(funds(g, s.owner), ELIMINATOR.cost);
     s.eliminatorProject = { side: s.owner, started: g.turn, ready: g.turn + ELIMINATOR.turns };
     // Defensive project locations are classified, unlike offensive warhead production.
@@ -235,6 +237,7 @@
     dropEliminator(g, s, 'destroyed');
     const d = depositOf(g, s),
       lost = d ? destroyDeposit(g, d) : null;
+    recordWarEvent(g,'cityDestroyed',s.owner,{cityId:s.id,city:s.name,owner:s.owner});
     (g.ruins ||= []).push({ name: s.name, c: s.c, r: s.r, owner: s.owner, capital: !!s.capital, turn: g.turn });
     g.stations.splice(g.stations.indexOf(s), 1);
     if (g.mode !== 'campaign') {
@@ -266,6 +269,7 @@
     g.arsenal[side]--;
     (g.launched ||= {})[side] = g.turn;
     const defense = eliminatorDefender(g, side, center);
+    recordWarEvent(g,'fleijaLaunch',side,{city:name,c,r,intercepted:!!defense,defender:defense?.owner||null});
     if (defense) {
       // A charge completing this turn can defend before its owner's phase begins.
       // Two turns of research + two of production therefore beat the second warhead.

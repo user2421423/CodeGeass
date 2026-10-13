@@ -219,6 +219,10 @@
       return;
     }
     v.hp = 0;
+    if(!v.warCounted){v.warCounted=true;
+      recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
+        unitSide:v.side,commander:v.cmd||null,byCombat:!!attacker||!!by,
+        group:warGroup(g,attacker),invasion:!!v.landingRefreshTurn&&v.landingRefreshTurn===g.turn});}
     // A sunk Carrier-Battleship takes the Knightmares aboard down with it.
     for (const c of v.cargo?.splice(0) || []) {
       c.hp = 0;
@@ -284,7 +288,9 @@
     if (d) {
       dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       consumeDefensiveSkills(g, d, a);
+      const priorHP=d.hp;
       d.hp = Math.max(0, d.hp - dmg);
+      recordWarEvent(g,'damage',a.side,{targetSide:d.side,value:priorHP-d.hp,unitId:a.id,group:warGroup(g,a)});
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
@@ -313,14 +319,18 @@
     if (d && d.hp > 0 && pr.counterAllowed && !evadeCounter) {
       // Worked out after the hit, so a damaged defender returns weaker fire (attack scales with remaining frame).
       retaliation = Math.round(power(g, d, a, stationAt(g, a), true) * (0.94 + random(g) * 0.12));
+      const priorHP=a.hp;
       a.hp = Math.max(0, a.hp - retaliation);
+      recordWarEvent(g,'damage',d.side,{targetSide:a.side,value:priorHP-a.hp,unitId:d.id,group:warGroup(g,d)});
       if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
       kill(g, a, d);
     }
     if (splashHits.length) {
       for (const { unit: v, amount } of splashHits) {
         if (v.hp <= 0) continue;
+        const priorHP=v.hp;
         v.hp = Math.max(0, v.hp - amount);
+        recordWarEvent(g,'damage',a.side,{targetSide:v.side,value:priorHP-v.hp,unitId:a.id,group:warGroup(g,a)});
         hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
         kill(g, v, a);
       }
