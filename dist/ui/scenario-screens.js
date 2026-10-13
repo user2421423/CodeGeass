@@ -51,12 +51,13 @@ const SCENARIO_BLURBS = {
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
     eu: 'Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases.'
-  }
+  },
   'area-18': {
     britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
     eu: 'Launch coordinated offensives from Syria, the Levant and Suez. Defend the northern Iraqi front against two rival armies.',
     cf: 'Command Persia from Tehran and the Zagros to Herat. Use mountain passes and the Persian Gulf to contest Britannian expansion.'
-  }};
+  }
+};
 const SCENARIO_TEXT = {
   'war-for-australia': {
     era: 'Australia · Alternate 2018',
@@ -106,7 +107,7 @@ const SCENARIO_TEXT = {
     diplomacy: 'Britannia and Europia United are at war from turn 1. There is no Chinese Federation involvement or scripted deadline.',
     elite: 'Elite Bering: land and amphibious forces begin as Lv.1 Elite Forces; enemy named commanders begin at Lv.5. Carriers remain conventional. Rival AI has advanced research and elite factories; players follow HQ unlock rules.',
     focus: {britannia:'Nome',eu:'Provideniya'}
-  }
+  },
   'philippines-invasion': {
     era: 'Philippine Archipelago · Alternate 2017',
     intro: 'Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.',
@@ -120,7 +121,8 @@ const SCENARIO_TEXT = {
     diplomacy: 'Britannia, Europia United and the Chinese Federation are all hostile from turn 1. No betrayals, nuclear weapons or campaign deadline.',
     elite: 'Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.5; carriers remain conventional. Research and Elite Force production follow existing scenario rules.',
     focus: {britannia:'Baghdad',eu:'Damascus',cf:'Kermanshah'}
-  }};
+  }
+};
 function scenarioModel(kind = scenarioKind) {
   return E.scenarios?.byId?.[kind] || E.scenarios?.japan;
 }
