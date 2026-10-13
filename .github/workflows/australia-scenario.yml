@@ -47,6 +47,8 @@ jobs:
           - {player: britannia, seed: 11, difficulty: normal}
           - {player: cf, seed: 43, difficulty: normal}
           - {player: eu, seed: 79, difficulty: normal}
+          - {player: britannia, seed: 101, difficulty: normal}
+          - {player: cf, seed: 131, difficulty: normal}
     name: ${{ matrix.player }} seed ${{ matrix.seed }}
     steps:
       - uses: actions/checkout@v4
@@ -55,4 +57,4 @@ jobs:
           node-version: '22'
       - name: Seeded actual-engine three-way AI simulation
         timeout-minutes: 30
-        run: node tools/australia_sim.cjs ${{ matrix.seed }} 25 ${{ matrix.player }} ${{ matrix.difficulty }}
+        run: node tools/australia_sim.cjs ${{ matrix.seed }} 50 ${{ matrix.player }} ${{ matrix.difficulty }}
