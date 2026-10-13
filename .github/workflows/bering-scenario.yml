@@ -18,6 +18,8 @@ jobs:
         run: node tools/build_sources.cjs --check
       - name: Bering and existing scenario regressions
         run: node --test tests/*.test.cjs
+      - name: Exhaustive Bering land, coast, sea and port hex audit
+        run: node tools/bering_hex_audit.cjs
       - name: Four-turn AI versus AI Bering invasion playtest
         timeout-minutes: 12
         run: node tools/bering_sim.cjs 11 4
