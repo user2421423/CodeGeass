@@ -30,9 +30,9 @@ test('Australia is an independent, hostile, three-faction 2018 theatre',()=>{
     assert.equal(g.stations.filter(s=>s.owner==='britannia').length,20);
     assert.equal(g.stations.filter(s=>s.owner==='cf').length,14);
     assert.equal(g.stations.filter(s=>s.owner==='eu').length,14);
-    assert.equal(g.units.length,134);
-    assert.equal(g.units.filter(ground).length,100);
-    assert.equal(g.units.filter(u=>E.TYPES[u.type].naval).length,34);
+    assert.equal(g.units.length,160);
+    assert.equal(g.units.filter(ground).length,124);
+    assert.equal(g.units.filter(u=>E.TYPES[u.type].naval).length,36);
     assert.equal(g.scenario.turnLimit,undefined);
     assert.deepEqual(g.arsenal,{britannia:0,cf:0,eu:0});
     assert.ok(g.units.every(u=>SIDES.includes(u.side)&&u.hp>0));
