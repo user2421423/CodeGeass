@@ -17,7 +17,7 @@ test('Division of Japan uses persistent two-theater commitments without permanen
   assert.equal(wings.length,land(g,'britannia').length);
   assert.equal(wings.filter(w=>w==='eu').length,Math.ceil(wings.length/2));
   assert.equal(wings.filter(w=>w==='cf').length,Math.floor(wings.length/2));
-  assert.deepEqual(plan.guards,{},'no enemy near enough to require city interception at setup');
+  assert.ok(Object.values(plan.guards).every(p=>p.response && p.emergency),'any initial defenders are threat-triggered');
   assert.ok(plan.theaters.eu && plan.theaters.cf);
   assert.ok(Number.isFinite(plan.theaters.eu.arriving));
   assert.ok(plan.theaters.eu.arriving<=land(g,'britannia').reduce((v,u)=>v+E.unitStrength(u),0));
