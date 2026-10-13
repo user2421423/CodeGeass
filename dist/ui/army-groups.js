@@ -84,7 +84,7 @@ function armyGroupsDialog(editId = null) {
   E.armyGroupPrune(game);
   const groups = E.armyGroups(game);
   const gr = editId == null ? null : E.armyGroup(game, editId);
-  if (gr) { activeArmyGroupId = gr.id; multiSelectedIds.clear(); }
+  if (gr) activeArmyGroupId = gr.id;
   const active = activeArmyGroup();
   const selected = selectedUnit();
   const chosen = selected?.side === game.player ? selected : null;
