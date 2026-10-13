@@ -210,8 +210,8 @@ test('Combined scenario selector keeps every regional scenario and descriptions 
   const src=fs.readFileSync(require.resolve('../dist/ui/scenario-screens.js'),'utf8');
   const definitions=src.slice(0,src.indexOf('function scenarioModel'));
   const registry=vm.runInNewContext(definitions+'\n({kinds:SCENARIO_KINDS,blurbs:SCENARIO_BLURBS,text:SCENARIO_TEXT});');
-  const expected=['invasion-japan','division-japan','european-war','bering-strait',
-    'operation-stonehenge','conquest-indochina','philippines-invasion','war-for-australia','area-18'];
+  const expected=['invasion-japan','division-japan','european-war','operation-stonehenge',
+    'bering-strait','conquest-indochina','philippines-invasion','war-for-australia','area-18'];
   assert.deepEqual(Array.from(registry.kinds,entry=>entry?.[0]),expected);
   for(const id of expected){
     assert.ok(registry.blurbs[id],'missing faction briefing '+id);
