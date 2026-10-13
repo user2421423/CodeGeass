@@ -20,12 +20,16 @@ jobs:
           - { player: eu, seed: 11 }
           - { player: britannia, seed: 43 }
           - { player: eu, seed: 43 }
+          - { player: britannia, seed: 79 }
+          - { player: eu, seed: 79 }
+          - { player: britannia, seed: 131 }
+          - { player: eu, seed: 131 }
     name: ${{ matrix.player }} seed ${{ matrix.seed }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Long-run 30-turn all-AI scenario
+      - name: Long-run 40-turn all-AI scenario
         timeout-minutes: 30
         run: node tools/bering_long_balance.cjs ${{ matrix.seed }} 30 ${{ matrix.player }} normal
