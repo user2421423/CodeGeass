@@ -1,0 +1,79 @@
+name: Permanent Eliminator Escort Screening
+on:
+  push:
+    branches: ['experiment/eliminator-permanent-escorts']
+    paths: ['.github/workflows/eliminator-permanent-screen.yml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/eliminator-carriers.test.cjs
+      - run: node --check tools/eliminator-permanent-variants.cjs
+      - run: node --check tools/eliminator_ab_sim.cjs
+      - run: |
+          for v in main city regular combined; do
+            node tools/eliminator-permanent-variants.cjs "$v"
+            node --check dist/engine/ai.js
+          done
+  compare:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} 4-way
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Run identical-seed 4-way full wars
+        shell: bash
+        run: |
+          set -euo pipefail
+          for v in main city regular combined; do
+            node tools/eliminator-permanent-variants.cjs "$v"
+            node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" "$v" > "$v.json"
+          done
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const variants=['main','city','regular','combined'];
+          const fields=['warheads','intercepted','carrierIntercepts','cityIntercepts','carrierTier1','carrierOther','carrierLosses','avgCarried','avgWaiting','weightedProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtEnd','elapsedMs','finalCities'];
+          const data=Object.fromEntries(variants.map(v=>[v,JSON.parse(fs.readFileSync(v+'.json'))]));
+          const result={mode:data.main.mode,seed:data.main.seed,variants:Object.fromEntries(variants.map(v=>
+            [v,Object.fromEntries(fields.map(k=>[k,data[v][k]]))]))};
+          console.log('PERMANENT_ESCORT_SCREEN '+JSON.stringify(result));
+          fs.writeFileSync('summary.json',JSON.stringify(result,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'## '+result.mode+' seed '+result.seed+'\n\n'+
+            '|Metric|Main|City/Tier1|Regular|Combined|\n|---|---:|---:|---:|---:|\n'+
+            fields.filter(k=>typeof data.main[k]==='number').map(k=>'|'+k+'|'+variants.map(v=>data[v][k]).join('|')+'|').join('\n')+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: permanent-escort-${{ matrix.mode }}-${{ matrix.seed }}
+          path: |
+            main.json
+            city.json
+            regular.json
+            combined.json
+            summary.json
+          retention-days: 14
