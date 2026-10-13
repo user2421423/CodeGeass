@@ -204,3 +204,22 @@ test('Area 18 renderer paints all faction land instead of the Japan-only atlas',
   assert.equal(geography.paint(ctx,g,0,5000,0,5000,1),true);
   assert.equal(painted.size,3,'all three faction land regions must be visible');
 });
+
+test('Combined scenario selector keeps every regional scenario and descriptions intact',()=>{
+  const fs=require('node:fs'),vm=require('node:vm');
+  const src=fs.readFileSync(require.resolve('../dist/ui/scenario-screens.js'),'utf8');
+  const definitions=src.slice(0,src.indexOf('function scenarioModel'));
+  const registry=vm.runInNewContext(definitions+'\n({kinds:SCENARIO_KINDS,blurbs:SCENARIO_BLURBS,text:SCENARIO_TEXT});');
+  const expected=['invasion-japan','division-japan','european-war','bering-strait',
+    'operation-stonehenge','conquest-indochina','philippines-invasion','war-for-australia','area-18'];
+  assert.deepEqual(Array.from(registry.kinds,entry=>entry?.[0]),expected);
+  for(const id of expected){
+    assert.ok(registry.blurbs[id],'missing faction briefing '+id);
+    assert.ok(registry.text[id]?.focus,'missing preview focus '+id);
+    assert.ok(registry.text[id]?.era,'missing scenario introduction '+id);
+  }
+  for(const side of SIDES){
+    assert.ok(registry.blurbs['area-18'][side],'Area 18 faction briefing '+side);
+    assert.ok(registry.text['area-18'].focus[side],'Area 18 focus '+side);
+  }
+});
