@@ -6,7 +6,17 @@
   const MAX_GROUPS = 12;
   const MAX_UNITS = 24;
 
-  const groups = g => (g.armyGroups ||= []);
+  // Legacy saves used Defend; upgrade it to passive Hold Position on first access.
+  const groups = g => {
+    const list = (g.armyGroups ||= []);
+    for (const gr of list) {
+      if (gr.stance !== 'defend') continue;
+      for (const id of gr.units || [])
+        clearMatchingOrder(g, g.units.find(u => u.id === id), gr.destination);
+      gr.stance = 'hold';
+    }
+    return list;
+  };
   const find = (g, id) => groups(g).find(v => v.id === id && v.side === g.player);
   function canEdit(g) {
     if (g.mode !== 'conquest' && g.mode !== 'scenario') return 'Available in conquest or scenarios only';
@@ -57,7 +67,7 @@
     }
     group.units.push(unitId);
     let routed = false;
-    if (group.destination && group.stance !== 'defend') {
+    if (group.destination && group.stance !== 'hold') {
       if (u.c === group.destination.c && u.r === group.destination.r) {
         delete u.goto;
         routed = true;
@@ -89,8 +99,9 @@
     }
     if (members.length && !ready.length)
       return { ok: false, reason: 'No group unit has a route to that destination', failed: rejected.length };
-    for (const u of ready) {
-      if (u.c === c && u.r === r || group.stance === 'defend') delete u.goto;
+    // A held group's objective is dormant; individual standing orders are untouched.
+    if (group.stance !== 'hold') for (const u of ready) {
+      if (u.c === c && u.r === r) delete u.goto;
       else E.setGoto(g, u.id, c, r);
     }
     if (group.autoConquer) { group.autoConquer = false; group.autoRouted = {}; group.targetStationId = null; }
@@ -116,19 +127,20 @@
   }
   const STANCES = Object.freeze({
     advance: 'Advance',
-    defend: 'Defend',
+    hold: 'Hold Position',
     assault: 'Assault',
   });
-  // Advance = movement alone. Defend = hold and engage reachable hostiles.
+  // Advance = movement alone. Hold Position = no group movement or fire.
   // Assault = movement followed by legal fire, retaining enemy objectives until captured.
   function setStance(g, groupId, stance) {
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
     if (!Object.hasOwn(STANCES, stance)) return { ok: false, reason: 'Unknown group stance' };
-    if (group.autoConquer && stance !== 'advance') return { ok: false, reason: 'Stop automated conquest before enabling automatic fire' };
+    if (group.autoConquer && stance === 'assault') return { ok: false, reason: 'Stop automated conquest before enabling automatic fire' };
+    if (stance === 'hold' && group.autoConquer) setConquest(g, groupId, false);
     if (stance === (group.stance || 'advance')) return { ok: true, unchanged: true };
     const prior = group.destination;
-    if (stance === 'defend') {
+    if (stance === 'hold') {
       for (const id of group.units) clearMatchingOrder(g, g.units.find(u => u.id === id), prior);
     } else if (prior) {
       for (const id of group.units) {
@@ -244,7 +256,7 @@
     if (g.over || g.phase !== side) return report;
     const shooting = [];
     for (const gr of groups(g)) {
-      if (gr.side !== side || gr.autoConquer || !['defend', 'assault'].includes(gr.stance)) continue;
+      if (gr.side !== side || gr.autoConquer || gr.stance !== 'assault') continue;
       for (const id of gr.units) {
         const u = g.units.find(v => v.id === id && v.hp > 0 && v.side === side);
         if (u) shooting.push({ u, gr });

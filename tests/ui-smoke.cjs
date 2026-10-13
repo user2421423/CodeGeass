@@ -676,6 +676,8 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run('game.armyGroups.length'), 2,
     'importing a starting formation creates a managed group');
   assert(modal().includes('Stance:'), 'imported group exposes editable stance controls');
+  assert(modal().includes('Hold Position'), 'scenario army-group menu exposes Hold Position');
+  assert(!modal().includes('Defend holds and fires'), 'old Defend help text is removed');
   run('armyGroupStartRouting(game.armyGroups[0].id)');
   assert.equal(run('armyGroupRouting'), 1, 'scenario army group can enter destination selection');
   run('armyGroupRouting = null');

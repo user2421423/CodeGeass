@@ -18,7 +18,7 @@ test('Player army groups support regional scenarios without changing campaign pe
   assert.equal(E.addArmyGroupUnit(g, id, units[1].id).ok, true);
   assert.equal(E.armyGroup(g, id).units.length, 2);
   assert.equal(E.orderArmyGroup(g, id, units[0].c, units[0].r).ok, true);
-  assert.equal(E.setArmyGroupStance(g, id, 'defend').ok, true);
+  assert.equal(E.setArmyGroupStance(g, id, 'hold').ok, true);
   assert.equal(E.setArmyGroupStance(g, id, 'assault').ok, true);
   assert.equal(E.setArmyGroupConquest(g, id, true).ok, true);
   assert.equal(E.armyGroup(g, id).stance, 'advance');
@@ -29,6 +29,54 @@ test('Player army groups support regional scenarios without changing campaign pe
   assert.equal(E.armyGroups(g).length, 0);
   assert.equal(E.createArmyGroup({...g, mode: 'campaign'}).ok, false);
 });
+
+test('Hold Position suspends group movement without preventing manual orders', () => {
+  const g = japan.create('cf', 'normal', 7702);
+  const unit = g.units.find(u => u.side === g.player && !u.moved && !u.goto &&
+    E.adjacent(g, u).some(p => !E.unitAt(g, p) && !E.gotoReason(g, u, p)));
+  assert.ok(unit, 'an unmoved unit has an adjacent legal destination');
+  const goal = E.adjacent(g, unit).find(p => !E.unitAt(g, p) && !E.gotoReason(g, unit, p));
+  const start = { c: unit.c, r: unit.r };
+  const group = E.createArmyGroup(g, unit.id).group;
+  assert.equal(E.orderArmyGroup(g, group.id, goal.c, goal.r).ok, true);
+  assert.equal(unit.goto.c, goal.c);
+  assert.equal(E.setArmyGroupStance(g, group.id, 'hold').ok, true);
+  assert.equal(unit.goto, undefined);
+  assert.equal(E.runGotos(g, g.player).moved.some(m => m.id === unit.id), false);
+  assert.deepEqual({ c: unit.c, r: unit.r }, start);
+  assert.equal(E.setGoto(g, unit.id, goal.c, goal.r).ok, true);
+  assert.equal(E.orderArmyGroup(g, group.id, goal.c, goal.r).ok, true);
+  assert.equal(unit.goto.c, goal.c, 'held group orders do not override individual orders');
+  assert.ok(E.runGotos(g, g.player).moved.some(m => m.id === unit.id),
+    'individual standing orders continue to function');
+});
+
+test('Legacy Defend saves migrate to passive Hold Position', () => {
+  const g = japan.create('cf', 'normal', 7703);
+  const unit = g.units.find(u => u.side === g.player && u.hp > 0);
+  const group = E.createArmyGroup(g, unit.id).group;
+  group.destination = { c: unit.c + 1, r: unit.r };
+  unit.goto = { ...group.destination };
+  group.stance = 'defend';
+  assert.equal(E.armyGroups(g)[0].stance, 'hold');
+  assert.equal(unit.goto, undefined);
+  assert.equal(E.ARMY_GROUP_STANCES.hold, 'Hold Position');
+  assert.equal(Object.hasOwn(E.ARMY_GROUP_STANCES, 'defend'), false);
+  assert.deepEqual(E.runArmyGroupFire(g, g.player).fired, []);
+  assert.equal(!!unit.attacked, false, 'Hold Position does not spend attack actions');
+  assert.equal(E.setArmyGroupStance(g, group.id, 'assault').ok, true);
+});
+
+test('Hold Position stops automated conquest', () => {
+  const g = japan.create('cf', 'normal', 7704);
+  const unit = g.units.find(u => u.side === g.player && u.hp > 0);
+  const group = E.createArmyGroup(g, unit.id).group;
+  assert.equal(E.setArmyGroupConquest(g, group.id, true).ok, true);
+  assert.equal(E.setArmyGroupStance(g, group.id, 'hold').ok, true);
+  assert.equal(group.autoConquer, false);
+  assert.equal(group.stance, 'hold');
+});
+
 function landReachable(g, origin, destination) {
   const start = city(g, origin), finish = city(g, destination);
   const seen = new Set([E.key(start)]), queue = [start];
