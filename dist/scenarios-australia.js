@@ -105,7 +105,7 @@
       require('./australia-landmask.js'):null);
     const bits=geographic?.bits||root.AUSTRALIA_LAND_BITS;
     if(!bits)throw Error('Australian shoreline mask was not loaded');
-    const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
+    const raw=geographic?.binary || (typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1'));
     if(raw.length!==COLS*ROWS/8)throw Error('Australian shoreline mask is corrupt');
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
