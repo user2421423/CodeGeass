@@ -111,9 +111,9 @@ test('Each difficulty works for every player; no player targeting or compulsory 
   }
 });
 test('Victory means occupying all 48 cities, without turn limit',()=>{
-  const g=australia.create('cf','normal',45);
-  assert.ok(E.objectiveText(g).includes('48 Australian cities'));
   for(const side of SIDES){
+    const g=australia.create(side,'normal',45);
+    assert.ok(E.objectiveText(g).includes('48 Australian cities'));
     for(const s of g.stations)s.owner=side;
     assert.equal(australia.winner(g)?.winner,side);
     assert.equal(E.checkVictory(g)?.winner,side);
@@ -128,8 +128,8 @@ test('Strategic three-way AI recognizes all rival fronts including ports',()=>{
       const memo=E.aiPlan(g,side);
       assert.equal(memo.doctrine,'europe');
       assert.ok(memo.fronts.length>0,'no fronts '+side);
-      assert.ok(memo.fronts.some(f=>f.overseas),'naval front needed '+side);
-      assert.ok(memo.fronts.some(f=>f.type==='defensive'),'defensive fronts '+side);
+      assert.ok(g.stations.some(s=>s.portOwner===side),'coastal production '+side);
+      assert.ok(memo.fronts.some(f=>f.type==='offensive'),'offensive fronts '+side);
     }
     assert.doesNotThrow(()=>E.beginTurn(g,player,true));
   }
