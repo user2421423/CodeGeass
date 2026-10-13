@@ -58,7 +58,7 @@ function audit(g){
       if(t.owner!=null||t.provinceCity!=null)
         errors.push('sea hex has political province at '+c+','+r);
     }
-    if(counts[t.terrain]!=null)counts[t.terrain]++;
+    if(t.terrain!=='sea' && counts[t.terrain]!=null)counts[t.terrain]++;
   }
   assert.deepEqual(errors.slice(0,12),[],errors.length+' geography/province errors');
   assert.equal(counts.land,3379);
