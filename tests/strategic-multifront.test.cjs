@@ -85,3 +85,27 @@ test('European and Invasion scenarios choose doctrines; Campaign retains scripte
   const divisionHard=division.create('britannia','hard',71);
   assert.equal(E.aiPlan(divisionHard,'britannia').doctrine,'division');
 });
+
+test('Mobile defensive responders cannot also be recovering or already-acted',()=>{
+  const g=division.create('britannia','hard',987);
+  for(const u of g.units)if(u.side!=='britannia')u.hp=0;
+  const officers=land(g,'britannia').filter(u=>u.cmd);
+  assert.ok(officers.length);
+  for(const u of officers)u.hp=Math.max(1,Math.floor(E.maxHP(u)*0.2));
+  const city=g.stations.find(s=>s.owner==='britannia'&&
+    land(g,'britannia').some(u=>E.distance(g,u,s)<=5));
+  assert.ok(city);
+  const spawn=E.adjacent(g,city).find(p=>p.terrain!=='sea' &&
+    !E.TERRAIN[p.terrain]?.blocked&&!E.unitAt(g,p));
+  assert.ok(spawn);
+  E.newUnit(g,E.typeFor('eu','medium',g),'eu',spawn.c,spawn.r);
+  g.turn=2;
+  const plan=E.aiPlan(g,'britannia');
+  assert.ok(plan.recoveries?.size>0,'fixture exercises recovery planning');
+  for(const [id,post] of Object.entries(plan.guards)){
+    if(!post.response)continue;
+    const u=g.units.find(v=>v.id===Number(id));
+    assert.ok(u&&!u.moved&&!u.attacked);
+    assert.ok(!plan.recoveries.has(u.id),'a recovery order must not be counted as defense');
+  }
+});

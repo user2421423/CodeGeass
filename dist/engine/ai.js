@@ -496,7 +496,11 @@
       const threat=attackers.reduce((v,u)=>v+unitStrength(u),0),
         sameFront=attackers[0].side,
         eligible=troops.filter(u=>!deployed.has(u.id)&&!TYPES[u.type].naval &&
+          // Recovery orders take precedence over defense; do not divert wounded
+          // commanders or units already committed to an action this turn.
+          !u.moved && !u.attacked && !memo.recoveries?.has(u.id) && isReady(g,u) &&
           massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=8 &&
+          frontArrival(g,u,{anchor:city,side})<=2 &&
           (!memo.wings[u.id]||memo.wings[u.id]===sameFront)),
         ordered=eligible.sort((a,b)=>dist(g,a,city)-dist(g,b,city)||a.id-b.id),
         need=Math.min(doctrine==='europe' && side==='eb'?1:3,

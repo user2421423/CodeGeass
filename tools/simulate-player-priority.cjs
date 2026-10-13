@@ -55,8 +55,11 @@ function run(mode,seed,bonus) {
       }
       const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
         .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id).map(u=>u.id);
-      for(const id of ids) {
+      for(let step=0;step<ids.length;step++) {
         if(g.over)break;
+        const next=E.aiNextActor(g,ids,step);
+        if(next!==step)[ids[step],ids[next]]=[ids[next],ids[step]];
+        const id=ids[step];
         const owners=new Map(g.units.map(u=>[u.id,u.side]));
         const cityOwners=new Map(g.stations.map(s=>[`${s.c},${s.r}`,s.owner]));
         try{
