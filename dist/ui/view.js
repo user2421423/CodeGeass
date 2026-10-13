@@ -407,16 +407,20 @@ function attachMap() {
         visualCity = hitVisualStation(e.clientX, e.clientY),
         isAction = p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)));
       const targetUnit = p && E.unitAt(game, p);
-      if (pointer.shift && interactive() && game.mode === 'conquest' && targetUnit?.side === game.player &&
+      if (pointer.shift && interactive() && (game.mode === 'conquest' || game.mode === 'scenario') &&
+          targetUnit?.side === game.player &&
           !routing && !armyGroupRouting && !scenarioRoutingGroup && !strikeMode && !deploying) {
-        if (!multiSelectedIds.size && selectedUnit()?.side === game.player) multiSelectedIds.add(selectedUnit().id);
-        if (multiSelectedIds.has(targetUnit.id)) multiSelectedIds.delete(targetUnit.id);
-        else multiSelectedIds.add(targetUnit.id);
-        const first = multiSelectedIds.values().next().value;
-        if (first != null) selection = { kind: 'unit', id: first };
-        else selection = { kind: 'unit', id: targetUnit.id };
-        updateSelection();
-        toast(multiSelectedIds.size + ' formations selected. Open Army groups to assign them.');
+        if (activeArmyGroup()) {
+          armyGroupToggleUnit(targetUnit.id);
+        } else {
+          if (!multiSelectedIds.size && selectedUnit()?.side === game.player) multiSelectedIds.add(selectedUnit().id);
+          if (multiSelectedIds.has(targetUnit.id)) multiSelectedIds.delete(targetUnit.id);
+          else multiSelectedIds.add(targetUnit.id);
+          const first = multiSelectedIds.values().next().value;
+          selection = { kind: 'unit', id: first ?? targetUnit.id };
+          updateSelection();
+          toast(multiSelectedIds.size + ' formations selected. Create or choose a group in Army groups.');
+        }
       } else if (pin && !strikeMode && !armyGroupRouting && !isAction)
         generalDialog(pin.cmd, !!pin.personal);
       else if (armyGroupRouting && visualCity)
