@@ -1,0 +1,44 @@
+name: Indochina scenario regression and balance
+on:
+  push:
+    branches: ['scenario/indochina']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check source synchronization
+        run: node tools/build_sources.cjs --check
+      - name: Run full Node regression suite
+        run: node --test tests/*.test.cjs
+      - name: Audit each Indochina map hex and deployment
+        run: node tools/indochina_hex_audit.cjs
+      - name: UI smoke check
+        run: node tests/ui-smoke.cjs
+      - name: Asset and world map regression
+        run: |
+          node tools/validate_assets.cjs --tracked
+          python3 tools/check_map.py
+  seeded-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        player: ['britannia', 'cf']
+        difficulty: ['normal', 'hard', 'challenge', 'elite']
+        seed: [11, 29]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Three-turn real-engine AI versus AI playtest
+        run: node tools/indochina_sim.cjs ${{ matrix.player }} ${{ matrix.difficulty }} ${{ matrix.seed }} 3
