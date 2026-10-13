@@ -277,11 +277,39 @@ function draw(time, dt) {
       ctx.restore();
     }
   }
-  // Compact group numbers and objective flags stay visible at strategic zoom.
-  const groupColors = ['#ffd36e', '#62d9fa', '#ff91c4', '#aff29f', '#cbb1ff', '#ffa876'];
+
+  // Operational axes are on the dynamic canvas, above terrain atlas and below formations.
+  if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario')) {
+    for (const gr of strategicFriendlyGroups()) {
+      if (!gr.destination) continue;
+      const anchor = strategicGroupAnchor(gr), goal = hexCenter(gr.destination);
+      if (!anchor || !visible(goal)) continue;
+      const destX = wrapNear(goal.x, anchor.x);
+      const length = Math.hypot(destX - anchor.x, goal.y - anchor.y);
+      if (length < R * 0.7) continue;
+      const tone = strategicGroupColor(gr);
+      for (const ax of copiesBetween(anchor.x, left - length, right + length)) {
+        const dx = destX - anchor.x, dy = goal.y - anchor.y;
+        const tx = ax + dx, ty = goal.y, ux = dx / length, uy = dy / length;
+        ctx.save();
+        ctx.globalAlpha = 0.68;
+        drawLine(ax, anchor.y, tx - ux * R * 0.5, ty - uy * R * 0.5, tone,
+          2 / Math.max(scale, 0.3), [8 / Math.max(scale, 0.3), 5 / Math.max(scale, 0.3)]);
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - ux * R * 0.6 - uy * R * 0.22, ty - uy * R * 0.6 + ux * R * 0.22);
+        ctx.lineTo(tx - ux * R * 0.6 + uy * R * 0.22, ty - uy * R * 0.6 - ux * R * 0.22);
+        ctx.closePath();
+        ctx.fillStyle = tone;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+  // Group indicators share the same optional overlay in Conquest and Scenarios.
   const groupMembership = new Map();
-  if (game.mode === 'conquest') for (const gr of game.armyGroups || [])
-    if (gr.side === game.player) for (const id of gr.units) groupMembership.set(id, gr);
+  if (strategicOverlay) for (const gr of strategicFriendlyGroups())
+    for (const id of gr.units) groupMembership.set(id, gr);
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
   for (const u of living) {
@@ -291,7 +319,7 @@ function draw(time, dt) {
       sel = selection?.kind === 'unit' && selection.id === u.id,
       multi = multiSelectedIds.has(u.id),
       group = groupMembership.get(u.id),
-      groupColor = groupColors[((group?.id || 1) - 1) % groupColors.length],
+      groupColor = group ? strategicGroupColor(group) : '#ffd36e',
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
     for (const x of copies(base.x)) {
@@ -404,25 +432,43 @@ function draw(time, dt) {
       }
     }
   }
-  // Persistent group objective markers, including when no member is individually selected.
-  if (game.mode === 'conquest') for (const gr of game.armyGroups || []) {
-    if (gr.side !== game.player || !gr.destination) continue;
-    const center = hexCenter(gr.destination);
-    if (!visible(center)) continue;
-    const tone = groupColors[(gr.id - 1) % groupColors.length];
-    for (const x of copies(center.x)) {
-      ctx.save();
-      ctx.setLineDash([7 / Math.max(scale, 0.35), 5 / Math.max(scale, 0.35)]);
-      hexPath(x, center.y, R * 0.79);
-      ctx.strokeStyle = tone;
-      ctx.lineWidth = 2.5 / Math.max(scale, 0.4);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      outlinedText('G' + gr.id + ' ' + (gr.stance === 'defend' ? 'DEF' : gr.stance === 'assault' ? 'ATK' : 'ADV'),
-        x, center.y - R * 0.55, 15, tone, scale, 'Trebuchet MS', true);
-      ctx.restore();
+
+  // Friendly group centres and actual objectives, for both regional and wrapped maps.
+  if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario'))
+    for (const gr of strategicFriendlyGroups()) {
+      const report = strategicGroupReport(gr), anchor = strategicGroupAnchor(gr);
+      const tone = strategicGroupColor(gr);
+      if (anchor && visible(anchor)) for (const x of copies(anchor.x)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, anchor.y, 10 / Math.max(scale, 0.25), 0, Math.PI * 2);
+        ctx.fillStyle = '#102533dd';
+        ctx.fill();
+        ctx.strokeStyle = tone;
+        ctx.lineWidth = 1.8 / Math.max(scale, 0.25);
+        ctx.stroke();
+        outlinedText('G' + gr.id + ' ' + report.ready + '/' + report.members,
+          x, anchor.y - R * 0.6, 13, tone, scale, 'Trebuchet MS', true);
+        ctx.restore();
+      }
+      if (!gr.destination) continue;
+      const center = hexCenter(gr.destination);
+      if (!visible(center)) continue;
+      for (const x of copies(center.x)) {
+        ctx.save();
+        ctx.setLineDash([7 / Math.max(scale, 0.35), 5 / Math.max(scale, 0.35)]);
+        hexPath(x, center.y, R * 0.79);
+        ctx.strokeStyle = tone;
+        ctx.lineWidth = 2.5 / Math.max(scale, 0.4);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const order = gr.autoConquer ? 'CAP' : gr.stance === 'assault' ? 'ATK' :
+          gr.stance === 'hold' ? 'HOLD' : 'ADV';
+        outlinedText('G' + gr.id + ' ' + order, x, center.y - R * 0.55, 15,
+          tone, scale, 'Trebuchet MS', true);
+        ctx.restore();
+      }
     }
-  }
   // Standing orders: the selected unit's route to its destination, or the hex under the cursor while choosing one.
   const routed = selectedUnit();
   if (routed?.side === game.player && (routing ? hover : routed.goto)) {

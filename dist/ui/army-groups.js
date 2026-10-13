@@ -78,6 +78,75 @@ function armyGroupDestination(gr) {
   return p ? E.targetName(game, p) : 'Unknown destination';
 }
 
+
+const STRATEGIC_GROUP_COLORS = ['#ffd36e', '#62d9fa', '#ff91c4', '#aff29f', '#cbb1ff', '#ffa876'];
+function strategicGroupColor(gr) {
+  return STRATEGIC_GROUP_COLORS[((gr.id - 1) % STRATEGIC_GROUP_COLORS.length + STRATEGIC_GROUP_COLORS.length) % STRATEGIC_GROUP_COLORS.length];
+}
+function strategicFriendlyGroups() {
+  return (game.mode === 'conquest' || game.mode === 'scenario')
+    ? (game.armyGroups || []).filter(gr => gr.side === game.player) : [];
+}
+function strategicGroupOnMap(gr) {
+  const ids = new Set(gr.units || []);
+  return game.units.filter(u => ids.has(u.id) && u.hp > 0 && u.side === game.player);
+}
+function strategicGroupAnchor(gr) {
+  const units = strategicGroupOnMap(gr);
+  if (!units.length) return null;
+  const first = hexCenter(units[0]);
+  let x = 0, y = 0;
+  for (const unit of units) {
+    const p = hexCenter(unit);
+    x += wrapNear(p.x, first.x);
+    y += p.y;
+  }
+  x /= units.length;
+  return { x: wraps() ? ((x % WORLD_W) + WORLD_W) % WORLD_W : x, y: y / units.length };
+}
+// A local, disclosed estimate from observed positions: no AI orders or hidden plans.
+function strategicGroupReport(gr) {
+  const members = (gr.units || []).map(armyGroupMember).filter(u => u && u.side === game.player);
+  const deployed = strategicGroupOnMap(gr);
+  const ready = deployed.filter(u => u.morale > -3 && !u.attacked &&
+    u.hp >= E.maxHP(u) * 0.35);
+  const goal = gr.destination && E.tile(game, gr.destination.c, gr.destination.r);
+  const enemies = goal ? game.units.filter(u => u.hp > 0 && E.foe(game, u.side, game.player) &&
+    E.distance(u, goal, game) <= 4) : [];
+  const distances = goal ? deployed.map(u => E.distance(u, goal, game)) : [];
+  let arrival = 'No objective';
+  if (gr.stance === 'hold') arrival = 'Paused (Hold Position)';
+  else if (goal && !deployed.length) arrival = 'No deployed formations';
+  else if (goal) {
+    const turns = distances.map((d, i) => Math.ceil(d / Math.max(1,
+      E.TYPES[deployed[i].type]?.move || 1))).sort((a, b) => a - b);
+    arrival = turns.every(t => t === 0) ? 'At objective' :
+      'Approximately ' + turns[Math.floor(turns.length / 2)] + ' turn(s) (terrain may delay)';
+  }
+  let status = 'Awaiting objective';
+  if (!members.length) status = 'No formations assigned';
+  else if (gr.autoConquer) status = gr.autoStatus || 'Choosing a city';
+  else if (gr.stance === 'hold') status = 'Holding position';
+  else if (goal && !deployed.length) status = 'Awaiting deployment';
+  else if (goal && distances.every(d => d === 0)) status = 'At objective';
+  else if (goal && gr.stance === 'assault' && enemies.length &&
+    distances.some(d => d <= 3)) status = 'Engaging';
+  else if (goal) status = 'Advancing';
+  let threat = 'No objective to assess';
+  if (goal) threat = !enemies.length ? 'No visible hostiles within 4 hexes' :
+    enemies.length >= Math.max(1, ready.length) ? 'Outnumbered (' + enemies.length + ' visible hostiles)' :
+    enemies.length * 2 >= ready.length ? 'Contested (' + enemies.length + ' visible hostiles)' :
+    'Light resistance (' + enemies.length + ' visible hostiles)';
+  return { members: members.length, ready: ready.length, arrival, status, threat, enemies: enemies.length };
+}
+function toggleStrategicOverlay() {
+  if (game.mode !== 'conquest' && game.mode !== 'scenario') return;
+  strategicOverlay = !strategicOverlay;
+  requestMapFrame(); // Draw over the existing atlas; do not invalidate terrain/map cache.
+  if (modal.querySelector('[aria-label="Army groups"]')) armyGroupsDialog(activeArmyGroupId);
+  else toast('Strategic overlay ' + (strategicOverlay ? 'enabled' : 'disabled') + ' (V).');
+}
+
 function armyGroupsDialog(editId = null) {
   if (game.mode !== 'conquest' && game.mode !== 'scenario') return;
   armyGroupRouting = null;
@@ -94,7 +163,8 @@ function armyGroupsDialog(editId = null) {
     content = groups.length ? groups.map(v => {
       const live = v.units.map(armyGroupMember).filter(Boolean);
       const selectedCanJoin = chosenIds.some(id => !v.units.includes(id));
-      return `<div class="conquest-row scenario-army-row"><div><label>${live.length} unit${live.length === 1 ? '' : 's'} · ${esc(E.ARMY_GROUP_STANCES[v.stance || 'advance'])} · ${esc(armyGroupDestination(v))}</label><h3 class="conquest-title">${esc(armyGroupLabel(v))}</h3><p class="mode-note">${live.slice(0,5).map(u => esc(E.TYPES[u.type].name)).join(' · ')}${live.length > 5 ? ' · …' : ''}</p></div><div class="scenario-group-buttons"><button class="${active?.id === v.id ? 'primary' : 'small'}" data-army-activate="${active?.id === v.id ? '' : v.id}">${active?.id === v.id ? 'Stop assigning' : 'Use for Shift-click'}</button><button class="small" data-army-focus="${v.id}">Locate</button><button data-army-edit="${v.id}">Manage</button>${selectedCanJoin ? `<button class="small" data-army-add-selection="${v.id}">Add selected (${chosenIds.length})</button>` : ''}<button class="primary" data-army-route="${v.id}">Set objective</button></div></div>`;
+      const report = strategicGroupReport(v);
+      return `<div class="conquest-row scenario-army-row"><div><label>${live.length} unit${live.length === 1 ? '' : 's'} · ${esc(E.ARMY_GROUP_STANCES[v.stance || 'advance'])} · ${esc(armyGroupDestination(v))}</label><h3 class="conquest-title">${esc(armyGroupLabel(v))}</h3><p class="mode-note">${live.slice(0,5).map(u => esc(E.TYPES[u.type].name)).join(' · ')}${live.length > 5 ? ' · …' : ''}</p><p class="mode-note">${esc(report.status)} · Ready ${report.ready}/${report.members} · ${esc(report.threat)}</p></div><div class="scenario-group-buttons"><button class="${active?.id === v.id ? 'primary' : 'small'}" data-army-activate="${active?.id === v.id ? '' : v.id}">${active?.id === v.id ? 'Stop assigning' : 'Use for Shift-click'}</button><button class="small" data-army-focus="${v.id}">Locate</button><button data-army-edit="${v.id}">Manage</button>${selectedCanJoin ? `<button class="small" data-army-add-selection="${v.id}">Add selected (${chosenIds.length})</button>` : ''}<button class="primary" data-army-route="${v.id}">Set objective</button></div></div>`;
     }).join('') : '<p>No army groups yet. Shift-click your Knightmares on the map to select multiple formations, then create a group.</p>';
     if (game.mode === 'scenario') content += '<div class="dialog-footer"><button class="small" data-action="scenario-armies">Browse starting formations & fleets</button></div>';
   } else {
@@ -105,9 +175,10 @@ function armyGroupsDialog(editId = null) {
       .sort((a,b) => (anchor ? E.distance(a, anchor, game) - E.distance(b, anchor, game) : 0) || a.id - b.id)
       .slice(0,48);
     const row = u => `<div class="conquest-row scenario-army-row"><div><label>${esc(F(u.side).short)} · ${u.c},${u.r}${!game.units.includes(u) ? ' · Aboard carrier' : ''}${u.cmd ? ' · ' + esc(C(u.cmd)?.short || u.cmd) : ''}</label><strong>${esc(unitName(u))} ×${u.stack}</strong></div><div><button class="small" data-army-${gr.units.includes(u.id) ? 'remove' : 'add'}="${gr.id}:${u.id}">${gr.units.includes(u.id) ? 'Remove' : 'Add'}</button></div></div>`;
-    content = `<div class="conquest-row"><div><label>Current objective</label><h3 class="conquest-title">${esc(armyGroupDestination(gr))}</h3><p class="mode-note">${live.length}/24 units. All units remain individually controllable. Hold Position issues no group movement or attacks; individual standing orders still work.</p></div><div class="scenario-group-buttons"><button class="primary" data-army-route="${gr.id}">Set objective</button><button class="small" data-army-conquer="${gr.id}">${gr.autoConquer ? 'Stop capturing cities' : 'Capture Remaining Cities'}</button>${gr.autoConquer ? '<span class="mode-note">Status: ' + esc(gr.autoStatus || 'Planning') + '</span>' : ''}${gr.destination ? `<button data-army-cancel="${gr.id}">Cancel group order</button>` : ''}</div></div><div class="dialog-head"><div><h3>Stance: ${esc(E.ARMY_GROUP_STANCES[gr.stance || 'advance'])}</h3><p>Advance moves only · Hold Position gives no automated group orders · Assault advances and fires.</p></div><div class="scenario-group-buttons">${Object.entries(E.ARMY_GROUP_STANCES).map(([stance, title]) => `<button class="${(gr.stance || 'advance') === stance ? 'primary' : 'small'}" data-army-stance="${gr.id}:${stance}" ${!interactive() ? 'disabled' : ''}>${title}</button>`).join('')}</div></div><div class="dialog-head"><div><h3>Assigned units</h3><p>${live.length ? 'Remove a unit without affecting the rest of the group.' : 'Choose units below to build this group.'}</p></div></div><div style="max-height:30vh;overflow-y:auto">${live.map(row).join('') || '<p class="mode-note">None assigned.</p>'}</div><div class="dialog-head"><div><h3>Available Knightmares</h3><p>Nearest available units are listed first. Use Add nearby for units within five hexes of the first member.</p></div><div class="scenario-group-buttons"><button class="small" data-army-add-selection="${gr.id}" ${!chosenIds.length || !interactive() ? 'disabled' : ''}>Add selected (${chosenIds.length})</button><button class="small" data-army-nearby="${gr.id}">Add nearby</button></div></div><div style="max-height:29vh;overflow-y:auto">${available.map(row).join('') || '<p class="mode-note">No available units.</p>'}</div><div class="dialog-footer"><button class="ghost" data-army-disband="${gr.id}">Disband group</button><button data-action="army-groups">Back to groups</button></div>`;
+    const report = strategicGroupReport(gr);
+    content = `<div class="conquest-row"><div><label>Current objective</label><h3 class="conquest-title">${esc(armyGroupDestination(gr))}</h3><p class="mode-note">${live.length}/24 units. All units remain individually controllable. Hold Position issues no group movement or attacks; individual standing orders still work.</p></div><div class="scenario-group-buttons"><button class="primary" data-army-route="${gr.id}">Set objective</button><button class="small" data-army-conquer="${gr.id}">${gr.autoConquer ? 'Stop capturing cities' : 'Capture Remaining Cities'}</button>${gr.autoConquer ? '<span class="mode-note">Status: ' + esc(gr.autoStatus || 'Planning') + '</span>' : ''}${gr.destination ? `<button data-army-cancel="${gr.id}">Cancel group order</button>` : ''}</div></div><div class="conquest-row"><div><label>Operational summary · visible battlefield only</label><h3 class="conquest-title">${esc(armyGroupLabel(gr))}</h3><p class="mode-note">Order: ${esc(gr.autoConquer ? 'Capture Remaining Cities' : E.ARMY_GROUP_STANCES[gr.stance || 'advance'])} · Objective: ${esc(armyGroupDestination(gr))}</p><p class="mode-note">Status: ${esc(report.status)} · Assigned formations: ${report.members} · Combat-ready: ${report.ready}</p><p class="mode-note">Expected arrival: ${esc(report.arrival)}</p><p class="mode-note">Threat assessment: ${esc(report.threat)}</p></div></div><div class="dialog-head"><div><h3>Stance: ${esc(E.ARMY_GROUP_STANCES[gr.stance || 'advance'])}</h3><p>Advance moves only · Hold Position gives no automated group orders · Assault advances and fires.</p></div><div class="scenario-group-buttons">${Object.entries(E.ARMY_GROUP_STANCES).map(([stance, title]) => `<button class="${(gr.stance || 'advance') === stance ? 'primary' : 'small'}" data-army-stance="${gr.id}:${stance}" ${!interactive() ? 'disabled' : ''}>${title}</button>`).join('')}</div></div><div class="dialog-head"><div><h3>Assigned units</h3><p>${live.length ? 'Remove a unit without affecting the rest of the group.' : 'Choose units below to build this group.'}</p></div></div><div style="max-height:30vh;overflow-y:auto">${live.map(row).join('') || '<p class="mode-note">None assigned.</p>'}</div><div class="dialog-head"><div><h3>Available Knightmares</h3><p>Nearest available units are listed first. Use Add nearby for units within five hexes of the first member.</p></div><div class="scenario-group-buttons"><button class="small" data-army-add-selection="${gr.id}" ${!chosenIds.length || !interactive() ? 'disabled' : ''}>Add selected (${chosenIds.length})</button><button class="small" data-army-nearby="${gr.id}">Add nearby</button></div></div><div style="max-height:29vh;overflow-y:auto">${available.map(row).join('') || '<p class="mode-note">No available units.</p>'}</div><div class="dialog-footer"><button class="ghost" data-army-disband="${gr.id}">Disband group</button><button data-action="army-groups">Back to groups</button></div>`;
   }
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Army groups"><div class="dialog-head"><div><div class="eyebrow">${game.mode === 'scenario' ? 'Regional scenario' : 'World conquest'} · Operational command</div><h2>${gr ? esc(armyGroupLabel(gr)) : 'Army Groups'}</h2><p>Choose a group with Use for Shift-click, then Shift-click friendly units on the map to add or remove them. With no active group, Shift-click multi-selects for group creation. Advance moves only; Hold Position leaves units under manual control; Assault advances and fires. Orders execute at turn start or when you click Do all orders now.</p></div><button class="small close" data-action="close">Close</button></div>${content}${gr ? '' : `<div class="dialog-footer"><button class="primary" data-action="army-create" ${!interactive() ? 'disabled' : ''}>Create army group${chosen ? ' with selected unit' : ''}</button></div>`}</section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Army groups"><div class="dialog-head"><div><div class="eyebrow">${game.mode === 'scenario' ? 'Regional scenario' : 'World conquest'} · Operational command</div><h2>${gr ? esc(armyGroupLabel(gr)) : 'Army Groups'}</h2><p>Choose a group with Use for Shift-click, then Shift-click friendly units on the map to add or remove them. With no active group, Shift-click multi-selects for group creation. Advance moves only; Hold Position leaves units under manual control; Assault advances and fires. Orders execute at turn start or when you click Do all orders now.</p></div><div class="scenario-group-buttons"><button class="small" data-army-overlay="toggle" aria-pressed="${strategicOverlay}" >Strategic overlay: ${strategicOverlay ? 'On' : 'Off'} (V)</button><button class="small close" data-action="close">Close</button></div></div>${content}${gr ? '' : `<div class="dialog-footer"><button class="primary" data-action="army-create" ${!interactive() ? 'disabled' : ''}>Create army group${chosen ? ' with selected unit' : ''}</button></div>`}</section></div>`;
   focusDialog();
 }
 

@@ -286,6 +286,7 @@ document.addEventListener('click', e => {
     scenarioDialog();return;
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
+  if (d.armyOverlay === 'toggle') { toggleStrategicOverlay(); return; }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
   if (d.armyActivate !== undefined) { armyGroupActivate(d.armyActivate ? +d.armyActivate : null); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
@@ -639,6 +640,12 @@ document.addEventListener('keydown', e => {
   }
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
   const k = e.key.toLowerCase();
+  if (k === 'v' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.repeat &&
+      (game.mode === 'conquest' || game.mode === 'scenario')) {
+    e.preventDefault();
+    toggleStrategicOverlay();
+    return;
+  }
   if (k === 'e' && !e.altKey && !e.ctrlKey && !e.metaKey && interactive()) {
     e.preventDefault();
     if (!e.repeat) endTurn();
