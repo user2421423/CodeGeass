@@ -23,8 +23,10 @@ test('Indochina is a separate 120x104 regional game with 44 cities and no third 
     assert.equal(g.tiles.length,12480);assert.equal(g.stations.length,44);
     assert.equal(g.stations.filter(s=>s.owner==='britannia').length,24);
     assert.equal(g.stations.filter(s=>s.owner==='cf').length,20);
-    assert.equal(g.units.length,126);assert.equal(g.units.filter(naval).length,24);
-    assert.equal(g.units.filter(u=>!naval(u)).length,102);
+    assert.equal(g.units.length,142);assert.equal(g.units.filter(naval).length,24);
+    assert.equal(g.units.filter(u=>u.side==='britannia').length,70);
+    assert.equal(g.units.filter(u=>u.side==='cf').length,72);
+    assert.equal(g.units.filter(u=>!naval(u)).length,118);
     assert.equal(new Set(g.units.map(E.key)).size,g.units.length);
     assert.equal(new Set(g.stations.map(E.key)).size,44);
     assert.equal(g.teams,null);assert.equal(g.scenario.turnLimit,undefined);
@@ -104,7 +106,7 @@ test('All four difficulty levels, Elite conversions, rival incomes, commander an
   for(const difficulty of ['normal','hard','challenge','elite']){
    const g=map.create(p,difficulty,33);
    assert.equal(g.difficulty,difficulty);
-   assert.equal(g.units.length,126);
+   assert.equal(g.units.length,142);
    assert.ok(g.units.every(u=>u.hp>0));
    if(difficulty==='hard'||difficulty==='challenge')
      assert.ok(E.income(g,enemy).credits>E.income(normal,enemy).credits);
