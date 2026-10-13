@@ -138,6 +138,7 @@ test('Both sides retain standard factory recruitment and game saving',()=>{
 
 test('Indochina map uses its own coastal hex render and visible river overlays',()=>{
   const src=fs.readFileSync(require.resolve('../dist/ui/geography.js'),'utf8');
-  assert.match(src,/g.scenario.id === 'bering-strait' \|\| g.scenario.id === 'conquest-indochina'/);
+  assert.match(src,/g.scenario.id === 'bering-strait'\)\s*return paintBeringGeographic/);
+  assert.match(src,/g.scenario.id === 'conquest-indochina' \|\|/);
   assert.match(src,/g.scenario\?\.id==='conquest-indochina'&&g.scenario.rivers/);
 });
