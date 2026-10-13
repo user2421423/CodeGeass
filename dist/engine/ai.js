@@ -93,6 +93,7 @@
     serves,
     sideEliminators,
     eliminatorCity,
+    transferEliminator,
     siteAt,
     startEliminator,
     startProject,
@@ -1294,6 +1295,22 @@
     followSea(coastSeeds(land));
     return true;
   }
+  // Commanders (by rank) first, then Elite Forces; ordinary formations never take a charge from the AI.
+  function eliminatorCarrierScore(g, u) {
+    return u.cmd ? 1000 + 50 * (E.officerOf(g, u)?.rank || 0) + unitStrength(u) : u.elite ? 500 + unitStrength(u) : 0;
+  }
+  function aiAssignEliminators(g, side) {
+    if (g.mode === 'scenario') return;
+    for (const s of g.stations) {
+      if (s.owner !== side || !((s.eliminator || 0) > 0)) continue;
+      const carrier = g.units
+        .filter(u => u.hp > 0 && u.side === side && !((u.eliminator || 0) > 0) && dist(g, u, s) <= 1)
+        .map(u => [u, eliminatorCarrierScore(g, u)])
+        .filter(([, score]) => score > 0)
+        .sort((a, b) => b[1] - a[1] || a[0].id - b[0].id)[0]?.[0];
+      if (carrier) transferEliminator(g, { city: s.id }, { unit: carrier.id });
+    }
+  }
   function aiProduction(g) {
     const side = g.phase,
       e = funds(g, side),
@@ -1367,6 +1384,9 @@
     delete plan.saving;
     delete plan.lastSuperTurn;
     const ordinaryBudget = price(typeFor(side, 'scout', g), 2, g, side);
+    // 2a. Eliminator carriers: a charge waiting in a city goes to the most important commander or Elite Force in or
+    // next to it, so the charge travels with the army it protects. With none there it stays in the city.
+    aiAssignEliminators(g, side);
     // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
     // starting every charge they can afford (up to ELIMINATOR.max) and saving for the next one. With no free lab-3
     // city outside their charges' cover, step 3 raises a lab for one (defensePrep).
@@ -2174,5 +2194,5 @@
     memo.trafficCache?.clear();
     return events;
   }
-  Object.assign(E, { aiProduction, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
+  Object.assign(E, { aiProduction, aiAssignEliminators, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);

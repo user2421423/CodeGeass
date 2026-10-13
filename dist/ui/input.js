@@ -99,6 +99,23 @@ document.addEventListener('click', e => {
       toast(`F.L.E.I.J.A. Eliminator under way in ${s.name}: ready on turn ${s.eliminatorProject.ready}.`, true);
     return;
   }
+  // Eliminator carriers: a city hands its waiting charge to a unit, or a carrier hands it on.
+  if (d.eliminatorGive) {
+    const [city, unit] = d.eliminatorGive.split(':').map(Number);
+    doAction(() => E.transferEliminator(game, { city }, { unit }));
+    const u = game.units.find(v => v.id === unit);
+    if (u?.eliminator > 0) toast(`${carrierName(u)} now carries the F.L.E.I.J.A. Eliminator: it protects ${E.ELIMINATOR.range} hexes around the unit.`, true);
+    return;
+  }
+  if (d.eliminatorTo) {
+    const [from, kind, id] = d.eliminatorTo.split(':'),
+      to = kind === 'city' ? { city: +id } : { unit: +id };
+    closeModal();
+    doAction(() => E.transferEliminator(game, { unit: +from }, to));
+    const holder = kind === 'city' ? game.stations.find(s => s.id === +id) : game.units.find(v => v.id === +id);
+    if (holder?.eliminator > 0) toast(`F.L.E.I.J.A. Eliminator handed to ${kind === 'city' ? holder.name : carrierName(holder)}.`, true);
+    return;
+  }
   if (d.command) {
     const u = selectedUnit();
     closeModal();
@@ -565,6 +582,9 @@ document.addEventListener('click', e => {
       if (u) doAction(() => E.repair(game, u.id));
       break;
     }
+    case 'eliminator-handover':
+      eliminatorHandoverDialog(selectedUnit());
+      break;
     case 'do-all-orders':
       executeAllOrdersNow();
       break;

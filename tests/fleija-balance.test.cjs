@@ -48,9 +48,9 @@ test('older saves cap arsenals and refund cancelled projects', () => {
   assert.equal(loaded.economy.britannia.credits,credit+2*E.FLEIJA.cost.credits);
 });
 
-test('five-hex coverage and 2+2 Eliminator timing beat second warhead despite phase order', () => {
+test('three-hex coverage and 2+2 Eliminator timing beat second warhead despite phase order', () => {
   const g=E.createGame('britannia','normal','conquest',87,'ufn2018');
-  assert.equal(E.ELIMINATOR.range,5);
+  assert.equal(E.ELIMINATOR.range,3);
   assert.equal(E.ELIMINATOR.research,2);
   assert.equal(E.ELIMINATOR.turns,2);
   const defender=g.stations.find(s=>s.owner==='cf'&&s.name==='Luoyang');
@@ -67,11 +67,11 @@ test('five-hex coverage and 2+2 Eliminator timing beat second warhead despite ph
   g.turn=13;
   g.phase='britannia';
   g.arsenal={britannia:1};
-  const nearby=E.within(g,defender,6);
-  const at5=nearby.find(t=>E.distance(t,defender,g)===5);
-  const at6=nearby.find(t=>E.distance(t,defender,g)===6);
+  const nearby=E.within(g,defender,4);
+  const at5=nearby.find(t=>E.distance(t,defender,g)===3);
+  const at6=nearby.find(t=>E.distance(t,defender,g)===4);
   assert.ok(at5 && at6);
-  assert.equal(E.eliminatorDefender(g,'britannia',at5)?.id,defender.id);
+  assert.equal(E.eliminatorDefender(g,'britannia',at5)?.city?.id,defender.id);
   assert.equal(E.eliminatorDefender(g,'britannia',at6),null);
   const hit=E.launch(g,'britannia',defender.c,defender.r);
   assert.equal(hit.ok,true,hit.reason);

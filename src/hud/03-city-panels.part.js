@@ -123,16 +123,20 @@ function projectPanel(s) {
   }
   if (ours && ep) {
     const left = Math.max(0, ep.ready - game.turn);
-    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). It will neutralize one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of this city.</p></div>`;
+    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). Then hand it to a unit in or next to the city: the charge neutralizes one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of whoever holds it.</p></div>`;
   }
   const blocks = [];
-  if (ours && s.eliminator)
-    blocks.push(`<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>Eliminator charge ready</h3><p>Automatically neutralizes the next incoming F.L.E.I.J.A. aimed within ${E.ELIMINATOR.range} hexes of ${esc(s.name)}. One use.</p></div>`);
+  if (ours && s.eliminator) {
+    // Units in or next to the city can take the charge; until one does, it covers the city itself.
+    const takers = game.units.filter(u => u.hp > 0 && u.side === s.owner && !(u.eliminator > 0) && E.distance(u, s, game) <= 1)
+      .sort((a, b) => Number(!!b.cmd) - Number(!!a.cmd) || Number(!!b.elite) - Number(!!a.elite) || a.id - b.id);
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Charge awaiting a carrier</h3><p>Hand it to a unit in or next to ${esc(s.name)}; it then protects everything within ${E.ELIMINATOR.range} hexes of that unit and moves with it. Until then it covers ${E.ELIMINATOR.range} hexes of the city. One use.</p>${takers.length ? takers.map(u => act(`data-eliminator-give="${s.id}:${u.id}"`, `Give to ${esc(carrierName(u))}`, phaseReason() || E.transferEliminatorReason(game, { city: s.id }, { unit: u.id }))).join('') : '<p class="description">No unit in or next to the city.</p>'}</div>`);
+  }
   if (!ours) return blocks.join('');
   if (E.hasFleija(game, game.player))
     blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. ${game.era === 'ufn2018' && ['britannia','eb'].includes(game.player) ? 'Britannia and Euro Britannia share one warhead slot' : 'Only one warhead per faction'} (stored or building). Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`);
   if (E.eliminatorTurn(game) != null && !s.eliminator)
-    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Up to ${E.ELIMINATOR.max} charges per power at once, one per city.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · one interception within ${E.ELIMINATOR.range} hexes of the unit that carries it. Up to ${E.ELIMINATOR.max} charges per power at once (building, waiting or carried), one per city or unit.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
   return blocks.join('');
 }
 function automationUnitOptionsHTML(s, selected) {

@@ -108,8 +108,7 @@ function snapshot(g) {
         {
           warheads: g.arsenal?.[side] || 0,
           projects: g.stations.filter(s => s.project?.side === side).length,
-          eliminators: g.stations.filter(s => s.owner === side && (s.eliminator > 0 || s.eliminatorProject?.side === side))
-            .length,
+          eliminators: E.eliminatorCharges(g, side).length,
         },
       ]),
     ),

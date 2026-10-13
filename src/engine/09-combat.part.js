@@ -219,6 +219,7 @@
       return;
     }
     v.hp = 0;
+    dropCarriedEliminator(g, v, 'carrier destroyed');
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
         unitSide:v.side,commander:v.cmd||null,byCombat:!!attacker||!!by,

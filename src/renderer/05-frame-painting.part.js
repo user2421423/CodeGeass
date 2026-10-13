@@ -218,7 +218,7 @@ function draw(time, dt) {
         ctx.arc(0, -4, R * (0.78 + 0.05 * pulse), 0, Math.PI * 2);
         ctx.stroke();
         outlinedText(
-          s.eliminator ? 'ELIMINATOR · READY' : `ELIMINATOR · ${Math.max(0, s.eliminatorProject.ready - game.turn)}`,
+          s.eliminator ? 'ELIMINATOR · AWAITING CARRIER' : `ELIMINATOR · ${Math.max(0, s.eliminatorProject.ready - game.turn)}`,
           0,
           -R - (s.project ? 16 : 4),
           9,
@@ -378,6 +378,8 @@ function draw(time, dt) {
       if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);
+      // Your own Eliminator carriers; rival carriers stay classified.
+      if (u.side === game.player && u.eliminator > 0) outlinedText('✦', -33, 0, 14, '#9eeaff', scale, 'Trebuchet MS', true);
       if (group && u.side === game.player) outlinedText('G' + group.id, -30, 17, 15, groupColor, scale, 'Trebuchet MS', true);
       ctx.restore();
     }
@@ -394,6 +396,42 @@ function draw(time, dt) {
       p = hexCenter({ c, r });
     if (visible(p)) mapHasPulse = true;
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
+  }
+  // The selected Eliminator carrier's cover, any warhead aimed inside it is neutralized: a faint wash and a bright
+  // cyan outline along its edge, which stays readable over the movement range.
+  const carrier = selection?.kind === 'unit' && game.units.find(u => u.id === selection.id && u.hp > 0);
+  if (carrier && carrier.side === game.player && carrier.eliminator > 0) {
+    const cover = E.within(game, carrier, E.ELIMINATOR.range),
+      inside = new Set(cover.map(E.key));
+    ctx.save();
+    ctx.strokeStyle = '#9eeaff';
+    ctx.lineWidth = 3 / Math.max(scale, 0.4);
+    ctx.shadowColor = 'rgba(130,225,255,0.8)';
+    ctx.shadowBlur = 6;
+    for (const t of cover) {
+      const q = hexCenter(t);
+      if (!visible(q)) continue;
+      for (const x of copies(q.x)) {
+        hexPath(x, q.y, R - 2);
+        ctx.fillStyle = 'rgba(130,225,255,0.1)';
+        ctx.fill();
+      }
+      for (const n of E.adjacent(game, t)) {
+        if (inside.has(E.key(n))) continue;
+        const m = hexCenter(n),
+          dx = m.x - q.x,
+          dy = m.y - q.y;
+        if (Math.abs(dx) > 3 * R) continue; // across the date-line seam
+        const a = Math.atan2(dy, dx);
+        for (const x of copies(q.x)) {
+          ctx.beginPath();
+          ctx.moveTo(x + R * Math.cos(a - Math.PI / 6), q.y + R * Math.sin(a - Math.PI / 6));
+          ctx.lineTo(x + R * Math.cos(a + Math.PI / 6), q.y + R * Math.sin(a + Math.PI / 6));
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
   }
   // Campaign warnings: the hexes a scripted strike will hit next turn.
   for (const w of game.campaign?.warnings || []) {

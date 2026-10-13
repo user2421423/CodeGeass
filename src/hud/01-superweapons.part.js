@@ -111,3 +111,23 @@ async function launchAt(p) {
     );
 }
 // Why the player cannot act right now (rival phase or finished operation).
+// Eliminator carriers: a unit's name as its charge holder, and where it can hand the charge.
+function carrierName(u) {
+  return `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)}`;
+}
+function eliminatorHandoverDialog(u) {
+  if (!u || !(u.eliminator > 0)) return;
+  const from = { unit: u.id },
+    options = [
+      ...game.units.filter(v => v.hp > 0 && v !== u && v.side === u.side && E.distance(u, v, game) <= 1)
+        .map(v => [{ unit: v.id }, carrierName(v)]),
+      ...game.stations.filter(s => s.owner === u.side && E.distance(u, s, game) <= 1)
+        .map(s => [{ city: s.id }, `Store in ${s.name}`]),
+    ],
+    rows = options.map(([to, label]) => {
+      const ref = to.unit != null ? `unit:${to.unit}` : `city:${to.city}`;
+      return `<li>${act(`data-eliminator-to="${u.id}:${ref}"`, esc(label), phaseReason() || E.transferEliminatorReason(game, from, to))}</li>`;
+    }).join('');
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Hand over Eliminator"><div class="eyebrow">F.L.E.I.J.A. Eliminator</div><h2>Hand over the charge from ${esc(carrierName(u))}</h2><p>The charge protects everything within ${E.ELIMINATOR.range} hexes of whoever holds it. It can go to a unit or one of your cities in the same or an adjacent hex, once a turn.</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No unit or city of yours in an adjacent hex.</p>'}<div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
+  focusDialog();
+}
