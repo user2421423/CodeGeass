@@ -116,135 +116,6 @@
   // Route-aware lab selection: first maximize defensible city value, then
   // prioritize laboratories a Tier 1 commander can reach in a few turns.
 
-  // Move charges *to* frontline leaders, never the leaders back to a lab.
-  // A regular unit may carry a charge temporarily as a physical courier.
-  // Transfer rules remain identical to those available to a human player.
-  function eliminatorRelayJobs(g, side) {
-    return (((g.ai ||= {})[side] ||= {}).eliminatorRelayJobs ||= {});
-  }
-  function eliminatorRelayLeaderValue(g, hero) {
-    const allies = g.units.filter(v=>v.hp>0 && v.side===hero.side &&
-      v.id!==hero.id && dist(g,v,hero)<=4).length;
-    const rivals = g.units.filter(v=>v.hp>0 && foe(g,v.side,hero.side) &&
-      dist(g,v,hero)<=8).length;
-    return 120 + Math.min(8,allies)*35 + Math.min(7,rivals)*27;
-  }
-  function eliminatorRelaySupplyScore(g,side,s) {
-    const runners = g.units.filter(u=>u.hp>0 && u.side===side &&
-      !u.cmd && !u.eliminator && !atSea(g,u) &&
-      massOf(g,u)===massOf(g,s) && dist(g,u,s)<=5);
-    let best=-360;
-    for(const hero of g.units) {
-      if(hero.side!==side || hero.hp<=0 || hero.eliminator ||
-          eliminatorCarrierScore(g,hero)<=0 ||
-          massOf(g,hero)!==massOf(g,s)) continue;
-      const distance=dist(g,hero,s);
-      if(distance>12)continue;
-      if(!runners.length && distance>1)continue;
-      best=Math.max(best,350 + eliminatorRelayLeaderValue(g,hero)*0.3 -
-        distance*42 - (runners.length ? 0 : 110));
-    }
-    return best;
-  }
-  function aiPlanEliminatorRelays(g,side) {
-    const jobs=eliminatorRelayJobs(g,side);
-    if(g.mode==='scenario')return jobs;
-    const fixed=eliminatorStationaryCities(g,side);
-    for(const [runnerId,job] of Object.entries(jobs)) {
-      const runner=g.units.find(v=>v.id===Number(runnerId)&&v.hp>0&&v.side===side);
-      const hero=g.units.find(v=>v.id===job.hero&&v.hp>0&&v.side===side&&
-        !v.eliminator&&eliminatorCarrierScore(g,v)>0);
-      const city=g.stations.find(s=>s.id===job.city&&s.owner===side);
-      if(!runner || !hero || !city ||
-          massOf(g,runner)!==massOf(g,hero) ||
-          (!runner.eliminator && (!city.eliminator || fixed.has(city.id))) ||
-          g.turn-job.started>8) {
-        const stats=((g.ai ||= {})[side] ||= {});
-        stats.eliminatorRelayFailed=(stats.eliminatorRelayFailed||0)+1;
-        delete jobs[runnerId];
-      }
-    }
-    const usedRunners=new Set(Object.keys(jobs).map(Number));
-    const usedHeroes=new Set(Object.values(jobs).map(j=>j.hero));
-    const rivals=g.units.filter(v=>v.hp>0&&foe(g,v.side,side));
-    const heroes=g.units.filter(u=>u.hp>0&&u.side===side&&
-      !u.eliminator&&!usedHeroes.has(u.id)&&
-      eliminatorCarrierScore(g,u)>0&&u.hp/maxHP(u)>=0.65);
-    for(const city of g.stations) {
-      if(city.owner!==side || !city.eliminator || fixed.has(city.id) ||
-          city.eliminatorMoved===g.turn)continue;
-      let best=null,bestScore=-Infinity;
-      for(const hero of heroes) {
-        if(usedHeroes.has(hero.id)||massOf(g,hero)!==massOf(g,city))continue;
-        const heroDist=dist(g,hero,city);
-        if(heroDist<2||heroDist>12)continue; // adjacent heroes take directly
-        for(const runner of g.units) {
-          if(runner.hp<=0||runner.side!==side||runner.cmd||runner.eliminator||
-              atSea(g,runner)||isShip(runner)||usedRunners.has(runner.id)||
-              massOf(g,runner)!==massOf(g,city)||
-              runner.hp/maxHP(runner)<0.7)continue;
-          const fetchDist=dist(g,runner,city);
-          if(fetchDist>5 || rivals.some(v=>dist(g,v,runner)<=2))continue;
-          const score=eliminatorRelayLeaderValue(g,hero) -
-            heroDist*36 - fetchDist*31;
-          if(score>bestScore) {best={runner,hero};bestScore=score;}
-        }
-      }
-      if(best&&bestScore>-280) {
-        jobs[best.runner.id]={city:city.id,hero:best.hero.id,started:g.turn};
-        const stats=((g.ai ||= {})[side] ||= {});
-        stats.eliminatorRelayStarted=(stats.eliminatorRelayStarted||0)+1;
-        usedRunners.add(best.runner.id);usedHeroes.add(best.hero.id);
-      }
-    }
-    return jobs;
-  }
-  function aiEliminatorRelayOrder(g,u) {
-    const job=aiPlanEliminatorRelays(g,u.side)[u.id];
-    if(!job || g.mode==='scenario'||!isReady(g,u))return null;
-    const hero=g.units.find(v=>v.id===job.hero&&v.hp>0&&v.side===u.side);
-    const city=g.stations.find(s=>s.id===job.city&&s.owner===u.side);
-    if(!hero||!city)return null;
-    const hasCharge=u.eliminator>0;
-    const target=hasCharge ? hero : city;
-    const deliver=()=>{
-      if(dist(g,u,target)>1)return false;
-      const tx=hasCharge
-        ? (u.eliminatorMoved!==g.turn && !hero.eliminator &&
-            transferEliminator(g,{unit:u.id},{unit:hero.id}))
-        : (city.eliminator>0 && city.eliminatorMoved!==g.turn &&
-            transferEliminator(g,{city:city.id},{unit:u.id}));
-      if(tx?.ok) {
-        if(hasCharge) {
-          const stats=((g.ai ||= {})[u.side] ||= {});
-          stats.eliminatorRelayDelivered=(stats.eliminatorRelayDelivered||0)+1;
-          stats.eliminatorRelayDeliveryTurns=(stats.eliminatorRelayDeliveryTurns||0)+
-            g.turn-(job.pickedTurn??job.started);
-          delete eliminatorRelayJobs(g,u.side)[u.id];
-        } else job.pickedTurn=g.turn;
-      }
-      return !!tx?.ok;
-    };
-    if(deliver())return [];
-    if(dist(g,u,target)<=1)return null; // charge cooldown; may fight normally
-    if(u.moved||u.attacked)return null;
-    const field=goalField(g,u.side,[[target,0]],'land',null,35);
-    const start=field[u.r*g.cols+u.c];
-    if(!Number.isFinite(start))return null;
-    const foes=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side));
-    const options=[...reachable(g,u).keys()]
-      .map(k=>{const [c,r]=k.split(',').map(Number);return tile(g,c,r)})
-      .filter(p=>p&&!isSea(p)&&!unitAt(g,p)&&
-        field[p.r*g.cols+p.c]<start &&
-        !foes.some(v=>dist(g,v,p)<=2))
-      .sort((a,b)=>field[a.r*g.cols+a.c]-field[b.r*g.cols+b.c]||
-        a.r-b.r||a.c-b.c);
-    if(!options.length)return null;
-    const m=move(g,u.id,options[0].c,options[0].r);
-    if(!m?.ok)return null;
-    deliver();
-    return [{kind:'move',...m,id:u.id}];
-  }
   function eliminatorProductionCity(g, side, anyLab = false) {
     const mobileDesired = sideEliminators(g, side).length > 0;
     const leaders = g.units.filter(u => u.hp > 0 && u.side === side &&
@@ -279,8 +150,7 @@
           b.u.hp - a.u.hp)[0];
       return { ...entry,
         score: entry.cover * 0.18 + entry.safety +
-          Math.max(best ? 480 - 80 * best.route.turns : -450,
-            eliminatorRelaySupplyScore(g,side,entry.s)) +
+          (best ? 480 - 80 * best.route.turns : -450) +
           (anyLab ? (entry.s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
     return precise[0]?.s || ranked[0]?.s || null;
@@ -345,8 +215,6 @@
     return assignments;
   }
   function aiEliminatorPickup(g,u,memo) {
-    if (Object.values(eliminatorRelayJobs(g,u.side)).some(job=>job.hero===u.id))
-      return null; // A courier is bringing this commander's charge.
     if (g.mode==='scenario' || !isReady(g,u) || u.eliminator ||
         eliminatorCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
     return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
@@ -464,7 +332,6 @@
     // 2a. Protect one high-value city cluster with a stationary charge; give other charges
     // only to nearby Tier 1 commanders, or send an available hero to fetch them.
     aiAssignEliminators(g, side);
-    aiPlanEliminatorRelays(g, side);
     // 2b. Evaluate labs by newly protected economic/capital value, safe access, and Tier 1
     // collection routes rather than indiscriminately manufacturing at an isolated lab.
     const wantsDefense = () => g.mode !== 'scenario' && eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
