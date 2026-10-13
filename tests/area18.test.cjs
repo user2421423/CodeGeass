@@ -184,3 +184,23 @@ test('Area 18 saves and resumes for all factions on normal and elite',()=>{
     assert.doesNotThrow(()=>E.aiPlan(restored,player));
   }
 });
+
+test('Area 18 renderer paints all faction land instead of the Japan-only atlas',()=>{
+  // An empty global atlas makes a mistaken Japan-renderer fallback detectable:
+  // the scenario should paint its *own* gameplay landmask and ownership.
+  const fs=require('node:fs'),vm=require('node:vm');
+  const source=fs.readFileSync(require.resolve('../dist/ui/geography.js'),'utf8');
+  const geography=vm.runInNewContext(source+'\nGEOGRAPHY;',{
+    SQ:Math.sqrt(3),R:12,GEOGRAPHY_SHAPES:{land:[],biomes:[]},E
+  });
+  const painted=new Set();
+  const ctx={
+    save(){},restore(){},beginPath(){},rect(){},clip(){},fillRect(){},
+    moveTo(){},lineTo(){},
+    createLinearGradient(){return {addColorStop(){}};},
+    fill(){if(this.globalAlpha===0.88)painted.add(this.fillStyle);}
+  };
+  const g=area.create('britannia','normal',444);
+  assert.equal(geography.paint(ctx,g,0,5000,0,5000,1),true);
+  assert.equal(painted.size,3,'all three faction land regions must be visible');
+});
