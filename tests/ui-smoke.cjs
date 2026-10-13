@@ -284,7 +284,7 @@ const modal = () => node('modal-root').innerHTML;
   assert(regionSource.includes('const europeOnly = europeanRegion(g)') &&
     regionSource.includes("g.scenario?.id === 'operation-stonehenge'") &&
     regionSource.includes('if (!europeOnly) {') &&
-    regionSource.includes('europeanRegion(g) ? 1 : 2'),
+    regionSource.includes("europeanRegion(g) || g.scenario?.id === 'area-18' ? 1 : 2"),
     'Europe-only atlas must hide extra-continental silhouettes and limit coastal colour bleed');
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');
