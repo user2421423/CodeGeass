@@ -2,12 +2,24 @@
 'use strict';
 /* Exhaustive 12,144-hex geography, province, deployment and port audit. */
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
 const E=require('../dist/engine.js');
 require('../dist/scenarios.js');
 const geo=require('../dist/australia-landmask.js');
 const scenario=require('../dist/scenarios-australia.js');
 const N=scenario.cols*scenario.rows;
 const bits=Buffer.from(geo.bits,'base64');
+// Independent GSHHG polygons drive the *visible* coastline; they are not the
+// sampled gameplay bitmap. Cross-check every playable hex centre against both.
+const vectorShapes=vm.runInNewContext(fs.readFileSync(
+  path.join(__dirname,'../dist/ui/geography-data.js'),'utf8')+'\nGEOGRAPHY_SHAPES');
+const atlasSource=fs.readFileSync(path.join(__dirname,'../dist/ui/geography.js'),'utf8');
+const R=43,SQ=Math.sqrt(3);
+const geography=new Function('R','SQ','WORLD_W','WORLD_H','GEOGRAPHY_SHAPES','E',
+  atlasSource+'\nreturn GEOGRAPHY;')(
+    R,SQ,SQ*R*180,R*(1.5*75+2),vectorShapes,E);
 assert.equal(bits.length,N/8);
 const regionize=(g,condition)=>{
   const visited=new Uint8Array(N),components=[];
@@ -27,13 +39,22 @@ const regionize=(g,condition)=>{
 };
 function audit(g){
   const counts={sea:0,coast:0,plains:0,forest:0,mountain:0,desert:0};
-  const problems=[];
+  const problems=[],visualDifferences=[];
   for(let i=0;i<N;i++){
     const t=g.tiles[i],c=i%g.cols,r=(i/g.cols)|0;
     if(!t||t.c!==c||t.r!==r){problems.push('wrong tile coordinates '+i);continue;}
     const p=geo.point(c,r),mask=!!(bits[i>>3]&(128>>(i&7)));
     const expected=geo.isLand(p.lon,p.lat);
     if(mask!==expected || (t.terrain!=='sea')!==mask)problems.push('wrong land/sea '+c+','+r);
+    // Subhex coastline detail can differ slightly between vector atlas and
+    // centre-sampled mask, but a geographic mismatch must remain coastal.
+    if(geography.australiaLandAt(p.lon,p.lat)!==mask){
+      visualDifferences.push({c,r,lon:+p.lon.toFixed(2),lat:+p.lat.toFixed(2),
+        playableLand:mask});
+      const boundary=[t,...E.adjacent(g,t)].some(n=>
+        E.adjacent(g,n).some(other=>(other.terrain==='sea')!==(n.terrain==='sea')));
+      if(!boundary)problems.push('inland visual coast mismatch '+c+','+r);
+    }
     if(!Object.hasOwn(counts,t.terrain))problems.push('unknown terrain '+t.terrain);
     else counts[t.terrain]++;
     if(mask){
@@ -48,6 +69,17 @@ function audit(g){
       problems.push('sea assigned owner '+c+','+r);
   }
   assert.deepEqual(problems.slice(0,15),[],problems.length+' tile errors');
+  assert.ok(visualDifferences.length<=32,
+    'too many vector/GIS coastline disagreements: '+visualDifferences.length);
+  for(const [name,lon,lat,land] of [
+    ['Australian mainland',133.88,-23.7,true],
+    ['Tasmania',147.32,-42.88,true],
+    ['Bass Strait',146.5,-40,false],
+    ['open Indian Ocean',112,-36,false],
+    ['Papua New Guinea',145,-7,false],
+    ['Indonesia',119,-8,false]])
+    assert.equal(geography.australiaLandAt(lon,lat),land,
+      'wrong visual regional island filter: '+name);
   const land=regionize(g,t=>t.terrain!=='sea');
   const water=regionize(g,t=>t.terrain==='sea');
   assert.equal(water.length,1,'all playable sea hexes are connected');
@@ -87,7 +119,8 @@ function audit(g){
       assert.equal(t.owner,u.side,'incorrect ground deployment '+u.id);
     }
   }
-  return {hexes:N,...counts,landComponents:land.map(x=>x.length),
+  return {hexes:N,...counts,visualCoastDifferences:visualDifferences.length,
+    visualCoastSamples:visualDifferences.slice(0,20),landComponents:land.map(x=>x.length),
     seaComponents:water.map(x=>x.length),cities:g.stations.length,
     ports:ports.length,units:g.units.length,
     armies:g.units.filter(u=>!E.TYPES[u.type].naval).length,
