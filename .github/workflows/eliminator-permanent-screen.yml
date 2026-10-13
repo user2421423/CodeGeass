@@ -2,7 +2,12 @@ name: Permanent Eliminator Escort Screening
 on:
   push:
     branches: ['experiment/eliminator-permanent-escorts']
-    paths: ['.github/workflows/eliminator-permanent-screen.yml']
+    paths:
+      - '.github/workflows/eliminator-permanent-screen.yml'
+      - 'src/ai/06-production.part.js'
+      - 'dist/engine/ai.js'
+      - 'tests/eliminator-carriers.test.cjs'
+      - 'tools/eliminator-permanent-variants.cjs'
 permissions:
   contents: read
 jobs:
