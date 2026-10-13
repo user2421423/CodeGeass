@@ -10,7 +10,7 @@ const variant=process.argv[2];
 if(!['main','city','regular','combined'].includes(variant))throw Error('Variant: main|city|regular|combined');
 const source=sha=>cp.execFileSync('git',['show',sha+':dist/engine/ai.js'],
   {cwd:ROOT,encoding:'utf8',maxBuffer:20*1024*1024});
-const regular=fs.readFileSync(path.join(ROOT,'dist/engine/ai.js'),'utf8');
+const regular=source('HEAD');
 let script=variant==='main'?source(main):variant==='city'?source(city):regular;
 if(variant==='regular'){
   const old=source(city);
