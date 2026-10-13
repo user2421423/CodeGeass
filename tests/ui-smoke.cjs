@@ -689,7 +689,7 @@ const modal = () => node('modal-root').innerHTML;
     }
   })()`);
   const firstGroup = run('game.armyGroups[0].id');
-  const newMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id)).id');
+  const newMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id) && E.unitAt(game, u)?.id === u.id).id');
   run('closeModal()');
   shiftClickUnit(newMember);
   assert.equal(run(`game.armyGroups[0].units.includes(${newMember})`), true,
@@ -712,8 +712,10 @@ const modal = () => node('modal-root').innerHTML;
     'multi-selection does not modify group memberships');
   run('armyGroupsDialog()');
   assert(modal().includes('data-army-activate="1"'), 'group chooser offers a Shift-click activation action');
+  clickAction({ armyActivate: String(firstGroup) });
+  assert.equal(run('activeArmyGroupId'), firstGroup, 'group chooser activates Shift-click from its button');
   run(`armyGroupsDialog(${firstGroup})`);
-  assert.equal(run('activeArmyGroupId'), firstGroup, 'Manage chooses the active group');
+  assert.equal(run('activeArmyGroupId'), firstGroup, 'Manage keeps the same group active');
 
   run('scenarioGroupsDialog()');
   assert(modal().includes('data-scenario-group-import='),
@@ -738,7 +740,7 @@ const modal = () => node('modal-root').innerHTML;
   run('armyGroupCreate()');
   assert.equal(run('activeArmyGroupId'), 1, 'new conquest army group becomes active');
   run('closeModal()');
-  const conquestMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id)).id');
+  const conquestMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id) && E.unitAt(game, u)?.id === u.id).id');
   shiftClickUnit(conquestMember);
   assert.equal(run(`game.armyGroups[0].units.includes(${conquestMember})`), true,
     'Conquest Shift-click directly assigns a unit');
