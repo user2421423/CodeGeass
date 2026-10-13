@@ -329,26 +329,34 @@
   }
   // Reserve a different reachable hex per unit, using terrain and occupancy.
   // Artillery prefers its firing range behind the frontline; fast capturers prefer ring one.
-  function stage(g,u,city,reserved) {
+  function stage(g,u,city,reserved,op) {
     const role=unitRole(u), t=E.TYPES[u.type];
     const preferred=role==='artillery'?Math.max(1,Math.min(3,t.max||1)):
       role==='naval'?2:role==='raider'||role==='heavy'?1:2;
+    // Stable per-member rally slots reduce pathfinding cost and prevent
+    // units from swapping destinations every time a defender is killed.
+    const retained=op.staging[u.id], existing=retained && E.tile(g,retained.c,retained.r);
+    if(existing && !reserved.has(hkey(existing)) && !sameHex(existing,city) &&
+      (!E.unitAt(g,existing) || E.unitAt(g,existing)===u) &&
+      (sameHex(u,existing) || matches(u,op.autoRouted[u.id])))
+      return existing;
     const radius=role==='artillery'?3:2;
-    let best=null;
-    for (const p of E.within(g,city,radius)) {
-      if (sameHex(p,city) || reserved.has(hkey(p)) || E.TERRAIN[p.terrain]?.blocked) continue;
+    const candidates=[];
+    const foes=g.units.filter(v=>v.hp>0&&E.foe(g,v.side,u.side)&&E.distance(v,city,g)<=4);
+    for(const p of E.within(g,city,radius)){
+      if(sameHex(p,city)||reserved.has(hkey(p))||E.TERRAIN[p.terrain]?.blocked)continue;
       const occupant=E.unitAt(g,p);
-      if (occupant && occupant!==u) continue;
-      if (!sameHex(p,u) && E.gotoReason(g,u,p)) continue;
-      const ring=E.distance(p,city,g), trip=E.distance(p,u,g);
-      const exposed=role==='artillery' && g.units.some(v=>v.hp>0 &&
-        E.foe(g,v.side,u.side) && E.distance(v,p,g)<=1);
-      const score=Math.abs(ring-preferred)*16+trip*2+(exposed?35:0)+
-        (occupant===u?-12:0);
-      if(!best || score<best.score || score===best.score && hkey(p)<hkey(best.p))
-        best={p,score};
+      if(occupant&&occupant!==u)continue;
+      // Avoid asking the full world pathfinder about every nearby hex.
+      const ring=E.distance(p,city,g),trip=E.distance(p,u,g);
+      const exposed=role==='artillery'&&foes.some(v=>E.distance(v,p,g)<=1);
+      const score=Math.abs(ring-preferred)*16+trip*2+(exposed?35:0)+(occupant===u?-12:0);
+      candidates.push({p,score});
     }
-    return best?.p || null;
+    candidates.sort((a,b)=>a.score-b.score||hkey(a.p).localeCompare(hkey(b.p)));
+    for(const {p} of candidates.slice(0,8))
+      if(sameHex(p,u)||!E.gotoReason(g,u,p))return p;
+    return null;
   }
   function planGroupAssault(g,gr) {
     if (!gr || gr.stance!=='assault' || g.over || g.phase!==gr.side) return null;
@@ -387,7 +395,7 @@
     const near=active.filter(u=>E.distance(u,city,g)<=Math.max(2,Math.min(3,E.TYPES[u.type].max||1)));
     const close=near.reduce((sum,u)=>sum+u.hp,0);
     const resistance=defenders.reduce((sum,u)=>sum+u.hp,0)+Math.max(0,city.shield||0);
-    const threatened=near.some(u=>defenders.some(e=>E.distance(e,u,g)<=1));
+    const threatened=near.some(u=>defenders.some(e=>E.distance(e,u,g)<=Math.max(2,E.TYPES[e.type].max||1)));
     const proceed=near.length && (close >= ASSAULT_TUNING.readiness*Math.max(1,strength) ||
       close >= ASSAULT_TUNING.overwhelming*Math.max(1,resistance) || threatened ||
       g.turn-op.startedTurn>=ASSAULT_TUNING.assemblyGrace);
@@ -409,7 +417,7 @@
     if(capturing!=null)reserved.add(hkey(city));
     for(const u of units.slice().sort((a,b)=>priority[unitRole(a)]-priority[unitRole(b)]||a.id-b.id)){
       if(u.id===capturing || manual(g,gr,u) || sameHex(u,city))continue;
-      const p=stage(g,u,city,reserved);
+      const p=stage(g,u,city,reserved,op);
       if(!p)continue;
       reserved.add(hkey(p));
       op.staging[u.id]={c:p.c,r:p.r};
