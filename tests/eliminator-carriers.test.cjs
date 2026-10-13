@@ -258,6 +258,56 @@ test('frontline hero receives a charge via ordinary courier without leaving the 
   assert.equal(remote.eliminator||0,0,'the spare charge was collected');
 });
 
+test('spare Eliminator equips an ordinary frontline unit when no Tier 1 commander is nearby', () => {
+  const {g,city}=setup(401);
+  const remote=g.stations.filter(s=>s.owner==='cf' && s!==city && land(g,s,1).length &&
+    land(g,s,2).length).sort((a,b)=>E.distance(b,city,g)-E.distance(a,city,g))[0];
+  assert.ok(remote);
+  remote.eliminator=1;
+  const carrier=unit(g,'cf',land(g,remote,1)[0]);
+  const teammates=land(g,carrier,3).filter(p=>E.distance(p,carrier,g)<=3).slice(0,3);
+  assert.equal(teammates.length,3);
+  for(const p of teammates)unit(g,'cf',p);
+  E.aiAssignEliminators(g,'cf');
+  assert.equal(city.eliminator,1,'important city keeps its first charge');
+  assert.equal(carrier.eliminator,1,'ordinary combat unit receives spare Eliminator');
+  assert.equal(remote.eliminator,0);
+  assert.equal(E.eliminatorCharges(g,'cf').filter(h=>h.unit).length,1);
+  g.turn++;
+  E.aiOrder(g,carrier.id);
+  assert.equal(carrier.eliminator,1,'ordinary escort retains charge across normal battle orders');
+});
+
+test('Tier 1 leaders outrank eligible ordinary escorts at the same city', () => {
+  const {g,city}=setup(401);
+  const remote=g.stations.filter(s=>s.owner==='cf' && s!==city && land(g,s,1).length>=2)
+    .sort((a,b)=>E.distance(b,city,g)-E.distance(a,city,g))[0];
+  assert.ok(remote);
+  remote.eliminator=1;
+  const spots=land(g,remote,1);
+  const leader=unit(g,'cf',spots[0],'xingke');
+  const ordinary=unit(g,'cf',spots[1]);
+  for(const p of land(g,ordinary,3).slice(0,3))unit(g,'cf',p);
+  E.aiAssignEliminators(g,'cf');
+  assert.equal(city.eliminator,1);
+  assert.equal(leader.eliminator,1,'Tier 1 commander gets priority');
+  assert.equal(ordinary.eliminator||0,0);
+});
+
+test('ordinary armed carrier intercepts an attack and obeys normal charge limits', () => {
+  const {g,city}=setup(401);
+  const p=land(g,city,1)[0];
+  const escort=unit(g,'cf',p);
+  assert.equal(E.transferEliminator(g,{city:city.id},{unit:escort.id}).ok,true);
+  g.phase='britannia';
+  const target=land(g,escort,2)[0];
+  const shot=E.launch(g,'britannia',target.c,target.r);
+  assert.equal(shot.ok,true,shot.reason);
+  assert.equal(shot.intercepted,true,'normal units defend exactly like commanders');
+  assert.equal(shot.eliminatorCarrier,escort.id);
+  assert.equal(escort.eliminator||0,0,'charge is expended after interception');
+});
+
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
   g.phase = 'britannia';
