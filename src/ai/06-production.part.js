@@ -243,6 +243,16 @@
       weightedCoverage: covered.reduce((n, s) => n + eliminatorCityValue(g, side, s), 0),
       importantCitiesCovered: covered.filter(s => s.capitalOf === side || s.tier >= 3).length,
       importantCitiesTotal: cities.filter(s => s.capitalOf === side || s.tier >= 3).length,
+      // Exposure-weighted force protection helps distinguish idle charges from
+      // charges riding with a combat formation.
+      threatenedUnitValue: eliminatorThreatAssets(g,side)
+        .filter(a => a.kind === 'unit').reduce((n,a) => n + a.value, 0),
+      protectedUnitValue: eliminatorThreatAssets(g,side)
+        .filter(a => a.kind === 'unit' && charges.some(h =>
+          h.ready && dist(g,h,a.p) <= ELIMINATOR.range))
+        .reduce((n,a) => n + a.value, 0),
+      tier1Carriers: charges.filter(h => h.unit &&
+        COMMANDERS[h.unit.cmd]?.storyTier === 1).length,
     };
   }
   function aiProduction(g) {
