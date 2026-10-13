@@ -199,28 +199,6 @@
     }
     return jobs;
   }
-  function aiFinishEliminatorRelay(g,side,job,runner,hero) {
-    if(!runner.eliminator || runner.eliminatorMoved===g.turn ||
-        hero.eliminator || dist(g,runner,hero)>1)return false;
-    const result=transferEliminator(g,{unit:runner.id},{unit:hero.id});
-    if(!result.ok)return false;
-    const stats=((g.ai ||= {})[side] ||= {});
-    stats.eliminatorRelayDelivered=(stats.eliminatorRelayDelivered||0)+1;
-    stats.eliminatorRelayDeliveryTurns=(stats.eliminatorRelayDeliveryTurns||0)+
-      g.turn-(job.pickedTurn??job.started);
-    delete eliminatorRelayJobs(g,side)[runner.id];
-    return true;
-  }
-  // Transfer before commanders move whenever a rendezvous has already been
-  // achieved. This preserves the general late-movement order of rear couriers.
-  function aiEliminatorRelayRendezvous(g,side) {
-    const jobs=aiPlanEliminatorRelays(g,side);
-    for(const [id,job] of Object.entries(jobs)) {
-      const runner=g.units.find(u=>u.id===Number(id)&&u.hp>0&&u.side===side);
-      const hero=g.units.find(u=>u.id===job.hero&&u.hp>0&&u.side===side);
-      if(runner&&hero)aiFinishEliminatorRelay(g,side,job,runner,hero);
-    }
-  }
   function aiEliminatorRelayOrder(g,u) {
     const job=aiPlanEliminatorRelays(g,u.side)[u.id];
     if(!job || g.mode==='scenario'||!isReady(g,u))return null;
@@ -487,7 +465,6 @@
     // only to nearby Tier 1 commanders, or send an available hero to fetch them.
     aiAssignEliminators(g, side);
     aiPlanEliminatorRelays(g, side);
-    aiEliminatorRelayRendezvous(g, side);
     // 2b. Evaluate labs by newly protected economic/capital value, safe access, and Tier 1
     // collection routes rather than indiscriminately manufacturing at an isolated lab.
     const wantsDefense = () => g.mode !== 'scenario' && eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
