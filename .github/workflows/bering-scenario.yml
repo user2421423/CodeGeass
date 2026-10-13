@@ -18,5 +18,8 @@ jobs:
         run: node tools/build_sources.cjs --check
       - name: Bering and existing scenario regressions
         run: node --test tests/bering.test.cjs tests/europe.test.cjs tests/division-japan.test.cjs tests/scenario.test.cjs
+      - name: Four-turn AI versus AI Bering invasion playtest
+        timeout-minutes: 12
+        run: node tools/bering_sim.cjs 11 4
       - name: Browser UI smoke checks
         run: node tests/ui-smoke.cjs
