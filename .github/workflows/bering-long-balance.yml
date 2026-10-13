@@ -32,4 +32,4 @@ jobs:
           node-version: '22'
       - name: Long-run 40-turn all-AI scenario
         timeout-minutes: 30
-        run: node tools/bering_long_balance.cjs ${{ matrix.seed }} 30 ${{ matrix.player }} normal
+        run: node tools/bering_long_balance.cjs ${{ matrix.seed }} 40 ${{ matrix.player }} normal
