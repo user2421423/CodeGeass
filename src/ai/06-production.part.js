@@ -267,7 +267,8 @@
     // threats and overseas fronts rather than arbitrary per-faction ship/port caps.
     // Spending on the fleet must still leave a normal two-frame Scout formation
     // affordable, so coastal construction cannot starve the field army.
-    const navy = g.mode !== 'campaign' && (g.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf' ? NAVAL.bk : NAVAL[side]);
+    const navy = g.mode !== 'campaign' && !philippinesDefense(g, side) &&
+      (g.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf' ? NAVAL.bk : NAVAL[side]);
     if (navy) {
       const coastal = [
           ...bases.filter(s => portSite(g, s)),

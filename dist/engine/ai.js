@@ -176,6 +176,15 @@
   const scenarioRoutes = new WeakMap();
   // With only one or two hostile cities left, columns may grow to `finalUnits` to finish the war.
   const SCENARIO_COLUMN = { maxUnits: 5, finalUnits: 10, switchMargin: 1.35, exploitTurns: 2, exploitRadius: 9 };
+  // In the Philippines, China is the archipelago's defender. It never
+  // counter-invades Palau/Yap or transfers armies between Philippine islands.
+  function philippinesDefense(g, side) {
+    return g.mode === 'scenario' && g.scenario?.id === 'philippines-invasion' && side === 'cf';
+  }
+  function philippinesHome(g, city) {
+    return !!city && g.scenario?.id === 'philippines-invasion' &&
+      !['Koror', 'Peleliu', 'Colonia'].includes(city.name);
+  }
   function scenarioCache(g) {
     let cache = scenarioRoutes.get(g);
     if (!cache || cache.tiles !== g.tiles) {
@@ -285,7 +294,10 @@
     state.recentCaptures = history.filter(p => g.turn - p.turn <= SCENARIO_COLUMN.exploitTurns);
   }
   function scenarioPick(g, memo, u, old = null) {
-    const availableTargets = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
+    const defender = philippinesDefense(g, u.side);
+    const availableTargets = memo.fronts.filter(f =>
+      (defender ? !atSea(g, u) && philippinesHome(g, f.anchor) &&
+        massOf(g, u) === massOf(g, f.anchor) : foe(g, f.anchor.owner, u.side)) &&
       Number.isFinite(scenarioTravel(g, u, f))),
       wing = memo.wings?.[u.id],
       matched = wing && availableTargets.filter(f=>f.anchor.owner===wing),
@@ -483,7 +495,9 @@
     delete state.localResponses;
     planScenarioTheaters(g,side,troops,memo,state);
     const active=troops.filter(u=>!memo.guards?.[u.id]&&!memo.recoveries?.has(u.id));
-    const fronts = g.stations.filter(s => foe(g, s.owner, side)).map(s => {
+    const defendingPhilippines = philippinesDefense(g, side);
+    const fronts = g.stations.filter(s =>
+      defendingPhilippines ? philippinesHome(g, s) : foe(g, s.owner, side)).map(s => {
       const opponents = enemies.filter(u => dist(g, u, s) <= 6),
         mass = massOf(g, s),
         local = own.filter(c => massOf(g, c) === mass),
@@ -494,7 +508,8 @@
         fortified = !!s.fort || s.shield >= 300;
       return {
         id: 'j' + s.id, side, anchor: s, name: s.name,
-        type: 'offensive', state: 'attacking', overseas: !local.length,
+        type: defendingPhilippines && s.owner === side ? 'defensive' : 'offensive',
+        state: 'attacking', overseas: defendingPhilippines ? false : !local.length,
         rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0, fortified }],
         enemies: opponents, enemyStrength: opposition,
         desiredStrength: Math.max(3, opposition * 1.15 + (fortified ? 3 : 1)),
@@ -520,7 +535,9 @@
       f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
       const posture=(state.scenarioPostures||{})[f.id]||{};
       const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
-      f.state = (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
+      f.state = defendingPhilippines
+        ? (f.anchor.owner === side ? 'holding' : 'attacking')
+        : (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
       f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
       (state.scenarioPostures ||= {})[f.id]={state:f.state,since:posture.state===f.state?posture.since:g.turn};
       f.target = f.desiredStrength;
@@ -1131,9 +1148,9 @@
     // instead of marching toward a city that is already theirs until next turn.
     if (g.mode === 'scenario') {
       const old = memo.byId[memo.assign[u.id]];
-      if (old && !foe(g, old.anchor.owner, u.side))
+      if (old && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         scenarioRememberCapture(g, u.side, old.anchor);
-      const next = !old || !foe(g, old.anchor.owner, u.side)
+      const next = !old || (!philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         ? scenarioPick(g, memo, u)
         : old;
       if (next?.id !== old?.id) scenarioGive(g, memo, u, next);
@@ -1158,6 +1175,21 @@
   // The goal field a unit follows: the assigned front's. Guards and
   // unassigned units use the side-wide field; unassigned warships may use the leading front.
   function fieldFor(g, memo, u) {
+    if (philippinesDefense(g, u.side)) {
+      const mass = massOf(g, u);
+      // Ships hold their coastal stations. Offshore amphibious defenders may
+      // land on adjacent Philippine shores, never sail toward enemy bases.
+      if (mass < 0) return p =>
+        !isSea(p) && philippinesHome(g, g.stations[p.provinceCity]) &&
+        dist(g, u, p) === 1 ? 0 : 1000;
+      const front = memo?.byId?.[memo.assign?.[u.id]];
+      const local = g.stations.filter(s => philippinesHome(g, s) && massOf(g, s) === mass);
+      const seeds = front ? [[front.anchor, 0]] : local.map(s => [s, 0]);
+      const field = seeds.length ? goalField(g, u.side, seeds, 'land') : null;
+      return p => !isSea(p) && massOf(g, p) === mass && field &&
+        Number.isFinite(field[p.r * g.cols + p.c])
+        ? field[p.r * g.cols + p.c] : 1000;
+    }
     if(memo.reserve?.hub&&memo.reserve.units.includes(u.id)){
       const h=memo.reserve.hub;
       memo.reserveField ||= goalField(g,u.side,[[h,0]],'land');
@@ -1398,6 +1430,7 @@
   // nothing to attack on theirs; or (city-taking Infantry and Armor only) far from it (goal field 14+), unless they are
   // still gathering.
   function wantsLift(g, u, memo) {
+    if (philippinesDefense(g, u.side)) return false;
     if (TYPES[u.type].naval || atSea(g, u) || u.hold || memo.recoveries?.has(u.id)) return false;
     const front = frontOf(g, memo, u),
       mass = massOf(g, u),
@@ -1449,6 +1482,7 @@
   }
   const WAVE_WAIT = 2; // turns a loaded carrier may hold on a beach for a second wave
   function aiCarrier(g, u, memo, events, fieldAt) {
+    if (philippinesDefense(g, u.side)) return true;
     // Escorting is a fallback: a transport only escorts once the boarding
     // planner below finds no troops anywhere that need a lift and no staging
     // area. Hulls without capacity (future dedicated escorts) always escort.
@@ -1843,7 +1877,8 @@
     // threats and overseas fronts rather than arbitrary per-faction ship/port caps.
     // Spending on the fleet must still leave a normal two-frame Scout formation
     // affordable, so coastal construction cannot starve the field army.
-    const navy = g.mode !== 'campaign' && (g.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf' ? NAVAL.bk : NAVAL[side]);
+    const navy = g.mode !== 'campaign' && !philippinesDefense(g, side) &&
+      (g.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf' ? NAVAL.bk : NAVAL[side]);
     if (navy) {
       const coastal = [
           ...bases.filter(s => portSite(g, s)),
@@ -2225,6 +2260,11 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    const islandDefender = philippinesDefense(g, u.side);
+    const defenseStep = p => !islandDefender ||
+      (!isShip(u) && !isSea(p) &&
+        philippinesHome(g, g.stations[p.provinceCity]) &&
+        (atSea(g, u) ? dist(g, u, p) === 1 : massOf(g, p) === massOf(g, u)));
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
@@ -2262,7 +2302,8 @@
       }
     }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
-    const steered = isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
+    const steered = (islandDefender && isShip(u)) ||
+      (isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt));
     if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
       const berth = [...reachable(g, u).keys()]
         .map(k => {
@@ -2314,7 +2355,7 @@
           const [c, r] = k.split(',').map(Number);
           return tile(g, c, r);
         })
-        .filter(p => !unitAt(g, p));
+        .filter(p => !unitAt(g, p) && defenseStep(p));
       const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= aiRange(g).enemyScan);
       const old = { c: u.c, r: u.r };
       // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
@@ -2456,7 +2497,7 @@
     if (!u.moved && (u.attacked || u.skillReposition || u.withdrawMove) && !g.over && u.hp > 0) {
       const score = p => -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30;
       const picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
-        .filter(p => !unitAt(g, p)).sort((a, b) => score(b) - score(a));
+        .filter(p => !unitAt(g, p) && defenseStep(p)).sort((a, b) => score(b) - score(a));
       if (picks[0] && score(picks[0]) > score(u)) {
         const m = move(g, id, picks[0].c, picks[0].r);
         if (m.ok) events.push({ kind: 'move', ...m, id });

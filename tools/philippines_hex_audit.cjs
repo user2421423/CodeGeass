@@ -9,6 +9,18 @@ const bits=Buffer.from(require('../dist/philippines-landmask.js'),'base64');
 const W=144,H=112,N=W*H;
 assert.equal(bits.length,N/8);
 const g=scenario.create('britannia','normal',227);
+// Check that the visual map's lon/lat projection aligns exactly with the
+// tactical hex centres at every corner, rather than drifting offshore.
+const p=g.scenario.projection,b=g.scenario.bounds,k=Math.cos(p.centerLat*Math.PI/180);
+const dx=(b.east-b.west)/W,dy=(b.north-b.south)/H;
+for(const [c,r] of [[0,0],[W-1,0],[0,H-1],[W-1,H-1],[72,56]]) {
+ const lon=b.west+(c+.5*(r&1)+.5)*dx,lat=b.north-(r+.5)*dy;
+ const u=(lon-p.centerLon)*k,v=lat-p.centerLat;
+ const x=(u-p.uMin)*(W-1)/(p.uMax-p.uMin);
+ const y=(p.vMax-v)*(H-1)/(p.vMax-p.vMin);
+ assert.ok(Math.abs(x-(c+.5*(r&1)))<1e-8,'atlas longitude drift '+c+','+r);
+ assert.ok(Math.abs(y-r)<1e-8,'atlas latitude drift '+c+','+r);
+}
 const land=i=>!!(bits[i>>3]&(128>>(i&7)));
 const seen=new Uint8Array(N),components=new Int16Array(N).fill(-1);
 function regions(sea){

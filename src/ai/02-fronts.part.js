@@ -15,6 +15,15 @@
   const scenarioRoutes = new WeakMap();
   // With only one or two hostile cities left, columns may grow to `finalUnits` to finish the war.
   const SCENARIO_COLUMN = { maxUnits: 5, finalUnits: 10, switchMargin: 1.35, exploitTurns: 2, exploitRadius: 9 };
+  // In the Philippines, China is the archipelago's defender. It never
+  // counter-invades Palau/Yap or transfers armies between Philippine islands.
+  function philippinesDefense(g, side) {
+    return g.mode === 'scenario' && g.scenario?.id === 'philippines-invasion' && side === 'cf';
+  }
+  function philippinesHome(g, city) {
+    return !!city && g.scenario?.id === 'philippines-invasion' &&
+      !['Koror', 'Peleliu', 'Colonia'].includes(city.name);
+  }
   function scenarioCache(g) {
     let cache = scenarioRoutes.get(g);
     if (!cache || cache.tiles !== g.tiles) {
@@ -124,7 +133,10 @@
     state.recentCaptures = history.filter(p => g.turn - p.turn <= SCENARIO_COLUMN.exploitTurns);
   }
   function scenarioPick(g, memo, u, old = null) {
-    const availableTargets = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
+    const defender = philippinesDefense(g, u.side);
+    const availableTargets = memo.fronts.filter(f =>
+      (defender ? !atSea(g, u) && philippinesHome(g, f.anchor) &&
+        massOf(g, u) === massOf(g, f.anchor) : foe(g, f.anchor.owner, u.side)) &&
       Number.isFinite(scenarioTravel(g, u, f))),
       wing = memo.wings?.[u.id],
       matched = wing && availableTargets.filter(f=>f.anchor.owner===wing),
@@ -322,7 +334,9 @@
     delete state.localResponses;
     planScenarioTheaters(g,side,troops,memo,state);
     const active=troops.filter(u=>!memo.guards?.[u.id]&&!memo.recoveries?.has(u.id));
-    const fronts = g.stations.filter(s => foe(g, s.owner, side)).map(s => {
+    const defendingPhilippines = philippinesDefense(g, side);
+    const fronts = g.stations.filter(s =>
+      defendingPhilippines ? philippinesHome(g, s) : foe(g, s.owner, side)).map(s => {
       const opponents = enemies.filter(u => dist(g, u, s) <= 6),
         mass = massOf(g, s),
         local = own.filter(c => massOf(g, c) === mass),
@@ -333,7 +347,8 @@
         fortified = !!s.fort || s.shield >= 300;
       return {
         id: 'j' + s.id, side, anchor: s, name: s.name,
-        type: 'offensive', state: 'attacking', overseas: !local.length,
+        type: defendingPhilippines && s.owner === side ? 'defensive' : 'offensive',
+        state: 'attacking', overseas: defendingPhilippines ? false : !local.length,
         rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0, fortified }],
         enemies: opponents, enemyStrength: opposition,
         desiredStrength: Math.max(3, opposition * 1.15 + (fortified ? 3 : 1)),
@@ -359,7 +374,9 @@
       f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
       const posture=(state.scenarioPostures||{})[f.id]||{};
       const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
-      f.state = (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
+      f.state = defendingPhilippines
+        ? (f.anchor.owner === side ? 'holding' : 'attacking')
+        : (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
       f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
       (state.scenarioPostures ||= {})[f.id]={state:f.state,since:posture.state===f.state?posture.since:g.turn};
       f.target = f.desiredStrength;
@@ -970,9 +987,9 @@
     // instead of marching toward a city that is already theirs until next turn.
     if (g.mode === 'scenario') {
       const old = memo.byId[memo.assign[u.id]];
-      if (old && !foe(g, old.anchor.owner, u.side))
+      if (old && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         scenarioRememberCapture(g, u.side, old.anchor);
-      const next = !old || !foe(g, old.anchor.owner, u.side)
+      const next = !old || (!philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         ? scenarioPick(g, memo, u)
         : old;
       if (next?.id !== old?.id) scenarioGive(g, memo, u, next);
@@ -997,6 +1014,21 @@
   // The goal field a unit follows: the assigned front's. Guards and
   // unassigned units use the side-wide field; unassigned warships may use the leading front.
   function fieldFor(g, memo, u) {
+    if (philippinesDefense(g, u.side)) {
+      const mass = massOf(g, u);
+      // Ships hold their coastal stations. Offshore amphibious defenders may
+      // land on adjacent Philippine shores, never sail toward enemy bases.
+      if (mass < 0) return p =>
+        !isSea(p) && philippinesHome(g, g.stations[p.provinceCity]) &&
+        dist(g, u, p) === 1 ? 0 : 1000;
+      const front = memo?.byId?.[memo.assign?.[u.id]];
+      const local = g.stations.filter(s => philippinesHome(g, s) && massOf(g, s) === mass);
+      const seeds = front ? [[front.anchor, 0]] : local.map(s => [s, 0]);
+      const field = seeds.length ? goalField(g, u.side, seeds, 'land') : null;
+      return p => !isSea(p) && massOf(g, p) === mass && field &&
+        Number.isFinite(field[p.r * g.cols + p.c])
+        ? field[p.r * g.cols + p.c] : 1000;
+    }
     if(memo.reserve?.hub&&memo.reserve.units.includes(u.id)){
       const h=memo.reserve.hub;
       memo.reserveField ||= goalField(g,u.side,[[h,0]],'land');

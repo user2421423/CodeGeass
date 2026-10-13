@@ -35,6 +35,11 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    const islandDefender = philippinesDefense(g, u.side);
+    const defenseStep = p => !islandDefender ||
+      (!isShip(u) && !isSea(p) &&
+        philippinesHome(g, g.stations[p.provinceCity]) &&
+        (atSea(g, u) ? dist(g, u, p) === 1 : massOf(g, p) === massOf(g, u)));
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
@@ -72,7 +77,8 @@
       }
     }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
-    const steered = isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
+    const steered = (islandDefender && isShip(u)) ||
+      (isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt));
     if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
       const berth = [...reachable(g, u).keys()]
         .map(k => {
@@ -124,7 +130,7 @@
           const [c, r] = k.split(',').map(Number);
           return tile(g, c, r);
         })
-        .filter(p => !unitAt(g, p));
+        .filter(p => !unitAt(g, p) && defenseStep(p));
       const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= aiRange(g).enemyScan);
       const old = { c: u.c, r: u.r };
       // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea
@@ -266,7 +272,7 @@
     if (!u.moved && (u.attacked || u.skillReposition || u.withdrawMove) && !g.over && u.hp > 0) {
       const score = p => -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30;
       const picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
-        .filter(p => !unitAt(g, p)).sort((a, b) => score(b) - score(a));
+        .filter(p => !unitAt(g, p) && defenseStep(p)).sort((a, b) => score(b) - score(a));
       if (picks[0] && score(picks[0]) > score(u)) {
         const m = move(g, id, picks[0].c, picks[0].r);
         if (m.ok) events.push({ kind: 'move', ...m, id });

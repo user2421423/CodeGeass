@@ -636,6 +636,20 @@ const GEOGRAPHY = (() => {
   function australiaLandAt(lon, lat) {
     return AUSTRALIA_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }
+  // Render the Philippine archipelago against its actual island outlines, not
+  // the generic filled-hex map. Exclude Borneo and other foreign coastlines
+  // even though they overlap the rectangular theatre viewport.
+  const PHILIPPINES_ISLAND_ANCHORS = [
+    [121.3,16.4],[120.9,14.9],[121.5,13.9],[123.3,13.5], // Luzon
+    [121.13,12.9],[120.7,12.0],[118.72,9.7],[119.45,11.2], // Mindoro, Palawan
+    [122.55,11.0],[123.05,10.4],[123.85,10.3],[123.8,9.8], // Panay, Negros, Cebu, Bohol
+    [124.6,11.9],[125.1,11.2],[123.65,12.35],[124.45,9.4], // Samar, Leyte, Masbate
+    [124.8,8.0],[125.5,7.15],[122.2,7.05],[124.2,8.6], // Mindanao
+    [122.0,6.6],[123.4,7.4],[124.1,6.0] // Basilan and southern islands
+  ];
+  const PHILIPPINES_LAND = LAYERS.land.filter(shape =>
+    PHILIPPINES_ISLAND_ANCHORS.some(([lon,lat]) =>
+      pointWithinShape(shape, px(lon), py(lat))));
   let japanColorCache = null;
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
@@ -896,14 +910,14 @@ const GEOGRAPHY = (() => {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
     if (g.scenario.id === 'bering-strait')
       return paintBeringGeographic(ctx, g, left, right, top, bottom);
-    if (g.scenario.id === 'conquest-indochina' ||
-        g.scenario.id === 'philippines-invasion')
+    if (g.scenario.id === 'conquest-indochina')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
     // Reproject the same GSHHG atlas into the north-up Japan theatre.
     // The political and tactical layers share this zero-rotation projection.
     const australia = g.scenario.id === 'war-for-australia';
+    const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
     const centreSampledRegion = australia || middleEast;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
@@ -941,7 +955,7 @@ const GEOGRAPHY = (() => {
     ];
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
-    const source = australia ? AUSTRALIA_LAND :
+    const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
       (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
@@ -951,7 +965,7 @@ const GEOGRAPHY = (() => {
     sea.addColorStop(1, '#103d5b');
     ctx.fillStyle = sea;
     ctx.fillRect(left, top, right - left, bottom - top);
-    if (!shapes.length) return true;
+    if (!shapes.length && !philippines) return true;
 
     // Japan keeps its geographic land silhouette. Europe is deliberately
     // Europe-only: do not draw the GSHHG outline of Africa, Anatolia or the
@@ -1000,6 +1014,25 @@ const GEOGRAPHY = (() => {
         Math.max(0.5, scale * Math.hypot(A, C)));
       // Match the playable, navigable Suez canal with a visual water cut.
       if (middleEast) paintSuezCanal(ctx, shapes, a, b, c, d);
+      ctx.restore();
+    }
+    // Palau and Yap are intentionally enlarged in the *gameplay* mask to
+    // accommodate Britannian bases. Some are absent from the global coastline
+    // asset, so render only these offshore staging islets from their hex mask.
+    if (philippines) {
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      for (const t of g.tiles) {
+        if (t.c < 106 || t.terrain === 'sea') continue;
+        const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
+        const y = 1.5 * R * t.r + R;
+        if (x < left - R || x > right + R || y < top - R || y > bottom + R) continue;
+        const faction = g.factions?.[t.owner] || E.FACTIONS[t.owner];
+        ctx.fillStyle = faction?.color || '#91a799';
+        ctx.beginPath();
+        tacticalHex(ctx, t, R + 0.7);
+        ctx.fill();
+      }
       ctx.restore();
     }
     return true;
