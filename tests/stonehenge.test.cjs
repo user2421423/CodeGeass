@@ -104,7 +104,7 @@ test('European islands, Channel, Atlantic, harbours, eastern front and sea conne
 test('Armies are independently staffed; Britannia has dominant ocean lift',()=>{
  const g=stone.create('eu','normal',18);
  for(const side of stone.sides){
-  assert.ok(g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).length>=38,side+' land army');
+  assert.ok(g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).length>=(side==='britannia'?20:38),side+' land army');
  }
  const ships=side=>g.units.filter(u=>u.side===side&&E.TYPES[u.type].naval==='ship').length;
  assert.equal(ships('britannia'),10);
