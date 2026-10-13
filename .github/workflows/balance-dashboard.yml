@@ -49,8 +49,9 @@ jobs:
         run: |
           node tools/build_sources.cjs --check
           node --test tests/balance-dashboard.test.cjs
-          node --test tests/*.test.cjs
           node tests/ui-smoke.cjs
+          # The complete engine suite runs in Source/build synchronization.
+          # Do not block diagnostic report generation on unrelated game tests.
       - name: Determine paired simulation settings
         id: config
         env:
@@ -70,6 +71,7 @@ jobs:
           REF="$BASELINE_REF"
           if [ -z "$REF" ]; then REF="HEAD^"; fi
           BASE_SHA="$(git rev-parse --verify "$REF^{commit}")"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then RUNS=3; TURNS=30; fi
           echo "runs=$RUNS" >> "$GITHUB_OUTPUT"
           echo "turns=$TURNS" >> "$GITHUB_OUTPUT"
           echo "baseline=$BASE_SHA" >> "$GITHUB_OUTPUT"
