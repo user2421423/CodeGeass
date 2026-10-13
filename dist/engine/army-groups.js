@@ -95,7 +95,14 @@
     if (!members.length && E.isSea(p)) return { ok: false, reason: 'Choose a land destination for an empty group' };
     // First validate every route: a wholly impossible order leaves old destinations unchanged.
     const ready = [], rejected = [];
-    for (const u of members) {
+    // A hostile-city Assault moves toward distinct staging hexes, not onto
+    // the (possibly shielded/occupied) city itself. Validate the actual
+    // staging routes in the planner instead of pathfinding to the same city
+    // once per member and then throwing those routes away.
+    const cityObjective = group.stance === 'assault' &&
+      !!g.stations.find(s => s.c === c && s.r === r && foeSide(g, s.owner, group.side));
+    if (cityObjective) ready.push(...members);
+    else for (const u of members) {
       const arrived = u.c === c && u.r === r;
       if (arrived || !E.gotoReason(g, u, p)) ready.push(u);
       else rejected.push(u.id);
@@ -306,6 +313,12 @@
     if (marked && hostile(marked)) return marked;
     const ordered = g.stations.find(s => sameHex(s,gr.destination));
     if (ordered && hostile(ordered)) return ordered;
+    if (!gr.autoConquer && gr.destination) {
+      // Preserve Assault-on-area orders from existing saves and UI actions.
+      // City-specific captures and consolidation apply only to real cities.
+      return {id:'hex:'+hkey(gr.destination),name:'Target area',
+        c:gr.destination.c,r:gr.destination.r,owner:null,shield:0};
+    }
     if (!gr.autoConquer) return null;
     const capturers = units.filter(u => E.canCapture(u) && unitRole(u)!=='naval');
     const reserved = new Set(groups(g).filter(x => x !== gr && x.side === gr.side &&
@@ -420,7 +433,7 @@
       .sort((a,b)=>(unitRole(a)==='raider'?-100:0)-(unitRole(b)==='raider'?-100:0) ||
         E.distance(a,city,g)-E.distance(b,city,g) || a.id-b.id);
     let capturing=null;
-    if(open && capturers.length) {
+    if(open && city.owner != null && foeSide(g,city.owner,gr.side) && capturers.length) {
       const u=capturers.find(u=>!u.moved && !u.lastTurnMoved && u.autoOrderTurn!==g.turn &&
         (sameHex(u,city)||!E.gotoReason(g,u,E.tile(g,city.c,city.r))));
       if(u && !sameHex(u,city) && routeMember(g,gr,u,city))capturing=u.id;
