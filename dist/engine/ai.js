@@ -1823,17 +1823,52 @@
         eliminatorFieldCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
     return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
   }
+  // Give each mobile charge an escort objective anchored to a living
+  // friendly battle formation. A formation can be led by a Tier 1 officer,
+  // but need not be; ordinary carriers keep the charge until interception or loss.
+  function eliminatorEscortTarget(g,u,memo) {
+    const cache = (memo.eliminatorEscortTargets ||= {});
+    if (Object.prototype.hasOwnProperty.call(cache,u.id)) {
+      return g.units.find(v=>v.id===cache[u.id] && v.hp>0) || null;
+    }
+    const friends = g.units.filter(v=>v.hp>0 && v.side===u.side &&
+      v.id!==u.id && !atSea(g,v) && dist(g,v,u)<=9);
+    const enemies = g.units.filter(v=>v.hp>0 && foe(g,v.side,u.side));
+    const front = memo.assign?.[u.id];
+    const ready = sideEliminators(g,u.side).filter(h=>h.ready &&
+      h.unit?.id !== u.id);
+    let best=null, bestScore=-Infinity;
+    for (const v of friends) {
+      const distance=dist(g,v,u);
+      const nearFriends=friends.filter(w=>w!==v&&dist(g,w,v)<=3).length;
+      const nearFoes=enemies.filter(e=>dist(g,e,v)<=9).length;
+      const covered=ready.some(h=>dist(g,h,v)<=ELIMINATOR.range);
+      const sameFront=front && memo.assign?.[v.id]===front;
+      const score=(COMMANDERS[v.cmd]?.storyTier===1?210:v.cmd?95:0) +
+        Math.min(8,nearFriends)*38 + Math.min(6,nearFoes)*28 +
+        (sameFront?95:0) + Math.min(115,unitStrength(v)*6) -
+        distance*23 - (covered?180:0);
+      if(score>bestScore){best=v;bestScore=score;}
+    }
+    cache[u.id]=best && bestScore>35 ? best.id : null;
+    return best && bestScore>35 ? best : null;
+  }
   function eliminatorMobileCoverBonus(g,u,p,nearbyFoes,memo) {
-    if (!(u.eliminator>0) || COMMANDERS[u.cmd]?.storyTier!==1) return 0;
-    const assets = eliminatorThreatAssets(g,u.side,memo);
-    const home = {c:u.c,r:u.r};
-    const before = eliminatorThreatCover(g,u.side,home,assets,u);
-    const after = eliminatorThreatCover(g,u.side,p,assets,u);
-    // Reward protecting high-value formations and deny moves that abandon
-    // a cluster. This must influence battlefield positioning without forbidding
-    // combat, assault captures, or emergency retreats.
-    const gain = Math.max(-220,Math.min(220,(after-before)*0.65));
-    return gain + Math.min(90,after*0.12);
+    if (!(u.eliminator>0))return 0;
+    const target=eliminatorEscortTarget(g,u,memo);
+    const friendAssets=eliminatorThreatAssets(g,u.side,memo)
+      .filter(a=>a.kind==='unit');
+    const old={c:u.c,r:u.r};
+    const before=eliminatorThreatCover(g,u.side,old,friendAssets,u);
+    const after=eliminatorThreatCover(g,u.side,p,friendAssets,u);
+    const gain=Math.max(-180,Math.min(180,(after-before)*0.68));
+    if(!target)return gain+Math.min(75,after*0.10);
+    const prior=dist(g,old,target),next=dist(g,p,target);
+    const tether=next<=ELIMINATOR.range?120:
+      next===ELIMINATOR.range+1 ? 20:-Math.min(130,(next-4)*32);
+    const lost=prior<=ELIMINATOR.range && next>ELIMINATOR.range?-90:0;
+    const approach=Math.max(-35,Math.min(35,(prior-next)*15));
+    return gain+Math.min(75,after*0.10)+tether+lost+approach;
   }
   function aiEliminatorMetrics(g, side) {
     const charges = sideEliminators(g, side);
