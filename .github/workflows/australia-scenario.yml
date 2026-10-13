@@ -1,0 +1,60 @@
+name: Australia three-way scenario regression
+on:
+  push:
+    branches: ['scenario/australia']
+  pull_request:
+    paths:
+      - 'dist/scenarios-australia.js'
+      - 'dist/australia-landmask.js'
+      - 'tests/australia.test.cjs'
+      - 'tools/australia_*.cjs'
+      - 'dist/ui/scenario-screens.js'
+      - 'src/ai/02-fronts.part.js'
+      - 'dist/engine/ai.js'
+      - 'dist/index.html'
+      - 'dist/ui/geography.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Synced source parts
+        run: node tools/build_sources.cjs --check
+      - name: Complete Node regression suite
+        run: node --test tests/*.test.cjs
+      - name: All 12,144 hexes, provinces, ports and routes
+        run: node tools/australia_hex_audit.cjs
+      - name: Browser smoke regression
+        run: node tests/ui-smoke.cjs
+      - name: Tracked assets
+        run: node tools/validate_assets.cjs --tracked
+      - name: Existing world map audit
+        run: python3 tools/check_map.py
+  balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {player: britannia, seed: 11, difficulty: normal}
+          - {player: cf, seed: 43, difficulty: normal}
+          - {player: eu, seed: 79, difficulty: normal}
+          - {player: britannia, seed: 101, difficulty: normal}
+          - {player: cf, seed: 131, difficulty: normal}
+    name: ${{ matrix.player }} seed ${{ matrix.seed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Seeded actual-engine three-way AI simulation
+        timeout-minutes: 30
+        run: node tools/australia_sim.cjs ${{ matrix.seed }} 50 ${{ matrix.player }} ${{ matrix.difficulty }}

@@ -10,9 +10,15 @@ const SCENARIO_KINDS = [
   ['european-war','The European War','44 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
-  ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides']
+  ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
+  ['war-for-australia','The War for Australia','48 cities · 3 sides']
 ];
 const SCENARIO_BLURBS = {
+  'war-for-australia': {
+    britannia: 'Hold Sydney, Melbourne, Brisbane and Australia’s eastern industrial heartland. Counter northern advances and Western amphibious landings.',
+    cf: 'Push south from Darwin through the Outback, fight for Cape York, and launch amphibious assaults on the eastern and western coasts.',
+    eu: 'Defend Perth and Adelaide, exploit the southern coastal corridor, and launch carrier-led landings to outflank eastern strongholds.'
+  },
   'invasion-japan': {
     britannia: 'Defend Honshu and contain the Chinese Federation at the Kanmon Strait while cooperating temporarily with the Black Knights.',
     bk: 'Command Zero’s resistance enclaves in central Japan. For now the Black Knights are temporarily allied to Britannia.',
@@ -48,6 +54,13 @@ const SCENARIO_BLURBS = {
   }
 };
 const SCENARIO_TEXT = {
+  'war-for-australia': {
+    era: 'Australia · Alternate 2018',
+    intro: 'Britannia holds the east, China the north, and Europia the west. Three-way continental and naval war. Conquer every rival city.',
+    diplomacy: 'All three powers are enemies from turn 1. No alliances, scripted diplomacy, or turn limit.',
+    elite: 'Elite Australia: rivals gain 60% extra turn income and veteran three-frame land formations; all sides use their established faction units and commander rosters.',
+    focus: {britannia:'Sydney',cf:'Darwin',eu:'Perth'}
+  },
   'invasion-japan': {
     era: 'Japan · 2017 a.t.b.',
     intro: 'Three playable powers in the Japanese theatre, with an alliance that ends on turn 10.',
