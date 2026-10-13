@@ -1905,6 +1905,8 @@
     return assignments;
   }
   function aiEliminatorPickup(g,u,memo) {
+    if (Object.values(eliminatorRelayJobs(g,u.side)).some(job=>job.hero===u.id))
+      return null; // A courier is bringing this commander's charge.
     if (g.mode==='scenario' || !isReady(g,u) || u.eliminator ||
         eliminatorCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
     return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
