@@ -247,7 +247,7 @@ const modal = () => node('modal-root').innerHTML;
   const beringForward = beringAtlasTransforms.transforms.filter(
     t => Math.abs(t[0] - 3) < 1e-7 && Math.abs(t[3] - 80 * 128 / (26 * 75)) < 1e-7);
   assert.equal(beringForward.length, 2, 'both Bering date-line halves must be geographically projected');
-  assert(Math.abs(beringForward[1][4] - beringForward[0][4]) > run('SQ * R * 120'),
+  assert(Math.abs(beringForward[1][4] - beringForward[0][4]) > Math.sqrt(3) * 43 * 120,
     'Alaska must be unwrapped to the east of Kamchatka, not mirrored over Siberia');
   assert(beringAtlasTransforms.clips >= 5,
     'both date-line halves and political colours must be clipped to geographic land');
