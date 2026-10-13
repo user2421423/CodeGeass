@@ -1383,7 +1383,7 @@ function draw(time, dt) {
         ctx.stroke();
         outlinedText(`F.L.E.I.J.A. · ${Math.max(0, s.project.ready - game.turn)}`, 0, -R - 4, 10, '#ff9fd0', scale, 'Trebuchet MS', true);
       }
-      if (s.eliminatorProject || s.eliminator) {
+      if (s.owner === game.player && (s.eliminatorProject || s.eliminator)) {
         mapHasPulse = true;
         const pulse = 0.5 + 0.5 * Math.sin(time / 260);
         ctx.strokeStyle = `rgba(130,225,255,${0.5 + 0.45 * pulse})`;

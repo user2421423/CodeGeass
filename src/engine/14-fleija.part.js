@@ -5,6 +5,7 @@
     radius: 2,
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
+    max: 1, // combined stored and under-construction warheads per faction
     lab: 3, // research lab level needed
     labTurn: 15, // 2017 World War: Research Lab III and F.L.E.I.J.A. unlock
     ufnLabTurn: 5, // 2018 Rise of the U.F.N.: earlier strategic-weapons unlock
@@ -14,11 +15,11 @@
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
   };
   const ELIMINATOR = {
-    range: 3, // scaled with the denser world map; protects targets this many hexes from the city holding the charge
+    range: 5, // defense radius measured from the city holding the charge
     cost: { credits: 1200, industry: 300, science: 250, sakuradite: 60 },
-    turns: 3,
+    turns: 2,
     lab: 3,
-    research: 3, // turns after the first detonation before Eliminators can be built
+    research: 2, // turns after the first detonation before Eliminators can be built
     max: 3, // charges (ready or under construction) a power may hold at once, one per city
   };
   // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
@@ -59,6 +60,8 @@
         ? 'F.L.E.I.J.A. is unavailable outside conquests'
         : `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`) : null) ||
       cityBusyReason(g, s) ||
+      ((g.arsenal?.[s.owner] || 0) + g.stations.filter(c => c.project?.side === s.owner).length >= FLEIJA.max
+        ? 'Only one F.L.E.I.J.A. warhead may be held or under construction per faction' : null) ||
       ((s.lab || 0) < FLEIJA.lab ? `Requires research lab level ${FLEIJA.lab}` : null) ||
       shortfall(funds(g, s.owner), FLEIJA.cost)
     );
@@ -97,7 +100,8 @@
     if (why) return { ok: false, reason: why };
     spend(funds(g, s.owner), ELIMINATOR.cost);
     s.eliminatorProject = { side: s.owner, started: g.turn, ready: g.turn + ELIMINATOR.turns };
-    log(g, `INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, s.owner);
+    // Defensive project locations are classified, unlike offensive warhead production.
+    log(g, 'F.L.E.I.J.A. Eliminator development initiated at a classified site.', s.owner);
     return { ok: true, ready: s.eliminatorProject.ready };
   }
   function dropProject(g, s, why) {
@@ -108,11 +112,11 @@
   function dropEliminator(g, s, why) {
     if (!s) return;
     if (s.eliminatorProject) {
-      log(g, `${s.name}: the F.L.E.I.J.A. Eliminator project is lost${why ? ' (' + why + ')' : ''}.`, s.owner);
+      log(g, `A F.L.E.I.J.A. Eliminator project is lost${why ? ' (' + why + ')' : ''}.`, s.owner);
       s.eliminatorProject = null;
     }
     if (s.eliminator) {
-      log(g, `${s.name}: the F.L.E.I.J.A. Eliminator charge is destroyed${why ? ' (' + why + ')' : ''}.`, s.owner);
+      log(g, `A F.L.E.I.J.A. Eliminator charge is destroyed${why ? ' (' + why + ')' : ''}.`, s.owner);
       s.eliminator = 0;
     }
   }
@@ -134,13 +138,13 @@
     for (const s of g.stations) {
       if (s.project?.side === side && s.owner === side && s.project.ready <= g.turn) {
         s.project = null;
-        (g.arsenal ||= {})[side] = (g.arsenal[side] || 0) + 1;
+        (g.arsenal ||= {})[side] = Math.min(FLEIJA.max, (g.arsenal[side] || 0) + 1);
         log(g, `${s.name} completes a F.L.E.I.J.A. warhead.`, side);
       }
       if (s.eliminatorProject?.side === side && s.owner === side && s.eliminatorProject.ready <= g.turn) {
         s.eliminatorProject = null;
         s.eliminator = 1;
-        log(g, `${s.name} completes a F.L.E.I.J.A. Eliminator charge.`, side);
+        log(g, 'A F.L.E.I.J.A. Eliminator charge is ready at a classified site.', side);
       }
     }
   }
@@ -155,7 +159,8 @@
           s =>
             foe(g, s.owner, attacker) &&
             isMajor(g, s.owner) &&
-            (s.eliminator || 0) > 0 &&
+            ((s.eliminator || 0) > 0 ||
+              (s.eliminatorProject?.side === s.owner && s.eliminatorProject.ready <= g.turn)) &&
             dist(g, s, p) <= ELIMINATOR.range,
         )
         .sort((a, b) => dist(g, a, p) - dist(g, b, p) || a.id - b.id)[0] || null
@@ -238,8 +243,11 @@
     (g.launched ||= {})[side] = g.turn;
     const defense = eliminatorDefender(g, side, center);
     if (defense) {
+      // A charge completing this turn can defend before its owner's phase begins.
+      // Two turns of research + two of production therefore beat the second warhead.
+      if (defense.eliminatorProject?.ready <= g.turn) defense.eliminatorProject = null;
       defense.eliminator = 0;
-      log(g, `${defense.name}: F.L.E.I.J.A. Eliminator neutralizes the incoming warhead aimed at ${name}.`, defense.owner);
+      log(g, `F.L.E.I.J.A. Eliminator neutralizes the incoming warhead aimed at ${name}.`, defense.owner);
       return {
         ok: true,
         side,

@@ -34,8 +34,7 @@
   function aiLaunchTarget(g, side) {
     const rival = s => !!s && s !== 'neutral' && foe(g, s, side),
       seen = new Set();
-    let best = null,
-      protectedBest = null;
+    let best = null;
     const candidates = [
       ...g.units.filter(u => u.hp > 0 && rival(u.side)),
       ...g.stations.filter(s => rival(s.owner)),
@@ -73,7 +72,6 @@
               : 300 + 100 * levels + s.shield * 0.5 + 5 * (s.income + s.industry + s.science);
           if (!ring && isMajor(g, s.owner) && g.stations.filter(c => c.owner === s.owner).length === 1) score += 3000;
           if (s.project) score += 2000;
-          if (s.eliminatorProject) score += 1600;
           if (
             ring &&
             !outer &&
@@ -86,12 +84,10 @@
       }
       if (!safe) continue;
       const pick = { p, score };
-      if (eliminatorDefender(g, side, p)) {
-        if (!protectedBest || score > protectedBest.score) protectedBest = pick;
-      } else if (!best || score > best.score) best = pick;
+      // Enemy Eliminator positions are secret: do not probe their interception coverage.
+      if (!best || score > best.score) best = pick;
     }
-    if (best && best.score >= FLEIJA.aiThreshold) return best.p;
-    return protectedBest && protectedBest.score >= FLEIJA.aiThreshold * 1.5 ? protectedBest.p : null;
+    return best && best.score >= FLEIJA.aiThreshold ? best.p : null;
   }
   function beginTurn(g, side, collect = true) {
     // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.

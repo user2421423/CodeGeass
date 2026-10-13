@@ -106,6 +106,21 @@
       g.teams = { ...cfg.teams };
       g.factions = cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null;
       if (!cfg.selectable.includes(g.player)) return null;
+      // Migrate prior saves to the new one-warhead cap; refund extra unfinished projects.
+      g.arsenal ||= {};
+      for (const side of g.majors) {
+        const stored = Math.max(0, g.arsenal[side] || 0);
+        g.arsenal[side] = Math.min(stored, FLEIJA.max);
+        const projects = g.stations.filter(s => s.project?.side === side)
+          .sort((a, b) => a.project.ready - b.project.ready || a.id - b.id);
+        const slots = Math.max(0, FLEIJA.max - g.arsenal[side]);
+        for (const s of projects.slice(slots)) {
+          s.project = null;
+          const fundsForSide = funds(g, side);
+          if (fundsForSide) for (const [resource, amount] of Object.entries(FLEIJA.cost))
+            fundsForSide[resource] = (fundsForSide[resource] || 0) + amount;
+        }
+      }
     }
     if (g.mode !== 'campaign' && !regional) {
       migrateCoastalTerrain(g);

@@ -33,13 +33,13 @@ async function endTurn() {
       for (const s of game.stations) {
         if (s.project?.side === side && s.project.started === game.turn)
           toast(`INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, true);
-        if (s.eliminatorProject?.side === side && s.eliminatorProject.started === game.turn)
-          toast(`INTELLIGENCE: F.L.E.I.J.A. Eliminator development detected in ${s.name}.`, true);
       }
       for (const shot of game.launches || []) {
         await fleijaSequence(shot.to, side, shot.name, null, shot);
         if (shot.intercepted)
-          toast(`F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`, true);
+          toast(shot.defender === game.player
+            ? `Your F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`
+            : 'An F.L.E.I.J.A. Eliminator neutralized the incoming warhead. Defensive site classified.', true);
         else if (shot.eliminatorUnlocked)
           toast(`F.L.E.I.J.A. Eliminator research begins; countermeasures are available from turn ${shot.eliminatorTurn}.`, true);
         if (token !== aiToken) return;

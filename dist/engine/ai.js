@@ -1322,14 +1322,12 @@
         if (shot.ok) g.strikes.push(shot);
       }
     }
-    // 0b. F.L.E.I.J.A.: launch every ready warhead, each at the most valuable target that spares its own units and
-    // cities (the UI plays g.launches).
+    // 0b. F.L.E.I.J.A.: one ready warhead maximum; rival Eliminator sites are unknown.
     g.launches = [];
-    while (g.mode !== 'scenario' && (g.arsenal?.[side] || 0) > 0 && !g.over) {
+    if (g.mode !== 'scenario' && (g.arsenal?.[side] || 0) > 0 && !g.over) {
       const p = aiLaunchTarget(g, side),
         shot = p && launch(g, side, p.c, p.r);
-      if (!shot?.ok) break;
-      g.launches.push(shot);
+      if (shot?.ok) g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
     for (const u of (g.mode === 'scenario' ? [] : own())

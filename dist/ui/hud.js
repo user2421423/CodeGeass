@@ -113,7 +113,7 @@ async function fleijaSequence(target, side, name, fire = null, resolved = null) 
   }
   const result = fire ? fire() : resolved;
   if (result?.intercepted) {
-    alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Countermeasure engaged</span><b>F.L.E.I.J.A. eliminated</b><span class="fleija-impact">${esc(result.eliminatorCity)}</span><small>${esc(F(result.defender).name)}</small></div>`;
+    alert.innerHTML = `<div class="fleija-box"><span class="fleija-kicker">Countermeasure engaged</span><b>F.L.E.I.J.A. eliminated</b><span class="fleija-impact">${result.defender === game.player ? esc(result.eliminatorCity) : 'Defensive site classified'}</span><small>${esc(F(result.defender).name)}</small></div>`;
     await pause(1200);
     alert.classList.remove('show');
     alert.hidden = true;
@@ -158,11 +158,10 @@ function blastSummary(p) {
 function confirmLaunch(p) {
   const { tally, cities, own } = blastSummary(p),
     name = E.targetName(game, p),
-    defense = E.eliminatorDefender(game, game.player, p),
     rows = Object.entries(tally)
       .map(([side, k]) => `<li><b style="color:${factionUIColor(side)}">${F(side).short}</b> ${k.erased} erased · ${k.crippled} crippled · ${k.damaged} damaged</li>`)
       .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => c.distance === 0) ? ` and ${esc(cities.find(c => c.distance === 0).s.name)} is destroyed for the rest of the war` : ''}${E.siteAt(game, p) || (cities.some(c => c.distance === 0) && E.depositOf(game, cities.find(c => c.distance === 0).s)) ? '; the Sakuradite deposit there will never produce again' : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.distance === 1) ? `; ${cities.filter(c => c.distance === 1).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.distance === 1).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.${cities.some(c => c.distance > 1) ? ` Outer ring: ${cities.filter(c => c.distance > 1).map(c => esc(c.s.name)).join(' and ')} retain at most ${Math.round(E.FLEIJA.outerShield * 100)}% defenses.` : ''}</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}${defense ? `<div class="info-strip">F.L.E.I.J.A. Eliminator coverage detected from ${esc(defense.name)}. This warhead will be neutralized and consume its one defensive charge.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow fleija-confirm" role="dialog" aria-modal="true" aria-label="Launch F.L.E.I.J.A."><div class="eyebrow">Strategic arsenal · ${game.arsenal[game.player]} warhead${game.arsenal[game.player] > 1 ? 's' : ''}</div><h2>Launch F.L.E.I.J.A. at ${esc(name)}?</h2><p>Ground zero: every unit is erased${cities.some(c => c.distance === 0) ? ` and ${esc(cities.find(c => c.distance === 0).s.name)} is destroyed for the rest of the war` : ''}${E.siteAt(game, p) || (cities.some(c => c.distance === 0) && E.depositOf(game, cities.find(c => c.distance === 0).s)) ? '; the Sakuradite deposit there will never produce again' : ''}; the land becomes a crater. The ring: units are left at ${Math.round(E.FLEIJA.ringHP * 100)}% with collapsed morale${cities.some(c => c.distance === 1) ? `; ${cities.filter(c => c.distance === 1).map(c => esc(c.s.name)).join(' and ')} lose${cities.filter(c => c.distance === 1).length > 1 ? '' : 's'} all defenses and a level of every building` : ''}.${cities.some(c => c.distance > 1) ? ` Outer ring: ${cities.filter(c => c.distance > 1).map(c => esc(c.s.name)).join(' and ')} retain at most ${Math.round(E.FLEIJA.outerShield * 100)}% defenses.` : ''}</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No units in the blast.</p>'}${own ? `<div class="info-strip danger-strip">Your own forces are inside the blast.</div>` : ''}<div class="dialog-footer"><button data-action="close">Cancel</button><button class="primary danger" data-launch="${p.c},${p.r}">Launch</button></div></section></div>`;
   focusDialog();
 }
 async function launchAt(p) {
@@ -192,7 +191,7 @@ async function launchAt(p) {
   undoStack = [];
   refreshAndSave();
   if (result.intercepted)
-    toast(`F.L.E.I.J.A. Eliminator at ${result.eliminatorCity} neutralized the warhead.`, true);
+    toast('An enemy F.L.E.I.J.A. Eliminator neutralized the warhead. Defensive site classified.', true);
   else
     toast(
       `F.L.E.I.J.A. detonation at ${name}: ${result.destroyed.length} units erased, ${result.crippled.length} crippled.${result.cities.some(c => c.destroyed) ? ` ${result.cities.find(c => c.destroyed).name} is erased.` : ''}${result.depleted?.length ? ` The ${result.depleted.join(', ')} deposit will never produce again.` : ''}${result.eliminatorUnlocked ? ` Eliminator research begins; countermeasures are available from turn ${result.eliminatorTurn}.` : ''}`,
@@ -474,16 +473,16 @@ function projectPanel(s) {
     const left = Math.max(0, p.ready - game.turn);
     return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. project' : 'Intelligence'}</span><h3>${ours ? 'Warhead under construction' : 'Strategic weapons research detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${p.ready} (${left} turn${left === 1 ? '' : 's'}). ${ours ? 'The city builds nothing else meanwhile; if it is captured, the project is lost.' : 'Capture the city to stop it.'}</p></div>`;
   }
-  if (ep) {
+  if (ours && ep) {
     const left = Math.max(0, ep.ready - game.turn);
     return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). It will neutralize one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of this city.</p></div>`;
   }
   const blocks = [];
-  if (s.eliminator)
+  if (ours && s.eliminator)
     blocks.push(`<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>Eliminator charge ready</h3><p>Automatically neutralizes the next incoming F.L.E.I.J.A. aimed within ${E.ELIMINATOR.range} hexes of ${esc(s.name)}. One use.</p></div>`);
   if (!ours) return blocks.join('');
   if (E.hasFleija(game, game.player))
-    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`);
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. Only one warhead per faction (stored or building). Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`);
   if (E.eliminatorTurn(game) != null && !s.eliminator)
     blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Up to ${E.ELIMINATOR.max} charges per power at once, one per city.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
   return blocks.join('');
