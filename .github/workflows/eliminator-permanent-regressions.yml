@@ -1,0 +1,20 @@
+name: Permanent Eliminator Escort Full Regressions
+on:
+  push:
+    branches: ['experiment/eliminator-permanent-escorts']
+    paths: ['.github/workflows/eliminator-permanent-regressions.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+      - run: node tools/validate_assets.cjs --tracked
+      - run: python3 tools/check_map.py
