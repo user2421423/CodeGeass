@@ -274,6 +274,27 @@
         t.terrain='sea'; // Temporarily water for city/army placement.
       }
     }
+    // Remove sub-hex enclosed water artifacts from the raster mask. They are
+    // small inland holes, not viable sea links or fleet harbours (notably Cork).
+    // The Atlantic, English Channel, North Sea and real inland seas are retained.
+    const seaVisited=new Uint8Array(g.tiles.length);
+    for(let start=0;start<g.tiles.length;start++){
+      if(seaVisited[start]||g.tiles[start].terrain!=='sea'||excludedLand[start])continue;
+      const region=[g.tiles[start]];seaVisited[start]=1;
+      let touchesEdge=false;
+      for(let i=0;i<region.length;i++){
+        const t=region[i];
+        if(t.c===0||t.r===0||t.c===COLS-1||t.r===ROWS-1)touchesEdge=true;
+        for(const n of E.adjacent(g,t)){
+          const j=n.r*COLS+n.c;
+          if(n.terrain==='sea'&&!excludedLand[j]&&!seaVisited[j]){
+            seaVisited[j]=1;region.push(n);
+          }
+        }
+      }
+      if(!touchesEdge&&region.length<=4)
+        for(const t of region)t.terrain='plains';
+    }
     // Every genuine land-to-sea edge is coastal, including island tips.
     // A theatre-border cut is NOT a new navigable shoreline.
     for(const t of g.tiles)if(t.terrain!=='sea'){
