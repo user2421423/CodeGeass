@@ -32,6 +32,33 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // Pick up a waiting charge only when a Tier 1 commander can make a short, safe detour.
+    // After collection the commander resumes the usual assault AI, carrying protection forward.
+    const pickup = aiEliminatorPickup(g, u, memo);
+    if (pickup) {
+      if (dist(g, u, pickup.city) <= 1) {
+        transferEliminator(g, { city: pickup.city.id }, { unit: u.id });
+      } else if (!u.moved && !u.attacked) {
+        const current = pickup.field[u.r * g.cols + u.c];
+        const candidates = [...reachable(g, u).keys()].map(k => {
+          const [c, r] = k.split(',').map(Number);
+          return tile(g, c, r);
+        }).filter(p => p && !unitAt(g, p) && !isSea(p) &&
+          Number.isFinite(pickup.field[p.r * g.cols + p.c]) &&
+          pickup.field[p.r * g.cols + p.c] < current)
+          .sort((a, b) => pickup.field[a.r * g.cols + a.c] - pickup.field[b.r * g.cols + b.c] ||
+            dist(g, a, pickup.city) - dist(g, b, pickup.city));
+        if (candidates[0]) {
+          const m = move(g, id, candidates[0].c, candidates[0].r);
+          if (m.ok) {
+            events.push({ kind: 'move', ...m, id });
+            if (dist(g, u, pickup.city) <= 1)
+              transferEliminator(g, { city: pickup.city.id }, { unit: u.id });
+            return events;
+          }
+        }
+      }
+    }
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
@@ -201,6 +228,9 @@
         if (naval && u.hp / maxHP(u) < 0.5 && portAtHex(g, p)?.portOwner === u.side) sc += 150;
         if (u.cmd && !u.attacked)
           sc -= Math.min(95, localThreat(g, u, p) * 0.36);
+        // Mobile Eliminators follow the shifting warfront, covering valuable cities AND troop stacks.
+        // A capped bonus preserves combat objectives and permits Tier 1 carriers to attack normally.
+        sc += eliminatorMobileCoverBonus(g, u, p, enemies);
         if (TYPES[u.type].branch === 'Artillery' && !guard && !u.hold && !station && !isSea(p) &&
             adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
             freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
@@ -285,5 +315,5 @@
     memo.trafficCache?.clear();
     return events;
   }
-  Object.assign(E, { aiProduction, aiAssignEliminators, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
+  Object.assign(E, { aiProduction, aiAssignEliminators, aiEliminatorMetrics, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);
