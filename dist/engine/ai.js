@@ -281,11 +281,11 @@
     state.recentCaptures = history.filter(p => g.turn - p.turn <= SCENARIO_COLUMN.exploitTurns);
   }
   function scenarioPick(g, memo, u, old = null) {
-    const candidates = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
+    const availableTargets = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
       Number.isFinite(scenarioTravel(g, u, f))),
       wing = memo.wings?.[u.id],
-      matched = wing && candidates.filter(f=>f.anchor.owner===wing),
-      fronts = matched?.length ? matched : candidates;
+      matched = wing && availableTargets.filter(f=>f.anchor.owner===wing),
+      fronts = matched?.length ? matched : availableTargets;
     if (!fronts.length) return null;
     const limit = memo.fronts.length <= 2 ? SCENARIO_COLUMN.finalUnits : SCENARIO_COLUMN.maxUnits;
     const understrength = fronts.filter(f => f.members.length < limit &&
