@@ -4060,7 +4060,17 @@
     if (g.mode === 'scenario') {
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
-      if (!contenders.includes(g.player)) {
+      // Coalition victory must be final before checking whether a particular
+      // player faction has surrendered: its partner may have won the war.
+      if (conquest && g.scenario?.id === 'operation-stonehenge') {
+        g.over = conquest;
+        return g.over;
+      }
+      // A Stonehenge ally can lose its own cities while the coalition still fights.
+      const survivingAlly=g.scenario?.id==='operation-stonehenge' &&
+        contenders.some(s=>s!==g.player && g.teams?.[g.player] &&
+          g.teams[s]===g.teams[g.player]);
+      if (!contenders.includes(g.player) && !survivingAlly) {
         // Player defeat can end their run, but award no faction a victory
         // until that faction controls every Japanese city.
         const soleVictor = conquest?.winner || null;
@@ -4313,7 +4323,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'area-18'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge', 'area-18'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4516,9 +4526,11 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','area-18'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18'].includes(g.scenario?.id)) return g;
     const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
-      g.scenario.id === 'bering-strait' ? ['britannia','eu'] : ['eu','eb'];
+      g.scenario.id === 'operation-stonehenge' ? ['britannia','eb','eu'] :
+      g.scenario.id === 'bering-strait' ? ['britannia','eu'] :
+      g.scenario.id === 'conquest-indochina' ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',
@@ -4529,9 +4541,9 @@
     };
     const naval = {
       eu: {amphibious:'panzer_frosch_ii'},
+      cf: {amphibious:'shui_gun_ru_ii'},
       eb: {amphibious:'portman_ii'},
       britannia: {amphibious:'portman_ii'},
-      cf: {amphibious:'shui_gun_ru_ii'},
     };
     // Preserve this map's smaller city yields before raising factory tiers.
     for (const s of g.stations) {
@@ -4545,7 +4557,7 @@
     for (const side of sides.filter(side => side !== g.player)) {
       g.tech[side] = techUpToTier(4);
       const own = g.stations.filter(s => s.owner === side);
-      const rivals = g.stations.filter(s => s.owner !== side && sides.includes(s.owner));
+      const rivals = g.stations.filter(s => foe(g, s.owner, side) && sides.includes(s.owner));
       const distanceToEnemy = s => Math.min(...rivals.map(other => dist(g, s, other)));
       const byFront = own.slice().sort((a,b) =>
         distanceToEnemy(a) - distanceToEnemy(b) || a.id - b.id);
