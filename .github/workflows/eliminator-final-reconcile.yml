@@ -1,0 +1,36 @@
+name: Reconcile final Eliminator draft with main
+on:
+  push:
+    branches: ['feature/eliminator-strategic-ai']
+    paths: ['.github/workflows/eliminator-final-reconcile.yml']
+permissions:
+  contents: write
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/eliminator-strategic-ai
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Safely bring latest main into draft branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "PINNED_MAIN=$(git rev-parse origin/main)"
+          git merge --no-ff -m "Reconcile main into Eliminator draft after rejecting courier trials" origin/main
+          echo "INTEGRATED_HEAD=$(git rev-parse HEAD)"
+          node tools/build_sources.cjs --check
+          node --test tests/*.test.cjs
+          node tests/ui-smoke.cjs
+          node tools/validate_assets.cjs --tracked
+          python3 tools/check_map.py
+          git push origin HEAD:refs/heads/feature/eliminator-strategic-ai
