@@ -92,12 +92,12 @@ test('Mobile defensive responders cannot also be recovering or already-acted',()
   const officers=land(g,'britannia').filter(u=>u.cmd);
   assert.ok(officers.length);
   for(const u of officers)u.hp=Math.max(1,Math.floor(E.maxHP(u)*0.2));
-  const city=g.stations.find(s=>s.owner==='britannia'&&
-    land(g,'britannia').some(u=>E.distance(u,s,g)<=5));
-  assert.ok(city);
-  const spawn=E.adjacent(g,city).find(p=>p.terrain!=='sea' &&
-    !E.TERRAIN[p.terrain]?.blocked&&!E.unitAt(g,p));
-  assert.ok(spawn);
+  const site=g.stations.filter(s=>s.owner==='britannia')
+    .map(city=>({city,spawn:E.adjacent(g,city).find(p=>p.terrain!=='sea' &&
+      !E.TERRAIN[p.terrain]?.blocked&&!E.unitAt(g,p))}))
+    .find(({city,spawn})=>spawn&&land(g,'britannia').some(u=>E.distance(u,city,g)<=8));
+  assert.ok(site,'fixture requires a reachable city with an empty attack hex');
+  const {city,spawn}=site;
   E.newUnit(g,E.typeFor('eu','medium',g),'eu',spawn.c,spawn.r);
   g.turn=2;
   const plan=E.aiPlan(g,'britannia');
