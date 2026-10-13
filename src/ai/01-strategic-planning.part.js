@@ -38,10 +38,9 @@
     if (!memo) aiMemo.set(g, (memo = {}));
     if (!memo[side] || memo[side].turn !== g.turn) {
       // Campaign scripting stays authoritative. Scenarios use a doctrine
-      // selected by ID; multi-front battles get mobile (not permanent) defense
-      // and commander recovery, while rapid assaults retain their tempo.
-      // On Normal Division Japan, Britannia also keeps local garrisons for both
-      // exposed fronts; mobile responders are drawn from its other units.
+      // selected by ID, persistent theaters and commander recovery where enabled.
+      // Scenario AI no longer diverts field armies into temporary city responses;
+      // Normal Division Japan Britannia retains its specifically assigned garrisons.
       const scenario = g.mode === 'scenario',
         doctrine = scenario ? scenarioDoctrine(g) : null,
         recovery = !scenario || doctrine === 'division' || doctrine === 'europe';
