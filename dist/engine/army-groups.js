@@ -107,7 +107,13 @@
       if (u.c === c && u.r === r) delete u.goto;
       else E.setGoto(g, u.id, c, r);
     }
-    if (group.autoConquer) { group.autoConquer = false; group.autoRouted = {}; group.targetStationId = null; }
+    if (group.autoConquer) {
+      for (const id of group.units) {
+        const u = g.units.find(v=>v.id===id);
+        if (matches(u,group.autoRouted?.[id])) delete u.goto;
+      }
+      group.autoConquer = false; group.autoRouted = {}; group.targetStationId = null;
+    }
     resetOperation(g, group);
     group.destination = { c: p.c, r: p.r };
     if (group.stance === 'assault') planGroupAssault(g, group);
@@ -182,6 +188,7 @@
     gr.targetStationId = null;
     gr.autoStatus = enabled ? 'Choosing a city' : '';
     // Advance remains movement-only; Assault can coordinate automatic city conquest.
+    if (enabled && gr.stance === 'hold') gr.stance = 'advance';
     return { ok: true };
   }
   function suspendConquestUnit(g, id, preserveGoto = false) {
