@@ -124,8 +124,11 @@
     state.recentCaptures = history.filter(p => g.turn - p.turn <= SCENARIO_COLUMN.exploitTurns);
   }
   function scenarioPick(g, memo, u, old = null) {
-    const fronts = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
-      Number.isFinite(scenarioTravel(g, u, f)));
+    const candidates = memo.fronts.filter(f => foe(g, f.anchor.owner, u.side) &&
+      Number.isFinite(scenarioTravel(g, u, f))),
+      wing = memo.wings?.[u.id],
+      matched = wing && candidates.filter(f=>f.anchor.owner===wing),
+      fronts = matched?.length ? matched : candidates;
     if (!fronts.length) return null;
     const limit = memo.fronts.length <= 2 ? SCENARIO_COLUMN.finalUnits : SCENARIO_COLUMN.maxUnits;
     const understrength = fronts.filter(f => f.members.length < limit &&
@@ -158,6 +161,180 @@
     g.ai[u.side].assignments[u.id] = { front: next.id, since: g.turn };
     return next;
   }
+  // Scenario doctrines retain the fast Japanese invasion planner where useful,
+  // but give genuinely multi-front scenarios stateful operational commitments.
+  function scenarioDoctrine(g) {
+    const id = g.scenario?.id || '';
+    if (id === 'division-japan') return 'division';
+    if (id.includes('europe')) return 'europe';
+    if (id.includes('invasion-japan') || id === 'japan') return 'invasion';
+    return 'assault';
+  }
+  const STRATEGIC = { commitment: 4, margin: 1.3, transferCooldown: 4,
+    arrivalWindow: 4, transferBuffer: 2, defenseRadius: 6 };
+  // Route-aware arriving strength. A unit on another island or six turns
+  // away cannot contribute to a four-turn defense, even if already assigned.
+  function frontArrival(g, u, f) {
+    if (!u || !f) return Infinity;
+    const from = u.cargoHost || u, target = f.rally || f.anchor;
+    if (!target) return Infinity;
+    if (g.mode === 'scenario') return scenarioTravel(g, from, f);
+    if (atSea(g, from) || massOf(g, from) < 0 || massOf(g, from) !== massOf(g, target))
+      return Infinity; // Overseas expeditions require actual shipping first.
+    const cache = scenarioCache(g), cacheKey = 'conquest:' + target.c + ':' + target.r + ':' + g.phase;
+    if (!cache.fields.has(cacheKey))
+      cache.fields.set(cacheKey, goalField(g, u.side, [[target,0]], 'land'));
+    const cost = cache.fields.get(cacheKey)[from.r*g.cols+from.c];
+    return Number.isFinite(cost) ? cost / Math.max(1,E.movement(g,u)) : Infinity;
+  }
+  // Scenario theater strength and targets are saved as plain data in g.ai.
+  // Opponents are theater IDs: 'eu' and 'cf' in Division of Japan, for example.
+  function planScenarioTheaters(g, side, troops, memo, state) {
+    memo.wings = {};
+    memo.theaters = {};
+    const doctrine = scenarioDoctrine(g);
+    if (doctrine !== 'division' && doctrine !== 'europe' && doctrine !== 'invasion') return;
+    const enemies = g.stations.filter(s=>foe(g,s.owner,side) && s.owner !== 'neutral');
+    const rivalIds = [...new Set(enemies.map(s=>s.owner))].sort();
+    if (rivalIds.length < 2 && doctrine !== 'europe') {
+      state.wingSince = {};
+      state.wings = {};
+      state.wingTransfers = {};
+      return;
+    }
+    const land = troops.filter(u=>!TYPES[u.type].naval && !atSea(g,u)),
+      allies = g.stations.filter(s=>s.owner===side),
+      opponents = g.units.filter(u=>u.hp>0 && foe(g,u.side,side) && !isShip(u)),
+      nearest = (u,cities)=>cities.length?Math.min(...cities.map(s=>dist(g,u,s))):Infinity,
+      prior = state.wings || {}, since=state.wingSince || {},
+      assignments = {}, dates = {}, counts=Object.fromEntries(rivalIds.map(r=>[r,0]));
+    const threat = Object.fromEntries(rivalIds.map(r=>{
+      const cities = enemies.filter(s=>s.owner===r),
+        border = allies.slice().sort((a,b)=>nearest(a,cities)-nearest(b,cities)).slice(0,5);
+      const enemyPower = opponents.filter(u=>u.side===r).reduce((v,u)=>{
+        const range=nearest(u,border);
+        return v+(range<=12 ? unitStrength(u)*(1-range/16):0);
+      },0),
+        objectiveValue = border.reduce((v,s)=>v+(s.capitalOf===side?6:s.tier>=3?3:1),0);
+      return [r,Math.max(1,enemyPower+objectiveValue+cities.length*0.3)];
+    }));
+    const savedPressure=state.theaterPressure||{};
+    for(const r of rivalIds) threat[r]=savedPressure[r]==null?threat[r]:
+      0.55*savedPressure[r]+0.45*threat[r];
+    state.theaterPressure={...threat};
+    const total = rivalIds.reduce((s,r)=>s+threat[r],0);
+    const quotas = Object.fromEntries(rivalIds.map(r=>[r,Math.round(land.length*Math.max(0.35,
+      Math.min(0.65, threat[r]/total)))]));
+    if(rivalIds.length===2){ const second=rivalIds[1]; quotas[second]=land.length-quotas[rivalIds[0]]; }
+    for(const u of land) if(rivalIds.includes(prior[u.id])){
+      assignments[u.id]=prior[u.id]; dates[u.id]=since[u.id]??g.turn; counts[prior[u.id]]++;
+    }
+    // Opening: geographic 50/50 in Division, weighted elsewhere. Newly raised
+    // units reinforce locally unless they are on a genuine theater boundary.
+    const recruits=land.filter(u=>!assignments[u.id]);
+    if(!Object.keys(assignments).length && rivalIds.length===2){
+      const a=rivalIds[0], b=rivalIds[1], citiesA=enemies.filter(s=>s.owner===a),
+        citiesB=enemies.filter(s=>s.owner===b);
+      recruits.sort((x,y)=>(nearest(x,citiesA)-nearest(x,citiesB))-
+        (nearest(y,citiesA)-nearest(y,citiesB))||x.id-y.id);
+      const n=doctrine==='division'?Math.ceil(recruits.length/2):quotas[a];
+      recruits.forEach((u,i)=>{const wing=i<n?a:b;
+        assignments[u.id]=wing; dates[u.id]=g.turn; counts[wing]++;});
+    }else for(const u of recruits.sort((a,b)=>a.id-b.id)){
+      const ranked=rivalIds.slice().sort((a,b)=>{
+        const da=nearest(u,enemies.filter(s=>s.owner===a)),db=nearest(u,enemies.filter(s=>s.owner===b));
+        return da+5<db?-1:db+5<da?1:
+          (quotas[b]-counts[b])-(quotas[a]-counts[a])||da-db;
+      });
+      const wing=ranked[0];assignments[u.id]=wing;dates[u.id]=g.turn;counts[wing]++;
+    }
+    // Assess real arrivals, rather than counting the entire wing at the border.
+    for(const rival of rivalIds){
+      const cities=enemies.filter(s=>s.owner===rival),
+        anchor=cities.slice().sort((a,b)=>nearest(a,allies)-nearest(b,allies))[0],
+        f=anchor&&{anchor,side},
+        wing=land.filter(u=>assignments[u.id]===rival),
+        available=wing.reduce((v,u)=>v+(frontArrival(g,u,f)<=2?unitStrength(u):0),0),
+        arriving=wing.reduce((v,u)=>v+(frontArrival(g,u,f)<=4?unitStrength(u):0),0),
+        required=Math.max(2, threat[rival]*1.1),
+        deficit=Math.max(0,required-arriving);
+      memo.theaters[rival]={rival, anchor:anchor?.id??null, required,
+        available, arriving, deficit, pressure:threat[rival], members:wing.map(u=>u.id)};
+    }
+    // Transfer at most one safe mobile formation after a meaningful 30% priority
+    // improvement. Respect a 4-turn tour and a transfer already underway.
+    const oldTransfers=state.wingTransfers||{}, transfers={};
+    for(const [id,t] of Object.entries(oldTransfers))if(g.turn-(t.started??0)<=10 &&
+      land.some(u=>u.id===Number(id)))transfers[id]=t;
+    if(rivalIds.length===2 && g.turn-(state.lastWingTransfer??-99)>=STRATEGIC.transferCooldown){
+      const urgent=rivalIds.slice().sort((a,b)=>memo.theaters[b].deficit-memo.theaters[a].deficit)[0],
+        donor=rivalIds.find(r=>r!==urgent),
+        target=memo.theaters[urgent], source=memo.theaters[donor];
+      if(target?.deficit>2 && target.pressure>source.pressure*STRATEGIC.margin &&
+        counts[donor]>Math.max(3,Math.floor(land.length*0.33))){
+        const dest=g.stations.find(s=>s.id===target.anchor),
+          f=dest&&{anchor:dest,side},
+          options=land.filter(u=>assignments[u.id]===donor && !transfers[u.id] &&
+            g.turn-dates[u.id]>=STRATEGIC.commitment &&
+            !opponents.some(e=>dist(g,u,e)<=4) &&
+            frontArrival(g,u,f)<=STRATEGIC.arrivalWindow)
+          .sort((a,b)=>frontArrival(g,a,f)-frontArrival(g,b,f)||a.id-b.id);
+        const chosen=options[0];
+        if(chosen){
+          assignments[chosen.id]=urgent;dates[chosen.id]=g.turn;
+          transfers[chosen.id]={from:donor,to:urgent,started:g.turn,
+            target:target.anchor};
+          counts[donor]--;counts[urgent]++;state.lastWingTransfer=g.turn;
+        }
+      }
+    }
+    memo.wings=assignments;
+    state.wings={...assignments};state.wingSince={...dates};state.wingTransfers=transfers;
+    state.theaterSnapshot={turn:g.turn,theaters:Object.fromEntries(Object.entries(memo.theaters)
+      .map(([id,f])=>[id,{required:f.required,available:f.available,
+        arriving:f.arriving,deficit:f.deficit,pressure:f.pressure,count:counts[id]}]))};
+  }
+  // Temporary city counterattacks: one hostile formation alarms only its
+  // nearest vulnerable city. Responders never lose their long-term front.
+  function planScenarioMobileDefense(g,side,troops,memo,state){
+    memo.localDefense={alerts:[],dispatched:0};
+    const doctrine=scenarioDoctrine(g);
+    if(doctrine!=='division' && doctrine!=='europe' && doctrine!=='invasion')return;
+    const own=g.stations.filter(s=>s.owner===side),
+      enemies=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&!isShip(u)),
+      alerts=new Map(),deployed=new Set(),next={},
+      max=Math.min(Math.floor(troops.length*0.25),doctrine==='division'?8:6);
+    for(const e of enemies){
+      const city=own.filter(s=>!atSea(g,e) && massOf(g,e)===massOf(g,s) &&
+        dist(g,e,s)<=STRATEGIC.defenseRadius)
+        .sort((a,b)=>dist(g,e,a)-dist(g,e,b)||a.id-b.id)[0];
+      if(!city)continue;
+      if(!alerts.has(city.id))alerts.set(city.id,{city,enemies:[]});
+      alerts.get(city.id).enemies.push(e);
+    }
+    const sorted=[...alerts.values()].sort((a,b)=>
+      (b.city.capitalOf===side?10:0)+b.enemies.length*3-
+      ((a.city.capitalOf===side?10:0)+a.enemies.length*3));
+    for(const {city,enemies:attackers} of sorted){
+      if(deployed.size>=max)break;
+      const threat=attackers.reduce((v,u)=>v+unitStrength(u),0),
+        sameFront=attackers[0].side,
+        eligible=troops.filter(u=>!deployed.has(u.id)&&!TYPES[u.type].naval &&
+          massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=8 &&
+          (!memo.wings[u.id]||memo.wings[u.id]===sameFront)),
+        ordered=eligible.sort((a,b)=>dist(g,a,city)-dist(g,b,city)||a.id-b.id),
+        need=Math.min(3,Math.max(1,Math.ceil(threat/3)));
+      let count=0;
+      for(const u of ordered){
+        if(count>=need||deployed.size>=max)break;
+        memo.guards[u.id]={c:city.c,r:city.r,id:city.id,emergency:true,response:true};
+        next[u.id]={city:city.id,turn:g.turn};deployed.add(u.id);count++;
+      }
+      if(count)memo.localDefense.alerts.push({city:city.id,count,front:sameFront});
+    }
+    memo.localDefense.dispatched=deployed.size;
+    state.localResponses=next;
+  }
   function planScenarioOffense(g, side, memo) {
     const state = ((g.ai ||= {})[side] ||= {}),
       own = g.stations.filter(s => s.owner === side),
@@ -169,6 +346,9 @@
     state.recentCaptures = (state.recentCaptures || [])
       .filter(p => g.turn - p.turn <= SCENARIO_COLUMN.exploitTurns);
     const previous = state.assignments || {};
+    planScenarioTheaters(g,side,troops,memo,state);
+    planScenarioMobileDefense(g,side,troops,memo,state);
+    const active=troops.filter(u=>!memo.guards?.[u.id]&&!memo.recoveries?.has(u.id));
     const fronts = g.stations.filter(s => foe(g, s.owner, side)).map(s => {
       const opponents = enemies.filter(u => dist(g, u, s) <= 6),
         mass = massOf(g, s),
@@ -193,21 +373,29 @@
       assign: {}, fields: {}, columns: {} });
     const at = u => carried.get(u.id) || u;
     const best = u => Math.min(Infinity, ...fronts.map(f => scenarioTravel(g, at(u), f)));
-    troops.sort((a, b) => best(a) - best(b) || a.id - b.id);
-    for (const u of troops) {
+    active.sort((a, b) => best(a) - best(b) || a.id - b.id);
+    for (const u of active) {
       const old = memo.byId[previous[u.id]?.front] || null,
         next = scenarioPick(g, memo, at(u), old);
       if (next) scenarioGive(g, memo, u, next);
     }
     for (const f of fronts) {
       f.friendlyStrength = f.assigned;
+      f.arrivingFour = active.filter(u=>memo.assign[u.id]===f.id &&
+        frontArrival(g,at(u),f)<=4).reduce((sum,u)=>sum+unitStrength(u),0);
+      f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
+      const posture=(state.scenarioPostures||{})[f.id]||{};
+      const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
+      f.state = crisis && f.rally ? 'regrouping' : 'attacking';
+      f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
+      (state.scenarioPostures ||= {})[f.id]={state:f.state,since:posture.state===f.state?posture.since:g.turn};
       f.target = f.desiredStrength;
-      f.need = frontNeeds(f, troops.filter(u => memo.assign[u.id] === f.id), g);
+      f.need = frontNeeds(f, active.filter(u => memo.assign[u.id] === f.id), g);
       memo.columns[f.id] = f.members;
     }
     fronts.sort((a, b) => {
-      const nearest = f => Math.min(Infinity, ...(troops.length ?
-        troops.map(u => scenarioTravel(g, at(u), f)) :
+      const nearest = f => Math.min(Infinity, ...(active.length ?
+        active.map(u => scenarioTravel(g, at(u), f)) :
         own.map(c => scenarioTravel(g, c, f))));
       return nearest(a) - nearest(b) || a.anchor.id - b.anchor.id;
     });
