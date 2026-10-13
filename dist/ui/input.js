@@ -102,7 +102,11 @@ document.addEventListener('click', e => {
   if (d.command) {
     const u = selectedUnit();
     closeModal();
-    if (u) doAction(() => E.feint(game, u.id, +d.command));
+    if (u) doAction(() => {
+      const result = E.feint(game, u.id, +d.command);
+      if (result?.ok) E.suspendArmyGroupConquestUnit(game, u.id);
+      return result;
+    });
     return;
   }
   if (d.launch) {
@@ -574,6 +578,7 @@ document.addEventListener('click', e => {
     case 'wait': {
       const u = selectedUnit();
       if (u && u.side === game.player && interactive() && !u.attacked) {
+        E.suspendArmyGroupConquestUnit(game, u.id);
         u.moved = u.attacked = true;
         refreshAndSave();
         nextFleet();
