@@ -158,7 +158,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'area-18'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -361,8 +361,9 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait'].includes(g.scenario?.id)) return g;
-    const sides = g.scenario.id === 'bering-strait' ? ['britannia','eu'] : ['eu','eb'];
+    if (!eliteScenario(g) || !['european-war','bering-strait','area-18'].includes(g.scenario?.id)) return g;
+    const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
+      g.scenario.id === 'bering-strait' ? ['britannia','eu'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',
@@ -375,6 +376,7 @@
       eu: {amphibious:'panzer_frosch_ii'},
       eb: {amphibious:'portman_ii'},
       britannia: {amphibious:'portman_ii'},
+      cf: {amphibious:'shui_gun_ru_ii'},
     };
     // Preserve this map's smaller city yields before raising factory tiers.
     for (const s of g.stations) {
