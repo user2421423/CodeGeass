@@ -55,7 +55,7 @@ function drawMinimap() {
   m.drawImage(minimapBase, 0, 0);
 
   // UI-only operational markers. Never bake groups or enemy plans into the minimap base.
-  if (strategicOverlay && (g.mode === 'conquest' || g.mode === 'scenario') && g === game) {
+  if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario')) {
     const sx = mini.width / WORLD_W, sy = mini.height / WORLD_H;
     for (const gr of strategicFriendlyGroups()) {
       const a = strategicGroupAnchor(gr), goal = gr.destination && hexCenter(gr.destination);
