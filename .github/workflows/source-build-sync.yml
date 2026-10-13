@@ -25,3 +25,13 @@ jobs:
         run: node tests/ui-smoke.cjs
       - name: Audit Australia's 12,144 hexes, ports and vector coastline
         run: node tools/australia_hex_audit.cjs
+
+  australia-hex-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Independently audit every Australian hex and atlas alignment
+        run: node tools/australia_hex_audit.cjs
