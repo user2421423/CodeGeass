@@ -86,7 +86,7 @@
     // scenario only. No global HQ, Conquest, or Japan access is changed.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
-      eu:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
+      cf:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('cf')),
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
