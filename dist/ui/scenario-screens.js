@@ -8,7 +8,7 @@ const SCENARIO_KINDS = [
   ['invasion-japan','The Invasion of Japan','44 cities · 3 sides'],
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
-  ['operation-stonehenge','Operation Stonehenge','54 cities · 3 sides'],
+  ['operation-stonehenge','Operation Stonehenge','37 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
@@ -36,9 +36,8 @@ const SCENARIO_BLURBS = {
     eb: 'Lead Euro Britannia’s elite spearheads from Russia and eastern Europe toward Paris.'
   },
   'operation-stonehenge': {
-    britannia: 'Launch ten carrier-battleships and amphibious fleets from the Atlantic staging ports of western Ireland. Seize Britain and western continental bridgeheads.',
-    eb: 'Strike west from Russia and eastern Europe with a powerful independent land army. Coordinate victory with Britannia.',
-    eu: 'Defend the Channel, western ports and industrial heartland while also resisting the eastern Euro Britannian offensive.'
+    britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
+    eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
   },
   'conquest-indochina': {
     britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
@@ -88,11 +87,11 @@ const SCENARIO_TEXT = {
     focus: {eu:'Warsaw',eb:'Minsk'}
   },
   'operation-stonehenge': {
-    era: 'Europe · Alternate 2017',
-    intro: 'All-out Britannian Atlantic invasion and a simultaneous Euro Britannian attack from the east: a true two-front war.',
-    diplomacy: 'Britannia and Euro Britannia are permanent allies with separate economies, forces and commanders. Coalition victory requires the complete defeat of the E.U.',
-    elite: 'Elite Stonehenge: land and amphibious forces start as Lv.1 Elite Forces, with AI rival commanders at Lv.5. Carrier-battleships remain conventional. HQ unlock rules apply.',
-    focus: {britannia:'Galway',eb:'Minsk',eu:'Paris'}
+    era: 'Western Europe · Alternate 2017',
+    intro: 'Britannia invades from the Atlantic with troops loaded on carriers and amphibious Knightmares at sea. The E.U. holds every city.',
+    diplomacy: 'Only Britannia and Europia United are at war. Britannia must seize the entire theatre; the E.U. can win by destroying the invaders.',
+    elite: 'Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.',
+    focus: {britannia:'',eu:'Paris'}
   },
   'conquest-indochina': {
     era: 'Indochina · Alternate 2017',
@@ -140,7 +139,8 @@ function scenarioDialog() {
   const cards=model.sides.map(s=>{
     const owner=E.FACTIONS[s];
     const cities=preview.stations.filter(c=>c.owner===s).length;
-    const units=preview.units.filter(u=>u.side===s).length;
+    const units=preview.units.reduce((n,u)=>n+(u.side===s?1:0)+
+      (u.cargo||[]).filter(v=>v.side===s).length,0);
     return '<button class="faction '+s+(s===scenarioSide?' active':'')+'" data-scenario-faction="'+s+'">'+
       '<span class="label" style="color:'+(s==='bk'?'#f0c94a':owner.color)+'">'+owner.short+'</span>'+
       '<h3>'+owner.name+'</h3><p>'+(SCENARIO_BLURBS[scenarioKind]?.[s]||'')+'</p>'+
@@ -191,7 +191,8 @@ function startScenario(side=scenarioSide) {
   // Start inside each faction's theatre instead of fitting empty sea.
   const focusName=(SCENARIO_TEXT[scenarioKind]||SCENARIO_TEXT['invasion-japan']).focus[side];
   const focus=game.stations.find(s=>s.name===focusName)||
-    game.stations.find(s=>s.owner===side);
+    game.stations.find(s=>s.owner===side)||
+    game.units.find(u=>u.side===side&&u.hp>0);
   const units=game.units.filter(u=>u.side===side&&u.hp>0)
     .sort((a,b)=>E.distance(a,focus,game)-E.distance(b,focus,game));
   selection={kind:'unit',id:units[0]?.id};
@@ -207,7 +208,8 @@ function scenarioGroupsDialog() {
   if(game.mode!=='scenario')return;
   const groups=game.scenario.groups.filter(gr=>gr.side===game.player);
   const rows=groups.map(gr=>{
-    const units=gr.units.map(id=>game.units.find(u=>u.id===id)).filter(u=>u&&u.hp>0);
+    const listed=[...game.units,...game.units.flatMap(u=>u.cargo||[])];
+    const units=gr.units.map(id=>listed.find(u=>u.id===id)).filter(u=>u&&u.hp>0);
     const editable=E.armyGroup(game,gr.editableId);
     const destination=gr.destination?' · Destination '+gr.destination.c+','+gr.destination.r:'';
     return '<div class="conquest-row scenario-army-row"><div>'+

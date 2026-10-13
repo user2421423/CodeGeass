@@ -1,178 +1,98 @@
 'use strict';
-const test=require('node:test');
-const assert=require('node:assert/strict');
+const test=require('node:test'),assert=require('node:assert/strict');
 const E=require('../dist/engine.js');
 require('../dist/engine/ai.js');
 require('../dist/europe-landmask.js');
 require('../dist/scenarios.js');
 const europe=require('../dist/scenarios-europe.js');
 const stone=require('../dist/scenarios-stonehenge.js');
-const byName=(g,n)=>g.stations.find(s=>s.name===n);
-const counts=g=>Object.fromEntries(stone.sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length]));
-test('Independent registered 120x80 / 54-city three-sided operation',()=>{
+const all=g=>g.units.flatMap(u=>[u,...(u.cargo||[])]);
+test('new Stonehenge is 120x96 with 37 entirely EU-owned cities and two playable factions',()=>{
  assert.equal(E.scenarios.byId['operation-stonehenge'],stone);
  assert.equal(E.scenarios.byId['european-war'],europe);
- assert.deepEqual(stone.sides,['britannia','eb','eu']);
+ assert.deepEqual(stone.sides,['britannia','eu']);
  for(const player of stone.sides){
   const g=stone.create(player,'normal',11);
-  assert.equal(g.mode,'scenario');assert.equal(g.scenario.id,'operation-stonehenge');
-  assert.equal(g.scenario.aiDoctrine,'europe');assert.equal(g.cols,120);assert.equal(g.rows,80);
-  assert.equal(g.wrap,false);assert.equal(g.tiles.length,9600);assert.equal(g.stations.length,54);
-  assert.deepEqual(counts(g),{britannia:3,eb:16,eu:35});
+  assert.equal(g.scenario.version,2);
+  assert.equal(g.cols,120);assert.equal(g.rows,96);assert.equal(g.tiles.length,11520);
+  assert.equal(g.stations.length,37);assert.ok(g.stations.every(s=>s.owner==='eu'));
+  assert.ok(g.stations.some(s=>s.name==='Paris')&&g.stations.some(s=>s.name==='Madrid'));
+  assert.ok(!g.stations.some(s=>s.name==='Moscow'||s.name==='Berlin'));
   assert.deepEqual(g.order,[player,...stone.sides.filter(s=>s!==player)]);
-  assert.equal(new Set(g.stations.map(E.key)).size,54);
+  assert.equal(new Set(g.stations.map(E.key)).size,37);
   assert.equal(new Set(g.units.map(E.key)).size,g.units.length);
-  assert.ok(g.units.every(u=>u.hp>0));
-  assert.equal(g.scenario.turnLimit,undefined);
-  for(const k of ['mountain','forest','coast','sea','offmap'])
-   assert.ok(g.tiles.some(t=>t.terrain===k),'missing '+k);
-  assert.ok(g.tiles.every(t=>t.terrain==='sea'||t.terrain==='offmap'||(t.owner&&t.provinceCity!=null)));
+  assert.ok(g.tiles.every(t=>t.terrain==='sea'||t.terrain==='offmap'||(t.owner==='eu'&&t.provinceCity!=null)));
+  for(const t of ['mountain','forest','coast','sea','offmap'])
+   assert.ok(g.tiles.some(p=>p.terrain===t),'missing terrain '+t);
+  assert.equal(E.checkVictory(g),null,'cityless Britannia must remain alive');
  }
- assert.equal(europe.create('eu','normal',11).stations.length,44);
+ assert.equal(europe.create('eu','normal',1).stations.length,44);
 });
-test('Permanent Britannian coalition is friendly in both directions',()=>{
- for(const player of stone.sides){
-  const g=stone.create(player,'normal',12);
-  assert.equal(g.teams.britannia,g.teams.eb);assert.notEqual(g.teams.eu,g.teams.eb);
-  assert.equal(E.foe(g,'britannia','eb'),false);assert.equal(E.foe(g,'eb','britannia'),false);
-  assert.equal(E.foe(g,'britannia','eu'),true);assert.equal(E.foe(g,'eu','eb'),true);
-  g.turn=200;assert.equal(stone.onTurn(g),false);
-  assert.equal(E.foe(g,'britannia','eb'),false);
-  assert.equal(stone.winner(g),null);
- }
+test('Britannia starts solely with carrier cargo and adjacent amphibious escorts',()=>{
+ const g=stone.create('britannia','normal',18);
+ const ships=g.units.filter(u=>u.side==='britannia'&&E.TYPES[u.type].naval==='ship');
+ const amphib=g.units.filter(u=>u.side==='britannia'&&E.TYPES[u.type].naval==='amphibious');
+ assert.equal(ships.length,12);assert.equal(amphib.length,25);
+ assert.equal(ships.reduce((n,u)=>n+(u.cargo||[]).length,0),24);
+ assert.ok(ships.every(u=>u.cargo.length===2&&E.tile(g,u.c,u.r).terrain==='sea'));
+ assert.ok(amphib.every(u=>E.tile(g,u.c,u.r).terrain==='sea'));
+ assert.ok(amphib.every(u=>Math.min(...ships.map(s=>E.distance(s,u,g)))<=8));
+ assert.ok(!g.units.some(u=>u.side==='britannia'&&!E.TYPES[u.type].naval));
+ assert.ok(ships.every(u=>u.cargo.every(v=>v.side==='britannia'&&!E.TYPES[v.type].naval)));
+ assert.equal(g.stations.filter(s=>s.owner==='britannia').length,0);
+ assert.ok(E.income(g,'britannia').credits>=700);
 });
-test('Coalition victory works for each allied player; the E.U. beats both, never one',()=>{
- for(const player of stone.sides){
-  const g=stone.create(player,'normal',13);
-  for(const s of g.stations)if(s.owner==='eu')s.owner='eb';
-  const result=E.checkVictory(g);
-  assert.equal(result.team,'britannian-coalition');
-  assert.equal(result.winner,player==='eu'?'britannia':player);
-  assert.notEqual(result.winner,'eu');
-  const e=stone.create(player,'normal',14);
-  for(const s of e.stations)if(s.owner==='britannia')s.owner='eu';
-  assert.equal(stone.winner(e),null,'Euro Britannia is still alive');
-  for(const s of e.stations)if(s.owner==='eb')s.owner='eu';
-  assert.equal(stone.winner(e).winner,'eu');
- }
-});
-test('An eliminated player ally may continue for a living coalition',()=>{
- for(const player of ['britannia','eb']){
-  const g=stone.create(player,'normal',15);
-  for(const city of g.stations)if(city.owner===player)city.owner='eu';
-  g.fallen[player]={by:'eu',city:'last allied city'};
-  assert.ok(g.stations.some(s=>s.owner===(player==='britannia'?'eb':'britannia')));
-  assert.equal(E.checkVictory(g),null,'do not declare player defeat while an ally survives');
- }
-});
-test('Stonehenge Sakuradite is physically attached to London and survives saves',()=>{
- const g=stone.create('eu','normal',16),london=byName(g,'London');
- const d=g.sites.find(s=>s.name==='Stonehenge');
- assert.ok(d);assert.equal(d.city,london.id);assert.equal(d.c,london.c);
- assert.equal(d.r,london.r);assert.ok(london.refinery>=1);
- assert.equal(E.hasFleija(g,'eu'),false);
- const restored=E.migrateSave(JSON.parse(JSON.stringify(E.packSave(g))));
- assert.ok(restored);assert.deepEqual(restored.teams,g.teams);
- assert.deepEqual(restored.sites,g.sites);assert.equal(restored.scenario.id,g.scenario.id);
- assert.equal(stone.winner(restored),null);
-});
-test('European islands, Channel, Atlantic, harbours, eastern front and sea connections',()=>{
- const g=stone.create('britannia','normal',17);
+test('E.U. coastal ports and Atlantic lanes are viable',()=>{
+ const g=stone.create('eu','normal',19);
  const ports=g.stations.filter(s=>s.portAt);
  assert.equal(ports.length,Object.keys(stone.ports).length);
  assert.equal(new Set(ports.map(s=>E.key(s.portAt))).size,ports.length);
- for(const city of ports){
-  assert.equal(E.distance(city,city.portAt,g),1,'port not adjacent: '+city.name);
-  assert.equal(E.tile(g,city.portAt.c,city.portAt.r).terrain,'sea',city.name);
-  assert.equal(city.portOwner,city.owner);
+ for(const s of ports){
+  assert.equal(E.distance(s,s.portAt,g),1,s.name);
+  assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea',s.name);
+  assert.equal(s.portOwner,'eu',s.name);
  }
- for(const name of ['London','Paris','Berlin','Warsaw','Minsk','Moscow','Brest',
-  'Southampton','Galway','Cork','Sligo','Rotterdam','Belfast','Copenhagen'])
-  assert.ok(byName(g,name),'missing '+name);
- assert.ok(byName(g,'Galway').c<byName(g,'London').c);
- assert.ok(byName(g,'Minsk').c>byName(g,'Berlin').c);
- assert.ok(byName(g,'Brest').c<byName(g,'Paris').c);
- const start=E.tile(g,byName(g,'Galway').portAt.c,byName(g,'Galway').portAt.r);
- const queue=[start],seen=new Set([E.key(start)]);
- for(let i=0;i<queue.length;i++)for(const n of E.adjacent(g,queue[i]))
-  if(n.terrain==='sea'&&!seen.has(E.key(n))){seen.add(E.key(n));queue.push(n);}
- for(const name of ['Cork','Sligo','London','Brest','Southampton','Liverpool','Copenhagen'])
-  assert.ok(seen.has(E.key(byName(g,name).portAt)),'unreachable Atlantic route: '+name);
- assert.ok(g.units.filter(u=>E.TYPES[u.type].naval).every(u=>E.tile(g,u.c,u.r).terrain==='sea'));
- assert.ok(g.units.some(u=>u.side==='britannia'&&E.TYPES[u.type].naval==='ship'));
+ const galway=g.stations.find(s=>s.name==='Galway');
+ const start=E.adjacent(g,galway).find(t=>t.terrain==='sea');
+ assert.ok(start);
+ const q=[start],seen=new Set([E.key(start)]);
+ for(let i=0;i<q.length;i++)for(const t of E.adjacent(g,q[i]))
+  if(t.terrain==='sea'&&!seen.has(E.key(t))){seen.add(E.key(t));q.push(t);}
+ for(const name of ['Cork','Brest','Southampton','Plymouth','Lisbon','Porto','Cadiz'])
+  assert.ok(seen.has(E.key(g.stations.find(s=>s.name===name).portAt)),name);
 });
-test('Armies are independently staffed; Britannia has dominant ocean lift',()=>{
- const g=stone.create('eu','normal',18);
- for(const side of stone.sides){
-  assert.ok(g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).length>=(side==='britannia'?20:38),side+' land army');
+test('zero-city invasion can continue and either side can ultimately win',()=>{
+ for(const player of stone.sides){
+  const g=stone.create(player,'normal',21);
+  const city=g.stations[0];
+  city.owner='britannia';assert.equal(E.checkVictory(g),null);
+  city.owner='eu';assert.equal(E.checkVictory(g),null);
+  for(const s of g.stations)s.owner='britannia';
+  assert.equal(E.checkVictory(g).winner,'britannia');
+  const e=stone.create(player,'normal',22);
+  e.units=e.units.filter(u=>u.side!=='britannia');
+  assert.equal(E.checkVictory(e).winner,'eu');
  }
- const ships=side=>g.units.filter(u=>u.side===side&&E.TYPES[u.type].naval==='ship').length;
- assert.equal(ships('britannia'),10);
- assert.equal(ships('eu'),5);
- assert.equal(ships('eb'),2);
- assert.ok(g.scenario.groups.some(x=>x.side==='britannia'&&x.name.includes('Fleet')));
 });
-test('Difficulty levels and all playable perspectives work with AI planning',()=>{
- for(const player of stone.sides)for(const difficulty of ['normal','hard','challenge','elite']){
-  const g=stone.create(player,difficulty,19);
-  assert.equal(g.player,player);assert.equal(g.difficulty,difficulty);
-  assert.ok(g.units.length>100);
-  if(difficulty==='elite'){
-   assert.ok(g.units.filter(u=>E.TYPES[u.type].naval!=='ship').some(u=>u.elite));
+test('loaded cargo survives save migration; old scenario saves are invalidated',()=>{
+ const g=stone.create('britannia','normal',16),london=g.stations.find(s=>s.name==='London');
+ assert.equal(g.sites.find(s=>s.name==='Stonehenge').city,london.id);
+ const save=E.packSave(g),restored=E.migrateSave(JSON.parse(JSON.stringify(save)));
+ assert.ok(restored);assert.equal(all(restored).filter(u=>u.side==='britannia').length,61);
+ assert.deepEqual(restored.scenario.citylessFunding,['britannia']);
+ const old=JSON.parse(JSON.stringify(save));old.scenario.version=1;
+ assert.equal(E.migrateSave(old),null);
+});
+test('AI planning and difficulty levels run for both perspectives',()=>{
+ for(const player of stone.sides)for(const diff of ['normal','hard','challenge','elite']){
+  const g=stone.create(player,diff,31);
+  assert.ok(all(g).length>90);
+  if(diff==='elite'){
+   assert.ok(all(g).some(u=>u.elite));
    assert.ok(g.units.filter(u=>E.TYPES[u.type].naval==='ship').every(u=>!u.elite));
   }
-  const enemy=stone.sides.find(s=>E.foe(g,s,player));
-  g.phase=enemy;
-  const memo=E.aiPlan(g,enemy);
-  assert.ok(memo);
-  assert.equal(memo.doctrine,'europe');
+  const enemy=stone.sides.find(s=>s!==player);g.phase=enemy;
+  assert.doesNotThrow(()=>E.aiPlan(g,enemy));
   assert.doesNotThrow(()=>E.aiProduction(g));
  }
-});
-
-test('Europia strategic high command assigns actual western and eastern theaters',()=>{
-  const g=stone.create('eu','normal',221);
-  g.phase='eu';
-  const memo=E.aiPlan(g,'eu');
-  const assigned=Object.values(memo.wings||{});
-  const west=assigned.filter(s=>s==='britannia').length;
-  const east=assigned.filter(s=>s==='eb').length;
-  assert.ok(west>=8,'western theater needs a substantial British/Atlantic defensive force: '+west);
-  assert.ok(east>=8,'eastern theater needs a substantial Euro Britannian defensive force: '+east);
-  assert.ok((memo.theaters?.britannia?.members||[]).length>=8);
-  assert.ok((memo.theaters?.eb?.members||[]).length>=8);
-  for(const side of ['britannia','eb']){
-    g.phase=side;
-    const ally=E.aiPlan(g,side);
-    assert.ok(ally.fronts.every(f=>f.anchor.owner==='eu'),
-      side+' must target only E.U. cities, never allied cities');
-  }
-});
-
-test('Visual painter fills European political land instead of an all-ocean Stonehenge map',()=>{
- // Simulate Europe alongside an unrelated Japanese island. The old renderer
- // picked the Japan-only geometry and failed to paint any Stonehenge land.
- const fs=require('node:fs');
- const source=fs.readFileSync(require('node:path').join(__dirname,'../dist/ui/geography.js'),'utf8');
- const R=43,SQ=Math.sqrt(3),W=SQ*R*180,H=1.5*R*76;
- const make=new Function('R','SQ','WORLD_W','WORLD_H','GEOGRAPHY_SHAPES','JAPAN_SHAPES','E','document',
-   source+'\nreturn GEOGRAPHY;');
- const europeanLand=[[-14,73],[48,73],[48,33],[-14,33]];
- const japanLand=[[139,34],[141,34],[141,36],[139,36]];
- const geo=make(R,SQ,W,H,{land:[europeanLand],water:[],biomes:[]},
-   [japanLand],E,{});
- const g=stone.create('britannia','normal',23);
- let ocean=0,territory=0;
- const colors=new Set(stone.sides.map(s=>(g.factions[s]||E.FACTIONS[s]).color));
- const ctx={
-   fillStyle:'',save(){},restore(){},beginPath(){},rect(){},clip(){},
-   moveTo(){},lineTo(){},closePath(){},transform(){},
-   createLinearGradient(){return {addColorStop(){}};},
-   fillRect(){ocean++;},
-   fill(){if(colors.has(this.fillStyle))territory++;}
- };
- const drawn=geo.paint(ctx,g,0,SQ*R*(g.cols+1),0,1.5*R*(g.rows+1),0.85);
- assert.equal(drawn,true);
- assert.ok(ocean>=1,'the sea must still be painted');
- assert.ok(territory>=3,'the three European powers must have visible land, found '+territory+' fills');
 });

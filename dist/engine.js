@@ -1348,6 +1348,8 @@
     const regional = g.mode === 'scenario';
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
+    // Old Stonehenge saves had a different map and an extra playable power.
+    if (regional && g.scenario?.id === 'operation-stonehenge' && g.scenario.version !== 2) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
@@ -1745,7 +1747,10 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const annexed = g.mode !== 'campaign' && alive(g, loser) && !g.stations.some(c => c.owner === loser)
+    const expeditionAfloat = g.scenario?.id === 'operation-stonehenge' &&
+      loser === 'britannia' && g.units.some(v => v.side === loser && v.hp > 0);
+    const annexed = g.mode !== 'campaign' && alive(g, loser) &&
+      !g.stations.some(c => c.owner === loser) && !expeditionAfloat
       ? surrender(g, loser, u.side, s) : null;
     return { captured: s.name, annexed };
   }
@@ -2327,7 +2332,8 @@
     // to city output. Captured cities still add (or remove) their normal
     // earnings. Do not give stipends to eliminated powers.
     const support = g.mode === 'scenario' && alive(g, side) &&
-      g.stations.some(s => s.owner === side) ? g.scenario?.funding?.[side] : null;
+      (g.stations.some(s => s.owner === side) ||
+        g.scenario?.citylessFunding?.includes(side)) ? g.scenario?.funding?.[side] : null;
     if (support) for (const resource of ['credits','industry','science','sakuradite'])
       total[resource] += support[resource] || 0;
     return total;
@@ -4060,17 +4066,12 @@
     if (g.mode === 'scenario') {
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
-      // Coalition victory must be final before checking whether a particular
-      // player faction has surrendered: its partner may have won the war.
-      if (conquest && g.scenario?.id === 'operation-stonehenge') {
-        g.over = conquest;
+      // Britannia begins Stonehenge with no cities; the navy is the foothold.
+      if (g.scenario?.id === 'operation-stonehenge') {
+        if (conquest) g.over = conquest;
         return g.over;
       }
-      // A Stonehenge ally can lose its own cities while the coalition still fights.
-      const survivingAlly=g.scenario?.id==='operation-stonehenge' &&
-        contenders.some(s=>s!==g.player && g.teams?.[g.player] &&
-          g.teams[s]===g.teams[g.player]);
-      if (!contenders.includes(g.player) && !survivingAlly) {
+      if (!contenders.includes(g.player)) {
         // Player defeat can end their run, but award no faction a victory
         // until that faction controls every Japanese city.
         const soleVictor = conquest?.winner || null;
@@ -4528,7 +4529,7 @@
   function prepareEliteEurope(g) {
     if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18'].includes(g.scenario?.id)) return g;
     const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
-      g.scenario.id === 'operation-stonehenge' ? ['britannia','eb','eu'] :
+      g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
       g.scenario.id === 'bering-strait' ? ['britannia','eu'] :
       g.scenario.id === 'conquest-indochina' ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {

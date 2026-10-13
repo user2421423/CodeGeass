@@ -363,7 +363,7 @@
   function prepareEliteEurope(g) {
     if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18'].includes(g.scenario?.id)) return g;
     const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
-      g.scenario.id === 'operation-stonehenge' ? ['britannia','eb','eu'] :
+      g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
       g.scenario.id === 'bering-strait' ? ['britannia','eu'] :
       g.scenario.id === 'conquest-indochina' ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {

@@ -27,7 +27,8 @@
     // to city output. Captured cities still add (or remove) their normal
     // earnings. Do not give stipends to eliminated powers.
     const support = g.mode === 'scenario' && alive(g, side) &&
-      g.stations.some(s => s.owner === side) ? g.scenario?.funding?.[side] : null;
+      (g.stations.some(s => s.owner === side) ||
+        g.scenario?.citylessFunding?.includes(side)) ? g.scenario?.funding?.[side] : null;
     if (support) for (const resource of ['credits','industry','science','sakuradite'])
       total[resource] += support[resource] || 0;
     return total;

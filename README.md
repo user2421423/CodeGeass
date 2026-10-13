@@ -19,12 +19,14 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **The Invasion of Japan** | 110 × 84 · 44 cities | Britannia (31 cities) and the Black Knights (5) are initially allied against China (8); the alliance dissolves on turn 10. Full conquest, not a turn-60 score. |
 | **The Division of Japan** | 110 × 84 · 44 cities | Britannia, Europia United and China control central, northern and western Japan respectively; all are hostile from turn one. |
 | **The European War** | 120 × 80 · 44 cities | Europia United defends 28 western and central European cities against Euro Britannia's 16 eastern cities. |
-| **Operation Stonehenge** | 120 × 80 · 54 cities | Britannia invades western Europe by sea while allied Euro Britannia attacks from the east. Their permanent coalition must defeat Europia United. |
+| **Operation Stonehenge** | 120 × 96 · 37 cities | Britannia starts with no cities, twelve loaded carrier-battleships and 25 amphibious escorts off the Atlantic coast; Europia United owns every city in Britain, Ireland, France, Iberia and the Low Countries. Only the two powers fight. |
 | **The Bering Strait Crisis** | 120 × 80 · 28 cities | Britannia in Alaska and the Aleutians fights Europia United in eastern Siberia and Kamchatka, with naval assaults across the Bering Sea. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |
 | **The Conquest of Area 18** | 120 × 88 · 50 cities | Britannia fights Europia United and China across the Arabian Peninsula, Mesopotamia, Persia and the Levant. All three are hostile. |
+
+The new Stonehenge map is cropped to Western Europe. Britannia receives an expeditionary stipend until it captures ports; old three-faction Stonehenge saves are not compatible.
 
 The regional maps include separate terrain and coastline data, starting army
 groups and fleets, functional ports and city economies. Their rules and

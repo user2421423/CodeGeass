@@ -1,156 +1,119 @@
-/* Operation Stonehenge — 2017 Atlantic amphibious invasion versus Europia United.
-   Standalone 120x80 European theatre with a permanent Britannian coalition.
-   Reuses the audited European coastline mask, never the European War's game state. */
+/* Operation Stonehenge — Britannia's fully seaborne invasion of E.U.-held Western Europe.
+   British Isles, France, Iberia, and nearby Low Countries; no Britannian cities. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
-  const COLS=120,ROWS=80,SIDES=['britannia','eb','eu'];
-  const BOUNDS={west:-13,east:47,north:72,south:34};
-  const PROJECTION={centerLon:17,centerLat:52.5,angle:0,
-    uMin:-30*Math.cos(52.5*Math.PI/180),uMax:30*Math.cos(52.5*Math.PI/180),
-    vMin:-18.5,vMax:19.5};
+  const COLS=120,ROWS=96,SIDES=['britannia','eu'];
+  const MASK_COLS=120,MASK_ROWS=80;
+  const BOUNDS={west:-13,east:10,north:60,south:35.5};
+  const PROJECTION={centerLon:-1.5,centerLat:47.75,angle:0,
+    uMin:-11.5*Math.cos(47.75*Math.PI/180),uMax:11.5*Math.cos(47.75*Math.PI/180),
+    vMin:-12.25,vMax:12.25};
   const CITIES=[
     ["London",-0.13,51.51,"eu",3,true],
     ["Edinburgh",-3.18,55.95,"eu",2,false],
-    ["Dublin",-6.26,53.35,"eu",2,false],
+    ["Glasgow",-4.25,55.86,"eu",2,false],
+    ["Manchester",-2.24,53.48,"eu",2,false],
+    ["Liverpool",-2.99,53.41,"eu",2,true],
+    ["Birmingham",-1.89,52.49,"eu",2,false],
+    ["Bristol",-2.59,51.45,"eu",2,false],
+    ["Southampton",-1.4,50.91,"eu",2,true],
+    ["Plymouth",-4.14,50.38,"eu",2,true],
+    ["Belfast",-5.93,54.6,"eu",2,true],
+    ["Dublin",-6.26,53.35,"eu",2,true],
+    ["Cork",-8.47,51.9,"eu",2,true],
+    ["Galway",-9.05,53.27,"eu",2,false],
     ["Paris",2.35,48.86,"eu",3,true],
+    ["Lille",3.06,50.63,"eu",2,false],
+    ["Le Havre",0.11,49.49,"eu",2,true],
+    ["Brest",-4.49,48.39,"eu",3,true],
+    ["Nantes",-1.55,47.22,"eu",2,true],
+    ["Bordeaux",-0.58,44.84,"eu",2,true],
     ["Lyon",4.83,45.76,"eu",2,false],
-    ["Marseille",5.37,43.3,"eu",2,false],
-    ["Madrid",-3.7,40.42,"eu",3,false],
-    ["Barcelona",2.17,41.38,"eu",2,false],
-    ["Lisbon",-9.14,38.72,"eu",2,false],
-    ["Berlin",13.4,52.52,"eu",3,true],
-    ["Hamburg",10,53.55,"eu",2,true],
-    ["Munich",11.58,48.14,"eu",2,false],
+    ["Toulouse",1.44,43.6,"eu",2,false],
+    ["Marseille",5.37,43.3,"eu",3,true],
+    ["Calais",1.86,50.95,"eu",2,true],
+    ["Madrid",-3.7,40.42,"eu",3,true],
+    ["Barcelona",2.17,41.38,"eu",2,true],
+    ["Lisbon",-9.14,38.72,"eu",3,true],
+    ["Porto",-8.63,41.15,"eu",2,true],
+    ["Seville",-5.98,37.39,"eu",2,false],
+    ["Valencia",-0.38,39.47,"eu",2,true],
+    ["Bilbao",-2.93,43.26,"eu",2,true],
+    ["Zaragoza",-0.89,41.65,"eu",2,false],
+    ["Vigo",-8.72,42.24,"eu",2,true],
+    ["Cadiz",-6.29,36.53,"eu",2,true],
+    ["Malaga",-4.42,36.72,"eu",2,true],
     ["Amsterdam",4.9,52.37,"eu",2,true],
     ["Brussels",4.35,50.85,"eu",2,false],
-    ["Copenhagen",12.57,55.68,"eu",2,false],
-    ["Oslo",10.75,59.91,"eu",2,false],
-    ["Stockholm",18.06,59.33,"eu",3,false],
-    ["Helsinki",24.94,60.17,"eu",2,false],
-    ["Prague",14.42,50.08,"eu",2,false],
-    ["Vienna",16.37,48.21,"eu",3,true],
-    ["Warsaw",21,52.23,"eu",3,true],
-    ["Krakow",19.94,50.06,"eu",2,false],
-    ["Budapest",19.04,47.5,"eu",2,false],
-    ["Rome",12.5,41.9,"eu",3,false],
-    ["Milan",9.19,45.46,"eu",2,false],
-    ["Naples",14.27,40.85,"eu",2,false],
-    ["Bucharest",26.1,44.43,"eu",2,true],
-    ["Belgrade",20.46,44.79,"eu",2,false],
-    ["St Petersburg",30.3,59.93,"eb",3,true],
-    ["Moscow",37.62,55.75,"eb",3,true],
-    ["Minsk",27.56,53.9,"eb",3,true],
-    ["Kyiv",30.52,50.45,"eb",3,true],
-    ["Istanbul",28.98,41.01,"eb",3,true],
-    ["Smolensk",32.05,54.78,"eb",2,false],
-    ["Pskov",28.33,57.82,"eb",2,false],
-    ["Novgorod",31.28,58.52,"eb",2,false],
-    ["Tver",35.91,56.86,"eb",2,false],
-    ["Bryansk",34.36,53.25,"eb",2,false],
-    ["Kaluga",36.26,54.51,"eb",2,false],
-    ["Kharkiv",36.23,49.99,"eb",2,false],
-    ["Odessa",30.73,46.48,"eb",2,false],
-    ["Lviv",24.03,49.84,"eb",2,false],
-    ["Riga",24.11,56.95,"eb",2,false],
-    ["Vilnius",25.28,54.69,"eb",2,false],
-    ["Galway",-9.05,53.27,"britannia",3,true],
-    ["Cork",-8.47,51.9,"britannia",3,true],
-    ["Sligo",-8.47,54.27,"britannia",2,true],
-    ["Belfast",-5.93,54.6,"eu",2,true],
-    ["Liverpool",-2.99,53.41,"eu",2,true],
-    ["Southampton",-1.4,50.91,"eu",2,true],
-    ["Brest",-4.49,48.39,"eu",3,true],
-    ["Bordeaux",-0.58,44.84,"eu",2,true],
-    ["Rotterdam",4.48,51.92,"eu",2,true],
-    ["Frankfurt",8.68,50.11,"eu",3,true]
+    ["Rotterdam",4.48,51.92,"eu",2,true]
   ];
   const ARMY_GROUPS=[
-    ["britannia","Galway","heavy",2,"cornelia"],
-    ["britannia","Galway","rocket",2,"cecile"],
-    ["britannia","Galway","medium",3,"guilford"],
-    ["britannia","Galway","assault",2],
-    ["britannia","Cork","heavy",2,"suzaku"],
-    ["britannia","Cork","raider",2,"jeremiah"],
-    ["britannia","Cork","medium",2,"darlton"],
-    ["britannia","Cork","siege",2],
-    ["britannia","Sligo","heavy",2,"bismarck"],
-    ["britannia","Sligo","support",2],
-    ["britannia","Sligo","medium",2,"gino"],
-    ["britannia","Sligo","light",2,"villetta"],
-    ["eu","Paris","medium",4,"leila"],
+    ["britannia","Western Approaches","heavy",2,"cornelia"],
+    ["britannia","Western Approaches","rocket",2,"cecile"],
+    ["britannia","Western Approaches","medium",2,"guilford"],
+    ["britannia","Western Approaches","assault",2,"suzaku"],
+    ["britannia","Bay of Biscay","heavy",2,"bismarck"],
+    ["britannia","Bay of Biscay","siege",2],
+    ["britannia","Bay of Biscay","raider",2,"jeremiah"],
+    ["britannia","Bay of Biscay","medium",2,"darlton"],
+    ["britannia","Iberian Atlantic","heavy",2,"gino"],
+    ["britannia","Iberian Atlantic","rocket",2],
+    ["britannia","Iberian Atlantic","medium",2],
+    ["britannia","Iberian Atlantic","assault",2,"villetta"],
+    ["eu","Paris","medium",3,"leila"],
     ["eu","Paris","support",2,"margaret"],
     ["eu","Brest","heavy",3,"pierre"],
     ["eu","Brest","rocket",2],
-    ["eu","Bordeaux","medium",3,"olivia"],
-    ["eu","Southampton","heavy",3],
-    ["eu","Southampton","rocket",2],
-    ["eu","London","medium",4],
-    ["eu","Liverpool","assault",2],
+    ["eu","London","heavy",3],
+    ["eu","London","rocket",2],
+    ["eu","Liverpool","medium",2],
+    ["eu","Edinburgh","light",2],
+    ["eu","Southampton","assault",2],
+    ["eu","Plymouth","medium",2],
     ["eu","Belfast","light",2],
-    ["eu","Rotterdam","heavy",3],
-    ["eu","Amsterdam","medium",2],
-    ["eu","Frankfurt","heavy",3],
-    ["eu","Warsaw","heavy",4,"akito"],
-    ["eu","Warsaw","assault",3],
-    ["eu","Warsaw","rocket",2,"yukiya"],
-    ["eu","Krakow","medium",3,"ryo"],
-    ["eu","Berlin","heavy",4,"ayano"],
-    ["eu","Berlin","support",2,"anna"],
-    ["eu","Vienna","siege",3,"smilas"],
-    ["eu","Vienna","medium",2,"eduardo"],
-    ["eu","Bucharest","medium",2,"oscar"],
-    ["eu","Prague","support",2,"ferilli"],
-    ["eu","Copenhagen","light",2],
-    ["eu","Milan","assault",2],
-    ["eb","Minsk","heavy",4,"shin"],
-    ["eb","Minsk","assault",4,"kewell"],
-    ["eb","Lviv","heavy",4,"manfredi"],
-    ["eb","Lviv","raider",3],
-    ["eb","Kyiv","medium",4,"ashley"],
-    ["eb","Kyiv","rocket",3,"farnese"],
-    ["eb","Moscow","siege",3,"julius"],
-    ["eb","Moscow","heavy",3,"augustus"],
-    ["eb","Smolensk","medium",3],
-    ["eb","Smolensk","support",2],
-    ["eb","Riga","raider",3],
-    ["eb","Vilnius","assault",3],
-    ["eb","Kharkiv","heavy",3],
-    ["eb","Odessa","light",2],
-    ["eb","St Petersburg","siege",2],
-    ["eb","Istanbul","medium",2]
+    ["eu","Bordeaux","medium",3,"olivia"],
+    ["eu","Nantes","rocket",2],
+    ["eu","Le Havre","heavy",2],
+    ["eu","Marseille","medium",3,"akito"],
+    ["eu","Marseille","support",2,"yukiya"],
+    ["eu","Lyon","heavy",2,"ayano"],
+    ["eu","Madrid","heavy",3,"smilas"],
+    ["eu","Madrid","rocket",2],
+    ["eu","Lisbon","medium",2,"eduardo"],
+    ["eu","Porto","assault",2],
+    ["eu","Barcelona","medium",2],
+    ["eu","Seville","light",2],
+    ["eu","Rotterdam","heavy",2,"anna"],
+    ["eu","Calais","assault",2],
+    ["eu","Bilbao","support",2]
   ];
-  const PORTS={"London":3,"Edinburgh":2,"Dublin":1,"Marseille":2,"Lisbon":2,"Barcelona":1,"Copenhagen":2,"Stockholm":2,"Helsinki":2,"St Petersburg":2,"Riga":2,"Odessa":2,"Istanbul":2,"Galway":3,"Cork":3,"Sligo":2,"Belfast":2,"Liverpool":2,"Southampton":3,"Brest":3,"Bordeaux":2,"Rotterdam":2};
+  const PORTS={"London":3,"Edinburgh":2,"Liverpool":2,"Southampton":3,"Plymouth":3,"Belfast":2,"Dublin":2,"Cork":2,"Le Havre":2,"Brest":3,"Nantes":2,"Bordeaux":2,"Marseille":2,"Calais":2,"Barcelona":2,"Lisbon":3,"Porto":2,"Valencia":2,"Bilbao":2,"Vigo":2,"Cadiz":2,"Malaga":2,"Amsterdam":2,"Rotterdam":2};
   const FLEETS=[
-    ["britannia","Galway","carrier_battleship",4],
-    ["britannia","Cork","carrier_battleship",4],
-    ["britannia","Sligo","carrier_battleship",2],
-    ["britannia","Galway","portman_ii",5],
-    ["britannia","Cork","portman_ii",5],
-    ["britannia","Sligo","portman_ii",4],
-    ["eu","London","eu_carrier",1],
-    ["eu","Southampton","eu_carrier",1],
-    ["eu","Brest","eu_carrier",1],
-    ["eu","Copenhagen","eu_carrier",1],
-    ["eu","Stockholm","eu_carrier",1],
-    ["eu","Brest","panzer_frosch_ii",3],
-    ["eu","Southampton","panzer_frosch_ii",3],
-    ["eu","Liverpool","panzer_frosch",2],
-    ["eu","Copenhagen","panzer_frosch",2],
-    ["eb","St Petersburg","carrier_battleship",1],
-    ["eb","Odessa","carrier_battleship",1],
-    ["eb","Riga","portman_ii",2],
-    ["eb","Istanbul","portman_ii",2]
+    ["britannia","Western Approaches",-10.5,53.4,"carrier_battleship",4],
+    ["britannia","Bay of Biscay",-6.4,47.7,"carrier_battleship",4],
+    ["britannia","Iberian Atlantic",-10.5,39.5,"carrier_battleship",4],
+    ["britannia","Western Approaches",-10.5,53.4,"portman_ii",9],
+    ["britannia","Bay of Biscay",-6.4,47.7,"portman_ii",8],
+    ["britannia","Iberian Atlantic",-10.5,39.5,"portman_ii",8],
+    ["eu","London",null,null,"eu_carrier",1],
+    ["eu","Brest",null,null,"eu_carrier",1],
+    ["eu","Lisbon",null,null,"eu_carrier",1],
+    ["eu","Southampton",null,null,"panzer_frosch_ii",3],
+    ["eu","Brest",null,null,"panzer_frosch_ii",3],
+    ["eu","Liverpool",null,null,"panzer_frosch",2],
+    ["eu","Marseille",null,null,"panzer_frosch_ii",2]
   ];
-  const FUNDING={"britannia":{"credits":680,"industry":420,"science":65,"sakuradite":25},"eu":{"credits":820,"industry":500,"science":75,"sakuradite":32},"eb":{"credits":530,"industry":360,"science":52,"sakuradite":22}};
+  const FUNDING={britannia:{credits:760,industry:460,science:65,sakuradite:28},
+    eu:{credits:760,industry:475,science:75,sakuradite:35}};
   function geo(c,r){
-    return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*60/COLS,
-      lat:BOUNDS.north-(r+.5)*38/ROWS};
+    return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*(BOUNDS.east-BOUNDS.west)/COLS,
+      lat:BOUNDS.north-(r+.5)*(BOUNDS.north-BOUNDS.south)/ROWS};
   }
   function locate(lon,lat){
-    const r=Math.max(0,Math.min(ROWS-1,Math.round((BOUNDS.north-lat)*ROWS/38-.5)));
+    const r=Math.max(0,Math.min(ROWS-1,Math.round((BOUNDS.north-lat)*ROWS/(BOUNDS.north-BOUNDS.south)-.5)));
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
-      (lon-BOUNDS.west)*COLS/60-.5-.5*(r&1))))};
+      (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
   function nearest(g,p,valid,radius=9){
     let best=null,d=Infinity;
@@ -163,15 +126,16 @@
       }
     return best;
   }
-  const MOUNTAINS=[[8.5,46.4,5,1.4],[21,48.4,5.4,1.8],
-    [-1,43,5,1.2],[24,42.1,3.5,1.1],[10.8,62,4,5.3],[15,68,3.5,2.8]];
-  const FORESTS=[[24,55,6,4],[28,59,6,3],[15,57,6,4],[9,51,6,3]];
+  const MOUNTAINS=[[-4.8,57,2.8,1.8],[-3.7,43.1,4,0.8],[0.7,42.7,4.3,0.9],
+    [-3.2,37.2,2.0,0.8],[3.1,45.4,2.4,1.5],[8.3,46,1.8,1.1]];
+  const FORESTS=[[5,50.5,1.6,1.4],[-1.1,44.3,1.8,2],[2.0,47.5,3.3,2.5],
+    [-5,54,2,1.5],[-6.1,40,2.2,2]];
   function density(p,areas){return Math.max(0,...areas.map(([x,y,w,h])=>
     Math.exp(-(((p.lon-x)/w)**2+((p.lat-y)/h)**2)*1.6)));}
   function landscape(p,c,r){
     const mountain=density(p,MOUNTAINS),forest=density(p,FORESTS);
     return mountain>.63?'mountain':
-      mountain>.29||forest>.51||p.lat>66||((c*29+r*17)%31<4&&p.lat>49)
+      mountain>.29||forest>.51||p.lat>66||((c*29+r*17)%31<4&&p.lat>45)
         ?'forest':'plains';
   }
   function orderGroup(g,id,target){
@@ -199,37 +163,38 @@
       fallen:{},economy:{},tech:{},officers:Object.fromEntries(
         Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
       roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,
-      eliteDeployed:{},arsenal:{britannia:0,eb:0,eu:0},
+      eliteDeployed:{},arsenal:{britannia:0,eu:0},
       automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
-      mapRevision:0,teams:{britannia:'britannian-coalition',eb:'britannian-coalition',eu:'eu'},
-      factions:{eb:E.FACTIONS.eb},lineup:{eb:E.ROSTER.eb}
+      mapRevision:0,teams:{britannia:'britannia',eu:'eu'}
     };
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
     g.scenario={id:'operation-stonehenge',key:'stonehenge',title:'Operation Stonehenge',
-      phase:'two-front-war',aiDoctrine:'europe',groups:[],funding:{},
-      bounds:BOUNDS,projection:PROJECTION,
-      permanentCoalition:['britannia','eb']};
-    // Euro Britannia borrows the Britannian Elite Force roster only in this scenario.
+      version:2,phase:'atlantic-invasion',aiDoctrine:'europe',groups:[],funding:{},
+      bounds:BOUNDS,projection:PROJECTION,citylessFunding:['britannia']};
+    // Only Britannia and Europia United are playable here.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia')),
       eu:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('eu')),
-      eb:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('britannia'))
+        E.ELITE_FORCES[id].availableTo.includes('eu'))
     };
     const packed=root.EUROPE_LAND_BITS || (typeof require==='function'?
       require('./europe-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.EUROPE_LAND_BITS;
     if(!bits)throw Error('European tactical landmask was not loaded');
     const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
-    if(raw.length!==COLS*ROWS/8)throw Error('European tactical landmask is corrupt');
+    if(raw.length!==MASK_COLS*MASK_ROWS/8)throw Error('European tactical landmask is corrupt');
+    // Crop and resample the original packed European shoreline onto Western Europe.
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
-      const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
+      const sr=Math.round((72-p.lat)*MASK_ROWS/38-.5);
+      const sc=Math.round((p.lon+13)*MASK_COLS/60-.5-.5*(sr&1));
+      const j=sr*MASK_COLS+sc;
+      const land=sr>=0&&sr<MASK_ROWS&&sc>=0&&sc<MASK_COLS&&
+        !!(raw.charCodeAt(j>>3)&(128>>(j&7)));
       return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
     });
     // The packed continental coastline includes the African coast and Asian
@@ -309,7 +274,7 @@
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place European city '+name);
-      const capital=name==='Paris'||name==='St Petersburg'||name==='Galway';
+      const capital=name==='Paris';
       const shield=fort?400:120+60*tier;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
@@ -359,6 +324,7 @@
       return groupByCity.get(k);
     }
     for(const [side,name,cls,count,commander] of ARMY_GROUPS){
+      if(side==='britannia')continue; // Load troops into offshore carriers below.
       const s=g.stations.find(v=>v.name===name);
       if(!s||s.owner!==side)throw Error('Invalid staging city '+name);
       for(let i=0;i<count;i++){
@@ -366,7 +332,7 @@
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),10);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
-        const stack=side==='eb'?(i===0?3:2):(i===0?2:1);
+        const stack=i===0?2:1;
         const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,stack,cmd);
         group(side,name).units.push(u.id);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
@@ -382,27 +348,53 @@
       s.portAt={c:at.c,r:at.r};s.portLevel=level;s.portOwner=s.owner;
       taken.add(E.key(at));
     }
-    for(const [side,name,type,count] of FLEETS){
-      const s=g.stations.find(v=>v.name===name);
+    for(const [side,name,lon,lat,type,count] of FLEETS){
+      const s=side==='eu'?g.stations.find(v=>v.name===name):null;
+      const anchor=s||locate(lon,lat);
       if(!E.TYPES[type]?.naval)throw Error('Invalid Stonehenge fleet type '+type);
       const fleet={id:'fleet-'+g.scenario.groups.length,side,
         name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
-          !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),10);
+        const at=nearest(g,anchor,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
+          !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),18);
         if(!at)throw Error('Cannot deploy navy at '+name);
-        fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
+        const ship=E.newUnit(g,type,side,at.c,at.r);
+        if(side==='britannia')ship.invasionGroup=name;
+        fleet.units.push(ship.id);
       }
       g.scenario.groups.push(fleet);
     }
-    // Preserve navigable Atlantic, Channel and North Sea corridors up to twelve hexes offshore.
+    // Create exactly 24 land formations; all are loaded before the player starts.
+    const carriers=g.units.filter(u=>u.side==='britannia'&&E.TYPES[u.type].naval==='ship');
+    const passengers=[];
+    for(const [side,name,cls,count,commander] of ARMY_GROUPS){
+      if(side!=='britannia')continue;
+      for(let i=0;i<count;i++){
+        const ship=carriers.find(v=>v.invasionGroup===name&&
+          (v.pendingPassengers||0)<E.TYPES[v.type].capacity);
+        if(!ship)throw Error('Not enough carrier capacity in '+name);
+        ship.pendingPassengers=(ship.pendingPassengers||0)+1;
+        const cmd=i===0?commander:null;
+        const u=E.newUnit(g,E.typeFor(side,cls,g),side,ship.c,ship.r,i===0?2:1,cmd);
+        if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
+        passengers.push({ship,u});
+        group(side,name).units.push(u.id);
+      }
+    }
+    if(difficulty==='elite')E.prepareEliteEurope(g);
+    for(const {ship,u} of passengers){
+      (ship.cargo||=[]).push(u);
+      g.units.splice(g.units.indexOf(u),1);
+    }
+    for(const ship of carriers)delete ship.pendingPassengers;
+    // Keep open-water approach lanes to the British Isles, Biscay and Iberia.
     const depth=new Int16Array(g.tiles.length).fill(-1),q=[];
     for(const t of g.tiles)if(t.terrain!=='sea'){
       depth[t.r*COLS+t.c]=0;q.push(t);
     }
     for(let i=0;i<q.length;i++){
       const t=q[i],d=depth[t.r*COLS+t.c];
-      if(d>=12)continue;
+      if(d>=30)continue;
       for(const n of E.adjacent(g,t)){
         const j=n.r*COLS+n.c;
         if(n.terrain==='sea'&&depth[j]===-1){depth[j]=d+1;q.push(n);}
@@ -410,13 +402,12 @@
     }
     for(const t of g.tiles)if(t.terrain==='sea'&&
       (excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
-       depth[t.r*COLS+t.c]>12))t.terrain='offmap';
+       depth[t.r*COLS+t.c]>30))t.terrain='offmap';
     // The historical Stonehenge Sakuradite discovery is worked from London.
     // Site yield follows London ownership upon capture, using standard refinery rules.
     const london=g.stations.find(s=>s.name==='London');
     london.refinery=Math.max(1,london.refinery||0);
     g.sites.push({id:0,name:'Stonehenge',c:london.c,r:london.r,base:20,city:london.id});
-    if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
       const factor=side===player||!E.foe(g,side,player)?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
@@ -430,11 +421,13 @@
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>E.foe(g,v,player)))
-        for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
+        for(const [i,u] of g.units.flatMap(v=>[v,...(v.cargo||[])])
+          .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship').entries())
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
-    g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
-    E.log(g,'Britannia invades the Atlantic coast from western Ireland while Euro Britannia attacks the E.U. from the east. The Britannian alliance is permanent.',player);
+    g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
+      n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
+    E.log(g,'Britannia starts with no cities: carrier-borne forces and amphibious escorts launch an all-out Atlantic invasion.',player);
     return g;
   }
   function onTurn(){return false;}
@@ -443,20 +436,22 @@
   }
   function objective(g,side=g.player){
     const euCities=g.stations.filter(s=>s.owner==='eu').length;
-    const britCities=g.stations.filter(s=>s.owner==='britannia'||s.owner==='eb').length;
+    const britCities=g.stations.filter(s=>s.owner==='britannia').length;
+    const afloat=g.units.filter(u=>u.side==='britannia'&&u.hp>0).length;
     return side==='eu'
-      ? 'Defend Europia United and eliminate both Britannian armies ('+britCities+' coalition cities remain).'
-      : 'Coordinate the permanent Britannian alliance to defeat the E.U. ('+euCities+' E.U. cities remain).';
+      ? 'Hold the coast and destroy Britannia’s expedition ('+afloat+' hostile units afloat; '+britCities+' occupied cities).'
+      : 'Land troops from carriers and conquer all '+CITIES.length+' cities ('+euCities+' E.U. cities remain).';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='operation-stonehenge'||
        g.stations.length!==CITIES.length)return null;
     const eu=g.stations.some(s=>s.owner==='eu');
-    const coalition=g.stations.some(s=>s.owner==='britannia'||s.owner==='eb');
-    if(!eu)return {winner:g.player==='britannia'||g.player==='eb'?g.player:'britannia',
-      team:'britannian-coalition',reason:'The E.U. has surrendered; Britannia and Euro Britannia win as a permanent coalition.'};
-    if(!coalition)return {winner:'eu',team:'eu',
-      reason:'Both Britannian powers have surrendered. Europia United has defeated the invasion.'};
+    const britCities=g.stations.some(s=>s.owner==='britannia');
+    const britUnits=g.units.some(u=>u.side==='britannia'&&u.hp>0);
+    if(!eu)return {winner:'britannia',team:'britannia',
+      reason:'Britannia has conquered every E.U. city in Western Europe.'};
+    if(!britCities&&!britUnits)return {winner:'eu',team:'eu',
+      reason:'Europia United has destroyed every invading Britannian formation.'};
     return null;
   }
   const api={id:'operation-stonehenge',title:'Operation Stonehenge',cols:COLS,rows:ROWS,
