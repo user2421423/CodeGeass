@@ -1051,6 +1051,48 @@
     // Idle carriers wait off the rally city of the best offensive across the sea.
     const lift = fronts.find(f => f.overseas && f.rally);
     Object.assign(memo, { fronts, byId, assign, fields: {}, staging: lift?.rally || null });
+    planConquestMobileReserve(g,side,memo,state,units,fronts,emergencies);
+  }
+  // Conquest-only optional mobile reserve: 10% of a large field army camps
+  // near a safe central transport junction. An active emergency releases it.
+  function planConquestMobileReserve(g,side,memo,state,units,fronts,urgent){
+    memo.reserve={units:[],hub:null};
+    if(g.mode!=='conquest'||urgent.length||units.length<20||fronts.length<3){
+      state.mobileReserve=null;
+      return;
+    }
+    const foes=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&!isShip(u)),
+      cities=g.stations.filter(s=>s.owner===side&&!foes.some(u=>dist(g,u,s)<=8)),
+      main=fronts.slice(0,3);
+    if(!cities.length||main.length<2)return;
+    const hub=cities.slice().sort((a,b)=>{
+      const weight=s=>main.reduce((sum,f)=>sum+dist(g,s,f.anchor),0);
+      return weight(a)-weight(b)||a.id-b.id;
+    })[0],
+      count=Math.min(3,Math.floor(units.length*0.1)),
+      previous=new Set(state.mobileReserve?.units||[]);
+    const selected=units.filter(u=>!memo.guards?.[u.id]&&
+      !memo.recoveries?.has(u.id)&&!foes.some(v=>dist(g,v,u)<=6)&&
+      massOf(g,u)===massOf(g,hub)&&dist(g,u,hub)<=12 &&
+      memo.byId[memo.assign[u.id]]?.type==='offensive')
+      .sort((a,b)=>Number(previous.has(b.id))-Number(previous.has(a.id)) ||
+        dist(g,a,hub)-dist(g,b,hub)||a.id-b.id).slice(0,count);
+    for(const u of selected){
+      const f=memo.byId[memo.assign[u.id]];
+      if(!f||f.arrivingFour<Math.max(2,f.target*0.7))continue;
+      f.assigned=Math.max(0,f.assigned-unitStrength(u));
+      const eta=frontArrival(g,u,f);
+      if(eta<=2)f.arrivingTwo=Math.max(0,f.arrivingTwo-unitStrength(u));
+      if(eta<=4)f.arrivingFour=Math.max(0,f.arrivingFour-unitStrength(u));
+      f.deficit=Math.max(0,f.desiredStrength-f.arrivingFour);
+      delete memo.assign[u.id];
+      delete state.assignments[u.id];
+      memo.reserve.units.push(u.id);
+    }
+    if(memo.reserve.units.length){
+      memo.reserve.hub={c:hub.c,r:hub.r,id:hub.id};
+      state.mobileReserve={hub:hub.id,units:memo.reserve.units.slice(),since:state.mobileReserve?.since??g.turn};
+    }else state.mobileReserve=null;
   }
   // Already nearer an assembling front's target than its rally city is, on the rally's landmass.
   const aheadOfRally = (g, f, p) => massOf(g, p) === massOf(g, f.rally) && dist(g, p, f.anchor) < dist(g, f.rally, f.anchor);
@@ -1091,7 +1133,7 @@
   }
   // The active front a unit serves; newly raised formations reinforce understrength fronts.
   function frontOf(g, memo, u) {
-    if (!memo?.byId || !u || memo.guards?.[u.id] || memo.recoveries?.has(u.id) || isShip(u) || u.hold) return null;
+    if (!memo?.byId || !u || memo.reserve?.units?.includes(u.id) || memo.guards?.[u.id] || memo.recoveries?.has(u.id) || isShip(u) || u.hold) return null;
     // Once a city falls, redirect the remaining attacking units immediately
     // instead of marching toward a city that is already theirs until next turn.
     if (g.mode === 'scenario') {
@@ -1123,6 +1165,12 @@
   // The goal field a unit follows: the assigned front's. Guards and
   // unassigned units use the side-wide field; unassigned warships may use the leading front.
   function fieldFor(g, memo, u) {
+    if(memo.reserve?.hub&&memo.reserve.units.includes(u.id)){
+      const h=memo.reserve.hub;
+      memo.reserveField ||= goalField(g,u.side,[[h,0]],'land');
+      return p=>{const cost=memo.reserveField[p.r*g.cols+p.c];
+        return Number.isFinite(cost)?cost:60;};
+    }
     const f = frontOf(g, memo, u) || (isShip(u) ? memo.fronts?.[0] : null);
     let field = null;
     return p => {
