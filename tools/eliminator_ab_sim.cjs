@@ -85,7 +85,7 @@ const inspect = () => {
         u.eliminatorMoved === g.turn && E.distance(g,u,s) <= 1);
       if(picked) {
         result.pickedUp++;
-        result.perSide[s.owner]?.pickedUp++;
+        if(result.perSide[s.owner]) result.perSide[s.owner].pickedUp++;
       }
     }
     previous.set(id,Boolean(s.eliminator > 0));
@@ -93,7 +93,7 @@ const inspect = () => {
   const live = new Set(units().map(u => u.id));
   for(const [id,side] of armed) if(!live.has(id)){
     result.carrierLosses++;
-    result.perSide[side]?.carrierLosses++;
+    if(result.perSide[side]) result.perSide[side].carrierLosses++;
     armed.delete(id);
   }
   for(const u of units()){
