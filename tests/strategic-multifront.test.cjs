@@ -90,6 +90,7 @@ test('Prior mobile response data is retired without disabling scenario recovery'
   const officers=land(g,'britannia').filter(u=>u.cmd);
   assert.ok(officers.length);
   for(const u of officers)u.hp=Math.max(1,Math.floor(E.maxHP(u)*0.2));
+  g.ai ||= {};
   (g.ai.britannia ||= {}).localResponses={123:{city:1,turn:1}};
   g.turn=2;
   const plan=E.aiPlan(g,'britannia');
