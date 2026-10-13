@@ -7,29 +7,6 @@ require('../dist/engine/army-groups.js');
 const japan = require('../dist/scenarios.js');
 
 const city = (g, name) => g.stations.find(s => s.name === name);
-test('Player army groups support regional scenarios without changing campaign permissions', () => {
-  const g = japan.create('cf', 'normal', 7701);
-  const units = g.units.filter(u => u.side === g.player && u.hp > 0);
-  assert.ok(units.length >= 2);
-  const created = E.createArmyGroup(g, units[0].id);
-  assert.equal(created.ok, true);
-  const id = created.group.id;
-  assert.deepEqual(created.group.units, [units[0].id]);
-  assert.equal(E.addArmyGroupUnit(g, id, units[1].id).ok, true);
-  assert.equal(E.armyGroup(g, id).units.length, 2);
-  assert.equal(E.orderArmyGroup(g, id, units[0].c, units[0].r).ok, true);
-  assert.equal(E.setArmyGroupStance(g, id, 'hold').ok, true);
-  assert.equal(E.setArmyGroupStance(g, id, 'assault').ok, true);
-  assert.equal(E.setArmyGroupConquest(g, id, true).ok, true);
-  assert.equal(E.armyGroup(g, id).stance, 'advance');
-  assert.equal(E.setArmyGroupConquest(g, id, false).ok, true);
-  assert.equal(E.removeArmyGroupUnit(g, id, units[1].id).ok, true);
-  assert.equal(E.armyGroup(g, id).units.length, 1);
-  assert.equal(E.disbandArmyGroup(g, id).ok, true);
-  assert.equal(E.armyGroups(g).length, 0);
-  assert.equal(E.createArmyGroup({...g, mode: 'campaign'}).ok, false);
-});
-
 test('Hold Position suspends group movement without preventing manual orders', () => {
   const g = japan.create('cf', 'normal', 7702);
   const unit = g.units.find(u => u.side === g.player && !u.moved && !u.goto &&

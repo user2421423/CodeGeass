@@ -22,7 +22,7 @@ function dock(naval, branch = 'Armor') {
     selectedStation: () => null,
     selectedPort: () => null,
     selectedSite: () => null,
-    game: { player: 'britannia', mode: 'conquest' },
+    game: { player: 'britannia', mode: 'conquest', stations: [] },
     E: {
       TYPES: { test: { naval, branch } },
       maxHP: () => 673, atSea: () => false,
