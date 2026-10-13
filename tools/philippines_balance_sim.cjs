@@ -19,7 +19,7 @@ const values=()=>Object.fromEntries(SIDES.map(s=>[s,0]));
 const total={seed:SEED,player:PLAYER,difficulty:DIFFICULTY,requestedTurns:MAX_TURNS,
   actualTurns:0,winner:null,winTurn:null,errorCount:0,errors:[],
   movements:{land:values(),naval:values()},attacks:values(),
-  landings:values(),produced:values(),destroyed:values(),
+  landings:values(),amphibiousLandings:values(),portCaptures:values(),produced:values(),navalProduced:values(),destroyed:values(),
   britishBeachheads:[],chineseRecaptures:[],
   opening:Object.fromEntries(SIDES.map(s=>[s,{cities:g.stations.filter(c=>c.owner===s).length,units:g.units.filter(u=>u.side===s).length}])),
   captures:[],snapshots:[],elapsedSeconds:0};
@@ -45,6 +45,7 @@ function observe(){
   const every=allUnits();
   for(const u of every) if(!everSeen.has(u.id)) {
     everSeen.set(u.id,u.side);if(total.produced[u.side]!=null)total.produced[u.side]++;
+    if(E.TYPES[u.type]?.naval && total.navalProduced[u.side]!=null)total.navalProduced[u.side]++;
   }
   const current=new Map(every.map(u=>[u.id,u]));
   for(const [id,side] of everSeen){
@@ -108,6 +109,10 @@ for(let turn=1;turn<=MAX_TURNS && !finished;turn++){
         for(const e of events){
           if(e.kind==='attack')total.attacks[side]++;
           if(e.kind==='deploy')total.landings[side]++;
+          if(e.kind==='move' && E.TYPES[u.type]?.naval==='amphibious' && e.from && e.to &&
+            E.tile(g,e.from.c,e.from.r)?.terrain==='sea' && E.tile(g,e.to.c,e.to.r)?.terrain!=='sea')
+            total.amphibiousLandings[side]++;
+          if(e.portCaptured)total.portCaptures[side]++;
           if(e.kind==='move'||e.kind==='deploy')
             total.movements[naval?'naval':'land'][side]++;
         }
