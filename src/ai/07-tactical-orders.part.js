@@ -22,7 +22,7 @@
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
       emergency = memo.guards?.[u.id]?.emergency ||
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
-    if (g.ai?.[u.side]?.eliminatorRelayJobs?.[u.id]) return -5;
+    if (g.ai?.[u.side]?.eliminatorRelayJobs?.[u.id]) return 11; // after front commanders move
     return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
   function aiOrder(g, id) {
