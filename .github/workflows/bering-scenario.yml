@@ -1,0 +1,22 @@
+name: Bering Strait scenario regression
+on:
+  push:
+    branches: ['feature/bering-strait-crisis']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scenario-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and distribution parity
+        run: node tools/build_sources.cjs --check
+      - name: Bering and existing scenario regressions
+        run: node --test tests/bering.test.cjs tests/europe.test.cjs tests/division-japan.test.cjs tests/scenario.test.cjs
+      - name: Browser UI smoke checks
+        run: node tests/ui-smoke.cjs
