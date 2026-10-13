@@ -86,7 +86,8 @@ function attackHex(p) {
     toast(result.reason);
     return;
   }
-  E.suspendArmyGroupConquestUnit(game, u.id, true);
+  // Manual fire suppresses the planner for this unit this turn, not indefinitely.
+  E.suspendArmyGroupConquestUnit(game, u.id);
   addCombatEffects(result, u, visuals);
   moralePopups(before);
   refreshAndSave();
