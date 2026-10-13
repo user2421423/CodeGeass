@@ -1,4 +1,5 @@
   function wantsLift(g, u, memo) {
+    if (philippinesDefense(g, u.side)) return false;
     if (TYPES[u.type].naval || atSea(g, u) || u.hold || memo.recoveries?.has(u.id)) return false;
     const front = frontOf(g, memo, u),
       mass = massOf(g, u),
@@ -50,6 +51,7 @@
   }
   const WAVE_WAIT = 2; // turns a loaded carrier may hold on a beach for a second wave
   function aiCarrier(g, u, memo, events, fieldAt) {
+    if (philippinesDefense(g, u.side)) return true;
     // Escorting is a fallback: a transport only escorts once the boarding
     // planner below finds no troops anywhere that need a lift and no staging
     // area. Hulls without capacity (future dedicated escorts) always escort.

@@ -67,16 +67,50 @@ test('Naval ports share the open ocean, have unoccupied adjacent water and allow
  port.owner='britannia';port.portOwner='britannia';
  assert.equal(port.portOwner,'britannia');
 });
-test('Britannia can reach Philippine landing zones and China can reach Britannian bases',()=>{
+test('Britannia invades overseas while Chinese AI defends and recaptures Philippine land only',()=>{
  for(const side of scenario.sides){
   const g=scenario.create(side,'normal',41);
   const plan=E.aiPlan(g,side);
-  assert.ok(plan.fronts.some(f=>f.overseas),'must have genuine overseas goals: '+side);
+  if(side==='britannia'){
+   assert.ok(plan.fronts.some(f=>f.overseas),'Britannian invasion must cross the sea');
+  } else {
+   assert.equal(plan.fronts.filter(f=>f.overseas).length,0,'China cannot plan overseas invasions');
+   assert.ok(plan.fronts.every(f=>!['Koror','Peleliu','Colonia'].includes(f.anchor.name)),
+     'Chinese fronts must exclude Britannian staging bases');
+  }
   assert.ok(plan.fronts.some(f=>f.members.length>0),'must allocate troops: '+side);
   assert.ok(g.units.filter(u=>u.side===side&&E.TYPES[u.type].naval==='amphibious').length>=10);
   assert.doesNotThrow(()=>E.aiProduction(g));
   assert.doesNotThrow(()=>E.beginTurn(g,side,true));
  }
+});
+test('Chinese AI holds fleet stations, does not embark and stays on its original Philippine island',()=>{
+ const g=scenario.create('britannia','normal',142);
+ g.phase='cf';
+ const plan=E.aiPlan(g,'cf');
+ assert.equal(plan.fronts.length,34);
+ const mass=E.internal.massOf;
+ const chinese=g.units.filter(u=>u.side==='cf');
+ for(const u of chinese.filter(u=>E.TYPES[u.type].naval==='ship').slice(0,3)){
+  const start=[u.c,u.r];
+  E.aiOrder(g,u.id);
+  assert.deepEqual([u.c,u.r],start,'Chinese ship must not sail offshore');
+ }
+ for(const u of chinese.filter(u=>!E.TYPES[u.type].naval).slice(0,12)){
+  const before=mass(g,u);
+  E.aiOrder(g,u.id);
+  assert.notEqual(E.tile(g,u.c,u.r).terrain,'sea','Chinese land army cannot embark');
+  assert.equal(mass(g,u),before,'Chinese army cannot cross islands');
+ }
+});
+test('Chinese AI retains a local recapture objective after a Philippine city falls',()=>{
+ const g=scenario.create('britannia','normal',143);
+ const lost=station(g,'Manila');
+ lost.owner='britannia';
+ const plan=E.aiPlan(g,'cf');
+ assert.ok(plan.fronts.some(f=>f.anchor.id===lost.id&&f.type==='offensive'));
+ assert.ok(plan.fronts.some(f=>f.type==='defensive'&&f.anchor.owner==='cf'));
+ assert.ok(plan.fronts.every(f=>f.anchor.name!=='Koror'&&f.anchor.name!=='Colonia'));
 });
 test('Both sides can build, win, and resume without artificial 50-turn ending',()=>{
  for(const side of scenario.sides){

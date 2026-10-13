@@ -8,7 +8,11 @@
   const COLS=144,ROWS=112,SIDES=['britannia','cf'];
   const BOUNDS={west:115.5,east:139.1,north:21.2,south:4.5};
   const K=Math.cos(13*Math.PI/180);
-  const PROJECTION={centerLon:127.3,centerLat:13,angle:0,uMin:-11.8*K,uMax:11.8*K,vMin:-8.5,vMax:8.5};
+  const DLON=(BOUNDS.east-BOUNDS.west)/COLS, DLAT=(BOUNDS.north-BOUNDS.south)/ROWS;
+  // Geographic atlas and playable hex centers must use the same projection.
+  const PROJECTION={centerLon:127.3,centerLat:13,angle:0,
+    uMin:(BOUNDS.west+DLON/2-127.3)*K,uMax:(BOUNDS.east-DLON/2-127.3)*K,
+    vMin:BOUNDS.south+DLAT/2-13,vMax:BOUNDS.north-DLAT/2-13};
   // [city, real longitude, latitude, initial owner, factory tier, fortress]
   const CITIES=[["Manila",120.984,14.599,"cf",3,true],["Quezon City",121.05,14.676,"cf",3,true],["Baguio",120.596,16.402,"cf",2,true],["Laoag",120.596,18.197,"cf",2,false],["Tuguegarao",121.733,17.614,"cf",2,false],["Dagupan",120.34,16.04,"cf",2,false],["Tarlac",120.59,15.49,"cf",2,false],["Batangas",121.06,13.75,"cf",2,true],["Naga",123.18,13.62,"cf",2,false],["Legazpi",123.73,13.14,"cf",2,true],["Calapan",121.18,13.41,"cf",2,false],["San Jose",121.07,12.35,"cf",1,false],["Puerto Princesa",118.735,9.74,"cf",3,true],["El Nido",119.39,11.18,"cf",2,false],["Coron",120.2,12,"cf",1,false],["Iloilo",122.56,10.72,"cf",3,true],["Roxas",122.75,11.59,"cf",2,false],["Bacolod",122.95,10.66,"cf",3,true],["Dumaguete",123.31,9.31,"cf",2,false],["Cebu",123.89,10.32,"cf",3,true],["Bogo",124,11.05,"cf",2,false],["Tagbilaran",123.86,9.65,"cf",2,false],["Tacloban",125,11.24,"cf",3,true],["Ormoc",124.61,11.01,"cf",2,false],["Calbayog",124.6,12.07,"cf",2,false],["Masbate",123.62,12.37,"cf",2,false],["Cagayan de Oro",124.65,8.48,"cf",3,true],["Davao",125.61,7.07,"cf",3,true],["Zamboanga",122.07,6.91,"cf",3,true],["Butuan",125.54,8.95,"cf",2,false],["Iligan",124.24,8.23,"cf",2,false],["Cotabato",124.25,7.22,"cf",2,false],["General Santos",125.17,6.11,"cf",2,false],["Surigao",125.49,9.78,"cf",2,false],["Koror",134.48,7.34,"britannia",3,true],["Peleliu",134.24,7.03,"britannia",2,true],["Colonia",138.12,9.52,"britannia",3,true]];
   // Historical commanders and military forces are an alternate-history deployment.
@@ -93,8 +97,8 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    // Sea routes remain unrestricted across the strait and the entire
-    // Kamchatka–Aleutian flank, rather than stopping five hexes offshore.
+    // The connected Philippine Sea remains navigable for Britannia's invasion;
+    // Chinese AI defense rules prohibit counter-invasions of offshore bases.
     const packed=root.PHILIPPINES_LAND_BITS || (typeof require==='function'?
       require('./philippines-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.PHILIPPINES_LAND_BITS;
