@@ -3,7 +3,7 @@
   // Only own charge locations enter these calculations. Never inspect rival Eliminator state.
   // Reserve the first charge for a valuable city cluster.  Further charges are
   // mobile assets if living Tier 1 commanders can actually retrieve them.
-  const ELIMINATOR_AI = { pickupTurns: 4, maxPickupDistance: 24, anchorMinimum: 75 };
+  const ELIMINATOR_AI = { pickupTurns: 4, maxPickupDistance: 24, maxRouteCost: 44, anchorMinimum: 75 };
   function eliminatorCityValue(g, side, s) {
     return 22 + (s.tier || 1) * 12 + (s.income || 0) * 3 + (s.industry || 0) * 2 +
       (s.capitalOf === side ? 240 : 0) + (s.project?.side === side ? 130 : 0) +
@@ -24,126 +24,211 @@
     }
     return score;
   }
-  function eliminatorAnchorCity(g, side) {
-    const waiting = g.stations.filter(s => s.owner === side && s.eliminator > 0);
-    if (!waiting.length) return null;
-    const best = waiting.map(s => ({
-      s, score: eliminatorCoverageValue(g, side, s, s.id),
-    })).sort((a, b) => b.score - a.score || a.s.id - b.s.id)[0];
-    return best.score >= ELIMINATOR_AI.anchorMinimum ? best.s : null;
+  // Public battlefield situation + own assets only. Never peek at another
+  // side's Eliminator state or private weapon projects.
+  function eliminatorThreatAssets(g, side, memo = null) {
+    if (memo?.eliminatorThreatAssets) return memo.eliminatorThreatAssets;
+    const foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral');
+    const threat = p => {
+      let nearest = Infinity, nearby = 0;
+      for (const foeUnit of foes) {
+        const d = dist(g, p, foeUnit);
+        if (d < nearest) nearest = d;
+        if (d <= 8) nearby++;
+      }
+      // A strike on an active battle line is more plausible than a remote
+      // unguarded tile, but capitals remain strategically valuable.
+      return nearest <= 3 ? 1.8 : nearest <= 7 ? 1.45 :
+        nearest <= 13 ? 1.05 : foes.length ? 0.78 : 1;
+    };
+    const assets = [];
+    for (const s of g.stations) {
+      if (s.owner !== side) continue;
+      const cluster = g.units.filter(u => u.hp > 0 && u.side === side && dist(g, u, s) <= 3).length;
+      assets.push({ p: s, kind: 'city', id: s.id,
+        value: eliminatorCityValue(g, side, s) * threat(s) * (1 + Math.min(0.4, cluster * 0.05)) });
+    }
+    for (const u of g.units) {
+      if (u.hp <= 0 || u.side !== side) continue;
+      const commander = COMMANDERS[u.cmd], ratio = Math.max(0.2, u.hp / maxHP(u));
+      const nearby = g.units.filter(v => v !== u && v.hp > 0 && v.side === side && dist(g, v, u) <= 3).length;
+      const strength = unitStrength(u);
+      const value = (40 + Math.min(200, strength * 9) +
+        (commander?.storyTier === 1 ? 180 : u.cmd ? 90 : 0)) * ratio *
+        threat(u) * (1 + Math.min(0.5, nearby * 0.06));
+      assets.push({ p: u, kind: 'unit', id: u.id, value });
+    }
+    if (memo) memo.eliminatorThreatAssets = assets;
+    return assets;
   }
-  // Prefer labs reachable from an available Tier 1 commander. Strategic coverage
-  // dominates the first project, but mobile accessibility dominates follow-up projects.
-  function eliminatorProductionCity(g, side, anyLab = false) {
+  function eliminatorThreatCover(g, side, p, assets, carrier = null) {
+    const others = sideEliminators(g, side).filter(h =>
+      h.ready && (!carrier || h.unit?.id !== carrier.id));
+    let score = 0;
+    for (const asset of assets) {
+      if (asset.kind === 'unit' && carrier?.id === asset.id) continue;
+      if (dist(g, p, asset.p) > ELIMINATOR.range) continue;
+      const overlap = others.filter(h => dist(g, h, asset.p) <= ELIMINATOR.range).length;
+      score += asset.value / (1 + overlap * 3);
+    }
+    return score;
+  }
+  // At least one strong stationary city anchor, and a second only if a
+  // seriously threatened city cluster merits sacrificing a mobile escort.
+  function eliminatorStationaryCities(g, side) {
+    const waiting = g.stations.filter(s => s.owner === side && s.eliminator > 0);
     const holders = sideEliminators(g, side);
-    const mobileDesired = holders.length > 0;
+    const fixed = new Set();
+    if (!waiting.length) return fixed;
+    const sorted = waiting.map(s => ({
+      s, score: eliminatorCoverageValue(g, side, s, s.id),
+    })).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
+    if (sorted[0].score >= ELIMINATOR_AI.anchorMinimum) fixed.add(sorted[0].s.id);
+    const leaders = g.units.filter(u => u.side === side && !u.eliminator && eliminatorCarrierScore(g, u) > 0);
+    const second = sorted.slice(1).find(x => ![...fixed].some(id => {
+      const anchor = g.stations.find(s => s.id === id);
+      return anchor && dist(g, anchor, x.s) <= ELIMINATOR.range;
+    }));
+    if (holders.length >= 3 && second && leaders.length &&
+        second.score >= 180 && second.score > sorted[0].score * 0.8 &&
+        g.units.some(u => u.hp > 0 && foe(g, u.side, side) &&
+          dist(g, u, second.s) <= 9)) fixed.add(second.s.id);
+    // If there is no eligible active courier, every charge remains stationary.
+    if (!leaders.length) for (const s of waiting) fixed.add(s.id);
+    return fixed;
+  }
+  function eliminatorAnchorCity(g, side) {
+    const fixed = eliminatorStationaryCities(g, side);
+    return g.stations.find(s => fixed.has(s.id)) || null;
+  }
+  function eliminatorCourierRoute(g, side, city, candidate, field = null) {
+    if (massOf(g, candidate) < 0 || massOf(g, candidate) !== massOf(g, city)) return null;
+    const straight = dist(g, candidate, city);
+    if (straight > ELIMINATOR_AI.maxPickupDistance) return null;
+    const route = field || goalField(g, side, [[city, 0]], 'land', null,
+      ELIMINATOR_AI.maxRouteCost);
+    const cost = route[candidate.r * g.cols + candidate.c];
+    if (!Number.isFinite(cost)) return null;
+    const speed = Math.max(1, TYPES[candidate.type]?.move || 3);
+    const turns = Math.max(0, Math.ceil(Math.max(0, cost - 1) / speed));
+    return turns <= ELIMINATOR_AI.pickupTurns ? { field: route, cost, turns } : null;
+  }
+  // Route-aware lab selection: first maximize defensible city value, then
+  // prioritize laboratories a Tier 1 commander can reach in a few turns.
+  function eliminatorProductionCity(g, side, anyLab = false) {
+    const mobileDesired = sideEliminators(g, side).length > 0;
     const leaders = g.units.filter(u => u.hp > 0 && u.side === side &&
-      !(u.eliminator > 0) && eliminatorCarrierScore(g, u) > 0);
+      !u.eliminator && eliminatorCarrierScore(g, u) > 0 &&
+      u.hp / maxHP(u) >= 0.65);
     const rivals = g.units.filter(u => u.hp > 0 && foe(g, u.side, side));
-    return g.stations
-      .filter(s => s.owner === side && !cityBusyReason(g, s) && !(s.eliminator > 0) &&
-        (anyLab || (s.lab || 0) >= ELIMINATOR.lab))
-      .map(s => {
-        const nearestEnemy = rivals.reduce((d, u) => Math.min(d, dist(g, u, s)), 99);
-        const safety = nearestEnemy <= 2 ? -260 : nearestEnemy <= 4 ? -110 : nearestEnemy <= 7 ? -20 : 35;
-        const candidates = leaders.filter(u => massOf(g, u) >= 0 && massOf(g, u) === massOf(g, s))
-          .map(u => ({ u, d: dist(g, u, s) }))
-          .filter(v => v.d <= ELIMINATOR_AI.maxPickupDistance)
-          .sort((a, b) => a.d - b.d || eliminatorCarrierScore(g, b.u) - eliminatorCarrierScore(g, a.u));
-        const courier = candidates[0];
-        const cover = eliminatorCoverageValue(g, side, s);
-        const mobile = courier
-          ? 380 - courier.d * 27 + Math.min(75, (eliminatorCarrierScore(g, courier.u) - 1000) * 0.15)
-          : -280;
-        // Every project matters; if no viable commander exists, create useful
-        // stationary cover rather than hoarding production or wasting remote labs.
-        const score = mobileDesired && leaders.length ? mobile + cover * 0.16 + safety
-          : cover + safety;
-        return { s, score: score + (anyLab ? (s.lab || 0) * 55 : 0) };
-      })
-      .sort((a, b) => b.score - a.score || a.s.id - b.s.id)[0]?.s || null;
+    const candidateLabs = g.stations.filter(s => s.owner === side &&
+      !cityBusyReason(g, s) && !(s.eliminator > 0) &&
+      (anyLab || (s.lab || 0) >= ELIMINATOR.lab));
+    const ranked = candidateLabs.map(s => {
+      const danger = rivals.reduce((d, u) => Math.min(d, dist(g, u, s)), 99);
+      const safety = danger <= 2 ? -260 : danger <= 4 ? -110 : danger <= 7 ? -20 : 35;
+      const cover = eliminatorCoverageValue(g, side, s);
+      const near = leaders.filter(u => massOf(g, u) === massOf(g, s))
+        .map(u => ({ u, d: dist(g,u,s) }))
+        .filter(x => x.d <= ELIMINATOR_AI.maxPickupDistance)
+        .sort((a,b) => a.d - b.d || a.u.id - b.u.id)[0];
+      return { s, cover, safety, near,
+        preview: (mobileDesired && leaders.length ? cover * 0.18 +
+          (near ? 450 - near.d * 22 : -450) : cover) + safety +
+          (anyLab ? (s.lab || 0) * 55 : 0) };
+    }).sort((a,b) => b.preview - a.preview || a.s.id - b.s.id);
+    // A bounded shortlist avoids running global Dijkstra on every laboratory.
+    const precise = ranked.slice(0, 8).map(entry => {
+      if (!mobileDesired || !leaders.length) return { ...entry, score: entry.preview };
+      const close = leaders.filter(u => massOf(g,u) === massOf(g,entry.s) &&
+        dist(g,u,entry.s) <= ELIMINATOR_AI.maxPickupDistance);
+      const field = close.length ? goalField(g, side, [[entry.s,0]], 'land', null,
+        ELIMINATOR_AI.maxRouteCost) : null;
+      const best = field && close.map(u => ({ u, route: eliminatorCourierRoute(g,side,entry.s,u,field) }))
+        .filter(x => x.route).sort((a,b) => a.route.turns-b.route.turns ||
+          b.u.hp - a.u.hp)[0];
+      return { ...entry,
+        score: entry.cover * 0.18 + entry.safety +
+          (best ? 480 - 80 * best.route.turns : -450) +
+          (anyLab ? (entry.s.lab || 0) * 55 : 0) };
+    }).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
+    return precise[0]?.s || ranked[0]?.s || null;
   }
   function aiAssignEliminators(g, side) {
     if (g.mode === 'scenario') return;
-    const anchor = eliminatorAnchorCity(g, side);
+    const fixed = eliminatorStationaryCities(g, side);
     for (const s of g.stations) {
-      if (s.owner !== side || !(s.eliminator > 0) || s === anchor ||
+      if (s.owner !== side || !(s.eliminator > 0) || fixed.has(s.id) ||
           s.eliminatorMoved === g.turn) continue;
       const carrier = g.units.filter(u => u.hp > 0 && u.side === side &&
           !u.eliminator && dist(g, u, s) <= 1)
         .map(u => [u, eliminatorCarrierScore(g, u)])
         .filter(([, score]) => score > 0)
-        .sort((a, b) => b[1] - a[1] || a[0].id - b[0].id)[0]?.[0];
-      if (carrier) transferEliminator(g, { city: s.id }, { unit: carrier.id });
+        .sort((a,b) => b[1] - a[1] || a[0].id - b[0].id)[0]?.[0];
+      if (carrier) transferEliminator(g, { city:s.id }, { unit:carrier.id });
     }
   }
-  // One stable courier per waiting charge, recalculated once per turn.  Holding
-  // a collection mission across turns avoids the old oscillation where city
-  // garrisons and offensive front targets reclaimed the leader on every move.
-  // Do not send a commander into combat purely to pick up a charge.
   function eliminatorCourierPlan(g, side, memo) {
     if (memo.eliminatorCouriers) return memo.eliminatorCouriers;
-    const old = (g.ai?.[side]?.eliminatorCourierAssignments || {});
+    const old = g.ai?.[side]?.eliminatorCourierAssignments || {};
     const assignments = {};
     memo.eliminatorCouriers = assignments;
     if (g.mode === 'scenario') return assignments;
-    const anchor = eliminatorAnchorCity(g, side);
-    const waiting = g.stations.filter(s =>
-      s.owner === side && s !== anchor && s.eliminator > 0 && s.eliminatorMoved !== g.turn);
+    const fixed = eliminatorStationaryCities(g,side);
+    const waiting = g.stations.filter(s => s.owner === side && !fixed.has(s.id) &&
+      s.eliminator > 0 && s.eliminatorMoved !== g.turn);
     if (!waiting.length) return assignments;
-    const rivals = g.units.filter(u => u.hp > 0 && foe(g, u.side, side));
+    const rivals = g.units.filter(u => u.hp > 0 && foe(g,u.side,side));
     const candidates = g.units.filter(u =>
       u.hp > 0 && u.side === side && !u.eliminator &&
-      eliminatorCarrierScore(g, u) > 0 && u.hp / maxHP(u) >= 0.65 &&
+      eliminatorCarrierScore(g,u) > 0 && u.hp/maxHP(u) >= 0.65 &&
       !memo.recoveries?.has(u.id) && !memo.guards?.[u.id]?.emergency &&
-      // Pulling a commander out of an active battle risks both the army and charge.
-      !rivals.some(v => dist(g, v, u) <= 2));
+      !rivals.some(v => dist(g,v,u) <= 2));
     const options = [];
     for (const s of waiting) {
-      const field = goalField(g, side, [[s, 0]], 'land');
-      for (const u of candidates) {
-        const d = dist(g, u, s);
-        if (d > ELIMINATOR_AI.maxPickupDistance ||
-            massOf(g, u) < 0 || massOf(g, u) !== massOf(g, s) ||
-            !Number.isFinite(field[u.r * g.cols + u.c])) continue;
+      const eligible = candidates.filter(u => massOf(g,u) === massOf(g,s) &&
+        dist(g,u,s) <= ELIMINATOR_AI.maxPickupDistance);
+      if (!eligible.length) continue;
+      const field = goalField(g,side,[[s,0]],'land',null,ELIMINATOR_AI.maxRouteCost);
+      for (const u of eligible) {
+        const route = eliminatorCourierRoute(g,side,s,u,field);
+        if (!route) continue;
         const committed = old[u.id] === s.id;
         const guardPenalty = memo.guards?.[u.id] ? 70 : 0;
-        const score = 400 + (eliminatorCarrierScore(g, u) - 1000) * 0.2 -
-          d * 26 - field[u.r * g.cols + u.c] * 2 +
-          (committed ? 115 : 0) - guardPenalty;
-        options.push({ s, u, score, field });
+        const frontRisk = rivals.some(v => dist(g, v, u) <= 5) ? 130 : 0;
+        const score = 440 + (eliminatorCarrierScore(g,u)-1000)*0.2 -
+          95 * route.turns - route.cost * 2 + (committed ? 115 : 0) -
+          guardPenalty - frontRisk;
+        options.push({s,u,score,field});
       }
     }
-    options.sort((a, b) => b.score - a.score || a.u.id - b.u.id || a.s.id - b.s.id);
+    options.sort((a,b)=>b.score-a.score || a.u.id-b.u.id || a.s.id-b.s.id);
     const takenUnits = new Set(), takenCities = new Set();
     for (const o of options) {
       if (takenUnits.has(o.u.id) || takenCities.has(o.s.id)) continue;
-      takenUnits.add(o.u.id);
-      takenCities.add(o.s.id);
-      assignments[o.u.id] = { city: o.s, field: o.field };
+      takenUnits.add(o.u.id); takenCities.add(o.s.id);
+      assignments[o.u.id] = {city:o.s,field:o.field};
     }
-    // Store only ordinary JSON, never full world fields or private enemy details.
     ((g.ai ||= {})[side] ||= {}).eliminatorCourierAssignments =
-      Object.fromEntries(Object.entries(assignments).map(([id, info]) => [id, info.city.id]));
+      Object.fromEntries(Object.entries(assignments).map(([id,info])=>[id,info.city.id]));
     return assignments;
   }
-  function aiEliminatorPickup(g, u, memo) {
-    if (g.mode === 'scenario' || !isReady(g, u) || u.eliminator ||
-        eliminatorCarrierScore(g, u) <= 0 || u.hp / maxHP(u) < 0.65) return null;
-    return eliminatorCourierPlan(g, u.side, memo)[u.id] || null;
+  function aiEliminatorPickup(g,u,memo) {
+    if (g.mode==='scenario' || !isReady(g,u) || u.eliminator ||
+        eliminatorCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
+    return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
   }
-  function eliminatorMobileCoverBonus(g, u, p, nearbyFoes) {
-    if (!(u.eliminator > 0) || COMMANDERS[u.cmd]?.storyTier !== 1) return 0;
-    const exposed = s => nearbyFoes.some(v => dist(g, v, s) <= 7) ? 1.4 : 0.6;
-    let value = 0;
-    for (const s of g.stations)
-      if (s.owner === u.side && dist(g, s, p) <= ELIMINATOR.range)
-        value += eliminatorCityValue(g, u.side, s) * exposed(s);
-    for (const v of g.units)
-      if (v.side === u.side && v.hp > 0 && dist(g, v, p) <= ELIMINATOR.range)
-        value += 25 + (v.cmd ? 70 : 0) + unitStrength(v) * 5;
-    // Still an attacking commander: defensive cover affects positioning, not combat permission.
-    return Math.min(85, value * 0.08);
+  function eliminatorMobileCoverBonus(g,u,p,nearbyFoes,memo) {
+    if (!(u.eliminator>0) || COMMANDERS[u.cmd]?.storyTier!==1) return 0;
+    const assets = eliminatorThreatAssets(g,u.side,memo);
+    const home = {c:u.c,r:u.r};
+    const before = eliminatorThreatCover(g,u.side,home,assets,u);
+    const after = eliminatorThreatCover(g,u.side,p,assets,u);
+    // Reward protecting high-value formations and deny moves that abandon
+    // a cluster. This must influence battlefield positioning without forbidding
+    // combat, assault captures, or emergency retreats.
+    const gain = Math.max(-220,Math.min(220,(after-before)*0.65));
+    return gain + Math.min(90,after*0.12);
   }
   function aiEliminatorMetrics(g, side) {
     const charges = sideEliminators(g, side);
