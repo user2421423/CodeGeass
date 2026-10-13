@@ -262,35 +262,208 @@
     return owner != null && owner !== side && E.foe(g, owner, side);
   }
 
-  function runFire(g, side) {
-    const report = { fired: [], failed: [] };
-    if (g.over || g.phase !== side) return report;
-    const shooting = [];
-    for (const gr of groups(g)) {
-      if (gr.side !== side || gr.autoConquer || gr.stance !== 'assault') continue;
-      for (const id of gr.units) {
-        const u = g.units.find(v => v.id === id && v.hp > 0 && v.side === side);
-        if (u) shooting.push({ u, gr });
-      }
+
+  // Coordination preferences only: no combat stats or action budgets are altered.
+  const ASSAULT_TUNING = Object.freeze({
+    readiness: .7, overwhelming: 1.5, assemblyGrace: 3, maxShotsPerUnit: 5,
+    damage: 1, kill: 95, objective: 70, routeOpening: 105, counterRisk: 1.2,
+  });
+  const hkey = p => p.c + ',' + p.r;
+  const sameHex = (a,b) => !!a && !!b && a.c === b.c && a.r === b.r;
+  const unitRole = u => {
+    const t = E.TYPES[u.type];
+    return t.naval === 'ship' ? 'naval' : t.branch === 'Artillery' ? 'artillery' :
+      /Heavy/.test(t.role || '') ? 'heavy' : /Raider|Scout/.test(t.role || '') ? 'raider' :
+      t.role === 'Assault' ? 'assault' : 'mainline';
+  };
+  function clearPlanned(g, gr, u, preserveGoto = false) {
+    if (!u || !gr?.operation) return;
+    if (!preserveGoto && matches(u, gr.operation.autoRouted?.[u.id])) delete u.goto;
+    delete gr.operation.autoRouted?.[u.id];
+  }
+  function resetOperation(g, gr) {
+    if (!gr?.operation) return;
+    for (const id of gr.units || []) clearPlanned(g,gr,g.units.find(u=>u.id===id));
+    delete gr.operation;
+  }
+  const live = (g,gr) => (gr.units || []).map(id =>
+    g.units.find(u => u.id === id && u.hp > 0 && u.side === gr.side)).filter(Boolean);
+  function manual(g,gr,u) {
+    return gr.manualOverrides?.[u.id] === g.turn ||
+      gr.operation?.manualOverrides?.[u.id] === g.turn ||
+      (!!u.goto && !matches(u, gr.operation?.autoRouted?.[u.id]));
+  }
+  function hostileCity(g,gr,units) {
+    const hostile = s => s && s.owner != null && E.foe(g,s.owner,gr.side);
+    const marked = g.stations.find(s => s.id === gr.operation?.targetCityId);
+    if (marked && hostile(marked)) return marked;
+    const ordered = g.stations.find(s => sameHex(s,gr.destination));
+    if (ordered && hostile(ordered)) return ordered;
+    if (!gr.autoConquer) return null;
+    const capturers = units.filter(u => E.canCapture(u) && unitRole(u)!=='naval');
+    const reserved = new Set(groups(g).filter(x => x !== gr && x.side === gr.side &&
+      x.stance === 'assault').map(x => x.operation?.targetCityId).filter(x => x != null));
+    const candidates = g.stations.filter(s=>hostile(s) && !reserved.has(s.id))
+      .sort((a,b)=>Math.min(...capturers.map(u=>E.distance(u,a,g))) -
+        Math.min(...capturers.map(u=>E.distance(u,b,g))) || String(a.id).localeCompare(String(b.id)));
+    return candidates.find(s=>capturers.some(u=>sameHex(u,s) ||
+      !E.gotoReason(g,u,E.tile(g,s.c,s.r)))) || null;
+  }
+  function routeMember(g,gr,u,p) {
+    const op=gr.operation;
+    if (!p || manual(g,gr,u)) return false;
+    if (sameHex(u,p)) { clearPlanned(g,gr,u); return true; }
+    if (matches(u,p)) { op.autoRouted[u.id]={c:p.c,r:p.r}; return true; }
+    clearPlanned(g,gr,u);
+    if (u.goto) return false;
+    if (!E.setGoto(g,u.id,p.c,p.r).ok) return false;
+    op.autoRouted[u.id]={c:p.c,r:p.r};
+    return true;
+  }
+  // Reserve a different reachable hex per unit, using terrain and occupancy.
+  // Artillery prefers its firing range behind the frontline; fast capturers prefer ring one.
+  function stage(g,u,city,reserved) {
+    const role=unitRole(u), t=E.TYPES[u.type];
+    const preferred=role==='artillery'?Math.max(1,Math.min(3,t.max||1)):
+      role==='naval'?2:role==='raider'||role==='heavy'?1:2;
+    const radius=role==='artillery'?3:2;
+    let best=null;
+    for (const p of E.within(g,city,radius)) {
+      if (sameHex(p,city) || reserved.has(hkey(p)) || E.TERRAIN[p.terrain]?.blocked) continue;
+      const occupant=E.unitAt(g,p);
+      if (occupant && occupant!==u) continue;
+      if (!sameHex(p,u) && E.gotoReason(g,u,p)) continue;
+      const ring=E.distance(p,city,g), trip=E.distance(p,u,g);
+      const exposed=role==='artillery' && g.units.some(v=>v.hp>0 &&
+        E.foe(g,v.side,u.side) && E.distance(v,p,g)<=1);
+      const score=Math.abs(ring-preferred)*16+trip*2+(exposed?35:0)+
+        (occupant===u?-12:0);
+      if(!best || score<best.score || score===best.score && hkey(p)<hkey(best.p))
+        best={p,score};
     }
-    for (const { u, gr } of shooting) {
-      if (g.over) break;
-      if (u.attacked || u.morale <= -3 || u.autoFireTurn === g.turn) continue;
-      const targets = E.targets(g, u);
-      if (!targets.length) continue;
-      const goal = gr.destination;
-      const ranked = targets.map(p => {
-        const enemy = E.unitAt(g, p), station = E.stationAt(g, p);
-        return { p, score: (goal && p.c === goal.c && p.r === goal.r ? 1000 : 0) +
-            (enemy ? 150 + (1 - enemy.hp / Math.max(1, E.maxHP(enemy))) * 30 : station ? 65 : 0) -
-            (goal ? E.distance(p, goal, g) : E.distance(p, u, g)) };
-      }).sort((a,b) => b.score - a.score || a.p.r - b.p.r || a.p.c - b.p.c);
-      const p = ranked[0].p;
-      const attack = E.attack(g, u.id, p.c, p.r);
-      if (attack.ok) {
-        u.autoFireTurn = g.turn;
-        report.fired.push({ id: u.id, ...attack });
-      } else report.failed.push(u.id);
+    return best?.p || null;
+  }
+  function planGroupAssault(g,gr) {
+    if (!gr || gr.stance!=='assault' || g.over || g.phase!==gr.side) return null;
+    const units=live(g,gr);
+    if(!units.length){gr.autoStatus='No active members';return null;}
+    const old=gr.operation, oldCity=old && g.stations.find(s=>s.id===old.targetCityId);
+    if(oldCity && !foeSide(g,oldCity.owner,gr.side)){
+      if(old.phase!=='consolidating'){
+        for(const u of units)clearPlanned(g,gr,u);
+        old.phase='consolidating';
+        gr.autoStatus='Consolidating at '+oldCity.name;
+        if(!gr.autoConquer)gr.destination=null;
+        return old;
+      }
+      if(g.turn<=old.lastPlanTurn)return old; // continue next turn, never immediately leapfrog
+      resetOperation(g,gr);
+    }
+    const city=hostileCity(g,gr,units);
+    if(!city){
+      gr.autoStatus=gr.autoConquer?'No reachable hostile cities':'Select a hostile city';
+      return null;
+    }
+    if(!gr.operation || gr.operation.targetCityId!==city.id){
+      resetOperation(g,gr);
+      gr.operation={targetCityId:city.id,phase:'planning',startedTurn:g.turn,
+        rallyHex:{c:city.c,r:city.r},lastPlanTurn:0,manualOverrides:{},
+        autoRouted:{},staging:{}};
+    }
+    const op=gr.operation;
+    gr.destination={c:city.c,r:city.r};
+    gr.targetStationId=city.id;
+    const defenders=g.units.filter(u=>u.hp>0 && E.foe(g,u.side,gr.side) &&
+      E.distance(u,city,g)<=2);
+    const active=units.filter(u=>unitRole(u)!=='naval'||E.distance(u,city,g)<=3);
+    const strength=active.reduce((sum,u)=>sum+u.hp,0);
+    const near=active.filter(u=>E.distance(u,city,g)<=Math.max(2,Math.min(3,E.TYPES[u.type].max||1)));
+    const close=near.reduce((sum,u)=>sum+u.hp,0);
+    const resistance=defenders.reduce((sum,u)=>sum+u.hp,0)+Math.max(0,city.shield||0);
+    const threatened=near.some(u=>defenders.some(e=>E.distance(e,u,g)<=1));
+    const proceed=near.length && (close >= ASSAULT_TUNING.readiness*Math.max(1,strength) ||
+      close >= ASSAULT_TUNING.overwhelming*Math.max(1,resistance) || threatened ||
+      g.turn-op.startedTurn>=ASSAULT_TUNING.assemblyGrace);
+    if(proceed)op.phase='assault';
+    else if(op.phase!=='assault')op.phase='assembling';
+    const cityOccupant=E.unitAt(g,city);
+    const open=city.shield<=0 && !cityOccupant;
+    const capturers=units.filter(u=>E.canCapture(u) && unitRole(u)!=='naval' && !manual(g,gr,u))
+      .sort((a,b)=>(unitRole(a)==='raider'?-100:0)-(unitRole(b)==='raider'?-100:0) ||
+        E.distance(a,city,g)-E.distance(b,city,g) || a.id-b.id);
+    let capturing=null;
+    if(open && capturers.length) {
+      const u=capturers.find(u=>!u.moved && !u.lastTurnMoved && u.autoOrderTurn!==g.turn &&
+        (sameHex(u,city)||!E.gotoReason(g,u,E.tile(g,city.c,city.r))));
+      if(u && !sameHex(u,city) && routeMember(g,gr,u,city))capturing=u.id;
+    }
+    const priority={heavy:0,mainline:1,assault:2,raider:3,artillery:4,naval:5};
+    const reserved=new Set();
+    if(capturing!=null)reserved.add(hkey(city));
+    for(const u of units.slice().sort((a,b)=>priority[unitRole(a)]-priority[unitRole(b)]||a.id-b.id)){
+      if(u.id===capturing || manual(g,gr,u) || sameHex(u,city))continue;
+      const p=stage(g,u,city,reserved);
+      if(!p)continue;
+      reserved.add(hkey(p));
+      op.staging[u.id]={c:p.c,r:p.r};
+      routeMember(g,gr,u,p);
+    }
+    op.lastPlanTurn=g.turn;
+    gr.autoStatus=op.phase==='assembling'?'Assembling '+Math.round(close/Math.max(1,strength)*100)+'% strength':
+      open?'City open for capture':'Coordinated assault';
+    return op;
+  }
+  function planAssaults(g,side) {
+    if(g.over||g.phase!==side||side!==g.player)return;
+    prune(g);
+    for(const gr of groups(g).filter(x=>x.side===side&&x.stance==='assault'))planGroupAssault(g,gr);
+  }
+  function attackScore(g,gr,u,p,pr) {
+    const t=E.TYPES[u.type], role=unitRole(u), v=E.unitAt(g,p),
+      s=E.stationAt(g,p), city=g.stations.find(x=>x.id===gr.operation?.targetCityId);
+    const kill=v && pr.unit>=v.hp?ASSAULT_TUNING.kill:0;
+    const objective=city && sameHex(city,p)?ASSAULT_TUNING.objective:
+      city && E.distance(city,p,g)<=2?25:0;
+    const opens=city && sameHex(city,p) &&
+      (v && pr.unit>=v.hp || s?.shield>0 && pr.shield>=s.shield) ?
+      ASSAULT_TUNING.routeOpening:0;
+    const roleBonus=role==='artillery'&&s?.shield>0?50:
+      (role==='heavy'||role==='assault')&&v&&E.TYPES[v.type].branch==='Armor'?25:
+      role==='mainline'&&v&&v.hp<E.maxHP(v)/2?20:0;
+    const exposure=pr.counter*ASSAULT_TUNING.counterRisk*
+      (role==='artillery'||u.hp<E.maxHP(u)*.4?1.5:1);
+    return ASSAULT_TUNING.damage*(pr.unit+pr.shield)+kill+objective+opens+roleBonus-exposure;
+  }
+  function runFire(g,side) {
+    const report={fired:[],failed:[]},counts=new Map();
+    if(g.over||g.phase!==side)return report;
+    const limit=groups(g).filter(gr=>gr.side===side&&gr.stance==='assault')
+      .reduce((n,gr)=>n+gr.units.length,0)*ASSAULT_TUNING.maxShotsPerUnit;
+    for(let i=0;i<limit&&!g.over;i++){
+      let best=null;
+      for(const gr of groups(g)){
+        if(gr.side!==side||gr.stance!=='assault'||gr.operation?.phase!=='assault')continue;
+        for(const u of live(g,gr)){
+          if(manual(g,gr,u)||u.attacked||u.morale<=-3||
+            (counts.get(u.id)||0)>=ASSAULT_TUNING.maxShotsPerUnit)continue;
+          for(const p of E.targets(g,u)){
+            const pr=E.preview(g,u.id,p.c,p.r);
+            if(!pr)continue;
+            const score=attackScore(g,gr,u,p,pr);
+            if(!best||score>best.score||score===best.score&&u.id<best.u.id)
+              best={gr,u,p,score};
+          }
+        }
+      }
+      if(!best)break;
+      const {gr,u,p}=best,result=E.attack(g,u.id,p.c,p.r);
+      counts.set(u.id,(counts.get(u.id)||0)+1);
+      if(result.ok){
+        u.autoFireTurn=g.turn;
+        report.fired.push({id:u.id,...result});
+        // Legal targets are recomputed after every single attack.
+        planGroupAssault(g,gr);
+      }else report.failed.push(u.id);
     }
     return report;
   }
@@ -300,6 +473,9 @@
   E.ARMY_GROUP_STANCES = STANCES;
   E.setArmyGroupStance = setStance;
   E.runArmyGroupFire = runFire;
+  E.planArmyGroupAssault = planAssaults;
+  E.planGroupAssault = planGroupAssault;
+  E.ARMY_GROUP_ASSAULT_TUNING = ASSAULT_TUNING;
   E.armyGroups = groups;
   E.armyGroup = find;
   E.armyGroupPrune = prune;
