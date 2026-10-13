@@ -175,7 +175,7 @@ function runPlayerAutomatedOrders() {
   orders.fired = fire.fired;
   // Capture phase: an unmoved raider can occupy a newly opened city this turn.
   E.planArmyGroupAssault(game, game.player);
-  const capture = E.runGotos(game, game.player);
+  const capture = E.runGotos(game, game.player, { assaultOnly: true });
   for (const key of ['moved','arrived','blocked','lost'])
     orders[key].push(...capture[key]);
   E.planArmyGroupAssault(game, game.player);
