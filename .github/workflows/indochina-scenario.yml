@@ -42,3 +42,19 @@ jobs:
           node-version: '22'
       - name: Three-turn real-engine AI versus AI playtest
         run: node tools/indochina_sim.cjs ${{ matrix.player }} ${{ matrix.difficulty }} ${{ matrix.seed }} 3
+
+  extended-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        player: ['britannia', 'cf']
+        seed: [11, 29]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Forty-turn full-engine strategic balance run
+        run: node tools/indochina_sim.cjs ${{ matrix.player }} normal ${{ matrix.seed }} 40

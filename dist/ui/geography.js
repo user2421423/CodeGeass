@@ -697,12 +697,36 @@ const GEOGRAPHY = (() => {
         ctx.fill();
       }
     }
+    // Indochina river systems: plotted from geographic coordinates in the
+    // same equirectangular hex projection used by scenarios-indochina.js.
+    // These strokes are visual only; riverbeds do not become impassable sea.
+    if(g.scenario?.id==='conquest-indochina'&&g.scenario.rivers){
+      const b=g.scenario.bounds, spanLon=b.east-b.west,spanLat=b.north-b.south;
+      ctx.save();
+      ctx.strokeStyle='#4ac4de';
+      ctx.globalAlpha=.76;
+      ctx.lineWidth=4.2;
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      for(const line of Object.values(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        for(let i=0;i<line.length;i++){
+          const [lon,lat]=line[i];
+          const x=SQ*R*((lon-b.west)*g.cols/spanLon-.5)+R;
+          const y=1.5*R*((b.north-lat)*g.rows/spanLat-.5)+R;
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     ctx.restore();
     return true;
   }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
-    if (g.scenario.id === 'bering-strait')
+    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'conquest-indochina')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;

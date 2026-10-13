@@ -1,5 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs');
 const E=require('../dist/engine.js');
 require('../dist/engine/ai.js');
 require('../dist/scenarios.js');
@@ -131,4 +132,10 @@ test('Both sides retain standard factory recruitment and game saving',()=>{
   assert.equal(restored.stations.length,44);
   assert.equal(restored.units.length,g.units.length);
  }
+});
+
+test('Indochina map uses its own coastal hex render and visible river overlays',()=>{
+  const src=fs.readFileSync(require.resolve('../dist/ui/geography.js'),'utf8');
+  assert.match(src,/g.scenario.id === 'bering-strait' \|\| g.scenario.id === 'conquest-indochina'/);
+  assert.match(src,/g.scenario\?\.id==='conquest-indochina'&&g.scenario.rivers/);
 });
