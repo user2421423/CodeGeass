@@ -4476,11 +4476,6 @@
         ...cityBase([name, lon, lat, owner, tier, capital, fort]),
         producedTurn: 0,
       };
-      // Occupied Russian/Siberian administrations are less productive than developed Britannian cores.
-      if (cfg.id === 'ufn2018' && owner === 'eb' && name !== 'St. Petersburg') {
-        s.income = Math.round(s.income * 0.75);
-        s.industry = Math.round(s.industry * 0.75);
-      }
       s.shield = s.maxShield;
       setTileTerrain(g, at, 'plains');
       g.stations.push(s);
