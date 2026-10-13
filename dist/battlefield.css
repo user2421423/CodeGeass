@@ -511,6 +511,17 @@ h3 {
 .goto-line {
   color: #ffd76a;
 }
+.dock-group-label {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border: 1px solid rgba(244, 205, 116, 0.45);
+  border-radius: 4px;
+  color: #f1d68b;
+  font: 10px/1.2 sans-serif;
+  vertical-align: middle;
+  white-space: nowrap;
+}
 .dock-actions .fire-button {
   background: linear-gradient(#ac6452, #71372d);
   border: 1px solid #e6a176;
