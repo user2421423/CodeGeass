@@ -1,0 +1,74 @@
+name: Eliminator AI ablation trials
+on:
+  push:
+    branches: ['feature/eliminator-strategic-ai']
+    paths:
+      - '.github/workflows/eliminator-ablations.yml'
+      - 'tools/eliminator-ablations.cjs'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/eliminator-carriers.test.cjs
+      - run: node --check tools/eliminator-ablations.cjs
+      - run: |
+          for v in current escort allocation logistics combined; do
+            node tools/eliminator-ablations.cjs "$v"
+            node --check dist/engine/ai.js
+          done
+  ablation:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        mode: ['2017', '2018']
+        seed: [401, 777, 13579]
+        variant: ['current', 'escort', 'allocation', 'logistics', 'combined']
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} ${{ matrix.variant }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Run exact-seed current versus variant
+        shell: bash
+        run: |
+          set -euo pipefail
+          TURNS=35
+          if [ "${{ matrix.mode }}" = 2017 ]; then TURNS=45; fi
+          node tools/eliminator-ablations.cjs current
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "$TURNS" current > current.json
+          node tools/eliminator-ablations.cjs "${{ matrix.variant }}"
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "$TURNS" "${{ matrix.variant }}" > variant.json
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const a=JSON.parse(fs.readFileSync('current.json')),b=JSON.parse(fs.readFileSync('variant.json'));
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','avgCarried','avgWaiting','carrierTier1','carrierLosses','weightedProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtEnd','elapsedMs','finalCities'];
+          const comparison=Object.fromEntries(keys.map(k=>[k,{current:a[k],variant:b[k]}]));
+          const result={mode:a.mode,seed:a.seed,variant:b.variant,comparison};
+          console.log('ABLATION_COMPARE '+JSON.stringify(result));
+          fs.writeFileSync('comparison.json',JSON.stringify(result,null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            '## '+a.mode+' seed '+a.seed+' variant '+b.variant+'\n\n'+
+            '|Metric|Current|Variant|\n|---|---:|---:|\n'+
+            keys.filter(k=>typeof a[k]==='number').map(k=>'|'+k+'|'+a[k]+'|'+b[k]+'|').join('\n')+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ablation-${{ matrix.mode }}-${{ matrix.seed }}-${{ matrix.variant }}
+          path: |
+            current.json
+            variant.json
+            comparison.json
+          retention-days: 14
