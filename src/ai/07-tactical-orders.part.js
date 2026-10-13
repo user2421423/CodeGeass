@@ -35,7 +35,7 @@
     // Pick up a waiting charge only when a Tier 1 commander can make a short, safe detour.
     // After collection the commander resumes the usual assault AI, carrying protection forward.
     const pickup = aiEliminatorPickup(g, u, memo);
-    if (pickup) {
+    if (pickup && pickup.city.owner === u.side && pickup.city.eliminator > 0) {
       if (dist(g, u, pickup.city) <= 1) {
         transferEliminator(g, { city: pickup.city.id }, { unit: u.id });
       } else if (!u.moved && !u.attacked) {
@@ -48,8 +48,12 @@
           pickup.field[p.r * g.cols + p.c] < current)
           .sort((a, b) => pickup.field[a.r * g.cols + a.c] - pickup.field[b.r * g.cols + b.c] ||
             dist(g, a, pickup.city) - dist(g, b, pickup.city));
-        if (candidates[0]) {
-          const m = move(g, id, candidates[0].c, candidates[0].r);
+        // A courier avoids immediate enemy contact when a safe path exists.
+        const rivals = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side));
+        const safe = candidates.filter(p => !rivals.some(v => dist(g, v, p) <= 2));
+        const destination = safe[0] || candidates[0];
+        if (destination) {
+          const m = move(g, id, destination.c, destination.r);
           if (m.ok) {
             events.push({ kind: 'move', ...m, id });
             if (dist(g, u, pickup.city) <= 1)
