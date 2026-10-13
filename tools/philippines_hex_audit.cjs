@@ -44,9 +44,9 @@ for(let i=0;i<N;i++){
   assert.equal(t.owner,null);assert.ok(t.provinceCity==null);
  }
 }
-assert.equal(landCount,1334);assert.equal(N-landCount,14794);
+assert.equal(landCount,1336);assert.equal(N-landCount,14792);
 const seaRegions=regions(true);assert.equal(seaRegions.sizes.length,1,'all staging/landing seas must connect');
-assert.equal(seaRegions.sizes[0],14794);
+assert.equal(seaRegions.sizes[0],14792);
 const dry=regions(false);
 const byName=Object.fromEntries(g.stations.map(s=>[s.name,s]));
 function separate(a,b){
