@@ -7,6 +7,7 @@ require('../dist/europe-landmask.js');
 const invasion = require('../dist/scenarios.js');
 const division = require('../dist/scenarios-division-japan.js');
 const europe = require('../dist/scenarios-europe.js');
+const bering = require('../dist/scenarios-bering.js');
 
 test('2017 FLEIJA unlocks on turn 15 and 2018 U.F.N. on turn 5', () => {
   for (const [era, unlock] of [['world',15], ['ufn2018',5]]) {
@@ -35,6 +36,7 @@ for(const [name,scenario] of [
   ['Invasion of Japan',invasion],
   ['Division of Japan',division],
   ['The European War',europe],
+  ['The Bering Strait Crisis',bering],
 ]) {
   test('FLEIJA disabled in '+name+' even with imported arsenal/projects',()=>{
     const g = scenario.create(scenario.sides[0],'normal',51);
