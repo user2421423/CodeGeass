@@ -311,7 +311,7 @@
     memo.localDefense={alerts:[],dispatched:0};
     const doctrine=scenarioDoctrine(g);
     if(doctrine!=='division' && doctrine!=='europe' &&
-      !(doctrine==='invasion' && g.turn>=10))return;
+      !(doctrine==='invasion' && g.scenario?.phase==='three-way-war'))return;
     const own=g.stations.filter(s=>s.owner===side),
       enemies=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&!isShip(u)),
       alerts=new Map(),deployed=new Set(),next={},
