@@ -33,6 +33,7 @@ const cuts=[
  ['Peleliu separation',(x,y)=>Math.abs(y-7.18)<.09&&x>134.0&&x<134.85]
 ];
 const bytes=Buffer.alloc(W*H/8);
+const corrections=require('./data/philippines_hex_corrections.json');
 let cells=0;
 const cutsCount=Object.fromEntries(cuts.map(([name])=>[name,0]));
 for(let r=0;r<H;r++)for(let c=0;c<W;c++){
@@ -43,7 +44,19 @@ for(let r=0;r<H;r++)for(let c=0;c<W;c++){
  if(cut){cutsCount[cut[0]]++;continue;}
  const i=r*W+c;bytes[i>>3]|=128>>(i&7);cells++;
 }
-assert.equal(bytes.toString('base64'),stored,'Coast mask must match the source polygons and channel corrections');
+// Audit-derived corrections remove Borneo, split accidentally joined islets,
+ // refine city landing shores and separate Palau/Yap staging landmasses.
+ for(const [c,r] of corrections.land){
+  assert.ok(c>=0&&c<W&&r>=0&&r<H);
+  const i=r*W+c;bytes[i>>3]|=128>>(i&7);
+ }
+ for(const [c,r] of corrections.sea){
+  assert.ok(c>=0&&c<W&&r>=0&&r<H);
+  const i=r*W+c;bytes[i>>3]&=~(128>>(i&7));
+ }
+ cells=0;
+ for(let i=0;i<W*H;i++)if(bytes[i>>3]&(128>>(i&7)))cells++;
+ assert.equal(bytes.toString('base64'),stored,'Coast mask must match the source polygons and audited corrections');
 if(require.main===module)console.log('PHILIPPINES_MASK_REPRODUCED '+JSON.stringify({cols:W,rows:H,
- land:cells,sea:W*H-cells,channelCorrections:cutsCount}));
+ land:cells,sea:W*H-cells,channelCorrections:cutsCount,landOverrides:corrections.land.length,seaOverrides:corrections.sea.length}));
 module.exports={cols:W,rows:H,land:cells,cutsCount};
