@@ -16,13 +16,13 @@
   const FUNDING={britannia:{credits:420,industry:245,science:43,sakuradite:26},
     eu:{credits:405,industry:245,science:43,sakuradite:26}};
   function geo(c,r){
-    return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*60/COLS,
-      lat:BOUNDS.north-(r+.5)*38/ROWS};
+    return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*(BOUNDS.east-BOUNDS.west)/COLS,
+      lat:BOUNDS.north-(r+.5)*(BOUNDS.north-BOUNDS.south)/ROWS};
   }
   function locate(lon,lat){
-    const r=Math.max(0,Math.min(ROWS-1,Math.round((BOUNDS.north-lat)*ROWS/38-.5)));
+    const r=Math.max(0,Math.min(ROWS-1,Math.round((BOUNDS.north-lat)*ROWS/(BOUNDS.north-BOUNDS.south)-.5)));
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
-      (lon-BOUNDS.west)*COLS/60-.5-.5*(r&1))))};
+      (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
   function nearest(g,p,valid,radius=9){
     let best=null,d=Infinity;
@@ -35,15 +35,14 @@
       }
     return best;
   }
-  const MOUNTAINS=[[8.5,46.4,5,1.4],[21,48.4,5.4,1.8],
-    [-1,43,5,1.2],[24,42.1,3.5,1.1],[10.8,62,4,5.3],[15,68,3.5,2.8]];
-  const FORESTS=[[24,55,6,4],[28,59,6,3],[15,57,6,4],[9,51,6,3]];
+  const MOUNTAINS=[[157,57,6,3],[171,65,8,4],[184,64,5,2],[204,62,8,3],[216,63,8,5],[213,69,5,2]];
+  const FORESTS=[[154,60,7,3],[210,63,10,5],[222,61,9,4]];
   function density(p,areas){return Math.max(0,...areas.map(([x,y,w,h])=>
     Math.exp(-(((p.lon-x)/w)**2+((p.lat-y)/h)**2)*1.6)));}
   function landscape(p,c,r){
     const mountain=density(p,MOUNTAINS),forest=density(p,FORESTS);
     return mountain>.63?'mountain':
-      mountain>.29||forest>.51||p.lat>66||((c*29+r*17)%31<4&&p.lat>49)
+      mountain>.29||forest>.53||p.lat>70||((c*29+r*17)%31<4&&p.lat>60)
         ?'forest':'plains';
   }
   function orderGroup(g,id,target){
@@ -61,94 +60,61 @@
     return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
   }
   function create(player='eu',difficulty='normal',seed=201701){
-    if(!SIDES.includes(player))throw Error('Unsupported European War faction: '+player);
+    if(!SIDES.includes(player))throw Error('Unsupported Bering Strait Crisis faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
     const g={
       game:'knightmare',version:1,rulesVersion:E.RULES_VERSION,player,difficulty,
-      mode:'scenario',era:'european-war',order:[player,...SIDES.filter(s=>s!==player)],
+      mode:'scenario',era:'bering-strait',order:[player,...SIDES.filter(s=>s!==player)],
       seed,wrap:false,cols:COLS,rows:ROWS,turn:1,phase:player,nextId:1,
       tiles:[],units:[],stations:[],sites:[],log:[],strikes:[],launches:[],
       fallen:{},economy:{},tech:{},officers:Object.fromEntries(
         Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
       roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,
-      eliteDeployed:{},arsenal:{eu:0,eb:0},
+      eliteDeployed:{},arsenal:{britannia:0,eu:0},
       automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
       mapRevision:0,teams:null,
-      factions:{eb:E.FACTIONS.eb},lineup:{eb:E.ROSTER.eb}
+      factions:{},lineup:{}
     };
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'european-war',key:'europe',title:'The European War',
-      phase:'continental-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
-    // Euro Britannia uses compatible Britannian Elite Forces for this
+    g.scenario={id:'bering-strait',key:'bering',title:'The Bering Strait Crisis',
+      phase:'amphibious-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
+    // Britannia uses compatible Britannian Elite Forces for this
     // scenario only. No global HQ, Conquest, or Japan access is changed.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
       eu:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('eu')),
-      eb:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
+      britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    const packed=root.EUROPE_LAND_BITS || (typeof require==='function'?
-      require('./europe-landmask.js'):null);
-    const bits=typeof packed==='string'?packed:root.EUROPE_LAND_BITS;
-    if(!bits)throw Error('European tactical landmask was not loaded');
+    const packed=root.BERING_LAND_BITS || (typeof require==='function'?
+      require('./bering-landmask.js'):null);
+    const bits=typeof packed==='string'?packed:root.BERING_LAND_BITS;
+    if(!bits)throw Error('Bering tactical landmask was not loaded');
     const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
-    if(raw.length!==COLS*ROWS/8)throw Error('European tactical landmask is corrupt');
+    if(raw.length!==COLS*ROWS/8)throw Error('Bering tactical landmask is corrupt');
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
       const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
       return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
     });
-    // The packed continental coastline includes the African coast and Asian
-    // Anatolia. Audit its connected landmasses BEFORE allocating city provinces:
-    // islands such as Sicily, Sardinia, Corsica and Crete must remain playable.
-    const rawComponents=new Int16Array(g.tiles.length).fill(-1),rawRegions=[];
-    for(let i=0;i<g.tiles.length;i++){
-      if(g.tiles[i].terrain==='sea'||rawComponents[i]>=0)continue;
-      const q=[g.tiles[i]],id=rawRegions.length;
-      rawComponents[i]=id;
-      let minLon=Infinity,maxLon=-Infinity,maxLat=-Infinity;
-      for(let k=0;k<q.length;k++){
-        const t=q[k],p=geo(t.c,t.r);
-        minLon=Math.min(minLon,p.lon);maxLon=Math.max(maxLon,p.lon);
-        maxLat=Math.max(maxLat,p.lat);
-        for(const n of E.adjacent(g,t)){
-          const j=n.r*COLS+n.c;
-          if(n.terrain==='sea'||rawComponents[j]>=0)continue;
-          rawComponents[j]=id;q.push(n);
-        }
-      }
-      rawRegions.push({size:q.length,minLon,maxLon,maxLat});
-    }
-    const mainland=rawRegions.indexOf(rawRegions.reduce((best,r)=>
-      r.size>best.size?r:best,rawRegions[0]));
-    const excludedRegions=new Set(rawRegions.flatMap((region,id)=>
-      id!==mainland&&region.maxLat<38&&region.minLon<12&&region.maxLon>-7?[id]:[]));
-    function anatolianLand(p){
-      // West of the Bosporus (European Thrace) remains in the theatre.
-      // Beyond it, the Black Sea / Caucasus boundary excludes Asia.
-      if(p.lon<26.5)return false;
-      if(p.lon<28)return p.lat<40.25;
-      if(p.lon<29.2)return p.lat<40.65;
-      return p.lat<41.55+0.07*(p.lon-29.2);
-    }
-    const excludedLand=new Uint8Array(g.tiles.length);
-    for(let i=0;i<g.tiles.length;i++){
-      const t=g.tiles[i];
-      if(t.terrain!=='sea'&&(excludedRegions.has(rawComponents[i])||
-          (rawComponents[i]===mainland&&anatolianLand(geo(t.c,t.r))))){
-        excludedLand[i]=1;
-        t.terrain='sea'; // Temporarily water for city/army placement.
-      }
-    }
-    // Every genuine land-to-sea edge is coastal, including island tips.
-    // A theatre-border cut is NOT a new navigable shoreline.
-    for(const t of g.tiles)if(t.terrain!=='sea'){
-      if(E.adjacent(g,t).some(n=>n.terrain==='sea'&&
-          !excludedLand[n.r*COLS+n.c]))t.terrain='coast';
-    }
+    // Sea routes remain unrestricted across the strait and the entire
+    // Kamchatka–Aleutian flank, rather than stopping five hexes offshore.
+    const packed=root.BERING_LAND_BITS || (typeof require==='function'?
+      require('./bering-landmask.js'):null);
+    const bits=typeof packed==='string'?packed:root.BERING_LAND_BITS;
+    if(!bits)throw Error('Bering shoreline mask was not loaded');
+    const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
+    if(raw.length!==COLS*ROWS/8)throw Error('Bering shoreline mask is corrupt');
+    g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
+      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
+      const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
+      return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
+    });
+    for(const t of g.tiles)if(t.terrain!=='sea'&&
+      E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
@@ -156,8 +122,8 @@
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
-      if(!at)throw Error('Cannot place European city '+name);
-      const capital=name==='Paris'||name==='St Petersburg';
+      if(!at)throw Error('Cannot place Bering city '+name);
+      const capital=name==='Anchorage'||name==='Magadan';
       const shield=fort?400:120+60*tier;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
@@ -214,7 +180,7 @@
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),10);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
-        const stack=side==='eb'?(i===0?3:2):(i===0?2:1);
+        const stack=i===0?3:2;
         const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,stack,cmd);
         group(side,name).units.push(u.id);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
@@ -223,14 +189,16 @@
     const taken=new Set();
     for(const [name,level] of Object.entries(PORTS)){
       const s=g.stations.find(v=>v.name===name);
-      const at=nearest(g,s,t=>t.terrain==='sea'&&!taken.has(E.key(t)),9);
+      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!taken.has(E.key(t)))
+        .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
+          E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
       if(!at)throw Error('Cannot place naval port '+name);
       s.portAt={c:at.c,r:at.r};s.portLevel=level;s.portOwner=s.owner;
       taken.add(E.key(at));
     }
     for(const [side,name,type,count] of FLEETS){
       const s=g.stations.find(v=>v.name===name);
-      if(!E.TYPES[type]?.naval)throw Error('Invalid European fleet type '+type);
+      if(!E.TYPES[type]?.naval)throw Error('Invalid Bering fleet type '+type);
       const fleet={id:'fleet-'+g.scenario.groups.length,side,
         name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
@@ -241,24 +209,8 @@
       }
       g.scenario.groups.push(fleet);
     }
-    // The ocean stays visually continuous while only coastal shipping
-    // theatres within five hexes of land are actionable.
-    const depth=new Int16Array(g.tiles.length).fill(-1),q=[];
-    for(const t of g.tiles)if(t.terrain!=='sea'){
-      depth[t.r*COLS+t.c]=0;q.push(t);
-    }
-    for(let i=0;i<q.length;i++){
-      const t=q[i],d=depth[t.r*COLS+t.c];
-      if(d>=5)continue;
-      for(const n of E.adjacent(g,t)){
-        const j=n.r*COLS+n.c;
-        if(n.terrain==='sea'&&depth[j]===-1){depth[j]=d+1;q.push(n);}
-      }
-    }
-    for(const t of g.tiles)if(t.terrain==='sea'&&
-      (excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
-       depth[t.r*COLS+t.c]>5))t.terrain='offmap';
-    if(difficulty==='elite')E.prepareEliteEurope(g);
+    // The entire connected regional sea stays navigable for fleets.
+    if(difficulty==='elite')E.prepareEliteBering(g);
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
@@ -268,7 +220,7 @@
           [resource,Math.round(n*factor)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
-        g.economy[side][resource]=actual[resource]*(side==='eu'?2:3);
+        g.economy[side][resource]=actual[resource]*2;
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
@@ -276,7 +228,7 @@
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
-    E.log(g,'Euro Britannia attacks from the east; the European republic defends its industrial heartland.',player);
+    E.log(g,'Britannia and Europia United contest the Bering Strait, with invasion routes through Kamchatka and the Aleutians.',player);
     return g;
   }
   function onTurn(){return false;}
@@ -284,21 +236,21 @@
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
   function objective(g,side=g.player){
-    return 'Conquer all '+CITIES.length+' European cities ('+
+    return 'Conquer all '+CITIES.length+' Bering theatre cities ('+
       g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).';
   }
   function winner(g){
-    if(g.mode!=='scenario'||g.scenario?.id!=='european-war'||
+    if(g.mode!=='scenario'||g.scenario?.id!=='bering-strait'||
       g.stations.length!==CITIES.length)return null;
     for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
       return {winner:side,reason:E.FACTIONS[side].name+
-        ' has conquered every city in Europe.'};
+        ' has conquered every city in Bering.'};
     return null;
   }
-  const api={id:'european-war',title:'The European War',cols:COLS,rows:ROWS,
+  const api={id:'bering-strait',title:'The Bering Strait Crisis',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  E.scenarios={...(E.scenarios||{}),europe:api,
-    byId:{...(E.scenarios?.byId||{}),'european-war':api}};
+  E.scenarios={...(E.scenarios||{}),bering:api,
+    byId:{...(E.scenarios?.byId||{}),'bering-strait':api}};
   if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
