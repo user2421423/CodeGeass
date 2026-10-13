@@ -195,7 +195,7 @@ test('Area 18 renderer paints all faction land instead of the Japan-only atlas',
   });
   const painted=new Set();
   const ctx={
-    save(){},restore(){},beginPath(){},rect(){},clip(){},fillRect(){},
+    save(){},restore(){},beginPath(){},closePath(){},rect(){},clip(){},fillRect(){},
     moveTo(){},lineTo(){},
     createLinearGradient(){return {addColorStop(){}};},
     fill(){if(this.globalAlpha===0.88)painted.add(this.fillStyle);}
