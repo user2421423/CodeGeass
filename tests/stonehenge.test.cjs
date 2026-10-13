@@ -148,3 +148,31 @@ test('Europia strategic high command assigns actual western and eastern theaters
       side+' must target only E.U. cities, never allied cities');
   }
 });
+
+test('Visual painter fills European political land instead of an all-ocean Stonehenge map',()=>{
+ // Simulate Europe alongside an unrelated Japanese island. The old renderer
+ // picked the Japan-only geometry and failed to paint any Stonehenge land.
+ const fs=require('node:fs');
+ const source=fs.readFileSync(require('node:path').join(__dirname,'../dist/ui/geography.js'),'utf8');
+ const R=43,SQ=Math.sqrt(3),W=SQ*R*180,H=1.5*R*76;
+ const make=new Function('R','SQ','WORLD_W','WORLD_H','GEOGRAPHY_SHAPES','JAPAN_SHAPES','E','document',
+   source+'\nreturn GEOGRAPHY;');
+ const europeanLand=[[-14,73],[48,73],[48,33],[-14,33]];
+ const japanLand=[[139,34],[141,34],[141,36],[139,36]];
+ const geo=make(R,SQ,W,H,{land:[europeanLand],water:[],biomes:[]},
+   [japanLand],E,{});
+ const g=stone.create('britannia','normal',23);
+ let ocean=0,territory=0;
+ const colors=new Set(stone.sides.map(s=>(g.factions[s]||E.FACTIONS[s]).color));
+ const ctx={
+   fillStyle:'',save(){},restore(){},beginPath(){},rect(){},clip(){},
+   moveTo(){},lineTo(){},closePath(){},transform(){},
+   createLinearGradient(){return {addColorStop(){}};},
+   fillRect(){ocean++;},
+   fill(){if(colors.has(this.fillStyle))territory++;}
+ };
+ const drawn=geo.paint(ctx,g,0,SQ*R*(g.cols+1),0,1.5*R*(g.rows+1),0.85);
+ assert.equal(drawn,true);
+ assert.ok(ocean>=1,'the sea must still be painted');
+ assert.ok(territory>=3,'the three European powers must have visible land, found '+territory+' fills');
+});

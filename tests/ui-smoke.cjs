@@ -252,22 +252,25 @@ const modal = () => node('modal-root').innerHTML;
     honshu:true,kyushu:true,shikoku:true,hokkaido:true,korea:false,russia:false
   }, 'scenario should draw Japanese islands only, not Korea or Russia');
   const regionSource = fs.readFileSync(path.join(__dirname, '../dist/ui/geography.js'), 'utf8');
-  assert(regionSource.includes("const europeOnly = g.scenario.id === 'european-war'") &&
+  assert(regionSource.includes('const europeOnly = europeanRegion(g)') &&
+    regionSource.includes("g.scenario?.id === 'operation-stonehenge'") &&
     regionSource.includes('if (!europeOnly) {') &&
-    regionSource.includes("g.scenario?.id === 'european-war' ? 1 : 2"),
+    regionSource.includes('europeanRegion(g) ? 1 : 2'),
     'Europe-only atlas must hide extra-continental silhouettes and limit coastal colour bleed');
   assert(regionSource.includes('clipPath(ctx, clip)') && regionSource.includes('japanColorGroups(g)'),
     'Japan faction ownership is clipped to the realistic island outlines');
 
   const scenarioCamera = fs.readFileSync(path.join(__dirname, '../dist/ui/core.js'), 'utf8');
   const scenarioLaunch = fs.readFileSync(path.join(__dirname, '../dist/ui/scenario-screens.js'), 'utf8');
-  assert(scenarioCamera.includes("game.scenario?.id === 'european-war' ? 5.4 : 2.15"),
+  assert(scenarioCamera.includes("['european-war','operation-stonehenge'].includes(game.scenario?.id) ? 5.4 : 2.15"),
     'Europe uses a tactical opening camera while Japan retains its existing zoom');
   const scenarioZooms = run(`(() => {
     const prior = game;
     try {
       game = E.scenarios.europe.create('eb', 'normal', 17);
       const europe = homeZoom();
+      game = E.scenarios.stonehenge.create('britannia', 'normal', 17);
+      const stonehenge = homeZoom();
       const europeLimit = turnLimit();
       const europeTurnLabel = 'Turn ' + game.turn +
         (turnLimit() ? ' / ' + turnLimit() : '');
@@ -275,11 +278,13 @@ const modal = () => node('modal-root').innerHTML;
       const japan = homeZoom(), japanLimit = turnLimit();
       game.scenario.turnLimit = 42;
       const explicitLimit = turnLimit();
-      return { europe, japan, europeLimit, europeTurnLabel, japanLimit, explicitLimit };
+      return { europe, stonehenge, japan, europeLimit, europeTurnLabel, japanLimit, explicitLimit };
     } finally { game = prior; }
   })()`);
   assert.equal(scenarioZooms.europe, 5.4,
     'the European War should open close enough to show Knightmare sprites');
+  assert.equal(scenarioZooms.stonehenge, 5.4,
+    'Operation Stonehenge needs legible European formations');
   assert.equal(scenarioZooms.japan, 2.15,
     'Japan scenario opening camera must remain unchanged');
   assert.equal(scenarioZooms.europeLimit, 0,
@@ -293,7 +298,8 @@ const modal = () => node('modal-root').innerHTML;
   assert(scenarioLaunch.includes("britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'"),
     'the opening camera must center on each chosen faction');
   const renderingText = fs.readFileSync(path.join(__dirname, '../dist/ui/renderer.js'), 'utf8');
-  assert(renderingText.includes("Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)") &&
+  assert(renderingText.includes("['european-war','operation-stonehenge'].includes(game.scenario?.id)") &&
+    renderingText.includes("Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)") &&
     renderingText.includes("Math.max(15, 5 / scale)") &&
     renderingText.includes("if (europeOverview && u.cmd)"),
     'Europe strategic view needs legible cities, formations and commander markers');
