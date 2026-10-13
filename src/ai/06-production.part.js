@@ -75,26 +75,40 @@
   }
   // At least one strong stationary city anchor, and a second only if a
   // seriously threatened city cluster merits sacrificing a mobile escort.
+  // First slot: the highest-value city cluster. Further slots default to
+  // formation escorts, with a second city reserved only under direct,
+  // independently valuable threat. Never lock all charges at idle labs.
   function eliminatorStationaryCities(g, side) {
     const waiting = g.stations.filter(s => s.owner === side && s.eliminator > 0);
-    const holders = sideEliminators(g, side);
     const fixed = new Set();
     if (!waiting.length) return fixed;
-    const sorted = waiting.map(s => ({
-      s, score: eliminatorCoverageValue(g, side, s, s.id),
-    })).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
-    if (sorted[0].score >= ELIMINATOR_AI.anchorMinimum) fixed.add(sorted[0].s.id);
-    const leaders = g.units.filter(u => u.side === side && !u.eliminator && eliminatorCarrierScore(g, u) > 0);
-    const second = sorted.slice(1).find(x => ![...fixed].some(id => {
-      const anchor = g.stations.find(s => s.id === id);
-      return anchor && dist(g, anchor, x.s) <= ELIMINATOR.range;
-    }));
-    if (holders.length >= 3 && second && leaders.length &&
-        second.score >= 180 && second.score > sorted[0].score * 0.8 &&
-        g.units.some(u => u.hp > 0 && foe(g, u.side, side) &&
-          dist(g, u, second.s) <= 9)) fixed.add(second.s.id);
-    // If there is no eligible active courier, every charge remains stationary.
-    if (!leaders.length) for (const s of waiting) fixed.add(s.id);
+    const sorted = waiting.map(s => ({s,
+      score: eliminatorCoverageValue(g,side,s,s.id),
+    })).sort((a,b)=>b.score-a.score || a.s.id-b.s.id);
+    const first = sorted[0];
+    if (first.score >= ELIMINATOR_AI.anchorMinimum) fixed.add(first.s.id);
+    const spare = sorted.filter(x => !fixed.has(x.s.id));
+    const leaders = g.units.filter(u => u.hp > 0 && u.side === side &&
+      !(u.eliminator>0) && eliminatorCarrierScore(g,u)>0 &&
+      u.hp/maxHP(u) >= 0.6);
+    const rivals = g.units.filter(u => u.hp > 0 && foe(g,u.side,side));
+    if (spare.length && sideEliminators(g,side).length >= 3) {
+      const threatened = spare
+        .map(x => ({
+          ...x,
+          threat: rivals.filter(e=>dist(g,e,x.s)<=8).length,
+          important: x.s.capitalOf === side || x.s.tier >= 3,
+        })).filter(x => x.important && x.threat >= 2 &&
+          x.score > Math.max(175,first.score*0.62) &&
+          (!fixed.size || dist(g,first.s,x.s)>ELIMINATOR.range*2))
+        .sort((a,b) => (b.score*(1+Math.min(3,b.threat)*0.3)) -
+          (a.score*(1+Math.min(3,a.threat)*0.3)) || a.s.id-b.s.id)[0];
+      // A third charge remains mobile if capable commanders and a valuable
+      // army group can actually use it. The threatened city exception only
+      // displaces a *spare* mobile slot, never the first city anchor.
+      if (threatened && (!leaders.length || threatened.threat >= 3))
+        fixed.add(threatened.s.id);
+    }
     return fixed;
   }
   function eliminatorAnchorCity(g, side) {
