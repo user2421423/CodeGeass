@@ -1,12 +1,13 @@
 name: Area 18 scenario regression
 on:
   push:
-    branches: ['scenario/area-18']
+    branches: ['scenario/area-18', 'main']
   pull_request:
     branches: ['main']
     paths:
       - 'dist/area18-landmask.js'
       - 'dist/scenarios-area18.js'
+      - 'dist/ui/geography.js'
       - 'tests/area18.test.cjs'
       - 'tools/area18_*.cjs'
       - 'dist/ui/scenario-screens.js'
