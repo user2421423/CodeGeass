@@ -1,0 +1,61 @@
+name: Philippines scenario integration and invasion balance
+on:
+  push:
+    branches: ['scenario/philippines']
+  pull_request:
+    paths:
+      - 'dist/scenarios-philippines.js'
+      - 'dist/philippines-landmask.js'
+      - 'dist/index.html'
+      - 'dist/ui/scenario-screens.js'
+      - 'dist/ui/geography.js'
+      - 'tests/philippines.test.cjs'
+      - 'tools/philippines_*.cjs'
+      - '.github/workflows/philippines-scenario.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify regenerated main source artifacts
+        run: node tools/build_sources.cjs --check
+      - name: Rebuild source coastline and verify packed terrain
+        run: node tools/philippines_landmask_builder.cjs
+      - name: Hex-level geography and port audit
+        run: node tools/philippines_hex_audit.cjs
+      - name: All game regression tests
+        run: node --test tests/*.test.cjs
+      - name: Browser menu and preview smoke tests
+        run: node tests/ui-smoke.cjs
+      - name: Asset checks
+        run: node tools/validate_assets.cjs --tracked
+      - name: Conquest world map validation
+        run: python3 tools/check_map.py
+  ai-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { seed: 11, player: britannia, difficulty: normal, turns: 50 }
+          - { seed: 43, player: britannia, difficulty: normal, turns: 50 }
+          - { seed: 79, player: britannia, difficulty: normal, turns: 50 }
+          - { seed: 131, player: britannia, difficulty: normal, turns: 50 }
+          - { seed: 11, player: cf, difficulty: hard, turns: 50 }
+          - { seed: 43, player: britannia, difficulty: challenge, turns: 50 }
+    name: ${{ matrix.difficulty }} seed ${{ matrix.seed }} first ${{ matrix.player }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full-engine seeded AI-versus-AI campaign
+        run: node tools/philippines_balance_sim.cjs ${{ matrix.seed }} ${{ matrix.turns }} ${{ matrix.player }} ${{ matrix.difficulty }} > /tmp/philippines-sim.log 2>&1; result=$?; grep 'PHILIPPINES_LONG_RESULT' /tmp/philippines-sim.log || tail -50 /tmp/philippines-sim.log; exit $result
