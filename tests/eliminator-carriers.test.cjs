@@ -202,6 +202,34 @@ test('the AI keeps a multi-turn Tier 1 courier assignment until the charge is co
     'courier continues to make progress on the next turn');
 });
 
+test('Eliminator metrics value coverage of a frontline formation, not only empty cities', () => {
+  const { g, city } = setup(401);
+  const near = land(g,city,1);
+  const hero = unit(g,'cf',near[0],'xingke');
+  const ally = unit(g,'cf',near[1]);
+  const covered = E.aiEliminatorMetrics(g,'cf');
+  assert.ok(covered.protectedUnitValue > 0);
+  assert.ok(covered.threatenedUnitValue >= covered.protectedUnitValue);
+  // A charge moves with its Tier 1 commander; nearby formations benefit.
+  E.transferEliminator(g,{city:city.id},{unit:hero.id});
+  const moved = E.aiEliminatorMetrics(g,'cf');
+  assert.equal(moved.tier1Carriers,1);
+  assert.ok(moved.protectedUnitValue > 0);
+  assert.ok(ally.hp > 0);
+});
+
+test('charge production and courier scoring do not select unreachable Tier 1 leaders', () => {
+  const {g,city}=setup(401);
+  const spare = g.stations.find(s=>s.owner==='cf' && s!==city &&
+    E.internal.massOf(g,s)!==E.internal.massOf(g,city) && land(g,s,1).length);
+  if(!spare)return; // A map without a second landmass cannot exercise this fixture.
+  spare.eliminator=1;
+  const hero=unit(g,'cf',land(g,city,1)[0],'xingke');
+  E.aiOrder(g,hero.id);
+  assert.notEqual(g.ai?.cf?.eliminatorCourierAssignments?.[hero.id],spare.id);
+  assert.equal(hero.eliminator||0,0);
+});
+
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
   g.phase = 'britannia';
