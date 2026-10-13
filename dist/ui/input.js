@@ -287,6 +287,7 @@ document.addEventListener('click', e => {
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
+  if (d.armyActivate !== undefined) { armyGroupActivate(d.armyActivate ? +d.armyActivate : null); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
   if (d.armyStance) {
     const [id, stance] = d.armyStance.split(':');
@@ -321,7 +322,7 @@ document.addEventListener('click', e => {
   }
   if (d.armyDisband) {
     const result = E.disbandArmyGroup(game, +d.armyDisband);
-    if (result.ok) { refreshAndSave(); armyGroupsDialog(); toast('Army group disbanded.'); }
+    if (result.ok) { if (activeArmyGroupId === +d.armyDisband) activeArmyGroupId = null; refreshAndSave(); armyGroupsDialog(); toast('Army group disbanded.'); }
     else toast(result.reason);
     return;
   }
