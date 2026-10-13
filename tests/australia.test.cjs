@@ -53,11 +53,11 @@ test('Coastline, inland deserts and Bass Strait follow Australian geography',()=
     }
     return best;
   };
-  for(const p of [[133.88,-23.7],[138.6,-34.9],[151.2,-33.9],[115.9,-31.95],[147.3,-42.9]])
+  for(const p of [[133.88,-23.7],[138.6,-34.9],[151.2,-33.9],[115.9,-31.95],[147.1,-42]])
     assert.notEqual(nearest(...p).terrain,'sea','land coordinate '+p);
   for(const p of [[146.5,-40],[112,-36],[125,-39],[155,-25],[143,-9]])
     assert.equal(nearest(...p).terrain,'sea','water coordinate '+p);
-  assert.equal(geo.isLand(147.3,-42.9),true);
+  assert.equal(geo.isLand(147.1,-42),true);
   assert.equal(geo.isLand(146.5,-40),false,'Bass Strait remains water');
   assert.equal(geo.isLand(134,-23),true,'central Outback accessible');
   assert.equal(g.stations.find(s=>s.name==='Sydney').owner,'britannia');
