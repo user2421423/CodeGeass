@@ -652,8 +652,58 @@ const GEOGRAPHY = (() => {
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
   }
+  // The Bering map crosses the international date line (148° E to 132° W).
+  // Global atlas polygons use -180..180 and would split its coastline apart.
+  // Paint the GSHHS-sampled *gameplay* shoreline instead: provinces, ports and
+  // tactical hexes then agree exactly on which side of the strait is land.
+  // Cache combined faction paths for efficient panning and map previews.
+  let beringPaintCache={tiles:null,revision:-1,paths:null};
+  function paintBering(ctx,g,left,right,top,bottom) {
+    ctx.save();
+    ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+    const sea=ctx.createLinearGradient(0,top,0,bottom);
+    sea.addColorStop(0,'#205372');sea.addColorStop(1,'#103d5b');
+    ctx.fillStyle=sea;ctx.fillRect(left,top,right-left,bottom-top);
+    const revision=g.mapRevision||0;
+    if(beringPaintCache.tiles!==g.tiles||beringPaintCache.revision!==revision){
+      const groups=new Map();
+      for(const t of g.tiles)if(t.terrain!=='sea'&&t.owner){
+        if(!groups.has(t.owner))groups.set(t.owner,[]);
+        groups.get(t.owner).push(t);
+      }
+      const paths=new Map();
+      if(typeof Path2D!=='undefined'){
+        for(const [side,tiles] of groups){
+          const path=new Path2D();
+          for(const t of tiles)tacticalHex(path,t,R+.9);
+          paths.set(side,path);
+        }
+      }
+      beringPaintCache={tiles:g.tiles,revision,paths,groups};
+    }
+    for(const [side,tiles] of beringPaintCache.groups){
+      const faction=g.factions?.[side]||E.FACTIONS[side];
+      ctx.fillStyle=faction?.color||'#91a799';
+      ctx.globalAlpha=0.88;
+      const path=beringPaintCache.paths.get(side);
+      if(path)ctx.fill(path);
+      else{
+        ctx.beginPath();
+        for(const t of tiles){
+          const x=SQ*R*(t.c+.5*(t.r&1))+R,y=1.5*R*t.r+R;
+          if(x<left-2*R||x>right+2*R||y<top-2*R||y>bottom+2*R)continue;
+          tacticalHex(ctx,t,R+.9);
+        }
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    return true;
+  }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
+    if (g.scenario.id === 'bering-strait')
+      return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
     // Reproject the same GSHHG atlas into the north-up Japan theatre.
