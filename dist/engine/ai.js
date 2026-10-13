@@ -1301,7 +1301,7 @@
   // Only own charge locations enter these calculations. Never inspect rival Eliminator state.
   // Reserve the first charge for a valuable city cluster.  Further charges are
   // mobile assets if living Tier 1 commanders can actually retrieve them.
-  const ELIMINATOR_AI = { pickupTurns: 4, maxPickupDistance: 24, maxRouteCost: 44, anchorMinimum: 75 };
+  const ELIMINATOR_AI = { pickupTurns: 8, maxPickupDistance: 36, maxRouteCost: 72, anchorMinimum: 75 };
   function eliminatorCityValue(g, side, s) {
     return 22 + (s.tier || 1) * 12 + (s.income || 0) * 3 + (s.industry || 0) * 2 +
       (s.capitalOf === side ? 240 : 0) + (s.project?.side === side ? 130 : 0) +
@@ -1427,7 +1427,7 @@
   }
   // Route-aware lab selection: first maximize defensible city value, then
   // prioritize laboratories a Tier 1 commander can reach in a few turns.
-  function eliminatorProductionCity(g, side, anyLab = false) {
+  function eliminatorProductionCity(g, side, anyLab = false, memo = null) {
     const mobileDesired = sideEliminators(g, side).length > 0;
     const leaders = g.units.filter(u => u.hp > 0 && u.side === side &&
       !u.eliminator && eliminatorCarrierScore(g, u) > 0 &&
@@ -1456,12 +1456,23 @@
         dist(g,u,entry.s) <= ELIMINATOR_AI.maxPickupDistance);
       const field = close.length ? goalField(g, side, [[entry.s,0]], 'land', null,
         ELIMINATOR_AI.maxRouteCost) : null;
-      const best = field && close.map(u => ({ u, route: eliminatorCourierRoute(g,side,entry.s,u,field) }))
-        .filter(x => x.route).sort((a,b) => a.route.turns-b.route.turns ||
-          b.u.hp - a.u.hp)[0];
+      const best = field && close.map(u => {
+        const route = eliminatorCourierRoute(g,side,entry.s,u,field);
+        if (!route) return {u,route};
+        const front = memo?.byId?.[memo.assign?.[u.id]];
+        // A lab on the commander's operational path allows pickup as the
+        // charge finishes, without recalling the hero from an active assault.
+        const onRoute = front?.anchor ?
+          Math.max(-8,Math.min(8,dist(g,u,front.anchor) -
+            dist(g,entry.s,front.anchor))) : 0;
+        return {u,route,onRoute};
+      }).filter(x => x.route).sort((a,b) =>
+        (a.route.turns*80 - (a.onRoute||0)*20) -
+        (b.route.turns*80 - (b.onRoute||0)*20) ||
+        b.u.hp-a.u.hp)[0];
       return { ...entry,
         score: entry.cover * 0.18 + entry.safety +
-          (best ? 480 - 80 * best.route.turns : -450) +
+          (best ? 530 - 74 * best.route.turns + (best.onRoute||0)*25 : -450) +
           (anyLab ? (entry.s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
     return precise[0]?.s || ranked[0]?.s || null;
@@ -1488,7 +1499,10 @@
     if (g.mode === 'scenario') return assignments;
     const fixed = eliminatorStationaryCities(g,side);
     const waiting = g.stations.filter(s => s.owner === side && !fixed.has(s.id) &&
-      s.eliminator > 0 && s.eliminatorMoved !== g.turn);
+      (s.eliminator > 0 ||
+        (s.eliminatorProject?.side === side &&
+          s.eliminatorProject.ready <= g.turn + 2)) &&
+      s.eliminatorMoved !== g.turn);
     if (!waiting.length) return assignments;
     const rivals = g.units.filter(u => u.hp > 0 && foe(g,u.side,side));
     const candidates = g.units.filter(u =>
@@ -1507,9 +1521,9 @@
         if (!route) continue;
         const committed = old[u.id] === s.id;
         const guardPenalty = memo.guards?.[u.id] ? 70 : 0;
-        const frontRisk = rivals.some(v => dist(g, v, u) <= 5) ? 130 : 0;
+        const frontRisk = rivals.some(v => dist(g, v, u) <= 4) ? 95 : 0;
         const score = 440 + (eliminatorCarrierScore(g,u)-1000)*0.2 -
-          95 * route.turns - route.cost * 2 + (committed ? 115 : 0) -
+          65 * route.turns - route.cost * 1.5 + (committed ? 130 : 0) -
           guardPenalty - frontRisk;
         options.push({s,u,score,field});
       }
@@ -1684,12 +1698,12 @@
     // collection routes rather than indiscriminately manufacturing at an isolated lab.
     const wantsDefense = () => g.mode !== 'scenario' && eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
     let defenseCity = null;
-    while (wantsDefense() && (defenseCity = eliminatorProductionCity(g, side)) && !eliminatorReason(g, defenseCity)) {
+    while (wantsDefense() && (defenseCity = eliminatorProductionCity(g, side, false, memo)) && !eliminatorReason(g, defenseCity)) {
       startEliminator(g, defenseCity.id);
       defenseCity = null;
     }
     plan.eliminator = !!defenseCity;
-    const defensePrep = wantsDefense() && !defenseCity ? eliminatorProductionCity(g, side, true) : null;
+    const defensePrep = wantsDefense() && !defenseCity ? eliminatorProductionCity(g, side, true, memo) : null;
     // 2c. F.L.E.I.J.A.: one warhead per strategic pool (shared by the 2018 Britannian allies). The human
     // Britannian partner has first claim when it can afford a project. A power with the
     // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
