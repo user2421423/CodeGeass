@@ -4554,7 +4554,7 @@
     for (const side of sides.filter(side => side !== g.player)) {
       g.tech[side] = techUpToTier(4);
       const own = g.stations.filter(s => s.owner === side);
-      const rivals = g.stations.filter(s => s.owner !== side && sides.includes(s.owner));
+      const rivals = g.stations.filter(s => foe(g, s.owner, side) && sides.includes(s.owner));
       const distanceToEnemy = s => Math.min(...rivals.map(other => dist(g, s, other)));
       const byFront = own.slice().sort((a,b) =>
         distanceToEnemy(a) - distanceToEnemy(b) || a.id - b.id);

@@ -129,3 +129,22 @@ test('Difficulty levels and all playable perspectives work with AI planning',()=
   assert.doesNotThrow(()=>E.aiProduction(g));
  }
 });
+
+test('Europia strategic high command assigns actual western and eastern theaters',()=>{
+  const g=stone.create('eu','normal',221);
+  g.phase='eu';
+  const memo=E.aiPlan(g,'eu');
+  const assigned=Object.values(memo.wings||{});
+  const west=assigned.filter(s=>s==='britannia').length;
+  const east=assigned.filter(s=>s==='eb').length;
+  assert.ok(west>=8,'western theater needs a substantial British/Atlantic defensive force: '+west);
+  assert.ok(east>=8,'eastern theater needs a substantial Euro Britannian defensive force: '+east);
+  assert.ok((memo.theaters?.britannia?.members||[]).length>=8);
+  assert.ok((memo.theaters?.eb?.members||[]).length>=8);
+  for(const side of ['britannia','eb']){
+    g.phase=side;
+    const ally=E.aiPlan(g,side);
+    assert.ok(ally.fronts.every(f=>f.anchor.owner==='eu'),
+      side+' must target only E.U. cities, never allied cities');
+  }
+});
