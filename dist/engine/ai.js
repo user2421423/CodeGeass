@@ -342,7 +342,7 @@
     if (!cache.fields.has(cacheKey))
       cache.fields.set(cacheKey, goalField(g, u.side, [[target,0]], 'land'));
     const cost = cache.fields.get(cacheKey)[from.r*g.cols+from.c];
-    return Number.isFinite(cost) ? cost / Math.max(1,E.movement(g,u)) : Infinity;
+    return Number.isFinite(cost) ? cost / Math.max(1,u.type?E.movement(g,u):4) : Infinity;
   }
   // Scenario theater strength and targets are saved as plain data in g.ai.
   // Opponents are theater IDs: 'eu' and 'cf' in Division of Japan, for example.
@@ -456,7 +456,8 @@
   function planScenarioMobileDefense(g,side,troops,memo,state){
     memo.localDefense={alerts:[],dispatched:0};
     const doctrine=scenarioDoctrine(g);
-    if(doctrine!=='division' && doctrine!=='europe' && doctrine!=='invasion')return;
+    if(doctrine!=='division' && doctrine!=='europe' &&
+      !(doctrine==='invasion' && g.turn>=10))return;
     const own=g.stations.filter(s=>s.owner===side),
       enemies=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&!isShip(u)),
       alerts=new Map(),deployed=new Set(),next={},
@@ -543,7 +544,7 @@
       f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
       const posture=(state.scenarioPostures||{})[f.id]||{};
       const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
-      f.state = crisis && f.rally ? 'regrouping' : 'attacking';
+      f.state = (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
       f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
       (state.scenarioPostures ||= {})[f.id]={state:f.state,since:posture.state===f.state?posture.since:g.turn};
       f.target = f.desiredStrength;
@@ -1056,7 +1057,7 @@
   // Conquest-only optional mobile reserve: 10% of a large field army camps
   // near a safe central transport junction. An active emergency releases it.
   function planConquestMobileReserve(g,side,memo,state,units,fronts,urgent){
-    memo.reserve={units:[],hub:null};
+    delete memo.reserve;
     if(g.mode!=='conquest'||urgent.length||units.length<20||fronts.length<3){
       state.mobileReserve=null;
       return;
@@ -1077,6 +1078,7 @@
       memo.byId[memo.assign[u.id]]?.type==='offensive')
       .sort((a,b)=>Number(previous.has(b.id))-Number(previous.has(a.id)) ||
         dist(g,a,hub)-dist(g,b,hub)||a.id-b.id).slice(0,count);
+    memo.reserve={units:[],hub:null};
     for(const u of selected){
       const f=memo.byId[memo.assign[u.id]];
       if(!f||f.arrivingFour<Math.max(2,f.target*0.7))continue;
@@ -1089,10 +1091,10 @@
       delete state.assignments[u.id];
       memo.reserve.units.push(u.id);
     }
-    if(memo.reserve.units.length){
+    if(memo.reserve?.units?.length){
       memo.reserve.hub={c:hub.c,r:hub.r,id:hub.id};
       state.mobileReserve={hub:hub.id,units:memo.reserve.units.slice(),since:state.mobileReserve?.since??g.turn};
-    }else state.mobileReserve=null;
+    }else{delete memo.reserve;state.mobileReserve=null;}
   }
   // Already nearer an assembling front's target than its rally city is, on the rally's landmass.
   const aheadOfRally = (g, f, p) => massOf(g, p) === massOf(g, f.rally) && dist(g, p, f.anchor) < dist(g, f.rally, f.anchor);
