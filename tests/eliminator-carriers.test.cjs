@@ -178,6 +178,30 @@ test('Tier 1 couriers are routed toward a waiting spare charge without revealing
 });
 
 
+test('the AI keeps a multi-turn Tier 1 courier assignment until the charge is collected', () => {
+  const { g, city } = setup(909);
+  const distant = g.stations
+    .filter(s => s.owner === 'cf' && s !== city && E.internal.massOf(g, s) >= 0 && land(g, s, 9).length)
+    .sort((a, b) => E.distance(b, city, g) - E.distance(a, city, g))[0];
+  assert.ok(distant, 'need a second reachable Chinese city');
+  distant.eliminator = 1;
+  const start = land(g, distant, 9).find(t => E.internal.massOf(g, t) === E.internal.massOf(g, distant));
+  assert.ok(start, 'need a reachable same-landmass starting position');
+  const hero = unit(g, 'cf', start, 'xingke');
+  const before = E.distance(hero, distant, g);
+  E.aiOrder(g, hero.id);
+  const assignment = g.ai?.cf?.eliminatorCourierAssignments?.[hero.id];
+  assert.equal(assignment, distant.id, 'courier has a persisted collection objective');
+  assert.ok(E.distance(hero, distant, g) < before, 'commander marches toward the charge');
+  const after = E.distance(hero, distant, g);
+  g.turn++;
+  hero.moved = false;
+  hero.attacked = false;
+  E.aiOrder(g, hero.id);
+  assert.ok(E.distance(hero, distant, g) < after || hero.eliminator > 0,
+    'courier continues to make progress on the next turn');
+});
+
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
   g.phase = 'britannia';
