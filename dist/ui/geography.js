@@ -652,6 +652,7 @@ const GEOGRAPHY = (() => {
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
   }
+  // Bering and the Philippines use their audited tactical landmask silhouettes.
   // The Bering map crosses the international date line (148° E to 132° W).
   // Global atlas polygons use -180..180 and would split its coastline apart.
   // Paint the GSHHS-sampled *gameplay* shoreline instead: provinces, ports and
@@ -702,7 +703,7 @@ const GEOGRAPHY = (() => {
   }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
-    if (g.scenario.id === 'bering-strait')
+    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'philippines-invasion')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
