@@ -1714,7 +1714,7 @@
   function eliminatorProductionCity(g, side, anyLab = false) {
     const mobileDesired = sideEliminators(g, side).length > 0;
     const leaders = g.units.filter(u => u.hp > 0 && u.side === side &&
-      !u.eliminator && eliminatorCarrierScore(g, u) > 0 &&
+      !u.eliminator && eliminatorFieldCarrierScore(g,u) > 0 &&
       u.hp / maxHP(u) >= 0.65);
     const rivals = g.units.filter(u => u.hp > 0 && foe(g, u.side, side));
     const candidateLabs = g.stations.filter(s => s.owner === side &&
@@ -1724,28 +1724,34 @@
       const danger = rivals.reduce((d, u) => Math.min(d, dist(g, u, s)), 99);
       const safety = danger <= 2 ? -260 : danger <= 4 ? -110 : danger <= 7 ? -20 : 35;
       const cover = eliminatorCoverageValue(g, side, s);
-      const near = leaders.filter(u => massOf(g, u) === massOf(g, s))
-        .map(u => ({ u, d: dist(g,u,s) }))
-        .filter(x => x.d <= ELIMINATOR_AI.maxPickupDistance)
-        .sort((a,b) => a.d - b.d || a.u.id - b.u.id)[0];
+      const near = leaders.filter(u => massOf(g,u) === massOf(g,s))
+        .map(u => ({u,d:dist(g,u,s),tier1:eliminatorCarrierScore(g,u)>0}))
+        .filter(x => x.d <= (x.tier1 ? ELIMINATOR_AI.maxPickupDistance : 8))
+        .sort((a,b) => (b.tier1 ? 135 : 0) - (a.tier1 ? 135 : 0) +
+          (a.d-b.d)*24 || a.u.id-b.u.id)[0];
       return { s, cover, safety, near,
         preview: (mobileDesired && leaders.length ? cover * 0.18 +
-          (near ? 450 - near.d * 22 : -450) : cover) + safety +
+          (near ? 470 - near.d * 24 + (near.tier1 ? 90 : 0) : -450) : cover) + safety +
           (anyLab ? (s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.preview - a.preview || a.s.id - b.s.id);
     // A bounded shortlist avoids running global Dijkstra on every laboratory.
     const precise = ranked.slice(0, 8).map(entry => {
       if (!mobileDesired || !leaders.length) return { ...entry, score: entry.preview };
       const close = leaders.filter(u => massOf(g,u) === massOf(g,entry.s) &&
-        dist(g,u,entry.s) <= ELIMINATOR_AI.maxPickupDistance);
+        dist(g,u,entry.s) <= (eliminatorCarrierScore(g,u)>0 ?
+          ELIMINATOR_AI.maxPickupDistance : 8));
       const field = close.length ? goalField(g, side, [[entry.s,0]], 'land', null,
         ELIMINATOR_AI.maxRouteCost) : null;
-      const best = field && close.map(u => ({ u, route: eliminatorCourierRoute(g,side,entry.s,u,field) }))
-        .filter(x => x.route).sort((a,b) => a.route.turns-b.route.turns ||
-          b.u.hp - a.u.hp)[0];
+      const best = field && close.map(u => ({u,
+        route:eliminatorCourierRoute(g,side,entry.s,u,field),
+        tier1:eliminatorCarrierScore(g,u)>0}))
+        .filter(x => x.route && (x.tier1 || x.route.turns <= 2))
+        .sort((a,b) => (a.route.turns*80 - (a.tier1?90:0)) -
+          (b.route.turns*80 - (b.tier1?90:0)) || b.u.hp-a.u.hp)[0];
       return { ...entry,
         score: entry.cover * 0.18 + entry.safety +
-          (best ? 480 - 80 * best.route.turns : -450) +
+          (best ? 480 - 80 * best.route.turns +
+            (best.tier1 ? 90 : 0) : -450) +
           (anyLab ? (entry.s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
     return precise[0]?.s || ranked[0]?.s || null;
@@ -1758,9 +1764,9 @@
           s.eliminatorMoved === g.turn) continue;
       const carrier = g.units.filter(u => u.hp > 0 && u.side === side &&
           !u.eliminator && dist(g, u, s) <= 1)
-        .map(u => [u, eliminatorCarrierScore(g, u)])
+        .map(u => [u, eliminatorFieldCarrierScore(g,u)])
         .filter(([, score]) => score > 0)
-        .sort((a,b) => b[1] - a[1] || a[0].id - b[0].id)[0]?.[0];
+        .sort((a,b) => b[1]-a[1] || a[0].id-b[0].id)[0]?.[0];
       if (carrier) transferEliminator(g, { city:s.id }, { unit:carrier.id });
     }
   }
@@ -1777,22 +1783,25 @@
     const rivals = g.units.filter(u => u.hp > 0 && foe(g,u.side,side));
     const candidates = g.units.filter(u =>
       u.hp > 0 && u.side === side && !u.eliminator &&
-      eliminatorCarrierScore(g,u) > 0 && u.hp/maxHP(u) >= 0.65 &&
+      eliminatorFieldCarrierScore(g,u) > 0 && u.hp/maxHP(u) >= 0.65 &&
       !memo.recoveries?.has(u.id) && !memo.guards?.[u.id]?.emergency &&
       !rivals.some(v => dist(g,v,u) <= 2));
     const options = [];
     for (const s of waiting) {
       const eligible = candidates.filter(u => massOf(g,u) === massOf(g,s) &&
-        dist(g,u,s) <= ELIMINATOR_AI.maxPickupDistance);
+        dist(g,u,s) <= (eliminatorCarrierScore(g,u)>0 ?
+          ELIMINATOR_AI.maxPickupDistance : 8));
       if (!eligible.length) continue;
       const field = goalField(g,side,[[s,0]],'land',null,ELIMINATOR_AI.maxRouteCost);
       for (const u of eligible) {
         const route = eliminatorCourierRoute(g,side,s,u,field);
-        if (!route) continue;
+        if (!route || (!eliminatorCarrierScore(g,u) && route.turns > 2)) continue;
         const committed = old[u.id] === s.id;
         const guardPenalty = memo.guards?.[u.id] ? 70 : 0;
         const frontRisk = rivals.some(v => dist(g, v, u) <= 5) ? 130 : 0;
-        const score = 440 + (eliminatorCarrierScore(g,u)-1000)*0.2 -
+        const hero = eliminatorCarrierScore(g,u)>0;
+        const score = 440 + (hero ? 105 : 0) +
+          (eliminatorFieldCarrierScore(g,u)-500)*0.13 -
           95 * route.turns - route.cost * 2 + (committed ? 115 : 0) -
           guardPenalty - frontRisk;
         options.push({s,u,score,field});
@@ -1811,7 +1820,7 @@
   }
   function aiEliminatorPickup(g,u,memo) {
     if (g.mode==='scenario' || !isReady(g,u) || u.eliminator ||
-        eliminatorCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
+        eliminatorFieldCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
     return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
   }
   function eliminatorMobileCoverBonus(g,u,p,nearbyFoes,memo) {
