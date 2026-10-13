@@ -38,9 +38,10 @@ function observe(){
   for(const u of g.units) if(!everSeen.has(u.id)) {
     everSeen.set(u.id,u.side);if(total.produced[u.side]!=null)total.produced[u.side]++;
   }
+  const current=new Map(g.units.map(u=>[u.id,u]));
   for(const [id,side] of everSeen){
     if(lost.has(id))continue;
-    const u=g.units.find(v=>v.id===id);
+    const u=current.get(id);
     if(!u || !LIVE(u)){
       lost.add(id);if(total.destroyed[side]!=null)total.destroyed[side]++;
     }
