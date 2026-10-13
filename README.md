@@ -6,54 +6,35 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu offers three independent regional wars. A scenario saves automatically
-each turn in its own slot (one scenario at a time), so it never overwrites Conquest or Campaign
-progress, and it does not import or award HQ research, commander ranks or rewards. All use the
-standard strategic AI and city-based province capture.
+The **Scenarios** menu contains nine independent regional wars. Each scenario
+automatically saves progress in its own scenario slot (one active scenario save
+at a time), separate from Conquest and Campaign. Scenarios do not import HQ
+research or grant persistent HQ rewards. All use ordinary combat, city-based
+province capture, and the regional AI. Normal, Hard, Challenge, and Elite are
+available. Regional scenarios disable F.L.E.I.J.A. and generally end only when
+one power, or an allied coalition where applicable, conquers its enemies.
 
-- **The Invasion of Japan** (110 × 84 hexes): the established Britannia,
-  Black Knights and Chinese Federation scenario, including the turn-10 alliance change.
-- **The Division of Japan** (110 × 84 hexes, alternate 2017): Britannia, Europia United and
-  the Chinese Federation hold Japan's centre, north and west and are at war from turn 1.
-- **The Bering Strait Crisis** (120 × 80 hexes, alternate 2017): a standalone
-  two-faction naval war between **Britannia (Alaska and the Aleutians)** and
-  **Europia United (Chukotka, eastern Siberia and Kamchatka)**. China has no
-  units, territory, diplomacy or scheduled intervention. Fourteen cities per
-  side, 67 starting ground formations, 28 naval formations and 18 coastal ports
-  form two simultaneous invasion routes: the narrow Bering Strait and the
-  Aleutian–Kamchatka flank. Both factions can build carriers, amphibious
-  Knightmares and regular reinforcements. The entire Bering Sea is navigable;
-  there is no arbitrary coastal shipping cutoff. City capture, total-conquest
-  victory and Normal/Hard/Challenge/Elite rules follow the other regional
-  sandboxes, without a turn limit or F.L.E.I.J.A.
-  Real-world tactical coastlines are sampled from the GSHHS intermediate
-  shoreline atlas (unwrapped across the date line) into
-  `dist/bering-landmask.js`; `dist/scenarios-bering.js` defines the
-  scenario. Run `node --test tests/bering.test.cjs` or
-  `node tools/bering_sim.cjs 11 4` for scenario regression/playtesting.
-- **The European War** (120 × 80 hexes, 2017 a.t.b.): an alternate continental war
-  inspired by *Akito the Exiled*. Europia United controls 28 western/central European cities;
-  Euro Britannia controls 16 cities in eastern Europe, western Russia and the Black Sea
-  theatre. Both powers are playable and hostile from the outset. The regional map has its
-  own coastline, forests, mountains, city provinces, naval ports and starting fleets.
-  A hundred starting formations include Leila, Akito, Ryo, Ayano, Yukiya and Smilas
-  against Shin, Julius Kingsley, Ashley and Manfredi. The E.U. has more cities and
-  higher initial economic income; Euro Britannia fields concentrated eastern spearheads
-  and a larger starting treasury. The only victory condition is ownership of **all 44 cities**,
-  with no scripted deadline. Normal, Hard, Challenge and **Elite** are available.
-  In Elite, starting land and amphibious formations become one-frame Elite Forces at
-  Lv.1 except opposing named commanders, who start at Lv.5 with Supreme Commander
-  rank. The AI inherits Challenge-grade research, improved factories, enhanced
-  income and unrestricted Lv.1 elite reinforcement production. Euro Britannia
-  borrows Britannian Elite Forces **only for this scenario**; the E.U. uses its own
-  Elite Forces. Players can deploy HQ-unlocked elites once per type per operation,
-  while Carrier-Battleships remain ordinary ships rather than Elite Forces.
+| Scenario | Battlefield | Starting situation and objective |
+| --- | --- | --- |
+| **The Invasion of Japan** | 110 × 84 · 44 cities | Britannia (31 cities) and the Black Knights (5) are initially allied against China (8); the alliance dissolves on turn 10. Full conquest, not a turn-60 score. |
+| **The Division of Japan** | 110 × 84 · 44 cities | Britannia, Europia United and China control central, northern and western Japan respectively; all are hostile from turn one. |
+| **The European War** | 120 × 80 · 44 cities | Europia United defends 28 western and central European cities against Euro Britannia's 16 eastern cities. |
+| **Operation Stonehenge** | 120 × 80 · 54 cities | Britannia invades western Europe by sea while allied Euro Britannia attacks from the east. Their permanent coalition must defeat Europia United. |
+| **The Bering Strait Crisis** | 120 × 80 · 28 cities | Britannia in Alaska and the Aleutians fights Europia United in eastern Siberia and Kamchatka, with naval assaults across the Bering Sea. |
+| **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
+| **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
+| **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |
+| **The Conquest of Area 18** | 120 × 88 · 50 cities | Britannia fights Europia United and China across the Arabian Peninsula, Mesopotamia, Persia and the Levant. All three are hostile. |
 
-`dist/scenarios-europe.js` holds the self-contained scenario rules and
-`dist/europe-landmask.js` contains a packed 120 × 80 European tactical coastline.
-The landscape was sampled from the repository's pre-existing world geography and
-European coastal polygon data; it does not request external mapping services.
-Run `node --test tests/europe.test.cjs` to test its configuration and rules.
+The regional maps include separate terrain and coastline data, starting army
+groups and fleets, functional ports and city economies. Their rules and
+geography are covered by the dedicated tests in `tests/area18.test.cjs`,
+`tests/australia.test.cjs`, `tests/bering.test.cjs`,
+`tests/division-japan.test.cjs`, `tests/europe.test.cjs`,
+`tests/indochina.test.cjs`, `tests/philippines.test.cjs`,
+`tests/scenario.test.cjs`, and `tests/stonehenge.test.cjs`.
+Longer AI playtests have dedicated tools and GitHub Actions workflows; a
+successful regression test is not itself proof that a scenario is balanced.
 
 ## Features
 
@@ -79,9 +60,12 @@ Run `node --test tests/europe.test.cjs` to test its configuration and rules.
   | Artillery | Fire support (range 1) | Liverpool | Gardmare | Gekka Rocket |
   | Artillery | Rocket (range 2, splash) | Sutherland Air | Panzer-Hummel | Akatsuki Missile |
   | Artillery | Siege (range 2, +100% vs cities) | Gareth | Panzer-Hummel Gun Battery | Akatsuki Heavy Weapons |
-  Sutherland Air and the Akatsuki Zikisan Air Glide fly (they ignore terrain movement costs). Frames named as a
-  configuration (Close-Combat, Elite, Rocket, Missile, Heavy Weapons, Gun Battery) are the game's loadouts of a wiki
-  frame. The Middle Eastern Federation garrisons field the Bamides.
+  Regular units in each class now share the same gameplay profile across all three
+  factions (including HP, attack, armor, movement and range); their names, sprites and lore differ.
+  The regular Sutherland Air and Akatsuki Zikisan Air Glide use standard class movement despite
+  their flight-themed designs. Elite Forces and scenario-only special units can have distinct
+  mechanics. Named configurations (Close-Combat, Elite, Rocket, Missile, Heavy Weapons, Gun
+  Battery) represent loadouts of existing frames. The Middle Eastern Federation fields Bamides.
 - **Doctrines:** Britannian Armor +8% damage; E.U. Artillery +10% damage; Federation Infantry 15% cheaper.
 - **Sakuradite, the fourth resource:** mined at six deposits. Japan holds 70 of the world's 120 base output: the
   great mine on **Mount Fuji** (40 a turn, its own hex beside Tokyo), Hokkaido and Kyushu (15 each, worked from
@@ -94,22 +78,30 @@ Run `node --test tests/europe.test.cjs` to test its configuration and rules.
   basic frames need none. Elite Forces cost 5 / 10 / 15 by rarity (Rare / Epic / Legendary), whatever their level.
   Mines have no defenses: Infantry or Armor seize one by moving onto it. Every power starts with 100. (Balance
   values, not canon quantities.)
-- **F.L.E.I.J.A., the superweapon:** conquest-only rather than permanent HQ research. Research Lab III unlocks for
-  every major power on turn 15; a city with a level-3 lab can then build a warhead for 1,800 credits, 450 industry,
-  300 research and 150 Sakuradite over 4 turns, building nothing else meanwhile. Every power
-  is alerted ("INTELLIGENCE: Strategic weapons research detected in …") and the AI goes for that city; capturing it
-  ends the project. Launch from the arsenal button at any hex, as many warheads a turn as you hold: a full-screen
-  warning, a white-pink flash and an expanding sphere. Ground zero: every unit erased, a city there destroyed for
-  the rest of the war, leaving only ruins on the map (a power that loses its last city this way surrenders to the
-  launcher; you cannot strike your own last city), a Sakuradite deposit there never
-  produces again, and the land turned into a permanent crater. The ring: units left at 10% with collapsed
-  morale; cities lose their defenses and a level of every building. On the world map the blast is the target hex
-  plus two rings. The first successful detonation starts Eliminator research for every power; 3 turns later a
-  level-3 lab can build a **F.L.E.I.J.A. Eliminator** charge for 1,200 credits, 300 industry, 250 research and
-  60 Sakuradite over 3 turns; a power may hold up to three at once (ready or under construction), one per city. The
-  AI builds them before anything else as soon as it can, and starts a new warhead as soon as it has fired the last.
-  Each charge is tied to its city, protects targets within 3 hexes and automatically neutralizes one
-  incoming warhead; capture or ruin destroys it. The AI uses the same rules. (First-pass numbers.)
+- **F.L.E.I.J.A., the superweapon (Conquest only):** research-lab level III and
+  strategic weapons unlock on turn 15 in the 2017 world conquest, or turn 5 in
+  the 2018 U.F.N. conquest. A warhead costs 1,800 credits, 450 industry,
+  300 science and 150 Sakuradite, and takes four turns. Each faction can hold
+  **at most one** warhead in total, counting both ready stock and unfinished
+  projects. In 2018, Britannia and Euro Britannia share a **single** warhead
+  allowance, although their economies and conventional armies remain separate;
+  a funded human Britannian player receives first claim over the allied AI.
+  Rival warhead construction is public intelligence. Detonations destroy units
+  and can permanently ruin cities, mines and terrain, with weaker effects in
+  the surrounding rings.
+
+  After the first detonation, **Eliminator research takes two turns**, followed
+  by **two turns to build** a charge at a level-III lab. Each charge costs
+  1,200 credits, 300 industry, 250 science and 60 Sakuradite. A faction may
+  have up to three charges total, whether building, waiting in cities or
+  carried by units. Ready Eliminators automatically intercept one hostile
+  warhead targeted within their defensive radius; both the charge and the
+  attacking warhead are spent. Charges can be handed to adjacent friendly
+  units, carried into battle (including aboard carriers), and transferred
+  at most once per turn. Rival defensive project sites and charge locations
+  are classified from both the player and enemy AI. **Current implemented
+  coverage is three hexes**, measured from the charge's city or carrier unit;
+  this is the actual code value, not a five-hex radius.
 - **Sea transport:** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
   turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
   undefended city).
@@ -117,11 +109,28 @@ Run `node --test tests/europe.test.cjs` to test its configuration and rules.
   that fight at sea and cross the coast without stopping, and Carrier-Battleships whose two formations launch onto
   the beach ready to move and attack. Ports on coastal cities build and repair them; a Naval research branch improves
   them, and the AI carries out its own carrier invasions.
-- **Standing orders:** select a unit, choose Set destination (or press G) and click any hex. It moves toward it at
-  the start of each of your turns until it arrives; change the destination or stop it at any time on your turn.
-- **Theaters (Conquest AI):** each rival groups objectives into fronts, ranks them, retains armies on a front for
-  several turns, and masses offensives at rally cities. Garrisons protect key locations; all remaining field units
-  serve active offensive or defensive fronts. There is no strategic reserve or percentage cap on defenders.
+- **Standing orders:** select a unit, choose Set destination (or press G), and
+  click a hex. Units follow the route on subsequent turns; orders can be
+  changed or cancelled.
+- **Army Group Assault:** create a player army group and choose Advance,
+  Assault or Hold Position. Assault plans and assembles around hostile
+  objectives, assigns separate staging hexes, automatically fires legal
+  attacks and captures cities when defenses fall. Advance moves without
+  attacking; Hold Position disables group automation while preserving
+  manually issued orders.
+- **War Report:** a persistent, HUD-accessible report records turn-by-turn
+  city changes, destroyed and produced units, damage, commander losses,
+  landings, strategic weapons and economic activity. View the latest turn,
+  territorial history, all-faction statistics and army-group performance;
+  it does not interrupt every turn with a modal. Existing saves begin
+  tracking from their first post-upgrade turn without fabricating history.
+- **Strategic AI:** Conquest rivals group objectives into offensive and defensive
+  fronts, assess threats and route-aware reinforcements, maintain persistent
+  assignments and gather formations at rally points. Regional wars use
+  scenario-specific doctrines, including multi-front commitments and limited
+  transfers between theaters. The dedicated commander recovery planner and
+  automatic city repair pass are enabled for Division/European-style scenario
+  doctrines; the invasion-style `assault` doctrine currently skips both.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (60 damage + 10% of target maximum HP, no cap;
   range 2, or 3 with Battery Overcharge; always 2-turn recharge), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
@@ -141,8 +150,11 @@ Run `node --test tests/europe.test.cjs` to test its configuration and rules.
   (frame 112%–160%), given branch stars (up to 6) and medals.
 - **HQ research with command tokens:** 40 technologies in six trees (Infantry, Armor, Artillery, Sakuradite, Naval,
   Cities), tiers II–IV unlocked by victories, kept across operations and factions.
-- **Difficulty:** Normal, Hard and Challenge, as in Galactic Command (rival research, upgraded and extra units,
-  higher commander ranks, richer treasuries) with ×1.5 / ×2 token rewards.
+- **Difficulty:** Normal, Hard, Challenge and Elite are available in regional
+  scenarios, with upgraded or additional rival units, research, stronger
+  commanders and resources according to the mode. Elite scenarios feature
+  one-frame Elite Forces and enhanced opposing officers; Campaign reward
+  rules remain separate.
 - **Campaign mastery rewards:** 1★ still clears a mission and unlocks the next. Reaching 2★ and 3★ for the first time across any difficulty awards story-relevant Elite Force fragments, while each difficulty keeps its own token rewards. Every campaign also pays one-time rewards at 50%, 75% and 100% of its total stars.
 - **Presentation:** strategy HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
   minimap, procedural terrain, drawn fallbacks for every Knightmare and commander, published image support, synthesized sound, camera shake.
@@ -163,25 +175,48 @@ step and no dependency.
 
 ## Code layout
 
-Everything ships from `dist/` as plain scripts that `index.html` loads in order; there is no bundler.
+The browser serves `dist/index.html` and the ordered classic JavaScript
+scripts under `dist/`; no npm install or runtime bundler is required.
 
-- `engine.js`: the deterministic rules (combat, movement, economy, Sakuradite, F.L.E.I.J.A., standing orders,
-  pathfinding). Its data lives in `engine/frames.js`, `engine/commanders.js`, `engine/research.js` and
-  `engine/world.js`; `engine/ai.js` adds the rival AI. In Node, `require('./dist/engine.js')` loads all of them.
-- `missions.js` and `campaign.js`: campaign missions and their rules.
-- `art.js`, `icons.js`, `audio.js`: drawn art, icons and synthesized sound.
-- `ui/*.js`: the interface, one file per system (core state, HUD, turns, dialogs, campaign screens, camera, effects,
-  input, renderer); `game.js` starts it.
+- `dist/engine.js`, `dist/engine/*.js` and `dist/engine/ai.js`:
+  game rules, unit data, commanders, technology, AI and army groups.
+- `dist/scenarios*.js` and `dist/*-landmask.js`: nine standalone regional
+  scenarios, maps and starting armies. `dist/missions.js` and
+  `dist/campaign.js` implement the story campaign.
+- `dist/ui/*.js`: HUD, input, rendering, scenario selection, army-group
+  controls, turns and `war-report.js`; `dist/game.js` starts the UI.
+- `dist/art.js`, `dist/icons.js`, `dist/audio.js` and
+  `dist/assets/art/`: art, icons, sound and finished image assets.
 
-## Tests (optional)
+The large generated entrypoints (`dist/engine.js`,
+`dist/engine/ai.js`, `dist/missions.js`, `dist/ui/renderer.js`,
+`dist/ui/hud.js`) are built from editable `src/**/*.part.js` fragments.
+After changing those fragments, run `node tools/build_sources.cjs` and commit
+the regenerated `dist/` output. See [the source guide](src/README.md).
 
-The repository keeps only a small YAGNI-focused safety net: core engine/campaign integrity, one UI smoke path, and validation of the public assets that actually deploy.
+## Tests and simulations
+
+The repository includes engine, AI, map, scenario, army-group, F.L.E.I.J.A.,
+War Report, roster-parity and save-compatibility regression tests:
 
 ```sh
+node tools/build_sources.cjs --check
 node --test tests/*.test.cjs
 node tests/ui-smoke.cjs
 node tools/validate_assets.cjs --tracked
+python3 tools/check_map.py
 ```
+
+For longer gameplay/balance checks, see the scripts under `tools/` and
+scenario-specific workflows in `.github/workflows/`. For example, a seeded
+50-turn Philippines AI simulation:
+
+```sh
+node tools/philippines_balance_sim.cjs 11 50 britannia normal
+```
+
+Simulations measure observed outcomes, not guaranteed faction win rates;
+repeat with multiple seeds, players and difficulties before assessing balance.
 
 ## Publish artwork
 
@@ -216,92 +251,22 @@ Unofficial fan game based on Code Geass. Unit and character names follow the Cod
 original and generated in code; imported images are credited in ASSETS.md.
 
 
-## Scenario Mode: Japan invasion
+## Japan scenario notes
 
-The **Invasion of Japan** is a self-contained regional war opened from **Scenarios** in the main menu.
-Before launching, choose Britannia, the Black Knights or the Chinese Federation, inspect the map,
-and choose Normal, Hard or Challenge difficulty. There is no battle save/resume: Conquest and
-Campaign saves are not affected and persistent HQ upgrades are not applied.
+The original **Invasion of Japan** scenario uses a 110 × 84 north-up tactical
+grid with 44 cities. Britannia begins with 31 cities, the Black Knights with
+five, and the Chinese Federation with eight (all of Kyushu begins Chinese).
+Britannia and the Black Knights start allied and become enemies on turn 10.
+All three factions ultimately compete for **total city conquest**; an
+incomplete war no longer ends in a 60-turn score or an earlier strategic
+stronghold victory. This scenario saves automatically in the shared scenario
+slot and does not overwrite Conquest or Campaign progress.
 
-- **Map:** North-up, unrotated Japan on a tighter 110 × 84 tactical grid
-  (9,240 hexes, approximately 1,341 land). The four main Japanese islands
-  and selected Japanese offshore islets use detailed GSHHG coastlines.
-  Korea, Russia, and other non-Japanese polygons are excluded from Scenario
-  Mode without changing the global Conquest map. Scenario Mode starts
-  zoomed in on the selected faction (Nagoya for Britannia, Kyoto for the
-  Black Knights, Fukuoka for China). Exactly five rings of coastal sea hexes
-  remain playable: 1,933 navigable sea tiles connect all nine ports and 14
-  starting naval formations; 5,966 deep-ocean tiles become impassable
-  background. Faction territorial colors, all 44 cities, and the navigable
-  Kanmon Strait remain intact.
-- **Starting factions:** Britannia 31 cities / 20 units (14 land, 6 naval), Black Knights 5 cities / 13 units,
-  Chinese Federation 8 cities / 29 units. All cities and land on Kyushu begin Chinese.
-  This includes 14 naval and 48 land formations.
-- **Naval infrastructure:** 9 coastal ports, 14 starting warships/amphibious Knightmares;
-  Mount Fuji, Sapporo and Fukuoka work Japan's three Sakuradite deposits.
-- **Army groups:** 26 named starting army groups and fleets. During a scenario, open
-  **Army Groups** to locate a formation or set a shared map-click destination for all
-  reachable member units. Group orders use the normal standing-order route rules.
-- **Diplomacy:** Britannia and the Black Knights begin allied. At the start of turn 10
-  their alliance ends and all three powers become hostile.
-- **Objectives:** faction-specific strategic stronghold and territorial goals, with
-  a 60-turn regional score fallback. AI income and rival stacks scale by difficulty.
-- **Implementation:** a dedicated regional-game initializer does not build the full
-  Conquest world first. Scenario runs do not save or grant persistent profile rewards.
+The **Division of Japan** is a separate 2017 alternate-history scenario with
+the same 44-city map, three initially hostile powers, and persistent
+multi-front AI. Both are covered by `tests/scenario.test.cjs` and
+`tests/division-japan.test.cjs`.
 
-**Still to develop:** new scripted battles and uprisings, naval supply and reinforcement
-routes (starting fleets are implemented), full economic and military balancing, extended
-50–60-turn AI simulations, browser performance profiling, and final UX polish.
-
-Automated regression coverage: `tests/scenario.test.cjs`.
-
-### Japan starting-force balance check
-
-Britannia's opening formations were reduced from **38 to 20 total**, retaining six naval
-formations, four key named commanders and fourteen land formations. The Black Knights
-remain on 13 and the Chinese Federation on 29 (62 formations total).
-
-A baseline set of seven deterministic Normal-difficulty AI-vs-AI runs using multiple
-seeds and player perspectives was completed after this change. In the three trials where
-Britannia was the selected side, it met its victory requirements on turns 32, 38 and 47.
-The remaining four trials ended with the selected BK/Chinese player eliminated while
-Britannia held most of the Japanese cities; these are **not** proof of an overall Britannian
-victory, because the current scenario engine closes a session on player elimination.
-
-The previous (pre-rebalance) starting income was 554 credits / 301 industry for
-Britannia, versus BK 96 / 49 and CF 100 / 55. Those **historical simulation
-results do not apply to the newer economic balance**.
-
-### Japan scenario economy (Normal difficulty)
-
-| Starting economy (per turn) | Britannia | China | Black Knights |
-| --- | ---: | ---: | ---: |
-| Credits | 400 | 320 | 300 |
-| Industry | 220 | 185 | 175 |
-| Research | 42 | 34 | 32 |
-| Sakuradite | 28 | 15 | 12 |
-
-Starting stockpiles equal **four turns of China's income** and **two turns
-for Britannia and the Black Knights**, across all four resources:
-
-| Initial stockpile | Britannia | China | Black Knights |
-| --- | ---: | ---: | ---: |
-| Credits | 800 | 1,280 | 600 |
-| Industry | 440 | 740 | 350 |
-| Research | 84 | 136 | 64 |
-| Sakuradite | 56 | 60 | 24 |
-Japan city production runs at 40% of the base Conquest city yield; fixed
-faction command funding brings total opening income to the targets above.
-Unlike a flat income override, losing or capturing cities changes actual
-income, while the external budget does not automatically follow captured
-cities. Hard and Challenge increase rival income and starting stockpiles
-together, preserving the four-turn Chinese reserve and two-turn reserves
-for the other factions at every difficulty.
-
-These values passed all scenario economic and capture regression checks.
-Two preliminary 60-turn AI-vs-AI simulations of the revised economy finished
-successfully: the Britannia-selected seed 101 game ended with a Britannian
-armistice victory (32 cities at turn 60); the China-selected seed 202 game
-ended with a Chinese strategic victory (30 cities at turn 60). These are
-early smoke/balance indicators only: a larger multi-seed sample, including
-Black Knights games, is still needed before calling the scenario balanced.
+For more representative results, use the current per-scenario and long-run
+simulation tools rather than historical Japan balance tables from older
+versions of the victory and economy rules.
