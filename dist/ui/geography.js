@@ -588,7 +588,7 @@ const GEOGRAPHY = (() => {
   // the SAME GSHHG coastline used by Conquest into those hex coordinates, then
   // clip province tint to geographic land. The grid stays the source of truth
   // for movement, capture, ports and combat, not for the visual shoreline.
-  // Regional scenarios depict Japan only. The global GSHHG atlas also
+  // Japanese regional scenarios select islands only. The global GSHHG atlas also
   // contains Korea, Russia, China and nearby foreign islands; clipping by
   // viewport alone must never allow those polygons into this scenario.
   // Match the four principal Japanese islands and selected Japanese islets
@@ -616,6 +616,10 @@ const GEOGRAPHY = (() => {
     return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }
   let japanColorCache = null;
+  // European regional operations share the continental political shoreline.
+  function europeanRegion(g) {
+    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge';
+  }
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
     if (japanColorCache?.tiles === g.tiles && japanColorCache.revision === revision)
@@ -634,7 +638,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= (g.scenario?.id === 'european-war' ? 1 : 2)) continue;
+      if (depth[j] >= (europeanRegion(g) ? 1 : 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -697,12 +701,38 @@ const GEOGRAPHY = (() => {
         ctx.fill();
       }
     }
+    // Indochina river systems: plotted from geographic coordinates in the
+    // same equirectangular hex projection used by scenarios-indochina.js.
+    // These strokes are visual only; riverbeds do not become impassable sea.
+    if(g.scenario?.id==='conquest-indochina'&&g.scenario.rivers){
+      const b=g.scenario.bounds, spanLon=b.east-b.west,spanLat=b.north-b.south;
+      ctx.save();
+      ctx.strokeStyle='#4ac4de';
+      ctx.globalAlpha=.76;
+      ctx.lineWidth=4.2;
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      for(const line of Object.values(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        for(let i=0;i<line.length;i++){
+          const [lon,lat]=line[i];
+          const x=SQ*R*((lon-b.west)*g.cols/spanLon-.5)+R;
+          const y=1.5*R*((b.north-lat)*g.rows/spanLat-.5)+R;
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     ctx.restore();
     return true;
   }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
-    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'area-18')
+    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'conquest-indochina' ||
+        g.scenario.id === 'philippines-invasion' || g.scenario.id === 'war-for-australia' ||
+        g.scenario.id === 'area-18')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
@@ -734,7 +764,7 @@ const GEOGRAPHY = (() => {
       Math.max(...corners.map(t => t[1])) + 10,
     ];
     const [a, b, c, d] = bounds;
-    const europeOnly = g.scenario.id === 'european-war';
+    const europeOnly = europeanRegion(g);
     const source = europeOnly ? LAYERS.land : JAPAN_LAND; // both Japan scenarios
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
