@@ -14,6 +14,7 @@
       for (const id of gr.units || [])
         clearMatchingOrder(g, g.units.find(u => u.id === id), gr.destination);
       gr.stance = 'hold';
+      delete gr.operation;
     }
     return list;
   };
@@ -64,10 +65,11 @@
     if (previous) {
       previous.units = previous.units.filter(id => id !== unitId);
       clearMatchingOrder(g, u, previous.destination);
+      clearPlanned(g, previous, u);
     }
     group.units.push(unitId);
     let routed = false;
-    if (group.destination && group.stance !== 'hold') {
+    if (group.destination && group.stance !== 'hold' && group.stance !== 'assault') {
       if (u.c === group.destination.c && u.r === group.destination.r) {
         delete u.goto;
         routed = true;
@@ -81,6 +83,7 @@
     if (!group.units.includes(unitId)) return { ok: false, reason: 'Unit not in this group' };
     group.units = group.units.filter(id => id !== unitId);
     clearMatchingOrder(g, g.units.find(u => u.id === unitId), group.destination);
+    clearPlanned(g, group, g.units.find(u => u.id === unitId));
     return { ok: true };
   }
   function order(g, groupId, c, r) {
@@ -100,21 +103,25 @@
     if (members.length && !ready.length)
       return { ok: false, reason: 'No group unit has a route to that destination', failed: rejected.length };
     // A held group's objective is dormant; individual standing orders are untouched.
-    if (group.stance !== 'hold') for (const u of ready) {
+    if (group.stance !== 'hold' && group.stance !== 'assault') for (const u of ready) {
       if (u.c === c && u.r === r) delete u.goto;
       else E.setGoto(g, u.id, c, r);
     }
     if (group.autoConquer) { group.autoConquer = false; group.autoRouted = {}; group.targetStationId = null; }
+    resetOperation(g, group);
     group.destination = { c: p.c, r: p.r };
+    if (group.stance === 'assault') planGroupAssault(g, group);
     return { ok: true, assigned: ready.length, failed: rejected.length };
   }
   function cancel(g, groupId) {
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
-    if (group.autoConquer) return setConquest(g, groupId, false);
-    if (!group.destination) return { ok: false, reason: 'No objective set' };
+    if (!group.destination && !group.autoConquer && !group.operation) return { ok: false, reason: 'No objective set' };
+    if (group.autoConquer) setConquest(g, groupId, false);
     for (const id of group.units) clearMatchingOrder(g, g.units.find(u => u.id === id), group.destination);
+    resetOperation(g, group);
     group.destination = null;
+    group.autoStatus = '';
     return { ok: true };
   }
   function disband(g, groupId) {
@@ -136,11 +143,11 @@
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
     if (!Object.hasOwn(STANCES, stance)) return { ok: false, reason: 'Unknown group stance' };
-    if (group.autoConquer && stance === 'assault') return { ok: false, reason: 'Stop automated conquest before enabling automatic fire' };
     if (stance === 'hold' && group.autoConquer) setConquest(g, groupId, false);
     if (stance === (group.stance || 'advance')) return { ok: true, unchanged: true };
     const prior = group.destination;
-    if (stance === 'hold') {
+    if (group.stance === 'assault' || stance === 'hold') resetOperation(g, group);
+    if (stance === 'hold' || stance === 'assault') {
       for (const id of group.units) clearMatchingOrder(g, g.units.find(u => u.id === id), prior);
     } else if (prior) {
       for (const id of group.units) {
@@ -151,6 +158,7 @@
       }
     }
     group.stance = stance;
+    if (stance === 'assault' && (prior || group.autoConquer)) planGroupAssault(g, group);
     return { ok: true, stance };
   }
 
@@ -169,19 +177,22 @@
     gr.autoConquer = !!enabled;
     gr.autoRouted = {};
     gr.manualOverrides = {};
+    resetOperation(g, gr);
     gr.destination = null;
     gr.targetStationId = null;
     gr.autoStatus = enabled ? 'Choosing a city' : '';
-    if (enabled) gr.stance = 'advance'; // no automatic attacks in this order
+    // Advance remains movement-only; Assault can coordinate automatic city conquest.
     return { ok: true };
   }
   function suspendConquestUnit(g, id, preserveGoto = false) {
     for (const gr of groups(g)) {
-      if (!gr.autoConquer || !gr.units.includes(id)) continue;
-      (gr.manualOverrides ||= {})[id] = true;
+      if (!gr.units.includes(id)) continue;
+      (gr.manualOverrides ||= {})[id] = g.turn;
       const u = g.units.find(v => v.id === id);
       if (!preserveGoto && matches(u, gr.autoRouted?.[id])) delete u.goto;
       if (gr.autoRouted) delete gr.autoRouted[id];
+      clearPlanned(g, gr, u, preserveGoto);
+      if (gr.operation) (gr.operation.manualOverrides ||= {})[id] = g.turn;
       return true;
     }
     return false;
@@ -192,12 +203,12 @@
     const cities = g.stations.filter(s => foeSide(g, s.owner, side) &&
       E.tile(g, s.c, s.r) && !E.TERRAIN[E.tile(g, s.c, s.r).terrain]?.blocked);
     const reserved = new Set();
-    const active = groups(g).filter(gr => gr.side === side && gr.autoConquer).sort((a, b) => a.id - b.id);
+    const active = groups(g).filter(gr => gr.side === side && gr.autoConquer && gr.stance !== 'assault').sort((a, b) => a.id - b.id);
     for (const gr of active) {
       const members = gr.units.map(id => g.units.find(u => u.id === id && u.hp > 0 && u.side === side)).filter(Boolean),
         manual = gr.manualOverrides || {},
         prior = (gr.autoRouted ||= {}),
-        available = members.filter(u => !manual[u.id] && (!u.goto || matches(u, prior[u.id]))),
+        available = members.filter(u => manual[u.id] !== g.turn && (!u.goto || matches(u, prior[u.id]))),
         capturers = available.filter(u => E.canCapture(u) && E.TYPES[u.type].naval !== 'ship');
       if (!capturers.length) {
         gr.autoStatus = 'Waiting for capturable units or manual orders';
