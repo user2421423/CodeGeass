@@ -9,6 +9,7 @@ const SCENARIO_KINDS = [
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
+  ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
@@ -26,9 +27,20 @@ const SCENARIO_BLURBS = {
     eu: 'Hold the industrial cities of western and central Europe against the eastern offensive.',
     eb: 'Lead Euro Britannia’s elite spearheads from Russia and eastern Europe toward Paris.'
   },
+  'conquest-indochina': {
+    britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
+    cf: 'Invade south through northern Vietnam, Yunnan and mountain corridors toward Laos.'
+  },
   'philippines-invasion': {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
     cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
+  },
+  'philippines-invasion': {
+    era: 'Philippine Archipelago · Alternate 2017',
+    intro: 'Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.',
+    diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
+    elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
+    focus: {britannia:'Koror',cf:'Manila'}
   },
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
@@ -57,12 +69,12 @@ const SCENARIO_TEXT = {
     elite: 'Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.',
     focus: {eu:'Warsaw',eb:'Minsk'}
   },
-  'philippines-invasion': {
-    era: 'Philippine Archipelago · Alternate 2017',
-    intro: 'Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.',
-    diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
-    elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
-    focus: {britannia:'Koror',cf:'Manila'}
+  'conquest-indochina': {
+    era: 'Indochina · Alternate 2017',
+    intro: 'The Chinese Federation invades Britannian mainland Southeast Asia. Capture all 44 cities to win.',
+    diplomacy: 'Hostile from turn 1. F.L.E.I.J.A. is disabled; there is no scripted deadline.',
+    elite: 'Elite Indochina replaces land and amphibious formations with faction Elite Forces; carriers remain conventional.',
+    focus: {britannia:'Vinh',cf:'Hanoi'}
   },
   'bering-strait': {
     era: 'Bering Strait · Alternate 2017',
