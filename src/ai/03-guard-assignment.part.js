@@ -1,3 +1,32 @@
+  // Normal Division of Japan: Britannia must screen both Kanto and western Honshu.
+  // Unlike the other Japan scenarios, these defenders keep a local post while
+  // the rest of the army can counterattack; a lost city releases its guards.
+  function assignDivisionBritanniaGuards(g, side) {
+    if (g.mode !== 'scenario' || g.scenario?.id !== 'division-japan' ||
+        g.difficulty !== 'normal' || side !== 'britannia') return {};
+    const own = g.units.filter(u => u.hp > 0 && u.side === side &&
+      !atSea(g, u) && !isShip(u) && !u.hold),
+      foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),
+      taken = {},
+      // Reserve no more than 12 of 32 starting formations for local defense.
+      posts = [
+        ['Tokyo Settlement', 3, 7], ['Osaka', 3, 7],
+        ['Saitama', 2, 6], ['Kobe', 2, 6],
+        ['Yokohama', 1, 6], ['Kyoto', 1, 6]
+      ];
+    for (const [name, need, radius] of posts) {
+      const s = g.stations.find(city => city.name === name && city.owner === side);
+      if (!s || (g.turn > 3 && !foes.some(u => dist(g, u, s) <= 9))) continue;
+      const candidates = own.filter(u => !taken[u.id] &&
+        massOf(g, u) === massOf(g, s) && dist(g, u, s) <= radius)
+        .sort((a, b) => dist(g, a, s) - dist(g, b, s) ||
+          Number(!!a.cmd) - Number(!!b.cmd) || a.id - b.id);
+      for (const u of candidates.slice(0, need))
+        taken[u.id] = { c: s.c, r: s.r, id: s.id,
+          emergency: foes.some(f => dist(g, f, s) <= 4) };
+    }
+    return taken;
+  }
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
       foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side) && u.side !== 'neutral'),

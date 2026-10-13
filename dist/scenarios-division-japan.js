@@ -34,7 +34,8 @@
     throw new Error('Division of Japan must allocate all 44 map cities exactly once');
 
   // [staging city, class, count, named commander for first formation].
-  // 24 ground formations per power; four commanders each; four naval units.
+  // Base: 24 ground formations per power, nine named commanders, four naval units.
+  // Normal Division only: Britannia receives eight additional defensive formations.
   const LAND = Object.freeze({
     britannia: [
       ['Tokyo Settlement','medium',2,'suzaku'],['Tokyo Settlement','heavy',2,'cornelia'],
@@ -61,6 +62,12 @@
       ['Kumamoto','light',2,'ren'],['Kumamoto','rocket',2,'vritra'],
     ]
   });
+  // Four reinforcements around Kanto, four defending the western Honshu front.
+  // Kept separate from LAND so Hard, Challenge and Elite are unchanged.
+  const BRITANNIA_NORMAL_REINFORCEMENTS = Object.freeze([
+    ['Saitama','heavy',2],['Yokohama','rocket',2],
+    ['Kobe','heavy',2],['Wakayama','assault',2],
+  ]);
   const NAVY = Object.freeze({
     britannia: [
       ['Yokohama','carrier_battleship'],['Osaka','carrier_battleship'],
@@ -151,7 +158,9 @@
     g.units=[];
     g.nextId=1;
     for(const side of SIDES) {
-      for(const [cityName,cls,count,commander] of LAND[side]) {
+      const forces=side==='britannia' && difficulty==='normal'
+        ? [...LAND[side],...BRITANNIA_NORMAL_REINFORCEMENTS] : LAND[side];
+      for(const [cityName,cls,count,commander] of forces) {
         const s=cityByName.get(cityName);
         if(s.owner!==side)throw new Error('Foreign staging city: '+side+' '+cityName);
         const group={id:'army-'+g.scenario.groups.length,side,
@@ -198,7 +207,8 @@
         .map(([resource,target])=>[resource,Math.max(0,Math.round(target*factor)-before[resource])]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(actual))
-        g.economy[side][resource]=actual[resource]*RESERVES[side];
+        g.economy[side][resource]=actual[resource]*(side==='britannia' && difficulty==='normal'
+          ? 3 : RESERVES[side]);
     }
     if(difficulty!=='normal' && difficulty!=='elite')
       for(const side of SIDES.filter(s=>s!==player))

@@ -14,7 +14,10 @@
       : type.branch === 'Armor' || type.cls === 'assault' ? 2
       : canCapture(u) && (type.move >= 4 || type.cls === 'raider') ? 4
       : 3;
-    if (g.mode === 'scenario') return tactical - trafficBoost(g, u, aiPlan(g, u.side));
+    if (g.mode === 'scenario') {
+      const memo=aiPlan(g,u.side);
+      return tactical-trafficBoost(g,u,memo);
+    }
     const memo = aiPlan(g, u.side),
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
       emergency = memo.guards?.[u.id]?.emergency ||

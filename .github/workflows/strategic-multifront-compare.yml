@@ -1,0 +1,69 @@
+name: Strategic multifront baseline comparison
+on:
+  push:
+    branches: ['feature/strategic-multifront-ai-20261013']
+    paths: ['.github/workflows/strategic-multifront-compare.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        version: [baseline, enhanced]
+        player: [britannia, eu, cf]
+    env:
+      VERSION: ${{ matrix.version }}
+      PLAYER: ${{ matrix.player }}
+      BASE_SHA: 241812826c3960b62ed34cd15731f16cbff6de1b
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare 12-turn Division Japan scenario from identical seed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$VERSION" = baseline ]; then
+            git worktree add --detach /tmp/multi-baseline "$BASE_SHA"
+            cd /tmp/multi-baseline
+          fi
+          node - <<'NODE'
+          const E=require('./dist/engine.js');require('./dist/engine/ai.js');
+          require('./dist/scenarios.js');
+          const sc=require('./dist/scenarios-division-japan.js');
+          const g=sc.create(process.env.PLAYER,'normal',415);
+          const counts=()=>Object.fromEntries(sc.sides.map(s=>[s,g.stations.filter(c=>c.owner===s).length]));
+          const record={version:process.env.VERSION,player:process.env.PLAYER,turns:12,
+            moves:0,attacks:0,cities:{},errors:0};
+          for(let t=1;t<=12;t++){
+            g.turn=t;sc.onTurn?.(g);
+            for(const side of g.order){
+              if(!E.alive(g,side))continue;
+              if(!(t===1&&side===g.order[0]))E.beginTurn(g,side,t>1);
+              if(g.over)g.over=null;
+              E.aiProduction(g);
+              const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
+                .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id)
+                .map(u=>u.id);
+              for(const id of ids){
+                const u=g.units.find(v=>v.id===id);
+                if(!u||u.hp<=0||u.side!==side)continue;
+                for(const x of E.aiOrder(g,id)||[]){
+                  if(x.kind==='move')record.moves++;
+                  if(x.kind==='attack')record.attacks++;
+                }
+                if(g.over)g.over=null;
+              }
+            }
+            if([5,10,12].includes(t))record.cities[t]=counts();
+          }
+          console.log('MULTIFRONT_COMPARE '+JSON.stringify(record));
+          NODE

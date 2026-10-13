@@ -37,13 +37,18 @@
     let memo = aiMemo.get(g);
     if (!memo) aiMemo.set(g, (memo = {}));
     if (!memo[side] || memo[side].turn !== g.turn) {
-      // Japan Scenario is an all-out city offensive: no guards, defensive
-      // fronts, recovery retreats or offensive assembly delays.
-      const rush = g.mode === 'scenario';
-      memo[side] = { turn: g.turn, guards: rush ? {} : assignGuards(g, side) };
-      if (!rush) planRecovery(g, side, memo[side]);
+      // Campaign scripting stays authoritative. Scenarios use a doctrine
+      // selected by ID, persistent theaters and commander recovery where enabled.
+      // Scenario AI no longer diverts field armies into temporary city responses;
+      // Normal Division Japan Britannia retains its specifically assigned garrisons.
+      const scenario = g.mode === 'scenario',
+        doctrine = scenario ? scenarioDoctrine(g) : null,
+        recovery = !scenario || doctrine === 'division' || doctrine === 'europe';
+      memo[side] = { turn: g.turn, doctrine,
+        guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
+      if (recovery) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
-      else if (rush) planScenarioOffense(g, side, memo[side]);
+      else if (scenario) planScenarioOffense(g, side, memo[side]);
       else planFronts(g, side, memo[side]);
     }
     return memo[side];

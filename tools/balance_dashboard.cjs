@@ -212,7 +212,11 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
         .sort((a, b) => E.aiOrderPriority(g, a) - E.aiOrderPriority(g, b) || a.id - b.id)
         .map(u => u.id);
       inspectFronts(side);
-      for (const id of ids) {
+      for (let step = 0; step < ids.length; step++) {
+        // Mirror the live browser's bounded reordering after earlier orders.
+        const next = E.aiNextActor(g, ids, step);
+        if (next !== step) [ids[step], ids[next]] = [ids[next], ids[step]];
+        const id = ids[step];
         const actor = g.units.find(u => u.id === id && u.hp > 0 && u.side === side);
         if (!actor) continue;
         const targetOwners = new Map(g.units.filter(u => u.hp > 0).map(u => [u.c + ',' + u.r, u.side]));

@@ -328,19 +328,25 @@ test('The conquest AI can take a turn without throwing', () => {
   assert.equal(g.phase, side);
 });
 
-test('AI has no strategic reserve and continues assigning garrisons and fronts', () => {
-  assert.equal(Object.hasOwn(E.FRONT, 'reserve'), false, 'there is no strategic reserve setting');
+test('Conquest strategic reserves are bounded, optional and separate from the actual theaters', () => {
   for (const side of E.MAJORS) {
     for (const quiet of [false, true]) {
       const g = E.createGame('britannia', 'normal', 'conquest', 123);
       if (quiet) g.units = g.units.filter(u => u.side === side);
       const memo = E.aiPlan(g, side);
-      assert.equal(memo.reserve, undefined, 'no synthetic strategic reserve front');
-      assert.equal(memo.byId.reserve, undefined, 'no reserve in active front registry');
-      assert(!Object.values(memo.assign).includes('reserve'), 'no units assigned to reserve');
+      assert.equal(memo.byId.reserve, undefined, 'reserve never masquerades as an active theater');
+      assert(!Object.values(memo.assign).includes('reserve'), 'reserve uses mobile staging, not a fake theater');
+      const field = g.units.filter(u=>u.hp>0&&u.side===side&&!E.TYPES[u.type].naval);
+      assert.ok((memo.reserve?.units.length||0) <= Math.ceil(field.length*0.15),
+        'at most fifteen percent of field strength kept in optional reserve');
+      if (memo.reserve) {
+        assert.ok(memo.reserve.hub,'mobile reserve has a real staging city');
+        assert.ok(memo.reserve.units.every(id=>!memo.assign[id]),
+          'reserved formations are not double counted as deployed');
+      }
       assert(Object.keys(memo.guards).length > 0, 'city guards still operate');
-      assert(memo.fronts.every(f => f.type === 'offensive' || f.type === 'alert' || f.type === 'defensive'),
-        'all assignments serve offensive, alert, or defensive fronts');
+      assert(memo.fronts.every(f => ['offensive','alert','defensive'].includes(f.type)),
+        'actual theaters retain their existing offensive and defensive types');
     }
   }
 });
