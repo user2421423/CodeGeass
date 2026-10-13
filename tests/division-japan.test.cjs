@@ -70,6 +70,8 @@ test('All three factions begin with real territory, armies, fleets and commander
   }
 });
 
+// Fixed garrisons only; the multi-front planner may add threat-triggered responders anywhere.
+const fixedGuards = plan => Object.keys(plan.guards).filter(id => !plan.guards[id].response);
 test('Normal Division gives Britannia eight balanced reinforcements and a third reserve turn only', () => {
   for (const player of division.sides) {
     const g=division.create(player,'normal',125);
@@ -84,22 +86,22 @@ test('Normal Division gives Britannia eight balanced reinforcements and a third 
     assert.equal(g.economy.eu.credits,E.income(g,'eu').credits*3);
     assert.equal(g.economy.cf.credits,E.income(g,'cf').credits*3);
     const plan=E.aiPlan(g,'britannia');
-    const guardIds=Object.keys(plan.guards);
+    const guardIds=fixedGuards(plan);
     assert.ok(guardIds.length>=6 && guardIds.length<=12,'dedicated frontline defenders');
     assert.ok(guardIds.every(id=>britannia.some(u=>u.id===Number(id))));
     assert.ok(guardIds.every(id=>!plan.assign[id]),'garrisons are withheld from offensives');
-    assert.deepEqual(E.aiPlan(g,'eu').guards,{});
-    assert.deepEqual(E.aiPlan(g,'cf').guards,{});
+    assert.deepEqual(fixedGuards(E.aiPlan(g,'eu')),[]);
+    assert.deepEqual(fixedGuards(E.aiPlan(g,'cf')),[]);
   }
   for (const difficulty of ['hard','challenge','elite']) {
     const g=division.create('britannia',difficulty,126);
     assert.equal(g.units.length,84,'other difficulties keep previous unit count');
     assert.equal(g.startUnits.britannia,28);
     assert.equal(g.economy.britannia.credits,E.income(g,'britannia').credits*2);
-    assert.deepEqual(E.aiPlan(g,'britannia').guards,{});
+    assert.deepEqual(fixedGuards(E.aiPlan(g,'britannia')),[]);
   }
   const old=invasion.create('britannia','normal',127);
-  assert.deepEqual(E.aiPlan(old,'britannia').guards,{},'original Japan AI unaffected');
+  assert.deepEqual(fixedGuards(E.aiPlan(old,'britannia')),[],'original Japan AI unaffected');
 });
 
 test('The three fronts reflect the approved political boundaries', () => {

@@ -1,0 +1,97 @@
+name: Strategic multi-front AI regression
+on:
+  push:
+    branches: ['feature/strategic-multifront-ai-20261013']
+    paths:
+      - 'src/ai/**'
+      - 'dist/engine/ai.js'
+      - 'tests/strategic-multifront.test.cjs'
+      - '.github/workflows/strategic-multifront.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure generated sources are synchronized
+        run: node tools/build_sources.cjs --check
+      - name: Check syntax of AI bundle
+        run: node --check dist/engine/ai.js
+      - name: Full automated game regression suite
+        run: node --test tests/*.test.cjs
+      - name: UI smoke
+        run: node tests/ui-smoke.cjs
+  scenarios:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        faction: [britannia, eu, cf]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Simulate normal Japan Division with one selected faction
+        shell: bash
+        env:
+          FACTION: ${{ matrix.faction }}
+        run: |
+          node - <<'NODE'
+          const E=require('./dist/engine.js');require('./dist/engine/ai.js');
+          require('./dist/scenarios.js');
+          const sc=require('./dist/scenarios-division-japan.js');
+          const g=sc.create(process.env.FACTION,'normal',415);
+          const captureCount=()=>Object.fromEntries(sc.sides.map(s=>[s,g.stations.filter(c=>c.owner===s).length]));
+          let moves=0,attacks=0,frontChanges=0;
+          const previous={};
+          for(let t=1;t<=12;t++){
+            g.turn=t;sc.onTurn?.(g);
+            for(const side of g.order){
+              if(!E.alive(g,side))continue;
+              if(!(t===1&&side===g.order[0]))E.beginTurn(g,side,t>1);
+              if(g.over)g.over=null;
+              E.aiProduction(g);
+              const memo=E.aiPlan(g,side);
+              for(const [id,wing] of Object.entries(memo.wings||{})){
+                if(previous[id]&&previous[id]!==wing)frontChanges++;
+                previous[id]=wing;
+              }
+              const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
+                .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id)
+                .map(u=>u.id);
+              for(const id of ids){
+                const u=g.units.find(v=>v.id===id);
+                if(!u||u.hp<=0||u.side!==side)continue;
+                for(const x of E.aiOrder(g,id)||[]){
+                  if(x.kind==='move')moves++;
+                  if(x.kind==='attack')attacks++;
+                }
+                if(g.over)g.over=null;
+              }
+            }
+          }
+          if(moves<1||attacks<1)throw Error('No military operations');
+          console.log('STRATEGIC_SIM '+JSON.stringify({
+            selected:process.env.FACTION,turns:12,moves,attacks,frontChanges,
+            cities:captureCount()}));
+          NODE
+  conquest:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conquest AI operational smoke
+        run: node tools/balance_sim.cjs --runs 1 --max-turns 8 --players britannia --difficulties normal --output /tmp/front-balance.json --summary /tmp/front-balance.md --quiet
