@@ -7,7 +7,8 @@ const E = Knightmare,
   modal = $('modal-root');
 let game = E.createGame('britannia'),
   selection = null,
-  multiSelectedIds = new Set(), // Shift-clicked friendly formations
+  multiSelectedIds = new Set(), // Shift-clicked friendly formations when no group is active
+  activeArmyGroupId = null, // UI-only group chosen for direct Shift-click assignment
   undoStack = [],
   hover = null,
   canvas,
@@ -189,6 +190,7 @@ function resetSession() {
   routing = null;
   armyGroupRouting = null;
   multiSelectedIds.clear();
+  activeArmyGroupId = null;
   undoStack = [];
   effects = [];
 }
