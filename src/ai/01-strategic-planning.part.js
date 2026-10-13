@@ -43,7 +43,8 @@
       // Normal Division Japan Britannia retains its specifically assigned garrisons.
       const scenario = g.mode === 'scenario',
         doctrine = scenario ? scenarioDoctrine(g) : null,
-        recovery = !scenario || doctrine === 'division' || doctrine === 'europe';
+        recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
+          g.scenario?.id === 'philippines-invasion';
       memo[side] = { turn: g.turn, doctrine,
         guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);

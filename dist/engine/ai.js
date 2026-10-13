@@ -148,7 +148,8 @@
       // Normal Division Japan Britannia retains its specifically assigned garrisons.
       const scenario = g.mode === 'scenario',
         doctrine = scenario ? scenarioDoctrine(g) : null,
-        recovery = !scenario || doctrine === 'division' || doctrine === 'europe';
+        recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
+          g.scenario?.id === 'philippines-invasion';
       memo[side] = { turn: g.turn, doctrine,
         guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);
@@ -1627,7 +1628,8 @@
       if (shot?.ok) g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
-    for (const u of (g.mode === 'scenario' && !['division','europe'].includes(memo.doctrine) ? [] : own())
+    for (const u of (g.mode === 'scenario' && !['division','europe'].includes(memo.doctrine) &&
+      g.scenario?.id !== 'philippines-invasion' ? [] : own())
       .filter(u => u.hp / maxHP(u) < (memo.recoveries?.has(u.id) ? 0.7 : 0.55) && nearFriendlyCity(g, u) && !atSea(g, u))
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
