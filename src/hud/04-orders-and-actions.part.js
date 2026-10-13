@@ -86,6 +86,7 @@ function attackHex(p) {
     toast(result.reason);
     return;
   }
+  E.suspendArmyGroupConquestUnit(game, u.id, true);
   addCombatEffects(result, u, visuals);
   moralePopups(before);
   refreshAndSave();
