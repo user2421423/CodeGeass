@@ -14,6 +14,27 @@
     return 1000 + 45 * (E.officerOf(g, u)?.rank || 0) + unitStrength(u) * 8 +
       80 * Math.min(1, u.hp / maxHP(u));
   }
+  // A regular unit can permanently defend its assigned field formation.
+  // Prefer tough, healthy maneuver units already fighting alongside allies.
+  // Story-Tier-1 leaders always outrank ordinary candidates for the same charge.
+  function eliminatorRegularCarrierScore(g,u) {
+    if (u.hp <= 0 || u.cmd || u.eliminator || isShip(u) || atSea(g,u) ||
+        u.hp / maxHP(u) < 0.65 || TYPES[u.type]?.naval) return 0;
+    const allies = g.units.filter(v => v.hp > 0 && v.side === u.side &&
+      v.id !== u.id && !atSea(g,v) && dist(g,v,u) <= 4).length;
+    const enemies = g.units.filter(v => v.hp > 0 && foe(g,v.side,u.side) &&
+      dist(g,v,u) <= 9).length;
+    if (!allies || (!enemies && allies < 3)) return 0;
+    const t = TYPES[u.type];
+    const durable = t.branch === 'Armor' || t.cls === 'assault' ? 100
+      : t.branch === 'Artillery' ? -45 : t.cls === 'raider' ? 35 : 30;
+    return 275 + durable + Math.min(7,allies)*42 +
+      Math.min(6,enemies)*34 + Math.min(180,unitStrength(u)*8) +
+      Math.floor(55*u.hp/maxHP(u));
+  }
+  function eliminatorFieldCarrierScore(g,u) {
+    return eliminatorCarrierScore(g,u) || eliminatorRegularCarrierScore(g,u);
+  }
   function eliminatorCoverageValue(g, side, p, ignoreCity = null) {
     const existing = sideEliminators(g, side).filter(h => h.city?.id !== ignoreCity);
     let score = 0;
@@ -83,8 +104,9 @@
     const sorted = waiting.map(s => ({
       s, score: eliminatorCoverageValue(g, side, s, s.id),
     })).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
-    if (sorted[0].score >= ELIMINATOR_AI.anchorMinimum) fixed.add(sorted[0].s.id);
-    const leaders = g.units.filter(u => u.side === side && !u.eliminator && eliminatorCarrierScore(g, u) > 0);
+    fixed.add(sorted[0].s.id); // Keep one charge protecting the strongest city cluster.
+    const leaders = g.units.filter(u => u.side === side && !u.eliminator &&
+      eliminatorFieldCarrierScore(g,u) > 0);
     const second = sorted.slice(1).find(x => ![...fixed].some(id => {
       const anchor = g.stations.find(s => s.id === id);
       return anchor && dist(g, anchor, x.s) <= ELIMINATOR.range;
@@ -93,8 +115,6 @@
         second.score >= 180 && second.score > sorted[0].score * 0.8 &&
         g.units.some(u => u.hp > 0 && foe(g, u.side, side) &&
           dist(g, u, second.s) <= 9)) fixed.add(second.s.id);
-    // If there is no eligible active courier, every charge remains stationary.
-    if (!leaders.length) for (const s of waiting) fixed.add(s.id);
     return fixed;
   }
   function eliminatorAnchorCity(g, side) {
