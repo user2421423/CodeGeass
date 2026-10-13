@@ -89,17 +89,6 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    const packed=root.BERING_LAND_BITS || (typeof require==='function'?
-      require('./bering-landmask.js'):null);
-    const bits=typeof packed==='string'?packed:root.BERING_LAND_BITS;
-    if(!bits)throw Error('Bering tactical landmask was not loaded');
-    const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
-    if(raw.length!==COLS*ROWS/8)throw Error('Bering tactical landmask is corrupt');
-    g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
-      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
-      const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
-      return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
-    });
     // Sea routes remain unrestricted across the strait and the entire
     // Kamchatka–Aleutian flank, rather than stopping five hexes offshore.
     const packed=root.BERING_LAND_BITS || (typeof require==='function'?
@@ -210,7 +199,7 @@
       g.scenario.groups.push(fleet);
     }
     // The entire connected regional sea stays navigable for fleets.
-    if(difficulty==='elite')E.prepareEliteBering(g);
+    if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
@@ -244,7 +233,7 @@
       g.stations.length!==CITIES.length)return null;
     for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
       return {winner:side,reason:E.FACTIONS[side].name+
-        ' has conquered every city in Bering.'};
+        ' has conquered every city in the Bering theatre.'};
     return null;
   }
   const api={id:'bering-strait',title:'The Bering Strait Crisis',cols:COLS,rows:ROWS,
