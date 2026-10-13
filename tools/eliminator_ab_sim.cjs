@@ -24,6 +24,7 @@ const result = {
   warheads: 0, intercepted: 0, cityIntercepts: 0, carrierIntercepts: 0,
   unitsDestroyedByWarheads: 0, citiesDestroyedByWarheads: 0,
   chargesStarted: 0, pickedUp: 0, carrierLosses: 0, carrierTier1: 0, carrierOther: 0,
+  relayStarted: 0, relayDelivered: 0, relayFailed: 0, relayDeliveryTurns: 0,
   chargedSideTurns: 0, carriedSideTurns: 0, waitingSideTurns: 0, buildingSideTurns: 0,
   importantCityExposure: 0, importantCityProtected: 0, weightedCityExposure: 0, weightedCityProtected: 0,
   armyExposure: 0, armyProtected: 0,
@@ -172,6 +173,15 @@ for (let turn=1; turn<=maxTurns;turn++) {
 }
 result.firstEliminatorObservation=beganAt;
 result.commandsAliveAtEnd = units().filter(u=>initialCommanders.has(u.id)).length;
+for(const side of sides) {
+  const ai=g.ai?.[side]||{};
+  result.relayStarted+=(ai.eliminatorRelayStarted||0);
+  result.relayDelivered+=(ai.eliminatorRelayDelivered||0);
+  result.relayFailed+=(ai.eliminatorRelayFailed||0);
+  result.relayDeliveryTurns+=(ai.eliminatorRelayDeliveryTurns||0);
+}
+result.avgRelayDeliveryTurns=result.relayDelivered ?
+  +(result.relayDeliveryTurns/result.relayDelivered).toFixed(2):null;
 result.armyValueProtectionRate = result.armyValueExposed ?
   +(result.armyValueProtected/result.armyValueExposed).toFixed(4) : null;
 result.frontlineValueProtectionRate = result.frontValueExposed ?
