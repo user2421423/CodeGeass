@@ -34,7 +34,7 @@ test('37-city Philippines invasion has correct ownership and independent faction
   assert.equal(new Set(g.stations.map(E.key)).size,37);
   assert.ok(g.tiles.every(t=>t.terrain==='sea'||(t.owner&&t.provinceCity!=null)));
   assert.ok(g.units.every(u=>u.hp>0&&scenario.sides.includes(u.side)));
-  assert.equal(g.units.filter(u=>u.side==='britannia'&&u.type==='carrier_battleship').length,8);
+  assert.equal(g.units.filter(u=>u.side==='britannia'&&u.type==='carrier_battleship').length,12);
   assert.ok(g.units.filter(u=>u.side==='britannia'&&u.type.startsWith('portman')).length>=30);
   assert.ok(g.units.filter(u=>u.side==='cf'&&u.type==='cf_carrier').length>=4);
  }
@@ -106,4 +106,54 @@ test('Difficulty strengthens rival only; FLEIJA and diplomacy remain disabled',(
    assert.equal(scenario.onTurn(g),false);
   }
  }
+});
+
+test('Both starting shipyards build genuine naval reinforcements',()=>{
+ for(const side of scenario.sides){
+  const g=scenario.create(side,'normal',97);
+  const harbor=g.stations.find(s=>s.owner===side&&s.portAt&&s.portLevel>=2&&!E.unitAt(g,s.portAt));
+  assert.ok(harbor,'operational shipyard '+side);
+  const shipType=side==='britannia'?'portman_ii':'shui_gun_ru_ii';
+  const produced=E.recruit(g,harbor.id,shipType,1);
+  assert.equal(produced.ok,true,produced.reason);
+  assert.equal(produced.unit.side,side);
+  assert.equal(produced.unit.c,harbor.portAt.c);
+  assert.equal(produced.unit.r,harbor.portAt.r);
+  assert.equal(harbor.portProducedTurn,g.turn);
+ }
+});
+
+test('Enemy ports transfer only on naval hex capture, not automatically on city occupation',()=>{
+ for(const side of scenario.sides){
+  const enemyName=side==='britannia'?'Cebu':'Koror';
+  const g=scenario.create(side,'normal',98),city=station(g,enemyName);
+  const previousOwner=city.owner,previousPort=city.portOwner;
+  const origin=E.adjacent(g,city.portAt).find(t=>t.terrain==='sea'&&!E.unitAt(g,t));
+  assert.ok(origin,'must have an open sea approach to '+enemyName);
+  const type=side==='britannia'?'portman_ii':'shui_gun_ru_ii';
+  const unit=E.newUnit(g,type,side,origin.c,origin.r);
+  const result=E.move(g,unit.id,city.portAt.c,city.portAt.r);
+  assert.equal(result.ok,true,result.reason);
+  assert.equal(result.portCaptured,city.name);
+  assert.equal(city.portOwner,side);
+  assert.equal(city.owner,previousOwner,'landing at a port does not take the neighboring city');
+  assert.notEqual(previousPort,side);
+ }
+});
+
+test('Offshore Britannian amphibious units can land on and capture an empty Chinese coastal city',()=>{
+ const g=scenario.create('britannia','normal',99);
+ const city=station(g,'El Nido');
+ assert.equal(city.owner,'cf');
+ assert.ok(E.adjacent(g,city).some(t=>t.terrain==='sea'));
+ g.units=g.units.filter(u=>u.side==='britannia'||E.distance(u,city,g)>4);
+ const beach=E.adjacent(g,city).find(t=>t.terrain==='sea'&&!E.unitAt(g,t));
+ assert.ok(beach);
+ const attacker=E.newUnit(g,'portman_ii','britannia',beach.c,beach.r);
+ const harborBefore=city.portOwner;
+ const result=E.move(g,attacker.id,city.c,city.r);
+ assert.equal(result.ok,true,result.reason);
+ assert.equal(result.captured,'El Nido');
+ assert.equal(city.owner,'britannia');
+ assert.equal(city.portOwner,harborBefore,'port remains Chinese until separately seized');
 });
