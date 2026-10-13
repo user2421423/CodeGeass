@@ -1314,3 +1314,20 @@ a {
 .faction.ufn-2018 { border-top-color: #f8cf32; }
 .ufn-start-flag { display: block; width: 108px; max-width: 44%; margin: 9px 0 6px; line-height: 0; border: 1px solid #d2a82b; box-shadow: 0 2px 7px #0007; }
 .ufn-start-flag svg, .ufn-city-flag svg { display: block; width: 100%; height: auto; }
+
+/* Persistent, non-interrupting War Report */
+.war-report{max-width:min(1140px,96vw)}
+.war-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.war-content{max-height:min(64vh,680px);overflow-y:auto;padding-right:4px}
+.war-content h3{margin:18px 0 10px}
+.war-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.war-metric{padding:14px;background:rgba(255,255,255,.045);border:1px solid rgba(220,205,170,.17);border-radius:8px}
+.war-metric span{display:block;font-size:.78rem;opacity:.78;margin-bottom:6px}
+.war-metric b{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.war-events{padding-left:22px;margin:8px 0}.war-events li{padding:7px 0;border-bottom:1px solid rgba(220,205,170,.12)}
+.war-event-turn{font-variant-numeric:tabular-nums;opacity:.72;margin-right:8px}
+.war-scroll{overflow-x:auto}
+.war-table{border-collapse:collapse;width:100%;font-size:.84rem;font-variant-numeric:tabular-nums}
+.war-table th,.war-table td{padding:9px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid rgba(220,205,170,.14)}
+.war-table thead th{position:sticky;top:0;background:#142737}
+.war-table tbody tr:hover{background:rgba(255,255,255,.045)}

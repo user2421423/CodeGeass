@@ -5,7 +5,7 @@
     radius: 2,
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
-    max: 1, // combined stored and under-construction warheads per faction
+    max: 1, // combined stored and unfinished warheads; shared by Britannia and Euro Britannia in 2018
     lab: 3, // research lab level needed
     labTurn: 15, // 2017 World War: Research Lab III and F.L.E.I.J.A. unlock
     ufnLabTurn: 5, // 2018 Rise of the U.F.N.: earlier strategic-weapons unlock
@@ -45,6 +45,28 @@
   function hasFleija(g, side) {
     return g.mode === 'conquest' && isMajor(g, side) && g.turn >= fleijaLabTurn(g);
   }
+  // The 2018 Britannian allies share one strategic arsenal slot, but never
+  // share funds, project ownership, a warhead's launch control, or unit orders.
+  function fleijaPoolSides(g, side) {
+    return g.mode === 'conquest' && g.era === 'ufn2018' &&
+      (side === 'britannia' || side === 'eb') &&
+      g.teams?.britannia && g.teams.britannia === g.teams.eb
+      ? ['britannia', 'eb'] : [side];
+  }
+  function fleijaWarheadCount(g, side) {
+    const members = fleijaPoolSides(g, side);
+    return members.reduce((n, member) => n + (g.arsenal?.[member] || 0), 0) +
+      g.stations.filter(s => members.includes(s.project?.side)).length;
+  }
+  // If a Britannian player has a funded, idle level-III lab, the AI ally must
+  // not claim the newly free shared slot first (including after an AI launch).
+  // The AI may use the slot if the player is unable to begin a project.
+  function fleijaPlayerPriority(g, side) {
+    if (side === g.player || !fleijaPoolSides(g, side).includes(g.player) ||
+        !hasFleija(g, g.player) || g.over) return false;
+    return g.stations.some(s => s.owner === g.player && !cityBusyReason(g, s) &&
+      (s.lab || 0) >= FLEIJA.lab && !shortfall(funds(g, g.player), FLEIJA.cost));
+  }
   function cityBusyReason(g, s) {
     return s.project
       ? 'F.L.E.I.J.A. project under way'
@@ -60,8 +82,10 @@
         ? 'F.L.E.I.J.A. is unavailable outside conquests'
         : `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`) : null) ||
       cityBusyReason(g, s) ||
-      ((g.arsenal?.[s.owner] || 0) + g.stations.filter(c => c.project?.side === s.owner).length >= FLEIJA.max
-        ? 'Only one F.L.E.I.J.A. warhead may be held or under construction per faction' : null) ||
+      (fleijaWarheadCount(g, s.owner) >= FLEIJA.max
+        ? (fleijaPoolSides(g, s.owner).length > 1
+          ? 'Britannia and Euro Britannia share one F.L.E.I.J.A. warhead slot (ready or under construction)'
+          : 'Only one F.L.E.I.J.A. warhead may be held or under construction per faction') : null) ||
       ((s.lab || 0) < FLEIJA.lab ? `Requires research lab level ${FLEIJA.lab}` : null) ||
       shortfall(funds(g, s.owner), FLEIJA.cost)
     );
@@ -71,6 +95,7 @@
     const s = g.stations.find(s => s.id === id),
       why = projectReason(g, s);
     if (why) return { ok: false, reason: why };
+    warSpend(g,s.owner,FLEIJA.cost,'F.L.E.I.J.A.');
     spend(funds(g, s.owner), FLEIJA.cost);
     s.project = { side: s.owner, started: g.turn, ready: g.turn + FLEIJA.turns };
     log(g, `INTELLIGENCE: Strategic weapons research detected in ${s.name}.`, s.owner);
@@ -98,6 +123,7 @@
     const s = g.stations.find(s => s.id === id),
       why = eliminatorReason(g, s);
     if (why) return { ok: false, reason: why };
+    warSpend(g,s.owner,ELIMINATOR.cost,'Eliminator');
     spend(funds(g, s.owner), ELIMINATOR.cost);
     s.eliminatorProject = { side: s.owner, started: g.turn, ready: g.turn + ELIMINATOR.turns };
     // Defensive project locations are classified, unlike offensive warhead production.
@@ -211,6 +237,7 @@
     dropEliminator(g, s, 'destroyed');
     const d = depositOf(g, s),
       lost = d ? destroyDeposit(g, d) : null;
+    recordWarEvent(g,'cityDestroyed',s.owner,{cityId:s.id,city:s.name,owner:s.owner});
     (g.ruins ||= []).push({ name: s.name, c: s.c, r: s.r, owner: s.owner, capital: !!s.capital, turn: g.turn });
     g.stations.splice(g.stations.indexOf(s), 1);
     if (g.mode !== 'campaign') {
@@ -242,6 +269,7 @@
     g.arsenal[side]--;
     (g.launched ||= {})[side] = g.turn;
     const defense = eliminatorDefender(g, side, center);
+    recordWarEvent(g,'fleijaLaunch',side,{city:name,c,r,intercepted:!!defense,defender:defense?.owner||null});
     if (defense) {
       // A charge completing this turn can defend before its owner's phase begins.
       // Two turns of research + two of production therefore beat the second warhead.
@@ -280,13 +308,15 @@
         d = siteAt(g, t);
       if (v && blastDistance === 0) {
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp });
+        recordWarEvent(g,'damage',side,{targetSide:v.side,value:v.hp,weapon:'F.L.E.I.J.A.'});
         v.hp = 0;
-        kill(g, v, null, true);
+        kill(g, v, null, true, side);
         destroyed.push(v.id);
       } else if (v) {
         const ratio = outer ? FLEIJA.outerHP : FLEIJA.ringHP,
           left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * ratio)));
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp - left });
+        recordWarEvent(g,'damage',side,{targetSide:v.side,value:v.hp-left,weapon:'F.L.E.I.J.A.'});
         v.hp = left;
         if (ring) {
           v.morale = moraleFloor(g, v);

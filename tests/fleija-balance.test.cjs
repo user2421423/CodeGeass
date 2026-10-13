@@ -20,12 +20,12 @@ test('one warhead across construction and stockpile for every faction and conque
       assert.equal(cities.length,2);
       for (const c of cities) c.lab=3;
       assert.equal(E.startProject(g,cities[0].id).ok,true);
-      assert.match(E.projectReason(g,cities[1]),/Only one F.L.E.I.J.A./);
+      assert.match(E.projectReason(g,cities[1]),/(?:Only one|share one) F.L.E.I.J.A./);
       assert.equal(E.startProject(g,cities[1].id).ok,false);
       g.turn+=E.FLEIJA.turns;
       E.beginTurn(g,side,false);
       assert.equal(g.arsenal[side],1);
-      assert.match(E.projectReason(g,cities[1]),/Only one F.L.E.I.J.A./);
+      assert.match(E.projectReason(g,cities[1]),/(?:Only one|share one) F.L.E.I.J.A./);
       const sea = g.tiles.find(t => t.terrain==='sea' && E.blastArea(g,t).every(p =>
         !E.stationAt(g,p) && !E.unitAt(g,p) && !E.siteAt(g,p)));
       assert.ok(sea);
@@ -111,4 +111,125 @@ test('hostile Eliminator intelligence is hidden in map, city, powers, launch and
   assert.match(powers,/eliminatorProjects = side === game\.player/);
   assert.match(turns,/shot\.defender === game\.player/);
   assert.doesNotMatch(turns,/Eliminator development detected in/);
+});
+
+test('2018 Britannian allies share one warhead slot across construction and ready arsenals', () => {
+  for (const [human, builder, partner] of [
+    ['britannia','britannia','eb'],
+    ['eb','eb','britannia'],
+    ['cf','britannia','eb'],
+    ['cf','eb','britannia'],
+  ]) {
+    const g=E.createGame(human,'normal','conquest',702,'ufn2018');
+    const first=g.stations.find(s=>s.owner===builder);
+    const second=g.stations.find(s=>s.owner===partner);
+    first.lab=second.lab=3;
+    rich(g,builder); rich(g,partner);
+    g.turn=E.fleijaLabTurn(g);
+    g.phase=builder;
+    const cost=E.FLEIJA.cost.credits;
+    const beforeBuilder=g.economy[builder].credits;
+    const beforePartner=g.economy[partner].credits;
+    assert.deepEqual(E.fleijaPoolSides(g,builder),['britannia','eb']);
+    assert.equal(E.startProject(g,first.id).ok,true);
+    assert.equal(E.fleijaWarheadCount(g,partner),1);
+    assert.equal(g.economy[builder].credits,beforeBuilder-cost);
+    assert.equal(g.economy[partner].credits,beforePartner);
+    g.phase=partner;
+    assert.match(E.projectReason(g,second),/share one F.L.E.I.J.A./);
+    assert.equal(E.startProject(g,second.id).ok,false);
+    g.turn+=E.FLEIJA.turns;
+    E.beginTurn(g,builder,false);
+    assert.equal(g.arsenal[builder],1);
+    assert.equal(g.arsenal[partner]||0,0);
+    assert.equal(E.fleijaWarheadCount(g,partner),1);
+    g.phase=partner;
+    assert.match(E.projectReason(g,second),/share one F.L.E.I.J.A./);
+    g.phase=builder;
+    const sea=g.tiles.find(t=>t.terrain==='sea'&&E.blastArea(g,t).every(p=>
+      !E.stationAt(g,p)&&!E.unitAt(g,p)&&!E.siteAt(g,p)));
+    assert.ok(sea);
+    assert.equal(E.launch(g,builder,sea.c,sea.r).ok,true);
+    assert.equal(E.fleijaWarheadCount(g,partner),0);
+    g.phase=partner;
+    assert.equal(E.projectReason(g,second),null);
+    assert.equal(E.startProject(g,second.id).ok,true);
+    assert.equal(g.economy[partner].credits,beforePartner-cost);
+  }
+});
+
+test('2017 factions retain independent warhead slots',()=>{
+  const g=E.createGame('britannia','normal','conquest',71,'world');
+  g.turn=15;
+  rich(g,'britannia');rich(g,'eu');
+  const brit=g.stations.find(s=>s.owner==='britannia');
+  const eu=g.stations.find(s=>s.owner==='eu');
+  brit.lab=eu.lab=3;
+  g.phase='britannia';
+  assert.equal(E.startProject(g,brit.id).ok,true);
+  g.phase='eu';
+  assert.equal(E.startProject(g,eu.id).ok,true);
+  assert.equal(E.fleijaWarheadCount(g,'britannia'),1);
+  assert.equal(E.fleijaWarheadCount(g,'eu'),1);
+});
+
+test('human Britannian commander gets first funded claim ahead of allied AI',()=>{
+  for(const human of ['britannia','eb']){
+    const ally=human==='britannia'?'eb':'britannia';
+    const g=E.createGame(human,'normal','conquest',803,'ufn2018');
+    g.turn=5;
+    rich(g,human); rich(g,ally);
+    const humanCity=g.stations.find(s=>s.owner===human);
+    const allyCity=g.stations.find(s=>s.owner===ally);
+    humanCity.lab=allyCity.lab=3;
+    assert.equal(E.fleijaPlayerPriority(g,ally),true);
+    g.phase=ally;
+    E.aiProduction(g);
+    assert.equal(E.fleijaWarheadCount(g,ally),0,'AI must defer a free slot to an eligible human');
+    g.phase=human;
+    assert.equal(E.startProject(g,humanCity.id).ok,true);
+    assert.equal(E.fleijaWarheadCount(g,ally),1);
+  }
+});
+
+test('allied AI can construct if the Britannian player is unable to do so',()=>{
+  for(const human of ['britannia','eb']){
+    const ally=human==='britannia'?'eb':'britannia';
+    const g=E.createGame(human,'normal','conquest',914,'ufn2018');
+    g.turn=5;
+    rich(g,ally);
+    const allyCity=g.stations.find(s=>s.owner===ally);
+    allyCity.lab=3;
+    for(const c of g.stations.filter(s=>s.owner===human))c.lab=0;
+    assert.equal(E.fleijaPlayerPriority(g,ally),false);
+    g.phase=ally;
+    E.aiProduction(g);
+    assert.equal(E.fleijaWarheadCount(g,ally),1,'AI ally should use an unclaimed shared slot');
+    assert.equal(g.stations.filter(s=>s.project?.side===ally).length,1);
+  }
+});
+
+test('old 2018 saves reconcile alliance stock and projects, retaining player priority',()=>{
+  const g=E.createGame('eb','normal','conquest',929,'ufn2018');
+  const brit=g.stations.find(s=>s.owner==='britannia');
+  const euro=g.stations.find(s=>s.owner==='eb');
+  const before=g.economy.britannia.credits;
+  g.arsenal={britannia:1,eb:0,cf:1};
+  brit.project={side:'britannia',started:5,ready:9};
+  euro.project={side:'eb',started:5,ready:9};
+  const saved=E.migrateSave(E.packSave(g));
+  assert.ok(saved);
+  assert.equal(saved.arsenal.britannia,0);
+  assert.equal(saved.arsenal.eb,0);
+  assert.equal(saved.stations.find(s=>s.id===euro.id).project?.side,'eb');
+  assert.equal(saved.stations.find(s=>s.id===brit.id).project,null);
+  assert.equal(saved.economy.britannia.credits,before+E.FLEIJA.cost.credits);
+  assert.equal(saved.fleijaWarheadCount,undefined);
+  assert.equal(E.fleijaWarheadCount(saved,'britannia'),1);
+  assert.equal(E.fleijaWarheadCount(saved,'cf'),1);
+  const swapped=E.createGame('cf','normal','conquest',929,'ufn2018');
+  swapped.arsenal={britannia:1,eb:1};
+  const previous=E.migrateSave(E.packSave(swapped));
+  assert.equal(E.fleijaWarheadCount(previous,'eb'),1);
+  assert.equal(previous.arsenal.britannia+previous.arsenal.eb,1);
 });

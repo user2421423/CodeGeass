@@ -9,6 +9,7 @@ let game = E.createGame('britannia'),
   selection = null,
   multiSelectedIds = new Set(), // Shift-clicked friendly formations when no group is active
   activeArmyGroupId = null, // UI-only group chosen for direct Shift-click assignment
+  strategicOverlay = false, // Optional player-only army-group overlay (Conquest and Scenarios)
   undoStack = [],
   hover = null,
   canvas,

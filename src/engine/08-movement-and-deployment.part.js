@@ -28,6 +28,7 @@
     u.hpTech = hullTech(g, u);
     u.hp = maxHP(u);
     g.units.push(u);
+    if(g.warReport)recordWarEvent(g,'unitProduced',side,{unitId:u.id,unitType:type});
     return u;
   }
   function movement(g, u) {
@@ -250,7 +251,9 @@
   function capturePort(g, u) {
     const s = portAtHex(g, u);
     if (!s || !foe(g, s.portOwner || s.owner, u.side)) return null;
-    s.portOwner = u.side;
+    const previousOwner=s.portOwner||s.owner;
+    s.portOwner=u.side;
+    recordWarEvent(g,'portCaptured',u.side,{cityId:s.id,city:s.name,previousOwner,unitId:u.id});
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures the port of ${s.name}.`, u.side);
     return s.name;
   }
@@ -264,6 +267,8 @@
     if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
     delete s.expSupplyBlocked;delete s.expDecree;
     s.owner = u.side;
+    recordWarEvent(g,'cityCaptured',u.side,{cityId:s.id,city:s.name,previousOwner:loser,
+      unitId:u.id,commander:u.cmd||null,naval:!!navalLanding,group:warGroup(g,u)});
     s.shield = 0;
     s.capturedTurn = g.turn;
     dropProject(g, s, 'captured');
@@ -352,6 +357,7 @@
   // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
   function surrender(g, loser, winner, last) {
     (g.fallen ||= {})[loser] = { by: winner, turn: g.turn, city: last.name };
+    recordWarEvent(g,'surrender',winner,{loser,city:last.name});
     // Clear strategic defenses while any remaining cities still identify their original owner.
     annexStrategic(g, loser);
     let cities = 0,

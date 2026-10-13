@@ -61,6 +61,7 @@
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     const cost = decreePrice(price(type, stack, g, producer),s);
     if(s.expDecree&&!TYPES[type].naval)delete s.expDecree;
+    warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -129,6 +130,7 @@
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
       cost = elitePrice(id, eliteCampaign(g) ? 1 : rec.level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
+    warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -179,6 +181,7 @@
       level = eliteCampaign(g) ? 3 : 1,
       cost = elitePrice(id, level);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
+    warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
@@ -223,6 +226,7 @@
     if (why) return { ok: false, reason: why };
     const cost = reinforceCost(u.type, g, u.side, u),
       e = funds(g, u.side);
+    warSpend(g,u.side,cost,'reinforcement');
     spend(e, cost);
     const old = maxHP(u);
     u.stack++;
@@ -236,6 +240,7 @@
     const why = repairReason(g, u);
     if (why) return { ok: false, reason: why };
     const cost = repairCost(u, g);
+    warSpend(g,u.side,{credits:cost},'repair');
     funds(g, u.side).credits -= cost;
     const amount = Math.min(maxHP(u) - u.hp, Math.round(maxHP(u) * 0.35));
     u.hp += amount;
@@ -306,6 +311,7 @@
       e = funds(g, s.owner);
     if(s.expDecree)delete s.expDecree;
     buildingFoundation(g, s);
+    warSpend(g,s.owner,cost,'construction');
     spend(e, cost);
     if (kind === 'port' && !s.portAt) {
       const t = portSite(g, s);

@@ -100,6 +100,7 @@ async function endTurn() {
   aiSide = null;
   if (token !== aiToken) return;
   SFX.setAiTurn(false);
+  E.finishWarTurn(game, game.turn);
   let armed = false,
     orders = null,
     scenarioNotice = false;

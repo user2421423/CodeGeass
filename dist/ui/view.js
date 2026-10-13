@@ -204,6 +204,26 @@ function hitHex(clientX, clientY) {
   }
   return nearest;
 }
+
+function hitStrategicArmyGroup(clientX, clientY) {
+  if (!strategicOverlay || (game.mode !== 'conquest' && game.mode !== 'scenario')) return null;
+  const { x, y, scale } = toWorld(clientX, clientY);
+  const radius = Math.max(R * 0.65, 24 / Math.max(scale, 0.1));
+  let nearest = null, best = radius;
+  for (const gr of strategicFriendlyGroups()) {
+    const anchor = strategicGroupAnchor(gr);
+    const targets = [gr.destination && hexCenter(gr.destination), anchor];
+    for (const p of targets) {
+      if (!p) continue;
+      // Objective label is offset above its hex; centroid label is offset too.
+      const offsetY = p === targets[0] ? R * 0.55 : R * 0.6;
+      const distance = Math.hypot(x - wrapNear(p.x, x), y - (p.y - offsetY));
+      if (distance < best) { best = distance; nearest = gr; }
+    }
+  }
+  return nearest;
+}
+
 function changeZoom(factor, anchor) {
   const oldScale = computeView();
   const before = anchor ? { x: (anchor.x - offset.x) / oldScale, y: (anchor.y - offset.y) / oldScale } : null;
@@ -371,7 +391,7 @@ function attachMap() {
     if (hover && !pointer?.dragged) {
       canvas.style.cursor = strikeMode || routing || armyGroupRouting
         ? 'crosshair'
-        : readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
+        : hitStrategicArmyGroup(e.clientX, e.clientY) || readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
           ? 'pointer'
           : 'default';
       const u = E.unitAt(game, hover),
@@ -421,7 +441,11 @@ function attachMap() {
           updateSelection();
           toast(multiSelectedIds.size + ' formations selected. Create or choose a group in Army groups.');
         }
-      } else if (pin && !strikeMode && !armyGroupRouting && !isAction)
+      } else if (!pointer.shift && !strikeMode && !routing && !armyGroupRouting &&
+          !scenarioRoutingGroup && !deploying && !isAction &&
+          hitStrategicArmyGroup(e.clientX, e.clientY))
+        armyGroupsDialog(hitStrategicArmyGroup(e.clientX, e.clientY).id);
+      else if (pin && !strikeMode && !armyGroupRouting && !isAction)
         generalDialog(pin.cmd, !!pin.personal);
       else if (armyGroupRouting && visualCity)
         activateHex(E.tile(game, visualCity.c, visualCity.r));

@@ -53,6 +53,39 @@ function drawMinimap() {
   }
   m.setTransform(1, 0, 0, 1, 0, 0);
   m.drawImage(minimapBase, 0, 0);
+
+  // UI-only operational markers. Never bake groups or enemy plans into the minimap base.
+  if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario')) {
+    const sx = mini.width / WORLD_W, sy = mini.height / WORLD_H;
+    for (const gr of strategicFriendlyGroups()) {
+      const a = strategicGroupAnchor(gr), goal = gr.destination && hexCenter(gr.destination);
+      const tone = strategicGroupColor(gr);
+      if (a && goal) {
+        const gx = wrapNear(goal.x, a.x);
+        m.strokeStyle = tone;
+        m.lineWidth = Math.max(1, dpr);
+        m.setLineDash([3 * dpr, 2 * dpr]);
+        for (const shift of wraps() ? [-WORLD_W, 0, WORLD_W] : [0]) {
+          m.beginPath();
+          m.moveTo((a.x + shift) * sx, a.y * sy);
+          m.lineTo((gx + shift) * sx, goal.y * sy);
+          m.stroke();
+        }
+        m.setLineDash([]);
+      }
+      if (a) {
+        m.fillStyle = tone;
+        m.beginPath();
+        m.arc(a.x * sx, a.y * sy, 2.6 * dpr, 0, Math.PI * 2);
+        m.fill();
+      }
+      if (goal) {
+        m.strokeStyle = tone;
+        m.lineWidth = Math.max(1, dpr);
+        m.strokeRect(goal.x * sx - 3 * dpr, goal.y * sy - 3 * dpr, 6 * dpr, 6 * dpr);
+      }
+    }
+  }
   // Viewport frame, drawn twice when it straddles the date line.
   const scale = baseScale * zoom,
     vw = (mapSize.w / scale) * (mini.width / WORLD_W),

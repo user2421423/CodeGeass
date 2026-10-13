@@ -670,6 +670,23 @@ const modal = () => node('modal-root').innerHTML;
   run('armyGroupCreate()');
   assert.equal(run('game.armyGroups.length'), 1, 'player can create an army group in scenario mode');
   assert.equal(run('activeArmyGroupId'), 1, 'managing a newly created group selects it for Shift-click');
+
+  assert(modal().includes('data-army-overlay="toggle"'), 'army-group dialog has one overlay toggle');
+  assert.equal(run('strategicOverlay'), false, 'strategic overlay is off by default');
+  run('toggleStrategicOverlay()');
+  assert.equal(run('strategicOverlay'), true, 'overlay supports scenarios');
+  assert(modal().includes('Strategic overlay: On'), 'dialog button reflects overlay state');
+  assert(modal().includes('Operational summary'), 'managing a group shows computed operational statistics');
+  assert(modal().includes('Combat-ready:'), 'operational summary has combat readiness');
+  assert.equal(run('strategicFriendlyGroups().every(gr => gr.side === game.player)'), true,
+    'overlay never renders enemy AI group orders');
+  run('draw(200,.016);drawMinimap();');
+  run('closeModal()');
+  events.keydown({ key: 'v', target: {tagName:'DIV'}, preventDefault(){} });
+  assert.equal(run('strategicOverlay'), false, 'V switches overlay off');
+  run('toggleStrategicOverlay()');
+  assert.equal(run('strategicOverlay'), true, 'overlay switches on again');
+
   const shiftClickUnit = id => run(`(() => {
     const u = game.units.find(v => v.id === ${id});
     if (!u) throw Error('No test unit');
@@ -739,6 +756,13 @@ const modal = () => node('modal-root').innerHTML;
     'conquest unit dock also omits the army-group button');
   run('armyGroupCreate()');
   assert.equal(run('activeArmyGroupId'), 1, 'new conquest army group becomes active');
+
+  run('armyGroupsDialog(1)');
+  assert(modal().includes('Operational summary'), 'conquest shows same group summary');
+  assert.equal(run('strategicFriendlyGroups().length'), 1, 'conquest overlay finds its player group');
+  run('draw(220,.016);drawMinimap();');
+  run('closeModal()');
+
   run('closeModal()');
   const conquestMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id) && E.unitAt(game, u)?.id === u.id).id');
   shiftClickUnit(conquestMember);
