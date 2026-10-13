@@ -726,7 +726,8 @@ const GEOGRAPHY = (() => {
   }
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
-    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'conquest-indochina')
+    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'conquest-indochina' ||
+        g.scenario.id === 'philippines-invasion')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
