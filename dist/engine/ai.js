@@ -659,16 +659,9 @@
       units = allUnits(g).filter(u => u.hp > 0 && u.side === side && !isShip(u) && !u.hold && !memo.guards[u.id] && !memo.recoveries?.has(u.id)),
       sum = list => list.reduce((a, u) => a + unitStrength(u), 0),
       byDist = (p, list) => list.slice().sort((a, b) => dist(g, a.anchor || a, p) - dist(g, b.anchor || b, p) || (a.id < b.id ? -1 : 1)),
-      // Lower bound on arrival time, not actual pathfinding. Incompatible landmasses
-      // cannot reinforce one another overland; overseas units stage at coastal rallies.
-      travelTurns = (u, f) => {
-        const from = at(u), destination = f.rally || f.anchor;
-        if (!from || !destination || atSea(g, from) ||
-            massOf(g, from) < 0 || massOf(g, from) !== massOf(g, destination))
-          return Infinity;
-        return Math.ceil(Math.max(0, dist(g, from, destination) - FRONT.rally) /
-          Math.max(1, E.movement(g, u)));
-      };
+      // Terrain/path-aware ETA. Disconnected landmasses do not magically
+      // reinforce each other across the sea. Arrivals count only at ETA.
+      travelTurns = (u, f) => frontArrival(g, at(u), f);
     // 1. Cluster: existing fronts re-form around their old anchors so ids stay stable from turn to turn.
     const objectives = frontObjectives(g, side).sort(
       (a, b) => !!saved[b.key] - !!saved[a.key] || b.value - a.value || (a.key < b.key ? -1 : 1),
@@ -820,8 +813,11 @@
     // Garrisons have already been excluded from the deployable field army.
     // All remaining formations can reinforce offensives or defensive fronts as needed.
     const byId = Object.fromEntries(fronts.map(f => [f.id, f]));
-    // 3. Sticky assignments persist unless the front disappears, its term ends, the unit
-    // drifts far away, or a nearby vital emergency demands redeployment.
+    // 3. Persist theater assignments. A 30% priority margin, genuine
+    // four-turn deficit and a secure donor are needed to countermand a tour.
+    const sourceReady = Object.fromEntries(fronts.map(f=>[f.id,
+      units.filter(u=>sticky[u.id]?.front===f.id && travelTurns(u,f)<=4)
+        .reduce((v,u)=>v+unitStrength(u),0)]));
     const assign = {},
       emergencies = fronts.filter(f => f.emergency && f.type === 'defensive'),
       give = (u, f) => {
@@ -830,16 +826,30 @@
         const eta = travelTurns(u, f);
         if (eta <= 2) f.arrivingTwo += unitStrength(u);
         if (eta <= 4) f.arrivingFour += unitStrength(u);
-        if (sticky[u.id]?.front !== f.id) sticky[u.id] = { front: f.id, since: g.turn };
+        if (sticky[u.id]?.front !== f.id)
+          sticky[u.id] = {front:f.id,since:g.turn,
+            lockUntil:g.turn+Math.max(STRATEGIC.commitment,Math.ceil(Math.min(20,eta))+2)};
       };
     for (const u of units) {
       const a = sticky[u.id],
         f = a && byId[a.front];
       if (!f) continue;
-      // Projected threats never interrupt sticky offensive assignments.
-      const pulled = emergencies.some(e => e !== f && dist(g, at(u), e.anchor) <= FRONT.pull &&
-        (e.vital || (e.immediateCities >= 2 && e.priority > f.priority && !f.emergency)));
-      if (!pulled && g.turn - a.since < FRONT.sticky && dist(g, at(u), f.anchor) <= FRONT.far) give(u, f);
+      // Keep already-moving formations committed, even if the four-turn
+      // minimum elapses before they reach their destination.
+      const age = g.turn-a.since, eta = travelTurns(u,f),
+        candidates = fronts.filter(e=>e!==f &&
+          e.priority > Math.max(1,f.priority)*STRATEGIC.margin &&
+          e.desiredStrength > e.arrivingFour+STRATEGIC.transferBuffer &&
+          travelTurns(u,e)<=STRATEGIC.arrivalWindow),
+        alternative = candidates.sort((a,b)=>b.priority-a.priority)[0],
+        safeDonor = f.type!=='defensive' && !f.emergency &&
+          sourceReady[f.id]-unitStrength(u) >= Math.min(f.target*0.65,f.desiredStrength*0.65);
+      const allowSwitch = alternative && age>=STRATEGIC.commitment &&
+        g.turn >= (a.lockUntil??a.since+STRATEGIC.commitment) &&
+        eta<=2 && safeDonor;
+      if (!allowSwitch || dist(g,at(u),f.anchor)<=FRONT.far && !alternative)
+        give(u,f);
+      else sourceReady[f.id]-=unitStrength(u);
     }
     // 4. Emergency fronts get priority; remaining forces are shared across both
     // offensive and routine defensive fronts by priority and actual strength need.
@@ -966,6 +976,15 @@
           (!preferred || dist(g, at(u), local.anchor) + FRONT.pull < dist(g, at(u), preferred.anchor));
       const pick = nearbyCover ? local : preferred;
       if (pick) give(u, pick);
+    }
+    for(const f of fronts){
+      f.deficit=Math.max(0,f.desiredStrength-f.arrivingFour);
+      f.geographicExposure=f.objectives.filter(o=>o.defend).length;
+      f.strategicValue=f.score;
+      f.offensivePotential=f.type==='offensive' ?
+        f.arrivingFour/Math.max(1,f.enemyStrength+2) : 0;
+      f.stability=f.deficit>f.desiredStrength*0.6?'collapsing':
+        f.type==='defensive'?'holding':f.offensivePotential>=1.25?'advancing':'contested';
     }
     // 5. Offensives: ASSEMBLING until enough of the assigned army stands at the rally city (or ahead of it), then
     // ATTACKING; an attack that has lost over half its force falls back to regroup. Defensive fronts hold.
