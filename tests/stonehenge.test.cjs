@@ -52,9 +52,10 @@ test('E.U. coastal ports and Atlantic lanes are viable',()=>{
   assert.equal(E.tile(g,s.portAt.c,s.portAt.r).terrain,'sea',s.name);
   assert.equal(s.portOwner,'eu',s.name);
  }
- const galway=g.stations.find(s=>s.name==='Galway');
- const start=E.adjacent(g,galway).find(t=>t.terrain==='sea');
- assert.ok(start);
+ const flagship=g.units.find(u=>u.side==='britannia'&&E.TYPES[u.type].naval==='ship');
+ assert.ok(flagship,'there must be an offshore Britannian fleet');
+ const start=E.tile(g,flagship.c,flagship.r);
+ assert.equal(start.terrain,'sea');
  const q=[start],seen=new Set([E.key(start)]);
  for(let i=0;i<q.length;i++)for(const t of E.adjacent(g,q[i]))
   if(t.terrain==='sea'&&!seen.has(E.key(t))){seen.add(E.key(t));q.push(t);}
