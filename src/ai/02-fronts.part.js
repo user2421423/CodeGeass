@@ -304,7 +304,10 @@
     const own=g.stations.filter(s=>s.owner===side),
       enemies=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&!isShip(u)),
       alerts=new Map(),deployed=new Set(),next={},
-      max=Math.min(Math.floor(troops.length*0.25),doctrine==='division'?8:6);
+      // European War: E.U. preserves defensive depth, while Euro Britannia
+      // retains its concentrated attack rather than scattering city screens.
+      cap=doctrine==='europe'?(side==='eu'?0.30:0.12):0.25,
+      max=Math.min(Math.floor(troops.length*cap),doctrine==='division'?8:side==='eu'?8:4);
     for(const e of enemies){
       const city=own.filter(s=>!atSea(g,e) && massOf(g,e)===massOf(g,s) &&
         dist(g,e,s)<=STRATEGIC.defenseRadius)
@@ -324,7 +327,8 @@
           massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=8 &&
           (!memo.wings[u.id]||memo.wings[u.id]===sameFront)),
         ordered=eligible.sort((a,b)=>dist(g,a,city)-dist(g,b,city)||a.id-b.id),
-        need=Math.min(3,Math.max(1,Math.ceil(threat/3)));
+        need=Math.min(doctrine==='europe' && side==='eb'?1:3,
+          Math.max(1,Math.ceil(threat/3)));
       let count=0;
       for(const u of ordered){
         if(count>=need||deployed.size>=max)break;
@@ -582,6 +586,15 @@
       f.type = f.emergency && (f.vital || f.immediateCities >= 2 ||
         (imminent.length && worth(imminent) >= bestAttack))
         ? 'defensive' : attack.length ? 'offensive' : 'alert';
+      // In the U.F.N. conquest, allied armies contribute only if physically
+      // present near the same operational objectives; they do not count as
+      // reinforcements from across the globe.
+      f.coalitionSupport = g.era === 'ufn2018'
+        ? g.units.filter(u=>u.hp>0 && u.side!==side && u.side!=='neutral' &&
+          !foe(g,u.side,side) && !isShip(u) &&
+          f.objectives.some(o=>dist(g,u,o)<=6) &&
+          massOf(g,u)===massOf(g,f.anchor)).reduce((v,u)=>v+unitStrength(u),0)
+        : 0;
       f.desiredStrength = f.type === 'defensive'
         ? Math.max(f.vital ? 8 : 2, immediateMenace * 1.2 +
             (f.vital ? projectedMenace * 0.8 + f.stagingMenace * 0.45 : 0) -
@@ -592,6 +605,8 @@
             Math.max(0, f.enemyStrength - f.localStrength) * 0.5 -
             f.localGarrison * 0.25)
           : Math.max(3, f.enemyStrength * 1.5 + attack.length * 0.5);
+      if (f.coalitionSupport)
+        f.desiredStrength=Math.max(2,f.desiredStrength - f.coalitionSupport*0.45);
       // A long list of projected endangered cities cannot drown out a major offensive.
       const imminentValue = imminent.length
         ? Math.max(...imminent.map(o => o.value)) +
