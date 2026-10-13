@@ -292,7 +292,6 @@
     const sides = g.order; // Use this scenario's playable allegiances.
     const signature = {
       suzaku: 'lancelot', cornelia: 'cornelia_gloucester',
-      xingke: 'shen_hu',
       kallen: 'guren_mkii', zero: 'shinkiro',
       tohdoh: 'tohdoh_gekka', xingke: 'shen_hu',
       leila: 'leila_alexander', akito: 'akito_liberte',

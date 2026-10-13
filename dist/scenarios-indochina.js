@@ -80,8 +80,8 @@
     g.scenario={id:'conquest-indochina',key:'indochina',title:'The Conquest of Indochina',
       phase:'southward-invasion',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,
       rivers:{Mekong:[[100.3,21.3],[101.8,19.9],[102.7,18.1],[104.7,16.6],[105.1,15.5],[105.8,13.8],[105.1,11.6],[106.6,10.1]],Red:[[103.8,22.4],[104.8,21.6],[105.9,21],[106.8,20.8]]}};
-    // Britannia uses compatible Britannian Elite Forces for this
-    // scenario only. No global HQ, Conquest, or Japan access is changed.
+    // Both sides use their own established faction Elite Force rosters.
+    // Other scenarios, global HQ and Conquest remain unchanged.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
       cf:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
@@ -89,8 +89,8 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    // Sea routes remain unrestricted across the strait and the entire
-    // Kamchatka–Aleutian flank, rather than stopping five hexes offshore.
+    // Connected waters include the Gulf of Thailand, Gulf of Tonkin and South China Sea.
+    // Every shipyard launches at an adjacent navigable hex.
     const packed=root.INDOCHINA_LAND_BITS || (typeof require==='function'?
       require('./indochina-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.INDOCHINA_LAND_BITS;
