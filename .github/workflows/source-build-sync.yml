@@ -19,6 +19,8 @@ jobs:
         run: node tools/build_sources.cjs --check
       - name: Run all engine, conquest, scenario and art regressions
         run: node --test tests/*.test.cjs
+      - name: Audit all Bering Strait land, coast, port and sea hexes
+        run: node tools/bering_hex_audit.cjs
       - name: Run existing UI smoke checks
         run: node tests/ui-smoke.cjs
       - name: Audit Australia's 12,144 hexes, ports and vector coastline
