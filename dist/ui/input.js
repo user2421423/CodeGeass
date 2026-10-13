@@ -343,7 +343,18 @@ document.addEventListener('click', e => {
     } else toast(r.reason);
     return;
   }
+  if (d.action?.startsWith('war-report-turn-')) {
+    warReportDialog('latest', Number(d.action.slice('war-report-turn-'.length)));
+    return;
+  }
   switch (d.action) {
+    case 'war-report':
+    case 'war-report-latest':
+      warReportDialog('latest'); break;
+    case 'war-report-history':
+      warReportDialog('history'); break;
+    case 'war-report-statistics':
+      warReportDialog('statistics'); break;
     case 'details':
       if (selectedUnit()) {
         carrierHoldOpen = null;
