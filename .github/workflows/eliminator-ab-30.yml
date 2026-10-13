@@ -1,0 +1,107 @@
+name: Eliminator 30-pair strategic defense benchmark
+on:
+  push:
+    branches: ['feature/eliminator-strategic-ai']
+    paths: ['.github/workflows/eliminator-ab-30.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/eliminator-carriers.test.cjs
+      - run: node --check tools/eliminator_ab_sim.cjs
+  compare:
+    needs: validate
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} (baseline versus feature)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - { mode: '2017', seed: 401, turns: 45 }
+          - { mode: '2017', seed: 777, turns: 45 }
+          - { mode: '2017', seed: 13579, turns: 45 }
+          - { mode: '2017', seed: 20261007, turns: 45 }
+          - { mode: '2017', seed: 314159, turns: 45 }
+          - { mode: '2017', seed: 271828, turns: 45 }
+          - { mode: '2017', seed: 42, turns: 45 }
+          - { mode: '2017', seed: 246801, turns: 45 }
+          - { mode: '2017', seed: 8675309, turns: 45 }
+          - { mode: '2017', seed: 1234567, turns: 45 }
+          - { mode: '2017', seed: 9001, turns: 45 }
+          - { mode: '2017', seed: 8080, turns: 45 }
+          - { mode: '2017', seed: 55555, turns: 45 }
+          - { mode: '2017', seed: 67891, turns: 45 }
+          - { mode: '2017', seed: 424242, turns: 45 }
+          - { mode: '2018', seed: 401, turns: 35 }
+          - { mode: '2018', seed: 777, turns: 35 }
+          - { mode: '2018', seed: 13579, turns: 35 }
+          - { mode: '2018', seed: 20261007, turns: 35 }
+          - { mode: '2018', seed: 314159, turns: 35 }
+          - { mode: '2018', seed: 271828, turns: 35 }
+          - { mode: '2018', seed: 42, turns: 35 }
+          - { mode: '2018', seed: 246801, turns: 35 }
+          - { mode: '2018', seed: 8675309, turns: 35 }
+          - { mode: '2018', seed: 1234567, turns: 35 }
+          - { mode: '2018', seed: 9001, turns: 35 }
+          - { mode: '2018', seed: 8080, turns: 35 }
+          - { mode: '2018', seed: 55555, turns: 35 }
+          - { mode: '2018', seed: 67891, turns: 35 }
+          - { mode: '2018', seed: 424242, turns: 35 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify starting source
+        run: node tools/build_sources.cjs --check
+      - name: Verify feature-branch Eliminator tests
+        run: node --test tests/eliminator-carriers.test.cjs
+      - name: Run matched A/B full AI wars
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" feature > feature.json
+          git show 7520e61a31d07196f49a929be081220bee89f9ac:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" baseline > baseline.json
+          echo 'FEATURE'
+          cat feature.json
+          echo 'BASELINE'
+          cat baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const f=JSON.parse(fs.readFileSync('feature.json'));
+          const b=JSON.parse(fs.readFileSync('baseline.json'));
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','interceptionRate','chargesStarted','pickedUp','carrierTier1','carrierOther','carrierLosses','avgCarried','avgWaiting','cityProtectionRate','weightedProtectionRate','armyProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtStart','commandsAliveAtEnd','elapsedMs','played','finalCities','actions'];
+          const comparison=Object.fromEntries(keys.map(k=>[k,{baseline:b[k],feature:f[k]}]));
+          const report={mode:f.mode,seed:f.seed,turns:f.maxTurns,comparison};
+          fs.writeFileSync('comparison.json',JSON.stringify(report,null,2));
+          console.log('ELIMINATOR_COMPARE '+JSON.stringify(report));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+          '## '+f.mode+' seed '+f.seed+'\n\n'+
+          '|Metric|Baseline|Feature|\n|---|---:|---:|\n'+
+          keys.filter(k=>typeof f[k]==='number').map(k=>'|'+k+'|'+b[k]+'|'+f[k]+'|').join('\n')+'\n');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eliminator-30-${{ matrix.mode }}-${{ matrix.seed }}
+          path: |
+            feature.json
+            baseline.json
+            comparison.json
+          if-no-files-found: warn
+          retention-days: 14
