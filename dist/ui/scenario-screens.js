@@ -7,7 +7,8 @@ let scenarioRoutingGroup = null;
 const SCENARIO_KINDS = [
   ['invasion-japan','The Invasion of Japan','44 cities · 3 sides'],
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
-  ['european-war','The European War','44 cities · 2 sides']
+  ['european-war','The European War','44 cities · 2 sides'],
+  ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
   'invasion-japan': {
@@ -23,6 +24,10 @@ const SCENARIO_BLURBS = {
   'european-war': {
     eu: 'Hold the industrial cities of western and central Europe against the eastern offensive.',
     eb: 'Lead Euro Britannia’s elite spearheads from Russia and eastern Europe toward Paris.'
+  },
+  'bering-strait': {
+    britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
+    eu: 'Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases.'
   }
 };
 const SCENARIO_TEXT = {
@@ -46,6 +51,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Both sides are hostile from turn 1. Europia United has the larger industrial economy; Euro Britannia begins with a heavier eastern field army.',
     elite: 'Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.',
     focus: {eu:'Warsaw',eb:'Minsk'}
+  },
+  'bering-strait': {
+    era: 'Bering Strait · Alternate 2017',
+    intro: 'Britannia versus Europia United: a two-front naval and amphibious war from Alaska to Kamchatka. Conquer every enemy city.',
+    diplomacy: 'Britannia and Europia United are at war from turn 1. There is no Chinese Federation involvement or scripted deadline.',
+    elite: 'Elite Bering: land and amphibious forces begin as Lv.1 Elite Forces; enemy named commanders begin at Lv.5. Carriers remain conventional. Rival AI has advanced research and elite factories; players follow HQ unlock rules.',
+    focus: {britannia:'Nome',eu:'Provideniya'}
   }
 };
 function scenarioModel(kind = scenarioKind) {

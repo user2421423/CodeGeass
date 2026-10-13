@@ -15,6 +15,22 @@ standard strategic AI and city-based province capture.
   Black Knights and Chinese Federation scenario, including the turn-10 alliance change.
 - **The Division of Japan** (110 × 84 hexes, alternate 2017): Britannia, Europia United and
   the Chinese Federation hold Japan's centre, north and west and are at war from turn 1.
+- **The Bering Strait Crisis** (120 × 80 hexes, alternate 2017): a standalone
+  two-faction naval war between **Britannia (Alaska and the Aleutians)** and
+  **Europia United (Chukotka, eastern Siberia and Kamchatka)**. China has no
+  units, territory, diplomacy or scheduled intervention. Fourteen cities per
+  side, 67 starting ground formations, 28 naval formations and 18 coastal ports
+  form two simultaneous invasion routes: the narrow Bering Strait and the
+  Aleutian–Kamchatka flank. Both factions can build carriers, amphibious
+  Knightmares and regular reinforcements. The entire Bering Sea is navigable;
+  there is no arbitrary coastal shipping cutoff. City capture, total-conquest
+  victory and Normal/Hard/Challenge/Elite rules follow the other regional
+  sandboxes, without a turn limit or F.L.E.I.J.A.
+  Real-world tactical coastlines are sampled from the GSHHS intermediate
+  shoreline atlas (unwrapped across the date line) into
+  `dist/bering-landmask.js`; `dist/scenarios-bering.js` defines the
+  scenario. Run `node --test tests/bering.test.cjs` or
+  `node tools/bering_sim.cjs 11 4` for scenario regression/playtesting.
 - **The European War** (120 × 80 hexes, 2017 a.t.b.): an alternate continental war
   inspired by *Akito the Exiled*. Europia United controls 28 western/central European cities;
   Euro Britannia controls 16 cities in eastern Europe, western Russia and the Black Sea
