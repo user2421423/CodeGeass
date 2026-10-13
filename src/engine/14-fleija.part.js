@@ -308,13 +308,15 @@
         d = siteAt(g, t);
       if (v && blastDistance === 0) {
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp });
+        recordWarEvent(g,'damage',side,{targetSide:v.side,value:v.hp,weapon:'F.L.E.I.J.A.'});
         v.hp = 0;
-        kill(g, v, null, true);
+        kill(g, v, null, true, side);
         destroyed.push(v.id);
       } else if (v) {
         const ratio = outer ? FLEIJA.outerHP : FLEIJA.ringHP,
           left = Math.min(v.hp, Math.max(1, Math.round(maxHP(v) * ratio)));
         hit.push({ id: v.id, c: t.c, r: t.r, damage: v.hp - left });
+        recordWarEvent(g,'damage',side,{targetSide:v.side,value:v.hp-left,weapon:'F.L.E.I.J.A.'});
         v.hp = left;
         if (ring) {
           v.morale = moraleFloor(g, v);

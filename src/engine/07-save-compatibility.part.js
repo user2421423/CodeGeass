@@ -23,8 +23,13 @@
   function warGroup(g,u){const x=u&&(g.armyGroups||[]).find(a=>a.side===u.side&&a.units?.includes(u.id));
     return x?String(x.id):null;}
   function recordWarEvent(g,kind,side,data={}){if(!g||g.warReportMuted)return;
-    const r=ensureWarReport(g),e={turn:g.turn,side,kind,...data};
-    r.events.push(e);if(r.events.length>WAR_EVENT_LIMIT)r.events.splice(0,r.events.length-WAR_EVENT_LIMIT);
+    const r=ensureWarReport(g);
+    // Routine damage, recruitment and economy actions remain in the exact per-turn
+    // aggregates, avoiding huge saves and burying the major operational events.
+    const notable=['cityCaptured','cityDestroyed','surrender','portCaptured','fleijaLaunch'].includes(kind)
+      || (kind==='unitDestroyed'&&(!!data.commander||!!data.invasion));
+    if(notable){r.events.push({turn:g.turn,side,kind,...data});
+      if(r.events.length>WAR_EVENT_LIMIT)r.events.splice(0,r.events.length-WAR_EVENT_LIMIT);}
     const x=warCounters(r,g.turn,side),other=data.targetSide||data.previousOwner||data.unitSide;
     if(kind==='cityCaptured'){x.citiesCaptured++;
       if(other&&other!==side)warCounters(r,g.turn,other).citiesLost++;
