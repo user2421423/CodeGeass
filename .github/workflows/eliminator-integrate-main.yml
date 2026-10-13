@@ -1,0 +1,31 @@
+name: Integrate latest main into Eliminator feature branch
+on:
+  push:
+    branches: ['feature/eliminator-strategic-ai']
+    paths: ['.github/workflows/eliminator-integrate-main.yml']
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/eliminator-strategic-ai
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Reconcile latest main in a feature-only merge commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git merge --no-ff -m "Merge latest main into Eliminator feature branch after ablation validation" origin/main
+          node tools/build_sources.cjs --check
+          node --test tests/eliminator-carriers.test.cjs
+          node --test tests/strategic-multifront.test.cjs
+          echo 'INTEGRATION_COMMIT' $(git rev-parse HEAD)
+          git push origin HEAD:refs/heads/feature/eliminator-strategic-ai
