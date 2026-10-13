@@ -128,8 +128,13 @@ test('Enemy ports transfer only on naval hex capture, not automatically on city 
   const enemyName=side==='britannia'?'Cebu':'Koror';
   const g=scenario.create(side,'normal',98),city=station(g,enemyName);
   const previousOwner=city.owner,previousPort=city.portOwner;
-  const origin=E.adjacent(g,city.portAt).find(t=>t.terrain==='sea'&&!E.unitAt(g,t));
-  assert.ok(origin,'must have an open sea approach to '+enemyName);
+  // The invasion fleet may fill every sea hex surrounding a staging port.
+  // Model an escort sinking before the assault so the landing route is open.
+  const origin=E.adjacent(g,city.portAt).find(t=>t.terrain==='sea'&&!E.unitAt(g,t)) ||
+    E.adjacent(g,city.portAt).find(t=>t.terrain==='sea');
+  assert.ok(origin,'must have a navigable sea approach to '+enemyName);
+  const blocker=E.unitAt(g,origin);
+  if(blocker)g.units=g.units.filter(u=>u.id!==blocker.id);
   const type=side==='britannia'?'portman_ii':'shui_gun_ru_ii';
   const unit=E.newUnit(g,type,side,origin.c,origin.r);
   const result=E.move(g,unit.id,city.portAt.c,city.portAt.r);
