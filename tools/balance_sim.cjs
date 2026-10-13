@@ -109,6 +109,7 @@ function snapshot(g) {
           warheads: g.arsenal?.[side] || 0,
           projects: g.stations.filter(s => s.project?.side === side).length,
           eliminators: E.eliminatorCharges(g, side).length,
+          ...E.aiEliminatorMetrics(g, side),
         },
       ]),
     ),
@@ -153,7 +154,11 @@ function playSide(g, side, counters) {
   for (const shot of g.launches || []) {
     const s = counters.strikes[side];
     s.launched++;
-    if (shot.intercepted) s.intercepted++;
+    if (shot.intercepted) {
+      s.intercepted++;
+      if (shot.eliminatorCarrier != null) s.carrierIntercepts++;
+      else s.cityIntercepts++;
+    }
     s.citiesErased += shot.cities.filter(c => c.destroyed).length;
     s.depositsDestroyed += shot.depleted?.length || 0;
     s.unitsErased += shot.destroyed.length;
@@ -206,8 +211,11 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
     attacks: Object.fromEntries(MAJORS.map(s => [s, 0])),
     special: Object.fromEntries(MAJORS.map(s => [s, 0])),
     strikes: Object.fromEntries(
-      MAJORS.map(s => [s, { launched: 0, intercepted: 0, citiesErased: 0, depositsDestroyed: 0, unitsErased: 0 }]),
+      MAJORS.map(s => [s, { launched: 0, intercepted: 0, carrierIntercepts: 0, cityIntercepts: 0, citiesErased: 0, depositsDestroyed: 0, unitsErased: 0 }]),
     ),
+    // Per-turn defensive posture allows reproducible before/after Eliminator strategy comparisons.
+    eliminatorLog: [],
+    carrierLosses: 0,
     strikeLog: [],
     frontLog: [],
     cityTransfers: [],
@@ -217,6 +225,7 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
   // Turn 1 begins with the selected player's units already refreshed, exactly
   // like the browser game. Rivals call beginTurn(..., false) before acting.
   while (!g.over && g.turn <= maxTurns) {
+    const armedAtStart = allUnits(g).filter(u => u.hp > 0 && u.eliminator > 0).map(u => u.id);
     playSide(g, g.order[0], counters);
 
     for (const side of g.order.slice(1)) {
@@ -237,6 +246,15 @@ function simulate({ player, difficulty, seed, maxTurns, snapshotTurns, equalAi =
         previousOwners.set(city.id, city.owner);
       }
     }
+    if (g.fleijaDetonated != null) {
+      counters.eliminatorLog.push({
+        turn: g.turn,
+        bySide: Object.fromEntries(MAJORS.map(side => [side, E.aiEliminatorMetrics(g, side)])),
+      });
+    }
+    // A disappearing armed carrier loses its charge permanently. Interceptions leave the unit alive.
+    for (const id of armedAtStart)
+      if (!allUnits(g).some(u => u.id === id && u.hp > 0)) counters.carrierLosses++;
     if (wanted.has(g.turn)) timeline.push(snapshot(g));
     if (g.over) break;
 
@@ -313,13 +331,28 @@ function aggregate(results) {
             MAJORS.map(side => [
               side,
               Object.fromEntries(
-                ['launched', 'intercepted', 'citiesErased', 'depositsDestroyed'].map(k => [
+                ['launched', 'intercepted', 'carrierIntercepts', 'cityIntercepts', 'citiesErased', 'depositsDestroyed'].map(k => [
                   k,
                   +average(rows.map(r => r.actions.strikes[side][k])).toFixed(2),
                 ]),
               ),
             ]),
           ),
+          eliminatorBenchmark: {
+            // One observation per side per turn; baseline and feature branches use identical seeds.
+            avgMobileCharges: +average(rows.flatMap(r => r.actions.eliminatorLog.flatMap(t =>
+              MAJORS.map(s => t.bySide[s].carried)))).toFixed(2),
+            avgStationaryCharges: +average(rows.flatMap(r => r.actions.eliminatorLog.flatMap(t =>
+              MAJORS.map(s => t.bySide[s].stationary)))).toFixed(2),
+            avgImportantCityCoverage: +average(rows.flatMap(r => r.actions.eliminatorLog.flatMap(t =>
+              MAJORS.map(s => t.bySide[s].importantCitiesTotal
+                ? t.bySide[s].importantCitiesCovered / t.bySide[s].importantCitiesTotal : 0)))).toFixed(3),
+            avgLostCarriers: +average(rows.map(r => r.actions.carrierLosses)).toFixed(2),
+            avgCarrierIntercepts: +average(rows.map(r =>
+              MAJORS.reduce((n, s) => n + r.actions.strikes[s].carrierIntercepts, 0))).toFixed(2),
+            avgCityIntercepts: +average(rows.map(r =>
+              MAJORS.reduce((n, s) => n + r.actions.strikes[s].cityIntercepts, 0))).toFixed(2),
+          },
           avgFirstStrikeTurn: +average(
             rows.map(r => r.actions.strikeLog[0]?.turn).filter(t => t != null),
           ).toFixed(2),
@@ -386,6 +419,16 @@ function markdown(report) {
       lines.push(
         `| ${player} | ${difficulty} | ${a.avgFirstStrikeTurn || '—'} | ${MAJORS.map(s => a.avgStrikes[s].launched).join(' / ')} | ${sum('intercepted')} | ${sum('citiesErased')} | ${sum('depositsDestroyed')} | ${a.avgFinalDeposits} |`,
       );
+    }
+  lines.push('', '## Eliminator AI benchmark (average per game)', '',
+    '| Player | Difficulty | Mobile charges / side-turn | Stationary charges / side-turn | Important cities protected | Carrier interceptions | City interceptions | Carriers lost |',
+    '|---|---:|---:|---:|---:|---:|---:|---:|');
+  for (const player of report.config.players)
+    for (const difficulty of report.config.difficulties) {
+      const a = report.aggregate[`${player}|${difficulty}`];
+      if (!a) continue;
+      const m = a.eliminatorBenchmark;
+      lines.push(`| ${player} | ${difficulty} | ${m.avgMobileCharges} | ${m.avgStationaryCharges} | ${pct(m.avgImportantCityCoverage)} | ${m.avgCarrierIntercepts} | ${m.avgCityIntercepts} | ${m.avgLostCarriers} |`);
     }
   lines.push(
     '',
