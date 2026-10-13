@@ -82,7 +82,7 @@ const inspect = () => {
     if(before === true && !s.eliminator && !s.eliminatorProject){
       // Every city->commander pickup leaves an armed unit within one hex and a transfer mark.
       const picked = units().some(u => u.side === s.owner && u.eliminator > 0 &&
-        u.eliminatorMoved === g.turn && E.distance(g,u,s) <= 1);
+        u.eliminatorMoved === g.turn && E.distance(u,s,g) <= 1);
       if(picked) {
         result.pickedUp++;
         if(result.perSide[s.owner]) result.perSide[s.owner].pickedUp++;
