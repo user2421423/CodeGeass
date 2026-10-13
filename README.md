@@ -130,7 +130,8 @@ successful regression test is not itself proof that a scenario is balanced.
   scenario-specific doctrines, including multi-front commitments and limited
   transfers between theaters. The dedicated commander recovery planner and
   automatic city repair pass are enabled for Division/European-style scenario
-  doctrines; the invasion-style `assault` doctrine currently skips both.
+  doctrines and specifically for the Philippines invasion. Other invasion-style
+  `assault` doctrines retain their existing behavior.
 - **Same systems as Galactic Command:** move once / attack once, one-click red-hex attacks with damage preview, undo
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (60 damage + 10% of target maximum HP, no cap;
   range 2, or 3 with Battery Overcharge; always 2-turn recharge), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
