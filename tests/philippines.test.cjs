@@ -162,3 +162,35 @@ test('Offshore Britannian amphibious units can land on and capture an empty Chin
  assert.equal(city.owner,'britannia');
  assert.equal(city.portOwner,harborBefore,'port remains Chinese until separately seized');
 });
+
+test('Philippines commanders use the recovery planner after taking heavy damage',()=>{
+  const g=scenario.create('britannia','normal',20261013);
+  for(const u of g.units)if(u.side==='cf')u.hp=0;
+  const commanders=g.units.filter(u=>u.side==='britannia'&&u.cmd&&!E.TYPES[u.type].naval&&
+    E.tile(g,u.c,u.r)?.terrain!=='sea');
+  assert.ok(commanders.length>0,'Britannia has land commanders to recover');
+  for(const u of commanders)u.hp=Math.max(1,Math.floor(E.maxHP(u)*0.2));
+  g.turn=2;
+  const plan=E.aiPlan(g,'britannia');
+  assert.equal(plan.doctrine,'assault','preserve Philippines strategic doctrine');
+  assert.ok(plan.recoveries instanceof Map,'recovery planner runs in the Philippines');
+  assert.ok(plan.recoveries.size>0,'damaged commanders have recovery orders');
+});
+
+test('Philippines city repair pass restores damaged AI units on both factions',()=>{
+  for(const side of scenario.sides){
+    const g=scenario.create(side,'normal',20261014),s=g.stations.find(c=>c.owner===side);
+    assert.ok(s,'friendly repair city for '+side);
+    g.units=g.units.filter(u=>u.c!==s.c||u.r!==s.r);
+    const unit=E.newUnit(g,E.typeFor(side,'light',g),side,s.c,s.r);
+    unit.hp=Math.max(1,Math.floor(E.maxHP(unit)*0.2));
+    unit.moved=unit.attacked=false;
+    g.phase=side;
+    g.economy[side].credits=10000;
+    const before=unit.hp;
+    assert.doesNotThrow(()=>E.aiProduction(g));
+    assert.ok(unit.hp>before,'AI repairs the '+side+' damaged formation');
+    assert.equal(unit.moved,true,'repair consumes movement');
+    assert.equal(unit.attacked,true,'repair consumes attack');
+  }
+});
