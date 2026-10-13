@@ -44,9 +44,10 @@ for(let i=0;i<N;i++){
   assert.equal(t.owner,null);assert.ok(t.provinceCity==null);
  }
 }
-assert.equal(landCount,1336);assert.equal(N-landCount,14792);
+assert.equal(landCount,1124);assert.equal(N-landCount,15004);
+for(const [c,r] of [[7,101],[8,102],[10,100]])assert.equal(land(r*W+c),false,'Borneo must not enter the Philippine theatre');
 const seaRegions=regions(true);assert.equal(seaRegions.sizes.length,1,'all staging/landing seas must connect');
-assert.equal(seaRegions.sizes[0],14792);
+assert.equal(seaRegions.sizes[0],15004);
 const dry=regions(false);
 const byName=Object.fromEntries(g.stations.map(s=>[s.name,s]));
 function separate(a,b){
