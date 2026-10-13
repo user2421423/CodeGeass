@@ -1,18 +1,129 @@
-  // Commanders (by rank) first, then Elite Forces; ordinary formations never take a charge from the AI.
+  // A country's Eliminators have two complementary jobs: one stays near the most valuable
+  // cities, while the others follow Tier 1 commanders into combat to protect armies from F.L.E.I.J.A.
+  // Only own charge locations enter these calculations. Never inspect rival Eliminator state.
+  const ELIMINATOR_AI = { pickupTurns: 3, anchorMinimum: 75 };
+  function eliminatorCityValue(g, side, s) {
+    return 22 + (s.tier || 1) * 12 + (s.income || 0) * 3 + (s.industry || 0) * 2 +
+      (s.capitalOf === side ? 240 : 0) + (s.project?.side === side ? 130 : 0) +
+      ((s.lab || 0) >= 3 ? 28 : 0);
+  }
   function eliminatorCarrierScore(g, u) {
-    return u.cmd ? 1000 + 50 * (E.officerOf(g, u)?.rank || 0) + unitStrength(u) : u.elite ? 500 + unitStrength(u) : 0;
+    // storyTier, not combat rank or Elite Force status, determines which heroes can carry charges.
+    if (COMMANDERS[u.cmd]?.storyTier !== 1 || u.hp <= 0 || atSea(g, u)) return 0;
+    return 1000 + 45 * (E.officerOf(g, u)?.rank || 0) + unitStrength(u) * 8 +
+      80 * Math.min(1, u.hp / maxHP(u));
+  }
+  function eliminatorCoverageValue(g, side, p, ignoreCity = null) {
+    const existing = sideEliminators(g, side).filter(h => h.city?.id !== ignoreCity);
+    let score = 0;
+    for (const s of g.stations) {
+      if (s.owner !== side || dist(g, s, p) > ELIMINATOR.range) continue;
+      // Redundant cover is worth something for very important cities, but far less than new cover.
+      const overlap = existing.filter(h => dist(g, h, s) <= ELIMINATOR.range).length;
+      score += eliminatorCityValue(g, side, s) / (1 + overlap * 3);
+    }
+    return score;
+  }
+  function eliminatorAnchorCity(g, side) {
+    const waiting = g.stations.filter(s => s.owner === side && s.eliminator > 0);
+    if (!waiting.length) return null;
+    const best = waiting
+      .map(s => ({ s, score: eliminatorCoverageValue(g, side, s, s.id) }))
+      .sort((a, b) => b.score - a.score || a.s.id - b.s.id)[0];
+    // Deliberately retain one strategically useful stationary charge, not every waiting charge.
+    return best.score >= ELIMINATOR_AI.anchorMinimum ? best.s : null;
+  }
+  function eliminatorProductionCity(g, side, anyLab = false) {
+    const covers = sideEliminators(g, side);
+    const leaders = g.units.filter(u => u.side === side && u.hp > 0 &&
+      !u.eliminator && eliminatorCarrierScore(g, u) > 0);
+    const preferMobile = covers.length > 0; // First charge covers cities; additional charges serve armies.
+    const foes = g.units.filter(u => u.hp > 0 && foe(g, u.side, side));
+    return g.stations
+      .filter(s => s.owner === side && !cityBusyReason(g, s) && !s.eliminator &&
+        (anyLab || (s.lab || 0) >= ELIMINATOR.lab))
+      .map(s => {
+        const nearestFoe = foes.reduce((d, u) => Math.min(d, dist(g, u, s)), 99);
+        const nearLeader = leaders
+          .filter(u => massOf(g, u) >= 0 && massOf(g, u) === massOf(g, s))
+          .map(u => ({ u, d: dist(g, u, s) }))
+          .filter(x => x.d <= (TYPES[x.u.type]?.move || 3) * ELIMINATOR_AI.pickupTurns)
+          .sort((a, b) => a.d - b.d || eliminatorCarrierScore(g, b.u) - eliminatorCarrierScore(g, a.u))[0];
+        const coverage = eliminatorCoverageValue(g, side, s);
+        const safety = nearestFoe <= 2 ? -240 : nearestFoe <= 5 ? -65 : 20;
+        const mobile = nearLeader ? 130 - nearLeader.d * 15 +
+          (eliminatorCarrierScore(g, nearLeader.u) - 1000) * 0.12 : -100;
+        const score = (preferMobile && leaders.length ? coverage * 0.35 + mobile : coverage) +
+          safety + (anyLab ? (s.lab || 0) * 35 : 0);
+        return { s, score };
+      })
+      .sort((a, b) => b.score - a.score || a.s.id - b.s.id)[0]?.s || null;
   }
   function aiAssignEliminators(g, side) {
     if (g.mode === 'scenario') return;
+    const anchor = eliminatorAnchorCity(g, side);
     for (const s of g.stations) {
-      if (s.owner !== side || !((s.eliminator || 0) > 0)) continue;
+      if (s.owner !== side || !(s.eliminator > 0) || s === anchor) continue;
       const carrier = g.units
-        .filter(u => u.hp > 0 && u.side === side && !((u.eliminator || 0) > 0) && dist(g, u, s) <= 1)
+        .filter(u => u.hp > 0 && u.side === side && !u.eliminator && dist(g, u, s) <= 1)
         .map(u => [u, eliminatorCarrierScore(g, u)])
         .filter(([, score]) => score > 0)
         .sort((a, b) => b[1] - a[1] || a[0].id - b[0].id)[0]?.[0];
       if (carrier) transferEliminator(g, { city: s.id }, { unit: carrier.id });
     }
+  }
+  // Select at most one courier per waiting charge. Commanders fighting an immediate battle or
+  // recovering are not recalled; cross-water routes and dangerously long detours are rejected.
+  function aiEliminatorPickup(g, u, memo) {
+    if (g.mode === 'scenario' || !isReady(g, u) || u.eliminator ||
+        eliminatorCarrierScore(g, u) <= 0 || u.hp / maxHP(u) < 0.7 ||
+        memo.recoveries?.has(u.id) || memo.guards?.[u.id]?.emergency) return null;
+    const own = g.units.filter(v => v.hp > 0 && v.side === u.side && !v.eliminator &&
+      eliminatorCarrierScore(g, v) > 0);
+    const anchor = eliminatorAnchorCity(g, u.side);
+    const rivals = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side));
+    for (const s of g.stations) {
+      if (s.owner !== u.side || s === anchor || !(s.eliminator > 0) || s.eliminatorMoved === g.turn) continue;
+      const field = goalField(g, u.side, [[s, 0]], 'land');
+      const options = own
+        .filter(v => massOf(g, v) >= 0 && massOf(g, v) === massOf(g, s) &&
+          Number.isFinite(field[v.r * g.cols + v.c]) &&
+          dist(g, v, s) <= (TYPES[v.type]?.move || 3) * ELIMINATOR_AI.pickupTurns &&
+          (dist(g, v, s) <= 1 || !rivals.some(e => dist(g, e, v) <= 3)))
+        .map(v => ({ v, score: eliminatorCarrierScore(g, v) -
+          dist(g, v, s) * 30 - field[v.r * g.cols + v.c] * 2 }))
+        .sort((a, b) => b.score - a.score || a.v.id - b.v.id);
+      if (options[0]?.v.id === u.id) return { city: s, field };
+    }
+    return null;
+  }
+  function eliminatorMobileCoverBonus(g, u, p, nearbyFoes) {
+    if (!(u.eliminator > 0) || COMMANDERS[u.cmd]?.storyTier !== 1) return 0;
+    const exposed = s => nearbyFoes.some(v => dist(g, v, s) <= 7) ? 1.4 : 0.6;
+    let value = 0;
+    for (const s of g.stations)
+      if (s.owner === u.side && dist(g, s, p) <= ELIMINATOR.range)
+        value += eliminatorCityValue(g, u.side, s) * exposed(s);
+    for (const v of g.units)
+      if (v.side === u.side && v.hp > 0 && dist(g, v, p) <= ELIMINATOR.range)
+        value += 25 + (v.cmd ? 70 : 0) + unitStrength(v) * 5;
+    // Still an attacking commander: defensive cover affects positioning, not combat permission.
+    return Math.min(85, value * 0.08);
+  }
+  function aiEliminatorMetrics(g, side) {
+    const charges = sideEliminators(g, side);
+    const cities = g.stations.filter(s => s.owner === side);
+    const covered = cities.filter(s => charges.some(h => h.ready && dist(g, h, s) <= ELIMINATOR.range));
+    return {
+      building: charges.filter(h => !h.ready).length,
+      stationary: charges.filter(h => !!h.city && h.ready).length,
+      carried: charges.filter(h => !!h.unit).length,
+      coveredCities: covered.length,
+      totalCities: cities.length,
+      weightedCoverage: covered.reduce((n, s) => n + eliminatorCityValue(g, side, s), 0),
+      importantCitiesCovered: covered.filter(s => s.capitalOf === side || s.tier >= 3).length,
+      importantCitiesTotal: cities.filter(s => s.capitalOf === side || s.tier >= 3).length,
+    };
   }
   function aiProduction(g) {
     const side = g.phase,
@@ -87,20 +198,19 @@
     delete plan.saving;
     delete plan.lastSuperTurn;
     const ordinaryBudget = price(typeFor(side, 'scout', g), 2, g, side);
-    // 2a. Eliminator carriers: a charge waiting in a city goes to the most important commander or Elite Force in or
-    // next to it, so the charge travels with the army it protects. With none there it stays in the city.
+    // 2a. Protect one high-value city cluster with a stationary charge; give other charges
+    // only to nearby Tier 1 commanders, or send an available hero to fetch them.
     aiAssignEliminators(g, side);
-    // 2b. F.L.E.I.J.A. Eliminator: the moment countermeasures are available, rivals build them before anything else,
-    // starting every charge they can afford (up to ELIMINATOR.max) and saving for the next one. With no free lab-3
-    // city outside their charges' cover, step 3 raises a lab for one (defensePrep).
+    // 2b. Evaluate labs by newly protected economic/capital value, safe access, and Tier 1
+    // collection routes rather than indiscriminately manufacturing at an isolated lab.
     const wantsDefense = () => g.mode !== 'scenario' && eliminatorUnlocked(g) && sideEliminators(g, side).length < ELIMINATOR.max;
     let defenseCity = null;
-    while (wantsDefense() && (defenseCity = eliminatorCity(g, side)) && !eliminatorReason(g, defenseCity)) {
+    while (wantsDefense() && (defenseCity = eliminatorProductionCity(g, side)) && !eliminatorReason(g, defenseCity)) {
       startEliminator(g, defenseCity.id);
       defenseCity = null;
     }
     plan.eliminator = !!defenseCity;
-    const defensePrep = wantsDefense() && !defenseCity ? eliminatorCity(g, side, true) : null;
+    const defensePrep = wantsDefense() && !defenseCity ? eliminatorProductionCity(g, side, true) : null;
     // 2c. F.L.E.I.J.A.: one warhead per strategic pool (shared by the 2018 Britannian allies). The human
     // Britannian partner has first claim when it can afford a project. A power with the
     // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
