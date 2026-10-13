@@ -26,7 +26,11 @@ const result = {
   chargesStarted: 0, pickedUp: 0, carrierLosses: 0, carrierTier1: 0, carrierOther: 0,
   chargedSideTurns: 0, carriedSideTurns: 0, waitingSideTurns: 0, buildingSideTurns: 0,
   importantCityExposure: 0, importantCityProtected: 0, weightedCityExposure: 0, weightedCityProtected: 0,
-  armyExposure: 0, armyProtected: 0, actions: { attacks:0, moves:0, deploys:0 },
+  armyExposure: 0, armyProtected: 0,
+  armyValueExposed: 0, armyValueProtected: 0,
+  frontValueExposed: 0, frontValueProtected: 0,
+  commandsAliveAtStart: 0, commandsAliveAtEnd: 0,
+  actions: { attacks:0, moves:0, deploys:0 },
   finalCities: {}, finalUnits: {}, perSide: {},
   startedTurn: {}, intercepts: [],
 };
@@ -38,6 +42,8 @@ const launchedChargeProjects = new Set();
 const previous = new Map();
 const armed = new Map();
 const everCarried = new Set();
+const initialCommanders = new Set(units().filter(u => u.cmd).map(u=>u.id));
+result.commandsAliveAtStart = initialCommanders.size;
 let beganAt = null;
 const sample = () => {
   for (const side of sides) {
@@ -64,9 +70,21 @@ const sample = () => {
         result.perSide[side].importantCityProtected++;
       }
     }
+    const rivals = units().filter(u => u.side !== side && u.side !== 'neutral' && E.foe(g,u.side,side));
     for (const u of units().filter(u => u.side === side)) {
+      const ratio = Math.max(0.2,u.hp/Math.max(1,E.maxHP(u)));
+      const nearBattle = rivals.some(v=>E.distance(v,u,g)<=7);
+      const value = (40+Math.min(240,u.stack*15)+(u.cmd ? 160 : 0)) * ratio *
+        (nearBattle ? 1.6 : 0.8);
+      const protectedByCharge = current.some(h => h.ready && E.distance(h,u,g) <= E.ELIMINATOR.range);
       result.armyExposure++;
-      if (current.some(h => h.ready && E.distance(h,u,g) <= E.ELIMINATOR.range)) result.armyProtected++;
+      result.armyValueExposed += value;
+      if(nearBattle) result.frontValueExposed += value;
+      if(protectedByCharge) {
+        result.armyProtected++;
+        result.armyValueProtected += value;
+        if(nearBattle) result.frontValueProtected += value;
+      }
     }
   }
 };
@@ -153,6 +171,11 @@ for (let turn=1; turn<=maxTurns;turn++) {
   if(living.length<=1) break;
 }
 result.firstEliminatorObservation=beganAt;
+result.commandsAliveAtEnd = units().filter(u=>initialCommanders.has(u.id)).length;
+result.armyValueProtectionRate = result.armyValueExposed ?
+  +(result.armyValueProtected/result.armyValueExposed).toFixed(4) : null;
+result.frontlineValueProtectionRate = result.frontValueExposed ?
+  +(result.frontValueProtected/result.frontValueExposed).toFixed(4) : null;
 result.cityProtectionRate=result.importantCityExposure
   ? +(result.importantCityProtected/result.importantCityExposure).toFixed(4):null;
 result.weightedProtectionRate=result.weightedCityExposure
