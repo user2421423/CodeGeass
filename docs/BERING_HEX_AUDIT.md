@@ -2,7 +2,7 @@
 
 **Branch:** `feature/bering-strait-crisis`  
 **Grid:** 120 × 80 = 9,600 hexes; 148°E–228°E (unwrapped across the international date line), 74°N–48°N.  
-**Coastline source:** GSHHS intermediate-resolution polygons, sampled in the pre-existing `/mnt/data/bering_build/make_mask.py` work. The sampling correction is documented here so the source of the new packed mask is traceable.
+**Coastline source:** GSHHS intermediate-resolution polygons, sampled using a Basemap geographic dataset. The audit's land/sea classifications and all changed grid coordinates are permanently recorded in the packed mask and accompanying CSV.
 
 ## Audit methodology
 
