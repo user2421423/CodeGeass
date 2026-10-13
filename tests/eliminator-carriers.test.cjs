@@ -258,6 +258,30 @@ test('frontline hero receives a charge via ordinary courier without leaving the 
   assert.equal(remote.eliminator||0,0,'the spare charge was collected');
 });
 
+test('charged relay hands off to adjacent Tier 1 commander before the army moves', () => {
+  const {g,city}=setup(401);
+  const remote=g.stations.find(s=>s.owner==='cf' && s!==city && land(g,s,2).length);
+  assert.ok(remote);
+  const heroTile=land(g,remote,2)[0];
+  const runnerTile=land(g,heroTile,1).find(p=>
+    E.internal.massOf(g,p)===E.internal.massOf(g,heroTile));
+  assert.ok(heroTile&&runnerTile);
+  const hero=unit(g,'cf',heroTile,'xingke');
+  const runner=unit(g,'cf',runnerTile);
+  runner.eliminator=1;
+  g.ai ||= {};
+  (g.ai.cf ||= {}).eliminatorRelayJobs={
+    [runner.id]:{city:remote.id,hero:hero.id,started:g.turn-1,pickedTurn:g.turn-1}
+  };
+  assert.equal(E.aiOrderPriority(g,runner),11,'rear courier acts after the regular commanders');
+  const at=[hero.c,hero.r];
+  E.aiProduction(g);
+  assert.equal(hero.eliminator,1,'the pre-movement rendezvous transfers the charge');
+  assert.equal(runner.eliminator,0,'courier is disarmed after delivering');
+  assert.deepEqual([hero.c,hero.r],at,'no commander detour');
+  assert.equal(g.ai.cf.eliminatorRelayDelivered,1,'successful delivery is counted once');
+});
+
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
   g.phase = 'britannia';
