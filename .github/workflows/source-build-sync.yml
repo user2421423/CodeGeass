@@ -35,3 +35,17 @@ jobs:
           node-version: '22'
       - name: Independently audit every Australian hex and atlas alignment
         run: node tools/australia_hex_audit.cjs
+
+  bering-map-and-hex-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bering scenario and regional renderer regressions
+        run: node --test tests/bering.test.cjs tests/indochina.test.cjs
+      - name: Audit all 9,600 Bering land, sea and coastal hexes
+        run: node tools/bering_hex_audit.cjs
+      - name: Verify Bering projected map, minimap and other UI
+        run: node tests/ui-smoke.cjs
