@@ -1732,7 +1732,11 @@
       if(!runner || !hero || !city ||
           massOf(g,runner)!==massOf(g,hero) ||
           (!runner.eliminator && (!city.eliminator || fixed.has(city.id))) ||
-          g.turn-job.started>8)delete jobs[runnerId];
+          g.turn-job.started>8) {
+        const stats=((g.ai ||= {})[side] ||= {});
+        stats.eliminatorRelayFailed=(stats.eliminatorRelayFailed||0)+1;
+        delete jobs[runnerId];
+      }
     }
     const usedRunners=new Set(Object.keys(jobs).map(Number));
     const usedHeroes=new Set(Object.values(jobs).map(j=>j.hero));
@@ -1762,6 +1766,8 @@
       }
       if(best&&bestScore>-280) {
         jobs[best.runner.id]={city:city.id,hero:best.hero.id,started:g.turn};
+        const stats=((g.ai ||= {})[side] ||= {});
+        stats.eliminatorRelayStarted=(stats.eliminatorRelayStarted||0)+1;
         usedRunners.add(best.runner.id);usedHeroes.add(best.hero.id);
       }
     }
@@ -1782,7 +1788,15 @@
             transferEliminator(g,{unit:u.id},{unit:hero.id}))
         : (city.eliminator>0 && city.eliminatorMoved!==g.turn &&
             transferEliminator(g,{city:city.id},{unit:u.id}));
-      if(tx?.ok && hasCharge)delete eliminatorRelayJobs(g,u.side)[u.id];
+      if(tx?.ok) {
+        if(hasCharge) {
+          const stats=((g.ai ||= {})[u.side] ||= {});
+          stats.eliminatorRelayDelivered=(stats.eliminatorRelayDelivered||0)+1;
+          stats.eliminatorRelayDeliveryTurns=(stats.eliminatorRelayDeliveryTurns||0)+
+            g.turn-(job.pickedTurn??job.started);
+          delete eliminatorRelayJobs(g,u.side)[u.id];
+        } else job.pickedTurn=g.turn;
+      }
       return !!tx?.ok;
     };
     if(deliver())return [];
