@@ -58,7 +58,7 @@
     if(assigned)group.destination={c:target.c,r:target.r};
     return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
   }
-  function create(player='eu',difficulty='normal',seed=201701){
+  function create(player='britannia',difficulty='normal',seed=201701){
     if(!SIDES.includes(player))throw Error('Unsupported Indochina faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
     const g={
