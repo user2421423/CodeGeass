@@ -4852,13 +4852,18 @@
   // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
   // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex
   // farther along its legal route this turn) and lost [id] (no terrain route remains; order cancelled).
-  function runGotos(g, side) {
+  function runGotos(g, side, { assaultOnly = false } = {}) {
     const report = { moved: [], arrived: [], blocked: [], lost: [] },
       fields = new Map();
     const orders = g.units
       // Never rerun a standing order after a unit has moved manually or by automation this turn.
       // Some elite/mobility skills refresh u.moved; autoOrderTurn closes that loophole.
       .filter(u => u.side === side && u.hp > 0 && u.goto && !u.moved && !u.lastTurnMoved && u.autoOrderTurn !== g.turn)
+      // The post-fire capture pass must not rerun unrelated personal orders.
+      .filter(u => !assaultOnly || (g.armyGroups || []).some(gr =>
+        gr.side === side && gr.stance === 'assault' && gr.units.includes(u.id) &&
+        gr.operation?.autoRouted?.[u.id]?.c === u.goto?.c &&
+        gr.operation?.autoRouted?.[u.id]?.r === u.goto?.r))
       .sort((a, b) => dist(g, a, a.goto) - dist(g, b, b.goto) || a.id - b.id);
     for (const u of orders) {
       if (g.over) break;
