@@ -113,8 +113,8 @@
         dist(g, p, f.anchor) <= SCENARIO_COLUMN.exploitRadius)) turns -= 2.5;
       else turns -= 0.5;
     }
-    // Player-owned cities are worth the extra operational travel time; a zero bonus keeps nearest-city ordering.
-    return Math.max(0, turns) / (1 + (playerPriorityTarget(g, u.side, f.anchor.owner) ? playerPriorityBonus(g, u.side) : 0));
+    // Scenario columns prioritize actual travel time, regardless of who controls the target.
+    return Math.max(0, turns);
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
