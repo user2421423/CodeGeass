@@ -37,13 +37,16 @@
     let memo = aiMemo.get(g);
     if (!memo) aiMemo.set(g, (memo = {}));
     if (!memo[side] || memo[side].turn !== g.turn) {
-      // Japan Scenario is an all-out city offensive: no guards, defensive
-      // fronts, recovery retreats or offensive assembly delays.
-      const rush = g.mode === 'scenario';
-      memo[side] = { turn: g.turn, guards: rush ? {} : assignGuards(g, side) };
-      if (!rush) planRecovery(g, side, memo[side]);
+      // Campaign scripting stays authoritative. Scenarios use a doctrine
+      // selected by ID; multi-front battles get mobile (not permanent) defense
+      // and commander recovery, while rapid assaults retain their tempo.
+      const scenario = g.mode === 'scenario',
+        doctrine = scenario ? scenarioDoctrine(g) : null,
+        recovery = !scenario || doctrine === 'division' || doctrine === 'europe';
+      memo[side] = { turn: g.turn, doctrine, guards: scenario ? {} : assignGuards(g, side) };
+      if (recovery) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
-      else if (rush) planScenarioOffense(g, side, memo[side]);
+      else if (scenario) planScenarioOffense(g, side, memo[side]);
       else planFronts(g, side, memo[side]);
     }
     return memo[side];
