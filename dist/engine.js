@@ -1324,19 +1324,38 @@
       g.teams = { ...cfg.teams };
       g.factions = cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null;
       if (!cfg.selectable.includes(g.player)) return null;
-      // Migrate prior saves to the new one-warhead cap; refund extra unfinished projects.
+      // Reconcile old saves to one warhead per pool. In 2018 the Britannian
+      // partners count together, with a human-owned warhead/project kept first.
+      // Cancelled projects refund their ORIGINAL owner's treasury, not the ally's.
       g.arsenal ||= {};
+      const visitedPools = new Set();
       for (const side of g.majors) {
-        const stored = Math.max(0, g.arsenal[side] || 0);
-        g.arsenal[side] = Math.min(stored, FLEIJA.max);
-        const projects = g.stations.filter(s => s.project?.side === side)
-          .sort((a, b) => a.project.ready - b.project.ready || a.id - b.id);
-        const slots = Math.max(0, FLEIJA.max - g.arsenal[side]);
-        for (const s of projects.slice(slots)) {
-          s.project = null;
-          const fundsForSide = funds(g, side);
-          if (fundsForSide) for (const [resource, amount] of Object.entries(FLEIJA.cost))
-            fundsForSide[resource] = (fundsForSide[resource] || 0) + amount;
+        const members = fleijaPoolSides(g, side);
+        const poolKey = members.join('/');
+        if (visitedPools.has(poolKey)) continue;
+        visitedPools.add(poolKey);
+        const entries = [];
+        for (const member of members) {
+          if ((g.arsenal[member] || 0) > 0)
+            entries.push({ member, kind: 'stored' });
+          for (const s of g.stations.filter(s => s.project?.side === member))
+            entries.push({ member, kind: 'project', station: s });
+        }
+        entries.sort((a, b) =>
+          Number(b.member === g.player) - Number(a.member === g.player) ||
+          Number(b.kind === 'stored') - Number(a.kind === 'stored') ||
+          (a.station?.project.ready || 0) - (b.station?.project.ready || 0) ||
+          g.majors.indexOf(a.member) - g.majors.indexOf(b.member));
+        for (const member of members) g.arsenal[member] = 0;
+        for (const [i, entry] of entries.entries()) {
+          if (i < FLEIJA.max) {
+            if (entry.kind === 'stored') g.arsenal[entry.member] = 1;
+          } else if (entry.kind === 'project') {
+            entry.station.project = null;
+            const treasury = funds(g, entry.member);
+            if (treasury) for (const [resource, amount] of Object.entries(FLEIJA.cost))
+              treasury[resource] = (treasury[resource] || 0) + amount;
+          }
         }
       }
     }
@@ -3214,7 +3233,7 @@
     radius: 2,
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
     turns: 4, // construction time
-    max: 1, // combined stored and under-construction warheads per faction
+    max: 1, // combined stored and unfinished warheads; shared by Britannia and Euro Britannia in 2018
     lab: 3, // research lab level needed
     labTurn: 15, // 2017 World War: Research Lab III and F.L.E.I.J.A. unlock
     ufnLabTurn: 5, // 2018 Rise of the U.F.N.: earlier strategic-weapons unlock
@@ -3254,6 +3273,28 @@
   function hasFleija(g, side) {
     return g.mode === 'conquest' && isMajor(g, side) && g.turn >= fleijaLabTurn(g);
   }
+  // The 2018 Britannian allies share one strategic arsenal slot, but never
+  // share funds, project ownership, a warhead's launch control, or unit orders.
+  function fleijaPoolSides(g, side) {
+    return g.mode === 'conquest' && g.era === 'ufn2018' &&
+      (side === 'britannia' || side === 'eb') &&
+      g.teams?.britannia && g.teams.britannia === g.teams.eb
+      ? ['britannia', 'eb'] : [side];
+  }
+  function fleijaWarheadCount(g, side) {
+    const members = fleijaPoolSides(g, side);
+    return members.reduce((n, member) => n + (g.arsenal?.[member] || 0), 0) +
+      g.stations.filter(s => members.includes(s.project?.side)).length;
+  }
+  // If a Britannian player has a funded, idle level-III lab, the AI ally must
+  // not claim the newly free shared slot first (including after an AI launch).
+  // The AI may use the slot if the player is unable to begin a project.
+  function fleijaPlayerPriority(g, side) {
+    if (side === g.player || !fleijaPoolSides(g, side).includes(g.player) ||
+        !hasFleija(g, g.player) || g.over) return false;
+    return g.stations.some(s => s.owner === g.player && !cityBusyReason(g, s) &&
+      (s.lab || 0) >= FLEIJA.lab && !shortfall(funds(g, g.player), FLEIJA.cost));
+  }
   function cityBusyReason(g, s) {
     return s.project
       ? 'F.L.E.I.J.A. project under way'
@@ -3269,8 +3310,10 @@
         ? 'F.L.E.I.J.A. is unavailable outside conquests'
         : `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`) : null) ||
       cityBusyReason(g, s) ||
-      ((g.arsenal?.[s.owner] || 0) + g.stations.filter(c => c.project?.side === s.owner).length >= FLEIJA.max
-        ? 'Only one F.L.E.I.J.A. warhead may be held or under construction per faction' : null) ||
+      (fleijaWarheadCount(g, s.owner) >= FLEIJA.max
+        ? (fleijaPoolSides(g, s.owner).length > 1
+          ? 'Britannia and Euro Britannia share one F.L.E.I.J.A. warhead slot (ready or under construction)'
+          : 'Only one F.L.E.I.J.A. warhead may be held or under construction per faction') : null) ||
       ((s.lab || 0) < FLEIJA.lab ? `Requires research lab level ${FLEIJA.lab}` : null) ||
       shortfall(funds(g, s.owner), FLEIJA.cost)
     );
@@ -5137,6 +5180,9 @@
     ELIMINATOR,
     fleijaLabTurn,
     hasFleija,
+    fleijaPoolSides,
+    fleijaWarheadCount,
+    fleijaPlayerPriority,
     eliminatorUnlocked,
     eliminatorTurn,
     eliminatorReason,
@@ -5176,6 +5222,9 @@
       FACTIONS,
       FLEIJA,
       fleijaLabTurn,
+      fleijaPoolSides,
+      fleijaWarheadCount,
+      fleijaPlayerPriority,
       MAJORS,
       powersOf,
       isMajor,

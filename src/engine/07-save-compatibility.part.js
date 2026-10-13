@@ -106,19 +106,38 @@
       g.teams = { ...cfg.teams };
       g.factions = cfg.factions ? JSON.parse(JSON.stringify(cfg.factions)) : null;
       if (!cfg.selectable.includes(g.player)) return null;
-      // Migrate prior saves to the new one-warhead cap; refund extra unfinished projects.
+      // Reconcile old saves to one warhead per pool. In 2018 the Britannian
+      // partners count together, with a human-owned warhead/project kept first.
+      // Cancelled projects refund their ORIGINAL owner's treasury, not the ally's.
       g.arsenal ||= {};
+      const visitedPools = new Set();
       for (const side of g.majors) {
-        const stored = Math.max(0, g.arsenal[side] || 0);
-        g.arsenal[side] = Math.min(stored, FLEIJA.max);
-        const projects = g.stations.filter(s => s.project?.side === side)
-          .sort((a, b) => a.project.ready - b.project.ready || a.id - b.id);
-        const slots = Math.max(0, FLEIJA.max - g.arsenal[side]);
-        for (const s of projects.slice(slots)) {
-          s.project = null;
-          const fundsForSide = funds(g, side);
-          if (fundsForSide) for (const [resource, amount] of Object.entries(FLEIJA.cost))
-            fundsForSide[resource] = (fundsForSide[resource] || 0) + amount;
+        const members = fleijaPoolSides(g, side);
+        const poolKey = members.join('/');
+        if (visitedPools.has(poolKey)) continue;
+        visitedPools.add(poolKey);
+        const entries = [];
+        for (const member of members) {
+          if ((g.arsenal[member] || 0) > 0)
+            entries.push({ member, kind: 'stored' });
+          for (const s of g.stations.filter(s => s.project?.side === member))
+            entries.push({ member, kind: 'project', station: s });
+        }
+        entries.sort((a, b) =>
+          Number(b.member === g.player) - Number(a.member === g.player) ||
+          Number(b.kind === 'stored') - Number(a.kind === 'stored') ||
+          (a.station?.project.ready || 0) - (b.station?.project.ready || 0) ||
+          g.majors.indexOf(a.member) - g.majors.indexOf(b.member));
+        for (const member of members) g.arsenal[member] = 0;
+        for (const [i, entry] of entries.entries()) {
+          if (i < FLEIJA.max) {
+            if (entry.kind === 'stored') g.arsenal[entry.member] = 1;
+          } else if (entry.kind === 'project') {
+            entry.station.project = null;
+            const treasury = funds(g, entry.member);
+            if (treasury) for (const [resource, amount] of Object.entries(FLEIJA.cost))
+              treasury[resource] = (treasury[resource] || 0) + amount;
+          }
         }
       }
     }

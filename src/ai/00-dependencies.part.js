@@ -14,6 +14,8 @@
     FACTIONS,
     FLEIJA,
     fleijaLabTurn,
+    fleijaWarheadCount,
+    fleijaPlayerPriority,
     MAJORS,
     powersOf,
     isMajor,

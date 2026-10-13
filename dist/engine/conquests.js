@@ -6,7 +6,7 @@
     title: '2018 — Rise of the U.F.N.',
     year: '2018 a.t.b.',
     desc: 'The United Federation of Nations unites the former Chinese Federation and surviving E.U. territories against Britannia and its Euro-Britannian ally. Australia remains neutral.',
-    rulesText: 'Britannia and Euro Britannia are permanently allied but command separate armies and economies. Defeat the opposing coalition, or lead by cities at the 120-turn armistice.',
+    rulesText: 'Britannia and Euro Britannia are permanently allied and share one F.L.E.I.J.A. warhead allowance, but command separate armies and economies. Defeat the opposing coalition, or lead by cities at the 120-turn armistice.',
     majors: ['britannia', 'eb', 'cf'],
     selectable: ['britannia', 'eb', 'cf'],
     teams: { britannia: 'britannian', eb: 'britannian', cf: 'ufn' },

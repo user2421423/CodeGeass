@@ -82,14 +82,15 @@
     }
     plan.eliminator = !!defenseCity;
     const defensePrep = wantsDefense() && !defenseCity ? eliminatorCity(g, side, true) : null;
-    // 2c. F.L.E.I.J.A.: one warhead at a time, started again as soon as the last one is fired. A power with the
+    // 2c. F.L.E.I.J.A.: one warhead per strategic pool (shared by the 2018 Britannian allies). The human
+    // Britannian partner has first claim when it can afford a project. A power with the
     // Sakuradite for it (or the income to gather it soon) keeps that Sakuradite back, then saves credits and industry
     // and starts the project in its best-lab city.
     const warCity =
       g.mode !== 'scenario' && !plan.eliminator &&
       hasFleija(g, side) &&
-      !g.stations.some(s => s.project?.side === side) &&
-      !(g.arsenal?.[side] > 0)
+      fleijaWarheadCount(g, side) < FLEIJA.max &&
+      !fleijaPlayerPriority(g, side)
         ? fleijaCity(g, side, front)
         : null;
     plan.warhead = !!warCity && ((e.sakuradite || 0) >= FLEIJA.cost.sakuradite || income(g, side).sakuradite >= 15);
