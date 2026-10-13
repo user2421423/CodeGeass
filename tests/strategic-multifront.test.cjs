@@ -74,8 +74,14 @@ test('European and Invasion scenarios choose doctrines; Campaign retains scripte
   assert.equal(E.aiPlan(eu,'eu').doctrine,'europe');
   assert.ok(E.aiPlan(eu,'eu').localDefense);
   const invasion=japan.create('britannia','normal',71);
-  assert.equal(E.aiPlan(invasion,'britannia').doctrine,'invasion');
-  assert.ok(E.aiPlan(invasion,'britannia').localDefense);
+  const opening=E.aiPlan(invasion,'britannia');
+  assert.equal(opening.doctrine,'invasion');
+  assert.equal(opening.localDefense?.dispatched,0);
+  invasion.turn=10;
+  assert.equal(japan.onTurn(invasion),true,'story alliance ends at the scenario hook');
+  const postCollapse=E.aiPlan(invasion,'britannia');
+  assert.equal(postCollapse.doctrine,'invasion');
+  assert.ok(postCollapse.localDefense,'defensive response activated after alliance change');
   const divisionHard=division.create('britannia','hard',71);
   assert.equal(E.aiPlan(divisionHard,'britannia').doctrine,'division');
 });
