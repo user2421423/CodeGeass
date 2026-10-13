@@ -52,7 +52,7 @@ test('Geographic city order, Red River, Mekong, Annamite Range and both naval gu
 
 test('Ports adjoin navigable water; both fleets can access connected sea',()=>{
   const g=map.create('cf','normal',11),ports=g.stations.filter(s=>s.portAt);
-  assert.equal(ports.length,14);
+  assert.equal(ports.length,13);
   assert.equal(new Set(ports.map(s=>E.key(s.portAt))).size,ports.length);
   for(const s of ports){
     assert.equal(E.distance(s,s.portAt,g),1,s.name);

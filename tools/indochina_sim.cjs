@@ -13,15 +13,19 @@ const r={player,difficulty,seed,maxTurns:turns,startingCities:Object.fromEntries
   startingForces:Object.fromEntries(sides.map(s=>[s,g.units.filter(v=>v.side===s).length])),
   captures:[],losses:{britannia:0,cf:0},production:{britannia:0,cf:0},attacks:{britannia:0,cf:0},
   navalActions:{britannia:0,cf:0},navalMoves:{britannia:0,cf:0},errors:[],snapshots:[],winner:null,openingStall:false};
-let oldOwners=new Map(g.stations.map(s=>[s.id,s.owner])),known=new Set(g.units.map(u=>u.id)),dead=new Set();
+let oldOwners=new Map(g.stations.map(s=>[s.id,s.owner])),known=new Set(g.units.map(u=>u.id)),
+  previousAlive=new Map(g.units.filter(u=>u.hp>0).map(u=>[u.id,u.side]));
 function observe(){
  for(const city of g.stations)if(oldOwners.get(city.id)!==city.owner){
   r.captures.push({turn:g.turn,city:city.name,from:oldOwners.get(city.id),to:city.owner});oldOwners.set(city.id,city.owner);
  }
+ const living=new Map();
  for(const u of g.units){
   if(!known.has(u.id)){known.add(u.id);r.production[u.side]++;}
-  if(u.hp<=0&&!dead.has(u.id)){dead.add(u.id);r.losses[u.side]++;}
+  if(u.hp>0)living.set(u.id,u.side);
  }
+ for(const [id,side] of previousAlive)if(!living.has(id))r.losses[side]++;
+ previousAlive=living;
 }
 let end=false;
 for(let turn=1;turn<=turns&&!end;turn++){
