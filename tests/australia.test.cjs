@@ -134,3 +134,21 @@ test('Strategic three-way AI recognizes all rival fronts including ports',()=>{
     assert.doesNotThrow(()=>E.beginTurn(g,player,true));
   }
 });
+
+test('All three player campaigns persist with the same map, fleets and diplomatic setup',()=>{
+  for(const side of SIDES)for(const difficulty of ['normal','hard','challenge','elite']){
+    const g=australia.create(side,difficulty,107);
+    const original=JSON.stringify(E.packSave(g));
+    assert.ok(original.length<300000,'regional scenario should pack compactly');
+    const restored=E.migrateSave(JSON.parse(original));
+    assert.ok(restored,'scenario must load');
+    assert.equal(restored.scenario.id,'war-for-australia');
+    assert.equal(restored.player,side);
+    assert.equal(restored.difficulty,difficulty);
+    assert.deepEqual(restored.order,g.order);
+    assert.equal(restored.teams,null);
+    assert.deepEqual(restored.stations,g.stations);
+    assert.deepEqual(restored.units,g.units);
+    assert.doesNotThrow(()=>E.beginTurn(restored,side,true));
+  }
+});
