@@ -36,7 +36,7 @@
       if (shot?.ok) g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
-    for (const u of (g.mode === 'scenario' ? [] : own())
+    for (const u of (g.mode === 'scenario' && !['division','europe'].includes(memo.doctrine) ? [] : own())
       .filter(u => u.hp / maxHP(u) < (memo.recoveries?.has(u.id) ? 0.7 : 0.55) && nearFriendlyCity(g, u) && !atSea(g, u))
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
@@ -190,36 +190,37 @@
       // Factories must reinforce a front they can actually reach. Deficits use
       // near-term arrivals rather than distant assigned troops that will not
       // defend the city in the next few turns.
-      factoryETA = (s, f) => {
-        const target = f.rally || f.anchor;
-        if (!target || massOf(g, s) < 0 || massOf(g, s) !== massOf(g, target))
-          return Infinity;
-        return Math.ceil(dist(g, s, target) / 4);
-      },
+      factoryETA = (s, f) => f && frontArrival(g,s,f),
       // Japan Scenario: reinforcements march toward an active, understrength attack along
       // real terrain and naval routes instead of a generic nearest enemy or a rear-area defense.
       // A capture-capable unit standing at the factory estimates the real land or sea route,
       // so island factories can reinforce overseas columns.
       scenarioServes = s => {
-        const needing = memo.fronts.filter(f => f.assigned < f.desiredStrength);
+        const needing = memo.fronts.filter(f => (f.deficit ??
+          Math.max(0,f.desiredStrength-f.assigned)) > 0);
         const choices = needing.length ? needing : memo.fronts;
         const sample = allUnits(g).find(u => u.side === side && u.hp > 0 && canCapture(u) && !isShip(u)),
           proxy = sample && { ...sample, id: 'factory:' + s.id, c: s.c, r: s.r },
           route = f => scenarioTravel(g, proxy || s, f);
-        return choices.slice().sort((a, b) => route(a) - route(b) || a.anchor.id - b.anchor.id)[0];
+        return choices.slice().sort((a,b) => {
+          const score = f => (f.deficit??Math.max(0,f.desiredStrength-f.assigned))*2 /
+            (1+route(f)) + (f.state==='regrouping'?2:0);
+          return score(b)-score(a)||route(a)-route(b)||a.anchor.id-b.anchor.id;
+        })[0];
       },
       scenarioUrgency = s => {
         const f = scenarioServes(s);
         if (!f) return 0;
-        const shortage = Math.max(0, f.desiredStrength - f.assigned);
-        return shortage * 3 - Math.min(20, scenarioRouteField(g, f)[s.r * g.cols + s.c] / 4);
+        const shortage = f.deficit ?? Math.max(0,f.desiredStrength-f.assigned);
+        const travel = frontArrival(g,s,f);
+        return shortage*3/(1+Math.min(10,travel)/3) + (f.state==='regrouping'?2:0);
       },
       serves = s => {
         if (g.mode === 'scenario') return scenarioServes(s);
         if (!yardFront.has(s.id)) {
           const chosen = (memo.fronts || [])
             .map(f => ({ f, eta: factoryETA(s, f),
-              gap: Math.max(0, f.desiredStrength - (f.arrivingFour || 0)) }))
+              gap: f.deficit ?? Math.max(0, f.desiredStrength - (f.arrivingFour || 0)) }))
             .filter(x => x.eta <= 5 && x.gap > 0)
             .sort((a, b) =>
               b.gap * (1 + (b.f.type === 'defensive' ? 0.8 : 0.1)) /
@@ -237,7 +238,7 @@
         const eta = chosen?.eta ?? factoryETA(s, f || { anchor: s });
         const nearbyThreat = foes.some(u => dist(g, u, s) <= aiRange(g).threat) ? 8 : 0;
         return nearbyThreat + (f
-          ? Math.max(0, f.desiredStrength - (f.arrivingFour || 0)) *
+          ? (f.deficit ?? Math.max(0, f.desiredStrength - (f.arrivingFour || 0))) *
               (0.5 + Math.max(0, f.score) / 100) / (1 + eta * 0.35)
           : 0);
       },
