@@ -1,4 +1,4 @@
-name: Eliminator 30-pair test versus latest main
+name: Eliminator relay 30-pair comparison against latest main
 on:
   push:
     branches: ['feature/eliminator-strategic-ai']
@@ -75,7 +75,7 @@ jobs:
         run: |
           set -euo pipefail
           node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" feature > feature.json
-          git show 9b34e6104df9e65e9d46d81ede127bde02c53844:dist/engine/ai.js > dist/engine/ai.js
+          git show 6c0ea583b949479c46b5290d39db0fb986d82a38:dist/engine/ai.js > dist/engine/ai.js
           node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" baseline > baseline.json
           echo 'FEATURE'
           cat feature.json
@@ -85,7 +85,7 @@ jobs:
           const fs=require('node:fs');
           const f=JSON.parse(fs.readFileSync('feature.json'));
           const b=JSON.parse(fs.readFileSync('baseline.json'));
-          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','interceptionRate','chargesStarted','pickedUp','carrierTier1','carrierOther','carrierLosses','avgCarried','avgWaiting','cityProtectionRate','weightedProtectionRate','armyProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtStart','commandsAliveAtEnd','elapsedMs','played','finalCities','actions'];
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','interceptionRate','chargesStarted','pickedUp','carrierTier1','carrierOther','carrierLosses','avgCarried','avgWaiting','cityProtectionRate','weightedProtectionRate','armyProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','commandsAliveAtStart','commandsAliveAtEnd','relayStarted','relayDelivered','relayFailed','avgRelayDeliveryTurns','elapsedMs','played','finalCities','actions'];
           const comparison=Object.fromEntries(keys.map(k=>[k,{baseline:b[k],feature:f[k]}]));
           const report={mode:f.mode,seed:f.seed,turns:f.maxTurns,comparison};
           fs.writeFileSync('comparison.json',JSON.stringify(report,null,2));
