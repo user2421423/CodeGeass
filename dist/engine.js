@@ -4060,7 +4060,11 @@
     if (g.mode === 'scenario') {
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
-      if (!contenders.includes(g.player)) {
+      // A Stonehenge ally can lose its own cities while the coalition still fights.
+      const survivingAlly=g.scenario?.id==='operation-stonehenge' &&
+        contenders.some(s=>s!==g.player && g.teams?.[g.player] &&
+          g.teams[s]===g.teams[g.player]);
+      if (!contenders.includes(g.player) && !survivingAlly) {
         // Player defeat can end their run, but award no faction a victory
         // until that faction controls every Japanese city.
         const soleVictor = conquest?.winner || null;
@@ -4313,7 +4317,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'operation-stonehenge'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4516,8 +4520,9 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait'].includes(g.scenario?.id)) return g;
-    const sides = g.scenario.id === 'bering-strait' ? ['britannia','eu'] : ['eu','eb'];
+    if (!eliteScenario(g) || !['european-war','bering-strait','operation-stonehenge'].includes(g.scenario?.id)) return g;
+    const sides = g.scenario.id === 'operation-stonehenge' ? ['britannia','eb','eu'] :
+      g.scenario.id === 'bering-strait' ? ['britannia','eu'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',

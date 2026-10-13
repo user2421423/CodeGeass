@@ -165,6 +165,7 @@
   // but give genuinely multi-front scenarios stateful operational commitments.
   function scenarioDoctrine(g) {
     const id = g.scenario?.id || '';
+    if (g.scenario?.aiDoctrine === 'europe') return 'europe';
     if (id === 'division-japan') return 'division';
     if (id.includes('europe') || id === 'bering-strait') return 'europe';
     if (id.includes('invasion-japan') || id === 'japan') return 'invasion';

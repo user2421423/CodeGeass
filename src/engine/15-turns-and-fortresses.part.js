@@ -296,7 +296,11 @@
     if (g.mode === 'scenario') {
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
-      if (!contenders.includes(g.player)) {
+      // A Stonehenge ally can lose its own cities while the coalition still fights.
+      const survivingAlly=g.scenario?.id==='operation-stonehenge' &&
+        contenders.some(s=>s!==g.player && g.teams?.[g.player] &&
+          g.teams[s]===g.teams[g.player]);
+      if (!contenders.includes(g.player) && !survivingAlly) {
         // Player defeat can end their run, but award no faction a victory
         // until that faction controls every Japanese city.
         const soleVictor = conquest?.winner || null;

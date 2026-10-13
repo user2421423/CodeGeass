@@ -1,0 +1,34 @@
+name: Operation Stonehenge scenario
+on:
+  push:
+    branches: ['scenario/operation-stonehenge']
+  pull_request:
+    paths:
+      - 'dist/scenarios-stonehenge.js'
+      - 'tests/stonehenge.test.cjs'
+      - 'tools/stonehenge_sim.cjs'
+      - 'src/ai/**'
+      - 'src/engine/**'
+      - 'dist/engine.js'
+      - 'dist/engine/ai.js'
+      - 'dist/ui/scenario-screens.js'
+      - 'dist/index.html'
+      - '.github/workflows/operation-stonehenge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+      - name: Two-seed simulation of three factions and four difficulties
+        timeout-minutes: 32
+        run: node tools/stonehenge_sim.cjs 6

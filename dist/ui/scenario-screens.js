@@ -8,7 +8,8 @@ const SCENARIO_KINDS = [
   ['invasion-japan','The Invasion of Japan','44 cities · 3 sides'],
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
-  ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides']
+  ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
+  ['operation-stonehenge','Operation Stonehenge','54 cities · 3 sides']
 ];
 const SCENARIO_BLURBS = {
   'invasion-japan': {
@@ -24,6 +25,11 @@ const SCENARIO_BLURBS = {
   'european-war': {
     eu: 'Hold the industrial cities of western and central Europe against the eastern offensive.',
     eb: 'Lead Euro Britannia’s elite spearheads from Russia and eastern Europe toward Paris.'
+  },
+  'operation-stonehenge': {
+    britannia: 'Launch ten carrier-battleships and amphibious fleets from the Atlantic staging ports of western Ireland. Seize Britain and western continental bridgeheads.',
+    eb: 'Strike west from Russia and eastern Europe with a powerful independent land army. Coordinate victory with Britannia.',
+    eu: 'Defend the Channel, western ports and industrial heartland while also resisting the eastern Euro Britannian offensive.'
   },
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
@@ -51,6 +57,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Both sides are hostile from turn 1. Europia United has the larger industrial economy; Euro Britannia begins with a heavier eastern field army.',
     elite: 'Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.',
     focus: {eu:'Warsaw',eb:'Minsk'}
+  },
+  'operation-stonehenge': {
+    era: 'Europe · Alternate 2017',
+    intro: 'All-out Britannian Atlantic invasion and a simultaneous Euro Britannian attack from the east: a true two-front war.',
+    diplomacy: 'Britannia and Euro Britannia are permanent allies with separate economies, forces and commanders. Coalition victory requires the complete defeat of the E.U.',
+    elite: 'Elite Stonehenge: land and amphibious forces start as Lv.1 Elite Forces, with AI rival commanders at Lv.5. Carrier-battleships remain conventional. HQ unlock rules apply.',
+    focus: {britannia:'Galway',eb:'Minsk',eu:'Paris'}
   },
   'bering-strait': {
     era: 'Bering Strait · Alternate 2017',
