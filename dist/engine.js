@@ -4861,12 +4861,13 @@
 
   // ======== Pathfinding: goal fields and landmasses, for standing orders and the AI ========
   // The side-wide targets as [position, value] pairs: rival cities (a F.L.E.I.J.A. project outranks even a capital) and
-  // Sakuradite mines held by others (Mount Fuji pulls almost like a capital).
+  // Sakuradite mines held by others (Mount Fuji pulls almost like a capital). Rival Eliminator projects are classified,
+  // so they never attract attention.
   function goalSeeds(g, side) {
     const seeds = [];
     for (const s of g.stations)
       if (foe(g, s.owner, side))
-        seeds.push([s, s.project || s.eliminatorProject ? -8 : s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0]);
+        seeds.push([s, s.project ? -8 : s.capitalOf && alive(g, s.owner) ? -6 : s.owner === 'neutral' ? 1 : 0]);
     for (const d of g.sites || []) if (d.city == null && foe(g, d.owner, side)) seeds.push([d, d.base >= 30 ? -5 : -1]);
     return seeds;
   }

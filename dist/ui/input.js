@@ -788,6 +788,11 @@ document.addEventListener('keydown', e => {
     activateHex(hover);
   }
 });
+function classified(o) {
+  const { eliminator, eliminatorProject, eliminatorMoved, ...rest } = o;
+  if (rest.cargo) rest.cargo = rest.cargo.map(classified);
+  return rest;
+}
 function registerTools() {
   const context = document.modelContext;
   if (!context?.registerTool) return;
@@ -802,10 +807,11 @@ function registerTools() {
         phase: game.phase,
         player: game.player,
         resources: game.economy[game.player],
-        cities: game.stations,
+        // Rival Eliminator charges, projects and carriers are classified.
+        cities: game.stations.map(s => s.owner === game.player ? s : classified(s)),
         sakuraditeDeposits: game.sites || [],
         fleijaArsenal: game.arsenal || {},
-        units: game.units.filter(u => u.hp > 0),
+        units: game.units.filter(u => u.hp > 0).map(u => u.side === game.player ? u : classified(u)),
         fallen: game.fallen,
         result: game.over,
       }),

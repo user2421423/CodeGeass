@@ -135,3 +135,26 @@ test('the AI hands a waiting charge to the best commander next to the city, neve
   assert.equal(officer.eliminator, 1);
   assert.equal(plain.eliminator || 0, 0);
 });
+
+test('rival Eliminators stay classified from AI targeting and from the player', () => {
+  const { g, city } = setup();
+  g.phase = 'britannia';
+  const carrier = unit(g, 'cf', land(g, city, 1)[0], 'xingke');
+  const seeds = () => JSON.stringify(E.internal.goalSeeds(g, 'britannia').map(([p, v]) => [p.c, p.r, v]));
+  const target = () => { const t = E.aiLaunchTarget(g, 'britannia'); return t && [t.c, t.r]; };
+  city.eliminator = 0;
+  const before = [seeds(), target()];
+  // A charge waiting, a project under way, and a carried charge must not change where the AI aims or marches.
+  city.eliminator = 1;
+  g.stations.find(s => s.owner === 'cf' && s !== city).eliminatorProject = { side: 'cf', started: 19, ready: 21 };
+  carrier.eliminator = 1;
+  assert.deepEqual([seeds(), target()], before);
+  const read = p => require('node:fs').readFileSync(require('node:path').join(__dirname, '..', p), 'utf8');
+  assert.match(read('src/ai/02-fronts.part.js'), /const project = s\.project,/);
+  assert.match(read('src/renderer/05-frame-painting.part.js'), /u\.side === game\.player && u\.eliminator > 0/);
+  assert.match(read('src/renderer/05-frame-painting.part.js'), /carrier\.side === game\.player && carrier\.eliminator > 0/);
+  assert.match(read('src/hud/05-command-dock.part.js'), /ours && u\.eliminator > 0/);
+  const input = read('dist/ui/input.js');
+  assert.match(input, /cities: game\.stations\.map\(s => s\.owner === game\.player \? s : classified\(s\)\)/);
+  assert.match(input, /units: game\.units\.filter\(u => u\.hp > 0\)\.map\(u => u\.side === game\.player \? u : classified\(u\)\)/);
+});

@@ -421,7 +421,8 @@
       list = [];
     for (const s of g.stations) {
       if (foe(g, s.owner, side)) {
-        const project = s.project || s.eliminatorProject,
+        // Warhead projects are public intelligence; rival Eliminator projects are classified.
+        const project = s.project,
           capital = s.capitalOf && alive(g, s.owner);
         if (!operational(s)) continue;
         const [value, seed] = project ? [100, -8] : capital ? [70, -6] : s.owner === 'neutral' ? [8, 1] : s.tier >= 3 ? [20, -1] : [10, 0];
