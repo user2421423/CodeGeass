@@ -223,6 +223,35 @@ const modal = () => node('modal-root').innerHTML;
     return GEOGRAPHY.paint(painter,g,0,SQ*R*(g.cols+1),0,R*1.5*(g.rows+1),0.85);
   })()`);
   assert.equal(japanAtlas, true, 'scenario painting uses the geographic Japan coastline');
+
+  // Bering uses two geographically projected high-detail GSHHG halves on
+  // either side of the date line, rather than 9,600 filled political hexes.
+  // Both the normal map and the minimap/briefing use GEOGRAPHY.paint.
+  const beringAtlasTransforms = run(`(() => {
+    const g = E.scenarios.bering.create('britannia', 'normal', 17);
+    const painter = document.createElement('canvas').getContext('2d');
+    const oldTransform = painter.transform, oldClip = painter.clip;
+    const transforms = [], clips = [];
+    painter.transform = (...args) => { transforms.push(args); oldTransform(...args); };
+    painter.clip = (...args) => { clips.push(args); oldClip(...args); };
+    try {
+      const painted = GEOGRAPHY.paint(painter, g, 0,
+        SQ * R * (g.cols + 1), 0, 1.5 * R * (g.rows + 1), .85);
+      return { painted, transforms, clips: clips.length };
+    } finally {
+      painter.transform = oldTransform;
+      painter.clip = oldClip;
+    }
+  })()`);
+  assert.equal(beringAtlasTransforms.painted, true);
+  const beringForward = beringAtlasTransforms.transforms.filter(
+    t => Math.abs(t[0] - 3) < 1e-7 && Math.abs(t[3] - 80 * 128 / (26 * 75)) < 1e-7);
+  assert.equal(beringForward.length, 2, 'both Bering date-line halves must be geographically projected');
+  assert(Math.abs(beringForward[1][4] - beringForward[0][4]) > SQ * R * 120,
+    'Alaska must be unwrapped to the east of Kamchatka, not mirrored over Siberia');
+  assert(beringAtlasTransforms.clips >= 5,
+    'both date-line halves and political colours must be clipped to geographic land');
+
   // The scenario still draws a continuous ocean background. The coastal
   // gameplay limit must not impose a jagged geographic clipping mask.
   const oceanPainting = run(`(() => {
