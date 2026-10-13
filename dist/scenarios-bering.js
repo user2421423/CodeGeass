@@ -1,45 +1,20 @@
-/* The European War — 2017 a.t.b. Alternate continental scenario inspired by Akito the Exiled.
-   Independent regional map and Euro Britannia/E.U. armies; no external assets or network. */
+/* The Bering Strait Crisis — 2017 alternate history, Britannia versus Europia United.
+   120 x 80 GSHHS intermediate-resolution geography with longitude unwrapped across the date line.
+   Amphibious invasion, naval battles and conquest victory; no Chinese involvement. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
-  const COLS=120,ROWS=80,SIDES=['eu','eb'];
-  const BOUNDS={west:-13,east:47,north:72,south:34};
-  const PROJECTION={centerLon:17,centerLat:52.5,angle:0,
-    uMin:-30*Math.cos(52.5*Math.PI/180),uMax:30*Math.cos(52.5*Math.PI/180),
-    vMin:-18.5,vMax:19.5};
-  const CITIES=[["London",-0.13,51.51,"eu",3,false],["Edinburgh",-3.18,55.95,"eu",2,false],["Dublin",-6.26,53.35,"eu",2,false],["Paris",2.35,48.86,"eu",3,true],["Lyon",4.83,45.76,"eu",2,false],["Marseille",5.37,43.3,"eu",2,false],["Madrid",-3.7,40.42,"eu",3,false],["Barcelona",2.17,41.38,"eu",2,false],["Lisbon",-9.14,38.72,"eu",2,false],["Berlin",13.4,52.52,"eu",3,true],["Hamburg",10,53.55,"eu",2,false],["Munich",11.58,48.14,"eu",2,false],["Amsterdam",4.9,52.37,"eu",2,false],["Brussels",4.35,50.85,"eu",2,false],["Copenhagen",12.57,55.68,"eu",2,false],["Oslo",10.75,59.91,"eu",2,false],["Stockholm",18.06,59.33,"eu",3,false],["Helsinki",24.94,60.17,"eu",2,false],["Prague",14.42,50.08,"eu",2,false],["Vienna",16.37,48.21,"eu",3,true],["Warsaw",21,52.23,"eu",3,true],["Krakow",19.94,50.06,"eu",2,false],["Budapest",19.04,47.5,"eu",2,false],["Rome",12.5,41.9,"eu",3,false],["Milan",9.19,45.46,"eu",2,false],["Naples",14.27,40.85,"eu",2,false],["Bucharest",26.1,44.43,"eu",2,true],["Belgrade",20.46,44.79,"eu",2,false],["St Petersburg",30.3,59.93,"eb",3,true],["Moscow",37.62,55.75,"eb",3,true],["Minsk",27.56,53.9,"eb",3,true],["Kyiv",30.52,50.45,"eb",3,true],["Istanbul",28.98,41.01,"eb",3,true],["Smolensk",32.05,54.78,"eb",2,false],["Pskov",28.33,57.82,"eb",2,false],["Novgorod",31.28,58.52,"eb",2,false],["Tver",35.91,56.86,"eb",2,false],["Bryansk",34.36,53.25,"eb",2,false],["Kaluga",36.26,54.51,"eb",2,false],["Kharkiv",36.23,49.99,"eb",2,false],["Odessa",30.73,46.48,"eb",2,false],["Lviv",24.03,49.84,"eb",2,false],["Riga",24.11,56.95,"eb",2,false],["Vilnius",25.28,54.69,"eb",2,false]];
-  const ARMY_GROUPS=[
-    ['eu','Paris','medium',3,'leila'],['eu','Paris','support',2,'margaret'],
-    ['eu','Warsaw','heavy',3,'akito'],['eu','Warsaw','assault',3],['eu','Warsaw','rocket',2,'yukiya'],
-    ['eu','Krakow','medium',3,'ryo'],['eu','Krakow','assault',2],
-    ['eu','Berlin','heavy',3,'ayano'],['eu','Berlin','support',2,'anna'],
-    ['eu','Vienna','siege',2,'smilas'],['eu','Vienna','medium',2,'eduardo'],
-    ['eu','Bucharest','medium',3,'oscar'],['eu','Bucharest','assault',2],
-    ['eu','Belgrade','light',2,'fernando'],['eu','Helsinki','light',2],
-    ['eu','Prague','support',2,'ferilli'],['eu','Milan','assault',2],
-    ['eu','London','medium',2,'pierre'],['eu','Madrid','light',2,'olivia'],
-    ['eb','Minsk','heavy',4,'shin'],['eb','Minsk','assault',3,'kewell'],
-    ['eb','Lviv','heavy',4,'manfredi'],['eb','Lviv','raider',3],
-    ['eb','Kyiv','medium',4,'ashley'],['eb','Kyiv','rocket',2,'farnese'],
-    ['eb','Moscow','siege',3,'julius'],['eb','Moscow','heavy',3,'augustus'],
-    ['eb','Smolensk','medium',3],['eb','Smolensk','support',2],
-    ['eb','Riga','raider',3],['eb','Vilnius','assault',3],
-    ['eb','Kharkiv','heavy',2],['eb','Odessa','light',2],
-    ['eb','St Petersburg','siege',2],['eb','Istanbul','medium',2]
-  ];
-  const PORTS={London:2,Edinburgh:1,Dublin:1,Marseille:2,Lisbon:2,
-    Barcelona:1,Copenhagen:2,Stockholm:2,Helsinki:2,
-    'St Petersburg':2,Riga:2,Odessa:2,Istanbul:2};
-  const FLEETS=[
-    ['eu','London','eu_carrier',1],['eu','Marseille','panzer_frosch_ii',2],
-    ['eu','Copenhagen','eu_carrier',1],['eu','Stockholm','panzer_frosch',2],
-    ['eb','St Petersburg','carrier_battleship',1],
-    ['eb','Riga','portman_ii',2],['eb','Odessa','carrier_battleship',1],
-    ['eb','Istanbul','portman',1]
-  ];
-  const FUNDING={eu:{credits:560,industry:345,science:60,sakuradite:20},
-    eb:{credits:430,industry:280,science:48,sakuradite:17}};
+  const COLS=120,ROWS=80,SIDES=['britannia','eu'];
+  const BOUNDS={west:148,east:228,north:74,south:48};
+  const K=Math.cos(61*Math.PI/180);
+  const PROJECTION={centerLon:188,centerLat:61,angle:0,uMin:-40*K,uMax:40*K,vMin:-13,vMax:13};
+  // Military formations and factories are alternate history. Coordinates are real locations.
+  const CITIES=[["Anchorage",210.1,61.22,"britannia",3,true],["Fairbanks",212.5,64.84,"britannia",3,true],["Nome",194.6,64.5,"britannia",3,true],["Kotzebue",197.4,66.9,"britannia",2,true],["Utqiagvik",203.21,71.29,"britannia",1,false],["Bethel",198.25,60.79,"britannia",2,false],["Unalaska",193.46,53.87,"britannia",2,false],["Adak",183.38,51.88,"britannia",2,false],["Kodiak",207.6,57.79,"britannia",2,false],["Valdez",213.65,61.13,"britannia",2,false],["Dillingham",201.1,59.04,"britannia",2,false],["Cold Bay",197.29,55.2,"britannia",1,false],["Prudhoe Bay",211.67,70.26,"britannia",2,false],["Seward",210.55,60.1,"britannia",2,false],["Magadan",150.8,59.56,"eu",3,true],["Anadyr",177.5,64.73,"eu",3,true],["Provideniya",186.23,64.43,"eu",3,true],["Uelen",190.3,66.16,"eu",2,true],["Pevek",170.3,69.7,"eu",2,false],["Bilibino",166.45,68.05,"eu",2,false],["Egvekinot",179.11,66.33,"eu",2,false],["Petropavlovsk",158.65,53.02,"eu",3,false],["Ust-Kamchatsk",162.54,56.22,"eu",2,false],["Palana",159.83,59.08,"eu",2,false],["Tigil",158.67,57.76,"eu",1,false],["Ossora",163.08,59.25,"eu",2,false],["Beringovsky",179.1,63.05,"eu",1,false],["Khatyrka",175.32,62.05,"eu",2,false]];
+  const ARMY_GROUPS=[["britannia","Nome","heavy",3,"cornelia"],["britannia","Nome","rocket",2,"cecile"],["britannia","Nome","assault",2,"guilford"],["britannia","Kotzebue","medium",3,"gino"],["britannia","Kotzebue","support",2,null],["britannia","Bethel","raider",2,"villetta"],["britannia","Fairbanks","heavy",3,"bismarck"],["britannia","Fairbanks","medium",2,"darlton"],["britannia","Anchorage","heavy",2,"suzaku"],["britannia","Anchorage","siege",2,null],["britannia","Unalaska","assault",3,"jeremiah"],["britannia","Adak","medium",2,"oldrin"],["britannia","Kodiak","medium",2,null],["britannia","Valdez","light",2,null],["eu","Uelen","heavy",3,"akito"],["eu","Uelen","rocket",2,"yukiya"],["eu","Provideniya","assault",3,"ryo"],["eu","Provideniya","heavy",2,"ayano"],["eu","Anadyr","medium",3,"leila"],["eu","Anadyr","support",2,"anna"],["eu","Pevek","rocket",2,"smilas"],["eu","Pevek","medium",2,null],["eu","Egvekinot","assault",2,"klaus"],["eu","Magadan","heavy",3,"oscar"],["eu","Magadan","siege",2,null],["eu","Petropavlovsk","medium",3,"olivia"],["eu","Petropavlovsk","assault",2,"fernando"],["eu","Ust-Kamchatsk","raider",2,null],["eu","Ossora","light",2,null]];
+  const PORTS={"Nome":3,"Kotzebue":2,"Unalaska":3,"Adak":2,"Kodiak":3,"Dillingham":2,"Cold Bay":2,"Valdez":2,"Seward":2,"Anadyr":3,"Provideniya":3,"Uelen":3,"Pevek":2,"Petropavlovsk":3,"Ust-Kamchatsk":2,"Magadan":2,"Egvekinot":2,"Ossora":2};
+  const FLEETS=[["britannia","Nome","carrier_battleship",2],["britannia","Adak","carrier_battleship",1],["britannia","Kodiak","carrier_battleship",1],["britannia","Kotzebue","portman_ii",2],["britannia","Unalaska","portman_ii",2],["britannia","Dillingham","portman",2],["britannia","Cold Bay","portman_ii",2],["britannia","Seward","portman",2],["eu","Uelen","eu_carrier",2],["eu","Anadyr","eu_carrier",1],["eu","Petropavlovsk","eu_carrier",1],["eu","Provideniya","panzer_frosch_ii",2],["eu","Pevek","panzer_frosch",2],["eu","Ust-Kamchatsk","panzer_frosch_ii",2],["eu","Ossora","panzer_frosch",2],["eu","Egvekinot","panzer_frosch_ii",2]];
+  const FUNDING={britannia:{credits:420,industry:245,science:43,sakuradite:26},
+    eu:{credits:405,industry:245,science:43,sakuradite:26}};
   function geo(c,r){
     return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*60/COLS,
       lat:BOUNDS.north-(r+.5)*38/ROWS};
