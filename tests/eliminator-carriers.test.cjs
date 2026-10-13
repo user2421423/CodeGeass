@@ -122,19 +122,61 @@ test('saves keep carried charges', () => {
   assert.equal(E.eliminatorCharges(loaded, 'cf').length, 1);
 });
 
-test('the AI hands a waiting charge to the best commander next to the city, never to an ordinary formation', () => {
+test('the AI reserves a strategic city charge and equips Tier 1 commanders with spare charges', () => {
   const { g, city } = setup();
   const [a, b] = land(g, city, 1);
   const plain = unit(g, 'cf', a);
-  E.aiAssignEliminators(g, 'cf');
-  assert.equal(city.eliminator, 1, 'no commander or Elite Force nearby: the charge stays in the city');
-  assert.equal(plain.eliminator || 0, 0);
   const officer = unit(g, 'cf', b, 'xingke');
   E.aiAssignEliminators(g, 'cf');
-  assert.equal(city.eliminator, 0);
-  assert.equal(officer.eliminator, 1);
+  assert.equal(city.eliminator, 1, 'a capital defense stays stationary even with a Tier 1 commander nearby');
+  assert.equal(officer.eliminator || 0, 0);
   assert.equal(plain.eliminator || 0, 0);
+  const remote = g.stations.filter(s => s.owner === 'cf' && s !== city && land(g, s, 1).length)
+    .sort((x, y) => E.distance(y, city, g) - E.distance(x, city, g))[0];
+  assert.ok(remote);
+  remote.eliminator = 1;
+  const escort = unit(g, 'cf', land(g, remote, 1)[0], 'zero');
+  // Zero is not a Chinese commander, so use a matching Tier 1 leader instead.
+  escort.cmd = 'xingke';
+  E.aiAssignEliminators(g, 'cf');
+  assert.equal(city.eliminator, 1, 'the capital retains its stationary charge');
+  assert.equal(escort.eliminator, 1, 'a second charge travels with the Tier 1 battle leader');
+  assert.equal(remote.eliminator, 0);
 });
+
+test('non-Tier 1 officers cannot take an Eliminator and coverage metrics track placement', () => {
+  const { g, city } = setup();
+  const officerId = Object.keys(E.COMMANDERS).find(id =>
+    E.COMMANDERS[id].side === 'cf' && E.COMMANDERS[id].storyTier !== 1);
+  assert.ok(officerId);
+  const junior = unit(g, 'cf', land(g, city, 1)[0], officerId);
+  const before = E.aiEliminatorMetrics(g, 'cf');
+  assert.equal(before.stationary, 1);
+  assert.equal(before.carried, 0);
+  assert.ok(before.importantCitiesCovered >= 1);
+  E.aiAssignEliminators(g, 'cf');
+  assert.equal(junior.eliminator || 0, 0);
+  const charge = E.eliminatorCharges(g, 'cf')[0];
+  assert.equal(charge.city.id, city.id);
+});
+
+test('Tier 1 couriers are routed toward a waiting spare charge without revealing rival charges', () => {
+  const { g, city } = setup();
+  const remote = g.stations.filter(s => s.owner === 'cf' && s !== city && land(g, s, 1).length >= 2)
+    .sort((x, y) => E.distance(y, city, g) - E.distance(x, city, g))[0];
+  assert.ok(remote);
+  remote.eliminator = 1;
+  const start = land(g, remote, 3).find(p =>
+    E.internal.massOf(g, p) === E.internal.massOf(g, remote));
+  assert.ok(start);
+  const hero = unit(g, 'cf', start, 'xingke');
+  const initial = E.distance(hero, remote, g);
+  const orders = E.aiOrder(g, hero.id);
+  assert.ok(orders.every(o => o.kind !== 'attack'), 'collection trip never starts a battle');
+  assert.ok(E.distance(hero, remote, g) < initial || hero.eliminator === 1,
+    'courier makes progress toward its collection site');
+});
+
 
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
