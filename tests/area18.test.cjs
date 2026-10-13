@@ -165,3 +165,22 @@ test('Elite starts use appropriate forces and AI plans multiple rivals',()=>{
     assert.doesNotThrow(()=>E.beginTurn(normal,human,true));
   }
 });
+
+test('Area 18 saves and resumes for all factions on normal and elite',()=>{
+  for(const player of SIDES)for(const difficulty of ['normal','elite']){
+    const original=area.create(player,difficulty,732);
+    const serialized=JSON.stringify(E.packSave(original));
+    assert.ok(serialized.length<200000,'compact regional save '+player+' '+difficulty);
+    const restored=E.migrateSave(JSON.parse(serialized));
+    assert.ok(restored,'restored '+player+' '+difficulty);
+    assert.equal(restored.scenario.id,'area-18');
+    assert.equal(restored.player,player);
+    assert.equal(restored.difficulty,difficulty);
+    assert.deepEqual(restored.stations,original.stations);
+    assert.deepEqual(restored.units,original.units);
+    assert.deepEqual(restored.scenario.groups,original.scenario.groups);
+    assert.equal(restored.tiles.length,original.tiles.length);
+    assert.deepEqual(restored.eliteDeployed,{},'preplaced Elite Forces do not consume HQ limit');
+    assert.doesNotThrow(()=>E.aiPlan(restored,player));
+  }
+});
