@@ -26,7 +26,9 @@ const owner=new Map(g.stations.map(s=>[s.id,s.owner]));
 const everSeen=new Map(g.units.map(u=>[u.id,u.side]));
 const lost=new Set();
 const startTime=Date.now();
-const LIVE=u=>u.hp>0 && (!u.cargoHost || u.cargoHost.hp>0);
+const LIVE=u=>u.hp>0;
+// Units aboard a carrier are alive but temporarily absent from g.units.
+const allUnits=()=>g.units.flatMap(u=>u.cargo?.length?[u,...u.cargo]:[u]);
 function observe(){
   for(const city of g.stations){
     const before=owner.get(city.id);
@@ -35,10 +37,11 @@ function observe(){
       owner.set(city.id,city.owner);
     }
   }
-  for(const u of g.units) if(!everSeen.has(u.id)) {
+  const every=allUnits();
+  for(const u of every) if(!everSeen.has(u.id)) {
     everSeen.set(u.id,u.side);if(total.produced[u.side]!=null)total.produced[u.side]++;
   }
-  const current=new Map(g.units.map(u=>[u.id,u]));
+  const current=new Map(every.map(u=>[u.id,u]));
   for(const [id,side] of everSeen){
     if(lost.has(id))continue;
     const u=current.get(id);
@@ -50,7 +53,7 @@ function observe(){
 function snapshot(turn){
   const counts={};
   for(const s of SIDES) {
-    const us=g.units.filter(u=>LIVE(u)&&u.side===s);
+    const us=allUnits().filter(u=>LIVE(u)&&u.side===s);
     const ships=us.filter(u=>E.TYPES[u.type]?.naval==='ship');
     const amphibious=us.filter(u=>E.TYPES[u.type]?.naval==='amphibious');
     const land=us.filter(u=>!E.TYPES[u.type]?.naval);
