@@ -218,17 +218,54 @@
         eliminatorCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
     return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
   }
+  // Assign a charged Tier 1 commander a *living* formation to escort, rather
+  // than giving only a small city-coverage movement bonus. Select from its own
+  // theater, and reconsider each turn if the formation disperses or is killed.
+  function eliminatorEscortTarget(g, u, memo) {
+    const cache = (memo.eliminatorEscortTargets ||= {});
+    if (Object.prototype.hasOwnProperty.call(cache, u.id))
+      return cache[u.id] && g.units.find(v => v.id === cache[u.id] && v.hp > 0) || null;
+    const rivals = g.units.filter(v => v.hp > 0 && foe(g,v.side,u.side));
+    const assignedFront = memo.assign?.[u.id];
+    const anchors = g.units.filter(v => v.hp > 0 && v.side === u.side &&
+      v.id !== u.id && !(v.eliminator > 0) && !isShip(v) && !atSea(g,v) &&
+      dist(g,u,v) <= 14 &&
+      (!assignedFront || !memo.assign?.[v.id] || memo.assign[v.id] === assignedFront));
+    let best=null, bestScore=-Infinity;
+    for (const v of anchors) {
+      const teammates = g.units.filter(w => w.hp > 0 && w.side === u.side &&
+        w.id !== u.id && dist(g,w,v) <= 3);
+      const foeNear = rivals.some(f => dist(g,f,v) <= 9);
+      const covered = sideEliminators(g,u.side).some(h => h.ready &&
+        h.unit?.id !== u.id && dist(g,h,v) <= ELIMINATOR.range);
+      const commander = COMMANDERS[v.cmd];
+      const value = (commander?.storyTier === 1 ? 190 : v.cmd ? 105 : 0) +
+        Math.min(210,unitStrength(v)*15) +
+        teammates.length*34 + (foeNear ? 135 : 0) -
+        dist(g,u,v)*19 - (covered ? 165 : 0);
+      if (value > bestScore) { best=v; bestScore=value; }
+    }
+    cache[u.id]=best && bestScore > 0 ? best.id : null;
+    return cache[u.id] == null ? null : best;
+  }
   function eliminatorMobileCoverBonus(g,u,p,nearbyFoes,memo) {
     if (!(u.eliminator>0) || COMMANDERS[u.cmd]?.storyTier!==1) return 0;
+    const target = eliminatorEscortTarget(g,u,memo);
     const assets = eliminatorThreatAssets(g,u.side,memo);
     const home = {c:u.c,r:u.r};
     const before = eliminatorThreatCover(g,u.side,home,assets,u);
     const after = eliminatorThreatCover(g,u.side,p,assets,u);
-    // Reward protecting high-value formations and deny moves that abandon
-    // a cluster. This must influence battlefield positioning without forbidding
-    // combat, assault captures, or emergency retreats.
-    const gain = Math.max(-220,Math.min(220,(after-before)*0.65));
-    return gain + Math.min(90,after*0.12);
+    const gain = Math.max(-190,Math.min(190,(after-before)*0.55));
+    if (!target) return gain + Math.min(80,after*0.1);
+    const previous = dist(g,home,target), next = dist(g,p,target);
+    // A moving escort retains coverage during the assault, rather than
+    // anchoring on a city that the whole formation has already left behind.
+    // An emergency move or promising combat attack may still prevail.
+    const tether = next <= ELIMINATOR.range ? 245 :
+      next === ELIMINATOR.range + 1 ? 75 : -Math.min(170,(next-4)*32);
+    const continuity = previous <= ELIMINATOR.range && next > ELIMINATOR.range ? -155 : 0;
+    const closing = Math.max(-65,Math.min(65,(previous-next)*22));
+    return gain + Math.min(80,after*0.1) + tether + continuity + closing;
   }
   function aiEliminatorMetrics(g, side) {
     const charges = sideEliminators(g, side);
