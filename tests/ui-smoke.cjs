@@ -712,7 +712,7 @@ const modal = () => node('modal-root').innerHTML;
     'multi-selection does not modify group memberships');
   run('armyGroupsDialog()');
   assert(modal().includes('data-army-activate="1"'), 'group chooser offers a Shift-click activation action');
-  run('armyGroupsDialog(firstGroup)');
+  run(`armyGroupsDialog(${firstGroup})`);
   assert.equal(run('activeArmyGroupId'), firstGroup, 'Manage chooses the active group');
 
   run('scenarioGroupsDialog()');
