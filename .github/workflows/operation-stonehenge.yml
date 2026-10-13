@@ -20,7 +20,7 @@ permissions:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,6 +29,18 @@ jobs:
       - run: node tools/build_sources.cjs --check
       - run: node --test tests/*.test.cjs
       - run: node tests/ui-smoke.cjs
-      - name: Two-seed simulation of three factions and four difficulties
-        timeout-minutes: 32
-        run: node tools/stonehenge_sim.cjs 6
+  simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        player: [britannia, eb, eu]
+        difficulty: [normal, hard, challenge, elite]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Seeded six-turn AI combat and amphibious performance
+        run: node tools/stonehenge_sim.cjs 6 ${{ matrix.player }} ${{ matrix.difficulty }}
