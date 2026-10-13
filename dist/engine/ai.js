@@ -338,9 +338,10 @@
     if (g.mode === 'scenario') return scenarioTravel(g, from, f);
     if (atSea(g, from) || massOf(g, from) < 0 || massOf(g, from) !== massOf(g, target))
       return Infinity; // Overseas expeditions require actual shipping first.
-    const cache = scenarioCache(g), cacheKey = 'conquest:' + target.c + ':' + target.r + ':' + g.phase;
+    const owner=u.side||f.side||g.phase,
+      cache = scenarioCache(g), cacheKey = 'conquest:' + target.c + ':' + target.r + ':' + owner;
     if (!cache.fields.has(cacheKey))
-      cache.fields.set(cacheKey, goalField(g, u.side, [[target,0]], 'land'));
+      cache.fields.set(cacheKey, goalField(g, owner, [[target,0]], 'land'));
     const cost = cache.fields.get(cacheKey)[from.r*g.cols+from.c];
     return Number.isFinite(cost) ? cost / Math.max(1,u.type?E.movement(g,u):4) : Infinity;
   }
@@ -424,15 +425,25 @@
     for(const [id,t] of Object.entries(oldTransfers))if(g.turn-(t.started??0)<=10 &&
       land.some(u=>u.id===Number(id)))transfers[id]=t;
     if(rivalIds.length===2 && g.turn-(state.lastWingTransfer??-99)>=STRATEGIC.transferCooldown){
-      const urgent=rivalIds.slice().sort((a,b)=>memo.theaters[b].deficit-memo.theaters[a].deficit)[0],
+      const capital=allies.find(s=>s.capitalOf===side),
+        capitalAttackers=capital?opponents.filter(u=>
+          massOf(g,u)===massOf(g,capital) && dist(g,u,capital)<=3):[],
+        capitalThreat=capitalAttackers.reduce((v,u)=>v+unitStrength(u),0),
+        capitalCover=capital?land.filter(u=>dist(g,u,capital)<=4)
+          .reduce((v,u)=>v+unitStrength(u),0):0,
+        capitalCrisis=capitalAttackers.length>0 && capitalThreat>Math.max(2,capitalCover*1.2),
+        threatened=capitalCrisis?capitalAttackers[0].side:null,
+        urgent=threatened&&rivalIds.includes(threatened)?threatened:
+          rivalIds.slice().sort((a,b)=>memo.theaters[b].deficit-memo.theaters[a].deficit)[0],
         donor=rivalIds.find(r=>r!==urgent),
-        target=memo.theaters[urgent], source=memo.theaters[donor];
-      if(target?.deficit>2 && target.pressure>source.pressure*STRATEGIC.margin &&
+        target=memo.theaters[urgent], source=memo.theaters[donor],
+        emergency=capitalCrisis && urgent===threatened;
+      if((emergency || target?.deficit>2 && target.pressure>source.pressure*STRATEGIC.margin) &&
         counts[donor]>Math.max(3,Math.floor(land.length*0.33))){
-        const dest=g.stations.find(s=>s.id===target.anchor),
+        const dest=emergency?capital:g.stations.find(s=>s.id===target.anchor),
           f=dest&&{anchor:dest,side},
           options=land.filter(u=>assignments[u.id]===donor && !transfers[u.id] &&
-            g.turn-dates[u.id]>=STRATEGIC.commitment &&
+            (emergency || g.turn-dates[u.id]>=STRATEGIC.commitment) &&
             !opponents.some(e=>dist(g,u,e)<=4) &&
             frontArrival(g,u,f)<=STRATEGIC.arrivalWindow)
           .sort((a,b)=>frontArrival(g,a,f)-frontArrival(g,b,f)||a.id-b.id);
@@ -440,7 +451,7 @@
         if(chosen){
           assignments[chosen.id]=urgent;dates[chosen.id]=g.turn;
           transfers[chosen.id]={from:donor,to:urgent,started:g.turn,
-            target:target.anchor};
+            target:dest.id,emergency};
           counts[donor]--;counts[urgent]++;state.lastWingTransfer=g.turn;
         }
       }
@@ -860,9 +871,12 @@
         alternative = candidates.sort((a,b)=>b.priority-a.priority)[0],
         safeDonor = f.type!=='defensive' && !f.emergency &&
           sourceReady[f.id]-unitStrength(u) >= Math.min(f.target*0.65,f.desiredStrength*0.65);
-      const allowSwitch = alternative && age>=STRATEGIC.commitment &&
-        g.turn >= (a.lockUntil??a.since+STRATEGIC.commitment) &&
-        eta<=2 && safeDonor;
+      const emergencyOverride = alternative?.type==='defensive' &&
+        alternative.vital && alternative.immediateMenace>0 &&
+        travelTurns(u,alternative)<=2;
+      const allowSwitch = alternative && safeDonor &&
+        (emergencyOverride || (age>=STRATEGIC.commitment &&
+          g.turn >= (a.lockUntil??a.since+STRATEGIC.commitment) && eta<=2));
       if (!allowSwitch || dist(g,at(u),f.anchor)<=FRONT.far && !alternative)
         give(u,f);
       else sourceReady[f.id]-=unitStrength(u);
