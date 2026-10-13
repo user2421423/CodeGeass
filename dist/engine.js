@@ -2085,6 +2085,7 @@
       return;
     }
     v.hp = 0;
+    dropCarriedEliminator(g, v, 'carrier destroyed');
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
         unitSide:v.side,commander:v.cmd||null,byCombat:!!attacker||!!by,
@@ -3324,12 +3325,12 @@
     aiThreshold: 1500, // the least target value a rival will spend a warhead on
   };
   const ELIMINATOR = {
-    range: 5, // defense radius measured from the city holding the charge
+    range: 3, // defense radius measured from the unit carrying the charge, or the city where it waits for one
     cost: { credits: 1200, industry: 300, science: 250, sakuradite: 60 },
     turns: 2,
     lab: 3,
     research: 2, // turns after the first detonation before Eliminators can be built
-    max: 3, // charges (ready or under construction) a power may hold at once, one per city
+    max: 3, // charges a power may hold at once (building, waiting in a city or carried), one per city or unit
   };
   // The turn Eliminator research completes (g.fleijaDetonated is the turn of the first detonation), or null.
   function eliminatorTurn(g) {
@@ -3343,9 +3344,76 @@
     const at = eliminatorTurn(g);
     return at != null && g.turn >= at;
   }
-  // A power's cities holding an Eliminator charge or building one.
+  // Every Eliminator charge in play, positioned for dist(): one building or waiting in a city, or one carried by a
+  // unit (aboard a Carrier-Battleship it covers from the ship). `ready` charges can intercept; a project completing
+  // this turn already can, before its owner's phase begins.
+  function eliminatorCharges(g, side = null) {
+    const out = [];
+    for (const s of g.stations) {
+      if (side && s.owner !== side) continue;
+      if ((s.eliminator || 0) > 0) out.push({ c: s.c, r: s.r, owner: s.owner, city: s, ready: true });
+      else if (s.eliminatorProject?.side === s.owner)
+        out.push({ c: s.c, r: s.r, owner: s.owner, city: s, ready: s.eliminatorProject.ready <= g.turn });
+    }
+    for (const v of g.units)
+      if (v.hp > 0 && (!side || v.side === side))
+        for (const u of [v, ...(v.cargo || [])])
+          if (u.hp > 0 && (u.eliminator || 0) > 0) out.push({ c: v.c, r: v.r, owner: v.side, unit: u, ready: true });
+    return out;
+  }
+  // A power's Eliminator charges: building, waiting in a city or carried.
   function sideEliminators(g, side) {
-    return g.stations.filter(s => s.owner === side && ((s.eliminator || 0) > 0 || s.eliminatorProject?.side === side));
+    return eliminatorCharges(g, side);
+  }
+  // How the owner's UI names whoever holds a charge.
+  function eliminatorHolderName(holder) {
+    if (!holder) return '';
+    if (holder.city) return holder.city.name;
+    const u = holder.unit;
+    return u.cmd ? `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short}'s ${TYPES[u.type].short}` : TYPES[u.type].short;
+  }
+  // A ready charge changes hands between a city and a unit in or next to it, or between two adjacent units. It is
+  // free, but each charge moves once a turn, so it cannot relay down a line of units. `from`/`to` are
+  // { city: id } or { unit: id }; units aboard a Carrier-Battleship cannot take part.
+  function eliminatorHolder(g, ref) {
+    if (ref?.city != null) return g.stations.find(s => s.id === ref.city) || null;
+    if (ref?.unit != null) return g.units.find(u => u.id === ref.unit && u.hp > 0) || null;
+    return null;
+  }
+  function transferEliminatorReason(g, from, to) {
+    const a = eliminatorHolder(g, from),
+      b = eliminatorHolder(g, to);
+    if (g.mode === 'scenario') return 'F.L.E.I.J.A. Eliminators are unavailable in regional scenarios';
+    if (g.over) return 'Operation over';
+    if (!a || !b || a === b) return 'Unavailable';
+    const side = from.city != null ? a.owner : a.side,
+      other = to.city != null ? b.owner : b.side;
+    if (from.city != null && to.city != null) return 'A charge moves between a city and a unit, or between units';
+    if (side !== g.phase) return 'Not your turn';
+    if (other !== side) return 'Only your own units and cities can hold your charges';
+    if (!((a.eliminator || 0) > 0)) return 'No Eliminator charge to hand over';
+    if ((b.eliminator || 0) > 0) return `${to.city != null ? 'That city' : 'That unit'} already holds an Eliminator charge`;
+    if (to.city != null && b.eliminatorProject) return 'That city is building an Eliminator charge';
+    if (a.eliminatorMoved === g.turn) return 'This charge has already changed hands this turn';
+    if (dist(g, a, b) > 1) return 'Must be in the same or an adjacent hex';
+    return null;
+  }
+  function transferEliminator(g, from, to) {
+    const why = transferEliminatorReason(g, from, to);
+    if (why) return { ok: false, reason: why };
+    const a = eliminatorHolder(g, from),
+      b = eliminatorHolder(g, to);
+    a.eliminator = 0;
+    delete a.eliminatorMoved;
+    b.eliminator = 1;
+    b.eliminatorMoved = g.turn;
+    return { ok: true, holder: eliminatorHolderName(to.city != null ? { city: b } : { unit: b }) };
+  }
+  // A carrier that is destroyed takes its charge with it.
+  function dropCarriedEliminator(g, v, why) {
+    if (!((v?.eliminator || 0) > 0)) return;
+    v.eliminator = 0;
+    log(g, `A F.L.E.I.J.A. Eliminator charge is lost${why ? ' (' + why + ')' : ''}.`, v.side);
   }
   // F.L.E.I.J.A. is conquest-only. All major powers share their conquest's Lab III gate.
   function fleijaLabTurn(g) {
@@ -3423,7 +3491,7 @@
       ((s.lab || 0) < ELIMINATOR.lab ? `Requires research lab level ${ELIMINATOR.lab}` : null) ||
       ((s.eliminator || 0) > 0 ? 'This city already holds an Eliminator charge' : null) ||
       (sideEliminators(g, s.owner).length >= ELIMINATOR.max
-        ? `At most ${ELIMINATOR.max} Eliminator charges at once (ready or under construction)`
+        ? `At most ${ELIMINATOR.max} Eliminator charges at once (building, waiting or carried)`
         : null) ||
       shortfall(funds(g, s.owner), ELIMINATOR.cost)
     );
@@ -3453,6 +3521,7 @@
     if (s.eliminator) {
       log(g, `A F.L.E.I.J.A. Eliminator charge is destroyed${why ? ' (' + why + ')' : ''}.`, s.owner);
       s.eliminator = 0;
+      delete s.eliminatorMoved;
     }
   }
   // A surrendering power's projects and warheads are lost.
@@ -3461,6 +3530,8 @@
       if (s.project?.side === loser) dropProject(g, s, 'surrender');
       if (s.eliminatorProject?.side === loser || (s.owner === loser && s.eliminator)) dropEliminator(g, s, 'surrender');
     }
+    for (const v of g.units)
+      if (v.side === loser) for (const u of [v, ...(v.cargo || [])]) dropCarriedEliminator(g, u, 'surrender');
     if (g.arsenal) g.arsenal[loser] = 0;
   }
   // Start of a power's turn: finished strategic projects come online.
@@ -3479,26 +3550,25 @@
       if (s.eliminatorProject?.side === side && s.owner === side && s.eliminatorProject.ready <= g.turn) {
         s.eliminatorProject = null;
         s.eliminator = 1;
-        log(g, 'A F.L.E.I.J.A. Eliminator charge is ready at a classified site.', side);
+        log(g, 'A F.L.E.I.J.A. Eliminator charge is ready at a classified site and waits for a carrier.', side);
       }
     }
   }
   function blastArea(g, p, radius = FLEIJA.radius) {
     return within(g, p, radius);
   }
+  // The ready enemy charge nearest the target, carried or waiting in a city, or null. Carriers before cities at a tie.
   function eliminatorDefender(g, attacker, p) {
     if (!p) return null;
     return (
-      g.stations
-        .filter(
-          s =>
-            foe(g, s.owner, attacker) &&
-            isMajor(g, s.owner) &&
-            ((s.eliminator || 0) > 0 ||
-              (s.eliminatorProject?.side === s.owner && s.eliminatorProject.ready <= g.turn)) &&
-            dist(g, s, p) <= ELIMINATOR.range,
-        )
-        .sort((a, b) => dist(g, a, p) - dist(g, b, p) || a.id - b.id)[0] || null
+      eliminatorCharges(g)
+        .filter(h => h.ready && foe(g, h.owner, attacker) && isMajor(g, h.owner) && dist(g, h, p) <= ELIMINATOR.range)
+        .sort(
+          (a, b) =>
+            dist(g, a, p) - dist(g, b, p) ||
+            Number(!!a.city) - Number(!!b.city) ||
+            (a.unit || a.city).id - (b.unit || b.city).id,
+        )[0] || null
     );
   }
   // What a strike is called: the city or mine at ground zero, else the nearest city.
@@ -3582,8 +3652,10 @@
     if (defense) {
       // A charge completing this turn can defend before its owner's phase begins.
       // Two turns of research + two of production therefore beat the second warhead.
-      if (defense.eliminatorProject?.ready <= g.turn) defense.eliminatorProject = null;
-      defense.eliminator = 0;
+      const holder = defense.unit || defense.city;
+      if (defense.city?.eliminatorProject?.ready <= g.turn) defense.city.eliminatorProject = null;
+      holder.eliminator = 0;
+      delete holder.eliminatorMoved;
       log(g, `F.L.E.I.J.A. Eliminator neutralizes the incoming warhead aimed at ${name}.`, defense.owner);
       return {
         ok: true,
@@ -3593,7 +3665,8 @@
         name,
         intercepted: true,
         defender: defense.owner,
-        eliminatorCity: defense.name,
+        eliminatorCity: eliminatorHolderName(defense),
+        eliminatorCarrier: defense.unit ? defense.unit.id : null,
         destroyed: [],
         crippled: [],
         damaged: [],
@@ -5291,6 +5364,10 @@
     eliminatorReason,
     startEliminator,
     eliminatorDefender,
+    eliminatorCharges,
+    eliminatorHolderName,
+    transferEliminatorReason,
+    transferEliminator,
     projectReason,
     startProject,
     launchReason,
@@ -5400,6 +5477,7 @@
       serves,
       sideEliminators,
       eliminatorCity,
+      transferEliminator,
       siteAt,
       startEliminator,
       startProject,

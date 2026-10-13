@@ -200,6 +200,26 @@ async function launchAt(p) {
     );
 }
 // Why the player cannot act right now (rival phase or finished operation).
+// Eliminator carriers: a unit's name as its charge holder, and where it can hand the charge.
+function carrierName(u) {
+  return `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)}`;
+}
+function eliminatorHandoverDialog(u) {
+  if (!u || !(u.eliminator > 0)) return;
+  const from = { unit: u.id },
+    options = [
+      ...game.units.filter(v => v.hp > 0 && v !== u && v.side === u.side && E.distance(u, v, game) <= 1)
+        .map(v => [{ unit: v.id }, carrierName(v)]),
+      ...game.stations.filter(s => s.owner === u.side && E.distance(u, s, game) <= 1)
+        .map(s => [{ city: s.id }, `Store in ${s.name}`]),
+    ],
+    rows = options.map(([to, label]) => {
+      const ref = to.unit != null ? `unit:${to.unit}` : `city:${to.city}`;
+      return `<li>${act(`data-eliminator-to="${u.id}:${ref}"`, esc(label), phaseReason() || E.transferEliminatorReason(game, from, to))}</li>`;
+    }).join('');
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Hand over Eliminator"><div class="eyebrow">F.L.E.I.J.A. Eliminator</div><h2>Hand over the charge from ${esc(carrierName(u))}</h2><p>The charge protects everything within ${E.ELIMINATOR.range} hexes of whoever holds it. It can go to a unit or one of your cities in the same or an adjacent hex, once a turn.</p>${rows ? `<ul class="blast-list">${rows}</ul>` : '<p class="description">No unit or city of yours in an adjacent hex.</p>'}<div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
+  focusDialog();
+}
 function phaseReason() {
   return uiActionBusy ? 'Strategic weapon resolving' : game.over ? 'Operation over' : game.phase !== game.player ? `${F(game.phase).short} turn` : null;
 }
@@ -476,16 +496,20 @@ function projectPanel(s) {
   }
   if (ours && ep) {
     const left = Math.max(0, ep.ready - game.turn);
-    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). It will neutralize one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of this city.</p></div>`;
+    return `<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>${ours ? 'Countermeasure under construction' : 'Eliminator development detected'}</h3><p>${ours ? 'Ready' : 'Completes'} on turn ${ep.ready} (${left} turn${left === 1 ? '' : 's'}). Then hand it to a unit in or next to the city: the charge neutralizes one incoming warhead aimed within ${E.ELIMINATOR.range} hexes of whoever holds it.</p></div>`;
   }
   const blocks = [];
-  if (ours && s.eliminator)
-    blocks.push(`<div class="target-box fleija-panel"><span class="label">${ours ? 'F.L.E.I.J.A. Eliminator' : 'Intelligence'}</span><h3>Eliminator charge ready</h3><p>Automatically neutralizes the next incoming F.L.E.I.J.A. aimed within ${E.ELIMINATOR.range} hexes of ${esc(s.name)}. One use.</p></div>`);
+  if (ours && s.eliminator) {
+    // Units in or next to the city can take the charge; until one does, it covers the city itself.
+    const takers = game.units.filter(u => u.hp > 0 && u.side === s.owner && !(u.eliminator > 0) && E.distance(u, s, game) <= 1)
+      .sort((a, b) => Number(!!b.cmd) - Number(!!a.cmd) || Number(!!b.elite) - Number(!!a.elite) || a.id - b.id);
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Charge awaiting a carrier</h3><p>Hand it to a unit in or next to ${esc(s.name)}; it then protects everything within ${E.ELIMINATOR.range} hexes of that unit and moves with it. Until then it covers ${E.ELIMINATOR.range} hexes of the city. One use.</p>${takers.length ? takers.map(u => act(`data-eliminator-give="${s.id}:${u.id}"`, `Give to ${esc(carrierName(u))}`, phaseReason() || E.transferEliminatorReason(game, { city: s.id }, { unit: u.id }))).join('') : '<p class="description">No unit in or next to the city.</p>'}</div>`);
+  }
   if (!ours) return blocks.join('');
   if (E.hasFleija(game, game.player))
     blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A.</span><h3>Build a warhead</h3><p>${E.FLEIJA.turns} turns in a city with a level-${E.FLEIJA.lab} research lab. ${game.era === 'ufn2018' && ['britannia','eb'].includes(game.player) ? 'Britannia and Euro Britannia share one warhead slot' : 'Only one warhead per faction'} (stored or building). Every power is alerted when work begins.</p>${act(`data-project="${s.id}"`, 'Begin warhead project', phaseReason() || E.projectReason(game, s), costHTML(E.FLEIJA.cost))}</div>`);
   if (E.eliminatorTurn(game) != null && !s.eliminator)
-    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · protects targets within ${E.ELIMINATOR.range} hexes of this city · one interception. Up to ${E.ELIMINATOR.max} charges per power at once, one per city.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
+    blocks.push(`<div class="target-box fleija-panel"><span class="label">F.L.E.I.J.A. Eliminator</span><h3>Build a defensive charge</h3><p>${E.ELIMINATOR.turns} turns · one interception within ${E.ELIMINATOR.range} hexes of the unit that carries it. Up to ${E.ELIMINATOR.max} charges per power at once (building, waiting or carried), one per city or unit.</p>${act(`data-eliminator="${s.id}"`, 'Begin Eliminator project', phaseReason() || E.eliminatorReason(game, s), costHTML(E.ELIMINATOR.cost))}</div>`);
   return blocks.join('');
 }
 function automationUnitOptionsHTML(s, selected) {
@@ -690,8 +714,12 @@ function dockHTML() {
       undoReason = !interactive() ? 'Undo is only available on your turn.'
         : 'No reversible move. Captures and carrier actions cannot be undone.',
       under = E.stationAt(game, u),
-      mine = !under && E.siteAt(game, u);
-    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}<span class="faction-flag ${u.side}">${F(u.side).letter}</span></div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.naval === 'amphibious' ? 'Naval' : t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}</span><strong>${unitName(u)}${ours && armyGroup ? `<span class="dock-group-label" title="${esc(armyGroupLabel(armyGroup))}">Group ${armyGroup.id}</span>` : ''}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div><p>${moraleName(u.morale)}${ours ? ' · ' + fireStatus(u) : ''}</p>${ours && u.goto ? `<p class="goto-line">⚑ ${esc(gotoText(u))}</p>` : ''}</div><div class="dock-actions unit-dock-actions">${ours ? `<button class="small undo-button" data-action="undo" title="${esc(canUndo ? 'Undo last ordinary move (Z).' : undoReason)}" aria-label="${esc(canUndo ? 'Undo last move' : 'Undo unavailable: ' + undoReason)}"${canUndo ? '' : ' disabled'}>↶ Undo${canUndo ? '' : ' locked'}</button>` : ''}${under ? `<button class="small" data-station="${under.id}" title="Select the city under this unit (or click the unit again)">City: ${esc(under.name)}</button>` : ''}${mine ? `<button class="small" data-site="${mine.id}" title="Select the mine under this unit (or click the unit again)">Mine: ${esc(mine.name)}</button>` : ''}${ours && t.naval === 'ship' ? '<button class="small" data-action="carrier-deploy">Deploy units</button>' : ours && !u.cmd ? '<button class="small" data-action="assign">Assign</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false) : ''}${ours && u.goto ? act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false) : ''}${ours && !u.elite ? act('data-action="reinforce"', 'Add frame', phaseReason() || E.reinforceReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="repair"', 'Repair', phaseReason() || E.repairReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="wait"', 'Hold', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost', false) : ''}</div>`;
+      mine = !under && E.siteAt(game, u),
+      // A ready Eliminator charge this unit could take from a city in or next to its hex.
+      chargeCity = ours && !(u.eliminator > 0) && game.mode !== 'scenario'
+        ? game.stations.find(s => s.owner === u.side && s.eliminator > 0 && E.distance(u, s, game) <= 1)
+        : null;
+    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}<span class="faction-flag ${u.side}">${F(u.side).letter}</span></div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.naval === 'amphibious' ? 'Naval' : t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${ours && u.eliminator > 0 ? ' · <span class="eliminator-text">✦ Eliminator</span>' : ''}</span><strong>${unitName(u)}${ours && armyGroup ? `<span class="dock-group-label" title="${esc(armyGroupLabel(armyGroup))}">Group ${armyGroup.id}</span>` : ''}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div><p>${moraleName(u.morale)}${ours ? ' · ' + fireStatus(u) : ''}</p>${ours && u.goto ? `<p class="goto-line">⚑ ${esc(gotoText(u))}</p>` : ''}</div><div class="dock-actions unit-dock-actions">${ours ? `<button class="small undo-button" data-action="undo" title="${esc(canUndo ? 'Undo last ordinary move (Z).' : undoReason)}" aria-label="${esc(canUndo ? 'Undo last move' : 'Undo unavailable: ' + undoReason)}"${canUndo ? '' : ' disabled'}>↶ Undo${canUndo ? '' : ' locked'}</button>` : ''}${under ? `<button class="small" data-station="${under.id}" title="Select the city under this unit (or click the unit again)">City: ${esc(under.name)}</button>` : ''}${mine ? `<button class="small" data-site="${mine.id}" title="Select the mine under this unit (or click the unit again)">Mine: ${esc(mine.name)}</button>` : ''}${ours && t.naval === 'ship' ? '<button class="small" data-action="carrier-deploy">Deploy units</button>' : ours && !u.cmd ? '<button class="small" data-action="assign">Assign</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false) : ''}${ours && u.goto ? act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false) : ''}${ours && !u.elite ? act('data-action="reinforce"', 'Add frame', phaseReason() || E.reinforceReason(game, u), '', 'small', false) : ''}${chargeCity ? act(`data-eliminator-give="${chargeCity.id}:${u.id}"`, 'Take Eliminator', phaseReason() || E.transferEliminatorReason(game, { city: chargeCity.id }, { unit: u.id }), '', 'small', false) : ''}${ours && u.eliminator > 0 ? act('data-action="eliminator-handover"', 'Hand over Eliminator', phaseReason() || (u.eliminatorMoved === game.turn ? 'This charge has already changed hands this turn' : null), '', 'small', false) : ''}${ours ? act('data-action="repair"', 'Repair', phaseReason() || E.repairReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="wait"', 'Hold', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost', false) : ''}</div>`;
   }
   if (s) {
     const ours = s.owner === game.player,

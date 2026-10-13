@@ -275,7 +275,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   1,800 credits / 450 industry / 300 research / 150 Sakuradite, `turns` 4, `lab` 3, `labTurn` 15,
   inner-ring `ringHP` 0.1, outer-ring `outerHP` 0.55 and `outerShield` 0.35,
   `aiThreshold` 1500). Ground zero is erased, ring 1 is catastrophic, ring 2 is a weaker blast fringe.
-  The Eliminator protection radius is 3 on the high-resolution world.
+  The Eliminator protection radius is 3 hexes around whoever holds the charge.
 - Access: F.L.E.I.J.A. is conquest-only and has no HQ node. Research Lab III unlocks on turn 15 for every major power;
   `hasFleija(g, side)` uses that same universal turn gate, while `projectReason` still requires Lab III in the city.
 - State: `s.project = { side, started, ready }` on a city; `g.arsenal[side]` warheads; `g.launched[side]` the turn
@@ -298,12 +298,19 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   `ruin(…, 1)` (defenses 0, one level off each building and the output it added, never below founding values from
   `CITY_DATA`). A factory at level 0 is rebuilt for 110 credits / 25 industry.
 - F.L.E.I.J.A. Eliminator: `ELIMINATOR` is conquest-only. The first successful F.L.E.I.J.A. detonation starts its
-  research for every power; it becomes buildable `research` (3) turns later, announced by `strategicTurn`. A level-3 lab builds a charge for 1,200 credits / 300 industry / 250 research /
-  60 Sakuradite over 3 turns; a power holds at most `ELIMINATOR.max` (3) charges, ready or under construction, one
-  per city (`sideEliminators`). The completed charge is tied to its city and automatically intercepts one enemy
-  warhead targeted within range 3; the attacking warhead and defensive charge are both consumed and no blast occurs.
-  Capture, surrender or F.L.E.I.J.A. ruin destroys the project/charge. `eliminatorReason`, `startEliminator`,
-  `eliminatorDefender` and `dropEliminator` implement it.
+  research for every power; it becomes buildable `research` (2) turns later, announced by `strategicTurn`. A level-3 lab builds a charge for 1,200 credits / 300 industry / 250 research /
+  60 Sakuradite over 2 turns; a power holds at most `ELIMINATOR.max` (3) charges, building, waiting or carried, one
+  per city or unit (`eliminatorCharges`/`sideEliminators` list them with their positions).
+  Carriers: a finished charge (`s.eliminator = 1`) waits in its city until a unit in or next to it takes it
+  (`transferEliminator(g, { city }, { unit })`); a carrier (`u.eliminator = 1`) can hand it to an adjacent unit or
+  store it in an adjacent own city. Hand-overs are free, but `eliminatorMoved` (the turn it last changed hands) stops a
+  charge moving twice in one turn. A ready charge automatically intercepts one enemy warhead targeted within range 3
+  of whoever holds it: the carrier, the city where it waits, or the Carrier-Battleship a carrier is aboard. The
+  warhead and the charge are both consumed and no blast occurs; the launch result names the holder
+  (`eliminatorCity`, `eliminatorCarrier`). A project completing this turn can intercept before its owner's phase.
+  `kill` drops a dead carrier's charge (`dropCarriedEliminator`); capture, surrender or F.L.E.I.J.A. ruin destroys a
+  city's project/charge. `eliminatorReason`, `startEliminator`, `eliminatorDefender`, `transferEliminatorReason` and
+  `dropEliminator` implement it.
 - AI: `aiLaunchTarget` scores units (price × health, ring 75%), cities by what the blast destroys (ground zero adds
   the city's output, +3000 if it is its owner's last city; projects +2000; a live capital in the inner
   ring +1500 only with the launcher's capturing units within 4 hexes), a rival deposit at ground zero 25 × its base,
@@ -311,6 +318,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   warhead. Step 2b: once Eliminators are available, it starts every charge it can afford up to the cap in
   `eliminatorCity` (a free lab-3 city outside its other charges' cover, capital first, then the richest) and saves for
   the next one before anything else; with no such city, step 3 raises a lab in `eliminatorCity(g, side, true)` first.
+  Step 2a (`aiAssignEliminators`) hands each charge waiting in a city to the highest-ranked commander, else an Elite
+  Force, in or next to it; ordinary formations never take one from the AI, so with none there it stays in the city.
   Step 2c starts one warhead at a time in `fleijaCity` (best lab, then farthest from the enemy) once it holds the
   Sakuradite or earns 15+ a turn, with no wait after a launch, saving credits/industry when ready; step 3 begins
   preparing that city's lab five turns before turn 15, but Lab III itself cannot be built before turn 15.
@@ -321,7 +330,10 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   `launchAt`, `fleijaSequence` (the `#fleija-alert` warning in `index.html`, `SFX.play('fleija')`, the `flash`
   overlay and the `fleija` sphere effect; it plays for rival launches during `endTurn` even after Skip),
   `projectPanel` in the city panel, `strategicText` in World powers, ruins and project markers on the map.
-  Eliminator projects/ready charges use cyan map rings; protected launch confirmations warn that the warhead will be
+  Eliminator projects and waiting charges use cyan map rings; your carriers show a cyan ✦, and selecting one shades
+  its 3-hex cover. The dock offers Take Eliminator (from a city in or next to the unit) and Hand over Eliminator
+  (`eliminatorHandoverDialog`), and the city panel lists units that can take a waiting charge. Rival carriers are
+  never shown. Protected launch confirmations warn that the warhead will be
   consumed, and `fleijaSequence` shows a separate "F.L.E.I.J.A. eliminated" interception state instead of a blast.
 - Fortress batteries on capitals and fortress cities (Tokyo Settlement, St. Petersburg, Gibraltar, Cairo/El Alamein,
   Liaodong, Singapore, Panama, Pearl Harbor): range 2 (+1 with Battery Overcharge), 60 + 10% of the target's maximum HP with no cap, always 2-turn recharge. Fortifications research adds 100 city defense HP per level (up to +500).

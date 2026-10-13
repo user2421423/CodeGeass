@@ -2721,6 +2721,9 @@ table.powers .legend-dot {
 .fleija-text {
   color: #ff9fd0;
 }
+.eliminator-text {
+  color: #9eeaff;
+}
 .danger-strip {
   border-color: #ff5fae;
   background: #4a0f2c99;

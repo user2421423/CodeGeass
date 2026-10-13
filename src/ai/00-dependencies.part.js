@@ -93,6 +93,7 @@
     serves,
     sideEliminators,
     eliminatorCity,
+    transferEliminator,
     siteAt,
     startEliminator,
     startProject,

@@ -38,7 +38,7 @@ async function endTurn() {
         await fleijaSequence(shot.to, side, shot.name, null, shot);
         if (shot.intercepted)
           toast(shot.defender === game.player
-            ? `Your F.L.E.I.J.A. Eliminator at ${shot.eliminatorCity} neutralized the incoming warhead.`
+            ? `Your F.L.E.I.J.A. Eliminator (${shot.eliminatorCity}) neutralized the incoming warhead.`
             : 'An F.L.E.I.J.A. Eliminator neutralized the incoming warhead. Defensive site classified.', true);
         else if (shot.eliminatorUnlocked)
           toast(`F.L.E.I.J.A. Eliminator research begins; countermeasures are available from turn ${shot.eliminatorTurn}.`, true);
