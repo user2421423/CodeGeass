@@ -2569,6 +2569,7 @@
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
       emergency = memo.guards?.[u.id]?.emergency ||
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
+    if (g.ai?.[u.side]?.eliminatorRelayJobs?.[u.id]) return -5;
     return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
   function aiOrder(g, id) {
@@ -2584,6 +2585,8 @@
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
     // Pick up a waiting charge only when a Tier 1 commander can make a short, safe detour.
     // After collection the commander resumes the usual assault AI, carrying protection forward.
+    const relay = aiEliminatorRelayOrder(g, u);
+    if (relay !== null) return relay;
     const pickup = aiEliminatorPickup(g, u, memo);
     if (pickup && pickup.city.owner === u.side && pickup.city.eliminator > 0) {
       if (dist(g, u, pickup.city) <= 1) {
