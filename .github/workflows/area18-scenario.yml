@@ -37,12 +37,12 @@ jobs:
         run: python3 tools/check_map.py
       - name: Browser UI smoke checks
         run: node tests/ui-smoke.cjs
-      - name: Seeded three-way simulation (17)
+      - name: 20-turn three-way simulation (17)
         timeout-minutes: 15
-        run: node tools/area18_sim.cjs 17 5 britannia normal
-      - name: Seeded three-way simulation (29)
+        run: node tools/area18_sim.cjs 17 20 britannia normal
+      - name: 20-turn three-way simulation (29)
         timeout-minutes: 15
-        run: node tools/area18_sim.cjs 29 5 eu hard
-      - name: Seeded three-way simulation (43)
+        run: node tools/area18_sim.cjs 29 20 eu hard
+      - name: 20-turn three-way simulation (43)
         timeout-minutes: 15
-        run: node tools/area18_sim.cjs 43 5 cf challenge
+        run: node tools/area18_sim.cjs 43 20 cf challenge
