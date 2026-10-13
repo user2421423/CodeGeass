@@ -615,6 +615,27 @@ const GEOGRAPHY = (() => {
   function japanLandAt(lon, lat) {
     return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }
+  // Select only geographic Australian islands; a rectangular crop would also
+  // show Indonesian and Papua New Guinean land that is absent from this theatre.
+  // These polygons come from the same GSHHG atlas as the world map. The tactical
+  // Australia landmask remains authoritative for naval and land movement.
+  const AUSTRALIA_ISLAND_ANCHORS = [
+    [133.88, -23.70], // Australian mainland (Alice Springs)
+    [147.32, -42.88], // Tasmania
+    [137.25, -35.80], // Kangaroo Island
+    [148.00, -40.00], // Flinders Island
+    [143.93, -39.87], // King Island
+    [130.85, -11.45], // Melville Island
+    [130.25, -11.75], // Bathurst Island
+    [136.70, -13.90], // Groote Eylandt
+    [139.50, -16.50], // Mornington Island
+  ];
+  const AUSTRALIA_LAND = LAYERS.land.filter(shape =>
+    AUSTRALIA_ISLAND_ANCHORS.some(([lon, lat]) =>
+      pointWithinShape(shape, px(lon), py(lat))));
+  function australiaLandAt(lon, lat) {
+    return AUSTRALIA_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
+  }
   let japanColorCache = null;
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
@@ -731,23 +752,30 @@ const GEOGRAPHY = (() => {
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
     if (g.scenario.id === 'bering-strait' || g.scenario.id === 'conquest-indochina' ||
-        g.scenario.id === 'philippines-invasion' || g.scenario.id === 'war-for-australia' ||
-        g.scenario.id === 'area-18')
+        g.scenario.id === 'philippines-invasion' || g.scenario.id === 'area-18')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
     // Reproject the same GSHHG atlas into the north-up Japan theatre.
     // The political and tactical layers share this zero-rotation projection.
+    const australia = g.scenario.id === 'war-for-australia';
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
       dx = px(p.centerLon + 1) - ox, dy = py(p.centerLat + 1) - oy;
     const wx = SQ * R * (g.cols - 1) / (p.uMax - p.uMin),
       hy = 1.5 * R * (g.rows - 1) / (p.vMax - p.vMin);
-    const A = wx * X * k / dx, B = wx * Y / dy,
-      C = hy * Y * k / dx, D = -hy * X / dy,
-      tx = R - wx * p.uMin - A * ox - B * oy,
-      ty = R + hy * p.vMax - C * ox - D * oy;
+    // Australia's shoreline mask uses half-cell offsets and division by the
+    // full grid dimensions, unlike the Japan/Europe projection. Apply the
+    // exact map transform so the geographic atlas sits beneath the same hexes
+    // used for city positions, terrain, movement and fleet routes.
+    const bounds = g.scenario.bounds;
+    const A = australia ? SQ * R * g.cols / (bounds.east - bounds.west) / dx : wx * X * k / dx;
+    const B = australia ? 0 : wx * Y / dy;
+    const C = australia ? 0 : hy * Y * k / dx;
+    const D = australia ? -1.5 * R * g.rows / (bounds.north - bounds.south) / dy : -hy * X / dy;
+    const tx = australia ? R - SQ * R * .5 - A * px(bounds.west) : R - wx * p.uMin - A * ox - B * oy;
+    const ty = australia ? R - 1.5 * R * .5 - D * py(bounds.north) : R + hy * p.vMax - C * ox - D * oy;
     const det = A * D - B * C;
     const invA = D / det, invB = -B / det,
       invC = -C / det, invD = A / det,
@@ -765,7 +793,8 @@ const GEOGRAPHY = (() => {
     ];
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
-    const source = europeOnly ? LAYERS.land : JAPAN_LAND; // both Japan scenarios
+    const source = australia ? AUSTRALIA_LAND :
+      europeOnly ? LAYERS.land : JAPAN_LAND; // Japan scenarios share their original atlas
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -903,5 +932,6 @@ const GEOGRAPHY = (() => {
     const t = g.tiles[r * g.cols + c];
     return t && t.terrain !== 'sea' ? 1 : 0;
   }
-  return { paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, japanLandAt, shapes: LAYERS, cacheStats };
+  return { paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, japanLandAt,
+    australiaLandAt, shapes: LAYERS, cacheStats };
 })();
