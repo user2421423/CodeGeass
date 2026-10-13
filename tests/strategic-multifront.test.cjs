@@ -17,7 +17,7 @@ test('Division of Japan uses persistent two-theater commitments without permanen
   assert.equal(wings.length,land(g,'britannia').length);
   assert.equal(wings.filter(w=>w==='eu').length,Math.ceil(wings.length/2));
   assert.equal(wings.filter(w=>w==='cf').length,Math.floor(wings.length/2));
-  assert.ok(Object.values(plan.guards).every(p=>p.response && p.emergency),'any initial defenders are threat-triggered');
+  assert.ok(Object.values(plan.guards).every(p=>!p.response),'no temporary city responders');
   assert.ok(plan.theaters.eu && plan.theaters.cf);
   assert.ok(Number.isFinite(plan.theaters.eu.arriving));
   assert.ok(plan.theaters.eu.arriving<=land(g,'britannia').reduce((v,u)=>v+E.unitStrength(u),0));
@@ -35,53 +35,66 @@ test('Division of Japan uses persistent two-theater commitments without permanen
   assert.doesNotThrow(()=>JSON.stringify(g.ai.britannia),'wing decisions remain save-safe');
 });
 
-test('Mobile city response dispatches nearby field formations and releases them after danger',()=>{
+test('Adjacent enemies never divert scenario theater units into mobile city guards',()=>{
   const g=division.create('britannia','hard',987);
   for(const u of g.units)if(u.side!=='britannia')u.hp=0;
-  const initial=E.aiPlan(g,'britannia');
-  const trials=g.stations.filter(s=>s.owner==='britannia').flatMap(city=>
-    ['eu','cf'].map(rival=>({city,rival,
-      defenders:land(g,'britannia').filter(u=>initial.wings[u.id]===rival&&E.distance(u,city,g)<=7),
-      spawn:E.adjacent(g,city).find(p=>p.terrain!=='sea'&&
-        !E.TERRAIN[p.terrain]?.blocked&&!E.unitAt(g,p))})))
-    .filter(p=>p.defenders.length>=2&&p.spawn)
-    .sort((a,b)=>b.defenders.length-a.defenders.length);
-  assert.ok(trials.length);
-  const {city,rival,spawn}=trials[0];
-  const hostile=E.newUnit(g,E.typeFor(rival,'medium',g),rival,spawn.c,spawn.r);
+  const opening=E.aiPlan(g,'britannia');
+  const site=g.stations.filter(s=>s.owner==='britannia')
+    .map(city=>({city,spawn:E.adjacent(g,city).find(p=>p.terrain!=='sea'&&
+      !E.TERRAIN[p.terrain]?.blocked&&!E.unitAt(g,p))}))
+    .find(({city,spawn})=>spawn&&land(g,'britannia').some(u=>E.distance(u,city,g)<=8));
+  assert.ok(site,'a city with an adjacent enemy spawn must exist');
+  const hostile=E.newUnit(g,E.typeFor('eu','medium',g),'eu',site.spawn.c,site.spawn.r);
   g.turn=2;
-  const defend=E.aiPlan(g,'britannia');
-  const intercepted=Object.entries(defend.guards).filter(([,p])=>p.id===city.id);
-  assert.ok(intercepted.length>0&&intercepted.length<=3);
-  for(const [id,post] of intercepted){
-    assert.equal(post.response,true);
-    assert.equal(defend.wings[id],rival,'no transfer to another strategic front');
-    assert.equal(defend.assign[id],undefined,'temporarily paused offensive');
-    assert.ok(E.distance(g.units.find(u=>u.id===Number(id)),city,g)<=8);
-  }
-  hostile.hp=0;g.turn=3;
+  const threatened=E.aiPlan(g,'britannia');
+  assert.deepEqual(threatened.guards,{},'hard scenario does not dispatch mobile guards');
+  assert.equal(threatened.localDefense,undefined);
+  assert.equal(g.ai.britannia.localResponses,undefined);
+  assert.ok(Object.values(threatened.wings).length>0,'theater assignments remain active');
+  hostile.hp=0;
+  g.turn=3;
   const resumed=E.aiPlan(g,'britannia');
   assert.deepEqual(resumed.guards,{});
-  for(const [id] of intercepted){
-    assert.equal(resumed.wings[id],rival);
-    assert.ok(resumed.assign[id],'return to existing offensive theater');
-    assert.equal(resumed.byId[resumed.assign[id]].anchor.owner,rival);
-  }
+  assert.ok(Object.values(resumed.assign).some(Boolean),'offensive orders remain');
 });
 
 test('European and Invasion scenarios choose doctrines; Campaign retains scripted planner',()=>{
   const eu=europe.create('eu','normal',71);
   assert.equal(E.aiPlan(eu,'eu').doctrine,'europe');
-  assert.ok(E.aiPlan(eu,'eu').localDefense);
+  assert.equal(E.aiPlan(eu,'eu').localDefense,undefined);
+  assert.ok(Object.values(E.aiPlan(eu,'eu').guards).every(p=>!p.response));
+  const euroBritannia=europe.create('eb','normal',72);
+  assert.equal(E.aiPlan(euroBritannia,'eb').localDefense,undefined);
   const invasion=japan.create('britannia','normal',71);
   const opening=E.aiPlan(invasion,'britannia');
   assert.equal(opening.doctrine,'invasion');
-  assert.equal(opening.localDefense?.dispatched,0);
+  assert.equal(opening.localDefense,undefined);
   invasion.turn=10;
   assert.equal(japan.onTurn(invasion),true,'story alliance ends at the scenario hook');
   const postCollapse=E.aiPlan(invasion,'britannia');
   assert.equal(postCollapse.doctrine,'invasion');
-  assert.ok(postCollapse.localDefense,'defensive response activated after alliance change');
+  assert.equal(postCollapse.localDefense,undefined,'no responses after alliance change');
+  assert.ok(Object.values(postCollapse.guards).every(p=>!p.response));
   const divisionHard=division.create('britannia','hard',71);
   assert.equal(E.aiPlan(divisionHard,'britannia').doctrine,'division');
+  assert.equal(E.aiPlan(divisionHard,'britannia').localDefense,undefined);
+  const divisionNormal=division.create('britannia','normal',71);
+  const ordinaryGuards=Object.values(E.aiPlan(divisionNormal,'britannia').guards);
+  assert.ok(ordinaryGuards.length>0,'preserve Normal Division Britannia local garrisons');
+  assert.ok(ordinaryGuards.every(p=>!p.response),'garrisons are permanent, not responders');
+});
+
+test('Prior mobile response data is retired without disabling scenario recovery',()=>{
+  const g=division.create('britannia','hard',987);
+  for(const u of g.units)if(u.side!=='britannia')u.hp=0;
+  const officers=land(g,'britannia').filter(u=>u.cmd);
+  assert.ok(officers.length);
+  for(const u of officers)u.hp=Math.max(1,Math.floor(E.maxHP(u)*0.2));
+  g.ai ||= {};
+  (g.ai.britannia ||= {}).localResponses={123:{city:1,turn:1}};
+  g.turn=2;
+  const plan=E.aiPlan(g,'britannia');
+  assert.ok(plan.recoveries?.size>0,'commander recovery remains enabled');
+  assert.equal(g.ai.britannia.localResponses,undefined,'outdated saved state removed');
+  assert.ok(Object.values(plan.guards).every(p=>!p.response));
 });

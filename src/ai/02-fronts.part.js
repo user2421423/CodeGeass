@@ -171,7 +171,7 @@
     return 'assault';
   }
   const STRATEGIC = { commitment: 4, margin: 1.3, transferCooldown: 4,
-    arrivalWindow: 4, transferBuffer: 2, defenseRadius: 6 };
+    arrivalWindow: 4, transferBuffer: 2 };
   // Route-aware arriving strength. A unit on another island or six turns
   // away cannot contribute to a four-turn defense, even if already assigned.
   function frontArrival(g, u, f) {
@@ -305,52 +305,6 @@
       .map(([id,f])=>[id,{required:f.required,available:f.available,
         arriving:f.arriving,deficit:f.deficit,pressure:f.pressure,count:counts[id]}]))};
   }
-  // Temporary city counterattacks: one hostile formation alarms only its
-  // nearest vulnerable city. Responders never lose their long-term front.
-  function planScenarioMobileDefense(g,side,troops,memo,state){
-    memo.localDefense={alerts:[],dispatched:0};
-    const doctrine=scenarioDoctrine(g);
-    if(doctrine!=='division' && doctrine!=='europe' &&
-      !(doctrine==='invasion' && g.scenario?.phase==='three-way-war'))return;
-    const own=g.stations.filter(s=>s.owner===side),
-      enemies=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&!isShip(u)),
-      alerts=new Map(),deployed=new Set(),next={},
-      // European War: E.U. preserves defensive depth, while Euro Britannia
-      // retains its concentrated attack rather than scattering city screens.
-      cap=doctrine==='europe'?(side==='eu'?0.30:0.12):0.25,
-      max=Math.min(Math.floor(troops.length*cap),doctrine==='division'?8:side==='eu'?8:4);
-    for(const e of enemies){
-      const city=own.filter(s=>!atSea(g,e) && massOf(g,e)===massOf(g,s) &&
-        dist(g,e,s)<=STRATEGIC.defenseRadius)
-        .sort((a,b)=>dist(g,e,a)-dist(g,e,b)||a.id-b.id)[0];
-      if(!city)continue;
-      if(!alerts.has(city.id))alerts.set(city.id,{city,enemies:[]});
-      alerts.get(city.id).enemies.push(e);
-    }
-    const sorted=[...alerts.values()].sort((a,b)=>
-      (b.city.capitalOf===side?10:0)+b.enemies.length*3-
-      ((a.city.capitalOf===side?10:0)+a.enemies.length*3));
-    for(const {city,enemies:attackers} of sorted){
-      if(deployed.size>=max)break;
-      const threat=attackers.reduce((v,u)=>v+unitStrength(u),0),
-        sameFront=attackers[0].side,
-        eligible=troops.filter(u=>!deployed.has(u.id)&&!TYPES[u.type].naval &&
-          massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=8 &&
-          (!memo.wings[u.id]||memo.wings[u.id]===sameFront)),
-        ordered=eligible.sort((a,b)=>dist(g,a,city)-dist(g,b,city)||a.id-b.id),
-        need=Math.min(doctrine==='europe' && side==='eb'?1:3,
-          Math.max(1,Math.ceil(threat/3)));
-      let count=0;
-      for(const u of ordered){
-        if(count>=need||deployed.size>=max)break;
-        memo.guards[u.id]={c:city.c,r:city.r,id:city.id,emergency:true,response:true};
-        next[u.id]={city:city.id,turn:g.turn};deployed.add(u.id);count++;
-      }
-      if(count)memo.localDefense.alerts.push({city:city.id,count,front:sameFront});
-    }
-    memo.localDefense.dispatched=deployed.size;
-    state.localResponses=next;
-  }
   function planScenarioOffense(g, side, memo) {
     const state = ((g.ai ||= {})[side] ||= {}),
       own = g.stations.filter(s => s.owner === side),
@@ -362,8 +316,10 @@
     state.recentCaptures = (state.recentCaptures || [])
       .filter(p => g.turn - p.turn <= SCENARIO_COLUMN.exploitTurns);
     const previous = state.assignments || {};
+    // Old saved games may still contain dispatch metadata; retire it without
+    // touching persistent theater assignments or normal city garrisons.
+    delete state.localResponses;
     planScenarioTheaters(g,side,troops,memo,state);
-    planScenarioMobileDefense(g,side,troops,memo,state);
     const active=troops.filter(u=>!memo.guards?.[u.id]&&!memo.recoveries?.has(u.id));
     const fronts = g.stations.filter(s => foe(g, s.owner, side)).map(s => {
       const opponents = enemies.filter(u => dist(g, u, s) <= 6),

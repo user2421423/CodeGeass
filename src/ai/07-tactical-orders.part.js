@@ -16,8 +16,7 @@
       : 3;
     if (g.mode === 'scenario') {
       const memo=aiPlan(g,u.side);
-      return memo.guards?.[u.id]?.response?tactical-10:
-        tactical-trafficBoost(g,u,memo);
+      return tactical-trafficBoost(g,u,memo);
     }
     const memo = aiPlan(g, u.side),
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
@@ -110,7 +109,6 @@
               : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
-            (guard?.response && d && dist(g,d,guard)<=4 ? 150 : 0) +
             (d ? commanderValue(g, d) + focusValue(g, u, d, pr, memo) : 0) -
             pr.counter * 0.5;
           // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
@@ -155,7 +153,7 @@
         // unit on the city hex blocks production); when one comes close it steps onto the city.
         const onGuard = guard && p.c === guard.c && p.r === guard.r,
           guardBonus = !onGuard ? 0 : guard.id != null && !enemies.some(v => dist(g, v, guard) <= 2) ? -40 : 25;
-        sc -= guard ? dist(g, p, guard) * (guard.response?22:30) - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
+        sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
         if (g.mode === 'scenario' && front) {
           // Columns converge without waiting or retreating: a modest cohesion

@@ -160,9 +160,14 @@ function playSide(g, side, counters) {
     counters.strikeLog.push({ turn: g.turn, side, target: shot.name, intercepted: !!shot.intercepted, erased: shot.cities.filter(c => c.destroyed).map(c => c.name), depleted: shot.depleted || [] });
   }
 
-  const ids = g.units.filter(u => u.hp > 0 && u.side === side && !u.attacked).map(u => u.id);
-  for (const id of ids) {
+  const ids = g.units.filter(u => u.hp > 0 && u.side === side && !u.attacked)
+    .sort((a, b) => E.aiOrderPriority(g, a) - E.aiOrderPriority(g, b) || a.id - b.id)
+    .map(u => u.id);
+  for (let step = 0; step < ids.length; step++) {
     if (g.over) break;
+    const next = E.aiNextActor(g, ids, step);
+    if (next !== step) [ids[step], ids[next]] = [ids[next], ids[step]];
+    const id = ids[step];
     const u = g.units.find(v => v.id === id);
     if (!u || u.hp <= 0 || u.side !== side) continue;
     const before = new Map(g.units.filter(v => v.hp > 0 && v.side !== side)

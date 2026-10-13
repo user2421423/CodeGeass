@@ -88,3 +88,12 @@ test('one real one-turn world simulation keeps legal results and a timeline', ()
   assert.ok(r.metrics.attacks.britannia >= 0);
   assert.ok(r.metrics.unitsLost.cf >= 0);
 });
+
+test('simulation harnesses mirror live bounded tactical reprioritization',()=>{
+  const fs=require('node:fs'), path=require('node:path');
+  for(const name of ['balance_dashboard.cjs','balance_sim.cjs','japan_conquest_sim.cjs','simulate-player-priority.cjs']){
+    const script=fs.readFileSync(path.join(__dirname,'../tools',name),'utf8');
+    assert.match(script,/E\.aiNextActor\(g,\s*ids,\s*step\)/,name);
+    assert.match(script,/E\.aiOrder\(g,\s*id\)/,name);
+  }
+});
