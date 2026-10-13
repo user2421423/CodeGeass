@@ -327,7 +327,7 @@
     const id = g.scenario?.id || '';
     if (g.scenario?.aiDoctrine === 'europe') return 'europe';
     if (id === 'division-japan') return 'division';
-    if (id.includes('europe') || id === 'bering-strait' || id === 'conquest-indochina' || id === 'war-for-australia') return 'europe';
+    if (id.includes('europe') || id === 'bering-strait' || id === 'conquest-indochina' || id === 'war-for-australia' || id === 'area-18') return 'europe';
     if (id.includes('invasion-japan') || id === 'japan') return 'invasion';
     return 'assault';
   }

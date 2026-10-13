@@ -8,11 +8,12 @@ const SCENARIO_KINDS = [
   ['invasion-japan','The Invasion of Japan','44 cities · 3 sides'],
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
-  ['operation-stonehenge','Operation Stonehenge','54 cities · 3 sides']
+  ['operation-stonehenge','Operation Stonehenge','54 cities · 3 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
-  ['war-for-australia','The War for Australia','48 cities · 3 sides']
+  ['war-for-australia','The War for Australia','48 cities · 3 sides'],
+  ['area-18','The Conquest of Area 18','50 cities · 3 sides']
 ];
 const SCENARIO_BLURBS = {
   'war-for-australia': {
@@ -47,16 +48,14 @@ const SCENARIO_BLURBS = {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
     cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
   },
-  'philippines-invasion': {
-    era: 'Philippine Archipelago · Alternate 2017',
-    intro: 'Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.',
-    diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
-    elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
-    focus: {britannia:'Koror',cf:'Manila'}
-  },
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
     eu: 'Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases.'
+  },
+  'area-18': {
+    britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
+    eu: 'Launch coordinated offensives from Syria, the Levant and Suez. Defend the northern Iraqi front against two rival armies.',
+    cf: 'Command Persia from Tehran and the Zagros to Herat. Use mountain passes and the Persian Gulf to contest Britannian expansion.'
   }
 };
 const SCENARIO_TEXT = {
@@ -108,6 +107,20 @@ const SCENARIO_TEXT = {
     diplomacy: 'Britannia and Europia United are at war from turn 1. There is no Chinese Federation involvement or scripted deadline.',
     elite: 'Elite Bering: land and amphibious forces begin as Lv.1 Elite Forces; enemy named commanders begin at Lv.5. Carriers remain conventional. Rival AI has advanced research and elite factories; players follow HQ unlock rules.',
     focus: {britannia:'Nome',eu:'Provideniya'}
+  },
+  'philippines-invasion': {
+    era: 'Philippine Archipelago · Alternate 2017',
+    intro: 'Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.',
+    diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
+    elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
+    focus: {britannia:'Koror',cf:'Manila'}
+  },
+  'area-18': {
+    era: 'Middle East · Alternate 2017',
+    intro: 'Three great powers fight across Arabia, Mesopotamia, the Levant and Persia. Conquer every rival city.',
+    diplomacy: 'Britannia, Europia United and the Chinese Federation are all hostile from turn 1. No betrayals, nuclear weapons or campaign deadline.',
+    elite: 'Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.5; carriers remain conventional. Research and Elite Force production follow existing scenario rules.',
+    focus: {britannia:'Baghdad',eu:'Damascus',cf:'Kermanshah'}
   }
 };
 function scenarioModel(kind = scenarioKind) {
