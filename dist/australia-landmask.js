@@ -60,9 +60,17 @@
     if(isLand(p.lon,p.lat))raw[i>>3]|=128>>(i&7);
   }
   let binary='';for(const b of raw)binary+=String.fromCharCode(b);
-  const bits=typeof btoa==='function'?btoa(binary):Buffer.from(raw).toString('base64');
+  // No Buffer/btoa dependency: also works in the UI smoke-test VM.
+  const abc='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let bits='';
+  for(let i=0;i<raw.length;i+=3){
+    const b0=raw[i],b1=i+1<raw.length?raw[i+1]:0,b2=i+2<raw.length?raw[i+2]:0;
+    bits+=abc[b0>>2]+abc[((b0&3)<<4)|(b1>>4)]+
+      (i+1<raw.length?abc[((b1&15)<<2)|(b2>>6)]:'=')+
+      (i+2<raw.length?abc[b2&63]:'=');
+  }
   root.AUSTRALIA_LAND_BITS=bits;
-  const api={bits,cols:COLS,rows:ROWS,bounds:BOUNDS,mainland:MAINLAND,tasmania:TASMANIA,isLand,point};
+  const api={bits,binary,cols:COLS,rows:ROWS,bounds:BOUNDS,mainland:MAINLAND,tasmania:TASMANIA,isLand,point};
   root.AUSTRALIA_GEOGRAPHY=api;
   if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
