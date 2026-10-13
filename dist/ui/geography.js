@@ -749,9 +749,154 @@ const GEOGRAPHY = (() => {
     ctx.restore();
     return true;
   }
+
+  // Bering is centred on the International Date Line. Its gameplay mask is
+  // already independently GIS-audited, but using filled tactical hexagons as
+  // the underlying artwork made Alaska, Chukotka and the Aleutians look blocky.
+  // Draw the actual GSHHG shorelines from the world atlas instead. Split the
+  // projection at +/-180 degrees so neither Siberia nor Alaska is mirrored,
+  // and keep the detailed coastline independent of the gameplay landmask.
+  const BERING_VECTOR_SLICES = [
+    { west: 148, east: 180, unwrap: 0 },
+    { west: -180, east: -132, unwrap: 360 },
+  ].map(region => {
+    const top = py(74), bottom = py(48);
+    const west = px(region.west), east = px(region.east);
+    const shapes = LAYERS.land.filter(s => intersects(s.bounds, west, east, top, bottom));
+    const compiled = FAST_PATH && typeof Path2D.prototype.addPath === 'function';
+    const landPath = compiled ? new Path2D() : null;
+    if (landPath) for (const s of shapes) landPath.addPath(s.path);
+    // The global shapefile is cut at +/-180 degrees. Its vertical closing
+    // edges are NOT real coastlines and must not be outlined on the map.
+    const seamX = px(region.unwrap ? -180 : 180);
+    const outline = FAST_PATH ? new Path2D() : null;
+    const outlineSegments = [];
+    for (const s of shapes) {
+      const pts = s.points;
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        if (Math.abs(a[0] - seamX) < 0.01 && Math.abs(b[0] - seamX) < 0.01) continue;
+        if (Math.abs(a[0] - b[0]) > SQ * R * 10) continue;
+        if (Math.max(a[0], b[0]) < west || Math.min(a[0], b[0]) > east ||
+            Math.max(a[1], b[1]) < top || Math.min(a[1], b[1]) > bottom) continue;
+        if (outline) {
+          outline.moveTo(a[0], a[1]);
+          outline.lineTo(b[0], b[1]);
+        } else outlineSegments.push([a, b]);
+      }
+    }
+    return { ...region, shapes, landPath, outline, outlineSegments };
+  });
+  // Share the existing province paths between the detailed and tactical
+  // renderers; rebuild only on a territory/map revision.
+  function beringOwnerGroups(g) {
+    const revision = g.mapRevision || 0;
+    if (beringPaintCache.tiles !== g.tiles || beringPaintCache.revision !== revision) {
+      const groups = new Map();
+      for (const t of g.tiles) if (t.terrain !== 'sea' && t.owner) {
+        if (!groups.has(t.owner)) groups.set(t.owner, []);
+        groups.get(t.owner).push(t);
+      }
+      const paths = new Map();
+      if (FAST_PATH) for (const [side, tiles] of groups) {
+        const path = new Path2D();
+        for (const t of tiles) tacticalHex(path, t, R + .9);
+        paths.set(side, path);
+      }
+      beringPaintCache = { tiles: g.tiles, revision, paths, groups };
+    }
+    return beringPaintCache;
+  }
+  function paintBeringGeographic(ctx, g, left, right, top, bottom) {
+    const bounds = g.scenario.bounds;
+    const sx = 2 * g.cols / (bounds.east - bounds.west);
+    const sy = g.rows * VISUAL_WORLD.latSpan /
+      ((bounds.north - bounds.south) * (VISUAL_WORLD.rows - 1));
+    // The visual origin is the same centre-sampled longitude/latitude grid
+    // as scenarios-bering.js, including the half-column stagger of odd rows.
+    const mapX = lon => R - SQ * R / 2 +
+      (lon - bounds.west) * SQ * R * g.cols / (bounds.east - bounds.west);
+    const mapY = lat => R - .75 * R +
+      (bounds.north - lat) * 1.5 * R * g.rows / (bounds.north - bounds.south);
+    const tx = mapX(bounds.west) - sx * px(bounds.west);
+    const ty = mapY(bounds.north) - sy * py(bounds.north);
+    const owners = beringOwnerGroups(g);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(left, top, right - left, bottom - top);
+    ctx.clip();
+    const sea = ctx.createLinearGradient(0, top, 0, bottom);
+    sea.addColorStop(0, '#205372');
+    sea.addColorStop(1, '#103d5b');
+    ctx.fillStyle = sea;
+    ctx.fillRect(left, top, right - left, bottom - top);
+    for (const region of BERING_VECTOR_SLICES) {
+      // Independently clip the two halves at the date line. Their original
+      // atlas longitudes do not overlap; unwrapping only shifts the east half.
+      const x0 = Math.max(left, mapX(region.west + region.unwrap));
+      const x1 = Math.min(right, mapX(region.east + region.unwrap));
+      const y0 = Math.max(top, mapY(bounds.north));
+      const y1 = Math.min(bottom, mapY(bounds.south));
+      if (x1 <= x0 || y1 <= y0 || !region.shapes.length) continue;
+      const shift = tx + region.unwrap * SQ * R * g.cols /
+        (bounds.east - bounds.west);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x0, y0, x1 - x0, y1 - y0);
+      ctx.clip();
+      ctx.transform(sx, 0, 0, sy, shift, ty);
+      const land = region.landPath || paths(ctx, region.shapes,
+        px(region.west), px(region.east), py(bounds.north), py(bounds.south));
+      ctx.fillStyle = '#91a799';
+      fillPath(ctx, land);
+      if (land) {
+        // Political hexes are only an ownership stencil, clipped to the
+        // real polygon silhouettes. No hex edges form the visible shoreline.
+        ctx.save();
+        clipPath(ctx, land);
+        ctx.transform(1 / sx, 0, 0, 1 / sy, -shift / sx, -ty / sy);
+        ctx.globalAlpha = .88;
+        for (const [side, tiles] of owners.groups) {
+          const faction = g.factions?.[side] || E.FACTIONS[side];
+          ctx.fillStyle = faction?.color || '#91a799';
+          const path = owners.paths.get(side);
+          if (path) ctx.fill(path);
+          else {
+            ctx.beginPath();
+            for (const t of tiles) {
+              const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
+              const y = 1.5 * R * t.r + R;
+              if (x < left - 2 * R || x > right + 2 * R ||
+                  y < top - 2 * R || y > bottom + 2 * R) continue;
+              tacticalHex(ctx, t, R + .9);
+            }
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+      ctx.strokeStyle = 'rgba(226,233,216,0.66)';
+      ctx.lineWidth = Math.max(.35, 1.15 / Math.max(sx, sy));
+      if (region.outline) ctx.stroke(region.outline);
+      else {
+        ctx.beginPath();
+        for (const [a, b] of region.outlineSegments) {
+          ctx.moveTo(a[0], a[1]);
+          ctx.lineTo(b[0], b[1]);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+    return true;
+  }
+
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
-    if (g.scenario.id === 'bering-strait' || g.scenario.id === 'conquest-indochina' ||
+    if (g.scenario.id === 'bering-strait')
+      return paintBeringGeographic(ctx, g, left, right, top, bottom);
+    if (g.scenario.id === 'conquest-indochina' ||
         g.scenario.id === 'philippines-invasion' || g.scenario.id === 'area-18')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
