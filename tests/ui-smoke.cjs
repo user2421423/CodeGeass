@@ -662,13 +662,59 @@ const modal = () => node('modal-root').innerHTML;
   assert.equal(run('game.mode'),'scenario');
   assert(node('app').innerHTML.includes('data-action="army-groups"'),
     'scenario top navigation exposes editable Army Groups');
-  assert(node('selection-dock').innerHTML.includes('data-action="army-groups"'),
-    'scenario units can be assigned through their dock');
+  assert(!node('selection-dock').innerHTML.includes('data-action="army-groups"'),
+    'scenario unit dock has no redundant army-group button');
   run('armyGroupsDialog()');
   assert(modal().includes('Browse starting formations & fleets'),
     'scenario army group dialog links to its original formation roster');
   run('armyGroupCreate()');
   assert.equal(run('game.armyGroups.length'), 1, 'player can create an army group in scenario mode');
+  assert.equal(run('activeArmyGroupId'), 1, 'managing a newly created group selects it for Shift-click');
+  const shiftClickUnit = id => run(`(() => {
+    const u = game.units.find(v => v.id === ${id});
+    if (!u) throw Error('No test unit');
+    const oldHex = hitHex, oldPin = hitPin, oldCity = hitVisualStation;
+    hitHex = () => E.tile(game, u.c, u.r);
+    hitPin = () => null;
+    hitVisualStation = () => null;
+    try {
+      const event = { button: 0, pointerType: 'mouse', shiftKey: true, pointerId: 2,
+        clientX: 50, clientY: 50 };
+      canvas.onpointerdown(event);
+      canvas.onpointerup(event);
+    } finally {
+      hitHex = oldHex;
+      hitPin = oldPin;
+      hitVisualStation = oldCity;
+    }
+  })()`);
+  const firstGroup = run('game.armyGroups[0].id');
+  const newMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id)).id');
+  run('closeModal()');
+  shiftClickUnit(newMember);
+  assert.equal(run(`game.armyGroups[0].units.includes(${newMember})`), true,
+    'Shift-click directly adds friendly units to the active scenario group');
+  assert(node('selection-dock').innerHTML.includes('dock-group-label'),
+    'assigned scenario unit shows a compact group indicator');
+  assert(!node('selection-dock').innerHTML.includes('Manage army group'),
+    'assigned unit does not regain the redundant group button');
+  shiftClickUnit(newMember);
+  assert.equal(run(`game.armyGroups[0].units.includes(${newMember})`), false,
+    'Shift-click a member again removes it from the active scenario group');
+  run('armyGroupActivate(null)');
+  assert.equal(run('activeArmyGroupId'), null, 'group editing can be deactivated');
+  const otherUnit = run('game.units.find(u => u.side === game.player && u.id !== ' + newMember + ').id');
+  run(`selectUnit(${otherUnit})`);
+  shiftClickUnit(newMember);
+  assert.equal(run(`multiSelectedIds.has(${newMember})`), true,
+    'without an active group, Shift-click still multi-selects for group creation');
+  assert.equal(run(`game.armyGroups[0].units.includes(${newMember})`), false,
+    'multi-selection does not modify group memberships');
+  run('armyGroupsDialog()');
+  assert(modal().includes('data-army-activate="1"'), 'group chooser offers a Shift-click activation action');
+  run('armyGroupsDialog(firstGroup)');
+  assert.equal(run('activeArmyGroupId'), firstGroup, 'Manage chooses the active group');
+
   run('scenarioGroupsDialog()');
   assert(modal().includes('data-scenario-group-import='),
     'starting scenario formations can be imported into editable groups');
@@ -686,6 +732,22 @@ const modal = () => node('modal-root').innerHTML;
   assert(!node('app').innerHTML.includes('class="map-legend"'),
     'scenario map omits the faction-colour legend entirely');
   run('newGame()');
+  assert.equal(run('activeArmyGroupId'), null, 'new conquest clears active group from the previous scenario');
+  assert(!node('selection-dock').innerHTML.includes('data-action="army-groups"'),
+    'conquest unit dock also omits the army-group button');
+  run('armyGroupCreate()');
+  assert.equal(run('activeArmyGroupId'), 1, 'new conquest army group becomes active');
+  run('closeModal()');
+  const conquestMember = run('game.units.find(u => u.side === game.player && !game.armyGroups[0].units.includes(u.id)).id');
+  shiftClickUnit(conquestMember);
+  assert.equal(run(`game.armyGroups[0].units.includes(${conquestMember})`), true,
+    'Conquest Shift-click directly assigns a unit');
+  shiftClickUnit(conquestMember);
+  assert.equal(run(`game.armyGroups[0].units.includes(${conquestMember})`), false,
+    'Conquest Shift-click also removes the unit');
+  run('armyGroupsDialog()');
+  assert(modal().includes('data-army-activate=""'), 'active group can be deselected from its group row');
+  run('armyGroupActivate(null)');
 
   run('startMenu();campaignDialog("bk_s1")');
   assert(modal().includes('data-mission="bk1"'), 'campaign menu renders');
