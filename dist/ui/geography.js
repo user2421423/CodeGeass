@@ -659,7 +659,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= (europeanRegion(g) ? 1 : 2)) continue;
+      if (depth[j] >= (europeanRegion(g) || g.scenario?.id === 'area-18' ? 1 : 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -897,13 +897,15 @@ const GEOGRAPHY = (() => {
     if (g.scenario.id === 'bering-strait')
       return paintBeringGeographic(ctx, g, left, right, top, bottom);
     if (g.scenario.id === 'conquest-indochina' ||
-        g.scenario.id === 'philippines-invasion' || g.scenario.id === 'area-18')
+        g.scenario.id === 'philippines-invasion')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
     // Reproject the same GSHHG atlas into the north-up Japan theatre.
     // The political and tactical layers share this zero-rotation projection.
     const australia = g.scenario.id === 'war-for-australia';
+    const middleEast = g.scenario.id === 'area-18';
+    const centreSampledRegion = australia || middleEast;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -914,13 +916,14 @@ const GEOGRAPHY = (() => {
     // full grid dimensions, unlike the Japan/Europe projection. Apply the
     // exact map transform so the geographic atlas sits beneath the same hexes
     // used for city positions, terrain, movement and fleet routes.
-    const australiaBounds = g.scenario.bounds;
-    const A = australia ? SQ * R * g.cols / (australiaBounds.east - australiaBounds.west) / dx : wx * X * k / dx;
-    const B = australia ? 0 : wx * Y / dy;
-    const C = australia ? 0 : hy * Y * k / dx;
-    const D = australia ? -1.5 * R * g.rows / (australiaBounds.north - australiaBounds.south) / dy : -hy * X / dy;
-    const tx = australia ? R - SQ * R * .5 - A * px(australiaBounds.west) : R - wx * p.uMin - A * ox - B * oy;
-    const ty = australia ? R - 1.5 * R * .5 - D * py(australiaBounds.north) : R + hy * p.vMax - C * ox - D * oy;
+    // Both regions use centre-sampled hex grids; preserve city/shore alignment.
+    const regionalBounds = g.scenario.bounds;
+    const A = centreSampledRegion ? SQ * R * g.cols / (regionalBounds.east - regionalBounds.west) / dx : wx * X * k / dx;
+    const B = centreSampledRegion ? 0 : wx * Y / dy;
+    const C = centreSampledRegion ? 0 : hy * Y * k / dx;
+    const D = centreSampledRegion ? -1.5 * R * g.rows / (regionalBounds.north - regionalBounds.south) / dy : -hy * X / dy;
+    const tx = centreSampledRegion ? R - SQ * R * .5 - A * px(regionalBounds.west) : R - wx * p.uMin - A * ox - B * oy;
+    const ty = centreSampledRegion ? R - 1.5 * R * .5 - D * py(regionalBounds.north) : R + hy * p.vMax - C * ox - D * oy;
     const det = A * D - B * C;
     const invA = D / det, invB = -B / det,
       invC = -C / det, invD = A / det,
@@ -939,7 +942,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND :
-      europeOnly ? LAYERS.land : JAPAN_LAND; // Japan scenarios share their original atlas
+      (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -995,6 +998,8 @@ const GEOGRAPHY = (() => {
       ctx.transform(A, C, B, D, tx, ty);
       coast(ctx, shapes, a, b, c, d,
         Math.max(0.5, scale * Math.hypot(A, C)));
+      // Match the playable, navigable Suez canal with a visual water cut.
+      if (middleEast) paintSuezCanal(ctx, shapes, a, b, c, d);
       ctx.restore();
     }
     return true;

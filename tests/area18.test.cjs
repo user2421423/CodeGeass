@@ -185,24 +185,35 @@ test('Area 18 saves and resumes for all factions on normal and elite',()=>{
   }
 });
 
-test('Area 18 renderer paints all faction land instead of the Japan-only atlas',()=>{
-  // An empty global atlas makes a mistaken Japan-renderer fallback detectable:
-  // the scenario should paint its *own* gameplay landmask and ownership.
+test('Area 18 draws a geographic atlas with exact cell alignment',()=>{
   const fs=require('node:fs'),vm=require('node:vm');
   const source=fs.readFileSync(require.resolve('../dist/ui/geography.js'),'utf8');
   const geography=vm.runInNewContext(source+'\nGEOGRAPHY;',{
-    SQ:Math.sqrt(3),R:12,GEOGRAPHY_SHAPES:{land:[],biomes:[]},E
+    SQ:Math.sqrt(3),R:12,
+    GEOGRAPHY_SHAPES:{land:[[[29,10.5],[70,10.5],[70,42],[29,42]]],biomes:[]},E
   });
-  const painted=new Set();
-  const ctx={
-    save(){},restore(){},beginPath(){},closePath(){},rect(){},clip(){},fillRect(){},
-    moveTo(){},lineTo(){},
+  const colors=new Set(),transforms=[];
+  const ctx={save(){},restore(){},beginPath(){},closePath(){},rect(){},
+    clip(){},fillRect(){},moveTo(){},lineTo(){},stroke(){},
+    transform(...matrix){transforms.push(matrix);},
     createLinearGradient(){return {addColorStop(){}};},
-    fill(){if(this.globalAlpha===0.88)painted.add(this.fillStyle);}
-  };
+    fill(){if(this.globalAlpha===.86)colors.add(this.fillStyle);}};
   const g=area.create('britannia','normal',444);
   assert.equal(geography.paint(ctx,g,0,5000,0,5000,1),true);
-  assert.equal(painted.size,3,'all three faction land regions must be visible');
+  assert.equal(colors.size,3,'all three factions fill geographic land');
+  assert.ok(transforms.length>=2,'geographic polygons rather than hex fill');
+  const [A,C,B,D,tx,ty]=transforms[0],bounds=area.bounds;
+  const SQ=Math.sqrt(3),R=12;
+  const px=lon=>(lon+180)*SQ*R/2+R-SQ*R/2;
+  const py=lat=>R+(74-lat)*1.5*R*75/128;
+  for(const t of g.tiles){
+    const lon=bounds.west+(t.c+.5*(t.r&1)+.5)*(bounds.east-bounds.west)/g.cols;
+    const lat=bounds.north-(t.r+.5)*(bounds.north-bounds.south)/g.rows;
+    assert.ok(Math.abs(A*px(lon)+B*py(lat)+tx-(SQ*R*(t.c+.5*(t.r&1))+R))<1e-7,
+      'horizontal coastline drift '+E.key(t));
+    assert.ok(Math.abs(C*px(lon)+D*py(lat)+ty-(1.5*R*t.r+R))<1e-7,
+      'vertical coastline drift '+E.key(t));
+  }
 });
 
 test('Combined scenario selector keeps every regional scenario and descriptions intact',()=>{
