@@ -326,7 +326,7 @@
   function scenarioDoctrine(g) {
     const id = g.scenario?.id || '';
     if (id === 'division-japan') return 'division';
-    if (id.includes('europe') || id === 'bering-strait') return 'europe';
+    if (id.includes('europe') || id === 'bering-strait' || id === 'conquest-indochina') return 'europe';
     if (id.includes('invasion-japan') || id === 'japan') return 'invasion';
     return 'assault';
   }
