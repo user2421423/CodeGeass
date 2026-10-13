@@ -20,12 +20,12 @@ test('one warhead across construction and stockpile for every faction and conque
       assert.equal(cities.length,2);
       for (const c of cities) c.lab=3;
       assert.equal(E.startProject(g,cities[0].id).ok,true);
-      assert.match(E.projectReason(g,cities[1]),/Only one F.L.E.I.J.A./);
+      assert.match(E.projectReason(g,cities[1]),/(?:Only one|share one) F.L.E.I.J.A./);
       assert.equal(E.startProject(g,cities[1].id).ok,false);
       g.turn+=E.FLEIJA.turns;
       E.beginTurn(g,side,false);
       assert.equal(g.arsenal[side],1);
-      assert.match(E.projectReason(g,cities[1]),/Only one F.L.E.I.J.A./);
+      assert.match(E.projectReason(g,cities[1]),/(?:Only one|share one) F.L.E.I.J.A./);
       const sea = g.tiles.find(t => t.terrain==='sea' && E.blastArea(g,t).every(p =>
         !E.stationAt(g,p) && !E.unitAt(g,p) && !E.siteAt(g,p)));
       assert.ok(sea);
