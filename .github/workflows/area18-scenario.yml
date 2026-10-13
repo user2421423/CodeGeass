@@ -1,0 +1,48 @@
+name: Area 18 scenario regression
+on:
+  push:
+    branches: ['scenario/area-18']
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'dist/area18-landmask.js'
+      - 'dist/scenarios-area18.js'
+      - 'tests/area18.test.cjs'
+      - 'tools/area18_*.cjs'
+      - 'dist/ui/scenario-screens.js'
+      - 'dist/index.html'
+      - 'src/ai/02-fronts.part.js'
+      - 'dist/engine/ai.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  area18-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify split-source synchronization
+        run: node tools/build_sources.cjs --check
+      - name: All automated regression tests
+        run: node --test tests/*.test.cjs
+      - name: Hex-by-hex geographic audit
+        run: node tools/area18_hex_audit.cjs
+      - name: Validate tracked assets
+        run: node tools/validate_assets.cjs --tracked
+      - name: Validate world map parity
+        run: python3 tools/check_map.py
+      - name: Browser UI smoke checks
+        run: node tests/ui-smoke.cjs
+      - name: Seeded three-way simulation (17)
+        timeout-minutes: 15
+        run: node tools/area18_sim.cjs 17 5 britannia normal
+      - name: Seeded three-way simulation (29)
+        timeout-minutes: 15
+        run: node tools/area18_sim.cjs 29 5 eu hard
+      - name: Seeded three-way simulation (43)
+        timeout-minutes: 15
+        run: node tools/area18_sim.cjs 43 5 cf challenge
