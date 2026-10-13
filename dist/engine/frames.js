@@ -246,7 +246,8 @@
     },
   };
   const CLASS_ORDER = ['scout', 'assault', 'raider', 'light', 'medium', 'heavy', 'super', 'support', 'rocket', 'siege'];
-  // Faction Knightmare lineups (Code Geass wiki). Stats come from the class; a few frames tweak them.
+  // Faction Knightmare lineups (Code Geass wiki). Regular land units inherit class stats;
+  // Elite Forces and scenario-only special frames may have custom values.
   // A "configuration" is the game's loadout of a wiki frame, using the optional weapons the wiki lists for it.
   // Navies (Conquest only, built at a port; outside the ten-class lineups). Every power's equivalent units share these
   // numbers exactly; only names, models and art differ.
@@ -328,8 +329,6 @@
       gen: '5th generation',
       weapon: 'Main battle cannon · Side minigun',
       lore: 'A tank turret on legs: hard-hitting at the line, helpless in a melee.',
-      attack: 63,
-      armor: 8,
     },
     sutherland_air: {
       side: 'britannia',
@@ -338,8 +337,7 @@
       model: 'RPI-13/F2 Flight-Enabled',
       gen: '5th generation',
       weapon: 'Arm-mounted bazooka · Assault rifle',
-      lore: 'A Sutherland given Air Glide wings and a heavy bazooka: it flies over any terrain.',
-      float: true,
+      lore: 'A Sutherland given Air Glide wings and a heavy bazooka: its flight hardware does not change Rocket-class terrain movement.',
     },
     gareth: {
       side: 'britannia',
@@ -412,9 +410,7 @@
       model: 'WOX-Type02 · ace configuration',
       gen: '7th-generation equivalent',
       weapon: 'Personal axes, swords and sniper rifles',
-      lore: 'Type-02s tuned for wZERO’s aces, each with its own weapons: lighter and faster than other super-heavies.',
-      hp: 540,
-      move: 3,
+      lore: 'Type-02s tuned for wZERO’s aces, each with its own weapons: using the standard super-heavy battlefield profile.',
     },
     gardmare: {
       side: 'eu',
@@ -423,9 +419,7 @@
       model: 'E.U. escort platform',
       gen: 'Imitation Knightmare',
       weapon: 'Arm auto-cannons · Large claws',
-      lore: 'A fast escort weapon platform from before the E.U. could build true Knightmares.',
-      move: 3,
-      armor: 7,
+      lore: 'An escort weapon platform from before the E.U. could build true Knightmares.',
     },
     panzer_hummel: {
       side: 'eu',
@@ -434,9 +428,7 @@
       model: 'Mk3-E2E8',
       gen: '4th generation',
       weapon: 'Auto-cannons · 3-tube missile pods',
-      lore: 'The E.U.’s walking tank. Slow, but it held the El Alamein line.',
-      armor: 16,
-      move: 2,
+      lore: 'The E.U.’s walking tank. It held the El Alamein line.',
     },
     hummel_battery: {
       side: 'eu',
@@ -455,9 +447,7 @@
       model: 'TQ-19',
       gen: '4th generation',
       weapon: 'Shoulder machine guns and cannons',
-      lore: 'Cheap, crude and fielded by the hundreds: sturdier but slower than other scouts.',
-      hp: 175,
-      move: 3,
+      lore: 'Cheap, crude and fielded by the hundreds: deployed as the Federation’s standard scout.',
     },
     burai_kai: {
       side: 'cf',
@@ -511,8 +501,7 @@
       model: 'Type-05S/F2F · heavy configuration',
       gen: '7th-generation equivalent',
       weapon: 'Air Glide wings · Bazooka · Radiation Wave missiles',
-      lore: 'The Command Model with Air Glide wings and its full heavy armament: it flies over any terrain.',
-      float: true,
+      lore: 'The Command Model with Air Glide wings and its full heavy armament: its Air Glide equipment retains the standard super-heavy movement rules.',
     },
     gekka_rocket: {
       side: 'cf',
@@ -931,8 +920,8 @@
       lore: 'An elite Black Knights Gekka marine conversion retaining Type II amphibious stats and aquatic scaling.',
     },
 
-    // Campaign-only frames (campaign: true): the Black Knights' and JLF's own machines and Shen Hu, placed by
-    // missions and never part of Conquest lineups. Missions field the named aces as Elite Force frames.
+    // Black Knights and JLF campaign frames, also borrowed by specific Conquest lineups.
+    // Missions field named aces as Elite Force frames.
     burai: {
       side: 'bk',
       cls: 'scout',
@@ -950,8 +939,7 @@
       model: 'Type-05/F2D',
       gen: '7th-generation equivalent',
       weapon: 'Air Glide wings · Bazooka',
-      lore: 'The mass-production Akatsuki with Air Glide wings, issued before the UFN war: it flies over any terrain.',
-      float: true,
+      lore: 'The mass-production Akatsuki with Air Glide wings, issued before the UFN war: its flight equipment retains the standard raider movement rules.',
       campaign: true,
     },
     zangetsu: {
@@ -995,7 +983,6 @@
       gen: '5th generation',
       weapon: 'Long-range linear cannon',
       lore: 'The Knights of St. Michael’s siege gun, brought up against the walls of Castle Weisswolf.',
-      hp: 300, attack: 115, armor: 24, move: 1,
       campaign: true,
     },
     siegfried: {
@@ -1188,15 +1175,15 @@
       rocket: 'jp_artillery',
       siege: 'raiko',
     },
-    // Euro Britannia fields Britannia's 2017 frames plus its own Canterbury siege gun: three artillery frames.
+    // Euro Britannia borrows Britannia's regular 2017 frames plus its own Canterbury siege gun.
     eb: {
       scout: 'glasgow',
       assault: 'gloucester',
       raider: 'gracchus',
       light: 'sutherland',
-      medium: 'gloucester',
-      heavy: 'gloucester',
-      super: 'canterbury',
+      medium: 'vincent_ward',
+      heavy: 'vincent_commander',
+      super: 'brighton',
       support: 'liverpool',
       rocket: 'sutherland_air',
       siege: 'canterbury',
