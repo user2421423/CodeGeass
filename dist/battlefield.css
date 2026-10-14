@@ -3229,3 +3229,34 @@ button.danger:hover:not(:disabled) {
     padding-top: 79px;
   }
 }
+
+/* Guided mechanics tutorial: keep instructions above the battlefield, not in a blocking modal. */
+.tutorial-guide {
+  position: fixed;
+  top: 142px;
+  right: 24px;
+  z-index: 7;
+  width: min(340px, calc(100vw - 32px));
+  padding: 18px 20px;
+  border: 1px solid #d3b77d;
+  border-radius: 9px;
+  background: linear-gradient(155deg, #182a32f7, #0d1924f7);
+  color: #e9e5d5;
+  box-shadow: 0 10px 36px #000a;
+  line-height: 1.5;
+}
+.tutorial-guide-head, .tutorial-buttons { display: flex; align-items: center; gap: 7px; }
+.tutorial-guide-head { justify-content: space-between; }
+.tutorial-count { font: bold 11px Arial,sans-serif; color: #ead29f; }
+.tutorial-guide h3 { margin: 8px 0; font-size: 22px; color: #f2dfb6; }
+.tutorial-guide p { font-size: 13px; line-height: 1.65; color: #d6dce0; }
+.tutorial-meter { margin: 15px 0 12px; height: 6px; border-radius: 5px; background: #5d6a6e; overflow: hidden; }
+.tutorial-meter i { display: block; height: 100%; background: #e9c779; transition: width .18s ease; }
+.tutorial-buttons { flex-wrap: wrap; }
+.tutorial-buttons button { padding: 6px 10px; font-size: 11px; }
+.tutorial-entry { border-left: 3px solid #d0b676; padding-left: 13px; }
+@media (max-width: 760px) {
+  .tutorial-guide { top: 66px; right: 10px; width: min(310px, calc(100vw - 20px)); padding: 11px 13px; }
+  .tutorial-guide h3 { font-size: 19px; }
+  .tutorial-guide p { font-size: 11px; }
+}

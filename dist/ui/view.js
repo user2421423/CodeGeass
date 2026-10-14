@@ -320,6 +320,7 @@ function activateHex(p) {
         wasSea = E.atSea(game, u),
         result = E.move(game, u.id, p.c, p.r);
       if (result.ok) {
+        tutorialObserve('move', { unitId: u.id, captured: result.captured, to: result.to });
         SFX.play('move', u.side);
         E.suspendArmyGroupConquestUnit(game, u.id);
         // Occupation and carrier boarding are strategic actions, not reversible moves.

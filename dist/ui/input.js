@@ -192,6 +192,7 @@ document.addEventListener('click', e => {
     const r = E.recruit(game, shop.station, d.recruit, E.TYPES[d.recruit].naval === 'ship' ? 1 : shop.stack);
     if (r.ok) {
       selection = { kind: 'unit', id: r.unit.id };
+      tutorialObserve('recruit', { city: game.stations.find(s => s.id === shop.station)?.name });
       closeModal();
       refreshAndSave();
       toast(`${E.TYPES[d.recruit].name} rolls out. It will be ready next turn.`);
@@ -386,6 +387,21 @@ document.addEventListener('click', e => {
         detailOpen = false;
       }
       updateSelection();
+      break;
+    case 'tutorial':
+      confirmReplace(TUTORIAL_KEY, 'new', startTutorial);
+      break;
+    case 'continue-tutorial':
+      loadGame(getSave(TUTORIAL_KEY));
+      break;
+    case 'tutorial-focus':
+      tutorialFocus();
+      break;
+    case 'tutorial-restart':
+      confirmReplace(TUTORIAL_KEY, 'close', startTutorial);
+      break;
+    case 'tutorial-menu':
+      startMenu();
       break;
     case 'scenario':
       scenarioDialog();

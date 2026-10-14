@@ -12,6 +12,8 @@ async function endTurn() {
   skipAI = true;
   SFX.setAiTurn(true);
   for (const side of game.order.slice(1)) {
+    // Training opponents remain stationary while the player learns core controls.
+    if (tutorialActive()) continue;
     if (!E.alive(game, side) || game.over) continue;
     aiSide = side;
     try {
@@ -114,6 +116,7 @@ async function endTurn() {
     game.automationReport = game.mode === 'conquest' ? E.runCityAutomation(game, game.player) : null;
     armed = (game.arsenal?.[game.player] || 0) > warheads;
     orders = runPlayerAutomatedOrders();
+    tutorialObserve('turn');
   }
   render();
   save();
