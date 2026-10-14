@@ -153,6 +153,42 @@
       }
     }
     const gulf=t=>(t.terrain==='sea'||t.terrain==='coast')&&reachable.has(E.key(t));
+    // River edges are crossed where a movement segment intersects the real
+    // river polyline. The map uses hex-centre approximations at tactical scale.
+    // Bridge cities offer exempt approaches; everywhere else land units pay +1
+    // movement. The saved scenario stores ordinary JSON for pathfinding.
+    function orientation(a,b,p){
+      return (b.lon-a.lon)*(p.lat-a.lat)-(b.lat-a.lat)*(p.lon-a.lon);
+    }
+    function intersects(a,b,x,y){
+      const u=orientation(a,b,{lon:x[0],lat:x[1]}),
+        v=orientation(a,b,{lon:y[0],lat:y[1]}),
+        m=orientation({lon:x[0],lat:x[1]},{lon:y[0],lat:y[1]},a),
+        n=orientation({lon:x[0],lat:x[1]},{lon:y[0],lat:y[1]},b);
+      return ((u>0&&v<0)||(u<0&&v>0))&&((m>0&&n<0)||(m<0&&n>0));
+    }
+    const riverSegments=Object.values(RIVERS).flatMap(polyline=>
+      polyline.slice(1).map((p,i)=>[polyline[i],p]));
+    const bridges=new Set(g.scenario.riverCrossings);
+    const bridgeCities=()=>g.stations.filter(s=>bridges.has(s.name));
+    function riverBarriers(){
+      const edges={},crossings=bridgeCities();
+      for(const t of g.tiles){
+        if(t.terrain==='sea'||t.terrain==='offmap'||E.TERRAIN[t.terrain]?.blocked)continue;
+        const a=geo(t.c,t.r),from=t.r*COLS+t.c;
+        for(const n of E.adjacent(g,t)){
+          const to=n.r*COLS+n.c;
+          if(to<=from||n.terrain==='sea'||n.terrain==='offmap'||
+             E.TERRAIN[n.terrain]?.blocked)continue;
+          const b=geo(n.c,n.r);
+          if(!riverSegments.some(([x,y])=>intersects(a,b,x,y)))continue;
+          if(crossings.some(s=>E.distance(s,t,g)<=1&&E.distance(s,n,g)<=1))
+            continue;
+          edges[from+':'+to]=true;
+        }
+      }
+      return edges;
+    }
     // Place each city at or very near its actual coordinates. A defended port
     // must border navigable Gulf water instead of bridging over land.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
@@ -203,6 +239,7 @@
       }
       if(closest){t.owner=closest.owner;t.provinceCity=closest.id;}
     }
+    g.scenario.riverBarriers=riverBarriers();
     const groupMap=new Map();
     function group(side,name,origin){
       const key=side+':'+name;
