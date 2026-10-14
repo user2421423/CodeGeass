@@ -96,6 +96,36 @@ const modal = () => node('modal-root').innerHTML;
 
 (async () => {
   assert(modal().includes('One world.'), 'start menu renders');
+  assert(modal().includes('data-action="tutorial"'), 'start menu offers guided mechanics training');
+  run('startTutorial()');
+  assert.equal(run('tutorialActive()'), true, 'tutorial launches as a scenario');
+  assert.equal(run('game.scenario.tutorial.step'), 0);
+  assert.equal(run('saveKey()'), 'knightmare-mechanics-tutorial-save');
+  assert(node('app').innerHTML.includes('id="tutorial-guide"'), 'HUD displays persistent lesson guidance');
+  const traineeId = run('game.scenario.tutorial.unitId');
+  run('selectUnit(' + traineeId + ')');
+  assert.equal(run('game.scenario.tutorial.step'), 1, 'selecting the Gloucester advances selection lesson');
+  run('(() => { const r = E.move(game, game.scenario.tutorial.unitId, 5, 5); if (!r.ok) throw Error(r.reason); tutorialObserve("move",{unitId:game.scenario.tutorial.unitId,to:r.to}); render();save(); })()');
+  assert.equal(run('game.scenario.tutorial.step'), 2, 'actual movement advances the movement lesson');
+  run('(() => { const r = E.attack(game, game.scenario.tutorial.unitId, 6, 5); if (!r.ok) throw Error(r.reason); tutorialObserve("attack",{unitId:game.scenario.tutorial.unitId,target:{c:6,r:5}});render();save(); })()');
+  assert.equal(run('game.scenario.tutorial.step'), 3, 'actual attack advances the combat lesson');
+  await run('endTurn()');
+  assert.equal(run('game.scenario.tutorial.step'), 4, 'ending turn restores movement and advances lesson');
+  run('(() => { const r = E.move(game, game.scenario.tutorial.unitId, 7, 5); if (!r.ok) throw Error(r.reason); tutorialObserve("move",{unitId:game.scenario.tutorial.unitId,captured:r.captured});render();save(); })()');
+  assert.equal(run('game.scenario.tutorial.step'), 5, 'capturing depot advances tutorial');
+  run('(() => { const r = E.recruit(game, 0, "glasgow", 1); if (!r.ok) throw Error(r.reason); tutorialObserve("recruit",{city:"Command Post"});render();save(); })()');
+  assert.equal(run('game.scenario.tutorial.step'), 6, 'factory production advances tutorial');
+  await run('endTurn()');
+  assert.equal(run('game.scenario.tutorial.step'), 7, 'turn refresh completes tutorial');
+  assert(node('app').innerHTML.includes('Training complete'), 'tutorial displays a completion state');
+  const trainingSave = run('getSave(TUTORIAL_KEY)');
+  assert.equal(trainingSave.scenario.tutorial.step, 7, 'lesson progress survives a save/load');
+  run('startMenu()');
+  assert(modal().includes('data-action="continue-tutorial"'), 'training can be continued independently');
+  run('loadGame(getSave(TUTORIAL_KEY))');
+  assert.equal(run('game.scenario.tutorial.step'), 7, 'the lesson resumes from its own save');
+  run('startMenu()');
+
   // 2018 alone shows the U.F.N. standard, keeping its existing portrait.
   run("setup.conquest = 'ufn2018'; setup.side = 'cf'; startMenu();");
   const ufnCard = modal().split('<button class="faction cf ufn-2018')[1]?.split('</button>')[0];
