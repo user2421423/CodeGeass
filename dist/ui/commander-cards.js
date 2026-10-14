@@ -64,7 +64,20 @@
       '<strong>' + safe(a.skill) + '</strong><p>' + safe(a.desc) + '</p></div>' +
       '<div class="cc-card-bottom"><span title="Based on commander roster data">Signature frame: ' +
       safe(a.hull || '—') + '</span>' + actionMarkup + '</div>';
-    // The portrait opens existing Commander Info; keyboard support is handled by the game's listener.
+    // Open the dossier from any non-control part of the card; leave portrait and
+    // purchase buttons to the game's existing delegated handlers.
+    node.tabIndex = 0;
+    node.setAttribute('role', 'group');
+    node.setAttribute('aria-label', a.name + ', Tier ' + tier + '. Press Enter to view commander info.');
+    node.addEventListener('click', event => {
+      if (!event.target.closest('[data-general],button,a,input,select')) generalDialog(key, true);
+    });
+    node.addEventListener('keydown', event => {
+      if (event.target === node && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        generalDialog(key, true);
+      }
+    });
   }
   function decorateOperationCommanders(dialog) {
     dialog.querySelectorAll('.scenario-chip').forEach(chip => {
