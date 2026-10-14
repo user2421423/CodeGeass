@@ -320,7 +320,7 @@
         ' has conquered every city in the Malacca theatre.'};
     return null;
   }
-  const api={id:'bf-malacca',title:'The Conquest of Malacca',cols:COLS,rows:ROWS,
+  const api={id:'bf-malacca',title:'Battle of the Strait of Malacca',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
   E.scenarios={...(E.scenarios||{}),malacca:api,
