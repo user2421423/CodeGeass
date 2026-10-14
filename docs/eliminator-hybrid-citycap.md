@@ -34,6 +34,20 @@ A single [four-way GitHub Actions workflow](https://github.com/user2421423/CodeG
 
 **Merge gate:** demand a demonstrated improvement in city and field protection and sustainable real intercepts, not merely a better interception count with different numbers of attacks. `main` unchanged.
 
-## Results
+## Results — completed matched simulations (NO MERGE for CAP 0.50)
 
-Pending.
+[All 27 jobs passed](https://github.com/user2421423/CodeGeass/actions/runs/38557249804): existing Node tests, synchronized source/build artifacts, UI smoke, 20 matched 2017 four-way simulations and six 2018 exact-neutrality checks.
+
+| 2017 results, 20 seeds | Original | Anchors-only | CAP 0.50 | CAP 1.25 |
+|---|---:|---:|---:|---:|
+| Launched | 187 | 188 | 193 | 189 |
+| Intercepted | 80 | 83 | 88 | 84 |
+| Mobile interceptions | 1 | 1 | 3 | 3 |
+| Carrier losses | 7 | 5 | 8 | 5 |
+| Mean army-value coverage | 10.29% | 9.97% | **8.93%** | 9.60% |
+| Mean frontline-value coverage | 11.10% | 10.27% | **8.16%** | 9.66% |
+| Mean weighted city-value coverage | 19.59% | 20.35% | **18.29%** | 20.70% |
+
+All six 2018 runs matched original defensive AI gameplay for all candidates (including charge pickups and losses, intercepts, actions, coverage and survivors).
+
+**Decision: Reject CAP 0.50 for gameplay integration.** It intercepted eight more incoming missiles than the original, but with six more missile launches and materially worse army, frontline and city coverage, plus an extra carrier lost (7→8). The 1.25 cap is a more balanced follow-up, but it too worsens protection of the frontline versus baseline. Do not merge either version based on the interception count alone. `main` unchanged.
