@@ -195,6 +195,7 @@
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
+    // The 'europe' doctrine is the shared regional AI planner, not a faction identifier.
     g.scenario={id:'invasion-california',key:'california',title:'Invasion of California',
       version:3,phase:'federation-pacific-offensive',aiDoctrine:'europe',groups:[],funding:{},
       bounds:BOUNDS,projection:PROJECTION,operationalFronts:[
@@ -342,7 +343,7 @@
       }
     }
     if(difficulty==='elite'){
-      // Shared initializer still hardcodes the old California Federation side mapping.
+      // Shared initializer still classifies California as a Britannia/non-China scenario.
       // Apply its established Britannia/CF Elite rules using the equivalent
       // two-faction selector, then restore the authoritative California ID.
       // Integrator: update prepareEliteEurope's California side mapping to
