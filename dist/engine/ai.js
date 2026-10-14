@@ -1810,13 +1810,15 @@
         .sort((a,b) => (b.tier1 ? 135 : 0) - (a.tier1 ? 135 : 0) +
           (a.d-b.d)*24 || a.u.id-b.u.id)[0];
       return { s, cover, safety, near,
-        preview: (mobileDesired && leaders.length ? cover * 0.18 +
-          (near ? 470 - near.d * 24 + (near.tier1 ? 90 : 0) : -450) : cover) + safety +
+        preview: (mobileDesired ? cover * 0.18 +
+          Math.max(near ? 470 - near.d * 24 + (near.tier1 ? 90 : 0) : -450,
+            (eliminatorForwardFormation(g,side,s)?.score || -450) + 265)
+          : cover) + safety +
           (anyLab ? (s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.preview - a.preview || a.s.id - b.s.id);
     // A bounded shortlist avoids running global Dijkstra on every laboratory.
     const precise = ranked.slice(0, 8).map(entry => {
-      if (!mobileDesired || !leaders.length) return { ...entry, score: entry.preview };
+      if (!mobileDesired) return { ...entry, score: entry.preview };
       const close = leaders.filter(u => massOf(g,u) === massOf(g,entry.s) &&
         dist(g,u,entry.s) <= (eliminatorCarrierScore(g,u)>0 ?
           ELIMINATOR_AI.maxPickupDistance : 8));
@@ -1830,8 +1832,9 @@
           (b.route.turns*80 - (b.tier1?90:0)) || b.u.hp-a.u.hp)[0];
       return { ...entry,
         score: entry.cover * 0.18 + entry.safety +
-          (best ? 480 - 80 * best.route.turns +
-            (best.tier1 ? 90 : 0) : -450) +
+          Math.max(best ? 480 - 80 * best.route.turns +
+            (best.tier1 ? 90 : 0) : -450,
+            (eliminatorForwardFormation(g,side,entry.s)?.score || -450) + 265) +
           (anyLab ? (entry.s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
     return precise[0]?.s || ranked[0]?.s || null;
@@ -1844,10 +1847,14 @@
           s.eliminatorMoved === g.turn) continue;
       const carrier = g.units.filter(u => u.hp > 0 && u.side === side &&
           !u.eliminator && dist(g, u, s) <= 1)
-        .map(u => [u, eliminatorFieldCarrierScore(g,u)])
+        .map(u => [u, Math.max(eliminatorFieldCarrierScore(g,u),
+          eliminatorForwardRunnerScore(g,side,s,u))])
         .filter(([, score]) => score > 0)
         .sort((a,b) => b[1]-a[1] || a[0].id-b[0].id)[0]?.[0];
-      if (carrier) transferEliminator(g, { city:s.id }, { unit:carrier.id });
+      if (carrier) {
+        const tx=transferEliminator(g,{city:s.id},{unit:carrier.id});
+        if(tx.ok)eliminatorRememberMuster(g,side,s,carrier);
+      }
     }
   }
   function eliminatorCourierPlan(g, side, memo) {
@@ -1863,14 +1870,18 @@
     const rivals = g.units.filter(u => u.hp > 0 && foe(g,u.side,side));
     const candidates = g.units.filter(u =>
       u.hp > 0 && u.side === side && !u.eliminator &&
-      eliminatorFieldCarrierScore(g,u) > 0 && u.hp/maxHP(u) >= 0.65 &&
+      (eliminatorFieldCarrierScore(g,u)>0 ||
+        (!u.cmd && !isShip(u) && !atSea(g,u) &&
+          u.hp/maxHP(u)>=0.7)) && u.hp/maxHP(u) >= 0.65 &&
       !memo.recoveries?.has(u.id) && !memo.guards?.[u.id]?.emergency &&
       !rivals.some(v => dist(g,v,u) <= 2));
     const options = [];
     for (const s of waiting) {
       const eligible = candidates.filter(u => massOf(g,u) === massOf(g,s) &&
         dist(g,u,s) <= (eliminatorCarrierScore(g,u)>0 ?
-          ELIMINATOR_AI.maxPickupDistance : 8));
+          ELIMINATOR_AI.maxPickupDistance : 8) &&
+        (eliminatorFieldCarrierScore(g,u)>0 ||
+          eliminatorForwardRunnerScore(g,side,s,u)>0));
       if (!eligible.length) continue;
       const field = goalField(g,side,[[s,0]],'land',null,ELIMINATOR_AI.maxRouteCost);
       for (const u of eligible) {
@@ -1881,10 +1892,12 @@
         const frontRisk = rivals.some(v => dist(g, v, u) <= 5) ? 130 : 0;
         const hero = eliminatorCarrierScore(g,u)>0;
         const score = 440 + (hero ? 105 : 0) +
-          (eliminatorFieldCarrierScore(g,u)-500)*0.13 -
+          (Math.max(eliminatorFieldCarrierScore(g,u),
+            eliminatorForwardRunnerScore(g,side,s,u))-500)*0.13 -
           95 * route.turns - route.cost * 2 + (committed ? 115 : 0) -
           guardPenalty - frontRisk;
-        options.push({s,u,score,field});
+        options.push({s,u,score,field,forward:!hero &&
+          !!eliminatorForwardRunnerScore(g,side,s,u)});
       }
     }
     options.sort((a,b)=>b.score-a.score || a.u.id-b.u.id || a.s.id-b.s.id);
@@ -1892,7 +1905,7 @@
     for (const o of options) {
       if (takenUnits.has(o.u.id) || takenCities.has(o.s.id)) continue;
       takenUnits.add(o.u.id); takenCities.add(o.s.id);
-      assignments[o.u.id] = {city:o.s,field:o.field};
+      assignments[o.u.id] = {city:o.s,field:o.field,forward:o.forward};
     }
     ((g.ai ||= {})[side] ||= {}).eliminatorCourierAssignments =
       Object.fromEntries(Object.entries(assignments).map(([id,info])=>[id,info.city.id]));
@@ -1900,7 +1913,7 @@
   }
   function aiEliminatorPickup(g,u,memo) {
     if (g.mode==='scenario' || !isReady(g,u) || u.eliminator ||
-        eliminatorFieldCarrierScore(g,u)<=0 || u.hp/maxHP(u)<0.65) return null;
+        u.hp/maxHP(u)<0.65) return null;
     return eliminatorCourierPlan(g,u.side,memo)[u.id] || null;
   }
   // Give each mobile charge an escort objective anchored to a living
