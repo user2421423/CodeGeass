@@ -19,13 +19,13 @@
           "campaign_objective_id": "federation-britannia-indochina",
           "scenario_id": "conquest-indochina",
           "player_side": "cf",
-          "status": "already-linked"
+          "status": "integrated_unverified_runtime"
         },
         {
           "campaign_objective_id": "federation-britannia-philippines",
           "scenario_id": "philippines-invasion",
           "player_side": "cf",
-          "status": "already-linked"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Review existing Federation offensive in Indochina and defensive Philippines operation; preserve original IDs, terrain, starts and opposite Britannian campaign use."
@@ -42,7 +42,7 @@
           "campaign_objective_id": "federation-britannia-hawaii",
           "scenario_id": "invasion-hawaii",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Keep 176x114 geography/30-city map and Britannian defenses; replace EU attackers with CF forces, leaders, transports, elites, funding, scenario narrative and victory logic. Hawaii belongs exclusively to Federation World Campaign; old standalone implementation may be updated in place."
@@ -59,7 +59,7 @@
           "campaign_objective_id": "federation-britannia-new-zealand",
           "scenario_id": "cf-new-zealand",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Entire North and South Islands, Cook Strait, large forces, coastlines, ports, standard four difficulties, Britannian defense."
@@ -77,13 +77,13 @@
           "campaign_objective_id": "eu-panama-atlantic",
           "scenario_id": "eu-panama",
           "player_side": "eu",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         },
         {
           "campaign_objective_id": "federation-britannia-panama-pacific",
           "scenario_id": "cf-panama",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Preserve existing 156x100 Panama geography and navigable canal; EU starts exclusively on Caribbean side, CF starts exclusively on Pacific side, Britannia defends both. Distinct runtime IDs; share map helpers where safe."
@@ -100,7 +100,7 @@
           "campaign_objective_id": "federation-britannia-pacific-northwest",
           "scenario_id": "cf-pacific-northwest",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Large Washington/Oregon/west Idaho regional map; carrier landings near Puget Sound/Columbia River and Cascades/Columbia Basin campaign."
@@ -117,7 +117,7 @@
           "campaign_objective_id": "federation-britannia-central-america",
           "scenario_id": "cf-central-america",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Large Central America map Guatemala to Costa Rica; Chinese overland offensives north from Panama, supporting Pacific fleets, Britannian mountain defenses."
@@ -134,7 +134,7 @@
           "campaign_objective_id": "federation-britannia-california",
           "scenario_id": "invasion-california",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Preserve 160x120 California geography/63 cities, convert EU-owned Oregon/staging armies and fleets into Chinese formations, coordinated land push from Pacific Northwest and Chinese carrier landings."
@@ -151,7 +151,7 @@
           "campaign_objective_id": "federation-britannia-mexican-heartland",
           "scenario_id": "cf-mexico",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Southern/central Mexico with vast Chinese land invasion from Central America, coastal support, mountain passes, Britannian armies around Mexican Plateau."
@@ -169,13 +169,13 @@
           "campaign_objective_id": "eu-pendragon-east",
           "scenario_id": "eu-pendragon",
           "player_side": "eu",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         },
         {
           "campaign_objective_id": "federation-britannia-pendragon-west",
           "scenario_id": "cf-pendragon",
           "player_side": "cf",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Preserve capital and full-conquest, EU from Utah/eastern Nevada, Federation from California/western Nevada; existing EU Pendragon deployed west and needs rework."
@@ -192,19 +192,22 @@
           "campaign_objective_id": "eu-rocky-mountains",
           "scenario_id": "eu-rocky-mountains",
           "player_side": "eu",
-          "status": "planned"
+          "status": "integrated_unverified_runtime"
         }
       ],
       "instruction": "Large Colorado/Wyoming/Utah and east mountain approaches, multiple E.U. armies crossing Rockies west to prepare eastern Pendragon."
     }
   ],
   "activation_rules": [
-    "Planned registry entry remains scenarioId:null until exact runtime model id, sides and create function are present.",
+    "All approved scenario objectives now point to their integrated runtime IDs; changes require further review before main merge.",
     "Converting existing scenario keeps its standalone scenario ID but changes player side and all relevant assets; old EU World Campaign objective removed.",
     "EU Panama and EU Pendragon use intentionally new campaign objective IDs while keeping their historical runtime scenario IDs.",
     "Preserve existing independent campaign storage and user progress; never credit old EU Hawaiian/Californian victories to China.",
     "New modules should expose scenario model through E.scenarios.byId; integrator wires dist/index.html script imports later.",
     "Do not run simulations or automated tests; do not create new regression tests.",
-    "Keep all handoff branches unmerged until separate integration request."
-  ]
+    "All ten handoff branches have been merged into the feature branch; main remains untouched."
+  ],
+  "integration_status": "merged_into_feature_branch_unverified_runtime",
+  "integration_date": "2026-10-15",
+  "integration_note": "All source branches merged into the feature branch with ancestry; registered scenario modules, underlays, Elite support, cityless expedition handling, UI and campaign IDs. No tests or simulations performed. main unchanged."
 }

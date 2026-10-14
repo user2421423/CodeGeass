@@ -1,8 +1,8 @@
-# World Campaign: Federation vs Britannia and revised E.U. (approved skeleton)
+# World Campaign: Federation vs Britannia and revised E.U. (integrated)
 
 **Authority:** User-approved campaign planning as of 2026-10-15.
 **Target:** `feature/federation-war-campaign-structure`; do not merge this branch to `main` without explicit approval.
-**Scope:** Registry/UI/documentation only. This scaffold does not implement scenarios, alter maps, change AI, or run tests/simulations.
+**Integration status (2026-10-15):** All ten approved scenario branches merged into this feature branch with an octopus merge; new scenario registrations, shared engine survival/Elite eligibility, geographical underlays, standalone menu, and World Campaign runtime IDs are now integrated. No gameplay tests or simulations were run. The root `main` branch was not modified.
 
 ## Four independent campaigns
 
@@ -19,21 +19,21 @@ Campaign IDs are NOT engine combat sides. The existing localStorage version-1 pr
 
 All objectives in a tier are required; order within a tier is unrestricted. The scenario may launch only if `scenarioId` is non-null and its runtime model includes the correct side.
 
-| Tier | Title | Campaign objective ID | Runtime scenario ID *now* | Future scenario ID / notes |
+| Tier | Title | Campaign objective ID | Runtime scenario ID | Future scenario ID / notes |
 | --- | --- | --- | --- | --- |
 | 1 | Global Conflicts | `federation-britannia-australia` | `war-for-australia` | Shared |
 | 1 | Global Conflicts | `federation-britannia-area-18` | `area-18` | Shared |
 | 1 | Global Conflicts | `federation-britannia-division-japan` | `division-japan` | Shared |
 | 2 | Asian War | `federation-britannia-indochina` | `conquest-indochina` | Existing Chinese offensive |
 | 2 | Asian War | `federation-britannia-philippines` | `philippines-invasion` | Existing Chinese defense (approved exception) |
-| 3 | Pacific Expansion | `federation-britannia-hawaii` | **null** | `invasion-hawaii` AFTER conversion to `cf` |
-| 3 | Pacific Expansion | `federation-britannia-new-zealand` | **null** | `cf-new-zealand` |
-| 4 | American Beachheads | `federation-britannia-panama-pacific` | **null** | `cf-panama`; attack from Pacific ONLY |
-| 4 | American Beachheads | `federation-britannia-pacific-northwest` | **null** | `cf-pacific-northwest` |
-| 5 | Central American War | `federation-britannia-central-america` | **null** | `cf-central-america` |
-| 6 | Western America | `federation-britannia-california` | **null** | `invasion-california` AFTER conversion to `cf` |
-| 6 | Western America | `federation-britannia-mexican-heartland` | **null** | `cf-mexico` |
-| 7 | Final Offensive | `federation-britannia-pendragon-west` | **null** | `cf-pendragon`; approach from California/western Nevada |
+| 3 | Pacific Expansion | `federation-britannia-hawaii` | `invasion-hawaii` | Chinese conversion integrated |
+| 3 | Pacific Expansion | `federation-britannia-new-zealand` | `cf-new-zealand` | Integrated |
+| 4 | American Beachheads | `federation-britannia-panama-pacific` | `cf-panama` | Pacific-only integrated; attack from Pacific ONLY |
+| 4 | American Beachheads | `federation-britannia-pacific-northwest` | `cf-pacific-northwest` | Integrated |
+| 5 | Central American War | `federation-britannia-central-america` | `cf-central-america` | Integrated |
+| 6 | Western America | `federation-britannia-california` | `invasion-california` | Chinese conversion integrated |
+| 6 | Western America | `federation-britannia-mexican-heartland` | `cf-mexico` | Integrated |
+| 7 | Final Offensive | `federation-britannia-pendragon-west` | `cf-pendragon` | Western finale integrated; approach from California/western Nevada |
 
 **Nonnegotiable tier relationship:** Chinese Pacific Panama is Tier **4**; California is Tier **6**. The Chinese campaign has two American routes: (Hawaii -> Pacific Northwest -> California) and (Pacific Panama -> Central America -> Mexico). Both culminate at Pendragon West. New Zealand is a major separate southern-Pacific invasion in the same early-Pacific tier, not a prerequisite geographically for reaching America.
 
@@ -46,12 +46,12 @@ All objectives in a tier are required; order within a tier is unrestricted. The 
 | 1 | Global Conflicts | `eu-australia`, `eu-area-18`, `eu-division-japan` | Existing shared scenarios |
 | 2 | Bering Strait | `eu-bering` | Existing |
 | 3 | Overseas Invasions | `eu-brazil`, `eu-greenland`, `eu-caribbean` | Existing |
-| 4 | Continental Landings | `eu-panama-atlantic`, `eu-new-york`, `eu-canada` | Panama **planned** until Caribbean-only deployment |
+| 4 | Continental Landings | `eu-panama-atlantic`, `eu-new-york`, `eu-canada` | Panama Atlantic-only variant integrated |
 | 5 | American Interior | `eu-great-lakes` | Existing |
-| 6 | Crossing the Rocky Mountains | `eu-rocky-mountains` | **Planned**, `eu-rocky-mountains` scenario to be created |
-| 7 | Final Offensive | `eu-pendragon-east` | **Planned** until eastern-approach version of `eu-pendragon` is delivered |
+| 6 | Crossing the Rocky Mountains | `eu-rocky-mountains` | Integrated: `eu-rocky-mountains` |
+| 7 | Final Offensive | `eu-pendragon-east` | Integrated: `eu-pendragon` eastern attack |
 
-**Transfers:** `eu-hawaii` and `eu-california` were removed from the E.U. campaign registry. The standalone scenario files still exist; their conversion/deployment changes are **not** part of this scaffold.
+**Transfers:** `eu-hawaii` and `eu-california` were removed from the E.U. campaign registry. The former E.U. standalone variants have been converted to Chinese offensive scenarios, and both are loaded into the game.
 
 **Two Panama variants:** E.U. keeps runtime scenario ID `eu-panama` but must attack from the **Caribbean/Atlantic only**. Chinese `cf-panama` attacks from the **Pacific only**. Same underlying map/canal geography; different attacking fleets, starting sides and army dispositions. Both scenarios remain distinct playable entries after integration.
 
@@ -62,13 +62,13 @@ All objectives in a tier are required; order within a tier is unrestricted. The 
 - Existing campaign storage keys and unaltered objective IDs are preserved.
 - `eu-hawaii` and `eu-california` no longer appear as E.U. objectives; their saved E.U. victories **do not transfer** to the Federation.
 - The *campaign objective IDs* `eu-panama-atlantic` and `eu-pendragon-east` are intentionally new. Old `eu-panama` or `eu-pendragon` victory records do not count toward the newly directed battles. **Runtime scenario IDs stay `eu-panama` and `eu-pendragon`** once correctly updated.
-- While E.U. Panama and Pendragon are pending, they are deliberately non-launchable in World Campaign Mode, even if their old standalone versions still exist.
+- E.U. Atlantic Panama and Eastern Pendragon are now active. Their campaign objective IDs remain distinct from older records.
 - Standalone Scenarios and legacy saves are otherwise not modified by this scaffold. No fabricated victory, no automatic completion, no cross-campaign win credit.
 - Any changes to persistent runtime saves for the reworked standalone scenarios should be handled consciously by the implementing AI; do not silently reinterpret old saves.
 
 ## Integration contract for scenario AIs
 
-**Canonical machine-readable handoff:** `docs/FEDERATION_SCENARIO_HANDOFFS.json`.
+**Canonical machine-readable integration record:** `docs/FEDERATION_SCENARIO_HANDOFFS.json`. The original development branches are merged; the rules below remain guidelines for future follow-up changes.
 
 1. Branch independently from `feature/federation-war-campaign-structure`. One branch per scenario task. Do not merge.
 2. **Own only your scenario module(s) and scenario-local helpers.** Do not change `dist/war-campaign.js`, `dist/ui/war-campaign-screen.js`, `dist/war-campaign.css`, this spec or the handoff JSON; do not modify `main`.
@@ -86,4 +86,4 @@ All objectives in a tier are required; order within a tier is unrestricted. The 
 
 `britannia` (Britannia vs E.U.) remains unchanged. `britannia-federation` retains its existing eight approved objectives: Philippines invasion, Indochina defense, Malacca, Korea, Iraq–Iran, South China, Yangtze and Luoyang finale. Previously unimplemented entries remain planned.
 
-**Current work is a campaign skeleton only; it does not imply scenario completion.**
+**Integrated, not playtested:** Scenario source and entry points are present on this feature branch. Runtime gameplay, 2D atlas visual accuracy at all zoom levels, Army Group AI performance, save migration and balance remain unverified pending explicit test authorization.
