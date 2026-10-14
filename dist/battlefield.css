@@ -203,7 +203,7 @@ h3 {
 .map-banner {
   position: absolute;
   top: auto;
-  bottom: 185px;
+  bottom: 95px;
   left: 50%;
   transform: translateX(-50%);
   max-width: 80%;
@@ -871,7 +871,7 @@ h3 {
     min-height: 0;
   }
   .map-banner {
-    bottom: 199px;
+    bottom: 109px;
     font-size: 10px;
     max-width: 85%;
     left: 50%;
