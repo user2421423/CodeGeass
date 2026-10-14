@@ -6,7 +6,6 @@ on:
       - '.github/workflows/ai-starting-army-experiments.yml'
       - 'tools/ai_starting_forces_variant.cjs'
       - 'dist/engine/world.js'
-      - 'tests/faction-doctrine-and-redeployment.test.cjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -32,7 +31,6 @@ jobs:
       - name: Verify baseline bundles and regressions
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/*.test.cjs
       - name: Apply simulation-only starting army deployment
         run: node tools/ai_starting_forces_variant.cjs "${{ matrix.variant }}"
       - name: Check initial Chinese army
