@@ -216,7 +216,7 @@
     const second = sorted.filter(x => !fixed.has(x.s.id) &&
         dist(g, x.s, anchor.s) > ELIMINATOR.range)
       .sort((a,b) => b.forward - a.forward || a.s.id-b.s.id)[0];
-    if (holders.length >= 2 && second?.forward >= 175)
+    if (holders.length >= 3 && second?.forward >= 250)
       fixed.add(second.s.id);
     return fixed;
   }
@@ -262,7 +262,7 @@
         preview: (mobileDesired ? cover * 0.18 +
           Math.max(near ? 470 - near.d * 24 + (near.tier1 ? 90 : 0) : -450,
             (eliminatorForwardFormation(g,side,s)?.score || -450) + 265)
-          : cover) + safety + forward * (mobileDesired ? 1.15 : 0.25) +
+          : cover) + safety + forward * (mobileDesired ? 0.75 : 0.1) +
           (anyLab ? (s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.preview - a.preview || a.s.id - b.s.id);
     // A bounded shortlist avoids running global Dijkstra on every laboratory.
@@ -280,7 +280,7 @@
         .sort((a,b) => (a.route.turns*80 - (a.tier1?90:0)) -
           (b.route.turns*80 - (b.tier1?90:0)) || b.u.hp-a.u.hp)[0];
       return { ...entry,
-        score: entry.cover * 0.18 + entry.forward * 1.15 + entry.safety +
+        score: entry.cover * 0.18 + entry.forward * 0.75 + entry.safety +
           Math.max(best ? 480 - 80 * best.route.turns +
             (best.tier1 ? 90 : 0) : -450,
             (eliminatorForwardFormation(g,side,entry.s)?.score || -450) + 265) +
