@@ -108,12 +108,16 @@
         fraction===1?'coast':landscape(p)};
     });
     // GSHHG coastal samples have isolated inland lakes. Keep ocean only.
+    // The game explicitly allows ships through 20–80% mixed coast hexes.
+    // Flood-fill sea PLUS coast so Chesapeake/Delaware bays and estuaries can
+    // reach the Atlantic through narrow, shallow coastal mouth hexes.
     const visited=new Set();let ocean=new Set();
+    const water=t=>t.terrain==='sea'||t.terrain==='coast';
     for(const start of g.tiles){
-      if(start.terrain!=='sea'||visited.has(E.key(start)))continue;
+      if(!water(start)||visited.has(E.key(start)))continue;
       const q=[start],component=new Set([E.key(start)]);visited.add(E.key(start));
       for(let i=0;i<q.length;i++)for(const n of E.adjacent(g,q[i])){
-        const key=E.key(n);if(n.terrain!=='sea'||visited.has(key))continue;
+        const key=E.key(n);if(!water(n)||visited.has(key))continue;
         visited.add(key);component.add(key);q.push(n);
       }
       if(component.size>ocean.size)ocean=component;
