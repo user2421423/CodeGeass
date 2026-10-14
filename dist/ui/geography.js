@@ -615,6 +615,10 @@ const GEOGRAPHY = (() => {
   function japanLandAt(lon, lat) {
     return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }
+  // Korea and its Japanese staging islands use the same high-resolution vector
+  // shorelines as the 20–80 tactical mask. The global map remains unchanged.
+  const KOREA_LAND = typeof KOREA_SHAPES !== 'undefined' && KOREA_SHAPES.length
+    ? KOREA_SHAPES.map(shape) : LAYERS.land;
   // Select only geographic Australian islands; a rectangular crop would also
   // show Indonesian and Papua New Guinean land that is absent from this theatre.
   // These polygons come from the same GSHHG atlas as the world map. The tactical
@@ -926,6 +930,7 @@ const GEOGRAPHY = (() => {
     // The political and tactical layers share this zero-rotation projection.
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
+    const korea = g.scenario.id === 'invasion-korea';
     const middleEast = g.scenario.id === 'area-18';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
@@ -942,7 +947,7 @@ const GEOGRAPHY = (() => {
     const panama = g.scenario.id === 'eu-panama';
     const pendragon = g.scenario.id === 'eu-pendragon';
     const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -978,7 +983,7 @@ const GEOGRAPHY = (() => {
     ];
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
-    const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
+    const source = korea ? KOREA_LAND : australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
       greenland ? GREENLAND_LAND :
       (europeOnly || middleEast || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
@@ -1102,7 +1107,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast) && g.scenario?.rivers){
+    if((siberia || brazil || canada || california || eastCoast || korea) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
