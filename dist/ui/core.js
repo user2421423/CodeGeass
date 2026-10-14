@@ -11,6 +11,7 @@ let game = E.createGame('britannia'),
   activeArmyGroupId = null, // UI-only group chosen for direct Shift-click assignment
   strategicOverlay = false, // Derived compatibility flag for the view
   strategicOverlayMode = 'off', // Off / selected / all, never game-rule state
+  strategicOverlayManuallySet = false, // Preserve explicit Off when managing groups
   undoStack = [],
   hover = null,
   canvas,
