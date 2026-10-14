@@ -1,0 +1,43 @@
+name: Forward-city defense overflow seed 99991
+on:
+  push:
+    branches: ['experiment/eliminator-forward-city-defense']
+    paths: ['.github/workflows/eliminator-forward-city-overflow.yml']
+  pull_request:
+    branches: ['experiment/eliminator-launch-diagnostics']
+permissions:
+  contents: read
+jobs:
+  recover-last-matched-seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Isolated 2018 seed 99991 reproducibility comparison
+        shell: bash
+        env:
+          ELIMINATOR_TARGET_DIAGNOSTICS: '1'
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs 2018 99991 35 forward-city-defense > candidate.json
+          git show 6e452e5ca7f3148c9392d37701c1e93897a3386e:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs 2018 99991 35 pinned-baseline > baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const a=JSON.parse(fs.readFileSync('candidate.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('baseline.json','utf8'));
+          assert.equal(a.diagnostics.launches,a.warheads);
+          assert.equal(b.diagnostics.launches,b.warheads);
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts',
+            'chargesStarted','pickedUp','carrierLosses','armyValueProtectionRate',
+            'frontlineValueProtectionRate','weightedProtectionRate','elapsedMs'];
+          console.log('DEFENSE_ONLY_COMPARE '+JSON.stringify({
+            mode:a.mode,seed:a.seed,
+            metrics:Object.fromEntries(keys.map(k=>[k,{old:b[k],new:a[k]}])),
+            cityTargets:{old:b.diagnostics.cityTargets,new:a.diagnostics.cityTargets},
+            armyTargets:{old:b.diagnostics.mobileThreats,new:a.diagnostics.mobileThreats}
+          }));
+          NODE
