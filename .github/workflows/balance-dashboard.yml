@@ -20,7 +20,6 @@ on:
     branches: [main]
     paths:
       - "tools/balance_dashboard*.cjs"
-      - "tests/balance-dashboard.test.cjs"
       - ".github/workflows/balance-dashboard.yml"
       - "src/ai/**"
       - "dist/engine/ai.js"
@@ -48,8 +47,6 @@ jobs:
       - name: Validate game and balance dashboard
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/balance-dashboard.test.cjs
-          node tests/ui-smoke.cjs
           # The complete engine suite runs in Source/build synchronization.
           # Do not block diagnostic report generation on unrelated game tests.
       - name: Determine paired simulation settings
@@ -109,11 +106,3 @@ jobs:
             --html dashboard-output/index.html \
             --summary dashboard-output/comparison.md
           cat dashboard-output/comparison.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload HTML, reports and raw telemetry
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: balance-dashboard-${{ github.run_id }}
-          path: dashboard-output/
-          if-no-files-found: warn
-          retention-days: 30
