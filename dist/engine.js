@@ -1772,6 +1772,7 @@
       'operation-stonehenge':'britannia','invasion-south-africa':'britannia',
       'invasion-american-east-coast':'eu','invasion-brazil':'eu',
       'eu-greenland':'eu','invasion-caribbean':'eu','eu-panama':'eu',
+      'eu-rocky-mountains':'eu','eu-pendragon':'eu',
       'invasion-canada':'eu'
     })[g.scenario?.id];
     const expeditionAfloat = loser === expeditionSide &&
