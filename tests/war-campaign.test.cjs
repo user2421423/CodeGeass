@@ -140,3 +140,15 @@ test('selection and independent saves persist and corrupt data is handled',()=>{
   st.setItem(W.STORAGE_KEY,'corrupt');
   assert.equal(W.unlockedTier(W.load(st),'eu'),1);
 });
+
+test('geographic masks secure the intended regions without coloring neighboring territory',()=>{
+  assert.equal(W.regionContains(W.ALL['eu-brazil'],-43.2,-22.9),true); // Rio
+  assert.equal(W.regionContains(W.ALL['eu-brazil'],-58.4,-34.6),false); // Buenos Aires
+  assert.equal(W.regionContains(W.ALL['britannia-south-africa'],18.4,-33.9),true); // Cape Town
+  assert.equal(W.regionContains(W.ALL['britannia-south-africa'],28,-26),true); // Johannesburg
+  assert.equal(W.regionContains(W.ALL['britannia-turkey'],29,41),true); // Istanbul
+  assert.equal(W.regionContains(W.ALL['eu-california'],-122.4,37.8),true); // San Francisco
+  assert.equal(W.regionContains(W.ALL['eu-california'],-117,37.5),false); // Pendragon only final
+  assert.equal(W.regionContains(W.ALL['eu-pendragon'],-117,37.5),true);
+  assert.equal(W.regionContains(W.ALL['eu-caribbean'],-69,11),false); // Venezuelan mainland
+});
