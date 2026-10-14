@@ -1,21 +1,23 @@
-/* The Conquest of Area 18 — three-way 2017 Middle Eastern regional war.
-   Natural Earth sampled landmask, Persian Gulf fleets and Suez navigation.
-   No scripted diplomacy, F.L.E.I.J.A. or turn limit. */
+/* The Conquest of Area 18 — a three-way Arabian Peninsula campaign.
+   Britannia defends the southern Peninsula; Europia United holds Hejaz and
+   the central plateau; the Chinese Federation controls the Gulf and eastern Oman.
+   True WGS84 cities, independently sampled gameplay coastline, GSHHG map
+   underlay, capturable ports and four standard difficulties. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
   const COLS=120,ROWS=88,SIDES=['britannia','eu','cf'];
-  const BOUNDS={west:29,east:70,north:42,south:10.5};
-  const K=Math.cos(26.25*Math.PI/180);
-  const PROJECTION={centerLon:49.5,centerLat:26.25,angle:0,uMin:-20.5*K,uMax:20.5*K,vMin:-15.75,vMax:15.75};
-  // Named positions are real; the 2017 factions and deployments are alternate history.
-  const CITIES=[["Riyadh",46.68,24.71,"britannia",3,true],["Jeddah",39.17,21.54,"britannia",3,true],["Mecca",39.83,21.42,"britannia",2,false],["Medina",39.61,24.47,"britannia",2,false],["Dammam",50.1,26.43,"britannia",3,true],["Hofuf",49.59,25.38,"britannia",2,false],["Buraydah",43.97,26.36,"britannia",2,false],["Tabuk",36.57,28.38,"britannia",2,true],["Hail",41.69,27.52,"britannia",2,false],["Najran",44.13,17.49,"britannia",2,false],["Abha",42.51,18.22,"britannia",2,false],["Kuwait City",47.98,29.38,"britannia",3,true],["Basra",47.78,30.51,"britannia",3,true],["Baghdad",44.37,33.32,"britannia",3,true],["Doha",51.53,25.29,"britannia",2,false],["Abu Dhabi",54.37,24.45,"britannia",2,false],["Dubai",55.27,25.2,"britannia",2,false],["Muscat",58.41,23.59,"britannia",3,true],["Salalah",54.09,17.02,"britannia",2,false],["Sana'a",44.21,15.37,"britannia",2,true],["Aden",45.03,12.79,"britannia",2,true],["Damascus",36.29,33.51,"eu",3,true],["Aleppo",37.16,36.2,"eu",3,true],["Latakia",35.79,35.52,"eu",2,true],["Beirut",35.5,33.89,"eu",3,true],["Homs",36.72,34.73,"eu",2,false],["Amman",35.93,31.95,"eu",2,true],["Jerusalem",35.23,31.77,"eu",2,true],["Haifa",34.99,32.81,"eu",2,false],["Aqaba",35.01,29.53,"eu",2,false],["Mosul",43.13,36.34,"eu",3,true],["Erbil",44.01,36.19,"eu",2,true],["Port Said",32.3,31.26,"eu",2,true],["Suez",32.55,29.97,"eu",2,true],["Cairo",31.24,30.04,"eu",3,true],["Tehran",51.43,35.69,"cf",3,true],["Isfahan",51.68,32.65,"cf",3,true],["Shiraz",52.54,29.59,"cf",3,true],["Tabriz",46.29,38.08,"cf",3,true],["Ahvaz",48.68,31.32,"cf",3,true],["Kermanshah",47.07,34.32,"cf",3,true],["Hamadan",48.51,34.8,"cf",2,false],["Qom",50.88,34.64,"cf",2,false],["Yazd",54.37,31.9,"cf",2,false],["Mashhad",59.61,36.3,"cf",3,true],["Kerman",57.07,30.29,"cf",2,false],["Zahedan",60.86,29.5,"cf",2,false],["Bandar Abbas",56.28,27.18,"cf",3,true],["Bushehr",50.84,28.92,"cf",3,true],["Herat",62.2,34.35,"cf",2,true]];
-  const ARMY_GROUPS=[["britannia","Baghdad","heavy",4,"cornelia"],["britannia","Baghdad","rocket",3,"guilford"],["britannia","Baghdad","assault",3,"darlton"],["britannia","Basra","heavy",3,"suzaku"],["britannia","Basra","assault",3,"jeremiah"],["britannia","Kuwait City","medium",3,"gino"],["britannia","Kuwait City","rocket",2,null],["britannia","Dammam","heavy",3,"bismarck"],["britannia","Dammam","assault",3,"villetta"],["britannia","Tabuk","medium",3,"nonette"],["britannia","Tabuk","raider",2,null],["britannia","Riyadh","heavy",3,"schneizel"],["britannia","Riyadh","siege",2,null],["britannia","Buraydah","medium",3,null],["britannia","Hail","raider",2,null],["britannia","Jeddah","medium",3,"monica"],["britannia","Jeddah","assault",2,null],["britannia","Muscat","medium",3,"anya"],["britannia","Muscat","rocket",2,null],["britannia","Dubai","raider",2,null],["britannia","Abu Dhabi","medium",2,null],["britannia","Aden","medium",2,null],["britannia","Sana'a","assault",2,null],["eu","Mosul","heavy",4,"akito"],["eu","Mosul","rocket",3,"yukiya"],["eu","Erbil","heavy",3,"ryo"],["eu","Erbil","assault",3,"ayano"],["eu","Aleppo","medium",3,"leila"],["eu","Aleppo","rocket",3,"smilas"],["eu","Damascus","heavy",4,"oscar"],["eu","Damascus","assault",3,"klaus"],["eu","Homs","medium",3,"anna"],["eu","Homs","support",2,null],["eu","Amman","medium",3,"fernando"],["eu","Amman","raider",2,null],["eu","Latakia","medium",2,"marirrosa"],["eu","Beirut","assault",2,null],["eu","Aqaba","medium",2,null],["eu","Suez","medium",2,null],["eu","Cairo","assault",2,null],["cf","Kermanshah","heavy",4,"xingke"],["cf","Kermanshah","rocket",3,"xianglin"],["cf","Ahvaz","heavy",4,"honggu"],["cf","Ahvaz","assault",3,"cao"],["cf","Tabriz","heavy",3,"gaohai"],["cf","Tabriz","rocket",2,null],["cf","Tehran","heavy",3,"zhaohao"],["cf","Tehran","siege",2,null],["cf","Isfahan","heavy",3,"leifeng"],["cf","Isfahan","assault",3,"meiling"],["cf","Shiraz","medium",3,"lifeng"],["cf","Shiraz","rocket",2,null],["cf","Bushehr","medium",3,null],["cf","Bushehr","assault",2,null],["cf","Bandar Abbas","medium",3,"rakshata"],["cf","Bandar Abbas","raider",2,null],["cf","Mashhad","medium",3,null],["cf","Herat","raider",2,null],["cf","Yazd","rocket",2,null],["cf","Kerman","assault",2,null]];
-  const PORTS={"Jeddah":3,"Dammam":3,"Kuwait City":2,"Doha":2,"Abu Dhabi":2,"Dubai":2,"Muscat":3,"Salalah":2,"Aden":3,"Latakia":3,"Beirut":2,"Haifa":2,"Aqaba":2,"Port Said":3,"Suez":3,"Bandar Abbas":3,"Bushehr":3};
-  const FLEETS=[["britannia","Dammam","carrier_battleship",2],["britannia","Muscat","carrier_battleship",2],["britannia","Jeddah","carrier_battleship",1],["britannia","Kuwait City","portman_ii",2],["britannia","Doha","portman_ii",2],["britannia","Dubai","portman",2],["britannia","Aden","portman_ii",2],["britannia","Salalah","portman",2],["eu","Latakia","eu_carrier",2],["eu","Port Said","eu_carrier",1],["eu","Haifa","panzer_frosch_ii",2],["eu","Suez","panzer_frosch_ii",2],["eu","Aqaba","panzer_frosch",2],["cf","Bandar Abbas","cf_carrier",2],["cf","Bushehr","cf_carrier",1],["cf","Bushehr","shui_gun_ru_ii",2],["cf","Bandar Abbas","shui_gun_ru_ii",2]];
-  const FUNDING={britannia:{credits:760,industry:430,science:76,sakuradite:42},
-    eu:{credits:650,industry:380,science:72,sakuradite:38},
-    cf:{credits:690,industry:405,science:74,sakuradite:40}};
+  const BOUNDS={"west":34,"east":61.5,"north":31.5,"south":11.3};
+  const K=Math.cos(21.4*Math.PI/180);
+  const PROJECTION={centerLon:47.75,centerLat:21.4,angle:0,uMin:-13.75*K,uMax:13.75*K,vMin:-10.1,vMax:10.1};
+  // Named positions are geographic anchors; ownership is alternate history.
+  const CITIES=[["Riyadh",46.68,24.71,"eu",3,true],["Jeddah",39.17,21.54,"eu",3,true],["Mecca",39.83,21.42,"eu",2,false],["Medina",39.61,24.47,"eu",3,true],["Yanbu",38.06,24.09,"eu",2,true],["Tabuk",36.57,28.38,"eu",3,true],["Duba",35.72,27.34,"eu",2,false],["Al Wajh",36.45,26.25,"eu",2,false],["AlUla",37.92,26.61,"eu",2,false],["Hail",41.69,27.52,"eu",3,true],["Buraydah",43.97,26.36,"eu",3,true],["Taif",40.42,21.27,"eu",2,false],["Al Kharj",47.33,24.16,"eu",2,true],["Dawadmi",44.39,24.51,"eu",2,false],["Sana'a",44.21,15.37,"britannia",3,true],["Aden",45.03,12.79,"britannia",3,true],["Taiz",44.01,13.58,"britannia",2,false],["Hodeidah",42.95,14.8,"britannia",2,true],["Mukalla",49.12,14.55,"britannia",3,true],["Sayun",48.78,15.94,"britannia",2,false],["Marib",45.32,15.46,"britannia",2,false],["Najran",44.13,17.49,"britannia",3,true],["Jizan",42.57,16.89,"britannia",2,true],["Abha",42.51,18.22,"britannia",2,true],["Bisha",42.61,19.99,"britannia",2,false],["Sharurah",47.12,17.46,"britannia",2,false],["Salalah",54.09,17.02,"britannia",3,true],["Duqm",57.7,19.7,"britannia",2,true],["Kuwait City",47.98,29.38,"cf",3,true],["Hafr al Batin",45.97,28.43,"cf",2,false],["Khafji",48.49,28.44,"cf",2,true],["Dammam",50.1,26.43,"cf",3,true],["Jubail",49.66,27,"cf",2,true],["Hofuf",49.59,25.38,"cf",2,false],["Doha",51.53,25.29,"cf",3,true],["Abu Dhabi",54.37,24.45,"cf",3,true],["Dubai",55.27,25.2,"cf",3,true],["Al Ain",55.76,24.21,"cf",2,false],["Fujairah",56.33,25.13,"cf",2,true],["Muscat",58.41,23.59,"cf",3,true],["Sohar",56.73,24.35,"cf",2,true],["Sur",59.52,22.57,"cf",2,true],["Nizwa",57.53,22.93,"cf",2,false]];
+  const ARMY_GROUPS=[["britannia","Sana'a","heavy",4,"cornelia"],["britannia","Sana'a","rocket",3,"guilford"],["britannia","Aden","assault",3,"darlton"],["britannia","Aden","medium",3,"jeremiah"],["britannia","Najran","heavy",4,"suzaku"],["britannia","Najran","assault",3,"villetta"],["britannia","Abha","medium",3,"gino"],["britannia","Jizan","raider",2,null],["britannia","Bisha","medium",2,null],["britannia","Sharurah","heavy",3,"bismarck"],["britannia","Sharurah","rocket",2,null],["britannia","Mukalla","assault",3,"anya"],["britannia","Mukalla","rocket",2,null],["britannia","Salalah","heavy",3,"nonette"],["britannia","Salalah","assault",3,null],["britannia","Duqm","medium",3,"monica"],["britannia","Hodeidah","medium",3,null],["britannia","Marib","siege",2,null],["eu","Riyadh","heavy",4,"akito"],["eu","Riyadh","rocket",3,"yukiya"],["eu","Al Kharj","assault",3,"ryo"],["eu","Buraydah","heavy",4,"oscar"],["eu","Buraydah","rocket",3,"leila"],["eu","Hail","heavy",3,"smilas"],["eu","Hail","assault",3,"ayano"],["eu","Tabuk","medium",3,"klaus"],["eu","Tabuk","rocket",3,"anna"],["eu","Medina","heavy",3,"fernando"],["eu","Medina","assault",3,null],["eu","Jeddah","medium",3,"marirrosa"],["eu","Jeddah","support",2,null],["eu","Yanbu","raider",2,null],["eu","Dawadmi","medium",3,null],["eu","Taif","medium",2,null],["eu","AlUla","raider",2,null],["cf","Dammam","heavy",4,"xingke"],["cf","Dammam","rocket",3,"xianglin"],["cf","Hofuf","heavy",4,"honggu"],["cf","Hofuf","assault",3,"cao"],["cf","Kuwait City","heavy",3,"gaohai"],["cf","Kuwait City","rocket",3,"zhaohao"],["cf","Hafr al Batin","medium",3,null],["cf","Khafji","assault",3,null],["cf","Doha","heavy",3,"leifeng"],["cf","Doha","rocket",3,"meiling"],["cf","Abu Dhabi","heavy",3,"lifeng"],["cf","Dubai","medium",3,null],["cf","Al Ain","raider",2,null],["cf","Muscat","heavy",3,"rakshata"],["cf","Muscat","rocket",3,null],["cf","Sohar","assault",3,null],["cf","Nizwa","medium",3,null],["cf","Fujairah","medium",2,null]];
+  const PORTS={"Jeddah":3,"Yanbu":2,"Duba":2,"Al Wajh":2,"Jizan":2,"Hodeidah":2,"Aden":3,"Mukalla":3,"Salalah":3,"Duqm":2,"Kuwait City":2,"Khafji":2,"Dammam":3,"Jubail":2,"Doha":3,"Abu Dhabi":2,"Dubai":3,"Fujairah":2,"Muscat":3,"Sohar":2,"Sur":2};
+  const FLEETS=[["britannia","Aden","carrier_battleship",2],["britannia","Mukalla","carrier_battleship",2],["britannia","Salalah","portman_ii",2],["britannia","Hodeidah","portman_ii",2],["britannia","Duqm","portman",2],["eu","Jeddah","eu_carrier",2],["eu","Yanbu","panzer_frosch_ii",2],["eu","Duba","eu_carrier",1],["eu","Al Wajh","panzer_frosch",2],["cf","Dammam","cf_carrier",2],["cf","Doha","cf_carrier",1],["cf","Muscat","cf_carrier",2],["cf","Dubai","shui_gun_ru_ii",2],["cf","Fujairah","shui_gun_ru_ii",2]];
+  const FUNDING={britannia:{credits:700,industry:410,science:70,sakuradite:40},
+    eu:{credits:700,industry:410,science:70,sakuradite:40},
+    cf:{credits:700,industry:410,science:70,sakuradite:40}};
   function geo(c,r){
     return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*(BOUNDS.east-BOUNDS.west)/COLS,
       lat:BOUNDS.north-(r+.5)*(BOUNDS.north-BOUNDS.south)/ROWS};
@@ -36,32 +38,27 @@
       }
     return best;
   }
-  // Zagros and Alborz ridges, Asir, Hajar and northern Levant highlands.
-  // Deliberate Iraqi-Khuzestan, Kermanshah and Shiraz passes stay traversable.
-  const MOUNTAINS=[[35.9,34.9,1.7,2.4],[43.9,37.7,2.4,1.6],
-    [47.9,35.7,1.1,2.0],[49.5,33.5,1.35,2.9],[51.6,31.6,1.2,2.5],
-    [53.7,29.5,1.4,2.2],[55.5,27.7,1.4,1.4],[52.1,36.5,4.2,1],
-    [57.1,35.0,2.4,1.9],[42.9,19.5,1.1,4.3],[57.4,23.6,1.35,1.8]];
-  const FORESTS=[[35.7,35.0,1.1,1.7],[46.6,36.6,1.7,1.2],
-    [51.8,36.7,3.4,0.9],[41.8,15.6,1.2,2.0]];
-  const PASSES=[[46.9,34.35,0.85,0.75],[48.6,31.3,1.25,0.95],
-    [51.6,30.5,0.8,0.65],[56.2,27.2,0.8,0.65]];
+  // Hejaz, Asir, Dhofar and Hajar ranges; mountain passes prevent deadlock.
+  const MOUNTAINS=[[37.5,27.2,1.0,2.2],[39.5,23.6,1.15,4.2],
+    [42.8,18.3,1.0,3.0],[44.2,16.1,1.4,1.6],
+    [54.0,17.2,1.9,1.1],[57.5,23.5,1.3,2.6],[59.2,22.8,0.75,1.7]];
+  const FORESTS=[[42.8,18.2,0.8,2.1],[44.1,15.5,1.3,0.9],
+    [54.1,17.2,1.2,0.6],[58.5,23.7,0.9,1.1]];
+  const PASSES=[[39.4,24.4,0.7,0.8],[42.6,20.3,0.65,0.7],
+    [43.0,18.9,0.7,0.8],[57.0,23.5,1.0,1.0],[54.1,17.5,0.9,0.7]];
   function density(p,areas){return Math.max(0,...areas.map(([x,y,w,h])=>
     Math.exp(-(((p.lon-x)/w)**2+((p.lat-y)/h)**2)*1.6)));}
   function landscape(p){
     const mountain=density(p,MOUNTAINS),pass=density(p,PASSES),forest=density(p,FORESTS);
-    // Passes remove impenetrable terrain without erasing the Zagros foothills.
     if(mountain>.87&&pass<.38)return 'peak';
-    if(mountain>.35&&pass<.75)return 'mountain';
-    if(forest>.55&&p.lat>29)return 'forest';
-    // Tigris-Euphrates lowlands, Mediterranean basin and Iranian Gulf plain.
-    const mesopotamia=p.lon>42.4&&p.lon<49.1&&p.lat>29.2&&p.lat<36.6;
-    const levant=p.lon<41&&p.lat>29;
-    const khuzestan=p.lon>47.2&&p.lon<50.1&&p.lat>29.3&&p.lat<32.5;
-    if(mesopotamia||levant||khuzestan)return 'plains';
-    if(p.lat<30.1&&p.lon>35.5&&p.lon<60.5)return 'desert';
-    if(p.lon>53&&p.lon<64&&p.lat>27&&p.lat<35.5)return 'desert';
-    if(p.lon>40&&p.lon<48&&p.lat<31.5)return 'desert';
+    if(mountain>.36&&pass<.7)return 'mountain';
+    if(forest>.57)return 'forest';
+    // Central and eastern Peninsula: broad deserts, oases and the Empty Quarter.
+    const gulfOasis=p.lat>23&&p.lat<29.6&&p.lon>47&&p.lon<52;
+    const hejazOasis=p.lon<41&&p.lat>20&&p.lat<26.5;
+    if(gulfOasis||hejazOasis||p.lat<17.4&&p.lon<50)return 'plains';
+    if(p.lat>17&&p.lat<25&&p.lon>43.5&&p.lon<57.3)return 'desert';
+    if(p.lat>24&&p.lon>40&&p.lon<50)return 'desert';
     return 'plains';
   }
   function orderGroup(g,id,target){
@@ -97,7 +94,7 @@
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18',
+    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:2,
       phase:'three-way-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
     // Britannia uses compatible Britannian Elite Forces for this
     // scenario only. No global HQ, Conquest, or Japan access is changed.
@@ -110,7 +107,7 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    // Mediterranean–Suez–Red Sea–Arabian Sea–Persian Gulf routes remain open.
+    // The Red Sea, Bab al-Mandab, Arabian Sea and Persian Gulf stay navigable.
     const packed=root.AREA18_LAND_BITS || (typeof require==='function'?
       require('./area18-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.AREA18_LAND_BITS;
@@ -132,7 +129,7 @@
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Area 18 city '+name);
-      const capital=name==='Riyadh'||name==='Damascus'||name==='Tehran';
+      const capital=name==='Sana\'a'||name==='Riyadh'||name==='Dammam';
       const shield=fort?400:120+60*tier;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
@@ -237,7 +234,7 @@
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
-    E.log(g,'Britannia holds Arabia and Mesopotamia, Europia United advances from the Levant, and the Chinese Federation attacks from Persia. All three powers are at war.',player);
+    E.log(g,'Britannia controls Yemen and the southern coast, Europia United holds western and central Arabia, and the Chinese Federation holds the Gulf and eastern Peninsula. All three powers are at war.',player);
     return g;
   }
   function onTurn(){return false;}
@@ -245,7 +242,7 @@
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
   function objective(g,side=g.player){
-    return 'Conquer all '+CITIES.length+' Area 18 theatre cities ('+
+    return 'Conquer all '+CITIES.length+' Arabian Peninsula cities ('+
       g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).';
   }
   function winner(g){
@@ -253,10 +250,10 @@
       g.stations.length!==CITIES.length)return null;
     for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
       return {winner:side,reason:E.FACTIONS[side].name+
-        ' has conquered every city in Area 18.'};
+        ' has conquered every city in the Arabian Peninsula.'};
     return null;
   }
-  const api={id:'area-18',title:'The Conquest of Area 18',cols:COLS,rows:ROWS,
+  const api={id:'area-18',title:'The Conquest of Area 18 — Arabian Peninsula',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
   E.scenarios={...(E.scenarios||{}),area18:api,

@@ -35,6 +35,8 @@ jobs:
         run: node tools/build_sources.cjs --check
       - name: Hex-by-hex geographic audit
         run: node tools/area18_hex_audit.cjs
+      - name: All-side and all-difficulty scenario regression
+        run: node --test tests/area18.test.cjs
       - name: Validate tracked assets
         run: node tools/validate_assets.cjs --tracked
       - name: Validate world map parity

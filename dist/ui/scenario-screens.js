@@ -15,7 +15,7 @@ const SCENARIO_KINDS = [
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['invasion-korea','Invasion of Korea','55 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
-  ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
+  ['area-18','Area 18 — Arabian Peninsula','43 cities · 3 sides'],
   ['britannia-iraq-iran','Iraq–Iran Campaign','84 cities · 2 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
@@ -171,9 +171,9 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     cf:'Hold northern and southern Iraq, counterattack the river crossings and preserve powerful reserves behind the Zagros passes and on the Iranian Plateau.'
   },
   'area-18': {
-    britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
-    eu: 'Launch coordinated offensives from Syria, the Levant and Suez. Defend the northern Iraqi front against two rival armies.',
-    cf: 'Command Persia from Tehran and the Zagros to Herat. Use mountain passes and the Persian Gulf to contest Britannian expansion.'
+    britannia: 'Defend Yemen, Najran and southern Oman. Push north from the Asir and Empty Quarter while your Gulf of Aden and Red Sea fleets threaten both rivals.',
+    eu: 'Command the Hejaz, Riyadh and the central plateau. Protect Red Sea ports, contest the Saudi interior and drive against the Federation Gulf cities.',
+    cf: 'Hold Kuwait, the eastern Arabian coast, Qatar, the Emirates and northern Oman. Control the Persian Gulf and Strait of Hormuz and advance toward Riyadh.'
   }
 };
 const SCENARIO_TEXT = {
@@ -424,8 +424,8 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     focus:{britannia:'Deir ez-Zor',cf:'Baghdad'}
   },
   'area-18': {
-    era: 'Middle East · Alternate 2017',
-    intro: 'Three great powers fight across Arabia, Mesopotamia, the Levant and Persia. Conquer every rival city.',
+    era: 'Arabian Peninsula · Alternate 2017',
+    intro: 'A three-way war for the Arabian Peninsula: Britannia dominates the south, Europia United the west and center, and the Chinese Federation the Gulf coast and east. Capture all 43 cities.',
     diplomacy: 'Britannia, Europia United and the Chinese Federation are all hostile from turn 1. No betrayals, nuclear weapons or campaign deadline.',
     elite: 'Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.5; carriers remain conventional. Research and Elite Force production follow existing scenario rules.',
     focus: {britannia:'Baghdad',eu:'Damascus',cf:'Kermanshah'}
@@ -439,7 +439,9 @@ function scenarioDialog() {
   if (!model) return;
   if (!model.sides.includes(scenarioSide)) scenarioSide = model.sides[0];
   const text = SCENARIO_TEXT[scenarioKind] || SCENARIO_TEXT['invasion-japan'];
-  const saved = getSave(SCENARIO_KEY), resume = saved && !saved.over && scenarioModel(saved.scenario?.id);
+  const saved = getSave(SCENARIO_KEY), resume = saved && !saved.over &&
+    (saved.scenario?.id !== 'area-18' || saved.scenario.version === 2) &&
+    scenarioModel(saved.scenario?.id);
   const preview = model.create(scenarioSide,scenarioDifficulty,246801);
   const choices = SCENARIO_KINDS.filter(([id])=>E.scenarios?.byId?.[id]).map(([id,title,note])=>
     '<button class="small'+(id===scenarioKind?' active':'')+
