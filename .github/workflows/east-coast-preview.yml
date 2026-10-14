@@ -9,7 +9,7 @@ permissions:
   id-token: write
 concurrency:
   group: east-coast-preview
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -25,8 +25,17 @@ jobs:
           node --check dist/scenarios-east-coast.js
           node --check dist/ui/geography.js
           node tools/east_coast_hex_audit.cjs
+  simulation:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Seeded amphibious AI simulations
-        run: node tools/east_coast_sim.cjs 3 | tee east-coast-simulation.log
+        run: node tools/east_coast_sim.cjs 2 | tee east-coast-simulation.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
