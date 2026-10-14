@@ -35,4 +35,25 @@ This is a controlled era-gating experiment; do not infer that the 2017 variant i
 
 ## Results
 
-Awaiting the new matched benchmark. Do not merge this branch or PR #68 to main without explicit user approval.
+## Completed independent results — 20 × 2017, 6 × 2018
+
+[All 27 jobs passed](https://github.com/user2421423/CodeGeass/actions/runs/38542990781): validation, 20 matched 2017 wars and all six 2018-neutrality comparisons. The six 2018 trials asserted exact equality for missiles, intercepts, carried and city charges, projects, pickups, carrier losses, protected army/frontline/city value, unit actions and survivor counts. All six reported `2018_AI_NEUTRALITY_OK`.
+
+| Metric | Original 2017 AI | 2017-only variant |
+|---|---:|---:|
+| Missiles fired | 187 | 188 |
+| Intercepted | **80 / 187 (42.78%)** | **85 / 188 (45.21%)** |
+| Mobile interceptions | 1 | 9 |
+| City interceptions | 79 | 76 |
+| Eliminators started | 253 | 246 |
+| Charge pickups | 27 | 30 |
+| Carrier losses | 7 | 4 |
+| Mean friendly-army value protected | **10.2905%** | **10.1850%** |
+| Mean frontline value protected | **11.1040%** | **11.5540%** |
+| Mean weighted city value protected | **19.5870%** | **17.7065%** |
+
+**2018 preservation confirmed:** all six matched checks gave byte-equivalent game outcome measurements apart from elapsed runtime. 2018 defenders are not worsened in the tested seeds.
+
+**Decision: hold, do not merge yet.** Five extra intercepted missiles, eight extra mobile interceptions and three fewer lost carriers are promising, but the 1.88-point loss of weighted city coverage is material. A next candidate should improve city-anchor selection without eliminating forward army coverage; compare against this era-gated version *and* the original baseline. Do not claim a general defensive upgrade yet.
+
+No gameplay or merge changes to `main`.
