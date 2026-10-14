@@ -200,23 +200,6 @@ h3 {
   padding: 7px;
   font-size: 14px;
 }
-.map-banner {
-  position: absolute;
-  top: auto;
-  bottom: 95px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 80%;
-  width: max-content;
-  font-size: 11px;
-  line-height: 1.5;
-  color: #d5e0d6;
-  background: #0c2029b8;
-  border: 0;
-  padding: 6px 12px;
-  box-shadow: 0 1px 4px #0004;
-  pointer-events: none;
-}
 .map-legend {
   bottom: 193px;
   left: 25px;
@@ -760,7 +743,7 @@ h3 {
   border-color: #bec397;
 }
 #toast {
-  bottom: 181px;
+  bottom: 75px;
   background: #334843f5;
   border-color: #a7b390;
   color: #f4f2d9;
@@ -869,12 +852,6 @@ h3 {
   .map-wrap {
     height: 100%;
     min-height: 0;
-  }
-  .map-banner {
-    bottom: 109px;
-    font-size: 10px;
-    max-width: 85%;
-    left: 50%;
   }
   .map-caption {
     bottom: 176px;
@@ -1031,7 +1008,7 @@ h3 {
     font-size: 10px;
   }
   #toast {
-    bottom: 192px;
+    bottom: 75px;
   }
   .cards {
     grid-template-columns: repeat(2, 1fr);
@@ -1167,9 +1144,6 @@ h3 {
   }
   .selection-dock {
     gap: 4px;
-  }
-  .map-banner {
-    font-size: 9px;
   }
 }
 .ship-art,
