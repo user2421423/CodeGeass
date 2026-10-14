@@ -52,9 +52,34 @@ function starPath(x, y, ro, ri) {
   }
   ctx.closePath();
 }
+function isPacificAirBattle() {
+  return game.mode === 'campaign' && (game.campaign?.id === 'bk_pacific' || game.campaign?.id === 'br_pacific');
+}
 function terrainProps(t, x, y, scale) {
   if (R * scale < 13) return;
   const h = k => hash01(t.c, t.r, k);
+  // The Pacific fleet interception uses clouds/storms instead of terrestrial relief.
+  // This is a visual treatment only; the underlying tactical terrain rules are unchanged.
+  if (isPacificAirBattle()) {
+    if (t.terrain === 'forest') {
+      ctx.fillStyle = '#f1faffca';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x + (i - 1) * 10, y + (h(i) - 0.5) * 8, 11, 6.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (t.terrain === 'mountain') {
+      ctx.strokeStyle = '#d4e7f6bd';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - 17 + i * 6, y - 9 + i * 7);
+        ctx.lineTo(x + 6 + i * 6, y - 17 + i * 7);
+        ctx.stroke();
+      }
+    }
+    return;
+  }
   if (t.terrain === 'forest') {
     for (let i = 0; i < 4; i++) {
       const tx = x + (h(i) - 0.5) * R * 1.1,
