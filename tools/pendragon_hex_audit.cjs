@@ -92,6 +92,44 @@ g.turn=10000;
 assert.equal(P.winner(g),null,'No time limit');
 for(const s of g.stations)s.owner='britannia';
 assert.equal(P.winner(g)?.winner,'britannia','Reverse total conquest must win');
+
+// Verify official Campaign progression separately from standalone scenario wins.
+const WC=require('../dist/war-campaign.js');
+assert.equal(WC.ALL['eu-pendragon'].scenarioId,'eu-pendragon');
+assert.equal(WC.ALL['eu-pendragon'].final,true);
+const memory=new Map(),storage={
+ getItem:k=>memory.get(k)||null,
+ setItem:(k,v)=>memory.set(k,v)
+};
+const fresh=WC.fresh();
+assert.equal(WC.launch(fresh,'eu','eu-pendragon',E.scenarios.byId).ok,false,
+ 'Final objective must not bypass earlier Campaign tiers');
+const progress=WC.testFixture('eu',6);
+assert(WC.persist(storage,progress));
+const eligible=WC.launch(WC.load(storage),'eu','eu-pendragon',E.scenarios.byId);
+assert(eligible.ok&&eligible.battleSide==='eu');
+const official=P.create('eu','normal',202617);
+for(const city of official.stations)city.owner='eu';
+official.over=P.winner(official);
+official.warCampaign=eligible.context;
+const recorded=WC.recordVictory(storage,official);
+assert(recorded.ok&&recorded.complete&&
+  WC.completed(WC.load(storage),'eu','eu-pendragon'),
+  'Legitimate Pendragon victory must complete the E.U. Campaign');
+const standalone=P.create('eu','normal',202618);
+for(const city of standalone.stations)city.owner='eu';
+standalone.over=P.winner(standalone);
+assert.equal(WC.recordVictory(storage,standalone).ok,false,
+ 'Standalone scenario victories do not update Campaign progress');
+const preview=P.create('eu','normal',202619);
+for(const city of preview.stations)city.owner='eu';
+preview.over=P.winner(preview);
+preview.warCampaign={...eligible.context,preview:true};
+assert.equal(WC.recordVictory(storage,preview).ok,false,
+ 'Preview victories do not update Campaign progress');
+assert(WC.regionContains(WC.ALL['eu-pendragon'],-117,37.5),
+ 'Official final victory must cover capital Campaign marker');
+
 console.log('PENDRAGON_AUDIT '+JSON.stringify({cities:P.cityData.length,
  dimensions:[g.cols,g.rows],landHexes:reachable.size,mountain,desert,forest,plains:plain,
  armies:g.startUnits,groups:g.scenario.groups.length,capitalShield:capital.maxShield,
