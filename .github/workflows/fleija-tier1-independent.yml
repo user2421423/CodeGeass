@@ -1,0 +1,62 @@
+name: Isolated FLEIJA Tier 1 milestone
+on:
+  push:
+    branches: ['experiment/fleija-tier1-after-five-cities']
+    paths: ['.github/workflows/fleija-tier1-independent.yml']
+  pull_request:
+    branches: ['experiment/eliminator-launch-diagnostics']
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  extended-wars:
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 100}
+          - {mode: '2017', seed: 777, turns: 100}
+          - {mode: '2018', seed: 401, turns: 90}
+          - {mode: '2018', seed: 777, turns: 90}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} extended milestone
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Record natural five-hit milestones over longer wars
+        shell: bash
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+          ELIMINATOR_TARGET_DIAGNOSTICS: '1'
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" tier1-milestone > extended.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const r=JSON.parse(fs.readFileSync('extended.json','utf8'));
+          assert.equal(r.warheads,r.diagnostics.launches);
+          assert.equal(r.diagnostics.coveredButMissed,0);
+          console.log('TIER1_LONG_WAR '+JSON.stringify({
+            mode:r.mode,seed:r.seed,turns:r.played,warheads:r.warheads,
+            cityHitsByAttacker:r.diagnostics.cityHitsByAttacker,
+            postThresholdShots:r.diagnostics.postThresholdShots,
+            tier1DirectAfter5:r.diagnostics.tier1DirectAfter5,
+            tier1Direct:r.diagnostics.tier1Direct,
+            interceptions:r.intercepted
+          }));
+          NODE
