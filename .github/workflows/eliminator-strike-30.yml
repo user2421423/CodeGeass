@@ -1,0 +1,80 @@
+name: Eliminator Strike Center 30 Pair Confirmation
+on:
+  push:
+    branches: ['experiment/eliminator-threat-cover']
+    paths: ['.github/workflows/eliminator-strike-30.yml']
+  pull_request:
+    branches: ['experiment/eliminator-forward-muster']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  compare:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2017', seed: 314159, turns: 45}
+          - {mode: '2017', seed: 271828, turns: 45}
+          - {mode: '2017', seed: 42, turns: 45}
+          - {mode: '2017', seed: 246801, turns: 45}
+          - {mode: '2017', seed: 8675309, turns: 45}
+          - {mode: '2017', seed: 1234567, turns: 45}
+          - {mode: '2017', seed: 9001, turns: 45}
+          - {mode: '2017', seed: 8080, turns: 45}
+          - {mode: '2017', seed: 55555, turns: 45}
+          - {mode: '2017', seed: 67891, turns: 45}
+          - {mode: '2017', seed: 424242, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+          - {mode: '2018', seed: 314159, turns: 35}
+          - {mode: '2018', seed: 271828, turns: 35}
+          - {mode: '2018', seed: 42, turns: 35}
+          - {mode: '2018', seed: 246801, turns: 35}
+          - {mode: '2018', seed: 8675309, turns: 35}
+          - {mode: '2018', seed: 1234567, turns: 35}
+          - {mode: '2018', seed: 9001, turns: 35}
+          - {mode: '2018', seed: 8080, turns: 35}
+          - {mode: '2018', seed: 55555, turns: 35}
+          - {mode: '2018', seed: 67891, turns: 35}
+          - {mode: '2018', seed: 424242, turns: 35}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} center vs forward
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Run paired full wars with only AI code changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" strike-center > targeted.json
+          git show d580c260bedd7adc78e4f1741d786247d3f349a9:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" forward-muster > forward.json
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const t=JSON.parse(fs.readFileSync('targeted.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('forward.json','utf8'));
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','carrierLosses','carrierOther','pickedUp','avgCarried','weightedProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','elapsedMs'];
+          const metrics=Object.fromEntries(keys.map(k=>[k,{baseline:b[k],targeted:t[k]}]));
+          console.log('STRIKE_CENTER_COMPARE '+JSON.stringify({mode:t.mode,seed:t.seed,metrics}));
+          NODE
