@@ -1,0 +1,50 @@
+name: Turkey scenario audit and seeded simulations
+on:
+  push:
+    branches: ['scenario/britannia-turkey']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs --check
+      - run: node tools/turkey_hex_audit.cjs
+      - run: node --test tests/*.test.cjs
+  seeded-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        player: ['britannia', 'eu']
+        difficulty: ['normal', 'hard', 'challenge', 'elite']
+        seed: [11, 29]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real-engine five-turn AI versus AI
+        run: node tools/turkey_sim.cjs ${{ matrix.player }} ${{ matrix.difficulty }} ${{ matrix.seed }} 5
+  extended-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        player: ['britannia', 'eu']
+        seed: [11, 29]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Twenty-turn invasion and counteroffensive playtest
+        run: node tools/turkey_sim.cjs ${{ matrix.player }} normal ${{ matrix.seed }} 20
