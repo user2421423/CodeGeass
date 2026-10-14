@@ -20,15 +20,15 @@ const SCENARIO_KINDS = [
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
   ['invasion-brazil','Invasion of Brazil','57 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['invasion-california','Invasion of California','63 cities · 2 sides'],
+  ['invasion-canada','Invasion of Canada','74 cities · 2 sides'],
   ['invasion-caribbean','Invasion of the Caribbean','41 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['eu-great-lakes','Battle for the Great Lakes','56 cities · 2 sides'],
   ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
   ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
+  ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
+  ['eu-panama','Panama Campaign','30 cities · 2 sides'],
+  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
   'invasion-brazil': {
