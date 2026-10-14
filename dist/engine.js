@@ -217,7 +217,6 @@
   }
   // Research saved before the Naval branch existed moves to it.
   const LEGACY_RESEARCH = {
-    'sakura.transport': 'naval.logistics',
     'sakura.landing': 'naval.landing',
     'infantry.armor': 'infantry.urban',
     'artillery.armor': 'artillery.counterbattery',
@@ -998,7 +997,7 @@
       const v = unitAt(g, n);
       return v && v.side === u.side && isShip(v);
     });
-    const sea = TYPES[u.type].seaMove + techValue(g, u.side, 'naval.amphibious');
+    const sea = TYPES[u.type].seaMove;
     return escort ? Math.max(CARRIER_ESCORT_SEA, sea) : sea;
   }
   // Embarked units take extra damage; Landing Craft halves the penalty.
@@ -1007,8 +1006,7 @@
   }
   function seaMove(g, u) {
     const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
-    // Naval Logistics raises transports from 5 to 6. Level II changes embark/landing tempo instead of adding speed.
-    return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
+    return base;
   }
 
   // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Marshal).
@@ -1500,16 +1498,15 @@
     const t = TYPES[u.type],
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
-    let n = t.move + Math.min(1, unitTech(g, u, 'drives')) + (eliteFx(u).move || 0);
-    // Carrier-Battleships use their listed 10-hex movement; the +2 Conquest
-    // bonus applies to land and amphibious formations, not warships.
-    if (g?.mode !== 'campaign' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
+    let n = t.move + (eliteFx(u).move || 0);
+    // Only world Conquest has the +2 high-resolution map movement bonus.
+    // Scenario/Campaign units and warships use their normal movement values.
+    if (g?.mode === 'conquest' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
     if(u.expJammedActive)n=Math.max(1,n-2);
     n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
-    if (techLevel(g, u.side, 'sakura.float') >= 2 && (t.branch === 'Armor' || t.float || eliteFx(u).float)) n += 1;
     return n;
   }
   function terrainCost(g, u, t) {
@@ -1548,11 +1545,9 @@
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
       budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? landMove : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
       boards = !u.skillReposition && !t.naval && u.deployedTurn !== g.turn,
-      roughDiscount = !u.skillReposition && !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.drives') >= 2,
-      advancedLanding = !u.skillReposition && !t.naval && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
-      stateKey = (p, used) => `${key(p)}|${used ? 1 : 0}`,
-      costs = new Map([[stateKey(start, false), 0]]),
-      queue = [{ p: start, cost: 0, roughUsed: false, order: 0 }];
+      stateKey = p => key(p),
+      costs = new Map([[stateKey(start), 0]]),
+      queue = [{ p: start, cost: 0, order: 0 }];
     let nextOrder = 1;
     const before = (a, b) => a.cost < b.cost || (a.cost === b.cost && a.order < b.order);
     const push = entry => {
@@ -1584,8 +1579,8 @@
       return first;
     };
     while (queue.length) {
-      const { p, cost, roughUsed } = pop();
-      if (cost > costs.get(stateKey(p, roughUsed))) continue;
+      const { p, cost } = pop();
+      if (cost > costs.get(stateKey(p))) continue;
       for (const n of adjacent(g, p)) {
         if (TERRAIN[n.terrain]?.blocked || (ship && !navigable(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
         const occ = unitAt(g, n),
@@ -1598,25 +1593,20 @@
         }
         if (st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalAssault)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
-        let nextRough = roughUsed,
-          step = isSea(n) ? 1 : terrainCost(g, u, n);
-        if (roughDiscount && !roughUsed && !cross && step > 1) {
-          step--;
-          nextRough = true;
-        }
+        const step = isSea(n) ? 1 : terrainCost(g, u, n);
         const nc = u.skillReposition
           ? cost + step
           : cross
-          ? advancedLanding ? cost + 1 : budget
+          ? budget
           : ship
             ? cost + 1
             : amphibious
               ? cost + (isSea(n) ? landMove : terrainCost(g, u, n) * seaMv)
               : cost + step;
-        const sk = stateKey(n, nextRough);
+        const sk = stateKey(n);
         if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
         costs.set(sk, nc);
-        if (!cross) push({ p: n, cost: nc, roughUsed: nextRough });
+        if (!cross) push({ p: n, cost: nc });
         if (!occ && key(n) !== key(start)) found.set(key(n), Math.min(found.get(key(n)) ?? Infinity, nc));
       }
     }
@@ -1764,10 +1754,6 @@
     const from = { c: u.c, r: u.r },
       fromSea = isSea(tile(g, u.c, u.r)),
       t = TYPES[u.type],
-      cross = !t.naval && isSea(dest) !== fromSea,
-      advancedLanding = cross && !u.skillReposition && techLevel(g, u.side, 'naval.logistics') >= 2 && hasPort3(g, u.side),
-      moveBudget = fromSea ? seaMove(g, u) : movement(g, u),
-      retainMove = advancedLanding && moveBudget - moveCost >= 2,
       carrier = unitAt(g, dest);
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
     if (carrier && carrier !== u && carrier.side === u.side && canBoard(g, carrier)) {
@@ -1793,7 +1779,7 @@
       c.c = dest.c;
       c.r = dest.r;
     }
-    u.moved = !retainMove;
+    u.moved = true;
     // Amphibious units gain one full extra movement and attack after landing each turn.
     // A per-turn stamp prevents unlimited actions by hopping across the coastline.
     const freshLanding = t.naval === 'amphibious' && fromSea && !isSea(dest) && u.landingRefreshTurn !== g.turn;
@@ -1809,7 +1795,7 @@
     if(fromSea&&!isSea(dest))u.expLandedTurn=g.turn;
     if(u.expRetrofit){u.expRetrofitStrike=u.movedDistance>=3;delete u.expRetrofit;}
     u.lastTurnMoved = true;
-    u.skillReposition = retainMove ? 1 : 0;
+    u.skillReposition = 0;
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
     reindex(g, u, from);
@@ -1934,8 +1920,6 @@
     attack *= 1 + unitTech(g, u, 'guns');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
     if (!t.naval && t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
-    if (!t.naval && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.drives') >= 2 && (u.movedDistance || 0) <= 1)
-      attack *= 1.1;
     const friends = (side, at, test) =>
       g.units.some(v => v.hp > 0 && v.side === side && v.id !== u.id && dist(g, v, at) === 1 && test(TYPES[v.type]));
     // Lance Formation and Factsphere Fire Control.
@@ -2230,17 +2214,6 @@
       // Heavy and super-heavy frames always fire again after a kill, beyond the breakthrough cap.
       a.attacked = false;
       breakthrough = true;
-    }
-    if (
-      destroyed &&
-      a.hp > 0 &&
-      !TYPES[a.type].naval &&
-      TYPES[a.type].branch === 'Armor' &&
-      techLevel(g, a.side, 'armor.drives') >= 2 &&
-      a.overdriveTurn !== g.turn
-    ) {
-      a.overdriveTurn = g.turn;
-      grantReposition(a, 1);
     }
     // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
     if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {

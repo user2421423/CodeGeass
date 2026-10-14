@@ -688,6 +688,46 @@ test('Commander ranks grant up to double HP and every Mobility star grants one m
   }
 });
 
+test('World Conquest alone gets the global two-point movement bonus', () => {
+  const g = blank();
+  const unit = E.newUnit(g, E.typeFor('britannia', 'raider'), 'britannia', 5, 5);
+  const ship = E.newUnit(g, E.NAVAL.britannia.carrier, 'britannia', 5, 6);
+  for (const mode of ['campaign', 'scenario', 'conquest']) {
+    g.mode = mode;
+    assert.equal(E.movement(g, unit), E.TYPES[unit.type].move + (mode === 'conquest' ? 2 : 0));
+    assert.equal(E.movement(g, ship), E.TYPES[ship.type].move, 'warships never get the Conquest bonus');
+  }
+});
+
+test('Retired movement research cannot change movement, even in older saves', () => {
+  const g = blank();
+  const kinds = ['scout', 'raider', 'medium', 'rocket'];
+  const units = kinds.map((kind, i) =>
+    E.newUnit(g, E.typeFor('britannia', kind), 'britannia', 2 + i, 5));
+  const amphibious = E.newUnit(g, E.NAVAL.britannia.amphibious, 'britannia', 8, 5);
+  const transport = units[0];
+  const base = units.map(u => E.movement(g, u));
+  const amphibiousSea = E.internal.amphibiousSea(g, amphibious);
+  const transportSea = E.seaMove(g, transport);
+  g.tech.britannia = {
+    'infantry.drives': 2,
+    'armor.drives': 2,
+    'artillery.drives': 2,
+    'sakura.float': 2,
+    'naval.logistics': 2,
+    'naval.amphibious': 1,
+  };
+  assert.deepEqual(units.map(u => E.movement(g, u)), base,
+    'legacy speed research must not increase movement');
+  assert.equal(E.internal.amphibiousSea(g, amphibious), amphibiousSea);
+  assert.equal(E.seaMove(g, transport), transportSea);
+  for (const id of [
+    'infantry.drives', 'armor.drives', 'artillery.drives', 'naval.logistics', 'naval.amphibious',
+  ]) assert.equal(E.TECH_NODES[id], undefined, `${id} must not be purchasable`);
+  assert.equal(E.TECH_NODES['sakura.float'].max, 1,
+    'Float System retains terrain benefits but not the movement tier');
+});
+
 test('Commander branch stars add +5 flat base attack per star across combat branches', () => {
   for (const cls of ['scout', 'medium', 'rocket']) {
     const g = blank();
