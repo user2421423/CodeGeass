@@ -218,7 +218,7 @@
     if(difficulty==='elite')E.prepareEliteEurope(g);
     const carriers=g.units.filter(u=>u.side==='britannia'&&
       u.type==='carrier_battleship');
-    for(const [name,reserve] of [['Koror',2],['Peleliu',1],['Colonia',2]]){
+    for(const [name,reserve] of [['Koror',2],['Peleliu',1],['Colonia',3]]){
       const command=groupByCity.get('britannia:'+name);
       const units=(command?.units||[]).map(id=>g.units.find(u=>u.id===id))
         .filter(Boolean)
