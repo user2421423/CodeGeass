@@ -8,6 +8,7 @@ const SCENARIO_KINDS = [
   ['invasion-japan','The Invasion of Japan','44 cities · 3 sides'],
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
   ['operation-stonehenge','Operation Stonehenge','37 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
@@ -16,6 +17,10 @@ const SCENARIO_KINDS = [
   ['area-18','The Conquest of Area 18','50 cities · 3 sides']
 ];
 const SCENARIO_BLURBS = {
+  'britannia-western-russia': {
+    britannia: 'Advance west from the Volga through three Army Group axes, breach Moscow and St. Petersburg, then conquer all E.U. cities.',
+    eu: 'Hold Moscow, St. Petersburg, the Upper Volga and the wooded river approaches. Commit reserves to blunt the Britannian offensive.'
+  },
   'war-for-australia': {
     britannia: 'Hold Sydney, Melbourne, Brisbane and Australia’s eastern industrial heartland. Counter northern advances and Western amphibious landings.',
     cf: 'Push south from Darwin through the Outback, fight for Cape York, and launch amphibious assaults on the eastern and western coasts.',
@@ -58,6 +63,13 @@ const SCENARIO_BLURBS = {
   }
 };
 const SCENARIO_TEXT = {
+  'britannia-western-russia': {
+    era: 'Western Russia · Alternate 2017',
+    intro: 'After crossing the Urals, Britannia invades E.U.-controlled western Russia. Capture all 41 cities to win; no turn limit.',
+    diplomacy: 'Two hostile powers from turn 1. Moscow and St. Petersburg are exceptionally fortified, but neither is invulnerable.',
+    elite: 'Elite Western Russia: single-frame eligible Elite Forces; AI named commanders begin at Level 5. AI has stronger research and production, while player unlocks follow HQ rules.',
+    focus: {britannia:'Kazan',eu:'Moscow'}
+  },
   'war-for-australia': {
     era: 'Australia · Alternate 2018',
     intro: 'Britannia holds the east, China the north, and Europia the west. Three-way continental and naval war. Conquer every rival city.',
