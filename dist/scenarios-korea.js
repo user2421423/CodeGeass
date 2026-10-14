@@ -234,16 +234,30 @@
     if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
     const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
     if(!group)return {ok:false,reason:'Unknown Army Group'};
+    const ordered=new Set();
     let assigned=0,failed=0;
-    for(const id of group.units){
-      const u=E.allUnits(g).find(v=>v.id===id&&v.hp>0&&v.side===g.player);
-      // Cargo orders are issued after deployment; carriers move while embarked.
-      if(!u||u.cargoHost)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
+    const goal=E.tile(g,target.c,target.r);
+    if(!goal)return {ok:false,reason:'Outside the theatre'};
+    for(const unitId of group.units){
+      let u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
+      // An embarked Army Group is controlled by the transports carrying it.
+      // Group IDs stay tied to the actual land formations after deployment.
+      if(!u)u=g.units.find(v=>v.hp>0&&v.side===g.player&&
+        (v.cargo||[]).some(c=>c.id===unitId&&c.hp>0));
+      if(!u||ordered.has(u.id))continue;
+      ordered.add(u.id);
+      const ship=E.TYPES[u.type].naval==='ship';
+      // Warships cannot receive a standing order to an inland tile. Route
+      // the carriers to an accessible coastal approach to the chosen objective.
+      const dest=ship&&goal.terrain!=='sea'&&goal.terrain!=='coast'
+        ?nearest(g,goal,t=>t.terrain==='sea',12):goal;
+      if(!dest){failed++;continue;}
+      const res=E.setGoto(g,u.id,dest.c,dest.r);
       if(res.ok)assigned++;else failed++;
     }
     if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No active formation can reach the destination'};
+    return {ok:assigned>0,assigned,failed,
+      reason:assigned?'':'No operational Army Group formation can reach the destination'};
   }
   function create(player='britannia',difficulty='normal',seed=201718){
     if(!SIDES.includes(player))throw Error('Unsupported Invasion of Korea side '+player);
