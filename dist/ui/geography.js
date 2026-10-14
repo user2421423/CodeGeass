@@ -936,13 +936,14 @@ const GEOGRAPHY = (() => {
     const canada = g.scenario.id === 'invasion-canada';
     const caribbean = g.scenario.id === 'invasion-caribbean';
     const greatLakes = g.scenario.id === 'eu-great-lakes';
+    const yangtze = g.scenario.id === 'bf-yangtze';
     const greenland = g.scenario.id === 'eu-greenland';
     const hawaii = g.scenario.id === 'invasion-hawaii';
     const eastCoast = g.scenario.id === 'invasion-american-east-coast';
     const panama = g.scenario.id === 'eu-panama';
     const pendragon = g.scenario.id === 'eu-pendragon';
     const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || yangtze;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -1098,6 +1099,39 @@ const GEOGRAPHY = (() => {
         ctx.strokeStyle='#245b78';
         ctx.lineWidth=Math.max(3,sx*(name==='Straits of Mackinac'?.24:.16));
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // Yangtze main channel and tributaries are projected with the same WGS84
+    // centre-sampled transform as its playable hexes. The continental GSHHG
+    // atlas has no inland Yangtze cutout; draw the true river meanders above
+    // the land/ownership fill so the underlay and navigable tactical tiles agree.
+    if(yangtze && g.scenario?.rivers){
+      const b=g.scenario.bounds,sx=SQ*R*g.cols/(b.east-b.west),
+        sy=1.5*R*g.rows/(b.north-b.south);
+      const xy=([lon,lat])=>[
+        R-SQ*R*.5+(lon-b.west)*sx,
+        R-.75*R+(b.north-lat)*sy
+      ];
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineJoin='round';ctx.lineCap='round';
+      for(const [name,points] of Object.entries(g.scenario.rivers)){
+        if(points.length<2)continue;
+        ctx.beginPath();
+        points.forEach((coord,i)=>{const [x,y]=xy(coord);
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.lineWidth=name==='Yangtze'?Math.max(2,2.4*R):
+          Math.max(1.2,.32*R);
+        ctx.strokeStyle=name==='Yangtze'?'#215a79':'#58a9c4';
+        ctx.stroke();
+      }
+      // Bridge marks are tactical, not an alternate river navigation system:
+      // the engine's mixed 'coast' deck permits both land and warships.
+      ctx.strokeStyle='#e1d0a2';ctx.lineWidth=Math.max(1.2,.22*R);
+      for(const bridge of g.scenario.bridges||[]){
+        const [x,y]=xy([bridge.lon,bridge.lat]);
+        ctx.beginPath();ctx.moveTo(x-.58*R,y-.58*R);
+        ctx.lineTo(x+.58*R,y+.58*R);ctx.stroke();
       }
       ctx.restore();
     }

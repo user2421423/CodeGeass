@@ -142,7 +142,7 @@
     ['britannia','Chizhou','heavy',5,'schneizel','VI Army Group · Anqing'],
     ['britannia','Chizhou','siege',4,null,'VI Army Group · Anqing'],
     ['britannia','Xuancheng','assault',5,null,'VI Army Group · Anqing'],
-    ['britannia','Jurong','heavy',6,'clovis','VII Army Group · Nanjing'],
+    ['britannia','Jurong','heavy',6,'kewell','VII Army Group · Nanjing'],
     ['britannia','Jurong','rocket',5,null,'VII Army Group · Nanjing'],
     ['britannia','Gaochun','assault',4,null,'VII Army Group · Nanjing'],
     ['cf','Yichang','heavy',5,'xingke','Western River Defense'],
@@ -180,7 +180,6 @@
     ['britannia','Jingzhou','portman_ii',3],
     ['britannia','Jingzhou','portman',3],
     ['britannia','Yidu','portman_ii',2],
-    ['britannia','Wuhan','portman_ii',0], // no Britannian ships in enemy-held Wuhan
     ['cf','Yichang','shui_gun_ru_ii',3],
     ['cf','Wuhan','shui_gun_ru_ii',4],
     ['cf','Huangshi','shui_gun_ru',3],
@@ -380,10 +379,10 @@
       const t=E.tile(g,s.c,s.r);t.owner=s.owner;t.provinceCity=s.id;
     }
     const groupMap=new Map();
-    function group(side,name){
+    function group(side,name,origin){
       const key=side+':'+name;
       if(!groupMap.has(key)){
-        const v={id:'army-'+groupMap.size,side,name,origin:name,units:[]};
+        const v={id:'army-'+groupMap.size,side,name,origin,units:[]};
         groupMap.set(key,v);g.scenario.groups.push(v);
       }
       return groupMap.get(key);
@@ -398,7 +397,7 @@
         const cmd=i===0&&commander?commander:null;
         const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,i===0?3:2,cmd);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
-        group(side,army).units.push(u.id);
+        group(side,army,name).units.push(u.id);
       }
     }
     const occupiedPorts=new Set();

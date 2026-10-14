@@ -24,6 +24,7 @@ const SCENARIO_KINDS = [
   ['invasion-canada','Invasion of Canada','74 cities · 2 sides'],
   ['invasion-caribbean','Invasion of the Caribbean','41 cities · 2 sides'],
   ['eu-great-lakes','Battle for the Great Lakes','56 cities · 2 sides'],
+  ['bf-yangtze','Battle of the Yangtze River','60 cities · 2 sides'],
   ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
   ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
@@ -42,6 +43,10 @@ const SCENARIO_BLURBS = {
   'invasion-canada': {
     eu: 'Command six northern footholds and launch five carrier-led invasions from the Atlantic, Hudson Strait, Labrador Sea and Arctic. Seize ports, then converge on the industrial heartland.',
     britannia: 'Hold Canada\'s fortified ports, prairie supply routes, Rocky Mountain passes and Great Lakes industrial network. Move reserves between threatened fronts.'
+  },
+  'bf-yangtze': {
+    britannia: 'Lead seven enormous Army Groups across the Yangtze. Seize bridgeheads from Yichang to Nanjing, destroy Chinese river squadrons, and exploit breakthroughs toward the north.',
+    cf: 'Hold the river crossing corridors, defend Wuhan and Nanjing, contest river ports, and commit inland reserves to crush isolated Britannian bridgeheads.'
   },
   'eu-great-lakes': {
     eu: 'Lead five coordinated offensives out of Ontario. Cross the inland seas, break Detroit and Buffalo, then take Chicago and the industrial belt.',
@@ -150,6 +155,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Two hostile powers. Five amphibious invasion axes and continental defense with independently capturable ports and no scripted deadline.',
     elite: 'Elite Canada uses established single-frame Elite Forces and veteran enemy commanders. Carriers remain conventional; all faction mechanics are unchanged.',
     focus: {eu:'Iqaluit',britannia:'Ottawa'}
+  },
+  'bf-yangtze': {
+    era: 'Central and Eastern Yangtze · Alternate 2017',
+    intro: 'After South China, Britannia reaches the great Yangtze barrier. Cross its nine defended bridge corridors, seize every one of 60 cities, and advance deep into Federation territory. No turn limit.',
+    diplomacy: 'Britannia and the Chinese Federation are hostile from the opening turn. River ships use the navigable main channel; ports are independently capturable. Tributaries are visual and geographic obstacles, not imaginary blue-water shortcuts.',
+    elite: 'Elite Yangtze uses established Britannian and Chinese Elite Force replacements. Riverine fleets retain standard naval models and commander, production and income scaling follow existing Elite rules.',
+    focus: {britannia:'Jingzhou',cf:'Wuhan'}
   },
   'eu-great-lakes': {
     era:'Great Lakes · Alternate 2017',
