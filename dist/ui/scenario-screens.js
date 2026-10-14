@@ -118,8 +118,8 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     britannia: 'Hold Nuuk, Sisimiut, Ilulissat, Tasiilaq and the northern garrisons. Concentrate coastal reserves, patrol the straits and counterattack invaded harbours.'
   },
   'invasion-hawaii': {
-    eu: 'Four carrier task forces assault Kauai, Oahu, Maui and Hawaii from the open Pacific. Capture every base on all eight islands.',
-    britannia: 'Defend Pearl Harbor, Honolulu and the outer island garrisons. Use naval interception and island reserves to destroy E.U. transports.'
+    cf: 'Four Chinese Federation expeditionary fleets approach from the western Pacific, assault Kauai, Oahu, Maui and Hawaii, and capture every base across eight islands.',
+    britannia: 'Defend Pearl Harbor, Honolulu and outer island garrisons. Use naval interception, coastal guns and reserves to destroy Federation transports.'
   },
   'invasion-south-africa': {
     britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
@@ -296,10 +296,10 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
   },
   'invasion-hawaii': {
     era: 'Hawaiian Islands · Alternate 2017',
-    intro: 'After the Bering Strait, Europia United launches four carrier-borne invasions of the Britannian Hawaiian Islands. The E.U. owns no city on turn one; seize all 30 bases to win.',
-    diplomacy: 'Britannia controls eight fortified islands, airfields and independently capturable ports. No alliances or turn limit.',
-    elite: 'Elite Hawaii: eligible transported land formations convert to Elite Forces. Naval carriers and amphibious fleets retain standardized mechanics.',
-    focus: {eu:'',britannia:'Pearl Harbor'}
+    intro: 'The Chinese Federation sails east from the western Pacific with four powerful carrier-borne invasion groups. China begins offshore with no cities; capture all 30 Britannian bases across the Hawaiian Islands.',
+    diplomacy: 'Britannia controls eight fortified islands, airfields and independently capturable ports. Only Britannia and the Chinese Federation fight; there is no turn limit.',
+    elite: 'Elite Hawaii uses Chinese Federation and Britannian Elite Force rosters, Lv.5 rival commanders and standard amphibious Elite equipment; carrier hulls remain conventional.',
+    focus: {cf:'',britannia:'Pearl Harbor'}
   },
   'invasion-south-africa': {
     era: 'Southern Africa · Alternate 2017',
@@ -373,7 +373,8 @@ function scenarioDialog() {
   if (!model) return;
   if (!model.sides.includes(scenarioSide)) scenarioSide = model.sides[0];
   const text = SCENARIO_TEXT[scenarioKind] || SCENARIO_TEXT['invasion-japan'];
-  const saved = getSave(SCENARIO_KEY), resume = saved && !saved.over && scenarioModel(saved.scenario?.id);
+  const saved = getSave(SCENARIO_KEY), resume = saved && !saved.over && scenarioModel(saved.scenario?.id) &&
+    (saved.scenario?.id!=='invasion-hawaii' || saved.player!=='eu');
   const preview = model.create(scenarioSide,scenarioDifficulty,246801);
   const choices = SCENARIO_KINDS.filter(([id])=>E.scenarios?.byId?.[id]).map(([id,title,note])=>
     '<button class="small'+(id===scenarioKind?' active':'')+

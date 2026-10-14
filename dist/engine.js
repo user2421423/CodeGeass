@@ -4591,12 +4591,13 @@
     if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id)) return g;
     const sides = ['area-18','war-for-australia'].includes(g.scenario.id) ? ['britannia','eu','cf'] :
       g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
-      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario.id) ? ['britannia','eu'] :
-      ['conquest-indochina','philippines-invasion','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
+      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario.id) ? ['britannia','eu'] :
+      ['conquest-indochina','philippines-invasion','invasion-hawaii','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',
       yukiya: 'yukiya_valiant', smilas: 'hummel_battery',
+      xingke: 'shen_hu',
       suzaku: 'lancelot', cornelia: 'cornelia_gloucester',
       shin: 'lancelot', julius: 'mordred',
       ashley: 'vincent_ward', manfredi: 'cornelia_gloucester',
