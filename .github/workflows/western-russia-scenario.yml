@@ -21,7 +21,7 @@ jobs:
       - name: Campaign registry regression
         run: node --test tests/war-campaign.test.cjs
       - name: UI smoke
-        run: node tests/ui-smoke.cjs
+        run: node tests/western-russia-ui-smoke.cjs
       - name: Syntax validation
         run: |
           node --check dist/scenarios-western-russia.js
@@ -35,10 +35,10 @@ jobs:
         run: node tools/western_russia_sim.cjs 37 6 britannia hard
       - name: Elite ground order regression – seed 53
         run: node tools/western_russia_sim.cjs 53 4 eu elite
-      - name: Probe third-party no-merge branch preview
-        if: always()
-        continue-on-error: true
-        run: |
-          url=https://raw.githack.com/user2421423/CodeGeass/scenario/britannia-western-russia/dist
-          curl -LIs --connect-timeout 8 --max-time 20 "$url/index.html" | grep -Ei '^HTTP/|^content-type:'
-          curl -LIs --connect-timeout 8 --max-time 20 "$url/scenarios-western-russia.js" | grep -Ei '^HTTP/|^content-type:'
+      - name: Package playable browser preview
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: western-russia-browser-preview
+          path: dist/
+          retention-days: 30
