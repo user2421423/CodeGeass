@@ -182,11 +182,12 @@ function scenarioDialog() {
   }
   focusDialog();
 }
-function startScenario(side=scenarioSide) {
+function startScenario(side=scenarioSide, campaignContext=null) {
   const model=scenarioModel();
   if(!model?.sides.includes(side))return;
   resetSession();
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
+  if (campaignContext) game.warCampaign={...campaignContext};
   scenarioRoutingGroup=null;
   setWorld();
   // Start inside each faction's theatre instead of fitting empty sea.
