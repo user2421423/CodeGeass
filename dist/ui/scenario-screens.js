@@ -418,7 +418,9 @@ function scenarioGroupsDialog() {
 }
 function scenarioGroupFocus(id) {
   const gr=game.scenario?.groups?.find(v=>v.id===id&&v.side===game.player);
-  const u=gr?.units.map(id=>game.units.find(v=>v.id===id&&v.hp>0)).find(Boolean);
+  const u=gr?.units.map(id=>game.units.find(v=>v.id===id&&v.hp>0)).find(Boolean)||
+    (game.scenario?.id==='invasion-korea'&&game.units.find(ship=>ship.hp>0&&
+      (ship.cargo||[]).some(c=>gr?.units.includes(c.id)&&c.hp>0)));
   closeModal();
   if(u)selectUnit(u.id,true);
 }
@@ -444,6 +446,14 @@ function scenarioGroupImport(id) {
   group.name = staging.name;
   const members = staging.units.filter(unitId =>
     game.units.some(u => u.id === unitId && u.hp > 0 && u.side === game.player));
+  // The Korean land invasion groups begin aboard carriers. Editing their
+  // formation before landing imports the carrier hosts, never cargo ghosts.
+  if(game.scenario?.id==='invasion-korea'){
+    const embarked=new Set(staging.units);
+    for(const ship of game.units)if(ship.side===game.player&&ship.hp>0&&
+      (ship.cargo||[]).some(c=>embarked.has(c.id)&&c.hp>0)&&!members.includes(ship.id))
+      members.push(ship.id);
+  }
   let assigned = 0;
   for (const unitId of members.slice(0, 24))
     if (E.addArmyGroupUnit(game, group.id, unitId).ok) assigned++;
