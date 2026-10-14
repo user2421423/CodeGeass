@@ -29,6 +29,7 @@ const MINI_TERRAIN = {
   crater: '#f2bfdc',
   urban: '#6c6f78',
 };
+const PACIFIC_MINI_TERRAIN = { plains: '#75b8d9', forest: '#b8d8e8', mountain: '#476681' };
 function drawMinimap() {
   const mini = $('minimap');
   if (!mini || typeof document.createElement !== 'function') return;
@@ -106,6 +107,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   // Scenario previews and minimaps use the same real Japanese silhouette as
   // the main map, not low-resolution rectangles of terrain colours.
   const regional = g.mode === 'scenario' && !!g.scenario?.projection;
+  const pacificSky = g.mode === 'campaign' && (g.campaign?.id === 'bk_pacific' || g.campaign?.id === 'br_pacific');
   if (regional) {
     b.save();
     b.scale(sx, sy);
@@ -113,7 +115,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
     b.restore();
   } else for (const t of g.tiles) {
     const p = hexCenter(t);
-    b.fillStyle = MINI_TERRAIN[t.terrain];
+    b.fillStyle = pacificSky ? (PACIFIC_MINI_TERRAIN[t.terrain] || '#75b8d9') : MINI_TERRAIN[t.terrain];
     b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
     if (t.owner && t.terrain !== 'sea') {
       b.fillStyle = col(t.owner) + '88';
@@ -291,9 +293,34 @@ function starPath(x, y, ro, ri) {
   }
   ctx.closePath();
 }
+function isPacificAirBattle() {
+  return game.mode === 'campaign' && (game.campaign?.id === 'bk_pacific' || game.campaign?.id === 'br_pacific');
+}
 function terrainProps(t, x, y, scale) {
   if (R * scale < 13) return;
   const h = k => hash01(t.c, t.r, k);
+  // The Pacific fleet interception uses clouds/storms instead of terrestrial relief.
+  // This is a visual treatment only; the underlying tactical terrain rules are unchanged.
+  if (isPacificAirBattle()) {
+    if (t.terrain === 'forest') {
+      ctx.fillStyle = '#f1faffca';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x + (i - 1) * 10, y + (h(i) - 0.5) * 8, 11, 6.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (t.terrain === 'mountain') {
+      ctx.strokeStyle = '#d4e7f6bd';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - 17 + i * 6, y - 9 + i * 7);
+        ctx.lineTo(x + 6 + i * 6, y - 17 + i * 7);
+        ctx.stroke();
+      }
+    }
+    return;
+  }
   if (t.terrain === 'forest') {
     for (let i = 0; i < 4; i++) {
       const tx = x + (h(i) - 0.5) * R * 1.1,
@@ -1122,7 +1149,8 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     visible = p => p.y >= top && p.y <= bottom;
   // Geography is a continuous visual atlas. Hexes remain the *logical* map;
   // they are not used as filled polygon art unless the device lacks ImageData.
-  const atlas = GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
+  const pacificSky = isPacificAirBattle();
+  const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
   if (!atlas) {
     for (const t of game.tiles) {
       const c = hexCenter(t);
@@ -1131,7 +1159,9 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
         hexPath(x, c.y, R + 0.5);
         // If vector geography is unavailable, scenario land still uses the
         // controlling nation's colour rather than biome swatches.
-        ctx.fillStyle = t.terrain === 'offmap' ? '#174663' :
+        ctx.fillStyle = pacificSky
+          ? (t.terrain === 'forest' ? '#b6d5e5' : t.terrain === 'mountain' ? '#4a637d' : '#72b6db')
+          : t.terrain === 'offmap' ? '#174663' :
           game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
             ? F(t.owner).color : TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
