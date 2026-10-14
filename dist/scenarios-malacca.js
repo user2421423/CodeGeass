@@ -315,7 +315,7 @@
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
-        for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
+        for(const [i,u] of E.allUnits(g).filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship').entries())
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,E.allUnits(g).filter(u=>u.side===side).length]));
