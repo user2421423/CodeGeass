@@ -274,8 +274,8 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = g.scenario?.id === 'operation-stonehenge' &&
-      loser === 'britannia' && g.units.some(v => v.side === loser && v.hp > 0);
+    const expeditionAfloat = ((g.scenario?.id === 'operation-stonehenge' && loser === 'britannia') ||
+      (g.scenario?.id === 'invasion-american-east-coast' && loser === 'eu')) && g.units.some(v => v.side === loser && v.hp > 0);
     const annexed = g.mode !== 'campaign' && alive(g, loser) &&
       !g.stations.some(c => c.owner === loser) && !expeditionAfloat
       ? surrender(g, loser, u.side, s) : null;
