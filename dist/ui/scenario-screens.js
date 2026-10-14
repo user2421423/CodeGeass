@@ -28,6 +28,7 @@ const SCENARIO_KINDS = [
   ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
   ['eu-panama','Panama Campaign','30 cities · 2 sides'],
+  ['bf-malacca','Battle of the Strait of Malacca','54 cities · 2 sides'],
   ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
@@ -50,6 +51,10 @@ const SCENARIO_BLURBS = {
   'invasion-american-east-coast': {
     eu: 'Lead six offshore carrier groups against New England, New York, Chesapeake Bay, the Carolinas, Georgia and Florida. Seize every Britannian city.',
     britannia: 'Fortify industrial capitals and harbors, contest landing beaches, defend the Appalachian approaches and counterattack E.U. bridgeheads.'
+  },
+  'bf-malacca': {
+    britannia: 'Advance from southern Thailand while carrier task forces contest the narrow strait. Land on Sumatra, take Penang and Malacca, then storm Singapore and the island ports.',
+    cf: 'Hold both shores with fortified cities, coastal army reserves and strong fleets. Defend Penang, Port Klang, Medan, Dumai and Singapore; intercept Britannian amphibious landings.'
   },
   'eu-panama': {
     eu: 'Attack simultaneously from Caribbean and Pacific carrier groups. Open the canal, capture fortified ports, then sweep the isthmus.',
@@ -171,6 +176,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Both powers are at war from turn 1. Capturable ports and fortified coastal cities control inland supply and naval staging.',
     elite: 'Elite East Coast uses standard faction Elite Force rosters. Rival named commanders begin at Level 5; carriers remain conventional.',
     focus: {eu:'',britannia:'New York City'}
+  },
+  'bf-malacca': {
+    era:'Strait of Malacca · Alternate 2017',
+    intro:'Britannia advances from its Indochinese positions into the Strait of Malacca. Fight through 54 regional cities on the Malay Peninsula, eastern Sumatra and the Singapore approaches. Total city conquest; no turn limit.',
+    diplomacy:'Two hostile powers from turn one. The main sea channel is navigable, both shores have capturable ports and separate coastal land fronts. Seizing the strait denies an important Federation sea approach, but does not trigger a fictional global naval blockade.',
+    elite:'Standard Britannian and Chinese Federation Elite Forces replace eligible land formations. Enemy veteran commanders, production and technologies use established Elite rules; carriers remain conventional.',
+    focus:{britannia:'Phuket',cf:'Singapore'}
   },
   'eu-panama': {
     era:'Panama · Alternate 2017',
