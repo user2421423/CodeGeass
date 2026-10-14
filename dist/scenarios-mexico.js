@@ -270,7 +270,7 @@
       const at=nearest(g,p,valid,port?8:6);
       if(!at)throw Error('Unplaceable Mexico/Guatemala city: '+name);
       const actual=geo(at.c,at.r);
-      if(Math.hypot((actual.lon-lon)*.94,actual.lat-lat)>(port?.65:.4))
+      if(Math.hypot((actual.lon-lon)*.94,actual.lat-lat)>(port ? 0.55 : 0.4))
         throw Error('Geography drift at '+name);
       if(side==='cf'&&!guatemala(actual))throw Error('Staging town outside Guatemala: '+name);
       if(side==='britannia'&&guatemala(actual))throw Error('Mexican town misplaced: '+name);
