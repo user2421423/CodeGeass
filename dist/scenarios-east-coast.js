@@ -107,7 +107,6 @@
       return {c,r,owner:null,terrain:fraction===0?'sea':
         fraction===1?'coast':landscape(p)};
     });
-    const excludedLand=new Uint8Array(g.tiles.length);
     // GSHHG coastal samples have isolated inland lakes. Keep ocean only.
     const visited=new Set();let ocean=new Set();
     for(const start of g.tiles){
@@ -244,22 +243,9 @@
       g.units.splice(g.units.indexOf(u),1);
     }
     for(const ship of carriers)delete ship.pendingPassengers;
-    // Keep all four Atlantic, Cape and Indian Ocean invasion corridors navigable.
-    const depth=new Int16Array(g.tiles.length).fill(-1),q=[];
-    for(const t of g.tiles)if(t.terrain!=='sea'){
-      depth[t.r*COLS+t.c]=0;q.push(t);
-    }
-    for(let i=0;i<q.length;i++){
-      const t=q[i],d=depth[t.r*COLS+t.c];
-      if(d>=30)continue;
-      for(const n of E.adjacent(g,t)){
-        const j=n.r*COLS+n.c;
-        if(n.terrain==='sea'&&depth[j]===-1){depth[j]=d+1;q.push(n);}
-      }
-    }
-    for(const t of g.tiles)if(t.terrain==='sea'&&
-      (!ocean.has(E.key(t))||excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
-       depth[t.r*COLS+t.c]>30))t.terrain='offmap';
+    // Preserve the entire connected Atlantic and Gulf theatre for transatlantic
+    // carrier approaches. Only disconnected inland water is impassable.
+    for(const t of g.tiles)if(t.terrain==='sea'&&!ocean.has(E.key(t)))t.terrain='offmap';
     // No scripted Sakuradite site: standard research and refinery balance.
     for(const side of SIDES){
       const factor=side===player||!E.foe(g,side,player)?1:['challenge','elite'].includes(difficulty)?1.6:
