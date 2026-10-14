@@ -273,10 +273,10 @@
     });
     paintCanal(g);
     const caribbean=E.tile(g,locate(-79.99,9.72).c,locate(-79.99,9.72).r);
-    const pacific=E.tile(g,locate(-79.54,8.56).c,locate(-79.54,8.56).r);
-    if(caribbean.terrain!=='sea'||pacific.terrain!=='sea')throw Error('Panama canal sea mouths are blocked');
+    const pacificMouth=E.tile(g,locate(-79.54,8.56).c,locate(-79.54,8.56).r);
+    if(caribbean.terrain!=='sea'||pacificMouth.terrain!=='sea')throw Error('Panama canal sea mouths are blocked');
     const openWater=floodWater(g,caribbean);
-    if(!openWater.has(E.key(pacific)))throw Error('Atlantic and Pacific are not connected through the Panama Canal');
+    if(!openWater.has(E.key(pacificMouth)))throw Error('Atlantic and Pacific are not connected through the Panama Canal');
     const mainWater=t=>navigable(t)&&openWater.has(E.key(t));
     const cityKeys=new Set();
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
