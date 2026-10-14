@@ -244,7 +244,7 @@
     g.scenario={id:'cf-new-zealand',key:'newZealand',title:'Chinese Federation Invasion of New Zealand',
       version:1,phase:'federation-twin-island-offensive',aiDoctrine:'europe',
       groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,citylessFunding:['cf'],
-      airfields:[],islandNames:['Niihau','Kauai','Oahu','Molokai','Lanai','Maui','Kahoolawe','New Zealand']};
+      airfields:[],islandNames:['North Island','South Island','Stewart Island']};
     const elites=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,
       elites.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&E.ELITE_FORCES[id].availableTo.includes(side))]));
@@ -396,7 +396,7 @@
     }
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,g.units.reduce((n,u)=>n+
       (u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0)]));
-    E.log(g,'Chinese Federation launches four carrier-led invasions of the Britannian New Zealandan Islands. Capture every fortified base without a turn limit.',player);
+    E.log(g,'The Federation launches seven carrier-led invasions of both main islands while Britannia contests Cook Strait. Take every city without a turn limit.',player);
     return g;
   }
   // Let existing engine amphibious, pursuit, port, production and counterattack AI
