@@ -1,6 +1,42 @@
   // Normal Division of Japan: Britannia must screen both Kanto and western Honshu.
   // Unlike the other Japan scenarios, these defenders keep a local post while
   // the rest of the army can counterattack; a lost city releases its guards.
+  // Finale-specific layer doctrine: keep a small standing capital guard and
+  // divert local reserves to threatened approach cities. All remaining units
+  // are left with the normal multi-front AI to attack vulnerable spearheads
+  // and recapture Britannian staging cities. No scripted reinforcements.
+  function assignLuoyangGuards(g, side){
+    if(g.mode!=='scenario'||g.scenario?.id!=='battle-luoyang'||side!=='cf')
+      return {};
+    const enemy=g.units.filter(u=>u.side==='britannia'&&u.hp>0&&!isShip(u)),
+      own=g.units.filter(u=>u.side==='cf'&&u.hp>0&&!isShip(u)&&!atSea(g,u)),
+      reserved={},
+      posts=[
+        ['Luoyang',4,9],['Mengjin',3,8],['Yanshi',2,8],
+        ['Zhengzhou',3,8],['Gongyi',2,8],['Jiyuan',2,8],
+        ['Jiaozuo',2,8],['Kaifeng',2,8],['Xinxiang',2,8],
+        ['Sanmenxia',2,8],['Pingdingshan',2,8]
+      ];
+    for(const [name,quota,radius] of posts){
+      const s=g.stations.find(c=>c.name===name&&c.owner==='cf');
+      if(!s)continue; // A fallen city releases its guard into the offensive.
+      const nearby=enemy.filter(u=>dist(g,u,s)<=10);
+      if(name!=='Luoyang'&&!nearby.length&&g.turn>4)continue;
+      const urgency=nearby.some(u=>dist(g,u,s)<=4);
+      const candidates=own.filter(u=>!reserved[u.id]&&
+        dist(g,u,s)<=radius)
+        .sort((a,b)=>
+          dist(g,a,s)-dist(g,b,s)||
+          Number(!!a.cmd)-Number(!!b.cmd)||a.id-b.id);
+      // Unthreatened posts retain only a minimal watch. When attacked they
+      // request their full allocation, with battle losses naturally reducing
+      // that allocation rather than conjuring new units.
+      const required=urgency?quota:name==='Luoyang'?3:Math.min(1,quota);
+      for(const u of candidates.slice(0,required))
+        reserved[u.id]={c:s.c,r:s.r,id:s.id,emergency:urgency};
+    }
+    return reserved;
+  }
   function assignDivisionBritanniaGuards(g, side) {
     if (g.mode !== 'scenario' || g.scenario?.id !== 'division-japan' ||
         g.difficulty !== 'normal' || side !== 'britannia') return {};
@@ -26,6 +62,47 @@
           emergency: foes.some(f => dist(g, f, s) <= 4) };
     }
     return taken;
+  }
+  // Indochina is explicitly a defense-first theatre for Britannia. The
+  // normal multi-front AI otherwise launches every formation at Chinese cities
+  // and leaves Vinh, Vientiane and the mountain passes unprotected. Guard
+  // assignments expire when the threat recedes, releasing troops for a real
+  // counteroffensive. China reserves units only when its own cities are at risk.
+  function assignIndochinaGuards(g,side) {
+    if(g.mode!=='scenario'||g.scenario?.id!=='conquest-indochina')return {};
+    const own=g.units.filter(u=>u.hp>0&&u.side===side&&!atSea(g,u)&&
+      !isShip(u)&&!u.hold);
+    const foes=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&
+      u.side!=='neutral'&&!isShip(u));
+    const posts=side==='britannia'?(g.scenario.defensePosts||[]):[
+      ['Hanoi',1,7],['Nanning',1,7],['Kunming',1,7],
+      ['Luang Prabang',1,7],['Haiphong',1,7]
+    ];
+    const guards={};
+    // Prevent an AI fortress screen from swallowing the counterattack force.
+    const cap=Math.max(2,Math.floor(own.length*(side==='britannia'?0.28:0.14)));
+    let assigned=0;
+    for(const [name,openingNeed,radius] of posts) {
+      if(assigned>=cap)break;
+      const city=g.stations.find(s=>s.name===name&&s.owner===side);
+      if(!city)continue;
+      const nearby=foes.filter(u=>massOf(g,u)===massOf(g,city)&&
+        dist(g,u,city)<=10);
+      const opening=side==='britannia'&&g.turn<=4;
+      if(!nearby.length&&!opening)continue;
+      const urgent=nearby.some(u=>dist(g,u,city)<=5);
+      const need=Math.min(cap-assigned,urgent?Math.max(2,openingNeed):
+        opening?openingNeed:1);
+      const candidates=own.filter(u=>!guards[u.id]&&
+        massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=radius)
+        .sort((a,b)=>dist(g,a,city)-dist(g,b,city)||
+          Number(!!a.cmd)-Number(!!b.cmd)||a.id-b.id);
+      for(const u of candidates.slice(0,need)) {
+        guards[u.id]={c:city.c,r:city.r,id:city.id,emergency:urgent};
+        assigned++;
+      }
+    }
+    return guards;
   }
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
