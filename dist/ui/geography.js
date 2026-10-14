@@ -933,6 +933,7 @@ const GEOGRAPHY = (() => {
     const korea = g.scenario.id === 'invasion-korea';
     const middleEast = g.scenario.id === 'area-18';
     const iraqIran = g.scenario.id === 'britannia-iraq-iran';
+    const malacca = g.scenario.id === 'bf-malacca';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
     const urals = g.scenario.id === 'crossing-urals';
@@ -950,7 +951,7 @@ const GEOGRAPHY = (() => {
     const pendragon = g.scenario.id === 'eu-pendragon';
     const southChina = g.scenario.id === 'bf-south-china';
     const luoyang = g.scenario.id === 'battle-luoyang';
-    const centreSampledRegion = australia || middleEast || iraqIran || siberia || southernAfrica || urals || turkey ||
+    const centreSampledRegion = australia || middleEast || iraqIran || malacca || siberia || southernAfrica || urals || turkey ||
       brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea || southChina || yangtze || luoyang;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
