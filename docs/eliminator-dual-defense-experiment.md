@@ -48,7 +48,7 @@ Run eight matched wars, four in 2017 (45 turns) and four in 2018 (35 turns), eac
 | Mean weighted city value protected | 23.14% | 22.98% |
 | Mean simulation runtime | 65.14 s | 65.93 s |
 
-Across four matched 2017 wars and four matched 2018 wars, seven pairs had unchanged frontline protection; the only material frontline improvement occurred in 2018 seed 401 (1.90% → 3.90%) and 2017 seed 13579 also improved (16.28% → 17.19%), so six of eight were unchanged. No seed yielded additional real missile interceptions.
+Across four matched 2017 wars and four matched 2018 wars, six pairs had unchanged frontline protection. Two improved: 2018 seed 401 (1.90% → 3.90%) and 2017 seed 13579 (16.28% → 17.19%). No seed yielded additional real missile interceptions.
 
 **Interpretation:** Patrol paths appear to alter positional coverage in only a few wars; real field-warhead interception remains too rare for this tactic to demonstrate value. The main bottleneck is more likely the low rate of field-targeted launches, or too few deployable spare carriers near strike opportunities. The result does not prove which explanation dominates.
 
