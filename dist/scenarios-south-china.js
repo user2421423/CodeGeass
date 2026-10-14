@@ -238,12 +238,45 @@
         const at=nearest(g,locate(lon,lat),t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
           !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),13);
         if(!at)throw Error('Cannot deploy fleet '+name);
-        fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
+        const ship=E.newUnit(g,type,side,at.c,at.r);
+        if(side==='britannia'&&type==='carrier_battleship')ship.invasionGroup=name;
+        fleet.units.push(ship.id);
       }
       g.scenario.groups.push(fleet);
     }
     // The entire connected regional sea stays navigable for fleets.
+    // Load 24 assault formations across four independent carrier operations.
+    // Cargo stays in the regular Elite conversion pass before embarking.
+    const invasionLoads=[
+      ['Tonkin Carrier Command','assault',4],
+      ['Tonkin Carrier Command','rocket',2],
+      ['Hainan Carrier Command','heavy',4],
+      ['Hainan Carrier Command','assault',2],
+      ['Pearl Delta Carrier Command','heavy',4],
+      ['Pearl Delta Carrier Command','siege',2],
+      ['Eastern Carrier Command','assault',4],
+      ['Eastern Carrier Command','rocket',2]
+    ];
+    const carriers=g.units.filter(u=>u.side==='britannia'&&u.invasionGroup);
+    const passengers=[];
+    for(const [name,cls,count] of invasionLoads){
+      for(let i=0;i<count;i++){
+        const ship=carriers.find(v=>v.invasionGroup===name&&
+          (v.pendingPassengers||0)<E.TYPES[v.type].capacity);
+        if(!ship)throw Error('Insufficient carrier capacity in '+name);
+        ship.pendingPassengers=(ship.pendingPassengers||0)+1;
+        const u=E.newUnit(g,E.typeFor('britannia',cls,g),'britannia',
+          ship.c,ship.r,2);
+        passengers.push({ship,u});
+        group('britannia',name).units.push(u.id);
+      }
+    }
     if(difficulty==='elite')E.prepareEliteEurope(g);
+    for(const {ship,u} of passengers){
+      (ship.cargo||=[]).push(u);
+      g.units.splice(g.units.indexOf(u),1);
+    }
+    for(const ship of carriers)delete ship.pendingPassengers;
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
@@ -257,10 +290,12 @@
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
-        for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
+        for(const [i,u] of g.units.flatMap(v=>[v,...(v.cargo||[])])
+          .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship').entries())
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
-    g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
+    g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
+      n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
     E.log(g,'Britannian Army Groups advance out of Indochina into Guangxi and Yunnan while four carrier commands threaten the Federation coastal industrial belt.',player);
     return g;
   }
