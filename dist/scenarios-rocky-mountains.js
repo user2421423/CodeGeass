@@ -19,6 +19,8 @@
  *    For full relief, render g.scenario.reliefPolygons/roads/rivers/lakes using
  *    this region's WGS84 transform, or replace approximate relief polygons
  *    with georeferenced USGS 3DEP / equivalent DEM-derived hypsometry.
+ *    The module exports paintRelief(ctx,g,{R,SQ,left,right,top,bottom})
+ *    for the integrator to call after geographic ownership fill.
  *    Current relief features are geographic control-point approximations,
  *    not a claim that genuine DEM has been embedded.
  * 4. In dist/engine.js prepareEliteEurope() allowlists (both lists near the
@@ -1569,12 +1571,23 @@ function landscape(p,c,r){
  if(p.lon<-112.4&&p.lat<42.8)return 'desert';
  return 'plains';
 }
-function nearest(g,p,valid,radius=19){let best=null,d=Infinity;
- for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
- for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-  const t=E.tile(g,c,r);if(!t||!valid(t))continue;
-  const n=E.distance(p,t,g);if(n<d){d=n;best=t;}
- }return best;}
+function nearest(g,p,valid,radius=19){
+ const origin=E.tile(g,p.c,p.r);
+ if(origin&&valid(origin))return origin;
+ // Expand one square ring at a time. Avoid scanning every tile in a full
+ // 39x39 box for each of the hundreds of deployed starting detachments.
+ for(let ring=1;ring<=radius;ring++){
+  let best=null,dist=Infinity;
+  for(let r=Math.max(0,p.r-ring);r<=Math.min(g.rows-1,p.r+ring);r++)
+   for(let c=Math.max(0,p.c-ring);c<=Math.min(g.cols-1,p.c+ring);c++){
+    if(Math.max(Math.abs(r-p.r),Math.abs(c-p.c))!==ring)continue;
+    const t=E.tile(g,c,r);if(!t||!valid(t))continue;
+    const n=E.distance(p,t,g);if(n<dist){best=t;dist=n;}
+   }
+  if(best)return best;
+ }
+ return null;
+}
 function orderGroup(g,id,target){
  if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
  const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
@@ -1732,11 +1745,48 @@ function winner(g){
    'Europia United has captured every Rocky Mountain city and opened the eastern approach to the final Battle of Pendragon.':
    'Britannia has destroyed the E.U. offensive and reclaimed every eastern staging city.'};
  return null;}
+// Visual-only WGS84 relief data renderer. The integrator invokes this from
+// paintJapan() using the shared renderer's R/SQ constants after faction tint.
+// Mountain outlines are approximations, not DEM-derived elevation contours.
+function paintRelief(ctx,g,{R,SQ,left,right,top,bottom}){
+ if(g.scenario?.id!==ID)return;
+ const sx=SQ*R*g.cols/(BOUNDS.east-BOUNDS.west);
+ const sy=1.5*R*g.rows/(BOUNDS.north-BOUNDS.south);
+ const xy=([lon,lat])=>[R-SQ*R*.5+(lon-BOUNDS.west)*sx,
+  R-.75*R+(BOUNDS.north-lat)*sy];
+ function path(poly){ctx.beginPath();poly.forEach((point,i)=>{
+  const [x,y]=xy(point);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+ });ctx.closePath();}
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(const [,poly,kind] of BASINS){
+  ctx.fillStyle=kind==='desert'?'rgba(207,171,110,0.35)':'rgba(153,176,126,0.18)';
+  path(poly);ctx.fill();
+ }
+ // Separate actual named mountain massifs, instead of uniform diagonal strips.
+ for(const [,poly] of MASSIFS){
+  ctx.fillStyle='rgba(112,101,85,0.42)';path(poly);ctx.fill();
+  ctx.strokeStyle='rgba(221,208,176,0.28)';ctx.lineWidth=Math.max(.7,R*.11);
+  ctx.stroke();
+ }
+ for(const [,poly] of LAKES){
+  ctx.fillStyle='#245b75';path(poly);ctx.fill();
+  ctx.strokeStyle='rgba(173,218,228,0.7)';ctx.lineWidth=Math.max(.8,R*.1);
+  ctx.stroke();
+ }
+ ctx.globalAlpha=.65;ctx.lineJoin='round';ctx.lineCap='round';
+ ctx.strokeStyle='#5bb4c8';ctx.lineWidth=Math.max(1.1,R*.18);
+ for(const line of Object.values(RIVERS)){
+  ctx.beginPath();line.forEach((point,i)=>{
+   const [x,y]=xy(point);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+  });ctx.stroke();
+ }
+ ctx.restore();
+}
 const api={id:ID,key:'rockyMountains',title:'Crossing the Rocky Mountains',
  cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,projection:PROJECTION,
  cityData:CITIES,armyGroups:FORMATIONS,operationalAxes:OPERATIONAL_AXES,
  mountainPasses:PASSES,reliefPolygons:MASSIFS,lakes:LAKES,rivers:RIVERS,roads:ROADS,
- create,onTurn,objective,winner,strategicScore,orderGroup,geo,locate};
+ create,onTurn,objective,winner,strategicScore,orderGroup,paintRelief,geo,locate};
 E.scenarios={...(E.scenarios||{}),rockyMountains:api,
  byId:{...(E.scenarios?.byId||{}),[ID]:api}};
 if(typeof module!=='undefined')module.exports=api;
