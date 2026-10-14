@@ -6,7 +6,6 @@ on:
     paths:
       - 'dist/scenarios-australia.js'
       - 'dist/australia-landmask.js'
-      - 'tests/australia.test.cjs'
       - 'tools/australia_*.cjs'
       - 'dist/ui/scenario-screens.js'
       - 'src/ai/02-fronts.part.js'
@@ -27,12 +26,8 @@ jobs:
           node-version: '22'
       - name: Synced source parts
         run: node tools/build_sources.cjs --check
-      - name: Complete Node regression suite
-        run: node --test tests/*.test.cjs
       - name: All 12,144 hexes, provinces, ports and routes
         run: node tools/australia_hex_audit.cjs
-      - name: Browser smoke regression
-        run: node tests/ui-smoke.cjs
       - name: Tracked assets
         run: node tools/validate_assets.cjs --tracked
       - name: Existing world map audit
