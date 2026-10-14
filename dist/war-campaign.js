@@ -48,7 +48,7 @@
       ['urals','Crossing the Urals',null,'The Urals',[62,58],[52,50,72,67],'Break the mountain frontier into European Russia.'],
       ['turkey','Invasion of Turkey',null,'Anatolia',[35,39],[26,35,45,43],'Push through Anatolia toward the European front.'],
     ]],
-    [5,[['western-russia','Invasion of St. Petersburg and Moscow',null,'Western Russia',[35,57],[28,54,43,63],'Capture the twin centers of Russian resistance and establish Euro Britannia.']]],
+    [5,[['western-russia','Invasion of St. Petersburg and Moscow','britannia-western-russia','Western Russia',[37,57],[27,51.5,52,63.25],'Capture the twin centers of Russian resistance and establish Euro Britannia.']]],
     [6,[['european-war','European War','european-war','Central Europe',[14,50],[-2,44,31,56],'Take command of Euro Britannia in its existing regional war against the E.U.']]],
     [7,[['stonehenge','Operation Stonehenge','operation-stonehenge','Western Europe',[-2,49],[-11,36,10,59],'Lead the final Britannian carrier invasion of western Europe.']]],
   ];
@@ -56,6 +56,9 @@
   // otherwise tint substantial unrelated territory. The GSHHG atlas continues
   // to supply the authoritative coastlines and underlying land geometry.
   const REGION_POLYGONS=Object.freeze({
+    'britannia-western-russia': [[27.1,57.6],[28,58.3],[28,59.5],[29.2,60.1],
+      [30,60.6],[31.8,61.5],[33.0,63.25],[52,63.25],[52,51.5],
+      [35.5,51.5],[32,53.1],[30.6,55.2],[27.1,57.6]],
     'eu-brazil': [[-73,-8],[-69,-10],[-66,-12],[-62,-16],[-58,-21],
       [-57,-26],[-53,-33],[-48,-30],[-45,-25],[-40,-22],[-35,-9],
       [-35,-5],[-44,-2],[-50,1],[-52,4],[-61,5],[-66,2],[-69,-1]],
