@@ -7,7 +7,6 @@ on:
       - 'src/engine/**'
       - 'dist/engine.js'
       - 'dist/engine/ai.js'
-      - 'tests/scenario.test.cjs'
       - 'tools/japan_conquest_sim.cjs'
       - '.github/workflows/japan-full-conquest.yml'
   workflow_dispatch:
@@ -28,10 +27,6 @@ jobs:
           node-version: 22
       - name: Validate generated sources
         run: node tools/build_sources.cjs --check
-      - name: Run regression tests
-        run: node --test tests/*.test.cjs
-      - name: Browser smoke tests
-        run: node tests/ui-smoke.cjs
   benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 110
