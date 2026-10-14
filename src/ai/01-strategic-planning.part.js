@@ -46,7 +46,11 @@
         recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
           g.scenario?.id === 'philippines-invasion';
       memo[side] = { turn: g.turn, doctrine,
-        guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
+        guards: scenario ? (g.scenario?.id === 'conquest-indochina'
+          ? assignIndochinaGuards(g, side)
+          : g.scenario?.id === 'battle-luoyang' && side === 'cf'
+            ? assignLuoyangGuards(g, side) : assignDivisionBritanniaGuards(g, side))
+          : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
       else if (scenario) planScenarioOffense(g, side, memo[side]);

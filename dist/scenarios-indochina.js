@@ -1,19 +1,64 @@
-/* The Conquest of Indochina — alternate-2017 Chinese southward invasion of Britannian Southeast Asia.
-   120 × 104 regional theatre, GSHHS landmask, standard combat and conquest victory. */
+/* Defense of Indochina — Britannia holds the Southeast Asian frontier against
+   China's three-pronged invasion, then counterattacks into Federation territory.
+   Reuses the original conquest-indochina ID, 120 × 104 GSHHS-derived shoreline,
+   independent capturable ports and total-city conquest victory. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
   const COLS=120,ROWS=104,SIDES=['britannia','cf'];
   const BOUNDS={west:96.2,east:117.2,north:27,south:7.5};
   const K=Math.cos(17.25*Math.PI/180);
-  const PROJECTION={centerLon:106.7,centerLat:17.25,angle:0,uMin:-10.5*K,uMax:10.5*K,vMin:-9.75,vMax:9.75};
+  const DLON=(BOUNDS.east-BOUNDS.west)/COLS,DLAT=(BOUNDS.north-BOUNDS.south)/ROWS;
+  // Match geo()/locate(): each tactical hex samples the centre of its
+  // geographic cell. The regional vector underlay must use these identical
+  // half-cell bounds (including the odd-row hex offset), not viewport edges.
+  // The shared renderer currently uses hex-filled geography for this ID;
+  // integration must switch it to the centre-sampled atlas transform.
+  const PROJECTION={centerLon:106.7,centerLat:17.25,angle:0,
+    uMin:(BOUNDS.west+DLON/2-106.7)*K,uMax:(BOUNDS.east-DLON/2-106.7)*K,
+    vMin:BOUNDS.south+DLAT/2-17.25,vMax:BOUNDS.north-DLAT/2-17.25};
   // Land formations and factories are alternate history; city coordinates reflect real settlements.
   // China's superior land strength counters Britannia's deep coastal economy and carrier fleet.
-  const CITIES=[["Guangzhou",113.26,23.13,"cf",3,true],["Nanning",108.32,22.82,"cf",3,true],["Kunming",102.83,25.04,"cf",3,true],["Liuzhou",109.41,24.33,"cf",2],["Beihai",109.12,21.48,"cf",2],["Fangchenggang",108.35,21.62,"cf",2],["Baise",106.62,23.9,"cf",2],["Wenshan",104.24,23.37,"cf",2],["Mengzi",103.39,23.37,"cf",2],["Jinghong",100.8,22.01,"cf",1],["Hanoi",105.83,21.03,"cf",3,true],["Haiphong",106.68,20.86,"cf",2,true],["Lao Cai",103.97,22.49,"cf",2],["Lang Son",106.76,21.85,"cf",2],["Cao Bang",106.25,22.66,"cf",1],["Dien Bien Phu",103.02,21.39,"cf",2],["Phongsali",102.1,21.68,"cf",1],["Luang Prabang",102.13,19.89,"cf",2],["Haikou",110.35,20.02,"cf",2],["Sanya",109.51,18.25,"cf",2],["Vinh",105.69,18.68,"britannia",2,true],["Dong Hoi",106.6,17.46,"britannia",2],["Hue",107.59,16.46,"britannia",2,true],["Da Nang",108.22,16.05,"britannia",3,true],["Quy Nhon",109.22,13.78,"britannia",2],["Nha Trang",109.2,12.24,"britannia",2],["Da Lat",108.44,11.94,"britannia",2],["Ho Chi Minh City",106.7,10.82,"britannia",3,true],["Can Tho",105.78,10.04,"britannia",2],["Vientiane",102.62,17.97,"britannia",3,true],["Thakhek",104.83,17.4,"britannia",2],["Savannakhet",104.75,16.55,"britannia",2],["Pakse",105.78,15.12,"britannia",2],["Phnom Penh",104.92,11.56,"britannia",3,true],["Siem Reap",103.86,13.36,"britannia",2],["Battambang",103.2,13.1,"britannia",2],["Sihanoukville",103.5,10.63,"britannia",2],["Bangkok",100.5,13.75,"britannia",3,true],["Chiang Mai",98.99,18.79,"britannia",2],["Chiang Rai",99.83,19.91,"britannia",2],["Khon Kaen",102.83,16.43,"britannia",2],["Udon Thani",102.79,17.41,"britannia",2],["Nakhon Ratchasima",102.1,14.97,"britannia",2],["Trat",102.51,12.24,"britannia",1]];
-  const ARMY_GROUPS=[["cf","Nanning","heavy",5,"xingke"],["cf","Nanning","assault",4,"cao"],["cf","Nanning","rocket",3,"honggu"],["cf","Hanoi","medium",5,"xianglin"],["cf","Hanoi","assault",4,"chengzhong"],["cf","Hanoi","siege",3],["cf","Haiphong","assault",2],["cf","Lang Son","medium",4],["cf","Lao Cai","medium",2],["cf","Dien Bien Phu","heavy",4,"ren"],["cf","Dien Bien Phu","light",4],["cf","Luang Prabang","assault",5,"chaojielun"],["cf","Phongsali","scout",3],["cf","Kunming","heavy",4],["cf","Kunming","rocket",2],["cf","Wenshan","medium",5],["cf","Mengzi","support",2],["cf","Baise","raider",2],["cf","Guangzhou","medium",2],["britannia","Vinh","heavy",4,"cornelia"],["britannia","Vinh","rocket",2,"cecile"],["britannia","Vinh","assault",2],["britannia","Dong Hoi","medium",3,"guilford"],["britannia","Hue","heavy",3,"darlton"],["britannia","Hue","support",2],["britannia","Da Nang","assault",3,"suzaku"],["britannia","Da Nang","rocket",2],["britannia","Vientiane","heavy",4,"bismarck"],["britannia","Vientiane","medium",2],["britannia","Thakhek","medium",3,"villetta"],["britannia","Savannakhet","assault",2],["britannia","Chiang Mai","medium",3,"oldrin"],["britannia","Chiang Rai","scout",2],["britannia","Khon Kaen","medium",2],["britannia","Udon Thani","light",2],["britannia","Bangkok","heavy",3,"jeremiah"],["britannia","Bangkok","rocket",2],["britannia","Phnom Penh","medium",3],["britannia","Ho Chi Minh City","heavy",2,"kewell"],["britannia","Nha Trang","light",2]];
+  const CITIES=[["Guangzhou",113.26,23.13,"cf",3,true],["Nanning",108.32,22.82,"cf",3,true],["Kunming",102.83,25.04,"cf",3,true],["Liuzhou",109.41,24.33,"cf",2],["Beihai",109.12,21.48,"cf",2],["Fangchenggang",108.35,21.62,"cf",2],["Baise",106.62,23.9,"cf",2],["Wenshan",104.24,23.37,"cf",2],["Mengzi",103.39,23.37,"cf",2],["Jinghong",100.8,22.01,"cf",1],["Hanoi",105.83,21.03,"cf",3,true],["Haiphong",106.68,20.86,"cf",2,true],["Lao Cai",103.97,22.49,"cf",2],["Lang Son",106.76,21.85,"cf",2],["Cao Bang",106.25,22.66,"cf",1],["Dien Bien Phu",103.02,21.39,"cf",2],["Phongsali",102.1,21.68,"cf",1],["Luang Prabang",102.13,19.89,"cf",2],["Haikou",110.35,20.02,"cf",2],["Sanya",109.51,18.25,"cf",2],["Vinh",105.69,18.68,"britannia",2,true],["Dong Hoi",106.6,17.46,"britannia",2,true],["Hue",107.59,16.46,"britannia",2,true],["Da Nang",108.22,16.05,"britannia",3,true],["Quy Nhon",109.22,13.78,"britannia",2],["Nha Trang",109.2,12.24,"britannia",2],["Da Lat",108.44,11.94,"britannia",2],["Ho Chi Minh City",106.7,10.82,"britannia",3,true],["Can Tho",105.78,10.04,"britannia",2],["Vientiane",102.62,17.97,"britannia",3,true],["Thakhek",104.83,17.4,"britannia",2,true],["Savannakhet",104.75,16.55,"britannia",2,true],["Pakse",105.78,15.12,"britannia",2],["Phnom Penh",104.92,11.56,"britannia",3,true],["Siem Reap",103.86,13.36,"britannia",2],["Battambang",103.2,13.1,"britannia",2],["Sihanoukville",103.5,10.63,"britannia",2],["Bangkok",100.5,13.75,"britannia",3,true],["Chiang Mai",98.99,18.79,"britannia",2,true],["Chiang Rai",99.83,19.91,"britannia",2],["Khon Kaen",102.83,16.43,"britannia",2,true],["Udon Thani",102.79,17.41,"britannia",2],["Nakhon Ratchasima",102.1,14.97,"britannia",2],["Trat",102.51,12.24,"britannia",1]];
+  const ARMY_GROUPS=[["cf","Nanning","heavy",5,"xingke"],["cf","Nanning","assault",4,"cao"],["cf","Nanning","rocket",3,"honggu"],["cf","Hanoi","medium",5,"xianglin"],["cf","Hanoi","assault",4,"chengzhong"],["cf","Hanoi","siege",3],["cf","Haiphong","assault",2],["cf","Lang Son","medium",4],["cf","Lao Cai","medium",2],["cf","Dien Bien Phu","heavy",4,"ren"],["cf","Dien Bien Phu","light",4],["cf","Luang Prabang","assault",5,"chaojielun"],["cf","Phongsali","scout",3],["cf","Kunming","heavy",4],["cf","Kunming","rocket",2],["cf","Wenshan","medium",5],["cf","Mengzi","support",2],["cf","Baise","raider",2],["cf","Guangzhou","medium",2],["britannia","Vinh","heavy",4,"cornelia"],["britannia","Vinh","rocket",2,"cecile"],["britannia","Vinh","assault",2],["britannia","Dong Hoi","medium",3,"guilford"],["britannia","Hue","heavy",3,"darlton"],["britannia","Hue","support",2],["britannia","Da Nang","assault",3,"suzaku"],["britannia","Da Nang","rocket",2],["britannia","Vientiane","heavy",4,"bismarck"],["britannia","Vientiane","medium",2],["britannia","Thakhek","medium",3,"villetta"],["britannia","Savannakhet","assault",2],["britannia","Chiang Mai","medium",3,"oldrin"],["britannia","Chiang Rai","scout",2],["britannia","Khon Kaen","medium",2],["britannia","Udon Thani","light",2],["britannia","Bangkok","heavy",3,"jeremiah"],["britannia","Bangkok","rocket",2],["britannia","Phnom Penh","medium",3],["britannia","Ho Chi Minh City","heavy",2,"kewell"],["britannia","Nha Trang","light",2],
+    // Federation breakthroughs are built around three supported operational axes.
+    ["cf","Hanoi","heavy",2],["cf","Hanoi","rocket",2],
+    ["cf","Nanning","assault",2],["cf","Dien Bien Phu","siege",2],
+    ["cf","Luang Prabang","rocket",2],["cf","Kunming","medium",2],
+    // Britannian forward lines, defended passes, and mobile second-echelon reserves.
+    ["britannia","Vinh","medium",2],["britannia","Dong Hoi","heavy",2],
+    ["britannia","Hue","rocket",2],["britannia","Da Nang","heavy",2],
+    ["britannia","Vientiane","rocket",2],["britannia","Thakhek","heavy",2],
+    ["britannia","Savannakhet","heavy",3],["britannia","Chiang Mai","rocket",2],
+    ["britannia","Nakhon Ratchasima","heavy",3],
+    ["britannia","Phnom Penh","rocket",2]];
   const PORTS={"Beihai":2,"Fangchenggang":2,"Haiphong":3,"Haikou":2,"Sanya":2,"Dong Hoi":1,"Da Nang":3,"Quy Nhon":2,"Nha Trang":2,"Ho Chi Minh City":3,"Sihanoukville":2,"Bangkok":3,"Trat":1};
   const FLEETS=[["britannia","Da Nang","carrier_battleship",2],["britannia","Ho Chi Minh City","carrier_battleship",2],["britannia","Sihanoukville","carrier_battleship",1],["britannia","Bangkok","carrier_battleship",1],["britannia","Nha Trang","carrier_battleship",1],["britannia","Da Nang","portman_ii",3],["britannia","Ho Chi Minh City","portman_ii",3],["britannia","Bangkok","portman",2],["britannia","Quy Nhon","portman",2],["cf","Haiphong","cf_carrier",1],["cf","Beihai","cf_carrier",1],["cf","Haikou","cf_carrier",1],["cf","Haiphong","shui_gun_ru_ii",2],["cf","Sanya","shui_gun_ru",2]];
-  const FUNDING={"britannia":{"credits":560,"industry":300,"science":56,"sakuradite":26},"cf":{"credits":610,"industry":345,"science":58,"sakuradite":25}};
+  // Named axes are tactical preferences, not scripted attacks or extra movement.
+  // AI only applies them to already reachable enemy objectives; captured targets
+  // fall out of the sequence, enabling coordinated exploitation.
+  const OFFENSIVE_AXES={cf:{
+    'Red River':['Vinh','Dong Hoi','Hue','Da Nang','Quy Nhon','Nha Trang','Ho Chi Minh City'],
+    'Mekong Valley':['Vientiane','Thakhek','Savannakhet','Pakse','Phnom Penh','Can Tho'],
+    'Thai Highlands':['Chiang Rai','Chiang Mai','Udon Thani','Khon Kaen','Nakhon Ratchasima','Bangkok']
+  }};
+  const CF_ORIGIN_AXIS={
+    Nanning:'Red River',Hanoi:'Red River',Haiphong:'Red River',
+    'Lang Son':'Red River','Cao Bang':'Red River',Wenshan:'Red River',
+    Guangzhou:'Red River',Baise:'Red River','Lao Cai':'Red River',
+    Kunming:'Thai Highlands',Mengzi:'Thai Highlands',Jinghong:'Thai Highlands',
+    'Dien Bien Phu':'Mekong Valley',Phongsali:'Mekong Valley',
+    'Luang Prabang':'Mekong Valley'
+  };
+  // A small AI city screen is released as the danger moves away; these
+  // are not permanently immobile formations or a limit on counterattacks.
+  const DEFENSE_POSTS=[
+    ['Vinh',2,8],['Vientiane',2,8],['Dong Hoi',1,7],
+    ['Hue',1,7],['Da Nang',1,7],['Thakhek',1,7],
+    ['Savannakhet',1,7],['Chiang Mai',1,7],['Khon Kaen',1,7]
+  ];
+  const FUNDING={"britannia":{"credits":600,"industry":320,"science":56,"sakuradite":26},
+    "cf":{"credits":630,"industry":355,"science":58,"sakuradite":25}};
   function geo(c,r){
     return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*(BOUNDS.east-BOUNDS.west)/COLS,
       lat:BOUNDS.north-(r+.5)*(BOUNDS.north-BOUNDS.south)/ROWS};
@@ -79,7 +124,9 @@
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
     g.scenario={id:'conquest-indochina',key:'indochina',title:'The Conquest of Indochina',
-      phase:'southward-invasion',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,
+      phase:'southward-invasion',aiDoctrine:'europe',groups:[],funding:{},
+      offensiveAxes:OFFENSIVE_AXES,defensePosts:DEFENSE_POSTS,
+      bounds:BOUNDS,projection:PROJECTION,
       rivers:{Mekong:[[100.3,21.3],[101.8,19.9],[102.7,18.1],[104.7,16.6],[105.1,15.5],[105.8,13.8],[105.1,11.6],[106.6,10.1]],Red:[[103.8,22.4],[104.8,21.6],[105.9,21],[106.8,20.8]]}};
     // Both sides use their own established faction Elite Force rosters.
     // Other scenarios, global HQ and Conquest remain unchanged.
@@ -105,12 +152,28 @@
     });
     for(const t of g.tiles)if(t.terrain!=='sea'&&
       E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+    // Separate open ocean from isolated inland water in the authoritative
+    // shoreline mask. Shipyards and starting fleets use this sea basin only.
+    const visitedSea=new Set();
+    let openSea=new Set();
+    for(const start of g.tiles){
+      if(start.terrain!=='sea'||visitedSea.has(E.key(start)))continue;
+      const queue=[start],component=new Set([E.key(start)]);
+      visitedSea.add(E.key(start));
+      for(let i=0;i<queue.length;i++)for(const n of E.adjacent(g,queue[i])){
+        const key=E.key(n);
+        if(n.terrain!=='sea'||visitedSea.has(key))continue;
+        visitedSea.add(key);component.add(key);queue.push(n);
+      }
+      if(component.size>openSea.size)openSea=component;
+    }
+    if(!openSea.size)throw Error('Indochina navigable sea is disconnected');
+    const navigable=t=>t.terrain==='sea'&&openSea.has(E.key(t));
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
-      // Harbour cities must have an adjacent sea hex: preserve actual port
-      // accessibility rather than linking city and shipyard across two hexes.
-      const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
+      // Cities stay at the nearest actual land hex to their coordinates.
+      // PortAt is a separately captured coastal tile: inland Bangkok and
+      // Ho Chi Minh City must not be teleported to a beach to get a harbour.
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
-        (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Indochina city '+name);
       const capital=name==='Bangkok'||name==='Nanning';
@@ -173,16 +236,16 @@
         const stack=i===0?3:2;
         const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,stack,cmd);
         group(side,name).units.push(u.id);
+        if(side==='cf')u.invasionGroup=CF_ORIGIN_AXIS[name]||null;
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
       }
     }
     const taken=new Set();
     for(const [name,level] of Object.entries(PORTS)){
       const s=g.stations.find(v=>v.name===name);
-      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!taken.has(E.key(t)))
-        .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
-          E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
-      if(!at)throw Error('Cannot place naval port '+name);
+      const at=nearest(g,s,t=>navigable(t)&&!taken.has(E.key(t))&&
+        E.adjacent(g,t).some(n=>n.terrain!=='sea'),14);
+      if(!at)throw Error('No open-sea coastal port near '+name);
       s.portAt={c:at.c,r:at.r};s.portLevel=level;s.portOwner=s.owner;
       taken.add(E.key(at));
     }
@@ -192,8 +255,8 @@
       const fleet={id:'fleet-'+g.scenario.groups.length,side,
         name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
-          !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),10);
+        const at=nearest(g,s.portAt||s,t=>navigable(t)&&!E.unitAt(g,t)&&
+          !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),12);
         if(!at)throw Error('Cannot deploy navy at '+name);
         fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
       }
@@ -218,7 +281,9 @@
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
-    E.log(g,'The Chinese Federation pushes south along the Red River and Lao mountain passes. Britannia commands the coast and southern plains.',player);
+    E.log(g,player==='cf'
+      ? 'The Federation advances on the Red River, Mekong and northern Thai axes. Coordinate your Army Groups, overcome Britannian reserves and capture every enemy city.'
+      : 'The Federation attacks on the Red River, Mekong and northern Thai axes. Britannia must hold its layered frontier, concentrate reserves, then take every Chinese city.',player);
     return g;
   }
   function onTurn(){return false;}
@@ -226,8 +291,10 @@
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
   function objective(g,side=g.player){
-    return 'Conquer all '+CITIES.length+' Indochina theatre cities ('+
-      g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).';
+    const controlled=g.stations.filter(s=>s.owner===side).length;
+    return (side==='britannia'?'Defend Southeast Asia, then counterattack: ':
+      'Break the Britannian frontier: ')+
+      'control every Indochina theatre city ('+controlled+'/'+CITIES.length+').';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='conquest-indochina'||

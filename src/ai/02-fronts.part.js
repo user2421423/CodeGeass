@@ -158,7 +158,23 @@
     }
     // Scenario columns prioritize actual travel time. Canada's route bias
     // acts only after geography has established a reachable destination.
-    return canadaOperationalCost(g,u,f,Math.max(0, turns));
+    const cost=canadaOperationalCost(g,u,f,Math.max(0, turns));
+    return indochinaOperationalCost(g,u,f,cost);
+  }
+  // A route bias, not scripted movement: the Federation's three armies favor
+  // their next unclaimed city only after the normal planner finds a real path.
+  // They can still exploit another open approach if terrain blocks their axis.
+  function indochinaOperationalCost(g,u,f,turns) {
+    if(g.scenario?.id!=='conquest-indochina'||u.side!=='cf'||
+       !Number.isFinite(turns))return turns;
+    const axis=g.scenario.offensiveAxes?.cf?.[u.invasionGroup];
+    if(!axis?.length)return turns;
+    const remaining=axis.filter(name=>g.stations.some(s=>s.name===name&&
+      foe(g,s.owner,u.side)));
+    if(!remaining.length)return turns;
+    const index=remaining.indexOf(f.anchor.name);
+    if(index<0)return turns+0.8;
+    return Math.max(0,turns-(index===0?2.6:index===1?1.5:0.5));
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
@@ -494,6 +510,33 @@
           list.push({ key: 'd' + s.id, c: s.c, r: s.r, name: s.name, defend: true, city: true,
             immediate: w.immediate, projected: !w.immediate && w.projected,
             vital, value: vital ? 100 : 20, seed: vital ? -6 : -2 });
+      }
+    }
+    // Yangtze only: when Britannian land units cross to the NORTH bank,
+    // activate existing emergency defensive fronts around nearby crossings.
+    // Southern staging forces already trigger the normal projected warning.
+    if (g.scenario?.id === 'bf-yangtze' && side === 'cf' &&
+        g.scenario.bridges?.length && g.scenario.rivers?.Yangtze) {
+      const river = g.scenario.rivers.Yangtze, b = g.scenario.bounds;
+      const riverLat = lon => {
+        for (let i=1; i<river.length; i++) {
+          const a=river[i-1], end=river[i];
+          if(lon<=end[0]){
+            const f=Math.max(0,Math.min(1,(lon-a[0])/(end[0]-a[0])));
+            return a[1]+f*(end[1]-a[1]);
+          }
+        }
+        return river[river.length-1][1];
+      };
+      const landed = foes.filter(u => u.side === 'britannia' &&
+        !isShip(u) && !atSea(g,u) &&
+        b.north-(u.r+.5)*(b.north-b.south)/g.rows >
+          riverLat(b.west+(u.c+.5+.5*(u.r&1))*(b.east-b.west)/g.cols)+0.04);
+      for(const [i,bridge] of g.scenario.bridges.entries()){
+        if(!landed.some(u=>dist(g,u,bridge)<=9))continue;
+        list.push({key:'yangtze-bridgehead-'+i,c:bridge.c,r:bridge.r,
+          name:bridge.name,defend:true,city:false,immediate:true,
+          projected:false,vital:true,value:100,seed:-8});
       }
     }
     for (const d of g.sites || []) {

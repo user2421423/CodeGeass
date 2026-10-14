@@ -1,12 +1,12 @@
-/* Invasion of California — Europia United's northern and Pacific offensives.
-   GSHHS intermediate coastal polygons sampled at 20–80% land coverage on a
-   160 × 120 geographic hex grid. Oregon is the northern E.U. staging area.
+/* Invasion of California — Chinese Federation offensive from Oregon and the Pacific.
+   Existing GSHHS intermediate coastal polygons retain the 20–80% land rule on
+   the original 160 × 120 WGS84 hex grid. Oregon is the Federation staging area.
    Californian cities, defended independent ports, mountain passes and
    offshore transports form a self-contained, no-turn-limit scenario. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
-  const COLS=160,ROWS=120,SIDES=['eu','britannia'];
+  const COLS=160,ROWS=120,SIDES=['cf','britannia'];
   const BOUNDS={west:-127,east:-112,north:45,south:31.5};
   const K=Math.cos(38.25*Math.PI/180);
   const PROJECTION={centerLon:-119.5,centerLat:38.25,angle:0,uMin:-7.5*K,uMax:7.5*K,vMin:-6.75,vMax:6.75};
@@ -25,11 +25,93 @@
   if(COAST_ROWS.length!==ROWS)throw Error('Incomplete California coastline');
   function coastCoverageClass(c,r){return COAST_ROWS[r][c];}
   // [name, WGS84 longitude, latitude, controller, settlement tier, fortified]
-  const CITIES=[["Eugene",-123.09,44.05,"eu",3,true],["Roseburg",-123.34,43.22,"eu",2,false],["Coos Bay",-124.22,43.37,"eu",2,true],["Newport",-124.05,44.64,"eu",2,true],["Florence",-124.1,43.98,"eu",2,true],["Medford",-122.88,42.33,"eu",3,true],["Ashland",-122.71,42.19,"eu",2,false],["Grants Pass",-123.33,42.44,"eu",2,false],["Brookings",-124.29,42.06,"eu",2,true],["Klamath Falls",-121.78,42.22,"eu",3,true],["Bend",-121.32,44.06,"eu",2,false],["Lakeview",-120.35,42.19,"eu",2,false],["Crescent City",-124.2,41.75,"britannia",2,true],["Eureka",-124.16,40.8,"britannia",3,true],["Arcata",-124.08,40.87,"britannia",2,false],["Redding",-122.39,40.59,"britannia",3,true],["Mount Shasta",-122.31,41.31,"britannia",2,true],["Yreka",-122.64,41.73,"britannia",2,false],["Chico",-121.84,39.73,"britannia",2,false],["Fort Bragg",-123.81,39.45,"britannia",2,true],["Ukiah",-123.21,39.15,"britannia",2,false],["Santa Rosa",-122.71,38.44,"britannia",3,true],["Napa",-122.29,38.3,"britannia",2,false],["Vallejo",-122.26,38.1,"britannia",2,true],["Sacramento",-121.49,38.58,"britannia",3,true],["Davis",-121.74,38.54,"britannia",2,false],["Stockton",-121.29,37.96,"britannia",3,true],["Modesto",-120.99,37.64,"britannia",2,false],["Merced",-120.48,37.3,"britannia",2,false],["Fresno",-119.79,36.74,"britannia",3,true],["Visalia",-119.29,36.33,"britannia",2,false],["Bakersfield",-119.02,35.37,"britannia",3,true],["San Francisco",-122.42,37.78,"britannia",3,true],["Oakland",-122.27,37.8,"britannia",3,true],["Richmond",-122.35,37.94,"britannia",2,true],["San Jose",-121.89,37.34,"britannia",3,true],["Palo Alto",-122.14,37.44,"britannia",2,false],["Santa Cruz",-122.03,36.97,"britannia",2,true],["Monterey",-121.89,36.6,"britannia",3,true],["Salinas",-121.66,36.68,"britannia",2,false],["San Luis Obispo",-120.66,35.28,"britannia",2,false],["Morro Bay",-120.85,35.37,"britannia",2,true],["Santa Barbara",-119.7,34.42,"britannia",3,true],["Ventura",-119.29,34.28,"britannia",2,true],["Oxnard",-119.18,34.2,"britannia",2,true],["Los Angeles",-118.24,34.05,"britannia",3,true],["Long Beach",-118.19,33.77,"britannia",3,true],["Anaheim",-117.91,33.84,"britannia",2,false],["Irvine",-117.83,33.68,"britannia",2,false],["Riverside",-117.4,33.95,"britannia",3,true],["San Bernardino",-117.29,34.11,"britannia",3,true],["Palm Springs",-116.55,33.83,"britannia",2,false],["Barstow",-117.02,34.9,"britannia",2,false],["Lancaster",-118.14,34.7,"britannia",2,false],["San Diego",-117.16,32.72,"britannia",3,true],["Oceanside",-117.38,33.2,"britannia",2,true],["Carlsbad",-117.35,33.16,"britannia",2,false],["El Centro",-115.56,32.79,"britannia",2,true],["Bishop",-118.4,37.36,"britannia",2,false],["Truckee",-120.18,39.33,"britannia",2,true],["South Lake Tahoe",-119.98,38.94,"britannia",2,true],["Placerville",-120.8,38.73,"britannia",2,false],["Auburn",-121.08,38.9,"britannia",2,false]];
-  const ARMY_GROUPS=[["eu","Medford","heavy",4,"akito"],["eu","Medford","rocket",3,"yukiya"],["eu","Ashland","assault",3,"ryo"],["eu","Grants Pass","heavy",3,"ayano"],["eu","Klamath Falls","siege",2,"smilas"],["eu","Klamath Falls","medium",3,"leila"],["eu","Brookings","assault",3,"klaus"],["eu","Roseburg","rocket",2,"oscar"],["eu","Bend","medium",2,"olivia"],["eu","Eugene","heavy",2,"anna"],["eu","North Pacific Force","heavy",2,"pierre"],["eu","North Pacific Force","assault",2,null],["eu","North Pacific Force","rocket",2,null],["eu","Golden Gate Force","heavy",2,"marirrosa"],["eu","Golden Gate Force","assault",2,null],["eu","Golden Gate Force","siege",2,null],["eu","Central Coast Force","heavy",2,"fernando"],["eu","Central Coast Force","medium",2,null],["eu","Central Coast Force","rocket",2,null],["eu","Southern Beaches Force","heavy",2,"margaret"],["eu","Southern Beaches Force","assault",2,null],["eu","Southern Beaches Force","rocket",2,null],["britannia","Eureka","heavy",3,"cornelia"],["britannia","Eureka","rocket",2,"cecile"],["britannia","Redding","heavy",3,"guilford"],["britannia","Mount Shasta","medium",2,"gino"],["britannia","Sacramento","heavy",5,"bismarck"],["britannia","Sacramento","rocket",3,"darlton"],["britannia","Sacramento","siege",2,null],["britannia","Stockton","medium",3,"jeremiah"],["britannia","Fresno","heavy",4,"villetta"],["britannia","Fresno","rocket",2,null],["britannia","Bakersfield","heavy",4,"oldrin"],["britannia","Bakersfield","siege",2,null],["britannia","San Francisco","heavy",4,"suzaku"],["britannia","San Francisco","rocket",3,null],["britannia","Oakland","heavy",3,null],["britannia","San Jose","heavy",4,null],["britannia","Monterey","medium",3,null],["britannia","Santa Barbara","medium",3,null],["britannia","Los Angeles","heavy",5,null],["britannia","Los Angeles","siege",3,null],["britannia","Long Beach","rocket",3,null],["britannia","Riverside","heavy",4,null],["britannia","San Bernardino","rocket",3,null],["britannia","San Diego","heavy",5,null],["britannia","San Diego","rocket",3,null],["britannia","Barstow","medium",2,null],["britannia","Truckee","medium",2,null],["britannia","South Lake Tahoe","medium",2,null],["britannia","Bishop","medium",2,null],["britannia","El Centro","assault",2,null]];
+  const CITIES=[["Eugene",-123.09,44.05,"cf",3,true],["Roseburg",-123.34,43.22,"cf",2,false],["Coos Bay",-124.22,43.37,"cf",2,true],["Newport",-124.05,44.64,"cf",2,true],["Florence",-124.1,43.98,"cf",2,true],["Medford",-122.88,42.33,"cf",3,true],["Ashland",-122.71,42.19,"cf",2,false],["Grants Pass",-123.33,42.44,"cf",2,false],["Brookings",-124.29,42.06,"cf",2,true],["Klamath Falls",-121.78,42.22,"cf",3,true],["Bend",-121.32,44.06,"cf",2,false],["Lakeview",-120.35,42.19,"cf",2,false],["Crescent City",-124.2,41.75,"britannia",2,true],["Eureka",-124.16,40.8,"britannia",3,true],["Arcata",-124.08,40.87,"britannia",2,false],["Redding",-122.39,40.59,"britannia",3,true],["Mount Shasta",-122.31,41.31,"britannia",2,true],["Yreka",-122.64,41.73,"britannia",2,false],["Chico",-121.84,39.73,"britannia",2,false],["Fort Bragg",-123.81,39.45,"britannia",2,true],["Ukiah",-123.21,39.15,"britannia",2,false],["Santa Rosa",-122.71,38.44,"britannia",3,true],["Napa",-122.29,38.3,"britannia",2,false],["Vallejo",-122.26,38.1,"britannia",2,true],["Sacramento",-121.49,38.58,"britannia",3,true],["Davis",-121.74,38.54,"britannia",2,false],["Stockton",-121.29,37.96,"britannia",3,true],["Modesto",-120.99,37.64,"britannia",2,false],["Merced",-120.48,37.3,"britannia",2,false],["Fresno",-119.79,36.74,"britannia",3,true],["Visalia",-119.29,36.33,"britannia",2,false],["Bakersfield",-119.02,35.37,"britannia",3,true],["San Francisco",-122.42,37.78,"britannia",3,true],["Oakland",-122.27,37.8,"britannia",3,true],["Richmond",-122.35,37.94,"britannia",2,true],["San Jose",-121.89,37.34,"britannia",3,true],["Palo Alto",-122.14,37.44,"britannia",2,false],["Santa Cruz",-122.03,36.97,"britannia",2,true],["Monterey",-121.89,36.6,"britannia",3,true],["Salinas",-121.66,36.68,"britannia",2,false],["San Luis Obispo",-120.66,35.28,"britannia",2,false],["Morro Bay",-120.85,35.37,"britannia",2,true],["Santa Barbara",-119.7,34.42,"britannia",3,true],["Ventura",-119.29,34.28,"britannia",2,true],["Oxnard",-119.18,34.2,"britannia",2,true],["Los Angeles",-118.24,34.05,"britannia",3,true],["Long Beach",-118.19,33.77,"britannia",3,true],["Anaheim",-117.91,33.84,"britannia",2,false],["Irvine",-117.83,33.68,"britannia",2,false],["Riverside",-117.4,33.95,"britannia",3,true],["San Bernardino",-117.29,34.11,"britannia",3,true],["Palm Springs",-116.55,33.83,"britannia",2,false],["Barstow",-117.02,34.9,"britannia",2,false],["Lancaster",-118.14,34.7,"britannia",2,false],["San Diego",-117.16,32.72,"britannia",3,true],["Oceanside",-117.38,33.2,"britannia",2,true],["Carlsbad",-117.35,33.16,"britannia",2,false],["El Centro",-115.56,32.79,"britannia",2,true],["Bishop",-118.4,37.36,"britannia",2,false],["Truckee",-120.18,39.33,"britannia",2,true],["South Lake Tahoe",-119.98,38.94,"britannia",2,true],["Placerville",-120.8,38.73,"britannia",2,false],["Auburn",-121.08,38.9,"britannia",2,false]];
+  // Federation northern Army Groups and carrier-embarked assault formations.
+  // Preserve the named Britannian commanders and reinforce inland counterattack reserves.
+  const ARMY_GROUPS=[
+    ["cf","Medford","heavy",5,"xingke"],
+    ["cf","Medford","rocket",3,"honggu"],
+    ["cf","Ashland","assault",4,"cao"],
+    ["cf","Grants Pass","heavy",4,"leifeng"],
+    ["cf","Klamath Falls","siege",3,"chaojielun"],
+    ["cf","Klamath Falls","medium",4,"xianglin"],
+    ["cf","Brookings","assault",3,"lifeng"],
+    ["cf","Roseburg","rocket",2,"vritra"],
+    ["cf","Bend","medium",3,"meiling"],
+    ["cf","Eugene","heavy",3,"zhaohao"],
+    ["cf","North Pacific Force","heavy",3,"zidien"],
+    ["cf","North Pacific Force","assault",3,"ren"],
+    ["cf","North Pacific Force","rocket",2,null],
+    ["cf","Golden Gate Force","heavy",3,"sawasaki"],
+    ["cf","Golden Gate Force","assault",3,"chengzhong"],
+    ["cf","Golden Gate Force","siege",3,"rakshata"],
+    ["cf","Central Coast Force","heavy",3,null],
+    ["cf","Central Coast Force","medium",3,null],
+    ["cf","Central Coast Force","rocket",3,"huangqian"],
+    ["cf","Southern Beaches Force","heavy",3,null],
+    ["cf","Southern Beaches Force","assault",3,"xiawang"],
+    ["cf","Southern Beaches Force","rocket",3,null],
+    ["britannia","Eureka","heavy",3,"cornelia"],
+    ["britannia","Eureka","rocket",2,"cecile"],
+    ["britannia","Redding","heavy",3,"guilford"],
+    ["britannia","Mount Shasta","medium",2,"gino"],
+    ["britannia","Sacramento","heavy",5,"bismarck"],
+    ["britannia","Sacramento","rocket",3,"darlton"],
+    ["britannia","Sacramento","siege",2,null],
+    ["britannia","Stockton","medium",3,"jeremiah"],
+    ["britannia","Fresno","heavy",4,"villetta"],
+    ["britannia","Fresno","rocket",2,null],
+    ["britannia","Bakersfield","heavy",4,"oldrin"],
+    ["britannia","Bakersfield","siege",2,null],
+    ["britannia","San Francisco","heavy",4,"suzaku"],
+    ["britannia","San Francisco","rocket",3,null],
+    ["britannia","Oakland","heavy",3,null],
+    ["britannia","San Jose","heavy",4,null],
+    ["britannia","Monterey","medium",3,null],
+    ["britannia","Santa Barbara","medium",3,null],
+    ["britannia","Los Angeles","heavy",5,null],
+    ["britannia","Los Angeles","siege",3,null],
+    ["britannia","Long Beach","rocket",3,null],
+    ["britannia","Riverside","heavy",4,null],
+    ["britannia","San Bernardino","rocket",3,null],
+    ["britannia","San Diego","heavy",5,null],
+    ["britannia","San Diego","rocket",3,null],
+    ["britannia","Barstow","medium",2,null],
+    ["britannia","Truckee","medium",2,null],
+    ["britannia","South Lake Tahoe","medium",2,null],
+    ["britannia","Bishop","medium",2,null],
+    ["britannia","El Centro","assault",2,null],
+    ["britannia","Chico","assault",3,null],
+    ["britannia","Sacramento","medium",3,null],
+    ["britannia","Fresno","medium",3,null],
+    ["britannia","Bakersfield","rocket",2,null],
+    ["britannia","Santa Barbara","rocket",2,null],
+    ["britannia","Los Angeles","medium",3,null],
+    ["britannia","San Diego","assault",3,null],
+    ["britannia","Oceanside","medium",2,null]
+  ];
   const PORTS={"Coos Bay":2,"Newport":2,"Florence":2,"Brookings":2,"Crescent City":3,"Eureka":3,"Fort Bragg":2,"Vallejo":2,"San Francisco":3,"Oakland":3,"Richmond":2,"Santa Cruz":2,"Monterey":3,"Morro Bay":2,"Santa Barbara":3,"Ventura":2,"Oxnard":2,"Los Angeles":3,"Long Beach":3,"San Diego":3,"Oceanside":2};
-  const FLEETS=[["eu","North Pacific Force",-125.35,41.55,"eu_carrier",4],["eu","Golden Gate Force",-124.25,37.95,"eu_carrier",4],["eu","Central Coast Force",-122.35,35.25,"eu_carrier",4],["eu","Southern Beaches Force",-120.3,33.1,"eu_carrier",4],["eu","North Pacific Force",-125.35,41.55,"panzer_frosch_ii",3],["eu","Golden Gate Force",-124.25,37.95,"panzer_frosch_ii",3],["eu","Central Coast Force",-122.35,35.25,"panzer_frosch_ii",3],["eu","Southern Beaches Force",-120.3,33.1,"panzer_frosch_ii",3],["britannia","Eureka",null,null,"carrier_battleship",2],["britannia","San Francisco",null,null,"carrier_battleship",3],["britannia","Long Beach",null,null,"carrier_battleship",3],["britannia","San Diego",null,null,"carrier_battleship",3],["britannia","Oakland",null,null,"portman_ii",3],["britannia","Monterey",null,null,"portman_ii",2],["britannia","Oxnard",null,null,"portman_ii",2],["britannia","San Diego",null,null,"portman_ii",3]];
-  const FUNDING={eu:{credits:1100,industry:650,science:95,sakuradite:42},
+  // Five Chinese carriers per amphibious axis support the enlarged embarked corps;
+  // Shui Gun-Ru II escorts operate independently of carrier cargo.
+  const FLEETS=[
+    ["cf","North Pacific Force",-125.35,41.55,"cf_carrier",5],
+    ["cf","Golden Gate Force",-124.25,37.95,"cf_carrier",5],
+    ["cf","Central Coast Force",-122.35,35.25,"cf_carrier",5],
+    ["cf","Southern Beaches Force",-120.3,33.1,"cf_carrier",5],
+    ["cf","North Pacific Force",-125.35,41.55,"shui_gun_ru_ii",3],
+    ["cf","Golden Gate Force",-124.25,37.95,"shui_gun_ru_ii",3],
+    ["cf","Central Coast Force",-122.35,35.25,"shui_gun_ru_ii",3],
+    ["cf","Southern Beaches Force",-120.3,33.1,"shui_gun_ru_ii",3],
+    ["britannia","Eureka",null,null,"carrier_battleship",2],
+    ["britannia","San Francisco",null,null,"carrier_battleship",3],
+    ["britannia","Long Beach",null,null,"carrier_battleship",3],
+    ["britannia","San Diego",null,null,"carrier_battleship",3],
+    ["britannia","Oakland",null,null,"portman_ii",3],
+    ["britannia","Monterey",null,null,"portman_ii",2],
+    ["britannia","Oxnard",null,null,"portman_ii",2],
+    ["britannia","San Diego",null,null,"portman_ii",3]
+  ];
+  const FUNDING={cf:{credits:1250,industry:720,science:105,sakuradite:50},
     britannia:{credits:1020,industry:670,science:88,sakuradite:40}};
     function geo(c,r){
     return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*(BOUNDS.east-BOUNDS.west)/COLS,
@@ -106,27 +188,37 @@
       fallen:{},economy:{},tech:{},officers:Object.fromEntries(
         Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
       roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,
-      eliteDeployed:{},arsenal:{britannia:0,eu:0},
+      eliteDeployed:{},arsenal:{britannia:0,cf:0},
       automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
-      mapRevision:0,teams:{britannia:'britannia',eu:'eu'}
+      mapRevision:0,teams:{britannia:'britannia',cf:'cf'}
     };
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
+    // The 'europe' doctrine is the shared regional AI planner, not a faction identifier.
     g.scenario={id:'invasion-california',key:'california',title:'Invasion of California',
-      version:2,phase:'pacific-northern-offensive',aiDoctrine:'europe',groups:[],funding:{},
-      bounds:BOUNDS,projection:PROJECTION,operationalFronts:[{name:'Klamath-Siskiyou',attack:'eu',objective:'Redding'},{name:'Golden Gate',attack:'eu',objective:'San Francisco'},{name:'Central Valley',attack:'eu',objective:'Fresno'},{name:'Southern Beaches',attack:'eu',objective:'Los Angeles'},{name:'Sierra Reserve',attack:'britannia',objective:'Sacramento'}],rivers:{Sacramento:[[-122.3,40.3],[-121.5,39],[-121.55,38.6]],SanJoaquin:[[-119.7,37.8],[-120.9,37.5],[-121.45,38]],Colorado:[[-114.75,36],[-114.55,34.5],[-114.7,32.8]],Klamath:[[-121.8,42],[-123.1,41.5],[-124.1,41.6]]}};
-    // Only Britannia and Europia United are playable here.
+      version:3,phase:'federation-pacific-offensive',aiDoctrine:'europe',groups:[],funding:{},
+      bounds:BOUNDS,projection:PROJECTION,operationalFronts:[
+        {name:'Oregon–Siskiyou land offensive',attack:'cf',objective:'Redding'},
+        {name:'Sacramento convergence',attack:'cf',objective:'Sacramento'},
+        {name:'Golden Gate amphibious offensive',attack:'cf',objective:'San Francisco'},
+        {name:'Central Coast and valley offensive',attack:'cf',objective:'Fresno'},
+        {name:'Southern California amphibious offensive',attack:'cf',objective:'Los Angeles'},
+        {name:'Britannian northern reserve',attack:'britannia',objective:'Sacramento'},
+        {name:'Britannian central reserve',attack:'britannia',objective:'Bakersfield'},
+        {name:'Britannian southern reserve',attack:'britannia',objective:'San Diego'}
+      ],rivers:{Sacramento:[[-122.3,40.3],[-121.5,39],[-121.55,38.6]],SanJoaquin:[[-119.7,37.8],[-120.9,37.5],[-121.45,38]],Colorado:[[-114.75,36],[-114.55,34.5],[-114.7,32.8]],Klamath:[[-121.8,42],[-123.1,41.5],[-124.1,41.6]]}};
+    // Only Britannia and the Chinese Federation are playable here.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia')),
-      eu:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('eu'))
+      cf:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
+        E.ELITE_FORCES[id].availableTo.includes('cf'))
     };
     // Authoritative tactical coast: each cell's clipped polygon land share is
     // <20%=sea, 20–80%=coast, >80%=land. Unlike a center-point mask this
-    // preserves the Cape of Good Hope and narrow coastal approaches.
+    // preserves real bay inlets, Channel Islands, and narrow coastal approaches.
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),fraction=coastCoverageClass(c,r);
       return {c,r,owner:null,terrain:fraction===0?'sea':
@@ -142,8 +234,8 @@
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
-      if(!at)throw Error('Cannot place European city '+name);
-      const capital=name==='Johannesburg';
+      if(!at)throw Error('Cannot place California city '+name);
+      const capital=false; // Pendragon is not inside the California theater.
       const shield=fort?400:120+60*tier;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
@@ -193,7 +285,7 @@
       return groupByCity.get(k);
     }
     for(const [side,name,cls,count,commander] of ARMY_GROUPS){
-      if(!g.stations.some(v=>v.name===name))continue; // Offshore E.U. groups embark below.
+      if(!g.stations.some(v=>v.name===name))continue; // Offshore Federation groups embark below.
       const s=g.stations.find(v=>v.name===name);
       if(!s||s.owner!==side)throw Error('Invalid staging city '+name);
       for(let i=0;i<count;i++){
@@ -228,16 +320,16 @@
           !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),18);
         if(!at)throw Error('Cannot deploy navy at '+name);
         const ship=E.newUnit(g,type,side,at.c,at.r);
-        if(side==='eu'&&lon!=null)ship.invasionGroup=name;
+        if(side==='cf'&&lon!=null)ship.invasionGroup=name;
         fleet.units.push(ship.id);
       }
       g.scenario.groups.push(fleet);
     }
-    // Load all 24 E.U. landing formations into offshore carriers before turn one.
-    const carriers=g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
+    // Load all four Federation landing corps into the matching carrier groups before turn one.
+    const carriers=g.units.filter(u=>u.side==='cf'&&E.TYPES[u.type].naval==='ship');
     const passengers=[];
     for(const [side,name,cls,count,commander] of ARMY_GROUPS){
-      if(side!=='eu'||g.stations.some(v=>v.name===name))continue;
+      if(side!=='cf'||g.stations.some(v=>v.name===name))continue;
       for(let i=0;i<count;i++){
         const ship=carriers.find(v=>v.invasionGroup===name&&
           (v.pendingPassengers||0)<E.TYPES[v.type].capacity);
@@ -282,7 +374,7 @@
           [resource,Math.round(n*factor)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
-        g.economy[side][resource]=actual[resource]*(side==='eu'?2:3);
+        g.economy[side][resource]=actual[resource]*(side==='cf'?2:3);
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>E.foe(g,v,player)))
@@ -292,7 +384,7 @@
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
       n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
-    E.log(g,'Europia advances through southern Oregon and four carrier-led Pacific invasion fronts against fortified California.',player);
+    E.log(g,'The Chinese Federation advances south from conquered Oregon while four carrier task forces land around Northern California, San Francisco Bay, the Central Coast and Southern California.',player);
     return g;
   }
   function onTurn(){return false;}
@@ -300,18 +392,19 @@
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
   function objective(g,side=g.player){
-    const enemy=side==='eu'?'britannia':'eu';
+    const enemy=side==='cf'?'britannia':'cf';
     const count=g.stations.filter(s=>s.owner===enemy).length;
-    return 'Conquer every '+(enemy==='britannia'?'Britannian':'E.U.')+
-      ' city ('+count+' remain). No turn limit; California is not Pendragon.';
+    return 'Conquer every '+(enemy==='britannia'?'Britannian':'Federation')+
+      ' city ('+count+' remain). No turn limit; Pendragon is a separate battle.';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='invasion-california'||
-       g.stations.length!==CITIES.length)return null;
-    if(!g.stations.some(s=>s.owner==='britannia'))return {winner:'eu',team:'eu',
-      reason:'Europia United controls every Britannian city in the California theatre. Pendragon remains a separate campaign battle.'};
-    if(!g.stations.some(s=>s.owner==='eu'))return {winner:'britannia',team:'britannia',
-      reason:'Britannia has conquered the last E.U. staging city.'};
+        g.stations.length!==CITIES.length)return null;
+    if(!g.stations.some(s=>s.owner==='britannia'))return {winner:'cf',team:'cf',
+      reason:'The Chinese Federation controls every Britannian city in California. The offensive against Pendragon remains separate.'};
+    if(!g.stations.some(s=>s.owner==='cf') &&
+       !E.allUnits(g).some(u=>u.side==='cf'&&u.hp>0))return {winner:'britannia',team:'britannia',
+      reason:'Britannia has reclaimed every Federation staging city in Oregon and California.'};
     return null;
   }
   const api={id:'invasion-california',title:'Invasion of California',cols:COLS,rows:ROWS,

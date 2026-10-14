@@ -24,6 +24,36 @@
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
     return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
+  // Chinese patrol fleets contest invasion convoys near the Philippine islands,
+  // but never sail to capture Britannia's remote Palau and Yap bases.
+  // Ground defense and the global amphibious doctrine remain unchanged.
+  function philippinesNavalInterception(g, u, events) {
+    if (u.moved) return true;
+    const base=u.philippinesPatrol||{c:u.c,r:u.r};
+    const islandPorts=g.stations.filter(s=>philippinesHome(g,s)&&s.portAt);
+    const coastalDistance=p=>Math.min(Infinity,
+      ...islandPorts.map(s=>dist(g,s,p)));
+    const intruders=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&
+      (isShip(v)||isSea(tile(g,v.c,v.r)))&&
+      dist(g,base,v)<=18&&coastalDistance(v)<=9)
+      .sort((a,b)=>coastalDistance(a)-coastalDistance(b)||
+        dist(g,u,a)-dist(g,u,b)||
+        (b.cargo?.length||0)-(a.cargo?.length||0));
+    const target=intruders[0];
+    if(!target||dist(g,u,target)<=rangeOf(g,u).max)return true;
+    const options=[...reachable(g,u).keys()].map(k=>{
+      const [c,r]=k.split(',').map(Number);return tile(g,c,r);
+    }).filter(p=>p&&navigable(p)&&!unitAt(g,p)&&
+      dist(g,base,p)<=18&&coastalDistance(p)<=11)
+      .sort((a,b)=>dist(g,a,target)-dist(g,b,target)||
+        coastalDistance(a)-coastalDistance(b));
+    const next=options[0];
+    if(next&&dist(g,next,target)<dist(g,u,target)){
+      const moved=move(g,u.id,next.c,next.r);
+      if(moved.ok)events.push({kind:'move',...moved,id:u.id});
+    }
+    return true;
+  }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
@@ -77,8 +107,9 @@
       }
     }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
-    const steered = (islandDefender && isShip(u)) ||
-      (isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt));
+    const steered = islandDefender && isShip(u)
+      ? philippinesNavalInterception(g, u, events)
+      : isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
     if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
       const berth = [...reachable(g, u).keys()]
         .map(k => {

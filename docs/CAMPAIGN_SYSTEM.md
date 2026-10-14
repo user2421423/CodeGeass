@@ -1,5 +1,7 @@
 # Strategic World Campaign Mode: developer handoff
 
+> **Branch-specific integration update (2026-10-15):** This document describes an earlier campaign revision. The current feature branch now includes the approved Federation and revised E.U. scenarios and registrations. Consult [FEDERATION_INTEGRATION_STATUS.md](FEDERATION_INTEGRATION_STATUS.md) for merged-branch status, remaining validation gaps, and engine/geography fixes; consult [FEDERATION_WAR_CAMPAIGN_STRUCTURE.md](FEDERATION_WAR_CAMPAIGN_STRUCTURE.md) and [FEDERATION_SCENARIO_HANDOFFS.json](FEDERATION_SCENARIO_HANDOFFS.json) for stable mission IDs. Hawaii and California are Chinese invasions, Panama has independent Atlantic E.U. and Pacific Chinese attacks, Pendragon has separate eastern E.U. and western Chinese attacks, and the E.U. also crosses the Rocky Mountains. **No tests or simulations were run, and `main` remains untouched.**
+
 Branch: **feature/campaign-world-map** (not merged to main).
 
 ## Modes and save compatibility

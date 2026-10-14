@@ -8,10 +8,21 @@
   'use strict';
   const STORAGE_KEY = 'knightmare-war-campaign-v1';
   const BATTLE_KEY = 'knightmare-war-campaign-battle';
-  const FACTIONS = ['eu', 'britannia'];
+  // Campaign identifiers are independent of engine factions: Britannia can fight
+  // different opponents without sharing progress, tiers or save-state selections.
+  const FACTIONS = ['eu', 'britannia', 'britannia-federation', 'federation-britannia'];
+  const CAMPAIGN_INFO = Object.freeze({
+    eu: Object.freeze({label:'E.U. vs Britannia',side:'eu',opponent:'britannia'}),
+    britannia: Object.freeze({label:'Britannia vs E.U.',side:'britannia',opponent:'eu'}),
+    'britannia-federation': Object.freeze({label:'Britannia vs Federation',side:'britannia',opponent:'cf'}),
+    'federation-britannia': Object.freeze({label:'Federation vs Britannia',side:'cf',opponent:'britannia'}),
+  });
+  const campaignSide = campaign => CAMPAIGN_INFO[campaign]?.side || campaign;
   const tierLabels = {
-    eu: ['Global Conflicts','Bering Strait','Overseas Invasions','Continental Landings','Conquest of the Britannian Homeland','Final Offensive'],
+    eu: ['Global Conflicts','Bering Strait','Overseas Invasions','Continental Landings','American Interior','Crossing the Rocky Mountains','Final Offensive'],
     britannia: ['Global Conflicts','Bering Strait','Imperial Expansion','The Eurasian Offensive','Conquest of Western Russia','The European War','Operation Stonehenge'],
+    'britannia-federation': ['Opening Battles','Securing the Flanks','Invasion of South China','The Yangtze Front','The Imperial Capital'],
+    'federation-britannia': ['Global Conflicts','Asian War','Pacific Expansion','American Beachheads','Central American War','Western America','Final Offensive'],
   };
   // [id, title, existing scenario ID/null, geographic name, marker lon/lat,
   //  geographic bounds west/south/east/north, short campaign description].
@@ -23,21 +34,19 @@
   const bering = ['bering','Bering Strait Crisis','bering-strait','Bering Strait',[177,63],[160,55,180,72],'Control the crossing between Siberia and Alaska.'];
   const euRows = [
     [3,[
-      ['hawaii','Invasion of Hawaii','invasion-hawaii','Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
       ['brazil','Invasion of Brazil','invasion-brazil','Brazil',[-51,-13],[-74,-34,-34,6],'Establish a South American foothold in Britannian territory.'],
       ['greenland','Invasion of Greenland','eu-greenland','Greenland',[-42,72],[-73,58,-12,84],'Capture the North Atlantic approaches.'],
       ['caribbean','Invasion of the Caribbean','invasion-caribbean','Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
     ]],
     [4,[
-      ['panama','Panama Campaign','eu-panama','Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
+      // Stable new objective ID avoids credit from the earlier two-ocean deployment.
+      ['panama-atlantic','Panama Campaign — Atlantic Offensive','eu-panama','Panama',[-80,9],[-84,7,-77,11],'Invade from the Caribbean only, then force the canal toward the Pacific.'],
       ['new-york','Invasion of the American East Coast','invasion-american-east-coast','American East Coast',[-75.5,37.2],[-85.6,24,-65.4,47.2],'Conquer the entire Britannian Atlantic seaboard from Maine to Florida.'],
       ['canada','Invasion of Canada','invasion-canada','Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
     ]],
-    [5,[
-      ['great-lakes','Battle for the Great Lakes','eu-great-lakes','Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
-      ['california','Invasion of California','invasion-california','California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
-    ]],
-    [6,[['pendragon','Battle of Pendragon','eu-pendragon','Pendragon',[-117,37.5],[-119,35.5,-115,39.5],'Conclude the war with an assault on the imperial capital.']]],
+    [5,[['great-lakes','Battle for the Great Lakes','eu-great-lakes','Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.']]],
+    [6,[['rocky-mountains','Crossing the Rocky Mountains','eu-rocky-mountains','Rocky Mountains',[-107.5,40],[-113,35,-101,45],'Fight west through Britannian mountain defenses and open the eastern approach to Pendragon.']]],
+    [7,[['pendragon-east','Battle of Pendragon — Eastern Offensive','eu-pendragon','Pendragon',[-117,37.5],[-120,35,-113,40],'Conclude the war by attacking Britannia\'s capital from Utah and eastern Nevada.']]],
   ];
   const brRows = [
     [3,[
@@ -52,6 +61,46 @@
     [6,[['european-war','European War','european-war','Central Europe',[14,50],[-2,44,31,56],'Take command of Euro Britannia in its existing regional war against the E.U.']]],
     [7,[['stonehenge','Operation Stonehenge','operation-stonehenge','Western Europe',[-2,49],[-11,36,10,59],'Lead the final Britannian carrier invasion of western Europe.']]],
   ];
+  // ONLY user-approved Britannia-vs-Federation objectives. Unbuilt regional
+  // scenarios have null IDs and cannot be launched or completed. The two
+  // existing regional scenarios retain their original starting positions.
+  const brFederationRows = [
+    [1,[
+      ['philippines','Invasion of the Philippines','philippines-invasion','Philippines',[124,12],[115.5,4.5,139.1,21.2],'Launch a carrier-supported invasion of Federation-held Philippine islands.'],
+      ['indochina','Defense of Indochina','conquest-indochina','Indochina',[106,16],[96.2,7.5,117.2,27],'Defend Britannian Southeast Asia against the Federation advance.'],
+    ]],
+    [2,[
+      ['malacca','Battle of the Strait of Malacca','bf-malacca','Malacca Strait',[101.5,3.5],[94,-2,106,8],'Capture the maritime chokepoint and cut the Federation\'s western access to Indonesia.'],
+      ['korea','Invasion of Korea','invasion-korea','Korean Peninsula',[127.5,37],[124,33,131,43],'Attack the Federation on the Korean Peninsula from Britannian Pacific positions.'],
+      ['iraq-iran','Iraq–Iran Campaign','britannia-iraq-iran','Iraq and Iran',[49,33],[38,24,64,40],'Open a western offensive into Federation-held Iraq and Iran.'],
+    ]],
+    [3,[['south-china','Invasion of South China','bf-south-china','Southern China',[111,23],[102,18,119,29],'Advance north from Southeast Asia with supporting coastal operations.']]],
+    [4,[['yangtze','Battle of the Yangtze River','bf-yangtze','Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
+    [5,[['luoyang','Battle of Luoyang','battle-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
+  ];
+  // Federation vs Britannia: only user-approved scenarios, with distinct campaign
+  // objectives and runtime IDs. Existing Indochina and Philippines support 'cf'.
+  const federationBritanniaRows = [
+    [1,shared],
+    [2,[
+      ['indochina','Conquest of Indochina','conquest-indochina','Indochina',[106,16],[96.2,7.5,117.2,27],'Advance south into Britannian Indochina with major Chinese Army Groups.'],
+      ['philippines','Defense of the Philippines','philippines-invasion','Philippines',[124,12],[115.5,4.5,139.1,21.2],'Defend Federation-held Philippines and defeat the Britannian amphibious invasion.'],
+    ]],
+    [3,[
+      ['hawaii','Invasion of Hawaii','invasion-hawaii','Hawaii',[-156,21],[-161,18,-154,24],'Chinese carrier-led conquest of Britannian Hawaii from the western Pacific.'],
+      ['new-zealand','Invasion of New Zealand','cf-new-zealand','New Zealand',[172,-41],[165,-48,179,-34],'Launch large amphibious invasions of both islands and contest Cook Strait.'],
+    ]],
+    [4,[
+      ['panama-pacific','Pacific Invasion of Panama','cf-panama','Panama',[-80,9],[-84,7,-77,11],'Attack the canal exclusively from the Pacific and advance toward Colon.'],
+      ['pacific-northwest','Invasion of the Pacific Northwest','cf-pacific-northwest','Pacific Northwest',[-121,46],[-126,41,-111,50],'Land at Puget Sound and the Columbia estuary, then cross the Cascades.'],
+    ]],
+    [5,[['central-america','Central American Offensive','cf-central-america','Central America',[-87.5,14],[-93,8.5,-82,18.5],'Advance north from captured Panama through Britannian Central America.']]],
+    [6,[
+      ['california','Invasion of California','invasion-california','California',[-120,37],[-125,32,-114,42],'Advance from captured Oregon while Chinese carrier groups land on the Californian coast.'],
+      ['mexican-heartland','Conquest of the Mexican Heartland','cf-mexico','Central Mexico',[-100,20],[-106,15,-94,24],'Invade Britannian Mexico from Central America with supporting coastal landings.'],
+    ]],
+    [7,[['pendragon-west','Battle of Pendragon — Western Offensive','cf-pendragon','Pendragon',[-117,37.5],[-120,35,-114,40],'Conquer the imperial capital and all remaining cities from the Californian west.']]],
+  ];
   // Approximate national/state contours where a rectangular theater would
   // otherwise tint substantial unrelated territory. The GSHHG atlas continues
   // to supply the authoritative coastlines and underlying land geometry.
@@ -62,7 +111,9 @@
     'eu-brazil': [[-73,-8],[-69,-10],[-66,-12],[-62,-16],[-58,-21],
       [-57,-26],[-53,-33],[-48,-30],[-45,-25],[-40,-22],[-35,-9],
       [-35,-5],[-44,-2],[-50,1],[-52,4],[-61,5],[-66,2],[-69,-1]],
-    'eu-california': [[-124.5,42],[-120,42],[-120,39],[-114.6,35],
+    // Transferred to the Chinese campaign; protects the territorial overlay from
+    // coloring broad parts of neighboring Nevada and Oregon after conquest.
+    'federation-britannia-california': [[-124.5,42],[-120,42],[-120,39],[-114.6,35],
       [-114.6,32.7],[-117.1,32.5],[-121,34],[-124.5,40]],
     'britannia-south-africa': [[16.3,-28.6],[16.8,-33.7],[18,-34.9],[20,-35.3],
       [29.9,-34.8],[32.9,-27.5],[31.1,-25.9],[31.2,-22.5],
@@ -94,16 +145,15 @@
       scenarioId,
       // Euro Britannia is the scenario's actual playable faction, but does not
       // replace the overarching Britannian campaign identity.
-      battleSide: faction === 'britannia' && suffix === 'european-war' ? 'eb' : faction,
+      battleSide: faction === 'britannia' && suffix === 'european-war' ? 'eb' : campaignSide(faction),
       final: tier === tierLabels[faction].length,
     });
   }
   const registry = Object.freeze(Object.fromEntries(FACTIONS.map(faction=>{
-    const rows = [
-      [1,shared],
-      [2,[bering]],
-      ...(faction==='eu'?euRows:brRows),
-    ];
+    const rows = faction==='eu' ? [[1,shared],[2,[bering]],...euRows]
+      : faction==='britannia' ? [[1,shared],[2,[bering]],...brRows]
+      : faction==='britannia-federation' ? brFederationRows
+      : federationBritanniaRows;
     return [faction,Object.freeze(rows.map(([tier,items])=>Object.freeze({
       number:tier,title:tierLabels[faction][tier-1],
       missions:Object.freeze(items.map(row=>objective(faction,tier,row))),
@@ -111,7 +161,7 @@
   })));
   const ALL = Object.freeze(Object.fromEntries(FACTIONS.flatMap(f=>registry[f].flatMap(t=>t.missions.map(m=>[m.id,m])))));
   const PLACEHOLDERS = Object.freeze(Object.values(ALL).filter(m=>m.status==='planned'));
-  function fresh(){return {version:1,selectedFaction:'eu',completed:{eu:{},britannia:{}}};}
+  function fresh(){return {version:1,selectedFaction:'eu',completed:Object.fromEntries(FACTIONS.map(f=>[f,{}]))};}
   function load(storage) {
     let raw;
     try { raw=JSON.parse(storage.getItem(STORAGE_KEY)); } catch(_e){return fresh();}
@@ -132,7 +182,7 @@
   function unlockedTier(progress,faction){
     if(!registry[faction]) return 0;
     for(const tier of registry[faction])
-      if(!tier.missions.every(m=>completed(progress,faction,m.id)))return tier.number;
+      if(!tier.missions.length || !tier.missions.every(m=>completed(progress,faction,m.id)))return tier.number;
     return registry[faction].length + 1;
   }
   function state(progress,faction,id){
@@ -148,8 +198,7 @@
     // The South Africa development branch offers one deliberate, scenario-only
     // playtest bypass. It neither fabricates prerequisite victories nor unlocks
     // any other Campaign objective.
-    const playtest=(options?.previewSouthAfrica===true && faction==='britannia' && id==='britannia-south-africa') ||
-      (options?.previewPanama===true && faction==='eu' && id==='eu-panama');
+    const playtest=(options?.previewSouthAfrica===true && faction==='britannia' && id==='britannia-south-africa');
     if(state(progress,faction,id)==='locked'&&!playtest)
       return {ok:false,reason:'Complete all required wars in earlier tiers first.'};
     if(!m.scenarioId)return {ok:false,reason:'Planned — Scenario Not Yet Implemented'};
@@ -199,7 +248,7 @@
     if(m.id==='eu-caribbean' && lat<16) return false;
     if(m.id.endsWith('division-japan')) return lon>=129+(lat-30)*.48;
     // Pendragon's imperial capital remains an enemy enclave until the final.
-    if(m.id==='eu-california' && Math.abs(lon+117)<2 && Math.abs(lat-37.5)<2) return false;
+    if(m.id==='federation-britannia-california' && Math.abs(lon+117)<2 && Math.abs(lat-37.5)<2) return false;
     return true;
   }
   function worldSnapshot(engine,faction,progress){
@@ -210,12 +259,12 @@
       if(t.terrain==='sea' || t.terrain==='offmap')continue;
       const lon=-180+(t.c+0.5*(t.r&1))*engine.WORLD.dlon,
             lat=engine.WORLD.lat0-t.r*engine.WORLD.dlat;
-      for(const m of wins)if(regionContains(m,lon,lat))t.owner=faction;
+      for(const m of wins)if(regionContains(m,lon,lat))t.owner=campaignSide(faction);
     }
     world.mapRevision=(world.mapRevision||0)+1;
     return world;
   }
-  const api={STORAGE_KEY,BATTLE_KEY,FACTIONS,registry,ALL,PLACEHOLDERS,
+  const api={STORAGE_KEY,BATTLE_KEY,FACTIONS,CAMPAIGN_INFO,campaignSide,registry,ALL,PLACEHOLDERS,
     fresh,load,persist,completed,unlockedTier,state,launch,recordVictory,chooseFaction,
     regionContains,worldSnapshot};
   // Fixture only exists in Node test runs; it is intentionally not reachable

@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains twenty-four independent regional wars. Each scenario
+The **Scenarios** menu contains thirty independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -36,6 +36,12 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **Battle for the Great Lakes** | 176 × 112 · 56 cities | Multi-front Canadian offensive into Britannian inland Great Lakes naval and industrial defenses. |
 | **Invasion of California** | 160 × 120 · 63 cities | E.U. overland advance and carrier landings along California and southern Oregon. |
 | **Battle of Pendragon** | 136 × 104 · 48 cities | The E.U. finale in the American Southwest: take the fortified Britannian capital and every remaining city. |
+| **Invasion of Korea** | 184 × 160 · 55 cities | Five carrier-led Britannian assaults from Japan against Federation-held Korean defenses, naval fleets, mountain corridors and fortified ports. |
+| **Battle of the Strait of Malacca** | 168 × 132 · 54 cities | Britannian operations from the Malay north and fleet landings on Sumatra to seize Singapore and the strait's strategic ports. |
+| **Iraq–Iran Campaign** | 168 × 112 · 84 cities | Britannia advances across the Mesopotamian lowlands, contested rivers, Zagros passes and the Iranian Plateau. |
+| **Invasion of South China** | 168 × 124 · 64 cities | Britannia combines offensives from Indochina with major carrier operations off Guangdong and Hainan. |
+| **Battle of the Yangtze River** | 196 × 122 · 60 cities | Britannia attacks multiple Yangtze crossings from Yichang to Nanjing against Federation river fleets and reserves. |
+| **Battle of Luoyang** | 174 × 116 · 83 cities | Multi-front assault on the Chinese Federation's fortified imperial capital with layered defensive Army Groups. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |

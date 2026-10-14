@@ -151,7 +151,11 @@
         recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
           g.scenario?.id === 'philippines-invasion';
       memo[side] = { turn: g.turn, doctrine,
-        guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
+        guards: scenario ? (g.scenario?.id === 'conquest-indochina'
+          ? assignIndochinaGuards(g, side)
+          : g.scenario?.id === 'battle-luoyang' && side === 'cf'
+            ? assignLuoyangGuards(g, side) : assignDivisionBritanniaGuards(g, side))
+          : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
       else if (scenario) planScenarioOffense(g, side, memo[side]);
@@ -319,7 +323,23 @@
     }
     // Scenario columns prioritize actual travel time. Canada's route bias
     // acts only after geography has established a reachable destination.
-    return canadaOperationalCost(g,u,f,Math.max(0, turns));
+    const cost=canadaOperationalCost(g,u,f,Math.max(0, turns));
+    return indochinaOperationalCost(g,u,f,cost);
+  }
+  // A route bias, not scripted movement: the Federation's three armies favor
+  // their next unclaimed city only after the normal planner finds a real path.
+  // They can still exploit another open approach if terrain blocks their axis.
+  function indochinaOperationalCost(g,u,f,turns) {
+    if(g.scenario?.id!=='conquest-indochina'||u.side!=='cf'||
+       !Number.isFinite(turns))return turns;
+    const axis=g.scenario.offensiveAxes?.cf?.[u.invasionGroup];
+    if(!axis?.length)return turns;
+    const remaining=axis.filter(name=>g.stations.some(s=>s.name===name&&
+      foe(g,s.owner,u.side)));
+    if(!remaining.length)return turns;
+    const index=remaining.indexOf(f.anchor.name);
+    if(index<0)return turns+0.8;
+    return Math.max(0,turns-(index===0?2.6:index===1?1.5:0.5));
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
@@ -655,6 +675,33 @@
           list.push({ key: 'd' + s.id, c: s.c, r: s.r, name: s.name, defend: true, city: true,
             immediate: w.immediate, projected: !w.immediate && w.projected,
             vital, value: vital ? 100 : 20, seed: vital ? -6 : -2 });
+      }
+    }
+    // Yangtze only: when Britannian land units cross to the NORTH bank,
+    // activate existing emergency defensive fronts around nearby crossings.
+    // Southern staging forces already trigger the normal projected warning.
+    if (g.scenario?.id === 'bf-yangtze' && side === 'cf' &&
+        g.scenario.bridges?.length && g.scenario.rivers?.Yangtze) {
+      const river = g.scenario.rivers.Yangtze, b = g.scenario.bounds;
+      const riverLat = lon => {
+        for (let i=1; i<river.length; i++) {
+          const a=river[i-1], end=river[i];
+          if(lon<=end[0]){
+            const f=Math.max(0,Math.min(1,(lon-a[0])/(end[0]-a[0])));
+            return a[1]+f*(end[1]-a[1]);
+          }
+        }
+        return river[river.length-1][1];
+      };
+      const landed = foes.filter(u => u.side === 'britannia' &&
+        !isShip(u) && !atSea(g,u) &&
+        b.north-(u.r+.5)*(b.north-b.south)/g.rows >
+          riverLat(b.west+(u.c+.5+.5*(u.r&1))*(b.east-b.west)/g.cols)+0.04);
+      for(const [i,bridge] of g.scenario.bridges.entries()){
+        if(!landed.some(u=>dist(g,u,bridge)<=9))continue;
+        list.push({key:'yangtze-bridgehead-'+i,c:bridge.c,r:bridge.r,
+          name:bridge.name,defend:true,city:false,immediate:true,
+          projected:false,vital:true,value:100,seed:-8});
       }
     }
     for (const d of g.sites || []) {
@@ -1288,6 +1335,42 @@
   // Normal Division of Japan: Britannia must screen both Kanto and western Honshu.
   // Unlike the other Japan scenarios, these defenders keep a local post while
   // the rest of the army can counterattack; a lost city releases its guards.
+  // Finale-specific layer doctrine: keep a small standing capital guard and
+  // divert local reserves to threatened approach cities. All remaining units
+  // are left with the normal multi-front AI to attack vulnerable spearheads
+  // and recapture Britannian staging cities. No scripted reinforcements.
+  function assignLuoyangGuards(g, side){
+    if(g.mode!=='scenario'||g.scenario?.id!=='battle-luoyang'||side!=='cf')
+      return {};
+    const enemy=g.units.filter(u=>u.side==='britannia'&&u.hp>0&&!isShip(u)),
+      own=g.units.filter(u=>u.side==='cf'&&u.hp>0&&!isShip(u)&&!atSea(g,u)),
+      reserved={},
+      posts=[
+        ['Luoyang',4,9],['Mengjin',3,8],['Yanshi',2,8],
+        ['Zhengzhou',3,8],['Gongyi',2,8],['Jiyuan',2,8],
+        ['Jiaozuo',2,8],['Kaifeng',2,8],['Xinxiang',2,8],
+        ['Sanmenxia',2,8],['Pingdingshan',2,8]
+      ];
+    for(const [name,quota,radius] of posts){
+      const s=g.stations.find(c=>c.name===name&&c.owner==='cf');
+      if(!s)continue; // A fallen city releases its guard into the offensive.
+      const nearby=enemy.filter(u=>dist(g,u,s)<=10);
+      if(name!=='Luoyang'&&!nearby.length&&g.turn>4)continue;
+      const urgency=nearby.some(u=>dist(g,u,s)<=4);
+      const candidates=own.filter(u=>!reserved[u.id]&&
+        dist(g,u,s)<=radius)
+        .sort((a,b)=>
+          dist(g,a,s)-dist(g,b,s)||
+          Number(!!a.cmd)-Number(!!b.cmd)||a.id-b.id);
+      // Unthreatened posts retain only a minimal watch. When attacked they
+      // request their full allocation, with battle losses naturally reducing
+      // that allocation rather than conjuring new units.
+      const required=urgency?quota:name==='Luoyang'?3:Math.min(1,quota);
+      for(const u of candidates.slice(0,required))
+        reserved[u.id]={c:s.c,r:s.r,id:s.id,emergency:urgency};
+    }
+    return reserved;
+  }
   function assignDivisionBritanniaGuards(g, side) {
     if (g.mode !== 'scenario' || g.scenario?.id !== 'division-japan' ||
         g.difficulty !== 'normal' || side !== 'britannia') return {};
@@ -1313,6 +1396,47 @@
           emergency: foes.some(f => dist(g, f, s) <= 4) };
     }
     return taken;
+  }
+  // Indochina is explicitly a defense-first theatre for Britannia. The
+  // normal multi-front AI otherwise launches every formation at Chinese cities
+  // and leaves Vinh, Vientiane and the mountain passes unprotected. Guard
+  // assignments expire when the threat recedes, releasing troops for a real
+  // counteroffensive. China reserves units only when its own cities are at risk.
+  function assignIndochinaGuards(g,side) {
+    if(g.mode!=='scenario'||g.scenario?.id!=='conquest-indochina')return {};
+    const own=g.units.filter(u=>u.hp>0&&u.side===side&&!atSea(g,u)&&
+      !isShip(u)&&!u.hold);
+    const foes=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&
+      u.side!=='neutral'&&!isShip(u));
+    const posts=side==='britannia'?(g.scenario.defensePosts||[]):[
+      ['Hanoi',1,7],['Nanning',1,7],['Kunming',1,7],
+      ['Luang Prabang',1,7],['Haiphong',1,7]
+    ];
+    const guards={};
+    // Prevent an AI fortress screen from swallowing the counterattack force.
+    const cap=Math.max(2,Math.floor(own.length*(side==='britannia'?0.28:0.14)));
+    let assigned=0;
+    for(const [name,openingNeed,radius] of posts) {
+      if(assigned>=cap)break;
+      const city=g.stations.find(s=>s.name===name&&s.owner===side);
+      if(!city)continue;
+      const nearby=foes.filter(u=>massOf(g,u)===massOf(g,city)&&
+        dist(g,u,city)<=10);
+      const opening=side==='britannia'&&g.turn<=4;
+      if(!nearby.length&&!opening)continue;
+      const urgent=nearby.some(u=>dist(g,u,city)<=5);
+      const need=Math.min(cap-assigned,urgent?Math.max(2,openingNeed):
+        opening?openingNeed:1);
+      const candidates=own.filter(u=>!guards[u.id]&&
+        massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=radius)
+        .sort((a,b)=>dist(g,a,city)-dist(g,b,city)||
+          Number(!!a.cmd)-Number(!!b.cmd)||a.id-b.id);
+      for(const u of candidates.slice(0,need)) {
+        guards[u.id]={c:city.c,r:city.r,id:city.id,emergency:urgent};
+        assigned++;
+      }
+    }
+    return guards;
   }
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
@@ -2290,6 +2414,36 @@
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
     return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
+  // Chinese patrol fleets contest invasion convoys near the Philippine islands,
+  // but never sail to capture Britannia's remote Palau and Yap bases.
+  // Ground defense and the global amphibious doctrine remain unchanged.
+  function philippinesNavalInterception(g, u, events) {
+    if (u.moved) return true;
+    const base=u.philippinesPatrol||{c:u.c,r:u.r};
+    const islandPorts=g.stations.filter(s=>philippinesHome(g,s)&&s.portAt);
+    const coastalDistance=p=>Math.min(Infinity,
+      ...islandPorts.map(s=>dist(g,s,p)));
+    const intruders=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&
+      (isShip(v)||isSea(tile(g,v.c,v.r)))&&
+      dist(g,base,v)<=18&&coastalDistance(v)<=9)
+      .sort((a,b)=>coastalDistance(a)-coastalDistance(b)||
+        dist(g,u,a)-dist(g,u,b)||
+        (b.cargo?.length||0)-(a.cargo?.length||0));
+    const target=intruders[0];
+    if(!target||dist(g,u,target)<=rangeOf(g,u).max)return true;
+    const options=[...reachable(g,u).keys()].map(k=>{
+      const [c,r]=k.split(',').map(Number);return tile(g,c,r);
+    }).filter(p=>p&&navigable(p)&&!unitAt(g,p)&&
+      dist(g,base,p)<=18&&coastalDistance(p)<=11)
+      .sort((a,b)=>dist(g,a,target)-dist(g,b,target)||
+        coastalDistance(a)-coastalDistance(b));
+    const next=options[0];
+    if(next&&dist(g,next,target)<dist(g,u,target)){
+      const moved=move(g,u.id,next.c,next.r);
+      if(moved.ok)events.push({kind:'move',...moved,id:u.id});
+    }
+    return true;
+  }
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
@@ -2343,8 +2497,9 @@
       }
     }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
-    const steered = (islandDefender && isShip(u)) ||
-      (isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt));
+    const steered = islandDefender && isShip(u)
+      ? philippinesNavalInterception(g, u, events)
+      : isShip(u) && !u.moved && aiCarrier(g, u, memo, events, fieldAt);
     if (!u.moved && !guard && u.deployedTurn !== g.turn && wantsLift(g, u, memo)) {
       const berth = [...reachable(g, u).keys()]
         .map(k => {

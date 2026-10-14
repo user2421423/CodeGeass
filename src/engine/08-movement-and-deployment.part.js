@@ -55,6 +55,17 @@
     if (nav >= 2 || (nav >= 1 && (t.terrain === 'forest' || t.terrain === 'mountain'))) return 1;
     return TERRAIN[t.terrain]?.cost || 1;
   }
+  // Iraq–Iran only: crossing a Tigris, Euphrates or Karun river edge consumes
+  // one extra movement point. Marked bridge-city approaches have no surcharge.
+  // All other scenarios and the global Conquest rules remain unchanged.
+  function riverCrossingCost(g, a, b, u = null) {
+    if (g?.mode !== 'scenario' || g.scenario?.id !== 'britannia-iraq-iran' ||
+        isSea(a) || isSea(b)) return 0;
+    if (u && (fx(u).ignoreTerrain || u.expRetrofit || TYPES[u.type]?.float ||
+        eliteFx(u).float || TYPES[u.type]?.naval)) return 0;
+    const i = a.r * g.cols + a.c, j = b.r * g.cols + b.c;
+    return g.scenario.riverBarriers?.[i < j ? i + ':' + j : j + ':' + i] ? 1 : 0;
+  }
   function canCapture(u) {
     return TYPES[u.type].naval !== 'ship';
   }
@@ -124,7 +135,7 @@
         }
         if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
-        const step = isSea(n) ? 1 : terrainCost(g, u, n);
+        const step = isSea(n) ? 1 : terrainCost(g, u, n) + riverCrossingCost(g, p, n, u);
         const nc = u.skillReposition
           ? cost + step
           : cross
@@ -132,7 +143,7 @@
           : ship
             ? cost + 1
             : amphibious
-              ? cost + (isSea(n) ? landMove : terrainCost(g, u, n) * seaMv)
+              ? cost + (isSea(n) ? landMove : (terrainCost(g, u, n) + riverCrossingCost(g, p, n, u)) * seaMv)
               : cost + step;
         const sk = stateKey(n);
         if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
@@ -272,10 +283,20 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = ((['operation-stonehenge','invasion-south-africa'].includes(g.scenario?.id) && loser === 'britannia') ||
-      (['invasion-american-east-coast','invasion-hawaii','invasion-brazil','eu-greenland',
-        'invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) &&
-      g.units.some(v => v.side === loser && v.hp > 0);
+    // Preserve expeditionary forces, including carrier cargo, after their last city is lost.
+    const expeditionSide = ({
+      'invasion-hawaii':'cf','invasion-california':'cf','cf-new-zealand':'cf',
+      'cf-panama':'cf','cf-pacific-northwest':'cf',
+      'cf-central-america':'cf','cf-mexico':'cf','cf-pendragon':'cf',
+      'operation-stonehenge':'britannia','invasion-south-africa':'britannia',
+      'invasion-american-east-coast':'eu','invasion-brazil':'eu',
+      'eu-greenland':'eu','invasion-caribbean':'eu','eu-panama':'eu',
+      'eu-rocky-mountains':'eu','eu-pendragon':'eu',
+      'invasion-canada':'eu'
+    })[g.scenario?.id];
+    const expeditionAfloat = loser === expeditionSide &&
+      (g.units.some(v => v.side === loser && v.hp > 0) ||
+       g.units.some(v => (v.cargo||[]).some(u => u.side === loser && u.hp > 0)));
     const annexed = g.mode !== 'campaign' && alive(g, loser) &&
       !g.stations.some(c => c.owner === loser) && !expeditionAfloat
       ? surrender(g, loser, u.side, s) : null;
