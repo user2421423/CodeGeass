@@ -344,6 +344,47 @@
   // Give each mobile charge an escort objective anchored to a living
   // friendly battle formation. A formation can be led by a Tier 1 officer,
   // but need not be; ordinary carriers keep the charge until interception or loss.
+  // Model plausible F.L.E.I.J.A. impact *centers*, not merely troops
+  // within the blast. One Eliminator only stops a missile when it is within
+  // three hexes of the chosen center. Candidates use our own visible army
+  // and cities, never rival classified warheads/Eliminator deployments.
+  function eliminatorStrikeCenters(g,side,memo=null) {
+    if(memo?.eliminatorStrikeCenters)return memo.eliminatorStrikeCenters;
+    const assets=eliminatorThreatAssets(g,side,memo);
+    const adversaries=g.units.filter(v=>v.hp>0 && foe(g,v.side,side));
+    const origins=assets.slice().sort((a,b)=>b.value-a.value).slice(0,65);
+    const scored=origins.map(a=>{
+      const center=a.p;
+      let value=0;
+      for(const item of assets) {
+        const d=dist(g,center,item.p);
+        if(d>2)continue;
+        value+=item.value*(item.kind==='city' ?
+          (d===0?2.8:d===1?0.95:0.32):
+          (d===0?1.1:d===1?0.70:0.25));
+      }
+      // A launcher cannot strike a center overlapping its own forces.
+      // Nearby visible adversaries make this a less reliable target; do not
+      // pretend to know which rival, if any, holds a ready warhead.
+      if(adversaries.some(v=>dist(g,v,center)<=2))value*=0.25;
+      return {p:center,value};
+    }).filter(x=>x.value>90).sort((a,b)=>b.value-a.value);
+    const best=scored.slice(0,36);
+    if(memo)memo.eliminatorStrikeCenters=best;
+    return best;
+  }
+  function eliminatorStrikePosture(g,side,p,carrier,memo) {
+    const centers=eliminatorStrikeCenters(g,side,memo);
+    const other=sideEliminators(g,side).filter(h=>h.ready &&
+      h.unit?.id!==carrier.id);
+    let result=0;
+    for(const target of centers) {
+      if(dist(g,p,target.p)>ELIMINATOR.range)continue;
+      const overlap=other.filter(h=>dist(g,h,target.p)<=ELIMINATOR.range).length;
+      result+=target.value/(1+overlap*4);
+    }
+    return result;
+  }
   function eliminatorEscortTarget(g,u,memo) {
     const cache = (memo.eliminatorEscortTargets ||= {});
     if (Object.prototype.hasOwnProperty.call(cache,u.id)) {
@@ -380,13 +421,16 @@
     const before=eliminatorThreatCover(g,u.side,old,friendAssets,u);
     const after=eliminatorThreatCover(g,u.side,p,friendAssets,u);
     const gain=Math.max(-180,Math.min(180,(after-before)*0.68));
-    if(!target)return gain+Math.min(75,after*0.10);
+    const priorCenter=eliminatorStrikePosture(g,u.side,old,u,memo);
+    const nextCenter=eliminatorStrikePosture(g,u.side,p,u,memo);
+    const centerGain=Math.max(-145,Math.min(145,(nextCenter-priorCenter)*0.20));
+    if(!target)return gain+centerGain+Math.min(75,after*0.10);
     const prior=dist(g,old,target),next=dist(g,p,target);
     const tether=next<=ELIMINATOR.range?120:
       next===ELIMINATOR.range+1 ? 20:-Math.min(130,(next-4)*32);
     const lost=prior<=ELIMINATOR.range && next>ELIMINATOR.range?-90:0;
     const approach=Math.max(-35,Math.min(35,(prior-next)*15));
-    return gain+Math.min(75,after*0.10)+tether+lost+approach;
+    return gain+centerGain+Math.min(75,after*0.10)+tether+lost+approach;
   }
   function aiEliminatorMetrics(g, side) {
     const charges = sideEliminators(g, side);
@@ -411,6 +455,13 @@
         .reduce((n,a) => n + a.value, 0),
       tier1Carriers: charges.filter(h => h.unit &&
         COMMANDERS[h.unit.cmd]?.storyTier === 1).length,
+      // Diagnostic only: high-value visible strike centers covered by
+      // current ready charges. No knowledge of enemy weapon stockpiles.
+      strikeCenterValueTotal: eliminatorStrikeCenters(g,side)
+        .reduce((n,c)=>n+c.value,0),
+      strikeCenterValueProtected: eliminatorStrikeCenters(g,side)
+        .filter(c=>charges.some(h=>h.ready && dist(g,h,c.p)<=ELIMINATOR.range))
+        .reduce((n,c)=>n+c.value,0),
     };
   }
   function aiProduction(g) {
