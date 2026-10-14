@@ -1528,7 +1528,13 @@
         TYPES[v.type]?.capacity > 0 && v.cargo?.length),
       landing = p => {
         // Count only a nearby loaded carrier as prospective same-wave support.
-        const support = landingSupport.filter(v => dist(g, v, p) <= 3)
+        // A designated East Coast invasion flotilla plans its beachhead as a
+        // synchronized landing force, even while its carriers are still offshore.
+        // Actual deployment still requires legal beach hexes and nearby support.
+        const support = landingSupport.filter(v => dist(g, v, p) <= 3 ||
+          (g.scenario?.id === 'invasion-american-east-coast' &&
+           v.invasionGroup && v.invasionGroup === u.invasionGroup &&
+           dist(g, v, u) <= 9))
           .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
         const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
           .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses))
