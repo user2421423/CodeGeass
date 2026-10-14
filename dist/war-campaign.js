@@ -30,7 +30,7 @@
     ]],
     [4,[
       ['panama','Panama Campaign',null,'Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
-      ['new-york','Invasion of New York',null,'New York',[-74,41],[-80,38,-70,45],'Assault the Britannian Atlantic metropolitan corridor.'],
+      ['new-york','Invasion of the American East Coast','invasion-american-east-coast','American East Coast',[-75.5,37.2],[-85.6,24,-65.4,47.2],'Conquer the entire Britannian Atlantic seaboard from Maine to Florida.'],
       ['canada','Invasion of Canada',null,'Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
     ]],
     [5,[
