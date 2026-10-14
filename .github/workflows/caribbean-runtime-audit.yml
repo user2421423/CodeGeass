@@ -1,0 +1,91 @@
+name: Temporary Caribbean runtime audit
+on:
+  push:
+    branches:
+      - scenario/eu-caribbean
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source and syntax consistency
+        run: |
+          node --check dist/scenarios-caribbean.js
+          node tools/build_sources.cjs --check
+      - name: Focused map, port, difficulty and naval access audit
+        run: |
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const E=require('./dist/engine.js');
+          require('./dist/engine/ai.js');
+          const S=require('./dist/scenarios-caribbean.js');
+          const counts={};
+          for(const difficulty of ['normal','hard','challenge','elite'])for(const side of ['eu','britannia']){
+            const g=S.create(side,difficulty,11);
+            assert.equal(g.stations.length,41);
+            assert.equal(g.stations.filter(s=>s.owner==='eu').length,0);
+            assert.equal(g.stations.filter(s=>s.owner==='britannia').length,41);
+            assert.equal(g.scenario.id,'invasion-caribbean');
+            assert.equal(S.winner(g),null);
+            for(const t of g.tiles){
+              counts[t.terrain]=(counts[t.terrain]||0)+1;
+              if(t.terrain==='sea'||t.terrain==='offmap'){
+                assert.equal(t.owner,null);assert.equal(t.provinceCity,undefined);
+              }else{assert.equal(t.owner,'britannia');assert.ok(g.stations[t.provinceCity]);}
+            }
+            for(const s of g.stations){
+              const tile=E.tile(g,s.c,s.r);
+              assert.ok(tile.terrain!=='sea'&&tile.terrain!=='offmap','City on dry land '+s.name);
+              if(s.portAt){
+                const p=E.tile(g,s.portAt.c,s.portAt.r);
+                assert.equal(p.terrain,'sea','port in water '+s.name);
+                assert.equal(E.distance(g,s,p),1,'port beside city '+s.name);
+                assert.equal(s.portOwner,'britannia');
+              }
+            }
+            assert.ok(g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship').length>=24);
+            assert.ok(g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship').flatMap(u=>u.cargo||[]).length>=45);
+            for(const u of g.units){
+              const t=E.tile(g,u.c,u.r);
+              assert.ok(t&&t.terrain!=='offmap');
+              if(E.TYPES[u.type].naval==='ship')assert.equal(t.terrain,'sea');
+            }
+            console.log(JSON.stringify({side,difficulty,cities:g.stations.length,ports:g.stations.filter(s=>s.portAt).length,ships:g.units.filter(u=>E.TYPES[u.type].naval==='ship').length,loaded:g.units.flatMap(u=>u.cargo||[]).length}));
+          }
+          console.log('HEXES',JSON.stringify(Object.fromEntries(Object.entries(counts).map(([k,v])=>[k,v/8]))));
+          NODE
+      - name: Multi-seed real-engine AI simulations
+        run: |
+          node <<'NODE'
+          const E=require('./dist/engine.js');
+          require('./dist/engine/ai.js');
+          const S=require('./dist/scenarios-caribbean.js');
+          for(const side of ['eu','britannia'])for(const seed of [11,29,47]){
+            const g=S.create(side,'normal',seed);
+            let moves=0,deploys=0,attacks=0,captures=0;
+            let owners=new Map(g.stations.map(s=>[s.id,s.owner]));
+            for(let turn=1;turn<=3;turn++){
+              g.turn=turn;
+              for(const faction of g.order){
+                if(!E.alive(g,faction))continue;
+                if(!(turn===1&&faction===g.order[0]))E.beginTurn(g,faction,turn>1);
+                E.aiProduction(g);
+                const ids=g.units.filter(u=>u.hp>0&&u.side===faction&&!u.attacked)
+                  .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id).map(u=>u.id);
+                for(let i=0;i<ids.length;i++){
+                  if(typeof E.aiNextActor==='function'){const index=E.aiNextActor(g,ids,i);if(index>i&&index<ids.length)[ids[i],ids[index]]=[ids[index],ids[i]];}
+                  const u=g.units.find(x=>x.id===ids[i]);if(!u||u.hp<=0||u.side!==faction)continue;
+                  for(const ev of E.aiOrder(g,u.id)||[]){if(ev.kind==='deploy')deploys++;if(ev.kind==='attack')attacks++;if(ev.kind==='move')moves++;}
+                  for(const s of g.stations)if(owners.get(s.id)!==s.owner){captures++;owners.set(s.id,s.owner);}
+                }
+              }
+            }
+            console.log('SIM',JSON.stringify({side,seed,moves,deploys,attacks,captures,turn:g.turn}));
+          }
+          NODE
