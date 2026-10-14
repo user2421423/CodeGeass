@@ -419,6 +419,13 @@
       }
       if (blastDistance === 0 && !navigable(t) && !TERRAIN[t.terrain]?.blocked) setTileTerrain(g, t, 'crater');
     }
+    // Only an unintercepted strike destroying an enemy city at ground zero
+    // advances this attacker's Tier 1 targeting phase. Splash damage and
+    // neutral/friendly cities never count; the record survives compact saves.
+    if (cities.some(c => c.destroyed && foe(g, c.owner, side))) {
+      const hits = (g.fleijaSuccessfulCityHits ||= {});
+      hits[side] = (hits[side] || 0) + 1;
+    }
     if (unlocksEliminator) g.fleijaDetonated = g.turn;
     // A power whose last city was destroyed surrenders to the launcher.
     const ground = cities.find(c => c.destroyed);
