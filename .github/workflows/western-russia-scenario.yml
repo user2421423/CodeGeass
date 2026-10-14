@@ -1,0 +1,30 @@
+name: Western Russia scenario audit and AI simulation
+on:
+  push:
+    branches: ['scenario/britannia-western-russia']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  western-russia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build source/distribution parity
+        run: node tools/build_sources.cjs --check
+      - name: Western Russia 20–80% coast, hexes, cities, both victory sides, and all four difficulties
+        run: node tools/western_russia_hex_audit.cjs
+      - name: Campaign registry regression
+        run: node --test tests/war-campaign.test.cjs
+      - name: Britannian AI multi-axis offensive – seed 11
+        run: node tools/western_russia_sim.cjs 11 6 britannia normal
+      - name: E.U. counteroffensive – seed 23
+        run: node tools/western_russia_sim.cjs 23 6 eu normal
+      - name: Hard strategic challenge – seed 37
+        run: node tools/western_russia_sim.cjs 37 6 britannia hard
+      - name: Elite ground order regression – seed 53
+        run: node tools/western_russia_sim.cjs 53 4 eu elite
