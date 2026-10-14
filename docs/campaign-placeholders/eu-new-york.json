@@ -1,0 +1,22 @@
+{
+  "id": "eu-new-york",
+  "title": "Invasion of New York",
+  "campaignFaction": "eu",
+  "tier": 4,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "New York",
+  "proposedMapBounds": {
+    "west": -80,
+    "south": 38,
+    "east": -70,
+    "north": 45
+  },
+  "campaignMapMarker": {
+    "longitude": -74,
+    "latitude": 41
+  },
+  "description": "Assault the Britannian Atlantic metropolitan corridor.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
