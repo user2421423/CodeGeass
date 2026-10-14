@@ -1,0 +1,22 @@
+{
+  "id": "britannia-siberia",
+  "title": "Invasion of Siberia",
+  "campaignFaction": "britannia",
+  "tier": 3,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Siberia",
+  "proposedMapBounds": {
+    "west": 76,
+    "south": 50,
+    "east": 157,
+    "north": 71
+  },
+  "campaignMapMarker": {
+    "longitude": 116,
+    "latitude": 60
+  },
+  "description": "Advance into the E.U.-held Siberian interior.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
