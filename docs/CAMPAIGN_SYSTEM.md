@@ -99,3 +99,9 @@ Also test in a browser: start menu, Story Mode arcs, standalone Scenarios, Conqu
 - Map: 144×108 hexes; 10.5°E–39.5°E and 18°S–38°S. GSHHG intermediate coastline masks use exact 20/80 classification. The rendered map uses the same global GSHHG African geographic underlay and the centre-sampled hex projection.
 - Scenario: 47 E.U. cities; Britannia begins without city ownership, with four loaded carrier formations, amphibious escorts and an offshore expedition; defender has fortifications and navy. Victory by conquering all opposing cities (or defender eliminating the cityless expedition). No turn deadline.
 - Changes are branch-only, do not merge without explicit approval. Run `node --test tests/south-africa.test.cjs` and `node tools/south-africa_sim.cjs 6 all all`.
+
+## South Africa direct playtest shortcut
+
+On the `scenario/britannia-south-africa` branch, use **Campaign Mode → South Africa quick play** to jump directly to the Britannian Tier 3 objective, select a difficulty, and press **Play South Africa now**. The battle launches even when Tiers 1 and 2 are incomplete. Only this mission has a playtest bypass; ordinary campaign unlock checks stay unchanged.
+
+A playtest is marked `game.warCampaign.preview=true`, uses the separate Campaign battle save slot, and can be resumed. It does **not** mark prerequisite victories, tint Campaign territory, award Campaign progress, or unlock another tier when won. A normally unlocked playthrough continues to record official Campaign victory as before.

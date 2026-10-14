@@ -139,19 +139,30 @@
     if(m.tier>unlockedTier(progress,faction))return 'locked';
     return m.status==='planned'?'planned':'available';
   }
-  function launch(progress,faction,id,scenarioModels) {
+  function launch(progress,faction,id,scenarioModels,options=null) {
     const m=ALL[id];
     if(!m || m.campaignFaction!==faction)return {ok:false,reason:'Unknown campaign objective.'};
-    if(state(progress,faction,id)==='locked')return {ok:false,reason:'Complete all required wars in earlier tiers first.'};
+    // The South Africa development branch offers one deliberate, scenario-only
+    // playtest bypass. It neither fabricates prerequisite victories nor unlocks
+    // any other Campaign objective.
+    const playtest=options?.previewSouthAfrica===true &&
+      faction==='britannia' && id==='britannia-south-africa';
+    if(state(progress,faction,id)==='locked'&&!playtest)
+      return {ok:false,reason:'Complete all required wars in earlier tiers first.'};
     if(!m.scenarioId)return {ok:false,reason:'Planned — Scenario Not Yet Implemented'};
     const model=scenarioModels && scenarioModels[m.scenarioId];
     if(!model || !model.sides || !model.sides.includes(m.battleSide) || typeof model.create!=='function')
       return {ok:false,reason:'Playable scenario is not registered for this faction.'};
     return {ok:true,scenarioId:m.scenarioId,battleSide:m.battleSide,
-      context:{faction,missionId:m.id,scenarioId:m.scenarioId,battleSide:m.battleSide}};
+      context:{faction,missionId:m.id,scenarioId:m.scenarioId,
+        battleSide:m.battleSide,...(playtest?{preview:true}:{})}};
   }
   function recordVictory(storage,game){
     const ctx=game && game.warCampaign, m=ctx && ALL[ctx.missionId];
+    // Completing a bypassed playtest is not an official Campaign victory:
+    // do not turn test results into territory, tiers, or campaign save data.
+    if(ctx?.preview)return {ok:false,
+      reason:'South Africa playtest complete. Campaign progress is unchanged.'};
     if(!m || m.status!=='implemented' || m.campaignFaction!==ctx.faction ||
        m.scenarioId!==ctx.scenarioId || m.battleSide!==ctx.battleSide ||
        game.mode!=='scenario' || game.scenario?.id!==m.scenarioId ||

@@ -153,3 +153,29 @@ test('geographic masks secure the intended regions without coloring neighboring 
   assert.equal(W.regionContains(W.ALL['eu-pendragon'],-117,37.5),true);
   assert.equal(W.regionContains(W.ALL['eu-caribbean'],-69,11),false); // Venezuelan mainland
 });
+
+test('South Africa quick play bypasses prerequisites, not saved victories or other locks',()=>{
+  const p=W.fresh(),st=storage(),m=W.ALL['britannia-south-africa'];
+  assert.equal(W.unlockedTier(p,'britannia'),1);
+  assert.equal(W.state(p,'britannia',m.id),'locked');
+  assert.equal(W.launch(p,'britannia',m.id,models).ok,false);
+  const info=W.launch(p,'britannia',m.id,models,{previewSouthAfrica:true});
+  assert.equal(info.ok,true);
+  assert.equal(info.context.preview,true);
+  assert.equal(info.scenarioId,'invasion-south-africa');
+  assert.equal(info.battleSide,'britannia');
+  assert.equal(W.launch(p,'britannia','britannia-european-war',models,{previewSouthAfrica:true}).ok,false);
+  assert.equal(W.launch(p,'eu','eu-hawaii',models,{previewSouthAfrica:true}).ok,false);
+  assert.equal(W.state(p,'britannia','britannia-siberia'),'locked');
+  const game={...fakeGame(m),warCampaign:info.context};
+  assert.equal(W.recordVictory(st,game).ok,false);
+  assert.equal(W.load(st).completed.britannia[m.id],undefined);
+  assert.equal(W.unlockedTier(W.load(st),'britannia'),1);
+  assert.equal(W.state(W.load(st),'britannia',m.id),'locked');
+  const normal=W.testFixture('britannia',3);
+  const regular=W.launch(normal,'britannia',m.id,models);
+  assert.equal(regular.ok,true);
+  assert.equal(regular.context.preview,undefined);
+  assert.equal(W.recordVictory(st,{...game,warCampaign:regular.context}).ok,false,
+    'An ordinary victory still cannot skip earlier-tier completion in persistent saves');
+});
