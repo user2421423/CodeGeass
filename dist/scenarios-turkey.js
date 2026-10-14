@@ -93,8 +93,8 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    // Connected waters include the Gulf of Thailand, Gulf of Tonkin and South China Sea.
-    // Every shipyard launches at an adjacent navigable hex.
+    // Only the connected Aegean–Marmara–Black Sea–Mediterranean basin is
+    // operational for carriers and harbours; tiny inland lakes are not ports.
     const packed=root.TURKEY_LAND_BITS || (typeof require==='function'?
       require('./turkey-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.TURKEY_LAND_BITS;
@@ -108,12 +108,29 @@
     });
     for(const t of g.tiles)if(t.terrain!=='sea'&&
       E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+    // The 20–80% coastal mask creates some isolated lagoon cells.
+    // Find the largest continuous sea basin once, before placing any ports.
+    const visitedSea=new Set();
+    let openSea=new Set();
+    for(const start of g.tiles){
+      if(start.terrain!=='sea'||visitedSea.has(E.key(start)))continue;
+      const queue=[start],component=new Set([E.key(start)]);
+      visitedSea.add(E.key(start));
+      for(let i=0;i<queue.length;i++)for(const n of E.adjacent(g,queue[i])){
+        const k=E.key(n);
+        if(n.terrain!=='sea'||visitedSea.has(k))continue;
+        visitedSea.add(k);component.add(k);queue.push(n);
+      }
+      if(component.size>openSea.size)openSea=component;
+    }
+    if(openSea.size<2500)throw Error('Anatolian maritime approaches are disconnected');
+    const navigable=t=>t.terrain==='sea'&&openSea.has(E.key(t));
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
-        (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
+        (!coastal||E.adjacent(g,t).some(n=>navigable(n)))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Turkey city '+name);
       const capital=name==='Ankara'||name==='Aleppo';
@@ -182,7 +199,7 @@
     const taken=new Set();
     for(const [name,level] of Object.entries(PORTS)){
       const s=g.stations.find(v=>v.name===name);
-      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!taken.has(E.key(t)))
+      const at=E.adjacent(g,s).filter(t=>navigable(t)&&!taken.has(E.key(t)))
         .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
           E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
       if(!at)throw Error('Cannot place naval port '+name);
@@ -195,7 +212,7 @@
       const fleet={id:'fleet-'+g.scenario.groups.length,side,
         name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
+        const at=nearest(g,s,t=>navigable(t)&&!E.unitAt(g,t)&&
           !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),10);
         if(!at)throw Error('Cannot deploy navy at '+name);
         fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
