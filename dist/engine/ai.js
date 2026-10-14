@@ -151,7 +151,9 @@
         recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
           g.scenario?.id === 'philippines-invasion';
       memo[side] = { turn: g.turn, doctrine,
-        guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
+        guards: scenario ? (g.scenario?.id === 'conquest-indochina'
+          ? assignIndochinaGuards(g, side) : assignDivisionBritanniaGuards(g, side))
+          : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
       else if (scenario) planScenarioOffense(g, side, memo[side]);
@@ -319,7 +321,23 @@
     }
     // Scenario columns prioritize actual travel time. Canada's route bias
     // acts only after geography has established a reachable destination.
-    return canadaOperationalCost(g,u,f,Math.max(0, turns));
+    const cost=canadaOperationalCost(g,u,f,Math.max(0, turns));
+    return indochinaOperationalCost(g,u,f,cost);
+  }
+  // A route bias, not scripted movement: the Federation's three armies favor
+  // their next unclaimed city only after the normal planner finds a real path.
+  // They can still exploit another open approach if terrain blocks their axis.
+  function indochinaOperationalCost(g,u,f,turns) {
+    if(g.scenario?.id!=='conquest-indochina'||u.side!=='cf'||
+       !Number.isFinite(turns))return turns;
+    const axis=g.scenario.offensiveAxes?.cf?.[u.invasionGroup];
+    if(!axis?.length)return turns;
+    const remaining=axis.filter(name=>g.stations.some(s=>s.name===name&&
+      foe(g,s.owner,u.side)));
+    if(!remaining.length)return turns;
+    const index=remaining.indexOf(f.anchor.name);
+    if(index<0)return turns+0.8;
+    return Math.max(0,turns-(index===0?2.6:index===1?1.5:0.5));
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
@@ -1313,6 +1331,47 @@
           emergency: foes.some(f => dist(g, f, s) <= 4) };
     }
     return taken;
+  }
+  // Indochina is explicitly a defense-first theatre for Britannia. The
+  // normal multi-front AI otherwise launches every formation at Chinese cities
+  // and leaves Vinh, Vientiane and the mountain passes unprotected. Guard
+  // assignments expire when the threat recedes, releasing troops for a real
+  // counteroffensive. China reserves units only when its own cities are at risk.
+  function assignIndochinaGuards(g,side) {
+    if(g.mode!=='scenario'||g.scenario?.id!=='conquest-indochina')return {};
+    const own=g.units.filter(u=>u.hp>0&&u.side===side&&!atSea(g,u)&&
+      !isShip(u)&&!u.hold);
+    const foes=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&
+      u.side!=='neutral'&&!isShip(u));
+    const posts=side==='britannia'?(g.scenario.defensePosts||[]):[
+      ['Hanoi',1,7],['Nanning',1,7],['Kunming',1,7],
+      ['Luang Prabang',1,7],['Haiphong',1,7]
+    ];
+    const guards={};
+    // Prevent an AI fortress screen from swallowing the counterattack force.
+    const cap=Math.max(2,Math.floor(own.length*(side==='britannia'?0.28:0.14)));
+    let assigned=0;
+    for(const [name,openingNeed,radius] of posts) {
+      if(assigned>=cap)break;
+      const city=g.stations.find(s=>s.name===name&&s.owner===side);
+      if(!city)continue;
+      const nearby=foes.filter(u=>massOf(g,u)===massOf(g,city)&&
+        dist(g,u,city)<=10);
+      const opening=side==='britannia'&&g.turn<=4;
+      if(!nearby.length&&!opening)continue;
+      const urgent=nearby.some(u=>dist(g,u,city)<=5);
+      const need=Math.min(cap-assigned,urgent?Math.max(2,openingNeed):
+        opening?openingNeed:1);
+      const candidates=own.filter(u=>!guards[u.id]&&
+        massOf(g,u)===massOf(g,city)&&dist(g,u,city)<=radius)
+        .sort((a,b)=>dist(g,a,city)-dist(g,b,city)||
+          Number(!!a.cmd)-Number(!!b.cmd)||a.id-b.id);
+      for(const u of candidates.slice(0,need)) {
+        guards[u.id]={c:city.c,r:city.r,id:city.id,emergency:urgent};
+        assigned++;
+      }
+    }
+    return guards;
   }
   function assignGuards(g, side) {
     const own = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u) && !isShip(u)),
