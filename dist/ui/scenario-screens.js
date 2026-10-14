@@ -18,9 +18,14 @@ const SCENARIO_KINDS = [
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['invasion-canada','Invasion of Canada','74 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'invasion-canada': {
+    eu: 'Command six northern footholds and launch five carrier-led invasions from the Atlantic, Hudson Strait, Labrador Sea and Arctic. Seize ports, then converge on the industrial heartland.',
+    britannia: 'Hold Canada\'s fortified ports, prairie supply routes, Rocky Mountain passes and Great Lakes industrial network. Move reserves between threatened fronts.'
+  },
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -83,6 +88,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'invasion-canada': {
+    era: 'Canada · Alternate 2017',
+    intro: 'Following Greenland, Europia United launches coordinated naval and northern invasions against Britannian Canada. All 74 theatre cities must fall; no turn limit.',
+    diplomacy: 'Two hostile powers. Five amphibious invasion axes and continental defense with independently capturable ports and no scripted deadline.',
+    elite: 'Elite Canada uses established single-frame Elite Forces and veteran enemy commanders. Carriers remain conventional; all faction mechanics are unchanged.',
+    focus: {eu:'Iqaluit',britannia:'Ottawa'}
+  },
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
