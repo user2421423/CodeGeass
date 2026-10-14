@@ -941,8 +941,9 @@ const GEOGRAPHY = (() => {
     const eastCoast = g.scenario.id === 'invasion-american-east-coast';
     const panama = g.scenario.id === 'eu-panama';
     const pendragon = g.scenario.id === 'eu-pendragon';
+    const southChina = g.scenario.id === 'bf-south-china';
     const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || southChina;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -1102,7 +1103,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast) && g.scenario?.rivers){
+    if((siberia || brazil || canada || california || eastCoast || southChina) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
