@@ -10,7 +10,7 @@ function warReportDialog(tab='latest',selectedTurn=null) {
     fmt=n=>Number(n||0).toLocaleString(),
     faction=s=>F(s)?.short||s,
     metric=(label,value,sign='')=>'<div class="war-metric"><span>'+esc(label)+'</span><b>'+sign+fmt(value)+'</b></div>';
-  const tabs=[['latest','Turn report'],['history','Territory history'],['statistics','Statistics']]
+  const tabs=[['latest','Turn report'],['history','Territory history'],['statistics','Statistics'],['notifications','Notifications']]
     .map(([id,label])=>'<button class="small '+(tab===id?'primary':'ghost')+
       '" data-action="war-report-'+id+'">'+label+'</button>').join('');
   let body='';
@@ -52,6 +52,16 @@ function warReportDialog(tab='latest',selectedTurn=null) {
         .slice(-80).reverse().map(e=>'<li><span class="war-event-turn">T'+e.turn+'</span> '+
         esc(faction(e.side)+' · '+e.kind.replace(/([A-Z])/g,' $1').toLowerCase()+' · '+(e.city||''))+'</li>').join('')+
       '</ol>';
+  } else if(tab==='notifications') {
+    // Short-lived UI notices are an additional session log, not the authoritative War Report.
+    body='<h3>This-session notifications</h3>' +
+      '<p class="mode-note">Recent interface messages from this browser session. Strategic battle history remains under Territory history.</p>' +
+      (noticeHistory.length ? '<ol class="notification-history">' +
+        noticeHistory.slice().reverse().map(n => '<li class="notice-' + n.type + '">' +
+          '<span class="war-event-turn">T' + n.turn + '</span>' +
+          '<b>' + esc(NOTICE_LABELS[n.type]) + '</b> ' + esc(n.text) +
+          (n.count > 1 ? ' <small>×' + n.count + '</small>' : '') + '</li>').join('') +
+        '</ol>' : '<p class="mode-note">No notifications this session.</p>');
   } else {
     const totals={};
     for(const row of Object.values(r.turns))for(const [side,entry] of Object.entries(row)){
