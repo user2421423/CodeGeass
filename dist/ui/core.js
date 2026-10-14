@@ -78,8 +78,9 @@ const SAVE_KEY = 'knightmare-conquest-save',
   chosenSaveKey = () => setup.conquest === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY,
   CAMPAIGN_KEY = 'knightmare-conquest-mission',
   SCENARIO_KEY = 'knightmare-conquest-scenario',
+  TUTORIAL_KEY = 'knightmare-mechanics-tutorial-save',
   PROFILE_KEY = 'knightmare-conquest-profile',
-  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? SCENARIO_KEY
+  saveKey = () => (game.scenario?.id === 'mechanics-tutorial' ? TUTORIAL_KEY : game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? SCENARIO_KEY
     : game.era === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY);
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
