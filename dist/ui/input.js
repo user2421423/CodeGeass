@@ -672,7 +672,7 @@ document.addEventListener('keydown', e => {
     }
     if (e.key === 'Escape' && !modal.querySelector('[aria-label="Operation setup"]')) {
       if (modal.querySelector('[aria-label="Mission dialogue"]')) talkNext(true);
-      else if (modal.querySelector('[aria-label="Campaigns"], [aria-label="Scenario selection"]')) startMenu();
+      else if (modal.querySelector('[aria-label="Story Mode"], [aria-label="World Campaign"], [aria-label="Scenario selection"]')) startMenu();
       else if (modal.querySelector('[data-back="campaign"]')) campaignDialog();
       else if (helpBack === 'start' && modal.querySelector('[aria-label="Field manual"]')) startMenu();
       else if (archiveBack === 'start' && modal.querySelector('[aria-label="Knightmare archive"]')) startMenu();
