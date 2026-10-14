@@ -174,7 +174,7 @@
   function nearest(g,p,valid,radius=12){
     let best=null,d=Infinity;
     for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c);c++){
+      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
         const t=E.tile(g,c,r);
         if(!t||!valid(t))continue;
         const n=E.distance(p,t,g);
