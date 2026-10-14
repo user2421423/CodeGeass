@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains nine independent regional wars. Each scenario
+The **Scenarios** menu contains fourteen independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -21,6 +21,11 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **The European War** | 120 × 80 · 44 cities | Europia United defends 28 western and central European cities against Euro Britannia's 16 eastern cities. |
 | **Operation Stonehenge** | 120 × 96 · 37 cities | Britannia starts with no cities, twelve loaded carrier-battleships and 25 amphibious escorts off the Atlantic coast; Europia United owns every city in Britain, Ireland, France, Iberia and the Low Countries. Only the two powers fight. |
 | **The Bering Strait Crisis** | 120 × 80 · 28 cities | Britannia in Alaska and the Aleutians fights Europia United in eastern Siberia and Kamchatka, with naval assaults across the Bering Sea. |
+| **Invasion of Siberia** | 160 × 88 · 49 cities | Britannia begins at eastern Siberian footholds and Pacific coast bases against the E.U.'s defended Lena, Yenisei and Trans-Siberian corridor. Total conquest with no turn limit; Arctic and Pacific ports are independently capturable. |
+| **Invasion of South Africa** | 144 × 108 · 47 cities | Four Britannian carrier-led landing forces begin offshore with no cities. The E.U. holds Cape Town, Johannesburg, Pretoria, Durban and the wider southern African theatre, defending 16 ports and inland industrial centers. Capture every city, or as the E.U. defeat the cityless invaders. |
+| **Crossing the Urals** | 120 × 90 · 40 cities | Britannia attacks the E.U. across the Ural mountain passes and industrial railway corridors. Complete city conquest without a turn limit. |
+| **Invasion of Turkey** | 144 × 104 · 59 cities | Britannian armies and naval forces advance from Syria and Iraq into E.U.-held Turkey. The Bosporus and Dardanelles are navigable; total conquest wins. |
+| **Invasion of St. Petersburg and Moscow** | 128 × 88 · 41 cities | Britannian field armies advance from their Volga footholds against fortified E.U. Russian cities, culminating in Moscow and St. Petersburg. Complete city conquest wins. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |
@@ -183,7 +188,7 @@ scripts under `dist/`; no npm install or runtime bundler is required.
 
 - `dist/engine.js`, `dist/engine/*.js` and `dist/engine/ai.js`:
   game rules, unit data, commanders, technology, AI and army groups.
-- `dist/scenarios*.js` and `dist/*-landmask.js`: nine standalone regional
+- `dist/scenarios*.js` and `dist/*-landmask.js`: fourteen standalone regional
   scenarios, maps and starting armies. `dist/missions.js` and
   `dist/campaign.js` implement the story campaign.
 - `dist/ui/*.js`: HUD, input, rendering, scenario selection, army-group

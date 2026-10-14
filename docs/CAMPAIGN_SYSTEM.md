@@ -7,7 +7,7 @@ Branch: **feature/campaign-world-map** (not merged to main).
 - **Story Mode** is the original 58 narrative missions, in six preserved arcs. Its internal game.mode = campaign, its engine is dist/campaign.js, and its key knightmare-conquest-mission is unchanged.
 - **Campaign Mode** is a new world map and tier registry in dist/war-campaign.js; its independently saved progress key is knightmare-war-campaign-v1.
 - Campaign Mode launches *original* regional scenarios through game.mode = scenario with an attached warCampaign context and uses its own active battle slot, knightmare-war-campaign-battle.
-- **Scenarios** remain independent with key knightmare-conquest-scenario and nine unchanged regional battles. Conquest and its 2018 variant keep their existing saves and rules.
+- **Scenarios** remain independent with key knightmare-conquest-scenario and fourteen standalone regional battles (nine original, five added without modifying their historical starting situations). Conquest and its 2018 variant keep their existing saves and rules.
 
 Winning a standalone Scenario, quitting, losing or viewing a preview does not count toward Campaign progress.
 
@@ -26,9 +26,9 @@ Winning a standalone Scenario, quitting, losing or viewing a preview does not co
 | --- | --- | --- |
 | 1: Global Conflicts | War for Australia; Conquest of Area 18; Division of Japan | Existing |
 | 2: Bering Strait | Bering Strait Crisis | Existing |
-| 3: Imperial Expansion | Invasion of Siberia; Invasion of South Africa | Planned |
-| 4: Eurasian Offensive | Crossing the Urals; Invasion of Turkey | Planned |
-| 5: Western Russia | Invasion of St. Petersburg and Moscow | Planned |
+| 3: Imperial Expansion | Invasion of Siberia; Invasion of South Africa | Implemented |
+| 4: Eurasian Offensive | Crossing the Urals; Invasion of Turkey | Implemented |
+| 5: Western Russia | Invasion of St. Petersburg and Moscow | Implemented |
 | 6: European War | European War | Existing |
 | 7: Operation Stonehenge | Operation Stonehenge | Existing |
 
@@ -39,7 +39,7 @@ For Britannian Tier 6, battleSide = eb, because the unchanged European War is fo
 - dist/war-campaign.js — authoritative data-driven objective registry, unique IDs, planned-versus-implemented status, independent progression, victory validation, geographical map tinting.
 - dist/ui/war-campaign-screen.js — 2017-map canvas, selectable region markers, tier tabs, front arrows, faction selection, pan and zoom, info panel and battle launch.
 - dist/war-campaign.css — scoped, responsive styling.
-- docs/campaign-placeholders/*.json — one structured implementation task per planned mission, 15 total.
+- docs/campaign-placeholders/*.json — fifteen structured mission handoff files; five Britannian objectives implemented and ten E.U. objectives still planned.
 - tests/war-campaign.test.cjs — focused tier, save, map and verification checks.
 - src/hud/00-start-menu.part.js and dist/ui/hud.js — main menu links; Story Mode is a UI-only rename.
 - dist/ui/core.js — separate Campaign battle save key.
@@ -55,15 +55,15 @@ Ten E.U. IDs: eu-hawaii, eu-brazil, eu-greenland, eu-caribbean, eu-panama, eu-ne
 
 Five Britannian IDs: britannia-siberia, britannia-south-africa, britannia-urals, britannia-turkey, britannia-western-russia.
 
-Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in dist/war-campaign.js: id, title, campaignFaction, tier, region, marker [longitude,latitude], bounds [west,south,east,north], description, status, scenarioId and battleSide. Planned entries currently have scenarioId = null, and therefore cannot launch or be completed.
+Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in dist/war-campaign.js: id, title, campaignFaction, tier, region, marker [longitude,latitude], bounds [west,south,east,north], description, status, scenarioId and battleSide. Only the ten planned E.U. objectives have scenarioId = null, and therefore cannot launch or be completed.
 
 1. Implement the specified new regional battle in a **separate** scenario module on its own development branch. Follow an existing scenario API: stable ID, sides array containing the intended battleSide, create(side,difficulty,seed), normal Scenario victory reporting, and registration in E.scenarios.byId.
 2. Load the module before the Campaign UI. Change **only its matching registry row** in dist/war-campaign.js from scenarioId null to the actual registered scenario ID. The runtime derives its implemented status automatically.
 3. Update that mission's JSON placeholder metadata to specify its new ID, module location and status.
 4. Refine marker and bounds to match the actual region if necessary. Geographic bounds are approximate rectangles used for campaign map recoloring; never recolor an unrelated continent.
-5. Run Campaign tests and existing Scenario tests. The objective's launch button becomes functional automatically when unlocked. No fake battle, fake victory, cross-scenario resource carryover, or additional UI case is needed.
+5. Audit terrain/ports and run focused AI simulations without adding new regression tests. The objective's launch button becomes functional automatically when unlocked. No fake battle, fake victory, cross-scenario resource carryover, or additional UI case is needed.
 
-The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. No new planned regional scenario is implemented on this branch.
+The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. All five Britannian regional objectives are now implemented and playable when their tiers unlock. The ten E.U. placeholders remain unimplemented.
 
 ## Map rendering, ownership and navigation
 
@@ -92,3 +92,19 @@ Run from repository root:
     node tools/validate_assets.cjs --tracked
 
 Also test in a browser: start menu, Story Mode arcs, standalone Scenarios, Conquest, faction-specific map ownership, pan/zoom, locked/planned markers, and a real Campaign-launched scenario victory. Verify standalone Scenario victory does not unlock Campaign. Do not merge without explicit user approval.
+
+## Integrated Britannian scenarios
+
+| Tier | Mission | Runtime ID | Map | Starting cities |
+| --- | --- | --- | --- | --- |
+| 3 | Invasion of Siberia | `britannia-siberia` | 160 × 88 | 13 Britannia / 36 E.U. |
+| 3 | Invasion of South Africa | `invasion-south-africa` | 144 × 108 | 0 Britannia / 47 E.U. |
+| 4 | Crossing the Urals | `crossing-urals` | 120 × 90 | 17 Britannia / 23 E.U. |
+| 4 | Invasion of Turkey | `invasion-turkey` | 144 × 104 | 14 Britannia / 45 E.U. |
+| 5 | Invasion of St. Petersburg and Moscow | `britannia-western-russia` | 128 × 88 | 11 Britannia / 30 E.U. |
+
+Each new regional scenario is selectable independently in Scenarios. In Campaign Mode, completed tiers unlock subsequent tiers only after legitimate in-game victory. South Africa includes an optional direct-play development shortcut that does not change Campaign completion, recolor territory, or unlock tiers. The existing European War remains a separate Tier 6 fight played as Euro Britannia; after completing Tier 5 the result screen announces **Euro Britannia Established**.
+
+All five scenarios use the established faction units and all four difficulties. Their branch-specific geographic audit and seeded AI simulation scripts are kept under `tools/`; no new regression tests are added by integration. New map scripts are loaded from `dist/index.html` before `dist/war-campaign.js`. Generated engine Elite eligibility rules are synchronized with `src/engine/16-world-setup.part.js` for Siberia, Urals and Western Russia.
+
+The five implementation branches were combined into `feature/campaign-world-map`. Do not merge to `main` without a separate user request. Full graphical playtesting and long-run balance remain separately verifiable.

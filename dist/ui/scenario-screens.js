@@ -13,9 +13,22 @@ const SCENARIO_KINDS = [
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
-  ['area-18','The Conquest of Area 18','50 cities · 3 sides']
+  ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
+  ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
+  ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
+  ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
+  ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+'crossing-urals': {
+britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
+eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
+},
+  'britannia-western-russia': {
+    britannia: 'Advance west from the Volga through three Army Group axes, breach Moscow and St. Petersburg, then conquer all E.U. cities.',
+    eu: 'Hold Moscow, St. Petersburg, the Upper Volga and the wooded river approaches. Commit reserves to blunt the Britannian offensive.'
+  },
   'war-for-australia': {
     britannia: 'Hold Sydney, Melbourne, Brisbane and Australia’s eastern industrial heartland. Counter northern advances and Western amphibious landings.',
     cf: 'Push south from Darwin through the Outback, fight for Cape York, and launch amphibious assaults on the eastern and western coasts.',
@@ -39,6 +52,10 @@ const SCENARIO_BLURBS = {
     britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
     eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
   },
+  'invasion-south-africa': {
+    britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
+    eu: 'Hold all mainland cities, ports and industrial corridors. Intercept the carrier fleets, defend beaches and counterattack seized harbours.'
+  },
   'conquest-indochina': {
     britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
     cf: 'Invade south through northern Vietnam, Yunnan and mountain corridors toward Laos.'
@@ -47,9 +64,17 @@ const SCENARIO_BLURBS = {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
     cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
   },
+  'britannia-siberia': {
+    britannia: 'Launch the great westward offensive from Magadan, Oymyakon and Ust-Maya. Break E.U. defenses on the Lena and drive for the Trans-Siberian railway.',
+    eu: 'Defend Yakutsk and Khandyga, protect the industrial railway hubs, preserve mobile reserves and counterattack Britannian columns.'
+  },
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
     eu: 'Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases.'
+  },
+  'invasion-turkey': {
+    britannia: 'Lead the northern land offensive from Syria and Iraq, pierce the Taurus passes and land expeditionary fleets at Anatolian ports. Take every E.U. city.',
+    eu: 'Defend Istanbul, Ankara and the Anatolian interior, hold the Bosporus and Dardanelles, then counterattack into Syria and Mesopotamia.'
   },
   'area-18': {
     britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
@@ -58,6 +83,20 @@ const SCENARIO_BLURBS = {
   }
 };
 const SCENARIO_TEXT = {
+'crossing-urals': {
+era:'The Urals · Alternate 2017',
+intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
+diplomacy:'Both sides are hostile from the start. Routes through the mountains are slower except at named valleys.',
+elite:'Elite Urals uses the existing land Elite Force conversion, rival commanders and difficulty scaling.',
+focus:{britannia:'Yekaterinburg',eu:'Perm'}
+},
+  'britannia-western-russia': {
+    era: 'Western Russia · Alternate 2017',
+    intro: 'After crossing the Urals, Britannia invades E.U.-controlled western Russia. Capture all 41 cities to win; no turn limit.',
+    diplomacy: 'Two hostile powers from turn 1. Moscow and St. Petersburg are exceptionally fortified, but neither is invulnerable.',
+    elite: 'Elite Western Russia: single-frame eligible Elite Forces; AI named commanders begin at Level 5. AI has stronger research and production, while player unlocks follow HQ rules.',
+    focus: {britannia:'Kazan',eu:'Moscow'}
+  },
   'war-for-australia': {
     era: 'Australia · Alternate 2018',
     intro: 'Britannia holds the east, China the north, and Europia the west. Three-way continental and naval war. Conquer every rival city.',
@@ -93,12 +132,26 @@ const SCENARIO_TEXT = {
     elite: 'Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.',
     focus: {britannia:'',eu:'Paris'}
   },
+  'invasion-south-africa': {
+    era: 'Southern Africa · Alternate 2017',
+    intro: 'Four Britannian carrier groups attack E.U.-controlled southern Africa from the Atlantic and Indian Oceans. Britannia owns no cities at the start.',
+    diplomacy: 'Only Britannia and Europia United are at war. No turn limit: conquer every enemy city or eliminate the invading expedition.',
+    elite: 'Elite South Africa: eligible Lv.1 Elite Forces replace transported land formations; named AI commanders reach Lv.5. Carriers and fleet escorts remain conventional.',
+    focus: {britannia:'',eu:'Cape Town'}
+  },
   'conquest-indochina': {
     era: 'Indochina · Alternate 2017',
     intro: 'The Chinese Federation invades Britannian mainland Southeast Asia. Capture all 44 cities to win.',
     diplomacy: 'Hostile from turn 1. F.L.E.I.J.A. is disabled; there is no scripted deadline.',
     elite: 'Elite Indochina replaces land and amphibious formations with faction Elite Forces; carriers remain conventional.',
     focus: {britannia:'Vinh',cf:'Hanoi'}
+  },
+  'britannia-siberia': {
+    era: 'Siberia · Alternate 2017',
+    intro: 'Following the Bering Strait victory, Britannia attacks west from Russian Far Eastern footholds. Capture every one of 49 Siberian cities to win.',
+    diplomacy: 'Britannia and Europia United are hostile from turn 1. No F.L.E.I.J.A., scripted alliances or turn limit.',
+    elite: 'Elite Siberia uses the established Elite Force conversion, rival veteran commanders and scenario research rules. No global faction unit changes.',
+    focus: {britannia:'Ust-Maya',eu:'Yakutsk'}
   },
   'bering-strait': {
     era: 'Bering Strait · Alternate 2017',
@@ -113,6 +166,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
     elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
     focus: {britannia:'Koror',cf:'Manila'}
+  },
+  'invasion-turkey': {
+    era: 'Anatolia · Alternate 2017',
+    intro: 'Britannia attacks north from the Middle East while its expeditionary fleets target the Mediterranean coast. Europia United defends Turkey and the straits. Capture all 59 cities.',
+    diplomacy: 'Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.',
+    elite: 'Elite Turkey uses standard faction Elite Force replacements for land and amphibious troops while ships remain conventional. AI income and commanders follow established Elite settings.',
+    focus: {britannia:'Antakya',eu:'Ankara'}
   },
   'area-18': {
     era: 'Middle East · Alternate 2017',

@@ -653,7 +653,8 @@ const GEOGRAPHY = (() => {
   let japanColorCache = null;
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
-    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge';
+    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge' ||
+      g.scenario?.id === 'britannia-western-russia';
   }
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
@@ -919,7 +920,11 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
-    const centreSampledRegion = australia || middleEast;
+    const siberia = g.scenario.id === 'britannia-siberia';
+    const southernAfrica = g.scenario.id === 'invasion-south-africa';
+    const urals = g.scenario.id === 'crossing-urals';
+    const turkey = g.scenario.id === 'invasion-turkey';
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -956,7 +961,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || siberia || southernAfrica || urals || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1032,6 +1037,84 @@ const GEOGRAPHY = (() => {
         ctx.beginPath();
         tacticalHex(ctx, t, R + 0.7);
         ctx.fill();
+      }
+      ctx.restore();
+    }
+    // Dedicated northern river underlay in geographical, not approximate tile coordinates.
+    if(siberia && g.scenario?.rivers){
+      const b=g.scenario.bounds;
+      const toHex=([lon,lat])=>[
+        R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
+        R-.75*R+1.5*R*g.rows*(b.north-lat)/(b.north-b.south)];
+      ctx.save();ctx.strokeStyle='#60bfd5';ctx.lineWidth=Math.max(1.2,Math.min(3,1.4*scale));
+      ctx.globalAlpha=.8;
+      for(const path of Object.values(g.scenario.rivers)){
+        ctx.beginPath();path.forEach((p,i)=>{const [x,y]=toHex(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(g.scenario.id==='crossing-urals'&&g.scenario.rivers){
+const b=g.scenario.bounds;ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ctx.strokeStyle='#4ac4de';ctx.globalAlpha=.78;ctx.lineWidth=3.1;ctx.lineJoin='round';ctx.lineCap='round';
+for(const line of Object.values(g.scenario.rivers)){if(line.length<2)continue;
+ctx.beginPath();for(let i=0;i<line.length;i++){const [lon,lat]=line[i],
+x=R-SQ*R/2+(lon-b.west)*SQ*R*g.cols/(b.east-b.west),
+y=R-.75*R+(b.north-lat)*1.5*R*g.rows/(b.north-b.south);
+if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
+ctx.restore();}
+    if (turkey) {
+      // This is a tactical-scale hydrographic correction, not a land bridge.
+      // The GSHHS vector map has sub-hex-wide straits; the actual GSHHS-derived
+      // gameplay mask carves connected sea hexes for both navigable passages.
+      const b = g.scenario.bounds, sx = SQ * R * g.cols / (b.east - b.west),
+        sy = 1.5 * R * g.rows / (b.north - b.south);
+      const point = ([lon,lat]) => [
+        R - SQ * R / 2 + (lon-b.west)*sx,
+        R - 1.5 * R / 2 + (b.north-lat)*sy,
+      ];
+      const drawLines = (lines, color, width) => {
+        ctx.strokeStyle = color;ctx.lineWidth = width;
+        ctx.lineCap='round';ctx.lineJoin='round';
+        for (const coords of Object.values(lines || {})) {
+          if (coords.length<2) continue;
+          ctx.beginPath();
+          for (let i=0;i<coords.length;i++) {
+            const [x,y]=point(coords[i]);
+            if (!i) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          }
+          ctx.stroke();
+        }
+      };
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      // Draw rivers first, then the Bosporus and Dardanelles water channels.
+      // River strokes are visual only; the straits match navigable sea hexes.
+      drawLines(g.scenario.rivers,'rgba(75,190,215,0.76)',Math.max(1.1,R*.15));
+      drawLines(g.scenario.straits,'#205372',Math.max(3.5,R*.76));
+      ctx.restore();
+    }
+    // Western Russia's major rivers are geographic polylines. They are
+    // rendered above the political atlas but never turn land hexes into sea.
+    if(g.scenario?.id==='britannia-western-russia' && g.scenario.rivers){
+      const p=g.scenario.projection, k=Math.cos(p.centerLat*Math.PI/180),
+        wx=SQ*R*(g.cols-1)/(p.uMax-p.uMin),
+        hy=1.5*R*(g.rows-1)/(p.vMax-p.vMin);
+      ctx.save();
+      ctx.strokeStyle='#62c3df';
+      ctx.lineWidth=2.7;
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      ctx.globalAlpha=.68;
+      for(const line of Object.values(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        for(let i=0;i<line.length;i++){
+          const [lon,lat]=line[i],
+            x=R+wx*((lon-p.centerLon)*k-p.uMin),
+            y=R+hy*(p.centerLat+p.vMax-lat);
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
       }
       ctx.restore();
     }
