@@ -3,20 +3,21 @@
   "title": "Invasion of Siberia",
   "campaignFaction": "britannia",
   "tier": 3,
-  "status": "planned",
-  "scenarioId": null,
-  "playableModule": null,
+  "status": "implemented",
+  "scenarioId": "britannia-siberia",
+  "playableModule": "dist/scenarios-siberia.js",
   "geographicRegion": "Siberia",
   "proposedMapBounds": {
-    "west": 76,
-    "south": 50,
-    "east": 157,
-    "north": 71
+    "west": 55,
+    "south": 47,
+    "east": 180,
+    "north": 79
   },
   "campaignMapMarker": {
     "longitude": 116,
     "latitude": 60
   },
-  "description": "Advance into the E.U.-held Siberian interior.",
-  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+  "description": "Following the Bering Strait victory, advance west through eastern Siberia, seize the Trans-Siberian cities and conquer all 49 enemy cities.",
+  "implementationNotes": "Standalone registered scenario, GSHHG coastline, independent ports, 49 cities, 4 difficulties and total-conquest victory. Branch only; no tier changes.",
+  "mapAsset": "dist/siberia-landmask.js"
 }

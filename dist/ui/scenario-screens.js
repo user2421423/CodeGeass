@@ -10,6 +10,7 @@ const SCENARIO_KINDS = [
   ['european-war','The European War','44 cities · 2 sides'],
   ['operation-stonehenge','Operation Stonehenge','37 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
+  ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
@@ -46,6 +47,10 @@ const SCENARIO_BLURBS = {
   'philippines-invasion': {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
     cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
+  },
+  'britannia-siberia': {
+    britannia: 'Launch the great westward offensive from Magadan, Oymyakon and Ust-Maya. Break E.U. defenses on the Lena and drive for the Trans-Siberian railway.',
+    eu: 'Defend Yakutsk and Khandyga, protect the industrial railway hubs, preserve mobile reserves and counterattack Britannian columns.'
   },
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
@@ -99,6 +104,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Hostile from turn 1. F.L.E.I.J.A. is disabled; there is no scripted deadline.',
     elite: 'Elite Indochina replaces land and amphibious formations with faction Elite Forces; carriers remain conventional.',
     focus: {britannia:'Vinh',cf:'Hanoi'}
+  },
+  'britannia-siberia': {
+    era: 'Siberia · Alternate 2017',
+    intro: 'Following the Bering Strait victory, Britannia attacks west from Russian Far Eastern footholds. Capture every one of 49 Siberian cities to win.',
+    diplomacy: 'Britannia and Europia United are hostile from turn 1. No F.L.E.I.J.A., scripted alliances or turn limit.',
+    elite: 'Elite Siberia uses the established Elite Force conversion, rival veteran commanders and scenario research rules. No global faction unit changes.',
+    focus: {britannia:'Ust-Maya',eu:'Yakutsk'}
   },
   'bering-strait': {
     era: 'Bering Strait · Alternate 2017',

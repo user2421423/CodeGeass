@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains nine independent regional wars. Each scenario
+The **Scenarios** menu contains ten independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -21,6 +21,7 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **The European War** | 120 × 80 · 44 cities | Europia United defends 28 western and central European cities against Euro Britannia's 16 eastern cities. |
 | **Operation Stonehenge** | 120 × 96 · 37 cities | Britannia starts with no cities, twelve loaded carrier-battleships and 25 amphibious escorts off the Atlantic coast; Europia United owns every city in Britain, Ireland, France, Iberia and the Low Countries. Only the two powers fight. |
 | **The Bering Strait Crisis** | 120 × 80 · 28 cities | Britannia in Alaska and the Aleutians fights Europia United in eastern Siberia and Kamchatka, with naval assaults across the Bering Sea. |
+| **Invasion of Siberia** | 160 × 88 · 49 cities | Britannia begins at eastern Siberian footholds and Pacific coast bases against the E.U.'s defended Lena, Yenisei and Trans-Siberian corridor. Total conquest with no turn limit; Arctic and Pacific ports are independently capturable. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |

@@ -7,7 +7,7 @@ Branch: **feature/campaign-world-map** (not merged to main).
 - **Story Mode** is the original 58 narrative missions, in six preserved arcs. Its internal game.mode = campaign, its engine is dist/campaign.js, and its key knightmare-conquest-mission is unchanged.
 - **Campaign Mode** is a new world map and tier registry in dist/war-campaign.js; its independently saved progress key is knightmare-war-campaign-v1.
 - Campaign Mode launches *original* regional scenarios through game.mode = scenario with an attached warCampaign context and uses its own active battle slot, knightmare-war-campaign-battle.
-- **Scenarios** remain independent with key knightmare-conquest-scenario and nine unchanged regional battles. Conquest and its 2018 variant keep their existing saves and rules.
+- **Scenarios** remain independent with key knightmare-conquest-scenario and the nine original regional battles plus the standalone Invasion of Siberia. Conquest and its 2018 variant keep their existing saves and rules.
 
 Winning a standalone Scenario, quitting, losing or viewing a preview does not count toward Campaign progress.
 
@@ -26,7 +26,7 @@ Winning a standalone Scenario, quitting, losing or viewing a preview does not co
 | --- | --- | --- |
 | 1: Global Conflicts | War for Australia; Conquest of Area 18; Division of Japan | Existing |
 | 2: Bering Strait | Bering Strait Crisis | Existing |
-| 3: Imperial Expansion | Invasion of Siberia; Invasion of South Africa | Planned |
+| 3: Imperial Expansion | Invasion of Siberia (implemented); Invasion of South Africa (planned) | Mixed |
 | 4: Eurasian Offensive | Crossing the Urals; Invasion of Turkey | Planned |
 | 5: Western Russia | Invasion of St. Petersburg and Moscow | Planned |
 | 6: European War | European War | Existing |
@@ -53,7 +53,7 @@ Existing generated bundles retain src as their editable source: src/README.md an
 
 Ten E.U. IDs: eu-hawaii, eu-brazil, eu-greenland, eu-caribbean, eu-panama, eu-new-york, eu-canada, eu-great-lakes, eu-california, eu-pendragon.
 
-Five Britannian IDs: britannia-siberia, britannia-south-africa, britannia-urals, britannia-turkey, britannia-western-russia.
+Remaining Britannian planned IDs: britannia-south-africa, britannia-urals, britannia-turkey, britannia-western-russia. The fifth original placeholder, britannia-siberia, is now implemented on scenario/britannia-siberia.
 
 Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in dist/war-campaign.js: id, title, campaignFaction, tier, region, marker [longitude,latitude], bounds [west,south,east,north], description, status, scenarioId and battleSide. Planned entries currently have scenarioId = null, and therefore cannot launch or be completed.
 
@@ -63,7 +63,7 @@ Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in di
 4. Refine marker and bounds to match the actual region if necessary. Geographic bounds are approximate rectangles used for campaign map recoloring; never recolor an unrelated continent.
 5. Run Campaign tests and existing Scenario tests. The objective's launch button becomes functional automatically when unlocked. No fake battle, fake victory, cross-scenario resource carryover, or additional UI case is needed.
 
-The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. No new planned regional scenario is implemented on this branch.
+The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. No new other planned regional scenario is implemented on this branch.
 
 ## Map rendering, ownership and navigation
 

@@ -919,7 +919,8 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
-    const centreSampledRegion = australia || middleEast;
+    const siberia = g.scenario.id === 'britannia-siberia';
+    const centreSampledRegion = australia || middleEast || siberia;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -956,7 +957,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || siberia) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1032,6 +1033,20 @@ const GEOGRAPHY = (() => {
         ctx.beginPath();
         tacticalHex(ctx, t, R + 0.7);
         ctx.fill();
+      }
+      ctx.restore();
+    }
+    // Dedicated northern river underlay in geographical, not approximate tile coordinates.
+    if(siberia && g.scenario?.rivers){
+      const b=g.scenario.bounds;
+      const toHex=([lon,lat])=>[
+        R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
+        R-.75*R+1.5*R*g.rows*(b.north-lat)/(b.north-b.south)];
+      ctx.save();ctx.strokeStyle='#60bfd5';ctx.lineWidth=Math.max(1.2,Math.min(3,1.4*scale));
+      ctx.globalAlpha=.8;
+      for(const path of Object.values(g.scenario.rivers)){
+        ctx.beginPath();path.forEach((p,i)=>{const [x,y]=toHex(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.stroke();
       }
       ctx.restore();
     }
