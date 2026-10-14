@@ -500,17 +500,7 @@
           group('cf',f.name+' Landing Army',f.name).units.push(u.id);
           embarked.push({ship,u});
         }
-    if(difficulty==='elite'){
-      // Existing Elite preparation dispatch is keyed to a fixed scenario list.
-      // The Korea case shares this two-faction ('cf'/'britannia') contract.
-      // Reuse its sanctioned roster/rank/production transformations without
-      // changing shared engine code or modifying the persisted scenario ID.
-      const actualScenarioId=g.scenario.id;
-      try{
-        g.scenario.id='invasion-korea';
-        E.prepareEliteEurope(g);
-      }finally{g.scenario.id=actualScenarioId;}
-    }
+    if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const {ship,u} of embarked){
       (ship.cargo||=[]).push(u);
       g.units.splice(g.units.indexOf(u),1);

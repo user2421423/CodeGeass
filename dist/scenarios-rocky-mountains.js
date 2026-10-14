@@ -1678,13 +1678,7 @@ function create(player='eu',difficulty='normal',seed=201740){
    if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
   }
  }
- // Reuse unmodified European Elite scaling/commander/fort rules. The existing
- // allowlist has not yet been extended, so temporarily use its identical two-side
- // Pendragon theatre entry, restore immediately, and never persist the alias.
- if(difficulty==='elite'){
-  g.scenario.id='eu-pendragon';
-  try{E.prepareEliteEurope(g);}finally{g.scenario.id=ID;}
- }
+ if(difficulty==='elite')E.prepareEliteEurope(g);
  for(const side of SIDES){
   const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
    difficulty==='hard'?1.3:1;

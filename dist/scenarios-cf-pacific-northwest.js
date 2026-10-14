@@ -283,7 +283,7 @@
     // Global prepareEliteEurope is ID-whitelisted; apply the same roster
     // conversion locally to avoid changing the shared game engine here.
     const used={};
-    for(const u of g.units){
+    for(const u of E.allUnits(g)){
       const base=E.TYPES[u.type];
       if(!base||base.naval==='ship')continue;
       const roster=g.scenario.eliteRosters[u.side]||[];

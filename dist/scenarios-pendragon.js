@@ -293,16 +293,7 @@ function create(player=attacker,difficulty='normal',seed=startingSeed){
    if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
   }
  }
- if(difficulty==='elite'){
-  // The shared Elite preparer currently whitelists battle-luoyang for cf
-  // but not cf-pendragon. Reuse its exact Britannia/CF transformation,
-  // including standard L1 frames and named rival L5 officers, then restore ID.
-  if(attacker==='cf'){
-   const saved=g.scenario.id;
-   try{g.scenario.id='battle-luoyang';E.prepareEliteEurope(g);}
-   finally{g.scenario.id=saved;}
-  }else E.prepareEliteEurope(g);
- }
+ if(difficulty==='elite')E.prepareEliteEurope(g);
  if(difficulty==='hard'||difficulty==='challenge'){
   for(const side of SIDES.filter(v=>v!==player))
    for(const [i,u] of g.units.filter(v=>v.side===side).entries())

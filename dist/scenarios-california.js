@@ -342,16 +342,7 @@
         group(side,name).units.push(u.id);
       }
     }
-    if(difficulty==='elite'){
-      // Shared initializer still classifies California as a Britannia/non-China scenario.
-      // Apply its established Britannia/CF Elite rules using the equivalent
-      // two-faction selector, then restore the authoritative California ID.
-      // Integrator: update prepareEliteEurope's California side mapping to
-      // ['britannia','cf'] and replace this compatibility shim with a direct call.
-      const californiaId=g.scenario.id;
-      try{g.scenario.id='invasion-korea';E.prepareEliteEurope(g);}
-      finally{g.scenario.id=californiaId;}
-    }
+    if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const {ship,u} of passengers){
       (ship.cargo||=[]).push(u);
       g.units.splice(g.units.indexOf(u),1);
