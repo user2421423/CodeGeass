@@ -1700,6 +1700,29 @@
     }
     return score;
   }
+  // Prioritize *actual likely F.L.E.I.J.A. city targets*: visible friendly
+  // cities close to hostile armies and friendly combat concentrations. Our
+  // own existing ready/pending charges reduce duplicate coverage value.
+  // Never inspect opposing Eliminators, arsenals or secret projects.
+  function eliminatorForwardCityCoverage(g, side, p, ignoreCity = null) {
+    if (g.era === 'ufn2018') return 0; // restore original 2018 lab ranking
+    const charges = sideEliminators(g, side).filter(h => h.city?.id !== ignoreCity);
+    const enemies = g.units.filter(u => u.hp > 0 && foe(g, u.side, side));
+    const friends = g.units.filter(u => u.hp > 0 && u.side === side && !atSea(g, u));
+    let score = 0;
+    for (const s of g.stations) {
+      if (s.owner !== side || dist(g, s, p) > ELIMINATOR.range) continue;
+      const allies = friends.filter(u => dist(g, u, s) <= 4).length;
+      if (allies < 2) continue;
+      const threat = enemies.reduce((d, u) => Math.min(d, dist(g, u, s)), Infinity);
+      if (threat > 12) continue;
+      const overlap = charges.filter(h => dist(g, h, s) <= ELIMINATOR.range).length;
+      const urgency = threat <= 3 ? 0.55 : threat <= 6 ? 1.25 : threat <= 9 ? 1.1 : 0.85;
+      score += eliminatorCityValue(g, side, s) *
+        (1 + Math.min(5, allies) * 0.17) * urgency / (1 + overlap * 4);
+    }
+    return score;
+  }
   // Public battlefield situation + own assets only. Never peek at another
   // side's Eliminator state or private weapon projects.
   function eliminatorThreatAssets(g, side, memo = null) {
@@ -1751,7 +1774,7 @@
   }
   // At least one strong stationary city anchor, and a second only if a
   // seriously threatened city cluster merits sacrificing a mobile escort.
-  function eliminatorStationaryCities(g, side) {
+  function eliminatorStationaryCities2018Baseline(g, side) {
     const waiting = g.stations.filter(s => s.owner === side && s.eliminator > 0);
     const holders = sideEliminators(g, side);
     const fixed = new Set();
@@ -1770,6 +1793,31 @@
         second.score >= 180 && second.score > sorted[0].score * 0.8 &&
         g.units.some(u => u.hp > 0 && foe(g, u.side, side) &&
           dist(g, u, second.s) <= 9)) fixed.add(second.s.id);
+    return fixed;
+  }
+  // Preserve the previous 2018 allocation exactly; only 2017 tests the
+  // enhanced forward-city heuristic.
+  function eliminatorStationaryCities(g, side) {
+    if (g.era === 'ufn2018') return eliminatorStationaryCities2018Baseline(g, side);
+    const waiting = g.stations.filter(s => s.owner === side && s.eliminator > 0);
+    const holders = sideEliminators(g, side);
+    const fixed = new Set();
+    if (!waiting.length) return fixed;
+    const sorted = waiting.map(s => ({
+      s, score: eliminatorCoverageValue(g, side, s, s.id),
+      forward: eliminatorForwardCityCoverage(g, side, s, s.id),
+    })).sort((a,b) => b.score - a.score || a.s.id - b.s.id);
+    // Keep the home capital's fixed shield where it exists; if the capital
+    // has no waiting charge, preserve the strongest existing city anchor.
+    const anchor = sorted.find(x => x.s.capitalOf === side) || sorted[0];
+    fixed.add(anchor.s.id);
+    // A second charge can remain stationary only if it covers an actual
+    // threatened city-and-army cluster. Never sacrifice the primary anchor.
+    const second = sorted.filter(x => !fixed.has(x.s.id) &&
+        dist(g, x.s, anchor.s) > ELIMINATOR.range)
+      .sort((a,b) => b.forward - a.forward || a.s.id-b.s.id)[0];
+    if (holders.length >= 3 && second?.forward >= 250)
+      fixed.add(second.s.id);
     return fixed;
   }
   function eliminatorAnchorCity(g, side) {
@@ -1804,16 +1852,21 @@
       const danger = rivals.reduce((d, u) => Math.min(d, dist(g, u, s)), 99);
       const safety = danger <= 2 ? -260 : danger <= 4 ? -110 : danger <= 7 ? -20 : 35;
       const cover = eliminatorCoverageValue(g, side, s);
+      // Preserve city-defense viability when buying a forward Eliminator.
+      // 2018 retains its original score; only 2017 gets a bounded boost.
+      const forward = mobileDesired && g.era !== 'ufn2018'
+        ? Math.min(eliminatorForwardCityCoverage(g, side, s, s.id),
+            cover * 0.5) : 0;
       const near = leaders.filter(u => massOf(g,u) === massOf(g,s))
         .map(u => ({u,d:dist(g,u,s),tier1:eliminatorCarrierScore(g,u)>0}))
         .filter(x => x.d <= (x.tier1 ? ELIMINATOR_AI.maxPickupDistance : 8))
         .sort((a,b) => (b.tier1 ? 135 : 0) - (a.tier1 ? 135 : 0) +
           (a.d-b.d)*24 || a.u.id-b.u.id)[0];
-      return { s, cover, safety, near,
+      return { s, cover, forward, safety, near,
         preview: (mobileDesired ? cover * 0.18 +
           Math.max(near ? 470 - near.d * 24 + (near.tier1 ? 90 : 0) : -450,
             (eliminatorForwardFormation(g,side,s)?.score || -450) + 265)
-          : cover) + safety +
+          : cover) + safety + forward * (mobileDesired ? 0.75 : 0.1) +
           (anyLab ? (s.lab || 0) * 55 : 0) };
     }).sort((a,b) => b.preview - a.preview || a.s.id - b.s.id);
     // A bounded shortlist avoids running global Dijkstra on every laboratory.
@@ -1831,7 +1884,7 @@
         .sort((a,b) => (a.route.turns*80 - (a.tier1?90:0)) -
           (b.route.turns*80 - (b.tier1?90:0)) || b.u.hp-a.u.hp)[0];
       return { ...entry,
-        score: entry.cover * 0.18 + entry.safety +
+        score: entry.cover * 0.18 + entry.forward * 0.75 + entry.safety +
           Math.max(best ? 480 - 80 * best.route.turns +
             (best.tier1 ? 90 : 0) : -450,
             (eliminatorForwardFormation(g,side,entry.s)?.score || -450) + 265) +
