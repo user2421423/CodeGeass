@@ -919,7 +919,8 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
-    const centreSampledRegion = australia || middleEast || g.scenario.id === 'invasion-turkey';
+    const turkey = g.scenario.id === 'invasion-turkey';
+    const centreSampledRegion = australia || middleEast || turkey;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -956,7 +957,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1033,6 +1034,36 @@ const GEOGRAPHY = (() => {
         tacticalHex(ctx, t, R + 0.7);
         ctx.fill();
       }
+      ctx.restore();
+    }
+    if (turkey) {
+      // This is a tactical-scale hydrographic correction, not a land bridge.
+      // The GSHHS vector map has sub-hex-wide straits; the actual GSHHS-derived
+      // gameplay mask carves connected sea hexes for both navigable passages.
+      const b = g.scenario.bounds, sx = SQ * R * g.cols / (b.east - b.west),
+        sy = 1.5 * R * g.rows / (b.north - b.south);
+      const point = ([lon,lat]) => [
+        R - SQ * R / 2 + (lon-b.west)*sx,
+        R - 1.5 * R / 2 + (b.north-lat)*sy,
+      ];
+      const drawLines = (lines, color, width) => {
+        ctx.strokeStyle = color;ctx.lineWidth = width;
+        ctx.lineCap='round';ctx.lineJoin='round';
+        for (const coords of Object.values(lines || {})) {
+          if (coords.length<2) continue;
+          ctx.beginPath();
+          for (let i=0;i<coords.length;i++) {
+            const [x,y]=point(coords[i]);
+            if (!i) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          }
+          ctx.stroke();
+        }
+      };
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      // Draw rivers first, then the Bosporus and Dardanelles water channels.
+      // River strokes are visual only; the straits match navigable sea hexes.
+      drawLines(g.scenario.rivers,'rgba(75,190,215,0.76)',Math.max(1.1,R*.15));
+      drawLines(g.scenario.straits,'#205372',Math.max(3.5,R*.76));
       ctx.restore();
     }
     return true;
