@@ -1,0 +1,106 @@
+name: Gated 2017 Eliminator threat coverage evaluation
+on:
+  push:
+    branches: ['experiment/eliminator-2017-protection-gated']
+    paths: ['.github/workflows/eliminator-threat-protection-gate.yml']
+  pull_request:
+    branches: ['experiment/eliminator-launch-diagnostics']
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  compare:
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2017', seed: 42, turns: 45}
+          - {mode: '2017', seed: 246801, turns: 45}
+          - {mode: '2017', seed: 8675309, turns: 45}
+          - {mode: '2017', seed: 1234567, turns: 45}
+          - {mode: '2017', seed: 314159, turns: 45}
+          - {mode: '2017', seed: 271828, turns: 45}
+          - {mode: '2017', seed: 9001, turns: 45}
+          - {mode: '2017', seed: 8080, turns: 45}
+          - {mode: '2017', seed: 55555, turns: 45}
+          - {mode: '2017', seed: 67891, turns: 45}
+          - {mode: '2017', seed: 99991, turns: 45}
+          - {mode: '2017', seed: 424242, turns: 45}
+          - {mode: '2017', seed: 77777, turns: 45}
+          - {mode: '2017', seed: 606060, turns: 45}
+          - {mode: '2017', seed: 31415, turns: 45}
+          - {mode: '2017', seed: 9999, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+          - {mode: '2018', seed: 42, turns: 35}
+          - {mode: '2018', seed: 246801, turns: 35}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} protected gate
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Compare unchanged engine and four defensive AI policies
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+          ELIMINATOR_TARGET_DIAGNOSTICS: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" threat-gated > gated.json
+          git show 5465627c9709ec764d49404d3124633a0b08b23f:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" prior-cap125 > cap125.json
+          git show a96329bbd1bb1d10626751c7a4229a8f32c6a011:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" anchor-only > anchors.json
+          git show 6e452e5ca7f3148c9392d37701c1e93897a3386e:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" original > baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const filenames={gated:'gated.json',cap125:'cap125.json',
+            anchors:'anchors.json',baseline:'baseline.json'};
+          const data=Object.fromEntries(Object.entries(filenames).map(([k,f])=>
+            [k,JSON.parse(fs.readFileSync(f,'utf8'))]));
+          for(const [name,r] of Object.entries(data)){
+            assert.equal(r.warheads,r.diagnostics.launches,name+' launch accounting');
+            assert.equal(r.diagnostics.coveredButMissed,0,name+' interception coverage');
+          }
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts',
+            'chargesStarted','pickedUp','carrierLosses','armyValueProtectionRate',
+            'frontlineValueProtectionRate','weightedProtectionRate','elapsedMs'];
+          if(data.baseline.mode==='2018'){
+            const exact=['warheads','intercepted','carrierIntercepts','cityIntercepts',
+              'chargesStarted','pickedUp','carrierLosses','armyValueProtectionRate',
+              'frontlineValueProtectionRate','weightedProtectionRate',
+              'actions','finalCities','finalUnits'];
+            for(const name of ['gated','cap125','anchors'])
+              for(const k of exact)
+                assert.deepEqual(data[name][k],data.baseline[k],name+' 2018 '+k);
+            console.log('GATED_2018_NEUTRALITY_OK '+data.baseline.seed);
+          }
+          console.log('GATED_PROTECTION_COMPARE '+JSON.stringify({
+            mode:data.baseline.mode,seed:data.baseline.seed,
+            metrics:Object.fromEntries(keys.map(k=>[k,
+              Object.fromEntries(Object.entries(data).map(([name,r])=>[name,r[k]]))]))
+          }));
+          NODE
