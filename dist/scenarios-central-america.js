@@ -214,13 +214,13 @@
   // Carrier-led Pacific landings threaten the defenders' *rear*; none starts
   // on a continental city. Ships themselves remain in reachable ocean.
   const INVASIONS=[
-    {name:'Nicoya Landing',lon:-88.95,lat:9.52,carriers:3,amphib:5,
+    {name:'Nicoya Landing',lon:-88.95,lat:9.52,carriers:5,amphib:5,
       troops:[['heavy',3,'rakshata'],['assault',3,null],['rocket',2,null]]},
-    {name:'Fonseca Flanking Force',lon:-89.40,lat:11.57,carriers:3,amphib:5,
+    {name:'Fonseca Flanking Force',lon:-89.40,lat:11.57,carriers:5,amphib:5,
       troops:[['heavy',4,'sawasaki'],['assault',2,null],['siege',2,null]]},
-    {name:'Salvadoran Pacific Landing',lon:-90.97,lat:12.25,carriers:3,amphib:5,
+    {name:'Salvadoran Pacific Landing',lon:-90.97,lat:12.25,carriers:5,amphib:5,
       troops:[['heavy',4,null],['rocket',2,null],['medium',2,null]]},
-    {name:'Guatemala Coastal Landing',lon:-92.93,lat:13.00,carriers:3,amphib:6,
+    {name:'Guatemala Coastal Landing',lon:-92.93,lat:13.00,carriers:5,amphib:6,
       troops:[['heavy',4,null],['assault',3,null],['rocket',2,null]]}
   ];
   const DEFENSIVE_FLEETS=[
@@ -497,7 +497,17 @@
           group('cf',f.name+' Landing Army',f.name).units.push(u.id);
           embarked.push({ship,u});
         }
-    if(difficulty==='elite')E.prepareEliteEurope(g);
+    if(difficulty==='elite'){
+      // Existing Elite preparation dispatch is keyed to a fixed scenario list.
+      // The Korea case shares this two-faction ('cf'/'britannia') contract.
+      // Reuse its sanctioned roster/rank/production transformations without
+      // changing shared engine code or modifying the persisted scenario ID.
+      const actualScenarioId=g.scenario.id;
+      try{
+        g.scenario.id='invasion-korea';
+        E.prepareEliteEurope(g);
+      }finally{g.scenario.id=actualScenarioId;}
+    }
     for(const {ship,u} of embarked){
       (ship.cargo||=[]).push(u);
       g.units.splice(g.units.indexOf(u),1);
