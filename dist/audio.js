@@ -181,6 +181,21 @@ const SFX = (() => {
       tone(t, 'square', 1400, 1400, 0.06, 0.1);
       tone(t + 0.06, 'square', 2100, 2100, 0.09, 0.1);
     },
+    // Quiet menu/interface feedback, deliberately separate from combat sounds.
+    'ui-success'(t) {
+      tone(t, 'triangle', 830, 1100, 0.12, 0.035);
+      tone(t + 0.09, 'sine', 1100, 1320, 0.12, 0.025);
+    },
+    'ui-warning'(t) {
+      tone(t, 'triangle', 620, 420, 0.2, 0.055);
+    },
+    'ui-strategic'(t) {
+      tone(t, 'triangle', 540, 800, 0.18, 0.055);
+      tone(t + 0.15, 'sine', 800, 1040, 0.23, 0.035);
+    },
+    'ui-turn'(t) {
+      tone(t, 'sine', 660, 850, 0.16, 0.025);
+    },
   };
   // Weapon sounds by Knightmare class.
   const WEAPON = {
