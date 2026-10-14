@@ -15,3 +15,18 @@ Tests:
 - Four extended AI-observer wars to check how frequently the five-success threshold naturally occurs; absence of a milestone in short wars is expected and **not** proof the trigger is broken.
 
 No change to Eliminator AI defense placement or production. **Draft only; do not merge into `main` without approval.**
+
+## Extended simulated-war results (completed)
+
+[Four extended AI wars](https://github.com/user2421423/CodeGeass/actions/runs/38539998542) all passed, as did the full Node suite, source/build synchronization, UI smoke, and the integrated fifth-city hit → commander-target strike test.
+
+| Era / seed | Simulated turns | Missiles fired | City's destruction count by most successful attacker | Attacks by any qualifying attacker after their fifth success | Tier 1 direct hits after threshold |
+|---|---:|---:|---:|---:|---:|
+| 2017 / 401 | 91 | 21 | Britannia: 7 | 3 | 0 |
+| 2017 / 777 | 97 | 22 | Britannia: 6 | 2 | 0 |
+| 2018 / 401 | 54 | 12 | CF: 2 | 0 | 0 |
+| 2018 / 777 | 90 | 23 | Britannia: 5 | 2 | **2** |
+
+The 2018/777 case proves the rule works without an artificially injected fifth-hit state: Britannia earned all five city destructions in real AI gameplay and then directly aimed the next two warheads at Tier 1 commanders. The two 2017 cases had five or more successful enemy-city destructions but the subsequent targets were not Tier 1. **This is not enough to conclude the preference failed** because legal high-value Tier 1 opportunities were not recorded in the current observer. The AI remains free to choose safe non-commander targets. Do not claim a 100% Tier 1 strike rate.
+
+Decision: this branch has an independently validated implemented rule. Keep it unmerged pending explicit user approval; it no longer depends on the forward-defense experiment.
