@@ -16,6 +16,7 @@ const SCENARIO_KINDS = [
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
+  ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
@@ -52,6 +53,10 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
     eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
   },
+  'eu-greenland': {
+    eu: 'Start offshore with four carrier-supported Army Groups. Seize Greenland’s fjord ports and advance around the ice sheet to each Britannian base.',
+    britannia: 'Hold Nuuk, Sisimiut, Ilulissat, Tasiilaq and the northern garrisons. Concentrate coastal reserves, patrol the straits and counterattack invaded harbours.'
+  },
   'invasion-south-africa': {
     britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
     eu: 'Hold all mainland cities, ports and industrial corridors. Intercept the carrier fleets, defend beaches and counterattack seized harbours.'
@@ -83,6 +88,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'eu-greenland': {
+    era:'Greenland · Alternate 2017',
+    intro:'Europia United launches a carrier-borne assault to take Greenland’s North Atlantic bases. Capture every enemy city; no turn limit.',
+    diplomacy:'Britannia controls every city. Europia starts at sea with no city, but can seize independent harbours and reinforce coastal landing zones.',
+    elite:'Elite Greenland uses the standard E.U. and Britannian elite conversion and increased AI resources; the geography and carrier rules are unchanged.',
+    focus:{eu:'Nuuk',britannia:'Nuuk'}
+  },
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',

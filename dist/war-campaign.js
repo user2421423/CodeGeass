@@ -25,7 +25,7 @@
     [3,[
       ['hawaii','Invasion of Hawaii',null,'Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
       ['brazil','Invasion of Brazil',null,'Brazil',[-51,-13],[-74,-34,-34,6],'Establish a South American foothold in Britannian territory.'],
-      ['greenland','Invasion of Greenland',null,'Greenland',[-42,72],[-61,59,-20,84],'Capture the North Atlantic approaches.'],
+      ['greenland','Invasion of Greenland','eu-greenland','Greenland',[-42,72],[-73,58,-12,84],'Capture the North Atlantic approaches.'],
       ['caribbean','Invasion of the Caribbean',null,'Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
     ]],
     [4,[

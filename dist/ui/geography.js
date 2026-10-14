@@ -650,6 +650,13 @@ const GEOGRAPHY = (() => {
   const PHILIPPINES_LAND = LAYERS.land.filter(shape =>
     PHILIPPINES_ISLAND_ANCHORS.some(([lon,lat]) =>
       pointWithinShape(shape, px(lon), py(lat))));
+  // Exclude Canada's Arctic islands and Iceland from the Greenland theatre;
+  // select Greenland's true GSHHG coastal polygon and its nearby skerries.
+  const GREENLAND_ANCHORS = [[-51.74,64.18],[-53.67,66.94],[-51.1,69.22],
+    [-37.64,65.61],[-46.03,60.72],[-69.23,77.47],[-21.96,70.48]];
+  const GREENLAND_LAND = LAYERS.land.filter(shape =>
+    GREENLAND_ANCHORS.some(([lon,lat]) =>
+      pointWithinShape(shape, px(lon), py(lat))));
   let japanColorCache = null;
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
@@ -924,7 +931,8 @@ const GEOGRAPHY = (() => {
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
     const urals = g.scenario.id === 'crossing-urals';
     const turkey = g.scenario.id === 'invasion-turkey';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey;
+    const greenland = g.scenario.id === 'eu-greenland';
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey || greenland;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -961,6 +969,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
+      greenland ? GREENLAND_LAND :
       (europeOnly || middleEast || siberia || southernAfrica || urals || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
@@ -1009,6 +1018,23 @@ const GEOGRAPHY = (() => {
     }
     ctx.restore();
 
+    // Greenland's ice cap lies above the national coastal tint. Render it as
+    // snowy relief while retaining the actual GSHHG silhouette under all hexes.
+    if (greenland) {
+      ctx.save();
+      ctx.globalAlpha=0.76;
+      ctx.fillStyle='#ebf5f6';
+      ctx.beginPath();
+      for(const tile of g.tiles){
+        if(tile.biome!=='ice-sheet')continue;
+        const x=SQ*R*(tile.c+.5*(tile.r&1))+R;
+        const y=1.5*R*tile.r+R;
+        if(x<left-2*R||x>right+2*R||y<top-2*R||y>bottom+2*R)continue;
+        tacticalHex(ctx,tile,R+0.25);
+      }
+      ctx.fill();
+      ctx.restore();
+    }
     // Only Japan draws unfiltered global-coast strokes; Europe's coastline
     // is the exact edge of its geographically clipped European political
     // fill. Unfiltered strokes would reintroduce African/Asian outlines.
