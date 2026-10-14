@@ -8,10 +8,21 @@
   'use strict';
   const STORAGE_KEY = 'knightmare-war-campaign-v1';
   const BATTLE_KEY = 'knightmare-war-campaign-battle';
-  const FACTIONS = ['eu', 'britannia'];
+  // Campaign identifiers are independent of engine factions: Britannia can fight
+  // different opponents without sharing progress, tiers or save-state selections.
+  const FACTIONS = ['eu', 'britannia', 'britannia-federation', 'federation-britannia'];
+  const CAMPAIGN_INFO = Object.freeze({
+    eu: Object.freeze({label:'E.U. vs Britannia',side:'eu',opponent:'britannia'}),
+    britannia: Object.freeze({label:'Britannia vs E.U.',side:'britannia',opponent:'eu'}),
+    'britannia-federation': Object.freeze({label:'Britannia vs Federation',side:'britannia',opponent:'cf'}),
+    'federation-britannia': Object.freeze({label:'Federation vs Britannia',side:'cf',opponent:'britannia'}),
+  });
+  const campaignSide = campaign => CAMPAIGN_INFO[campaign]?.side || campaign;
   const tierLabels = {
     eu: ['Global Conflicts','Bering Strait','Overseas Invasions','Continental Landings','Conquest of the Britannian Homeland','Final Offensive'],
     britannia: ['Global Conflicts','Bering Strait','Imperial Expansion','The Eurasian Offensive','Conquest of Western Russia','The European War','Operation Stonehenge'],
+    'britannia-federation': ['Opening Battles','Securing the Flanks','Invasion of South China','The Yangtze Front','The Imperial Capital'],
+    'federation-britannia': ['Awaiting Approved Federation Battles'],
   };
   // [id, title, existing scenario ID/null, geographic name, marker lon/lat,
   //  geographic bounds west/south/east/north, short campaign description].
@@ -52,6 +63,26 @@
     [6,[['european-war','European War','european-war','Central Europe',[14,50],[-2,44,31,56],'Take command of Euro Britannia in its existing regional war against the E.U.']]],
     [7,[['stonehenge','Operation Stonehenge','operation-stonehenge','Western Europe',[-2,49],[-11,36,10,59],'Lead the final Britannian carrier invasion of western Europe.']]],
   ];
+  // ONLY user-approved Britannia-vs-Federation objectives. Unbuilt regional
+  // scenarios have null IDs and cannot be launched or completed. The two
+  // existing regional scenarios retain their original starting positions.
+  const brFederationRows = [
+    [1,[
+      ['philippines','Invasion of the Philippines','philippines-invasion','Philippines',[124,12],[115.5,4.5,139.1,21.2],'Launch a carrier-supported invasion of Federation-held Philippine islands.'],
+      ['indochina','Defense of Indochina','conquest-indochina','Indochina',[106,16],[96.2,7.5,117.2,27],'Defend Britannian Southeast Asia against the Federation advance.'],
+    ]],
+    [2,[
+      ['malacca','Battle of the Strait of Malacca',null,'Malacca Strait',[101.5,3.5],[94,-2,106,8],'Capture the maritime chokepoint and cut the Federation\'s western access to Indonesia.'],
+      ['korea','Invasion of Korea',null,'Korean Peninsula',[127.5,37],[124,33,131,43],'Attack the Federation on the Korean Peninsula from Britannian Pacific positions.'],
+      ['iraq-iran','Iraq–Iran Campaign',null,'Iraq and Iran',[49,33],[38,24,64,40],'Open a western offensive into Federation-held Iraq and Iran.'],
+    ]],
+    [3,[['south-china','Invasion of South China',null,'Southern China',[111,23],[102,18,119,29],'Advance north from Southeast Asia with supporting coastal operations.']]],
+    [4,[['yangtze','Battle of the Yangtze River',null,'Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
+    [5,[['luoyang','Battle of Luoyang',null,'Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
+  ];
+  // Federation-side battles are not yet approved. A genuine empty tier is used
+  // rather than fabricating a launchable mission or an invented map marker.
+  const federationBritanniaRows = [[1,[]]];
   // Approximate national/state contours where a rectangular theater would
   // otherwise tint substantial unrelated territory. The GSHHG atlas continues
   // to supply the authoritative coastlines and underlying land geometry.
@@ -94,16 +125,15 @@
       scenarioId,
       // Euro Britannia is the scenario's actual playable faction, but does not
       // replace the overarching Britannian campaign identity.
-      battleSide: faction === 'britannia' && suffix === 'european-war' ? 'eb' : faction,
+      battleSide: faction === 'britannia' && suffix === 'european-war' ? 'eb' : campaignSide(faction),
       final: tier === tierLabels[faction].length,
     });
   }
   const registry = Object.freeze(Object.fromEntries(FACTIONS.map(faction=>{
-    const rows = [
-      [1,shared],
-      [2,[bering]],
-      ...(faction==='eu'?euRows:brRows),
-    ];
+    const rows = faction==='eu' ? [[1,shared],[2,[bering]],...euRows]
+      : faction==='britannia' ? [[1,shared],[2,[bering]],...brRows]
+      : faction==='britannia-federation' ? brFederationRows
+      : federationBritanniaRows;
     return [faction,Object.freeze(rows.map(([tier,items])=>Object.freeze({
       number:tier,title:tierLabels[faction][tier-1],
       missions:Object.freeze(items.map(row=>objective(faction,tier,row))),
@@ -111,7 +141,7 @@
   })));
   const ALL = Object.freeze(Object.fromEntries(FACTIONS.flatMap(f=>registry[f].flatMap(t=>t.missions.map(m=>[m.id,m])))));
   const PLACEHOLDERS = Object.freeze(Object.values(ALL).filter(m=>m.status==='planned'));
-  function fresh(){return {version:1,selectedFaction:'eu',completed:{eu:{},britannia:{}}};}
+  function fresh(){return {version:1,selectedFaction:'eu',completed:Object.fromEntries(FACTIONS.map(f=>[f,{}]))};}
   function load(storage) {
     let raw;
     try { raw=JSON.parse(storage.getItem(STORAGE_KEY)); } catch(_e){return fresh();}
@@ -132,7 +162,7 @@
   function unlockedTier(progress,faction){
     if(!registry[faction]) return 0;
     for(const tier of registry[faction])
-      if(!tier.missions.every(m=>completed(progress,faction,m.id)))return tier.number;
+      if(!tier.missions.length || !tier.missions.every(m=>completed(progress,faction,m.id)))return tier.number;
     return registry[faction].length + 1;
   }
   function state(progress,faction,id){
@@ -210,12 +240,12 @@
       if(t.terrain==='sea' || t.terrain==='offmap')continue;
       const lon=-180+(t.c+0.5*(t.r&1))*engine.WORLD.dlon,
             lat=engine.WORLD.lat0-t.r*engine.WORLD.dlat;
-      for(const m of wins)if(regionContains(m,lon,lat))t.owner=faction;
+      for(const m of wins)if(regionContains(m,lon,lat))t.owner=campaignSide(faction);
     }
     world.mapRevision=(world.mapRevision||0)+1;
     return world;
   }
-  const api={STORAGE_KEY,BATTLE_KEY,FACTIONS,registry,ALL,PLACEHOLDERS,
+  const api={STORAGE_KEY,BATTLE_KEY,FACTIONS,CAMPAIGN_INFO,campaignSide,registry,ALL,PLACEHOLDERS,
     fresh,load,persist,completed,unlockedTier,state,launch,recordVictory,chooseFaction,
     regionContains,worldSnapshot};
   // Fixture only exists in Node test runs; it is intentionally not reachable
