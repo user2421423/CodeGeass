@@ -204,8 +204,12 @@ function wcMissionPanel(){
       'TIER '+m.tier+' · '+wcSafe(m.region)+'</div><h2>'+wcSafe(m.title)+'</h2>'+
       '<p>'+wcSafe(m.description)+'</p><div class="wc-record">Status: <b>'+
       (status==='completed'?'Secured':status==='locked'?'Locked':status==='planned'?'Planned — Scenario Not Yet Implemented':'Ready for deployment')+'</b></div>';
-    if(status==='locked')html+='<p class="wc-warning">Complete every required war in Tier '+unlocked+' to unlock this objective.</p>';
-    else if(status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented. This objective cannot be played or completed.</p>';
+    if(status==='locked'){
+      html+='<p class="wc-warning">Complete every required war in Tier '+unlocked+' to unlock this objective.</p>';
+      if(m.status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented.</p>';
+    }else if(status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented. This objective cannot be played or completed.</p>';
+    else if(!E.scenarios?.byId?.[m.scenarioId])
+      html+='<p class="wc-warning">This regional scenario module is not registered.</p>';
     else{
       html+='<label class="wc-diff-label" for="wc-difficulty">Battle difficulty</label><select class="select" id="wc-difficulty">'+
         ['normal','hard','challenge','elite'].map(d=>'<option value="'+d+'"'+(wcDifficulty===d?' selected':'')+'>'+wcSafe(E.DIFFICULTIES[d]?.name||d)+'</option>').join('')+'</select>';
