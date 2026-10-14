@@ -34,4 +34,18 @@ Do not consider a merge if city protection worsens compared with original baseli
 
 ## Results
 
-Pending validation and matched comparisons.
+[All 27 CI jobs passed](https://github.com/user2421423/CodeGeass/actions/runs/38547683070): full Node tests, build-sync, UI smoke, twenty 2017 three-way comparisons and six strict 2018-neutrality checks.
+
+**The new 85% city-coverage floor is empirically inert in this sample.** In all twenty 2017 seeds, the new candidate produced *identical gameplay metrics* to the prior 2017-only candidate for missile launches, interceptions (including mobile/city), production, pickup, carrier losses, army/frontline/weighted-city protection. Only wall-clock runtimes differed. Every 2018 candidate and prior run also matched the unchanged original baseline.
+
+| Aggregate outcome, 20 matched 2017 wars | Original baseline | PR #69 | PR #70 |
+|---|---:|---:|---:|
+| Missiles fired | 187 | 188 | **188** |
+| Missiles intercepted | 80 | 85 | **85** |
+| Mobile interceptions | 1 | 9 | **9** |
+| Carrier losses | 7 | 4 | **4** |
+| Mean army coverage | 10.29% | 10.19% | **10.19%** |
+| Mean frontline coverage | 11.10% | 11.55% | **11.55%** |
+| Mean weighted city coverage | 19.59% | 17.71% | **17.71%** |
+
+**Decision: Do not merge this candidate.** The adjusted primary anchor condition never changed observed outcomes. Next refinement should address actual forward city production, charge disposition and city versus mobile protection trade-offs, with matched simulations. Do not claim the new city coverage rule improves the game. `main` unchanged.
