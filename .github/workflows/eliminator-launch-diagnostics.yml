@@ -1,0 +1,103 @@
+name: FLEIJA launch-target and Eliminator-distance diagnostic
+on:
+  push:
+    branches: ['experiment/eliminator-launch-diagnostics']
+    paths: ['.github/workflows/eliminator-launch-diagnostics.yml']
+  pull_request:
+    branches: ['experiment/eliminator-threat-cover']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+      - name: Verify diagnostic mode cannot alter AI outcomes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs 2018 401 35 uninstrumented > plain.json
+          ELIMINATOR_TARGET_DIAGNOSTICS=1 node tools/eliminator_ab_sim.cjs 2018 401 35 diagnostic > observed.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const base=JSON.parse(fs.readFileSync('plain.json','utf8'));
+          const diag=JSON.parse(fs.readFileSync('observed.json','utf8'));
+          for(const k of ['warheads','intercepted','cityIntercepts','carrierIntercepts',
+            'chargesStarted','pickedUp','carrierLosses','finalCities','finalUnits','actions']){
+            assert.deepEqual(diag[k],base[k],k);
+          }
+          assert.equal(diag.diagnostics.launches,diag.warheads,'one diagnostic per missile');
+          assert.equal(diag.diagnostics.coveredButMissed,0,'ready coverage must intercept');
+          console.log('DIAGNOSTIC_NEUTRALITY_OK');
+          NODE
+  diagnose:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 14
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2017', seed: 314159, turns: 45}
+          - {mode: '2017', seed: 271828, turns: 45}
+          - {mode: '2017', seed: 42, turns: 45}
+          - {mode: '2017', seed: 246801, turns: 45}
+          - {mode: '2017', seed: 8675309, turns: 45}
+          - {mode: '2017', seed: 1234567, turns: 45}
+          - {mode: '2017', seed: 9001, turns: 45}
+          - {mode: '2017', seed: 8080, turns: 45}
+          - {mode: '2017', seed: 55555, turns: 45}
+          - {mode: '2017', seed: 67891, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+          - {mode: '2018', seed: 314159, turns: 35}
+          - {mode: '2018', seed: 271828, turns: 35}
+          - {mode: '2018', seed: 42, turns: 35}
+          - {mode: '2018', seed: 246801, turns: 35}
+          - {mode: '2018', seed: 8675309, turns: 35}
+          - {mode: '2018', seed: 1234567, turns: 35}
+          - {mode: '2018', seed: 9001, turns: 35}
+          - {mode: '2018', seed: 8080, turns: 35}
+          - {mode: '2018', seed: 55555, turns: 35}
+          - {mode: '2018', seed: 67891, turns: 35}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} launch diagnosis
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Inspect exact launch targets and defensive distances
+        shell: bash
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+          ELIMINATOR_TARGET_DIAGNOSTICS: '1'
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" launch-diagnostic > launch-diagnostic.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const r=JSON.parse(fs.readFileSync('launch-diagnostic.json','utf8'));
+          assert.ok(r.diagnostics,'diagnostic payload missing');
+          assert.equal(r.diagnostics.launches,r.warheads,'unrecorded launch');
+          assert.equal(r.diagnostics.coveredButMissed,0,'coverage/interception mismatch');
+          console.log('ELIMINATOR_DIAG_RESULT '+JSON.stringify({
+            mode:r.mode,seed:r.seed,turns:r.played,
+            warheads:r.warheads,intercepted:r.intercepted,
+            carrierIntercepts:r.carrierIntercepts,cityIntercepts:r.cityIntercepts,
+            diagnostics:r.diagnostics
+          }));
+          NODE

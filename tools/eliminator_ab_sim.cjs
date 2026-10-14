@@ -39,6 +39,53 @@ for (const side of sides) result.perSide[side] = {
   warheads:0, intercepted:0, chargesStarted:0, pickedUp:0, carrierLosses:0,
   carriedSideTurns:0, waitingSideTurns:0, importantCityProtected:0, importantCityExposure:0
 };
+// Read-only pre-launch telemetry. The AI hook records the target only after
+// target selection and immediately before launch, so destroyed cities/units
+// and expended charges cannot bias the classification.
+const diagnosticEnabled=process.env.ELIMINATOR_TARGET_DIAGNOSTICS==='1';
+const diagnosticShots=[];
+if(diagnosticEnabled)g.__fleijaDiagnosticHook=(attacker,p)=>{
+  const opposing=side=>side&&side!=='neutral'&&E.foe(g,side,attacker);
+  const directCity=g.stations.find(s=>s.c===p.c&&s.r===p.r&&opposing(s.owner));
+  const directUnit=E.unitAt(g,p);
+  const hasUnit=directUnit&&directUnit.hp>0&&opposing(directUnit.side);
+  const nearbyCities=g.stations.filter(s=>opposing(s.owner)&&E.distance(s,p,g)<=2);
+  const nearbyUnits=g.units.filter(u=>u.hp>0&&opposing(u.side)&&E.distance(u,p,g)<=2);
+  const nearbyFriendly=g.units.filter(u=>u.hp>0&&opposing(u.side)&&E.distance(u,p,g)<=3);
+  const hostileCharges=E.eliminatorCharges(g).filter(h=>opposing(h.owner));
+  const ready=hostileCharges.filter(h=>h.ready);
+  const waiting=ready.filter(h=>!!h.city);
+  const mobile=ready.filter(h=>!!h.unit);
+  const minDistance=holders=>{
+    const n=holders.reduce((m,h)=>Math.min(m,E.distance(h,p,g)),Infinity);
+    return Number.isFinite(n)?n:null;
+  };
+  const nearestReadyDistance=minDistance(ready);
+  const centerType=directCity?'city_center':hasUnit?'army_center':
+    nearbyCities.length?'city_splash_only':
+    nearbyUnits.length?'army_splash_only':'other';
+  const row={
+    turn:g.turn, attacker, center:{c:p.c,r:p.r}, centerType,
+    directCity:!!directCity, directArmy:!!hasUnit,
+    citiesInBlast:nearbyCities.length, unitsInBlast:nearbyUnits.length,
+    troopsNearImpact:nearbyFriendly.length,
+    targetSides:[...new Set([...nearbyCities.map(s=>s.owner),...nearbyUnits.map(u=>u.side)])].sort(),
+    readyCharges:ready.length, pendingCharges:hostileCharges.length-ready.length,
+    readyMobile:mobile.length, readyStationary:waiting.length,
+    nearestReadyDistance, nearestMobileDistance:minDistance(mobile),
+    nearestStationaryDistance:minDistance(waiting),
+    // Context-specific explanation; do not conflate lack of production with
+    // a deployed but badly positioned ready Eliminator.
+    coverageStatus:nearestReadyDistance==null?
+      (hostileCharges.length?'only_pending':'no_charges'):
+      nearestReadyDistance<=E.ELIMINATOR.range?'covered':
+      nearestReadyDistance<=6?'gap_4_to_6':
+      nearestReadyDistance<=10?'gap_7_to_10':'gap_over_10',
+    launched:false, intercepted:false, interceptorType:null,
+  };
+  diagnosticShots.push(row);
+  return row;
+};
 const launchedChargeProjects = new Set();
 const previous = new Map();
 const armed = new Map();
@@ -198,4 +245,32 @@ result.avgWaiting=result.chargedSideTurns ? +(result.waitingSideTurns/result.cha
 result.finalCities=Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length]));
 result.finalUnits=Object.fromEntries(sides.map(s=>[s,units().filter(v=>v.side===s).length]));
 result.elapsedMs=+(Number(process.hrtime.bigint()-started)/1e6).toFixed(0);
+if(diagnosticEnabled){
+  const shots=diagnosticShots.filter(s=>s.launched);
+  const summarize=(selector,values)=>Object.fromEntries(values.map(v=>[
+    v,shots.filter(s=>selector(s)===v).length]));
+  const centerTypes=['city_center','army_center','city_splash_only','army_splash_only','other'];
+  const coverageStatuses=['covered','gap_4_to_6','gap_7_to_10','gap_over_10','only_pending','no_charges'];
+  const byType=Object.fromEntries(centerTypes.map(type=>{
+    const rows=shots.filter(s=>s.centerType===type);
+    return [type,{launches:rows.length,intercepted:rows.filter(s=>s.intercepted).length,
+      mobileInterceptions:rows.filter(s=>s.interceptorType==='mobile').length,
+      noReady:rows.filter(s=>s.nearestReadyDistance==null).length,
+      readyOutsideRange:rows.filter(s=>s.nearestReadyDistance>E.ELIMINATOR.range).length}];
+  }));
+  result.diagnostics={
+    interpretation:'Strike center is classification of ground-zero hex, not inferred attacker intent.',
+    launches:shots.length, byType,
+    coverage:summarize(s=>s.coverageStatus,coverageStatuses),
+    missedByCoverage:Object.fromEntries(coverageStatuses.map(status=>[
+      status,shots.filter(s=>!s.intercepted&&s.coverageStatus===status).length])),
+    mobileThreats:shots.filter(s=>s.centerType==='army_center').length,
+    cityTargets:shots.filter(s=>s.centerType==='city_center').length,
+    coveredButMissed:shots.filter(s=>s.coverageStatus==='covered'&&!s.intercepted).length,
+    noCoverageAtTarget:shots.filter(s=>s.coverageStatus!=='covered').length,
+    readyButOutOfRange:shots.filter(s=>s.nearestReadyDistance!=null&&s.nearestReadyDistance>E.ELIMINATOR.range).length,
+    shots,
+  };
+  delete g.__fleijaDiagnosticHook;
+}
 console.log(JSON.stringify(result));
