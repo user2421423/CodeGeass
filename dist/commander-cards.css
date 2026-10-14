@@ -34,8 +34,8 @@
 .cc-empty { color: #c0cbd6; margin: 20px 0; }
 .cc-empty[hidden] { display: none; }
 
-/* Visual hierarchy follows the screenshot: tier / portrait + name + rank /
- * ratings / gold-accented ability / signature frame / original action. */
+/* Portraits now form an entire left column beside the information.
+ * This intentionally keeps the three-across navy/gold visual language. */
 .cc-roster .cc-card {
   --cc-tier-color: #c28a62;
   --cc-tier-muted: #795440;
@@ -43,10 +43,10 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 11px;
   min-width: 0;
-  min-height: 465px;
+  min-height: 375px;
+  padding: 12px;
   border: 1px solid var(--cc-tier-muted);
   border-top: 3px solid var(--cc-tier-color);
   border-radius: 11px;
@@ -57,51 +57,70 @@
 .cc-roster .cc-card.cc-tier-2 { --cc-tier-color: #cbd5e2; --cc-tier-muted: #697b8f; }
 .cc-roster .cc-card.cc-tier-3 { --cc-tier-color: #c28a62; --cc-tier-muted: #795440; }
 .cc-roster .cc-card:hover { border-color: var(--cc-tier-color); box-shadow: 0 7px 25px #0006; }
-.cc-card-top { display: flex; min-height: 23px; align-items: center; }
+.cc-card-top { display: flex; flex: none; min-height: 23px; align-items: center; }
 .cc-tier {
   font-weight: 800; letter-spacing: .09em; font-size: 11px;
   color: var(--cc-tier-color); padding: 4px 7px;
   border: 1px solid var(--cc-tier-muted); border-radius: 4px;
 }
-.cc-card-identity {
+.cc-card-main {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
-  min-height: 115px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  grid-template-columns: minmax(139px, 44%) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 11px;
 }
 .cc-card-portrait {
-  width: 96px;
-  height: 115px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(160deg,#25364b,#122439);
+  min-width: 0;
+  min-height: 299px;
+  height: 100%;
+  width: 100%;
   border: 1px solid var(--cc-tier-muted);
-  border-radius: 6px;
+  border-radius: 7px;
+  background: radial-gradient(ellipse at 50% 20%, #465466, #1c3045 60%, #0f2133);
 }
 .cc-card-portrait .cc-portrait-art {
-  position: relative; display: block;
-  width: 100%; height: 100%; cursor: pointer;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  overflow: hidden;
 }
-.cc-card-portrait .cc-portrait-art > img {
-  position: absolute; inset: 0;
-  display: block; width: 100%; height: 100%;
+.cc-roster .cc-card .cc-card-portrait .cc-portrait-art > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
   object-fit: contain !important;
-  object-position: center center !important;
+  object-position: center top !important;
 }
 .cc-card-portrait [data-general]:focus-visible {
   outline: 2px solid var(--cc-tier-color);
   outline-offset: -2px;
 }
+.cc-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
 .cc-name-group { min-width: 0; }
 .cc-roster .cc-card h3 {
-  margin: 0 0 8px;
+  margin: 1px 0 7px;
   font-size: 17px;
-  line-height: 1.3;
+  line-height: 1.28;
   color: #f5f4f1;
   overflow-wrap: anywhere;
 }
-.cc-rank-line { margin-top: 7px; }
+.cc-rank-line { margin-top: 6px; }
 .cc-rank-line b {
   display: block;
   font-size: 12px;
@@ -111,62 +130,85 @@
 .cc-card-ratings {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 10px;
-  padding: 10px;
+  min-width: 0;
+  gap: 8px 4px;
+  padding: 8px 5px;
   border: 1px solid #344b62;
   border-radius: 7px;
   background: #101f2d;
 }
-.cc-rating { display: flex; flex-direction: column; min-width: 0; gap: 4px; }
-.cc-rating > span:first-child { font-size: 11px; color: #bed0dd; }
+.cc-rating {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 3px;
+}
+.cc-rating > span:first-child {
+  font-size: 10px;
+  color: #bed0dd;
+}
 .cc-stars {
   display: inline-flex;
-  gap: 1px;
+  gap: 0;
+  letter-spacing: -.5px;
   white-space: nowrap;
-  font-size: 14px;
-  letter-spacing: 0;
+  font-size: 11px;
+  line-height: 1.3;
 }
 .cc-stars .lit { color: #ecd184; text-shadow: 0 0 5px #c79e4740; }
 .cc-stars .dim { color: #526171; }
 .cc-signature {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 11px 12px;
-  min-height: 100px;
+  gap: 4px;
+  padding: 9px 8px;
   border-left: 3px solid var(--cc-tier-color);
   border-radius: 5px;
   background: linear-gradient(115deg, #243c52, #192c3e);
 }
-.cc-signature strong { color: #f4d999; font-size: 14px; }
-.cc-roster .cc-card .cc-signature p {
-  min-height: 0; margin: 0;
-  line-height: 1.55;
-  color: #ccd7e3;
-  font-size: 12px;
+.cc-signature strong {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #f4d999;
+  overflow-wrap: anywhere;
 }
 .cc-card-bottom {
-  display: flex; flex-direction: column; gap: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-top: auto;
+  min-width: 0;
   color: #9eafc1;
   font-size: 11px;
 }
 .cc-frame { overflow-wrap: anywhere; }
 .cc-roster .cc-card .officer-actions {
-  display: flex; width: 100%; margin: 0;
+  display: flex;
+  width: 100%;
+  margin: 0;
   align-items: stretch;
 }
-.cc-roster .cc-card .officer-actions button { width: 100%; }
+.cc-roster .cc-card .officer-actions button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
 
 @media (max-width: 1060px) {
   .cc-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cc-card-main { grid-template-columns: minmax(150px, 43%) minmax(0, 1fr); }
+  .cc-stars { font-size: 12px; }
 }
 @media (max-width: 720px) {
   .cc-roster { grid-template-columns: 1fr; }
   .cc-roster .cc-card { min-height: 0; }
+  .cc-card-main { grid-template-columns: minmax(130px, 43%) minmax(0, 1fr); }
+  .cc-card-portrait { min-height: 275px; }
 }
 @media (max-width: 480px) {
   .cc-filter-bar label { flex-basis: calc(50% - 8px); }
-  .cc-card-identity { grid-template-columns: 86px minmax(0, 1fr); }
-  .cc-card-portrait { width: 86px; height: 106px; }
+  .cc-card-main { grid-template-columns: minmax(106px, 40%) minmax(0, 1fr); gap: 8px; }
+  .cc-card-portrait { min-height: 255px; }
+  .cc-roster .cc-card h3 { font-size: 15px; }
+  .cc-stars { font-size: 10px; }
 }
