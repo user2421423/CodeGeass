@@ -1,0 +1,65 @@
+name: East Coast branch audit and playable preview
+on:
+  push:
+    branches: ['scenario/eu-new-york']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: east-coast-preview
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify generated source, syntax and 20–80% map
+        run: |
+          node tools/build_sources.cjs --check
+          node --check dist/scenarios-east-coast.js
+          node --check dist/ui/geography.js
+          node tools/east_coast_hex_audit.cjs
+      - name: Seeded amphibious AI simulations
+        run: node tools/east_coast_sim.cjs 3 | tee east-coast-simulation.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: east-coast-simulation
+          path: east-coast-simulation.log
+  preview:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: east-coast-preview
+      url: ${{ steps.deployment.outputs.page_url }}previews/east-coast/
+    steps:
+      - name: Checkout East Coast branch
+        uses: actions/checkout@v4
+        with:
+          path: east-coast-source
+      - name: Checkout production main without changing it
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: production
+          persist-credentials: false
+      - name: Bundle isolated playable branch
+        run: |
+          mkdir -p production/dist/previews/east-coast
+          cp -a east-coast-source/dist/. production/dist/previews/east-coast/
+          git -C east-coast-source rev-parse HEAD > production/dist/previews/east-coast/preview-commit.txt
+          test -f production/dist/index.html
+          test -f production/dist/previews/east-coast/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: production/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
