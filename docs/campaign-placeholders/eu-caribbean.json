@@ -3,9 +3,9 @@
   "title": "Invasion of the Caribbean",
   "campaignFaction": "eu",
   "tier": 3,
-  "status": "planned",
-  "scenarioId": null,
-  "playableModule": null,
+  "status": "implemented",
+  "scenarioId": "invasion-caribbean",
+  "playableModule": "dist/scenarios-caribbean.js",
   "geographicRegion": "Caribbean",
   "proposedMapBounds": {
     "west": -84,
@@ -18,5 +18,5 @@
     "latitude": 19
   },
   "description": "Take the island chains controlling approaches to America.",
-  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+  "implementationNotes": "Native standalone scenario and Campaign Tier 3 activation. GSHHS intermediate-resolution clipped land/coast (>80% land, 20-80% mixed, <20% sea), mainland blocked. E.U. has no cities, starts with offshore carrier task forces. No turn cap. No regression tests added."
 }

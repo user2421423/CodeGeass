@@ -16,6 +16,7 @@ const SCENARIO_KINDS = [
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
+  ['invasion-caribbean','Invasion of the Caribbean','41 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
@@ -51,6 +52,10 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   'operation-stonehenge': {
     britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
     eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
+  },
+  'invasion-caribbean': {
+    eu: 'Command six loaded carrier forces, capture island harbours and advance from Cuba and the Bahamas through Hispaniola to the Lesser Antilles.',
+    britannia: 'Defend the major islands and harbours, concentrate naval patrols and counterattack isolated beachheads.'
   },
   'invasion-south-africa': {
     britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
@@ -131,6 +136,13 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     diplomacy: 'Only Britannia and Europia United are at war. Britannia must seize the entire theatre; the E.U. can win by destroying the invaders.',
     elite: 'Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.',
     focus: {britannia:'',eu:'Paris'}
+  },
+  'invasion-caribbean': {
+    era: 'Caribbean Sea · Alternate 2017',
+    intro: 'Six E.U. task forces begin offshore with no cities; Britannia holds 41 island cities across the Caribbean.',
+    diplomacy: 'Capture every hostile city to win. No turn limit and no F.L.E.I.J.A.',
+    elite: 'Elite Caribbean converts eligible land forces and amphibious troops under the standard regional Elite rules; naval carriers remain conventional.',
+    focus: {eu:'',britannia:'Havana'}
   },
   'invasion-south-africa': {
     era: 'Southern Africa · Alternate 2017',
