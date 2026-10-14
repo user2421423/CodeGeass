@@ -1,0 +1,22 @@
+{
+  "id": "eu-brazil",
+  "title": "Invasion of Brazil",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Brazil",
+  "proposedMapBounds": {
+    "west": -74,
+    "south": -34,
+    "east": -34,
+    "north": 6
+  },
+  "campaignMapMarker": {
+    "longitude": -51,
+    "latitude": -13
+  },
+  "description": "Establish a South American foothold in Britannian territory.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
