@@ -334,6 +334,7 @@
       phase:'panama-to-guatemala-federation-offensive',aiDoctrine:'europe',
       bounds:BOUNDS,projection:PROJECTION,groups:[],funding:{},citylessFunding:['cf'],
       rivers:RIVERS,lakes:LAKES,volcanoes:VOLCANOES,mountainPasses:PASSES,
+      reliefZones:HIGHLANDS,forestZones:FORESTS,valleyZones:PLAINS,
       operationalFronts:[
         {name:'Pacific Road Axis',attack:'cf',objective:'Liberia'},
         {name:'Talamanca Highland Passage',attack:'cf',objective:'San José'},

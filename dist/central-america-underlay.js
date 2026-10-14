@@ -106,6 +106,26 @@
     ctx.lineWidth=Math.max(0.7,1.3/Math.max(scale,.5));
     if(outline)ctx.stroke(outline);else {landPath(ctx);ctx.stroke();}
     ctx.restore();
+    // Add geographical highlands and forests under the tactical hexes.
+    // Clip these WGS84 landform washes to the real GSHHG coastline.
+    if(g.scenario.reliefZones?.length){
+      ctx.save();ctx.transform(A,0,0,D,tx,ty);
+      const land=landPath(ctx);
+      if(land)ctx.clip(land);else ctx.clip();
+      ctx.transform(1/A,0,0,1/D,-tx/A,-ty/D);
+      const geographicWash=(zones,color)=>{
+        ctx.fillStyle=color;
+        for(const [lon,lat,rx,ry] of zones||[]){
+          const x=mapX(lon),y=mapY(lat);ctx.beginPath();
+          ctx.ellipse(x,y,Math.max(1,Math.abs(rx*sx)),
+            Math.max(1,Math.abs(ry*sy)),0,0,Math.PI*2);ctx.fill();
+        }
+      };
+      geographicWash(g.scenario.valleyZones,'rgba(212,197,143,.24)');
+      geographicWash(g.scenario.forestZones,'rgba(53,110,77,.23)');
+      geographicWash(g.scenario.reliefZones,'rgba(119,105,89,.30)');
+      ctx.restore();
+    }
     // Lake Nicaragua and Lake Managua are real freshwater basins. Their
     // water hexes come from the sampled shoreline mask; the following
     // geographic polygons prevent the continental atlas from hiding them.
