@@ -28,7 +28,7 @@
   //  geographic bounds west/south/east/north, short campaign description].
   const shared = [
     ['australia','War for Australia','war-for-australia','Australia',[134,-25],[113,-44,154,-10],'Secure the Australian continent against rival great powers.'],
-    ['area-18','Conquest of Area 18','area-18','Arabia, Levant and Persia',[47,30],[34,15,64,39],'Win the struggle for the Middle Eastern strategic corridor.'],
+    ['area-18','Conquest of Area 18 — Arabian Peninsula','area-18','Arabian Peninsula',[47.75,21.4],[34,11.3,61.5,31.5],'Win the three-way war for the Peninsula: Britannia south, E.U. west and center, Federation east.'],
     ['division-japan','Division of Japan','division-japan','Japan',[139,37],[129,30,146,46],'Defeat rival armies in the divided Japanese home islands.'],
   ];
   const bering = ['bering','Bering Strait Crisis','bering-strait','Bering Strait',[177,63],[160,55,180,72],'Control the crossing between Siberia and Alaska.'];

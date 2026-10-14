@@ -1100,8 +1100,7 @@ const GEOGRAPHY = (() => {
       ctx.transform(A, C, B, D, tx, ty);
       coast(ctx, shapes, a, b, c, d,
         Math.max(0.5, scale * Math.hypot(A, C)));
-      // Match the playable, navigable Suez canal with a visual water cut.
-      if (middleEast) paintSuezCanal(ctx, shapes, a, b, c, d);
+      // Area 18 now depicts Arabia only; Suez lies outside this theatre.
       ctx.restore();
     }
     // Palau and Yap are intentionally enlarged in the *gameplay* mask to
