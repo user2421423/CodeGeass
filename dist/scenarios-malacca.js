@@ -131,12 +131,30 @@
     });
     // The main shipping lane is real open sea, not a scripted blockade.
     // Mixed coastal cells remain passable for land and warships as in the core engine.
+    // Select the largest contiguous sea component. Narrow landlocked lagoons
+    // must never masquerade as military harbours or trap task forces.
+    const mainWater=(()=>{
+      const visited=new Uint8Array(g.tiles.length);
+      let largest=[];
+      for(let i=0;i<g.tiles.length;i++){
+        if(visited[i]||g.tiles[i].terrain!=='sea')continue;
+        const flood=[g.tiles[i]];visited[i]=1;
+        for(let j=0;j<flood.length;j++)for(const next of E.adjacent(g,flood[j])){
+          const k=next.r*COLS+next.c;
+          if(visited[k]||next.terrain!=='sea')continue;
+          visited[k]=1;flood.push(next);
+        }
+        if(flood.length>largest.length)largest=flood;
+      }
+      if(largest.length<100)throw Error('Malacca regional shipping channel not navigable');
+      return new Set(largest.map(E.key));
+    })();
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
-        (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
+        (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'&&mainWater.has(E.key(n))))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Malacca city '+name);
       const capital=name==='Bangkok'||name==='Nanning';
@@ -205,7 +223,7 @@
     const taken=new Set();
     for(const [name,level] of Object.entries(PORTS)){
       const s=g.stations.find(v=>v.name===name);
-      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!taken.has(E.key(t)))
+      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&mainWater.has(E.key(t))&&!taken.has(E.key(t)))
         .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
           E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
       if(!at)throw Error('Cannot place naval port '+name);
@@ -219,7 +237,7 @@
       if(!anchor||!E.TYPES[type]?.naval)throw Error('Invalid Malacca fleet '+name+' '+type);
       const fleet={id:'fleet-'+g.scenario.groups.length,side,name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
-        const at=nearest(g,anchor,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
+        const at=nearest(g,anchor,t=>t.terrain==='sea'&&mainWater.has(E.key(t))&&!E.unitAt(g,t)&&
           !activePortHexes.has(E.key(t)),22);
         if(!at)throw Error('Cannot deploy fleet '+name);
         const ship=E.newUnit(g,type,side,at.c,at.r);
@@ -321,7 +339,7 @@
     return null;
   }
   const api={id:'bf-malacca',title:'Battle of the Strait of Malacca',cols:COLS,rows:ROWS,
-    sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
+    sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,fleetData:FLEETS,ports:PORTS,landings:LANDINGS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
   E.scenarios={...(E.scenarios||{}),malacca:api,
     byId:{...(E.scenarios?.byId||{}),'bf-malacca':api}};
