@@ -653,7 +653,8 @@ const GEOGRAPHY = (() => {
   let japanColorCache = null;
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
-    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge';
+    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge' ||
+      g.scenario?.id === 'britannia-western-russia';
   }
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
