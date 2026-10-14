@@ -110,21 +110,23 @@
     'fffffppppppppppppfffff',
   ];
   // The eastern front from Moscow to Warsaw (the European Front mission's map).
-  const EASTERN_FRONT = [
-    'sssssfffffppppppppfffsss',
-    'ssssffffpppppppppppffsss',
-    'fffffppppppppfffppppppff',
-    'ffppppppppppfffffppppppp',
-    'pppppppppppppfffpppppppp',
-    'ppppfffppppppppppppfffpp',
-    'pppfffffpppppppppppfffpp',
-    'pppppfppppppmmmpppppppff',
-    'ppppppppppmmmmmppppppfff',
-    'fppppppppppmmmpppppppfff',
-    'ffpppppfffppppppppppppff',
-    'fffppppffffppppppppppppp',
-    'ffffppppppppppppfffppppp',
-    'fffffppppppppppfffffpppp',
+  // The Warsaw battle is local: city districts to the west, suburbs and field positions to the east.
+  // Keep its combat footprint separate from the multi-country European War regional scenario.
+  const WARSAW_DISTRICTS = [
+    'ppuuuuuppppppppppfffpppp',
+    'puuuuuuuffpppppppfffpppp',
+    'uuuuuuuuufpppppppppppppp',
+    'uuuuuuppppppfffppppppppp',
+    'uuuuuuppppppfffppppppppp',
+    'uuuuuuuuuuupppppppppffff',
+    'uuuuuuuuppuupppppppppppp',
+    'uuuuuuuupppppppppppppppp',
+    'uuuuuuuuuuupppfffppppppp',
+    'uuuuuupppppppppffppppppp',
+    'puuuuuuppppppppppppppppp',
+    'ppuuuuufffpppppppppppppp',
+    'pppuuuffffpppppppppppppp',
+    'pppppffffppppppppppppppp',
   ];
 
   const NARVA_CITIES = [
@@ -358,14 +360,14 @@
     ['Saint-Denis Landing', 3, 11, owners.landing, 1],
   ];
 
-  const EASTERN_CITIES = [
-    ['Moscow', 21, 4, EB, 3],
-    ['Smolensk', 15, 9, 'eu', 1],
-    ['Minsk', 10, 5, 'eu', 2],
-    ['Vilnius', 6, 2, 'eu', 1],
+  const WARSAW_CITIES = [
+    ['Eastern Field HQ', 21, 4, EB, 3],
+    ['South Industrial Works', 15, 9, 'eu', 1],
+    ['Praga Rail Junction', 10, 5, 'eu', 2],
+    ['Citadel Gate', 6, 2, 'eu', 1],
     ['Warsaw', 2, 7, 'eu', 3, { fort: true, gun: 'Warsaw' }],
   ];
-  const EASTERN_EB = [
+  const WARSAW_EB = [
     [EB, 'vercingetorix', 20, 6, 1, 'shin'],
     [EB, 'gloucester', 21, 8, 2, 'julius'],
     [EB, 'gracchus', 19, 9, 2, 'ashley'],
@@ -377,7 +379,7 @@
     [EB, 'liverpool', 22, 6, 1],
     [EB, 'liverpool', 22, 9, 1],
   ];
-  const EASTERN_EU = [
+  const WARSAW_EU = [
     ['eu', 'elite_leila_alexander', 6, 7, 1, 'leila'],
     ['eu', 'alexander_elite', 8, 6, 1, 'akito'],
     ['eu', 'alexander', 9, 8, 1, 'ryo'],
