@@ -8,8 +8,8 @@
     exportCredits: 15, // a level-3 refinery also exports for credits
     // Per frame, by class; basic classes need none (credits and industry cover them). Extra frames follow the 85% rule.
     cost: { raider: 2, medium: 3, rocket: 3, heavy: 5, siege: 8, super: 10 },
-    // Elite Forces: one unique frame, priced by rarity whatever its Elite level.
-    elite: { Rare: 5, Epic: 10, Legendary: 15 },
+    // Elite Forces: fixed Sakuradite price by class, regardless of rarity or Elite level.
+    elite: { raider: 10, medium: 12, heavy: 15, super: 20, rocket: 14, siege: 18, amphib: 12 },
     allocation: { sites: ['Mount Fuji', 'Hokkaido', 'Kyushu'], share: 0.2 }, // each other power's share of Japan
     national: 5, // every surviving major power's own supply a turn, tied to no deposit (Conquest only)
   };
