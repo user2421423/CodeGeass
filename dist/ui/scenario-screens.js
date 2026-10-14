@@ -12,6 +12,7 @@ const SCENARIO_KINDS = [
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
+  ['invasion-korea','Invasion of Korea','55 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
@@ -110,6 +111,10 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   'philippines-invasion': {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
     cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
+  },
+  'invasion-korea': {
+    britannia: 'Lead five simultaneous carrier-led assaults from Japanese bases: Korea Strait, Jeju and the Yellow Sea, Incheon, Wonsan, and the north-east coast. Fight inland through western plains and mountain passes.',
+    cf: 'Hold Seoul, Pyongyang, Busan and both Korean coasts. Concentrate fortified reserve armies at the Imjin, Han, Nakdong and Yalu lines while your fleets intercept Britannian landings.'
   },
   'britannia-siberia': {
     britannia: 'Launch the great westward offensive from Magadan, Oymyakon and Ust-Maya. Break E.U. defenses on the Lena and drive for the Trans-Siberian railway.',
@@ -277,6 +282,13 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
     elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
     focus: {britannia:'Koror',cf:'Manila'}
+  },
+  'invasion-korea': {
+    era: 'Korean Peninsula and Japan · Alternate 2017',
+    intro: 'Britannia launches five major amphibious fronts from its Japanese bases. The Federation holds all 46 Korean cities; nine Japanese staging cities provide the Britannian supply base. Capture every theatre city to win.',
+    diplomacy: 'Two hostile powers. Sea routes, separate capturable harbours, dense Korean mountain corridors and major rivers define the battle. No turn limit or scripted alliance.',
+    elite: 'Elite Korea uses the established faction-specific land and amphibious Elite Forces and upgraded AI commanders. Carriers remain standard naval vessels.',
+    focus: {britannia:'Fukuoka',cf:'Seoul'}
   },
   'invasion-turkey': {
     era: 'Anatolia · Alternate 2017',
