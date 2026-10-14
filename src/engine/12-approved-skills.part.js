@@ -19,7 +19,8 @@
           (u.cmd!=='indira'||['Infantry','Armor'].every(b=>g.units.some(x=>x.hp>0&&x.side===u.side&&TYPES[x.type].branch===b&&dist(g,x,v)===1)))
         : v.id!==u.id&&v.side===u.side&&(k==='ally'||k==='commander'&&!!COMMANDERS[v.cmd]?.action||
           k==='elite'&&!!v.elite||k==='ship'&&isShip(v)||k==='wounded'&&v.hp<maxHP(v)||
-          k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3)
+          k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3&&
+          !g.stations.some(s=>s.expSupplyBlocked?.owner===v.side&&dist(g,v,s)<=1))
     ));
   }
   function newcomerUse(g,u,targetId){
@@ -49,8 +50,9 @@
       case 'margaret':{
         const cost=reinforceCost(v.type,g,v.side,v),bank=funds(g,v.side);
         if(v.elite)return {ok:false,reason:'Elite Forces are single frames and cannot be reinforced.'};
+        if(g.stations.some(s=>s.expSupplyBlocked?.owner===v.side&&dist(g,v,s)<=1))return {ok:false,reason:'City supply lines are disrupted.'};
         if(v.stack>=3||shortfall(bank,cost))return {ok:false,reason:'Cannot afford this reinforcement.'};
-        const old=maxHP(v);spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
+        const old=maxHP(v);warSpend(g,v.side,cost,'reinforcement');spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
       }
       case 'chloe':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.2));break;
       case 'tianzi':{

@@ -133,7 +133,9 @@
     const d = g.sites?.find(d => d.id === id),
       why = refineReason(g, d);
     if (why) return { ok: false, reason: why };
-    spend(funds(g, d.owner), buildCost(d, 'refinery'));
+    const cost = buildCost(d, 'refinery');
+    warSpend(g, d.owner, cost, 'construction');
+    spend(funds(g, d.owner), cost);
     d.refinery = (d.refinery || 0) + 1;
     log(g, `${d.name}: Sakuradite refinery upgraded to level ${d.refinery}.`, d.owner);
     return { ok: true };

@@ -119,7 +119,7 @@
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, eliteCampaign(g) ? 1 : availableLevel || 1))
+      shortfall(funds(g, producer), decreePrice(elitePrice(id, eliteCampaign(g) ? 1 : availableLevel || 1), s.owner === producer ? s : null))
     );
   }
   function deployElite(g, stationId, id, profile = {}, position) {
@@ -132,8 +132,9 @@
       rec = e.scenarioOnly && eliteScenario(g) ? { level: 1 } : eliteRecord(profile, id),
       options = recruitOptions(g, s, producer, e.type),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = elitePrice(id, eliteCampaign(g) ? 1 : rec.level);
+      cost = decreePrice(elitePrice(id, eliteCampaign(g) ? 1 : rec.level), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
+    if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
@@ -173,7 +174,7 @@
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
         ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, eliteCampaign(g) ? 3 : 1))
+      shortfall(funds(g, producer), decreePrice(elitePrice(id, eliteCampaign(g) ? 3 : 1), s.owner === producer ? s : null))
     );
   }
   function recruitAIElite(g, stationId, id) {
@@ -184,8 +185,9 @@
       producer = t.naval ? (s.portOwner || s.owner) : s.owner,
       p = recruitOptions(g, s, producer, e.type)[0],
       level = eliteCampaign(g) ? 3 : 1,
-      cost = elitePrice(id, level);
+      cost = decreePrice(elitePrice(id, level), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
+    if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
@@ -326,7 +328,8 @@
     s[b.field] = buildingLevel(s, kind) + 1;
     if (kind === 'factory') {
       syncBuildings(g, s);
-      s.shield = Math.min(s.maxShield, s.shield + 60);
+      // Captured cities stay undefended for the capture turn, even after factory upgrades.
+      if (s.capturedTurn !== g.turn) s.shield = Math.min(s.maxShield, s.shield + 60);
     } else if (kind === 'lab') syncBuildings(g, s);
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };

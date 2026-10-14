@@ -132,7 +132,7 @@
     if (side === g.player || !fleijaPoolSides(g, side).includes(g.player) ||
         !hasFleija(g, g.player) || g.over) return false;
     return g.stations.some(s => s.owner === g.player && !cityBusyReason(g, s) &&
-      (s.lab || 0) >= FLEIJA.lab && !shortfall(funds(g, g.player), FLEIJA.cost));
+      s.expSupplyBlocked?.owner !== g.player && (s.lab || 0) >= FLEIJA.lab && !shortfall(funds(g, g.player), FLEIJA.cost));
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -234,6 +234,16 @@
       log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
     }
     for (const s of g.stations) {
+      if (s.owner === side && s.expSupplyBlocked?.owner === side) {
+        // Stop the production clock for this owner's turn; never complete a blocked project.
+        for (const project of [s.project, s.eliminatorProject]) {
+          if (project?.side === side && project.pausedTurn !== g.turn) {
+            project.ready++;
+            project.pausedTurn = g.turn;
+          }
+        }
+        continue;
+      }
       if (s.project?.side === side && s.owner === side && s.project.ready <= g.turn) {
         s.project = null;
         (g.arsenal ||= {})[side] = Math.min(FLEIJA.max, (g.arsenal[side] || 0) + 1);

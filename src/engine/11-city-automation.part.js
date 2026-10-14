@@ -23,14 +23,17 @@
     }
     return a;
   }
-  function automationUnitOptions(g, s) {
+  function automationUnitOptions(g, s, side = g.player) {
     if (!s) return [];
-    const land = g.buildable?.[s.owner] || Object.values(lineupOf(g, s.owner)),
-      navy = s.portAt || portSite(g, s) ? navalTypes(g, s.owner) : [];
+    const landOwned = s.owner === side,
+      portOwned = (s.portOwner || s.owner) === side,
+      land = landOwned ? (g.buildable?.[side] || Object.values(lineupOf(g, side))) : [],
+      navy = portOwned && (s.portAt || (landOwned && portSite(g, s))) ? navalTypes(g, side) : [];
     return [...new Set([...land, ...navy])]
       .filter(id => {
         const t = TYPES[id];
-        return t && !t.elite && !t.campaign && (t.side === s.owner || t.side === 'neutral' || (g.buildable?.[s.owner] || []).includes(id));
+        return t && !t.elite && !t.campaign && (t.naval ? portOwned : landOwned) &&
+          (t.side === side || t.side === 'neutral' || (g.buildable?.[side] || []).includes(id));
       })
       .sort((a, b) => {
         const ta = TYPES[a],
@@ -46,16 +49,18 @@
         );
       });
   }
-  function cityAutomation(g, s) {
+  function cityAutomation(g, s, side = g.player) {
     const a = automationState(g),
       o = a.cities?.[s?.id] || {},
-      options = automationUnitOptions(g, s);
+      options = automationUnitOptions(g, s, side);
     return { unit: options.includes(o.unit) ? o.unit : null };
   }
   function setCityAutomation(g, stationId, patch = {}) {
     const a = automationState(g),
       s = g.stations.find(v => v.id === +stationId);
     if (!s) return { ok: false, reason: 'Unknown city' };
+    if (s.owner !== g.player && (!s.portAt || (s.portOwner || s.owner) !== g.player))
+      return { ok: false, reason: 'Not your city or port' };
     const o = (a.cities[s.id] ||= {});
     if ('unit' in patch) {
       if (patch.unit == null || patch.unit === '') delete o.unit;
@@ -92,12 +97,14 @@
       report = emptyAutomationReport();
     if (g.mode !== 'conquest' || g.over || g.phase !== side || (!a.enabled && !opts.force)) return report;
     const reserve = a.reserve;
-    for (const s of g.stations.filter(v => v.owner === side).sort((x, y) => x.id - y.id)) {
-      const unit = cityAutomation(g, s).unit;
-      if (a.autoUpgrade) {
+    // An independent captured port may operate naval production without owning the city.
+    for (const s of g.stations.filter(v => v.owner === side ||
+      (v.portAt && (v.portOwner || v.owner) === side)).sort((x, y) => x.id - y.id)) {
+      const unit = cityAutomation(g, s, side).unit;
+      if (s.owner === side && a.autoUpgrade) {
         for (const kind of automationUpgradeOrder(g, s, unit)) {
           if (buildReason(g, s, kind)) continue;
-          const cost = buildCost(s, kind);
+          const cost = decreePrice(buildCost(s, kind), s);
           if (!automationReserveAllows(g, side, cost, reserve)) continue;
           const r = build(g, s.id, kind);
           if (r.ok) {
@@ -110,8 +117,10 @@
       }
       if (!unit || (TYPES[unit].naval ? s.portProducedTurn : s.producedTurn) === g.turn) continue;
       const t = TYPES[unit],
-        stack = t.naval === 'ship' ? 1 : a.stack,
-        cost = price(unit, stack, g, side);
+        producer = t.naval ? (s.portOwner || s.owner) : s.owner;
+      if (producer !== side) continue;
+      const stack = t.naval === 'ship' ? 1 : a.stack,
+        cost = decreePrice(price(unit, stack, g, side), s.owner === side ? s : null);
       if (!automationReserveAllows(g, side, cost, reserve) || buyReason(g, s, unit, stack)) continue;
       const r = recruit(g, s.id, unit, stack);
       if (r.ok) {
@@ -137,7 +146,7 @@
     if (!BUILDINGS[kind]) return { ...report, reason: 'Unknown building' };
     for (const s of g.stations.filter(v => v.owner === side).sort((x, y) => x.id - y.id)) {
       if (buildReason(g, s, kind)) continue;
-      const cost = buildCost(s, kind);
+      const cost = decreePrice(buildCost(s, kind), s);
       if (!automationReserveAllows(g, side, cost, a.reserve)) continue;
       const r = build(g, s.id, kind);
       if (!r.ok) continue;

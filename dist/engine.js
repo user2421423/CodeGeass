@@ -2395,7 +2395,7 @@
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, eliteCampaign(g) ? 1 : availableLevel || 1))
+      shortfall(funds(g, producer), decreePrice(elitePrice(id, eliteCampaign(g) ? 1 : availableLevel || 1), s.owner === producer ? s : null))
     );
   }
   function deployElite(g, stationId, id, profile = {}, position) {
@@ -2408,8 +2408,9 @@
       rec = e.scenarioOnly && eliteScenario(g) ? { level: 1 } : eliteRecord(profile, id),
       options = recruitOptions(g, s, producer, e.type),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = elitePrice(id, eliteCampaign(g) ? 1 : rec.level);
+      cost = decreePrice(elitePrice(id, eliteCampaign(g) ? 1 : rec.level), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
+    if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
@@ -2449,7 +2450,7 @@
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
         ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), elitePrice(id, eliteCampaign(g) ? 3 : 1))
+      shortfall(funds(g, producer), decreePrice(elitePrice(id, eliteCampaign(g) ? 3 : 1), s.owner === producer ? s : null))
     );
   }
   function recruitAIElite(g, stationId, id) {
@@ -2460,8 +2461,9 @@
       producer = t.naval ? (s.portOwner || s.owner) : s.owner,
       p = recruitOptions(g, s, producer, e.type)[0],
       level = eliteCampaign(g) ? 3 : 1,
-      cost = elitePrice(id, level);
+      cost = decreePrice(elitePrice(id, level), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
+    if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (t.naval) s.portProducedTurn = g.turn;
@@ -2602,7 +2604,8 @@
     s[b.field] = buildingLevel(s, kind) + 1;
     if (kind === 'factory') {
       syncBuildings(g, s);
-      s.shield = Math.min(s.maxShield, s.shield + 60);
+      // Captured cities stay undefended for the capture turn, even after factory upgrades.
+      if (s.capturedTurn !== g.turn) s.shield = Math.min(s.maxShield, s.shield + 60);
     } else if (kind === 'lab') syncBuildings(g, s);
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };
@@ -2632,14 +2635,17 @@
     }
     return a;
   }
-  function automationUnitOptions(g, s) {
+  function automationUnitOptions(g, s, side = g.player) {
     if (!s) return [];
-    const land = g.buildable?.[s.owner] || Object.values(lineupOf(g, s.owner)),
-      navy = s.portAt || portSite(g, s) ? navalTypes(g, s.owner) : [];
+    const landOwned = s.owner === side,
+      portOwned = (s.portOwner || s.owner) === side,
+      land = landOwned ? (g.buildable?.[side] || Object.values(lineupOf(g, side))) : [],
+      navy = portOwned && (s.portAt || (landOwned && portSite(g, s))) ? navalTypes(g, side) : [];
     return [...new Set([...land, ...navy])]
       .filter(id => {
         const t = TYPES[id];
-        return t && !t.elite && !t.campaign && (t.side === s.owner || t.side === 'neutral' || (g.buildable?.[s.owner] || []).includes(id));
+        return t && !t.elite && !t.campaign && (t.naval ? portOwned : landOwned) &&
+          (t.side === side || t.side === 'neutral' || (g.buildable?.[side] || []).includes(id));
       })
       .sort((a, b) => {
         const ta = TYPES[a],
@@ -2655,16 +2661,18 @@
         );
       });
   }
-  function cityAutomation(g, s) {
+  function cityAutomation(g, s, side = g.player) {
     const a = automationState(g),
       o = a.cities?.[s?.id] || {},
-      options = automationUnitOptions(g, s);
+      options = automationUnitOptions(g, s, side);
     return { unit: options.includes(o.unit) ? o.unit : null };
   }
   function setCityAutomation(g, stationId, patch = {}) {
     const a = automationState(g),
       s = g.stations.find(v => v.id === +stationId);
     if (!s) return { ok: false, reason: 'Unknown city' };
+    if (s.owner !== g.player && (!s.portAt || (s.portOwner || s.owner) !== g.player))
+      return { ok: false, reason: 'Not your city or port' };
     const o = (a.cities[s.id] ||= {});
     if ('unit' in patch) {
       if (patch.unit == null || patch.unit === '') delete o.unit;
@@ -2701,12 +2709,14 @@
       report = emptyAutomationReport();
     if (g.mode !== 'conquest' || g.over || g.phase !== side || (!a.enabled && !opts.force)) return report;
     const reserve = a.reserve;
-    for (const s of g.stations.filter(v => v.owner === side).sort((x, y) => x.id - y.id)) {
-      const unit = cityAutomation(g, s).unit;
-      if (a.autoUpgrade) {
+    // An independent captured port may operate naval production without owning the city.
+    for (const s of g.stations.filter(v => v.owner === side ||
+      (v.portAt && (v.portOwner || v.owner) === side)).sort((x, y) => x.id - y.id)) {
+      const unit = cityAutomation(g, s, side).unit;
+      if (s.owner === side && a.autoUpgrade) {
         for (const kind of automationUpgradeOrder(g, s, unit)) {
           if (buildReason(g, s, kind)) continue;
-          const cost = buildCost(s, kind);
+          const cost = decreePrice(buildCost(s, kind), s);
           if (!automationReserveAllows(g, side, cost, reserve)) continue;
           const r = build(g, s.id, kind);
           if (r.ok) {
@@ -2719,8 +2729,10 @@
       }
       if (!unit || (TYPES[unit].naval ? s.portProducedTurn : s.producedTurn) === g.turn) continue;
       const t = TYPES[unit],
-        stack = t.naval === 'ship' ? 1 : a.stack,
-        cost = price(unit, stack, g, side);
+        producer = t.naval ? (s.portOwner || s.owner) : s.owner;
+      if (producer !== side) continue;
+      const stack = t.naval === 'ship' ? 1 : a.stack,
+        cost = decreePrice(price(unit, stack, g, side), s.owner === side ? s : null);
       if (!automationReserveAllows(g, side, cost, reserve) || buyReason(g, s, unit, stack)) continue;
       const r = recruit(g, s.id, unit, stack);
       if (r.ok) {
@@ -2746,7 +2758,7 @@
     if (!BUILDINGS[kind]) return { ...report, reason: 'Unknown building' };
     for (const s of g.stations.filter(v => v.owner === side).sort((x, y) => x.id - y.id)) {
       if (buildReason(g, s, kind)) continue;
-      const cost = buildCost(s, kind);
+      const cost = decreePrice(buildCost(s, kind), s);
       if (!automationReserveAllows(g, side, cost, a.reserve)) continue;
       const r = build(g, s.id, kind);
       if (!r.ok) continue;
@@ -3036,7 +3048,8 @@
           (u.cmd!=='indira'||['Infantry','Armor'].every(b=>g.units.some(x=>x.hp>0&&x.side===u.side&&TYPES[x.type].branch===b&&dist(g,x,v)===1)))
         : v.id!==u.id&&v.side===u.side&&(k==='ally'||k==='commander'&&!!COMMANDERS[v.cmd]?.action||
           k==='elite'&&!!v.elite||k==='ship'&&isShip(v)||k==='wounded'&&v.hp<maxHP(v)||
-          k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3)
+          k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3&&
+          !g.stations.some(s=>s.expSupplyBlocked?.owner===v.side&&dist(g,v,s)<=1))
     ));
   }
   function newcomerUse(g,u,targetId){
@@ -3066,8 +3079,9 @@
       case 'margaret':{
         const cost=reinforceCost(v.type,g,v.side,v),bank=funds(g,v.side);
         if(v.elite)return {ok:false,reason:'Elite Forces are single frames and cannot be reinforced.'};
+        if(g.stations.some(s=>s.expSupplyBlocked?.owner===v.side&&dist(g,v,s)<=1))return {ok:false,reason:'City supply lines are disrupted.'};
         if(v.stack>=3||shortfall(bank,cost))return {ok:false,reason:'Cannot afford this reinforcement.'};
-        const old=maxHP(v);spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
+        const old=maxHP(v);warSpend(g,v.side,cost,'reinforcement');spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
       }
       case 'chloe':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.2));break;
       case 'tianzi':{
@@ -3293,7 +3307,9 @@
     const d = g.sites?.find(d => d.id === id),
       why = refineReason(g, d);
     if (why) return { ok: false, reason: why };
-    spend(funds(g, d.owner), buildCost(d, 'refinery'));
+    const cost = buildCost(d, 'refinery');
+    warSpend(g, d.owner, cost, 'construction');
+    spend(funds(g, d.owner), cost);
     d.refinery = (d.refinery || 0) + 1;
     log(g, `${d.name}: Sakuradite refinery upgraded to level ${d.refinery}.`, d.owner);
     return { ok: true };
@@ -3432,7 +3448,7 @@
     if (side === g.player || !fleijaPoolSides(g, side).includes(g.player) ||
         !hasFleija(g, g.player) || g.over) return false;
     return g.stations.some(s => s.owner === g.player && !cityBusyReason(g, s) &&
-      (s.lab || 0) >= FLEIJA.lab && !shortfall(funds(g, g.player), FLEIJA.cost));
+      s.expSupplyBlocked?.owner !== g.player && (s.lab || 0) >= FLEIJA.lab && !shortfall(funds(g, g.player), FLEIJA.cost));
   }
   function cityBusyReason(g, s) {
     return s.project
@@ -3534,6 +3550,16 @@
       log(g, 'INTELLIGENCE: F.L.E.I.J.A. Eliminator countermeasures are now available at level-3 research labs.', side);
     }
     for (const s of g.stations) {
+      if (s.owner === side && s.expSupplyBlocked?.owner === side) {
+        // Stop the production clock for this owner's turn; never complete a blocked project.
+        for (const project of [s.project, s.eliminatorProject]) {
+          if (project?.side === side && project.pausedTurn !== g.turn) {
+            project.ready++;
+            project.pausedTurn = g.turn;
+          }
+        }
+        continue;
+      }
       if (s.project?.side === side && s.owner === side && s.project.ready <= g.turn) {
         s.project = null;
         (g.arsenal ||= {})[side] = Math.min(FLEIJA.max, (g.arsenal[side] || 0) + 1);
