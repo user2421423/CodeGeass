@@ -142,6 +142,7 @@ function scenarioDialog() {
     const units=preview.units.reduce((n,u)=>n+(u.side===s?1:0)+
       (u.cargo||[]).filter(v=>v.side===s).length,0);
     return '<button class="faction '+s+(s===scenarioSide?' active':'')+'" data-scenario-faction="'+s+'">'+
+      (ART.flagSVG(s) ? '<span class="faction-banner" aria-hidden="true">'+ART.flagSVG(s)+'</span>' : '')+
       '<span class="label" style="color:'+(s==='bk'?'#f0c94a':owner.color)+'">'+owner.short+'</span>'+
       '<h3>'+owner.name+'</h3><p>'+(SCENARIO_BLURBS[scenarioKind]?.[s]||'')+'</p>'+
       '<p class="doctrine">'+cities+' cities · '+units+' starting formations</p>'+

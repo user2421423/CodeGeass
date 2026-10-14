@@ -3229,3 +3229,14 @@ button.danger:hover:not(:disabled) {
     padding-top: 79px;
   }
 }
+
+/* Real rectangular faction flags on selected armies, cities, ports and mines. */
+.faction-flag.flag-art {
+  width: 28px;
+  height: 19px;
+  border-radius: 2px;
+  padding: 0;
+  overflow: hidden;
+  line-height: 0;
+}
+.faction-flag.flag-art svg { display: block; width: 100%; height: 100%; }

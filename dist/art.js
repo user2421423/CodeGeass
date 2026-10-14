@@ -22,6 +22,16 @@ const ART = (() => {
   function ufnFlagSVG() {
     return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 831 594\" aria-label=\"United Federation of Nations flag\"><rect width=\"831\" height=\"594\" fill=\"#f8cf32\"/><path fill=\"#ffffff\" fill-rule=\"evenodd\" d=\"M160 305 160 313 180 332 201 387 226 436 242 453 271 473 296 483 315 486 354 478 398 479 428 487 449 498 513 490 467 466 412 451 371 448 356 456 331 462 305 461 278 452 244 424 225 393 214 355 213 312 194 304ZM406 212 422 232 433 254 446 314 486 321 520 322 537 318 549 309 552 299 546 286 495 244 595 283 624 288 639 284 627 268 602 250 561 228 526 215 474 205 440 205ZM360 79 343 80 313 97 292 114 246 164 228 192 214 228 215 255 223 268 242 233 268 205 301 186 338 180 348 158 370 126 351 132 311 158 351 110 362 88Z\"/><path fill=\"#187abd\" fill-rule=\"evenodd\" d=\"M221 287 218 301 244 330 252 299 236 288ZM403 213 370 228 348 252 371 267 387 287 398 315 401 344 396 375 386 399 375 415 350 436 328 444 312 445 291 440 276 431 259 413 248 392 242 367 242 337 216 314 217 355 226 388 246 422 275 447 312 459 353 454 366 448 328 449 354 439 386 435 419 396 437 349 440 316 435 313 441 313 440 295 429 252ZM384 198 365 188 342 183 320 184 294 192 274 204 251 226 226 270 248 280 257 294 270 276 289 260 310 251 330 249 339 231 353 216Z\"/><path fill=\"#5bc5e5\" fill-rule=\"evenodd\" d=\"M329 252 298 258 269 281 258 298 259 315 255 304 246 334 255 348 245 340 247 380 263 414 285 434 309 442 342 437 374 412 391 382 398 349 396 318 384 287 367 267 348 256 341 271 340 291 353 337 342 328 326 293 325 266ZM309 353 321 359 329 369 333 395 326 412 314 423 303 426 282 416 273 390 281 366 294 355Z\"/><path fill=\"#e70701\" fill-rule=\"evenodd\" d=\"M336 485 387 489 415 501 432 517 481 496 449 501 421 488 385 481ZM232 448 250 476 266 492 294 507 328 507 357 489 311 489 288 484 266 474ZM346 445 392 445 430 451 478 467 519 490 557 491 618 504 556 466 490 444 453 438 396 437ZM144 300 148 311 144 309 166 323 156 310 160 302 194 301 205 304 242 333 230 316 209 298 187 295 176 300 147 295ZM328 269 331 299 344 324 337 296 337 274 346 249 365 228 386 215 417 205 448 201 488 203 543 217 583 235 633 269 642 286 635 291 601 288 517 257 550 286 555 297 553 309 530 324 468 322 514 333 537 334 559 330 570 324 578 312 575 297 565 287 651 321 682 324 691 317 685 299 666 278 615 242 545 210 470 192 418 192 377 204 345 228 334 246ZM385 58 354 64 313 88 279 116 236 162 212 200 202 231 202 263 212 279 242 287 254 297 246 282 229 276 218 267 210 244 211 226 218 205 250 154 284 117 316 91 341 77 358 75 365 81 363 95 330 142 362 123 371 123 374 128 346 170 388 118 383 109 357 116 387 74 389 62Z\"/><path fill=\"#adecfd\" fill-rule=\"evenodd\" d=\"M299 357 289 362 281 372 277 396 280 407 289 418 306 422 323 411 330 386 328 375 317 360Z\"/><path fill=\"#080a0d\" fill-rule=\"evenodd\" d=\"M142 301 152 316 178 334 202 395 229 448 246 474 267 495 294 509 319 511 344 502 361 488 377 489 411 501 432 520 468 502 514 492 571 495 629 510 582 477 513 448 451 436 389 435 412 410 429 380 439 348 443 316 501 333 547 335 562 331 575 322 580 313 578 295 614 311 660 325 682 326 693 317 683 293 656 267 610 237 551 210 495 194 456 189 418 190 387 198 370 188 342 182 390 118 389 111 383 107 365 110 381 89 391 68 390 60 380 55 341 68 285 108 236 159 208 204 200 231 199 257 205 274 219 285 216 300 205 295 190 295 203 295 214 300 242 332 199 303 158 304 157 310 164 323 144 307 143 300 147 296ZM335 485 349 481 385 480 421 487 449 500 482 496 432 518 415 502 399 494 377 488ZM231 448 266 473 288 483 311 488 358 489 328 508 294 508 266 493 249 476ZM345 445 396 436 453 437 490 443 556 465 595 486 619 504 557 492 519 491 478 468 430 452 392 446ZM158 305 198 303 215 313 216 358 227 394 244 422 272 447 309 460 340 459 373 446 415 450 473 467 514 490 448 499 424 487 395 480 360 479 309 487 272 475 227 440 203 395 178 331 159 314ZM221 286 241 289 253 299 244 331 217 301ZM317 251 330 252 326 269 328 296 337 318 351 337 339 296 344 257 349 255 378 277 396 313 399 352 390 387 367 421 340 439 308 443 279 431 259 410 245 376 243 344 245 338 253 347 245 330 255 303 258 313 257 297 264 286 289 262ZM306 354 287 361 275 384 280 411 298 424 318 419 326 410 332 392 331 378 325 365ZM300 355 319 360 331 380 327 407 319 417 305 424 287 418 279 408 275 394 280 371ZM403 212 430 252 441 295 442 313 436 313 441 316 438 349 420 396 386 436 354 440 329 449 367 448 353 455 312 460 275 448 245 422 229 397 216 355 215 314 243 337 243 367 249 392 260 413 276 430 291 439 312 444 328 443 350 435 374 415 385 399 395 375 400 344 397 315 386 287 371 268 347 252 370 227ZM404 211 437 204 480 204 534 216 606 251 638 277 640 285 635 289 597 285 496 246 528 267 546 284 553 296 549 311 524 323 491 323 444 315 433 258 421 233ZM327 269 333 246 344 228 377 203 418 191 470 191 545 209 615 241 666 277 686 299 692 317 682 325 651 322 565 288 576 297 579 312 570 325 559 331 537 335 514 334 468 323 530 323 552 309 554 297 551 289 517 256 601 287 635 290 641 286 633 270 583 236 543 218 488 204 448 202 417 206 386 216 365 229 349 246 340 265 338 296 343 324 330 299ZM385 198 353 217 340 231 330 250 310 252 289 261 271 276 257 295 248 281 225 270 250 226 274 203 294 191 320 183 342 182 365 187ZM359 77 364 85 358 101 313 157 350 131 369 124 371 131 352 154 339 181 300 188 269 206 243 234 224 270 213 253 212 231 221 203 243 166 266 138 307 100 341 79ZM385 57 390 62 388 74 357 117 372 109 383 108 389 113 389 118 346 171 352 156 373 128 371 124 362 124 330 141 362 95 364 81 358 76 341 78 304 101 268 134 244 163 219 205 212 226 211 244 219 267 246 281 255 297 237 286 212 280 201 263 201 231 211 200 235 162 279 115 313 87 354 63Z\"/></svg>";
   }
+  // Self-contained faction standards, rendered in cards, city banners and the canvas.
+  // Vector interpretations of the factions' recognizable heraldry; no external requests.
+  const FACTION_FLAGS = {
+    "britannia": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 72\" aria-label=\"Holy Britannian Empire flag\"><rect width=\"120\" height=\"72\" fill=\"#284499\"/><path d=\"M0 30H120M54 0V72\" stroke=\"#f5f3ed\" stroke-width=\"23\"/><path d=\"M0 30H120M54 0V72\" stroke=\"#bd294b\" stroke-width=\"15\"/><path d=\"M43 18L60 11 77 18 77 47 60 60 43 47Z\" fill=\"#191d42\" stroke=\"#f4c46b\" stroke-width=\"3.4\"/><path d=\"M47 21Q38 16 38 27M73 21Q82 16 82 27\" stroke=\"#327f58\" stroke-width=\"3\" fill=\"none\"/><path d=\"M46 17L48 9 54 14 60 5 66 14 72 9 74 17Z\" fill=\"#f4c46b\" stroke=\"#8f5a24\" stroke-width=\"1.3\"/><path d=\"M53 46L49 37 53 29 59 29 63 35 58 38 65 42 68 38 72 43 65 50 57 48Z\" fill=\"#d58b4a\"/><path d=\"M71 30Q81 36 73 47Q67 53 64 47\" fill=\"none\" stroke=\"#71a278\" stroke-width=\"3.2\" stroke-linecap=\"round\"/></svg>",
+    "eu": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 72\" aria-label=\"Europia United flag\"><rect width=\"120\" height=\"72\" fill=\"#121f54\"/><path d=\"M60 12L55 23 46 29 39 23 29 24 13 16 21 30 35 36 51 37 60 47 69 37 85 36 99 30 107 16 91 24 81 23 74 29 65 23Z\" fill=\"#e0e6ef\" stroke=\"#9baec6\" stroke-width=\"1.2\"/><path d=\"M60 26V58M48 32L48 39Q60 52 72 39L72 32M44 32L48 28 52 32M56 25L60 19 64 25M68 32L72 28 76 32\" fill=\"none\" stroke=\"#f6f7fb\" stroke-width=\"3.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><text x=\"20\" y=\"53\" font-family=\"Georgia,serif\" font-size=\"17\" font-weight=\"bold\" fill=\"#f3f5fa\">E</text><text x=\"88\" y=\"53\" font-family=\"Georgia,serif\" font-size=\"17\" font-weight=\"bold\" fill=\"#f3f5fa\">U</text></svg>",
+    "bk": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 120 72\" aria-label=\"Black Knights flag\"><rect width=\"120\" height=\"72\" fill=\"#101018\"/><path d=\"M60 6L66 25 63 34 63 48 60 64 57 48 57 34 54 25Z\" fill=\"#f4f5f5\"/><path d=\"M56 34L41 26 30 33 7 15 27 36 31 53 39 38 54 47 60 53V39ZM64 34L79 26 90 33 113 15 93 36 89 53 81 38 66 47 60 53V39Z\" fill=\"#f4f5f5\"/><path d=\"M3 4H117M3 68H117\" stroke=\"#902c37\" stroke-width=\"2\" opacity=\".7\"/></svg>"
+  };
+  function flagSVG(side) {
+    return side === 'ufn' ? ufnFlagSVG() : (FACTION_FLAGS[side] || '');
+  }
   // ---- Cities ----
   function citySVG(kind, side) {
     const f = FACTION_ART[side] || FACTION_ART.neutral,
@@ -164,6 +174,7 @@ const ART = (() => {
     },
     citySVG,
     ufnFlagSVG,
+    flagSVG,
     // HTML: a Knightmare for panels and cards.
     unit(type, extra = '', side) {
       const l = withLocal('units', ELITE_ART_ALIASES[type] || type);
@@ -176,8 +187,9 @@ const ART = (() => {
         ? `${drawn}<img src="${escapeAttr(e.base + e.src)}" alt="" draggable="false" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.remove()">`
         : drawn;
       // Overlay the standard even when the shared city picture loads.
-      const banner = side === 'ufn'
-        ? `<span class="ufn-city-flag" style="position:absolute;top:1%;right:3%;width:40%;pointer-events:none">${ufnFlagSVG()}</span>`
+      const standard = flagSVG(side);
+      const banner = standard
+        ? `<span class="${side === 'ufn' ? 'ufn-city-flag ' : ''}city-faction-flag" style="position:absolute;top:1%;right:3%;width:40%;pointer-events:none">${standard}</span>`
         : '';
       return `<span class="ship-art unit-art city-art${e ? ' local-art' : ''} ${extra}" style="${banner ? 'position:relative' : ''}" aria-hidden="true">${html}${banner}</span>`;
     },
@@ -223,13 +235,14 @@ const ART = (() => {
       return true;
     },
     drawFlag(ctx, side, x, y, w) {
-      if (side !== 'ufn') return false;
-      const img = image('flag|ufn', ufnFlagSVG());
+      const standard = flagSVG(side);
+      if (!standard) return false;
+      const img = image('flag|' + side, standard);
       if (!img) return false;
-      const h = w * (594 / 831);
+      const h = w * (side === 'ufn' ? 594 / 831 : 72 / 120);
       ctx.save();
       ctx.beginPath();
-      ctx.strokeStyle = '#b79625';
+      ctx.strokeStyle = side === 'ufn' ? '#b79625' : '#b8b09a';
       ctx.lineWidth = 2;
       ctx.moveTo(x - 3, y - 2);
       ctx.lineTo(x - 3, y + h + 9);
@@ -262,7 +275,7 @@ const ART = (() => {
     // Unit and portrait assets preload in useLocal(); these three symbols are still drawn.
     preload(sides) {
       for (const s of sides) for (const kind of ['city', 'capital', 'fortress']) image(`c|${kind}|${s}`, citySVG(kind, s));
-      image('flag|ufn', ufnFlagSVG());
+      for (const side of ['britannia', 'eu', 'bk', 'ufn']) image('flag|' + side, flagSVG(side));
     },
   };
   if (typeof globalThis !== 'undefined' && globalThis.KnightmareArtManifest) api.useLocal(globalThis.KnightmareArtManifest);

@@ -40,8 +40,9 @@ function startMenu() {
       ufn = cfg.id === 'ufn2018' && side === 'cf';
     const label = ufn ? 'The United Federation' : b.label;
     const blurb = ufn ? 'Field Black Knights Knightmares with Black Knights, Chinese and former E.U. commanders against the Britannian alliance.' : b.text;
-    // Show the same self-contained flag used on U.F.N. cities, above the existing portrait.
-    const flag = ufn ? `<span class="ufn-start-flag" aria-hidden="true">${ART.ufnFlagSVG()}</span>` : '';
+    // Display each faction's standard; retain the U.F.N.'s original placement.
+    const flag = ufn ? `<span class="ufn-start-flag" aria-hidden="true">${ART.ufnFlagSVG()}</span>`
+      : ART.flagSVG(side) ? `<span class="faction-banner" aria-hidden="true">${ART.flagSVG(side)}</span>` : '';
     return `<button class="faction ${side} ${ufn ? 'ufn-2018' : ''} ${on ? 'active' : ''}" data-faction="${side}">${ART.portrait(b.portrait, 'faction-portrait')}${flag}<span class="label" style="color:${info.color}">${label}</span><h3>${info.name}</h3><p><b>${cfg.expectedCities?.[side] ?? '?'} starting cities · ${info.capital}</b></p><p>${blurb}</p><span class="select-mark">${on ? '✓ Command selected' : 'Select ' + info.short}</span></button>`;
   }).join('');
   const reward = conquestReward(setup.difficulty, profile, cfg.id, setup.side);
