@@ -1,0 +1,94 @@
+name: Isolated forward-city Eliminator defense screen
+on:
+  push:
+    branches: ['experiment/eliminator-forward-city-defense']
+    paths: ['.github/workflows/eliminator-forward-city-independent.yml']
+  pull_request:
+    branches: ['experiment/eliminator-launch-diagnostics']
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  compare:
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2017', seed: 42, turns: 45}
+          - {mode: '2017', seed: 246801, turns: 45}
+          - {mode: '2017', seed: 8675309, turns: 45}
+          - {mode: '2017', seed: 1234567, turns: 45}
+          - {mode: '2017', seed: 314159, turns: 45}
+          - {mode: '2017', seed: 271828, turns: 45}
+          - {mode: '2017', seed: 9001, turns: 45}
+          - {mode: '2017', seed: 8080, turns: 45}
+          - {mode: '2017', seed: 55555, turns: 45}
+          - {mode: '2017', seed: 67891, turns: 45}
+          - {mode: '2017', seed: 99991, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+          - {mode: '2018', seed: 42, turns: 35}
+          - {mode: '2018', seed: 246801, turns: 35}
+          - {mode: '2018', seed: 8675309, turns: 35}
+          - {mode: '2018', seed: 1234567, turns: 35}
+          - {mode: '2018', seed: 314159, turns: 35}
+          - {mode: '2018', seed: 271828, turns: 35}
+          - {mode: '2018', seed: 9001, turns: 35}
+          - {mode: '2018', seed: 8080, turns: 35}
+          - {mode: '2018', seed: 55555, turns: 35}
+          - {mode: '2018', seed: 67891, turns: 35}
+          - {mode: '2018', seed: 99991, turns: 35}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} forward city
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Compare defense-only AI against pinned identical world-rules baseline
+        shell: bash
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+          ELIMINATOR_TARGET_DIAGNOSTICS: '1'
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" forward-city-defense > candidate.json
+          git show 6e452e5ca7f3148c9392d37701c1e93897a3386e:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" pinned-baseline > baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const a=JSON.parse(fs.readFileSync('candidate.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('baseline.json','utf8'));
+          assert.equal(a.diagnostics.launches,a.warheads);
+          assert.equal(b.diagnostics.launches,b.warheads);
+          assert.equal(a.diagnostics.coveredButMissed,0);
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts',
+            'chargesStarted','pickedUp','carrierLosses','armyValueProtectionRate',
+            'frontlineValueProtectionRate','weightedProtectionRate','elapsedMs'];
+          console.log('DEFENSE_ONLY_COMPARE '+JSON.stringify({
+            mode:a.mode,seed:a.seed,
+            metrics:Object.fromEntries(keys.map(k=>[k,{old:b[k],new:a[k]}])),
+            cityTargets:{old:b.diagnostics.cityTargets,new:a.diagnostics.cityTargets},
+            armyTargets:{old:b.diagnostics.mobileThreats,new:a.diagnostics.mobileThreats}
+          }));
+          NODE
