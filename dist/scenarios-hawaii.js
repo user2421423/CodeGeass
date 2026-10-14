@@ -329,8 +329,11 @@
     if(g.mode!=='scenario'||g.scenario?.id!=='invasion-hawaii'||g.stations.length!==CITIES.length)return null;
     if(g.stations.every(s=>s.owner==='eu'))
       return {winner:'eu',team:'eu',reason:'Europia United has conquered every city and island base in Hawaii.'};
-    if(!g.units.some(u=>u.side==='eu'&&u.hp>0))
-      return {winner:'britannia',team:'britannia',reason:'Britannia has destroyed the E.U. expeditionary forces.'};
+    // The invasion is only defeated after both its field forces (including cargo)
+    // and every captured island foothold are gone.
+    if(!g.stations.some(s=>s.owner==='eu') &&
+       !E.allUnits(g).some(u=>u.side==='eu'&&u.hp>0))
+      return {winner:'britannia',team:'britannia',reason:'Britannia has eliminated all E.U. forces and recaptured every island foothold.'};
     return null;
   }
   const api={id:'invasion-hawaii',title:'Invasion of Hawaii',cols:COLS,rows:ROWS,
