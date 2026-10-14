@@ -36,6 +36,28 @@ Then compare four defensive AI bundles under identical engine and paired seeds:
 
 Run 20 matched 2017 games (45 turns) and six 2018 controls (35 turns) with strict full-gameplay neutrality assertions. Track missile launches, actual interceptions split by city and mobile, carrier losses, protected army and frontline value, weighted-city protection, charge construction and pickup. Don't promote based solely on interceptions with more incoming missiles.
 
-## Status
+## Completed 20-seed 2017 + six 2018-neutrality results
 
-Awaiting benchmark validation and results. No merge unless data justify it and user explicitly approves.
+[All 27 jobs passed](https://github.com/user2421423/CodeGeass/actions/runs/38564626578): existing Node suite, source/build synchronization, UI smoke, all twenty matched 2017 comparisons and all six strict 2018 baseline-neutrality checks. Game engine and weapon rules were identical; only the defender AI bundle changed.
+
+| Metric | Original diagnostic AI | Anchors-only | CAP 1.25 | Value-protection gate |
+|---|---:|---:|---:|---:|
+| Missiles launched | 187 | 188 | 189 | 186 |
+| Missile interceptions | 80 | 83 | 84 | 81 |
+| Mobile interceptions | 1 | 1 | 3 | 4 |
+| City interceptions | 79 | 82 | 81 | 77 |
+| Eliminator charges started | 253 | 255 | 254 | 253 |
+| Picked up | 27 | 20 | 20 | 17 |
+| Carrier losses | 7 | 5 | 5 | 4 |
+| Mean army value protected | **10.29%** | 9.97% | 9.60% | 9.51% |
+| Mean frontline value protected | **11.10%** | 10.27% | 9.66% | 9.60% |
+| Mean weighted city value protected | 19.59% | 20.35% | **20.70%** | 20.11% |
+
+Six 2018 trials passed exact gameplay-neutrality assertions against baseline for all variants (intercepts, charges, losses, coverage, actions and survivor counts).
+
+### Interpretation and decision
+
+**NO MERGE for this gate**. One extra mobile interception and one fewer carrier loss versus CAP 1.25 do not compensate for its decline in army and city coverage. Only 81 actual interceptions across 186 attacks, compared with 84/189 under CAP 1.25. The expected-value gate's 95% city and 90% frontline thresholds were local *production-site forecasts*, not end-to-end protective constraints, and downstream carrier/army positioning still changes. The gate can even alter the shortlist for actual carrier route scoring, making baseline comparisons nontrivial.
+
+Recommendations: keep baseline defensive AI for the general 2017 experience unless the user explicitly prefers the trade-off from a tested 2017 variant; if continuing experiments, isolate **actual carrier distribution and protected front-line assets** instead of repeatedly changing lab bonuses. PR #67 offensive Tier 1 targeting was validated independently and is unaffected. No changes to `main`.
+
