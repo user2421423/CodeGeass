@@ -29,17 +29,22 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        difficulty: [normal, hard, challenge, elite]
+        player: [eu, britannia]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Seeded amphibious AI simulations
-        run: node tools/east_coast_sim.cjs 2 | tee east-coast-simulation.log
+        run: node tools/east_coast_sim.cjs 2 ${{ matrix.difficulty }} ${{ matrix.player }} | tee east-coast-simulation.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: east-coast-simulation
+          name: east-coast-simulation-${{ matrix.difficulty }}-${{ matrix.player }}
           path: east-coast-simulation.log
   preview:
     needs: validate
