@@ -1,0 +1,22 @@
+{
+  "id": "britannia-turkey",
+  "title": "Invasion of Turkey",
+  "campaignFaction": "britannia",
+  "tier": 4,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Anatolia",
+  "proposedMapBounds": {
+    "west": 26,
+    "south": 35,
+    "east": 45,
+    "north": 43
+  },
+  "campaignMapMarker": {
+    "longitude": 35,
+    "latitude": 39
+  },
+  "description": "Push through Anatolia toward the European front.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
