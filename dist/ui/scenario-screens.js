@@ -28,9 +28,14 @@ const SCENARIO_KINDS = [
   ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
   ['eu-panama','Panama Campaign','30 cities · 2 sides'],
-  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides']
+  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides'],
+  ['battle-luoyang','Battle of Luoyang','82 cities · 2 sides · final offensive']
 ];
 const SCENARIO_BLURBS = {
+  'battle-luoyang': {
+    britannia: 'Converge from the Korean, Yangtze and eastern fronts; breach the Yellow River defense, seize the Imperial Capital and conquer every remaining Federation city.',
+    cf: 'Defend the capital behind successive fortified belts, guard the crossings and counterattack isolated Britannian Army Groups with strategic reserves.'
+  },
   'invasion-brazil': {
     eu: 'Launch six carrier-supported landing fronts from the Atlantic. Take Belém, Fortaleza, Recife, Salvador, Rio and the south; secure ports and advance inland to Brasília and beyond.',
     britannia: 'Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches.'
@@ -130,6 +135,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'battle-luoyang': {
+    era: 'Henan · World Campaign Finale',
+    intro: 'The decisive multi-front assault on Luoyang. A vast inland battlefield with a playable Yellow River barrier, named Army Groups and no turn limit. Every enemy city must fall.',
+    diplomacy: 'Britannia and the Chinese Federation fight from turn 1. Luoyang has the hardest layered defense of this war; taking it alone cannot end the battle.',
+    elite: 'Elite uses the existing faction elite roster and shared scenario scaling, including maximum-rank rival commanders. No artificially invulnerable city or unique combat modifiers.',
+    focus: {britannia:'Xuchang',cf:'Luoyang'}
+  },
   'invasion-brazil': {
     era: 'Brazil · Alternate 2017',
     intro: 'Europia United begins with no Brazilian cities and launches six major transatlantic naval landings against Britannia. Total conquest of all 57 cities wins without a turn limit.',
