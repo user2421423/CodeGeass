@@ -6,13 +6,13 @@ let campaignTab = 'bk_s1',
   missionDifficulty = 'normal',
   missionBriefingId = null,
   talkThen = null; // what follows the dialogue now playing (a result screen, or nothing)
-// The turn shown beside the objective: a mission deadline, scenario deadline,
-// or conquest armistice. European War has no turn deadline: don't invent one.
+// The turn shown beside the objective: a mission deadline, an explicitly timed
+// scenario, or a conquest armistice. Untimed scenarios must not show a deadline.
 function turnLimit() {
   return game.mode === 'campaign'
     ? game.campaign?.turnLimit ?? E.campaign.mission(game.campaign.id)?.lose?.turns ?? 0
     : game.mode === 'scenario'
-      ? (game.scenario?.turnLimit ?? (game.scenario?.id === 'european-war' ? 0 : 60))
+      ? (game.scenario?.turnLimit ?? 0)
       : E.ARMISTICE;
 }
 function starRow(n) {
