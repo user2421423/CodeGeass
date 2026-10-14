@@ -1,0 +1,60 @@
+name: Eliminator Dual Defense A-B Screen
+on:
+  push:
+    branches: ['experiment/eliminator-dual-defense']
+    paths: ['.github/workflows/eliminator-dual-defense.yml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  compare:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+    name: dual-defense vs strike-center - ${{ matrix.mode }} seed ${{ matrix.seed }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Compare identical wars with only Eliminator AI code changed
+        shell: bash
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" dual-defense > dual.json
+          git show 4373be17e8f8838d2923874726f016ab89f84758:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" strike-center-baseline > baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const next=JSON.parse(fs.readFileSync('dual.json','utf8'));
+          const prior=JSON.parse(fs.readFileSync('baseline.json','utf8'));
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','carrierLosses','pickedUp','avgCarried','armyValueProtectionRate','frontlineValueProtectionRate','weightedProtectionRate','elapsedMs'];
+          const metrics=Object.fromEntries(keys.map(k=>[k,{baseline:prior[k],dualDefense:next[k]}]));
+          console.log('DUAL_DEFENSE_COMPARE '+JSON.stringify({mode:next.mode,seed:next.seed,metrics}));
+          NODE
