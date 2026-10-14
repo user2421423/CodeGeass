@@ -7,6 +7,9 @@ async function endTurn() {
   strikeMode = false;
   armyGroupRouting = null;
   save();
+  dismissTurnSummary();
+  dismissPoliticalReport();
+  militaryPresentation.suspend();
   const token = ++aiToken;
   // Rival turns always play at full speed (no per-move pauses or combat animations).
   skipAI = true;
@@ -14,6 +17,7 @@ async function endTurn() {
   for (const side of game.order.slice(1)) {
     if (!E.alive(game, side) || game.over) continue;
     aiSide = side;
+    setAiPhase(side);
     try {
       let before = unitSnapshot();
       E.beginTurn(game, side, game.turn > 1);
@@ -98,9 +102,11 @@ async function endTurn() {
     if (game.over) break;
   }
   aiSide = null;
+  setAiPhase(null);
   if (token !== aiToken) return;
   SFX.setAiTurn(false);
-  E.finishWarTurn(game, game.turn);
+  const completedTurn = game.turn;
+  E.finishWarTurn(game, completedTurn);
   let armed = false,
     orders = null,
     scenarioNotice = false;
@@ -117,11 +123,17 @@ async function endTurn() {
   }
   render();
   save();
+  militaryPresentation.resume();
   campaignFeed(() => game.over && resultDialog());
+  if (!game.over) {
+    announceTurn(!!scenarioNotice);
+    showTurnSummary(completedTurn, orders);
+  }
   const logistics = game.automationReport,
     standing = orders ? [gotoReportText(orders), orders.fired?.length ? `${orders.fired.length} army-group attack${orders.fired.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') : '';
   const standingSummary = standing ? ` Standing orders: ${standing}.` : '';
-  if (scenarioNotice) toast('Turn 10: the Britannia–Black Knights alliance has collapsed. All three powers are now hostile.', true);
+  if (scenarioNotice) showPoliticalReport('THE ALLIANCE HAS COLLAPSED',
+    'Britannia and the Black Knights are now hostile. All three powers are at war.');
   else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standingSummary}`, true);
   else if (!game.over && logistics && (logistics.units || logistics.upgrades))
     toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}${standingSummary}`, true);
@@ -220,13 +232,16 @@ function claimReward() {
   return true;
 }
 function resultDialog() {
+  if (!game.over) return;
+  militaryPresentation.resultSound();
   if (game.mode === 'scenario') {
     if (!game.over) return;
     const won=game.over.winner===game.player;
     const lost=!!game.over.eliminated;
-    modal.innerHTML='<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Scenario result">'+
-      '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
-      '<p>'+esc(game.over.reason)+'</p><p class="description">Scenarios do not award campaign or HQ rewards.</p>'+
+    modal.innerHTML='<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Scenario result">'+
+      militaryPresentation.resultHero('scenario', { title: game.scenario?.title || 'Regional scenario' })+
+      '<p>'+esc(game.over.reason)+'</p>'+militaryPresentation.summaryHTML()+
+      '<p class="description">Scenarios do not award campaign or HQ rewards.</p>'+
       '<div class="dialog-footer"><button data-action="close">Inspect map</button><button class="primary" data-action="scenario">Play again</button></div>'+
       '</section></div>';
     focusDialog();
@@ -236,6 +251,6 @@ function resultDialog() {
   if (game.mode === 'campaign') return missionResult();
   const win = game.over.winner === game.player,
     draw = game.over.winner === 'draw';
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Operation result"><div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? (game.era === 'ufn2018' ? 'Your coalition triumphs.' : 'The world bows.') : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${(game.medalsEarned || []).length ? `<div class="medal-case"><span class="label">Medals earned</span>${game.medalsEarned.map(m => `<span class="medal-chip" title="${esc(m.reason)}">🎖 ${E.MEDALS[m.id].name}</span>`).join('')}</div>` : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Medals earned go to your medal case. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p><div class="result-numbers"><div><b>${game.turn}</b><small>Turns elapsed</small></div><div><b>${game.stations.filter(s => s.owner === game.player).length}</b><small>${game.era === 'ufn2018' ? 'Your faction cities' : 'Cities held'}</small></div><div><b>${ownUnits().length}</b><small>Units remaining</small></div></div><div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Operation result">${militaryPresentation.resultHero('conquest')}<div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? (game.era === 'ufn2018' ? 'Your coalition triumphs.' : 'The world bows.') : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${(game.medalsEarned || []).length ? `<div class="medal-case"><span class="label">Medals earned</span>${game.medalsEarned.map(m => `<span class="medal-chip" title="${esc(m.reason)}">🎖 ${E.MEDALS[m.id].name}</span>`).join('')}</div>` : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Medals earned go to your medal case. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p>${militaryPresentation.summaryHTML()}<div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
   focusDialog();
 }

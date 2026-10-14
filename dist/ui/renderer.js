@@ -58,14 +58,15 @@ function drawMinimap() {
   // UI-only operational markers. Never bake groups or enemy plans into the minimap base.
   if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario')) {
     const sx = mini.width / WORLD_W, sy = mini.height / WORLD_H;
-    for (const gr of strategicFriendlyGroups()) {
+    for (const gr of strategicOverlayGroups()) {
       const a = strategicGroupAnchor(gr), goal = gr.destination && hexCenter(gr.destination);
       const tone = strategicGroupColor(gr);
-      if (a && goal) {
+      const phase = strategicGroupPhase(gr,strategicGroupReport(gr));
+      if (a && goal && phase.key !== 'hold') {
         const gx = wrapNear(goal.x, a.x);
         m.strokeStyle = tone;
         m.lineWidth = Math.max(1, dpr);
-        m.setLineDash([3 * dpr, 2 * dpr]);
+        m.setLineDash(phase.key==='assault' ? [] : [3*dpr,2*dpr]);
         for (const shift of wraps() ? [-WORLD_W, 0, WORLD_W] : [0]) {
           m.beginPath();
           m.moveTo((a.x + shift) * sx, a.y * sy);
@@ -79,6 +80,9 @@ function drawMinimap() {
         m.beginPath();
         m.arc(a.x * sx, a.y * sy, 2.6 * dpr, 0, Math.PI * 2);
         m.fill();
+        m.fillStyle = tone;
+        m.font = 'bold '+Math.max(8,8*dpr)+'px sans-serif';
+        m.fillText('G'+gr.id,a.x*sx+3*dpr,a.y*sy-3*dpr);
       }
       if (goal) {
         m.strokeStyle = tone;
@@ -1515,38 +1519,40 @@ function draw(time, dt) {
     }
   }
 
-  // Operational axes are on the dynamic canvas, above terrain atlas and below formations.
+  // Direction-only orders: a straight arrow must never suggest a verified route.
   if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario')) {
-    for (const gr of strategicFriendlyGroups()) {
+    for (const gr of strategicOverlayGroups()) {
       if (!gr.destination) continue;
-      const anchor = strategicGroupAnchor(gr), goal = hexCenter(gr.destination);
-      if (!anchor || !visible(goal)) continue;
-      const destX = wrapNear(goal.x, anchor.x);
-      const length = Math.hypot(destX - anchor.x, goal.y - anchor.y);
-      if (length < R * 0.7) continue;
-      const tone = strategicGroupColor(gr);
-      for (const ax of copiesBetween(anchor.x, left - length, right + length)) {
-        const dx = destX - anchor.x, dy = goal.y - anchor.y;
-        const tx = ax + dx, ty = goal.y, ux = dx / length, uy = dy / length;
+      const phase = strategicGroupPhase(gr, strategicGroupReport(gr));
+      if (['hold','empty','blocked'].includes(phase.key)) continue;
+      const anchor=strategicGroupAnchor(gr), goal=hexCenter(gr.destination);
+      if (!anchor || (!visible(goal) && !visible(anchor))) continue;
+      const destX=wrapNear(goal.x,anchor.x), dx=destX-anchor.x, dy=goal.y-anchor.y;
+      const length=Math.hypot(dx,dy);
+      if(length<R*0.7) continue;
+      const ux=dx/length,uy=dy/length,tone=strategicGroupColor(gr);
+      const width=['assault','capturing'].includes(phase.key)?3.2:2.1;
+      const dash=phase.key==='planning'?[2,8]:phase.key==='assembly'?[3,6]:
+        ['assault','capturing'].includes(phase.key)?[]:[10,6];
+      for (const ax of copiesBetween(anchor.x,left-length,right+length)) {
+        const tx=ax+dx,ty=goal.y;
         ctx.save();
-        ctx.globalAlpha = 0.68;
-        drawLine(ax, anchor.y, tx - ux * R * 0.5, ty - uy * R * 0.5, tone,
-          2 / Math.max(scale, 0.3), [8 / Math.max(scale, 0.3), 5 / Math.max(scale, 0.3)]);
+        ctx.globalAlpha=phase.key==='planning'?0.48:0.84;
+        drawLine(ax,anchor.y,tx-ux*R*0.6,ty-uy*R*0.6,tone,width/Math.max(scale,0.3),
+          dash.map(n=>n/Math.max(scale,0.3)));
         ctx.beginPath();
-        ctx.moveTo(tx, ty);
-        ctx.lineTo(tx - ux * R * 0.6 - uy * R * 0.22, ty - uy * R * 0.6 + ux * R * 0.22);
-        ctx.lineTo(tx - ux * R * 0.6 + uy * R * 0.22, ty - uy * R * 0.6 - ux * R * 0.22);
-        ctx.closePath();
-        ctx.fillStyle = tone;
-        ctx.fill();
-        ctx.restore();
+        ctx.moveTo(tx-ux*R*0.35,ty-uy*R*0.35);
+        ctx.lineTo(tx-ux*R*0.9-uy*R*0.3,ty-uy*R*0.9+ux*R*0.3);
+        ctx.lineTo(tx-ux*R*0.9+uy*R*0.3,ty-uy*R*0.9-ux*R*0.3);
+        ctx.closePath();ctx.fillStyle=tone;ctx.fill();ctx.restore();
       }
     }
   }
   // Group indicators share the same optional overlay in Conquest and Scenarios.
   const groupMembership = new Map();
-  if (strategicOverlay) for (const gr of strategicFriendlyGroups())
+  if (strategicOverlay) for (const gr of strategicOverlayGroups())
     for (const id of gr.units) groupMembership.set(id, gr);
+  const focusedGroup=strategicOverlayMode==='selected'?activeArmyGroup():null;
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
   for (const u of living) {
@@ -1557,12 +1563,14 @@ function draw(time, dt) {
       multi = multiSelectedIds.has(u.id),
       group = groupMembership.get(u.id),
       groupColor = group ? strategicGroupColor(group) : '#ffd36e',
+      dimOperationsUnit=focusedGroup&&u.side===game.player&&!focusedGroup.units.includes(u.id),
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
     for (const x of copies(base.x)) {
       if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
+      if(dimOperationsUnit)ctx.globalAlpha=0.53;
       if (!detail) {
         ctx.beginPath();
         const europeOverview = ['european-war','operation-stonehenge'].includes(game.scenario?.id);
@@ -1595,12 +1603,15 @@ function draw(time, dt) {
           ctx.fillStyle = '#ffe3a0';
           ctx.fill();
         }
-        if (group && u.side === game.player) outlinedText('G' + group.id, -18, -13, 11, groupColor, scale, 'Trebuchet MS', true);
+        if(group && u.side===game.player){
+          outlinedText('G'+group.id,-18,-13,11,groupColor,scale,'Trebuchet MS',true);
+          if(focusedGroup?.id===group.id){ctx.beginPath();ctx.arc(0,0,radius+4/Math.max(scale,0.3),0,Math.PI*2);ctx.strokeStyle=groupColor;ctx.lineWidth=2.8/Math.max(scale,0.3);ctx.stroke();}
+        }
         ctx.restore();
         continue;
       }
       drawPlate(u, scale, sea, time, sel || multi);
-      ctx.globalAlpha = spent ? 0.6 : 1;
+      ctx.globalAlpha=(spent?0.6:1)*(dimOperationsUnit?0.53:1);
       const size = t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
       ctx.shadowColor = '#000a';
@@ -1617,7 +1628,10 @@ function draw(time, dt) {
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);
       // Your own Eliminator carriers; rival carriers stay classified.
       if (u.side === game.player && u.eliminator > 0) outlinedText('✦', -33, 0, 14, '#9eeaff', scale, 'Trebuchet MS', true);
-      if (group && u.side === game.player) outlinedText('G' + group.id, -30, 17, 15, groupColor, scale, 'Trebuchet MS', true);
+      if(group && u.side===game.player){
+        outlinedText('G'+group.id,-30,17,15,groupColor,scale,'Trebuchet MS',true);
+        if(focusedGroup?.id===group.id){ctx.beginPath();ctx.arc(0,0,R*0.90,0,Math.PI*2);ctx.strokeStyle=groupColor;ctx.lineWidth=2.8/Math.max(scale,0.3);ctx.stroke();}
+      }
       ctx.restore();
     }
   }
@@ -1708,39 +1722,36 @@ function draw(time, dt) {
     }
   }
 
-  // Friendly group centres and actual objectives, for both regional and wrapped maps.
+  // Only the player's actual group objectives and assigned formations are annotated.
   if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario'))
-    for (const gr of strategicFriendlyGroups()) {
-      const report = strategicGroupReport(gr), anchor = strategicGroupAnchor(gr);
-      const tone = strategicGroupColor(gr);
-      if (anchor && visible(anchor)) for (const x of copies(anchor.x)) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x, anchor.y, 10 / Math.max(scale, 0.25), 0, Math.PI * 2);
-        ctx.fillStyle = '#102533dd';
-        ctx.fill();
-        ctx.strokeStyle = tone;
-        ctx.lineWidth = 1.8 / Math.max(scale, 0.25);
-        ctx.stroke();
-        outlinedText('G' + gr.id + ' ' + report.ready + '/' + report.members,
-          x, anchor.y - R * 0.6, 13, tone, scale, 'Trebuchet MS', true);
+    for (const gr of strategicOverlayGroups()) {
+      const report=strategicGroupReport(gr),phase=strategicGroupPhase(gr,report),
+        anchor=strategicGroupAnchor(gr),tone=strategicGroupColor(gr);
+      if(anchor && visible(anchor)) for(const x of copies(anchor.x)){
+        ctx.save();ctx.beginPath();
+        ctx.arc(x,anchor.y,11/Math.max(scale,0.25),0,Math.PI*2);
+        ctx.fillStyle='#102533ec';ctx.fill();ctx.strokeStyle=tone;
+        ctx.lineWidth=2.2/Math.max(scale,0.25);ctx.stroke();
+        outlinedText('G'+gr.id+' '+phase.symbol+' '+report.ready+'/'+report.deployed,
+          x,anchor.y-R*0.65,13,tone,scale,'Trebuchet MS',true);
+        if(['hold','blocked'].includes(phase.key))
+          outlinedText(phase.symbol,x,anchor.y+R*0.8,18,phase.key==='blocked'?'#ffb1a6':tone,
+            scale,'Trebuchet MS',true);
         ctx.restore();
       }
-      if (!gr.destination) continue;
-      const center = hexCenter(gr.destination);
-      if (!visible(center)) continue;
-      for (const x of copies(center.x)) {
-        ctx.save();
-        ctx.setLineDash([7 / Math.max(scale, 0.35), 5 / Math.max(scale, 0.35)]);
-        hexPath(x, center.y, R * 0.79);
-        ctx.strokeStyle = tone;
-        ctx.lineWidth = 2.5 / Math.max(scale, 0.4);
-        ctx.stroke();
+      if(!gr.destination)continue;
+      const center=hexCenter(gr.destination);
+      if(!visible(center))continue;
+      for(const x of copies(center.x)){
+        ctx.save();ctx.setLineDash(['assault','capturing'].includes(phase.key)?[]:
+          [7/Math.max(scale,0.35),5/Math.max(scale,0.35)]);
+        hexPath(x,center.y,R*(activeArmyGroupId===gr.id?0.91:0.78));
+        ctx.strokeStyle=tone;ctx.lineWidth=2.7/Math.max(scale,0.4);ctx.stroke();
         ctx.setLineDash([]);
-        const order = gr.autoConquer ? 'CAP' : gr.stance === 'assault' ? 'ATK' :
-          gr.stance === 'hold' ? 'HOLD' : 'ADV';
-        outlinedText('G' + gr.id + ' ' + order, x, center.y - R * 0.55, 15,
-          tone, scale, 'Trebuchet MS', true);
+        outlinedText('G'+gr.id+' · '+phase.label,x,center.y-R*0.65,14,
+          tone,scale,'Trebuchet MS',true);
+        if(['capturing','hold','blocked'].includes(phase.key))
+          outlinedText(phase.symbol,x,center.y+R*0.75,18,tone,scale,'Trebuchet MS',true);
         ctx.restore();
       }
     }

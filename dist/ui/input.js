@@ -307,7 +307,7 @@ document.addEventListener('click', e => {
     scenarioDialog();return;
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
-  if (d.armyOverlay === 'toggle') { toggleStrategicOverlay(); return; }
+  if (d.armyOverlay) { if (d.armyOverlay === 'toggle') toggleStrategicOverlay(); else setStrategicOverlayMode(d.armyOverlay); return; }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
   if (d.armyActivate !== undefined) { armyGroupActivate(d.armyActivate ? +d.armyActivate : null); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
@@ -369,6 +369,16 @@ document.addEventListener('click', e => {
     return;
   }
   switch (d.action) {
+    case 'turn-report-open':
+      dismissTurnSummary();
+      warReportDialog('latest', summaryTurn);
+      break;
+    case 'turn-report-dismiss':
+      dismissTurnSummary(); break;
+    case 'political-report-dismiss':
+      dismissPoliticalReport(); break;
+    case 'war-report-notifications':
+      warReportDialog('notifications'); break;
     case 'war-report':
     case 'war-report-latest':
       warReportDialog('latest'); break;
@@ -648,6 +658,10 @@ document.addEventListener('keydown', e => {
     return;
   }
   if (modal.children.length) {
+    if (e.key.toLowerCase() === 'v' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        modal.querySelector('[aria-label="Army groups"]')) {
+      e.preventDefault(); toggleStrategicOverlay(); return;
+    }
     if (e.key === 'Tab') {
       const list = [...modal.querySelectorAll('button:not(:disabled),select,input:not(:disabled),a[href]')],
         first = list[0],

@@ -63,8 +63,6 @@
     attack *= 1 + unitTech(g, u, 'guns');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
     if (!t.naval && t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
-    if (!t.naval && t.branch === 'Artillery' && techLevel(g, u.side, 'artillery.drives') >= 2 && (u.movedDistance || 0) <= 1)
-      attack *= 1.1;
     const friends = (side, at, test) =>
       g.units.some(v => v.hp > 0 && v.side === side && v.id !== u.id && dist(g, v, at) === 1 && test(TYPES[v.type]));
     // Lance Formation and Factsphere Fire Control.
@@ -359,17 +357,6 @@
       // Heavy and super-heavy frames always fire again after a kill, beyond the breakthrough cap.
       a.attacked = false;
       breakthrough = true;
-    }
-    if (
-      destroyed &&
-      a.hp > 0 &&
-      !TYPES[a.type].naval &&
-      TYPES[a.type].branch === 'Armor' &&
-      techLevel(g, a.side, 'armor.drives') >= 2 &&
-      a.overdriveTurn !== g.turn
-    ) {
-      a.overdriveTurn = g.turn;
-      grantReposition(a, 1);
     }
     // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
     if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {

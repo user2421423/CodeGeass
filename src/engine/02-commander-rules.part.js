@@ -30,7 +30,6 @@
   }
   // Research saved before the Naval branch existed moves to it.
   const LEGACY_RESEARCH = {
-    'sakura.transport': 'naval.logistics',
     'sakura.landing': 'naval.landing',
     'infantry.armor': 'infantry.urban',
     'artillery.armor': 'artillery.counterbattery',

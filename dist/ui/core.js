@@ -9,7 +9,9 @@ let game = E.createGame('britannia'),
   selection = null,
   multiSelectedIds = new Set(), // Shift-clicked friendly formations when no group is active
   activeArmyGroupId = null, // UI-only group chosen for direct Shift-click assignment
-  strategicOverlay = false, // Optional player-only army-group overlay (Conquest and Scenarios)
+  strategicOverlay = false, // Derived compatibility flag for the view
+  strategicOverlayMode = 'off', // Off / selected / all, never game-rule state
+  strategicOverlayManuallySet = false, // Preserve explicit Off when managing groups
   undoStack = [],
   hover = null,
   canvas,
@@ -94,10 +96,7 @@ const F = side => game.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutra
 // 2018-only visual alias: territory and save identifiers remain unchanged.
 const artSide = side => game?.mode === 'conquest' && game.era === 'ufn2018' && side === 'cf' ? 'ufn' : side;
 function toast(text, long = false) {
-  $('toast').textContent = text;
-  $('toast').classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $('toast').classList.remove('show'), long ? 6000 : 3500);
+  postNotice(text, { long });
 }
 // The commander whose Commander Info card is open, so HQ orders can refresh it.
 let generalOpen = null;
@@ -179,6 +178,7 @@ const homeOf = () => capitalOf(game.player) || ownUnits().find(u => u.cmd) || ow
 // Everything tied to the game being replaced: an unfinished rival turn (aiToken aborts it), its Skip state,
 // open drawers, targeting modes, undo history and in-flight effects.
 function resetSession() {
+  if (typeof resetNotificationUI === 'function') resetNotificationUI();
   aiToken++;
   aiSide = null;
   skipAI = false;
