@@ -210,7 +210,7 @@ function hitStrategicArmyGroup(clientX, clientY) {
   const { x, y, scale } = toWorld(clientX, clientY);
   const radius = Math.max(R * 0.65, 24 / Math.max(scale, 0.1));
   let nearest = null, best = radius;
-  for (const gr of strategicFriendlyGroups()) {
+  for (const gr of strategicOverlayGroups()) {
     const anchor = strategicGroupAnchor(gr);
     const targets = [gr.destination && hexCenter(gr.destination), anchor];
     for (const p of targets) {

@@ -58,14 +58,15 @@ function drawMinimap() {
   // UI-only operational markers. Never bake groups or enemy plans into the minimap base.
   if (strategicOverlay && (game.mode === 'conquest' || game.mode === 'scenario')) {
     const sx = mini.width / WORLD_W, sy = mini.height / WORLD_H;
-    for (const gr of strategicFriendlyGroups()) {
+    for (const gr of strategicOverlayGroups()) {
       const a = strategicGroupAnchor(gr), goal = gr.destination && hexCenter(gr.destination);
       const tone = strategicGroupColor(gr);
-      if (a && goal) {
+      const phase = strategicGroupPhase(gr,strategicGroupReport(gr));
+      if (a && goal && phase.key !== 'hold') {
         const gx = wrapNear(goal.x, a.x);
         m.strokeStyle = tone;
         m.lineWidth = Math.max(1, dpr);
-        m.setLineDash([3 * dpr, 2 * dpr]);
+        m.setLineDash(phase.key==='assault' ? [] : [3*dpr,2*dpr]);
         for (const shift of wraps() ? [-WORLD_W, 0, WORLD_W] : [0]) {
           m.beginPath();
           m.moveTo((a.x + shift) * sx, a.y * sy);
@@ -79,6 +80,9 @@ function drawMinimap() {
         m.beginPath();
         m.arc(a.x * sx, a.y * sy, 2.6 * dpr, 0, Math.PI * 2);
         m.fill();
+        m.fillStyle = tone;
+        m.font = 'bold '+Math.max(8,8*dpr)+'px sans-serif';
+        m.fillText('G'+gr.id,a.x*sx+3*dpr,a.y*sy-3*dpr);
       }
       if (goal) {
         m.strokeStyle = tone;
