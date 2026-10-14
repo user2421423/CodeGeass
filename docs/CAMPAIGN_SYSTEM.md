@@ -1,5 +1,7 @@
 # Strategic World Campaign Mode: developer handoff
 
+> **Branch-specific update (2026-10-15):** The approved World Campaign structure on `feature/federation-war-campaign-structure` supersedes the E.U. objective/tier tables and old scenario handoffs below. **Use [FEDERATION_WAR_CAMPAIGN_STRUCTURE.md](FEDERATION_WAR_CAMPAIGN_STRUCTURE.md) and [FEDERATION_SCENARIO_HANDOFFS.json](FEDERATION_SCENARIO_HANDOFFS.json) as the authoritative instructions** for the Chinese Federation and revised E.U. campaigns. Hawaii and California move from E.U. to China; E.U. Panama changes to Atlantic-only, China gets Pacific-only Panama; E.U. crosses the Rockies and attacks Pendragon from the east, China attacks from the west. Older `docs/campaign-placeholders/eu-*.json` files reflect historical E.U. scenarios and must not override these newer assignments. This document otherwise remains a historical description of the earlier E.U./Britannia campaign implementation. No scenario was converted by the skeleton update.
+
 Branch: **feature/campaign-world-map** (not merged to main).
 
 ## Modes and save compatibility
