@@ -64,7 +64,9 @@
     ['Sasebo',129.716,33.160,'britannia',3,true],
     ['Nagasaki',129.877,32.750,'britannia',2,true],
     ['Kitakyushu',130.875,33.883,'britannia',3,true],
-    ['Shimonoseki',130.939,33.957,'britannia',2,true],
+    // Slightly east within the Shimonoseki harbour district so its navigable
+    // port hex remains independent from Kitakyushu across the Kanmon Strait.
+    ['Shimonoseki',130.985,34.008,'britannia',2,true],
     ['Hiroshima',132.455,34.386,'britannia',3,true],
     ['Iwakuni',132.218,34.167,'britannia',2,true],
     ['Matsuyama',132.766,33.840,'britannia',2,true],
