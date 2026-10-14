@@ -294,6 +294,7 @@ document.addEventListener('click',function(e){
   if(d.wcMission){wcMission=d.wcMission;wcTier=WC.ALL[wcMission].tier;wcRefresh();return;}
   if(d.action==='war-campaign'){warCampaignDialog();return;}
   if(d.action==='wc-back'){startMenu();return;}
+  if(d.action==='wc-return'){warCampaignDialog(game.warCampaign?.announcement || '');return;}
   if(d.action==='wc-launch'){wcLaunch();return;}
   if(d.action==='wc-resume'){wcResume();return;}
   if(d.action==='wc-reset'){wcView={zoom:1,x:0,y:0};wcDraw();return;}
