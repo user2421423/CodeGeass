@@ -29,7 +29,7 @@ const SCENARIO_KINDS = [
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
   ['eu-panama','Panama Campaign','30 cities · 2 sides'],
   ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides'],
-  ['battle-luoyang','Battle of Luoyang','82 cities · 2 sides · final offensive']
+  ['battle-luoyang','Battle of Luoyang','83 cities · 2 sides · final offensive']
 ];
 const SCENARIO_BLURBS = {
   'battle-luoyang': {
