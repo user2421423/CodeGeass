@@ -350,14 +350,12 @@ function draw(time, dt) {
           ctx.stroke();
         }
         ctx.shadowBlur = 0;
-        // Gold commander pip distinguishes named officers from ordinary
-        // formations while preserving the familiar side-coloured unit rings.
-        if (europeOverview && u.cmd) {
-          ctx.beginPath();
-          ctx.arc(0, -radius - 2.5 / scale, 2.1 / scale, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffe3a0';
-          ctx.fill();
-        }
+        // Far zoom: allegiance, durability, formation identity and only
+        // high-priority symbols. No strategic-weapon information leaks.
+        if (u.cmd) outlinedText('★', 0, -radius - 5, 12, '#ffe3a0', scale, 'Trebuchet MS', true);
+        if (u.morale <= -3) outlinedText('!', radius + 3, 0, 12, '#ffb58b', scale, 'Trebuchet MS', true);
+        if (u.side === game.player && u.eliminator > 0)
+          outlinedText('✦', -radius - 3, 0, 12, '#9eeaff', scale, 'Trebuchet MS', true);
         if (group && u.side === game.player) outlinedText('G' + group.id, -18, -13, 11, groupColor, scale, 'Trebuchet MS', true);
         ctx.restore();
         continue;
@@ -375,18 +373,19 @@ function draw(time, dt) {
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
       drawStackBars(u.stack, u.side);
-      if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
+      // Draw badges after the artwork so the Knightmare remains the focus.
+      drawUnitStatusBadges(u, scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);
-      // Your own Eliminator carriers; rival carriers stay classified.
-      if (u.side === game.player && u.eliminator > 0) outlinedText('✦', -33, 0, 14, '#9eeaff', scale, 'Trebuchet MS', true);
       if (group && u.side === game.player) outlinedText('G' + group.id, -30, 17, 15, groupColor, scale, 'Trebuchet MS', true);
       ctx.restore();
     }
   }
+  // Commander portraits appear on selection/hover rather than permanently.
   if (detail)
     for (const u of living)
-      if (u.cmd) {
+      if (u.cmd && ((selection?.kind === 'unit' && selection.id === u.id) ||
+            (hover && hover.c === u.c && hover.r === u.r))) {
         const p = animatedPosition(u);
         if (!visible(p)) continue;
         for (const x of copies(p.x)) drawAdmiralPin(u, { x, y: p.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
