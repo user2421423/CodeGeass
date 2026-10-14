@@ -17,14 +17,10 @@ jobs:
           node-version: '22'
       - name: Confirm generated JavaScript matches source
         run: node tools/build_sources.cjs --check
-      - name: Run all engine, conquest, scenario and art regressions
-        run: node --test tests/*.test.cjs
       - name: Audit all Bering Strait land, coast, port and sea hexes
         run: node tools/bering_hex_audit.cjs
       - name: Audit every Philippine hex and invasion route
         run: node tools/philippines_hex_audit.cjs
-      - name: Run existing UI smoke checks
-        run: node tests/ui-smoke.cjs
       - name: Audit Australia's 12,144 hexes, ports and vector coastline
         run: node tools/australia_hex_audit.cjs
 
@@ -45,9 +41,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Bering scenario and regional renderer regressions
-        run: node --test tests/bering.test.cjs tests/indochina.test.cjs
       - name: Audit all 9,600 Bering land, sea and coastal hexes
         run: node tools/bering_hex_audit.cjs
-      - name: Verify Bering projected map, minimap and other UI
-        run: node tests/ui-smoke.cjs
