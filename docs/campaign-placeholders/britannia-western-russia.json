@@ -1,0 +1,22 @@
+{
+  "id": "britannia-western-russia",
+  "title": "Invasion of St. Petersburg and Moscow",
+  "campaignFaction": "britannia",
+  "tier": 5,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Western Russia",
+  "proposedMapBounds": {
+    "west": 28,
+    "south": 54,
+    "east": 43,
+    "north": 63
+  },
+  "campaignMapMarker": {
+    "longitude": 35,
+    "latitude": 57
+  },
+  "description": "Capture the twin centers of Russian resistance and establish Euro Britannia.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
