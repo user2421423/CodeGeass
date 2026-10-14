@@ -3729,6 +3729,13 @@
       }
       if (blastDistance === 0 && !navigable(t) && !TERRAIN[t.terrain]?.blocked) setTileTerrain(g, t, 'crater');
     }
+    // Only an unintercepted strike destroying an enemy city at ground zero
+    // advances this attacker's Tier 1 targeting phase. Splash damage and
+    // neutral/friendly cities never count; the record survives compact saves.
+    if (cities.some(c => c.destroyed && foe(g, c.owner, side))) {
+      const hits = (g.fleijaSuccessfulCityHits ||= {});
+      hits[side] = (hits[side] || 0) + 1;
+    }
     if (unlocksEliminator) g.fleijaDetonated = g.turn;
     // A power whose last city was destroyed surrenders to the launcher.
     const ground = cities.find(c => c.destroyed);
@@ -3798,6 +3805,7 @@
   function aiLaunchTarget(g, side) {
     const rival = s => !!s && s !== 'neutral' && foe(g, s, side),
       seen = new Set();
+    const tier1Phase = (g.fleijaSuccessfulCityHits?.[side] || 0) >= 5;
     let best = null;
     const candidates = [
       ...g.units.filter(u => u.hp > 0 && rival(u.side)),
@@ -3819,9 +3827,15 @@
           safe = false;
           break;
         }
-        if (v && rival(v.side))
+        if (v && rival(v.side)) {
           score +=
             price(v.type, v.stack, g, v.side).credits * (v.hp / maxHP(v)) * (outer ? 0.35 : ring ? 0.75 : 1) + (v.cmd ? 200 : 0);
+          // After five *successful* enemy-city ground-zero detonations, the
+          // attacking faction actively hunts vulnerable Tier 1 commanders.
+          // Blast legality is unchanged; classified Eliminators are ignored.
+          if (tier1Phase && COMMANDERS[v.cmd]?.storyTier === 1)
+            score += !ring ? 4500 : outer ? 300 : 1100;
+        }
         // Cities are worth what the blast destroys: one at ground zero is erased with its output (and its owner
         // surrenders if it was the last); a capital in the inner ring is worth more only when the launcher has troops
         // close enough to take it afterwards.
