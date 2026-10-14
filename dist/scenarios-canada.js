@@ -102,6 +102,15 @@
       return {c,r,owner:null,terrain:kind===0?'sea':kind===1?'coast':landscape(p,c,r),
         biome:kind&&p.lat>69?'tundra':kind&&p.lat>55?'taiga':null};
     });
+    // The Strait of Georgia / Juan de Fuca is narrower than one strategic
+    // hex. Three mixed-water shoreline cells retain its actual sea passage
+    // between Vancouver Island and the Lower Mainland, removing the false
+    // hex land bridge while preserving both mainland and island cities.
+    for(const [c,r] of [[42,91],[42,92],[41,92]]){
+      const t=g.tiles[r*COLS+c];
+      if(t.terrain!=='coast')throw Error('Georgia Strait geometry changed');
+      t.terrain='sea';
+    }
     // Isolated lake pixels must not create unusable ocean ports. The Atlantic,
     // Labrador, Beaufort and Pacific basins are identifiable by their large
     // connected navigable water components; narrow freshwater basins are not.
