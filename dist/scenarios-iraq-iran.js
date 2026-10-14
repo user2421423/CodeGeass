@@ -73,9 +73,11 @@
     if(alborz<.40&&pass>.7)return 'mountain';
     if(p.lon>52.0&&p.lon<60.5&&p.lat>28.0&&p.lat<35.0)return 'desert';
     if(p.lon>53&&p.lon<57.5&&p.lat>33&&p.lat<35.6)return 'desert';
-    if(p.lon<46.3&&p.lat<32.5&&p.lon>37)return 'desert';
+    // The fertile Tigris–Euphrates and Khuzestan corridors remain plains
+    // even where desert polygons overlap their river valleys.
     if(p.lon>42.2&&p.lon<48.8&&p.lat>29.4&&p.lat<37.2)return 'plains';
     if(p.lon>47.5&&p.lon<50.6&&p.lat>30.1&&p.lat<32.7)return 'plains';
+    if(p.lon<46.3&&p.lat<32.5&&p.lon>37)return 'desert';
     if(p.lat>36.4&&p.lon>46&&p.lon<55&&((c*17+r*11)%19)<5)return 'forest';
     return 'plains';
   }
