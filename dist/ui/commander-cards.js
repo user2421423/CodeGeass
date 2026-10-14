@@ -126,8 +126,11 @@
     empty.textContent = 'No commanders match these filters.';
     first.before(toolbar, roster, empty);
     // The two historical groups are now one searchable, sortable roster.
-    grids.forEach(g => g.remove());
-    dialog.querySelectorAll('.officer-section').forEach(h => h.remove());
+    grids.forEach(g => {
+      const heading = g.previousElementSibling;
+      if (heading?.classList.contains('officer-section')) heading.remove();
+      g.remove();
+    });
     cards.forEach(card => roster.append(card));
     const queryInput = toolbar.querySelector('[data-cc-filter="query"]');
     queryInput.value = controls.query;
