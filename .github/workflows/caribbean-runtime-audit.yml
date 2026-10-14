@@ -89,3 +89,47 @@ jobs:
             console.log('SIM',JSON.stringify({side,seed,moves,deploys,attacks,captures,turn:g.turn}));
           }
           NODE
+      - name: Naval corridor accessibility and sustained 10-turn invasion
+        run: |
+          node <<'NODE'
+          const assert=require('node:assert/strict');
+          const E=require('./dist/engine.js');
+          require('./dist/engine/ai.js');
+          const S=require('./dist/scenarios-caribbean.js');
+          const baseline=S.create('britannia','normal',101);
+          const sea=t=>t&&(t.terrain==='sea'||t.terrain==='coast');
+          const reachable=new Set();
+          const q=baseline.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship').map(u=>E.tile(baseline,u.c,u.r));
+          for(const t of q)reachable.add(E.key(t));
+          for(let i=0;i<q.length;i++)for(const n of E.adjacent(baseline,q[i]))if(sea(n)&&!reachable.has(E.key(n))){reachable.add(E.key(n));q.push(n);}
+          for(const s of baseline.stations.filter(s=>s.portAt)){
+            const p=E.tile(baseline,s.portAt.c,s.portAt.r);
+            assert.ok(reachable.has(E.key(p)),'isolated port '+s.name);
+          }
+          console.log('ACCESSIBLE',JSON.stringify({navalHexes:reachable.size,ports:baseline.stations.filter(s=>s.portAt).length}));
+          for(const seed of [11,29,47]){
+            const g=S.create('britannia','normal',seed);
+            let deploys=0,attacks=0,moves=0,captures=0;
+            const owned=new Map(g.stations.map(s=>[s.id,s.owner]));
+            let last=0;
+            for(let turn=1;turn<=10;turn++){
+              g.turn=turn;last=turn;
+              for(const side of g.order){
+                if(!E.alive(g,side)||g.over)continue;
+                if(!(turn===1&&side===g.order[0]))E.beginTurn(g,side,turn>1);
+                E.aiProduction(g);
+                const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
+                  .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id).map(u=>u.id);
+                for(let i=0;i<ids.length;i++){
+                  if(typeof E.aiNextActor==='function'){const j=E.aiNextActor(g,ids,i);if(j>i&&j<ids.length)[ids[i],ids[j]]=[ids[j],ids[i]];}
+                  const u=g.units.find(x=>x.id===ids[i]);if(!u||u.hp<=0||u.side!==side)continue;
+                  for(const ev of E.aiOrder(g,u.id)||[]){if(ev.kind==='move')moves++;if(ev.kind==='attack')attacks++;if(ev.kind==='deploy')deploys++;}
+                  for(const s of g.stations)if(owned.get(s.id)!==s.owner){owned.set(s.id,s.owner);captures++;}
+                }
+              }
+              if(g.over)break;
+            }
+            assert.ok(moves>0&&deploys>0&&attacks>0&&captures>0,'invasion did not progress');
+            console.log('SUSTAINED',JSON.stringify({seed,turns:last,moves,attacks,deploys,captures,remaining:g.stations.filter(s=>s.owner==='britannia').length,euShips:g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship'&&u.hp>0).length}));
+          }
+          NODE
