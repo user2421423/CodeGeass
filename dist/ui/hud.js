@@ -733,7 +733,6 @@ function undoMove() {
   selection = { kind: 'unit', id: unitId };
   render();
   save();
-  toast('Move undone.');
 }
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion() ? 15 : ms));
