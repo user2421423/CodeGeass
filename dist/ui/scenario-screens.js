@@ -11,9 +11,12 @@ const SCENARIO_KINDS = [
   ['operation-stonehenge','Operation Stonehenge','37 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
+  ['bf-south-china','Invasion of South China','64 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
+  ['invasion-korea','Invasion of Korea','55 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
+  ['britannia-iraq-iran','Iraq–Iran Campaign','84 cities · 2 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
@@ -24,13 +27,24 @@ const SCENARIO_KINDS = [
   ['invasion-canada','Invasion of Canada','74 cities · 2 sides'],
   ['invasion-caribbean','Invasion of the Caribbean','41 cities · 2 sides'],
   ['eu-great-lakes','Battle for the Great Lakes','56 cities · 2 sides'],
+  ['bf-yangtze','Battle of the Yangtze River','60 cities · 2 sides'],
   ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
   ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
   ['eu-panama','Panama Campaign','30 cities · 2 sides'],
-  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides']
+  ['bf-malacca','Battle of the Strait of Malacca','54 cities · 2 sides'],
+  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides'],
+  ['battle-luoyang','Battle of Luoyang','83 cities · 2 sides · final offensive']
 ];
 const SCENARIO_BLURBS = {
+  'battle-luoyang': {
+    britannia: 'Converge from the Korean, Yangtze and eastern fronts; breach the Yellow River defense, seize the Imperial Capital and conquer every remaining Federation city.',
+    cf: 'Defend the capital behind successive fortified belts, guard the crossings and counterattack isolated Britannian Army Groups with strategic reserves.'
+  },
+  'bf-south-china': {
+    britannia: 'Command coordinated offensives from Indochina against Yunnan and Guangxi, while four carrier groups invade the Gulf of Tonkin, Hainan, Pearl Delta and eastern Guangdong. Capture every Chinese city.',
+    cf: 'Defend Kunming, Nanning, Guangzhou and Shenzhen with fortified mountain corridors, industrial reserves and coastal fleets. Counterattack through the border passes and repel landings.'
+  },
   'invasion-brazil': {
     eu: 'Launch six carrier-supported landing fronts from the Atlantic. Take Belém, Fortaleza, Recife, Salvador, Rio and the south; secure ports and advance inland to Brasília and beyond.',
     britannia: 'Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches.'
@@ -43,6 +57,10 @@ const SCENARIO_BLURBS = {
     eu: 'Command six northern footholds and launch five carrier-led invasions from the Atlantic, Hudson Strait, Labrador Sea and Arctic. Seize ports, then converge on the industrial heartland.',
     britannia: 'Hold Canada\'s fortified ports, prairie supply routes, Rocky Mountain passes and Great Lakes industrial network. Move reserves between threatened fronts.'
   },
+  'bf-yangtze': {
+    britannia: 'Lead seven enormous Army Groups across the Yangtze. Seize bridgeheads from Yichang to Nanjing, destroy Chinese river squadrons, and exploit breakthroughs toward the north.',
+    cf: 'Hold the river crossing corridors, defend Wuhan and Nanjing, contest river ports, and commit inland reserves to crush isolated Britannian bridgeheads.'
+  },
   'eu-great-lakes': {
     eu: 'Lead five coordinated offensives out of Ontario. Cross the inland seas, break Detroit and Buffalo, then take Chicago and the industrial belt.',
     britannia: 'Defend Chicago, Detroit, Cleveland and Buffalo with heavy formations, fortified cities, shipborne reserves and inland fleets.'
@@ -50,6 +68,10 @@ const SCENARIO_BLURBS = {
   'invasion-american-east-coast': {
     eu: 'Lead six offshore carrier groups against New England, New York, Chesapeake Bay, the Carolinas, Georgia and Florida. Seize every Britannian city.',
     britannia: 'Fortify industrial capitals and harbors, contest landing beaches, defend the Appalachian approaches and counterattack E.U. bridgeheads.'
+  },
+  'bf-malacca': {
+    britannia: 'Advance from southern Thailand while carrier task forces contest the narrow strait. Land on Sumatra, take Penang and Malacca, then storm Singapore and the island ports.',
+    cf: 'Hold both shores with fortified cities, coastal army reserves and strong fleets. Defend Penang, Port Klang, Medan, Dumai and Singapore; intercept Britannian amphibious landings.'
   },
   'eu-panama': {
     eu: 'Attack simultaneously from Caribbean and Pacific carrier groups. Open the canal, capture fortified ports, then sweep the isthmus.',
@@ -104,12 +126,16 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     eu: 'Hold all mainland cities, ports and industrial corridors. Intercept the carrier fleets, defend beaches and counterattack seized harbours.'
   },
   'conquest-indochina': {
-    britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
-    cf: 'Invade south through northern Vietnam, Yunnan and mountain corridors toward Laos.'
+    britannia: 'Hold Vinh and Vientiane against the first offensives. Use the Dong Hoi–Hue–Da Nang line, Thai highlands and reserves at Savannakhet and Nakhon Ratchasima; then counterattack Hanoi, Nanning and Kunming.',
+    cf: 'Concentrate offensives along the Red River, Mekong Valley and northern Thai highlands. Break the forward fortifications, isolate Britannian reserves and capture every southern city.'
   },
   'philippines-invasion': {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
     cf: 'Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap.'
+  },
+  'invasion-korea': {
+    britannia: 'Lead five simultaneous carrier-led assaults from Japanese bases: Korea Strait, Jeju and the Yellow Sea, Incheon, Wonsan, and the north-east coast. Fight inland through western plains and mountain passes.',
+    cf: 'Hold Seoul, Pyongyang, Busan and both Korean coasts. Concentrate fortified reserve armies at the Imjin, Han, Nakdong and Yalu lines while your fleets intercept Britannian landings.'
   },
   'britannia-siberia': {
     britannia: 'Launch the great westward offensive from Magadan, Oymyakon and Ust-Maya. Break E.U. defenses on the Lena and drive for the Trans-Siberian railway.',
@@ -123,6 +149,10 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     britannia: 'Lead the northern land offensive from Syria and Iraq, pierce the Taurus passes and land expeditionary fleets at Anatolian ports. Take every E.U. city.',
     eu: 'Defend Istanbul, Ankara and the Anatolian interior, hold the Bosporus and Dardanelles, then counterattack into Syria and Mesopotamia.'
   },
+  'britannia-iraq-iran': {
+    britannia:'Advance from Syria and Arabia, cross the Tigris–Euphrates plains, break the Zagros defenses and seize Tehran. The Persian Gulf fleets can strike the Iranian coast.',
+    cf:'Hold northern and southern Iraq, counterattack the river crossings and preserve powerful reserves behind the Zagros passes and on the Iranian Plateau.'
+  },
   'area-18': {
     britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
     eu: 'Launch coordinated offensives from Syria, the Levant and Suez. Defend the northern Iraqi front against two rival armies.',
@@ -130,6 +160,20 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'battle-luoyang': {
+    era: 'Henan · World Campaign Finale',
+    intro: 'The decisive multi-front assault on Luoyang. A vast inland battlefield with a playable Yellow River barrier, named Army Groups and no turn limit. Every enemy city must fall.',
+    diplomacy: 'Britannia and the Chinese Federation fight from turn 1. Luoyang has the hardest layered defense of this war; taking it alone cannot end the battle.',
+    elite: 'Elite uses the existing faction elite roster and shared scenario scaling, including maximum-rank rival commanders. No artificially invulnerable city or unique combat modifiers.',
+    focus: {britannia:'Xuchang',cf:'Luoyang'}
+  },
+  'bf-south-china': {
+    era: 'South China · Alternate 2017',
+    intro: 'Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 64 theatre cities on a large regional map without a turn limit.',
+    diplomacy: 'Britannia and the Chinese Federation are hostile from turn 1. Inland Army Groups and offshore invasion fleets operate independently; Chinese reserves and fleets defend mountain corridors, cities and strategic ports.',
+    elite: 'Elite South China uses the standard faction Elite Force conversion and rival commander upgrades. Carrier fleets remain conventional; no unit balance or global campaign rules are changed.',
+    focus: {britannia:'Lang Son',cf:'Guangzhou'}
+  },
   'invasion-brazil': {
     era: 'Brazil · Alternate 2017',
     intro: 'Europia United begins with no Brazilian cities and launches six major transatlantic naval landings against Britannia. Total conquest of all 57 cities wins without a turn limit.',
@@ -151,6 +195,13 @@ const SCENARIO_TEXT = {
     elite: 'Elite Canada uses established single-frame Elite Forces and veteran enemy commanders. Carriers remain conventional; all faction mechanics are unchanged.',
     focus: {eu:'Iqaluit',britannia:'Ottawa'}
   },
+  'bf-yangtze': {
+    era: 'Central and Eastern Yangtze · Alternate 2017',
+    intro: 'After South China, Britannia reaches the great Yangtze barrier. Cross its nine defended bridge corridors, seize every one of 60 cities, and advance deep into Federation territory. No turn limit.',
+    diplomacy: 'Britannia and the Chinese Federation are hostile from the opening turn. River ships use the navigable main channel; ports are independently capturable. Tributaries are visual and geographic obstacles, not imaginary blue-water shortcuts.',
+    elite: 'Elite Yangtze uses established Britannian and Chinese Elite Force replacements. Riverine fleets retain standard naval models and commander, production and income scaling follow existing Elite rules.',
+    focus: {britannia:'Jingzhou',cf:'Wuhan'}
+  },
   'eu-great-lakes': {
     era:'Great Lakes · Alternate 2017',
     intro:'After conquering Canada, Europia invades the Britannian Great Lakes industrial heartland. Fight across all five navigable lakes and seize all 56 cities without a turn limit.',
@@ -171,6 +222,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Both powers are at war from turn 1. Capturable ports and fortified coastal cities control inland supply and naval staging.',
     elite: 'Elite East Coast uses standard faction Elite Force rosters. Rival named commanders begin at Level 5; carriers remain conventional.',
     focus: {eu:'',britannia:'New York City'}
+  },
+  'bf-malacca': {
+    era:'Strait of Malacca · Alternate 2017',
+    intro:'Britannia advances from its Indochinese positions into the Strait of Malacca. Fight through 54 regional cities on the Malay Peninsula, eastern Sumatra and the Singapore approaches. Total city conquest; no turn limit.',
+    diplomacy:'Two hostile powers from turn one. The main sea channel is navigable, both shores have capturable ports and separate coastal land fronts. Seizing the strait denies an important Federation sea approach, but does not trigger a fictional global naval blockade.',
+    elite:'Standard Britannian and Chinese Federation Elite Forces replace eligible land formations. Enemy veteran commanders, production and technologies use established Elite rules; carriers remain conventional.',
+    focus:{britannia:'Phuket',cf:'Singapore'}
   },
   'eu-panama': {
     era:'Panama · Alternate 2017',
@@ -252,9 +310,9 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
   },
   'conquest-indochina': {
     era: 'Indochina · Alternate 2017',
-    intro: 'The Chinese Federation invades Britannian mainland Southeast Asia. Capture all 44 cities to win.',
-    diplomacy: 'Hostile from turn 1. F.L.E.I.J.A. is disabled; there is no scripted deadline.',
-    elite: 'Elite Indochina replaces land and amphibious formations with faction Elite Forces; carriers remain conventional.',
+    intro: 'Defense of Indochina: Britannia must withstand a three-axis Federation land offensive before advancing into Chinese-controlled northern Vietnam and southern China. Win only by capturing all 44 cities; there is no turn limit.',
+    diplomacy: 'Britannia and the Federation are hostile from turn 1. Cities, independent naval ports and army concentrations change hands normally. F.L.E.I.J.A. is disabled.',
+    elite: 'Elite Indochina applies the established faction Elite Force conversion, stronger rival commanders and difficulty scaling. Carriers remain conventional.',
     focus: {britannia:'Vinh',cf:'Hanoi'}
   },
   'britannia-siberia': {
@@ -278,12 +336,26 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
     focus: {britannia:'Koror',cf:'Manila'}
   },
+  'invasion-korea': {
+    era: 'Korean Peninsula and Japan · Alternate 2017',
+    intro: 'Britannia launches five major amphibious fronts from its Japanese bases. The Federation holds all 46 Korean cities; nine Japanese staging cities provide the Britannian supply base. Capture every theatre city to win.',
+    diplomacy: 'Two hostile powers. Sea routes, separate capturable harbours, dense Korean mountain corridors and major rivers define the battle. No turn limit or scripted alliance.',
+    elite: 'Elite Korea uses the established faction-specific land and amphibious Elite Forces and upgraded AI commanders. Carriers remain standard naval vessels.',
+    focus: {britannia:'Fukuoka',cf:'Seoul'}
+  },
   'invasion-turkey': {
     era: 'Anatolia · Alternate 2017',
     intro: 'Britannia attacks north from the Middle East while its expeditionary fleets target the Mediterranean coast. Europia United defends Turkey and the straits. Capture all 59 cities.',
     diplomacy: 'Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.',
     elite: 'Elite Turkey uses standard faction Elite Force replacements for land and amphibious troops while ships remain conventional. AI income and commanders follow established Elite settings.',
     focus: {britannia:'Antakya',eu:'Ankara'}
+  },
+  'britannia-iraq-iran': {
+    era:'Iraq and Iran · Alternate 2017',
+    intro:'Britannia invades Iraq and Iran from western expeditionary bases. Fight across Mesopotamia, breach the Zagros and capture the Iranian Plateau. All 84 theatre cities count; no turn limit.',
+    diplomacy:'Only Britannia and the Chinese Federation fight. Two theaters, independent Gulf ports, major reserves and a contested Strait of Hormuz; no three-faction Area 18 forces.',
+    elite:'Elite Iraq–Iran uses both factions’ standard Elite Force rosters, veteran rival commanders and existing production rules. Carrier hulls remain conventional.',
+    focus:{britannia:'Deir ez-Zor',cf:'Baghdad'}
   },
   'area-18': {
     era: 'Middle East · Alternate 2017',
@@ -406,7 +478,9 @@ function scenarioGroupsDialog() {
 }
 function scenarioGroupFocus(id) {
   const gr=game.scenario?.groups?.find(v=>v.id===id&&v.side===game.player);
-  const u=gr?.units.map(id=>game.units.find(v=>v.id===id&&v.hp>0)).find(Boolean);
+  const u=gr?.units.map(id=>game.units.find(v=>v.id===id&&v.hp>0)).find(Boolean)||
+    (game.scenario?.id==='invasion-korea'&&game.units.find(ship=>ship.hp>0&&
+      (ship.cargo||[]).some(c=>gr?.units.includes(c.id)&&c.hp>0)));
   closeModal();
   if(u)selectUnit(u.id,true);
 }
@@ -432,6 +506,14 @@ function scenarioGroupImport(id) {
   group.name = staging.name;
   const members = staging.units.filter(unitId =>
     game.units.some(u => u.id === unitId && u.hp > 0 && u.side === game.player));
+  // The Korean land invasion groups begin aboard carriers. Editing their
+  // formation before landing imports the carrier hosts, never cargo ghosts.
+  if(game.scenario?.id==='invasion-korea'){
+    const embarked=new Set(staging.units);
+    for(const ship of game.units)if(ship.side===game.player&&ship.hp>0&&
+      (ship.cargo||[]).some(c=>embarked.has(c.id)&&c.hp>0)&&!members.includes(ship.id))
+      members.push(ship.id);
+  }
   let assigned = 0;
   for (const unitId of members.slice(0, 24))
     if (E.addArmyGroupUnit(game, group.id, unitId).ok) assigned++;
