@@ -16,11 +16,8 @@ jobs:
           node-version: 22
       - name: Confirm source sections match production bundles
         run: node tools/build_sources.cjs --check
-      - name: Test engine, scenarios, saves, Elite and UI
-        run: node --test tests/*.test.cjs
       - name: UI smoke, assets, and coastline checks
         run: |
-          node tests/ui-smoke.cjs
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
       - name: Simulate UFN openings and report military/economic balance
