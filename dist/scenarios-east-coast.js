@@ -120,7 +120,8 @@
       if(component.size>ocean.size)ocean=component;
     }
     if(ocean.size<6000)throw Error('East Coast ocean basin is unexpectedly fragmented');
-    for(const t of g.tiles)if(t.terrain==='sea'&&!ocean.has(E.key(t)))t.terrain='offmap';
+    // Keep isolated water classified as sea through province assignment; ban
+    // it only after city, province and unit deployment have finished.
     const navigable=t=>t.terrain==='sea'&&ocean.has(E.key(t));
     const taken=new Set(); // Reserve independent port hexes while choosing harbor city anchors.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
@@ -257,7 +258,7 @@
       }
     }
     for(const t of g.tiles)if(t.terrain==='sea'&&
-      (excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
+      (!ocean.has(E.key(t))||excludedLand[t.r*COLS+t.c]||depth[t.r*COLS+t.c]<0||
        depth[t.r*COLS+t.c]>30))t.terrain='offmap';
     // No scripted Sakuradite site: standard research and refinery balance.
     for(const side of SIDES){
