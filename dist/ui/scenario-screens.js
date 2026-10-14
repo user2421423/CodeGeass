@@ -11,6 +11,7 @@ const SCENARIO_KINDS = [
   ['operation-stonehenge','Operation Stonehenge','37 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
+  ['bf-south-china','Invasion of South China','65 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
@@ -31,6 +32,10 @@ const SCENARIO_KINDS = [
   ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'bf-south-china': {
+    britannia: 'Command coordinated offensives from Indochina against Yunnan and Guangxi, while four carrier groups invade the Gulf of Tonkin, Hainan, Pearl Delta and eastern Guangdong. Capture every Chinese city.',
+    cf: 'Defend Kunming, Nanning, Guangzhou and Shenzhen with fortified mountain corridors, industrial reserves and coastal fleets. Counterattack through the border passes and repel landings.'
+  },
   'invasion-brazil': {
     eu: 'Launch six carrier-supported landing fronts from the Atlantic. Take Belém, Fortaleza, Recife, Salvador, Rio and the south; secure ports and advance inland to Brasília and beyond.',
     britannia: 'Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches.'
@@ -130,6 +135,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'bf-south-china': {
+    era: 'South China · Alternate 2017',
+    intro: 'Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 65 theatre cities on a large regional map without a turn limit.',
+    diplomacy: 'Britannia and the Chinese Federation are hostile from turn 1. Inland Army Groups and offshore invasion fleets operate independently; Chinese reserves and fleets defend mountain corridors, cities and strategic ports.',
+    elite: 'Elite South China uses the standard faction Elite Force conversion and rival commander upgrades. Carrier fleets remain conventional; no unit balance or global campaign rules are changed.',
+    focus: {britannia:'Lang Son',cf:'Guangzhou'}
+  },
   'invasion-brazil': {
     era: 'Brazil · Alternate 2017',
     intro: 'Europia United begins with no Brazilian cities and launches six major transatlantic naval landings against Britannia. Total conquest of all 57 cities wins without a turn limit.',
