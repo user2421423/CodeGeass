@@ -48,6 +48,14 @@
       '<div class="cc-rating"><span>' + safe(E.BRANCH_NAMES[key]) + '</span>' +
       starsHTML(ratings[key] || 0) + '</div>').join('');
 
+    // Use the game's existing faction flag artwork, never a generated emblem.
+    // The JLF share the Black Knights standard; Euro Britannia uses Britannia's.
+    const watermarkSide = a.side === 'jlf' ? 'bk' : a.side === 'eb' ? 'britannia' : a.side;
+    const watermarkGraphic = ART.flagSVG(watermarkSide);
+    const watermarkMarkup = watermarkGraphic
+      ? '<span class="cc-faction-watermark" aria-hidden="true">' + watermarkGraphic + '</span>'
+      : '';
+
     // A full-bleed portrait fills the entire left edge, like the original roster.
     // The right side contains rank, ratings and actions only; abilities are
     // intentionally absent from the card (they remain in Commander Info).
@@ -59,6 +67,7 @@
           '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
         '</div>' +
         '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
+        watermarkMarkup +
         '<div class="cc-card-bottom">' +
           '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
           actionMarkup +
