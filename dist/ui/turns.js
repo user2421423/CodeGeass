@@ -7,6 +7,8 @@ async function endTurn() {
   strikeMode = false;
   armyGroupRouting = null;
   save();
+  dismissTurnSummary();
+  dismissPoliticalReport();
   const token = ++aiToken;
   // Rival turns always play at full speed (no per-move pauses or combat animations).
   skipAI = true;
@@ -14,6 +16,7 @@ async function endTurn() {
   for (const side of game.order.slice(1)) {
     if (!E.alive(game, side) || game.over) continue;
     aiSide = side;
+    setAiPhase(side);
     try {
       let before = unitSnapshot();
       E.beginTurn(game, side, game.turn > 1);
@@ -98,9 +101,11 @@ async function endTurn() {
     if (game.over) break;
   }
   aiSide = null;
+  setAiPhase(null);
   if (token !== aiToken) return;
   SFX.setAiTurn(false);
-  E.finishWarTurn(game, game.turn);
+  const completedTurn = game.turn;
+  E.finishWarTurn(game, completedTurn);
   let armed = false,
     orders = null,
     scenarioNotice = false;
@@ -118,10 +123,15 @@ async function endTurn() {
   render();
   save();
   campaignFeed(() => game.over && resultDialog());
+  if (!game.over) {
+    announceTurn();
+    showTurnSummary(completedTurn, orders);
+  }
   const logistics = game.automationReport,
     standing = orders ? [gotoReportText(orders), orders.fired?.length ? `${orders.fired.length} army-group attack${orders.fired.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') : '';
   const standingSummary = standing ? ` Standing orders: ${standing}.` : '';
-  if (scenarioNotice) toast('Turn 10: the Britannia–Black Knights alliance has collapsed. All three powers are now hostile.', true);
+  if (scenarioNotice) showPoliticalReport('THE ALLIANCE HAS COLLAPSED',
+    'Britannia and the Black Knights are now hostile. All three powers are at war.');
   else if (armed) toast(`Turn ${game.turn}. A F.L.E.I.J.A. warhead is ready: use the arsenal button to launch it.${standingSummary}`, true);
   else if (!game.over && logistics && (logistics.units || logistics.upgrades))
     toast(`AUTOMATED LOGISTICS — ${automationReportText(logistics)}${standingSummary}`, true);

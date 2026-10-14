@@ -369,6 +369,16 @@ document.addEventListener('click', e => {
     return;
   }
   switch (d.action) {
+    case 'turn-report-open':
+      dismissTurnSummary();
+      warReportDialog('latest', summaryTurn);
+      break;
+    case 'turn-report-dismiss':
+      dismissTurnSummary(); break;
+    case 'political-report-dismiss':
+      dismissPoliticalReport(); break;
+    case 'war-report-notifications':
+      warReportDialog('notifications'); break;
     case 'war-report':
     case 'war-report-latest':
       warReportDialog('latest'); break;

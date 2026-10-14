@@ -3240,3 +3240,94 @@ button.danger:hover:not(:disabled) {
   line-height: 0;
 }
 .faction-flag.flag-art svg { display: block; width: 100%; height: 100%; }
+
+
+
+/* Section 10 — nonblocking turn feedback and classified notifications. */
+#toast.categorized-toast {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+  min-width: 220px;
+  max-width: min(460px, 90vw);
+  padding: 11px 16px;
+  border-left: 4px solid #8eaabc;
+  pointer-events: none;
+  z-index: 50;
+}
+#toast .notice-type { font-size: 10px; font-weight: 800; letter-spacing: .11em; color: #d4e6ef; }
+#toast .notice-message { line-height: 1.35; overflow-wrap: anywhere; }
+#toast.notice-success { border-left-color: #7fc79f; }
+#toast.notice-warning { border-left-color: #efbe70; background: #443b31f5; }
+#toast.notice-strategic { border-left-color: #dbab68; background: #2e3041f7; }
+#toast.notice-warning .notice-type { color: #ffe1a8; }
+#toast.notice-strategic .notice-type { color: #ffe1a8; }
+.ai-phase-status {
+  position: fixed; top: 77px; left: 50%; transform: translateX(-50%);
+  z-index: 11; pointer-events: none; padding: 7px 16px;
+  background: #172937f2; border: 1px solid var(--phase-color, #a8b4bc);
+  color: #f0f2e7; border-radius: 3px; font-size: 12px;
+  letter-spacing: .025em; box-shadow: 0 4px 12px #0007;
+}
+.turn-announcement {
+  position: fixed; top: 24%; left: 50%; transform: translate(-50%, -12px);
+  z-index: 22; pointer-events: none; opacity: 0;
+  min-width: min(350px, 85vw); padding: 17px 35px;
+  border: 1px solid #ccba84; background: #122538ed;
+  box-shadow: 0 12px 36px #0009; text-align: center;
+  display: flex; flex-direction: column; gap: 5px;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.turn-announcement.visible { opacity: 1; transform: translate(-50%, 0); }
+.turn-announcement small { color: #d8c690; letter-spacing: .13em; font-size: 10px; text-transform: uppercase; }
+.turn-announcement strong { color: #f7f0d5; font: 29px Georgia, serif; }
+.turn-announcement span { color: #c0cdd4; font-size: 12px; }
+.turn-summary {
+  position: fixed; right: 17px; top: 80px; z-index: 13;
+  width: min(306px, calc(100vw - 34px));
+  background: #182b39f7; border: 1px solid #79897b;
+  color: #e9eee7; box-shadow: 0 6px 24px #0009; border-radius: 4px;
+}
+.turn-summary summary {
+  padding: 11px 13px; cursor: pointer; color: #f0dca7;
+  font-weight: 700; font-size: 12px; letter-spacing: .07em;
+}
+.turn-summary .summary-chevron { float: right; }
+.turn-summary-body { padding: 0 13px 12px; }
+.turn-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px; }
+.turn-summary-grid span { color: #bed0d2; font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
+.turn-summary-grid b { color: #f3f3e2; font-size: 18px; }
+.turn-summary-body small { display: block; margin-top: 9px; font-size: 10px; color: #b7c8cb; }
+.summary-actions { display: flex; gap: 8px; margin-top: 12px; }
+.summary-actions button { font-size: 11px; }
+.political-report {
+  position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 24;
+  width: min(570px, calc(100vw - 30px)); padding: 13px 15px;
+  background: linear-gradient(125deg, #283647fa, #152431f9);
+  color: #f8eede; border: 1px solid #d1b575;
+  box-shadow: 0 9px 28px #0009; display: flex; gap: 15px; align-items: flex-start;
+}
+.political-report > div { flex: 1; }
+.political-report small { color: #f2d08c; letter-spacing: .11em; font-size: 10px; }
+.political-report h3 { font-size: 19px; margin: 5px 0; }
+.political-report p { font-size: 13px; line-height: 1.4; }
+.political-report button { flex-shrink: 0; }
+.notification-history { display: flex; flex-direction: column; gap: 8px; padding: 0; list-style: none; max-height: 50vh; overflow-y: auto; }
+.notification-history li { border-left: 3px solid #7894a9; padding: 7px 10px; background: #122431; line-height: 1.4; }
+.notification-history li.notice-warning { border-color: #efbe70; }
+.notification-history li.notice-success { border-color: #7fc79f; }
+.notification-history li.notice-strategic { border-color: #dbab68; }
+.notification-history li b { font-size: 10px; margin-right: 9px; color: #e7dcaf; }
+@media (max-width: 760px) {
+  .ai-phase-status { top: 59px; font-size: 11px; }
+  .turn-summary { top: 64px; right: 8px; width: min(280px, calc(100vw - 16px)); }
+  .political-report { top: 64px; }
+  #toast.categorized-toast { max-width: 84vw; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .turn-announcement { transition: none; }
+  #toast { transition: none; }
+}
+[hidden] { display: none !important; }
