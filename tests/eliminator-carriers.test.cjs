@@ -306,10 +306,10 @@ test('rear escort collects spare charge for nearby frontline formation, without 
   assert.equal(remote.eliminator,0,'spare charge left rear city');
   assert.equal(runner.eliminator,1,'regular unit receives permanent charge');
   assert.equal(g.ai?.cf?.eliminatorMusterTargets?.[runner.id],anchor.id);
-  const previous=E.distance(g,runner,anchor);
+  const previous=E.distance(runner,anchor,g);
   const orders=E.aiOrder(g,runner.id);
   assert.ok(orders.some(o=>o.kind==='move'),'charged rear escort starts forward transit');
-  assert.ok(E.distance(g,runner,anchor)<previous,'escort closes on friendly formation');
+  assert.ok(E.distance(runner,anchor,g)<previous,'escort closes on friendly formation');
   assert.equal(runner.eliminator,1,'charge stays with escort');
 });
 
