@@ -8,7 +8,15 @@
   const COLS=120,ROWS=104,SIDES=['britannia','cf'];
   const BOUNDS={west:96.2,east:117.2,north:27,south:7.5};
   const K=Math.cos(17.25*Math.PI/180);
-  const PROJECTION={centerLon:106.7,centerLat:17.25,angle:0,uMin:-10.5*K,uMax:10.5*K,vMin:-9.75,vMax:9.75};
+  const DLON=(BOUNDS.east-BOUNDS.west)/COLS,DLAT=(BOUNDS.north-BOUNDS.south)/ROWS;
+  // Match geo()/locate(): each tactical hex samples the centre of its
+  // geographic cell. The regional vector underlay must use these identical
+  // half-cell bounds (including the odd-row hex offset), not viewport edges.
+  // The shared renderer currently uses hex-filled geography for this ID;
+  // integration must switch it to the centre-sampled atlas transform.
+  const PROJECTION={centerLon:106.7,centerLat:17.25,angle:0,
+    uMin:(BOUNDS.west+DLON/2-106.7)*K,uMax:(BOUNDS.east-DLON/2-106.7)*K,
+    vMin:BOUNDS.south+DLAT/2-17.25,vMax:BOUNDS.north-DLAT/2-17.25};
   // Land formations and factories are alternate history; city coordinates reflect real settlements.
   // China's superior land strength counters Britannia's deep coastal economy and carrier fleet.
   const CITIES=[["Guangzhou",113.26,23.13,"cf",3,true],["Nanning",108.32,22.82,"cf",3,true],["Kunming",102.83,25.04,"cf",3,true],["Liuzhou",109.41,24.33,"cf",2],["Beihai",109.12,21.48,"cf",2],["Fangchenggang",108.35,21.62,"cf",2],["Baise",106.62,23.9,"cf",2],["Wenshan",104.24,23.37,"cf",2],["Mengzi",103.39,23.37,"cf",2],["Jinghong",100.8,22.01,"cf",1],["Hanoi",105.83,21.03,"cf",3,true],["Haiphong",106.68,20.86,"cf",2,true],["Lao Cai",103.97,22.49,"cf",2],["Lang Son",106.76,21.85,"cf",2],["Cao Bang",106.25,22.66,"cf",1],["Dien Bien Phu",103.02,21.39,"cf",2],["Phongsali",102.1,21.68,"cf",1],["Luang Prabang",102.13,19.89,"cf",2],["Haikou",110.35,20.02,"cf",2],["Sanya",109.51,18.25,"cf",2],["Vinh",105.69,18.68,"britannia",2,true],["Dong Hoi",106.6,17.46,"britannia",2,true],["Hue",107.59,16.46,"britannia",2,true],["Da Nang",108.22,16.05,"britannia",3,true],["Quy Nhon",109.22,13.78,"britannia",2],["Nha Trang",109.2,12.24,"britannia",2],["Da Lat",108.44,11.94,"britannia",2],["Ho Chi Minh City",106.7,10.82,"britannia",3,true],["Can Tho",105.78,10.04,"britannia",2],["Vientiane",102.62,17.97,"britannia",3,true],["Thakhek",104.83,17.4,"britannia",2,true],["Savannakhet",104.75,16.55,"britannia",2,true],["Pakse",105.78,15.12,"britannia",2],["Phnom Penh",104.92,11.56,"britannia",3,true],["Siem Reap",103.86,13.36,"britannia",2],["Battambang",103.2,13.1,"britannia",2],["Sihanoukville",103.5,10.63,"britannia",2],["Bangkok",100.5,13.75,"britannia",3,true],["Chiang Mai",98.99,18.79,"britannia",2,true],["Chiang Rai",99.83,19.91,"britannia",2],["Khon Kaen",102.83,16.43,"britannia",2,true],["Udon Thani",102.79,17.41,"britannia",2],["Nakhon Ratchasima",102.1,14.97,"britannia",2],["Trat",102.51,12.24,"britannia",1]];
