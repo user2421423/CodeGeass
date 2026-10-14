@@ -157,7 +157,7 @@
   // [group name, source base, sea longitude, sea latitude, carriers,
   //  amphibious ships, embarked formations [class,count,commander]]
   const INVASIONS=[
-    ['Korea Strait Assault','Fukuoka',129.30,34.50,4,6,
+    ['Korea Strait Assault','Fukuoka',129.80,34.50,4,6,
       [['heavy',3,'jeremiah'],['assault',2,'darlton'],['rocket',2,null]]],
     ['Yellow Sea Expedition','Sasebo',125.90,33.65,4,5,
       [['heavy',2,'oldrin'],['medium',2,'villetta'],['siege',2,null]]],
