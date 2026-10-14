@@ -1536,6 +1536,17 @@
     if (nav >= 2 || (nav >= 1 && (t.terrain === 'forest' || t.terrain === 'mountain'))) return 1;
     return TERRAIN[t.terrain]?.cost || 1;
   }
+  // Iraq–Iran only: crossing a Tigris, Euphrates or Karun river edge consumes
+  // one extra movement point. Marked bridge-city approaches have no surcharge.
+  // All other scenarios and the global Conquest rules remain unchanged.
+  function riverCrossingCost(g, a, b, u = null) {
+    if (g?.mode !== 'scenario' || g.scenario?.id !== 'britannia-iraq-iran' ||
+        isSea(a) || isSea(b)) return 0;
+    if (u && (fx(u).ignoreTerrain || u.expRetrofit || TYPES[u.type]?.float ||
+        eliteFx(u).float || TYPES[u.type]?.naval)) return 0;
+    const i = a.r * g.cols + a.c, j = b.r * g.cols + b.c;
+    return g.scenario.riverBarriers?.[i < j ? i + ':' + j : j + ':' + i] ? 1 : 0;
+  }
   function canCapture(u) {
     return TYPES[u.type].naval !== 'ship';
   }
@@ -1605,7 +1616,7 @@
         }
         if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
-        const step = isSea(n) ? 1 : terrainCost(g, u, n);
+        const step = isSea(n) ? 1 : terrainCost(g, u, n) + riverCrossingCost(g, p, n, u);
         const nc = u.skillReposition
           ? cost + step
           : cross
@@ -1613,7 +1624,7 @@
           : ship
             ? cost + 1
             : amphibious
-              ? cost + (isSea(n) ? landMove : terrainCost(g, u, n) * seaMv)
+              ? cost + (isSea(n) ? landMove : (terrainCost(g, u, n) + riverCrossingCost(g, p, n, u)) * seaMv)
               : cost + step;
         const sk = stateKey(n);
         if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
@@ -4374,7 +4385,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','britannia-iraq-iran','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4577,11 +4588,11 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','britannia-iraq-iran','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id)) return g;
     const sides = ['area-18','war-for-australia'].includes(g.scenario.id) ? ['britannia','eu','cf'] :
       g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
       ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario.id) ? ['britannia','eu'] :
-      ['conquest-indochina','philippines-invasion'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
+      ['conquest-indochina','philippines-invasion','britannia-iraq-iran','invasion-korea','bf-malacca','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',
@@ -5026,7 +5037,8 @@
         if (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n))) continue;
         if (unit && !routePassable(g, unit, n)) continue;
         const step = unit ? isSea(tiles[i]) ? 1 : terrainCost(g, unit, tiles[i]) : isSea(n) ? 1 : TERRAIN[n.terrain].cost;
-        const nd = d + (only === 'sea' ? 1 : (isSea(n) !== sea ? 4 : 0) + step);
+        const nd = d + (only === 'sea' ? 1 :
+          (isSea(n) !== sea ? 4 : 0) + step + riverCrossingCost(g, tiles[i], n, unit));
         if (nd <= maxCost && nd < field[j]) {
           field[j] = nd;
           push(j, nd);
