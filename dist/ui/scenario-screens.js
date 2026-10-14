@@ -16,11 +16,16 @@ const SCENARIO_KINDS = [
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
+  ['invasion-brazil','Invasion of Brazil','57 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'invasion-brazil': {
+    eu: 'Launch six carrier-supported landing fronts from the Atlantic. Take Belém, Fortaleza, Recife, Salvador, Rio and the south; secure ports and advance inland to Brasília and beyond.',
+    britannia: 'Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches.'
+  },
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -83,6 +88,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'invasion-brazil': {
+    era: 'Brazil · Alternate 2017',
+    intro: 'Europia United begins with no Brazilian cities and launches six major transatlantic naval landings against Britannia. Total conquest of all 57 cities wins without a turn limit.',
+    diplomacy: 'E.U. and Britannia are hostile from turn 1; EU fleets carry the entire first landing force. Capturing coastal ports creates forward bases for inland operations.',
+    elite: 'Elite Brazil replaces eligible land formations with standard faction Elite Forces; carriers remain conventional. AI commander and production scaling follow standard scenario Elite rules.',
+    focus: {eu:'',britannia:'Brasília'}
+  },
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
