@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
-      name: github-pages
+      name: siberia-preview
       url: ${{ steps.deployment.outputs.page_url }}previews/siberia/
     steps:
       - name: Checkout branch preview
