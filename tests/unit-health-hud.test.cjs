@@ -7,7 +7,9 @@ const vm = require('node:vm');
 
 const icons = fs.readFileSync(path.join(__dirname, '../dist/icons.js'), 'utf8');
 const hud = fs.readFileSync(path.join(__dirname, '../dist/ui/hud.js'), 'utf8');
+const dockFlagFunction = hud.match(/function dockFlag\(side\) \{[\s\S]*?\n\}/)?.[0];
 const dockFunction = hud.match(/function dockHTML\(\) \{[\s\S]*?\n\}/)?.[0];
+assert(dockFlagFunction, 'generated HUD must contain dockFlag');
 assert(dockFunction, 'generated HUD must contain dockHTML');
 
 function gauge(hp, max) {
@@ -31,7 +33,8 @@ function dock(naval, branch = 'Armor') {
     },
     C: () => null,
     F: () => ({ letter: 'B' }),
-    ART: { unit: () => '' },
+    ART: { unit: () => '', flagSVG: () => '<svg viewBox="0 0 120 72"></svg>' },
+    artSide: side => side,
     ICONS: { hp: gauge },
     statRow: () => '',
     unitName: () => 'Alexander',
@@ -42,7 +45,7 @@ function dock(naval, branch = 'Armor') {
     interactive: () => false, undoStack: [], act: () => '',
     esc: s => s,
   };
-  return vm.runInNewContext(dockFunction + '\ndockHTML();', sandbox);
+  return vm.runInNewContext(dockFlagFunction + '\n' + dockFunction + '\ndockHTML();', sandbox);
 }
 
 test('health circle shows remaining HP, not rounded percentage', () => {
