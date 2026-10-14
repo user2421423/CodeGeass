@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains fourteen independent regional wars. Each scenario
+The **Scenarios** menu contains fifteen independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -26,6 +26,7 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **Crossing the Urals** | 120 × 90 · 40 cities | Britannia attacks the E.U. across the Ural mountain passes and industrial railway corridors. Complete city conquest without a turn limit. |
 | **Invasion of Turkey** | 144 × 104 · 59 cities | Britannian armies and naval forces advance from Syria and Iraq into E.U.-held Turkey. The Bosporus and Dardanelles are navigable; total conquest wins. |
 | **Invasion of St. Petersburg and Moscow** | 128 × 88 · 41 cities | Britannian field armies advance from their Volga footholds against fortified E.U. Russian cities, culminating in Moscow and St. Petersburg. Complete city conquest wins. |
+| **Invasion of Canada** | 196 × 112 · 74 cities | E.U. expeditionary army groups and carrier fleets attack Britannia across Atlantic, Labrador, Hudson Strait and Arctic approaches. Fortified Canadian ports, rail hubs, prairie corridors, the Shield and Rockies anchor a long continental defense. Total city conquest without a turn limit. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |
