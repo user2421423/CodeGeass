@@ -119,9 +119,9 @@
     ['Westland Invasion Fleet',164.4,-43.15,4,4,
       [['heavy',2,'vritra'],['assault',2,'chengzhong'],['rocket',2,null],['medium',2,null]]],
     ['Canterbury Landing Fleet',177.0,-43.9,5,5,
-      [['heavy',3,'xingke'],['assault',2,'xianglin'],['rocket',2,null],['medium',2,null]]],
+      [['heavy',3,'gaohai'],['assault',2,'zhaohao'],['rocket',2,null],['medium',2,null]]],
     ['Southern Ocean Expedition',173.5,-46.85,4,4,
-      [['heavy',2,'cao'],['assault',2,'honggu'],['medium',2,null],['siege',2,null]]]
+      [['heavy',2,'leifeng'],['assault',2,'meiling'],['medium',2,null],['siege',2,null]]]
   ];
   // Britannian standing armies, garrisons and operational reserves.
   const DEFENDERS=[
@@ -132,17 +132,17 @@
     ['Taupo','heavy',3,null],['Waiouru','heavy',4,'bismarck'],
     ['New Plymouth','heavy',3,'oldrin'],['Gisborne','medium',3,null],
     ['Napier','assault',3,'darlton'],['Palmerston North','heavy',4,'suzaku'],
-    ['Ohakea Air Base','rocket',3,null],['Wellington','heavy',5,'cornelia'],
+    ['Ohakea Air Base','rocket',3,null],['Wellington','heavy',5,null],
     ['Wellington','rocket',3,null],['Masterton','medium',3,null],
-    ['Nelson','heavy',3,'guilford'],['Picton','heavy',4,'bismarck'],
+    ['Nelson','heavy',3,null],['Picton','heavy',4,null],
     ['Blenheim','rocket',3,null],['Westport','medium',3,null],
-    ['Greymouth','heavy',3,'jeremiah'],['Kaikoura','medium',3,null],
-    ['Christchurch','heavy',5,'suzaku'],['Christchurch','rocket',3,'cecile'],
+    ['Greymouth','heavy',3,null],['Kaikoura','medium',3,null],
+    ['Christchurch','heavy',5,null],['Christchurch','rocket',3,null],
     ['Lyttelton','heavy',3,null],['Ashburton','medium',3,null],
-    ['Timaru','heavy',4,'gino'],['Oamaru','medium',3,null],
-    ['Dunedin','heavy',4,'oldrin'],['Dunedin','rocket',3,null],
-    ['Queenstown','heavy',4,'darlton'],['Twizel','heavy',3,null],
-    ['Invercargill','heavy',4,'villetta'],['Bluff','assault',3,null],
+    ['Timaru','heavy',4,null],['Oamaru','medium',3,null],
+    ['Dunedin','heavy',4,null],['Dunedin','rocket',3,null],
+    ['Queenstown','heavy',4,null],['Twizel','heavy',3,null],
+    ['Invercargill','heavy',4,null],['Bluff','assault',3,null],
     ['Te Anau','medium',3,null],['Oban','medium',2,null]
   ];
   const NAVY=[
@@ -277,7 +277,7 @@
       const component=components[at.r*COLS+at.c];
       if(wanted!=null&&component!==wanted)throw Error('City escaped island '+name);
       islandComponent.set(island,component);
-      const capital=name==='Honolulu';
+      const capital=name==='Wellington';
       const shield=fort?(capital?550:tier===3?430:350):150+45*tier;
       const s={id:g.stations.length,name,c:at.c,r:at.r,owner:'britannia',tier,
         capital,capitalOf:capital?'britannia':null,fort:!!fort,
@@ -289,7 +289,7 @@
       if(airfield)g.scenario.airfields.push(s.id);
     }
     if(islandComponent.size!==3||new Set(islandComponent.values()).size!==3)
-      throw Error('New Zealandan island coastline connectivity audit failed');
+      throw Error('New Zealand island coastline connectivity audit failed');
     const byComponent=new Map();
     for(const s of g.stations){
       const id=components[s.r*COLS+s.c];
