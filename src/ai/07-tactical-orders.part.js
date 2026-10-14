@@ -94,6 +94,8 @@
       }
       return events;
     }
+    const dualDefense=aiEliminatorDualDefenseOrder(g,u,memo);
+    if(dualDefense!==null)return [...events,...dualDefense];
     // Trigger available newcomer abilities for AI-led armies, rather than leaving them player-only.
     if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!feintReason(g,u)) {
       const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
@@ -327,5 +329,5 @@
     memo.trafficCache?.clear();
     return events;
   }
-  Object.assign(E, { aiProduction, aiAssignEliminators, aiEliminatorMetrics, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
+  Object.assign(E, { aiProduction, aiAssignEliminators, aiEliminatorMetrics, aiEliminatorDualDefenseOrder, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);
