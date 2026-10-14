@@ -1,0 +1,22 @@
+{
+  "id": "eu-brazil",
+  "title": "Invasion of Brazil",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "implemented",
+  "scenarioId": "invasion-brazil",
+  "playableModule": "dist/scenarios-brazil.js",
+  "geographicRegion": "Brazil",
+  "proposedMapBounds": {
+    "west": -74,
+    "south": -34,
+    "east": -34,
+    "north": 6
+  },
+  "campaignMapMarker": {
+    "longitude": -51,
+    "latitude": -13
+  },
+  "description": "Establish a South American foothold in Britannian territory.",
+  "implementationNotes": "Registered in E.scenarios.byId, standalone selector, script loader and Campaign Mode; GSHHS-derived 176x144 20-80 coastline, six EU offshore carrier fronts, 57 Britannian cities and 19 independent ports. No new regression tests."
+}

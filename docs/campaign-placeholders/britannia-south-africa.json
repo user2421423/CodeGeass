@@ -1,0 +1,22 @@
+{
+  "id": "britannia-south-africa",
+  "title": "Invasion of South Africa",
+  "campaignFaction": "britannia",
+  "tier": 3,
+  "status": "implemented",
+  "scenarioId": "invasion-south-africa",
+  "playableModule": "dist/scenarios-south-africa.js",
+  "geographicRegion": "South Africa",
+  "proposedMapBounds": {
+    "west": 10.5,
+    "south": -38,
+    "east": 39.5,
+    "north": -18
+  },
+  "campaignMapMarker": {
+    "longitude": 25,
+    "latitude": -29
+  },
+  "description": "Capture the southern African strategic base network.",
+  "implementationNotes": "Implemented as a standalone two-faction scenario on scenario/britannia-south-africa. Both sides use base faction balance. Britannia starts with no cities, 12 loaded carriers and independent amphibious escorts. Tactical mask uses GSHHG intermediate-resolution 20/80 coastal classification. Campaign registry attaches the exact scenario ID."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "eu-new-york",
+  "title": "Invasion of the American East Coast",
+  "campaignFaction": "eu",
+  "tier": 4,
+  "status": "implemented",
+  "scenarioId": "invasion-american-east-coast",
+  "playableModule": "dist/scenarios-east-coast.js",
+  "geographicRegion": "American Atlantic Seaboard: Maine to Florida",
+  "proposedMapBounds": {
+    "west": -85.6,
+    "south": 24,
+    "east": -65.4,
+    "north": 47.2
+  },
+  "campaignMapMarker": {
+    "longitude": -75.5,
+    "latitude": 37.2
+  },
+  "description": "Massive six-front Europian carrier invasion of Britannian East Coast cities and ports.",
+  "implementationNotes": "Standalone scenario and Campaign eu-new-york Tier 4 share the actual invasion-american-east-coast model; all other objective IDs and tiers remain unchanged."
+}

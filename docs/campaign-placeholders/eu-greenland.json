@@ -1,0 +1,22 @@
+{
+  "id": "eu-greenland",
+  "title": "Invasion of Greenland",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "implemented",
+  "scenarioId": "eu-greenland",
+  "playableModule": "dist/scenarios-greenland.js",
+  "geographicRegion": "Greenland",
+  "proposedMapBounds": {
+    "west": -78,
+    "south": 58,
+    "east": -10,
+    "north": 84
+  },
+  "campaignMapMarker": {
+    "longitude": -42,
+    "latitude": 72
+  },
+  "description": "Capture the North Atlantic approaches.",
+  "implementationNotes": "An 18-city Greenland scenario is registered in E.scenarios.byId and activated in Campaign Tier 3, with independent standalone access and no changes to other campaigns."
+}

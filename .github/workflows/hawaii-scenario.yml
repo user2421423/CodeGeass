@@ -1,0 +1,32 @@
+name: Hawaii scenario simulation
+on:
+  push:
+    branches:
+      - scenario/eu-hawaii
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hawaii-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check generated engine source
+        run: node tools/build_sources.cjs --check
+      - name: Four difficulties and eight-island coast and port audit
+        run: node tools/simulate-hawaii.cjs eu 11 0
+      - name: Multi-seed amphibious AI playthroughs
+        run: |
+          for faction in eu britannia; do
+            for seed in 11 29 47; do
+              node tools/simulate-hawaii.cjs "$faction" "$seed" 4
+            done
+          done
+      - name: Longer multi-island operational simulation
+        run: |
+          node tools/simulate-hawaii.cjs eu 101 10
+          node tools/simulate-hawaii.cjs britannia 101 10

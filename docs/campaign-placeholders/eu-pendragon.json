@@ -1,0 +1,22 @@
+{
+  "id": "eu-pendragon",
+  "title": "Battle of Pendragon",
+  "campaignFaction": "eu",
+  "tier": 6,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Pendragon",
+  "proposedMapBounds": {
+    "west": -119,
+    "south": 35.5,
+    "east": -115,
+    "north": 39.5
+  },
+  "campaignMapMarker": {
+    "longitude": -117,
+    "latitude": 37.5
+  },
+  "description": "Capture the imperial capital at Pendragon (-117° longitude, 37.5° latitude) in the final E.U. offensive.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}

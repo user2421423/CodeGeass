@@ -650,10 +650,18 @@ const GEOGRAPHY = (() => {
   const PHILIPPINES_LAND = LAYERS.land.filter(shape =>
     PHILIPPINES_ISLAND_ANCHORS.some(([lon,lat]) =>
       pointWithinShape(shape, px(lon), py(lat))));
+  // Exclude Canada's Arctic islands and Iceland from the Greenland theatre;
+  // select Greenland's true GSHHG coastal polygon and its nearby skerries.
+  const GREENLAND_ANCHORS = [[-51.74,64.18],[-53.67,66.94],[-51.1,69.22],
+    [-37.64,65.61],[-46.03,60.72],[-69.23,77.47],[-21.96,70.48]];
+  const GREENLAND_LAND = LAYERS.land.filter(shape =>
+    GREENLAND_ANCHORS.some(([lon,lat]) =>
+      pointWithinShape(shape, px(lon), py(lat))));
   let japanColorCache = null;
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
-    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge';
+    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge' ||
+      g.scenario?.id === 'britannia-western-russia';
   }
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
@@ -919,7 +927,22 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
-    const centreSampledRegion = australia || middleEast;
+    const siberia = g.scenario.id === 'britannia-siberia';
+    const southernAfrica = g.scenario.id === 'invasion-south-africa';
+    const urals = g.scenario.id === 'crossing-urals';
+    const turkey = g.scenario.id === 'invasion-turkey';
+    const brazil = g.scenario.id === 'invasion-brazil';
+    const california = g.scenario.id === 'invasion-california';
+    const canada = g.scenario.id === 'invasion-canada';
+    const caribbean = g.scenario.id === 'invasion-caribbean';
+    const greatLakes = g.scenario.id === 'eu-great-lakes';
+    const greenland = g.scenario.id === 'eu-greenland';
+    const hawaii = g.scenario.id === 'invasion-hawaii';
+    const eastCoast = g.scenario.id === 'invasion-american-east-coast';
+    const panama = g.scenario.id === 'eu-panama';
+    const pendragon = g.scenario.id === 'eu-pendragon';
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -956,7 +979,8 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      greenland ? GREENLAND_LAND :
+      (europeOnly || middleEast || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1004,6 +1028,23 @@ const GEOGRAPHY = (() => {
     }
     ctx.restore();
 
+    // Greenland's ice cap lies above the national coastal tint. Render it as
+    // snowy relief while retaining the actual GSHHG silhouette under all hexes.
+    if (greenland) {
+      ctx.save();
+      ctx.globalAlpha=0.76;
+      ctx.fillStyle='#ebf5f6';
+      ctx.beginPath();
+      for(const tile of g.tiles){
+        if(tile.biome!=='ice-sheet')continue;
+        const x=SQ*R*(tile.c+.5*(tile.r&1))+R;
+        const y=1.5*R*tile.r+R;
+        if(x<left-2*R||x>right+2*R||y<top-2*R||y>bottom+2*R)continue;
+        tacticalHex(ctx,tile,R+0.25);
+      }
+      ctx.fill();
+      ctx.restore();
+    }
     // Only Japan draws unfiltered global-coast strokes; Europe's coastline
     // is the exact edge of its geographically clipped European political
     // fill. Unfiltered strokes would reintroduce African/Asian outlines.
@@ -1032,6 +1073,125 @@ const GEOGRAPHY = (() => {
         ctx.beginPath();
         tacticalHex(ctx, t, R + 0.7);
         ctx.fill();
+      }
+      ctx.restore();
+    }
+    // Lakes are inland freshwater: the GSHHG continental land polygon alone
+    // paints them as dry ground. Render the same navigable lake polygons and
+    // engineered connectors used by the tactical hex classifier above it.
+    if (greatLakes && g.scenario.lakes) {
+      const bb=g.scenario.bounds,sx=SQ*R*g.cols/(bb.east-bb.west),
+        sy=1.5*R*g.rows/(bb.north-bb.south),
+        pt=([lon,lat])=>[R-SQ*R*.5+(lon-bb.west)*sx,
+          R-.75*R+(bb.north-lat)*sy];
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineJoin='round';ctx.lineCap='round';
+      for(const polygon of Object.values(g.scenario.lakes)){
+        ctx.beginPath();polygon.forEach((p,i)=>{const [x,y]=pt(p);
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});ctx.closePath();
+        ctx.fillStyle='#194b69';ctx.fill();ctx.strokeStyle='#75b3c3';
+        ctx.lineWidth=Math.max(1.5,1.2*scale);ctx.stroke();
+      }
+      for(const [name,line] of Object.entries(g.scenario.channels||{})){
+        ctx.beginPath();line.forEach((p,i)=>{const [x,y]=pt(p);
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.strokeStyle='#245b78';
+        ctx.lineWidth=Math.max(3,sx*(name==='Straits of Mackinac'?.24:.16));
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // Dedicated northern river underlay in geographical, not approximate tile coordinates.
+    if((siberia || brazil || canada || california || eastCoast) && g.scenario?.rivers){
+      const b=g.scenario.bounds;
+      const toHex=([lon,lat])=>[
+        R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
+        R-.75*R+1.5*R*g.rows*(b.north-lat)/(b.north-b.south)];
+      ctx.save();ctx.strokeStyle='#60bfd5';ctx.lineWidth=Math.max(1.2,Math.min(3,1.4*scale));
+      ctx.globalAlpha=.8;
+      for(const path of Object.values(g.scenario.rivers)){
+        ctx.beginPath();path.forEach((p,i)=>{const [x,y]=toHex(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(g.scenario.id==='crossing-urals'&&g.scenario.rivers){
+const b=g.scenario.bounds;ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ctx.strokeStyle='#4ac4de';ctx.globalAlpha=.78;ctx.lineWidth=3.1;ctx.lineJoin='round';ctx.lineCap='round';
+for(const line of Object.values(g.scenario.rivers)){if(line.length<2)continue;
+ctx.beginPath();for(let i=0;i<line.length;i++){const [lon,lat]=line[i],
+x=R-SQ*R/2+(lon-b.west)*SQ*R*g.cols/(b.east-b.west),
+y=R-.75*R+(b.north-lat)*1.5*R*g.rows/(b.north-b.south);
+if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
+ctx.restore();}
+    if (turkey) {
+      // This is a tactical-scale hydrographic correction, not a land bridge.
+      // The GSHHS vector map has sub-hex-wide straits; the actual GSHHS-derived
+      // gameplay mask carves connected sea hexes for both navigable passages.
+      const b = g.scenario.bounds, sx = SQ * R * g.cols / (b.east - b.west),
+        sy = 1.5 * R * g.rows / (b.north - b.south);
+      const point = ([lon,lat]) => [
+        R - SQ * R / 2 + (lon-b.west)*sx,
+        R - 1.5 * R / 2 + (b.north-lat)*sy,
+      ];
+      const drawLines = (lines, color, width) => {
+        ctx.strokeStyle = color;ctx.lineWidth = width;
+        ctx.lineCap='round';ctx.lineJoin='round';
+        for (const coords of Object.values(lines || {})) {
+          if (coords.length<2) continue;
+          ctx.beginPath();
+          for (let i=0;i<coords.length;i++) {
+            const [x,y]=point(coords[i]);
+            if (!i) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          }
+          ctx.stroke();
+        }
+      };
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      // Draw rivers first, then the Bosporus and Dardanelles water channels.
+      // River strokes are visual only; the straits match navigable sea hexes.
+      drawLines(g.scenario.rivers,'rgba(75,190,215,0.76)',Math.max(1.1,R*.15));
+      drawLines(g.scenario.straits,'#205372',Math.max(3.5,R*.76));
+      ctx.restore();
+    }
+    // Western Russia's major rivers are geographic polylines. They are
+    // rendered above the political atlas but never turn land hexes into sea.
+    if(g.scenario?.id==='britannia-western-russia' && g.scenario.rivers){
+      const p=g.scenario.projection, k=Math.cos(p.centerLat*Math.PI/180),
+        wx=SQ*R*(g.cols-1)/(p.uMax-p.uMin),
+        hy=1.5*R*(g.rows-1)/(p.vMax-p.vMin);
+      ctx.save();
+      ctx.strokeStyle='#62c3df';
+      ctx.lineWidth=2.7;
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      ctx.globalAlpha=.68;
+      for(const line of Object.values(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        for(let i=0;i<line.length;i++){
+          const [lon,lat]=line[i],
+            x=R+wx*((lon-p.centerLon)*k-p.uMin),
+            y=R+hy*(p.centerLat+p.vMax-lat);
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(pendragon && g.scenario.roads){
+      // Historic highway corridors are aligned with this north-up WGS84 grid.
+      const b=g.scenario.bounds;
+      const xy=([lon,lat])=>[
+        R-SQ*R/2+(lon-b.west)*SQ*R*g.cols/(b.east-b.west),
+        R-.75*R+(b.north-lat)*1.5*R*g.rows/(b.north-b.south)];
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.strokeStyle='rgba(227,205,145,.65)';ctx.lineWidth=Math.max(1.3,R*.24);
+      ctx.lineCap='round';ctx.lineJoin='round';
+      for(const route of Object.values(g.scenario.roads)){
+        ctx.beginPath();
+        route.forEach((p,i)=>{const [x,y]=xy(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.stroke();
       }
       ctx.restore();
     }

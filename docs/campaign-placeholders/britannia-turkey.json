@@ -1,0 +1,22 @@
+{
+  "id": "britannia-turkey",
+  "title": "Invasion of Turkey",
+  "campaignFaction": "britannia",
+  "tier": 4,
+  "status": "implemented",
+  "scenarioId": "invasion-turkey",
+  "playableModule": "dist/scenarios-turkey.js",
+  "geographicRegion": "Anatolia",
+  "proposedMapBounds": {
+    "west": 24.1,
+    "south": 33.9,
+    "east": 45.6,
+    "north": 43.5
+  },
+  "campaignMapMarker": {
+    "longitude": 35,
+    "latitude": 39
+  },
+  "description": "Attack north from Syria and Iraq through Anatolia, supported by eastern Mediterranean carriers. Take all 59 cities, including Istanbul and the navigable straits.",
+  "implementationNotes": "Registered as invasion-turkey in E.scenarios.byId; GSHHS sampled with explicit navigable Bosporus and Dardanelles. Standalone and Britannian Tier 4 Campaign mission; no turn limit; ports are capturable and AI uses europe doctrine. Do not merge without approval."
+}

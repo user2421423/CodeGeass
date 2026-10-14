@@ -238,11 +238,37 @@ function resultDialog() {
     if (!game.over) return;
     const won=game.over.winner===game.player;
     const lost=!!game.over.eliminated;
-    modal.innerHTML='<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Scenario result">'+
-      militaryPresentation.resultHero('scenario', { title: game.scenario?.title || 'Regional scenario' })+
-      '<p>'+esc(game.over.reason)+'</p>'+militaryPresentation.summaryHTML()+
-      '<p class="description">Scenarios do not award campaign or HQ rewards.</p>'+
-      '<div class="dialog-footer"><button data-action="close">Inspect map</button><button class="primary" data-action="scenario">Play again</button></div>'+
+    let campaignNotice='';
+    if (game.warCampaign) {
+      if (won && !game.warCampaign.recorded) {
+        const result=KnightmareWarCampaign.recordVictory(localStorage,game);
+        if(result.ok){
+          game.warCampaign.recorded=true;
+          const name=KnightmareWarCampaign.ALL[game.warCampaign.missionId]?.title || game.scenario.title;
+          campaignNotice=name+' secured for '+E.FACTIONS[game.warCampaign.faction].name+'.'+
+            (result.unlocked?' Tier '+result.unlocked+' unlocked.':'')+
+            (result.complete?' Campaign complete.':'')+
+            (result.complete&&game.warCampaign.missionId==='eu-pendragon'?' E.U. Campaign Victory! The Holy Britannian Empire has fallen.':'')+
+            (game.warCampaign.missionId==='britannia-western-russia'?' Euro Britannia Established. European War unlocked.':'');
+          game.warCampaign.announcement=campaignNotice;
+          save();
+        }else campaignNotice=result.reason;
+      }else campaignNotice=game.warCampaign.announcement || '';
+    }
+    const euFinal=won && game.warCampaign?.recorded && game.warCampaign.missionId==='eu-pendragon';
+    const founded=won && game.warCampaign?.recorded &&
+      game.warCampaign.missionId==='britannia-western-russia';
+    modal.innerHTML='<div class="overlay"><section class="dialog narrow military-result-dialog'+(euFinal?' wc-imperial-victory':'')+'" role="dialog" aria-modal="true" aria-label="Scenario result">'+
+      militaryPresentation.resultHero('scenario',{title:game.scenario?.title||'Regional scenario'})+
+      '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(euFinal?'E.U. Campaign Victory':founded?'Euro Britannia Established':won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
+      (euFinal?'<p class="wc-imperial-subtitle">The Imperial Capital Has Fallen · Europia United Triumphant</p>':'')+
+      '<p>'+esc(game.over.reason)+'</p>'+
+      militaryPresentation.summaryHTML()+
+      (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant map territory and tier progress on confirmed victories only. No HQ rewards.')+'</p>' :
+        '<p class="description">Scenarios do not award campaign or HQ rewards.</p>')+
+      '<div class="dialog-footer"><button data-action="close">Inspect map</button>'+
+      (game.warCampaign?'<button class="primary" data-action="wc-return">Campaign map</button>':
+        '<button class="primary" data-action="scenario">Play again</button>')+'</div>'+
       '</section></div>';
     focusDialog();
     return;

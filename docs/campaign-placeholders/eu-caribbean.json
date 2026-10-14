@@ -1,0 +1,22 @@
+{
+  "id": "eu-caribbean",
+  "title": "Invasion of the Caribbean",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "implemented",
+  "scenarioId": "invasion-caribbean",
+  "playableModule": "dist/scenarios-caribbean.js",
+  "geographicRegion": "Caribbean",
+  "proposedMapBounds": {
+    "west": -84,
+    "south": 10,
+    "east": -60,
+    "north": 25
+  },
+  "campaignMapMarker": {
+    "longitude": -69,
+    "latitude": 19
+  },
+  "description": "Take the island chains controlling approaches to America.",
+  "implementationNotes": "Native standalone scenario and Campaign Tier 3 activation. GSHHS intermediate-resolution clipped land/coast (>80% land, 20-80% mixed, <20% sea), mainland blocked. E.U. has no cities, starts with offshore carrier task forces. No turn cap. No regression tests added."
+}

@@ -52,7 +52,7 @@ function campaignRow(profile) {
     seasons = Object.values(CP.SEASONS || {}),
     all = camps.flatMap(c => c.missions),
     got = all.reduce((a, m) => a + CP.best(profile, m.id), 0);
-  return `<div class="conquest-row campaign-row"><div><label>Campaign · ${seasons.length} story arcs · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard, Challenge and Elite modes. Elite uses one-frame Elite Forces; player Lv.1 units face Lv.3–5 rivals. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Campaigns</button></div>`;
+  return `<div class="conquest-row campaign-row"><div><label>Story Mode · ${seasons.length} story arcs · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard, Challenge and Elite modes. Elite uses one-frame Elite Forces; player Lv.1 units face Lv.3–5 rivals. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Story Mode</button></div>`;
 }
 function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
@@ -75,7 +75,7 @@ function campaignDialog(cid = campaignTab) {
         return `${m.claimed ? '✓' : m.reached ? '◆' : '○'} ${m.stars}★: ${prize}`;
       })
       .join(' · ');
-  // Campaign selection: pick a season first, then the side you play it from.
+  // Story Mode selection: pick a season first, then the side you play it from.
   const seasonTabs = Object.entries(CP.SEASONS || {})
     .map(([n, s]) => {
       const [k] = camps.find(([, c]) => String(c.season) === n && c.side === camp.side) || camps.find(([, c]) => String(c.season) === n);
@@ -93,7 +93,7 @@ function campaignDialog(cid = campaignTab) {
       return `<button class="mission-card${best ? ' cleared' : ''}" data-mission="${m.id}" ${open ? '' : `disabled title="Clear ${esc(camp.missions[i - 1].title)} first"`}><span class="mission-num">${open ? i + 1 : '🔒'}</span><span class="mission-info"><small>${m.year} · ${esc(m.place)}</small><b>${esc(m.title)}</b></span>${starRow(best)}</button>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Campaigns"><div class="dialog-head"><div><div class="eyebrow">Campaign · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order; 1★ is enough to progress. Campaign milestones: ${milestoneText}. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Story Mode"><div class="dialog-head"><div><div class="eyebrow">Story Mode · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order; 1★ is enough to progress. Story Mode milestones: ${milestoneText}. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
   focusDialog();
 }
 // Before a mission (live = false) or during one (live = true, with each star goal's current state).

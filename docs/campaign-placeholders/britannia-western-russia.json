@@ -1,0 +1,22 @@
+{
+  "id": "britannia-western-russia",
+  "title": "Invasion of St. Petersburg and Moscow",
+  "campaignFaction": "britannia",
+  "tier": 5,
+  "status": "implemented",
+  "scenarioId": "britannia-western-russia",
+  "playableModule": "dist/scenarios-western-russia.js",
+  "geographicRegion": "Western Russia",
+  "proposedMapBounds": {
+    "west": 27,
+    "south": 51.5,
+    "east": 52,
+    "north": 63.25
+  },
+  "campaignMapMarker": {
+    "longitude": 37,
+    "latitude": 57
+  },
+  "description": "Capture the twin centers of Russian resistance and establish Euro Britannia.",
+  "implementationNotes": "Standalone regional scenario registered in E.scenarios.byId. Requires European land mask, uses land/lake masks and strategic multi-front scenario AI. Campaign victory credits britannia and activates the existing European War without editing that battle."
+}

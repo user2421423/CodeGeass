@@ -1,0 +1,22 @@
+{
+  "id": "britannia-urals",
+  "title": "Crossing the Urals",
+  "campaignFaction": "britannia",
+  "tier": 4,
+  "status": "implemented",
+  "scenarioId": "crossing-urals",
+  "playableModule": "dist/scenarios-urals.js",
+  "geographicRegion": "The Urals",
+  "proposedMapBounds": {
+    "west": 51,
+    "south": 49,
+    "east": 75,
+    "north": 67
+  },
+  "campaignMapMarker": {
+    "longitude": 62,
+    "latitude": 58
+  },
+  "description": "Break the mountain frontier into European Russia.",
+  "implementationNotes": "Registered standalone and as Britannia's Tier 4 campaign mission. No main merge."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "eu-california",
+  "title": "Invasion of California",
+  "campaignFaction": "eu",
+  "tier": 5,
+  "status": "implemented",
+  "scenarioId": "invasion-california",
+  "playableModule": "dist/scenarios-california.js",
+  "geographicRegion": "California",
+  "proposedMapBounds": {
+    "west": -125,
+    "south": 32,
+    "east": -114,
+    "north": 42
+  },
+  "campaignMapMarker": {
+    "longitude": -120,
+    "latitude": 37
+  },
+  "description": "Europia United drives south from Oregon while carrier task forces invade Britannian-controlled California.",
+  "implementationNotes": "WGS84 160x120 map sampled from GSHHS intermediate land polygons at 20–80% shoreline thresholds. Four E.U. offshore groups, twelve Oregon staging cities, 51 fortified/industrial Californian objectives, independent ports, passes, standard unit rosters and four difficulties. Registered as standalone Scenarios and Campaign tier 5. Pendragon tier 6 remains separate."
+}

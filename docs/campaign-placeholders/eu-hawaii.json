@@ -1,0 +1,22 @@
+{
+  "id": "eu-hawaii",
+  "title": "Invasion of Hawaii",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "implemented",
+  "scenarioId": "invasion-hawaii",
+  "playableModule": "dist/scenarios-hawaii.js",
+  "geographicRegion": "Hawaii",
+  "proposedMapBounds": {
+    "west": -161,
+    "south": 18,
+    "east": -154,
+    "north": 24
+  },
+  "campaignMapMarker": {
+    "longitude": -156,
+    "latitude": 21
+  },
+  "description": "Launch an oceanic assault against Britannian Pacific bases.",
+  "implementationNotes": "Standalone scenario is implemented and registered in E.scenarios.byId. Campaign eu-hawaii is active in dist/war-campaign.js. Land, sea, port, and unit rules are reused without changing other scenarios."
+}

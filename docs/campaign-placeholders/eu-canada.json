@@ -1,0 +1,22 @@
+{
+  "id": "eu-canada",
+  "title": "Invasion of Canada",
+  "campaignFaction": "eu",
+  "tier": 4,
+  "status": "implemented",
+  "scenarioId": "invasion-canada",
+  "playableModule": "dist/scenarios-canada.js",
+  "geographicRegion": "Canada",
+  "proposedMapBounds": {
+    "west": -147,
+    "south": 41,
+    "east": -40,
+    "north": 83.8
+  },
+  "campaignMapMarker": {
+    "longitude": -105,
+    "latitude": 57
+  },
+  "description": "Launch combined Atlantic, Greenland, Hudson Strait, Labrador and Arctic offensives to conquer Britannian Canada.",
+  "implementationNotes": "Playable standalone scenario registered in E.scenarios.byId and linked to eu-canada in Campaign Mode. All 74 theatre cities must be captured. No turn limit; no changes to campaign tiers."
+}
