@@ -107,6 +107,40 @@
     }
     return done(best);
   }
+  // Canada's carrier armies keep separate operational axes while the player
+  // and AI retain the existing goal-field navigation, city defense and army
+  // formation rules. In particular, no city is valued until reachable.
+  function canadaOperationalCost(g,u,f,turns) {
+    if(g.scenario?.id!=='invasion-canada'||!Number.isFinite(turns))return turns;
+    const name=f.anchor.name;
+    const axes={
+      'Atlantic Vanguard':["St. John's",'Gander','Corner Brook','Sydney','Halifax','Québec City','Montréal','Ottawa'],
+      'Maritime Assault':['Halifax','Saint John','Sydney','Moncton','Fredericton','Québec City','Montréal','Ottawa'],
+      'Hudson Strait Force':['Kuujjuaq','Rankin Inlet','Churchill','Thompson','Winnipeg','Thunder Bay','Regina'],
+      'Labrador Pincer':['Happy Valley-Goose Bay','Labrador City','Sept-Îles','Baie-Comeau','Saguenay','Québec City','Montréal'],
+      'Beaufort Passage':['Tuktoyaktuk','Inuvik','Norman Wells','Yellowknife','Fort McMurray','Edmonton','Calgary','Vancouver']
+    };
+    if(u.side==='eu'){
+      const targets=axes[u.invasionGroup] || [];
+      // Prioritize each landing group's next unswept supply hub, then its
+      // neighboring corridor. This avoids diverting all ships to one beach.
+      const remaining=targets.filter(n=>g.stations.some(s=>s.name===n&&s.owner!=='eu'));
+      const i=remaining.indexOf(name);
+      if(i>=0)turns-=i===0?3.8:i===1?2.2:1;
+      if(f.anchor.portAt && !g.stations.some(s=>s.owner==='eu'&&
+        s.name===name))turns-=.35;
+      if(g.scenario.supplyCorridors?.prairie.includes(name)&&
+        g.stations.some(s=>s.owner==='eu'&&g.scenario.supplyCorridors?.prairie.includes(s.name)))
+        turns-=1.5; // Exploit a captured railway corridor.
+    }else if(u.side==='britannia'){
+      // Britannian counterattacks concentrate on threatened arterial cities,
+      // rather than conducting fruitless long-range expeditions to Greenland.
+      const hubs=['Halifax','Québec City','Montréal','Ottawa','Toronto',
+        'Winnipeg','Regina','Calgary','Edmonton','Vancouver','Churchill'];
+      if(hubs.includes(name))turns-=2.3;
+    }
+    return Math.max(0,turns);
+  }
   // Capturing a city opens a short breakthrough window for raiders and other
   // fast capture-capable units against nearby unguarded, weakened cities.
   function scenarioCityCost(g, u, f) {
@@ -122,8 +156,9 @@
         dist(g, p, f.anchor) <= SCENARIO_COLUMN.exploitRadius)) turns -= 2.5;
       else turns -= 0.5;
     }
-    // Scenario columns prioritize actual travel time, regardless of who controls the target.
-    return Math.max(0, turns);
+    // Scenario columns prioritize actual travel time. Canada's route bias
+    // acts only after geography has established a reachable destination.
+    return canadaOperationalCost(g,u,f,Math.max(0, turns));
   }
   function scenarioRememberCapture(g, side, city) {
     const state = ((g.ai ||= {})[side] ||= {}),
