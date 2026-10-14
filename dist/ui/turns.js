@@ -234,10 +234,30 @@ function resultDialog() {
     if (!game.over) return;
     const won=game.over.winner===game.player;
     const lost=!!game.over.eliminated;
+    let campaignNotice='';
+    if (game.warCampaign) {
+      if (won && !game.warCampaign.recorded) {
+        const result=KnightmareWarCampaign.recordVictory(localStorage,game);
+        if(result.ok){
+          game.warCampaign.recorded=true;
+          const name=KnightmareWarCampaign.ALL[game.warCampaign.missionId]?.title || game.scenario.title;
+          campaignNotice=name+' secured for '+E.FACTIONS[game.warCampaign.faction].name+'.'+
+            (result.unlocked?' Tier '+result.unlocked+' unlocked.':'')+
+            (result.complete?' Campaign complete.':'')+
+            (game.warCampaign.missionId==='britannia-western-russia'?' Euro Britannia established.':'');
+          game.warCampaign.announcement=campaignNotice;
+          save();
+        }else campaignNotice=result.reason;
+      }else campaignNotice=game.warCampaign.announcement || '';
+    }
     modal.innerHTML='<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Scenario result">'+
       '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
-      '<p>'+esc(game.over.reason)+'</p><p class="description">Scenarios do not award campaign or HQ rewards.</p>'+
-      '<div class="dialog-footer"><button data-action="close">Inspect map</button><button class="primary" data-action="scenario">Play again</button></div>'+
+      '<p>'+esc(game.over.reason)+'</p>'+
+      (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant map territory and tier progress on confirmed victories only. No HQ rewards.')+'</p>' :
+        '<p class="description">Scenarios do not award campaign or HQ rewards.</p>')+
+      '<div class="dialog-footer"><button data-action="close">Inspect map</button>'+
+      (game.warCampaign?'<button class="primary" data-action="wc-return">Campaign map</button>':
+        '<button class="primary" data-action="scenario">Play again</button>')+'</div>'+
       '</section></div>';
     focusDialog();
     return;
