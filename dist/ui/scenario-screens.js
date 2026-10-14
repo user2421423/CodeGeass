@@ -18,9 +18,11 @@ const SCENARIO_KINDS = [
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'eu-pendragon': {eu:'Converge from the Sierra Nevada, northern Nevada, Mojave and eastern desert approaches. Break the imperial defense ring and conquer every city.',britannia:'Defend the imperial capital and its fortress ring, counterattack isolated E.U. columns, and hold every remaining city.'},
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -83,6 +85,7 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'eu-pendragon': {era:'Pendragon · Imperial Last Stand',intro:'The final E.U. offensive against the Holy Britannian imperial capital. Capture all 48 cities, not merely Pendragon. No turn limit.',diplomacy:'Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.',elite:'Elite Pendragon: eligible single-frame Elite Forces replace land formations; rival named commanders start at Level 5. Factories and research follow the established Elite AI rules.',focus:{eu:'Bishop',britannia:'Pendragon'}},
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
