@@ -45,7 +45,7 @@ jobs:
               if(s.portAt){
                 const p=E.tile(g,s.portAt.c,s.portAt.r);
                 assert.equal(p.terrain,'sea','port in water '+s.name);
-                assert.equal(E.distance(g,s,p),1,'port beside city '+s.name);
+                assert.equal(E.distance(s,p,g),1,'port beside city '+s.name);
                 assert.equal(s.portOwner,'britannia');
               }
             }
