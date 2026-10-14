@@ -1,0 +1,178 @@
+/* Strategic World Campaign registry. Independent from dist/campaign.js Story Mode.
+   IDs and tiers are stable; scenarioId:null means documentation only, NEVER a playable battle. */
+(function (root, factory) {
+  const api = factory();
+  root.KnightmareWarCampaign = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+  const STORAGE_KEY = 'knightmare-war-campaign-v1';
+  const BATTLE_KEY = 'knightmare-war-campaign-battle';
+  const FACTIONS = ['eu', 'britannia'];
+  const tierLabels = {
+    eu: ['Global Conflicts','Bering Strait','Overseas Invasions','Continental Landings','Conquest of the Britannian Homeland','Final Offensive'],
+    britannia: ['Global Conflicts','Bering Strait','Imperial Expansion','The Eurasian Offensive','Conquest of Western Russia','The European War','Operation Stonehenge'],
+  };
+  // [id, title, existing scenario ID/null, geographic name, marker lon/lat,
+  //  geographic bounds west/south/east/north, short campaign description].
+  const shared = [
+    ['australia','War for Australia','war-for-australia','Australia',[134,-25],[113,-44,154,-10],'Secure the Australian continent against rival great powers.'],
+    ['area-18','Conquest of Area 18','area-18','Arabia, Levant and Persia',[47,30],[34,15,64,39],'Win the struggle for the Middle Eastern strategic corridor.'],
+    ['division-japan','Division of Japan','division-japan','Japan',[139,37],[129,30,146,46],'Defeat rival armies in the divided Japanese home islands.'],
+  ];
+  const bering = ['bering','Bering Strait Crisis','bering-strait','Bering Strait',[177,63],[160,55,180,72],'Control the crossing between Siberia and Alaska.'];
+  const euRows = [
+    [3,[
+      ['hawaii','Invasion of Hawaii',null,'Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
+      ['brazil','Invasion of Brazil',null,'Brazil',[-51,-13],[-74,-34,-34,6],'Establish a South American foothold in Britannian territory.'],
+      ['greenland','Invasion of Greenland',null,'Greenland',[-42,72],[-61,59,-20,84],'Capture the North Atlantic approaches.'],
+      ['caribbean','Invasion of the Caribbean',null,'Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
+    ]],
+    [4,[
+      ['panama','Panama Campaign',null,'Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
+      ['new-york','Invasion of New York',null,'New York',[-74,41],[-80,38,-70,45],'Assault the Britannian Atlantic metropolitan corridor.'],
+      ['canada','Invasion of Canada',null,'Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
+    ]],
+    [5,[
+      ['great-lakes','Battle for the Great Lakes',null,'Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
+      ['california','Invasion of California',null,'California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
+    ]],
+    [6,[['pendragon','Battle of Pendragon',null,'Pendragon',[-119,35],[-118.5,34,-116.5,36],'Conclude the war with an assault on the imperial capital.']]],
+  ];
+  const brRows = [
+    [3,[
+      ['siberia','Invasion of Siberia',null,'Siberia',[116,60],[76,50,157,71],'Advance into the E.U.-held Siberian interior.'],
+      ['south-africa','Invasion of South Africa',null,'South Africa',[25,-29],[16,-35,33,-22],'Capture the southern African strategic base network.'],
+    ]],
+    [4,[
+      ['urals','Crossing the Urals',null,'The Urals',[62,58],[52,50,72,67],'Break the mountain frontier into European Russia.'],
+      ['turkey','Invasion of Turkey',null,'Anatolia',[35,39],[26,35,45,43],'Push through Anatolia toward the European front.'],
+    ]],
+    [5,[['western-russia','Invasion of St. Petersburg and Moscow',null,'Western Russia',[35,57],[28,54,43,63],'Capture the twin centers of Russian resistance and establish Euro Britannia.']]],
+    [6,[['european-war','European War','european-war','Central Europe',[14,50],[-2,44,31,56],'Take command of Euro Britannia in its existing regional war against the E.U.']]],
+    [7,[['stonehenge','Operation Stonehenge','operation-stonehenge','Western Europe',[-2,49],[-11,36,10,59],'Lead the final Britannian carrier invasion of western Europe.']]],
+  ];
+  function objective(faction,tier,row) {
+    const [suffix,title,scenarioId,region,marker,bounds,description] = row;
+    return Object.freeze({
+      id: faction + '-' + suffix, title, campaignFaction:faction, tier,
+      region, marker, bounds, description,
+      status: scenarioId ? 'implemented' : 'planned',
+      scenarioId,
+      // Euro Britannia is the scenario's actual playable faction, but does not
+      // replace the overarching Britannian campaign identity.
+      battleSide: faction === 'britannia' && suffix === 'european-war' ? 'eb' : faction,
+      final: tier === tierLabels[faction].length,
+    });
+  }
+  const registry = Object.freeze(Object.fromEntries(FACTIONS.map(faction=>{
+    const rows = [
+      [1,shared],
+      [2,[bering]],
+      ...(faction==='eu'?euRows:brRows),
+    ];
+    return [faction,Object.freeze(rows.map(([tier,items])=>Object.freeze({
+      number:tier,title:tierLabels[faction][tier-1],
+      missions:Object.freeze(items.map(row=>objective(faction,tier,row))),
+    })))];
+  })));
+  const ALL = Object.freeze(Object.fromEntries(FACTIONS.flatMap(f=>registry[f].flatMap(t=>t.missions.map(m=>[m.id,m])))));
+  const PLACEHOLDERS = Object.freeze(Object.values(ALL).filter(m=>m.status==='planned'));
+  function fresh(){return {version:1,selectedFaction:'eu',completed:{eu:{},britannia:{}}};}
+  function load(storage) {
+    let raw;
+    try { raw=JSON.parse(storage.getItem(STORAGE_KEY)); } catch(_e){return fresh();}
+    const p=fresh();
+    if (!raw || raw.version!==1) return p;
+    if (FACTIONS.includes(raw.selectedFaction)) p.selectedFaction=raw.selectedFaction;
+    for(const f of FACTIONS)
+      for(const m of registry[f].flatMap(t=>t.missions))
+        if(m.status==='implemented' && raw.completed && raw.completed[f] && raw.completed[f][m.id]===true)
+          p.completed[f][m.id]=true;
+    return p;
+  }
+  function persist(storage,progress){
+    try { storage.setItem(STORAGE_KEY,JSON.stringify(progress)); return true; }
+    catch(_e){ return false; }
+  }
+  function completed(progress,faction,id){return !!(progress.completed && progress.completed[faction] && progress.completed[faction][id]);}
+  function unlockedTier(progress,faction){
+    if(!registry[faction]) return 0;
+    for(const tier of registry[faction])
+      if(!tier.missions.every(m=>completed(progress,faction,m.id)))return tier.number;
+    return registry[faction].length + 1;
+  }
+  function state(progress,faction,id){
+    const m=ALL[id];
+    if(!m || m.campaignFaction!==faction) return 'invalid';
+    if(completed(progress,faction,id))return 'completed';
+    if(m.tier>unlockedTier(progress,faction))return 'locked';
+    return m.status==='planned'?'planned':'available';
+  }
+  function launch(progress,faction,id,scenarioModels) {
+    const m=ALL[id];
+    if(!m || m.campaignFaction!==faction)return {ok:false,reason:'Unknown campaign objective.'};
+    if(state(progress,faction,id)==='locked')return {ok:false,reason:'Complete all required wars in earlier tiers first.'};
+    if(!m.scenarioId)return {ok:false,reason:'Planned — Scenario Not Yet Implemented'};
+    const model=scenarioModels && scenarioModels[m.scenarioId];
+    if(!model || !model.sides || !model.sides.includes(m.battleSide) || typeof model.create!=='function')
+      return {ok:false,reason:'Playable scenario is not registered for this faction.'};
+    return {ok:true,scenarioId:m.scenarioId,battleSide:m.battleSide,
+      context:{faction,missionId:m.id,scenarioId:m.scenarioId,battleSide:m.battleSide}};
+  }
+  function recordVictory(storage,game){
+    const ctx=game && game.warCampaign, m=ctx && ALL[ctx.missionId];
+    if(!m || m.status!=='implemented' || m.campaignFaction!==ctx.faction ||
+       m.scenarioId!==ctx.scenarioId || m.battleSide!==ctx.battleSide ||
+       game.mode!=='scenario' || game.scenario?.id!==m.scenarioId ||
+       game.player!==m.battleSide || !game.over ||
+       game.over.winner!==game.player)
+      return {ok:false,reason:'No confirmed Campaign battle victory.'};
+    const progress=load(storage);
+    if(completed(progress,ctx.faction,m.id))return {ok:true,already:true,progress};
+    if(m.tier>unlockedTier(progress,ctx.faction))
+      return {ok:false,reason:'The campaign objective is still locked.'};
+    const before=unlockedTier(progress,ctx.faction);
+    progress.completed[ctx.faction][m.id]=true;
+    if(!persist(storage,progress))return {ok:false,reason:'Campaign progress could not be saved.'};
+    const after=unlockedTier(progress,ctx.faction);
+    return {ok:true,already:false,progress,objective:m,
+      unlocked:after>before && after<=registry[ctx.faction].length ? after : null,
+      complete:after>registry[ctx.faction].length};
+  }
+  function chooseFaction(storage,faction){
+    if(!FACTIONS.includes(faction))return false;
+    const p=load(storage);
+    p.selectedFaction=faction;
+    return persist(storage,p);
+  }
+  function regionContains(m,lon,lat){
+    const [west,south,east,north]=m.bounds;
+    if(lat<south || lat>north || lon<west || lon>east)return false;
+    // Japan is a slanted chain: exclude the Korean mainland on the western edge.
+    if(m.id.endsWith('division-japan')) return lon>=129+(lat-30)*.48;
+    return true;
+  }
+  function worldSnapshot(engine,faction,progress){
+    const world=engine.createGame('britannia','normal','conquest',246801,'world');
+    world.units=[];world.stations=[];world.sites=[];
+    const wins=registry[faction].flatMap(t=>t.missions).filter(m=>completed(progress,faction,m.id));
+    for(const t of world.tiles){
+      if(t.terrain==='sea' || t.terrain==='offmap')continue;
+      const lon=-180+(t.c+0.5*(t.r&1))*engine.WORLD.dlon,
+            lat=engine.WORLD.lat0-t.r*engine.WORLD.dlat;
+      for(const m of wins)if(regionContains(m,lon,lat))t.owner=faction;
+    }
+    world.mapRevision=(world.mapRevision||0)+1;
+    return world;
+  }
+  const api={STORAGE_KEY,BATTLE_KEY,FACTIONS,registry,ALL,PLACEHOLDERS,
+    fresh,load,persist,completed,unlockedTier,state,launch,recordVictory,chooseFaction,
+    regionContains,worldSnapshot};
+  // Fixture only exists in Node test runs; it is intentionally not reachable
+  // through the browser UI or exposed as a browser development cheat.
+  if(typeof module!=='undefined' && module.exports)
+    api.testFixture=(f,tier)=>{const p=fresh();for(const row of registry[f]||[])
+      if(row.number< tier) for(const m of row.missions)p.completed[f][m.id]=true;return p;};
+  return Object.freeze(api);
+});
