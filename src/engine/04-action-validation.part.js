@@ -79,7 +79,7 @@
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), TYPES[type].naval ? price(type,stack,g,producer) : decreePrice(price(type,stack,g,producer),s))
+      shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null))
     );
   }
   function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}

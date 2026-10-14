@@ -263,6 +263,9 @@
     u.morale = 1;
     funds(g, u.side).credits += 40;
     fortify(g, s);
+    // Update the new owner's maximum fortification, but do not grant instant defenses.
+    // Shields recover normally on the new owner's subsequent turn.
+    s.shield = 0;
     claim(g, s, u.side);
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
     if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;

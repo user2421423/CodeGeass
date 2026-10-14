@@ -60,8 +60,10 @@
     const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    const cost = decreePrice(price(type, stack, g, producer),s);
-    if(s.expDecree&&!TYPES[type].naval)delete s.expDecree;
+    // The decree belongs to the city owner, not an occupying third-party port operator.
+    // Naval purchases consume it just like land purchases and building upgrades.
+    const cost = decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null);
+    if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
@@ -106,6 +108,7 @@
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
       (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
       (e.scenarioOnly && !eliteScenario(g) ? 'Available only in the relevant Elite scenario' : null) ||
       (!availableLevel ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
@@ -161,6 +164,7 @@
     return (
       turnReason(g, producer) ||
       (!naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (naval && (!s.portAt || (s.portLevel || 0) < t.port)
         ? `Requires port level ${t.port}` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||

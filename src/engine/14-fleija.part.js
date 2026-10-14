@@ -148,6 +148,7 @@
       (!hasFleija(g, s.owner) ? (g.mode !== 'conquest'
         ? 'F.L.E.I.J.A. is unavailable outside conquests'
         : `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`) : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       cityBusyReason(g, s) ||
       (fleijaWarheadCount(g, s.owner) >= FLEIJA.max
         ? (fleijaPoolSides(g, s.owner).length > 1
@@ -177,6 +178,7 @@
         : !eliminatorUnlocked(g)
           ? `Eliminator research completes on turn ${eliminatorTurn(g)}`
           : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       cityBusyReason(g, s) ||
       ((s.lab || 0) < ELIMINATOR.lab ? `Requires research lab level ${ELIMINATOR.lab}` : null) ||
       ((s.eliminator || 0) > 0 ? 'This city already holds an Eliminator charge' : null) ||

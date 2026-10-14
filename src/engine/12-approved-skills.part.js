@@ -6,6 +6,13 @@
     if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
       ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
       : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=2):true));
+    // Rapid Rotation is strictly land-to-land. Amphibious units at sea count as sea units.
+    if (u.cmd === 'olivia') return g.units.filter(v =>
+      v.hp > 0 && v.id !== u.id && v.side === u.side && dist(g,u,v) <= range &&
+      !isShip(v) && !isSea(tile(g,v.c,v.r)) &&
+      g.units.some(w => w.hp > 0 && w.side === u.side && w.id !== v.id && w.id !== u.id &&
+        !isShip(w) && !isSea(tile(g,w.c,w.r)) &&
+        dist(g,v,w) === 1 && dist(g,u,w) <= range));
     return g.units.filter(v=>v.hp>0&&!atSea(g,v)&&dist(g,u,v)<=range&&(
       ['enemy','enemyCommander'].includes(k)
         ? foe(g,v.side,u.side)&&(k!=='enemyCommander'||!!v.cmd)&&
@@ -32,8 +39,10 @@
       }
       case 'sarah':v.expJammedNext=true;break;
       case 'olivia':{
-        const w=nearby(w=>w.id!==v.id&&!isShip(w)&&!isShip(v)&&!atSea(g,w)&&!atSea(g,v)&&dist(g,w,v)===1&&dist(g,u,w)<=2);
-        if(!w)return {ok:false,reason:'Need two adjacent friendly land units.'};
+        if (isShip(v) || isSea(tile(g,v.c,v.r)))
+          return {ok:false,reason:'Rapid Rotation requires two land units on land hexes.'};
+        const w=nearby(w=>w.id!==v.id&&!isShip(w)&&!isSea(tile(g,w.c,w.r))&&dist(g,w,v)===1&&dist(g,u,w)<=2);
+        if(!w)return {ok:false,reason:'Need two adjacent friendly land units on land.'};
         const p={c:v.c,r:v.r},q={c:w.c,r:w.r};
         v.c=q.c;v.r=q.r;w.c=p.c;w.r=p.r;reindex(g,v,p);reindex(g,w,q);break;
       }

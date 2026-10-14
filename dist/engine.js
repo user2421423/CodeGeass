@@ -593,7 +593,7 @@
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), TYPES[type].naval ? price(type,stack,g,producer) : decreePrice(price(type,stack,g,producer),s))
+      shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null))
     );
   }
   function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}
@@ -1726,6 +1726,9 @@
     u.morale = 1;
     funds(g, u.side).credits += 40;
     fortify(g, s);
+    // Update the new owner's maximum fortification, but do not grant instant defenses.
+    // Shields recover normally on the new owner's subsequent turn.
+    s.shield = 0;
     claim(g, s, u.side);
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
     if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
@@ -2333,8 +2336,10 @@
     const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
-    const cost = decreePrice(price(type, stack, g, producer),s);
-    if(s.expDecree&&!TYPES[type].naval)delete s.expDecree;
+    // The decree belongs to the city owner, not an occupying third-party port operator.
+    // Naval purchases consume it just like land purchases and building upgrades.
+    const cost = decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null);
+    if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
     if (TYPES[type].naval) s.portProducedTurn = g.turn;
@@ -2379,6 +2384,7 @@
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
       (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
       (e.scenarioOnly && !eliteScenario(g) ? 'Available only in the relevant Elite scenario' : null) ||
       (!availableLevel ? `Locked — collect ${ELITE_UNLOCK_FRAGMENTS} fragments and unlock it in HQ` : null) ||
@@ -2434,6 +2440,7 @@
     return (
       turnReason(g, producer) ||
       (!naval ? cityBusyReason(g, s) : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (naval && (!s.portAt || (s.portLevel || 0) < t.port)
         ? `Requires port level ${t.port}` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
@@ -3016,6 +3023,13 @@
     if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
       ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
       : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=2):true));
+    // Rapid Rotation is strictly land-to-land. Amphibious units at sea count as sea units.
+    if (u.cmd === 'olivia') return g.units.filter(v =>
+      v.hp > 0 && v.id !== u.id && v.side === u.side && dist(g,u,v) <= range &&
+      !isShip(v) && !isSea(tile(g,v.c,v.r)) &&
+      g.units.some(w => w.hp > 0 && w.side === u.side && w.id !== v.id && w.id !== u.id &&
+        !isShip(w) && !isSea(tile(g,w.c,w.r)) &&
+        dist(g,v,w) === 1 && dist(g,u,w) <= range));
     return g.units.filter(v=>v.hp>0&&!atSea(g,v)&&dist(g,u,v)<=range&&(
       ['enemy','enemyCommander'].includes(k)
         ? foe(g,v.side,u.side)&&(k!=='enemyCommander'||!!v.cmd)&&
@@ -3042,8 +3056,10 @@
       }
       case 'sarah':v.expJammedNext=true;break;
       case 'olivia':{
-        const w=nearby(w=>w.id!==v.id&&!isShip(w)&&!isShip(v)&&!atSea(g,w)&&!atSea(g,v)&&dist(g,w,v)===1&&dist(g,u,w)<=2);
-        if(!w)return {ok:false,reason:'Need two adjacent friendly land units.'};
+        if (isShip(v) || isSea(tile(g,v.c,v.r)))
+          return {ok:false,reason:'Rapid Rotation requires two land units on land hexes.'};
+        const w=nearby(w=>w.id!==v.id&&!isShip(w)&&!isSea(tile(g,w.c,w.r))&&dist(g,w,v)===1&&dist(g,u,w)<=2);
+        if(!w)return {ok:false,reason:'Need two adjacent friendly land units on land.'};
         const p={c:v.c,r:v.r},q={c:w.c,r:w.r};
         v.c=q.c;v.r=q.r;w.c=p.c;w.r=p.r;reindex(g,v,p);reindex(g,w,q);break;
       }
@@ -3432,6 +3448,7 @@
       (!hasFleija(g, s.owner) ? (g.mode !== 'conquest'
         ? 'F.L.E.I.J.A. is unavailable outside conquests'
         : `Research lab level 3 unlocks on turn ${fleijaLabTurn(g)}`) : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       cityBusyReason(g, s) ||
       (fleijaWarheadCount(g, s.owner) >= FLEIJA.max
         ? (fleijaPoolSides(g, s.owner).length > 1
@@ -3461,6 +3478,7 @@
         : !eliminatorUnlocked(g)
           ? `Eliminator research completes on turn ${eliminatorTurn(g)}`
           : null) ||
+      (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       cityBusyReason(g, s) ||
       ((s.lab || 0) < ELIMINATOR.lab ? `Requires research lab level ${ELIMINATOR.lab}` : null) ||
       ((s.eliminator || 0) > 0 ? 'This city already holds an Eliminator charge' : null) ||
