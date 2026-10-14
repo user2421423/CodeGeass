@@ -281,7 +281,9 @@
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
-    E.log(g,'The Federation attacks on the Red River, Mekong and northern Thai axes. Britannia must hold its layered frontier, concentrate reserves, then take every Chinese city.',player);
+    E.log(g,player==='cf'
+      ? 'The Federation advances on the Red River, Mekong and northern Thai axes. Coordinate your Army Groups, overcome Britannian reserves and capture every enemy city.'
+      : 'The Federation attacks on the Red River, Mekong and northern Thai axes. Britannia must hold its layered frontier, concentrate reserves, then take every Chinese city.',player);
     return g;
   }
   function onTurn(){return false;}
