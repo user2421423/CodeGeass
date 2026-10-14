@@ -1734,7 +1734,8 @@ function objective(g,side=g.player){const other=side==='eu'?'britannia':'eu';
  ' city in the Rocky Mountains theatre ('+n+' remain). No turn limit.';}
 function winner(g){
  if(g.mode!=='scenario'||g.scenario?.id!==ID||g.stations.length!==CITIES.length)return null;
- for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
+ for(const side of SIDES)if(g.stations.every(s=>s.owner===side) &&
+  (side==='eu'||!E.allUnits(g).some(u=>u.side==='eu'&&u.hp>0)))
   return {winner:side,team:side,reason:side==='eu'?
    'Europia United has captured every Rocky Mountain city and opened the eastern approach to the final Battle of Pendragon.':
    'Britannia has destroyed the E.U. offensive and reclaimed every eastern staging city.'};

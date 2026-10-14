@@ -470,7 +470,8 @@
     if(g.stations.every(s=>s.owner==='cf'))
       return {winner:'cf',team:'cf',
         reason:'The Chinese Federation has conquered every city of the Mexican Heartland.'};
-    if(g.stations.every(s=>s.owner==='britannia'))
+    if(g.stations.every(s=>s.owner==='britannia') &&
+       !E.allUnits(g).some(u=>u.side==='cf'&&u.hp>0))
       return {winner:'britannia',team:'britannia',
         reason:'Britannia has expelled the Federation and occupied its Guatemalan staging bases.'};
     return null;

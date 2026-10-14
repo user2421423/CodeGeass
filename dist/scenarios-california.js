@@ -402,7 +402,8 @@
         g.stations.length!==CITIES.length)return null;
     if(!g.stations.some(s=>s.owner==='britannia'))return {winner:'cf',team:'cf',
       reason:'The Chinese Federation controls every Britannian city in California. The offensive against Pendragon remains separate.'};
-    if(!g.stations.some(s=>s.owner==='cf'))return {winner:'britannia',team:'britannia',
+    if(!g.stations.some(s=>s.owner==='cf') &&
+       !E.allUnits(g).some(u=>u.side==='cf'&&u.hp>0))return {winner:'britannia',team:'britannia',
       reason:'Britannia has reclaimed every Federation staging city in Oregon and California.'};
     return null;
   }

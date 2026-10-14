@@ -325,8 +325,9 @@ function objective(g,side=g.player){
 }
 function winner(g){
  if(g.mode!=='scenario'||g.scenario?.id!==ID||g.stations.length!==CITIES.length)return null;
- for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
-  return {winner:side,reason:side===attacker?
+ for(const side of SIDES)if(g.stations.every(s=>s.owner===side) &&
+   (side===attacker || !E.allUnits(g).some(u=>u.side===attacker&&u.hp>0)))
+  return {winner:side,team:side,reason:side===attacker?
    attackerVictory:
    'The imperial capital and every city remain under Holy Britannian rule.'};
  return null;
