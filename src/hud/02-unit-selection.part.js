@@ -125,10 +125,6 @@ function updateSelection() {
     : '';
   $('side').classList.toggle('open', showSide);
   $('selection-dock').innerHTML = dockHTML();
-  const ready = readyIds.size;
-  $('turn-status').innerHTML = game.over
-    ? 'Operation concluded'
-    : `${ready} units ready <small>${F(game.player).short} · ${E.DIFFICULTIES[game.difficulty]?.name || 'Normal'} · ${saveOk ? 'autosaved' : 'not saved'}</small>`;
   // AI playback and async game-state changes are not necessarily user input events.
   if (typeof requestMapFrame === 'function') requestMapFrame();
 }

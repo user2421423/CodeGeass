@@ -239,6 +239,7 @@ h3 {
   border: 0;
   background: none;
   gap: 18px;
+  justify-content: flex-end;
   pointer-events: none;
 }
 .footer > * {
