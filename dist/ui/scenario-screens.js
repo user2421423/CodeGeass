@@ -18,9 +18,14 @@ const SCENARIO_KINDS = [
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['invasion-california','Invasion of California','63 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'invasion-california': {
+    eu: 'Advance south from Oregon toward Redding and Sacramento, while four carrier groups land at Northern California, San Francisco, the central coast and southern beaches.',
+    britannia: 'Defend San Francisco, Los Angeles, San Diego and the Central Valley with layered Army Groups, Pacific naval interception and reinforcements from Sierra passes.'
+  },
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -83,6 +88,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'invasion-california': {
+    era:'California and Southern Oregon · Alternate 2017',
+    intro:'Europia United launches four carrier-led landings coordinated with a northern land invasion. Britannia controls all California cities; the E.U. holds 12 southern Oregon staging towns.',
+    diplomacy:'Two sides at war from turn 1. Capture every hostile city without a turn limit. Pendragon remains a separate final campaign battle.',
+    elite:'Existing Elite Force rules replace eligible land formations; fleets retain conventional naval roles and rival commanders follow the current difficulty rules.',
+    focus:{eu:'Medford',britannia:'Sacramento'}
+  },
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
