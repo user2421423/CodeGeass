@@ -7,6 +7,7 @@ function selectUnit(id, center = false) {
   if (!u) return;
   selection = { kind: 'unit', id };
   updateSelection();
+  if (tutorialObserve('select', { id })) { render(); save(); }
   if (center) centerOn(u);
 }
 function selectStation(id, center = false) {
@@ -86,6 +87,7 @@ function attackHex(p) {
     toast(result.reason);
     return;
   }
+  tutorialObserve('attack', { unitId: u.id, target: { c: p.c, r: p.r } });
   // Manual fire suppresses the planner for this unit this turn, not indefinitely.
   E.suspendArmyGroupConquestUnit(game, u.id);
   addCombatEffects(result, u, visuals);
