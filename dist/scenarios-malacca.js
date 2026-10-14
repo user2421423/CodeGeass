@@ -157,7 +157,7 @@
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'&&mainWater.has(E.key(n))))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Malacca city '+name);
-      const capital=name==='Bangkok'||name==='Nanning';
+      const capital=name==='Phuket'||name==='Singapore';
       const shield=fort?400:120+60*tier;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
