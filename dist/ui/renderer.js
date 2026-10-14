@@ -572,6 +572,75 @@ function hostileUnit(u) {
 function readyUnit(u) {
   return !!u && u.side === game.player && interactive() && hasOrders(u);
 }
+
+ // Read-only, per-UI-revision combat-readiness snapshot. Movement and firing use
+ // the same engine queries as player orders; no game flags or saves are changed.
+ let unitStatusCache = new Map(), unitStatusCacheKey = '';
+ function unitActionStatus(u) {
+   if (!u || u.side !== game.player) return null; // Never reveal rival readiness.
+   const revision = [uiStateRevision, game.turn, game.phase, game.over ? 1 : 0, uiActionBusy ? 1 : 0].join(':');
+   if (unitStatusCacheKey !== revision) {
+     unitStatusCache.clear();
+     unitStatusCacheKey = revision;
+   }
+   const fingerprint = [u.c, u.r, u.hp, u.moved, u.attacked, u.morale, u.expDisabledActive,
+     u.expPinnedActive, u.expJammedActive, u.skillReposition, u.withdrawMove, u.eliteMoveAfterKill].join(':');
+   const previous = unitStatusCache.get(u.id);
+   if (previous?.fingerprint === fingerprint) return previous.state;
+   const active = interactive() && u.hp > 0;
+   const canMove = active && E.reachable(game, u).size > 0;
+   const eligibleToFire = active && u.morale > -3 && !u.attacked && !E.atSea(game, u);
+   const hasTarget = eligibleToFire && E.targets(game, u).length > 0;
+   const move = canMove ? 'ready' : !active ? 'inactive'
+     : u.morale <= -3 ? 'morale' : u.moved ? 'used' : 'blocked';
+   const attack = hasTarget ? 'ready' : !active ? 'inactive'
+     : u.morale <= -3 ? 'morale' : u.attacked ? 'used'
+       : E.atSea(game, u) ? 'embarked' : 'no-target';
+   const state = { move, attack, canMove, canAttack: hasTarget };
+   unitStatusCache.set(u.id, { fingerprint, state });
+   return state;
+ }
+ const STATUS_ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
+ // Compact metallic tokens, separate from the one existing durability ring.
+ function drawUnitBadge(label, x, y, color, scale, dim = false) {
+   const sz = Math.min(21, Math.max(12, 9 / Math.max(scale, 0.25)));
+   const w = Math.max(sz * 1.3, (label.length + 0.45) * sz * 0.72);
+   ctx.save();
+   ctx.globalAlpha *= dim ? 0.65 : 0.96;
+   ctx.beginPath();
+   if (ctx.roundRect) ctx.roundRect(x - w / 2, y - sz * 0.76, w, sz * 1.45, sz * 0.35);
+   else ctx.rect(x - w / 2, y - sz * 0.76, w, sz * 1.45);
+   ctx.fillStyle = dim ? '#1a2630' : '#101d29';
+   ctx.strokeStyle = dim ? '#64727a' : color;
+   ctx.lineWidth = Math.max(1, 1.15 / Math.max(scale, 0.35));
+   ctx.fill();
+   ctx.stroke();
+   ctx.fillStyle = dim ? '#afbdc3' : color;
+   ctx.font = 'bold ' + sz + 'px Trebuchet MS, sans-serif';
+   ctx.textAlign = 'center';
+   ctx.textBaseline = 'middle';
+   ctx.fillText(label, x, y - sz * 0.02);
+   ctx.restore();
+ }
+ function drawUnitStatusBadges(u, scale) {
+   // Shared map visibility: commanders/Elite Forces can be identified on both
+   // sides; Eliminator charges are strictly visible only for the player.
+   if (u.cmd) drawUnitBadge('★', 35, -25, '#ffe2a3', scale);
+   const level = u.elite && Number.isInteger(u.eliteLevel) ? u.eliteLevel : 0;
+   if (level > 0) drawUnitBadge(STATUS_ROMAN[Math.min(5, level)] || String(level), -35, -25, '#d5dee7', scale);
+   if (u.side === game.player && u.eliminator > 0)
+     drawUnitBadge('✦', -36, u.cargo?.length ? 9 : -3, '#9eeaff', scale);
+   if (u.morale < 0) drawUnitBadge(u.morale <= -3 ? '!' : '↓', 35, 0, '#ffb58b', scale);
+   // Readiness belongs only at close tactical zoom; it is never guessed from
+   // the broad "has orders" flag, which also includes repair and reinforcement.
+   if (R * scale >= 54 && u.side === game.player) {
+     const state = unitActionStatus(u);
+     drawUnitBadge('➜', -28, 30, state.canMove ? '#8dffc9' : '#82909a', scale, !state.canMove);
+     drawUnitBadge(state.attack === 'no-target' ? '⊙' : '⊕', 28, 30,
+       state.canAttack ? '#ffe29b' : state.attack === 'no-target' ? '#efbb79' : '#82909a',
+       scale, !state.canAttack && state.attack !== 'no-target');
+   }
+ }
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
 function drawStackBars(n, side) {
   const c = PLATE[artSide(side)],
@@ -622,7 +691,8 @@ function drawAdmiralPin(u, p, scale, sel) {
     ctx.fill();
   }
   ctx.restore();
-  if (sel || scale > 0.8) outlinedText(a.short, p.x - 22, p.y - 40 - (h / 2 + 7) * k, 10, '#f7e5ad', scale);
+  const rank = E.RANKS[E.officerOf(game, u)?.rank] || 'Commander';
+  outlinedText(a.short + ' · ' + rank, p.x - 22, p.y - 40 - (h / 2 + 7) * k, 10, '#f7e5ad', scale);
 }
 // Sakuradite: a cluster of glowing pink crystals (k scales it; the glow breathes slowly).
 function drawCrystals(x, y, k, time) {
@@ -1587,14 +1657,12 @@ function draw(time, dt) {
           ctx.stroke();
         }
         ctx.shadowBlur = 0;
-        // Gold commander pip distinguishes named officers from ordinary
-        // formations while preserving the familiar side-coloured unit rings.
-        if (europeOverview && u.cmd) {
-          ctx.beginPath();
-          ctx.arc(0, -radius - 2.5 / scale, 2.1 / scale, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffe3a0';
-          ctx.fill();
-        }
+        // Far zoom: allegiance, durability, formation identity and only
+        // high-priority symbols. No strategic-weapon information leaks.
+        if (u.cmd) outlinedText('★', 0, -radius - 5, 12, '#ffe3a0', scale, 'Trebuchet MS', true);
+        if (u.morale <= -3) outlinedText('!', radius + 3, 0, 12, '#ffb58b', scale, 'Trebuchet MS', true);
+        if (u.side === game.player && u.eliminator > 0)
+          outlinedText('✦', -radius - 3, 0, 12, '#9eeaff', scale, 'Trebuchet MS', true);
         if (group && u.side === game.player) outlinedText('G' + group.id, -18, -13, 11, groupColor, scale, 'Trebuchet MS', true);
         ctx.restore();
         continue;
@@ -1612,18 +1680,19 @@ function draw(time, dt) {
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
       drawStackBars(u.stack, u.side);
-      if (u.morale < 0) outlinedText(u.morale === -3 ? '!' : '↓', 31, -14, 13, '#ffb78c', scale);
+      // Draw badges after the artwork so the Knightmare remains the focus.
+      drawUnitStatusBadges(u, scale);
       if (u.cargo?.length) outlinedText(`⚓${u.cargo.length}`, -32, -16, 12, '#cfe8ff', scale, 'Trebuchet MS', true);
       if (u.goto && u.side === game.player) outlinedText('⚑', 31, 12, 13, '#ffd76a', scale, 'Trebuchet MS', true);
-      // Your own Eliminator carriers; rival carriers stay classified.
-      if (u.side === game.player && u.eliminator > 0) outlinedText('✦', -33, 0, 14, '#9eeaff', scale, 'Trebuchet MS', true);
       if (group && u.side === game.player) outlinedText('G' + group.id, -30, 17, 15, groupColor, scale, 'Trebuchet MS', true);
       ctx.restore();
     }
   }
+  // Commander portraits appear on selection/hover rather than permanently.
   if (detail)
     for (const u of living)
-      if (u.cmd) {
+      if (u.cmd && ((selection?.kind === 'unit' && selection.id === u.id) ||
+            (hover && hover.c === u.c && hover.r === u.r))) {
         const p = animatedPosition(u);
         if (!visible(p)) continue;
         for (const x of copies(p.x)) drawAdmiralPin(u, { x, y: p.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
