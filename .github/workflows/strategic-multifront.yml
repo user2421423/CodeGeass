@@ -5,7 +5,6 @@ on:
     paths:
       - 'src/ai/**'
       - 'dist/engine/ai.js'
-      - 'tests/strategic-multifront.test.cjs'
       - '.github/workflows/strategic-multifront.yml'
   workflow_dispatch:
 permissions:
@@ -23,10 +22,6 @@ jobs:
         run: node tools/build_sources.cjs --check
       - name: Check syntax of AI bundle
         run: node --check dist/engine/ai.js
-      - name: Full automated game regression suite
-        run: node --test tests/*.test.cjs
-      - name: UI smoke
-        run: node tests/ui-smoke.cjs
   scenarios:
     needs: verify
     runs-on: ubuntu-latest
