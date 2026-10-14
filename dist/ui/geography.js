@@ -615,6 +615,10 @@ const GEOGRAPHY = (() => {
   function japanLandAt(lon, lat) {
     return JAPAN_LAND.some(shape => pointWithinShape(shape, px(lon), py(lat)));
   }
+  // Korea and its Japanese staging islands use the same high-resolution vector
+  // shorelines as the 20–80 tactical mask. The global map remains unchanged.
+  const KOREA_LAND = typeof KOREA_SHAPES !== 'undefined' && KOREA_SHAPES.length
+    ? KOREA_SHAPES.map(shape) : LAYERS.land;
   // Select only geographic Australian islands; a rectangular crop would also
   // show Indonesian and Papua New Guinean land that is absent from this theatre.
   // These polygons come from the same GSHHG atlas as the world map. The tactical
@@ -926,7 +930,9 @@ const GEOGRAPHY = (() => {
     // The political and tactical layers share this zero-rotation projection.
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
+    const korea = g.scenario.id === 'invasion-korea';
     const middleEast = g.scenario.id === 'area-18';
+    const iraqIran = g.scenario.id === 'britannia-iraq-iran';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
     const urals = g.scenario.id === 'crossing-urals';
@@ -936,13 +942,16 @@ const GEOGRAPHY = (() => {
     const canada = g.scenario.id === 'invasion-canada';
     const caribbean = g.scenario.id === 'invasion-caribbean';
     const greatLakes = g.scenario.id === 'eu-great-lakes';
+    const yangtze = g.scenario.id === 'bf-yangtze';
     const greenland = g.scenario.id === 'eu-greenland';
     const hawaii = g.scenario.id === 'invasion-hawaii';
     const eastCoast = g.scenario.id === 'invasion-american-east-coast';
     const panama = g.scenario.id === 'eu-panama';
     const pendragon = g.scenario.id === 'eu-pendragon';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
+    const southChina = g.scenario.id === 'bf-south-china';
+    const luoyang = g.scenario.id === 'battle-luoyang';
+    const centreSampledRegion = australia || middleEast || iraqIran || siberia || southernAfrica || urals || turkey ||
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea || southChina || yangtze || luoyang;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -978,7 +987,7 @@ const GEOGRAPHY = (() => {
     ];
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
-    const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
+    const source = korea ? KOREA_LAND : australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
       greenland ? GREENLAND_LAND :
       (europeOnly || middleEast || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
@@ -1101,8 +1110,41 @@ const GEOGRAPHY = (() => {
       }
       ctx.restore();
     }
+    // Yangtze main channel and tributaries are projected with the same WGS84
+    // centre-sampled transform as its playable hexes. The continental GSHHG
+    // atlas has no inland Yangtze cutout; draw the true river meanders above
+    // the land/ownership fill so the underlay and navigable tactical tiles agree.
+    if(yangtze && g.scenario?.rivers){
+      const b=g.scenario.bounds,sx=SQ*R*g.cols/(b.east-b.west),
+        sy=1.5*R*g.rows/(b.north-b.south);
+      const xy=([lon,lat])=>[
+        R-SQ*R*.5+(lon-b.west)*sx,
+        R-.75*R+(b.north-lat)*sy
+      ];
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineJoin='round';ctx.lineCap='round';
+      for(const [name,points] of Object.entries(g.scenario.rivers)){
+        if(points.length<2)continue;
+        ctx.beginPath();
+        points.forEach((coord,i)=>{const [x,y]=xy(coord);
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.lineWidth=name==='Yangtze'?Math.max(2,2.4*R):
+          Math.max(1.2,.32*R);
+        ctx.strokeStyle=name==='Yangtze'?'#215a79':'#58a9c4';
+        ctx.stroke();
+      }
+      // Bridge marks are tactical, not an alternate river navigation system:
+      // the engine's mixed 'coast' deck permits both land and warships.
+      ctx.strokeStyle='#e1d0a2';ctx.lineWidth=Math.max(1.2,.22*R);
+      for(const bridge of g.scenario.bridges||[]){
+        const [x,y]=xy([bridge.lon,bridge.lat]);
+        ctx.beginPath();ctx.moveTo(x-.58*R,y-.58*R);
+        ctx.lineTo(x+.58*R,y+.58*R);ctx.stroke();
+      }
+      ctx.restore();
+    }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast) && g.scenario?.rivers){
+    if((siberia || brazil || canada || california || eastCoast || korea || iraqIran || southChina) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
@@ -1112,6 +1154,26 @@ const GEOGRAPHY = (() => {
       for(const path of Object.values(g.scenario.rivers)){
         ctx.beginPath();path.forEach((p,i)=>{const [x,y]=toHex(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // Inland Henan: the Yellow River is a navigational barrier on the hex
+    // grid, drawn at its surveyed geographic coordinates over the atlas.
+    if(luoyang && g.scenario.rivers){
+      const b=g.scenario.bounds;
+      const sx=SQ*R*g.cols/(b.east-b.west),sy=1.5*R*g.rows/(b.north-b.south);
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.86;
+      for(const [name,line] of Object.entries(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        line.forEach(([lon,lat],i)=>{
+          const x=R-SQ*R*.5+(lon-b.west)*sx,
+            y=R-.75*R+(b.north-lat)*sy;
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+        });
+        ctx.strokeStyle=name==='YellowRiver'?'#50b6d4':'#79bfd2';
+        ctx.lineWidth=name==='YellowRiver'?6:2.6;ctx.stroke();
       }
       ctx.restore();
     }
