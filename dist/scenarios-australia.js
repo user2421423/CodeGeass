@@ -93,9 +93,7 @@
     }
     g.scenario={id:'war-for-australia',key:'australia',title:'The War for Australia',
       phase:'three-way-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
-    // Elite rosters remain faction-scoped. The Australia Elite difficulty
-    // increases rival resources and veteran stacks without changing the
-    // shared global elite conversion rules for the established scenarios.
+    // Elite rosters remain faction-scoped and use the shared regional conversion.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,
       eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
@@ -209,7 +207,8 @@
       g.scenario.groups.push(fleet);
     }
     // The entire connected regional sea stays navigable for fleets.
-    // All four difficulties share the same starting map and faction equipment.
+    // Elite uses the same map with faction-specific elite formations.
+    if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
@@ -221,7 +220,7 @@
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*2;
     }
-    if(difficulty!=='normal'){
+    if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
         for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
           if(difficulty!=='hard'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}

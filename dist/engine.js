@@ -665,11 +665,13 @@
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
   function applyProfile(g, profile = {}) {
+    if (g.mode === 'scenario') return g;
     applyRoster(g, profile);
     applyElites(g, profile);
     return applyTech(g, profile?.research);
   }
   function applyElites(g, profile = {}) {
+    if (g.mode === 'scenario') return g;
     const records = eliteProfile(profile);
     g.eliteDeployed ||= {};
     // Kept on the game so Elite Forces that join mid-operation (campaign spawns and upgrades) use the same levels.
@@ -686,6 +688,7 @@
   }
   // Refresh your commanders inside an operation, e.g. after an HQ promotion; personal units keep their damage.
   function applyRoster(g, profile = {}) {
+    if (g.mode === 'scenario') return g;
     g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
     for (const u of allUnits(g)) {
       if (!u.cmd) continue;
@@ -697,6 +700,7 @@
   }
   // Load HQ research into the player's side: frame bonuses keep each unit's damage, city defenses follow.
   function applyTech(g, research = {}) {
+    if (g.mode === 'scenario') return g;
     g.tech ||= {};
     g.tech[g.player] = Object.fromEntries(
       Object.entries(normalizeResearch(research))
@@ -1431,12 +1435,26 @@
     g.eliteDeployed ||= {};
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
-        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && ((eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
-              (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
-            ? RANKS.length - 1 : HQ_RANK_CAP);
+        if (COMMANDERS[k]) {
+          const scenarioOfficers = which === 'officers' && eliteScenario(g)
+            ? allUnits(g).filter(u => u.cmd === k && !u.personal && foe(g, u.side, g.player)) : [];
+          // Older loads could cap the officer record but leave its unit's rank intact.
+          // Recover that rank, including officers currently aboard carriers.
+          const record = scenarioOfficers.length ? { ...rec,
+            rank: Math.max(rec?.rank || 0, ...scenarioOfficers.map(u => u.cmdRank || 0)) } : rec;
+          records[k] = cleanOfficer(k, record,
+            which === 'officers' && (scenarioOfficers.length ||
+              (eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
+              (eliteCampaign(g) && allUnits(g).some(u => u.cmd === k && !u.personal && foe(g, u.side, g.player))))
+              ? RANKS.length - 1 : HQ_RANK_CAP);
+        }
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
+      if (eliteScenario(g) && u.cmd && COMMANDERS[u.cmd]) {
+        const old = maxHP(u);
+        u.cmdRank = officerOf(g, u).rank;
+        if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+      }
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {
         u.elite = elite;
@@ -1710,7 +1728,7 @@
   // City capture changes provinces, but does not automatically transfer ports.
   function captureCity(g, u, navalLanding = false) {
     const s = stationAt(g, u);
-    if (!s || !foe(g, s.owner, u.side) ||
+    if (u.hp <= 0 || !s || !foe(g, s.owner, u.side) ||
       !canCapture(u) || s.shield > 0)
       return { captured: null, annexed: null };
     const loser = s.owner;
@@ -1735,7 +1753,7 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = ((g.scenario?.id === 'operation-stonehenge' && loser === 'britannia') ||
+    const expeditionAfloat = ((['operation-stonehenge','invasion-south-africa'].includes(g.scenario?.id) && loser === 'britannia') ||
       (['invasion-american-east-coast','invasion-hawaii','invasion-brazil','eu-greenland',
         'invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) &&
       g.units.some(v => v.side === loser && v.hp > 0);
@@ -2169,6 +2187,8 @@
     if (aef.stun && d && d.hp > 0) {
       d.moved = true;
       d.attacked = true;
+      // Rival action flags refresh at turn start; carry the stun into that activation.
+      d.expDisabledNext = true;
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
@@ -2249,12 +2269,28 @@
     if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
     if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
-    if(a.expCalibration){a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));delete a.expCalibration;}
+    if(a.expCalibration){
+      // The calibration cost is nonlethal, but combat deaths must remain deaths.
+      if(a.hp>0)a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));
+      delete a.expCalibration;
+    }
     if(a.forcedOffensive)delete a.forcedOffensive;
     if(a.expRetrofitStrike)delete a.expRetrofitStrike;
     if(a.expNavalRelay)delete a.expNavalRelay;
-    if(a.expBreach&&destroyed&&d&&!unitAt(g,d)&&(!stationAt(g,d)||stationAt(g,d).shield<=0)){
-      const old={c:a.c,r:a.r};a.c=d.c;a.r=d.r;reindex(g,a,old);captureCity(g,a);delete a.expBreach;
+    if(a.expBreach&&destroyed&&d){
+      delete a.expBreach;
+      if(a.hp>0&&!unitAt(g,d)){
+        // A free advance still follows legal movement, terrain, city defenses,
+        // overwatch and port/deposit capture rules. It grants no extra activation.
+        const actions={moved:a.moved,attacked:a.attacked,chain:a.chain,
+          skillReposition:a.skillReposition,withdrawMove:a.withdrawMove,
+          eliteMoveAfterKill:a.eliteMoveAfterKill};
+        a.moved=a.attacked=false;
+        a.skillReposition=0;
+        a.withdrawMove=false;
+        try { move(g,a.id,d.c,d.r); }
+        finally { Object.assign(a,actions); }
+      }
     }
     log(
       g,
@@ -2421,7 +2457,7 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = eliteCampaign(g) ? 1 : rec.level;
+    u.eliteLevel = eliteCampaign(g) || g.mode === 'scenario' ? 1 : rec.level;
     u.hp = maxHP(u);
     log(g, `${t.name} · Elite Lv.${u.eliteLevel} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };
@@ -2571,7 +2607,7 @@
   // The foundation can be negative: some starting factories have less output than upgrades add.
   function buildingFoundation(g, s) {
     if (s.buildingFoundation) return s.buildingFoundation;
-    const row = g.mode !== 'campaign' && CITY_DATA.find(r => r[0] === s.name),
+    const row = g.mode === 'conquest' && CITY_DATA.find(r => r[0] === s.name),
       base = row ? cityBase(row) : s,
       tier = row ? row[4] : s.tier || 0,
       lab = row ? row[5] ? 1 : 0 : s.lab || 0;
@@ -4081,7 +4117,7 @@
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       // Amphibious regional invasions may start with no cities; surviving expeditions remain in play.
-      if (['operation-stonehenge','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon'].includes(g.scenario?.id)) {
+      if (['operation-stonehenge','invasion-south-africa','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon'].includes(g.scenario?.id)) {
         if (conquest) g.over = conquest;
         return g.over;
       }
@@ -4338,7 +4374,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4541,11 +4577,11 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id)) return g;
-    const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id)) return g;
+    const sides = ['area-18','war-for-australia'].includes(g.scenario.id) ? ['britannia','eu','cf'] :
       g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
       ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario.id) ? ['britannia','eu'] :
-      g.scenario.id === 'conquest-indochina' ? ['britannia','cf'] : ['eu','eb'];
+      ['conquest-indochina','philippines-invasion'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',

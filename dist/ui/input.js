@@ -220,7 +220,7 @@ document.addEventListener('click', e => {
     if (r.ok) {
       saveProfile(p);
       // In an operation the new technology applies at once; from the start menu it applies to the next launch.
-      if (researchBack !== 'start') {
+      if (researchBack !== 'start' && game.mode !== 'scenario') {
         E.applyTech(game, p.research);
         undoStack = [];
         render();
@@ -240,7 +240,7 @@ document.addEventListener('click', e => {
       return;
     }
     saveProfile(p);
-    if (eliteBack === 'game') {
+    if (eliteBack === 'game' && game.mode !== 'scenario') {
       E.applyElites(game, p);
       undoStack = [];
       render();
@@ -268,7 +268,7 @@ document.addEventListener('click', e => {
       return;
     }
     saveProfile(p);
-    if (hqBack === 'game') {
+    if (hqBack === 'game' && game.mode !== 'scenario') {
       E.applyRoster(game, p);
       undoStack = [];
       render();

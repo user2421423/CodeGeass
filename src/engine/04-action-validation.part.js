@@ -151,11 +151,13 @@
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
   function applyProfile(g, profile = {}) {
+    if (g.mode === 'scenario') return g;
     applyRoster(g, profile);
     applyElites(g, profile);
     return applyTech(g, profile?.research);
   }
   function applyElites(g, profile = {}) {
+    if (g.mode === 'scenario') return g;
     const records = eliteProfile(profile);
     g.eliteDeployed ||= {};
     // Kept on the game so Elite Forces that join mid-operation (campaign spawns and upgrades) use the same levels.
@@ -172,6 +174,7 @@
   }
   // Refresh your commanders inside an operation, e.g. after an HQ promotion; personal units keep their damage.
   function applyRoster(g, profile = {}) {
+    if (g.mode === 'scenario') return g;
     g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
     for (const u of allUnits(g)) {
       if (!u.cmd) continue;
@@ -183,6 +186,7 @@
   }
   // Load HQ research into the player's side: frame bonuses keep each unit's damage, city defenses follow.
   function applyTech(g, research = {}) {
+    if (g.mode === 'scenario') return g;
     g.tech ||= {};
     g.tech[g.player] = Object.fromEntries(
       Object.entries(normalizeResearch(research))

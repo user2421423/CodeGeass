@@ -247,7 +247,7 @@
   // City capture changes provinces, but does not automatically transfer ports.
   function captureCity(g, u, navalLanding = false) {
     const s = stationAt(g, u);
-    if (!s || !foe(g, s.owner, u.side) ||
+    if (u.hp <= 0 || !s || !foe(g, s.owner, u.side) ||
       !canCapture(u) || s.shield > 0)
       return { captured: null, annexed: null };
     const loser = s.owner;
@@ -272,7 +272,7 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = ((g.scenario?.id === 'operation-stonehenge' && loser === 'britannia') ||
+    const expeditionAfloat = ((['operation-stonehenge','invasion-south-africa'].includes(g.scenario?.id) && loser === 'britannia') ||
       (['invasion-american-east-coast','invasion-hawaii','invasion-brazil','eu-greenland',
         'invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) &&
       g.units.some(v => v.side === loser && v.hp > 0);

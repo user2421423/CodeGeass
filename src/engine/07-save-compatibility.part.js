@@ -215,12 +215,26 @@
     g.eliteDeployed ||= {};
     for (const [which, records] of [['officers', g.officers], ['roster', g.roster]])
       if (records) for (const [k, rec] of Object.entries(records))
-        if (COMMANDERS[k]) records[k] = cleanOfficer(k, rec,
-          which === 'officers' && ((eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
-              (eliteCampaign(g) && g.units.some(u => u.cmd === k && foe(g, u.side, g.player))))
-            ? RANKS.length - 1 : HQ_RANK_CAP);
+        if (COMMANDERS[k]) {
+          const scenarioOfficers = which === 'officers' && eliteScenario(g)
+            ? allUnits(g).filter(u => u.cmd === k && !u.personal && foe(g, u.side, g.player)) : [];
+          // Older loads could cap the officer record but leave its unit's rank intact.
+          // Recover that rank, including officers currently aboard carriers.
+          const record = scenarioOfficers.length ? { ...rec,
+            rank: Math.max(rec?.rank || 0, ...scenarioOfficers.map(u => u.cmdRank || 0)) } : rec;
+          records[k] = cleanOfficer(k, record,
+            which === 'officers' && (scenarioOfficers.length ||
+              (eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
+              (eliteCampaign(g) && allUnits(g).some(u => u.cmd === k && !u.personal && foe(g, u.side, g.player))))
+              ? RANKS.length - 1 : HQ_RANK_CAP);
+        }
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
+      if (eliteScenario(g) && u.cmd && COMMANDERS[u.cmd]) {
+        const old = maxHP(u);
+        u.cmdRank = officerOf(g, u).rank;
+        if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+      }
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {
         u.elite = elite;

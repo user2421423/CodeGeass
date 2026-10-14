@@ -312,6 +312,8 @@
     if (aef.stun && d && d.hp > 0) {
       d.moved = true;
       d.attacked = true;
+      // Rival action flags refresh at turn start; carry the stun into that activation.
+      d.expDisabledNext = true;
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
@@ -392,12 +394,28 @@
     if(f.diagnosis&&d){const before=a.expDiagnosisId===d.id?a.expDiagnosisCount||0:0;a.expDiagnosisId=d.id;a.expDiagnosisCount=Math.min(3,before+1);}
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
     if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
-    if(a.expCalibration){a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));delete a.expCalibration;}
+    if(a.expCalibration){
+      // The calibration cost is nonlethal, but combat deaths must remain deaths.
+      if(a.hp>0)a.hp=Math.max(1,a.hp-Math.round(maxHP(a)*.08));
+      delete a.expCalibration;
+    }
     if(a.forcedOffensive)delete a.forcedOffensive;
     if(a.expRetrofitStrike)delete a.expRetrofitStrike;
     if(a.expNavalRelay)delete a.expNavalRelay;
-    if(a.expBreach&&destroyed&&d&&!unitAt(g,d)&&(!stationAt(g,d)||stationAt(g,d).shield<=0)){
-      const old={c:a.c,r:a.r};a.c=d.c;a.r=d.r;reindex(g,a,old);captureCity(g,a);delete a.expBreach;
+    if(a.expBreach&&destroyed&&d){
+      delete a.expBreach;
+      if(a.hp>0&&!unitAt(g,d)){
+        // A free advance still follows legal movement, terrain, city defenses,
+        // overwatch and port/deposit capture rules. It grants no extra activation.
+        const actions={moved:a.moved,attacked:a.attacked,chain:a.chain,
+          skillReposition:a.skillReposition,withdrawMove:a.withdrawMove,
+          eliteMoveAfterKill:a.eliteMoveAfterKill};
+        a.moved=a.attacked=false;
+        a.skillReposition=0;
+        a.withdrawMove=false;
+        try { move(g,a.id,d.c,d.r); }
+        finally { Object.assign(a,actions); }
+      }
     }
     log(
       g,

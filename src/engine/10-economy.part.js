@@ -143,7 +143,7 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = eliteCampaign(g) ? 1 : rec.level;
+    u.eliteLevel = eliteCampaign(g) || g.mode === 'scenario' ? 1 : rec.level;
     u.hp = maxHP(u);
     log(g, `${t.name} · Elite Lv.${u.eliteLevel} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };
@@ -293,7 +293,7 @@
   // The foundation can be negative: some starting factories have less output than upgrades add.
   function buildingFoundation(g, s) {
     if (s.buildingFoundation) return s.buildingFoundation;
-    const row = g.mode !== 'campaign' && CITY_DATA.find(r => r[0] === s.name),
+    const row = g.mode === 'conquest' && CITY_DATA.find(r => r[0] === s.name),
       base = row ? cityBase(row) : s,
       tier = row ? row[4] : s.tier || 0,
       lab = row ? row[5] ? 1 : 0 : s.lab || 0;

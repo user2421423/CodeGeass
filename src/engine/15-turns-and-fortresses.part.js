@@ -297,7 +297,7 @@
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       // Amphibious regional invasions may start with no cities; surviving expeditions remain in play.
-      if (['operation-stonehenge','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon'].includes(g.scenario?.id)) {
+      if (['operation-stonehenge','invasion-south-africa','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon'].includes(g.scenario?.id)) {
         if (conquest) g.over = conquest;
         return g.over;
       }

@@ -1229,7 +1229,7 @@
       type: 'elite_guren_mkii', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic',
       skill: 'Radiant Wave Surger',
       lv3Text: '+35% damage against Armor, +20% penetration; targets cannot counter-fire.',
-      lv5Text: '+50% vs Armor, +30% penetration; surviving targets lose their remaining action.',
+      lv5Text: '+50% vs Armor, +30% penetration; surviving targets cannot move or attack on their next turn.',
       lv3: { vsArmor: 0.35, pen: 0.20, noCounter: true }, lv5: { vsArmor: 0.50, pen: 0.30, noCounter: true, stun: true },
     },
     tohdoh_gekka: {
