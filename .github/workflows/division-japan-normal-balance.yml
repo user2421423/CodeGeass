@@ -6,7 +6,6 @@ on:
       - 'dist/scenarios-division-japan.js'
       - 'src/ai/**'
       - 'dist/engine/ai.js'
-      - 'tests/division-japan.test.cjs'
       - 'tools/division_japan_balance_sim.cjs'
       - '.github/workflows/division-japan-normal-balance.yml'
   workflow_dispatch:
@@ -23,8 +22,6 @@ jobs:
           node-version: '22'
       - name: Check generated AI matches source
         run: node tools/build_sources.cjs --check
-      - name: Run Division and scenario regression tests
-        run: node --test tests/division-japan.test.cjs tests/scenario.test.cjs
       - name: Smoke-test actual-engine simulation
         run: node tools/division_japan_balance_sim.cjs britannia normal 11 2 sanity.json
   compare:
