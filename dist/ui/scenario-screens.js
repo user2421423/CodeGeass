@@ -104,8 +104,8 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     eu: 'Hold all mainland cities, ports and industrial corridors. Intercept the carrier fleets, defend beaches and counterattack seized harbours.'
   },
   'conquest-indochina': {
-    britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
-    cf: 'Invade south through northern Vietnam, Yunnan and mountain corridors toward Laos.'
+    britannia: 'Hold Vinh and Vientiane against the first offensives. Use the Dong Hoi–Hue–Da Nang line, Thai highlands and reserves at Savannakhet and Nakhon Ratchasima; then counterattack Hanoi, Nanning and Kunming.',
+    cf: 'Concentrate offensives along the Red River, Mekong Valley and northern Thai highlands. Break the forward fortifications, isolate Britannian reserves and capture every southern city.'
   },
   'philippines-invasion': {
     britannia: 'Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.',
@@ -252,9 +252,9 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
   },
   'conquest-indochina': {
     era: 'Indochina · Alternate 2017',
-    intro: 'The Chinese Federation invades Britannian mainland Southeast Asia. Capture all 44 cities to win.',
-    diplomacy: 'Hostile from turn 1. F.L.E.I.J.A. is disabled; there is no scripted deadline.',
-    elite: 'Elite Indochina replaces land and amphibious formations with faction Elite Forces; carriers remain conventional.',
+    intro: 'Defense of Indochina: Britannia must withstand a three-axis Federation land offensive before advancing into Chinese-controlled northern Vietnam and southern China. Win only by capturing all 44 cities; there is no turn limit.',
+    diplomacy: 'Britannia and the Federation are hostile from turn 1. Cities, independent naval ports and army concentrations change hands normally. F.L.E.I.J.A. is disabled.',
+    elite: 'Elite Indochina applies the established faction Elite Force conversion, stronger rival commanders and difficulty scaling. Carriers remain conventional.',
     focus: {britannia:'Vinh',cf:'Hanoi'}
   },
   'britannia-siberia': {
