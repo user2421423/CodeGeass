@@ -5,11 +5,13 @@ const E=require('../dist/engine.js');
 require('../dist/engine/ai.js');
 const S=require('../dist/scenarios-east-coast.js');
 const maxTurns=Number(process.argv[2]||3);
+const difficultyFilter=process.argv[3]||'all';
+const playerFilter=process.argv[4]||'all';
 const difficulties=['normal','hard','challenge','elite'];
 const seeds=[11,71];
-if(!Number.isInteger(maxTurns)||maxTurns<1||maxTurns>20)throw Error('turns: 1..20');
+if(!Number.isInteger(maxTurns)||maxTurns<1||maxTurns>20||!['all',...difficulties].includes(difficultyFilter)||!['all',...S.sides].includes(playerFilter))throw Error('usage: node tools/east_coast_sim.cjs [turns] [all|normal|hard|challenge|elite] [all|eu|britannia]');
 const reports=[];
-for(const difficulty of difficulties)for(const player of S.sides)for(const seed of seeds){
+for(const difficulty of difficulties.filter(x=>difficultyFilter==='all'||difficultyFilter===x))for(const player of S.sides.filter(x=>playerFilter==='all'||playerFilter===x))for(const seed of seeds){
  const g=S.create(player,difficulty,seed),
    result={difficulty,player,seed,turns:0,citiesCaptured:0,EUBeachLandings:0,
     EUCarrierMoves:0,BritannianCounterattacks:0,attacks:0,errors:[],cities:{},winner:null};
