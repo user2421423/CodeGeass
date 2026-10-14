@@ -54,7 +54,7 @@ for(const side of S.sides)for(const difficulty of ['normal','hard','challenge','
  assert.equal(cargo.length,84,'84 EU Knightmare troops embarked on carriers');
  assert.equal(g.units.filter(u=>u.side==='eu'&&u.type==='eu_carrier').length,42,'42 EU carrier-battleships');
  assert.equal(g.units.filter(u=>u.side==='eu').length,66,'EU 42 carriers and 24 escorts');
- for(const u of g.units){const t=E.tile(g,u.c,u.r);assert.ok(t);if(E.TYPES[u.type].naval==='ship')assert.equal(t.terrain,'sea','ship on land '+u.id);}
+ for(const u of g.units){const t=E.tile(g,u.c,u.r);assert.ok(t);if(E.TYPES[u.type].naval==='ship')assert.equal(t.terrain,'sea','ship on land '+JSON.stringify({id:u.id,side:u.side,type:u.type,c:u.c,r:u.r,invasionGroup:u.invasionGroup}));}
  for(const wave of ['New England','New York','Chesapeake','Carolinas','Georgia','Florida'])
    assert.ok(g.units.some(u=>u.side==='eu'&&u.invasionGroup===wave&&u.cargo.length===2),
      'missing embarked operational front '+wave);
