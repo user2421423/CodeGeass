@@ -8,15 +8,15 @@
   "playableModule": null,
   "geographicRegion": "Pendragon",
   "proposedMapBounds": {
-    "west": -118.5,
-    "south": 34,
-    "east": -116.5,
-    "north": 36
+    "west": -119,
+    "south": 35.5,
+    "east": -115,
+    "north": 39.5
   },
   "campaignMapMarker": {
-    "longitude": -119,
-    "latitude": 35
+    "longitude": -117,
+    "latitude": 37.5
   },
-  "description": "Conclude the war with an assault on the imperial capital.",
+  "description": "Capture the imperial capital at Pendragon (-117° longitude, 37.5° latitude) in the final E.U. offensive.",
   "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
 }
