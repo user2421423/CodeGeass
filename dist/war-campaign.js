@@ -37,7 +37,7 @@
       ['great-lakes','Battle for the Great Lakes',null,'Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
       ['california','Invasion of California',null,'California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
     ]],
-    [6,[['pendragon','Battle of Pendragon',null,'Pendragon',[-119,35],[-118.5,34,-116.5,36],'Conclude the war with an assault on the imperial capital.']]],
+    [6,[['pendragon','Battle of Pendragon',null,'Pendragon',[-117,37.5],[-119,35.5,-115,39.5],'Conclude the war with an assault on the imperial capital.']]],
   ];
   const brRows = [
     [3,[
@@ -54,9 +54,13 @@
   ];
   function objective(faction,tier,row) {
     const [suffix,title,scenarioId,region,marker,bounds,description] = row;
+    // The Bering battle pushes into opposite shorelines: E.U. into Alaska,
+    // Britannia into Chukotka, so a win visibly changes political ownership.
+    const targetMarker=suffix==='bering' && faction==='eu' ? [-165,64] : marker;
+    const targetBounds=suffix==='bering' && faction==='eu' ? [-174,55,-143,70] : bounds;
     return Object.freeze({
       id: faction + '-' + suffix, title, campaignFaction:faction, tier,
-      region, marker, bounds, description,
+      region, marker:targetMarker, bounds:targetBounds, description,
       status: scenarioId ? 'implemented' : 'planned',
       scenarioId,
       // Euro Britannia is the scenario's actual playable faction, but does not
@@ -151,6 +155,8 @@
     if(lat<south || lat>north || lon<west || lon>east)return false;
     // Japan is a slanted chain: exclude the Korean mainland on the western edge.
     if(m.id.endsWith('division-japan')) return lon>=129+(lat-30)*.48;
+    // Pendragon's imperial capital remains an enemy enclave until the final.
+    if(m.id==='eu-california' && Math.abs(lon+117)<2 && Math.abs(lat-37.5)<2) return false;
     return true;
   }
   function worldSnapshot(engine,faction,progress){
