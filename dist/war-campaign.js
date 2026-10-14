@@ -39,15 +39,14 @@
       ['caribbean','Invasion of the Caribbean','invasion-caribbean','Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
     ]],
     [4,[
-      // New mission ID deliberately avoids crediting victories from the old two-ocean deployment.
-      // Keep scenarioId null until the existing eu-panama scenario is Caribbean-only.
-      ['panama-atlantic','Panama Campaign — Atlantic Offensive',null,'Panama',[-80,9],[-84,7,-77,11],'Invade from the Caribbean only, then force the canal toward the Pacific.'],
+      // Stable new objective ID avoids credit from the earlier two-ocean deployment.
+      ['panama-atlantic','Panama Campaign — Atlantic Offensive','eu-panama','Panama',[-80,9],[-84,7,-77,11],'Invade from the Caribbean only, then force the canal toward the Pacific.'],
       ['new-york','Invasion of the American East Coast','invasion-american-east-coast','American East Coast',[-75.5,37.2],[-85.6,24,-65.4,47.2],'Conquer the entire Britannian Atlantic seaboard from Maine to Florida.'],
       ['canada','Invasion of Canada','invasion-canada','Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
     ]],
     [5,[['great-lakes','Battle for the Great Lakes','eu-great-lakes','Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.']]],
-    [6,[['rocky-mountains','Crossing the Rocky Mountains',null,'Rocky Mountains',[-107.5,40],[-113,35,-101,45],'Fight west through Britannian mountain defenses and open the eastern approach to Pendragon.']]],
-    [7,[['pendragon-east','Battle of Pendragon — Eastern Offensive',null,'Pendragon',[-117,37.5],[-120,35,-113,40],'Conclude the war by attacking Britannia\'s capital from Utah and eastern Nevada.']]],
+    [6,[['rocky-mountains','Crossing the Rocky Mountains','eu-rocky-mountains','Rocky Mountains',[-107.5,40],[-113,35,-101,45],'Fight west through Britannian mountain defenses and open the eastern approach to Pendragon.']]],
+    [7,[['pendragon-east','Battle of Pendragon — Eastern Offensive','eu-pendragon','Pendragon',[-117,37.5],[-120,35,-113,40],'Conclude the war by attacking Britannia\'s capital from Utah and eastern Nevada.']]],
   ];
   const brRows = [
     [3,[
@@ -79,9 +78,8 @@
     [4,[['yangtze','Battle of the Yangtze River','bf-yangtze','Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
     [5,[['luoyang','Battle of Luoyang','battle-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
   ];
-  // Federation vs Britannia: only user-approved objectives. Planned scenarios
-  // MUST stay scenarioId:null until their Chinese deployment is registered.
-  // Existing Indochina and Philippines support playable side 'cf' directly.
+  // Federation vs Britannia: only user-approved scenarios, with distinct campaign
+  // objectives and runtime IDs. Existing Indochina and Philippines support 'cf'.
   const federationBritanniaRows = [
     [1,shared],
     [2,[
@@ -89,19 +87,19 @@
       ['philippines','Defense of the Philippines','philippines-invasion','Philippines',[124,12],[115.5,4.5,139.1,21.2],'Defend Federation-held Philippines and defeat the Britannian amphibious invasion.'],
     ]],
     [3,[
-      ['hawaii','Invasion of Hawaii',null,'Hawaii',[-156,21],[-161,18,-154,24],'Chinese carrier-led conquest of Britannian Hawaii from the western Pacific.'],
-      ['new-zealand','Invasion of New Zealand',null,'New Zealand',[172,-41],[165,-48,179,-34],'Launch large amphibious invasions of both islands and contest Cook Strait.'],
+      ['hawaii','Invasion of Hawaii','invasion-hawaii','Hawaii',[-156,21],[-161,18,-154,24],'Chinese carrier-led conquest of Britannian Hawaii from the western Pacific.'],
+      ['new-zealand','Invasion of New Zealand','cf-new-zealand','New Zealand',[172,-41],[165,-48,179,-34],'Launch large amphibious invasions of both islands and contest Cook Strait.'],
     ]],
     [4,[
-      ['panama-pacific','Pacific Invasion of Panama',null,'Panama',[-80,9],[-84,7,-77,11],'Attack the canal exclusively from the Pacific and advance toward Colon.'],
-      ['pacific-northwest','Invasion of the Pacific Northwest',null,'Pacific Northwest',[-121,46],[-126,41,-111,50],'Land at Puget Sound and the Columbia estuary, then cross the Cascades.'],
+      ['panama-pacific','Pacific Invasion of Panama','cf-panama','Panama',[-80,9],[-84,7,-77,11],'Attack the canal exclusively from the Pacific and advance toward Colon.'],
+      ['pacific-northwest','Invasion of the Pacific Northwest','cf-pacific-northwest','Pacific Northwest',[-121,46],[-126,41,-111,50],'Land at Puget Sound and the Columbia estuary, then cross the Cascades.'],
     ]],
-    [5,[['central-america','Central American Offensive',null,'Central America',[-87.5,14],[-93,8.5,-82,18.5],'Advance north from captured Panama through Britannian Central America.']]],
+    [5,[['central-america','Central American Offensive','cf-central-america','Central America',[-87.5,14],[-93,8.5,-82,18.5],'Advance north from captured Panama through Britannian Central America.']]],
     [6,[
-      ['california','Invasion of California',null,'California',[-120,37],[-125,32,-114,42],'Advance from captured Oregon while Chinese carrier groups land on the Californian coast.'],
-      ['mexican-heartland','Conquest of the Mexican Heartland',null,'Central Mexico',[-100,20],[-106,15,-94,24],'Invade Britannian Mexico from Central America with supporting coastal landings.'],
+      ['california','Invasion of California','invasion-california','California',[-120,37],[-125,32,-114,42],'Advance from captured Oregon while Chinese carrier groups land on the Californian coast.'],
+      ['mexican-heartland','Conquest of the Mexican Heartland','cf-mexico','Central Mexico',[-100,20],[-106,15,-94,24],'Invade Britannian Mexico from Central America with supporting coastal landings.'],
     ]],
-    [7,[['pendragon-west','Battle of Pendragon — Western Offensive',null,'Pendragon',[-117,37.5],[-120,35,-114,40],'Conquer the imperial capital and all remaining cities from the Californian west.']]],
+    [7,[['pendragon-west','Battle of Pendragon — Western Offensive','cf-pendragon','Pendragon',[-117,37.5],[-120,35,-114,40],'Conquer the imperial capital and all remaining cities from the Californian west.']]],
   ];
   // Approximate national/state contours where a rectangular theater would
   // otherwise tint substantial unrelated territory. The GSHHG atlas continues
