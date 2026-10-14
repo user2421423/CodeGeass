@@ -4385,7 +4385,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','cf-new-zealand','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','cf-new-zealand','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
