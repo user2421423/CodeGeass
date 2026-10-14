@@ -1,0 +1,30 @@
+name: Pendragon scenario verification
+on:
+  push:
+    branches:
+      - scenario/eu-pendragon
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pendragon-runtime-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify editable engine source consistency
+        run: node tools/build_sources.cjs --check
+      - name: Check map geometry, city locations, all hexes, Army Groups and victory
+        run: node tools/pendragon_hex_audit.cjs
+      - name: Run multi-seed full-engine operational simulations
+        run: |
+          for side in eu britannia; do
+            for seed in 11 29 47; do
+              node tools/pendragon_sim.cjs "$seed" 2 "$side" normal
+            done
+          done
+          node tools/pendragon_sim.cjs 101 4 eu hard
+          node tools/pendragon_sim.cjs 103 2 eu elite
