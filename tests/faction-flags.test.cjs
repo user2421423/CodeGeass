@@ -8,24 +8,36 @@ const root = path.resolve(__dirname,'..');
 const artSource = fs.readFileSync(path.join(root,'dist/art.js'),'utf8');
 const context = {};
 vm.runInNewContext(artSource + '\nthis.renderedFlags = ART;', context);
-test('Britannia, Europia and Black Knights have standalone faction flags', () => {
-  for (const side of ['britannia','eu','bk']) {
+
+const exactFlags = {
+  britannia: [260,157],
+  eu: [260,173],
+  cf: [260,173],
+  bk: [260,260],
+};
+test('each faction flag uses the actual uploaded artwork, not a hand-drawn substitute', () => {
+  for (const [side, [width,height]] of Object.entries(exactFlags)) {
     const svg = context.renderedFlags.flagSVG(side);
     assert.match(svg, /<svg /);
-    assert.match(svg, /viewBox="0 0 120 72"/);
-    assert.match(svg, /<path /);
-    assert.match(svg, /aria-label=/);
+    assert.match(svg, new RegExp('viewBox="0 0 ' + width + ' ' + height + '"'));
+    assert.ok(svg.includes('href="assets/flags/' + side + '.webp"'));
+    assert.match(svg, /<image /);
+    assert.doesNotMatch(svg, /<path /, side + ' should show the uploaded flag instead of the SVG substitute');
+    const data = fs.readFileSync(path.join(root,'dist/assets/flags',side+'.webp'));
+    assert.equal(data.toString('ascii',0,4), 'RIFF');
+    assert.equal(data.toString('ascii',8,12), 'WEBP');
+    assert.ok(data.length > 500);
   }
   assert.equal(context.renderedFlags.flagSVG('neutral'), '');
 });
-test('the existing U.F.N. flag remains available', () => {
+test('U.F.N. flag still uses its original self-contained artwork', () => {
   assert.equal(context.renderedFlags.flagSVG('ufn'), context.renderedFlags.ufnFlagSVG());
 });
-test('faction flags are presented on map cities, setup cards and docks', () => {
-  const art = fs.readFileSync(path.join(root,'dist/art.js'),'utf8');
+test('faction flags appear on map cities, setup cards, scenario cards and docks', () => {
   const hud = fs.readFileSync(path.join(root,'dist/ui/hud.js'),'utf8');
   const scenarios = fs.readFileSync(path.join(root,'dist/ui/scenario-screens.js'),'utf8');
-  assert.match(art, /const standard = flagSVG\(side\)/);
+  assert.match(artSource, /const standard = flagSVG\(side\)/);
+  assert.match(artSource, /flagAssetImage\(side\)/);
   assert.match(hud, /ART\.flagSVG\(side\)/);
   assert.match(hud, /ART\.flagSVG\(artSide\(side\)\)/);
   assert.match(scenarios, /ART\.flagSVG\(s\)/);

@@ -1351,3 +1351,6 @@ a {
 @media (max-width: 760px) {
   .faction-banner { width: 56px; top: 9px; right: 9px; }
 }
+
+/* The Black Knights source standard is square; preserve that exact silhouette. */
+.faction.bk .faction-banner { width: 66px; aspect-ratio: 1 / 1; }

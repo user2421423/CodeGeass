@@ -80,3 +80,7 @@ The rights holders' follow-up email extends the permission to official imagery a
 the artwork is used strictly within the game itself and the non-commercial and attribution terms are kept. The owner has requested publication of the finished artwork under those terms. Finished files belong in
 `dist/assets/art/`; raw downloads remain excluded. Preserve the notice and record source credits when the
 artwork is updated.
+
+## Faction flags
+
+The playable faction standards for the Holy Britannian Empire, Europia United, Chinese Federation and Black Knights are optimized WebP versions of the four exact flag images supplied by the project owner (2026-10-14), stored in `dist/assets/flags/`. They replace the previous hand-drawn placeholder heraldry. Their image proportions are preserved for both faction cards and canvas city banners. The U.F.N. flag remains the original inline SVG used for the 2018 conquest.
