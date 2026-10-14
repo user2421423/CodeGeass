@@ -56,6 +56,8 @@
     cards.forEach(card => prepareClassicCard(card, mode, profile));
 
     const first = grids[0];
+    const headings = grids.map(grid => grid.previousElementSibling)
+      .filter(heading => heading?.classList.contains('officer-section'));
     const toolbar = document.createElement('section');
     toolbar.className = 'cc-tools';
     toolbar.setAttribute('aria-label', 'Commander roster filters');
@@ -87,12 +89,10 @@
     empty.textContent = 'No commanders match these filters.';
     first.before(toolbar, roster, empty);
 
-    // Preserve unrelated "Operation commanders" headings and chips.
-    grids.forEach(grid => {
-      const heading = grid.previousElementSibling;
-      if (heading?.classList.contains('officer-section')) heading.remove();
-      grid.remove();
-    });
+    // Remove the obsolete split headings; results now combine all filtered cards.
+    // Leave the unrelated "Operation commanders" section below intact.
+    headings.forEach(heading => heading.remove());
+    grids.forEach(grid => grid.remove());
     cards.forEach(card => roster.append(card));
 
     toolbar.querySelectorAll('[data-cc-filter]').forEach(el => {
