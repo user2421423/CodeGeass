@@ -49,7 +49,7 @@
     if (dist(g, u, p) > 1) return false;
     const occ = unitAt(g, p),
       st = stationAt(g, p);
-    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalCityAssault(g, u)));
+    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0));
   }
   // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
   // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex

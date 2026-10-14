@@ -1521,11 +1521,6 @@
   function canCapture(u) {
     return TYPES[u.type].naval !== 'ship';
   }
-  // Amphibious frames and embarked transports may capture an empty enemy city
-  // even when its shields have not yet been reduced to zero.
-  function navalCityAssault(g, u) {
-    return TYPES[u.type].naval === 'amphibious' || atSea(g, u);
-  }
   function isReady(g, u) {
     return !g.over && g.phase === u.side && u.hp > 0 && u.morale > -3;
   }
@@ -1538,7 +1533,6 @@
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
-      navalAssault = t.naval === 'amphibious' || (!t.naval && fromSea),
       ship = t.naval === 'ship',
       amphibious = t.naval === 'amphibious',
       landMove = movement(g, u),
@@ -1591,7 +1585,7 @@
           if (cost < budget) found.set(key(n), budget);
           continue;
         }
-        if (st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalAssault)) continue;
+        if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
         const step = isSea(n) ? 1 : terrainCost(g, u, n);
         const nc = u.skillReposition
@@ -1644,11 +1638,12 @@
     if (u.cargo?.some((c, i) => !deployReason(g, u, i))) return true;
     return !!COMMANDERS[u.cmd]?.action && !feintReason(g, u);
   }
-  // Carrier cargo can land on an empty enemy city, but cannot displace a garrison.
+  // Carrier cargo may land on an unoccupied enemy city only after its defenses reach zero.
   function deployTargetsAt(g, p, side, carriesTroops = false) {
     return adjacent(g, p).filter(t =>
       !isSea(t) && !TERRAIN[t.terrain]?.blocked && !unitAt(g, t) &&
-      (carriesTroops || !stationAt(g, t) || !foe(g, stationAt(g, t).owner, side)),
+      (!stationAt(g, t) || !foe(g, stationAt(g, t).owner, side) ||
+        (carriesTroops && stationAt(g, t).shield <= 0)),
     );
   }
   const deployTargets = (g, ship, i = 0) => deployTargetsAt(g, ship, ship.side, !!ship.cargo?.[i]);
@@ -1716,7 +1711,7 @@
   function captureCity(g, u, navalLanding = false) {
     const s = stationAt(g, u);
     if (!s || !foe(g, s.owner, u.side) ||
-      !(canCapture(u) || navalLanding) || (s.shield > 0 && !navalLanding))
+      !canCapture(u) || s.shield > 0)
       return { captured: null, annexed: null };
     const loser = s.owner;
     if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
@@ -4869,7 +4864,7 @@
   function routePassable(g, u, p) {
     const t = TYPES[u.type], st = stationAt(g, p), occ = unitAt(g, p);
     if (t.naval === 'ship' && (!navigable(p) || st)) return false;
-    if (st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalCityAssault(g, u))) return false;
+    if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) return false;
     return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
   }
   function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity) {
@@ -5044,7 +5039,7 @@
     if (dist(g, u, p) > 1) return false;
     const occ = unitAt(g, p),
       st = stationAt(g, p);
-    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && !((canCapture(u) && st.shield <= 0) || navalCityAssault(g, u)));
+    return (!!occ && occ !== u) || (!!st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0));
   }
   // Moves every unit of `side` with a destination one turn along its route, nearest first. Returns what happened:
   // moved [{ id, from, to, captured, seized, annexed }], arrived [id] (order complete), blocked [id] (no free hex
