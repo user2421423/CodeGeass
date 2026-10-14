@@ -151,7 +151,7 @@
         recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
           g.scenario?.id === 'philippines-invasion';
       memo[side] = { turn: g.turn, doctrine,
-        guards: scenario ? assignDivisionBritanniaGuards(g, side) : assignGuards(g, side) };
+        guards: scenario ? (g.scenario?.id==='battle-luoyang' && side==='cf' ? assignLuoyangGuards(g,side) : assignDivisionBritanniaGuards(g, side)) : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);
       if (g.mode === 'campaign') memo[side].field = goalField(g, side);
       else if (scenario) planScenarioOffense(g, side, memo[side]);
@@ -1288,6 +1288,42 @@
   // Normal Division of Japan: Britannia must screen both Kanto and western Honshu.
   // Unlike the other Japan scenarios, these defenders keep a local post while
   // the rest of the army can counterattack; a lost city releases its guards.
+  // Finale-specific layer doctrine: keep a small standing capital guard and
+  // divert local reserves to threatened approach cities. All remaining units
+  // are left with the normal multi-front AI to attack vulnerable spearheads
+  // and recapture Britannian staging cities. No scripted reinforcements.
+  function assignLuoyangGuards(g, side){
+    if(g.mode!=='scenario'||g.scenario?.id!=='battle-luoyang'||side!=='cf')
+      return {};
+    const enemy=g.units.filter(u=>u.side==='britannia'&&u.hp>0&&!isShip(u)),
+      own=g.units.filter(u=>u.side==='cf'&&u.hp>0&&!isShip(u)&&!atSea(g,u)),
+      reserved={},
+      posts=[
+        ['Luoyang',4,9],['Mengjin',3,8],['Yanshi',2,8],
+        ['Zhengzhou',3,8],['Gongyi',2,8],['Jiyuan',2,8],
+        ['Jiaozuo',2,8],['Kaifeng',2,8],['Xinxiang',2,8],
+        ['Sanmenxia',2,8],['Pingdingshan',2,8]
+      ];
+    for(const [name,quota,radius] of posts){
+      const s=g.stations.find(c=>c.name===name&&c.owner==='cf');
+      if(!s)continue; // A fallen city releases its guard into the offensive.
+      const nearby=enemy.filter(u=>dist(g,u,s)<=10);
+      if(name!=='Luoyang'&&!nearby.length&&g.turn>4)continue;
+      const urgency=nearby.some(u=>dist(g,u,s)<=4);
+      const candidates=own.filter(u=>!reserved[u.id]&&
+        dist(g,u,s)<=radius)
+        .sort((a,b)=>
+          dist(g,a,s)-dist(g,b,s)||
+          Number(!!a.cmd)-Number(!!b.cmd)||a.id-b.id);
+      // Unthreatened posts retain only a minimal watch. When attacked they
+      // request their full allocation, with battle losses naturally reducing
+      // that allocation rather than conjuring new units.
+      const required=urgency?quota:name==='Luoyang'?3:Math.min(1,quota);
+      for(const u of candidates.slice(0,required))
+        reserved[u.id]={c:s.c,r:s.r,id:s.id,emergency:urgency};
+    }
+    return reserved;
+  }
   function assignDivisionBritanniaGuards(g, side) {
     if (g.mode !== 'scenario' || g.scenario?.id !== 'division-japan' ||
         g.difficulty !== 'normal' || side !== 'britannia') return {};
