@@ -106,7 +106,7 @@
     };
     // Authoritative tactical coast: each cell's clipped polygon land share is
     // <20%=sea, 20–80%=coast, >80%=land. Unlike a center-point mask this
-    // preserves the Cape of Good Hope and narrow coastal approaches.
+    // preserves the Amazon estuary and narrow Brazilian coastal approaches.
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),fraction=coastCoverageClass(c,r);
       return {c,r,owner:null,terrain:fraction===0?'sea':
@@ -114,7 +114,7 @@
     });
     const excludedLand=new Uint8Array(g.tiles.length);
     // Audit connectivity: a ship may use sea and mixed-coast cells only.
-    // No artificial inland waterways or shortcuts across African land.
+    // No artificial inland sea lanes or shortcuts across Brazilian land.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
@@ -122,7 +122,7 @@
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
-      if(!at)throw Error('Cannot place European city '+name);
+      if(!at)throw Error('Cannot place Brazilian city '+name);
       const capital=name==='Brasília';
       const shield=fort?400:120+60*tier;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
@@ -134,7 +134,7 @@
         science:Math.round((1+tier)*.55),producedTurn:0});
       // Do not overwrite a mixed-coast designation for a harbour.
     }
-    // Islands receive provinces from the nearest city on their own landmass.
+    // Territories receive provinces from the nearest city on their connected landmass.
     const components=new Int16Array(g.tiles.length).fill(-1);
     let id=0;
     for(let i=0;i<g.tiles.length;i++){
@@ -213,7 +213,7 @@
       }
       g.scenario.groups.push(fleet);
     }
-    // Load all 24 Britannian land formations into offshore carriers before turn one.
+    // Load all 42 Europian land formations into offshore carriers before turn one.
     const carriers=g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
     const passengers=[];
     for(const [side,name,cls,count,commander] of ARMY_GROUPS){
@@ -236,7 +236,7 @@
       g.units.splice(g.units.indexOf(u),1);
     }
     for(const ship of carriers)delete ship.pendingPassengers;
-    // Keep all four Atlantic, Cape and Indian Ocean invasion corridors navigable.
+    // Keep all six Atlantic invasion corridors navigable.
     const depth=new Int16Array(g.tiles.length).fill(-1),q=[];
     for(const t of g.tiles)if(t.terrain!=='sea'){
       depth[t.r*COLS+t.c]=0;q.push(t);
