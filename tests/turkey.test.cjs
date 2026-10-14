@@ -67,7 +67,7 @@ test('Fourteen ports are individually placed, operational and linked to open wat
   assert.ok(sea.has(key(p.portAt)),'unconnected shipyard '+p.name);
  }
  for(const u of g.units){
-  assert.equal(E.tile(g,u.c,u.r).terrain==='sea',E.TYPES[u.type].naval==='ship','illegal deployment '+u.id);
+  assert.equal(E.tile(g,u.c,u.r).terrain==='sea',!!E.TYPES[u.type].naval,'illegal deployment '+u.id);
  }
 });
 test('Fifty army group detachments and opposing fleets are present',()=>{
@@ -77,8 +77,8 @@ test('Fifty army group detachments and opposing fleets are present',()=>{
   assert.ok(group.units.length,group.name);
   assert.ok(group.units.every(id=>g.units.some(u=>u.id===id&&u.side===group.side)),group.name);
  }
- assert.ok(g.units.filter(u=>u.side==='britannia'&&E.TYPES[u.type].naval==='ship').length>=12);
- assert.ok(g.units.some(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship'));
+ assert.ok(g.units.filter(u=>u.side==='britannia'&&!!E.TYPES[u.type].naval).length>=12);
+ assert.ok(g.units.some(u=>u.side==='eu'&&!!E.TYPES[u.type].naval));
 });
 test('Conquering the final opposing city, not a turn counter, triggers victory',()=>{
  for(const p of M.sides){
