@@ -8,7 +8,7 @@
 - Nine named crossing corridors, separate capturable river ports and shallow-water units using the existing Portman/Shui Gun Ru models. There are no implausible ocean carrier battles in shallow upper reaches.
 - Main navigable channel is a simplified geographical polyline through historical bends. Han, Qingjiang, Gan and other tributaries appear as geographical underlay only; shallow rivers are **not** imaginary navy routes.
 - Land and naval tactics use existing engine rules. Named bridge decks are mixed `coast` hexes: ground troops and vessels can traverse them. All other shoreline hexes use sampled 20–80% water-coverage classification.
-- Two-sided AI retains the existing `europe` multi-front operational doctrine and standard emergency city-defense, offensive redirection, reinforcement and combat mechanics. The northern reserve is physically deployed inland rather than assumed available at every crossing.
+- Two-sided AI retains the existing `europe` multi-front operational doctrine and standard emergency city-defense, offensive redirection, reinforcement and combat mechanics. The Federation AI now activates emergency objectives at threatened crossing corridors once Britannian ground units establish a north-bank bridgehead, concentrating otherwise standard defensive fronts and counters. The northern reserve is physically deployed inland rather than assumed available at every crossing.
 - Victory is **control of all 60 cities**, with no turn limit.
 
 ## Design and connectivity review

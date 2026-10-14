@@ -657,6 +657,33 @@
             vital, value: vital ? 100 : 20, seed: vital ? -6 : -2 });
       }
     }
+    // Yangtze only: when Britannian land units cross to the NORTH bank,
+    // activate existing emergency defensive fronts around nearby crossings.
+    // Southern staging forces already trigger the normal projected warning.
+    if (g.scenario?.id === 'bf-yangtze' && side === 'cf' &&
+        g.scenario.bridges?.length && g.scenario.rivers?.Yangtze) {
+      const river = g.scenario.rivers.Yangtze, b = g.scenario.bounds;
+      const riverLat = lon => {
+        for (let i=1; i<river.length; i++) {
+          const a=river[i-1], end=river[i];
+          if(lon<=end[0]){
+            const f=Math.max(0,Math.min(1,(lon-a[0])/(end[0]-a[0])));
+            return a[1]+f*(end[1]-a[1]);
+          }
+        }
+        return river[river.length-1][1];
+      };
+      const landed = foes.filter(u => u.side === 'britannia' &&
+        !isShip(u) && !atSea(g,u) &&
+        b.north-(u.r+.5)*(b.north-b.south)/g.rows >
+          riverLat(b.west+(u.c+.5+.5*(u.r&1))*(b.east-b.west)/g.cols)+0.04);
+      for(const [i,bridge] of g.scenario.bridges.entries()){
+        if(!landed.some(u=>dist(g,u,bridge)<=9))continue;
+        list.push({key:'yangtze-bridgehead-'+i,c:bridge.c,r:bridge.r,
+          name:bridge.name,defend:true,city:false,immediate:true,
+          projected:false,vital:true,value:100,seed:-8});
+      }
+    }
     for (const d of g.sites || []) {
       if (d.city != null) continue;
       const major = d.base >= 30;
