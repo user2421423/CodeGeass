@@ -4297,7 +4297,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','eu-greenland'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4500,7 +4500,7 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','eu-greenland'].includes(g.scenario?.id)) return g;
     const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
       g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
       ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey'].includes(g.scenario.id) ? ['britannia','eu'] :
