@@ -14,6 +14,7 @@ const SCENARIO_KINDS = [
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
+  ['britannia-iraq-iran','Iraq–Iran Campaign','84 cities · 2 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
@@ -122,6 +123,10 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   'invasion-turkey': {
     britannia: 'Lead the northern land offensive from Syria and Iraq, pierce the Taurus passes and land expeditionary fleets at Anatolian ports. Take every E.U. city.',
     eu: 'Defend Istanbul, Ankara and the Anatolian interior, hold the Bosporus and Dardanelles, then counterattack into Syria and Mesopotamia.'
+  },
+  'britannia-iraq-iran': {
+    britannia:'Advance from Syria and Arabia, cross the Tigris–Euphrates plains, break the Zagros defenses and seize Tehran. The Persian Gulf fleets can strike the Iranian coast.',
+    cf:'Hold northern and southern Iraq, counterattack the river crossings and preserve powerful reserves behind the Zagros passes and on the Iranian Plateau.'
   },
   'area-18': {
     britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
@@ -284,6 +289,13 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     diplomacy: 'Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.',
     elite: 'Elite Turkey uses standard faction Elite Force replacements for land and amphibious troops while ships remain conventional. AI income and commanders follow established Elite settings.',
     focus: {britannia:'Antakya',eu:'Ankara'}
+  },
+  'britannia-iraq-iran': {
+    era:'Iraq and Iran · Alternate 2017',
+    intro:'Britannia invades Iraq and Iran from western expeditionary bases. Fight across Mesopotamia, breach the Zagros and capture the Iranian Plateau. All 84 theatre cities count; no turn limit.',
+    diplomacy:'Only Britannia and the Chinese Federation fight. Two theaters, independent Gulf ports, major reserves and a contested Strait of Hormuz; no three-faction Area 18 forces.',
+    elite:'Elite Iraq–Iran uses both factions’ standard Elite Force rosters, veteran rival commanders and existing production rules. Carrier hulls remain conventional.',
+    focus:{britannia:'Deir ez-Zor',cf:'Baghdad'}
   },
   'area-18': {
     era: 'Middle East · Alternate 2017',

@@ -927,6 +927,7 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
+    const iraqIran = g.scenario.id === 'britannia-iraq-iran';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
     const urals = g.scenario.id === 'crossing-urals';
@@ -941,7 +942,7 @@ const GEOGRAPHY = (() => {
     const eastCoast = g.scenario.id === 'invasion-american-east-coast';
     const panama = g.scenario.id === 'eu-panama';
     const pendragon = g.scenario.id === 'eu-pendragon';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
+    const centreSampledRegion = australia || middleEast || iraqIran || siberia || southernAfrica || urals || turkey ||
       brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
@@ -1102,7 +1103,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast) && g.scenario?.rivers){
+    if((siberia || brazil || canada || california || eastCoast || iraqIran) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
