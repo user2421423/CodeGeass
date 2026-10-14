@@ -368,3 +368,39 @@ test('rival Eliminators stay classified from AI targeting and from the player', 
   assert.match(input, /cities: game\.stations\.map\(s => s\.owner === game\.player \? s : classified\(s\)\)/);
   assert.match(input, /units: game\.units\.filter\(u => u\.hp > 0\)\.map\(u => u\.side === game\.player \? u : classified\(u\)\)/);
 });
+
+
+test('dual-purpose Eliminator patrol never commandeers Tier 1 leaders or critical recovery orders', () => {
+  const {g,city}=setup(401);
+  const locations=land(g,city,1);
+  const leader=unit(g,'cf',locations[0],'xingke');
+  leader.eliminator=1;
+  const ordinary=unit(g,'cf',locations[1]);
+  ordinary.eliminator=1;
+  const memo={recoveries:new Map(),guards:{},byId:{},assign:{}};
+  assert.equal(E.aiEliminatorDualDefenseOrder(g,leader,memo),null,
+    'Tier 1 commanders retain combat control');
+  memo.guards[ordinary.id]={emergency:true};
+  assert.equal(E.aiEliminatorDualDefenseOrder(g,ordinary,memo),null,
+    'emergency garrisons retain defensive orders');
+  delete memo.guards[ordinary.id];
+  memo.recoveries.set(ordinary.id,{tactical:{c:ordinary.c,r:ordinary.r}});
+  assert.equal(E.aiEliminatorDualDefenseOrder(g,ordinary,memo),null,
+    'recovery orders outrank proactive coverage');
+  memo.recoveries.clear();
+  ordinary.eliminator=0;
+  assert.equal(E.aiEliminatorDualDefenseOrder(g,ordinary,memo),null,
+    'unarmed units cannot receive a protection patrol');
+  assert.equal(city.eliminator,1,'stationary capital protection is untouched');
+});
+
+test('dual-purpose Eliminator patrol does not redeploy without visible enemy threat', () => {
+  const {g,city}=setup(401);
+  const ordinary=unit(g,'cf',land(g,city,5)[0]);
+  ordinary.eliminator=1;
+  const memo={recoveries:new Map(),guards:{},byId:{},assign:{}};
+  assert.equal(E.aiEliminatorDualDefenseOrder(g,ordinary,memo),null);
+  assert.equal(ordinary.moved||false,false);
+  assert.equal(ordinary.eliminator,1);
+  assert.equal(city.eliminator,1);
+});
