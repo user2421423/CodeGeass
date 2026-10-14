@@ -922,9 +922,10 @@ const GEOGRAPHY = (() => {
     const middleEast = g.scenario.id === 'area-18';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
+    const hawaii = g.scenario.id === 'invasion-hawaii';
     const urals = g.scenario.id === 'crossing-urals';
     const turkey = g.scenario.id === 'invasion-turkey';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey;
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || hawaii || urals || turkey;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
