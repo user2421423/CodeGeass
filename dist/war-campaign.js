@@ -23,7 +23,7 @@
   const bering = ['bering','Bering Strait Crisis','bering-strait','Bering Strait',[177,63],[160,55,180,72],'Control the crossing between Siberia and Alaska.'];
   const euRows = [
     [3,[
-      ['hawaii','Invasion of Hawaii',null,'Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
+      ['hawaii','Invasion of Hawaii','invasion-hawaii','Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
       ['brazil','Invasion of Brazil',null,'Brazil',[-51,-13],[-74,-34,-34,6],'Establish a South American foothold in Britannian territory.'],
       ['greenland','Invasion of Greenland',null,'Greenland',[-42,72],[-61,59,-20,84],'Capture the North Atlantic approaches.'],
       ['caribbean','Invasion of the Caribbean',null,'Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
