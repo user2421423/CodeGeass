@@ -377,6 +377,13 @@
   const api={id:ID,title:'Invasion of St. Petersburg and Moscow',
     cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,
     armyGroups:ARMY_GROUPS,lakes:LAKES,rivers:RIVERS,
+    geographicAt:geo,
+    coastFractionAt(c,r){
+      const packed=root.EUROPE_LAND_BITS;
+      if(!packed)throw Error('Missing European geography mask');
+      const raw=typeof atob==='function'?atob(packed):Buffer.from(packed,'base64').toString('latin1');
+      return coastFraction(geo(c,r),raw);
+    },
     create,onTurn,objective,winner,strategicScore,orderGroup};
   E.scenarios={...(E.scenarios||{}),westernRussia:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
