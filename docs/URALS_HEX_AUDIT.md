@@ -22,8 +22,6 @@ Both factions were instantiated on Normal, Hard, Challenge and Elite. Every diff
 | 71 | Britannia | 167 | 15 | 1 | 0 |
 
 ## Repeatable checks
-`node --test tests/urals.test.cjs`
-
 `node tools/urals_sim.cjs britannia normal 11 5`
 
 `node tools/urals_sim.cjs eu hard 29 5`
