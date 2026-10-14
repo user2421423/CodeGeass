@@ -122,12 +122,13 @@
     if(ocean.size<6000)throw Error('East Coast ocean basin is unexpectedly fragmented');
     for(const t of g.tiles)if(t.terrain==='sea'&&!ocean.has(E.key(t)))t.terrain='offmap';
     const navigable=t=>t.terrain==='sea'&&ocean.has(E.key(t));
+    const taken=new Set(); // Reserve independent port hexes while choosing harbor city anchors.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const hasPort=Object.prototype.hasOwnProperty.call(PORTS,name);
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
-        (!hasPort||E.adjacent(g,t).some(n=>navigable(n)))&&
+        (!hasPort||E.adjacent(g,t).some(n=>navigable(n)&&!taken.has(E.key(n))))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place European city '+name);
       const capital=name==='New York City';
@@ -139,7 +140,16 @@
         income:Math.round((capital?48:tier===3?30:tier===2?20:12)*.55),
         industry:Math.round((capital?25:6*tier)*.55),
         science:Math.round((1+tier)*.55),producedTurn:0});
-      // Do not overwrite a mixed-coast designation for a harbour.
+      if(hasPort){
+        const port=E.adjacent(g,at).filter(t=>navigable(t)&&!taken.has(E.key(t)))
+          .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
+            E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
+        if(!port)throw Error('Cannot reserve independent naval port for '+name);
+        const station=g.stations[g.stations.length-1];
+        station.portAt={c:port.c,r:port.r};station.portLevel=PORTS[name];station.portOwner=owner;
+        taken.add(E.key(port));
+      }
+      // Preserve mixed-coast city land adjacency; ports never share a hex.
     }
     // Islands receive provinces from the nearest city on their own landmass.
     const components=new Int16Array(g.tiles.length).fill(-1);
@@ -193,16 +203,6 @@
         group(side,name).units.push(u.id);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
       }
-    }
-    const taken=new Set();
-    for(const [name,level] of Object.entries(PORTS)){
-      const s=g.stations.find(v=>v.name===name);
-      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!taken.has(E.key(t)))
-        .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
-          E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
-      if(!at)throw Error('Cannot place naval port '+name);
-      s.portAt={c:at.c,r:at.r};s.portLevel=level;s.portOwner=s.owner;
-      taken.add(E.key(at));
     }
     for(const [side,name,lon,lat,type,count] of FLEETS){
       const s=side==='britannia'?g.stations.find(v=>v.name===name):null;
