@@ -1,7 +1,7 @@
   const BRITANNIA = [
     {
       id: 'br1',
-      title: 'Invasion of Japan',
+      title: 'The Fall of Tokyo',
       place: 'Kantō Plain',
       year: '2010 a.t.b.',
       brief:
