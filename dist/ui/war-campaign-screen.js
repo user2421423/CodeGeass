@@ -7,10 +7,11 @@ let wcFaction='eu',wcTier=1,wcMission=null,wcDifficulty='normal',
     wcView={zoom:1,x:0,y:0},wcDrag=null,wcFeedback='';
 const WC_ROUTES={
   eu:[
-    ['eu-bering','eu-hawaii'],['eu-hawaii','eu-california'],
-    ['eu-greenland','eu-canada'],['eu-caribbean','eu-panama'],
-    ['eu-canada','eu-great-lakes'],['eu-california','eu-pendragon'],
-    ['eu-great-lakes','eu-pendragon']
+    ['eu-bering','eu-canada'],
+    ['eu-greenland','eu-canada'],['eu-caribbean','eu-panama-atlantic'],
+    ['eu-new-york','eu-great-lakes'],['eu-canada','eu-great-lakes'],
+    ['eu-great-lakes','eu-rocky-mountains'],
+    ['eu-rocky-mountains','eu-pendragon-east']
   ],
   britannia:[
     ['britannia-bering','britannia-siberia'],['britannia-siberia','britannia-urals'],
@@ -24,7 +25,17 @@ const WC_ROUTES={
     ['britannia-federation-yangtze','britannia-federation-luoyang'],
     ['britannia-federation-korea','britannia-federation-luoyang']
   ],
-  'federation-britannia':[]
+  'federation-britannia':[
+    ['federation-britannia-philippines','federation-britannia-hawaii'],
+    ['federation-britannia-indochina','federation-britannia-new-zealand'],
+    ['federation-britannia-hawaii','federation-britannia-pacific-northwest'],
+    ['federation-britannia-hawaii','federation-britannia-panama-pacific'],
+    ['federation-britannia-panama-pacific','federation-britannia-central-america'],
+    ['federation-britannia-central-america','federation-britannia-mexican-heartland'],
+    ['federation-britannia-pacific-northwest','federation-britannia-california'],
+    ['federation-britannia-california','federation-britannia-pendragon-west'],
+    ['federation-britannia-mexican-heartland','federation-britannia-pendragon-west']
+  ]
 };
 function wcProgress(){return WC.load(localStorage);}
 function wcMapColor(){return E.FACTIONS[WC.campaignSide(wcFaction)].color;}
@@ -219,7 +230,7 @@ function wcMissionPanel(){
         '</span><span>'+wcSafe(o.title)+'</span></button>';
     }).join('')+'</div>';
   if(!row.missions.length)
-    html+='<div class="wc-detail"><h2>Awaiting battle approvals</h2><p>No Chinese Federation campaign battles have been approved yet. This track is a framework only; no missions have been invented or made playable.</p></div>';
+    html+='<div class="wc-detail"><h2>No objectives in this tier</h2><p>This tier has no registered regional battles.</p></div>';
   if(m){
     html+='<div class="wc-detail"><div class="wc-tag">'+(m.final?'FINAL OBJECTIVE · ':'')+
       'TIER '+m.tier+' · '+wcSafe(m.region)+'</div><h2>'+wcSafe(m.title)+'</h2>'+
@@ -228,14 +239,14 @@ function wcMissionPanel(){
     if(status==='locked'){
       html+='<p class="wc-warning">Complete every required war in Tier '+unlocked+' to unlock this objective.</p>';
       if(m.status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented.</p>';
-      if((m.id==='britannia-south-africa'||m.id==='eu-panama') && E.scenarios?.byId?.[m.scenarioId]){
+      if(m.id==='britannia-south-africa' && E.scenarios?.byId?.[m.scenarioId]){
         html+='<label class="wc-diff-label" for="wc-difficulty">Playtest difficulty</label>'+
           '<select class="select" id="wc-difficulty">'+
           ['normal','hard','challenge','elite'].map(d=>'<option value="'+d+'"'+
           (wcDifficulty===d?' selected':'')+'>'+wcSafe(E.DIFFICULTIES[d]?.name||d)+'</option>').join('')+
-          '</select><button class="primary wc-launch" data-action="'+(m.id==='eu-panama'?'wc-launch-panama-playtest':'wc-launch-south-africa-playtest')+'">'+
-          (m.id==='eu-panama'?'Play Panama now':'Play South Africa now')+'</button>'+
+          '</select><button class="primary wc-launch" data-action="wc-launch-south-africa-playtest">Play South Africa now</button>'+
           '<p class="wc-record">Skip earlier Campaign tiers for this test battle. Other Campaign progress is unchanged; a playtest victory does not unlock later tiers.</p>';
+
       }
     }else if(status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented. This objective cannot be played or completed.</p>';
     else if(!E.scenarios?.byId?.[m.scenarioId])
@@ -257,7 +268,7 @@ function wcRefresh(){
         total=tiers.flatMap(t=>t.missions).length,
         unlocked=WC.unlockedTier(p,wcFaction);
   const top=modal.querySelector('#wc-progress');
-  if(top)top.textContent=total ? complete+'/'+total+' territories secured · Tier '+Math.min(unlocked,tiers.length)+' of '+tiers.length : 'Awaiting approved Federation battles';
+  if(top)top.textContent=total ? complete+'/'+total+' territories secured · Tier '+Math.min(unlocked,tiers.length)+' of '+tiers.length : 'No registered battles';
   const tabs=modal.querySelector('#wc-tiers');
   if(tabs)tabs.innerHTML=tiers.map(t=>'<button class="'+(t.number===wcTier?'current ':'')+
     (t.number>unlocked?'locked':'')+'" data-wc-tier="'+t.number+'" aria-pressed="'+(t.number===wcTier)+'">'+
@@ -283,7 +294,7 @@ function warCampaignDialog(message=''){
     '<div class="wc-heading"><div><div class="eyebrow">Code Geass · Grand Strategy</div><h2>Campaign Mode</h2>'+
     '<p id="wc-progress"></p></div>'+
     '<div><button class="small" data-action="wc-open-south-africa">South Africa quick play</button>'+
-    '<button class="small" data-action="wc-open-panama">Panama quick play</button>'+ 
+
      '<button class="small close" data-action="wc-back">Back to menu</button></div></div>'+
     '<div class="wc-factions">'+WC.FACTIONS.map(f=>'<button class="'+(f===wcFaction?'active':'')+
     '" data-wc-faction="'+f+'" style="--wc-faction-color:'+E.FACTIONS[WC.campaignSide(f)].color+'">'+
@@ -317,18 +328,11 @@ function wcOpenSouthAfrica(){
   wcMission='britannia-south-africa';
   wcRefresh();
 }
-function wcOpenPanama(){
-  if(wcFaction!=='eu'){
-    if(!WC.chooseFaction(localStorage,'eu')){toast('Unable to select the E.U. for Panama playtest.',true);return;}
-    wcFaction='eu';warCampaignDialog();
-  }
-  wcTier=4;wcMission='eu-panama';wcRefresh();
-}
 function wcLaunch(preview=false){
   const m=WC.ALL[wcMission];
   if(!m)return;
   const info=WC.launch(wcProgress(),wcFaction,m.id,E.scenarios?.byId,
-    preview?wcMission==='eu-panama'?{previewPanama:true}:{previewSouthAfrica:true}:null);
+    preview?{previewSouthAfrica:true}:null);
   if(!info.ok){toast(info.reason,true);return;}
   confirmReplace(WC.BATTLE_KEY,'war-campaign',()=>{
     scenarioKind=info.scenarioId;
@@ -353,8 +357,7 @@ document.addEventListener('click',function(e){
   if(d.action==='wc-return'){warCampaignDialog(game.warCampaign?.announcement || '');return;}
   if(d.action==='wc-launch'){wcLaunch();return;}
   if(d.action==='wc-open-south-africa'){wcOpenSouthAfrica();return;}
-  if(d.action==='wc-open-panama'){wcOpenPanama();return;}
-  if(d.action==='wc-launch-south-africa-playtest'||d.action==='wc-launch-panama-playtest'){wcLaunch(true);return;}
+  if(d.action==='wc-launch-south-africa-playtest'){wcLaunch(true);return;}
   if(d.action==='wc-resume'){wcResume();return;}
   if(d.action==='wc-reset'){wcView={zoom:1,x:0,y:0};wcDraw();return;}
   if(d.action==='wc-zoom-in'||d.action==='wc-zoom-out'){
