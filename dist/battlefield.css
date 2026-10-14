@@ -3240,3 +3240,14 @@ button.danger:hover:not(:disabled) {
   line-height: 0;
 }
 .faction-flag.flag-art svg { display: block; width: 100%; height: 100%; }
+
+/* Read-only tactical unit readiness indicators in the selection dock. */
+.dock-readiness { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.readiness-chip { display: inline-flex; align-items: center; gap: 3px; border-radius: 4px;
+  padding: 2px 5px; background: #142b33; border: 1px solid #3f666f; color: #daefe7;
+  font: 700 10px 'Trebuchet MS', Arial, sans-serif; }
+.readiness-chip.ready { border-color: #6de0af; color: #b9ffe0; }
+.readiness-chip.no-target { border-color: #ac865a; color: #f0cb98; }
+.readiness-chip.unavailable { border-color: #50626c; background: #19252b; color: #98a7ad; }
+.dock-officer { display: block; margin: -5px 0 5px; font-size: 10px; color: #f4d58d; }
+.dock-unit .dock-strategic-state { color: #9eeaff; }
