@@ -1,4 +1,5 @@
 name: Forward-city Eliminator and Tier 1 FLEIJA AI experiment
+# Second screen: conservative forward-city anchors; baseline unchanged.
 on:
   push:
     branches: ['experiment/eliminator-forward-city-tier1']
