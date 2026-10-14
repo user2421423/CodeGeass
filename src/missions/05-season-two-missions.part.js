@@ -990,7 +990,7 @@
     },
     {
       id: 'br_mausoleum',
-      title: 'The Mausoleum Campaign',
+      title: 'Defense of the Forbidden City',
       place: 'Luoyang, Chinese Federation',
       year: '2018 a.t.b.',
       brief:
