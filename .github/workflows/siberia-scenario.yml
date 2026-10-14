@@ -1,0 +1,32 @@
+name: Siberia scenario verification
+on:
+  push:
+    branches:
+      - scenario/britannia-siberia
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regional-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generated source consistency
+        run: node tools/build_sources.cjs --check
+      - name: Exhaustive map and port audit
+        run: node tools/siberia_hex_audit.cjs
+      - name: Siberia scenario and campaign tests
+        run: node --test tests/siberia.test.cjs tests/war-campaign.test.cjs
+      - name: Existing regression tests
+        run: node --test tests/*.test.cjs
+      - name: Multiseed Britannia and E.U. AI turns
+        run: |
+          for side in britannia eu; do
+            for seed in 11 29 47; do
+              node tools/siberia_sim.cjs "$seed" 3 "$side"
+            done
+          done
