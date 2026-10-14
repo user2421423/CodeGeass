@@ -175,7 +175,7 @@ function hitPin(clientX, clientY) {
     k = Math.min(1.6, Math.max(1, 0.85 / scale));
   if (R * scale < 14) return null;
   return game.units.find(u => {
-    if (u.hp <= 0 || !u.cmd) return false;
+    if (u.hp <= 0 || !u.cmd || !((selection?.kind === 'unit' && selection.id === u.id) || (hover?.c === u.c && hover?.r === u.r))) return false;
     const p = animatedPosition(u),
       px = wrapNear(p.x, x),
       dx = x - (px - 22),
@@ -387,7 +387,9 @@ function attachMap() {
         canvas.style.cursor = 'grabbing';
       }
     }
+    const oldHover = hover;
     hover = hitHex(e.clientX, e.clientY);
+    if (oldHover?.c !== hover?.c || oldHover?.r !== hover?.r) requestMapFrame();
     if (hover && !pointer?.dragged) {
       canvas.style.cursor = strikeMode || routing || armyGroupRouting
         ? 'crosshair'
@@ -465,7 +467,7 @@ function attachMap() {
   };
   canvas.onpointercancel = () => (pointer = null);
   canvas.onpointerleave = () => {
-    if (!pointer) hover = null;
+    if (!pointer) { hover = null; requestMapFrame(); }
   };
   canvas.onwheel = e => {
     e.preventDefault();
