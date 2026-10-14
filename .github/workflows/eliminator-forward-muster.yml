@@ -4,6 +4,8 @@ on:
     branches: ['experiment/eliminator-forward-muster']
     paths:
       - '.github/workflows/eliminator-forward-muster.yml'
+  pull_request:
+    branches: ['experiment/eliminator-permanent-escorts']
 permissions:
   contents: read
 jobs:
