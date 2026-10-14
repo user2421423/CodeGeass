@@ -12,25 +12,25 @@ const K=Math.cos(37.925*Math.PI/180);
 const PROJECTION={centerLon:-116.4,centerLat:37.925,angle:0,
   uMin:-4.85*K,uMax:4.85*K,vMin:-3.125,vMax:3.125};
 // Fictional imperial fortresses are intentionally distinguished from real towns.
-// [city, longitude, latitude, controller, factory tier, fortification]
+// [city, WGS84 longitude, latitude, shared Britannian baseline, tier, fortification]
 const GEOGRAPHIC_CITIES=[
- ['Reno',-119.814,39.53,'eu',3,true],
- ['Carson City',-119.767,39.163,'eu',3,true],
- ['Truckee',-120.183,39.328,'eu',2,false],
- ['Fallon',-118.777,39.474,'eu',2,true],
- ['Hawthorne',-118.631,38.524,'eu',2,true],
- ['Bridgeport',-119.231,38.255,'eu',2,false],
- ['Mammoth Lakes',-118.973,37.649,'eu',2,true],
- ['Bishop',-118.399,37.361,'eu',3,true],
- ['Independence',-118.2,36.802,'eu',2,true],
- ['Lone Pine',-118.063,36.606,'eu',2,false],
- ['Ridgecrest',-117.67,35.623,'eu',3,true],
- ['Mojave',-118.174,35.053,'eu',2,false],
- ['Pahrump',-115.984,36.208,'eu',2,true],
- ['Caliente',-114.513,37.615,'eu',2,true],
- ['Pioche',-114.453,37.929,'eu',2,false],
- ['Austin',-117.069,39.493,'eu',2,true],
- ['Dyer',-118.068,37.673,'eu',2,false],
+ ['Reno',-119.814,39.53,'britannia',3,true],
+ ['Carson City',-119.767,39.163,'britannia',3,true],
+ ['Truckee',-120.183,39.328,'britannia',2,false],
+ ['Fallon',-118.777,39.474,'britannia',2,true],
+ ['Hawthorne',-118.631,38.524,'britannia',2,true],
+ ['Bridgeport',-119.231,38.255,'britannia',2,false],
+ ['Mammoth Lakes',-118.973,37.649,'britannia',2,true],
+ ['Bishop',-118.399,37.361,'britannia',3,true],
+ ['Independence',-118.2,36.802,'britannia',2,true],
+ ['Lone Pine',-118.063,36.606,'britannia',2,false],
+ ['Ridgecrest',-117.67,35.623,'britannia',3,true],
+ ['Mojave',-118.174,35.053,'britannia',2,false],
+ ['Pahrump',-115.984,36.208,'britannia',2,true],
+ ['Caliente',-114.513,37.615,'britannia',2,true],
+ ['Pioche',-114.453,37.929,'britannia',2,false],
+ ['Austin',-117.069,39.493,'britannia',2,true],
+ ['Dyer',-118.068,37.673,'britannia',2,false],
  ['Pendragon',-117,37.5,'britannia',3,true],
  ['Imperial Citadel',-117.15,37.7,'britannia',3,true],
  ['Western Imperial Gate',-117.54,37.48,'britannia',2,true],
@@ -107,7 +107,12 @@ GEOGRAPHIC_CITIES.push(
  ['Cedar City',-113.061,37.677,'britannia',3,true],
  ['Enterprise',-113.721,37.574,'britannia',2,true],
  ['Saint George',-113.583,37.096,'britannia',3,true],
- ['Kanab',-112.527,37.047,'britannia',2,true]
+ ['Kanab',-112.527,37.047,'britannia',2,true],
+ ['Panguitch',-112.436,37.823,'britannia',2,true],
+ ['Fernley',-119.251,39.608,'britannia',2,true],
+ ['Lovelock',-118.474,40.179,'britannia',2,true],
+ ['Winnemucca',-117.736,40.973,'britannia',3,true],
+ ['Elko',-115.763,40.834,'britannia',3,true]
 );
 RIDGES.push(
  // House and Confusion ranges, Snake Range, Mineral Range, Wasatch foothills,
@@ -120,28 +125,34 @@ RIDGES.push(
  [[-111.80,39.32],[-111.96,38.85],[-112.16,38.45]]
 );
 Object.assign(ROADS,{
- // Actual western Utah/Nevada road valleys and mountain crossings.
- I80:[[-119.814,39.53],[-118.777,39.474],[-117.925,38.869],
-       [-115.96,39.512],[-114.037,40.739],[-112.298,40.53]],
- US50:[[-119.767,39.163],[-118.777,39.474],[-117.925,38.869],
-       [-117.069,39.493],[-115.961,39.512],[-114.888,39.247],
-       [-113.011,38.397],[-112.577,39.353]],
+ // I-80 follows Truckee Meadows, the Humboldt corridor and the Salt Flats;
+ // US-50/US-6 run through real Great Basin valleys rather than ridgeline cuts.
+ I80:[[-119.814,39.53],[-119.251,39.608],[-118.474,40.179],
+      [-117.736,40.973],[-115.763,40.834],[-114.037,40.739],
+      [-112.298,40.53]],
+ US50:[[-119.767,39.163],[-118.777,39.474],[-117.069,39.493],
+       [-115.961,39.512],[-114.888,39.247],[-112.577,39.353]],
+ US6:[[-118.399,37.361],[-117.231,38.068],[-116.372,38.192],
+      [-114.888,39.247],[-112.577,39.353]],
+ US395:[[-119.814,39.53],[-119.767,39.163],[-119.231,38.255],
+        [-118.973,37.649],[-118.399,37.361],[-118.2,36.802],
+        [-118.063,36.606],[-117.67,35.623]],
+ I15:[[-112.641,38.277],[-113.061,37.677],[-113.583,37.096],
+      [-114.067,36.806],[-115.14,36.17],[-117.02,34.9]],
  UT21:[[-114.13,38.98],[-113.011,38.397],[-112.641,38.277]],
  UT130:[[-113.011,38.397],[-113.061,37.677]],
- UT14:[[-113.061,37.677],[-112.527,37.047]],
- US89:[[-111.835,38.773],[-112.641,38.277],[-113.061,37.677],
-       [-112.527,37.047]],
+ UT14:[[-113.061,37.677],[-112.436,37.823]],
+ US89:[[-111.835,38.773],[-112.436,37.823],[-112.527,37.047]],
  EastNevadaCorridor:[[-114.888,39.247],[-115.007,38.855],[-114.453,37.929],
        [-114.513,37.615],[-115.192,37.602],[-116.52,37.55]],
  SouthernUtahCorridor:[[-112.641,38.277],[-113.061,37.677],
        [-113.583,37.096],[-114.067,36.806],[-115.164,37.36],[-116.52,37.55]]
 });
-
 const DESERT_BASINS=[[-116.96,36.55,1.2,.75],[-117.25,37.9,1.7,1.5],
  [-115.9,38.05,1.65,1.6],[-118.18,38.7,1.2,1.0]];
-const EU_STAGING=new Set(["Alamo","Baker","Beaver","Caliente","Cedar City","Delta","Ely","Enterprise","Fillmore","Hiko","Kanab","Lund","McGill","Mesquite","Milford","Panaca","Pioche","Richfield","Saint George","Tooele","Wendover"]);
-const EU_ARMIES=[["eu","Tooele","heavy",9,"akito"],["eu","Tooele","rocket",6,null],["eu","Wendover","heavy",8,"leila"],["eu","Wendover","siege",5,null],["eu","Delta","heavy",8,"smilas"],["eu","Delta","rocket",6,"yukiya"],["eu","Fillmore","medium",5,null],["eu","Richfield","heavy",7,"fernando"],["eu","Richfield","siege",5,"oscar"],["eu","Milford","heavy",8,"ayano"],["eu","Milford","rocket",6,null],["eu","Beaver","heavy",8,"marirrosa"],["eu","Beaver","siege",5,null],["eu","Cedar City","heavy",9,"ryo"],["eu","Cedar City","rocket",6,null],["eu","Saint George","heavy",8,"klaus"],["eu","Saint George","assault",6,null],["eu","Enterprise","medium",5,null],["eu","Ely","heavy",10,"anna"],["eu","Ely","siege",6,null],["eu","McGill","heavy",7,"pierre"],["eu","Baker","rocket",6,null],["eu","Pioche","heavy",8,"margaret"],["eu","Pioche","rocket",6,null],["eu","Panaca","assault",6,null],["eu","Caliente","heavy",9,"olivia"],["eu","Caliente","siege",5,null],["eu","Hiko","assault",6,null],["eu","Alamo","heavy",8,null],["eu","Alamo","rocket",6,null],["eu","Mesquite","medium",5,null],["eu","Lund","heavy",5,null],["eu","Kanab","assault",5,null]];
-const EAST_DEFENSE=[["britannia","Pendragon","heavy",13,"suzaku"],["britannia","Pendragon","rocket",9,"bismarck"],["britannia","Pendragon","siege",7,null],["britannia","Imperial Citadel","heavy",11,"cornelia"],["britannia","Imperial Citadel","siege",8,"schneizel"],["britannia","Imperial Air Command","heavy",10,"gino"],["britannia","Imperial Air Command","rocket",7,null],["britannia","Royal Arsenal","heavy",10,"jeremiah"],["britannia","Royal Arsenal","support",6,null],["britannia","Eastern Imperial Gate","heavy",13,"guilford"],["britannia","Eastern Imperial Gate","rocket",9,"darlton"],["britannia","Eastern Imperial Gate","siege",7,null],["britannia","Northern Imperial Gate","heavy",9,"anya"],["britannia","Northern Imperial Gate","rocket",6,null],["britannia","Southern Imperial Gate","heavy",8,"villetta"],["britannia","Western Imperial Gate","heavy",7,"oldrin"],["britannia","Tonopah","heavy",8,"nonette"],["britannia","Tonopah","rocket",5,null],["britannia","Goldfield","heavy",8,"kewell"],["britannia","Goldfield","rocket",5,null],["britannia","Rachel","heavy",9,"monica"],["britannia","Rachel","siege",6,null],["britannia","Warm Springs","heavy",8,"dorothea"],["britannia","Warm Springs","rocket",6,null],["britannia","Round Mountain","heavy",7,"luciano"],["britannia","Round Mountain","rocket",5,null],["britannia","Austin","heavy",8,"manfredi"],["britannia","Austin","medium",6,null],["britannia","Eureka","heavy",6,"augustus"],["britannia","Las Vegas","heavy",8,null],["britannia","Nellis Air Base","rocket",6,null],["britannia","Pahrump","heavy",8,null],["britannia","Indian Springs","rocket",6,null],["britannia","Gabbs","heavy",6,null],["britannia","Silver Peak","heavy",6,null],["britannia","Lida","heavy",6,null],["britannia","Amargosa Valley","siege",5,null]];
+const EU_STAGING=new Set(["Alamo","Baker","Beaver","Caliente","Cedar City","Delta","Ely","Enterprise","Fillmore","Hiko","Kanab","Lund","McGill","Mesquite","Milford","Panaca","Pioche","Richfield","Saint George","Tooele","Wendover","Panguitch"]);
+const EU_ARMIES=[["eu","Tooele","heavy",9,"akito"],["eu","Tooele","rocket",6,null],["eu","Wendover","heavy",8,"leila"],["eu","Wendover","siege",5,null],["eu","Delta","heavy",8,"smilas"],["eu","Delta","rocket",6,"yukiya"],["eu","Fillmore","medium",5,null],["eu","Richfield","heavy",7,"fernando"],["eu","Richfield","siege",5,"oscar"],["eu","Milford","heavy",8,"ayano"],["eu","Milford","rocket",6,null],["eu","Beaver","heavy",8,"marirrosa"],["eu","Beaver","siege",5,null],["eu","Cedar City","heavy",9,"ryo"],["eu","Cedar City","rocket",6,null],["eu","Saint George","heavy",8,"klaus"],["eu","Saint George","assault",6,null],["eu","Enterprise","medium",5,null],["eu","Ely","heavy",10,"anna"],["eu","Ely","siege",6,null],["eu","McGill","heavy",7,"pierre"],["eu","Baker","rocket",6,null],["eu","Pioche","heavy",8,"margaret"],["eu","Pioche","rocket",6,null],["eu","Panaca","assault",6,null],["eu","Caliente","heavy",9,"olivia"],["eu","Caliente","siege",5,null],["eu","Hiko","assault",6,null],["eu","Alamo","heavy",8,null],["eu","Alamo","rocket",6,null],["eu","Mesquite","medium",5,null],["eu","Lund","heavy",5,null],["eu","Kanab","assault",5,null],["eu","Panguitch","assault",5,null]];
+const EAST_DEFENSE=[["britannia","Pendragon","heavy",13,"suzaku"],["britannia","Pendragon","rocket",9,"bismarck"],["britannia","Pendragon","siege",7,null],["britannia","Imperial Citadel","heavy",11,"cornelia"],["britannia","Imperial Citadel","siege",8,"schneizel"],["britannia","Imperial Air Command","heavy",10,"gino"],["britannia","Imperial Air Command","rocket",7,null],["britannia","Royal Arsenal","heavy",10,"jeremiah"],["britannia","Royal Arsenal","support",6,null],["britannia","Eastern Imperial Gate","heavy",13,"guilford"],["britannia","Eastern Imperial Gate","rocket",9,"darlton"],["britannia","Eastern Imperial Gate","siege",7,null],["britannia","Northern Imperial Gate","heavy",9,"anya"],["britannia","Northern Imperial Gate","rocket",6,null],["britannia","Southern Imperial Gate","heavy",8,"villetta"],["britannia","Western Imperial Gate","heavy",7,"oldrin"],["britannia","Tonopah","heavy",8,"nonette"],["britannia","Tonopah","rocket",5,null],["britannia","Goldfield","heavy",8,"kewell"],["britannia","Goldfield","rocket",5,null],["britannia","Rachel","heavy",9,"monica"],["britannia","Rachel","siege",6,null],["britannia","Warm Springs","heavy",8,"dorothea"],["britannia","Warm Springs","rocket",6,null],["britannia","Round Mountain","heavy",7,"luciano"],["britannia","Round Mountain","rocket",5,null],["britannia","Austin","heavy",8,"manfredi"],["britannia","Austin","medium",6,null],["britannia","Eureka","heavy",6,"augustus"],["britannia","Las Vegas","heavy",8,null],["britannia","Nellis Air Base","rocket",6,null],["britannia","Pahrump","heavy",8,null],["britannia","Indian Springs","rocket",6,null],["britannia","Gabbs","heavy",6,null],["britannia","Silver Peak","heavy",6,null],["britannia","Lida","heavy",6,null],["britannia","Amargosa Valley","siege",5,null],["britannia","Elko","heavy",7,null],["britannia","Winnemucca","medium",3,null]];
 const EU_FRONTS=[
  {name:'Great Basin Northern Advance',side:'eu',bases:['Wendover','Tooele','Delta','Ely'],goal:'Northern Imperial Gate'},
  {name:'Central Nevada Breakthrough',side:'eu',bases:['Milford','Baker','McGill','Pioche'],goal:'Eastern Imperial Gate'},
@@ -190,7 +201,7 @@ function defineScenario(config){
   fronts,counterattackBases}=config;
  const SIDES=[attacker,'britannia'];
  // Geographic city entries are immutable between stories; ownership alone differs.
- const CITIES=GEOGRAPHIC_CITIES.map(([name,lon,lat,oldOwner,tier,fort])=>
+ const CITIES=GEOGRAPHIC_CITIES.map(([name,lon,lat,_baselineOwner,tier,fort])=>
   [name,lon,lat,staging.has(name)?attacker:'britannia',tier,fort]);
  const ARMY_GROUPS=[...armies,...defense];
 function orderGroup(g,id,target){
