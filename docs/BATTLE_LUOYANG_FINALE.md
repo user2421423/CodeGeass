@@ -27,6 +27,7 @@ The regional scenario explicitly selects the **existing GSHHG atlas** with the c
 - All six bridge cells lie precisely on the river raster. Each has dry neighbours **on both banks**, with no artificial permanent obstruction of the crossing.
 - The steepest impassable mountain zones cover approximately **1,031 hexes** before road openings; the dry non-peak land and the bridging system form **one connected land component**, containing all cities.
 - Every city is placeable on an unoccupied passable hex; the largest nearest-dry-cell adjustment is **3 hexes**, confined to steep terrain or dense neighboring settlements.
+- Luoyang explicitly uses the **canonical 2017 Chinese Federation lineup** (including native Chuyen super-heavy and Gun-Ru siege/rocket artillery), avoiding the engine's generic Britannian fallback for world-only Chinese variants. No global roster or unit stats were changed.
 - The shared four-difficulty Elite scenario logic was extended to `battle-luoyang`, with Britannian and Federation Elite rosters, the existing rival commander rank rules, and Xingke's Shen Hu signature mapping.
 - The existing AI has a new scenario-gated Federation garrison planner for Luoyang and its threatened approaches. Unassigned reserves remain under the ordinary multi-front offensive AI; lost cities release their defenders to retake positions.
 - Victory is checked only when **one faction owns every city**. No turn limit, scripted unit spawning, hidden combat buffs, unique production costs or changes to global unit balance.
