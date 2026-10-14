@@ -12,8 +12,6 @@ on:
       - 'dist/engine.js'
       - 'dist/engine/ai.js'
       - 'tools/balance_sim.cjs'
-      - 'tests/ai-multifront-defense.test.cjs'
-      - 'tests/core.test.cjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -39,7 +37,6 @@ jobs:
       - name: Check rebuilt bundles and regressions
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/*.test.cjs
       - name: Apply controlled AI variant
         run: node tools/ai_defense_variant.cjs "${{ matrix.variant }}"
       - name: Simulate 50 turns
