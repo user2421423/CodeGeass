@@ -48,22 +48,20 @@
       '<div class="cc-rating"><span>' + safe(E.BRANCH_NAMES[key]) + '</span>' +
       starsHTML(ratings[key] || 0) + '</div>').join('');
 
-    // Portrait occupies its own tall column beside all commander details.
-    // The skill name stays on the card; its long description belongs in Commander Info.
-    // Previously removed faction/status/specialization/rank-icon headings stay absent.
-    card.innerHTML = '<div class="cc-card-top"><span class="cc-tier">Tier ' + tier + '</span></div>' +
-      '<div class="cc-card-main">' +
-        '<div class="cc-card-portrait">' + generalPortrait(k, 'cc-portrait-art', true) + '</div>' +
-        '<div class="cc-card-info">' +
-          '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
-            '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
-          '</div>' +
-          '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
-          '<div class="cc-signature"><strong>' + safe(a.skill) + '</strong></div>' +
-          '<div class="cc-card-bottom">' +
-            '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
-            actionMarkup +
-          '</div>' +
+    // A full-bleed portrait fills the entire left edge, like the original roster.
+    // The right side contains rank, ratings and actions only; abilities are
+    // intentionally absent from the card (they remain in Commander Info).
+    card.innerHTML = '<div class="cc-card-portrait">' +
+        generalPortrait(k, 'cc-portrait-art', true) + '</div>' +
+      '<div class="cc-card-info">' +
+        '<div class="cc-card-top"><span class="cc-tier">Tier ' + tier + '</span></div>' +
+        '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
+          '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
+        '</div>' +
+        '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
+        '<div class="cc-card-bottom">' +
+          '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
+          actionMarkup +
         '</div>' +
       '</div>';
 
