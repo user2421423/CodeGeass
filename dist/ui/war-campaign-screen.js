@@ -224,7 +224,7 @@ function wcMissionPanel(){
           '<select class="select" id="wc-difficulty">'+
           ['normal','hard','challenge','elite'].map(d=>'<option value="'+d+'"'+
           (wcDifficulty===d?' selected':'')+'>'+wcSafe(E.DIFFICULTIES[d]?.name||d)+'</option>').join('')+
-          '</select><button class="primary wc-launch" data-action="wc-launch-south-africa-playtest">'+
+          '</select><button class="primary wc-launch" data-action="'+(m.id==='eu-panama'?'wc-launch-panama-playtest':'wc-launch-south-africa-playtest')+'">'+
           (m.id==='eu-panama'?'Play Panama now':'Play South Africa now')+'</button>'+
           '<p class="wc-record">Skip earlier Campaign tiers for this test battle. Other Campaign progress is unchanged; a playtest victory does not unlock later tiers.</p>';
       }
@@ -344,7 +344,7 @@ document.addEventListener('click',function(e){
   if(d.action==='wc-return'){warCampaignDialog(game.warCampaign?.announcement || '');return;}
   if(d.action==='wc-launch'){wcLaunch();return;}
   if(d.action==='wc-open-south-africa'){wcOpenSouthAfrica();return;}
-   if(d.action==='wc-open-panama'){wcOpenPanama();return;}
+  if(d.action==='wc-open-panama'){wcOpenPanama();return;}
   if(d.action==='wc-launch-south-africa-playtest'||d.action==='wc-launch-panama-playtest'){wcLaunch(true);return;}
   if(d.action==='wc-resume'){wcResume();return;}
   if(d.action==='wc-reset'){wcView={zoom:1,x:0,y:0};wcDraw();return;}
