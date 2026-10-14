@@ -1,0 +1,22 @@
+{
+  "id": "britannia-south-africa",
+  "title": "Invasion of South Africa",
+  "campaignFaction": "britannia",
+  "tier": 3,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "South Africa",
+  "proposedMapBounds": {
+    "west": 16,
+    "south": -35,
+    "east": 33,
+    "north": -22
+  },
+  "campaignMapMarker": {
+    "longitude": 25,
+    "latitude": -29
+  },
+  "description": "Capture the southern African strategic base network.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
