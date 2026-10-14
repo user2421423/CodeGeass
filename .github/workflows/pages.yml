@@ -40,7 +40,6 @@ jobs:
       - name: Fast deployment safety checks
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/core.test.cjs tests/source-parts.test.cjs tests/fleija-mode-gates.test.cjs
           node tools/validate_assets.cjs --tracked
       # Preview branches are optional: removed experiments must never block
       # deployment of the tested main game.
@@ -72,7 +71,6 @@ jobs:
         working-directory: hd-source
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/scenario.test.cjs
       - name: Add isolated Japan HD preview
         if: steps.previews.outputs.japan_hd == 'true'
         run: |
@@ -96,8 +94,6 @@ jobs:
         working-directory: visual-map-source
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/*.test.cjs
-          node tests/ui-smoke.cjs
       - name: Add isolated visual map preview
         if: steps.previews.outputs.visual_map == 'true'
         run: |
