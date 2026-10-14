@@ -1036,6 +1036,31 @@ const GEOGRAPHY = (() => {
       }
       ctx.restore();
     }
+    // Western Russia's major rivers are geographic polylines. They are
+    // rendered above the political atlas but never turn land hexes into sea.
+    if(g.scenario?.id==='britannia-western-russia' && g.scenario.rivers){
+      const p=g.scenario.projection, k=Math.cos(p.centerLat*Math.PI/180),
+        wx=SQ*R*(g.cols-1)/(p.uMax-p.uMin),
+        hy=1.5*R*(g.rows-1)/(p.vMax-p.vMin);
+      ctx.save();
+      ctx.strokeStyle='#62c3df';
+      ctx.lineWidth=2.7;
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      ctx.globalAlpha=.68;
+      for(const line of Object.values(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        for(let i=0;i<line.length;i++){
+          const [lon,lat]=line[i],
+            x=R+wx*((lon-p.centerLon)*k-p.uMin),
+            y=R+hy*(p.centerLat+p.vMax-lat);
+          if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     return true;
   }
   function paint(ctx, g, left, right, top, bottom, scale) {
