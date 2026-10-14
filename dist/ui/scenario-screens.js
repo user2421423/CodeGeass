@@ -23,16 +23,16 @@ const SCENARIO_KINDS = [
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
   ['invasion-brazil','Invasion of Brazil','57 cities · 2 sides'],
-  ['invasion-california','Invasion of California','63 cities · 2 sides'],
+  ['invasion-california','Chinese Invasion of California','63 cities · 2 sides'],
   ['invasion-canada','Invasion of Canada','74 cities · 2 sides'],
   ['invasion-caribbean','Invasion of the Caribbean','41 cities · 2 sides'],
   ['eu-great-lakes','Battle for the Great Lakes','56 cities · 2 sides'],
   ['bf-yangtze','Battle of the Yangtze River','60 cities · 2 sides'],
   ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
-  ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
+  ['invasion-hawaii','Chinese Invasion of Hawaii','30 bases · 2 sides'],
   ['cf-new-zealand','Chinese Federation Invasion of New Zealand','63 cities · 2 sides'],
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
-  ['eu-panama','Panama Campaign','30 cities · 2 sides'],
+  ['eu-panama','Panama Campaign — Atlantic Offensive','30 cities · 2 sides'],
   ['bf-malacca','Battle of the Strait of Malacca','54 cities · 2 sides'],
   ['eu-pendragon','Battle of Pendragon — E.U. Eastern Offensive','2 sides · Finale'],
   ['cf-pendragon','Battle of Pendragon — Chinese Western Offensive','2 sides · Finale'],
@@ -249,10 +249,10 @@ const SCENARIO_TEXT = {
   },
   'invasion-california': {
     era:'California and Southern Oregon · Alternate 2017',
-    intro:'Europia United launches four carrier-led landings coordinated with a northern land invasion. Britannia controls all California cities; the E.U. holds 12 southern Oregon staging towns.',
+    intro:'The Chinese Federation launches four carrier-led landings supported by an offensive from conquered Oregon. Britannia holds the California cities; China controls the Oregon staging towns.',
     diplomacy:'Two sides at war from turn 1. Capture every hostile city without a turn limit. Pendragon remains a separate final campaign battle.',
     elite:'Existing Elite Force rules replace eligible land formations; fleets retain conventional naval roles and rival commanders follow the current difficulty rules.',
-    focus:{eu:'Medford',britannia:'Sacramento'}
+    focus:{cf:'Medford',britannia:'Sacramento'}
   },
   'invasion-canada': {
     era: 'Canada · Alternate 2017',
@@ -362,10 +362,10 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
   },
   'invasion-hawaii': {
     era: 'Hawaiian Islands · Alternate 2017',
-    intro: 'After the Bering Strait, Europia United launches four carrier-borne invasions of the Britannian Hawaiian Islands. The E.U. owns no city on turn one; seize all 30 bases to win.',
+    intro: 'Following victories in the western Pacific, the Chinese Federation launches four carrier-borne assaults against Britannian Hawaii. China owns no Hawaiian city on turn one; seize all 30 bases.',
     diplomacy: 'Britannia controls eight fortified islands, airfields and independently capturable ports. No alliances or turn limit.',
     elite: 'Elite Hawaii: eligible transported land formations convert to Elite Forces. Naval carriers and amphibious fleets retain standardized mechanics.',
-    focus: {eu:'',britannia:'Pearl Harbor'}
+    focus: {cf:'',britannia:'Pearl Harbor'}
   },
   'invasion-south-africa': {
     era: 'Southern Africa · Alternate 2017',
