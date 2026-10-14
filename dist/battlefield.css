@@ -3142,9 +3142,19 @@ button.danger:hover:not(:disabled) {
   gap: 9px;
   padding-right: 10px;
 }
+/* Keep all five unit statistics, including range, on a single row. */
 .selection-dock:has(.unit-dock-actions) .dock-unit {
-  min-width: 175px;
-  max-width: 215px;
+  min-width: 245px;
+  max-width: none;
+  flex: 0 0 auto;
+}
+.selection-dock:has(.unit-dock-actions) .dock-stats {
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+.selection-dock:has(.unit-dock-actions) .dock-stats > * {
+  flex-shrink: 0;
 }
 .unit-dock-actions {
   max-width: 320px;
@@ -3164,6 +3174,13 @@ button.danger:hover:not(:disabled) {
   .selection-dock:has(.unit-dock-actions) .dock-unit {
     min-width: 0;
     max-width: none;
+    width: auto;
+    flex: 1 1 190px;
+  }
+  .selection-dock:has(.unit-dock-actions) .dock-stats {
+    gap: 4px;
+    max-width: 100%;
+    overflow-x: auto;
   }
 }
 /* All unit orders are in the bottom bar; only carrier cargo opens the right drawer. */
