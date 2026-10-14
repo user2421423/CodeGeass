@@ -1,102 +1,85 @@
-/* Section 9: commander presentation. No engine, rank, roster or purchase changes. */
+/* Classic commander cards with modern roster search. No gameplay changes. */
 .cc-roster-dialog { max-width: 1140px; }
-.cc-tools { margin: 18px 0 20px; border: 1px solid #385268; border-radius: 12px;
-  padding: 14px; background: linear-gradient(130deg,#172b3e,#12202e); }
-.cc-toolbar-title { display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.cc-tools {
+  margin: 18px 0 20px; border: 1px solid #385268; border-radius: 10px;
+  padding: 14px; background: linear-gradient(130deg,#172b3e,#12202e);
+}
+.cc-toolbar-title {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
+}
 .cc-toolbar-title strong { font-size: 17px; color: #eaf4fc; letter-spacing: .03em; }
-.cc-toolbar-title small { display: block; font-size: 11px; color: #b2c4d6; padding-top: 3px; }
+.cc-toolbar-title small {
+  display: block; font-size: 11px; color: #b2c4d6; padding-top: 3px;
+}
 .cc-result-count { color: #d5bf80; font-size: 12px; font-variant-numeric: tabular-nums; }
 .cc-filter-bar { display: flex; gap: 9px; flex-wrap: wrap; }
-.cc-filter-bar label { display: flex; flex: 1 1 145px; min-width: 125px; flex-direction: column;
-  gap: 5px; color: #aabbce; font-size: 11px; letter-spacing: .04em; }
+.cc-filter-bar label {
+  display: flex; flex: 1 1 145px; min-width: 125px;
+  flex-direction: column; gap: 5px;
+  color: #aabbce; font-size: 11px; letter-spacing: .04em;
+}
 .cc-filter-bar .cc-search-label { flex: 2 1 230px; }
-.cc-filter-bar input, .cc-filter-bar select { width: 100%; min-width: 0; padding: 9px 10px;
-  border: 1px solid #4c667c; border-radius: 6px; background: #0d1b29; color: #edf4f9;
-  font: inherit; font-size: 13px; box-sizing: border-box; }
-.cc-filter-bar :is(input, select):focus-visible { outline: 2px solid #e2bd6f; outline-offset: 1px; }
-.cc-roster { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 15px; }
+.cc-filter-bar input, .cc-filter-bar select {
+  width: 100%; min-width: 0; padding: 9px 10px;
+  border: 1px solid #4c667c; border-radius: 6px;
+  background: #0d1b29; color: #edf4f9;
+  font: inherit; font-size: 13px; box-sizing: border-box;
+}
+.cc-filter-bar :is(input, select):focus-visible {
+  outline: 2px solid #e2bd6f; outline-offset: 1px;
+}
+.cc-roster {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
 .cc-empty { color: #c0cbd6; margin: 20px 0; }
 .cc-empty[hidden] { display: none; }
-.cc-card { --cc-tier-color: #b47b53; --cc-tier-muted: #5c4438; position: relative; overflow: hidden;
-  min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 12px;
-  padding: 14px; background: linear-gradient(155deg, #213346 0%, #152332 80%);
-  border: 1px solid var(--cc-tier-muted); border-top: 3px solid var(--cc-tier-color);
-  border-radius: 11px; box-shadow: 0 5px 19px #0003; }
-.cc-tier-1 { --cc-tier-color: #e1bc6d; --cc-tier-muted: #9a783c; }
-.cc-tier-2 { --cc-tier-color: #cbd5e2; --cc-tier-muted: #697b8f; }
-.cc-tier-3 { --cc-tier-color: #c28a62; --cc-tier-muted: #795440; }
-.cc-card:hover { border-color: var(--cc-tier-color); box-shadow: 0 7px 25px #0006; }
-.cc-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.cc-tier { font-weight: 800; letter-spacing: .09em; font-size: 11px; color: var(--cc-tier-color);
-  padding: 4px 7px; border: 1px solid var(--cc-tier-muted); border-radius: 4px; }
-.cc-state { color: #c3d2de; font-size: 11px; text-align: right; }
-.cc-unrecruited .cc-state { color: #bcae99; }
-.cc-unrecruited .cc-card-portrait { filter: saturate(.65); }
-.cc-card-identity { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: start; }
-.cc-card-portrait { width: 96px; height: 115px; background: #0c1826; overflow: hidden;
-  border-radius: 7px; border: 1px solid var(--cc-tier-muted); position: relative; }
-.cc-card-portrait .cc-portrait-art { display: block; width: 100%; height: 100%; cursor: pointer; }
-.cc-card-portrait .portrait-art, .cc-card-portrait img { object-fit: cover; object-position: center 22%; }
-.cc-card-portrait img { width: 100%; height: 100%; max-width: 100%; }
-.cc-name-group { min-width: 0; }
-.cc-faction, .cc-faction-detail { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #91b8d5; }
-.cc-card h3 { font-size: 17px; line-height: 1.3; color: #f5f4f1; margin: 5px 0 9px;
-  overflow-wrap: anywhere; }
-.cc-rank-line { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
-.cc-rank-mark { flex: none; display: flex; flex-direction: column; justify-content: center; align-items: center;
-  width: 35px; height: 38px; border: 1px solid var(--cc-tier-muted); border-radius: 5px;
-  background: #0f1c2d; color: var(--cc-tier-color); line-height: 1.05; }
-.cc-rank-bars { letter-spacing: 1px; font-size: 10px; }
-.cc-rank-grade { font-size: 10px; font-weight: 800; }
-.cc-rank-line small { display: block; color: #8caabe; font-size: 10px; }
-.cc-rank-line b { display: block; color: #e8eaf0; font-size: 12px; overflow-wrap: anywhere; }
-.cc-specialty { display: inline-block; border: 1px solid #345978; border-radius: 5px; color: #b6d9ed;
-  background: #112b43; padding: 4px 7px; font-size: 11px; }
-.cc-card-ratings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px 10px; padding: 10px; background: #101f2d; border: 1px solid #2f4459; border-radius: 7px; }
-.cc-rating { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.cc-rating > span:first-child { font-size: 11px; color: #bed0dd; }
-.cc-stars { display: inline-flex; gap: 2px; letter-spacing: 0; white-space: nowrap; font-size: 14px; }
-.cc-stars .lit { color: #ecd184; text-shadow: 0 0 5px #c79e4740; }
-.cc-stars .dim { color: #526171; }
-.cc-signature { display: flex; flex-direction: column; gap: 5px; padding: 11px 12px;
-  background: linear-gradient(115deg, #243c52, #192c3e); border-left: 3px solid var(--cc-tier-color);
-  border-radius: 5px; }
-.cc-section-label { text-transform: uppercase; letter-spacing: .12em; color: #acbcd0; font-size: 10px; font-weight: 700; }
-.cc-signature strong { color: #f4d999; font-size: 14px; }
-.cc-card .cc-signature p { min-height: 0; margin: 0; line-height: 1.55; font-size: 12px; color: #ccd7e3; }
-.cc-card-bottom { display: flex; flex-direction: column; gap: 9px; margin-top: auto; color: #9eafc1; font-size: 11px; }
-.cc-card-bottom .officer-actions { width: 100%; margin: 0; }
-.cc-card-bottom .officer-actions button { width: 100%; }
-.cc-operation-chip { --cc-tier-color: #c28a62; border-left: 3px solid var(--cc-tier-color); }
-.cc-operation-chip.cc-tier-1 { --cc-tier-color: #e1bc6d; }
-.cc-operation-chip.cc-tier-2 { --cc-tier-color: #cbd5e2; }
-.cc-operation-tier { display: block; color: var(--cc-tier-color); font-size: 10px; margin-bottom: 3px; letter-spacing: .07em; }
-.cc-detail { --cc-tier-color: #c28a62; border-color: var(--cc-tier-color) !important; }
-.cc-detail .gi-head { background: linear-gradient(100deg,#172638,#304b63); border-bottom: 2px solid var(--cc-tier-color); }
-.cc-detail .gi-head h2 { color: #f4f0e9; font-size: 17px; letter-spacing: .16em; }
-.cc-detail .gi-head .close { background: #233747; border: 1px solid #7890a2; }
-.cc-detail .gi-nameplate { background: #132335; border: 1px solid var(--cc-tier-muted);
-  border-left: 3px solid var(--cc-tier-color); display: flex; flex-wrap: wrap; padding: 8px; }
-.cc-detail .gi-stars-top { color: var(--cc-tier-color); }
-.cc-detail .gi-left { background: linear-gradient(#273d50,#142638) !important; border-right-color: #4d657d; }
-.cc-detail .gi-portrait { overflow: hidden; border: 1px solid var(--cc-tier-muted); border-radius: 8px; }
-.cc-detail .gi-portrait .portrait-art, .cc-detail .gi-portrait img { object-fit: contain; object-position: center top; }
-.cc-detail .gi-portrait img { width: 100%; height: 100%; }
-.cc-detail .gi-rank { background: #152435; }
-.cc-detail .gi-ability.cc-detail-signature { margin: 12px; border-left: 4px solid var(--cc-tier-color);
-  background: linear-gradient(115deg,#243c50,#17293a); }
-.cc-detail-signature h3 { margin: 7px 0 4px; color: #f1d49c; font-size: 20px; }
-.cc-detail-signature .cc-signature-title { color: #b5cadd; }
-.cc-detail .gi-ability.cc-generic { background: #1a2d40; }
-.cc-detail .gi-stars .on { color: #e9cb7e; }
-.cc-disabled-explanation { color: #e1b39b !important; flex-basis: 100%; font-size: 11px; }
-@media (max-width: 680px) {
-  .cc-card-identity { grid-template-columns: 84px minmax(0,1fr); }
-  .cc-card-portrait { width: 84px; height: 104px; }
-  .cc-filter-bar label { flex-basis: calc(50% - 8px); }
+
+/* Preserve the original card typography, green surfaces and horizontal rank line.
+ * The only card visual change is an uncropped left-side portrait. */
+.cc-roster .cc-classic {
+  position: relative; overflow: hidden; min-height: 340px;
+  padding: 20px 20px 20px 190px;
+  background: linear-gradient(130deg, #35413b, #1b3039);
+  border: 1px solid #8e927077;
+  border-radius: 2px;
+}
+.cc-roster .cc-classic .officer-portrait {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  height: 100%; width: 173px;
+  display: flex; align-items: flex-start; justify-content: center;
+  overflow: hidden; mask-image: none; -webkit-mask-image: none;
+  background: linear-gradient(180deg, #3a4843, #1a2c34);
+  border-right: 1px solid #81948922;
+}
+.cc-roster .cc-classic .officer-portrait > img {
+  display: block; position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+.cc-roster .cc-classic .officer-portrait:focus-visible {
+  outline: 2px solid #ecd28c; outline-offset: -3px;
+}
+.cc-roster .cc-classic > .label {
+  display: block; line-height: 1.5;
+  margin-bottom: 7px; letter-spacing: .035em;
+  color: #c2d4d1;
+}
+.cc-roster .cc-classic .officer-actions { align-items: stretch; }
+.cc-roster .cc-classic p { min-height: 0; }
+
+@media (max-width: 950px) {
   .cc-roster { grid-template-columns: 1fr; }
-  .cc-detail .gi-body { grid-template-columns: 1fr; }
-  .cc-detail .gi-portrait { max-width: 270px; width: calc(100% - 20px); margin-inline: auto; }
+}
+@media (max-width: 560px) {
+  .cc-roster .cc-classic { padding: 18px 15px 18px 138px; }
+  .cc-roster .cc-classic .officer-portrait { width: 126px; }
+  .cc-filter-bar label { flex-basis: calc(50% - 8px); }
+}
+@media (max-width: 400px) {
+  .cc-roster .cc-classic { padding-left: 113px; }
+  .cc-roster .cc-classic .officer-portrait { width: 104px; }
+  .cc-roster .cc-classic h3 { font-size: 19px; }
 }
