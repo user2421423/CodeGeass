@@ -302,12 +302,15 @@ const modal = () => node('modal-root').innerHTML;
       const europeTurnLabel = 'Turn ' + game.turn +
         (turnLimit() ? ' / ' + turnLimit() : '');
       game = E.scenarios.stonehenge.create('britannia', 'normal', 17);
-      const stonehenge = homeZoom();
+      const stonehenge = homeZoom(), stonehengeLimit = turnLimit();
       game = E.scenarios.japan.create('britannia', 'normal', 17);
       const japan = homeZoom(), japanLimit = turnLimit();
+      const japanTurnLabel = 'Turn ' + game.turn +
+        (turnLimit() ? ' / ' + turnLimit() : '');
       game.scenario.turnLimit = 42;
       const explicitLimit = turnLimit();
-      return { europe, stonehenge, japan, europeLimit, europeTurnLabel, japanLimit, explicitLimit };
+      return { europe, stonehenge, stonehengeLimit, japan, europeLimit, europeTurnLabel,
+        japanLimit, japanTurnLabel, explicitLimit };
     } finally { game = prior; }
   })()`);
   assert.equal(scenarioZooms.europe, 5.4,
@@ -320,8 +323,12 @@ const modal = () => node('modal-root').innerHTML;
     'European War has no 60-turn deadline');
   assert.equal(scenarioZooms.europeTurnLabel, 'Turn 1',
     'European War header should not show Turn 1 / 60');
-  assert.equal(scenarioZooms.japanLimit, 60,
-    'Japan scenarios retain the existing turn counter');
+  assert.equal(scenarioZooms.stonehengeLimit, 0,
+    'Operation Stonehenge has no turn deadline');
+  assert.equal(scenarioZooms.japanLimit, 0,
+    'Japan scenarios have no turn deadline');
+  assert.equal(scenarioZooms.japanTurnLabel, 'Turn 1',
+    'Japan scenario header should not show a fictitious 60-turn cap');
   assert.equal(scenarioZooms.explicitLimit, 42,
     'an explicit scenario turn limit must still appear in the UI');
   assert(scenarioLaunch.includes("britannia:'Nagoya',bk:'Kyoto',cf:'Fukuoka'"),
