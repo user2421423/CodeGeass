@@ -1,0 +1,22 @@
+{
+  "id": "eu-great-lakes",
+  "title": "Battle for the Great Lakes",
+  "campaignFaction": "eu",
+  "tier": 5,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Great Lakes",
+  "proposedMapBounds": {
+    "west": -94,
+    "south": 41,
+    "east": -78,
+    "north": 50
+  },
+  "campaignMapMarker": {
+    "longitude": -86,
+    "latitude": 44
+  },
+  "description": "Fight for the inland industrial centers and lake crossings.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
