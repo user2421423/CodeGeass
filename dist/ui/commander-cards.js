@@ -1,5 +1,5 @@
-/* Section 9 revised: retain the classic commander cards, add roster search/sort only.
- * Game data, recruitment prices and all original action handlers are unchanged. */
+/* Section 9: tiered commander roster with large side portraits and concise skills.
+ * Gameplay, prices, commander data and original action handlers are unchanged. */
 (() => {
   'use strict';
   const controls = { query: '', tier: 'all', ownership: 'all', specialty: 'all', sort: 'tier' };
@@ -48,22 +48,23 @@
       '<div class="cc-rating"><span>' + safe(E.BRANCH_NAMES[key]) + '</span>' +
       starsHTML(ratings[key] || 0) + '</div>').join('');
 
-    // The reference card's compact navy-and-gold layout, minus the labels the user
-    // asked to remove: faction, specialization, ownership, rank icon/rank heading,
-    // and the "Signature Ability" heading. Real rank and ability are still shown.
+    // Portrait occupies its own tall column beside all commander details.
+    // The skill name stays on the card; its long description belongs in Commander Info.
+    // Previously removed faction/status/specialization/rank-icon headings stay absent.
     card.innerHTML = '<div class="cc-card-top"><span class="cc-tier">Tier ' + tier + '</span></div>' +
-      '<div class="cc-card-identity">' +
+      '<div class="cc-card-main">' +
         '<div class="cc-card-portrait">' + generalPortrait(k, 'cc-portrait-art', true) + '</div>' +
-        '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
-          '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
+        '<div class="cc-card-info">' +
+          '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
+            '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
+          '</div>' +
+          '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
+          '<div class="cc-signature"><strong>' + safe(a.skill) + '</strong></div>' +
+          '<div class="cc-card-bottom">' +
+            '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
+            actionMarkup +
+          '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
-      '<div class="cc-signature"><strong>' + safe(a.skill) + '</strong>' +
-        '<p>' + safe(a.desc) + '</p></div>' +
-      '<div class="cc-card-bottom">' +
-        '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
-        actionMarkup +
       '</div>';
 
     // The original [data-general] portrait still opens Commander Info.
