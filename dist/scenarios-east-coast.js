@@ -224,7 +224,7 @@
       }
       g.scenario.groups.push(fleet);
     }
-    // Load all 24 Britannian land formations into offshore carriers before turn one.
+    // Load all 84 E.U. land formations into six offshore invasion flotillas.
     const carriers=g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
     const passengers=[];
     for(const [side,name,cls,count,commander] of ARMY_GROUPS){
