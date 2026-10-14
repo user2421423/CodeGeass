@@ -18,9 +18,14 @@ const SCENARIO_KINDS = [
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'invasion-american-east-coast': {
+    eu: 'Lead six offshore carrier groups against New England, New York, Chesapeake Bay, the Carolinas, Georgia and Florida. Seize every Britannian city.',
+    britannia: 'Fortify industrial capitals and harbors, contest landing beaches, defend the Appalachian approaches and counterattack E.U. bridgeheads.'
+  },
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -83,6 +88,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'invasion-american-east-coast': {
+    era: 'American Atlantic Seaboard · Alternate 2017',
+    intro: 'Europia United starts at sea without cities. Six simultaneous amphibious fronts attack Britannia from Maine to Florida, with no turn limit.',
+    diplomacy: 'Both powers are at war from turn 1. Capturable ports and fortified coastal cities control inland supply and naval staging.',
+    elite: 'Elite East Coast uses standard faction Elite Force rosters. Rival named commanders begin at Level 5; carriers remain conventional.',
+    focus: {eu:'',britannia:'New York City'}
+  },
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
