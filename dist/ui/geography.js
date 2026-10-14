@@ -919,7 +919,7 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
-    const centreSampledRegion = australia || middleEast;
+    const centreSampledRegion = australia || middleEast || g.scenario.id === 'invasion-turkey';
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),

@@ -13,7 +13,8 @@ const SCENARIO_KINDS = [
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
-  ['area-18','The Conquest of Area 18','50 cities · 3 sides']
+  ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
+  ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
   'war-for-australia': {
@@ -50,6 +51,10 @@ const SCENARIO_BLURBS = {
   'bering-strait': {
     britannia: 'Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.',
     eu: 'Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases.'
+  },
+  'invasion-turkey': {
+    britannia: 'Lead the northern land offensive from Syria and Iraq, pierce the Taurus passes and land expeditionary fleets at Anatolian ports. Take every E.U. city.',
+    eu: 'Defend Istanbul, Ankara and the Anatolian interior, hold the Bosporus and Dardanelles, then counterattack into Syria and Mesopotamia.'
   },
   'area-18': {
     britannia: 'Consolidate Arabia and Mesopotamia, break the Levantine line and drive east into Persia. Your fleets hold Gulf and Red Sea bases.',
@@ -113,6 +118,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.',
     elite: 'Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.',
     focus: {britannia:'Koror',cf:'Manila'}
+  },
+  'invasion-turkey': {
+    era: 'Anatolia · Alternate 2017',
+    intro: 'Britannia attacks north from the Middle East while its expeditionary fleets target the Mediterranean coast. Europia United defends Turkey and the straits. Capture all 59 cities.',
+    diplomacy: 'Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.',
+    elite: 'Elite Turkey uses standard faction Elite Force replacements for land and amphibious troops while ships remain conventional. AI income and commanders follow established Elite settings.',
+    focus: {britannia:'Antakya',eu:'Ankara'}
   },
   'area-18': {
     era: 'Middle East · Alternate 2017',

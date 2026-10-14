@@ -25,11 +25,11 @@ test('two factions and exactly approved tier sizes',()=>{
   assert.equal(W.registry.britannia.length,7);
   assert.equal(Object.keys(W.ALL).length,25);
 });
-test('exactly 15 unique planned objectives with null playable modules',()=>{
-  assert.equal(W.PLACEHOLDERS.length,15);
+test('exactly 14 remaining planned objectives with null playable modules',()=>{
+  assert.equal(W.PLACEHOLDERS.length,14);
   assert.equal(new Set(W.PLACEHOLDERS.map(m=>m.id)).size,15);
   assert.equal(W.PLACEHOLDERS.filter(m=>m.campaignFaction==='eu').length,10);
-  assert.equal(W.PLACEHOLDERS.filter(m=>m.campaignFaction==='britannia').length,5);
+  assert.equal(W.PLACEHOLDERS.filter(m=>m.campaignFaction==='britannia').length,4);
   for(const m of W.PLACEHOLDERS){
     assert.equal(m.status,'planned');assert.equal(m.scenarioId,null);
     assert.equal(m.bounds.length,4);assert.equal(m.marker.length,2);
@@ -42,6 +42,8 @@ test('existing scenarios link to exact modules and playing sides',()=>{
       ['war-for-australia','area-18','division-japan']);
     assert.equal(W.registry[f][1].missions[0].scenarioId,'bering-strait');
   }
+  assert.equal(W.ALL['britannia-turkey'].scenarioId,'invasion-turkey');
+  assert.equal(W.ALL['britannia-turkey'].status,'implemented');
   assert.equal(W.ALL['britannia-european-war'].scenarioId,'european-war');
   assert.equal(W.ALL['britannia-european-war'].battleSide,'eb');
   assert.equal(W.ALL['britannia-stonehenge'].scenarioId,'operation-stonehenge');

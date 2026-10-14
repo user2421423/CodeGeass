@@ -53,7 +53,7 @@ Existing generated bundles retain src as their editable source: src/README.md an
 
 Ten E.U. IDs: eu-hawaii, eu-brazil, eu-greenland, eu-caribbean, eu-panama, eu-new-york, eu-canada, eu-great-lakes, eu-california, eu-pendragon.
 
-Five Britannian IDs: britannia-siberia, britannia-south-africa, britannia-urals, britannia-turkey, britannia-western-russia.
+Britannian missions: britannia-turkey is now implemented on scenario/britannia-turkey; the four remaining planned IDs are britannia-siberia, britannia-south-africa, britannia-urals and britannia-western-russia.
 
 Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in dist/war-campaign.js: id, title, campaignFaction, tier, region, marker [longitude,latitude], bounds [west,south,east,north], description, status, scenarioId and battleSide. Planned entries currently have scenarioId = null, and therefore cannot launch or be completed.
 
@@ -63,7 +63,7 @@ Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in di
 4. Refine marker and bounds to match the actual region if necessary. Geographic bounds are approximate rectangles used for campaign map recoloring; never recolor an unrelated continent.
 5. Run Campaign tests and existing Scenario tests. The objective's launch button becomes functional automatically when unlocked. No fake battle, fake victory, cross-scenario resource carryover, or additional UI case is needed.
 
-The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. No new planned regional scenario is implemented on this branch.
+The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. On scenario/britannia-turkey, the Turkey objective is implemented on its own branch and unlocks when the preceding tiers are completed. This branch has not been merged.
 
 ## Map rendering, ownership and navigation
 
