@@ -1,0 +1,22 @@
+{
+  "id": "eu-canada",
+  "title": "Invasion of Canada",
+  "campaignFaction": "eu",
+  "tier": 4,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Canada",
+  "proposedMapBounds": {
+    "west": -140,
+    "south": 48,
+    "east": -60,
+    "north": 70
+  },
+  "campaignMapMarker": {
+    "longitude": -105,
+    "latitude": 57
+  },
+  "description": "Open a broad northern continental offensive.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
