@@ -42,6 +42,19 @@ for(const difficulty of difficulties.filter(x=>difficultyFilter==='all'||difficu
   if(result.errors.length||S.winner(g))break;
  }
  result.winner=S.winner(g)?.winner||null;
+ if(difficulty==='elite'&&player==='britannia'&&seed===11){
+  const carriers=g.units.filter(u=>u.side==='eu'&&E.TYPES[u.type].naval==='ship');
+  result.eliteAIDiagnostic={
+   euAlive:E.alive(g,'eu'),euShips:carriers.length,
+   loadedShips:carriers.filter(u=>(u.cargo||[]).length).length,
+   embarked:carriers.reduce((n,u)=>n+(u.cargo||[]).length,0),
+   euAssignments:Object.keys(g.ai?.eu?.assignments||{}).length,
+   euFleetStates:Object.keys(g.ai?.eu?.fleet||{}).length,
+   moved:carriers.filter(u=>u.moved).length,
+   carrierSample:carriers.slice(0,4).map(u=>({group:u.invasionGroup,
+    c:u.c,r:u.r,cargo:(u.cargo||[]).map(v=>({type:v.type,stack:v.stack}))}))
+  };
+ }
  result.cities=Object.fromEntries(S.sides.map(s=>[s,g.stations.filter(c=>c.owner===s).length]));
  reports.push(result);console.log('EAST_COAST_SIM '+JSON.stringify(result));
 }
