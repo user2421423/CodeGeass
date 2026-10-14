@@ -8,7 +8,7 @@ permissions:
 jobs:
   scenario:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,4 +18,18 @@ jobs:
       - run: node tools/build_sources.cjs --check
       - run: node --test tests/south-africa.test.cjs
       - run: node --test tests/war-campaign.test.cjs
-      - run: node tools/south-africa_sim.cjs 5 all normal
+  multi-seed-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        difficulty: [normal, hard, challenge, elite]
+        side: [britannia, eu]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Three deterministic seeds, four turns, both factions and all difficulties
+        run: node tools/south-africa_sim.cjs 4 ${{ matrix.side }} ${{ matrix.difficulty }}

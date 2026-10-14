@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains nine independent regional wars. Each scenario
+The **Scenarios** menu contains ten independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -20,6 +20,7 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **The Division of Japan** | 110 × 84 · 44 cities | Britannia, Europia United and China control central, northern and western Japan respectively; all are hostile from turn one. |
 | **The European War** | 120 × 80 · 44 cities | Europia United defends 28 western and central European cities against Euro Britannia's 16 eastern cities. |
 | **Operation Stonehenge** | 120 × 96 · 37 cities | Britannia starts with no cities, twelve loaded carrier-battleships and 25 amphibious escorts off the Atlantic coast; Europia United owns every city in Britain, Ireland, France, Iberia and the Low Countries. Only the two powers fight. |
+| **Invasion of South Africa** | 144 × 108 · 47 cities | Four Britannian carrier-led landing forces begin offshore with no cities. The E.U. holds Cape Town, Johannesburg, Pretoria, Durban and the wider southern African theatre, defending 16 ports and inland industrial centers. Capture every city, or as the E.U. defeat the cityless invaders. |
 | **The Bering Strait Crisis** | 120 × 80 · 28 cities | Britannia in Alaska and the Aleutians fights Europia United in eastern Siberia and Kamchatka, with naval assaults across the Bering Sea. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |

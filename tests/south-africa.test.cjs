@@ -71,3 +71,33 @@ test('Campaign Mode registry activates only this Britannian tier-three objective
  const p=W.testFixture('britannia',3);
  assert.equal(W.launch(p,'britannia',m.id,{[S.id]:S}).ok,true);
 });
+
+test('20/80 coastline classification exhaustively covers every geographic hex',()=>{
+ const g=S.create('britannia','normal',73);
+ const count=Object.fromEntries([...new Set(g.tiles.map(t=>t.terrain))].map(k=>[k,g.tiles.filter(t=>t.terrain===k).length]));
+ // Calculated offline by polygon/hex intersection with GSHHG intermediate
+ // coastline: under 20% water, 20–80% coastline, over 80% land.
+ assert.equal((count.sea||0)+(count.offmap||0),7880);
+ assert.equal(count.coast,228);
+ assert.equal(g.tiles.length-(count.sea||0)-(count.offmap||0)-count.coast,7444);
+ // Every port is in navigable sea, and every mixed hex touches the
+ // coastline, not an isolated internal sea artifact.
+ for(const t of g.tiles.filter(t=>t.terrain==='coast')){
+   const ring=E.adjacent(g,t);
+   assert.ok(ring.some(n=>n.terrain==='sea'||n.terrain==='offmap'||n.terrain==='coast'),'orphan coast '+t.c+','+t.r);
+ }
+ const water=new Set(g.tiles.filter(t=>t.terrain==='sea').map(t=>t.c+','+t.r));
+ const start=g.stations.find(s=>s.name==='Cape Town').portAt;
+ const seen=new Set([start.c+','+start.r]),q=[E.tile(g,start.c,start.r)];
+ for(let i=0;i<q.length;i++)for(const n of E.adjacent(g,q[i])){
+   const k=n.c+','+n.r;
+   if(water.has(k)&&!seen.has(k)){seen.add(k);q.push(n);}
+ }
+ for(const s of g.stations.filter(s=>s.portAt)){
+   const p=s.portAt;
+   assert.ok(seen.has(p.c+','+p.r),'disconnected harbour: '+s.name);
+ }
+ for(const u of g.units.filter(u=>u.side==='britannia'&&E.TYPES[u.type]?.naval==='ship')){
+   assert.ok(seen.has(u.c+','+u.r),'disconnected landing fleet');
+ }
+});
