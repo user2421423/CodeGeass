@@ -103,14 +103,18 @@
       return {c,r,owner:null,terrain:kind===0?'sea':kind===1?'coast':landscape(p,c,r),
         biome:kind&&p.lat>69?'tundra':kind&&p.lat>55?'taiga':null};
     });
-    // The Strait of Georgia / Juan de Fuca is narrower than one strategic
-    // hex. Three mixed-water shoreline cells retain its actual sea passage
-    // between Vancouver Island and the Lower Mainland, removing the false
-    // hex land bridge while preserving both mainland and island cities.
-    for(const [c,r] of [[42,91],[42,92],[41,92]]){
-      const t=g.tiles[r*COLS+c];
-      if(t.terrain!=='coast')throw Error('Georgia Strait geometry changed');
-      t.terrain='sea';
+    // Hydrographic straits narrower than a 196 x 112 strategic hex must not
+    // become land bridges. These eight independently GSHHS-checked cells
+    // correct Georgia Strait, Johnstone Strait, Fury and Hecla Strait,
+    // Belle Isle Strait and Northumberland Strait. A fully land-covered
+    // cell at Johnstone Strait represents both opposing shores at this scale.
+    const STRAIT_WATER=[[42,91,1],[42,92,1],[41,92,1],
+      [35,86,1],[37,87,2],[114,36,1],[166,84,1],
+      [151,98,1],[153,99,1]];
+    for(const [c,r,expected] of STRAIT_WATER){
+      const i=r*COLS+c;
+      if(COAST[i]!==expected)throw Error('Canadian strait source geometry changed');
+      g.tiles[i].terrain='sea';
     }
     // Isolated lake pixels must not create unusable ocean ports. The Atlantic,
     // Labrador, Beaufort and Pacific basins are identifiable by their large
