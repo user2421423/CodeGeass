@@ -351,7 +351,7 @@
     ['britannia', 'scout', -80, 9, 1],
     ['britannia', 'super', 139.7, 35.7, 1, 'suzaku'],
     ['britannia', 'heavy', 136, 35, 2, 'cornelia'],
-    ['britannia', 'medium', 131, 33.5, 2],
+    ['britannia', 'medium', 131, 33.5, 2, 'lelouch'], // 2017: Lelouch starts in Japan (Fukuoka), not China.
     ['britannia', 'rocket', 140, 38.5, 1],
     ['britannia', 'light', 141.4, 43, 1],
     // Euro Britannia's knights, exiled from Europe, stage on the Atlantic coast for a crossing.
