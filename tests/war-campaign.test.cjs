@@ -27,7 +27,7 @@ test('two factions and exactly approved tier sizes',()=>{
 });
 test('14 remaining planned missions and Western Russia implementation',()=>{
   assert.equal(W.PLACEHOLDERS.length,14);
-  assert.equal(new Set(W.PLACEHOLDERS.map(m=>m.id)).size,15);
+  assert.equal(new Set(W.PLACEHOLDERS.map(m=>m.id)).size,14);
   assert.equal(W.PLACEHOLDERS.filter(m=>m.campaignFaction==='eu').length,10);
   assert.equal(W.PLACEHOLDERS.filter(m=>m.campaignFaction==='britannia').length,4);
   assert.equal(W.ALL['britannia-western-russia'].scenarioId,'britannia-western-russia');
