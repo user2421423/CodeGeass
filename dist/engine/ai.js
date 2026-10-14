@@ -1610,6 +1610,86 @@
   function eliminatorFieldCarrierScore(g,u) {
     return eliminatorCarrierScore(g,u) || eliminatorRegularCarrierScore(g,u);
   }
+  // Select a visible friendly field formation that could benefit from a
+  // mobile charge. This is not a secret enemy-Eliminator prediction: only
+  // friendly units and ordinary, visible enemy combat units are inspected.
+  function eliminatorForwardFormation(g,side,city) {
+    const land=massOf(g,city);
+    if (land < 0) return null;
+    const friends=g.units.filter(u=>u.hp>0 && u.side===side &&
+      !atSea(g,u) && massOf(g,u)===land);
+    const enemies=g.units.filter(u=>u.hp>0 && foe(g,u.side,side));
+    const covered=sideEliminators(g,side).filter(h=>h.ready &&
+      h.city?.id!==city.id);
+    let best=null,score=-Infinity;
+    for(const anchor of friends) {
+      const d=dist(g,city,anchor);
+      if(d<4 || d>17)continue;
+      const allies=friends.filter(v=>dist(g,v,anchor)<=4).length;
+      if(allies<3)continue;
+      const threat=enemies.filter(e=>dist(g,e,anchor)<=12).length;
+      if(!threat)continue;
+      const duplicate=covered.some(h=>dist(g,h,anchor)<=ELIMINATOR.range);
+      const value=Math.min(8,allies)*45 + Math.min(6,threat)*36 +
+        (COMMANDERS[anchor.cmd]?.storyTier===1?150:anchor.cmd?75:0) -
+        d*17 - (duplicate?260:0);
+      if(value>score){score=value;best=anchor;}
+    }
+    return best && score>=30 ? {unit:best,score} : null;
+  }
+  function eliminatorForwardRunnerScore(g,side,city,u) {
+    if (u.hp<=0 || u.cmd || u.eliminator || isShip(u) || atSea(g,u) ||
+        u.hp/maxHP(u)<0.7 || dist(g,u,city)>5 ||
+        massOf(g,u)!==massOf(g,city))return 0;
+    const formation=eliminatorForwardFormation(g,side,city);
+    if(!formation)return 0;
+    const t=TYPES[u.type];
+    if(t.branch==='Artillery' || t.naval)return 0;
+    return 220 + Math.max(0,formation.score)*0.3 +
+      (t.branch==='Armor'||t.cls==='assault'?95:0) -
+      20*dist(g,u,city);
+  }
+  function eliminatorRememberMuster(g,side,city,u) {
+    if(eliminatorCarrierScore(g,u)>0)return;
+    const formation=eliminatorForwardFormation(g,side,city);
+    if(!formation)return;
+    const store=(((g.ai ||= {})[side] ||= {}).eliminatorMusterTargets ||= {});
+    store[u.id]=formation.unit.id;
+    (((g.ai ||= {})[side] ||= {}).eliminatorMusterAssigned ||= 0);
+    g.ai[side].eliminatorMusterAssigned++;
+  }
+  // Rear defenders carrying a ready charge move toward a nearby friendly
+  // formation, but stop taking logistics orders once within coverage range,
+  // or as soon as combat/recovery requires normal unit behavior.
+  function aiEliminatorMusterOrder(g,u) {
+    const state=g.ai?.[u.side];
+    const targetId=state?.eliminatorMusterTargets?.[u.id];
+    if(targetId==null || !u.eliminator || u.moved || u.attacked) return null;
+    const target=g.units.find(v=>v.id===targetId && v.hp>0 &&
+      v.side===u.side && !atSea(g,v));
+    const clear=()=>{delete state.eliminatorMusterTargets[u.id];};
+    if(!target || massOf(g,target)!==massOf(g,u)) {clear();return null;}
+    const distance=dist(g,u,target);
+    if(distance<=ELIMINATOR.range) {clear();return null;}
+    const enemies=g.units.filter(v=>v.hp>0 && foe(g,v.side,u.side));
+    if(enemies.some(v=>dist(g,v,u)<=4))return null;
+    const field=goalField(g,u.side,[[target,0]],'land',null,60);
+    const current=field[u.r*g.cols+u.c];
+    if(!Number.isFinite(current)) {clear();return null;}
+    const candidates=[...reachable(g,u).keys()]
+      .map(k=>{const [c,r]=k.split(',').map(Number);return tile(g,c,r);})
+      .filter(p=>p && !isSea(p) && !unitAt(g,p) &&
+        field[p.r*g.cols+p.c]<current &&
+        !enemies.some(v=>dist(g,v,p)<=3))
+      .sort((a,b)=>field[a.r*g.cols+a.c]-field[b.r*g.cols+b.c] ||
+        a.r-b.r || a.c-b.c);
+    if(!candidates.length)return null; // never force a risky march
+    const destination=candidates[0];
+    const moved=move(g,u.id,destination.c,destination.r);
+    if(!moved?.ok)return null;
+    if(dist(g,u,target)<=ELIMINATOR.range)clear();
+    return [{kind:'move',...moved,id:u.id}];
+  }
   function eliminatorCoverageValue(g, side, p, ignoreCity = null) {
     const existing = sideEliminators(g, side).filter(h => h.city?.id !== ignoreCity);
     let score = 0;
