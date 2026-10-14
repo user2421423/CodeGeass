@@ -29,7 +29,7 @@ Created both playable factions on Normal, Hard, Challenge and Elite with the act
 | Elite scenario conversion and Elite AI production | Pass: 164 starting Elite formations; naval carriers remain conventional |
 | Early win detection | Pass: no premature victory at scenario creation |
 
-The connected Pacific network reached 4,778 sea/coast hexes. 77 separate tiny water/coast components were not used for the fleet or any port; no objective depends on those isolated waters. The 20–80% classification itself is not modified by city/port placement.
+The connected Pacific network reached 4,778 sea/coast hexes. 77 water/coast hexes outside that connected Pacific network were not used for the fleet or any port; no objective depends on those isolated waters. The 20–80% classification itself is not modified by city/port placement.
 
 ## Multi-seed AI runtime exercises
 
