@@ -29,6 +29,7 @@ const MINI_TERRAIN = {
   crater: '#f2bfdc',
   urban: '#6c6f78',
 };
+const PACIFIC_MINI_TERRAIN = { plains: '#75b8d9', forest: '#b8d8e8', mountain: '#476681' };
 function drawMinimap() {
   const mini = $('minimap');
   if (!mini || typeof document.createElement !== 'function') return;
@@ -106,6 +107,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
   // Scenario previews and minimaps use the same real Japanese silhouette as
   // the main map, not low-resolution rectangles of terrain colours.
   const regional = g.mode === 'scenario' && !!g.scenario?.projection;
+  const pacificSky = g.mode === 'campaign' && (g.campaign?.id === 'bk_pacific' || g.campaign?.id === 'br_pacific');
   if (regional) {
     b.save();
     b.scale(sx, sy);
@@ -113,7 +115,7 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
     b.restore();
   } else for (const t of g.tiles) {
     const p = hexCenter(t);
-    b.fillStyle = MINI_TERRAIN[t.terrain];
+    b.fillStyle = pacificSky ? (PACIFIC_MINI_TERRAIN[t.terrain] || '#75b8d9') : MINI_TERRAIN[t.terrain];
     b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
     if (t.owner && t.terrain !== 'sea') {
       b.fillStyle = col(t.owner) + '88';
