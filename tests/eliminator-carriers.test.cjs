@@ -326,6 +326,26 @@ test('rear guard without a threatened friendly formation does not take a spare c
   assert.equal(runner.eliminator||0,0);
 });
 
+test('visible strike-center diagnostic counts real interception radius and ignores hidden charges', () => {
+  const {g,city}=setup(401);
+  const unitSpot=land(g,city,1)[0];
+  const escort=unit(g,'cf',unitSpot);
+  const active=E.aiEliminatorMetrics(g,'cf');
+  assert.ok(active.strikeCenterValueTotal>0);
+  assert.ok(active.strikeCenterValueProtected>0);
+  assert.ok(active.strikeCenterValueProtected<=active.strikeCenterValueTotal);
+  city.eliminator=0;
+  const empty=E.aiEliminatorMetrics(g,'cf');
+  assert.equal(empty.strikeCenterValueProtected,0,
+    'a nearby unarmed defender cannot intercept any strike center');
+  escort.eliminator=1;
+  const mobile=E.aiEliminatorMetrics(g,'cf');
+  assert.ok(mobile.strikeCenterValueProtected>0,
+    'armed regular units defend exactly the same three-hex impact centers');
+  assert.equal(mobile.strikeCenterValueTotal,empty.strikeCenterValueTotal,
+    'moving charge holders does not change publicly visible target values');
+});
+
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
   g.phase = 'britannia';
