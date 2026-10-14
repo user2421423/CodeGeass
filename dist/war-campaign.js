@@ -29,7 +29,7 @@
       ['caribbean','Invasion of the Caribbean',null,'Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
     ]],
     [4,[
-      ['panama','Panama Campaign',null,'Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
+      ['panama','Panama Campaign','eu-panama','Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
       ['new-york','Invasion of New York',null,'New York',[-74,41],[-80,38,-70,45],'Assault the Britannian Atlantic metropolitan corridor.'],
       ['canada','Invasion of Canada',null,'Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
     ]],
@@ -148,8 +148,8 @@
     // The South Africa development branch offers one deliberate, scenario-only
     // playtest bypass. It neither fabricates prerequisite victories nor unlocks
     // any other Campaign objective.
-    const playtest=options?.previewSouthAfrica===true &&
-      faction==='britannia' && id==='britannia-south-africa';
+    const playtest=(options?.previewSouthAfrica===true && faction==='britannia' && id==='britannia-south-africa') ||
+      (options?.previewPanama===true && faction==='eu' && id==='eu-panama');
     if(state(progress,faction,id)==='locked'&&!playtest)
       return {ok:false,reason:'Complete all required wars in earlier tiers first.'};
     if(!m.scenarioId)return {ok:false,reason:'Planned — Scenario Not Yet Implemented'};
@@ -165,7 +165,7 @@
     // Completing a bypassed playtest is not an official Campaign victory:
     // do not turn test results into territory, tiers, or campaign save data.
     if(ctx?.preview)return {ok:false,
-      reason:'South Africa playtest complete. Campaign progress is unchanged.'};
+      reason:'Scenario playtest complete. Campaign progress is unchanged.'};
     if(!m || m.status!=='implemented' || m.campaignFaction!==ctx.faction ||
        m.scenarioId!==ctx.scenarioId || m.battleSide!==ctx.battleSide ||
        game.mode!=='scenario' || game.scenario?.id!==m.scenarioId ||
