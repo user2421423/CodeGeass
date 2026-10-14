@@ -30,6 +30,7 @@ const SCENARIO_KINDS = [
   ['bf-yangtze','Battle of the Yangtze River','60 cities · 2 sides'],
   ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
   ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
+  ['cf-new-zealand','Chinese Federation Invasion of New Zealand','63 cities · 2 sides'],
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
   ['eu-panama','Panama Campaign','30 cities · 2 sides'],
   ['bf-malacca','Battle of the Strait of Malacca','54 cities · 2 sides'],
@@ -37,6 +38,10 @@ const SCENARIO_KINDS = [
   ['battle-luoyang','Battle of Luoyang','83 cities · 2 sides · final offensive']
 ];
 const SCENARIO_BLURBS = {
+  'cf-new-zealand': {
+    cf: 'Lead seven carrier-led landing fleets against North Island and South Island simultaneously. Force Cook Strait, establish beachheads, cross the Southern Alps and take every Britannian city.',
+    britannia: 'Hold both New Zealand islands with fortified Army Groups, naval bases and mobile reserves. Intercept Chinese carrier fleets in Cook Strait and counterattack every bridgehead.'
+  },
   'battle-luoyang': {
     britannia: 'Converge from the Korean, Yangtze and eastern fronts; breach the Yellow River defense, seize the Imperial Capital and conquer every remaining Federation city.',
     cf: 'Defend the capital behind successive fortified belts, guard the crossings and counterattack isolated Britannian Army Groups with strategic reserves.'
@@ -160,6 +165,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'cf-new-zealand': {
+    era: 'New Zealand · Chinese Federation World Campaign',
+    intro: 'The Chinese Federation has no mainland cities: seven carrier-led task forces invade North Island, South Island and Stewart Island while Britannia defends all cities and major naval bases. Total conquest without a turn limit.',
+    diplomacy: 'Both sides are hostile from turn one. Carrier cargo must land amphibiously; Cook Strait remains navigable; shipyards are independently capturable. Army Groups cover both island campaigns.',
+    elite: 'Elite uses standardized Chinese and Britannian Elite Force rosters, rival Level 5 commanders and established difficulty scaling; carrier hulls remain conventional.',
+    focus: {cf:'',britannia:'Wellington'}
+  },
   'battle-luoyang': {
     era: 'Henan · World Campaign Finale',
     intro: 'The decisive multi-front assault on Luoyang. A vast inland battlefield with a playable Yellow River barrier, named Army Groups and no turn limit. Every enemy city must fall.',

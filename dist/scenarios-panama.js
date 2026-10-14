@@ -1,11 +1,11 @@
-/* Panama Campaign — Europia United's two-ocean assault on Britannian Panama.
+/* Panama Campaign — shared geography for the Atlantic E.U. and Pacific Federation invasions.
    156 x 100 geodetic hexes; intermediate GSHHG exact hex-area 20/80 coastal land fractions.
    The canal is a one-hex, lock-to-lock navigable channel with only mapped bridge crossings.
    Standard faction equipment, independently capturable ports and existing multi-front naval AI. */
 (function(root) {
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
-  const COLS=156, ROWS=100, SIDES=['eu','britannia'];
+  const COLS=156, ROWS=100;
   const BOUNDS={west:-84.35,east:-76.75,north:11.12,south:6.85};
   const K=Math.cos(8.985*Math.PI/180);
   const PROJECTION={centerLon:-80.55,centerLat:8.985,angle:0,uMin:-3.8*K,uMax:3.8*K,vMin:-2.135,vMax:2.135};
@@ -72,28 +72,19 @@
     ['britannia','Meteti','medium',2,null,false],
     ['britannia','Puerto Armuelles','medium',2,null,false],
     ['britannia','Chitre','medium',2,null,false],
-    ['eu','Caribbean North','heavy',5,'akito'],
-    ['eu','Caribbean North','assault',4,'ryo'],
-    ['eu','Caribbean North','rocket',3,'yukiya'],
-    ['eu','Caribbean East','heavy',4,'smilas'],
-    ['eu','Caribbean East','medium',4,'leila'],
-    ['eu','Caribbean East','siege',3,null],
-    ['eu','Pacific West','heavy',5,'oscar'],
-    ['eu','Pacific West','assault',4,'ayano'],
-    ['eu','Pacific West','rocket',3,'klaus'],
-    ['eu','Pacific East','heavy',4,'olivia'],
-    ['eu','Pacific East','medium',4,'pierre'],
-    ['eu','Pacific East','siege',3,'margaret']
+    // The E.U. lands solely from the Caribbean; there is no Pacific starting force.
+    ['eu','Caribbean North','heavy',7,'akito'],
+    ['eu','Caribbean North','assault',6,'ryo'],
+    ['eu','Caribbean North','rocket',4,'yukiya'],
+    ['eu','Caribbean East','heavy',6,'smilas'],
+    ['eu','Caribbean East','medium',6,'leila'],
+    ['eu','Caribbean East','siege',4,'margaret']
   ];
   const FLEETS=[
-    ['eu','Caribbean North',-81.80,10.20,'eu_carrier',7],
-    ['eu','Caribbean East',-78.52,10.50,'eu_carrier',6],
-    ['eu','Pacific West',-82.05,7.35,'eu_carrier',7],
-    ['eu','Pacific East',-79.35,7.38,'eu_carrier',6],
-    ['eu','Caribbean North',-81.80,10.20,'panzer_frosch_ii',5],
-    ['eu','Caribbean East',-78.52,10.50,'panzer_frosch_ii',4],
-    ['eu','Pacific West',-82.05,7.35,'panzer_frosch_ii',5],
-    ['eu','Pacific East',-79.35,7.38,'panzer_frosch_ii',4],
+    ['eu','Caribbean North',-81.80,10.20,'eu_carrier',9],
+    ['eu','Caribbean East',-78.52,10.50,'eu_carrier',9],
+    ['eu','Caribbean North',-81.80,10.20,'panzer_frosch_ii',6],
+    ['eu','Caribbean East',-78.52,10.50,'panzer_frosch_ii',6],
     ['britannia','Colon',null,null,'carrier_battleship',3],
     ['britannia','Portobelo',null,null,'carrier_battleship',2],
     ['britannia','Balboa',null,null,'carrier_battleship',3],
@@ -102,7 +93,34 @@
     ['britannia','Balboa',null,null,'portman_ii',5],
     ['britannia','Puerto Armuelles',null,null,'portman',3]
   ];
-  const FUNDING={eu:{credits:840,industry:440,science:78,sakuradite:35},
+  // Separate offensive orders and faction equipment; geography and Britannian defence
+  // above are reused byte-for-byte by the two independent runtime scenarios.
+  const CF_LAND_GROUPS=[
+    ['cf','Pacific Canal Approach','heavy',7,'xingke'],
+    ['cf','Pacific Canal Approach','assault',5,'sawasaki'],
+    ['cf','Pacific Canal Approach','rocket',4,'honggu'],
+    ['cf','Gulf of Panama','heavy',5,'leifeng'],
+    ['cf','Gulf of Panama','medium',4,'zhaohao'],
+    ['cf','Gulf of Panama','siege',4,'huangqian'],
+    ['cf','Western Pacific Landing','heavy',4,'xianglin'],
+    ['cf','Western Pacific Landing','assault',4,'cao'],
+    ['cf','Western Pacific Landing','rocket',3,'gaohai'],
+    ['cf','Eastern Pacific Landing','medium',3,'meiling'],
+    ['cf','Eastern Pacific Landing','assault',3,'lifeng'],
+    ['cf','Eastern Pacific Landing','support',2,'ren']
+  ];
+  const CF_FLEETS=[
+    ['cf','Pacific Canal Approach',-79.62,8.51,'cf_carrier',8],
+    ['cf','Gulf of Panama',-79.02,7.55,'cf_carrier',7],
+    ['cf','Western Pacific Landing',-82.05,7.35,'cf_carrier',6],
+    ['cf','Eastern Pacific Landing',-78.53,7.46,'cf_carrier',5],
+    ['cf','Pacific Canal Approach',-79.62,8.51,'shui_gun_ru_ii',5],
+    ['cf','Gulf of Panama',-79.02,7.55,'shui_gun_ru_ii',4],
+    ['cf','Western Pacific Landing',-82.05,7.35,'shui_gun_ru_ii',4],
+    ['cf','Eastern Pacific Landing',-78.53,7.46,'shui_gun_ru_ii',4]
+  ];
+  const CF_FUNDING={credits:1040,industry:570,science:95,sakuradite:43};
+  const FUNDING={eu:{credits:900,industry:490,science:82,sakuradite:36},
     britannia:{credits:795,industry:510,science:70,sakuradite:35}};
   const CANAL=[
     [-79.966,9.415],[-79.942,9.353],[-79.917,9.277],
@@ -192,8 +210,16 @@
     if(assigned)gr.destination={c:target.c,r:target.r};
     return {ok:!!assigned,assigned,failed};
   }
-  function create(player='eu',difficulty='normal',seed=201719){
+  function createScenario(attacker,player=attacker,difficulty='normal',seed=201719){
+    const SIDES=[attacker,'britannia'];
     if(!SIDES.includes(player))throw Error('Unsupported Panama side: '+player);
+    const landGroups=attacker==='cf'
+      ?LAND_GROUPS.filter(row=>row[0]==='britannia').concat(CF_LAND_GROUPS)
+      :LAND_GROUPS;
+    const fleets=attacker==='cf'
+      ?FLEETS.filter(row=>row[0]==='britannia').concat(CF_FLEETS)
+      :FLEETS;
+    const funding=attacker==='cf'?{...FUNDING,cf:CF_FUNDING}:FUNDING;
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
     const g={game:'knightmare',version:1,rulesVersion:E.RULES_VERSION,player,difficulty,
       mode:'scenario',era:'panama',order:[player,...SIDES.filter(s=>s!==player)],
@@ -202,21 +228,37 @@
       fallen:{},economy:{},tech:{},officers:Object.fromEntries(
         Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
       roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,eliteDeployed:{},
-      arsenal:{eu:0,britannia:0},
+      arsenal:{[attacker]:0,britannia:0},
       automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
       mapRevision:0,teams:null,factions:{},lineup:{}};
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'eu-panama',key:'panama',title:'Panama Campaign',
-      phase:'two-ocean-canal-assault',aiDoctrine:'europe',groups:[],funding:{},
-      citylessFunding:['eu'],bounds:BOUNDS,projection:PROJECTION,
-      operationalFronts:[
+    const pacific=attacker==='cf';
+    g.scenario={id:pacific?'cf-panama':'eu-panama',key:pacific?'panama-cf':'panama',
+      attacker,title:pacific?'Chinese Federation — Pacific Invasion of Panama':
+        'Europia United — Atlantic Invasion of Panama',
+      phase:pacific?'pacific-canal-invasion':'atlantic-canal-invasion',
+      navalApproach:pacific?'pacific':'atlantic',
+      aiDoctrine:'europe',groups:[],funding:{},citylessFunding:[attacker],
+      bounds:BOUNDS,projection:PROJECTION,
+      openingObjectives:pacific?['Balboa','Panama City','Gamboa','Gatun','Colon']:
+        ['Colon','Portobelo','Gatun','Gamboa','Panama City','Balboa'],
+      operationalFronts:pacific?[
+        {name:'Pacific Canal Entry',attack:'cf',objective:'Balboa'},
+        {name:'Capital Beachhead',attack:'cf',objective:'Panama City'},
+        {name:'Western Pacific Landing',attack:'cf',objective:'David'},
+        {name:'Darien Pacific Landing',attack:'cf',objective:'La Palma'},
+        {name:'Gatun Locks',attack:'cf',objective:'Gatun'},
+        {name:'Caribbean Breakout',attack:'cf',objective:'Colon'},
+        {name:'Britannian Canal Reserve',attack:'britannia',objective:'Gamboa'}
+      ]:[
         {name:'Caribbean Canal Entry',attack:'eu',objective:'Colon'},
-        {name:'Pacific Canal Exit',attack:'eu',objective:'Balboa'},
-        {name:'Western Isthmus',attack:'eu',objective:'David'},
-        {name:'Central Reserve',attack:'britannia',objective:'Penonome'},
-        {name:'Darien Defense',attack:'britannia',objective:'Chepo'}
+        {name:'Northern Port Assault',attack:'eu',objective:'Portobelo'},
+        {name:'Gatun Locks',attack:'eu',objective:'Gatun'},
+        {name:'Central Canal Offensive',attack:'eu',objective:'Gamboa'},
+        {name:'Pacific Exit',attack:'eu',objective:'Balboa'},
+        {name:'Britannian Inland Reserve',attack:'britannia',objective:'Penonome'}
       ]};
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(s=>[s,eliteIds.filter(id=>
@@ -231,10 +273,10 @@
     });
     paintCanal(g);
     const caribbean=E.tile(g,locate(-79.99,9.72).c,locate(-79.99,9.72).r);
-    const pacific=E.tile(g,locate(-79.54,8.56).c,locate(-79.54,8.56).r);
-    if(caribbean.terrain!=='sea'||pacific.terrain!=='sea')throw Error('Panama canal sea mouths are blocked');
+    const pacificMouth=E.tile(g,locate(-79.54,8.56).c,locate(-79.54,8.56).r);
+    if(caribbean.terrain!=='sea'||pacificMouth.terrain!=='sea')throw Error('Panama canal sea mouths are blocked');
     const openWater=floodWater(g,caribbean);
-    if(!openWater.has(E.key(pacific)))throw Error('Atlantic and Pacific are not connected through the Panama Canal');
+    if(!openWater.has(E.key(pacificMouth)))throw Error('Atlantic and Pacific are not connected through the Panama Canal');
     const mainWater=t=>navigable(t)&&openWater.has(E.key(t));
     const cityKeys=new Set();
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
@@ -287,7 +329,7 @@
       }
       return groupMap.get(k);
     }
-    for(const [side,name,cls,count,commander,guard] of LAND_GROUPS){
+    for(const [side,name,cls,count,commander,guard] of landGroups){
       if(side!=='britannia')continue;
       const s=byName[name];
       for(let i=0;i<count;i++){
@@ -312,18 +354,23 @@
       occupiedPorts.add(E.key(at));
     }
     const shipsByGroup=new Map();
-    for(const [side,name,lon,lat,type,count] of FLEETS){
+    // Keep every invading ship in the prescribed ocean at the opening,
+    // including near the canal: Caribbean north of 9.55 N; Pacific south of 8.70 N.
+    const invadingSea=t=>attacker==='cf'?geo(t.c,t.r).lat<8.70:
+      geo(t.c,t.r).lat>9.55;
+    for(const [side,name,lon,lat,type,count] of fleets){
       const anchor=side==='britannia'?byName[name]:locate(lon,lat);
       if(!E.TYPES[type]?.naval)throw Error('Unknown Panama ship '+type);
       const fleet={id:'fleet-'+g.scenario.groups.length,side,name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
         const at=nearest(g,anchor,t=>t.terrain==='sea'&&mainWater(t)&&
-          !E.unitAt(g,t)&&!occupiedPorts.has(E.key(t)),17);
+          !E.unitAt(g,t)&&!occupiedPorts.has(E.key(t))&&
+          (side==='britannia'||invadingSea(t)),17);
         if(!at)throw Error('No naval position at '+name);
         const ship=E.newUnit(g,type,side,at.c,at.r);
-        ship.invasionGroup=side==='eu'?name:null;
+        ship.invasionGroup=side===attacker?name:null;
         fleet.units.push(ship.id);
-        if(side==='eu'&&E.TYPES[type].naval==='ship'){
+        if(side===attacker&&E.TYPES[type].naval==='ship'){
           if(!shipsByGroup.has(name))shipsByGroup.set(name,[]);
           shipsByGroup.get(name).push(ship);
         }
@@ -331,8 +378,8 @@
       g.scenario.groups.push(fleet);
     }
     const passengers=[];
-    for(const [side,name,cls,count,commander] of LAND_GROUPS){
-      if(side!=='eu')continue;
+    for(const [side,name,cls,count,commander] of landGroups){
+      if(side!==attacker)continue;
       for(let i=0;i<count;i++){
         const ship=(shipsByGroup.get(name)||[]).find(v=>
           (v.pendingPassengers||0)<E.TYPES[v.type].capacity);
@@ -385,18 +432,24 @@
         difficulty==='hard'?1.3:1;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
-        Object.entries(FUNDING[side]).map(([k,v])=>[k,Math.round(v*factor)-base[k]]));
+        Object.entries(funding[side]).map(([k,v])=>[k,Math.round(v*factor)-base[k]]));
       const actual=E.income(g,side);
-      for(const k of Object.keys(FUNDING[side]))
-        g.economy[side][k]=actual[k]*(side==='eu'?3:2);
+      for(const k of Object.keys(funding[side]))
+        g.economy[side][k]=actual[k]*(side===attacker?3:2);
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
-    if(g.stations.some(s=>s.owner==='eu'))throw Error('E.U. must begin Panama with no cities');
-    E.log(g,'Europia United launches simultaneous Caribbean and Pacific carrier assaults. Capture the canal and every Britannian city.',player);
+    if(g.stations.some(s=>s.owner!== 'britannia'))
+      throw Error('Britannia must own every Panamanian city initially');
+    if(E.allUnits(g).some(u=>u.side===attacker && !E.TYPES[u.type]?.naval &&
+      !u.cargoHost && !g.units.some(ship=>(ship.cargo||[]).some(v=>v.id===u.id))))
+      throw Error('Invading formations must begin at sea');
+    E.log(g,pacific
+      ?'The Chinese Federation invades Panama solely from the Pacific. Seize Balboa and Panama City, then fight north through the locks and Gatun Lake toward Colon.'
+      :'Europia United invades Panama solely from the Caribbean. Seize Colon and the northern locks, then push south toward Panama City and Balboa.',player);
     return g;
   }
   function onTurn(g){
-    if(g.scenario?.id!=='eu-panama')return false;
+    if(!['eu-panama','cf-panama'].includes(g.scenario?.id))return false;
     // Canal guards are ordered to hold while Britannia controls their sector.
     // Once a bridgehead falls, survivors join the dynamic multi-front AI
     // rather than guarding lost locks indefinitely.
@@ -412,21 +465,38 @@
   }
   function objective(g,side=g.player){
     const captured=g.stations.filter(s=>s.owner===side).length;
-    return (side==='eu'?'Secure the canal, then conquer':'Defend the canal and hold')+
+    const attacker=g.scenario?.attacker||'eu';
+    return (side===attacker?'Seize the canal, then conquer':'Defend the canal and hold')+
       ' all '+CITIES.length+' Panama cities ('+captured+'/'+CITIES.length+' controlled).';
   }
   function winner(g){
-    if(g.mode!=='scenario'||g.scenario?.id!=='eu-panama'||g.stations.length!==CITIES.length)return null;
-    if(g.stations.every(s=>s.owner==='eu'))
-      return {winner:'eu',team:'eu',reason:'Europia United has seized the Panama Canal and every Britannian city.'};
-    if(g.stations.every(s=>s.owner==='britannia')&&!E.allUnits(g).some(u=>u.side==='eu'&&u.hp>0))
-      return {winner:'britannia',team:'britannia',reason:'Britannia has annihilated the Europian invasion fleets.'};
+    if(g.mode!=='scenario'||!['eu-panama','cf-panama'].includes(g.scenario?.id)||
+      g.stations.length!==CITIES.length)return null;
+    const attacker=g.scenario.attacker||'eu';
+    if(g.stations.every(s=>s.owner===attacker))
+      return {winner:attacker,team:attacker,reason:
+        (attacker==='cf'?'The Chinese Federation':'Europia United')+
+        ' has seized the Panama Canal and every Britannian city.'};
+    if(g.stations.every(s=>s.owner==='britannia')&&
+      !E.allUnits(g).some(u=>u.side===attacker&&u.hp>0))
+      return {winner:'britannia',team:'britannia',reason:'Britannia has annihilated the invading expedition.'};
     return null;
   }
-  const api={id:'eu-panama',title:'Panama Campaign',cols:COLS,rows:ROWS,
-    sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:LAND_GROUPS,
-    fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,
-    orderGroup:groupOrder};
+  function createVariant(attacker){
+    if(!['eu','cf'].includes(attacker))throw Error('Unknown Panama attacker '+attacker);
+    const pacific=attacker==='cf',sides=[attacker,'britannia'];
+    return {id:pacific?'cf-panama':'eu-panama',
+      title:pacific?'Chinese Federation — Pacific Invasion of Panama':
+        'Europia United — Atlantic Invasion of Panama',
+      cols:COLS,rows:ROWS,sides,bounds:BOUNDS,cityData:CITIES,
+      armyGroups:pacific?LAND_GROUPS.filter(row=>row[0]==='britannia').concat(CF_LAND_GROUPS):LAND_GROUPS,
+      fleetData:pacific?FLEETS.filter(row=>row[0]==='britannia').concat(CF_FLEETS):FLEETS,
+      ports:PORTS,create:(player=attacker,difficulty='normal',seed=pacific?201720:201719)=>
+        createScenario(attacker,player,difficulty,seed),
+      onTurn,objective,winner,strategicScore,orderGroup:groupOrder,
+      createVariant};
+  }
+  const api=createVariant('eu');
   E.scenarios={...(E.scenarios||{}),panama:api,
     byId:{...(E.scenarios?.byId||{}),'eu-panama':api}};
   if(typeof module!=='undefined')module.exports=api;

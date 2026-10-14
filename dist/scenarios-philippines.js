@@ -260,8 +260,11 @@
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
   function objective(g,side=g.player){
-    return 'Capture all enemy-held Philippine theatre cities ('+
-      g.stations.filter(s=>s.owner!==side).length+' remaining of '+CITIES.length+').';
+    const remaining=g.stations.filter(s=>s.owner!==side).length;
+    return (side==='cf'
+      ? 'Defend the Philippine islands against Britannian landings; then take the Palau and Yap staging bases for total victory ('
+      : 'Invade the Federation-held Philippine islands from Palau and Yap; capture every enemy city (')+
+      remaining+' remaining of '+CITIES.length+').';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='philippines-invasion'||

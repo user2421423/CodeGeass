@@ -936,6 +936,7 @@ const GEOGRAPHY = (() => {
     const malacca = g.scenario.id === 'bf-malacca';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
+    const newZealand = g.scenario.id === 'cf-new-zealand';
     const urals = g.scenario.id === 'crossing-urals';
     const turkey = g.scenario.id === 'invasion-turkey';
     const brazil = g.scenario.id === 'invasion-brazil';
@@ -951,7 +952,7 @@ const GEOGRAPHY = (() => {
     const pendragon = g.scenario.id === 'eu-pendragon';
     const southChina = g.scenario.id === 'bf-south-china';
     const luoyang = g.scenario.id === 'battle-luoyang';
-    const centreSampledRegion = australia || middleEast || iraqIran || malacca || siberia || southernAfrica || urals || turkey ||
+    const centreSampledRegion = australia || middleEast || iraqIran || malacca || siberia || southernAfrica || newZealand || urals || turkey ||
       brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea || southChina || yangtze || luoyang;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
@@ -1145,7 +1146,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast || korea || iraqIran || southChina) && g.scenario?.rivers){
+    if((siberia || brazil || canada || california || eastCoast || korea || iraqIran || southChina || newZealand) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),

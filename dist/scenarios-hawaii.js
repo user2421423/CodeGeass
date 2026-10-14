@@ -1,4 +1,4 @@
-/* Invasion of Hawaii — E.U. Pacific landing against Britannia.
+/* Invasion of Hawaii — Chinese Federation expedition against Britannia.
    GSHHG intermediate-resolution coastline, 176x114 WGS84 sampling:
    <20% land = sea, 20–80% = mixed coast, >80% = land.
    Hawaiʻi, Maui, Kahoʻolawe, Lānaʻi, Molokaʻi, Oʻahu, Kauaʻi and Niʻihau
@@ -6,7 +6,7 @@
 (function(root) {
   'use strict';
   const E = root.Knightmare || (typeof require === 'function' ? require('./engine.js') : null);
-  const COLS=176,ROWS=114,SIDES=['eu','britannia'];
+  const COLS=176,ROWS=114,SIDES=['cf','britannia'];
   const BOUNDS={west:-160.75,east:-154.55,north:22.45,south:18.75};
   const K=Math.cos(20.6*Math.PI/180);
   const PROJECTION={centerLon:-157.65,centerLat:20.6,angle:0,uMin:-3.1*K,uMax:3.1*K,vMin:-1.85,vMax:1.85};
@@ -63,13 +63,14 @@
   const PORTS={'Pearl Harbor':3,'Honolulu':3,'Lihue':2,'Port Allen':2,
     'Puuwai':1,'Kaunakakai':2,'Manele Bay':1,'Kahului':3,'Lahaina':2,
     'Hana':2,'Kahoolawe Range':1,'Hilo':3,'Kailua-Kona':3,'Kawaihae':2};
-  // Invasion task forces begin in open ocean; no E.U. land or city at start.
+  // Chinese Federation carrier groups arrive from the western Pacific; no Chinese city at start.
   // [group, lon, lat, carrier count, amphibious count, land formations]
   const LANDINGS=[
-    ['Kauai Task Force',-160.42,22.22,4,4,[['heavy',2,'akito'],['rocket',2,'ryo'],['assault',2,'ayano'],['siege',1,null]]],
-    ['Oahu Assault',-158.55,21.74,5,4,[['heavy',2,'leila'],['siege',2,'yukiya'],['medium',2,'anna'],['rocket',2,'smilas']]],
-    ['Maui Expedition',-156.95,20.32,4,4,[['heavy',2,'oscar'],['rocket',2,'klaus'],['medium',2,'olivia'],['assault',1,null]]],
-    ['Hawaii Landing',-154.69,19.78,5,5,[['heavy',2,'pierre'],['siege',2,'margaret'],['rocket',2,null],['assault',2,null]]]
+    ['Kauai Task Force',-160.42,22.22,4,4,[['heavy',2,'sawasaki'],['rocket',2,'honggu'],['assault',2,'cao'],['siege',1,null]]],
+    ['Oahu Assault',-158.55,21.74,5,4,[['heavy',2,'xingke'],['siege',2,'rakshata'],['medium',2,'meiling'],['rocket',2,null]]],
+    ['Maui Expedition',-156.95,20.32,4,4,[['heavy',2,'leifeng'],['rocket',2,'huangqian'],['medium',2,null],['assault',1,'xianglin']]],
+    // Approach the Big Island from the west rather than the eastern Pacific.
+    ['Hawaii Western Landing',-156.28,19.55,5,5,[['heavy',2,'zhaohao'],['siege',2,null],['rocket',2,null],['assault',2,'lifeng']]]
   ];
   // Naval strongpoints and mobile island defenses; all standard roster units.
   const DEFENDERS=[
@@ -95,7 +96,7 @@
     ['Hilo','carrier_battleship',2],['Hilo','portman_ii',3],
     ['Kailua-Kona','carrier_battleship',1],['Kailua-Kona','portman_ii',2]
   ];
-  const FUNDING={eu:{credits:850,industry:470,science:68,sakuradite:34},
+  const FUNDING={cf:{credits:850,industry:470,science:68,sakuradite:34},
     britannia:{credits:970,industry:540,science:70,sakuradite:39}};
   const MOUNTAINS=[
     [-155.47,19.82,.26,.28],[-155.60,19.48,.32,.33], // Mauna Kea and Mauna Loa
@@ -141,7 +142,7 @@
     if(assigned)gr.destination={c:target.c,r:target.r};
     return {ok:assigned>0,assigned,failed,reason:assigned?'':'No unit can reach destination'};
   }
-  function create(player='eu',difficulty='normal',seed=201717){
+  function create(player='cf',difficulty='normal',seed=201717){
     if(!SIDES.includes(player))throw Error('Unsupported Hawaii faction '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
     const g={game:'knightmare',version:1,rulesVersion:E.RULES_VERSION,
@@ -151,15 +152,15 @@
       fallen:{},economy:{},tech:{},
       officers:Object.fromEntries(Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
       roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,
-      eliteDeployed:{},arsenal:{britannia:0,eu:0},
+      eliteDeployed:{},arsenal:{britannia:0,cf:0},
       automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
-      mapRevision:0,teams:{britannia:'britannia',eu:'eu'}};
+      mapRevision:0,teams:{britannia:'britannia',cf:'cf'}};
     for(const side of [...SIDES,'neutral']) {
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
     g.scenario={id:'invasion-hawaii',key:'hawaii',title:'Invasion of Hawaii',
-      version:1,phase:'eu-pacific-amphibious',aiDoctrine:'europe',
-      groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,citylessFunding:['eu'],
+      version:1,phase:'cf-pacific-amphibious',aiDoctrine:'europe',
+      groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,citylessFunding:['cf'],
       airfields:[],islandNames:['Niihau','Kauai','Oahu','Molokai','Lanai','Maui','Kahoolawe','Hawaii']};
     const elites=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,
@@ -266,14 +267,14 @@
     };
     for(const [name,lon,lat,carriers,amphibious] of LANDINGS){
       const at=locate(lon,lat);
-      placeFleet('eu',name,at,'eu_carrier',carriers,true);
-      placeFleet('eu',name+' Amphibious',at,'panzer_frosch_ii',amphibious,false);
+      placeFleet('cf',name,at,'cf_carrier',carriers,true);
+      placeFleet('cf',name+' Amphibious',at,'shui_gun_ru_ii',amphibious,false);
     }
     for(const [name,type,count] of NAVY) {
       const s=g.stations.find(v=>v.name===name);
       placeFleet('britannia',name,s,type,count,false);
     }
-    const carriers=g.units.filter(u=>u.side==='eu'&&u.invasionGroup&&E.TYPES[u.type].capacity>0);
+    const carriers=g.units.filter(u=>u.side==='cf'&&u.invasionGroup&&E.TYPES[u.type].capacity>0);
     const passengers=[];
     for(const [name,lon,lat,carrierCount,amphibious,formations] of LANDINGS)
       for(const [cls,count,commander] of formations)for(let i=0;i<count;i++){
@@ -282,9 +283,9 @@
         if(!ship)throw Error('Hawaii carrier capacity exceeded for '+name);
         ship.pendingPassengers=(ship.pendingPassengers||0)+1;
         const cmd=i===0?commander:null;
-        const u=E.newUnit(g,E.typeFor('eu',cls,g),'eu',ship.c,ship.r,i===0?2:1,cmd);
+        const u=E.newUnit(g,E.typeFor('cf',cls,g),'cf',ship.c,ship.r,i===0?2:1,cmd);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
-        group('eu',name).units.push(u.id);
+        group('cf',name).units.push(u.id);
         passengers.push({ship,u});
       }
     if(difficulty==='elite')E.prepareEliteEurope(g);
@@ -298,7 +299,7 @@
         Object.entries(FUNDING[side]).map(([k,v])=>[k,Math.round(v*factor)-baseline[k]]));
       const income=E.income(g,side);
       for(const k of Object.keys(FUNDING[side]))
-        g.economy[side][k]=income[k]*(side==='eu'?3:2);
+        g.economy[side][k]=income[k]*(side==='cf'?3:2);
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       for(const side of SIDES.filter(s=>s!==player)){
@@ -312,7 +313,7 @@
     }
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,g.units.reduce((n,u)=>n+
       (u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0)]));
-    E.log(g,'Europia United launches four carrier-led invasions of the Britannian Hawaiian Islands. Capture every fortified base without a turn limit.',player);
+    E.log(g,'The Chinese Federation launches four carrier-led amphibious assaults from the western Pacific. Conquer all 30 Britannian island bases without a turn limit.',player);
     return g;
   }
   // Let existing engine amphibious, pursuit, port, production and counterattack AI
@@ -321,19 +322,19 @@
   function strategicScore(g,side){return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);}
   function objective(g,side=g.player){
     const remaining=g.stations.filter(s=>s.owner!==side).length;
-    return side==='eu'
+    return side==='cf'
       ?'Seize all '+CITIES.length+' Hawaiian bases ('+remaining+' Britannian bases remain).'
-      :'Repel the European landing forces ('+g.units.filter(u=>u.side==='eu'&&u.hp>0).length+' hostile vessels or units remain).';
+      :'Repel the Chinese Federation landing forces ('+E.allUnits(g).filter(u=>u.side==='cf'&&u.hp>0).length+' hostile vessels or units remain).';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='invasion-hawaii'||g.stations.length!==CITIES.length)return null;
-    if(g.stations.every(s=>s.owner==='eu'))
-      return {winner:'eu',team:'eu',reason:'Europia United has conquered every city and island base in Hawaii.'};
+    if(g.stations.every(s=>s.owner==='cf'))
+      return {winner:'cf',team:'cf',reason:'The Chinese Federation has conquered every city and island base in Hawaii.'};
     // The invasion is only defeated after both its field forces (including cargo)
     // and every captured island foothold are gone.
-    if(!g.stations.some(s=>s.owner==='eu') &&
-       !E.allUnits(g).some(u=>u.side==='eu'&&u.hp>0))
-      return {winner:'britannia',team:'britannia',reason:'Britannia has eliminated all E.U. forces and recaptured every island foothold.'};
+    if(!g.stations.some(s=>s.owner==='cf') &&
+       !E.allUnits(g).some(u=>u.side==='cf'&&u.hp>0))
+      return {winner:'britannia',team:'britannia',reason:'Britannia has eliminated the Chinese Federation expedition and recaptured every island foothold.'};
     return null;
   }
   const api={id:'invasion-hawaii',title:'Invasion of Hawaii',cols:COLS,rows:ROWS,

@@ -284,7 +284,8 @@
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
     const expeditionAfloat = ((['operation-stonehenge','invasion-south-africa'].includes(g.scenario?.id) && loser === 'britannia') ||
-      (['invasion-american-east-coast','invasion-hawaii','invasion-brazil','eu-greenland',
+      (g.scenario?.id === 'invasion-hawaii' && loser === 'cf') ||
+      (['invasion-american-east-coast','invasion-brazil','eu-greenland',
         'invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) &&
       g.units.some(v => v.side === loser && v.hp > 0);
     const annexed = g.mode !== 'campaign' && alive(g, loser) &&
