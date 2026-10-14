@@ -15,6 +15,20 @@ let turnBannerTimeout = null;
 let politicalTimeout = null;
 let summaryCollapseTimeout = null;
 let summaryTurn = null;
+// Remember the user's minimized preference across turns and page refreshes.
+const TURN_SUMMARY_COLLAPSED_KEY = 'knightmare-turn-summary-collapsed';
+let turnSummaryCollapsed = false;
+try {
+  turnSummaryCollapsed = typeof localStorage !== 'undefined' &&
+    localStorage.getItem(TURN_SUMMARY_COLLAPSED_KEY) === '1';
+} catch (_) { /* Private browsing/storage restrictions should not block reports. */ }
+function rememberTurnSummaryCollapsed(collapsed) {
+  turnSummaryCollapsed = !!collapsed;
+  try {
+    if (typeof localStorage !== 'undefined')
+      localStorage.setItem(TURN_SUMMARY_COLLAPSED_KEY, turnSummaryCollapsed ? '1' : '0');
+  } catch (_) { /* In-memory state still applies for this session. */ }
+}
 let lastNoticeSound = 0;
 
 // Existing toast callers share these categories; callers may specify a category for important events.
@@ -121,12 +135,10 @@ function showTurnSummary(completedTurn, orders) {
   const el = noticeNode('turn-summary', 'turn-summary');
   summaryTurn = completedTurn;
   clearTimeout(summaryCollapseTimeout);
-  summaryCollapseTimeout = setTimeout(() => {
-    if (!el.hidden && el.querySelector('details')) el.querySelector('details').open = false;
-  }, 8000);
+  summaryCollapseTimeout = null;
   const value = key => stats && Number.isFinite(stats[key]) ? count(stats[key]) : '—';
   const blocked = Array.isArray(orders?.blocked) ? count(orders.blocked.length) : '—';
-  el.innerHTML = '<details open><summary>TURN ' + count(completedTurn) +
+  el.innerHTML = '<details' + (turnSummaryCollapsed ? '' : ' open') + '><summary>TURN ' + count(completedTurn) +
     ' REPORT <span class="summary-chevron" aria-hidden="true">⌄</span></summary>' +
     '<div class="turn-summary-body"><div class="turn-summary-grid">' +
     '<span>Cities captured <b>' + value('citiesCaptured') + '</b></span>' +
@@ -137,6 +149,25 @@ function showTurnSummary(completedTurn, orders) {
     '<div class="summary-actions"><button class="small" data-action="turn-report-open">Full War Report</button>' +
     '<button class="small ghost" data-action="turn-report-dismiss">Dismiss</button></div></div></details>';
   el.hidden = false;
+  const details = el.querySelector('details');
+  details.addEventListener('toggle', () => {
+    // An obsolete report may still have a queued toggle event after re-render.
+    if (el.querySelector('details') === details)
+      rememberTurnSummaryCollapsed(!details.open);
+  });
+  details.querySelector('summary').addEventListener('click', () => {
+    // Explicitly opening the report should not be undone by its old timer.
+    clearTimeout(summaryCollapseTimeout);
+    summaryCollapseTimeout = null;
+  });
+  if (!turnSummaryCollapsed) {
+    summaryCollapseTimeout = setTimeout(() => {
+      if (!el.hidden && el.querySelector('details') === details && details.open) {
+        details.open = false;
+        rememberTurnSummaryCollapsed(true);
+      }
+    }, 8000);
+  }
 }
 function dismissPoliticalReport() {
   clearTimeout(politicalTimeout);
