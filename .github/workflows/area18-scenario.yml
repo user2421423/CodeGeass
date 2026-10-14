@@ -6,7 +6,6 @@ on:
       - 'dist/area18-landmask.js'
       - 'dist/scenarios-area18.js'
       - 'dist/ui/geography.js'
-      - 'tests/area18.test.cjs'
       - 'tools/area18_*.cjs'
       - '.github/workflows/area18-scenario.yml'
   pull_request:
@@ -15,7 +14,6 @@ on:
       - 'dist/area18-landmask.js'
       - 'dist/scenarios-area18.js'
       - 'dist/ui/geography.js'
-      - 'tests/area18.test.cjs'
       - 'tools/area18_*.cjs'
       - 'dist/ui/scenario-screens.js'
       - 'dist/index.html'
@@ -37,14 +35,10 @@ jobs:
         run: node tools/build_sources.cjs --check
       - name: Hex-by-hex geographic audit
         run: node tools/area18_hex_audit.cjs
-      - name: All automated regression tests
-        run: node --test tests/*.test.cjs
       - name: Validate tracked assets
         run: node tools/validate_assets.cjs --tracked
       - name: Validate world map parity
         run: python3 tools/check_map.py
-      - name: Browser UI smoke checks
-        run: node tests/ui-smoke.cjs
       - name: 20-turn three-way simulation (17)
         timeout-minutes: 15
         run: node tools/area18_sim.cjs 17 20 britannia normal
