@@ -13,9 +13,14 @@ const SCENARIO_KINDS = [
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
   ['war-for-australia','The War for Australia','48 cities · 3 sides'],
-  ['area-18','The Conquest of Area 18','50 cities · 3 sides']
+  ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
+  ['crossing-urals','Crossing the Urals','40 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+'crossing-urals': {
+britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
+eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
+},
   'war-for-australia': {
     britannia: 'Hold Sydney, Melbourne, Brisbane and Australia’s eastern industrial heartland. Counter northern advances and Western amphibious landings.',
     cf: 'Push south from Darwin through the Outback, fight for Cape York, and launch amphibious assaults on the eastern and western coasts.',
@@ -58,6 +63,13 @@ const SCENARIO_BLURBS = {
   }
 };
 const SCENARIO_TEXT = {
+'crossing-urals': {
+era:'The Urals · Alternate 2017',
+intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
+diplomacy:'Both sides are hostile from the start. Routes through the mountains are slower except at named valleys.',
+elite:'Elite Urals uses the existing land Elite Force conversion, rival commanders and difficulty scaling.',
+focus:{britannia:'Yekaterinburg',eu:'Perm'}
+},
   'war-for-australia': {
     era: 'Australia · Alternate 2018',
     intro: 'Britannia holds the east, China the north, and Europia the west. Three-way continental and naval war. Conquer every rival city.',

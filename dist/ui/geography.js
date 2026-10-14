@@ -919,7 +919,7 @@ const GEOGRAPHY = (() => {
     const australia = g.scenario.id === 'war-for-australia';
     const philippines = g.scenario.id === 'philippines-invasion';
     const middleEast = g.scenario.id === 'area-18';
-    const centreSampledRegion = australia || middleEast;
+    const centreSampledRegion = australia || middleEast || g.scenario.id === 'crossing-urals';
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -956,7 +956,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || g.scenario.id === 'crossing-urals') ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1016,6 +1016,15 @@ const GEOGRAPHY = (() => {
       if (middleEast) paintSuezCanal(ctx, shapes, a, b, c, d);
       ctx.restore();
     }
+    if(g.scenario.id==='crossing-urals'&&g.scenario.rivers){
+const b=g.scenario.bounds;ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ctx.strokeStyle='#4ac4de';ctx.globalAlpha=.78;ctx.lineWidth=3.1;ctx.lineJoin='round';ctx.lineCap='round';
+for(const line of Object.values(g.scenario.rivers)){if(line.length<2)continue;
+ctx.beginPath();for(let i=0;i<line.length;i++){const [lon,lat]=line[i],
+x=R-SQ*R/2+(lon-b.west)*SQ*R*g.cols/(b.east-b.west),
+y=R-.75*R+(b.north-lat)*1.5*R*g.rows/(b.north-b.south);
+if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
+ctx.restore();}
     // Palau and Yap are intentionally enlarged in the *gameplay* mask to
     // accommodate Britannian bases. Some are absent from the global coastline
     // asset, so render only these offshore staging islets from their hex mask.

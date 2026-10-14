@@ -45,7 +45,7 @@
       ['south-africa','Invasion of South Africa',null,'South Africa',[25,-29],[16,-35,33,-22],'Capture the southern African strategic base network.'],
     ]],
     [4,[
-      ['urals','Crossing the Urals',null,'The Urals',[62,58],[52,50,72,67],'Break the mountain frontier into European Russia.'],
+      ['urals','Crossing the Urals','crossing-urals','The Urals',[62,58],[51,49,75,67],'Break the mountain frontier into European Russia.'],
       ['turkey','Invasion of Turkey',null,'Anatolia',[35,39],[26,35,45,43],'Push through Anatolia toward the European front.'],
     ]],
     [5,[['western-russia','Invasion of St. Petersburg and Moscow',null,'Western Russia',[35,57],[28,54,43,63],'Capture the twin centers of Russian resistance and establish Euro Britannia.']]],
