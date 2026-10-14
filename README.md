@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains twenty-four independent regional wars. Each scenario
+The **Scenarios** menu contains twenty-five independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -37,6 +37,7 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **Invasion of California** | 160 × 120 · 63 cities | E.U. overland advance and carrier landings along California and southern Oregon. |
 | **Battle of Pendragon** | 136 × 104 · 48 cities | The E.U. finale in the American Southwest: take the fortified Britannian capital and every remaining city. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
+| **Invasion of South China** | 168 × 124 · 65 cities | Britannia advances north from Indochina on several Army Group fronts while four loaded carrier forces strike the Federation’s Guangxi, Hainan and Guangdong coasts. Capture all cities without a turn limit. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |
 | **The Conquest of Area 18** | 120 × 88 · 50 cities | Britannia fights Europia United and China across the Arabian Peninsula, Mesopotamia, Persia and the Levant. All three are hostile. |
@@ -198,7 +199,7 @@ scripts under `dist/`; no npm install or runtime bundler is required.
 
 - `dist/engine.js`, `dist/engine/*.js` and `dist/engine/ai.js`:
   game rules, unit data, commanders, technology, AI and army groups.
-- `dist/scenarios*.js` and `dist/*-landmask.js`: twenty-four standalone regional
+- `dist/scenarios*.js` and `dist/*-landmask.js`: twenty-five standalone regional
   scenarios, maps and starting armies. `dist/missions.js` and
   `dist/campaign.js` implement the story campaign.
 - `dist/ui/*.js`: HUD, input, rendering, scenario selection, army-group
