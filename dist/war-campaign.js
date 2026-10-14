@@ -35,7 +35,7 @@
     ]],
     [5,[
       ['great-lakes','Battle for the Great Lakes',null,'Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
-      ['california','Invasion of California',null,'California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
+      ['california','Invasion of California','invasion-california','California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
     ]],
     [6,[['pendragon','Battle of Pendragon',null,'Pendragon',[-117,37.5],[-119,35.5,-115,39.5],'Conclude the war with an assault on the imperial capital.']]],
   ];
