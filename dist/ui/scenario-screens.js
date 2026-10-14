@@ -34,7 +34,13 @@ const SCENARIO_KINDS = [
   ['invasion-american-east-coast','Invasion of the American East Coast','62 cities · 2 sides'],
   ['eu-panama','Panama Campaign','30 cities · 2 sides'],
   ['bf-malacca','Battle of the Strait of Malacca','54 cities · 2 sides'],
-  ['eu-pendragon','Battle of Pendragon','48 cities · 2 sides'],
+  ['eu-pendragon','Battle of Pendragon — E.U. Eastern Offensive','2 sides · Finale'],
+  ['cf-pendragon','Battle of Pendragon — Chinese Western Offensive','2 sides · Finale'],
+  ['cf-panama','Chinese Pacific Invasion of Panama','30 cities · 2 sides'],
+  ['cf-pacific-northwest','Invasion of the Pacific Northwest','63 cities · 2 sides'],
+  ['cf-central-america','Central American Offensive','81 cities · 2 sides'],
+  ['cf-mexico','Conquest of the Mexican Heartland','80 cities · 2 sides'],
+  ['eu-rocky-mountains','Crossing the Rocky Mountains','101 cities · 2 sides'],
   ['battle-luoyang','Battle of Luoyang','83 cities · 2 sides · final offensive']
 ];
 const SCENARIO_BLURBS = {
@@ -55,7 +61,7 @@ const SCENARIO_BLURBS = {
     britannia: 'Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches.'
   },
   'invasion-california': {
-    eu: 'Advance south from Oregon toward Redding and Sacramento, while four carrier groups land at Northern California, San Francisco, the central coast and southern beaches.',
+    cf: 'Advance south from Federation-held Oregon while Chinese carrier fleets land near San Francisco, the central coast and southern California.',
     britannia: 'Defend San Francisco, Los Angeles, San Diego and the Central Valley with layered Army Groups, Pacific naval interception and reinforcements from Sierra passes.'
   },
   'invasion-canada': {
@@ -79,10 +85,16 @@ const SCENARIO_BLURBS = {
     cf: 'Hold both shores with fortified cities, coastal army reserves and strong fleets. Defend Penang, Port Klang, Medan, Dumai and Singapore; intercept Britannian amphibious landings.'
   },
   'eu-panama': {
-    eu: 'Attack simultaneously from Caribbean and Pacific carrier groups. Open the canal, capture fortified ports, then sweep the isthmus.',
+    eu: 'Invade exclusively from the Caribbean, take Colon and Gatun, then push through the canal toward Panama City and Balboa.',
     britannia: 'Defend Colón, Gatún, Balboa and Panama City. Hold the two canal bridges, protect naval bases and organize inland counteroffensives.'
   },
-  'eu-pendragon': {eu:'Converge from the Sierra Nevada, northern Nevada, Mojave and eastern desert approaches. Break the imperial defense ring and conquer every city.',britannia:'Defend the imperial capital and its fortress ring, counterattack isolated E.U. columns, and hold every remaining city.'},
+  'eu-pendragon': {eu:'Attack from Utah and eastern Nevada after crossing the Rockies. Break Britannian eastern defenses and capture every city.',britannia:'Defend Pendragon against Europia United attacking westward from Utah.'},
+  'cf-pendragon': {cf:'Attack eastward from California and western Nevada with massive Chinese Army Groups to conquer every imperial city.',britannia:'Hold the western and northern imperial defenses against the Federation.'},
+  'cf-panama': {cf:'Seize Balboa and Panama City by carrier-led invasion from the Pacific only, then fight toward Colon.',britannia:'Defend the Pacific canal mouth, lock system, Panama City and Colon.'},
+  'cf-pacific-northwest': {cf:'Land carrier-led armies near Puget Sound, Columbia estuary and Oregon, then fight through the Cascades.',britannia:'Repel simultaneous Pacific landings and defend the mountain passes and inland reserves.'},
+  'cf-central-america': {cf:'Advance north from Panama through three great land corridors, supported by Pacific amphibious landings.',britannia:'Hold Costa Rica through Guatemala with mountain defenses and fleet interception.'},
+  'cf-mexico': {cf:'Invade from Guatemala and land on both coasts, converge on the Mexican Plateau and take every enemy city.',britannia:'Defend Mexico City, Puebla, Guadalajara and the major mountain approaches.'},
+  'eu-rocky-mountains': {eu:'Cross the Rockies from eastern plains through several passes, defeat Britannian reserves and reach Utah.',britannia:'Defend the mountain passes and move reserves against E.U. breakthroughs.'},
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -123,8 +135,8 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
     britannia: 'Hold Nuuk, Sisimiut, Ilulissat, Tasiilaq and the northern garrisons. Concentrate coastal reserves, patrol the straits and counterattack invaded harbours.'
   },
   'invasion-hawaii': {
-    eu: 'Four carrier task forces assault Kauai, Oahu, Maui and Hawaii from the open Pacific. Capture every base on all eight islands.',
-    britannia: 'Defend Pearl Harbor, Honolulu and the outer island garrisons. Use naval interception and island reserves to destroy E.U. transports.'
+    cf: 'Lead four Chinese carrier-led amphibious invasions into Britannian Hawaii from the western Pacific. Capture every island base.',
+    britannia: 'Defend Pearl Harbor, Honolulu and the outer island garrisons. Use naval interception and island reserves to destroy Chinese transports.'
   },
   'invasion-south-africa': {
     britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
@@ -165,6 +177,48 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'cf-panama': {
+    era:'Panama · Chinese Pacific Offensive',
+    intro:'The Chinese Federation invades Britannian Panama exclusively from the Pacific. Seize every city and the canal without a turn limit.',
+    diplomacy:'Chinese Pacific carrier forces land around Balboa and Panama City; the canal is navigable and ports are independently capturable.',
+    elite:'Standard Federation and Britannian Elite Forces with existing level and recruitment rules; carriers remain conventional.',
+    focus:{cf:'',britannia:'Panama City'}
+  },
+  'cf-pacific-northwest': {
+    era:'Pacific Northwest · Federation World Campaign',
+    intro:'China lands five carrier-led invasions along the Washington and Oregon coast and advances across the Cascades. Total city conquest.',
+    diplomacy:'Britannia owns all inland cities; independent ports and mountain passes determine where beachheads can expand.',
+    elite:'Chinese and Britannian Elite Forces follow the standard four-difficulty system.',
+    focus:{cf:'',britannia:'Seattle'}
+  },
+  'cf-central-america': {
+    era:'Central America · Federation World Campaign',
+    intro:'The Federation advances north from Panama through Costa Rica to Guatemala, supported by Pacific fleets. Capture all 81 cities.',
+    diplomacy:'Mountain corridors, rivers, jungle and Pacific amphibious landings shape the invasion; all ports are independently capturable.',
+    elite:'Standard Elite preparation and ongoing recruitment, using the proper Federation and Britannian rosters.',
+    focus:{cf:'',britannia:'San José'}
+  },
+  'cf-mexico': {
+    era:'Mexican Heartland · Federation World Campaign',
+    intro:'China attacks north from conquered Guatemala and makes coastal landings against Mexico’s plateau and industrial cities.',
+    diplomacy:'The Mexican Plateau, Sierra Madre ranges and separate Gulf/Pacific coasts shape large-scale Army Group warfare.',
+    elite:'Elite uses established faction rosters, AI factories and commander levels.',
+    focus:{cf:'Quetzaltenango',britannia:'Mexico City'}
+  },
+  'cf-pendragon': {
+    era:'Pendragon · Chinese Western Finale',
+    intro:'China attacks the imperial capital from California and western Nevada, facing powerful Britannian defenses. Capture all enemy cities.',
+    diplomacy:'The Great Basin and imperial fortress system shape the final offensive; no turn cap or capital-only victory.',
+    elite:'Existing Chinese Federation and Britannian Elite Force roster and commander rules apply.',
+    focus:{cf:'Reno',britannia:'Pendragon'}
+  },
+  'eu-rocky-mountains': {
+    era:'Rocky Mountains · E.U. Penultimate Offensive',
+    intro:'Europia United attacks westward through Wyoming and Colorado mountain corridors toward Utah. Conquer all 101 Britannian cities.',
+    diplomacy:'Mountain passes, plains approaches and defensive reserves shape the offensive; rivers do not permit ocean shipping.',
+    elite:'Standard Europia United and Britannian Elite Forces, research and rival commander scaling.',
+    focus:{eu:'Denver',britannia:'Salt Lake City'}
+  },
   'cf-new-zealand': {
     era: 'New Zealand · Chinese Federation World Campaign',
     intro: 'The Chinese Federation has no mainland cities: seven carrier-led task forces invade North Island, South Island and Stewart Island while Britannia defends all cities and major naval bases. Total conquest without a turn limit.',
@@ -243,13 +297,13 @@ const SCENARIO_TEXT = {
     focus:{britannia:'Phuket',cf:'Singapore'}
   },
   'eu-panama': {
-    era:'Panama · Alternate 2017',
-    intro:'Europia United attacks Panama from both oceans after securing Caribbean bases. Britannia controls all 30 cities. No turn limit.',
+    era:'Panama · Atlantic Offensive',
+    intro:'Europia United attacks Britannian Panama solely from the Caribbean, fighting south through the canal. Every city must fall; no turn limit.',
     diplomacy:'The Panama Canal is navigable for fleets between the Atlantic and Pacific. Only the Centennial and Bridge of the Americas crossings permit land transit across the canal; ports are independently capturable.',
     elite:'Elite Panama starts with faction-specific Elite Forces at standard scenario levels; rival named commanders reach Lv.5. Carrier hulls stay conventional.',
     focus:{eu:'',britannia:'Colon'}
   },
-  'eu-pendragon': {era:'Pendragon · Imperial Last Stand',intro:'The final E.U. offensive against the Holy Britannian imperial capital. Capture all 48 cities, not merely Pendragon. No turn limit.',diplomacy:'Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.',elite:'Elite Pendragon: eligible single-frame Elite Forces replace land formations; rival named commanders start at Level 5. Factories and research follow the established Elite AI rules.',focus:{eu:'Bishop',britannia:'Pendragon'}},
+  'eu-pendragon': {era:'Pendragon · Eastern Imperial Last Stand',intro:'The final E.U. offensive attacks west from Utah and eastern Nevada. Capture every city, not merely Pendragon. No turn limit.',diplomacy:'Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.',elite:'Elite Pendragon: eligible single-frame Elite Forces replace land formations; rival named commanders start at Level 5. Factories and research follow the established Elite AI rules.',focus:{eu:'Tooele',britannia:'Pendragon'}},
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
