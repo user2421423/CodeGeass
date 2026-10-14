@@ -1,0 +1,238 @@
+/* Section 9: restore compact blue, tier-framed commander roster cards.
+ * Only presentation/search. Game records and purchase controls remain original. */
+.cc-roster-dialog { max-width: 1140px; }
+.cc-tools {
+  margin: 18px 0 20px; border: 1px solid #385268; border-radius: 12px;
+  padding: 14px; background: linear-gradient(130deg,#172b3e,#12202e);
+}
+.cc-toolbar-title {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 12px;
+}
+.cc-toolbar-title strong { font-size: 17px; color: #eaf4fc; letter-spacing: .03em; }
+.cc-toolbar-title small { display: block; font-size: 11px; color: #b2c4d6; padding-top: 3px; }
+.cc-result-count { color: #d5bf80; font-size: 12px; font-variant-numeric: tabular-nums; }
+.cc-filter-bar { display: flex; gap: 9px; flex-wrap: wrap; }
+.cc-filter-bar label {
+  display: flex; flex: 1 1 145px; min-width: 125px; flex-direction: column;
+  gap: 5px; color: #aabbce; font-size: 11px; letter-spacing: .04em;
+}
+.cc-filter-bar .cc-search-label { flex: 2 1 230px; }
+.cc-filter-bar input, .cc-filter-bar select {
+  width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid #4c667c;
+  border-radius: 6px; background: #0d1b29; color: #edf4f9;
+  font: inherit; font-size: 13px; box-sizing: border-box;
+}
+.cc-filter-bar :is(input, select):focus-visible {
+  outline: 2px solid #e2bd6f; outline-offset: 1px;
+}
+.cc-roster {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+.cc-empty { color: #c0cbd6; margin: 20px 0; }
+.cc-empty[hidden] { display: none; }
+
+/* Portraits run edge-to-edge down the card's full left side, matching the
+ * earlier Suzaku portrait strip. All factual commander data remains unchanged. */
+.cc-roster .cc-card {
+  --cc-tier-color: #c28a62;
+  --cc-tier-muted: #795440;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 41%) minmax(0, 59%);
+  gap: 0;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 406px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--cc-tier-muted);
+  border-top: 3px solid var(--cc-tier-color);
+  border-radius: 10px;
+  background: linear-gradient(155deg, #213346, #152332 80%);
+  box-shadow: 0 5px 19px #0003;
+}
+.cc-roster .cc-card.cc-tier-1 { --cc-tier-color: #e1bc6d; --cc-tier-muted: #9a783c; }
+.cc-roster .cc-card.cc-tier-2 { --cc-tier-color: #cbd5e2; --cc-tier-muted: #697b8f; }
+.cc-roster .cc-card.cc-tier-3 { --cc-tier-color: #c28a62; --cc-tier-muted: #795440; }
+.cc-roster .cc-card:hover { border-color: var(--cc-tier-color); box-shadow: 0 7px 25px #0006; }
+
+.cc-roster .cc-card .cc-card-portrait {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 406px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 55% 30%, #344555, #172637 70%);
+}
+/* Fade only the boundary into the adjacent blue panel, never mask the face. */
+.cc-roster .cc-card .cc-card-portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 15%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #1d3042);
+}
+.cc-roster .cc-card .cc-card-portrait .cc-portrait-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+}
+.cc-roster .cc-card .cc-card-portrait .cc-portrait-art > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  display: block;
+  object-fit: cover !important;
+  /* ART.portrait sets an inline object-position using the asset's focus data. */
+}
+.cc-roster .cc-card .cc-card-portrait [data-general]:focus-visible {
+  outline: 2px solid var(--cc-tier-color);
+  outline-offset: -3px;
+}
+.cc-roster .cc-card .cc-card-info {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 14px 12px 14px 7px;
+}
+/* Faint heraldry only: sits behind the unused gap between ratings and
+   recruitment controls, without taking space or affecting any click targets. */
+.cc-roster .cc-card .cc-card-info { position: relative; isolation: isolate; }
+.cc-roster .cc-card .cc-card-info > :not(.cc-faction-watermark) {
+  position: relative;
+  z-index: 1;
+}
+.cc-roster .cc-card .cc-faction-watermark {
+  position: absolute;
+  z-index: 0;
+  right: 10px;
+  bottom: 77px;
+  width: calc(100% - 20px);
+  height: 118px;
+  display: grid;
+  place-items: center;
+  opacity: .13;
+  overflow: hidden;
+  pointer-events: none;
+  filter: grayscale(1) brightness(1.75) contrast(1.2);
+  -webkit-mask-image: radial-gradient(ellipse 72% 78% at center, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 78% at center, #000 35%, transparent 100%);
+}
+.cc-roster .cc-card .cc-faction-watermark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 118px;
+}
+.cc-card-top { display: flex; align-items: flex-start; min-height: 24px; }
+.cc-tier {
+  font-weight: 800;
+  letter-spacing: .09em;
+  font-size: 11px;
+  color: var(--cc-tier-color);
+  padding: 4px 7px;
+  border: 1px solid var(--cc-tier-muted);
+  border-radius: 4px;
+}
+.cc-name-group { min-width: 0; }
+.cc-roster .cc-card h3 {
+  margin: 0 0 8px;
+  color: #f5f4f1;
+  font-size: 19px;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+.cc-rank-line { margin-top: 7px; }
+.cc-rank-line b {
+  display: block;
+  font-size: 12px;
+  color: #e7ecf2;
+  overflow-wrap: anywhere;
+}
+.cc-card-ratings {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid #45596b;
+  border-bottom: 1px solid #45596b;
+}
+.cc-rating {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+}
+.cc-rating > span:first-child {
+  font-size: 11px;
+  color: #c4d5e1;
+}
+.cc-stars {
+  display: inline-flex;
+  gap: 0;
+  white-space: nowrap;
+  letter-spacing: -.35px;
+  font-size: 11px;
+  line-height: 1.2;
+}
+.cc-stars .lit { color: #ecd184; text-shadow: 0 0 5px #c79e4740; }
+.cc-stars .dim { color: #526171; }
+.cc-card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  min-width: 0;
+  color: #9eafc1;
+  font-size: 11px;
+}
+.cc-frame { overflow-wrap: anywhere; }
+.cc-roster .cc-card .officer-actions {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  align-items: stretch;
+}
+.cc-roster .cc-card .officer-actions button {
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+@media (max-width: 1060px) {
+  .cc-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cc-roster .cc-card { min-height: 390px; }
+  .cc-roster .cc-card .cc-card-portrait { min-height: 390px; }
+  .cc-stars { font-size: 12px; }
+}
+@media (max-width: 720px) {
+  .cc-roster { grid-template-columns: 1fr; }
+  .cc-roster .cc-card { min-height: 385px; }
+  .cc-roster .cc-card .cc-card-portrait { min-height: 385px; }
+}
+@media (max-width: 480px) {
+  .cc-filter-bar label { flex-basis: calc(50% - 8px); }
+  .cc-roster .cc-card { grid-template-columns: minmax(0, 38%) minmax(0, 62%); }
+  .cc-roster .cc-card .cc-card-info { padding: 12px 10px 12px 7px; gap: 15px; }
+  .cc-roster .cc-card h3 { font-size: 17px; }
+  .cc-stars { font-size: 10px; }
+}
