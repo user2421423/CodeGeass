@@ -170,7 +170,7 @@ function loadGame(s) {
   // Regional scenarios never import HQ research, commander ranks or elite levels.
   game = s.mode === 'scenario' ? s : E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
-  if (game.mode === 'scenario') {
+  if (game.mode === 'scenario' && game.scenario?.id !== 'mechanics-tutorial') {
     scenarioKind = game.scenario.id;
     scenarioSide = game.player;
     scenarioDifficulty = game.difficulty || 'normal';
