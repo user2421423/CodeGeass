@@ -73,14 +73,14 @@
     return { ok: true, unit: u };
   }
 
-  function elitePrice(id, level = 1) {
+  // Deployment cost is fixed by elite class, regardless of level or rarity.
+  function elitePrice(id) {
     const e = ELITE_FORCES[id], t = e && TYPES[e.type];
     if (!t) return { credits: 0, industry: 0, sakuradite: 0 };
-    const premium = 1 + 0.04 * Math.max(0, level - 1);
     return {
-      credits: Math.round(t.cost * premium),
-      industry: Math.round(t.industry * premium),
-      sakuradite: SAKURADITE.elite[e.rarity] ?? 0,
+      credits: t.cost,
+      industry: t.industry,
+      sakuradite: SAKURADITE.elite[t.naval === 'amphibious' ? 'amphib' : t.cls] ?? 0,
     };
   }
   // Land elites use a city factory; amphibious elites use the independently owned
@@ -119,7 +119,7 @@
         ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
         : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), decreePrice(elitePrice(id, eliteCampaign(g) ? 1 : availableLevel || 1), s.owner === producer ? s : null))
+      shortfall(funds(g, producer), decreePrice(elitePrice(id), s.owner === producer ? s : null))
     );
   }
   function deployElite(g, stationId, id, profile = {}, position) {
@@ -132,7 +132,7 @@
       rec = e.scenarioOnly && eliteScenario(g) ? { level: 1 } : eliteRecord(profile, id),
       options = recruitOptions(g, s, producer, e.type),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = decreePrice(elitePrice(id, eliteCampaign(g) ? 1 : rec.level), s.owner === producer ? s : null);
+      cost = decreePrice(elitePrice(id), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
@@ -174,7 +174,7 @@
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
         ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), decreePrice(elitePrice(id, eliteCampaign(g) ? 3 : 1), s.owner === producer ? s : null))
+      shortfall(funds(g, producer), decreePrice(elitePrice(id), s.owner === producer ? s : null))
     );
   }
   function recruitAIElite(g, stationId, id) {
@@ -185,7 +185,7 @@
       producer = t.naval ? (s.portOwner || s.owner) : s.owner,
       p = recruitOptions(g, s, producer, e.type)[0],
       level = eliteCampaign(g) ? 3 : 1,
-      cost = decreePrice(elitePrice(id, level), s.owner === producer ? s : null);
+      cost = decreePrice(elitePrice(id), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
     if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
