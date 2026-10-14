@@ -31,7 +31,7 @@
     [4,[
       ['panama','Panama Campaign',null,'Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
       ['new-york','Invasion of New York',null,'New York',[-74,41],[-80,38,-70,45],'Assault the Britannian Atlantic metropolitan corridor.'],
-      ['canada','Invasion of Canada',null,'Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
+      ['canada','Invasion of Canada','invasion-canada','Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
     ]],
     [5,[
       ['great-lakes','Battle for the Great Lakes',null,'Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
