@@ -244,7 +244,8 @@
     g.scenario={id:'cf-new-zealand',key:'newZealand',title:'Chinese Federation Invasion of New Zealand',
       version:1,phase:'federation-twin-island-offensive',aiDoctrine:'europe',
       groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,citylessFunding:['cf'],
-      airfields:[],islandNames:['North Island','South Island','Stewart Island']};
+      airfields:[],islandNames:['North Island','South Island','Stewart Island'],
+      reliefZones:MOUNTAINS,forestZones:FORESTS};
     const elites=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,
       elites.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&E.ELITE_FORCES[id].availableTo.includes(side))]));

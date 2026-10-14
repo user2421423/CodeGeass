@@ -329,7 +329,8 @@
     g.scenario={id:ID,key:'cfPacificNorthwest',title:'Chinese Federation Invasion of the Pacific Northwest',
       version:1,phase:'transpacific-invasion',aiDoctrine:'europe',bounds:BOUNDS,
       projection:PROJECTION,groups:[],funding:{},citylessFunding:['cf'],
-      rivers:RIVERS,passes:PASSES,operationalFronts:FRONTS,landingFronts:INVASIONS.map(x=>x[0])};
+      rivers:RIVERS,passes:PASSES,reliefZones:RIDGES,forestZones:WOODS,
+      valleyZones:VALLEYS,operationalFronts:FRONTS,landingFronts:INVASIONS.map(x=>x[0])};
     const ids=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(s=>[s,
       ids.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
