@@ -73,7 +73,7 @@ function factionUIColor(side) {
 
 /* Section 7: short, keyboard-accessible command groups, without changing action handlers. */
 function hudNavGroup(label, items, key) {
-  return `<details class="hud-nav-group" data-hud-group="${key}"><summary title="${esc(label)} commands" aria-label="${esc(label)} commands">${esc(label)}<span class="hud-chevron" aria-hidden="true">⌄</span></summary><div class="hud-nav-menu" role="group" aria-label="${esc(label)}">${items.join('')}</div></details>`;
+  return `<details name="hud-command-menu" class="hud-nav-group" data-hud-group="${key}"><summary title="${esc(label)} commands" aria-label="${esc(label)} commands">${esc(label)}<span class="hud-chevron" aria-hidden="true">⌄</span></summary><div class="hud-nav-menu" role="group" aria-label="${esc(label)}">${items.join('')}</div></details>`;
 }
 function hudNavAction(action, label, tip, disabled = null) {
   return `<button type="button" class="hud-menu-action" data-action="${action}" title="${esc(disabled || tip)}"${disabled ? ` disabled aria-label="${esc(label + ': ' + disabled)}"` : ''}>${esc(label)}</button>`;
