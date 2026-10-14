@@ -922,9 +922,10 @@ const GEOGRAPHY = (() => {
     const middleEast = g.scenario.id === 'area-18';
     const siberia = g.scenario.id === 'britannia-siberia';
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
+    const eastCoast = g.scenario.id === 'invasion-american-east-coast';
     const urals = g.scenario.id === 'crossing-urals';
     const turkey = g.scenario.id === 'invasion-turkey';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey;
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || eastCoast || urals || turkey;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -961,7 +962,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast || siberia || southernAfrica || urals || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || siberia || southernAfrica || eastCoast || urals || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1041,7 +1042,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if(siberia && g.scenario?.rivers){
+    if((siberia || eastCoast) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
