@@ -160,6 +160,19 @@ const SFX = (() => {
       tone(t + 2.05, 'sine', 2093, 1568, 2.6, 0.08);
       tone(t + 2.05, 'triangle', 1318, 988, 2.6, 0.06);
     },
+    // Short distinct ceremonial cues, synthesized and gated by the existing sound toggle.
+    triumph(t) {
+      tone(t, 'triangle', 440, 440, 0.32, 0.13);
+      tone(t + 0.16, 'triangle', 554, 554, 0.38, 0.15);
+      tone(t + 0.33, 'triangle', 659, 659, 0.5, 0.2);
+      tone(t + 0.49, 'sine', 880, 880, 0.82, 0.15);
+    },
+    defeat(t) {
+      tone(t, 'triangle', 392, 392, 0.4, 0.11);
+      tone(t + 0.25, 'triangle', 330, 330, 0.5, 0.13);
+      tone(t + 0.52, 'sine', 247, 247, 0.9, 0.15);
+      tone(t + 0.56, 'sine', 123, 70, 1, 0.1);
+    },
     explosion(t) {
       burst(t, 'lowpass', 1800, 80, 0.65, 0.6);
       tone(t, 'sine', 85, 28, 0.55, 0.5);
