@@ -49,6 +49,9 @@ function armyGroupActivate(id) {
   const next = id == null ? null : E.armyGroup(game, id);
   if (id != null && !next) return toast('Army group not found.');
   activeArmyGroupId = next?.id ?? null;
+  if (next && !strategicOverlayManuallySet && strategicOverlayMode === 'off') {
+    strategicOverlayMode = 'selected'; strategicOverlay = true;
+  }
   multiSelectedIds.clear();
   closeModal();
   updateSelection();
@@ -102,7 +105,7 @@ function strategicOverlayControls() {
 }
 function strategicGroupPhase(gr, report) {
   if (!report.members) return {key:'empty',label:'No formations assigned',symbol:'!'};
-  if (gr.stance === 'hold') return {key:'hold',label:'Hold Position',symbol:'▣'};
+  if (gr.stance === 'hold') return {key:'hold',label:'Hold Position',symbol:'⛨'};
   const auto = String(gr.autoStatus || '').toLowerCase();
   if (auto.startsWith('blocked:')) return {key:'blocked',label:'Blocked',symbol:'!'};
   if (auto === 'city open for capture') return {key:'capturing',label:'City open for capture',symbol:'◆'};
@@ -201,6 +204,7 @@ function strategicGroupReport(gr) {
 function setStrategicOverlayMode(mode) {
   if ((game.mode !== 'conquest' && game.mode !== 'scenario') ||
       !Object.hasOwn(STRATEGIC_OVERLAY_MODES,mode)) return;
+  strategicOverlayManuallySet = true;
   strategicOverlayMode=mode;
   strategicOverlay=mode!=='off';
   requestMapFrame(); // Only dynamic paint changes; keep terrain atlas cached.
@@ -218,7 +222,13 @@ function armyGroupsDialog(editId = null) {
   E.armyGroupPrune(game);
   const groups = E.armyGroups(game);
   const gr = editId == null ? null : E.armyGroup(game, editId);
-  if (gr) { activeArmyGroupId = gr.id; requestMapFrame(); }
+  if (gr) {
+    activeArmyGroupId = gr.id;
+    if (!strategicOverlayManuallySet && strategicOverlayMode === 'off') {
+      strategicOverlayMode = 'selected'; strategicOverlay = true;
+    }
+    requestMapFrame();
+  }
   const active = activeArmyGroup();
   const selected = selectedUnit();
   const chosen = selected?.side === game.player ? selected : null;
