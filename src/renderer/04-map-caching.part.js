@@ -202,7 +202,8 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     visible = p => p.y >= top && p.y <= bottom;
   // Geography is a continuous visual atlas. Hexes remain the *logical* map;
   // they are not used as filled polygon art unless the device lacks ImageData.
-  const atlas = GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
+  const pacificSky = isPacificAirBattle();
+  const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
   if (!atlas) {
     for (const t of game.tiles) {
       const c = hexCenter(t);
@@ -211,7 +212,9 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
         hexPath(x, c.y, R + 0.5);
         // If vector geography is unavailable, scenario land still uses the
         // controlling nation's colour rather than biome swatches.
-        ctx.fillStyle = t.terrain === 'offmap' ? '#174663' :
+        ctx.fillStyle = pacificSky
+          ? (t.terrain === 'forest' ? '#b6d5e5' : t.terrain === 'mountain' ? '#4a637d' : '#72b6db')
+          : t.terrain === 'offmap' ? '#174663' :
           game.mode === 'scenario' && t.owner && t.terrain !== 'sea'
             ? F(t.owner).color : TERRAIN_FILL[t.terrain] || TERRAIN_FILL.plains;
         ctx.fill();
