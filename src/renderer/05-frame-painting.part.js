@@ -369,8 +369,8 @@ function draw(time, dt) {
       ctx.shadowColor = '#000a';
       ctx.shadowBlur = 5;
       ctx.shadowOffsetY = 4;
-      for (let i = Math.min(u.stack - 1, 2); i >= 0; i--)
-        ART.drawUnit(ctx, u.type, u.side, (i ? i * 7 * (flip ? -1 : 1) : 0) + (flip ? 4 : -4), -10 - i * 7, size * (i ? 0.86 : 1), size * (i ? 0.86 : 1), flip);
+      // Formation strength is shown by bars; draw exactly one unit sprite.
+      ART.drawUnit(ctx, u.type, u.side, flip ? 4 : -4, -10, size, size, flip);
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
