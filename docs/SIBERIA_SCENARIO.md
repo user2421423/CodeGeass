@@ -22,15 +22,15 @@ No merge into `main` or into the parent feature branch.
 ```sh
 node tools/build_sources.cjs --check
 node tools/siberia_hex_audit.cjs
-node --test tests/siberia.test.cjs tests/war-campaign.test.cjs
-node --test tests/*.test.cjs
 for side in britannia eu; do
   for seed in 11 29 47; do node tools/siberia_sim.cjs "$seed" 3 "$side"; done
 done
 ```
 
-The branch's GitHub Actions workflow runs the same verification. The static coastline counts describe the mask, not a substitute for simulation results. Multi-seed AI results must be read from the action logs; do not claim balancing or completion based on a short smoke test.
+The branch's scenario workflow runs the geography audit and seeded AI simulations without regression tests. The static coastline counts describe the mask, not a substitute for simulation results. Multi-seed AI results must be read from the action logs; do not claim balancing or completion based on a short smoke test.
 
-## Initial engine verification (2026-10-14)
+## Direct engine verification (2026-10-14)
 
-The complete 14,080-hex coastline audit passed for both playable sides. The 79 existing regression tests, 13 focused Siberia/Campaign tests and six seeded three-turn normal-difficulty AI-vs-AI simulations passed on commit `28649f2`. The reinforcements on the Ust-Maya front prevented its early collapse: none of the six games lost that Britannian city; one recorded a Britannian capture of Khandyga. These are opening-game smoke/balance indicators, not proof of full-campaign equilibrium. Longer-turn simulation logs are recorded in the branch's workflow.
+The live engine instantiated Siberia successfully for Britannia and E.U. on Normal and Elite. Each start had 49 cities, 9 independent port locations, 122 field/naval units and 35 Army Groups. After the Elite source/generator fix, both sides' Elite starts converted 105 land units. The other two difficulties and longer AI balance require independent runtime checks.
+
+No new regression tests are retained. The branch-specific static preview workflow is manual-only and cannot trigger a production Pages deployment automatically.
