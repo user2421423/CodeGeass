@@ -244,16 +244,18 @@ function resultDialog() {
           campaignNotice=name+' secured for '+E.FACTIONS[game.warCampaign.faction].name+'.'+
             (result.unlocked?' Tier '+result.unlocked+' unlocked.':'')+
             (result.complete?' Campaign complete.':'')+
+            (result.complete&&game.warCampaign.missionId==='eu-pendragon'?' E.U. Campaign Victory! The Holy Britannian Empire has fallen.':'')+
             (game.warCampaign.missionId==='britannia-western-russia'?' Euro Britannia Established. European War unlocked.':'');
           game.warCampaign.announcement=campaignNotice;
           save();
         }else campaignNotice=result.reason;
       }else campaignNotice=game.warCampaign.announcement || '';
     }
+    const euFinal=won && game.warCampaign?.recorded && game.warCampaign.missionId==='eu-pendragon';
     const founded=won && game.warCampaign?.recorded &&
       game.warCampaign.missionId==='britannia-western-russia';
     modal.innerHTML='<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Scenario result">'+
-      '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(founded?'Euro Britannia Established':won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
+      '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(euFinal?'E.U. Campaign Victory':founded?'Euro Britannia Established':won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
       '<p>'+esc(game.over.reason)+'</p>'+
       (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant map territory and tier progress on confirmed victories only. No HQ rewards.')+'</p>' :
         '<p class="description">Scenarios do not award campaign or HQ rewards.</p>')+
