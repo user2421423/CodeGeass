@@ -23,21 +23,21 @@
   const bering = ['bering','Bering Strait Crisis','bering-strait','Bering Strait',[177,63],[160,55,180,72],'Control the crossing between Siberia and Alaska.'];
   const euRows = [
     [3,[
-      ['hawaii','Invasion of Hawaii',null,'Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
-      ['brazil','Invasion of Brazil',null,'Brazil',[-51,-13],[-74,-34,-34,6],'Establish a South American foothold in Britannian territory.'],
-      ['greenland','Invasion of Greenland',null,'Greenland',[-42,72],[-61,59,-20,84],'Capture the North Atlantic approaches.'],
-      ['caribbean','Invasion of the Caribbean',null,'Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
+      ['hawaii','Invasion of Hawaii','invasion-hawaii','Hawaii',[-156,21],[-161,18,-154,24],'Launch an oceanic assault against Britannian Pacific bases.'],
+      ['brazil','Invasion of Brazil','invasion-brazil','Brazil',[-51,-13],[-74,-34,-34,6],'Establish a South American foothold in Britannian territory.'],
+      ['greenland','Invasion of Greenland','eu-greenland','Greenland',[-42,72],[-73,58,-12,84],'Capture the North Atlantic approaches.'],
+      ['caribbean','Invasion of the Caribbean','invasion-caribbean','Caribbean',[-69,19],[-84,10,-60,25],'Take the island chains controlling approaches to America.'],
     ]],
     [4,[
-      ['panama','Panama Campaign',null,'Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
-      ['new-york','Invasion of New York',null,'New York',[-74,41],[-80,38,-70,45],'Assault the Britannian Atlantic metropolitan corridor.'],
-      ['canada','Invasion of Canada',null,'Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
+      ['panama','Panama Campaign','eu-panama','Panama',[-80,9],[-84,7,-77,11],'Secure the isthmus and its strategic sea routes.'],
+      ['new-york','Invasion of the American East Coast','invasion-american-east-coast','American East Coast',[-75.5,37.2],[-85.6,24,-65.4,47.2],'Conquer the entire Britannian Atlantic seaboard from Maine to Florida.'],
+      ['canada','Invasion of Canada','invasion-canada','Canada',[-105,57],[-140,48,-60,70],'Open a broad northern continental offensive.'],
     ]],
     [5,[
-      ['great-lakes','Battle for the Great Lakes',null,'Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
-      ['california','Invasion of California',null,'California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
+      ['great-lakes','Battle for the Great Lakes','eu-great-lakes','Great Lakes',[-86,44],[-94,41,-78,50],'Fight for the inland industrial centers and lake crossings.'],
+      ['california','Invasion of California','invasion-california','California',[-120,37],[-125,32,-114,42],'Establish control of the Britannian Pacific heartland.'],
     ]],
-    [6,[['pendragon','Battle of Pendragon',null,'Pendragon',[-117,37.5],[-119,35.5,-115,39.5],'Conclude the war with an assault on the imperial capital.']]],
+    [6,[['pendragon','Battle of Pendragon','eu-pendragon','Pendragon',[-117,37.5],[-119,35.5,-115,39.5],'Conclude the war with an assault on the imperial capital.']]],
   ];
   const brRows = [
     [3,[
@@ -148,8 +148,8 @@
     // The South Africa development branch offers one deliberate, scenario-only
     // playtest bypass. It neither fabricates prerequisite victories nor unlocks
     // any other Campaign objective.
-    const playtest=options?.previewSouthAfrica===true &&
-      faction==='britannia' && id==='britannia-south-africa';
+    const playtest=(options?.previewSouthAfrica===true && faction==='britannia' && id==='britannia-south-africa') ||
+      (options?.previewPanama===true && faction==='eu' && id==='eu-panama');
     if(state(progress,faction,id)==='locked'&&!playtest)
       return {ok:false,reason:'Complete all required wars in earlier tiers first.'};
     if(!m.scenarioId)return {ok:false,reason:'Planned — Scenario Not Yet Implemented'};
@@ -165,7 +165,7 @@
     // Completing a bypassed playtest is not an official Campaign victory:
     // do not turn test results into territory, tiers, or campaign save data.
     if(ctx?.preview)return {ok:false,
-      reason:'South Africa playtest complete. Campaign progress is unchanged.'};
+      reason:'Scenario playtest complete. Campaign progress is unchanged.'};
     if(!m || m.status!=='implemented' || m.campaignFaction!==ctx.faction ||
        m.scenarioId!==ctx.scenarioId || m.battleSide!==ctx.battleSide ||
        game.mode!=='scenario' || game.scenario?.id!==m.scenarioId ||

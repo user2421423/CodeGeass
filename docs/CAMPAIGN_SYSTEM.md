@@ -17,10 +17,10 @@ Winning a standalone Scenario, quitting, losing or viewing a preview does not co
 | --- | --- | --- |
 | 1: Global Conflicts | War for Australia; Conquest of Area 18; Division of Japan | Existing |
 | 2: Bering Strait | Bering Strait Crisis | Existing |
-| 3: Overseas Invasions | Invasion of Hawaii; Brazil; Greenland; Caribbean | Planned |
-| 4: Continental Landings | Panama Campaign; Invasion of New York; Invasion of Canada | Planned |
-| 5: Britannian Homeland | Battle for the Great Lakes; Invasion of California | Planned |
-| 6: Final Offensive | Battle of Pendragon | Planned |
+| 3: Overseas Invasions | Invasion of Hawaii; Brazil; Greenland; Caribbean | Implemented |
+| 4: Continental Landings | Panama Campaign; Invasion of New York; Invasion of Canada | Implemented |
+| 5: Britannian Homeland | Battle for the Great Lakes; Invasion of California | Implemented |
+| 6: Final Offensive | Battle of Pendragon | Implemented |
 
 | Britannia tier | Objectives | Runtime |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ For Britannian Tier 6, battleSide = eb, because the unchanged European War is fo
 - dist/war-campaign.js — authoritative data-driven objective registry, unique IDs, planned-versus-implemented status, independent progression, victory validation, geographical map tinting.
 - dist/ui/war-campaign-screen.js — 2017-map canvas, selectable region markers, tier tabs, front arrows, faction selection, pan and zoom, info panel and battle launch.
 - dist/war-campaign.css — scoped, responsive styling.
-- docs/campaign-placeholders/*.json — fifteen structured mission handoff files; five Britannian objectives implemented and ten E.U. objectives still planned.
+- docs/campaign-placeholders/*.json — fifteen structured mission handoff files, all now implemented.
 - tests/war-campaign.test.cjs — focused tier, save, map and verification checks.
 - src/hud/00-start-menu.part.js and dist/ui/hud.js — main menu links; Story Mode is a UI-only rename.
 - dist/ui/core.js — separate Campaign battle save key.
@@ -55,7 +55,7 @@ Ten E.U. IDs: eu-hawaii, eu-brazil, eu-greenland, eu-caribbean, eu-panama, eu-ne
 
 Five Britannian IDs: britannia-siberia, britannia-south-africa, britannia-urals, britannia-turkey, britannia-western-russia.
 
-Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in dist/war-campaign.js: id, title, campaignFaction, tier, region, marker [longitude,latitude], bounds [west,south,east,north], description, status, scenarioId and battleSide. Only the ten planned E.U. objectives have scenarioId = null, and therefore cannot launch or be completed.
+Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in dist/war-campaign.js: id, title, campaignFaction, tier, region, marker [longitude,latitude], bounds [west,south,east,north], description, status, scenarioId and battleSide. All ten E.U. regional objectives are now implemented and registered. The approved Campaign tiers and historical Story Mode remain unchanged.
 
 1. Implement the specified new regional battle in a **separate** scenario module on its own development branch. Follow an existing scenario API: stable ID, sides array containing the intended battleSide, create(side,difficulty,seed), normal Scenario victory reporting, and registration in E.scenarios.byId.
 2. Load the module before the Campaign UI. Change **only its matching registry row** in dist/war-campaign.js from scenarioId null to the actual registered scenario ID. The runtime derives its implemented status automatically.
@@ -63,7 +63,7 @@ Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in di
 4. Refine marker and bounds to match the actual region if necessary. Geographic bounds are approximate rectangles used for campaign map recoloring; never recolor an unrelated continent.
 5. Audit terrain/ports and run focused AI simulations without adding new regression tests. The objective's launch button becomes functional automatically when unlocked. No fake battle, fake victory, cross-scenario resource carryover, or additional UI case is needed.
 
-The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. All five Britannian regional objectives are now implemented and playable when their tiers unlock. The ten E.U. placeholders remain unimplemented.
+The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. All fifteen new regional objectives (five Britannian and ten E.U.) are implemented and playable when their tiers unlock.
 
 ## Map rendering, ownership and navigation
 
@@ -108,3 +108,13 @@ Each new regional scenario is selectable independently in Scenarios. In Campaign
 All five scenarios use the established faction units and all four difficulties. Their branch-specific geographic audit and seeded AI simulation scripts are kept under `tools/`; no new regression tests are added by integration. New map scripts are loaded from `dist/index.html` before `dist/war-campaign.js`. Generated engine Elite eligibility rules are synchronized with `src/engine/16-world-setup.part.js` for Siberia, Urals and Western Russia.
 
 The five implementation branches were combined into `feature/campaign-world-map`. Do not merge to `main` without a separate user request. Full graphical playtesting and long-run balance remain separately verifiable.
+
+## Integrated E.U. Regional Campaign
+
+Tier 3: Invasion of Hawaii (`invasion-hawaii`), Invasion of Brazil (`invasion-brazil`), Invasion of Greenland (`eu-greenland`), Invasion of the Caribbean (`invasion-caribbean`).
+
+Tier 4: Panama Campaign (`eu-panama`), Invasion of the American East Coast (`invasion-american-east-coast`, Campaign ID `eu-new-york` retained), Invasion of Canada (`invasion-canada`).
+
+Tier 5: Battle for the Great Lakes (`eu-great-lakes`), Invasion of California (`invasion-california`). Tier 6: Battle of Pendragon (`eu-pendragon`), with a legitimate Campaign victory announcement.
+
+The engine's Elite scenario lists now include all ten E.U. scenarios and all five Britannian scenarios. Existing game mechanics, HQ unlocks, save keys, underlying data and campaign tier prerequisites are retained. The Caribbean, Hawaii, Greenland, East Coast, Brazil and Panama invasions remain alive while offshore forces survive despite owning no initial cities. No regression tests or simulations were added or run for this integration.

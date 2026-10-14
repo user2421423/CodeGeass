@@ -18,9 +18,44 @@ const SCENARIO_KINDS = [
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['invasion-brazil','Invasion of Brazil','57 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['invasion-caribbean','Invasion of the Caribbean','41 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['eu-greenland','Invasion of Greenland','18 cities · 2 sides'],
+  ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'invasion-brazil': {
+    eu: 'Launch six carrier-supported landing fronts from the Atlantic. Take Belém, Fortaleza, Recife, Salvador, Rio and the south; secure ports and advance inland to Brasília and beyond.',
+    britannia: 'Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches.'
+  },
+  'invasion-california': {
+    eu: 'Advance south from Oregon toward Redding and Sacramento, while four carrier groups land at Northern California, San Francisco, the central coast and southern beaches.',
+    britannia: 'Defend San Francisco, Los Angeles, San Diego and the Central Valley with layered Army Groups, Pacific naval interception and reinforcements from Sierra passes.'
+  },
+  'invasion-canada': {
+    eu: 'Command six northern footholds and launch five carrier-led invasions from the Atlantic, Hudson Strait, Labrador Sea and Arctic. Seize ports, then converge on the industrial heartland.',
+    britannia: 'Hold Canada\'s fortified ports, prairie supply routes, Rocky Mountain passes and Great Lakes industrial network. Move reserves between threatened fronts.'
+  },
+  'eu-great-lakes': {
+    eu: 'Lead five coordinated offensives out of Ontario. Cross the inland seas, break Detroit and Buffalo, then take Chicago and the industrial belt.',
+    britannia: 'Defend Chicago, Detroit, Cleveland and Buffalo with heavy formations, fortified cities, shipborne reserves and inland fleets.'
+  },
+  'invasion-american-east-coast': {
+    eu: 'Lead six offshore carrier groups against New England, New York, Chesapeake Bay, the Carolinas, Georgia and Florida. Seize every Britannian city.',
+    britannia: 'Fortify industrial capitals and harbors, contest landing beaches, defend the Appalachian approaches and counterattack E.U. bridgeheads.'
+  },
+  'eu-panama': {
+    eu: 'Attack simultaneously from Caribbean and Pacific carrier groups. Open the canal, capture fortified ports, then sweep the isthmus.',
+    britannia: 'Defend Colón, Gatún, Balboa and Panama City. Hold the two canal bridges, protect naval bases and organize inland counteroffensives.'
+  },
+  'eu-pendragon': {eu:'Converge from the Sierra Nevada, northern Nevada, Mojave and eastern desert approaches. Break the imperial defense ring and conquer every city.',britannia:'Defend the imperial capital and its fortress ring, counterattack isolated E.U. columns, and hold every remaining city.'},
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -51,6 +86,18 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   'operation-stonehenge': {
     britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
     eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
+  },
+  'invasion-caribbean': {
+    eu: 'Command six loaded carrier forces, capture island harbours and advance from Cuba and the Bahamas through Hispaniola to the Lesser Antilles.',
+    britannia: 'Defend the major islands and harbours, concentrate naval patrols and counterattack isolated beachheads.'
+  },
+  'eu-greenland': {
+    eu: 'Start offshore with four carrier-supported Army Groups. Seize Greenland’s fjord ports and advance around the ice sheet to each Britannian base.',
+    britannia: 'Hold Nuuk, Sisimiut, Ilulissat, Tasiilaq and the northern garrisons. Concentrate coastal reserves, patrol the straits and counterattack invaded harbours.'
+  },
+  'invasion-hawaii': {
+    eu: 'Four carrier task forces assault Kauai, Oahu, Maui and Hawaii from the open Pacific. Capture every base on all eight islands.',
+    britannia: 'Defend Pearl Harbor, Honolulu and the outer island garrisons. Use naval interception and island reserves to destroy E.U. transports.'
   },
   'invasion-south-africa': {
     britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
@@ -83,6 +130,56 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'invasion-brazil': {
+    era: 'Brazil · Alternate 2017',
+    intro: 'Europia United begins with no Brazilian cities and launches six major transatlantic naval landings against Britannia. Total conquest of all 57 cities wins without a turn limit.',
+    diplomacy: 'E.U. and Britannia are hostile from turn 1; EU fleets carry the entire first landing force. Capturing coastal ports creates forward bases for inland operations.',
+    elite: 'Elite Brazil replaces eligible land formations with standard faction Elite Forces; carriers remain conventional. AI commander and production scaling follow standard scenario Elite rules.',
+    focus: {eu:'',britannia:'Brasília'}
+  },
+  'invasion-california': {
+    era:'California and Southern Oregon · Alternate 2017',
+    intro:'Europia United launches four carrier-led landings coordinated with a northern land invasion. Britannia controls all California cities; the E.U. holds 12 southern Oregon staging towns.',
+    diplomacy:'Two sides at war from turn 1. Capture every hostile city without a turn limit. Pendragon remains a separate final campaign battle.',
+    elite:'Existing Elite Force rules replace eligible land formations; fleets retain conventional naval roles and rival commanders follow the current difficulty rules.',
+    focus:{eu:'Medford',britannia:'Sacramento'}
+  },
+  'invasion-canada': {
+    era: 'Canada · Alternate 2017',
+    intro: 'Following Greenland, Europia United launches coordinated naval and northern invasions against Britannian Canada. All 74 theatre cities must fall; no turn limit.',
+    diplomacy: 'Two hostile powers. Five amphibious invasion axes and continental defense with independently capturable ports and no scripted deadline.',
+    elite: 'Elite Canada uses established single-frame Elite Forces and veteran enemy commanders. Carriers remain conventional; all faction mechanics are unchanged.',
+    focus: {eu:'Iqaluit',britannia:'Ottawa'}
+  },
+  'eu-great-lakes': {
+    era:'Great Lakes · Alternate 2017',
+    intro:'After conquering Canada, Europia invades the Britannian Great Lakes industrial heartland. Fight across all five navigable lakes and seize all 56 cities without a turn limit.',
+    diplomacy:'E.U. and Britannia are hostile from turn 1. Mackinac, St. Marys, Detroit and St. Clair are navigable. The Welland Canal bypasses Niagara Falls. Harbours can be captured separately.',
+    elite:'Elite Great Lakes converts eligible land formations to established faction Elite Forces; naval vessels remain conventional and enemy aces gain their normal Elite bonuses.',
+    focus:{eu:'Toronto',britannia:'Detroit'}
+  },
+  'eu-greenland': {
+    era:'Greenland · Alternate 2017',
+    intro:'Europia United launches a carrier-borne assault to take Greenland’s North Atlantic bases. Capture every enemy city; no turn limit.',
+    diplomacy:'Britannia controls every city. Europia starts at sea with no city, but can seize independent harbours and reinforce coastal landing zones.',
+    elite:'Elite Greenland uses the standard E.U. and Britannian elite conversion and increased AI resources; the geography and carrier rules are unchanged.',
+    focus:{eu:'Nuuk',britannia:'Nuuk'}
+  },
+  'invasion-american-east-coast': {
+    era: 'American Atlantic Seaboard · Alternate 2017',
+    intro: 'Europia United starts at sea without cities. Six simultaneous amphibious fronts attack Britannia from Maine to Florida, with no turn limit.',
+    diplomacy: 'Both powers are at war from turn 1. Capturable ports and fortified coastal cities control inland supply and naval staging.',
+    elite: 'Elite East Coast uses standard faction Elite Force rosters. Rival named commanders begin at Level 5; carriers remain conventional.',
+    focus: {eu:'',britannia:'New York City'}
+  },
+  'eu-panama': {
+    era:'Panama · Alternate 2017',
+    intro:'Europia United attacks Panama from both oceans after securing Caribbean bases. Britannia controls all 30 cities. No turn limit.',
+    diplomacy:'The Panama Canal is navigable for fleets between the Atlantic and Pacific. Only the Centennial and Bridge of the Americas crossings permit land transit across the canal; ports are independently capturable.',
+    elite:'Elite Panama starts with faction-specific Elite Forces at standard scenario levels; rival named commanders reach Lv.5. Carrier hulls stay conventional.',
+    focus:{eu:'',britannia:'Colon'}
+  },
+  'eu-pendragon': {era:'Pendragon · Imperial Last Stand',intro:'The final E.U. offensive against the Holy Britannian imperial capital. Capture all 48 cities, not merely Pendragon. No turn limit.',diplomacy:'Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.',elite:'Elite Pendragon: eligible single-frame Elite Forces replace land formations; rival named commanders start at Level 5. Factories and research follow the established Elite AI rules.',focus:{eu:'Bishop',britannia:'Pendragon'}},
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
@@ -131,6 +228,20 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     diplomacy: 'Only Britannia and Europia United are at war. Britannia must seize the entire theatre; the E.U. can win by destroying the invaders.',
     elite: 'Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.',
     focus: {britannia:'',eu:'Paris'}
+  },
+  'invasion-caribbean': {
+    era: 'Caribbean Sea · Alternate 2017',
+    intro: 'Six E.U. task forces begin offshore with no cities; Britannia holds 41 island cities across the Caribbean.',
+    diplomacy: 'Capture every hostile city to win. No turn limit and no F.L.E.I.J.A.',
+    elite: 'Elite Caribbean converts eligible land forces and amphibious troops under the standard regional Elite rules; naval carriers remain conventional.',
+    focus: {eu:'',britannia:'Havana'}
+  },
+  'invasion-hawaii': {
+    era: 'Hawaiian Islands · Alternate 2017',
+    intro: 'After the Bering Strait, Europia United launches four carrier-borne invasions of the Britannian Hawaiian Islands. The E.U. owns no city on turn one; seize all 30 bases to win.',
+    diplomacy: 'Britannia controls eight fortified islands, airfields and independently capturable ports. No alliances or turn limit.',
+    elite: 'Elite Hawaii: eligible transported land formations convert to Elite Forces. Naval carriers and amphibious fleets retain standardized mechanics.',
+    focus: {eu:'',britannia:'Pearl Harbor'}
   },
   'invasion-south-africa': {
     era: 'Southern Africa · Alternate 2017',

@@ -1,22 +1,22 @@
 {
   "id": "eu-new-york",
-  "title": "Invasion of New York",
+  "title": "Invasion of the American East Coast",
   "campaignFaction": "eu",
   "tier": 4,
-  "status": "planned",
-  "scenarioId": null,
-  "playableModule": null,
-  "geographicRegion": "New York",
+  "status": "implemented",
+  "scenarioId": "invasion-american-east-coast",
+  "playableModule": "dist/scenarios-east-coast.js",
+  "geographicRegion": "American Atlantic Seaboard: Maine to Florida",
   "proposedMapBounds": {
-    "west": -80,
-    "south": 38,
-    "east": -70,
-    "north": 45
+    "west": -85.6,
+    "south": 24,
+    "east": -65.4,
+    "north": 47.2
   },
   "campaignMapMarker": {
-    "longitude": -74,
-    "latitude": 41
+    "longitude": -75.5,
+    "latitude": 37.2
   },
-  "description": "Assault the Britannian Atlantic metropolitan corridor.",
-  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+  "description": "Massive six-front Europian carrier invasion of Britannian East Coast cities and ports.",
+  "implementationNotes": "Standalone scenario and Campaign eu-new-york Tier 4 share the actual invasion-american-east-coast model; all other objective IDs and tiers remain unchanged."
 }

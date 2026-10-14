@@ -55,3 +55,30 @@
   to{opacity:1;transform:translateY(0)}
 }
 @media(prefers-reduced-motion:reduce){.wc-feedback{animation:none}}
+
+/* Only an authenticated final E.U. Campaign victory gets the imperial finale. */
+.dialog.wc-imperial-victory{
+  border:2px solid #dcb772;
+  background:radial-gradient(circle at 50% 0%,#355167 0,#102639 58%,#091923 100%);
+  box-shadow:0 0 0 5px #dcb77222,0 24px 75px #03080dcc;
+  text-align:center;
+  padding:35px 35px 27px;
+}
+.wc-imperial-victory .eyebrow{color:#f2d394;letter-spacing:2px}
+.wc-imperial-victory h2{
+  color:#ffe4a3;
+  font-size:clamp(30px,5vw,47px);
+  margin:12px 0;
+  text-shadow:0 3px 16px #070d14;
+}
+.wc-imperial-victory .wc-imperial-subtitle{
+  font-weight:700;
+  letter-spacing:.06em;
+  color:#f3e6cf;
+  border-top:1px solid #bc965b99;
+  border-bottom:1px solid #bc965b99;
+  padding:13px 4px;
+  margin:18px auto;
+  max-width:550px;
+}
+.wc-imperial-victory .dialog-footer{justify-content:center}

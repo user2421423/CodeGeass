@@ -6,7 +6,7 @@ fight a world war with Knightmare Frames: the **Holy Britannian Empire**, the **
 
 ## Regional scenarios
 
-The **Scenarios** menu contains fourteen independent regional wars. Each scenario
+The **Scenarios** menu contains twenty-four independent regional wars. Each scenario
 automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
@@ -26,6 +26,16 @@ one power, or an allied coalition where applicable, conquers its enemies.
 | **Crossing the Urals** | 120 × 90 · 40 cities | Britannia attacks the E.U. across the Ural mountain passes and industrial railway corridors. Complete city conquest without a turn limit. |
 | **Invasion of Turkey** | 144 × 104 · 59 cities | Britannian armies and naval forces advance from Syria and Iraq into E.U.-held Turkey. The Bosporus and Dardanelles are navigable; total conquest wins. |
 | **Invasion of St. Petersburg and Moscow** | 128 × 88 · 41 cities | Britannian field armies advance from their Volga footholds against fortified E.U. Russian cities, culminating in Moscow and St. Petersburg. Complete city conquest wins. |
+| **Invasion of Hawaii** | 176 × 114 · 30 cities | E.U. amphibious invasion across the Hawaiian Islands; capture every Britannian city and port. |
+| **Invasion of Brazil** | 176 × 144 · 57 cities | Transatlantic six-front E.U. invasion; land from carriers, seize fortified ports, then advance inland. |
+| **Invasion of Greenland** | 140 × 120 · 18 cities | E.U. carrier-supported landings around Greenland’s ice sheet and Arctic fjords. |
+| **Invasion of the Caribbean** | 184 × 120 · 41 cities | E.U. island-hopping invasion of Britannian Caribbean bases; multiple task forces, no starting cities. |
+| **Panama Campaign** | 156 × 100 · 30 cities | E.U. assaults from two oceans through the navigable Panama Canal and mainland approaches. |
+| **Invasion of the American East Coast** | 160 × 176 · 62 cities | Maine-to-Florida invasion against Britannian ports and industry; six E.U. carrier task forces. |
+| **Invasion of Canada** | 196 × 112 · 74 cities | Five E.U. amphibious and northern operational axes against Britannian Canadian industrial centers. |
+| **Battle for the Great Lakes** | 176 × 112 · 56 cities | Multi-front Canadian offensive into Britannian inland Great Lakes naval and industrial defenses. |
+| **Invasion of California** | 160 × 120 · 63 cities | E.U. overland advance and carrier landings along California and southern Oregon. |
+| **Battle of Pendragon** | 136 × 104 · 48 cities | The E.U. finale in the American Southwest: take the fortified Britannian capital and every remaining city. |
 | **The Conquest of Indochina** | 120 × 104 · 44 cities | Britannia holds most of mainland Southeast Asia while the Chinese Federation invades from northern Vietnam and southern China. |
 | **The Invasion of the Philippines** | 144 × 112 · 37 cities | China holds all 34 Philippine cities; Britannia starts from three offshore bases at Koror, Peleliu and Colonia and launches a carrier-supported naval invasion. |
 | **The War for Australia** | 132 × 92 · 48 cities | Britannia holds eastern Australia (20 cities), China the north (14), and Europia the west (14); all three are hostile. |
@@ -188,7 +198,7 @@ scripts under `dist/`; no npm install or runtime bundler is required.
 
 - `dist/engine.js`, `dist/engine/*.js` and `dist/engine/ai.js`:
   game rules, unit data, commanders, technology, AI and army groups.
-- `dist/scenarios*.js` and `dist/*-landmask.js`: fourteen standalone regional
+- `dist/scenarios*.js` and `dist/*-landmask.js`: twenty-four standalone regional
   scenarios, maps and starting armies. `dist/missions.js` and
   `dist/campaign.js` implement the story campaign.
 - `dist/ui/*.js`: HUD, input, rendering, scenario selection, army-group

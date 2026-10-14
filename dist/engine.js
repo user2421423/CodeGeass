@@ -1737,8 +1737,8 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = g.scenario?.id === 'operation-stonehenge' &&
-      loser === 'britannia' && g.units.some(v => v.side === loser && v.hp > 0);
+    const expeditionAfloat = ((g.scenario?.id === 'operation-stonehenge' && loser === 'britannia') ||
+      (['invasion-american-east-coast','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) && g.units.some(v => v.side === loser && v.hp > 0);
     const annexed = g.mode !== 'campaign' && alive(g, loser) &&
       !g.stations.some(c => c.owner === loser) && !expeditionAfloat
       ? surrender(g, loser, u.side, s) : null;
@@ -4039,8 +4039,8 @@
     if (g.mode === 'scenario') {
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
-      // Britannia begins Stonehenge with no cities; the navy is the foothold.
-      if (g.scenario?.id === 'operation-stonehenge') {
+      // Amphibious regional invasions may start with no cities; surviving expeditions remain in play.
+      if (['operation-stonehenge','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon'].includes(g.scenario?.id)) {
         if (conquest) g.over = conquest;
         return g.over;
       }
@@ -4297,7 +4297,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4500,10 +4500,10 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario?.id)) return g;
     const sides = g.scenario.id === 'area-18' ? ['britannia','eu','cf'] :
       g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
-      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey'].includes(g.scenario.id) ? ['britannia','eu'] :
+      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario.id) ? ['britannia','eu'] :
       g.scenario.id === 'conquest-indochina' ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
