@@ -3397,22 +3397,6 @@ button.danger:hover:not(:disabled) {
 .footer .hud-all-orders:hover:not(:disabled) { background:linear-gradient(#4a5a60,#293c47); }
 .footer .hud-end-turn { background:linear-gradient(#e5cf83,#ae944a); border-color:#f8df9a; color:#18221e; font-weight:800; box-shadow: 0 0 0 1px #d4bc6c44,0 4px 18px #0007; }
 .footer .hud-end-turn:hover:not(:disabled) { background:linear-gradient(#f0dea0,#c7aa62); }
-.selection-dock:has(.dock-orders) { width:min(1020px,calc(100vw - 46px)); max-width:calc(100vw - 46px); min-height:104px; gap:10px; padding:10px; align-items:center; border-radius:4px; }
-.selection-dock:has(.dock-orders) .dock-unit { width:250px; max-width:270px; min-width:185px; flex:0 1 auto; }
-.dock-orders { flex:1 1 370px; min-width:210px; display:flex; flex-direction:column; gap:7px; align-self:center; }
-.dock-action-title { display:block; width:100%; font:700 10px Arial,sans-serif; color:#d3d5b5; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
-.dock-orders .dock-actions { max-width:none; margin:0; gap:5px; }
-.dock-orders .dock-actions button { min-height:29px; padding:6px 8px; font-size:11px; }
-.dock-secondary { border-top:1px solid #a4c1b331; padding-top:5px; }
-.dock-secondary > summary { color:#c7d5ce; cursor:pointer; font:11px Arial,sans-serif; padding:4px 0; }
-.dock-secondary > summary:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
-.dock-secondary .dock-actions { padding:8px 0 3px; }
-.dock-readiness { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
-.dock-ready { display:inline-flex; align-items:center; font:10px Arial,sans-serif; border:1px solid #697d7e; padding:3px 5px; border-radius:3px; }
-.dock-ready.ready { border-color:#7fae8a; color:#b7ebbb; background:#21462a99; }
-.dock-ready.used { color:#b8bab8; background:#2b3435; }
-.dock-ready:focus-visible { outline:2px solid #f1d37d; }
-.dock-note { color:#c2c9c2; font-size:12px; }
 @media (max-width: 1400px) {
   .topbar.hud-v2 { gap:8px; padding:0 8px; }
   .hud-v2 .hud-brand { min-width:0; }
@@ -3445,9 +3429,6 @@ button.danger:hover:not(:disabled) {
   .hud-v2 .top-actions button:nth-child(3) { display:block; }
   .theater-head { top:126px; }
   .map-tools { top:185px; }
-  .selection-dock:has(.dock-orders) { max-height:180px; overflow-y:auto; bottom:68px; align-items:start; }
-  .selection-dock:has(.dock-orders) .dock-unit { min-width:145px; width:195px; }
-  .dock-orders { min-width:180px; }
 }
 @media (max-width: 550px) {
   .hud-v2 .hud-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }
@@ -3457,12 +3438,8 @@ button.danger:hover:not(:disabled) {
   .hud-v2 .resource .res-icon { width: 18px; height: 18px; flex-basis: 18px; }
   .hud-v2 .resource.res-cities .label { font-size: 8px; }
   .hud-nav-group > summary { font-size:10px; }
-  .selection-dock:has(.dock-orders) { left:8px; width:calc(100vw - 16px); max-width:calc(100vw - 16px); flex-wrap:wrap; max-height:180px; }
-  .selection-dock:has(.dock-orders) .dock-visual { width:57px; }
-  .selection-dock:has(.dock-orders) .dock-unit { flex:1 1 180px; width:auto; }
-  .selection-dock:has(.dock-orders) .dock-orders { flex-basis:100%; }
   .footer .hud-all-orders { font-size:10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hud-nav-group, .hud-v2 .resource, .dock-secondary { scroll-behavior:auto; }
+  .hud-nav-group, .hud-v2 .resource { scroll-behavior:auto; }
 }

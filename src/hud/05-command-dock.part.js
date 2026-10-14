@@ -20,37 +20,7 @@ function dockHTML() {
       chargeCity = ours && !(u.eliminator > 0) && game.mode !== 'scenario'
         ? game.stations.find(s => s.owner === u.side && s.eliminator > 0 && E.distance(u, s, game) <= 1)
         : null;
-    const ship = t.naval === 'ship';
-    const movable = ours && interactive() && !u.moved && u.morale > -3;
-    const fireable = ours && interactive() && !u.attacked && u.morale > -3 && !E.atSea(game, u);
-    const moveWhy = !ours ? 'Enemy unit' : phaseReason() || (u.morale <= -3 ? 'Confused unit' : u.moved ? 'Movement already used' : 'Movement available');
-    const fireWhy = !ours ? 'Enemy unit' : phaseReason() || (u.morale <= -3 ? 'Confused unit' : E.atSea(game, u) ? 'Embarked units cannot fire' : u.attacked ? 'Attack already used' : fireStatus(u));
-    const primary = [
-      ...(ship ? [act('data-action="carrier-deploy"', 'Deploy cargo' + (u.cargo?.length ? ' (' + u.cargo.length + ')' : ''), phaseReason(), 'Open carrier deployment', 'small primary', false)] : []),
-      ...(!ship && !u.cmd ? [act('data-action="assign"', 'Assign commander', phaseReason(), '', 'small primary', false)] : []),
-      ...(a?.action ? [act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false)] : []),
-      act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false),
-      ...(u.goto ? [act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false)] : []),
-      act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost', false)
-    ];
-    const secondary = [
-      ...(!u.elite ? [act('data-action="reinforce"', 'Add frame', phaseReason() || E.reinforceReason(game, u), '', 'small', false)] : []),
-      act('data-action="repair"', 'Repair', phaseReason() || E.repairReason(game, u), '', 'small', false),
-      ...(chargeCity ? [act(`data-eliminator-give="${chargeCity.id}:${u.id}"`, 'Take Eliminator', phaseReason() || E.transferEliminatorReason(game, { city: chargeCity.id }, { unit: u.id }), '', 'small', false)] : []),
-      ...(u.eliminator > 0 ? [act('data-action="eliminator-handover"', 'Hand over Eliminator', phaseReason() || (u.eliminatorMoved === game.turn ? 'Charge already transferred this turn' : null), '', 'small', false)] : []),
-      ...(under ? [`<button class="small" data-station="${under.id}" title="Select the city beneath this unit">City: ${esc(under.name)}</button>`] : []),
-      ...(mine ? [`<button class="small" data-site="${mine.id}" title="Select the mine beneath this unit">Mine: ${esc(mine.name)}</button>`] : [])
-    ];
-    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}${dockFlag(u.side)}</div>
-      <div class="dock-unit"><span class="label">${a ? esc(a.short) + ' · ' : ''}${t.naval === 'amphibious' ? 'Naval' : esc(t.branch)} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${ours && u.eliminator > 0 ? ' · ✦ Eliminator' : ''}</span>
-      <strong>${esc(unitName(u))}${armyGroup ? `<span class="dock-group-label" title="${esc(armyGroupLabel(armyGroup))}">Group ${armyGroup.id}</span>` : ''}</strong>
-      <div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u,t)}</div>
-      <div class="dock-readiness"><span tabindex="0" class="dock-ready ${movable ? 'ready' : 'used'}" title="${esc(moveWhy)}" aria-label="Movement: ${esc(moveWhy)}">↗ ${movable ? 'Move ready' : 'Move unavailable'}</span><span tabindex="0" class="dock-ready ${fireable ? 'ready' : 'used'}" title="${esc(fireWhy)}" aria-label="Attack: ${esc(fireWhy)}">⌖ ${fireable ? 'Attack ready' : 'Attack unavailable'}</span></div>
-      <p>${moraleName(u.morale)}${ours && u.goto ? ' · ' + esc(gotoText(u)) : ''}${armyGroup ? ' · ' + esc(armyGroupLabel(armyGroup)) : ''}</p></div>
-      <div class="dock-orders" aria-label="Unit orders">
-      ${ours ? `<div class="dock-actions dock-primary"><span class="dock-action-title">Orders${ship ? ' · carrier' : ''}</span>${primary.join('')}</div><details class="dock-secondary"><summary>Support &amp; logistics</summary><div class="dock-actions">${secondary.join('')}</div></details>` : `<span class="dock-action-title">Opponent unit</span><span class="dock-note">Select a friendly unit to issue orders.</span>`}
-      </div>`;
-
+    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}${dockFlag(u.side)}</div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.naval === 'amphibious' ? 'Naval' : t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${ours && u.eliminator > 0 ? ' · <span class="eliminator-text">✦ Eliminator</span>' : ''}</span><strong>${unitName(u)}${ours && armyGroup ? `<span class="dock-group-label" title="${esc(armyGroupLabel(armyGroup))}">Group ${armyGroup.id}</span>` : ''}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div>${ours && u.goto ? `<p class="goto-line">⚑ ${esc(gotoText(u))}</p>` : ''}</div><div class="dock-actions unit-dock-actions">${ours ? `<button class="small undo-button" data-action="undo" title="${esc(canUndo ? 'Undo last ordinary move (Z).' : undoReason)}" aria-label="${esc(canUndo ? 'Undo last move' : 'Undo unavailable: ' + undoReason)}"${canUndo ? '' : ' disabled'}>↶ Undo${canUndo ? '' : ' locked'}</button>` : ''}${under ? `<button class="small" data-station="${under.id}" title="Select the city under this unit (or click the unit again)">City: ${esc(under.name)}</button>` : ''}${mine ? `<button class="small" data-site="${mine.id}" title="Select the mine under this unit (or click the unit again)">Mine: ${esc(mine.name)}</button>` : ''}${ours && t.naval === 'ship' ? '<button class="small" data-action="carrier-deploy">Deploy units</button>' : ours && !u.cmd ? '<button class="small" data-action="assign">Assign</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false) : ''}${ours && u.goto ? act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false) : ''}${ours && !u.elite ? act('data-action="reinforce"', 'Add frame', phaseReason() || E.reinforceReason(game, u), '', 'small', false) : ''}${chargeCity ? act(`data-eliminator-give="${chargeCity.id}:${u.id}"`, 'Take Eliminator', phaseReason() || E.transferEliminatorReason(game, { city: chargeCity.id }, { unit: u.id }), '', 'small', false) : ''}${ours && u.eliminator > 0 ? act('data-action="eliminator-handover"', 'Hand over Eliminator', phaseReason() || (u.eliminatorMoved === game.turn ? 'This charge has already changed hands this turn' : null), '', 'small', false) : ''}${ours ? act('data-action="repair"', 'Repair', phaseReason() || E.repairReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="wait"', 'Hold', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost', false) : ''}</div>`;
   }
   if (s) {
     const ours = s.owner === game.player,
