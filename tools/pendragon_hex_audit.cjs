@@ -104,18 +104,19 @@ const memory=new Map(),storage={
 const fresh=WC.fresh();
 assert.equal(WC.launch(fresh,'eu','eu-pendragon',E.scenarios.byId).ok,false,
  'Final objective must not bypass earlier Campaign tiers');
-const progress=WC.testFixture('eu',6);
-assert(WC.persist(storage,progress));
+// Earlier E.U. objectives remain planned on this branch. Even fixtures for
+// earlier tiers must not smuggle their completions into legitimate progression.
+const staged=WC.testFixture('eu',6);
+assert(WC.persist(storage,staged));
 const eligible=WC.launch(WC.load(storage),'eu','eu-pendragon',E.scenarios.byId);
-assert(eligible.ok&&eligible.battleSide==='eu');
-const official=P.create('eu','normal',202617);
-for(const city of official.stations)city.owner='eu';
-official.over=P.winner(official);
-official.warCampaign=eligible.context;
-const recorded=WC.recordVictory(storage,official);
-assert(recorded.ok&&recorded.complete&&
-  WC.completed(WC.load(storage),'eu','eu-pendragon'),
-  'Legitimate Pendragon victory must complete the E.U. Campaign');
+assert.equal(eligible.ok,false,'Planned previous missions must preserve Campaign lock');
+const forged=P.create('eu','normal',202617);
+for(const city of forged.stations)city.owner='eu';
+forged.over=P.winner(forged);
+forged.warCampaign={faction:'eu',missionId:'eu-pendragon',
+  scenarioId:'eu-pendragon',battleSide:'eu'};
+assert.equal(WC.recordVictory(storage,forged).ok,false,
+ 'An unauthorized final-battle win must not complete the Campaign');
 const standalone=P.create('eu','normal',202618);
 for(const city of standalone.stations)city.owner='eu';
 standalone.over=P.winner(standalone);
@@ -124,9 +125,10 @@ assert.equal(WC.recordVictory(storage,standalone).ok,false,
 const preview=P.create('eu','normal',202619);
 for(const city of preview.stations)city.owner='eu';
 preview.over=P.winner(preview);
-preview.warCampaign={...eligible.context,preview:true};
+preview.warCampaign={...forged.warCampaign,preview:true};
 assert.equal(WC.recordVictory(storage,preview).ok,false,
  'Preview victories do not update Campaign progress');
+assert.equal(WC.completed(WC.load(storage),'eu','eu-pendragon'),false);
 assert(WC.regionContains(WC.ALL['eu-pendragon'],-117,37.5),
  'Official final victory must cover capital Campaign marker');
 
