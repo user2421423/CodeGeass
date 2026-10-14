@@ -92,6 +92,7 @@ function attackHex(p) {
   moralePopups(before);
   refreshAndSave();
   if (result.breakthrough) toast('Breakthrough! This unit can act again.');
+  else if (result.destroyed && !game.over) toast('Enemy formation destroyed.');
 }
 // Unit movement undo: a unit that moved but has not fired returns to where it started.
 function undoMove() {
@@ -102,7 +103,6 @@ function undoMove() {
   selection = { kind: 'unit', id: unitId };
   render();
   save();
-  toast('Move undone.');
 }
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion() ? 15 : ms));

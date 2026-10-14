@@ -1,0 +1,77 @@
+/* Section 5 — military event and victory presentation, responsive and non-blocking. */
+.military-notice {
+  position: fixed; z-index: 130; top: 86px; right: 18px; width: min(400px, calc(100vw - 32px));
+  padding: 0; overflow: hidden; border: 1px solid rgba(223,192,111,.58); border-radius: 12px;
+  color: #f4eddf; background: linear-gradient(150deg,#21384b 0%,#0b1b2c 85%);
+  box-shadow: 0 12px 34px #000b, inset 0 1px rgba(255,255,255,.08);
+  animation: military-slide .28s ease-out both;
+}
+.military-notice[hidden] { display: none; }
+.military-notice.minor { border-color: #7a96aa; width: min(330px, calc(100vw - 32px)); }
+.military-notice-top, .military-notice-bottom {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 9px 14px; background: #07132191; letter-spacing: .12em;
+  font-size: 10px; font-weight: 800; color: #e0c277;
+}
+.military-notice-bottom { color: #95acbd; font-weight: 500; letter-spacing: .03em; }
+.military-notice-top button {
+  width: 27px; min-width: 27px; height: 27px; padding: 0; border: 1px solid #ffffff36;
+  border-radius: 6px; background: #233d51; color: #fff; font-size: 20px; cursor: pointer;
+}
+.military-notice-main { padding: 15px 16px 10px; display: flex; gap: 13px; align-items: center; }
+.military-notice-main > div { min-width: 0; }
+.military-notice-main h3 {
+  font-size: clamp(18px, 1.65vw, 23px); line-height: 1.13; margin: 7px 0 5px;
+  font-family: Georgia, 'Times New Roman', serif; color: #f7e5b5;
+}
+.military-notice-main small { color: #d5e1e7; font-size: 12px; }
+.military-notice p { margin: 0 16px 15px; font-size: 12px; line-height: 1.55; color: #d0dce3; }
+.military-notice-flags { display: flex; gap: 7px; align-items: center; }
+.military-flag { display: inline-block; width: 45px; height: 28px; overflow: hidden; border: 1px solid #ffffff52; background: #142433; }
+.military-flag svg { width: 100%; height: 100%; }
+.military-notice-portrait { width: 78px; height: 96px; object-fit: cover; flex-shrink: 0; border: 1px solid #d6b76666; border-radius: 5px; }
+.military-notice-events { margin: 0 15px 13px; padding: 0; list-style: none; max-height: 210px; overflow-y: auto; }
+.military-notice-events li { padding: 8px 0; border-top: 1px solid #ffffff1f; display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.military-notice-events strong { font-size: 12px; color: #f4e4c1; }
+.military-notice-events small { font-size: 11px; color: #bed0db; text-align: right; }
+.military-result-hero {
+  margin: -4px 0 15px; border: 1px solid #ccab65a8; border-radius: 9px; overflow: hidden;
+  background: linear-gradient(125deg,#192f42,#0c1825); color: #f3e8d6;
+}
+.military-result-banner { display: flex; align-items: center; gap: 16px; padding: 17px; }
+.military-result-banner > div { flex: 1; min-width: 0; }
+.military-result-flag { flex-shrink: 0; display: block; width: 74px; height: 53px; border: 1px solid #e6ca8e88; overflow: hidden; background: #121c2a; }
+.military-result-flag svg { width: 100%; height: 100%; }
+.military-hero-kicker { display: block; color: #ebc77e; font-size: 10px; letter-spacing: .12em; font-weight: 800; }
+.military-result-banner h2 { margin: 2px 0 0; font-size: clamp(24px, 4vw, 38px); font-weight: 800; letter-spacing: .09em; line-height: 1; }
+.military-result-banner strong { font-family: Georgia,serif; font-size: 13px; font-weight: 500; color: #ebdfc8; }
+.military-result-portrait { width: 74px; height: 86px; object-fit: cover; border: 1px solid #dfc27c66; border-radius: 3px; }
+.military-result-map { position: relative; margin: 0 15px 14px; border: 1px solid #ffffff3b; background: #0c1e2c; }
+.military-result-map img { display: block; width: 100%; max-height: 195px; object-fit: contain; image-rendering: auto; }
+.military-result-map span { position: absolute; right: 0; bottom: 0; background: #081726db; padding: 3px 8px; font-size: 10px; color: #d0dbe4; }
+.military-final-highlights { padding: 4px 15px 12px; border-top: 1px solid #ffffff26; }
+.military-final-highlights > span { font-size: 10px; letter-spacing: .11em; color: #e9c37c; }
+.military-final-highlights p { margin: 5px 0 0; font-size: 12px; line-height: 1.5; color: #e6e0d4; }
+.military-result-statistics { margin: 15px 0; border-top: 1px solid #ffffff32; border-bottom: 1px solid #ffffff32; padding: 12px 0; }
+.military-result-statistics h3 { margin: 0 0 11px; font-size: 13px; letter-spacing: .025em; }
+.military-stat-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.military-stat { background: #ffffff0d; border: 1px solid #ffffff1d; border-radius: 6px; padding: 9px 6px; text-align: center; }
+.military-stat b { display: block; font-size: 19px; color: #f2cb78; font-variant-numeric: tabular-nums; }
+.military-stat small { display: block; font-size: 10px; line-height: 1.3; color: #ced7df; }
+.military-report-source { display: block; font-size: 10px; opacity: .78; margin-top: 9px; }
+.military-result-scenario .military-result-banner { border-left: 5px solid #d9b86f; }
+.military-result-campaign .military-result-banner { background: linear-gradient(120deg,#263347,#132637); }
+.military-result-conquest .military-result-banner { background: linear-gradient(120deg,#3a2f22,#12293b); }
+@keyframes military-slide {
+  from { opacity: 0; transform: translateY(-9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .military-notice { animation: none; }
+}
+@media (max-width: 700px) {
+  .military-notice { right: 8px; top: 62px; width: min(400px, calc(100vw - 16px)); }
+  .military-result-banner { padding: 12px; gap: 10px; }
+  .military-result-flag { width: 58px; height: 43px; }
+  .military-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}

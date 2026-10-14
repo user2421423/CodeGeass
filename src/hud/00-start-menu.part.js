@@ -85,6 +85,7 @@ function render() {
   attachMinimap();
   minimapDirty = true;
   updateSelection();
+  militaryPresentation.collect();
   if (mapFocused) canvas.focus({ preventScroll: true });
 }
 // Your F.L.E.I.J.A. arsenal: shown once you hold a warhead; it arms the targeting mode.
