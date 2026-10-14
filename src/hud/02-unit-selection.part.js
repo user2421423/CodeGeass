@@ -129,24 +129,6 @@ function updateSelection() {
   $('turn-status').innerHTML = game.over
     ? 'Operation concluded'
     : `${ready} units ready <small>${F(game.player).short} · ${E.DIFFICULTIES[game.difficulty]?.name || 'Normal'} · ${saveOk ? 'autosaved' : 'not saved'}</small>`;
-  $('map-banner').textContent =
-    game.phase !== game.player
-      ? `${F(game.phase).name} is maneuvering…`
-      : game.over
-        ? 'Operation concluded'
-        : strikeMode
-          ? 'F.L.E.I.J.A. armed · choose a target hex · Escape cancels'
-          : armyGroupRouting
-            ? `Army group · click a destination hex · Escape cancels`
-          : routing
-            ? `Standing orders · click the hex ${unitName(u)} should head for · Escape cancels`
-            : u?.side === game.player
-            ? `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)} ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${u.morale <= -3 ? ' · In confusion' : !hasOrders(u) ? ' · Orders complete' : ''}`
-            : selectedStation()
-              ? `${selectedStation().name} · ${selectedStation().owner === game.player ? 'Open the factory to build Knightmares' : 'Break its defenses before capture'}`
-              : selectedSite()
-                ? `${selectedSite().name} · Sakuradite mine · ${selectedSite().owner === game.player ? 'Upgrade its refinery to extract more' : 'Move Infantry or Armor onto it to seize it'}`
-                : 'Select a Knightmare to reveal movement and firing range.';
   // AI playback and async game-state changes are not necessarily user input events.
   if (typeof requestMapFrame === 'function') requestMapFrame();
 }
