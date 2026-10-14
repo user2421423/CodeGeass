@@ -70,6 +70,47 @@ function conquestReward(difficulty, profile, era = 'world', side = 'britannia') 
 function factionUIColor(side) {
   return side === 'bk' ? '#f0c94a' : F(side).color;
 }
+
+/* Section 7: short, keyboard-accessible command groups, without changing action handlers. */
+function hudNavGroup(label, items, key) {
+  return `<details name="hud-command-menu" class="hud-nav-group" data-hud-group="${key}"><summary title="${esc(label)} commands" aria-label="${esc(label)} commands">${esc(label)}<span class="hud-chevron" aria-hidden="true">⌄</span></summary><div class="hud-nav-menu" role="group" aria-label="${esc(label)}">${items.join('')}</div></details>`;
+}
+function hudNavAction(action, label, tip, disabled = null) {
+  return `<button type="button" class="hud-menu-action" data-action="${action}" title="${esc(disabled || tip)}"${disabled ? ` disabled aria-label="${esc(label + ': ' + disabled)}"` : ''}>${esc(label)}</button>`;
+}
+function hudMenus() {
+  const campaign = game.mode === 'campaign';
+  const groupMode = game.mode === 'conquest' || game.mode === 'scenario';
+  const blocked = phaseReason();
+  const operations = [
+    ...(groupMode ? [hudNavAction('army-groups', 'Army Groups', 'Plan and manage Army Group objectives')] : []),
+    ...(!campaign ? [hudNavAction('production', 'Production', 'Build and automate units', blocked),
+                   hudNavAction('elite-forces', 'Elite Forces', 'Inspect and upgrade elite units')] : []),
+    ...(campaign ? [hudNavAction('briefing', 'Mission Briefing', 'Review the active mission'),
+                    hudNavAction('archive', 'Unit Archive', 'Examine units')] : [])
+  ];
+  const hq = [
+    ...(!campaign ? [hudNavAction('admirals', 'Commanders', 'Assign a commander', blocked)] : []),
+    hudNavAction('research', 'Research', 'Open the research headquarters'),
+    ...(!campaign ? [hudNavAction('archive', 'Unit Archive', 'Inspect available unit classes')] : [])
+  ];
+  const intelligence = [
+    hudNavAction('war-report', 'War Report', 'Review events, losses and operations'),
+    ...(!campaign ? [hudNavAction('powers', 'Powers', 'Inspect rival powers')] : [])
+  ];
+  const system = [
+    hudNavAction('menu', 'Menu & Settings', 'Open the game menu and settings', game.phase !== game.player ? 'Cannot open the game menu during an AI phase' : null),
+    hudNavAction('help', 'Field Manual', 'Open gameplay help'),
+    `<button type="button" class="hud-menu-action" data-action="sound" aria-pressed="${SFX.enabled}" title="${SFX.enabled ? 'Mute sound' : 'Enable sound'}">${SFX.enabled ? 'Mute sound' : 'Enable sound'}</button>`
+  ];
+  return `<nav class="top-actions hud-nav" aria-label="Game commands">
+    ${arsenalButton()}
+    ${hudNavGroup('Operations', operations.length ? operations : [hudNavAction('archive', 'Unit Archive', 'Inspect units')], 'operations')}
+    ${hudNavGroup('Command HQ', hq, 'hq')}
+    ${hudNavGroup('Intelligence', intelligence, 'intelligence')}
+    ${hudNavGroup('System', system, 'system')}
+  </nav>`;
+}
 function render() {
   E.ensureWarReport(game);
   invalidateUIState();
@@ -78,7 +119,7 @@ function render() {
   const e = game.economy[game.player],
     inc = E.income(game, game.player),
     cities = game.stations.filter(s => s.owner === game.player).length;
-  app.innerHTML = `<header class="topbar"><div class="brand"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · ${game.mode === 'campaign' ? 'CAMPAIGN' : game.mode === 'scenario' ? 'SCENARIO' : 'WORLD WAR'}</small></div></div><div class="resources">${resource('credits', 'Credits', 'Credits', e.credits, inc.credits)}${resource('industry', 'Industry', 'Industry · Knightmare factories', e.industry, inc.industry)}${resource('research', 'Research', 'Research. Banked research becomes command tokens when you win (5 research = 1 token)', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Sakuradite · mined at deposits; heavier Knightmares need it', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'Command tokens · spent on HQ research, earned by winning operations', loadProfile().tokens || 0)}<div class="resource"><span class="label">Cities</span><b>${cities} <small>/ ${game.stations.length}</small></b></div></div><nav class="top-actions" aria-label="Command menus">${arsenalButton()}${(game.mode === 'conquest' || game.mode === 'scenario') ? '<button class="small" data-action="army-groups">Army groups</button>' : ''}<button class="small ghost" data-action="war-report">War Report</button><button class="small" data-action="research">Research</button>${game.mode === 'campaign' ? '<button class="small" data-action="briefing">Briefing</button><button class="small ghost" data-action="archive">Units</button>' : `<button class="small" data-action="production" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Production</button><button class="small" data-action="admirals" ${!interactive() ? `disabled title="${phaseReason()}"` : ''}>Commanders</button><button class="small ghost" data-action="archive">Units</button><button class="small ghost" data-action="elite-forces">Elite Forces</button><button class="small ghost" data-action="powers">Powers</button>`}<button class="small ghost sound-toggle" data-action="sound" aria-pressed="${SFX.enabled}" aria-label="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}" title="${SFX.enabled ? 'Mute sound' : 'Unmute sound'}">${SFX.enabled ? '🔊' : '🔇'}</button><button class="small ghost" data-action="help" aria-label="Field manual">?</button><button class="small ghost" data-action="menu" ${game.phase !== game.player ? 'disabled' : ''}>Menu</button></nav></header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label" style="color:${factionUIColor(game.phase)}">Turn ${String(game.turn).padStart(2, '0')} · ${F(game.phase).short} phase</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} <b>Turn ${game.turn}${turnLimit() ? ' / ' + turnLimit() : ''}</b>${starChips()}</p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select a unit on the map or press N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green land, cyan coastal, or blue water hex, or attacks a red hex. Z undoes the last move. E ends your turn. Drag to pan; plus and minus zoom."></canvas><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="${wraps() ? 'World overview' : 'Whole battlefield'}">${wraps() ? 'World' : 'Map'}</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas>${game.mode === 'scenario' ? '' : `<div class="map-legend">${(game.mode === 'campaign' ? game.order.filter(s => s !== 'neutral') : (game.majors || E.MAJORS)).map(s => `<span style="color:${factionUIColor(s)}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div>`}</div><div class="map-caption"><span id="map-caption">Green: land move · Cyan: coast (land + ships) · Blue: sea/embark · Red: attack</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit · <span class="kbd">E</span> end turn</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button><button class="small primary" data-action="do-all-orders" ${!interactive() ? 'disabled' : ''} title="Move every eligible unit with standing orders now, and resolve group stance attacks. Each unit auto-moves at most once per turn.">Do all orders now</button>${game.phase === game.player || game.over ? `<button class="primary end" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn <span class="kbd">E</span></button>` : `<button class="primary end" disabled>${F(game.phase).short} turn…</button>`}</div></footer>`;
+  app.innerHTML = `<header class="topbar hud-v2"><div class="brand hud-brand" title="Knightmare Conquest"><span class="mark" aria-hidden="true">◈</span><div><h1>Knightmare Conquest</h1><small>CODE GEASS · ${game.mode === 'campaign' ? 'CAMPAIGN' : game.mode === 'scenario' ? 'SCENARIO' : 'WORLD WAR'}</small></div></div><div class="hud-phase" role="status" aria-label="Current turn and faction"><span class="hud-phase-mode">${game.mode === 'campaign' ? 'Campaign' : game.mode === 'scenario' ? 'Scenario' : 'World War'} · ${turnLimit() ? `Turn ${game.turn} / ${turnLimit()}` : `Turn ${game.turn}`}</span><strong><span class="hud-phase-dot" style="background:${factionUIColor(game.phase)}"></span>${esc(F(game.phase).short)} <span class="hud-phase-suffix">${game.phase === game.player ? 'command' : 'AI phase'}</span></strong></div><div class="resources hud-resources" role="group" aria-label="Current resources">${resource('credits', 'Credits', 'Money for production and operations', e.credits, inc.credits)}${resource('industry', 'Industry', 'Used to build and reinforce units in factories', e.industry, inc.industry)}${resource('research', 'Research', 'Progress for technology and victory rewards', e.science, inc.science)}${resource('sakuradite', 'Sakuradite', 'Strategic mineral required by advanced Knightmares', e.sakuradite || 0, inc.sakuradite || 0)}${resource('token', 'Tokens', 'HQ command tokens earned from victories', loadProfile().tokens || 0)}<div class="resource res-cities" tabindex="0" role="status" title="Cities controlled: ${cities} of ${game.stations.length}" aria-label="Cities controlled: ${cities} of ${game.stations.length}"><span class="res-city-icon" aria-hidden="true">▣</span><span class="label">Cities</span><b>${cities}</b></div></div>${hudMenus()}</header><div class="workbench"><main class="theater"><div class="theater-head"><div><span class="label">STRATEGIC THEATER</span><h2>${E.modeTitle(game)}</h2></div><p class="objective">${E.objectiveText(game)} ${starChips()}</p></div><div class="map-wrap"><canvas id="map" tabindex="0" aria-label="World hex map. Select a unit on the map or press N. Arrow keys move the hex cursor; Enter selects. Enter moves to a green land, cyan coastal, or blue water hex, or attacks a red hex. Z undoes the last move. E ends your turn. Drag to pan; plus and minus zoom."></canvas><div class="map-banner" id="map-banner">${game.phase !== game.player ? 'Rival powers are maneuvering…' : 'Select a Knightmare to reveal its movement and firing range.'}</div><div class="map-tools"><button data-action="zoom-out" aria-label="Zoom out">−</button><button data-action="fit" title="${wraps() ? 'World overview' : 'Whole battlefield'}">${wraps() ? 'World' : 'Map'}</button><button data-action="zoom-in" aria-label="Zoom in">+</button><button data-action="home" title="Center on your capital">⌂</button></div><canvas id="minimap" class="minimap" aria-label="World minimap: click to move the view"></canvas>${game.mode === 'scenario' ? '' : `<div class="map-legend">${(game.mode === 'campaign' ? game.order.filter(s => s !== 'neutral') : (game.majors || E.MAJORS)).map(s => `<span style="color:${factionUIColor(s)}"><i class="legend-dot"></i>${F(s).short}</span>`).join('')}<span style="color:#d8cfa6"><i class="legend-dot"></i>Neutral</span><span>▣ City</span></div>`}</div><div class="map-caption"><span id="map-caption">Green: land move · Cyan: coast (land + ships) · Blue: sea/embark · Red: attack</span><span>Drag to pan · Scroll to zoom · <span class="kbd">N</span> next unit · <span class="kbd">E</span> end turn</span></div></main><aside class="side" id="side"></aside><div class="selection-dock" id="selection-dock"></div></div><footer class="footer"><div class="turn-status" id="turn-status"></div><div class="footer-actions"><button class="small undo-button" data-action="undo" ${!interactive() || !undoStack.length ? 'disabled' : ''} title="${phaseReason() || (undoStack.length ? 'Return the last moved unit to where it started (Z)' : 'No move to undo')}">↶ Undo move <span class="kbd">Z</span></button><button class="small" data-action="next" ${!interactive() ? 'disabled' : ''}>Next unit <span class="kbd">N</span></button><button class="small hud-all-orders" data-action="do-all-orders" ${!interactive() ? 'disabled' : ''} title="Move every eligible unit with standing orders now, and resolve group stance attacks. Each unit auto-moves at most once per turn.">Do all orders now</button>${game.phase === game.player || game.over ? `<button class="primary end hud-end-turn" title="Finish your turn (E)" data-action="end" ${!interactive() ? 'disabled' : ''}>End turn <span class="kbd">E</span></button>` : `<button class="primary end" disabled>${F(game.phase).short} turn…</button>`}</div></footer>`;
   canvas = $('map');
   ctx = canvas.getContext('2d');
   attachMap();
@@ -236,7 +277,7 @@ function act(attrs, label, why, detail = '', cls = '', showWhy = true) {
       : detail && (showWhy || !why)
         ? `<small>${detail}</small>`
         : '';
-  return `<button class="${cls}${why ? ' blocked' : ''}" ${attrs} ${why ? `disabled${isShortfall(why) ? '' : ` title="${esc(why)}"`}` : ''}>${label}${note}</button>`;
+  return `<button class="${cls}${why ? ' blocked' : ''}" ${attrs} ${why ? `disabled title="${esc(why)}" aria-label="${esc(label + ': ' + why)}"` : ''}>${label}${note}</button>`;
 }
 // Where a unit's standing order is taking it.
 function gotoText(u) {
@@ -276,8 +317,9 @@ function rangeText(u) {
   return r.min === r.max ? r.max : r.min + '–' + r.max;
 }
 function resource(icon, label, title, value, perTurn) {
-  const rate = perTurn == null ? '' : ` · +${perTurn}/turn`;
-  return `<div class="resource res-${icon}" title="${title}${rate}">${ICONS.use(icon, 'res-icon')}<span class="label">${label}</span><b>${count(value)} ${perTurn == null ? '' : `<small>+${perTurn}/turn</small>`}</b></div>`;
+  const signed = perTurn == null ? '' : (perTurn >= 0 ? '+' : '−') + count(Math.abs(perTurn));
+  const detail = perTurn == null ? 'Stored balance' : `Per turn: ${signed}`;
+  return `<div class="resource res-${icon}" tabindex="0" role="status" title="${esc(label + ': ' + count(value) + '. ' + title + '. ' + detail)}" aria-label="${esc(label + ': ' + count(value) + '. ' + detail)}">${ICONS.use(icon, 'res-icon')}<span class="label">${esc(label)}</span><b>${count(value)}</b><span class="hud-income ${perTurn < 0 ? 'negative' : 'positive'}" aria-hidden="true">${perTurn == null ? '' : signed}</span></div>`;
 }
 // Costs render as resource tokens; zero amounts are omitted unless all is set.
 // Prices (not balances, which pass all) turn red for each resource the player cannot cover.
@@ -352,6 +394,24 @@ function updateSelection() {
   $('turn-status').innerHTML = game.over
     ? 'Operation concluded'
     : `${ready} units ready <small>${F(game.player).short} · ${E.DIFFICULTIES[game.difficulty]?.name || 'Normal'} · ${saveOk ? 'autosaved' : 'not saved'}</small>`;
+  $('map-banner').textContent =
+    game.phase !== game.player
+      ? `${F(game.phase).name} is maneuvering…`
+      : game.over
+        ? 'Operation concluded'
+        : strikeMode
+          ? 'F.L.E.I.J.A. armed · choose a target hex · Escape cancels'
+          : armyGroupRouting
+            ? `Army group · click a destination hex · Escape cancels`
+          : routing
+            ? `Standing orders · click the hex ${unitName(u)} should head for · Escape cancels`
+            : u?.side === game.player
+            ? `${u.cmd ? C(u.cmd).short + ' · ' : ''}${unitName(u)} ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${u.morale <= -3 ? ' · In confusion' : !hasOrders(u) ? ' · Orders complete' : ''}`
+            : selectedStation()
+              ? `${selectedStation().name} · ${selectedStation().owner === game.player ? 'Open the factory to build Knightmares' : 'Break its defenses before capture'}`
+              : selectedSite()
+                ? `${selectedSite().name} · Sakuradite mine · ${selectedSite().owner === game.player ? 'Upgrade its refinery to extract more' : 'Move Infantry or Armor onto it to seize it'}`
+                : 'Select a Knightmare to reveal movement and firing range.';
   // AI playback and async game-state changes are not necessarily user input events.
   if (typeof requestMapFrame === 'function') requestMapFrame();
 }
@@ -707,7 +767,37 @@ function dockHTML() {
       chargeCity = ours && !(u.eliminator > 0) && game.mode !== 'scenario'
         ? game.stations.find(s => s.owner === u.side && s.eliminator > 0 && E.distance(u, s, game) <= 1)
         : null;
-    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}${dockFlag(u.side)}</div><div class="dock-unit"><span class="label">${a ? a.short + ' · ' : ''}${t.naval === 'amphibious' ? 'Naval' : t.branch} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${ours && u.eliminator > 0 ? ' · <span class="eliminator-text">✦ Eliminator</span>' : ''}</span><strong>${unitName(u)}${ours && armyGroup ? `<span class="dock-group-label" title="${esc(armyGroupLabel(armyGroup))}">Group ${armyGroup.id}</span>` : ''}</strong><div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u, t)}</div>${ours && u.goto ? `<p class="goto-line">⚑ ${esc(gotoText(u))}</p>` : ''}</div><div class="dock-actions unit-dock-actions">${ours ? `<button class="small undo-button" data-action="undo" title="${esc(canUndo ? 'Undo last ordinary move (Z).' : undoReason)}" aria-label="${esc(canUndo ? 'Undo last move' : 'Undo unavailable: ' + undoReason)}"${canUndo ? '' : ' disabled'}>↶ Undo${canUndo ? '' : ' locked'}</button>` : ''}${under ? `<button class="small" data-station="${under.id}" title="Select the city under this unit (or click the unit again)">City: ${esc(under.name)}</button>` : ''}${mine ? `<button class="small" data-site="${mine.id}" title="Select the mine under this unit (or click the unit again)">Mine: ${esc(mine.name)}</button>` : ''}${ours && t.naval === 'ship' ? '<button class="small" data-action="carrier-deploy">Deploy units</button>' : ours && !u.cmd ? '<button class="small" data-action="assign">Assign</button>' : ''}${ours && a?.action ? act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false) : ''}${ours && u.goto ? act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false) : ''}${ours && !u.elite ? act('data-action="reinforce"', 'Add frame', phaseReason() || E.reinforceReason(game, u), '', 'small', false) : ''}${chargeCity ? act(`data-eliminator-give="${chargeCity.id}:${u.id}"`, 'Take Eliminator', phaseReason() || E.transferEliminatorReason(game, { city: chargeCity.id }, { unit: u.id }), '', 'small', false) : ''}${ours && u.eliminator > 0 ? act('data-action="eliminator-handover"', 'Hand over Eliminator', phaseReason() || (u.eliminatorMoved === game.turn ? 'This charge has already changed hands this turn' : null), '', 'small', false) : ''}${ours ? act('data-action="repair"', 'Repair', phaseReason() || E.repairReason(game, u), '', 'small', false) : ''}${ours ? act('data-action="wait"', 'Hold', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost', false) : ''}</div>`;
+    const ship = t.naval === 'ship';
+    const movable = ours && interactive() && !u.moved && u.morale > -3;
+    const fireable = ours && interactive() && !u.attacked && u.morale > -3 && !E.atSea(game, u);
+    const moveWhy = !ours ? 'Enemy unit' : phaseReason() || (u.morale <= -3 ? 'Confused unit' : u.moved ? 'Movement already used' : 'Movement available');
+    const fireWhy = !ours ? 'Enemy unit' : phaseReason() || (u.morale <= -3 ? 'Confused unit' : E.atSea(game, u) ? 'Embarked units cannot fire' : u.attacked ? 'Attack already used' : fireStatus(u));
+    const primary = [
+      ...(ship ? [act('data-action="carrier-deploy"', 'Deploy cargo' + (u.cargo?.length ? ' (' + u.cargo.length + ')' : ''), phaseReason(), 'Open carrier deployment', 'small primary', false)] : []),
+      ...(!ship && !u.cmd ? [act('data-action="assign"', 'Assign commander', phaseReason(), '', 'small primary', false)] : []),
+      ...(a?.action ? [act('data-action="feint"', a.action.name, phaseReason() || E.feintReason(game, u), '', 'small', false)] : []),
+      act('data-action="goto"', routing === u.id ? 'Choose a hex…' : u.goto ? 'Change destination' : 'Set destination', phaseReason(), '', 'small', false),
+      ...(u.goto ? [act('data-action="goto-cancel"', 'Stop auto-move', phaseReason(), '', 'small ghost', false)] : []),
+      act('data-action="wait"', 'Hold position', phaseReason() || (u.attacked ? 'Already fired' : null), '', 'small ghost', false)
+    ];
+    const secondary = [
+      ...(!u.elite ? [act('data-action="reinforce"', 'Add frame', phaseReason() || E.reinforceReason(game, u), '', 'small', false)] : []),
+      act('data-action="repair"', 'Repair', phaseReason() || E.repairReason(game, u), '', 'small', false),
+      ...(chargeCity ? [act(`data-eliminator-give="${chargeCity.id}:${u.id}"`, 'Take Eliminator', phaseReason() || E.transferEliminatorReason(game, { city: chargeCity.id }, { unit: u.id }), '', 'small', false)] : []),
+      ...(u.eliminator > 0 ? [act('data-action="eliminator-handover"', 'Hand over Eliminator', phaseReason() || (u.eliminatorMoved === game.turn ? 'Charge already transferred this turn' : null), '', 'small', false)] : []),
+      ...(under ? [`<button class="small" data-station="${under.id}" title="Select the city beneath this unit">City: ${esc(under.name)}</button>`] : []),
+      ...(mine ? [`<button class="small" data-site="${mine.id}" title="Select the mine beneath this unit">Mine: ${esc(mine.name)}</button>`] : [])
+    ];
+    return `<div class="dock-visual">${ART.unit(u.type, '', u.side)}${a ? generalPortrait(u.cmd, 'dock-portrait', !!u.personal) : ''}${dockFlag(u.side)}</div>
+      <div class="dock-unit"><span class="label">${a ? esc(a.short) + ' · ' : ''}${t.naval === 'amphibious' ? 'Naval' : esc(t.branch)} · ×${u.stack}${E.atSea(game, u) ? ' · Embarked' : ''}${ours && u.eliminator > 0 ? ' · ✦ Eliminator' : ''}</span>
+      <strong>${esc(unitName(u))}${armyGroup ? `<span class="dock-group-label" title="${esc(armyGroupLabel(armyGroup))}">Group ${armyGroup.id}</span>` : ''}</strong>
+      <div class="dock-stats">${ICONS.hp(u.hp, E.maxHP(u))}${statRow(u,t)}</div>
+      <div class="dock-readiness"><span tabindex="0" class="dock-ready ${movable ? 'ready' : 'used'}" title="${esc(moveWhy)}" aria-label="Movement: ${esc(moveWhy)}">↗ ${movable ? 'Move ready' : 'Move unavailable'}</span><span tabindex="0" class="dock-ready ${fireable ? 'ready' : 'used'}" title="${esc(fireWhy)}" aria-label="Attack: ${esc(fireWhy)}">⌖ ${fireable ? 'Attack ready' : 'Attack unavailable'}</span></div>
+      <p>${moraleName(u.morale)}${ours && u.goto ? ' · ' + esc(gotoText(u)) : ''}${armyGroup ? ' · ' + esc(armyGroupLabel(armyGroup)) : ''}</p></div>
+      <div class="dock-orders" aria-label="Unit orders">
+      ${ours ? `<div class="dock-actions dock-primary"><span class="dock-action-title">Orders${ship ? ' · carrier' : ''}</span>${primary.join('')}</div><details class="dock-secondary"><summary>Support &amp; logistics</summary><div class="dock-actions">${secondary.join('')}</div></details>` : `<span class="dock-action-title">Opponent unit</span><span class="dock-note">Select a friendly unit to issue orders.</span>`}
+      </div>`;
+
   }
   if (s) {
     const ours = s.owner === game.player,
