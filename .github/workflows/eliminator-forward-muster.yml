@@ -1,0 +1,68 @@
+name: Forward Muster Eliminator AI Trial
+on:
+  push:
+    branches: ['experiment/eliminator-forward-muster']
+    paths:
+      - '.github/workflows/eliminator-forward-muster.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/eliminator-carriers.test.cjs
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  screen:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 45}
+          - {mode: '2017', seed: 777, turns: 45}
+          - {mode: '2017', seed: 13579, turns: 45}
+          - {mode: '2017', seed: 20261007, turns: 45}
+          - {mode: '2018', seed: 401, turns: 35}
+          - {mode: '2018', seed: 777, turns: 35}
+          - {mode: '2018', seed: 13579, turns: 35}
+          - {mode: '2018', seed: 20261007, turns: 35}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} forward vs permanent
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Matched comparisons against the prior permanent-carrier AI
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" forward > forward.json
+          git show 963da71006193f8234fdcfa28a15c70e586fb81c:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "${{ matrix.mode }}" "${{ matrix.seed }}" "${{ matrix.turns }}" permanent > permanent.json
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const f=JSON.parse(fs.readFileSync('forward.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('permanent.json','utf8'));
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts','carrierLosses','carrierTier1','carrierOther','pickedUp','avgCarried','avgWaiting','weightedProtectionRate','armyValueProtectionRate','frontlineValueProtectionRate','elapsedMs'];
+          const report={mode:f.mode,seed:f.seed,metrics:Object.fromEntries(keys.map(k=>[k,{permanent:b[k],forward:f[k]}]))};
+          console.log('FORWARD_MUSTER_COMPARE '+JSON.stringify(report));
+          fs.writeFileSync('comparison.json',JSON.stringify(report,null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forward-muster-${{ matrix.mode }}-${{ matrix.seed }}
+          path: |
+            forward.json
+            permanent.json
+            comparison.json
+          retention-days: 14
