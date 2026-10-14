@@ -3258,13 +3258,37 @@ button.danger:hover:not(:disabled) {
 .hud-phase strong { font: 600 12px Arial,sans-serif; color: #f5e8c5; white-space: nowrap; }
 .hud-phase-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 0 2px #ffffff18; }
 .hud-phase-suffix { color:#bdcdc9; font-weight:400; font-size:10px; }
-.hud-v2 .hud-resources { display:flex; flex:1 1 auto; gap:3px; min-width:0; align-items:stretch; justify-content:space-evenly; margin:0; }
-.hud-v2 .resource { min-width: 0; display:flex; flex: 0 1 auto; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding: 4px 7px; border-radius:3px; position:relative; border:1px solid transparent; cursor:help; }
-.hud-v2 .resource:hover, .hud-v2 .resource:focus-visible { background:#c8dfc214; border-color:#b6cbaa77; outline-offset:2px; }
-.hud-v2 .resource .res-icon, .hud-v2 .res-city-icon { height:14px; width:17px; font-size:15px; margin-bottom:1px; display:block; line-height:14px; text-align:center; }
-.hud-v2 .resource .label, .hud-v2 .resource:last-child .label { display:none; font-size:10px; }
-.hud-v2 .resource b { font: 700 13px/1.2 'Trebuchet MS', Arial, sans-serif; margin:0; white-space:nowrap; }
-.hud-v2 .resource .hud-income { display:none; }
+/* Resource balances use the original icon-left, value-right layout, never a stacked grid. */
+.hud-v2 .hud-resources {
+  display: flex; flex: 1 1 auto; min-width: 0; gap: clamp(4px, .7vw, 15px);
+  align-items: center; justify-content: space-evenly; margin: 0;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+}
+.hud-v2 .hud-resources::-webkit-scrollbar { display: none; }
+.hud-v2 .resource {
+  display: inline-flex; flex: 0 0 auto; flex-direction: row; align-items: center;
+  justify-content: center; gap: 7px; min-width: 0; white-space: nowrap;
+  padding: 6px 4px; border: 1px solid transparent; border-radius: 3px;
+  position: relative; cursor: help;
+}
+.hud-v2 .resource:hover, .hud-v2 .resource:focus-visible {
+  background: #c8dfc214; border-color: #b6cbaa77; outline-offset: 2px;
+}
+.hud-v2 .resource .res-icon {
+  width: 25px; height: 25px; flex: 0 0 25px; margin: 0;
+  display: inline-block; vertical-align: middle; filter: drop-shadow(0 2px 2px #000c);
+}
+.hud-v2 .resource .res-city-icon { display: none; }
+.hud-v2 .resource .label { display: none; }
+.hud-v2 .resource.res-cities .label {
+  display: inline; order: 0; color: #aebdbf;
+  font: 9px/1 Arial,sans-serif; text-transform: uppercase; letter-spacing: .6px;
+}
+.hud-v2 .resource b {
+  display: inline; order: 1; font: 700 16px/1.2 'Trebuchet MS',Arial,sans-serif;
+  margin: 0; white-space: nowrap;
+}
+.hud-v2 .resource .hud-income { display: none; }
 .hud-v2 .hud-nav { display:flex; flex:0 0 auto; gap:5px; align-items:stretch; margin:0; }
 .hud-nav-group { position:relative; color:#eae7d5; }
 .hud-nav-group > summary { list-style:none; cursor:pointer; border:1px solid #81938c55; border-radius:3px; background:#253a41d9; padding:9px 10px; font:600 11px Arial,sans-serif; white-space:nowrap; user-select:none; }
@@ -3304,22 +3328,25 @@ button.danger:hover:not(:disabled) {
   .topbar.hud-v2 { gap:8px; padding:0 8px; }
   .hud-v2 .hud-brand { min-width:0; }
   .hud-v2 .hud-brand small { display:none; }
-  .hud-v2 .resource { padding:4px 5px; }
+  .hud-v2 .resource { padding: 5px 2px; gap: 5px; }
   .hud-nav-group > summary { padding:9px 7px; }
 }
 @media (max-width: 1170px) {
   .hud-v2 .hud-brand { display:none; }
-  .hud-v2 .resource b { font-size:12px; }
+  .hud-v2 .resource b { font-size: 14px; }
   .hud-v2 .hud-nav .fleija-button { padding:7px 6px; }
 }
 @media (max-width: 850px) {
   .topbar.hud-v2 { height:99px; min-height:0; top:7px; left:7px; right:7px; padding:7px; display:grid; grid-template-columns: 108px minmax(0,1fr); grid-template-rows:39px 37px; gap:5px 7px; }
   .hud-v2 .hud-phase { grid-column:1; grid-row:1; padding-left:3px; border:0; min-width:0; }
-  .hud-v2 .hud-resources { grid-column:2; grid-row:1; gap:2px; justify-content:space-around; align-self:center; }
-  .hud-v2 .resource { padding:2px; min-width:0; }
-  .hud-v2 .resource .res-icon,.hud-v2 .res-city-icon { font-size:14px; }
-  .hud-v2 .resource b { font-size:12px; }
-  .hud-v2 .resource:last-child { display:flex; }
+  .hud-v2 .hud-resources {
+    grid-column: 2; grid-row: 1; gap: 7px;
+    justify-content: flex-start; align-self: center;
+  }
+  .hud-v2 .resource { padding: 3px 1px; gap: 4px; min-width: 0; flex-direction: row; }
+  .hud-v2 .resource .res-icon { width: 19px; height: 19px; flex-basis: 19px; }
+  .hud-v2 .resource b { font-size: 13px; }
+  .hud-v2 .resource:last-child { display: inline-flex; }
   .hud-v2 .hud-nav { grid-column:1 / -1; grid-row:2; display:grid; grid-template-columns: repeat(4,minmax(0,1fr)) auto; gap:3px; }
   .hud-v2 .hud-nav > .fleija-button { grid-column:5; grid-row:1; }
   .hud-nav-group { min-width:0; }
@@ -3336,8 +3363,9 @@ button.danger:hover:not(:disabled) {
   .hud-v2 .hud-nav { grid-template-columns:repeat(4,minmax(0,1fr)); }
   .hud-v2 .hud-nav > .fleija-button { grid-column:4; grid-row:1; font-size:9px; max-height:32px; position:absolute; top:102px; right:0; }
   .hud-v2 .hud-nav .hud-chevron { display:none; }
-  .hud-v2 .resource b { font-size:11px; }
-  .hud-v2 .resource .res-icon,.hud-v2 .res-city-icon { font-size:12px; }
+  .hud-v2 .resource b { font-size: 12px; }
+  .hud-v2 .resource .res-icon { width: 18px; height: 18px; flex-basis: 18px; }
+  .hud-v2 .resource.res-cities .label { font-size: 8px; }
   .hud-nav-group > summary { font-size:10px; }
   .selection-dock:has(.dock-orders) { left:8px; width:calc(100vw - 16px); max-width:calc(100vw - 16px); flex-wrap:wrap; max-height:180px; }
   .selection-dock:has(.dock-orders) .dock-visual { width:57px; }
