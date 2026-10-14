@@ -78,7 +78,11 @@ test('new forward-city anchor preserves the capital and shields a threatened cit
     landAt(g,s,1).length>=2&&landAt(g,s,8).length)
     .sort((a,b)=>E.distance(b,capital,g)-E.distance(a,capital,g))[0];
   assert.ok(capital&&forward);
-  capital.eliminator=1;forward.eliminator=1;
+  const spare=g.stations.find(s=>s.owner==='cf'&&s!==capital&&s!==forward&&
+    E.distance(s,capital,g)>E.ELIMINATOR.range&&
+    E.distance(s,forward,g)>E.ELIMINATOR.range);
+  assert.ok(spare,'three charges are available while one stays mobile');
+  capital.eliminator=1;forward.eliminator=1;spare.eliminator=1;
   forward.tier=4;forward.income=50;forward.industry=50;
   const friendly=landAt(g,forward,1);
   E.newUnit(g,E.typeFor('cf','scout'),'cf',friendly[0].c,friendly[0].r);
