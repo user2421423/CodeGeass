@@ -42,7 +42,7 @@
   const brRows = [
     [3,[
       ['siberia','Invasion of Siberia',null,'Siberia',[116,60],[76,50,157,71],'Advance into the E.U.-held Siberian interior.'],
-      ['south-africa','Invasion of South Africa',null,'South Africa',[25,-29],[16,-35,33,-22],'Capture the southern African strategic base network.'],
+      ['south-africa','Invasion of South Africa','invasion-south-africa','South Africa',[25,-29],[16,-35,33,-22],'Capture the southern African strategic base network.'],
     ]],
     [4,[
       ['urals','Crossing the Urals',null,'The Urals',[62,58],[52,50,72,67],'Break the mountain frontier into European Russia.'],

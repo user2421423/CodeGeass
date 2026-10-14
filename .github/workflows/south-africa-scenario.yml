@@ -1,0 +1,21 @@
+name: South Africa scenario verification
+on:
+  push:
+    branches: ['scenario/britannia-south-africa']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scenario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check dist/scenarios-south-africa.js
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/south-africa.test.cjs
+      - run: node --test tests/war-campaign.test.cjs
+      - run: node tools/south-africa_sim.cjs 5 all normal

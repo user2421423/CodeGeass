@@ -26,7 +26,7 @@ Winning a standalone Scenario, quitting, losing or viewing a preview does not co
 | --- | --- | --- |
 | 1: Global Conflicts | War for Australia; Conquest of Area 18; Division of Japan | Existing |
 | 2: Bering Strait | Bering Strait Crisis | Existing |
-| 3: Imperial Expansion | Invasion of Siberia; Invasion of South Africa | Planned |
+| 3: Imperial Expansion | Invasion of Siberia (planned); Invasion of South Africa (implemented) | Mixed |
 | 4: Eurasian Offensive | Crossing the Urals; Invasion of Turkey | Planned |
 | 5: Western Russia | Invasion of St. Petersburg and Moscow | Planned |
 | 6: European War | European War | Existing |
@@ -39,7 +39,7 @@ For Britannian Tier 6, battleSide = eb, because the unchanged European War is fo
 - dist/war-campaign.js — authoritative data-driven objective registry, unique IDs, planned-versus-implemented status, independent progression, victory validation, geographical map tinting.
 - dist/ui/war-campaign-screen.js — 2017-map canvas, selectable region markers, tier tabs, front arrows, faction selection, pan and zoom, info panel and battle launch.
 - dist/war-campaign.css — scoped, responsive styling.
-- docs/campaign-placeholders/*.json — one structured implementation task per planned mission, 15 total.
+- docs/campaign-placeholders/*.json — one structured implementation task per planned mission, 15 total at initial handoff; South Africa is now implemented.
 - tests/war-campaign.test.cjs — focused tier, save, map and verification checks.
 - src/hud/00-start-menu.part.js and dist/ui/hud.js — main menu links; Story Mode is a UI-only rename.
 - dist/ui/core.js — separate Campaign battle save key.
@@ -63,7 +63,7 @@ Each is documented in docs/campaign-placeholders/<ID>.json. Runtime fields in di
 4. Refine marker and bounds to match the actual region if necessary. Geographic bounds are approximate rectangles used for campaign map recoloring; never recolor an unrelated continent.
 5. Run Campaign tests and existing Scenario tests. The objective's launch button becomes functional automatically when unlocked. No fake battle, fake victory, cross-scenario resource carryover, or additional UI case is needed.
 
-The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. No new planned regional scenario is implemented on this branch.
+The registry is the runtime authority; JSON files are implementation handoffs and must be kept consistent with it. South Africa is implemented on scenario/britannia-south-africa. All other remaining placeholders retain their original planned status.
 
 ## Map rendering, ownership and navigation
 
@@ -92,3 +92,10 @@ Run from repository root:
     node tools/validate_assets.cjs --tracked
 
 Also test in a browser: start menu, Story Mode arcs, standalone Scenarios, Conquest, faction-specific map ownership, pan/zoom, locked/planned markers, and a real Campaign-launched scenario victory. Verify standalone Scenario victory does not unlock Campaign. Do not merge without explicit user approval.
+
+## Invasion of South Africa implementation (branch-only)
+
+- Standalone ID: `invasion-south-africa`; module: `dist/scenarios-south-africa.js`; registered in `E.scenarios.byId` and standalone selection.
+- Map: 144×108 hexes; 10.5°E–39.5°E and 18°S–38°S. GSHHG intermediate coastline masks use exact 20/80 classification. The rendered map uses the same global GSHHG African geographic underlay and the centre-sampled hex projection.
+- Scenario: 47 E.U. cities; Britannia begins without city ownership, with four loaded carrier formations, amphibious escorts and an offshore expedition; defender has fortifications and navy. Victory by conquering all opposing cities (or defender eliminating the cityless expedition). No turn deadline.
+- Changes are branch-only, do not merge without explicit approval. Run `node --test tests/south-africa.test.cjs` and `node tools/south-africa_sim.cjs 6 all all`.

@@ -9,6 +9,7 @@ const SCENARIO_KINDS = [
   ['division-japan','The Division of Japan','44 cities · 3 sides'],
   ['european-war','The European War','44 cities · 2 sides'],
   ['operation-stonehenge','Operation Stonehenge','37 cities · 2 sides'],
+  ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['bering-strait','The Bering Strait Crisis','28 cities · 2 sides'],
   ['conquest-indochina','The Conquest of Indochina','44 cities · 2 sides'],
   ['philippines-invasion','The Invasion of the Philippines','37 cities · 2 sides'],
@@ -38,6 +39,10 @@ const SCENARIO_BLURBS = {
   'operation-stonehenge': {
     britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
     eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
+  },
+  'invasion-south-africa': {
+    britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
+    eu: 'Hold all mainland cities, ports and industrial corridors. Intercept the carrier fleets, defend beaches and counterattack seized harbours.'
   },
   'conquest-indochina': {
     britannia: 'Hold mainland Southeast Asia with fortified fronts and a powerful coastal fleet.',
@@ -92,6 +97,13 @@ const SCENARIO_TEXT = {
     diplomacy: 'Only Britannia and Europia United are at war. Britannia must seize the entire theatre; the E.U. can win by destroying the invaders.',
     elite: 'Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.',
     focus: {britannia:'',eu:'Paris'}
+  },
+  'invasion-south-africa': {
+    era: 'Southern Africa · Alternate 2017',
+    intro: 'Four Britannian carrier groups attack E.U.-controlled southern Africa from the Atlantic and Indian Oceans. Britannia owns no cities at the start.',
+    diplomacy: 'Only Britannia and Europia United are at war. No turn limit: conquer every enemy city or eliminate the invading expedition.',
+    elite: 'Elite South Africa: eligible Lv.1 Elite Forces replace transported land formations; named AI commanders reach Lv.5. Carriers and fleet escorts remain conventional.',
+    focus: {britannia:'',eu:'Cape Town'}
   },
   'conquest-indochina': {
     era: 'Indochina · Alternate 2017',
