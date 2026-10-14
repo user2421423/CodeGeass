@@ -36,13 +36,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run essential regression checks
+      # Publish quickly; the complete suite still runs in source-build-sync.yml.
+      - name: Fast deployment safety checks
         run: |
           node tools/build_sources.cjs --check
-          node --test tests/*.test.cjs
-          node tests/ui-smoke.cjs
+          node --test tests/core.test.cjs tests/source-parts.test.cjs tests/fleija-mode-gates.test.cjs
           node tools/validate_assets.cjs --tracked
-          python3 tools/check_map.py
       # Preview branches are optional: removed experiments must never block
       # deployment of the tested main game.
       - name: Check optional preview branches
