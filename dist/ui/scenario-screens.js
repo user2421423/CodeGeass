@@ -16,6 +16,7 @@ const SCENARIO_KINDS = [
   ['area-18','The Conquest of Area 18','50 cities · 3 sides'],
   ['britannia-siberia','Invasion of Siberia','49 cities · 2 sides'],
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
+  ['invasion-hawaii','Invasion of Hawaii','30 bases · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
   ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
@@ -51,6 +52,10 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   'operation-stonehenge': {
     britannia: 'Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.',
     eu: 'Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces.'
+  },
+  'invasion-hawaii': {
+    eu: 'Four carrier task forces assault Kauai, Oahu, Maui and Hawaii from the open Pacific. Capture every base on all eight islands.',
+    britannia: 'Defend Pearl Harbor, Honolulu and the outer island garrisons. Use naval interception and island reserves to destroy E.U. transports.'
   },
   'invasion-south-africa': {
     britannia: 'Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.',
@@ -131,6 +136,13 @@ focus:{britannia:'Yekaterinburg',eu:'Perm'}
     diplomacy: 'Only Britannia and Europia United are at war. Britannia must seize the entire theatre; the E.U. can win by destroying the invaders.',
     elite: 'Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.',
     focus: {britannia:'',eu:'Paris'}
+  },
+  'invasion-hawaii': {
+    era: 'Hawaiian Islands · Alternate 2017',
+    intro: 'After the Bering Strait, Europia United launches four carrier-borne invasions of the Britannian Hawaiian Islands. The E.U. owns no city on turn one; seize all 30 bases to win.',
+    diplomacy: 'Britannia controls eight fortified islands, airfields and independently capturable ports. No alliances or turn limit.',
+    elite: 'Elite Hawaii: eligible transported land formations convert to Elite Forces. Naval carriers and amphibious fleets retain standardized mechanics.',
+    focus: {eu:'',britannia:'Pearl Harbor'}
   },
   'invasion-south-africa': {
     era: 'Southern Africa · Alternate 2017',
