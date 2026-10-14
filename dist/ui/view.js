@@ -399,6 +399,11 @@ function attachMap() {
         own = selectedUnit(),
         fort = selectedStation(),
         pr = own && targetCache.has(E.key(hover)) ? E.preview(game, own.id, hover.c, hover.r) : null;
+      const commander = u?.cmd && C(u.cmd),
+        officerRank = commander ? E.RANKS[E.officerOf(game, u)?.rank] || 'Commander' : '',
+        commanderText = commander ? ` · ★ ${commander.short} (${officerRank})` : '',
+        eliteText = u?.elite && u.eliteLevel ? ` · Elite ${E.ROMAN?.[Math.min(5, u.eliteLevel)] || u.eliteLevel}` : '',
+        chargeText = u?.side === game.player && u.eliminator > 0 ? ' · ✦ Eliminator ready' : '';
       const blast = strikeMode ? blastSummary(hover) : null;
       $('map-caption').textContent = blast
         ? `F.L.E.I.J.A. target: ${E.targetName(game, hover)} · ${Object.values(blast.tally).reduce((a, k) => a + k.erased, 0)} erased · ${Object.values(blast.tally).reduce((a, k) => a + k.crippled, 0)} crippled · ${Object.values(blast.tally).reduce((a, k) => a + k.damaged, 0)} damaged${blast.own ? ' · your own forces are inside' : ''}`
@@ -408,7 +413,7 @@ function attachMap() {
             ? `Click to fire ${E.fortressName(fort)} at ${E.TYPES[u.type].short} · ~${E.fortressDamage(game, u, fort.owner)} damage`
             : pr
               ? `Click to attack ${u ? E.TYPES[u.type].short : s.name} · ~${pr.unit || pr.shield} damage · ${pr.counterAllowed ? pr.counter + ' counter-fire' : 'no counter-fire'}`
-              : `${s ? s.name + ' · ' : ''}${E.siteAt(game, hover) ? E.siteAt(game, hover).name + ' Sakuradite mine · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
+              : `${s ? s.name + ' · ' : ''}${E.siteAt(game, hover) ? E.siteAt(game, hover).name + ' Sakuradite mine · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short}${commanderText}${eliteText}${chargeText} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
       if (armyGroupRouting) {
         $('map-caption').textContent = 'Army group destination · click a traversable hex, or Escape to cancel';
       } else if (routing && own) {
