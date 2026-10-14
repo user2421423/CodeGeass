@@ -67,6 +67,9 @@ if(diagnosticEnabled)g.__fleijaDiagnosticHook=(attacker,p)=>{
   const row={
     turn:g.turn, attacker, center:{c:p.c,r:p.r}, centerType,
     directCity:!!directCity, directArmy:!!hasUnit,
+    directTier1:!!(hasUnit&&E.COMMANDERS[directUnit.cmd]?.storyTier===1),
+    tier1InBlast:nearbyUnits.filter(u=>E.COMMANDERS[u.cmd]?.storyTier===1).length,
+    cityHitsBefore:g.fleijaSuccessfulCityHits?.[attacker]||0,
     citiesInBlast:nearbyCities.length, unitsInBlast:nearbyUnits.length,
     troopsNearImpact:nearbyFriendly.length,
     targetSides:[...new Set([...nearbyCities.map(s=>s.owner),...nearbyUnits.map(u=>u.side)])].sort(),
@@ -261,6 +264,10 @@ if(diagnosticEnabled){
   result.diagnostics={
     interpretation:'Strike center is classification of ground-zero hex, not inferred attacker intent.',
     launches:shots.length, byType,
+    tier1Direct:shots.filter(s=>s.directTier1).length,
+    tier1DirectAfter5:shots.filter(s=>s.directTier1&&s.cityHitsBefore>=5).length,
+    postThresholdShots:shots.filter(s=>s.cityHitsBefore>=5).length,
+    cityHitsByAttacker:g.fleijaSuccessfulCityHits||{},
     coverage:summarize(s=>s.coverageStatus,coverageStatuses),
     missedByCoverage:Object.fromEntries(coverageStatuses.map(status=>[
       status,shots.filter(s=>!s.intercepted&&s.coverageStatus===status).length])),
