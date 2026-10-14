@@ -924,7 +924,8 @@ const GEOGRAPHY = (() => {
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
     const urals = g.scenario.id === 'crossing-urals';
     const turkey = g.scenario.id === 'invasion-turkey';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey;
+    const pendragon = g.scenario.id === 'eu-pendragon';
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey || pendragon;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -961,7 +962,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast || siberia || southernAfrica || urals || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || siberia || southernAfrica || urals || turkey || pendragon) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1114,6 +1115,22 @@ ctx.restore();}
             y=R+hy*(p.centerLat+p.vMax-lat);
           if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
         }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(pendragon && g.scenario.roads){
+      // Historic highway corridors are aligned with this north-up WGS84 grid.
+      const b=g.scenario.bounds;
+      const xy=([lon,lat])=>[
+        R-SQ*R/2+(lon-b.west)*SQ*R*g.cols/(b.east-b.west),
+        R-.75*R+(b.north-lat)*1.5*R*g.rows/(b.north-b.south)];
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.strokeStyle='rgba(227,205,145,.65)';ctx.lineWidth=Math.max(1.3,R*.24);
+      ctx.lineCap='round';ctx.lineJoin='round';
+      for(const route of Object.values(g.scenario.roads)){
+        ctx.beginPath();
+        route.forEach((p,i)=>{const [x,y]=xy(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
         ctx.stroke();
       }
       ctx.restore();
