@@ -10,7 +10,7 @@ if(!Number.isInteger(seed)||!Number.isInteger(maxTurns)||maxTurns<1||maxTurns>50
 if(!['britannia','eu'].includes(player))throw Error('Expected Britannia or E.U.');
 const g=siberia.create(player,'normal',seed);
 const types=id=>E.TYPES[g.units.find(u=>u.id===id)?.type]?.naval||null;
-const metrics={turns:0,seed,startingCities:Object.fromEntries(siberia.sides.map(side=>[side,g.stations.filter(s=>s.owner===side).length])),
+const metrics={turns:0,seed,player,startingCities:Object.fromEntries(siberia.sides.map(side=>[side,g.stations.filter(s=>s.owner===side).length])),
   navalMoves:{britannia:0,eu:0},groundMoves:{britannia:0,eu:0},
   attacks:{britannia:0,eu:0},deployments:{britannia:0,eu:0},
   captures:[],errors:[],snapshots:[]};

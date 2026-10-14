@@ -30,3 +30,7 @@ done
 ```
 
 The branch's GitHub Actions workflow runs the same verification. The static coastline counts describe the mask, not a substitute for simulation results. Multi-seed AI results must be read from the action logs; do not claim balancing or completion based on a short smoke test.
+
+## Initial engine verification (2026-10-14)
+
+The complete 14,080-hex coastline audit passed for both playable sides. The 79 existing regression tests, 13 focused Siberia/Campaign tests and six seeded three-turn normal-difficulty AI-vs-AI simulations passed on commit `28649f2`. The reinforcements on the Ust-Maya front prevented its early collapse: none of the six games lost that Britannian city; one recorded a Britannian capture of Khandyga. These are opening-game smoke/balance indicators, not proof of full-campaign equilibrium. Longer-turn simulation logs are recorded in the branch's workflow.

@@ -29,4 +29,7 @@ jobs:
             for seed in 11 29 47; do
               node tools/siberia_sim.cjs "$seed" 3 "$side"
             done
+          # Longer campaigns expose reinforcement, redeployment and strategic stalemates.
+          node tools/siberia_sim.cjs 101 10 britannia
+          node tools/siberia_sim.cjs 101 10 eu
           done
