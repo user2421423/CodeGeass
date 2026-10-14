@@ -924,7 +924,8 @@ const GEOGRAPHY = (() => {
     const southernAfrica = g.scenario.id === 'invasion-south-africa';
     const urals = g.scenario.id === 'crossing-urals';
     const turkey = g.scenario.id === 'invasion-turkey';
-    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey;
+    const greatLakes = g.scenario.id === 'eu-great-lakes';
+    const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey || greatLakes;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -961,7 +962,7 @@ const GEOGRAPHY = (() => {
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
     const source = australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      (europeOnly || middleEast || siberia || southernAfrica || urals || turkey) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+      (europeOnly || middleEast || siberia || southernAfrica || urals || turkey || greatLakes) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1037,6 +1038,31 @@ const GEOGRAPHY = (() => {
         ctx.beginPath();
         tacticalHex(ctx, t, R + 0.7);
         ctx.fill();
+      }
+      ctx.restore();
+    }
+    // Lakes are inland freshwater: the GSHHG continental land polygon alone
+    // paints them as dry ground. Render the same navigable lake polygons and
+    // engineered connectors used by the tactical hex classifier above it.
+    if (greatLakes && g.scenario.lakes) {
+      const bb=g.scenario.bounds,sx=SQ*R*g.cols/(bb.east-bb.west),
+        sy=1.5*R*g.rows/(bb.north-bb.south),
+        pt=([lon,lat])=>[R-SQ*R*.5+(lon-bb.west)*sx,
+          R-.75*R+(bb.north-lat)*sy];
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineJoin='round';ctx.lineCap='round';
+      for(const polygon of Object.values(g.scenario.lakes)){
+        ctx.beginPath();polygon.forEach((p,i)=>{const [x,y]=pt(p);
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});ctx.closePath();
+        ctx.fillStyle='#194b69';ctx.fill();ctx.strokeStyle='#75b3c3';
+        ctx.lineWidth=Math.max(1.5,1.2*scale);ctx.stroke();
+      }
+      for(const [name,line] of Object.entries(g.scenario.channels||{})){
+        ctx.beginPath();line.forEach((p,i)=>{const [x,y]=pt(p);
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
+        ctx.strokeStyle='#245b78';
+        ctx.lineWidth=Math.max(3,sx*(name==='Straits of Mackinac'?.24:.16));
+        ctx.stroke();
       }
       ctx.restore();
     }
