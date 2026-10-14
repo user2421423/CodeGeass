@@ -941,8 +941,9 @@ const GEOGRAPHY = (() => {
     const eastCoast = g.scenario.id === 'invasion-american-east-coast';
     const panama = g.scenario.id === 'eu-panama';
     const pendragon = g.scenario.id === 'eu-pendragon';
+    const luoyang = g.scenario.id === 'battle-luoyang';
     const centreSampledRegion = australia || middleEast || siberia || southernAfrica || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon;
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || luoyang;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -1112,6 +1113,26 @@ const GEOGRAPHY = (() => {
       for(const path of Object.values(g.scenario.rivers)){
         ctx.beginPath();path.forEach((p,i)=>{const [x,y]=toHex(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // Inland Henan: the Yellow River is a navigational barrier on the hex
+    // grid, drawn at its surveyed geographic coordinates over the atlas.
+    if(luoyang && g.scenario.rivers){
+      const b=g.scenario.bounds;
+      const sx=SQ*R*g.cols/(b.east-b.west),sy=1.5*R*g.rows/(b.north-b.south);
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=.86;
+      for(const [name,line] of Object.entries(g.scenario.rivers)){
+        if(line.length<2)continue;
+        ctx.beginPath();
+        line.forEach(([lon,lat],i)=>{
+          const x=R-SQ*R*.5+(lon-b.west)*sx,
+            y=R-.75*R+(b.north-lat)*sy;
+          if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+        });
+        ctx.strokeStyle=name==='YellowRiver'?'#50b6d4':'#79bfd2';
+        ctx.lineWidth=name==='YellowRiver'?6:2.6;ctx.stroke();
       }
       ctx.restore();
     }
