@@ -202,12 +202,37 @@
         const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
           !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),10);
         if(!at)throw Error('Cannot deploy navy at '+name);
-        fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
+        const ship=E.newUnit(g,type,side,at.c,at.r);
+        // Keep expeditionary carriers with their staging force, and Chinese
+        // patrols tied to their own Philippine naval district.
+        if(side==='britannia'&&type==='carrier_battleship')ship.invasionGroup=name;
+        if(side==='cf')ship.philippinesPatrol={c:s.c,r:s.r};
+        fleet.units.push(ship.id);
       }
       g.scenario.groups.push(fleet);
     }
-    // The entire connected regional sea stays navigable for fleets.
+    // The original staging armies remain intact; only their deployment changes.
+    // Embark the first attack waves before turn one, retaining land garrisons
+    // at each base and leaving other carriers free to ferry reinforcements.
+    // Cargo follows the same representation as the existing Hawaii invasion.
     if(difficulty==='elite')E.prepareEliteEurope(g);
+    const carriers=g.units.filter(u=>u.side==='britannia'&&
+      u.type==='carrier_battleship');
+    for(const [name,reserve] of [['Koror',2],['Peleliu',1],['Colonia',2]]){
+      const command=groupByCity.get('britannia:'+name);
+      const units=(command?.units||[]).map(id=>g.units.find(u=>u.id===id))
+        .filter(Boolean)
+        .sort((a,b)=>Number(!!b.cmd)-Number(!!a.cmd)||a.id-b.id);
+      for(const u of units.slice(0,Math.max(0,units.length-reserve))){
+        const ship=carriers.find(v=>v.invasionGroup===name&&
+          (v.cargo?.length||0)<E.TYPES[v.type].capacity);
+        if(!ship)throw Error('Philippines invasion carrier capacity exceeded at '+name);
+        u.c=ship.c;u.r=ship.r;
+        (ship.cargo||=[]).push(u);
+        g.units.splice(g.units.indexOf(u),1);
+      }
+    }
+    // The entire connected regional sea stays navigable for fleets.
     for(const side of SIDES){
       const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
         difficulty==='hard'?1.3:1;
@@ -221,10 +246,12 @@
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
-        for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
+        for(const [i,u] of E.allUnits(g).filter(v=>v.side===side&&
+          E.TYPES[v.type].naval!=='ship').entries())
           if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
     }
-    g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
+    // Include troops inside carriers in starting strength and all difficulty modes.
+    g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
     E.log(g,'China holds all Philippine cities. Britannia launches its amphibious invasion from Palau and Yap.',player);
     return g;
   }
@@ -233,8 +260,8 @@
     return g.stations.filter(s=>s.owner===side).reduce((n,s)=>n+s.tier,0);
   }
   function objective(g,side=g.player){
-    return 'Conquer all '+CITIES.length+' Philippine theatre cities ('+
-      g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).';
+    return 'Capture all enemy-held Philippine theatre cities ('+
+      g.stations.filter(s=>s.owner!==side).length+' remaining of '+CITIES.length+').';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!=='philippines-invasion'||
