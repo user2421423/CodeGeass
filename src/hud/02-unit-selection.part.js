@@ -12,7 +12,7 @@ function act(attrs, label, why, detail = '', cls = '', showWhy = true) {
       : detail && (showWhy || !why)
         ? `<small>${detail}</small>`
         : '';
-  return `<button class="${cls}${why ? ' blocked' : ''}" ${attrs} ${why ? `disabled${isShortfall(why) ? '' : ` title="${esc(why)}"`}` : ''}>${label}${note}</button>`;
+  return `<button class="${cls}${why ? ' blocked' : ''}" ${attrs} ${why ? `disabled title="${esc(why)}" aria-label="${esc(label + ': ' + why)}"` : ''}>${label}${note}</button>`;
 }
 // Where a unit's standing order is taking it.
 function gotoText(u) {
@@ -52,8 +52,9 @@ function rangeText(u) {
   return r.min === r.max ? r.max : r.min + '–' + r.max;
 }
 function resource(icon, label, title, value, perTurn) {
-  const rate = perTurn == null ? '' : ` · +${perTurn}/turn`;
-  return `<div class="resource res-${icon}" title="${title}${rate}">${ICONS.use(icon, 'res-icon')}<span class="label">${label}</span><b>${count(value)} ${perTurn == null ? '' : `<small>+${perTurn}/turn</small>`}</b></div>`;
+  const signed = perTurn == null ? '' : (perTurn >= 0 ? '+' : '−') + count(Math.abs(perTurn));
+  const detail = perTurn == null ? 'Stored balance' : `Per turn: ${signed}`;
+  return `<div class="resource res-${icon}" tabindex="0" role="status" title="${esc(label + ': ' + count(value) + '. ' + title + '. ' + detail)}" aria-label="${esc(label + ': ' + count(value) + '. ' + detail)}">${ICONS.use(icon, 'res-icon')}<span class="label">${esc(label)}</span><b>${count(value)}</b><span class="hud-income ${perTurn < 0 ? 'negative' : 'positive'}" aria-hidden="true">${perTurn == null ? '' : signed}</span></div>`;
 }
 // Costs render as resource tokens; zero amounts are omitted unless all is set.
 // Prices (not balances, which pass all) turn red for each resource the player cannot cover.
