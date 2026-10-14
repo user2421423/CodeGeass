@@ -1,0 +1,22 @@
+{
+  "id": "eu-california",
+  "title": "Invasion of California",
+  "campaignFaction": "eu",
+  "tier": 5,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "California",
+  "proposedMapBounds": {
+    "west": -125,
+    "south": 32,
+    "east": -114,
+    "north": 42
+  },
+  "campaignMapMarker": {
+    "longitude": -120,
+    "latitude": 37
+  },
+  "description": "Establish control of the Britannian Pacific heartland.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
