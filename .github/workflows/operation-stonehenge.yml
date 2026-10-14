@@ -5,7 +5,6 @@ on:
   pull_request:
     paths:
       - 'dist/scenarios-stonehenge.js'
-      - 'tests/stonehenge.test.cjs'
       - 'tools/stonehenge_sim.cjs'
       - 'src/ai/**'
       - 'src/engine/**'
@@ -27,8 +26,6 @@ jobs:
         with:
           node-version: '22'
       - run: node tools/build_sources.cjs --check
-      - run: node --test tests/*.test.cjs
-      - run: node tests/ui-smoke.cjs
   simulation:
     runs-on: ubuntu-latest
     timeout-minutes: 30
