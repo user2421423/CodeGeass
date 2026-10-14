@@ -283,11 +283,19 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = ((['operation-stonehenge','invasion-south-africa'].includes(g.scenario?.id) && loser === 'britannia') ||
-      (g.scenario?.id === 'invasion-hawaii' && loser === 'cf') ||
-      (['invasion-american-east-coast','invasion-brazil','eu-greenland',
-        'invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) &&
-      g.units.some(v => v.side === loser && v.hp > 0);
+    // Preserve expeditionary forces, including carrier cargo, after their last city is lost.
+    const expeditionSide = ({
+      'invasion-hawaii':'cf','invasion-california':'cf','cf-new-zealand':'cf',
+      'cf-panama':'cf','cf-pacific-northwest':'cf',
+      'cf-central-america':'cf','cf-mexico':'cf','cf-pendragon':'cf',
+      'operation-stonehenge':'britannia','invasion-south-africa':'britannia',
+      'invasion-american-east-coast':'eu','invasion-brazil':'eu',
+      'eu-greenland':'eu','invasion-caribbean':'eu','eu-panama':'eu',
+      'invasion-canada':'eu'
+    })[g.scenario?.id];
+    const expeditionAfloat = loser === expeditionSide &&
+      (g.units.some(v => v.side === loser && v.hp > 0) ||
+       g.units.some(v => (v.cargo||[]).some(u => u.side === loser && u.hp > 0)));
     const annexed = g.mode !== 'campaign' && alive(g, loser) &&
       !g.stations.some(c => c.owner === loser) && !expeditionAfloat
       ? surrender(g, loser, u.side, s) : null;

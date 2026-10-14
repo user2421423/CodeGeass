@@ -1764,10 +1764,19 @@
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
-    const expeditionAfloat = ((['operation-stonehenge','invasion-south-africa'].includes(g.scenario?.id) && loser === 'britannia') ||
-      (['invasion-american-east-coast','invasion-hawaii','invasion-brazil','eu-greenland',
-        'invasion-caribbean','eu-panama','invasion-canada'].includes(g.scenario?.id) && loser === 'eu')) &&
-      g.units.some(v => v.side === loser && v.hp > 0);
+    // Preserve expeditionary forces, including carrier cargo, after their last city is lost.
+    const expeditionSide = ({
+      'invasion-hawaii':'cf','invasion-california':'cf','cf-new-zealand':'cf',
+      'cf-panama':'cf','cf-pacific-northwest':'cf',
+      'cf-central-america':'cf','cf-mexico':'cf','cf-pendragon':'cf',
+      'operation-stonehenge':'britannia','invasion-south-africa':'britannia',
+      'invasion-american-east-coast':'eu','invasion-brazil':'eu',
+      'eu-greenland':'eu','invasion-caribbean':'eu','eu-panama':'eu',
+      'invasion-canada':'eu'
+    })[g.scenario?.id];
+    const expeditionAfloat = loser === expeditionSide &&
+      (g.units.some(v => v.side === loser && v.hp > 0) ||
+       g.units.some(v => (v.cargo||[]).some(u => u.side === loser && u.hp > 0)));
     const annexed = g.mode !== 'campaign' && alive(g, loser) &&
       !g.stations.some(c => c.owner === loser) && !expeditionAfloat
       ? surrender(g, loser, u.side, s) : null;
@@ -4128,7 +4137,7 @@
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       // Amphibious regional invasions may start with no cities; surviving expeditions remain in play.
-      if (['operation-stonehenge','invasion-south-africa','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon'].includes(g.scenario?.id)) {
+      if (['operation-stonehenge','invasion-south-africa','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon','cf-new-zealand','cf-panama','cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon','eu-rocky-mountains'].includes(g.scenario?.id)) {
         if (conquest) g.over = conquest;
         return g.over;
       }
@@ -4385,7 +4394,7 @@
   }
   function eliteScenario(g) {
     return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id) &&
+      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang','cf-new-zealand','cf-panama','cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon','eu-rocky-mountains'].includes(g.scenario?.id) &&
       g.difficulty === 'elite';
   }
   function eliteAIProduction(g) {
@@ -4588,11 +4597,19 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang','cf-new-zealand','cf-panama','cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon','eu-rocky-mountains'].includes(g.scenario?.id)) return g;
     const sides = ['area-18','war-for-australia'].includes(g.scenario.id) ? ['britannia','eu','cf'] :
       g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
-      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon'].includes(g.scenario.id) ? ['britannia','eu'] :
-      ['conquest-indochina','philippines-invasion','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
+      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia',
+       'invasion-south-africa','invasion-turkey','invasion-brazil',
+       'invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland',
+       'invasion-american-east-coast','eu-panama','eu-pendragon',
+       'eu-rocky-mountains'].includes(g.scenario.id) ? ['britannia','eu'] :
+      ['conquest-indochina','philippines-invasion','invasion-korea',
+       'invasion-hawaii','invasion-california','cf-new-zealand','cf-panama',
+       'cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon',
+       'bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze',
+       'battle-luoyang'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',
