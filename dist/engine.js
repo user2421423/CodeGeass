@@ -4039,8 +4039,8 @@
     if (g.mode === 'scenario') {
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
-      // Britannia begins Stonehenge with no cities; the navy is the foothold.
-      if (g.scenario?.id === 'operation-stonehenge') {
+      // Stonehenge and Hawaii start with an offshore invasion: surviving carriers are footholds.
+      if (g.scenario?.id === 'operation-stonehenge' || g.scenario?.id === 'invasion-hawaii') {
         if (conquest) g.over = conquest;
         return g.over;
       }
