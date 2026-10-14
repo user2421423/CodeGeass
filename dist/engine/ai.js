@@ -1960,6 +1960,70 @@
     }
     return result;
   }
+  // Spare ordinary carriers may defend an uncovered threatened city and its
+  // adjacent army at once. Use visible units and own charges only; never
+  // inspect classified rival Eliminators or enemy warhead stockpiles.
+  function aiEliminatorDualDefenseOrder(g,u,memo) {
+    if(g.mode!=='conquest'||!u.eliminator||u.cmd||u.moved||u.attacked||
+        isShip(u)||atSea(g,u)||u.hp/maxHP(u)<0.7||
+        memo.recoveries?.has(u.id)||memo.guards?.[u.id])return null;
+    const front=memo.byId?.[memo.assign?.[u.id]];
+    if(front?.emergency||g.ai?.[u.side]?.eliminatorMusterTargets?.[u.id]!=null)return null;
+    const foes=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side));
+    if(foes.some(v=>dist(g,v,u)<=6))return null; // combat first
+    const ownLand=massOf(g,u);
+    if(ownLand<0)return null;
+    const others=sideEliminators(g,u.side).filter(h=>h.ready&&h.unit?.id!==u.id);
+    const friends=g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v));
+    const orders=(((g.ai||={})[u.side]||={}).eliminatorDualDefenseAssignments||={});
+    const assigned=g.stations.find(s=>s.id===orders[u.id]&&s.owner===u.side);
+    const valid=s=>s&&massOf(g,s)===ownLand&&
+      !others.some(h=>dist(g,h,s)<=ELIMINATOR.range)&&
+      friends.filter(v=>dist(g,v,s)<=4).length>=2&&
+      foes.some(v=>dist(g,v,s)<=12);
+    if(assigned&&!valid(assigned))delete orders[u.id];
+    const oldCover=eliminatorStrikePosture(g,u.side,u,u,memo);
+    const choices=[];
+    if(assigned&&valid(assigned))choices.push({s:assigned,score:Infinity});
+    else for(const s of g.stations) {
+      const d=dist(g,u,s);
+      if(d<4||d>14||!valid(s))continue;
+      const projected=eliminatorStrikePosture(g,u.side,s,u,memo);
+      if(projected<oldCover*1.35+125)continue; // protect old assignment
+      const allyCount=friends.filter(v=>dist(g,v,s)<=4).length;
+      const hostileCount=foes.filter(v=>dist(g,v,s)<=12).length;
+      const score=projected-oldCover*1.35+
+        eliminatorCityValue(g,u.side,s)*0.35+
+        Math.min(6,allyCount)*28+Math.min(5,hostileCount)*30-d*13;
+      choices.push({s,score});
+    }
+    choices.sort((a,b)=>b.score-a.score||a.s.id-b.s.id);
+    for(const {s} of choices.slice(0,5)) {
+      if(dist(g,u,s)<=ELIMINATOR.range) {
+        orders[u.id]=s.id;
+        return null; // keep normal attack and recovery behavior
+      }
+      const field=goalField(g,u.side,[[s,0]],'land',null,44);
+      const current=field[u.r*g.cols+u.c];
+      if(!Number.isFinite(current))continue;
+      const reachableLand=[...reachable(g,u).keys()]
+        .map(k=>{const [c,r]=k.split(',').map(Number);return tile(g,c,r);})
+        .filter(p=>p&&!isSea(p)&&!unitAt(g,p)&&
+          Number.isFinite(field[p.r*g.cols+p.c])&&
+          field[p.r*g.cols+p.c]<current&&
+          !foes.some(v=>dist(g,v,p)<=4))
+        .sort((a,b)=>field[a.r*g.cols+a.c]-field[b.r*g.cols+b.c]||
+          eliminatorStrikePosture(g,u.side,b,u,memo)-
+          eliminatorStrikePosture(g,u.side,a,u,memo)||a.r-b.r||a.c-b.c);
+      for(const p of reachableLand) {
+        const moved=move(g,u.id,p.c,p.r);
+        if(!moved?.ok)continue;
+        orders[u.id]=s.id;
+        return [{kind:'move',...moved,id:u.id}];
+      }
+    }
+    return null;
+  }
   function eliminatorEscortTarget(g,u,memo) {
     const cache = (memo.eliminatorEscortTargets ||= {});
     if (Object.prototype.hasOwnProperty.call(cache,u.id)) {
@@ -1989,6 +2053,13 @@
   }
   function eliminatorMobileCoverBonus(g,u,p,nearbyFoes,memo) {
     if (!(u.eliminator>0))return 0;
+    // Prefer retaining dual-purpose cover once a charge reaches its city.
+    const assignedCity=g.stations.find(s=>
+      s.id===g.ai?.[u.side]?.eliminatorDualDefenseAssignments?.[u.id]&&
+      s.owner===u.side);
+    const cityHold=assignedCity?
+      (dist(g,p,assignedCity)<=ELIMINATOR.range?115:
+        dist(g,u,assignedCity)<=ELIMINATOR.range?-165:0):0;
     const target=eliminatorEscortTarget(g,u,memo);
     const friendAssets=eliminatorThreatAssets(g,u.side,memo)
       .filter(a=>a.kind==='unit');
@@ -1999,13 +2070,13 @@
     const priorCenter=eliminatorStrikePosture(g,u.side,old,u,memo);
     const nextCenter=eliminatorStrikePosture(g,u.side,p,u,memo);
     const centerGain=Math.max(-145,Math.min(145,(nextCenter-priorCenter)*0.20));
-    if(!target)return gain+centerGain+Math.min(75,after*0.10);
+    if(!target)return gain+centerGain+cityHold+Math.min(75,after*0.10);
     const prior=dist(g,old,target),next=dist(g,p,target);
     const tether=next<=ELIMINATOR.range?120:
       next===ELIMINATOR.range+1 ? 20:-Math.min(130,(next-4)*32);
     const lost=prior<=ELIMINATOR.range && next>ELIMINATOR.range?-90:0;
     const approach=Math.max(-35,Math.min(35,(prior-next)*15));
-    return gain+centerGain+Math.min(75,after*0.10)+tether+lost+approach;
+    return gain+centerGain+cityHold+Math.min(75,after*0.10)+tether+lost+approach;
   }
   function aiEliminatorMetrics(g, side) {
     const charges = sideEliminators(g, side);
@@ -2731,6 +2802,8 @@
       }
       return events;
     }
+    const dualDefense=aiEliminatorDualDefenseOrder(g,u,memo);
+    if(dualDefense!==null)return [...events,...dualDefense];
     // Trigger available newcomer abilities for AI-led armies, rather than leaving them player-only.
     if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!feintReason(g,u)) {
       const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
@@ -2964,5 +3037,5 @@
     memo.trafficCache?.clear();
     return events;
   }
-  Object.assign(E, { aiProduction, aiAssignEliminators, aiEliminatorMetrics, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
+  Object.assign(E, { aiProduction, aiAssignEliminators, aiEliminatorMetrics, aiEliminatorDualDefenseOrder, aiOrder, aiOrderPriority, aiNextActor, aiPlan, unitStrength, FRONT, playerPriorityBonus, playerPrioritySeeds });
 })(typeof window !== 'undefined' ? window : globalThis);
