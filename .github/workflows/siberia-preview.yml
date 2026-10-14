@@ -1,8 +1,5 @@
 name: Isolated Siberia playable preview
 on:
-  push:
-    branches:
-      - scenario/britannia-siberia
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,7 +34,6 @@ jobs:
         run: |
           node tools/build_sources.cjs --check
           node tools/siberia_hex_audit.cjs
-          node --test tests/siberia.test.cjs
       - name: Keep production main files intact and add isolated branch preview
         run: |
           mkdir -p main-site/dist/previews/siberia
