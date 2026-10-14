@@ -124,7 +124,7 @@ async function endTurn() {
   save();
   campaignFeed(() => game.over && resultDialog());
   if (!game.over) {
-    announceTurn();
+    announceTurn(!!scenarioNotice);
     showTurnSummary(completedTurn, orders);
   }
   const logistics = game.automationReport,

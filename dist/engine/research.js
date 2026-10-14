@@ -13,13 +13,6 @@
       name: 'Infantry',
       desc: 'Scouts, assault frames and raiders: screens, city-takers and entrenched defenders.',
       nodes: {
-        drives: {
-          name: 'Landspinner Tuning',
-          values: [1, 2],
-          tiers: [1, 3],
-          costs: [60, 220],
-          text: v => (v === 1 ? '+1 movement' : '+1 movement; ignore the first rough-terrain surcharge each move'),
-        },
         guns: {
           name: 'Linear Assault Rifles',
           values: [0.06, 0.12, 0.19, 0.27],
@@ -116,13 +109,6 @@
           costs: [50, 120, 250, 420],
           text: v => `+${pct(v)} damage`,
         },
-        drives: {
-          name: 'Yggdrasil Overdrive',
-          values: [1, 2],
-          tiers: [2, 4],
-          costs: [150, 380],
-          text: v => (v === 1 ? '+1 movement' : '+1 movement; the first kill each turn grants a 1-hex reposition'),
-        },
         secondary: {
           name: 'Needle Blazers',
           values: [0.3, 0.45],
@@ -182,13 +168,6 @@
           costs: [40, 100, 200],
           text: v => `+${pct(v)} frame integrity`,
         },
-        drives: {
-          name: 'Heavy Landspinners',
-          values: [1, 2],
-          tiers: [2, 4],
-          costs: [160, 400],
-          text: v => (v === 1 ? '+1 movement' : '+1 movement; +10% damage after moving 1 hex or less this turn'),
-        },
         shells: {
           name: 'Fragmentation Shells',
           values: [0.3, 0.45],
@@ -227,7 +206,7 @@
     },
     sakura: {
       name: 'Sakuradite',
-      desc: 'Sakuradite technology from Camelot, Clément and Jabalpur: float units, shields and sea transport.',
+      desc: 'Sakuradite technology from Camelot, Clément and Jabalpur: float systems, shields and energy reserves.',
       nodes: {
         varis: {
           name: 'VARIS Rifles',
@@ -252,32 +231,18 @@
         },
         float: {
           name: 'Float System',
-          values: [1, 2],
-          tiers: [3, 4],
-          costs: [260, 460],
+          values: [1],
+          tiers: [3],
+          costs: [260],
           req: ['varis', 1],
-          text: v => (v === 1 ? 'Armor units ignore terrain movement costs' : '+1 movement for Armor and Float-capable units'),
+          text: () => 'Armor units ignore terrain movement costs',
         },
       },
     },
     naval: {
       name: 'Naval',
-      desc: 'Transports, amphibious Knightmares and Carrier-Battleships: durability, torpedoes and fire control. Existing Tier IV port-gated benefits still need a level-3 port.',
+      desc: 'Naval durability, torpedoes, carrier systems and fire control. Tier IV port-gated abilities still require a level-3 port.',
       nodes: {
-        logistics: {
-          name: 'Naval Logistics',
-          values: [1, 2],
-          tiers: [1, 4],
-          costs: [50, 300],
-          text: v => (v === 1 ? 'Transports sail 6 hexes' : 'Advanced Naval Logistics: transports sail 6 hexes and may retain a 1-hex reposition after embarking or landing with enough movement (needs a level-3 port)'),
-        },
-        amphibious: {
-          name: 'Amphibious Systems',
-          values: [1],
-          tiers: [1],
-          costs: [60],
-          text: v => `+${v} sea movement for amphibious Knightmares`,
-        },
         landing: {
           name: 'Landing Craft',
           values: [0.25],

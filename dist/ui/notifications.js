@@ -13,7 +13,9 @@ let activeNotice = null;
 let noticeTimeout = null;
 let turnBannerTimeout = null;
 let politicalTimeout = null;
+let summaryCollapseTimeout = null;
 let summaryTurn = null;
+let lastNoticeSound = 0;
 
 // Existing toast callers share these categories; callers may specify a category for important events.
 function noticeKind(message) {
@@ -44,6 +46,16 @@ function showNextNotice() {
     return;
   }
   const n = activeNotice;
+  const now = Date.now();
+  if (!aiSide && now - lastNoticeSound > 1200) {
+    const cue = n.type === 'success' ? 'ui-success' :
+      n.type === 'warning' ? 'ui-warning' :
+      n.type === 'strategic' && !/f\.l\.e\.i\.j\.a\.|surrender/i.test(n.text) ? 'ui-strategic' : null;
+    if (cue) {
+      SFX.play(cue, game.player);
+      lastNoticeSound = now;
+    }
+  }
   el.className = 'show categorized-toast notice-' + n.type;
   el.innerHTML = '<span class="notice-type">' + NOTICE_LABELS[n.type] + '</span>' +
     '<span class="notice-message">' + esc(n.text) + (n.count > 1 ? ' (×' + n.count + ')' : '') + '</span>';
@@ -86,8 +98,9 @@ function setAiPhase(side) {
     el.style.setProperty('--phase-color', typeof factionUIColor === 'function' ? factionUIColor(side) : '#c1c9d5');
   }
 }
-function announceTurn() {
+function announceTurn(silent = false) {
   const el = noticeNode('turn-announcement', 'turn-announcement');
+  if (!silent) SFX.play('ui-turn', game.player);
   clearTimeout(turnBannerTimeout);
   el.innerHTML = '<small>' + esc(F(game.player).name) + '</small><strong>TURN ' +
     count(game.turn) + '</strong><span>Your orders await</span>';
@@ -107,6 +120,10 @@ function showTurnSummary(completedTurn, orders) {
   const stats = report.turns?.[completedTurn]?.[game.player] || null;
   const el = noticeNode('turn-summary', 'turn-summary');
   summaryTurn = completedTurn;
+  clearTimeout(summaryCollapseTimeout);
+  summaryCollapseTimeout = setTimeout(() => {
+    if (!el.hidden && el.querySelector('details')) el.querySelector('details').open = false;
+  }, 8000);
   const value = key => stats && Number.isFinite(stats[key]) ? count(stats[key]) : '—';
   const blocked = Array.isArray(orders?.blocked) ? count(orders.blocked.length) : '—';
   el.innerHTML = '<details open><summary>TURN ' + count(completedTurn) +
@@ -129,6 +146,7 @@ function dismissPoliticalReport() {
 function showPoliticalReport(title, description) {
   dismissPoliticalReport();
   postNotice(description, { type: 'strategic', silent: true });
+  SFX.play('ui-strategic', game.player);
   const el = noticeNode('political-report', 'political-report');
   el.innerHTML = '<div><small>STRATEGIC COMMUNIQUÉ · TURN ' + count(game.turn) +
     '</small><h3>' + esc(title) + '</h3><p>' + esc(description) +
@@ -141,6 +159,7 @@ function resetNotificationUI() {
   clearTimeout(noticeTimeout);
   clearTimeout(turnBannerTimeout);
   clearTimeout(politicalTimeout);
+  clearTimeout(summaryCollapseTimeout);
   activeNotice = null;
   pendingNotices.length = 0;
   noticeHistory.length = 0;

@@ -123,7 +123,7 @@
       const v = unitAt(g, n);
       return v && v.side === u.side && isShip(v);
     });
-    const sea = TYPES[u.type].seaMove + techValue(g, u.side, 'naval.amphibious');
+    const sea = TYPES[u.type].seaMove;
     return escort ? Math.max(CARRIER_ESCORT_SEA, sea) : sea;
   }
   // Embarked units take extra damage; Landing Craft halves the penalty.
@@ -132,8 +132,7 @@
   }
   function seaMove(g, u) {
     const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;
-    // Naval Logistics raises transports from 5 to 6. Level II changes embark/landing tempo instead of adding speed.
-    return base + Math.min(1, techValue(g, u.side, 'naval.logistics'));
+    return base;
   }
 
   // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Marshal).

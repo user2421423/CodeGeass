@@ -28,4 +28,7 @@ test('War Report notification history and event wiring', () => {
   assert.match(turns, /showTurnSummary\(completedTurn, orders\)/);
   assert.match(turns, /showPoliticalReport\('THE ALLIANCE HAS COLLAPSED'/);
   assert.match(turns, /setAiPhase\(side\)/);
+  assert.match(read('ui/notifications.js'), /SFX\.play\('ui-turn'/);
+  assert.match(read('ui/notifications.js'), /summaryCollapseTimeout/);
+  assert.match(read('audio.js'), /'ui-strategic'\(t\)/);
 });
