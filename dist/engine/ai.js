@@ -2072,8 +2072,21 @@
     // 0b. F.L.E.I.J.A.: one ready warhead maximum; rival Eliminator sites are unknown.
     g.launches = [];
     if (g.mode !== 'scenario' && (g.arsenal?.[side] || 0) > 0 && !g.over) {
-      const p = aiLaunchTarget(g, side),
-        shot = p && launch(g, side, p.c, p.r);
+      const p = aiLaunchTarget(g, side);
+      // Opt-in simulator observer only: capture the exact selected target
+      // BEFORE the detonation consumes a charge or destroys the target.
+      // The returned record is never used in target selection or movement.
+      const diagnostic = p && typeof g.__fleijaDiagnosticHook === 'function'
+        ? g.__fleijaDiagnosticHook(side, p) : null;
+      const shot = p && launch(g, side, p.c, p.r);
+      if (diagnostic) {
+        diagnostic.launched = !!shot?.ok;
+        diagnostic.intercepted = !!shot?.intercepted;
+        diagnostic.interceptorType = shot?.intercepted
+          ? (shot.eliminatorCarrier != null ? 'mobile' : 'city') : null;
+        diagnostic.interceptingSide = shot?.defender || null;
+        if (!shot?.ok) diagnostic.failureReason = shot?.reason || 'no launch';
+      }
       if (shot?.ok) g.launches.push(shot);
     }
     // 1. Repair badly damaged units resting at a friendly city (this spends their turn).
