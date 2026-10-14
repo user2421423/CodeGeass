@@ -93,7 +93,7 @@ assert.equal(P.winner(g),null,'No time limit');
 for(const s of g.stations)s.owner='britannia';
 assert.equal(P.winner(g)?.winner,'britannia','Reverse total conquest must win');
 console.log('PENDRAGON_AUDIT '+JSON.stringify({cities:P.cityData.length,
- dimensions:[g.cols,g.rows],landHexes:reachable.size,mountain,desert,forest,plains,
+ dimensions:[g.cols,g.rows],landHexes:reachable.size,mountain,desert,forest,plains:plain,
  armies:g.startUnits,groups:g.scenario.groups.length,capitalShield:capital.maxShield,
  georeferencedCapital:target,approaches,allFourDifficulties:true,
  victoryRequiresEveryCity:true,turnLimit:null}));
