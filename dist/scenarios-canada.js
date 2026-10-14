@@ -86,7 +86,8 @@
     }
     g.scenario={id:ID,key:'canada',title:'Invasion of Canada',
       version:1,phase:'northern-multifront',aiDoctrine:'europe',groups:[],funding:{},
-      bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,operations:['Atlantic','Maritimes','Hudson','Labrador','Arctic','Transcontinental']};
+      bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,operations:['Atlantic','Maritimes','Hudson','Labrador','Arctic','Transcontinental'],
+      supplyCorridors:{atlantic:['St. John\'s','Corner Brook','Halifax','Moncton','Québec City','Montréal','Ottawa','Toronto'],hudson:['Kuujjuaq','Rankin Inlet','Churchill','Thompson','Winnipeg','Thunder Bay'],prairie:['Winnipeg','Regina','Saskatoon','Calgary','Edmonton','Vancouver'],arctic:['Pond Inlet','Resolute','Cambridge Bay','Inuvik','Yellowknife']}};
     // Only Britannia and Europia United are playable here.
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
@@ -233,6 +234,7 @@
         ship.pendingPassengers=(ship.pendingPassengers||0)+1;
         const cmd=i===0?commander:null;
         const u=E.newUnit(g,E.typeFor(side,cls,g),side,ship.c,ship.r,i===0?2:1,cmd);
+        u.invasionGroup=name; // Persistent operational front after unloading.
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
         passengers.push({ship,u});
         group(side,name).units.push(u.id);
