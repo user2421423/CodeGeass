@@ -948,12 +948,15 @@ const GEOGRAPHY = (() => {
     const greenland = g.scenario.id === 'eu-greenland';
     const hawaii = g.scenario.id === 'invasion-hawaii';
     const eastCoast = g.scenario.id === 'invasion-american-east-coast';
-    const panama = g.scenario.id === 'eu-panama';
-    const pendragon = g.scenario.id === 'eu-pendragon';
+    const panama = g.scenario.id === 'eu-panama' || g.scenario.id === 'cf-panama';
+    const pendragon = g.scenario.id === 'eu-pendragon' || g.scenario.id === 'cf-pendragon';
+    const northwest = g.scenario.id === 'cf-pacific-northwest';
+    const mexico = g.scenario.id === 'cf-mexico';
+    const rockyMountains = g.scenario.id === 'eu-rocky-mountains';
     const southChina = g.scenario.id === 'bf-south-china';
     const luoyang = g.scenario.id === 'battle-luoyang';
     const centreSampledRegion = australia || middleEast || iraqIran || malacca || siberia || southernAfrica || newZealand || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea || southChina || yangtze || luoyang;
+      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea || southChina || yangtze || luoyang || northwest || mexico || rockyMountains;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -1146,7 +1149,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast || korea || iraqIran || southChina || newZealand) && g.scenario?.rivers){
+    if((siberia || brazil || canada || california || eastCoast || korea || iraqIran || southChina || newZealand || northwest) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
@@ -1240,6 +1243,63 @@ ctx.restore();}
           if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
         }
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // New regional IDs use the WGS84 geographic atlas rather than Japan's
+    // fallback map. Relief below is geographically located and separate from
+    // the gameplay hex mask; do not trace tactical hex boundaries as shoreline.
+    if(rockyMountains){
+      const model=E.scenarios?.byId?.['eu-rocky-mountains'];
+      if(typeof model?.paintRelief==='function')
+        model.paintRelief(ctx,g,{R,SQ,left,right,top,bottom});
+    }
+    if(mexico && g.scenario?.atlas){
+      const bb=g.scenario.bounds,atlas=g.scenario.atlas;
+      const sx=SQ*R*g.cols/(bb.east-bb.west),
+            sy=1.5*R*g.rows/(bb.north-bb.south);
+      const xy=([lon,lat])=>[R-SQ*R*.5+(lon-bb.west)*sx,
+        R-.75*R+(bb.north-lat)*sy];
+      const line=(points,close=false)=>{
+        ctx.beginPath();for(let i=0;i<points.length;i++){
+          const [x,y]=xy(points[i]);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);
+        }if(close)ctx.closePath();
+      };
+      ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+      ctx.lineJoin='round';ctx.lineCap='round';
+      for(const [lon,lat,width,height] of atlas.basins||[]){
+        const [x,y]=xy([lon,lat]);ctx.beginPath();ctx.ellipse(x,y,
+          Math.abs(width*sx*.5),Math.abs(height*sy*.5),0,0,Math.PI*2);
+        ctx.fillStyle='rgba(209,190,140,.29)';ctx.fill();
+      }
+      for(const ridge of Object.values(atlas.ridges||{})){
+        if(!ridge?.points?.length)continue;
+        line(ridge.points);ctx.strokeStyle='rgba(103,93,77,.33)';
+        ctx.lineWidth=Math.max(2,Math.abs(ridge.width*sx)*1.35);ctx.stroke();
+        line(ridge.points);ctx.strokeStyle='rgba(218,202,169,.32)';
+        ctx.lineWidth=Math.max(1,Math.abs(ridge.width*sx)*.22);ctx.stroke();
+      }
+      for(const pass of Object.values(atlas.passes||{})){
+        if(!pass?.points?.length)continue;
+        line(pass.points);ctx.strokeStyle='rgba(229,213,155,.55)';
+        ctx.lineWidth=Math.max(1,Math.min(3.5,Math.abs(pass.width*sx)*.25));
+        ctx.stroke();
+      }
+      for(const points of Object.values(atlas.lakes||{})){
+        if(points.length<3)continue;line(points,true);
+        ctx.fillStyle='#245b78';ctx.fill();
+        ctx.strokeStyle='rgba(118,188,207,.75)';ctx.lineWidth=1.2;ctx.stroke();
+      }
+      for(const points of Object.values(atlas.rivers||{})){
+        if(points.length<2)continue;line(points);
+        ctx.strokeStyle='rgba(83,188,213,.8)';ctx.lineWidth=Math.max(1.3,.18*R);
+        ctx.stroke();
+      }
+      for(const [,lon,lat] of atlas.volcanoes||[]){
+        const [x,y]=xy([lon,lat]),v=Math.max(2,R*.26);
+        ctx.beginPath();ctx.moveTo(x,y-v);ctx.lineTo(x+v*.8,y+v*.65);
+        ctx.lineTo(x-v*.8,y+v*.65);ctx.closePath();
+        ctx.fillStyle='rgba(92,63,54,.75)';ctx.fill();
       }
       ctx.restore();
     }
