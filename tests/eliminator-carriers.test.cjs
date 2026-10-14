@@ -280,6 +280,52 @@ test('ordinary armed carrier intercepts an attack and obeys normal charge limits
   assert.equal(escort.eliminator||0,0,'charge is expended after interception');
 });
 
+test('rear escort collects spare charge for nearby frontline formation, without a Tier 1 commander', () => {
+  const {g,city}=setup(401);
+  const remote=g.stations.filter(s=>s.owner==='cf' && s!==city &&
+    E.internal.massOf(g,s)>=0 && land(g,s,1).length &&
+    land(g,s,8).some(p=>E.internal.massOf(g,p)===E.internal.massOf(g,s)))
+    .sort((a,b)=>E.distance(b,city,g)-E.distance(a,city,g))[0];
+  assert.ok(remote,'need a separate source lab with an inland field approach');
+  remote.eliminator=1;
+  const runnerHex=land(g,remote,1).find(p=>E.internal.massOf(g,p)===E.internal.massOf(g,remote));
+  const advance=land(g,remote,8).find(p=>E.internal.massOf(g,p)===E.internal.massOf(g,remote) &&
+    land(g,p,2).filter(q=>E.internal.massOf(g,q)===E.internal.massOf(g,p)).length>=2 &&
+    land(g,p,6).length);
+  assert.ok(runnerHex&&advance);
+  const runner=unit(g,'cf',runnerHex);
+  const anchor=unit(g,'cf',advance);
+  const friends=land(g,anchor,2).filter(p=>E.internal.massOf(g,p)===E.internal.massOf(g,anchor)).slice(0,2);
+  assert.equal(friends.length,2);
+  for(const p of friends)unit(g,'cf',p);
+  const foePos=land(g,anchor,6).find(p=>!E.unitAt(g,p));
+  assert.ok(foePos);
+  unit(g,'britannia',foePos);
+  E.aiAssignEliminators(g,'cf');
+  assert.equal(city.eliminator,1,'city keeps anchor defense');
+  assert.equal(remote.eliminator,0,'spare charge left rear city');
+  assert.equal(runner.eliminator,1,'regular unit receives permanent charge');
+  assert.equal(g.ai?.cf?.eliminatorMusterTargets?.[runner.id],anchor.id);
+  const previous=E.distance(g,runner,anchor);
+  const orders=E.aiOrder(g,runner.id);
+  assert.ok(orders.some(o=>o.kind==='move'),'charged rear escort starts forward transit');
+  assert.ok(E.distance(g,runner,anchor)<previous,'escort closes on friendly formation');
+  assert.equal(runner.eliminator,1,'charge stays with escort');
+});
+
+test('rear guard without a threatened friendly formation does not take a spare charge', () => {
+  const {g,city}=setup(401);
+  const remote=g.stations.filter(s=>s.owner==='cf'&&s!==city&&land(g,s,1).length)
+    .sort((a,b)=>E.distance(b,city,g)-E.distance(a,city,g))[0];
+  assert.ok(remote);
+  remote.eliminator=1;
+  const runner=unit(g,'cf',land(g,remote,1)[0]);
+  E.aiAssignEliminators(g,'cf');
+  assert.equal(city.eliminator,1);
+  assert.equal(remote.eliminator,1);
+  assert.equal(runner.eliminator||0,0);
+});
+
 test('rival Eliminators stay classified from AI targeting and from the player', () => {
   const { g, city } = setup();
   g.phase = 'britannia';
