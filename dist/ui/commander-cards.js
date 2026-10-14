@@ -16,6 +16,13 @@
     };
   }
 
+  const safe = value => esc(String(value ?? ''));
+  const starsHTML = number => '<span class="cc-stars" aria-label="' + number +
+    ' out of ' + E.MAX_RATING + ' stars">' +
+    Array.from({ length: E.MAX_RATING }, (_, i) =>
+      '<span aria-hidden="true" class="' + (i < number ? 'lit' : 'dim') + '">★</span>').join('') +
+    '</span>';
+
   function prepareClassicCard(card, mode, profile) {
     const portrait = card.querySelector('[data-general]');
     if (!portrait) return;
@@ -23,29 +30,57 @@
     const a = C(k);
     const { recruited, officer } = commanderState(k, mode, profile);
     const ratings = officer.ratings || {};
+    const tier = Math.max(1, Math.min(3, Number(a.storyTier) || 3));
     const specialty = branches.slice().sort((x, y) =>
       (ratings[y] || 0) - (ratings[x] || 0))[0];
-    card.classList.add('cc-classic');
-    card.dataset.tier = String(a.storyTier || 3);
+
+    // Keep real action markup and its original event delegation, requirements and costs.
+    const actionMarkup = card.querySelector('.officer-actions')?.outerHTML || '';
+    card.classList.add('cc-card', 'cc-tier-' + tier);
+    card.dataset.tier = String(tier);
     card.dataset.recruited = recruited ? 'yes' : 'no';
     card.dataset.specialty = specialty;
     card.dataset.rank = String(officer.rank);
     card.dataset.name = a.name.toLocaleLowerCase();
     for (const r of ratingKeys) card.dataset['rating' + r] = String(ratings[r] || 0);
 
-    // Reuse the historical card markup instead of replacing it.
-    // Hide category/status labels, not the actual ability name, rank or description.
-    // Recruitment continues to be identifiable from its original priced Recruit button.
-    const label = card.querySelector(':scope > .label');
-    if (label) {
-      label.textContent = [
-        E.RANKS[officer.rank],
-        Math.round(E.RANK_HP[officer.rank] * 100) + '% frame',
-        a.skill,
-      ].join(' · ');
-    }
-    // Preserve the built-in portrait click target, stars, stats, medals and action buttons.
-    // Leave the full card non-interactive so clicking upgrade/recruit is unambiguous.
+    const ratingsMarkup = ratingKeys.map(key =>
+      '<div class="cc-rating"><span>' + safe(E.BRANCH_NAMES[key]) + '</span>' +
+      starsHTML(ratings[key] || 0) + '</div>').join('');
+
+    // The reference card's compact navy-and-gold layout, minus the labels the user
+    // asked to remove: faction, specialization, ownership, rank icon/rank heading,
+    // and the "Signature Ability" heading. Real rank and ability are still shown.
+    card.innerHTML = '<div class="cc-card-top"><span class="cc-tier">Tier ' + tier + '</span></div>' +
+      '<div class="cc-card-identity">' +
+        '<div class="cc-card-portrait">' + generalPortrait(k, 'cc-portrait-art', true) + '</div>' +
+        '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
+          '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
+      '<div class="cc-signature"><strong>' + safe(a.skill) + '</strong>' +
+        '<p>' + safe(a.desc) + '</p></div>' +
+      '<div class="cc-card-bottom">' +
+        '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
+        actionMarkup +
+      '</div>';
+
+    // The original [data-general] portrait still opens Commander Info.
+    // Give the other non-button portions the same behavior, without intercepting
+    // recruitment, assignment, and upgrade controls.
+    card.tabIndex = 0;
+    card.setAttribute('role', 'group');
+    card.setAttribute('aria-label', a.name + '. Press Enter for Commander Info.');
+    card.addEventListener('click', event => {
+      if (!event.target.closest('[data-general],button,a,input,select')) generalDialog(k, true);
+    });
+    card.addEventListener('keydown', event => {
+      if (event.target === card && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        generalDialog(k, true);
+      }
+    });
   }
 
   function setupFilters(dialog, mode) {
