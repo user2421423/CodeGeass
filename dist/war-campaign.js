@@ -52,6 +52,31 @@
     [6,[['european-war','European War','european-war','Central Europe',[14,50],[-2,44,31,56],'Take command of Euro Britannia in its existing regional war against the E.U.']]],
     [7,[['stonehenge','Operation Stonehenge','operation-stonehenge','Western Europe',[-2,49],[-11,36,10,59],'Lead the final Britannian carrier invasion of western Europe.']]],
   ];
+  // Approximate national/state contours where a rectangular theater would
+  // otherwise tint substantial unrelated territory. The GSHHG atlas continues
+  // to supply the authoritative coastlines and underlying land geometry.
+  const REGION_POLYGONS=Object.freeze({
+    'eu-brazil': [[-73,-8],[-69,-10],[-66,-12],[-62,-16],[-58,-21],
+      [-57,-26],[-53,-33],[-48,-30],[-45,-25],[-40,-22],[-35,-9],
+      [-35,-5],[-44,-2],[-50,1],[-52,4],[-61,5],[-66,2],[-69,-1]],
+    'eu-california': [[-124.5,42],[-120,42],[-120,39],[-114.6,35],
+      [-114.6,32.7],[-117.1,32.5],[-121,34],[-124.5,40]],
+    'britannia-south-africa': [[16.3,-28.6],[17,-32],[20,-34.8],
+      [29.9,-34.8],[32.9,-27.5],[31.1,-25.9],[31.2,-22.5],
+      [25,-22.1],[20,-22.4],[20,-26.6]],
+    'britannia-turkey': [[26,40],[28,42],[35,42.2],[41.8,41.8],
+      [44.8,38.5],[43,36],[36,36],[31,36.3],[27,37.2]],
+  });
+  function inPolygon(points,lon,lat){
+    let inside=false;
+    for(let i=0,j=points.length-1;i<points.length;j=i++){
+      const a=points[i],b=points[j];
+      if(((a[1]>lat)!==(b[1]>lat)) &&
+        lon<(b[0]-a[0])*(lat-a[1])/(b[1]-a[1])+a[0])
+        inside=!inside;
+    }
+    return inside;
+  }
   function objective(faction,tier,row) {
     const [suffix,title,scenarioId,region,marker,bounds,description] = row;
     // The Bering battle pushes into opposite shorelines: E.U. into Alaska,
@@ -61,6 +86,7 @@
     return Object.freeze({
       id: faction + '-' + suffix, title, campaignFaction:faction, tier,
       region, marker:targetMarker, bounds:targetBounds, description,
+      polygon:REGION_POLYGONS[faction+'-'+suffix]||null,
       status: scenarioId ? 'implemented' : 'planned',
       scenarioId,
       // Euro Britannia is the scenario's actual playable faction, but does not
@@ -154,6 +180,9 @@
     const [west,south,east,north]=m.bounds;
     if(lat<south || lat>north || lon<west || lon>east)return false;
     // Japan is a slanted chain: exclude the Korean mainland on the western edge.
+    if(m.polygon && !inPolygon(m.polygon,lon,lat)) return false;
+    // The Caribbean objective concerns islands, not Venezuela and Colombia.
+    if(m.id==='eu-caribbean' && lat<16) return false;
     if(m.id.endsWith('division-japan')) return lon>=129+(lat-30)*.48;
     // Pendragon's imperial capital remains an enemy enclave until the final.
     if(m.id==='eu-california' && Math.abs(lon+117)<2 && Math.abs(lat-37.5)<2) return false;
