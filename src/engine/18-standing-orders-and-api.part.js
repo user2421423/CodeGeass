@@ -196,6 +196,7 @@
     buildingLevel,
     buildCost,
     build,
+    decreePrice,
     AUTOMATION_DEFAULT_RESERVE,
     automationState,
     automationUnitOptions,
