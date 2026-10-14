@@ -993,7 +993,7 @@
   const BRITANNIA = [
     {
       id: 'br1',
-      title: 'Invasion of Japan',
+      title: 'The Fall of Tokyo',
       place: 'Kantō Plain',
       year: '2010 a.t.b.',
       brief:
@@ -3091,7 +3091,7 @@
     },
     {
       id: 'br_mausoleum',
-      title: 'The Mausoleum Campaign',
+      title: 'Defense of the Forbidden City',
       place: 'Luoyang, Chinese Federation',
       year: '2018 a.t.b.',
       brief:
@@ -3347,21 +3347,23 @@
     'fffffppppppppppppfffff',
   ];
   // The eastern front from Moscow to Warsaw (the European Front mission's map).
-  const EASTERN_FRONT = [
-    'sssssfffffppppppppfffsss',
-    'ssssffffpppppppppppffsss',
-    'fffffppppppppfffppppppff',
-    'ffppppppppppfffffppppppp',
-    'pppppppppppppfffpppppppp',
-    'ppppfffppppppppppppfffpp',
-    'pppfffffpppppppppppfffpp',
-    'pppppfppppppmmmpppppppff',
-    'ppppppppppmmmmmppppppfff',
-    'fppppppppppmmmpppppppfff',
-    'ffpppppfffppppppppppppff',
-    'fffppppffffppppppppppppp',
-    'ffffppppppppppppfffppppp',
-    'fffffppppppppppfffffpppp',
+  // The Warsaw battle is local: city districts to the west, suburbs and field positions to the east.
+  // Keep its combat footprint separate from the multi-country European War regional scenario.
+  const WARSAW_DISTRICTS = [
+    'ppuuuuuppppppppppfffpppp',
+    'puuuuuuuffpppppppfffpppp',
+    'uuuuuuuuufpppppppppppppp',
+    'uuuuuuppppppfffppppppppp',
+    'uuuuuuppppppfffppppppppp',
+    'uuuuuuuuuuupppppppppffff',
+    'uuuuuuuuppuupppppppppppp',
+    'uuuuuuuupppppppppppppppp',
+    'uuuuuuuuuuupppfffppppppp',
+    'uuuuuupppppppppffppppppp',
+    'puuuuuuppppppppppppppppp',
+    'ppuuuuufffpppppppppppppp',
+    'pppuuuffffpppppppppppppp',
+    'pppppffffppppppppppppppp',
   ];
 
   const NARVA_CITIES = [
@@ -3595,14 +3597,14 @@
     ['Saint-Denis Landing', 3, 11, owners.landing, 1],
   ];
 
-  const EASTERN_CITIES = [
-    ['Moscow', 21, 4, EB, 3],
-    ['Smolensk', 15, 9, 'eu', 1],
-    ['Minsk', 10, 5, 'eu', 2],
-    ['Vilnius', 6, 2, 'eu', 1],
+  const WARSAW_CITIES = [
+    ['Eastern Field HQ', 21, 4, EB, 3],
+    ['South Industrial Works', 15, 9, 'eu', 1],
+    ['Praga Rail Junction', 10, 5, 'eu', 2],
+    ['Citadel Gate', 6, 2, 'eu', 1],
     ['Warsaw', 2, 7, 'eu', 3, { fort: true, gun: 'Warsaw' }],
   ];
-  const EASTERN_EB = [
+  const WARSAW_EB = [
     [EB, 'vercingetorix', 20, 6, 1, 'shin'],
     [EB, 'gloucester', 21, 8, 2, 'julius'],
     [EB, 'gracchus', 19, 9, 2, 'ashley'],
@@ -3614,7 +3616,7 @@
     [EB, 'liverpool', 22, 6, 1],
     [EB, 'liverpool', 22, 9, 1],
   ];
-  const EASTERN_EU = [
+  const WARSAW_EU = [
     ['eu', 'elite_leila_alexander', 6, 7, 1, 'leila'],
     ['eu', 'alexander_elite', 8, 6, 1, 'akito'],
     ['eu', 'alexander', 9, 8, 1, 'ryo'],
@@ -3703,31 +3705,31 @@
     },
     {
       id: 'br6',
-      title: 'European Front',
-      place: 'Euro Britannia, the eastern front',
+      title: 'Assault on Warsaw',
+      place: 'Warsaw, eastern outskirts',
       year: '2017 a.t.b.',
       brief:
-        'Julius Kingsley’s Ark Fleet has Paris in a panic and the E.U. front is falling back. He orders Euro Britannia forward on every front at once: Shin leads the Knights of St. Michael into the gap. Take Warsaw.',
+        'Julius Kingsley’s Ark Fleet has panicked Paris, and the E.U. is retreating toward Warsaw. Shin leads the Knights of St. Michael from an eastern field camp through the city’s industrial outskirts and rail junctions. Break the final defenses and take Warsaw.',
       unlock: 'Kingsley’s offensive',
       player: EB,
       sides: [EB, 'eu'],
-      map: EASTERN_FRONT,
-      cities: EASTERN_CITIES,
+      map: WARSAW_DISTRICTS,
+      cities: WARSAW_CITIES,
       economy: { eb: 500, eu: 500 },
       industry: { eb: 200, eu: 200 },
       production: ['eu'],
       units: [
-        ...EASTERN_EB,
+        ...WARSAW_EB,
         [EB, 'gracchus', 20, 12, 1, null, { normalOnly: true }],
-        ...EASTERN_EU,
+        ...WARSAW_EU,
         ['eu', 'gardmare', 14, 9, 1, null, { skipNormal: true }],
         ['eu', 'alexander_drone', 15, 10, 2, null, { skipNormal: true }],
       ],
-      objective: 'Capture Warsaw. Moscow must hold.',
+      objective: 'Capture Warsaw. The Eastern Field HQ must hold.',
       win: { capture: ['Warsaw'] },
-      lose: { cities: ['Moscow'], turns: 22 },
-      stars: [{ kill: ['akito'] }, { capture: ['Smolensk', 'Minsk', 'Vilnius', 'Warsaw'] }],
-      victory: 'Warsaw falls. The E.U.’s eastern front collapses before Euro Britannia.',
+      lose: { cities: ['Eastern Field HQ'], turns: 22 },
+      stars: [{ kill: ['akito'] }, { capture: ['South Industrial Works', 'Praga Rail Junction'] }],
+      victory: 'Warsaw falls. Euro Britannia breaks the city’s defenses and opens the road to the west.',
       events: [
         {
           turn: 1,
@@ -3735,7 +3737,7 @@
             ['augustus', 'Euro Britannia marches west. Bring me Warsaw.'],
             ['julius', 'The E.U. is a carcass waiting to fall. Shin, take the center; Ashley, the south.'],
             ['shin', 'And the Alexanders? I would very much like to meet their pilot.'],
-            ['leila', 'wZERO, hold the line at Minsk. We fight smarter than they do.'],
+            ['leila', 'wZERO, hold the Praga Rail Junction. We fight smarter than they do.'],
           ],
         },
       ],
@@ -3901,7 +3903,7 @@
     },
     {
       id: 'eb_fall',
-      title: 'The Fall of Europia',
+      title: 'The Fall of Paris',
       place: 'Paris',
       year: '2018 a.t.b.',
       brief:
@@ -4090,31 +4092,31 @@
     {
       id: 'eu_front',
       title: 'Defense of Warsaw',
-      place: 'The eastern front, Warsaw',
+      place: 'Warsaw, western defenses',
       year: '2017 a.t.b.',
       brief:
-        'Kingsley’s Ark Fleet has Paris rioting and the E.U. front pulling back. wZERO, stripped of its credentials and stuck in Warsaw, is all that stands between Euro Britannia’s offensive and the city.',
+        'Kingsley’s Ark Fleet has Paris rioting and the E.U. falling back. wZERO holds Warsaw’s western districts and citadel while Euro Britannia pushes through the eastern field positions and rail junction. Keep the city from falling.',
       unlock: 'The Wyvern holds',
       player: 'eu',
       sides: ['eu', EB],
-      map: EASTERN_FRONT,
-      cities: EASTERN_CITIES,
+      map: WARSAW_DISTRICTS,
+      cities: WARSAW_CITIES,
       economy: { eu: 500, eb: 500 },
       industry: { eu: 200, eb: 200 },
       production: [EB],
       goals: { eb: [[2, 7, -6]] },
       units: [
-        ...EASTERN_EU,
+        ...WARSAW_EU,
         ['eu', 'estrella', 4, 8, 1, null, { normalOnly: true }],
-        ...EASTERN_EB,
+        ...WARSAW_EB,
         [EB, 'gracchus', 19, 4, 1, null, { skipNormal: true }],
         [EB, 'sutherland', 21, 11, 1, null, { skipNormal: true }],
       ],
       objective: 'Hold Warsaw until the end of turn 12.',
       win: { hold: 12 },
       lose: { cities: ['Warsaw'] },
-      stars: [{ keep: ['Vilnius', 'Minsk'] }, { kill: ['ashley'] }],
-      victory: 'Euro Britannia’s offensive breaks on Warsaw. The Ark Fleet was never real, and now Paris knows it.',
+      stars: [{ keep: ['Citadel Gate', 'Praga Rail Junction'] }, { kill: ['ashley'] }],
+      victory: 'Euro Britannia’s assault breaks against Warsaw. The Ark Fleet was never real, and now Paris knows it.',
       events: [
         {
           turn: 1,
