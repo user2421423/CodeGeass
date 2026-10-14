@@ -24,7 +24,7 @@ test('U.F.N. flag and palette are distinct from 2017 Chinese Federation', () => 
   assert.equal(ART.FACTION_ART.cf.flag, '#b52a2a');
   assert.notEqual(ART.citySVG('capital', 'ufn'), ART.citySVG('capital', 'cf'));
 });
-test('U.F.N. city flag overlays the generic picture and does not render for China', () => {
+test('U.F.N. and Chinese Federation city flags are separate standards', () => {
   const calls = [];
   const ctx = { save() {}, restore() {}, beginPath() {}, moveTo() {}, lineTo() {}, stroke() {},
     drawImage(...args) { calls.push(args); } };
@@ -33,10 +33,15 @@ test('U.F.N. city flag overlays the generic picture and does not render for Chin
   assert.equal(calls[0][3], 32);
   assert.ok(Math.abs(calls[0][4] - 32 * 594 / 831) < 0.01);
   assert.match(decodeURIComponent(calls[0][0].src), /United Federation of Nations flag/);
-  assert.equal(ART.drawFlag(ctx, 'cf', 5, -20, 32), false);
-  assert.equal(calls.length, 1);
+
+  assert.equal(ART.drawFlag(ctx, 'cf', 5, -20, 32), true);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1][0].src, 'assets/flags/cf.webp');
+  assert.ok(Math.abs(calls[1][4] - 32 * 173 / 260) < 0.01);
+
   assert.match(ART.city('city', 'ufn'), /ufn-city-flag/);
   assert.doesNotMatch(ART.city('city', 'cf'), /ufn-city-flag/);
+  assert.match(ART.city('city', 'cf'), /assets\/flags\/cf.webp/);
 });
 test('Conquest-only art alias preserves political teal and other factions', () => {
   const core = read('dist/ui/core.js');
