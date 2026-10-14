@@ -296,7 +296,7 @@ function create(player=attacker,difficulty='normal',seed=startingSeed){
  if(difficulty==='elite'){
   // The shared Elite preparer currently whitelists battle-luoyang for cf
   // but not cf-pendragon. Reuse its exact Britannia/CF transformation,
-  // including L1 player, L3 AI and named L5 officers, then restore ID.
+  // including standard L1 frames and named rival L5 officers, then restore ID.
   if(attacker==='cf'){
    const saved=g.scenario.id;
    try{g.scenario.id='battle-luoyang';E.prepareEliteEurope(g);}
