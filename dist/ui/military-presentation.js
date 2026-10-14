@@ -157,7 +157,7 @@ const militaryPresentation = (() => {
     }
   }
 
-  function suspend() { paused = true; }
+  function suspend() { paused = true; dismiss(); }
   function resume() { paused = false; collect(); flush(); }
 
   function resultSound() {
@@ -168,6 +168,8 @@ const militaryPresentation = (() => {
   }
 
   function mapPreview() {
+    // Final rendering may precede the next animation frame after the last action.
+    if (typeof drawMinimap === 'function') drawMinimap();
     const mini = document.getElementById('minimap');
     if (!mini || !mini.width || !mini.height) return '';
     try {
