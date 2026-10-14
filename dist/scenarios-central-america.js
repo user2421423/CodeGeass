@@ -552,9 +552,15 @@
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!==ID||g.stations.length!==CITIES.length)return null;
-    for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
-      return {winner:side,team:side,reason:E.FACTIONS[side].name+
-        ' has conquered every city in the Central American theatre.'};
+    // Britannia initially owns *all* 81 cities. It must not win on turn one:
+    // repel the invasion, including land troops already embarked as cargo.
+    if(g.stations.every(s=>s.owner==='cf'))
+      return {winner:'cf',team:'cf',reason:
+        'The Federation has conquered every Central American city.'};
+    if(g.stations.every(s=>s.owner==='britannia')&&
+      !E.allUnits(g).some(u=>u.side==='cf'&&u.hp>0))
+      return {winner:'britannia',team:'britannia',reason:
+        'Britannia has eliminated every Chinese expeditionary formation.'};
     return null;
   }
   const api={id:ID,title:'Central American Offensive',sides:SIDES,cols:COLS,rows:ROWS,
