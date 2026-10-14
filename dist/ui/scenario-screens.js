@@ -18,9 +18,14 @@ const SCENARIO_KINDS = [
   ['invasion-south-africa','Invasion of South Africa','47 cities · 2 sides'],
   ['crossing-urals','Crossing the Urals','40 cities · 2 sides'],
   ['invasion-turkey','Invasion of Turkey','59 cities · 2 sides'],
-  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides']
+  ['britannia-western-russia','Invasion of St. Petersburg and Moscow','41 cities · 2 sides'],
+  ['eu-great-lakes','Battle for the Great Lakes','56 cities · 2 sides']
 ];
 const SCENARIO_BLURBS = {
+  'eu-great-lakes': {
+    eu: 'Lead five coordinated offensives out of Ontario. Cross the inland seas, break Detroit and Buffalo, then take Chicago and the industrial belt.',
+    britannia: 'Defend Chicago, Detroit, Cleveland and Buffalo with heavy formations, fortified cities, shipborne reserves and inland fleets.'
+  },
 'crossing-urals': {
 britannia:'Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.',
 eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads.'
@@ -83,6 +88,13 @@ eu:'Hold Perm, Ufa and the defended industrial passes; counterattack eastern spe
   }
 };
 const SCENARIO_TEXT = {
+  'eu-great-lakes': {
+    era:'Great Lakes · Alternate 2017',
+    intro:'After conquering Canada, Europia invades the Britannian Great Lakes industrial heartland. Fight across all five navigable lakes and seize all 56 cities without a turn limit.',
+    diplomacy:'E.U. and Britannia are hostile from turn 1. Mackinac, St. Marys, Detroit and St. Clair are navigable. The Welland Canal bypasses Niagara Falls. Harbours can be captured separately.',
+    elite:'Elite Great Lakes converts eligible land formations to established faction Elite Forces; naval vessels remain conventional and enemy aces gain their normal Elite bonuses.',
+    focus:{eu:'Toronto',britannia:'Detroit'}
+  },
 'crossing-urals': {
 era:'The Urals · Alternate 2017',
 intro:'Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.',
