@@ -2626,7 +2626,8 @@
     const pickup = aiEliminatorPickup(g, u, memo);
     if (pickup && pickup.city.owner === u.side && pickup.city.eliminator > 0) {
       if (dist(g, u, pickup.city) <= 1) {
-        transferEliminator(g, { city: pickup.city.id }, { unit: u.id });
+        const tx=transferEliminator(g,{city:pickup.city.id},{unit:u.id});
+        if(tx.ok) eliminatorRememberMuster(g,u.side,pickup.city,u);
       } else if (!u.moved && !u.attacked) {
         const current = pickup.field[u.r * g.cols + u.c];
         const candidates = [...reachable(g, u).keys()].map(k => {
@@ -2645,13 +2646,17 @@
           const m = move(g, id, destination.c, destination.r);
           if (m.ok) {
             events.push({ kind: 'move', ...m, id });
-            if (dist(g, u, pickup.city) <= 1)
-              transferEliminator(g, { city: pickup.city.id }, { unit: u.id });
+            if (dist(g, u, pickup.city) <= 1) {
+              const tx=transferEliminator(g,{city:pickup.city.id},{unit:u.id});
+              if(tx.ok) eliminatorRememberMuster(g,u.side,pickup.city,u);
+            }
             return events;
           }
         }
       }
     }
+    const muster=aiEliminatorMusterOrder(g,u);
+    if(muster!==null) return [...events,...muster];
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
