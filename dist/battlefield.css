@@ -3359,11 +3359,8 @@ button.danger:hover:not(:disabled) {
 .hud-v2 .hud-brand h1 { font-size: 15px; letter-spacing: .15px; white-space: nowrap; }
 .hud-v2 .hud-brand small { font-size: 7px; letter-spacing: 1.1px; }
 .hud-v2 .mark { font-size: 23px; }
-.hud-phase { flex: 0 0 auto; display: flex; flex-direction: column; gap: 5px; padding-left: 12px; border-left: 1px solid #bfcba52e; min-width: 103px; }
-.hud-phase-mode { color: #bbcbc6; font: 10px/1.1 Arial,sans-serif; white-space: nowrap; }
+.hud-phase { flex: 0 0 auto; display: flex; align-items: center; padding-left: 12px; border-left: 1px solid #bfcba52e; }
 .hud-phase strong { font: 600 12px Arial,sans-serif; color: #f5e8c5; white-space: nowrap; }
-.hud-phase-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; box-shadow: 0 0 0 2px #ffffff18; }
-.hud-phase-suffix { color:#bdcdc9; font-weight:400; font-size:10px; }
 /* Resource balances use the original icon-left, value-right layout, never a stacked grid. */
 .hud-v2 .hud-resources {
   display: inline-flex; flex: 0 1 auto; width: auto; min-width: 0;
