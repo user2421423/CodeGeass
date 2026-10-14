@@ -1,0 +1,49 @@
+/* Strategic World Campaign; intentionally scoped so Story/Scenarios/Conquest retain their layout. */
+.dialog.wc-dialog{box-sizing:border-box;width:min(97vw,1700px);max-width:1700px;max-height:95vh;overflow:auto;padding:22px 26px 14px;background:#102538;color:#e9edf1}
+.wc-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;border-bottom:1px solid #51616e70;padding-bottom:12px}
+.wc-heading h2{font-size:clamp(23px,2.2vw,34px);margin:4px 0 0}
+.wc-heading p{font-size:13px;margin:4px 0 0;color:#aebdcc}
+.wc-factions{display:flex;gap:12px;margin:12px 0}
+.wc-factions button{display:flex;align-items:center;gap:8px;min-width:190px;padding:10px 15px;border:1px solid #40566a;background:#152d40;color:#c7d5e2;border-radius:8px;font-weight:700;cursor:pointer}
+.wc-factions button.active{border-color:var(--wc-faction-color);color:#fff;box-shadow:inset 0 -3px var(--wc-faction-color)}
+.wc-factions button:focus-visible,.wc-dialog button:focus-visible{outline:2px solid #f0d78e;outline-offset:2px}
+.wc-flag{display:inline-flex;width:34px;height:25px;align-items:center;justify-content:center;overflow:hidden;border-radius:3px}
+.wc-flag svg{max-width:100%;max-height:100%}
+.wc-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,315px);gap:16px;min-height:0}
+.wc-stage{min-width:0}
+.wc-map-area{position:relative;min-width:0;border:1px solid #607589;border-radius:9px;overflow:hidden;background:#0d293d}
+.wc-map-area canvas{display:block;width:100%;height:clamp(350px,42vw,555px);touch-action:none;cursor:grab}
+.wc-map-area canvas:active{cursor:grabbing}
+.wc-map-controls{position:absolute;right:9px;top:10px;display:flex;gap:5px}
+.wc-map-controls button{padding:6px 10px;background:#102d42e6;color:#e6f0ef;border:1px solid #7a91a4;border-radius:5px;font-size:12px;cursor:pointer}
+.wc-map-legend{position:absolute;left:10px;bottom:9px;display:flex;flex-wrap:wrap;gap:10px;background:#0c2235e8;color:#e1e6ea;border-radius:4px;padding:7px 9px;font-size:11px;pointer-events:none}
+.wc-tier-strip{display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:5px}
+.wc-tier-strip button{min-width:105px;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:8px 10px;cursor:pointer;background:#1b3548;border:1px solid #44617a;color:#c2d3df;border-radius:6px;text-align:left}
+.wc-tier-strip button b{font-size:15px}
+.wc-tier-strip button small{font-size:10px;line-height:1.3}
+.wc-tier-strip button.current{border-color:#e6c77d;background:#314355;color:#fff}
+.wc-tier-strip button.locked{opacity:.61}
+.wc-panel{min-width:0;background:#0c1d2d;border:1px solid #3e586b;border-radius:8px;padding:15px;overflow-y:auto;max-height:670px}
+.wc-tag{font-size:10px;text-transform:uppercase;letter-spacing:1.3px;color:#c2ad72;font-weight:750}
+.wc-detail-header h3{font-size:18px;margin:6px 0 14px;line-height:1.2}
+.wc-objectives{display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.wc-objective{width:100%;border-radius:5px;border:1px solid transparent;background:#193044;color:#d5e2ea;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 10px;font-size:12px;cursor:pointer}
+.wc-objective.active{border-color:#f0c77b;background:#28475a}
+.wc-objective.locked{opacity:.55}
+.wc-objective.completed .wc-state{color:#72ca9c}
+.wc-objective.planned .wc-state{color:#f0c77b}
+.wc-state{font-weight:bold;flex:none;width:16px;text-align:center}
+.wc-detail{border-top:1px solid #3b5365;padding-top:15px}
+.wc-detail h2{font-size:21px;margin:7px 0;line-height:1.2}
+.wc-detail p{font-size:12px;line-height:1.5;color:#b9c9d4}
+.wc-detail .wc-warning{color:#ebc987;border-left:2px solid #ebc987;padding-left:9px}
+.wc-record{margin:15px 0;font-size:12px;color:#acbfcc}
+.wc-record b{color:#eaf3f6}
+.wc-diff-label{display:block;font-size:11px;color:#b8cbd7;margin:8px 0 6px}
+.wc-detail .select{display:block;width:100%;margin:0 0 10px}
+.wc-dialog .wc-launch{width:100%;padding:10px}
+.wc-resume{width:100%;padding:10px;margin-top:11px;background:#234d5d;color:#f1eee4;border:1px solid #76a3a7;border-radius:5px}
+.wc-feedback{background:#253d4e;color:#ead69c;border-left:3px solid #ead69c;padding:9px 12px;font-size:13px;margin:8px 0}
+.wc-footnote{font-size:11px;color:#94abbd;margin:10px 0 0}
+@media(max-width:920px){.dialog.wc-dialog{padding:14px;max-height:96vh}.wc-layout{grid-template-columns:1fr}.wc-panel{max-height:none}.wc-map-area canvas{height:390px}.wc-tier-strip button{min-width:120px;flex:0 0 auto}.wc-heading{gap:10px}}
+@media(max-width:560px){.wc-heading h2{font-size:22px}.wc-heading .close{font-size:11px}.wc-factions{flex-direction:column}.wc-factions button{width:100%}.wc-map-area canvas{height:290px}.wc-map-legend{gap:6px;font-size:10px}.wc-layout{gap:9px}}
