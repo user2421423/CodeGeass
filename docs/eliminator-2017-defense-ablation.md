@@ -22,3 +22,21 @@ The [four-way matched workflow](https://github.com/user2421423/CodeGeass/actions
 ## Results
 
 Pending.
+
+## Completed four-way ablation — 20 matched 2017 wars, 6 neutral 2018 controls
+
+[All 27 jobs succeeded](https://github.com/user2421423/CodeGeass/actions/runs/38552666399). Each seed used identical game rules, switching only defensive AI. All six 2018 seeds passed strict full-gameplay neutrality against the original AI for all three candidates.
+
+| 2017 outcome | Baseline | Production-only | Anchors-only | Combined |
+|---|---:|---:|---:|---:|
+| Missile launches | 187 | 189 | 188 | 188 |
+| Missile interceptions | 80 | 85 | 83 | 85 |
+| Mobile interceptions | 1 | 7 | 1 | 9 |
+| Carrier losses | 7 | 5 | 5 | 4 |
+| Mean army coverage | 10.29% | 10.43% | 9.97% | 10.19% |
+| Mean frontline coverage | 11.10% | 12.12% | 10.27% | 11.55% |
+| Mean weighted city coverage | 19.59% | 16.86% | 20.35% | 17.71% |
+
+**Diagnosis:** The additional 2017 forward-city *production* score is the major driver of improved mobile interception and the loss of weighted city coverage. Changing *stationary anchor* assignments independently mildly improves weighted city coverage but does not increase mobile interceptions above baseline. The prior combined change does not resolve this trade-off. Neither feature is compelling enough to merge independently.
+
+**Next:** a separately branched restrained-production/anchor hybrid using weaker forward lab priority and a high-value city anchor. Measure new candidate against these four controls, not only the combined candidate. Do not modify `main`.
