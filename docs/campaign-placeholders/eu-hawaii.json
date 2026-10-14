@@ -1,0 +1,22 @@
+{
+  "id": "eu-hawaii",
+  "title": "Invasion of Hawaii",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Hawaii",
+  "proposedMapBounds": {
+    "west": -161,
+    "south": 18,
+    "east": -154,
+    "north": 24
+  },
+  "campaignMapMarker": {
+    "longitude": -156,
+    "latitude": 21
+  },
+  "description": "Launch an oceanic assault against Britannian Pacific bases.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
