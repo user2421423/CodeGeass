@@ -1,20 +1,19 @@
-/* Battle of Pendragon — final Europia United World Campaign battle.
-   Pendragon is fictional and fixed at the existing Campaign marker (-117, 37.5).
-   Surrounding Nevada and eastern California features are georeferenced to WGS84.
-   All theatre cities must change hands: the capital alone does not end the war.
-   No new global mechanics or scenario-specific regression tests are introduced. */
+/* Dual Pendragon regional geography and E.U. eastern finale.
+   The capital is fictionally fixed at WGS84 (-117,37.5). The same static
+   Nevada / eastern California / Utah grid is used by both independent battles.
+   Shared renderer and campaign registry are intentionally unchanged. */
 (function(root){
 'use strict';
 const E=root.Knightmare||(typeof require==='function'?require('./engine.js'):null);
-const ID='eu-pendragon', SIDES=['eu','britannia'];
-const COLS=136,ROWS=104;
-const BOUNDS={west:-120.5,east:-114,north:40,south:35};
-const K=Math.cos(37.5*Math.PI/180);
-const PROJECTION={centerLon:-117.25,centerLat:37.5,angle:0,
-  uMin:-3.25*K,uMax:3.25*K,vMin:-2.5,vMax:2.5};
+
+const COLS=180,ROWS=126;
+const BOUNDS={west:-121.25,east:-111.55,north:41.05,south:34.8};
+const K=Math.cos(37.925*Math.PI/180);
+const PROJECTION={centerLon:-116.4,centerLat:37.925,angle:0,
+  uMin:-4.85*K,uMax:4.85*K,vMin:-3.125,vMax:3.125};
 // Fictional imperial fortresses are intentionally distinguished from real towns.
 // [city, longitude, latitude, controller, factory tier, fortification]
-const CITIES=[
+const GEOGRAPHIC_CITIES=[
  ['Reno',-119.814,39.53,'eu',3,true],
  ['Carson City',-119.767,39.163,'eu',3,true],
  ['Truckee',-120.183,39.328,'eu',2,false],
@@ -87,43 +86,69 @@ const ROADS={
  ImperialNorth:[[-117.07,39.49],[-117.06,38.71],[-117.23,38.07],[-117.15,37.7],[-117,37.5]],
  ImperialSouth:[[-117.67,35.62],[-116.4,36.64],[-116.98,37.05],[-117,37.5]]
 };
+
+/* The capital remains at the established -117,37.5 WGS84 point.
+   Both battles use this ONE surveyed regional coordinate frame; only owners,
+   armies and objectives differ. Nevada/California/Utah features never move. */
+GEOGRAPHIC_CITIES.push(
+ ['South Lake Tahoe',-119.977,38.939,'britannia',2,true],
+ ['Lee Vining',-119.12,37.958,'britannia',2,false],
+ ['Big Pine',-118.29,37.165,'britannia',2,false],
+ ['McGill',-114.78,39.41,'britannia',2,true],
+ ['Baker',-114.13,38.98,'britannia',2,true],
+ ['Mesquite',-114.067,36.806,'britannia',2,true],
+ ['Wendover',-114.037,40.739,'britannia',3,true],
+ ['Tooele',-112.298,40.53,'britannia',3,true],
+ ['Delta',-112.577,39.353,'britannia',3,true],
+ ['Fillmore',-112.327,38.968,'britannia',2,true],
+ ['Richfield',-111.835,38.773,'britannia',3,true],
+ ['Milford',-113.011,38.397,'britannia',3,true],
+ ['Beaver',-112.641,38.277,'britannia',3,true],
+ ['Cedar City',-113.061,37.677,'britannia',3,true],
+ ['Enterprise',-113.721,37.574,'britannia',2,true],
+ ['Saint George',-113.583,37.096,'britannia',3,true],
+ ['Kanab',-112.527,37.047,'britannia',2,true]
+);
+RIDGES.push(
+ // House and Confusion ranges, Snake Range, Mineral Range, Wasatch foothills,
+ // Pine Valley Mountains and the San Rafael highlands. Valleys remain passable.
+ [[-113.65,40.0],[-113.32,39.65],[-113.43,39.22],[-113.43,38.94]],
+ [[-114.38,39.78],[-114.23,39.22],[-114.20,38.74]],
+ [[-113.37,38.95],[-113.20,38.58],[-113.23,38.23]],
+ [[-112.05,40.9],[-111.85,40.30],[-111.90,39.78],[-111.83,39.28]],
+ [[-113.96,37.77],[-113.63,37.45],[-113.46,37.18]],
+ [[-111.80,39.32],[-111.96,38.85],[-112.16,38.45]]
+);
+Object.assign(ROADS,{
+ // Actual western Utah/Nevada road valleys and mountain crossings.
+ I80:[[-119.814,39.53],[-118.777,39.474],[-117.925,38.869],
+       [-115.96,39.512],[-114.037,40.739],[-112.298,40.53]],
+ US50:[[-119.767,39.163],[-118.777,39.474],[-117.925,38.869],
+       [-117.069,39.493],[-115.961,39.512],[-114.888,39.247],
+       [-113.011,38.397],[-112.577,39.353]],
+ UT21:[[-114.13,38.98],[-113.011,38.397],[-112.641,38.277]],
+ UT130:[[-113.011,38.397],[-113.061,37.677]],
+ UT14:[[-113.061,37.677],[-112.527,37.047]],
+ US89:[[-111.835,38.773],[-112.641,38.277],[-113.061,37.677],
+       [-112.527,37.047]],
+ EastNevadaCorridor:[[-114.888,39.247],[-115.007,38.855],[-114.453,37.929],
+       [-114.513,37.615],[-115.192,37.602],[-116.52,37.55]],
+ SouthernUtahCorridor:[[-112.641,38.277],[-113.061,37.677],
+       [-113.583,37.096],[-114.067,36.806],[-115.164,37.36],[-116.52,37.55]]
+});
+
 const DESERT_BASINS=[[-116.96,36.55,1.2,.75],[-117.25,37.9,1.7,1.5],
  [-115.9,38.05,1.65,1.6],[-118.18,38.7,1.2,1.0]];
-const ARMY_GROUPS=[
- ['eu','Reno','heavy',8,'akito'],['eu','Reno','rocket',5,'yukiya'],['eu','Carson City','assault',5,'leila'],
- ['eu','Fallon','heavy',7,'smilas'],['eu','Fallon','siege',4,'oscar'],
- ['eu','Hawthorne','assault',5,'ryo'],['eu','Hawthorne','rocket',5,null],
- ['eu','Austin','heavy',8,'ayano'],['eu','Austin','siege',4,'anna'],
- ['eu','Mammoth Lakes','heavy',7,'pierre'],['eu','Mammoth Lakes','rocket',5,null],
- ['eu','Bishop','heavy',8,'fernando'],['eu','Bishop','siege',4,null],
- ['eu','Independence','assault',5,'olivia'],['eu','Lone Pine','rocket',5,null],
- ['eu','Ridgecrest','heavy',8,'margaret'],['eu','Ridgecrest','rocket',5,null],
- ['eu','Pahrump','heavy',8,'klaus'],['eu','Pahrump','siege',4,null],
- ['eu','Caliente','heavy',8,null],['eu','Caliente','rocket',5,null],
- ['eu','Pioche','assault',4,null],['eu','Dyer','medium',4,null],
- ['eu','Mojave','assault',4,null],
- ['britannia','Pendragon','heavy',6,'suzaku'],['britannia','Pendragon','rocket',4,'bismarck'],
- ['britannia','Imperial Citadel','heavy',5,'cornelia'],['britannia','Imperial Citadel','siege',4,'schneizel'],
- ['britannia','Imperial Air Command','heavy',4,'gino'],['britannia','Imperial Air Command','rocket',3,null],
- ['britannia','Royal Arsenal','heavy',4,'jeremiah'],['britannia','Royal Arsenal','support',3,'cecile'],
- ['britannia','Western Imperial Gate','heavy',4,'guilford'],['britannia','Western Imperial Gate','rocket',3,'darlton'],
- ['britannia','Eastern Imperial Gate','heavy',4,'oldrin'],['britannia','Eastern Imperial Gate','siege',3,null],
- ['britannia','Southern Imperial Gate','heavy',3,'villetta'],['britannia','Southern Imperial Gate','rocket',2,null],
- ['britannia','Northern Imperial Gate','heavy',4,'kewell'],['britannia','Northern Imperial Gate','siege',3,null],
- ['britannia','Tonopah','heavy',4,null],['britannia','Tonopah','rocket',3,null],
- ['britannia','Goldfield','heavy',4,null],['britannia','Goldfield','siege',2,null],
- ['britannia','Ely','heavy',3,null],['britannia','Las Vegas','heavy',4,null],
- ['britannia','Nellis Air Base','rocket',3,null],['britannia','Beatty','medium',3,null],
- ['britannia','Rachel','assault',3,null],['britannia','Alamo','medium',3,null],
- ['britannia','Warm Springs','heavy',3,null],['britannia','Gabbs','medium',3,null],
- ['britannia','Eureka','medium',3,null],['britannia','Round Mountain','support',2,null],
- ['britannia','Indian Springs','heavy',3,null],['britannia','Amargosa Valley','rocket',2,null],
- ['britannia','Lida','assault',2,null],['britannia','Mercury','support',2,null]
+const EU_STAGING=new Set(["Alamo","Baker","Beaver","Caliente","Cedar City","Delta","Ely","Enterprise","Fillmore","Hiko","Kanab","Lund","McGill","Mesquite","Milford","Panaca","Pioche","Richfield","Saint George","Tooele","Wendover"]);
+const EU_ARMIES=[["eu","Tooele","heavy",9,"akito"],["eu","Tooele","rocket",6,null],["eu","Wendover","heavy",8,"leila"],["eu","Wendover","siege",5,null],["eu","Delta","heavy",8,"smilas"],["eu","Delta","rocket",6,"yukiya"],["eu","Fillmore","medium",5,null],["eu","Richfield","heavy",7,"fernando"],["eu","Richfield","siege",5,"oscar"],["eu","Milford","heavy",8,"ayano"],["eu","Milford","rocket",6,null],["eu","Beaver","heavy",8,"marirrosa"],["eu","Beaver","siege",5,null],["eu","Cedar City","heavy",9,"ryo"],["eu","Cedar City","rocket",6,null],["eu","Saint George","heavy",8,"klaus"],["eu","Saint George","assault",6,null],["eu","Enterprise","medium",5,null],["eu","Ely","heavy",10,"anna"],["eu","Ely","siege",6,null],["eu","McGill","heavy",7,"pierre"],["eu","Baker","rocket",6,null],["eu","Pioche","heavy",8,"margaret"],["eu","Pioche","rocket",6,null],["eu","Panaca","assault",6,null],["eu","Caliente","heavy",9,"olivia"],["eu","Caliente","siege",5,null],["eu","Hiko","assault",6,null],["eu","Alamo","heavy",8,null],["eu","Alamo","rocket",6,null],["eu","Mesquite","medium",5,null],["eu","Lund","heavy",5,null],["eu","Kanab","assault",5,null]];
+const EAST_DEFENSE=[["britannia","Pendragon","heavy",13,"suzaku"],["britannia","Pendragon","rocket",9,"bismarck"],["britannia","Pendragon","siege",7,null],["britannia","Imperial Citadel","heavy",11,"cornelia"],["britannia","Imperial Citadel","siege",8,"schneizel"],["britannia","Imperial Air Command","heavy",10,"gino"],["britannia","Imperial Air Command","rocket",7,null],["britannia","Royal Arsenal","heavy",10,"jeremiah"],["britannia","Royal Arsenal","support",6,null],["britannia","Eastern Imperial Gate","heavy",13,"guilford"],["britannia","Eastern Imperial Gate","rocket",9,"darlton"],["britannia","Eastern Imperial Gate","siege",7,null],["britannia","Northern Imperial Gate","heavy",9,"anya"],["britannia","Northern Imperial Gate","rocket",6,null],["britannia","Southern Imperial Gate","heavy",8,"villetta"],["britannia","Western Imperial Gate","heavy",7,"oldrin"],["britannia","Tonopah","heavy",8,"nonette"],["britannia","Tonopah","rocket",5,null],["britannia","Goldfield","heavy",8,"kewell"],["britannia","Goldfield","rocket",5,null],["britannia","Rachel","heavy",9,"monica"],["britannia","Rachel","siege",6,null],["britannia","Warm Springs","heavy",8,"dorothea"],["britannia","Warm Springs","rocket",6,null],["britannia","Round Mountain","heavy",7,"luciano"],["britannia","Round Mountain","rocket",5,null],["britannia","Austin","heavy",8,"manfredi"],["britannia","Austin","medium",6,null],["britannia","Eureka","heavy",6,"augustus"],["britannia","Las Vegas","heavy",8,null],["britannia","Nellis Air Base","rocket",6,null],["britannia","Pahrump","heavy",8,null],["britannia","Indian Springs","rocket",6,null],["britannia","Gabbs","heavy",6,null],["britannia","Silver Peak","heavy",6,null],["britannia","Lida","heavy",6,null],["britannia","Amargosa Valley","siege",5,null]];
+const EU_FRONTS=[
+ {name:'Great Basin Northern Advance',side:'eu',bases:['Wendover','Tooele','Delta','Ely'],goal:'Northern Imperial Gate'},
+ {name:'Central Nevada Breakthrough',side:'eu',bases:['Milford','Baker','McGill','Pioche'],goal:'Eastern Imperial Gate'},
+ {name:'Southern Utah Thrust',side:'eu',bases:['Cedar City','Saint George','Caliente','Alamo'],goal:'Royal Arsenal'},
+ {name:'Eastern Imperial Defense',side:'britannia',bases:['Eastern Imperial Gate','Rachel','Tonopah','Warm Springs'],goal:'Eastern Imperial Gate'},
+ {name:'Mobile Counteroffensive',side:'britannia',bases:['Pendragon','Royal Arsenal','Imperial Air Command'],goal:'Ely'}
 ];
-const FUNDING={
- eu:{credits:1420,industry:940,science:116,sakuradite:62},
- britannia:{credits:1540,industry:1080,science:125,sakuradite:72}
-};
 function geo(c,r){return {lon:BOUNDS.west+(c+.5*(r&1)+.5)*(BOUNDS.east-BOUNDS.west)/COLS,
  lat:BOUNDS.north-(r+.5)*(BOUNDS.north-BOUNDS.south)/ROWS};}
 function locate(lon,lat){const r=Math.max(0,Math.min(ROWS-1,Math.round((BOUNDS.north-lat)*ROWS/(BOUNDS.north-BOUNDS.south)-.5)));
@@ -159,6 +184,15 @@ function nearest(g,p,valid,radius=14){
   }
  return best;
 }
+function defineScenario(config){
+ const {id:ID,title,attacker,staging,armies,defense,funding:FUNDING,
+  startingSeed,openingText,attackerVictory,operationKey,approach,
+  fronts,counterattackBases}=config;
+ const SIDES=[attacker,'britannia'];
+ // Geographic city entries are immutable between stories; ownership alone differs.
+ const CITIES=GEOGRAPHIC_CITIES.map(([name,lon,lat,oldOwner,tier,fort])=>
+  [name,lon,lat,staging.has(name)?attacker:'britannia',tier,fort]);
+ const ARMY_GROUPS=[...armies,...defense];
 function orderGroup(g,id,target){
  if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
  const gr=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
@@ -173,7 +207,7 @@ function orderGroup(g,id,target){
  if(assigned)gr.destination={c:target.c,r:target.r};
  return {ok:assigned>0,assigned,failed,reason:assigned?'':'No reachable formation'};
 }
-function create(player='eu',difficulty='normal',seed=201799){
+function create(player=attacker,difficulty='normal',seed=startingSeed){
  if(!SIDES.includes(player))throw Error('Unsupported Pendragon faction: '+player);
  if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
  const g={game:'knightmare',version:1,rulesVersion:E.RULES_VERSION,player,difficulty,
@@ -183,15 +217,17 @@ function create(player='eu',difficulty='normal',seed=201799){
   fallen:{},economy:{},tech:{},officers:Object.fromEntries(
    Object.keys(E.COMMANDERS).map(k=>[k,E.defaultOfficer(k)])),
   roster:{},medalInventory:[],medalsEarned:[],stats:{},over:null,
-  eliteDeployed:{},arsenal:{eu:0,britannia:0},
+  eliteDeployed:{},arsenal:{[attacker]:0,britannia:0},
   automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
-  mapRevision:0,teams:{eu:'eu',britannia:'britannia'},factions:{},lineup:{}};
+  mapRevision:0,teams:{[attacker]:attacker,britannia:'britannia'},factions:{},lineup:{}};
  for(const side of [...SIDES,'neutral']){
   g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
  }
- g.scenario={id:ID,key:'pendragon',title:'Battle of Pendragon',phase:'imperial-final-offensive',
+ g.scenario={id:ID,key:operationKey,title,phase:'imperial-final-offensive',
   aiDoctrine:'europe',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION,
-  roads:ROADS,ridges:RIDGES,capitalCoordinate:[-117,37.5]};
+  roads:ROADS,ridges:RIDGES,capitalCoordinate:[-117,37.5],
+  approach:approach,operationalFronts:fronts,counterattackBases:counterattackBases,
+  mapDatum:'WGS84',mapRegion:'Nevada-Eastern-California-Utah'};
  const eliteIds=Object.keys(E.ELITE_FORCES);
  g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,
   eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&E.ELITE_FORCES[id].availableTo.includes(side))]));
@@ -246,7 +282,16 @@ function create(player='eu',difficulty='normal',seed=201799){
    if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
   }
  }
- if(difficulty==='elite')E.prepareEliteEurope(g);
+ if(difficulty==='elite'){
+  // The shared Elite preparer currently whitelists battle-luoyang for cf
+  // but not cf-pendragon. Reuse its exact Britannia/CF transformation,
+  // including L1 player, L3 AI and named L5 officers, then restore ID.
+  if(attacker==='cf'){
+   const saved=g.scenario.id;
+   try{g.scenario.id='battle-luoyang';E.prepareEliteEurope(g);}
+   finally{g.scenario.id=saved;}
+  }else E.prepareEliteEurope(g);
+ }
  if(difficulty==='hard'||difficulty==='challenge'){
   for(const side of SIDES.filter(v=>v!==player))
    for(const [i,u] of g.units.filter(v=>v.side===side).entries())
@@ -263,7 +308,7 @@ function create(player='eu',difficulty='normal',seed=201799){
    g.economy[side][res]=actual[res]*2;
  }
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
- E.log(g,'The final offensive begins. E.U. armies converge through Nevada and the Sierra Nevada passes; Britannia defends its last imperial citadel.',player);
+ E.log(g,openingText,player);
  return g;
 }
 function onTurn(){return false;}
@@ -279,15 +324,33 @@ function objective(g,side=g.player){
 function winner(g){
  if(g.mode!=='scenario'||g.scenario?.id!==ID||g.stations.length!==CITIES.length)return null;
  for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
-  return {winner:side,reason:side==='eu'?
-   'Europia United has captured Pendragon and every remaining Britannian city. The Holy Britannian Empire has fallen.':
+  return {winner:side,reason:side===attacker?
+   attackerVictory:
    'The imperial capital and every city remain under Holy Britannian rule.'};
  return null;
 }
-const api={id:ID,title:'Battle of Pendragon',cols:COLS,rows:ROWS,sides:SIDES,
+const api={id:ID,title,cols:COLS,rows:ROWS,sides:SIDES,
  bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,ridges:RIDGES,roads:ROADS,
  geographicAt:geo,locate,create,onTurn,objective,winner,strategicScore,orderGroup};
-E.scenarios={...(E.scenarios||{}),pendragon:api,
- byId:{...(E.scenarios?.byId||{}),[ID]:api}};
-if(typeof module!=='undefined')module.exports=api;
+ return api;
+}
+const euApi=defineScenario({
+ id:'eu-pendragon',title:'Battle of Pendragon — Eastern Offensive',
+ attacker:'eu',staging:EU_STAGING,armies:EU_ARMIES,defense:EAST_DEFENSE,
+ funding:{eu:{credits:1850,industry:1250,science:145,sakuradite:80},
+  britannia:{credits:2100,industry:1480,science:160,sakuradite:98}},
+ startingSeed:201799,operationKey:'pendragon-east',approach:'east',
+ fronts:EU_FRONTS,
+ counterattackBases:['Rachel','Tonopah','Pendragon','Royal Arsenal','Warm Springs'],
+ openingText:'Europia advances westward from Utah and eastern Nevada. Britannian mobile reserves counterattack through the eastern imperial gates.',
+ attackerVictory:'Europia United has conquered Pendragon and every remaining Britannian city from the eastern approaches.'
+});
+root.PENDRAGON_SHARED=Object.freeze({
+ defineScenario,BOUNDS,PROJECTION,COLS,ROWS,
+ geographicCities:GEOGRAPHIC_CITIES,
+ geographicAt:geo,locate,ridges:RIDGES,roads:ROADS
+});
+E.scenarios={...(E.scenarios||{}),pendragon:euApi,
+ byId:{...(E.scenarios?.byId||{}),'eu-pendragon':euApi}};
+if(typeof module!=='undefined')module.exports=euApi;
 })(typeof window!=='undefined'?window:globalThis);
