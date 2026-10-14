@@ -72,13 +72,13 @@
       ['indochina','Defense of Indochina','conquest-indochina','Indochina',[106,16],[96.2,7.5,117.2,27],'Defend Britannian Southeast Asia against the Federation advance.'],
     ]],
     [2,[
-      ['malacca','Battle of the Strait of Malacca',null,'Malacca Strait',[101.5,3.5],[94,-2,106,8],'Capture the maritime chokepoint and cut the Federation\'s western access to Indonesia.'],
-      ['korea','Invasion of Korea',null,'Korean Peninsula',[127.5,37],[124,33,131,43],'Attack the Federation on the Korean Peninsula from Britannian Pacific positions.'],
-      ['iraq-iran','Iraq–Iran Campaign',null,'Iraq and Iran',[49,33],[38,24,64,40],'Open a western offensive into Federation-held Iraq and Iran.'],
+      ['malacca','Battle of the Strait of Malacca','bf-malacca','Malacca Strait',[101.5,3.5],[94,-2,106,8],'Capture the maritime chokepoint and cut the Federation\'s western access to Indonesia.'],
+      ['korea','Invasion of Korea','invasion-korea','Korean Peninsula',[127.5,37],[124,33,131,43],'Attack the Federation on the Korean Peninsula from Britannian Pacific positions.'],
+      ['iraq-iran','Iraq–Iran Campaign','britannia-iraq-iran','Iraq and Iran',[49,33],[38,24,64,40],'Open a western offensive into Federation-held Iraq and Iran.'],
     ]],
-    [3,[['south-china','Invasion of South China',null,'Southern China',[111,23],[102,18,119,29],'Advance north from Southeast Asia with supporting coastal operations.']]],
-    [4,[['yangtze','Battle of the Yangtze River',null,'Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
-    [5,[['luoyang','Battle of Luoyang',null,'Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
+    [3,[['south-china','Invasion of South China','bf-south-china','Southern China',[111,23],[102,18,119,29],'Advance north from Southeast Asia with supporting coastal operations.']]],
+    [4,[['yangtze','Battle of the Yangtze River','bf-yangtze','Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
+    [5,[['luoyang','Battle of Luoyang','battle-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
   ];
   // Federation-side battles are not yet approved. A genuine empty tier is used
   // rather than fabricating a launchable mission or an invented map marker.
