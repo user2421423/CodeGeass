@@ -1,0 +1,22 @@
+{
+  "id": "eu-greenland",
+  "title": "Invasion of Greenland",
+  "campaignFaction": "eu",
+  "tier": 3,
+  "status": "planned",
+  "scenarioId": null,
+  "playableModule": null,
+  "geographicRegion": "Greenland",
+  "proposedMapBounds": {
+    "west": -61,
+    "south": 59,
+    "east": -20,
+    "north": 84
+  },
+  "campaignMapMarker": {
+    "longitude": -42,
+    "latitude": 72
+  },
+  "description": "Capture the North Atlantic approaches.",
+  "implementationNotes": "Implement the regional battle in a separate module. Register its actual ID in E.scenarios.byId, then change the matching entry's scenarioId in dist/war-campaign.js. Keep this metadata and the registry synchronized. Do not overwrite an existing standalone scenario or change campaign tiers."
+}
