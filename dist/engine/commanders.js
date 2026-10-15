@@ -464,6 +464,7 @@
       skill: "Palace Treasury",
       desc: "While occupying a friendly city it earns +50% credits. Once per turn transfer up to 20% of its maximum shields to an adjacent friendly city.",
       fx: {"treasury":0.5},
+      action: {name:'Shield Transfer',verb:'Shield Transfer',kind:'special',target:'city',range:1,cooldown:0,desc:'Move up to 20% of the source city maximum shields to a selected adjacent friendly city.'},
       title: 'High Eunuch',
       recruit: 200,
     },
@@ -696,6 +697,7 @@
       skill: 'Special Operations',
       desc: "Capturing a city heals 25% HP and grants a 3-hex reposition. Once per turn disable adjacent enemy city's shield regeneration for its next turn.",
       fx: {"captureHeal":0.25},
+      action: {name:'Shield Sabotage',verb:'Shield Sabotage',kind:'special',target:'enemyCity',range:1,cooldown:0,desc:'Choose an adjacent enemy city to block shield regeneration for its next turn.'},
       recruit: 200,
     },
     minami: {
