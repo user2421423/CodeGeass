@@ -578,7 +578,7 @@ document.addEventListener('click', e => {
       break;
     case 'feint': {
       const u = selectedUnit();
-      if (u && ['command', 'designate', 'stratagem', 'special'].includes(C(u.cmd)?.action?.kind) && C(u.cmd)?.action?.target!=='self') commandDialog(u);
+      if (u && (['command','designate','stratagem'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
       else if (u) doAction(() => E.feint(game, u.id));
       break;
     }

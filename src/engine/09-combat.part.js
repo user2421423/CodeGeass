@@ -221,7 +221,7 @@
     return {
       unit: unitDmg,
       shield: shieldDmg,
-      counter: senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*.5) : counter ? power(g,d,a,stationAt(g,a),true) : 0,
+      counter: senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65)) : counter ? power(g,d,a,stationAt(g,a),true) : 0,
       counterAllowed: counter||senbaReaction,
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
@@ -366,7 +366,7 @@
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
-      retaliation = Math.round(power(g,d,a,stationAt(g,a),true)*(senbaCounter ? .5 : 1)*(0.94+random(g)*.12));
+      retaliation = Math.round(power(g,d,a,stationAt(g,a),true)*(senbaCounter ? .5/.65 : 1)*(0.94+random(g)*.12));
       if(senbaCounter)d.expSenbaCounterTurn=g.turn;
       if(d.guardReady&&d.held&&skillNear(g,d,'defensiveDoctrine',2)&&d.expSmilasCounterTurn!==g.turn){
         d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;

@@ -29,7 +29,7 @@
   }
   function newcomerUse(g,u,targetId){
     const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
-    if(targetId==null&&action?.target!=='self')return {ok:false,reason:'Select the intended skill target.'};
+    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
     const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
