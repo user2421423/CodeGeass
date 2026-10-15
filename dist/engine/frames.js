@@ -993,6 +993,9 @@
       gen: '5th generation',
       weapon: 'Long-range linear cannon',
       lore: 'The Knights of St. Michael’s siege gun, brought up against the walls of Castle Weisswolf.',
+      // One rough-terrain hex per turn in Story Mode (forest/mountain/tundra cost 2).
+      // Other siege batteries keep their normal 1-point base mobility.
+      move: 2,
       campaign: true,
     },
     siegfried: {
