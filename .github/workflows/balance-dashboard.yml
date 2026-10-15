@@ -80,6 +80,8 @@ jobs:
           mkdir -p dashboard-output
           (
             cd /tmp/knightmare-baseline
+            # Built bundles are not committed; build the baseline's own engine first.
+            node tools/build_sources.cjs
             node tools/balance_dashboard.cjs \
               --modes "${{ steps.config.outputs.modes }}" \
               --runs "${{ steps.config.outputs.runs }}" \
