@@ -23,6 +23,7 @@ jobs:
       - name: Compare all full-suite test failures against exact starting main
         shell: bash
         run: |
+          set +e
           set -uo pipefail
           node --test tests/*.test.cjs > /tmp/pr-tier1-full-suite.tap 2>&1
           pr_status=$?
