@@ -9,11 +9,6 @@
      b.onclick=e=>{e.stopPropagation();hud.classList.toggle('wc4-menu-open');b.setAttribute('aria-expanded',String(hud.classList.contains('wc4-menu-open')))};
      nav.appendChild(b);
    }
-   if(!document.querySelector('.wc4-more-actions')){
-     const b=document.createElement('button');b.type='button';b.className='wc4-more-actions';b.textContent='⋯';b.setAttribute('aria-label','More battlefield actions');
-     b.onclick=()=>{footer.classList.toggle('wc4-actions-open');b.setAttribute('aria-expanded',String(footer.classList.contains('wc4-actions-open')))};
-     document.body.appendChild(b);
-   }
  }
  new MutationObserver(setup).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
  document.addEventListener('click',e=>{if(!e.target.closest('.hud-nav'))document.querySelector('.topbar.hud-v2')?.classList.remove('wc4-menu-open')});
