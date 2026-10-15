@@ -1,0 +1,66 @@
+/* HYBRID — cinematic Code Geass character art over grand-strategy theater map */
+
+/* Alternative art-direction preview. All original controls and save actions remain active. */
+.dialog.wide.start-command{width:min(1440px,100%);max-height:min(96dvh,1100px);padding:0;overflow-y:auto}
+.start-command .start-header,.start-command .start-conquest-panel,.start-command .start-mode,.start-command .start-faction,.start-command .start-launch button{transition:border-color .18s ease,background-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.start-command .start-faction:hover:not(:disabled){transform:translateY(-3px)}
+.start-command .start-mode:hover{transform:translateY(-2px)}
+.start-command .start-header{isolation:isolate}
+.start-command .start-header .start-brand{z-index:2}
+.start-command .start-header .start-signal{z-index:2}
+.start-command .start-mode button:focus-visible,.start-command .start-hq button:focus-visible{outline-offset:3px}
+@media(max-width:1000px){.start-layout{grid-template-columns:1fr}.start-side{order:0}}
+@media(max-width:650px){.dialog.wide.start-command{max-height:98dvh}.start-command .start-header{min-height:0}.start-command .start-faction:hover:not(:disabled),.start-command .start-mode:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.start-command *,.start-command *::before,.start-command *::after{transition:none!important;animation:none!important}}
+
+.start-overlay{background:radial-gradient(ellipse at 60% 0%,#315b7450,transparent 55%),linear-gradient(145deg,#050911,#071521);backdrop-filter:blur(14px)}
+.dialog.wide.start-command{border:1px solid #ad9668;border-radius:4px;box-shadow:0 35px 110px #000f,0 0 45px #8d713325;background:#0d1825}
+.start-command .start-header{min-height:265px;padding:38px 46px;border-bottom:2px solid #cba97488;background-image:linear-gradient(90deg,#081320f6 0%,#081320d6 39%,#0b1e31a0 75%,#10263ba0),url('menu-world.svg');background-size:cover,cover;background-position:center,center 37%;align-items:center}
+.start-command .start-header:before{content:"";position:absolute;right:5%;top:-30px;bottom:-44px;width:310px;background:url('assets/art/portraits/lelouch-78b808b17079.webp') center 28%/contain no-repeat;opacity:.7;filter:drop-shadow(0 0 18px #0b1a2a);-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 20%,#000 75%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0%,#000 20%,#000 75%,transparent 100%);pointer-events:none;z-index:0}
+.start-command .start-header:after{border-radius:50%;border:1px solid #d6b47777;width:340px;height:340px;right:8%;top:-155px;box-shadow:0 0 0 32px #d6b47708,0 0 0 69px #d6b47706}
+.start-command .start-header h1{font:700 clamp(42px,4.8vw,70px)/.94 Georgia,serif;letter-spacing:-.02em;color:#fcf7e9;text-shadow:0 5px 19px #000;max-width:670px}
+.start-command .start-header h1 em{color:#efc478}
+.start-command .start-brandline{color:#e8c58b}
+.start-command .start-brandmark{border-color:#e3b863;box-shadow:0 0 18px #daa74c30}
+.start-command .start-header p{max-width:540px;color:#c6d7dd;font-size:14px}
+.start-command .start-signal{color:#a8bdc7;background:#0a16249e;border:1px solid #9eafaa44;padding:11px 14px;backdrop-filter:blur(4px)}
+.start-command .start-signal strong{color:#e8ce9e}
+.start-command .start-content{background:radial-gradient(circle at 20% 0,#233c4d55,transparent 55%),#0c1723;padding:27px 37px 23px}
+.start-command .start-layout{grid-template-columns:minmax(0,1.55fr) minmax(290px,.96fr);gap:18px}
+.start-command .start-conquest-panel{border:1px solid #b89b665e;background:linear-gradient(135deg,#16293be9,#0d1c2bf0 70%),url('menu-world.svg') center/cover;padding:27px}
+.start-command .start-panel-index{color:#e8c78b}
+.start-command .start-panel-top .start-chip{color:#dae5e6;border-color:#b69c6759;background:#b6a2781d}
+.start-command .start-conquest-panel h2{font:700 clamp(33px,3vw,44px) Georgia,serif;color:#f6ead6}
+.start-command .start-intro{color:#b8cbd1}
+.start-command .start-config-grid label{color:#c1d3d5}
+.start-command .select{border-color:#788e96;background:#091521;color:#f3e9d8}
+.start-command .start-section-heading span{color:#edca8c}
+.start-command .start-factions{gap:10px}
+.start-command .start-faction{min-height:173px;padding:12px 11px 14px 94px;border-radius:2px;background:linear-gradient(120deg,#27394a,#112334);border:1px solid #69818f;border-top:4px solid var(--side-accent,#e5bb79)}
+.start-command .start-faction .faction-portrait{width:105px;height:175px;left:-9px;opacity:.84}
+.start-command .start-faction .faction-banner{width:48px;height:34px}
+.start-command .start-faction-title{font:700 16px/1.12 Georgia,serif;color:#fff4e5}
+.start-command .start-faction-meta{color:#c7d5d6}
+.start-command .start-faction-choice{color:#f0d396}
+.start-command .start-faction.active{background:linear-gradient(120deg,#304d5a,#183040);border:2px solid #f2d69c;border-top:4px solid var(--side-accent,#ecc47b);box-shadow:0 0 23px #e3bd6a29,inset 0 0 0 1px #ecdaaf30}
+.start-command .start-era-brief{color:#c7d5d9;border-top-color:#acbdc043}
+.start-command .start-era-name{color:#e9d5a4;border-color:#b99f6670}
+.start-command button.start-launch-main{background:linear-gradient(180deg,#f7d992,#cba55e);border-color:#f3deac;color:#111b25;box-shadow:0 5px 18px #0006}
+.start-command button.start-launch-main:hover{background:#ffe6ac}
+.start-command button.start-resume{border-color:#a3a08270;background:#24394c;color:#f3e2c4}
+.start-command .start-side-title{color:#e0bc7c}
+.start-command .start-mode{background:linear-gradient(105deg,#1a2e40,#10202f);border:1px solid #567080;border-left:4px solid var(--mode-accent,#d7aa64);padding:17px 18px}
+.start-command .start-mode:hover{border-color:#a7b5b0}
+.start-command .start-mode h3{font:700 22px Georgia,serif;color:#f9f0df}
+.start-command .start-mode p{color:#b4c6cc}
+.start-command .start-mode-info{color:#dfc498}
+.start-command .start-mode button{background:#2c4253;border-color:#b0a078;color:#f0e0c3}
+.start-command .start-mode button:hover{background:#3b5766}
+.start-command .start-hq{border-color:#58717b;background:#101f2d}
+.start-command .start-hq-top b{color:#eccb83}
+.start-command .start-hq-actions button{border-color:#688894;background:#253c4e;color:#d4e6e8}
+.start-command .start-foot{border-top-color:#c3ac7850}
+.start-command .start-foot-left button{border-color:#65808c;color:#d8e3e1}
+.start-command .start-foot small{color:#829aa9}
+@media(max-width:1000px){.start-command .start-layout{grid-template-columns:1fr}.start-command .start-header:before{opacity:.4;right:2%}}
+@media(max-width:650px){.start-command .start-header{min-height:210px;padding:24px 19px}.start-command .start-header:before{right:-9%;width:50%;opacity:.3}.start-command .start-header h1{font-size:clamp(37px,10vw,52px)}.start-command .start-content{padding:15px 12px}.start-command .start-conquest-panel{padding:17px 13px}.start-command .start-faction{min-height:99px;padding-left:114px}.start-command .start-faction .faction-portrait{height:120px;width:112px}.start-command .start-side{display:grid;grid-template-columns:1fr}}
