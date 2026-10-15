@@ -22,7 +22,9 @@
       skillReposition: 0,
       withdrawMove: false,
       elite: ELITE_TYPE_TO_ID[type] || null,
-      eliteLevel: ELITE_TYPE_TO_ID[type] ? 1 : 0,
+      eliteLevel: ELITE_TYPE_TO_ID[type]
+        ? (g.warCampaign && side === g.player ? (g.eliteLevels?.[ELITE_TYPE_TO_ID[type]] || 1) : 1)
+        : 0,
       eliteMoveAfterKill: false,
     };
     u.hpTech = hullTech(g, u);
