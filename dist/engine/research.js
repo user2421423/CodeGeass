@@ -224,10 +224,10 @@
         },
         energy: {
           name: 'Energy Filler Network',
-          values: [0.03],
+          values: [0.15],
           tiers: [3],
           costs: [220],
-          text: v => `Units not adjacent to an enemy repair ${pct(v)} of their frame each turn`,
+          text: v => `Manual repairs cost ${pct(v)} fewer credits; HP restored is unchanged`,
         },
         float: {
           name: 'Float System',
@@ -280,10 +280,10 @@
         },
         damage: {
           name: 'Damage Control',
-          values: [0.15],
+          values: [0.25],
           tiers: [3],
           costs: [200],
-          text: v => `Carrier-Battleships repair ${pct(v)} more of their frame in a friendly port`,
+          text: v => `Manual warship repairs at a friendly port cost ${pct(v)} fewer credits; HP restored is unchanged`,
         },
         launch: {
           name: 'Rapid Launch Systems',

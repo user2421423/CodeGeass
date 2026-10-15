@@ -223,7 +223,13 @@
     const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
     const camelot = g && u.elite && !TYPES[u.type].naval && skillNear(g, u, 'combatEngineering', 2) ? 0.8 : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot * (g && logisticsNear(g, u) ? 0.7 : 1)));
+    // Research discounts affect credits only: manual repairs still restore exactly 20% HP.
+    const energyNetwork = g ? 1 - techValue(g, u.side, 'sakura.energy') : 1;
+    // A ship must occupy a port held by its own side, not merely be adjacent to any city.
+    const friendlyDock = g && isShip(u) && portAtHex(g, u)?.portOwner === u.side;
+    const dockyard = friendlyDock ? 1 - techValue(g, u.side, 'naval.damage') : 1;
+    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot *
+      (g && logisticsNear(g, u) ? 0.7 : 1) * energyNetwork * dockyard));
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
