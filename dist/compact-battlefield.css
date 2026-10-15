@@ -301,3 +301,25 @@ body .map-tools { display: none !important; }
     margin-top: 4px !important; flex-shrink: 0 !important;
   }
 }
+
+/* Allow expanded mobile orders to scroll inside the compact dock. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+ body .selection-dock.mobile-unit-expanded:has(.unit-dock-actions) {
+   max-height: min(260px, 63dvh) !important;
+   overflow: hidden !important;
+ }
+ body .selection-dock.mobile-unit-expanded .unit-dock-actions {
+   display: flex !important;
+   flex-wrap: wrap !important;
+   max-height: min(128px, 30dvh) !important;
+   min-height: 0 !important;
+   overflow-y: auto !important;
+   overflow-x: hidden !important;
+   overscroll-behavior: contain;
+   -webkit-overflow-scrolling: touch;
+   align-content: flex-start !important;
+ }
+ body .selection-dock.mobile-unit-expanded .unit-dock-actions > button {
+   flex: 0 0 auto !important;
+ }
+}
