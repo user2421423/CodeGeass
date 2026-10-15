@@ -1,0 +1,71 @@
+/* GRAND STRATEGY — cartographic war room, HOI-style briefing interface */
+
+/* Alternative art-direction preview. All original controls and save actions remain active. */
+.dialog.wide.start-command{width:min(1440px,100%);max-height:min(96dvh,1100px);padding:0;overflow-y:auto}
+.start-command .start-header,.start-command .start-conquest-panel,.start-command .start-mode,.start-command .start-faction,.start-command .start-launch button{transition:border-color .18s ease,background-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.start-command .start-faction:hover:not(:disabled){transform:translateY(-3px)}
+.start-command .start-mode:hover{transform:translateY(-2px)}
+.start-command .start-header{isolation:isolate}
+.start-command .start-header .start-brand{z-index:2}
+.start-command .start-header .start-signal{z-index:2}
+.start-command .start-mode button:focus-visible,.start-command .start-hq button:focus-visible{outline-offset:3px}
+@media(max-width:1000px){.start-layout{grid-template-columns:1fr}.start-side{order:0}}
+@media(max-width:650px){.dialog.wide.start-command{max-height:98dvh}.start-command .start-header{min-height:0}.start-command .start-faction:hover:not(:disabled),.start-command .start-mode:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.start-command *,.start-command *::before,.start-command *::after{transition:none!important;animation:none!important}}
+
+.start-overlay{background:linear-gradient(#09121bee,#09121bee),repeating-linear-gradient(0deg,#a9cad00a 0 1px,transparent 1px 48px),#111d28}
+.dialog.wide.start-command{border:1px solid #83919a;border-radius:0;background:#152534;box-shadow:0 25px 100px #000e;color:#e5e8e9}
+.start-command .start-header{min-height:235px;padding:30px 40px;border-bottom:3px solid #7893a3;background-image:linear-gradient(90deg,#0a1925f5 0%,#101e2cd6 35%,#101e2c60 100%),url('menu-world.svg');background-size:cover,cover;background-position:center,center 35%;align-items:flex-end}
+.start-command .start-header:after{border-radius:0;width:260px;height:260px;transform:rotate(45deg);right:-155px;top:-175px;box-shadow:none;border:1px solid #c5e0e733}
+.start-command .start-header h1{font:900 clamp(39px,4.5vw,66px)/.94 'Arial Narrow','Helvetica Neue',Arial,sans-serif;letter-spacing:.012em;color:#f0f4ef;text-shadow:0 3px 12px #001}
+.start-command .start-header h1 em{color:#d3dfe1}
+.start-command .start-brandline{font-size:10px;letter-spacing:.22em;color:#9bc1d3}
+.start-command .start-brandmark{border:1px solid #afd6df;color:#b5d3dc}
+.start-command .start-header p{max-width:500px;color:#c1d0d8;font-size:13px}
+.start-command .start-signal{color:#b9cfda;opacity:.87}
+.start-command .start-signal strong{color:#e2eacb}
+.start-command .start-content{background:#192a38;padding:26px 34px 21px}
+.start-command .start-layout{grid-template-columns:minmax(265px,.83fr) minmax(0,1.9fr);gap:16px}
+.start-command .start-side{order:-1;gap:10px}
+.start-command .start-side-title{color:#a9cad8;letter-spacing:.13em;border-bottom:1px solid #718c9e55;padding-bottom:10px}
+.start-command .start-mode{border:1px solid #536b7c;border-left:4px solid var(--mode-accent,#9cb9c7);background:linear-gradient(120deg,#263c4a,#1a2c39);padding:15px 16px}
+.start-command .start-mode:before{background:linear-gradient(90deg,transparent,#a8d1e909)}
+.start-command .start-mode h3{font:700 21px 'Arial Narrow',Arial,sans-serif;color:#eef2f2;margin:6px 0 10px}
+.start-command .start-mode p{display:none}
+.start-command .start-mode-info{font-size:10px;color:#b7ccd2}
+.start-command .start-mode-bottom{align-items:center;gap:12px}
+.start-command .start-mode-bottom button{background:#243b4a;color:#e9eff0;border:1px solid #84a1ae;padding:7px 8px;font-size:11px}
+.start-command .start-mode:hover{background:#2d4554;border-color:#91a8b5}
+.start-command .start-mode-resume button{background:#243c46}
+.start-command .start-hq{background:#12232f;border:1px solid #536d78;margin-top:auto;padding:15px}
+.start-command .start-hq-top b{color:#d6e8df;font-size:17px}
+.start-command .start-hq-actions button{background:#284151;border-color:#6f8b9b;color:#dbe6ed}
+.start-command .start-conquest-panel{padding:25px 28px;background:linear-gradient(90deg,#182a39f0,#203344e7),url('menu-world.svg') center/cover;border:1px solid #788e9b;box-shadow:inset 0 0 0 1px #ffffff08}
+.start-command .start-conquest-panel:before{border-color:#b9d2d725;box-shadow:0 0 0 29px #b9d2d705}
+.start-command .start-panel-index{color:#b9d6dc}
+.start-command .start-panel-top .start-chip{background:#7898ad22;border-color:#7c9fb0;color:#d0e4e8}
+.start-command .start-conquest-panel h2{font:900 clamp(31px,3vw,45px) 'Arial Narrow',Arial,sans-serif;letter-spacing:.01em;color:#f0f3f2}
+.start-command .start-intro{color:#b8cad3}
+.start-command .start-config-grid label{color:#c7d7df}
+.start-command .select{background:#102332;border:1px solid #7291a3;border-radius:0;color:#e1f1f2}
+.start-command .start-section-heading span{color:#cbdbda}
+.start-command .start-section-heading small{color:#9eb6c3}
+.start-command .start-factions{gap:9px}
+.start-command .start-faction{min-height:160px;border-radius:0;border:1px solid #5d7a8b;border-top:4px solid var(--side-accent,#98aebd);background:linear-gradient(130deg,#23394b,#172a38);padding:12px 10px 13px 86px}
+.start-command .start-faction .faction-portrait{left:-10px;width:99px;height:156px;opacity:.72}
+.start-command .start-faction .faction-banner{width:41px;height:28px}
+.start-command .start-faction-title{font:800 15px/1.15 'Arial Narrow',Arial,sans-serif;color:#edf3f1}
+.start-command .start-faction-meta{color:#c0d2db;font-size:10px}
+.start-command .start-faction-choice{color:#accddb}
+.start-command .start-faction.active{border:2px solid #c6d8d8;border-top:4px solid var(--side-accent,#adbdc8);background:linear-gradient(140deg,#355666,#1d3546);box-shadow:0 0 0 2px #bad9df22 inset}
+.start-command .start-era-brief{border-top-color:#8ca9b53c;color:#c8d6d9}
+.start-command .start-era-name{border-color:#7192a3;background:#536f8240;color:#d7e4e9}
+.start-command button.start-launch-main{background:#bbd0cf;border:1px solid #deede7;color:#152430;box-shadow:inset 0 -2px 0 #778f90}
+.start-command button.start-launch-main:hover{background:#e0efed}
+.start-command button.start-resume{background:#223c4d;border-color:#6c8997;color:#e4eff1}
+.start-command .start-reward{color:#afc5cd}
+.start-command .start-foot{border-top-color:#a1bfcd38}
+.start-command .start-foot-left button{color:#c7dbe3;border-color:#5e7f90}
+.start-command .start-foot small{color:#91a7b3}
+@media(max-width:1000px){.start-command .start-layout{grid-template-columns:1fr}.start-command .start-side{order:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.start-command .start-side-title,.start-command .start-hq{grid-column:1/-1}.start-command .start-mode{height:100%}.start-command .start-mode-bottom{flex-direction:column;align-items:stretch}}
+@media(max-width:650px){.start-command .start-header{min-height:210px;padding:24px 18px;background-position:center,40% center}.start-command .start-header h1{font-size:clamp(38px,10vw,50px)}.start-command .start-content{padding:16px 12px}.start-command .start-conquest-panel{padding:17px 13px}.start-command .start-side{grid-template-columns:1fr}.start-command .start-faction{min-height:100px;padding-left:104px}.start-command .start-faction .faction-portrait{height:110px;width:106px}.start-command .start-mode{height:auto}.start-command .start-mode-bottom{flex-direction:row}}
