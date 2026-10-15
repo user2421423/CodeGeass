@@ -129,6 +129,12 @@ function dismissTurnSummary() {
   if (el) el.hidden = true;
 }
 function showTurnSummary(completedTurn, orders) {
+  // Phone UI: suppress only the routine end-of-turn summary. Strategic events,
+  // commander casualties, political reports and the historical War Report remain active.
+  if (typeof matchMedia === 'function' && matchMedia('(pointer: coarse) and (max-width: 950px), (pointer: coarse) and (max-height: 600px)').matches) {
+    dismissTurnSummary();
+    return;
+  }
   if (!game || !Number.isFinite(completedTurn)) return;
   const report = E.ensureWarReport(game);
   const stats = report.turns?.[completedTurn]?.[game.player] || null;
