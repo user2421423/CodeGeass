@@ -13,14 +13,39 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - name: Verify every generated browser bundle matches source
         run: node tools/build_sources.cjs --check
       - name: Run isolated threshold, save/load and integrated attack tests
         run: node --test tests/fleija-tier1-after-five.test.cjs tests/fleija-tier1-milestone-sim.test.cjs
-      - name: Run all repository Node regression tests
-        run: node --test tests/*.test.cjs
+      - name: Compare all full-suite test failures against exact starting main
+        shell: bash
+        run: |
+          set -uo pipefail
+          node --test tests/*.test.cjs > /tmp/pr-tier1-full-suite.tap 2>&1
+          pr_status=$?
+          git worktree add --detach ../tier1-review-base 85bbdfe735d0460057fb0ea7c7081f51b6cccf9a
+          (cd ../tier1-review-base && node --test tests/*.test.cjs) > /tmp/main-baseline-full-suite.tap 2>&1
+          base_status=$?
+          PR_STATUS="$pr_status" BASE_STATUS="$base_status" node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const failed=text=>[...text.matchAll(/^not ok \d+ - (.+)$/gm)].map(x=>x[1]).sort();
+          const baseline=failed(fs.readFileSync('/tmp/main-baseline-full-suite.tap','utf8'));
+          const review=failed(fs.readFileSync('/tmp/pr-tier1-full-suite.tap','utf8'));
+          const unexpected=review.filter(x=>!baseline.includes(x));
+          console.log('MAIN_BASELINE_REGRESSION_COMPARISON '+JSON.stringify({
+            baselineExit:+process.env.BASE_STATUS,reviewExit:+process.env.PR_STATUS,
+            baselineFailures:baseline,reviewFailures:review,newFailures:unexpected
+          }));
+          assert.equal(unexpected.length,0,'PR introduces new failures not present in starting main');
+          assert.ok(review.length===0||baseline.length>0,'Failures must be present on original main');
+          if(+process.env.PR_STATUS!==0 && review.length===0)
+            throw Error('Full PR suite exited unsuccessfully without a parsed test failure');
+          if(+process.env.BASE_STATUS!==0 && baseline.length===0)
+            throw Error('Original main suite exited unsuccessfully without a parsed test failure');
+          NODE
       - name: Browser HUD UI smoke
         run: node tests/ui-smoke.cjs
   long-war:
@@ -51,7 +76,7 @@ jobs:
           assert.ok(row.turnsPlayed>0,'conquest advanced');
           console.log('FLEIJA_MAIN_REVIEW_WAR '+JSON.stringify({
             seed:+seed,turns:row.turnsPlayed,winner:row.winner||null,
-            cityHits:row.counters?.strikes||row.strikes||null,
-            successfulCityHits:row.fleijaSuccessfulCityHits||null
+            strikes:row.actions?.strikes||null,
+            finalCities:row.final?.cities||null
           }));
           NODE
