@@ -71,7 +71,7 @@ function startMenu() {
       <header class="start-header">
         <div class="start-hero-art" aria-hidden="true"><img src="assets/art/portraits/lelouch-78b808b17079.webp" alt="" decoding="async"></div>
         <div class="start-brand">
-          <div class="start-brandline"><span>CODE GEASS</span><span class="start-brand-divider" aria-hidden="true"></span><span class="start-brand-subtitle">KNIGHTMARE CONQUEST</span></div>
+          <div class="start-brandline"><span>CODE GEASS</span></div>
           <h1>Knightmare <em>Conquest</em></h1>
           <p id="start-description">Three empires. One world at war. Choose a side and decide its fate.</p>
         </div>
