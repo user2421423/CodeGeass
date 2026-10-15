@@ -71,7 +71,8 @@
       case 'indira':v.expPinnedNext=true;break;
       default:return {ok:false,reason:'Unknown approved signature action.'};
     }
-    u.feintCD=COMMANDERS[u.cmd].action.cooldown||3;
+    u.feintCD=COMMANDERS[u.cmd].action.cooldown ?? 3;
+    u.feintUsedTurn=g.turn;
     log(g,COMMANDERS[u.cmd].short+' uses '+COMMANDERS[u.cmd].skill+'.',u.side);
     return {ok:true,target:v.id,affected:1};
   }
