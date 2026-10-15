@@ -19,7 +19,11 @@ const FACTION_BLURB = {
   },
 };
 function startMenu() {
-  // Leaving a mission (it stays saved) puts the world map back behind the menu.
+  // Separate saved operations remain intact: this screen is visual/navigation only.
+  const previous = modal.querySelector('.start-command');
+  const scroll = previous?.scrollTop || 0;
+  const focusedId = document.activeElement?.id;
+  const focusedFaction = document.activeElement?.dataset?.faction;
   if (game.mode === 'campaign' || game.mode === 'scenario') {
     resetSession();
     game = E.createGame('britannia');
@@ -30,33 +34,107 @@ function startMenu() {
   }
   const cfg = E.CONQUESTS[setup.conquest] || E.CONQUESTS.world;
   if (!cfg.selectable.includes(setup.side)) setup.side = cfg.selectable[0];
-  const saved = getSave(chosenSaveKey()),
-    scenarioSave = getSave(SCENARIO_KEY),
-    profile = loadProfile();
-  const cards = cfg.selectable.map(side => {
-    const b = FACTION_BLURB[side],
-      info = cfg.factions?.[side] || E.FACTIONS[side],
-      on = setup.side === side,
-      ufn = cfg.id === 'ufn2018' && side === 'cf';
-    const label = ufn ? 'The United Federation' : b.label;
-    const blurb = ufn ? 'Field Black Knights Knightmares with Black Knights, Chinese and former E.U. commanders against the Britannian alliance.' : b.text;
-    // Display each faction's standard; retain the U.F.N.'s original placement.
-    const flag = ufn ? `<span class="ufn-start-flag" aria-hidden="true">${ART.ufnFlagSVG()}</span>`
-      : ART.flagSVG(side) ? `<span class="faction-banner" aria-hidden="true">${ART.flagSVG(side)}</span>` : '';
-    return `<button class="faction ${side} ${ufn ? 'ufn-2018' : ''} ${on ? 'active' : ''}" data-faction="${side}">${ART.portrait(b.portrait, 'faction-portrait')}${flag}<span class="label" style="color:${info.color}">${label}</span><h3>${info.name}</h3><p><b>${cfg.expectedCities?.[side] ?? '?'} starting cities · ${info.capital}</b></p><p>${blurb}</p><span class="select-mark">${on ? '✓ Command selected' : 'Select ' + info.short}</span></button>`;
-  }).join('');
+  const era = E.ERAS[cfg.id] || E.ERAS.world;
+  const saved = getSave(chosenSaveKey());
+  const scenarioSave = getSave(SCENARIO_KEY);
+  const missionSave = getSave(CAMPAIGN_KEY);
+  const profile = loadProfile();
   const reward = conquestReward(setup.difficulty, profile, cfg.id, setup.side);
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Operation setup"><div class="eyebrow">Code Geass · World conquest</div><h1>${cfg.id === 'ufn2018' ? 'A federation rises.<br>An empire resists.' : 'One world.<br>Three empires.'}</h1><p>Build a Knightmare army. Appoint your commanders. Take your rivals’ cities—a power surrenders only when its last city falls.</p><div class="setup-row"><div><label for="conquest-select">Choose conquest</label><select class="select" id="conquest-select">${Object.values(E.CONQUESTS).map(c => `<option value="${c.id}" ${c.id === cfg.id ? 'selected' : ''}>${c.title}</option>`).join('')}</select></div></div><div class="choice-grid three">${cards}</div><div class="conquest-row"><div><label>Conquest · ${E.WORLD.cols} × ${E.WORLD.rows} world map</label><h3 class="conquest-title">${cfg.title}</h3><p class="mode-note">${(E.ERAS[cfg.id] || E.ERAS.world).desc} <b>${(E.ERAS[cfg.id] || E.ERAS.world).rulesText}</b> Played as the ${(cfg.factions?.[setup.side] || E.FACTIONS[setup.side]).name}. ${cfg.id === 'ufn2018' ? 'Starting cities: Britannia 75 · Euro Britannia 15 · U.F.N. 72 · Neutral Australia 6.' : 'Starting cities: Britannia 51 · E.U. 58 · Chinese Federation 47 · Neutral 12.'}${reward ? ` First win: up to ${reward} command tokens.` : ''}</p></div><button class="primary" data-action="start-conquest">Launch conquest</button></div><div class="conquest-row"><div><label>Scenarios · Japan and Europe</label><h3 class="conquest-title">Regional Wars</h3><p class="mode-note">Choose the Invasion of Japan, the alternate-history Division of Japan or the European War, each with its own tactical map, commanders and total conquest victory. Saved automatically in a separate slot.</p></div>${scenarioSave && !scenarioSave.over ? `<button data-action="continue-scenario">Continue ${esc(scenarioSave.scenario?.title || 'scenario')} · turn ${scenarioSave.turn}</button>` : ''}<button class="primary" data-action="scenario">Scenarios</button></div>${campaignRow(profile)}<div class="conquest-row campaign-world-row"><div><label>Campaign Mode · Strategic World War</label><h3 class="conquest-title">Conquer the world, region by region.</h3><p class="mode-note">Choose Europia United or the Holy Britannian Empire. Win regional wars to unlock the next front; your world map changes as you conquer.</p></div><button class="primary" data-action="war-campaign">Campaign Mode</button></div><div class="setup-row"><div><label for="difficulty-select">Difficulty</label><select class="select" id="difficulty-select">${Object.entries(
-    E.DIFFICULTIES,
-  )
-    .map(
-      ([k, d]) =>
-        `<option value="${k}" ${setup.difficulty === k ? 'selected' : ''}>${d.name}${d.tokens > 1 ? ` · ×${d.tokens} tokens` : ''}</option>`,
-    )
-    .join(
-      '',
-    )}</select><p class="mode-note">${E.DIFFICULTIES[setup.difficulty]?.desc || ''}</p></div><div class="hq-summary"><span class="label">Command HQ</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b><small>${profile.wins || 0} victories · ${Object.values(profile.research || {}).reduce((a, l) => a + l, 0)} research levels</small><span class="hq-buttons"><button class="small" data-action="research">HQ research</button><button class="small" data-action="generals-start">Commanders</button><button class="small" data-action="elite-forces-start">Elite Forces</button></span></div></div><div class="badge-row"><span class="badge">${Object.values(E.TYPES).filter(t => t.side !== 'neutral').length} Knightmare Frames</span><span class="badge">3 branches: Infantry · Armor · Artillery</span><span class="badge">${Object.keys(E.COMMANDERS).length} commanders · ${Object.values(E.COMMANDERS).filter(a => a.recruit).length} to recruit</span><span class="badge">${Object.keys(E.TECH_NODES).length} HQ technologies</span><span class="badge">${Object.keys(E.ELITE_FORCES).length} Elite Forces</span><span class="badge">${E.CITY_DATA?.length || 168} cities</span></div><div class="dialog-footer"><div>${saved ? '<button data-action="continue">Continue saved game</button>' : unreadableSave(chosenSaveKey()) ? '<small class="notice">Your saved conquest is from an older version and cannot be loaded. A new conquest will replace it.</small>' : ''}<button class="ghost" data-action="help">Field manual</button><button class="ghost" data-action="archive-start">Knightmare archive</button></div><small class="notice">${NOTICE}<br>Free, non-commercial fan game. Saved in this browser; a new operation replaces your saved conquest.</small></div></section></div>`;
-  focusDialog();
+  const CP = E.campaign;
+  const campaigns = Object.values(CP?.CAMPAIGNS || {});
+  const missions = campaigns.flatMap(c => c.missions);
+  const earnedStars = missions.reduce((total, m) => total + CP.best(profile, m.id), 0);
+  const factions = cfg.selectable.map(side => {
+    const b = FACTION_BLURB[side];
+    const info = cfg.factions?.[side] || E.FACTIONS[side];
+    const selected = setup.side === side;
+    const ufn = cfg.id === 'ufn2018' && side === 'cf';
+    const name = ufn ? 'United Federation' : side === 'britannia' ? 'Britannia' : side === 'eu' ? 'Europia United' : info.name;
+    const standard = ufn ? `<span class="ufn-start-flag" aria-hidden="true">${ART.ufnFlagSVG()}</span>`
+      : ART.flagSVG(side) ? `<span class="faction-banner" aria-hidden="true">${ART.flagSVG(side)}</span>` : '';
+    const count = cfg.expectedCities?.[side];
+    return `<button type="button" class="faction start-faction ${side} ${ufn ? 'ufn-2018' : ''} ${selected ? 'active' : ''}" data-faction="${side}" aria-pressed="${selected}" style="--side-accent:${info.color}" title="${esc(info.name)} — ${esc(b.text)}">
+      ${ART.portrait(b.portrait, 'faction-portrait')}${standard}
+      <span class="start-faction-title">${esc(name)}</span>
+      <span class="start-faction-meta">${count == null ? '' : count + ' starting cities · '}${esc(info.capital)}</span>
+      <span class="start-faction-choice">${selected ? '✓ Selected' : 'Select faction →'}</span>
+    </button>`;
+  }).join('');
+  const saveButton = saved ? `<button class="start-resume" data-action="continue">Continue conquest · Turn ${saved.turn}</button>` : '';
+  const missionResume = missionSave && (!missionSave.over || !missionSave.rewardClaimed) && CP?.mission(missionSave.campaign?.id)
+    ? `<div class="start-mode-resume"><button data-action="continue-mission">↳ Resume saved story mission · Turn ${missionSave.turn}</button></div>` : '';
+  const scenarioResume = scenarioSave && !scenarioSave.over
+    ? `<div class="start-mode-resume"><button data-action="continue-scenario">↳ Resume ${esc(scenarioSave.scenario?.title || 'scenario')} · Turn ${scenarioSave.turn}</button></div>` : '';
+  const techCount = Object.values(profile.research || {}).reduce((sum, level) => sum + level, 0);
+  modal.innerHTML = `<div class="overlay start-overlay">
+    <section class="dialog wide start-command" role="dialog" aria-modal="true" aria-label="Operation setup" aria-describedby="start-description">
+      <header class="start-header">
+        <div class="start-brand">
+          <div class="start-brandline"><span class="start-brandmark" aria-hidden="true"><span>✦</span></span><span>CODE GEASS · STRATEGIC COMMAND</span></div>
+          <h1>Knightmare <em>Conquest</em></h1>
+          <p id="start-description">The world is divided. Choose your allegiance, take command of the battlefield, and rewrite history.</p>
+        </div>
+        <div class="start-signal" aria-hidden="true"><strong>COMMAND NETWORK</strong><span>STATUS: OPERATIONAL</span><span>THEATER: GLOBAL</span><span>CLASSIFIED // 01</span></div>
+      </header>
+      <div class="start-content">
+        <div class="start-layout">
+          <section class="start-conquest-panel" aria-label="World Conquest setup">
+            <div class="start-panel-top"><span class="start-panel-index">01 / GRAND STRATEGY</span><span class="start-chip">${E.WORLD.cols} × ${E.WORLD.rows} HEX WORLD</span></div>
+            <h2>World Conquest</h2>
+            <p class="start-intro">Lead an empire across the global map. Recruit commanders, build Knightmare armies and capture every rival city.</p>
+            <div class="start-config-grid">
+              <div><label for="conquest-select">Conflict</label><select class="select" id="conquest-select">${Object.values(E.CONQUESTS).map(c => `<option value="${esc(c.id)}" ${c.id === cfg.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></div>
+              <div><label for="difficulty-select">Difficulty</label><select class="select" id="difficulty-select">${Object.entries(E.DIFFICULTIES).map(([id, d]) => `<option value="${esc(id)}" ${setup.difficulty === id ? 'selected' : ''}>${esc(d.name)}${d.tokens > 1 ? ' · ×' + d.tokens + ' tokens' : ''}</option>`).join('')}</select></div>
+            </div>
+            <div class="start-section-heading"><span>Choose your faction</span><small>${cfg.selectable.length} playable powers</small></div>
+            <div class="start-factions" role="group" aria-label="Conquest faction">${factions}</div>
+            <div class="start-era-brief"><span class="start-era-name">${esc(cfg.title)}</span><span>${esc(era.desc)} <strong>${esc(era.rulesText)}</strong></span></div>
+            <div class="start-launch">
+              <button class="start-launch-main primary" data-action="start-conquest">Launch conquest <span aria-hidden="true">↗</span></button>
+              ${saveButton}
+            </div>
+            ${unreadableSave(chosenSaveKey()) ? '<p class="start-save-warning">This conquest save is from an older version and cannot be loaded. Starting a new conquest will replace it.</p>' : ''}
+            <small class="start-reward">${esc(E.DIFFICULTIES[setup.difficulty]?.desc || '')}${reward ? ` · First victory: up to ${reward} command tokens` : ''}</small>
+          </section>
+          <aside class="start-side" aria-label="Other game modes and headquarters">
+            <div class="start-side-title"><span>Other operations</span><span>02 — 04</span></div>
+            <section class="start-mode" style="--mode-accent:#d7aa64">
+              <span class="start-kicker">02 / NARRATIVE WARFARE</span><h3>Story Mode</h3>
+              <p>Experience the Code Geass campaigns through scripted battles, signature commanders and mission objectives.</p>
+              <div class="start-mode-bottom"><span class="start-mode-info">${campaigns.length} campaigns · ${earnedStars}/${missions.length * 3} ★</span><button data-action="campaign">Enter story →</button></div>
+              ${missionResume}
+            </section>
+            <section class="start-mode" style="--mode-accent:#6fa7be">
+              <span class="start-kicker">03 / INDEPENDENT OPERATIONS</span><h3>Regional Scenarios</h3>
+              <p>Jump into a standalone battlefield. Command invasions, defensive campaigns and naval operations on regional maps.</p>
+              <div class="start-mode-bottom"><span class="start-mode-info">Standalone saves</span><button data-action="scenario">Choose scenario →</button></div>
+              ${scenarioResume}
+            </section>
+            <section class="start-mode" style="--mode-accent:#c46f70">
+              <span class="start-kicker">04 / CONNECTED WORLD WAR</span><h3>World Campaign</h3>
+              <p>Fight across linked regional fronts. Each victory changes the world and unlocks the next offensive.</p>
+              <div class="start-mode-bottom"><span class="start-mode-info">Persistent theater map</span><button data-action="war-campaign">Open campaign →</button></div>
+            </section>
+            <section class="start-hq" aria-label="Command headquarters">
+              <div class="start-hq-top"><span class="start-kicker">COMMAND HQ</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b></div>
+              <p>${profile.wins || 0} victories · ${techCount} research levels · Persistent HQ upgrades</p>
+              <div class="start-hq-actions"><button data-action="research">Research</button><button data-action="generals-start">Commanders</button><button data-action="elite-forces-start">Elite Forces</button></div>
+            </section>
+          </aside>
+        </div>
+        <footer class="start-foot">
+          <div class="start-foot-left"><button data-action="help">Field manual</button><button data-action="archive-start">Knightmare archive</button></div>
+          <small>${esc(NOTICE)} <b>Free, non-commercial fan game.</b> Progress is saved locally in this browser. Starting a new operation replaces the corresponding save slot.</small>
+        </footer>
+      </div>
+    </section>
+  </div>`;
+  modal.querySelector('.start-command').scrollTop = scroll;
+  const nextFocus = focusedId === 'conquest-select' || focusedId === 'difficulty-select'
+    ? $(focusedId)
+    : focusedFaction ? modal.querySelector(`.start-faction[data-faction="${focusedFaction}"]`) : null;
+  if (nextFocus) nextFocus.focus({ preventScroll: true });
+  else focusDialog();
 }
 // Tokens still on offer for a first victory at this difficulty (before banked research).
 function conquestReward(difficulty, profile, era = 'world', side = 'britannia') {
