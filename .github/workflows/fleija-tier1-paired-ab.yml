@@ -1,0 +1,62 @@
+name: Tier 1 FLEIJA paired original-AI benchmark
+on:
+  push:
+    branches: ['feature/fleija-tier1-five-city-main-review']
+    paths: ['.github/workflows/fleija-tier1-paired-ab.yml']
+  pull_request:
+    branches: ['main']
+permissions:
+  contents: read
+jobs:
+  matched-wars:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - {mode: '2017', seed: 401, turns: 95}
+          - {mode: '2017', seed: 777, turns: 95}
+          - {mode: '2017', seed: 13579, turns: 95}
+          - {mode: '2017', seed: 20261007, turns: 95}
+          - {mode: '2017', seed: 42, turns: 95}
+          - {mode: '2017', seed: 246801, turns: 95}
+          - {mode: '2017', seed: 9001, turns: 95}
+          - {mode: '2017', seed: 8675309, turns: 95}
+          - {mode: '2018', seed: 401, turns: 90}
+          - {mode: '2018', seed: 777, turns: 90}
+          - {mode: '2018', seed: 13579, turns: 90}
+          - {mode: '2018', seed: 20261007, turns: 90}
+          - {mode: '2018', seed: 42, turns: 90}
+          - {mode: '2018', seed: 246801, turns: 90}
+    name: ${{ matrix.mode }} matched seed ${{ matrix.seed }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Run fixed-seed original main AI and Tier 1 offensive AI independently
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/fleija_tier1_pair.cjs "$MODE" "$SEED" "$TURNS" tier1-feature > candidate.json
+          git show 85bbdfe735d0460057fb0ea7c7081f51b6cccf9a:dist/engine.js > dist/engine.js
+          node tools/fleija_tier1_pair.cjs "$MODE" "$SEED" "$TURNS" current-main-baseline > baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const a=JSON.parse(fs.readFileSync('candidate.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('baseline.json','utf8'));
+          for(const x of [a,b]){
+            assert.equal(x.shotsWithoutMatchingPreview,0,x.variant+' predicted launch-target mismatch');
+            assert.ok(x.turnsPlayed>0);
+            assert.equal(x.launched,Object.values(x.shotsBySide).reduce((n,v)=>n+v,0));
+            assert.equal(x.groundCityHits,Object.values(x.cityHitsByAttacker).reduce((n,v)=>n+v,0));
+          }
+          console.log('TIER1_PAIRED_COMPARE '+JSON.stringify({mode:a.mode,seed:a.seed,
+            baseline:b,candidate:a}));
+          NODE
