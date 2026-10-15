@@ -134,3 +134,349 @@
 @media(max-width:1250px){.scenario-library--archives .scenario-workspace{grid-template-columns:minmax(230px,265px) minmax(0,1fr)}.scenario-library--archives .scenario-side-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.scenario-library--archives .scenario-brief{gap:12px}.scenario-library--archives .scenario-side-option{padding-top:44px;min-height:83px}}
 @media(max-width:950px){.scenario-library--archives .scenario-stage-body{grid-template-rows:minmax(185px,1fr) auto}.scenario-library--archives .scenario-brief{grid-template-columns:1fr;overflow-y:auto;gap:10px}.scenario-library--archives .scenario-brief-text{padding-right:0;border-right:0}.scenario-library--archives .scenario-brief h4{margin-top:6px}.scenario-library--archives .scenario-map-side{margin:0 12px}.scenario-library--archives .scenario-side-option{min-height:76px}}
 @media(max-width:760px){.scenario-library--archives .scenario-workspace{display:flex}.scenario-library--archives .scenario-catalog{border-right:0;border-bottom:1px solid #665446}.scenario-library--archives .scenario-stage-body{display:flex}.scenario-library--archives .scenario-map-side{margin:0 10px}.scenario-library--archives .scenario-brief{display:flex;flex-direction:column;padding:15px 12px}.scenario-library--archives .scenario-side-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.scenario-library--archives .scenario-side-option{min-height:85px}.scenario-library--archives .scenario-library-footer{border-top:1px solid #947653}}
+
+
+/* ==========================================================================
+   COMBINED SCENARIO COMMAND: C's full-sized geographic stage plus B's
+   three-across illustrated faction selection. No runtime preview renderer.
+   ========================================================================== */
+.overlay.scenario-library-overlay{padding:4px;overflow:hidden}
+.dialog.scenario-library--combined{
+  width:calc(100vw - 8px);
+  max-width:none;
+  height:calc(100dvh - 8px);
+  max-height:none;
+  background:#131a24;
+  border:1px solid #697889;
+  border-radius:0;
+  box-shadow:0 18px 48px #0009
+}
+.scenario-library--combined .scenario-library-header{
+  flex:0 0 88px;
+  min-height:0;
+  padding:13px clamp(15px,1.8vw,30px);
+  background:#182634;
+  border-bottom:1px solid #8e825f;
+}
+.scenario-library--combined .scenario-library-eyebrow{
+  font-size:10px;
+  letter-spacing:.17em;
+  color:#dfbf85
+}
+.scenario-library--combined .scenario-library-heading h1{
+  font-size:clamp(29px,2.8vw,42px);
+  margin:2px 0 3px;
+  letter-spacing:-.025em
+}
+.scenario-library--combined .scenario-library-heading p{font-size:11px}
+.scenario-library--combined .scenario-library-back{
+  background:#222f3c;border-color:#817359;color:#e8d6b7
+}
+.scenario-library--combined .scenario-workspace{
+  grid-template-columns:clamp(247px,21vw,318px) minmax(0,1fr);
+  background:#141f2a;
+}
+.scenario-library--combined .scenario-catalog{
+  background:#162331;
+  border-right:1px solid #576775
+}
+.scenario-library--combined .scenario-catalog-heading{padding:12px 14px 8px}
+.scenario-library--combined .scenario-catalog-heading strong{
+  font:700 12px/1.35 Georgia,serif;
+  color:#e0c79d
+}
+.scenario-library--combined .scenario-search{padding:0 12px 8px}
+.scenario-library--combined .scenario-search input{height:34px}
+.scenario-library--combined .scenario-theaters{
+  padding:2px 11px 8px;gap:3px
+}
+.scenario-library--combined .scenario-theater{
+  padding:5px 7px;
+  font-size:10px;
+  background:#253344;
+  border:0
+}
+.scenario-library--combined .scenario-theater.active{
+  background:#7c6c53;
+  color:#fff1d2
+}
+.scenario-library--combined .scenario-index{padding:0 5px 11px}
+.scenario-library--combined .scenario-catalog-group{
+  color:#d8bd88;
+  padding:9px 8px 5px
+}
+.scenario-library--combined .scenario-entry{padding:9px 7px}
+.scenario-library--combined .scenario-entry.active{
+  background:#344857;
+  border-left:3px solid #e3bd80
+}
+.scenario-library--combined .scenario-entry:hover{
+  background:#2a3b4b
+}
+.scenario-library--combined .scenario-entry-copy strong{
+  font-size:12px
+}
+.scenario-library--combined .scenario-entry-copy small{
+  font-size:10px
+}
+.scenario-library--combined .scenario-stage{background:#172432}
+.scenario-library--combined .scenario-operation-header{
+  flex:0 0 auto;
+  padding:13px clamp(15px,1.65vw,25px) 11px;
+  background:#162330;
+  border-bottom:1px solid #526775
+}
+.scenario-library--combined .scenario-operation-index{color:#cbb894}
+.scenario-library--combined .scenario-operation-header h2{
+  margin:5px 0 0;
+  font:700 clamp(27px,2.5vw,39px)/1.12 Georgia,serif;
+  color:#f5eddf
+}
+.scenario-library--combined .scenario-stage-body{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  min-width:0
+}
+.scenario-library--combined .scenario-map-side{
+  flex:1 1 auto;
+  min-height:205px;
+  margin:0;
+  border:0;
+  background:#0c2a3a
+}
+.scenario-library--combined .scenario-map-head{
+  flex:0 0 28px;
+  padding:7px 14px;
+  background:#203241;
+  border:0;
+  color:#d9d5cb
+}
+.scenario-library--combined .scenario-map-window{
+  flex:1 1 auto;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  min-height:170px;
+  background:#0d2b40;
+  overflow:hidden
+}
+.scenario-library--combined .scenario-preview-image{
+  display:block;
+  width:100%;
+  height:100%;
+  min-height:0;
+  object-fit:contain;
+  object-position:center;
+  image-rendering:auto
+}
+.scenario-library--combined .scenario-map-unavailable{
+  align-self:center;
+  margin:auto;
+  font:13px/1.5 system-ui,sans-serif;
+  color:#c5cdd4;
+  padding:20px
+}
+.scenario-library--combined .scenario-map-legend{
+  flex:0 0 29px;
+  padding:7px 14px;
+  background:#203241;
+  color:#c5d0d7;
+  border-top:1px solid #4c6274
+}
+.scenario-library--combined .scenario-brief{
+  display:flex;
+  flex:0 0 auto;
+  flex-direction:column;
+  gap:10px;
+  min-height:0;
+  max-height:min(33vh,240px);
+  overflow-y:auto;
+  background:#17212d;
+  padding:11px clamp(13px,1.6vw,23px) 14px;
+  border-top:1px solid #8d7656
+}
+.scenario-library--combined .scenario-brief-text{
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  min-width:0;
+  gap:13px
+}
+.scenario-library--combined .scenario-brief-eyebrow{
+  flex:0 0 auto;
+  color:#d5b67f;
+  font:750 10px/1.35 system-ui,sans-serif;
+  letter-spacing:.12em
+}
+.scenario-library--combined .scenario-brief-text>p{
+  flex:1 1 auto;
+  min-width:0;
+  font:11px/1.45 system-ui,sans-serif;
+  color:#bcc5cd;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.scenario-library--combined .scenario-diplomacy-details{
+  flex:0 0 auto;
+  position:relative;
+  font:10px system-ui,sans-serif;
+  color:#d4be98
+}
+.scenario-library--combined .scenario-diplomacy-details summary{
+  cursor:pointer;
+  list-style:inside;
+  white-space:nowrap
+}
+.scenario-library--combined .scenario-diplomacy-details[open]{
+  position:absolute;
+  right:20px;
+  bottom:165px;
+  z-index:3;
+  max-width:min(440px,58vw);
+  padding:12px;
+  border:1px solid #8b785f;
+  background:#242d36;
+  box-shadow:0 9px 30px #000b
+}
+.scenario-library--combined .scenario-diplomacy-details p{
+  white-space:normal;
+  margin-top:7px
+}
+.scenario-library--combined .scenario-brief-factions{
+  flex:0 0 auto;
+  min-width:0
+}
+.scenario-library--combined .scenario-side-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+  margin-top:7px
+}
+.scenario-library--combined .scenario-side-option{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-end;
+  height:94px;
+  min-height:94px;
+  min-width:0;
+  padding:39px 11px 9px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid #596271;
+  background:#282b36;
+  text-align:left
+}
+.scenario-library--combined .scenario-side-option:hover{
+  background:#373440;
+  border-color:#bda57b
+}
+.scenario-library--combined .scenario-side-option.active{
+  background:#443b38;
+  border-color:#e5bd80;
+  box-shadow:inset 0 -2px 0 #ddb879
+}
+.scenario-library--combined .scenario-side-image{
+  position:absolute;
+  inset:0 auto 0 0;
+  z-index:0;
+  width:42%;
+  height:100%;
+  opacity:.78;
+  background:#1c2330
+}
+.scenario-library--combined .scenario-side-image:after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent 24%,#282b36 100%)
+}
+.scenario-library--combined .scenario-side-option.active .scenario-side-image:after{
+  background:linear-gradient(90deg,transparent 24%,#443b38 100%)
+}
+.scenario-library--combined .scenario-side-copy{
+  flex:0 0 auto;
+  min-width:0;
+  position:relative;
+  z-index:1;
+  gap:3px
+}
+.scenario-library--combined .scenario-side-name{
+  color:#fff4df;
+  font:700 clamp(12px,1.15vw,17px)/1.15 Georgia,serif;
+  text-shadow:0 1px 5px #000d
+}
+.scenario-library--combined .scenario-side-stats{
+  font-size:10px;
+  color:#dbd3c8;
+  text-shadow:0 1px 3px #000b
+}
+.scenario-library--combined .scenario-side-flag{
+  top:6px;right:7px;
+  width:30px;height:22px;
+  z-index:2
+}
+.scenario-library--combined .scenario-side-mark{
+  z-index:3;
+  right:9px;bottom:7px
+}
+.scenario-library--combined .scenario-library-footer{
+  flex:0 0 66px;
+  min-height:0;
+  padding:8px clamp(12px,1.7vw,24px);
+  background:#1c232e;
+  border-top:2px solid #9b805c
+}
+.scenario-library--combined .scenario-deploy{
+  height:40px;
+  background:#d9ba82;
+  color:#171b23
+}
+.scenario-library--combined .scenario-deploy:hover{background:#f2d6a4}
+.scenario-library--combined .scenario-resume{padding:6px 10px}
+@media(max-width:1080px){
+ .scenario-library--combined .scenario-workspace{grid-template-columns:225px minmax(0,1fr)}
+ .scenario-library--combined .scenario-side-option{height:88px;min-height:88px}
+ .scenario-library--combined .scenario-brief{max-height:min(37vh,260px)}
+ .scenario-library--combined .scenario-brief-text>p{font-size:10px}
+}
+@media(max-width:760px){
+ .overlay.scenario-library-overlay{padding:3px}
+ .dialog.scenario-library--combined{
+   width:calc(100vw - 6px);
+   height:calc(100dvh - 6px);
+   max-height:none
+ }
+ .scenario-library--combined .scenario-library-header{flex:0 0 68px;padding:10px 12px}
+ .scenario-library--combined .scenario-library-heading h1{font-size:25px}
+ .scenario-library--combined .scenario-workspace{display:flex;flex-direction:column;overflow-y:auto}
+ .scenario-library--combined .scenario-catalog{flex:0 0 auto;max-height:210px;border-right:0;border-bottom:1px solid #576775}
+ .scenario-library--combined .scenario-catalog-heading{padding:7px 10px 5px}
+ .scenario-library--combined .scenario-search{padding:0 9px 5px}
+ .scenario-library--combined .scenario-theaters{flex-wrap:nowrap;overflow-x:auto;padding:2px 9px 7px}
+ .scenario-library--combined .scenario-theater{white-space:nowrap}
+ .scenario-library--combined .scenario-index{max-height:89px}
+ .scenario-library--combined .scenario-stage{flex:0 0 auto;overflow:visible}
+ .scenario-library--combined .scenario-operation-header{padding:10px 12px}
+ .scenario-library--combined .scenario-operation-header h2{font-size:24px}
+ .scenario-library--combined .scenario-stage-body{display:flex}
+ .scenario-library--combined .scenario-map-side{min-height:0;flex:0 0 auto}
+ .scenario-library--combined .scenario-map-window{height:245px;min-height:245px}
+ .scenario-library--combined .scenario-map-legend{padding:7px 9px}
+ .scenario-library--combined .scenario-brief{max-height:none;overflow:visible;padding:11px 10px}
+ .scenario-library--combined .scenario-brief-text{flex-wrap:wrap;gap:4px 9px}
+ .scenario-library--combined .scenario-brief-text>p{white-space:normal;flex-basis:100%}
+ .scenario-library--combined .scenario-side-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .scenario-library--combined .scenario-side-option{height:95px;min-height:95px;padding:44px 5px 5px}
+ .scenario-library--combined .scenario-side-name{font-size:11px}
+ .scenario-library--combined .scenario-side-stats{font-size:9px}
+ .scenario-library--combined .scenario-side-flag{width:22px;height:16px}
+ .scenario-library--combined .scenario-library-footer{flex:0 0 auto;min-height:70px;padding:7px 10px;gap:5px}
+ .scenario-library--combined .scenario-save-notice{display:none}
+ .scenario-library--combined .scenario-resume strong{font-size:10px}
+ .scenario-library--combined .scenario-difficulty .select{min-width:106px}
+ .scenario-library--combined .scenario-deploy{min-width:130px}
+}
