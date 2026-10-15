@@ -1,0 +1,134 @@
+/*
+ * Imperial Code Geass menu intensity experiment.
+ * Loaded after main-menu.css and menu-variant.css.
+ * Applies only to the start screen; underlying game rendering and handlers unchanged.
+ */
+
+/* RESTRAINED: Code Geass heraldry and maps, without ornamental excess. */
+.start-overlay { background: #0b0c12; backdrop-filter: none; padding: clamp(8px, 1vw, 14px); }
+.dialog.wide.start-command {
+  width: min(1330px, 100%);
+  max-height: 96dvh;
+  background: #17171d;
+  border: 1px solid #766d65;
+  box-shadow: 0 20px 55px #000b;
+  border-radius: 0;
+}
+.start-command .start-header {
+  min-height: 176px;
+  padding: 25px 34px;
+  border-bottom: 1px solid #8b765b;
+  background: linear-gradient(90deg,#18141df7 0%,#191720ef 49%,#17151cc2 100%),url('menu-world.svg') center / cover;
+}
+.start-command .start-header:before {
+  inset: 0 3% 0 auto;
+  width: min(260px, 29%);
+  opacity: .29;
+  filter: saturate(.75);
+  -webkit-mask-image: linear-gradient(90deg,transparent 0%,#000 27%,#000 70%,transparent 100%);
+  mask-image: linear-gradient(90deg,transparent 0%,#000 27%,#000 70%,transparent 100%);
+}
+.start-command .start-header:after { display: none; }
+.start-command .start-brandmark { width: 28px; height: 28px; font-size: 15px; border-width: 1px; box-shadow: none; }
+.start-command .start-brandline { font-size: 10px; letter-spacing: .14em; }
+.start-command .start-header h1 {
+  font: 700 clamp(38px,3.6vw,56px)/1.03 Georgia,serif;
+  margin: 12px 0 9px;
+  text-shadow: none;
+  max-width: 690px;
+}
+.start-command .start-header h1 em { color:#d3b37f; }
+.start-command .start-header p { font: 13px/1.5 system-ui,Arial,sans-serif; color: #c0b7b3; max-width: 580px; }
+.start-command .start-content { background: #17171d; padding: 23px 31px 20px; }
+.start-command .start-layout { grid-template-columns:minmax(0,1.6fr) minmax(285px,.94fr); gap:15px; }
+.start-command .start-conquest-panel {
+  background: linear-gradient(120deg,#201e24e9,#171820e3),url('menu-world.svg') center / cover;
+  border:1px solid #665d58;
+  box-shadow:none;
+  padding: 22px;
+}
+.start-command .start-conquest-panel:before { display: none; }
+.start-command .start-conquest-panel h2 { font:700 clamp(31px,2.7vw,40px) Georgia,serif; margin: 13px 0 4px; }
+.start-command .start-intro { font:13px/1.5 system-ui,Arial,sans-serif; color:#bfb5b4; margin-bottom:15px; }
+.start-command .start-panel-index,
+.start-command .start-section-heading span,
+.start-command .start-side-title,
+.start-command .start-kicker { color: #c9ad83; letter-spacing: .1em; }
+.start-command .start-panel-top .start-chip,
+.start-command .start-era-name { background: transparent; border-color: #716354; color:#cbb694; }
+.start-command .start-config-grid { margin-bottom: 14px; }
+.start-command .start-config-grid label { letter-spacing: .09em; }
+.start-command .select { border-color: #766a60; background: #19171f; }
+.start-command .start-factions { gap: 8px; }
+.start-command .start-faction {
+  min-height: 139px;
+  padding: 10px 9px 12px 79px;
+  background: #211e27;
+  border: 1px solid #665d58;
+  border-top: 2px solid var(--side-accent,#c2a87b);
+  box-shadow: none;
+}
+.start-command .start-faction .faction-portrait { left: -10px; height: 136px; width: 92px; opacity:.7; filter: none; }
+.start-command .start-faction .faction-banner { width: 40px; height: 27px; opacity:.76; }
+.start-command .start-faction-title { font:700 14px/1.2 Georgia,serif; }
+.start-command .start-faction-meta { color:#ada9a8; font-size: 10px; }
+.start-command .start-faction-choice { color:#b8a27e; }
+.start-command .start-faction.active {
+  background: #2c2730;
+  border: 1px solid #c8a97a;
+  border-top: 2px solid var(--side-accent,#c2a87b);
+  box-shadow:inset 0 0 0 1px #bca0752a;
+}
+.start-command .start-faction:hover:not(:disabled) { transform:none; background:#292530; border-color:#aa906e; }
+.start-command .start-era-brief { margin: 14px 0 12px; padding-top: 13px; color:#bbb4b4; }
+.start-command .start-launch button { min-height:44px; }
+.start-command button.start-launch-main {
+  background:#d7bb8e !important;
+  border:1px solid #d7bb8e !important;
+  box-shadow:none;
+  color:#201a17 !important;
+  font:700 13px system-ui,Arial,sans-serif;
+}
+.start-command button.start-launch-main:hover { background:#e7cd9e !important; }
+.start-command .start-reward { margin-top:9px; }
+.start-command .start-side { gap:10px; }
+.start-command .start-mode {
+  min-height: 0;
+  padding: 13px 16px;
+  background: #221f27;
+  border: 1px solid #5a5658;
+  border-left: 2px solid var(--mode-accent,#ba9b6b);
+  box-shadow:none;
+}
+.start-command .start-mode:before { display:none; }
+.start-command .start-mode h3 { font:700 21px Georgia,serif; margin:5px 0; }
+.start-command .start-mode p { font-size:12px; line-height:1.4; margin-bottom:8px; color:#b8b3b4; }
+.start-command .start-mode button { background:#332e36; color:#ddc69f; border-color:#796951; }
+.start-command .start-mode:hover { transform:none; border-color:#937b5d; }
+.start-command .start-hq { background:#1d1a21; border:1px solid #5e5758; padding:13px 16px; }
+.start-command .start-hq-top b { font-size:17px; color:#d6bc91; }
+.start-command .start-hq-actions button { background:#292630; border-color:#6d635d; }
+.start-command .start-foot { border-top:1px solid #71635455; padding-top:12px; margin-top:16px; }
+.start-command .start-foot small { color:#9d9594; }
+.start-command * { animation:none !important; }
+.start-command .start-faction,
+.start-command .start-mode,
+.start-command .start-header,
+.start-command .start-launch button { transition:none !important; }
+@media(max-width:1000px){
+  .start-command .start-layout { grid-template-columns: 1fr; }
+  .start-command .start-side { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .start-command .start-side-title,.start-command .start-hq { grid-column:1/-1; }
+}
+@media(max-width:650px){
+  .start-command .start-header { padding: 22px 16px; min-height: 145px; }
+  .start-command .start-header:before { width: 48%; opacity:.18; }
+  .start-command .start-header h1 { font-size: clamp(34px,9vw,45px); }
+  .start-command .start-content { padding:14px 10px; }
+  .start-command .start-conquest-panel { padding:16px 12px; }
+  .start-command .start-factions { grid-template-columns:1fr; }
+  .start-command .start-faction { min-height: 87px; padding-left: 104px; }
+  .start-command .start-faction .faction-portrait { height:105px; width:100px; }
+  .start-command .start-side { grid-template-columns:1fr; }
+  .start-command .start-side-title,.start-command .start-hq { grid-column:1; }
+}
