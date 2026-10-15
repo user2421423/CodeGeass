@@ -1,0 +1,21 @@
+name: Preview branch build
+# Checks a preview/* branch; on success the Pages workflow on main publishes it at /previews/<name>/.
+on:
+  push:
+    branches: ['preview/**']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
+      - name: Check published artwork
+        run: node tools/validate_assets.cjs --tracked

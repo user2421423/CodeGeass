@@ -216,6 +216,9 @@ The large entrypoints (`dist/engine.js`, `dist/engine/ai.js`, `dist/missions.js`
 editable `src/**/*.part.js` fragments and are not committed. Edit the fragments,
 rebuild, and commit only `src/`. See [the source guide](src/README.md).
 
+To try a branch on the live site, name it `preview/<name>` and push it: it is published at
+`https://user2421423.github.io/CodeGeass/previews/<name>/` next to the live game (same browser saves).
+
 Several AI sessions can work at once: [docs/LANES.json](docs/LANES.json) assigns
 each area of the code to one lane, and `node tools/scenario_sim.cjs --all` must
 reproduce `tools/data/sim_baseline.txt` unless a change is meant to alter play.

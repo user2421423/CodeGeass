@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # A push to a preview/* branch runs "Preview branch build" on that branch; this workflow then runs
+  # with main's definition and republishes the live game plus every preview/* branch.
+  workflow_run:
+    workflows: ['Preview branch build']
+    types: [completed]
 
 permissions:
   contents: read
@@ -16,12 +21,17 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # The live game is always main, whichever event started the deploy.
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -29,6 +39,23 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Check published artwork
         run: node tools/validate_assets.cjs --tracked
+      # Each preview/<name> branch is built in its own folder and served at /previews/<name>/.
+      # A preview that fails to build is skipped; it never blocks the live game.
+      - name: Add preview branches
+        run: |
+          for ref in $(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin/preview/); do
+            name="${ref#preview/}"
+            dir="/tmp/preview-$name"
+            git worktree add --detach "$dir" "origin/$ref"
+            if (cd "$dir" && node tools/build_sources.cjs); then
+              mkdir -p "dist/previews/$name"
+              cp -a "$dir/dist/." "dist/previews/$name/"
+              git -C "$dir" rev-parse HEAD > "dist/previews/$name/preview-commit.txt"
+              echo "Preview: /previews/$name/"
+            else
+              echo "::warning::Preview branch $ref did not build; skipped."
+            fi
+          done
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
