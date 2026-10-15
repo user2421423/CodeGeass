@@ -268,7 +268,7 @@ document.addEventListener('click', e => {
       return;
     }
     saveProfile(p);
-    if (hqBack === 'game' && game.mode !== 'scenario') {
+    if (hqBack === 'game') {
       E.applyRoster(game, p);
       undoStack = [];
       render();
