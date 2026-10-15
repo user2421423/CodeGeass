@@ -34,6 +34,30 @@ Collect total incoming missiles, successful interceptions by carrier/stationary 
 
 **Do not merge this branch** without strong matched evidence and explicit user approval. Prior offensive Tier 1 targeting PR #67 is separate. No changes to `main` or scenario implementation.
 
-## Results
+## Results — complete: HOLD / NO MERGE
 
-Pending 30 matched 2017 war comparisons and six 2018 neutrality controls.
+All **38/38 GitHub Actions jobs passed**: [batch 1](https://github.com/user2421423/CodeGeass/actions/runs/38665018338) ran validation, fifteen 2017 paired wars and six 2018 controls; [batch 2](https://github.com/user2421423/CodeGeass/actions/runs/38665018209) ran validation and fifteen more paired 2017 wars. The existing Node tests, source/bundle sync, UI smoke and every comparison succeeded; all six 2018 controls passed strict baseline gameplay neutrality.
+
+| Metric, thirty 2017 wars | Original defensive AI | PR #76 city-focused | PR #80 mobile posture |
+|---|---:|---:|---:|
+| Incoming launches | 279 | 279 | 278 |
+| Actual interceptions | **123** | 126 | 120 |
+| Mobile interceptions | 3 | **6** | 4 |
+| Stationary/city interceptions | 120 | 120 | 116 |
+| Charges started | 379 | 380 | 379 |
+| Charge pickups | 37 | 32 | 37 |
+| Carrier losses | 10 | **8** | 9 |
+| Mean protected army value | **10.66%** | 9.77% | 10.60% |
+| Mean protected frontline value | **11.32%** | 9.66% | 11.13% |
+| Mean protected weighted-city value | 19.94% | 19.90% | **20.15%** |
+| Units destroyed by warheads | **74** | **72** | 75 |
+| Cities destroyed by warheads | 151 | **144** | 153 |
+
+Protection rates are arithmetic means over thirty seeds, rather than pooled ratios or confidence intervals. Shot totals vary slightly as the wars evolve; compare protection value and outcomes together.
+
+**Decision: NO MERGE.** The movement-only experiment preserves most of the baseline's frontline cover and yields a small mean city-coverage gain (+0.22 percentage points); carrier losses decline by one. However, interceptions decrease 123→120, army coverage decreases 10.66%→10.60%, frontline decreases 11.32%→11.13%, and warhead-destroyed cities increase 151→153. It is not a robust all-around improvement on the original AI.
+
+### What next
+
+Stop tuning the defensive AI heuristics blindly. Keep the original 2017 defense as the game's broad-purpose behavior and the original 2018 rules unchanged. Preserve PRs #68–#80 as measured historical experiments, not gameplay changes. If the project resumes defensive work, prioritize direct unit/AI battle diagnostics and scenario-specific failure cases, with hard user-visible gameplay problems; otherwise shift to more impactful playtesting and gameplay features. Offensive [PR #67](https://github.com/user2421423/CodeGeass/pull/67) was separately validated; review/approval of it should not depend on these defensive tests. `main` remains unchanged.
+
