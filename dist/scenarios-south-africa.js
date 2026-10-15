@@ -299,6 +299,22 @@
   const api={id:'invasion-south-africa',title:'Invasion of South Africa',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true},
+    elite:true,expeditionSide:'britannia',
+    text:{
+      era:"Southern Africa · Alternate 2017",
+      intro:"Four Britannian carrier groups attack E.U.-controlled southern Africa from the Atlantic and Indian Oceans. Britannia owns no cities at the start.",
+      diplomacy:"Only Britannia and Europia United are at war. No turn limit: conquer every enemy city or eliminate the invading expedition.",
+      elite:"Elite South Africa: eligible Lv.1 Elite Forces replace transported land formations; named AI commanders reach Lv.5. Carriers and fleet escorts remain conventional.",
+      focus:{
+        britannia:"",
+        eu:"Cape Town"
+      }
+    },
+    blurbs:{
+      britannia:"Begin without cities. Land carrier-borne Knightmares at the Cape, along the southern coast, in KwaZulu-Natal or Namibia; seize ports before pushing inland.",
+      eu:"Hold all mainland cities, ports and industrial corridors. Intercept the carrier fleets, defend beaches and counterattack seized harbours."
+    }};
   E.scenarios={...(E.scenarios||{}),southAfrica:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-south-africa':api}};
   if(typeof module!=='undefined')module.exports=api;

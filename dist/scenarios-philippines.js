@@ -277,6 +277,23 @@
   const api={id:'philippines-invasion',title:'The Invasion of the Philippines',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{land:'philippines',overlays:['philippines']},
+    elite:true,
+    ai:{recovery:true,islandDefense:{side:'cf',invaderBases:['Koror','Peleliu','Colonia']}},
+    text:{
+      era:"Philippine Archipelago · Alternate 2017",
+      intro:"Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.",
+      diplomacy:"Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.",
+      elite:"Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.",
+      focus:{
+        britannia:"Koror",
+        cf:"Manila"
+      }
+    },
+    blurbs:{
+      britannia:"Launch the all-out invasion from Koror, Peleliu and Yap: escort amphibious Knightmares, land on multiple Philippine islands and capture Chinese ports.",
+      cf:"Hold Luzon, the Visayas, Mindanao and Palawan. Defend the major ports, contest the sea, contain landings and counter-invade Palau and Yap."
+    }};
   E.scenarios={...(E.scenarios||{}),philippines:api,
     byId:{...(E.scenarios?.byId||{}),'philippines-invasion':api}};
   if(typeof module!=='undefined')module.exports=api;

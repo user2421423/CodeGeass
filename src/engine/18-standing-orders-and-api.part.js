@@ -383,6 +383,7 @@
   // Shared with the engine's own parts (engine/ai.js); not part of the game's API.
   Object.defineProperty(root.Knightmare, 'internal', {
     value: {
+      scenarioMeta,
       COMMANDERS,
       ELIMINATOR,
       ELITE_FORCES,

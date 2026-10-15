@@ -182,6 +182,22 @@ return null;}
 const api={id:'crossing-urals',title:'Crossing the Urals',cols:COLS,rows:ROWS,
 sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,mountainPasses:MOUNTAIN_PASSES,
 supplyCorridors:SUPPLY_CORRIDORS,rivers:RIVERS,create,onTurn,objective,winner,strategicScore,orderGroup,locate,geo};
+api.meta={map:{centreSampled:true,overlays:['uralsRivers']},
+  elite:true,
+  text:{
+    era:"The Urals · Alternate 2017",
+    intro:"Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.",
+    diplomacy:"Both sides are hostile from the start. Routes through the mountains are slower except at named valleys.",
+    elite:"Elite Urals uses the existing land Elite Force conversion, rival commanders and difficulty scaling.",
+    focus:{
+      britannia:"Yekaterinburg",
+      eu:"Perm"
+    }
+  },
+  blurbs:{
+    britannia:"Drive west from Yekaterinburg and Chelyabinsk through the mountain pass corridors.",
+    eu:"Hold Perm, Ufa and the defended industrial passes; counterattack eastern spearheads."
+  }};
 E.scenarios={...(E.scenarios||{}),urals:api,byId:{...(E.scenarios?.byId||{}),'crossing-urals':api}};
 if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

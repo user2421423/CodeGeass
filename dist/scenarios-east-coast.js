@@ -292,6 +292,23 @@
   const api={id:'invasion-american-east-coast',title:'Invasion of the American East Coast',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,expeditionSide:'eu',
+    ai:{synchronizedFlotillas:true},
+    text:{
+      era:"American Atlantic Seaboard · Alternate 2017",
+      intro:"Europia United starts at sea without cities. Six simultaneous amphibious fronts attack Britannia from Maine to Florida, with no turn limit.",
+      diplomacy:"Both powers are at war from turn 1. Capturable ports and fortified coastal cities control inland supply and naval staging.",
+      elite:"Elite East Coast uses standard faction Elite Force rosters. Rival named commanders begin at Level 5; carriers remain conventional.",
+      focus:{
+        eu:"",
+        britannia:"New York City"
+      }
+    },
+    blurbs:{
+      eu:"Lead six offshore carrier groups against New England, New York, Chesapeake Bay, the Carolinas, Georgia and Florida. Seize every Britannian city.",
+      britannia:"Fortify industrial capitals and harbors, contest landing beaches, defend the Appalachian approaches and counterattack E.U. bridgeheads."
+    }};
   E.scenarios={...(E.scenarios||{}),eastCoast:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-american-east-coast':api}};
   if(typeof module!=='undefined')module.exports=api;

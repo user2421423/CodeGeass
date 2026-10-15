@@ -464,6 +464,23 @@
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMIES,
     rivers:RIVERS,crossings:CROSSINGS,operationalFronts:FRONTS,
     create,onTurn,objective,winner,strategicScore,orderGroup,geo,locate};
+  api.meta={map:{centreSampled:true,overlays:['yellowRiver']},
+    elite:true,
+    ai:{guards:'luoyang'},
+    text:{
+      era:"Henan · World Campaign Finale",
+      intro:"The decisive multi-front assault on Luoyang. A vast inland battlefield with a playable Yellow River barrier, named Army Groups and no turn limit. Every enemy city must fall.",
+      diplomacy:"Britannia and the Chinese Federation fight from turn 1. Luoyang has the hardest layered defense of this war; taking it alone cannot end the battle.",
+      elite:"Elite uses the existing faction elite roster and shared scenario scaling, including maximum-rank rival commanders. No artificially invulnerable city or unique combat modifiers.",
+      focus:{
+        britannia:"Xuchang",
+        cf:"Luoyang"
+      }
+    },
+    blurbs:{
+      britannia:"Converge from the Korean, Yangtze and eastern fronts; breach the Yellow River defense, seize the Imperial Capital and conquer every remaining Federation city.",
+      cf:"Defend the capital behind successive fortified belts, guard the crossings and counterattack isolated Britannian Army Groups with strategic reserves."
+    }};
   E.scenarios={...(E.scenarios||{}),luoyangFinale:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

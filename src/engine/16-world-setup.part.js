@@ -157,9 +157,7 @@
     return g?.mode === 'campaign' && g.difficulty === 'elite';
   }
   function eliteScenario(g) {
-    return g?.mode === 'scenario' &&
-      ['invasion-japan', 'division-japan', 'european-war', 'bering-strait', 'conquest-indochina', 'philippines-invasion', 'war-for-australia', 'operation-stonehenge', 'area-18', 'britannia-siberia', 'crossing-urals', 'britannia-western-russia', 'invasion-south-africa', 'invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang','cf-new-zealand','cf-panama','cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon','eu-rocky-mountains'].includes(g.scenario?.id) &&
-      g.difficulty === 'elite';
+    return g?.mode === 'scenario' && g.difficulty === 'elite' && !!scenarioMeta(g).elite;
   }
   function eliteAIProduction(g) {
     return eliteConquest(g) || eliteScenario(g);
@@ -288,7 +286,7 @@
   // use Level 1 frames, except AI starting commanders on Level 5; HQ unlocks only matter at the player's factory.
   function prepareEliteJapan(g) {
     // Both Japan scenarios share this setup; the European War has its own.
-    if (!eliteScenario(g) || !['invasion-japan', 'division-japan'].includes(g.scenario?.id)) return g;
+    if (!eliteScenario(g) || scenarioMeta(g).elite !== 'japan') return g;
     const sides = g.order; // Use this scenario's playable allegiances.
     const signature = {
       suzaku: 'lancelot', cornelia: 'cornelia_gloucester',
@@ -361,19 +359,8 @@
   // Elite European War uses its own two-faction roster instead of modifying the
   // historical Japan roster or Britannian unlock eligibility in other modes.
   function prepareEliteEurope(g) {
-    if (!eliteScenario(g) || !['european-war','bering-strait','conquest-indochina','philippines-invasion','war-for-australia','operation-stonehenge','area-18','britannia-siberia','crossing-urals','britannia-western-russia','invasion-south-africa','invasion-turkey','invasion-brazil','invasion-california','invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland','invasion-hawaii','invasion-american-east-coast','eu-panama','eu-pendragon','invasion-korea','bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze','battle-luoyang','cf-new-zealand','cf-panama','cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon','eu-rocky-mountains'].includes(g.scenario?.id)) return g;
-    const sides = ['area-18','war-for-australia'].includes(g.scenario.id) ? ['britannia','eu','cf'] :
-      g.scenario.id === 'operation-stonehenge' ? ['britannia','eu'] :
-      ['bering-strait','britannia-siberia','crossing-urals','britannia-western-russia',
-       'invasion-south-africa','invasion-turkey','invasion-brazil',
-       'invasion-canada','invasion-caribbean','eu-great-lakes','eu-greenland',
-       'invasion-american-east-coast','eu-panama','eu-pendragon',
-       'eu-rocky-mountains'].includes(g.scenario.id) ? ['britannia','eu'] :
-      ['conquest-indochina','philippines-invasion','invasion-korea',
-       'invasion-hawaii','invasion-california','cf-new-zealand','cf-panama',
-       'cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon',
-       'bf-malacca','britannia-iraq-iran','bf-south-china','bf-yangtze',
-       'battle-luoyang'].includes(g.scenario.id) ? ['britannia','cf'] : ['eu','eb'];
+    if (!eliteScenario(g) || scenarioMeta(g).elite !== true) return g;
+    const sides = scenarioOf(g).sides;
     const signatures = {
       leila: 'leila_alexander', akito: 'akito_liberte',
       ryo: 'ryo_valiant', ayano: 'ayano_valiant',

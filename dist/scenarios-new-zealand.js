@@ -426,6 +426,22 @@
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,ports:PORTS,rivers:RIVERS,
     landingData:LANDINGS,defenderData:DEFENDERS,create,onTurn,objective,winner,
     strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['reliefZones','regionalRivers']},
+    elite:true,expeditionSide:'cf',
+    text:{
+      era:"New Zealand · Chinese Federation World Campaign",
+      intro:"The Chinese Federation has no mainland cities: seven carrier-led task forces invade North Island, South Island and Stewart Island while Britannia defends all cities and major naval bases. Total conquest without a turn limit.",
+      diplomacy:"Both sides are hostile from turn one. Carrier cargo must land amphibiously; Cook Strait remains navigable; shipyards are independently capturable. Army Groups cover both island campaigns.",
+      elite:"Elite uses standardized Chinese and Britannian Elite Force rosters, rival Level 5 commanders and established difficulty scaling; carrier hulls remain conventional.",
+      focus:{
+        cf:"",
+        britannia:"Wellington"
+      }
+    },
+    blurbs:{
+      cf:"Lead seven carrier-led landing fleets against North Island and South Island simultaneously. Force Cook Strait, establish beachheads, cross the Southern Alps and take every Britannian city.",
+      britannia:"Hold both New Zealand islands with fortified Army Groups, naval bases and mobile reserves. Intercept Chinese carrier fleets in Cook Strait and counterattack every bridgehead."
+    }};
   E.scenarios={...(E.scenarios||{}),newZealand:api,
     byId:{...(E.scenarios?.byId||{}),'cf-new-zealand':api}};
   if(typeof module!=='undefined')module.exports=api;

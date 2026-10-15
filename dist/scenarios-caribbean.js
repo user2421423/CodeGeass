@@ -296,6 +296,22 @@
   const api={id:'invasion-caribbean',title:'Invasion of the Caribbean',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true},
+    elite:true,expeditionSide:'eu',
+    text:{
+      era:"Caribbean Sea · Alternate 2017",
+      intro:"Six E.U. task forces begin offshore with no cities; Britannia holds 41 island cities across the Caribbean.",
+      diplomacy:"Capture every hostile city to win. No turn limit and no F.L.E.I.J.A.",
+      elite:"Elite Caribbean converts eligible land forces and amphibious troops under the standard regional Elite rules; naval carriers remain conventional.",
+      focus:{
+        eu:"",
+        britannia:"Havana"
+      }
+    },
+    blurbs:{
+      eu:"Command six loaded carrier forces, capture island harbours and advance from Cuba and the Bahamas through Hispaniola to the Lesser Antilles.",
+      britannia:"Defend the major islands and harbours, concentrate naval patrols and counterattack isolated beachheads."
+    }};
   E.scenarios={...(E.scenarios||{}),caribbean:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-caribbean':api}};
   if(typeof module!=='undefined')module.exports=api;

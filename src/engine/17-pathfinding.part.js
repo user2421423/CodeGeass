@@ -85,7 +85,8 @@
       }
     }
     const nb = neighborTable(g),
-      tiles = g.tiles;
+      tiles = g.tiles,
+      rivers = g.mode === 'scenario' && !!g.scenario?.riverBarriers; // decided once, not per step
     while (hd.length) {
       const d = hd[0],
         i = pop();
@@ -99,7 +100,7 @@
         if (unit && !routePassable(g, unit, n)) continue;
         const step = unit ? isSea(tiles[i]) ? 1 : terrainCost(g, unit, tiles[i]) : isSea(n) ? 1 : TERRAIN[n.terrain].cost;
         const nd = d + (only === 'sea' ? 1 :
-          (isSea(n) !== sea ? 4 : 0) + step + riverCrossingCost(g, tiles[i], n, unit));
+          (isSea(n) !== sea ? 4 : 0) + step + (rivers ? riverCrossingCost(g, tiles[i], n, unit) : 0));
         if (nd <= maxCost && nd < field[j]) {
           field[j] = nd;
           push(j, nd);

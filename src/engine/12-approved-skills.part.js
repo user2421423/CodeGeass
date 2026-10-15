@@ -85,36 +85,36 @@
     // Chao's combined-arms doctrine is granted only to nearby ranged/armored allies
     // attacking a target screened by friendly infantry. Multiple copies never stack.
     if(!counter&&target&&['Armor','Artillery'].includes(TYPES[u.type].branch)&&
-      g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).combinedFront&&dist(g,v,u)<=2)&&
+      g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).combinedFront&&dist(g,v,u)<=2)&&
       g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&TYPES[v.type].branch==='Infantry'&&dist(g,v,target)===1))m*=1.15;
     // Zi Dien's movement-triggered raid may activate once per turn against a commander.
     if(!counter&&f.ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
     if(!counter&&u.expRetrofitStrike)m*=1.1;
-    if(!counter&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
+    if(!counter&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
     // Eduardo: mountain defenders counterstrike harder under nearby Georgian command.
     if(counter&&tile(g,u.c,u.r)?.terrain==='mountain'&&
-      g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).blackSeaFox&&dist(g,v,u)<=2))m*=1.25;
+      g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).blackSeaFox&&dist(g,v,u)<=2))m*=1.25;
     return m;
   }
   function newcomerDefense(g,target,attacker,counter,direct){
     let m=1;
-    if(g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
+    if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
     if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=.8;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
     // Eduardo: improved defensive deployment on mountain hexes.
     if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
-      g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).blackSeaFox&&dist(g,v,target)<=2))m*=.85;
-    if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
+      g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&fx(v).blackSeaFox&&dist(g,v,target)<=2))m*=.85;
+    if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
     if(target.forcedOffensive&&counter)m*=1.2;
 
     // Ferilli's W-0 telemetry prevents avoidable losses to retaliatory fire.
     // Passive, non-stacking, and deliberately separate from Sophie's support attacks.
     if(counter&&direct&&target&&!TYPES[target.type].naval&&
-      g.units.some(v=>v.hp>0&&v.side===target.side&&fx(v).counterfireRouting&&dist(g,v,target)<=2))m*=.8;
+      g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&fx(v).counterfireRouting&&dist(g,v,target)<=2))m*=.8;
     return m;
   }
   function newcomerIntercept(g,target,amount){
-    const guard=g.units.find(v=>v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
+    const guard=g.units.find(v=>v.cmd&&v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
     if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
     if(target.expAfterimage)delete target.expAfterimage;
     return amount;

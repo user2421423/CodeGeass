@@ -197,7 +197,7 @@
   }
   // Inoue's Resistance Logistics (repair and reinforce discount, extra city repair) and Minami's spotting reach.
   const logisticsNear = (g, u) =>
-    g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).logistics && dist(g, v, u) <= fx(v).logistics);
+    g.units.some(v => v.cmd && v.hp > 0 && v.side === u.side && fx(v).logistics && dist(g, v, u) <= fx(v).logistics);
   const spotted = (g, u) =>
-    g.units.some(v => v.hp > 0 && v.side === u.side && fx(v).spotter && dist(g, v, u) <= fx(v).spotter);
+    g.units.some(v => v.cmd && v.hp > 0 && v.side === u.side && fx(v).spotter && dist(g, v, u) <= fx(v).spotter);
 

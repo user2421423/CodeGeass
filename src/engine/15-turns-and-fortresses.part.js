@@ -289,6 +289,10 @@
     const all = root.Knightmare.scenarios;
     return all?.byId?.[g?.scenario?.id] || all?.[g?.scenario?.key] || all?.japan;
   }
+  // Per-scenario rule switches the scenario module declares on itself (no fallback to Japan).
+  function scenarioMeta(g) {
+    return (g?.mode === 'scenario' && root.Knightmare.scenarios?.byId?.[g.scenario?.id]?.meta) || {};
+  }
   // World conquest: every rival surrenders (a power surrenders when it holds no city), or hold the most cities at the
   // armistice.
   function decideVictory(g) {
@@ -297,7 +301,7 @@
       const conquest = scenarioOf(g)?.winner(g),
         contenders = g.order.filter(s => g.stations.some(c => c.owner === s));
       // Amphibious regional invasions may start with no cities; surviving expeditions remain in play.
-      if (['operation-stonehenge','invasion-south-africa','invasion-hawaii','invasion-brazil','eu-greenland','invasion-caribbean','eu-panama','invasion-american-east-coast','invasion-canada','eu-great-lakes','invasion-california','eu-pendragon','cf-new-zealand','cf-panama','cf-pacific-northwest','cf-central-america','cf-mexico','cf-pendragon','eu-rocky-mountains'].includes(g.scenario?.id)) {
+      if (scenarioMeta(g).expeditionSide) {
         if (conquest) g.over = conquest;
         return g.over;
       }
@@ -365,10 +369,7 @@
   function objectiveText(g) {
     if (g.mode === 'campaign' && hooks.objective) return hooks.objective(g);
     if (g.mode === 'scenario')
-      return (scenarioOf(g)?.objective(g) || 'Conquer every enemy city') +
-        (g.scenario?.id === 'invasion-japan' ?
-          (g.scenario.phase === 'opening' ? ' · Alliance ends on turn 10.' : ' · All three powers are at war.')
-          : g.scenario?.id === 'division-japan' ? ' · All three powers are at war.' : '');
+      return scenarioOf(g)?.objective(g) || 'Conquer every enemy city';
     if (g.era === 'ufn2018') return g.player === 'cf'
       ? 'Defeat both Britannian powers. Australia is not a victory target.'
       : 'Fight alongside the other Britannian power to eliminate the U.F.N. Australia is not a victory target.';

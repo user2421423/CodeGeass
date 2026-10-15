@@ -353,6 +353,22 @@ root.PENDRAGON_SHARED=Object.freeze({
  geographicCities:GEOGRAPHIC_CITIES,
  geographicAt:geo,locate,ridges:RIDGES,roads:ROADS
 });
+euApi.meta={map:{centreSampled:true,overlays:['roads']},
+  elite:true,expeditionSide:'eu',
+  text:{
+    era:"Pendragon · Eastern Imperial Last Stand",
+    intro:"The final E.U. offensive attacks west from Utah and eastern Nevada. Capture every city, not merely Pendragon. No turn limit.",
+    diplomacy:"Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.",
+    elite:"Elite Pendragon: eligible single-frame Elite Forces replace land formations; rival named commanders start at Level 5. Factories and research follow the established Elite AI rules.",
+    focus:{
+      eu:"Tooele",
+      britannia:"Pendragon"
+    }
+  },
+  blurbs:{
+    eu:"Attack from Utah and eastern Nevada after crossing the Rockies. Break Britannian eastern defenses and capture every city.",
+    britannia:"Defend Pendragon against Europia United attacking westward from Utah."
+  }};
 E.scenarios={...(E.scenarios||{}),pendragon:euApi,
  byId:{...(E.scenarios?.byId||{}),'eu-pendragon':euApi}};
 if(typeof module!=='undefined')module.exports=euApi;

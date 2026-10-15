@@ -662,10 +662,14 @@ const GEOGRAPHY = (() => {
     GREENLAND_ANCHORS.some(([lon,lat]) =>
       pointWithinShape(shape, px(lon), py(lat))));
   let japanColorCache = null;
+  // Drawing options a regional scenario declares on itself (meta.map in its scenarios-*.js file).
+  function mapMeta(g) {
+    return (g?.mode === 'scenario' && E.scenarios?.byId?.[g.scenario?.id]?.meta?.map) || {};
+  }
+  const hasOverlay = (g, name) => !!mapMeta(g).overlays?.includes(name);
   // European regional operations share the continental political shoreline.
   function europeanRegion(g) {
-    return g.scenario?.id === 'european-war' || g.scenario?.id === 'operation-stonehenge' ||
-      g.scenario?.id === 'britannia-western-russia';
+    return !!mapMeta(g).europeanRegion;
   }
   function japanColorGroups(g) {
     const revision = g.mapRevision || 0;
@@ -685,7 +689,7 @@ const GEOGRAPHY = (() => {
     // extends beyond coarse coastal hex centres. Sea gameplay is unaffected.
     for (let i = 0; i < queue.length; i++) {
       const j = queue[i], t = g.tiles[j];
-      if (depth[j] >= (europeanRegion(g) || g.scenario?.id === 'area-18' ? 1 : 2)) continue;
+      if (depth[j] >= (mapMeta(g).coastBuffer || 2)) continue;
       for (const n of E.adjacent(g, t)) {
         const k = n.r * g.cols + n.c;
         if (n.terrain !== 'sea' || depth[k] <= depth[j] + 1) continue;
@@ -751,7 +755,7 @@ const GEOGRAPHY = (() => {
     // Indochina river systems: plotted from geographic coordinates in the
     // same equirectangular hex projection used by scenarios-indochina.js.
     // These strokes are visual only; riverbeds do not become impassable sea.
-    if(g.scenario?.id==='conquest-indochina'&&g.scenario.rivers){
+    if(hasOverlay(g,'indochinaRivers')&&g.scenario.rivers){
       const b=g.scenario.bounds, spanLon=b.east-b.west,spanLat=b.north-b.south;
       ctx.save();
       ctx.strokeStyle='#4ac4de';
@@ -920,43 +924,16 @@ const GEOGRAPHY = (() => {
 
   function paintJapan(ctx, g, left, right, top, bottom, scale) {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
-    if (g.scenario.id === 'bering-strait')
+    const meta = mapMeta(g), has = name => !!meta.overlays?.includes(name);
+    if (meta.painter === 'beringGeographic')
       return paintBeringGeographic(ctx, g, left, right, top, bottom);
-    if (g.scenario.id === 'conquest-indochina')
+    if (meta.painter === 'beringGrid')
       return paintBering(ctx,g,left,right,top,bottom);
     const p = g.scenario.projection;
     if (!p) return false;
     // Reproject the same GSHHG atlas into the north-up Japan theatre.
     // The political and tactical layers share this zero-rotation projection.
-    const australia = g.scenario.id === 'war-for-australia';
-    const philippines = g.scenario.id === 'philippines-invasion';
-    const korea = g.scenario.id === 'invasion-korea';
-    const middleEast = g.scenario.id === 'area-18';
-    const iraqIran = g.scenario.id === 'britannia-iraq-iran';
-    const malacca = g.scenario.id === 'bf-malacca';
-    const siberia = g.scenario.id === 'britannia-siberia';
-    const southernAfrica = g.scenario.id === 'invasion-south-africa';
-    const newZealand = g.scenario.id === 'cf-new-zealand';
-    const urals = g.scenario.id === 'crossing-urals';
-    const turkey = g.scenario.id === 'invasion-turkey';
-    const brazil = g.scenario.id === 'invasion-brazil';
-    const california = g.scenario.id === 'invasion-california';
-    const canada = g.scenario.id === 'invasion-canada';
-    const caribbean = g.scenario.id === 'invasion-caribbean';
-    const greatLakes = g.scenario.id === 'eu-great-lakes';
-    const yangtze = g.scenario.id === 'bf-yangtze';
-    const greenland = g.scenario.id === 'eu-greenland';
-    const hawaii = g.scenario.id === 'invasion-hawaii';
-    const eastCoast = g.scenario.id === 'invasion-american-east-coast';
-    const panama = g.scenario.id === 'eu-panama' || g.scenario.id === 'cf-panama';
-    const pendragon = g.scenario.id === 'eu-pendragon' || g.scenario.id === 'cf-pendragon';
-    const northwest = g.scenario.id === 'cf-pacific-northwest';
-    const mexico = g.scenario.id === 'cf-mexico';
-    const rockyMountains = g.scenario.id === 'eu-rocky-mountains';
-    const southChina = g.scenario.id === 'bf-south-china';
-    const luoyang = g.scenario.id === 'battle-luoyang';
-    const centreSampledRegion = australia || middleEast || iraqIran || malacca || siberia || southernAfrica || newZealand || urals || turkey ||
-      brazil || california || canada || caribbean || greatLakes || greenland || hawaii || eastCoast || panama || pendragon || korea || southChina || yangtze || luoyang || northwest || mexico || rockyMountains;
+    const centreSampledRegion = !!meta.centreSampled;
     const theta = p.angle * Math.PI / 180, X = Math.cos(theta), Y = Math.sin(theta),
       k = Math.cos(p.centerLat * Math.PI / 180);
     const ox = px(p.centerLon), oy = py(p.centerLat),
@@ -992,9 +969,9 @@ const GEOGRAPHY = (() => {
     ];
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
-    const source = korea ? KOREA_LAND : australia ? AUSTRALIA_LAND : philippines ? PHILIPPINES_LAND :
-      greenland ? GREENLAND_LAND :
-      (europeOnly || middleEast || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
+    const source = meta.land === 'korea' ? KOREA_LAND : meta.land === 'australia' ? AUSTRALIA_LAND :
+      meta.land === 'philippines' ? PHILIPPINES_LAND : meta.land === 'greenland' ? GREENLAND_LAND :
+      (europeOnly || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
@@ -1003,7 +980,7 @@ const GEOGRAPHY = (() => {
     sea.addColorStop(1, '#103d5b');
     ctx.fillStyle = sea;
     ctx.fillRect(left, top, right - left, bottom - top);
-    if (!shapes.length && !philippines) return true;
+    if (!shapes.length && !has('philippines')) return true;
 
     // Japan keeps its geographic land silhouette. Europe is deliberately
     // Europe-only: do not draw the GSHHG outline of Africa, Anatolia or the
@@ -1044,7 +1021,7 @@ const GEOGRAPHY = (() => {
 
     // WGS84 relief for the Federation's two new oceanic theatres. The coastline
     // is still the real GSHHG polygon, not an outline of the tactical hexes.
-    if((newZealand || northwest) && g.scenario.reliefZones?.length){
+    if(has('reliefZones') && g.scenario.reliefZones?.length){
       const region=g.scenario,bb=region.bounds;
       const sx=SQ*R*g.cols/(bb.east-bb.west),
             sy=1.5*R*g.rows/(bb.north-bb.south);
@@ -1077,7 +1054,7 @@ const GEOGRAPHY = (() => {
     }
     // Greenland's ice cap lies above the national coastal tint. Render it as
     // snowy relief while retaining the actual GSHHG silhouette under all hexes.
-    if (greenland) {
+    if (has('greenland')) {
       ctx.save();
       ctx.globalAlpha=0.76;
       ctx.fillStyle='#ebf5f6';
@@ -1106,7 +1083,7 @@ const GEOGRAPHY = (() => {
     // Palau and Yap are intentionally enlarged in the *gameplay* mask to
     // accommodate Britannian bases. Some are absent from the global coastline
     // asset, so render only these offshore staging islets from their hex mask.
-    if (philippines) {
+    if (has('philippines')) {
       ctx.save();
       ctx.globalAlpha = 0.9;
       for (const t of g.tiles) {
@@ -1125,7 +1102,7 @@ const GEOGRAPHY = (() => {
     // Lakes are inland freshwater: the GSHHG continental land polygon alone
     // paints them as dry ground. Render the same navigable lake polygons and
     // engineered connectors used by the tactical hex classifier above it.
-    if (greatLakes && g.scenario.lakes) {
+    if (has('lakes') && g.scenario.lakes) {
       const bb=g.scenario.bounds,sx=SQ*R*g.cols/(bb.east-bb.west),
         sy=1.5*R*g.rows/(bb.north-bb.south),
         pt=([lon,lat])=>[R-SQ*R*.5+(lon-bb.west)*sx,
@@ -1151,7 +1128,7 @@ const GEOGRAPHY = (() => {
     // centre-sampled transform as its playable hexes. The continental GSHHG
     // atlas has no inland Yangtze cutout; draw the true river meanders above
     // the land/ownership fill so the underlay and navigable tactical tiles agree.
-    if(yangtze && g.scenario?.rivers){
+    if(has('yangtzeRiver') && g.scenario?.rivers){
       const b=g.scenario.bounds,sx=SQ*R*g.cols/(b.east-b.west),
         sy=1.5*R*g.rows/(b.north-b.south);
       const xy=([lon,lat])=>[
@@ -1181,7 +1158,7 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if((siberia || brazil || canada || california || eastCoast || korea || iraqIran || southChina || newZealand || northwest) && g.scenario?.rivers){
+    if(has('regionalRivers') && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
@@ -1196,7 +1173,7 @@ const GEOGRAPHY = (() => {
     }
     // Inland Henan: the Yellow River is a navigational barrier on the hex
     // grid, drawn at its surveyed geographic coordinates over the atlas.
-    if(luoyang && g.scenario.rivers){
+    if(has('yellowRiver') && g.scenario.rivers){
       const b=g.scenario.bounds;
       const sx=SQ*R*g.cols/(b.east-b.west),sy=1.5*R*g.rows/(b.north-b.south);
       ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
@@ -1214,7 +1191,7 @@ const GEOGRAPHY = (() => {
       }
       ctx.restore();
     }
-    if(g.scenario.id==='crossing-urals'&&g.scenario.rivers){
+    if(has('uralsRivers')&&g.scenario.rivers){
 const b=g.scenario.bounds;ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
 ctx.strokeStyle='#4ac4de';ctx.globalAlpha=.78;ctx.lineWidth=3.1;ctx.lineJoin='round';ctx.lineCap='round';
 for(const line of Object.values(g.scenario.rivers)){if(line.length<2)continue;
@@ -1223,7 +1200,7 @@ x=R-SQ*R/2+(lon-b.west)*SQ*R*g.cols/(b.east-b.west),
 y=R-.75*R+(b.north-lat)*1.5*R*g.rows/(b.north-b.south);
 if(!i)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
 ctx.restore();}
-    if (turkey) {
+    if (has('turkey')) {
       // This is a tactical-scale hydrographic correction, not a land bridge.
       // The GSHHS vector map has sub-hex-wide straits; the actual GSHHS-derived
       // gameplay mask carves connected sea hexes for both navigable passages.
@@ -1255,7 +1232,7 @@ ctx.restore();}
     }
     // Western Russia's major rivers are geographic polylines. They are
     // rendered above the political atlas but never turn land hexes into sea.
-    if(g.scenario?.id==='britannia-western-russia' && g.scenario.rivers){
+    if(has('westernRussiaRivers') && g.scenario.rivers){
       const p=g.scenario.projection, k=Math.cos(p.centerLat*Math.PI/180),
         wx=SQ*R*(g.cols-1)/(p.uMax-p.uMin),
         hy=1.5*R*(g.rows-1)/(p.vMax-p.vMin);
@@ -1281,12 +1258,11 @@ ctx.restore();}
     // New regional IDs use the WGS84 geographic atlas rather than Japan's
     // fallback map. Relief below is geographically located and separate from
     // the gameplay hex mask; do not trace tactical hex boundaries as shoreline.
-    if(rockyMountains){
-      const model=E.scenarios?.byId?.['eu-rocky-mountains'];
-      if(typeof model?.paintRelief==='function')
-        model.paintRelief(ctx,g,{R,SQ,left,right,top,bottom});
-    }
-    if(mexico && g.scenario?.atlas){
+    // A scenario may paint its own geographic relief (Rocky Mountains).
+    const model=E.scenarios?.byId?.[g.scenario.id];
+    if(typeof model?.paintRelief==='function')
+      model.paintRelief(ctx,g,{R,SQ,left,right,top,bottom});
+    if(has('mexicoAtlas') && g.scenario?.atlas){
       const bb=g.scenario.bounds,atlas=g.scenario.atlas;
       const sx=SQ*R*g.cols/(bb.east-bb.west),
             sy=1.5*R*g.rows/(bb.north-bb.south);
@@ -1335,7 +1311,7 @@ ctx.restore();}
       }
       ctx.restore();
     }
-    if(pendragon && g.scenario.roads){
+    if(has('roads') && g.scenario.roads){
       // Historic highway corridors are aligned with this north-up WGS84 grid.
       const b=g.scenario.bounds;
       const xy=([lon,lat])=>[

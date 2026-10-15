@@ -224,7 +224,8 @@
   }
   function objective(g,side=g.player) {
     return 'Conquer all 44 Japanese cities ('+
-      g.stations.filter(s=>s.owner===side).length+'/44 controlled).';
+      g.stations.filter(s=>s.owner===side).length+'/44 controlled).'+
+      (g.scenario?.id==='division-japan'?' · All three powers are at war.':'');
   }
   function winner(g) {
     if(g.mode!=='scenario'||g.scenario?.id!=='division-japan'||g.stations.length!==44)return null;
@@ -238,6 +239,24 @@
     regions:REGIONS,land:LAND,navy:NAVY,create,
     onTurn:()=>false,objective,winner,
     strategicScore:japan.strategicScore,orderGroup:japan.orderGroup};
+  api.meta={elite:'japan',
+    ai:{doctrine:'division',guards:'division'},
+    text:{
+      era:"Japan · Alternate 2017",
+      intro:"Alternate 2017: Britannia, Europia and China fight for a divided Japan from the first turn.",
+      diplomacy:"No alliances: all three powers are hostile from turn 1.",
+      elite:"All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.",
+      focus:{
+        britannia:"Nagoya",
+        eu:"Sendai",
+        cf:"Hiroshima"
+      }
+    },
+    blurbs:{
+      britannia:"Hold the industrial heartland and Mount Fuji while defending against enemies to the north and west.",
+      eu:"Fight south from Hokkaido and Tohoku, or break out of the Chiba–Narita bridgehead beside Tokyo.",
+      cf:"Command western Honshu, Shikoku and Kyushu. Exploit strategic depth, multiple ports and your broad army front."
+    }};
   E.scenarios={...E.scenarios,divisionJapan:api,
     byId:{...(E.scenarios.byId||{}),'invasion-japan':japan,'division-japan':api}};
   if(typeof module!=='undefined')module.exports=api;

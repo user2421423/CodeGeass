@@ -81,9 +81,10 @@
         }
         return events;
       }
-      const field = recovery.field,
-        value = p => field[p.r * g.cols + p.c] + g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && !atSea(g, v) && dist(g, v, p) <= rangeOf(g, v).max).length * 8
-          - (p.c === recovery.city.c && p.r === recovery.city.r ? 2 : 0),
+      // Scores are cached per hex: the board does not change while the candidates are ranked.
+      const field = recovery.field, scored = new Map(),
+        value = p => scored.get(p) ?? scored.set(p, field[p.r * g.cols + p.c] + g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && !atSea(g, v) && dist(g, v, p) <= rangeOf(g, v).max).length * 8
+          - (p.c === recovery.city.c && p.r === recovery.city.r ? 2 : 0)).get(p),
         picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
           .filter(p => !isSea(p) && !unitAt(g, p) && Number.isFinite(field[p.r * g.cols + p.c]))
           .sort((a, b) => value(a) - value(b));
@@ -301,7 +302,9 @@
     }
     // Spend restored movement on a safe hex, including withdrawal moves after firing.
     if (!u.moved && (u.attacked || u.skillReposition || u.withdrawMove) && !g.over && u.hp > 0) {
-      const score = p => -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30;
+      // Scores are cached per hex: the board does not change while the candidates are ranked.
+      const scored = new Map(),
+        score = p => scored.get(p) ?? scored.set(p, -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30).get(p);
       const picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
         .filter(p => !unitAt(g, p) && defenseStep(p)).sort((a, b) => score(b) - score(a));
       if (picks[0] && score(picks[0]) > score(u)) {

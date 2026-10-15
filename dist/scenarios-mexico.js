@@ -484,6 +484,22 @@
       rivers:RIVERS,volcanoes:VOLCANOES,lakes:LAKES,border:BORDER},
     coastalMask:COAST_ROWS,create,onTurn,objective,winner,
     strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['mexicoAtlas']},
+    elite:true,expeditionSide:'cf',
+    text:{
+      era:"Mexican Heartland · Federation World Campaign",
+      intro:"China attacks north from conquered Guatemala and makes coastal landings against Mexico’s plateau and industrial cities.",
+      diplomacy:"The Mexican Plateau, Sierra Madre ranges and separate Gulf/Pacific coasts shape large-scale Army Group warfare.",
+      elite:"Elite uses established faction rosters, AI factories and commander levels.",
+      focus:{
+        cf:"Quetzaltenango",
+        britannia:"Mexico City"
+      }
+    },
+    blurbs:{
+      cf:"Invade from Guatemala and land on both coasts, converge on the Mexican Plateau and take every enemy city.",
+      britannia:"Defend Mexico City, Puebla, Guadalajara and the major mountain approaches."
+    }};
   E.scenarios={...(E.scenarios||{}),mexico:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

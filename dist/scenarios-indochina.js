@@ -307,6 +307,23 @@
   const api={id:'conquest-indochina',title:'The Conquest of Indochina',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{painter:'beringGrid',overlays:['indochinaRivers']},
+    elite:true,
+    ai:{doctrine:'europe',guards:'indochina',routeBias:'cf'},
+    text:{
+      era:"Indochina · Alternate 2017",
+      intro:"Defense of Indochina: Britannia must withstand a three-axis Federation land offensive before advancing into Chinese-controlled northern Vietnam and southern China. Win only by capturing all 44 cities; there is no turn limit.",
+      diplomacy:"Britannia and the Federation are hostile from turn 1. Cities, independent naval ports and army concentrations change hands normally. F.L.E.I.J.A. is disabled.",
+      elite:"Elite Indochina applies the established faction Elite Force conversion, stronger rival commanders and difficulty scaling. Carriers remain conventional.",
+      focus:{
+        britannia:"Vinh",
+        cf:"Hanoi"
+      }
+    },
+    blurbs:{
+      britannia:"Hold Vinh and Vientiane against the first offensives. Use the Dong Hoi–Hue–Da Nang line, Thai highlands and reserves at Savannakhet and Nakhon Ratchasima; then counterattack Hanoi, Nanning and Kunming.",
+      cf:"Concentrate offensives along the Red River, Mekong Valley and northern Thai highlands. Break the forward fortifications, isolate Britannian reserves and capture every southern city."
+    }};
   E.scenarios={...(E.scenarios||{}),indochina:api,
     byId:{...(E.scenarios?.byId||{}),'conquest-indochina':api}};
   if(typeof module!=='undefined')module.exports=api;

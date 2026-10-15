@@ -341,6 +341,22 @@
   const api={id:'bf-malacca',title:'Battle of the Strait of Malacca',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,fleetData:FLEETS,ports:PORTS,landings:LANDINGS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true},
+    elite:true,
+    text:{
+      era:"Strait of Malacca · Alternate 2017",
+      intro:"Britannia advances from its Indochinese positions into the Strait of Malacca. Fight through 54 regional cities on the Malay Peninsula, eastern Sumatra and the Singapore approaches. Total city conquest; no turn limit.",
+      diplomacy:"Two hostile powers from turn one. The main sea channel is navigable, both shores have capturable ports and separate coastal land fronts. Seizing the strait denies an important Federation sea approach, but does not trigger a fictional global naval blockade.",
+      elite:"Standard Britannian and Chinese Federation Elite Forces replace eligible land formations. Enemy veteran commanders, production and technologies use established Elite rules; carriers remain conventional.",
+      focus:{
+        britannia:"Phuket",
+        cf:"Singapore"
+      }
+    },
+    blurbs:{
+      britannia:"Advance from southern Thailand while carrier task forces contest the narrow strait. Land on Sumatra, take Penang and Malacca, then storm Singapore and the island ports.",
+      cf:"Hold both shores with fortified cities, coastal army reserves and strong fleets. Defend Penang, Port Klang, Medan, Dumai and Singapore; intercept Britannian amphibious landings."
+    }};
   E.scenarios={...(E.scenarios||{}),malacca:api,
     byId:{...(E.scenarios?.byId||{}),'bf-malacca':api}};
   if(typeof module!=='undefined')module.exports=api;

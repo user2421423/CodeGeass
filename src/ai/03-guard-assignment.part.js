@@ -6,7 +6,7 @@
   // are left with the normal multi-front AI to attack vulnerable spearheads
   // and recapture Britannian staging cities. No scripted reinforcements.
   function assignLuoyangGuards(g, side){
-    if(g.mode!=='scenario'||g.scenario?.id!=='battle-luoyang'||side!=='cf')
+    if(scenarioMeta(g).ai?.guards!=='luoyang'||side!=='cf')
       return {};
     const enemy=g.units.filter(u=>u.side==='britannia'&&u.hp>0&&!isShip(u)),
       own=g.units.filter(u=>u.side==='cf'&&u.hp>0&&!isShip(u)&&!atSea(g,u)),
@@ -38,7 +38,7 @@
     return reserved;
   }
   function assignDivisionBritanniaGuards(g, side) {
-    if (g.mode !== 'scenario' || g.scenario?.id !== 'division-japan' ||
+    if (scenarioMeta(g).ai?.guards !== 'division' ||
         g.difficulty !== 'normal' || side !== 'britannia') return {};
     const own = g.units.filter(u => u.hp > 0 && u.side === side &&
       !atSea(g, u) && !isShip(u) && !u.hold),
@@ -69,7 +69,7 @@
   // assignments expire when the threat recedes, releasing troops for a real
   // counteroffensive. China reserves units only when its own cities are at risk.
   function assignIndochinaGuards(g,side) {
-    if(g.mode!=='scenario'||g.scenario?.id!=='conquest-indochina')return {};
+    if(scenarioMeta(g).ai?.guards!=='indochina')return {};
     const own=g.units.filter(u=>u.hp>0&&u.side===side&&!atSea(g,u)&&
       !isShip(u)&&!u.hold);
     const foes=g.units.filter(u=>u.hp>0&&foe(g,u.side,side)&&

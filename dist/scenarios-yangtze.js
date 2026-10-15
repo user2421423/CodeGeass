@@ -486,6 +486,23 @@
     cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,
     armyGroups:ARMY_GROUPS,ports:PORTS,rivers:RIVERS,bridges:BRIDGES,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['yangtzeRiver']},
+    elite:true,
+    ai:{riverlineDefense:{side:'cf',attacker:'britannia',river:'Yangtze'}},
+    text:{
+      era:"Central and Eastern Yangtze · Alternate 2017",
+      intro:"After South China, Britannia reaches the great Yangtze barrier. Cross its nine defended bridge corridors, seize every one of 60 cities, and advance deep into Federation territory. No turn limit.",
+      diplomacy:"Britannia and the Chinese Federation are hostile from the opening turn. River ships use the navigable main channel; ports are independently capturable. Tributaries are visual and geographic obstacles, not imaginary blue-water shortcuts.",
+      elite:"Elite Yangtze uses established Britannian and Chinese Elite Force replacements. Riverine fleets retain standard naval models and commander, production and income scaling follow existing Elite rules.",
+      focus:{
+        britannia:"Jingzhou",
+        cf:"Wuhan"
+      }
+    },
+    blurbs:{
+      britannia:"Lead seven enormous Army Groups across the Yangtze. Seize bridgeheads from Yichang to Nanjing, destroy Chinese river squadrons, and exploit breakthroughs toward the north.",
+      cf:"Hold the river crossing corridors, defend Wuhan and Nanjing, contest river ports, and commit inland reserves to crush isolated Britannian bridgeheads."
+    }};
   E.scenarios={...(E.scenarios||{}),yangtze:api,
     byId:{...(E.scenarios?.byId||{}),'bf-yangtze':api}};
   if(typeof module!=='undefined')module.exports=api;

@@ -410,6 +410,22 @@
   const api={id:'invasion-california',title:'Invasion of California',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,expeditionSide:'cf',
+    text:{
+      era:"California and Southern Oregon · Alternate 2017",
+      intro:"The Chinese Federation launches four carrier-led landings supported by an offensive from conquered Oregon. Britannia holds the California cities; China controls the Oregon staging towns.",
+      diplomacy:"Two sides at war from turn 1. Capture every hostile city without a turn limit. Pendragon remains a separate final campaign battle.",
+      elite:"Existing Elite Force rules replace eligible land formations; fleets retain conventional naval roles and rival commanders follow the current difficulty rules.",
+      focus:{
+        cf:"Medford",
+        britannia:"Sacramento"
+      }
+    },
+    blurbs:{
+      cf:"Advance south from Federation-held Oregon while Chinese carrier fleets land near San Francisco, the central coast and southern California.",
+      britannia:"Defend San Francisco, Los Angeles, San Diego and the Central Valley with layered Army Groups, Pacific naval interception and reinforcements from Sierra passes."
+    }};
   E.scenarios={...(E.scenarios||{}),california:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-california':api}};
   if(typeof module!=='undefined')module.exports=api;

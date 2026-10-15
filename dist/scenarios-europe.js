@@ -323,6 +323,23 @@
   const api={id:'european-war',title:'The European War',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{europeanRegion:true,coastBuffer:1,homeZoom:5.4,overviewMarkers:true},
+    elite:true,eliteRosterOnly:true,
+    ai:{doctrine:'europe'},
+    text:{
+      era:"Europe · 2017 a.t.b.",
+      intro:"Euro Britannia versus Europia United. No scripted turn limit: capture every enemy city.",
+      diplomacy:"Both sides are hostile from turn 1. Europia United has the larger industrial economy; Euro Britannia begins with a heavier eastern field army.",
+      elite:"Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.",
+      focus:{
+        eu:"Warsaw",
+        eb:"Minsk"
+      }
+    },
+    blurbs:{
+      eu:"Hold the industrial cities of western and central Europe against the eastern offensive.",
+      eb:"Lead Euro Britannia’s elite spearheads from Russia and eastern Europe toward Paris."
+    }};
   E.scenarios={...(E.scenarios||{}),europe:api,
     byId:{...(E.scenarios?.byId||{}),'european-war':api}};
   if(typeof module!=='undefined')module.exports=api;

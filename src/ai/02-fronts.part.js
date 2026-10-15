@@ -15,14 +15,14 @@
   const scenarioRoutes = new WeakMap();
   // With only one or two hostile cities left, columns may grow to `finalUnits` to finish the war.
   const SCENARIO_COLUMN = { maxUnits: 5, finalUnits: 10, switchMargin: 1.35, exploitTurns: 2, exploitRadius: 9 };
-  // In the Philippines, China is the archipelago's defender. It never
-  // counter-invades Palau/Yap or transfers armies between Philippine islands.
+  // Island defense (the Philippines): the defender never counter-invades the
+  // invader's offshore bases or transfers armies between its own islands.
   function philippinesDefense(g, side) {
-    return g.mode === 'scenario' && g.scenario?.id === 'philippines-invasion' && side === 'cf';
+    return scenarioMeta(g).ai?.islandDefense?.side === side;
   }
   function philippinesHome(g, city) {
-    return !!city && g.scenario?.id === 'philippines-invasion' &&
-      !['Koror', 'Peleliu', 'Colonia'].includes(city.name);
+    const defense = scenarioMeta(g).ai?.islandDefense;
+    return !!city && !!defense && !defense.invaderBases.includes(city.name);
   }
   function scenarioCache(g) {
     let cache = scenarioRoutes.get(g);
@@ -107,37 +107,29 @@
     }
     return done(best);
   }
-  // Canada's carrier armies keep separate operational axes while the player
-  // and AI retain the existing goal-field navigation, city defense and army
-  // formation rules. In particular, no city is valued until reachable.
-  function canadaOperationalCost(g,u,f,turns) {
-    if(g.scenario?.id!=='invasion-canada'||!Number.isFinite(turns))return turns;
+  // Scenarios with operational axes (Canada): each carrier army keeps its own
+  // route of supply hubs while the player and AI retain the existing goal-field
+  // navigation, city defense and army formation rules. No city is valued until reachable.
+  function axisOperationalCost(g,u,f,turns) {
+    const plan=scenarioMeta(g).ai?.operationalAxes;
+    if(!plan||!Number.isFinite(turns))return turns;
     const name=f.anchor.name;
-    const axes={
-      'Atlantic Vanguard':["St. John's",'Gander','Corner Brook','Sydney','Halifax','Québec City','Montréal','Ottawa'],
-      'Maritime Assault':['Halifax','Saint John','Sydney','Moncton','Fredericton','Québec City','Montréal','Ottawa'],
-      'Hudson Strait Force':['Kuujjuaq','Rankin Inlet','Churchill','Thompson','Winnipeg','Thunder Bay','Regina'],
-      'Labrador Pincer':['Happy Valley-Goose Bay','Labrador City','Sept-Îles','Baie-Comeau','Saguenay','Québec City','Montréal'],
-      'Beaufort Passage':['Tuktoyaktuk','Inuvik','Norman Wells','Yellowknife','Fort McMurray','Edmonton','Calgary','Vancouver']
-    };
-    if(u.side==='eu'){
-      const targets=axes[u.invasionGroup] || [];
+    if(u.side===plan.invader){
+      const targets=plan.axes[u.invasionGroup] || [];
       // Prioritize each landing group's next unswept supply hub, then its
       // neighboring corridor. This avoids diverting all ships to one beach.
-      const remaining=targets.filter(n=>g.stations.some(s=>s.name===n&&s.owner!=='eu'));
+      const remaining=targets.filter(n=>g.stations.some(s=>s.name===n&&s.owner!==plan.invader));
       const i=remaining.indexOf(name);
       if(i>=0)turns-=i===0?3.8:i===1?2.2:1;
-      if(f.anchor.portAt && !g.stations.some(s=>s.owner==='eu'&&
+      if(f.anchor.portAt && !g.stations.some(s=>s.owner===plan.invader&&
         s.name===name))turns-=.35;
       if(g.scenario.supplyCorridors?.prairie.includes(name)&&
-        g.stations.some(s=>s.owner==='eu'&&g.scenario.supplyCorridors?.prairie.includes(s.name)))
+        g.stations.some(s=>s.owner===plan.invader&&g.scenario.supplyCorridors?.prairie.includes(s.name)))
         turns-=1.5; // Exploit a captured railway corridor.
-    }else if(u.side==='britannia'){
-      // Britannian counterattacks concentrate on threatened arterial cities,
-      // rather than conducting fruitless long-range expeditions to Greenland.
-      const hubs=['Halifax','Québec City','Montréal','Ottawa','Toronto',
-        'Winnipeg','Regina','Calgary','Edmonton','Vancouver','Churchill'];
-      if(hubs.includes(name))turns-=2.3;
+    }else if(u.side===plan.defender){
+      // Defender counterattacks concentrate on threatened arterial cities,
+      // rather than conducting fruitless long-range expeditions.
+      if(plan.defenderHubs.includes(name))turns-=2.3;
     }
     return Math.max(0,turns);
   }
@@ -158,16 +150,15 @@
     }
     // Scenario columns prioritize actual travel time. Canada's route bias
     // acts only after geography has established a reachable destination.
-    const cost=canadaOperationalCost(g,u,f,Math.max(0, turns));
-    return indochinaOperationalCost(g,u,f,cost);
+    const cost=axisOperationalCost(g,u,f,Math.max(0, turns));
+    return routeBiasCost(g,u,f,cost);
   }
-  // A route bias, not scripted movement: the Federation's three armies favor
+  // A route bias, not scripted movement (Indochina): the biased side's armies favor
   // their next unclaimed city only after the normal planner finds a real path.
   // They can still exploit another open approach if terrain blocks their axis.
-  function indochinaOperationalCost(g,u,f,turns) {
-    if(g.scenario?.id!=='conquest-indochina'||u.side!=='cf'||
-       !Number.isFinite(turns))return turns;
-    const axis=g.scenario.offensiveAxes?.cf?.[u.invasionGroup];
+  function routeBiasCost(g,u,f,turns) {
+    if(scenarioMeta(g).ai?.routeBias!==u.side||!Number.isFinite(turns))return turns;
+    const axis=g.scenario.offensiveAxes?.[u.side]?.[u.invasionGroup];
     if(!axis?.length)return turns;
     const remaining=axis.filter(name=>g.stations.some(s=>s.name===name&&
       foe(g,s.owner,u.side)));
@@ -227,12 +218,8 @@
   // Scenario doctrines retain the fast Japanese invasion planner where useful,
   // but give genuinely multi-front scenarios stateful operational commitments.
   function scenarioDoctrine(g) {
-    const id = g.scenario?.id || '';
     if (g.scenario?.aiDoctrine === 'europe') return 'europe';
-    if (id === 'division-japan') return 'division';
-    if (id.includes('europe') || id === 'bering-strait' || id === 'conquest-indochina' || id === 'war-for-australia' || id === 'area-18') return 'europe';
-    if (id.includes('invasion-japan') || id === 'japan') return 'invasion';
-    return 'assault';
+    return scenarioMeta(g).ai?.doctrine || 'assault';
   }
   const STRATEGIC = { commitment: 4, margin: 1.3, transferCooldown: 4,
     arrivalWindow: 4, transferBuffer: 2 };
@@ -411,7 +398,9 @@
     Object.assign(memo, { fronts, byId: Object.fromEntries(fronts.map(f => [f.id, f])),
       assign: {}, fields: {}, columns: {} });
     const at = u => carried.get(u.id) || u;
-    const best = u => Math.min(Infinity, ...fronts.map(f => scenarioTravel(g, at(u), f)));
+    // Cached per unit: nothing moves while the units are ranked.
+    const bestTravel = new Map(),
+      best = u => bestTravel.get(u) ?? bestTravel.set(u, Math.min(Infinity, ...fronts.map(f => scenarioTravel(g, at(u), f)))).get(u);
     active.sort((a, b) => best(a) - best(b) || a.id - b.id);
     for (const u of active) {
       const old = memo.byId[previous[u.id]?.front] || null,
@@ -512,12 +501,13 @@
             vital, value: vital ? 100 : 20, seed: vital ? -6 : -2 });
       }
     }
-    // Yangtze only: when Britannian land units cross to the NORTH bank,
+    // River-line defense (Yangtze): when enemy land units cross to the NORTH bank,
     // activate existing emergency defensive fronts around nearby crossings.
     // Southern staging forces already trigger the normal projected warning.
-    if (g.scenario?.id === 'bf-yangtze' && side === 'cf' &&
-        g.scenario.bridges?.length && g.scenario.rivers?.Yangtze) {
-      const river = g.scenario.rivers.Yangtze, b = g.scenario.bounds;
+    const riverline = scenarioMeta(g).ai?.riverlineDefense;
+    if (riverline?.side === side &&
+        g.scenario.bridges?.length && g.scenario.rivers?.[riverline.river]) {
+      const river = g.scenario.rivers[riverline.river], b = g.scenario.bounds;
       const riverLat = lon => {
         for (let i=1; i<river.length; i++) {
           const a=river[i-1], end=river[i];
@@ -528,13 +518,13 @@
         }
         return river[river.length-1][1];
       };
-      const landed = foes.filter(u => u.side === 'britannia' &&
+      const landed = foes.filter(u => u.side === riverline.attacker &&
         !isShip(u) && !atSea(g,u) &&
         b.north-(u.r+.5)*(b.north-b.south)/g.rows >
           riverLat(b.west+(u.c+.5+.5*(u.r&1))*(b.east-b.west)/g.cols)+0.04);
       for(const [i,bridge] of g.scenario.bridges.entries()){
         if(!landed.some(u=>dist(g,u,bridge)<=9))continue;
-        list.push({key:'yangtze-bridgehead-'+i,c:bridge.c,r:bridge.r,
+        list.push({key:riverline.river.toLowerCase()+'-bridgehead-'+i,c:bridge.c,r:bridge.r,
           name:bridge.name,defend:true,city:false,immediate:true,
           projected:false,vital:true,value:100,seed:-8});
       }

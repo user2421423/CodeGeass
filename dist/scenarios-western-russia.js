@@ -385,6 +385,22 @@
       return coastFraction(geo(c,r),raw);
     },
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{europeanRegion:true,coastBuffer:1,overlays:['westernRussiaRivers']},
+    elite:true,
+    text:{
+      era:"Western Russia · Alternate 2017",
+      intro:"After crossing the Urals, Britannia invades E.U.-controlled western Russia. Capture all 41 cities to win; no turn limit.",
+      diplomacy:"Two hostile powers from turn 1. Moscow and St. Petersburg are exceptionally fortified, but neither is invulnerable.",
+      elite:"Elite Western Russia: single-frame eligible Elite Forces; AI named commanders begin at Level 5. AI has stronger research and production, while player unlocks follow HQ rules.",
+      focus:{
+        britannia:"Kazan",
+        eu:"Moscow"
+      }
+    },
+    blurbs:{
+      britannia:"Advance west from the Volga through three Army Group axes, breach Moscow and St. Petersburg, then conquer all E.U. cities.",
+      eu:"Hold Moscow, St. Petersburg, the Upper Volga and the wooded river approaches. Commit reserves to blunt the Britannian offensive."
+    }};
   E.scenarios={...(E.scenarios||{}),westernRussia:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

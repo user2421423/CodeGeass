@@ -341,6 +341,22 @@
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,ports:PORTS,
     landingData:LANDINGS,defenderData:DEFENDERS,create,onTurn,objective,winner,
     strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true},
+    elite:true,expeditionSide:'cf',
+    text:{
+      era:"Hawaiian Islands · Alternate 2017",
+      intro:"Following victories in the western Pacific, the Chinese Federation launches four carrier-borne assaults against Britannian Hawaii. China owns no Hawaiian city on turn one; seize all 30 bases.",
+      diplomacy:"Britannia controls eight fortified islands, airfields and independently capturable ports. No alliances or turn limit.",
+      elite:"Elite Hawaii: eligible transported land formations convert to Elite Forces. Naval carriers and amphibious fleets retain standardized mechanics.",
+      focus:{
+        cf:"",
+        britannia:"Pearl Harbor"
+      }
+    },
+    blurbs:{
+      cf:"Lead four Chinese carrier-led amphibious invasions into Britannian Hawaii from the western Pacific. Capture every island base.",
+      britannia:"Defend Pearl Harbor, Honolulu and the outer island garrisons. Use naval interception and island reserves to destroy Chinese transports."
+    }};
   E.scenarios={...(E.scenarios||{}),hawaii:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-hawaii':api}};
   if(typeof module!=='undefined')module.exports=api;

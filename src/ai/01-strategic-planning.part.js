@@ -43,12 +43,12 @@
       // Normal Division Japan Britannia retains its specifically assigned garrisons.
       const scenario = g.mode === 'scenario',
         doctrine = scenario ? scenarioDoctrine(g) : null,
-        recovery = !scenario || doctrine === 'division' || doctrine === 'europe' ||
-          g.scenario?.id === 'philippines-invasion';
+        ai = scenarioMeta(g).ai || {},
+        recovery = !scenario || doctrine === 'division' || doctrine === 'europe' || !!ai.recovery;
       memo[side] = { turn: g.turn, doctrine,
-        guards: scenario ? (g.scenario?.id === 'conquest-indochina'
+        guards: scenario ? (ai.guards === 'indochina'
           ? assignIndochinaGuards(g, side)
-          : g.scenario?.id === 'battle-luoyang' && side === 'cf'
+          : ai.guards === 'luoyang' && side === 'cf'
             ? assignLuoyangGuards(g, side) : assignDivisionBritanniaGuards(g, side))
           : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);

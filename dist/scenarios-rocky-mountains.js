@@ -1782,6 +1782,22 @@ const api={id:ID,key:'rockyMountains',title:'Crossing the Rocky Mountains',
  cityData:CITIES,armyGroups:FORMATIONS,operationalAxes:OPERATIONAL_AXES,
  mountainPasses:PASSES,reliefPolygons:MASSIFS,lakes:LAKES,rivers:RIVERS,roads:ROADS,
  create,onTurn,objective,winner,strategicScore,orderGroup,paintRelief,geo,locate};
+api.meta={map:{centreSampled:true},
+  elite:true,expeditionSide:'eu',
+  text:{
+    era:"Rocky Mountains · E.U. Penultimate Offensive",
+    intro:"Europia United attacks westward through Wyoming and Colorado mountain corridors toward Utah. Conquer all 101 Britannian cities.",
+    diplomacy:"Mountain passes, plains approaches and defensive reserves shape the offensive; rivers do not permit ocean shipping.",
+    elite:"Standard Europia United and Britannian Elite Forces, research and rival commander scaling.",
+    focus:{
+      eu:"Denver",
+      britannia:"Salt Lake City"
+    }
+  },
+  blurbs:{
+    eu:"Cross the Rockies from eastern plains through several passes, defeat Britannian reserves and reach Utah.",
+    britannia:"Defend the mountain passes and move reserves against E.U. breakthroughs."
+  }};
 E.scenarios={...(E.scenarios||{}),rockyMountains:api,
  byId:{...(E.scenarios?.byId||{}),[ID]:api}};
 if(typeof module!=='undefined')module.exports=api;

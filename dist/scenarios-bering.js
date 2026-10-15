@@ -239,6 +239,23 @@
   const api={id:'bering-strait',title:'The Bering Strait Crisis',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{painter:'beringGeographic'},
+    elite:true,
+    ai:{doctrine:'europe'},
+    text:{
+      era:"Bering Strait · Alternate 2017",
+      intro:"Britannia versus Europia United: a two-front naval and amphibious war from Alaska to Kamchatka. Conquer every enemy city.",
+      diplomacy:"Britannia and Europia United are at war from turn 1. There is no Chinese Federation involvement or scripted deadline.",
+      elite:"Elite Bering: land and amphibious forces begin as Lv.1 Elite Forces; enemy named commanders begin at Lv.5. Carriers remain conventional. Rival AI has advanced research and elite factories; players follow HQ unlock rules.",
+      focus:{
+        britannia:"Nome",
+        eu:"Provideniya"
+      }
+    },
+    blurbs:{
+      britannia:"Command the Alaskan land army and carrier fleets. Cross the Bering Strait or strike Kamchatka through the Aleutians.",
+      eu:"Defend eastern Siberia and Chukotka, then counter-invade Alaska using fortified northern ports and Kamchatka bases."
+    }};
   E.scenarios={...(E.scenarios||{}),bering:api,
     byId:{...(E.scenarios?.byId||{}),'bering-strait':api}};
   if(typeof module!=='undefined')module.exports=api;

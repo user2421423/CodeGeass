@@ -328,6 +328,22 @@
   const api={id:ID,title:'Iraq–Iran Campaign',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,
+    text:{
+      era:"Iraq and Iran · Alternate 2017",
+      intro:"Britannia invades Iraq and Iran from western expeditionary bases. Fight across Mesopotamia, breach the Zagros and capture the Iranian Plateau. All 84 theatre cities count; no turn limit.",
+      diplomacy:"Only Britannia and the Chinese Federation fight. Two theaters, independent Gulf ports, major reserves and a contested Strait of Hormuz; no three-faction Area 18 forces.",
+      elite:"Elite Iraq–Iran uses both factions’ standard Elite Force rosters, veteran rival commanders and existing production rules. Carrier hulls remain conventional.",
+      focus:{
+        britannia:"Deir ez-Zor",
+        cf:"Baghdad"
+      }
+    },
+    blurbs:{
+      britannia:"Advance from Syria and Arabia, cross the Tigris–Euphrates plains, break the Zagros defenses and seize Tehran. The Persian Gulf fleets can strike the Iranian coast.",
+      cf:"Hold northern and southern Iraq, counterattack the river crossings and preserve powerful reserves behind the Zagros passes and on the Iranian Plateau."
+    }};
   E.scenarios={...(E.scenarios||{}),[KEY]:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

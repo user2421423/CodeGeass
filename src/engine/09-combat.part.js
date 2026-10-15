@@ -30,7 +30,7 @@
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
-    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.5&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
+    attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.5&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
     attack *= 1 + auraBonus(g, u);
     attack *= newcomerAttack(g,u,target,counter);
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
@@ -79,7 +79,7 @@
     const pen = Math.min(.95,armorPenetration(g,u,target)
       +(u.expCalibration?.15:0)
       +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0)
-      +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.12:0));
+      +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.12:0));
     const formationArmor =
       target &&
       !victim.naval &&
@@ -129,7 +129,7 @@
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
-      if (g.units.some(v => v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
+      if (g.units.some(v => v.cmd && v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
         attack *= 0.9;
       attack *= skillDefense(g,target,counter,direct) *
         commanderDefense(g,target,u,counter,direct) *
@@ -203,7 +203,7 @@
       armorPen: Math.min(.95,armorPenetration(g,a,d)
         +(a.expCalibration?.15:0)
         +(fx(a).diagnosis&&d&&a.expDiagnosisId===d.id?.1*(a.expDiagnosisCount||0):0)
-        +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.12:0)),
+        +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.12:0)),
     };
   }
   // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.

@@ -258,6 +258,22 @@
   const api={id:'britannia-siberia',title:'Invasion of Siberia',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,ports:PORTS,rivers:RIVERS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,
+    text:{
+      era:"Siberia · Alternate 2017",
+      intro:"Following the Bering Strait victory, Britannia attacks west from Russian Far Eastern footholds. Capture every one of 49 Siberian cities to win.",
+      diplomacy:"Britannia and Europia United are hostile from turn 1. No F.L.E.I.J.A., scripted alliances or turn limit.",
+      elite:"Elite Siberia uses the established Elite Force conversion, rival veteran commanders and scenario research rules. No global faction unit changes.",
+      focus:{
+        britannia:"Ust-Maya",
+        eu:"Yakutsk"
+      }
+    },
+    blurbs:{
+      britannia:"Launch the great westward offensive from Magadan, Oymyakon and Ust-Maya. Break E.U. defenses on the Lena and drive for the Trans-Siberian railway.",
+      eu:"Defend Yakutsk and Khandyga, protect the industrial railway hubs, preserve mobile reserves and counterattack Britannian columns."
+    }};
   E.scenarios={...(E.scenarios||{}),siberia:api,
     byId:{...(E.scenarios?.byId||{}),'britannia-siberia':api}};
   if(typeof module!=='undefined')module.exports=api;

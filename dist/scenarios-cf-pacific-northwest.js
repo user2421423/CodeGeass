@@ -516,6 +516,22 @@
     cityData:CITIES,ports:PORTS,armyGroups:GARRISONS,invasionData:INVASIONS,
     fleetData:DEFENSIVE_FLEETS,rivers:RIVERS,passes:PASSES,operationalFronts:FRONTS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['reliefZones','regionalRivers']},
+    elite:true,expeditionSide:'cf',
+    text:{
+      era:"Pacific Northwest · Federation World Campaign",
+      intro:"China lands five carrier-led invasions along the Washington and Oregon coast and advances across the Cascades. Total city conquest.",
+      diplomacy:"Britannia owns all inland cities; independent ports and mountain passes determine where beachheads can expand.",
+      elite:"Chinese and Britannian Elite Forces follow the standard four-difficulty system.",
+      focus:{
+        cf:"",
+        britannia:"Seattle"
+      }
+    },
+    blurbs:{
+      cf:"Land carrier-led armies near Puget Sound, Columbia estuary and Oregon, then fight through the Cascades.",
+      britannia:"Repel simultaneous Pacific landings and defend the mountain passes and inland reserves."
+    }};
   E.scenarios={...(E.scenarios||{}),cfPacificNorthwest:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

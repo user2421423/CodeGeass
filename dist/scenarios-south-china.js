@@ -320,6 +320,22 @@
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,rivers:RIVERS,operationalFronts:OPERATIONAL_FRONTS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,
+    text:{
+      era:"South China · Alternate 2017",
+      intro:"Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 64 theatre cities on a large regional map without a turn limit.",
+      diplomacy:"Britannia and the Chinese Federation are hostile from turn 1. Inland Army Groups and offshore invasion fleets operate independently; Chinese reserves and fleets defend mountain corridors, cities and strategic ports.",
+      elite:"Elite South China uses the standard faction Elite Force conversion and rival commander upgrades. Carrier fleets remain conventional; no unit balance or global campaign rules are changed.",
+      focus:{
+        britannia:"Lang Son",
+        cf:"Guangzhou"
+      }
+    },
+    blurbs:{
+      britannia:"Command coordinated offensives from Indochina against Yunnan and Guangxi, while four carrier groups invade the Gulf of Tonkin, Hainan, Pearl Delta and eastern Guangdong. Capture every Chinese city.",
+      cf:"Defend Kunming, Nanning, Guangzhou and Shenzhen with fortified mountain corridors, industrial reserves and coastal fleets. Counterattack through the border passes and repel landings."
+    }};
   E.scenarios={...(E.scenarios||{}),southChina:api,
     byId:{...(E.scenarios?.byId||{}),'bf-south-china':api}};
   if(typeof module!=='undefined')module.exports=api;

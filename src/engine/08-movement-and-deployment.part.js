@@ -59,7 +59,7 @@
   // one extra movement point. Marked bridge-city approaches have no surcharge.
   // All other scenarios and the global Conquest rules remain unchanged.
   function riverCrossingCost(g, a, b, u = null) {
-    if (g?.mode !== 'scenario' || g.scenario?.id !== 'britannia-iraq-iran' ||
+    if (g?.mode !== 'scenario' || !g.scenario.riverBarriers ||
         isSea(a) || isSea(b)) return 0;
     if (u && (fx(u).ignoreTerrain || u.expRetrofit || TYPES[u.type]?.float ||
         eliteFx(u).float || TYPES[u.type]?.naval)) return 0;
@@ -120,6 +120,7 @@
       }
       return first;
     };
+    const rivers = g.mode === 'scenario' && !!g.scenario?.riverBarriers; // decided once, not per step
     while (queue.length) {
       const { p, cost } = pop();
       if (cost > costs.get(stateKey(p))) continue;
@@ -135,7 +136,7 @@
         }
         if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
-        const step = isSea(n) ? 1 : terrainCost(g, u, n) + riverCrossingCost(g, p, n, u);
+        const step = isSea(n) ? 1 : terrainCost(g, u, n) + (rivers ? riverCrossingCost(g, p, n, u) : 0);
         const nc = u.skillReposition
           ? cost + step
           : cross
@@ -143,7 +144,7 @@
           : ship
             ? cost + 1
             : amphibious
-              ? cost + (isSea(n) ? landMove : (terrainCost(g, u, n) + riverCrossingCost(g, p, n, u)) * seaMv)
+              ? cost + (isSea(n) ? landMove : (terrainCost(g, u, n) + (rivers ? riverCrossingCost(g, p, n, u) : 0)) * seaMv)
               : cost + step;
         const sk = stateKey(n);
         if (nc > budget || (cross && cost >= budget) || nc >= (costs.get(sk) ?? Infinity)) continue;
@@ -225,7 +226,11 @@
   // Embarked units cannot fire.
   function targets(g, u) {
     if (atSea(g, u)) return [];
-    return within(g, u, rangeOf(g, u).max).filter(p => inRange(u, p, g) && hostileTarget(g, u, p));
+    const { min, max } = rangeOf(g, u); // once, not again for every hex in reach
+    return within(g, u, max).filter(p => {
+      const d = dist(g, u, p);
+      return d >= min && d <= max && hostileTarget(g, u, p);
+    });
   }
   function claim(g, p, owner) {
     if (g.mode !== 'campaign') {
@@ -284,16 +289,7 @@
     hooks.capture?.(g, s, u, loser);
     if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
     // Preserve expeditionary forces, including carrier cargo, after their last city is lost.
-    const expeditionSide = ({
-      'invasion-hawaii':'cf','invasion-california':'cf','cf-new-zealand':'cf',
-      'cf-panama':'cf','cf-pacific-northwest':'cf',
-      'cf-central-america':'cf','cf-mexico':'cf','cf-pendragon':'cf',
-      'operation-stonehenge':'britannia','invasion-south-africa':'britannia',
-      'invasion-american-east-coast':'eu','invasion-brazil':'eu',
-      'eu-greenland':'eu','invasion-caribbean':'eu','eu-panama':'eu',
-      'eu-rocky-mountains':'eu','eu-pendragon':'eu',
-      'invasion-canada':'eu'
-    })[g.scenario?.id];
+    const expeditionSide = scenarioMeta(g).expeditionSide;
     const expeditionAfloat = loser === expeditionSide &&
       (g.units.some(v => v.side === loser && v.hp > 0) ||
        g.units.some(v => (v.cargo||[]).some(u => u.side === loser && u.hp > 0)));

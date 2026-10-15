@@ -8,15 +8,31 @@
     return !hostileMass(g, u.side, mass) || far;
   }
   // A landing hex: enemy frames within 3 hexes (threat) and an undefended enemy city within 2 (prize). Lower is better;
-  // null when the beach is defended by more frames than the carrier brings.
-  function landingScore(g, side, t, strength, fieldAt, masses = null) {
+  // null when the beach is defended by more frames than the carrier brings. `grids` (landingGrids) answers the same
+  // questions from a lookup when many hexes are scored on an unchanged board.
+  function landingScore(g, side, t, strength, fieldAt, masses = null, grids = null) {
     if (!hostileMass(g, side, massOf(g, t)) && !masses?.has(massOf(g, t))) return null;
-    const threat = g.units
+    const i = t.r * g.cols + t.c;
+    const threat = grids ? grids.threat[i] : g.units
       .filter(v => v.hp > 0 && foe(g, v.side, side) && !isShip(v) && !atSea(g, v) && dist(g, v, t) <= 3)
       .reduce((a, v) => a + v.stack, 0);
     if (threat > strength * (g.mode === 'scenario' ? 1.5 : 1)) return null;
-    const prize = g.stations.some(s => foe(g, s.owner, side) && !unitAt(g, s) && dist(g, s, t) <= 2);
+    const prize = grids ? grids.prize[i] === 1 :
+      g.stations.some(s => foe(g, s.owner, side) && !unitAt(g, s) && dist(g, s, t) <= 2);
     return fieldAt(t) + threat * 3 - (prize ? 25 : 0);
+  }
+  // Per-hex counts for scoring every coast at once: enemy land frames within 3 (threat), an undefended enemy city
+  // within 2 (prize) and enemy units within 2 (danger). Valid only until the next move, attack or landing.
+  function landingGrids(g, side) {
+    const n = g.cols * g.rows, threat = new Float64Array(n), prize = new Uint8Array(n), danger = new Uint32Array(n);
+    for (const v of g.units) {
+      if (v.hp <= 0 || !foe(g, v.side, side)) continue;
+      for (const t of E.within(g, v, 2)) danger[t.r * g.cols + t.c]++;
+      if (!isShip(v) && !atSea(g, v)) for (const t of E.within(g, v, 3)) threat[t.r * g.cols + t.c] += v.stack;
+    }
+    for (const s of g.stations)
+      if (foe(g, s.owner, side) && !unitAt(g, s)) for (const t of E.within(g, s, 2)) prize[t.r * g.cols + t.c] = 1;
+    return { threat, prize, danger };
   }
   // Launch every ready formation onto the best landing hex (toward its front, which may be a friendly rally city), then
   // give each its full turn.
@@ -91,24 +107,25 @@
         const m = move(g, u.id, p.c, p.r);
         if (m.ok) events.push({ kind: 'move', ...m, id: u.id });
       },
-      danger = p => g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
+      danger = (p, grids = null) => grids ? grids.danger[p.r * g.cols + p.c] :
+        g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
       strength = cargo.reduce((a, c) => a + c.stack, 0),
       landingSupport = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
         TYPES[v.type]?.capacity > 0 && v.cargo?.length),
-      landing = p => {
+      landing = (p, grids = null) => {
         // Count only a nearby loaded carrier as prospective same-wave support.
-        // A designated East Coast invasion flotilla plans its beachhead as a
+        // A designated invasion flotilla (East Coast) plans its beachhead as a
         // synchronized landing force, even while its carriers are still offshore.
         // Actual deployment still requires legal beach hexes and nearby support.
         const support = landingSupport.filter(v => dist(g, v, p) <= 3 ||
-          (g.scenario?.id === 'invasion-american-east-coast' &&
+          (scenarioMeta(g).ai?.synchronizedFlotillas &&
            v.invasionGroup && v.invasionGroup === u.invasionGroup &&
            dist(g, v, u) <= 9))
           .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
         const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
-          .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses))
+          .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses, grids))
           .filter(v => v != null);
-        return scores.length ? Math.min(...scores) + danger(p) * 2 + (team?.landing ? Math.min(30, dist(g, p, team.landing) * 4) : 0) : null;
+        return scores.length ? Math.min(...scores) + danger(p, grids) * 2 + (team?.landing ? Math.min(30, dist(g, p, team.landing) * 4) : 0) : null;
       };
     const here = tile(g, u.c, u.r),
       // The route is sea-only even when its goal is a city or troops ashore. Include
@@ -117,8 +134,10 @@
         if (!seeds.length) return false;
         const route = goalField(g, u.side, seeds, 'sea'),
           value = p => route[p.r * g.cols + p.c],
+          risk = new Map(),
+          riskOf = p => risk.get(p) ?? risk.set(p, danger(p)).get(p),
           choices = [here, ...reach].filter(p => Number.isFinite(value(p)))
-            .sort((a, b) => value(a) - value(b) || danger(a) - danger(b) || dist(g, a, u) - dist(g, b, u));
+            .sort((a, b) => value(a) - value(b) || riskOf(a) - riskOf(b) || dist(g, a, u) - dist(g, b, u));
         if (!choices.length) return false;
         sail(choices[0]);
         return true;
@@ -138,7 +157,8 @@
       if (landing(tile(g, u.c, u.r)) == null) {
         // Seed feasible landing positions, then route through navigable water rather
         // than following a land shortcut in the formation's strategic goal field.
-        const seeds = seaCoasts(g, memo).map(p => [p, landing(p)]).filter(([, score]) => score != null)
+        const grids = landingGrids(g, u.side),
+          seeds = seaCoasts(g, memo).map(p => [p, landing(p, grids)]).filter(([, score]) => score != null)
           .sort((a, b) => a[1] - b[1] || a[0].r - b[0].r || a[0].c - b[0].c);
         if (team && seeds.length) team.landing = seeds[0][0];
         followSea(seeds);

@@ -567,7 +567,8 @@
   }
   function objective(g,side=g.player){
     return 'Conquer all '+CITIES.length+' Japanese cities ('+
-      g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).';
+      g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+' controlled).'+
+      (g.scenario?.id!=='invasion-japan'?'':g.scenario.phase==='opening'?' · Alliance ends on turn 10.':' · All three powers are at war.');
   }
   function winner(g){
     if(g.mode!=='scenario' || g.scenario?.id!=='invasion-japan' ||
@@ -579,6 +580,24 @@
     return null;
   }
   const api={id:'invasion-japan',title:'The Invasion of Japan',cols:COLS,rows:ROWS,sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={elite:'japan',
+    ai:{doctrine:'invasion'},
+    text:{
+      era:"Japan · 2017 a.t.b.",
+      intro:"Three playable powers in the Japanese theatre, with an alliance that ends on turn 10.",
+      diplomacy:"Britannia and the Black Knights are allied until turn 10.",
+      elite:"All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.",
+      focus:{
+        britannia:"Nagoya",
+        bk:"Kyoto",
+        cf:"Fukuoka"
+      }
+    },
+    blurbs:{
+      britannia:"Defend Honshu and contain the Chinese Federation at the Kanmon Strait while cooperating temporarily with the Black Knights.",
+      bk:"Command Zero’s resistance enclaves in central Japan. For now the Black Knights are temporarily allied to Britannia.",
+      cf:"Command all of Kyushu as the Federation invasion base and push north into Honshu."
+    }};
   E.scenarios={...(E.scenarios||{}),japan:api};
   if (typeof module!=='undefined') module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -497,6 +497,22 @@
       createVariant};
   }
   const api=createVariant('eu');
+  api.meta={map:{centreSampled:true},
+    elite:true,expeditionSide:'eu',
+    text:{
+      era:"Panama · Atlantic Offensive",
+      intro:"Europia United attacks Britannian Panama solely from the Caribbean, fighting south through the canal. Every city must fall; no turn limit.",
+      diplomacy:"The Panama Canal is navigable for fleets between the Atlantic and Pacific. Only the Centennial and Bridge of the Americas crossings permit land transit across the canal; ports are independently capturable.",
+      elite:"Elite Panama starts with faction-specific Elite Forces at standard scenario levels; rival named commanders reach Lv.5. Carrier hulls stay conventional.",
+      focus:{
+        eu:"",
+        britannia:"Colon"
+      }
+    },
+    blurbs:{
+      eu:"Invade exclusively from the Caribbean, take Colon and Gatun, then push through the canal toward Panama City and Balboa.",
+      britannia:"Defend Colón, Gatún, Balboa and Panama City. Hold the two canal bridges, protect naval bases and organize inland counteroffensives."
+    }};
   E.scenarios={...(E.scenarios||{}),panama:api,
     byId:{...(E.scenarios?.byId||{}),'eu-panama':api}};
   if(typeof module!=='undefined')module.exports=api;

@@ -4,6 +4,7 @@
   'use strict';
   const E = root.Knightmare;
   const {
+    scenarioMeta,
     COMMANDERS,
     ELIMINATOR,
     ELITE_FORCES,

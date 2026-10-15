@@ -298,6 +298,22 @@
   const api={id:'invasion-brazil',title:'Invasion of Brazil',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,expeditionSide:'eu',
+    text:{
+      era:"Brazil · Alternate 2017",
+      intro:"Europia United begins with no Brazilian cities and launches six major transatlantic naval landings against Britannia. Total conquest of all 57 cities wins without a turn limit.",
+      diplomacy:"E.U. and Britannia are hostile from turn 1; EU fleets carry the entire first landing force. Capturing coastal ports creates forward bases for inland operations.",
+      elite:"Elite Brazil replaces eligible land formations with standard faction Elite Forces; carriers remain conventional. AI commander and production scaling follow standard scenario Elite rules.",
+      focus:{
+        eu:"",
+        britannia:"Brasília"
+      }
+    },
+    blurbs:{
+      eu:"Launch six carrier-supported landing fronts from the Atlantic. Take Belém, Fortaleza, Recife, Salvador, Rio and the south; secure ports and advance inland to Brasília and beyond.",
+      britannia:"Defend all 57 Brazilian cities. Use the fortified ports, Amazon forests and central highlands to defeat the incoming fleets and counterattack occupied beaches."
+    }};
   E.scenarios={...(E.scenarios||{}),brazil:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-brazil':api}};
   if(typeof module!=='undefined')module.exports=api;

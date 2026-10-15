@@ -559,6 +559,21 @@
     staging:STAGING,defense:DEFENDERS,invasions:INVASIONS,
     lakes:LAKES,rivers:RIVERS,volcanoes:VOLCANOES,mountainPasses:PASSES,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={elite:true,expeditionSide:'cf',
+    text:{
+      era:"Central America · Federation World Campaign",
+      intro:"The Federation advances north from Panama through Costa Rica to Guatemala, supported by Pacific fleets. Capture all 81 cities.",
+      diplomacy:"Mountain corridors, rivers, jungle and Pacific amphibious landings shape the invasion; all ports are independently capturable.",
+      elite:"Standard Elite preparation and ongoing recruitment, using the proper Federation and Britannian rosters.",
+      focus:{
+        cf:"",
+        britannia:"San José"
+      }
+    },
+    blurbs:{
+      cf:"Advance north from Panama through three great land corridors, supported by Pacific amphibious landings.",
+      britannia:"Hold Costa Rica through Guatemala with mountain defenses and fleet interception."
+    }};
   E.scenarios={...(E.scenarios||{}),[KEY]:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

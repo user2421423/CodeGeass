@@ -248,6 +248,25 @@
   const api={id:'war-for-australia',title:'The War for Australia',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,land:'australia'},
+    elite:true,
+    ai:{doctrine:'europe'},
+    text:{
+      era:"Australia · Alternate 2018",
+      intro:"Britannia holds the east, China the north, and Europia the west. Three-way continental and naval war. Conquer every rival city.",
+      diplomacy:"All three powers are enemies from turn 1. No alliances, scripted diplomacy, or turn limit.",
+      elite:"Elite Australia: rivals gain 60% extra turn income and veteran three-frame land formations; all sides use their established faction units and commander rosters.",
+      focus:{
+        britannia:"Sydney",
+        cf:"Darwin",
+        eu:"Perth"
+      }
+    },
+    blurbs:{
+      britannia:"Hold Sydney, Melbourne, Brisbane and Australia’s eastern industrial heartland. Counter northern advances and Western amphibious landings.",
+      cf:"Push south from Darwin through the Outback, fight for Cape York, and launch amphibious assaults on the eastern and western coasts.",
+      eu:"Defend Perth and Adelaide, exploit the southern coastal corridor, and launch carrier-led landings to outflank eastern strongholds."
+    }};
   E.scenarios={...(E.scenarios||{}),australia:api,
     byId:{...(E.scenarios?.byId||{}),'war-for-australia':api}};
   if(typeof module!=='undefined')module.exports=api;

@@ -256,6 +256,25 @@
   const api={id:'area-18',title:'The Conquest of Area 18 — Arabian Peninsula',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,coastBuffer:1},
+    elite:true,
+    ai:{doctrine:'europe'},saveVersion:2,
+    text:{
+      era:"Arabian Peninsula · Alternate 2017",
+      intro:"A three-way war for the Arabian Peninsula: Britannia dominates the south, Europia United the west and center, and the Chinese Federation the Gulf coast and east. Capture all 43 cities.",
+      diplomacy:"Britannia, Europia United and the Chinese Federation are all hostile from turn 1. No betrayals, nuclear weapons or campaign deadline.",
+      elite:"Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.5; carriers remain conventional. Research and Elite Force production follow existing scenario rules.",
+      focus:{
+        britannia:"Baghdad",
+        eu:"Damascus",
+        cf:"Kermanshah"
+      }
+    },
+    blurbs:{
+      britannia:"Defend Yemen, Najran and southern Oman. Push north from the Asir and Empty Quarter while your Gulf of Aden and Red Sea fleets threaten both rivals.",
+      eu:"Command the Hejaz, Riyadh and the central plateau. Protect Red Sea ports, contest the Saudi interior and drive against the Federation Gulf cities.",
+      cf:"Hold Kuwait, the eastern Arabian coast, Qatar, the Emirates and northern Oman. Control the Persian Gulf and Strait of Hormuz and advance toward Riyadh."
+    }};
   E.scenarios={...(E.scenarios||{}),area18:api,
     byId:{...(E.scenarios?.byId||{}),'area-18':api}};
   if(typeof module!=='undefined')module.exports=api;

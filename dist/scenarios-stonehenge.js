@@ -457,6 +457,22 @@
   const api={id:'operation-stonehenge',title:'Operation Stonehenge',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{europeanRegion:true,coastBuffer:1,homeZoom:5.4,overviewMarkers:true},
+    elite:true,saveVersion:2,expeditionSide:'britannia',
+    text:{
+      era:"Western Europe · Alternate 2017",
+      intro:"Britannia invades from the Atlantic with troops loaded on carriers and amphibious Knightmares at sea. The E.U. holds every city.",
+      diplomacy:"Only Britannia and Europia United are at war. Britannia must seize the entire theatre; the E.U. can win by destroying the invaders.",
+      elite:"Elite Stonehenge: land and amphibious units start as Elite Forces. Carriers remain conventional.",
+      focus:{
+        britannia:"",
+        eu:"Paris"
+      }
+    },
+    blurbs:{
+      britannia:"Lead a carrier-borne amphibious invasion with no starting cities. Take E.U. ports to gain production capacity.",
+      eu:"Hold the British Isles, France and Iberia; repel Britannian carriers and amphibious landing forces."
+    }};
   E.scenarios={...(E.scenarios||{}),stonehenge:api,
     byId:{...(E.scenarios?.byId||{}),'operation-stonehenge':api}};
   if(typeof module!=='undefined')module.exports=api;

@@ -262,6 +262,22 @@
   const api={id:'eu-great-lakes',title:'Battle for the Great Lakes',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,ports:PORTS,rivers:RIVERS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['lakes']},
+    elite:true,expeditionSide:'eu',
+    text:{
+      era:"Great Lakes · Alternate 2017",
+      intro:"After conquering Canada, Europia invades the Britannian Great Lakes industrial heartland. Fight across all five navigable lakes and seize all 56 cities without a turn limit.",
+      diplomacy:"E.U. and Britannia are hostile from turn 1. Mackinac, St. Marys, Detroit and St. Clair are navigable. The Welland Canal bypasses Niagara Falls. Harbours can be captured separately.",
+      elite:"Elite Great Lakes converts eligible land formations to established faction Elite Forces; naval vessels remain conventional and enemy aces gain their normal Elite bonuses.",
+      focus:{
+        eu:"Toronto",
+        britannia:"Detroit"
+      }
+    },
+    blurbs:{
+      eu:"Lead five coordinated offensives out of Ontario. Cross the inland seas, break Detroit and Buffalo, then take Chicago and the industrial belt.",
+      britannia:"Defend Chicago, Detroit, Cleveland and Buffalo with heavy formations, fortified cities, shipborne reserves and inland fleets."
+    }};
   E.scenarios={...(E.scenarios||{}),greatLakes:api,
     byId:{...(E.scenarios?.byId||{}),'eu-great-lakes':api}};
   if(typeof module!=='undefined')module.exports=api;

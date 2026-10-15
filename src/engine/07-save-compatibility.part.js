@@ -131,7 +131,7 @@
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
     // Old Stonehenge saves had a different map and an extra playable power.
-    if (regional && g.scenario?.id === 'operation-stonehenge' && g.scenario.version !== 2) return null;
+    if (regional && scenarioMeta(g).saveVersion && g.scenario.version !== scenarioMeta(g).saveVersion) return null;
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;

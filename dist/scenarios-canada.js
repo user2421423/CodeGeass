@@ -295,6 +295,34 @@
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,rivers:RIVERS,create,onTurn,
     objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+    elite:true,expeditionSide:'eu',
+    ai:{operationalAxes:{invader:'eu',defender:'britannia',
+    // Each E.U. carrier army's route of supply hubs, in order.
+    axes:{
+      'Atlantic Vanguard':["St. John's",'Gander','Corner Brook','Sydney','Halifax','Québec City','Montréal','Ottawa'],
+      'Maritime Assault':['Halifax','Saint John','Sydney','Moncton','Fredericton','Québec City','Montréal','Ottawa'],
+      'Hudson Strait Force':['Kuujjuaq','Rankin Inlet','Churchill','Thompson','Winnipeg','Thunder Bay','Regina'],
+      'Labrador Pincer':['Happy Valley-Goose Bay','Labrador City','Sept-Îles','Baie-Comeau','Saguenay','Québec City','Montréal'],
+      'Beaufort Passage':['Tuktoyaktuk','Inuvik','Norman Wells','Yellowknife','Fort McMurray','Edmonton','Calgary','Vancouver']
+    },
+    // Britannian counterattacks concentrate on these arterial cities.
+    defenderHubs:['Halifax','Québec City','Montréal','Ottawa','Toronto',
+      'Winnipeg','Regina','Calgary','Edmonton','Vancouver','Churchill']}},
+    text:{
+      era:"Canada · Alternate 2017",
+      intro:"Following Greenland, Europia United launches coordinated naval and northern invasions against Britannian Canada. All 74 theatre cities must fall; no turn limit.",
+      diplomacy:"Two hostile powers. Five amphibious invasion axes and continental defense with independently capturable ports and no scripted deadline.",
+      elite:"Elite Canada uses established single-frame Elite Forces and veteran enemy commanders. Carriers remain conventional; all faction mechanics are unchanged.",
+      focus:{
+        eu:"Iqaluit",
+        britannia:"Ottawa"
+      }
+    },
+    blurbs:{
+      eu:"Command six northern footholds and launch five carrier-led invasions from the Atlantic, Hudson Strait, Labrador Sea and Arctic. Seize ports, then converge on the industrial heartland.",
+      britannia:"Hold Canada's fortified ports, prairie supply routes, Rocky Mountain passes and Great Lakes industrial network. Move reserves between threatened fronts."
+    }};
   E.scenarios={...(E.scenarios||{}),canada:api,
     byId:{...(E.scenarios?.byId||{}),[ID]:api}};
   if(typeof module!=='undefined')module.exports=api;

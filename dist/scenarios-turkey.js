@@ -260,6 +260,22 @@
   const api={id:'invasion-turkey',title:'Invasion of Turkey',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.meta={map:{centreSampled:true,overlays:['turkey']},
+    elite:true,
+    text:{
+      era:"Anatolia · Alternate 2017",
+      intro:"Britannia attacks north from the Middle East while its expeditionary fleets target the Mediterranean coast. Europia United defends Turkey and the straits. Capture all 59 cities.",
+      diplomacy:"Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.",
+      elite:"Elite Turkey uses standard faction Elite Force replacements for land and amphibious troops while ships remain conventional. AI income and commanders follow established Elite settings.",
+      focus:{
+        britannia:"Antakya",
+        eu:"Ankara"
+      }
+    },
+    blurbs:{
+      britannia:"Lead the northern land offensive from Syria and Iraq, pierce the Taurus passes and land expeditionary fleets at Anatolian ports. Take every E.U. city.",
+      eu:"Defend Istanbul, Ankara and the Anatolian interior, hold the Bosporus and Dardanelles, then counterattack into Syria and Mesopotamia."
+    }};
   E.scenarios={...(E.scenarios||{}),turkey:api,
     byId:{...(E.scenarios?.byId||{}),'invasion-turkey':api}};
   if(typeof module!=='undefined')module.exports=api;
