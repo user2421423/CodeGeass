@@ -92,7 +92,7 @@
       g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).combinedFront&&dist(g,v,u)<=2)&&
       g.units.some(v=>v.hp>0&&v.side===u.side&&v.id!==u.id&&TYPES[v.type].branch==='Infantry'&&dist(g,v,target)===1))m*=1.15;
     // Zi Dien's movement-triggered raid may activate once per turn against a commander.
-    if(!counter&&f.ziAmbush&&target?.cmd&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
+    if(!counter&&f.ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
     
     if(!counter&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
     // Eduardo: mountain defenders counterstrike harder under nearby Georgian command.
@@ -109,7 +109,7 @@
     if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
       g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&fx(v).blackSeaFox&&dist(g,v,target)<=2))m*=.85;
     if(rangeOf(g,attacker).max>1&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&fx(v).rangeShield&&dist(g,v,target)<=2))m*=.85;
-    if(target.forcedOffensive&&counter)m*=1.2;
+    if(target.forcedOffensive)m*=1.15;
 
     // Ferilli's W-0 telemetry prevents avoidable losses to retaliatory fire.
     // Passive, non-stacking, and deliberately separate from Sophie's support attacks.
@@ -142,10 +142,10 @@
   }
   function newcomerKilled(g,v,attacker){
     if(!attacker)return;
-    for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&u.expSalvageTurn!==g.turn&&dist(g,u,v)<=2){
+    for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&dist(g,u,v)<=2){
       const gained=Math.min(20,60-(u.expSalvageIndustry||0));funds(g,u.side).industry+=Math.max(0,gained);u.expSalvageIndustry=(u.expSalvageIndustry||0)+Math.max(0,gained);
       u.expSalvageCount=(u.expSalvageCount||0)+1;
       if(u.expSalvageCount%3===0)u.hp=Math.min(maxHP(u),u.hp+Math.round(maxHP(u)*.1));
-      u.expSalvageTurn=g.turn;break;
+      break;
     }
   }
