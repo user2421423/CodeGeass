@@ -364,7 +364,6 @@
     u.guardReady = false;
     u.movedDistance = freshLanding ? 0 : (u.movedDistance || 0) + dist(g, from, dest);
     if(fromSea&&!isSea(dest)){u.expLandedTurn=g.turn;if(u.cmd==='sawasaki'){u.expBeachheadStart=g.turn;u.expBeachheadUntil=g.turn+2;}}
-    if(u.expRetrofit){u.expRetrofitStrike=u.movedDistance>=3;delete u.expRetrofit;}
     u.lastTurnMoved = true;
     u.skillReposition = 0;
     u.withdrawMove = false;

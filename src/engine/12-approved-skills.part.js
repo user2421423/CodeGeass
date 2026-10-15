@@ -69,8 +69,6 @@
         const city=v;city.expSupplyBlocked={owner:city.owner,turns:2};for(const w of g.units)if(w.hp>0&&w.side===city.owner&&dist(g,w,city)<=2)w.expChengWeaken={turns:1,value:.15};break;
       }
       case 'diethard':addTargetMark(v,{side:u.side,source:u.id,damage:.2,uses:1});break;
-      case 'kinoshita':v.expBreach=true;break;
-      case 'savitri':v.expRetrofit=true;break;
       case 'mutsuki':v.expNavalRelay=true;break;
       case 'ichijiku':v.expRadar={side:u.side};break;
       case 'indira':v.expPinnedNext=true;v.expPinnedWeakenNext=.25;break;

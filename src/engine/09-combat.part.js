@@ -462,7 +462,6 @@
       delete a.expCalibration;
     }
     if(a.forcedOffensive)delete a.forcedOffensive;
-    if(a.expRetrofitStrike)delete a.expRetrofitStrike;
     if(a.expNavalRelay)delete a.expNavalRelay;
     if(f.breachPassive&&destroyed&&d&&a.expBreachTurn!==g.turn){
       if(a.hp>0&&!unitAt(g,d)){
