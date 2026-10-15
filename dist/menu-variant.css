@@ -1,0 +1,67 @@
+/* IMPERIAL CODE GEASS — character-first royal military tableau */
+
+/* Alternative art-direction preview. All original controls and save actions remain active. */
+.dialog.wide.start-command{width:min(1440px,100%);max-height:min(96dvh,1100px);padding:0;overflow-y:auto}
+.start-command .start-header,.start-command .start-conquest-panel,.start-command .start-mode,.start-command .start-faction,.start-command .start-launch button{transition:border-color .18s ease,background-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.start-command .start-faction:hover:not(:disabled){transform:translateY(-3px)}
+.start-command .start-mode:hover{transform:translateY(-2px)}
+.start-command .start-header{isolation:isolate}
+.start-command .start-header .start-brand{z-index:2}
+.start-command .start-header .start-signal{z-index:2}
+.start-command .start-mode button:focus-visible,.start-command .start-hq button:focus-visible{outline-offset:3px}
+@media(max-width:1000px){.start-layout{grid-template-columns:1fr}.start-side{order:0}}
+@media(max-width:650px){.dialog.wide.start-command{max-height:98dvh}.start-command .start-header{min-height:0}.start-command .start-faction:hover:not(:disabled),.start-command .start-mode:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.start-command *,.start-command *::before,.start-command *::after{transition:none!important;animation:none!important}}
+
+.start-overlay{background:radial-gradient(ellipse at 75% 5%,#612c3550,transparent 46%),radial-gradient(ellipse at 6% 80%,#bb773721,transparent 45%),#07070d}
+.dialog.wide.start-command{border:1px solid #bf9a55;border-radius:2px;box-shadow:0 45px 120px #000f,0 0 0 3px #2c1d1b,0 0 0 4px #745b3680;background:#111018;color:#f6e9d4}
+.start-command .start-header{min-height:255px;padding:42px 48px 38px;border-bottom:3px double #be9868;background:radial-gradient(ellipse at 85% 45%,#802d2e88,transparent 47%),linear-gradient(90deg,#130e17 0%,#1b121ad6 63%,#23141d 100%);align-items:center}
+.start-command .start-header:before{content:"";position:absolute;inset:-26px 5% -35px auto;width:min(440px,39%);background:url('assets/art/portraits/lelouch-78b808b17079.webp') center 39%/contain no-repeat;opacity:.77;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 24%,#000 76%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0%,#000 24%,#000 76%,transparent 100%);pointer-events:none;z-index:0}
+.start-command .start-header:after{content:"";width:340px;height:340px;top:-105px;right:8%;border:1px solid #e8c37a80;border-radius:0;transform:rotate(45deg);box-shadow:0 0 0 27px #d2ac5f10,0 0 0 57px #e4be6a09}
+.start-command .start-brand{max-width:700px}
+.start-command .start-brandline{letter-spacing:.24em;color:#dbb36b;font-size:11px}
+.start-command .start-brandmark{width:41px;height:41px;border:2px solid #d8b471;color:#f4dc9d;box-shadow:0 0 16px #c59a4057}
+.start-command .start-header h1{font:700 clamp(43px,5.1vw,75px)/.97 Georgia,'Times New Roman',serif;color:#fff5e2;text-shadow:0 4px 18px #000,0 0 28px #e0b47440;margin:24px 0 13px;letter-spacing:.005em;max-width:800px}
+.start-command .start-header h1 em{color:#e4b760}
+.start-command .start-header p{font:italic 15px/1.55 Georgia,serif;color:#e7d3b6;max-width:570px}
+.start-command .start-signal{display:none}
+.start-command .start-content{background:radial-gradient(ellipse at 60% 0,#58302720,transparent 45%),#100f17;padding:30px 43px 25px}
+.start-command .start-layout{grid-template-columns:minmax(0,1.55fr) minmax(290px,.96fr);gap:21px}
+.start-command .start-conquest-panel{border:1px solid #a4814e;background:linear-gradient(135deg,#201923ee,#13121ae8 70%),url('menu-world.svg') center/cover;padding:28px;box-shadow:inset 0 0 0 3px #c8a26013}
+.start-command .start-conquest-panel:before{border-color:#cba86c40;box-shadow:0 0 0 29px #cba86c05,0 0 0 65px #cba86c04}
+.start-command .start-panel-index,.start-command .start-kicker,.start-command .eyebrow{color:#dfb36c}
+.start-command .start-panel-top .start-chip,.start-command .start-era-name{border-color:#9b7244;color:#e6c38e;background:#66452739}
+.start-command .start-conquest-panel h2{font:700 clamp(34px,3vw,46px) Georgia,serif;color:#fff1dd;margin-top:20px}
+.start-command .start-intro{color:#c5b7b5;font:13px/1.7 Georgia,serif}
+.start-command .start-section-heading span{color:#e8c282}
+.start-command .start-config-grid label{color:#d5c4ac}
+.start-command .select{background:#100c14;border:1px solid #846a51;color:#fff0d9;border-radius:0}
+.start-command .start-factions{gap:11px}
+.start-command .start-faction{min-height:172px;padding:12px 11px 14px 98px;border-radius:0;border:1px solid #6d5351;border-top:3px solid var(--side-accent,#c3a167);background:radial-gradient(ellipse at 3% 80%,#8d514d40,transparent 65%),linear-gradient(140deg,#2b1e26,#17161d)}
+.start-command .start-faction .faction-portrait{height:169px;width:105px;left:-7px;filter:drop-shadow(1px 0 6px #000a)}
+.start-command .start-faction .faction-banner{width:45px;height:33px}
+.start-command .start-faction-title{font:700 16px/1.12 Georgia,serif;color:#fff3e1;text-shadow:0 2px 4px #000}
+.start-command .start-faction-meta{color:#d1bdb4}
+.start-command .start-faction-choice{color:#e5bd72}
+.start-command .start-faction.active{background:linear-gradient(145deg,#543b34,#25191f);border:2px solid #f5cc7c;border-top:3px solid var(--side-accent,#f0ca7e);box-shadow:0 0 24px #cba35e34,inset 0 0 0 1px #f6d29c6e}
+.start-command .start-era-brief{border-top-color:#af895b50;color:#d8c6bb}
+.start-command .start-launch-main{background:linear-gradient(180deg,#f4d69a,#caa064)!important;border-color:#ffe6af!important;color:#2c1914!important;box-shadow:0 4px 13px #0008;font:700 14px Georgia,serif;text-transform:uppercase}
+.start-command .start-launch-main:hover{background:#ffe7af!important}
+.start-command .start-resume{background:#231b25;border-color:#917352;color:#ead6b4}
+.start-command .start-reward{color:#c3a790}
+.start-command .start-mode{padding:18px 19px;border:1px solid #7b5e4a;border-left:3px solid var(--mode-accent,#d4a96d);background:linear-gradient(115deg,#291d26,#17151e);box-shadow:inset 0 0 0 1px #f1c77b0e}
+.start-command .start-mode:before{background:radial-gradient(circle at 89% -12%,#a9823d29,transparent 55%)}
+.start-command .start-mode h3{font:700 23px Georgia,serif;color:#fbe8cc}
+.start-command .start-mode p{color:#c6b4af}
+.start-command .start-mode-info{color:#d9b991}
+.start-command .start-mode button{background:#44312f;border-color:#9f7c57;color:#f7e6c5}
+.start-command .start-mode button:hover{background:#644334}
+.start-command .start-side-title{color:#dcaf69}
+.start-command .start-hq{background:#1b1821;border-color:#7f654c}
+.start-command .start-hq-top b{color:#e9c47b}
+.start-command .start-hq-actions button{background:#34292c;border-color:#856c50;color:#ead7bb}
+.start-command .start-foot{border-top-color:#94735044}
+.start-command .start-foot-left button{border-color:#947350;color:#e9cb9a}
+.start-command .start-foot small{color:#99877e}
+@media(max-width:1000px){.start-command .start-layout{grid-template-columns:1fr}.start-command .start-header:before{width:37%;opacity:.4}}
+@media(max-width:650px){.start-command .start-header{padding:27px 19px;min-height:195px}.start-command .start-header:before{width:50%;right:-5%;opacity:.35}.start-command .start-header h1{font-size:clamp(39px,10vw,55px)}.start-command .start-header p{font-size:12px}.start-command .start-content{padding:15px 12px}.start-command .start-conquest-panel{padding:17px 14px}.start-command .start-faction{min-height:98px;padding-left:112px}.start-command .start-faction .faction-portrait{height:122px;width:110px}.start-command .start-side{display:grid;grid-template-columns:1fr}}
