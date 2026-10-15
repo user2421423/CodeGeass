@@ -40,7 +40,7 @@
           values: [1, 2],
           tiers: [1, 2],
           costs: [70, 150],
-          text: v => (v === 1 ? 'Forests and mountains cost 1 movement' : 'Every terrain costs 1 movement'),
+          text: v => `Infantry +${v} movement point${v === 1 ? '' : 's'} (total from All-Terrain Landspinners)`,
         },
         filler: {
           name: 'Energy Filler Reserves',
@@ -235,7 +235,7 @@
           tiers: [3],
           costs: [260],
           req: ['varis', 1],
-          text: () => 'Armor units ignore terrain movement costs',
+          text: () => 'Armor units gain +1 movement',
         },
       },
     },

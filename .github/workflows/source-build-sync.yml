@@ -19,6 +19,8 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Verify Story Mode Canterbury movement
         run: node tools/story_canterbury_movement_smoke.cjs
+      - name: Verify HQ mobility research bonuses
+        run: node tools/research_mobility_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
       - name: Verify manual repairs and port healing

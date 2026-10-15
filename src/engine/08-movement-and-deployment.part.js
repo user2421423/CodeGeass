@@ -41,6 +41,13 @@
     // All playable modes grant +2 movement to ground and amphibious units.
     // Warships retain their normal movement values in every mode.
     if (g && t.naval !== 'ship') n += UNIVERSAL_MOVE_BONUS;
+    // HQ mobility research replaces the former terrain-cost discounts.
+    // Landspinners: +1 per Infantry level (max +2). Float System: +1 for Armor.
+    // This applies consistently to every game mode; warships are excluded.
+    if (g && t.naval !== 'ship') {
+      if (t.branch === 'Infantry') n += techLevel(g, u.side, 'infantry.nav');
+      else if (t.branch === 'Armor') n += techLevel(g, u.side, 'sakura.float');
+    }
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
     if(u.expJammedActive)n=Math.max(1,n-2);
@@ -52,9 +59,6 @@
     if (isSea(t)) return 1;
     const type = TYPES[u.type];
     if (fx(u).ignoreTerrain || u.expRetrofit || type.float || eliteFx(u).float) return 1;
-    if (type.branch === 'Armor' && techLevel(g, u.side, 'sakura.float') >= 1) return 1;
-    const nav = type.branch === 'Infantry' ? techLevel(g, u.side, 'infantry.nav') : 0;
-    if (nav >= 2 || (nav >= 1 && (t.terrain === 'forest' || t.terrain === 'mountain'))) return 1;
     return TERRAIN[t.terrain]?.cost || 1;
   }
   // Iraq–Iran only: crossing a Tigris, Euphrates or Karun river edge consumes
