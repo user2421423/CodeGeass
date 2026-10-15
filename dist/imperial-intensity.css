@@ -544,3 +544,345 @@
   }
   .start-command .start-header:before { opacity: .81; transform: none; }
 }
+
+
+/* --------------------------------------------------------------------------
+ * Second art-direction pass: a studio-style illustrated strategy interface.
+ * One deliberate illustration plane, real faction imagery, and game-specific
+ * operation rows. Keeps the existing Rich layout and all button handlers.
+ * -------------------------------------------------------------------------- */
+
+/* ART A — Use the actual anime frame as a composed hero image, not a
+   feathered cutout above an unrelated abstract gradient. */
+.start-command .start-header {
+  position: relative;
+  min-height: 250px;
+  padding-block: 32px;
+  background: #151821;
+  border-bottom: 2px solid #a89062;
+}
+.start-command .start-header:before {
+  display: none;
+  content: none;
+  animation: none;
+}
+.start-command .start-hero-art {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 auto;
+  width: 46%;
+  overflow: hidden;
+  pointer-events: none;
+  background: #20212a;
+}
+.start-command .start-hero-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  filter: saturate(.9) contrast(1.05) brightness(.89);
+}
+/* Controlled picture-to-UI seam; no mist, noisy textures, or lens glow. */
+.start-command .start-hero-art:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #151821 0%, #151821c9 11%, #15182100 37%),
+    linear-gradient(0deg, #1718208f 0%, transparent 25%, transparent 83%, #1518212e);
+}
+.start-command .start-header .start-brand {
+  z-index: 1;
+  width: 57%;
+  max-width: 675px;
+}
+.start-command .start-brandline { gap: 10px; letter-spacing: .11em; }
+.start-command .start-brand-subtitle {
+  color: #b5a991;
+  font-size: 10px;
+  font-weight: 600;
+}
+.start-command .start-header h1 {
+  max-width: 645px;
+  margin: 16px 0 11px;
+  font-size: clamp(44px, 4.35vw, 64px);
+  line-height: 1.025;
+  letter-spacing: -.027em;
+  text-shadow: 0 2px 5px #090b1091;
+}
+.start-command .start-header h1 em { color: #d4b274; }
+.start-command .start-header p {
+  max-width: 440px;
+  color: #bec2c5;
+  font-size: 13px;
+  line-height: 1.5;
+  text-shadow: none;
+}
+/* A/B — Strip "product card" roundedness while retaining the generous
+   two-column conquest + modes arrangement and the warm Imperial accents. */
+.start-command .start-content {
+  background: #141b23;
+}
+.start-command .start-conquest-panel {
+  background: #1b242e;
+  border: 1px solid #535962;
+  border-top: 2px solid #bea271;
+}
+.start-command .start-panel-top .start-chip {
+  font-variant-numeric: tabular-nums;
+  font-size: 10px;
+  color: #a8b0b5;
+  letter-spacing: .035em;
+}
+.start-command .start-conquest-panel h2 {
+  letter-spacing: -.032em;
+  color: #f3eee5;
+}
+.start-command .start-intro { color: #b5c0c6; }
+.start-command .start-config-grid .select {
+  border: 1px solid #647481;
+  border-radius: 0;
+  box-shadow: inset 0 1px 0 #edf4f20a;
+}
+.start-command .start-config-grid .select:focus-visible {
+  outline: 2px solid #ddc28e;
+}
+/* ART A — every faction portrait gets the same framed crop instead of
+   different floating masks and hand-tuned feathering. */
+.start-command .start-faction {
+  min-height: 158px;
+  padding: 13px 10px 12px 99px;
+  border: 1px solid #56606a;
+  border-top: 3px solid var(--side-accent, #cdb27d);
+  background: #252e38;
+  border-radius: 0;
+}
+.start-command .start-faction:before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 93px;
+  background: #1b2630;
+  border-right: 1px solid #ffffff24;
+  z-index: 0;
+  pointer-events: none;
+}
+.start-command .start-faction:after {
+  content: "";
+  position: absolute;
+  left: 93px;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--side-accent,#cdb27d);
+  opacity: .38;
+  pointer-events: none;
+}
+.start-command .start-faction .faction-portrait {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 93px;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: .94;
+  filter: saturate(.85) contrast(1.04);
+  -webkit-mask-image: none;
+  mask-image: none;
+  z-index: 1;
+}
+.start-command .start-faction.active {
+  background: #343c46;
+  border: 1px solid #d8c297;
+  border-top: 3px solid var(--side-accent, #cdb27d);
+  box-shadow: inset 0 0 0 1px #e0cea727;
+}
+.start-command .start-faction.active .faction-portrait {
+  opacity: 1;
+  filter: saturate(1) contrast(1.04);
+}
+.start-command .start-faction .faction-banner,
+.start-command .start-faction .ufn-start-flag {
+  top: 9px;
+  right: 9px;
+  width: 37px;
+  height: 26px;
+  padding: 1px;
+  border: 1px solid #b8a8916f;
+  background: #151c25;
+  box-sizing: border-box;
+}
+.start-command .start-faction-title {
+  font-size: 16px;
+  line-height: 1.16;
+  padding-right: 2px;
+  text-shadow: none;
+}
+.start-command .start-faction-meta { color: #bfc6c9; }
+.start-command .start-faction-choice {
+  font-weight: 700;
+  font-size: 10px;
+  color: #ceb98f;
+}
+.start-command .start-faction:hover:not(:disabled) {
+  background: #303945;
+  transform: none;
+  border-color: #bfa87f;
+}
+.start-command .start-faction:focus-visible { outline-offset: 3px; }
+
+/* B — Turn secondary modes into campaign operations, not feature cards.
+   Distinct Roman series, disciplined button placement, unobtrusive separators. */
+.start-command .start-side-title {
+  padding: 1px 0 4px;
+  color: #d4c198;
+  letter-spacing: .045em;
+}
+.start-command .start-mode {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 15px 15px 13px 51px;
+  min-height: 109px;
+  background: #202a35;
+  border: 1px solid #47515b;
+  border-left: 3px solid var(--mode-accent, #bba67d);
+  border-radius: 0;
+  box-shadow: inset 0 1px 0 #ffffff0b;
+}
+.start-command .start-mode-serial {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 14px;
+  display: block;
+  width: 24px;
+  color: var(--mode-accent, #d2b47e);
+  font: 700 19px/1.2 Georgia, serif;
+  text-align: left;
+}
+.start-command .start-mode:before {
+  display: block;
+  content: "";
+  position: absolute;
+  inset: 14px auto 13px 41px;
+  width: 1px;
+  background: #8e9aa442;
+}
+.start-command .start-mode:after { display:none;content:none; }
+.start-command .start-mode h3 {
+  color: #f0ede7;
+  margin-bottom: 4px;
+  font-size: 21px;
+  font-weight: 700;
+}
+.start-command .start-mode p {
+  margin-bottom: 8px;
+  color: #b6c0c6;
+  font-size: 11px;
+}
+.start-command .start-mode-info {
+  color: #a9b1b7;
+  font-variant-numeric: tabular-nums;
+}
+.start-command .start-mode:hover {
+  background: #273441;
+  border-color: #73808a;
+  border-left-color: var(--mode-accent, #bba67d);
+  transform: none;
+}
+.start-command .start-mode .start-mode-bottom button {
+  min-height: 27px;
+  padding: 4px 0 3px;
+  border: 0;
+  border-bottom: 1px solid #bca377;
+  border-radius: 0;
+  background: transparent;
+  color: #ead6b6;
+  font: 700 11px/1.3 system-ui, sans-serif;
+  white-space: nowrap;
+}
+.start-command .start-mode .start-mode-bottom button:hover {
+  background: transparent;
+  color: #fff0d4;
+  border-bottom-color: #f0d7a4;
+}
+.start-command .start-mode .start-mode-resume button {
+  min-height: 29px;
+  padding: 6px 9px;
+  background: #1c333a;
+  border: 1px solid #568080;
+  color: #c3e5db;
+  font-size: 10px;
+  text-align: left;
+}
+.start-command .start-mode .start-mode-resume button:hover {
+  border-color: #83b6aa;
+  background: #24454c;
+}
+.start-command .start-hq {
+  background: #1c2630;
+  border: 1px solid #4c5861;
+  border-top: 2px solid #85765b;
+}
+.start-command .start-hq-actions button {
+  border-radius: 0;
+  background: #303d4a;
+  border-color: #596976;
+}
+.start-command .start-hq-actions button:hover {
+  background: #41505e;
+  border-color: #b7a17d;
+}
+.start-command button.start-launch-main {
+  background: #d7bb86 !important;
+  border-color: #e7ce99 !important;
+  border-radius: 0;
+  box-shadow: inset 0 -2px 0 #8b704e !important;
+  text-transform: uppercase;
+  letter-spacing: .055em;
+}
+.start-command button.start-launch-main:hover {
+  background: #e6ca97 !important;
+}
+.start-command .start-launch button.start-resume,
+.start-command .start-foot-left button { border-radius: 0; }
+
+/* Small screens keep the full rich menu rather than an unrelated mobile layout. */
+@media (max-width: 1100px) {
+  .start-command .start-header .start-brand { width: 61%; }
+  .start-command .start-hero-art { width: 43%; }
+  .start-command .start-mode { min-height: 0; }
+}
+@media (max-width: 650px) {
+  .start-command .start-header { min-height: 194px; padding: 24px 18px; }
+  .start-command .start-hero-art { width: 59%; opacity: .47; }
+  .start-command .start-hero-art img { object-position: 52% 20%; }
+  .start-command .start-hero-art:after {
+    background: linear-gradient(90deg,#151821 0%,#151821c9 25%,#15182100 70%);
+  }
+  .start-command .start-header .start-brand { width: 94%; }
+  .start-command .start-header h1 { max-width: 94%; }
+  .start-command .start-header p { max-width: 86%; }
+  .start-command .start-faction {
+    min-height: 96px;
+    padding: 9px 10px 9px 105px;
+  }
+  .start-command .start-faction:before { width: 96px; }
+  .start-command .start-faction:after { left: 96px; }
+  .start-command .start-faction .faction-portrait { width: 96px; }
+  .start-command .start-mode { padding: 13px 13px 12px 49px; }
+  .start-command .start-mode:before { inset: 12px auto 12px 40px; }
+  .start-command .start-mode-serial { top: 12px; left: 13px; }
+  .start-command .start-mode-bottom { gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-command .start-hero-art img,
+  .start-command .start-mode,
+  .start-command .start-faction {
+    animation: none !important;
+    transition: none !important;
+  }
+}
