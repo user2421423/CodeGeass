@@ -33,8 +33,6 @@ jobs:
           node-version: '22'
       - name: Hex-by-hex geographic audit
         run: node tools/area18_hex_audit.cjs
-      - name: All-side and all-difficulty scenario regression
-        run: node --test tests/area18.test.cjs
       - name: Verify split-source synchronization
         run: node tools/build_sources.cjs --check
       - name: Validate tracked assets

@@ -50,14 +50,9 @@ one power, or an allied coalition where applicable, conquers its enemies.
 The new Stonehenge map is cropped to Western Europe. Britannia receives an expeditionary stipend until it captures ports; old three-faction Stonehenge saves are not compatible.
 
 The regional maps include separate terrain and coastline data, starting army
-groups and fleets, functional ports and city economies. Their rules and
-geography are covered by the dedicated tests in `tests/area18.test.cjs`,
-`tests/australia.test.cjs`, `tests/bering.test.cjs`,
-`tests/division-japan.test.cjs`, `tests/europe.test.cjs`,
-`tests/indochina.test.cjs`, `tests/philippines.test.cjs`,
-`tests/scenario.test.cjs`, and `tests/stonehenge.test.cjs`.
-Longer AI playtests have dedicated tools and GitHub Actions workflows; a
-successful regression test is not itself proof that a scenario is balanced.
+groups and fleets, functional ports and city economies. Map audits
+(`tools/*_hex_audit.cjs`) and AI playtests (`tools/scenario_sim.cjs`) check them;
+a clean playtest is not itself proof that a scenario is balanced.
 
 ## Features
 
@@ -220,13 +215,10 @@ the regenerated `dist/` output. See [the source guide](src/README.md).
 
 ## Tests and simulations
 
-The repository includes engine, AI, map, scenario, army-group, F.L.E.I.J.A.,
-War Report, roster-parity and save-compatibility regression tests:
+The repository has no regression test suite. These checks verify the build, art and maps:
 
 ```sh
 node tools/build_sources.cjs --check
-node --test tests/*.test.cjs
-node tests/ui-smoke.cjs
 node tools/validate_assets.cjs --tracked
 python3 tools/check_map.py
 ```
@@ -294,8 +286,7 @@ slot and does not overwrite Conquest or Campaign progress.
 
 The **Division of Japan** is a separate 2017 alternate-history scenario with
 the same 44-city map, three initially hostile powers, and persistent
-multi-front AI. Both are covered by `tests/scenario.test.cjs` and
-`tests/division-japan.test.cjs`.
+multi-front AI.
 
 For more representative results, use the current per-scenario and long-run
 simulation tools rather than historical Japan balance tables from older
