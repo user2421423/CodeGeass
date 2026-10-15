@@ -13,11 +13,10 @@ function withScenarios(then) {
 function scenarioModel(kind = scenarioKind) {
   return E.scenarios?.byId?.[kind] || E.scenarios?.japan;
 }
-const SCENARIO_MENU_STYLE = 'archives';
+const SCENARIO_MENU_STYLE = 'combined';
 
 let scenarioLibraryQuery = '';
 let scenarioLibraryTheater = 'all';
-let scenarioLibraryPreview = null;
 const SCENARIO_THEATERS = Object.freeze([
   {
     "id": "east-asia",
@@ -127,19 +126,17 @@ function scenarioDialog() {
   const brief=model.meta?.text || {};
   const saved=getSave(SCENARIO_KEY);
   const savedModel=saved&&!saved.over&&E.scenarios?.byId?.[saved.scenario?.id];
-  const cacheKey=scenarioKind+'|'+scenarioSide+'|'+scenarioDifficulty;
-  if(!scenarioLibraryPreview || scenarioLibraryPreview.key!==cacheKey)
-    scenarioLibraryPreview={key:cacheKey,game:model.create(scenarioSide,scenarioDifficulty,246801)};
-  const preview=scenarioLibraryPreview.game;
-  const cityCount=preview.stations.length;
-  const unitCount=preview.units.length;
-  const sideCount=model.sides.length;
+  // Read pre-generated map and force metadata. Never build a scenario just to browse.
+  const imageMeta=typeof SCENARIO_STATIC_MAPS==='undefined'?{}:(SCENARIO_STATIC_MAPS[scenarioKind]||{});
   const meta=SCENARIO_MANIFEST.find(entry=>entry.id===scenarioKind);
+  const cityCount=imageMeta.cities ?? (Number(meta?.note?.match(/\d+(?= cities)/)?.[0])||'—');
+  const unitCount=imageMeta.formations ?? null;
+  const sideCount=model.sides.length;
   const sides=model.sides.map(side=>{
     const owner=E.FACTIONS[side];
     const active=side===scenarioSide;
-    const cities=preview.stations.filter(c=>c.owner===side).length;
-    const units=preview.units.reduce((n,u)=>n+(u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0);
+    const cities=imageMeta.sides?.[side]?.cities ?? '—';
+    const units=imageMeta.sides?.[side]?.formations ?? '—';
     const portraitKey={britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin'}[side];
     const portrait=portraitKey?ART.portrait(portraitKey,'scenario-side-art'):'';
     const flag=ART.flagSVG(side);
@@ -160,12 +157,12 @@ function scenarioDialog() {
   modal.innerHTML=`<div class="overlay scenario-library-overlay">
     <section class="dialog scenario-library scenario-library--${SCENARIO_MENU_STYLE}" role="dialog" aria-modal="true" aria-label="Scenario selection" aria-describedby="scenario-library-description">
       <header class="scenario-library-header">
-        <div class="scenario-library-heading"><span class="scenario-library-eyebrow">CODE GEASS / ${SCENARIO_MENU_STYLE==='archives'?'IMPERIAL WAR ARCHIVES':'STRATEGIC OPERATIONS COMMAND'}</span><h1>${SCENARIO_MENU_STYLE==='archives'?'War Archives':'Operations Room'}</h1><p id="scenario-library-description">${SCENARIO_MENU_STYLE==='archives'?'The regional campaigns of a world at war.':'Select a front, study its forces, and assume command.'}</p></div>
+        <div class="scenario-library-heading"><span class="scenario-library-eyebrow">CODE GEASS / STRATEGIC WAR ARCHIVES</span><h1>Regional Operations</h1><p id="scenario-library-description">Select the theater, study its geography, and take command.</p></div>
         <button type="button" class="scenario-library-back" data-action="scenario-close">← Main menu</button>
       </header>
       <div class="scenario-workspace">
         <aside class="scenario-catalog" aria-label="Browse regional scenarios">
-          <div class="scenario-catalog-heading"><strong>${SCENARIO_MENU_STYLE==='archives'?'Campaign Register':'Scenario Index'}</strong><small id="scenario-filter-count"></small></div>
+          <div class="scenario-catalog-heading"><strong>Scenario Index</strong><small id="scenario-filter-count"></small></div>
           <div class="scenario-search"><label for="scenario-library-query">Find an operation</label><input id="scenario-library-query" type="search" autocomplete="off" placeholder="Search battlefields…" aria-label="Search scenarios"></div>
           <div class="scenario-theaters" role="group" aria-label="Filter scenario theater">${filterButtons}</div>
           <nav id="scenario-library-index" class="scenario-index" aria-label="Available regional scenarios"></nav>
@@ -179,13 +176,13 @@ function scenarioDialog() {
             <div class="scenario-map-side">
               <div class="scenario-map-head"><span>OPERATIONAL MAP</span><span>${model.cols} × ${model.rows} HEXES</span></div>
               <div class="scenario-map-window">
-                <canvas id="scenario-preview-map" class="scenario-preview-map" aria-label="Regional battlefield preview showing geography, cities and military forces"></canvas>
+                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" alt="Geographic map of ${esc(model.title)} with no troops or unit markers" src="scenario-previews/${esc(scenarioKind)}.webp"><p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
               </div>
-              <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount} initial formations</span><span>${sideCount} belligerents</span></div>
+              <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount===null?'Static geographic preview':unitCount+' starting formations'}</span><span>${sideCount} playable powers</span></div>
             </div>
             <aside class="scenario-brief" aria-label="Operation briefing and deployment">
-              <section class="scenario-brief-text"><div class="scenario-brief-eyebrow">OPERATION BRIEF</div><h3>Situation</h3><p>${esc(brief.intro||'Control the battlefield and defeat rival armies.')}</p>
-                <h4>Opening diplomacy</h4><p class="scenario-diplomacy">${esc(brief.diplomacy||'All rival factions are hostile.')}</p>
+              <section class="scenario-brief-text"><div class="scenario-brief-eyebrow">OPERATION BRIEF</div><p>${esc(brief.intro||'Control the battlefield and defeat rival armies.')}</p>
+                <details class="scenario-diplomacy-details"><summary>Opening diplomacy</summary><p>${esc(brief.diplomacy||'All rival factions are hostile.')}</p></details>
               </section>
               <section class="scenario-brief-factions"><div class="scenario-brief-eyebrow">YOUR COMMAND</div><div class="scenario-side-grid" role="group" aria-label="Select playable faction">${sides}</div></section>
             </aside>
@@ -220,14 +217,12 @@ function scenarioDialog() {
       scenarioCatalogRefresh();
     });
   });
-  const canvas=modal.querySelector('#scenario-preview-map');
-  if(canvas){
-    const dpr=Math.min(window.devicePixelRatio||1,2),rect=canvas.getBoundingClientRect();
-    canvas.width=Math.max(600,Math.round(rect.width*dpr));
-    canvas.height=Math.max(330,Math.round(rect.height*dpr));
-    const ctx=canvas.getContext('2d');
-    if(ctx)paintMap(ctx,preview,canvas.width,canvas.height,dpr,true);
-  }
+  const staticMap=modal.querySelector('#scenario-preview-map');
+  if(staticMap)staticMap.addEventListener('error',()=>{
+    staticMap.hidden=true;
+    const message=modal.querySelector('.scenario-map-unavailable');
+    if(message)message.hidden=false;
+  });
   if(activeId==='scenario-difficulty')modal.querySelector('#scenario-difficulty')?.focus({preventScroll:true});
   else if(activeFaction)modal.querySelector('.scenario-side-option[data-scenario-faction="'+activeFaction+'"]')?.focus({preventScroll:true});
   else focusDialog();
