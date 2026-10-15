@@ -700,12 +700,29 @@ const GEOGRAPHY = (() => {
         queue.push(k);
       }
     }
-    for (let i = 0; i < owner.length; i++) {
-      const side = owner[i];
-      if (!side) continue;
+    const addTint = (side, tile) => {
+      if (!side) return;
       if (!groups.has(side)) groups.set(side, []);
-      groups.get(side).push(g.tiles[i]);
+      groups.get(side).push(tile);
+    };
+    for (let i = 0; i < owner.length; i++) addTint(owner[i], g.tiles[i]);
+    // A geographic polygon can reach beyond the first/last sampled hex
+    // centre. Continue the existing coastal faction stencil by one virtual
+    // hex around the regional map edges. Clip to vector land in paintJapan:
+    // this never changes gameplay hexes or paints political colour at sea.
+    for (let r = 0; r < g.rows; r++) {
+      addTint(owner[r * g.cols], { c: -1, r });
+      addTint(owner[r * g.cols + g.cols - 1], { c: g.cols, r });
     }
+    for (let c = 0; c < g.cols; c++) {
+      addTint(owner[c], { c, r: -1 });
+      addTint(owner[(g.rows - 1) * g.cols + c], { c, r: g.rows });
+    }
+    for (const [r, c, i] of [
+      [-1, -1, 0], [-1, g.cols, g.cols - 1],
+      [g.rows, -1, (g.rows - 1) * g.cols],
+      [g.rows, g.cols, g.rows * g.cols - 1]
+    ]) addTint(owner[i], { c, r });
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
   }
@@ -1045,7 +1062,10 @@ const GEOGRAPHY = (() => {
     if (clip) {
       clipPath(ctx, clip);
       ctx.transform(invA, invC, invB, invD, invX, invY);
-      ctx.globalAlpha = 0.86;
+      // Ownership tint must be fully opaque: blending faction paint with
+      // the neutral green base creates off-colour coastlines and patches
+      // across every atlas-backed regional scenario.
+      ctx.globalAlpha = 1;
       for (const [side, tiles] of japanColorGroups(g)) {
         const faction = g.factions?.[side] || E.FACTIONS[side];
         if (!faction?.color) continue;
