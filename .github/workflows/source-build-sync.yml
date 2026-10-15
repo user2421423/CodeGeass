@@ -25,6 +25,8 @@ jobs:
         run: node tools/story_canterbury_movement_smoke.cjs
       - name: Verify HQ mobility research bonuses
         run: node tools/research_mobility_smoke.cjs
+      - name: Verify six-branch HQ research
+        run: node tools/research_branch_redesign_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
       - name: Verify manual repairs and port healing

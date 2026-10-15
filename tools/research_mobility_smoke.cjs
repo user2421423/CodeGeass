@@ -6,14 +6,16 @@ const assert = require('node:assert/strict');
 const E = require('../dist/engine.js');
 
 const landspinners = E.TECH_TREE.infantry.nodes.nav;
-const floatSystem = E.TECH_TREE.sakura.nodes.float;
-assert.deepEqual(landspinners.values, [1, 2]);
-assert.deepEqual(landspinners.costs, [70, 150], 'original research costs remain');
-assert.deepEqual(floatSystem.values, [1]);
-assert.deepEqual(floatSystem.costs, [260], 'original research cost remains');
+const floatSystem = E.TECH_TREE.armor.nodes.float;
+const traction = E.TECH_TREE.artillery.nodes.traction;
+assert.deepEqual(landspinners.values, [1, 2, 3, 4]);
+assert.deepEqual(landspinners.costs, [70, 150, 260, 400]);
+assert.deepEqual(floatSystem.values, [1, 2, 3, 4]);
+assert.deepEqual(traction.values, [1, 2]);
+assert.deepEqual(floatSystem.costs, [260, 320, 420, 520]);
 assert.match(landspinners.text(1), /Infantry \+1 movement/);
 assert.match(landspinners.text(2), /Infantry \+2 movement/);
-assert.match(floatSystem.text(1), /Armor units gain \+1 movement/);
+assert.match(floatSystem.text(1), /Armor and amphibious Knightmares gain \+1 land movement/);
 
 const g = E.createGame('britannia', 'normal', 'conquest', 20261015);
 const player = g.player;
@@ -48,12 +50,16 @@ for (const mode of ['conquest', 'scenario', 'campaign']) {
   assert.equal(E.movement(g, infantry), before[infantry.id] + 2, mode + ' Landspinners II');
   assert.equal(E.movement(g, enemyInfantry), before[enemyInfantry.id], mode + ' enemy research isolated');
 
-  g.tech[player]['sakura.float'] = 1;
-  assert.equal(E.movement(g, armor), before[armor.id] + 1, mode + ' Float System');
-  assert.equal(E.movement(g, amphibious), before[amphibious.id] + 1, mode + ' armored amphibious Float System');
-  assert.equal(E.movement(g, artillery), before[artillery.id], mode + ' no Artillery mobility research');
+  g.tech[player]['infantry.nav'] = 4;
+  assert.equal(E.movement(g, infantry), before[infantry.id] + 4);
+  g.tech[player]['armor.float'] = 4;
+  assert.equal(E.movement(g, armor), before[armor.id] + 4, mode + ' Float System IV');
+  assert.equal(E.movement(g, amphibious), before[amphibious.id] + 4, mode + ' amphibious Float System IV');
+  assert.equal(E.movement(g, artillery), before[artillery.id], mode + ' before Artillery Traction');
+  g.tech[player]['artillery.traction'] = 2;
+  assert.equal(E.movement(g, artillery), before[artillery.id] + 2);
   assert.equal(E.movement(g, carrier), before[carrier.id], mode + ' no warship mobility research');
-  assert.equal(E.movement(g, infantry), before[infantry.id] + 2, mode + ' Infantry/Armor upgrades independent');
+  assert.equal(E.movement(g, infantry), before[infantry.id] + 4, mode + ' Infantry/Armor upgrades independent');
 
   for (const terrain of ['forest', 'mountain', 'snow', 'crater'])
     assert.equal(E.TERRAIN[terrain].cost, 1, mode + ' terrain cost unchanged by research');

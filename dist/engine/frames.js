@@ -94,7 +94,7 @@
       crit: 0.12,
       pen: 0.45,
       boarding: true,
-      rule: 'Anti-Knightmare close assault: +55% damage to Armor and to city defenses. Range 1; exchanges counter-fire.',
+      rule: 'Anti-Knightmare close assault: +50% damage to Armor and to city defenses. Range 1; exchanges counter-fire.',
     },
     raider: {
       branch: 'Infantry',

@@ -34,6 +34,7 @@
     BRANCH_NAMES,
     TECH_TIERS,
     TECH_TREE,
+    RESEARCH_VERSION,
     // world.js
     RESOURCE_SITES,
     WORLD_ROWS,

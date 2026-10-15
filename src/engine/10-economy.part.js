@@ -204,7 +204,7 @@
     return {
       hp: maxHP(u),
       attack: Math.round(intrinsicAttack(g, u)),
-      armor: t.armor + s.armor,
+      armor: t.armor + s.armor + unitTech(g, u, 'armor'),
       move: isSea(tile(g, u.c, u.r))
         ? t.naval === 'amphibious' ? amphibiousSea(g, u) : atSea(g, u) ? seaMove(g, u) : movement(g, u)
         : movement(g, u),
@@ -224,7 +224,7 @@
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
     const camelot = g && u.elite && !TYPES[u.type].naval && skillNear(g, u, 'combatEngineering', 2) ? 0.8 : 1;
     // Research discounts affect credits only: manual repairs still restore exactly 20% HP.
-    const energyNetwork = g ? 1 - techValue(g, u.side, 'sakura.energy') : 1;
+    const energyNetwork = g ? 1 - techValue(g, u.side, 'cities.energy') : 1;
     // A ship must occupy a port held by its own side, not merely be adjacent to any city.
     const friendlyDock = g && isShip(u) && portAtHex(g, u)?.portOwner === u.side;
     const dockyard = friendlyDock ? 1 - techValue(g, u.side, 'naval.damage') : 1;

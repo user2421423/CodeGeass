@@ -26,23 +26,17 @@
     ),
   );
   function branchOf(type) {
-    return BRANCHES[TYPES[type].branch];
+    const t = TYPES[type];
+    if (t.naval === 'ship') return 'naval';
+    if (t.naval === 'amphibious') return 'amphibious';
+    return BRANCHES[t.branch];
   }
-  // Research saved before the Naval branch existed moves to it.
-  const LEGACY_RESEARCH = {
-    'sakura.landing': 'naval.landing',
-    'infantry.armor': 'infantry.urban',
-    'artillery.armor': 'artillery.counterbattery',
-  };
+  // No old research purchases migrate; unrelated HQ progress remains intact.
   function normalizeResearch(research = {}) {
-    const out = { ...(research || {}) };
-    for (const [old, now] of Object.entries(LEGACY_RESEARCH))
-      if (out[old]) {
-        out[now] = Math.max(out[now] || 0, out[old]);
-        delete out[old];
-      }
-    for (const [id, level] of Object.entries(out))
-      if (TECH_NODES[id]) out[id] = Math.max(0, Math.min(level | 0, TECH_NODES[id].max));
+    const out = {};
+    for (const [id, level] of Object.entries(research || {}))
+      if (TECH_NODES[id] && Number.isInteger(level) && level > 0)
+        out[id] = Math.min(level, TECH_NODES[id].max);
     return out;
   }
   function techLevel(g, side, id) {
@@ -54,11 +48,10 @@
   }
   // Branch-wide tech for a unit, e.g. unitTech(g, u, 'guns') reads 'armor.guns' for a Sutherland.
   function unitTech(g, u, k) {
-    if (TYPES[u.type].naval) return 0;
     return techValue(g, u.side, `${branchOf(u.type)}.${k}`);
   }
   // Naval units use the Naval HP research instead of inheriting Armor/Artillery frames.
   function hullTech(g, u) {
-    return unitTech(g, u, 'hull') + (TYPES[u.type].naval ? techValue(g, u.side, 'naval.hulls') : 0);
+    return unitTech(g, u, 'hull') + (TYPES[u.type].naval === 'ship' ? techValue(g, u.side, 'naval.hulls') : 0);
   }
 

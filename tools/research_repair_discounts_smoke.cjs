@@ -33,7 +33,7 @@ g.tech[side] = {};
 assert.equal(repairSpent(land), basicCost(E.TYPES.glasgow.cost), 'baseline infantry repair cost');
 assert.equal(repairSpent(ship), basicCost(E.TYPES.carrier_battleship.cost), 'baseline warship repair cost');
 
-g.tech[side] = { 'sakura.energy': 1 };
+g.tech[side] = { 'cities.energy': 1 };
 assert.equal(repairSpent(land), Math.round(basicCost(E.TYPES.glasgow.cost) * 0.85),
   'Energy Filler Network reduces manual repair cost by 15%');
 assert.equal(repairSpent(ship), Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.85),
@@ -44,7 +44,7 @@ assert.equal(repairSpent(land), basicCost(E.TYPES.glasgow.cost), 'naval research
 assert.equal(repairSpent(ship), Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.75),
   'Damage Control reduces docked warship repair cost by 25%');
 
-g.tech[side] = { 'naval.damage': 1, 'sakura.energy': 1 };
+g.tech[side] = { 'naval.damage': 1, 'cities.energy': 1 };
 assert.equal(repairSpent(ship),
   Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.85 * 0.75),
   'manual repair research discounts combine multiplicatively');
@@ -60,6 +60,6 @@ land.hp = Math.floor(E.maxHP(land) * 0.4);
 const before = land.hp;
 E.beginTurn(g, side, false);
 assert.equal(land.hp, before, 'Energy Filler Network gives no passive HP regeneration');
-assert.equal(E.TECH_TREE.sakura.nodes.energy.costs[0], 220, 'preserves research price');
+assert.equal(E.TECH_TREE.cities.nodes.energy.costs[0], 220, 'preserves research price');
 assert.equal(E.TECH_TREE.naval.nodes.damage.costs[0], 200, 'preserves research price');
 console.log('Manual repair research discounts: PASS');

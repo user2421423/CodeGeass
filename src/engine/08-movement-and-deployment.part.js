@@ -42,11 +42,12 @@
     // Warships retain their normal movement values in every mode.
     if (g && t.naval !== 'ship') n += UNIVERSAL_MOVE_BONUS;
     // HQ mobility research replaces the former terrain-cost discounts.
-    // Landspinners: +1 per Infantry level (max +2). Float System: +1 for Armor.
-    // This applies consistently to every game mode; warships are excluded.
+    // Landspinners +4; Float +4 on land, including amphibious; Traction +2.
+    // Warship and amphibious sea movement remain unchanged.
     if (g && t.naval !== 'ship') {
-      if (t.branch === 'Infantry') n += techLevel(g, u.side, 'infantry.nav');
-      else if (t.branch === 'Armor') n += techLevel(g, u.side, 'sakura.float');
+      if (t.naval === 'amphibious' || t.branch === 'Armor') n += techLevel(g, u.side, 'armor.float');
+      else if (t.branch === 'Infantry') n += techLevel(g, u.side, 'infantry.nav');
+      else if (t.branch === 'Artillery') n += techLevel(g, u.side, 'artillery.traction');
     }
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;

@@ -104,6 +104,13 @@ let generalOpen = null;
 function loadProfile() {
   try {
     const p = JSON.parse(localStorage.getItem(PROFILE_KEY)) || {};
+    if (p.researchVersion !== E.RESEARCH_VERSION) {
+      // Clean slate for permanent HQ research only, as requested.
+      // Commander, Elite, conquest and token progression are retained.
+      p.research = {};
+      p.researchVersion = E.RESEARCH_VERSION;
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+    }
     if (p.research) p.research = E.normalizeResearch(p.research);
     return p;
   } catch (e) {
@@ -112,6 +119,7 @@ function loadProfile() {
 }
 function saveProfile(p) {
   try {
+    p.researchVersion = E.RESEARCH_VERSION;
     localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
     return true;
   } catch (e) {

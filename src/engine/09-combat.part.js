@@ -35,7 +35,7 @@
     attack *= newcomerAttack(g,u,target,counter);
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
-    if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'naval.torpedoes');
+    if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'amphibious.torpedoes');
     if (t.aquatic && isSea(tile(g, u.c, u.r))) attack *= 1 + t.aquatic;
     if (t.naval === 'ship') {
       attack *= 1 + techValue(g, u.side, 'naval.gunnery');
@@ -58,16 +58,20 @@
         1 +
         f.artist *
           Math.min(3, g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, target) === 1).length);
-    if (t.boarding && (target ? victim.branch === 'Armor' : !!st)) attack *= 1.55;
+    if (t.boarding && (target ? victim.branch === 'Armor' : !!st)) attack *= 1.50;
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
+    if (!t.naval && t.branch === 'Infantry' && victim?.branch === 'Armor')
+      attack *= 1 + techValue(g, u.side, 'infantry.antiarmor');
+    if (t.naval === 'amphibious' && !counter && u.expLandedTurn === g.turn && u.landingAssaultUsedTurn !== g.turn)
+      attack *= 1 + techValue(g, u.side, 'amphibious.landing');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
     if (!t.naval && t.branch === 'Artillery' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'artillery.shells');
     const friends = (side, at, test) =>
       g.units.some(v => v.hp > 0 && v.side === side && v.id !== u.id && dist(g, v, at) === 1 && test(TYPES[v.type]));
     // Lance Formation and Factsphere Fire Control.
     if (!t.naval && t.branch === 'Armor' && techLevel(g, u.side, 'armor.formation') >= 1 && friends(u.side, u, v => v.branch === 'Armor' && !v.naval))
-      attack *= 1.12;
+      attack *= 1.10;
     if (
       !t.naval &&
       t.branch === 'Artillery' &&
@@ -105,7 +109,7 @@
       if (!victim.naval && victim.branch === 'Infantry' && target.entrenched)
         attack *= 1 - techValue(g, target.side, 'infantry.entrench');
       if (nearCity) attack *= 1 - techValue(g, target.side, 'cities.bunkers');
-      attack *= 1 - techValue(g, target.side, 'sakura.blaze');
+      attack *= 1 - techValue(g, target.side, 'cities.shields');
       // Factsphere Screen: Infantry shields neighbouring Artillery.
       if (
         !victim.naval &&
@@ -115,7 +119,7 @@
           v => v.hp > 0 && v.side === target.side && TYPES[v.type].branch === 'Infantry' && dist(g, v, target) === 1,
         )
       )
-        attack *= 0.85;
+        attack *= 0.80;
       // Commander signature abilities (defender side).
       if (tf.taken) attack *= tf.taken;
       const tef = eliteFx(target);
@@ -140,7 +144,7 @@
         attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
       }
     }
-    if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.85 : 0.65;
+    if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
     return Math.max(1, Math.round(attack));
   }
   function preview(g, id, c, r) {
@@ -156,11 +160,15 @@
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Chaos Mines and city-breaker commanders raise damage to city defenses.
     const ef = eliteFx(a),
-      raid = (1 + (t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) * (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) * bombardBonus(g, a, s);
+      raid = (1 + (!t.naval && t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) *
+        (1 + (t.naval === 'amphibious' && s &&
+          (s.portAt || adjacent(g, s).some(v => navigable(v)))
+          ? techValue(g, a.side, 'amphibious.coastal') : 0)) *
+        (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
           base *
-            (t.boarding && d && TYPES[d.type].branch !== 'Armor' ? 1.55 : 1) *
+            (t.boarding && d && TYPES[d.type].branch !== 'Armor' ? 1.50 : 1) *
             (t.siege || 1) *
             (d ? 0.8 : 1.45) *
             raid,
@@ -188,7 +196,7 @@
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
         (wears(g, a, 'marksman') ? 0.08 : 0) +
-        techValue(g, a.side, 'sakura.varis'),
+        techValue(g, a.side, 'cities.targeting'),
       0,
       1,
     );
@@ -282,6 +290,9 @@
     a.skillReposition = 0;
     a.withdrawMove = false;
     a.launched = null;
+    // Consume the landing research bonus on the first attack only.
+    if (TYPES[a.type].naval === 'amphibious' && a.expLandedTurn === g.turn)
+      a.landingAssaultUsedTurn = g.turn;
     let dmg = 0,
       sd = 0;
     if (d) {

@@ -219,6 +219,7 @@
     TECH_TREE,
     TECH_NODES,
     TECH_TIERS,
+    RESEARCH_VERSION,
     TOKEN_REWARD,
     normalizeResearch,
     carrierCapacity,

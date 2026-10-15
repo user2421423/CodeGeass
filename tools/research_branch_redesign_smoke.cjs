@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+'use strict';
+const assert = require('node:assert/strict'), E = require('../dist/engine.js');
+assert.equal(E.RESEARCH_VERSION,2);
+assert.deepEqual(Object.keys(E.TECH_TREE),['infantry','armor','artillery','naval','amphibious','cities']);
+assert.equal(E.TECH_TREE.infantry.nodes.nav.values.at(-1),4);
+assert.equal(E.TECH_TREE.armor.nodes.float.values.at(-1),4);
+assert.equal(E.TECH_TREE.artillery.nodes.traction.values.at(-1),2);
+assert.equal(E.TECH_TREE.infantry.nodes.antiarmor.values.at(-1),.5);
+assert.equal(E.TECH_TREE.amphibious.nodes.hull.values.at(-1),.3);
+assert.equal(E.TECH_TREE.naval.nodes.hulls.values.at(-1),.2);
+assert.ok(!E.TECH_TREE.amphibious.nodes.escort);
+assert.equal(E.branchOf('portman'),'amphibious');
+assert.equal(E.branchOf('carrier_battleship'),'naval');
+assert.deepEqual(E.normalizeResearch({'sakura.float':1,'naval.torpedoes':2}),{});
+const g=E.createGame('britannia','normal','conquest',20261015,'world'), side=g.player;
+g.tech[side]={};
+const units=['glasgow','sutherland','gareth','portman','carrier_battleship'].map((id,i)=>E.newUnit(g,id,side,i+1,3));
+const old=units.map(u=>E.unitStats(g,u));
+g.tech[side]={'infantry.bodyarmor':2,'armor.armor':4,'artillery.armor':2,'amphibious.armor':2,'naval.armor':2,'amphibious.hull':2,'naval.hulls':2};
+for(const u of units)u.hpTech=E.hullTech(g,u);
+const now=units.map(u=>E.unitStats(g,u));
+assert.deepEqual(now.map((v,i)=>v.armor-old[i].armor),[10,20,10,10,10]);
+assert.equal(E.maxHP(units[3]),Math.round(E.TYPES.portman.hp*1.3));
+assert.equal(E.maxHP(units[4]),Math.round(E.TYPES.carrier_battleship.hp*1.2));
+assert.equal(E.maxHP(units[1]),old[1].hp);
+// HQ tech applies to the class-equivalent Elite, while signature abilities stay intact.
+const eliteType=Object.keys(E.TYPES).find(t=>E.TYPES[t].elite && !E.TYPES[t].naval && E.TYPES[t].branch==='Armor');
+assert.ok(eliteType,'elite armored frame available');
+const elite=E.newUnit(g,eliteType,side,8,3);
+assert.ok(elite.elite);
+assert.equal(E.unitStats(g,elite).armor,E.TYPES[eliteType].armor + E.eliteStats(elite.elite,1).armor - E.TYPES[eliteType].armor + 20);
+console.log('Six-branch HQ research, class isolation and Elite parity: PASS');

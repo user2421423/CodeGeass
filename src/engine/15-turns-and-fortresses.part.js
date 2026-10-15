@@ -175,8 +175,6 @@
       if (attrition) {
         const filler = !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry' ? techValue(g, side, 'infantry.filler') : 0;
         u.hp = Math.max(1, u.hp - Math.round(maxHP(u) * attrition * (1 - filler)));
-        if (filler && (t.terrain === 'desert' || t.terrain === 'snow'))
-          u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.03));
       }
       // City occupancy no longer heals frames by itself. Inoue's separate
       // Resistance Logistics bonus still applies to friendly city garrisons.
