@@ -1,0 +1,65 @@
+name: Pre-render 37 geographic scenario maps
+
+on:
+  push:
+    branches: ['preview/scenario-combined']
+    paths:
+      - '.github/workflows/scenario-static-images.yml'
+      - 'tools/generate-scenario-previews.cjs'
+      - 'src/renderer/00-minimap.part.js'
+      - 'dist/ui/scenario-screens.js'
+      - 'dist/index.html'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: scenario-static-images
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless browser driver
+        run: |
+          npm install --prefix /tmp/scenario-export --no-save --no-package-lock playwright-core@1.57.0
+          command -v google-chrome || command -v google-chrome-stable || command -v chromium
+      - name: Build generated game source bundles
+        run: node tools/build_sources.cjs
+      - name: Render all scenario geographic previews once
+        run: NODE_PATH=/tmp/scenario-export/node_modules node tools/generate-scenario-previews.cjs
+      - name: Commit optimized WebP images and force statistics
+        id: commit
+        run: |
+          git add dist/scenario-previews/
+          if git diff --cached --quiet; then
+            echo "No preview images changed"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Build static troop-free geographic previews for all 37 scenarios"
+            git push origin HEAD:preview/scenario-combined
+          fi
+      - name: Publish refreshed GitHub Pages preview
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Actions authored with GITHUB_TOKEN don't start push-triggered workflows.
+          # A workflow_dispatch explicitly republishes the preview branch assets.
+          curl --fail-with-body --retry 3 --retry-delay 3 \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
+            -d '{"ref":"main"}'
