@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify manual repairs and port healing
+        run: node tools/repair_and_port_healing_smoke.cjs
       - name: Verify World Campaign Elite HQ levels
         run: node tools/world_campaign_elite_levels_smoke.cjs
       - name: Audit every Philippine hex and invasion route
