@@ -1153,3 +1153,62 @@
     padding-left: 49px;
   }
 }
+
+/* Restore Imperial gold accents; keep the user's borderless treatment. */
+.start-command { --menu-gold: #e2c080; }
+.start-command .start-header h1 em { color: #ddbd81; }
+.start-command .start-brandline,
+.start-command .start-panel-index,
+.start-command .start-section-heading span,
+.start-command .start-side-title,
+.start-command .start-kicker,
+.start-command .eyebrow,
+.start-command .start-hq .start-kicker { color: #d5b781; }
+.start-command .start-brand-subtitle { color: #c6b397; }
+.start-command .start-brand-divider { background: #9a825d; }
+.start-command .start-panel-top .start-chip { color: #c1ae8c; }
+.start-command .start-config-grid label { color: #d0c0a5; }
+.start-command .start-section-heading small { color: #b4afaa; }
+.start-command .start-era-name { color: #dfc18d; }
+.start-command .start-era-brief strong { color: #e3d2ae; }
+.start-command .start-faction {
+  --side-accent: #d6b77f !important;
+  background: #2c333c;
+}
+.start-command .start-faction-title { color: #f5efe5; }
+.start-command .start-faction-choice,
+.start-command .start-faction.active .start-faction-choice { color: #e1bc75; }
+.start-command .start-faction.active { background: #4a4036; }
+.start-command .start-faction:hover:not(:disabled) { background: #3c3b3b; }
+.start-command .start-faction.active:hover:not(:disabled) { background: #574938; }
+.start-command .start-mode { --mode-accent: #d3b47c !important; }
+.start-command .start-mode-serial { color: #dabc83; }
+.start-command .start-mode .start-mode-bottom button { color: #ead3a9; }
+.start-command .start-mode .start-mode-bottom button:hover { color: #ffebc7; }
+.start-command .start-hq-top b,
+.start-command .start-foot small b { color: #e0bf82; }
+.start-command button.start-launch-main {
+  background: #d7bb86 !important;
+  color: #201912 !important;
+}
+.start-command button.start-launch-main:hover {
+  background: #ebd09e !important;
+  color: #201912 !important;
+}
+.start-command button.start-resume,
+.start-command .start-hq-actions button,
+.start-command .start-foot-left button { color: #ebd7b3; }
+.start-command button.start-resume:hover,
+.start-command .start-hq-actions button:hover,
+.start-command .start-foot-left button:hover { color: #fff1d6; }
+.start-command button:focus-visible,
+.start-command .select:focus-visible,
+.start-command .start-faction:focus-visible {
+  background: #705d40 !important;
+  color: #fff4dc !important;
+}
+.start-command button.start-launch-main:focus-visible {
+  background: #f2dcae !important;
+  color: #201912 !important;
+}
+.start-command .start-faction.active:focus-visible { background: #6b5437 !important; }
