@@ -231,7 +231,7 @@
       hp: 280,
       attack: 112,
       armor: 23,
-      move: 1,
+      move: 2,
       min: 2,
       max: 2,
       cost: 380,
@@ -970,8 +970,6 @@
       gen: '7th-generation equivalent',
       weapon: 'Scythe Slash Harkens · transformable flight form',
       lore: 'Shin Hyuga Shaing’s golden frame, Grand Master of the Knights of St. Michael.',
-      hp: 470, attack: 98, armor: 44, move: 4, min: 1, max: 1,
-      float: true,
       campaign: true,
     },
     ahura_mazda: {
@@ -982,7 +980,6 @@
       gen: '7th-generation equivalent',
       weapon: 'Shoulder cannons · missile pods · twin rifles',
       lore: 'Ashley Ashra’s heavily armed frame, sent with him to guard the Gallia Grande.',
-      hp: 560, attack: 110, armor: 50, move: 3, min: 1, max: 2,
       campaign: true,
     },
     canterbury: {
@@ -993,9 +990,6 @@
       gen: '5th generation',
       weapon: 'Long-range linear cannon',
       lore: 'The Knights of St. Michael’s siege gun, brought up against the walls of Castle Weisswolf.',
-      // One rough-terrain hex per turn in Story Mode (forest/mountain/tundra cost 2).
-      // Other siege batteries keep their normal 1-point base mobility.
-      move: 2,
       campaign: true,
     },
     siegfried: {
@@ -1006,8 +1000,6 @@
       gen: 'Geass Order prototype',
       weapon: 'Slash Harken spikes · Electromagnetic shield',
       lore: 'The Geass Order’s spherical mobile fortress, flown by V.V. in the Directorate’s last stand.',
-      hp: 680, attack: 112, armor: 54, move: 3, min: 1, max: 2,
-      float: true,
       campaign: true,
     },
     raiko: {
@@ -1057,8 +1049,6 @@
       gen: '7th-generation equivalent',
       weapon: 'Baryon Cannon · Electrified harkens',
       lore: 'Li Xingke’s “Divine Tiger”: its Baryon Cannon hits harder than any other super-heavy, at the cost of hull.',
-      attack: 114,
-      hp: 560,
       campaign: true,
     },
     // Neutral garrisons: the Middle Eastern Federation's own frame.
