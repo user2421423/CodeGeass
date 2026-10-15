@@ -127,7 +127,6 @@ async function endTurn() {
   campaignFeed(() => game.over && resultDialog());
   if (!game.over) {
     announceTurn(!!scenarioNotice);
-    if (game.mode !== 'campaign') showTurnSummary(completedTurn, orders);
   }
   const logistics = game.automationReport,
     standing = orders ? [gotoReportText(orders), orders.fired?.length ? `${orders.fired.length} army-group attack${orders.fired.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') : '';
