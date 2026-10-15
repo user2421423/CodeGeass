@@ -35,12 +35,11 @@
         .slice(0, genericSlots(k))),
     };
   }
-  // The persistent roster, created on first use: the two starters per faction.
+  // Every profile owns its starter commanders, including older saves with an empty roster object.
   function roster(profile) {
-    if (!profile.roster) {
-      profile.roster = {};
-      for (const k of Object.values(STARTERS).flat()) profile.roster[k] = defaultOfficer(k);
-    }
+    profile.roster ||= {};
+    for (const k of Object.values(STARTERS).flat())
+      if (!profile.roster[k]) profile.roster[k] = defaultOfficer(k);
     for (const [k, rec] of Object.entries(profile.roster))
       if (COMMANDERS[k] && rec?.commanderVersion !== COMMANDER_VERSION) {
         // Mobility now starts at 6: return tokens paid for Cornelia's old fifth/sixth star. Only records from before
