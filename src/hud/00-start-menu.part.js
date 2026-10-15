@@ -96,7 +96,7 @@ function hudMenus() {
     ...(!campaign ? [hudNavAction('archive', 'Unit Archive', 'Inspect available unit classes')] : [])
   ];
   const intelligence = [
-    hudNavAction('war-report', 'War Report', 'Review events, losses and operations'),
+    ...(!campaign ? [hudNavAction('war-report', 'War Report', 'Review events, losses and operations')] : []),
     ...(!campaign ? [hudNavAction('powers', 'Powers', 'Inspect rival powers')] : [])
   ];
   const system = [
