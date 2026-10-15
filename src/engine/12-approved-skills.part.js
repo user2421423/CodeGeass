@@ -16,7 +16,7 @@
     return g.units.filter(v=>v.hp>0&&!atSea(g,v)&&dist(g,u,v)<=range&&(
       ['enemy','enemyCommander'].includes(k)
         ? foe(g,v.side,u.side)&&(k!=='enemyCommander'||!!v.cmd)&&
-          (u.cmd!=='indira'||['Infantry','Armor'].every(b=>g.units.some(x=>x.hp>0&&x.side===u.side&&TYPES[x.type].branch===b&&dist(g,x,v)===1)))
+          (u.cmd!=='indira'||['Infantry','Armor'].some(b=>g.units.some(x=>x.hp>0&&x.side===u.side&&TYPES[x.type].branch===b&&dist(g,x,v)===1)))
         : v.id!==u.id&&v.side===u.side&&(k==='ally'||k==='commander'&&!!COMMANDERS[v.cmd]?.action||
           k==='elite'&&!!v.elite||k==='ship'&&isShip(v)||k==='wounded'&&v.hp<maxHP(v)||
           k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3&&
@@ -68,7 +68,8 @@
       case 'savitri':v.expRetrofit=true;break;
       case 'mutsuki':v.expNavalRelay=true;break;
       case 'ichijiku':v.expRadar={side:u.side};break;
-      case 'indira':v.expPinnedNext=true;break;
+      case 'indira':v.expPinnedNext=true;v.expPinnedWeakenNext=.25;break;
+      case 'kate':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.15));break;
       default:return {ok:false,reason:'Unknown approved signature action.'};
     }
     u.feintCD=COMMANDERS[u.cmd].action.cooldown ?? 3;
@@ -79,7 +80,9 @@
   function newcomerAttack(g,u,target,counter){
     const f=fx(u),terrain=tile(g,u.c,u.r);let m=1;
     if(!counter&&f.dashStrike&&u.movedDistance>=3&&u.expDashTurn!==g.turn)m*=1.3;
-    if(!counter&&f.highland&&terrain?.terrain==='mountain'&&u.expHighlandTurn!==g.turn)m*=1.25;
+    if(!counter&&f.highland&&terrain?.terrain==='mountain'&&u.expHighlandTurn!==g.turn)m*=1.35;
+    if(!counter&&f.adaptiveBreakthrough&&u.movedDistance>=3)m*=1.2;
+    if(!counter&&f.ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1.25;
     if(!counter&&f.beachhead&&target&&(g.turn-(u.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=1.25;
     if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
       !g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&dist(g,v,target)===1))m*=1.25;
@@ -100,7 +103,7 @@
   function newcomerDefense(g,target,attacker,counter,direct){
     let m=1;
     if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
-    if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=1&&tile(g,target.c,target.r)?.terrain==='coast')m*=.8;
+    if(fx(target).beachhead&&(g.turn-(target.expLandedTurn??-999))<=2)m*=.85;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
     // Eduardo: improved defensive deployment on mountain hexes.
     if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
@@ -140,7 +143,9 @@
   function newcomerKilled(g,v,attacker){
     if(!attacker)return;
     for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&u.expSalvageTurn!==g.turn&&dist(g,u,v)<=2){
-      funds(g,u.side).industry+=Math.min(15,Math.round(price(v.type,v.stack,g,v.side).industry*.1));
+      funds(g,u.side).industry+=20;
+      u.expSalvageCount=(u.expSalvageCount||0)+1;
+      if(u.expSalvageCount%3===0)u.hp=Math.min(maxHP(u),u.hp+Math.round(maxHP(u)*.1));
       u.expSalvageTurn=g.turn;break;
     }
   }

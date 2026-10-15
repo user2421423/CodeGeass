@@ -145,7 +145,7 @@
   }
   function bombardBonus(g, u, city) {
     if (!city) return 1;
-    const raiko=TYPES[u.type].branch==='Artillery'&&skillNear(g,u,'raikoCity',2)?1.15:1;
+    const raiko=TYPES[u.type].branch==='Artillery'&&skillNear(g,u,'raikoCity',2)?1.25:1;
     let mult = city.bombardMark?.side === u.side ? 1 + city.bombardMark.value : 1;
     const old = u.focusCity;
     if (fx(u).focusBombard && old?.city === city.id && old.lastTurn >= g.turn - 1)
@@ -178,8 +178,8 @@
   function skillAttack(g, u, counter) {
     const f = fx(u);
     let m = counter ? [1, 1.25, 1.4][miracle(g, u)] : 1;
-    if (f.lastStand && u.hp / maxHP(u) < 0.4) m *= 1 + f.lastStand;
-    if (f.charge && !counter && u.moved && !u.chain) m *= 1 + f.charge;
+    if (f.lastStand && u.hp / maxHP(u) < 0.5) m *= 1 + f.lastStand;
+    if (f.charge && !counter && u.movedDistance>=2 && !u.chain) m *= 1 + f.charge;
     return m;
   }
   // Damage-taken multiplier: Miracle Worker, Senba's Veteran's Guard, Katase's Prepared Position.
@@ -189,7 +189,7 @@
     let m = [1, 0.9, 0.8][miracle(g, target)];
     if (tf.guard && !counter && direct && target.guardReady && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
     if (
-      skillNear(g, target, 'prepared', 1) &&
+      skillNear(g, target, 'prepared', 2) &&
       (ground?.terrain === 'mountain' || g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1))
     )
       m *= 0.85;
