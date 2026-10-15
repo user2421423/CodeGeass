@@ -128,47 +128,6 @@ function dismissTurnSummary() {
   const el = $('turn-summary');
   if (el) el.hidden = true;
 }
-function showTurnSummary(completedTurn, orders) {
-  if (!game || !Number.isFinite(completedTurn)) return;
-  const report = E.ensureWarReport(game);
-  const stats = report.turns?.[completedTurn]?.[game.player] || null;
-  const el = noticeNode('turn-summary', 'turn-summary');
-  summaryTurn = completedTurn;
-  clearTimeout(summaryCollapseTimeout);
-  summaryCollapseTimeout = null;
-  const value = key => stats && Number.isFinite(stats[key]) ? count(stats[key]) : '—';
-  const blocked = Array.isArray(orders?.blocked) ? count(orders.blocked.length) : '—';
-  el.innerHTML = '<details' + (turnSummaryCollapsed ? '' : ' open') + '><summary>TURN ' + count(completedTurn) +
-    ' REPORT <span class="summary-chevron" aria-hidden="true">⌄</span></summary>' +
-    '<div class="turn-summary-body"><div class="turn-summary-grid">' +
-    '<span>Cities captured <b>' + value('citiesCaptured') + '</b></span>' +
-    '<span>Cities lost <b>' + value('citiesLost') + '</b></span>' +
-    '<span>Enemies destroyed <b>' + value('enemiesDestroyed') + '</b></span>' +
-    '<span>Own units lost <b>' + value('unitsLost') + '</b></span></div>' +
-    '<small>New turn standing orders blocked: ' + blocked + '</small>' +
-    '<div class="summary-actions"><button class="small" data-action="turn-report-open">Full War Report</button>' +
-    '<button class="small ghost" data-action="turn-report-dismiss">Dismiss</button></div></div></details>';
-  el.hidden = false;
-  const details = el.querySelector('details');
-  details.addEventListener('toggle', () => {
-    // An obsolete report may still have a queued toggle event after re-render.
-    if (el.querySelector('details') === details)
-      rememberTurnSummaryCollapsed(!details.open);
-  });
-  details.querySelector('summary').addEventListener('click', () => {
-    // Explicitly opening the report should not be undone by its old timer.
-    clearTimeout(summaryCollapseTimeout);
-    summaryCollapseTimeout = null;
-  });
-  if (!turnSummaryCollapsed) {
-    summaryCollapseTimeout = setTimeout(() => {
-      if (!el.hidden && el.querySelector('details') === details && details.open) {
-        details.open = false;
-        rememberTurnSummaryCollapsed(true);
-      }
-    }, 8000);
-  }
-}
 function dismissPoliticalReport() {
   clearTimeout(politicalTimeout);
   const el = $('political-report');
