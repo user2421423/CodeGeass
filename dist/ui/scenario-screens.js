@@ -13,62 +13,224 @@ function withScenarios(then) {
 function scenarioModel(kind = scenarioKind) {
   return E.scenarios?.byId?.[kind] || E.scenarios?.japan;
 }
+const SCENARIO_MENU_STYLE = 'operations';
+
+let scenarioLibraryQuery = '';
+let scenarioLibraryTheater = 'all';
+let scenarioLibraryPreview = null;
+const SCENARIO_THEATERS = Object.freeze([
+  {
+    "id": "east-asia",
+    "label": "East Asia",
+    "ids": [
+      "invasion-japan",
+      "division-japan",
+      "invasion-korea",
+      "bf-south-china",
+      "bf-yangtze",
+      "battle-luoyang"
+    ]
+  },
+  {
+    "id": "pacific",
+    "label": "Southeast Asia & Pacific",
+    "ids": [
+      "conquest-indochina",
+      "philippines-invasion",
+      "war-for-australia",
+      "invasion-hawaii",
+      "cf-new-zealand",
+      "bf-malacca",
+      "bering-strait"
+    ]
+  },
+  {
+    "id": "europe",
+    "label": "Europe & Russia",
+    "ids": [
+      "european-war",
+      "operation-stonehenge",
+      "britannia-siberia",
+      "crossing-urals",
+      "britannia-western-russia"
+    ]
+  },
+  {
+    "id": "middle-east",
+    "label": "Middle East & Africa",
+    "ids": [
+      "area-18",
+      "britannia-iraq-iran",
+      "invasion-south-africa",
+      "invasion-turkey"
+    ]
+  },
+  {
+    "id": "americas",
+    "label": "The Americas",
+    "ids": [
+      "invasion-brazil",
+      "invasion-california",
+      "invasion-canada",
+      "invasion-caribbean",
+      "eu-great-lakes",
+      "eu-greenland",
+      "invasion-american-east-coast",
+      "eu-panama",
+      "cf-panama",
+      "cf-pacific-northwest",
+      "cf-central-america",
+      "cf-mexico",
+      "eu-rocky-mountains",
+      "eu-pendragon",
+      "cf-pendragon"
+    ]
+  }
+]);
+
+function scenarioTheaterOf(id) {
+  const group=SCENARIO_THEATERS.find(theater=>theater.ids.includes(id));
+  return group?.id || "other";
+}
+
+function scenarioCatalogRefresh() {
+  const root=modal.querySelector('#scenario-library-index');
+  if(!root) return;
+  const term=scenarioLibraryQuery.trim().toLocaleLowerCase();
+  const entries=SCENARIO_MANIFEST.filter(({id})=>!!E.scenarios?.byId?.[id]).filter(({id,title,note})=>
+    (scenarioLibraryTheater==='all'||scenarioTheaterOf(id)===scenarioLibraryTheater)&&
+    (!term||(title+' '+note+' '+scenarioTheaterOf(id)).toLocaleLowerCase().includes(term)));
+  const groups=scenarioLibraryTheater==='all'?SCENARIO_THEATERS:SCENARIO_THEATERS.filter(g=>g.id===scenarioLibraryTheater);
+  root.innerHTML=groups.map(group=>{
+    const rows=entries.filter(entry=>group.ids.includes(entry.id));
+    if(!rows.length) return '';
+    const buttons=rows.map(({id,title,note})=>`<button class="scenario-entry ${id===scenarioKind?'active':''}" type="button" data-scenario-kind="${esc(id)}" aria-pressed="${id===scenarioKind}" title="${esc(title)}">
+      <span class="scenario-entry-marker" aria-hidden="true">${id===scenarioKind?'◆':'◇'}</span>
+      <span class="scenario-entry-copy"><strong>${esc(title)}</strong><small>${esc(note)}</small></span>
+      <span class="scenario-entry-tail" aria-hidden="true">${id===scenarioKind?'●':'›'}</span>
+    </button>`).join('');
+    return `<section class="scenario-catalog-section" aria-label="${esc(group.label)}">
+      <div class="scenario-catalog-group">${esc(group.label)}<span>${rows.length}</span></div>${buttons}</section>`;
+  }).join('') || `<p class="scenario-catalog-empty">No matching operations. Try another theater or search term.</p>`;
+  const count=modal.querySelector('#scenario-filter-count');
+  if(count)count.textContent=entries.length+' of '+SCENARIO_MANIFEST.filter(v=>E.scenarios?.byId?.[v.id]).length+' operations';
+}
+
 function scenarioDialog() {
-  const model = scenarioModel();
-  if (!model) return;
-  if (!model.sides.includes(scenarioSide)) scenarioSide = model.sides[0];
-  const text = model.meta.text;
-  const saved = getSave(SCENARIO_KEY), resume = saved && !saved.over && scenarioModel(saved.scenario?.id);
-  const preview = model.create(scenarioSide,scenarioDifficulty,246801);
-  const choices = SCENARIO_MANIFEST.filter(({id})=>E.scenarios?.byId?.[id]).map(({id,title,note})=>
-    '<button class="small'+(id===scenarioKind?' active':'')+
-    '" data-scenario-kind="'+id+'" aria-pressed="'+(id===scenarioKind)+'">'+
-    title+' · '+note+'</button>').join('');
-  const cards=model.sides.map(s=>{
-    const owner=E.FACTIONS[s];
-    const cities=preview.stations.filter(c=>c.owner===s).length;
-    const units=preview.units.reduce((n,u)=>n+(u.side===s?1:0)+
-      (u.cargo||[]).filter(v=>v.side===s).length,0);
-    return '<button class="faction '+s+(s===scenarioSide?' active':'')+'" data-scenario-faction="'+s+'">'+
-      (ART.flagSVG(s) ? '<span class="faction-banner" aria-hidden="true">'+ART.flagSVG(s)+'</span>' : '')+
-      '<span class="label" style="color:'+(s==='bk'?'#f0c94a':owner.color)+'">'+owner.short+'</span>'+
-      '<h3>'+owner.name+'</h3><p>'+(model.meta.blurbs?.[s]||'')+'</p>'+
-      '<p class="doctrine">'+cities+' cities · '+units+' starting formations</p>'+
-      '<span class="select-mark">'+(s===scenarioSide?'✓ Selected':'Select faction')+'</span></button>';
+  const model=scenarioModel();
+  if(!model)return;
+  const priorCatalog=modal.querySelector('#scenario-library-index');
+  const priorScroll=priorCatalog?.scrollTop || 0;
+  const activeId=document.activeElement?.id;
+  const activeFaction=document.activeElement?.dataset?.scenarioFaction;
+  if(!model.sides.includes(scenarioSide))scenarioSide=model.sides[0];
+  const brief=model.meta?.text || {};
+  const saved=getSave(SCENARIO_KEY);
+  const savedModel=saved&&!saved.over&&E.scenarios?.byId?.[saved.scenario?.id];
+  const cacheKey=scenarioKind+'|'+scenarioSide+'|'+scenarioDifficulty;
+  if(!scenarioLibraryPreview || scenarioLibraryPreview.key!==cacheKey)
+    scenarioLibraryPreview={key:cacheKey,game:model.create(scenarioSide,scenarioDifficulty,246801)};
+  const preview=scenarioLibraryPreview.game;
+  const cityCount=preview.stations.length;
+  const unitCount=preview.units.length;
+  const sideCount=model.sides.length;
+  const meta=SCENARIO_MANIFEST.find(entry=>entry.id===scenarioKind);
+  const sides=model.sides.map(side=>{
+    const owner=E.FACTIONS[side];
+    const active=side===scenarioSide;
+    const cities=preview.stations.filter(c=>c.owner===side).length;
+    const units=preview.units.reduce((n,u)=>n+(u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0);
+    const portraitKey={britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin'}[side];
+    const portrait=portraitKey?ART.portrait(portraitKey,'scenario-side-art'):'';
+    const flag=ART.flagSVG(side);
+    return `<button class="scenario-side-option ${active?'active':''}" type="button" data-scenario-faction="${esc(side)}" aria-pressed="${active}" style="--scenario-side-color:${side==='bk'?'#f0c94a':owner.color}">
+      <span class="scenario-side-image" aria-hidden="true">${portrait}</span>
+      <span class="scenario-side-copy"><span class="scenario-side-name">${esc(owner.name)}</span><span class="scenario-side-stats">${cities} cities · ${units} formations</span></span>
+      <span class="scenario-side-flag" aria-hidden="true">${flag||''}</span>
+      <span class="scenario-side-mark" aria-hidden="true">${active?'✓':''}</span>
+    </button>`;
   }).join('');
-  const difficulties = Object.entries(E.DIFFICULTIES)
+  const difficulties=Object.entries(E.DIFFICULTIES)
     .filter(([id])=>['normal','hard','challenge','elite'].includes(id))
-    .sort((a,b)=>['normal','hard','challenge','elite'].indexOf(a[0])-
-      ['normal','hard','challenge','elite'].indexOf(b[0]))
-    .map(([id,d])=>'<option value="'+id+'"'+
-      (scenarioDifficulty===id?' selected':'')+'>'+d.name+'</option>').join('');
-  modal.innerHTML='<div class="overlay"><section class="dialog wide scenario-select" role="dialog" aria-modal="true" aria-label="Scenario selection">'+
-    '<div class="dialog-head"><div><div class="eyebrow">Scenario Mode · '+text.era+'</div>'+
-    '<h2>'+model.title+'</h2><p>'+text.intro+'</p><div class="scenario-choices">'+choices+'</div>'+
-    '</div><button class="small close" data-action="scenario-close">Back</button></div>'+
-    (resume ? '<div class="conquest-row"><div><label>Saved scenario</label><h3 class="conquest-title">'+esc(resume.title)+'</h3>'+
-      '<p class="mode-note">'+E.FACTIONS[saved.player].name+' · '+(E.DIFFICULTIES[saved.difficulty]?.name || 'Normal')+' · turn '+saved.turn+'</p></div>'+
-      '<button class="primary" data-action="continue-scenario">Continue</button></div>' : '')+
-    '<canvas id="scenario-preview-map" class="scenario-preview-map" aria-label="Regional scenario preview with cities and armies"></canvas>'+
-    '<div class="choice-grid '+(model.sides.length===2?'two':'three')+'">'+cards+'</div>'+
-    '<div class="setup-row"><div><label for="scenario-difficulty">Difficulty</label>'+
-    '<select id="scenario-difficulty" class="select">'+difficulties+'</select>'+
-    '<p class="mode-note">'+(scenarioDifficulty==='elite'?text.elite:'Hard and Challenge strengthen rival armies and income.')+'</p></div>'+
-    '<div><label>Opening diplomacy</label><p>'+text.diplomacy+'</p></div></div>'+
-    '<div class="dialog-footer"><small class="notice">'+model.cols+' × '+model.rows+
-      ' hexes · '+preview.stations.length+' cities · '+preview.units.length+
-      ' starting formations · Saved automatically in its own scenario slot. Total conquest victory.</small>'+
-      '<button class="primary" data-action="start-scenario">Command '+E.FACTIONS[scenarioSide].short+'</button></div>'+
-    '</section></div>';
+    .sort((a,b)=>['normal','hard','challenge','elite'].indexOf(a[0])-['normal','hard','challenge','elite'].indexOf(b[0]))
+    .map(([id,d])=>`<option value="${esc(id)}" ${scenarioDifficulty===id?'selected':''}>${esc(d.name)}</option>`).join('');
+  const filterButtons=[{id:'all',label:'All theaters'},...SCENARIO_THEATERS].map(group=>
+    `<button type="button" class="scenario-theater ${scenarioLibraryTheater===group.id?'active':''}" data-scenario-theater="${esc(group.id)}" aria-pressed="${scenarioLibraryTheater===group.id}">${esc(group.label)}</button>`).join('');
+  const saveButton=savedModel?`<button class="scenario-resume" data-action="continue-scenario" type="button"><strong>Continue saved operation</strong><small>${esc(savedModel.title)} · Turn ${saved.turn}</small></button>`:'';
+  modal.innerHTML=`<div class="overlay scenario-library-overlay">
+    <section class="dialog scenario-library scenario-library--${SCENARIO_MENU_STYLE}" role="dialog" aria-modal="true" aria-label="Scenario selection" aria-describedby="scenario-library-description">
+      <header class="scenario-library-header">
+        <div class="scenario-library-heading"><span class="scenario-library-eyebrow">CODE GEASS / ${SCENARIO_MENU_STYLE==='archives'?'IMPERIAL WAR ARCHIVES':'STRATEGIC OPERATIONS COMMAND'}</span><h1>${SCENARIO_MENU_STYLE==='archives'?'War Archives':'Operations Room'}</h1><p id="scenario-library-description">${SCENARIO_MENU_STYLE==='archives'?'The regional campaigns of a world at war.':'Select a front, study its forces, and assume command.'}</p></div>
+        <button type="button" class="scenario-library-back" data-action="scenario-close">← Main menu</button>
+      </header>
+      <div class="scenario-workspace">
+        <aside class="scenario-catalog" aria-label="Browse regional scenarios">
+          <div class="scenario-catalog-heading"><strong>${SCENARIO_MENU_STYLE==='archives'?'Campaign Register':'Scenario Index'}</strong><small id="scenario-filter-count"></small></div>
+          <div class="scenario-search"><label for="scenario-library-query">Find an operation</label><input id="scenario-library-query" type="search" autocomplete="off" placeholder="Search battlefields…" aria-label="Search scenarios"></div>
+          <div class="scenario-theaters" role="group" aria-label="Filter scenario theater">${filterButtons}</div>
+          <nav id="scenario-library-index" class="scenario-index" aria-label="Available regional scenarios"></nav>
+        </aside>
+        <main class="scenario-stage" aria-label="Selected regional operation">
+          <div class="scenario-operation-header">
+            <span class="scenario-operation-index">${esc(brief.era||'Regional campaign')} <span class="scenario-operation-slash">/</span> ${esc(meta?.note||'Regional operation')}</span>
+            <h2>${esc(model.title)}</h2>
+          </div>
+          <div class="scenario-stage-body">
+            <div class="scenario-map-side">
+              <div class="scenario-map-head"><span>OPERATIONAL MAP</span><span>${model.cols} × ${model.rows} HEXES</span></div>
+              <div class="scenario-map-window">
+                <canvas id="scenario-preview-map" class="scenario-preview-map" aria-label="Regional battlefield preview showing geography, cities and military forces"></canvas>
+              </div>
+              <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount} initial formations</span><span>${sideCount} belligerents</span></div>
+            </div>
+            <aside class="scenario-brief" aria-label="Operation briefing and deployment">
+              <section class="scenario-brief-text"><div class="scenario-brief-eyebrow">OPERATION BRIEF</div><h3>Situation</h3><p>${esc(brief.intro||'Control the battlefield and defeat rival armies.')}</p>
+                <h4>Opening diplomacy</h4><p class="scenario-diplomacy">${esc(brief.diplomacy||'All rival factions are hostile.')}</p>
+              </section>
+              <section class="scenario-brief-factions"><div class="scenario-brief-eyebrow">YOUR COMMAND</div><div class="scenario-side-grid" role="group" aria-label="Select playable faction">${sides}</div></section>
+            </aside>
+          </div>
+        </main>
+      </div>
+      <footer class="scenario-library-footer">
+        <div class="scenario-footer-saves">${saveButton}<span class="scenario-save-notice">Regional scenarios save independently · Total conquest victory</span></div>
+        <div class="scenario-footer-launch"><div class="scenario-difficulty"><label for="scenario-difficulty">Difficulty</label><select id="scenario-difficulty" class="select">${difficulties}</select></div>
+          <button class="scenario-deploy primary" type="button" data-action="start-scenario">Deploy ${esc(E.FACTIONS[scenarioSide]?.short||'forces')} <span aria-hidden="true">→</span></button></div>
+      </footer>
+    </section>
+  </div>`;
+  scenarioCatalogRefresh();
+  const cat=modal.querySelector('#scenario-library-index');
+  if(cat)cat.scrollTop=priorScroll;
+  const search=modal.querySelector('#scenario-library-query');
+  if(search){
+    search.value=scenarioLibraryQuery;
+    search.addEventListener('input',e=>{scenarioLibraryQuery=e.target.value;scenarioCatalogRefresh();});
+  }
+  modal.querySelectorAll('[data-scenario-theater]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      scenarioLibraryTheater=button.dataset.scenarioTheater;
+      modal.querySelectorAll('[data-scenario-theater]').forEach(item=>{
+        const active=item.dataset.scenarioTheater===scenarioLibraryTheater;
+        item.classList.toggle('active',active);
+        item.setAttribute('aria-pressed',String(active));
+      });
+      const list=modal.querySelector('#scenario-library-index');
+      if(list)list.scrollTop=0;
+      scenarioCatalogRefresh();
+    });
+  });
   const canvas=modal.querySelector('#scenario-preview-map');
   if(canvas){
     const dpr=Math.min(window.devicePixelRatio||1,2),rect=canvas.getBoundingClientRect();
     canvas.width=Math.max(600,Math.round(rect.width*dpr));
     canvas.height=Math.max(330,Math.round(rect.height*dpr));
-    const b=canvas.getContext('2d');
-    if(b)paintMap(b,preview,canvas.width,canvas.height,dpr,true);
+    const ctx=canvas.getContext('2d');
+    if(ctx)paintMap(ctx,preview,canvas.width,canvas.height,dpr,true);
   }
-  focusDialog();
+  if(activeId==='scenario-difficulty')modal.querySelector('#scenario-difficulty')?.focus({preventScroll:true});
+  else if(activeFaction)modal.querySelector('.scenario-side-option[data-scenario-faction="'+activeFaction+'"]')?.focus({preventScroll:true});
+  else focusDialog();
 }
 function startScenario(side=scenarioSide, campaignContext=null) {
   const model=scenarioModel();
