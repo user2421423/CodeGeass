@@ -5,7 +5,7 @@
     if(!k)return [];
     if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
       ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
-      : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=2):true));
+      : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=3):true));
     // Rapid Rotation is strictly land-to-land. Amphibious units at sea count as sea units.
     if (u.cmd === 'olivia') return g.units.filter(v =>
       v.hp > 0 && v.id !== u.id && v.side === u.side && dist(g,u,v) <= range &&
@@ -60,8 +60,8 @@
         if(!city)return {ok:false,reason:'No friendly city in range.'};city.expDecree=true;break;
       }
       case 'chengzhong':{
-        const city=g.stations.filter(s=>foe(g,s.owner,u.side)&&dist(g,u,s)<=2).sort((a,b)=>dist(g,u,a)-dist(g,u,b))[0];
-        if(!city)return {ok:false,reason:'No enemy city in range.'};city.expSupplyBlocked={owner:city.owner};break;
+        const city=g.stations.filter(s=>foe(g,s.owner,u.side)&&dist(g,u,s)<=3).sort((a,b)=>dist(g,u,a)-dist(g,u,b))[0];
+        if(!city)return {ok:false,reason:'No enemy city in range.'};city.expSupplyBlocked={owner:city.owner,turns:2};for(const w of g.units)if(w.hp>0&&w.side===city.owner&&dist(g,w,city)<=2)w.expChengWeaken={turns:1,value:.15};break;
       }
       case 'diethard':addTargetMark(v,{side:u.side,source:u.id,damage:.2,uses:1});break;
       case 'kinoshita':v.expBreach=true;break;

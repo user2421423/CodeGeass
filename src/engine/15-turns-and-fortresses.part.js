@@ -98,7 +98,7 @@
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
     if(outgoing){for(const v of g.units)if(v.side===outgoing)delete v.expSilenced;
-      for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing)delete station.expSupplyBlocked;}
+      for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing){station.expSupplyBlocked.turns=(station.expSupplyBlocked.turns||1)-1;if(station.expSupplyBlocked.turns<=0)delete station.expSupplyBlocked;}}
     if (outgoing && outgoing !== side)
       for (const u of g.units)
         if (u.hp > 0 && u.side === outgoing && !TYPES[u.type].naval && TYPES[u.type].branch === 'Infantry')
