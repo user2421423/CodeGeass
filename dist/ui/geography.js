@@ -726,6 +726,33 @@ const GEOGRAPHY = (() => {
     japanColorCache = { tiles: g.tiles, revision, groups };
     return groups;
   }
+  // The active geographic map is the playable land plus the SAME short
+  // coastal colour buffer used by the political painter. It must never be
+  // the whole GSHHG atlas: continental polygons extend far beyond a small
+  // regional scenario and would expose unrelated countries as grey terrain.
+  function regionalVisibleLand(g) {
+    japanColorGroups(g);
+    const cache = japanColorCache;
+    if (cache.visibleLand) return cache.visibleLand;
+    const tiles = [];
+    const seen = new Set();
+    const add = t => {
+      const key = t.r + ':' + t.c;
+      if (!seen.has(key)) { seen.add(key); tiles.push(t); }
+    };
+    for (const group of cache.groups.values()) for (const t of group) add(t);
+    // Neutral playable land remains visible even without a political owner.
+    for (const t of g.tiles) if (t.terrain !== 'sea') add(t);
+    const path = FAST_PATH ? new Path2D() : null;
+    if (path) for (const t of tiles) tacticalHex(path, t, R + .8);
+    return cache.visibleLand = { path, tiles };
+  }
+  function clipRegionalLand(ctx, coverage) {
+    if (coverage.path) return ctx.clip(coverage.path);
+    ctx.beginPath();
+    for (const t of coverage.tiles) tacticalHex(ctx, t, R + .8);
+    ctx.clip();
+  }
   // The Bering map crosses the international date line (148° E to 132° W).
   // Global atlas polygons use -180..180 and would split its coastline apart.
   // Paint the GSHHS-sampled *gameplay* shoreline instead: provinces, ports and
@@ -1043,29 +1070,27 @@ const GEOGRAPHY = (() => {
     ctx.fillRect(left, top, right - left, bottom - top);
     if (!shapes.length && !has('philippines')) return true;
 
-    // Japan keeps its geographic land silhouette. Europe is deliberately
-    // Europe-only: do not draw the GSHHG outline of Africa, Anatolia or the
-    // Middle East just because they share a large global land polygon.
-    // Europe is painted below solely where European tactical provinces exist.
-    if (!europeOnly) {
-      ctx.save();
-      ctx.transform(A, C, B, D, tx, ty);
-      ctx.fillStyle = '#91a799';
-      fillPath(ctx, paths(ctx, shapes, a, b, c, d));
-      ctx.restore();
-    }
-
-    // Draw only faction ownership INSIDE the geographic coast polygons.
+    // No unconditional land fill: global coast polygons can include Russia,
+    // China, Africa or neighbouring islands OUTSIDE the playable theatre.
+    // Draw land only when a real scenario land tile (or its shoreline buffer)
+    // covers it. This rule also applies when Campaign launches a scenario.
+    const visibleLand = regionalVisibleLand(g);
+    // Draw only playable political/neutral land INSIDE real geographic shores.
     ctx.save();
     ctx.transform(A, C, B, D, tx, ty);
     const clip = paths(ctx, shapes, a, b, c, d);
     if (clip) {
       clipPath(ctx, clip);
       ctx.transform(invA, invC, invB, invD, invX, invY);
-      // Ownership tint must be fully opaque: blending faction paint with
-      // the neutral green base creates off-colour coastlines and patches
-      // across every atlas-backed regional scenario.
+      // Legitimate unowned land uses the neutral terrain colour, but only
+      // inside its own playable hexes; no foreign atlas polygon leaks through.
       ctx.globalAlpha = 1;
+      ctx.fillStyle = '#91a799';
+      ctx.beginPath();
+      for (const t of g.tiles) {
+        if (t.terrain !== 'sea' && !t.owner) tacticalHex(ctx, t, R + .8);
+      }
+      ctx.fill();
       for (const [side, tiles] of japanColorGroups(g)) {
         const faction = g.factions?.[side] || E.FACTIONS[side];
         if (!faction?.color) continue;
@@ -1133,15 +1158,15 @@ const GEOGRAPHY = (() => {
       ctx.fill();
       ctx.restore();
     }
-    // Only Japan draws unfiltered global-coast strokes; Europe's coastline
-    // is the exact edge of its geographically clipped European political
-    // fill. Unfiltered strokes would reintroduce African/Asian outlines.
+    // Coastal outlines are as strictly theatre-clipped as the colour fill.
+    // Without this clip, invisible foreign land still leaves bright coast
+    // strokes in the ocean (e.g. south of Siberia / west of Arabia).
     if (!europeOnly) {
       ctx.save();
+      clipRegionalLand(ctx, visibleLand);
       ctx.transform(A, C, B, D, tx, ty);
       coast(ctx, shapes, a, b, c, d,
         Math.max(0.5, scale * Math.hypot(A, C)));
-      // Area 18 now depicts Arabia only; Suez lies outside this theatre.
       ctx.restore();
     }
     // Palau and Yap are intentionally enlarged in the *gameplay* mask to
