@@ -48,7 +48,12 @@
   }
   // Branch-wide tech for a unit, e.g. unitTech(g, u, 'guns') reads 'armor.guns' for a Sutherland.
   function unitTech(g, u, k) {
-    return techValue(g, u.side, `${branchOf(u.type)}.${k}`);
+    const branch = branchOf(u.type);
+    // Infantry Body Armor is a distinct node, so it does not conflict
+    // with the Armor branch's own armor-research key.
+    if (branch === 'infantry' && k === 'armor')
+      return techValue(g, u.side, 'infantry.bodyarmor');
+    return techValue(g, u.side, `${branch}.${k}`);
   }
   // Naval units use the Naval HP research instead of inheriting Armor/Artillery frames.
   function hullTech(g, u) {
