@@ -398,7 +398,7 @@ document.addEventListener('click', e => {
       updateSelection();
       break;
     case 'scenario':
-      scenarioDialog();
+      withScenarios(scenarioDialog);
       break;
     case 'scenario-armies':
       scenarioGroupsDialog();
@@ -410,7 +410,7 @@ document.addEventListener('click', e => {
       confirmReplace(SCENARIO_KEY, 'scenario', () => startScenario());
       break;
     case 'continue-scenario':
-      loadGame(getSave(SCENARIO_KEY));
+      withScenarios(() => loadGame(getSave(SCENARIO_KEY)));
       break;
     case 'start-conquest':
       confirmReplace(chosenSaveKey(), 'new', newGame);

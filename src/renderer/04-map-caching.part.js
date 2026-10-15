@@ -6,12 +6,13 @@ function copiesBetween(x, left, right) {
   return out;
 }
 // Terrain, territory and coastlines only change when the camera moves or a hex changes hands or terrain, so they are
-// painted into an offscreen layer with a margin for panning and copied onto the map each frame.
+// painted into an offscreen layer with a margin for panning and copied onto the map each frame. Unit moves, selection
+// and other UI changes do not repaint it: everything it draws is keyed by game.tiles and game.mapRevision.
 const MAP_LAYER_MARGIN = 200;
 let mapLayerCache = null;
 function mapLayerFresh(m, scale, dpr, w, h) {
   if (!m || m.tiles !== game.tiles || m.revision !== (game.mapRevision || 0) ||
-      m.renderRevision !== mapRenderRevision || m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
+      m.scale !== scale || m.dpr !== dpr || m.w !== w || m.h !== h) return false;
   const slack = MAP_LAYER_MARGIN - 16;
   return Math.abs(offset.x - m.x) <= slack && Math.abs(offset.y - m.y) <= slack;
 }
@@ -155,7 +156,6 @@ function mapLayer(scale, detail, dpr, w, h) {
     canvas: layer,
     tiles: game.tiles,
     revision: game.mapRevision || 0,
-    renderRevision: mapRenderRevision,
     scale,
     dpr,
     w,

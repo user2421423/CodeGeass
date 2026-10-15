@@ -31,7 +31,8 @@ function startMenu() {
   const cfg = E.CONQUESTS[setup.conquest] || E.CONQUESTS.world;
   if (!cfg.selectable.includes(setup.side)) setup.side = cfg.selectable[0];
   const saved = getSave(chosenSaveKey()),
-    scenarioSave = getSave(SCENARIO_KEY),
+    // Read once the scenario modules have loaded; game.js redraws this menu then.
+    scenarioSave = scenariosReady ? getSave(SCENARIO_KEY) : null,
     profile = loadProfile();
   const cards = cfg.selectable.map(side => {
     const b = FACTION_BLURB[side],

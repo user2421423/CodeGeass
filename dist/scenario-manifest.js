@@ -1,5 +1,5 @@
-/* Regional scenario manifest: menu order, title and short note for every scenario.
-   A new scenario adds one line here; everything else about it lives in its own scenarios-*.js file. */
+/* Regional scenario manifest: menu order, title and short note for every scenario, and the files that make them up.
+   A new scenario adds one line to each list here; everything else about it lives in its own scenarios-*.js file. */
 'use strict';
 const SCENARIO_MANIFEST = Object.freeze([
   {id:"invasion-japan",title:"The Invasion of Japan",note:"44 cities · 3 sides"},
@@ -40,3 +40,73 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"eu-rocky-mountains",title:"Crossing the Rocky Mountains",note:"101 cities · 2 sides"},
   {id:"battle-luoyang",title:"Battle of Luoyang",note:"83 cities · 2 sides · final offensive"}
 ]);
+// Scenario modules and their map data, in load order: each file loads after the files it uses.
+const SCENARIO_FILES = Object.freeze([
+  'scenarios.js',
+  'europe-landmask.js',
+  'scenarios-division-japan.js',
+  'scenarios-europe.js',
+  'scenarios-stonehenge.js',
+  'bering-landmask.js',
+  'scenarios-bering.js',
+  'indochina-landmask.js',
+  'scenarios-indochina.js',
+  'philippines-landmask.js',
+  'scenarios-philippines.js',
+  'australia-landmask.js',
+  'scenarios-australia.js',
+  'area18-landmask.js',
+  'scenarios-area18.js',
+  'siberia-landmask.js',
+  'scenarios-siberia.js',
+  'scenarios-south-africa.js',
+  'scenarios-urals.js',
+  'turkey-landmask.js',
+  'scenarios-turkey.js',
+  'scenarios-western-russia.js',
+  'scenarios-brazil.js',
+  'scenarios-california.js',
+  'canada-landmask.js',
+  'scenarios-canada.js',
+  'scenarios-caribbean.js',
+  'great-lakes-geography.js',
+  'scenarios-great-lakes.js',
+  'scenarios-greenland.js',
+  'scenarios-hawaii.js',
+  'scenarios-new-zealand.js',
+  'scenarios-east-coast.js',
+  'panama-landmask.js',
+  'scenarios-panama.js',
+  'scenarios-panama-cf.js',
+  'scenarios-pendragon.js',
+  'scenarios-pendragon-cf.js',
+  'korea-landmask.js',
+  'korea-coastlines.js',
+  'scenarios-korea.js',
+  'scenarios-malacca.js',
+  'iraq-iran-coast.js',
+  'scenarios-iraq-iran.js',
+  'scenarios-south-china.js',
+  'scenarios-yangtze.js',
+  'scenarios-luoyang.js',
+  'scenarios-cf-pacific-northwest.js',
+  'scenarios-central-america.js',
+  'scenarios-mexico.js',
+  'scenarios-rocky-mountains.js',
+  'central-america-underlay.js'
+]);
+// The start menu appears without these files; game.js starts loading them, in order, right after it.
+let scenariosReady = false, scenarioLoad = null;
+function loadScenarios() {
+  return (scenarioLoad ||= new Promise((resolve, reject) => {
+    let left = SCENARIO_FILES.length;
+    for (const src of SCENARIO_FILES) {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = false; // execute in list order
+      script.onload = () => { if (--left === 0) { scenariosReady = true; resolve(); } };
+      script.onerror = () => { scenarioLoad = null; reject(new Error('Could not load ' + src + '. Check the connection and try again.')); };
+      document.head.appendChild(script);
+    }
+  }));
+}

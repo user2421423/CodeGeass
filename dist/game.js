@@ -8,3 +8,7 @@ render();
 startMenu();
 registerTools();
 requestMapFrame();
+// Regional scenarios load after the menu is up; the menu then shows any saved scenario.
+loadScenarios().then(() => {
+  if (modal.querySelector('[aria-label="Operation setup"]')) startMenu();
+}, e => toast(e.message, true));

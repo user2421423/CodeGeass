@@ -200,8 +200,11 @@ scripts under `dist/`; no npm install or runtime bundler is required.
 
 - `dist/engine.js`, `dist/engine/*.js` and `dist/engine/ai.js`:
   game rules, unit data, commanders, technology, AI and army groups.
-- `dist/scenarios*.js` and `dist/*-landmask.js`: twenty-four standalone regional
-  scenarios, maps and starting armies. `dist/missions.js` and
+- `dist/scenarios*.js` and their map data (`dist/*-landmask.js` and similar): the
+  regional scenarios, maps and starting armies. `dist/scenario-manifest.js` lists
+  them; they load in the background after the start menu appears. Each scenario
+  describes its own rules, AI, map drawing and menu text in `meta` — see
+  [adding a scenario](docs/ADDING_A_SCENARIO.md). `dist/missions.js` and
   `dist/campaign.js` implement the story campaign.
 - `dist/ui/*.js`: HUD, input, rendering, scenario selection, army-group
   controls, turns and `war-report.js`; `dist/game.js` starts the UI.
@@ -212,6 +215,10 @@ The large entrypoints (`dist/engine.js`, `dist/engine/ai.js`, `dist/missions.js`
 `dist/ui/renderer.js`, `dist/ui/hud.js`) are build output: they are made from the
 editable `src/**/*.part.js` fragments and are not committed. Edit the fragments,
 rebuild, and commit only `src/`. See [the source guide](src/README.md).
+
+Several AI sessions can work at once: [docs/LANES.json](docs/LANES.json) assigns
+each area of the code to one lane, and `node tools/scenario_sim.cjs --all` must
+reproduce `tools/data/sim_baseline.txt` unless a change is meant to alter play.
 
 ## Tests and simulations
 

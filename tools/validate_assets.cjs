@@ -22,6 +22,11 @@ const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
   if (!/^(data:|https?:|#)/.test(match[1])) checkFile(match[1]);
 }
+// Regional scenario files load from dist/scenario-manifest.js after startup, not from index.html.
+const scenarioEnv = {};
+vm.runInNewContext(fs.readFileSync(path.join(dist, 'scenario-manifest.js'), 'utf8') + ';this.files = SCENARIO_FILES;', scenarioEnv);
+assert(scenarioEnv.files.length > 0, 'Empty scenario file list');
+for (const file of scenarioEnv.files) checkFile(file);
 const manifest = JSON.parse(fs.readFileSync(path.join(dist, 'assets/art/manifest.json'), 'utf8'));
 checkFile('assets/art/manifest.json');
 checkFile('assets/art/manifest.js');

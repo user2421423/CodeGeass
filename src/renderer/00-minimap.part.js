@@ -174,9 +174,8 @@ function drawLine(x, y, tx, ty, color, width = 1, dash = []) {
 let mapFramePending = false,
   mapFrameDirty = true,
   mapHasPulse = false,
-  mapRenderRevision = 0,
   mapPulseTimer = null;
-// State changes invalidate the static layer; selection/camera events only wake the renderer.
+// State changes also redraw the minimap; selection/camera events only wake the renderer.
 function requestMapFrame() {
   mapFrameDirty = true;
   if (mapPulseTimer !== null) {
@@ -188,7 +187,6 @@ function requestMapFrame() {
   requestAnimationFrame(frame);
 }
 function invalidateMapRender() {
-  mapRenderRevision++;
   minimapDirty = true;
   requestMapFrame();
 }

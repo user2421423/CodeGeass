@@ -1,6 +1,48 @@
 # Refactoring plan: speed and parallel work
 
-Status: proposed, 2026-10-15. Done so far: 0.1.
+Status: done, 2026-10-15. Results and differences from the plan are in section 0; the plan follows unchanged.
+
+## 0. Results
+
+| Step | What was done | Check |
+| --- | --- | --- |
+| 0.1 | Built bundles untracked; CI and Pages build first | live site loads |
+| 0.2 | `scenario_sim.cjs --all` and `tools/data/sim_baseline.txt` (seed 11, 2 turns, setup at 4 difficulties) | — |
+| 1.1–1.6 | `meta` on all 37 scenarios; `dist/scenario-manifest.js`; engine and AI name no scenario ID | baseline identical; menu text identical for 78 scenario sides; drawing flags identical for 37 scenarios |
+| 3.1–3.4 | carrier lookup grids, commander-first scans, river check hoisted, `targets()` computes range once, comparator sorts cache scores | baseline identical |
+| 2 | 51 scenario files leave `index.html` (89 → 38 script tags) and load in the background after the start menu | all menus, saves and campaign tested in the browser |
+| 4 | static map layer no longer repainted on every move or click | redraw after a change 126 ms → 1 ms |
+
+AI time per round (JavaScriptCore shell, same seeds):
+
+| Map | Before | After |
+| --- | ---: | ---: |
+| World Conquest | 1.5 s | 1.1 s |
+| Battle of Pendragon (Elite) | 3.2 s | 1.8 s |
+| Central America (Elite) | 7.8 s | 5.3 s |
+| Rocky Mountains (Elite) | 7.2 s | 4.8 s |
+| Invasion of South China | 4.4 s | 2.7 s |
+| Great Lakes (Elite) | 2.2 s | 1.6 s |
+| Invasion of Turkey | 0.9 s | 0.7 s |
+
+In a real browser a full rival turn on Central America went from 1.7 s to 1.5 s; the browser's engine is much
+faster than the test shell, so the shell numbers overstate what players wait.
+
+Differences from the plan:
+
+- **Phase 2 loads every scenario in the background** instead of only the chosen one. Save files are read
+  synchronously in many places and need their scenario's rules; one shared load keeps that simple. The start menu
+  no longer waits for scenario data (1.08 MB of the 4.46 MB).
+- **Phase 4:** panning was already fast (about 1 ms per frame). The 42 ms measured before was the HUD and map
+  together after a game change; the real cost was the static layer being repainted after every change.
+- **Great Lakes** now uses the expedition rule in both the surrender and victory checks (it was only in the
+  victory check). The game still ends at the same moment, without the surrender step.
+- **Area 18 and Stonehenge** reject old-version saves through `meta.saveVersion` in the engine instead of a
+  menu-only check.
+- **The baseline was generated with the JavaScriptCore shell.** CI runs Node; if Node's output differs on an
+  unchanged `main`, regenerate the baseline with Node once and keep that one.
+- **Not done:** `ui/geography-data.js` (1.97 MB) still loads at startup (2.3); the baseline does not run in CI
+  (decision 2 below); the World Campaign still repeats scenario titles (decision 3 below).
 
 Two goals:
 

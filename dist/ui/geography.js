@@ -617,7 +617,9 @@ const GEOGRAPHY = (() => {
   }
   // Korea and its Japanese staging islands use the same high-resolution vector
   // shorelines as the 20–80 tactical mask. The global map remains unchanged.
-  const KOREA_LAND = typeof KOREA_SHAPES !== 'undefined' && KOREA_SHAPES.length
+  // korea-coastlines.js loads with the scenarios, after this file: convert it on first use.
+  let koreaLand = null;
+  const KOREA_LAND = () => koreaLand ||= typeof KOREA_SHAPES !== 'undefined' && KOREA_SHAPES.length
     ? KOREA_SHAPES.map(shape) : LAYERS.land;
   // Select only geographic Australian islands; a rectangular crop would also
   // show Indonesian and Papua New Guinean land that is absent from this theatre.
@@ -969,7 +971,7 @@ const GEOGRAPHY = (() => {
     ];
     const [a, b, c, d] = bounds;
     const europeOnly = europeanRegion(g);
-    const source = meta.land === 'korea' ? KOREA_LAND : meta.land === 'australia' ? AUSTRALIA_LAND :
+    const source = meta.land === 'korea' ? KOREA_LAND() : meta.land === 'australia' ? AUSTRALIA_LAND :
       meta.land === 'philippines' ? PHILIPPINES_LAND : meta.land === 'greenland' ? GREENLAND_LAND :
       (europeOnly || centreSampledRegion) ? LAYERS.land : JAPAN_LAND; // regional shorelines
     const shapes = source.filter(shape =>

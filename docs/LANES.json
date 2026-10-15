@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "purpose": "Ownership lanes for parallel AI sessions. A session works in one lane and edits only that lane's files; a change another lane needs goes to that lane as a short note. One session per lane at a time.",
+  "supersedes": "The integration_rule in docs/FEDERATION_SCENARIO_HANDOFFS.json: scenarios no longer need an integrator, because shared code reads each scenario's meta (docs/ADDING_A_SCENARIO.md).",
+  "build": "Bundles in dist/ built from src/ are not committed; run python3 tools/build_sources.py (or node tools/build_sources.cjs).",
+  "behavior_check": "node tools/scenario_sim.cjs --all must reproduce tools/data/sim_baseline.txt unless the change is meant to alter play; then regenerate it in the same commit and say why.",
+  "lanes": [
+    {
+      "lane": "scenario",
+      "one_per": "scenario",
+      "files": ["dist/scenarios-<name>.js", "dist/<name>-landmask.js", "dist/<name>-coast*.js", "dist/<name>-underlay.js", "docs/<NAME>*.md"],
+      "shared_lines": ["dist/scenario-manifest.js: its own SCENARIO_MANIFEST line and SCENARIO_FILES entries"],
+      "guide": "docs/ADDING_A_SCENARIO.md"
+    },
+    {
+      "lane": "engine-rules",
+      "files": ["src/engine/**"],
+      "work": "combat, movement, economy, saves, victory, Elite setup"
+    },
+    {
+      "lane": "ai",
+      "files": ["src/ai/**", "dist/engine/army-groups.js"],
+      "work": "doctrines, production, naval, tactical orders; new scenario behaviors as named meta.ai switches"
+    },
+    {
+      "lane": "map-drawing",
+      "files": ["src/renderer/**", "dist/ui/geography.js", "dist/ui/geography-data.js", "dist/ui/japan-coastlines.js", "dist/ui/territory-labels.js", "dist/ui/view.js", "dist/ui/effects.js"],
+      "work": "rendering, underlays, meta.map overlays, drawing speed"
+    },
+    {
+      "lane": "screens-and-hud",
+      "files": ["src/hud/**", "dist/ui/core.js", "dist/ui/input.js", "dist/ui/dialogs.js", "dist/ui/turns.js", "dist/ui/notifications.js", "dist/ui/scenario-screens.js", "dist/ui/army-groups.js", "dist/ui/commander-cards.js", "dist/ui/war-report.js", "dist/ui/military-presentation.js", "dist/ui/campaign-screens.js", "dist/*.css", "dist/index.html", "dist/game.js"],
+      "work": "menus, dialogs, panels, start-up"
+    },
+    {
+      "lane": "campaigns",
+      "files": ["dist/war-campaign.js", "dist/ui/war-campaign-screen.js", "dist/campaign.js", "src/missions/**"],
+      "work": "World Campaign tiers and objectives, Story Mode missions"
+    },
+    {
+      "lane": "data-and-art",
+      "files": ["dist/engine/frames.js", "dist/engine/commanders.js", "dist/engine/generic-skills.js", "dist/engine/research.js", "dist/engine/world.js", "dist/engine/conquests.js", "dist/assets/**", "dist/art.js", "dist/icons.js", "dist/audio.js"],
+      "work": "unit, commander and research data; world map; art"
+    },
+    {
+      "lane": "tooling-and-ci",
+      "files": ["tools/**", ".github/workflows/**", ".gitignore"],
+      "work": "build, simulations, audits, CI"
+    }
+  ]
+}

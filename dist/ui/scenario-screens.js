@@ -4,6 +4,12 @@ let scenarioSide = 'britannia';
 let scenarioKind = 'invasion-japan';
 let scenarioDifficulty = 'normal';
 let scenarioRoutingGroup = null;
+// Scenario modules load in the background after the start menu (scenario-manifest.js); wait for them once.
+function withScenarios(then) {
+  if (scenariosReady) return then();
+  toast('Loading regional scenarios…');
+  loadScenarios().then(then, e => toast(e.message, true));
+}
 function scenarioModel(kind = scenarioKind) {
   return E.scenarios?.byId?.[kind] || E.scenarios?.japan;
 }
