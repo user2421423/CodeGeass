@@ -185,12 +185,8 @@
       const s = stationAt(g, u);
       if (s?.owner === side && logisticsNear(g, u))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      const port = TYPES[u.type].naval && portAtHex(g, u);
-      if (port && port.portOwner === side)
-        u.hp = Math.min(
-          maxHP(u),
-          u.hp + Math.round(maxHP(u) * (PORT.repair[port.portLevel] + (isShip(u) ? techValue(g, side, 'naval.damage') : 0))),
-        );
+      // Ports supply shipyards, not passive naval healing. Ships must use an explicit
+      // repair action (or a separate earned ability) to recover HP.
     }
     // Captured port control persists after the occupying ship sails away.
     g.strikes = [];
