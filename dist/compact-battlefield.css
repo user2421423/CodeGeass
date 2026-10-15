@@ -131,3 +131,103 @@ body .map-tools { display: none !important; }
 @media (pointer: fine), (min-height: 601px) and (min-width: 851px) {
   body .mobile-unit-toggle { display: none !important; }
 }
+
+/* Compact city/port selection and production panels on landscape phones. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) {
+    left: max(8px, env(safe-area-inset-left)) !important;
+    right: auto !important; bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: min(320px, 42vw) !important; max-width: 42vw !important;
+    max-height: min(185px, 48vh) !important;
+    height: auto !important; padding: 5px 7px !important;
+    gap: 4px 6px !important; display: flex !important;
+    flex-wrap: wrap !important; overflow: hidden !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-visual {
+    flex: 0 0 32px !important; width: 32px !important;
+    height: 36px !important; min-width: 0 !important;
+    overflow: hidden !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-visual > * {
+    max-width: 100% !important; max-height: 100% !important;
+    object-fit: contain !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-unit {
+    flex: 1 1 0 !important; min-width: 0 !important;
+    max-width: calc(100% - 42px) !important; width: auto !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-unit strong {
+    display: block !important; font-size: 12px !important;
+    overflow: hidden !important; text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-unit .label {
+    font-size: 10px !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-unit p {
+    font-size: 10px !important; line-height: 1.2 !important;
+    margin: 2px 0 !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .mobile-unit-toggle {
+    display: block !important; flex: 1 0 100% !important;
+    width: 100% !important; min-height: 24px !important;
+    padding: 2px 8px !important; font-size: 11px !important;
+    text-align: left !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-actions {
+    display: none !important; flex: 1 0 100% !important;
+    width: 100% !important; max-width: 100% !important;
+    max-height: 88px !important; overflow: auto !important;
+    flex-direction: row !important; flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+  body .selection-dock.mobile-unit-expanded:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-actions {
+    display: flex !important;
+  }
+  body .selection-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-actions button {
+    min-height: 28px !important; padding: 4px 7px !important;
+    font-size: 11px !important; width: auto !important;
+    flex: 0 0 auto !important;
+  }
+  body #modal-root .overlay {
+    padding: 4px !important; align-items: center !important;
+  }
+  body #modal-root .dialog {
+    width: min(98vw, 1100px) !important;
+    max-width: 98vw !important;
+    max-height: calc(100dvh - 12px) !important;
+    overflow-y: auto !important; padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+  body #modal-root .dialog-head { margin-bottom: 5px !important; gap: 8px !important; }
+  body #modal-root .dialog-head h2 { font-size: 17px !important; margin: 1px 0 !important; }
+  body #modal-root .dialog-head p { margin: 2px 0 !important; }
+  body #modal-root .toolbar-row { margin: 4px 0 !important; gap: 5px !important; }
+  body #modal-root .tabs { gap: 3px !important; margin: 3px 0 !important; }
+  body #modal-root .tabs button { min-height: 28px !important; padding: 4px 8px !important; font-size: 10px !important; }
+  body #modal-root .description, body #modal-root .info-strip {
+    font-size: 10px !important; line-height: 1.2 !important;
+    margin: 3px 0 !important; padding: 4px 7px !important;
+  }
+  body #modal-root .dialog .cards {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit,minmax(165px,1fr)) !important;
+    gap: 6px !important;
+  }
+  body #modal-root .dialog .unit-card {
+    min-width: 0 !important; padding: 6px !important;
+    margin: 0 !important; gap: 3px !important;
+  }
+  body #modal-root .dialog .unit-card .catalog-ship {
+    max-height: 52px !important; height: 52px !important;
+    width: auto !important; object-fit: contain !important;
+  }
+  body #modal-root .dialog .unit-card h3 { font-size: 12px !important; margin: 2px 0 !important; }
+  body #modal-root .dialog .unit-card p { font-size: 10px !important; margin: 2px 0 !important; line-height: 1.15 !important; }
+  body #modal-root .dialog .unit-card .lore { display: none !important; }
+  body #modal-root .dialog .unit-card .unit-spec {
+    display: flex !important; flex-wrap: wrap !important;
+    gap: 3px 6px !important; font-size: 10px !important;
+  }
+  body #modal-root .dialog .unit-card button { min-height: 28px !important; padding: 4px 8px !important; font-size: 11px !important; }
+}
