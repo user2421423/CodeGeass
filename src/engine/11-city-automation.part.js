@@ -198,7 +198,8 @@
         // Keep chain/ace/reposition stamps: an extra activation must not refresh once-per-turn skills.
       } else addTargetMark(v, { side: u.side, source: u.id, range: 2,
         damage: action.kind === 'designate' ? 0.2 : 0, noCounter: action.kind === 'stratagem' });
-      u.feintCD = 3;
+      u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;
+      u.feintUsedTurn = g.turn;
       log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? 'acts again' : 'designated'}.`, u.side);
       return { ok: true, target: v.id, affected: 1 };
     }
@@ -207,7 +208,8 @@
       else if (action.kind === 'withdraw') { v.moved = false; v.withdrawMove = true; v.skillReposition = 0; }
       else lowerMorale(g, v, 2);
     }
-    u.feintCD = 3;
+    u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;
+    u.feintUsedTurn = g.turn;
     log(g, `${action.verb} affects ${options.length} units.`, u.side);
     return { ok: true, affected: options.length };
   }
