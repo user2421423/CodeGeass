@@ -162,10 +162,15 @@
     if(u.expChengWeaken?.turns>0)out.push('Supply disruption: attack −15%');
     if(u.expPinnedActive)out.push('Pinned: movement disabled');
     if(u.expPinnedWeakenActive)out.push('Pinned: attack −25%');
-    if(u.forcedOffensive)out.push('Forced Offensive: attack +35%, incoming damage +15%');
+    if(u.forcedOffensive||u.expForcedVulnerable)out.push(`Forced Offensive: ${u.forcedOffensive?'next attack +35%; ':''}${u.expForcedVulnerable?'incoming damage +15%':''}`);
     if(u.feintUsedTurn===g.turn&&COMMANDERS[u.cmd]?.action)out.push('Signature action used this turn');
     else if(COMMANDERS[u.cmd]?.action&&!(u.feintCD>0))out.push('Signature action ready');
     if(u.expSalvageIndustry>0)out.push(`Salvage: +${u.expSalvageIndustry}/60 industry`);
+    if(u.expSmilasSuppression)out.push('Suppressed: next attack −20%');
+    if(u.expPuristCounter)out.push('Purist discipline: counterattack +20%');
+    if(u.expZiWeakenNext||u.despairWeakened?.source==='zi')out.push('Shadow ambush: next turn attack −20%');
+    if(u.expBeachheadStart!=null&&g.turn<=u.expBeachheadUntil)out.push(`Beachhead: ${u.expBeachheadUntil-g.turn+1} turns remain`);
+    if(u.expJoeDiagnosis?.until>=g.turn)out.push('Armor diagnosed: allied penetration +15 points');
     if (u.auraDisrupted) out.push('Command damage aura suppressed');
     if (u.moraleWard) out.push('Protected against morale disruption');
     if (u.assaultInspired) out.push(`Inspired: attack damage +${Math.round(u.assaultInspired.value * 100)}%`);

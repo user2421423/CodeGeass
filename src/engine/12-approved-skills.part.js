@@ -21,7 +21,7 @@
       ['enemy','enemyCommander'].includes(k)
         ? foe(g,v.side,u.side)&&(k!=='enemyCommander'||!!v.cmd)&&
           (u.cmd!=='indira'||['Infantry','Armor'].some(b=>g.units.some(x=>x.hp>0&&x.side===u.side&&TYPES[x.type].branch===b&&dist(g,x,v)===1)))
-        : v.id!==u.id&&v.side===u.side&&(k==='ally'||k==='commander'&&!!COMMANDERS[v.cmd]?.action||
+        : (v.id!==u.id||u.cmd==='marrybell')&&v.side===u.side&&(k==='ally'||k==='commander'&&!!COMMANDERS[v.cmd]?.action||
           k==='elite'&&!!v.elite||k==='ship'&&isShip(v)||k==='wounded'&&v.hp<maxHP(v)||
           k==='garrison'&&stationAt(g,v)?.owner===v.side&&!v.elite&&!isShip(v)&&v.stack<3&&
           !g.stations.some(s=>s.expSupplyBlocked?.owner===v.side&&dist(g,v,s)<=1))
@@ -88,8 +88,7 @@
         funds(g,v.side).sakuradite=(funds(g,v.side).sakuradite||0)+Math.max(1,Math.round(income(g,v.side).sakuradite*.2));break;
       }
       case 'sugiyama':{
-        const city=g.stations.find(s=>s.owner!==u.side&&dist(g,u,s)===1);
-        if(!city)return {ok:false,reason:'No adjacent enemy city.'};city.expShieldRegenBlocked={owner:city.owner,turns:1};break;
+        const city=v;city.expShieldRegenBlocked={owner:city.owner,turns:1};break;
       }
       default:return {ok:false,reason:'Unknown approved signature action.'};
     }

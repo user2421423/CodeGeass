@@ -24,8 +24,8 @@ function dockHTML() {
   }
   if (s) {
     const ours = s.owner === game.player,
-      y = E.cityYield(game, s);
-    return `<div class="dock-visual">${ART.city(cityKind(s), artSide(s.owner))}${dockFlag(s.owner)}</div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.maxShield ? s.shield / s.maxShield : 0) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><button class="mobile-unit-toggle" type="button" data-action="mobile-unit-toggle" aria-expanded="false">City actions ▾</button><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', factoryReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
+      y = s.expSupplyBlocked?.owner===s.owner ? {credits:0,industry:0} : E.cityYield(game, s);
+    return `<div class="dock-visual">${ART.city(cityKind(s), artSide(s.owner))}${dockFlag(s.owner)}</div><div class="dock-unit"><span class="label">${s.capital ? 'Capital' : s.fort ? 'Fortress city' : 'City'} · Factory ${s.tier}</span><strong>${s.name}</strong><div class="dock-health"><div class="bar"><i style="width:${(s.maxShield ? s.shield / s.maxShield : 0) * 100}%"></i></div><span>${Math.ceil(s.shield)} / ${s.maxShield} DEF</span></div><p>${s.expSupplyBlocked?.owner===s.owner?'Production disrupted · ':''}Income +${y.credits} &nbsp; Industry +${y.industry}${E.depositOf(game, s) ? ` &nbsp; Sakuradite +${y.sakuradite}` : ''}</p></div><button class="mobile-unit-toggle" type="button" data-action="mobile-unit-toggle" aria-expanded="false">City actions ▾</button><div class="dock-actions">${ours ? act(`data-shop="${s.id}"`, 'Factory', factoryReason(s), '', 'primary') : ''}<button class="small" data-action="details">City details</button></div>`;
   }
   const pt = selectedPort();
   if (pt)

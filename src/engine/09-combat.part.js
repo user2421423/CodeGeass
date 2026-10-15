@@ -192,6 +192,8 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
+    const senbaReaction=!!d&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+      !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
       !followUp &&
       !(f.timeStop && a.timeStopTurn !== g.turn) &&
@@ -219,8 +221,8 @@
     return {
       unit: unitDmg,
       shield: shieldDmg,
-      counter: counter ? power(g, d, a, stationAt(g, a), true) : 0,
-      counterAllowed: counter,
+      counter: senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*.5) : counter ? power(g,d,a,stationAt(g,a),true) : 0,
+      counterAllowed: counter||senbaReaction,
       crit,
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
       splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
@@ -360,7 +362,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&d.hp>0&&fx(d).guard&&d.held&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.

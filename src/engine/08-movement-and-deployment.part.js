@@ -291,9 +291,12 @@
     s.shield = 0;
     claim(g, s, u.side);
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
-    if(u.cmd==='sawasaki'&&u.expBeachheadStart!=null&&g.turn<=u.expBeachheadUntil&&adjacent(g,s).some(t=>isSea(t)))u.expBeachheadUntil=Math.min(u.expBeachheadStart+3,u.expBeachheadUntil+1);
+    if(adjacent(g,s).some(t=>isSea(t)))
+      for(const sw of g.units)if(sw.hp>0&&sw.side===u.side&&sw.cmd==='sawasaki'&&sw.expBeachheadStart!=null&&
+        g.turn<=sw.expBeachheadUntil&&(sw.id===u.id||(TYPES[u.type].naval==='amphibious'&&dist(g,sw,s)<=2)))
+        sw.expBeachheadUntil=Math.min(sw.expBeachheadStart+3,sw.expBeachheadUntil+1);
     if(u.cmd==='nonette' && u.expCaptureAttackTurn!==g.turn){u.attacked=false;u.expCaptureAttackTurn=g.turn;}
-    if(['anya','sugiyama'].includes(u.cmd)&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
+    if((u.cmd==='sugiyama'||(u.cmd==='anya'&&u.focusCity?.city===s.id))&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
     const kaguyas=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='kaguya'&&dist(g,v,s)<=3);
     if(kaguyas.length)for(const v of g.units)if(v.hp>0&&v.side===u.side&&kaguyas.some(k=>dist(g,k,v)<=3))v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.1));
     if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
