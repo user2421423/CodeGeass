@@ -53,9 +53,9 @@ assert.equal(result.ok, true, result.reason || 'Canterbury can make the actual m
 assert.equal(u.c, target.c);
 assert.equal(u.r, target.r);
 
-// Other regular siege frames retain their base stats.
-assert.equal(E.TYPES.gareth.move > 0, true);
+// All regular siege frames now share the same two-point base movement.
+assert.equal(E.CLASSES.siege.move, 2, 'Siege base movement is standardized');
 const otherSiege = Object.entries(E.TYPES).find(([id, t]) => id !== 'canterbury' &&
-  t.cls === 'siege' && !t.elite && t.move === 1);
-assert.ok(otherSiege, 'ordinary Siege mobility has not been raised globally');
+  t.cls === 'siege' && !t.elite && t.move === 2);
+assert.ok(otherSiege, 'ordinary Siege frames receive the global movement increase');
 console.log('Story Mode Canterbury rough-terrain mobility: PASS');
