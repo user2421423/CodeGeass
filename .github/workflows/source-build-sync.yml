@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Confirm generated JavaScript matches source
-        run: node tools/build_sources.cjs --check
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Audit every Philippine hex and invasion route
         run: node tools/philippines_hex_audit.cjs
 
@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Independently audit every Australian hex and atlas alignment
         run: node tools/australia_hex_audit.cjs
 
@@ -37,5 +39,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Audit all 9,600 Bering land, sea and coastal hexes
         run: node tools/bering_hex_audit.cjs

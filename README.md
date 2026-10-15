@@ -183,14 +183,15 @@ a clean playtest is not itself proof that a scenario is balanced.
 
 ## Run the game
 
-Serve `dist/` with any static server and open it, for example:
+Build the game once after every `git pull` or source change, then serve `dist/` with any static server:
 
 ```sh
+python3 tools/build_sources.py
 python3 -m http.server 8000 --directory dist
 ```
 
-Then open http://localhost:8000. Opening `dist/index.html` directly also works in most browsers. There is no build
-step and no dependency.
+Then open http://localhost:8000. `node tools/build_sources.cjs` does the same build with Node. After building,
+opening `dist/index.html` directly also works in most browsers. There are no dependencies.
 
 ## Code layout
 
@@ -207,18 +208,17 @@ scripts under `dist/`; no npm install or runtime bundler is required.
 - `dist/art.js`, `dist/icons.js`, `dist/audio.js` and
   `dist/assets/art/`: art, icons, sound and finished image assets.
 
-The large generated entrypoints (`dist/engine.js`,
-`dist/engine/ai.js`, `dist/missions.js`, `dist/ui/renderer.js`,
-`dist/ui/hud.js`) are built from editable `src/**/*.part.js` fragments.
-After changing those fragments, run `node tools/build_sources.cjs` and commit
-the regenerated `dist/` output. See [the source guide](src/README.md).
+The large entrypoints (`dist/engine.js`, `dist/engine/ai.js`, `dist/missions.js`,
+`dist/ui/renderer.js`, `dist/ui/hud.js`) are build output: they are made from the
+editable `src/**/*.part.js` fragments and are not committed. Edit the fragments,
+rebuild, and commit only `src/`. See [the source guide](src/README.md).
 
 ## Tests and simulations
 
 The repository has no regression test suite. These checks verify the build, art and maps:
 
 ```sh
-node tools/build_sources.cjs --check
+node tools/build_sources.cjs
 node tools/validate_assets.cjs --tracked
 python3 tools/check_map.py
 ```

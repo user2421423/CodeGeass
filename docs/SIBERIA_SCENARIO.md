@@ -20,7 +20,7 @@ No merge into `main` or into the parent feature branch.
 ## Reproducibility
 
 ```sh
-node tools/build_sources.cjs --check
+node tools/build_sources.cjs
 node tools/siberia_hex_audit.cjs
 for side in britannia eu; do
   for seed in 11 29 47; do node tools/scenario_sim.cjs britannia-siberia "$side" normal "$seed" 3; done

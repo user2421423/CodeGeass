@@ -19,9 +19,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Verify generated source, syntax and 20–80% map
         run: |
-          node tools/build_sources.cjs --check
           node --check dist/scenarios-east-coast.js
           node --check dist/ui/geography.js
           node tools/east_coast_hex_audit.cjs
@@ -39,6 +40,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Seeded amphibious AI simulations
         run: for seed in 11 71; do node tools/scenario_sim.cjs invasion-american-east-coast ${{ matrix.player }} ${{ matrix.difficulty }} "$seed" 2; done | tee east-coast-simulation.log
       - uses: actions/upload-artifact@v4

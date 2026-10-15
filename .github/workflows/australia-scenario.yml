@@ -24,8 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Synced source parts
-        run: node tools/build_sources.cjs --check
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: All 12,144 hexes, provinces, ports and routes
         run: node tools/australia_hex_audit.cjs
       - name: Tracked assets
@@ -50,6 +50,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Seeded actual-engine three-way AI simulation
         timeout-minutes: 30
         run: node tools/scenario_sim.cjs war-for-australia ${{ matrix.player }} ${{ matrix.difficulty }} ${{ matrix.seed }} 50

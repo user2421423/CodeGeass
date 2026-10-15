@@ -87,7 +87,7 @@ There is deliberately no production progression cheat. The CommonJS-only testFix
 
 Run from repository root:
 
-    node tools/build_sources.cjs --check
+    node tools/build_sources.cjs
     node --test tests/war-campaign.test.cjs
     node --test tests/*.test.cjs
     node tests/ui-smoke.cjs

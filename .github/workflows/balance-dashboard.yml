@@ -44,11 +44,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Validate game and balance dashboard
-        run: |
-          node tools/build_sources.cjs --check
-          # The complete engine suite runs in Source/build synchronization.
-          # Do not block diagnostic report generation on unrelated game tests.
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Determine paired simulation settings
         id: config
         env:

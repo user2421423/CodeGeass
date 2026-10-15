@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check generated engine source
-        run: node tools/build_sources.cjs --check
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Four difficulties and eight-island coast and port audit
         run: node tools/simulate-hawaii.cjs eu 11 0
       - name: Multi-seed amphibious AI playthroughs

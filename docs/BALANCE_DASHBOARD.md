@@ -84,7 +84,7 @@ balance. Favor separate held-out seeds and inspect territory, casualties,
 reassignments, naval activity and performance together. Before merging
 gameplay changes, run:
 
-    node tools/build_sources.cjs --check
+    node tools/build_sources.cjs
     node --test tests/*.test.cjs
     node tests/ui-smoke.cjs
     node tools/validate_assets.cjs --tracked

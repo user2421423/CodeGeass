@@ -7,3 +7,9 @@ dist/local-art/*
 /dist/*.zip
 /art-source/
 /map-preview*.png
+# Build output of tools/build_sources.cjs / .py (sources in src/, list in tools/bundles.json).
+/dist/engine.js
+/dist/engine/ai.js
+/dist/missions.js
+/dist/ui/renderer.js
+/dist/ui/hud.js

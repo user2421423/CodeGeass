@@ -30,9 +30,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check source bundles and defensive AI regression
-        run: |
-          node tools/build_sources.cjs --check
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Run 50-turn all-AI simulation
         run: |
           node tools/balance_sim.cjs --runs 1 --max-turns 50 --players "${{ matrix.player }}" --difficulties normal --seed "${{ matrix.seed }}" --snapshot-turns 10,20,30,40,50 --output balance-results.json --summary balance-summary.md --quiet --equal-ai

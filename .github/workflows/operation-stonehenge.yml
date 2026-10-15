@@ -25,7 +25,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node tools/build_sources.cjs --check
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
   simulation:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -39,5 +40,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Seeded six-turn AI combat and amphibious performance
         run: for seed in 11 71; do node tools/scenario_sim.cjs operation-stonehenge ${{ matrix.player }} ${{ matrix.difficulty }} "$seed" 6; done

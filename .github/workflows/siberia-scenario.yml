@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Generated source consistency
-        run: node tools/build_sources.cjs --check
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Exhaustive map and port audit
         run: node tools/siberia_hex_audit.cjs
       - name: Multiseed Britannia and E.U. AI turns

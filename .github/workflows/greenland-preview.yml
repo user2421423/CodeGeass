@@ -31,10 +31,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Check existing source build and Greenland scenario syntax
         working-directory: greenland-src
         run: |
-          node tools/build_sources.cjs --check
+          node tools/build_sources.cjs
           node --check dist/scenarios-greenland.js
           node --check dist/ui/geography.js
           node -e "const E=require('./dist/engine.js');require('./dist/engine/ai.js');const G=require('./dist/scenarios-greenland.js');for(const side of G.sides){for(const d of ['normal','hard','challenge','elite']){const g=G.create(side,d,11);if(g.stations.length!==18||g.stations.filter(s=>s.portAt).length!==15||G.winner(g))process.exit(1);} }"

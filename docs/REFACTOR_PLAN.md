@@ -1,6 +1,6 @@
 # Refactoring plan: speed and parallel work
 
-Status: proposed, 2026-10-15. Nothing here is implemented yet.
+Status: proposed, 2026-10-15. Done so far: 0.1.
 
 Two goals:
 
@@ -96,15 +96,14 @@ Where the time goes (one profiled round per map):
 
 ### Phase 0 — Groundwork (one session, do first)
 
-**0.1 Stop committing generated bundles.**
-- Untrack `dist/engine.js`, `dist/engine/ai.js`, `dist/missions.js`, `dist/ui/renderer.js`,
-  `dist/ui/hud.js` and add them to `.gitignore`.
-- `pages.yml` and every workflow that runs game code first run `node tools/build_sources.cjs`.
-- Add `tools/build_sources.py` (same concatenation, about 20 lines), because the owner's Mac has no
-  Node. Running the game locally then needs one build command first; document it in the README.
+**0.1 Stop committing generated bundles.** Done (2026-10-15).
+- `dist/engine.js`, `dist/engine/ai.js`, `dist/missions.js`, `dist/ui/renderer.js` and
+  `dist/ui/hud.js` are untracked and listed in `.gitignore`.
+- Every CI job that sets up Node, including the Pages deploy, runs `node tools/build_sources.cjs` first.
+- `tools/build_sources.py` does the same build without Node. Both read the bundle list from
+  `tools/bundles.json`. Running locally: `python3 tools/build_sources.py`, then serve `dist/`.
 - Effect: the 153-commits-a-week conflict file disappears, and editing `dist/` by mistake becomes
   impossible.
-- Decision needed: see section 6.
 
 **0.2 Baseline for the safety net.**
 - Add `--all` to `tools/scenario_sim.cjs`: run every scenario × side for a given seed and number
@@ -222,9 +221,7 @@ from the end of Phase 0.
 
 ## 6. Decisions for the owner
 
-1. **Untrack generated bundles (0.1)?** Yes means fewer conflicts, but local play needs a build
-   command first (`python3 tools/build_sources.py`). No means keeping the conflicts, and a rule
-   that only the integrator rebuilds `dist/`.
+1. ~~Untrack generated bundles (0.1)?~~ Decided yes; done.
 2. **Run the sim baseline in CI on every push?** It catches crashes and unintended behavior changes
    in every scenario. It costs a few CI minutes and is not a test suite.
 3. **Is World Campaign data allowed to read titles from scenarios (Phase 1)?** It makes campaign

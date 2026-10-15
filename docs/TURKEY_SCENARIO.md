@@ -38,7 +38,7 @@ To guard against false navigability, the module finds the **largest contiguous s
 ## Simulation and regression
 
 GitHub Actions workflow `.github/workflows/turkey-scenario.yml` executes:
-- `node tools/build_sources.cjs --check`
+- `node tools/build_sources.cjs`
 - `node tools/turkey_hex_audit.cjs`
 - `node --test tests/*.test.cjs`
 - 16 five-turn, full-engine AI-versus-AI runs: Britannia and E.U. × four difficulties × seeds 11, 29

@@ -29,10 +29,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
       - name: Validate Siberia source and map before publishing
         working-directory: siberia-src
         run: |
-          node tools/build_sources.cjs --check
+          node tools/build_sources.cjs
           node tools/siberia_hex_audit.cjs
       - name: Keep production main files intact and add isolated branch preview
         run: |
