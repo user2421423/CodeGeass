@@ -18,7 +18,7 @@ const g=E.createGame('britannia','normal','conquest',20261015,'world'), side=g.p
 g.tech[side]={};
 const units=['glasgow','sutherland','gareth','portman','carrier_battleship'].map((id,i)=>E.newUnit(g,id,side,i+1,3));
 const old=units.map(u=>E.unitStats(g,u));
-g.tech[side]={'infantry.bodyarmor':2,'armor.armor':4,'artillery.armor':2,'amphibious.armor':2,'naval.armor':2,'amphibious.hull':2,'naval.hulls':2};
+g.tech[side]={'infantry.bodyarmor':2,'armor.armor':4,'artillery.armor':2,'amphibious.armor':2,'naval.armor':2,'amphibious.hull':3,'naval.hulls':2};
 for(const u of units)u.hpTech=E.hullTech(g,u);
 const now=units.map(u=>E.unitStats(g,u));
 assert.deepEqual(now.map((v,i)=>v.armor-old[i].armor),[10,20,10,10,10]);
