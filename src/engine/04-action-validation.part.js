@@ -157,7 +157,8 @@
     return applyTech(g, profile?.research);
   }
   function applyElites(g, profile = {}) {
-    if (g.mode === 'scenario') return g;
+    // World Campaign regional battles inherit Elite upgrades, not the rest of HQ progression.
+    if (g.mode === 'scenario' && !g.warCampaign) return g;
     const records = eliteProfile(profile);
     g.eliteDeployed ||= {};
     // Kept on the game so Elite Forces that join mid-operation (campaign spawns and upgrades) use the same levels.

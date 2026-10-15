@@ -75,7 +75,11 @@ function startScenario(side=scenarioSide, campaignContext=null) {
   if(!model?.sides.includes(side))return;
   resetSession();
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
-  if (campaignContext) game.warCampaign={...campaignContext};
+  if (campaignContext) {
+    game.warCampaign = { ...campaignContext };
+    // The World Campaign imports only persistent Elite levels, not HQ research or ranks.
+    E.applyElites(game, loadProfile());
+  }
   scenarioRoutingGroup=null;
   setWorld();
   // Start inside each faction's theatre instead of fitting empty sea.

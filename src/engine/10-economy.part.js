@@ -143,7 +143,8 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
-    u.eliteLevel = eliteCampaign(g) || g.mode === 'scenario' ? 1 : rec.level;
+    // Standalone scenarios stay at Lv.1; World Campaign recruits use their HQ unlock level.
+    u.eliteLevel = eliteCampaign(g) || (g.mode === 'scenario' && !g.warCampaign) ? 1 : rec.level;
     u.hp = maxHP(u);
     log(g, `${t.name} · Elite Lv.${u.eliteLevel} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };

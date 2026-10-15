@@ -167,8 +167,10 @@ function startMission(id, difficulty = missionDifficulty) {
 function loadGame(s) {
   if (!s) return;
   resetSession();
-  // Regional scenarios never import HQ research, commander ranks or elite levels.
-  game = s.mode === 'scenario' ? s : E.applyProfile(s, loadProfile());
+  // Only World Campaign regional battles import HQ Elite levels; standalone scenarios import nothing.
+  game = s.mode === 'scenario'
+    ? (s.warCampaign ? E.applyElites(s, loadProfile()) : s)
+    : E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
   if (game.mode === 'scenario') {
     scenarioKind = game.scenario.id;
