@@ -205,11 +205,12 @@
     // Shield recovery follows the city's engineering upgrades and Huang Qian's nearby administration aura.
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const rate = 0.12 + techValue(g, side, 'cities.engineering') +
-        (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3)?.15:0);
-      // Consume this marker at the owner's next regeneration. A hit by any
-      // rival phase is counted once, even when factions take turns in one round.
-      const recovery = s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side?0:(s.attackedSinceRegen ? rate * 0.5 : rate);
+      const baseRate = .12+techValue(g,side,'cities.engineering');
+      const administrationBonus=mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3) ? .15 : 0;
+      // Incoming fire halves ordinary repair, but Huang Qian still restores
+      // the full additional 15% maximum shields every friendly turn.
+      const recovery=s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
+        ? 0 : (s.attackedSinceRegen?baseRate*.5:baseRate)+administrationBonus;
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
       s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * recovery));
       delete s.attackedSinceRegen;
