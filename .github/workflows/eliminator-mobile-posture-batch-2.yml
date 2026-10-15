@@ -3,6 +3,8 @@ on:
   push:
     branches: ['experiment/eliminator-2017-mobile-posture']
     paths: ['.github/workflows/eliminator-mobile-posture-batch-2.yml']
+  pull_request:
+    branches: ['experiment/eliminator-launch-diagnostics']
 permissions:
   contents: read
 jobs:
