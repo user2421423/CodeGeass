@@ -1999,13 +1999,42 @@
     const priorCenter=eliminatorStrikePosture(g,u.side,old,u,memo);
     const nextCenter=eliminatorStrikePosture(g,u.side,p,u,memo);
     const centerGain=Math.max(-145,Math.min(145,(nextCenter-priorCenter)*0.20));
-    if(!target)return gain+centerGain+Math.min(75,after*0.10);
-    const prior=dist(g,old,target),next=dist(g,p,target);
-    const tether=next<=ELIMINATOR.range?120:
-      next===ELIMINATOR.range+1 ? 20:-Math.min(130,(next-4)*32);
-    const lost=prior<=ELIMINATOR.range && next>ELIMINATOR.range?-90:0;
-    const approach=Math.max(-35,Math.min(35,(prior-next)*15));
-    return gain+centerGain+Math.min(75,after*0.10)+tether+lost+approach;
+    const baseline=(()=>{
+      if(!target)return gain+centerGain+Math.min(75,after*0.10);
+      const prior=dist(g,old,target),next=dist(g,p,target);
+      const tether=next<=ELIMINATOR.range?120:
+        next===ELIMINATOR.range+1 ? 20:-Math.min(130,(next-4)*32);
+      const lost=prior<=ELIMINATOR.range && next>ELIMINATOR.range?-90:0;
+      const approach=Math.max(-35,Math.min(35,(prior-next)*15));
+      return gain+centerGain+Math.min(75,after*0.10)+tether+lost+approach;
+    })();
+    // 2018 is intentionally byte-for-byte equivalent in scoring outcomes.
+    if(g.era==='ufn2018')return baseline;
+    // Our own assets, active frontline, and *visible* enemy units only.
+    // A valuable ready carrier should not abandon a defended formation
+    // merely to improve an unrelated positional objective.
+    const enemies=(memo.eliminatorMobileVisibleFoes ||= g.units.filter(v=>
+      v.hp>0 && foe(g,v.side,u.side) && v.side!=='neutral'));
+    const allAssets=eliminatorThreatAssets(g,u.side,memo);
+    const activeField=(memo.eliminatorMobileActiveField ||= allAssets.filter(a=>
+      a.kind==='unit' && enemies.some(v=>dist(g,v,a.p)<=12)));
+    const cityAssets=(memo.eliminatorMobileCityAssets ||= allAssets.filter(a=>
+      a.kind==='city'));
+    const frontBefore=eliminatorThreatCover(g,u.side,old,activeField,u);
+    const frontAfter=eliminatorThreatCover(g,u.side,p,activeField,u);
+    const cityBefore=eliminatorThreatCover(g,u.side,old,cityAssets,u);
+    const cityAfter=eliminatorThreatCover(g,u.side,p,cityAssets,u);
+    const frontDelta=Math.max(-260,Math.min(260,(frontAfter-frontBefore)*0.52));
+    const cityDelta=Math.max(-130,Math.min(130,(cityAfter-cityBefore)*0.20));
+    const abandoning=frontBefore>200 && frontAfter<frontBefore*0.90 ?
+      -190 : 0;
+    const tier1Escort=target && COMMANDERS[target.cmd]?.storyTier===1;
+    const breakTier1=tier1Escort &&
+      dist(g,old,target)<=ELIMINATOR.range &&
+      dist(g,p,target)>ELIMINATOR.range ? -220 : 0;
+    // Underlap is already discounted by eliminatorThreatCover; compare
+    // coverage gain to the *current* carrier position, not absolute totals.
+    return baseline+frontDelta+cityDelta+abandoning+breakTier1;
   }
   function aiEliminatorMetrics(g, side) {
     const charges = sideEliminators(g, side);
