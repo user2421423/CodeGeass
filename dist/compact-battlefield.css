@@ -1,0 +1,45 @@
+/* Compact battlefield controls: intentionally shared across desktop and phone. */
+body .map-tools { display: none !important; }
+
+/* Phone-only battlefield layout; desktop HUD and unit card remain unchanged. */
+@media (max-width: 850px), (max-height: 500px) and (pointer: coarse) {
+  body .footer { width: auto; max-width: min(290px, 46vw); }
+  body .footer-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; width: 100%; height: auto; }
+  body .footer-actions > button {
+    width: auto; min-width: 0; min-height: 32px; height: auto;
+    padding: 5px 7px; font-size: 11px; line-height: 1.15;
+    white-space: normal;
+  }
+  body .selection-dock:has(.unit-dock-actions) {
+    left: max(6px, env(safe-area-inset-left)); right: auto;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    width: min(390px, 49vw); max-width: calc(100vw - 12px);
+    max-height: min(150px, 45vh); overflow-y: auto;
+    padding: 6px 8px; gap: 4px 7px; align-items: center;
+  }
+  body .selection-dock:has(.unit-dock-actions) .dock-visual {
+    flex: 0 0 38px; width: 38px; height: 42px;
+  }
+  body .selection-dock:has(.unit-dock-actions) .dock-unit {
+    flex: 1 1 130px; width: auto; min-width: 0; max-width: 100%;
+  }
+  body .selection-dock:has(.unit-dock-actions) .dock-unit strong { font-size: 12px; }
+  body .selection-dock:has(.unit-dock-actions) .dock-stats {
+    gap: 4px; max-width: 100%; overflow-x: auto; flex-wrap: nowrap;
+  }
+  body .selection-dock:has(.unit-dock-actions) .unit-dock-actions {
+    flex: 1 0 100%; width: 100%; max-width: 100%;
+    max-height: 64px; overflow-x: auto; overflow-y: auto;
+    display: flex; flex-wrap: nowrap; gap: 4px; margin: 0;
+  }
+  body .selection-dock:has(.unit-dock-actions) .unit-dock-actions button {
+    flex: 0 0 auto; min-height: 30px; padding: 5px 7px; font-size: 11px;
+  }
+}
+@media (max-width: 850px) and (orientation: portrait) {
+  body .selection-dock:has(.unit-dock-actions) {
+    width: auto; right: max(6px, env(safe-area-inset-right));
+    bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  body .footer { max-width: none; left: max(6px, env(safe-area-inset-left)); right: max(6px, env(safe-area-inset-right)); }
+}
