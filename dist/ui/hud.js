@@ -69,8 +69,9 @@ function startMenu() {
   modal.innerHTML = `<div class="overlay start-overlay">
     <section class="dialog wide start-command" role="dialog" aria-modal="true" aria-label="Operation setup" aria-describedby="start-description">
       <header class="start-header">
+        <div class="start-hero-art" aria-hidden="true"><img src="assets/art/portraits/lelouch-78b808b17079.webp" alt="" decoding="async"></div>
         <div class="start-brand">
-          <div class="start-brandline"><span>CODE GEASS</span><span class="start-brand-divider" aria-hidden="true"></span><span class="start-brand-subtitle">GRAND STRATEGY</span></div>
+          <div class="start-brandline"><span>CODE GEASS</span><span class="start-brand-divider" aria-hidden="true"></span><span class="start-brand-subtitle">KNIGHTMARE CONQUEST</span></div>
           <h1>Knightmare <em>Conquest</em></h1>
           <p id="start-description">Three empires. One world at war. Choose a side and decide its fate.</p>
         </div>
@@ -99,18 +100,21 @@ function startMenu() {
           <aside class="start-side" aria-label="Other game modes and headquarters">
             <div class="start-side-title"><span>Game modes</span></div>
             <section class="start-mode" style="--mode-accent:#d7aa64">
+              <span class="start-mode-serial" aria-hidden="true">I</span>
               <h3>Story Mode</h3>
               <p>Follow the story through linked missions and decisive battles.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">${campaigns.length} campaigns · ${earnedStars}/${missions.length * 3} ★</span><button data-action="campaign">Play story</button></div>
               ${missionResume}
             </section>
             <section class="start-mode" style="--mode-accent:#6fa7be">
+              <span class="start-mode-serial" aria-hidden="true">II</span>
               <h3>Regional Scenarios</h3>
               <p>Fight standalone battles across detailed regional maps.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">Standalone saves</span><button data-action="scenario">Browse scenarios</button></div>
               ${scenarioResume}
             </section>
             <section class="start-mode" style="--mode-accent:#c46f70">
+              <span class="start-mode-serial" aria-hidden="true">III</span>
               <h3>World Campaign</h3>
               <p>Lead your faction through an interconnected world war.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">Persistent theater map</span><button data-action="war-campaign">Open campaign</button></div>
