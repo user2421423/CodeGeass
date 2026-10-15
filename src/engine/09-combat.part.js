@@ -236,8 +236,18 @@
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null) {
     if (v.hp > 0) return;
-    if ((fx(v).undying && !v.undyingUsed || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker) && !force) {
-      if(v.cmd==='urabe'){v.expFinalStandUsed=true;v.hp=1;log(g,'Urabe survives a lethal attack: Final Stand.',v.side);return;}
+    if ((fx(v).undying && !v.undyingUsed || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
+      if(v.cmd==='urabe'){
+        v.expFinalStandUsed=true;v.hp=1;
+        log(g,'Urabe survives a lethal direct hit: Final Stand.',v.side);
+        if(attacker.hp>0&&!atSea(g,v)&&inRange(v,attacker,g)&&hostileTarget(g,v,attacker)){
+          const amount=power(g,v,attacker,stationAt(g,attacker),false);
+          const oldHp=attacker.hp;attacker.hp=Math.max(0,attacker.hp-amount);
+          recordWarEvent(g,'damage',v.side,{targetSide:attacker.side,value:oldHp-attacker.hp,unitId:v.id,group:warGroup(g,v)});
+          if(attacker.hp<=0){attacker.expDirectIncoming=true;kill(g,attacker,v);delete attacker.expDirectIncoming;}
+        }
+        return;
+      }
       v.hp = 1;
       v.undyingUsed = true;
       log(g, `${COMMANDERS[v.cmd].short} survives a lethal blow: Code Bearer.`, v.side);

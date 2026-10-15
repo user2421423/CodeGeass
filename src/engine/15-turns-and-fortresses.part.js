@@ -97,7 +97,13 @@
     // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
-    if(outgoing){for(const v of g.units)if(v.side===outgoing){delete v.expSilenced;if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;}
+    if(outgoing){for(const v of g.units)if(v.side===outgoing){
+        delete v.expSilenced;
+        if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;
+        if(v.expPuristCounter&&v.expPuristCounter.startTurn<g.turn)delete v.expPuristCounter;
+        if(v.expSmilasSuppression&&v.expSmilasSuppressionTurn<g.turn)delete v.expSmilasSuppression;
+        if(v.despairWeakened?.source==='zi')delete v.despairWeakened;
+      }
       for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing){station.expSupplyBlocked.turns=(station.expSupplyBlocked.turns||1)-1;if(station.expSupplyBlocked.turns<=0)delete station.expSupplyBlocked;}}
     if (outgoing && outgoing !== side)
       for (const u of g.units)
@@ -117,10 +123,11 @@
         sakuradite:Math.round(inc.sakuradite*modifier)});
     }
     for (const v of allUnits(g)) {
+      if(v.expJoeDiagnosis?.until<g.turn)delete v.expJoeDiagnosis;
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
       for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired', 'despairWeakened']) if (v[field]?.side === side) delete v[field];
     }
-    for (const city of g.stations) if (city.bombardMark?.side === side) delete city.bombardMark;
+    for (const city of g.stations){if(city.bombardMark?.side===side)delete city.bombardMark;if(city.expYoshidaBreak?.turn<g.turn)delete city.expYoshidaBreak;}
     // Off-map passengers have no terrain, morale or healing effects, but their
     // commander action cooldown advances on their faction's turn.
     for (const ship of g.units) if (ship.side === side)
@@ -140,6 +147,7 @@
       u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
       u.expPinnedWeakenActive=u.expPinnedWeakenNext||0;delete u.expPinnedWeakenNext;
       u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
+      if(u.expZiWeakenNext){u.despairWeakened={side:u.side,source:'zi',value:u.expZiWeakenNext};delete u.expZiWeakenNext;}
       if(u.expDisabledActive){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
       delete u.expOverwatch;delete u.expLink;
       u.chain = 0;
