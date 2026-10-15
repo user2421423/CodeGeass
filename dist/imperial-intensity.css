@@ -495,7 +495,7 @@
     gap: 7px;
   }
   .start-command .start-mode-bottom button { width: 100%; }
-  .start-command .start-header:before { opacity: .55; width: 37%; right: 3%; }
+  .start-command .start-header:before { animation: none; opacity: .55; width: 37%; right: 3%; }
 }
 
 @media (max-width: 650px) {
