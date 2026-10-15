@@ -222,6 +222,8 @@
     u.r = t.r;
     u.moved = u.attacked = false;
     u.deployedTurn = u.launched = g.turn;
+    u.expLandedTurn=g.turn;
+    if(u.cmd==='sawasaki'){u.expBeachheadStart=g.turn;u.expBeachheadUntil=g.turn+2;}
     g.units.push(u);
     // Only city captures transfer territory; ordinary landings cannot repaint it.
     const { captured, annexed } = captureCity(g, u, true);

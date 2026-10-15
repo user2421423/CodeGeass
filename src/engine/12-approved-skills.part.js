@@ -107,8 +107,8 @@
       skillNear(g,u,'prepared',2);
   }
   function hongGuGuardian(g,u){
-    const h=g.units.find(v=>v.hp>0&&v.side===u.side&&v.cmd==='honggu'&&dist(g,v,u)<=2);
-    return h?(friendlyNeighbors(g,h).length>=2?.8:.9):1;
+    const guardians=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='honggu'&&dist(g,v,u)<=2);
+    return guardians.some(h=>friendlyNeighbors(g,h).length>=2) ? .8 : guardians.length ? .9 : 1;
   }
   function joePenetration(g,u,target){
     if(!target)return 0;

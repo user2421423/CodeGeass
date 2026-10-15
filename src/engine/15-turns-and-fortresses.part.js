@@ -202,11 +202,9 @@
     }
     // Captured port control persists after the occupying ship sails away.
     g.strikes = [];
-    // Katase boosts nearby city defense recovery by 25 percentage points; Gao Hai boosts the city he occupies by 15.
-    const prepared = mine.filter(m => m.hp > 0 && fx(m).prepared);
+    // Shield recovery follows the city's engineering upgrades and Huang Qian's nearby administration aura.
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const palaceTreasury = mine.some(m => fx(m).treasury && m.c === s.c && m.r === s.r);
       const rate = 0.12 + techValue(g, side, 'cities.engineering') +
         (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3)?.15:0);
       // Consume this marker at the owner's next regeneration. A hit by any
