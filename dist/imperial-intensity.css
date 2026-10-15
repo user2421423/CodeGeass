@@ -1,0 +1,215 @@
+/*
+ * Imperial Code Geass menu intensity experiment.
+ * Loaded after main-menu.css and menu-variant.css.
+ * Applies only to the start screen; underlying game rendering and handlers unchanged.
+ */
+
+/* MAXIMAL: a cinematic imperial briefing with animated gilding and reaction to faction choice. */
+.start-overlay {
+  --imperial-radiance: #c94756;
+  background: radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--imperial-radiance),transparent 78%), transparent 48%),
+              radial-gradient(circle at 6% 85%, #d9ac5959, transparent 44%), #03040a;
+  backdrop-filter: blur(18px);
+}
+.start-overlay:has(.start-faction.eu.active) { --imperial-radiance: #527dcf; }
+.start-overlay:has(.start-faction.cf.active) { --imperial-radiance: #dea24d; }
+.start-overlay:has(.start-faction.eb.active) { --imperial-radiance: #997add; }
+.dialog.wide.start-command {
+  width:min(1500px,100%);
+  border:2px solid #edc17b;
+  box-shadow: 0 0 0 3px #221213, 0 0 0 5px #a87b3c80, 0 40px 110px #000f, 0 0 85px #d0934440;
+  border-radius:0;
+  background:#120e18;
+  animation: imperial-max-enter .8s cubic-bezier(.15,.65,.2,1) both;
+}
+.start-command .start-header {
+  min-height: 363px;
+  padding:50px 54px 49px;
+  background: radial-gradient(ellipse at 78% 44%, color-mix(in srgb, var(--imperial-radiance),transparent 50%), transparent 54%),
+              linear-gradient(90deg,#100d19ef 0%,#17101bd8 42%,#2e15217c 100%),
+              url('menu-world.svg') center 30% / cover;
+  border-bottom:3px double #f0ca84;
+  overflow:hidden;
+}
+.start-command .start-header:before {
+  inset: -52px 4% -75px auto;
+  width:min(550px,42%);
+  background-position:center 30%;
+  opacity:.93;
+  filter:drop-shadow(0 0 18px #e6a4474a) drop-shadow(0 18px 28px #000);
+  animation: imperial-max-character-in 1.35s cubic-bezier(.17,.67,.2,1) both,
+             imperial-max-character-breathe 12s ease-in-out 1.35s infinite alternate;
+}
+.start-command .start-header:after {
+  width:470px;height:470px;top:-125px;right:7%;
+  border:2px solid #ead39b9c;border-radius:0;
+  box-shadow: 0 0 0 35px #e2ba6d12,0 0 0 68px #eac97c09, 0 0 0 104px #e9ba6910,
+              0 0 65px #deaf6c4a;
+  animation:imperial-max-sigil 23s linear infinite;
+}
+.start-command .start-brand { position:relative; z-index:2; }
+.start-command .start-brandline { color:#f2d89d; font-size:12px; text-shadow:0 0 8px #dab65f5b; }
+.start-command .start-brandmark { width:46px;height:46px;box-shadow:0 0 19px #f8c96d80;animation:imperial-max-mark 4s ease-in-out infinite alternate; }
+.start-command .start-header h1 {
+  font:700 clamp(49px,5.7vw,85px)/.94 Georgia,serif;
+  letter-spacing:.006em;
+  max-width:760px;
+  color:#fff9ea;
+  text-shadow:0 5px 16px #000,0 0 34px #e9ba696c;
+  animation:imperial-max-title-in .9s .1s ease-out both;
+}
+.start-command .start-header h1 em {
+  color:#f2c676;
+  text-shadow:0 0 24px #e6b55b82,0 2px 12px #000;
+}
+.start-command .start-header p {
+  max-width:525px;
+  font:italic 17px/1.6 Georgia,serif;
+  color:#f2ddc2;
+  text-shadow:0 2px 9px #000;
+  animation:imperial-max-title-in 1s .3s ease-out both;
+}
+.start-command .start-content {
+  padding:32px 46px 27px;
+  background: radial-gradient(ellipse at 75% 0%,color-mix(in srgb,var(--imperial-radiance),transparent 93%),transparent 55%),#110e17;
+}
+.start-command .start-layout { grid-template-columns:minmax(0,1.55fr) minmax(315px,.95fr);gap:21px; }
+.start-command .start-conquest-panel {
+  padding:31px;
+  overflow:hidden;
+  border:1px solid #c9a371;
+  background:linear-gradient(135deg,#2a1c26df,#130e17d9),url('menu-world.svg') center / cover;
+  box-shadow:inset 0 0 0 1px #fff0c53d,0 8px 24px #0006;
+}
+.start-command .start-conquest-panel:after {
+  content:"";
+  position:absolute;inset:-100% 0 auto;
+  height:50%;
+  background:linear-gradient(180deg,transparent 0%,#e9bb6724 95%,#f1d69c6e 100%);
+  transform:translateY(-100%);
+  pointer-events:none;
+  opacity:.35;
+  animation:imperial-max-scan 10s linear infinite;
+}
+.start-command .start-conquest-panel h2 { font-size:clamp(37px,3vw,48px);text-shadow:0 2px 12px #000; }
+.start-command .start-panel-index { text-shadow:0 0 9px #e9bf7f57; }
+.start-command .start-config-grid .select { min-height:49px;background:#150e19;border:1px solid #9c795a; }
+.start-command .start-factions { gap:12px; }
+.start-command .start-faction {
+  min-height:204px;
+  padding:14px 11px 16px 110px;
+  background:radial-gradient(ellipse at 7% 68%,color-mix(in srgb,var(--side-accent),transparent 83%),transparent 75%),linear-gradient(135deg,#39212b,#17111c);
+  border:1px solid #ac815d;
+  border-top:4px solid var(--side-accent,#e1b97b);
+  box-shadow:0 7px 22px #0008;
+  transform-origin:center bottom;
+  transition:transform .45s cubic-bezier(.15,.65,.2,1),box-shadow .4s,border-color .4s,filter .4s;
+}
+.start-command .start-faction .faction-portrait {
+  width:116px;height:202px;left:-9px;
+  opacity:.85;
+  filter:drop-shadow(4px 0 10px #000);
+  transition:transform .45s cubic-bezier(.15,.65,.2,1),filter .4s,opacity .4s;
+}
+.start-command .start-faction .faction-banner { width:50px;height:35px;filter:drop-shadow(0 2px 5px #000b); }
+.start-command .start-faction-title { font-size:18px;line-height:1.12; }
+.start-command .start-faction-choice { letter-spacing:.09em; }
+.start-command .start-faction:hover:not(:disabled) {
+  transform:translateY(-7px) scale(1.02);
+  border-color:#ffdb9e;
+  box-shadow:0 15px 35px #000b,0 0 28px #e5ba6a4a;
+}
+.start-command .start-faction:hover .faction-portrait {
+  transform:translateX(6px) scale(1.075);
+  filter:drop-shadow(5px 0 17px #eabf7755);
+  opacity:1;
+}
+.start-command .start-faction.active {
+  border:2px solid #ffdf9a;
+  border-top:4px solid var(--side-accent,#f0c17d);
+  box-shadow:0 0 0 1px #ffe5a460 inset,0 0 38px #deae4e78;
+  animation:imperial-max-active-glow 3.6s ease-in-out infinite alternate;
+}
+.start-command .start-era-brief { border-top-color:#c6a2746e; }
+.start-command button.start-launch-main {
+  min-height:61px;
+  background:linear-gradient(125deg,#e0ac5e,#ffe4a4 42%,#d09e55) !important;
+  border:2px solid #ffebb9 !important;
+  color:#211318 !important;
+  box-shadow:0 0 28px #d8a14d71,0 8px 20px #000b;
+  transition:filter .25s ease,transform .25s ease,box-shadow .25s ease;
+}
+.start-command button.start-launch-main:hover {
+  filter:brightness(1.13);
+  transform:translateY(-3px);
+  box-shadow:0 0 48px #e7b7609d,0 13px 24px #000d;
+}
+.start-command .start-side-title { color:#f5ca86; }
+.start-command .start-mode {
+  overflow:hidden;
+  padding:19px 21px;
+  border-color:#a07b5b;
+  background:linear-gradient(120deg,#301e27,#18111c);
+  transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease;
+}
+.start-command .start-mode:before {
+  background:linear-gradient(105deg,transparent 32%,color-mix(in srgb,var(--imperial-radiance),transparent 88%),transparent);
+  opacity:.8;
+}
+.start-command .start-mode:after {
+  content:'';
+  position:absolute;right:-10px;top:-18px;width:40%;height:170px;
+  background:var(--mode-image) center 30% / contain no-repeat;
+  pointer-events:none;
+  opacity:.22;
+  filter:saturate(.83);
+  -webkit-mask-image:linear-gradient(90deg,transparent,black 40%);
+  mask-image:linear-gradient(90deg,transparent,black 40%);
+}
+.start-command .start-mode:nth-of-type(1) { --mode-image:url('assets/art/portraits/lelouch-78b808b17079.webp'); }
+.start-command .start-mode:nth-of-type(2) { --mode-image:url('assets/art/portraits/suzaku-d9d72b74ec97.jpg'); }
+.start-command .start-mode:nth-of-type(3) { --mode-image:url('assets/art/portraits/leila-83d5a9985185.jpg'); }
+.start-command .start-mode > * { position:relative;z-index:1; }
+.start-command .start-mode p { max-width:80%; }
+.start-command .start-mode:hover { transform:translateX(5px);border-color:#e9bc7c;box-shadow:0 6px 21px #0008,0 0 22px #c29b5d30; }
+.start-command .start-mode h3 { font-size:24px; }
+.start-command .start-mode button { background:linear-gradient(180deg,#664238,#362632);border-color:#cfa269;color:#ffe9c3; }
+.start-command .start-mode button:hover { background:#82523d; }
+.start-command .start-hq { border-color:#a9865b;background:linear-gradient(130deg,#281b25,#18121d); }
+.start-command .start-hq-top b { color:#ffe0a0;text-shadow:0 0 11px #e3b85d44; }
+@keyframes imperial-max-enter { from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes imperial-max-character-in { from{opacity:0;transform:translateX(80px) scale(1.07)}to{opacity:.93;transform:translateX(0) scale(1)} }
+@keyframes imperial-max-character-breathe { from{transform:translateY(0) scale(1)}to{transform:translateY(-9px) scale(1.028)} }
+@keyframes imperial-max-sigil { from{transform:rotate(45deg)}to{transform:rotate(405deg)} }
+@keyframes imperial-max-mark { from{box-shadow:0 0 9px #f8c96d45}to{box-shadow:0 0 27px #f8c96daa} }
+@keyframes imperial-max-title-in { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+@keyframes imperial-max-active-glow { from{box-shadow:0 0 0 1px #ffe5a460 inset,0 0 12px #deae4e42}to{box-shadow:0 0 0 1px #ffe5a480 inset,0 0 40px #deae4e8c} }
+@keyframes imperial-max-scan { from{transform:translateY(-100%)}to{transform:translateY(550%)} }
+@media(max-width:1100px) {
+  .start-command .start-layout{grid-template-columns:1fr}
+  .start-command .start-side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .start-command .start-side-title,.start-command .start-hq{grid-column:1/-1}
+  .start-command .start-mode p {max-width:100%}
+  .start-command .start-mode:after {opacity:.12}
+}
+@media(max-width:700px) {
+  .start-command .start-header{min-height:235px;padding:29px 18px}
+  .start-command .start-header:before{right:-15%;width:60%;opacity:.45}
+  .start-command .start-header h1{font-size:clamp(39px,10vw,54px)}
+  .start-command .start-header p{font-size:13px}
+  .start-command .start-content{padding:16px 12px}
+  .start-command .start-conquest-panel{padding:18px 13px}
+  .start-command .start-factions{grid-template-columns:1fr}
+  .start-command .start-faction{min-height:104px;padding-left:121px}
+  .start-command .start-faction .faction-portrait{height:128px;width:118px}
+  .start-command .start-side{grid-template-columns:1fr}
+  .start-command .start-mode p{max-width:75%}
+  .start-command .start-faction:hover:not(:disabled),.start-command .start-mode:hover{transform:none}
+}
+@media(prefers-reduced-motion:reduce) {
+  .start-command, .start-command *, .start-command *::before, .start-command *::after {animation:none!important;transition:none!important;}
+  .start-command .start-header:before { opacity:.85;transform:none!important; }
+  .start-command .start-conquest-panel:after {display:none}
+  .start-command .start-header h1,.start-command .start-header p {opacity:1;transform:none}
+  .start-command .start-faction.active {box-shadow:inset 0 0 0 1px #ffe5a460,0 0 18px #deae4e70}
+}
