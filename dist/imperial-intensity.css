@@ -1,0 +1,146 @@
+/*
+ * Imperial Code Geass menu intensity experiment.
+ * Loaded after main-menu.css and menu-variant.css.
+ * Applies only to the start screen; underlying game rendering and handlers unchanged.
+ */
+
+/* RICH: a lavish illustration-led menu that remains fast and legible */
+.start-overlay {
+  background: radial-gradient(ellipse at 74% 13%, #77414a46, transparent 49%),
+              radial-gradient(ellipse at 5% 87%, #bf975b25, transparent 50%), #080710;
+}
+.dialog.wide.start-command {
+  width: min(1480px, 100%);
+  border: 1px solid #e2bc79;
+  box-shadow: 0 28px 100px #000f, 0 0 0 2px #322322, 0 0 65px #9e65431b;
+}
+.start-command .start-header {
+  min-height: 318px;
+  padding: 46px 52px 46px;
+  background: radial-gradient(ellipse at 75% 50%, #71383e90, transparent 56%),
+              linear-gradient(90deg, #141019f8 0%, #1b121de7 55%, #301c269a 100%),
+              url('menu-world.svg') center 37% / cover;
+  border-bottom: 3px double #d9b578;
+}
+.start-command .start-header:before {
+  inset: -40px 6% -54px auto;
+  width: min(480px, 38%);
+  opacity: .87;
+  filter: drop-shadow(0 12px 24px #0009);
+  animation: imperial-rich-portrait 1.1s ease-out both;
+}
+.start-command .start-header:after {
+  width: 420px;
+  height: 420px;
+  right: 6%;
+  top: -130px;
+  border-color: #e1ba7988;
+  box-shadow: 0 0 0 36px #e9ba6910, 0 0 0 72px #e6c78a0a, 0 0 0 110px #e9ba6908;
+}
+.start-command .start-brandline { font-size: 12px; letter-spacing: .22em; color: #e8c987; }
+.start-command .start-header h1 {
+  font-size: clamp(46px, 5.25vw, 78px);
+  max-width: 690px;
+  text-shadow: 0 6px 23px #000d, 0 0 30px #eec37132;
+}
+.start-command .start-header p { font-size: 16px; max-width: 530px; }
+.start-command .start-content { padding: 30px 42px 26px; }
+.start-command .start-layout { gap: 22px; grid-template-columns: minmax(0, 1.52fr) minmax(320px, .98fr); }
+.start-command .start-conquest-panel {
+  background: linear-gradient(145deg, #271d26ed, #120f18df 67%), url('menu-world.svg') center / cover;
+  border-color: #cda773;
+  padding: 31px;
+}
+.start-command .start-conquest-panel h2 { font-size: clamp(36px, 3vw, 48px); }
+.start-command .start-factions { gap: 12px; }
+.start-command .start-faction {
+  min-height: 192px;
+  padding: 15px 11px 17px 103px;
+  background: linear-gradient(125deg,#3d292fe8,#19151fea);
+  border-color: #95775a;
+  box-shadow: 0 6px 16px #0005;
+  transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease, background .3s ease;
+}
+.start-command .start-faction .faction-portrait {
+  height: 194px;
+  width: 111px;
+  opacity: .88;
+  filter: drop-shadow(3px 0 8px #000d);
+  transition: filter .35s ease, transform .35s ease, opacity .35s ease;
+}
+.start-command .start-faction .faction-banner { width: 47px; height: 35px; }
+.start-command .start-faction-title { font-size: 17px; }
+.start-command .start-faction:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: #e7bd7e;
+  box-shadow: 0 12px 28px #0009;
+}
+.start-command .start-faction:hover .faction-portrait {
+  transform: translateX(4px) scale(1.035);
+  opacity: 1;
+}
+.start-command .start-faction.active { box-shadow: 0 0 0 1px #ffe0ad55 inset, 0 0 27px #d59f533a; }
+.start-command .start-era-brief { font-size: 12px; }
+.start-command .start-launch-main {
+  min-height: 57px;
+  box-shadow: 0 4px 20px #d29c423d, 0 6px 16px #0009 !important;
+}
+.start-command .start-mode {
+  overflow: hidden;
+  min-height: 139px;
+  padding: 19px 22px;
+  border-color: #96785c;
+  transition: background .27s ease, transform .27s ease, border-color .27s ease;
+}
+.start-command .start-mode h3 { font-size: 25px; }
+.start-command .start-mode p { max-width: 77%; }
+.start-command .start-mode::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  right: -15px;
+  top: -22px;
+  width: 40%;
+  height: 180px;
+  background: var(--menu-portrait) center top / contain no-repeat;
+  opacity: .27;
+  pointer-events: none;
+  filter: saturate(.8);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 30%);
+  mask-image: linear-gradient(90deg, transparent, black 30%);
+}
+.start-command .start-mode:nth-of-type(1) { --menu-portrait: url('assets/art/portraits/lelouch-78b808b17079.webp'); }
+.start-command .start-mode:nth-of-type(2) { --menu-portrait: url('assets/art/portraits/suzaku-d9d72b74ec97.jpg'); }
+.start-command .start-mode:nth-of-type(3) { --menu-portrait: url('assets/art/portraits/leila-83d5a9985185.jpg'); }
+.start-command .start-mode > * { position: relative; z-index: 1; }
+.start-command .start-mode:hover { border-color: #dfb67c; transform: translateY(-2px); }
+.start-command .start-hq { border-color: #977d60; background: linear-gradient(120deg,#251c24,#18141d); }
+.start-command .start-hq-top b { font-size: 20px; }
+@keyframes imperial-rich-portrait {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: .87; transform: translateX(0); }
+}
+@media(max-width:1100px){
+  .start-command .start-layout { grid-template-columns: 1fr; }
+  .start-command .start-side { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+  .start-command .start-side-title,.start-command .start-hq { grid-column: 1/-1; }
+  .start-command .start-mode p { max-width: 100%; }
+  .start-command .start-mode::after { opacity:.18; }
+}
+@media(max-width:700px){
+  .start-command .start-header { padding: 29px 19px; min-height: 220px; }
+  .start-command .start-header:before { inset: 0 -10% 0 auto; width: 64%; opacity:.4; }
+  .start-command .start-header h1 { font-size: clamp(38px, 10vw, 53px); }
+  .start-command .start-header p { font-size: 13px; }
+  .start-command .start-content { padding: 15px 12px; }
+  .start-command .start-conquest-panel { padding: 17px 13px; }
+  .start-command .start-factions { grid-template-columns: 1fr; }
+  .start-command .start-faction { min-height: 103px; padding-left: 120px; }
+  .start-command .start-faction .faction-portrait { height: 127px; width: 119px; }
+  .start-command .start-side { display:grid; grid-template-columns:1fr; }
+  .start-command .start-mode p { max-width: 76%; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .start-command .start-header:before { animation: none; opacity:.87; }
+  .start-command .start-faction, .start-command .start-faction .faction-portrait, .start-command .start-mode { transition: none !important; }
+}
