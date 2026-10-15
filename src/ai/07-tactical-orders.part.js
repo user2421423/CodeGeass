@@ -1,3 +1,8 @@
+  // The 29 reworked signatures are player-only active actions. Their passive
+  // rules still affect every faction through the normal engine combat pipeline.
+  const playerOnlyReworkedActions = new Set([
+    'marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'
+  ]);
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
@@ -95,7 +100,7 @@
       return events;
     }
     // Trigger available newcomer abilities for AI-led armies, rather than leaving them player-only.
-    if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!feintReason(g,u)) {
+    if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!playerOnlyReworkedActions.has(u.cmd)&&!feintReason(g,u)) {
       const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
     }
@@ -125,7 +130,7 @@
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -281,7 +286,7 @@
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       maneuver();
       // A designation may only now be in range.
-      if (action && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
         const r = feint(g, id);
         if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
       }
