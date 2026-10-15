@@ -1,0 +1,358 @@
+/* Phones and touch screens. Loaded last; desktop layout is unchanged above 760px wide with a mouse. */
+
+/* Phone-only controls are hidden on larger screens. */
+.objective-toggle,
+.minimap-toggle {
+  display: none;
+}
+
+/* Touch screens: no double-tap zoom delay on controls, no text selection or callout on long press. */
+@media (pointer: coarse) {
+  button,
+  select,
+  summary,
+  [data-action] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .map-wrap canvas {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  /* Keyboard shortcut badges mean nothing without a keyboard. */
+  .kbd {
+    display: none;
+  }
+  /* Fingers need about 44px; small buttons grow without changing their text. */
+  button.small,
+  .hud-nav-group > summary,
+  .hud-menu-action {
+    min-height: 40px;
+  }
+}
+
+/* Dialog rows that are wider than a phone scroll sideways inside the dialog. */
+@media (max-width: 760px) {
+  .dialog .tabs,
+  .wc-tier-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .dialog .tabs > button,
+  .wc-tier-strip > button {
+    flex: 0 0 auto;
+  }
+  .dialog table.powers {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+}
+
+/* Phone layout of the battle screen. */
+@media (max-width: 760px) {
+  body .topbar.hud-v2 {
+    top: max(7px, env(safe-area-inset-top));
+    left: max(7px, env(safe-area-inset-left));
+    right: max(7px, env(safe-area-inset-right));
+  }
+  /* Command menus open inside the screen, under the top bar. */
+  body .hud-nav-menu {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    top: calc(max(7px, env(safe-area-inset-top)) + 100px);
+    width: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 60;
+  }
+  body .hud-resources {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Title on one line; the objective opens on demand. */
+  body .theater-head {
+    top: calc(max(7px, env(safe-area-inset-top)) + 104px);
+    left: 10px;
+    right: 64px;
+    height: auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    pointer-events: none;
+  }
+  body .theater-head .label {
+    display: none;
+  }
+  body .theater-head h2 {
+    font-size: 15px;
+    line-height: 1.2;
+    margin: 0;
+  }
+  body .theater-head .objective {
+    display: none;
+  }
+  html.show-objective body .theater-head .objective {
+    display: block;
+    flex-basis: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    background: rgba(6, 20, 30, 0.92);
+    border: 1px solid #81938c55;
+    pointer-events: auto;
+  }
+  body .objective-toggle {
+    display: block;
+    pointer-events: auto;
+    padding: 4px 10px;
+    min-height: 32px;
+    font-size: 12px;
+  }
+
+  /* Map buttons: one column on the right, finger-sized. */
+  body .map-tools {
+    top: calc(max(7px, env(safe-area-inset-top)) + 104px);
+    right: max(8px, env(safe-area-inset-right));
+    gap: 6px;
+  }
+  body .map-tools button {
+    width: auto;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 6px;
+    font-size: 15px;
+  }
+  body .minimap-toggle {
+    display: block;
+  }
+  /* The minimap is out of the way until asked for. */
+  body #minimap {
+    display: none;
+  }
+  html.show-minimap body #minimap {
+    display: block;
+    top: calc(max(7px, env(safe-area-inset-top)) + 150px);
+    left: 10px;
+    right: auto;
+    bottom: auto;
+    width: min(220px, 55vw);
+    height: auto;
+    aspect-ratio: 7 / 4;
+    z-index: 5;
+  }
+
+  /* The hint line sits under the title, clear of the bottom panel. */
+  body .map-caption {
+    top: calc(max(7px, env(safe-area-inset-top)) + 140px);
+    bottom: auto;
+    left: 10px;
+    right: 64px;
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: normal;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(6, 20, 30, 0.82);
+  }
+  html.show-minimap body .map-caption {
+    display: none;
+  }
+
+  /* With nothing selected the panel only repeats the footer's Next unit: give the map that space. */
+  body .selection-dock:has(> .dock-idle) {
+    display: none;
+  }
+  /* Bottom panel: full width above the footer; unit details on top, actions in one scrollable row. */
+  body .selection-dock {
+    left: max(6px, env(safe-area-inset-left));
+    right: max(6px, env(safe-area-inset-right));
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: 42vh;
+    overflow-y: auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 8px 10px;
+  }
+  body .selection-dock .dock-visual {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 56px;
+  }
+  body .selection-dock .dock-unit,
+  body .selection-dock .dock-idle {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  body .selection-dock .dock-actions {
+    flex: 1 0 100%;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding-bottom: 2px;
+  }
+  body .selection-dock .dock-actions > button {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  body .footer {
+    left: max(6px, env(safe-area-inset-left));
+    right: max(6px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  body .footer-actions {
+    width: 100%;
+  }
+  body .footer-actions > button {
+    flex: 1 1 0;
+    min-height: 44px;
+  }
+
+  /* Notices appear under the title rather than over the bottom panel (also while showing). */
+  body #toast,
+  body #toast.show {
+    top: calc(max(7px, env(safe-area-inset-top)) + 104px);
+    bottom: auto;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    transform: none;
+    z-index: 50;
+  }
+}
+
+/* Phones held sideways: little height, so everything gets out of the map's way. */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Turn, resources and command menus on one row. */
+  body .topbar.hud-v2 {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    height: auto;
+    min-height: 0;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    top: max(4px, env(safe-area-inset-top));
+    left: max(6px, env(safe-area-inset-left));
+    right: max(6px, env(safe-area-inset-right));
+  }
+  body .topbar.hud-v2 .hud-resources {
+    overflow-x: auto;
+  }
+  body .topbar.hud-v2 .top-actions {
+    grid-column: auto;
+    grid-row: auto;
+    grid-template-columns: repeat(4, auto);
+    gap: 4px;
+  }
+  body .hud-nav-group > summary {
+    min-height: 36px;
+    padding: 0 8px;
+  }
+  body .hud-nav-menu {
+    position: fixed;
+    top: calc(max(4px, env(safe-area-inset-top)) + 50px);
+    right: 8px;
+    left: auto;
+    width: min(320px, 60vw);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    z-index: 60;
+  }
+  body .theater-head,
+  body .map-caption,
+  body #minimap {
+    display: none;
+  }
+  /* Map buttons in a short column on the right. */
+  body .map-tools {
+    top: calc(max(4px, env(safe-area-inset-top)) + 54px);
+    right: max(8px, env(safe-area-inset-right));
+    gap: 4px;
+  }
+  body .map-tools button {
+    width: auto;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 6px;
+  }
+  /* Bottom panel on the left, footer buttons on the right, each one row tall. */
+  body .selection-dock {
+    left: max(6px, env(safe-area-inset-left));
+    right: auto;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    width: min(420px, 50vw);
+    max-height: 46vh;
+    overflow-y: auto;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding: 6px 8px;
+  }
+  body .selection-dock:has(> .dock-idle) {
+    display: none;
+  }
+  body .selection-dock .dock-visual {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 44px;
+  }
+  body .selection-dock .dock-unit {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  body .selection-dock .dock-actions {
+    flex: 1 0 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+  }
+  body .selection-dock .dock-actions > button {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 36px;
+    white-space: nowrap;
+  }
+  body .footer {
+    left: auto;
+    right: max(6px, env(safe-area-inset-right));
+    bottom: max(6px, env(safe-area-inset-bottom));
+    width: auto;
+    max-width: calc(50vw - 24px);
+  }
+  body .footer,
+  body .footer-actions {
+    height: auto;
+  }
+  body .footer-actions {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 4px;
+  }
+  body .footer-actions > button {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+  body #toast,
+  body #toast.show {
+    top: calc(max(4px, env(safe-area-inset-top)) + 54px);
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    width: min(420px, 60vw);
+    transform: translateX(-50%);
+  }
+}

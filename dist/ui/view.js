@@ -368,34 +368,35 @@ function activateHex(p) {
     updateSelection();
   }
 }
-function attachMap() {
-  canvas.onpointerdown = e => {
-    if (e.button !== 0 && e.pointerType !== 'touch') return;
-    canvas.focus({ preventScroll: true });
-    pointer = { x: e.clientX, y: e.clientY, cam: { ...cam }, dragged: false, id: e.pointerId, shift: e.shiftKey };
-    canvas.setPointerCapture(e.pointerId);
-  };
-  canvas.onpointermove = e => {
-    if (pointer) {
-      const dx = e.clientX - pointer.x,
-        dy = e.clientY - pointer.y;
-      if (Math.hypot(dx, dy) > 5) pointer.dragged = true;
-      if (pointer.dragged) {
-        const scale = baseScale * zoom;
-        cam.x = pointer.cam.x - dx / scale;
-        cam.y = pointer.cam.y - dy / scale;
-        canvas.style.cursor = 'grabbing';
-      }
-    }
-    // Hover hit-tests and previews are invisible during an active drag.
-    if (pointer?.dragged) { hover = null; return; }
-    hover = hitHex(e.clientX, e.clientY);
-    if (hover) {
-      canvas.style.cursor = strikeMode || routing || armyGroupRouting
-        ? 'crosshair'
-        : hitStrategicArmyGroup(e.clientX, e.clientY) || readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
-          ? 'pointer'
-          : 'default';
+// Shift-click (or a long press on touch screens) adds a friendly formation to the selection or active army group.
+function canMultiSelect(u) {
+  return interactive() && (game.mode === 'conquest' || game.mode === 'scenario') && u?.side === game.player &&
+    !routing && !armyGroupRouting && !scenarioRoutingGroup && !strikeMode && !deploying;
+}
+function toggleMultiSelect(targetUnit) {
+  if (activeArmyGroup()) {
+    armyGroupToggleUnit(targetUnit.id);
+  } else {
+    if (!multiSelectedIds.size && selectedUnit()?.side === game.player) multiSelectedIds.add(selectedUnit().id);
+    if (multiSelectedIds.has(targetUnit.id)) multiSelectedIds.delete(targetUnit.id);
+    else multiSelectedIds.add(targetUnit.id);
+    const first = multiSelectedIds.values().next().value;
+    selection = { kind: 'unit', id: first ?? targetUnit.id };
+    updateSelection();
+    toast(multiSelectedIds.size + ' formations selected. Create or choose a group in Army groups.');
+  }
+}
+// What the hex under the pointer (or the last tapped hex on a touch screen) means: shown in the map caption.
+let touchInput = false;
+function showHexInfo(x, y) {
+  hover = hitHex(x, y);
+  if (!hover) return;
+  canvas.style.cursor = strikeMode || routing || armyGroupRouting
+    ? 'crosshair'
+    : hitStrategicArmyGroup(x, y) || readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
+      ? 'pointer'
+      : 'default';
+  const verb = touchInput ? 'Tap again' : 'Click';
       const u = E.unitAt(game, hover),
         s = E.stationAt(game, hover),
         own = selectedUnit(),
@@ -407,21 +408,109 @@ function attachMap() {
         : own && readyCache.has(E.key(hover)) && E.isSea(hover) && !E.atSea(game, own)
           ? 'Embark here: the unit becomes a transport (cannot fire, +50% damage taken) and stops'
           : fort && u && targetCache.has(E.key(hover))
-            ? `Click to fire ${E.fortressName(fort)} at ${E.TYPES[u.type].short} · ~${E.fortressDamage(game, u, fort.owner)} damage`
+            ? `${verb} to fire ${E.fortressName(fort)} at ${E.TYPES[u.type].short} · ~${E.fortressDamage(game, u, fort.owner)} damage`
             : pr
-              ? `Click to attack ${u ? E.TYPES[u.type].short : s.name} · ~${pr.unit || pr.shield} damage · ${pr.counterAllowed ? pr.counter + ' counter-fire' : 'no counter-fire'}`
+              ? `${verb} to attack ${u ? E.TYPES[u.type].short : s.name} · ~${pr.unit || pr.shield} damage · ${pr.counterAllowed ? pr.counter + ' counter-fire' : 'no counter-fire'}`
               : `${s ? s.name + ' · ' : ''}${E.siteAt(game, hover) ? E.siteAt(game, hover).name + ' Sakuradite mine · ' : ''}${u ? `${F(u.side).short} ${E.TYPES[u.type].short} · ` : ''}${E.TERRAIN[hover.terrain].name}${hover.owner ? ' · ' + F(hover.owner).short + ' territory' : ''}`;
       if (armyGroupRouting) {
-        $('map-caption').textContent = 'Army group destination · click a traversable hex, or Escape to cancel';
+        $('map-caption').textContent = 'Army group destination · ' + (touchInput ? 'tap' : 'click') + ' a traversable hex, or Escape to cancel';
       } else if (routing && own) {
         const why = routeWhy(own, hover);
         $('map-caption').textContent = why
           ? `Cannot head here: ${why}`
           : `Head for ${E.targetName(game, hover)} · ${E.distance(own, hover, game)} hexes away`;
       }
+}
+// Touch screens: two fingers pinch-zoom and pan; the first tap on an attack hex previews it and the second attacks;
+// a long press on a friendly formation adds it to the selection, like Shift-click.
+const LONG_PRESS_MS = 500;
+let touches = new Map(), pinch = null, armedAttack = null, longPressTimer = null;
+const touchMid = () => {
+  const [a, b] = [...touches.values()];
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) };
+};
+function isAttackHex(p) {
+  if (!p || !interactive() || strikeMode || routing || armyGroupRouting || scenarioRoutingGroup || deploying) return false;
+  const k = E.key(p);
+  return targetCache.has(k) && (selectedStation() || selectedUnit()?.side === game.player);
+}
+function attachMap() {
+  canvas.onpointerdown = e => {
+    if (e.button !== 0 && e.pointerType !== 'touch') return;
+    touchInput = e.pointerType === 'touch';
+    canvas.focus({ preventScroll: true });
+    if (touchInput) {
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size === 2) {
+        clearTimeout(longPressTimer);
+        pointer = null;
+        pinch = touchMid();
+        canvas.setPointerCapture(e.pointerId);
+        return;
+      }
+      if (touches.size > 2) return;
     }
+    pointer = { x: e.clientX, y: e.clientY, cam: { ...cam }, dragged: false, id: e.pointerId, shift: e.shiftKey };
+    canvas.setPointerCapture(e.pointerId);
+    clearTimeout(longPressTimer);
+    if (touchInput) longPressTimer = setTimeout(() => {
+      if (!pointer || pointer.dragged || pointer.id !== e.pointerId) return;
+      const p = hitHex(pointer.x, pointer.y), u = p && E.unitAt(game, p);
+      pointer.longPressed = true;
+      if (canMultiSelect(u)) toggleMultiSelect(u);
+      else showHexInfo(pointer.x, pointer.y);
+      requestMapFrame();
+    }, LONG_PRESS_MS);
+  };
+  canvas.onpointermove = e => {
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && touches.size === 2) {
+      const now = touchMid(), rect = canvas.getBoundingClientRect();
+      if (pinch.d > 0 && now.d > 0) changeZoom(now.d / pinch.d, { x: now.x - rect.left, y: now.y - rect.top });
+      const scale = baseScale * zoom;
+      cam.x -= (now.x - pinch.x) / scale;
+      cam.y -= (now.y - pinch.y) / scale;
+      pinch = now;
+      requestMapFrame();
+      return;
+    }
+    if (pointer) {
+      const dx = e.clientX - pointer.x,
+        dy = e.clientY - pointer.y;
+      if (Math.hypot(dx, dy) > (touchInput ? 10 : 5)) { pointer.dragged = true; clearTimeout(longPressTimer); }
+      if (pointer.dragged) {
+        const scale = baseScale * zoom;
+        cam.x = pointer.cam.x - dx / scale;
+        cam.y = pointer.cam.y - dy / scale;
+        canvas.style.cursor = 'grabbing';
+      }
+    }
+    // Hover hit-tests and previews are invisible during an active drag; touch screens have no hover.
+    if (pointer?.dragged) { hover = null; return; }
+    if (e.pointerType !== 'touch') showHexInfo(e.clientX, e.clientY);
   };
   canvas.onpointerup = e => {
+    clearTimeout(longPressTimer);
+    if (touches.delete(e.pointerId) && pinch) {
+      // Lifting a finger ends the pinch; the remaining finger does not start a tap or drag.
+      if (touches.size < 2) pinch = null;
+      pointer = null;
+      return;
+    }
+    if (pointer?.longPressed) { pointer = null; return; }
+    if (pointer && !pointer.dragged && e.pointerType === 'touch') {
+      const p = hitHex(e.clientX, e.clientY);
+      showHexInfo(e.clientX, e.clientY);
+      // An attack cannot be undone: the first tap shows its preview, a second tap on the same hex confirms it.
+      const arm = p && [E.key(p), selectedUnit()?.id ?? selectedStation()?.id, game.turn].join('|');
+      if (isAttackHex(p) && armedAttack !== arm) {
+        armedAttack = arm;
+        pointer = null;
+        requestMapFrame();
+        return;
+      }
+      armedAttack = null;
+    }
     if (pointer && !pointer.dragged) {
       // A click on a commander's map portrait opens Commander Info, unless it lands on a move or attack hex.
       const p = hitHex(e.clientX, e.clientY),
@@ -429,20 +518,8 @@ function attachMap() {
         visualCity = hitVisualStation(e.clientX, e.clientY),
         isAction = p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)));
       const targetUnit = p && E.unitAt(game, p);
-      if (pointer.shift && interactive() && (game.mode === 'conquest' || game.mode === 'scenario') &&
-          targetUnit?.side === game.player &&
-          !routing && !armyGroupRouting && !scenarioRoutingGroup && !strikeMode && !deploying) {
-        if (activeArmyGroup()) {
-          armyGroupToggleUnit(targetUnit.id);
-        } else {
-          if (!multiSelectedIds.size && selectedUnit()?.side === game.player) multiSelectedIds.add(selectedUnit().id);
-          if (multiSelectedIds.has(targetUnit.id)) multiSelectedIds.delete(targetUnit.id);
-          else multiSelectedIds.add(targetUnit.id);
-          const first = multiSelectedIds.values().next().value;
-          selection = { kind: 'unit', id: first ?? targetUnit.id };
-          updateSelection();
-          toast(multiSelectedIds.size + ' formations selected. Create or choose a group in Army groups.');
-        }
+      if (pointer.shift && canMultiSelect(targetUnit)) {
+        toggleMultiSelect(targetUnit);
       } else if (!pointer.shift && !strikeMode && !routing && !armyGroupRouting &&
           !scenarioRoutingGroup && !deploying && !isAction &&
           hitStrategicArmyGroup(e.clientX, e.clientY))
@@ -460,9 +537,15 @@ function attachMap() {
     pointer = null;
     canvas.style.cursor = 'default';
   };
-  canvas.onpointercancel = () => (pointer = null);
-  canvas.onpointerleave = () => {
-    if (!pointer) hover = null;
+  canvas.onpointercancel = e => {
+    clearTimeout(longPressTimer);
+    touches.delete(e.pointerId);
+    if (touches.size < 2) pinch = null;
+    pointer = null;
+  };
+  canvas.onpointerleave = e => {
+    // A lifted finger "leaves"; keep its tapped hex highlighted.
+    if (!pointer && e.pointerType !== 'touch') hover = null;
   };
   canvas.onwheel = e => {
     e.preventDefault();
