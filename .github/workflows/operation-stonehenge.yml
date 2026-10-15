@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - 'dist/scenarios-stonehenge.js'
-      - 'tools/stonehenge_sim.cjs'
+      - 'tools/scenario_sim.cjs'
       - 'src/ai/**'
       - 'src/engine/**'
       - 'dist/engine.js'
@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        player: [britannia, eb, eu]
+        player: [britannia, eu]
         difficulty: [normal, hard, challenge, elite]
     steps:
       - uses: actions/checkout@v4
@@ -40,4 +40,4 @@ jobs:
         with:
           node-version: '22'
       - name: Seeded six-turn AI combat and amphibious performance
-        run: node tools/stonehenge_sim.cjs 6 ${{ matrix.player }} ${{ matrix.difficulty }}
+        run: for seed in 11 71; do node tools/scenario_sim.cjs operation-stonehenge ${{ matrix.player }} ${{ matrix.difficulty }} "$seed" 6; done

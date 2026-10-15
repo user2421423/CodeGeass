@@ -23,9 +23,9 @@ jobs:
         run: |
           for side in britannia eu; do
             for seed in 11 29 47; do
-              node tools/siberia_sim.cjs "$seed" 3 "$side"
+              node tools/scenario_sim.cjs britannia-siberia "$side" normal "$seed" 3
             done
-          # Longer campaigns expose reinforcement, redeployment and strategic stalemates.
-          node tools/siberia_sim.cjs 101 10 britannia
-          node tools/siberia_sim.cjs 101 10 eu
           done
+          # Longer campaigns expose reinforcement, redeployment and strategic stalemates.
+          node tools/scenario_sim.cjs britannia-siberia britannia normal 101 10
+          node tools/scenario_sim.cjs britannia-siberia eu normal 101 10

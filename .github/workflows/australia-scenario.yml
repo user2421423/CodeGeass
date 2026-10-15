@@ -52,4 +52,4 @@ jobs:
           node-version: '22'
       - name: Seeded actual-engine three-way AI simulation
         timeout-minutes: 30
-        run: node tools/australia_sim.cjs ${{ matrix.seed }} 50 ${{ matrix.player }} ${{ matrix.difficulty }}
+        run: node tools/scenario_sim.cjs war-for-australia ${{ matrix.player }} ${{ matrix.difficulty }} ${{ matrix.seed }} 50

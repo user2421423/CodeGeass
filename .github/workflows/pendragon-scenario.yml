@@ -23,8 +23,8 @@ jobs:
         run: |
           for side in eu britannia; do
             for seed in 11 29 47; do
-              node tools/pendragon_sim.cjs "$seed" 2 "$side" normal
+              node tools/scenario_sim.cjs eu-pendragon "$side" normal "$seed" 2
             done
           done
-          node tools/pendragon_sim.cjs 101 4 eu hard
-          node tools/pendragon_sim.cjs 103 2 eu elite
+          node tools/scenario_sim.cjs eu-pendragon eu hard 101 4
+          node tools/scenario_sim.cjs eu-pendragon eu elite 103 2

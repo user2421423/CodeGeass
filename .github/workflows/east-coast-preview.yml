@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: '22'
       - name: Seeded amphibious AI simulations
-        run: node tools/east_coast_sim.cjs 2 ${{ matrix.difficulty }} ${{ matrix.player }} | tee east-coast-simulation.log
+        run: for seed in 11 71; do node tools/scenario_sim.cjs invasion-american-east-coast ${{ matrix.player }} ${{ matrix.difficulty }} "$seed" 2; done | tee east-coast-simulation.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

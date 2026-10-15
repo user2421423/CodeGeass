@@ -239,6 +239,12 @@ scenario-specific workflows in `.github/workflows/`. For example, a seeded
 node tools/philippines_balance_sim.cjs 11 50 britannia normal
 ```
 
+Any regional scenario runs as an all-AI game by its scenario ID:
+
+```sh
+node tools/scenario_sim.cjs invasion-turkey britannia normal 11 10
+```
+
 Simulations measure observed outcomes, not guaranteed faction win rates;
 repeat with multiple seeds, players and difficulties before assessing balance.
 

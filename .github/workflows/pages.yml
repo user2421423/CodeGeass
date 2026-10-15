@@ -4,12 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  # After successful tests on the experimental branch, republish its preview.
-  # workflow_run uses the workflow definition on main, so main's game stays live.
-  workflow_run:
-    workflows: ['Refactor regressions']
-    branches: ['experiment/japan-hd-156x120', 'experiment/visual-map-overhaul-20261011']
-    types: [completed]
 
 permissions:
   contents: read
@@ -22,17 +16,12 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # Always publish the live game from main, even when a preview update
-      # triggers this workflow.
       - uses: actions/checkout@v4
-        with:
-          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,68 +30,6 @@ jobs:
         run: |
           node tools/build_sources.cjs --check
           node tools/validate_assets.cjs --tracked
-      # Preview branches are optional: removed experiments must never block
-      # deployment of the tested main game.
-      - name: Check optional preview branches
-        id: previews
-        shell: bash
-        run: |
-          if git ls-remote --exit-code --heads origin "experiment/japan-hd-156x120" >/dev/null 2>&1; then
-            echo "japan_hd=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "japan_hd=false" >> "$GITHUB_OUTPUT"
-          fi
-          if git ls-remote --exit-code --heads origin "experiment/visual-map-overhaul-20261011" >/dev/null 2>&1; then
-            echo "visual_map=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "visual_map=false" >> "$GITHUB_OUTPUT"
-          fi
-      # Preview builds are isolated inside dist, with their own relative assets.
-      # Never replace the main game's index.html or scripts.
-      - name: Checkout high-resolution Japan experiment
-        if: steps.previews.outputs.japan_hd == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: experiment/japan-hd-156x120
-          path: hd-source
-          persist-credentials: false
-      - name: Verify Japan HD scenario
-        if: steps.previews.outputs.japan_hd == 'true'
-        working-directory: hd-source
-        run: |
-          node tools/build_sources.cjs --check
-      - name: Add isolated Japan HD preview
-        if: steps.previews.outputs.japan_hd == 'true'
-        run: |
-          test -f hd-source/dist/index.html
-          mkdir -p dist/previews/japan-hd
-          cp -a hd-source/dist/. dist/previews/japan-hd/
-          git -C hd-source rev-parse HEAD > dist/previews/japan-hd/preview-commit.txt
-          test -f dist/index.html
-          test -f dist/previews/japan-hd/index.html
-      # Keep the visual-map experiment alongside main and the Japan HD preview.
-      # The game loads assets relatively, so each preview is self-contained.
-      - name: Checkout visual map experiment
-        if: steps.previews.outputs.visual_map == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: experiment/visual-map-overhaul-20261011
-          path: visual-map-source
-          persist-credentials: false
-      - name: Verify visual map preview
-        if: steps.previews.outputs.visual_map == 'true'
-        working-directory: visual-map-source
-        run: |
-          node tools/build_sources.cjs --check
-      - name: Add isolated visual map preview
-        if: steps.previews.outputs.visual_map == 'true'
-        run: |
-          test -f visual-map-source/dist/index.html
-          mkdir -p dist/previews/visual-map
-          cp -a visual-map-source/dist/. dist/previews/visual-map/
-          git -C visual-map-source rev-parse HEAD > dist/previews/visual-map/preview-commit.txt
-          test -f dist/index.html
-          test -f dist/previews/visual-map/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

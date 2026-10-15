@@ -22,8 +22,8 @@ Both factions were instantiated on Normal, Hard, Challenge and Elite. Every diff
 | 71 | Britannia | 167 | 15 | 1 | 0 |
 
 ## Repeatable checks
-`node tools/urals_sim.cjs britannia normal 11 5`
+`node tools/scenario_sim.cjs crossing-urals britannia normal 11 5`
 
-`node tools/urals_sim.cjs eu hard 29 5`
+`node tools/scenario_sim.cjs crossing-urals eu hard 29 5`
 
 Longer-run competitive balance is not established by these smoke tests.

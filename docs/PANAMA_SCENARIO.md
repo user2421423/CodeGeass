@@ -36,5 +36,4 @@
 ## Play
 
 - **Scenarios → Panama Campaign**: launch as Europia United or Britannia and choose difficulty.
-- **Campaign Mode → Panama quick play**: instantly open the E.U. Panama battle without earlier Campaign-tier victories; progress and unlocks are intentionally untouched.
 - When earlier E.U. Campaign tiers are completed, normal Tier 4 Panama battles register wins toward the next tier.

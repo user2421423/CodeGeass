@@ -37,7 +37,7 @@ The accompanying CSV, `docs/BERING_HEX_AUDIT.csv`, records the exact 100 modifie
 ```bash
 node tools/bering_hex_audit.cjs
 node --test tests/bering.test.cjs tests/fleija-mode-gates.test.cjs
-node tools/bering_sim.cjs 11 4
+node tools/scenario_sim.cjs bering-strait britannia normal 11 4
 node --test tests/*.test.cjs
 ```
 

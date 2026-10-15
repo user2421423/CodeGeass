@@ -12,7 +12,7 @@ The revised starting forces contain **160 formations**, of which **124 are land 
 
 ## Actual-engine simulation methodology
 
-The `tools/australia_sim.cjs` harness uses production code for `E.aiPlan`, `E.aiProduction`, `E.aiOrder`, beginning turns, unit movement, city capture, naval moves and carrier amphibious disembarkation. Both or all three rivals plus the nominated player are AI-controlled; `player` selects turn order and normal-difficulty starting resources, **not** a scripted player-targeting bonus. A run stops at victory or the **50-turn observation cutoff**, which does **not** set a game turn limit. Five deterministic seeds are sampled with the same `player` in baseline and revised starts.
+The `tools/scenario_sim.cjs war-for-australia` harness uses production code for `E.aiPlan`, `E.aiProduction`, `E.aiOrder`, beginning turns, unit movement, city capture, naval moves and carrier amphibious disembarkation. Both or all three rivals plus the nominated player are AI-controlled; `player` selects turn order and normal-difficulty starting resources, **not** a scripted player-targeting bonus. A run stops at victory or the **50-turn observation cutoff**, which does **not** set a game turn limit. Five deterministic seeds are sampled with the same `player` in baseline and revised starts.
 
 ### Before rebalancing (original approximate shoreline)
 

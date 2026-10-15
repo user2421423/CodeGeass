@@ -1,18 +1,28 @@
 #!/usr/bin/env node
 'use strict';
-/* Seeded full-engine AI-v-AI playtest: node tools/indochina_sim.cjs [player] [difficulty] [seed] [turns] */
+/* Seeded full-engine AI-v-AI playtest of any regional scenario:
+   node tools/scenario_sim.cjs <scenario-id> [player] [difficulty] [seed] [turns] */
+const fs=require('node:fs');
+const path=require('node:path');
 const E=require('../dist/engine.js');
 require('../dist/engine/ai.js');
-const scenario=require('../dist/scenarios-indochina.js');
-const player=process.argv[2]||'britannia',difficulty=process.argv[3]||'normal';
-const seed=Number(process.argv[4]||11),turns=Number(process.argv[5]||3);
+const DIST=path.join(__dirname,'../dist');
+for(const f of fs.readdirSync(DIST).filter(f=>/^(scenarios.*|.*-landmask|.*-geography)\.js$/.test(f)).sort())
+  require(path.join(DIST,f));
+const id=process.argv[2],scenario=E.scenarios?.byId?.[id];
+if(!scenario)throw Error('Unknown scenario '+id+'. Known: '+Object.keys(E.scenarios?.byId||{}).join(', '));
+const player=process.argv[3]||scenario.sides[0],difficulty=process.argv[4]||'normal';
+const seed=Number(process.argv[5]||11),turns=Number(process.argv[6]||3);
 if(!scenario.sides.includes(player)||!['normal','hard','challenge','elite'].includes(difficulty)||
- !Number.isInteger(seed)||!Number.isInteger(turns)||turns<1||turns>150)throw Error('Invalid Indochina simulation arguments');
+ !Number.isInteger(seed)||!Number.isInteger(turns)||turns<1||turns>150)
+  throw Error('usage: node tools/scenario_sim.cjs <scenario-id> ['+scenario.sides.join('|')+'] [normal|hard|challenge|elite] [seed] [turns 1..150]');
 const g=scenario.create(player,difficulty,seed),sides=scenario.sides;
-const r={player,difficulty,seed,maxTurns:turns,startingCities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
+const zeros=()=>Object.fromEntries(sides.map(s=>[s,0]));
+const r={scenario:id,player,difficulty,seed,maxTurns:turns,
+  startingCities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
   startingForces:Object.fromEntries(sides.map(s=>[s,g.units.filter(v=>v.side===s).length])),
-  captures:[],losses:{britannia:0,cf:0},production:{britannia:0,cf:0},attacks:{britannia:0,cf:0},
-  navalActions:{britannia:0,cf:0},navalMoves:{britannia:0,cf:0},errors:[],snapshots:[],winner:null,openingStall:false};
+  captures:[],losses:zeros(),production:zeros(),attacks:zeros(),
+  navalActions:zeros(),navalMoves:zeros(),errors:[],snapshots:[],winner:null,openingStall:false};
 let oldOwners=new Map(g.stations.map(s=>[s.id,s.owner])),known=new Set(g.units.map(u=>u.id)),
   previousAlive=new Map(g.units.filter(u=>u.hp>0).map(u=>[u.id,u.side]));
 function observe(){
@@ -20,7 +30,8 @@ function observe(){
   r.captures.push({turn:g.turn,city:city.name,from:oldOwners.get(city.id),to:city.owner});oldOwners.set(city.id,city.owner);
  }
  const living=new Map();
- for(const u of g.units){
+ // Units aboard a carrier are alive but temporarily absent from g.units.
+ for(const u of g.units.flatMap(u=>[u,...(u.cargo||[])])){
   if(!known.has(u.id)){known.add(u.id);r.production[u.side]++;}
   if(u.hp>0)living.set(u.id,u.side);
  }
@@ -30,6 +41,7 @@ function observe(){
 let end=false;
 for(let turn=1;turn<=turns&&!end;turn++){
  g.turn=turn;
+ if(turn>1)scenario.onTurn?.(g);
  for(const side of g.order){
   if(!E.alive(g,side))continue;
   if(!(turn===1&&side===g.order[0]))E.beginTurn(g,side,turn>1);
@@ -37,7 +49,7 @@ for(let turn=1;turn<=turns&&!end;turn++){
   const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
     .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id).map(u=>u.id);
   for(let i=0;i<ids.length;i++){
-   if(typeof E.aiNextActor==='function'){const j=E.aiNextActor(g,ids,i);if(j>i&&j<ids.length)[ids[i],ids[j]]=[ids[j],ids[i]];}
+   const j=E.aiNextActor(g,ids,i);if(j>i&&j<ids.length)[ids[i],ids[j]]=[ids[j],ids[i]];
    const u=g.units.find(v=>v.id===ids[i]);
    if(!u||u.hp<=0||u.side!==side)continue;
    try{
@@ -50,6 +62,7 @@ for(let turn=1;turn<=turns&&!end;turn++){
    observe();
    const won=scenario.winner(g);
    if(won){r.winner=won.winner;end=true;break;}
+   // Full AI-vs-AI is not ended by a human-specific loss screen.
    if(g.over)g.over=null;
   }
   if(end)break;
@@ -58,5 +71,5 @@ for(let turn=1;turn<=turns&&!end;turn++){
   units:Object.fromEntries(sides.map(s=>[s,g.units.filter(v=>v.side===s&&v.hp>0).length]))});
 }
 r.openingStall=r.captures.length===0&&r.snapshots.length>=3;
-console.log('INDOCHINA_SIM '+JSON.stringify(r));
+console.log('SCENARIO_SIM '+JSON.stringify(r));
 if(r.errors.length)process.exitCode=1;

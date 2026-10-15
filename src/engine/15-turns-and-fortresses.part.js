@@ -313,8 +313,8 @@
             ? 'Your last stronghold in this theatre has fallen. The ' + FACTIONS[soleVictor].name +
               ' has conquered every city in the theatre.'
             : contenders.length === 1
-              ? 'Your last Japanese stronghold has fallen. The surviving power has not yet conquered every city in this theatre.'
-              : 'Your last Japanese stronghold has fallen. ' +
+              ? 'Your last stronghold in this theatre has fallen. The surviving power has not yet conquered every city in this theatre.'
+              : 'Your last stronghold in this theatre has fallen. ' +
                 'The war continues between ' +
                 contenders.map(side => FACTIONS[side].name).join(' and ') + '.',
         };

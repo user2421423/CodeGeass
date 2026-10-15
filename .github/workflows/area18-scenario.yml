@@ -43,10 +43,10 @@ jobs:
         run: python3 tools/check_map.py
       - name: 20-turn three-way simulation (17)
         timeout-minutes: 15
-        run: node tools/area18_sim.cjs 17 20 britannia normal
+        run: node tools/scenario_sim.cjs area-18 britannia normal 17 20
       - name: 20-turn three-way simulation (29)
         timeout-minutes: 15
-        run: node tools/area18_sim.cjs 29 20 eu hard
+        run: node tools/scenario_sim.cjs area-18 eu hard 29 20
       - name: 20-turn three-way simulation (43)
         timeout-minutes: 15
-        run: node tools/area18_sim.cjs 43 20 cf challenge
+        run: node tools/scenario_sim.cjs area-18 cf challenge 43 20
