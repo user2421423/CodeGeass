@@ -19,13 +19,13 @@ Source touched: `src/engine/14-fleija.part.js`, `src/engine/15-turns-and-fortres
 - `tests/fleija-tier1-after-five.test.cjs`: real fifth city destroyed, save/load persistence, interception not counted, splash not counted, scoring preference for a Tier 1 direct target only once threshold reached.
 - `tests/fleija-tier1-milestone-sim.test.cjs`: the real fifth successful city strike followed by a subsequent AI production launch at the Tier 1 commander.
 - `node tools/build_sources.cjs --check`: all generated bundles synchronized.
-- `node --test tests/*.test.cjs` plus UI smoke check.
+- `node --test tests/*.test.cjs` with a strict **failure-for-failure comparison against the exact unchanged starting main SHA**. The current repository does not provide `tests/ui-smoke.cjs`; its existing unit-dock/HUD tests are included in the full suite.
 - Two real-world 2017 equal-AI 95-turn stability campaigns (seeds 401, 777) using the **current main** balance simulator, as distinct from the older experimental branch's simulation code.
 
 [Review CI workflow](https://github.com/user2421423/CodeGeass/actions/workflows/fleija-tier1-main-review.yml)
 
 ## Notes
 
-Prior experimental [PR #67](https://github.com/user2421423/CodeGeass/pull/67) passed long 2017/2018 wars and exhibited two direct post-threshold Tier 1 attacks in its 2018/777 game. Those older outcomes are historical and **do not establish** identical results on the current main. This review branch must pass its own current-main checks; even if the two 2017 wars do not reach the threshold naturally, direct fifth-city integration tests verify functionality.
+Prior experimental [PR #67](https://github.com/user2421423/CodeGeass/pull/67) passed long 2017/2018 wars and exhibited two direct post-threshold Tier 1 attacks in its 2018/777 game. Those older outcomes are historical and **do not establish** identical results on the current main. The five existing full-suite failures on the clean review branch exactly reproduce five failures on the original main (four Indochina scenario expectations and one unit-dock HUD expectation); **zero additional failures**. The head branch's five explicit F.L.E.I.J.A. milestone tests pass. This review branch must pass its own current-main checks; even if the two 2017 wars do not reach the threshold naturally, direct fifth-city integration tests verify functionality.
 
 **No merge** without user's explicit authorization. Main remains unchanged.
