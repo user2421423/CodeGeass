@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify regular class standardization
+        run: node tools/regular_class_standardization_smoke.cjs
       - name: Verify Story Mode Canterbury movement
         run: node tools/story_canterbury_movement_smoke.cjs
       - name: Verify HQ mobility research bonuses
