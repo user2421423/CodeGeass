@@ -1,6 +1,7 @@
 (function(){
  const media=matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 600px)');
  function setup(){
+   document.querySelectorAll('button').forEach(b=>{const label=b.textContent.trim().replace(/^[↶↩⟲\\s]+/,'').trim(); if(/undo move/i.test(label))b.textContent='Undo'; else if(/do all orders now/i.test(label))b.textContent='Orders';});
    const hud=document.querySelector('.topbar.hud-v2'), nav=hud?.querySelector('.hud-nav'), footer=document.querySelector('.footer');
    if(!media.matches||!hud||!nav||!footer)return;
    if(!nav.querySelector('.wc4-nav-toggle')){
