@@ -106,7 +106,10 @@
         : 0;
     const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') + formationArmor : 35;
     const vritraBypass=!counter&&f.elitePenSupport&&victim?.branch==='Armor'&&u.expVritraUsedTurn!==g.turn;
-    attack *= 100 / (100 + armor * (1 - pen) * (vritraBypass?1.6:2));
+    // First anti-armor hit bypasses 20% of the entire target-defense reduction,
+    // rather than adding a second penetration or cover modifier.
+    const beforeDefenses=attack;
+    attack *= 100 / (100 + armor * (1 - pen) * 2);
     if (target) {
       const tf = fx(target),
         nearCity = g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1);
@@ -153,10 +156,11 @@
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else {
-        const bypass=(u.forcedOffensive?.5:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(f.blackSeaFox&&u.expEduardoMountainTurn!==g.turn&&tile(g,u.c,u.r)?.terrain==='mountain'?.25:0)+(vritraBypass?.2:0);
+        const bypass=(u.forcedOffensive?.5:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(f.blackSeaFox&&u.expEduardoMountainTurn!==g.turn&&tile(g,u.c,u.r)?.terrain==='mountain'?.25:0);
         attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
       }
     }
+    if(vritraBypass&&attack<beforeDefenses)attack+=.2*(beforeDefenses-attack);
     if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
     return Math.max(1, Math.round(attack));
   }
@@ -325,8 +329,11 @@
     // Consume the landing research bonus on the first attack only.
     if (TYPES[a.type].naval === 'amphibious' && a.expLandedTurn === g.turn)
       a.landingAssaultUsedTurn = g.turn;
+    // Any prior suppression was included in preview and splash calculations;
+    // clear it only after preparing the complete volley, not after the counterattack.
     let dmg = 0,
       sd = 0;
+    if(a.expSmilasSuppression)delete a.expSmilasSuppression;
     if (d) {
       dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       consumeDefensiveSkills(g, d, a);
@@ -445,7 +452,6 @@
     if(f.blackSeaFox&&tile(g,a.c,a.r)?.terrain==='mountain')a.expEduardoMountainTurn=g.turn;
     if(f.elitePenSupport&&d&&TYPES[d.type].branch==='Armor')a.expVritraUsedTurn=g.turn;
     if(f.charge&&a.expTamakiCharging)a.expTamakiUsedTurn=g.turn;
-    if(a.expSmilasSuppression)delete a.expSmilasSuppression;
     delete a.expTamakiCharging;
     if(f.diagnosis&&d)d.expJoeDiagnosis={side:a.side,until:g.turn+1};
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
