@@ -58,7 +58,6 @@
     let mult = 1;
     if (counter) {
       if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
-      if(u.guardReady&&u.held&&skillNear(g,u,'prepared',2))mult*=1.2;
       return mult;
     }
     if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
@@ -90,8 +89,6 @@
     if (skillNear(g, target, 'calmDefense', 1)) mult *= 0.9;
     if (target.guardReady && target.held && skillNear(g, target, 'veteranSupport', 1, false)) mult *= 0.9;
     if (f.loneRisk && !friends.length) mult *= f.loneRisk;
-    if (f.steadyRanks && friends.length >= 2) mult *= f.steadyRanks;
-    if(skillNear(g,target,'steadyRanks',2,false))mult*=friendlyNeighbors(g,target).length>=2?.8:.9;
     if(target.guardReady&&target.held&&skillNear(g,target,'defensiveDoctrine',2))mult*=.85;
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {
@@ -121,7 +118,7 @@
     if (city && foe(g, city.owner, a.side)) {
       if (f.focusBombard) {
         const old = a.focusCity;
-        const count = old?.city === city.id && old.lastTurn >= g.turn - 1 ? Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) : 0;
+        const count = old?.city === city.id && old.lastTurn >= g.turn - 1 ? Math.min(3, old.count + 1) : 0;
         a.focusCity = { city: city.id, count, lastTurn: g.turn };
       }
       if (f.siegeMark && a.siegeMarkTurn !== g.turn) {
@@ -152,8 +149,7 @@
     const raiko=TYPES[u.type].branch==='Artillery'&&skillNear(g,u,'raikoCity',2)?1.25:1;
     let mult = city.bombardMark?.side === u.side ? 1 + city.bombardMark.value : 1;
     const old = u.focusCity;
-    if (fx(u).focusBombard && old?.city === city.id && old.lastTurn >= g.turn - 1)
-      mult *= 1 + Math.min(3, old.count + (old.lastTurn < g.turn ? 1 : 0)) * fx(u).focusBombard;
+    // Focused Bombardment is applied in power(), not a second time here.
     return mult*raiko;
   }
   function treasuryBonus(g, city) {
@@ -190,7 +186,7 @@
     const f = fx(u);
     let m = counter ? [1, 1.25, 1.4][miracle(g, u)] : 1;
     if (f.lastStand && u.hp / maxHP(u) < 0.5) m *= 1 + f.lastStand;
-    if (f.charge && !counter && u.movedDistance>=2 && !u.chain) m *= 1 + f.charge;
+    if (f.charge && !counter && u.movedDistance>=2 && u.expTamakiUsedTurn!==g.turn) m *= 1 + f.charge;
     return m;
   }
   // Damage-taken multiplier: Miracle Worker, Senba's Veteran's Guard, Katase's Prepared Position.
@@ -198,12 +194,7 @@
     const tf = fx(target),
       ground = tile(g, target.c, target.r);
     let m = [1, 0.9, 0.8][miracle(g, target)];
-    if (tf.guard && !counter && direct && target.guardReady && target.held && target.guardStamp !== guardStamp(g)) m *= tf.guard;
-    if (
-      skillNear(g, target, 'prepared', 2) &&
-      (ground?.terrain === 'mountain' || g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1))
-    )
-      m *= 0.85;
+    if (tf.guard && target.held && target.guardReady) m *= tf.guard;
     return m;
   }
   // Inoue's Resistance Logistics (repair and reinforce discount, extra city repair) and Minami's spotting reach.
