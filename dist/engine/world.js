@@ -508,6 +508,71 @@
     ['Pearl Harbor', 2], ['New York', 2], ['Kyoto', 1], ['Los Angeles', 1],
     ['London', 2], ['Gibraltar', 2], ['Barcelona', 1], ['Athens', 1],
     ['Shanghai', 2], ['Singapore', 2], ['Hong Kong', 1], ['Mumbai', 1],
+    // Additional starting ports are shared by both 2017 and 2018 conquests.
+    // Port ownership always follows each era's city ownership at game creation.
+    // Britannian and Pacific bases.
+    ['San Francisco', 2],
+    ['Miami', 2],
+    ['Halifax', 1],
+    ['Houston', 1],
+    ['Havana', 1],
+    ['Panama', 2],
+    ['Lima', 1],
+    ['Recife', 1],
+    ['Rio de Janeiro', 2],
+    ['Sao Paulo', 1],
+    ['Manila', 2],
+    ['Auckland', 2],
+    ['Christchurch', 1],
+    ['Tokyo Settlement', 2],
+    ['Fukuoka', 1],
+    ['Sapporo', 1],
+    ['Nuuk', 1],
+    // Europia United's Mediterranean, Atlantic, African and northern bases.
+    ['Amsterdam', 2],
+    ['Dublin', 1],
+    ['Edinburgh', 1],
+    ['Rome', 2],
+    ['Algiers', 1],
+    ['Tripoli', 1],
+    ['Stockholm', 1],
+    ['Reykjavik', 1],
+    ['Murmansk', 2],
+    ['Casablanca', 1],
+    ['Dakar', 2],
+    ['Lagos', 1],
+    ['Luanda', 1],
+    ['Cape Town', 2],
+    ['Dar es Salaam', 2],
+    ['Petropavlovsk', 1],
+    // Chinese Federation's Asian and Indian Ocean bases.
+    ['Guangzhou', 2],
+    ['Seoul', 1],
+    ['Vladivostok', 2],
+    ['Taipei', 1],
+    ['Karachi', 2],
+    ['Kolkata', 1],
+    ['Chennai', 1],
+    ['Colombo', 2],
+    ['Yangon', 1],
+    ['Ho Chi Minh City', 1],
+    ['Hanoi', 1],
+    ['Kuala Lumpur', 1],
+    ['Jakarta', 2],
+    ['Surabaya', 2],
+    ['Makassar', 1],
+    ['Pontianak', 1],
+    ['Port Moresby', 2],
+    ['Jayapura', 1],
+    // Australian and Arabian neutral-region bases.
+    ['Sydney', 2],
+    ['Melbourne', 2],
+    ['Perth', 2],
+    ['Darwin', 1],
+    ['Brisbane', 1],
+    ['Adelaide', 1],
+    ['Jeddah', 1],
+    ['Dubai', 2],
   ];
   const NAVY_DATA = [
     ['britannia', 'carrier', -158, 20.5, 1], ['britannia', 'carrier', -71, 39.5, 1], ['britannia', 'carrier', 135, 33, 1], ['britannia', 'carrier', -124, 37.5, 1],
@@ -522,7 +587,9 @@
   ];
   // Fixed starting placements: retain pre-experiment cities/ports even when adjacent coastline changes.
   const COASTAL_CITY_HEXES = {"Pendragon":[31,21],"Seattle":[28,15],"Denver":[37,20],"Chicago":[45,19],"New York":[52,20],"Miami":[49,28],"Winnipeg":[41,14],"Halifax":[57,17],"Anchorage":[14,7],"Mexico City":[40,32],"Panama":[50,38],"Bogota":[52,41],"Lima":[51,50],"Manaus":[59,45],"Recife":[72,48],"Rio de Janeiro":[67,57],"Buenos Aires":[60,64],"Santiago":[54,63],"Pearl Harbor":[10,31],"Manila":[150,35],"Auckland":[176,65],"Tokyo Settlement":[159,22],"Kyoto":[157,23],"Fukuoka":[155,24],"Sapporo":[161,18],"St. Petersburg":[105,8],"Moscow":[108,11],"Minsk":[103,12],"Kiev":[105,14],"Bucharest":[103,17],"Istanbul":[105,20],"Tbilisi":[111,19],"Volgograd":[111,15],"Yekaterinburg":[120,10],"Novosibirsk":[130,11],"Irkutsk":[141,13],"Yakutsk":[154,7],"Petropavlovsk":[169,12],"Nuuk":[64,6],"Paris":[90,15],"London":[89,13],"Edinburgh":[87,11],"Dublin":[86,12],"Reykjavik":[79,6],"Madrid":[88,20],"Gibraltar":[87,22],"Rome":[96,19],"Berlin":[96,13],"Vienna":[97,15],"Warsaw":[100,13],"Stockholm":[98,9],"Oslo":[95,8],"Murmansk":[106,3],"Athens":[100,21],"Belgrade":[99,17],"Cairo":[105,26],"Algiers":[91,22],"Tripoli":[95,24],"Dakar":[81,35],"Bamako":[86,36],"Lagos":[92,40],"Khartoum":[106,34],"Addis Ababa":[109,38],"Kinshasa":[97,46],"Nairobi":[108,44],"Johannesburg":[103,59],"Cape Town":[98,63],"Antananarivo":[113,54],"Luoyang":[145,23],"Beijing":[148,20],"Shanghai":[149,25],"Hong Kong":[147,30],"Chongqing":[143,26],"Liaodong":[151,19],"Seoul":[152,21],"Vladivostok":[155,18],"Ulaanbaatar":[142,15],"Urumqi":[133,18],"Lhasa":[136,26],"Almaty":[128,18],"Tashkent":[124,19],"Kabul":[124,23],"Tehran":[115,22],"Karachi":[123,29],"Delhi":[128,27],"Jabalpur":[129,30],"Mumbai":[126,32],"Kolkata":[134,30],"Chennai":[129,36],"Colombo":[129,39],"Yangon":[138,34],"Hanoi":[142,31],"Bangkok":[139,35],"Singapore":[141,43],"Jakarta":[142,47],"Taipei":[150,29],"Port Moresby":[163,49],"Sydney":[165,63],"Melbourne":[162,66],"Perth":[147,62],"Darwin":[154,51],"Baghdad":[112,24],"Riyadh":[112,29],"Damascus":[108,24],"San Francisco":[28,21],"Los Angeles":[30,23],"Houston":[42,26],"Toronto":[50,18],"Montreal":[52,17],"Havana":[48,30],"Quito":[50,43],"Caracas":[57,38],"Brasilia":[65,53],"Sao Paulo":[66,57],"Barcelona":[90,19],"Amsterdam":[91,13],"Helsinki":[102,8],"Casablanca":[86,24],"Luanda":[96,49],"Dar es Salaam":[108,47],"Harbin":[152,17],"Xian":[143,23],"Chengdu":[141,25],"Wuhan":[146,25],"Guangzhou":[146,30],"Kunming":[140,29],"Kathmandu":[132,27],"Dhaka":[134,29],"Ho Chi Minh City":[142,37],"Kuala Lumpur":[140,41],"Surabaya":[146,48],"Brisbane":[166,59],"Adelaide":[159,64],"Sanaa":[112,34],"Calgary":[32,13],"Kansas City":[42,20],"Atlanta":[47,24],"Monterrey":[39,28],"Guatemala City":[44,35],"Saskatoon":[36,13],"Belém":[64,44],"Cuiabá":[61,52],"La Paz":[55,53],"Iquitos":[53,46],"Asunción":[61,58],"Punta Arenas":[54,74],"Puerto Montt":[54,68],"Salvador":[69,51],"Christchurch":[176,68],"Samara":[115,12],"Omsk":[126,11],"Krasnoyarsk":[135,11],"N'Djamena":[97,36],"Niamey":[90,35],"Kano":[94,36],"Kisangani":[102,43],"Bangui":[98,41],"Lusaka":[104,52],"Windhoek":[98,57],"Lahore":[126,25],"Hyderabad":[128,33],"Mashhad":[119,22],"Lanzhou":[141,22],"Pontianak":[144,43],"Makassar":[149,45],"Jayapura":[158,45],"Jeddah":[109,31],"Dubai":[117,29]};
-  const COASTAL_PORT_HEXES = {"Pearl Harbor":[10,30],"New York":[52,21],"Kyoto":[157,22],"Los Angeles":[30,24],"London":[90,12],"Gibraltar":[88,22],"Barcelona":[91,20],"Athens":[100,22],"Shanghai":[150,25],"Singapore":[142,42],"Hong Kong":[147,31],"Mumbai":[125,32]};
+  // Each starting port is fixed to an adjacent navigable sea hex, preventing
+  // neighbouring shipyards from competing for the same placement.
+  const COASTAL_PORT_HEXES = {"Pearl Harbor":[10,30],"New York":[52,21],"Kyoto":[157,22],"Los Angeles":[30,24],"London":[90,12],"Gibraltar":[88,22],"Barcelona":[91,20],"Athens":[100,22],"Shanghai":[150,25],"Singapore":[142,42],"Hong Kong":[147,31],"Mumbai":[125,32],"San Francisco":[27,21],"Miami":[50,28],"Halifax":[58,16],"Houston":[42,27],"Havana":[47,29],"Panama":[49,37],"Lima":[50,50],"Recife":[73,48],"Rio de Janeiro":[68,58],"Sao Paulo":[67,58],"Manila":[151,35],"Auckland":[177,64],"Christchurch":[175,67],"Tokyo Settlement":[159,23],"Fukuoka":[154,23],"Sapporo":[161,17],"Nuuk":[63,6],"Amsterdam":[91,12],"Dublin":[86,13],"Edinburgh":[87,12],"Rome":[96,20],"Algiers":[90,21],"Tripoli":[95,23],"Stockholm":[99,9],"Reykjavik":[78,6],"Murmansk":[107,2],"Casablanca":[85,23],"Dakar":[80,35],"Lagos":[91,41],"Luanda":[95,49],"Cape Town":[97,63],"Dar es Salaam":[109,47],"Petropavlovsk":[169,13],"Guangzhou":[145,31],"Seoul":[151,21],"Vladivostok":[155,19],"Taipei":[151,28],"Karachi":[123,30],"Kolkata":[134,31],"Chennai":[130,36],"Colombo":[128,39],"Yangon":[137,35],"Ho Chi Minh City":[143,38],"Hanoi":[143,32],"Kuala Lumpur":[141,41],"Jakarta":[142,48],"Surabaya":[145,47],"Makassar":[148,45],"Pontianak":[144,42],"Port Moresby":[164,48],"Jayapura":[158,44],"Sydney":[166,63],"Melbourne":[161,67],"Perth":[146,62],"Darwin":[154,50],"Brisbane":[167,58],"Adelaide":[158,65],"Jeddah":[108,31],"Dubai":[118,29]};
   const data = (root.KnightmareData ||= {});
   Object.assign(data, {
     RESOURCE_SITES,
