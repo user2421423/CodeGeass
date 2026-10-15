@@ -102,7 +102,7 @@ function drawMinimap() {
   for (const shift of wraps() ? [-mini.width, 0, mini.width] : [0]) m.strokeRect(vx + shift, vy, vw, vh);
 }
 // Terrain, territory, cities, mines and units on a small canvas: the minimap, and the map in a mission briefing.
-function paintMap(b, g, width, height, dpr, allUnits = false) {
+function paintMap(b, g, width, height, dpr, allUnits = false, geographyOnly = false) {
   const sx = width / mapW(g),
     sy = height / mapH(g),
     col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
@@ -126,6 +126,9 @@ function paintMap(b, g, width, height, dpr, allUnits = false) {
       b.fillRect((p.x - R) * sx, (p.y - R) * sy, SQ * R * sx + 1, 1.5 * R * sy + 1);
     }
   }
+  // Offline geographic snapshots must preserve geography/ownership without
+  // drawing stations, sites or any military formation markers.
+  if (geographyOnly) return;
   for (const s of g.stations) {
     const p = hexCenter(s);
     b.fillStyle = s.capital ? '#ffffff' : col(s.owner);
