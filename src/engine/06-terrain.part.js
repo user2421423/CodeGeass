@@ -94,7 +94,8 @@
   const hasPort3 = (g, side) => g.stations.some(s => (s.portLevel || 0) >= 3 && s.portOwner === side);
   function carrierCapacity(g, ship) {
     if (!isShip(ship)) return 0;
-    return TYPES[ship.type].capacity + (techLevel(g, ship.side, 'naval.hangars') ? 1 : 0);
+    // Expanded Hangars removed: no carrier can hold more than two formations.
+    return Math.min(2, TYPES[ship.type].capacity);
   }
   const canBoard = (g, ship) => isShip(ship) && ship.hp > 0 && (ship.cargo?.length || 0) < carrierCapacity(g, ship);
   // Every unit on the map plus the Knightmares carried inside Carrier-Battleships.
@@ -128,7 +129,7 @@
   }
   // Embarked units take extra damage; Landing Craft halves the penalty.
   function seaPenalty(g, side) {
-    return techLevel(g, side, 'naval.landing') ? 0.25 : 0.5;
+    return techValue(g, side, 'naval.landing') || 0.5;
   }
   function seaMove(g, u) {
     const base = g?.mode === 'campaign' ? SEA_MOVE.campaign : SEA_MOVE.conquest;

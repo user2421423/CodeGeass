@@ -224,7 +224,7 @@
       Math.round(
         (FORTRESS_GUN.fixed + maxHP(foe) * FORTRESS_GUN.share) *
           (1 + techValue(g, owner, 'cities.battery')) *
-          (TYPES[foe.type].branch === 'Armor' ? 1 - techValue(g, foe.side, 'armor.bulkheads') : 1),
+          (!TYPES[foe.type].naval && TYPES[foe.type].branch === 'Armor' ? 1 - techValue(g, foe.side, 'armor.bulkheads') : 1),
       ),
     );
   }

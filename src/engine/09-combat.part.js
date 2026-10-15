@@ -61,8 +61,12 @@
     if (t.boarding && (target ? victim.branch === 'Armor' : !!st)) attack *= 1.50;
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
-    if (!t.naval && t.branch === 'Infantry' && victim?.branch === 'Armor')
-      attack *= 1 + techValue(g, u.side, 'infantry.antiarmor');
+    if (!t.naval && t.branch === 'Infantry' && victim && !victim.naval) {
+      if (victim.branch === 'Armor') attack *= 1 + techValue(g, u.side, 'infantry.antiarmor');
+      if (victim.branch === 'Artillery') attack *= 1 + techValue(g, u.side, 'infantry.antiartillery');
+    }
+    if (!t.naval && t.branch === 'Armor' && counter)
+      attack *= 1 + techValue(g, u.side, 'armor.reactive');
     if (t.naval === 'amphibious' && !counter && u.expLandedTurn === g.turn && u.landingAssaultUsedTurn !== g.turn)
       attack *= 1 + techValue(g, u.side, 'amphibious.landing');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
@@ -71,7 +75,7 @@
       g.units.some(v => v.hp > 0 && v.side === side && v.id !== u.id && dist(g, v, at) === 1 && test(TYPES[v.type]));
     // Lance Formation and Factsphere Fire Control.
     if (!t.naval && t.branch === 'Armor' && techLevel(g, u.side, 'armor.formation') >= 1 && friends(u.side, u, v => v.branch === 'Armor' && !v.naval))
-      attack *= 1.10;
+      attack *= 1 + techValue(g, u.side, 'armor.formation');
     if (
       !t.naval &&
       t.branch === 'Artillery' &&
@@ -81,6 +85,8 @@
     )
       attack *= 1.2;
     const pen = Math.min(.95,armorPenetration(g,u,target)
+      + (!t.naval && t.branch === 'Armor' && victim && !victim.naval && victim.branch === 'Armor'
+        ? techValue(g, u.side, 'armor.precision') : 0)
       +(u.expCalibration?.15:0)
       +(fx(u).diagnosis&&target&&u.expDiagnosisId===target.id?.1*(u.expDiagnosisCount||0):0)
       +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.12:0));
@@ -88,7 +94,7 @@
       target &&
       !victim.naval &&
       victim.branch === 'Armor' &&
-      techLevel(g, target.side, 'armor.formation') >= 1 &&
+      techLevel(g, target.side, 'armor.formation') >= 2 &&
       g.units.some(v => v.hp > 0 && v.side === target.side && v.id !== target.id && !TYPES[v.type].naval && TYPES[v.type].branch === 'Armor' && dist(g, v, target) === 1)
         ? 5
         : 0;
@@ -158,9 +164,12 @@
     const base = power(g, a, d, s),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
-    // Chaos Mines and city-breaker commanders raise damage to city defenses.
+    // Specialized infantry, artillery and naval research can increase city shield damage.
     const ef = eliteFx(a),
       raid = (1 + (!t.naval && t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) *
+        (1 + (!t.naval && t.branch === 'Artillery' ? techValue(g, a.side, 'artillery.siege') : 0)) *
+        (1 + (t.naval === 'ship' && s && (s.portAt || adjacent(g, s).some(v => navigable(v)))
+          ? techValue(g, a.side, 'naval.coastal') : 0)) *
         (1 + (t.naval === 'amphibious' && s &&
           (s.portAt || adjacent(g, s).some(v => navigable(v)))
           ? techValue(g, a.side, 'amphibious.coastal') : 0)) *
@@ -209,6 +218,8 @@
       critMult: (t.critMult || 1.55) + (f.critBonus || 0),
       splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
       armorPen: Math.min(.95,armorPenetration(g,a,d)
+        + (!t.naval && t.branch === 'Armor' && d && !TYPES[d.type].naval && TYPES[d.type].branch === 'Armor'
+          ? techValue(g, a.side, 'armor.precision') : 0)
         +(a.expCalibration?.15:0)
         +(fx(a).diagnosis&&d&&a.expDiagnosisId===d.id?.1*(a.expDiagnosisCount||0):0)
         +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.12:0)),

@@ -34,24 +34,30 @@ assert.equal(repairSpent(land), basicCost(E.TYPES.glasgow.cost), 'baseline infan
 assert.equal(repairSpent(ship), basicCost(E.TYPES.carrier_battleship.cost), 'baseline warship repair cost');
 
 g.tech[side] = { 'cities.energy': 1 };
+assert.equal(repairSpent(land), Math.round(basicCost(E.TYPES.glasgow.cost) * 0.90),
+  'Energy Filler Network I saves 10% on manual repairs');
+g.tech[side] = { 'cities.energy': 2 };
 assert.equal(repairSpent(land), Math.round(basicCost(E.TYPES.glasgow.cost) * 0.85),
-  'Energy Filler Network reduces manual repair cost by 15%');
+  'Energy Filler Network II saves 15%');
 assert.equal(repairSpent(ship), Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.85),
   'Energy Filler Network applies to ships too');
 
 g.tech[side] = { 'naval.damage': 1 };
 assert.equal(repairSpent(land), basicCost(E.TYPES.glasgow.cost), 'naval research does not affect land units');
+assert.equal(repairSpent(ship), Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.90),
+  'Damage Control I saves 10%');
+g.tech[side] = { 'naval.damage': 2 };
 assert.equal(repairSpent(ship), Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.75),
-  'Damage Control reduces docked warship repair cost by 25%');
+  'Damage Control II saves 25%');
 
-g.tech[side] = { 'naval.damage': 1, 'cities.energy': 1 };
+g.tech[side] = { 'naval.damage': 2, 'cities.energy': 2 };
 assert.equal(repairSpent(ship),
   Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.85 * 0.75),
   'manual repair research discounts combine multiplicatively');
 
 station.portOwner = 'eu';
 assert.equal(repairSpent(ship), Math.round(basicCost(E.TYPES.carrier_battleship.cost) * 0.85),
-  'Damage Control does not apply in a port owned by another faction');
+  'Damage Control does not apply at enemy port');
 station.portOwner = side;
 
 // The new Energy Filler Network must not restore HP automatically.
@@ -60,6 +66,6 @@ land.hp = Math.floor(E.maxHP(land) * 0.4);
 const before = land.hp;
 E.beginTurn(g, side, false);
 assert.equal(land.hp, before, 'Energy Filler Network gives no passive HP regeneration');
-assert.equal(E.TECH_TREE.cities.nodes.energy.costs[0], 220, 'preserves research price');
-assert.equal(E.TECH_TREE.naval.nodes.damage.costs[0], 200, 'preserves research price');
+assert.deepEqual(E.TECH_TREE.cities.nodes.energy.costs, [110, 220]);
+assert.deepEqual(E.TECH_TREE.naval.nodes.damage.costs, [100, 200]);
 console.log('Manual repair research discounts: PASS');
