@@ -167,10 +167,12 @@ function startMission(id, difficulty = missionDifficulty) {
 function loadGame(s) {
   if (!s) return;
   resetSession();
-  // Only World Campaign regional battles import HQ Elite levels; standalone scenarios import nothing.
-  game = s.mode === 'scenario'
-    ? (s.warCampaign ? E.applyElites(s, loadProfile()) : s)
-    : E.applyProfile(s, loadProfile());
+  // Regional scenarios import personal commanders only; World Campaign also imports Elite levels.
+  // Neither imports HQ tech or overwrites scripted scenario commanders.
+  if (s.mode === 'scenario') {
+    const profile = loadProfile();
+    game = E.applyRoster(s.warCampaign ? E.applyElites(s, profile) : s, profile);
+  } else game = E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
   if (game.mode === 'scenario') {
     scenarioKind = game.scenario.id;
