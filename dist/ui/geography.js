@@ -821,13 +821,55 @@ const GEOGRAPHY = (() => {
   });
   // Share the existing province paths between the detailed and tactical
   // renderers; rebuild only on a territory/map revision.
+  // The geographic shoreline can extend into sea-centred tactical hexes.
+  // Colour those pixels from the nearest owned LAND tile instead of exposing
+  // the neutral green atlas base as jagged bands along Alaska and Chukotka.
+  // This is a paint-only stencil: sea terrain, ownership and naval access do
+  // not change. Cache it until a province changes hands.
+  let beringGeographicOwnersCache = { tiles: null, revision: -1, paths: null, groups: null };
   function beringOwnerGroups(g) {
     const revision = g.mapRevision || 0;
-    if (beringPaintCache.tiles !== g.tiles || beringPaintCache.revision !== revision) {
+    if (beringGeographicOwnersCache.tiles !== g.tiles ||
+        beringGeographicOwnersCache.revision !== revision) {
+      const attribution = new Array(g.tiles.length);
+      const queue = [];
+      // Multiple-source breadth-first search gives any offshore land fragments
+      // a deterministic nearest-coast faction. Owned land is never reassigned.
+      for (let i = 0; i < g.tiles.length; i++) {
+        const t = g.tiles[i];
+        if (t.terrain === 'sea' || !t.owner) continue;
+        attribution[i] = t.owner;
+        queue.push(i);
+      }
+      for (let head = 0; head < queue.length; head++) {
+        const i = queue[head], owner = attribution[i];
+        for (const adjacent of E.adjacent(g, g.tiles[i])) {
+          const j = adjacent.r * g.cols + adjacent.c;
+          if (attribution[j]) continue;
+          // Expand through sea only. A truly unowned land tile remains neutral;
+          // the BFS must never alter or pass through opposing land provinces.
+          if (adjacent.terrain !== 'sea') continue;
+          attribution[j] = owner;
+          queue.push(j);
+        }
+      }
       const groups = new Map();
-      for (const t of g.tiles) if (t.terrain !== 'sea' && t.owner) {
-        if (!groups.has(t.owner)) groups.set(t.owner, []);
-        groups.get(t.owner).push(t);
+      const add = (owner, t) => {
+        if (!owner) return;
+        if (!groups.has(owner)) groups.set(owner, []);
+        groups.get(owner).push(t);
+      };
+      for (let i = 0; i < g.tiles.length; i++) add(attribution[i], g.tiles[i]);
+      // The geographic crop reaches half a hex past the centre-sampled grid.
+      // Add virtual edge cells to prevent a sawtooth of neutral background at
+      // the 148°E / 132°W and north/south boundaries.
+      for (let r = 0; r < g.rows; r++) {
+        add(attribution[r * g.cols], { c: -1, r });
+        add(attribution[r * g.cols + g.cols - 1], { c: g.cols, r });
+      }
+      for (let c = 0; c < g.cols; c++) {
+        add(attribution[c], { c, r: -1 });
+        add(attribution[(g.rows - 1) * g.cols + c], { c, r: g.rows });
       }
       const paths = new Map();
       if (FAST_PATH) for (const [side, tiles] of groups) {
@@ -835,9 +877,9 @@ const GEOGRAPHY = (() => {
         for (const t of tiles) tacticalHex(path, t, R + .9);
         paths.set(side, path);
       }
-      beringPaintCache = { tiles: g.tiles, revision, paths, groups };
+      beringGeographicOwnersCache = { tiles: g.tiles, revision, paths, groups };
     }
-    return beringPaintCache;
+    return beringGeographicOwnersCache;
   }
   function paintBeringGeographic(ctx, g, left, right, top, bottom) {
     const bounds = g.scenario.bounds;
@@ -887,7 +929,7 @@ const GEOGRAPHY = (() => {
         ctx.save();
         clipPath(ctx, land);
         ctx.transform(1 / sx, 0, 0, 1 / sy, -shift / sx, -ty / sy);
-        ctx.globalAlpha = .88;
+        ctx.globalAlpha = 1;
         for (const [side, tiles] of owners.groups) {
           const faction = g.factions?.[side] || E.FACTIONS[side];
           ctx.fillStyle = faction?.color || '#91a799';
