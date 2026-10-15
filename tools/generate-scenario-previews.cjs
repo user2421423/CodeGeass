@@ -49,8 +49,8 @@ async function generate(){
     const data={cities:g.stations.length,formations:g.units.reduce((n,u)=>n+1+(u.cargo||[]).length,0),sides};
     const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
     const ctx=canvas.getContext('2d',{alpha:false});if(!ctx)throw Error('Canvas unavailable');
-    // Uses the actual political terrain/shoreline painter, never its icon layers.
-    paintMap(ctx,{...g,stations:[],units:[],sites:[]},width,height,1,false);
+    // Preserve real coastlines/ownership, but skip every city and unit icon layer.
+    paintMap(ctx,g,width,height,1,false,true);
     const webp=canvas.toDataURL('image/webp',.88);
     if(!webp.startsWith('data:image/webp;base64,'))throw Error('WebP unsupported');
     return {webp,data};
