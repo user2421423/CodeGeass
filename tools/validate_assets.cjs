@@ -7,7 +7,9 @@ const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const dist = path.join(root, 'dist');
 const E = require('../dist/engine.js');
-const tracked = new Set(execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).trim().split('\n'));
+// Bundles built from src/ parts are untracked but built before every deploy.
+const tracked = new Set([...execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).trim().split('\n'),
+  ...Object.keys(require('./bundles.json'))]);
 const mustBeTracked = process.argv.includes('--tracked');
 function checkFile(relative) {
   assert(!relative.includes('..') && !path.isAbsolute(relative), `Unsafe path: ${relative}`);
