@@ -451,7 +451,11 @@
     if(f.highland)a.expHighlandTurn=g.turn;
     if(f.blackSeaFox&&tile(g,a.c,a.r)?.terrain==='mountain')a.expEduardoMountainTurn=g.turn;
     if(f.elitePenSupport&&d&&TYPES[d.type].branch==='Armor')a.expVritraUsedTurn=g.turn;
-    if(f.charge&&a.expTamakiCharging)a.expTamakiUsedTurn=g.turn;
+    if(f.charge&&a.expTamakiCharging){
+      a.expTamakiUsedTurn=g.turn;
+      if(destroyed)delete a.expTamakiPenaltyTurn;
+      else a.expTamakiPenaltyTurn=g.turn;
+    }
     delete a.expTamakiCharging;
     if(f.diagnosis&&d)d.expJoeDiagnosis={side:a.side,until:g.turn+1};
     if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
@@ -473,7 +477,7 @@
         a.moved=a.attacked=false;
         a.skillReposition=0;
         a.withdrawMove=false;
-        try {const advance=move(g,a.id,d.c,d.r);if(advance.ok){a.expBreachTurn=g.turn;a.expBreachAuraTurn=g.turn;}}
+        try {const advance=move(g,a.id,d.c,d.r);if(advance.ok){a.expBreachTurn=g.turn;a.expBreachAuraAt={c:a.c,r:a.r,turn:g.turn};}}
         finally { Object.assign(a,actions); }
       }
     }

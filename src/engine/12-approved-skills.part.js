@@ -130,7 +130,7 @@
     // Zi Dien's movement-triggered raid may activate once per turn against a commander.
     if(!counter&&f.ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn)m*=1+f.ziAmbush;
     if(!counter&&target&&g.stations.some(s=>s.c===target.c&&s.r===target.r&&s.expYoshidaBreak?.side===u.side&&s.expYoshidaBreak.turn===g.turn))m*=1.15;
-    if(!counter&&target&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='kinoshita'&&v.expBreachAuraTurn===g.turn&&dist(g,v,u)<=2&&dist(g,v,target)<=2))m*=1.15;
+    if(!counter&&target&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='kinoshita'&&v.expBreachAuraAt?.turn===g.turn&&dist(g,v.expBreachAuraAt,u)<=2&&dist(g,v.expBreachAuraAt,target)<=2))m*=1.15;
     
     if(!counter&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&v.id!==u.id&&fx(v).expendable&&dist(g,v,u)===1))m*=1.25;
     // Eduardo: mountain defenders counterstrike harder under nearby Georgian command.
@@ -148,7 +148,7 @@
     m*=hongGuGuardian(g,target);
     if(preparedPosition(g,target))m*=.85;
     if(fx(target).lastStand&&target.hp/maxHP(target)<.5)m*=.8;
-    if(counter&&target.cmd==='tamaki'&&target.movedDistance>=2&&target.expTamakiUsedTurn!==g.turn)m*=1.2;
+    if(counter&&target.cmd==='tamaki'&&(target.expTamakiPenaltyTurn===g.turn||target.movedDistance>=2&&target.expTamakiUsedTurn!==g.turn))m*=1.2;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
     // Eduardo: improved defensive deployment on mountain hexes.
     if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
