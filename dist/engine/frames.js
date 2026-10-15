@@ -722,7 +722,7 @@
       weapon: 'VARIS · MVS · Blaze Luminous',
       lore: "Lloyd Asplund's prototype seventh-generation Knightmare and the technological foundation of Britannia's later ace frames.",
       desc: 'Prototype ranged heavy elite. VARIS and Blaze Luminous become active at Elite Lv.3.',
-      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 2, crit: 0.22, pen: 0.48,
+      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.22, pen: 0.48,
       breakthrough: true, relentless: false,
     },
     elite_guren_mkii: {
@@ -736,7 +736,7 @@
       weapon: 'Radiant Wave Surger · Fork Knife · Hand gun',
       lore: "Rakshata's close-combat prototype built around the Radiant Wave Surger, fielded by the Black Knights.",
       desc: 'Close-range anti-armor elite. Radiant Wave Surger becomes active at Elite Lv.3.',
-      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 2, crit: 0.22, pen: 0.48,
+      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.22, pen: 0.48,
       breakthrough: true, relentless: false,
     },
     elite_tohdoh_gekka: {
@@ -778,7 +778,7 @@
       weapon: 'Twin Hadron Cannons · Druid System',
       lore: "The Black Knights' captured command Knightmare combines twin Hadron Cannons with the Druid System.",
       desc: 'Long-range beam-barrage artillery. Hadron Cannons and Druid targeting become active at Elite Lv.3.',
-      hp: 550, attack: 140, armor: 22, move: 3, min: 2, max: 2, cost: 1050, industry: 280, tier: 3, crit: 0.21, pen: 0.62,
+      hp: 550, attack: 140, armor: 22, move: 3, min: 2, max: 2, cost: 1050, industry: 280, tier: 2, crit: 0.21, pen: 0.62,
       noCounter: true,
       splash: 0.45,
     },
@@ -809,7 +809,7 @@
       lore: "Suzaku's final Lancelot combines overwhelming ninth-generation output with Energy Wing mobility.",
       desc: 'Endgame aerial ace. Energy Wings become active at Elite Lv.3.',
       hp: 750, attack: 145, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.29, pen: 0.58,
-      breakthrough: false, relentless: false,
+      breakthrough: true, relentless: false,
     },
     elite_guren_seiten: {
       side: 'cf',
@@ -823,7 +823,7 @@
       lore: "Kallen's ultimate Guren is the Black Knights' ninth-generation counterpart to Lancelot Albion.",
       desc: 'Endgame aerial assault ace. Radiant Wave Burst and Energy Wings become active at Elite Lv.3.',
       hp: 750, attack: 145, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.29, pen: 0.58,
-      breakthrough: false, relentless: false,
+      breakthrough: true, relentless: false,
     },
     // Standardized advanced-class elites for the three Conquest factions.
     elite_vincent_ward: {
