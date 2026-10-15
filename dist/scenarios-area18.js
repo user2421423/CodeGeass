@@ -182,7 +182,7 @@
       const s=g.stations.find(v=>v.name===name);
       if(!s||s.owner!==side)throw Error('Invalid staging city '+name);
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain!=='sea'&&!E.unitAt(g,t)&&
+        const at=nearest(g,s,t=>t.terrain!=='sea'&&!E.TERRAIN[t.terrain]?.blocked&&!E.unitAt(g,t)&&
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),10);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
@@ -265,9 +265,9 @@
       diplomacy:"Britannia, Europia United and the Chinese Federation are all hostile from turn 1. No betrayals, nuclear weapons or campaign deadline.",
       elite:"Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.5; carriers remain conventional. Research and Elite Force production follow existing scenario rules.",
       focus:{
-        britannia:"Baghdad",
-        eu:"Damascus",
-        cf:"Kermanshah"
+        britannia:"Sana'a",
+        eu:"Riyadh",
+        cf:"Dammam"
       }
     },
     blurbs:{

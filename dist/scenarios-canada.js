@@ -286,7 +286,9 @@
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!==ID||
        g.stations.length!==CITIES.length)return null;
-    for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
+    // The E.U. expedition stays in play while any of its units survive, carried ones included.
+    for(const side of SIDES)if(g.stations.every(s=>s.owner===side)&&
+      (side==='eu'||!E.allUnits(g).some(u=>u.side==='eu'&&u.hp>0)))
       return {winner:side,team:side,reason:E.FACTIONS[side].name+
         ' has conquered every city in the Canadian theatre.'};
     return null;

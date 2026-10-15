@@ -324,7 +324,7 @@
     elite:true,
     text:{
       era:"South China · Alternate 2017",
-      intro:"Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 64 theatre cities on a large regional map without a turn limit.",
+      intro:"Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 65 theatre cities on a large regional map without a turn limit.",
       diplomacy:"Britannia and the Chinese Federation are hostile from turn 1. Inland Army Groups and offshore invasion fleets operate independently; Chinese reserves and fleets defend mountain corridors, cities and strategic ports.",
       elite:"Elite South China uses the standard faction Elite Force conversion and rival commander upgrades. Carrier fleets remain conventional; no unit balance or global campaign rules are changed.",
       focus:{

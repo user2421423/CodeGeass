@@ -8,7 +8,7 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"operation-stonehenge",title:"Operation Stonehenge",note:"37 cities · 2 sides"},
   {id:"bering-strait",title:"The Bering Strait Crisis",note:"28 cities · 2 sides"},
   {id:"conquest-indochina",title:"The Conquest of Indochina",note:"44 cities · 2 sides"},
-  {id:"bf-south-china",title:"Invasion of South China",note:"64 cities · 2 sides"},
+  {id:"bf-south-china",title:"Invasion of South China",note:"65 cities · 2 sides"},
   {id:"philippines-invasion",title:"The Invasion of the Philippines",note:"37 cities · 2 sides"},
   {id:"invasion-korea",title:"Invasion of Korea",note:"55 cities · 2 sides"},
   {id:"war-for-australia",title:"The War for Australia",note:"48 cities · 3 sides"},

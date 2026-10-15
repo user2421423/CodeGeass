@@ -1,18 +1,18 @@
-setup area-18 britannia normal 9ac59dfb
-setup area-18 britannia hard 76ce8d84
-setup area-18 britannia challenge 1fcc58a4
-setup area-18 britannia elite 157987b5
-sim area-18 britannia normal 11 2 61930f4e a70c1def cities={"britannia":14,"eu":14,"cf":15} errors=0
-setup area-18 eu normal 87ae5d45
-setup area-18 eu hard 2aebc92f
-setup area-18 eu challenge e8900851
-setup area-18 eu elite f6453532
-sim area-18 eu normal 11 2 7272e5fc e5af8531 cities={"britannia":14,"eu":14,"cf":15} errors=0
-setup area-18 cf normal ca5e5fa2
-setup area-18 cf hard 87b4f91d
-setup area-18 cf challenge 5882c59b
-setup area-18 cf elite b4dc32fd
-sim area-18 cf normal 11 2 830b735b c2903d2e cities={"britannia":14,"eu":15,"cf":14} errors=0
+setup area-18 britannia normal 7f733efc
+setup area-18 britannia hard 6a116813
+setup area-18 britannia challenge eafb39cb
+setup area-18 britannia elite 0886b35a
+sim area-18 britannia normal 11 2 80bda3d4 2619af2b cities={"britannia":14,"eu":14,"cf":15} errors=0
+setup area-18 eu normal 4e781e68
+setup area-18 eu hard e5a0b956
+setup area-18 eu challenge 7a47becc
+setup area-18 eu elite e99a7987
+sim area-18 eu normal 11 2 9b058fa7 bb7565b4 cities={"britannia":14,"eu":14,"cf":15} errors=0
+setup area-18 cf normal d6c31557
+setup area-18 cf hard 44863c40
+setup area-18 cf challenge e9285ae2
+setup area-18 cf elite 036d6718
+sim area-18 cf normal 11 2 54efde68 baf8af58 cities={"britannia":14,"eu":15,"cf":14} errors=0
 setup battle-luoyang britannia normal 4da80ea1
 setup battle-luoyang britannia hard 609dfc61
 setup battle-luoyang britannia challenge 9c80b454
@@ -27,57 +27,57 @@ setup bering-strait britannia normal d96081f4
 setup bering-strait britannia hard ddf319df
 setup bering-strait britannia challenge 678e7792
 setup bering-strait britannia elite 23f45d80
-sim bering-strait britannia normal 11 2 1ea48284 c98817b8 cities={"britannia":14,"eu":14} errors=0
+sim bering-strait britannia normal 11 2 be5101e8 c98817b8 cities={"britannia":14,"eu":14} errors=0
 setup bering-strait eu normal 64902e62
 setup bering-strait eu hard f0e343d9
 setup bering-strait eu challenge 9c1e9f0f
 setup bering-strait eu elite f0a4384a
-sim bering-strait eu normal 11 2 1deef826 4c777446 cities={"britannia":14,"eu":14} errors=0
+sim bering-strait eu normal 11 2 9d9e3c26 4c777446 cities={"britannia":14,"eu":14} errors=0
 setup bf-malacca britannia normal 2a9401da
 setup bf-malacca britannia hard e263e996
 setup bf-malacca britannia challenge 3192e5d3
 setup bf-malacca britannia elite a7f3244e
-sim bf-malacca britannia normal 11 2 f6dc6027 032344c0 cities={"britannia":9,"cf":45} errors=0
+sim bf-malacca britannia normal 11 2 5b650bbc 032344c0 cities={"britannia":9,"cf":45} errors=0
 setup bf-malacca cf normal 4abb309f
 setup bf-malacca cf hard cc6aa65a
 setup bf-malacca cf challenge 914770e0
 setup bf-malacca cf elite f609d2e8
-sim bf-malacca cf normal 11 2 252fede4 06eada01 cities={"britannia":10,"cf":44} errors=0
+sim bf-malacca cf normal 11 2 6f0adab8 11f2844f cities={"britannia":10,"cf":44} errors=0
 setup bf-south-china britannia normal c4554d07
 setup bf-south-china britannia hard ccb4aaca
 setup bf-south-china britannia challenge 44d8c748
 setup bf-south-china britannia elite a79bf8bf
-sim bf-south-china britannia normal 11 2 84c3674b 43e68263 cities={"britannia":15,"cf":50} errors=0
+sim bf-south-china britannia normal 11 2 f6df7f6c 43e68263 cities={"britannia":15,"cf":50} errors=0
 setup bf-south-china cf normal 896eacd2
 setup bf-south-china cf hard aae0d89f
 setup bf-south-china cf challenge 78da474b
 setup bf-south-china cf elite 0ac77aa7
-sim bf-south-china cf normal 11 2 2621e6c5 7133583d cities={"britannia":14,"cf":51} errors=0
+sim bf-south-china cf normal 11 2 2c641668 7133583d cities={"britannia":14,"cf":51} errors=0
 setup bf-yangtze britannia normal a0ee2245
 setup bf-yangtze britannia hard 1977479d
 setup bf-yangtze britannia challenge 8916ef95
 setup bf-yangtze britannia elite de81370f
-sim bf-yangtze britannia normal 11 2 bba54ef5 8643b62f cities={"britannia":23,"cf":37} errors=0
+sim bf-yangtze britannia normal 11 2 18298a89 1286cf34 cities={"britannia":23,"cf":37} errors=0
 setup bf-yangtze cf normal fc0dfe4a
 setup bf-yangtze cf hard ae953bc3
 setup bf-yangtze cf challenge b573daea
 setup bf-yangtze cf elite bb613bfe
-sim bf-yangtze cf normal 11 2 11e15b72 90645df3 cities={"britannia":24,"cf":36} errors=0
+sim bf-yangtze cf normal 11 2 aae04e40 90645df3 cities={"britannia":24,"cf":36} errors=0
 setup britannia-iraq-iran britannia normal 8fb849f1
 setup britannia-iraq-iran britannia hard b3b7e41e
 setup britannia-iraq-iran britannia challenge 6e6b5072
 setup britannia-iraq-iran britannia elite e98e0fc5
-sim britannia-iraq-iran britannia normal 11 2 0e28c5b1 533ab139 cities={"britannia":16,"cf":68} errors=0
+sim britannia-iraq-iran britannia normal 11 2 678d30ca 533ab139 cities={"britannia":16,"cf":68} errors=0
 setup britannia-iraq-iran cf normal 9b9133ec
 setup britannia-iraq-iran cf hard 45f4ebef
 setup britannia-iraq-iran cf challenge a55d7ba1
 setup britannia-iraq-iran cf elite 14a6c3fc
-sim britannia-iraq-iran cf normal 11 2 e554d97e 7f68188d cities={"britannia":18,"cf":66} errors=0
+sim britannia-iraq-iran cf normal 11 2 752f408b 7f68188d cities={"britannia":18,"cf":66} errors=0
 setup britannia-siberia britannia normal 8cb9ea19
 setup britannia-siberia britannia hard 768449f6
 setup britannia-siberia britannia challenge 65de981a
 setup britannia-siberia britannia elite 2490d1e0
-sim britannia-siberia britannia normal 11 2 ae982938 c1358684 cities={"britannia":13,"eu":36} errors=0
+sim britannia-siberia britannia normal 11 2 59ff4761 a87af106 cities={"britannia":13,"eu":36} errors=0
 setup britannia-siberia eu normal 7ebfe6f9
 setup britannia-siberia eu hard 1beb4075
 setup britannia-siberia eu challenge 4d7f9063
@@ -107,17 +107,17 @@ setup cf-mexico cf normal 26e384fd
 setup cf-mexico cf hard 30d62507
 setup cf-mexico cf challenge b4c21ab9
 setup cf-mexico cf elite f5d487e7
-sim cf-mexico cf normal 11 2 3b53c973 7be2f918 cities={"cf":6,"britannia":74} errors=0
+sim cf-mexico cf normal 11 2 20b753c5 7be2f918 cities={"cf":6,"britannia":74} errors=0
 setup cf-mexico britannia normal 7da493f2
 setup cf-mexico britannia hard 909d17ce
 setup cf-mexico britannia challenge 256bb875
 setup cf-mexico britannia elite c23fe255
-sim cf-mexico britannia normal 11 2 01a5c956 bd1d5003 cities={"cf":6,"britannia":74} errors=0
+sim cf-mexico britannia normal 11 2 4f0cd670 bd1d5003 cities={"cf":6,"britannia":74} errors=0
 setup cf-new-zealand cf normal 272aafbf
 setup cf-new-zealand cf hard 5000db89
 setup cf-new-zealand cf challenge 08fdb638
 setup cf-new-zealand cf elite 4457257f
-sim cf-new-zealand cf normal 11 2 d6a79c5a d849ab5e cities={"cf":3,"britannia":60} errors=0
+sim cf-new-zealand cf normal 11 2 24d1849b 80921099 cities={"cf":3,"britannia":60} errors=0
 setup cf-new-zealand britannia normal 2b404528
 setup cf-new-zealand britannia hard 4921363e
 setup cf-new-zealand britannia challenge 1e6704e8
@@ -127,7 +127,7 @@ setup cf-pacific-northwest cf normal 851025e2
 setup cf-pacific-northwest cf hard d2225f3e
 setup cf-pacific-northwest cf challenge 04ac241b
 setup cf-pacific-northwest cf elite 9e327c0e
-sim cf-pacific-northwest cf normal 11 2 aa4376cc 2034853d cities={"cf":1,"britannia":62} errors=0
+sim cf-pacific-northwest cf normal 11 2 9ee31f7a adb437f5 cities={"cf":1,"britannia":62} errors=0
 setup cf-pacific-northwest britannia normal c6bb56d5
 setup cf-pacific-northwest britannia hard 9d69077d
 setup cf-pacific-northwest britannia challenge 6735f1c9
@@ -137,12 +137,12 @@ setup cf-panama cf normal 48b341ed
 setup cf-panama cf hard 83cd1640
 setup cf-panama cf challenge 5a9e4bc6
 setup cf-panama cf elite 5548e2a8
-sim cf-panama cf normal 11 2 3c644458 b969a9d8 cities={"cf":3,"britannia":27} errors=0
+sim cf-panama cf normal 11 2 3b18d661 b969a9d8 cities={"cf":3,"britannia":27} errors=0
 setup cf-panama britannia normal 6e930b6a
 setup cf-panama britannia hard 181cb97c
 setup cf-panama britannia challenge 2b39bf91
 setup cf-panama britannia elite a9649b24
-sim cf-panama britannia normal 11 2 e863d778 e142fb48 cities={"cf":3,"britannia":27} errors=0
+sim cf-panama britannia normal 11 2 d37cff3d e142fb48 cities={"cf":3,"britannia":27} errors=0
 setup cf-pendragon cf normal 9f851b48
 setup cf-pendragon cf hard 85901c08
 setup cf-pendragon cf challenge 4674c5fa
@@ -157,7 +157,7 @@ setup conquest-indochina britannia normal fd84674b
 setup conquest-indochina britannia hard 9343c310
 setup conquest-indochina britannia challenge 174d6b3f
 setup conquest-indochina britannia elite 30e30fc3
-sim conquest-indochina britannia normal 11 2 57f20f31 c18b537d cities={"britannia":24,"cf":20} errors=0
+sim conquest-indochina britannia normal 11 2 f77cab4a c18b537d cities={"britannia":24,"cf":20} errors=0
 setup conquest-indochina cf normal 1f4708d9
 setup conquest-indochina cf hard f568670e
 setup conquest-indochina cf challenge ad375445
@@ -172,12 +172,12 @@ setup crossing-urals eu normal 913ce758
 setup crossing-urals eu hard ff3d8085
 setup crossing-urals eu challenge 96623fc4
 setup crossing-urals eu elite c0ff5244
-sim crossing-urals eu normal 11 2 1d688a32 8d4fa75b cities={"britannia":17,"eu":23} errors=0
+sim crossing-urals eu normal 11 2 25145e97 8d4fa75b cities={"britannia":17,"eu":23} errors=0
 setup division-japan britannia normal ff0c86c2
 setup division-japan britannia hard d4c3cf8d
 setup division-japan britannia challenge cf7abb85
 setup division-japan britannia elite 10e55ac7
-sim division-japan britannia normal 11 2 75e45d49 e6a79169 cities={"britannia":16,"eu":11,"cf":17} errors=0
+sim division-japan britannia normal 11 2 3d2dbb3e e6a79169 cities={"britannia":16,"eu":11,"cf":17} errors=0
 setup division-japan eu normal 0720f612
 setup division-japan eu hard 0c337b85
 setup division-japan eu challenge a24d22da
@@ -187,27 +187,27 @@ setup division-japan cf normal 99d9b455
 setup division-japan cf hard 115c684a
 setup division-japan cf challenge a8bd7593
 setup division-japan cf elite 8ef0aa55
-sim division-japan cf normal 11 2 5078dacc a590a2bb cities={"britannia":17,"eu":10,"cf":17} errors=0
+sim division-japan cf normal 11 2 6d513189 a590a2bb cities={"britannia":17,"eu":10,"cf":17} errors=0
 setup eu-great-lakes eu normal a23a7f93
 setup eu-great-lakes eu hard ab93e150
 setup eu-great-lakes eu challenge c4ab7648
 setup eu-great-lakes eu elite d57524eb
-sim eu-great-lakes eu normal 11 2 76973928 b2ec599e cities={"eu":18,"britannia":38} errors=0
+sim eu-great-lakes eu normal 11 2 0b039391 6d2e55fc cities={"eu":19,"britannia":37} errors=0
 setup eu-great-lakes britannia normal c487cd21
 setup eu-great-lakes britannia hard 58c52efd
 setup eu-great-lakes britannia challenge ec0186e2
 setup eu-great-lakes britannia elite 103afe7c
-sim eu-great-lakes britannia normal 11 2 e1d2013f 887ef8c6 cities={"eu":19,"britannia":37} errors=0
+sim eu-great-lakes britannia normal 11 2 efb62cfb 887ef8c6 cities={"eu":19,"britannia":37} errors=0
 setup eu-greenland britannia normal 18344bb6
 setup eu-greenland britannia hard 0197b474
 setup eu-greenland britannia challenge 93edbfa7
 setup eu-greenland britannia elite e1bc2c93
-sim eu-greenland britannia normal 11 2 8bf2d5e0 c6d0226e cities={"britannia":16,"eu":2} errors=0
+sim eu-greenland britannia normal 11 2 372708c7 c6d0226e cities={"britannia":16,"eu":2} errors=0
 setup eu-greenland eu normal 062af702
 setup eu-greenland eu hard cde6823f
 setup eu-greenland eu challenge 95e8322e
 setup eu-greenland eu elite 85fdc299
-sim eu-greenland eu normal 11 2 3053a1c1 f09f724c cities={"britannia":17,"eu":1} errors=0
+sim eu-greenland eu normal 11 2 86733004 18f1a04e cities={"britannia":17,"eu":1} errors=0
 setup eu-panama eu normal 27863a4a
 setup eu-panama eu hard 2c24c721
 setup eu-panama eu challenge 2c1d8003
@@ -232,37 +232,37 @@ setup eu-rocky-mountains eu normal e1015b13
 setup eu-rocky-mountains eu hard baf0c818
 setup eu-rocky-mountains eu challenge 416dc1a2
 setup eu-rocky-mountains eu elite f186cfca
-sim eu-rocky-mountains eu normal 11 2 214614f2 d031759f cities={"eu":28,"britannia":73} errors=0
+sim eu-rocky-mountains eu normal 11 2 b35973b0 7064ae3e cities={"eu":27,"britannia":74} errors=0
 setup eu-rocky-mountains britannia normal b7b6f02b
 setup eu-rocky-mountains britannia hard ca1e0074
 setup eu-rocky-mountains britannia challenge 002f6cec
 setup eu-rocky-mountains britannia elite e96ca885
-sim eu-rocky-mountains britannia normal 11 2 5b507992 946a4c18 cities={"eu":28,"britannia":73} errors=0
+sim eu-rocky-mountains britannia normal 11 2 19bc8e2a 84474c7e cities={"eu":28,"britannia":73} errors=0
 setup european-war eu normal 0e084748
 setup european-war eu hard 4009eff0
 setup european-war eu challenge 40fece1f
 setup european-war eu elite 448e6173
-sim european-war eu normal 11 2 5106db8b 25872b2f cities={"eu":28,"eb":16} errors=0
+sim european-war eu normal 11 2 56ce86a5 25872b2f cities={"eu":28,"eb":16} errors=0
 setup european-war eb normal 69457c19
 setup european-war eb hard 04cd4b44
 setup european-war eb challenge 7723dfbc
 setup european-war eb elite 4ab7b2ba
-sim european-war eb normal 11 2 52995227 6c174301 cities={"eu":28,"eb":16} errors=0
+sim european-war eb normal 11 2 e06c27c9 35643959 cities={"eu":28,"eb":16} errors=0
 setup invasion-american-east-coast eu normal 49c93f83
 setup invasion-american-east-coast eu hard 2dc686e7
 setup invasion-american-east-coast eu challenge 19481205
 setup invasion-american-east-coast eu elite fabcc8c3
-sim invasion-american-east-coast eu normal 11 2 0b03fec0 e26b1052 cities={"eu":2,"britannia":60} errors=0
+sim invasion-american-east-coast eu normal 11 2 d11b75d6 e26b1052 cities={"eu":2,"britannia":60} errors=0
 setup invasion-american-east-coast britannia normal b3a528f7
 setup invasion-american-east-coast britannia hard 9ddf2c08
 setup invasion-american-east-coast britannia challenge ecf9168d
 setup invasion-american-east-coast britannia elite 1401a9ca
-sim invasion-american-east-coast britannia normal 11 2 56c7faa6 f6a37e3f cities={"eu":2,"britannia":60} errors=0
+sim invasion-american-east-coast britannia normal 11 2 ecf4f976 668b2c0c cities={"eu":2,"britannia":60} errors=0
 setup invasion-brazil eu normal 48d0c6b1
 setup invasion-brazil eu hard 5c6948e4
 setup invasion-brazil eu challenge 50c97b9f
 setup invasion-brazil eu elite b74da809
-sim invasion-brazil eu normal 11 2 975f4344 be6171d2 cities={"eu":2,"britannia":55} errors=0
+sim invasion-brazil eu normal 11 2 1860981f be6171d2 cities={"eu":2,"britannia":55} errors=0
 setup invasion-brazil britannia normal 5ddd329b
 setup invasion-brazil britannia hard a30bfb4a
 setup invasion-brazil britannia challenge 34d4645f
@@ -272,7 +272,7 @@ setup invasion-california cf normal 0006ff38
 setup invasion-california cf hard 6c83f792
 setup invasion-california cf challenge f74c55d9
 setup invasion-california cf elite 40feced9
-sim invasion-california cf normal 11 2 fe9afe32 a88c107b cities={"cf":15,"britannia":48} errors=0
+sim invasion-california cf normal 11 2 838dd80c a88c107b cities={"cf":15,"britannia":48} errors=0
 setup invasion-california britannia normal 9e099c65
 setup invasion-california britannia hard 3d0670a9
 setup invasion-california britannia challenge ab2c6dc5
@@ -282,7 +282,7 @@ setup invasion-canada eu normal ed13e9c9
 setup invasion-canada eu hard 9fcae92c
 setup invasion-canada eu challenge 94273008
 setup invasion-canada eu elite 1c3c017b
-sim invasion-canada eu normal 11 2 d3d831e9 67338fe0 cities={"eu":9,"britannia":65} errors=0
+sim invasion-canada eu normal 11 2 b22b5242 4a860427 cities={"eu":9,"britannia":65} errors=0
 setup invasion-canada britannia normal 58ba9f6f
 setup invasion-canada britannia hard 801f3044
 setup invasion-canada britannia challenge 1156da0d
@@ -297,17 +297,17 @@ setup invasion-caribbean britannia normal d4485dd8
 setup invasion-caribbean britannia hard 16e40277
 setup invasion-caribbean britannia challenge 158b5db6
 setup invasion-caribbean britannia elite d4753093
-sim invasion-caribbean britannia normal 11 2 883814ad bf86df0b cities={"eu":5,"britannia":36} errors=0
+sim invasion-caribbean britannia normal 11 2 2deb8d0e bf86df0b cities={"eu":5,"britannia":36} errors=0
 setup invasion-hawaii cf normal 3612c089
 setup invasion-hawaii cf hard 76716307
 setup invasion-hawaii cf challenge 26223f19
 setup invasion-hawaii cf elite c209ccc3
-sim invasion-hawaii cf normal 11 2 f715aa17 cc708f07 cities={"cf":1,"britannia":29} errors=0
+sim invasion-hawaii cf normal 11 2 6ec56db7 cc708f07 cities={"cf":1,"britannia":29} errors=0
 setup invasion-hawaii britannia normal 40e0c840
 setup invasion-hawaii britannia hard 2bde1c86
 setup invasion-hawaii britannia challenge 952c9c19
 setup invasion-hawaii britannia elite 4484ccd7
-sim invasion-hawaii britannia normal 11 2 11db36f2 991c04cb cities={"cf":2,"britannia":28} errors=0
+sim invasion-hawaii britannia normal 11 2 6b6db8b6 991c04cb cities={"cf":2,"britannia":28} errors=0
 setup invasion-japan britannia normal aa64dcd0
 setup invasion-japan britannia hard fb752d6f
 setup invasion-japan britannia challenge 88841e61
@@ -322,7 +322,7 @@ setup invasion-japan cf normal ae26a061
 setup invasion-japan cf hard 00c8a31e
 setup invasion-japan cf challenge b491bd76
 setup invasion-japan cf elite fd287bb7
-sim invasion-japan cf normal 11 2 2ae328dd 8b5c0b38 cities={"britannia":31,"bk":5,"cf":8} errors=0
+sim invasion-japan cf normal 11 2 331644c2 8b5c0b38 cities={"britannia":31,"bk":5,"cf":8} errors=0
 setup invasion-korea britannia normal 470878cf
 setup invasion-korea britannia hard 541d531f
 setup invasion-korea britannia challenge d4540733
@@ -337,7 +337,7 @@ setup invasion-south-africa britannia normal ab7ea7cd
 setup invasion-south-africa britannia hard a6fc4ba3
 setup invasion-south-africa britannia challenge 0d8353d0
 setup invasion-south-africa britannia elite fad626a5
-sim invasion-south-africa britannia normal 11 2 ebc88a92 27d046a5 cities={"britannia":0,"eu":47} errors=0
+sim invasion-south-africa britannia normal 11 2 ec044b65 27d046a5 cities={"britannia":0,"eu":47} errors=0
 setup invasion-south-africa eu normal d745e5cf
 setup invasion-south-africa eu hard ea9bac32
 setup invasion-south-africa eu challenge 580a761d
@@ -347,17 +347,17 @@ setup invasion-turkey britannia normal 705b0600
 setup invasion-turkey britannia hard a80aeb6d
 setup invasion-turkey britannia challenge 92efe512
 setup invasion-turkey britannia elite 3e1abf9a
-sim invasion-turkey britannia normal 11 2 068611c7 e817f65f cities={"britannia":14,"eu":45} errors=0
+sim invasion-turkey britannia normal 11 2 4a908ccc e817f65f cities={"britannia":14,"eu":45} errors=0
 setup invasion-turkey eu normal 1dfe2488
 setup invasion-turkey eu hard 1bfcbd04
 setup invasion-turkey eu challenge c29a7ec0
 setup invasion-turkey eu elite e7bee30d
-sim invasion-turkey eu normal 11 2 373eb841 c2279792 cities={"britannia":15,"eu":44} errors=0
+sim invasion-turkey eu normal 11 2 9c2fdb4b 037f5b92 cities={"britannia":15,"eu":44} errors=0
 setup operation-stonehenge britannia normal 74bde75f
 setup operation-stonehenge britannia hard a66ef008
 setup operation-stonehenge britannia challenge 0dadfdfd
 setup operation-stonehenge britannia elite 2bbe33cc
-sim operation-stonehenge britannia normal 11 2 e3d639d2 9bf2cceb cities={"britannia":4,"eu":33} errors=0
+sim operation-stonehenge britannia normal 11 2 c1d81422 4e1788ef cities={"britannia":4,"eu":33} errors=0
 setup operation-stonehenge eu normal 49a0682f
 setup operation-stonehenge eu hard a4795f5b
 setup operation-stonehenge eu challenge f7f25824
@@ -377,14 +377,14 @@ setup war-for-australia britannia normal 9a5cd271
 setup war-for-australia britannia hard 78563df6
 setup war-for-australia britannia challenge 3714f39c
 setup war-for-australia britannia elite 443d838c
-sim war-for-australia britannia normal 11 2 a429f14b 195c9cbf cities={"britannia":20,"cf":14,"eu":14} errors=0
+sim war-for-australia britannia normal 11 2 04d50c4a 68b0a4b3 cities={"britannia":20,"cf":14,"eu":14} errors=0
 setup war-for-australia cf normal 2c4b8f20
 setup war-for-australia cf hard 15c25aa8
 setup war-for-australia cf challenge 52ffd860
 setup war-for-australia cf elite a50cc84f
-sim war-for-australia cf normal 11 2 af9a8dee 9ae9ff9d cities={"britannia":20,"cf":14,"eu":14} errors=0
+sim war-for-australia cf normal 11 2 9d2758d7 9ae9ff9d cities={"britannia":20,"cf":14,"eu":14} errors=0
 setup war-for-australia eu normal 33543453
 setup war-for-australia eu hard d0d9c272
 setup war-for-australia eu challenge 0726ba76
 setup war-for-australia eu elite 81aee16f
-sim war-for-australia eu normal 11 2 faca544b 5702f4ca cities={"britannia":20,"cf":14,"eu":14} errors=0
+sim war-for-australia eu normal 11 2 0ccae8ea 5702f4ca cities={"britannia":20,"cf":14,"eu":14} errors=0
