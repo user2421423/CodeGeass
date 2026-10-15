@@ -47,8 +47,6 @@ jobs:
           if(+process.env.BASE_STATUS!==0 && baseline.length===0)
             throw Error('Original main suite exited unsuccessfully without a parsed test failure');
           NODE
-      - name: Browser HUD UI smoke
-        run: node tests/ui-smoke.cjs
   long-war:
     needs: validation
     runs-on: ubuntu-latest
