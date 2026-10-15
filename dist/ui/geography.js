@@ -876,24 +876,27 @@ const GEOGRAPHY = (() => {
     if (beringGeographicOwnersCache.tiles !== g.tiles ||
         beringGeographicOwnersCache.revision !== revision) {
       const attribution = new Array(g.tiles.length);
-      const queue = [];
-      // Multiple-source breadth-first search gives any offshore land fragments
-      // a deterministic nearest-coast faction. Owned land is never reassigned.
+      const queue = [], depth = new Uint8Array(g.tiles.length);
+      depth.fill(255);
+      // Limit coastal inference to the shoreline, never the whole ocean.
+      // An unlimited BFS would render remote atlas islands or foreign land
+      // that has no playable land tile in the Bering theatre.
+      const buffer = Math.max(1, Math.min(3, mapMeta(g).coastBuffer || 2));
       for (let i = 0; i < g.tiles.length; i++) {
         const t = g.tiles[i];
         if (t.terrain === 'sea' || !t.owner) continue;
         attribution[i] = t.owner;
+        depth[i] = 0;
         queue.push(i);
       }
       for (let head = 0; head < queue.length; head++) {
         const i = queue[head], owner = attribution[i];
+        if (depth[i] >= buffer) continue;
         for (const adjacent of E.adjacent(g, g.tiles[i])) {
           const j = adjacent.r * g.cols + adjacent.c;
-          if (attribution[j]) continue;
-          // Expand through sea only. A truly unowned land tile remains neutral;
-          // the BFS must never alter or pass through opposing land provinces.
-          if (adjacent.terrain !== 'sea') continue;
+          if (attribution[j] || adjacent.terrain !== 'sea') continue;
           attribution[j] = owner;
+          depth[j] = depth[i] + 1;
           queue.push(j);
         }
       }
@@ -903,7 +906,10 @@ const GEOGRAPHY = (() => {
         if (!groups.has(owner)) groups.set(owner, []);
         groups.get(owner).push(t);
       };
-      for (let i = 0; i < g.tiles.length; i++) add(attribution[i], g.tiles[i]);
+      for (let i = 0; i < g.tiles.length; i++) {
+        const t = g.tiles[i];
+        add(attribution[i] || (t.terrain !== 'sea' ? 'neutral' : null), t);
+      }
       // The geographic crop reaches half a hex past the centre-sampled grid.
       // Add virtual edge cells to prevent a sawtooth of neutral background at
       // the 148°E / 132°W and north/south boundaries.
@@ -921,9 +927,20 @@ const GEOGRAPHY = (() => {
         for (const t of tiles) tacticalHex(path, t, R + .9);
         paths.set(side, path);
       }
-      beringGeographicOwnersCache = { tiles: g.tiles, revision, paths, groups };
+      const coverage = FAST_PATH ? new Path2D() : null;
+      if (coverage) for (const tiles of groups.values())
+        for (const t of tiles) tacticalHex(coverage, t, R + .9);
+      beringGeographicOwnersCache = { tiles: g.tiles, revision, paths, groups,
+        coverage };
     }
     return beringGeographicOwnersCache;
+  }
+  function clipBeringLand(ctx, owners) {
+    if (owners.coverage) return ctx.clip(owners.coverage);
+    ctx.beginPath();
+    for (const tiles of owners.groups.values())
+      for (const t of tiles) tacticalHex(ctx, t, R + .9);
+    ctx.clip();
   }
   function paintBeringGeographic(ctx, g, left, right, top, bottom) {
     const bounds = g.scenario.bounds;
@@ -965,8 +982,6 @@ const GEOGRAPHY = (() => {
       ctx.transform(sx, 0, 0, sy, shift, ty);
       const land = region.landPath || paths(ctx, region.shapes,
         px(region.west), px(region.east), py(bounds.north), py(bounds.south));
-      ctx.fillStyle = '#91a799';
-      fillPath(ctx, land);
       if (land) {
         // Political hexes are only an ownership stencil, clipped to the
         // real polygon silhouettes. No hex edges form the visible shoreline.
@@ -993,6 +1008,13 @@ const GEOGRAPHY = (() => {
         }
         ctx.restore();
       }
+      // Hide foreign/unplayable coasts using the same painted-land mask.
+      // Invert the atlas transform for the hex stencil, then return to
+      // geographic coordinates so the shoreline remains high-resolution.
+      ctx.save();
+      ctx.transform(1 / sx, 0, 0, 1 / sy, -shift / sx, -ty / sy);
+      clipBeringLand(ctx, owners);
+      ctx.transform(sx, 0, 0, sy, shift, ty);
       ctx.strokeStyle = 'rgba(226,233,216,0.66)';
       ctx.lineWidth = Math.max(.35, 1.15 / Math.max(sx, sy));
       if (region.outline) ctx.stroke(region.outline);
@@ -1004,6 +1026,7 @@ const GEOGRAPHY = (() => {
         }
         ctx.stroke();
       }
+      ctx.restore();
       ctx.restore();
     }
     ctx.restore();
