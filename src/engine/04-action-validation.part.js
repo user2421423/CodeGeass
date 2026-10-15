@@ -175,10 +175,11 @@
   }
   // Refresh your commanders inside an operation, e.g. after an HQ promotion; personal units keep their damage.
   function applyRoster(g, profile = {}) {
-    if (g.mode === 'scenario') return g;
+    // Regional scenarios also need personal HQ commanders. Their scripted officers
+    // remain untouched, including their authored ranks and special Elite bonuses.
     g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
     for (const u of allUnits(g)) {
-      if (!u.cmd) continue;
+      if (!u.cmd || (g.mode === 'scenario' && !u.personal)) continue;
       const old = maxHP(u);
       u.cmdRank = officerOf(g, u).rank;
       if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
