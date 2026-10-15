@@ -114,7 +114,7 @@
   function joePenetration(g,u,target){
     if(!target)return 0;
     if(target.expJoeDiagnosis?.side===u.side&&target.expJoeDiagnosis.until>=g.turn)return .15;
-    return fx(u).diagnosis?.1:0;
+    return fx(u).diagnosis ? .1 : 0;
   }
   function newcomerAttack(g,u,target,counter){
     const f=fx(u),terrain=tile(g,u.c,u.r);let m=1;
@@ -151,7 +151,7 @@
     m*=hongGuGuardian(g,target);
     if(preparedPosition(g,target))m*=.85;
     if(fx(target).lastStand&&target.hp/maxHP(target)<.5)m*=.8;
-    if(counter&&target.expTamakiCharging)m*=1.2;
+    if(counter&&target.cmd==='tamaki'&&target.movedDistance>=2&&target.expTamakiUsedTurn!==g.turn)m*=1.2;
     if(fx(target).afterimage&&target.expAfterimage&&direct&&!counter)m*=.65;
     // Eduardo: improved defensive deployment on mountain hexes.
     if(direct&&tile(g,target.c,target.r)?.terrain==='mountain'&&
@@ -191,7 +191,7 @@
   function newcomerKilled(g,v,attacker){
     if(!v.cmd&&g.units.some(k=>k.hp>0&&k.side===v.side&&k.cmd==='kewell'&&dist(g,k,v)<=2))
       for(const ally of g.units)if(ally.hp>0&&ally.side===v.side&&dist(g,ally,v)===1)
-        ally.expPuristCounter={turns:1};
+        ally.expPuristCounter={turns:1,startTurn:g.turn};
     if(!attacker)return;
     for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&dist(g,u,v)<=2){
       const gained=Math.min(20,60-(u.expSalvageIndustry||0));funds(g,u.side).industry+=Math.max(0,gained);u.expSalvageIndustry=(u.expSalvageIndustry||0)+Math.max(0,gained);

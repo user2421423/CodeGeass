@@ -275,7 +275,7 @@
       return { captured: null, annexed: null };
     const loser = s.owner;
     if(fx(u).taxSeizure){funds(g,u.side).credits+=Math.min(150,3*cityOutput(g,s).credits);s.expTaxUntil=g.turn+2;}
-    delete s.expSupplyBlocked;delete s.expDecree;
+    delete s.expSupplyBlocked;delete s.expDecree;delete s.expShieldRegenBlocked;delete s.expYoshidaBreak;
     s.owner = u.side;
     recordWarEvent(g,'cityCaptured',u.side,{cityId:s.id,city:s.name,previousOwner:loser,
       unitId:u.id,commander:u.cmd||null,naval:!!navalLanding,group:warGroup(g,u)});
@@ -291,6 +291,7 @@
     s.shield = 0;
     claim(g, s, u.side);
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
+    if(u.cmd==='sawasaki'&&u.expBeachheadStart!=null&&g.turn<=u.expBeachheadUntil&&adjacent(g,s).some(t=>isSea(t)))u.expBeachheadUntil=Math.min(u.expBeachheadStart+3,u.expBeachheadUntil+1);
     if(u.cmd==='nonette' && u.expCaptureAttackTurn!==g.turn){u.attacked=false;u.expCaptureAttackTurn=g.turn;}
     if(['anya','sugiyama'].includes(u.cmd)&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
     const kaguyas=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='kaguya'&&dist(g,v,s)<=3);
@@ -357,7 +358,7 @@
     u.held = false;
     u.guardReady = false;
     u.movedDistance = freshLanding ? 0 : (u.movedDistance || 0) + dist(g, from, dest);
-    if(fromSea&&!isSea(dest))u.expLandedTurn=g.turn;
+    if(fromSea&&!isSea(dest)){u.expLandedTurn=g.turn;if(u.cmd==='sawasaki'){u.expBeachheadStart=g.turn;u.expBeachheadUntil=g.turn+2;}}
     if(u.expRetrofit){u.expRetrofitStrike=u.movedDistance>=3;delete u.expRetrofit;}
     u.lastTurnMoved = true;
     u.skillReposition = 0;

@@ -5,6 +5,7 @@
       .filter(s => s.owner === side)
       .reduce((a, s) => {
         const y = cityOutput(g, s);
+        if(s.expSupplyBlocked?.owner===side)return a;
         a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1)*treasuryBonus(g,s);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).royalCompassion))a.credits+=Math.round(y.credits*.15);

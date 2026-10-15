@@ -725,7 +725,7 @@
       title: 'Squadron commander',
       skill: 'Reckless Charge',
       desc: "First attack after moving 2 hexes deals +40% damage and takes 20% more counterfire unless the target is killed.",
-      fx: {"charge":0.4,"counterTaken":1.2},
+      fx: {"charge":0.4},
       recruit: 100,
     },
     katase: {
