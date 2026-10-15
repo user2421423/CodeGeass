@@ -218,7 +218,7 @@
       k = u && g && logisticsNear(g, u) ? 0.7 : 1;
     return { credits: Math.round(p.credits * k), industry: Math.round(p.industry * k), sakuradite: p.sakuradite };
   }
-  // Repairs restore 35% of the frame for a fifth of the unit's build price.
+  // Manual repairs restore 20% of maximum HP for a fifth of the unit's build price.
   function repairCost(u, g = null) {
     const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
@@ -250,7 +250,7 @@
     const cost = repairCost(u, g);
     warSpend(g,u.side,{credits:cost},'repair');
     funds(g, u.side).credits -= cost;
-    const amount = Math.min(maxHP(u) - u.hp, Math.round(maxHP(u) * 0.35));
+    const amount = Math.min(maxHP(u) - u.hp, Math.round(maxHP(u) * 0.20));
     u.hp += amount;
     u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} repairs ${amount} frame.`, u.side);
@@ -270,7 +270,7 @@
     port: {
       name: 'Port',
       field: 'portLevel',
-      desc: 'Coastal cities only, on a sea hex beside the city. Level 1 builds amphibious Knightmares, level 2 Carrier-Battleships; naval units berthed there repair 10%, 20% or 30% a turn, and level 3 enables tier IV naval research.',
+      desc: 'Coastal cities only, on a sea hex beside the city. Level 1 builds amphibious Knightmares, level 2 Carrier-Battleships, and level 3 enables tier IV naval research. Docked naval units do not heal automatically.',
     },
     refinery: {
       name: 'Sakuradite refinery',
