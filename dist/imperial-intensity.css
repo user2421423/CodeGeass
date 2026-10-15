@@ -886,3 +886,270 @@
     transition: none !important;
   }
 }
+
+
+/* ==========================================================================
+   IMPERIAL RICH — BORDERLESS / NO-GOLD FINISH
+   Intentional unframed strategy interface: hierarchy comes from artwork,
+   tonal depth, type, and spacing, never gold trim or rectangular outlines.
+   Scope strictly to the main menu; game screens are unaffected.
+   ========================================================================== */
+
+.start-overlay {
+  background: #080d14;
+  backdrop-filter: blur(8px);
+}
+
+.start-command {
+  --menu-gold: #c6d1d9;
+  --menu-line: transparent;
+  --menu-muted: #b3bec8;
+  color: #e6ebee;
+  background: #121a23;
+}
+
+/* Remove frames completely, including nested controls, hover and focus rings.
+   The visible focus and selected states below use fill, not borders. */
+.start-command,
+.start-command *,
+.start-command *::before,
+.start-command *::after {
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.start-command .start-header,
+.start-command .start-content {
+  background-color: #151b24;
+}
+.start-command .start-header {
+  background: #161b24;
+}
+.start-command .start-hero-art {
+  background: #20242c;
+}
+.start-command .start-hero-art:after {
+  background:
+    linear-gradient(90deg, #161b24 0%, #161b24cd 11%, transparent 37%),
+    linear-gradient(0deg, #161b2478 0%, transparent 25%, transparent 82%, #161b2436);
+}
+.start-command .start-header h1 {
+  color: #f0f1f3;
+  text-shadow: none;
+}
+.start-command .start-header h1 em {
+  color: #d7dfe5;
+}
+.start-command .start-header p {
+  color: #b6c1c8;
+  text-shadow: none;
+}
+.start-command .start-brandline,
+.start-command .start-brand-subtitle,
+.start-command .start-panel-index,
+.start-command .start-section-heading span,
+.start-command .start-side-title,
+.start-command .start-kicker,
+.start-command .eyebrow,
+.start-command .start-hq .start-kicker {
+  color: #bac6d0;
+}
+.start-command .start-brand-divider {
+  background: #65717c;
+}
+.start-command .start-panel-top .start-chip,
+.start-command .start-era-name {
+  background: transparent;
+  color: #aab7c1;
+}
+.start-command .start-conquest-panel {
+  background: #202b36;
+  border-radius: 0;
+}
+.start-command .start-conquest-panel h2,
+.start-command .start-mode h3 {
+  color: #f0f2f2;
+  text-shadow: none;
+}
+.start-command .start-intro,
+.start-command .start-mode p,
+.start-command .start-faction-meta,
+.start-command .start-era-brief {
+  color: #bac4ca;
+}
+.start-command .start-config-grid label {
+  color: #bdc9d1;
+}
+.start-command .select {
+  background: #121d29;
+  color: #ebeff1;
+  border-radius: 0;
+  appearance: auto;
+}
+.start-command .select:hover {
+  background: #20303f;
+}
+.start-command .start-section-heading small,
+.start-command .start-mode-info,
+.start-command .start-reward,
+.start-command .start-foot small {
+  color: #a4b3bd;
+}
+
+/* Faction identity comes from flags and authentic portraits, not UI strokes. */
+.start-command .start-faction {
+  --side-accent: #aab7c1 !important;
+  background: #293744;
+  border-radius: 0;
+}
+.start-command .start-faction:before {
+  background: #1b2631;
+}
+.start-command .start-faction:after {
+  display: none;
+  content: none;
+}
+.start-command .start-faction .faction-portrait {
+  filter: saturate(.85) contrast(1.04);
+}
+.start-command .start-faction .faction-banner,
+.start-command .start-faction .ufn-start-flag {
+  padding: 0;
+  background: transparent;
+}
+.start-command .start-faction-title {
+  color: #eff2f4;
+  text-shadow: none;
+}
+.start-command .start-faction-choice,
+.start-command .start-faction.active .start-faction-choice {
+  color: #c5d5e0;
+}
+.start-command .start-faction.active {
+  background: #415364;
+}
+.start-command .start-faction:hover:not(:disabled) {
+  background: #374858;
+}
+.start-command .start-faction.active:hover:not(:disabled) {
+  background: #485c6e;
+}
+.start-command .start-era-brief strong {
+  color: #d2dce2;
+}
+.start-command .start-era-name {
+  padding-inline: 0;
+  font-weight: 700;
+}
+
+/* An operation list: flat tonal surfaces rather than bordered web cards. */
+.start-command .start-side {
+  gap: 10px;
+}
+.start-command .start-mode {
+  --mode-accent: #bac6d0 !important;
+  background: #202d39;
+  border-radius: 0;
+  padding-left: 49px;
+}
+.start-command .start-mode-serial {
+  color: #aebfcb;
+}
+.start-command .start-mode:before,
+.start-command .start-mode:after {
+  display: none !important;
+  content: none !important;
+}
+.start-command .start-mode:hover {
+  background: #2e3e4e;
+}
+.start-command .start-mode .start-mode-bottom button {
+  background: transparent;
+  color: #d2dce3;
+  padding-bottom: 4px;
+}
+.start-command .start-mode .start-mode-bottom button:hover {
+  background: transparent;
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.start-command .start-mode .start-mode-resume button {
+  background: #263d47;
+  color: #d6e5e7;
+  padding: 7px 9px;
+}
+.start-command .start-mode .start-mode-resume button:hover {
+  background: #334d57;
+  text-decoration: none;
+}
+
+/* All controls use tonal fills; none use gold call-to-action styling. */
+.start-command button.start-launch-main {
+  background: #b5c4cf !important;
+  color: #14202b !important;
+  border-radius: 0;
+  text-transform: uppercase;
+  box-shadow: none !important;
+}
+.start-command button.start-launch-main:hover {
+  background: #d2dce3 !important;
+  color: #0e1720 !important;
+}
+.start-command button.start-resume,
+.start-command .start-hq-actions button,
+.start-command .start-foot-left button {
+  color: #d7e0e6;
+  background: #344350;
+  border-radius: 0;
+}
+.start-command button.start-resume:hover,
+.start-command .start-hq-actions button:hover,
+.start-command .start-foot-left button:hover {
+  color: #fff;
+  background: #465969;
+}
+.start-command .start-hq {
+  background: #1d2a35;
+}
+.start-command .start-hq-top b,
+.start-command .start-foot small b {
+  color: #c5d2da;
+}
+.start-command .start-hq p {
+  color: #aab9c3;
+}
+.start-command .start-foot-left button {
+  background: #273541;
+}
+.start-command .start-save-warning {
+  color: #efbcb6;
+}
+
+/* Maintain keyboard accessibility without drawing an outline. */
+.start-command button:focus-visible,
+.start-command .select:focus-visible,
+.start-command .start-faction:focus-visible {
+  background: #5c7285 !important;
+  color: #fff !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.start-command button.start-launch-main:focus-visible {
+  background: #d5e2ec !important;
+  color: #101923 !important;
+}
+.start-command .start-faction.active:focus-visible {
+  background: #536d81 !important;
+}
+
+/* Do not remove navigation affordances on small screens. */
+@media (max-width: 650px) {
+  .start-command .start-hero-art:after {
+    background: linear-gradient(90deg,#161b24 0%, #161b24d9 25%, transparent 70%);
+  }
+  .start-command .start-mode {
+    padding-left: 49px;
+  }
+}
