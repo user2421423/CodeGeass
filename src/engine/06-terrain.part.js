@@ -11,8 +11,8 @@
       desc: 'Movement cost 1. Shore and shallows: land units stand and fight here as on land, and warships can sail through.',
     },
     plains: { name: 'Plains', cost: 1, desc: 'Movement cost 1. No terrain defense or attrition.' },
-    forest: { name: 'Forest', cost: 2, cover: 0.15, desc: 'Movement cost 2. Incoming damage reduced by 15%.' },
-    mountain: { name: 'Mountains', cost: 2, cover: 0.25, desc: 'Movement cost 2. Incoming damage reduced by 25%.' },
+    forest: { name: 'Forest', cost: 1, cover: 0.15, desc: 'Movement cost 1. Incoming damage reduced by 15%.' },
+    mountain: { name: 'Mountains', cost: 1, cover: 0.25, desc: 'Movement cost 1. Incoming damage reduced by 25%.' },
     desert: {
       name: 'Desert',
       cost: 1,
@@ -21,17 +21,17 @@
     },
     snow: {
       name: 'Tundra',
-      cost: 2,
+      cost: 1,
       attrition: 0.025,
-      desc: 'Movement cost 2. Units lose 2.5% of their frame each turn they start here.',
+      desc: 'Movement cost 1. Units lose 2.5% of their frame each turn they start here.',
     },
     peak: { name: 'Impassable peaks', blocked: true, desc: 'The high Himalaya and the Greenland ice cap: impassable.' },
     // City ruins appear on campaign maps only.
     urban: { name: 'City ruins', cost: 1, cover: 0.2, desc: 'Movement cost 1. Buildings and rubble cut incoming damage by 20%.' },
     crater: {
       name: 'F.L.E.I.J.A. crater',
-      cost: 2,
-      desc: 'Movement cost 2. A F.L.E.I.J.A. warhead erased everything here and glassed the ground pink and white.',
+      cost: 1,
+      desc: 'Movement cost 1. A F.L.E.I.J.A. warhead erased everything here and glassed the ground pink and white.',
     },
   };
   const TERRAIN_CODES = {
@@ -46,7 +46,7 @@
     c: 'crater',
     w: 'coast',
   };
-  const CONQUEST_MOVE_BONUS = 2,
+  const UNIVERSAL_MOVE_BONUS = 2,
     SEA_MOVE = { conquest: 5, campaign: 5 },
     CARRIER_ESCORT_SEA = 10; // a Portman that starts next to a friendly Carrier-Battleship swims this far
   // Warships and amphibious frames, built only in Conquest.

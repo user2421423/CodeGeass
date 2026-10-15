@@ -38,9 +38,9 @@
       f = fx(u),
       mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
     let n = t.move + (eliteFx(u).move || 0);
-    // Only world Conquest has the +2 high-resolution map movement bonus.
-    // Scenario/Campaign units and warships use their normal movement values.
-    if (g?.mode === 'conquest' && t.naval !== 'ship') n += CONQUEST_MOVE_BONUS;
+    // All playable modes grant +2 movement to ground and amphibious units.
+    // Warships retain their normal movement values in every mode.
+    if (g && t.naval !== 'ship') n += UNIVERSAL_MOVE_BONUS;
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
     if(u.expJammedActive)n=Math.max(1,n-2);

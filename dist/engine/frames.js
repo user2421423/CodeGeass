@@ -111,7 +111,7 @@
       tier: 2,
       crit: 0.1,
       pen: 0.15,
-      rule: 'Base movement 5 for flanking and city raids; Conquest adds the high-resolution world mobility bonus. Range 1; exchanges counter-fire.',
+      rule: 'Base movement 5 for flanking and city raids; all modes add the +2 movement bonus. Range 1; exchanges counter-fire.',
     },
     light: {
       branch: 'Armor',
