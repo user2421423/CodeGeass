@@ -77,9 +77,11 @@ function startScenario(side=scenarioSide, campaignContext=null) {
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
   if (campaignContext) {
     game.warCampaign = { ...campaignContext };
-    // The World Campaign imports only persistent Elite levels, not HQ research or ranks.
+    // World Campaign also imports persistent Elite levels, but not HQ research.
     E.applyElites(game, loadProfile());
   }
+  // Personal HQ commanders are assignable in every regional operation.
+  E.applyRoster(game, loadProfile());
   scenarioRoutingGroup=null;
   setWorld();
   // Start inside each faction's theatre instead of fitting empty sea.
