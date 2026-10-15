@@ -3,10 +3,13 @@
   function newcomerTargets(g,u){
     const a=COMMANDERS[u?.cmd]?.action,k=a?.target,range=a?.range||0;
     if(!k)return [];
+    if(u.cmd==='gaohai')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)===1&&s.shield<s.maxShield&&g.stations.some(o=>o.owner===u.side&&o.c===u.c&&o.r===u.r&&o.shield>0));
+    if(u.cmd==='huangqian')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)<=3&&s.shield<s.maxShield);
     if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
       ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
       : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=3):true));
     // Rapid Rotation is strictly land-to-land. Amphibious units at sea count as sea units.
+    if (u.cmd === 'sugiyama')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)===1);
     if (u.cmd === 'olivia') return g.units.filter(v =>
       v.hp > 0 && v.id !== u.id && v.side === u.side && dist(g,u,v) <= range &&
       !isShip(v) && !isSea(tile(g,v.c,v.r)) &&
@@ -28,7 +31,7 @@
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
     switch(u.cmd){
-      case 'marrybell':v.forcedOffensive=true;break;
+      case 'marrybell':v.forcedOffensive=true;v.expForcedOffensiveTurn=g.turn;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
       case 'charles':v.feintCD=Math.max(0,(v.feintCD||0)-2);break;
@@ -70,6 +73,18 @@
       case 'ichijiku':v.expRadar={side:u.side};break;
       case 'indira':v.expPinnedNext=true;v.expPinnedWeakenNext=.25;break;
       case 'kate':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.15));break;
+      case 'gaohai':{
+        const source=g.stations.find(s=>s.owner===u.side&&s.c===u.c&&s.r===u.r);
+        if(!source||source.shield<=0)return {ok:false,reason:'Gao Hai must occupy a shielded friendly city.'};
+        const amount=Math.min(source.shield,Math.round(source.maxShield*.2),v.maxShield-v.shield);
+        if(amount<=0)return {ok:false,reason:'No shields can be transferred.'};source.shield-=amount;v.shield+=amount;break;
+      }
+      case 'huangqian':v.shield=Math.min(v.maxShield,v.shield+Math.round(v.maxShield*.2));break;
+      case 'kirihara':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.1));v.energy=Math.min(v.maxEnergy||100,(v.energy||0)+Math.round((v.maxEnergy||100)*.2));break;
+      case 'sugiyama':{
+        const city=g.stations.find(s=>s.owner!==u.side&&dist(g,u,s)===1);
+        if(!city)return {ok:false,reason:'No adjacent enemy city.'};city.expShieldRegenBlocked={owner:city.owner,turns:1};break;
+      }
       default:return {ok:false,reason:'Unknown approved signature action.'};
     }
     u.feintCD=COMMANDERS[u.cmd].action.cooldown ?? 3;

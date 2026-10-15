@@ -29,6 +29,8 @@
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
+    if(u.expChengWeaken?.turns>0)attack*=1-u.expChengWeaken.value;
+    if(!counter&&u.forcedOffensive)attack*=1.35;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.7&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
@@ -147,7 +149,7 @@
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else {
-        const bypass=(u.forcedOffensive?.3:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0);
+        const bypass=(u.forcedOffensive?.5:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0);
         attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
       }
     }

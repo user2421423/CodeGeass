@@ -147,6 +147,8 @@
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       u.expSalvageIndustry=0;u.expSalvageCount=0;
+      if(u.expChengWeaken?.turns>0){u.expChengWeaken.turns--;if(!u.expChengWeaken.turns)delete u.expChengWeaken;}
+      if(u.forcedOffensive&&u.expForcedOffensiveTurn!==g.turn)delete u.forcedOffensive;
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
@@ -201,7 +203,8 @@
         (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3)?.15:0);
       // Consume this marker at the owner's next regeneration. A hit by any
       // rival phase is counted once, even when factions take turns in one round.
-      const recovery = s.attackedSinceRegen ? rate * 0.5 : rate;
+      const recovery = s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side?0:(s.attackedSinceRegen ? rate * 0.5 : rate);
+      if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
       s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * recovery));
       delete s.attackedSinceRegen;
     }
