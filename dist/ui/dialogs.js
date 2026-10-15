@@ -245,6 +245,8 @@ function commandDialog(u) {
   focusDialog();
 }
 function admiralDialog() {
+  // Restore the HQ roster for existing saves before listing assignable officers.
+  E.applyRoster(game, loadProfile());
   if (!interactive()) return;
   generalOpen = null;
   hqBack = 'game';
