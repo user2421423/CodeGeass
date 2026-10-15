@@ -1,0 +1,91 @@
+name: Mobile Eliminator 2017 positional trial batch 2
+on:
+  push:
+    branches: ['experiment/eliminator-2017-mobile-posture']
+    paths: ['.github/workflows/eliminator-mobile-posture-batch-2.yml']
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: node tools/build_sources.cjs --check
+      - run: node --test tests/*.test.cjs
+      - run: node tests/ui-smoke.cjs
+  compare:
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        include:
+          - {mode: '2017', seed: 9001, turns: 45}
+          - {mode: '2017', seed: 8080, turns: 45}
+          - {mode: '2017', seed: 55555, turns: 45}
+          - {mode: '2017', seed: 67891, turns: 45}
+          - {mode: '2017', seed: 99991, turns: 45}
+          - {mode: '2017', seed: 424242, turns: 45}
+          - {mode: '2017', seed: 77777, turns: 45}
+          - {mode: '2017', seed: 606060, turns: 45}
+          - {mode: '2017', seed: 31415, turns: 45}
+          - {mode: '2017', seed: 9999, turns: 45}
+          - {mode: '2017', seed: 27182, turns: 45}
+          - {mode: '2017', seed: 456789, turns: 45}
+          - {mode: '2017', seed: 998877, turns: 45}
+          - {mode: '2017', seed: 3141592, turns: 45}
+          - {mode: '2017', seed: 88888, turns: 45}
+    name: ${{ matrix.mode }} seed ${{ matrix.seed }} mobile posture
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Same world engine, original AI vs mobile posture vs city-focused control
+        shell: bash
+        env:
+          MODE: ${{ matrix.mode }}
+          SEED: ${{ matrix.seed }}
+          TURNS: ${{ matrix.turns }}
+          ELIMINATOR_TARGET_DIAGNOSTICS: '1'
+        run: |
+          set -euo pipefail
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" mobile-posture > mobile.json
+          git show 5465627c9709ec764d49404d3124633a0b08b23f:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" city-focused-cap125 > city.json
+          git show 6e452e5ca7f3148c9392d37701c1e93897a3386e:dist/engine/ai.js > dist/engine/ai.js
+          node tools/eliminator_ab_sim.cjs "$MODE" "$SEED" "$TURNS" original-ai > baseline.json
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const file={mobile:'mobile.json',city:'city.json',baseline:'baseline.json'};
+          const data=Object.fromEntries(Object.entries(file).map(([k,v])=>
+            [k,JSON.parse(fs.readFileSync(v,'utf8'))]));
+          for(const [name,v] of Object.entries(data)){
+            assert.equal(v.warheads,v.diagnostics.launches,name+' missile accounting');
+            assert.equal(v.diagnostics.coveredButMissed,0,name+' missed interception');
+          }
+          const keys=['warheads','intercepted','carrierIntercepts','cityIntercepts',
+            'chargesStarted','pickedUp','carrierLosses','armyValueProtectionRate',
+            'frontlineValueProtectionRate','weightedProtectionRate','elapsedMs',
+            'unitsDestroyedByWarheads','citiesDestroyedByWarheads','carrierTier1','carrierOther',
+            'strikeCenterProtectionRate'];
+          if(data.baseline.mode==='2018'){
+            const exact=['warheads','intercepted','carrierIntercepts',
+              'cityIntercepts','chargesStarted','pickedUp','carrierLosses',
+              'armyValueProtectionRate','frontlineValueProtectionRate',
+              'weightedProtectionRate','actions','finalCities','finalUnits'];
+            for(const k of exact)assert.deepEqual(data.mobile[k],data.baseline[k],
+              '2018 movement neutrality '+k);
+            console.log('MOBILE_2018_NEUTRALITY_OK '+data.baseline.seed);
+          }
+          console.log('MOBILE_POSTURE_COMPARE '+JSON.stringify({
+            mode:data.baseline.mode,seed:data.baseline.seed,
+            metrics:Object.fromEntries(keys.map(k=>[k,
+              Object.fromEntries(Object.entries(data).map(([name,v])=>[name,v[k]]))]))
+          }));
+          NODE
