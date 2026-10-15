@@ -5,6 +5,7 @@
     if(!k)return [];
     if(u.cmd==='gaohai')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)===1&&s.shield<s.maxShield&&g.stations.some(o=>o.owner===u.side&&o.c===u.c&&o.r===u.r&&o.shield>0));
     if(u.cmd==='huangqian')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)<=3&&s.shield<s.maxShield);
+    if(u.cmd==='chengzhong')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)<=3);
     if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
       ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
       : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=3):true));
@@ -27,11 +28,13 @@
     ));
   }
   function newcomerUse(g,u,targetId){
-    const choices=newcomerTargets(g,u),v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
+    const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
+    if(targetId==null&&action?.target!=='self')return {ok:false,reason:'Select the intended skill target.'};
+    const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
     switch(u.cmd){
-      case 'marrybell':v.forcedOffensive=true;v.expForcedOffensiveTurn=g.turn;break;
+      case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
       case 'charles':v.feintCD=Math.max(0,(v.feintCD||0)-2);break;
@@ -63,8 +66,7 @@
         if(!city)return {ok:false,reason:'No friendly city in range.'};city.expDecree=true;break;
       }
       case 'chengzhong':{
-        const city=g.stations.filter(s=>foe(g,s.owner,u.side)&&dist(g,u,s)<=3).sort((a,b)=>dist(g,u,a)-dist(g,u,b))[0];
-        if(!city)return {ok:false,reason:'No enemy city in range.'};city.expSupplyBlocked={owner:city.owner,turns:2};for(const w of g.units)if(w.hp>0&&w.side===city.owner&&dist(g,w,city)<=2)w.expChengWeaken={turns:1,value:.15};break;
+        const city=v;city.expSupplyBlocked={owner:city.owner,turns:2};for(const w of g.units)if(w.hp>0&&w.side===city.owner&&dist(g,w,city)<=2)w.expChengWeaken={turns:1,value:.15};break;
       }
       case 'diethard':addTargetMark(v,{side:u.side,source:u.id,damage:.2,uses:1});break;
       case 'kinoshita':v.expBreach=true;break;
@@ -80,7 +82,11 @@
         if(amount<=0)return {ok:false,reason:'No shields can be transferred.'};source.shield-=amount;v.shield+=amount;break;
       }
       case 'huangqian':v.shield=Math.min(v.maxShield,v.shield+Math.round(v.maxShield*.2));break;
-      case 'kirihara':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.1));v.energy=Math.min(v.maxEnergy||100,(v.energy||0)+Math.round((v.maxEnergy||100)*.2));break;
+      case 'kirihara':{
+        v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.1));
+        // Sakuradite is the faction's actual energy resource. Units have no energy gauge.
+        funds(g,v.side).sakuradite=(funds(g,v.side).sakuradite||0)+Math.max(1,Math.round(income(g,v.side).sakuradite*.2));break;
+      }
       case 'sugiyama':{
         const city=g.stations.find(s=>s.owner!==u.side&&dist(g,u,s)===1);
         if(!city)return {ok:false,reason:'No adjacent enemy city.'};city.expShieldRegenBlocked={owner:city.owner,turns:1};break;

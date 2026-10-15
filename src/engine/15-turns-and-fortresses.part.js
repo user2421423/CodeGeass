@@ -97,7 +97,7 @@
     // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
-    if(outgoing){for(const v of g.units)if(v.side===outgoing)delete v.expSilenced;
+    if(outgoing){for(const v of g.units)if(v.side===outgoing){delete v.expSilenced;if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;}
       for(const station of g.stations)if(station.expSupplyBlocked?.owner===outgoing){station.expSupplyBlocked.turns=(station.expSupplyBlocked.turns||1)-1;if(station.expSupplyBlocked.turns<=0)delete station.expSupplyBlocked;}}
     if (outgoing && outgoing !== side)
       for (const u of g.units)
@@ -147,8 +147,8 @@
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
       u.expSalvageIndustry=0;u.expSalvageCount=0;
-      if(u.expChengWeaken?.turns>0){u.expChengWeaken.turns--;if(!u.expChengWeaken.turns)delete u.expChengWeaken;}
-      if(u.forcedOffensive&&u.expForcedOffensiveTurn!==g.turn)delete u.forcedOffensive;
+      // A forced-offensive attack stays charged until used; its vulnerability ends on the recipient's next turn.
+      delete u.expForcedVulnerable;
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
