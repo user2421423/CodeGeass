@@ -70,54 +70,54 @@ function startMenu() {
     <section class="dialog wide start-command" role="dialog" aria-modal="true" aria-label="Operation setup" aria-describedby="start-description">
       <header class="start-header">
         <div class="start-brand">
-          <div class="start-brandline"><span class="start-brandmark" aria-hidden="true"><span>✦</span></span><span>CODE GEASS · STRATEGIC COMMAND</span></div>
+          <div class="start-brandline"><span>CODE GEASS</span><span class="start-brand-divider" aria-hidden="true"></span><span class="start-brand-subtitle">GRAND STRATEGY</span></div>
           <h1>Knightmare <em>Conquest</em></h1>
-          <p id="start-description">The world is divided. Choose your allegiance, take command of the battlefield, and rewrite history.</p>
+          <p id="start-description">Three empires. One world at war. Choose a side and decide its fate.</p>
         </div>
-        <div class="start-signal" aria-hidden="true"><strong>COMMAND NETWORK</strong><span>STATUS: OPERATIONAL</span><span>THEATER: GLOBAL</span><span>CLASSIFIED // 01</span></div>
+        
       </header>
       <div class="start-content">
         <div class="start-layout">
           <section class="start-conquest-panel" aria-label="World Conquest setup">
-            <div class="start-panel-top"><span class="start-panel-index">01 / GRAND STRATEGY</span><span class="start-chip">${E.WORLD.cols} × ${E.WORLD.rows} HEX WORLD</span></div>
+            <div class="start-panel-top"><span class="start-panel-index">CONQUEST</span><span class="start-chip">${E.WORLD.cols} × ${E.WORLD.rows} WORLD MAP</span></div>
             <h2>World Conquest</h2>
-            <p class="start-intro">Lead an empire across the global map. Recruit commanders, build Knightmare armies and capture every rival city.</p>
+            <p class="start-intro">Build your armies, appoint commanders and conquer the world.</p>
             <div class="start-config-grid">
               <div><label for="conquest-select">Conflict</label><select class="select" id="conquest-select">${Object.values(E.CONQUESTS).map(c => `<option value="${esc(c.id)}" ${c.id === cfg.id ? 'selected' : ''}>${esc(c.title)}</option>`).join('')}</select></div>
               <div><label for="difficulty-select">Difficulty</label><select class="select" id="difficulty-select">${Object.entries(E.DIFFICULTIES).map(([id, d]) => `<option value="${esc(id)}" ${setup.difficulty === id ? 'selected' : ''}>${esc(d.name)}${d.tokens > 1 ? ' · ×' + d.tokens + ' tokens' : ''}</option>`).join('')}</select></div>
             </div>
-            <div class="start-section-heading"><span>Choose your faction</span><small>${cfg.selectable.length} playable powers</small></div>
+            <div class="start-section-heading"><span>Select a faction</span><small>${cfg.selectable.length} playable powers</small></div>
             <div class="start-factions" role="group" aria-label="Conquest faction">${factions}</div>
             <div class="start-era-brief"><span class="start-era-name">${esc(cfg.title)}</span><span>${esc(era.desc)} <strong>${esc(era.rulesText)}</strong></span></div>
             <div class="start-launch">
-              <button class="start-launch-main primary" data-action="start-conquest">Launch conquest <span aria-hidden="true">↗</span></button>
+              <button class="start-launch-main primary" data-action="start-conquest">Start conquest</button>
               ${saveButton}
             </div>
             ${unreadableSave(chosenSaveKey()) ? '<p class="start-save-warning">This conquest save is from an older version and cannot be loaded. Starting a new conquest will replace it.</p>' : ''}
             <small class="start-reward">${esc(E.DIFFICULTIES[setup.difficulty]?.desc || '')}${reward ? ` · First victory: up to ${reward} command tokens` : ''}</small>
           </section>
           <aside class="start-side" aria-label="Other game modes and headquarters">
-            <div class="start-side-title"><span>Other operations</span><span>02 — 04</span></div>
+            <div class="start-side-title"><span>Game modes</span></div>
             <section class="start-mode" style="--mode-accent:#d7aa64">
-              <span class="start-kicker">02 / NARRATIVE WARFARE</span><h3>Story Mode</h3>
-              <p>Experience the Code Geass campaigns through scripted battles, signature commanders and mission objectives.</p>
-              <div class="start-mode-bottom"><span class="start-mode-info">${campaigns.length} campaigns · ${earnedStars}/${missions.length * 3} ★</span><button data-action="campaign">Enter story →</button></div>
+              <h3>Story Mode</h3>
+              <p>Follow the story through linked missions and decisive battles.</p>
+              <div class="start-mode-bottom"><span class="start-mode-info">${campaigns.length} campaigns · ${earnedStars}/${missions.length * 3} ★</span><button data-action="campaign">Play story</button></div>
               ${missionResume}
             </section>
             <section class="start-mode" style="--mode-accent:#6fa7be">
-              <span class="start-kicker">03 / INDEPENDENT OPERATIONS</span><h3>Regional Scenarios</h3>
-              <p>Jump into a standalone battlefield. Command invasions, defensive campaigns and naval operations on regional maps.</p>
-              <div class="start-mode-bottom"><span class="start-mode-info">Standalone saves</span><button data-action="scenario">Choose scenario →</button></div>
+              <h3>Regional Scenarios</h3>
+              <p>Fight standalone battles across detailed regional maps.</p>
+              <div class="start-mode-bottom"><span class="start-mode-info">Standalone saves</span><button data-action="scenario">Browse scenarios</button></div>
               ${scenarioResume}
             </section>
             <section class="start-mode" style="--mode-accent:#c46f70">
-              <span class="start-kicker">04 / CONNECTED WORLD WAR</span><h3>World Campaign</h3>
-              <p>Fight across linked regional fronts. Each victory changes the world and unlocks the next offensive.</p>
-              <div class="start-mode-bottom"><span class="start-mode-info">Persistent theater map</span><button data-action="war-campaign">Open campaign →</button></div>
+              <h3>World Campaign</h3>
+              <p>Lead your faction through an interconnected world war.</p>
+              <div class="start-mode-bottom"><span class="start-mode-info">Persistent theater map</span><button data-action="war-campaign">Open campaign</button></div>
             </section>
             <section class="start-hq" aria-label="Command headquarters">
-              <div class="start-hq-top"><span class="start-kicker">COMMAND HQ</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b></div>
-              <p>${profile.wins || 0} victories · ${techCount} research levels · Persistent HQ upgrades</p>
+              <div class="start-hq-top"><span class="start-kicker">HEADQUARTERS</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b></div>
+              <p>${profile.wins || 0} victories · ${techCount} research levels · Permanent upgrades</p>
               <div class="start-hq-actions"><button data-action="research">Research</button><button data-action="generals-start">Commanders</button><button data-action="elite-forces-start">Elite Forces</button></div>
             </section>
           </aside>
