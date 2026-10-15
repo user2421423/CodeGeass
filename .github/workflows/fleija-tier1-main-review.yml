@@ -1,0 +1,57 @@
+name: FLEIJA Tier 1 clean main review
+on:
+  push:
+    branches: ['feature/fleija-tier1-five-city-main-review']
+    paths: ['.github/workflows/fleija-tier1-main-review.yml']
+  pull_request:
+    branches: ['main']
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify every generated browser bundle matches source
+        run: node tools/build_sources.cjs --check
+      - name: Run isolated threshold, save/load and integrated attack tests
+        run: node --test tests/fleija-tier1-after-five.test.cjs tests/fleija-tier1-milestone-sim.test.cjs
+      - name: Run all repository Node regression tests
+        run: node --test tests/*.test.cjs
+      - name: Browser HUD UI smoke
+        run: node tests/ui-smoke.cjs
+  long-war:
+    needs: validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [401,777]
+    name: 'Long 2017 AI war seed ${{ matrix.seed }}'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Run live-main equal-AI 2017 conquest stability check
+        env:
+          SEED: ${{ matrix.seed }}
+        run: |
+          node tools/balance_sim.cjs --runs 1 --players britannia --difficulties normal --max-turns 95 --equal-ai --quiet --seed "$SEED" --output /tmp/fleija-main-review-$SEED.json --summary /tmp/fleija-main-review-$SEED.md
+          node - <<'NODE'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          const seed=process.env.SEED;
+          const report=JSON.parse(fs.readFileSync('/tmp/fleija-main-review-'+seed+'.json','utf8'));
+          const rows=report.results;
+          assert.equal(rows.length,1);
+          const row=rows[0];
+          assert.ok(row.turnsPlayed>0,'conquest advanced');
+          console.log('FLEIJA_MAIN_REVIEW_WAR '+JSON.stringify({
+            seed:+seed,turns:row.turnsPlayed,winner:row.winner||null,
+            cityHits:row.counters?.strikes||row.strikes||null,
+            successfulCityHits:row.fleijaSuccessfulCityHits||null
+          }));
+          NODE
