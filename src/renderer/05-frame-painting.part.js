@@ -28,10 +28,9 @@ function draw(time, dt) {
   ctx.fillRect(0, 0, w, h);
   const jolt = shake ? { x: (Math.random() * 2 - 1) * shake, y: (Math.random() * 2 - 1) * shake } : { x: 0, y: 0 };
   shake = Math.max(0, shake - dt * 30);
-  // Draw already-baked world atlas tiles directly at camera position. Avoid
-  // rebuilding a full screen-sized canvas each time the camera crosses its
-  // margin; that expensive copy was the remaining source of dragging stutter.
-  if (game.wrap && scale >= 0.33) {
+  // Draw reusable, world-anchored geographic chunks for regional scenarios
+  // as well as Conquest; camera movement only copies existing chunks.
+  if (shouldUseMapAtlas(scale)) {
     ctx.save();
     ctx.translate(offset.x + jolt.x, offset.y + jolt.y);
     ctx.scale(scale, scale);
@@ -42,8 +41,8 @@ function draw(time, dt) {
       (h - offset.y) / scale + R * 2);
     ctx.restore();
   } else {
-    // Campaign battlefields and far strategic zoom retain their existing
-    // cached layer; selection/attack effects remain independent in either path.
+    // Far strategic Conquest zoom retains its cheap overview layer;
+    // selections and attack effects stay separate on either path.
     const layer = mapLayer(scale, detail, dpr, w, h);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(

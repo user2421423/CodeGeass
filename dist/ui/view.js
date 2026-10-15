@@ -387,8 +387,10 @@ function attachMap() {
         canvas.style.cursor = 'grabbing';
       }
     }
+    // Hover hit-tests and previews are invisible during an active drag.
+    if (pointer?.dragged) { hover = null; return; }
     hover = hitHex(e.clientX, e.clientY);
-    if (hover && !pointer?.dragged) {
+    if (hover) {
       canvas.style.cursor = strikeMode || routing || armyGroupRouting
         ? 'crosshair'
         : hitStrategicArmyGroup(e.clientX, e.clientY) || readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))

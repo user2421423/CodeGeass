@@ -21,33 +21,70 @@ function mapLayerFresh(m, scale, dpr, w, h) {
 // canvas path rebuild which was still happening after geography was cached.
 const MAP_ATLAS_TILE = 960;
 const MAP_ATLAS_PAD = 5;
+const MAP_ATLAS_SCALE_STEP = 1.25;
 const mapAtlasTiles = new Map();
 const mapAtlasWarmQueue = [];
 const mapAtlasWarmKeys = new Set();
 let mapAtlasIdlePending = false;
 let mapAtlasGeneration = 0;
 let mapAtlasState = { tiles: null, revision: -1, scale: null };
+
+// Bounded regional maps have much more world space than visible screen space.
+// Large, coarser atlas chunks at strategic zoom prevent hundreds of tiny
+// synchronous paints; tactical zoom uses the original 960-unit chunks.
+function mapAtlasTileSize(scale) {
+  if (game.wrap) return MAP_ATLAS_TILE;
+  return scale < 0.14 ? MAP_ATLAS_TILE * 4 :
+    scale < 0.28 ? MAP_ATLAS_TILE * 2 : MAP_ATLAS_TILE;
+}
+function mapAtlasRenderScale(scale) {
+  if (game.wrap) return scale;
+  // Reuse atlas imagery across small trackpad zoom increments. Preserve the
+  // original 14/22/24/32-pixel grid/terrain detail thresholds.
+  const pixels = R * scale;
+  const stops = [0, 14, 22, 24, 32, Infinity];
+  const band = pixels < 14 ? 0 : pixels < 22 ? 1 :
+    pixels < 24 ? 2 : pixels < 32 ? 3 : 4;
+  const rounded = Math.pow(MAP_ATLAS_SCALE_STEP,
+    Math.ceil(Math.log(Math.max(0.001, scale)) / Math.log(MAP_ATLAS_SCALE_STEP)));
+  return Math.max(stops[band] / R,
+    Math.min(rounded, stops[band + 1] === Infinity
+      ? rounded : (stops[band + 1] - 0.001) / R));
+}
+function mapAtlasKey(tx, ty, scale, tileSize) {
+  return scale.toFixed(7) + ':' + tileSize + ':' + tx + ',' + ty;
+}
+function shouldUseMapAtlas(scale) {
+  // Wrapped Conquest keeps the cheap whole-world overview at extreme zoom.
+  return !game.wrap || scale >= 0.33;
+}
 function refreshMapAtlas(scale) {
   const revision = game.mapRevision || 0;
-  if (mapAtlasState.tiles === game.tiles && mapAtlasState.revision === revision && mapAtlasState.scale === scale) return;
-  mapAtlasTiles.clear();
+  if (mapAtlasState.tiles === game.tiles &&
+      mapAtlasState.revision === revision && mapAtlasState.scale === scale) return;
+  // Multiple zoom levels may coexist. Only changes to the underlying map
+  // invalidate all atlas tiles; stale prefetch jobs are always discarded.
+  if (mapAtlasState.tiles !== game.tiles || mapAtlasState.revision !== revision)
+    mapAtlasTiles.clear();
   mapAtlasWarmQueue.length = 0;
   mapAtlasWarmKeys.clear();
   mapAtlasGeneration++;
   mapAtlasState = { tiles: game.tiles, revision, scale };
 }
-function completeMapTile(tx, ty, scale, detail) {
-  const key = tx + ',' + ty;
+function completeMapTile(tx, ty, scale, detail, tileSize) {
+  const key = mapAtlasKey(tx, ty, scale, tileSize);
   let item = mapAtlasTiles.get(key);
   if (item) {
     mapAtlasTiles.delete(key);
     mapAtlasTiles.set(key, item);
     return item;
   }
-  const worldX = tx * MAP_ATLAS_TILE, worldY = ty * MAP_ATLAS_TILE;
-  const width = Math.min(MAP_ATLAS_TILE, WORLD_W - worldX);
-  const height = Math.min(MAP_ATLAS_TILE, WORLD_H - worldY);
-  const quality = Math.max(0.55, Math.min(1, scale * 1.35));
+  const worldX = tx * tileSize, worldY = ty * tileSize;
+  const width = Math.min(tileSize, WORLD_W - worldX);
+  const height = Math.min(tileSize, WORLD_H - worldY);
+  const quality = game.wrap
+    ? Math.max(0.55, Math.min(1, scale * 1.35))
+    : Math.max(0.18, Math.min(1, scale * 2));
   const c = document.createElement('canvas');
   c.width = Math.ceil((width + 2 * MAP_ATLAS_PAD) * quality);
   c.height = Math.ceil((height + 2 * MAP_ATLAS_PAD) * quality);
@@ -57,8 +94,7 @@ function completeMapTile(tx, ty, scale, detail) {
     ctx.setTransform(quality, 0, 0, quality,
       (-worldX + MAP_ATLAS_PAD) * quality,
       (-worldY + MAP_ATLAS_PAD) * quality);
-    // Culling is by hex centre, so reach one hex beyond the tile: a hex straddling the
-    // edge must be painted into both neighbouring tiles (the canvas clips the rest).
+    // Include hex centres just outside the tile so seams are fully painted.
     const reach = MAP_ATLAS_PAD + R * 2;
     paintMapLayer(scale, detail,
       worldX - reach, worldX + width + reach,
@@ -68,32 +104,30 @@ function completeMapTile(tx, ty, scale, detail) {
   }
   item = { canvas: c, worldX, worldY, width, height, quality };
   mapAtlasTiles.set(key, item);
-  while (mapAtlasTiles.size > 72) mapAtlasTiles.delete(mapAtlasTiles.keys().next().value);
+  while (mapAtlasTiles.size > 72)
+    mapAtlasTiles.delete(mapAtlasTiles.keys().next().value);
   return item;
 }
-// Build the next ring of map tiles during browser idle time, before camera
-// dragging reaches it. One tile per idle turn bounds main-thread work; actual
-// rendering never waits for prefetch if the player moves faster than idle work.
-function scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow) {
+function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRow, lastRow) {
   if (typeof requestIdleCallback !== 'function') return;
-  const maxC = Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1;
-  const maxR = Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1;
+  const maxC = Math.ceil(WORLD_W / tileSize) - 1;
+  const maxR = Math.ceil(WORLD_H / tileSize) - 1;
   for (let r = Math.max(0, firstRow - 1); r <= Math.min(maxR, lastRow + 1); r++)
     for (let c = Math.max(0, firstCol - 1); c <= Math.min(maxC, lastCol + 1); c++) {
       if (c >= firstCol && c <= lastCol && r >= firstRow && r <= lastRow) continue;
-      const key = c + ',' + r;
+      const key = mapAtlasKey(c, r, scale, tileSize);
       if (mapAtlasTiles.has(key) || mapAtlasWarmKeys.has(key)) continue;
       mapAtlasWarmKeys.add(key);
-      mapAtlasWarmQueue.push({ c, r, scale, detail, generation: mapAtlasGeneration });
+      mapAtlasWarmQueue.push({ c, r, scale, detail, tileSize, generation: mapAtlasGeneration });
     }
   if (mapAtlasIdlePending || !mapAtlasWarmQueue.length) return;
   mapAtlasIdlePending = true;
   function warm(deadline) {
     if (mapAtlasWarmQueue.length && deadline.timeRemaining() > 8) {
       const job = mapAtlasWarmQueue.shift();
-      mapAtlasWarmKeys.delete(job.c + ',' + job.r);
+      mapAtlasWarmKeys.delete(mapAtlasKey(job.c, job.r, job.scale, job.tileSize));
       if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale)
-        completeMapTile(job.c, job.r, job.scale, job.detail);
+        completeMapTile(job.c, job.r, job.scale, job.detail, job.tileSize);
     }
     if (mapAtlasWarmQueue.length) requestIdleCallback(warm);
     else mapAtlasIdlePending = false;
@@ -101,28 +135,37 @@ function scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow
   requestIdleCallback(warm);
 }
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
-  refreshMapAtlas(scale);
-  const firstRow = Math.max(0, Math.floor(top / MAP_ATLAS_TILE));
-  const lastRow = Math.min(Math.ceil(WORLD_H / MAP_ATLAS_TILE) - 1, Math.floor(bottom / MAP_ATLAS_TILE));
-  for (let k = Math.floor(left / WORLD_W) - 1; k <= Math.ceil(right / WORLD_W); k++) {
+  const paintScale = mapAtlasRenderScale(scale);
+  const paintDetail = R * paintScale >= 14;
+  const tileSize = mapAtlasTileSize(paintScale);
+  refreshMapAtlas(paintScale);
+  const firstRow = Math.max(0, Math.floor(top / tileSize));
+  const lastRow = Math.min(Math.ceil(WORLD_H / tileSize) - 1, Math.floor(bottom / tileSize));
+  // Regional maps must never repeat horizontally like wraparound Conquest.
+  const firstShift = wraps() ? Math.floor(left / WORLD_W) - 1 : 0;
+  const lastShift = wraps() ? Math.ceil(right / WORLD_W) : 0;
+  for (let k = firstShift; k <= lastShift; k++) {
     const shift = k * WORLD_W;
     const a = left - shift, b = right - shift;
     if (b <= 0 || a >= WORLD_W) continue;
-    const firstCol = Math.max(0, Math.floor(a / MAP_ATLAS_TILE));
-    const lastCol = Math.min(Math.ceil(WORLD_W / MAP_ATLAS_TILE) - 1, Math.floor(b / MAP_ATLAS_TILE));
+    const firstCol = Math.max(0, Math.floor(a / tileSize));
+    const lastCol = Math.min(Math.ceil(WORLD_W / tileSize) - 1, Math.floor(b / tileSize));
     for (let row = firstRow; row <= lastRow; row++)
       for (let col = firstCol; col <= lastCol; col++) {
-        const t = completeMapTile(col, row, scale, detail);
-        // Draw each tile with its painted padding so neighbours overlap: abutting at a
-        // fractional pixel edge left a faint hairline along every tile seam.
+        const t = completeMapTile(col, row, paintScale, paintDetail, tileSize);
         const pad = MAP_ATLAS_PAD;
-        ctx.drawImage(t.canvas, 0, 0, (t.width + 2 * pad) * t.quality, (t.height + 2 * pad) * t.quality,
-          t.worldX + shift - pad, t.worldY - pad, t.width + 2 * pad, t.height + 2 * pad);
+        ctx.drawImage(t.canvas, 0, 0,
+          (t.width + 2 * pad) * t.quality,
+          (t.height + 2 * pad) * t.quality,
+          t.worldX + shift - pad, t.worldY - pad,
+          t.width + 2 * pad, t.height + 2 * pad);
       }
     if (firstCol <= lastCol && firstRow <= lastRow)
-      scheduleMapPrefetch(scale, detail, firstCol, lastCol, firstRow, lastRow);
+      scheduleMapPrefetch(paintScale, paintDetail, tileSize,
+        firstCol, lastCol, firstRow, lastRow);
   }
 }
+
 function mapLayer(scale, detail, dpr, w, h) {
   if (mapLayerFresh(mapLayerCache, scale, dpr, w, h)) return mapLayerCache;
   const M = MAP_LAYER_MARGIN,
@@ -147,7 +190,7 @@ function mapLayer(scale, detail, dpr, w, h) {
     const bottom = (h + M - offset.y) / scale + R * 2;
     // Very distant views use the low-resolution overview directly; otherwise
     // cache geography AND its tactical overlay in world-anchored chunks.
-    if (game.wrap && scale >= 0.33) drawMapFromAtlas(scale, detail, left, right, top, bottom);
+    if (shouldUseMapAtlas(scale)) drawMapFromAtlas(scale, detail, left, right, top, bottom);
     else paintMapLayer(scale, detail, left, right, top, bottom);
   } finally {
     ctx = main;
@@ -197,6 +240,23 @@ function scenarioSeaHexVisible(t) {
   }
   return scenarioSeaCache.shown.has(t.r * game.cols + t.c);
 }
+// Iterate only the camera rectangle, not every hex in large regional maps.
+function* visibleMapTiles(left, right, top, bottom) {
+  const rowStep = R * 1.5, colStep = SQ * R;
+  const firstRow = Math.max(0, Math.floor((top - R * 2) / rowStep) - 1);
+  const lastRow = Math.min(game.rows - 1, Math.ceil((bottom + R * 2) / rowStep) + 1);
+  // Wraparound map tiles on the dateline may show columns from both edges.
+  const allColumns = wraps() && (left < R * 2 || right > WORLD_W - R * 2);
+  for (let r = firstRow; r <= lastRow; r++) {
+    const stagger = 0.5 * (r & 1);
+    const firstCol = allColumns ? 0 :
+      Math.max(0, Math.floor((left - R * 3 - R) / colStep - stagger));
+    const lastCol = allColumns ? game.cols - 1 :
+      Math.min(game.cols - 1, Math.ceil((right + R * 3 - R) / colStep - stagger));
+    for (let c = firstCol; c <= lastCol; c++)
+      yield game.tiles[r * game.cols + c];
+  }
+}
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
@@ -205,7 +265,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   const pacificSky = isPacificAirBattle();
   const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
   if (!atlas) {
-    for (const t of game.tiles) {
+    for (const t of visibleMapTiles(left, right, top, bottom)) {
       const c = hexCenter(t);
       if (!visible(c)) continue;
       for (const x of copies(c.x)) {
@@ -236,7 +296,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
       hexPixels < 38 ? 0.093 + (hexPixels - 26) * 0.008 :
       Math.min(0.30, 0.189 + (hexPixels - 38) * 0.005);
     ctx.lineWidth = (hexPixels >= 32 ? 0.82 : 0.55) / Math.max(scale, 0.25);
-    for (const t of game.tiles) {
+    for (const t of visibleMapTiles(left, right, top, bottom)) {
       const c = hexCenter(t);
       if (!visible(c) || !scenarioSeaHexVisible(t)) continue;
       ctx.strokeStyle =
@@ -250,7 +310,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
     }
     // Small icons read as relief on a real atlas rather than stamped hex fills.
     if (R * scale >= 24)
-      for (const t of game.tiles) {
+      for (const t of visibleMapTiles(left, right, top, bottom)) {
         if (t.terrain === 'plains' || !scenarioSeaHexVisible(t)) continue;
         if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
         if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
@@ -264,7 +324,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
   // Political borders are tactical information and still align to tile
   // ownership. Coastlines are already smoothed by the visual atlas; drawing
   // the old edge-by-edge hex coastline here would reintroduce the mosaic.
-  if (R * scale >= 22) for (const t of game.tiles) {
+  if (R * scale >= 22) for (const t of visibleMapTiles(left, right, top, bottom)) {
     if (t.terrain === 'sea') continue;
     const c = hexCenter(t);
     if (!visible(c)) continue;
