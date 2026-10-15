@@ -58,10 +58,11 @@
     let mult = 1;
     if (counter) {
       if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
+      if(u.guardReady&&u.held&&skillNear(g,u,'prepared',2))mult*=1.2;
       return mult;
     }
     if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
-    if (!u.cmd && skillNear(g, u, 'commanderlessAttack', 1, false)) mult *= 1.1;
+    if (!u.cmd && skillNear(g, u, 'commanderlessAttack', 2, false)) mult *= 1.15;
     if (TYPES[u.type].branch === 'Infantry' && skillNear(g, u, 'infantryCommand', 1, false)) mult *= 1.15;
     if (TYPES[u.type].branch === 'Armor' && skillNear(g, u, 'armorLeader', 2, false)) mult *= 1.1;
     if (f.loneRaider && !friends.length) mult *= 1 + f.loneRaider;
@@ -90,6 +91,8 @@
     if (target.guardReady && target.held && skillNear(g, target, 'veteranSupport', 1, false)) mult *= 0.9;
     if (f.loneRisk && !friends.length) mult *= f.loneRisk;
     if (f.steadyRanks && friends.length >= 2) mult *= f.steadyRanks;
+    if(skillNear(g,target,'steadyRanks',2,false))mult*=friendlyNeighbors(g,target).length>=2?.8:.9;
+    if(target.guardReady&&target.held&&skillNear(g,target,'defensiveDoctrine',2))mult*=.85;
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {
       if (f.foresight && target.foresightTurn !== g.turn) mult *= f.foresight;
@@ -131,6 +134,7 @@
       if (a.hp > 0) a.hp = Math.max(1, a.hp - Math.round(maxHP(a) * f.timeStop));
     }
     if (a.hp <= 0) return;
+    if ((f.adaptiveBreakthrough&&a.movedDistance>=3||f.highland&&tile(g,a.c,a.r)?.terrain==='mountain'||f.blackSeaFox&&tile(g,a.c,a.r)?.terrain==='mountain'||f.swordplay&&d&&dist(g,a,d)===1)&&a.repositionTurn!==g.turn){a.repositionTurn=g.turn;grantReposition(a,2);}
     if (f.reposition && a.repositionTurn !== g.turn) { a.repositionTurn = g.turn; grantReposition(a, f.reposition); }
     if (!destroyed) return;
     if (f.killReposition && a.killRepositionTurn !== g.turn) { a.killRepositionTurn = g.turn; grantReposition(a, f.killReposition); }

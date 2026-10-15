@@ -138,6 +138,7 @@
       u.attacked = false;
       u.expDisabledActive=!!u.expDisabledNext;delete u.expDisabledNext;
       u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
+      u.expPinnedWeakenActive=u.expPinnedWeakenNext||0;delete u.expPinnedWeakenNext;
       u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
       if(u.expDisabledActive){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
       delete u.expOverwatch;delete u.expLink;
@@ -145,6 +146,7 @@
       u.eliteMoveAfterKill = false;
       u.held = true; // cleared by move(): Senba's guard needs a turn without moving
       u.feintCD = Math.max(0, (u.feintCD || 0) - 1);
+      u.expSalvageIndustry=0;u.expSalvageCount=0;
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
@@ -196,7 +198,7 @@
       if (s.owner !== side) continue;
       const palaceTreasury = mine.some(m => fx(m).treasury && m.c === s.c && m.r === s.r);
       const rate = 0.12 + techValue(g, side, 'cities.engineering') +
-        (prepared.some(m => dist(g, m, s) <= 2) ? 0.25 : 0) + (palaceTreasury ? 0.15 : 0) + (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=2)?.12:0);
+        (mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3)?.15:0);
       // Consume this marker at the owner's next regeneration. A hit by any
       // rival phase is counted once, even when factions take turns in one round.
       const recovery = s.attackedSinceRegen ? rate * 0.5 : rate;

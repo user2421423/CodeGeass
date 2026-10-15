@@ -28,6 +28,7 @@
     let attack = intrinsicAttack(g, u, counter) * (1 + 0.07 * Math.min(5, u.xp));
     attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
+    if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.7&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
@@ -229,7 +230,8 @@
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null) {
     if (v.hp > 0) return;
-    if (fx(v).undying && !v.undyingUsed && !force) {
+    if ((fx(v).undying && !v.undyingUsed || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker) && !force) {
+      if(v.cmd==='urabe'){v.expFinalStandUsed=true;v.hp=1;log(g,'Urabe survives a lethal attack: Final Stand.',v.side);return;}
       v.hp = 1;
       v.undyingUsed = true;
       log(g, `${COMMANDERS[v.cmd].short} survives a lethal blow: Code Bearer.`, v.side);

@@ -18,7 +18,7 @@
     // refinery also exports for credits.
     total.sakuradite = 0;
     for (const d of g.sites || []) {
-      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.2:1);
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
     if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
