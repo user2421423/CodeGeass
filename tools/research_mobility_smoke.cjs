@@ -39,7 +39,8 @@ for (const mode of ['conquest', 'scenario', 'campaign']) {
     [infantry, armor, amphibious, artillery, carrier, enemyInfantry]
       .map(u => [u.id, E.movement(g, u)])
   );
-  assert.equal(before[infantry.id], E.TYPES.glasgow.move + 2, mode + ' baseline +2');
+  assert.equal(before[infantry.id], E.TYPES.glasgow.move + (mode === 'campaign' ? 0 : 2),
+    mode + ' applies the correct Story Mode or universal +2 baseline');
   assert.equal(before[carrier.id], E.TYPES.carrier_battleship.move, 'warship baseline unchanged');
 
   g.tech[player]['infantry.nav'] = 1;
