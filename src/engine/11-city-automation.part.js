@@ -163,7 +163,7 @@
       a = COMMANDERS[k];
     const why = assignReason(g, u, k);
     if (why) return { ok: false, reason: why };
-    funds(g, u.side).credits -= a.cost;
+    funds(g, u.side).credits -= assignmentCost(g, k);
     const old = maxHP(u);
     u.cmd = k;
     u.personal = true;
