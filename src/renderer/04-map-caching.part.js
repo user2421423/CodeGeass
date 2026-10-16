@@ -58,8 +58,14 @@ function preloadRegionalMapImage(id) {
   return entry;
 }
 let mapAtlasStrategicOwners = { tiles: null, original: null, revision: -1, canvas: null };
+// Last fully painted level of detail. Reuse it during zoom rather than
+// flashing back to a different background every time the LOD key changes.
+let mapAtlasShown = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
+let mapAtlasFade = { target: null, source: null, started: 0 };
+const MAP_ATLAS_CROSSFADE_MS = 150;
 const mapAtlasPerformance = {
   hits: 0, misses: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
+  reusedZoomFrames: 0, blendedZoomFrames: 0,
   basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
 };
@@ -155,11 +161,15 @@ function refreshMapAtlas(scale) {
     mapAtlasStaticTiles.clear();
     mapAtlasPoliticalTiles.clear();
     mapAtlasFallback.id = null;
+    mapAtlasShown = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
+    mapAtlasFade = { target: null, source: null, started: 0 };
     mapAtlasStrategicOwners = { tiles: game.tiles,
       original: game.tiles.map(t => t.owner), revision: -1, canvas: null };
   } else if (mapAtlasState.revision !== revision) {
     mapAtlasTiles.clear();
     mapAtlasPoliticalTiles.clear();
+    mapAtlasShown = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
+    mapAtlasFade = { target: null, source: null, started: 0 };
   }
   mapAtlasWarmQueue.length = 0;
   mapAtlasWarmKeys.clear();
@@ -299,6 +309,108 @@ function drawStrategicOwnershipDelta() {
   if (state.canvas)
     ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
 }
+// Only present a complete LOD. Unlike the old progressive switch, these
+// helpers never draw a rectangle from a different map representation.
+function cachedRegionalAtlas(scale, left, right, top, bottom, draw = false) {
+  const tileSize = mapAtlasTileSize(scale);
+  const maxCol = Math.ceil(WORLD_W / tileSize) - 1;
+  const maxRow = Math.ceil(WORLD_H / tileSize) - 1;
+  const firstCol = Math.max(0, Math.floor(left / tileSize));
+  const lastCol = Math.min(maxCol, Math.floor(right / tileSize));
+  const firstRow = Math.max(0, Math.floor(top / tileSize));
+  const lastRow = Math.min(maxRow, Math.floor(bottom / tileSize));
+  if (lastCol < firstCol || lastRow < firstRow) return true;
+  if (!draw) {
+    for (let row = firstRow; row <= lastRow; row++)
+      for (let col = firstCol; col <= lastCol; col++) {
+        const key = mapAtlasKey(col, row, scale, tileSize);
+        if (!mapAtlasStaticTiles.has(key) || !mapAtlasPoliticalTiles.has(key))
+          return false;
+      }
+    return true;
+  }
+  for (let row = firstRow; row <= lastRow; row++)
+    for (let col = firstCol; col <= lastCol; col++) {
+      const key = mapAtlasKey(col, row, scale, tileSize);
+      for (const cache of [mapAtlasStaticTiles, mapAtlasPoliticalTiles]) {
+        const tile = cache.get(key);
+        if (!tile) return false;
+        mapAtlasPerformance.hits++;
+        const pad = MAP_ATLAS_PAD;
+        ctx.drawImage(tile.canvas, 0, 0,
+          (tile.width + 2 * pad) * tile.quality,
+          (tile.height + 2 * pad) * tile.quality,
+          tile.worldX - pad, tile.worldY - pad,
+          tile.width + 2 * pad, tile.height + 2 * pad);
+      }
+    }
+  return true;
+}
+function queueRegionalAtlas(scale, detail, left, right, top, bottom) {
+  const tileSize = mapAtlasTileSize(scale);
+  const firstCol = Math.max(0, Math.floor(left / tileSize));
+  const lastCol = Math.min(Math.ceil(WORLD_W / tileSize) - 1, Math.floor(right / tileSize));
+  const firstRow = Math.max(0, Math.floor(top / tileSize));
+  const lastRow = Math.min(Math.ceil(WORLD_H / tileSize) - 1, Math.floor(bottom / tileSize));
+  for (let row = firstRow; row <= lastRow; row++)
+    for (let col = firstCol; col <= lastCol; col++) {
+      // Paint the base before the ownership layer; each chunk is only drawn
+      // once the entire visible camera is ready.
+      queueMapAtlasTile(col, row, scale, detail, tileSize, 'static', true);
+      queueMapAtlasTile(col, row, scale, detail, tileSize, 'political', true);
+    }
+  if (firstCol <= lastCol && firstRow <= lastRow)
+    scheduleMapPrefetch(scale, detail, tileSize,
+      firstCol, lastCol, firstRow, lastRow, ['static','political']);
+}
+function shownRegionalAtlasScale() {
+  return mapAtlasShown.tiles === game.tiles &&
+    mapAtlasShown.revision === (game.mapRevision || 0) &&
+    mapAtlasShown.terrainRevision === (game.mapTerrainRevision || 0)
+      ? mapAtlasShown.scale : null;
+}
+function displayRegionalAtlas(scale, left, right, top, bottom) {
+  if (!mapAtlasFallback.ready) {
+    cachedRegionalAtlas(scale, left, right, top, bottom, true);
+    return;
+  }
+  const previous = shownRegionalAtlasScale();
+  if (previous === scale) {
+    mapAtlasFade.target = null;
+    cachedRegionalAtlas(scale, left, right, top, bottom, true);
+    return;
+  }
+  // A cached previously completed scale is the most faithful intermediate
+  // zoom representation; use the whole-world WebP only when it cannot cover
+  // the entire viewport. Blend in the new cached LOD without hard flicker.
+  const sourceScale = previous !== null &&
+    cachedRegionalAtlas(previous, left, right, top, bottom)
+      ? previous : null;
+  if (mapAtlasFade.target !== scale || mapAtlasFade.source !== sourceScale) {
+    mapAtlasFade = { target: scale, source: sourceScale, started: performance.now() };
+  }
+  if (sourceScale !== null) {
+    cachedRegionalAtlas(sourceScale, left, right, top, bottom, true);
+    mapAtlasPerformance.reusedZoomFrames++;
+  } else {
+    ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+    drawStrategicOwnershipDelta();
+  }
+  const alpha = Math.min(1,
+    (performance.now() - mapAtlasFade.started) / MAP_ATLAS_CROSSFADE_MS);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  cachedRegionalAtlas(scale, left, right, top, bottom, true);
+  ctx.restore();
+  if (alpha < 1) {
+    mapAtlasPerformance.blendedZoomFrames++;
+    if (typeof requestMapFrame === 'function') requestMapFrame();
+  } else {
+    mapAtlasShown = { tiles: game.tiles, revision: game.mapRevision || 0,
+      terrainRevision: game.mapTerrainRevision || 0, scale };
+    mapAtlasFade.target = null;
+  }
+}
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const paintScale = mapAtlasRenderScale(scale);
   const paintDetail = R * paintScale >= 14;
@@ -311,8 +423,8 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   // Asset loading happens asynchronously; regular legacy painting remains a
   // safety net when both images fail to load.
   if (split && !mapAtlasFallback.ready && !mapAtlasFallback.failed) return;
-  // At wide strategic zoom, preserve the published geographic picture itself:
-  // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
+  // Distant overview uses a single stable world image, just like
+  // Conquest's overview. No zoom-quantized atlas repaints are needed here.
   if (defer && R * scale < 22) {
     // Abandon high-detail jobs scheduled while the backdrop was loading.
     // Otherwise heavy Japanese coastline chunks can still stall navigation.
@@ -324,6 +436,28 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     mapAtlasPerformance.strategicFrames++;
     ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
     drawStrategicOwnershipDelta();
+    return;
+  }
+  // Regional tactical mode behaves like Conquest's cached world atlas:
+  // when all visible tiles are ready it draws only cached canvases; while
+  // another zoom level is warming, it retains an older complete LOD.
+  if (defer) {
+    if (!cachedRegionalAtlas(paintScale, left, right, top, bottom)) {
+      mapAtlasPerformance.snapshotFrames++;
+      const old = shownRegionalAtlasScale();
+      if (old !== null &&
+          cachedRegionalAtlas(old, left, right, top, bottom)) {
+        cachedRegionalAtlas(old, left, right, top, bottom, true);
+        mapAtlasPerformance.reusedZoomFrames++;
+      } else {
+        ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+        drawStrategicOwnershipDelta();
+      }
+      queueRegionalAtlas(paintScale, paintDetail, left, right, top, bottom);
+      return;
+    }
+    mapAtlasPerformance.atomicAtlasFrames++;
+    displayRegionalAtlas(paintScale, left, right, top, bottom);
     return;
   }
   const firstRow = Math.max(0, Math.floor(top / tileSize));
