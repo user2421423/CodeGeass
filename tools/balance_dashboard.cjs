@@ -240,11 +240,9 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
         if (actor && E.TYPES[actor.type]?.naval === 'ship' && o.to &&
             E.tile(g, o.to.c, o.to.r)?.terrain !== 'sea') {
           metrics.seaLandings[side]++;
-          {
-            const landing = { side, turn: g.turn, to: o.to, success: false };
-            recentLandings.push(landing);
-            metrics.navalLandingLog.push({ side, turn: g.turn, c: o.to.c, r: o.to.r });
-          }
+          const landing = { side, turn: g.turn, to: o.to, success: false };
+          recentLandings.push(landing);
+          metrics.navalLandingLog.push({ side, turn: g.turn, c: o.to.c, r: o.to.r });
         }
       } else if (o.kind === 'move') {
         metrics.moves[side]++;
