@@ -776,7 +776,7 @@ const GEOGRAPHY = (() => {
   // Cull only shapes wholly outside this paint rectangle. Every intersecting
   // hex keeps its exact original vertices and winding.
   function localCoverage(coverage, left, right, top, bottom) {
-    if (!Number.isFinite(left) || !FAST_PATH) return coverage;
+    if (!Number.isFinite(left) || !FAST_PATH || right-left > 2048 || bottom-top > 2048) return coverage;
     const tiles = coverage.tiles.filter(t => {
       const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
       const y = 1.5 * R * t.r + R;
@@ -1159,7 +1159,7 @@ const GEOGRAPHY = (() => {
             ctx.fill();
           }
         } else {
-          const unowned = FAST_PATH ? new Path2D() : null;
+          const unowned = FAST_PATH && right-left <= 2048 && bottom-top <= 2048 ? new Path2D() : null;
           if (!unowned) ctx.beginPath();
           for (const t of g.tiles) {
             if (t.terrain === 'sea' || t.owner) continue;
@@ -1176,7 +1176,7 @@ const GEOGRAPHY = (() => {
           const faction = g.factions?.[side] || E.FACTIONS[side];
           if (!faction?.color) continue;
           ctx.fillStyle = faction.color;
-          const ownerPath = FAST_PATH ? new Path2D() : null;
+          const ownerPath = FAST_PATH && right-left <= 2048 && bottom-top <= 2048 ? new Path2D() : null;
           if (!ownerPath) ctx.beginPath();
           for (const t of tiles) {
             const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;

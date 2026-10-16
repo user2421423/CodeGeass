@@ -175,9 +175,7 @@ function regionalMapLayers() {
   if (game.mode !== 'scenario' || !game.scenario?.projection) return false;
   const meta = E.scenarios?.byId?.[game.scenario.id]?.meta?.map;
   // Bering uses a completely different, scenario-specific painter.
-  // Central America's custom underlay is a combined painter with its own
-  // rivers/volcano ordering; keep it on the combined cache path.
-  return !meta?.painter && game.scenario.id !== 'cf-central-america';
+  return !meta?.painter;
 }
 function mapAtlasTileSize(scale) {
   // Small bounded chunks keep each deferred painting job short. Oversized
@@ -403,7 +401,7 @@ function drawStrategicCurrentOwnership() {
       if (ctx) {
         ctx.setTransform(quality, 0, 0, quality, 0, 0);
         painted = GEOGRAPHY.paint(ctx, game,
-          0, WORLD_W, 0, WORLD_H, 1, 'political');
+          0, WORLD_W, 0, WORLD_H, 1, 'all');
       }
     } finally {
       ctx = mainCtx;

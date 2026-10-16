@@ -71,6 +71,15 @@ function percentile(values,p) {
           await startScenario(scenarioSide);
         }
         await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const imageDeadline=performance.now()+30000;
+        // An empty first canvas is not a playable frame. Eager main may finish
+        // two animation frames before its preview/current-ownership layer loads.
+        while (regionalMapLayers() && !mapAtlasFallback.failed &&
+            (!mapAtlasFallback.ready || mapAtlasStrategicOwners.revision !== (game.mapRevision || 0))) {
+          if (performance.now()>imageDeadline) throw Error('No valid opening map: '+id);
+          requestMapFrame();await new Promise(resolve=>setTimeout(resolve,16));
+        }
+        await new Promise(resolve=>requestAnimationFrame(resolve));
         const startupMs = performance.now()-beganLoad;
         await new Promise(resolve=>setTimeout(resolve,400));
         window.KNIGHTMARE_MAP_PERF.reset();
