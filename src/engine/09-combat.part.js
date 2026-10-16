@@ -322,7 +322,9 @@
     }
     // Urabe's Final Stand: his fall rallies friendly units within 2 hexes to High morale.
     if (fx(v).martyr) for (const w of g.units) if (w.hp > 0 && w.side === v.side && dist(g, w, v) <= 2) w.morale = 1;
-    if (attacker) {
+    // Cargo lost with a destroyed carrier is a consequential loss, not a
+    // separate direct kill by the commander who sank the carrier.
+    if (attacker && !force) {
       if (attacker.cmd) {
         const k = attacker.cmd,
           tally = (g.missionKills ||= {}),
