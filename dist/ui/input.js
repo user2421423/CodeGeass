@@ -61,6 +61,13 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('click', e => {
   if (uiActionBusy) return;
+  // Clicking a game-mode card activates the same command as its existing
+  // button. Resume and other nested controls retain their own behaviors.
+  const modeCard = e.target.closest('.start-mode[data-open-mode]');
+  if (modeCard && !e.target.closest('button, a, input, select, textarea')) {
+    modeCard.querySelector('button[data-action="' + modeCard.dataset.openMode + '"]')?.click();
+    return;
+  }
   const portrait = e.target.closest('[data-general]');
   if (portrait && !e.target.closest('button')) {
     generalDialog(portrait.dataset.general, portrait.dataset.personal === '1');
@@ -697,6 +704,13 @@ function toggleCarrierDeployment() {
 }
 document.addEventListener('keydown', e => {
   if (uiActionBusy) { e.preventDefault(); return; }
+  // Focused cards also support Enter/Space for keyboard-only play.
+  const modeCard = e.target.closest('.start-mode[data-open-mode]');
+  if (modeCard && e.target === modeCard && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    modeCard.querySelector('button[data-action="' + modeCard.dataset.openMode + '"]')?.click();
+    return;
+  }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.general) {
     e.preventDefault();
     generalDialog(e.target.dataset.general, e.target.dataset.personal === '1');
