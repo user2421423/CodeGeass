@@ -30,6 +30,7 @@ let mapAtlasIdlePending = false;
 let mapAtlasGeneration = 0;
 let mapAtlasState = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
 let mapAtlasFallback = { id: null, image: null, ready: false };
+let mapAtlasStrategicOwners = { tiles: null, original: null, revision: -1, canvas: null };
 const mapAtlasPerformance = {
   hits: 0, misses: 0, basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
@@ -104,6 +105,8 @@ function refreshMapAtlas(scale) {
     mapAtlasStaticTiles.clear();
     mapAtlasPoliticalTiles.clear();
     mapAtlasFallback.id = null;
+    mapAtlasStrategicOwners = { tiles: game.tiles,
+      original: game.tiles.map(t => t.owner), revision: -1, canvas: null };
   } else if (mapAtlasState.revision !== revision) {
     mapAtlasTiles.clear();
     mapAtlasPoliticalTiles.clear();
@@ -201,6 +204,43 @@ function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRo
       for (const layer of layers) queueMapAtlasTile(c, r, scale, detail, tileSize, layer);
     }
 }
+// At strategic zoom the already published troop-free WebP is sufficiently
+// detailed. This avoids re-tracing thousands of Japanese coastline vertices
+// just to move the camera. Tactical zoom still uses the high-resolution atlas.
+// Changes in ownership are a separate tiny overlay, not baked into geography.
+function drawStrategicOwnershipDelta() {
+  if (!mapAtlasFallback.ready) return;
+  const state = mapAtlasStrategicOwners;
+  if (state.tiles !== game.tiles) return;
+  const revision = game.mapRevision || 0;
+  if (state.revision !== revision) {
+    const source = mapAtlasFallback.image;
+    const c = state.canvas || document.createElement('canvas');
+    c.width = source.naturalWidth;
+    c.height = source.naturalHeight;
+    const originalCtx = ctx;
+    ctx = c.getContext('2d');
+    try {
+      ctx.setTransform(c.width / WORLD_W, 0, 0, c.height / WORLD_H, 0, 0);
+      for (let i = 0; i < game.tiles.length; i++) {
+        const t = game.tiles[i];
+        if (t.owner === state.original[i] ||
+            t.terrain === 'sea' || t.terrain === 'offmap') continue;
+        const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+        const y = R * 1.5 * t.r + R;
+        hexPath(x, y, R + 0.5);
+        ctx.fillStyle = t.owner ? F(t.owner).color : '#91a799';
+        ctx.fill();
+      }
+    } finally {
+      ctx = originalCtx;
+    }
+    state.canvas = c;
+    state.revision = revision;
+  }
+  if (state.canvas)
+    ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
+}
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const paintScale = mapAtlasRenderScale(scale);
   const paintDetail = R * paintScale >= 14;
@@ -209,6 +249,13 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const split = regionalMapLayers();
   const layers = split ? ['static', 'political'] : ['all'];
   const defer = split && mapAtlasFallback.ready;
+  // At wide strategic zoom, preserve the published geographic picture itself:
+  // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
+  if (defer && R * scale < 22) {
+    ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+    drawStrategicOwnershipDelta();
+    return;
+  }
   // Existing troop-free scenario map images provide a correct backdrop while
   // deferred high-resolution chunks progressively replace it.
   if (defer)
