@@ -48,6 +48,7 @@ const TRAINING_LABS=[
 {id:'groups',group:'Advanced Warfare',name:'Army groups and automation',description:'Build a group and assign a destination',setup(g,t){labReset(g,t);labUnit(g,t,'first','gloucester',2,4);labUnit(g,t,'second','sutherland',2,5);},steps:[
 {title:'Form an army group',text:'Create a temporary two-unit army group with the real engine. Groups can be managed from Army Groups during Conquest or regional battles.',type:'action',button:'Form training army group',op:'group-create'},
 {title:'Give the group an objective',text:'Press Set group destination, then click the highlighted hex. The group routes through ordinary standing orders.',type:'action',button:'Set group destination',op:'group-route',at:[6,4]},
+{title:'Set a city production queue',text:'Configure a temporary Headquarters production queue using the real automation settings. In World Conquest, it runs on eligible turns when Production Command is enabled.',type:'action',button:'Queue a scout for future turns',op:'city-queue'},
 {title:'Limits of automation',text:'Which statement describes army groups?',answers:['They coordinate standing orders but units still obey regular movement and combat rules','They automatically win every battle','They produce units for free'],correct:0}]},
 {id:'fleija',group:'Advanced Warfare',name:'F.L.E.I.J.A. and Eliminators',description:'Blast rings and a live intercepted strike',setup(g,t){labReset(g,t);g.arsenal||={};g.arsenal.britannia=1;g.stations[2].eliminator=1;labUnit(g,t,'hero','gloucester',2,4);},steps:[
 {title:'Consider the blast radius',text:'F.L.E.I.J.A. has a ground-zero hex and dangerous surrounding rings. Select the correct fact.',answers:['Nearby hexes can also suffer severe damage','The blast affects only the exact target unit','The blast cannot damage a city'],correct:0},
@@ -140,6 +141,10 @@ function labAction(op){
   }else if(op==='group-route'){
     const id=tutorialState.notes.group;if(!E.armyGroup(game,id))return toast('Missing army group.');
     armyGroupStartRouting(id);return;
+  }else if(op==='city-queue'){
+    const unit=E.lineupOf(game,game.player).scout;
+    result=E.setCityAutomation(game,0,{unit});
+    if(result.ok)E.automationState(game).enabled=true;
   }else if(op==='test-fleija'){
     const oldMode=game.mode;
     try{game.mode='conquest';result=E.launch(game,game.player,9,4);}
@@ -147,7 +152,7 @@ function labAction(op){
     if(result?.ok)tutorialState.notes.intercepted=!!result.intercepted;
   }
   if(result&&!result.ok){toast(result.reason||'Training action unavailable.');return;}
-  if(op==='group-create'&&result?.ok)labNext();
+  if((op==='group-create'||op==='city-queue')&&result?.ok)labNext();
   if(op==='test-fleija'&&result?.ok){toast(result.intercepted?'Eliminator intercepted the warhead; the charge was consumed.':'No interception: warhead detonated.',true);labNext();}
 }
 function labPaint(){
