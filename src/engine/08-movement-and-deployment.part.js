@@ -38,9 +38,10 @@
       f = fx(u),
       mobilityStars = u.cmd ? effectiveRating(g, u, 'mobility') : 0;
     let n = t.move + (eliteFx(u).move || 0);
-    // All playable modes grant +2 movement to ground and amphibious units.
-    // Warships retain their normal movement values in every mode.
-    if (g && t.naval !== 'ship') n += UNIVERSAL_MOVE_BONUS;
+    // Conquest and Scenarios grant +2 movement to ground and amphibious units.
+    // Story Mode uses base movement. Warships never receive this bonus.
+    if (g && (g.mode === 'conquest' || g.mode === 'scenario') && t.naval !== 'ship')
+      n += UNIVERSAL_MOVE_BONUS;
     // HQ mobility research replaces the former terrain-cost discounts.
     // Landspinners +4; Float +4 on land, including amphibious; Traction +2.
     // Warship and amphibious sea movement remain unchanged.

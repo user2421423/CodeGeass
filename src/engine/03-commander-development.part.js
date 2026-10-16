@@ -180,11 +180,14 @@
   function medalSlots(o) {
     return 1 + Math.floor(o.rank / 4);
   }
-  // Personal commander ratings above a rank's cap remain saved but inactive.
+  // Personal ratings over the rank cap remain saved but inactive. Mobility follows
+  // the same rank-based active-star limits even for fixed operation commanders;
+  // scripted commanders retain their uncapped combat-branch ratings.
   function effectiveRating(g, u, branch) {
     const o = officerOf(g, u);
     if (!o) return 0;
-    return u.personal ? Math.min(o.ratings[branch] || 0, ratingCap(o.rank, branch)) : (o.ratings[branch] || 0);
+    const stars = o.ratings[branch] || 0;
+    return (u.personal || branch === 'mobility') ? Math.min(stars, ratingCap(o.rank, branch)) : stars;
   }
   // Each combat-branch star contributes +5 flat base attack (1★ = +5, 6★ = +30).
   // The bonus is applied before Elite Force and formation multipliers, not as a percentage.

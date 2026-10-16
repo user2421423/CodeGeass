@@ -111,7 +111,7 @@
       tier: 2,
       crit: 0.1,
       pen: 0.15,
-      rule: 'Base movement 5 for flanking and city raids; all modes add the +2 movement bonus. Range 1; exchanges counter-fire.',
+      rule: 'Base movement 5 for flanking and city raids; Conquest and Scenarios add +2 movement, Story Mode does not. Range 1; exchanges counter-fire.',
     },
     light: {
       branch: 'Armor',
