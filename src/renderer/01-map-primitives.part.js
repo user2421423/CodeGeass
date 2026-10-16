@@ -62,6 +62,25 @@ function terrainProps(t, x, y, scale) {
   // This is a visual treatment only; the underlying tactical terrain rules are unchanged.
   if (isPacificAirBattle()) {
     if (t.terrain === 'forest') {
+      ctx.fillStyle = '#f1faffca';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(x + (i - 1) * 10, y + (h(i) - 0.5) * 8, 11, 6.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (t.terrain === 'mountain') {
+      ctx.strokeStyle = '#d4e7f6bd';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - 17 + i * 6, y - 9 + i * 7);
+        ctx.lineTo(x + 6 + i * 6, y - 17 + i * 7);
+        ctx.stroke();
+      }
+    }
+    return;
+  }
+  if (t.terrain === 'forest') {
     // Forests should read as terrain, not one identical tree stamp per hex.
     // The continuous, translucent ground tint is drawn under the tactical grid
     // in paintMapLayer; only a variable minority of hexes get fine silhouettes.
