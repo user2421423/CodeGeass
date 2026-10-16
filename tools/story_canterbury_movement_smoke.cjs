@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// Story Mode Canterbury must be able to traverse rough terrain with the universal +2 bonus.
+// Story Mode Canterbury can traverse rough terrain at base speed; +2 applies only outside Story Mode.
 const assert = require('node:assert/strict');
 const E = require('../dist/engine.js');
 require('../dist/missions.js');
@@ -11,7 +11,7 @@ const g = E.campaign.createMission('eb_weisswolf', 20261015, 'normal');
 assert.equal(g.mode, 'campaign', 'regression uses a real Story Mode operation');
 const u = g.units.find(v => v.type === 'canterbury' && v.side === g.player);
 assert.ok(u, 'Euro Britannia Story Mode begins with Canterbury');
-assert.equal(E.movement(g, u), 4, 'uncommanded Canterbury receives the universal +2 bonus');
+assert.equal(E.movement(g, u), 2, 'uncommanded Story Mode Canterbury uses base movement');
 for (const terrain of ['forest', 'mountain', 'snow', 'crater'])
   assert.equal(E.TERRAIN[terrain].cost, 1, terrain + ' costs one movement point');
 assert.equal(E.TERRAIN.forest.cover, 0.15, 'forest cover is preserved');
@@ -19,11 +19,12 @@ assert.equal(E.TERRAIN.mountain.cover, 0.25, 'mountain cover is preserved');
 assert.equal(E.TERRAIN.snow.attrition, 0.025, 'tundra attrition is preserved');
 assert.equal(E.TERRAIN.peak.blocked, true, 'impassable peaks remain blocked');
 
-// World Conquest, regional scenarios (including World Campaign), and Story Mode
-// must all receive the same bonus. Warships must not receive it.
+// World Conquest and regional scenarios (including World Campaign) receive +2;
+// Story Mode does not. Warships never receive the bonus.
 for (const mode of ['conquest', 'scenario', 'campaign']) {
   g.mode = mode;
-  assert.equal(E.movement(g, u), 4, mode + ' gives Canterbury the +2 bonus');
+  assert.equal(E.movement(g, u), mode === 'campaign' ? 2 : 4,
+    mode + ' applies its intended Canterbury movement rules');
   const ship = { ...u, type: 'carrier_battleship', cmd: null, elite: null };
   assert.equal(E.movement(g, ship), E.TYPES.carrier_battleship.move,
     mode + ' retains the listed warship speed');
@@ -58,4 +59,4 @@ assert.equal(E.CLASSES.siege.move, 2, 'Siege base movement is standardized');
 const otherSiege = Object.entries(E.TYPES).find(([id, t]) => id !== 'canterbury' &&
   t.cls === 'siege' && !t.elite && t.move === 2);
 assert.ok(otherSiege, 'ordinary Siege frames receive the global movement increase');
-console.log('Story Mode Canterbury rough-terrain mobility: PASS');
+console.log('Story Mode Canterbury base mobility and scenario/conquest bonuses: PASS');
