@@ -154,7 +154,91 @@ function annexNotice(a) {
   );
   SFX.play('thor', a.winner);
 }
-// Scenarios save personal decorations but never grant HQ tokens or Elite fragments.
+// A one-time selectable bundle for exactly one Elite Force. Store pending awards
+// in the persistent profile before offering a choice, so closing the game or
+// reloading a results screen cannot duplicate or discard the reward.
+const ELITE_REWARD_RARITIES = {
+  normal: ['Rare'], hard: ['Epic'], challenge: ['Legendary'],
+  elite: ['Rare', 'Epic', 'Legendary'],
+};
+function queueEliteReward(profile, operation, key, amount, source) {
+  if (!amount) return false;
+  profile.pendingEliteRewards ||= [];
+  profile.claimedEliteChoices ||= {};
+  if (profile.claimedEliteChoices[key] || profile.pendingEliteRewards.some(r => r.key === key)) return false;
+  const side = operation.player === 'eb' ? 'britannia'
+    : operation.era === 'ufn2018' && operation.player === 'cf' ? 'bk' : operation.player;
+  const allowed = ELITE_REWARD_RARITIES[operation.difficulty] || ELITE_REWARD_RARITIES.normal;
+  const options = Object.entries(E.ELITE_FORCES).filter(([, elite]) =>
+    !elite.scenarioOnly && allowed.includes(elite.rarity) && elite.availableTo.includes(side))
+    .map(([id]) => id);
+  if (!options.length) return false;
+  profile.pendingEliteRewards.push({
+    key, amount, source, options, rarity: allowed.length === 1 ? allowed[0] : 'Any',
+  });
+  return true;
+}
+function pendingEliteChoiceHTML(profile = loadProfile()) {
+  const award = profile.pendingEliteRewards?.[0];
+  if (!award) return '';
+  const options = (award.options || []).filter(id => E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly);
+  if (!options.length) return '';
+  return `<section class="reward" data-elite-choice-panel="1"><span class="label">Choose your Elite fragment reward</span>
+    <p><b>${award.amount} ${esc(award.rarity)} fragments</b> · ${esc(award.source)}</p>
+    <p class="description">Choose ONE Elite Force; no other units receive fragments.</p>
+    <div class="tabs" style="display:flex;flex-wrap:wrap;gap:6px">
+    ${options.map(id => `<button class="small" data-reward-elite="${id}">${esc(E.TYPES[E.ELITE_FORCES[id].type].name)}</button>`).join('')}
+    </div><small>${profile.pendingEliteRewards.length} unclaimed reward${profile.pendingEliteRewards.length === 1 ? '' : 's'} · Your choice is saved across sessions.</small></section>`;
+}
+function selectEliteReward(id) {
+  const profile = loadProfile(), award = profile.pendingEliteRewards?.[0];
+  if (!award || !award.options?.includes(id) || !E.ELITE_FORCES[id])
+    return { ok: false, reason: 'This Elite Force is not eligible for the pending reward' };
+  E.grantEliteFragments(profile, { [id]: award.amount });
+  (profile.claimedEliteChoices ||= {})[award.key] = id;
+  profile.pendingEliteRewards.shift();
+  if (!saveProfile(profile)) return { ok: false, reason: 'Could not save reward. Retry without reloading.' };
+  return { ok: true, id, amount: award.amount };
+}
+function claimWarCampaignHQReward(result) {
+  if (!result?.ok || !game.warCampaign || game.over?.winner !== game.player) return null;
+  const profile = loadProfile(),
+    faction = game.warCampaign.faction,
+    key = `${faction}:${game.warCampaign.missionId}:${game.difficulty || 'normal'}`;
+  profile.worldCampaignRewardClaims ||= {};
+  profile.worldCampaignMilestoneClaims ||= {};
+  const tokensByDifficulty = { normal: 200, hard: 300, challenge: 400, elite: 500 };
+  const fragmentsByDifficulty = { normal: 10, hard: 10, challenge: 10, elite: 20 };
+  let tokens = 0;
+  let fragmentBundle = 0;
+  if (!profile.worldCampaignRewardClaims[key]) {
+    profile.worldCampaignRewardClaims[key] = true;
+    tokens += tokensByDifficulty[game.difficulty] || 200;
+    fragmentBundle = fragmentsByDifficulty[game.difficulty] || 10;
+    queueEliteReward(profile, game, 'world:' + key, fragmentBundle, 'World Campaign victory');
+  }
+  // Milestones are derived from persistent map progress, not just this turn's
+  // transition, so a save interrupted between territorial and HQ writes recovers.
+  const tiers = KnightmareWarCampaign.registry[faction] || [];
+  const allComplete = tiers.length && tiers.every(t => t.missions.length &&
+    t.missions.every(m => KnightmareWarCampaign.completed(result.progress, faction, m.id)));
+  for (const tier of tiers) {
+    const milestoneKey = `${faction}:tier:${tier.number}`;
+    if (!tier.missions.length || profile.worldCampaignMilestoneClaims[milestoneKey]) continue;
+    if (tier.missions.every(m => KnightmareWarCampaign.completed(result.progress, faction, m.id))) {
+      profile.worldCampaignMilestoneClaims[milestoneKey] = true;
+      tokens += 500;
+    }
+  }
+  if (allComplete && !profile.worldCampaignMilestoneClaims[faction + ':complete']) {
+    profile.worldCampaignMilestoneClaims[faction + ':complete'] = true;
+    tokens += 1000;
+  }
+  profile.tokens = (profile.tokens || 0) + tokens;
+  if (!saveProfile(profile)) return { ok: false, reason: 'HQ rewards could not be saved. Reopen the completed battle result.' };
+  return { ok: true, tokens, fragmentBundle };
+}
+// Scenario honors are independent of the World Campaign's persistent HQ rewards.
 function claimScenarioHonors() {
   if (!game.over || game.honorsClaimed) return;
   game.honorClaimId ||= `honors:scenario:${game.scenario?.id||'regional'}:${game.player}:${game.turn}:${game.seed}`;
@@ -166,7 +250,7 @@ function claimScenarioHonors() {
   game.honorsClaimed=true;
   save();
 }
-// Standard operation rewards and honors are saved exactly once.
+// The existing rewards and personal honors share the same idempotent claim key.
 function claimReward() {
   if (game.mode === 'scenario') return; // Scenario runs do not alter the persistent profile in stage one.
   if (!game.over || game.rewardClaimed) return;
@@ -199,11 +283,7 @@ function claimReward() {
     p.tokens = (p.tokens || 0) + r.total;
     if (game.over.winner === game.player) {
       const legacyBest = CP.best(p, id),
-        difficultyRecords = (p.campaignDifficulty ||= {}),
-        eliteAward = {},
-        addEliteAward = awards => {
-          for (const [k, v] of Object.entries(awards || {})) eliteAward[k] = (eliteAward[k] || 0) + v;
-        };
+        difficultyRecords = (p.campaignDifficulty ||= {});
       // Migrate old campaign progress once: pre-difficulty stars belong to Normal.
       if (!difficultyRecords[id]) difficultyRecords[id] = { normal: legacyBest };
       const byDifficulty = difficultyRecords[id],
@@ -213,14 +293,11 @@ function claimReward() {
       const guaranteedElite = CP.STORY_ELITE_UNLOCKS[id];
       if (guaranteedElite && E.unlockStoryElite(p, guaranteedElite))
         game.storyEliteUnlocked = guaranteedElite;
-      // A first clear at each difficulty still pays the broad faction fragment drop. Two-star, three-star and
-      // campaign milestone bonuses are targeted and can stack onto that same result.
-      if (r.first) addEliteAward(E.eliteVictoryReward(game, {}));
-      addEliteAward(r.fragments);
-      if (Object.keys(eliteAward).length) {
-        E.grantEliteFragments(p, eliteAward);
-        game.eliteReward = eliteAward;
-      } else delete game.eliteReward;
+      // 3★ awards 10 fragments to one eligible Elite of the difficulty's rarity.
+      // New 2★ results never award fragments. There are no mass-faction drops.
+      if (r.fragmentChoice)
+        queueEliteReward(p, game, `story:${id}:${diff}`, r.fragmentChoice, 'Story Mode 3★');
+      delete game.eliteReward;
       // Campaign milestone rewards are once-only and live in the persistent profile.
       if (r.milestones?.length) {
         const cid = CP.mission(id)?.campaign,
@@ -230,11 +307,11 @@ function claimReward() {
     }
     game.reward = r;
   } else if (game.over.winner === game.player) {
-    const r = E.missionReward(game, p.wins || 0, p.cleared || {}),
-      eliteAward = E.eliteVictoryReward(game, p);
-    E.grantEliteFragments(p, eliteAward);
-    game.eliteReward = eliteAward;
+    const r = E.missionReward(game, p.wins || 0, p.cleared || {});
+    delete game.eliteReward;
     if (!r.repeat) {
+      queueEliteReward(p, game, `conquest:${E.operationKey(game)}`,
+        game.difficulty === 'elite' ? 30 : 20, 'Conquest victory');
       p.tokens = (p.tokens || 0) + r.total;
       p.wins = (p.wins || 0) + 1;
       (p.cleared ||= {})[E.operationKey(game)] = true;
@@ -253,8 +330,6 @@ function claimReward() {
 }
 function resultDialog() {
   if (!game.over) return;
-  // Story missions and standalone scenarios can set g.over directly, without
-  // going through the conquest victory checker. Finalize honors before claims.
   E.finalizeHonors(game);
   militaryPresentation.resultSound();
   if (game.mode === 'scenario') {
@@ -267,6 +342,9 @@ function resultDialog() {
       if (won && !game.warCampaign.recorded) {
         const result=KnightmareWarCampaign.recordVictory(localStorage,game);
         if(result.ok){
+          const hqReward = claimWarCampaignHQReward(result);
+          if (hqReward && !hqReward.ok) { toast(hqReward.reason, true); return; }
+          game.warCampaign.hqReward = hqReward;
           game.warCampaign.recorded=true;
           const name=KnightmareWarCampaign.ALL[game.warCampaign.missionId]?.title || game.scenario.title;
           campaignNotice=name+' secured for '+E.FACTIONS[game.warCampaign.faction].name+'.'+
@@ -289,8 +367,9 @@ function resultDialog() {
       '<p>'+esc(game.over.reason)+'</p>'+
       honorsEarnedHTML()+
       militaryPresentation.summaryHTML()+
-      (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant map territory and tier progress on confirmed victories only. No HQ tokens or Elite fragments; permanent honors can still be earned.')+'</p>' :
-        '<p class="description">Standalone scenarios award personal honors only, not currency or Elite fragments.</p>')+
+      (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant territory and unlock new tiers.')+'</p>'+
+        (game.warCampaign.hqReward?.tokens ? '<div class="reward"><b>+'+game.warCampaign.hqReward.tokens+' command tokens</b> · World Campaign rewards</div>' : '')+pendingEliteChoiceHTML() :
+        '<p class="description">Standalone scenarios award personal honors only; no HQ tokens or Elite fragments.</p>')+
       '<div class="dialog-footer"><button data-action="close">Inspect map</button>'+
       (game.warCampaign?'<button class="primary" data-action="wc-return">Campaign map</button>':
         '<button class="primary" data-action="scenario">Play again</button>')+'</div>'+
@@ -302,6 +381,6 @@ function resultDialog() {
   if (game.mode === 'campaign') return missionResult();
   const win = game.over.winner === game.player,
     draw = game.over.winner === 'draw';
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Operation result">${militaryPresentation.resultHero('conquest')}<div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? (game.era === 'ufn2018' ? 'Your coalition triumphs.' : 'The world bows.') : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${honorsEarnedHTML()}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Decorations enter permanent personal service records. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p>${militaryPresentation.summaryHTML()}<div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Operation result">${militaryPresentation.resultHero('conquest')}<div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? (game.era === 'ufn2018' ? 'Your coalition triumphs.' : 'The world bows.') : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${honorsEarnedHTML()}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${pendingEliteChoiceHTML()}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Decorations enter permanent personal service records. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p>${militaryPresentation.summaryHTML()}<div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
   focusDialog();
 }
