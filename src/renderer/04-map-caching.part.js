@@ -42,9 +42,10 @@ function mapAtlasRenderScale(scale) {
   // Reuse atlas imagery across small trackpad zoom increments. Preserve the
   // original 14/22/24/32-pixel grid/terrain detail thresholds.
   const pixels = R * scale;
-  const stops = [0, 14, 22, 24, 32, Infinity];
-  const band = pixels < 14 ? 0 : pixels < 22 ? 1 :
-    pixels < 24 ? 2 : pixels < 32 ? 3 : 4;
+  // Align cache scale bands to ALL rendering thresholds, including icons.
+  const stops = [0, 14, 22, 24, 26, 32, 43, Infinity];
+  const band = Math.max(0, stops.findIndex((stop, i) =>
+    pixels >= stop && pixels < stops[i + 1]));
   const rounded = Math.pow(MAP_ATLAS_SCALE_STEP,
     Math.ceil(Math.log(Math.max(0.001, scale)) / Math.log(MAP_ATLAS_SCALE_STEP)));
   return Math.max(stops[band] / R,
@@ -257,6 +258,18 @@ function* visibleMapTiles(left, right, top, bottom) {
       yield game.tiles[r * game.cols + c];
   }
 }
+// Discrete gameplay hexes remain untouched; these tinted hex fills join at
+// their edges into continuous visual regions beneath the tactical hex grid.
+// Country colours and geographical underlays remain the dominant layer.
+const TERRAIN_REGION_TINTS = Object.freeze({
+  forest: ['rgba(25,79,47,0.13)', 'rgba(25,79,47,0.21)'],
+  mountain: ['rgba(95,105,103,0.13)', 'rgba(95,105,103,0.19)'],
+  peak: ['rgba(123,132,143,0.15)', 'rgba(123,132,143,0.22)'],
+  desert: ['rgba(224,177,90,0.12)', 'rgba(224,177,90,0.20)'],
+  snow: ['rgba(204,226,239,0.19)', 'rgba(204,226,239,0.25)'],
+  urban: ['rgba(87,94,101,0.13)', 'rgba(87,94,101,0.19)'],
+  coast: ['rgba(82,164,151,0.10)', 'rgba(82,164,151,0.15)'],
+});
 function paintMapLayer(scale, detail, left, right, top, bottom) {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
@@ -285,6 +298,23 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
       }
     }
   }
+  // A lightweight land-only wash before grid, units and selection overlays.
+  // Matching neighboring hexes form a single subtle biome region, rather than
+  // independent colored tile art. Skip low-zoom global maps for performance.
+  if (!pacificSky && R * scale >= (game.wrap ? 22 : 14)) {
+    const far = R * scale < 26 ? 1 : 0;
+    for (const t of visibleMapTiles(left, right, top, bottom)) {
+      const tint = TERRAIN_REGION_TINTS[t.terrain];
+      if (!tint || !scenarioSeaHexVisible(t)) continue;
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      ctx.fillStyle = tint[far];
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R + 0.45);
+        ctx.fill();
+      }
+    }
+  }
   // A faint tactical grid is a separate *overlay*, not the map's terrain.
   // At distant zoom levels the grid vanishes altogether; selection and
   // movement/attack ranges continue to use their original vivid hex outlines.
@@ -309,14 +339,17 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
       }
     }
     // Small icons read as relief on a real atlas rather than stamped hex fills.
-    if (R * scale >= 24)
+    if (R * scale >= 22)
       for (const t of visibleMapTiles(left, right, top, bottom)) {
         if (t.terrain === 'plains' || !scenarioSeaHexVisible(t)) continue;
         if (game.wrap && !['crater', 'urban', 'mountain', 'peak'].includes(t.terrain)) continue;
         if (game.wrap && (t.terrain === 'mountain' || t.terrain === 'peak') && R * scale < 32) continue;
         const c = hexCenter(t);
         if (!visible(c)) continue;
-        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 : game.wrap ? 0.24 : 0.43;
+        ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.82 :
+          t.terrain === 'forest' ? 0.77 :
+          t.terrain === 'mountain' || t.terrain === 'peak' ? 0.78 :
+          game.wrap ? 0.34 : 0.63;
         for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
       }
     ctx.globalAlpha = 1;

@@ -55,7 +55,55 @@ function starPath(x, y, ro, ri) {
 function isPacificAirBattle() {
   return game.mode === 'campaign' && (game.campaign?.id === 'bk_pacific' || game.campaign?.id === 'br_pacific');
 }
-function terrainProps(t, x, y, scale) {
+// Terrain art is vector-based, cached once per asset, and always centered.
+const TERRAIN_ART_VARIANTS = Object.freeze({
+  forest: 3, mountain: 2, peak: 2, desert: 3, snow: 2,
+  urban: 2, sea: 3, coast: 2, crater: 1, cloud: 2, storm: 2,
+});
+const TERRAIN_ART_IMAGES = Object.create(null);
+function invalidateTerrainArtCache() {
+  // Images load asynchronously. Repaint the existing atlas without changing
+  // game.mapRevision (which describes gameplay state, not visual assets).
+  if (typeof mapAtlasTiles !== 'undefined') mapAtlasTiles.clear();
+  if (typeof mapLayerCache !== 'undefined') mapLayerCache = null;
+}
+if (typeof Image !== 'undefined') {
+  for (const [kind, count] of Object.entries(TERRAIN_ART_VARIANTS)) {
+    for (let i = 1; i <= count; i++) {
+      const image = new Image();
+      TERRAIN_ART_IMAGES[kind + '-' + i] = image;
+      image.onload = invalidateTerrainArtCache;
+      image.onerror = invalidateTerrainArtCache;
+      image.src = 'assets/terrain/' + kind + '-' + i + '.svg';
+    }
+  }
+}
+function drawTerrainArt(t, x, y, scale) {
+  const pixels = R * scale;
+  if (pixels < 26 && t.terrain !== 'crater') return true; // far: regional colour only
+  const sky = isPacificAirBattle();
+  const kind = sky
+    ? (t.terrain === 'forest' ? 'cloud' : t.terrain === 'mountain' ? 'storm' : null)
+    : t.terrain;
+  if (!kind || !TERRAIN_ART_VARIANTS[kind]) return sky;
+  const medium = pixels < 43;
+  // Sparse, deterministically chosen symbols at medium zoom. This changes
+  // density/variant, never the symbol's centered placement or the terrain.
+  const density = kind === 'sea' ? (medium ? 0.12 : 0.32) :
+    kind === 'coast' ? (medium ? 0.30 : 0.62) :
+    medium && ['forest', 'desert', 'snow', 'mountain', 'peak'].includes(kind) ? 0.55 : 1;
+  if (hash01(t.c, t.r, 191) >= density) return true;
+  const count = TERRAIN_ART_VARIANTS[kind];
+  const variant = 1 + Math.min(count - 1, Math.floor(hash01(t.c, t.r, 127) * count));
+  const sprite = TERRAIN_ART_IMAGES[kind + '-' + variant];
+  if (!sprite || !sprite.complete || !sprite.naturalWidth) return false;
+  const size = R * (medium ? 0.86 : 1.14);
+  const factor = kind === 'sea' || kind === 'coast' ? 0.83 : kind === 'crater' ? 1.03 : 1;
+  const width = size * factor, height = size * factor;
+  ctx.drawImage(sprite, x - width / 2, y - height / 2, width, height);
+  return true;
+}
+function legacyTerrainProps(t, x, y, scale) {
   if (R * scale < 13) return;
   // Decorations use fixed layouts centered on the hex; no coordinate hash jitter.
   // The Pacific fleet interception uses clouds/storms instead of terrestrial relief.
@@ -172,6 +220,20 @@ function terrainProps(t, x, y, scale) {
     ctx.quadraticCurveTo(x - 5, y - 4, x, y);
     ctx.quadraticCurveTo(x + 5, y + 4, x + 10, y);
     ctx.stroke();
+  }
+}
+function terrainProps(t, x, y, scale) {
+  if (drawTerrainArt(t, x, y, scale)) return;
+  // A loading/failed SVG must never make the map or terrain disappear.
+  // The previously shipped geometric terrain drawings remain the fallback.
+  if (R * scale < 43) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(0.78, 0.78);
+    legacyTerrainProps(t, 0, 0, scale);
+    ctx.restore();
+  } else {
+    legacyTerrainProps(t, x, y, scale);
   }
 }
 // Selected tile: glowing hex outline with pulsing inner corners.
