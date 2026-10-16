@@ -285,6 +285,22 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
       }
     }
   }
+  // Give forest terrain a quiet, continuous base rather than making every hex
+  // look like a separate stamped tree icon. This preserves the faction colour
+  // underneath and lets neighbouring forest cells read as woodland together.
+  // Keep the geographic world atlas clear of hex-coloured biome overlays.
+  if (!game.wrap && !pacificSky && R * scale >= 14) {
+    ctx.fillStyle = 'rgba(30, 87, 56, 0.17)';
+    for (const t of visibleMapTiles(left, right, top, bottom)) {
+      if (t.terrain !== 'forest') continue;
+      const c = hexCenter(t);
+      if (!visible(c)) continue;
+      for (const x of copies(c.x)) {
+        hexPath(x, c.y, R + 0.35);
+        ctx.fill();
+      }
+    }
+  }
   // A faint tactical grid is a separate *overlay*, not the map's terrain.
   // At distant zoom levels the grid vanishes altogether; selection and
   // movement/attack ranges continue to use their original vivid hex outlines.
@@ -317,7 +333,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
         const c = hexCenter(t);
         if (!visible(c)) continue;
         ctx.globalAlpha = t.terrain === 'crater' || t.terrain === 'urban' ? 0.8 :
-          t.terrain === 'forest' && !pacificSky ? 0.8 : game.wrap ? 0.24 : 0.43;
+          t.terrain === 'forest' && !pacificSky ? 0.68 : game.wrap ? 0.24 : 0.43;
         for (const x of copies(c.x)) terrainProps(t, x, c.y, scale);
       }
     ctx.globalAlpha = 1;
