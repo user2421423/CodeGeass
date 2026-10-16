@@ -332,8 +332,8 @@ function activateHex(p) {
         SFX.play('move', u.side);
         E.suspendArmyGroupConquestUnit(game, u.id);
         // Occupation and carrier boarding are strategic actions, not reversible moves.
-        // A mine capture must also clear all older snapshots, just like a city or port.
-        const irreversible = !!E.stationAt(game, p) || !!result.captured || !!result.annexed || !!result.portCaptured || !!result.seized || !!result.loaded;
+        // Captures, boarding, and hostile reactions must clear all older undo snapshots.
+        const irreversible = !!E.stationAt(game, p) || !!result.captured || !!result.annexed || !!result.portCaptured || !!result.seized || !!result.loaded || !!result.hostileReaction || !!result.destroyed;
         if (!irreversible) {
           undoStack.push({ snapshot, unitId: u.id });
           if (undoStack.length > 5) undoStack.shift(); // each snapshot is a compact save (~0.1 MB)
