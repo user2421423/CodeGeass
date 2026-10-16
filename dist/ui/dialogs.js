@@ -255,8 +255,8 @@ function commandDialog(u) {
   focusDialog();
 }
 function admiralDialog() {
-  // Restore the HQ roster for existing saves before listing assignable officers.
-  E.applyRoster(game, loadProfile());
+  // Tutorial loans Suzaku locally; never import or modify the player's permanent roster.
+  if (!(typeof isTutorial === 'function' && isTutorial())) E.applyRoster(game, loadProfile());
   if (!interactive()) return;
   generalOpen = null;
   hqBack = 'game';
