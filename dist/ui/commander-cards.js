@@ -2,7 +2,7 @@
  * Gameplay, prices, commander data and original action handlers are unchanged. */
 (() => {
   'use strict';
-  const controls = { query: '', commission: 'all', ownership: 'all', specialty: 'all', sort: 'commission' };
+  const controls = { query: '', commission: 'all', ownership: 'all', rank: 'all', sort: 'commission' };
   const branches = ['infantry', 'armor', 'artillery'];
   const ratingKeys = [...branches, 'mobility'];
 
@@ -32,15 +32,12 @@
     const ratings = officer.ratings || {};
     const commission = E.commissionOf(k, officer);
     const tier = {standard:3, distinguished:2, legendary:1}[commission];
-    const specialty = branches.slice().sort((x, y) =>
-      (ratings[y] || 0) - (ratings[x] || 0))[0];
 
     // Keep real action markup and its original event delegation, requirements and costs.
     const actionMarkup = card.querySelector('.officer-actions')?.outerHTML || '';
     card.classList.add('cc-card', 'cc-tier-' + tier);
     card.dataset.commission = commission;
     card.dataset.recruited = recruited ? 'yes' : 'no';
-    card.dataset.specialty = specialty;
     card.dataset.rank = String(officer.rank);
     card.dataset.name = a.name.toLocaleLowerCase();
     for (const r of ratingKeys) card.dataset['rating' + r] = String(ratings[r] || 0);
@@ -70,7 +67,6 @@
         '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
         watermarkMarkup +
         '<div class="cc-card-bottom">' +
-          '<span class="cc-frame">Signature frame: ' + safe(a.hull || '—') + '</span>' +
           actionMarkup +
         '</div>' +
       '</div>';
@@ -98,6 +94,8 @@
     const cards = grids.flatMap(grid => [...grid.querySelectorAll('.officer')]);
     const profile = loadProfile();
     cards.forEach(card => prepareClassicCard(card, mode, profile));
+    const availableRanks = [...new Set(cards.map(card => Number(card.dataset.rank)))].sort((a, b) => b - a);
+    if (controls.rank !== 'all' && !availableRanks.includes(Number(controls.rank))) controls.rank = 'all';
 
     const first = grids[0];
     const headings = grids.map(grid => grid.previousElementSibling)
@@ -119,8 +117,8 @@
       selector('Commission', 'commission', [['all', 'All commissions'], ['standard', 'Standard'], ['distinguished', 'Distinguished'], ['legendary', 'Legendary']]) +
       (mode === 'hq' ? selector('Ownership', 'ownership',
         [['all', 'All commanders'], ['yes', 'Recruited'], ['no', 'Unrecruited']]) : '') +
-      selector('Specialization', 'specialty', [['all', 'All branches'], ['infantry', 'Infantry'],
-        ['armor', 'Armor'], ['artillery', 'Artillery']]) +
+      selector('Military Rank', 'rank', [['all', 'All ranks'],
+        ...availableRanks.map(rank => [String(rank), safe(E.RANKS[rank] || E.RANKS[0])])]) +
       selector('Sort by', 'sort', [['commission', 'Commission'], ['name', 'Name A–Z'],
         ['rank', 'Rank'], ['infantry', 'Infantry rating'], ['armor', 'Armor rating'],
         ['artillery', 'Artillery rating'], ['mobility', 'Mobility rating']]) + '</div>';
@@ -152,7 +150,7 @@
         return (controls.commission === 'all' || card.dataset.commission === controls.commission) &&
           (mode !== 'hq' || controls.ownership === 'all' ||
             card.dataset.recruited === controls.ownership) &&
-          (controls.specialty === 'all' || card.dataset.specialty === controls.specialty) &&
+          (controls.rank === 'all' || card.dataset.rank === controls.rank) &&
           (!query || [a.name, a.short, a.skill, a.title, a.desc]
             .filter(Boolean).join(' ').toLocaleLowerCase().includes(query));
       });
