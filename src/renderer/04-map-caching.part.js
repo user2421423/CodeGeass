@@ -57,7 +57,7 @@ function preloadRegionalMapImage(id) {
   entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp';
   return entry;
 }
-let mapAtlasStrategicOwners = { tiles: null, original: null, revision: -1, canvas: null };
+let mapAtlasStrategicOwners = { tiles: null, revision: -1, source: null, canvas: null };
 const mapAtlasPerformance = {
   hits: 0, misses: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
   basePaints: 0, politicalPaints: 0,
@@ -155,8 +155,7 @@ function refreshMapAtlas(scale) {
     mapAtlasStaticTiles.clear();
     mapAtlasPoliticalTiles.clear();
     mapAtlasFallback.id = null;
-    mapAtlasStrategicOwners = { tiles: game.tiles,
-      original: game.tiles.map(t => t.owner), revision: -1, canvas: null };
+    mapAtlasStrategicOwners = { tiles: game.tiles, revision: -1, source: null, canvas: null };
   } else if (mapAtlasState.revision !== revision) {
     mapAtlasTiles.clear();
     mapAtlasPoliticalTiles.clear();
@@ -260,44 +259,44 @@ function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRo
       for (const layer of layers) queueMapAtlasTile(c, r, scale, detail, tileSize, layer);
     }
 }
-// At strategic zoom the already published troop-free WebP is sufficiently
-// detailed. This avoids re-tracing thousands of Japanese coastline vertices
-// just to move the camera. Tactical zoom still uses the high-resolution atlas.
-// Changes in ownership are a separate tiny overlay, not baked into geography.
-function drawStrategicOwnershipDelta() {
+// The published regional WebP is a fast, troop-free *geographic* backdrop.
+// Its baked political colors reflect the scenario's opening turn, not a loaded
+// save. Always repaint the complete current political layer above it: comparing
+// with ownership at load time misses territory captured before the save was made.
+// Use the same geographic clipping and faction stencil as tactical zoom.
+function drawStrategicCurrentOwnership() {
   if (!mapAtlasFallback.ready) return;
   const state = mapAtlasStrategicOwners;
   if (state.tiles !== game.tiles) return;
   const revision = game.mapRevision || 0;
-  if (state.revision !== revision) {
-    const source = mapAtlasFallback.image;
-    const c = state.canvas || document.createElement('canvas');
-    c.width = source.naturalWidth;
-    c.height = source.naturalHeight;
-    const originalCtx = ctx;
-    let changed = 0;
-    ctx = c.getContext('2d');
+  const image = mapAtlasFallback.image;
+  if (!image?.naturalWidth || !image?.naturalHeight) return;
+  if (state.revision !== revision || state.source !== image || !state.canvas) {
+    // This canvas is built only when ownership or the backdrop changes, never
+    // while panning or on every frame. Cap its resolution for large theatres.
+    const quality = Math.max(0.25, Math.min(0.75,
+      image.naturalWidth / WORLD_W, image.naturalHeight / WORLD_H));
+    const canvas = state.canvas || document.createElement('canvas');
+    canvas.width = Math.ceil(WORLD_W * quality);
+    canvas.height = Math.ceil(WORLD_H * quality);
+    const mainCtx = ctx;
+    let painted = false;
     try {
-      ctx.setTransform(c.width / WORLD_W, 0, 0, c.height / WORLD_H, 0, 0);
-      for (let i = 0; i < game.tiles.length; i++) {
-        const t = game.tiles[i];
-        if (t.owner === state.original[i] ||
-            t.terrain === 'sea' || t.terrain === 'offmap') continue;
-        const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
-        const y = R * 1.5 * t.r + R;
-        hexPath(x, y, R + 0.5);
-        changed++;
-        ctx.fillStyle = t.owner ? F(t.owner).color : '#91a799';
-        ctx.fill();
+      ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.setTransform(quality, 0, 0, quality, 0, 0);
+        painted = GEOGRAPHY.paint(ctx, game,
+          0, WORLD_W, 0, WORLD_H, 1, 'political');
       }
     } finally {
-      ctx = originalCtx;
+      ctx = mainCtx;
     }
-    state.canvas = changed ? c : null;
+    if (!painted) return;
+    state.canvas = canvas;
+    state.source = image;
     state.revision = revision;
   }
-  if (state.canvas)
-    ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
+  ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
 }
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const paintScale = mapAtlasRenderScale(scale);
@@ -323,7 +322,7 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     }
     mapAtlasPerformance.strategicFrames++;
     ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
-    drawStrategicOwnershipDelta();
+    drawStrategicCurrentOwnership();
     return;
   }
   const firstRow = Math.max(0, Math.floor(top / tileSize));
@@ -353,7 +352,7 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     if (missing.length || navigating) {
       mapAtlasPerformance.snapshotFrames++;
       ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
-      drawStrategicOwnershipDelta();
+      drawStrategicCurrentOwnership();
       // Schedule at most the visible missing tiles; don't build any on the
       // pointer-move/render stack, and don't show unfinished partial chunks.
       for (const job of missing)
