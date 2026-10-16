@@ -181,7 +181,7 @@ function hudMenus() {
     ...(!campaign ? [hudNavAction('powers', 'Powers', 'Inspect rival powers')] : [])
   ];
   const system = [
-    hudNavAction('menu', 'Menu & Settings', 'Open the game menu and settings', game.phase !== game.player ? 'Cannot open the game menu during an AI phase' : null),
+    hudNavAction('menu', 'Main Menu', 'Save and return to the main menu', game.phase !== game.player ? 'Cannot return to the main menu during an AI phase' : null),
     hudNavAction('help', 'Field Manual', 'Open gameplay help'),
     `<button type="button" class="hud-menu-action" data-action="sound" aria-pressed="${SFX.enabled}" title="${SFX.enabled ? 'Mute sound' : 'Enable sound'}">${SFX.enabled ? 'Mute sound' : 'Enable sound'}</button>`
   ];
