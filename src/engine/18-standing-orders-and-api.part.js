@@ -293,6 +293,7 @@
     buyReason,
     buildReason,
     researchReason,
+    assignmentCost,
     assignReason,
     feintReason,
     promoteReason,
