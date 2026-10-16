@@ -29,6 +29,8 @@ jobs:
         run: node tools/research_branch_redesign_smoke.cjs
       - name: Verify research progression, counts, and fixed carrier capacity
         run: node tools/research_progression_smoke.cjs
+      - name: Verify 200-level combat research effects
+        run: node tools/research_200_combat_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
       - name: Verify manual repairs and port healing

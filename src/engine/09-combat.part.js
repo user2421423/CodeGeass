@@ -19,6 +19,19 @@
     if (f.dmgBranch?.[t.branch] && strike) attack *= 1 + f.dmgBranch[t.branch];
     return attack * officerAttack(g, u) * (1 + 0.06 * genericLevel(g, u, attackGeneric));
   }
+  // Shared geography test: coastal land, not open water or inland terrain.
+  function coastalLand(g, u) {
+    const here = tile(g, u.c, u.r);
+    return !!here && !isSea(here) &&
+      (isCoast(here) || adjacent(g, u).some(n => isSea(n)));
+  }
+  // Suppressive Fire reduces retaliation to the initiating Infantry/Armor unit,
+  // but never removes the defender's ability to counter.
+  function suppressiveCounterFactor(g, u) {
+    const t = TYPES[u.type];
+    return !t.naval && (t.branch === 'Infantry' || t.branch === 'Armor')
+      ? 1 - techValue(g, u.side, `${branchOf(u.type)}.suppressive`) : 1;
+  }
   function power(g, u, target, st, counter = false, direct = true) {
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
@@ -42,10 +55,18 @@
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
     if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'amphibious.torpedoes');
+    if (t.naval === 'amphibious' && target && coastalLand(g, target))
+      attack *= 1 + techValue(g, u.side, 'amphibious.clearance');
+    if (t.naval === 'amphibious' && counter && coastalLand(g, u))
+      attack *= 1 + techValue(g, u.side, 'amphibious.counterfire');
     if (t.aquatic && isSea(tile(g, u.c, u.r))) attack *= 1 + t.aquatic;
     if (t.naval === 'ship') {
       attack *= 1 + techValue(g, u.side, 'naval.gunnery');
       if (counter) attack *= 1 + techValue(g, u.side, 'naval.firecontrol');
+      if (target && victim.naval === 'amphibious')
+        attack *= 1 + techValue(g, u.side, 'naval.antiamphib');
+      if (target && atSea(g, target))
+        attack *= 1 + techValue(g, u.side, 'naval.interdiction');
     }
     // Rapid Launch Systems: the first attack on the turn a Knightmare launched from a carrier (needs a level-3 port).
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
@@ -73,6 +94,12 @@
     }
     if (!t.naval && t.branch === 'Armor' && counter)
       attack *= 1 + techValue(g, u.side, 'armor.reactive');
+    if (!t.naval && t.branch === 'Armor' && !counter && u.expAssaultMomentumTurn === g.turn)
+      attack *= 1 + techValue(g, u.side, 'armor.momentum');
+    if (!t.naval && t.branch === 'Artillery' && victim && !victim.naval && victim.branch === 'Artillery')
+      attack *= 1 + techValue(g, u.side, 'artillery.counterammo');
+    if (!t.naval && t.branch === 'Artillery' && target && dist(g, u, target) >= 2)
+      attack *= 1 + techValue(g, u.side, 'artillery.longrange');
     if (t.naval === 'amphibious' && !counter && u.expLandedTurn === g.turn && u.landingAssaultUsedTurn !== g.turn)
       attack *= 1 + techValue(g, u.side, 'amphibious.landing');
     if (!t.naval && t.branch === 'Armor' && victim?.branch === 'Infantry') attack *= 1 + techValue(g, u.side, 'armor.secondary');
@@ -93,6 +120,8 @@
     const pen = Math.min(.95,armorPenetration(g,u,target)
       + (!t.naval && t.branch === 'Armor' && victim && !victim.naval && victim.branch === 'Armor'
         ? techValue(g, u.side, 'armor.precision') : 0)
+      + (!t.naval && t.branch === 'Artillery' && victim && !victim.naval && victim.branch === 'Armor'
+        ? techValue(g, u.side, 'artillery.shellfuses') : 0)
       +(u.expCalibration?.15:0)
       +joePenetration(g,u,target)
       +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.15:0));
@@ -119,6 +148,20 @@
       if (!victim.naval && t.cls === 'siege' && victim.branch === 'Armor') attack *= 1 - techValue(g, target.side, 'armor.bulkheads');
       if (!victim.naval && victim.branch === 'Artillery' && !t.naval && t.branch === 'Artillery')
         attack *= 1 - techValue(g, target.side, 'artillery.counterbattery');
+      // Exclusive class defenses: warships and amphibious units cannot inherit
+      // Infantry/Armor/Artillery research through their underlying frame class.
+      if (!victim.naval && victim.branch === 'Infantry' && !t.naval && t.branch === 'Armor')
+        attack *= 1 - techValue(g, target.side, 'infantry.armorcounters');
+      if (!victim.naval && victim.branch === 'Infantry' && !t.naval && t.branch === 'Artillery' && t.cls === 'siege')
+        attack *= 1 - techValue(g, target.side, 'infantry.antisiege');
+      if (!victim.naval && victim.branch === 'Armor' && !t.naval && t.branch === 'Armor')
+        attack *= 1 - techValue(g, target.side, 'armor.turrets');
+      if (victim.naval === 'ship' && t.naval === 'ship')
+        attack *= 1 - techValue(g, target.side, 'naval.bulkheads');
+      if (victim.naval === 'ship' && t.naval === 'amphibious')
+        attack *= 1 - techValue(g, target.side, 'naval.closein');
+      if (victim.naval === 'amphibious' && t.naval === 'ship' && isSea(tile(g, target.c, target.r)))
+        attack *= 1 - techValue(g, target.side, 'amphibious.openwater');
       const ground = tile(g, target.c, target.r);
       if (!victim.naval && victim.branch === 'Infantry' && (ground.terrain === 'urban' || !!stationAt(g, target)))
         attack *= 1 - techValue(g, target.side, 'infantry.urban');
@@ -225,14 +268,19 @@
     return {
       unit: unitDmg,
       shield: shieldDmg,
-      counter: senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65)) : counter ? power(g,d,a,stationAt(g,a),true) : 0,
+      counter: (senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65)) : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
+        suppressiveCounterFactor(g, a),
       counterAllowed: counter||senbaReaction,
       crit,
-      critMult: (t.critMult || 1.55) + (f.critBonus || 0),
+      baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
+      critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
+        techValue(g, a.side, `${branchOf(a.type)}.critpower`),
       splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
       armorPen: Math.min(.95,armorPenetration(g,a,d)
         + (!t.naval && t.branch === 'Armor' && d && !TYPES[d.type].naval && TYPES[d.type].branch === 'Armor'
           ? techValue(g, a.side, 'armor.precision') : 0)
+        + (!t.naval && t.branch === 'Artillery' && d && !TYPES[d.type].naval && TYPES[d.type].branch === 'Armor'
+          ? techValue(g, a.side, 'artillery.shellfuses') : 0)
         +(a.expCalibration?.15:0)
         +joePenetration(g,a,d)
         +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.15:0)),
@@ -306,7 +354,9 @@
       s = stationAt(g, p),
       f = fx(a),
       crit = random(g) < pr.crit,
-      mult = (0.92 + random(g) * 0.16) * (crit ? pr.critMult : 1),
+      variance = 0.92 + random(g) * 0.16,
+      mult = variance * (crit ? pr.critMult : 1),
+      shieldMult = variance * (crit ? pr.baseCritMult : 1),
       hit = [];
     const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
     const avoidance = genericLevel(g, a, TYPES[a.type].branch === 'Armor' ? 'blitzkrieg' : 'guerrilla');
@@ -320,6 +370,8 @@
     const movementBeforeAttack = !a.moved
       ? { skillReposition: a.skillReposition || 0, withdrawMove: !!a.withdrawMove }
       : null;
+    // Consume earned Assault Momentum on the next volley, regardless of outcome.
+    if (a.expAssaultMomentumTurn === g.turn) delete a.expAssaultMomentumTurn;
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
     a.moved = true;
@@ -351,7 +403,7 @@
       // keeps its next regeneration suppressed.
       s.attackedSinceRegen = true;
       if (pr.shield) {
-        sd = Math.min(s.shield, Math.round(pr.shield * mult));
+        sd = Math.min(s.shield, Math.round(pr.shield * shieldMult));
         s.shield -= sd;
       }
       if(priorShield>0&&s.shield<=0&&TYPES[a.type].branch==='Artillery'&&skillNear(g,a,'raikoCity',2))s.expYoshidaBreak={side:a.side,turn:g.turn};
@@ -373,7 +425,9 @@
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
-      retaliation = Math.round(power(g,d,a,stationAt(g,a),true)*(senbaCounter ? .5/.65 : 1)*(0.94+random(g)*.12));
+      retaliation = Math.round(power(g,d,a,stationAt(g,a),true) *
+        (senbaCounter ? .5/.65 : 1) * suppressiveCounterFactor(g, a) *
+        (0.94+random(g)*.12));
       if(senbaCounter)d.expSenbaCounterTurn=g.turn;
       if(d.guardReady&&d.held&&skillNear(g,d,'defensiveDoctrine',2)&&d.expSmilasCounterTurn!==g.turn){
         d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;
@@ -431,6 +485,11 @@
       a.eliteMoveAfterKill = true;
     }
     afterCommanderAttack(g,a,d,s,destroyed,timeStop);
+    // A kill only primes momentum if an existing breakthrough or signature
+    // ability actually granted another attack. It never grants one itself.
+    if (destroyed && a.hp > 0 && !a.attacked &&
+        !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor')
+      a.expAssaultMomentumTurn = g.turn;
     // Preserve the movement that was already available when a killing attack
     // refreshes another shot. Do not grant an extra move to a unit that had
     // spent it; existing Relentless, elite and commander rewards still apply.

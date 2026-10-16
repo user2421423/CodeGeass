@@ -4,11 +4,11 @@
 const assert = require('node:assert/strict');
 const E = require('../dist/engine.js');
 const expected = {
-  infantry: [12,32],
-  armor: [11,32],
-  artillery: [9,21],
-  naval: [8,16],
-  amphibious: [5,13],
+  infantry: [16,44],
+  armor: [15,44],
+  artillery: [13,33],
+  naval: [13,31],
+  amphibious: [9,25],
   cities: [10,23],
 };
 let unique = 0, levels = 0;
@@ -35,7 +35,23 @@ for (const [branch, [techs, purchases]] of Object.entries(expected)) {
   unique += count;
   levels += local;
 }
-assert.deepEqual([unique, levels],[55,137], 'total technologies and upgrades');
+assert.deepEqual([unique, levels],[76,200], 'total technologies and upgrades');
+const approved = {
+  infantry: ['armorcounters','antisiege','suppressive','critpower'],
+  armor: ['suppressive','turrets','momentum','critpower'],
+  artillery: ['counterammo','longrange','shellfuses','critpower'],
+  naval: ['bulkheads','antiamphib','closein','interdiction','critpower'],
+  amphibious: ['counterfire','openwater','clearance','critpower'],
+};
+for (const [branch, names] of Object.entries(approved)) {
+  for (const name of names) {
+    const node = E.TECH_TREE[branch].nodes[name];
+    assert.ok(node && node.values.length === 3, branch+'.'+name+' must have 3 levels');
+    assert.equal(E.TECH_NODES[branch+'.'+name].max, 3);
+  }
+}
+assert.ok(!Object.values(E.TECH_TREE).some(b => Object.values(b.nodes).some(n => n.name === 'Battlefield Salvage')),
+  'Battlefield Salvage remains unapproved and absent');
 assert.equal(Object.keys(E.TECH_TREE).length,6,'no fifth HQ tier or extra branches');
 assert.equal(E.TECH_TREE.naval.nodes.hangars,undefined,'Expanded Hangars removed');
 assert.deepEqual(E.TECH_TREE.naval.nodes.landing.values,[.4,.25]);
@@ -53,4 +69,4 @@ g.tech[side] = { 'naval.hangars': 9 };
 assert.equal(E.carrierCapacity(g,ship),2,'carrier holds exactly two formations at most');
 assert.equal(E.normalizeResearch({'naval.hangars':1})['naval.hangars'],undefined,
   'obsolete hangar purchases are not recognized');
-console.log('HQ progression (55 techs, 137 levels), no one-level research, carrier cap: PASS');
+console.log('HQ progression (76 techs, 200 levels), no one-level research, carrier cap: PASS');
