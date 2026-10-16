@@ -177,8 +177,10 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
       }
     for (const [id, unit] of seen) if (!current.has(id) && !unit.lost) {
       unit.lost = true;
-      metrics.unitsLost[unit.side]++;
-      if (unit.naval) metrics.navalLosses[unit.side]++;
+      if (Object.hasOwn(metrics.unitsLost, unit.side)) {
+        metrics.unitsLost[unit.side]++;
+        if (unit.naval) metrics.navalLosses[unit.side]++;
+      }
     }
     for (const city of g.stations) {
       const from = owners.get(city.id);
@@ -227,9 +229,10 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
         }
       } else if (o.kind === 'deploy') {
         metrics.deployments[side]++;
-        if (actor && E.TYPES[actor.type]?.naval === 'ship') {
+        if (actor && E.TYPES[actor.type]?.naval === 'ship' && o.to &&
+            E.tile(g, o.to.c, o.to.r)?.terrain !== 'sea') {
           metrics.seaLandings[side]++;
-          if (E.tile(g, o.to.c, o.to.r)?.terrain !== 'sea') {
+          {
             const landing = { side, turn: g.turn, to: o.to, success: false };
             recentLandings.push(landing);
             metrics.navalLandingLog.push({ side, turn: g.turn, c: o.to.c, r: o.to.r });
@@ -299,7 +302,7 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
   const survivors = new Set(allUnits(g).map(u => u.id));
   for (const u of openingCommanders) {
     const field = survivors.has(u.id) ? 'commanderSurvivors' : 'commandersLost';
-    metrics[field][u.side]++;
+    if (Object.hasOwn(metrics[field], u.side)) metrics[field][u.side]++;
   }
   // Eight turns without a city transfer or a formation loss while opposing
   // city owners remain is flagged as an AI stalemate, not as a game draw.
