@@ -26,6 +26,8 @@ const mapAtlasStaticTiles = new Map();
 const mapAtlasPoliticalTiles = new Map();
 const mapAtlasWarmQueue = [];
 const mapAtlasWarmKeys = new Set();
+const mapAtlasPrefetchAttempts = new Set();
+let mapAtlasPrefetchViewport = null;
 let mapAtlasIdlePending = false;
 let mapAtlasViewport = null;
 let mapAtlasClock = 0;
@@ -74,6 +76,7 @@ function resetMapResources() {
     cache.clear();
   }
   mapAtlasWarmQueue.length = 0; mapAtlasWarmKeys.clear(); mapAtlasGeneration++;
+  mapAtlasPrefetchAttempts.clear(); mapAtlasPrefetchViewport = null;
   mapAtlasState = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
   mapAtlasStrategicOwners = { tiles:null, revision:-1, source:null, canvas:null };
   mapAtlasFallback = {id:null,image:null,ready:false,hires:false};
@@ -315,9 +318,11 @@ function completeMapTile(tx, ty, scale, detail, tileSize, layer = 'all', deferre
 }
 function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = false) {
   const key = layer + ':' + mapAtlasKey(col, row, scale, tileSize);
+  if (!urgent && mapAtlasPrefetchAttempts.has(key)) return;
   if (mapAtlasCanvasSet(layer).has(mapAtlasKey(col, row, scale, tileSize)) ||
       mapAtlasWarmKeys.has(key)) return;
   mapAtlasWarmKeys.add(key);
+  if (!urgent) mapAtlasPrefetchAttempts.add(key);
   const job = { col, row, scale, detail, tileSize, layer, key, generation: mapAtlasGeneration };
   mapAtlasWarmQueue.push(job);
   if (mapAtlasIdlePending) return;
@@ -416,6 +421,11 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const paintDetail = R * paintScale >= 14;
   const tileSize = mapAtlasTileSize(paintScale);
   refreshMapAtlas(paintScale);
+  const prefetchView = [mapAtlasGeneration, Math.floor(left/tileSize), Math.floor(right/tileSize),
+    Math.floor(top/tileSize), Math.floor(bottom/tileSize)].join(':');
+  if (prefetchView !== mapAtlasPrefetchViewport) {
+    mapAtlasPrefetchViewport = prefetchView; mapAtlasPrefetchAttempts.clear();
+  }
   const split = regionalMapLayers();
   const layers = split ? ['static', 'political'] : ['all'];
   const navigationBase = !split && mapAtlasNavigationBase?.tiles === game.tiles &&
