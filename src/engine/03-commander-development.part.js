@@ -45,7 +45,7 @@
     }
     return {
       rank: personal ? 0 : (commissionOf(k) === 'legendary' ? 1 : 0),
-      ratings, commission: commissionOf(k), medals: [], generics: {},
+      ratings, commission: commissionOf(k), medals: [], honors: [], generics: {},
       spending: { promotions: {}, stars: {} }, commanderVersion: COMMANDER_VERSION,
     };
   }
@@ -67,6 +67,7 @@
         Object.keys(base.ratings).map(b => [b, clamp((ratings[b] ?? base.ratings[b]) | 0, 1, MAX_RATING)]),
       ),
       medals: (rec.medals || []).filter(m => MEDALS[m]),
+      honors: (Array.isArray(rec.honors) ? rec.honors : []).filter(h => h && MEDALS[h.id] && Array.isArray(h.citations)),
       generics: Object.fromEntries(Object.entries(rec.generics || {})
         .filter(([id, level]) => GENERIC_SKILLS[id] && Number.isInteger(level) && level >= 1 && level <= 5)
         .slice(0, genericSlots(k, rec))),
@@ -85,6 +86,23 @@
           profile.tokens = (profile.tokens || 0) + STAR_COST[star];
         profile.roster[k] = cleanOfficer(k, rec);
       }
+    // Migrate shared and equipped legacy medals into an account archive. Original
+    // transferable medals have no trustworthy individual recipient; never invent one.
+    if (profile.honorsVersion !== 1) {
+      const legacy = (profile.legacyHonors ||= []);
+      const moveLegacy = (id, formerOwner = null) => {
+        if (!MEDALS[id]) return;
+        const row = legacy.find(m => m.id === id && m.formerOwner === formerOwner);
+        if (row) row.count += 1;
+        else legacy.push({ id, formerOwner, count: 1 });
+      };
+      for (const id of profile.medals || []) moveLegacy(id);
+      for (const [k, officer] of Object.entries(profile.roster))
+        for (const id of officer.medals || []) moveLegacy(id, k);
+      profile.medals = [];
+      for (const officer of Object.values(profile.roster)) officer.medals = [];
+      profile.honorsVersion = 1;
+    }
     // One-time migration: preserve saved ratings as inactive beyond new rank caps.
     if (profile.commanderProgressionVersion !== 1) {
       profile.commanderProgressionVersion = 1;
@@ -174,11 +192,19 @@
     };
     return branch + (rule[s.kind] || '');
   }
-  function wears(g, u, medal) {
-    return !!officerOf(g, u)?.medals?.includes(medal);
+  // All ranks display any number of earned awards. Historical medal slots and
+  // transferable loadouts were removed; this exists for old save compatibility.
+  function medalSlots() { return 0; }
+  function honorService(g, u) {
+    if (!g || !u?.cmd || u.side !== g.player) return null;
+    const key = (u.personal ? 'hq:' : 'script:') + u.cmd;
+    const stats = (g.honorService ||= {});
+    return (stats[key] ||= { commander: u.cmd, personal: !!u.personal,
+      combats: 0, kills: 0, commanderDefeats: 0, cities: 0, capitals: 0 });
   }
-  function medalSlots(o) {
-    return 1 + Math.floor(o.rank / 4);
+  function honorAction(g, u, kind) {
+    const service = honorService(g, u);
+    if (service && Object.hasOwn(service, kind)) service[kind] += 1;
   }
   // Personal ratings over the rank cap remain saved but inactive. Mobility follows
   // the same rank-based active-star limits even for fixed operation commanders;
@@ -195,21 +221,10 @@
     if (!u.cmd) return 0;
     return 5 * effectiveRating(g, u, branchOf(u.type));
   }
-  // Commander medals still multiply attack; defensive branch-star scaling is unchanged.
-  function officerAttack(g, u) {
-    if (!u.cmd) return 1;
-    return (wears(g, u, 'valor') ? 1.08 : 1) *
-      (wears(g, u, 'campaign') ? 1.04 : 1);
-  }
+  // Honors are purely commemorative. Combat-branch ratings retain their own rules.
+  function officerAttack() { return 1; }
   function officerDefense(g, u) {
-    if (!u.cmd) return 1;
-    const o = officerOf(g, u);
-    return Math.max(
-      0.5,
-      (1 - 0.03 * (effectiveRating(g, u, branchOf(u.type)) - 3)) *
-        (wears(g, u, 'laurel') ? 0.92 : 1) *
-        (wears(g, u, 'campaign') ? 0.96 : 1),
-    );
+    return u.cmd ? Math.max(0.5, 1 - 0.03 * (effectiveRating(g, u, branchOf(u.type)) - 3)) : 1;
   }
   function auraRange(a) {
     return fx(a).aura?.range || 1;
@@ -313,7 +328,6 @@
       o.ratings[branch] = Math.min(cap, o.ratings[branch]);
     }
     o.rank = 7;
-    while (o.medals.length > medalSlots(o)) (profile.medals ||= []).push(o.medals.pop());
     o.spending = spent;
     const refund = Math.round(reimbursable * proportion);
     profile.tokens = (profile.tokens || 0) + refund;
@@ -366,37 +380,74 @@
     delete roster(profile)[k].generics[id];
     return { ok: true };
   }
-  function equipReason(profile, k, medal) {
-    const why = ownedReason(profile, k);
-    if (why) return why;
-    const o = roster(profile)[k];
-    return (
-      (!(profile.medals || []).includes(medal) ? 'Not in your medal case' : null) ||
-      (o.medals.includes(medal) ? 'Already wearing this medal' : null) ||
-      (o.medals.length >= medalSlots(o) ? `All ${medalSlots(o)} medal slots in use` : null)
-    );
+  // No equipment actions: an award belongs permanently to the commander who earned it.
+  function equipReason() { return 'Decorations are permanent service records, not equipment'; }
+  function equipMedal() { return { ok: false, reason: equipReason() }; }
+  function unequipMedal() { return { ok: false, reason: equipReason() }; }
+  function award(g, side, id, reason, unit, key = reason) {
+    if (side !== g.player || !MEDALS[id] || !unit?.cmd || !COMMANDERS[unit.cmd]) return;
+    const events = (g.honorEvents ||= []);
+    // Repeat achievements become citations across operations, not spammable
+    // identical decorations in the same battle.
+    if (events.some(e => e.id === id && e.commander === unit.cmd &&
+        e.personal === !!unit.personal && (id !== 'star' || e.key === key))) return;
+    events.push({ id, commander: unit.cmd, personal: !!unit.personal,
+      reason, key, turn: g.turn });
+    log(g, `${MEDALS[id].name}: ${COMMANDERS[unit.cmd].short} — ${reason}.`, side);
   }
-  function equipMedal(profile, k, medal) {
-    const why = equipReason(profile, k, medal);
-    if (why) return { ok: false, reason: why };
-    profile.medals.splice(profile.medals.indexOf(medal), 1);
-    roster(profile)[k].medals.push(medal);
-    return { ok: true };
+  function finalizeHonors(g) {
+    if (!g.over || g.honorsFinalized) return;
+    g.honorsFinalized = true;
+    if (g.over.winner !== g.player) return;
+    const services = Object.values(g.honorService || {})
+      .filter(s => s.combats || s.kills || s.cities || s.capitals || s.commanderDefeats);
+    const operation = g.mode === 'campaign' ? (g.campaign?.id || 'Story Mode') :
+      g.mode === 'scenario' ? (g.scenario?.title || g.scenario?.id || 'Scenario') :
+        (g.era || 'Conquest');
+    for (const s of services)
+      award(g, g.player, 'campaign', `Participated in the victorious ${operation} operation`,
+        { cmd: s.commander, personal: s.personal });
+    const laurel = { hard: 'laurel_hard', challenge: 'laurel_challenge', elite: 'laurel_elite' }[g.difficulty];
+    if (laurel && g.mode === 'conquest') {
+      const best = services.filter(s => s.personal).sort((a, b) => {
+        const score = s => 10*s.capitals + 5*s.commanderDefeats + 3*s.cities + Math.min(5,s.kills);
+        return score(b)-score(a) || b.capitals-a.capitals ||
+          b.commanderDefeats-a.commanderDefeats || b.kills-a.kills ||
+          a.commander.localeCompare(b.commander);
+      })[0];
+      if (best) award(g, g.player, laurel, `Highest contribution to the ${g.difficulty} conquest victory`,
+        { cmd: best.commander, personal: true });
+    }
   }
-  function unequipMedal(profile, k, medal) {
-    const why = ownedReason(profile, k);
-    if (why) return { ok: false, reason: why };
-    const o = roster(profile)[k],
-      i = o.medals.indexOf(medal);
-    if (i < 0) return { ok: false, reason: 'Not wearing that medal' };
-    o.medals.splice(i, 1);
-    (profile.medals ||= []).push(medal);
-    return { ok: true };
+  // Claim only after saving a unique operation ID. Standalone Scenarios use the
+  // same honors-only transaction without granting campaign currency or fragments.
+  function claimHonors(profile, g, claimId) {
+    roster(profile);
+    if (!claimId || (profile.honorClaims ||= {})[claimId]) return { awarded: [] };
+    const awarded = [];
+    const operation = g.mode === 'campaign' ? (g.campaign?.id || 'Story Mode') :
+      g.mode === 'scenario' ? (g.scenario?.id || 'Scenario') : (g.era || 'Conquest');
+    const difficulty = g.difficulty || 'normal';
+    for (const event of g.honorEvents || []) {
+      if (!event.personal || !profile.roster[event.commander] || !MEDALS[event.id]) continue;
+      const officer = profile.roster[event.commander];
+      const honors = (officer.honors ||= []);
+      let medal = honors.find(m => m.id === event.id);
+      if (!medal) honors.push(medal = { id: event.id, citations: [] });
+      medal.citations.push({ operation, difficulty, reason: event.reason,
+        turn: event.turn, claimId });
+      awarded.push(event);
+    }
+    // An old operation save can contain awards from the previous shared-inventory
+    // system. Preserve them in the legacy cabinet without assigning recipients.
+    for (const old of g.medalsEarned || []) {
+      if (!MEDALS[old.id]) continue;
+      const row = (profile.legacyHonors ||= []).find(m => m.id === old.id && m.formerOwner === null);
+      if (row) row.count += 1;
+      else profile.legacyHonors.push({ id: old.id, formerOwner: null, count: 1 });
+    }
+    profile.honorClaims[claimId] = true;
+    return { awarded };
   }
-  function award(g, side, id, reason) {
-    if (side !== g.player || !MEDALS[id]) return;
-    (g.medalInventory ||= []).push(id);
-    (g.medalsEarned ||= []).push({ id, reason, turn: g.turn });
-    log(g, `${MEDALS[id].name} awarded: ${reason}.`, side);
-  }
+
 

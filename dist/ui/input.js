@@ -300,9 +300,7 @@ document.addEventListener('click', e => {
     (d.promote && (p => E.promote(p, d.promote))) ||
     (d.retireCommission && (p => E.retireCommission(p, d.retireCommission))) ||
     (d.upgradeCommission && (p => E.upgradeCommission(p, d.upgradeCommission))) ||
-    (d.expandHighCommand && (p => E.expandHighCommand(p))) ||
-    (d.equip && (p => E.equipMedal(p, d.officer, d.equip))) ||
-    (d.unequip && (p => E.unequipMedal(p, d.officer, d.unequip)));
+    (d.expandHighCommand && (p => E.expandHighCommand(p)));
   if (hqOrder) {
     const p = loadProfile(),
       r = hqOrder(p);
@@ -338,10 +336,12 @@ document.addEventListener('click', e => {
                 ? `${name} upgraded to ${E.commissionName(r.commission)} Commission.`
                 : d.expandHighCommand
                   ? `High Command expanded to ${r.capacity} seats.`
-            : `${name}'s medals updated.`,
+            : `${name}'s HQ record updated.`,
     );
     return;
   }
+  if (d.action === 'honors') { honorsHall(); return; }
+  if (d.action === 'honors-close') { generalsDialog(); return; }
   if (d.generalOpen) {
     generalDialog(d.generalOpen, true);
     return;

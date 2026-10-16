@@ -263,7 +263,6 @@
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
-        (wears(g, a, 'marksman') ? 0.08 : 0) +
         techValue(g, a.side, 'cities.targeting'),
       0,
       1,
@@ -294,6 +293,10 @@
   function kill(g, v, attacker, force = false, by = null) {
     if (v.hp > 0) return;
     if ((fx(v).undying && !v.undyingUsed || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
+      // A commander who forces a lethal Code Bearer / Final Stand activation
+      // has still earned a Valor citation, despite the scripted survival.
+      if (v.cmd && attacker?.cmd)
+        award(g, attacker.side, 'valor', `Overcame ${COMMANDERS[v.cmd].short}'s final defense`, attacker);
       if(v.cmd==='urabe'){
         v.expFinalStandUsed=true;v.hp=1;
         log(g,'Urabe survives a lethal direct hit: Final Stand.',v.side);
@@ -323,7 +326,9 @@
     }
     // Urabe's Final Stand: his fall rallies friendly units within 2 hexes to High morale.
     if (fx(v).martyr) for (const w of g.units) if (w.hp > 0 && w.side === v.side && dist(g, w, v) <= 2) w.morale = 1;
-    if (attacker) {
+    // Cargo lost with a destroyed carrier is a consequential loss, not a
+    // separate direct kill by the commander who sank the carrier.
+    if (attacker && !force) {
       if (attacker.cmd) {
         const k = attacker.cmd,
           tally = (g.missionKills ||= {}),
@@ -332,8 +337,12 @@
         tally[k] = (tally[k] || 0) + 1;
         // Legacy aggregate tallies cannot distinguish officer instances; never inherit another one's kills.
         instances[instance] = (instances[instance] || 0) + 1;
-        if (v.cmd) award(g, attacker.side, 'valor', `${COMMANDERS[k].short} defeated ${COMMANDERS[v.cmd].short}`);
-        if (instances[instance] === 5) award(g, attacker.side, 'marksman', `${COMMANDERS[k].short} destroyed 5 units`);
+        honorAction(g, attacker, 'kills');
+        if (v.cmd) {
+          honorAction(g, attacker, 'commanderDefeats');
+          award(g, attacker.side, 'valor', `Defeated ${COMMANDERS[v.cmd].short}`, attacker);
+        }
+        if (instances[instance] === 5) award(g, attacker.side, 'marksman', 'Destroyed 5 enemy units', attacker);
       }
       attacker.kills++;
       attacker.xp = Math.min(5, attacker.xp + 1);
@@ -377,6 +386,7 @@
     if (a.expAssaultMomentumTurn === g.turn) delete a.expAssaultMomentumTurn;
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
+    honorAction(g, a, 'combats');
     a.moved = true;
     a.skillReposition = 0;
     a.withdrawMove = false;

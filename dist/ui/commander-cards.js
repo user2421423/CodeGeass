@@ -66,6 +66,7 @@
         '<div class="cc-card-top"><span class="cc-tier">' + safe(E.commissionName(commission)) + ' Commission</span></div>' +
         '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
           '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
+          (recruited && officer.honors?.length ? '<div class="honors-mini">' + officer.honors.slice(0,3).map(h => honorIcon(h.id)).join('') + (officer.honors.length>3?'<small>+'+(officer.honors.length-3)+'</small>':'') + '</div>' : '') +
         '</div>' +
         '<div class="cc-card-ratings" aria-label="Commander ratings">' + ratingsMarkup + '</div>' +
         watermarkMarkup +

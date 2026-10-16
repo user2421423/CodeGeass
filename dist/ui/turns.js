@@ -238,7 +238,19 @@ function claimWarCampaignHQReward(result) {
   if (!saveProfile(profile)) return { ok: false, reason: 'HQ rewards could not be saved. Reopen the completed battle result.' };
   return { ok: true, tokens, fragmentBundle };
 }
-// When an operation ends, its medals join the profile's medal case and a win pays command tokens, exactly once.
+// Scenario honors are independent of the World Campaign's persistent HQ rewards.
+function claimScenarioHonors() {
+  if (!game.over || game.honorsClaimed) return;
+  game.honorClaimId ||= `honors:scenario:${game.scenario?.id||'regional'}:${game.player}:${game.turn}:${game.seed}`;
+  save();
+  const profile=loadProfile();
+  if (!profile.honorClaims?.[game.honorClaimId])
+    E.claimHonors(profile,game,game.honorClaimId);
+  if (!saveProfile(profile)) return;
+  game.honorsClaimed=true;
+  save();
+}
+// The existing rewards and personal honors share the same idempotent claim key.
 function claimReward() {
   if (game.mode === 'scenario') return; // Scenario runs do not alter the persistent profile in stage one.
   if (!game.over || game.rewardClaimed) return;
@@ -251,6 +263,10 @@ function claimReward() {
   save();
   const p = loadProfile(), claims = (p.rewardClaims ||= {}), prior = claims[game.rewardClaimId];
   if (prior) {
+    if (!p.honorClaims?.[game.rewardClaimId]) {
+      E.claimHonors(p, game, game.rewardClaimId);
+      if (!saveProfile(p)) return false;
+    }
     game.reward = prior.reward;
     if (prior.eliteReward) game.eliteReward = prior.eliteReward;
     if (prior.storyEliteUnlocked) game.storyEliteUnlocked = prior.storyEliteUnlocked;
@@ -259,7 +275,7 @@ function claimReward() {
     save();
     return true;
   }
-  p.medals = [...(p.medals || []), ...(game.medalsEarned || []).map(m => m.id)];
+  E.claimHonors(p, game, game.rewardClaimId);
   if (game.mode === 'campaign') {
     const CP = E.campaign,
       id = game.campaign.id,
@@ -314,9 +330,11 @@ function claimReward() {
 }
 function resultDialog() {
   if (!game.over) return;
+  E.finalizeHonors(game);
   militaryPresentation.resultSound();
   if (game.mode === 'scenario') {
     if (!game.over) return;
+    claimScenarioHonors();
     const won=game.over.winner===game.player;
     const lost=!!game.over.eliminated;
     let campaignNotice='';
@@ -347,10 +365,11 @@ function resultDialog() {
       '<div class="eyebrow">'+esc(game.scenario?.title || 'Scenario')+'</div><h2>'+(euFinal?'E.U. Campaign Victory':founded?'Euro Britannia Established':won?'Victory':lost?'Defeat':'Scenario concluded')+'</h2>'+
       (euFinal?'<p class="wc-imperial-subtitle">The Imperial Capital Has Fallen · Europia United Triumphant</p>':'')+
       '<p>'+esc(game.over.reason)+'</p>'+
+      honorsEarnedHTML()+
       militaryPresentation.summaryHTML()+
       (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant territory and unlock new tiers.')+'</p>'+
         (game.warCampaign.hqReward?.tokens ? '<div class="reward"><b>+'+game.warCampaign.hqReward.tokens+' command tokens</b> · World Campaign rewards</div>' : '')+pendingEliteChoiceHTML() :
-        '<p class="description">Scenarios do not award campaign or HQ rewards.</p>')+
+        '<p class="description">Standalone scenarios award personal honors only; no HQ tokens or Elite fragments.</p>')+
       '<div class="dialog-footer"><button data-action="close">Inspect map</button>'+
       (game.warCampaign?'<button class="primary" data-action="wc-return">Campaign map</button>':
         '<button class="primary" data-action="scenario">Play again</button>')+'</div>'+
@@ -362,6 +381,6 @@ function resultDialog() {
   if (game.mode === 'campaign') return missionResult();
   const win = game.over.winner === game.player,
     draw = game.over.winner === 'draw';
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Operation result">${militaryPresentation.resultHero('conquest')}<div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? (game.era === 'ufn2018' ? 'Your coalition triumphs.' : 'The world bows.') : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${(game.medalsEarned || []).length ? `<div class="medal-case"><span class="label">Medals earned</span>${game.medalsEarned.map(m => `<span class="medal-chip" title="${esc(m.reason)}">🎖 ${E.MEDALS[m.id].name}</span>`).join('')}</div>` : ''}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${pendingEliteChoiceHTML()}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Medals earned go to your medal case. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p>${militaryPresentation.summaryHTML()}<div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow military-result-dialog" role="dialog" aria-modal="true" aria-label="Operation result">${militaryPresentation.resultHero('conquest')}<div class="eyebrow">${win ? 'Operation successful' : draw ? 'Armistice' : 'Operation ended'}</div><h2>${win ? (game.era === 'ufn2018' ? 'Your coalition triumphs.' : 'The world bows.') : draw ? 'An uneasy peace.' : 'The last order.'}</h2><p>${game.over.reason}</p>${honorsEarnedHTML()}${game.eliteReward && Object.keys(game.eliteReward).length ? `<div class="reward"><span class="label">Elite fragments recovered</span><small>${Object.entries(game.eliteReward).map(([k,v]) => `${E.TYPES[E.ELITE_FORCES[k].type].name} +${v}`).join(' · ')}</small></div>` : ''}${pendingEliteChoiceHTML()}${game.reward ? (game.reward.repeat ? `<div class="reward"><span class="label">No command tokens</span><small>Tokens are paid only for the first victory at each difficulty. Try ${game.difficulty === 'challenge' ? 'another faction' : 'a harder difficulty'} for more.</small></div>` : `<div class="reward"><span class="label">Command tokens earned</span><b>${ICONS.use('token', 'cost-ico')} +${game.reward.total}</b><small>${game.reward.parts.map(([k, v]) => (v ? `${k} +${v}` : k)).join(' · ')}</small></div>`) : ''}<p class="description">Decorations enter permanent personal service records. Spend command tokens on HQ research and on your commanders in HQ → Commanders.</p>${militaryPresentation.summaryHTML()}<div class="dialog-footer"><button data-action="close">Inspect the map</button><button data-action="research">HQ research</button><button class="primary" data-action="new">New operation</button></div></section></div>`;
   focusDialog();
 }

@@ -53,7 +53,6 @@
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
     if(u.expJammedActive)n=Math.max(1,n-2);
-    n += wears(g, u, 'star') ? 1 : 0;
     n += f.move || 0;
     return n;
   }
@@ -315,7 +314,11 @@
     if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
     log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} captures ${s.name}.`, u.side);
     hooks.capture?.(g, s, u, loser);
-    if (s.capitalOf && s.capitalOf === loser) award(g, u.side, 'star', `${s.name} captured`);
+    honorAction(g, u, 'cities');
+    if (s.capitalOf && s.capitalOf === loser) {
+      honorAction(g, u, 'capitals');
+      award(g, u.side, 'star', `${s.name} captured`, u, String(s.id));
+    }
     // Preserve expeditionary forces, including carrier cargo, after their last city is lost.
     const expeditionSide = scenarioMeta(g).expeditionSide;
     const expeditionAfloat = loser === expeditionSide &&
