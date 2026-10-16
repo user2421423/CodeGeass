@@ -23,7 +23,7 @@ function tutorialScenario() {
   E.scenarios.byId[TUTORIAL_ID] = {
     id: TUTORIAL_ID, title: 'Training Grounds', sides: ['britannia', 'eu'],
     meta: { map: { homeZoom: 1 }, text: { focus: { britannia: 'Headquarters' } } },
-    objective: () => TUTORIAL_STEPS[tutorialState?.step || 0].title,
+    objective: () => tutorialState?.lab ? (labStepData()?.title || 'Training complete') : TUTORIAL_STEPS[tutorialState?.step || 0].title,
     winner: () => null,
     onTurn: () => false,
   };
