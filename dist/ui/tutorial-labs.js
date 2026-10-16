@@ -109,6 +109,7 @@ function labCheck(){
     case 'reinforce':good=!!u&&u.stack>=2;break;
     case 'undo':good=!!u&&u.c===goal.c&&u.r===goal.r;break;
     case 'goto':good=!!u&&u.goto?.c===goal.c&&u.goto?.r===goal.r;break;
+    case 'action':if(s.op==='group-route'){const gr=E.armyGroup(game,tutorialState.notes.group);good=gr?.destination?.c===goal.c&&gr?.destination?.r===goal.r;}break;
   }
   if(good)labNext();
 }
