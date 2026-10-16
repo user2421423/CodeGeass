@@ -290,10 +290,7 @@
   function checkVictory(g) {
     if (g.over) return g.over;
     decideVictory(g);
-    if (g.over && g.over.winner === g.player) {
-      award(g, g.player, 'campaign', 'Operation won');
-      if (DIFFICULTIES[g.difficulty]?.level) award(g, g.player, 'laurel', `${DIFFICULTIES[g.difficulty].name} victory`);
-    }
+    if (g.over) finalizeHonors(g);
     return g.over;
   }
   // The regional scenario module behind a game: by scenario id, then by key, else Invasion of Japan.

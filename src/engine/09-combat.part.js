@@ -263,7 +263,6 @@
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
         (followUp ? f.followUp : 0) +
-        (wears(g, a, 'marksman') ? 0.08 : 0) +
         techValue(g, a.side, 'cities.targeting'),
       0,
       1,
@@ -332,8 +331,12 @@
         tally[k] = (tally[k] || 0) + 1;
         // Legacy aggregate tallies cannot distinguish officer instances; never inherit another one's kills.
         instances[instance] = (instances[instance] || 0) + 1;
-        if (v.cmd) award(g, attacker.side, 'valor', `${COMMANDERS[k].short} defeated ${COMMANDERS[v.cmd].short}`);
-        if (instances[instance] === 5) award(g, attacker.side, 'marksman', `${COMMANDERS[k].short} destroyed 5 units`);
+        honorAction(g, attacker, 'kills');
+        if (v.cmd) {
+          honorAction(g, attacker, 'commanderDefeats');
+          award(g, attacker.side, 'valor', `Defeated ${COMMANDERS[v.cmd].short}`, attacker);
+        }
+        if (instances[instance] === 5) award(g, attacker.side, 'marksman', 'Destroyed 5 enemy units', attacker);
       }
       attacker.kills++;
       attacker.xp = Math.min(5, attacker.xp + 1);
@@ -377,6 +380,7 @@
     if (a.expAssaultMomentumTurn === g.turn) delete a.expAssaultMomentumTurn;
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
+    honorAction(g, a, 'combats');
     a.moved = true;
     a.skillReposition = 0;
     a.withdrawMove = false;

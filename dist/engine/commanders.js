@@ -906,16 +906,17 @@
   const RANK_HP = [1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0, 2.08, 2.16];
   // Tokens to reach each rank.
   const PROMOTE_COST = [0, 50, 80, 120, 160, 220, 280, 350, 430, 520, 650];
+  // Honors are permanent, cosmetic records; they never modify unit statistics.
   const MEDALS = {
-    valor: { name: 'Order of Valor', desc: '+8% damage.', earn: 'Destroy a unit led by an enemy commander.' },
-    laurel: { name: 'Golden Laurel', desc: '8% less damage taken.', earn: 'Win a conquest on Hard or Challenge.' },
-    star: { name: "Conqueror's Star", desc: '+1 movement.', earn: 'Capture an enemy capital.' },
-    marksman: {
-      name: 'Marksman Ribbon',
-      desc: '+8% critical chance.',
-      earn: 'One commander destroys 5 units in a single operation.',
-    },
-    campaign: { name: 'Campaign Ribbon', desc: '+4% damage and 4% less damage taken.', earn: 'Win any operation.' },
+    valor: { name: 'Order of Valor', desc: 'Defeated an enemy commander in battle.', earn: 'Personally defeat an enemy commander-led unit.' },
+    star: { name: "Conqueror's Star", desc: 'Captured an enemy capital.', earn: 'Personally capture an enemy capital.' },
+    marksman: { name: 'Marksman Ribbon', desc: 'Five direct victories in a single operation.', earn: 'Personally destroy five enemy units in an operation.' },
+    campaign: { name: 'Campaign Ribbon', desc: 'Distinguished service in a victorious operation.', earn: 'Participate meaningfully in a victorious operation.' },
+    laurel_hard: { name: 'Bronze Laurel', desc: 'Most distinguished commander in a Hard conquest.', earn: 'Highest HQ contribution in a Hard conquest victory.' },
+    laurel_challenge: { name: 'Silver Laurel', desc: 'Most distinguished commander in a Challenge conquest.', earn: 'Highest HQ contribution in a Challenge conquest victory.' },
+    laurel_elite: { name: 'Golden Laurel', desc: 'Most distinguished commander in an Elite conquest.', earn: 'Highest HQ contribution in an Elite conquest victory.' },
+    // Read-only legacy type kept solely to identify medals in older saves.
+    laurel: { name: 'Legacy Golden Laurel', desc: 'Awarded under the original medal rules.', earn: 'Historical decoration.' },
   };
   // Starting branch ratings (stars, up to 6 with command tokens): Infantry, Armor, Artillery.
   const RATINGS = {

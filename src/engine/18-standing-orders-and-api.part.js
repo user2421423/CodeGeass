@@ -269,6 +269,8 @@
     removeGeneric,
     officer,
     medalSlots,
+    claimHonors,
+    finalizeHonors,
     moraleFloor,
     STARTERS,
     recruitPrice,
