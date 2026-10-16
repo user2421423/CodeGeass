@@ -260,6 +260,7 @@ function fireFortressAt(s, p) {
 }
 function activateHex(p) {
   if (!p) return;
+  if (typeof tutorialAllowHex === 'function' && !tutorialAllowHex(p)) return;
   if (armyGroupRouting && (game.mode === 'conquest' || game.mode === 'scenario') && interactive()) {
     const id = armyGroupRouting;
     const result = E.orderArmyGroup(game, id, p.c, p.r);
