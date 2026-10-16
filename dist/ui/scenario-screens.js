@@ -117,6 +117,10 @@ function scenarioCatalogRefresh() {
 
 function scenarioDialog() {
   const model=scenarioModel();
+  // Load the high-resolution map while the player reads the scenario briefing
+  // so the first gameplay frame is crisp instead of a blurred placeholder.
+  if (typeof preloadRegionalMapImage === 'function')
+    preloadRegionalMapImage(scenarioKind);
   if(!model)return;
   const priorCatalog=modal.querySelector('#scenario-library-index');
   const priorScroll=priorCatalog?.scrollTop || 0;
