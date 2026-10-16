@@ -382,14 +382,14 @@
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
     if(u.expShadowMove){u.moved=true;delete u.expShadowMove;}
     reindex(g,u,from);
-    newcomerOverwatch(g,u);
-    if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true};}
+    const hostileReaction = newcomerOverwatch(g,u);
+    if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true,hostileReaction};}
     // Moving through enemy or neutral territory never changes its map color.
     const { captured, annexed } = captureCity(g, u, t.naval === 'amphibious' || (!t.naval && fromSea));
     const portCaptured = capturePort(g, u);
     const seized = seizeDeposit(g, u, dest);
     checkVictory(g);
-    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, portCaptured, seized };
+    return { ok: true, from, to: { c: dest.c, r: dest.r }, captured, annexed, portCaptured, seized, hostileReaction };
   }
   // `last` is the city whose capture left the loser with none; anything it still held passes to the conqueror.
   function surrender(g, loser, winner, last) {
