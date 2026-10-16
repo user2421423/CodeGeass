@@ -21,6 +21,8 @@ The seven transparent original medal renders are combined into `dist/assets/art/
 ## Persistence and recovery
 `profile.roster[k].honors` is an array of `{ id, citations: [{ operation, difficulty, reason, turn, claimId }] }`. Additional victories add citations beneath the same decoration. `profile.honorClaims` prevents duplicate claims when a completed save is reopened; normal mission/conquest reward claims reuse their existing claim ID. Scenarios claim only honors, not command tokens or Elite fragments.
 
+Story Mode missions can set their victory state outside the conquest victory checker; result-screen finalization ensures the Campaign Ribbon still awards after participation.
+
 The existing shared `profile.medals` inventory and previously equipped `profile.roster[k].medals` are migrated once to `profile.legacyHonors`, preserving counts and any known *former equipped owner*, without claiming the former owner actually earned the award. Prior operation saves with the old `game.medalsEarned` format are also preserved in the historical archive when claimed. No rank, commission, star, commander ownership, or currency data is reset.
 
 ## Interface

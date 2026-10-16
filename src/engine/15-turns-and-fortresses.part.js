@@ -288,7 +288,7 @@
   }
   const ARMISTICE = 120;
   function checkVictory(g) {
-    if (g.over) return g.over;
+    if (g.over) { finalizeHonors(g); return g.over; }
     decideVictory(g);
     if (g.over) finalizeHonors(g);
     return g.over;

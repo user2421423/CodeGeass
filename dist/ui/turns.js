@@ -253,6 +253,9 @@ function claimReward() {
 }
 function resultDialog() {
   if (!game.over) return;
+  // Story missions and standalone scenarios can set g.over directly, without
+  // going through the conquest victory checker. Finalize honors before claims.
+  E.finalizeHonors(game);
   militaryPresentation.resultSound();
   if (game.mode === 'scenario') {
     if (!game.over) return;
