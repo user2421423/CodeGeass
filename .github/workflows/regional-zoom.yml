@@ -28,6 +28,11 @@ jobs:
           NODE_PATH: /tmp/zoom-deps/node_modules
           REGIONAL_ZOOM_OUTPUT: /tmp/regional-zoom-checks
         run: node tools/check-regional-zoom.cjs
+      - name: Benchmark map panning on all four scenarios
+        env:
+          NODE_PATH: /tmp/zoom-deps/node_modules
+          BENCHMARK_OUTPUT: /tmp/regional-zoom-checks/panning-results.json
+        run: node tools/benchmark_regional_maps.cjs
       - name: Upload before/tactical/after screenshots and JSON measurements
         if: always()
         uses: actions/upload-artifact@v4
