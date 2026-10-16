@@ -21,7 +21,7 @@
   const tierLabels = {
     eu: ['Global Conflicts','Bering Strait','Overseas Invasions','Continental Landings','American Interior','Crossing the Rocky Mountains','Final Offensive'],
     britannia: ['Global Conflicts','Bering Strait','Imperial Expansion','The Eurasian Offensive','Conquest of Western Russia','The European War','Operation Stonehenge'],
-    'britannia-federation': ['Opening Battles','Securing the Flanks','Invasion of South China','The Yangtze Front','The Imperial Capital'],
+    'britannia-federation': ['Global Conflicts','Opening Battles','Securing the Flanks','Invasion of South China','The Yangtze Front','The Imperial Capital'],
     'federation-britannia': ['Global Conflicts','Asian War','Pacific Expansion','American Beachheads','Central American War','Western America','Final Offensive'],
   };
   // [id, title, existing scenario ID/null, geographic name, marker lon/lat,
@@ -65,18 +65,19 @@
   // scenarios have null IDs and cannot be launched or completed. The two
   // existing regional scenarios retain their original starting positions.
   const brFederationRows = [
-    [1,[
+    [1,shared],
+    [2,[
       ['philippines','Invasion of the Philippines','philippines-invasion','Philippines',[124,12],[115.5,4.5,139.1,21.2],'Launch a carrier-supported invasion of Federation-held Philippine islands.'],
       ['indochina','Defense of Indochina','conquest-indochina','Indochina',[106,16],[96.2,7.5,117.2,27],'Defend Britannian Southeast Asia against the Federation advance.'],
     ]],
-    [2,[
+    [3,[
       ['malacca','Battle of the Strait of Malacca','bf-malacca','Malacca Strait',[101.5,3.5],[94,-2,106,8],'Capture the maritime chokepoint and cut the Federation\'s western access to Indonesia.'],
       ['korea','Invasion of Korea','invasion-korea','Korean Peninsula',[127.5,37],[124,33,131,43],'Attack the Federation on the Korean Peninsula from Britannian Pacific positions.'],
       ['iraq-iran','Iraq–Iran Campaign','britannia-iraq-iran','Iraq and Iran',[49,33],[38,24,64,40],'Open a western offensive into Federation-held Iraq and Iran.'],
     ]],
-    [3,[['south-china','Invasion of South China','bf-south-china','Southern China',[111,23],[102,18,119,29],'Advance north from Southeast Asia with supporting coastal operations.']]],
-    [4,[['yangtze','Battle of the Yangtze River','bf-yangtze','Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
-    [5,[['luoyang','Battle of Luoyang','battle-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
+    [4,[['south-china','Invasion of South China','bf-south-china','Southern China',[111,23],[102,18,119,29],'Advance north from Southeast Asia with supporting coastal operations.']]],
+    [5,[['yangtze','Battle of the Yangtze River','bf-yangtze','Yangtze River',[113,31],[105,27,122,33],'Fight across the Yangtze with major crossings, river operations and defensive lines.']]],
+    [6,[['luoyang','Battle of Luoyang','battle-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Finish the campaign with the assault on the Federation imperial capital.']]],
   ];
   // Federation vs Britannia: only user-approved scenarios, with distinct campaign
   // objectives and runtime IDs. Existing Indochina and Philippines support 'cf'.
