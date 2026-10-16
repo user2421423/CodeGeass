@@ -2,7 +2,7 @@
 
 A guided, playable **Training Grounds** battle using the actual Knightmare engine and existing map controls.
 
-**Access:** Main menu → **Interactive Tutorial** → **Start tutorial** (also via **Play tutorial** in the footer).
+**Access:** Main menu → footer **Interactive tutorial** (next to Field manual); the tutorial is deliberately separate from the Game modes section.
 
 ## Lessons
 1. Begin the training battle.
