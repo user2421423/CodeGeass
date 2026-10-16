@@ -4,20 +4,32 @@
 // initializers; no alternative movement, production, combat or victory rules.
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const E = require('../dist/engine.js');
 require('../dist/engine/ai.js');
-const japan = require('../dist/scenarios.js');
-const division = require('../dist/scenarios-division-japan.js');
-const europe = require('../dist/scenarios-europe.js');
 const report = require('./balance_dashboard_report.cjs');
-
+// Read the shipped manifest rather than maintaining an incomplete second catalog.
+// The manifest only declares a browser loader; no DOM functions are invoked here.
+const manifestSource = fs.readFileSync(path.join(__dirname, '../dist/scenario-manifest.js'), 'utf8');
+const catalog = vm.runInNewContext(manifestSource +
+  '\n;({ entries: SCENARIO_MANIFEST, files: SCENARIO_FILES })');
+for (const file of catalog.files) require(path.join(__dirname, '../dist', file));
+const missing = catalog.entries.filter(entry => !E.scenarios?.byId?.[entry.id]);
+if (missing.length) throw new Error('Missing regional scenario modules: ' + missing.map(v => v.id).join(', '));
+const regional = Object.fromEntries(catalog.entries.map(entry => {
+  const scenario = E.scenarios.byId[entry.id];
+  return [entry.id, { title: scenario.title || entry.title, sides: scenario.sides, scenario }];
+}));
 const MODES = Object.freeze({
   '2017': { title: '2017 — World War', sides: ['britannia', 'eu', 'cf'], era: 'world' },
   '2018': { title: '2018 — Rise of the U.F.N.', sides: ['britannia', 'eb', 'cf'], era: 'ufn2018' },
-  invasion: { title: 'The Invasion of Japan', sides: japan.sides, scenario: japan },
-  division: { title: 'The Division of Japan', sides: division.sides, scenario: division },
-  europe: { title: 'The European War', sides: europe.sides, scenario: europe }
+  ...regional,
+  // Legacy mode names remain accepted, but are excluded from the default matrix.
+  invasion: regional['invasion-japan'],
+  division: regional['division-japan'],
+  europe: regional['european-war']
 });
+const ALL_MODES = ['2017', '2018', ...catalog.entries.map(v => v.id)];
 const DIFFICULTIES = ['normal', 'hard', 'challenge', 'elite'];
 const DEFAULT_TURNS = [10, 20, 30, 40, 50];
 
@@ -34,8 +46,9 @@ function parse(argv) {
   };
   const list = (flag, fallback) => String(value(flag, fallback)).split(',').map(s => s.trim()).filter(Boolean);
   const options = {
-    modes: list('--modes', Object.keys(MODES).join(',')),
-    difficulties: list('--difficulties', 'normal'),
+    modes: list('--modes', 'all'),
+    difficulties: list('--difficulties', 'all'),
+    shard: value('--shard', null),
     runs: number('--runs', 1, 1, 100),
     seed: number('--seed', 20261007, 0, 4294967295),
     turns: number('--max-turns', 30, 1, 120),
@@ -48,6 +61,17 @@ function parse(argv) {
   options.snapshots = [...new Set(list('--snapshot-turns', DEFAULT_TURNS.join(','))
     .map(Number).filter(t => Number.isInteger(t) && t >= 1 && t <= options.turns))].sort((a, b) => a - b);
   if (!options.snapshots.includes(options.turns)) options.snapshots.push(options.turns);
+  options.modes = [...new Set(options.modes.flatMap(m =>
+    m === 'all' ? ALL_MODES : m === 'regional' ? catalog.entries.map(v => v.id) :
+      m === 'conquest' ? ['2017', '2018'] : [m]))];
+  options.difficulties = [...new Set(options.difficulties.flatMap(d =>
+    d === 'all' ? DIFFICULTIES : [d]))];
+  if (options.shard != null) {
+    const match = /^(\d+)\/(\d+)$/.exec(options.shard);
+    if (!match || +match[2] < 1 || +match[2] > 64 || +match[1] >= +match[2])
+      throw new Error('--shard must be index/count, e.g. 0/8');
+    options.modes = options.modes.filter((_, i) => i % +match[2] === +match[1]);
+  }
   if (!options.modes.length || options.modes.some(m => !MODES[m]))
     throw new Error('Unknown or missing mode; valid: ' + Object.keys(MODES).join(', '));
   if (options.difficulties.some(d => !DIFFICULTIES.includes(d)))
@@ -90,6 +114,9 @@ function captureSnapshot(g, sides, turn) {
 function tally(sides) {
   return Object.fromEntries(sides.map(s => [s, 0]));
 }
+function coastalCity(g, city) {
+  return !!city.portAt || E.adjacent(g, city).some(p => p.terrain === 'sea');
+}
 function winnerFor(g, mode, sides, turn) {
   const cfg = MODES[mode];
   if (cfg.scenario) return cfg.scenario.winner(g)?.winner || null;
@@ -122,14 +149,25 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
     unitsBuilt: tally(sides), unitsLost: tally(sides),
     cityCaptures: tally(sides), coastalCaptures: tally(sides),
     frontSwitches: tally(sides), pairedAttacks: {},
-    cityTransfers: [], navalLandingLog: [], frontSwitchLog: []
+    cityTransfers: [], navalLandingLog: [], frontSwitchLog: [],
+    navalSuccesses: tally(sides), commanderStarts: tally(sides),
+    commanderSurvivors: tally(sides), commandersLost: tally(sides),
+    longestStallTurns: 0, stalemate: false
   };
   const seen = new Map();
   const lastAssignments = Object.fromEntries(sides.map(side => [side, {}]));
   const owners = new Map(g.stations.map(s => [s.id, s.owner]));
   const recentLandings = [];
+  // Track only officers present at scenario setup; replacements aren't retroactively
+  // counted as survival, and embarked officers are included.
+  const openingCommanders = allUnits(g).filter(u => u.cmd).map(u => ({
+    id: u.id, side: u.side, commander: u.cmd
+  }));
+  for (const u of openingCommanders)
+    if (Object.hasOwn(metrics.commanderStarts, u.side)) metrics.commanderStarts[u.side]++;
   const timeline = [initial];
   let winner = null, played = 0, initialObservationComplete = false;
+  let idleTurns = 0;
   function inspect() {
     const current = new Map(allUnits(g).map(u => [u.id, u]));
     for (const [id, u] of current)
@@ -147,10 +185,21 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
       if (from === city.owner) continue;
       if (Object.hasOwn(metrics.cityCaptures, city.owner)) {
         metrics.cityCaptures[city.owner]++;
-        const coastal = !!city.portAt || E.adjacent(g, city).some(p => p.terrain === 'sea');
+        const coastal = coastalCity(g, city);
         if (coastal) metrics.coastalCaptures[city.owner]++;
       }
       metrics.cityTransfers.push({ turn: g.turn, city: city.name, from, to: city.owner });
+      // A landing counts as operationally successful only when a nearby hostile
+      // coastal city is captured within five turns. This is a proxy, not proof
+      // the landing force itself made the capture.
+      if (coastalCity(g, city) && from !== city.owner)
+        for (const landing of recentLandings) {
+          if (landing.side !== city.owner || landing.success ||
+              g.turn - landing.turn > 5 || g.turn < landing.turn ||
+              E.distance(landing.to, city, g) > 5) continue;
+          landing.success = true;
+          metrics.navalSuccesses[landing.side]++;
+        }
       owners.set(city.id, city.owner);
     }
   }
@@ -180,15 +229,19 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
         metrics.deployments[side]++;
         if (actor && E.TYPES[actor.type]?.naval === 'ship') {
           metrics.seaLandings[side]++;
-          recentLandings.push({ side, turn: g.turn, to: o.to });
-          metrics.navalLandingLog.push({ side, turn: g.turn, c: o.to.c, r: o.to.r });
+          if (E.tile(g, o.to.c, o.to.r)?.terrain !== 'sea') {
+            const landing = { side, turn: g.turn, to: o.to, success: false };
+            recentLandings.push(landing);
+            metrics.navalLandingLog.push({ side, turn: g.turn, c: o.to.c, r: o.to.r });
+          }
         }
       } else if (o.kind === 'move') {
         metrics.moves[side]++;
         if (o.from && o.to && E.tile(g, o.from.c, o.from.r)?.terrain === 'sea' &&
             E.tile(g, o.to.c, o.to.r)?.terrain !== 'sea') {
           metrics.seaLandings[side]++;
-          recentLandings.push({ side, turn: g.turn, to: o.to });
+          const landing = { side, turn: g.turn, to: o.to, success: false };
+          recentLandings.push(landing);
           metrics.navalLandingLog.push({ side, turn: g.turn, c: o.to.c, r: o.to.r });
         }
       }
@@ -198,6 +251,8 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
   initialObservationComplete = true;
   const started = process.hrtime.bigint();
   for (let turn = 1; turn <= maxTurns; turn++) {
+    const progressBefore = metrics.cityTransfers.length +
+      Object.values(metrics.unitsLost).reduce((a, b) => a + b, 0);
     g.turn = turn;
     if (cfg.scenario) cfg.scenario.onTurn(g);
     for (const side of g.order) {
@@ -233,16 +288,34 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
     inspect();
     played = turn;
     winner = winnerFor(g, mode, sides, turn);
+    const progressAfter = metrics.cityTransfers.length +
+      Object.values(metrics.unitsLost).reduce((a, b) => a + b, 0);
+    const opposingCities = sides.filter(side => g.stations.some(s => s.owner === side)).length >= 2;
+    idleTurns = opposingCities && progressAfter === progressBefore ? idleTurns + 1 : 0;
+    metrics.longestStallTurns = Math.max(metrics.longestStallTurns, idleTurns);
     if (snapshots.includes(turn) || winner) timeline.push(captureSnapshot(g, sides, turn));
     if (winner) break;
   }
-  // Observation counters track native actions; sea landings are a measurable
-  // proxy, NOT proof that a coherent naval invasion succeeded.
+  const survivors = new Set(allUnits(g).map(u => u.id));
+  for (const u of openingCommanders) {
+    const field = survivors.has(u.id) ? 'commanderSurvivors' : 'commandersLost';
+    metrics[field][u.side]++;
+  }
+  // Eight turns without a city transfer or a formation loss while opposing
+  // city owners remain is flagged as an AI stalemate, not as a game draw.
+  metrics.stalemate = !winner && maxTurns >= 8 && idleTurns >= 8 &&
+    sides.filter(side => g.stations.some(s => s.owner === side)).length >= 2;
+  const selectedLosses = metrics.unitsLost[player] || 0;
+  const opposingLosses = sides.filter(side => side !== player)
+    .reduce((sum, side) => sum + (metrics.unitsLost[side] || 0), 0);
   return {
     mode, player, difficulty, seed, maxTurns, turnsPlayed: played,
     resolved: !!winner, winner, result: winner || 'unresolved',
     initial, final: captureSnapshot(g, sides, played), timeline, metrics,
-    elapsedMs: +(Number(process.hrtime.bigint() - started) / 1e6).toFixed(1)
+    casualtyRatio: selectedLosses ? +(opposingLosses / selectedLosses).toFixed(3) : null,
+    casualtyTotals: { friendly: selectedLosses, opposing: opposingLosses },
+    elapsedMs: +(Number(process.hrtime.bigint() - started) / 1e6).toFixed(1),
+    msPerTurn: played ? +(Number(process.hrtime.bigint() - started) / 1e6 / played).toFixed(1) : 0
   };
 }
 function run(options) {
@@ -260,10 +333,10 @@ function run(options) {
         }
   }
   return {
-    schema: 1, generatedAt: new Date().toISOString(), engine: 'Knightmare Conquest (shipped rules)',
+    schema: 2, generatedAt: new Date().toISOString(), engine: 'Knightmare Conquest (shipped rules)',
     configuration: { modes: options.modes, difficulties: options.difficulties,
       players: options.players, runs: options.runs, seed: options.seed,
-      maxTurns: options.turns, snapshotTurns: options.snapshots },
+      maxTurns: options.turns, snapshotTurns: options.snapshots, shard: options.shard },
     modes: Object.fromEntries(options.modes.map(m => [m, { title: MODES[m].title, sides: MODES[m].sides }])),
     rows
   };
