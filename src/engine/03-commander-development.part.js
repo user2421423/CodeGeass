@@ -22,6 +22,13 @@
   function genericSlots(k, officer = null) { return COMMISSION_ORDER.indexOf(commissionOf(k, officer)) + 1; }
   function commandStage(rank) { return rank >= 8 ? 2 : rank >= 4 ? 1 : 0; }
   function commandStageName(rank) { return ['Tactical Command', 'Operational Command', 'High Command'][commandStage(rank)]; }
+  // Battle credits paid each time a personal commander is assigned. Commission affects generic slots;
+  // military rank affects command strength. Neither the frame nor its Elite status affects this cost.
+  function assignmentCost(g, k) {
+    const officer = g?.roster?.[k];
+    return 100 + 40 * COMMISSION_ORDER.indexOf(commissionOf(k, officer))
+      + 30 * commandStage(officer?.rank ?? 0);
+  }
   function ratingCap(rank, branch = 'armor') {
     return branch === 'mobility' ? [4, 5, 6][commandStage(rank)] : [2, 4, 6][commandStage(rank)];
   }
