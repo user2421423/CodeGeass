@@ -1033,7 +1033,7 @@ const GEOGRAPHY = (() => {
     return true;
   }
 
-  function paintJapan(ctx, g, left, right, top, bottom, scale) {
+  function paintJapan(ctx, g, left, right, top, bottom, scale, layer = 'all') {
     if (g.mode !== 'scenario' || !g.scenario?.projection) return false;
     const meta = mapMeta(g), has = name => !!meta.overlays?.includes(name);
     if (meta.painter === 'beringGeographic')
@@ -1089,8 +1089,10 @@ const GEOGRAPHY = (() => {
     const sea = ctx.createLinearGradient(0, top, 0, bottom);
     sea.addColorStop(0, '#205372');
     sea.addColorStop(1, '#103d5b');
-    ctx.fillStyle = sea;
-    ctx.fillRect(left, top, right - left, bottom - top);
+    if (layer !== 'political') {
+      ctx.fillStyle = sea;
+      ctx.fillRect(left, top, right - left, bottom - top);
+    }
     if (!shapes.length && !has('philippines')) return true;
 
     // No unconditional land fill: global coast polygons can include Russia,
@@ -1098,39 +1100,52 @@ const GEOGRAPHY = (() => {
     // Draw land only when a real scenario land tile (or its shoreline buffer)
     // covers it. This rule also applies when Campaign launches a scenario.
     const visibleLand = regionalVisibleLand(g);
-    // Draw only playable political/neutral land INSIDE real geographic shores.
+    // Terrain and national ownership are independent render passes. The base
+    // remains valid across ordinary city captures and is cached separately.
     ctx.save();
     ctx.transform(A, C, B, D, tx, ty);
     const clip = paths(ctx, shapes, a, b, c, d);
     if (clip) {
       clipPath(ctx, clip);
       ctx.transform(invA, invC, invB, invD, invX, invY);
-      // Legitimate unowned land uses the neutral terrain colour, but only
-      // inside its own playable hexes; no foreign atlas polygon leaks through.
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#91a799';
-      ctx.beginPath();
-      for (const t of g.tiles) {
-        if (t.terrain !== 'sea' && !t.owner) tacticalHex(ctx, t, R + .8);
-      }
-      ctx.fill();
-      for (const [side, tiles] of japanColorGroups(g)) {
-        const faction = g.factions?.[side] || E.FACTIONS[side];
-        if (!faction?.color) continue;
-        ctx.fillStyle = faction.color;
-        ctx.beginPath();
-        for (const t of tiles) {
-          const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
-          const y = R * 1.5 * t.r + R;
-          if (x < left - R * 2 || x > right + R * 2 ||
-              y < top - R * 2 || y > bottom + R * 2) continue;
-          tacticalHex(ctx, t, R + .8);
+      if (layer !== 'political') {
+        ctx.fillStyle = '#91a799';
+        if (layer === 'static') {
+          // Cover all playable mainland/coastal buffer with neutral geography;
+          // political colour is a transparent layer above this immutable base.
+          if (visibleLand.path) ctx.fill(visibleLand.path);
+          else {
+            ctx.beginPath();
+            for (const t of visibleLand.tiles) tacticalHex(ctx, t, R + .8);
+            ctx.fill();
+          }
+        } else {
+          ctx.beginPath();
+          for (const t of g.tiles)
+            if (t.terrain !== 'sea' && !t.owner) tacticalHex(ctx, t, R + .8);
+          ctx.fill();
         }
-        ctx.fill();
+      }
+      if (layer !== 'static') {
+        for (const [side, tiles] of japanColorGroups(g)) {
+          const faction = g.factions?.[side] || E.FACTIONS[side];
+          if (!faction?.color) continue;
+          ctx.fillStyle = faction.color;
+          ctx.beginPath();
+          for (const t of tiles) {
+            const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+            const y = R * 1.5 * t.r + R;
+            if (x < left - R * 2 || x > right + R * 2 ||
+                y < top - R * 2 || y > bottom + R * 2) continue;
+            tacticalHex(ctx, t, R + .8);
+          }
+          ctx.fill();
+        }
       }
     }
     ctx.restore();
-
+    // No terrain, sea fill, coastlines or relief work on a capture-only repaint.
+    if (layer === 'political') return true;
     // WGS84 relief for the Federation's two new oceanic theatres. The coastline
     // is still the real GSHHG polygon, not an outline of the tactical hexes.
     if(has('reliefZones') && g.scenario.reliefZones?.length){
@@ -1441,8 +1456,8 @@ ctx.restore();}
     }
     return true;
   }
-  function paint(ctx, g, left, right, top, bottom, scale) {
-    if (paintJapan(ctx, g, left, right, top, bottom, scale)) return true;
+  function paint(ctx, g, left, right, top, bottom, scale, layer = 'all') {
+    if (paintJapan(ctx, g, left, right, top, bottom, scale, layer)) return true;
     if (!g.wrap || g.cols !== VISUAL_WORLD.cols || g.rows !== VISUAL_WORLD.rows) return false;
     if (typeof document === 'undefined' || typeof document.createElement !== 'function' ||
         typeof ctx.drawImage !== 'function') return paintRaw(ctx, g, left, right, top, bottom, scale);

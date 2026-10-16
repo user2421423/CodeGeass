@@ -16,31 +16,75 @@ function mapLayerFresh(m, scale, dpr, w, h) {
   const slack = MAP_LAYER_MARGIN - 16;
   return Math.abs(offset.x - m.x) <= slack && Math.abs(offset.y - m.y) <= slack;
 }
-// Camera-independent cache of *complete* terrain tiles, including grid,
-// ownership borders and relief. Reusing the whole base map prevents the 30-50ms
-// canvas path rebuild which was still happening after geography was cached.
+// The static geographic layer is cached independently of the dynamic political
+// layer. A capture invalidates tint/borders, never the costly coastlines.
 const MAP_ATLAS_TILE = 960;
 const MAP_ATLAS_PAD = 5;
 const MAP_ATLAS_SCALE_STEP = 1.25;
-const mapAtlasTiles = new Map();
+const mapAtlasTiles = new Map(); // legacy Conquest / combined layers
+const mapAtlasStaticTiles = new Map();
+const mapAtlasPoliticalTiles = new Map();
 const mapAtlasWarmQueue = [];
 const mapAtlasWarmKeys = new Set();
 let mapAtlasIdlePending = false;
+let mapAtlasLastNavigation = -Infinity;
+function noteMapNavigation() { mapAtlasLastNavigation = performance.now(); }
 let mapAtlasGeneration = 0;
-let mapAtlasState = { tiles: null, revision: -1, scale: null };
-
-// Bounded regional maps have much more world space than visible screen space.
-// Large, coarser atlas chunks at strategic zoom prevent hundreds of tiny
-// synchronous paints; tactical zoom uses the original 960-unit chunks.
+let mapAtlasState = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
+let mapAtlasFallback = { id: null, image: null, ready: false, hires: false };
+// Keep a few recently viewed theatre maps decoded, not all 37 at once.
+const mapAtlasHiResImages = new Map();
+function preloadRegionalMapImage(id) {
+  if (!id || typeof Image === 'undefined') return null;
+  if (mapAtlasHiResImages.has(id)) {
+    const cached = mapAtlasHiResImages.get(id);
+    mapAtlasHiResImages.delete(id);
+    mapAtlasHiResImages.set(id, cached);
+    return cached;
+  }
+  const entry = { image: new Image(), ready: false, failed: false, listeners: [] };
+  entry.image.onload = () => {
+    entry.ready = true;
+    for (const notify of entry.listeners.splice(0)) notify(entry.image);
+  };
+  entry.image.onerror = () => {
+    entry.failed = true;
+    entry.listeners.length = 0;
+  };
+  mapAtlasHiResImages.set(id, entry);
+  while (mapAtlasHiResImages.size > 3)
+    mapAtlasHiResImages.delete(mapAtlasHiResImages.keys().next().value);
+  entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp';
+  return entry;
+}
+let mapAtlasStrategicOwners = { tiles: null, original: null, revision: -1, canvas: null };
+const mapAtlasPerformance = {
+  hits: 0, misses: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
+  basePaints: 0, politicalPaints: 0,
+  synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
+};
+if (typeof window !== 'undefined') window.KNIGHTMARE_MAP_PERF = {
+  snapshot: () => ({ ...mapAtlasPerformance, queued: mapAtlasWarmQueue.length,
+    staticChunks: mapAtlasStaticTiles.size, politicalChunks: mapAtlasPoliticalTiles.size,
+    combinedChunks: mapAtlasTiles.size, fallbackReady: mapAtlasFallback.ready,
+    highResolutionBackdrop: mapAtlasFallback.hires }),
+  reset: () => {
+    for (const k of Object.keys(mapAtlasPerformance)) mapAtlasPerformance[k] = 0;
+  },
+};
+function regionalMapLayers() {
+  if (game.mode !== 'scenario' || !game.scenario?.projection) return false;
+  const meta = E.scenarios?.byId?.[game.scenario.id]?.meta?.map;
+  // Bering uses a completely different, scenario-specific painter.
+  return !meta?.painter;
+}
 function mapAtlasTileSize(scale) {
-  if (game.wrap) return MAP_ATLAS_TILE;
-  return scale < 0.14 ? MAP_ATLAS_TILE * 4 :
-    scale < 0.28 ? MAP_ATLAS_TILE * 2 : MAP_ATLAS_TILE;
+  // Small bounded chunks keep each deferred painting job short. Oversized
+  // strategic chunks previously required thousands of hex operations at once.
+  return !game.wrap ? MAP_ATLAS_TILE : MAP_ATLAS_TILE;
 }
 function mapAtlasRenderScale(scale) {
   if (game.wrap) return scale;
-  // Reuse atlas imagery across small trackpad zoom increments. Preserve the
-  // original 14/22/24/32-pixel grid/terrain detail thresholds.
   const pixels = R * scale;
   const stops = [0, 14, 22, 24, 32, Infinity];
   const band = pixels < 14 ? 0 : pixels < 22 ? 1 :
@@ -54,31 +98,86 @@ function mapAtlasRenderScale(scale) {
 function mapAtlasKey(tx, ty, scale, tileSize) {
   return scale.toFixed(7) + ':' + tileSize + ':' + tx + ',' + ty;
 }
-function shouldUseMapAtlas(scale) {
-  // Wrapped Conquest keeps the cheap whole-world overview at extreme zoom.
-  return !game.wrap || scale >= 0.33;
+function shouldUseMapAtlas(scale) { return !game.wrap || scale >= 0.33; }
+function mapAtlasCanvasSet(layer) {
+  return layer === 'static' ? mapAtlasStaticTiles :
+    layer === 'political' ? mapAtlasPoliticalTiles : mapAtlasTiles;
+}
+function updateMapFallback() {
+  const id = regionalMapLayers() ? game.scenario.id : null;
+  if (mapAtlasFallback.id === id) return;
+  mapAtlasFallback = { id, image: null, ready: false, hires: false };
+  if (!id || typeof Image === 'undefined') return;
+  const sourceId = id;
+  const notify = (img, hires) => {
+    if (mapAtlasFallback.id !== sourceId || (mapAtlasFallback.hires && !hires)) return;
+    mapAtlasFallback.image = img;
+    mapAtlasFallback.ready = true;
+    mapAtlasFallback.hires = hires;
+    // Low-resolution tiles left in the queue are superseded by the bitmap.
+    if (R * (baseScale * zoom) < 22 && mapAtlasWarmQueue.length) {
+      mapAtlasWarmQueue.length = 0;
+      mapAtlasWarmKeys.clear();
+      mapAtlasGeneration++;
+    }
+    if (typeof requestMapFrame === 'function') requestMapFrame();
+  };
+  const high = preloadRegionalMapImage(id);
+  if (high?.ready) {
+    notify(high.image, true);
+    return;
+  }
+  if (high && !high.failed)
+    high.listeners.push(img => notify(img, true));
+  // The smaller gallery image acts as a fast network fallback only; it must
+  // never be mixed with some detailed chunks in the same viewport.
+  const low = new Image();
+  low.onload = () => notify(low, false);
+  low.onerror = () => {
+    if (mapAtlasFallback.id === sourceId && !mapAtlasFallback.ready) {
+      // The regular atlas can still render if static imagery is unavailable.
+      mapAtlasFallback.failed = true;
+      if (typeof requestMapFrame === 'function') requestMapFrame();
+    }
+  };
+  low.src = 'scenario-previews/' + encodeURIComponent(id) + '.webp';
 }
 function refreshMapAtlas(scale) {
   const revision = game.mapRevision || 0;
+  const terrainRevision = game.mapTerrainRevision || 0;
   if (mapAtlasState.tiles === game.tiles &&
-      mapAtlasState.revision === revision && mapAtlasState.scale === scale) return;
-  // Multiple zoom levels may coexist. Only changes to the underlying map
-  // invalidate all atlas tiles; stale prefetch jobs are always discarded.
-  if (mapAtlasState.tiles !== game.tiles || mapAtlasState.revision !== revision)
+      mapAtlasState.revision === revision &&
+      mapAtlasState.terrainRevision === terrainRevision &&
+      mapAtlasState.scale === scale) return;
+  if (mapAtlasState.tiles !== game.tiles ||
+      mapAtlasState.terrainRevision !== terrainRevision) {
     mapAtlasTiles.clear();
+    mapAtlasStaticTiles.clear();
+    mapAtlasPoliticalTiles.clear();
+    mapAtlasFallback.id = null;
+    mapAtlasStrategicOwners = { tiles: game.tiles,
+      original: game.tiles.map(t => t.owner), revision: -1, canvas: null };
+  } else if (mapAtlasState.revision !== revision) {
+    mapAtlasTiles.clear();
+    mapAtlasPoliticalTiles.clear();
+  }
   mapAtlasWarmQueue.length = 0;
   mapAtlasWarmKeys.clear();
   mapAtlasGeneration++;
-  mapAtlasState = { tiles: game.tiles, revision, scale };
+  mapAtlasState = { tiles: game.tiles, revision, terrainRevision, scale };
+  updateMapFallback();
 }
-function completeMapTile(tx, ty, scale, detail, tileSize) {
+function completeMapTile(tx, ty, scale, detail, tileSize, layer = 'all', deferred = false) {
   const key = mapAtlasKey(tx, ty, scale, tileSize);
-  let item = mapAtlasTiles.get(key);
+  const cache = mapAtlasCanvasSet(layer);
+  let item = cache.get(key);
   if (item) {
-    mapAtlasTiles.delete(key);
-    mapAtlasTiles.set(key, item);
+    mapAtlasPerformance.hits++;
+    cache.delete(key);
+    cache.set(key, item);
     return item;
   }
+  mapAtlasPerformance.misses++;
   const worldX = tx * tileSize, worldY = ty * tileSize;
   const width = Math.min(tileSize, WORLD_W - worldX);
   const height = Math.min(tileSize, WORLD_H - worldY);
@@ -88,62 +187,182 @@ function completeMapTile(tx, ty, scale, detail, tileSize) {
   const c = document.createElement('canvas');
   c.width = Math.ceil((width + 2 * MAP_ATLAS_PAD) * quality);
   c.height = Math.ceil((height + 2 * MAP_ATLAS_PAD) * quality);
-  const oldCtx = ctx;
+  const oldCtx = ctx, start = performance.now();
   ctx = c.getContext('2d');
   try {
     ctx.setTransform(quality, 0, 0, quality,
       (-worldX + MAP_ATLAS_PAD) * quality,
       (-worldY + MAP_ATLAS_PAD) * quality);
-    // Include hex centres just outside the tile so seams are fully painted.
     const reach = MAP_ATLAS_PAD + R * 2;
     paintMapLayer(scale, detail,
       worldX - reach, worldX + width + reach,
-      worldY - reach, worldY + height + reach);
+      worldY - reach, worldY + height + reach, layer);
   } finally {
     ctx = oldCtx;
   }
+  const ms = performance.now() - start;
+  mapAtlasPerformance.paintMs += ms;
+  mapAtlasPerformance.maxPaintMs = Math.max(ms, mapAtlasPerformance.maxPaintMs);
+  if (layer === 'static') mapAtlasPerformance.basePaints++;
+  if (layer === 'political') mapAtlasPerformance.politicalPaints++;
+  if (deferred) mapAtlasPerformance.deferredPaints++;
+  else mapAtlasPerformance.synchronousPaints++;
   item = { canvas: c, worldX, worldY, width, height, quality };
-  mapAtlasTiles.set(key, item);
-  while (mapAtlasTiles.size > 72)
-    mapAtlasTiles.delete(mapAtlasTiles.keys().next().value);
+  cache.set(key, item);
+  while (cache.size > (layer === 'all' ? 72 : 96))
+    cache.delete(cache.keys().next().value);
   return item;
 }
-function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRow, lastRow) {
-  if (typeof requestIdleCallback !== 'function') return;
+function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = false) {
+  const key = layer + ':' + mapAtlasKey(col, row, scale, tileSize);
+  if (mapAtlasCanvasSet(layer).has(mapAtlasKey(col, row, scale, tileSize)) ||
+      mapAtlasWarmKeys.has(key)) return;
+  mapAtlasWarmKeys.add(key);
+  const job = { col, row, scale, detail, tileSize, layer, key, generation: mapAtlasGeneration };
+  if (urgent) mapAtlasWarmQueue.unshift(job);
+  else mapAtlasWarmQueue.push(job);
+  if (mapAtlasIdlePending) return;
+  mapAtlasIdlePending = true;
+  function warm(deadline) {
+    // A slow geography chunk can exceed 100ms on Japan. Never begin it while
+    // the user is panning or zooming; use the static backdrop until they stop.
+    if (mapAtlasWarmQueue.length && performance.now() - mapAtlasLastNavigation < 180) {
+      schedule(warm);
+      return;
+    }
+    // Exactly one chunk per idle task. Do not perform an unbounded tile loop
+    // in a pointer-move or requestAnimationFrame callback.
+    const job = mapAtlasWarmQueue.shift();
+    if (job) {
+      mapAtlasWarmKeys.delete(job.key);
+      if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale) {
+        completeMapTile(job.col, job.row, job.scale, job.detail, job.tileSize,
+          job.layer, true);
+        if (typeof requestMapFrame === 'function') requestMapFrame();
+      }
+    }
+    if (mapAtlasWarmQueue.length) schedule(warm);
+    else mapAtlasIdlePending = false;
+  }
+  function schedule(fn) {
+    if (typeof requestIdleCallback === 'function')
+      requestIdleCallback(fn, { timeout: 120 });
+    else setTimeout(() => fn({ timeRemaining: () => 0 }), 16);
+  }
+  schedule(warm);
+}
+function scheduleMapPrefetch(scale, detail, tileSize, firstCol, lastCol, firstRow, lastRow, layers) {
   const maxC = Math.ceil(WORLD_W / tileSize) - 1;
   const maxR = Math.ceil(WORLD_H / tileSize) - 1;
   for (let r = Math.max(0, firstRow - 1); r <= Math.min(maxR, lastRow + 1); r++)
     for (let c = Math.max(0, firstCol - 1); c <= Math.min(maxC, lastCol + 1); c++) {
       if (c >= firstCol && c <= lastCol && r >= firstRow && r <= lastRow) continue;
-      const key = mapAtlasKey(c, r, scale, tileSize);
-      if (mapAtlasTiles.has(key) || mapAtlasWarmKeys.has(key)) continue;
-      mapAtlasWarmKeys.add(key);
-      mapAtlasWarmQueue.push({ c, r, scale, detail, tileSize, generation: mapAtlasGeneration });
+      for (const layer of layers) queueMapAtlasTile(c, r, scale, detail, tileSize, layer);
     }
-  if (mapAtlasIdlePending || !mapAtlasWarmQueue.length) return;
-  mapAtlasIdlePending = true;
-  function warm(deadline) {
-    if (mapAtlasWarmQueue.length && deadline.timeRemaining() > 8) {
-      const job = mapAtlasWarmQueue.shift();
-      mapAtlasWarmKeys.delete(mapAtlasKey(job.c, job.r, job.scale, job.tileSize));
-      if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale)
-        completeMapTile(job.c, job.r, job.scale, job.detail, job.tileSize);
+}
+// At strategic zoom the already published troop-free WebP is sufficiently
+// detailed. This avoids re-tracing thousands of Japanese coastline vertices
+// just to move the camera. Tactical zoom still uses the high-resolution atlas.
+// Changes in ownership are a separate tiny overlay, not baked into geography.
+function drawStrategicOwnershipDelta() {
+  if (!mapAtlasFallback.ready) return;
+  const state = mapAtlasStrategicOwners;
+  if (state.tiles !== game.tiles) return;
+  const revision = game.mapRevision || 0;
+  if (state.revision !== revision) {
+    const source = mapAtlasFallback.image;
+    const c = state.canvas || document.createElement('canvas');
+    c.width = source.naturalWidth;
+    c.height = source.naturalHeight;
+    const originalCtx = ctx;
+    let changed = 0;
+    ctx = c.getContext('2d');
+    try {
+      ctx.setTransform(c.width / WORLD_W, 0, 0, c.height / WORLD_H, 0, 0);
+      for (let i = 0; i < game.tiles.length; i++) {
+        const t = game.tiles[i];
+        if (t.owner === state.original[i] ||
+            t.terrain === 'sea' || t.terrain === 'offmap') continue;
+        const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
+        const y = R * 1.5 * t.r + R;
+        hexPath(x, y, R + 0.5);
+        changed++;
+        ctx.fillStyle = t.owner ? F(t.owner).color : '#91a799';
+        ctx.fill();
+      }
+    } finally {
+      ctx = originalCtx;
     }
-    if (mapAtlasWarmQueue.length) requestIdleCallback(warm);
-    else mapAtlasIdlePending = false;
+    state.canvas = changed ? c : null;
+    state.revision = revision;
   }
-  requestIdleCallback(warm);
+  if (state.canvas)
+    ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
 }
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const paintScale = mapAtlasRenderScale(scale);
   const paintDetail = R * paintScale >= 14;
   const tileSize = mapAtlasTileSize(paintScale);
   refreshMapAtlas(paintScale);
+  const split = regionalMapLayers();
+  const layers = split ? ['static', 'political'] : ['all'];
+  const defer = split && mapAtlasFallback.ready;
+  // Never let the first frame synchronously rasterize a detailed theatre map.
+  // Asset loading happens asynchronously; regular legacy painting remains a
+  // safety net when both images fail to load.
+  if (split && !mapAtlasFallback.ready && !mapAtlasFallback.failed) return;
+  // At wide strategic zoom, preserve the published geographic picture itself:
+  // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
+  if (defer && R * scale < 22) {
+    // Abandon high-detail jobs scheduled while the backdrop was loading.
+    // Otherwise heavy Japanese coastline chunks can still stall navigation.
+    if (mapAtlasWarmQueue.length) {
+      mapAtlasWarmQueue.length = 0;
+      mapAtlasWarmKeys.clear();
+      mapAtlasGeneration++;
+    }
+    mapAtlasPerformance.strategicFrames++;
+    ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+    drawStrategicOwnershipDelta();
+    return;
+  }
   const firstRow = Math.max(0, Math.floor(top / tileSize));
   const lastRow = Math.min(Math.ceil(WORLD_H / tileSize) - 1, Math.floor(bottom / tileSize));
-  // Regional maps must never repeat horizontally like wraparound Conquest.
   const firstShift = wraps() ? Math.floor(left / WORLD_W) - 1 : 0;
   const lastShift = wraps() ? Math.ceil(right / WORLD_W) : 0;
+  // Atomic map presentation: never draw a mixture of low-res WebP and
+  // sharper tiles. Stay with one complete picture until *all* currently
+  // visible static and political tiles exist, then present them together.
+  // This also prevents alternating coastlines when the player pans.
+  if (defer) {
+    const missing = [];
+    const lastPhysicalRow = Math.ceil(WORLD_H / tileSize) - 1;
+    for (let k = firstShift; k <= lastShift; k++) {
+      const shift = k * WORLD_W;
+      const a = left - shift, b = right - shift;
+      if (b <= 0 || a >= WORLD_W) continue;
+      const firstCol = Math.max(0, Math.floor(a / tileSize));
+      const lastCol = Math.min(Math.ceil(WORLD_W / tileSize) - 1, Math.floor(b / tileSize));
+      for (let row = firstRow; row <= Math.min(lastRow, lastPhysicalRow); row++)
+        for (let col = firstCol; col <= lastCol; col++)
+          for (const layer of layers)
+            if (!mapAtlasCanvasSet(layer).has(mapAtlasKey(col, row, paintScale, tileSize)))
+              missing.push({ col, row, layer });
+    }
+    const navigating = performance.now() - mapAtlasLastNavigation < 180;
+    if (missing.length || navigating) {
+      mapAtlasPerformance.snapshotFrames++;
+      ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+      drawStrategicOwnershipDelta();
+      // Schedule at most the visible missing tiles; don't build any on the
+      // pointer-move/render stack, and don't show unfinished partial chunks.
+      for (const job of missing)
+        queueMapAtlasTile(job.col, job.row, paintScale, paintDetail,
+          tileSize, job.layer, true);
+      return;
+    }
+    mapAtlasPerformance.atomicAtlasFrames++;
+  }
   for (let k = firstShift; k <= lastShift; k++) {
     const shift = k * WORLD_W;
     const a = left - shift, b = right - shift;
@@ -152,20 +371,30 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     const lastCol = Math.min(Math.ceil(WORLD_W / tileSize) - 1, Math.floor(b / tileSize));
     for (let row = firstRow; row <= lastRow; row++)
       for (let col = firstCol; col <= lastCol; col++) {
-        const t = completeMapTile(col, row, paintScale, paintDetail, tileSize);
-        const pad = MAP_ATLAS_PAD;
-        ctx.drawImage(t.canvas, 0, 0,
-          (t.width + 2 * pad) * t.quality,
-          (t.height + 2 * pad) * t.quality,
-          t.worldX + shift - pad, t.worldY - pad,
-          t.width + 2 * pad, t.height + 2 * pad);
+        for (const layer of layers) {
+          const key = mapAtlasKey(col, row, paintScale, tileSize);
+          let tile = mapAtlasCanvasSet(layer).get(key);
+          if (tile) mapAtlasPerformance.hits++;
+          if (!tile) {
+            if (defer) {
+              queueMapAtlasTile(col, row, paintScale, paintDetail, tileSize, layer, true);
+              continue;
+            }
+            tile = completeMapTile(col, row, paintScale, paintDetail, tileSize, layer);
+          }
+          const pad = MAP_ATLAS_PAD;
+          ctx.drawImage(tile.canvas, 0, 0,
+            (tile.width + 2 * pad) * tile.quality,
+            (tile.height + 2 * pad) * tile.quality,
+            tile.worldX + shift - pad, tile.worldY - pad,
+            tile.width + 2 * pad, tile.height + 2 * pad);
+        }
       }
     if (firstCol <= lastCol && firstRow <= lastRow)
       scheduleMapPrefetch(paintScale, paintDetail, tileSize,
-        firstCol, lastCol, firstRow, lastRow);
+        firstCol, lastCol, firstRow, lastRow, layers);
   }
 }
-
 function mapLayer(scale, detail, dpr, w, h) {
   if (mapLayerFresh(mapLayerCache, scale, dpr, w, h)) return mapLayerCache;
   const M = MAP_LAYER_MARGIN,
@@ -257,13 +486,15 @@ function* visibleMapTiles(left, right, top, bottom) {
       yield game.tiles[r * game.cols + c];
   }
 }
-function paintMapLayer(scale, detail, left, right, top, bottom) {
+function paintMapLayer(scale, detail, left, right, top, bottom, layer = 'all') {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
-  // Geography is a continuous visual atlas. Hexes remain the *logical* map;
-  // they are not used as filled polygon art unless the device lacks ImageData.
   const pacificSky = isPacificAirBattle();
-  const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale);
+  const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale, layer);
+  if (layer === 'political') {
+    paintPoliticalBorders(scale, left, right, top, bottom);
+    return;
+  }
   if (!atlas) {
     for (const t of visibleMapTiles(left, right, top, bottom)) {
       const c = hexCenter(t);
@@ -321,9 +552,11 @@ function paintMapLayer(scale, detail, left, right, top, bottom) {
       }
     ctx.globalAlpha = 1;
   }
-  // Political borders are tactical information and still align to tile
-  // ownership. Coastlines are already smoothed by the visual atlas; drawing
-  // the old edge-by-edge hex coastline here would reintroduce the mosaic.
+  if (layer !== 'static') paintPoliticalBorders(scale, left, right, top, bottom);
+}
+function paintPoliticalBorders(scale, left, right, top, bottom) {
+  const copies = x => copiesBetween(x, left, right),
+    visible = p => p.y >= top && p.y <= bottom;
   if (R * scale >= 22) for (const t of visibleMapTiles(left, right, top, bottom)) {
     if (t.terrain === 'sea') continue;
     const c = hexCenter(t);

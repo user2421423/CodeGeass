@@ -476,6 +476,7 @@ function attachMap() {
     if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && touches.size === 2) {
       const now = touchMid(), rect = canvas.getBoundingClientRect();
+      if (typeof noteMapNavigation === 'function') noteMapNavigation();
       if (pinch.d > 0 && now.d > 0) changeZoom(now.d / pinch.d, { x: now.x - rect.left, y: now.y - rect.top });
       const scale = baseScale * zoom;
       cam.x -= (now.x - pinch.x) / scale;
@@ -489,6 +490,7 @@ function attachMap() {
         dy = e.clientY - pointer.y;
       if (Math.hypot(dx, dy) > (touchInput ? 10 : 5)) { pointer.dragged = true; clearTimeout(longPressTimer); }
       if (pointer.dragged) {
+        if (typeof noteMapNavigation === 'function') noteMapNavigation();
         const scale = baseScale * zoom;
         cam.x = pointer.cam.x - dx / scale;
         cam.y = pointer.cam.y - dy / scale;
@@ -565,6 +567,7 @@ function attachMap() {
     const pixels = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? rect.height : 1);
     if (!Number.isFinite(pixels) || !pixels) return;
     const step = E.clamp(pixels, -240, 240);
+    if (typeof noteMapNavigation === 'function') noteMapNavigation();
     changeZoom(Math.exp(-step / 500), { x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
   canvas.oncontextmenu = e => e.preventDefault();
