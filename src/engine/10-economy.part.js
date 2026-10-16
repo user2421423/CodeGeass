@@ -6,13 +6,13 @@
       .reduce((a, s) => {
         const y = cityOutput(g, s);
         if(s.expSupplyBlocked?.owner===side)return a;
-        a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1)*treasuryBonus(g,s);
+        a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).royalCompassion))a.credits+=Math.round(y.credits*.15);
 
         // The Mandate of Heaven aura does not stack with multiple copies.
         if(g.units.some(u=>u.hp>0&&!atSea(g,u)&&u.side===side&&fx(u).mandateOfHeaven&&dist(g,u,s)<=3)){
-          a.credits+=y.credits*.25*(s.expTaxUntil>=g.turn?.8:1)*treasuryBonus(g,s);
+          a.credits+=y.credits*.25*(s.expTaxUntil>=g.turn?.8:1);
           a.industry+=y.industry*.25;
         }
         a.industry += y.industry;
@@ -233,7 +233,7 @@
     // Research discounts affect credits only: manual repairs still restore exactly 20% HP.
     const energyNetwork = g ? 1 - techValue(g, u.side, 'cities.energy') : 1;
     // A ship must occupy a port held by its own side, not merely be adjacent to any city.
-    const friendlyDock = g && isShip(u) && portAtHex(g, u)?.portOwner === u.side;
+    const friendlyDock = g && isShip(u) && atFriendlyPort(g, u);
     const dockyard = friendlyDock ? 1 - techValue(g, u.side, 'naval.damage') : 1;
     return Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot *
       (g && logisticsNear(g, u) ? 0.7 : 1) * energyNetwork * dockyard));
