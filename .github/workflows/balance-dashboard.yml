@@ -4,25 +4,31 @@ on:
   workflow_dispatch:
     inputs:
       scope:
-        description: "Depth: smoke (1 seed/8 turns), standard (3 seeds/30 turns), deep (5 seeds/50 turns)"
+        description: "smoke (1 seed/8 turns), standard (3 seeds/30 turns), deep (5 seeds/50 turns)"
         type: choice
         options: [smoke, standard, deep]
         default: smoke
       baseline_ref:
-        description: "Baseline commit or ref (default: parent of checked-out commit)"
+        description: "Baseline commit/ref (defaults to first parent)"
         type: string
         required: false
       modes:
-        description: "Comma-separated modes (2017,2018,invasion,division,europe)"
+        description: "all, regional, conquest, or comma-separated scenario IDs"
         type: string
-        default: "2017,2018,invasion,division,europe"
+        default: all
+      difficulties:
+        description: "all, or comma-separated normal,hard,challenge,elite"
+        type: string
+        default: all
   push:
     branches: [main]
     paths:
       - "tools/balance_dashboard*.cjs"
       - ".github/workflows/balance-dashboard.yml"
+      - "dist/scenario-manifest.js"
+      - "dist/scenarios*.js"
       - "src/ai/**"
-      - "dist/engine/ai.js"
+      - "src/engine/**"
   schedule:
     - cron: "0 2 * * 1"
 
@@ -35,8 +41,13 @@ concurrency:
 
 jobs:
   compare:
+    name: Seeded comparison (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,64 +55,92 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Build game bundles
-        run: node tools/build_sources.cjs
-      - name: Determine paired simulation settings
+      - name: Prepare paired simulation matrix
         id: config
         env:
           SCOPE: ${{ inputs.scope }}
           REQUESTED_MODES: ${{ inputs.modes }}
+          REQUESTED_DIFFICULTIES: ${{ inputs.difficulties }}
           BASELINE_REF: ${{ inputs.baseline_ref }}
         shell: bash
         run: |
           set -euo pipefail
           case "$SCOPE" in
-            smoke) RUNS=1; TURNS=8 ;;
+            smoke|"") RUNS=1; TURNS=8 ;;
             standard) RUNS=3; TURNS=30 ;;
             deep) RUNS=5; TURNS=50 ;;
-            "") RUNS=1; TURNS=8 ;;
-            *) echo "Invalid scope"; exit 1 ;;
+            *) echo "Invalid scope $SCOPE"; exit 1 ;;
           esac
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then RUNS=3; TURNS=30; fi
           REF="$BASELINE_REF"
           if [ -z "$REF" ]; then REF="HEAD^"; fi
           BASE_SHA="$(git rev-parse --verify "$REF^{commit}")"
-          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then RUNS=3; TURNS=30; fi
           echo "runs=$RUNS" >> "$GITHUB_OUTPUT"
           echo "turns=$TURNS" >> "$GITHUB_OUTPUT"
           echo "baseline=$BASE_SHA" >> "$GITHUB_OUTPUT"
-          if [ -z "$REQUESTED_MODES" ]; then REQUESTED_MODES="2017,2018,invasion,division,europe"; fi
-          echo "modes=$REQUESTED_MODES" >> "$GITHUB_OUTPUT"
-      - name: Run baseline engine with identical reporting code
+          echo "modes=${REQUESTED_MODES:-all}" >> "$GITHUB_OUTPUT"
+          echo "difficulties=${REQUESTED_DIFFICULTIES:-all}" >> "$GITHUB_OUTPUT"
+      - name: Simulate baseline using current reporter
         shell: bash
         run: |
           set -euo pipefail
           git worktree add --detach /tmp/knightmare-baseline "${{ steps.config.outputs.baseline }}"
-          cp tools/balance_dashboard.cjs tools/balance_dashboard_report.cjs /tmp/knightmare-baseline/tools/
+          cp tools/balance_dashboard.cjs tools/balance_dashboard_report.cjs \
+            tools/balance_dashboard_report_expanded.cjs /tmp/knightmare-baseline/tools/
           mkdir -p dashboard-output
           (
             cd /tmp/knightmare-baseline
-            # Built bundles are not committed; build the baseline's own engine first.
             node tools/build_sources.cjs
             node tools/balance_dashboard.cjs \
               --modes "${{ steps.config.outputs.modes }}" \
+              --difficulties "${{ steps.config.outputs.difficulties }}" \
+              --shard "${{ matrix.shard }}/8" \
               --runs "${{ steps.config.outputs.runs }}" \
-              --max-turns "${{ steps.config.outputs.turns }}" \
-              --difficulties normal --seed 20261007 \
+              --max-turns "${{ steps.config.outputs.turns }}" --seed 20261007 \
               --output "$GITHUB_WORKSPACE/dashboard-output/baseline.json" \
               --html "$GITHUB_WORKSPACE/dashboard-output/baseline.html" \
               --summary "$GITHUB_WORKSPACE/dashboard-output/baseline.md"
           )
-      - name: Run current engine and generate matched dashboard
+      - name: Simulate candidate and compare identical seeds
         shell: bash
         run: |
           set -euo pipefail
+          node tools/build_sources.cjs
           node tools/balance_dashboard.cjs \
             --modes "${{ steps.config.outputs.modes }}" \
+            --difficulties "${{ steps.config.outputs.difficulties }}" \
+            --shard "${{ matrix.shard }}/8" \
             --runs "${{ steps.config.outputs.runs }}" \
-            --max-turns "${{ steps.config.outputs.turns }}" \
-            --difficulties normal --seed 20261007 \
+            --max-turns "${{ steps.config.outputs.turns }}" --seed 20261007 \
             --baseline dashboard-output/baseline.json \
             --output dashboard-output/candidate.json \
             --html dashboard-output/index.html \
             --summary dashboard-output/comparison.md
-          cat dashboard-output/comparison.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: balance-shard-${{ matrix.shard }}
+          path: dashboard-output/
+          retention-days: 21
+
+  combine:
+    name: Combined regional balance report
+    needs: compare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: balance-shard-*
+          path: dashboard-shards
+      - name: Merge and validate complete paired matrix
+        run: |
+          node tools/balance_dashboard_merge.cjs dashboard-shards dashboard-output/combined
+          head -n 18 dashboard-output/combined/comparison.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: balance-dashboard-combined
+          path: dashboard-output/combined/
+          retention-days: 30
