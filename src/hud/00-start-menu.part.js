@@ -99,7 +99,7 @@ function startMenu() {
           </section>
           <aside class="start-side" aria-label="Other game modes and headquarters">
             <div class="start-side-title"><span>Game modes</span></div>
-            <section class="start-mode" style="--mode-accent:#8acbc0"><span class="start-mode-serial" aria-hidden="true">START</span><h3>Interactive Tutorial</h3><p>Learn the controls in a guided, playable training battle.</p><div class="start-mode-bottom"><span class="start-mode-info">9 steps · Independent training session</span><button data-action="tutorial-start">Start tutorial</button></div></section>\n            <section class="start-mode" style="--mode-accent:#d7aa64">
+            <section class="start-mode" style="--mode-accent:#8acbc0"><span class="start-mode-serial" aria-hidden="true">START</span><h3>Interactive Tutorial</h3><p>Learn the controls in a guided, playable training battle.</p><div class="start-mode-bottom"><span class="start-mode-info">Guided battle · No save overwritten</span><button data-action="tutorial-start">Start tutorial</button></div></section>\n            <section class="start-mode" style="--mode-accent:#d7aa64">
               <span class="start-mode-serial" aria-hidden="true">I</span>
               <h3>Story Mode</h3>
               <p>Follow the story through linked missions and decisive battles.</p>
