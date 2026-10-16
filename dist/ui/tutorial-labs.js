@@ -19,10 +19,10 @@ const TRAINING_LABS=[
 {title:'Read city output',text:'Select Headquarters. Cities provide Credits, Industry and Science; Sakuradite supplies higher-tier technology. Conquest research converts progress into Command HQ opportunities.',type:'city',at:[1,4]},
 {title:'Buy a unit',text:'Open the city Factory and purchase a basic Infantry frame. Check how its price uses Credits and Industry and that new units act next turn.',type:'recruit'},
 {title:'Budget choice',text:'When is upgrading a factory preferable to buying another basic Knightmare?',answers:['When you need access to higher-tier frames and can fund the upgrade','Whenever you have no resources','Because factory upgrades make all units free'],correct:0}]},
-{id:'repairs',group:'Combat Academy',name:'Repair and reinforce',description:'Restore HP vs. add formation strength',setup(g,t){labReset(g,t);let u=labUnit(g,t,'hurt','gloucester',2,4);u.hp=Math.round(E.maxHP(u)*.5);labUnit(g,t,'fresh','sutherland',3,4);g.economy.britannia.credits=2500;},steps:[
+{id:'repairs',group:'Combat Academy',name:'Repair and reinforce',description:'Restore HP vs. add formation strength',setup(g,t){labReset(g,t);let u=labUnit(g,t,'hurt','gloucester',2,4);u.hp=Math.round(E.maxHP(u)*.5);labUnit(g,t,'fresh','sutherland',1,5);g.economy.britannia.credits=2500;},steps:[
 {title:'Inspect damaged HP',text:'Select the Gloucester at half health.',type:'select',who:'hurt',at:[2,4]},
 {title:'Restore 20% maximum HP',text:'Click Repair. It costs Credits, consumes actions, and restores up to 20% of the formation maximum HP.',type:'repair',who:'hurt'},
-{title:'Inspect a fresh unit',text:'Select the neighboring Sutherland. It has just one frame.',type:'select',who:'fresh',at:[3,4]},
+{title:'Inspect a fresh unit',text:'Select the Sutherland beside Headquarters. It has just one frame and can reinforce near a friendly city.',type:'select',who:'fresh',at:[1,5]},
 {title:'Add a frame',text:'Click Add frame to reinforce it. Reinforcement increases formation size and maximum HP; it is not the same as repairing.',type:'reinforce',who:'fresh'},
 {title:'Which option?',text:'A two-frame formation is damaged but has no missing frames. What restores its HP?',answers:['Repair','Add frame','End the campaign'],correct:0}]},
 {id:'terrain',group:'Combat Academy',name:'Terrain and positioning',description:'Cover, attrition and blocked terrain',setup(g,t){labReset(g,t);labUnit(g,t,'hero','gloucester',2,4);labTile(g,3,4,'forest');labTile(g,3,3,'mountain');labTile(g,4,4,'desert');},steps:[
