@@ -16,11 +16,31 @@ footer{margin-top:38px;color:#87a0a9;font-size:13px}
 </style></head><body>
 <header><div class="kicker">Knightmare Conquest · Visual Development</div><h1>Terrain Atlas</h1><p>24 original vector symbols, centered on their hexes. Choose a territory color to see how they read in-game. The playable preview uses reduced detail at lower zoom levels.</p></header>
 <main><div class="controls"><span>Territory backdrop:</span><button aria-pressed="true" data-mode="eu">E.U. blue</button><button aria-pressed="false" data-mode="britannia">Britannia red</button><button aria-pressed="false" data-mode="neutral">Neutral land</button></div>
+<h2>New painted terrain artwork</h2>
+<p>These ten images were generated in ChatGPT and optimized into one transparent atlas. They are the primary icons in the game; the original SVG variants remain as loading fallbacks.</p>
+<div id="painted-gallery" class="grid" style="margin-top:18px"></div>
+<h2 style="margin-top:40px">Previous SVG symbols (fallback)</h2>
 <div id="gallery"></div>
-<footer><a href="./">Back to the playable preview</a> · These SVGs are deployed as game assets, not pre-rendered screenshots.</footer></main>
+<footer><a href="./">Back to the playable preview</a> · The new terrain images are optimized game sprites, with SVG fallbacks.</footer></main>
 <script>
 const variants={forest:3,mountain:2,peak:2,desert:3,snow:2,urban:2,sea:3,coast:2,crater:1,cloud:2,storm:2};
 const root=document.getElementById('gallery');
+const paintedCoords={forest:[0,0],mountain:[1,0],peak:[2,0],desert:[3,0],
+ snow:[4,0],urban:[0,1],sea:[1,1],coast:[2,1],crater:[3,1],storm:[4,1]};
+const paintedGallery=document.getElementById('painted-gallery');
+for(const [name,[col,row]] of Object.entries(paintedCoords)){
+  const tile=document.createElement('div');tile.className='tile';
+  const canvas=document.createElement('div');canvas.className='canvas';
+  const sprite=document.createElement('div');
+  sprite.setAttribute('role','img');sprite.setAttribute('aria-label',name+' hand-painted terrain icon');
+  Object.assign(sprite.style,{width:'96px',height:'96px',zIndex:'1',
+    backgroundImage:"url('assets/terrain/generated-terrain-atlas.webp')",
+    backgroundRepeat:'no-repeat',backgroundSize:'480px 192px',
+    backgroundPosition:(-col*96)+'px '+(-row*96)+'px'});
+  canvas.appendChild(sprite);
+  const label=document.createElement('small');label.textContent=name+' · generated';
+  tile.append(canvas,label);paintedGallery.appendChild(tile);
+}
 for(const [name,count] of Object.entries(variants)){
  const section=document.createElement('section');
  const title=document.createElement('h2');title.textContent=name[0].toUpperCase()+name.slice(1);section.appendChild(title);
@@ -36,6 +56,7 @@ for(const [name,count] of Object.entries(variants)){
 }
 document.querySelectorAll('button[data-mode]').forEach(button=>button.addEventListener('click',()=>{
  root.className=button.dataset.mode;
+ paintedGallery.className='grid '+button.dataset.mode;
  document.querySelectorAll('button[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
 }));
 </script></body></html>

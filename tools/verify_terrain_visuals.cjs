@@ -21,6 +21,11 @@ for (const [kind, count] of Object.entries(counts)) for (let i=1;i<=count;i++) {
   assert.match(svg, /<(?:path|ellipse|rect|circle|polygon)\s/);
   assert.ok(svg.length < 7000, filename+' is too large');
 }
+const paintedFile = path.join(root, 'dist/assets/terrain/generated-terrain-atlas.webp');
+const paintedBytes = fs.readFileSync(paintedFile);
+assert.equal(paintedBytes.subarray(0,4).toString(), 'RIFF');
+assert.equal(paintedBytes.subarray(8,12).toString(), 'WEBP');
+assert.ok(paintedBytes.byteLength < 30000, 'Painted atlas is unexpectedly large');
 const begin = renderSource.indexOf('const TERRAIN_ART_VARIANTS = ');
 const end = renderSource.indexOf('// Selected tile:', begin);
 assert.ok(begin > 0 && end > begin, 'terrain art region missing');
@@ -28,12 +33,28 @@ const source = renderSource.slice(begin, end);
 const calls = [];
 let pacific = false;
 const canvas = {
-  drawImage(image, x, y, w, h) {
-    calls.push({ src:image.src, x,y,w,h });
+  drawImage(image, ...args) {
+    if (args.length === 8) {
+      const [sx,sy,sw,sh,x,y,w,h]=args;
+      assert.equal(sw,48); assert.equal(sh,48);
+      assert.ok(sx>=0 && sx<=192 && sx%48===0, 'atlas X outside sprite grid');
+      assert.ok(sy===0 || sy===48, 'atlas Y outside sprite grid');
+      calls.push({src:image.src,x,y,w,h,painted:true});
+    } else {
+      const [x,y,w,h]=args;
+      calls.push({src:image.src,x,y,w,h,painted:false});
+    }
   }
 };
 class FakeImage {
-  constructor(){ this.complete = true; this.naturalWidth = 100; }
+  constructor(){ this.complete = true; this.naturalWidth = 100; this.naturalHeight = 100; }
+  set src(value) {
+    this._src=value;
+    if (value.endsWith('generated-terrain-atlas.webp')) {
+      this.naturalWidth=240;this.naturalHeight=96;
+    }
+  }
+  get src(){return this._src;}
 }
 const sandbox = {
   ctx:canvas, R:45, Image:FakeImage,
@@ -60,6 +81,7 @@ for(const kind of ['forest','mountain','peak','desert','snow','urban','coast','c
   let visible=0;
   for(let r=0;r<6;r++)for(let c=0;c<8;c++)visible+=render(kind,c,r);
   assert.ok(visible>0,kind+' has no drawn terrain');
+  assert.ok(calls.every(c=>c.painted),kind+' is not using new painted artwork');
 }
 for(const kind of ['forest','mountain','desert','snow','urban','sea']){
   let close=0, medium=0;
@@ -76,4 +98,4 @@ assert.ok(render('mountain',4,2)>0,'Pacific storm missing');
 assert.equal(render('desert',4,2),0,'land asset drawn in Pacific sky');
 assert.match(atlasSource, /TERRAIN_REGION_TINTS/);
 assert.match(atlasSource, /24, 26, 32, 43, Infinity/);
-console.log('Terrain art check passed: 24 SVGs, full bundle syntax, centered sprites, LOD and Pacific sky.');
+console.log('Terrain art check passed: 10 painted images + 24 SVG fallbacks, full bundle syntax, centered sprites, LOD and Pacific sky.');

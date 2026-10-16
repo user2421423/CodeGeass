@@ -61,6 +61,17 @@ const TERRAIN_ART_VARIANTS = Object.freeze({
   urban: 2, sea: 3, coast: 2, crater: 1, cloud: 2, storm: 2,
 });
 const TERRAIN_ART_IMAGES = Object.create(null);
+
+// High-detail artwork generated for this game is packed into one tiny WebP
+// atlas to avoid ten network requests and large source PNG downloads.
+// Each 48x48 cell is centered in the same hex as its former SVG symbol.
+const PAINTED_TERRAIN_COORDS = Object.freeze({
+  forest: [0, 0], mountain: [1, 0], peak: [2, 0], desert: [3, 0],
+  snow: [4, 0], urban: [0, 1], sea: [1, 1], coast: [2, 1],
+  crater: [3, 1], storm: [4, 1],
+});
+const PAINTED_TERRAIN_CELL_SIZE = 48;
+let paintedTerrainAtlas = null;
 function invalidateTerrainArtCache() {
   // Images load asynchronously. Repaint the existing atlas without changing
   // game.mapRevision (which describes gameplay state, not visual assets).
@@ -68,6 +79,10 @@ function invalidateTerrainArtCache() {
   if (typeof mapLayerCache !== 'undefined') mapLayerCache = null;
 }
 if (typeof Image !== 'undefined') {
+  paintedTerrainAtlas = new Image();
+  paintedTerrainAtlas.onload = invalidateTerrainArtCache;
+  paintedTerrainAtlas.onerror = invalidateTerrainArtCache;
+  paintedTerrainAtlas.src = 'assets/terrain/generated-terrain-atlas.webp';
   for (const [kind, count] of Object.entries(TERRAIN_ART_VARIANTS)) {
     for (let i = 1; i <= count; i++) {
       const image = new Image();
@@ -95,11 +110,22 @@ function drawTerrainArt(t, x, y, scale) {
   if (hash01(t.c, t.r, 191) >= density) return true;
   const count = TERRAIN_ART_VARIANTS[kind];
   const variant = 1 + Math.min(count - 1, Math.floor(hash01(t.c, t.r, 127) * count));
-  const sprite = TERRAIN_ART_IMAGES[kind + '-' + variant];
-  if (!sprite || !sprite.complete || !sprite.naturalWidth) return false;
   const size = R * (medium ? 0.86 : 1.14);
   const factor = kind === 'sea' || kind === 'coast' ? 0.83 : kind === 'crater' ? 1.03 : 1;
   const width = size * factor, height = size * factor;
+  const painted = PAINTED_TERRAIN_COORDS[kind];
+  if (painted && paintedTerrainAtlas && paintedTerrainAtlas.complete &&
+      paintedTerrainAtlas.naturalWidth === PAINTED_TERRAIN_CELL_SIZE * 5 &&
+      paintedTerrainAtlas.naturalHeight === PAINTED_TERRAIN_CELL_SIZE * 2) {
+    ctx.drawImage(paintedTerrainAtlas,
+      painted[0] * PAINTED_TERRAIN_CELL_SIZE, painted[1] * PAINTED_TERRAIN_CELL_SIZE,
+      PAINTED_TERRAIN_CELL_SIZE, PAINTED_TERRAIN_CELL_SIZE,
+      x - width / 2, y - height / 2, width, height);
+    return true;
+  }
+  // Earlier SVGs remain intact as a reliable fallback if WebP loading fails.
+  const sprite = TERRAIN_ART_IMAGES[kind + '-' + variant];
+  if (!sprite || !sprite.complete || !sprite.naturalWidth) return false;
   ctx.drawImage(sprite, x - width / 2, y - height / 2, width, height);
   return true;
 }
