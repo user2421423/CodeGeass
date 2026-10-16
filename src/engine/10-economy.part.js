@@ -113,6 +113,7 @@
       availableLevel = e.scenarioOnly && eliteScenario(g) ? 1 : rec?.level;
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
+      (g.mode === 'campaign' && !eliteCampaign(g) ? 'Elite Forces are exclusive to Elite Story Mode factories' : null) ||
       (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
       (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||

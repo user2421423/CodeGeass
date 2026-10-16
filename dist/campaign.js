@@ -13,7 +13,7 @@
   const mission = id => ALL[id] || null;
 
   // Elite Campaign inherits Challenge but converts all combatants to one-frame Elite Forces.
-  // Normal, Hard and Challenge retain their original rules.
+  // Normal has no elites; Hard and Challenge permit only scripted Lv.1 commander elites.
   const DIFFICULTIES = {
     normal: {
       name: 'Normal',
@@ -24,17 +24,17 @@
       enemyShield: 1,
       economy: 1.5,
       extraTurns: 0,
-      desc: 'Story mode: full-strength enemies and city defenses with original formation sizes, favorable scenario force counts and 50% more starting resources. Mission turn limits are unchanged.',
+      desc: 'Story mode: ordinary formations only (up to 3 frames, no Elite Forces), favorable scenario force counts and 50% more starting resources. Mission turn limits are unchanged.',
     },
     hard: {
       ...E.DIFFICULTIES.hard,
       ranks: 1, // Preserve campaign's original commander progression.
-      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank.',
+      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank; only named aces retain Lv.1 Elite Forces.',
     },
     challenge: {
       ...E.DIFFICULTIES.challenge,
       ranks: 2, // Conquest uses maximum rank; campaigns retain +2.
-      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%.',
+      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%; only named aces retain Lv.1 Elite Forces.',
     },
     elite: {
       ...E.DIFFICULTIES.challenge,
@@ -110,6 +110,16 @@
     ryo: 'ryo_valiant', ayano: 'ayano_valiant', yukiya: 'yukiya_valiant',
   });
   const isEliteCampaign = g => g.mode === 'campaign' && g.difficulty === 'elite';
+  const storyAceElite = (g, cmd) =>
+    (g.difficulty === 'hard' || g.difficulty === 'challenge') && !!cmd;
+  function ordinaryStoryType(g, side, type) {
+    const frame = E.TYPES[type];
+    if (!frame?.elite) return type;
+    const regular = E.typeFor(frame.side === 'neutral' ? side : frame.side, frame.cls, g);
+    if (!E.TYPES[regular] || E.TYPES[regular].elite)
+      throw new Error(`No ordinary Story Mode equivalent for ${type}`);
+    return regular;
+  }
   function eliteRoster(side, g = null) {
     const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
       const e = E.ELITE_FORCES[id];
@@ -144,10 +154,9 @@
     used[key] = (used[key] || 0) + 1;
     return selected;
   }
-  // HQ level applies to legacy Campaign, but only unlocks recruitment on Elite.
-  const eliteLevelFor = (g, side, elite, level) =>
-    isEliteCampaign(g) ? (side === g.player ? 1 : 3) :
-      (side === g.player && g.eliteLevels?.[elite]) || level || 3;
+  // Named scripted aces on Hard and Challenge remain at Elite Lv.1.
+  const eliteLevelFor = (g, side) =>
+    isEliteCampaign(g) ? (side === g.player ? 1 : 3) : 1;
   const campaignEliteLevel = (g, side, cmd, special = false) =>
     side === g.player ? 1 : E.foe(g, side, g.player) && (cmd || special) ? 5 : 3;
   // One condition, checked against the live game.
@@ -184,6 +193,11 @@
     if (opts.skipNormal && g.difficulty === 'normal') return null;
     let type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g),
       unitStack = stack;
+    if (E.TYPES[type].elite && !isEliteCampaign(g) && !storyAceElite(g, cmd)) {
+      type = ordinaryStoryType(g, side, type);
+      unitStack = 3;
+    }
+    unitStack = Math.max(1, Math.min(3, unitStack));
     if (!E.TYPES[type].elite) {
       if (!enemy && side === g.player && d.playerStack) unitStack = Math.min(3, unitStack + d.playerStack);
       if (enemy && d.level) {
@@ -210,7 +224,7 @@
     const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : unitStack, cmd, opts.ready !== false);
     if (u.elite) {
       u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, side, cmd, special) :
-        eliteLevelFor(g, side, u.elite, opts.level);
+        eliteLevelFor(g, side);
       if (isEliteCampaign(g)) u.eliteStart = true;
     }
     const hold = opts.hold ?? g.campaign.hold?.[side];
@@ -387,6 +401,34 @@
     return g;
   }
 
+  // Adapt in-progress Story saves without losing position, identity or mission events.
+  function normalizeUnits(g) {
+    if (g?.mode !== 'campaign' || isEliteCampaign(g)) return g;
+    for (const u of g.units || []) {
+      if (!E.TYPES[u.type]?.elite) {
+        u.stack = Math.max(1, Math.min(3, u.stack || 1));
+        continue;
+      }
+      const keepAce = storyAceElite(g, u.cmd);
+      if (keepAce && u.stack === 1 && u.eliteLevel === 1) continue;
+      const previousMax = E.maxHP(u);
+      const hpFraction = previousMax > 0 ? Math.max(0, Math.min(1, u.hp / previousMax)) : 0;
+      if (keepAce) {
+        u.stack = 1;
+        u.eliteLevel = 1;
+      } else {
+        u.type = ordinaryStoryType(g, u.side, u.type);
+        u.elite = null;
+        u.eliteLevel = 0;
+        u.stack = 3;
+        delete u.eliteStart;
+      }
+      u.hpTech = E.hullTech(g, u);
+      u.hp = u.hp <= 0 ? 0 : Math.max(1, Math.round(E.maxHP(u) * hpFraction));
+    }
+    return g;
+  }
+
   // ======== Events ========
   // { turn | capture | killed | start, say: [[speaker, text]], spawn: [unit specs], blast, stun, upgrade, shield,
   //   remove: [commanders taken off the field, e.g. captured; not a loss or a kill], warn, note }. Speakers are commander ids or 'Name@side'; null narrates.
@@ -420,14 +462,18 @@
       const u = unitWith(g, up.cmd);
       if (!u) continue;
       const lost = E.maxHP(u) - u.hp,
-        elite = Object.entries(E.ELITE_FORCES).find(([, e]) => e.type === up.type)?.[0] || null;
-      const replacement = isEliteCampaign(g) ? eliteType(g, u.side, up.type, u.cmd) : elite;
-      u.type = replacement ? E.ELITE_FORCES[replacement].type : up.type;
+        scriptedElite = !!E.TYPES[up.type]?.elite,
+        type = !isEliteCampaign(g) && scriptedElite && !storyAceElite(g, u.cmd)
+          ? ordinaryStoryType(g, u.side, up.type) : up.type,
+        elite = Object.entries(E.ELITE_FORCES).find(([, e]) => e.type === type)?.[0] || null,
+        replacement = isEliteCampaign(g) ? eliteType(g, u.side, up.type, u.cmd) : elite;
+      u.type = replacement ? E.ELITE_FORCES[replacement].type : type;
       u.elite = replacement;
       u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, u.side, u.cmd, true) :
-        replacement ? eliteLevelFor(g, u.side, replacement, up.level ?? (u.eliteLevel || 3)) : 0;
-      u.stack = replacement ? 1 : u.stack;
+        replacement ? eliteLevelFor(g, u.side) : 0;
+      u.stack = replacement ? 1 : scriptedElite ? 3 : Math.max(1, Math.min(3, u.stack));
       if (isEliteCampaign(g)) u.eliteStart = true;
+      else if (!replacement) delete u.eliteStart;
       if (isEliteCampaign(g)) u.hpTech = E.hullTech(g, u);
       u.hp = Math.max(1, E.maxHP(u) - lost);
     }
@@ -716,6 +762,7 @@
     DIFFICULTIES,
     mission,
     createMission,
+    normalizeUnits,
     stars,
     text,
     holds,

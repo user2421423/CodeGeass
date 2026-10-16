@@ -178,7 +178,10 @@ function loadGame(s) {
     const profile = loadProfile();
     game = E.applyRoster(s.warCampaign ? E.applyElites(s, profile) : s, profile);
   } else game = E.applyProfile(s, loadProfile());
-  if (game.mode === 'campaign') missionDifficulty = game.difficulty || 'normal';
+  if (game.mode === 'campaign') {
+    missionDifficulty = game.difficulty || 'normal';
+    E.campaign.normalizeUnits(game);
+  }
   if (game.mode === 'scenario') {
     scenarioKind = game.scenario.id;
     scenarioSide = game.player;
