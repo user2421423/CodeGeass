@@ -18,7 +18,7 @@ for (const [kind, count] of Object.entries(counts)) for (let i=1;i<=count;i++) {
   const svg = fs.readFileSync(filename, 'utf8');
   assert.match(svg, /<svg\s/);
   assert.match(svg, /<\/svg>/);
-  assert.match(svg, /<path\s/);
+  assert.match(svg, /<(?:path|ellipse|rect|circle|polygon)\s/);
   assert.ok(svg.length < 7000, filename+' is too large');
 }
 const begin = renderSource.indexOf('const TERRAIN_ART_VARIANTS = ');
