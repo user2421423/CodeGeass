@@ -57,7 +57,7 @@ function isPacificAirBattle() {
 }
 function terrainProps(t, x, y, scale) {
   if (R * scale < 13) return;
-  const h = k => hash01(t.c, t.r, k);
+  // Decorations use fixed layouts centered on the hex; no coordinate hash jitter.
   // The Pacific fleet interception uses clouds/storms instead of terrestrial relief.
   // This is a visual treatment only; the underlying tactical terrain rules are unchanged.
   if (isPacificAirBattle()) {
@@ -65,7 +65,7 @@ function terrainProps(t, x, y, scale) {
       ctx.fillStyle = '#f1faffca';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        ctx.ellipse(x + (i - 1) * 10, y + (h(i) - 0.5) * 8, 11, 6.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + (i - 1) * 10, y, 11, 6.5, 0, 0, Math.PI * 2);
         ctx.fill();
       }
     } else if (t.terrain === 'mountain') {
@@ -82,8 +82,8 @@ function terrainProps(t, x, y, scale) {
   }
   if (t.terrain === 'forest') {
     for (let i = 0; i < 4; i++) {
-      const tx = x + (h(i) - 0.5) * R * 1.1,
-        ty = y + (h(i + 9) - 0.5) * R * 0.9;
+      const [dx, dy] = [[-9, -6], [9, -6], [-9, 6], [9, 6]][i];
+      const tx = x + dx, ty = y + dy;
       ctx.fillStyle = '#2f5a2e';
       ctx.beginPath();
       ctx.moveTo(tx, ty - 12);
@@ -102,8 +102,8 @@ function terrainProps(t, x, y, scale) {
   } else if (t.terrain === 'mountain' || t.terrain === 'peak') {
     const big = t.terrain === 'peak' ? 1.35 : 1;
     for (const [dx, s] of [
-      [-10, 0.8],
-      [8, 1],
+      [-9, 0.8],
+      [9, 1],
     ]) {
       const px = x + dx,
         hgt = 22 * s * big,
@@ -127,7 +127,7 @@ function terrainProps(t, x, y, scale) {
     ctx.strokeStyle = '#b89c62';
     ctx.lineWidth = 1.6;
     for (let i = 0; i < 2; i++) {
-      const dy = (i - 0.5) * 14 + (h(i) - 0.5) * 6;
+      const dy = (i - 0.5) * 14;
       ctx.beginPath();
       ctx.moveTo(x - 18, y + dy);
       ctx.quadraticCurveTo(x - 4, y + dy - 7, x + 10, y + dy);
@@ -150,8 +150,8 @@ function terrainProps(t, x, y, scale) {
   } else if (t.terrain === 'urban') {
     // City ruins: three broken blocks of flats with dark windows.
     for (let i = 0; i < 3; i++) {
-      const bx = x - 20 + i * 13 + (h(i) - 0.5) * 6,
-        bh = 10 + h(i + 4) * 14,
+      const bx = x - 19 + i * 14,
+        bh = [14, 21, 16][i],
         by = y + 10;
       ctx.fillStyle = i % 2 ? '#5b5f67' : '#4b4f57';
       ctx.fillRect(bx, by - bh, 10, bh);
@@ -163,8 +163,8 @@ function terrainProps(t, x, y, scale) {
     }
   } else if (t.terrain === 'snow') {
     ctx.fillStyle = '#c6d4dd';
-    for (let i = 0; i < 3; i++) ctx.fillRect(x + (h(i) - 0.5) * 40, y + (h(i + 5) - 0.5) * 30, 6, 2);
-  } else if (t.terrain === 'sea' && R * scale > 18 && h(3) < 0.35) {
+    for (const [dx, dy] of [[-16, -4], [-3, 2], [10, -4]]) ctx.fillRect(x + dx, y + dy, 6, 2);
+  } else if (t.terrain === 'sea' && R * scale > 18) {
     ctx.strokeStyle = '#ffffff1c';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
