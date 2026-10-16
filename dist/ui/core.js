@@ -132,6 +132,8 @@ function saveProfile(p) {
   }
 }
 function save() {
+  // Training is ephemeral: never write to the scenario, conquest, mission or HQ saves.
+  if (game.mode === 'scenario' && game.scenario?.id === 'training-grounds') return true;
   if (game.phase !== game.player && !game.over) return false;
   try {
     localStorage.setItem(saveKey(), JSON.stringify(E.packSave(game)));
