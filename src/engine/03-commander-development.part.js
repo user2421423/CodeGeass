@@ -196,7 +196,7 @@
   // transferable loadouts were removed; this exists for old save compatibility.
   function medalSlots() { return 0; }
   function honorService(g, u) {
-    if (!g || !u?.cmd || u.side !== g.player) return null;
+    if (!g || !u?.cmd || u.side !== g.player || !u.personal) return null;
     const key = (u.personal ? 'hq:' : 'script:') + u.cmd;
     const stats = (g.honorService ||= {});
     return (stats[key] ||= { commander: u.cmd, personal: !!u.personal,
@@ -385,7 +385,7 @@
   function equipMedal() { return { ok: false, reason: equipReason() }; }
   function unequipMedal() { return { ok: false, reason: equipReason() }; }
   function award(g, side, id, reason, unit, key = reason) {
-    if (side !== g.player || !MEDALS[id] || !unit?.cmd || !COMMANDERS[unit.cmd]) return;
+    if (side !== g.player || !MEDALS[id] || !unit?.personal || !unit?.cmd || !COMMANDERS[unit.cmd]) return;
     const events = (g.honorEvents ||= []);
     // Repeat achievements become citations across operations, not spammable
     // identical decorations in the same battle.
@@ -400,7 +400,7 @@
     g.honorsFinalized = true;
     if (g.over.winner !== g.player) return;
     const services = Object.values(g.honorService || {})
-      .filter(s => s.combats || s.kills || s.cities || s.capitals || s.commanderDefeats);
+      .filter(s => s.personal && (s.combats || s.kills || s.cities || s.capitals || s.commanderDefeats));
     const operation = g.mode === 'campaign' ? (g.campaign?.id || 'Story Mode') :
       g.mode === 'scenario' ? (g.scenario?.title || g.scenario?.id || 'Scenario') :
         (g.era || 'Conquest');
