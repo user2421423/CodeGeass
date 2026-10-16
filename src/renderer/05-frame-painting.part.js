@@ -331,7 +331,7 @@ function draw(time, dt) {
   const groupMembership = new Map();
   if (strategicOverlay) for (const gr of strategicOverlayGroups())
     for (const id of gr.units) groupMembership.set(id, gr);
-  const focusedGroup=strategicOverlayMode==='selected'?activeArmyGroup():null;
+  const focusedGroup=strategicOverlay?activeArmyGroup():null;
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
   for (const u of living) {
@@ -342,14 +342,12 @@ function draw(time, dt) {
       multi = multiSelectedIds.has(u.id),
       group = groupMembership.get(u.id),
       groupColor = group ? strategicGroupColor(group) : '#ffd36e',
-      dimOperationsUnit=focusedGroup&&u.side===game.player&&!focusedGroup.units.includes(u.id),
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
     for (const x of copies(base.x)) {
       if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
-      if(dimOperationsUnit)ctx.globalAlpha=0.53;
       if (!detail) {
         ctx.beginPath();
         const europeOverview = game.mode === 'scenario' && !!E.scenarios?.byId?.[game.scenario?.id]?.meta?.map?.overviewMarkers;
@@ -390,7 +388,7 @@ function draw(time, dt) {
         continue;
       }
       drawPlate(u, scale, sea, time, sel || multi);
-      ctx.globalAlpha=(spent?0.6:1)*(dimOperationsUnit?0.53:1);
+      ctx.globalAlpha=spent?0.6:1;
       const size = t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
       ctx.shadowColor = '#000a';

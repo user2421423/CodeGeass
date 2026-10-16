@@ -464,10 +464,16 @@
     if (d && d.hp <= 0){d.expDirectIncoming=true;kill(g,d,a);delete d.expDirectIncoming;}
     if(d)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
+    // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
+    const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
     const eliteBreakthrough = !!aef.breakthrough,
       eliteRelentless = !!aef.relentless;
-    let cap = f.refire || aef.refire ? 2 : 1;
-    // Breakthrough Doctrine: a kill at the cap may still earn one more breakthrough.
+    // Elite Forces that already have Breakthrough may chain kills indefinitely.
+    // Ordinary frames retain their existing limit and Breakthrough Doctrine bonus.
+    const unlimitedEliteChain = !!TYPES[a.type].elite &&
+      (TYPES[a.type].breakthrough || eliteBreakthrough);
+    let cap = unlimitedEliteChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
+    // Breakthrough Doctrine: a kill at a finite cap may still earn one more breakthrough.
     if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain === cap) {
       const chance = !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor' ? techValue(g, a.side, 'armor.assault') : 0;
       if (chance && random(g) < chance) cap++;
@@ -491,6 +497,12 @@
       if (breakthrough) grantReposition(a, 2);
       else { a.attacked = false; breakthrough = true; }
     }
+    // Destroying city defenses grants one additional attack to any surviving unit.
+    // A simultaneous frame kill cannot bank a second follow-up attack.
+    if (defensesDestroyed && a.hp > 0 && a.attacked) {
+      a.attacked = false;
+      breakthrough = true;
+    }
     if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
     if (destroyed && a.hp > 0 && aef.moveAfterKill) {
       a.moved = false;
@@ -506,7 +518,7 @@
     // Preserve the movement that was already available when a killing attack
     // refreshes another shot. Do not grant an extra move to a unit that had
     // spent it; existing Relentless, elite and commander rewards still apply.
-    if (destroyed && a.hp > 0 && !a.attacked && movementBeforeAttack) {
+    if ((destroyed || defensesDestroyed) && a.hp > 0 && !a.attacked && movementBeforeAttack) {
       a.moved = false;
       if (!(TYPES[a.type].relentless || eliteRelentless || aef.moveAfterAttack || aef.moveAfterKill)) {
         if (!movementBeforeAttack.skillReposition && !movementBeforeAttack.withdrawMove) {
@@ -568,7 +580,7 @@
     }
     log(
       g,
-      `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
+      `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${defensesDestroyed ? ' · city defenses destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
       a.side,
     );
     checkVictory(g);
@@ -578,6 +590,7 @@
       to: { c: p.c, r: p.r },
       damage: dmg,
       shieldDamage: sd,
+      defensesDestroyed,
       crit,
       counter: retaliation,
       hit,
