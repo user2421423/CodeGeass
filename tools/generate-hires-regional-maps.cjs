@@ -49,8 +49,13 @@ async function run() {
     await page.waitForFunction(() => typeof scenariosReady !== 'undefined' &&
       scenariosReady && typeof paintMap === 'function' && E.scenarios?.byId,
       null,{timeout:180000});
-    const ids = await page.evaluate(() =>
+    const availableIds = await page.evaluate(() =>
       SCENARIO_MANIFEST.map(s=>s.id).filter(id=>E.scenarios.byId[id]));
+    // CI can refresh just the maps affected by a renderer change.
+    const requestedIds = new Set((process.env.SCENARIO_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
+    const ids = requestedIds.size ? availableIds.filter(id => requestedIds.has(id)) : availableIds;
+    if (requestedIds.size && ids.length !== requestedIds.size)
+      throw Error('Unknown scenario IDs: ' + [...requestedIds].filter(id => !availableIds.includes(id)).join(', '));
     console.log('Rendering '+ids.length+' detailed, troop-free theatre maps.');
     for(let i=0;i<ids.length;i++) {
       const id=ids[i];
@@ -76,7 +81,7 @@ async function run() {
     }
     if(errors.length)throw Error('Browser script errors: '+errors.join(' | '));
     const generated=fs.readdirSync(OUT).filter(n=>n.endsWith('.webp'));
-    if(generated.length!==ids.length)
+    if(!requestedIds.size && generated.length!==ids.length)
       throw Error('Expected '+ids.length+' maps, found '+generated.length);
     console.log('Completed all '+generated.length+' high-resolution backdrops');
   } finally {
