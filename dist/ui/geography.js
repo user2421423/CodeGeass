@@ -1146,39 +1146,11 @@ const GEOGRAPHY = (() => {
     ctx.restore();
     // No terrain, sea fill, coastlines or relief work on a capture-only repaint.
     if (layer === 'political') return true;
-    // WGS84 relief for the Federation's two new oceanic theatres. The coastline
-    // is still the real GSHHG polygon, not an outline of the tactical hexes.
-    if(has('reliefZones') && g.scenario.reliefZones?.length){
-      const region=g.scenario,bb=region.bounds;
-      const sx=SQ*R*g.cols/(bb.east-bb.west),
-            sy=1.5*R*g.rows/(bb.north-bb.south);
-      const xy=(lon,lat)=>[R-SQ*R*.5+(lon-bb.west)*sx,
-        R-.75*R+(bb.north-lat)*sy];
-      ctx.save();ctx.transform(A,C,B,D,tx,ty);
-      const shoreline=paths(ctx,shapes,a,b,c,d);
-      if(shoreline){
-        clipPath(ctx,shoreline);
-        ctx.transform(invA,invC,invB,invD,invX,invY);
-        ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
-        function geographicWash(groups,fill){
-          ctx.fillStyle=fill;
-          for(const [lon,lat,rx,ry] of groups||[]){
-            const [x,y]=xy(lon,lat);
-            ctx.beginPath();ctx.ellipse(x,y,Math.max(1,Math.abs(rx*sx)),
-              Math.max(1,Math.abs(ry*sy)),0,0,Math.PI*2);ctx.fill();
-          }
-        }
-        geographicWash(region.valleyZones,'rgba(207,191,145,.25)');
-        geographicWash(region.forestZones,'rgba(53,110,79,.27)');
-        geographicWash(region.reliefZones,'rgba(113,103,90,.35)');
-        ctx.strokeStyle='rgba(223,199,147,.55)';ctx.lineWidth=Math.max(.9,R*.12);
-        for(const [,lon,lat] of region.passes||[]){
-          const [x,y]=xy(lon,lat);ctx.beginPath();
-          ctx.arc(x,y,Math.max(1,R*.20),0,Math.PI*2);ctx.stroke();
-        }
-      }
-      ctx.restore();
-    }
+    // Regional mountain, forest and valley coordinates still determine tactical
+    // terrain and movement. Do not paint their approximate influence zones as
+    // overlapping semi-transparent ellipses: at strategic zoom they become
+    // muddy circular patches over the owning faction's colour. Mountain and
+    // forest HEX terrain icons are already drawn by the tactical renderer.
     // Greenland's ice cap lies above the national coastal tint. Render it as
     // snowy relief while retaining the actual GSHHG silhouette under all hexes.
     if (has('greenland')) {
