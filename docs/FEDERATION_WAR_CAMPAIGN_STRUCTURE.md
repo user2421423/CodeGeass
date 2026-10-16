@@ -10,10 +10,23 @@
 | --- | --- | --- | --- |
 | `eu` | `eu` | Britannia | **Revised**: no Hawaii or California; Atlantic-only Panama and eastern Pendragon pending; Rockies added |
 | `britannia` | `britannia` | E.U. | **Unchanged**: original route ending in Operation Stonehenge |
-| `britannia-federation` | `britannia` | Federation | **Unchanged**: eight previously approved objectives, Luoyang finale |
+| `britannia-federation` | `britannia` | Federation | **Updated**: three shared Global Conflicts first, then the eight approved regional objectives, Luoyang finale |
 | `federation-britannia` | `cf` | Britannia | **Added**: seven tiers, three shared and ten China-side objectives |
 
 Campaign IDs are NOT engine combat sides. The existing localStorage version-1 progress format stores the four campaigns independently. The `federation-britannia` player side is **`cf`**.
+
+## Britannia vs Federation — revised six-tier structure (11 objectives)
+
+| Tier | Chapter | Objectives |
+| --- | --- | --- |
+| 1 | Global Conflicts | War for Australia; Conquest of Area 18; Division of Japan |
+| 2 | Opening Battles | Invasion of the Philippines; Defense of Indochina |
+| 3 | Securing the Flanks | Strait of Malacca; Invasion of Korea; Iraq–Iran Campaign |
+| 4 | Invasion of South China | Invasion of South China |
+| 5 | The Yangtze Front | Battle of the Yangtze River |
+| 6 | The Imperial Capital | Battle of Luoyang |
+
+The shared conflicts are required for unlocking the campaign's existing regional wars. Mission identifiers and completed-result records remain unchanged.
 
 ## Chinese Federation — approved seven-tier structure (13 objectives)
 
@@ -84,6 +97,6 @@ All objectives in a tier are required; order within a tier is unrestricted. The 
 
 ## Preserved other campaigns
 
-`britannia` (Britannia vs E.U.) remains unchanged. `britannia-federation` retains its existing eight approved objectives: Philippines invasion, Indochina defense, Malacca, Korea, Iraq–Iran, South China, Yangtze and Luoyang finale. Previously unimplemented entries remain planned.
+`britannia` (Britannia vs E.U.) remains unchanged. As of 2026-10-16, `britannia-federation` starts with the same three shared Global Conflicts as every other World Campaign (War for Australia, Area 18 and Division of Japan). Its eight existing regional objectives retain their mission IDs, battle definitions and internal order; the five former tiers become tiers 2–6, ending at Luoyang. Completed mission IDs remain valid in existing progress saves.
 
 **Integrated, not playtested:** Scenario source and entry points are present on this feature branch. Runtime gameplay, 2D atlas visual accuracy at all zoom levels, Army Group AI performance, save migration and balance remain unverified pending explicit test authorization.
