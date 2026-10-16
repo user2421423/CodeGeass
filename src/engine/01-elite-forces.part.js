@@ -79,17 +79,6 @@
       if (records[id] && amount > 0) records[id].fragments += Math.floor(amount);
     return records;
   }
-  // Fragment drops are deterministic: first clears pay more; rarity controls acquisition speed rather than raw strength.
-  function eliteVictoryReward(g, profile = {}) {
-    if (!g || g.over?.winner !== g.player) return {};
-    const first = !(profile.cleared || {})[operationKey(g)],
-      base = first
-        ? ({ normal: 12, hard: 18, challenge: 24 }[g.difficulty] || 12)
-        : ({ normal: 5, hard: 8, challenge: 12 }[g.difficulty] || 5),
-      rarity = { Rare: 1, Epic: 0.75, Legendary: 0.5 };
-    return Object.fromEntries(
-      Object.entries(ELITE_FORCES)
-        .filter(([id, e]) => !e.scenarioOnly && eliteEligible(g, g.player, id))
-        .map(([id, e]) => [id, Math.max(1, Math.round(base * (rarity[e.rarity] || 1)))])
-    );
-  }
+  // Old broad faction-wide fragment drops are intentionally disabled.
+  // Victory handlers now queue exactly one player-selected Elite reward.
+  function eliteVictoryReward(_g, _profile = {}) { return {}; }

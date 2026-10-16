@@ -76,6 +76,15 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
   const d = b.dataset;
+  if (d.rewardElite) {
+    const result = selectEliteReward(d.rewardElite);
+    if (!result.ok) { toast(result.reason); return; }
+    const pane = modal.querySelector('[data-elite-choice-panel]');
+    if (pane) pane.outerHTML = pendingEliteChoiceHTML() || '<div class="reward">All pending Elite fragment rewards claimed.</div>';
+    if (game.over) { undoStack = []; save(); }
+    toast(`+${result.amount} fragments awarded to ${E.TYPES[E.ELITE_FORCES[result.id].type].name}.`);
+    return;
+  }
   if (d.action === 'tutorial-start' || d.action === 'tutorial-hub') { tutorialHub(); return; }
   if (d.action === 'tutorial-hub-close') { startMenu(); return; }
   if (d.action === 'tutorial-basic') { tutorialStart(); return; }

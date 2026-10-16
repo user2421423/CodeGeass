@@ -288,7 +288,7 @@ function warCampaignDialog(message=''){
     '<div class="wc-factions">'+WC.FACTIONS.map(f=>'<button class="'+(f===wcFaction?'active':'')+
     '" data-wc-faction="'+f+'" style="--wc-faction-color:'+E.FACTIONS[WC.campaignSide(f)].color+'">'+
     '<span class="wc-flag">'+wcFlag(f)+'</span>'+wcSafe(WC.CAMPAIGN_INFO[f].label)+'</button>').join('')+'</div>'+
-    (message?'<p class="wc-feedback" role="status">'+wcSafe(message)+'</p>':'')+
+    (message?'<p class="wc-feedback" role="status">'+wcSafe(message)+'</p>':'')+pendingEliteChoiceHTML()+
     '<div class="wc-layout"><section class="wc-stage"><div class="wc-map-area"><canvas id="wc-map" aria-label="Strategic campaign world map: click regional objectives, drag to pan, use mouse wheel to zoom"></canvas>'+
     '<div class="wc-map-controls"><button data-action="wc-zoom-out" aria-label="Zoom out">−</button><button data-action="wc-reset" aria-label="Fit world map">WORLD</button><button data-action="wc-zoom-in" aria-label="Zoom in">+</button></div>'+
     '<div class="wc-map-legend"><span>● Ready</span><span>✓ Secured</span><span>! Planned</span><span>◇ Locked</span></div></div>'+

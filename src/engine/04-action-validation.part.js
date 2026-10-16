@@ -232,31 +232,17 @@
     (profile.research ||= {})[id] = l + 1;
     return { ok: true, level: l + 1 };
   }
-  // Command tokens are paid only for the first victory with each faction at each difficulty (Hard ×1.5,
-  // Challenge ×2); the first victory ever earns a bonus. Banked research converts 5 : 1, up to 300 tokens.
-  const TOKEN_REWARD = { victory: 250, conquest: 150, first: 150, research: 5, researchCap: 300 };
+  // Flat, round-number rewards per era/faction/difficulty (no research bank).
+  const TOKEN_REWARD = { normal: 500, hard: 1000, challenge: 1500, elite: 2000, first: 200 };
   function operationKey(g) {
     return `conquest:${g.era || 'world'}:${g.player || 'britannia'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
   }
   function missionReward(g, wins = 0, cleared = {}) {
     if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [] };
     if (cleared[operationKey(g)]) return { total: 0, parts: [], repeat: true };
-    const parts = [
-      ['Victory', TOKEN_REWARD.victory],
-      ['World conquest', TOKEN_REWARD.conquest],
-    ];
-    const banked = Math.min(
-      TOKEN_REWARD.researchCap,
-      Math.floor((funds(g, g.player)?.science || 0) / TOKEN_REWARD.research),
-    );
-    if (banked) parts.push(['Banked research', banked]);
-    const scale = DIFFICULTIES[g.difficulty]?.tokens || 1;
-    if (scale !== 1) parts.push([`${DIFFICULTIES[g.difficulty].name} ×${scale}`, 0]);
-    let total = Math.round(parts.reduce((a, [, v]) => a + v, 0) * scale);
-    if (!wins) {
-      parts.push(['First victory', TOKEN_REWARD.first]);
-      total += TOKEN_REWARD.first;
-    }
-    return { total, parts };
+    const base = TOKEN_REWARD[g.difficulty] || TOKEN_REWARD.normal;
+    const parts = [[`${DIFFICULTIES[g.difficulty]?.name || 'Normal'} conquest victory`, base]];
+    if (!wins) parts.push(['First-ever Conquest victory', TOKEN_REWARD.first]);
+    return { total: parts.reduce((sum, [, amount]) => sum + amount, 0), parts };
   }
 

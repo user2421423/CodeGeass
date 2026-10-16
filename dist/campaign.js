@@ -710,7 +710,7 @@
       milestones,
       stars: got,
       first: !had,
-      repeat: !parts.length && !fragmentParts.length,
+      repeat: !parts.length && !fragmentChoice,
     };
   }
   function next(id) {
