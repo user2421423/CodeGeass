@@ -106,6 +106,7 @@ function undoMove() {
   selection = { kind: 'unit', id: unitId };
   render();
   save();
+  if (typeof tutorialCheck === 'function') tutorialCheck();
 }
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion() ? 15 : ms));
