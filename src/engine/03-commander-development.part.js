@@ -11,9 +11,9 @@
   const COMMISSION_NAMES = { standard: 'Standard', distinguished: 'Distinguished', legendary: 'Legendary' };
   const COMMISSION_ORDER = ['standard', 'distinguished', 'legendary'];
   const HIGH_COMMAND_BASE_CAPACITY = 2;
-  // New prices are not approved: the engine must refuse purchases until configured.
-  const COMMISSION_UPGRADE_PRICES = { distinguished: null, legendary: null };
-  const HIGH_COMMAND_EXPANSION_PRICES = { 3: null, 4: null, 5: null, 6: null };
+  // Approved permanent HQ upgrades. Each entry is the incremental price for the next level.
+  const COMMISSION_UPGRADE_PRICES = { distinguished: 200, legendary: 350 };
+  const HIGH_COMMAND_EXPANSION_PRICES = { 3: 1800, 4: 3200, 5: 5500, 6: 9000 };
   function commissionName(c) { return COMMISSION_NAMES[c] || 'Standard'; }
   function commissionOf(k, officer = null) {
     const tier = officer?.commission || COMMANDERS[k]?.commission || 'standard';
@@ -97,7 +97,7 @@
   function expandHighCommandReason(profile) {
     if (highCommandCapacity(profile) >= 6) return 'Maximum of six High Command positions';
     const price = highCommandExpansionPrice(profile);
-    return price == null ? 'High Command expansion price pending approval' : tokenShort(profile, price);
+    return price == null ? 'High Command expansion unavailable' : tokenShort(profile, price);
   }
   function expandHighCommand(profile) {
     const why = expandHighCommandReason(profile);
@@ -116,7 +116,7 @@
     if (why) return why;
     if (commissionOf(k, roster(profile)[k]) === 'legendary') return 'Already a Legendary Commission';
     const price = commissionUpgradePrice(profile, k);
-    return price == null ? 'Commission upgrade price pending approval' : tokenShort(profile, price);
+    return price == null ? 'Commission upgrade unavailable' : tokenShort(profile, price);
   }
   function upgradeCommission(profile, k) {
     const why = upgradeCommissionReason(profile, k);
