@@ -1,0 +1,27 @@
+/* Permanent military decorations */
+.honor-icon{width:55px;height:55px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 5px #0009)}
+.honors-mini{display:flex;align-items:center;gap:4px;min-height:28px}
+.honors-mini .honor-icon{width:25px;height:25px}.honors-mini small{color:#d9caa5;font-size:11px}
+.honors-panel{padding:14px;margin-top:13px;border:1px solid #bfa67566;border-radius:9px;background:#151a2499}
+.honors-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.honors-empty{opacity:.72;font-size:13px}.honor-awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-top:12px}
+.honor-award{border:1px solid #bfa67555;border-radius:9px;background:#0b1320a8;padding:8px}
+.honor-award summary{display:flex;align-items:center;gap:7px;cursor:pointer;list-style:none}
+.honor-award summary::-webkit-details-marker{display:none}.honor-award summary span{display:grid;min-width:0}.honor-award summary b{font-size:12px}.honor-award summary small{opacity:.7;font-size:11px}
+.honor-citations{max-height:180px;overflow:auto;border-top:1px solid #ffffff2b;margin-top:8px;padding-top:7px;font-size:12px}
+.honor-citations div{margin:7px 0}.honor-citations small{display:block;opacity:.7}
+.honors-hall{max-width:1000px!important;max-height:90vh;overflow:auto}
+.honors-showcase{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:12px;margin:16px 0}
+.honors-catalog-item{background:#101825;border:1px solid #a9905966;border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.honors-catalog-item .honor-icon{width:86px;height:86px}.honors-catalog-item b{font-size:12px}.honors-catalog-item small{font-size:11px;opacity:.7;line-height:1.3}
+.honors-roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin:10px 0}
+.honors-officer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:55px;padding:8px;text-align:left}
+.honors-officer span:first-child{font-weight:600}.honors-officer small{display:block;font-size:11px;font-weight:400;opacity:.7}
+.honors-legacy{margin-top:15px;border-top:1px solid #c6a56b55;padding-top:14px}
+.honors-legacy summary{cursor:pointer}.honors-legacy-row{display:flex;align-items:center;gap:7px;margin:6px 0}.honors-legacy-row .honor-icon{width:28px;height:28px}
+.honors-earned{margin:14px 0;padding:12px;border:1px solid #bb995b77;border-radius:10px;background:#151923ad}
+.honors-earned-grid{display:grid;gap:8px;max-height:200px;overflow:auto;margin-top:8px}
+.honors-earned-item{display:flex;align-items:center;gap:10px;text-align:left}.honors-earned-item .honor-icon{width:40px;height:40px}
+.honors-earned-item b{font-size:12px}.honors-earned-item small{display:block;font-size:11px;opacity:.76}
+.honors-launch{margin:8px 0}
+@media(max-width:650px){.honors-hall{width:96vw!important}.honors-showcase{grid-template-columns:repeat(3,minmax(0,1fr))}.honors-catalog-item{padding:6px 3px}.honors-catalog-item .honor-icon{width:58px;height:58px}.honors-catalog-item small{font-size:10px}.honor-awards{grid-template-columns:1fr}}
