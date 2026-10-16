@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terrain Atlas | Knightmare Conquest</title>
+<style>
+:root{color-scheme:dark;--gold:#e8c889;--ink:#e7eee9}*{box-sizing:border-box}body{margin:0;background:#071c2b;color:var(--ink);font:15px/1.5 system-ui,-apple-system,sans-serif}
+header{padding:38px clamp(20px,5vw,90px) 26px;background:linear-gradient(140deg,#142f3c,#071b2b);border-bottom:1px solid #ffffff21}
+.kicker{text-transform:uppercase;letter-spacing:.25em;color:var(--gold);font-size:11px;font-weight:800}h1{font:normal clamp(29px,4vw,48px) Georgia,serif;margin:6px 0 12px;color:#f2d79b}p{max-width:760px;color:#a8b9bd;margin:0}a{color:var(--gold)}main{max-width:1300px;padding:20px 24px 80px;margin:auto}
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 24px}button{background:#193747;border:1px solid #5a7780;color:#eaf1f0;padding:9px 15px;border-radius:7px;cursor:pointer}
+button[aria-pressed=true]{background:#b08c4f;color:#13272c;border-color:#f3d799;font-weight:800}
+section{margin-top:35px}h2{font:normal 23px Georgia,serif;color:#f4dbad;margin:0 0 14px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{background:#163345;border:1px solid #49616a50;border-radius:12px;overflow:hidden}.canvas{height:142px;display:grid;place-items:center;background:#4e89e8;position:relative}
+.canvas::before{content:"";position:absolute;width:122px;height:122px;clip-path:polygon(50% 0,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%);background:rgba(255,255,255,.055);outline:1px solid white}
+.canvas img{z-index:1;width:75px;height:75px;object-fit:contain;filter:drop-shadow(0 2px 1px #07192344)}
+small{display:block;padding:12px;color:#d4e2e6;letter-spacing:.03em}.britannia .canvas{background:#a34d4f}.neutral .canvas{background:#80996b}
+footer{margin-top:38px;color:#87a0a9;font-size:13px}
+</style></head><body>
+<header><div class="kicker">Knightmare Conquest · Visual Development</div><h1>Terrain Atlas</h1><p>24 original vector symbols, centered on their hexes. Choose a territory color to see how they read in-game. The playable preview uses reduced detail at lower zoom levels.</p></header>
+<main><div class="controls"><span>Territory backdrop:</span><button aria-pressed="true" data-mode="eu">E.U. blue</button><button aria-pressed="false" data-mode="britannia">Britannia red</button><button aria-pressed="false" data-mode="neutral">Neutral land</button></div>
+<div id="gallery"></div>
+<footer><a href="./">Back to the playable preview</a> · These SVGs are deployed as game assets, not pre-rendered screenshots.</footer></main>
+<script>
+const variants={forest:3,mountain:2,peak:2,desert:3,snow:2,urban:2,sea:3,coast:2,crater:1,cloud:2,storm:2};
+const root=document.getElementById('gallery');
+for(const [name,count] of Object.entries(variants)){
+ const section=document.createElement('section');
+ const title=document.createElement('h2');title.textContent=name[0].toUpperCase()+name.slice(1);section.appendChild(title);
+ const grid=document.createElement('div');grid.className='grid';
+ for(let i=1;i<=count;i++){
+  const tile=document.createElement('div');tile.className='tile';
+  const canvas=document.createElement('div');canvas.className='canvas';
+  const img=document.createElement('img');img.src='assets/terrain/'+name+'-'+i+'.svg';img.alt=name+' terrain variant '+i;canvas.appendChild(img);
+  const label=document.createElement('small');label.textContent=name+' — variant '+i;
+  tile.append(canvas,label);grid.append(tile);
+ }
+ section.appendChild(grid);root.appendChild(section);
+}
+document.querySelectorAll('button[data-mode]').forEach(button=>button.addEventListener('click',()=>{
+ root.className=button.dataset.mode;
+ document.querySelectorAll('button[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+}));
+</script></body></html>

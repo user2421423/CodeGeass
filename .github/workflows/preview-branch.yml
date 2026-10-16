@@ -17,5 +17,7 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify terrain visual assets, zoom detail and renderer syntax
+        run: node tools/verify_terrain_visuals.cjs
       - name: Check published artwork
         run: node tools/validate_assets.cjs --tracked
