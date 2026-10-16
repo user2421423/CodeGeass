@@ -1,0 +1,85 @@
+/* Interactive training: compact coach above the playfield, not a blocking modal. */
+#tutorial-coach {
+  position: fixed;
+  z-index: 65;
+  top: clamp(86px, 13vh, 136px);
+  left: max(15px, env(safe-area-inset-left));
+  width: min(348px, calc(100vw - 30px));
+  padding: 17px 18px 14px;
+  border: 1px solid #bdac7a;
+  border-radius: 12px;
+  color: #f5e9cf;
+  background: linear-gradient(146deg, rgba(15, 31, 43, .98), rgba(8, 23, 34, .96));
+  box-shadow: 0 16px 45px #020912b8;
+  pointer-events: auto;
+  font-family: inherit;
+}
+#tutorial-coach .tutorial-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  font-weight: 700;
+  color: #e7c77f;
+}
+#tutorial-coach .tutorial-meter {
+  height: 4px;
+  overflow: hidden;
+  margin: 11px 0 14px;
+  border-radius: 5px;
+  background: #344959;
+}
+#tutorial-coach .tutorial-meter i {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: #eac579;
+  transition: width .2s ease;
+}
+#tutorial-coach h3 {
+  font-size: 19px;
+  font-weight: 750;
+  margin: 0 0 7px;
+  line-height: 1.25;
+  color: #fff8eb;
+}
+#tutorial-coach p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #cfdce2;
+}
+#tutorial-coach .tutorial-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+#tutorial-coach .tutorial-actions button {
+  min-height: 34px;
+  padding: 7px 11px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+#tutorial-coach .tutorial-actions button:last-child:not(:first-child) {
+  opacity: .8;
+}
+@media (max-width: 760px) {
+  #tutorial-coach {
+    top: calc(env(safe-area-inset-top) + 64px);
+    left: calc(env(safe-area-inset-left) + 9px);
+    width: min(100% - 18px, 430px);
+    max-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 18px);
+    padding: 11px 13px;
+  }
+  #tutorial-coach h3 { font-size: 16px; margin-bottom: 5px; }
+  #tutorial-coach p { font-size: 12px; line-height: 1.4; }
+  #tutorial-coach .tutorial-meter { margin: 8px 0 9px; }
+  #tutorial-coach .tutorial-actions { margin-top: 9px; }
+  #tutorial-coach .tutorial-actions button { min-height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #tutorial-coach .tutorial-meter i { transition: none; }
+}
