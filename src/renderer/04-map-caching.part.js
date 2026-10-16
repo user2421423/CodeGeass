@@ -31,16 +31,43 @@ let mapAtlasLastNavigation = -Infinity;
 function noteMapNavigation() { mapAtlasLastNavigation = performance.now(); }
 let mapAtlasGeneration = 0;
 let mapAtlasState = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
-let mapAtlasFallback = { id: null, image: null, ready: false };
+let mapAtlasFallback = { id: null, image: null, ready: false, hires: false };
+// Keep a few recently viewed theatre maps decoded, not all 37 at once.
+const mapAtlasHiResImages = new Map();
+function preloadRegionalMapImage(id) {
+  if (!id || typeof Image === 'undefined') return null;
+  if (mapAtlasHiResImages.has(id)) {
+    const cached = mapAtlasHiResImages.get(id);
+    mapAtlasHiResImages.delete(id);
+    mapAtlasHiResImages.set(id, cached);
+    return cached;
+  }
+  const entry = { image: new Image(), ready: false, failed: false, listeners: [] };
+  entry.image.onload = () => {
+    entry.ready = true;
+    for (const notify of entry.listeners.splice(0)) notify(entry.image);
+  };
+  entry.image.onerror = () => {
+    entry.failed = true;
+    entry.listeners.length = 0;
+  };
+  mapAtlasHiResImages.set(id, entry);
+  while (mapAtlasHiResImages.size > 3)
+    mapAtlasHiResImages.delete(mapAtlasHiResImages.keys().next().value);
+  entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp';
+  return entry;
+}
 let mapAtlasStrategicOwners = { tiles: null, original: null, revision: -1, canvas: null };
 const mapAtlasPerformance = {
-  hits: 0, misses: 0, strategicFrames: 0, basePaints: 0, politicalPaints: 0,
+  hits: 0, misses: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
+  basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
 };
 if (typeof window !== 'undefined') window.KNIGHTMARE_MAP_PERF = {
   snapshot: () => ({ ...mapAtlasPerformance, queued: mapAtlasWarmQueue.length,
     staticChunks: mapAtlasStaticTiles.size, politicalChunks: mapAtlasPoliticalTiles.size,
-    combinedChunks: mapAtlasTiles.size, fallbackReady: mapAtlasFallback.ready }),
+    combinedChunks: mapAtlasTiles.size, fallbackReady: mapAtlasFallback.ready,
+    highResolutionBackdrop: mapAtlasFallback.hires }),
   reset: () => {
     for (const k of Object.keys(mapAtlasPerformance)) mapAtlasPerformance[k] = 0;
   },
@@ -79,16 +106,15 @@ function mapAtlasCanvasSet(layer) {
 function updateMapFallback() {
   const id = regionalMapLayers() ? game.scenario.id : null;
   if (mapAtlasFallback.id === id) return;
-  mapAtlasFallback = { id, image: null, ready: false };
+  mapAtlasFallback = { id, image: null, ready: false, hires: false };
   if (!id || typeof Image === 'undefined') return;
-  const img = new Image();
   const sourceId = id;
-  img.onload = () => {
-    if (mapAtlasFallback.id !== sourceId) return;
+  const notify = (img, hires) => {
+    if (mapAtlasFallback.id !== sourceId || (mapAtlasFallback.hires && !hires)) return;
+    mapAtlasFallback.image = img;
     mapAtlasFallback.ready = true;
-    // Pending atlas jobs were queued before the WebP was available. At
-    // strategic zoom the WebP is the finished map, so discard those jobs now,
-    // before even one expensive Japanese coastline job can fire.
+    mapAtlasFallback.hires = hires;
+    // Low-resolution tiles left in the queue are superseded by the bitmap.
     if (R * (baseScale * zoom) < 22 && mapAtlasWarmQueue.length) {
       mapAtlasWarmQueue.length = 0;
       mapAtlasWarmKeys.clear();
@@ -96,11 +122,25 @@ function updateMapFallback() {
     }
     if (typeof requestMapFrame === 'function') requestMapFrame();
   };
-  img.onerror = () => {
-    if (mapAtlasFallback.id === sourceId) mapAtlasFallback.image = null;
+  const high = preloadRegionalMapImage(id);
+  if (high?.ready) {
+    notify(high.image, true);
+    return;
+  }
+  if (high && !high.failed)
+    high.listeners.push(img => notify(img, true));
+  // The smaller gallery image acts as a fast network fallback only; it must
+  // never be mixed with some detailed chunks in the same viewport.
+  const low = new Image();
+  low.onload = () => notify(low, false);
+  low.onerror = () => {
+    if (mapAtlasFallback.id === sourceId && !mapAtlasFallback.ready) {
+      // The regular atlas can still render if static imagery is unavailable.
+      mapAtlasFallback.failed = true;
+      if (typeof requestMapFrame === 'function') requestMapFrame();
+    }
   };
-  mapAtlasFallback.image = img;
-  img.src = 'scenario-previews/' + encodeURIComponent(id) + '.webp';
+  low.src = 'scenario-previews/' + encodeURIComponent(id) + '.webp';
 }
 function refreshMapAtlas(scale) {
   const revision = game.mapRevision || 0;
@@ -267,6 +307,10 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const split = regionalMapLayers();
   const layers = split ? ['static', 'political'] : ['all'];
   const defer = split && mapAtlasFallback.ready;
+  // Never let the first frame synchronously rasterize a detailed theatre map.
+  // Asset loading happens asynchronously; regular legacy painting remains a
+  // safety net when both images fail to load.
+  if (split && !mapAtlasFallback.ready && !mapAtlasFallback.failed) return;
   // At wide strategic zoom, preserve the published geographic picture itself:
   // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
   if (defer && R * scale < 22) {
@@ -282,14 +326,43 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
     drawStrategicOwnershipDelta();
     return;
   }
-  // Existing troop-free scenario map images provide a correct backdrop while
-  // deferred high-resolution chunks progressively replace it.
-  if (defer)
-    ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
   const firstRow = Math.max(0, Math.floor(top / tileSize));
   const lastRow = Math.min(Math.ceil(WORLD_H / tileSize) - 1, Math.floor(bottom / tileSize));
   const firstShift = wraps() ? Math.floor(left / WORLD_W) - 1 : 0;
   const lastShift = wraps() ? Math.ceil(right / WORLD_W) : 0;
+  // Atomic map presentation: never draw a mixture of low-res WebP and
+  // sharper tiles. Stay with one complete picture until *all* currently
+  // visible static and political tiles exist, then present them together.
+  // This also prevents alternating coastlines when the player pans.
+  if (defer) {
+    const missing = [];
+    const lastPhysicalRow = Math.ceil(WORLD_H / tileSize) - 1;
+    for (let k = firstShift; k <= lastShift; k++) {
+      const shift = k * WORLD_W;
+      const a = left - shift, b = right - shift;
+      if (b <= 0 || a >= WORLD_W) continue;
+      const firstCol = Math.max(0, Math.floor(a / tileSize));
+      const lastCol = Math.min(Math.ceil(WORLD_W / tileSize) - 1, Math.floor(b / tileSize));
+      for (let row = firstRow; row <= Math.min(lastRow, lastPhysicalRow); row++)
+        for (let col = firstCol; col <= lastCol; col++)
+          for (const layer of layers)
+            if (!mapAtlasCanvasSet(layer).has(mapAtlasKey(col, row, paintScale, tileSize)))
+              missing.push({ col, row, layer });
+    }
+    const navigating = performance.now() - mapAtlasLastNavigation < 180;
+    if (missing.length || navigating) {
+      mapAtlasPerformance.snapshotFrames++;
+      ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+      drawStrategicOwnershipDelta();
+      // Schedule at most the visible missing tiles; don't build any on the
+      // pointer-move/render stack, and don't show unfinished partial chunks.
+      for (const job of missing)
+        queueMapAtlasTile(job.col, job.row, paintScale, paintDetail,
+          tileSize, job.layer, true);
+      return;
+    }
+    mapAtlasPerformance.atomicAtlasFrames++;
+  }
   for (let k = firstShift; k <= lastShift; k++) {
     const shift = k * WORLD_W;
     const a = left - shift, b = right - shift;
