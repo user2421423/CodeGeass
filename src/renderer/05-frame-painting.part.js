@@ -83,6 +83,27 @@ function draw(time, dt) {
       if (naval && detail) outlinedText('⚓', x, c.y + 5, 12, '#d8f0ff', scale);
     }
   }
+  // Gold waypoint: an interactive tutorial objective, in the same tactical coordinates as movement.
+  if (typeof tutorialTargetHex === 'function') {
+    const tutorialGoal = tutorialTargetHex();
+    if (tutorialGoal) {
+      const q = hexCenter(tutorialGoal);
+      if (visible(q)) {
+        mapHasPulse = true;
+        const pulse = 0.5 + 0.5 * Math.sin(time / 260);
+        for (const x of copies(q.x)) {
+          ctx.save();
+          hexPath(x, q.y, R * (0.77 + 0.06 * pulse));
+          ctx.strokeStyle = '#ffe49c';
+          ctx.lineWidth = (3 + pulse) / Math.max(scale, 0.4);
+          ctx.shadowColor = '#edbb5e';
+          ctx.shadowBlur = 12;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+  }
   for (const k of targetCache) {
     const [cc, rr] = k.split(',').map(Number),
       c = hexCenter({ c: cc, r: rr });

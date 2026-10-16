@@ -7,6 +7,7 @@ function selectUnit(id, center = false) {
   if (!u) return;
   selection = { kind: 'unit', id };
   updateSelection();
+  if (typeof tutorialCheck === 'function') tutorialCheck();
   if (center) centerOn(u);
 }
 function selectStation(id, center = false) {
@@ -17,6 +18,7 @@ function selectStation(id, center = false) {
   if (!s) return;
   selection = { kind: 'station', id };
   updateSelection();
+  if (typeof tutorialCheck === 'function') tutorialCheck();
   if (center) centerOn(s);
 }
 function selectPort(id, center = false) {
@@ -63,6 +65,7 @@ function refreshAndSave(keepUndo = false) {
   if (!keepUndo) undoStack = [];
   render();
   save();
+  if (typeof tutorialCheck === 'function') tutorialCheck();
   campaignFeed(() => game.over && resultDialog());
 }
 function doAction(fn) {
@@ -103,6 +106,7 @@ function undoMove() {
   selection = { kind: 'unit', id: unitId };
   render();
   save();
+  if (typeof tutorialCheck === 'function') tutorialCheck();
 }
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pause = ms => new Promise(resolve => setTimeout(resolve, reducedMotion() ? 15 : ms));

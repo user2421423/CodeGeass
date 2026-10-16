@@ -127,7 +127,7 @@ function startMenu() {
           </aside>
         </div>
         <footer class="start-foot">
-          <div class="start-foot-left"><button data-action="help">Field manual</button><button data-action="archive-start">Knightmare archive</button></div>
+          <div class="start-foot-left"><button data-action="tutorial-start">Interactive tutorial</button><button data-action="help">Field manual</button><button data-action="archive-start">Knightmare archive</button></div>
           <small>${esc(NOTICE)} <b>Free, non-commercial fan game.</b> Progress is saved locally in this browser. Starting a new operation replaces the corresponding save slot.</small>
         </footer>
       </div>
@@ -208,6 +208,7 @@ function render() {
   attachMinimap();
   minimapDirty = true;
   updateSelection();
+  if (typeof tutorialPaint === 'function') tutorialPaint();
   militaryPresentation.collect();
   if (mapFocused) canvas.focus({ preventScroll: true });
 }

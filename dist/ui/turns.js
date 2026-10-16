@@ -1,6 +1,7 @@
 /* Knightmare Conquest UI: Ending a turn: rival-turn playback with Skip, surrender notices, rewards and the result screen. */
 'use strict';
 async function endTurn() {
+  if (typeof isTutorial === 'function' && isTutorial()) return tutorialEndTurn();
   if (!interactive()) return;
   closeModal();
   undoStack = [];
