@@ -4,14 +4,10 @@ let scenarioSide = 'britannia';
 let scenarioKind = 'invasion-japan';
 let scenarioDifficulty = 'normal';
 let scenarioRoutingGroup = null;
-// Scenario modules load in the background after the start menu (scenario-manifest.js); wait for them once.
-function withScenarios(then) {
-  if (scenariosReady) return then();
-  toast('Loading regional scenarios…');
-  loadScenarios().then(then, e => toast(e.message, true));
-}
+// Training needs only the common geography, never the regional battle library.
+function withScenarios(then) { return withGameAssets(ensureGeography, then); }
 function scenarioModel(kind = scenarioKind) {
-  return E.scenarios?.byId?.[kind] || E.scenarios?.japan;
+  return E.scenarios?.byId?.[kind] || SCENARIO_CATALOG[kind];
 }
 const SCENARIO_MENU_STYLE = 'combined';
 
@@ -96,7 +92,7 @@ function scenarioCatalogRefresh() {
   const root=modal.querySelector('#scenario-library-index');
   if(!root) return;
   const term=scenarioLibraryQuery.trim().toLocaleLowerCase();
-  const entries=SCENARIO_MANIFEST.filter(({id})=>!!E.scenarios?.byId?.[id]).filter(({id,title,note})=>
+  const entries=SCENARIO_MANIFEST.filter(({id,title,note})=>
     (scenarioLibraryTheater==='all'||scenarioTheaterOf(id)===scenarioLibraryTheater)&&
     (!term||(title+' '+note+' '+scenarioTheaterOf(id)).toLocaleLowerCase().includes(term)));
   const groups=scenarioLibraryTheater==='all'?SCENARIO_THEATERS:SCENARIO_THEATERS.filter(g=>g.id===scenarioLibraryTheater);
@@ -112,7 +108,7 @@ function scenarioCatalogRefresh() {
       <div class="scenario-catalog-group">${esc(group.label)}<span>${rows.length}</span></div>${buttons}</section>`;
   }).join('') || `<p class="scenario-catalog-empty">No matching operations. Try another theater or search term.</p>`;
   const count=modal.querySelector('#scenario-filter-count');
-  if(count)count.textContent=entries.length+' of '+SCENARIO_MANIFEST.filter(v=>E.scenarios?.byId?.[v.id]).length+' operations';
+  if(count)count.textContent=entries.length+' of '+SCENARIO_MANIFEST.length+' operations';
 }
 
 function scenarioDialog() {
@@ -129,7 +125,7 @@ function scenarioDialog() {
   if(!model.sides.includes(scenarioSide))scenarioSide=model.sides[0];
   const brief=model.meta?.text || {};
   const saved=getSave(SCENARIO_KEY);
-  const savedModel=saved&&!saved.over&&E.scenarios?.byId?.[saved.scenario?.id];
+  const savedModel=saved&&!saved.over&&scenarioModel(saved.scenario?.id);
   // Read pre-generated map and force metadata. Never build a scenario just to browse.
   const imageMeta=typeof SCENARIO_STATIC_MAPS==='undefined'?{}:(SCENARIO_STATIC_MAPS[scenarioKind]||{});
   const meta=SCENARIO_MANIFEST.find(entry=>entry.id===scenarioKind);
@@ -232,8 +228,13 @@ function scenarioDialog() {
   else focusDialog();
 }
 function startScenario(side=scenarioSide, campaignContext=null) {
-  const model=scenarioModel();
+  const id = scenarioKind, difficulty = scenarioDifficulty;
+  return withGameAssets(() => prepareScenarioAssets(id), () => startLoadedScenario(id, side, difficulty, campaignContext));
+}
+function startLoadedScenario(id, side, difficulty, campaignContext) {
+  const model=E.scenarios?.byId?.[id];
   if(!model?.sides.includes(side))return;
+  scenarioKind=id; scenarioSide=side; scenarioDifficulty=difficulty;
   resetSession();
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
   if (campaignContext) {
@@ -337,4 +338,11 @@ function scenarioGroupImport(id) {
   armyGroupsDialog(group.id);
   toast(group.name + ': ' + assigned + ' formations imported' +
     (members.length > 24 ? ' · 24-unit group limit reached' : '') + '.');
+}
+
+async function prepareScenarioAssets(id) {
+  // The menu already requests only the selected static image. Wait for its
+  // decode before exposing the battlefield so the first frame has a map.
+  const image = typeof preloadRegionalMapImage === 'function' ? preloadRegionalMapImage(id) : null;
+  await Promise.all([ensureScenario(id), image?.loaded]);
 }

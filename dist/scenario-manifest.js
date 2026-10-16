@@ -95,18 +95,55 @@ const SCENARIO_FILES = Object.freeze([
   'scenarios-rocky-mountains.js',
   'central-america-underlay.js'
 ]);
-// The start menu appears without these files; game.js starts loading them, in order, right after it.
+// Script promises are shared across callers; successful modules execute once per tab.
+const assetLoads = new Map();
+function loadGameScript(src) {
+  if (assetLoads.has(src)) return assetLoads.get(src);
+  const promise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => {
+      assetLoads.delete(src);
+      script.remove();
+      reject(new Error('Could not load ' + src + '. Check your connection and retry.'));
+    };
+    document.head.appendChild(script);
+  });
+  assetLoads.set(src, promise);
+  return promise;
+}
+let geographyLoad = null;
+function ensureGeography() {
+  return geographyLoad ||= (async () => {
+    await Promise.all(['ui/geography-data.js', 'ui/japan-coastlines.js'].map(loadGameScript));
+    await loadGameScript('ui/geography.js');
+    if (typeof GEOGRAPHY === 'undefined') throw new Error('Map geography did not initialize.');
+  })().catch(error => { geographyLoad = null; throw error; });
+}
+const scenarioLoads = new Map();
+function ensureScenario(id) {
+  const entry = SCENARIO_CATALOG[id];
+  if (!entry) return Promise.reject(new Error('Unknown regional operation: ' + id));
+  if (scenarioLoads.has(id)) return scenarioLoads.get(id);
+  const promise = (async () => {
+    await ensureGeography();
+    for (const src of entry.files) await loadGameScript(src);
+    // Original Japan registers its alias only when Division loads. Do not load
+    // the Division battle just to install that alias.
+    if (id === 'invasion-japan' && Knightmare.scenarios?.japan)
+      (Knightmare.scenarios.byId ||= {})[id] = Knightmare.scenarios.japan;
+    const model = Knightmare.scenarios?.byId?.[id];
+    if (!model?.create) throw new Error('Operation did not initialize: ' + id);
+    return model;
+  })().catch(error => { scenarioLoads.delete(id); throw error; });
+  scenarioLoads.set(id, promise);
+  return promise;
+}
+// Explicit bulk export hook for offline preview generators, never called by gameplay.
 let scenariosReady = false, scenarioLoad = null;
 function loadScenarios() {
-  return (scenarioLoad ||= new Promise((resolve, reject) => {
-    let left = SCENARIO_FILES.length;
-    for (const src of SCENARIO_FILES) {
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = false; // execute in list order
-      script.onload = () => { if (--left === 0) { scenariosReady = true; resolve(); } };
-      script.onerror = () => { scenarioLoad = null; reject(new Error('Could not load ' + src + '. Check the connection and try again.')); };
-      document.head.appendChild(script);
-    }
-  }));
+  return scenarioLoad ||= Promise.all(SCENARIO_MANIFEST.map(e => ensureScenario(e.id)))
+    .then(() => { scenariosReady = true; })
+    .catch(error => { scenarioLoad = null; throw error; });
 }

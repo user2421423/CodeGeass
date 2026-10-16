@@ -2,7 +2,7 @@
 'use strict';
 let helpBack = 'game';
 document.addEventListener('change', e => {
-  if (uiActionBusy) return;
+  if (uiActionBusy || gameAssetTask) return;
   const id = e.target.id;
   if (id === 'conquest-select') {
     setup.conquest = E.CONQUESTS[e.target.value] ? e.target.value : 'world';
@@ -60,7 +60,7 @@ document.addEventListener('change', e => {
   }
 });
 document.addEventListener('click', e => {
-  if (uiActionBusy) return;
+  if (uiActionBusy || gameAssetTask) return;
   // Clicking a game-mode card activates the same command as its existing
   // button. Resume and other nested controls retain their own behaviors.
   const modeCard = e.target.closest('.start-mode[data-open-mode]');
@@ -447,7 +447,7 @@ document.addEventListener('click', e => {
       updateSelection();
       break;
     case 'scenario':
-      withScenarios(scenarioDialog);
+      scenarioDialog();
       break;
     case 'scenario-armies':
       scenarioGroupsDialog();
@@ -459,7 +459,7 @@ document.addEventListener('click', e => {
       confirmReplace(SCENARIO_KEY, 'scenario', () => startScenario());
       break;
     case 'continue-scenario':
-      withScenarios(() => loadGame(getSave(SCENARIO_KEY)));
+      resumeSavedGame(SCENARIO_KEY);
       break;
     case 'start-conquest':
       confirmReplace(chosenSaveKey(), 'new', newGame);
@@ -471,10 +471,10 @@ document.addEventListener('click', e => {
       break;
     }
     case 'continue':
-      loadGame(getSave(chosenSaveKey()));
+      resumeSavedGame(chosenSaveKey());
       break;
     case 'continue-mission':
-      loadGame(getSave(CAMPAIGN_KEY));
+      resumeSavedGame(CAMPAIGN_KEY);
       break;
     case 'campaign':
       campaignDialog();
@@ -715,7 +715,7 @@ function toggleCarrierDeployment() {
   updateSelection();
 }
 document.addEventListener('keydown', e => {
-  if (uiActionBusy) { e.preventDefault(); return; }
+  if (uiActionBusy || gameAssetTask) { e.preventDefault(); return; }
   // Focused cards also support Enter/Space for keyboard-only play.
   const modeCard = e.target.closest('.start-mode[data-open-mode]');
   if (modeCard && e.target === modeCard && (e.key === 'Enter' || e.key === ' ')) {

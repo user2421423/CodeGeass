@@ -17,6 +17,7 @@ let tutorialState = null;
 const isTutorial = () => game?.mode === 'scenario' && game.scenario?.id === TUTORIAL_ID;
 
 function tutorialScenario() {
+  E.scenarios ||= {};
   E.scenarios.byId ||= {};
   if (E.scenarios.byId[TUTORIAL_ID]) return;
   // This scenario has no AI, scripted events, result rewards, or profile side effects.

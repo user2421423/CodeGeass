@@ -153,6 +153,9 @@ function briefingDialog(id, live = false) {
   focusDialog();
 }
 function startMission(id, difficulty = missionDifficulty) {
+  return withGameAssets(ensureGeography, () => startLoadedMission(id, difficulty));
+}
+function startLoadedMission(id, difficulty) {
   const CP = E.campaign;
   if (!CP?.mission(id)) return;
   missionDifficulty = CP.DIFFICULTIES[difficulty] ? difficulty : 'normal';
@@ -170,6 +173,15 @@ function startMission(id, difficulty = missionDifficulty) {
 }
 // A saved conquest or mission picks up where it stopped, with any unread dialogue and its result screen.
 function loadGame(s) {
+  if (!s) return;
+  return withGameAssets(() => s.mode === 'scenario' && s.scenario?.id !== 'training-grounds'
+    ? prepareScenarioAssets(s.scenario.id) : ensureGeography(), () => {
+      const migrated = E.migrateSave(s);
+      if (!migrated) throw new Error('This saved operation cannot be loaded.');
+      return restoreLoadedGame(migrated);
+    });
+}
+function restoreLoadedGame(s) {
   if (!s) return;
   resetSession();
   // Regional scenarios import personal commanders only; World Campaign also imports Elite levels.

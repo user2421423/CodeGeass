@@ -197,3 +197,5 @@
 @media (prefers-reduced-motion: reduce) {
   .start-command *, .start-command *:before, .start-command *:after { transition: none !important; animation: none !important; }
 }
+
+.game-asset-status { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:10000; padding:12px 20px; color:#f5ead4; background:#102d40; border:1px solid #ba9c5b; border-radius:8px; box-shadow:0 4px 24px #0008; }

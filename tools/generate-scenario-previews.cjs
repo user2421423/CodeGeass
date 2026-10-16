@@ -33,6 +33,8 @@ async function generate(){
   page.setDefaultTimeout(180000);
   page.on('pageerror',e=>console.error('Browser JS warning:',e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded',timeout:90000});
+  await page.waitForFunction(() => typeof loadScenarios === 'function');
+  await page.evaluate(() => loadScenarios());
   await page.waitForFunction(()=>typeof scenariosReady!=='undefined'&&scenariosReady&&typeof paintMap==='function'&&E.scenarios?.byId,null,{timeout:180000});
   const availableIds=await page.evaluate(()=>SCENARIO_MANIFEST.map(e=>e.id));
   const requestedIds=new Set((process.env.SCENARIO_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));

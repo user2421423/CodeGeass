@@ -10,7 +10,7 @@ function movementTileStyle(t) {
 }
 
 function draw(time, dt) {
-  if (!canvas || !ctx) return;
+  if (!canvas || !ctx || typeof GEOGRAPHY === 'undefined') return;
   mapHasPulse = false;
   const scale = computeView(),
     { w, h } = mapSize,

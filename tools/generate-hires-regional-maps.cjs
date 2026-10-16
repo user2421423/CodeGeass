@@ -46,6 +46,8 @@ async function run() {
     page.on('pageerror',e=>errors.push(e.message));
     await page.goto('http://127.0.0.1:'+server.address().port+'/',
       {waitUntil:'domcontentloaded',timeout:90000});
+    await page.waitForFunction(() => typeof loadScenarios === 'function');
+    await page.evaluate(() => loadScenarios());
     await page.waitForFunction(() => typeof scenariosReady !== 'undefined' &&
       scenariosReady && typeof paintMap === 'function' && E.scenarios?.byId,
       null,{timeout:180000});

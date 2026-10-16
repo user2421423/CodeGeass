@@ -240,7 +240,7 @@ function wcMissionPanel(){
       html+='<p class="wc-warning">Complete every required war in Tier '+unlocked+' to unlock this objective.</p>';
       if(m.status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented.</p>';
     }else if(status==='planned')html+='<p class="wc-warning">Planned — Scenario Not Yet Implemented. This objective cannot be played or completed.</p>';
-    else if(!E.scenarios?.byId?.[m.scenarioId])
+    else if(!SCENARIO_CATALOG[m.scenarioId])
       html+='<p class="wc-warning">This regional scenario module is not registered.</p>';
     else{
       html+='<label class="wc-diff-label" for="wc-difficulty">Battle difficulty</label><select class="select" id="wc-difficulty">'+
@@ -307,23 +307,27 @@ function wcSelectFaction(f){
   warCampaignDialog();
 }
 function wcLaunch(){
-  const m=WC.ALL[wcMission];
-  if(!m)return;
+  const selected = WC.ALL[wcMission];
+  if (!selected) return;
+  return withGameAssets(() => prepareScenarioAssets(selected.scenarioId), () => wcLaunchLoaded(selected));
+}
+function wcLaunchLoaded(m){
   const info=WC.launch(wcProgress(),wcFaction,m.id,E.scenarios?.byId);
   if(!info.ok){toast(info.reason,true);return;}
   confirmReplace(WC.BATTLE_KEY,'war-campaign',()=>{
     scenarioKind=info.scenarioId;
     scenarioSide=info.battleSide;
     scenarioDifficulty=wcDifficulty;
-    startScenario(info.battleSide,info.context);
+    startLoadedScenario(info.scenarioId,info.battleSide,wcDifficulty,info.context);
   });
 }
 function wcResume(){
   const g=getSave(WC.BATTLE_KEY);
   if(!g?.warCampaign || g.warCampaign.faction!==wcFaction){toast('No active Campaign battle for this faction.');return;}
-  loadGame(g);
+  resumeSavedGame(WC.BATTLE_KEY);
 }
 document.addEventListener('click',function(e){
+  if (gameAssetTask) return;
   const b=e.target.closest('button');if(!b || b.disabled)return;
   const d=b.dataset;
   if(d.wcFaction){wcSelectFaction(d.wcFaction);return;}

@@ -36,7 +36,7 @@ function startMenu() {
   if (!cfg.selectable.includes(setup.side)) setup.side = cfg.selectable[0];
   const era = E.ERAS[cfg.id] || E.ERAS.world;
   const saved = getSave(chosenSaveKey());
-  const scenarioSave = scenariosReady ? getSave(SCENARIO_KEY) : null;
+  const scenarioSave = getSave(SCENARIO_KEY);
   const missionSave = getSave(CAMPAIGN_KEY);
   const profile = loadProfile();
   const reward = conquestReward(setup.difficulty, profile, cfg.id, setup.side);
@@ -194,6 +194,7 @@ function hudMenus() {
   </nav>`;
 }
 function render() {
+  if (typeof prepareMapNavigationBase === 'function') prepareMapNavigationBase();
   E.ensureWarReport(game);
   invalidateUIState();
   const mapFocused = !!canvas && document.activeElement === canvas;

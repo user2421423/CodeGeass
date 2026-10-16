@@ -205,7 +205,8 @@ function getSave(key = SAVE_KEY) {
   try {
     const g = E.unpackSave(JSON.parse(localStorage.getItem(key)));
     if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player])
-      return E.migrateSave(g);
+      // Browsing a save must not migrate it with missing scenario rules.
+      return g.mode === 'scenario' && !E.scenarios?.byId?.[g.scenario?.id] ? g : E.migrateSave(g);
   } catch (e) {}
   return null;
 }
@@ -249,6 +250,7 @@ const homeOf = () => capitalOf(game.player) || ownUnits().find(u => u.cmd) || ow
 // Everything tied to the game being replaced: an unfinished rival turn (aiToken aborts it), its Skip state,
 // open drawers, targeting modes, undo history and in-flight effects.
 function resetSession() {
+  if (typeof resetMapResources === 'function') resetMapResources();
   if (typeof resetNotificationUI === 'function') resetNotificationUI();
   aiToken++;
   aiSide = null;
@@ -267,6 +269,9 @@ function resetSession() {
   effects = [];
 }
 function newGame() {
+  return withGameAssets(ensureGeography, startLoadedConquest);
+}
+function startLoadedConquest() {
   resetSession();
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0, setup.conquest), loadProfile());
   setWorld();
@@ -278,4 +283,50 @@ function newGame() {
   centerOn(u || capitalOf(game.player));
   save();
   toast('Select a Knightmare: green hexes move it, red hexes attack at once. Blue hexes are sea.');
+}
+
+// One asset transaction at a time, with a delayed status so cached launches do
+// not flash a loading screen. The existing menu/map stays visible behind it.
+let gameAssetTask = null;
+function withGameAssets(load, launch) {
+  if (gameAssetTask) return gameAssetTask;
+  document.querySelectorAll('.game-asset-retry').forEach(button => button.remove());
+  gameAssetTask = (async () => {
+    let status;
+    const timer = setTimeout(() => {
+      status = document.createElement('div');
+      status.className = 'game-asset-status';
+      status.setAttribute('role', 'status');
+      status.textContent = 'Loading battlefield…';
+      document.body.appendChild(status);
+    }, 100);
+    try {
+      await load();
+      return launch();
+    } catch (error) {
+      toast(error.message || 'Unable to load battlefield.', true);
+      const retry = document.createElement('button');
+      retry.className = 'game-asset-status game-asset-retry';
+      retry.textContent = 'Loading failed — Retry';
+      retry.onclick = () => { retry.remove(); withGameAssets(load, launch); };
+      document.body.appendChild(retry);
+      setTimeout(() => retry.remove(), 30000);
+      return null;
+    } finally {
+      clearTimeout(timer); status?.remove(); gameAssetTask = null;
+    }
+  })();
+  return gameAssetTask;
+}
+async function resumeSavedGame(key) {
+  return withGameAssets(async () => {
+    const raw = JSON.parse(localStorage.getItem(key));
+    if (raw?.mode === 'scenario' && raw.scenario?.id !== 'training-grounds')
+      await prepareScenarioAssets(raw.scenario?.id);
+    else await ensureGeography();
+  }, () => {
+    const saved = getSave(key);
+    if (!saved) throw new Error('This saved operation cannot be loaded.');
+    return restoreLoadedGame(saved);
+  });
 }
