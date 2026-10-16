@@ -1,5 +1,5 @@
 /* Permanent military decorations */
-.honor-icon{width:55px;height:55px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 5px #0009)}
+.honor-icon{display:inline-block;width:55px;height:55px;flex-shrink:0;background-image:url('assets/art/medals/medals.webp');background-repeat:no-repeat;background-size:700% 100%;filter:drop-shadow(0 2px 5px #0009)}
 .honors-mini{display:flex;align-items:center;gap:4px;min-height:28px}
 .honors-mini .honor-icon{width:25px;height:25px}.honors-mini small{color:#d9caa5;font-size:11px}
 .honors-panel{padding:14px;margin-top:13px;border:1px solid #bfa67566;border-radius:9px;background:#151a2499}

@@ -1,15 +1,12 @@
 /* Permanent military honors. The seven medal art files are bundled locally. */
 'use strict';
-const HONOR_ART = {
-  valor:'valor.webp', star:'conqueror.webp', marksman:'marksman.webp',
-  campaign:'campaign.webp', laurel_hard:'laurel-hard.webp',
-  laurel_challenge:'laurel-challenge.webp', laurel_elite:'laurel-elite.webp',
-  laurel:'laurel-challenge.webp'
-};
+// Indices into a single seven-frame sprite sheet; each frame is square.
+const HONOR_ART = {valor:0,star:1,marksman:2,campaign:3,
+  laurel_hard:4,laurel_challenge:5,laurel_elite:6,laurel:5};
 const HONOR_ORDER=['laurel_elite','laurel_challenge','laurel_hard','valor','star','marksman','campaign'];
 function honorIcon(id,cls=''){
-  if(!HONOR_ART[id])return '';
-  return `<img class="honor-icon ${cls}" src="assets/art/medals/${HONOR_ART[id]}" alt="${esc(E.MEDALS[id]?.name||id)}" loading="lazy">`;
+  if(!Object.hasOwn(HONOR_ART,id))return '';
+  return `<span class="honor-icon ${cls}" role="img" aria-label="${esc(E.MEDALS[id]?.name||id)}" style="background-position:${(HONOR_ART[id]/6)*100}% 50%"></span>`;
 }
 function honorsForCommander(o,operationCommander=null){
   const owned=operationCommander===null;
