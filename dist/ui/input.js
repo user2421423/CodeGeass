@@ -258,6 +258,9 @@ document.addEventListener('click', e => {
     (d.buyGeneric && (p => E.buyGeneric(p, d.officer, d.buyGeneric))) ||
     (d.removeGeneric && (p => E.removeGeneric(p, d.officer, d.removeGeneric))) ||
     (d.promote && (p => E.promote(p, d.promote))) ||
+    (d.retireCommission && (p => E.retireCommission(p, d.retireCommission))) ||
+    (d.upgradeCommission && (p => E.upgradeCommission(p, d.upgradeCommission))) ||
+    (d.expandHighCommand && (p => E.expandHighCommand(p))) ||
     (d.equip && (p => E.equipMedal(p, d.officer, d.equip))) ||
     (d.unequip && (p => E.unequipMedal(p, d.officer, d.unequip)));
   if (hqOrder) {
@@ -276,8 +279,8 @@ document.addEventListener('click', e => {
     }
     if (generalOpen) generalDialog(generalOpen.k, generalOpen.personal);
     else generalsDialog();
-    const k = d.recruitAdmiral || d.officer || d.promote,
-      name = C(k).short;
+    const k = d.recruitAdmiral || d.officer || d.promote || d.retireCommission || d.upgradeCommission,
+      name = k ? C(k).short : 'HQ';
     toast(
       d.recruitAdmiral
         ? `${C(k).name} joins your commanders.`
@@ -289,6 +292,12 @@ document.addEventListener('click', e => {
               ? `${name}: ${E.GENERIC_SKILLS[d.removeGeneric].name} replaced.`
           : d.promote
             ? `${name} promoted to ${E.RANKS[r.rank]}.`
+            : d.retireCommission
+              ? `${name} retired from High Command; ${r.refund} tokens refunded.`
+              : d.upgradeCommission
+                ? `${name} upgraded to ${E.commissionName(r.commission)} Commission.`
+                : d.expandHighCommand
+                  ? `High Command expanded to ${r.capacity} seats.`
             : `${name}'s medals updated.`,
     );
     return;

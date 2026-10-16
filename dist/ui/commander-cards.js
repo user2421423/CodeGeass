@@ -1,8 +1,8 @@
-/* Section 9: tiered commander roster with large side portraits and concise skills.
+/* Section 9: commission-based commander roster with large side portraits and concise skills.
  * Gameplay, prices, commander data and original action handlers are unchanged. */
 (() => {
   'use strict';
-  const controls = { query: '', tier: 'all', ownership: 'all', specialty: 'all', sort: 'tier' };
+  const controls = { query: '', commission: 'all', ownership: 'all', specialty: 'all', sort: 'commission' };
   const branches = ['infantry', 'armor', 'artillery'];
   const ratingKeys = [...branches, 'mobility'];
 
@@ -30,14 +30,15 @@
     const a = C(k);
     const { recruited, officer } = commanderState(k, mode, profile);
     const ratings = officer.ratings || {};
-    const tier = Math.max(1, Math.min(3, Number(a.storyTier) || 3));
+    const commission = E.commissionOf(k, officer);
+    const tier = {standard:3, distinguished:2, legendary:1}[commission];
     const specialty = branches.slice().sort((x, y) =>
       (ratings[y] || 0) - (ratings[x] || 0))[0];
 
     // Keep real action markup and its original event delegation, requirements and costs.
     const actionMarkup = card.querySelector('.officer-actions')?.outerHTML || '';
     card.classList.add('cc-card', 'cc-tier-' + tier);
-    card.dataset.tier = String(tier);
+    card.dataset.commission = commission;
     card.dataset.recruited = recruited ? 'yes' : 'no';
     card.dataset.specialty = specialty;
     card.dataset.rank = String(officer.rank);
@@ -62,7 +63,7 @@
     card.innerHTML = '<div class="cc-card-portrait">' +
         generalPortrait(k, 'cc-portrait-art', true) + '</div>' +
       '<div class="cc-card-info">' +
-        '<div class="cc-card-top"><span class="cc-tier">Tier ' + tier + '</span></div>' +
+        '<div class="cc-card-top"><span class="cc-tier">' + safe(E.commissionName(commission)) + ' Commission</span></div>' +
         '<div class="cc-name-group"><h3>' + safe(a.name) + '</h3>' +
           '<div class="cc-rank-line"><b>' + safe(E.RANKS[officer.rank] || E.RANKS[0]) + '</b></div>' +
         '</div>' +
@@ -115,12 +116,12 @@
       '<div class="cc-filter-bar">' +
       '<label class="cc-search-label">Search<input type="search" data-cc-filter="query" ' +
       'placeholder="Name or ability" autocomplete="off"></label>' +
-      selector('Story tier', 'tier', [['all', 'All tiers'], ['1', 'Tier 1'], ['2', 'Tier 2'], ['3', 'Tier 3']]) +
+      selector('Commission', 'commission', [['all', 'All commissions'], ['standard', 'Standard'], ['distinguished', 'Distinguished'], ['legendary', 'Legendary']]) +
       (mode === 'hq' ? selector('Ownership', 'ownership',
         [['all', 'All commanders'], ['yes', 'Recruited'], ['no', 'Unrecruited']]) : '') +
       selector('Specialization', 'specialty', [['all', 'All branches'], ['infantry', 'Infantry'],
         ['armor', 'Armor'], ['artillery', 'Artillery']]) +
-      selector('Sort by', 'sort', [['tier', 'Story tier'], ['name', 'Name A–Z'],
+      selector('Sort by', 'sort', [['commission', 'Commission'], ['name', 'Name A–Z'],
         ['rank', 'Rank'], ['infantry', 'Infantry rating'], ['armor', 'Armor rating'],
         ['artillery', 'Artillery rating'], ['mobility', 'Mobility rating']]) + '</div>';
 
@@ -148,7 +149,7 @@
       const visible = cards.filter(card => {
         const k = card.querySelector('[data-general]').dataset.general;
         const a = C(k);
-        return (controls.tier === 'all' || card.dataset.tier === controls.tier) &&
+        return (controls.commission === 'all' || card.dataset.commission === controls.commission) &&
           (mode !== 'hq' || controls.ownership === 'all' ||
             card.dataset.recruited === controls.ownership) &&
           (controls.specialty === 'all' || card.dataset.specialty === controls.specialty) &&
@@ -157,8 +158,8 @@
       });
       visible.sort((a, b) => {
         if (controls.sort === 'name') return a.dataset.name.localeCompare(b.dataset.name);
-        if (controls.sort === 'tier')
-          return Number(a.dataset.tier) - Number(b.dataset.tier) ||
+        if (controls.sort === 'commission')
+          return ({legendary:1, distinguished:2, standard:3}[a.dataset.commission] - {legendary:1, distinguished:2, standard:3}[b.dataset.commission]) ||
             a.dataset.name.localeCompare(b.dataset.name);
         const value = controls.sort === 'rank' ? 'rank' : 'rating' + controls.sort;
         return Number(b.dataset[value]) - Number(a.dataset[value]) ||

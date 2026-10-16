@@ -112,6 +112,10 @@ function loadProfile() {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
     }
     if (p.research) p.research = E.normalizeResearch(p.research);
+    if (p.commanderProgressionVersion !== 1) {
+      E.roster(p);
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+    }
     return p;
   } catch (e) {
     return {};

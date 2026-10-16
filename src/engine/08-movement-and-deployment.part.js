@@ -36,7 +36,7 @@
   function movement(g, u) {
     const t = TYPES[u.type],
       f = fx(u),
-      mobilityStars = u.cmd ? officerOf(g, u)?.ratings?.mobility || 1 : 0;
+      mobilityStars = u.cmd ? effectiveRating(g, u, 'mobility') : 0;
     let n = t.move + (eliteFx(u).move || 0);
     // All playable modes grant +2 movement to ground and amphibious units.
     // Warships retain their normal movement values in every mode.

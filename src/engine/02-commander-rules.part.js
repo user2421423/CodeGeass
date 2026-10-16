@@ -4,7 +4,7 @@
   // but the existing combat pipeline can read both without applying either twice.
   const COMMANDER_EFFECTS = Object.fromEntries(Object.entries(COMMANDERS).map(([id, c]) =>
     [id, { ...(c.stats || {}), ...c.fx }]));
-  const COMMANDER_VERSION = 2;
+  const COMMANDER_VERSION = 3;
   function commanderStatsText(k) {
     const st = COMMANDERS[k]?.stats || {}, out = [], pct = n => Math.round(n * 100);
     if (st.dmg) out.push(`Damage +${pct(st.dmg)}%${st.attackOnly ? ' on attacks' : ''}`);
