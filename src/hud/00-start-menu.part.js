@@ -99,7 +99,7 @@ function startMenu() {
           </section>
           <aside class="start-side" aria-label="Other game modes and headquarters">
             <div class="start-side-title"><span>Game modes</span></div>
-            <section class="start-mode" style="--mode-accent:#8acbc0"><span class="start-mode-serial" aria-hidden="true">START</span><h3>Interactive Tutorial</h3><p>Learn the controls in a guided, playable training battle.</p><div class="start-mode-bottom"><span class="start-mode-info">Guided battle · No save overwritten</span><button data-action="tutorial-start">Start tutorial</button></div></section>\n            <section class="start-mode" style="--mode-accent:#d7aa64">
+            <section class="start-mode" style="--mode-accent:#d7aa64">
               <span class="start-mode-serial" aria-hidden="true">I</span>
               <h3>Story Mode</h3>
               <p>Follow the story through linked missions and decisive battles.</p>
@@ -127,7 +127,7 @@ function startMenu() {
           </aside>
         </div>
         <footer class="start-foot">
-          <div class="start-foot-left"><button data-action="tutorial-start">Play tutorial</button><button data-action="help">Field manual</button><button data-action="archive-start">Knightmare archive</button></div>
+          <div class="start-foot-left"><button data-action="tutorial-start">Interactive tutorial</button><button data-action="help">Field manual</button><button data-action="archive-start">Knightmare archive</button></div>
           <small>${esc(NOTICE)} <b>Free, non-commercial fan game.</b> Progress is saved locally in this browser. Starting a new operation replaces the corresponding save slot.</small>
         </footer>
       </div>
