@@ -34,7 +34,7 @@ let mapAtlasState = { tiles: null, revision: -1, terrainRevision: -1, scale: nul
 let mapAtlasFallback = { id: null, image: null, ready: false };
 let mapAtlasStrategicOwners = { tiles: null, original: null, revision: -1, canvas: null };
 const mapAtlasPerformance = {
-  hits: 0, misses: 0, basePaints: 0, politicalPaints: 0,
+  hits: 0, misses: 0, strategicFrames: 0, basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
 };
 if (typeof window !== 'undefined') window.KNIGHTMARE_MAP_PERF = {
@@ -227,6 +227,7 @@ function drawStrategicOwnershipDelta() {
     c.width = source.naturalWidth;
     c.height = source.naturalHeight;
     const originalCtx = ctx;
+    let changed = 0;
     ctx = c.getContext('2d');
     try {
       ctx.setTransform(c.width / WORLD_W, 0, 0, c.height / WORLD_H, 0, 0);
@@ -237,13 +238,14 @@ function drawStrategicOwnershipDelta() {
         const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
         const y = R * 1.5 * t.r + R;
         hexPath(x, y, R + 0.5);
+        changed++;
         ctx.fillStyle = t.owner ? F(t.owner).color : '#91a799';
         ctx.fill();
       }
     } finally {
       ctx = originalCtx;
     }
-    state.canvas = c;
+    state.canvas = changed ? c : null;
     state.revision = revision;
   }
   if (state.canvas)
@@ -260,6 +262,14 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   // At wide strategic zoom, preserve the published geographic picture itself:
   // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
   if (defer && R * scale < 22) {
+    // Abandon high-detail jobs scheduled while the backdrop was loading.
+    // Otherwise heavy Japanese coastline chunks can still stall navigation.
+    if (mapAtlasWarmQueue.length) {
+      mapAtlasWarmQueue.length = 0;
+      mapAtlasWarmKeys.clear();
+      mapAtlasGeneration++;
+    }
+    mapAtlasPerformance.strategicFrames++;
     ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
     drawStrategicOwnershipDelta();
     return;
@@ -283,6 +293,7 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
         for (const layer of layers) {
           const key = mapAtlasKey(col, row, paintScale, tileSize);
           let tile = mapAtlasCanvasSet(layer).get(key);
+          if (tile) mapAtlasPerformance.hits++;
           if (!tile) {
             if (defer) {
               queueMapAtlasTile(col, row, paintScale, paintDetail, tileSize, layer, true);
