@@ -241,6 +241,8 @@ function startScenario(side=scenarioSide, campaignContext=null) {
   E.applyRoster(game, loadProfile());
   scenarioRoutingGroup=null;
   setWorld();
+  // Start loading the pre-rendered troop-free map before the first camera frame.
+  if (typeof updateMapFallback === 'function') updateMapFallback();
   // Start inside each faction's theatre instead of fitting empty sea.
   const focusName=model.meta.text.focus[side];
   const focus=game.stations.find(s=>s.name===focusName)||
