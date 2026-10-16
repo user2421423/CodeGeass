@@ -1,5 +1,9 @@
 # Regional map performance preview
 
+Current implementation and the seven-map desktop/mobile measurements are documented in
+[LAZY_LOADING_MAP_RENDERING.md](performance/LAZY_LOADING_MAP_RENDERING.md).
+The historical preview notes below describe the earlier refactor.
+
 Branch: `preview/map-render-performance`
 
 The atlas now stores the immutable geography/terrain separately from the

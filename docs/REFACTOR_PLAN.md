@@ -1,5 +1,9 @@
 # Refactoring plan: speed and parallel work
 
+The subsequent on-demand loading and rendering implementation supersedes the
+background-loading tradeoff described here; see
+[LAZY_LOADING_MAP_RENDERING.md](performance/LAZY_LOADING_MAP_RENDERING.md) for current behavior and measurements.
+
 Status: done, 2026-10-15. Results and differences from the plan are in section 0; the plan follows unchanged.
 
 ## 0. Results
