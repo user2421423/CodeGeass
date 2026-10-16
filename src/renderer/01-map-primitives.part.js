@@ -57,7 +57,7 @@ function isPacificAirBattle() {
 }
 function terrainProps(t, x, y, scale) {
   if (R * scale < 13) return;
-  const h = k => hash01(t.c, t.r, k);
+  // Decorations use fixed layouts centered on the hex; no coordinate hash jitter.
   // The Pacific fleet interception uses clouds/storms instead of terrestrial relief.
   // This is a visual treatment only; the underlying tactical terrain rules are unchanged.
   if (isPacificAirBattle()) {
@@ -65,7 +65,7 @@ function terrainProps(t, x, y, scale) {
       ctx.fillStyle = '#f1faffca';
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        ctx.ellipse(x + (i - 1) * 10, y + (h(i) - 0.5) * 8, 11, 6.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + (i - 1) * 10, y, 11, 6.5, 0, 0, Math.PI * 2);
         ctx.fill();
       }
     } else if (t.terrain === 'mountain') {
@@ -81,60 +81,29 @@ function terrainProps(t, x, y, scale) {
     return;
   }
   if (t.terrain === 'forest') {
-    // Forests should read as terrain, not one identical tree stamp per hex.
-    // The continuous, translucent ground tint is drawn under the tactical grid
-    // in paintMapLayer; only a variable minority of hexes get fine silhouettes.
-    const neighbors = metaFor(t).adj.filter(n => n.terrain === 'forest').length;
-    const isolated = neighbors <= 2;
-    if (isolated || h(40) > 0.51) {
-      const count = isolated ? 3 : h(41) > 0.76 ? 3 : 2;
-      const centerX = x + (h(42) - 0.5) * R * 0.66;
-      const centerY = y + (h(43) - 0.5) * R * 0.30;
-      for (let i = 0; i < count; i++) {
-        const px = centerX + (i - (count - 1) / 2) * 9 + (h(44 + i) - 0.5) * 4;
-        const py = centerY + (h(50 + i) - 0.5) * 7;
-        const height = (0.69 + h(60 + i) * 0.35) * (isolated ? 1.02 : 1);
-        const width = 0.73 + h(66 + i) * 0.32;
-
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.scale(width, height);
-        // A lean evergreen silhouette with uneven boughs and a visible trunk.
-        // Avoid round canopy blobs and symmetrical nested triangles.
-        ctx.fillStyle = '#334b37';
-        ctx.fillRect(-1, -1, 2, 5);
-        ctx.fillStyle = ['#1c4938', '#285640', '#24513f', '#2a5a45'][Math.floor(h(75 + i) * 4)];
-        ctx.beginPath();
-        ctx.moveTo(0, -17);
-        ctx.bezierCurveTo(-1.7, -14, -2.2, -12, -3.4, -11);
-        ctx.lineTo(-2, -11);
-        ctx.bezierCurveTo(-3.7, -8.8, -5.2, -7.1, -5.8, -6);
-        ctx.lineTo(-3.6, -6.3);
-        ctx.bezierCurveTo(-5.2, -3.7, -7, -1.7, -7.4, 0);
-        ctx.quadraticCurveTo(-2.3, 1.1, 0, 0);
-        ctx.quadraticCurveTo(3, 1.1, 7, 0);
-        ctx.bezierCurveTo(6.5, -1.7, 5, -3.9, 3.5, -6.1);
-        ctx.lineTo(5.6, -5.8);
-        ctx.bezierCurveTo(5.1, -7.3, 3.5, -8.9, 2, -11);
-        ctx.lineTo(3.2, -10.8);
-        ctx.bezierCurveTo(2, -12.6, 1.2, -15.2, 0, -17);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#71927b';
-        ctx.lineWidth = 0.8;
-        ctx.globalAlpha *= 0.5;
-        ctx.beginPath();
-        ctx.moveTo(-1, -13);
-        ctx.quadraticCurveTo(-2.8, -7.5, -4, -3);
-        ctx.stroke();
-        ctx.restore();
-      }
+    for (let i = 0; i < 4; i++) {
+      const [dx, dy] = [[-9, -6], [9, -6], [-9, 6], [9, 6]][i];
+      const tx = x + dx, ty = y + dy;
+      ctx.fillStyle = '#2f5a2e';
+      ctx.beginPath();
+      ctx.moveTo(tx, ty - 12);
+      ctx.lineTo(tx + 7, ty + 4);
+      ctx.lineTo(tx - 7, ty + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#3f7339';
+      ctx.beginPath();
+      ctx.moveTo(tx, ty - 9);
+      ctx.lineTo(tx + 4, ty + 1);
+      ctx.lineTo(tx - 4, ty + 1);
+      ctx.closePath();
+      ctx.fill();
     }
   } else if (t.terrain === 'mountain' || t.terrain === 'peak') {
     const big = t.terrain === 'peak' ? 1.35 : 1;
     for (const [dx, s] of [
-      [-10, 0.8],
-      [8, 1],
+      [-9, 0.8],
+      [9, 1],
     ]) {
       const px = x + dx,
         hgt = 22 * s * big,
@@ -158,7 +127,7 @@ function terrainProps(t, x, y, scale) {
     ctx.strokeStyle = '#b89c62';
     ctx.lineWidth = 1.6;
     for (let i = 0; i < 2; i++) {
-      const dy = (i - 0.5) * 14 + (h(i) - 0.5) * 6;
+      const dy = (i - 0.5) * 14;
       ctx.beginPath();
       ctx.moveTo(x - 18, y + dy);
       ctx.quadraticCurveTo(x - 4, y + dy - 7, x + 10, y + dy);
@@ -181,8 +150,8 @@ function terrainProps(t, x, y, scale) {
   } else if (t.terrain === 'urban') {
     // City ruins: three broken blocks of flats with dark windows.
     for (let i = 0; i < 3; i++) {
-      const bx = x - 20 + i * 13 + (h(i) - 0.5) * 6,
-        bh = 10 + h(i + 4) * 14,
+      const bx = x - 19 + i * 14,
+        bh = [14, 21, 16][i],
         by = y + 10;
       ctx.fillStyle = i % 2 ? '#5b5f67' : '#4b4f57';
       ctx.fillRect(bx, by - bh, 10, bh);
@@ -194,8 +163,8 @@ function terrainProps(t, x, y, scale) {
     }
   } else if (t.terrain === 'snow') {
     ctx.fillStyle = '#c6d4dd';
-    for (let i = 0; i < 3; i++) ctx.fillRect(x + (h(i) - 0.5) * 40, y + (h(i + 5) - 0.5) * 30, 6, 2);
-  } else if (t.terrain === 'sea' && R * scale > 18 && h(3) < 0.35) {
+    for (const [dx, dy] of [[-16, -4], [-3, 2], [10, -4]]) ctx.fillRect(x + dx, y + dy, 6, 2);
+  } else if (t.terrain === 'sea' && R * scale > 18) {
     ctx.strokeStyle = '#ffffff1c';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
