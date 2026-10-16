@@ -73,6 +73,9 @@ for(const lab of T.TRAINING_LABS)setup(lab.id);
   const id=r.group.id;r=E.addArmyGroupUnit(g,id,t.ids.second);assert.ok(r.ok,r.reason);
   r=E.orderArmyGroup(g,id,6,4);assert.ok(r.ok,r.reason);
   assert.equal(r.assigned,2);
+  const queue=E.lineupOf(g,g.player).scout;
+  const auto=E.setCityAutomation(g,0,{unit:queue});assert.ok(auto.ok,auto.reason);
+  assert.equal(E.cityAutomation(g,g.stations[0]).unit,queue);
 }
 {
   const {g}=setup('fleija');
