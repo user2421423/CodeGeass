@@ -1,7 +1,8 @@
 /* Commander stats are permanent personal modifiers; fx/action define situational signature skills.
    Knightmare Conquest engine data: commanders (signature abilities are data read by the combat rules), ranks,
    medals and branch ratings.
-   Data only; read by engine.js. */
+   Data only; read by engine.js. Historical per-character `cost` fields remain for
+   compatibility; personal assignment pricing now uses engine.assignmentCost(g, k). */
 (function (root) {
   'use strict';
   const COMMANDERS = {
