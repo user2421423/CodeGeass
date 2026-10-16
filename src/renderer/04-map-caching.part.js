@@ -27,6 +27,8 @@ const mapAtlasPoliticalTiles = new Map();
 const mapAtlasWarmQueue = [];
 const mapAtlasWarmKeys = new Set();
 let mapAtlasIdlePending = false;
+let mapAtlasLastNavigation = -Infinity;
+function noteMapNavigation() { mapAtlasLastNavigation = performance.now(); }
 let mapAtlasGeneration = 0;
 let mapAtlasState = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
 let mapAtlasFallback = { id: null, image: null, ready: false };
@@ -174,6 +176,12 @@ function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = fa
   if (mapAtlasIdlePending) return;
   mapAtlasIdlePending = true;
   function warm(deadline) {
+    // A slow geography chunk can exceed 100ms on Japan. Never begin it while
+    // the user is panning or zooming; use the static backdrop until they stop.
+    if (mapAtlasWarmQueue.length && performance.now() - mapAtlasLastNavigation < 180) {
+      schedule(warm);
+      return;
+    }
     // Exactly one chunk per idle task. Do not perform an unbounded tile loop
     // in a pointer-move or requestAnimationFrame callback.
     const job = mapAtlasWarmQueue.shift();
