@@ -69,11 +69,20 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
   const d = b.dataset;
-  if (d.action === 'tutorial-start' || d.action === 'tutorial-restart') { tutorialStart(); return; }
+  if (d.action === 'tutorial-start' || d.action === 'tutorial-hub') { tutorialHub(); return; }
+  if (d.action === 'tutorial-hub-close') { startMenu(); return; }
+  if (d.action === 'tutorial-basic') { tutorialStart(); return; }
+  if (d.tutorialLab) { labStart(d.tutorialLab); return; }
+  if (d.tutorialAnswer !== undefined) { labAnswer(+d.tutorialAnswer); return; }
+  if (d.tutorialOp) { labAction(d.tutorialOp); return; }
+  if (d.action === 'tutorial-restart') { if (tutorialState?.lab) labStart(tutorialState.lab); else tutorialStart(); return; }
   if (d.action === 'tutorial-begin') { tutorialStep(1); return; }
   if (d.action === 'tutorial-focus') { tutorialFocus(); return; }
   if (d.action === 'tutorial-exit') { tutorialExit(); return; }
   if (typeof isTutorial === 'function' && isTutorial()) {
+    if (tutorialState?.lab) {
+      if (!labAllowButton(d)) { toast('Follow the current training objective.'); return; }
+    } else {
     const step = tutorialState?.step;
     const system = ['zoom-in', 'zoom-out', 'fit', 'home', 'toggle-minimap', 'toggle-objective',
       'sound', 'mobile-unit-toggle', 'menu', 'help', 'help-close', 'close', 'new'].includes(d.action);
@@ -82,6 +91,7 @@ document.addEventListener('click', e => {
       (step === 7 && (d.shop !== undefined || d.branch || d.recruit !== undefined)) ||
       (step === 8 && (d.admiral || ['assign', 'admirals'].includes(d.action)));
     if (!system && !lesson) { toast('Finish the current tutorial objective before using that command.'); return; }
+    }
   }
   if (d.faction) {
     setup.side = d.faction;
