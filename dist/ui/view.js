@@ -132,6 +132,9 @@ function wrapNear(x, ref) {
   return wraps() ? x + Math.round((ref - x) / WORLD_W) * WORLD_W : x;
 }
 function viewPad() {
+  // Bounded scenarios and campaigns render behind the HUD: padding their
+  // camera creates visible empty bars that are not part of the playable map.
+  if (!wraps()) return { top: 0, bottom: 0 };
   const compact = mapSize.w < 700;
   return { top: compact ? 110 : 120, bottom: compact ? 200 : 170 };
 }
@@ -140,16 +143,22 @@ function computeView() {
   mapSize = { w: rect.width, h: rect.height };
   const pad = viewPad();
   const fitH = (rect.height - pad.top - pad.bottom) / WORLD_H;
-  baseScale = Math.max(0.05, wraps() ? fitH : Math.min(fitH, (rect.width - 40) / WORLD_W));
+  const fitW = rect.width / WORLD_W;
+  // A finite battlefield must COVER the viewport, not fit inside it:
+  // otherwise the renderer shows empty space on the short axis. Panning
+  // still reveals the entire map without resizing/deleting gameplay hexes.
+  // The east-west wrapping world retains its original camera framing.
+  baseScale = Math.max(0.05, wraps() ? fitH : Math.max(fitH, fitW));
   const scale = baseScale * zoom;
   if (wraps()) cam.x = ((cam.x % WORLD_W) + WORLD_W) % WORLD_W;
   else {
     const halfW = rect.width / 2 / scale;
-    cam.x = WORLD_W <= 2 * halfW ? WORLD_W / 2 : E.clamp(cam.x, halfW - 40 / scale, WORLD_W - halfW + 40 / scale);
+    cam.x = WORLD_W <= 2 * halfW ? WORLD_W / 2 : E.clamp(cam.x, halfW, WORLD_W - halfW);
   }
   const halfH = (rect.height - pad.top - pad.bottom) / 2 / scale,
     midY = pad.top + (rect.height - pad.top - pad.bottom) / 2;
-  cam.y = WORLD_H <= 2 * halfH ? WORLD_H / 2 : E.clamp(cam.y, halfH - 40 / scale, WORLD_H - halfH + 40 / scale);
+  const verticalSlack = wraps() ? 40 / scale : 0;
+  cam.y = WORLD_H <= 2 * halfH ? WORLD_H / 2 : E.clamp(cam.y, halfH - verticalSlack, WORLD_H - halfH + verticalSlack);
   // Whole device pixels, so the cached map layer lines up exactly wherever the camera stops.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   offset = {
