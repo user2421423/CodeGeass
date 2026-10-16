@@ -190,10 +190,33 @@ const GEOGRAPHY = (() => {
     islandOwnerCache = null;
     return ownershipCache;
   }
+  // World conquests have Havana as the only Caribbean city. Small island
+  // polygons often have no playable land hex at this scale, so the nearby-seed
+  // painter either leaves them green or borrows a colour across open water.
+  // Treat this island chain as Havana's geographic province, following its
+  // CURRENT controller (including after the city changes hands). Regional
+  // Caribbean scenarios have their own cities and retain per-island control.
+  function havanaCaribbeanIsland(shape) {
+    const west = (shape.bounds[0] - R) * 2 / (SQ * R) - 179;
+    const east = (shape.bounds[2] - R) * 2 / (SQ * R) - 179;
+    const north = 74 - (shape.bounds[1] - R) * 128 / (1.5 * R * 75);
+    const south = 74 - (shape.bounds[3] - R) * 128 / (1.5 * R * 75);
+    // Require the ENTIRE shape to lie in the Caribbean: never recolour
+    // Florida, Central/South America, or any other mainland coastline.
+    if (west < -86 || east > -58 || south < 9.5 || north > 28) return false;
+    // Exclude the Florida Keys; these belong to the mainland controller.
+    if (south > 23.5 && west < -80.5) return false;
+    return true;
+  }
   function homogeneousLandShapes(g) {
     const data = coastlineOwners(g);
-    if (islandOwnerCache && islandOwnerCache.source === data) return islandOwnerCache.owners;
+    const havanaOwner = g.wrap && g.cols === VISUAL_WORLD.cols &&
+      g.rows === VISUAL_WORLD.rows
+      ? g.stations?.find(city => city.name === 'Havana')?.owner : null;
+    if (islandOwnerCache && islandOwnerCache.source === data &&
+        islandOwnerCache.havanaOwner === havanaOwner) return islandOwnerCache.owners;
     const owners = LAYERS.land.map(shape => {
+      if (havanaOwner && havanaCaribbeanIsland(shape)) return havanaOwner;
       let owner = null, found = false;
       for (const seed of data.seeds) {
         if (!pointWithinShape(shape, seed.x, seed.y)) continue;
@@ -240,7 +263,7 @@ const GEOGRAPHY = (() => {
       }
       return closest;
     });
-    islandOwnerCache = { source: data, owners };
+    islandOwnerCache = { source: data, owners, havanaOwner };
     return owners;
   }
   // The Red Sea is one to two coarse tiles wide. Political colour must be
