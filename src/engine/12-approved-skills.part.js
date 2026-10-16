@@ -6,12 +6,9 @@
     if(u.cmd==='gaohai')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)===1&&s.shield<s.maxShield&&g.stations.some(o=>o.owner===u.side&&o.c===u.c&&o.r===u.r&&o.shield>0));
     if(u.cmd==='huangqian')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)<=3&&s.shield<s.maxShield);
     if(u.cmd==='chengzhong')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)<=3);
-    if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
-      ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
-      : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=3):true));
+    if(k==='self')return u.hp>0&&!(u.cmd==='sayoko'&&u.attacked)?[u]:[];
     if(u.cmd==='sugiyama')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)===1);
     if(u.cmd==='olivia')return u.attacked?[]:g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&inRange(u,v,g)&&hostileTarget(g,u,v));
-    if(u.cmd==='sayoko')return !u.attacked?[u]:[];
     if(u.cmd==='margaret')return g.units.filter(v=>v.hp>0&&v.id!==u.id&&v.side===u.side&&!atSea(g,v)&&!v.attacked&&dist(g,u,v)<=3&&!v.expMargaretRedeploy);
     return g.units.filter(v=>v.hp>0&&!atSea(g,v)&&dist(g,u,v)<=range&&(
       ['enemy','enemyCommander'].includes(k)
