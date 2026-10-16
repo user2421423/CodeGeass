@@ -72,9 +72,11 @@ function parse(argv) {
       throw new Error('--shard must be index/count, e.g. 0/8');
     options.modes = options.modes.filter((_, i) => i % +match[2] === +match[1]);
   }
-  if (!options.modes.length || options.modes.some(m => !MODES[m]))
+  // Some workers intentionally receive no modes when a small selection is
+  // split into more shards than scenarios. They still emit mergeable reports.
+  if ((!options.modes.length && options.shard == null) || options.modes.some(m => !MODES[m]))
     throw new Error('Unknown or missing mode; valid: ' + Object.keys(MODES).join(', '));
-  if (options.difficulties.some(d => !DIFFICULTIES.includes(d)))
+  if (!options.difficulties.length || options.difficulties.some(d => !DIFFICULTIES.includes(d)))
     throw new Error('Difficulty must be normal, hard, challenge or elite');
   if (options.players.length && options.players.some(p => !options.modes.some(m => MODES[m].sides.includes(p))))
     throw new Error('Unknown player selection');
@@ -147,6 +149,7 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
     attacks: tally(sides), moves: tally(sides), deployments: tally(sides),
     seaLandings: tally(sides), navalLosses: tally(sides),
     unitsBuilt: tally(sides), unitsLost: tally(sides),
+    hostileLossesByPlayer: tally(sides),
     cityCaptures: tally(sides), coastalCaptures: tally(sides),
     frontSwitches: tally(sides), pairedAttacks: {},
     cityTransfers: [], navalLandingLog: [], frontSwitchLog: [],
@@ -181,6 +184,11 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
         metrics.unitsLost[unit.side]++;
         if (unit.naval) metrics.navalLosses[unit.side]++;
       }
+      // Attribute opposing casualties using the alliance/hostility rules
+      // effective when the formation disappears, not just faction inequality.
+      for (const perspective of sides)
+        if (perspective !== unit.side && E.foe(g, perspective, unit.side))
+          metrics.hostileLossesByPlayer[perspective]++;
     }
     for (const city of g.stations) {
       const from = owners.get(city.id);
@@ -309,8 +317,7 @@ function simulate(mode, player, difficulty, seed, maxTurns, snapshots) {
   metrics.stalemate = !winner && maxTurns >= 8 && idleTurns >= 8 &&
     sides.filter(side => g.stations.some(s => s.owner === side)).length >= 2;
   const selectedLosses = metrics.unitsLost[player] || 0;
-  const opposingLosses = sides.filter(side => side !== player)
-    .reduce((sum, side) => sum + (metrics.unitsLost[side] || 0), 0);
+  const opposingLosses = metrics.hostileLossesByPlayer[player] || 0;
   return {
     mode, player, difficulty, seed, maxTurns, turnsPlayed: played,
     resolved: !!winner, winner, result: winner || 'unresolved',
