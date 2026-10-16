@@ -3,7 +3,7 @@
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
-  const STARTERS = { britannia: ['suzaku', 'cornelia'], eu: ['leila', 'akito'], cf: ['xingke', 'xianglin'] };
+  const STARTERS = { britannia: ['cornelia'], bk: ['zero'] };
   function fx(u) {
     return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
@@ -65,7 +65,7 @@
         .slice(0, genericSlots(k, rec))),
     };
   }
-  // Every profile owns its starter commanders, including older saves with an empty roster object.
+  // Fresh profiles have exactly two free commanders total; existing profile rosters are preserved.
   function roster(profile) {
     profile.roster ||= {};
     for (const k of Object.values(STARTERS).flat())

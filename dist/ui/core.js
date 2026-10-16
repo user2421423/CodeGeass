@@ -103,19 +103,42 @@ function toast(text, long = false) {
 let generalOpen = null;
 function loadProfile() {
   try {
-    const p = JSON.parse(localStorage.getItem(PROFILE_KEY)) || {};
+    const saved = localStorage.getItem(PROFILE_KEY),
+      p = saved ? JSON.parse(saved) || {} : {};
+    let changed = false;
+    // One-time migration: anyone with a pre-existing profile keeps the old free
+    // commanders and starter Elite fragment entitlements. Fresh profiles do not
+    // receive them. Existing purchased records are never overwritten.
+    if (p.startingSetupVersion !== 2) {
+      if (saved) {
+        p.legacyStarterEntitlements = true;
+        p.roster ||= {};
+        for (const k of ['suzaku', 'cornelia', 'leila', 'akito', 'xingke', 'xianglin'])
+          if (!p.roster[k]) p.roster[k] = E.defaultOfficer(k, true);
+        p.elites ||= {};
+        for (const id of ['cornelia_gloucester', 'tohdoh_gekka', 'leila_alexander', 'chuyen'])
+          if (!p.elites[id]) p.elites[id] = { level: 0, fragments: E.ELITE_UNLOCK_FRAGMENTS };
+      }
+      p.startingSetupVersion = 2;
+      changed = true;
+    }
     if (p.researchVersion !== E.RESEARCH_VERSION) {
-      // Clean slate for permanent HQ research only, as requested.
-      // Commander, Elite, conquest and token progression are retained.
+      // Preserve the existing research migration behavior.
       p.research = {};
       p.researchVersion = E.RESEARCH_VERSION;
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+      changed = true;
     }
     if (p.research) p.research = E.normalizeResearch(p.research);
     if (p.commanderProgressionVersion !== 1) {
       E.roster(p);
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+      changed = true;
     }
+    // Retroactively award the new third-mission Elites to players who have
+    // already beaten those battles, without reducing any existing Elite levels.
+    for (const [missionId, eliteId] of Object.entries({ br_mef: 'cornelia_gloucester', bk3: 'guren_mkii' }))
+      if ((p.campaign?.[missionId] || 0) > 0 && E.unlockStoryElite(p, eliteId))
+        changed = true;
+    if (changed) localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
     return p;
   } catch (e) {
     return {};

@@ -1205,8 +1205,7 @@
   ];
   const ELITE_FORCES = {
     cornelia_gloucester: {
-      type: 'elite_cornelia_gloucester', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare', starter: true,
-      skill: 'Royal Guard Raid',
+      type: 'elite_cornelia_gloucester', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare', skill: 'Royal Guard Raid',
       lv3Text: '+25% damage on or next to a friendly city while raiding.',
       lv5Text: '+40% city-position damage; a kill restores movement.',
       lv3: { cityAttack: 0.25 }, lv5: { cityAttack: 0.40, moveAfterKill: true },
@@ -1226,8 +1225,7 @@
       lv3: { vsArmor: 0.35, pen: 0.20, noCounter: true }, lv5: { vsArmor: 0.50, pen: 0.30, noCounter: true, stun: true },
     },
     tohdoh_gekka: {
-      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic', starter: true,
-      skill: 'Four Holy Swords',
+      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic', skill: 'Four Holy Swords',
       lv3Text: 'Adjacent friendly Infantry and Armor deal +12% damage.',
       lv5Text: 'Aura rises to +18%; Tohdoh gains +25% counter-fire.',
       lv3: { aura: { range: 1, value: 0.12, branches: ['Infantry', 'Armor'] } },
@@ -1273,8 +1271,7 @@
     },
 
     leila_alexander: {
-      type: 'elite_leila_alexander', faction: 'eu', availableTo: ['eu'], rarity: 'Rare', starter: true,
-      skill: 'wZERO Command Link',
+      type: 'elite_leila_alexander', faction: 'eu', availableTo: ['eu'], rarity: 'Rare', skill: 'wZERO Command Link',
       lv3Text: 'Adjacent Infantry and Armor deal +12% damage.',
       lv5Text: 'Command aura reaches 2 hexes at +15%; Leila takes 15% less damage.',
       lv3: { aura: { range: 1, value: 0.12, branches: ['Infantry', 'Armor'] } },
@@ -1313,8 +1310,7 @@
       lv5: { float: true, range: 1, pen: 0.30, splash: 0.30 },
     },
     chuyen: {
-      type: 'elite_chuyen', faction: 'cf', availableTo: ['cf'], rarity: 'Rare', starter: true,
-      skill: 'Monkey King Pole',
+      type: 'elite_chuyen', faction: 'cf', availableTo: ['cf'], rarity: 'Rare', skill: 'Monkey King Pole',
       lv3Text: '+20% damage and +20% counter-fire.',
       lv5Text: '+35% damage, +30% counter-fire; a kill restores movement.',
       lv3: { dmg: 0.20, counter: 0.20 },

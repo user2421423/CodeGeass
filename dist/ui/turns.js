@@ -168,6 +168,7 @@ function claimReward() {
   if (prior) {
     game.reward = prior.reward;
     if (prior.eliteReward) game.eliteReward = prior.eliteReward;
+    if (prior.storyEliteUnlocked) game.storyEliteUnlocked = prior.storyEliteUnlocked;
     game.rewardClaimed = true;
     undoStack = [];
     save();
@@ -192,6 +193,9 @@ function claimReward() {
         diff = game.difficulty || 'normal';
       byDifficulty[diff] = Math.max(byDifficulty[diff] || 0, r.stars);
       (p.campaign ||= {})[id] = Math.max(legacyBest, r.stars);
+      const guaranteedElite = CP.STORY_ELITE_UNLOCKS[id];
+      if (guaranteedElite && E.unlockStoryElite(p, guaranteedElite))
+        game.storyEliteUnlocked = guaranteedElite;
       // A first clear at each difficulty still pays the broad faction fragment drop. Two-star, three-star and
       // campaign milestone bonuses are targeted and can stack onto that same result.
       if (r.first) addEliteAward(E.eliteVictoryReward(game, {}));
@@ -220,7 +224,7 @@ function claimReward() {
     }
     game.reward = r;
   }
-  claims[game.rewardClaimId] = { reward: game.reward || null, eliteReward: game.eliteReward || null };
+  claims[game.rewardClaimId] = { reward: game.reward || null, eliteReward: game.eliteReward || null, storyEliteUnlocked: game.storyEliteUnlocked || null };
   if (!saveProfile(p)) {
     toast('Rewards are pending because command records could not be saved. Keep this operation and retry its result screen.', true);
     return false;
