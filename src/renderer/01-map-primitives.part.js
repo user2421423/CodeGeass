@@ -81,23 +81,54 @@ function terrainProps(t, x, y, scale) {
     return;
   }
   if (t.terrain === 'forest') {
-    for (let i = 0; i < 4; i++) {
-      const tx = x + (h(i) - 0.5) * R * 1.1,
-        ty = y + (h(i + 9) - 0.5) * R * 0.9;
-      ctx.fillStyle = '#2f5a2e';
+    // Small, reproducible groves instead of four scattered triangular placeholders.
+    // All shapes are painted in world coordinates and cached with the map atlas.
+    const grove = [
+      [-0.23, 0.05, 0.91],
+      [0.08, -0.19, 1.08],
+      [0.26, 0.12, 0.81],
+      [-0.11, 0.25, 0.89],
+    ];
+    ctx.fillStyle = '#28543c';
+    ctx.beginPath();
+    ctx.ellipse(x, y + R * 0.08, R * 0.35, R * 0.26, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < grove.length; i++) {
+      const [dx, dy, size] = grove[i];
+      const tx = x + (dx + (h(i + 13) - 0.5) * 0.08) * R;
+      const ty = y + (dy + (h(i + 23) - 0.5) * 0.07) * R;
+      const s = size * (0.94 + h(i + 33) * 0.14);
+
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.scale(s, s);
+
+      // A short trunk stays visible beneath each irregular leafy silhouette.
+      ctx.fillStyle = '#594b33';
+      ctx.fillRect(-1.6, -2, 3.2, 8);
+      ctx.fillStyle = ['#24583f', '#1c5039', '#2b6547', '#20563b'][i];
       ctx.beginPath();
-      ctx.moveTo(tx, ty - 12);
-      ctx.lineTo(tx + 7, ty + 4);
-      ctx.lineTo(tx - 7, ty + 4);
+      ctx.moveTo(0, -18);
+      ctx.bezierCurveTo(-4, -18, -5.5, -15, -5, -12);
+      ctx.bezierCurveTo(-9, -12, -10.5, -8.5, -8, -6);
+      ctx.bezierCurveTo(-12, -4.5, -11.5, 0, -7, 1.5);
+      ctx.quadraticCurveTo(0, 4.5, 7, 1.5);
+      ctx.bezierCurveTo(11.5, 0, 12, -4.5, 8, -6);
+      ctx.bezierCurveTo(10.5, -8.5, 9, -12, 5, -12);
+      ctx.bezierCurveTo(5.5, -15, 4, -18, 0, -18);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = '#3f7339';
+
+      // One soft sunlit face conveys volume without expensive sprite assets.
+      ctx.fillStyle = i % 2 ? '#48855b' : '#3a7651';
       ctx.beginPath();
-      ctx.moveTo(tx, ty - 9);
-      ctx.lineTo(tx + 4, ty + 1);
-      ctx.lineTo(tx - 4, ty + 1);
+      ctx.moveTo(-1.5, -15);
+      ctx.bezierCurveTo(-6.5, -13, -6.5, -9.5, -4.5, -8);
+      ctx.bezierCurveTo(-8, -5.5, -6, -2.5, -2.5, -2.5);
+      ctx.quadraticCurveTo(-4, -8, 1, -12.5);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
     }
   } else if (t.terrain === 'mountain' || t.terrain === 'peak') {
     const big = t.terrain === 'peak' ? 1.35 : 1;
