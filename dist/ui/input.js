@@ -510,7 +510,10 @@ document.addEventListener('click', e => {
       else closeModal();
       break;
     case 'menu':
-      menuDialog();
+      // System → Main Menu skips the old intermediary dialog. Preserve the
+      // current operation's resume slot before leaving the battlefield.
+      save();
+      startMenu();
       break;
     case 'powers':
       powersDialog();
