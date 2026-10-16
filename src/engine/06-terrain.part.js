@@ -109,6 +109,7 @@
   function setTileTerrain(g, t, terrain) {
     if (t.terrain === terrain) return;
     t.terrain = terrain;
+    g.mapTerrainRevision = (g.mapTerrainRevision || 0) + 1;
     g.mapRevision = (g.mapRevision || 0) + 1;
   }
   const isSea = t => t?.terrain === 'sea';
