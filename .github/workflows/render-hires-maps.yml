@@ -1,0 +1,61 @@
+name: Export crisp playable theatre maps
+on:
+  push:
+    branches: ['preview/map-render-performance']
+    paths:
+      - 'tools/generate-hires-regional-maps.cjs'
+      - '.github/workflows/render-hires-maps.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: render-hires-theatres
+  cancel-in-progress: false
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: preview/map-render-performance
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile source-of-truth bundles
+        run: node tools/build_sources.cjs
+      - name: Install headless Chrome driver
+        run: |
+          npm install --prefix /tmp/hires-deps --no-save --no-package-lock playwright-core@1.57.0
+          command -v google-chrome || command -v google-chrome-stable || command -v chromium
+      - name: Export world-aligned, troop-free high-resolution WebPs
+        env:
+          NODE_PATH: /tmp/hires-deps/node_modules
+        run: node tools/generate-hires-regional-maps.cjs
+      - name: Commit detailed raster backdrops to the preview branch
+        id: save
+        run: |
+          git add dist/scenario-hires/
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Export high-resolution geography backdrops for all scenarios"
+            git push origin HEAD:preview/map-render-performance
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Republish the playable branch preview
+        if: steps.save.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl --fail-with-body --retry 3 --retry-delay 3 \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/pages.yml/dispatches" \
+            -d '{"ref":"main"}'
