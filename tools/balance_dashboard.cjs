@@ -7,7 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const E = require('../dist/engine.js');
 require('../dist/engine/ai.js');
-const report = require('./balance_dashboard_report.cjs');
+const report = require('./balance_dashboard_report_expanded.cjs');
 // Read the shipped manifest rather than maintaining an incomplete second catalog.
 // The manifest only declares a browser loader; no DOM functions are invoked here.
 const manifestSource = fs.readFileSync(path.join(__dirname, '../dist/scenario-manifest.js'), 'utf8');
