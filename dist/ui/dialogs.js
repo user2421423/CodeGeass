@@ -136,7 +136,7 @@ function researchDialog(branch = researchBranch) {
   const p = loadProfile(),
     research = E.normalizeResearch(p.research || {}),
     tokens = p.tokens || 0,
-    wins = p.wins || 0,
+    wins = E.researchVictoryCount(p),
     tree = E.TECH_TREE[branch];
   const tiers = [1, 2, 3, 4]
     .map(
@@ -154,7 +154,7 @@ function researchDialog(branch = researchBranch) {
       return `<section class="tech-card hq"><span class="label">${tree.name} · Level ${l} / ${n.max}</span><h3>${n.name}</h3><ol class="doctrine">${n.values.map((v, i) => `<li class="${i < l ? 'unlocked' : ''}"><b>${E.ROMAN[i + 1]}</b> ${n.text(v)} <small>Tier ${E.ROMAN[n.tiers[i]]}</small></li>`).join('')}</ol>${req ? `<small class="req">Requires ${req.name} ${E.ROMAN[n.req[1]]}</small>` : ''}<div class="tech-levels">${n.values.map((_, i) => `<i class="${i < l ? 'unlocked' : ''}"></i>`).join('')}</div>${act(`data-research="${id}"`, done ? 'Fully researched' : `Research ${E.ROMAN[l + 1]}`, done ? 'Fully researched' : E.researchReason(p, id), done ? '' : tokenCost(E.researchCost(id, l), tokens), '', !done)}</section>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="HQ research"><div class="dialog-head"><div><div class="eyebrow">Command HQ · kept across every operation and faction</div><h2>HQ research</h2><p class="hq-balance">${ICONS.use('token', 'cost-ico')} <b>${count(tokens)}</b> command tokens · ${wins} ${wins === 1 ? 'victory' : 'victories'}</p></div><button class="small close" data-action="research-close">Close</button></div>${tokens || Object.keys(research).length ? '' : `<div class="info-strip">Command tokens are earned by the first victory with each faction at each difficulty: ${E.TOKEN_REWARD.victory} per victory plus ${E.TOKEN_REWARD.conquest} for the conquest and 1 per ${E.TOKEN_REWARD.research} research banked (up to ${E.TOKEN_REWARD.researchCap}), ×1.5 on Hard and ×2 on Challenge, and ${E.TOKEN_REWARD.first} more for your first win ever.</div>`}<div class="tier-row">${tiers}</div><div class="tabs">${Object.entries(
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="HQ research"><div class="dialog-head"><div><div class="eyebrow">Command HQ · kept across every operation and faction</div><h2>HQ research</h2><p class="hq-balance">${ICONS.use('token', 'cost-ico')} <b>${count(tokens)}</b> command tokens · ${wins} qualifying ${wins === 1 ? 'victory' : 'victories'} (${p.wins || 0} Conquest · ${Object.values(p.researchStoryCompletions || {}).filter(Boolean).length} Story · ${Object.values(p.researchWorldCompletions || {}).filter(Boolean).length} World)</p></div><button class="small close" data-action="research-close">Close</button></div>${tokens || Object.keys(research).length ? '' : `<div class="info-strip">HQ research prices: 100 / 200 / 300 / 400 / 500 command tokens per technology level. Unlock tiers by winning eligible Conquests and completing full Story Mode or World Campaign arcs (one credit per completed arc). Individual campaign missions do not count.</div>`}<div class="tier-row">${tiers}</div><div class="tabs">${Object.entries(
     E.TECH_TREE,
   )
     .map(([k, b]) => `<button data-research-branch="${k}" class="${k === branch ? 'active' : ''}">${b.name}</button>`)

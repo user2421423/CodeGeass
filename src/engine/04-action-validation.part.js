@@ -106,7 +106,16 @@
       shortfall(funds(g, s.owner), decreePrice(buildCost(s, kind),s))
     );
   }
-  // HQ research works on the persistent profile: { tokens, wins, research: { 'armor.guns': 2, ... } }.
+  // A qualifying research victory is a rewarded Conquest win or the first
+  // full completion of an individual Story Mode or World Campaign arc. Ordinary
+  // battles and repeated campaign completions never count towards HQ tier gates.
+  function researchVictoryCount(profile = {}) {
+    const conquests = Math.max(0, Math.floor(Number(profile.wins) || 0)),
+      completedStory = Object.values(profile.researchStoryCompletions || {}).filter(v => v === true).length,
+      completedWorld = Object.values(profile.researchWorldCompletions || {}).filter(v => v === true).length;
+    return conquests + completedStory + completedWorld;
+  }
+  // HQ research persists across every faction; existing research levels stay owned.
   function researchReason(profile, id) {
     const n = TECH_NODES[id];
     if (!n) return 'Unavailable';
@@ -114,9 +123,9 @@
       l = research[id] || 0;
     if (l >= n.max) return 'Fully researched';
     const tier = n.tiers[l],
-      wins = profile?.wins || 0;
+      wins = researchVictoryCount(profile);
     if (wins < TECH_TIERS[tier])
-      return `Tier ${tier}: win ${TECH_TIERS[tier] - wins} more operation${TECH_TIERS[tier] - wins > 1 ? 's' : ''}`;
+      return `Tier ${tier}: earn ${TECH_TIERS[tier] - wins} more qualifying victory credit${TECH_TIERS[tier] - wins > 1 ? 's' : ''}`;
     if (n.req) {
       const [k, need] = n.req,
         rid = `${n.branch}.${k}`;

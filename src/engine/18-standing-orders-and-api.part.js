@@ -342,6 +342,7 @@
     reinforce,
     repair,
     researchCost,
+    researchVictoryCount,
     research,
     assign,
     feint,

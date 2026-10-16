@@ -101,6 +101,38 @@ function toast(text, long = false) {
 }
 // The commander whose Commander Info card is open, so HQ orders can refresh it.
 let generalOpen = null;
+// Credit full campaigns once, including progress saved before this research
+// update. Campaign progress has its own storage; victory credits stay permanently
+// earned even if a player later resets or replays that campaign.
+function syncResearchCampaignCompletions(profile) {
+  let changed = false;
+  const storyCampaigns = E.campaign?.CAMPAIGNS || {};
+  for (const [id, campaign] of Object.entries(storyCampaigns)) {
+    const missions = campaign.missions || [];
+    if (missions.length && missions.every(m => (profile.campaign?.[m.id] || 0) >= 1)) {
+      profile.researchStoryCompletions ||= {};
+      if (profile.researchStoryCompletions[id] !== true) {
+        profile.researchStoryCompletions[id] = true;
+        changed = true;
+      }
+    }
+  }
+  const campaign = typeof KnightmareWarCampaign === 'undefined' ? null : KnightmareWarCampaign;
+  if (campaign?.load) {
+    const progress = campaign.load(localStorage);
+    for (const [id, tiers] of Object.entries(campaign.registry || {})) {
+      if (tiers.length && tiers.every(t => t.missions.length &&
+        t.missions.every(m => campaign.completed(progress, id, m.id)))) {
+        profile.researchWorldCompletions ||= {};
+        if (profile.researchWorldCompletions[id] !== true) {
+          profile.researchWorldCompletions[id] = true;
+          changed = true;
+        }
+      }
+    }
+  }
+  return changed;
+}
 function loadProfile() {
   try {
     const saved = localStorage.getItem(PROFILE_KEY),
@@ -138,6 +170,7 @@ function loadProfile() {
     for (const [missionId, eliteId] of Object.entries({ br_mef: 'cornelia_gloucester', bk3: 'guren_mkii' }))
       if ((p.campaign?.[missionId] || 0) > 0 && E.unlockStoryElite(p, eliteId))
         changed = true;
+    if (syncResearchCampaignCompletions(p)) changed = true;
     if (changed) localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
     return p;
   } catch (e) {

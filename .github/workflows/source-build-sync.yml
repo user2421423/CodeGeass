@@ -25,6 +25,8 @@ jobs:
         run: node tools/story_canterbury_movement_smoke.cjs
       - name: Verify HQ mobility research bonuses
         run: node tools/research_mobility_smoke.cjs
+      - name: Verify standardized research prices and whole-campaign credits
+        run: node tools/research_standardization_smoke.cjs
       - name: Verify six-branch HQ research
         run: node tools/research_branch_redesign_smoke.cjs
       - name: Verify research progression, counts, and fixed carrier capacity
