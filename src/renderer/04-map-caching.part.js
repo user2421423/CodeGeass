@@ -86,6 +86,14 @@ function updateMapFallback() {
   img.onload = () => {
     if (mapAtlasFallback.id !== sourceId) return;
     mapAtlasFallback.ready = true;
+    // Pending atlas jobs were queued before the WebP was available. At
+    // strategic zoom the WebP is the finished map, so discard those jobs now,
+    // before even one expensive Japanese coastline job can fire.
+    if (R * (baseScale * zoom) < 22 && mapAtlasWarmQueue.length) {
+      mapAtlasWarmQueue.length = 0;
+      mapAtlasWarmKeys.clear();
+      mapAtlasGeneration++;
+    }
     if (typeof requestMapFrame === 'function') requestMapFrame();
   };
   img.onerror = () => {
