@@ -129,7 +129,7 @@ function loadProfile() {
       changed = true;
     }
     if (p.research) p.research = E.normalizeResearch(p.research);
-    if (p.commanderProgressionVersion !== 1) {
+    if (p.commanderProgressionVersion !== 1 || p.honorsVersion !== 1) {
       E.roster(p);
       changed = true;
     }
