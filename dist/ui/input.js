@@ -69,6 +69,20 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
   const d = b.dataset;
+  if (d.action === 'tutorial-start' || d.action === 'tutorial-restart') { tutorialStart(); return; }
+  if (d.action === 'tutorial-begin') { tutorialStep(1); return; }
+  if (d.action === 'tutorial-focus') { tutorialFocus(); return; }
+  if (d.action === 'tutorial-exit') { tutorialExit(); return; }
+  if (typeof isTutorial === 'function' && isTutorial()) {
+    const step = tutorialState?.step;
+    const system = ['zoom-in', 'zoom-out', 'fit', 'home', 'toggle-minimap', 'toggle-objective',
+      'sound', 'mobile-unit-toggle', 'menu', 'help', 'help-close', 'close', 'new'].includes(d.action);
+    const lesson = (step === 4 && d.action === 'end') ||
+      (step >= 6 && d.station !== undefined) ||
+      (step === 7 && (d.shop !== undefined || d.branch || d.recruit !== undefined)) ||
+      (step === 8 && (d.admiral || ['assign', 'admirals'].includes(d.action)));
+    if (!system && !lesson) { toast('Finish the current tutorial objective before using that command.'); return; }
+  }
   if (d.faction) {
     setup.side = d.faction;
     startMenu();
