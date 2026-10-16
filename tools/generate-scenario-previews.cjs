@@ -34,7 +34,11 @@ async function generate(){
   page.on('pageerror',e=>console.error('Browser JS warning:',e.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded',timeout:90000});
   await page.waitForFunction(()=>typeof scenariosReady!=='undefined'&&scenariosReady&&typeof paintMap==='function'&&E.scenarios?.byId,null,{timeout:180000});
-  const ids=await page.evaluate(()=>SCENARIO_MANIFEST.map(e=>e.id));
+  const availableIds=await page.evaluate(()=>SCENARIO_MANIFEST.map(e=>e.id));
+  const requestedIds=new Set((process.env.SCENARIO_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
+  const ids=requestedIds.size?availableIds.filter(id=>requestedIds.has(id)):availableIds;
+  if(requestedIds.size&&ids.length!==requestedIds.size)
+   throw Error('Unknown scenario IDs: '+[...requestedIds].filter(id=>!availableIds.includes(id)).join(', '));
   const metadata={};
   console.log('Generating '+ids.length+' static map images: '+SIZE.width+' x '+SIZE.height);
   for(let i=0;i<ids.length;i++){
@@ -63,7 +67,8 @@ async function generate(){
    if(i%5===0)await page.evaluate(()=>{if(typeof gc==='function')gc()});
   }
   if(Object.keys(metadata).length!==ids.length)throw Error('Not all previews exported');
-  fs.writeFileSync(path.join(OUT,'metadata.js'),
+  // A selective visual refresh must not overwrite the full scenario metadata.
+  if(!requestedIds.size)fs.writeFileSync(path.join(OUT,'metadata.js'),
    '/* Static scenario data exported with geographic map pictures. */\n'+
    'const SCENARIO_STATIC_MAPS=Object.freeze('+JSON.stringify(metadata,null,2)+');\n');
   console.log('Generated all '+ids.length+' geography-only pictures.');
