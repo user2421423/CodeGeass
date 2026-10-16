@@ -537,11 +537,17 @@
   // ======== Progress and rewards (profile.campaign = { missionId: best stars }) ========
   // Clearing a mission is still enough to progress. Two- and three-star play now adds one-time, overall
   // performance rewards, while each difficulty keeps its own first-clear/new-star token payouts.
-  const REWARD = { first: 60, star: 30, twoStarFragments: 4, masteryFragments: 10 };
+  const REWARD = {
+    tokens: {
+      normal: [0, 100, 100, 200], hard: [0, 200, 200, 300],
+      challenge: [0, 300, 300, 400], elite: [0, 400, 400, 500],
+    },
+    masteryFragments: 10,
+  };
   const MILESTONES = [
     { id: 'half', ratio: 0.5, label: '50% stars', tokens: 100, fragments: 0 },
-    { id: 'three_quarters', ratio: 0.75, label: '75% stars', tokens: 0, fragments: 12 },
-    { id: 'master', ratio: 1, label: '100% stars', tokens: 200, fragments: 20 },
+    { id: 'three_quarters', ratio: 0.75, label: '75% stars', tokens: 200, fragments: 0 },
+    { id: 'master', ratio: 1, label: '100% stars', tokens: 300, fragments: 0 },
   ];
   // A mission pays fragments toward a story-relevant Elite Force when possible. Euro Britannia does not have a
   // persistent Elite roster of its own, so its mastery rewards feed Britannia's Lancelot progression.
@@ -663,26 +669,12 @@
       fragments = {},
       fragmentParts = [],
       milestones = [];
-    const addFragments = (id, amount, label) => {
-      if (!id || !E.ELITE_FORCES[id] || amount <= 0) return;
-      fragments[id] = (fragments[id] || 0) + amount;
-      fragmentParts.push([label, id, amount]);
-    };
-    if (!had) parts.push([`${d.name} first clear`, Math.round(REWARD.first * d.tokens)]);
-    const fresh = Math.max(0, got - Math.max(had, 1));
-    if (fresh)
-      parts.push([
-        `${fresh} new ${d.name} star${fresh > 1 ? 's' : ''}`,
-        Math.round(fresh * REWARD.star * d.tokens),
-      ]);
-
-    // These are overall mission achievements, not per-difficulty farming: earn them once, even if the first 3-star
-    // result is on Hard, Challenge or Elite.
-    const elite = starElite(g.campaign.id);
-    if (oldOverall < 2 && newOverall >= 2)
-      addFragments(elite, REWARD.twoStarFragments, '2★ performance');
-    if (oldOverall < 3 && newOverall >= 3)
-      addFragments(elite, REWARD.masteryFragments, '3★ mastery');
+    const table = REWARD.tokens[g.difficulty] || REWARD.tokens.normal;
+    const extraTokens = Math.max(0, table[got] - table[had]);
+    if (extraTokens) parts.push([`${d.name} mission ${got}★`, extraTokens]);
+    // No fragments at 2★. A new 3★ result yields one 10-fragment
+    // player-selected bundle, once per mission and difficulty.
+    const fragmentChoice = got === 3 && had < 3 ? REWARD.masteryFragments : 0;
 
     // Campaign milestones are likewise one-time. Old profiles receive any milestone they already qualify for the
     // next time they finish a mission, so introducing this system never strands previously earned stars.
@@ -705,12 +697,13 @@
     return {
       total: parts.reduce((a, [, v]) => a + v, 0),
       parts,
+      fragmentChoice,
       fragments,
       fragmentParts,
       milestones,
       stars: got,
       first: !had,
-      repeat: !parts.length && !fragmentParts.length,
+      repeat: !parts.length && !fragmentChoice,
     };
   }
   function next(id) {

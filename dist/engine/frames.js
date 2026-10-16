@@ -1194,7 +1194,7 @@
   };
   const ELITE_MAX_LEVEL = 5;
   const ELITE_UNLOCK_FRAGMENTS = 30;
-  const ELITE_UPGRADE_FRAGMENTS = [0, ELITE_UNLOCK_FRAGMENTS, 20, 30, 40, 50];
+  const ELITE_UPGRADE_FRAGMENTS = [0, ELITE_UNLOCK_FRAGMENTS, 40, 50, 60, 70];
   const ELITE_LEVEL_SCALE = [
     null,
     { hp: 1, attack: 1, armor: 0 },

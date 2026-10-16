@@ -33,6 +33,8 @@ jobs:
         run: node tools/research_200_combat_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
+      - name: Verify victory tokens and Elite fragment progression
+        run: node tools/reward_economy_smoke.cjs
       - name: Verify interactive tutorial mechanics and isolation
         run: node tools/interactive_tutorial_smoke.cjs
       - name: Verify all eleven tutorial academy drills
