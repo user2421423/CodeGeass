@@ -35,6 +35,8 @@ jobs:
         run: node tools/commander_assignment_smoke.cjs
       - name: Verify interactive tutorial mechanics and isolation
         run: node tools/interactive_tutorial_smoke.cjs
+      - name: Verify all eleven tutorial academy drills
+        run: node tools/tutorial_academy_smoke.cjs
       - name: Verify manual repairs and port healing
         run: node tools/repair_and_port_healing_smoke.cjs
       - name: Verify World Campaign Elite HQ levels

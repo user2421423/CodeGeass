@@ -23,7 +23,7 @@ function tutorialScenario() {
   E.scenarios.byId[TUTORIAL_ID] = {
     id: TUTORIAL_ID, title: 'Training Grounds', sides: ['britannia', 'eu'],
     meta: { map: { homeZoom: 1 }, text: { focus: { britannia: 'Headquarters' } } },
-    objective: () => TUTORIAL_STEPS[tutorialState?.step || 0].title,
+    objective: () => tutorialState?.lab ? (labStepData()?.title || 'Training complete') : TUTORIAL_STEPS[tutorialState?.step || 0].title,
     winner: () => null,
     onTurn: () => false,
   };
@@ -95,6 +95,7 @@ function tutorialStep(next) {
 }
 function tutorialCheck() {
   if (!isTutorial() || !tutorialState) return;
+  if (tutorialState.lab) { labCheck(); return; }
   const t = tutorialState, u = game.units.find(v => v.id === t.initialUnit);
   if (t.step === 1 && selection?.kind === 'unit' && selection.id === t.initialUnit) tutorialStep(2);
   else if (t.step === 2 && u?.c === 3 && u?.r === 4) tutorialStep(3);
@@ -109,10 +110,12 @@ function tutorialCheck() {
 }
 function tutorialTargetHex() {
   if (!isTutorial() || !tutorialState) return null;
+  if (tutorialState.lab) return labTarget();
   return TUTORIAL_STEPS[tutorialState.step]?.target || null;
 }
 function tutorialAllowHex(p) {
   if (!isTutorial() || !tutorialState) return true;
+  if (tutorialState.lab) return labAllowHex(p);
   const step = tutorialState.step;
   const goal = tutorialTargetHex();
   // Require the actual on-board action, not a skip button or a fake simulation.
@@ -126,6 +129,7 @@ function tutorialAllowHex(p) {
 }
 function tutorialEndTurn() {
   if (!isTutorial()) return;
+  if (tutorialState?.lab) return labEndTurn();
   if (tutorialState?.step !== 4) {
     toast('Complete the highlighted tutorial step before ending your turn.');
     return;
@@ -142,6 +146,7 @@ function tutorialEndTurn() {
 function tutorialPaint() {
   document.getElementById('tutorial-coach')?.remove();
   if (!isTutorial() || !tutorialState) return;
+  if (tutorialState.lab) { labPaint(); return; }
   const step = tutorialState.step, data = TUTORIAL_STEPS[step];
   const guide = document.createElement('section');
   guide.id = 'tutorial-coach';
@@ -157,6 +162,7 @@ function tutorialPaint() {
   app.appendChild(guide);
 }
 function tutorialFocus() {
+  if (tutorialState?.lab) return labFocus();
   const target = tutorialTargetHex();
   if (target) centerOn(target);
   else if (tutorialState.step === 8) centerOn(game.units.find(u => u.id === tutorialState.trainedUnit));
