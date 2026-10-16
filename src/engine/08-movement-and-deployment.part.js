@@ -132,7 +132,9 @@
       const { p, cost } = pop();
       if (cost > costs.get(stateKey(p))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked || (ship && !navigable(n)) || (u.skillReposition && !t.naval && isSea(n) && !fromSea)) continue;
+        if (TERRAIN[n.terrain]?.blocked || (ship && !navigable(n)) ||
+            (u.skillReposition && !t.naval && isSea(n) && !fromSea) ||
+            ((u.expMargaretRedeploy||u.expShadowMove)&&isSea(n)!==fromSea)) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (ship && st) continue;
@@ -297,6 +299,14 @@
       for(const sw of g.units)if(sw.hp>0&&sw.side===u.side&&sw.cmd==='sawasaki'&&sw.expBeachheadStart!=null&&
         g.turn<=sw.expBeachheadUntil&&(sw.id===u.id||(TYPES[u.type].naval==='amphibious'&&dist(g,sw,s)<=2)))
         sw.expBeachheadUntil=Math.min(sw.expBeachheadStart+3,sw.expBeachheadUntil+1);
+
+    if(u.cmd==='charles'&&u.expImperialCaptureTurn!==g.turn){
+      u.expImperialCaptureTurn=g.turn;
+      for(const v of g.units)if(v.hp>0&&v.side===u.side&&!atSea(g,v)&&v.attacked&&
+        v.expImperialRestoredTurn!==g.turn&&dist(g,u,v)<=3){
+        v.attacked=false;v.expImperialRestoredTurn=g.turn;
+      }
+    }
     if(u.cmd==='nonette' && u.expCaptureAttackTurn!==g.turn){u.attacked=false;u.expCaptureAttackTurn=g.turn;}
     if((u.cmd==='sugiyama'||(u.cmd==='anya'&&u.focusCity?.city===s.id))&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
     const kaguyas=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='kaguya'&&dist(g,v,s)<=3);
@@ -368,7 +378,10 @@
     u.skillReposition = 0;
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
-    reindex(g, u, from);
+    // Tactical redeployment preserves the original normal movement action.
+    if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
+    if(u.expShadowMove){u.moved=true;delete u.expShadowMove;}
+    reindex(g,u,from);
     newcomerOverwatch(g,u);
     if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true};}
     // Moving through enemy or neutral territory never changes its map color.

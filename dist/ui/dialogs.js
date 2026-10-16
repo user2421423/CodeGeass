@@ -241,9 +241,9 @@ function commanderCard(u) {
 // Friendly activation and enemy designation use the same explicit target picker.
 function commandDialog(u) {
   const action = C(u.cmd).action, options = E.actionTargets(game, u);
-  const cities = ['city', 'enemyCity'].includes(action.target);
+  const cities = ['city', 'enemyCity'].includes(action.target), self = action.target === 'self';
   const enemy = ['enemy', 'enemyCommander', 'enemyCity'].includes(action.target) || ['designate', 'stratagem'].includes(action.kind);
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · ${action.cooldown===0?'Once per turn':'Every '+(action.cooldown||3)+' turns'}</div><h2>${cities ? 'Select a city' : enemy ? 'Select an enemy' : 'Select an ally'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${cities ? esc(v.name)+' · '+Math.ceil(v.shield)+' / '+v.maxShield+' shields' : (v.cmd ? esc(C(v.cmd).short) + ' · ' : '') + esc(E.TYPES[v.type].short) + ' ×' + v.stack + ' · ' + esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · ${action.cooldown===0?'Once per turn':'Every '+(action.cooldown||3)+' turns'}</div><h2>${self ? 'Activate ability' : cities ? 'Select a city' : enemy ? 'Select an enemy' : 'Select an ally'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${cities ? esc(v.name)+' · '+Math.ceil(v.shield)+' / '+v.maxShield+' shields' : (v.cmd ? esc(C(v.cmd).short) + ' · ' : '') + esc(E.TYPES[v.type].short) + ' ×' + v.stack + ' · ' + esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
   focusDialog();
 }
 function admiralDialog() {

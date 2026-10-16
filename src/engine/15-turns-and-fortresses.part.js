@@ -98,6 +98,10 @@
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
     if(outgoing){for(const v of g.units)if(v.side===outgoing){
+        if(v.expInformationWarfare)delete v.expInformationWarfare;
+        if(v.expMargaretRedeploy){v.moved=!!v.expMargaretRedeploy.wasMoved;v.skillReposition=0;delete v.expMargaretRedeploy;}
+        if(v.expShadowMove){v.moved=true;v.skillReposition=0;delete v.expShadowMove;}
+        delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
         if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;
         if(v.expPuristCounter&&v.expPuristCounter.startTurn<g.turn)delete v.expPuristCounter;

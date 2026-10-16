@@ -9,6 +9,12 @@
         a.credits += y.credits*(s.expTaxUntil>=g.turn?.8:1)*treasuryBonus(g,s);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).nationalUnity))a.credits+=Math.round(y.credits*.15);
         if(g.units.some(u=>u.hp>0&&u.side===side&&u.c===s.c&&u.r===s.r&&fx(u).royalCompassion))a.credits+=Math.round(y.credits*.15);
+
+        // The Mandate of Heaven aura does not stack with multiple copies.
+        if(g.units.some(u=>u.hp>0&&!atSea(g,u)&&u.side===side&&fx(u).mandateOfHeaven&&dist(g,u,s)<=3)){
+          a.credits+=y.credits*.25*(s.expTaxUntil>=g.turn?.8:1)*treasuryBonus(g,s);
+          a.industry+=y.industry*.25;
+        }
         a.industry += y.industry;
         a.science += y.science;
         return a;

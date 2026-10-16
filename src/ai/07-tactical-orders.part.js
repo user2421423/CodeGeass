@@ -1,7 +1,7 @@
   // The 29 reworked signatures are player-only active actions. Their passive
   // rules still affect every faction through the normal engine combat pipeline.
   const playerOnlyReworkedActions = new Set([
-    'marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'
+    'marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','sayoko','margaret'
   ]);
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);

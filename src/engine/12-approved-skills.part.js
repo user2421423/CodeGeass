@@ -9,14 +9,10 @@
     if(k==='self')return [u].filter(v=>v.hp>0&&(u.cmd==='tianzi'
       ? g.stations.some(s=>s.owner===u.side&&dist(g,s,u)<=3)
       : u.cmd==='chengzhong' ? g.stations.some(s=>foe(g,s.owner,u.side)&&dist(g,s,u)<=3):true));
-    // Rapid Rotation is strictly land-to-land. Amphibious units at sea count as sea units.
-    if (u.cmd === 'sugiyama')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)===1);
-    if (u.cmd === 'olivia') return g.units.filter(v =>
-      v.hp > 0 && v.id !== u.id && v.side === u.side && dist(g,u,v) <= range &&
-      !isShip(v) && !isSea(tile(g,v.c,v.r)) &&
-      g.units.some(w => w.hp > 0 && w.side === u.side && w.id !== v.id && w.id !== u.id &&
-        !isShip(w) && !isSea(tile(g,w.c,w.r)) &&
-        dist(g,v,w) === 1 && dist(g,u,w) <= range));
+    if(u.cmd==='sugiyama')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)===1);
+    if(u.cmd==='olivia')return u.attacked?[]:g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&inRange(u,v,g)&&hostileTarget(g,u,v));
+    if(u.cmd==='sayoko')return !u.attacked?[u]:[];
+    if(u.cmd==='margaret')return g.units.filter(v=>v.hp>0&&v.id!==u.id&&v.side===u.side&&!atSea(g,v)&&!v.attacked&&dist(g,u,v)<=3&&!v.expMargaretRedeploy);
     return g.units.filter(v=>v.hp>0&&!atSea(g,v)&&dist(g,u,v)<=range&&(
       ['enemy','enemyCommander'].includes(k)
         ? foe(g,v.side,u.side)&&(k!=='enemyCommander'||!!v.cmd)&&
@@ -29,7 +25,7 @@
   }
   function newcomerUse(g,u,targetId){
     const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
-    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
+    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
     const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
@@ -37,7 +33,6 @@
       case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
-      case 'charles':v.feintCD=Math.max(0,(v.feintCD||0)-2);break;
       case 'lloyd':v.expCalibration=true;break;
       case 'sophie':{
         const w=nearby(w=>w.id!==v.id&&dist(g,u,w)<=2&&dist(g,v,w)<=2);
@@ -45,31 +40,18 @@
         v.expLink={partner:w.id};w.expLink={partner:v.id};break;
       }
       case 'sarah':v.expJammedNext=true;break;
-      case 'olivia':{
-        if (isShip(v) || isSea(tile(g,v.c,v.r)))
-          return {ok:false,reason:'Rapid Rotation requires two land units on land hexes.'};
-        const w=nearby(w=>w.id!==v.id&&!isShip(w)&&!isSea(tile(g,w.c,w.r))&&dist(g,w,v)===1&&dist(g,u,w)<=2);
-        if(!w)return {ok:false,reason:'Need two adjacent friendly land units on land.'};
-        const p={c:v.c,r:v.r},q={c:w.c,r:w.r};
-        v.c=q.c;v.r=q.r;w.c=p.c;w.r=p.r;reindex(g,v,p);reindex(g,w,q);break;
-      }
-      case 'margaret':{
-        const cost=reinforceCost(v.type,g,v.side,v),bank=funds(g,v.side);
-        if(v.elite)return {ok:false,reason:'Elite Forces are single frames and cannot be reinforced.'};
-        if(g.stations.some(s=>s.expSupplyBlocked?.owner===v.side&&dist(g,v,s)<=1))return {ok:false,reason:'City supply lines are disrupted.'};
-        if(v.stack>=3||shortfall(bank,cost))return {ok:false,reason:'Cannot afford this reinforcement.'};
-        const old=maxHP(v);warSpend(g,v.side,cost,'reinforcement');spend(bank,cost);v.stack++;v.hp+=maxHP(v)-old;break;
-      }
+      case 'olivia':u.expPrecisionTarget={id:v.id,turn:g.turn};break;
+      case 'sayoko':
+        u.expShadowMove={turn:g.turn};u.expShadowAttackTurn=g.turn;
+        u.moved=false;u.skillReposition=3;break;
+      case 'margaret':
+        v.expMargaretRedeploy={turn:g.turn,wasMoved:!!v.moved};v.expMargaretBonusTurn=g.turn;
+        v.moved=false;v.skillReposition=3;break;
       case 'chloe':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.2));break;
-      case 'tianzi':{
-        const city=g.stations.filter(s=>s.owner===u.side&&dist(g,u,s)<=3).sort((a,b)=>dist(g,u,a)-dist(g,u,b))[0];
-        if(!city)return {ok:false,reason:'No friendly city in range.'};city.expDecree=true;break;
-      }
       case 'chengzhong':{
         const city=v;city.expSupplyBlocked={owner:city.owner,turns:2};for(const w of g.units)if(w.hp>0&&w.side===city.owner&&dist(g,w,city)<=2)w.expChengWeaken={turns:1,value:.15};break;
       }
-      case 'diethard':addTargetMark(v,{side:u.side,source:u.id,damage:.2,uses:1});break;
-      case 'mutsuki':v.expNavalRelay=true;break;
+      case 'diethard':v.expInformationWarfare={side:u.side,source:u.id};break;
       case 'ichijiku':v.expRadar={side:u.side};break;
       case 'indira':v.expPinnedNext=true;v.expPinnedWeakenNext=.25;break;
       case 'kate':v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.15));break;
@@ -119,9 +101,13 @@
     if(!counter&&f.highland&&terrain?.terrain==='mountain')m*=1.35;
     if(!counter&&f.adaptiveBreakthrough&&u.movedDistance>=3)m*=1.2;
     
+
+    if(!counter&&u.cmd==='sayoko'&&u.expShadowAttackTurn===g.turn)m*=1.3;
+    if(!counter&&u.expMargaretBonusTurn===g.turn)m*=1.15;
+    if(!counter&&['Infantry','Armor'].includes(TYPES[u.type].branch)&&['forest','mountain'].includes(terrain?.terrain)&&
+      g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='mutsuki'&&dist(g,v,u)<=2))m*=1.2;
+    if(counter&&stationAt(g,u)?.owner===u.side&&g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='tianzi'&&dist(g,v,stationAt(g,u))<=3))m*=1.2;
     if(!counter&&beachheadSupport(g,u))m*=1.25;
-    if(!counter&&f.decapitation&&target?.cmd&&!(u.expDecapitationCd>0)&&
-      !g.units.some(v=>v.hp>0&&v.side===target.side&&v.id!==target.id&&dist(g,v,target)===1))m*=1.25;
     // Chao's combined-arms doctrine is granted only to nearby ranged/armored allies
     // attacking a target screened by friendly infantry. Multiple copies never stack.
     if(!counter&&target&&['Armor','Artillery'].includes(TYPES[u.type].branch)&&
@@ -144,6 +130,8 @@
   function newcomerDefense(g,target,attacker,counter,direct){
     let m=1;
     if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
+
+    if(target.cmd==='jeremiah'&&g.units.some(v=>v.hp>0&&v.id!==target.id&&v.side===target.side&&!!v.cmd&&dist(g,v,target)===1))m*=.85;
     if(beachheadSupport(g,target))m*=.85;
     m*=hongGuGuardian(g,target);
     if(preparedPosition(g,target))m*=.85;
@@ -163,6 +151,18 @@
     return m;
   }
   function newcomerIntercept(g,target,amount){
+    // Only lethal direct unit strikes qualify: not bombardment, FLEIJA, or splash.
+    if(target?.cmd&&amount>=target.hp){
+      const half=Math.round(amount*.5);
+      const guard=g.units.find(v=>v.cmd==='jeremiah'&&v.hp>half&&v.id!==target.id&&v.side===target.side&&
+        !atSea(g,v)&&v.expLoyaltyTurn!==g.turn&&dist(g,v,target)===1);
+      if(guard){
+        guard.hp-=half;guard.expLoyaltyTurn=g.turn;
+        recordWarEvent(g,'damage',guard.side,{targetSide:guard.side,value:half,unitId:guard.id,group:warGroup(g,guard)});
+        amount=Math.min(Math.max(0,target.hp-1),amount-half);
+        log(g,'Jeremiah intercepts a lethal strike for '+(COMMANDERS[target.cmd]?.short||'an allied commander')+'.',guard.side);
+      }
+    }
     const guard=g.units.find(v=>v.cmd&&v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
     if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
     if(target.expAfterimage)delete target.expAfterimage;

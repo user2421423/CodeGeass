@@ -19,7 +19,7 @@
   }
   const skillNear = (g, u, flag, range, self = true) =>
     g.units.some(
-      v => v.hp > 0 && !atSea(g, v) && v.side === u.side && (self || v.id !== u.id) && fx(v)[flag] &&
+      v => v.hp > 0 && !atSea(g, v) && v.side === u.side && (self || v.id !== u.id) && (!u.expInformationWarfare || v.id===u.id) && fx(v)[flag] &&
         (!v.auraDisrupted || !['orderCommander', 'screenedFire'].includes(flag)) && dist(g, v, u) <= range,
     );
   function friendlyNeighbors(g, u, predicate = () => true) {
@@ -160,6 +160,13 @@
     const out = [];
     if (u.skillMarks?.length) out.push('Designated target');
     if(u.expChengWeaken?.turns>0)out.push('Supply disruption: attack −15%');
+
+    if(u.expInformationWarfare)out.push('Information warfare: attack −20%, cover −25%, support suppressed');
+    if(u.expPrecisionTarget?.turn===g.turn)out.push('Precision target: +25 penetration points, cover bypass 40%');
+    if(u.expShadowMove)out.push('Shadow infiltration: legal 3-point move');
+    if(u.expShadowAttackTurn===g.turn)out.push('Shadow strike: next attack +30%, no commander counter');
+    if(u.expMargaretRedeploy)out.push('Strategic redeployment: free 3-point move');
+    if(u.expMargaretBonusTurn===g.turn)out.push('Strategic redeployment: next attack +15%');
     if(u.expPinnedActive)out.push('Pinned: movement disabled');
     if(u.expPinnedWeakenActive)out.push('Pinned: attack −25%');
     if(u.forcedOffensive||u.expForcedVulnerable)out.push(`Forced Offensive: ${u.forcedOffensive?'next attack +35%; ':''}${u.expForcedVulnerable?'incoming damage +15%':''}`);

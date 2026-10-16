@@ -35,7 +35,8 @@
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
     attack *= 1 - missingHpPenalty * (1 - 0.2 * genericLevel(g, u, gritSkill)) * (u.hp/maxHP(u)<.7&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).stabilize&&dist(g,u,v)<=2)?.5:1);
-    attack *= 1 + auraBonus(g, u);
+    attack *= 1 + (u.expInformationWarfare?0:auraBonus(g,u));
+    if(u.expInformationWarfare)attack*=.8;
     attack *= newcomerAttack(g,u,target,counter);
     if(!counter&&st&&foe(g,st.owner,u.side)&&fx(u).focusBombard&&u.focusCity?.city===st.id&&u.focusCity.lastTurn>=g.turn-1)
       attack*=1+Math.min(3,u.focusCity.count)*fx(u).focusBombard;
@@ -95,6 +96,7 @@
         ? techValue(g, u.side, 'armor.precision') : 0)
       +(u.expCalibration?.15:0)
       +joePenetration(g,u,target)
+      +(!counter&&target&&u.expPrecisionTarget?.turn===g.turn&&u.expPrecisionTarget.id===target.id?.25:0)
       +(u.elite&&!TYPES[u.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).elitePenSupport&&dist(g,v,u)<=2)?0.15:0));
     const formationArmor =
       target &&
@@ -156,7 +158,7 @@
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
       else {
-        const bypass=(u.forcedOffensive?.5:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(f.blackSeaFox&&u.expEduardoMountainTurn!==g.turn&&tile(g,u.c,u.r)?.terrain==='mountain'?.25:0);
+        const bypass=(target.expInformationWarfare?.side===u.side?.25:0)+(!counter&&u.expPrecisionTarget?.turn===g.turn&&u.expPrecisionTarget.id===target.id?.4:0)+(u.forcedOffensive?.5:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(f.blackSeaFox&&u.expEduardoMountainTurn!==g.turn&&tile(g,u.c,u.r)?.terrain==='mountain'?.25:0);
         attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
       }
     }
@@ -196,10 +198,11 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
       !followUp &&
+      !(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d?.cmd) &&
       !(f.timeStop && a.timeStopTurn !== g.turn) &&
       !(f.dashStrike&&a.movedDistance>=3&&a.expDashTurn!==g.turn) &&
       !targetMarked(g, a, d).noCounter &&
@@ -369,7 +372,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
@@ -446,6 +449,20 @@
         }
       }
     }
+
+    // Resolve Mutsuki's guerrilla reward after the kill and final attack flags.
+    const guerrillaPosition=destroyed&&['forest','mountain'].includes(tile(g,a.c,a.r)?.terrain)&&
+      ['Infantry','Armor'].includes(TYPES[a.type].branch)&&
+      g.units.some(v=>v.hp>0&&v.side===a.side&&v.cmd==='mutsuki'&&dist(g,v,a)<=2);
+    if(guerrillaPosition&&a.hp>0&&a.expGuerrillaMoveTurn!==g.turn){
+      a.expGuerrillaMoveTurn=g.turn;grantReposition(a,1);
+    }
+    if(a.expPrecisionTarget){
+      if(destroyed&&d?.id===a.expPrecisionTarget.id&&a.expPrecisionTarget.turn===g.turn&&a.hp>0)grantReposition(a,2);
+      delete a.expPrecisionTarget;
+    }
+    if(a.expMargaretBonusTurn===g.turn)delete a.expMargaretBonusTurn;
+    if(a.expShadowAttackTurn===g.turn)delete a.expShadowAttackTurn;
     if(f.dashStrike)a.expDashTurn=g.turn;
     if(f.ziAmbush&&a.movedDistance>=2&&a.expZiAmbushTurn!==g.turn){a.expZiAmbushTurn=g.turn;if(d?.cmd)d.expZiWeakenNext=.2;}
     if(f.highland)a.expHighlandTurn=g.turn;
@@ -458,7 +475,6 @@
     }
     delete a.expTamakiCharging;
     if(f.diagnosis&&d)d.expJoeDiagnosis={side:a.side,until:g.turn+1};
-    if(f.decapitation&&d?.cmd&&!(a.expDecapitationCd>0)&&!g.units.some(v=>v.hp>0&&v.side===d.side&&v.id!==d.id&&dist(g,v,d)===1)){d.expSilenced=true;a.expDecapitationCd=3;}
     if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
     if(a.expCalibration){
       // The calibration cost is nonlethal, but combat deaths must remain deaths.
