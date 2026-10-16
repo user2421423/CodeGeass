@@ -480,8 +480,8 @@
     }
     let breakthrough = false;
     if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain < cap) {
-      // Breakthrough: a kill lets the frame fire again. Line and mainline frames get no extra movement; heavy
-      // and super-heavy frames also regain movement on their first kill.
+      // Breakthrough refreshes the attack. Heavy and super-heavy movement
+      // is governed separately by their two-move-per-turn limit.
       a.chain++;
       a.attacked = false;
       if ((TYPES[a.type].relentless || eliteRelentless)) a.moved = false;
@@ -508,6 +508,12 @@
       a.moved = false;
       a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
+    }
+    // All heavy/super-heavy frames, including Elite variants, can reposition
+    // after a kill, but never more than twice in a single turn.
+    if (destroyed && a.hp > 0 && isHeavyChainMover(a) && !heavyMoveLimitReached(g, a)) {
+      a.moved = false;
+      a.skillReposition = 0;
     }
     afterCommanderAttack(g,a,d,s,destroyed,timeStop);
     // A kill only primes momentum if an existing breakthrough or signature
@@ -577,6 +583,14 @@
         try {const advance=move(g,a.id,d.c,d.r);if(advance.ok){a.expBreachTurn=g.turn;a.expBreachAuraAt={c:a.c,r:a.r,turn:g.turn};}}
         finally { Object.assign(a,actions); }
       }
+    }
+    // Skills and Elite Lv.5 bonuses may also reopen movement. Keep the attack
+    // chain intact while closing movement after the second completed move.
+    if (heavyMoveLimitReached(g, a)) {
+      a.moved = true;
+      a.skillReposition = 0;
+      a.withdrawMove = false;
+      a.eliteMoveAfterKill = false;
     }
     log(
       g,

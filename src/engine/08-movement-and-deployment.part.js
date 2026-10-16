@@ -19,6 +19,8 @@
       guardReady: false,
       entrenched: false,
       movedDistance: 0,
+      moveActionTurn: null,
+      moveActionsThisTurn: 0,
       skillReposition: 0,
       withdrawMove: false,
       elite: ELITE_TYPE_TO_ID[type] || null,
@@ -79,12 +81,25 @@
   function isReady(g, u) {
     return !g.over && g.phase === u.side && u.hp > 0 && u.morale > -3;
   }
+  // Count actual movement actions, not hex distance. This also covers abilities
+  // that reset 'moved', and works on old saves where these fields are missing.
+  function isHeavyChainMover(u) {
+    const cls = TYPES[u.type]?.cls;
+    return cls === 'heavy' || cls === 'super';
+  }
+  function heavyMoveLimitReached(g, u) {
+    return isHeavyChainMover(u) && u.moveActionTurn === g.turn && (u.moveActionsThisTurn || 0) >= 2;
+  }
+  function markMoveAction(g, u) {
+    u.moveActionsThisTurn = (u.moveActionTurn === g.turn ? (u.moveActionsThisTurn || 0) : 0) + 1;
+    u.moveActionTurn = g.turn;
+  }
   // Movement: a Dijkstra search. Land units may embark onto an adjacent sea hex (which ends the move); embarked
   // units sail up to their sea movement and may land on a coast hex (which ends the move).
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -342,6 +357,7 @@
       carrier = unitAt(g, dest);
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
     if (carrier && carrier !== u && carrier.side === u.side && canBoard(g, carrier)) {
+      markMoveAction(g, u);
       g.units.splice(g.units.indexOf(u), 1);
       u.c = dest.c;
       u.r = dest.r;
@@ -357,6 +373,7 @@
       log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} boards the Carrier-Battleship.`, u.side);
       return { ok: true, from, to: { c: dest.c, r: dest.r }, loaded: carrier.id };
     }
+    markMoveAction(g, u);
     u.c = dest.c;
     u.r = dest.r;
     // Units aboard a Carrier-Battleship travel with it (rallies and other distance rules read their position).
