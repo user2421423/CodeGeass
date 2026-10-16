@@ -178,9 +178,16 @@
   }
   function newcomerOverwatch(g,moved){
     const guards=g.units.filter(v=>v.hp>0&&v.expOverwatch&&foe(g,v.side,moved.side)&&!atSea(g,v)&&inRange(v,moved,g));
-    for(const u of guards){if(moved.hp<=0)break;delete u.expOverwatch;
+    let reacted=false;
+    for(const u of guards){
+      if(moved.hp<=0)break;
+      reacted=true;
+      delete u.expOverwatch;
       const amount=Math.max(1,Math.round(power(g,u,moved,stationAt(g,moved))*.6));
-      moved.hp=Math.max(0,moved.hp-newcomerIntercept(g,moved,amount));kill(g,moved,u);}
+      moved.hp=Math.max(0,moved.hp-newcomerIntercept(g,moved,amount));
+      kill(g,moved,u);
+    }
+    return reacted;
   }
   function newcomerKilled(g,v,attacker){
     if(!v.cmd&&g.units.some(k=>k.hp>0&&k.side===v.side&&k.cmd==='kewell'&&dist(g,k,v)<=2))
