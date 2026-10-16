@@ -167,9 +167,14 @@
     ctx.restore();
     return true;
   }
-  atlas.paint=function(ctx,g,left,right,top,bottom,scale){
+  const releaseMap=atlas.releaseMap;
+  atlas.releaseMap=function(){
+    ownerCache={tiles:null,revision:-1,bySide:null};
+    releaseMap?.call(this);
+  };
+  atlas.paint=function(ctx,g,left,right,top,bottom,scale,layer='all'){
     if(g?.mode==='scenario'&&g.scenario?.id==='cf-central-america')
       return paint(ctx,g,left,right,top,bottom,scale);
-    return originalPaint.call(this,ctx,g,left,right,top,bottom,scale);
+    return originalPaint.call(this,ctx,g,left,right,top,bottom,scale,layer);
   };
 })(typeof window!=='undefined'?window:globalThis);

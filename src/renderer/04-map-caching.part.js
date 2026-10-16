@@ -27,10 +27,102 @@ const mapAtlasPoliticalTiles = new Map();
 const mapAtlasWarmQueue = [];
 const mapAtlasWarmKeys = new Set();
 let mapAtlasIdlePending = false;
+let mapAtlasViewport = null;
+let mapAtlasClock = 0;
+const mapAtlasMobile = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+const MAP_ATLAS_BYTE_BUDGET = (mapAtlasMobile ? 48 : 144) * 1024 * 1024;
+function mapAtlasBytes() {
+  let bytes = 0;
+  for (const cache of [mapAtlasTiles, mapAtlasStaticTiles, mapAtlasPoliticalTiles])
+    for (const item of cache.values()) bytes += item.canvas.width * item.canvas.height * 4;
+  return bytes;
+}
+function trimMapAtlas() {
+  let bytes = mapAtlasBytes();
+  if (bytes <= MAP_ATLAS_BYTE_BUDGET) return;
+  const entries = [];
+  for (const cache of [mapAtlasTiles, mapAtlasStaticTiles, mapAtlasPoliticalTiles])
+    for (const [key, item] of cache) entries.push({cache, key, item});
+  entries.sort((a,b) => a.item.used - b.item.used);
+  for (const {cache,key,item} of entries) {
+    // Visible chunks are pinned even if an unusually large viewport exceeds
+    // the budget. DPR and visible quality stay unchanged on phones.
+    if (item.scale === mapAtlasState.scale && mapAtlasJobVisible(item)) continue;
+    cache.delete(key); bytes -= item.canvas.width * item.canvas.height * 4;
+    item.canvas.width = item.canvas.height = 0;
+    mapAtlasPerformance.evictions++;
+    if (bytes <= MAP_ATLAS_BYTE_BUDGET) break;
+  }
+}
+function mapAtlasJobVisible(item, buffer = 0) {
+  const v = mapAtlasViewport;
+  if (!v) return false;
+  const x = item.worldX ?? item.col * item.tileSize;
+  const y = item.worldY ?? item.row * item.tileSize;
+  const w = item.width ?? item.tileSize, h = item.height ?? item.tileSize;
+  const shifts = wraps() ? [-WORLD_W, 0, WORLD_W] : [0];
+  return shifts.some(shift => x+shift+w >= v.left-buffer && x+shift <= v.right+buffer &&
+    y+h >= v.top-buffer && y <= v.bottom+buffer);
+}
+function resetMapResources() {
+  if (typeof GEOGRAPHY !== 'undefined') GEOGRAPHY.releaseMap?.();
+  tileMeta = tileMetaFor = null;
+  scenarioSeaCache = {tiles:null,revision:-1,shown:null};
+  mapLayerCache = null;
+  for (const cache of [mapAtlasTiles, mapAtlasStaticTiles, mapAtlasPoliticalTiles]) {
+    for (const tile of cache.values()) tile.canvas.width = tile.canvas.height = 0;
+    cache.clear();
+  }
+  mapAtlasWarmQueue.length = 0; mapAtlasWarmKeys.clear(); mapAtlasGeneration++;
+  mapAtlasState = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
+  mapAtlasStrategicOwners = { tiles:null, revision:-1, source:null, canvas:null };
+  mapAtlasFallback = {id:null,image:null,ready:false,hires:false};
+  mapAtlasViewport = null;
+  mapAtlasNavigationBase = null;
+  mapAtlasOwnerSnapshot = null;
+}
 let mapAtlasLastNavigation = -Infinity;
 function noteMapNavigation() { mapAtlasLastNavigation = performance.now(); }
+// Non-regional boards use their own current vector map as a navigation base.
+// Build it on state changes, outside pointer/wheel handlers. It is never used
+// after a political/terrain revision until repainted with current ownership.
+let mapAtlasNavigationBase = null;
+function prepareMapNavigationBase() {
+  if (typeof GEOGRAPHY === 'undefined' || regionalMapLayers()) return;
+  const revision = game.mapRevision || 0, terrain = game.mapTerrainRevision || 0;
+  if (mapAtlasNavigationBase?.tiles === game.tiles &&
+      mapAtlasNavigationBase.revision === revision && mapAtlasNavigationBase.terrain === terrain) return;
+  const quality = Math.min(.25, 2048 / Math.max(WORLD_W, WORLD_H));
+  const image = document.createElement('canvas');
+  image.width = Math.ceil(WORLD_W * quality); image.height = Math.ceil(WORLD_H * quality);
+  const main = ctx;
+  try {
+    ctx = image.getContext('2d'); ctx.setTransform(quality,0,0,quality,0,0);
+    paintMapLayer(.8, false, 0, WORLD_W, 0, WORLD_H);
+  } finally { ctx = main; }
+  mapAtlasNavigationBase = {tiles:game.tiles,revision,terrain, image};
+}
 let mapAtlasGeneration = 0;
 let mapAtlasState = { tiles: null, revision: -1, terrainRevision: -1, scale: null };
+let mapAtlasOwnerSnapshot = null;
+function invalidateRegionalPolitics() {
+  // Regional ownership stencils spread at most coastBuffer sea rings. Include
+  // virtual edge hexes, political border neighbours and chunk padding too.
+  const reach = (E.scenarios?.byId?.[game.scenario?.id]?.meta?.map?.coastBuffer || 2) + 3;
+  const radius = reach * SQ * R;
+  const changed = [];
+  for (let i=0;i<game.tiles.length;i++) {
+    const t=game.tiles[i];
+    if (mapAtlasOwnerSnapshot?.[i] !== t.owner) {
+      const p=hexCenter(t); changed.push(p);
+    }
+  }
+  for (const [key,item] of mapAtlasPoliticalTiles) {
+    if (!changed.some(p => p.x >= item.worldX-radius && p.x <= item.worldX+item.width+radius &&
+        p.y >= item.worldY-radius && p.y <= item.worldY+item.height+radius)) continue;
+    mapAtlasPoliticalTiles.delete(key); item.canvas.width=item.canvas.height=0;
+  }
+}
 let mapAtlasFallback = { id: null, image: null, ready: false, hires: false };
 // Keep a few recently viewed theatre maps decoded, not all 37 at once.
 const mapAtlasHiResImages = new Map();
@@ -43,28 +135,32 @@ function preloadRegionalMapImage(id) {
     return cached;
   }
   const entry = { image: new Image(), ready: false, failed: false, listeners: [] };
+  let settled;
+  entry.loaded = new Promise(resolve => { settled = resolve; });
   entry.image.onload = () => {
     entry.ready = true;
+    settled(entry.image);
     for (const notify of entry.listeners.splice(0)) notify(entry.image);
   };
   entry.image.onerror = () => {
     entry.failed = true;
+    settled(null);
     entry.listeners.length = 0;
   };
   mapAtlasHiResImages.set(id, entry);
-  while (mapAtlasHiResImages.size > 3)
+  while (mapAtlasHiResImages.size > (mapAtlasMobile ? 1 : 3))
     mapAtlasHiResImages.delete(mapAtlasHiResImages.keys().next().value);
   entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp';
   return entry;
 }
 let mapAtlasStrategicOwners = { tiles: null, revision: -1, source: null, canvas: null };
 const mapAtlasPerformance = {
-  hits: 0, misses: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
+  hits: 0, misses: 0, evictions: 0, cancelledJobs: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
   basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
 };
 if (typeof window !== 'undefined') window.KNIGHTMARE_MAP_PERF = {
-  snapshot: () => ({ ...mapAtlasPerformance, queued: mapAtlasWarmQueue.length,
+  snapshot: () => ({ ...mapAtlasPerformance, cacheBytes:mapAtlasBytes(), cacheBudgetBytes:MAP_ATLAS_BYTE_BUDGET, queued: mapAtlasWarmQueue.length,
     staticChunks: mapAtlasStaticTiles.size, politicalChunks: mapAtlasPoliticalTiles.size,
     combinedChunks: mapAtlasTiles.size, fallbackReady: mapAtlasFallback.ready,
     highResolutionBackdrop: mapAtlasFallback.hires }),
@@ -76,7 +172,9 @@ function regionalMapLayers() {
   if (game.mode !== 'scenario' || !game.scenario?.projection) return false;
   const meta = E.scenarios?.byId?.[game.scenario.id]?.meta?.map;
   // Bering uses a completely different, scenario-specific painter.
-  return !meta?.painter;
+  // Central America's custom underlay is a combined painter with its own
+  // rivers/volcano ordering; keep it on the combined cache path.
+  return !meta?.painter && game.scenario.id !== 'cf-central-america';
 }
 function mapAtlasTileSize(scale) {
   // Small bounded chunks keep each deferred painting job short. Oversized
@@ -158,8 +256,11 @@ function refreshMapAtlas(scale) {
     mapAtlasStrategicOwners = { tiles: game.tiles, revision: -1, source: null, canvas: null };
   } else if (mapAtlasState.revision !== revision) {
     mapAtlasTiles.clear();
-    mapAtlasPoliticalTiles.clear();
+    if (regionalMapLayers() && mapAtlasOwnerSnapshot) invalidateRegionalPolitics();
+    else mapAtlasPoliticalTiles.clear(); // World island/province inference can be non-local.
   }
+  if (mapAtlasState.tiles !== game.tiles || mapAtlasState.revision !== revision)
+    mapAtlasOwnerSnapshot = game.tiles.map(t => t.owner);
   mapAtlasWarmQueue.length = 0;
   mapAtlasWarmKeys.clear();
   mapAtlasGeneration++;
@@ -172,6 +273,7 @@ function completeMapTile(tx, ty, scale, detail, tileSize, layer = 'all', deferre
   let item = cache.get(key);
   if (item) {
     mapAtlasPerformance.hits++;
+    item.used = ++mapAtlasClock;
     cache.delete(key);
     cache.set(key, item);
     return item;
@@ -206,10 +308,9 @@ function completeMapTile(tx, ty, scale, detail, tileSize, layer = 'all', deferre
   if (layer === 'political') mapAtlasPerformance.politicalPaints++;
   if (deferred) mapAtlasPerformance.deferredPaints++;
   else mapAtlasPerformance.synchronousPaints++;
-  item = { canvas: c, worldX, worldY, width, height, quality };
+  item = { canvas: c, worldX, worldY, width, height, quality, scale, used:++mapAtlasClock };
   cache.set(key, item);
-  while (cache.size > (layer === 'all' ? 72 : 96))
-    cache.delete(cache.keys().next().value);
+  trimMapAtlas();
   return item;
 }
 function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = false) {
@@ -218,27 +319,38 @@ function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = fa
       mapAtlasWarmKeys.has(key)) return;
   mapAtlasWarmKeys.add(key);
   const job = { col, row, scale, detail, tileSize, layer, key, generation: mapAtlasGeneration };
-  if (urgent) mapAtlasWarmQueue.unshift(job);
-  else mapAtlasWarmQueue.push(job);
+  mapAtlasWarmQueue.push(job);
   if (mapAtlasIdlePending) return;
   mapAtlasIdlePending = true;
   function warm(deadline) {
-    // A slow geography chunk can exceed 100ms on Japan. Never begin it while
-    // the user is panning or zooming; use the static backdrop until they stop.
-    if (mapAtlasWarmQueue.length && performance.now() - mapAtlasLastNavigation < 180) {
-      schedule(warm);
-      return;
+    // Reprioritize against the CURRENT viewport, rather than completing the
+    // history of pointer moves. A job is atomic; at most one begins per task.
+    for (let i = mapAtlasWarmQueue.length - 1; i >= 0; i--) {
+      const j = mapAtlasWarmQueue[i];
+      if (j.generation !== mapAtlasGeneration || !mapAtlasJobVisible(j, j.tileSize)) {
+        mapAtlasWarmQueue.splice(i,1); mapAtlasWarmKeys.delete(j.key);
+        mapAtlasPerformance.cancelledJobs++;
+      }
     }
-    // Exactly one chunk per idle task. Do not perform an unbounded tile loop
-    // in a pointer-move or requestAnimationFrame callback.
+    const v = mapAtlasViewport;
+    if (v) mapAtlasWarmQueue.sort((a,b) => {
+      const priority = j => (mapAtlasJobVisible(j) ? 0 : 1e12) +
+        (j.col*j.tileSize+j.tileSize/2-(v.left+v.right)/2)**2 +
+        (j.row*j.tileSize+j.tileSize/2-(v.top+v.bottom)/2)**2;
+      return priority(a)-priority(b);
+    });
+    // Background work yields while dragging. Visible jobs resume promptly
+    // after input quiets, independent of the pointer handler and HUD.
+    if (mapAtlasWarmQueue.length && performance.now() - mapAtlasLastNavigation < 80) {
+      schedule(warm); return;
+    }
     const job = mapAtlasWarmQueue.shift();
     if (job) {
       mapAtlasWarmKeys.delete(job.key);
-      if (job.generation === mapAtlasGeneration && job.scale === mapAtlasState.scale) {
-        completeMapTile(job.col, job.row, job.scale, job.detail, job.tileSize,
-          job.layer, true);
-        if (typeof requestMapFrame === 'function') requestMapFrame();
-      }
+      completeMapTile(job.col, job.row, job.scale, job.detail, job.tileSize, job.layer, true);
+      // Prefetch completion must not trigger another prefetch scan: at a
+      // full budget that scan would requeue the neighbour just evicted by LRU.
+      if (mapAtlasJobVisible(job) && typeof requestMapFrame === 'function') requestMapFrame();
     }
     if (mapAtlasWarmQueue.length) schedule(warm);
     else mapAtlasIdlePending = false;
@@ -299,20 +411,26 @@ function drawStrategicCurrentOwnership() {
   ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
 }
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
+  mapAtlasViewport = { left, right, top, bottom };
   const paintScale = mapAtlasRenderScale(scale);
   const paintDetail = R * paintScale >= 14;
   const tileSize = mapAtlasTileSize(paintScale);
   refreshMapAtlas(paintScale);
   const split = regionalMapLayers();
   const layers = split ? ['static', 'political'] : ['all'];
-  const defer = split && mapAtlasFallback.ready;
+  const navigationBase = !split && mapAtlasNavigationBase?.tiles === game.tiles &&
+    mapAtlasNavigationBase.revision === (game.mapRevision || 0) &&
+    mapAtlasNavigationBase.terrain === (game.mapTerrainRevision || 0)
+      ? mapAtlasNavigationBase.image : null;
+  const defer = (split && mapAtlasFallback.ready) || !!navigationBase;
+  const backdrop = navigationBase || mapAtlasFallback.image;
   // Never let the first frame synchronously rasterize a detailed theatre map.
   // Asset loading happens asynchronously; regular legacy painting remains a
   // safety net when both images fail to load.
   if (split && !mapAtlasFallback.ready && !mapAtlasFallback.failed) return;
   // At wide strategic zoom, preserve the published geographic picture itself:
   // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
-  if (defer && R * scale < 22) {
+  if (split && defer && R * scale < 22) {
     // Abandon high-detail jobs scheduled while the backdrop was loading.
     // Otherwise heavy Japanese coastline chunks can still stall navigation.
     if (mapAtlasWarmQueue.length) {
@@ -348,11 +466,11 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
             if (!mapAtlasCanvasSet(layer).has(mapAtlasKey(col, row, paintScale, tileSize)))
               missing.push({ col, row, layer });
     }
-    const navigating = performance.now() - mapAtlasLastNavigation < 180;
-    if (missing.length || navigating) {
+    if (missing.length) {
       mapAtlasPerformance.snapshotFrames++;
-      ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
-      drawStrategicCurrentOwnership();
+      for (let shift=firstShift;shift<=lastShift;shift++)
+        ctx.drawImage(backdrop, shift*WORLD_W, 0, WORLD_W, WORLD_H);
+      if (split) drawStrategicCurrentOwnership();
       // Schedule at most the visible missing tiles; don't build any on the
       // pointer-move/render stack, and don't show unfinished partial chunks.
       for (const job of missing)
@@ -373,7 +491,7 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
         for (const layer of layers) {
           const key = mapAtlasKey(col, row, paintScale, tileSize);
           let tile = mapAtlasCanvasSet(layer).get(key);
-          if (tile) mapAtlasPerformance.hits++;
+          if (tile) { mapAtlasPerformance.hits++; tile.used = ++mapAtlasClock; }
           if (!tile) {
             if (defer) {
               queueMapAtlasTile(col, row, paintScale, paintDetail, tileSize, layer, true);
@@ -443,7 +561,7 @@ function scenarioSeaHexVisible(t) {
   if (game.mode === 'scenario' && t.terrain === 'offmap') return false;
   if (game.mode !== 'scenario' || !game.scenario?.projection ||
       t.terrain !== 'sea') return true;
-  const revision = game.mapRevision || 0;
+  const revision = game.mapTerrainRevision || 0;
   if (scenarioSeaCache.tiles !== game.tiles || scenarioSeaCache.revision !== revision) {
     const seen = new Uint8Array(game.tiles.length), queue = [];
     for (const cell of game.tiles) if (cell.terrain !== 'sea') {
@@ -489,7 +607,12 @@ function paintMapLayer(scale, detail, left, right, top, bottom, layer = 'all') {
   const copies = x => copiesBetween(x, left, right),
     visible = p => p.y >= top && p.y <= bottom;
   const pacificSky = isPacificAirBattle();
-  const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale, layer);
+  // Main's regional underlay historically presented an opaque geographic
+  // political pass, including its sea/coast cover above tactical decorations.
+  // Preserve that exact presentation after fixing the underlay's argument
+  // forwarding. A capture still invalidates only political atlas chunks.
+  const geographyLayer = layer === 'political' ? 'all' : layer;
+  const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale, geographyLayer);
   if (layer === 'political') {
     paintPoliticalBorders(scale, left, right, top, bottom);
     return;

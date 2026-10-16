@@ -753,10 +753,10 @@ const GEOGRAPHY = (() => {
   // coastal colour buffer used by the political painter. It must never be
   // the whole GSHHG atlas: continental polygons extend far beyond a small
   // regional scenario and would expose unrelated countries as grey terrain.
-  function regionalVisibleLand(g) {
+  function regionalVisibleLand(g, left, right, top, bottom) {
     japanColorGroups(g);
     const cache = japanColorCache;
-    if (cache.visibleLand) return cache.visibleLand;
+    if (cache.visibleLand) return localCoverage(cache.visibleLand, left, right, top, bottom);
     const tiles = [];
     const seen = new Set();
     const add = t => {
@@ -768,7 +768,23 @@ const GEOGRAPHY = (() => {
     for (const t of g.tiles) if (t.terrain !== 'sea') add(t);
     const path = FAST_PATH ? new Path2D() : null;
     if (path) for (const t of tiles) tacticalHex(path, t, R + .8);
-    return cache.visibleLand = { path, tiles };
+    cache.visibleLand = { path, tiles };
+    return localCoverage(cache.visibleLand, left, right, top, bottom);
+  }
+  // Rasterizing the entire theatre's 10,000-hex clipping stencil in every
+  // small atlas tile was the dominant stall (even with precompiled paths).
+  // Cull only shapes wholly outside this paint rectangle. Every intersecting
+  // hex keeps its exact original vertices and winding.
+  function localCoverage(coverage, left, right, top, bottom) {
+    if (!Number.isFinite(left) || !FAST_PATH) return coverage;
+    const tiles = coverage.tiles.filter(t => {
+      const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
+      const y = 1.5 * R * t.r + R;
+      return x >= left - 2*R && x <= right + 2*R && y >= top - 2*R && y <= bottom + 2*R;
+    });
+    const path = new Path2D();
+    for (const t of tiles) tacticalHex(path, t, R + .8);
+    return { tiles, path };
   }
   function clipRegionalLand(ctx, coverage) {
     if (coverage.path) return ctx.clip(coverage.path);
@@ -1122,7 +1138,7 @@ const GEOGRAPHY = (() => {
     // China, Africa or neighbouring islands OUTSIDE the playable theatre.
     // Draw land only when a real scenario land tile (or its shoreline buffer)
     // covers it. This rule also applies when Campaign launches a scenario.
-    const visibleLand = regionalVisibleLand(g);
+    const visibleLand = regionalVisibleLand(g, left, right, top, bottom);
     // Terrain and national ownership are independent render passes. The base
     // remains valid across ordinary city captures and is cached separately.
     ctx.save();
@@ -1143,10 +1159,16 @@ const GEOGRAPHY = (() => {
             ctx.fill();
           }
         } else {
-          ctx.beginPath();
-          for (const t of g.tiles)
-            if (t.terrain !== 'sea' && !t.owner) tacticalHex(ctx, t, R + .8);
-          ctx.fill();
+          const unowned = FAST_PATH ? new Path2D() : null;
+          if (!unowned) ctx.beginPath();
+          for (const t of g.tiles) {
+            if (t.terrain === 'sea' || t.owner) continue;
+            const x = SQ * R * (t.c + .5 * (t.r & 1)) + R;
+            const y = 1.5 * R * t.r + R;
+            if (x < left - 2*R || x > right + 2*R || y < top - 2*R || y > bottom + 2*R) continue;
+            tacticalHex(unowned || ctx, t, R + .8);
+          }
+          unowned ? ctx.fill(unowned) : ctx.fill();
         }
       }
       if (layer !== 'static') {
@@ -1154,15 +1176,16 @@ const GEOGRAPHY = (() => {
           const faction = g.factions?.[side] || E.FACTIONS[side];
           if (!faction?.color) continue;
           ctx.fillStyle = faction.color;
-          ctx.beginPath();
+          const ownerPath = FAST_PATH ? new Path2D() : null;
+          if (!ownerPath) ctx.beginPath();
           for (const t of tiles) {
             const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;
             const y = R * 1.5 * t.r + R;
             if (x < left - R * 2 || x > right + R * 2 ||
                 y < top - R * 2 || y > bottom + R * 2) continue;
-            tacticalHex(ctx, t, R + .8);
+            tacticalHex(ownerPath || ctx, t, R + .8);
           }
-          ctx.fill();
+          ownerPath ? ctx.fill(ownerPath) : ctx.fill();
         }
       }
     }
@@ -1529,6 +1552,14 @@ ctx.restore();}
     const t = g.tiles[r * g.cols + c];
     return t && t.terrain !== 'sea' ? 1 : 0;
   }
-  return { paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, japanLandAt,
+  function releaseMap() {
+    ownershipCache = islandOwnerCache = japanColorCache = null;
+    beringPaintCache = {tiles:null,revision:-1,paths:null};
+    beringGeographicOwnersCache = {tiles:null,revision:-1,paths:null,groups:null};
+    lastMap = null; lastRevision = -1;
+    overviewCache.game = null; overviewCache.version = -1;
+    overviewCache.canvas = null;
+  }
+  return { releaseMap, paint, sample, visualLandAt, visualMixedHex, islandOwnerAt, japanLandAt,
     australiaLandAt, shapes: LAYERS, cacheStats };
 })();

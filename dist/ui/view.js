@@ -498,7 +498,7 @@ function attachMap() {
       }
     }
     // Hover hit-tests and previews are invisible during an active drag; touch screens have no hover.
-    if (pointer?.dragged) { hover = null; return; }
+    if (pointer?.dragged) { hover = null; requestMapFrame(); return; }
     if (e.pointerType !== 'touch') showHexInfo(e.clientX, e.clientY);
   };
   canvas.onpointerup = e => {
