@@ -293,6 +293,10 @@
   function kill(g, v, attacker, force = false, by = null) {
     if (v.hp > 0) return;
     if ((fx(v).undying && !v.undyingUsed || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
+      // A commander who forces a lethal Code Bearer / Final Stand activation
+      // has still earned a Valor citation, despite the scripted survival.
+      if (v.cmd && attacker?.cmd)
+        award(g, attacker.side, 'valor', `Overcame ${COMMANDERS[v.cmd].short}'s final defense`, attacker);
       if(v.cmd==='urabe'){
         v.expFinalStandUsed=true;v.hp=1;
         log(g,'Urabe survives a lethal direct hit: Final Stand.',v.side);
