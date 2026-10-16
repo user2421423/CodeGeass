@@ -51,7 +51,7 @@ function tutorialMakeGame() {
   for (let r = 0; r < g.rows; r++) {
     for (let c = 0; c < g.cols; c++) {
       const terrain = (r === 1 && c > 6) || (r === 7 && c >= 7) ? 'forest' :
-        (r === 2 && c >= 7) ? 'hills' : 'plains';
+        (r === 2 && c >= 7) ? 'mountain' : 'plains';
       g.tiles.push({ c, r, terrain, owner: c < 5 ? 'britannia' : 'eu',
         provinceCity: c <= 3 ? 0 : c <= 7 ? 1 : 2 });
     }
