@@ -25,6 +25,11 @@
   function nearFriendlyCity(g, u) {
     return g.stations.some(s => s.owner === u.side && dist(g, s, u) <= 1);
   }
+  // Ports can be controlled independently of their cities. Repairs use the actual harbour owner.
+  function atFriendlyPort(g, u) {
+    const port = portAtHex(g, u);
+    return !!port && (port.portOwner || port.owner) === u.side;
+  }
   function repairReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
@@ -34,7 +39,8 @@
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (u.hp >= maxHP(u) ? 'Frame already intact' : null) ||
       (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
-      (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
+      (isShip(u) && !atFriendlyPort(g, u) ? 'Warships must occupy a friendly-controlled port to repair' : null) ||
+      (!isShip(u) && !nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
       shortfall(funds(g, u.side), { credits: repairCost(u, g) })
     );
   }
