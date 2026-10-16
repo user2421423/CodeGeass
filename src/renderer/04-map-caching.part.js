@@ -356,8 +356,9 @@ function queueRegionalAtlas(scale, detail, left, right, top, bottom) {
     for (let col = firstCol; col <= lastCol; col++) {
       // Paint the base before the ownership layer; each chunk is only drawn
       // once the entire visible camera is ready.
-      queueMapAtlasTile(col, row, scale, detail, tileSize, 'static', true);
+      // Jobs are prepended; tint first means base executes first.
       queueMapAtlasTile(col, row, scale, detail, tileSize, 'political', true);
+      queueMapAtlasTile(col, row, scale, detail, tileSize, 'static', true);
     }
   if (firstCol <= lastCol && firstRow <= lastRow)
     scheduleMapPrefetch(scale, detail, tileSize,
@@ -423,26 +424,61 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   // Asset loading happens asynchronously; regular legacy painting remains a
   // safety net when both images fail to load.
   if (split && !mapAtlasFallback.ready && !mapAtlasFallback.failed) return;
-  // Distant overview uses a single stable world image, just like
-  // Conquest's overview. No zoom-quantized atlas repaints are needed here.
+  // Use a stable full-map image at low zoom. Fade *out* of the last
+  // completed detailed LOD instead of suddenly swapping map images.
   if (defer && R * scale < 22) {
-    // Abandon high-detail jobs scheduled while the backdrop was loading.
-    // Otherwise heavy Japanese coastline chunks can still stall navigation.
     if (mapAtlasWarmQueue.length) {
       mapAtlasWarmQueue.length = 0;
       mapAtlasWarmKeys.clear();
       mapAtlasGeneration++;
     }
     mapAtlasPerformance.strategicFrames++;
-    ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
-    drawStrategicOwnershipDelta();
+    const old = shownRegionalAtlasScale();
+    if (old !== null && cachedRegionalAtlas(old, left, right, top, bottom)) {
+      if (mapAtlasFade.target !== 'overview' || mapAtlasFade.source !== old)
+        mapAtlasFade = { target: 'overview', source: old, started: performance.now() };
+      cachedRegionalAtlas(old, left, right, top, bottom, true);
+      const alpha = Math.min(1,
+        (performance.now() - mapAtlasFade.started) / MAP_ATLAS_CROSSFADE_MS);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+      drawStrategicOwnershipDelta();
+      ctx.restore();
+      if (alpha < 1) {
+        mapAtlasPerformance.blendedZoomFrames++;
+        if (typeof requestMapFrame === 'function') requestMapFrame();
+      } else {
+        mapAtlasShown.scale = null;
+        mapAtlasFade.target = null;
+      }
+    } else {
+      ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+      drawStrategicOwnershipDelta();
+    }
     return;
   }
   // Regional tactical mode behaves like Conquest's cached world atlas:
   // when all visible tiles are ready it draws only cached canvases; while
   // another zoom level is warming, it retains an older complete LOD.
   if (defer) {
-    if (!cachedRegionalAtlas(paintScale, left, right, top, bottom)) {
+    const ready = cachedRegionalAtlas(paintScale, left, right, top, bottom);
+    // Keep an already finished LOD on screen while the wheel/pinch gesture
+    // is still active. Switch only after navigation settles.
+    if (performance.now() - mapAtlasLastNavigation < 180 &&
+        shownRegionalAtlasScale() !== paintScale) {
+      const old = shownRegionalAtlasScale();
+      if (old !== null && cachedRegionalAtlas(old, left, right, top, bottom)) {
+        cachedRegionalAtlas(old, left, right, top, bottom, true);
+        mapAtlasPerformance.reusedZoomFrames++;
+      } else {
+        ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
+        drawStrategicOwnershipDelta();
+      }
+      if (!ready) queueRegionalAtlas(paintScale, paintDetail, left, right, top, bottom);
+      return;
+    }
+    if (!ready) {
       mapAtlasPerformance.snapshotFrames++;
       const old = shownRegionalAtlasScale();
       if (old !== null &&
@@ -464,39 +500,6 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   const lastRow = Math.min(Math.ceil(WORLD_H / tileSize) - 1, Math.floor(bottom / tileSize));
   const firstShift = wraps() ? Math.floor(left / WORLD_W) - 1 : 0;
   const lastShift = wraps() ? Math.ceil(right / WORLD_W) : 0;
-  // Atomic map presentation: never draw a mixture of low-res WebP and
-  // sharper tiles. Stay with one complete picture until *all* currently
-  // visible static and political tiles exist, then present them together.
-  // This also prevents alternating coastlines when the player pans.
-  if (defer) {
-    const missing = [];
-    const lastPhysicalRow = Math.ceil(WORLD_H / tileSize) - 1;
-    for (let k = firstShift; k <= lastShift; k++) {
-      const shift = k * WORLD_W;
-      const a = left - shift, b = right - shift;
-      if (b <= 0 || a >= WORLD_W) continue;
-      const firstCol = Math.max(0, Math.floor(a / tileSize));
-      const lastCol = Math.min(Math.ceil(WORLD_W / tileSize) - 1, Math.floor(b / tileSize));
-      for (let row = firstRow; row <= Math.min(lastRow, lastPhysicalRow); row++)
-        for (let col = firstCol; col <= lastCol; col++)
-          for (const layer of layers)
-            if (!mapAtlasCanvasSet(layer).has(mapAtlasKey(col, row, paintScale, tileSize)))
-              missing.push({ col, row, layer });
-    }
-    const navigating = performance.now() - mapAtlasLastNavigation < 180;
-    if (missing.length || navigating) {
-      mapAtlasPerformance.snapshotFrames++;
-      ctx.drawImage(mapAtlasFallback.image, 0, 0, WORLD_W, WORLD_H);
-      drawStrategicOwnershipDelta();
-      // Schedule at most the visible missing tiles; don't build any on the
-      // pointer-move/render stack, and don't show unfinished partial chunks.
-      for (const job of missing)
-        queueMapAtlasTile(job.col, job.row, paintScale, paintDetail,
-          tileSize, job.layer, true);
-      return;
-    }
-    mapAtlasPerformance.atomicAtlasFrames++;
-  }
   for (let k = firstShift; k <= lastShift; k++) {
     const shift = k * WORLD_W;
     const a = left - shift, b = right - shift;
