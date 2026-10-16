@@ -153,7 +153,7 @@ function tutorialPaint() {
     ${step === 9 ? '<button class="primary" data-action="tutorial-exit">Back to main menu</button>' : ''}
     ${step !== 0 && step !== 9 ? '<button type="button" data-action="tutorial-focus">Show objective</button>' : ''}
     <button type="button" data-action="tutorial-restart">Restart</button>
-    <button type="button" data-action="tutorial-exit">Exit</button></div>`;
+    ${step === 9 ? '' : '<button type="button" data-action="tutorial-exit">Exit</button>'}</div>`;
   app.appendChild(guide);
 }
 function tutorialFocus() {
