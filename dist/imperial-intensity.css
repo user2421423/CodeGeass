@@ -886,3 +886,11 @@
     transition: none !important;
   }
 }
+
+/* Entire main-menu game-mode cards are actionable on mouse, touch, and keyboard.
+   The resume buttons keep their individual behavior. */
+.start-command .start-mode[data-open-mode] { cursor: pointer; }
+.start-command .start-mode[data-open-mode]:focus-visible {
+  outline: 2px solid #e1bd7f;
+  outline-offset: 3px;
+}
