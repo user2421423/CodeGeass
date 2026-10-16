@@ -99,21 +99,21 @@ function startMenu() {
           </section>
           <aside class="start-side" aria-label="Other game modes and headquarters">
             <div class="start-side-title"><span>Game modes</span></div>
-            <section class="start-mode" style="--mode-accent:#d7aa64">
+            <section class="start-mode" style="--mode-accent:#d7aa64" data-open-mode="campaign" role="button" tabindex="0" aria-label="Open Story Mode">
               <span class="start-mode-serial" aria-hidden="true">I</span>
               <h3>Story Mode</h3>
               <p>Follow the story through linked missions and decisive battles.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">${campaigns.length} campaigns · ${earnedStars}/${missions.length * 3} ★</span><button data-action="campaign">Play story</button></div>
               ${missionResume}
             </section>
-            <section class="start-mode" style="--mode-accent:#6fa7be">
+            <section class="start-mode" style="--mode-accent:#6fa7be" data-open-mode="scenario" role="button" tabindex="0" aria-label="Open Regional Scenarios">
               <span class="start-mode-serial" aria-hidden="true">II</span>
               <h3>Regional Scenarios</h3>
               <p>Fight standalone battles across detailed regional maps.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">Standalone saves</span><button data-action="scenario">Browse scenarios</button></div>
               ${scenarioResume}
             </section>
-            <section class="start-mode" style="--mode-accent:#c46f70">
+            <section class="start-mode" style="--mode-accent:#c46f70" data-open-mode="war-campaign" role="button" tabindex="0" aria-label="Open World Campaign">
               <span class="start-mode-serial" aria-hidden="true">III</span>
               <h3>World Campaign</h3>
               <p>Lead your faction through an interconnected world war.</p>
