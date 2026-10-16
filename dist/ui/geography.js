@@ -1086,7 +1086,9 @@ const GEOGRAPHY = (() => {
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
-    const sea = ctx.createLinearGradient(0, top, 0, bottom);
+    // The sea gradient must be in *world coordinates*, as for Conquest.
+    // Chunk-local gradients paint visibly different horizontal rectangles.
+    const sea = ctx.createLinearGradient(0, 0, 0, mapH(g));
     sea.addColorStop(0, '#205372');
     sea.addColorStop(1, '#103d5b');
     if (layer !== 'political') {
