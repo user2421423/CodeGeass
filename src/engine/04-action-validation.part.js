@@ -140,7 +140,7 @@
       turnReason(g, u.side) ||
       (!serves(k, u.side, g) ? 'Serves another faction' : null) ||
       (u.cmd ? 'Unit already has a commander' : null) ||
-      shortfall(funds(g, u.side), { credits: a.cost })
+      shortfall(funds(g, u.side), { credits: assignmentCost(g, k) })
     );
   }
   function feintReason(g, u) {
