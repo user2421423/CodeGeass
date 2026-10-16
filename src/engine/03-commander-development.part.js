@@ -30,7 +30,7 @@
       + 30 * commandStage(officer?.rank ?? 0);
   }
   function ratingCap(rank, branch = 'armor') {
-    return branch === 'mobility' ? [4, 5, 6][commandStage(rank)] : [2, 4, 6][commandStage(rank)];
+    return [2, 4, 6][commandStage(rank)];
   }
   function highCommandCapacity(profile) { return Math.max(2, Math.min(6, profile?.highCommandCapacity || 2)); }
   function recruitPrice(k) {
@@ -41,7 +41,7 @@
     const ratings = { ...RATINGS[k] };
     if (personal) {
       for (const branch of ['infantry', 'armor', 'artillery']) ratings[branch] = Math.min(2, ratings[branch]);
-      ratings.mobility = Math.min(4, ratings.mobility);
+      ratings.mobility = Math.min(ratingCap(0, 'mobility'), ratings.mobility);
     }
     return {
       rank: personal ? 0 : (commissionOf(k) === 'legendary' ? 1 : 0),

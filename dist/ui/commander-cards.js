@@ -40,11 +40,14 @@
     card.dataset.recruited = recruited ? 'yes' : 'no';
     card.dataset.rank = String(officer.rank);
     card.dataset.name = a.name.toLocaleLowerCase();
-    for (const r of ratingKeys) card.dataset['rating' + r] = String(ratings[r] || 0);
+    for (const r of ratingKeys) card.dataset['rating' + r] = String(r === 'mobility'
+      ? Math.min(ratings[r] || 0, E.ratingCap(officer.rank, r)) : (ratings[r] || 0));
 
     const ratingsMarkup = ratingKeys.map(key =>
       '<div class="cc-rating"><span>' + safe(E.BRANCH_NAMES[key]) + '</span>' +
-      starsHTML(ratings[key] || 0) + '</div>').join('');
+      starsHTML(key === 'mobility'
+        ? Math.min(ratings[key] || 0, E.ratingCap(officer.rank, key))
+        : (ratings[key] || 0)) + '</div>').join('');
 
     // Use the game's existing faction flag artwork, never a generated emblem.
     // The JLF share the Black Knights standard; Euro Britannia uses Britannia's.

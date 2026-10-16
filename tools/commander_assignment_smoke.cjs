@@ -7,8 +7,14 @@ const E = require('../dist/engine.js');
 const profile = { roster: {}, tokens: 1000 };
 const first = E.roster(profile);
 assert.deepEqual(Object.keys(first).sort(), ['cornelia', 'zero'], 'fresh profiles get exactly two commanders');
-for (const id of ['cornelia','zero'])
+for (const id of ['cornelia','zero']) {
   assert.ok(first[id], `Missing persistent starter commander: ${id}`);
+  assert.equal(first[id].ratings.mobility, 2, 'new personal commanders begin with at most two Mobility stars');
+}
+assert.deepEqual([0, 4, 8].map(rank => E.ratingCap(rank, 'mobility')), [2, 4, 6],
+  'Mobility star caps follow Tactical, Operational, and High Command limits');
+assert.match(E.starReason(profile, 'cornelia', 'mobility'), /Rank-limited to 2 stars/,
+  'Tactical commanders cannot buy Mobility stars above the cap');
 const previouslyPromoted = first.cornelia;
 previouslyPromoted.rank = 2;
 assert.strictEqual(E.roster(profile).cornelia, previouslyPromoted, 'loading the roster must not overwrite existing upgrades');

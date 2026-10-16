@@ -1,6 +1,6 @@
 # Commander progression and Commission design
 
-**Military rank:** Tactical Command (Second Lieutenant to Major) permits 2 combat stars and 4 Mobility stars; Operational Command (Lieutenant Colonel to Major General) permits 4 combat and 5 Mobility stars; High Command (Lieutenant General to Marshal) permits 6 combat and 6 Mobility stars. Rank does not determine generic skill slots.
+**Military rank:** Tactical Command (Second Lieutenant to Major) permits 2 combat and Mobility stars; Operational Command (Lieutenant Colonel to Major General) permits 4 combat and Mobility stars; High Command (Lieutenant General to Marshal) permits 6 combat and Mobility stars. Rank does not determine generic skill slots.
 
 **Commission:** Standard Commission has 1 generic skill slot, Distinguished 2, Legendary 3. All commissions may rank up; signature abilities do not consume generic slots. Initial Commission replaces storyTier and commander rarity stars, while campaign-mission stars and Elite Force levels remain separate.
 
@@ -12,7 +12,7 @@
 
 **Personal commander assignment cost:** Battle credits are charged once per assignment, using `100 + 40 × commission index + 30 × military rank stage` (Standard/Distinguished/Legendary commission indexes 0/1/2; Tactical/Operational/High Command stages 0/1/2). This yields Standard 100/130/160, Distinguished 140/170/200, and Legendary 180/210/240 credits by rank stage. Unit type, Elite status, and individual character do not change the price. Promotions and Commission upgrades change the cost of future assignments, not existing deployments. Scripted operation commanders begin assigned without an assignment fee. This cost uses battle credits, not permanent HQ command tokens. The assignment interface displays only the total price.
 
-**Movement:** Conquest and Scenarios give non-warship units +2 movement; Story Mode has no universal +2 bonus. Mobility gives +1 movement per active star, with rank caps of 4/5/6 stars in Tactical/Operational/High Command. The Mobility cap also applies to fixed operation commanders; their combat ratings remain fixed and uncapped by rank. Recruitment screens display movement computed from current operation rules and research, with Elite Force bonuses where applicable.
+**Movement:** Conquest and Scenarios give non-warship units +2 movement; Story Mode has no universal +2 bonus. Mobility gives +1 movement per active star, with rank caps of 2/4/6 stars in Tactical/Operational/High Command. The Mobility cap also applies to fixed operation commanders; their combat ratings remain fixed and uncapped by rank. Recruitment screens display movement computed from current operation rules and research, with Elite Force bonuses where applicable.
 
 **Migration:** Existing personal ratings above their rank's limits remain recorded but inactive until promoted. The once-only profile migration resolves existing global High Command over-cap situations by keeping the two highest-ranked officers, then demoting the remainder with a full refund of estimable forfeited purchases. New persistent commander records start at Second Lieutenant with Tactical-limited ratings; fixed operation commanders remain unchanged.
 
