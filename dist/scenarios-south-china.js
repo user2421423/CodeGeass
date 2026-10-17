@@ -128,9 +128,14 @@
     if(raw.length!==120*104/8)throw Error('Coastal atlas is corrupt');
     function sampledLand(lon,lat){
       if(lat>=27)return true;
-      if(lon<96.2||lon>=117.2||lat<7.5)return false;
+      if(lon<96.2||lat<7.5)return false;
+      // The source atlas ends at 117.2 E, exactly at this battlefield's
+      // eastern crop. Extend its final geographic sample into the fractional
+      // hex footprint; treating the missing sliver as water generated false
+      // coastline on an otherwise dry inland border.
+      const sourceLon=Math.min(lon,117.2-1e-6);
       const r=Math.max(0,Math.min(103,Math.round((27-lat)*104/19.5-.5)));
-      const c=Math.max(0,Math.min(119,Math.round((lon-96.2)*120/21-.5-.5*(r&1))));
+      const c=Math.max(0,Math.min(119,Math.round((sourceLon-96.2)*120/21-.5-.5*(r&1))));
       const i=r*120+c;
       return !!(raw.charCodeAt(i>>3)&(128>>(i&7)));
     }
