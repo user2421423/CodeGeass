@@ -260,9 +260,9 @@
   const api={id:'invasion-turkey',title:'Invasion of Turkey',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,overlays:['turkey']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['turkey']},
     elite:true,
-    text:{
+    text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"Anatolia · Alternate 2017",
       intro:"Britannia attacks north from the Middle East while its expeditionary fleets target the Mediterranean coast. Europia United defends Turkey and the straits. Capture all 59 cities.",
       diplomacy:"Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.",

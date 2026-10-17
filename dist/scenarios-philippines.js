@@ -116,7 +116,10 @@
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
+      const islandGeo=root.PHILIPPINES_GEOGRAPHY;
+      const island=islandGeo?.cityIslands?.[name];
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
+        (!island||islandGeo.islands[t.r*COLS+t.c]===island)&&
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Philippine city '+name);

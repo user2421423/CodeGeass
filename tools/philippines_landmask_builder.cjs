@@ -56,7 +56,11 @@ for(let r=0;r<H;r++)for(let c=0;c<W;c++){
  }
  cells=0;
  for(let i=0;i<W*H;i++)if(bytes[i>>3]&(128>>(i&7)))cells++;
- assert.equal(bytes.toString('base64'),stored,'Coast mask must match the source polygons and audited corrections');
+ const baseBits=Buffer.from(bytes);
+ const refinements=require('./data/island-coast-refinements.json');
+ for(const [c,r,kind] of refinements.philippines){const i=r*W+c;if(kind)bytes[i>>3]|=128>>(i&7);else bytes[i>>3]&=~(128>>(i&7));}
+ cells=0;for(let i=0;i<W*H;i++)if(bytes[i>>3]&(128>>(i&7)))cells++;
+ if(require.main===module)assert.equal(bytes.toString('base64'),stored,'Coast mask must match source polygons and island refinements');
 if(require.main===module)console.log('PHILIPPINES_MASK_REPRODUCED '+JSON.stringify({cols:W,rows:H,
  land:cells,sea:W*H-cells,channelCorrections:cutsCount,landOverrides:corrections.land.length,seaOverrides:corrections.sea.length}));
-module.exports={cols:W,rows:H,land:cells,cutsCount};
+module.exports={cols:W,rows:H,land:cells,cutsCount,baseBits};

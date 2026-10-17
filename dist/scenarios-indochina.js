@@ -12,8 +12,7 @@
   // Match geo()/locate(): each tactical hex samples the centre of its
   // geographic cell. The regional vector underlay must use these identical
   // half-cell bounds (including the odd-row hex offset), not viewport edges.
-  // The shared renderer currently uses hex-filled geography for this ID;
-  // integration must switch it to the centre-sampled atlas transform.
+  // The atlas uses the same centre-sampled transform as the tactical grid.
   const PROJECTION={centerLon:106.7,centerLat:17.25,angle:0,
     uMin:(BOUNDS.west+DLON/2-106.7)*K,uMax:(BOUNDS.east-DLON/2-106.7)*K,
     vMin:BOUNDS.south+DLAT/2-17.25,vMax:BOUNDS.north-DLAT/2-17.25};
@@ -307,10 +306,10 @@
   const api={id:'conquest-indochina',title:'The Conquest of Indochina',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{painter:'beringGrid',overlays:['indochinaRivers']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,coastBuffer:1,overlays:['indochinaRivers']},
     elite:true,
     ai:{doctrine:'europe',guards:'indochina',routeBias:'cf'},
-    text:{
+    text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"Indochina · Alternate 2017",
       intro:"Defense of Indochina: Britannia must withstand a three-axis Federation land offensive before advancing into Chinese-controlled northern Vietnam and southern China. Win only by capturing all 44 cities; there is no turn limit.",
       diplomacy:"Britannia and the Federation are hostile from turn 1. Cities, independent naval ports and army concentrations change hands normally. F.L.E.I.J.A. is disabled.",

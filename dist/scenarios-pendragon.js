@@ -353,9 +353,9 @@ root.PENDRAGON_SHARED=Object.freeze({
  geographicCities:GEOGRAPHIC_CITIES,
  geographicAt:geo,locate,ridges:RIDGES,roads:ROADS
 });
-euApi.meta={map:{centreSampled:true,overlays:['roads']},
+euApi.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['roads']},
   elite:true,expeditionSide:'eu',
-  text:{
+  text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
     era:"Pendragon · Eastern Imperial Last Stand",
     intro:"The final E.U. offensive attacks west from Utah and eastern Nevada. Capture every city, not merely Pendragon. No turn limit.",
     diplomacy:"Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.",

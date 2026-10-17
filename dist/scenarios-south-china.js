@@ -320,9 +320,9 @@
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,rivers:RIVERS,operationalFronts:OPERATIONAL_FRONTS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['regionalRivers']},
     elite:true,
-    text:{
+    text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"South China · Alternate 2017",
       intro:"Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 65 theatre cities on a large regional map without a turn limit.",
       diplomacy:"Britannia and the Chinese Federation are hostile from turn 1. Inland Army Groups and offshore invasion fleets operate independently; Chinese reserves and fleets defend mountain corridors, cities and strategic ports.",

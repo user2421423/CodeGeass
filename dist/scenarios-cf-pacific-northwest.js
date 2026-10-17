@@ -516,9 +516,9 @@
     cityData:CITIES,ports:PORTS,armyGroups:GARRISONS,invasionData:INVASIONS,
     fleetData:DEFENSIVE_FLEETS,rivers:RIVERS,passes:PASSES,operationalFronts:FRONTS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,overlays:['reliefZones','regionalRivers']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['reliefZones','regionalRivers']},
     elite:true,expeditionSide:'cf',
-    text:{
+    text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"Pacific Northwest · Federation World Campaign",
       intro:"China lands five carrier-led invasions along the Washington and Oregon coast and advances across the Cascades. Total city conquest.",
       diplomacy:"Britannia owns all inland cities; independent ports and mountain passes determine where beachheads can expand.",

@@ -347,6 +347,18 @@ document.addEventListener('click', e => {
   }
   if (d.scenarioFaction) { scenarioSide=d.scenarioFaction; scenarioDialog(); return; }
   if (d.armyOverlay) { if (d.armyOverlay === 'toggle') toggleStrategicOverlay(); else setStrategicOverlayMode(d.armyOverlay); return; }
+  if (d.armyOrganize) {
+    const r=E.organizeScenarioArmies(game);
+    if(!r.ok)toast(r.reason);
+    else {refreshAndSave();armyGroupsDialog();toast(r.assigned+' formations organized into '+r.created+' groups.'+(r.remaining?' '+r.remaining+' remain unassigned.':''));}
+    return;
+  }
+  if (d.armyBulk) {
+    const r=E.bulkArmyGroupOrder(game,d.armyBulk);
+    if(!r.ok)toast(r.reason);
+    else {refreshAndSave();armyGroupsDialog();toast(d.armyBulk==='hold'?'All groups are holding position.':r.changed+' armies ordered to capture remaining cities. Execute with Do all orders now or at turn start.');}
+    return;
+  }
   if (d.armyEdit) { armyGroupsDialog(+d.armyEdit); return; }
   if (d.armyActivate !== undefined) { armyGroupActivate(d.armyActivate ? +d.armyActivate : null); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }

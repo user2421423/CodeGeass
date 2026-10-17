@@ -145,6 +145,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 104,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Indochina · Alternate 2017",
         "intro": "Defense of Indochina: Britannia must withstand a three-axis Federation land offensive before advancing into Chinese-controlled northern Vietnam and southern China. Win only by capturing all 44 cities; there is no turn limit.",
         "diplomacy": "Britannia and the Federation are hostile from turn 1. Cities, independent naval ports and army concentrations change hands normally. F.L.E.I.J.A. is disabled.",
@@ -171,6 +172,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 124,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "South China · Alternate 2017",
         "intro": "Britannia attacks southern China on several continental fronts while carrier battle groups open a second front along the coast. Conquer all 65 theatre cities on a large regional map without a turn limit.",
         "diplomacy": "Britannia and the Chinese Federation are hostile from turn 1. Inland Army Groups and offshore invasion fleets operate independently; Chinese reserves and fleets defend mountain corridors, cities and strategic ports.",
@@ -307,6 +309,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 112,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Iraq and Iran · Alternate 2017",
         "intro": "Britannia invades Iraq and Iran from western expeditionary bases. Fight across Mesopotamia, breach the Zagros and capture the Iranian Plateau. All 84 theatre cities count; no turn limit.",
         "diplomacy": "Only Britannia and the Chinese Federation fight. Two theaters, independent Gulf ports, major reserves and a contested Strait of Hormuz; no three-faction Area 18 forces.",
@@ -384,6 +387,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 90,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "The Urals · Alternate 2017",
         "intro": "Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.",
         "diplomacy": "Both sides are hostile from the start. Routes through the mountains are slower except at named valleys.",
@@ -409,6 +413,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 104,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Anatolia · Alternate 2017",
         "intro": "Britannia attacks north from the Middle East while its expeditionary fleets target the Mediterranean coast. Europia United defends Turkey and the straits. Capture all 59 cities.",
         "diplomacy": "Two powers are at war from turn 1. The Bosporus and Dardanelles are navigable; ports may change hands. No turn limit.",
@@ -764,6 +769,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 126,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Pendragon · Eastern Imperial Last Stand",
         "intro": "The final E.U. offensive attacks west from Utah and eastern Nevada. Capture every city, not merely Pendragon. No turn limit.",
         "diplomacy": "Europia United and Britannia are hostile from turn 1. The desert approaches, major road corridors and fortified capital ring are all traversable.",
@@ -789,6 +795,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 126,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Pendragon · Chinese Western Finale",
         "intro": "China attacks the imperial capital from California and western Nevada, facing powerful Britannian defenses. Capture all enemy cities.",
         "diplomacy": "The Great Basin and imperial fortress system shape the final offensive; no turn cap or capital-only victory.",
@@ -842,6 +849,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 120,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Pacific Northwest · Federation World Campaign",
         "intro": "China lands five carrier-led invasions along the Washington and Oregon coast and advances across the Cascades. Total city conquest.",
         "diplomacy": "Britannia owns all inland cities; independent ports and mountain passes determine where beachheads can expand.",
@@ -867,6 +875,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 168,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Central America · Federation World Campaign",
         "intro": "The Federation advances north from Panama through Costa Rica to Guatemala, supported by Pacific fleets. Capture all 81 cities.",
         "diplomacy": "Mountain corridors, rivers, jungle and Pacific amphibious landings shape the invasion; all ports are independently capturable.",
@@ -893,6 +902,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 136,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Mexican Heartland · Federation World Campaign",
         "intro": "China attacks north from conquered Guatemala and makes coastal landings against Mexico’s plateau and industrial cities.",
         "diplomacy": "The Mexican Plateau, Sierra Madre ranges and separate Gulf/Pacific coasts shape large-scale Army Group warfare.",
@@ -918,6 +928,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 168,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Rocky Mountains · E.U. Penultimate Offensive",
         "intro": "Europia United attacks westward through Wyoming and Colorado mountain corridors toward Utah. Conquer all 101 Britannian cities.",
         "diplomacy": "Mountain passes, plains approaches and defensive reserves shape the offensive; rivers do not permit ocean shipping.",

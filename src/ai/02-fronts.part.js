@@ -26,22 +26,23 @@
   }
   function scenarioCache(g) {
     let cache = scenarioRoutes.get(g);
-    if (!cache || cache.tiles !== g.tiles) {
-      cache = { tiles: g.tiles, fields: new Map(), beaches: new Map() };
+    if (!cache || cache.tiles !== g.tiles || cache.terrainRevision !== (g.mapTerrainRevision || 0)) {
+      cache = { tiles: g.tiles, terrainRevision:g.mapTerrainRevision || 0,
+        fields: new Map(), beaches: new Map() };
       scenarioRoutes.set(g, cache);
     }
     return cache;
   }
   // 'mixed': goalField's combined land/sea costs; 'land': marches only; 'sea': water hexes
   // seeded from the shore next to the target's landmass (null when it has no reachable shore).
-  function scenarioRouteField(g, f, surface = 'mixed') {
-    const cache = scenarioCache(g), id = f.anchor.id + ':' + surface;
+  function scenarioRouteField(g, f, surface = 'mixed', flat = false) {
+    const cache = scenarioCache(g), id = f.anchor.id + ':' + surface + (flat ? ':flat' : '');
     if (cache.fields.has(id)) return cache.fields.get(id);
     let field;
-    if (surface === 'mixed') field = goalField(g, f.side, [[f.anchor, 0]]);
-    else if (surface === 'land') field = goalField(g, f.side, [[f.anchor, 0]], 'land');
+    if (surface === 'mixed') field = goalField(g, f.side, [[f.anchor, 0]], null, null, Infinity, flat);
+    else if (surface === 'land') field = goalField(g, f.side, [[f.anchor, 0]], 'land', null, Infinity, flat);
     else {
-      const land = scenarioRouteField(g, f, 'land'),
+      const land = scenarioRouteField(g, f, 'land', flat),
         targetMass = massOf(g, f.anchor),
         shore = g.tiles.filter(p => navigable(p) && !stationAt(g, p)).flatMap(p => {
           const approaches = adjacent(g, p).filter(n =>
@@ -77,7 +78,8 @@
       cache.travel = new Map();
     }
     const speed = Math.max(1, E.movement(g, u)),
-      key = [u.id, u.side, u.type, u.c, u.r, speed, f.anchor.id].join(':');
+      flat = E.terrainStepCost(g,{terrain:'mountain'}) > 1 && E.terrainCost(g,u,{terrain:'mountain'}) === 1,
+      key = [u.id, u.side, u.type, u.c, u.r, speed, f.anchor.id,flat].join(':');
     if (cache.travel.has(key)) return cache.travel.get(key);
     const done = cost => (cache.travel.set(key, cost), cost);
     const type = TYPES[u.type],
@@ -85,10 +87,10 @@
       ship = type.naval === 'ship',
       afloat = ship || isSea(tile(g, u.c, u.r));
     if (!afloat && srcMass === massOf(g, f.anchor)) {
-      const cost = scenarioRouteField(g, f, 'land')[index];
+      const cost = scenarioRouteField(g, f, 'land', flat)[index];
       return done(Number.isFinite(cost) ? cost / speed : Infinity);
     }
-    const water = scenarioRouteField(g, f, 'sea');
+    const water = scenarioRouteField(g, f, 'sea', flat);
     if (!water) return done(Infinity);
     const seaSpeed = ship ? speed
       : type.naval === 'amphibious' ? Math.max(1, amphibiousSea(g, u)) : Math.max(1, seaMove(g, u));
@@ -107,9 +109,73 @@
     }
     return done(best);
   }
-  // Scenarios with operational axes (Canada): each carrier army keeps its own
-  // route of supply hubs while the player and AI retain the existing goal-field
-  // navigation, city defense and army formation rules. No city is valued until reachable.
+  // Turn-local interpretation of the fronts, routes and reserve hubs declared
+  // by each scenario. Biases apply only after real route reachability is known.
+  function scenarioOperationalPlan(g, side) {
+    const cache = scenarioCache(g);
+    cache.operations ||= new Map();
+    const saved = cache.operations.get(side);
+    if (saved?.turn === g.turn) return saved;
+    if (!(g.scenario.operationalFronts?.length || g.scenario.operationalAxes ||
+        g.scenario.counterattackBases || g.scenario.defenseBelts)) {
+      const empty={turn:g.turn,axes:[],assignments:new Map(),defensive:[],counterBases:[]};
+      cache.operations.set(side,empty);
+      return empty;
+    }
+    const cities = new Map(g.stations.map(s=>[s.name,s]));
+    const axes = (g.scenario.operationalFronts || []).filter(row=>(row.side || row.attack)===side)
+      .map(row=>({name:row.name,bases:row.bases || (row.from ? [row.from] : []),
+        targets:row.route || row.objectives || [row.objective || row.goal]}));
+    // The Rockies' three armies already declare ordered geographic axes.
+    if (side === 'eu' && g.scenario.operationalAxes && !Array.isArray(g.scenario.operationalAxes))
+      for (const [name, targets] of Object.entries(g.scenario.operationalAxes))
+        if (Array.isArray(targets)) axes.push({name:name+' Army',bases:targets.slice(0,1),targets});
+    for (const a of axes) {
+      a.targets=a.targets.filter(name=>cities.has(name));
+      a.cities=a.targets.map(name=>cities.get(name));
+    }
+    const origins = new Map();
+    for (const group of g.scenario.groups || []) if (group.side===side)
+      for (const id of group.units) origins.set(id,group);
+    const assignments = new Map();
+    for (const u of allUnits(g).filter(u=>u.hp>0 && u.side===side)) {
+      const origin=origins.get(u.id);
+      const direct=axes.find(a=>a.name===u.invasionGroup || a.bases.includes(origin?.origin) ||
+        (origin?.name && a.name.split(' ')[0].toLowerCase()===origin.name.split(' ')[0].toLowerCase()));
+      const nearest=direct || axes.slice().sort((a,b)=>{
+        const distance=a=>Math.min(Infinity,...(a.bases.length?a.bases:a.targets)
+          .map(name=>cities.get(name)).filter(Boolean).map(s=>dist(g,u,s)));
+        return distance(a)-distance(b) || a.name.localeCompare(b.name);
+      })[0];
+      if (nearest) assignments.set(u.id,nearest);
+    }
+    const counterBases=(g.scenario.counterattackBases || []).map(name=>cities.get(name)).filter(s=>s?.owner===side);
+    const declaredHubs=axes.flatMap(a=>a.targets).map(name=>cities.get(name)).filter(s=>s?.owner===side);
+    if (side==='britannia') for (const names of Object.values(g.scenario.defenseBelts || {}))
+      for (const name of names) if(cities.get(name)?.owner===side) declaredHubs.push(cities.get(name));
+    const foes=g.units.filter(u=>u.hp>0 && foe(g,u.side,side) && !isShip(u));
+    const defensive=g.stations.filter(s=>s.owner===side &&
+      (declaredHubs.includes(s) || counterBases.some(base=>dist(g,base,s)<=12)) &&
+      foes.some(u=>massOf(g,u)===massOf(g,s) && dist(g,u,s)<=6));
+    const plan={turn:g.turn,axes,assignments,defensive,counterBases};
+    cache.operations.set(side,plan);
+    const state=((g.ai ||= {})[side] ||= {});
+    state.operations=Object.fromEntries([...assignments].map(([id,a])=>[id,a.name]));
+    state.operationalDefense=defensive.map(s=>s.id);
+    return plan;
+  }
+  function operationalCost(g,u,f,turns) {
+    const plan=scenarioOperationalPlan(g,u.side);
+    if (f.operational && f.type==='defensive') {
+      const nearBase=plan.counterBases.some(base=>dist(g,u,base)<=10);
+      return Math.max(0,turns-(nearBase?3:1));
+    }
+    const axis=plan.assignments.get(u.id);
+    if (!axis) return turns;
+    const remaining=axis.cities.filter(s=>foe(g,s.owner,u.side)).map(s=>s.name);
+    const index=remaining.indexOf(f.anchor.name);
+    return Math.max(0,turns+(index===0?-2.6:index===1?-1.5:index>=0?-.5:.6));
+  }
   function axisOperationalCost(g,u,f,turns) {
     const plan=scenarioMeta(g).ai?.operationalAxes;
     if(!plan||!Number.isFinite(turns))return turns;
@@ -150,7 +216,7 @@
     }
     // Scenario columns prioritize actual travel time. Canada's route bias
     // acts only after geography has established a reachable destination.
-    const cost=axisOperationalCost(g,u,f,Math.max(0, turns));
+    const cost=operationalCost(g,u,f,axisOperationalCost(g,u,f,Math.max(0, turns)));
     return routeBiasCost(g,u,f,cost);
   }
   // A route bias, not scripted movement (Indochina): the biased side's armies favor
@@ -178,10 +244,13 @@
     const defender = philippinesDefense(g, u.side);
     const availableTargets = memo.fronts.filter(f =>
       (defender ? !atSea(g, u) && philippinesHome(g, f.anchor) &&
-        massOf(g, u) === massOf(g, f.anchor) : foe(g, f.anchor.owner, u.side)) &&
+        massOf(g, u) === massOf(g, f.anchor) : foe(g, f.anchor.owner, u.side) ||
+          (f.operational && f.type==='defensive' && f.anchor.owner===u.side)) &&
       Number.isFinite(scenarioTravel(g, u, f))),
       wing = memo.wings?.[u.id],
-      matched = wing && availableTargets.filter(f=>f.anchor.owner===wing),
+      // Threatened home hubs remain eligible within an offensive theater.
+      matched = wing && availableTargets.filter(f=>f.anchor.owner===wing ||
+        (f.operational && f.type==='defensive')),
       fronts = matched?.length ? matched : availableTargets;
     if (!fronts.length) return null;
     const limit = memo.fronts.length <= 2 ? SCENARIO_COLUMN.finalUnits : SCENARIO_COLUMN.maxUnits;
@@ -189,15 +258,17 @@
       f.assigned < f.desiredStrength);
     const withRoom = fronts.filter(f => f.members.length < limit);
     const candidates = understrength.length ? understrength : withRoom.length ? withRoom : fronts;
+    const costs = new Map();
+    const cost = f => costs.get(f) ?? costs.set(f, scenarioCityCost(g, u, f)).get(f);
     // Keep a column intact unless its target falls or a substantially
     // better attack opens. This is not a defensive staging requirement.
     if (old && candidates.includes(old)) {
-      const best = Math.min(...candidates.map(f => scenarioCityCost(g, u, f)));
-      if (scenarioCityCost(g, u, old) <= best * SCENARIO_COLUMN.switchMargin + 0.5)
+      const best = Math.min(...candidates.map(cost));
+      if (cost(old) <= best * SCENARIO_COLUMN.switchMargin + 0.5)
         return old;
     }
     return candidates.slice().sort((a, b) =>
-      scenarioCityCost(g, u, a) - scenarioCityCost(g, u, b) ||
+      cost(a) - cost(b) ||
       a.members.length - b.members.length || a.anchor.id - b.anchor.id)[0];
   }
   function scenarioGive(g, memo, u, next) {
@@ -373,8 +444,9 @@
     planScenarioTheaters(g,side,troops,memo,state);
     const active=troops.filter(u=>!memo.guards?.[u.id]&&!memo.recoveries?.has(u.id));
     const defendingPhilippines = philippinesDefense(g, side);
+    const operations=scenarioOperationalPlan(g,side);
     const fronts = g.stations.filter(s =>
-      defendingPhilippines ? philippinesHome(g, s) : foe(g, s.owner, side)).map(s => {
+      defendingPhilippines ? philippinesHome(g, s) : foe(g, s.owner, side) || operations.defensive.includes(s)).map(s => {
       const opponents = enemies.filter(u => dist(g, u, s) <= 6),
         mass = massOf(g, s),
         local = own.filter(c => massOf(g, c) === mass),
@@ -385,7 +457,8 @@
         fortified = !!s.fort || s.shield >= 300;
       return {
         id: 'j' + s.id, side, anchor: s, name: s.name,
-        type: defendingPhilippines && s.owner === side ? 'defensive' : 'offensive',
+        type: s.owner===side ? 'defensive' : 'offensive',
+        operational:operations.defensive.includes(s),
         state: 'attacking', overseas: defendingPhilippines ? false : !local.length,
         rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0, fortified }],
         enemies: opponents, enemyStrength: opposition,
@@ -414,7 +487,7 @@
       f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
       const posture=(state.scenarioPostures||{})[f.id]||{};
       const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
-      f.state = defendingPhilippines
+      f.state = f.operational && f.type==='defensive' ? 'holding' : defendingPhilippines
         ? (f.anchor.owner === side ? 'holding' : 'attacking')
         : (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
       f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
@@ -423,12 +496,10 @@
       f.need = frontNeeds(f, active.filter(u => memo.assign[u.id] === f.id), g);
       memo.columns[f.id] = f.members;
     }
-    fronts.sort((a, b) => {
-      const nearest = f => Math.min(Infinity, ...(active.length ?
+    const nearestFront = new Map(fronts.map(f => [f, Math.min(Infinity, ...(active.length ?
         active.map(u => scenarioTravel(g, at(u), f)) :
-        own.map(c => scenarioTravel(g, c, f))));
-      return nearest(a) - nearest(b) || a.anchor.id - b.anchor.id;
-    });
+        own.map(c => scenarioTravel(g, c, f))))]));
+    fronts.sort((a, b) => nearestFront.get(a) - nearestFront.get(b) || a.anchor.id - b.anchor.id);
     state.assignments = Object.fromEntries(Object.entries(memo.assign)
       .filter(([, target]) => target).map(([id, target]) =>
         [id, { front: target, since: previous[id]?.front === target ? previous[id].since : g.turn }]));
@@ -1055,9 +1126,10 @@
     // instead of marching toward a city that is already theirs until next turn.
     if (g.mode === 'scenario') {
       const old = memo.byId[memo.assign[u.id]];
-      if (old && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
+      const friendlyDefense=old?.operational && old.type==='defensive' && old.anchor.owner===u.side;
+      if (old && !friendlyDefense && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         scenarioRememberCapture(g, u.side, old.anchor);
-      const next = !old || (!philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
+      const next = !old || (!friendlyDefense && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         ? scenarioPick(g, memo, u)
         : old;
       if (next?.id !== old?.id) scenarioGive(g, memo, u, next);
@@ -1092,7 +1164,11 @@
       const front = memo?.byId?.[memo.assign?.[u.id]];
       const local = g.stations.filter(s => philippinesHome(g, s) && massOf(g, s) === mass);
       const seeds = front ? [[front.anchor, 0]] : local.map(s => [s, 0]);
-      const field = seeds.length ? goalField(g, u.side, seeds, 'land') : null;
+      const cacheKey = 'island:' + mass + ':' + seeds.map(([p])=>p.id).join(',');
+      memo.islandFields ||= new Map();
+      if (!memo.islandFields.has(cacheKey)) memo.islandFields.set(cacheKey,
+        seeds.length ? goalField(g, u.side, seeds, 'land') : null);
+      const field = memo.islandFields.get(cacheKey);
       return p => !isSea(p) && massOf(g, p) === mass && field &&
         Number.isFinite(field[p.r * g.cols + p.c])
         ? field[p.r * g.cols + p.c] : 1000;
@@ -1104,9 +1180,17 @@
         return Number.isFinite(cost)?cost:60;};
     }
     const f = frontOf(g, memo, u) || (isShip(u) ? memo.fronts?.[0] : null);
+    const flat=g.mode === 'scenario' && E.terrainStepCost(g,{terrain:'mountain'}) > 1 &&
+      E.terrainCost(g,u,{terrain:'mountain'}) === 1;
+    const fieldKey=f && (f.id + ':' + (g.mapTerrainRevision || 0) + (flat ? ':flat' : ''));
     let field = null;
     return p => {
-      field ||= (f && (memo.fields[f.id] ||= goalField(g, f.side, f.seeds))) || (memo.field ||= goalField(g, u.side));
+      // Scenario fronts have one city seed, including their regrouping city.
+      // Its terrain-only field is identical across rounds and factions. Reuse
+      // the map's route cache rather than flood the entire map for every turn.
+      field ||= (f && (memo.fields[fieldKey] ||= g.mode === 'scenario' && f.seeds.length === 1 && f.seeds[0][1] === 0
+        ? scenarioRouteField(g, {anchor:f.seeds[0][0],side:f.side}, 'mixed', flat)
+        : goalField(g, f.side, f.seeds))) || (memo.field ||= goalField(g, u.side));
       const v = field[p.r * g.cols + p.c];
       return Number.isFinite(v) ? v : 60;
     };

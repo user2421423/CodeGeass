@@ -237,6 +237,13 @@ function armyGroupsDialog(editId = null) {
       const report = strategicGroupReport(v);
       return `<div class="conquest-row scenario-army-row ops-group-row" style="--ops-group-color:${strategicGroupColor(v)}"><div><label><span class="ops-group-id">G${v.id}</span> ${live.length} unit${live.length === 1 ? '' : 's'} · ${esc(E.ARMY_GROUP_STANCES[v.stance || 'advance'])} · ${esc(armyGroupDestination(v))}</label><h3 class="conquest-title">${esc(armyGroupLabel(v))}</h3><p class="mode-note">${live.slice(0,5).map(u => esc(E.TYPES[u.type].name)).join(' · ')}${live.length > 5 ? ' · …' : ''}</p><p class="mode-note"><span class="ops-phase ops-phase-${strategicGroupPhase(v,report).key}">${esc(strategicGroupPhase(v,report).label)}</span> · Ready ${report.ready}/${report.deployed} · ${esc(report.threat)}</p>${strategicGroupAlerts(v,report).length ? '<p class="ops-row-alert">⚠ '+esc(strategicGroupAlerts(v,report).join(' · '))+'</p>' : ''}</div><div class="scenario-group-buttons"><button class="${active?.id === v.id ? 'primary' : 'small'}" data-army-activate="${active?.id === v.id ? '' : v.id}">${active?.id === v.id ? 'Stop assigning' : 'Use for Shift-click'}</button><button class="small" data-army-focus="${v.id}">Locate</button><button data-army-edit="${v.id}">Manage</button>${selectedCanJoin ? `<button class="small" data-army-add-selection="${v.id}">Add selected (${chosenIds.length})</button>` : ''}<button class="primary" data-army-route="${v.id}">Set objective</button></div></div>`;
     }).join('') : '<p>No army groups yet. Shift-click your Knightmares on the map to select multiple formations, then create a group.</p>';
+    const unassigned=E.allUnits(game).filter(u=>u.hp>0 && u.side===game.player &&
+      !groups.some(gr=>gr.units.includes(u.id))).length;
+    content = '<div class="dialog-footer"><span class="mode-note">'+groups.length+' / '+E.armyGroupLimit(game)+' groups'+
+      (game.mode==='scenario'?' · '+unassigned+' unassigned formations':'')+'</span>'+
+      (game.mode==='scenario'?'<button data-army-organize="true" '+(!interactive()||!unassigned?'disabled':'')+'>Organize unassigned formations</button>':'')+
+      '<button data-army-bulk="hold" '+(!interactive()||!groups.length?'disabled':'')+'>Hold all groups</button>'+
+      '<button data-army-bulk="conquer" '+(!interactive()||!groups.length?'disabled':'')+'>Capture remaining cities with all armies</button></div>'+content;
     if (game.mode === 'scenario') content += '<div class="dialog-footer"><button class="small" data-action="scenario-armies">Browse starting formations & fleets</button></div>';
   } else {
     const live = gr.units.map(armyGroupMember).filter(Boolean);

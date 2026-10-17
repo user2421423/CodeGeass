@@ -35,8 +35,8 @@ async function run() {
   });
   let browser;
   try {
-    const binary = ['/usr/bin/google-chrome','/usr/bin/google-chrome-stable',
-      '/usr/bin/chromium','/usr/bin/chromium-browser'].find(fs.existsSync);
+    const binary = [process.env.BROWSER_EXECUTABLE_PATH,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable',
+      '/usr/bin/chromium','/usr/bin/chromium-browser'].filter(Boolean).find(fs.existsSync);
     browser = await chromium.launch({headless:true,
       ...(binary ? {executablePath:binary} : {channel:'chrome'}),
       args:['--no-sandbox','--disable-dev-shm-usage','--js-flags=--expose-gc']});
