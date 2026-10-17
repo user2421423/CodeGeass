@@ -167,6 +167,8 @@
     const old = maxHP(u);
     u.cmd = k;
     u.personal = true;
+    if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
+      g.challengePassRun.assigned[k] = true;
     u.cmdRank = g.roster[k].rank;
     u.hp += maxHP(u) - old;
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
