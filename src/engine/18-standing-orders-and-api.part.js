@@ -262,6 +262,8 @@
     genericDescription,
     genericLevel,
     genericCost,
+    genericRefundPreview,
+    commanderPlan,
     genericReason,
     buyGeneric,
     removeGenericReason,

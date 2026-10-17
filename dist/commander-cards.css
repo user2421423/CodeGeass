@@ -236,3 +236,67 @@
   .cc-roster .cc-card h3 { font-size: 17px; }
   .cc-stars { font-size: 10px; }
 }
+
+/* HQ development cost planner and cross-faction commander comparison. */
+.commander-plan {
+  border: 1px solid #476477;
+  border-radius: 9px;
+  padding: 11px 13px;
+  margin-top: 10px;
+  background: #102333;
+  color: #eaf2f7;
+}
+.commander-plan > summary {
+  cursor: pointer;
+  font-weight: 750;
+  color: #ead095;
+}
+.commander-plan-rows { display: grid; gap: 7px; margin: 12px 0; }
+.commander-plan-rows > div {
+  display: flex; justify-content: space-between; gap: 16px;
+  align-items: baseline; border-bottom: 1px solid #ffffff13; padding-bottom: 5px;
+}
+.commander-plan-rows b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.commander-plan-total {
+  font-weight: 800; color: #edd79e; border-top: 1px solid #567183;
+  padding-top: 11px;
+}
+.commander-plan small { display: block; line-height: 1.5; color: #adc0d0; }
+.cc-roster .cc-card .cc-compare-toggle {
+  display: block; width: 100%; border: 1px solid #506e82;
+  padding: 8px; border-radius: 6px; background: #172d40;
+  color: #e5eff5; cursor: pointer; font-size: 12px;
+}
+.cc-roster .cc-card .cc-compare-toggle[aria-pressed="true"] {
+  border-color: #e2c071; background: #3b3430; color: #ffe4a2;
+}
+.cc-comparison {
+  margin: 0 0 16px; padding: 12px;
+  border: 1px solid #38566b; border-radius: 10px;
+  background: linear-gradient(125deg, #152a3d, #122030);
+  color: #c9d7e3;
+}
+.cc-compare-heading {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-bottom: 10px;
+}
+.cc-compare-heading b { color: #ead095; font-size: 15px; }
+.cc-compare-heading button {
+  flex-shrink: 0; border: 1px solid #4b677d;
+  border-radius: 6px; background: #1a3145; color: #f2f5f8; cursor: pointer;
+}
+.cc-comparison p { line-height: 1.45; margin: 7px 0; }
+.cc-compare-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.cc-compare-person, .cc-compare-placeholder {
+  min-width: 0; margin: 0; border: 1px solid #415971; border-radius: 8px;
+  padding: 12px; background: #132536;
+}
+.cc-compare-person h4 { margin: 0 0 8px; color: #f1deb0; font-size: 15px; }
+.cc-compare-person p { overflow-wrap: anywhere; }
+.cc-compare-ratings { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px 13px; }
+.cc-compare-ratings > div { display: flex; justify-content: space-between; gap: 5px; font-size: 12px; }
+.cc-compare-ratings b { color: #f0d188; white-space: nowrap; }
+@media (max-width: 650px) {
+  .cc-compare-grid { grid-template-columns: 1fr; }
+  .cc-compare-heading { flex-wrap: wrap; }
+}

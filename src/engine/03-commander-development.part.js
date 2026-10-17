@@ -46,7 +46,7 @@
     return {
       rank: personal ? 0 : (commissionOf(k) === 'legendary' ? 1 : 0),
       ratings, commission: commissionOf(k), medals: [], honors: [], generics: {},
-      spending: { promotions: {}, stars: {} }, commanderVersion: COMMANDER_VERSION,
+      spending: { promotions: {}, stars: {} }, genericSpending: {}, commanderVersion: COMMANDER_VERSION,
     };
   }
   function cleanOfficer(k, rec, rankCap = HQ_RANK_CAP) {
@@ -71,6 +71,12 @@
       generics: Object.fromEntries(Object.entries(rec.generics || {})
         .filter(([id, level]) => GENERIC_SKILLS[id] && Number.isInteger(level) && level >= 1 && level <= 5)
         .slice(0, genericSlots(k, rec))),
+      // Older saves never recorded per-skill spending; use the old price schedule
+      // conservatively unless a newer explicit spending record is available.
+      genericSpending: Object.fromEntries(Object.entries(rec.generics || {})
+        .filter(([id, level]) => GENERIC_SKILLS[id] && Number.isInteger(level) && level >= 1 && level <= 5)
+        .map(([id, level]) => [id, Number.isSafeInteger(rec.genericSpending?.[id]) &&
+          rec.genericSpending[id] >= 0 ? rec.genericSpending[id] : legacyGenericInvestment(level)])),
     };
   }
   // Fresh profiles have exactly two free commanders total; existing profile rosters are preserved.
@@ -348,8 +354,45 @@
     return why ? { ok: false, reason: why } : relinquishHighCommand(profile, k, 0.9);
   }
   const GENERIC_COSTS = [0, 100, 150, 200, 350, 500];
+  const GENERIC_COSTS_LEGACY = [0, 100, 120, 150, 200, 260];
   const GENERIC_RESPEC_COST = 40;
   function genericCost(level = 0) { return GENERIC_COSTS[level + 1] ?? Infinity; }
+  function legacyGenericInvestment(level) {
+    return GENERIC_COSTS_LEGACY.slice(1, Math.min(5, level) + 1).reduce((a, b) => a + b, 0);
+  }
+  function genericRefundPreview(profile, k, id) {
+    const o = roster(profile)[k], level = o?.generics?.[id] || 0;
+    if (!level) return 0;
+    const recorded = o.genericSpending?.[id];
+    const invested = Number.isSafeInteger(recorded) && recorded >= 0 ?
+      recorded : legacyGenericInvestment(level);
+    return Math.round(invested * 0.9);
+  }
+  // Full-development planner. Future stars require Marshal rank; all three
+  // generic skills require Legendary Commission. These are accounted for in
+  // the grand total, without purchasing anything or mutating the roster.
+  function commanderPlan(profile, k) {
+    const o = roster(profile)[k];
+    if (!o) return null;
+    const promotions = PROMOTE_COST.slice(o.rank + 1).reduce((a, b) => a + b, 0);
+    const stars = Object.fromEntries(Object.keys(BRANCH_NAMES).map(branch => [
+      branch, STAR_COST.slice(Math.min(MAX_RATING, o.ratings[branch] || 0) + 1)
+        .reduce((a, b) => a + b, 0),
+    ]));
+    const commissionIndex = COMMISSION_ORDER.indexOf(commissionOf(k, o));
+    const commission = COMMISSION_ORDER.slice(commissionIndex + 1)
+      .reduce((a, tier) => a + (COMMISSION_UPGRADE_PRICES[tier] || 0), 0);
+    const skillLevels = Object.values(o.generics || {}).slice(0, 3);
+    const skills = Array.from({ length: 3 }, (_, i) =>
+      GENERIC_COSTS.slice((skillLevels[i] || 0) + 1).reduce((a, b) => a + b, 0));
+    const starTotal = Object.values(stars).reduce((a, b) => a + b, 0);
+    const skillsTotal = skills.reduce((a, b) => a + b, 0);
+    return {
+      promotions, stars, starTotal, commission, skills, skillsTotal,
+      total: promotions + starTotal + commission + skillsTotal,
+      highCommandSeat: o.rank < 8 && highCommandUsed(profile) >= highCommandCapacity(profile),
+    };
+  }
   function genericReason(profile, k, id) {
     const why = ownedReason(profile, k);
     if (why) return why;
@@ -363,22 +406,32 @@
     const why = genericReason(profile, k, id);
     if (why) return { ok: false, reason: why };
     const o = roster(profile)[k], level = o.generics?.[id] || 0;
-    profile.tokens -= genericCost(level);
+    const cost = genericCost(level);
+    const recorded = o.genericSpending?.[id];
+    const prior = Number.isSafeInteger(recorded) && recorded >= 0 ?
+      recorded : legacyGenericInvestment(level);
+    profile.tokens -= cost;
     (o.generics ||= {})[id] = level + 1;
+    (o.genericSpending ||= {})[id] = prior + cost;
     return { ok: true, level: level + 1 };
   }
   function removeGenericReason(profile, k, id) {
     const why = ownedReason(profile, k);
     if (why) return why;
     if (!roster(profile)[k].generics?.[id]) return 'Skill is not equipped';
-    return tokenShort(profile, GENERIC_RESPEC_COST);
+    // The fee is deducted from the refund, so the player does not need to
+    // hold 40 tokens merely to reclaim a previously purchased skill.
+    return tokenShort(profile, Math.max(0, GENERIC_RESPEC_COST - genericRefundPreview(profile, k, id)));
   }
   function removeGeneric(profile, k, id) {
     const why = removeGenericReason(profile, k, id);
     if (why) return { ok: false, reason: why };
-    profile.tokens -= GENERIC_RESPEC_COST;
-    delete roster(profile)[k].generics[id];
-    return { ok: true };
+    const officer = roster(profile)[k];
+    const refund = genericRefundPreview(profile, k, id);
+    profile.tokens += refund - GENERIC_RESPEC_COST;
+    delete officer.generics[id];
+    if (officer.genericSpending) delete officer.genericSpending[id];
+    return { ok: true, refund, fee: GENERIC_RESPEC_COST, netRefund: refund - GENERIC_RESPEC_COST };
   }
   // No equipment actions: an award belongs permanently to the commander who earned it.
   function equipReason() { return 'Decorations are permanent service records, not equipment'; }

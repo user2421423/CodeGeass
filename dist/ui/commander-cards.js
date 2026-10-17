@@ -5,6 +5,8 @@
   const controls = { query: '', commission: 'all', ownership: 'all', rank: 'all', sort: 'commission' };
   const branches = ['infantry', 'armor', 'artillery'];
   const ratingKeys = [...branches, 'mobility'];
+  // The comparison picks remain selected when switching faction tabs.
+  let comparisonPicks = [];
 
   function commanderState(k, mode, profile) {
     const recruited = mode === 'assignment' || E.owns(profile, k);
@@ -40,6 +42,10 @@
     card.dataset.recruited = recruited ? 'yes' : 'no';
     card.dataset.rank = String(officer.rank);
     card.dataset.name = a.name.toLocaleLowerCase();
+    card.dataset.faction = a.side;
+    card.dataset.role = (a.role || '').toLocaleLowerCase();
+    card.dataset.remaining = String(recruited && mode === 'hq'
+      ? (E.commanderPlan(profile, k)?.total || 0) : E.recruitPrice(k));
     for (const r of ratingKeys) card.dataset['rating' + r] = String(r === 'mobility'
       ? Math.min(ratings[r] || 0, E.ratingCap(officer.rank, r)) : (ratings[r] || 0));
 
@@ -98,6 +104,19 @@
     const cards = grids.flatMap(grid => [...grid.querySelectorAll('.officer')]);
     const profile = loadProfile();
     cards.forEach(card => prepareClassicCard(card, mode, profile));
+    if (mode === 'hq') {
+      for (const card of cards) {
+        const k = card.querySelector('[data-general]')?.dataset.general;
+        const controlsArea = card.querySelector('.cc-card-bottom');
+        if (!k || !controlsArea) continue;
+        const compare = document.createElement('button');
+        compare.type = 'button';
+        compare.className = 'small cc-compare-toggle';
+        compare.dataset.ccCompare = k;
+        compare.textContent = 'Compare';
+        controlsArea.append(compare);
+      }
+    }
     const availableRanks = [...new Set(cards.map(card => Number(card.dataset.rank)))].sort((a, b) => b - a);
     if (controls.rank !== 'all' && !availableRanks.includes(Number(controls.rank))) controls.rank = 'all';
 
@@ -124,7 +143,9 @@
       selector('Military Rank', 'rank', [['all', 'All ranks'],
         ...availableRanks.map(rank => [String(rank), safe(E.RANKS[rank] || E.RANKS[0])])]) +
       selector('Sort by', 'sort', [['commission', 'Commission'], ['name', 'Name A–Z'],
-        ['rank', 'Rank'], ['infantry', 'Infantry rating'], ['armor', 'Armor rating'],
+        ['faction', 'Faction'], ['ownership', 'Owned first'], ['role', 'Unit specialty'],
+        ['rank', 'Rank'], ['remaining', 'Remaining upgrade cost'],
+        ['infantry', 'Infantry rating'], ['armor', 'Armor rating'],
         ['artillery', 'Artillery rating'], ['mobility', 'Mobility rating']]) + '</div>';
 
     const roster = document.createElement('div');
@@ -133,7 +154,11 @@
     const empty = document.createElement('p');
     empty.className = 'cc-empty';
     empty.textContent = 'No commanders match these filters.';
-    first.before(toolbar, roster, empty);
+    const comparePanel = document.createElement('section');
+    comparePanel.className = 'cc-comparison';
+    comparePanel.setAttribute('aria-live', 'polite');
+    if (mode === 'hq') first.before(toolbar, comparePanel, roster, empty);
+    else first.before(toolbar, roster, empty);
 
     // Remove the obsolete split headings; results now combine all filtered cards.
     // Leave the unrelated "Operation commanders" section below intact.
@@ -145,6 +170,66 @@
       if (mode === 'assignment' && el.dataset.ccFilter === 'ownership') return;
       el.value = controls[el.dataset.ccFilter];
     });
+
+    function renderComparison() {
+      if (mode !== 'hq') return;
+      const picks = comparisonPicks.slice(0, 2);
+      const cell = k => {
+        const a = C(k);
+        const recruited = E.owns(profile, k);
+        // Unowned commanders show their actual starting HQ stats rather
+        // than the unrelated scripted operation commander's stats.
+        const o = recruited ? E.roster(profile)[k] : E.defaultOfficer(k, true);
+        const plan = recruited ? E.commanderPlan(profile, k) : null;
+        const ratings = ratingKeys.map(branch => {
+          const active = Math.min(o.ratings[branch] || 0, E.ratingCap(o.rank, branch));
+          return '<div><span>' + safe(E.BRANCH_NAMES[branch]) + '</span><b>' +
+            active + '/6 ★</b></div>';
+        }).join('');
+        const skills = Object.entries(o.generics || {}).map(([id, level]) =>
+          safe(E.GENERIC_SKILLS[id]?.name || id) + ' Lv.' + level).join(', ');
+        return '<article class="cc-compare-person"><h4>' + safe(a.name) + '</h4>' +
+          '<p>' + safe(a.side.toUpperCase()) + ' · ' + safe(a.role) +
+          ' · ' + safe(E.commissionName(E.commissionOf(k, o))) +
+          ' · ' + safe(E.RANKS[o.rank]) + '</p>' +
+          '<div class="cc-compare-ratings">' + ratings + '</div>' +
+          '<p><b>Signature: ' + safe(a.skill) + '</b> — ' + safe(a.desc) + '</p>' +
+          '<p><b>Base stats:</b> ' + safe(E.commanderStatsText(k) || 'No additional base modifiers') + '</p>' +
+          '<p><b>Generic skills:</b> ' + (skills || 'None yet') + '</p>' +
+          '<p><b>' + (recruited ? 'Remaining development' : 'Recruitment') + ':</b> ' +
+            Number(recruited ? plan.total : E.recruitPrice(k)).toLocaleString() + ' tokens</p>' +
+          '</article>';
+      };
+      comparePanel.innerHTML = '<div class="cc-compare-heading"><b>Commander comparison</b>' +
+        '<button type="button" class="small" data-cc-compare-clear>Clear selection</button></div>' +
+        (picks.length ? '<div class="cc-compare-grid">' + picks.map(cell).join('') +
+          (picks.length === 1 ? '<p class="cc-compare-placeholder">Select a second commander to compare abilities, ratings and upgrade costs.</p>' : '') +
+          '</div>' : '<p>Select two commanders using Compare on their roster cards. You can switch factions between selections.</p>');
+      for (const button of dialog.querySelectorAll('[data-cc-compare]')) {
+        const active = picks.includes(button.dataset.ccCompare);
+        button.setAttribute('aria-pressed', String(active));
+        button.textContent = active ? 'Selected for comparison' : 'Compare';
+      }
+    }
+    if (mode === 'hq') {
+      dialog.addEventListener('click', event => {
+        const button = event.target.closest('[data-cc-compare], [data-cc-compare-clear]');
+        if (!button) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (button.dataset.ccCompareClear !== undefined) comparisonPicks = [];
+        else {
+          const id = button.dataset.ccCompare;
+          if (comparisonPicks.includes(id)) comparisonPicks = comparisonPicks.filter(k => k !== id);
+          else {
+            if (comparisonPicks.length === 2) comparisonPicks.shift();
+            comparisonPicks.push(id);
+          }
+        }
+        renderComparison();
+      });
+      renderComparison();
+    }
 
     function apply() {
       const query = controls.query.trim().toLocaleLowerCase();
@@ -160,6 +245,12 @@
       });
       visible.sort((a, b) => {
         if (controls.sort === 'name') return a.dataset.name.localeCompare(b.dataset.name);
+        if (controls.sort === 'faction') return a.dataset.faction.localeCompare(b.dataset.faction) ||
+          a.dataset.name.localeCompare(b.dataset.name);
+        if (controls.sort === 'role') return a.dataset.role.localeCompare(b.dataset.role) ||
+          a.dataset.name.localeCompare(b.dataset.name);
+        if (controls.sort === 'ownership') return (b.dataset.recruited === 'yes') -
+          (a.dataset.recruited === 'yes') || a.dataset.name.localeCompare(b.dataset.name);
         if (controls.sort === 'commission')
           return ({legendary:1, distinguished:2, standard:3}[a.dataset.commission] - {legendary:1, distinguished:2, standard:3}[b.dataset.commission]) ||
             a.dataset.name.localeCompare(b.dataset.name);

@@ -317,7 +317,7 @@ document.addEventListener('click', e => {
           : d.buyGeneric
             ? `${name}: ${E.GENERIC_SKILLS[d.buyGeneric].name} Lv.${r.level}.`
             : d.removeGeneric
-              ? `${name}: ${E.GENERIC_SKILLS[d.removeGeneric].name} replaced.`
+              ? `${name}: ${E.GENERIC_SKILLS[d.removeGeneric].name} replaced; ${r.netRefund >= 0 ? '+' : ''}${r.netRefund} tokens net (90% refund, 40-token fee).`
           : d.promote
             ? `${name} promoted to ${E.RANKS[r.rank]}.`
             : d.retireCommission
