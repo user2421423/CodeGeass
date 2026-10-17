@@ -256,6 +256,7 @@
   const api={id:'war-for-australia',title:'The War for Australia',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.shorelineBits=SHORE_BITS;
   api.meta={map:{centreSampled:true,land:'australia'},
     elite:true,
     ai:{doctrine:'europe'},
