@@ -1125,7 +1125,9 @@ const GEOGRAPHY = (() => {
     const shapes = source.filter(shape =>
       intersects(shape.bounds, a, b, c, d));
 
-    const sea = ctx.createLinearGradient(0, top, 0, bottom);
+    // Shared world-space endpoints, identical for every atlas chunk.
+    // Chunk-local gradients produce rectangular seams while zooming/panning.
+    const sea = ctx.createLinearGradient(0, 0, 0, mapH(g));
     sea.addColorStop(0, '#205372');
     sea.addColorStop(1, '#103d5b');
     if (layer !== 'political') {

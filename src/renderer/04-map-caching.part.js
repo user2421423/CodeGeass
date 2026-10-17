@@ -83,6 +83,8 @@ function resetMapResources() {
   mapAtlasViewport = null;
   mapAtlasNavigationBase = null;
   mapAtlasOwnerSnapshot = null;
+  mapAtlasShown = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
+  mapAtlasFade = { target:null, source:null, started:0 };
 }
 let mapAtlasLastNavigation = -Infinity;
 function noteMapNavigation() { mapAtlasLastNavigation = performance.now(); }
@@ -157,8 +159,12 @@ function preloadRegionalMapImage(id) {
   return entry;
 }
 let mapAtlasStrategicOwners = { tiles: null, revision: -1, source: null, canvas: null };
+let mapAtlasShown = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
+let mapAtlasFade = { target:null, source:null, started:0 };
+const MAP_ATLAS_ZOOM_FADE_MS = 150;
 const mapAtlasPerformance = {
   hits: 0, misses: 0, evictions: 0, cancelledJobs: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
+  reusedZoomFrames: 0, blendedZoomFrames: 0,
   basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
 };
@@ -254,11 +260,15 @@ function refreshMapAtlas(scale) {
     mapAtlasStaticTiles.clear();
     mapAtlasPoliticalTiles.clear();
     mapAtlasFallback.id = null;
+    mapAtlasShown = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
+    mapAtlasFade = { target:null, source:null, started:0 };
     mapAtlasStrategicOwners = { tiles: game.tiles, revision: -1, source: null, canvas: null };
   } else if (mapAtlasState.revision !== revision) {
     mapAtlasTiles.clear();
     if (regionalMapLayers() && mapAtlasOwnerSnapshot) invalidateRegionalPolitics();
     else mapAtlasPoliticalTiles.clear(); // World island/province inference can be non-local.
+    mapAtlasShown = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
+    mapAtlasFade = { target:null, source:null, started:0 };
   }
   if (mapAtlasState.tiles !== game.tiles || mapAtlasState.revision !== revision)
     mapAtlasOwnerSnapshot = game.tiles.map(t => t.owner);
@@ -413,6 +423,115 @@ function drawStrategicCurrentOwnership() {
   }
   ctx.drawImage(state.canvas, 0, 0, WORLD_W, WORLD_H);
 }
+// Keep a complete cached regional detail level during zoom. The current
+// renderer still owns job scheduling, memory budgets and political invalidation.
+function regionLODReady(scale,left,right,top,bottom,draw=false) {
+  const size=mapAtlasTileSize(scale);
+  const c0=Math.max(0,Math.floor(left/size)),c1=Math.min(Math.ceil(WORLD_W/size)-1,Math.floor(right/size));
+  const r0=Math.max(0,Math.floor(top/size)),r1=Math.min(Math.ceil(WORLD_H/size)-1,Math.floor(bottom/size));
+  if(c1<c0||r1<r0)return true;
+  // Check all chunks before drawing any; never leave a rectangular hole.
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    const key=mapAtlasKey(c,r,scale,size);
+    const a=mapAtlasStaticTiles.get(key),b=mapAtlasPoliticalTiles.get(key);
+    if(!a||!b||!a.canvas.width||!b.canvas.width)return false;
+  }
+  if(!draw)return true;
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    const key=mapAtlasKey(c,r,scale,size);
+    for(const cache of [mapAtlasStaticTiles,mapAtlasPoliticalTiles]){
+      const tile=cache.get(key);tile.used=++mapAtlasClock;
+      mapAtlasPerformance.hits++;
+      ctx.drawImage(tile.canvas,0,0,
+        (tile.width+2*MAP_ATLAS_PAD)*tile.quality,(tile.height+2*MAP_ATLAS_PAD)*tile.quality,
+        tile.worldX-MAP_ATLAS_PAD,tile.worldY-MAP_ATLAS_PAD,
+        tile.width+2*MAP_ATLAS_PAD,tile.height+2*MAP_ATLAS_PAD);
+    }
+  }
+  return true;
+}
+function regionLODPrevious() {
+  return mapAtlasShown.tiles===game.tiles &&
+    mapAtlasShown.revision===(game.mapRevision||0) &&
+    mapAtlasShown.terrainRevision===(game.mapTerrainRevision||0)
+      ? mapAtlasShown.scale:null;
+}
+function regionLODBackdrop(){
+  ctx.drawImage(mapAtlasFallback.image,0,0,WORLD_W,WORLD_H);
+  drawStrategicCurrentOwnership();
+}
+function regionLODOldOrBackdrop(left,right,top,bottom){
+  const old=regionLODPrevious();
+  if(old!==null&&regionLODReady(old,left,right,top,bottom)){
+    regionLODReady(old,left,right,top,bottom,true);
+    mapAtlasPerformance.reusedZoomFrames++;
+    return old;
+  }
+  regionLODBackdrop();
+  return null;
+}
+function regionLODSchedule(scale,detail,left,right,top,bottom){
+  const size=mapAtlasTileSize(scale);
+  const c0=Math.max(0,Math.floor(left/size)),c1=Math.min(Math.ceil(WORLD_W/size)-1,Math.floor(right/size));
+  const r0=Math.max(0,Math.floor(top/size)),r1=Math.min(Math.ceil(WORLD_H/size)-1,Math.floor(bottom/size));
+  for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++){
+    queueMapAtlasTile(c,r,scale,detail,size,'static',true);
+    queueMapAtlasTile(c,r,scale,detail,size,'political',true);
+  }
+  if(c1>=c0&&r1>=r0)scheduleMapPrefetch(scale,detail,size,c0,c1,r0,r1,['static','political']);
+}
+function regionLODFrame(scale,detail,left,right,top,bottom,overview){
+  const previous=regionLODPrevious(),target=overview?'overview':scale;
+  if(overview){
+    mapAtlasPerformance.strategicFrames++;
+    // Previous tactical LOD fades into a stable overview in either direction.
+    if(previous!==null&&regionLODReady(previous,left,right,top,bottom)){
+      if(mapAtlasFade.target!=='overview'||mapAtlasFade.source!==previous)
+        mapAtlasFade={target:'overview',source:previous,started:performance.now()};
+      regionLODReady(previous,left,right,top,bottom,true);
+      const alpha=Math.min(1,(performance.now()-mapAtlasFade.started)/MAP_ATLAS_ZOOM_FADE_MS);
+      ctx.save();ctx.globalAlpha=alpha;regionLODBackdrop();ctx.restore();
+      if(alpha<1){mapAtlasPerformance.blendedZoomFrames++;requestMapFrame();}
+      else {mapAtlasShown.scale=null;mapAtlasFade.target=null;}
+    }else{mapAtlasFade.target=null;regionLODBackdrop();}
+    return;
+  }
+  const ready=regionLODReady(scale,left,right,top,bottom);
+  if(!ready){
+    mapAtlasPerformance.snapshotFrames++;
+    regionLODOldOrBackdrop(left,right,top,bottom);
+    regionLODSchedule(scale,detail,left,right,top,bottom);
+    return;
+  }
+  if(previous===scale){
+    mapAtlasFade.target=null;
+    mapAtlasPerformance.atomicAtlasFrames++;
+    regionLODReady(scale,left,right,top,bottom,true);
+    return;
+  }
+  // Never swap imagery mid-gesture. Keep the old completed LOD (or bitmap)
+  // until the user stops scrolling, then crossfade to fully cached tiles.
+  if(performance.now()-mapAtlasLastNavigation<180){
+    mapAtlasPerformance.snapshotFrames++;
+    regionLODOldOrBackdrop(left,right,top,bottom);
+    requestMapFrame();
+    return;
+  }
+  const old=previous!==null&&regionLODReady(previous,left,right,top,bottom)?previous:null;
+  if(mapAtlasFade.target!==target||mapAtlasFade.source!==old)
+    mapAtlasFade={target,source:old,started:performance.now()};
+  if(old!==null)regionLODReady(old,left,right,top,bottom,true);
+  else regionLODBackdrop();
+  const alpha=Math.min(1,(performance.now()-mapAtlasFade.started)/MAP_ATLAS_ZOOM_FADE_MS);
+  ctx.save();ctx.globalAlpha=alpha;regionLODReady(scale,left,right,top,bottom,true);ctx.restore();
+  if(alpha<1){mapAtlasPerformance.blendedZoomFrames++;requestMapFrame();}
+  else{
+    mapAtlasShown={tiles:game.tiles,revision:game.mapRevision||0,
+      terrainRevision:game.mapTerrainRevision||0,scale};
+    mapAtlasFade.target=null;
+  }
+  mapAtlasPerformance.atomicAtlasFrames++;
+}
 function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   mapAtlasViewport = { left, right, top, bottom };
   const paintScale = mapAtlasRenderScale(scale);
@@ -436,6 +555,12 @@ function drawMapFromAtlas(scale, detail, left, right, top, bottom) {
   // Asset loading happens asynchronously; regular legacy painting remains a
   // safety net when both images fail to load.
   if (split && !mapAtlasFallback.ready && !mapAtlasFallback.failed) return;
+  // Use Conquest-style complete LOD transitions on bounded regional maps,
+  // retaining newer main's viewport scheduler and memory policy.
+  if (split && defer) {
+    regionLODFrame(paintScale,paintDetail,left,right,top,bottom,R*scale<22);
+    return;
+  }
   // At wide strategic zoom, preserve the published geographic picture itself:
   // no grid/relief hexes are drawn below this 22-pixel tactical threshold.
   if (split && defer && R * scale < 22) {
