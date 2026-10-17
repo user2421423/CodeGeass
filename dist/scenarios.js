@@ -586,7 +586,7 @@
       era:"Japan · 2017 a.t.b.",
       intro:"Three playable powers in the Japanese theatre, with an alliance that ends on turn 10.",
       diplomacy:"Britannia and the Black Knights are allied until turn 10.",
-      elite:"All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.",
+      elite:"All automatically converted starting units are Lv.1 elites, including rival commanders. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player-deployed elites use their unlocked HQ level (up to Lv.5); mission carriers retain their existing rules.",
       focus:{
         britannia:"Nagoya",
         bk:"Kyoto",

@@ -212,8 +212,6 @@
     if (!free(at)) at = nearest(g, { c, r }, free);
     if (!at) return null;
     if (isEliteCampaign(g) && cmd && unitWith(g, cmd)) return null;
-    const special = !!E.TYPES[type].elite || ['siegfried', 'raiko', 'canterbury'].includes(type) ||
-      !!opts.special || !!opts.unique || opts.level === 5;
     if (isEliteCampaign(g)) {
       type = E.ELITE_FORCES[eliteType(g, side, type, cmd)].type;
       unitStack = 1;
@@ -223,8 +221,9 @@
         Math.min(E.RANKS.length - 1, E.defaultOfficer(cmd).rank + d.ranks);
     const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : unitStack, cmd, opts.ready !== false);
     if (u.elite) {
-      u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, side, cmd, special) :
-        eliteLevelFor(g, side);
+      // All automatically converted starting formations begin at Lv.1.
+      // Player factory recruits instead use the HQ level; later scripted upgrades stay separate.
+      u.eliteLevel = isEliteCampaign(g) ? 1 : eliteLevelFor(g, side);
       if (isEliteCampaign(g)) u.eliteStart = true;
     }
     const hold = opts.hold ?? g.campaign.hold?.[side];
@@ -252,7 +251,7 @@
         );
       if (!spot) continue;
       const u = E.newUnit(g, src.type, src.side, spot.c, spot.r, isEliteCampaign(g) ? 1 : src.stack);
-      if (isEliteCampaign(g)) { u.eliteLevel = 3; u.eliteStart = true; }
+      if (isEliteCampaign(g)) { u.eliteLevel = 1; u.eliteStart = true; }
       u.hp = E.maxHP(u);
       if (!E.isSea(spot)) E.setTileOwner(g, spot, src.side);
       made++;
