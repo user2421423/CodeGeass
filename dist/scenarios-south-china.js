@@ -146,8 +146,9 @@
       return {c,r,owner:null,terrain:share<.20?'sea':
         share<=.80?'coast':landscape(p,c,r)};
     });
-    for(const t of g.tiles)if(t.terrain!=='sea'&&
-      E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+    // Retain the 20-80% sampled land-fraction class computed above.
+    // An adjacency overwrite previously marked 89 more dry hexes as coast,
+    // including 68 with 100% dry sampled coverage.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
