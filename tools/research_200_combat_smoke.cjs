@@ -76,7 +76,7 @@ exp.def.hp=75; // Exactly 50% HP is not eligible.
 assert.equal(exp.damage().unit,full,'50% HP does not activate the bonus');
 exp.def.hp=74;
 assert.ok(exp.damage().unit>full,'strictly below 50% HP activates it');
-for (const type of ['glasgow','gareth','elite_lancelot','portman_ii']) {
+for (const type of ['glasgow','liverpool','elite_lancelot','portman_ii']) {
   const e=place(type,'glasgow');
   e.def.hp=60;
   const before=e.damage().unit;
