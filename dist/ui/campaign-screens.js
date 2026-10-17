@@ -52,7 +52,7 @@ function campaignRow(profile) {
     seasons = Object.values(CP.SEASONS || {}),
     all = camps.flatMap(c => c.missions),
     got = all.reduce((a, m) => a + CP.best(profile, m.id), 0);
-  return `<div class="conquest-row campaign-row"><div><label>Story Mode · ${seasons.length} story arcs · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard, Challenge and Elite modes. Elite uses one-frame Elite Forces; player Lv.1 units face Lv.3–5 rivals. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Story Mode</button></div>`;
+  return `<div class="conquest-row campaign-row"><div><label>Story Mode · ${seasons.length} story arcs · ${camps.length} campaigns · ${all.length} missions</label><h3 class="conquest-title">${seasons.map(s => s.name).join(' · ')}</h3><p class="mode-note">Story missions on hand-built battlefields, from the Shinjuku Ghetto to Damocles. Each mission has Normal, Hard, Challenge and Elite modes. Elite converts starting formations to Lv.1 Elite Forces; units you recruit use their HQ-unlocked levels. Scripted mission upgrades may differ. Up to three stars each: <b>${got} / ${all.length * 3} ★</b>. Each difficulty pays its own first-clear and star rewards, with Hard and Challenge multipliers.</p></div><button class="primary" data-action="campaign">Story Mode</button></div>`;
 }
 function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
@@ -184,8 +184,9 @@ function loadGame(s) {
 function restoreLoadedGame(s) {
   if (!s) return;
   resetSession();
-  // Regional scenarios import personal commanders only; World Campaign also imports Elite levels.
-  // Neither imports HQ tech or overwrites scripted scenario commanders.
+  // Regional scenarios import personal commanders; World Campaign also imports Elite level data.
+  // Converted starting forces keep Lv.1; recruited elites use the player's HQ levels.
+  // Neither imports HQ tech nor overwrites scripted scenario commanders.
   if (s.mode === 'scenario') {
     const profile = loadProfile();
     game = E.applyRoster(s.warCampaign ? E.applyElites(s, profile) : s, profile);
