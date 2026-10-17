@@ -31,11 +31,11 @@ const militaryPresentation = (() => {
     return node;
   }
 
-  function importantCommander(event) {
-    const officer = E.COMMANDERS[event.commander];
-    // Surrender disbands are not battlefield defeats. Lower-tier officers do not interrupt play.
-    return event.byCombat && officer && (officer.storyTier === 1 ||
-      (officer.storyTier === 2 && officer.stars >= 5));
+  function commanderCasualty(event) {
+    // Show all named-formation losses, independent of rank, side or game mode.
+    // The engine records fatalities from combat, batteries and strategic strikes.
+    // Surrender disbanding is a different event, not a unitDestroyed casualty.
+    return event.kind === 'unitDestroyed' && !!E.COMMANDERS[event.commander];
   }
 
   function classify(event) {
@@ -46,7 +46,7 @@ const militaryPresentation = (() => {
       if (event.previousOwner === game.player && event.side !== game.player)
         return { kind: 'minor', e: event };
     }
-    if (event.kind === 'unitDestroyed' && importantCommander(event))
+    if (commanderCasualty(event))
       return { kind: 'commander', e: event };
     return null;
   }
@@ -126,13 +126,16 @@ const militaryPresentation = (() => {
     const major = visible.some(a => a.kind !== 'minor'),
       multiple = visible.length > 1;
     const headline = multiple && major ? 'Strategic developments' : info.title;
+    // Never truncate commander casualties when several officers fall in an AI turn.
+    const listed = visible.filter((e, i) => i < 4 || e.kind === 'commander');
+    const omitted = visible.length - listed.length;
     const details = multiple
       ? '<ul class="military-notice-events">' +
-        visible.slice(0, 4).map(n => {
+        listed.map(n => {
           const d = eventText(n);
           return '<li><strong>' + esc(d.title) + '</strong><small>' + esc(d.subtitle) + '</small></li>';
         }).join('') +
-        (visible.length > 4 ? '<li>' + (visible.length - 4) + ' more developments · See War Report</li>' : '') +
+        (omitted ? '<li>' + omitted + ' more developments · See War Report</li>' : '') +
         '</ul>'
       : '<p>' + esc(info.detail) + '</p>';
     node.className = 'military-notice ' + (major ? 'major' : 'minor');

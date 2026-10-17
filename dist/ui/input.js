@@ -463,6 +463,9 @@ document.addEventListener('click', e => {
     case 'continue-scenario':
       resumeSavedGame(SCENARIO_KEY);
       break;
+    case 'continue-world-campaign':
+      resumeSavedGame(WAR_CAMPAIGN_BATTLE_KEY);
+      break;
     case 'start-conquest':
       confirmReplace(chosenSaveKey(), 'new', newGame);
       break;

@@ -38,6 +38,7 @@ function startMenu() {
   const saved = getSave(chosenSaveKey());
   const scenarioSave = getSave(SCENARIO_KEY);
   const missionSave = getSave(CAMPAIGN_KEY);
+  const worldCampaignSave = getSave(WAR_CAMPAIGN_BATTLE_KEY);
   const profile = loadProfile();
   const reward = conquestReward(setup.difficulty, profile, cfg.id, setup.side);
   const CP = E.campaign;
@@ -65,6 +66,12 @@ function startMenu() {
     ? `<div class="start-mode-resume"><button data-action="continue-mission">↳ Resume saved story mission · Turn ${missionSave.turn}</button></div>` : '';
   const scenarioResume = scenarioSave && !scenarioSave.over
     ? `<div class="start-mode-resume"><button data-action="continue-scenario">↳ Resume ${esc(scenarioSave.scenario?.title || 'scenario')} · Turn ${scenarioSave.turn}</button></div>` : '';
+  // World Campaign keeps an independent battle slot from standalone scenarios.
+  const worldCampaignResume = worldCampaignSave?.mode === 'scenario' &&
+    !worldCampaignSave.over && worldCampaignSave.warCampaign &&
+    KnightmareWarCampaign.FACTIONS.includes(worldCampaignSave.warCampaign.faction)
+      ? `<div class="start-mode-resume"><button data-action="continue-world-campaign">↳ Continue World Campaign · Turn ${worldCampaignSave.turn}</button></div>`
+      : '';
   const techCount = Object.values(profile.research || {}).reduce((sum, level) => sum + level, 0);
   modal.innerHTML = `<div class="overlay start-overlay">
     <section class="dialog wide start-command" role="dialog" aria-modal="true" aria-label="Operation setup" aria-describedby="start-description">
@@ -118,6 +125,7 @@ function startMenu() {
               <h3>World Campaign</h3>
               <p>Lead your faction through an interconnected world war.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">Persistent theater map</span><button data-action="war-campaign">Open campaign</button></div>
+              ${worldCampaignResume}
             </section>
             <section class="start-hq" aria-label="Command headquarters">
               <div class="start-hq-top"><span class="start-kicker">HEADQUARTERS</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b></div>
