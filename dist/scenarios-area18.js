@@ -94,7 +94,7 @@
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:4,
+    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:5,
       phase:'three-way-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
     // Britannia uses compatible Britannian Elite Forces for this
     // scenario only. No global HQ, Conquest, or Japan access is changed.
@@ -134,19 +134,28 @@
       return {c,r,owner:null,terrain:land?landscape(p):'sea'};
     });
     const playableLand=t=>t&&t.terrain!=='sea';
-    // A visually blank sea tile may represent omitted foreign MAINLAND.
-    // Only real maritime water can give an Arabian hex coastal terrain.
+    // The visible map has only playable land or open sea. The excluded-area
+    // mask is a reference ONLY: omitted foreign land must not create phantom
+    // coast along the cropped northern border.
     const actualWater=t=>t&&t.terrain==='sea'&&
       !(outsideRaw.charCodeAt((t.r*COLS+t.c)>>3)&
         (128>>((t.r*COLS+t.c)&7)));
+    const shoreIds=root.AREA18_SHORE_HEX_IDS;
+    if(!Array.isArray(shoreIds)||!shoreIds.length)
+      throw Error('Area 18 accurate coastline classification was not loaded');
+    const shoreHexes=new Set(shoreIds);
+    // Centre-sampling can otherwise label inland hexes as 'coast' simply
+    // because the *next* hex is water. Here the actual shoreline must cross
+    // this hex's footprint; four port-city exceptions are in the shore list.
     for(const t of g.tiles)if(playableLand(t)&&
-      E.adjacent(g,t).some(actualWater))t.terrain='coast';
+      shoreHexes.has(t.r*COLS+t.c)&&E.adjacent(g,t).some(actualWater))
+      t.terrain='coast';
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
       const at=nearest(g,locate(lon,lat),t=>playableLand(t)&&
-        (!coastal||E.adjacent(g,t).some(actualWater))&&
+        (!coastal||(t.terrain==='coast'&&E.adjacent(g,t).some(actualWater)))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Area 18 city '+name);
       const capital=name==='Sana\'a'||name==='Riyadh'||name==='Dammam';
@@ -276,9 +285,9 @@
   const api={id:'area-18',title:'The Conquest of Area 18 — Arabian Peninsula',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,coastBuffer:1},
+  api.meta={map:{centreSampled:true,coastBuffer:0},
     elite:true,
-    ai:{doctrine:'europe'},saveVersion:4,
+    ai:{doctrine:'europe'},saveVersion:5,
     text:{
       era:"Arabian Peninsula · Alternate 2017",
       intro:"A three-way war for the Arabian Peninsula: Britannia dominates the south, Europia United the west and center, and the Chinese Federation the Gulf coast and east. Capture all 43 cities.",
