@@ -13,7 +13,13 @@ const report = require('./balance_dashboard_report_expanded.cjs');
 const manifestSource = fs.readFileSync(path.join(__dirname, '../dist/scenario-manifest.js'), 'utf8');
 const catalog = vm.runInNewContext(manifestSource +
   '\n;({ entries: SCENARIO_MANIFEST, files: SCENARIO_FILES })');
-for (const file of catalog.files) require(path.join(__dirname, '../dist', file));
+// The manifest also includes a browser-only geographic paint override. It must
+// not run in a headless simulation: it requires the canvas GEOGRAPHY singleton,
+// but does not register scenarios or alter gameplay mechanics.
+for (const file of catalog.files) {
+  if (file === 'central-america-underlay.js') continue;
+  require(path.join(__dirname, '../dist', file));
+}
 const missing = catalog.entries.filter(entry => !E.scenarios?.byId?.[entry.id]);
 if (missing.length) throw new Error('Missing regional scenario modules: ' + missing.map(v => v.id).join(', '));
 const regional = Object.fromEntries(catalog.entries.map(entry => {
