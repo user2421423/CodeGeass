@@ -6,6 +6,8 @@
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
   const COLS=144,ROWS=112,SIDES=['britannia','cf'];
+  // 37-point GSHHG-i 20–80% mixed coastline encoded as alternating RLE runs.
+  const SHORE_RLE='1d0.1.c1.1.7s.4.41.1.3.2.3o.1.6.3.3q.1.49.1.3z.1.3o.1.3z.1.a.1.3o.1.a.1.7o.1.c.1.3z.1.3y.1.3n.1.b.1.3y.1.3l.1.2.1.3v.2.2.1.9.1.3o.2.7.2.3x.1.7p.1.9.1.3z.1.3p.1.8.1.3r.1.8.1.3q.1.8.1.1.2.3x.1.1.1.3o.1.1.3.5.2.3p.1.3.1.3.1.3r.2.1.2.1.1.3v.1.2.2.7.2.3l.1.8.2.4.1.6.1.3e.3.3.4.6.2.3.2.39.2.3.1.6.1.3.1.1.1.4.1.3j.2.4.1.1.1.6.2.1.1.3c.4.5.2.1.1.3.1.6.1.3c.2.3.2.2.1.1.1.1.2.6.1.3f.1.4.1.2.2.2.1.3o.1.4.1.8.3.2.3.3e.1.e.1.1.5.3f.1.3.1.f.1.3f.1.3.1.2.1.9.1.3j.1.2.1.2.2.1.2.3.4.2.1.1.2.2.1.32.1.6.1.1.1.3.1.2.2.2.1.2.1.3.1.5.1.32.1.1.1.a.1.7.3.1.1.2.1.37.3.h.1.2.1.1.1.3.1.4.1.31.2.b.2.9.2.4.1.3.1.31.1.c.1.1.1.f.1.2.1.3f.1.1.3.9.4.33.1.d.1.d.2.1.1.3.1.2z.1.l.1.8.1.2.1.2.1.2x.1.f.1.5.1.5.1.1.1.3.5.2x.2.e.1.4.1.1.3.2.1.2.2.32.3.i.1.4.1.1.2.5.1.31.1.f.1.1.3.1.1.4.1.3.1.1.1.1.1.2z.1.2.2.c.1.2.3.4.1.1.1.6.1.2y.2.1.1.e.1.9.1.1.1.4.1.2.1.1.1.2u.1.1.1.l.1.3.1.1.1.6.2.1.2.2t.1.2.1.l.1.2.3.2.1.1.1.2.3.1.1.2s.3.l.1.3.2.2.2.2.1.6.1.1.1.2q.1.r.1.3.1.4.1.4.1.3.1.3i.2.1.4.7.1.1.1.2o.1.u.2.b.2.1.1.2n.1.1.1.p.2.f.1.2.1.2m.1.1.2.t.1.1.1.6.1.2r.1.2.1.t.1.a.1.1.1.1.1.2n.1.2.1.14.1.1.1.2q.1.3w.1.1.1.y.1.1.2.3.1.1.1.7.1.2h.2.x.1.4.1.4.1.9.1.2g.1.y.1.7.1.3p.2.5.3.d.1.2e.1.v.1.b.1.c.1.2d.1.v.1.7.1.3.2.3m.1.3.1.1.1.1.1.1.2.f.1.39.1.2.4.3.1.1r.2.1z.2.2.1.i.1.1c.1.z.1.1.1.15.1.8.2.3p.1.8.3.2f.1.1.1.t.2.a.1.8.1.2.1.1.1.2f.2.14.1.8.1.3.2.2d.2.1.2.q.1.1.1.a.1.2w.2.q.1.k.1.2.2.2a.1.y.1.l.1.2.1.2b.1.1c.1.2u.1.1.1.i.2.i.2.3.1.2.1.2d.1.9.3.h.3.k.4.2e.1.b.4.14.1.1.1.2b.1.h.2.14.1.2u.3.46.1.3t.1.3.3.3o.1.2.2.4.1.7p.1.40.1.3i';
   const BOUNDS={west:115.5,east:139.1,north:21.2,south:4.5};
   const K=Math.cos(13*Math.PI/180);
   const DLON=(BOUNDS.east-BOUNDS.west)/COLS, DLAT=(BOUNDS.north-BOUNDS.south)/ROWS;
@@ -110,8 +112,17 @@
       const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
       return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
     });
+    const shore=new Uint8Array(COLS*ROWS);
+    let pos=0,water=0;
+    for(const token of SHORE_RLE.split('.')){
+      const length=parseInt(token,36);
+      if(water)shore.fill(1,pos,pos+length);
+      pos+=length;water^=1;
+    }
+    if(pos!==COLS*ROWS)throw Error('Philippines geographic coast corrupt');
     for(const t of g.tiles)if(t.terrain!=='sea'&&
-      E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+        shore[t.r*COLS+t.c]&&E.adjacent(g,t).some(n=>n.terrain==='sea'))
+      t.terrain='coast';
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
