@@ -1213,9 +1213,9 @@
   const ELITE_FORCES = {
     cornelia_gloucester: {
       type: 'elite_cornelia_gloucester', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare', skill: 'Royal Guard Raid',
-      lv3Text: '+25% damage on or next to a friendly city while raiding.',
-      lv5Text: '+40% city-position damage; a kill restores movement.',
-      lv3: { cityAttack: 0.25 }, lv5: { cityAttack: 0.40, moveAfterKill: true },
+      lv3Text: '+25% damage on or next to any city, friendly or enemy.',
+      lv5Text: '+50% damage near any city; a kill restores movement.',
+      lv3: { cityAttack: 0.25 }, lv5: { cityAttack: 0.50, moveAfterKill: true },
     },
     lancelot: {
       type: 'elite_lancelot', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
@@ -1249,9 +1249,9 @@
       type: 'elite_gawain', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
       skill: 'Hadron Beam Barrage · Druid System',
       lv3Text: 'Rocket-class beam barrage: +1 range and 20% extra splash from twin Hadron Cannons. Ignores terrain movement costs.',
-      lv5Text: '35% extra splash; adjacent allies gain +10% targeting damage. Ignores terrain movement costs.',
+      lv5Text: '35% extra splash; allies within 2 hexes gain +20% targeting damage. Ignores terrain movement costs.',
       lv3: { float: true, range: 1, splash: 0.20 },
-      lv5: { float: true, range: 1, splash: 0.35, aura: { range: 1, value: 0.10 } },
+      lv5: { float: true, range: 1, splash: 0.35, aura: { range: 2, value: 0.20 } },
     },
     shinkiro: {
       type: 'elite_shinkiro', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
@@ -1342,10 +1342,10 @@
     akatsuki_zikisan: {
       type: 'elite_akatsuki_zikisan', faction: 'cf', availableTo: ['cf'], rarity: 'Epic',
       skill: 'Zikisan Command',
-      lv3Text: 'Adjacent Infantry and Armor deal +10% damage.',
-      lv5Text: 'Aura rises to +15%; the Zikisan gains +25% counter-fire.',
-      lv3: { aura: { range: 1, value: 0.10, branches: ['Infantry', 'Armor'] } },
-      lv5: { aura: { range: 1, value: 0.15, branches: ['Infantry', 'Armor'] }, counter: 0.25 },
+      lv3Text: 'Friendly Infantry and Armor within 2 hexes deal +10% damage.',
+      lv5Text: '2-hex aura rises to +15%; the Zikisan gains +25% counter-fire.',
+      lv3: { aura: { range: 2, value: 0.10, branches: ['Infantry', 'Armor'] } },
+      lv5: { aura: { range: 2, value: 0.15, branches: ['Infantry', 'Armor'] }, counter: 0.25 },
     },
     shen_hu: {
       type: 'elite_shen_hu', faction: 'cf', availableTo: ['cf'], rarity: 'Legendary',
@@ -1359,7 +1359,7 @@
       type: 'elite_vincent_ward', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
       skill: 'Ward Fire Control',
       lv3Text: '+15% damage and +10% armor penetration.',
-      lv5Text: '+25% damage and +20% penetration; a kill restores movement.',
+      lv5Text: '+25% damage and +20% penetration; the first kill each turn restores movement.',
       lv3: { dmg: 0.15, pen: 0.10 }, lv5: { dmg: 0.25, pen: 0.20, moveAfterKill: true },
     },
     sutherland_air: {
@@ -1416,11 +1416,11 @@
     },
     japan_bk_amphibious: {
       type: 'elite_japan_bk_amphibious', faction: 'black_knights', availableTo: ['bk'],
-      rarity: 'Rare', skill: 'Marine Assault · Breakthrough Landing',
+      rarity: 'Rare', skill: 'Marine Assault · Coastal Reposition',
       lv3Text: '+20% damage when attacking land targets or coastal city defenses directly from water.',
-      lv5Text: '+30% water-to-land damage; one extra attack per turn after defeating a coastal defender or breaking coastal city defenses.',
+      lv5Text: '+30% water-to-land damage; the first coastal-defender kill each turn restores movement (attacks keep chaining).',
       lv3: { landingStrike: 0.20 },
-      lv5: { landingStrike: 0.30, coastalRefresh: true },
+      lv5: { landingStrike: 0.30, coastalMoveAfterKill: true },
     },
   };
   const data = (root.KnightmareData ||= {});

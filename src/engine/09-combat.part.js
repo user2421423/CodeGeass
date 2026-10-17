@@ -79,7 +79,8 @@
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
     if (counter && ef.counter) attack *= 1 + ef.counter;
     if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
-    if (ef.cityAttack && g.stations.some(s => s.owner === u.side && dist(g, s, u) <= 1) && strike)
+    // Cornelia's Royal Guard Raid applies near any city, whether held or hostile.
+    if (ef.cityAttack && g.stations.some(s => dist(g, s, u) <= 1) && strike)
       attack *= 1 + ef.cityAttack;
     // Amphibious Elite abilities: the Lv.5 values replace, rather than stack with, Lv.3.
     const amphibiousAtSea = isSea(tile(g, u.c, u.r));
@@ -529,19 +530,22 @@
       a.attacked = false;
       breakthrough = true;
     }
-    // Gekka Lv.5: one extra attack per turn after defeating a coastal defender.
-    // Shield-breaking already refreshes an attack for every unit; do not double-bank it
-    // or consume the Gekka's unique once-per-turn refresh if another rule granted one.
-    if (a.hp > 0 && a.attacked && aef.coastalRefresh &&
-        a.expCoastalRefreshTurn !== g.turn &&
-        ((destroyed && coastalLand(g, d)) ||
-          (defensesDestroyed && coastalLand(g, s)))) {
-      a.expCoastalRefreshTurn = g.turn;
-      a.attacked = false;
-      breakthrough = true;
+    // Gekka Lv.5: one reposition after a coastal-defender kill each turn.
+    // Type II Breakthrough already restores the attack; this only restores movement.
+    // The turn stamp stops later coastal kills from granting unlimited movement.
+    if (destroyed && a.hp > 0 && aef.coastalMoveAfterKill &&
+        a.expCoastalMoveTurn !== g.turn && coastalLand(g, d)) {
+      a.expCoastalMoveTurn = g.turn;
+      a.moved = false;
+      a.skillReposition = 0;
+      a.eliteMoveAfterKill = true;
     }
     if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
-    if (destroyed && a.hp > 0 && aef.moveAfterKill) {
+    // Vincent Ward's Lv.5 movement refresh is limited to its first kill
+    // each turn; its separate unlimited Breakthrough attack chain remains intact.
+    if (destroyed && a.hp > 0 && aef.moveAfterKill &&
+        (a.elite !== 'vincent_ward' || a.expVincentMoveTurn !== g.turn)) {
+      if (a.elite === 'vincent_ward') a.expVincentMoveTurn = g.turn;
       a.moved = false;
       a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
