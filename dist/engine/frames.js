@@ -251,8 +251,15 @@
   // A "configuration" is the game's loadout of a wiki frame, using the optional weapons the wiki lists for it.
   // Navies (Conquest only, built at a port; outside the ten-class lineups). Every power's equivalent units share these
   // numbers exactly; only names, models and art differ.
-  const AMPHIBIOUS = { cls: 'light', naval: 'amphibious', hp: 210, attack: 45, armor: 17, move: 1, seaMove: 6, min: 1, max: 1, crit: 0.08, pen: 0.15, cost: 120, industry: 30, tier: 1, port: 1 },
-    AMPHIBIOUS_II = { ...AMPHIBIOUS, hp: 260, attack: 55, armor: 22, seaMove: 7, crit: 0.1, pen: 0.2, aquatic: 0.15, cost: 175, industry: 45, sakuradite: 3, tier: 2 },
+  // Amphibious frames inherit Light Armor statistics, but only Type II
+  // receives its kill-based Breakthrough. This applies equally to each
+  // faction's regular amphibious frames and to the elite Type II variants.
+  const AMPHIBIOUS = { cls: 'light', naval: 'amphibious', breakthrough: false,
+      desc: 'Amphibious I crosses seas and beaches but cannot fire again from a kill.',
+      hp: 210, attack: 45, armor: 17, move: 1, seaMove: 6, min: 1, max: 1, crit: 0.08, pen: 0.15, cost: 120, industry: 30, tier: 1, port: 1 },
+    AMPHIBIOUS_II = { ...AMPHIBIOUS, breakthrough: true,
+      desc: 'Amphibious II: a kill refreshes its attack. Regular frames can fire once more per turn; elite Type II frames may chain kills.',
+      hp: 260, attack: 55, armor: 22, seaMove: 7, crit: 0.1, pen: 0.2, aquatic: 0.15, cost: 175, industry: 45, sakuradite: 3, tier: 2 },
     // Unlike fire support, a warship's guns do not suppress: any unit with the range returns its fire.
     CARRIER = { cls: 'support', naval: 'ship', hp: 520, attack: 82, armor: 44, move: 10, min: 1, max: 2, capacity: 2, crit: 0.08, pen: 0.3, cost: 520, industry: 150, sakuradite: 15, tier: 1, port: 2, noCounter: false,
       rule: 'Warship: guns at range 1–2; any unit with the range returns fire. Carries two Knightmare formations and launches them onto the beach.' };
