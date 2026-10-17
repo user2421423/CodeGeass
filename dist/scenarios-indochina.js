@@ -6,6 +6,8 @@
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
   const COLS=120,ROWS=104,SIDES=['britannia','cf'];
+  // Reference GSHHG-i coastline: 37 hex-footprint samples and 20–80% land.
+  const SHORE_BITS='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAIABAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAIAAwAAAAAAAAAAAAAAAAEF7AAAAAAAAAAAAAAAAAKeAAAAAAAAAAAAAAAAAAFwAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAACAIAvAAAAAAAAAAAAAAAPyADCAAAAAAAAAAAAAABgfB8AAAAAAAAAAAAAAACABCAAAAAAAAAAAAAAAAEACMAAAAAAAAAAAAAAAA4AAMAAAAAAAAAAAAAAABQAAIAAAAAAAAAAAAAAABAAAEAAAAAAAAAAAAAAACAAAoAAAAAAAAAAAAAAACAAACAAAAAAAAAAAAAAAYAADlAAAAAAAAAAAAAAAQAAIAgAAAAAAAAAAAAAAgAAwBAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAACAAAAAAAAAAAAAAAAAAABAIAAAAAAAAAAAAAAAAABBgAAAAAAAAAAAAAAAIAANAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAABAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAEAAAAAAAAAAAAAAAAAAAEAAAAAgAAAEAAAAAAAAAYQAAAAAAAACAAAAAAAAAgQAAAAAAAAAgAAAAAAAAAQAAAAAAAAAQAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAEAAAAAAAAAIAAAAAAAAACAAAAAAAAAIAAAAAAAAACAAAAAAAAAAAAAAAAAAAAgAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAEAAAAAAAAAAQAAAAAAAACAAAAAAAQAAIAAAAAAAAAAAAAAAAgAAAAAAAAAAABAAAAAAAAAAIAAAAAAAACAAAAAAAQAAAAAAAAAAAAACIAAAAQAAAAAAAAAAAAAEIAAwAQAAIAAAAAAAAAQAAAAQAIAAEAAAAAAAAAQEIAAcAQAAAAAAAAAAAAgEP4AEAAAAIAAAAAAAABwAAMADAAAAIAAAAAAAACQEACAAAAAAIAAAAAAAAAQAADgAAAAAAAAAAAAAAAQIAAQACAAAIAAAAAAAABoAAAQAAAAAQAAAAAAAABIQAAIAIAAAQAAAAAAAAAAAAAIAEAABgAAAAAAAAAIAAAFgMAADAAAAAAAAAAQgAACgIAAIAAAAAAAAABQgAAAgCAAQAAAAAAAAAAhAAABcGADAAAAAAAAAAARAAAAJBA8AAAAAAAAAAAiAAAAZgZAAAAAAAAAAABQAAAAAIDAAAAAAAAAAAACAAAAAQCAAAAAAAAAAAAQEAAAAQAAAAAAAAAAAAAgEAAAAAIAAAAAAAAAAAAhYAAAAQYAAAAAAAAAAABAIAAAAjAAAAAAAAAAAAAAEAAAACAAAAAAAAAAAABAAAAAAsAAAAAAAAAAAABAAAAAAYAAAAAAAAAAAABwCAAAAAAAAAAAAAAAAAAoBAAAAAAAAAAAAAAAAABMAAAAAAAAAAAAAAAACAAiAAAAAAAAAAAAAAAAAAABBAAAAAAAAAAAAAAAA';
   const BOUNDS={west:96.2,east:117.2,north:27,south:7.5};
   const K=Math.cos(17.25*Math.PI/180);
   const DLON=(BOUNDS.east-BOUNDS.west)/COLS,DLAT=(BOUNDS.north-BOUNDS.south)/ROWS;
@@ -149,24 +151,39 @@
       const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
       return {c,r,owner:null,terrain:land?landscape(p,c,r):'sea'};
     });
-    for(const t of g.tiles)if(t.terrain!=='sea'&&
-      E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+    const shore=typeof atob==='function'?atob(SHORE_BITS):
+      Buffer.from(SHORE_BITS,'base64').toString('latin1');
+    if(shore.length!==COLS*ROWS/8)throw Error('Indochina shore mask corrupt');
+    for(const t of g.tiles)if(t.terrain!=='sea'){
+      const i=t.r*COLS+t.c;
+      if((shore.charCodeAt(i>>3)&(128>>(i&7)))&&
+          E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+    }
     // Separate open ocean from isolated inland water in the authoritative
     // shoreline mask. Shipyards and starting fleets use this sea basin only.
-    const visitedSea=new Set();
-    let openSea=new Set();
+    const visitedSea=new Set(),openSea=new Set(),basinSizes=[];
     for(const start of g.tiles){
       if(start.terrain!=='sea'||visitedSea.has(E.key(start)))continue;
       const queue=[start],component=new Set([E.key(start)]);
+      let edge=false;
       visitedSea.add(E.key(start));
-      for(let i=0;i<queue.length;i++)for(const n of E.adjacent(g,queue[i])){
-        const key=E.key(n);
-        if(n.terrain!=='sea'||visitedSea.has(key))continue;
-        visitedSea.add(key);component.add(key);queue.push(n);
+      for(let i=0;i<queue.length;i++){
+        const here=queue[i];
+        if(here.c===0||here.c===COLS-1||here.r===0||here.r===ROWS-1)edge=true;
+        for(const n of E.adjacent(g,here)){
+          const key=E.key(n);
+          if(n.terrain!=='sea'||visitedSea.has(key))continue;
+          visitedSea.add(key);component.add(key);queue.push(n);
+        }
       }
-      if(component.size>openSea.size)openSea=component;
+      // The Andaman-side sea and South China Sea are genuinely separate
+      // basins. Both remain open water, but no land shortcut joins them.
+      if(edge&&component.size>=100){
+        for(const key of component)openSea.add(key);
+        basinSizes.push(component.size);
+      }
     }
-    if(!openSea.size)throw Error('Indochina navigable sea is disconnected');
+    if(!basinSizes.length)throw Error('Indochina navigable sea is disconnected');
     const navigable=t=>t.terrain==='sea'&&openSea.has(E.key(t));
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Cities stay at the nearest actual land hex to their coordinates.
@@ -306,7 +323,7 @@
   const api={id:'conquest-indochina',title:'The Conquest of Indochina',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,coastBuffer:1,overlays:['indochinaRivers']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,coastBuffer:0,overlays:['indochinaRivers']},
     elite:true,
     ai:{doctrine:'europe',guards:'indochina',routeBias:'cf'},
     text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
