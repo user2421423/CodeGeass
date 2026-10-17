@@ -201,8 +201,18 @@ function eligibleEliteRewardOptions(award, profile = loadProfile()) {
     .filter(([id, elite]) => rarities.includes(elite.rarity) && canReceive(id))
     .map(([id]) => id);
 }
+// If one old reward has no eligible units left, preserve it without blocking
+// a later reward of another rarity that can still be claimed.
+function nextEliteReward(profile) {
+  const pending = profile.pendingEliteRewards || [];
+  if (!pending.length) return { award: null, index: -1 };
+  const eligibleIndex = pending.findIndex(award =>
+    eligibleEliteRewardOptions(award, profile).length > 0);
+  const index = eligibleIndex >= 0 ? eligibleIndex : 0;
+  return { award: pending[index], index };
+}
 function pendingEliteChoiceHTML(profile = loadProfile()) {
-  const award = profile.pendingEliteRewards?.[0];
+  const { award } = nextEliteReward(profile);
   if (!award) return '';
   const options = eligibleEliteRewardOptions(award, profile);
   // Do not drop a one-time award if its entire rarity/faction pool is maxed.
@@ -220,12 +230,12 @@ function pendingEliteChoiceHTML(profile = loadProfile()) {
     </div><small>${profile.pendingEliteRewards.length} unclaimed reward${profile.pendingEliteRewards.length === 1 ? '' : 's'} · Your choice is saved across sessions.</small></section>`;
 }
 function selectEliteReward(id) {
-  const profile = loadProfile(), award = profile.pendingEliteRewards?.[0];
+  const profile = loadProfile(), { award, index } = nextEliteReward(profile);
   if (!award || !eligibleEliteRewardOptions(award, profile).includes(id))
     return { ok: false, reason: 'This Elite Force is unavailable or already at maximum level' };
   E.grantEliteFragments(profile, { [id]: award.amount });
   (profile.claimedEliteChoices ||= {})[award.key] = id;
-  profile.pendingEliteRewards.shift();
+  profile.pendingEliteRewards.splice(index, 1);
   if (!saveProfile(profile)) return { ok: false, reason: 'Could not save reward. Retry without reloading.' };
   return { ok: true, id, amount: award.amount };
 }
