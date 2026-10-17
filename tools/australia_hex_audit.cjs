@@ -65,7 +65,9 @@ function audit(g){
         g.stations[t.provinceCity]?.owner!==t.owner)
         problems.push('wrong province '+c+','+r);
       const touching=E.adjacent(g,t).some(n=>n.terrain==='sea');
-      if((t.terrain==='coast')!==(touching&&hasMixedCoast(i)))
+      const singleHexIsland=E.adjacent(g,t).length>0&&
+        E.adjacent(g,t).every(n=>n.terrain==='sea');
+      if((t.terrain==='coast')!==(touching&&(hasMixedCoast(i)||singleHexIsland)))
         problems.push('wrong coastal hex '+c+','+r);
     }else if(t.owner!=null||t.provinceCity!=null)
       problems.push('sea assigned owner '+c+','+r);
