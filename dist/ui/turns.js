@@ -183,21 +183,35 @@ function queueEliteReward(profile, operation, key, amount, source) {
 }
 // Expand pre-update, still-unclaimed World Campaign choices on demand without
 // rewriting profile saves, refunding claims, or touching Story/Conquest rewards.
-function eligibleEliteRewardOptions(award) {
+function eligibleEliteRewardOptions(award, profile = loadProfile()) {
   if (!award) return [];
+  // Read current HQ progress at selection time: old, still-pending rewards
+  // must also stop offering elites which have since reached the level cap.
+  const records = E.eliteProfile(profile);
+  const canReceive = id =>
+    !!E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly &&
+    records[id]?.level < E.ELITE_MAX_LEVEL;
   if (!award.key?.startsWith('world:'))
-    return (award.options || []).filter(id => E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly);
+    return (award.options || []).filter(canReceive);
+  // World Campaign, including its Challenge Pass milestones, remains
+  // faction-independent and respects the original difficulty/rarity.
   const difficulty = award.key.split(':').pop();
   const rarities = ELITE_REWARD_RARITIES[difficulty] || [];
   return Object.entries(E.ELITE_FORCES)
-    .filter(([, elite]) => !elite.scenarioOnly && rarities.includes(elite.rarity))
+    .filter(([id, elite]) => rarities.includes(elite.rarity) && canReceive(id))
     .map(([id]) => id);
 }
 function pendingEliteChoiceHTML(profile = loadProfile()) {
   const award = profile.pendingEliteRewards?.[0];
   if (!award) return '';
-  const options = eligibleEliteRewardOptions(award);
-  if (!options.length) return '';
+  const options = eligibleEliteRewardOptions(award, profile);
+  // Do not drop a one-time award if its entire rarity/faction pool is maxed.
+  // Keep it pending for future eligible elites and explain why no buttons appear.
+  if (!options.length)
+    return `<section class="reward" data-elite-choice-panel="1"><span class="label">Elite fragment reward saved</span>
+      <p><b>${award.amount} ${esc(award.rarity)} fragments</b> · ${esc(award.source)}</p>
+      <p class="description">All eligible Elite Forces are at maximum level. This reward remains unclaimed; no fragments have been spent.</p>
+      <small>${profile.pendingEliteRewards.length} unclaimed reward${profile.pendingEliteRewards.length === 1 ? '' : 's'} saved.</small></section>`;
   return `<section class="reward" data-elite-choice-panel="1"><span class="label">Choose your Elite fragment reward</span>
     <p><b>${award.amount} ${esc(award.rarity)} fragments</b> · ${esc(award.source)}</p>
     <p class="description">Choose ONE Elite Force; no other units receive fragments.</p>
@@ -207,8 +221,8 @@ function pendingEliteChoiceHTML(profile = loadProfile()) {
 }
 function selectEliteReward(id) {
   const profile = loadProfile(), award = profile.pendingEliteRewards?.[0];
-  if (!award || !eligibleEliteRewardOptions(award).includes(id))
-    return { ok: false, reason: 'This Elite Force is not eligible for the pending reward' };
+  if (!award || !eligibleEliteRewardOptions(award, profile).includes(id))
+    return { ok: false, reason: 'This Elite Force is unavailable or already at maximum level' };
   E.grantEliteFragments(profile, { [id]: award.amount });
   (profile.claimedEliteChoices ||= {})[award.key] = id;
   profile.pendingEliteRewards.shift();
