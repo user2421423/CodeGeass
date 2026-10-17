@@ -1,0 +1,61 @@
+/* Conquest Challenge Pass — dark imperial panel, responsive on mobile. */
+.challenge-pass-dialog{max-width:1060px;width:min(96vw,1060px);max-height:91dvh;overflow-y:auto;background:linear-gradient(145deg,#11283b 0%,#0d1c2c 56%,#121e2c 100%);border:1px solid rgba(226,193,116,.37);color:#f2f1ee;box-shadow:0 30px 100px rgba(0,0,0,.7)}
+.challenge-pass-dialog h2,.challenge-pass-dialog h3{color:#f7efd9}
+.cp-overlay .challenge-pass-dialog button{cursor:pointer}
+.cp-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px 30px 12px;border-bottom:1px solid rgba(227,193,116,.16)}
+.cp-header h2{margin:7px 0;font-size:clamp(23px,3vw,34px);line-height:1.13;letter-spacing:.025em}
+.cp-header p{margin:0 0 14px;color:#b8c6d2}
+.cp-header>button,.cp-footer button{background:#20384a;color:#f9ebc9;border:1px solid rgba(226,193,116,.3);border-radius:6px;padding:9px 16px}
+.cp-eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#d1b87f;font-weight:700}
+.cp-progress{padding:20px 30px 16px;background:rgba(5,18,31,.38)}
+.cp-progress-top{display:flex;justify-content:space-between;align-items:center;gap:15px;font-size:15px}
+.cp-progress-top b{font-size:21px;color:#f5d18d}
+.cp-progress-top span,.cp-progress small{font-size:12px;color:#bccbd7}
+.cp-progress-rail{height:11px;border-radius:12px;background:#284252;overflow:hidden;margin:10px 0}
+.cp-progress-rail span{height:100%;display:block;background:linear-gradient(90deg,#906b3e,#e7c781);border-radius:12px;transition:width .16s}
+.cp-equipped{margin:12px 30px 0;padding:8px 12px;border:1px solid #9f8047;border-radius:5px;color:#f3d49b;background:#58472c44;font-size:13px}
+.cp-tabs{display:flex;gap:6px;padding:13px 26px 11px;overflow:auto;border-bottom:1px solid #d0af7433}
+.cp-tabs button{white-space:nowrap;font-size:13px;background:#1a3346;color:#bdcbd7;padding:10px 14px;border:1px solid #395263;border-radius:6px}
+.cp-tabs button.active{background:#56472d;color:#f9e2a6;border-color:#c4a563}
+.cp-content{padding:18px 28px 25px}
+.cp-intro{font-size:13px;color:#bdcbd5;margin:0 0 16px;max-width:900px}
+.cp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cp-card{border:1px solid #364e5b;border-radius:9px;padding:16px;background:linear-gradient(155deg,#173044,#15293a);min-width:0}
+.cp-card.cp-ready,.cp-milestone.cp-ready{border-color:#c9a96d;background:linear-gradient(155deg,#36402c,#203344)}
+.cp-card.cp-done,.cp-milestone.cp-done{opacity:.83;border-color:#43765e}
+.cp-card-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.cp-card h3{font-size:18px;margin:13px 0 7px;line-height:1.2}
+.cp-card p{font-size:13px;color:#d5dee5;min-height:38px;margin:0 0 14px}
+.cp-small{color:#bccbd5;font-size:12px;white-space:nowrap}
+.cp-card-foot{border-top:1px solid #43607566;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:11px;color:#e5d2a5;font-size:12px}
+.cp-card-foot button,.cp-milestone button{padding:8px 13px;border-radius:5px;font-weight:700;white-space:nowrap;min-width:68px}
+.cp-overlay button.primary{background:#bb995a;color:#121c28;border:1px solid #ebc785}
+.cp-history{margin-top:10px;color:#9fb3c1;font-size:12px}
+.cp-history summary{cursor:pointer}
+.cp-history div{padding:4px 0}
+.cp-milestone-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cp-milestone{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid #385365;border-radius:7px;background:#142f41}
+.cp-milestone-number{color:#e8c786;min-width:69px;font-weight:700;font-size:13px}
+.cp-milestone-label{font-size:13px;color:#e3edf2;flex:1}
+.cp-cosmetics{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 16px}
+.cp-cosmetics button{background:#273e50;color:#f4ead5;border:1px solid #8f774b;padding:9px 11px;border-radius:5px}
+.cp-cosmetics button.active{background:#8c6f3d;color:#fff}
+.cp-footer{border-top:1px solid #344d5a;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;color:#a9bdcc;font-size:12px}
+.cp-result-notice{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.cp-result-notice button{margin-left:auto}
+.cp-menu-button{border-color:#b39455!important;color:#f0d496!important}
+@media(max-width:700px){
+.challenge-pass-dialog{max-height:96dvh;width:98vw}
+.cp-header{padding:17px 15px 10px}
+.cp-progress{padding:14px 15px}
+.cp-progress-top{align-items:flex-start}
+.cp-progress-top b{font-size:18px}
+.cp-tabs{padding:9px 10px}
+.cp-tabs button{font-size:12px;padding:9px 11px}
+.cp-content{padding:14px 12px}
+.cp-grid,.cp-milestone-list{grid-template-columns:1fr}
+.cp-card{padding:13px}
+.cp-card p{min-height:0}
+.cp-footer{padding:13px}
+.cp-milestone{padding:9px 11px}
+}
