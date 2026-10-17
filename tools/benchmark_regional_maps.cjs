@@ -5,7 +5,7 @@
 const fs = require('node:fs'),path = require('node:path'),http = require('node:http');
 const { chromium } = require('playwright-core');
 const DIST = path.resolve(process.env.BENCHMARK_DIST || path.join(__dirname,'../dist'));
-const SCENARIOS = process.env.BENCHMARK_STARTUP_ONLY ? [] : ['world','ufn2018','division-japan','invasion-california','war-for-australia','cf-central-america','eu-rocky-mountains'];
+const SCENARIOS = process.env.BENCHMARK_STARTUP_ONLY ? [] : ['world','ufn2018','division-japan','invasion-california','war-for-australia','invasion-korea','cf-central-america','eu-rocky-mountains'];
 const mime = {'.html':'text/html','.css':'text/css','.js':'text/javascript','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml','.json':'application/json'};
 function percentile(values,p) {
   if (!values.length) return null;

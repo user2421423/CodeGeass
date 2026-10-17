@@ -1,0 +1,43 @@
+name: Regional zoom and atlas continuity
+on:
+  push:
+    branches: ['preview/conquest-style-zoom-integrated']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  zoom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
+      - name: Verify syntax
+        run: |
+          node --check dist/ui/geography.js
+          node --check dist/ui/renderer.js
+          node --check tools/check-regional-zoom.cjs
+      - name: Install Playwright
+        run: npm install --prefix /tmp/zoom-deps --no-save --no-package-lock playwright-core@1.57.0
+      - name: Run Korea Japan California Australia zoom checks
+        env:
+          NODE_PATH: /tmp/zoom-deps/node_modules
+          REGIONAL_ZOOM_OUTPUT: /tmp/regional-zoom-checks
+        run: node tools/check-regional-zoom.cjs
+      - name: Benchmark map panning on all four scenarios
+        env:
+          NODE_PATH: /tmp/zoom-deps/node_modules
+          BENCHMARK_OUTPUT: /tmp/regional-zoom-checks/panning-results.json
+          SCENARIO_IDS: division-japan,invasion-california,war-for-australia,invasion-korea
+        run: node tools/benchmark_regional_maps.cjs
+      - name: Upload before/tactical/after screenshots and JSON measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regional-zoom-regression
+          path: /tmp/regional-zoom-checks/
+          if-no-files-found: ignore
