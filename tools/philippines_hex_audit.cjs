@@ -58,8 +58,10 @@ for(let i=0;i<N;i++){
   assert.ok(scenario.sides.includes(t.owner),'unowned land '+E.key(t));
   assert.ok(Number.isInteger(t.provinceCity)&&g.stations[t.provinceCity]);
   const isCoast=Boolean(shore[i])&&E.adjacent(g,t).some(p=>p.terrain==='sea');
-  assert.equal(t.terrain==='coast',isCoast,'wrong coastline '+E.key(t));
-  coasts+=isCoast;
+  if(isCoast)assert.equal(t.terrain,'coast','missed geographic mixed shoreline '+E.key(t));
+  if(t.terrain==='coast')assert.ok(E.adjacent(g,t).some(n=>n.terrain==='sea'),
+    'coast hex not adjacent to navigable water '+E.key(t));
+  coasts+=t.terrain==='coast'?1:0;
  }else {
   assert.equal(t.owner,null);assert.ok(t.provinceCity==null);
  }
@@ -69,6 +71,10 @@ for(const [c,r] of [[7,101],[8,102],[10,100]])assert.equal(land(r*W+c),false,'Bo
 const seaRegions=regions(true);assert.equal(seaRegions.sizes.length,1,'all staging/landing seas must connect');
 assert.equal(seaRegions.sizes[0],14988);
 const dry=regions(false);
+// Isolated bases and small islands must retain a landing coast even if the
+// geographical coverage sampler missed their sub-hex shorelines.
+for(const region of dry.locations)assert.ok(region.some(i=>g.tiles[i].terrain==='coast'),
+ 'one island cannot be invaded by sea');
 const byName=Object.fromEntries(g.stations.map(s=>[s.name,s]));
 function separate(a,b){
  const x=byName[a],y=byName[b];
