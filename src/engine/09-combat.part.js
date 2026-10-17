@@ -337,7 +337,7 @@
     dropCarriedEliminator(g, v, 'carrier destroyed');
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
-        unitSide:v.side,commander:v.cmd||null,byCombat:!!attacker||!!by,
+        unitSide:v.side,commander:v.cmd||null,personal:!!v.personal,byCombat:!!attacker||!!by,
         group:warGroup(g,attacker),invasion:!!v.landingRefreshTurn&&v.landingRefreshTurn===g.turn});}
     // A sunk Carrier-Battleship takes the Knightmares aboard down with it.
     for (const c of v.cargo?.splice(0) || []) {

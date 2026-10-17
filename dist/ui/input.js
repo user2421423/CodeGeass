@@ -109,6 +109,24 @@ document.addEventListener('click', e => {
     if (!system && !lesson) { toast('Finish the current tutorial objective before using that command.'); return; }
     }
   }
+  if (d.action === 'challenge-pass') { CHALLENGE_PASS.enter(); return; }
+  if (d.action === 'challenge-pass-close') { CHALLENGE_PASS.close(); return; }
+  if (d.challengeTab) { CHALLENGE_PASS.open(d.challengeTab, true); return; }
+  if (d.challengeClaim) {
+    const r = CHALLENGE_PASS.claimObjective(d.challengeClaim);
+    if (!r.ok) toast(r.reason); else { toast('+' + r.cp + ' Challenge Points claimed.'); CHALLENGE_PASS.open(undefined, true); }
+    return;
+  }
+  if (d.challengeMilestone) {
+    const r = CHALLENGE_PASS.claimMilestone(Number(d.challengeMilestone));
+    if (!r.ok) toast(r.reason); else { toast('Challenge Pass milestone claimed: ' + r.item.at + ' CP.'); CHALLENGE_PASS.open('rewards', true); }
+    return;
+  }
+  if (d.challengeEquip) {
+    const r = CHALLENGE_PASS.equipCosmetic(d.challengeEquip);
+    if (!r.ok) toast(r.reason); else CHALLENGE_PASS.open('rewards', true);
+    return;
+  }
   if (d.faction) {
     setup.side = d.faction;
     startMenu();
