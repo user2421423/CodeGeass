@@ -124,7 +124,11 @@ function updateSelection() {
     ? '<button class="drawer-close small" data-action="details" aria-label="Close information panel">×</button>' + panel()
     : '';
   $('side').classList.toggle('open', showSide);
-  $('selection-dock').innerHTML = dockHTML();
+  const selectionDock = $('selection-dock');
+  const dockContent = dockHTML();
+  selectionDock.innerHTML = dockContent;
+  // Leave the map unobstructed when there is no selected unit, city, or terrain hex.
+  selectionDock.style.display = dockContent ? '' : 'none';
   // AI playback and async game-state changes are not necessarily user input events.
   if (typeof requestMapFrame === 'function') requestMapFrame();
 }

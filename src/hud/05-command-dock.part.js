@@ -41,5 +41,6 @@ function dockHTML() {
       owner = tileChoice.owner ? F(tileChoice.owner) : null;
     return `<div class="dock-idle terrain-dock"><span class="label">Terrain · Hex ${tileChoice.c}, ${tileChoice.r}</span><strong>${esc(info.name)}</strong><p>${esc(E.terrainText(game,tileChoice))}${owner ? ` · ${esc(owner.short)} territory.` : ''}</p>${ruinText(tileChoice)}</div>`;
   }
-  return `<div class="dock-idle"><span class="label">Army command</span><strong>Select a unit or city</strong><p>Click a Knightmare to move and attack. Click a city to build.</p></div><div class="dock-actions"><button class="small" data-action="next">Select a ready unit</button></div>`;
+  // No redundant Army Command placeholder when the player has not selected anything.
+  return '';
 }
