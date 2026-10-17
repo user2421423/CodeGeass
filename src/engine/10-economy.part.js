@@ -17,18 +17,21 @@
         }
         a.industry += y.industry;
         a.science += y.science;
+        // Division of Japan's extra production is owned by the city itself.
+        for(const resource of ['credits','industry','science','sakuradite'])
+          a[resource] += s.divisionIncome?.[resource] || 0;
         return a;
-      }, { credits: 0, industry: 0, science: 0 });
+      }, { credits: 0, industry: 0, science: 0, sakuradite: 0 });
     total.industry = Math.round(total.industry);
     total.science = Math.round(total.science);
     // Sakuradite deposits: extraction by refinery level, with Japan's output allocated among the powers; a level-3
     // refinery also exports for credits.
-    total.sakuradite = 0;
     for (const d of g.sites || []) {
       total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
-    if (g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    // Division of Japan puts even the national allotment in its cities.
+    if (g.scenario?.id !== 'division-japan' && g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
     // Regional operations receive fixed off-map military funding in addition
     // to city output. Captured cities still add (or remove) their normal
@@ -123,9 +126,7 @@
       (naval && (!s.portAt || (s.portLevel || 0) < t.port) ? `Requires a level-${t.port} port` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
-      (naval
-        ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
-        : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      (naval && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, producer), decreePrice(elitePrice(id), s.owner === producer ? s : null))
     );
@@ -179,8 +180,7 @@
       (naval && (!s.portAt || (s.portLevel || 0) < t.port)
         ? `Requires port level ${t.port}` : null) ||
       (!naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
-      ((naval ? s.portProducedTurn : s.producedTurn) === g.turn
-        ? 'Already produced here this turn' : null) ||
+      (naval && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
         ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||

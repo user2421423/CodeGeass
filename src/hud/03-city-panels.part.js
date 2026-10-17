@@ -57,7 +57,7 @@ function panel() {
       })
       .join(
         '',
-      )}</div>${ours ? `${cityAutomationPanel(s)}<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', factoryReason(s), 'Build a Knightmare unit', 'primary')}${s.portLevel && s.portAt ? `<button class="small" data-port="${s.id}">⚓ Port</button>` : ''}</div><p class="description">One unit per city factory per turn${s.portLevel && s.portAt ? ', plus one naval unit from the port: select the ⚓ port hex to build ships' : ''}. New units act next turn. Garrison repairs require a separate repair action.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
+      )}</div>${ours ? `${cityAutomationPanel(s)}<div class="actions">${act(`data-shop="${s.id}"`, 'Open factory', factoryReason(s), 'Build a Knightmare unit', 'primary')}${s.portLevel && s.portAt ? `<button class="small" data-port="${s.id}">⚓ Port</button>` : ''}</div><p class="description">City factories can build again whenever the city hex is clear${s.portLevel && s.portAt ? '; the port can launch one naval unit per turn: select the ⚓ port hex to build ships' : ''}. New units act next turn. Garrison repairs require a separate repair action.</p>` : '<p class="description">Reduce its defenses to zero and destroy any garrison, then move an Infantry or Armor unit in to capture it. Artillery cannot capture.</p>'}</section>`;
   } else if (pt) {
     const holder = pt.portOwner || pt.owner,
       ours = holder === game.player;
@@ -99,7 +99,6 @@ function factoryReason(s) {
   return (
     phaseReason() ||
     (s.expSupplyBlocked?.owner === s.owner ? 'Production disrupted' : null) ||
-    (s.producedTurn === game.turn ? 'Already built here this turn' : null) ||
     (!E.recruitOptions(game, s, game.player).length ? 'A unit is on the city' : null)
   );
 }

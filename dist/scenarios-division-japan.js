@@ -85,8 +85,8 @@
   const PORT_ADDITIONS = Object.freeze({
     Sapporo: 2, Sendai: 2, Niigata: 2, Chiba: 2
   });
-  // Keep the industrial core desirable but offset China's territorial depth and
-  // Europia's smaller northern economy with fixed off-map wartime support.
+  // Preserve opening income with output from starting cities, not off-map support.
+  // Capturing a city transfers its extra resource output to the new owner.
   const INCOME_TARGETS = Object.freeze({
     britannia: {credits:420,industry:230,science:43,sakuradite:25},
     eu: {credits:365,industry:200,science:40,sakuradite:19},
@@ -198,13 +198,24 @@
     // the three-way scenario provides its own E.U. roster and coastal deployments.
     if (difficulty === 'elite') E.prepareEliteJapan(g);
 
-    // Same difficulty convention as the original: rivals receive stronger
-    // economy and stacks on Hard/Challenge, with no hidden player penalty.
+    // Distribute the former off-map funding (and national Sakuradite allotment)
+    // among each power's original cities. The bonus remains on the city when
+    // conquered; losing territory reduces income instead of preserving a stipend.
     for(const side of SIDES) {
       const factor=side===player?1:(difficulty==='challenge'||difficulty==='elite')?1.6:difficulty==='hard'?1.3:1;
       const before=E.income(g,side);
-      g.scenario.funding[side]=Object.fromEntries(Object.entries(INCOME_TARGETS[side])
-        .map(([resource,target])=>[resource,Math.max(0,Math.round(target*factor)-before[resource])]));
+      const cities=g.stations.filter(s=>s.owner===side).sort((a,b)=>a.id-b.id);
+      for(const [resource,target] of Object.entries(INCOME_TARGETS[side])) {
+        const extra=Math.max(0,Math.round(target*factor)-before[resource]);
+        const whole=Math.floor(extra), each=Math.floor(whole/cities.length), remainder=whole%cities.length;
+        for(let i=0;i<cities.length;i++) {
+          const amount=each+(i<remainder?1:0)+(i===0?extra-whole:0);
+          if(amount) {
+            cities[i].divisionIncome ||= {};
+            cities[i].divisionIncome[resource]=amount;
+          }
+        }
+      }
       const actual=E.income(g,side);
       for(const resource of Object.keys(actual))
         g.economy[side][resource]=actual[resource]*(side==='britannia' && difficulty==='normal'

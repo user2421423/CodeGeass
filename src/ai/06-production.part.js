@@ -198,7 +198,7 @@
           !atSea(g, u) &&
           // Keep the garrison's move available until replacement recruitment is decided.
           !(stationAt(g, u)?.owner === side && front(u) <= 2 &&
-            stationAt(g, u).producedTurn !== g.turn && !cityBusyReason(g, stationAt(g, u))),
+            !cityBusyReason(g, stationAt(g, u))),
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side, u);
@@ -508,9 +508,8 @@
     } else {
       const menus = new Map(yards.map(s => [s, menuOf(s)]));
       for (const s of yards) tryBuild(s, menus.get(s), [3, 2]);
-      // Only factories that have not produced this turn get the single-frame
-      // fallback. Respect the same affordability and reserve checks as above.
-      for (const s of yards)
-        if (s.producedTurn !== g.turn) tryBuild(s, menus.get(s), [1]);
+      // A vacated factory can try again, but its newly produced unit must
+      // first leave the city hex; all regular costs and checks still apply.
+      for (const s of yards) tryBuild(s, menus.get(s), [1]);
     }
   }

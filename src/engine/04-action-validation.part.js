@@ -79,10 +79,9 @@
       (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
-      // The city factory and its port are separate yards: each launches one unit a turn.
-      (t.naval
-        ? s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null
-        : s.producedTurn === g.turn ? 'Already built here this turn' : null) ||
+      // A clear land factory can produce again this turn; ports remain
+      // restricted to one naval launch per turn.
+      (t.naval && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
         ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null))

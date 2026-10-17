@@ -1,5 +1,6 @@
   // ======== Player city automation ========
-  // Per-city automation is intentionally simple: each city either builds one exact normal unit every turn or is off.
+  // Each automated city has one selected normal unit and makes one attempt
+  // per run; automation can be rerun if a produced unit vacates the city.
   // Global Production Command settings handle building upgrades, formation size and protected reserves.
   const AUTOMATION_DEFAULT_RESERVE = { credits: 500, industry: 150, sakuradite: 25 };
   function automationState(g) {
@@ -115,7 +116,7 @@
           }
         }
       }
-      if (!unit || (TYPES[unit].naval ? s.portProducedTurn : s.producedTurn) === g.turn) continue;
+      if (!unit || (TYPES[unit].naval && s.portProducedTurn === g.turn)) continue;
       const t = TYPES[unit],
         producer = t.naval ? (s.portOwner || s.owner) : s.owner;
       if (producer !== side) continue;
