@@ -291,6 +291,7 @@
   const api={id:'philippines-invasion',title:'The Invasion of the Philippines',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.shoreRLE=SHORE_RLE;
   api.meta={map:{land:'philippines',overlays:['philippines']},
     elite:true,
     ai:{recovery:true,islandDefense:{side:'cf',invaderBases:['Koror','Peleliu','Colonia']}},
