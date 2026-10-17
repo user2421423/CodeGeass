@@ -166,8 +166,9 @@ function draw(time, dt) {
         // Europe opens as a continental campaign: keep its settlements visible
         // as readable screen-sized markers when the player zooms back out.
         const europeOverview = game.mode === 'scenario' && !!E.scenarios?.byId?.[game.scenario?.id]?.meta?.map?.overviewMarkers;
-        const z = europeOverview
-          ? Math.max(s.capital ? 30 : 20, (s.capital ? 13 : 9) / scale)
+        const z = (europeOverview || game.mode === 'scenario')
+          ? Math.max(s.capital ? 30 : 20,
+            (s.capital ? 12 : 8) / Math.max(scale, 0.05))
           : s.capital ? 30 : 20;
         ctx.fillRect(-z / 2, -z / 2, z, z);
         ctx.strokeRect(-z / 2, -z / 2, z, z);
@@ -351,7 +352,12 @@ function draw(time, dt) {
       if (!detail) {
         ctx.beginPath();
         const europeOverview = game.mode === 'scenario' && !!E.scenarios?.byId?.[game.scenario?.id]?.meta?.map?.overviewMarkers;
-        const radius = europeOverview ? Math.max(15, 5 / scale) : 15;
+        // Keep regional formations screen-readable on continent-size views.
+        // Conquest uses its original marker sizing.
+        const scenarioOverview = game.mode === 'scenario';
+        const radius = scenarioOverview
+          ? Math.max(15, 6.5 / Math.max(scale, 0.05))
+          : europeOverview ? Math.max(15, 5 / scale) : 15;
         ctx.arc(0, 0, radius, 0, Math.PI * 2);
         ctx.fillStyle = PLATE[artSide(u.side)].light;
         ctx.fill();
@@ -363,7 +369,8 @@ function draw(time, dt) {
         }
         const integrity = Math.max(0, Math.min(1, u.hp / E.maxHP(u)));
         ctx.strokeStyle = '#0c1924e0';
-        ctx.lineWidth = 3 / Math.max(scale, 0.3);
+        ctx.lineWidth = scenarioOverview
+          ? 2 / Math.max(scale, 0.05) : 3 / Math.max(scale, 0.3);
         ctx.stroke();
         if (integrity > 0) {
           ctx.beginPath();
@@ -374,7 +381,7 @@ function draw(time, dt) {
         ctx.shadowBlur = 0;
         // Gold commander pip distinguishes named officers from ordinary
         // formations while preserving the familiar side-coloured unit rings.
-        if (europeOverview && u.cmd) {
+        if ((europeOverview || scenarioOverview) && u.cmd) {
           ctx.beginPath();
           ctx.arc(0, -radius - 2.5 / scale, 2.1 / scale, 0, Math.PI * 2);
           ctx.fillStyle = '#ffe3a0';
