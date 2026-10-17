@@ -121,8 +121,9 @@
       return {c,r,owner:null,terrain:land?(mixedCoast?'coast':landscape(p,c,r)):'sea',
         biome:land&&p.lat>69?'tundra':land&&p.lat>62?'taiga':null};
     });
-    for(const t of g.tiles)if(t.terrain!=='sea'&&E.adjacent(g,t).some(n=>n.terrain==='sea'))
-      t.terrain='coast';
+    // The 19-point geographic mixed-coast mask is authoritative. Do not
+    // turn fully dry land into coast merely because the next tile is sea.
+    // This previously promoted 320 additional non-mixed land hexes.
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
