@@ -151,8 +151,9 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
-    // Standalone scenarios stay at Lv.1; World Campaign recruits use their HQ unlock level.
-    u.eliteLevel = eliteCampaign(g) || (g.mode === 'scenario' && !g.warCampaign) ? 1 : rec.level;
+    // Player factory/port recruits use their unlocked HQ level in every mode.
+    // Preplaced converted elites have their own Lv.1 starting rule; recruitment never changes them.
+    u.eliteLevel = rec.level;
     u.hp = maxHP(u);
     log(g, `${t.name} · Elite Lv.${u.eliteLevel} deploys at ${t.naval ? 'the port of ' : ''}${s.name}. Ready next turn.`, producer);
     return { ok: true, unit: u, cost };
