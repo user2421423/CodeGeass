@@ -255,6 +255,18 @@ const CHALLENGE_PASS = (() => {
       n + ' objective' + (n === 1 ? '' : 's') + ' ready to claim' : 'Progress recorded'}
       <button class="small" data-action="challenge-pass">View Challenge Pass</button></div>`;
   }
+  function liveRunHTML() {
+    const run = game?.mode === "conquest" && !game.over && game.challengePassRun?.version === 1 ? game.challengePassRun : null;
+    if (!run) return "";
+    const assigned = Object.keys(run.assigned).length;
+    return `<section class="cp-live"><b>ACTIVE CONQUEST · TURN ${game.turn} · ${esc(DIFF_NAMES[DIFFICULTIES.indexOf(game.difficulty)] || game.difficulty)}</b>
+      <div class="cp-live-grid"><span>New frames: <strong>${run.produced}</strong></span>
+      <span>New Elite Forces: <strong>${run.eliteProduced ? "Yes" : "No"}</strong></span>
+      <span>Construction: <strong>${run.constructed ? "Used" : "None"}</strong></span>
+      <span>Manual repairs: <strong>${run.manualRepair ? "Used" : "None"}</strong></span>
+      <span>F.L.E.I.J.A.: <strong>${run.fleijaLaunch ? "Launched" : "Not launched"}</strong></span>
+      <span>HQ commanders: <strong>${assigned} assigned${run.officerLost ? " · losses recorded" : ""}</strong></span></div></section>`;
+  }
   function open(tab = currentTab, preserveScroll = false) {
     const old = preserveScroll ? modal.querySelector('.challenge-pass-dialog') : null;
     const scroll = old?.scrollTop || 0;
@@ -272,7 +284,7 @@ const CHALLENGE_PASS = (() => {
     const next = MILESTONES.find(m => !s.milestones[m.at]);
     const cosmetics = [...COSMETICS.values()].filter(name => s.cosmetics[name]);
     modal.innerHTML = `<div class="overlay cp-overlay"><section class="dialog wide challenge-pass-dialog" role="dialog"
-      aria-modal="true" aria-label="Conquest Challenge Pass">
+      aria-modal="true" aria-label="Conquest Challenge Pass" class="dialog wide challenge-pass-dialog">
       <header class="cp-header"><div><span class="cp-eyebrow">WORLD CONQUEST · PERMANENT · FREE</span>
         <h2>Conquest Challenge Pass</h2>
         <p>Master both world wars. Claim objectives and permanent rewards.</p></div>
@@ -285,6 +297,7 @@ const CHALLENGE_PASS = (() => {
       <nav class="cp-tabs" aria-label="Challenge Pass categories">
         ${tabs.map(([id,label]) => `<button class="${currentTab === id ? 'active' : ''}" data-challenge-tab="${id}">${label}</button>`).join('')}</nav>
       <div class="cp-content">
+        ${liveRunHTML()}
         ${currentTab === 'rewards' ? '<p class="cp-intro">Claim milestones in order. Elite fragment rewards let you choose any eligible Force of the stated rarity.</p>' :
           '<p class="cp-intro">Win new Conquests to qualify. Claim the current stage to reveal the next; higher difficulty counts for lower mastery and mobilization stages, but speed tracks require their exact difficulty.</p>'}
         <div class="${currentTab === 'rewards' ? '' : 'cp-grid'}">${visible}</div>
