@@ -123,6 +123,23 @@
     for(const t of g.tiles)if(t.terrain!=='sea'&&
         shore[t.r*COLS+t.c]&&E.adjacent(g,t).some(n=>n.terrain==='sea'))
       t.terrain='coast';
+    // Some physically tiny islands (including enlarged Britannian staging
+    // bases) are absent from the sampled 20–80% shore mask. Make an island
+    // landable if its entire land component otherwise has no coast tiles.
+    const islandSeen=new Uint8Array(g.tiles.length);
+    for(let start=0;start<g.tiles.length;start++){
+      if(islandSeen[start]||g.tiles[start].terrain==='sea')continue;
+      const q=[g.tiles[start]];islandSeen[start]=1;
+      let accessible=q[0].terrain==='coast';
+      for(let i=0;i<q.length;i++)for(const n of E.adjacent(g,q[i])){
+        const j=n.r*COLS+n.c;
+        if(n.terrain==='sea'||islandSeen[j])continue;
+        islandSeen[j]=1;q.push(n);
+        if(n.terrain==='coast')accessible=true;
+      }
+      if(!accessible)for(const t of q)
+        if(E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+    }
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
