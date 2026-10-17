@@ -113,6 +113,12 @@
       if((shoreline.charCodeAt(i>>3)&(128>>(i&7)))&&
           E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
     }
+    // Single-hex real islands have no 'interior'; keep them landable even
+    // if the subhex coast source represents the island as too small.
+    for(const t of g.tiles)if(t.terrain!=='sea'){
+      const n=E.adjacent(g,t);
+      if(n.length>0&&n.every(v=>v.terrain==='sea'))t.terrain='coast';
+    }
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
