@@ -61,4 +61,20 @@ assert.ok(sea,'An empty sea tile exists');
 launched.unit.c=sea.c;launched.unit.r=sea.r;
 assert.equal(E.recruit(g,port.id,naval,1).ok,false,
   'Ports retain their one-launch-per-turn limit even after clearing');
-console.log('Division city income and repeat land factory production: PASS');
+// Legacy saves with old support must migrate without resetting the campaign.
+const legacy=division.create('britannia','normal',2741);
+for(const s of legacy.stations)delete s.divisionIncome;
+legacy.scenario.funding=Object.fromEntries(SIDES.map(side=>[side,
+  {credits:20,industry:10,science:2,sakuradite:3}]));
+const migrated=E.migrateSave(legacy);
+assert.ok(migrated,'Legacy Division save must still load');
+assert.deepEqual(migrated.scenario.funding,{},'Legacy stipends are retired');
+for(const side of SIDES) {
+  const originalCities=migrated.stations.filter(s=>division.regions[side].includes(s.name));
+  const sum=resource=>originalCities.reduce((n,s)=>n+(s.divisionIncome?.[resource]||0),0);
+  assert.equal(sum('credits'),20);
+  assert.equal(sum('industry'),10);
+  assert.equal(sum('science'),2);
+  assert.equal(sum('sakuradite'),8,'Legacy national Sakuradite is transferred into cities');
+}
+console.log('Division city income, repeat land factories, and save migration: PASS');

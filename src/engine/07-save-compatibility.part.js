@@ -137,6 +137,38 @@
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
     // Old Stonehenge saves had a different map and an extra playable power.
     if (regional && scenarioMeta(g).saveVersion && g.scenario.version !== scenarioMeta(g).saveVersion) return null;
+    // Prior Division of Japan saves stored permanent off-map stipends. Move
+    // them into the original starting cities, including the universal national
+    // Sakuradite allotment, without resetting accumulated resources or territory.
+    if (regional && g.scenario.id === 'division-japan' &&
+        Object.keys(g.scenario.funding || {}).length) {
+      if (!g.stations.some(s => s.divisionIncome)) {
+        const startingRegions = root.Knightmare?.scenarios?.divisionJapan?.regions;
+        for (const [side, support] of Object.entries(g.scenario.funding)) {
+          const cities = g.stations.filter(s => startingRegions?.[side]?.includes(s.name))
+            .sort((a, b) => a.id - b.id);
+          // If the original scenario registry is missing, prefer the current
+          // cities to discarding earned income from a legacy save.
+          const recipients = cities.length ? cities :
+            g.stations.filter(s => s.owner === side).sort((a, b) => a.id - b.id);
+          if (!recipients.length) continue;
+          for (const resource of ['credits','industry','science','sakuradite']) {
+            const extra = Math.max(0, (support?.[resource] || 0) +
+              (resource === 'sakuradite' ? SAKURADITE.national : 0));
+            const whole = Math.floor(extra), each = Math.floor(whole / recipients.length),
+              remainder = whole % recipients.length;
+            for (let i = 0; i < recipients.length; i++) {
+              const amount = each + (i < remainder ? 1 : 0) + (i === 0 ? extra - whole : 0);
+              if (!amount) continue;
+              recipients[i].divisionIncome ||= {};
+              recipients[i].divisionIncome[resource] =
+                (recipients[i].divisionIncome[resource] || 0) + amount;
+            }
+          }
+        }
+      }
+      g.scenario.funding = {};
+    }
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
