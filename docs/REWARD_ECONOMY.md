@@ -9,7 +9,7 @@ All rewards are **one-time per reward key**, with clean hundreds of command toke
 - **Challenge:** choose one **Legendary** Elite Force.
 - **Elite:** choose any one Rare, Epic, or Legendary Elite Force.
 
-Only faction-eligible, non-scenario-only Elite Forces appear in the selector. Pending selections are saved to the permanent HQ profile and available from results screens, World Campaign and HQ → Elite Forces. A selection can be claimed once, never repeatedly. The selected Elite receives the entire bundle.
+Story Mode and Conquest fragment choices are faction-eligible only. **World Campaign fragment choices may target any faction's non-scenario-only Elite Force** matching the difficulty's rarity restriction. Pending selections are saved to the permanent HQ profile and available from results screens, World Campaign and HQ → Elite Forces. A selection can be claimed once, never repeatedly. The selected Elite receives the entire bundle.
 
 ## Story Mode
 
@@ -26,7 +26,7 @@ Story Mode campaign milestones: **100 tokens** at 50% stars; **200 tokens** at 7
 
 ## World Campaign
 
-Each objective/difficulty pays tokens and one selected bundle once. Map territory itself remains single-completion progression.
+Each objective/difficulty pays tokens and one selected bundle once. **The winner may choose any faction's elite of the appropriate rarity**, regardless of the faction played in the World Campaign. Saved unclaimed World Campaign bundles also offer the expanded choices; already claimed rewards are unchanged. Map territory itself remains single-completion progression.
 
 | Difficulty | First victory tokens | Fragments |
 | --- | ---: | --- |
@@ -59,4 +59,4 @@ The first **ever** Conquest victory adds **200** tokens. Each era/faction/diffic
 | Level 4 → 5 | 70 |
 | **Total locked → Lv.5** | **250** |
 
-Existing owned Elites and saved fragments are preserved; balances are not reset or rewritten.
+Existing owned Elites and saved fragments are preserved; balances are not reset or rewritten. The four amphibious Rare elites (Portman II, Panzer-Frosch II, Shui Gun-Ru II, and Black Knights Gekka Amphibious II) share these costs. Their combat abilities unlock at Lv.3 and improve at Lv.5; the Lv.5 percentages replace their Lv.3 values rather than stacking.

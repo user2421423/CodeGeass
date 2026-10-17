@@ -873,8 +873,8 @@
       cost: 1250, industry: 350, tier: 3, crit: 0.26, pen: 0.82, noCounter: true, siege: 2,
       critMult: 1.9,
     },
-    // Amphibious elites retain exactly the Type II loadout and aquatic rules.
-    // Elite level stat scaling is their only bonus; the normal Type II variants stay buildable.
+    // Amphibious elites retain Type II loadouts and aquatic rules, with distinct Lv.3/Lv.5 abilities.
+    // Normal Type II variants remain buildable.
     elite_portman_ii: {
       ...AMPHIBIOUS_II, side: 'britannia', elite: true, role: 'Elite amphibious',
       name: 'Portman II Elite', model: 'Portman II · elite formation',
@@ -1385,31 +1385,35 @@
     },
     portman_ii: {
       type: 'elite_portman_ii', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare',
-      skill: 'Standard Type II amphibious loadout',
-      lv3Text: 'No special ability; standard Elite Lv.3 stats only.',
-      lv5Text: 'No special ability; standard Elite Lv.5 stats only.',
-      lv3: {}, lv5: {},
+      skill: 'Harpoon Barrage · Blockade Breaker',
+      lv3Text: '+20% damage against warships and amphibious targets at sea.',
+      lv5Text: '+35% damage against naval targets; takes 20% less damage from naval counterattacks.',
+      lv3: { vsNaval: 0.20 },
+      lv5: { vsNaval: 0.35, navalCounterTaken: 0.80 },
     },
     panzer_frosch_ii: {
       type: 'elite_panzer_frosch_ii', faction: 'eu', availableTo: ['eu'], rarity: 'Rare',
-      skill: 'Standard Type II amphibious loadout',
-      lv3Text: 'No special ability; standard Elite Lv.3 stats only.',
-      lv5Text: 'No special ability; standard Elite Lv.5 stats only.',
-      lv3: {}, lv5: {},
+      skill: 'Armored Hull · Fortress of the Seas',
+      lv3Text: 'Takes 15% less damage while at sea.',
+      lv5Text: 'Takes 25% less damage at sea; deals 20% more counterattack damage while at sea.',
+      lv3: { seaTaken: 0.85 },
+      lv5: { seaTaken: 0.75, seaCounter: 0.20 },
     },
     shui_gun_ru_ii: {
       type: 'elite_shui_gun_ru_ii', faction: 'cf', availableTo: ['cf'], rarity: 'Rare',
-      skill: 'Standard Type II amphibious loadout',
-      lv3Text: 'No special ability; standard Elite Lv.3 stats only.',
-      lv5Text: 'No special ability; standard Elite Lv.5 stats only.',
-      lv3: {}, lv5: {},
+      skill: 'Coastal Fire Support · Landing Support',
+      lv3Text: '+20% damage against coastal-land targets, including city defenses.',
+      lv5Text: '+35% damage against coastal-land targets; adjacent allies deal +10% damage when attacking coastal land.',
+      lv3: { coastalAttack: 0.20 },
+      lv5: { coastalAttack: 0.35, coastalSupport: 0.10 },
     },
     japan_bk_amphibious: {
       type: 'elite_japan_bk_amphibious', faction: 'black_knights', availableTo: ['bk'],
-      rarity: 'Rare', skill: 'Standard Type II amphibious loadout',
-      lv3Text: 'Standard Type II aquatic combat; no extra ability.',
-      lv5Text: 'Standard Type II aquatic combat; no extra ability.',
-      lv3: {}, lv5: {},
+      rarity: 'Rare', skill: 'Marine Assault · Breakthrough Landing',
+      lv3Text: '+20% damage when attacking land targets or coastal city defenses directly from water.',
+      lv5Text: '+30% water-to-land damage; one extra attack per turn after defeating a coastal defender or breaking coastal city defenses.',
+      lv3: { landingStrike: 0.20 },
+      lv5: { landingStrike: 0.30, coastalRefresh: true },
     },
   };
   const data = (root.KnightmareData ||= {});

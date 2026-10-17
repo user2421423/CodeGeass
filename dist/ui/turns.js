@@ -169,8 +169,11 @@ function queueEliteReward(profile, operation, key, amount, source) {
   const side = operation.player === 'eb' ? 'britannia'
     : operation.era === 'ufn2018' && operation.player === 'cf' ? 'bk' : operation.player;
   const allowed = ELITE_REWARD_RARITIES[operation.difficulty] || ELITE_REWARD_RARITIES.normal;
+  // World Campaign rewards are faction-independent. Story and Conquest remain faction-bound.
+  const worldCampaign = key.startsWith('world:');
   const options = Object.entries(E.ELITE_FORCES).filter(([, elite]) =>
-    !elite.scenarioOnly && allowed.includes(elite.rarity) && elite.availableTo.includes(side))
+    !elite.scenarioOnly && allowed.includes(elite.rarity) &&
+    (worldCampaign || elite.availableTo.includes(side)))
     .map(([id]) => id);
   if (!options.length) return false;
   profile.pendingEliteRewards.push({
@@ -178,10 +181,22 @@ function queueEliteReward(profile, operation, key, amount, source) {
   });
   return true;
 }
+// Expand pre-update, still-unclaimed World Campaign choices on demand without
+// rewriting profile saves, refunding claims, or touching Story/Conquest rewards.
+function eligibleEliteRewardOptions(award) {
+  if (!award) return [];
+  if (!award.key?.startsWith('world:'))
+    return (award.options || []).filter(id => E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly);
+  const difficulty = award.key.split(':').pop();
+  const rarities = ELITE_REWARD_RARITIES[difficulty] || [];
+  return Object.entries(E.ELITE_FORCES)
+    .filter(([, elite]) => !elite.scenarioOnly && rarities.includes(elite.rarity))
+    .map(([id]) => id);
+}
 function pendingEliteChoiceHTML(profile = loadProfile()) {
   const award = profile.pendingEliteRewards?.[0];
   if (!award) return '';
-  const options = (award.options || []).filter(id => E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly);
+  const options = eligibleEliteRewardOptions(award);
   if (!options.length) return '';
   return `<section class="reward" data-elite-choice-panel="1"><span class="label">Choose your Elite fragment reward</span>
     <p><b>${award.amount} ${esc(award.rarity)} fragments</b> · ${esc(award.source)}</p>
@@ -192,7 +207,7 @@ function pendingEliteChoiceHTML(profile = loadProfile()) {
 }
 function selectEliteReward(id) {
   const profile = loadProfile(), award = profile.pendingEliteRewards?.[0];
-  if (!award || !award.options?.includes(id) || !E.ELITE_FORCES[id])
+  if (!award || !eligibleEliteRewardOptions(award).includes(id))
     return { ok: false, reason: 'This Elite Force is not eligible for the pending reward' };
   E.grantEliteFragments(profile, { [id]: award.amount });
   (profile.claimedEliteChoices ||= {})[award.key] = id;
