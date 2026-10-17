@@ -191,7 +191,7 @@ function generalDialog(k, personal = false) {
     owned = E.owns(profile, k),
     own = a.side === (hqBack === 'start' ? a.side : game.player),
     o = personal
-      ? E.roster(profile)[k] || { rank: 0, ratings: { ...E.officer(game, k).ratings }, medals: [] }
+      ? E.roster(profile)[k] || E.defaultOfficer(k, true)
       : E.officer(game, k),
     editable = personal && owned,
     unit = game.units.find(u => u.hp > 0 && u.cmd === k && !!u.personal === personal),
@@ -292,7 +292,7 @@ function officerCard(k, own) {
   return `<section class="officer">${generalPortrait(k, 'officer-portrait', true)}<span class="stars">${E.commissionName(o.commission || a.commission)} Commission</span><h3>${a.name}</h3><span class="label">${E.RANKS[o.rank]} · ${Math.round(E.RANK_HP[o.rank] * 100)}% frame · ${a.skill}</span><p>${a.desc}</p>${commanderBaseHTML(k)}<div class="ratings">${Object.entries(
     E.BRANCH_NAMES,
   )
-    .map(([b, name]) => `<div class="rating"><span>${name}</span><span class="stars">${ratingStars(o.ratings[b])}</span></div>`)
+    .map(([b, name]) => `<div class="rating"><span>${name}</span><span class="stars">${ratingStars(Math.min(o.ratings[b] || 0, E.ratingCap(o.rank, b)))}</span></div>`)
     .join(
       '',
     )}</div>${o.honors?.length ? `<div class="honors-mini">${o.honors.slice(0,3).map(h=>honorIcon(h.id)).join('')}</div>` : ''}<div class="officer-actions">${busy ? `<button class="small" disabled>Commanding ${E.TYPES[busy.type].short}</button>` : act(`data-admiral="${k}"`, 'Assign to selected unit', E.assignReason(game, own, k), costHTML({ credits: E.assignmentCost(game, k) }))}</div></section>`;
@@ -308,11 +308,11 @@ function generalsDialog(side = generalsSide) {
     locked = list.filter(([k]) => !E.owns(profile, k)),
     card = ([k, a]) => {
       const owned = E.owns(profile, k),
-        o = owned ? E.roster(profile)[k] : { rank: 0, ratings: { ...E.officer(game, k).ratings } };
+        o = owned ? E.roster(profile)[k] : E.defaultOfficer(k, true);
       return `<section class="officer ${owned ? '' : 'locked-officer'}">${generalPortrait(k, 'officer-portrait', true)}<span class="stars">${E.commissionName(o.commission || a.commission)} Commission</span><h3>${a.name}</h3><span class="label">${owned ? `${E.RANKS[o.rank]} · ${Math.round(E.RANK_HP[o.rank] * 100)}% frame` : 'Recruitable'} · ${a.role} · ${a.skill}</span><p>${a.desc}</p>${commanderBaseHTML(k)}<div class="ratings">${Object.entries(
         E.BRANCH_NAMES,
       )
-        .map(([b, name]) => `<div class="rating"><span>${name}</span><span class="stars">${ratingStars(o.ratings[b])}</span></div>`)
+        .map(([b, name]) => `<div class="rating"><span>${name}</span><span class="stars">${ratingStars(Math.min(o.ratings[b] || 0, E.ratingCap(o.rank, b)))}</span></div>`)
         .join(
           '',
         )}</div><div class="officer-actions">${owned ? `<button class="small" data-general-open="${k}">Upgrade</button>` : tokenButton(`data-recruit-admiral="${k}"`, E.recruitPrice(k), E.recruitReason(profile, k), 'Recruit ')}</div></section>`;

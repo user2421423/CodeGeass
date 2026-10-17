@@ -14,7 +14,7 @@
       (recruited ? E.roster(profile)[k] : null);
     return {
       recruited,
-      officer: officer || { rank: 0, ratings: { ...E.officer(game, k).ratings } },
+      officer: officer || E.defaultOfficer(k, true),
     };
   }
 
@@ -32,6 +32,8 @@
     const a = C(k);
     const { recruited, officer } = commanderState(k, mode, profile);
     const ratings = officer.ratings || {};
+    // Personal commanders only benefit from stars unlocked by their current rank.
+    const activeRating = key => Math.min(ratings[key] || 0, E.ratingCap(officer.rank, key));
     const commission = E.commissionOf(k, officer);
     const tier = {standard:3, distinguished:2, legendary:1}[commission];
 
@@ -46,14 +48,11 @@
     card.dataset.role = (a.role || '').toLocaleLowerCase();
     card.dataset.remaining = String(recruited && mode === 'hq'
       ? (E.commanderPlan(profile, k)?.total || 0) : E.recruitPrice(k));
-    for (const r of ratingKeys) card.dataset['rating' + r] = String(r === 'mobility'
-      ? Math.min(ratings[r] || 0, E.ratingCap(officer.rank, r)) : (ratings[r] || 0));
+    for (const r of ratingKeys) card.dataset['rating' + r] = String(activeRating(r));
 
     const ratingsMarkup = ratingKeys.map(key =>
       '<div class="cc-rating"><span>' + safe(E.BRANCH_NAMES[key]) + '</span>' +
-      starsHTML(key === 'mobility'
-        ? Math.min(ratings[key] || 0, E.ratingCap(officer.rank, key))
-        : (ratings[key] || 0)) + '</div>').join('');
+      starsHTML(activeRating(key)) + '</div>').join('');
 
     // Use the game's existing faction flag artwork, never a generated emblem.
     // The JLF share the Black Knights standard; Euro Britannia uses Britannia's.
