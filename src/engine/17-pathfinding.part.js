@@ -21,7 +21,7 @@
     if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) return false;
     return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
   }
-  function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity) {
+  function goalField(g, side, seeds = null, only = null, unit = null, maxCost = Infinity, ignoreTerrain = false) {
     const field = new Float32Array(g.tiles.length).fill(Infinity),
       hd = [],
       hi = [];
@@ -98,9 +98,10 @@
         const n = tiles[j];
         if (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n))) continue;
         if (unit && !routePassable(g, unit, n)) continue;
-        const step = unit ? isSea(tiles[i]) ? 1 : terrainCost(g, unit, tiles[i]) : isSea(n) ? 1 : TERRAIN[n.terrain].cost;
+        // Reverse search: the step from neighbour j toward goal i pays for i.
+        const step = isSea(tiles[i]) || ignoreTerrain ? 1 : unit ? terrainCost(g, unit, tiles[i]) : terrainStepCost(g, tiles[i]);
         const nd = d + (only === 'sea' ? 1 :
-          (isSea(n) !== sea ? 4 : 0) + step + (rivers ? riverCrossingCost(g, tiles[i], n, unit) : 0));
+          (isSea(n) !== sea ? 4 : 0) + step + (rivers && !ignoreTerrain ? riverCrossingCost(g, tiles[i], n, unit) : 0));
         if (nd <= maxCost && nd < field[j]) {
           field[j] = nd;
           push(j, nd);
@@ -122,9 +123,9 @@
   // Islands and continents, for deciding which troops need a ship (cached per map).
   const landCache = new WeakMap();
   function landmass(g) {
-    let m = landCache.get(g.tiles);
-    if (m) return m;
-    m = new Int32Array(g.tiles.length).fill(-1);
+    const saved = landCache.get(g.tiles), revision = g.mapTerrainRevision || 0;
+    if (saved?.revision === revision) return saved.labels;
+    const m = new Int32Array(g.tiles.length).fill(-1);
     let id = 0;
     for (const t of g.tiles) {
       if (isSea(t) || TERRAIN[t.terrain]?.blocked || m[t.r * g.cols + t.c] >= 0) continue;
@@ -140,7 +141,7 @@
       }
       id++;
     }
-    landCache.set(g.tiles, m);
+    landCache.set(g.tiles, {revision,labels:m});
     return m;
   }
   const massOf = (g, p) => landmass(g)[p.r * g.cols + p.c];

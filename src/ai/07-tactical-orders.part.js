@@ -183,7 +183,13 @@
         safe = front && !enemies.some(v => dist(g, v, u) <= aiRange(g).enemyScan / 2),
         convoy = fromLand && !guard && !ashore &&
           (g.mode === 'scenario' || landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
-        currentField = fieldAt(old);
+        currentField = fieldAt(old),
+        mates = g.mode === 'scenario' && front ? (memo.columns?.[front.id] || [])
+          .filter(id => id !== u.id).map(id => g.units.find(v => v.id === id))
+          .filter(v => v && v.hp > 0) : [],
+        skill = COMMANDERS[u.cmd]?.fx || {},
+        needsNearbyAllies = skill.loneRaider || skill.engineeringPen || skill.reassure ||
+          skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander;
       const placeScore = p => {
         const station = stationAt(g, p);
         let sc = station && foe(g, station.owner, u.side) && !isShip(u) &&
@@ -201,9 +207,6 @@
         if (g.mode === 'scenario' && front) {
           // Columns converge without waiting or retreating: a modest cohesion
           // bonus cannot outweigh movement toward the enemy objective.
-          const mates = (memo.columns?.[front.id] || [])
-            .filter(id => id !== u.id).map(id => g.units.find(v => v.id === id))
-            .filter(v => v && v.hp > 0);
           if (mates.length && fieldAt(p) > 1) {
             const nearest = Math.min(...mates.map(v => dist(g, p, v)));
             sc += Math.min(2, mates.filter(v => dist(g, p, v) <= 3).length) * 8;
@@ -238,8 +241,7 @@
           sc -= danger * 28;
           sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;
         } else sc -= nearestEnemy * 2;
-        const skill = COMMANDERS[u.cmd]?.fx || {};
-        const allies = freeAllies.filter(v => dist(g, v, p) <= 2);
+        const allies = needsNearbyAllies ? freeAllies.filter(v => dist(g, v, p) <= 2) : [];
         if (skill.loneRaider) sc -= allies.filter(v => dist(g, v, p) === 1).length * 18;
         if (skill.engineeringPen || skill.reassure || skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander)
           sc += Math.min(4, allies.length) * 12;

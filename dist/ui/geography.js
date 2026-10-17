@@ -1305,12 +1305,12 @@ const GEOGRAPHY = (() => {
       ctx.restore();
     }
     // Dedicated northern river underlay in geographical, not approximate tile coordinates.
-    if(has('regionalRivers') && g.scenario?.rivers){
+    if((has('regionalRivers') || has('indochinaRivers')) && g.scenario?.rivers){
       const b=g.scenario.bounds;
       const toHex=([lon,lat])=>[
         R-SQ*R*.5+SQ*R*g.cols*(lon-b.west)/(b.east-b.west),
         R-.75*R+1.5*R*g.rows*(b.north-lat)/(b.north-b.south)];
-      ctx.save();ctx.strokeStyle='#60bfd5';ctx.lineWidth=Math.max(1.2,Math.min(3,1.4*scale));
+      ctx.save();ctx.strokeStyle='#60bfd5';ctx.lineWidth=has('indochinaRivers')?4.2:Math.max(1.2,Math.min(3,1.4*scale));
       ctx.globalAlpha=.8;
       for(const path of Object.values(g.scenario.rivers)){
         ctx.beginPath();path.forEach((p,i)=>{const [x,y]=toHex(p);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);});

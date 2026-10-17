@@ -328,9 +328,9 @@
   const api={id:ID,title:'Iraq–Iran Campaign',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,overlays:['regionalRivers']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['regionalRivers']},
     elite:true,
-    text:{
+    text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"Iraq and Iran · Alternate 2017",
       intro:"Britannia invades Iraq and Iran from western expeditionary bases. Fight across Mesopotamia, breach the Zagros and capture the Iranian Plateau. All 84 theatre cities count; no turn limit.",
       diplomacy:"Only Britannia and the Chinese Federation fight. Two theaters, independent Gulf ports, major reserves and a contested Strait of Hormuz; no three-faction Area 18 forces.",

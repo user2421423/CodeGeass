@@ -484,9 +484,9 @@
       rivers:RIVERS,volcanoes:VOLCANOES,lakes:LAKES,border:BORDER},
     coastalMask:COAST_ROWS,create,onTurn,objective,winner,
     strategicScore,orderGroup};
-  api.meta={map:{centreSampled:true,overlays:['mexicoAtlas']},
+  api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['mexicoAtlas']},
     elite:true,expeditionSide:'cf',
-    text:{
+    text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
       era:"Mexican Heartland · Federation World Campaign",
       intro:"China attacks north from conquered Guatemala and makes coastal landings against Mexico’s plateau and industrial cities.",
       diplomacy:"The Mexican Plateau, Sierra Madre ranges and separate Gulf/Pacific coasts shape large-scale Army Group warfare.",

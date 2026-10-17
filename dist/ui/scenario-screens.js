@@ -182,7 +182,7 @@ function scenarioDialog() {
             </div>
             <aside class="scenario-brief" aria-label="Operation briefing and deployment">
               <section class="scenario-brief-text"><div class="scenario-brief-eyebrow">OPERATION BRIEF</div><p>${esc(brief.intro||'Control the battlefield and defeat rival armies.')}</p>
-                <details class="scenario-diplomacy-details"><summary>Opening diplomacy</summary><p>${esc(brief.diplomacy||'All rival factions are hostile.')}</p></details>
+                ${brief.terrain ? '<p class="mode-note">'+esc(brief.terrain)+'</p>' : ''}<details class="scenario-diplomacy-details"><summary>Opening diplomacy</summary><p>${esc(brief.diplomacy||'All rival factions are hostile.')}</p></details>
               </section>
               <section class="scenario-brief-factions"><div class="scenario-brief-eyebrow">YOUR COMMAND</div><div class="scenario-side-grid" role="group" aria-label="Select playable faction">${sides}</div></section>
             </aside>

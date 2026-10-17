@@ -1782,9 +1782,9 @@ const api={id:ID,key:'rockyMountains',title:'Crossing the Rocky Mountains',
  cityData:CITIES,armyGroups:FORMATIONS,operationalAxes:OPERATIONAL_AXES,
  mountainPasses:PASSES,reliefPolygons:MASSIFS,lakes:LAKES,rivers:RIVERS,roads:ROADS,
  create,onTurn,objective,winner,strategicScore,orderGroup,paintRelief,geo,locate};
-api.meta={map:{centreSampled:true},
+api.meta={terrainCosts:{mountain:2},map:{centreSampled:true},
   elite:true,expeditionSide:'eu',
-  text:{
+  text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
     era:"Rocky Mountains · E.U. Penultimate Offensive",
     intro:"Europia United attacks westward through Wyoming and Colorado mountain corridors toward Utah. Conquer all 101 Britannian cities.",
     diplomacy:"Mountain passes, plains approaches and defensive reserves shape the offensive; rivers do not permit ocean shipping.",

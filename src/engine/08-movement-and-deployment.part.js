@@ -58,11 +58,19 @@
     n += f.move || 0;
     return n;
   }
+  function terrainStepCost(g, t) {
+    const regional = g?.mode === 'scenario' ? scenarioMeta(g).terrainCosts?.[t.terrain] : null;
+    return regional || TERRAIN[t.terrain]?.cost || 1;
+  }
+  function terrainText(g, t) {
+    const info = TERRAIN[t.terrain], cost = terrainStepCost(g, t);
+    return info.desc.replace(/Movement cost \d+\./, 'Movement cost ' + cost + '.');
+  }
   function terrainCost(g, u, t) {
     if (isSea(t)) return 1;
     const type = TYPES[u.type];
     if (fx(u).ignoreTerrain || u.expRetrofit || type.float || eliteFx(u).float) return 1;
-    return TERRAIN[t.terrain]?.cost || 1;
+    return terrainStepCost(g, t);
   }
   // Iraq–Iran only: crossing a Tigris, Euphrates or Karun river edge consumes
   // one extra movement point. Marked bridge-city approaches have no surcharge.

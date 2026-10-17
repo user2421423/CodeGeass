@@ -5,6 +5,7 @@
   'use strict';
   const MAX_GROUPS = 12;
   const MAX_UNITS = 24;
+  const groupLimit = g => g.mode === 'scenario' ? 40 : MAX_GROUPS;
 
   // Legacy saves used Defend; upgrade it to passive Hold Position on first access.
   const groups = g => {
@@ -44,7 +45,7 @@
   function create(g, firstUnitId = null) {
     const why = canEdit(g);
     if (why) return { ok: false, reason: why };
-    if (groups(g).length >= MAX_GROUPS) return { ok: false, reason: 'Maximum 12 army groups' };
+    if (groups(g).length >= groupLimit(g)) return { ok: false, reason: 'Maximum '+groupLimit(g)+' army groups' };
     const first = firstUnitId == null ? null : g.units.find(u => u.id === firstUnitId && u.hp > 0 && u.side === g.player);
     if (firstUnitId != null && !first) return { ok: false, reason: 'Unit unavailable' };
     g.nextArmyGroupId = Math.max(g.nextArmyGroupId || 1, ...groups(g).map(gr => gr.id + 1), 1);
@@ -152,7 +153,7 @@
   });
   // Advance = movement alone. Hold Position = no group movement or fire.
   // Assault = movement followed by legal fire, retaining enemy objectives until captured.
-  function setStance(g, groupId, stance) {
+  function setStance(g, groupId, stance, deferPlanning = false) {
     const why = canEdit(g), group = find(g, groupId);
     if (why || !group) return { ok: false, reason: why || 'Army group not found' };
     if (!Object.hasOwn(STANCES, stance)) return { ok: false, reason: 'Unknown group stance' };
@@ -171,7 +172,7 @@
       }
     }
     group.stance = stance;
-    if (stance === 'assault' && (prior || group.autoConquer)) planGroupAssault(g, group);
+    if (!deferPlanning && stance === 'assault' && (prior || group.autoConquer)) planGroupAssault(g, group);
     return { ok: true, stance };
   }
 
@@ -509,6 +510,56 @@
     return report;
   }
   E.suspendArmyGroupConquestUnit = suspendConquestUnit;
+  // Opt-in organization of the existing roster. No units, positions, actions,
+  // objectives or resources change; existing player groups remain authoritative.
+  function organizeScenario(g) {
+    const why=canEdit(g);
+    if(why || g.mode!=='scenario')return {ok:false,reason:why || 'Regional scenarios only'};
+    prune(g);
+    const assigned=new Set(groups(g).flatMap(gr=>gr.units));
+    const positions=new Map(),sources=new Map();
+    for(const u of g.units)for(const v of u.cargo || [])positions.set(v.id,u);
+    for(const source of g.scenario.groups || [])if(source.side===g.player)
+      for(const id of source.units)sources.set(id,source);
+    const pending=E.allUnits(g).filter(u=>u.hp>0 && u.side===g.player && !assigned.has(u.id));
+    let created=0,added=0;
+    while(pending.length && groups(g).length<groupLimit(g)) {
+      const seed=pending[0],source=sources.get(seed.id),fleet=E.TYPES[seed.type].naval==='ship';
+      const location=positions.get(seed.id)||seed;
+      const eligible=pending.filter(u=>(E.TYPES[u.type].naval==='ship')===fleet)
+        .sort((a,b)=>(sources.get(b.id)===source)-(sources.get(a.id)===source) ||
+          E.distance(positions.get(a.id)||a,location,g)-E.distance(positions.get(b.id)||b,location,g) || a.id-b.id);
+      const slots=groupLimit(g)-groups(g).length;
+      const forceFill=Math.ceil(pending.length/MAX_UNITS)>=slots;
+      const members=eligible.filter(u=>forceFill || sources.get(u.id)===source ||
+        E.distance(positions.get(u.id)||u,location,g)<=12).slice(0,MAX_UNITS);
+      const result=create(g);if(!result.ok)break;
+      const gr=result.group,label=source?.name || (fleet?'Fleet':'Field Army');
+      const suffix=groups(g).filter(v=>v!==gr && (v.sourceLabel||v.name)===label).length;
+      gr.sourceLabel=label;gr.name=label+(suffix?' '+(suffix+1):'');
+      gr.units=members.map(u=>u.id);
+      const selected=new Set(gr.units);
+      for(let i=pending.length-1;i>=0;i--)if(selected.has(pending[i].id))pending.splice(i,1);
+      added+=members.length;created++;
+    }
+    return {ok:true,created,assigned:added,remaining:pending.length};
+  }
+  function bulkOrder(g, kind) {
+    const why=canEdit(g);if(why)return {ok:false,reason:why};
+    if(!['hold','conquer'].includes(kind))return {ok:false,reason:'Unknown army order'};
+    const live=new Map(E.allUnits(g).filter(u=>u.hp>0).map(u=>[u.id,u]));
+    let changed=0;
+    for(const gr of groups(g).filter(gr=>gr.side===g.player)) {
+      if(kind==='hold') {setStance(g,gr.id,'hold',true);changed++;}
+      else if(gr.units.some(id=>live.has(id) && E.TYPES[live.get(id).type].naval!=='ship')) {
+        setConquest(g,gr.id,true);setStance(g,gr.id,'assault',true);changed++;
+      }
+    }
+    return {ok:true,changed};
+  }
+  E.armyGroupLimit = groupLimit;
+  E.organizeScenarioArmies = organizeScenario;
+  E.bulkArmyGroupOrder = bulkOrder;
   E.setArmyGroupConquest = setConquest;
   E.planArmyGroupConquest = planConquests;
   E.ARMY_GROUP_STANCES = STANCES;

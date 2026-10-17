@@ -182,9 +182,9 @@ return null;}
 const api={id:'crossing-urals',title:'Crossing the Urals',cols:COLS,rows:ROWS,
 sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,mountainPasses:MOUNTAIN_PASSES,
 supplyCorridors:SUPPLY_CORRIDORS,rivers:RIVERS,create,onTurn,objective,winner,strategicScore,orderGroup,locate,geo};
-api.meta={map:{centreSampled:true,overlays:['uralsRivers']},
+api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['uralsRivers']},
   elite:true,
-  text:{
+  text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
     era:"The Urals · Alternate 2017",
     intro:"Britannia advances from Siberia into E.U.-held industrial Russia. Capture every city without a turn limit.",
     diplomacy:"Both sides are hostile from the start. Routes through the mountains are slower except at named valleys.",

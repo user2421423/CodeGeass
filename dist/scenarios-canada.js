@@ -103,19 +103,8 @@
       return {c,r,owner:null,terrain:kind===0?'sea':kind===1?'coast':landscape(p,c,r),
         biome:kind&&p.lat>69?'tundra':kind&&p.lat>55?'taiga':null};
     });
-    // Hydrographic straits narrower than a 196 x 112 strategic hex must not
-    // become land bridges. These eight independently GSHHS-checked cells
-    // correct Georgia Strait, Johnstone Strait, Fury and Hecla Strait,
-    // Belle Isle Strait and Northumberland Strait. A fully land-covered
-    // cell at Johnstone Strait represents both opposing shores at this scale.
-    const STRAIT_WATER=[[42,91,1],[42,92,1],[41,92,1],
-      [35,86,1],[37,87,2],[114,36,1],[166,84,1],
-      [151,98,1],[153,99,1]];
-    for(const [c,r,expected] of STRAIT_WATER){
-      const i=r*COLS+c;
-      if(COAST[i]!==expected)throw Error('Canadian strait source geometry changed');
-      g.tiles[i].terrain='sea';
-    }
+    // The packed geography already opens sub-hex straits by polygon identity.
+    // A city must stay on its physical island when snapping to a usable harbour.
     // Isolated lake pixels must not create unusable ocean ports. The Atlantic,
     // Labrador, Beaufort and Pacific basins are identifiable by their large
     // connected navigable water components; narrow freshwater basins are not.
@@ -133,7 +122,9 @@
     const taken=new Set();
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
+      const island=GEO.cityIslands?.[name];
       const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
+        (!island||GEO.islands[t.r*COLS+t.c]===island)&&
         (!coastal||E.adjacent(g,t).some(n=>openWater(n)&&!taken.has(E.key(n))))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),16);
       if(!at)throw Error('Cannot place Canadian city '+name);

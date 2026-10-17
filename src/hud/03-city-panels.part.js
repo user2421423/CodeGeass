@@ -212,5 +212,5 @@ function fortressPanel(s) {
 function terrainDescription(t) {
   const info = E.TERRAIN[t.terrain],
     owner = t.owner ? ` Territory of the ${F(t.owner).name}.` : '';
-  return `${info.name} · ${info.desc}${t.terrain !== 'sea' && t.terrain !== 'peak' ? ' Float units ignore movement costs.' : ''}${owner}`;
+  return `${info.name} · ${E.terrainText(game,t)}${t.terrain !== 'sea' && t.terrain !== 'peak' ? ' Float units ignore movement costs.' : ''}${owner}`;
 }

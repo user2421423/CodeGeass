@@ -28,9 +28,9 @@ const api=shared.defineScenario({
  openingText:'Chinese Federation Army Groups converge from California, western Nevada and the Owens Valley. Britannian strategic reserves counterattack the western siege lines.',
  attackerVictory:'The Chinese Federation has conquered Pendragon and every remaining Britannian city from the west.'
 });
-api.meta={map:{centreSampled:true,overlays:['roads']},
+api.meta={terrainCosts:{mountain:2},map:{centreSampled:true,overlays:['roads']},
   elite:true,expeditionSide:'cf',
-  text:{
+  text:{terrain:'Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.',
     era:"Pendragon · Chinese Western Finale",
     intro:"China attacks the imperial capital from California and western Nevada, facing powerful Britannian defenses. Capture all enemy cities.",
     diplomacy:"The Great Basin and imperial fortress system shape the final offensive; no turn cap or capital-only victory.",
