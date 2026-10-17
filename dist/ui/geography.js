@@ -349,7 +349,9 @@ const GEOGRAPHY = (() => {
       const xx = x + radius * Math.cos(a), yy = y + radius * Math.sin(a);
       i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
     }
-    ctx.closePath();
+    // Every caller fills or clips this path. Both operations implicitly close
+    // each subpath; explicit closePath repeatedly reprocesses huge native paths
+    // on Chromium. Keep the same vertices and winding without that extra work.
   }
   function tacticalSector(ctx, t, i, radius) {
     const x = SQ * R * (t.c + 0.5 * (t.r & 1)) + R;

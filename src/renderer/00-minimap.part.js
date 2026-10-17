@@ -30,6 +30,13 @@ const MINI_TERRAIN = {
   urban: '#6c6f78',
 };
 const PACIFIC_MINI_TERRAIN = { plains: '#75b8d9', forest: '#b8d8e8', mountain: '#476681' };
+let minimapGeography = null;
+function releaseMinimapResources() {
+  for (const c of [minimapBase, minimapGeography?.canvas])
+    if (c) c.width = c.height = 0;
+  minimapBase = minimapGeography = null;
+  minimapDirty = true;
+}
 function drawMinimap() {
   const mini = $('minimap');
   if (!mini || typeof document.createElement !== 'function') return;
@@ -49,7 +56,19 @@ function drawMinimap() {
     minimapBase.width = mini.width;
     minimapBase.height = mini.height;
     const b = minimapBase.getContext('2d');
-    if (b) paintMap(b, game, mini.width, mini.height, dpr);
+    if (b) {
+      const cached = minimapGeography;
+      if (!cached || cached.tiles !== game.tiles || cached.revision !== (game.mapRevision || 0) ||
+          cached.terrain !== (game.mapTerrainRevision || 0) || cached.w !== mini.width || cached.h !== mini.height) {
+        const image = cached?.canvas || document.createElement('canvas');
+        image.width = mini.width; image.height = mini.height;
+        paintMap(image.getContext('2d'), game, mini.width, mini.height, dpr, false, true);
+        minimapGeography = {canvas:image, tiles:game.tiles, revision:game.mapRevision || 0,
+          terrain:game.mapTerrainRevision || 0, w:mini.width, h:mini.height};
+      }
+      b.drawImage(minimapGeography.canvas, 0, 0);
+      paintMapMarkers(b, game, mini.width, mini.height, dpr);
+    }
     minimapDirty = false;
   }
   m.setTransform(1, 0, 0, 1, 0, 0);
@@ -128,7 +147,11 @@ function paintMap(b, g, width, height, dpr, allUnits = false, geographyOnly = fa
   }
   // Offline geographic snapshots must preserve geography/ownership without
   // drawing stations, sites or any military formation markers.
-  if (geographyOnly) return;
+  if (!geographyOnly) paintMapMarkers(b, g, width, height, dpr, allUnits);
+}
+function paintMapMarkers(b, g, width, height, dpr, allUnits = false) {
+  const sx = width / mapW(g), sy = height / mapH(g),
+    col = side => (g.factions?.[side] || E.FACTIONS[side] || E.FACTIONS.neutral).color;
   for (const s of g.stations) {
     const p = hexCenter(s);
     b.fillStyle = s.capital ? '#ffffff' : col(s.owner);
