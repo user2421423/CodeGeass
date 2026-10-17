@@ -61,6 +61,7 @@ for(let i=0;i<5;i++)assert.equal(CP.claimObjective('mobilization:ufn2018').cp,[1
 assert.equal(CP.claimObjective('mobilization:ufn2018').ok,false);
 assert.equal(CP.claimObjective('strategy:ufn2018:officer-safe').ok,true);
 assert.equal(CP.claimObjective('strategy:ufn2018:no-high').ok,false,'assignments block No High Command');
+profile = {}; // Isolate the invalid-run assertions from previously earned legitimate achievements.
 const failed = mk('world','elite','britannia',30,'run3');CP.start(failed);
 Object.assign(failed.challengePassRun,{ produced:1, eliteProduced:true, manualRepair:true,
   constructed:true, fleijaLaunch:true, officerLost:true, assigned:{cornelia:true,zero:true,suzaku:true}});
