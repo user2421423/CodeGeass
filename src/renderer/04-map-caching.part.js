@@ -49,7 +49,11 @@ function trimMapAtlas() {
   for (const {cache,key,item} of entries) {
     // Visible chunks are pinned even if an unusually large viewport exceeds
     // the budget. DPR and visible quality stay unchanged on phones.
-    if (item.scale === mapAtlasState.scale && mapAtlasJobVisible(item)) continue;
+    // Preserve the completed source LOD until its replacement is fully shown.
+    // Both current viewports may briefly exceed the budget during a fade;
+    // trim again immediately when the transition releases its source.
+    if ((item.scale === mapAtlasState.scale || item.scale === regionLODPrevious()) &&
+        mapAtlasJobVisible(item)) continue;
     cache.delete(key); bytes -= item.canvas.width * item.canvas.height * 4;
     item.canvas.width = item.canvas.height = 0;
     mapAtlasPerformance.evictions++;
@@ -68,6 +72,10 @@ function mapAtlasJobVisible(item, buffer = 0) {
 }
 function resetMapResources() {
   if (typeof GEOGRAPHY !== 'undefined') GEOGRAPHY.releaseMap?.();
+  releaseMinimapResources();
+  releaseMapBlend();
+  if (mapAtlasQuietTimer !== null) clearTimeout(mapAtlasQuietTimer);
+  mapAtlasQuietTimer = null;
   tileMeta = tileMetaFor = null;
   scenarioSeaCache = {tiles:null,revision:-1,shown:null};
   mapLayerCache = null;
@@ -85,6 +93,14 @@ function resetMapResources() {
   mapAtlasOwnerSnapshot = null;
   mapAtlasShown = { tiles:null, revision:-1, terrainRevision:-1, scale:null };
   mapAtlasFade = { target:null, source:null, started:0 };
+}
+let mapAtlasQuietTimer = null;
+function requestMapAfterNavigation() {
+  if (mapAtlasQuietTimer !== null) return;
+  mapAtlasQuietTimer = setTimeout(() => {
+    mapAtlasQuietTimer = null;
+    requestMapFrame();
+  }, Math.max(1, 180 - (performance.now() - mapAtlasLastNavigation)));
 }
 let mapAtlasLastNavigation = -Infinity;
 function noteMapNavigation() { mapAtlasLastNavigation = performance.now(); }
@@ -164,7 +180,7 @@ let mapAtlasFade = { target:null, source:null, started:0 };
 const MAP_ATLAS_ZOOM_FADE_MS = 150;
 const mapAtlasPerformance = {
   hits: 0, misses: 0, evictions: 0, cancelledJobs: 0, strategicFrames: 0, snapshotFrames: 0, atomicAtlasFrames: 0,
-  reusedZoomFrames: 0, blendedZoomFrames: 0,
+  reusedZoomFrames: 0, blendedZoomFrames: 0, idleBatches: 0, maxBatchMs: 0,
   basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
 };
@@ -337,7 +353,7 @@ function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = fa
   mapAtlasIdlePending = true;
   function warm(deadline) {
     // Reprioritize against the CURRENT viewport, rather than completing the
-    // history of pointer moves. A job is atomic; at most one begins per task.
+    // history of pointer moves. Each paint is atomic; cheap jobs share a small budget.
     for (let i = mapAtlasWarmQueue.length - 1; i >= 0; i--) {
       const j = mapAtlasWarmQueue[i];
       if (j.generation !== mapAtlasGeneration || !mapAtlasJobVisible(j, j.tileSize)) {
@@ -355,23 +371,35 @@ function queueMapAtlasTile(col, row, scale, detail, tileSize, layer, urgent = fa
     // Background work yields while dragging. Visible jobs resume promptly
     // after input quiets, independent of the pointer handler and HUD.
     if (mapAtlasWarmQueue.length && performance.now() - mapAtlasLastNavigation < 80) {
-      schedule(warm); return;
+      setTimeout(() => schedule(warm),
+        Math.max(1, 80 - (performance.now() - mapAtlasLastNavigation)));
+      return;
     }
-    const job = mapAtlasWarmQueue.shift();
-    if (job) {
+    const began = performance.now(), budget = mapAtlasMobile ? 3 : 4;
+    let visible = false, painted = 0;
+    while (mapAtlasWarmQueue.length) {
+      // Always allow one job for progress after an idle timeout. Additional
+      // jobs only start with time left in both our budget and the idle slot.
+      if (painted && (performance.now()-began >= budget || deadline.timeRemaining() < 1)) break;
+      const job = mapAtlasWarmQueue.shift();
       mapAtlasWarmKeys.delete(job.key);
       completeMapTile(job.col, job.row, job.scale, job.detail, job.tileSize, job.layer, true);
-      // Prefetch completion must not trigger another prefetch scan: at a
-      // full budget that scan would requeue the neighbour just evicted by LRU.
-      if (mapAtlasJobVisible(job) && typeof requestMapFrame === 'function') requestMapFrame();
+      visible ||= mapAtlasJobVisible(job);
+      painted++;
     }
+    if (painted) {
+      mapAtlasPerformance.idleBatches++;
+      mapAtlasPerformance.maxBatchMs = Math.max(mapAtlasPerformance.maxBatchMs, performance.now()-began);
+    }
+    // Buffer completion does not wake the renderer or restart prefetch.
+    if (visible) requestMapFrame();
     if (mapAtlasWarmQueue.length) schedule(warm);
     else mapAtlasIdlePending = false;
   }
   function schedule(fn) {
     if (typeof requestIdleCallback === 'function')
       requestIdleCallback(fn, { timeout: 120 });
-    else setTimeout(() => fn({ timeRemaining: () => 0 }), 16);
+    else setTimeout(() => { const began=performance.now(); fn({timeRemaining:()=>Math.max(0,4-(performance.now()-began))}); }, 16);
   }
   schedule(warm);
 }
@@ -478,10 +506,46 @@ function regionLODSchedule(scale,detail,left,right,top,bottom){
     queueMapAtlasTile(c,r,scale,detail,size,'static',true);
     queueMapAtlasTile(c,r,scale,detail,size,'political',true);
   }
+}
+function regionLODPrefetch(scale,detail,left,right,top,bottom) {
+  const size=mapAtlasTileSize(scale);
+  const c0=Math.max(0,Math.floor(left/size)),c1=Math.min(Math.ceil(WORLD_W/size)-1,Math.floor(right/size));
+  const r0=Math.max(0,Math.floor(top/size)),r1=Math.min(Math.ceil(WORLD_H/size)-1,Math.floor(bottom/size));
   if(c1>=c0&&r1>=r0)scheduleMapPrefetch(scale,detail,size,c0,c1,r0,r1,['static','political']);
 }
+let mapAtlasBlend = null;
+function releaseMapBlend() {
+  if (mapAtlasBlend) mapAtlasBlend.width = mapAtlasBlend.height = 0;
+  mapAtlasBlend = null;
+}
+function regionLODBlend(paint,alpha) {
+  if(alpha<=0)return;
+  if(alpha>=1){paint();return;}
+  const main=ctx, transform=main.getTransform();
+  const image=mapAtlasBlend ||= document.createElement('canvas');
+  if(image.width!==canvas.width || image.height!==canvas.height) {
+    image.width=canvas.width;image.height=canvas.height;
+  }
+  const blend=image.getContext('2d');
+  blend.setTransform(1,0,0,1,0,0);
+  blend.clearRect(0,0,image.width,image.height);
+  blend.setTransform(transform);
+  try {ctx=blend;paint();} finally {ctx=main;}
+  main.save();
+  main.setTransform(1,0,0,1,0,0);
+  main.globalAlpha=alpha;
+  main.drawImage(image,0,0);
+  main.restore();
+}
 function regionLODFrame(scale,detail,left,right,top,bottom,overview){
-  const previous=regionLODPrevious(),target=overview?'overview':scale;
+  let previous=regionLODPrevious();
+  const target=overview?'overview':scale;
+  if(previous!==null && previous!==scale && !regionLODReady(previous,left,right,top,bottom)) {
+    // An incomplete source cannot be displayed atomically. Release its pins
+    // and retain the accurate current-ownership backdrop instead.
+    mapAtlasShown.scale=null;
+    previous=null;
+  }
   if(overview){
     mapAtlasPerformance.strategicFrames++;
     // Previous tactical LOD fades into a stable overview in either direction.
@@ -490,10 +554,10 @@ function regionLODFrame(scale,detail,left,right,top,bottom,overview){
         mapAtlasFade={target:'overview',source:previous,started:performance.now()};
       regionLODReady(previous,left,right,top,bottom,true);
       const alpha=Math.min(1,(performance.now()-mapAtlasFade.started)/MAP_ATLAS_ZOOM_FADE_MS);
-      ctx.save();ctx.globalAlpha=alpha;regionLODBackdrop();ctx.restore();
+      regionLODBlend(regionLODBackdrop,alpha);
       if(alpha<1){mapAtlasPerformance.blendedZoomFrames++;requestMapFrame();}
-      else {mapAtlasShown.scale=null;mapAtlasFade.target=null;}
-    }else{mapAtlasFade.target=null;regionLODBackdrop();}
+      else {mapAtlasShown.scale=null;mapAtlasFade.target=null;releaseMapBlend();trimMapAtlas();}
+    }else{mapAtlasFade.target=null;releaseMapBlend();regionLODBackdrop();trimMapAtlas();}
     return;
   }
   const ready=regionLODReady(scale,left,right,top,bottom);
@@ -504,9 +568,11 @@ function regionLODFrame(scale,detail,left,right,top,bottom,overview){
     return;
   }
   if(previous===scale){
+    releaseMapBlend();
     mapAtlasFade.target=null;
     mapAtlasPerformance.atomicAtlasFrames++;
     regionLODReady(scale,left,right,top,bottom,true);
+    regionLODPrefetch(scale,detail,left,right,top,bottom);
     return;
   }
   // Never swap imagery mid-gesture. Keep the old completed LOD (or bitmap)
@@ -514,7 +580,7 @@ function regionLODFrame(scale,detail,left,right,top,bottom,overview){
   if(performance.now()-mapAtlasLastNavigation<180){
     mapAtlasPerformance.snapshotFrames++;
     regionLODOldOrBackdrop(left,right,top,bottom);
-    requestMapFrame();
+    requestMapAfterNavigation();
     return;
   }
   const old=previous!==null&&regionLODReady(previous,left,right,top,bottom)?previous:null;
@@ -523,12 +589,15 @@ function regionLODFrame(scale,detail,left,right,top,bottom,overview){
   if(old!==null)regionLODReady(old,left,right,top,bottom,true);
   else regionLODBackdrop();
   const alpha=Math.min(1,(performance.now()-mapAtlasFade.started)/MAP_ATLAS_ZOOM_FADE_MS);
-  ctx.save();ctx.globalAlpha=alpha;regionLODReady(scale,left,right,top,bottom,true);ctx.restore();
+  regionLODBlend(()=>regionLODReady(scale,left,right,top,bottom,true),alpha);
   if(alpha<1){mapAtlasPerformance.blendedZoomFrames++;requestMapFrame();}
   else{
     mapAtlasShown={tiles:game.tiles,revision:game.mapRevision||0,
       terrainRevision:game.mapTerrainRevision||0,scale};
     mapAtlasFade.target=null;
+    releaseMapBlend();
+    trimMapAtlas();
+    regionLODPrefetch(scale,detail,left,right,top,bottom);
   }
   mapAtlasPerformance.atomicAtlasFrames++;
 }

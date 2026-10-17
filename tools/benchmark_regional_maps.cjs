@@ -1,5 +1,5 @@
 'use strict';
-// Headless comparison using the exact live camera/renderer and three scenarios.
+// Headless comparison using the exact live camera/renderer and eight representative maps.
 // Run after node tools/build_sources.cjs.
 // NODE_PATH=/tmp/perf-deps/node_modules node tools/benchmark_regional_maps.cjs
 const fs = require('node:fs'),path = require('node:path'),http = require('node:http');
@@ -99,18 +99,31 @@ function percentile(values,p) {
         }
         await new Promise(resolve=>setTimeout(resolve,500));
         const draws=window.benchmarkDrawTimes.slice();
-        const zoomTimes=[];
+        const zoomTimes=[], zoomVisibleTimes=[], zoomSamples=[];
         for (const target of [24,32,38,32,24]) {
           zoom = Math.min(ZOOM_MAX, target/R/baseScale);
           const began = performance.now(); noteMapNavigation(); requestMapFrame();
           await new Promise(resolve=>requestAnimationFrame(resolve));
-          // Wait for the viewport to display all detailed chunks. Prefetch is
-          // included in this conservative settling metric, with a hard timeout.
-          while (mapAtlasWarmQueue.length && performance.now()-began<15000)
+          // Keep visible presentation separate from optional neighbouring work.
+          // Await the real completed LOD AND its crossfade, not only an empty queue.
+          let visibleMs=null, queueMs=null;
+          const regional=regionalMapLayers() && mapAtlasFallback.ready;
+          const shown=()=>!regional || (regionLODPrevious()===mapAtlasState.scale &&
+            mapAtlasFade.target===null && mapAtlasViewport && regionLODReady(mapAtlasState.scale,
+              mapAtlasViewport.left,mapAtlasViewport.right,mapAtlasViewport.top,mapAtlasViewport.bottom));
+          while(performance.now()-began<15000){
+            const elapsed=performance.now()-began;
+            if(visibleMs===null && shown()) visibleMs=elapsed;
+            if(queueMs===null && visibleMs!==null && !mapAtlasWarmQueue.length) queueMs=elapsed;
+            if(visibleMs!==null && queueMs!==null)break;
             await new Promise(resolve=>setTimeout(resolve,30));
-          zoomTimes.push(performance.now()-began);
+          }
+          if(visibleMs===null || queueMs===null)throw Error('Zoom did not settle: '+id+' / '+target);
+          zoomTimes.push(queueMs);
+          if(regional)zoomVisibleTimes.push(visibleMs);
+          zoomSamples.push({target,visibleMs:regional?visibleMs:null,queueMs});
         }
-        return {scenario:id,startupMs,zoomSettleMs:Math.max(...zoomTimes),hexes:game.cols*game.rows,
+        return {scenario:id,startupMs,zoomSettleMs:Math.max(...zoomTimes),zoomVisibleMs:zoomVisibleTimes.length?Math.max(...zoomVisibleTimes):null,zoomSamples,hexes:game.cols*game.rows,
           drawTimes:draws,frameP50Ms:durations.slice().sort((a,b)=>a-b)[23],
           framesMs:durations,
           ...window.KNIGHTMARE_MAP_PERF.snapshot()};
