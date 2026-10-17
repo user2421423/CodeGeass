@@ -6,14 +6,14 @@ let campaignTab = 'bk_s1',
   missionDifficulty = 'normal',
   missionBriefingId = null,
   talkThen = null; // what follows the dialogue now playing (a result screen, or nothing)
-// The turn shown beside the objective: a mission deadline, an explicitly timed
-// scenario, or a conquest armistice. Untimed scenarios must not show a deadline.
+// The turn shown beside the objective: a mission or scenario deadline.
+// Conquests and untimed scenarios have no turn limit.
 function turnLimit() {
   return game.mode === 'campaign'
     ? game.campaign?.turnLimit ?? E.campaign.mission(game.campaign.id)?.lose?.turns ?? 0
     : game.mode === 'scenario'
       ? (game.scenario?.turnLimit ?? 0)
-      : E.ARMISTICE;
+      : 0;
 }
 function starRow(n) {
   return `<span class="stars" aria-label="${n} of 3 stars">${[0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join('')}</span>`;
