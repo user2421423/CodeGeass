@@ -94,7 +94,7 @@
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:3,
+    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:4,
       phase:'three-way-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
     // Britannia uses compatible Britannian Elite Forces for this
     // scenario only. No global HQ, Conquest, or Japan access is changed.
@@ -107,38 +107,46 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
-    // Only actual water is navigable. The Sinai/African/Iranian shorelines are
-    // out-of-theatre land, while Bahrain, Farasan, Socotra and Masirah are playable.
-    // The Red Sea, Bab al-Mandab, Arabian Sea and Persian Gulf stay navigable.
+    // Restore the original sea-only non-playable area: no 'offmap' tiles.
+    // Use the geographical reference below ONLY to distinguish genuine
+    // shorelines from the artificially trimmed scenario land boundary.
+    // Bahrain, Farasan, Socotra and Masirah remain playable islands.
     const packed=root.AREA18_LAND_BITS || (typeof require==='function'?
       require('./area18-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.AREA18_LAND_BITS;
     if(!bits)throw Error('Area 18 shoreline mask was not loaded');
     const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
-    // Foreign mainland and out-of-theatre islands are geographically land,
-    // but must never become playable territory or navigable water.
+    // Retain the excluded mainland/island mask as a NON-RENDERED geographic
+    // reference. The tiles themselves go back to ordinary sea as requested.
+    // Without this reference, the northern border and the Saudi land frontier
+    // become artificial coastal hexes just because surrounding land is omitted.
     const outsideBits=root.AREA18_OUTSIDE_BITS;
-    if(!outsideBits)throw Error('Area 18 out-of-theatre mask was not loaded');
+    if(!outsideBits)throw Error('Area 18 geographic reference was not loaded');
     const outsideRaw=typeof atob==='function'?atob(outsideBits):
       Buffer.from(outsideBits,'base64').toString('latin1');
     if(raw.length!==COLS*ROWS/8||outsideRaw.length!==COLS*ROWS/8)
-      throw Error('Area 18 shoreline masks are corrupt');
+      throw Error('Area 18 geographic masks are corrupt');
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),bit=128>>(i&7),byte=i>>3;
       const land=!!(raw.charCodeAt(byte)&bit);
-      const outside=!!(outsideRaw.charCodeAt(byte)&bit);
-      if(land&&outside)throw Error('Area 18 overlapping geographic masks');
-      return {c,r,owner:null,terrain:outside?'offmap':land?landscape(p):'sea'};
+      if(land&&(outsideRaw.charCodeAt(byte)&bit))
+        throw Error('Area 18 overlapping geographic masks');
+      return {c,r,owner:null,terrain:land?landscape(p):'sea'};
     });
-    const playableLand=t=>t&&t.terrain!=='sea'&&t.terrain!=='offmap';
+    const playableLand=t=>t&&t.terrain!=='sea';
+    // A visually blank sea tile may represent omitted foreign MAINLAND.
+    // Only real maritime water can give an Arabian hex coastal terrain.
+    const actualWater=t=>t&&t.terrain==='sea'&&
+      !(outsideRaw.charCodeAt((t.r*COLS+t.c)>>3)&
+        (128>>((t.r*COLS+t.c)&7)));
     for(const t of g.tiles)if(playableLand(t)&&
-      E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
+      E.adjacent(g,t).some(actualWater))t.terrain='coast';
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
       const at=nearest(g,locate(lon,lat),t=>playableLand(t)&&
-        (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
+        (!coastal||E.adjacent(g,t).some(actualWater))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Area 18 city '+name);
       const capital=name==='Sana\'a'||name==='Riyadh'||name==='Dammam';
@@ -207,9 +215,9 @@
     const taken=new Set();
     for(const [name,level] of Object.entries(PORTS)){
       const s=g.stations.find(v=>v.name===name);
-      const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!taken.has(E.key(t)))
-        .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
-          E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
+      const at=E.adjacent(g,s).filter(t=>actualWater(t)&&!taken.has(E.key(t)))
+        .sort((a,b)=>E.adjacent(g,b).filter(actualWater).length-
+          E.adjacent(g,a).filter(actualWater).length)[0];
       if(!at)throw Error('Cannot place naval port '+name);
       s.portAt={c:at.c,r:at.r};s.portLevel=level;s.portOwner=s.owner;
       taken.add(E.key(at));
@@ -220,7 +228,7 @@
       const fleet={id:'fleet-'+g.scenario.groups.length,side,
         name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
+        const at=nearest(g,s,t=>actualWater(t)&&!E.unitAt(g,t)&&
           !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),10);
         if(!at)throw Error('Cannot deploy navy at '+name);
         fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
@@ -270,7 +278,7 @@
     create,onTurn,objective,winner,strategicScore,orderGroup};
   api.meta={map:{centreSampled:true,coastBuffer:1},
     elite:true,
-    ai:{doctrine:'europe'},saveVersion:3,
+    ai:{doctrine:'europe'},saveVersion:4,
     text:{
       era:"Arabian Peninsula · Alternate 2017",
       intro:"A three-way war for the Arabian Peninsula: Britannia dominates the south, Europia United the west and center, and the Chinese Federation the Gulf coast and east. Capture all 43 cities.",
