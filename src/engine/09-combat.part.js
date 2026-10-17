@@ -488,18 +488,23 @@
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
     const eliteBreakthrough = !!aef.breakthrough,
       eliteRelentless = !!aef.relentless;
-    // Elite Forces that already have Breakthrough may chain kills indefinitely.
-    // Ordinary frames retain their existing limit and Breakthrough Doctrine bonus.
-    const unlimitedEliteChain = !!TYPES[a.type].elite &&
-      (TYPES[a.type].breakthrough || eliteBreakthrough);
-    let cap = unlimitedEliteChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
-    // Breakthrough Doctrine: a kill at a finite cap may still earn one more breakthrough.
-    if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain === cap) {
+    // Light Armor has no kill-based Breakthrough. Medium, heavy, super-heavy
+    // and Amphibious II frames (ordinary or elite) can chain killing attacks
+    // indefinitely; existing other Breakthrough elites retain that benefit.
+    const type = TYPES[a.type];
+    const hasBreakthrough = !(type.cls === 'light' && !type.naval) &&
+      !!(type.breakthrough || eliteBreakthrough);
+    const unlimitedChain = hasBreakthrough &&
+      (type.elite || type.naval === 'amphibious' ||
+        ['medium', 'heavy', 'super'].includes(type.cls));
+    let cap = unlimitedChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
+    // Finite-chain Breakthrough Doctrine is retained for eligible future types.
+    if (destroyed && a.hp > 0 && hasBreakthrough && a.chain === cap) {
       const chance = !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor' ? techValue(g, a.side, 'armor.assault') : 0;
       if (chance && random(g) < chance) cap++;
     }
     let breakthrough = false;
-    if (destroyed && a.hp > 0 && (TYPES[a.type].breakthrough || eliteBreakthrough) && a.chain < cap) {
+    if (destroyed && a.hp > 0 && hasBreakthrough && a.chain < cap) {
       // Breakthrough refreshes the attack. Heavy and super-heavy movement
       // is governed separately by their two-move-per-turn limit.
       a.chain++;
@@ -507,7 +512,7 @@
       if ((TYPES[a.type].relentless || eliteRelentless)) a.moved = false;
       breakthrough = true;
     } else if (destroyed && a.hp > 0 && (TYPES[a.type].relentless || eliteRelentless)) {
-      // Heavy and super-heavy frames always fire again after a kill, beyond the breakthrough cap.
+      // Relentless frames also fire again after a kill when Breakthrough is unavailable.
       a.attacked = false;
       breakthrough = true;
     }

@@ -128,8 +128,8 @@
       tier: 1,
       crit: 0.12,
       pen: 0.2,
-      breakthrough: true,
-      rule: 'Balanced front-line frame. A kill lets it fire once more per turn (no extra movement).',
+      breakthrough: false,
+      rule: 'Balanced front-line frame. No kill-based extra attack or movement.',
     },
     medium: {
       branch: 'Armor',
@@ -147,7 +147,7 @@
       crit: 0.14,
       pen: 0.3,
       breakthrough: true,
-      rule: 'The army backbone. Heavy armor; a kill lets it fire once more per turn (no extra movement).',
+      rule: 'The army backbone. Heavy armor; each kill refreshes its attack without a kill-chain limit (no extra movement).',
     },
     heavy: {
       branch: 'Armor',
@@ -166,7 +166,7 @@
       pen: 0.42,
       breakthrough: true,
       relentless: true,
-      rule: 'Heavy armor penetration and 1–2 hex guns. Every kill lets it fire again; the first also refreshes its movement.',
+      rule: 'Heavy armor penetration and 1–2 hex guns. Every kill refreshes its attack without limit; movement is limited to two moves per turn.',
     },
     super: {
       branch: 'Armor',
@@ -185,7 +185,7 @@
       pen: 0.48,
       breakthrough: true,
       relentless: true,
-      rule: 'Super-heavy ace frame. Immense armor, 1–2 hex guns. Every kill lets it fire again; the first also refreshes its movement.',
+      rule: 'Super-heavy ace frame. Immense armor, 1–2 hex guns. Every kill refreshes its attack without limit; movement is limited to two moves per turn.',
     },
     support: {
       branch: 'Artillery',
@@ -258,7 +258,7 @@
       desc: 'Amphibious I crosses seas and beaches but cannot fire again from a kill.',
       hp: 210, attack: 45, armor: 17, move: 1, seaMove: 6, min: 1, max: 1, crit: 0.08, pen: 0.15, cost: 120, industry: 30, tier: 1, port: 1 },
     AMPHIBIOUS_II = { ...AMPHIBIOUS, breakthrough: true,
-      desc: 'Amphibious II: a kill refreshes its attack. Regular frames can fire once more per turn; elite Type II frames may chain kills.',
+      desc: 'Amphibious II: every kill refreshes its attack without a kill-chain limit, for regular and elite frames.',
       hp: 260, attack: 55, armor: 22, seaMove: 7, crit: 0.1, pen: 0.2, aquatic: 0.15, cost: 175, industry: 45, sakuradite: 3, tier: 2 },
     // Unlike fire support, a warship's guns do not suppress: any unit with the range returns its fire.
     CARRIER = { cls: 'support', naval: 'ship', hp: 520, attack: 82, armor: 44, move: 10, min: 1, max: 2, capacity: 2, crit: 0.08, pen: 0.3, cost: 520, industry: 150, sakuradite: 15, tier: 1, port: 2, noCounter: false,
