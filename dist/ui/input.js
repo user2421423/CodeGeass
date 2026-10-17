@@ -215,17 +215,7 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.deploy !== undefined) {
-    const u = selectedUnit(),
-      i = Number(d.deploy);
-    if (!interactive() || !u || u.side !== game.player || E.TYPES[u.type].naval !== 'ship') return;
-    const why = Number.isInteger(i) && i >= 0 ? E.deployReason(game, u, i) : 'Invalid cargo selection';
-    if (why) { toast(why); return; }
-    carrierHoldOpen = null;
-    detailOpen = false;
-    closeModal();
-    deploying = { ship: u.id, index: i };
-    updateSelection();
-    toast('Choose a green land hex next to the carrier to launch.');
+    chooseCarrierCargo(Number(d.deploy));
     return;
   }
   if (d.recruit) {
@@ -706,6 +696,20 @@ document.addEventListener('click', e => {
       break;
   }
 });
+// Clicking Launch and pressing 1/2 share one cargo-selection path.
+function chooseCarrierCargo(index) {
+  const u = selectedUnit();
+  if (!interactive() || !u || u.side !== game.player || E.TYPES[u.type].naval !== 'ship') return;
+  const why = Number.isInteger(index) && index >= 0
+    ? E.deployReason(game, u, index) : 'Invalid cargo selection';
+  if (why) { toast(why); return; }
+  carrierHoldOpen = null;
+  detailOpen = false;
+  closeModal();
+  deploying = { ship: u.id, index };
+  updateSelection();
+  toast('Choose a green land hex next to the carrier to launch.');
+}
 // Both the dock button and D use the same carrier deployment drawer.
 function toggleCarrierDeployment() {
   const u = selectedUnit();
@@ -782,6 +786,15 @@ document.addEventListener('keydown', e => {
   }
   const u = selectedUnit(),
     own = u && u.side === game.player && interactive() && !phaseReason();
+  // After D opens the carrier hold, 1 selects the top cargo row and 2
+  // selects the second row. No digit shortcuts apply outside this drawer.
+  if ((k === '1' || k === '2') && !e.repeat &&
+      !e.ctrlKey && !e.altKey && !e.metaKey &&
+      own && E.TYPES[u.type].naval === 'ship' && carrierHoldOpen === u.id) {
+    e.preventDefault();
+    chooseCarrierCargo(Number(k) - 1);
+    return;
+  }
   if (k === 'd' && own && E.TYPES[u.type].naval === 'ship') {
     e.preventDefault();
     if (!e.repeat) toggleCarrierDeployment();

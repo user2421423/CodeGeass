@@ -74,11 +74,11 @@ function holdHTML(u) {
     rows = cargo
       .map(
         (c, i) =>
-          `<div class="building"><span class="label">${c.cmd ? esc(C(c.cmd).short) + ' · ' : ''}${esc(E.TYPES[c.type].short)} ×${c.stack}</span><small>${Math.round(c.hp)} / ${E.maxHP(c)} HP</small>${ours ? act(`data-deploy="${i}"`, deploying?.ship === u.id && deploying.index === i ? 'Choose a green hex' : 'Launch', E.deployReason(game, u, i), 'Rapid KMF Deployment: lands with a full move and attack') : ''}</div>`,
+          `<div class="building"><span class="label">${i < 2 ? `[${i + 1}] · ` : ''}${c.cmd ? esc(C(c.cmd).short) + ' · ' : ''}${esc(E.TYPES[c.type].short)} ×${c.stack}</span><small>${Math.round(c.hp)} / ${E.maxHP(c)} HP</small>${ours ? act(`data-deploy="${i}"`, deploying?.ship === u.id && deploying.index === i ? 'Choose a green hex' : 'Launch', E.deployReason(game, u, i), 'Rapid KMF Deployment: lands with a full move and attack') : ''}</div>`,
       )
       .join('');
   const capacity = E.carrierCapacity(game, u);
-  return `<div class="section-divider"><span class="label">Hold · ${cargo.length} / ${capacity} formations</span>${rows || '<p class="description">Empty. Move a Knightmare onto the carrier to board it; boarding ends its turn.</p>'}<p class="description">A launched Knightmare lands on an empty land hex next to the ship with a full move and attack, even if it boarded this turn. If the carrier sinks, everything aboard is lost.</p></div>`;
+  return `<div class="section-divider"><span class="label">Hold · ${cargo.length} / ${capacity} formations</span>${rows || '<p class="description">Empty. Move a Knightmare onto the carrier to board it; boarding ends its turn.</p>'}<p class="description">Press D to open this hold, then 1 for the top cargo row or 2 for the second. Choose a highlighted landing hex to launch. A launched Knightmare has a full move and attack, even if it boarded this turn. If the carrier sinks, everything aboard is lost.</p></div>`;
 }
 function nearestCityName(u) {
   let best = null,
