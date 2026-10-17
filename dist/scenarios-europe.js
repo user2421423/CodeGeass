@@ -4,6 +4,9 @@
   'use strict';
   const E=root.Knightmare || (typeof require==='function'?require('./engine.js'):null);
   const COLS=120,ROWS=80,SIDES=['eu','eb'];
+  // 37-point GSHHG-i shoreline samples; only genuinely mixed (20–80% dry)
+  // hexes may become coast. Excluded foreign mainland remains sea-only.
+  const SHORE_BITS='AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAEAAAAAAAAAB/7wAAAAAAAAAAAAAAAAPmAIAAAAAAAAAAAAAAAH8AAfwAAAAAAAAAAAAAB0AAAAeAAAAAAAAAAAAAfgAAGAAOAAAAAAAAAAAA/AAAAAABgB8AAAAAAAAAOAAAAAIAOAiAAAAAAAAAYAAAABwABBQAAAAAAAABgAAAAA4AAgkAAAAAAAACAAAAABbgDcBAAAAAAAAEAQAAAHHD9xAAAAAAAAAIAAEMABAAEABAAAAAAAAYAAIGAABHCAAAAAAAAABgAAIIQABE+ABAAAAAAACAAAIQIAA5AAAAAAAAAA/AABjAAALCAABAAAAAAAgAAGGAQwFAAAAAAAAAAEAAAQAB+gBAAABABgAAAYAAAAIBDwBwAAAAAAAABAAAAgILz0CQAABAAAAAAgAAAgAKXJgoQAAAAAAABgAAAAIACIAQAABAAABAAgAAAIiD9FQBAAAAAAAAAwAAAEBwDyAAAABAAAAAAwBDF0Ae8AAAAAAAAAQAAwMFAwCgIAABAABAAXwAAYQmRAD4MCABQAAABpAAAHAggAAIEAAAgABABYmAAAGQBMHIAAAAAAAAAQEAAA6IDIAwAAAAAABAAcIAAAzEDAAAAAAAAAAAAYYAAACY8AQAAAAAAABAAeCAAAnogAIAAAAAAAAAH0CAAAOwQAAAAAAAAABAALhgAAQwB4AAAAAAAAABwSwgAARzcCAAAAAAAABAgQAAADwAgAAAAAAAAAAAgTgAA0AAAAAAAAAAAABAARALBAAAAAAAAAAAAAABBiACCAAAAAAAAAAAAABBmGACEAAAAAAAAAAAAAAAgBwEcAAAAAAAAAAAAABAACK9gAAAAAAAAAAAAAEAAHgCAAAAAAAAAAAAAABAAEAGAAAAAAAAAAAAAAAAAABwAAAAAAAAAAwAAABAAAQAAAAAAAAAAAAAAAAAACMAAAAAAAAAAAAAAEBAABAAAAAAAAAAAAAAAGAAAAYAAAAAAAAAAABAAIBAAAEAAAAAAAAAAAAD4AAAAAEAAAAAAAAAAHA5AABAAABAAAAAAAAAAI5AgAAAAABAAAAOAAAAAQZAAABAAABAAAAJwAAAAQI+AAAAAAAAAAAAQAAABgLDAABAAABAAAsAIAAABAAAQAAAGQCAADAGMAAACAAAIABAIDeAN8ABBgAACAAACAAAQAAAQAZBAwAAAAAABgBAIAAAIAQwgEAAEAAAAQAAQAAAQAIQcCAAEA/wAABAIAABgAIGCAAADhAMAgAAAAAEAAoBAiAfPAAB+ABAIAAIAAkAB4Bw/gAAAAIAQAAQUAgAKZABAAAAAABAQAAQYAEABAggwAAAAAAAgAASAAwAFAhhwAIAAEBAYAAQAAAAEAa4wAIAAGAAAAAgAAAP8ArwwAAAAAZAIABAAAAGIABgIAAAAAMAPgEAAO1BAABCMAAAAAJAAT4D4gBAQADADhD4AAAAAYAIAACAAAAAEw4QAABAAMAgAABAAAAQAAAQAAAAAH+AAABAAAAfAA8QAABAAQAAAABAAAAAAAYAAAAAAgAAAAEAAAAAAAAAAEB';
   const BOUNDS={west:-13,east:47,north:72,south:34};
   const PROJECTION={centerLon:17,centerLat:52.5,angle:0,
     uMin:-30*Math.cos(52.5*Math.PI/180),uMax:30*Math.cos(52.5*Math.PI/180),
@@ -168,11 +171,16 @@
         t.terrain='sea'; // Temporarily water for city/army placement.
       }
     }
-    // Every genuine land-to-sea edge is coastal, including island tips.
-    // A theatre-border cut is NOT a new navigable shoreline.
+    // An adjacent sea hex does not, by itself, make a land hex coastal.
+    // Require a shoreline intersecting the actual hex footprint.
+    const shore=typeof atob==='function'?atob(SHORE_BITS):
+      Buffer.from(SHORE_BITS,'base64').toString('latin1');
+    if(shore.length!==COLS*ROWS/8)throw Error('European coastline reference corrupt');
     for(const t of g.tiles)if(t.terrain!=='sea'){
-      if(E.adjacent(g,t).some(n=>n.terrain==='sea'&&
-          !excludedLand[n.r*COLS+n.c]))t.terrain='coast';
+      const i=t.r*COLS+t.c;
+      if((shore.charCodeAt(i>>3)&(128>>(i&7)))&&
+          E.adjacent(g,t).some(n=>n.terrain==='sea'&&
+            !excludedLand[n.r*COLS+n.c]))t.terrain='coast';
     }
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
@@ -323,7 +331,7 @@
   const api={id:'european-war',title:'The European War',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
-  api.meta={map:{europeanRegion:true,coastBuffer:1,homeZoom:5.4,overviewMarkers:true},
+  api.meta={map:{europeanRegion:true,coastBuffer:0,homeZoom:5.4,overviewMarkers:true},
     elite:true,eliteRosterOnly:true,
     ai:{doctrine:'europe'},
     text:{
