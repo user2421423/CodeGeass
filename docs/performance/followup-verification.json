@@ -1,0 +1,756 @@
+{
+  "visualComparisonBase": "acb104c7152851e787c15bb4001c60d14fab27b7",
+  "integratedMain": "a6d4f9aa323ea476f9c5a5ebd88b411d8cf534f8",
+  "visual": {
+    "checks": [
+      {
+        "id": "world",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 324.10000000009313,
+        "afterMs": 319.60000000009313
+      },
+      {
+        "id": "world",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 7.199999999953434,
+        "afterMs": 6.699999999953434
+      },
+      {
+        "id": "world",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 292.30000000004657,
+        "afterMs": 268.5
+      },
+      {
+        "id": "world",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2.199999999953434,
+        "afterMs": 2.0999999998603016
+      },
+      {
+        "id": "world",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1,
+        "afterMs": 1.0999999998603016
+      },
+      {
+        "id": "world",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 304.5,
+        "afterMs": 322
+      },
+      {
+        "id": "ufn2018",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 297.5999999998603,
+        "afterMs": 256.79999999981374
+      },
+      {
+        "id": "ufn2018",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 9.100000000093132,
+        "afterMs": 7.199999999953434
+      },
+      {
+        "id": "ufn2018",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 320.5,
+        "afterMs": 261.80000000004657
+      },
+      {
+        "id": "ufn2018",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.6999999999534339,
+        "afterMs": 1.5999999998603016
+      },
+      {
+        "id": "ufn2018",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.1999999999534339,
+        "afterMs": 1.1999999999534339
+      },
+      {
+        "id": "ufn2018",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 294.80000000004657,
+        "afterMs": 250.69999999995343
+      },
+      {
+        "id": "division-japan",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 262.69999999995343,
+        "afterMs": 17.5
+      },
+      {
+        "id": "division-japan",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 95.5,
+        "afterMs": 4.5
+      },
+      {
+        "id": "division-japan",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2.800000000046566,
+        "afterMs": 2.199999999953434
+      },
+      {
+        "id": "division-japan",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2.800000000046566,
+        "afterMs": 2.5
+      },
+      {
+        "id": "division-japan",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.0999999998603016,
+        "afterMs": 2.699999999953434
+      },
+      {
+        "id": "division-japan",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 265.0999999998603,
+        "afterMs": 13.199999999953434
+      },
+      {
+        "id": "invasion-california",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 800,
+        "afterMs": 37.799999999813735
+      },
+      {
+        "id": "invasion-california",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 266.5999999998603,
+        "afterMs": 8.399999999906868
+      },
+      {
+        "id": "invasion-california",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 5.800000000046566,
+        "afterMs": 6.199999999953434
+      },
+      {
+        "id": "invasion-california",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.5,
+        "afterMs": 4.400000000139698
+      },
+      {
+        "id": "invasion-california",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.5,
+        "afterMs": 1.1000000000931323
+      },
+      {
+        "id": "invasion-california",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 787.7999999998137,
+        "afterMs": 22.5
+      },
+      {
+        "id": "war-for-australia",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 115.39999999990687,
+        "afterMs": 15.599999999860302
+      },
+      {
+        "id": "war-for-australia",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 29.200000000186265,
+        "afterMs": 3.800000000046566
+      },
+      {
+        "id": "war-for-australia",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.3999999999068677,
+        "afterMs": 3
+      },
+      {
+        "id": "war-for-australia",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2.6000000000931323,
+        "afterMs": 2
+      },
+      {
+        "id": "war-for-australia",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2,
+        "afterMs": 1.6000000000931323
+      },
+      {
+        "id": "war-for-australia",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 112.60000000009313,
+        "afterMs": 11
+      },
+      {
+        "id": "invasion-korea",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 445.60000000009313,
+        "afterMs": 24
+      },
+      {
+        "id": "invasion-korea",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 154.0999999998603,
+        "afterMs": 7.300000000046566
+      },
+      {
+        "id": "invasion-korea",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 4,
+        "afterMs": 3.300000000046566
+      },
+      {
+        "id": "invasion-korea",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.300000000046566,
+        "afterMs": 3
+      },
+      {
+        "id": "invasion-korea",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.1999999999534339,
+        "afterMs": 1.1999999999534339
+      },
+      {
+        "id": "invasion-korea",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 426.5,
+        "afterMs": 16.699999999953434
+      },
+      {
+        "id": "cf-central-america",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 249.80000000004657,
+        "afterMs": 251.29999999981374
+      },
+      {
+        "id": "cf-central-america",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 253.30000000004657,
+        "afterMs": 245.39999999990687
+      },
+      {
+        "id": "cf-central-america",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 7.300000000046566,
+        "afterMs": 4.100000000093132
+      },
+      {
+        "id": "cf-central-america",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.6999999999534339,
+        "afterMs": 2
+      },
+      {
+        "id": "cf-central-america",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2.199999999953434,
+        "afterMs": 1.9000000001396984
+      },
+      {
+        "id": "cf-central-america",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 272.60000000009313,
+        "afterMs": 245.9000000001397
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 5111.299999999814,
+        "afterMs": 90.5999999998603
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1740.2999999998137,
+        "afterMs": 24
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 9.300000000046566,
+        "afterMs": 10.800000000046566
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 9.600000000093132,
+        "afterMs": 6.599999999860302
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 4.699999999953434,
+        "afterMs": 3.699999999953434
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 5134.799999999814,
+        "afterMs": 68.30000000004657
+      },
+      {
+        "id": "area-18",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 89,
+        "afterMs": 8.100000000093132
+      },
+      {
+        "id": "area-18",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 24.5,
+        "afterMs": 4.199999999953434
+      },
+      {
+        "id": "area-18",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.8999999999068677,
+        "afterMs": 2.5
+      },
+      {
+        "id": "area-18",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.5999999998603016,
+        "afterMs": 3
+      },
+      {
+        "id": "area-18",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.6999999999534339,
+        "afterMs": 1.2000000001862645
+      },
+      {
+        "id": "area-18",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 86.5,
+        "afterMs": 6.899999999906868
+      },
+      {
+        "id": "bering-strait",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 101.10000000009313,
+        "afterMs": 8.699999999953434
+      },
+      {
+        "id": "bering-strait",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 0.5,
+        "afterMs": 0.2999999998137355
+      },
+      {
+        "id": "bering-strait",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 0.8999999999068677,
+        "afterMs": 0.8000000000465661
+      },
+      {
+        "id": "bering-strait",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 0.8999999999068677,
+        "afterMs": 0.5999999998603016
+      },
+      {
+        "id": "bering-strait",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 0.5999999998603016,
+        "afterMs": 0.5999999998603016
+      },
+      {
+        "id": "bering-strait",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 86,
+        "afterMs": 6.7999999998137355
+      },
+      {
+        "id": "eu-greenland",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 428.89999999990687,
+        "afterMs": 27.100000000093132
+      },
+      {
+        "id": "eu-greenland",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 204.19999999995343,
+        "afterMs": 9.399999999906868
+      },
+      {
+        "id": "eu-greenland",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 11.900000000139698,
+        "afterMs": 5.300000000046566
+      },
+      {
+        "id": "eu-greenland",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 4.199999999953434,
+        "afterMs": 3.300000000046566
+      },
+      {
+        "id": "eu-greenland",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 3.5,
+        "afterMs": 1.6999999999534339
+      },
+      {
+        "id": "eu-greenland",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 426,
+        "afterMs": 16.9000000001397
+      },
+      {
+        "id": "conquest-indochina",
+        "render": "full",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 224.19999999995343,
+        "afterMs": 12.5
+      },
+      {
+        "id": "conquest-indochina",
+        "render": "minimap",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 74.9000000001397,
+        "afterMs": 5
+      },
+      {
+        "id": "conquest-indochina",
+        "render": "crop-0.32",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 2.199999999953434,
+        "afterMs": 2.0999999998603016
+      },
+      {
+        "id": "conquest-indochina",
+        "render": "crop-0.6",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.6000000000931323,
+        "afterMs": 1.8000000000465661
+      },
+      {
+        "id": "conquest-indochina",
+        "render": "crop-0.9",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 1.3000000000465661,
+        "afterMs": 2.3999999999068677
+      },
+      {
+        "id": "conquest-indochina",
+        "render": "capture",
+        "different": 0,
+        "max": 0,
+        "beforeMs": 234.89999999990687,
+        "afterMs": 11.100000000093132
+      }
+    ],
+    "states": [
+      {
+        "id": "world",
+        "hash": "ceacfbb2a470af183f1889ceeb4992cc3db1eb093f36c605259295e2baf0155c"
+      },
+      {
+        "id": "ufn2018",
+        "hash": "d387e38fec24142fd377bff0e9b26396fe501f4882daed6912e417a30d4f0475"
+      },
+      {
+        "id": "division-japan",
+        "hash": "6c0c770cb5a9b12910f749e362b69b879a3f3bfd734a9859c285be8f7a878ede"
+      },
+      {
+        "id": "invasion-california",
+        "hash": "5149c4070cf026b39350b37b93cbefa41bbb00423d33425be0f10cd8bc50f88f"
+      },
+      {
+        "id": "war-for-australia",
+        "hash": "e8320410cdcb01708b1737151f2d2d4c5977b60daa71492b0237e2601734b0d2"
+      },
+      {
+        "id": "invasion-korea",
+        "hash": "1b9e1476f47bb83000ffda2517bbda35c58fa00ebc35489766c0c1721b2281ae"
+      },
+      {
+        "id": "cf-central-america",
+        "hash": "5c3bc24f1dcc9dfbd0e2cc0e85bf6fa566fd9d909bc0006b9019fdc3ed29cf59"
+      },
+      {
+        "id": "eu-rocky-mountains",
+        "hash": "21be976624b7f480f4ed7e9109a235195423618ba0163cfc2910f7228c5001c1"
+      },
+      {
+        "id": "area-18",
+        "hash": "f632664b1345556f5bafb506336b0ba35f763ed00d616908fb9c289048708b82"
+      },
+      {
+        "id": "bering-strait",
+        "hash": "be03e4a14f1499174c4aab82c5dae8f9113484fcf1b1efb654952f7d4b78f842"
+      },
+      {
+        "id": "eu-greenland",
+        "hash": "ea3ebb1e4503f817fd67c4c4ba1adf174ce2138fd6f28df847c39154139e6e36"
+      },
+      {
+        "id": "conquest-indochina",
+        "hash": "e27fce0f82c7b9cbbcc430244247e5c84ef471946861501bf3851cdeece02d48"
+      }
+    ]
+  },
+  "compatibility": {
+    "checked": [
+      "invasion-japan",
+      "division-japan",
+      "european-war",
+      "operation-stonehenge",
+      "bering-strait",
+      "conquest-indochina",
+      "bf-south-china",
+      "philippines-invasion",
+      "invasion-korea",
+      "war-for-australia",
+      "area-18",
+      "britannia-iraq-iran",
+      "britannia-siberia",
+      "invasion-south-africa",
+      "crossing-urals",
+      "invasion-turkey",
+      "britannia-western-russia",
+      "invasion-brazil",
+      "invasion-california",
+      "invasion-canada",
+      "invasion-caribbean",
+      "eu-great-lakes",
+      "bf-yangtze",
+      "eu-greenland",
+      "invasion-hawaii",
+      "cf-new-zealand",
+      "invasion-american-east-coast",
+      "eu-panama",
+      "bf-malacca",
+      "eu-pendragon",
+      "cf-pendragon",
+      "cf-panama",
+      "cf-pacific-northwest",
+      "cf-central-america",
+      "cf-mexico",
+      "eu-rocky-mountains",
+      "battle-luoyang"
+    ],
+    "detail": {
+      "minimapCache": true,
+      "minimapPixels": true,
+      "factionFade": true,
+      "storyDifficulties": 4,
+      "tutorial": true,
+      "conquestRestore": true
+    },
+    "errors": []
+  },
+  "mobile": {
+    "transitions": [
+      {
+        "pixels": 24,
+        "protectedChecks": 0,
+        "maxSampledAtlasBytes": 50207200,
+        "finalBytes": 47724000
+      },
+      {
+        "pixels": 32,
+        "protectedChecks": 11,
+        "maxSampledAtlasBytes": 60217600,
+        "finalBytes": 47724000
+      },
+      {
+        "pixels": 38,
+        "protectedChecks": 11,
+        "maxSampledAtlasBytes": 60217600,
+        "finalBytes": 47724000
+      },
+      {
+        "pixels": 32,
+        "protectedChecks": 13,
+        "maxSampledAtlasBytes": 60217600,
+        "finalBytes": 47724000
+      },
+      {
+        "pixels": 24,
+        "protectedChecks": 10,
+        "maxSampledAtlasBytes": 60217600,
+        "finalBytes": 47724000
+      },
+      {
+        "pixels": 18,
+        "protectedChecks": 0,
+        "maxSampledAtlasBytes": 47724000,
+        "finalBytes": 47724000
+      }
+    ],
+    "touch": {
+      "beforeCam": {
+        "x": 3766.9092362730858,
+        "y": 3784
+      },
+      "afterCam": {
+        "x": 4053.5759029397523,
+        "y": 3698
+      }
+    },
+    "orientation": {
+      "width": 1688,
+      "height": 780,
+      "w": 844,
+      "h": 390,
+      "dpr": 2
+    },
+    "heap": [
+      20511148,
+      20121732,
+      20868848,
+      20190492,
+      20113072,
+      20267876,
+      20274692,
+      20313436,
+      20298076,
+      20390380,
+      20359148,
+      20362368
+    ],
+    "errors": []
+  }
+}

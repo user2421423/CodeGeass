@@ -1,0 +1,569 @@
+{
+  "timestamp": "2026-10-17T14:01:05.757Z",
+  "browser": "131.0.6778.204",
+  "viewport": "1440x900@1x",
+  "startup": {
+    "menuInteractiveMs": 342,
+    "jsBytes": 1533387,
+    "scripts": [
+      "/engine/frames.js",
+      "/engine/commanders.js",
+      "/engine/generic-skills.js",
+      "/engine/research.js",
+      "/engine/world.js",
+      "/engine/conquests.js",
+      "/engine.js",
+      "/engine/ai.js",
+      "/engine/army-groups.js",
+      "/missions.js",
+      "/campaign.js",
+      "/scenario-manifest.js",
+      "/scenario-previews/metadata.js",
+      "/scenario-catalog.js",
+      "/war-campaign.js",
+      "/assets/art/manifest.js",
+      "/art.js",
+      "/icons.js",
+      "/audio.js",
+      "/ui/core.js",
+      "/ui/military-presentation.js",
+      "/ui/notifications.js",
+      "/ui/hud.js",
+      "/ui/turns.js",
+      "/ui/honors.js",
+      "/ui/dialogs.js",
+      "/ui/war-report.js",
+      "/ui/commander-cards.js",
+      "/ui/army-groups.js",
+      "/ui/view.js",
+      "/ui/campaign-screens.js",
+      "/ui/scenario-screens.js",
+      "/ui/effects.js",
+      "/ui/input.js",
+      "/ui/tutorial.js",
+      "/ui/territory-labels.js",
+      "/ui/tutorial-labs.js",
+      "/ui/renderer.js",
+      "/ui/war-campaign-screen.js",
+      "/mobile-unit-toggle.js",
+      "/game.js",
+      "/wc4-mobile-hud.js"
+    ],
+    "scriptExecutionMs": 163.96099999999998,
+    "heapBytes": 4106608
+  },
+  "cases": [
+    {
+      "scenario": "world",
+      "startupMs": 847.3000000000466,
+      "zoomSettleMs": 601.1000000000931,
+      "zoomVisibleMs": null,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": null,
+          "queueMs": 601.0999999998603
+        },
+        {
+          "target": 32,
+          "visibleMs": null,
+          "queueMs": 575.3999999999069
+        },
+        {
+          "target": 38,
+          "visibleMs": null,
+          "queueMs": 485.9000000001397
+        },
+        {
+          "target": 32,
+          "visibleMs": null,
+          "queueMs": 3.0999999998603016
+        },
+        {
+          "target": 24,
+          "visibleMs": null,
+          "queueMs": 601.1000000000931
+        }
+      ],
+      "hexes": 13680,
+      "frameP50Ms": 14.5,
+      "hits": 146,
+      "misses": 123,
+      "evictions": 82,
+      "cancelledJobs": 74,
+      "strategicFrames": 0,
+      "snapshotFrames": 76,
+      "atomicAtlasFrames": 10,
+      "reusedZoomFrames": 0,
+      "blendedZoomFrames": 0,
+      "idleBatches": 70,
+      "maxBatchMs": 7.7999999998137355,
+      "basePaints": 0,
+      "politicalPaints": 0,
+      "synchronousPaints": 0,
+      "deferredPaints": 123,
+      "paintMs": 333.60000000032596,
+      "maxPaintMs": 7.099999999860302,
+      "cacheBytes": 150800040,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 0,
+      "politicalChunks": 0,
+      "combinedChunks": 62,
+      "fallbackReady": false,
+      "highResolutionBackdrop": false,
+      "frameP95Ms": 31.6,
+      "drawP50Ms": 1.6,
+      "drawP95Ms": 20.3,
+      "heapBytes": 18189592
+    },
+    {
+      "scenario": "ufn2018",
+      "startupMs": 496.89999999990687,
+      "zoomSettleMs": 609.6999999999534,
+      "zoomVisibleMs": null,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": null,
+          "queueMs": 569.1999999999534
+        },
+        {
+          "target": 32,
+          "visibleMs": null,
+          "queueMs": 609.6999999999534
+        },
+        {
+          "target": 38,
+          "visibleMs": null,
+          "queueMs": 432.39999999990687
+        },
+        {
+          "target": 32,
+          "visibleMs": null,
+          "queueMs": 2.5
+        },
+        {
+          "target": 24,
+          "visibleMs": null,
+          "queueMs": 377
+        }
+      ],
+      "hexes": 13680,
+      "frameP50Ms": 18.4,
+      "hits": 244,
+      "misses": 116,
+      "evictions": 78,
+      "cancelledJobs": 70,
+      "strategicFrames": 0,
+      "snapshotFrames": 70,
+      "atomicAtlasFrames": 17,
+      "reusedZoomFrames": 0,
+      "blendedZoomFrames": 0,
+      "idleBatches": 66,
+      "maxBatchMs": 9.399999999906868,
+      "basePaints": 0,
+      "politicalPaints": 0,
+      "synchronousPaints": 0,
+      "deferredPaints": 116,
+      "paintMs": 316.8999999992084,
+      "maxPaintMs": 5.699999999953434,
+      "cacheBytes": 150800040,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 0,
+      "politicalChunks": 0,
+      "combinedChunks": 62,
+      "fallbackReady": false,
+      "highResolutionBackdrop": false,
+      "frameP95Ms": 32.9,
+      "drawP50Ms": 2.4,
+      "drawP95Ms": 26.9,
+      "heapBytes": 18352256
+    },
+    {
+      "scenario": "division-japan",
+      "startupMs": 477.5999999998603,
+      "zoomSettleMs": 1545.1000000000931,
+      "zoomVisibleMs": 979.4000000001397,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": 783.6000000000931,
+          "queueMs": 937.8000000000466
+        },
+        {
+          "target": 32,
+          "visibleMs": 699.1000000000931,
+          "queueMs": 1012.4000000001397
+        },
+        {
+          "target": 38,
+          "visibleMs": 399.39999999990687,
+          "queueMs": 644.3999999999069
+        },
+        {
+          "target": 32,
+          "visibleMs": 414.60000000009313,
+          "queueMs": 657.1999999999534
+        },
+        {
+          "target": 24,
+          "visibleMs": 979.4000000001397,
+          "queueMs": 1545.1000000000931
+        }
+      ],
+      "hexes": 9240,
+      "frameP50Ms": 14.4,
+      "hits": 2176,
+      "misses": 182,
+      "evictions": 137,
+      "cancelledJobs": 0,
+      "strategicFrames": 53,
+      "snapshotFrames": 49,
+      "atomicAtlasFrames": 60,
+      "reusedZoomFrames": 37,
+      "blendedZoomFrames": 24,
+      "idleBatches": 80,
+      "maxBatchMs": 16,
+      "basePaints": 91,
+      "politicalPaints": 91,
+      "synchronousPaints": 0,
+      "deferredPaints": 182,
+      "paintMs": 364.599999998929,
+      "maxPaintMs": 13.5,
+      "cacheBytes": 150738000,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 22,
+      "politicalChunks": 23,
+      "combinedChunks": 0,
+      "fallbackReady": true,
+      "highResolutionBackdrop": true,
+      "frameP95Ms": 23,
+      "drawP50Ms": 13,
+      "drawP95Ms": 15.4,
+      "heapBytes": 15983572
+    },
+    {
+      "scenario": "invasion-california",
+      "startupMs": 480.9000000001397,
+      "zoomSettleMs": 1342.5,
+      "zoomVisibleMs": 781.6000000000931,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": 731.4000000001397,
+          "queueMs": 1342.5
+        },
+        {
+          "target": 32,
+          "visibleMs": 435.80000000004657,
+          "queueMs": 701.6000000000931
+        },
+        {
+          "target": 38,
+          "visibleMs": 432.80000000004657,
+          "queueMs": 738.6999999999534
+        },
+        {
+          "target": 32,
+          "visibleMs": 478.60000000009313,
+          "queueMs": 774
+        },
+        {
+          "target": 24,
+          "visibleMs": 781.6000000000931,
+          "queueMs": 1234.6000000000931
+        }
+      ],
+      "hexes": 19200,
+      "frameP50Ms": 15,
+      "hits": 2040,
+      "misses": 240,
+      "evictions": 200,
+      "cancelledJobs": 0,
+      "strategicFrames": 53,
+      "snapshotFrames": 42,
+      "atomicAtlasFrames": 67,
+      "reusedZoomFrames": 30,
+      "blendedZoomFrames": 28,
+      "idleBatches": 116,
+      "maxBatchMs": 31.199999999953434,
+      "basePaints": 120,
+      "politicalPaints": 120,
+      "synchronousPaints": 0,
+      "deferredPaints": 240,
+      "paintMs": 512.2000000013504,
+      "maxPaintMs": 28.5,
+      "cacheBytes": 150544000,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 20,
+      "politicalChunks": 20,
+      "combinedChunks": 0,
+      "fallbackReady": true,
+      "highResolutionBackdrop": true,
+      "frameP95Ms": 26.1,
+      "drawP50Ms": 12.7,
+      "drawP95Ms": 15.1,
+      "heapBytes": 18288424
+    },
+    {
+      "scenario": "war-for-australia",
+      "startupMs": 342.30000000004657,
+      "zoomSettleMs": 1088.1000000000931,
+      "zoomVisibleMs": 662.6000000000931,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": 587.9000000001397,
+          "queueMs": 820.2000000001863
+        },
+        {
+          "target": 32,
+          "visibleMs": 662.6000000000931,
+          "queueMs": 1088.1000000000931
+        },
+        {
+          "target": 38,
+          "visibleMs": 481.5,
+          "queueMs": 759.5
+        },
+        {
+          "target": 32,
+          "visibleMs": 496.30000000004657,
+          "queueMs": 744.0999999998603
+        },
+        {
+          "target": 24,
+          "visibleMs": 654.1000000000931,
+          "queueMs": 925.1000000000931
+        }
+      ],
+      "hexes": 12144,
+      "frameP50Ms": 14.8,
+      "hits": 2070,
+      "misses": 250,
+      "evictions": 204,
+      "cancelledJobs": 0,
+      "strategicFrames": 53,
+      "snapshotFrames": 53,
+      "atomicAtlasFrames": 62,
+      "reusedZoomFrames": 27,
+      "blendedZoomFrames": 26,
+      "idleBatches": 89,
+      "maxBatchMs": 14.5,
+      "basePaints": 125,
+      "politicalPaints": 125,
+      "synchronousPaints": 0,
+      "deferredPaints": 250,
+      "paintMs": 383.69999999995343,
+      "maxPaintMs": 12.899999999906868,
+      "cacheBytes": 149411040,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 23,
+      "politicalChunks": 23,
+      "combinedChunks": 0,
+      "fallbackReady": true,
+      "highResolutionBackdrop": true,
+      "frameP95Ms": 19.2,
+      "drawP50Ms": 12.3,
+      "drawP95Ms": 14.3,
+      "heapBytes": 16992024
+    },
+    {
+      "scenario": "invasion-korea",
+      "startupMs": 499.5,
+      "zoomSettleMs": 2450.7000000001863,
+      "zoomVisibleMs": 1100.2000000001863,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": 739.5,
+          "queueMs": 1189.5
+        },
+        {
+          "target": 32,
+          "visibleMs": 588,
+          "queueMs": 1032.7999999998137
+        },
+        {
+          "target": 38,
+          "visibleMs": 488,
+          "queueMs": 873.3999999999069
+        },
+        {
+          "target": 32,
+          "visibleMs": 572.1000000000931,
+          "queueMs": 943.8999999999069
+        },
+        {
+          "target": 24,
+          "visibleMs": 1100.2000000001863,
+          "queueMs": 2450.7000000001863
+        }
+      ],
+      "hexes": 29440,
+      "frameP50Ms": 15,
+      "hits": 3204,
+      "misses": 240,
+      "evictions": 200,
+      "cancelledJobs": 0,
+      "strategicFrames": 53,
+      "snapshotFrames": 66,
+      "atomicAtlasFrames": 105,
+      "reusedZoomFrames": 54,
+      "blendedZoomFrames": 24,
+      "idleBatches": 110,
+      "maxBatchMs": 28.899999999906868,
+      "basePaints": 120,
+      "politicalPaints": 120,
+      "synchronousPaints": 0,
+      "deferredPaints": 240,
+      "paintMs": 495.1999999997206,
+      "maxPaintMs": 26.899999999906868,
+      "cacheBytes": 150544000,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 20,
+      "politicalChunks": 20,
+      "combinedChunks": 0,
+      "fallbackReady": true,
+      "highResolutionBackdrop": true,
+      "frameP95Ms": 18.3,
+      "drawP50Ms": 12.3,
+      "drawP95Ms": 13.9,
+      "heapBytes": 20844188
+    },
+    {
+      "scenario": "cf-central-america",
+      "startupMs": 1079.8000000000466,
+      "zoomSettleMs": 1045,
+      "zoomVisibleMs": 659.1999999999534,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": 632.9000000001397,
+          "queueMs": 1045
+        },
+        {
+          "target": 32,
+          "visibleMs": 379.9000000001397,
+          "queueMs": 582.1999999999534
+        },
+        {
+          "target": 38,
+          "visibleMs": 463.19999999995343,
+          "queueMs": 785.3999999999069
+        },
+        {
+          "target": 32,
+          "visibleMs": 424.70000000018626,
+          "queueMs": 752.7000000001863
+        },
+        {
+          "target": 24,
+          "visibleMs": 659.1999999999534,
+          "queueMs": 1028.5
+        }
+      ],
+      "hexes": 30912,
+      "frameP50Ms": 15.2,
+      "hits": 1560,
+      "misses": 240,
+      "evictions": 200,
+      "cancelledJobs": 0,
+      "strategicFrames": 53,
+      "snapshotFrames": 33,
+      "atomicAtlasFrames": 43,
+      "reusedZoomFrames": 23,
+      "blendedZoomFrames": 25,
+      "idleBatches": 95,
+      "maxBatchMs": 15.100000000093132,
+      "basePaints": 120,
+      "politicalPaints": 120,
+      "synchronousPaints": 0,
+      "deferredPaints": 240,
+      "paintMs": 408.89999999827705,
+      "maxPaintMs": 11.900000000139698,
+      "cacheBytes": 150544000,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 20,
+      "politicalChunks": 20,
+      "combinedChunks": 0,
+      "fallbackReady": true,
+      "highResolutionBackdrop": true,
+      "frameP95Ms": 22.8,
+      "drawP50Ms": 12.2,
+      "drawP95Ms": 14,
+      "heapBytes": 17409196
+    },
+    {
+      "scenario": "eu-rocky-mountains",
+      "startupMs": 918.5999999998603,
+      "zoomSettleMs": 1485.7999999998137,
+      "zoomVisibleMs": 799.1999999999534,
+      "zoomSamples": [
+        {
+          "target": 24,
+          "visibleMs": 777,
+          "queueMs": 1485.7999999998137
+        },
+        {
+          "target": 32,
+          "visibleMs": 634.8000000000466,
+          "queueMs": 1122.2000000001863
+        },
+        {
+          "target": 38,
+          "visibleMs": 477.89999999990687,
+          "queueMs": 831.1999999999534
+        },
+        {
+          "target": 32,
+          "visibleMs": 464.30000000004657,
+          "queueMs": 1094.6999999999534
+        },
+        {
+          "target": 24,
+          "visibleMs": 799.1999999999534,
+          "queueMs": 1456
+        }
+      ],
+      "hexes": 37632,
+      "frameP50Ms": 13.8,
+      "hits": 2040,
+      "misses": 240,
+      "evictions": 200,
+      "cancelledJobs": 0,
+      "strategicFrames": 53,
+      "snapshotFrames": 55,
+      "atomicAtlasFrames": 81,
+      "reusedZoomFrames": 23,
+      "blendedZoomFrames": 28,
+      "idleBatches": 131,
+      "maxBatchMs": 24.699999999953434,
+      "basePaints": 120,
+      "politicalPaints": 120,
+      "synchronousPaints": 0,
+      "deferredPaints": 240,
+      "paintMs": 722.2999999993481,
+      "maxPaintMs": 22.300000000046566,
+      "cacheBytes": 150544000,
+      "cacheBudgetBytes": 150994944,
+      "queued": 0,
+      "staticChunks": 20,
+      "politicalChunks": 20,
+      "combinedChunks": 0,
+      "fallbackReady": true,
+      "highResolutionBackdrop": true,
+      "frameP95Ms": 21,
+      "drawP50Ms": 12.7,
+      "drawP95Ms": 14.2,
+      "heapBytes": 23742240
+    }
+  ]
+}
