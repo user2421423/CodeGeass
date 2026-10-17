@@ -19,3 +19,11 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Check published artwork
         run: node tools/validate_assets.cjs --tracked
+      - name: Check Challenge Pass scripts and regression tests
+        run: |
+          node --check dist/engine.js
+          node --check dist/ui/challenge-pass.js
+          node --check dist/ui/core.js
+          node --check dist/ui/turns.js
+          node --check dist/ui/input.js
+          node tools/challenge_pass_smoke.cjs
