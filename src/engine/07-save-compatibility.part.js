@@ -23,6 +23,11 @@
   function warGroup(g,u){const x=u&&(g.armyGroups||[]).find(a=>a.side===u.side&&a.units?.includes(u.id));
     return x?String(x.id):null;}
   function recordWarEvent(g,kind,side,data={}){if(!g||g.warReportMuted)return;
+    // Victory-only Challenge Pass constraints survive saves and truncated War Reports.
+    const challenge = g.mode === 'conquest' && g.challengePassRun?.version === 1 ? g.challengePassRun : null;
+    if (challenge && kind === 'fleijaLaunch' && side === g.player) challenge.fleijaLaunch = true;
+    if (challenge && kind === 'unitDestroyed' && data.unitSide === g.player && data.personal)
+      challenge.officerLost = true;
     const r=ensureWarReport(g);
     // Routine damage, recruitment and economy actions remain in the exact per-turn
     // aggregates, avoiding huge saves and burying the major operational events.
