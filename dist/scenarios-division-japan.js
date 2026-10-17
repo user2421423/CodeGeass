@@ -245,7 +245,7 @@
       era:"Japan · Alternate 2017",
       intro:"Alternate 2017: Britannia, Europia and China fight for a divided Japan from the first turn.",
       diplomacy:"No alliances: all three powers are hostile from turn 1.",
-      elite:"All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.",
+      elite:"All automatically converted starting units are Lv.1 elites, including rival commanders. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player-deployed elites use their unlocked HQ level (up to Lv.5); mission carriers retain their existing rules.",
       focus:{
         britannia:"Nagoya",
         eu:"Sendai",
