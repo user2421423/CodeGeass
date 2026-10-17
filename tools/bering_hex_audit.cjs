@@ -48,7 +48,8 @@ function audit(g){
     if(land){
       counts.land++;
       const touching=neighbors.some(n=>n.terrain==='sea');
-      if((t.terrain==='coast')!==(touching&&isMixedShore(i)))
+      const oneHexIsland=neighbors.length>0&&neighbors.every(n=>n.terrain==='sea');
+      if((t.terrain==='coast')!==(touching&&(isMixedShore(i)||oneHexIsland)))
         errors.push('wrong coast/land terrain at '+c+','+r+' '+t.terrain);
       if(!['coast','plains','forest','mountain'].includes(t.terrain))
         errors.push('unknown land terrain at '+c+','+r);
@@ -65,7 +66,7 @@ function audit(g){
   assert.deepEqual(errors.slice(0,12),[],errors.length+' geography/province errors');
   assert.equal(counts.land,3379);
   assert.equal(counts.sea,6221);
-  assert.equal(counts.coast,216);
+  assert.equal(counts.coast,219);
   assert.equal(counts.land+counts.sea,SIZE);
   const landRegions=regionize(g,t=>t.terrain!=='sea').regions;
   const waterRegions=regionize(g,t=>t.terrain==='sea').regions;
