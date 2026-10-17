@@ -11,6 +11,8 @@ const geo=require('../dist/australia-landmask.js');
 const scenario=require('../dist/scenarios-australia.js');
 const N=scenario.cols*scenario.rows;
 const bits=Buffer.from(geo.bits,'base64');
+const shoreline=Buffer.from(scenario.shorelineBits,'base64');
+const hasMixedCoast=i=>!!(shoreline[i>>3]&(128>>(i&7)));
 // Independent GSHHG polygons drive the *visible* coastline; they are not the
 // sampled gameplay bitmap. Cross-check every playable hex centre against both.
 const vectorShapes=vm.runInNewContext(fs.readFileSync(
@@ -63,7 +65,7 @@ function audit(g){
         g.stations[t.provinceCity]?.owner!==t.owner)
         problems.push('wrong province '+c+','+r);
       const touching=E.adjacent(g,t).some(n=>n.terrain==='sea');
-      if((t.terrain==='coast')!==touching)
+      if((t.terrain==='coast')!==(touching&&hasMixedCoast(i)))
         problems.push('wrong coastal hex '+c+','+r);
     }else if(t.owner!=null||t.provinceCity!=null)
       problems.push('sea assigned owner '+c+','+r);
