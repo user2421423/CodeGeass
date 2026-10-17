@@ -905,7 +905,7 @@
   ];
   const RANK_HP = [1.2, 1.28, 1.36, 1.44, 1.52, 1.6, 1.68, 1.76, 1.84, 1.92, 2.0, 2.08, 2.16];
   // Tokens to reach each rank.
-  const PROMOTE_COST = [0, 50, 80, 120, 160, 220, 280, 350, 430, 520, 650];
+  const PROMOTE_COST = [0, 50, 80, 120, 160, 250, 350, 500, 700, 900, 1200];
   // Honors are permanent, cosmetic records; they never modify unit statistics.
   const MEDALS = {
     valor: { name: 'Order of Valor', desc: 'Defeated an enemy commander in battle.', earn: 'Personally defeat an enemy commander-led unit.' },

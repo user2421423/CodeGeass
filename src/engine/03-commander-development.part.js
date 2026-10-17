@@ -347,7 +347,7 @@
     const why = ownedReason(profile, k);
     return why ? { ok: false, reason: why } : relinquishHighCommand(profile, k, 0.9);
   }
-  const GENERIC_COSTS = [0, 100, 120, 150, 200, 260];
+  const GENERIC_COSTS = [0, 100, 150, 200, 350, 500];
   const GENERIC_RESPEC_COST = 40;
   function genericCost(level = 0) { return GENERIC_COSTS[level + 1] ?? Infinity; }
   function genericReason(profile, k, id) {
