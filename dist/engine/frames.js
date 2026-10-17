@@ -922,7 +922,7 @@
       lore: 'Black Knights carrier with standard cargo, movement and launch rules.',
     },
     elite_japan_bk_amphibious: {
-      ...AMPHIBIOUS_II, side: 'bk', elite: true, scenarioOnly: true,
+      ...AMPHIBIOUS_II, side: 'bk', elite: true,
       name: 'Gekka Amphibious II Elite', model: 'Gekka Marine Elite Conversion',
       gen: '7th-generation equivalent', role: 'Elite amphibious',
       weapon: 'Heavy torpedoes · close-combat armament · waterjets',
@@ -1406,7 +1406,7 @@
     },
     japan_bk_amphibious: {
       type: 'elite_japan_bk_amphibious', faction: 'black_knights', availableTo: ['bk'],
-      rarity: 'Rare', scenarioOnly: true, skill: 'Standard Type II amphibious loadout',
+      rarity: 'Rare', skill: 'Standard Type II amphibious loadout',
       lv3Text: 'Standard Type II aquatic combat; no extra ability.',
       lv5Text: 'Standard Type II aquatic combat; no extra ability.',
       lv3: {}, lv5: {},
