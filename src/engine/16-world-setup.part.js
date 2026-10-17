@@ -102,7 +102,7 @@
       year: '2017 a.t.b.',
       desc: 'The Holy Britannian Empire holds the Americas, Area 11 and its Pacific bases; the Europia United holds Europe, Russia and Africa; the Chinese Federation holds Asia. Australia and the Middle Eastern Federation stand neutral.',
       rulesText:
-        'A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. Defeat every rival, or hold the most cities at the 120-turn armistice.',
+        'A power surrenders only when it has lost every city: its armies disband and its mines pass to the conqueror. World Conquest has no armistice; eliminate every opposing major power to win.',
     },
   };
 
