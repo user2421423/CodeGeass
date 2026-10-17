@@ -252,6 +252,8 @@
     spend(e, cost);
     const old = maxHP(u);
     u.stack++;
+    if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
+      g.challengePassRun.produced++;
     u.hp += maxHP(u) - old;
     u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} reinforced to ${u.stack} frames.`, u.side);
@@ -266,6 +268,8 @@
     funds(g, u.side).credits -= cost;
     const amount = Math.min(maxHP(u) - u.hp, Math.round(maxHP(u) * 0.20));
     u.hp += amount;
+    if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
+      g.challengePassRun.manualRepair = true;
     u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} repairs ${amount} frame.`, u.side);
     return { ok: true, amount };
@@ -341,6 +345,8 @@
       s.portOwner = s.owner;
     }
     s[b.field] = buildingLevel(s, kind) + 1;
+    if (g.mode === 'conquest' && s.owner === g.player && g.challengePassRun?.version === 1)
+      g.challengePassRun.constructed = true;
     if (kind === 'factory') {
       syncBuildings(g, s);
       // Captured cities stay undefended for the capture turn, even after factory upgrades.
