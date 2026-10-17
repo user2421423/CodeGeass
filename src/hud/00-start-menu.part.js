@@ -122,7 +122,7 @@ function startMenu() {
             <section class="start-hq" aria-label="Command headquarters">
               <div class="start-hq-top"><span class="start-kicker">HEADQUARTERS</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b></div>
               <p>${profile.wins || 0} victories · ${techCount} research levels · Permanent upgrades</p>
-              <div class="start-hq-actions"><button data-action="research">Research</button><button data-action="generals-start">Commanders</button><button data-action="elite-forces-start">Elite Forces</button></div>
+              <div class="start-hq-actions"><button data-action="research">Research</button><button data-action="generals-start">Commanders</button><button data-action="elite-forces-start">Elite Forces</button><button class="cp-menu-button" data-action="challenge-pass">Challenge Pass</button></div>
             </section>
           </aside>
         </div>
@@ -143,9 +143,8 @@ function startMenu() {
 // Tokens still on offer for a first victory at this difficulty (before banked research).
 function conquestReward(difficulty, profile, era = 'world', side = 'britannia') {
   if ((profile.cleared || {})[`conquest:${era}:${side}:${difficulty}`]) return 0;
-  const scale = E.DIFFICULTIES[difficulty]?.tokens || 1,
-    t = E.TOKEN_REWARD;
-  return Math.round((t.victory + t.conquest) * scale) + (profile.wins || 0 ? 0 : t.first);
+  const t = E.TOKEN_REWARD;
+  return (t[difficulty] || t.normal) + (profile.wins || 0 ? 0 : t.first);
 }
 // BK's faction identity is near-black on the map. Gold remains the
 // accessible interface accent against the game's dark command panels.
@@ -174,6 +173,7 @@ function hudMenus() {
   const hq = [
     ...(!campaign ? [hudNavAction('admirals', 'Commanders', 'Assign a commander', blocked)] : []),
     hudNavAction('research', 'Research', 'Open the research headquarters'),
+    ...(game.mode === 'conquest' ? [hudNavAction('challenge-pass', 'Challenge Pass', 'Track Conquest objectives and claim rewards')] : []),
     ...(!campaign ? [hudNavAction('archive', 'Unit Archive', 'Inspect available unit classes')] : [])
   ];
   const intelligence = [
