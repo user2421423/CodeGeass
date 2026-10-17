@@ -248,6 +248,7 @@
   const api={id:'bering-strait',title:'The Bering Strait Crisis',cols:COLS,rows:ROWS,
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     create,onTurn,objective,winner,strategicScore,orderGroup};
+  api.shorelineBits=SHORE_BITS;
   api.meta={map:{painter:'beringGeographic'},
     elite:true,
     ai:{doctrine:'europe'},
