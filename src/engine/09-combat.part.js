@@ -81,6 +81,24 @@
     if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
     if (ef.cityAttack && g.stations.some(s => s.owner === u.side && dist(g, s, u) <= 1) && strike)
       attack *= 1 + ef.cityAttack;
+    // Amphibious Elite abilities: the Lv.5 values replace, rather than stack with, Lv.3.
+    const amphibiousAtSea = isSea(tile(g, u.c, u.r));
+    const coastalTarget = target || st;
+    if (ef.vsNaval && target &&
+        (isShip(target) || (victim?.naval === 'amphibious' && isSea(tile(g, target.c, target.r)))))
+      attack *= 1 + ef.vsNaval;
+    if (counter && amphibiousAtSea && ef.seaCounter) attack *= 1 + ef.seaCounter;
+    if (!counter && ef.coastalAttack && coastalTarget && coastalLand(g, coastalTarget))
+      attack *= 1 + ef.coastalAttack;
+    if (!counter && ef.landingStrike && amphibiousAtSea && coastalTarget &&
+        !isSea(tile(g, coastalTarget.c, coastalTarget.r)))
+      attack *= 1 + ef.landingStrike;
+    // Shui Gun-Ru's coastal aura is positional and applies only on attacks against coastal land.
+    // Multiple Shui supporters do not stack.
+    if (!counter && coastalTarget && coastalLand(g, coastalTarget) &&
+        g.units.some(v => v.hp > 0 && v.id !== u.id && v.side === u.side &&
+          dist(g, v, u) === 1 && eliteFx(v).coastalSupport))
+      attack *= 1.10;
     if (f.artist && target)
       attack *=
         1 +
@@ -185,6 +203,8 @@
       if (tf.taken) attack *= tf.taken;
       const tef = eliteFx(target);
       if (tef.taken) attack *= tef.taken;
+      if (tef.seaTaken && isSea(tile(g, target.c, target.r))) attack *= tef.seaTaken;
+      if (tef.navalCounterTaken && counter && t.naval) attack *= tef.navalCounterTaken;
       const protector = g.units.find(v => {
         const p = eliteFx(v).protect;
         return v.hp > 0 && v.side === target.side && v.id !== target.id && p && dist(g, v, target) <= p.range;
@@ -500,6 +520,17 @@
     // Destroying city defenses grants one additional attack to any surviving unit.
     // A simultaneous frame kill cannot bank a second follow-up attack.
     if (defensesDestroyed && a.hp > 0 && a.attacked) {
+      a.attacked = false;
+      breakthrough = true;
+    }
+    // Gekka Lv.5: one extra attack per turn after defeating a coastal defender.
+    // Shield-breaking already refreshes an attack for every unit; do not double-bank it
+    // or consume the Gekka's unique once-per-turn refresh if another rule granted one.
+    if (a.hp > 0 && a.attacked && aef.coastalRefresh &&
+        a.expCoastalRefreshTurn !== g.turn &&
+        ((destroyed && coastalLand(g, d)) ||
+          (defensesDestroyed && coastalLand(g, s)))) {
+      a.expCoastalRefreshTurn = g.turn;
       a.attacked = false;
       breakthrough = true;
     }
