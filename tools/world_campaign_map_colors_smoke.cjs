@@ -11,7 +11,7 @@ const positive=[
   ['eu-division-japan',139.69,35.68],
   ['eu-brazil',-43.2,-22.9],
   ['eu-greenland',-42,71.5],
-  ['eu-canada',-75.7,45.4],
+  ['eu-canada',-123.1,49.25],
   ['eu-new-york',-74,40.7],
   ['britannia-siberia',104.3,52.3],
   ['britannia-turkey',32.85,39.93],
@@ -35,6 +35,10 @@ const negative=[
   ['federation-britannia-hawaii',-158,18.5], // Offshore
   ['eu-caribbean',-67,11], // Venezuelan mainland
 ];
+console.log('REGION_SAMPLES '+JSON.stringify({
+  positive:positive.map(([id,lon,lat])=>[id,lon,lat,contains(id,lon,lat)]),
+  negative:negative.map(([id,lon,lat])=>[id,lon,lat,contains(id,lon,lat)])
+}));
 for(const [id,lon,lat] of positive) {
   assert.equal(contains(id,lon,lat),true,`Expected ${id} to include ${lon},${lat}`);
 }
