@@ -213,7 +213,6 @@
     fortressTargets,
     fireFortress,
     ERAS,
-    ARMISTICE,
     objectiveText,
     scenarioOf,
     modeTitle,
