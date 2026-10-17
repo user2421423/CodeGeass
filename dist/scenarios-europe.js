@@ -338,7 +338,7 @@
       era:"Europe · 2017 a.t.b.",
       intro:"Euro Britannia versus Europia United. No scripted turn limit: capture every enemy city.",
       diplomacy:"Both sides are hostile from turn 1. Europia United has the larger industrial economy; Euro Britannia begins with a heavier eastern field army.",
-      elite:"Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.",
+      elite:"Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, including rival starting commanders. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player-deployed elites use their unlocked HQ levels (up to Lv.5).",
       focus:{
         eu:"Warsaw",
         eb:"Minsk"
