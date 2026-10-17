@@ -57,8 +57,64 @@ function wcConstrain(){
   wcView.x=Math.max(wcCanvas.width*(1-wcView.zoom),Math.min(0,wcView.x));
   wcView.y=Math.max(wcCanvas.height*(1-wcView.zoom),Math.min(0,wcView.y));
 }
+// Project geopolitical boundaries into the same world coordinates as the
+// GSHHG atlas (not the tactical hex grid or display-sized campaign canvas).
+function wcGeoProject(lon,lat) {
+  return {x:(lon+180)*SQ*R/2+R-SQ*R/2,
+          y:R+(74-lat)*1.5*R*75/128};
+}
+function wcPaintSecuredTerritories(c) {
+  const progress=wcProgress(), wins=wcActiveMissions()
+    .filter(m=>WC.completed(progress,wcFaction,m.id));
+  if(!wins.length)return;
+  // Clip to the actual world land silhouettes: a regional win must never
+  // turn its rectangular theater's ocean into a faction-coloured patch.
+  c.save();
+  const land=GEOGRAPHY.shapes.land;
+  const fast=typeof Path2D!=='undefined' && typeof Path2D.prototype.addPath==='function';
+  if(fast) {
+    const clip=new Path2D();
+    for(const shape of land) {
+      if(shape.path) clip.addPath(shape.path);
+      else if(shape.points.length>=3) {
+        const p=shape.points;clip.moveTo(p[0][0],p[0][1]);
+        for(let i=1;i<p.length;i++)clip.lineTo(p[i][0],p[i][1]);
+        clip.closePath();
+      }
+    }
+    c.clip(clip);
+  } else {
+    c.beginPath();
+    for(const shape of land) {
+      const p=shape.points;if(p.length<3)continue;
+      c.moveTo(p[0][0],p[0][1]);
+      for(let i=1;i<p.length;i++)c.lineTo(p[i][0],p[i][1]);
+      c.closePath();
+    }
+    c.clip();
+  }
+  c.fillStyle=wcMapColor();
+  c.globalAlpha=.88;
+  for(const m of wins) {
+    const rings=m.polygons.length?m.polygons:[[
+      [m.bounds[0],m.bounds[1]],[m.bounds[2],m.bounds[1]],
+      [m.bounds[2],m.bounds[3]],[m.bounds[0],m.bounds[3]]]];
+    for(const ring of rings) {
+      if(ring.length<3)continue;
+      c.beginPath();
+      ring.forEach(([lon,lat],i)=>{
+        const p=wcGeoProject(lon,lat);
+        if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);
+      });
+      c.closePath();c.fill();
+    }
+  }
+  c.restore();
+}
 function wcBuildAtlas(){
-  wcWorld=WC.worldSnapshot(E,wcFaction,wcProgress());
+  // Paint a fresh political baseline, then apply precise captured borders;
+  // coarse world hexes must never override geographic region boundaries.
+  wcWorld=WC.worldSnapshot(E,wcFaction,WC.fresh());
   wcAtlas=document.createElement('canvas');
   wcAtlas.width=1800;
   wcAtlas.height=Math.round(1800*mapH(wcWorld)/mapW(wcWorld));
@@ -68,6 +124,7 @@ function wcBuildAtlas(){
     b.fillStyle='#16384e';
     b.fillRect(0,0,mapW(wcWorld),mapH(wcWorld));
   }
+  wcPaintSecuredTerritories(b);
 }
 function wcDraw(){
   if(!wcCanvas || !wcAtlas)return;
@@ -96,8 +153,8 @@ function wcDraw(){
     c.lineTo(tx-Math.cos(angle+.52)*d,ty-Math.sin(angle+.52)*d);
     c.closePath();c.fill();c.restore();
   }
-  // Geographically bounded overlays are visual objectives only. Actual political
-  // recoloring is on the isolated GSHHG worldSnapshot's LAND hex ownership.
+  // Mission outlines reflect real country/state borders where available;
+  // secured political colors are painted on the cached GSHHG land atlas.
   for(const m of all){
     const state=wcState(m),show=m.tier===wcTier || m.id===wcMission;
     if(!show)continue;
@@ -108,13 +165,15 @@ function wcDraw(){
     c.save();c.strokeStyle=state==='completed'?color:state==='locked'?'#8fa1af80':'#f1d38d';
     c.lineWidth=m.id===wcMission?2.8:1.25;
     c.setLineDash(state==='locked'?[3,5]:[7,4]);
-    if(m.polygon){
-      c.beginPath();
-      m.polygon.forEach(([lon,lat],i)=>{
-        const p=wcProject(lon,lat),sx=p.x*wcView.zoom+wcView.x,sy=p.y*wcView.zoom+wcView.y;
-        if(i)c.lineTo(sx,sy);else c.moveTo(sx,sy);
-      });
-      c.closePath();c.stroke();
+    if(m.polygons.length){
+      for(const ring of m.polygons){
+        c.beginPath();
+        ring.forEach(([lon,lat],i)=>{
+          const p=wcProject(lon,lat),sx=p.x*wcView.zoom+wcView.x,sy=p.y*wcView.zoom+wcView.y;
+          if(i)c.lineTo(sx,sy);else c.moveTo(sx,sy);
+        });
+        c.closePath();c.stroke();
+      }
     }else c.strokeRect(x,y,rw,rh);
     c.restore();
   }
