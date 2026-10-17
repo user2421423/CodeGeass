@@ -14,9 +14,11 @@ require('../dist/scenarios.js');
 const bits=require('../dist/bering-landmask.js');
 const Bering=require('../dist/scenarios-bering.js');
 const COLS=120,ROWS=80,SIZE=COLS*ROWS;
-const raw=Buffer.from(bits,'base64');
+const raw=Buffer.from(bits,'base64'),shoreline=Buffer.from(Bering.shorelineBits,'base64');
+assert.equal(shoreline.length,SIZE/8,'geographic 20–80% shore reference');
 assert.equal(raw.length,SIZE/8,'1200 bytes of audited coastline expected');
 const isLand=i=>Boolean(raw[i>>3]&(128>>(i&7)));
+const isMixedShore=i=>Boolean(shoreline[i>>3]&(128>>(i&7)));
 const regionize=(g,predicate)=>{
   const visited=new Uint8Array(SIZE),regions=[],byHex=new Int16Array(SIZE).fill(-1);
   for(let i=0;i<SIZE;i++){
@@ -46,7 +48,7 @@ function audit(g){
     if(land){
       counts.land++;
       const touching=neighbors.some(n=>n.terrain==='sea');
-      if((t.terrain==='coast')!==touching)
+      if((t.terrain==='coast')!==(touching&&isMixedShore(i)))
         errors.push('wrong coast/land terrain at '+c+','+r+' '+t.terrain);
       if(!['coast','plains','forest','mountain'].includes(t.terrain))
         errors.push('unknown land terrain at '+c+','+r);
@@ -63,7 +65,7 @@ function audit(g){
   assert.deepEqual(errors.slice(0,12),[],errors.length+' geography/province errors');
   assert.equal(counts.land,3379);
   assert.equal(counts.sea,6221);
-  assert.equal(counts.coast,550);
+  assert.equal(counts.coast,216);
   assert.equal(counts.land+counts.sea,SIZE);
   const landRegions=regionize(g,t=>t.terrain!=='sea').regions;
   const waterRegions=regionize(g,t=>t.terrain==='sea').regions;
