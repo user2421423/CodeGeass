@@ -284,7 +284,7 @@ const CHALLENGE_PASS = (() => {
     const next = MILESTONES.find(m => !s.milestones[m.at]);
     const cosmetics = [...COSMETICS.values()].filter(name => s.cosmetics[name]);
     modal.innerHTML = `<div class="overlay cp-overlay"><section class="dialog wide challenge-pass-dialog" role="dialog"
-      aria-modal="true" aria-label="Conquest Challenge Pass" class="dialog wide challenge-pass-dialog">
+      aria-modal="true" aria-label="Conquest Challenge Pass">
       <header class="cp-header"><div><span class="cp-eyebrow">WORLD CONQUEST · PERMANENT · FREE</span>
         <h2>Conquest Challenge Pass</h2>
         <p>Master both world wars. Claim objectives and permanent rewards.</p></div>
