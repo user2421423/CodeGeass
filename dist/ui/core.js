@@ -274,6 +274,7 @@ function newGame() {
 function startLoadedConquest() {
   resetSession();
   game = E.applyProfile(E.createGame(setup.side, setup.difficulty, 'conquest', Date.now() >>> 0, setup.conquest), loadProfile());
+  challengePassStartRun(game);
   setWorld();
   selection = { kind: 'unit', id: ownUnits().find(u => u.cmd)?.id };
   zoom = 3.2;
