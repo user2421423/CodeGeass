@@ -180,7 +180,10 @@
     g.eliteLevels = Object.fromEntries(Object.entries(records).filter(([, r]) => r?.level).map(([id, r]) => [id, r.level]));
     for (const u of allUnits(g)) {
       // Only your own Elite Forces use your HQ levels; mission aces on other sides keep the level they were given.
-      if (!u.elite || u.side !== g.player || g.mode === 'campaign') continue;
+      // World Campaign starting conversions remain Lv.1, independent of HQ upgrades.
+      // Newly recruited elites receive their level directly from the HQ profile.
+      if (!u.elite || u.side !== g.player || g.mode === 'campaign' ||
+          (g.mode === 'scenario' && u.eliteStart)) continue;
       const old = maxHP(u),
         rec = records[u.elite];
       if (rec?.level) u.eliteLevel = rec.level;
