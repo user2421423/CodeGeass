@@ -94,7 +94,7 @@
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:2,
+    g.scenario={id:'area-18',key:'area18',title:'The Conquest of Area 18 — Arabian Peninsula',version:3,
       phase:'three-way-war',groups:[],funding:{},bounds:BOUNDS,projection:PROJECTION};
     // Britannia uses compatible Britannian Elite Forces for this
     // scenario only. No global HQ, Conquest, or Japan access is changed.
@@ -107,25 +107,37 @@
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
         E.ELITE_FORCES[id].availableTo.includes('britannia'))
     };
+    // Only actual water is navigable. The Sinai/African/Iranian shorelines are
+    // out-of-theatre land, while Bahrain, Farasan, Socotra and Masirah are playable.
     // The Red Sea, Bab al-Mandab, Arabian Sea and Persian Gulf stay navigable.
     const packed=root.AREA18_LAND_BITS || (typeof require==='function'?
       require('./area18-landmask.js'):null);
     const bits=typeof packed==='string'?packed:root.AREA18_LAND_BITS;
     if(!bits)throw Error('Area 18 shoreline mask was not loaded');
     const raw=typeof atob==='function'?atob(bits):Buffer.from(bits,'base64').toString('latin1');
-    if(raw.length!==COLS*ROWS/8)throw Error('Area 18 shoreline mask is corrupt');
+    // Foreign mainland and out-of-theatre islands are geographically land,
+    // but must never become playable territory or navigable water.
+    const outsideBits=root.AREA18_OUTSIDE_BITS;
+    if(!outsideBits)throw Error('Area 18 out-of-theatre mask was not loaded');
+    const outsideRaw=typeof atob==='function'?atob(outsideBits):
+      Buffer.from(outsideBits,'base64').toString('latin1');
+    if(raw.length!==COLS*ROWS/8||outsideRaw.length!==COLS*ROWS/8)
+      throw Error('Area 18 shoreline masks are corrupt');
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
-      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r);
-      const land=!!(raw.charCodeAt(i>>3)&(128>>(i&7)));
-      return {c,r,owner:null,terrain:land?landscape(p):'sea'};
+      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),bit=128>>(i&7),byte=i>>3;
+      const land=!!(raw.charCodeAt(byte)&bit);
+      const outside=!!(outsideRaw.charCodeAt(byte)&bit);
+      if(land&&outside)throw Error('Area 18 overlapping geographic masks');
+      return {c,r,owner:null,terrain:outside?'offmap':land?landscape(p):'sea'};
     });
-    for(const t of g.tiles)if(t.terrain!=='sea'&&
+    const playableLand=t=>t&&t.terrain!=='sea'&&t.terrain!=='offmap';
+    for(const t of g.tiles)if(playableLand(t)&&
       E.adjacent(g,t).some(n=>n.terrain==='sea'))t.terrain='coast';
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
       // Harbour cities must have an adjacent sea hex: preserve actual port
       // accessibility rather than linking city and shipyard across two hexes.
       const coastal=Object.prototype.hasOwnProperty.call(PORTS,name);
-      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
+      const at=nearest(g,locate(lon,lat),t=>playableLand(t)&&
         (!coastal||E.adjacent(g,t).some(n=>n.terrain==='sea'))&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Area 18 city '+name);
@@ -144,11 +156,11 @@
     const components=new Int16Array(g.tiles.length).fill(-1);
     let id=0;
     for(let i=0;i<g.tiles.length;i++){
-      if(g.tiles[i].terrain==='sea'||components[i]>=0)continue;
+      if(!playableLand(g.tiles[i])||components[i]>=0)continue;
       const q=[g.tiles[i]];components[i]=id;
       for(let k=0;k<q.length;k++)for(const n of E.adjacent(g,q[k])){
         const j=n.r*COLS+n.c;
-        if(n.terrain==='sea'||components[j]>=0)continue;
+        if(!playableLand(n)||components[j]>=0)continue;
         components[j]=id;q.push(n);
       }
       id++;
@@ -159,7 +171,7 @@
       if(!byComponent.has(k))byComponent.set(k,[]);
       byComponent.get(k).push(s);
     }
-    for(const t of g.tiles)if(t.terrain!=='sea'){
+    for(const t of g.tiles)if(playableLand(t)){
       const eligible=byComponent.get(components[t.r*COLS+t.c])||g.stations;
       let city=null,d=Infinity;
       for(const s of eligible){
@@ -182,7 +194,7 @@
       const s=g.stations.find(v=>v.name===name);
       if(!s||s.owner!==side)throw Error('Invalid staging city '+name);
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain!=='sea'&&!E.TERRAIN[t.terrain]?.blocked&&!E.unitAt(g,t)&&
+        const at=nearest(g,s,t=>playableLand(t)&&!E.TERRAIN[t.terrain]?.blocked&&!E.unitAt(g,t)&&
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),10);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
@@ -258,7 +270,7 @@
     create,onTurn,objective,winner,strategicScore,orderGroup};
   api.meta={map:{centreSampled:true,coastBuffer:1},
     elite:true,
-    ai:{doctrine:'europe'},saveVersion:2,
+    ai:{doctrine:'europe'},saveVersion:3,
     text:{
       era:"Arabian Peninsula · Alternate 2017",
       intro:"A three-way war for the Arabian Peninsula: Britannia dominates the south, Europia United the west and center, and the Chinese Federation the Gulf coast and east. Capture all 43 cities.",
