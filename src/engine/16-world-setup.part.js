@@ -346,7 +346,8 @@
       if (!ELITE_FORCES[id]) throw new Error('Missing Japan naval Elite Force for ' + u.side);
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      u.eliteLevel = u.cmd && u.side !== g.player ? 5 : 1;
+      // Elite scenario starting conversions begin at Lv.1 for both sides.
+      u.eliteLevel = 1;
       u.eliteStart = true;
       u.stack = 1; // Elite Forces are single frames on every side, AI included.
       if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
@@ -427,7 +428,8 @@
         throw new Error('Missing European naval/land Elite Force for '+u.side+': '+u.type);
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      u.eliteLevel = u.cmd && u.side !== g.player ? 5 : 1;
+      // European War starting conversions are Lv.1; player-built elites use HQ levels.
+      u.eliteLevel = 1;
       u.eliteStart = true;
       u.stack = 1;
       if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
