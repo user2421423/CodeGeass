@@ -21,7 +21,7 @@ Knightmare Frames.
 - **Surrender at zero cities (Conquest):** a major power surrenders only when its last city falls (`move()` checks after
   every capture; campaign missions never surrender). Its units disband, its mines and half its stockpiles pass to the
   conqueror (`surrender`, `annexDeposits`, `annexStrategic`). A capital is just the richest city. Defeat every rival,
-  or hold the most cities at the 120-turn armistice; losing your last city loses the war.
+  with no conquest turn limit; losing your last city loses the war.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
 **Campaign:** three story arcs as mission-based campaigns, each played from either side: Season 1 and R2 (Black Knights or
