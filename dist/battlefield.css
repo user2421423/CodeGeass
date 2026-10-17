@@ -210,7 +210,10 @@ h3 {
 .map-legend span:nth-child(n + 3) {
   display: none;
 }
+/* The map already shows selections and tactical highlights directly.
+   Remove the redundant floating terrain/hover text (e.g. "Ocean"). */
 .map-caption {
+  display: none;
   position: absolute;
   bottom: 160px;
   left: 25px;
