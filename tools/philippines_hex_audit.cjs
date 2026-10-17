@@ -7,6 +7,14 @@ require('../dist/scenarios.js');
 const scenario=require('../dist/scenarios-philippines.js');
 const bits=Buffer.from(require('../dist/philippines-landmask.js'),'base64');
 const W=144,H=112,N=W*H;
+const shore=new Uint8Array(N);
+let shorePos=0,shoreBit=0;
+for(const run of scenario.shoreRLE.split('.')){
+ const length=parseInt(run,36);
+ if(shoreBit)shore.fill(1,shorePos,shorePos+length);
+ shorePos+=length;shoreBit^=1;
+}
+assert.equal(shorePos,N,'precise Philippines shoreline coverage');
 assert.equal(bits.length,N/8);
 const g=scenario.create('britannia','normal',227);
 // Check that the visual map's lon/lat projection aligns exactly with the
@@ -49,7 +57,7 @@ for(let i=0;i<N;i++){
   landCount++;
   assert.ok(scenario.sides.includes(t.owner),'unowned land '+E.key(t));
   assert.ok(Number.isInteger(t.provinceCity)&&g.stations[t.provinceCity]);
-  const isCoast=E.adjacent(g,t).some(p=>p.terrain==='sea');
+  const isCoast=Boolean(shore[i])&&E.adjacent(g,t).some(p=>p.terrain==='sea');
   assert.equal(t.terrain==='coast',isCoast,'wrong coastline '+E.key(t));
   coasts+=isCoast;
  }else {
