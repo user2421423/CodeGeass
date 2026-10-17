@@ -746,11 +746,11 @@ function paintMapLayer(scale, detail, left, right, top, bottom, layer = 'all') {
   // forwarding. A capture still invalidates only political atlas chunks.
   const geographyLayer = layer === 'political' ? 'all' : layer;
   const atlas = pacificSky ? false : GEOGRAPHY.paint(ctx, game, left, right, top, bottom, scale, geographyLayer);
-  if (layer === 'political') {
-    paintPoliticalBorders(scale, left, right, top, bottom);
-    return;
-  }
-  if (!atlas) {
+  // The regional political pass is opaque: it covers decorations drawn
+  // into the static geographic canvas. Keep the terrain/grid overlay on the
+  // final political canvas so mountain, forest and other symbols stay visible
+  // after zoom transitions and captures. Combined maps use this same overlay.
+  if (layer !== 'political' && !atlas) {
     for (const t of visibleMapTiles(left, right, top, bottom)) {
       const c = hexCenter(t);
       if (!visible(c)) continue;
@@ -774,7 +774,7 @@ function paintMapLayer(scale, detail, left, right, top, bottom, layer = 'all') {
   // A faint tactical grid is a separate *overlay*, not the map's terrain.
   // At distant zoom levels the grid vanishes altogether; selection and
   // movement/attack ranges continue to use their original vivid hex outlines.
-  if (detail && R * scale >= 22) {
+  if (layer !== 'static' && detail && R * scale >= 22) {
     // Tactical grid gains contrast as the camera zooms closer to individual hexes.
     const hexPixels = R * scale;
     const strength = hexPixels < 18 ? 0.025 :
