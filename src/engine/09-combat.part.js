@@ -107,6 +107,12 @@
     if (t.boarding && (target ? victim.branch === 'Armor' : !!st)) attack *= 1.50;
     // HQ research: branch weapons and class counters.
     attack *= 1 + unitTech(g, u, 'guns');
+    // Armored Exploitation replaces the old kill-chain cap bonus. It applies
+    // only to ordinary land Armor attacking a living, weakened enemy frame.
+    // It does not boost counterfire, city defenses, elites or amphibious units.
+    if (!counter && !t.elite && !t.naval && t.branch === 'Armor' &&
+        target && target.hp > 0 && target.hp < maxHP(target) * 0.5)
+      attack *= 1 + techValue(g, u.side, 'armor.assault');
     if (!t.naval && t.branch === 'Infantry' && victim && !victim.naval) {
       if (victim.branch === 'Armor') attack *= 1 + techValue(g, u.side, 'infantry.antiarmor');
       if (victim.branch === 'Artillery') attack *= 1 + techValue(g, u.side, 'infantry.antiartillery');
@@ -497,12 +503,7 @@
     const unlimitedChain = hasBreakthrough &&
       (type.elite || type.naval === 'amphibious' ||
         ['medium', 'heavy', 'super'].includes(type.cls));
-    let cap = unlimitedChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
-    // Finite-chain Breakthrough Doctrine is retained for eligible future types.
-    if (destroyed && a.hp > 0 && hasBreakthrough && a.chain === cap) {
-      const chance = !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor' ? techValue(g, a.side, 'armor.assault') : 0;
-      if (chance && random(g) < chance) cap++;
-    }
+    const cap = unlimitedChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
     let breakthrough = false;
     if (destroyed && a.hp > 0 && hasBreakthrough && a.chain < cap) {
       // Breakthrough refreshes the attack. Heavy and super-heavy movement

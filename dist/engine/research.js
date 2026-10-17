@@ -182,12 +182,14 @@
           text: v => `−${pct(v)} damage from Artillery`,
         },
         assault: {
-          name: 'Breakthrough Doctrine',
-          values: [0.5, 0.8],
+          // Keep this ID to retain saved Breakthrough Doctrine purchases and
+          // Assault Momentum's existing prerequisite.
+          name: 'Armored Exploitation',
+          values: [0.10, 0.20],
           tiers: [2, 4],
           costs: [100, 200],
           req: ['guns', 2],
-          text: v => `${pct(v)} chance a kill grants one more breakthrough than the cap`,
+          text: v => `+${pct(v)} damage against units below 50% HP (ordinary land Armor)`,
         },
         formation: {
           name: 'Lance Formation',

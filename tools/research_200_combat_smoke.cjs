@@ -47,6 +47,42 @@ const damageBefore=u.damage().unit;
 g.tech[side]['armor.momentum']=3;
 u.att.expAssaultMomentumTurn=g.turn;
 assert.ok(u.damage().unit>damageBefore,'Assault Momentum boosts follow-on attack');
+// Armored Exploitation replaces the obsolete Breakthrough Doctrine under
+// the same research ID, preserving 76 technologies and 200 upgrades.
+const exploitation = E.TECH_TREE.armor.nodes.assault;
+assert.equal(exploitation.name, 'Armored Exploitation');
+assert.deepEqual(exploitation.values, [0.10, 0.20]);
+assert.deepEqual(exploitation.costs, [100, 200]);
+assert.deepEqual(exploitation.tiers, [2, 4]);
+assert.deepEqual(exploitation.req, ['guns', 2]);
+assert.equal(E.TECH_TREE.armor.nodes.momentum.req[0], 'assault');
+assert.equal(E.normalizeResearch({ 'armor.assault': 2 })['armor.assault'], 2,
+  'existing purchased upgrade levels retain their research ID');
+for (const type of ['sutherland','vincent_ward','vincent_commander','brighton']) {
+  const e=place(type,'glasgow');
+  e.def.hp=60; // Glasgow maximum HP is 150; below half (75).
+  const before=e.damage().unit;
+  g.tech[side]['armor.assault']=1;
+  const level1=e.damage().unit;
+  g.tech[side]['armor.assault']=2;
+  const level2=e.damage().unit;
+  assert.ok(Math.abs(level1/before-1.10)<0.04, type+' +10% vs weakened frames');
+  assert.ok(Math.abs(level2/before-1.20)<0.04, type+' +20% vs weakened frames');
+}
+let exp=place('sutherland','glasgow');
+g.tech[side]['armor.assault']=2;
+const full=exp.damage().unit;
+exp.def.hp=75; // Exactly 50% HP is not eligible.
+assert.equal(exp.damage().unit,full,'50% HP does not activate the bonus');
+exp.def.hp=74;
+assert.ok(exp.damage().unit>full,'strictly below 50% HP activates it');
+for (const type of ['glasgow','gareth','elite_lancelot','portman_ii']) {
+  const e=place(type,'glasgow');
+  e.def.hp=60;
+  const before=e.damage().unit;
+  g.tech[side]['armor.assault']=2;
+  assert.equal(e.damage().unit,before,type+' does not inherit ordinary land Armor bonus');
+}
 u=place('sutherland','glasgow');
 const c0=u.damage().counter;
 g.tech[foe]['infantry.armorcounters']=3;
