@@ -10,7 +10,7 @@ let profile = {};
 const queued = [];
 const dialog = { innerHTML: '', querySelector: () => ({ scrollTop: 0 }) };
 const sandbox = {
-  E, console, modal: dialog, esc: String, focusDialog() {},
+  E, console, game: null, modal: dialog, esc: String, focusDialog() {},
   loadProfile: () => profile,
   saveProfile: p => { profile = p; return true; },
   pendingEliteChoiceHTML: () => '',
@@ -89,8 +89,10 @@ const copy=E.unpackSave(E.packSave(engine));
 assert.equal(copy.challengePassRun.produced,5,'audit survives save/reload');
 assert.equal(copy.challengePassRun.officerLost,true);
 assert.ok(land);
+sandbox.game=engine;
 CP.open('mastery');
 assert.match(dialog.innerHTML,/Conquest Challenge Pass/);
+assert.match(dialog.innerHTML,/New frames: /);
 CP.open('rewards');
 assert.match(dialog.innerHTML,/1,600 CP/);
 console.log('Conquest Challenge Pass objectives, eligibility, claims, rewards, save safety and UI: PASS');
