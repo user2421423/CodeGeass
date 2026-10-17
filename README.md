@@ -63,7 +63,7 @@ a clean playtest is not itself proof that a scenario is balanced.
 - **City-controlled provinces:** each initially owned land hex is permanently assigned to the nearest city of its starting faction. Capturing a city transfers its entire province, not neighboring cities' land; moving a unit or landing from a carrier does not repaint hexes. Destroyed cities pass their provinces to another surviving friendly city, and surrender transfers remaining territory to the victor. Previously saved conquests acquire city provinces on load.
 - **Surrender at zero cities:** a power surrenders only when it has lost every city; its armies disband and its mines
   and half its stockpiles pass to the conqueror. A capital (Pendragon, Paris, Luoyang) is its richest city, not a
-  knockout. Defeat every rival to win, or hold the most cities at the 120-turn armistice. Lose your last city and the
+  knockout. Defeat every rival to win; there is no conquest turn limit. Lose your last city and the
   war is lost.
 - **Knightmares only, in three branches** (infantry, armor and artillery), ten per power:
   | Branch | Class | Britannia | E.U. | Federation |
