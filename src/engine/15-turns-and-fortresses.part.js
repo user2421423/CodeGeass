@@ -286,7 +286,6 @@
     checkVictory(g);
     return { ok: true, name, from: { c: s.c, r: s.r }, to: { c: foe.c, r: foe.r }, id: foe.id, damage, destroyed, hit };
   }
-  const ARMISTICE = 120;
   function checkVictory(g) {
     if (g.over) { finalizeHonors(g); return g.over; }
     decideVictory(g);
@@ -302,8 +301,7 @@
   function scenarioMeta(g) {
     return (g?.mode === 'scenario' && root.Knightmare.scenarios?.byId?.[g.scenario?.id]?.meta) || {};
   }
-  // World conquest: every rival surrenders (a power surrenders when it holds no city), or hold the most cities at the
-  // armistice.
+  // World conquest ends only when a faction or coalition eliminates every rival power.
   function decideVictory(g) {
     if (g.mode === 'campaign') return hooks.decide?.(g);
     if (g.mode === 'scenario') {
@@ -341,14 +339,13 @@
       const ufn = g.stations.filter(s => s.owner === 'cf').length;
       const britPlayer = g.player === 'britannia' || g.player === 'eb';
       const coalitionWinner = britPlayer ? g.player : 'britannia';
-      if (!ufn || !britannian || g.turn > ARMISTICE) {
-        const winningTeam = !ufn ? 'britannian' : !britannian ? 'ufn' : britannian === ufn ? 'draw' : britannian > ufn ? 'britannian' : 'ufn';
+      if (!ufn || !britannian) {
+        const winningTeam = !ufn ? 'britannian' : 'ufn';
         g.over = {
-          winner: winningTeam === 'draw' ? 'draw' : winningTeam === 'ufn' ? 'cf' : coalitionWinner,
+          winner: winningTeam === 'ufn' ? 'cf' : coalitionWinner,
           team: winningTeam,
           reason: !ufn ? 'The U.F.N. has surrendered. The Britannian alliance is victorious.'
-            : !britannian ? 'Both Britannian powers have surrendered. The U.F.N. is victorious.'
-            : `The ${ARMISTICE}-turn armistice: Britannian alliance ${britannian} cities; U.F.N. ${ufn} cities.${winningTeam === 'draw' ? ' A tie is a draw.' : ''}`,
+            : 'Both Britannian powers have surrendered. The U.F.N. is victorious.',
         };
       }
       return g.over;
@@ -363,16 +360,6 @@
         winner: P,
         reason: `Every rival power has surrendered to the ${FACTIONS[P].name}. The world is yours.`,
       };
-    else if (g.turn > ARMISTICE) {
-      const held = s => g.stations.filter(c => c.owner === s).length,
-        mine = held(P),
-        best = Math.max(...rivals.map(held)),
-        leader = rivals.find(s => held(s) === best);
-      g.over = {
-        winner: mine === best ? 'draw' : mine > best ? P : leader,
-        reason: `The ${ARMISTICE}-turn armistice: you hold ${mine} cities; the strongest rival holds ${best}.`,
-      };
-    }
     return g.over;
   }
   function objectiveText(g) {
