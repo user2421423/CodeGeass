@@ -32,7 +32,12 @@
     u.hpTech = hullTech(g, u);
     u.hp = maxHP(u);
     g.units.push(u);
-    if(g.warReport)recordWarEvent(g,'unitProduced',side,{unitId:u.id,unitType:type});
+    // Challenge Pass: count newly created frames, including ships, amphibious and Elite Forces.
+    if (g.mode === 'conquest' && side === g.player && g.challengePassRun?.version === 1) {
+      g.challengePassRun.produced += u.stack;
+      if (u.elite) g.challengePassRun.eliteProduced = true;
+    }
+    if(g.warReport)recordWarEvent(g,'unitProduced',side,{unitId:u.id,unitType:type,stack:u.stack});
     return u;
   }
   function movement(g, u) {
