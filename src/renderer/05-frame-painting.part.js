@@ -70,8 +70,10 @@ function draw(time, dt) {
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
       t = E.tile(game, cc, rr),
-      c = hexCenter(t),
-      style = movementTileStyle(t),
+      c = hexCenter(t);
+    // Range overlays can contain hundreds of hexes outside the camera.
+    if (!visible(c) || (!wraps() && (c.x < left || c.x > right))) continue;
+    const style = movementTileStyle(t),
       naval = E.isSea(t) || (movingShip && E.isCoast(t));
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
@@ -107,6 +109,7 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [cc, rr] = k.split(',').map(Number),
       c = hexCenter({ c: cc, r: rr });
+    if (!visible(c) || (!wraps() && (c.x < left || c.x > right))) continue;
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
       ctx.fillStyle = '#e8343050';
@@ -441,8 +444,10 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
-    if (visible(p)) mapHasPulse = true;
-    for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
+    if (!visible(p) || (!wraps() && (p.x < left || p.x > right))) continue;
+    const xs = copies(p.x);
+    if (xs.length) mapHasPulse = true;
+    for (const x of xs) drawCrosshair({ x, y: p.y }, time, scale);
   }
   // The selected Eliminator carrier's cover, any warhead aimed inside it is neutralized: a faint wash and a bright
   // cyan outline along its edge, which stays readable over the movement range.
