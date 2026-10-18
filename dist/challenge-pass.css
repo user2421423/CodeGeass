@@ -123,3 +123,7 @@
 .cp-equipped,.cp-hq-emblem{display:flex;align-items:center;gap:7px}
 .cp-equipped .cp-reward-symbol,.cp-hq-emblem .cp-reward-symbol{width:33px;height:33px}
 @media(max-width:700px){.cp-cosmetics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Preserve the original symbolic cosmetic designs in roadmap, gallery and HQ. */
+.cp-cosmetic-symbol{display:inline-flex;align-items:center;justify-content:center;font-size:32px;line-height:1;color:#f1d49a}
+.cp-cosmetic-card .cp-cosmetic-symbol{width:62px;height:62px;font-size:42px}
