@@ -66,6 +66,12 @@ jobs:
                 export NODE_PATH="$RUNNER_TEMP/map-perf-deps/node_modules"
                 export BENCHMARK_DIST="$RUNNER_TEMP/map-$state/dist"
                 export BENCHMARK_OUTPUT="$RUNNER_TEMP/map-bench/$profile-$state-$pass.json"
+                if [ "$pass" = 1 ]; then
+                  export BENCHMARK_SCREENSHOT_DIR="$RUNNER_TEMP/map-bench/screenshots"
+                  export BENCHMARK_SCREENSHOT_PREFIX="$profile-$state-$pass"
+                else
+                  unset BENCHMARK_SCREENSHOT_DIR BENCHMARK_SCREENSHOT_PREFIX || true
+                fi
                 if [ "$profile" = mobile ]; then
                   export BENCHMARK_MOBILE=1
                 else
