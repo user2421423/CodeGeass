@@ -76,8 +76,12 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
   const d = b.dataset;
+  if (d.rewardOpen !== undefined) {
+    openEliteRewardBox(d.rewardOpen, b);
+    return;
+  }
   if (d.rewardElite) {
-    const result = selectEliteReward(d.rewardElite);
+    const result = selectEliteReward(d.rewardElite, d.rewardKey ?? null);
     if (!result.ok) { toast(result.reason); return; }
     const pane = modal.querySelector('[data-elite-choice-panel]');
     if (pane) pane.outerHTML = pendingEliteChoiceHTML() || '<div class="reward">All pending Elite fragment rewards claimed.</div>';
