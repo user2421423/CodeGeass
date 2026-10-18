@@ -905,21 +905,21 @@
       hp: 600, attack: 145, armor: 22, move: 1, min: 1, max: 1, pen: 0.75, crit: 0.1, cost: 950
     },
 
-    // Black Knights naval conversions use existing Burai and Gekka art.
+    // Black Knights naval conversions use Guren Type-01 and Gekka Shiden art.
     // These are game-specific amphibious variants, not new canonical KMF models.
     bk_amphibious: {
       ...AMPHIBIOUS, side: 'bk',
-      name: 'Burai Amphibious I', model: 'Type-1R Marine Conversion',
-      gen: '4th generation', role: 'Amphibious I',
+      name: 'Guren Type-01 Amphibious', model: 'Type-01 Marine Conversion',
+      gen: '7th-generation equivalent', role: 'Amphibious I',
       weapon: 'Sealed rifle · torpedo pods · waterjets',
-      lore: 'Black Knights coastal adaptation of the Burai for sea crossings and landings.',
+      lore: 'A game-specific Black Knights marine adaptation of the Guren Type-01 for sea crossings and landings.',
     },
     bk_amphibious_ii: {
       ...AMPHIBIOUS_II, side: 'bk',
-      name: 'Gekka Amphibious II', model: 'Gekka Marine Conversion',
+      name: 'Gekka Shiden Amphibious', model: 'Type-03H/AC Marine Conversion',
       gen: '7th-generation equivalent', role: 'Amphibious II',
       weapon: 'Torpedo pods · naval propulsion · close-combat armament',
-      lore: 'A Gekka-based Black Knights marine conversion with the standard Type II aquatic bonus.',
+      lore: 'A game-specific Black Knights marine adaptation of the Gekka Shiden with the standard Type II aquatic bonus.',
     },
     // Ordinary Black Knights fleet carrier, replacing the former scenario-only Elite hull.
     bk_carrier: {
