@@ -50,3 +50,6 @@
  .elite-box-unit{padding:10px}
  .elite-box-unit .unit-spec{gap:4px}
 }
+
+/* Expand narrow result dialogs only while comparing; keep normal results compact. */
+.dialog.narrow:has(.elite-lootbox-picker:not(:empty)){width:min(96vw,1100px);max-width:1100px}
