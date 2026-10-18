@@ -23,3 +23,11 @@ jobs:
         run: node tools/scenario_sim.cjs war-for-australia britannia normal 11 2
       - name: Scenario registration and baseline short simulation
         run: node tools/scenario_sim.cjs --all 13 1 war-for-australia
+      - name: Division of Japan normal simulation
+        run: node tools/scenario_sim.cjs division-japan britannia normal 17 2
+      - name: European War hard simulation
+        run: node tools/scenario_sim.cjs european-war eu hard 17 2
+      - name: Invasion of Japan challenge simulation
+        run: node tools/scenario_sim.cjs invasion-japan britannia challenge 17 2
+      - name: Philippines island-defense simulation
+        run: node tools/scenario_sim.cjs philippines-invasion cf normal 17 2
