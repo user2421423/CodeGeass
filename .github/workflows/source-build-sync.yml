@@ -67,6 +67,8 @@ jobs:
         run: node tools/hud_income_display_smoke.cjs
       - name: Verify Next Unit includes actionable fortress beams
         run: node tools/next_unit_fortress_beam_smoke.cjs
+      - name: Verify unlimited army-group membership and scenario organization
+        run: node tools/army_group_unlimited_smoke.cjs
       - name: Verify direct city tier development and factory defense separation
         run: node tools/city_tier_upgrade_smoke.cjs
       - name: Audit every Philippine hex and invasion route
