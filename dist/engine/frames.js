@@ -550,6 +550,7 @@
       weapon:'Polearm · reinforced armor', lore:'Federation mainline Chuyen adapted for prolonged fighting.' },
     chuyen_heavy: { side:'cf', cls:'heavy', worldOnly:true, name:'Chuyen Heavy', model:'XT-401/H', gen:'7th-generation equivalent',
       weapon:'Heavy polearm · shield emitters', lore:'Reinforced Federation Chuyen for heavy assault formations.' },
+    // Legacy type retained so saves with pre-replacement Chuyen Command units still load.
     chuyen_super: { side:'cf', cls:'super', worldOnly:true, name:'Chuyen Command', model:'XT-401/S', gen:'7th-generation equivalent',
       weapon:'High-output polearm · command array', lore:'Limited-production Federation command Chuyen.' },
     gun_ru_support: { side:'cf', cls:'support', worldOnly:true, name:'Gun-Ru Support', model:'TQ-19/F', gen:'4th generation',
@@ -1158,7 +1159,7 @@
     cf2017: {
       scout:'gun_ru', assault:'gun_ru_assault', raider:'gun_ru_light',
       light:'chuyen', medium:'chuyen_medium', heavy:'chuyen_heavy',
-      super:'chuyen_super', support:'gun_ru_support',
+      super:'shen_hu', support:'gun_ru_support',
       rocket:'gun_ru_rocket', siege:'gun_ru_siege'
     },
     bk: {
