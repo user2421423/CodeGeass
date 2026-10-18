@@ -209,11 +209,11 @@
         },
         float: {
           name: 'Float System',
-          values: [1, 2, 3, 4],
-          tiers: [3, 3, 4, 4],
-          costs: [100, 200, 300, 400],
+          values: [1, 2],
+          tiers: [3, 3],
+          costs: [100, 200],
           req: ['armor', 2],
-          text: v => `Armor and amphibious Knightmares gain +${v} land movement`,
+          text: v => `Land Armor gains +${v} movement; amphibious Knightmares gain +${v * 2} land movement`,
         },
         reactive: {
           name: 'Reactive Counterfire',
