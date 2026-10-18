@@ -105,7 +105,7 @@ def main() -> None:
     )
     sources_path = ART / "sources.json"
     sources = json.loads(sources_path.read_text("utf-8"))
-    for record in sources["retrieved"].values():
+    for record in sources["retrieved"]:
         if record.get("kind") == "units" and record.get("id") == "estrella_cc":
             record["file"] = "units/" + filename
             record["page"] = PAGE
