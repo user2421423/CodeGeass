@@ -1,0 +1,18 @@
+/* Weekly regional operation: an editorial spotlight above the regular index. */
+.scenario-weekly-section{margin:0 4px 12px;padding:3px 2px 10px;background:linear-gradient(125deg,#353029,#232b33 70%);border:1px solid #8e754d}
+.scenario-weekly-section .scenario-catalog-group{color:#f1d39b;margin:0 5px;padding:9px 7px}
+.scenario-weekly-section .scenario-catalog-group span{color:#decba9}
+.scenario-weekly-entry{background:#272b32;border-left-color:#b8965f}
+.scenario-weekly-entry:hover{background:#3f3933;border-left-color:#e2bd76}
+.scenario-weekly-entry.active{background:#504030;border-left-color:#efcf91}
+.scenario-weekly-entry .scenario-entry-marker{color:#e8c37e}
+.scenario-weekly-entry .scenario-entry-copy strong{color:#fff0cd}
+.scenario-weekly-heading{margin:7px 0 0;color:#d9b87a;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.1em}
+.scenario-weekly-info{border:1px solid #78694b;background:#211f24;padding:12px;display:flex;flex-direction:column;gap:10px}
+.scenario-weekly-rewards{display:grid;gap:5px}
+.scenario-weekly-reward-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px;border-bottom:1px solid #534a42;padding:5px 0;color:#e6d8c3;font:11px/1.4 system-ui,sans-serif}
+.scenario-weekly-reward-row span:last-child{color:#d1b988;font-variant-numeric:tabular-nums}
+.scenario-weekly-reward-row.claimed{opacity:.58}
+.scenario-brief .scenario-weekly-earn{color:#eed5a5;font-size:11px}
+.scenario-weekly-earn b{color:#ffe2a7}
+@media(max-width:760px){.scenario-weekly-info{padding:10px}.scenario-weekly-reward-row{font-size:10px}}

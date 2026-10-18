@@ -80,9 +80,10 @@ const SAVE_KEY = 'knightmare-conquest-save',
   chosenSaveKey = () => setup.conquest === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY,
   CAMPAIGN_KEY = 'knightmare-conquest-mission',
   SCENARIO_KEY = 'knightmare-conquest-scenario',
+  WEEKLY_SCENARIO_KEY = 'knightmare-weekly-scenario-save',
   WAR_CAMPAIGN_BATTLE_KEY = KnightmareWarCampaign.BATTLE_KEY,
   PROFILE_KEY = 'knightmare-conquest-profile',
-  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? (game.warCampaign ? WAR_CAMPAIGN_BATTLE_KEY : SCENARIO_KEY)
+  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? (game.warCampaign ? WAR_CAMPAIGN_BATTLE_KEY : game.weeklyScenario ? WEEKLY_SCENARIO_KEY : SCENARIO_KEY)
     : game.era === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY);
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
@@ -201,7 +202,9 @@ function save() {
   if (game.mode === 'scenario' && game.scenario?.id === 'training-grounds') return true;
   if (game.phase !== game.player && !game.over) return false;
   try {
-    localStorage.setItem(saveKey(), JSON.stringify(E.packSave(game)));
+    const packed=E.packSave(game);
+    if(game.weeklyScenario)packed.weeklyScenario={...game.weeklyScenario};
+    localStorage.setItem(saveKey(), JSON.stringify(packed));
     saveOk = true;
     return true;
   } catch (e) {
@@ -212,10 +215,14 @@ function save() {
 }
 function getSave(key = SAVE_KEY) {
   try {
-    const g = E.unpackSave(JSON.parse(localStorage.getItem(key)));
-    if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player])
+    const raw=JSON.parse(localStorage.getItem(key)), g = E.unpackSave(raw);
+    if(g && raw?.weeklyScenario)g.weeklyScenario={...raw.weeklyScenario};
+    if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player]) {
       // Browsing a save must not migrate it with missing scenario rules.
-      return g.mode === 'scenario' && !E.scenarios?.byId?.[g.scenario?.id] ? g : E.migrateSave(g);
+      const migrated=g.mode === 'scenario' && !E.scenarios?.byId?.[g.scenario?.id] ? g : E.migrateSave(g);
+      if(migrated && raw?.weeklyScenario)migrated.weeklyScenario={...raw.weeklyScenario};
+      return migrated;
+    }
   } catch (e) {}
   return null;
 }
