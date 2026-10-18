@@ -11,12 +11,19 @@ function battle(type, level = 1, commander = null) {
   const g = E.createGame(side, 'normal', 'conquest', 20261018, 'world');
   g.phase = side;
   g.units = [];
-  const city = g.stations.find(s => s.owner === enemy &&
-    adjacent(g, s).some(p => p.terrain === 'plains' &&
-      !E.internal.stationAt(g, p)));
-  assert.ok(city, 'An enemy city with adjacent plains exists');
-  const start = adjacent(g, city).find(p => p.terrain === 'plains' &&
-    !E.internal.stationAt(g, p));
+  const firingPositions = city => {
+    const neighbors = adjacent(g, city);
+    const candidates = E.TYPES[type].min === 2
+      ? neighbors.flatMap(p => adjacent(g, p)).filter(p =>
+          !neighbors.some(n => n.c === p.c && n.r === p.r) &&
+          (p.c !== city.c || p.r !== city.r))
+      : neighbors;
+    return candidates.filter(p => p.terrain === 'plains' &&
+      !E.internal.stationAt(g, p));
+  };
+  const city = g.stations.find(s => s.owner === enemy && firingPositions(s).length);
+  assert.ok(city, 'An enemy city with a legal firing position exists');
+  const start = firingPositions(city)[0];
   assert.ok(start);
   city.shield = 1;
   const attacker = E.newUnit(g, type, side, start.c, start.r);
