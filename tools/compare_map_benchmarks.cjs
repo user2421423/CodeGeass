@@ -52,7 +52,7 @@ for(const profile of profiles){
 }
 const imageDir=path.join(dir,'screenshots');
 if(fs.existsSync(imageDir)){
-  const files=fs.readdirSync(imageDir).filter(f=>/^(desktop|mobile)-before-1-.*-zoom(24|38)\\.png$/.test(f));
+  const files=fs.readdirSync(imageDir).filter(f=>/^(desktop|mobile)-before-1-.*-zoom(24|38)\.png$/.test(f));
   const equal=[], different=[], absent=[];
   for(const before of files){
     const after=before.replace('-before-1-','-after-1-');
