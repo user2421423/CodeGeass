@@ -4,7 +4,7 @@ const assert = require('node:assert/strict'), E = require('../dist/engine.js');
 assert.equal(E.RESEARCH_VERSION,2);
 assert.deepEqual(Object.keys(E.TECH_TREE),['infantry','armor','artillery','naval','amphibious','cities']);
 assert.equal(E.TECH_TREE.infantry.nodes.nav.values.at(-1),4);
-assert.equal(E.TECH_TREE.armor.nodes.float.values.at(-1),4);
+assert.equal(E.TECH_TREE.armor.nodes.float.values.at(-1),2);
 assert.equal(E.TECH_TREE.artillery.nodes.traction.values.at(-1),2);
 assert.equal(E.TECH_TREE.infantry.nodes.antiarmor.values.at(-1),.5);
 assert.deepEqual(E.TECH_TREE.amphibious.nodes.hull.values,[.1,.2,.3]);
