@@ -183,8 +183,13 @@ const mapAtlasPerformance = {
   reusedZoomFrames: 0, blendedZoomFrames: 0, idleBatches: 0, maxBatchMs: 0,
   basePaints: 0, politicalPaints: 0,
   synchronousPaints: 0, deferredPaints: 0, paintMs: 0, maxPaintMs: 0,
+  dynamicUnitRenderMs: 0, dynamicUnitFrames: 0, dynamicUnitMaxMs: 0,
+  dynamicVisibleUnitTotal: 0, dynamicOffscreenUnitTotal: 0,
 };
 if (typeof window !== 'undefined') window.KNIGHTMARE_MAP_PERF = {
+  // Opt-in per-frame unit instrumentation. Normal gameplay performs no timing
+  // calls; existing benchmark clients can enable it without a build flag.
+  traceDynamic: false,
   snapshot: () => ({ ...mapAtlasPerformance, cacheBytes:mapAtlasBytes(), cacheBudgetBytes:MAP_ATLAS_BYTE_BUDGET, queued: mapAtlasWarmQueue.length,
     staticChunks: mapAtlasStaticTiles.size, politicalChunks: mapAtlasPoliticalTiles.size,
     combinedChunks: mapAtlasTiles.size, fallbackReady: mapAtlasFallback.ready,
