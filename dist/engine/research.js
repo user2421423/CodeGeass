@@ -185,9 +185,9 @@
           // Keep this ID to retain saved Breakthrough Doctrine purchases and
           // Assault Momentum's existing prerequisite.
           name: 'Armored Exploitation',
-          values: [0.10, 0.20],
-          tiers: [2, 4],
-          costs: [100, 200],
+          values: [0.10, 0.20, 0.30, 0.40],
+          tiers: [2, 4, 4, 4],
+          costs: [100, 200, 300, 400],
           req: ['guns', 2],
           text: v => `+${pct(v)} damage against units below 50% HP (ordinary land Armor)`,
         },
