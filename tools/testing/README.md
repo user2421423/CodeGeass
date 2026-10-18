@@ -1,6 +1,6 @@
 # Automated gameplay testing
 
-Ownership: `tooling-and-ci` (`tools/**`, `.github/workflows/**`, `.gitignore`). These tools do not change gameplay, unit data or assets. Build first; there are no npm dependencies. Node 22 is the CI runtime; local verification also used Node 24.
+Testing ownership: `tooling-and-ci` (`tools/**`, `.github/workflows/**`, `.gitignore`). The simulator observes the shipped rules. This branch also contains focused AI, engine-rules and custom-scenario defect fixes documented in [FIXES.md](FIXES.md); unit statistics and visual assets are unchanged. Build first; there are no npm dependencies. Node 22 is the CI runtime; local verification also used Node 24.
 
 ```sh
 node tools/build_sources.cjs
@@ -10,23 +10,23 @@ node tools/gameplay_checks.cjs full
 
 ## Regression suites
 
-The fast suite runs real-engine interaction tests, tournament-tool tests and a bounded set of existing smoke checks. The full suite additionally discovers **every** `tools/*_smoke.cjs`, checks every regional scenario/player/difficulty setup and runs strict reproductions of known gameplay defects. Individual smoke scripts run in isolated child processes with timeouts. No failed checks are skipped or converted into passing assertions.
+The fast suite runs real-engine interaction tests, tournament-tool tests, all four defect reproductions, the eight affected Elite roster configurations and a bounded set of existing smoke checks. The full suite additionally discovers **every** `tools/*_smoke.cjs`, checks every regional scenario/player/difficulty setup and runs strict reproductions of known gameplay defects. Individual smoke scripts run in isolated child processes with timeouts. No failed checks are skipped or converted into passing assertions.
 
 | Area | Executable coverage | Remaining gaps |
 |---|---|---|
 | Combat / movement / breakthroughs | `interactions.test.cjs`; amphibious, city-defense-refresh, regular/Elite class smoke checks | Exhaustive terrain, critical-hit and every commander combination |
 | Commander skills | Zero reactivation with heavy movement caps and persistent cooldown; commander assignment/progression and signature-related city-break smoke checks | Most individual active/passive skills need dedicated effect and expiry assertions |
 | Research / economy | Research combat, pricing/progression/mobility, advanced production/reinforcement and AI affordability smoke checks | Long-run scarcity and multi-resource reserve stress |
-| City upgrades / defenses | Resource spending, independent factory levels, once-per-turn lock through save/load, fortress checks | Strict regional-HQ load-capacity regression currently exposes an inherited defect |
+| City upgrades / defenses | Resource spending, independent factory levels, once-per-turn locks, regional HQ damage/capacity retention, inflated-save repair and fortress checks | Exhaustive fortification/research/difficulty combinations |
 | Naval | Carrier cargo through loading, disembarkation/capture/ready state, repairs, amphibious chain actions | Multi-carrier blocking, contested beach routing and invasion causality |
 | Conquest / campaign | Capital versus elimination rules, UFN alliances/rosters, campaign rewards/repeats, World Campaign level/color rules | Every campaign victory/unlock path and all strategic weapon interactions |
 | Save/load | Compact regional terrain/ownership, deterministic action continuation, damaged era-migrated cargo, action limits/cooldowns | Corrupt/truncated/untrusted saves, schema-version fuzzing and long replay equivalence |
-| Faction rosters | Every regional/player/difficulty combination; Federation 2017 / UFN 2018, classes, ordinary/Elite eligibility | Four custom Elite scenario converters currently fail strict eligibility checks |
+| Faction rosters | Every regional/player/difficulty combination; Federation 2017 / UFN 2018, classes, ordinary/Elite eligibility and custom-converter cargo | Exhaustive reinforcement/production paths after long games |
 | Rewards | Story mastery per difficulty, persistent repeat prevention, reward economy, loot boxes, challenge pass and max-level fragment smoke checks | Browser storage interruption and migration across multiple old profiles |
 
 Some older smoke checks inspect source text or data tables. They remain useful compatibility checks, but are not substitutes for gameplay execution. See `interactions.test.cjs` for the added multi-mechanic behavioral tests.
 
-**Known failures are intentional findings, not a green full-suite claim.** At the audited main revision, eight Elite roster combinations, two HQ save/load reproductions and an Elite Panama AI reproduction fail. See [FINDINGS.md](FINDINGS.md). Fast checks pass; the extensive regression job stays red until the owners fix these defects. `node --test tools/testing/known_defects.test.cjs` reproduces the HQ and Panama issues directly.
+**The original defects are fixed.** The eight failing Elite roster combinations, two HQ save/load cases and Elite Panama AI reproduction all pass now. Their assertions remain active, with stronger coverage for damaged/inflated saves and every regional setup. Original audit evidence is preserved under `evidence/`; current verification is recorded in [FIXES.md](FIXES.md) and `fix-validation/`.
 
 ## Tournament matrices
 
@@ -94,28 +94,30 @@ Losses mean formation disappearance, including surrender and embarked cargo; add
 
 Reports keep every scenario/player/difficulty/horizon separate. They show seed counts, victories, unresolved games, failures, city-share ranges, attacks per turn, landings and stall counts. Wilson 95% intervals describe observed victories **by that horizon** among successful simulations. Unresolved games are censored, not defeats. Failed/timeout games are shown separately and must be investigated before drawing balance conclusions. Repeated horizons from the same seed are correlated and are never pooled into a larger statistical sample.
 
-The repeated-dominance screen requires at least eight independent seeds and either a lower victory interval above 50% at least 80% final city share in every successful run, or at most 20% share in every run (repeated disadvantage). This is a triage heuristic, not a design target or a multiple-comparison-corrected significance test. Starting asymmetry, expedition objectives, selected-player effects and unused hold-out seeds must be checked before considering a balance change.
+The repeated-dominance screen requires at least eight independent seeds and a lower victory interval above 50%, at least 80% final city share in every successful run, or at most 20% share in every run (repeated disadvantage). This is a triage heuristic, not a design target or a multiple-comparison-corrected significance test. Starting asymmetry, expedition objectives, selected-player effects and unused hold-out seeds must be checked before considering a balance change.
 
 ## Deterministic baselines
 
-Never update `tools/data/sim_baseline.txt` merely to obtain a passing check.
+Never replace an unexplained failing reference. The historical baseline and independently captured starting main are preserved byte-for-byte as `tools/data/sim_baseline.legacy.txt` and `tools/data/sim_baseline.audited-main-09458d5.txt`. Their hashes, the old-to-new comparisons, fixed source hashes and two independent post-fix captures are recorded in `tools/data/sim_baseline.metadata.json`.
+
+The canonical `sim_baseline.txt` now describes the corrected rules. Its reconciliation is explicit: the historical file already differed on all 390 lines before this work; the follow-up repairs then intentionally changed AI error handling, regional city defenses and four Elite scenario rosters. Tests and affected simulations must pass before producing the new reference. No earlier reference or failed test evidence is deleted.
 
 ```sh
-# Compare with the tracked historical reference (strict; currently detects inherited drift).
+# Strict comparison against the documented current reference.
 node tools/check_sim_baseline.cjs --actual tools/results/current-fingerprints.txt
 
-# Compare with a separately checked-out and built PR base.
+# Inspect historical drift; this is expected to fail against corrected rules.
+node tools/check_sim_baseline.cjs --reference tools/data/sim_baseline.legacy.txt
+
+# Direct comparisons remain available for pure refactors.
 node tools/check_sim_baseline.cjs --base-root /path/to/base-checkout \
   --scenarios eu-greenland,division-japan,battle-luoyang
-
-# Or compare with an independently captured starting-main fingerprint file.
-node tools/check_sim_baseline.cjs --reference /tmp/main-fingerprints.txt
 ```
 
-The comparator reports missing/changed configurations and a bounded diff. It never writes the reference. PR CI compares representative scenarios directly to the PR base, so an outdated historical baseline does not hide a new tooling regression. The separate extensive job checks the preserved historical reference and reports its inherited failures explicitly.
+The comparator reports missing/changed configurations and a bounded diff. It never writes its reference. PR CI compares representative scenarios with the documented defect-fix reference; extensive CI checks all 390 lines. A direct comparison with pre-fix main is retained as audit evidence, rather than required to pass despite intentional gameplay repairs. Future intentional rule changes need their own explanation and paired evidence in review.
 
 ## CI
 
-`gameplay-checks.yml` runs the fast suite on every PR and a deterministic comparison with the PR base. `gameplay-tournament.yml` is manually dispatched: it runs full strict regressions, a historical-baseline check and 16 independent simulation shards, then merges their reports. Failure in one shard does not cancel the others. Logs, raw JSONL and reports are uploaded even on failure. Inputs are passed through quoted environment variables/arrays, not interpolated into shell code.
+`gameplay-checks.yml` runs the fast suite on every PR and a deterministic comparison with the documented baseline. `gameplay-tournament.yml` is manually dispatched: it runs full strict regressions, a full deterministic-baseline check and 16 independent simulation shards, then merges their reports. Failure in one shard does not cancel the others. Logs, raw JSONL and reports are uploaded even on failure. Inputs are passed through quoted environment variables/arrays, not interpolated into shell code.
 
 Use a focused deep matrix before a broad run. Each shard has a bounded overall job budget; incomplete plans are evidence of unfinished coverage, not a clean tournament result. The checked-in evidence and ranked findings document exactly what was actually run for this change.

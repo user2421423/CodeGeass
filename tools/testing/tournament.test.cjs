@@ -4,12 +4,24 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const os=require('node:os');
 const path=require('node:path');
+const crypto=require('node:crypto');
 const {spawnSync}=require('node:child_process');
 const {parse,matrix,runJob,readEvidence,missingShards}=require('../gameplay_tournament.cjs');
 const {E,simulate,fingerprint}=require('../scenario_sim.cjs');
 const {observer}=require('../tournament_metrics.cjs');
 const report=require('../tournament_report.cjs');
 const {differences}=require('../check_sim_baseline.cjs');
+test('baseline reconciliation preserves both original references and records the new digest',()=>{
+  const data=path.resolve(__dirname,'../data');
+  const metadata=JSON.parse(fs.readFileSync(path.join(data,'sim_baseline.metadata.json'),'utf8'));
+  const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(data,file))).digest('hex');
+  assert.equal(hash('sim_baseline.legacy.txt'),'5e4f1ae0742784af34dd90a2aede0bf19e2183f354daace87a6f4dc07798dc31');
+  assert.equal(hash('sim_baseline.audited-main-09458d5.txt'),'9b9c657956cdd13d0b3aca2d67d1cc30d5207664af8f9061c81445b2c9227120');
+  assert.equal(hash('sim_baseline.txt'),metadata.current.sha256);
+  assert.equal(hash('../testing/fix-validation/post-fix-fingerprints.txt'),metadata.current.sha256);
+  assert.equal(metadata.verification.independentCapturesIdentical,true);
+  assert.equal(metadata.profile.seed,11);assert.equal(metadata.profile.turns,2);
+});
 test('matrix covers manifest scenarios, four difficulties and every playable faction',()=>{
   const c=parse(['--seeds','11,29','--horizons','5,20,50,100']);
   const jobs=matrix(c), sides=Object.values(E.scenarios.byId).reduce((n,s)=>n+s.sides.length,0);

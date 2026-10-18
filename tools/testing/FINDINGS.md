@@ -1,6 +1,6 @@
 # Ranked gameplay findings — 18 October 2026
 
-Audited base: `user2421423/CodeGeass@09458d5900b994d6a2a3f23b59e22f6b955cfcd3` (latest main when work began, including PR #112's Federation-era roster separation). All implementation changes in this branch belong to `tooling-and-ci`. Gameplay fixes below are recommendations for the owning lanes; none were applied here.
+Audited base: `user2421423/CodeGeass@09458d5900b994d6a2a3f23b59e22f6b955cfcd3` (latest main when work began, including PR #112's Federation-era roster separation). This document preserves the initial audit. The follow-up fixes are now implemented in the AI, engine-rules and affected scenario files; see [FIXES.md](FIXES.md) for current behavior, passing regressions and baseline reconciliation. The observations below describe the original audited revision.
 
 ## 1. Confirmed bugs, ranked
 
@@ -137,4 +137,4 @@ The checked-in `evidence/` files retain per-match summaries, configurations, sou
 
 See [evidence/summary.json](evidence/summary.json), [evidence/matches.csv](evidence/matches.csv), [evidence/long-report.md](evidence/long-report.md), and [evidence/hundred-turn.json](evidence/hundred-turn.json). Duplicate diagnostic runs do not increase statistical seed counts. The full 100-turn telemetry is preserved, while the seven compact `matches-*.json` files retain per-configuration gameplay measurements for all 666 configurations.
 
-The strict full suite is expected to fail on inherited defects listed above. No skipped/TODO tests, gameplay changes, statistical adjustments to conceal failures or baseline regeneration were used. PR CI runs bounded passing checks and a direct comparison with its base; the manually dispatched extensive workflow exposes the strict failures and uploads evidence even when a job fails.
+The original audit deliberately retained strict failing assertions and did not regenerate its baseline. The subsequent defect fixes keep those assertions active and preserve all original evidence. Current test results, intentional behavior differences and the archived-baseline reconciliation are documented in [FIXES.md](FIXES.md).

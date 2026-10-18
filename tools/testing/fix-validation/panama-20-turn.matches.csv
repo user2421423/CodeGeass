@@ -1,0 +1,3 @@
+"scenario","player","difficulty","seed","turns","status","completedTurns","winner","captures","losses","produced","attacks","landings","stalls","quietFronts","errors"
+"eu-panama","eu","elite","11","20","ok","20","","0","76","0","122","127","0","9","0"
+"eu-panama","eu","elite","29","20","ok","20","","0","78","0","131","129","0","8","0"

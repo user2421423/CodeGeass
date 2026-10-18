@@ -1,5 +1,7 @@
 # Audit evidence
 
+This directory is the immutable **pre-fix audit**. Current passing verification is in `../fix-validation/` and [../FIXES.md](../FIXES.md).
+
 Audited remote main: `09458d5900b994d6a2a3f23b59e22f6b955cfcd3`.
 
 - `summary.json`: exact batch configurations, provenance, attempt/distinct counts, statistical groups, test outcomes and baseline verification. Batch `revision` fields describe the reconstructed local validation snapshot; `auditedMain` identifies the actual remote source. Gameplay source/data files were checked against their GitHub blob SHAs.
