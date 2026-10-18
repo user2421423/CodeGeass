@@ -212,6 +212,8 @@ function nextEliteReward(profile) {
   return { award: pending[index], index };
 }
 function pendingEliteChoiceHTML(profile = loadProfile()) {
+  // One shared loot-box component is used by every fragment-awarding game mode.
+  if (typeof eliteLootBoxPanelHTML === 'function') return eliteLootBoxPanelHTML(profile);
   const { award } = nextEliteReward(profile);
   if (!award) return '';
   const options = eligibleEliteRewardOptions(award, profile);
@@ -229,8 +231,12 @@ function pendingEliteChoiceHTML(profile = loadProfile()) {
     ${options.map(id => `<button class="small" data-reward-elite="${id}">${esc(E.TYPES[E.ELITE_FORCES[id].type].name)}</button>`).join('')}
     </div><small>${profile.pendingEliteRewards.length} unclaimed reward${profile.pendingEliteRewards.length === 1 ? '' : 's'} · Your choice is saved across sessions.</small></section>`;
 }
-function selectEliteReward(id) {
-  const profile = loadProfile(), { award, index } = nextEliteReward(profile);
+function selectEliteReward(id, rewardKey = null) {
+  const profile = loadProfile();
+  const { award, index } = rewardKey === null ? nextEliteReward(profile) : (() => {
+    const index = (profile.pendingEliteRewards || []).findIndex(entry => entry.key === rewardKey);
+    return { award: index >= 0 ? profile.pendingEliteRewards[index] : null, index };
+  })();
   if (!award || !eligibleEliteRewardOptions(award, profile).includes(id))
     return { ok: false, reason: 'This Elite Force is unavailable or already at maximum level' };
   E.grantEliteFragments(profile, { [id]: award.amount });
