@@ -33,7 +33,7 @@ jobs:
       - name: Existing mechanics and cross-system regressions
         run: node tools/gameplay_regressions.cjs --fast --output-dir artifacts/regressions-pr
       - name: Preserve selected deterministic simulator baselines
-        run: node tools/sim_baseline_check.cjs
+        run: node tools/sim_baseline_check.cjs --compare-base main
       - name: Upload reports (including failures)
         if: always()
         uses: actions/upload-artifact@v4
