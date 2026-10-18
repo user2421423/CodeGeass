@@ -50,6 +50,22 @@ for(const profile of profiles){
   }
   lines.push('');
 }
+const imageDir=path.join(dir,'screenshots');
+if(fs.existsSync(imageDir)){
+  const files=fs.readdirSync(imageDir).filter(f=>/^(desktop|mobile)-before-1-.*-zoom(24|38)\\.png$/.test(f));
+  const equal=[], different=[], absent=[];
+  for(const before of files){
+    const after=before.replace('-before-1-','-after-1-');
+    if(!fs.existsSync(path.join(imageDir,after)))absent.push(after);
+    else if(fs.readFileSync(path.join(imageDir,before)).equals(fs.readFileSync(path.join(imageDir,after))))equal.push(before);
+    else different.push(before);
+  }
+  lines.push('## Fixed-camera canvas screenshot parity','',
+    'Exact PNG byte equality: '+equal.length+' paired snapshots; differences: '+different.length+
+    '; missing: '+absent.length+'. Fixed seed 11, camera end point, 24/38 px-per-hex zoom and frozen animation timestamp. PNG mismatches require manual image review before approval.','');
+  if(different.length)lines.push('Differing pairs: '+different.join(', '), '');
+  if(absent.length)lines.push('Missing: '+absent.join(', '), '');
+}
 lines.push('## Interpretation','',
   '- Improvement targets: 30% lower median pan/zoom draw time, 20% faster large-map readiness, lower p95, no material steady-state heap growth and no small-map regression.',
   '- Pan frame scheduling latency and the main-canvas draw duration are different metrics; this table uses measured draw durations.',
