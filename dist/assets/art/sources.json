@@ -876,5 +876,62 @@
         "processed_sha256": "055d6c7d2dcb2e5fb76699e6af15cd1746bf41c6171c059a258a0fa96d09a9e3"
       }
     }
+  },
+  "generatedSpriteVariants": {
+    "date": "2026-10-18",
+    "scope": "2017 Chinese Federation common-unit sprite replacements",
+    "method": "User-approved original AI-generated artwork, resized to 640 px transparent WebP without changes to game statistics or unit mechanics",
+    "units": [
+      {
+        "id": "gun_ru",
+        "file": "units/gun_ru-25191c921b75.webp",
+        "original": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "id": "gun_ru_assault",
+        "file": "units/gun_ru_assault-5ef384845a87.webp",
+        "original": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "id": "gun_ru_light",
+        "file": "units/gun_ru_light-ca3d7e73843b.webp",
+        "original": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "id": "gun_ru_support",
+        "file": "units/gun_ru_support-221126cb2030.webp",
+        "original": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "id": "gun_ru_rocket",
+        "file": "units/gun_ru_rocket-93c271232d79.webp",
+        "original": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "id": "gun_ru_siege",
+        "file": "units/gun_ru_siege-7cc1c288f79d.webp",
+        "original": "units/gun_ru-e7776a73350d.png"
+      },
+      {
+        "id": "chuyen",
+        "file": "units/chuyen-99252cb6f888.webp",
+        "original": "units/chuyen-427d2c85b500.png"
+      },
+      {
+        "id": "chuyen_medium",
+        "file": "units/chuyen_medium-74dc84d9df22.webp",
+        "original": "units/chuyen-427d2c85b500.png"
+      },
+      {
+        "id": "chuyen_heavy",
+        "file": "units/chuyen_heavy-b7cbeea6ff34.webp",
+        "original": "units/chuyen-427d2c85b500.png"
+      },
+      {
+        "id": "chuyen_super",
+        "file": "units/chuyen_super-d6bdd3fffcc6.webp",
+        "original": "units/chuyen-427d2c85b500.png"
+      }
+    ]
   }
 }
