@@ -63,6 +63,8 @@ jobs:
         run: node tools/world_campaign_map_colors_smoke.cjs
       - name: Verify visible per-turn income in the battle HUD
         run: node tools/hud_income_display_smoke.cjs
+      - name: Verify Next Unit includes actionable fortress beams
+        run: node tools/next_unit_fortress_beam_smoke.cjs
       - name: Audit every Philippine hex and invasion route
         run: node tools/philippines_hex_audit.cjs
 

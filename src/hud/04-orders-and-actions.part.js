@@ -53,13 +53,25 @@ function startRouting() {
   if (routing) toast(`Click the hex ${unitName(u)} should head for. Escape cancels.`);
 }
 function nextFleet() {
-  const ready = ownUnits().filter(u => readyIds.has(u.id));
+  // Cycle usable fortress beams together with regular ready units. A charged
+  // battery only counts when an enemy is actually in range; otherwise it would
+  // repeatedly interrupt the cycle despite having no valid shot.
+  const ready = [
+    ...ownUnits().filter(u => readyIds.has(u.id)).map(u => ({ kind: 'unit', id: u.id })),
+    ...game.stations
+      .filter(s => s.owner === game.player && s.fort && E.fortressTargets(game, s).length > 0)
+      .map(s => ({ kind: 'station', id: s.id })),
+  ];
   if (!ready.length) {
-    toast('All units have completed their orders. End the turn to continue.');
+    toast('All units and fortress batteries have completed their orders. End the turn to continue.');
     return;
   }
-  const i = ready.findIndex(u => u.id === selection?.id);
-  selectUnit(ready[(i + 1) % ready.length].id, true);
+  const i = ready.findIndex(item => item.kind === selection?.kind && item.id === selection?.id);
+  const next = ready[(i + 1) % ready.length];
+  if (next.kind === 'station') {
+    // The red target hexes are immediately actionable from the city selection.
+    selectStation(next.id, true);
+  } else selectUnit(next.id, true);
 }
 function refreshAndSave(keepUndo = false) {
   if (!keepUndo) undoStack = [];
