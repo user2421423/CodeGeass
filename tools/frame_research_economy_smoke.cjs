@@ -75,8 +75,11 @@ for(const id of sample){
   const g=E.scenarios.byId['division-japan'].create('britannia','normal',83);
   E.income(g,'britannia');
   const type=E.typeFor('britannia','heavy',g),
-    station=g.stations.find(s=>s.owner==='britannia'&&s.tier>=3&&!E.unitAt(g,s));
-  assert.ok(station,'Free Heavy factory');
+    station=g.stations.find(s=>s.owner==='britannia'&&!E.unitAt(g,s));
+  assert.ok(station,'Free factory for production price test');
+  // The starting tier-III factories have garrisons; temporarily elevate an
+  // empty factory for this isolated affordability/spending regression.
+  station.tier=3;
   const e=g.economy.britannia;
   Object.assign(e,{credits:10000,industry:10000,sakuradite:1000,science:0});
   assert.match(E.buyReason(g,station,type,3),/research/,
