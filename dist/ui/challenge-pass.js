@@ -81,9 +81,12 @@ const CHALLENGE_PASS = (() => {
     [150, 'Rare'], [350, 'Rare'], [550, 'Epic'], [850, 'Epic'],
     [1150, 'Legendary'], [1350, 'Legendary'],
   ]);
-  // Preserve the current token amounts until the proposed reward-economy rebalance is approved.
-  // The 1,600-CP final milestone now awards a permanent High Command position.
-  const tokenAmounts = [...Array(10).fill(200), ...Array(7).fill(300), ...Array(3).fill(500), 600];
+  // Graduated Command Token rewards; exactly 21 token milestones totaling 6,200.
+  // The 1,600-CP final milestone also awards one permanent High Command position.
+  const tokenAmounts = [
+    ...Array(2).fill(150), ...Array(4).fill(200), ...Array(4).fill(250),
+    ...Array(4).fill(300), ...Array(3).fill(350), ...Array(2).fill(400), 450, 600,
+  ];
   let tokenIndex = 0;
   const MILESTONES = Array.from({ length: 32 }, (_, i) => {
     const at = (i + 1) * 50;

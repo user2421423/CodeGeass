@@ -27,11 +27,18 @@ assert.equal(CP.MAX_CP, 1850, '1,850 permanent CP');
 assert.equal(CP.TRACKS.length, 16, 'six faction, eight speed, two mobilization');
 assert.equal(CP.STRATEGIC.length, 12, 'six strategic achievements per era');
 assert.equal(CP.MILESTONES.length, 32, '50-CP milestone spacing through 1,600 CP');
-assert.equal(CP.MILESTONES.filter(x=>x.kind==='tokens').reduce((n,x)=>n+x.amount,0),6200);
+const tokenMilestones = CP.MILESTONES.filter(x => x.kind === 'tokens');
+assert.equal(tokenMilestones.length,21,'21 token milestones');
+assert.equal(tokenMilestones.reduce((n,x)=>n+x.amount,0),6200,'total token budget stays 6,200');
+assert.deepEqual([...new Set(tokenMilestones.map(x=>x.amount))].map(amount=>[
+  amount,tokenMilestones.filter(x=>x.amount===amount).length
+]),[[150,2],[200,4],[250,4],[300,4],[350,3],[400,2],[450,1],[600,1]],
+'exact approved graduated reward distribution');
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='fragments').reduce((n,x)=>n+x.amount,0),60);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='cosmetic').length,5);
 assert.equal(CP.MILESTONES.filter(x=>x.highCommandBonus).map(x=>x.at).join(','),'1600');
-assert.equal(CP.MILESTONES.find(x=>x.at===1600).amount,1);
+assert.equal(CP.MILESTONES.find(x=>x.at===1600).amount,600);
+assert.equal(CP.MILESTONES.find(x=>x.at===1600).highCommandBonus,1);
 const mk = (era = 'world', difficulty = 'normal', side = 'britannia', turn = 45, id = 'run1') =>
   ({ mode: 'conquest', era, difficulty, player: side, turn, over: {winner:side}, rewardClaimId:id, units:[] });
 const normal = mk();
@@ -50,7 +57,7 @@ assert.equal(CP.claimObjective('strategy:world:no-doomsday').ok,false,'strategic
 assert.equal(CP.earned(CP.state(profile)),70);
 assert.equal(CP.claimMilestone(100).ok,false,'claiming unearned milestone blocked');
 assert.equal(CP.claimMilestone(50).ok,true);
-assert.equal(profile.tokens,200);
+assert.equal(profile.tokens,150);
 assert.equal(CP.claimMilestone(50).ok,false,'milestone cannot be repeated');
 assert.equal(CP.claimMilestone(150).ok,false,'later milestone not unlocked');
 const elite = mk('ufn2018','elite','cf',29,'run2');
