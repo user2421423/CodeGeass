@@ -49,11 +49,14 @@
     // Story Mode uses base movement. Warships never receive this bonus.
     if (g && (g.mode === 'conquest' || g.mode === 'scenario') && t.naval !== 'ship')
       n += UNIVERSAL_MOVE_BONUS;
-    // HQ mobility research replaces the former terrain-cost discounts.
-    // Landspinners +4; Float +4 on land, including amphibious; Traction +2.
+    // HQ mobility: Infantry +4, land Armor +2, Artillery +2.
+    // Float's two levels still give amphibious Knightmares up to +4 on land.
+    // Clamp old in-progress games that saved Float levels III/IV.
     // Warship and amphibious sea movement remain unchanged.
     if (g && t.naval !== 'ship') {
-      if (t.naval === 'amphibious' || t.branch === 'Armor') n += techLevel(g, u.side, 'armor.float');
+      const floatLevel = Math.min(2, techLevel(g, u.side, 'armor.float'));
+      if (t.naval === 'amphibious') n += floatLevel * 2;
+      else if (t.branch === 'Armor') n += floatLevel;
       else if (t.branch === 'Infantry') n += techLevel(g, u.side, 'infantry.nav');
       else if (t.branch === 'Artillery') n += techLevel(g, u.side, 'artillery.traction');
     }
