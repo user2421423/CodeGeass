@@ -44,6 +44,13 @@ g.turn = (g.turn || 1) + 1;
 const crisis = E.aiPlan(g, side);
 const target = crisis.fronts.find(f => f.dynamicDefense &&
   (f.anchor.id === city.id || f.protectedCities.includes(city.id)));
+if (!target) console.log('DEFENSE_DIAGNOSTICS', JSON.stringify({
+  city: city.name, cityId: city.id,
+  homeDefense: g.ai?.[side]?.homeDefense,
+  dynamic: crisis.fronts.filter(f => f.dynamicDefense).map(f => f.name),
+  invaders: relocated.map(u => ({ type: u.type, at: [u.c,u.r],
+    distance: api.dist(g,u,city),sameLand:api.massOf(g,u)===api.massOf(g,city) }))
+}));
 assert(target, 'invasion triggers a local defensive objective');
 assert.equal(target.type, 'defensive');
 assert.equal(target.state, 'holding');
