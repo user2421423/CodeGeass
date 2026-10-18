@@ -524,9 +524,10 @@
       if (breakthrough) grantReposition(a, 2);
       else { a.attacked = false; breakthrough = true; }
     }
-    // Destroying city defenses grants one additional attack to any surviving unit.
-    // A simultaneous frame kill cannot bank a second follow-up attack.
-    if (defensesDestroyed && a.hp > 0 && a.attacked) {
+    // Only Siege Artillery and units with Breakthrough earn a follow-up attack
+    // for destroying city defenses. A simultaneous kill cannot bank a second attack.
+    if (defensesDestroyed && a.hp > 0 && a.attacked &&
+        (hasBreakthrough || (type.cls === 'siege' && type.branch === 'Artillery'))) {
       a.attacked = false;
       breakthrough = true;
     }
