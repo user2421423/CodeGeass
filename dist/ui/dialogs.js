@@ -67,9 +67,7 @@ function openEliteShop(id, navalOnly = false) {
   saveProfile(p);
   const ids = Object.keys(E.ELITE_FORCES).filter(k => {
     const e = E.ELITE_FORCES[k], t = E.TYPES[e.type];
-    const allowed = game.mode === 'campaign' && game.difficulty === 'elite'
-      ? game.campaign?.eliteRosters?.[game.player]?.includes(k)
-      : E.eliteEligible(game, game.player, k);
+    const allowed = E.eliteEligible(game, game.player, k);
     return allowed && !!t.naval === navalOnly &&
       (!e.scenarioOnly || (game.mode === 'scenario' && game.difficulty === 'elite'));
   });
@@ -329,8 +327,7 @@ const ARCHIVE_SIDES = [...E.MAJORS, 'eb', 'bk', 'jlf', 'neutral'],
 // Separate playable rosters by era. Extra frames associated with a faction
 // should not appear alongside its ten standard factory classes.
 function archiveRoster(side, view) {
-  if (side === 'cf' && view === 'world') return E.LINEUPS.cf2017;
-  if (side === 'cf' && view === 'ufn') return E.ROSTER.bk;
+  if (side === 'cf') return view === 'ufn' ? E.ROSTER.bk : E.LINEUPS.cf2017;
   return E.ROSTER[side] || {};
 }
 function archiveSpecialTypes(side) {
@@ -346,10 +343,8 @@ function archiveSpecialTypes(side) {
 }
 function archiveViews(side) {
   if (side === 'cf') return [
-    { id: 'scenario', label: 'Regional scenarios',
-      note: 'Default Chinese Federation factory roster for most regional scenarios, including Australia. Luoyang and Mexican Heartland use the separate 2017 roster instead.' },
-    { id: 'world', label: '2017 / Luoyang / Mexico',
-      note: 'The indigenous Gun-Ru and Chuyen lineup used in World Conquest (2017), and explicitly by the Luoyang and Mexican Heartland scenarios.' },
+    { id: 'world', label: 'Chinese Federation 2017',
+      note: 'The native Gun-Ru, Chuyen and Shen Hu lineup used in all 2017 Conquest, scenarios, World Campaign and Story Mode encounters with the Federation.' },
     { id: 'ufn', label: 'U.F.N. 2018',
       note: 'The 2018 U.F.N. Conquest uses the Black Knights field roster for the Chinese Federation. These are not extra factory choices in regional scenarios.' },
     { id: 'story', label: 'Story / special',
@@ -373,11 +368,7 @@ function archiveViews(side) {
 }
 function archiveDefaultView(side) {
   if (side !== 'cf') return side === 'neutral' ? 'story' : 'standard';
-  if (game?.mode === 'conquest' && game.era === 'world') return 'world';
-  if (game?.mode === 'conquest' && game.era === 'ufn2018') return 'ufn';
-  if (game?.mode === 'scenario' && game.lineup?.cf &&
-      E.CLASS_ORDER.every(cls => E.lineupOf(game, 'cf')[cls] === E.LINEUPS.cf2017[cls])) return 'world';
-  return 'scenario';
+  return game?.mode === 'conquest' && game.era === 'ufn2018' ? 'ufn' : 'world';
 }
 function archiveTypes(side, branch, view = archiveDefaultView(side)) {
   if (view === 'story') return archiveSpecialTypes(side).filter(id => E.TYPES[id].branch === branch);
