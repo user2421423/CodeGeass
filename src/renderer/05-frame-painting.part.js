@@ -345,10 +345,17 @@ function draw(time, dt) {
   // Cull before sorting: offscreen formations need neither sprite drawing nor
   // per-frame depth sorting. Keep the original row/column ordering for visible
   // units, including overlapping stacks and animated movements.
+  // One pass over active movement VFX avoids searching the effects array
+  // separately for each (usually stationary) unit during combat animation.
+  const movingIds = effects.length ? new Set() : null;
+  if (movingIds) for (const effect of effects)
+    if (effect.kind === 'move' && effect.life > 0) movingIds.add(effect.unitId);
   const living = [];
+  let aliveUnits = 0;
   for (const u of game.units) {
     if (u.hp <= 0) continue;
-    const base = animatedPosition(u);
+    aliveUnits++;
+    const base = movingIds?.has(u.id) ? animatedPosition(u) : hexCenter(u);
     if (!visible(base)) continue;
     // Non-wrapping maps previously painted every horizontal offscreen unit.
     // The camera bounds already include 2R of overscan; retain another 2R
@@ -452,7 +459,7 @@ function draw(time, dt) {
     mapAtlasPerformance.dynamicUnitFrames++;
     mapAtlasPerformance.dynamicUnitMaxMs = Math.max(mapAtlasPerformance.dynamicUnitMaxMs, ms);
     mapAtlasPerformance.dynamicVisibleUnitTotal += living.length;
-    mapAtlasPerformance.dynamicOffscreenUnitTotal += game.units.length - living.length;
+    mapAtlasPerformance.dynamicOffscreenUnitTotal += aliveUnits - living.length;
   }
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
