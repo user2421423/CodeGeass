@@ -1367,7 +1367,7 @@ a {
 .shortcut-group dl > div { display: grid; grid-template-columns: minmax(72px, auto) 1fr; align-items: start; gap: 12px; padding: 7px 0; border-top: 1px solid #31445b; }
 .shortcut-group dt, .shortcut-group dd { font-size: 13px; line-height: 1.5; margin: 0; }
 .shortcut-group dd { color: #c5d4e2; }
-.shortcut-group kbd { display: inline-block; padding: 1px 6px; border: 1px solid #60738a; border-bottom-width: 2px; border-radius: 4px; background: #22354a; color: #edf3f9; font: 600 12px/1.5 inherit; font-family: inherit; white-space: nowrap; }
+.shortcut-group kbd { display: inline-block; padding: 1px 6px; border: 1px solid #60738a; border-bottom-width: 2px; border-radius: 4px; background: #22354a; color: #edf3f9; font-size: 12px; font-weight: 600; line-height: 1.5; font-family: inherit; white-space: nowrap; }
 @media (max-width: 700px) {
   .shortcut-grid { grid-template-columns: minmax(0, 1fr); }
   .shortcut-group { padding: 12px; }
