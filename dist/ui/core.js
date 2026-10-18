@@ -160,6 +160,15 @@ function loadProfile() {
       p.researchVersion = E.RESEARCH_VERSION;
       changed = true;
     }
+    // Float System now stops at level II. Refund removed III/IV purchases once
+    // before normalization clamps old research records; keep all other HQ tech.
+    if (p.researchVersion === E.RESEARCH_VERSION && p.armorFloatRefundVersion !== 1) {
+      const previousFloat = Math.min(4, Math.max(0, Number(p.research?.['armor.float']) || 0));
+      if (previousFloat > 2)
+        p.tokens = (Number(p.tokens) || 0) + (previousFloat >= 3 ? 300 : 0) + (previousFloat >= 4 ? 400 : 0);
+      p.armorFloatRefundVersion = 1;
+      changed = true;
+    }
     if (p.research) p.research = E.normalizeResearch(p.research);
     if (p.commanderProgressionVersion !== 1 || p.honorsVersion !== 1) {
       E.roster(p);
