@@ -351,9 +351,9 @@
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
   }
   function reinforce(g, id) {
-    const u = g.units.find(u => u.id === id);
-    const why = reinforceReason(g, u);
-    if (why) return { ok: false, reason: why };
+    const check = validateAction(g, { kind: 'reinforce', id });
+    if (!check.ok) return check;
+    const u = check.actor;
     const cost = reinforceCost(u.type, g, u.side, u),
       e = funds(g, u.side);
     warSpend(g,u.side,cost,'reinforcement');
@@ -368,9 +368,9 @@
     return { ok: true };
   }
   function repair(g, id) {
-    const u = g.units.find(u => u.id === id);
-    const why = repairReason(g, u);
-    if (why) return { ok: false, reason: why };
+    const check = validateAction(g, { kind: 'repair', id });
+    if (!check.ok) return check;
+    const u = check.actor;
     const cost = repairCost(u, g);
     warSpend(g,u.side,{credits:cost},'repair');
     funds(g, u.side).credits -= cost;
