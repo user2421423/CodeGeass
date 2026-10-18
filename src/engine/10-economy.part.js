@@ -433,7 +433,7 @@
       s.gun ||= s.name + ' battery';
       s.gunReady = Math.max(s.gunReady || 0, g.turn + 1);
     }
-    s.maxShield = cityDefenseHP(s.cityTier, !!s.fort, !!s.capital) + (s.fortBonus || 0);
+    s.maxShield = cityDefenseFor(g, s) + (s.fortBonus || 0);
     s.shield = Math.min(s.shield, s.maxShield);
     if (g.mode === 'conquest' && s.owner === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.constructed = true;
@@ -459,7 +459,7 @@
     const base = buildingFoundation(g, s);
     s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
     s.science = Math.max(0, base.science + 8 * (s.lab || 0));
-    s.maxShield = cityDefenseHP(cityTierOf(s), !!s.fort, !!s.capital) + (s.fortBonus || 0);
+    s.maxShield = cityDefenseFor(g, s) + (s.fortBonus || 0);
   }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),

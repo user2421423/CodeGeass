@@ -382,7 +382,12 @@
 
   // City development is separate from the factory production tier.
   function cityTierOf(s) {
-    return Math.max(1, Math.min(4, Math.trunc(Number(s?.cityTier ?? (s?.fort ? 4 : s?.tier)) || 1)));
+    // Older/custom regional factories may already have been raised without
+    // recording cityTier. Their authored base HP identifies the city level;
+    // the factory level must not silently become a city upgrade on load.
+    const baseHP = (s?.maxShield || 0) - (s?.fortBonus || 0),
+      inferred = s?.fort ? 4 : ({200:1,250:2,300:3,400:4}[baseHP] ?? s?.tier);
+    return Math.max(1, Math.min(4, Math.trunc(Number(s?.cityTier ?? inferred) || 1)));
   }
   function cityTierCost(s) {
     return [{ credits: 200, industry: 50 }, { credits: 300, industry: 75 },
@@ -399,6 +404,14 @@
   function scenarioCityDefenseHP(tier, fort, name) {
     const trueCapital = CITY_DATA.some(row => row[0] === name && row[5] === true);
     return cityDefenseHP(tier, fort, trueCapital);
+  }
+  // Regional HQ flags also drive economy/objectives and must not confer the
+  // true-capital HP tier during loading or subsequent building upgrades.
+  function cityDefenseFor(g, s) {
+    const tier = cityTierOf(s);
+    return g.mode === 'scenario'
+      ? scenarioCityDefenseHP(tier, !!s.fort, s.name)
+      : cityDefenseHP(tier, !!s.fort, !!s.capital);
   }
   // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.
   function cityBase([name, , , , tier, capital = false, fort = false]) {
