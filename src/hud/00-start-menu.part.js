@@ -131,7 +131,7 @@ function startMenu() {
               <div class="start-hq-top"><span class="start-kicker">HEADQUARTERS</span><b>${ICONS.use('token', 'cost-ico')} ${profile.tokens || 0} tokens</b></div>
               <p>${profile.wins || 0} victories · ${techCount} research levels · Permanent upgrades</p>
               <div class="start-hq-actions"><button data-action="research">Research</button><button data-action="generals-start">Commanders</button><button data-action="elite-forces-start">Elite Forces</button><button class="cp-menu-button" data-action="challenge-pass">Challenge Pass</button></div>
-              ${profile.challengePass?.equipped && profile.challengePass?.cosmetics?.[profile.challengePass.equipped] ? `<div class="cp-hq-emblem">✦ ${esc(profile.challengePass.equipped)}</div>` : ""}
+              ${profile.challengePass?.equipped && profile.challengePass?.cosmetics?.[profile.challengePass.equipped] ? `<div class="cp-hq-emblem">${CHALLENGE_PASS.cosmeticIcon(profile.challengePass.equipped)} <span>${esc(profile.challengePass.equipped)}</span></div>` : ""}
             </section>
           </aside>
         </div>
