@@ -713,10 +713,11 @@
     {
       "kind": "units",
       "id": "akatsuki_flight",
-      "file": "units/akatsuki_flight-c649000bc081.png",
-      "page": "https://codegeass.fandom.com/wiki/Akatsuki_Command_Model_Zikisan",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/d/dd/Type-05-jikisan-air-full.jpg/revision/latest",
-      "method": "Shares the flight-enabled Akatsuki render used for the Akatsuki Zikisan Air Glide"
+      "file": "units/burai_powered_raider-fb8f96d8fde3.png",
+      "page": null,
+      "image": null,
+      "method": "Owner-approved custom Burai Powered Raider generated with built-in imagegen on 2026-10-18: black/charcoal compact mecha with twin oversized scissor claws and ankle landspinners; transparent background, trimmed and resized to 640 px. A game-specific Raider adaptation, not official design artwork.",
+      "sha256": "fb8f96d8fde3ce2da6e504bb51b47e7aa749d10e9b570510f1ee637031ddf5c1"
     },
     {
       "kind": "portraits",

@@ -953,11 +953,12 @@
     akatsuki_flight: {
       side: 'bk',
       cls: 'raider',
-      name: 'Akatsuki Flight-Enabled',
-      model: 'Type-05/F2D',
-      gen: '7th-generation equivalent',
-      weapon: 'Air Glide wings · Bazooka',
-      lore: 'The mass-production Akatsuki with Air Glide wings, issued before the UFN war: its flight equipment retains the standard raider movement rules.',
+      // Retain the historical ID so existing saves and scenario lineups keep working.
+      name: 'Burai Powered Raider',
+      model: 'Burai Powered Type · raider conversion',
+      gen: '4th generation',
+      weapon: 'Twin scissor claws · Chest-mounted Slash Harkens',
+      lore: 'A game-specific Black Knights raider adaptation of the Burai Powered Type, with oversized industrial claws and landspinner mobility.',
       campaign: true,
     },
     zangetsu: {
