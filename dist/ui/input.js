@@ -217,6 +217,10 @@ document.addEventListener('click', e => {
     doAction(() => E.build(game, +d.stationId, d.build));
     return;
   }
+  if (d.archiveView) {
+    archiveDialog(archiveBranch, archiveSide, d.archiveView);
+    return;
+  }
   if (d.archiveBranch) {
     archiveDialog(d.archiveBranch);
     return;

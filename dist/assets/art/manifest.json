@@ -65,7 +65,7 @@
       "src": "units/generic_carrier-bf5e0799d818.png"
     },
     "chuyen": {
-      "src": "units/chuyen-427d2c85b500.png"
+      "src": "units/chuyen-99252cb6f888.webp"
     },
     "elite_akatsuki_heavy": {
       "src": "units/akatsuki_heavy-7c180ab2623f.png"
@@ -155,7 +155,7 @@
       "src": "units/estrella-892bfb12bb42.png"
     },
     "estrella_cc": {
-      "src": "units/estrella_cc-4ebf772963e3.png"
+      "src": "units/estrella_cc_fernando-c95f88e9b062.png"
     },
     "eu_carrier": {
       "src": "units/generic_carrier-bf5e0799d818.png"
@@ -248,28 +248,28 @@
       "src": "units/zangetsu-4e4cb3c3bd61.png"
     },
     "gun_ru_assault": {
-      "src": "units/gun_ru-e7776a73350d.png"
+      "src": "units/gun_ru_assault-5ef384845a87.webp"
     },
     "gun_ru_light": {
-      "src": "units/gun_ru-e7776a73350d.png"
+      "src": "units/gun_ru_light-ca3d7e73843b.webp"
     },
     "gun_ru_support": {
-      "src": "units/gun_ru-e7776a73350d.png"
+      "src": "units/gun_ru_support-221126cb2030.webp"
     },
     "gun_ru_rocket": {
-      "src": "units/gun_ru-e7776a73350d.png"
+      "src": "units/gun_ru_rocket-93c271232d79.webp"
     },
     "gun_ru_siege": {
-      "src": "units/gun_ru-e7776a73350d.png"
+      "src": "units/gun_ru_siege-7cc1c288f79d.webp"
     },
     "chuyen_medium": {
-      "src": "units/chuyen-427d2c85b500.png"
+      "src": "units/chuyen_medium-74dc84d9df22.webp"
     },
     "chuyen_heavy": {
-      "src": "units/chuyen-427d2c85b500.png"
+      "src": "units/chuyen_heavy-b7cbeea6ff34.webp"
     },
     "chuyen_super": {
-      "src": "units/chuyen-427d2c85b500.png"
+      "src": "units/chuyen_super-d6bdd3fffcc6.webp"
     }
   },
   "portraits": {

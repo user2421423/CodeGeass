@@ -467,7 +467,7 @@
     },
     chuyen: {
       side: 'cf',
-      cls: 'raider',
+      cls: 'light',
       name: 'Chuyen',
       model: 'XT-401',
       gen: '7th-generation equivalent',
@@ -544,7 +544,7 @@
     // Not part of the Black Knights 2018 U.F.N. equipment lineup.
     gun_ru_assault: { side:'cf', cls:'assault', worldOnly:true, name:'Gun-Ru Assault', model:'TQ-19/A', gen:'4th generation',
       weapon:'Reinforced shoulder cannons', lore:'Federation assault conversion of the indigenous Gun-Ru.' },
-    gun_ru_light: { side:'cf', cls:'light', worldOnly:true, name:'Gun-Ru Mobile', model:'TQ-19/L', gen:'4th generation',
+    gun_ru_light: { side:'cf', cls:'raider', worldOnly:true, name:'Gun-Ru Mobile', model:'TQ-19/L', gen:'4th generation',
       weapon:'Light cannons · mobility kit', lore:'Faster Federation field conversion of the Gun-Ru.' },
     chuyen_medium: { side:'cf', cls:'medium', worldOnly:true, name:'Chuyen Line Model', model:'XT-401/M', gen:'7th-generation equivalent',
       weapon:'Polearm · reinforced armor', lore:'Federation mainline Chuyen adapted for prolonged fighting.' },
@@ -1156,8 +1156,8 @@
     // The 2017 Chinese Federation uses only native frames. The U.F.N.
     // retains its existing Black Knights lineup for 2018.
     cf2017: {
-      scout:'gun_ru', assault:'gun_ru_assault', raider:'chuyen',
-      light:'gun_ru_light', medium:'chuyen_medium', heavy:'chuyen_heavy',
+      scout:'gun_ru', assault:'gun_ru_assault', raider:'gun_ru_light',
+      light:'chuyen', medium:'chuyen_medium', heavy:'chuyen_heavy',
       super:'chuyen_super', support:'gun_ru_support',
       rocket:'gun_ru_rocket', siege:'gun_ru_siege'
     },
