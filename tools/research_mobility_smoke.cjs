@@ -10,12 +10,12 @@ const floatSystem = E.TECH_TREE.armor.nodes.float;
 const traction = E.TECH_TREE.artillery.nodes.traction;
 assert.deepEqual(landspinners.values, [1, 2, 3, 4]);
 assert.deepEqual(landspinners.costs, [100, 200, 300, 400]);
-assert.deepEqual(floatSystem.values, [1, 2, 3, 4]);
+assert.deepEqual(floatSystem.values, [1, 2]);
 assert.deepEqual(traction.values, [1, 2]);
-assert.deepEqual(floatSystem.costs, [100, 200, 300, 400]);
+assert.deepEqual(floatSystem.costs, [100, 200]);
 assert.match(landspinners.text(1), /Infantry \+1 movement/);
 assert.match(landspinners.text(2), /Infantry \+2 movement/);
-assert.match(floatSystem.text(1), /Armor and amphibious Knightmares gain \+1 land movement/);
+assert.match(floatSystem.text(1), /Land Armor gains \+1 movement; amphibious Knightmares gain \+2 land movement/);
 
 const g = E.createGame('britannia', 'normal', 'conquest', 20261015);
 const player = g.player;
@@ -53,9 +53,9 @@ for (const mode of ['conquest', 'scenario', 'campaign']) {
 
   g.tech[player]['infantry.nav'] = 4;
   assert.equal(E.movement(g, infantry), before[infantry.id] + 4);
-  g.tech[player]['armor.float'] = 4;
-  assert.equal(E.movement(g, armor), before[armor.id] + 4, mode + ' Float System IV');
-  assert.equal(E.movement(g, amphibious), before[amphibious.id] + 4, mode + ' amphibious Float System IV');
+  g.tech[player]['armor.float'] = 2;
+  assert.equal(E.movement(g, armor), before[armor.id] + 2, mode + ' Float System II');
+  assert.equal(E.movement(g, amphibious), before[amphibious.id] + 4, mode + ' amphibious Float System II');
   assert.equal(E.movement(g, artillery), before[artillery.id], mode + ' before Artillery Traction');
   g.tech[player]['artillery.traction'] = 2;
   assert.equal(E.movement(g, artillery), before[artillery.id] + 2);
