@@ -40,7 +40,10 @@ for (let i = 0; i < 8; i++) {
   api.reindex(g, u, old);
   relocated.push(u);
 }
-g.scenarioDefenseDebug = true;
+// Simulate an overwhelmed local defense without changing unit counts or types.
+for (const u of g.units.filter(u => u.hp > 0 && u.side === side &&
+  api.massOf(g,u) === api.massOf(g,city) && api.dist(g,u,city) <= 10))
+  u.hp = Math.max(1, Math.floor(u.hp * 0.2));
 g.turn = (g.turn || 1) + 1;
 const crisis = E.aiPlan(g, side);
 const target = crisis.fronts.find(f => f.dynamicDefense &&
@@ -48,7 +51,6 @@ const target = crisis.fronts.find(f => f.dynamicDefense &&
 if (!target) console.log('DEFENSE_DIAGNOSTICS', JSON.stringify({
   city: city.name, cityId: city.id,
   homeDefense: g.ai?.[side]?.homeDefense,
-  diagnostic: g.ai?.[side]?.defenseDebug?.[city.id],
   dynamic: crisis.fronts.filter(f => f.dynamicDefense).map(f => f.name),
   invaders: relocated.map(u => ({ type: u.type, at: [u.c,u.r],
     distance: api.dist(g,u,city),sameLand:api.massOf(g,u)===api.massOf(g,city) }))

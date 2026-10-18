@@ -57,7 +57,13 @@ function nextFleet() {
   // battery only counts when an enemy is actually in range; otherwise it would
   // repeatedly interrupt the cycle despite having no valid shot.
   const ready = [
-    ...ownUnits().filter(u => readyIds.has(u.id)).map(u => ({ kind: 'unit', id: u.id })),
+    ...ownUnits()
+      // Carriers belong in Next Unit only when at least one embarked unit can land.
+      // Movement, firing and repairs alone must not keep an undeployable carrier in the cycle.
+      .filter(u => readyIds.has(u.id) &&
+        (E.TYPES[u.type]?.naval !== 'ship' ||
+          u.cargo?.some((_, i) => !E.deployReason(game, u, i))))
+      .map(u => ({ kind: 'unit', id: u.id })),
     ...game.stations
       .filter(s => s.owner === game.player && s.fort && E.fortressTargets(game, s).length > 0)
       .map(s => ({ kind: 'station', id: s.id })),

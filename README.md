@@ -154,6 +154,7 @@ a clean playtest is not itself proof that a scenario is balanced.
   move (Z), 1–3-frame units, veterancy, morale, terrain, counter-fire, breakthroughs, fortress batteries (60 damage + 10% of target maximum HP, no cap;
   range 2, or 3 with Battery Overcharge; always 2-turn recharge), cities with factory and research lab (levels 1–3) plus a Sakuradite refinery where there is a
   deposit, repairs and reinforcement.
+- **Direct city tiers:** Cities can upgrade once per owner turn from Level 1 (200 base HP) to Level 2 (250), Level 3 (300), then Fortress City (400 + fortress battery). Upgrade prices are 200 credits/50 industry, 300/75, and 500/125. Level 2 and Level 3 earn +8 and +10 credits per turn; fortress conversion unlocks the existing defensive battery. Capitals retain 600 base defense HP. Factories remain independent production buildings: their upgrades increase industry but never defense HP. AI factions can develop city tiers too.
 - **Production Command (Conquest):** each city can queue one exact normal unit to auto-produce every turn, or stay
   manual. Global controls handle building auto-upgrades, 1–3-frame formation size, bulk upgrades and protected
   credit/industry/Sakuradite reserves. A queue waits if its chosen unit is unavailable rather than substituting another
