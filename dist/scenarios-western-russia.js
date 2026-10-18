@@ -273,7 +273,7 @@
         t.terrain!=='sea'&&!g.stations.some(s=>s.c===t.c&&s.r===t.r),10);
       if(!at)throw Error('Western Russia city outside dry grid: '+name);
       const capital=name==='Moscow'||name==='St. Petersburg';
-      const shield=capital?680:fort?410:130+65*tier;
+      const shield=Math.round((capital?680:fort?410:130+65*tier) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?'eu':null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

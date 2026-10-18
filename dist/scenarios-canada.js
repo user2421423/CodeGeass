@@ -129,8 +129,8 @@
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),16);
       if(!at)throw Error('Cannot place Canadian city '+name);
       const capital=name==='Ottawa'||name==='Nuuk';
-      const shield=name==='Ottawa'?650:name==='Toronto'||name==='Montréal'?540:
-        fort?390:120+60*tier;
+      const shield=Math.round((name==='Ottawa'?650:name==='Toronto'||name==='Montréal'?540:
+        fort?390:120+60*tier) / 50) * 50;
       const city={id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

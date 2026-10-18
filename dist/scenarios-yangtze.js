@@ -356,7 +356,7 @@
         (!port||E.adjacent(g,t).some(n=>n.terrain==='sea')),9);
       if(!at)throw Error('Cannot place Yangtze city '+name);
       const capital=name==='Wuhan'||name==='Nanjing'||name==='Jingzhou';
-      const shield=fort?(capital?740:490):(150+65*tier);
+      const shield=Math.round((fort?(capital?740:490):(150+65*tier)) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner:side,tier,
         capital,capitalOf:capital?side:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,

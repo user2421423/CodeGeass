@@ -275,7 +275,7 @@
       if(side==='cf'&&!guatemala(actual))throw Error('Staging town outside Guatemala: '+name);
       if(side==='britannia'&&guatemala(actual))throw Error('Mexican town misplaced: '+name);
       occupiedCities.add(E.key(at));
-      const capital=name==='Mexico City',shield=fort?(capital?720:tier>=3?540:420):145+75*tier;
+      const capital=name==='Mexico City',shield=Math.round((fort?(capital?720:tier>=3?540:420):145+75*tier) / 50) * 50;
       const station={id:g.stations.length,name,c:at.c,r:at.r,owner:side,tier,
         capital,capitalOf:capital?side:null,fort:!!fort,
         gun:fort?name+' Defense Battery':null,lab:0,refinery:0,

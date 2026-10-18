@@ -378,7 +378,7 @@
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),10);
       if(!at)throw Error('Unreachable Luoyang theatre city: '+name);
       const capital=name==='Luoyang';
-      const shield=capital?880:fort?390+65*tier:135+60*tier;
+      const shield=Math.round((capital?880:fort?390+65*tier:135+60*tier) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,
         owner,tier,capital,capitalOf:capital?'cf':null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,

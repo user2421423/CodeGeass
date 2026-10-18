@@ -304,7 +304,7 @@
       s.buildingFoundation ||= {
         industry: s.industry - 10 * s.tier,
         science: s.science - 8 * (s.lab || 0),
-        maxShield: s.maxShield - (s.fortBonus || 0) - 60 * s.tier,
+        maxShield: s.maxShield - (s.fortBonus || 0) - 50 * s.tier,
       };
       raiseFactoryTier(g, s, 2);
     }
@@ -381,7 +381,7 @@
       s.buildingFoundation ||= {
         industry: s.industry - 10 * s.tier,
         science: s.science - 8 * (s.lab || 0),
-        maxShield: s.maxShield - (s.fortBonus || 0) - 60 * s.tier,
+        maxShield: s.maxShield - (s.fortBonus || 0) - 50 * s.tier,
       };
       raiseFactoryTier(g, s, 2);
     }

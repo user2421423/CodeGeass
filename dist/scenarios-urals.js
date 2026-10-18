@@ -88,7 +88,7 @@ const c=i%COLS,r=(i/COLS)|0;return {c,r,owner:null,terrain:landscape(geo(c,r),c,
 !g.stations.some(s=>s.c===t.c&&s.r===t.r),10);
       if(!at)throw Error('Cannot place Urals city '+name);
       const capital=name==='Tyumen'||name==='Perm';
-      const shield=fort?400:120+60*tier;
+      const shield=Math.round((fort?400:120+60*tier) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

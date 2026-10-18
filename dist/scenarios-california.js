@@ -236,7 +236,7 @@
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place California city '+name);
       const capital=false; // Pendragon is not inside the California theater.
-      const shield=fort?400:120+60*tier;
+      const shield=Math.round((fort?400:120+60*tier) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Coastal Defence Battery':null,lab:0,refinery:0,

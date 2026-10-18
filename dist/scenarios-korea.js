@@ -307,7 +307,7 @@
         !E.stationAt(g,v)&&(!port||E.adjacent(g,v).some(n=>n.terrain==='sea')),13);
       if(!t)throw Error('No Korean or Japanese city location: '+name);
       const capital=name==='Seoul'||name==='Pyongyang'||name==='Fukuoka';
-      const shield=fort?(tier===3?480:350):145+60*tier;
+      const shield=Math.round((fort?(tier===3?480:350):145+60*tier) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:t.c,r:t.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

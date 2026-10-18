@@ -136,7 +136,7 @@
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),7);
       if(!at)throw Error('Cannot place Great Lakes city '+name);
       const capital=name==='Toronto'||name==='Chicago'||name==='Detroit';
-      const shield=['Chicago','Detroit','Cleveland','Toronto','Buffalo'].includes(name)?600:(fort?420:130+65*tier);
+      const shield=Math.round((['Chicago','Detroit','Cleveland','Toronto','Buffalo'].includes(name)?600:(fort?420:130+65*tier)) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

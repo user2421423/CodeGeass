@@ -347,7 +347,7 @@
     factory: {
       name: 'Knightmare factory',
       field: 'tier',
-      desc: 'Unlocks heavier frames (level 2: mainline, raider and rocket; level 3: heavy, super-heavy and siege). +10 industry and +60 defense per level.',
+      desc: 'Unlocks heavier frames (level 2: mainline, raider and rocket; level 3: heavy, super-heavy and siege). +10 industry and +50 defense per level.',
     },
     lab: {
       name: 'Research lab',
@@ -388,14 +388,14 @@
     return s.buildingFoundation ||= {
       industry: base.industry - 10 * tier,
       science: base.science - 8 * lab,
-      maxShield: base.maxShield - (row ? 0 : s.fortBonus || 0) - 60 * tier,
+      maxShield: base.maxShield - (row ? 0 : s.fortBonus || 0) - 50 * tier,
     };
   }
   function syncBuildings(g, s) {
     const base = buildingFoundation(g, s);
     s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
     s.science = Math.max(0, base.science + 8 * (s.lab || 0));
-    s.maxShield = Math.max(0, base.maxShield + 60 * (s.tier || 0) + (s.fortBonus || 0));
+    s.maxShield = Math.max(0, base.maxShield + 50 * (s.tier || 0) + (s.fortBonus || 0));
   }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),
@@ -419,7 +419,7 @@
     if (kind === 'factory') {
       syncBuildings(g, s);
       // Captured cities stay undefended for the capture turn, even after factory upgrades.
-      if (s.capturedTurn !== g.turn) s.shield = Math.min(s.maxShield, s.shield + 60);
+      if (s.capturedTurn !== g.turn) s.shield = Math.min(s.maxShield, s.shield + 50);
     } else if (kind === 'lab') syncBuildings(g, s);
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };

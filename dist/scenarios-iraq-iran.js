@@ -201,7 +201,7 @@
         (!coast||E.adjacent(g,t).some(n=>gulf(n))),coast?10:6);
       if(!at)throw Error('Iraq–Iran city inaccessible: '+name);
       const capital=name==='Damascus'||name==='Tehran'||name==='Baghdad';
-      const shield=fort?470:130+70*tier;
+      const shield=Math.round((fort?470:130+70*tier) / 50) * 50;
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Fortified Battery':null,lab:0,refinery:0,

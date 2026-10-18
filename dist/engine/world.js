@@ -297,7 +297,7 @@
     Kiev: { income: 14, industry: 8 },
     Istanbul: { income: 14, industry: 8 },
     Johannesburg: { income: 14, industry: 8 },
-    Tehran: { maxShield: 380 },
+    Tehran: { maxShield: 400 },
     Kabul: { maxShield: 300 },
     Tashkent: { maxShield: 300 },
     Almaty: { maxShield: 300 },

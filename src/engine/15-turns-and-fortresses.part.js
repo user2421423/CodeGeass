@@ -383,7 +383,7 @@
   // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.
   function cityBase([name, , , , tier, capital = false, fort = false]) {
     return {
-      maxShield: capital ? 600 : fort ? 400 : 120 + 60 * tier,
+      maxShield: capital ? 600 : fort ? 400 : Math.round((120 + 60 * tier) / 50) * 50,
       // Capitals: 50 plus the 15 their old refinery exported (refineries now need a Sakuradite deposit).
       income: capital ? 65 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
       industry: capital ? 30 : 6 * tier,
