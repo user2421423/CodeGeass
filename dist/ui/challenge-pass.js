@@ -202,18 +202,14 @@ const CHALLENGE_PASS = (() => {
     if (!saveProfile(profile)) return { ok: false, reason: 'Could not save cosmetic selection.' };
     return { ok: true };
   }
-  // New vector representations: the previous five cosmetic names had no individual artwork.
-  // These are cosmetic preview icons, not unlockable gameplay advantages.
+  // Original symbolic representations of the five cosmetic rewards.
   function cosmeticIcon(name) {
-    const shapes = {
-      '2017 Command Seal': '<path d="M24 3 43 13v22L24 45 5 35V13Z" fill="#50402c" stroke="#edcc84" stroke-width="2.5"/><path d="M24 11 36 18v12l-12 7-12-7V18Z" fill="none" stroke="#dabb77" stroke-width="1.5"/><circle cx="24" cy="24" r="7" fill="#b44444" stroke="#ffe1a1" stroke-width="2"/><path d="M20 24h8m-4-4v8" stroke="#ffe2ab" stroke-width="2"/>',
-      '2018 Field Banner': '<path d="M12 7h24v28L24 44 12 35Z" fill="#822f40" stroke="#eac885" stroke-width="2.5"/><path d="M8 6h32M24 13v22m-9-17 9 5 9-5" stroke="#f6dfaa" stroke-width="2.5" fill="none"/><path d="m24 16 4 6-4 6-4-6Z" fill="#f9d78d"/>',
-      'Command Profile Frame': '<rect x="7" y="7" width="34" height="34" rx="2" fill="#29465a" stroke="#9b814f"/><path d="M7 20V7h13M28 7h13v13M41 28v13H28M20 41H7V28" fill="none" stroke="#f5d58b" stroke-width="4"/><path d="m24 14 10 10-10 10-10-10Z" fill="none" stroke="#bca56c" stroke-width="2"/><circle cx="24" cy="24" r="4" fill="#e6c684"/>',
-      'Conquest Veteran Banner': '<path d="M10 6h28v25L24 44 10 31Z" fill="#494069" stroke="#ebc783" stroke-width="2.5"/><path d="m24 12 4 9 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" fill="#e6c37a"/><path d="M9 12q-7 16 3 26m27-26q7 16-3 26" fill="none" stroke="#9db89e" stroke-width="2"/>',
-      'Supreme Command Crest': '<path d="M24 5 41 14v20L24 44 7 34V14Z" fill="#4e3b24" stroke="#f3d68d" stroke-width="3"/><path d="m15 23 5 5 4-10 4 10 5-5-2 12H17Z" fill="#f3ce80" stroke="#ffe6b1"/><path d="M24 11v5M6 36Q0 22 7 12m35 24q6-14-1-24" stroke="#eecb80" stroke-width="2" fill="none"/>',
+    const symbols = {
+      '2017 Command Seal': '✦', '2018 Field Banner': '⚑',
+      'Command Profile Frame': '▣', 'Conquest Veteran Banner': '⚑',
+      'Supreme Command Crest': '♛',
     };
-    return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" role="img" aria-label="' +
-      esc(name) + '" xmlns="http://www.w3.org/2000/svg">' + (shapes[name] || '') + '</svg>';
+    return '<span class="cp-reward-symbol cp-cosmetic-symbol" aria-label="' + esc(name) + '">' + (symbols[name] || '✦') + '</span>';
   }
   function milestoneIcon(item) {
     if (item.kind === 'cosmetic') return cosmeticIcon(item.name);
