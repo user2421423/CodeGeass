@@ -305,8 +305,15 @@
     // A ship must occupy a port held by its own side, not merely be adjacent to any city.
     const friendlyDock = g && isShip(u) && atFriendlyPort(g, u);
     const dockyard = friendlyDock ? 1 - techValue(g, u.side, 'naval.damage') : 1;
-    return Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot *
+    const normalCost = Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot *
       (g && logisticsNear(g, u) ? 0.7 : 1) * energyNetwork * dockyard));
+    // A friendly city with zero defenses doubles land-unit repair costs.
+    // If multiple friendly cities are in range, an intact one can supply the repair.
+    if (g && !isShip(u)) {
+      const nearby = g.stations.filter(s => s.owner === u.side && dist(g, s, u) <= 1);
+      if (nearby.length && nearby.every(s => s.shield <= 0)) return normalCost * 2;
+    }
+    return normalCost;
   }
   function baseRepairCost(u) {
     return Math.max(20, Math.round(price(u.type, u.stack, null, u.side).credits * 0.2));
