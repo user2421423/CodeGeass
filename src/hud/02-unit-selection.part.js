@@ -54,7 +54,11 @@ function rangeText(u) {
 function resource(icon, label, title, value, perTurn) {
   const signed = perTurn == null ? '' : (perTurn >= 0 ? '+' : '−') + count(Math.abs(perTurn));
   const detail = perTurn == null ? 'Stored balance' : `Per turn: ${signed}`;
-  return `<div class="resource res-${icon}" tabindex="0" role="status" title="${esc(label + ': ' + count(value) + '. ' + title + '. ' + detail)}" aria-label="${esc(label + ': ' + count(value) + '. ' + detail)}">${ICONS.use(icon, 'res-icon')}<span class="label">${esc(label)}</span><b>${count(value)}</b><span class="hud-income ${perTurn < 0 ? 'negative' : 'positive'}" aria-hidden="true">${perTurn == null ? '' : signed}</span></div>`;
+  // Keep resource balances and income together so a compact or mobile HUD
+  // displays the per-turn rate beneath the balance rather than hiding it.
+  const values = `<span class="res-values"><b>${count(value)}</b>${perTurn == null ? '' :
+    `<span class="hud-income ${perTurn < 0 ? 'negative' : 'positive'}" aria-hidden="true">${signed}<small class="income-unit">/turn</small></span>`}</span>`;
+  return `<div class="resource res-${icon}" tabindex="0" role="status" title="${esc(label + ': ' + count(value) + '. ' + title + '. ' + detail)}" aria-label="${esc(label + ': ' + count(value) + '. ' + detail)}">${ICONS.use(icon, 'res-icon')}<span class="label">${esc(label)}</span>${values}</div>`;
 }
 // Costs render as resource tokens; zero amounts are omitted unless all is set.
 // Prices (not balances, which pass all) turn red for each resource the player cannot cover.

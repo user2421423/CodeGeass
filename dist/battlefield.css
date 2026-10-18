@@ -3373,7 +3373,7 @@ button.danger:hover:not(:disabled) {
 .hud-v2 .mark { font-size: 23px; }
 .hud-phase { flex: 0 0 auto; display: flex; align-items: center; padding-left: 12px; border-left: 1px solid #bfcba52e; }
 .hud-phase strong { font: 600 12px Arial,sans-serif; color: #f5e8c5; white-space: nowrap; }
-/* Resource balances use the original icon-left, value-right layout, never a stacked grid. */
+/* Icon-left resource groups show the balance with a smaller per-turn rate below. */
 .hud-v2 .hud-resources {
   display: inline-flex; flex: 0 1 auto; width: auto; min-width: 0;
   gap: clamp(4px, .45vw, 9px); align-items: center;
@@ -3404,7 +3404,20 @@ button.danger:hover:not(:disabled) {
   display: inline; order: 1; font: 700 16px/1.2 'Trebuchet MS',Arial,sans-serif;
   margin: 0; white-space: nowrap;
 }
-.hud-v2 .resource .hud-income { display: none; }
+.hud-v2 .resource .res-values {
+  display: inline-flex; flex-direction: column; align-items: flex-start;
+  justify-content: center; gap: 2px; min-width: 0;
+}
+.hud-v2 .resource .res-values b { order: 0; }
+.hud-v2 .resource .hud-income {
+  display: block; order: 1;
+  color: #a9e3b9; font: 700 10px/1.1 'Trebuchet MS',Arial,sans-serif;
+  font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 1px 2px #000b;
+}
+.hud-v2 .resource .hud-income.negative { color: #f4a7a5; }
+.hud-v2 .resource .income-unit {
+  font: 600 9px/1 Arial,sans-serif; color: #b2c8bf;
+}
 .hud-v2 .hud-nav { display:flex; flex:0 0 auto; gap:5px; align-items:stretch; margin:0 0 0 auto; }
 .hud-nav-group { position:relative; color:#eae7d5; }
 .hud-nav-group > summary { list-style:none; cursor:pointer; border:1px solid #81938c55; border-radius:3px; background:#253a41d9; padding:9px 10px; font:600 11px Arial,sans-serif; white-space:nowrap; user-select:none; }
