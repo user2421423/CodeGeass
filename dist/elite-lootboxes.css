@@ -1,0 +1,52 @@
+/* Shared Elite fragment loot-box cards — Story, Conquest, World Campaign, weekly event and Challenge Pass. */
+.elite-lootbox-panel{margin:14px 0;padding:14px;border:1px solid #4c5e70;border-radius:12px;background:linear-gradient(155deg,#101e2e,#142a3b);color:#eaf1f6;text-align:left;min-width:0}
+.elite-lootbox-title{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.elite-lootbox-title>b{font-size:17px;color:#f1dbad}
+.elite-lootbox-title>small{color:#b7c9d6;font-size:12px}
+.elite-lootbox-note{font-size:12px;line-height:1.5;margin:6px 0 13px;color:#c9d6e2}
+.elite-lootbox-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:11px;align-items:start}
+.elite-lootbox{min-width:0;border:1px solid #42647e;border-radius:10px;padding:13px;background:linear-gradient(155deg,#203c52,#112538);box-shadow:0 8px 16px #0002}
+.elite-rarity-rare{--elite-rarity:#b7d1e1}
+.elite-rarity-epic{--elite-rarity:#c3a1eb}
+.elite-rarity-legendary{--elite-rarity:#f0c77c}
+.elite-rarity-any{--elite-rarity:#95e6d7}
+.elite-lootbox{border-top:3px solid var(--elite-rarity)}
+.elite-lootbox-heading{display:flex;gap:12px;align-items:center}
+.elite-lootbox-symbol{flex:none;display:grid;place-items:center;width:44px;height:51px;background:linear-gradient(145deg,#34536b,#101e32);border:1px solid var(--elite-rarity);border-radius:8px;color:var(--elite-rarity);font-size:25px;text-shadow:0 0 9px #b0bed855}
+.elite-lootbox-heading>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.elite-lootbox-rarity{font-size:12px;letter-spacing:.065em;text-transform:uppercase;font-weight:800;color:var(--elite-rarity)}
+.elite-lootbox-heading b{font-size:14px;color:#fff}
+.elite-lootbox-heading small{font-size:11px;color:#b8ccda;line-height:1.35;overflow-wrap:anywhere}
+.elite-lootbox-open{margin-top:12px;width:100%;padding:9px 12px;font-size:13px;font-weight:700;border:1px solid var(--elite-rarity);color:#f9f2e8;background:#294457;border-radius:6px}
+.elite-lootbox-open:hover:not(:disabled),.elite-lootbox-open[aria-expanded=true]{background:#3a576e}
+.elite-lootbox-blocked{font-size:12px;line-height:1.45;color:#e2d5b3;margin:12px 0 2px}
+.elite-lootbox-picker:not(:empty){margin-top:14px;padding-top:14px;border-top:1px solid #6a819066}
+.elite-lootbox:has(.elite-lootbox-picker:not(:empty)){grid-column:1/-1}
+.elite-box-picker-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:13px}
+.elite-box-picker-head b{font-size:15px;color:#f3db9f}
+.elite-box-picker-head p{font-size:12px;color:#c0ced7;line-height:1.45;margin:5px 0}
+.elite-box-level-control{display:flex;flex-direction:column;gap:6px;min-width:170px;font-size:12px;color:#d8e3eb}
+.elite-box-level-control strong{font-size:18px;color:#f1cf94}
+.elite-box-level-control input{accent-color:#e1b66b;width:100%;cursor:pointer}
+.elite-box-level-ticks{display:flex;justify-content:space-between;font-size:11px;color:#bac6d0}
+.elite-lootbox-comparison{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px;align-items:stretch}
+.elite-box-tier-header{grid-column:1/-1;margin:9px 0 0;border-bottom:1px solid #577286;color:#e9d3a7;font-size:13px;padding-bottom:5px}
+.elite-box-unit{min-width:0;display:flex;flex-direction:column;text-align:left;border-top:3px solid var(--elite-rarity,#b2c6d6)}
+.elite-box-unit .catalog-ship{max-width:100%}
+.elite-box-unit h3{font-size:15px;line-height:1.25}
+.elite-box-unit .elite-fragments{font-size:11px;margin:10px 0;color:#b7c9d6}
+.elite-box-unit .elite-box-ability{font-size:11px;line-height:1.4;margin:5px 0;color:#becddd}
+.elite-box-unit .elite-box-ability b{color:#f2dcad}
+.elite-box-unit button[data-reward-elite]{margin-top:auto;min-height:38px;font-size:12px;padding:8px;line-height:1.3;white-space:normal}
+.elite-card .elite-box-ability{font-size:11px;line-height:1.4;margin:5px 0;color:#c5d4e1}
+.elite-card .elite-box-ability b{color:#f2d7a2}
+@media(max-width:620px){
+ .elite-lootbox-panel{padding:10px;margin:10px 0}
+ .elite-lootbox-list{grid-template-columns:1fr}
+ .elite-lootbox{padding:10px}
+ .elite-lootbox-comparison{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
+ .elite-box-picker-head{gap:10px}
+ .elite-box-level-control{width:100%}
+ .elite-box-unit{padding:10px}
+ .elite-box-unit .unit-spec{gap:4px}
+}
