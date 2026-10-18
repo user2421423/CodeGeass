@@ -68,7 +68,7 @@ function weeklyScenarioInfoHTML(difficulty = 'normal') {
     const done = !!claimed[tier.id];
     return '<div class="scenario-weekly-reward-row' + (done ? ' claimed' : '') + '">' +
       '<span>' + esc(tier.label) + (done ? ' ✓' : '') + '</span>' +
-      '<span>+' + tier.tokens + ' tokens · +' + tier.fragments + ' ' + esc(tier.rarity) + '</span></div>';
+      '<span>+' + tier.tokens + ' tokens · ' + esc(tier.rarity) + ' loot box (+' + tier.fragments + ' fragments)</span></div>';
   }).join('');
   const unclaimed = WEEKLY_SCENARIO_TIERS.slice(0, level + 1).filter(t => !claimed[t.id]);
   const tokens = unclaimed.reduce((total, tier) => total + tier.tokens, 0);
