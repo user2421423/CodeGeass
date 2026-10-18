@@ -59,8 +59,8 @@ function trial(scenario,player,difficulty,seed){
     for(const c of g.stations.filter(s=>s.owner===side)){
       const b=before.cities.get(c.id);if(!b)continue;
       for(const kind of Object.keys(upgrades))
-        upgrades[kind]+=Math.max(0,(kind==='city'?c.cityTier:kind==='factory'?c.tier:
-          kind==='lab'?c.lab:kind==='port'?c.portLevel:c.refinery)||0-b[kind]);
+        upgrades[kind]+=Math.max(0,((kind==='city'?c.cityTier:kind==='factory'?c.tier:
+          kind==='lab'?c.lab:kind==='port'?c.portLevel:c.refinery)||0)-b[kind]);
     }
     before=null;
   });
