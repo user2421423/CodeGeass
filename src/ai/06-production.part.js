@@ -128,18 +128,18 @@
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
-    const reserve = eliteCampaign ? 0 : defenseSaving
+    const reserve = (eliteCampaign || economic.critical) ? 0 : defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
       : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
-    const reserveInd = defenseSaving
+    const reserveInd = economic.critical ? 0 : defenseSaving
       ? Math.min(e.industry, ELIMINATOR.cost.industry)
       : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
-    const reserveSak = plan.eliminator
+    const reserveSak = economic.critical ? 0 : plan.eliminator
       ? ELIMINATOR.cost.sakuradite
       : plan.warhead ? FLEIJA.cost.sakuradite : 0;
     // Protect Research for an imminent strategic project, but do not hoard it
     // from the start of the war at the expense of useful armored production.
-    const reserveScience = defenseSaving && e.science >= ELIMINATOR.cost.science * 0.8
+    const reserveScience = !economic.critical && defenseSaving && e.science >= ELIMINATOR.cost.science * 0.8
       ? ELIMINATOR.cost.science
       : warSaving && e.science >= FLEIJA.cost.science * 0.8
         ? FLEIJA.cost.science : 0;
@@ -154,9 +154,11 @@
     // Preserve an ordinary formation budget when making optional investments;
     // the recruitment pass itself remains free to use that budget.
     const developmentAffordable = (c, kind = 'factory') =>
-      economic.budget.allows(c, kind) && affordable(c) &&
-      spendable() - c.credits >= ordinaryBudget.credits &&
-      e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry;
+      economic.budget.allows(c, kind, kind === 'reinforce' && economic.critical) &&
+      affordable(c) &&
+      ((kind === 'reinforce' && economic.critical) ||
+        (spendable() - c.credits >= ordinaryBudget.credits &&
+          e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry));
     // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
     const heavySak = yard3.length ? price(typeFor(side, 'heavy', g), 1, g, side).sakuradite : 0;
     const keepsHeavy = (type, c) =>
