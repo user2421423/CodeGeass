@@ -39,7 +39,7 @@
       // allocations cannot be double-counted across sequential purchases.
       allows(cost, category = 'production', emergency = false) {
         if (!cost || AI_ECONOMY_RESOURCES.some(k =>
-          !Number.isFinite(cost[k] || 0) || (cost[k] || 0) < 0 ||
+          !Number.isFinite(cost[k] ?? 0) || (cost[k] ?? 0) < 0 ||
           (cost[k] || 0) > (wallet[k] || 0))) return false;
         const investment = ['city', 'factory', 'lab', 'refinery', 'port', 'reinforce'].includes(category);
         if (investment && critical && !emergency) return false;
