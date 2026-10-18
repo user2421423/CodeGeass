@@ -37,6 +37,7 @@
     const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
     const yard3 = bases.filter(s => s.tier >= 3);
     const superType = typeFor(side, 'super', g);
+    const economic = aiEconomicPlan(g, side, memo, bases, foes, front);
     // 0. Fire every ready battery at the strongest enemy unit in range (the UI animates g.strikes).
     g.strikes = [];
     for (const s of bases) {
@@ -60,7 +61,9 @@
       !scenarioMeta(g).ai?.recovery ? [] : own())
       .filter(u => u.hp / maxHP(u) < (memo.recoveries?.has(u.id) ? 0.7 : 0.55) && nearFriendlyCity(g, u) && !atSea(g, u))
       .sort((a, b) => a.hp / maxHP(a) - b.hp / maxHP(b))) {
-      if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
+      const cost = { credits: repairCost(u, g) };
+      if (economic.budget.allows(cost, 'repair', economic.critical) &&
+          e.credits - cost.credits >= (economic.critical ? 0 : 60)) repair(g, u.id);
     }
     g.vacated = [];
     if (!builds) return;
@@ -143,13 +146,15 @@
     const spendable = () => Math.max(0, e.credits - reserve);
     // Sakuradite held back for a project only blocks purchases that spend Sakuradite.
     const affordable = c =>
+      economic.budget.allows(c, 'production', economic.critical) &&
       c.credits <= spendable() &&
       e.industry - (c.industry || 0) >= reserveInd &&
       (e.science || 0) - (c.science || 0) >= reserveScience &&
       (!c.sakuradite || (e.sakuradite || 0) - c.sakuradite >= reserveSak);
     // Preserve an ordinary formation budget when making optional investments;
     // the recruitment pass itself remains free to use that budget.
-    const developmentAffordable = c => affordable(c) &&
+    const developmentAffordable = (c, kind = 'factory') =>
+      economic.budget.allows(c, kind) && affordable(c) &&
       spendable() - c.credits >= ordinaryBudget.credits &&
       e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry;
     // Lighter frames leave enough Sakuradite for one heavy frame once a level-3 factory exists.
@@ -161,15 +166,9 @@
     if (g.turn >= 2) {
       const candidates = bases
         .filter(s => !cityTierReason(g, s) && s.shield >= s.maxShield * 0.5)
-        .map(s => {
-          const d = front(s), tier = cityTierOf(s);
-          const fortress = tier === 3 && d >= 3 && d <= 7;
-          const economic = tier < 3 && d >= 5;
-          return { s, d, useful: fortress || economic,
-            score: (fortress ? 120 : economic ? 60 : 0) + (s.capital ? 15 : 0) +
-              (s.portLevel ? 8 : 0) + (d <= 7 ? 12 - d : 0) - 3 * (tier - 1) };
-        })
-        .filter(v => v.useful)
+        .map(s => ({ s, d: front(s),
+          score: economic.cityScore(s, decreePrice(cityTierCost(s), s)) }))
+        .filter(v => Number.isFinite(v.score) && v.score > 0)
         .sort((a, b) => b.score - a.score || a.s.id - b.s.id);
       const limit = Math.min(3, Math.max(1, Math.ceil(bases.length / 25)));
       let built = 0;
@@ -177,7 +176,7 @@
         if (built >= limit) break;
         if (d <= 2 || (d < 5 && s.shield < s.maxShield * 0.75)) continue;
         const cost = decreePrice(cityTierCost(s), s);
-        if (developmentAffordable(cost) && upgradeCityTier(g, s.id).ok) built++;
+        if (developmentAffordable(cost, 'city') && upgradeCityTier(g, s.id).ok) built++;
       }
     }
     // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),
@@ -196,31 +195,33 @@
         ((prep.lab || 0) < FLEIJA.lab - 1 || g.turn >= unlockTurn)
       ) {
         const cost = buildCost(prep, 'lab');
-        if (spendable() - cost.credits >= 100 && developmentAffordable(cost)) upgraded = build(g, prep.id, 'lab').ok;
+        if (spendable() - cost.credits >= 100 && developmentAffordable(decreePrice(cost, prep), 'lab')) upgraded = build(g, prep.id, 'lab').ok;
       }
       for (const d of (g.sites || []).filter(d => depositOwner(g, d) === side).sort((a, b) => b.base - a.base)) {
         const host = depositHost(g, d),
           cost = buildCost(host, 'refinery');
         if (upgraded) break;
-        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 || !developmentAffordable(cost)) continue;
+        if ((host.refinery || 0) >= 3 || spendable() - cost.credits < 150 ||
+            !Number.isFinite(economic.buildingScore(host, 'refinery', cost, d)) ||
+            !developmentAffordable(decreePrice(cost, host), 'refinery')) continue;
         upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
         if (upgraded) break;
       }
       const researchScarce = (plan.researchShortageTurns || 0) >= 2;
       const options = bases
-        .flatMap(s => (g.mode === 'scenario' && !researchScarce ? ['factory'] : ['factory', 'lab'])
-          .map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
-        .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < unlockTurn))
-         .sort((a, b) => (researchScarce ? Number(b.kind === 'lab') - Number(a.kind === 'lab') : 0) ||
-          a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
-      const pick = options[0];
-      if (
-        !upgraded &&
-        pick &&
-        spendable() - buildCost(pick.s, pick.kind).credits >= 250 &&
-        developmentAffordable(buildCost(pick.s, pick.kind))
-      )
-        build(g, pick.s.id, pick.kind);
+        .flatMap(s => ['factory', 'lab']
+          .map(kind => ({ s, kind, level: buildingLevel(s, kind),
+            cost: decreePrice(buildCost(s, kind), s) })))
+        .filter(o => o.level < 3 && !buildReason(g, o.s, o.kind))
+        .map(o => ({ ...o, score: economic.buildingScore(o.s, o.kind, o.cost) +
+          (researchScarce && o.kind === 'lab' ? 18 : 0) }))
+        .filter(o => Number.isFinite(o.score) && o.score > 0)
+        .sort((a, b) => b.score - a.score || a.s.id - b.s.id ||
+          a.kind.localeCompare(b.kind));
+      const pick = options.find(o =>
+        spendable() - o.cost.credits >= (economic.critical ? 0 : 100) &&
+        developmentAffordable(o.cost, o.kind));
+      if (!upgraded && pick) build(g, pick.s.id, pick.kind);
     }
     // 4. Reinforce healthy Armor and Artillery units parked at a friendly city.
     for (const u of own()
@@ -239,7 +240,8 @@
       )
       .sort((a, b) => TYPES[b.type].cost - TYPES[a.type].cost)) {
       const c = reinforceCost(u.type, g, side, u);
-      if (developmentAffordable(c) && keepsHeavy(u.type, c) && spendable() - c.credits >= 150) reinforce(g, u.id);
+      if (developmentAffordable(c, 'reinforce') && keepsHeavy(u.type, c) &&
+          spendable() - c.credits >= (economic.mode === 'defensive' ? 0 : 150)) reinforce(g, u.id);
     }
     // 5. Build: factories serving the front with the largest strength deficit first (then front-line ones), each
     // putting what its front asks for at the top of its menu. There is no army cap; the treasury is the limit.
@@ -379,7 +381,8 @@
         (ports.length < desiredPorts ? portCandidates[0]?.s : null);
       if (portToBuild) {
         const cost = buildCost(portToBuild, 'port');
-        if (navyAffordable(cost) && spendable() - cost.credits >= ordinaryBudget.credits + 100)
+        if (economic.budget.allows(decreePrice(cost, portToBuild), 'port') &&
+            navyAffordable(cost) && spendable() - cost.credits >= ordinaryBudget.credits + 100)
           build(g, portToBuild.id, 'port');
       }
 
@@ -506,11 +509,20 @@
         // Other modes retain their existing randomized menu preference.
         preferred = g.mode === 'scenario' && need.length ? menu[0] :
           menu[Math.floor(random(g) * Math.min(menu.length, 3))];
-      // Super-heavy competes in the same formation-size and affordability passes
-      // when demanded, instead of being purchased by a separate saving routine.
-      return s.tier >= 3 && superDemand(serves(s))
-        ? [superType, preferred, ...menu.filter(x => x !== preferred)]
-        : [preferred, ...menu.filter(x => x !== preferred)];
+      // The strategic front still provides the preferred classes, but their
+      // ranking now incorporates travel time, scarcity and combat value per cost.
+      const theater = serves(s), allies = own().filter(u =>
+        !TYPES[u.type].naval && dist(g, u, theater?.anchor || s) <= 10);
+      const ordered = [...new Set([preferred, ...menu])]
+        .filter(type => !!TYPES[type])
+        .sort((a, b) =>
+          economic.frameScore(s, b, theater, allies, price(b, 2, g, side)) -
+          economic.frameScore(s, a, theater, allies, price(a, 2, g, side)) ||
+          a.localeCompare(b));
+      return s.tier >= 3 && superDemand(theater)
+        ? [superType, ...ordered.filter(x => x !== superType)]
+        : ordered.filter(x => x !== superType);
+
     };
     // Remember research-only bottlenecks, once per turn. When a priority
     // advanced unit is one income payment away, do not replace it with a
@@ -533,6 +545,8 @@
       else trace.offensiveBuilds = (trace.offensiveBuilds || 0) + 1;
     };
     const tryBuild = (s, menu, sizes) => {
+      // No usable theater or reachable enemy: save funds for a viable factory.
+      if (!serves(s) && front(s) > 14 && g.mode !== 'campaign') return false;
       const defender = unitAt(g, s),
         vacating = defender?.side === side && isReady(g, defender) && !defender.moved && front(s) <= 2 ? defender : null,
         reach = vacating && reachable(g, vacating),
@@ -571,7 +585,8 @@
               (!superDemand(serves(s)) ||
                 spendable() - c.credits < ordinaryBudget.credits ||
                 e.industry - reserveInd - c.industry < ordinaryBudget.industry)) continue;
-          if (!canBuy(g, s, type, n, spot ? vacating : null) || !affordable(c) || !keepsHeavy(type, c)) continue;
+          if (!Number.isFinite(economic.frameScore(s, type, serves(s), own(), c)) ||
+              !canBuy(g, s, type, n, spot ? vacating : null) || !affordable(c) || !keepsHeavy(type, c)) continue;
           if (vacating) {
             if (!spot) continue;
             const m = move(g, vacating.id, spot.c, spot.r);
