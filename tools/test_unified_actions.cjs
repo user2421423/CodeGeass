@@ -117,4 +117,76 @@ test('repeated illegal movement preserves original state', () => {
   assert.equal(E.resolveAction(g, { kind: 'move', id: actor.id, c: -999, r: -999 }).ok, false);
   assert.equal(JSON.stringify(g), before);
 });
+function friendlyFixture(seed = 631) {
+  const g = E.createGame(SIDE, 'normal', 'conquest', seed);
+  let point;
+  for (const s of g.stations.filter(s => s.owner === SIDE && !s.expSupplyBlocked)) {
+    point = [s, ...E.adjacent(g, s)].find(p =>
+      !E.isSea(p) && !E.internal.TERRAIN[p.terrain]?.blocked &&
+      !E.unitAt(g, p) && (!E.stationAt(g, p) || E.stationAt(g, p) === s));
+    if (point) break;
+  }
+  assert.ok(point, 'expected empty friendly city or adjacent land');
+  const actor = E.newUnit(g, E.typeFor(SIDE, 'scout', g), SIDE, point.c, point.r);
+  g.phase = SIDE;
+  Object.assign(g.economy[SIDE], { credits: 100000, industry: 100000, science: 100000, sakuradite: 100000 });
+  assert.equal(E.nearFriendlyCity(g, actor), true);
+  return { g, actor };
+}
+test('repair is charged once and dispatch matches direct execution', () => {
+  const a = friendlyFixture(), b = friendlyFixture();
+  a.actor.hp -= 30;
+  b.actor.hp -= 30;
+  const direct = E.repair(a.g, a.actor.id);
+  const dispatched = E.resolveAction(b.g, { kind: 'repair', id: b.actor.id });
+  assert.ok(direct.ok);
+  assert.deepEqual(dispatched, direct);
+  assert.equal(JSON.stringify(a.g), JSON.stringify(b.g));
+  const after = JSON.stringify(b.g);
+  assert.equal(E.resolveAction(b.g, { kind: 'repair', id: b.actor.id }).ok, false);
+  assert.equal(JSON.stringify(b.g), after, 'repeated repair must not spend credits');
+});
+test('reinforcement is charged once and dispatch matches direct execution', () => {
+  const a = friendlyFixture(), b = friendlyFixture();
+  const direct = E.reinforce(a.g, a.actor.id);
+  const dispatched = E.resolveAction(b.g, { kind: 'reinforce', id: b.actor.id });
+  assert.ok(direct.ok);
+  assert.deepEqual(dispatched, direct);
+  assert.equal(JSON.stringify(a.g), JSON.stringify(b.g));
+  const after = JSON.stringify(b.g);
+  assert.equal(E.resolveAction(b.g, { kind: 'reinforce', id: b.actor.id }).ok, false);
+  assert.equal(JSON.stringify(b.g), after, 'repeated reinforcement must not spend again');
+});
+test('combat action stamps survive save compression round-trip', () => {
+  const { g, actor } = cityFixture('heavy');
+  actor.moveActionTurn = g.turn;
+  actor.moveActionsThisTurn = 2;
+  actor.chain = 4;
+  actor.attacked = true;
+  const roundTrip = E.unpackSave(E.packSave(g));
+  assert.ok(roundTrip);
+  const restored = roundTrip.units.find(u => u.id === actor.id);
+  assert.ok(restored);
+  assert.equal(restored.moveActionTurn, actor.moveActionTurn);
+  assert.equal(restored.moveActionsThisTurn, 2);
+  assert.equal(restored.chain, 4);
+  assert.equal(restored.attacked, true);
+});
+test('ranged attacker does not receive illegal short-range retaliation', () => {
+  const { g, actor, city } = cityFixture('heavy', true);
+  const p = E.within(g, city, 2).find(t =>
+    E.dist(g, t, city) === 2 && !E.isSea(t) &&
+    !E.internal.TERRAIN[t.terrain]?.blocked &&
+    !E.unitAt(g, t) && !E.stationAt(g, t));
+  assert.ok(p, 'expected an empty two-hex firing position');
+  const before = { c: actor.c, r: actor.r };
+  actor.c = p.c; actor.r = p.r;
+  E.reindex(g, actor, before);
+  const pr = E.preview(g, actor.id, city.c, city.r);
+  assert.ok(pr);
+  assert.equal(pr.counterAllowed, false);
+  const r = E.attack(g, actor.id, city.c, city.r);
+  assert.ok(r.ok);
+  assert.equal(r.counter, 0);
+});
 console.log('Unified action regression checks: ' + cases + ' passed.');
