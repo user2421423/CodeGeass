@@ -49,4 +49,21 @@ jobs:
           done
           for pid in "${pids[@]}"; do wait "$pid"; done
           cat /tmp/unified-sim-shard-*.out > /tmp/unified-combat-sim.txt
-          diff -u tools/data/sim_baseline.txt /tmp/unified-combat-sim.txt
+          # First determine whether any divergence is introduced by this branch.
+          # The committed baseline may already be stale against current main.
+          pids=()
+          for shard in /tmp/unified-sim-shard-[0-9][0-9]; do
+            ( cd /tmp/codegeass-combat-main && node tools/scenario_sim.cjs --all 11 2 $(cat "$shard") ) > "${shard}.main.out" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          cat /tmp/unified-sim-shard-*.main.out > /tmp/unified-combat-main.txt
+          echo "=== Refactor versus exactly current main ==="
+          diff -u /tmp/unified-combat-main.txt /tmp/unified-combat-sim.txt
+          echo "=== Committed baseline versus exactly current main ==="
+          if diff -u tools/data/sim_baseline.txt /tmp/unified-combat-main.txt > /tmp/preexisting-baseline-diff.txt; then
+            echo "Committed baseline matches main and refactor."
+          else
+            echo "::warning::Committed sim_baseline.txt is stale on unmodified main. Refactor matches main exactly; do NOT regenerate the baseline in this PR."
+            head -n 36 /tmp/preexisting-baseline-diff.txt
+          fi
