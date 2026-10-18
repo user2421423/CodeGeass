@@ -1,6 +1,26 @@
   // ======== Economy and cities ========
   const REGIONAL_RESOURCES = ['credits','industry','science','sakuradite'];
   const CITYLESS_WARCHEST_TURNS = 10;
+  // Lightweight manufacturing Research costs shared across factions/modes.
+  const FRAME_RESEARCH = Object.freeze({
+    scout:0, assault:0, raider:2, light:0, medium:5, heavy:10,
+    super:15, support:0, rocket:7, siege:12
+  });
+  function frameResearch(t) {
+    if (!t) return 0;
+    if (t.naval === 'ship') return 12;
+    if (t.naval === 'amphibious') return t.tier >= 2 ? 4 : 0;
+    return FRAME_RESEARCH[t.cls] || 0;
+  }
+  // Scenarios complete initial treasury setup before assigning startUnits.
+  // Double each side's opening stockpile once, not its recurring income.
+  function doubleScenarioResearch(g) {
+    if (g.mode !== 'scenario' || !g.scenario || !g.startUnits ||
+        g.scenario.startingResearchDoubled) return;
+    for (const [side,wallet] of Object.entries(g.economy || {}))
+      if (side !== 'neutral') wallet.science = 2 * (wallet.science || 0);
+    g.scenario.startingResearchDoubled = true;
+  }
 
   // All regional battles keep their authored opening income targets and
   // difficulty-adjusted reserves. Once their setup is complete, transfer the
@@ -58,8 +78,10 @@
     // Regional constructors set startUnits only after calculating and storing
     // their opening resource reserves. This safely localizes funding on the
     // first post-construction income query for any scenario or campaign battle.
-    if (g.mode === 'scenario' && g.startUnits && !g.scenario?.localizingIncome)
+    if (g.mode === 'scenario' && g.startUnits && !g.scenario?.localizingIncome) {
       localizeScenarioIncome(g);
+      doubleScenarioResearch(g);
+    }
     if (g.scenario?.economyLocalized && g.mode === 'scenario' &&
         !g.stations.some(s => s.owner === side))
       return {credits:0,industry:0,science:0,sakuradite:0};
@@ -125,6 +147,7 @@
       credits: Math.round(t.cost * (1 + 0.85 * (stack - 1))),
       industry: Math.round(t.industry * (1 + 0.85 * (stack - 1))),
       sakuradite: Math.round((t.sakuradite ?? SAKURADITE.cost[t.cls] ?? 0) * (1 + 0.85 * (stack - 1))),
+      science: Math.round(frameResearch(t) * (1 + 0.85 * (stack - 1))),
     };
   }
   function canBuy(g, s, type, stack = 1, vacating = null) {
@@ -159,6 +182,7 @@
       credits: t.cost,
       industry: t.industry,
       sakuradite: SAKURADITE.elite[t.naval === 'amphibious' ? 'amphib' : t.cls] ?? 0,
+      science: frameResearch(t),
     };
   }
   // Land elites use a city factory; amphibious elites use the independently owned
@@ -293,7 +317,8 @@
   function reinforceCost(type, g = null, side = null, u = null) {
     const p = price(type, 1, g, side),
       k = u && g && logisticsNear(g, u) ? 0.7 : 1;
-    return { credits: Math.round(p.credits * k), industry: Math.round(p.industry * k), sakuradite: p.sakuradite };
+    return { credits: Math.round(p.credits * k), industry: Math.round(p.industry * k),
+      sakuradite: p.sakuradite, science: p.science };
   }
   // Manual repairs restore 20% of maximum HP for a fifth of the unit's build price.
   function repairCost(u, g = null) {
@@ -359,7 +384,7 @@
     lab: {
       name: 'Research lab',
       field: 'lab',
-      desc: 'Produces research (+8 per level). Research banked when you win becomes command tokens.',
+      desc: 'Produces research (+8 per level). Advanced units, reinforcement frames and Elite Forces cost Research; HQ upgrades use Command Tokens.',
     },
     port: {
       name: 'Port',

@@ -504,6 +504,9 @@
         cities: {},
       },
     };
+    // Double the initial Research stockpile, including era-specific overrides;
+    // income rates and other resource balances are unchanged.
+    for (const side of majors) g.economy[side].science *= 2;
     for (let r = 0; r < g.rows; r++)
       for (let c = 0; c < g.cols; c++)
         g.tiles.push({ c, r, terrain: TERRAIN_CODES[WORLD_ROWS[r]?.[c]] || 'sea', owner: null });

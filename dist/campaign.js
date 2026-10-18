@@ -304,7 +304,10 @@
       economy: Object.fromEntries(
         [...new Set([...sides, 'neutral'])].map(s => [
           s,
-          { credits: m.economy?.[s] ?? 0, industry: m.industry?.[s] ?? 0, science: 0, sakuradite: m.sakuradite?.[s] ?? 150 },
+          // Story missions previously started with zero Research. Grant the
+          // doubled 40-point Conquest baseline to each fighting faction.
+          { credits: m.economy?.[s] ?? 0, industry: m.industry?.[s] ?? 0,
+            science: s === 'neutral' ? 0 : 80, sakuradite: m.sakuradite?.[s] ?? 150 },
         ]),
       ),
       tech: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, {}])),

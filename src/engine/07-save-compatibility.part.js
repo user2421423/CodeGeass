@@ -135,6 +135,9 @@
     const regional = g.mode === 'scenario';
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
+    // Existing saves are in progress, not new starts. Do not retroactively
+    // double their already-spent Research on the next income calculation.
+    if (regional) g.scenario.startingResearchDoubled = true;
     // Old Stonehenge saves had a different map and an extra playable power.
     if (regional && scenarioMeta(g).saveVersion && g.scenario.version !== scenarioMeta(g).saveVersion) return null;
     // Prior Division of Japan saves stored permanent off-map stipends. Move

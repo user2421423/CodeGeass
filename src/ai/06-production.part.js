@@ -30,6 +30,10 @@
       eliteAI = eliteCampaign || eliteAIProduction(g),
       builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side) ||
         (eliteCampaign && foe(g, side, g.player));
+    // Ensure new regional games finish one-time treasury initialization before
+    // the AI examines budgets (including the doubled starting Research).
+    const scienceIncome = income(g, side).science;
+    if (plan.researchShortageTurn !== g.turn - 1) plan.researchShortageTurns = 0;
     const bases = g.stations.filter(s => s.owner === side).sort((a, b) => front(a) - front(b));
     const yard3 = bases.filter(s => s.tier >= 3);
     const superType = typeFor(side, 'super', g);
@@ -130,11 +134,18 @@
     const reserveSak = plan.eliminator
       ? ELIMINATOR.cost.sakuradite
       : plan.warhead ? FLEIJA.cost.sakuradite : 0;
+    // Protect Research for an imminent strategic project, but do not hoard it
+    // from the start of the war at the expense of useful armored production.
+    const reserveScience = defenseSaving && e.science >= ELIMINATOR.cost.science * 0.8
+      ? ELIMINATOR.cost.science
+      : warSaving && e.science >= FLEIJA.cost.science * 0.8
+        ? FLEIJA.cost.science : 0;
     const spendable = () => Math.max(0, e.credits - reserve);
     // Sakuradite held back for a project only blocks purchases that spend Sakuradite.
     const affordable = c =>
       c.credits <= spendable() &&
       e.industry - (c.industry || 0) >= reserveInd &&
+      (e.science || 0) - (c.science || 0) >= reserveScience &&
       (!c.sakuradite || (e.sakuradite || 0) - c.sakuradite >= reserveSak);
     // Preserve an ordinary formation budget when making optional investments;
     // the recruitment pass itself remains free to use that budget.
@@ -171,11 +182,13 @@
         upgraded = (d.city == null ? refine(g, d.id) : build(g, host.id, 'refinery')).ok;
         if (upgraded) break;
       }
+      const researchScarce = (plan.researchShortageTurns || 0) >= 2;
       const options = bases
-        .flatMap(s => (g.mode === 'scenario' ? ['factory'] : ['factory', 'lab'])
+        .flatMap(s => (g.mode === 'scenario' && !researchScarce ? ['factory'] : ['factory', 'lab'])
           .map(kind => ({ s, kind, level: buildingLevel(s, kind) })))
         .filter(o => o.level < 3 && !(o.kind === 'lab' && o.level === 2 && g.turn < unlockTurn))
-        .sort((a, b) => a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
+         .sort((a, b) => (researchScarce ? Number(b.kind === 'lab') - Number(a.kind === 'lab') : 0) ||
+          a.level - b.level || front(b.s) - front(a.s) || random(g) - 0.5);
       const pick = options[0];
       if (
         !upgraded &&
@@ -460,6 +473,17 @@
         ? [superType, preferred, ...menu.filter(x => x !== preferred)]
         : [preferred, ...menu.filter(x => x !== preferred)];
     };
+    // Remember research-only bottlenecks, once per turn. When a priority
+    // advanced unit is one income payment away, do not replace it with a
+    // basic unit unless the factory is defending against a nearby threat.
+    const markResearchShortage = () => {
+      if (plan.researchShortageTurn === g.turn) return;
+      plan.researchShortageTurn = g.turn;
+      plan.researchShortageTurns = (plan.researchShortageTurns || 0) + 1;
+    };
+    const researchOnlyShortage = c => (c.science || 0) > (e.science || 0) &&
+      c.credits <= spendable() && c.industry <= e.industry - reserveInd &&
+      (c.sakuradite || 0) <= (e.sakuradite || 0) - reserveSak;
     // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
     const tryBuild = (s, menu, sizes) => {
       const defender = unitAt(g, s),
@@ -468,6 +492,14 @@
         spot = reach && adjacent(g, s)
           .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
           .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
+      const preferred = menu[0];
+      const desired = preferred && (eliteAI ? elitePrice(preferred) :
+        price(preferred, sizes[sizes.length - 1], g, side));
+      if (desired && researchOnlyShortage(desired)) {
+        markResearchShortage();
+        if (front(s) > 3 && (e.science || 0) + Math.max(0, scienceIncome) >= desired.science)
+          return false; // Wait at most one turn for the priority formation.
+      }
       if (eliteAI) {
         for (const id of menu) {
           const cost = elitePrice(id, eliteCampaign ? 3 : 1);

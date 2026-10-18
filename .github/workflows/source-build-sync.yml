@@ -51,6 +51,8 @@ jobs:
         run: node tools/tutorial_academy_smoke.cjs
       - name: Verify manual repairs and port healing
         run: node tools/repair_and_port_healing_smoke.cjs
+      - name: Verify advanced frame Research pricing and AI purchasing
+        run: node tools/frame_research_economy_smoke.cjs
       - name: Verify Division of Japan city income and repeated factory production
         run: node tools/division_income_factory_smoke.cjs
       - name: Verify every regional scenario uses city-based income and cityless invasion war chests

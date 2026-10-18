@@ -75,7 +75,8 @@
     const e = funds(g, side),
       r = reserve || automationState(g).reserve;
     // A reserve only guards resources this order spends: low Sakuradite must not stop a frame that costs none.
-    return ['credits', 'industry', 'sakuradite'].every(k => !cost[k] || (e?.[k] || 0) - cost[k] >= (r?.[k] || 0));
+    return ['credits', 'industry', 'science', 'sakuradite'].every(k =>
+      !cost[k] || (e?.[k] || 0) - cost[k] >= (r?.[k] || 0));
   }
   function automationUpgradeOrder(g, s, unit) {
     const t = TYPES[unit];
@@ -88,10 +89,10 @@
     return [...new Set(order)];
   }
   function emptyAutomationReport() {
-    return { units: 0, upgrades: 0, spent: { credits: 0, industry: 0, sakuradite: 0 }, entries: [] };
+    return { units: 0, upgrades: 0, spent: { credits: 0, industry: 0, science: 0, sakuradite: 0 }, entries: [] };
   }
   function addAutomationSpend(report, cost = {}) {
-    for (const k of ['credits', 'industry', 'sakuradite']) report.spent[k] += cost[k] || 0;
+    for (const k of ['credits', 'industry', 'science', 'sakuradite']) report.spent[k] += cost[k] || 0;
   }
   function runCityAutomation(g, side = g.player, opts = {}) {
     const a = automationState(g),
@@ -134,7 +135,7 @@
     if (report.units || report.upgrades)
       log(
         g,
-        `AUTOMATED LOGISTICS: ${report.units} unit${report.units === 1 ? '' : 's'} produced · ${report.upgrades} building upgrade${report.upgrades === 1 ? '' : 's'} · ${report.spent.credits} credits · ${report.spent.industry} industry${report.spent.sakuradite ? ` · ${report.spent.sakuradite} Sakuradite` : ''} spent.`,
+        `AUTOMATED LOGISTICS: ${report.units} unit${report.units === 1 ? '' : 's'} produced · ${report.upgrades} building upgrade${report.upgrades === 1 ? '' : 's'} · ${report.spent.credits} credits · ${report.spent.industry} industry${report.spent.science ? ` · ${report.spent.science} research` : ''}${report.spent.sakuradite ? ` · ${report.spent.sakuradite} Sakuradite` : ''} spent.`,
         side,
       );
     return report;
