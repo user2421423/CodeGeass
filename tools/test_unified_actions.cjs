@@ -130,7 +130,7 @@ function friendlyFixture(seed = 631) {
   const actor = E.newUnit(g, E.typeFor(SIDE, 'scout', g), SIDE, point.c, point.r);
   g.phase = SIDE;
   Object.assign(g.economy[SIDE], { credits: 100000, industry: 100000, science: 100000, sakuradite: 100000 });
-  assert.equal(E.nearFriendlyCity(g, actor), true);
+  assert.equal(E.internal.nearFriendlyCity(g, actor), true);
   return { g, actor };
 }
 test('repair is charged once and dispatch matches direct execution', () => {
@@ -181,7 +181,7 @@ test('ranged attacker does not receive illegal short-range retaliation', () => {
   assert.ok(p, 'expected an empty two-hex firing position');
   const before = { c: actor.c, r: actor.r };
   actor.c = p.c; actor.r = p.r;
-  E.reindex(g, actor, before);
+  E.internal.reindex(g, actor, before);
   const pr = E.preview(g, actor.id, city.c, city.r);
   assert.ok(pr);
   assert.equal(pr.counterAllowed, false);
