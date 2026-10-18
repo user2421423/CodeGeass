@@ -33,7 +33,9 @@ Commander pins calculated `animatedPosition` again after the unit pass.
 
 The patch instead filters camera-visible formations *before* row/column sorting,
 reuses each visible formation's interpolated coordinates and wrapped positions,
-and omits off-camera range/target overlays. Non-wrapping culling retains a
+and omits off-camera range/target overlays. During active movement effects, a
+one-pass set of moving unit IDs avoids repeatedly scanning the effect list
+for each stationary unit; the existing interpolation is used for actual movers. Non-wrapping culling retains a
 generous world-space margin beyond the already-expanded viewport to protect
 partially visible sprites, pins and shadows. Wrapping maps retain every visible
 world copy. Depth-order comparator and image selection remain identical.
