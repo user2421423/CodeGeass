@@ -19,6 +19,8 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Verify Elite class stats and abilities
         run: node tools/elite_class_standardization_smoke.cjs
+      - name: Verify Amphibious Elite repeatable movement and attack chains
+        run: node tools/amphibious_elite_chain_smoke.cjs
       - name: Verify Elite fragment reward max-level safety
         run: node tools/elite_reward_max_level_smoke.cjs
       - name: Verify regular class standardization
