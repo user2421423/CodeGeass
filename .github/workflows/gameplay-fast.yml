@@ -30,6 +30,16 @@ jobs:
             --scenarios division-japan,invasion-japan \
             --difficulties normal --seeds 11 --turns 2 \
             --max-games 10 --output-dir artifacts/tournament-pr
+      - name: Four-difficulty smoke and 50-turn endurance sample
+        run: |
+          node tools/scenario_tournament.cjs \
+            --scenarios division-japan --players britannia \
+            --difficulties normal,hard,challenge,elite --seeds 11 \
+            --turns 2 --max-games 4 --output-dir artifacts/four-difficulty
+          node tools/scenario_tournament.cjs \
+            --scenarios division-japan --players britannia \
+            --difficulties normal --seeds 11,29 --turns 50 \
+            --max-games 2 --output-dir artifacts/endurance
       - name: Existing mechanics and cross-system regressions
         run: node tools/gameplay_regressions.cjs --fast --output-dir artifacts/regressions-pr
       - name: Preserve selected deterministic simulator baselines
