@@ -16,7 +16,7 @@ for(const f of fs.readdirSync(DIST).filter(f=>/^(scenarios.*|.*-landmask|.*-geog
   require(path.join(DIST,f));
 const DIFFICULTIES=['normal','hard','challenge','elite'];
 
-function simulate(scenario,player,difficulty,seed,turns){
+function simulate(scenario,player,difficulty,seed,turns,observer=null){
  const g=scenario.create(player,difficulty,seed),sides=scenario.sides;
  const zeros=()=>Object.fromEntries(sides.map(s=>[s,0]));
  const r={scenario:scenario.id,player,difficulty,seed,maxTurns:turns,
@@ -46,6 +46,7 @@ function simulate(scenario,player,difficulty,seed,turns){
   for(const side of g.order){
    if(!E.alive(g,side))continue;
    if(!(turn===1&&side===g.order[0]))E.beginTurn(g,side,turn>1);
+   const started=observer?process.hrtime.bigint():null;
    E.aiProduction(g);observe();
    const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
      .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id).map(u=>u.id);
@@ -66,6 +67,7 @@ function simulate(scenario,player,difficulty,seed,turns){
     // Full AI-vs-AI is not ended by a human-specific loss screen, but the first one is recorded.
     if(g.over){r.firstOver??=g.over.reason||'over';g.over=null;}
    }
+   if(observer) observer({g,side,turn,aiMs:Number(process.hrtime.bigint()-started)/1e6});
    if(end)break;
   }
   r.snapshots.push({turn,cities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
@@ -81,7 +83,7 @@ function fingerprint(value){
  return h.toString(16).padStart(8,'0');
 }
 
-if(process.argv[2]==='--all'){
+if(require.main===module && process.argv[2]==='--all'){
  const seed=Number(process.argv[3]||11),turns=Number(process.argv[4]||2),only=process.argv.slice(5);
  for(const id of Object.keys(E.scenarios.byId).sort().filter(id=>!only.length||only.includes(id))){
   const scenario=E.scenarios.byId[id];
@@ -93,7 +95,7 @@ if(process.argv[2]==='--all'){
     'cities='+JSON.stringify(r.snapshots.at(-1)?.cities),'errors='+r.errors.length].join(' '));
   }
  }
-}else{
+}else if(require.main===module){
  const id=process.argv[2],scenario=E.scenarios?.byId?.[id];
  if(!scenario)throw Error('Unknown scenario '+id+'. Known: '+Object.keys(E.scenarios?.byId||{}).join(', '));
  const player=process.argv[3]||scenario.sides[0],difficulty=process.argv[4]||'normal';
@@ -105,3 +107,6 @@ if(process.argv[2]==='--all'){
  console.log('SCENARIO_SIM '+JSON.stringify(r));
  if(r.errors.length)process.exitCode=1;
 }
+
+// Optional observer supports matched-seed economy tournaments without changing fingerprints.
+module.exports={simulate,fingerprint,E,DIFFICULTIES};
