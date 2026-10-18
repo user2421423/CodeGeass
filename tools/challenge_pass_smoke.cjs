@@ -30,7 +30,7 @@ assert.equal(CP.MILESTONES.length, 32, '50-CP milestone spacing through 1,600 CP
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='tokens').reduce((n,x)=>n+x.amount,0),5600);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='fragments').reduce((n,x)=>n+x.amount,0),60);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='cosmetic').length,5);
-assert.deepEqual(CP.MILESTONES.filter(x=>x.kind==='high-command').map(x=>x.at),[1600]);
+assert.equal(CP.MILESTONES.filter(x=>x.kind==='high-command').map(x=>x.at).join(','),'1600');
 assert.equal(CP.MILESTONES.find(x=>x.at===1600).amount,1);
 const mk = (era = 'world', difficulty = 'normal', side = 'britannia', turn = 45, id = 'run1') =>
   ({ mode: 'conquest', era, difficulty, player: side, turn, over: {winner:side}, rewardClaimId:id, units:[] });
