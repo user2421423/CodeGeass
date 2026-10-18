@@ -1,0 +1,66 @@
+name: Conservative Scenario Defense Comparison
+on:
+  push:
+    branches: [feature/scenario-dynamic-defense-20261018]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node tools/build_sources.cjs
+          node tools/scenario_dynamic_defense_smoke.cjs
+          node --check dist/engine/ai.js
+  compare:
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [main, combined, strict]
+        scenario:
+          - { id: war-for-australia, player: britannia, difficulty: normal, turns: 60, seeds: "11 37 59 83 101 137 211 307 409 503" }
+          - { id: division-japan, player: britannia, difficulty: hard, turns: 50, seeds: "11 37 59 83" }
+          - { id: invasion-japan, player: britannia, difficulty: challenge, turns: 50, seeds: "11 37 59 83" }
+          - { id: european-war, player: eu, difficulty: normal, turns: 35, seeds: "11 37 59 83" }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ffc9fa664b195b89560fd6437661908ab5268a19
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout aligned main baseline
+        if: matrix.profile == 'main'
+        run: |
+          cp tools/scenario_ai_eval.cjs /tmp/scenario_ai_eval.cjs
+          git fetch --depth=1 origin ce0b53b07159b8e3930e74374eeb40ec3faa47fd
+          git checkout --detach FETCH_HEAD
+          cp /tmp/scenario_ai_eval.cjs tools/scenario_ai_eval.cjs
+      - name: Compile profile
+        env:
+          PROFILE: ${{ matrix.profile }}
+        run: |
+          node tools/build_sources.cjs
+          if [ "$PROFILE" != "main" ]; then node tools/scenario_ai_variant.cjs "$PROFILE"; fi
+          node --check dist/engine/ai.js
+      - name: Long seeded comparisons
+        env:
+          PROFILE: ${{ matrix.profile }}
+          ID: ${{ matrix.scenario.id }}
+          PLAYER: ${{ matrix.scenario.player }}
+          DIFFICULTY: ${{ matrix.scenario.difficulty }}
+          TURNS: ${{ matrix.scenario.turns }}
+          SEEDS: ${{ matrix.scenario.seeds }}
+        run: |
+          for SEED in $SEEDS; do
+            AI_VERSION="$PROFILE" node tools/scenario_ai_eval.cjs "$ID" "$PLAYER" "$DIFFICULTY" "$SEED" "$TURNS"
+          done
