@@ -334,10 +334,24 @@ function draw(time, dt) {
     for (const id of gr.units) groupMembership.set(id, gr);
   const focusedGroup=strategicOverlay?activeArmyGroup():null;
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
-  const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
-  for (const u of living) {
+  // Cull before sorting: offscreen formations need neither sprite drawing nor
+  // per-frame depth sorting. Keep the original row/column ordering for visible
+  // units, including overlapping stacks and animated movements.
+  const living = [];
+  for (const u of game.units) {
+    if (u.hp <= 0) continue;
     const base = animatedPosition(u);
     if (!visible(base)) continue;
+    // Non-wrapping maps previously painted every horizontal offscreen unit.
+    // The camera bounds already include 2R of overscan; retain another 2R
+    // for large frames, commander pins, and their shadows.
+    if (!wraps() && (base.x < left - R * 2 || base.x > right + R * 2)) continue;
+    const xs = copies(base.x);
+    if (!xs.length) continue;
+    living.push({u, base, xs});
+  }
+  living.sort((a, b) => a.u.r - b.u.r || a.u.c - b.u.c);
+  for (const {u, base, xs} of living) {
     const t = E.TYPES[u.type],
       sel = selection?.kind === 'unit' && selection.id === u.id,
       multi = multiSelectedIds.has(u.id),
@@ -345,7 +359,7 @@ function draw(time, dt) {
       groupColor = group ? strategicGroupColor(group) : '#ffd36e',
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
-    for (const x of copies(base.x)) {
+    for (const x of xs) {
       if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
@@ -420,12 +434,10 @@ function draw(time, dt) {
     }
   }
   if (detail)
-    for (const u of living)
-      if (u.cmd) {
-        const p = animatedPosition(u);
-        if (!visible(p)) continue;
-        for (const x of copies(p.x)) drawAdmiralPin(u, { x, y: p.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
-      }
+    for (const {u, base, xs} of living)
+      if (u.cmd)
+        for (const x of xs)
+          drawAdmiralPin(u, { x, y: base.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
