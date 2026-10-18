@@ -1,0 +1,91 @@
+name: Long AI Scenario Balance Comparison
+on:
+  push:
+    branches:
+      - feature/scenario-dynamic-defense-20261018
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: ${{ matrix.case.label }} / ${{ matrix.version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [main, defense]
+        case:
+          - { label: australia, scenario: war-for-australia, side: britannia, difficulty: normal, turns: 30, seeds: "11 37" }
+          - { label: division, scenario: division-japan, side: britannia, difficulty: hard, turns: 30, seeds: "11 37" }
+          - { label: europe, scenario: european-war, side: eu, difficulty: normal, turns: 30, seeds: "11 37" }
+          - { label: invasion, scenario: invasion-japan, side: britannia, difficulty: challenge, turns: 25, seeds: "11" }
+          - { label: philippines, scenario: philippines-invasion, side: cf, difficulty: normal, turns: 25, seeds: "11" }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.version == 'main' && '5e952a674ad051d32c7826f506c8daa35cc86b6a' || '1d6f59221e4da3e23dfa432fc426fb146c6b0a9b' }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build exactly the selected revision
+        run: |
+          node tools/build_sources.cjs
+          node --check dist/engine/ai.js
+      - name: Seeded AI-vs-AI balance run
+        env:
+          VERSION: ${{ matrix.version }}
+          SCENARIO: ${{ matrix.case.scenario }}
+          SIDE: ${{ matrix.case.side }}
+          DIFFICULTY: ${{ matrix.case.difficulty }}
+          TURNS: ${{ matrix.case.turns }}
+          SEEDS: ${{ matrix.case.seeds }}
+        run: |
+          node <<'JS'
+          'use strict';
+          const {spawnSync}=require('node:child_process');
+          const version=process.env.VERSION;
+          const scenario=process.env.SCENARIO;
+          const side=process.env.SIDE;
+          const difficulty=process.env.DIFFICULTY;
+          const turns=Number(process.env.TURNS);
+          for(const seedText of process.env.SEEDS.trim().split(/\s+/)){
+            const seed=Number(seedText);
+            console.log('START_CASE '+JSON.stringify({version,scenario,side,difficulty,turns,seed}));
+            const start=Date.now();
+            const result=spawnSync(process.execPath,['tools/scenario_sim.cjs',scenario,side,difficulty,String(seed),String(turns)],{
+              encoding:'utf8',timeout:42*60*1000,maxBuffer:12*1024*1024
+            });
+            const raw=result.stdout||'';
+            const line=raw.split(/\r?\n/).find(line=>line.startsWith('SCENARIO_SIM '));
+            if(result.status!==0||!line) {
+              console.error('BENCHMARK_FAILED',JSON.stringify({version,scenario,seed,status:result.status,signal:result.signal,error:result.error?.message,stderr:result.stderr?.slice(-3000),stdout:raw.slice(-2000)}));
+              process.exitCode=1;
+              continue;
+            }
+            const r=JSON.parse(line.slice('SCENARIO_SIM '.length));
+            const last=r.snapshots.at(-1)||{},captureCount={};
+            const lostCount={};
+            for(const c of r.captures){
+              captureCount[c.to]=(captureCount[c.to]||0)+1;
+              lostCount[c.from]=(lostCount[c.from]||0)+1;
+            }
+            const lastCapture=r.captures.at(-1)?.turn??0;
+            const checkpoints=r.snapshots.filter(s=>[5,10,15,20,25,30].includes(s.turn));
+            console.log('BALANCE_CASE '+JSON.stringify({
+              version,scenario,side,difficulty,seed,turnsCompleted:last.turn||0,
+              elapsedSeconds:Math.round((Date.now()-start)/1000),
+              startingCities:r.startingCities,
+              endingCities:last.cities||{},endingUnits:last.units||{},
+              captures:r.captures.length,capturesBySide:captureCount,citiesLostBySide:lostCount,
+              losses:r.losses,production:r.production,attacks:r.attacks,
+              navalActions:r.navalActions,
+              firstCapture:r.captures[0]?.turn??null,
+              lastCapture:lastCapture||null,
+              turnsWithoutCapture:last.turn?last.turn-lastCapture:0,
+              winner:r.winner,errors:r.errors.length,
+              openingStall:r.openingStall,checkpoints
+            }));
+            if(r.errors.length)process.exitCode=1;
+          }
+          JS
