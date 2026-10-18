@@ -7,20 +7,26 @@
     if (!bySide) aiEconomyCache.set(g, (bySide = new Map()));
     const existing = bySide.get(side);
     if (existing?.turn === g.turn && existing.memo === memo) return existing;
+    const nearestCache = new Map(), etaCache = new Map();
+    const near = p => {
+      const id = p.id ?? (p.c + ':' + p.r);
+      if (!nearestCache.has(id)) nearestCache.set(id, nearestEnemy(p));
+      return nearestCache.get(id);
+    };
     const wallet = funds(g, side), incoming = income(g, side),
       horizons = { campaign: 3, scenario: 5, conquest: 8 },
       horizon = Math.max(3, Math.min(8, Number(g.aiEconomyHorizon) || horizons[g.mode] || 5)),
       fronts = memo.fronts || [],
       shortages = fronts.reduce((sum, f) => sum + Math.max(0,
         f.deficit ?? ((f.desiredStrength || 0) - (f.arrivingFour ?? f.assigned ?? 0))), 0),
-      threatened = bases.filter(s => nearestEnemy(s) <= 3),
-      critical = threatened.some(s => nearestEnemy(s) <= 2 && s.shield < s.maxShield * 0.6),
+      threatened = bases.filter(s => near(s) <= 3),
+      critical = threatened.some(s => near(s) <= 2 && s.shield < s.maxShield * 0.6),
       defensive = critical || fronts.some(f => f.type === 'defensive' &&
         (f.deficit ?? (f.desiredStrength || 0) - (f.assigned || 0)) > 0),
       offensive = !defensive && fronts.some(f => f.type === 'offensive'),
       mode = defensive ? 'defensive' : offensive ? 'offensive' : 'consolidation',
       factoryCount = bases.filter(s => s.tier > 0).length,
-      safeCapacity = bases.filter(s => s.tier > 0 && nearestEnemy(s) > 3).length,
+      safeCapacity = bases.filter(s => s.tier > 0 && near(s) > 3).length,
       basic = price(typeFor(side, 'scout', g), 2, g, side),
       expectedTurns = g.mode === 'campaign' ? 10 : g.mode === 'scenario'
         ? Math.max(14, Math.min(45, 12 + Math.ceil(g.stations.length / 2)))
@@ -53,7 +59,7 @@
       },
     };
     function cityScore(s, cost) {
-      const distance = nearestEnemy(s), level = cityTierOf(s);
+      const distance = near(s), level = cityTierOf(s);
       if (level >= 4 || distance <= 2 || s.shield < s.maxShield * 0.5) return -Infinity;
       if (level === 3) {
         // Defensive batteries are valuable on approaches, not in the rear.
@@ -68,7 +74,7 @@
         (s.capital ? 8 : 0) - (defensive ? 25 : 0);
     }
     function buildingScore(s, kind, cost, deposit = null) {
-      const distance = nearestEnemy(s);
+      const distance = near(s);
       if (distance <= 2 || s.shield < s.maxShield * 0.5) return -Infinity;
       if (kind === 'refinery') {
         if (!deposit || !deposit.base) return -Infinity;
@@ -97,7 +103,10 @@
     function frameScore(s, type, front, already, cost) {
       const t = TYPES[type];
       if (!t || t.naval) return -Infinity;
-      const eta = front ? frontArrival(g, s, front) : nearestEnemy(s);
+      const routeKey = s.id + ':' + (front?.id || '-');
+      if (!etaCache.has(routeKey)) etaCache.set(routeKey,
+        front ? frontArrival(g, s, front) : near(s));
+      const eta = etaCache.get(routeKey);
       if (!Number.isFinite(eta) || (front && eta > 14)) return -Infinity;
       const wanted = front?.need || [], role = wanted.indexOf(t.cls),
         group = already.filter(u => TYPES[u.type]?.branch === t.branch).length,
