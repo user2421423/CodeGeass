@@ -804,7 +804,9 @@ document.addEventListener('keydown', e => {
     toggleStrategicOverlay();
     return;
   }
-  if (k === 'e' && !e.altKey && !e.ctrlKey && !e.metaKey && interactive()) {
+  // Enter ends the turn; leave focused buttons and links to their native keyboard actions.
+  if (k === 'enter' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey &&
+      interactive() && !e.target.closest('button, a, summary, [role="button"], [contenteditable="true"]')) {
     e.preventDefault();
     if (!e.repeat) endTurn();
     return;
@@ -914,9 +916,10 @@ document.addEventListener('keydown', e => {
     );
     if (hover && !onScreen(hover)) centerOn(hover);
   }
-  if (k === 'enter' && document.activeElement === canvas) {
+  // Space takes over the map's old Enter-to-select shortcut.
+  if (k === ' ' && document.activeElement === canvas) {
     e.preventDefault();
-    activateHex(hover);
+    if (!e.repeat) activateHex(hover);
   }
 });
 function classified(o) {
