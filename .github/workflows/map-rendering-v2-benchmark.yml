@@ -37,19 +37,6 @@ jobs:
           (cd "$RUNNER_TEMP/map-after" && node tools/build_sources.cjs)
           mkdir -p "$RUNNER_TEMP/map-bench"
 
-      - name: Renderer-only static and gameplay checks
-        run: |
-          set -euo pipefail
-          node --check "$RUNNER_TEMP/map-after/dist/ui/renderer.js"
-          (cd "$RUNNER_TEMP/map-after" && node tools/validate_assets.cjs --tracked)
-          (cd "$RUNNER_TEMP/map-after" && python3 tools/check_map.py)
-          (cd "$RUNNER_TEMP/map-before" && node tools/scenario_sim.cjs --all > "$RUNNER_TEMP/map-bench/scenario-before.txt")
-          (cd "$RUNNER_TEMP/map-after" && node tools/scenario_sim.cjs --all > "$RUNNER_TEMP/map-bench/scenario-after.txt")
-          diff -u "$RUNNER_TEMP/map-bench/scenario-before.txt" "$RUNNER_TEMP/map-bench/scenario-after.txt"
-          for name in federation_era_roster_smoke commander_assignment_smoke repair_and_port_healing_smoke world_campaign_elite_levels_smoke; do
-            (cd "$RUNNER_TEMP/map-after" && node "tools/$name.cjs")
-          done
-
       - name: Install existing benchmark driver
         run: |
           npm install --prefix "$RUNNER_TEMP/map-perf-deps" --no-save --no-package-lock playwright-core@1.57.0
@@ -91,3 +78,17 @@ jobs:
           name: map-rendering-v2-compare
           path: ${{ runner.temp }}/map-bench/
           if-no-files-found: ignore
+
+      - name: Renderer-only static and gameplay checks
+        run: |
+          set -euo pipefail
+          node --check "$RUNNER_TEMP/map-after/dist/ui/renderer.js"
+          (cd "$RUNNER_TEMP/map-after" && node tools/validate_assets.cjs --tracked)
+          (cd "$RUNNER_TEMP/map-after" && python3 tools/check_map.py)
+          (cd "$RUNNER_TEMP/map-before" && node tools/scenario_sim.cjs --all > "$RUNNER_TEMP/map-bench/scenario-before.txt")
+          (cd "$RUNNER_TEMP/map-after" && node tools/scenario_sim.cjs --all > "$RUNNER_TEMP/map-bench/scenario-after.txt")
+          diff -u "$RUNNER_TEMP/map-bench/scenario-before.txt" "$RUNNER_TEMP/map-bench/scenario-after.txt"
+          for name in federation_era_roster_smoke commander_assignment_smoke repair_and_port_healing_smoke world_campaign_elite_levels_smoke; do
+            (cd "$RUNNER_TEMP/map-after" && node "tools/$name.cjs")
+          done
+
