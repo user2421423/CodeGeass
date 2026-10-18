@@ -175,7 +175,7 @@ test('combat action stamps survive save compression round-trip', () => {
 test('ranged attacker does not receive illegal short-range retaliation', () => {
   const { g, actor, city } = cityFixture('heavy', true);
   const p = E.within(g, city, 2).find(t =>
-    E.dist(g, t, city) === 2 && !E.isSea(t) &&
+    E.distance(t, city, g) === 2 && !E.isSea(t) &&
     !E.internal.TERRAIN[t.terrain]?.blocked &&
     !E.unitAt(g, t) && !E.stationAt(g, t));
   assert.ok(p, 'expected an empty two-hex firing position');
