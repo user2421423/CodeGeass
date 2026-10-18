@@ -27,10 +27,10 @@ assert.equal(CP.MAX_CP, 1850, '1,850 permanent CP');
 assert.equal(CP.TRACKS.length, 16, 'six faction, eight speed, two mobilization');
 assert.equal(CP.STRATEGIC.length, 12, 'six strategic achievements per era');
 assert.equal(CP.MILESTONES.length, 32, '50-CP milestone spacing through 1,600 CP');
-assert.equal(CP.MILESTONES.filter(x=>x.kind==='tokens').reduce((n,x)=>n+x.amount,0),5600);
+assert.equal(CP.MILESTONES.filter(x=>x.kind==='tokens').reduce((n,x)=>n+x.amount,0),6200);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='fragments').reduce((n,x)=>n+x.amount,0),60);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='cosmetic').length,5);
-assert.equal(CP.MILESTONES.filter(x=>x.kind==='high-command').map(x=>x.at).join(','),'1600');
+assert.equal(CP.MILESTONES.filter(x=>x.highCommandBonus).map(x=>x.at).join(','),'1600');
 assert.equal(CP.MILESTONES.find(x=>x.at===1600).amount,1);
 const mk = (era = 'world', difficulty = 'normal', side = 'britannia', turn = 45, id = 'run1') =>
   ({ mode: 'conquest', era, difficulty, player: side, turn, over: {winner:side}, rewardClaimId:id, units:[] });
@@ -100,6 +100,9 @@ assert.match(dialog.innerHTML,/1,600 CP/);
 assert.match(dialog.innerHTML,/cp-roadmap-chapter/);
 assert.match(dialog.innerHTML,/Supreme Command/);
 assert.match(dialog.innerHTML,/permanent High Command position/);
+assert.match(dialog.innerHTML,/Cosmetic collection/);
+assert.equal((dialog.innerHTML.match(/cp-cosmetic-card /g) || []).length,5);
+assert.match(dialog.innerHTML,/cp-reward-symbol/);
 
 // Final reward is permanent, idempotent, and additive to paid High Command capacity.
 profile = { tokens: 100000 };
@@ -114,6 +117,7 @@ for (const milestone of CP.MILESTONES) {
   assert.equal(CP.claimMilestone(milestone.at).ok,true,'milestone ' + milestone.at);
 }
 assert.equal(CP.claimMilestone(1600).ok,false,'final reward is not repeatable');
+assert.equal(profile.tokens,106200,'all original 6,200 tokens remain including final 600');
 assert.equal(E.highCommandCapacity(profile),3,'bonus seat permanently stacks on the base two');
 assert.equal(E.highCommandExpansionPrice(profile),1800,'bonus does not skip the 1,800-token tier');
 assert.equal(E.expandHighCommand(profile).ok,true);

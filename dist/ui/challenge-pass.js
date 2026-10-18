@@ -83,14 +83,13 @@ const CHALLENGE_PASS = (() => {
   ]);
   // Preserve the current token amounts until the proposed reward-economy rebalance is approved.
   // The 1,600-CP final milestone now awards a permanent High Command position.
-  const tokenAmounts = [...Array(10).fill(200), ...Array(7).fill(300), ...Array(3).fill(500)];
+  const tokenAmounts = [...Array(10).fill(200), ...Array(7).fill(300), ...Array(3).fill(500), 600];
   let tokenIndex = 0;
   const MILESTONES = Array.from({ length: 32 }, (_, i) => {
     const at = (i + 1) * 50;
-    if (at === 1600) return { at, kind: 'high-command', amount: 1 };
     if (COSMETICS.has(at)) return { at, kind: 'cosmetic', name: COSMETICS.get(at) };
     if (FRAGMENTS.has(at)) return { at, kind: 'fragments', amount: 10, rarity: FRAGMENTS.get(at) };
-    return { at, kind: 'tokens', amount: tokenAmounts[tokenIndex++] };
+    return { at, kind: 'tokens', amount: tokenAmounts[tokenIndex++], highCommandBonus: at === 1600 ? 1 : 0 };
   });
   const MAX_CP = TRACKS.reduce((n, track) => n + track.stages.reduce((m, stage) => m + stage.cp, 0), 0) +
     STRATEGIC.reduce((n, objective) => n + objective.cp, 0);
@@ -203,8 +202,27 @@ const CHALLENGE_PASS = (() => {
     if (!saveProfile(profile)) return { ok: false, reason: 'Could not save cosmetic selection.' };
     return { ok: true };
   }
+  // New vector representations: the previous five cosmetic names had no individual artwork.
+  // These are cosmetic preview icons, not unlockable gameplay advantages.
+  function cosmeticIcon(name) {
+    const shapes = {
+      '2017 Command Seal': '<path d="M24 3 43 13v22L24 45 5 35V13Z" fill="#50402c" stroke="#edcc84" stroke-width="2.5"/><path d="M24 11 36 18v12l-12 7-12-7V18Z" fill="none" stroke="#dabb77" stroke-width="1.5"/><circle cx="24" cy="24" r="7" fill="#b44444" stroke="#ffe1a1" stroke-width="2"/><path d="M20 24h8m-4-4v8" stroke="#ffe2ab" stroke-width="2"/>',
+      '2018 Field Banner': '<path d="M12 7h24v28L24 44 12 35Z" fill="#822f40" stroke="#eac885" stroke-width="2.5"/><path d="M8 6h32M24 13v22m-9-17 9 5 9-5" stroke="#f6dfaa" stroke-width="2.5" fill="none"/><path d="m24 16 4 6-4 6-4-6Z" fill="#f9d78d"/>',
+      'Command Profile Frame': '<rect x="7" y="7" width="34" height="34" rx="2" fill="#29465a" stroke="#9b814f"/><path d="M7 20V7h13M28 7h13v13M41 28v13H28M20 41H7V28" fill="none" stroke="#f5d58b" stroke-width="4"/><path d="m24 14 10 10-10 10-10-10Z" fill="none" stroke="#bca56c" stroke-width="2"/><circle cx="24" cy="24" r="4" fill="#e6c684"/>',
+      'Conquest Veteran Banner': '<path d="M10 6h28v25L24 44 10 31Z" fill="#494069" stroke="#ebc783" stroke-width="2.5"/><path d="m24 12 4 9 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" fill="#e6c37a"/><path d="M9 12q-7 16 3 26m27-26q7 16-3 26" fill="none" stroke="#9db89e" stroke-width="2"/>',
+      'Supreme Command Crest': '<path d="M24 5 41 14v20L24 44 7 34V14Z" fill="#4e3b24" stroke="#f3d68d" stroke-width="3"/><path d="m15 23 5 5 4-10 4 10 5-5-2 12H17Z" fill="#f3ce80" stroke="#ffe6b1"/><path d="M24 11v5M6 36Q0 22 7 12m35 24q6-14-1-24" stroke="#eecb80" stroke-width="2" fill="none"/>',
+    };
+    return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" role="img" aria-label="' +
+      esc(name) + '" xmlns="http://www.w3.org/2000/svg">' + (shapes[name] || '') + '</svg>';
+  }
+  function milestoneIcon(item) {
+    if (item.kind === 'cosmetic') return cosmeticIcon(item.name);
+    if (item.kind === 'fragments')
+      return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4 43 22 24 44 5 22Z" fill="#385a78" stroke="#bfe7ff" stroke-width="2.5"/><path d="M5 22h38M15 12l9 32 9-32" stroke="#c9e9ff" stroke-width="1.5" fill="none"/></svg>';
+    return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" aria-hidden="true"><circle cx="18" cy="19" r="13" fill="#87683a" stroke="#f0c979" stroke-width="2"/><circle cx="30" cy="29" r="13" fill="#b58b45" stroke="#ffe4a6" stroke-width="2"/><path d="M30 21v16m-6-12h12m-12 8h12" stroke="#fff2ca" stroke-width="2"/></svg>';
+  }
   function rewardText(item) {
-    if (item.kind === 'tokens') return '+' + item.amount + ' Command Tokens';
+    if (item.kind === 'tokens') return '+' + item.amount + ' Command Tokens' + (item.highCommandBonus ? ' and +1 permanent High Command position' : '');
     if (item.kind === 'high-command') return '+1 permanent High Command position';
     if (item.kind === 'fragments') return item.amount + ' selectable ' + item.rarity + ' fragments';
     return item.name;
@@ -259,11 +277,11 @@ const CHALLENGE_PASS = (() => {
             <div class="cp-roadmap-lane"><span class="cp-roadmap-rail" aria-hidden="true"><span style="width:${claimedCount / items.length * 100}%"></span></span>
               ${items.map(item => {
                 const claimed = !!s.milestones[item.at], ready = cp >= item.at && first?.at === item.at;
-                const kind = item.kind === 'high-command' ? 'capacity' : item.kind;
+                const kind = item.highCommandBonus || item.kind === 'high-command' ? 'capacity' : item.kind;
                 const status = claimed ? 'Claimed' : ready ? 'Ready' : cp >= item.at ? 'Available after earlier rewards' : 'Locked';
                 return `<article class="cp-roadmap-tile cp-kind-${kind} ${claimed ? 'cp-done' : ready ? 'cp-ready' : ''}" aria-label="${item.at} CP: ${esc(rewardText(item))}. ${status}">
                   <span class="cp-roadmap-step">${item.at} CP</span>
-                  <div class="cp-roadmap-node" aria-hidden="true"><span class="cp-roadmap-glyph">${milestoneSymbol(item)}</span></div>
+                  <div class="cp-roadmap-node" aria-hidden="true"><span class="cp-roadmap-glyph">${milestoneIcon(item)}</span>${item.highCommandBonus ? '<span class="cp-roadmap-cap-star">+1 HQ</span>' : ''}</div>
                   <div class="cp-roadmap-reward"><span class="cp-roadmap-type">${kind === 'capacity' ? 'PERMANENT UPGRADE' : kind.toUpperCase()}</span>
                     <strong>${esc(rewardText(item))}</strong></div>
                   ${claimed ? '<span class="cp-roadmap-status">✓ Claimed</span>' :
@@ -316,7 +334,7 @@ const CHALLENGE_PASS = (() => {
       ['strategy','Strategic'],['rewards','Rewards'],
     ];
     const next = MILESTONES.find(m => !s.milestones[m.at]);
-    const cosmetics = [...COSMETICS.values()].filter(name => s.cosmetics[name]);
+    const cosmetics = [...COSMETICS.entries()];
     modal.innerHTML = `<div class="overlay cp-overlay"><section class="dialog wide challenge-pass-dialog" role="dialog"
       aria-modal="true" aria-label="Conquest Challenge Pass">
       <header class="cp-header"><div><span class="cp-eyebrow">WORLD CONQUEST · PERMANENT · FREE</span>
@@ -327,7 +345,7 @@ const CHALLENGE_PASS = (() => {
         <span>Final reward at 1,600 CP</span></div>
         <div class="cp-progress-rail"><span style="width:${Math.min(100,cp/MAX_CP*100)}%"></span></div>
         <small>${availableCount(s)} objective tracks ready to claim · ${next ? 'Next reward at ' + next.at + ' CP' : 'All milestone rewards claimed'}</small></div>
-      ${equipped ? `<div class="cp-equipped">✦ Equipped: ${esc(equipped)}</div>` : ''}
+      ${equipped ? `<div class="cp-equipped">${cosmeticIcon(equipped)} <span>Equipped: ${esc(equipped)}</span></div>` : ''}
       <nav class="cp-tabs" aria-label="Challenge Pass categories">
         ${tabs.map(([id,label]) => `<button class="${currentTab === id ? 'active' : ''}" data-challenge-tab="${id}">${label}</button>`).join('')}</nav>
       <div class="cp-content">
@@ -335,8 +353,9 @@ const CHALLENGE_PASS = (() => {
         ${currentTab === 'rewards' ? '<p class="cp-intro">Follow the reward roadmap from 50 to 1,600 CP. Claim in order; eligible Elite fragments remain selectable. The final reward permanently adds one Global High Command position.</p>' :
           '<p class="cp-intro">Win new Conquests to qualify. Claim the current stage to reveal the next; higher difficulty counts for lower mastery and mobilization stages, but speed tracks require their exact difficulty.</p>'}
         <div class="${currentTab === 'rewards' ? '' : 'cp-grid'}">${visible}</div>
-        ${currentTab === 'rewards' && cosmetics.length ? `<h3>Unlocked cosmetics</h3><div class="cp-cosmetics">
-          ${cosmetics.map(name=>`<button data-challenge-equip="${esc(name)}" class="${equipped === name ? 'active' : ''}">${esc(name)}${equipped === name ? ' · Equipped' : ' · Equip'}</button>`).join('')}</div>` : ''}
+        ${currentTab === 'rewards' ? `<h3>Cosmetic collection</h3><p class="cp-intro">All five are cosmetic only. Unlocked insignia can be equipped on your HQ menu.</p><div class="cp-cosmetics">
+          ${cosmetics.map(([at,name])=>`<${s.cosmetics[name] ? 'button' : 'div'} class="cp-cosmetic-card ${equipped === name ? 'active' : ''} ${s.cosmetics[name] ? '' : 'cp-cosmetic-locked'}" ${s.cosmetics[name] ? 'data-challenge-equip="' + esc(name) + '"' : ''}>
+            ${cosmeticIcon(name)}<b>${esc(name)}</b><small>${s.cosmetics[name] ? (equipped === name ? '✓ Equipped' : 'Tap to equip') : 'Unlock at ' + at.toLocaleString('en-US') + ' CP'}</small></${s.cosmetics[name] ? 'button' : 'div'}>`).join('')}</div>` : ''}
         ${currentTab === 'rewards' ? pendingEliteChoiceHTML() : ''}
       </div><footer class="cp-footer"><span>No historical save credit · Saving and resuming new Conquests is allowed</span>
         <button data-action="challenge-pass-close">Return</button></footer></section></div>`;
@@ -354,7 +373,7 @@ const CHALLENGE_PASS = (() => {
     else closeModal();
   }
   return { TRACKS, STRATEGIC, MILESTONES, MAX_CP, state, earned, start, record, open,
-    enter, close, claimObjective, claimMilestone, equipCosmetic, resultHTML, availableCount };
+    enter, close, claimObjective, claimMilestone, equipCosmetic, cosmeticIcon, resultHTML, availableCount };
 })();
 function challengePassStartRun(g) { CHALLENGE_PASS.start(g); }
 function challengePassRecordVictory(profile, g) { return CHALLENGE_PASS.record(profile, g); }
