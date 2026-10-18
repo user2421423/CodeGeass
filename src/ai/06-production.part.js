@@ -235,18 +235,23 @@
         const sample = allUnits(g).find(u => u.side === side && u.hp > 0 && canCapture(u) && !isShip(u)),
           proxy = sample && { ...sample, id: 'factory:' + s.id, c: s.c, r: s.r },
           route = f => scenarioTravel(g, proxy || s, f);
-        return choices.slice().sort((a,b) => {
-          const score = f => (f.deficit??Math.max(0,f.desiredStrength-f.assigned))*2 /
-            (1+route(f)) + (f.state==='regrouping'?2:0);
+        const connected = choices.filter(f => Number.isFinite(route(f))),
+          reachable = connected.filter(f => !f.dynamicDefense || route(f) <= 5);
+        return (reachable.length ? reachable : connected).slice().sort((a,b) => {
+          const score = f => (f.deficit??Math.max(0,f.desiredStrength-f.assigned))*
+            (f.dynamicDefense ? 3.5 : 2) / (1+route(f)) +
+            (f.state==='regrouping'?2:0);
           return score(b)-score(a)||route(a)-route(b)||a.anchor.id-b.anchor.id;
-        })[0];
+        })[0] || null;
       },
       scenarioUrgency = s => {
         const f = scenarioServes(s);
         if (!f) return 0;
         const shortage = f.deficit ?? Math.max(0,f.desiredStrength-f.assigned);
         const travel = frontArrival(g,s,f);
-        return shortage*3/(1+Math.min(10,travel)/3) + (f.state==='regrouping'?2:0);
+        return shortage*3/(1+Math.min(10,travel)/3) +
+          (f.dynamicDefense && travel <= 5 ? (f.defenseSeverity==='critical'?8:5) : 0) +
+          (f.state==='regrouping'?2:0);
       },
       serves = s => {
         if (g.mode === 'scenario') return scenarioServes(s);
@@ -457,7 +462,7 @@
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
-            ? ['heavy', 'siege', 'medium', 'rocket', 'light', 'assault', 'support', 'scout']
+            ? ['heavy', 'siege', 'medium', 'rocket', 'raider', 'light', 'assault', 'support', 'scout']
             : s.tier === 2
               ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
               : ['light', 'support', 'assault', 'scout'],

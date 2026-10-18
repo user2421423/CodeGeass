@@ -111,6 +111,72 @@
   }
   // Turn-local interpretation of the fronts, routes and reserve hubs declared
   // by each scenario. Biases apply only after real route reachability is known.
+
+  // Dynamic home-city protection is local to a threatened Scenario Mode theater.
+  // A faction may hold one sector while its other columns remain offensive.
+  const SCENARIO_DEFENSE = {
+    enterRatio: 1.25, exitRatio: 0.70, releaseTurns: 2, respondTurns: 3,
+    maxFronts: 6, clusterRadius: 6,
+    mobilization: { moderate: 0.25, major: 0.40, critical: 0.60 }
+  };
+  function scenarioHomeDefense(g, side, own, opponents) {
+    const state = ((g.ai ||= {})[side] ||= {}),
+      previous = state.homeDefense || {}, next = {}, requests = [];
+    const land = allUnits(g).filter(u => u.hp > 0 && u.side === side &&
+      !isShip(u) && !atSea(g, u));
+    for (const city of own) {
+      const mass = massOf(g, city), coastal = coastTile(g, city);
+      const incoming = opponents.flatMap(u => {
+        const distance = dist(g, u, city);
+        if (distance > 10) return [];
+        const sameLand = !atSea(g, u) && !isShip(u) && massOf(g, u) === mass;
+        const atCoast = coastal && atSea(g, u) && distance <= 7 &&
+          (!isShip(u) || (u.cargo || []).length > 0);
+        if (!sameLand && !atCoast) return [];
+        const immediate = threatTo(g, u, city) > 0;
+        const approach = sameLand && approachingThreat(g, u, city);
+        const landing = atCoast && distance <= 5;
+        if (!immediate && !approach && !landing) return [];
+        const strength = isShip(u) ? (u.cargo || []).reduce((n, v) =>
+          n + unitStrength(v), 0) : unitStrength(u);
+        return [{ u, immediate, strength: strength * (immediate ? 1 : 0.65) }];
+      });
+      const threat = incoming.reduce((n, x) => n + x.strength, 0),
+        old = previous[city.id];
+      if (!incoming.length && !old?.active) continue;
+      const local = land.filter(u => massOf(g, u) === mass && dist(g, u, city) <= 10 &&
+        scenarioTravel(g, u, { anchor: city, side }) <= 2.5);
+      const friendly = local.reduce((n, u) => n + unitStrength(u), 0);
+      const exposed = (city.shield || 0) <= Math.max(0, (city.maxShield || 0) * 0.2) &&
+        !unitAt(g, city);
+      const captureSoon = exposed && incoming.some(x => x.immediate && canCapture(x.u));
+      const enter = threat >= Math.max(2, friendly * SCENARIO_DEFENSE.enterRatio) ||
+        captureSoon;
+      const quiet = !enter && (threat === 0 ||
+        threat < friendly * SCENARIO_DEFENSE.exitRatio) && !captureSoon
+        ? (old?.quiet || 0) + 1 : 0;
+      if (!enter && (!old?.active || quiet >= SCENARIO_DEFENSE.releaseTurns)) continue;
+      const ratio = threat / Math.max(1, friendly);
+      const severity = captureSoon || (own.length <= 2 && threat >= 2)
+        ? 'critical' : ratio >= 1.75 ? 'major' : 'moderate';
+      next[city.id] = { active: true, quiet, severity };
+      requests.push({ city, threat, friendly, enemies: incoming.map(x => x.u),
+        severity, captureSoon, protectedCities: [city.id],
+        score: (severity === 'critical' ? 30 : severity === 'major' ? 16 : 6) +
+          threat * 4 + (city.tier || 1) * 2 });
+    }
+    // Merge neighboring threatened cities so they do not compete for the same army.
+    requests.sort((a, b) => b.score - a.score || a.city.id - b.city.id);
+    const fronts = [];
+    for (const request of requests) {
+      const nearby = fronts.find(f => massOf(g, f.city) === massOf(g, request.city) &&
+        dist(g, f.city, request.city) <= SCENARIO_DEFENSE.clusterRadius);
+      if (nearby) nearby.protectedCities.push(request.city.id);
+      else if (fronts.length < SCENARIO_DEFENSE.maxFronts) fronts.push(request);
+    }
+    state.homeDefense = next;
+    return fronts;
+  }
   function scenarioOperationalPlan(g, side) {
     const cache = scenarioCache(g);
     cache.operations ||= new Map();
@@ -245,7 +311,8 @@
     const availableTargets = memo.fronts.filter(f =>
       (defender ? !atSea(g, u) && philippinesHome(g, f.anchor) &&
         massOf(g, u) === massOf(g, f.anchor) : foe(g, f.anchor.owner, u.side) ||
-          (f.operational && f.type==='defensive' && f.anchor.owner===u.side)) &&
+          ((f.operational || f.dynamicDefense) && f.type==='defensive' &&
+            f.anchor.owner===u.side)) &&
       Number.isFinite(scenarioTravel(g, u, f))),
       wing = memo.wings?.[u.id],
       // Threatened home hubs remain eligible within an offensive theater.
@@ -253,6 +320,19 @@
         (f.operational && f.type==='defensive')),
       fronts = matched?.length ? matched : availableTargets;
     if (!fronts.length) return null;
+    const committed = memo.fronts.filter(f => f.dynamicDefense)
+      .reduce((n, f) => n + f.assigned, 0);
+    if (committed < (memo.defenseBudget || 0)) {
+      const responders = fronts.filter(f => f.dynamicDefense &&
+        f.assigned < f.desiredStrength &&
+        scenarioTravel(g, u, f) <= SCENARIO_DEFENSE.respondTurns &&
+        (atSea(g, u) || massOf(g, u) === massOf(g, f.anchor)));
+      if (responders.length) return responders.sort((a,b) =>
+        (b.defenseSeverity === 'critical' ? 2 : b.defenseSeverity === 'major' ? 1 : 0) -
+        (a.defenseSeverity === 'critical' ? 2 : a.defenseSeverity === 'major' ? 1 : 0) ||
+        scenarioCityCost(g,u,a)-scenarioCityCost(g,u,b) ||
+        a.anchor.id-b.anchor.id)[0];
+    }
     const limit = memo.fronts.length <= 2 ? SCENARIO_COLUMN.finalUnits : SCENARIO_COLUMN.maxUnits;
     const understrength = fronts.filter(f => f.members.length < limit &&
       f.assigned < f.desiredStrength);
@@ -445,8 +525,11 @@
     const active=troops.filter(u=>!memo.guards?.[u.id]&&!memo.recoveries?.has(u.id));
     const defendingPhilippines = philippinesDefense(g, side);
     const operations=scenarioOperationalPlan(g,side);
+    const homeDefense = defendingPhilippines ? [] : scenarioHomeDefense(g, side, own, enemies);
+    const threatened = new Map(homeDefense.map(item => [item.city.id, item]));
     const fronts = g.stations.filter(s =>
-      defendingPhilippines ? philippinesHome(g, s) : foe(g, s.owner, side) || operations.defensive.includes(s)).map(s => {
+      defendingPhilippines ? philippinesHome(g, s) :
+        foe(g, s.owner, side) || operations.defensive.includes(s) || threatened.has(s.id)).map(s => {
       const opponents = enemies.filter(u => dist(g, u, s) <= 6),
         mass = massOf(g, s),
         local = own.filter(c => massOf(g, c) === mass),
@@ -454,22 +537,31 @@
         rally = (local.length ? local : coastal).slice()
           .sort((a, b) => dist(g, a, s) - dist(g, b, s) || a.id - b.id)[0] || null,
         opposition = opponents.reduce((total, u) => total + unitStrength(u), 0),
-        fortified = !!s.fort || s.shield >= 300;
+        fortified = !!s.fort || s.shield >= 300,
+        home = threatened.get(s.id);
       return {
         id: 'j' + s.id, side, anchor: s, name: s.name,
         type: s.owner===side ? 'defensive' : 'offensive',
-        operational:operations.defensive.includes(s),
+        operational:operations.defensive.includes(s), dynamicDefense: !!home,
+        defenseSeverity: home?.severity || null,
+        protectedCities: home?.protectedCities || [],
         state: 'attacking', overseas: defendingPhilippines ? false : !local.length,
-        rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0, fortified }],
-        enemies: opponents, enemyStrength: opposition,
-        desiredStrength: Math.max(3, opposition * 1.15 + (fortified ? 3 : 1)),
+        rally: home ? s : rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0, fortified }],
+        enemies: home?.enemies || opponents, enemyStrength: opposition,
+        desiredStrength: home ? Math.max(2, home.threat * 1.25) :
+          Math.max(3, opposition * 1.15 + (fortified ? 3 : 1)),
         assigned: 0, members: [], friendlyStrength: 0, target: 0,
         masses: new Set([mass]), seeds: [[s, 0]],
         score: 1, priority: 1, fortified,
       };
     });
+    const severity = homeDefense.some(f => f.severity === 'critical') ? 'critical' :
+      homeDefense.some(f => f.severity === 'major') ? 'major' : 'moderate';
+    const mobileStrength = active.reduce((n, u) => n + unitStrength(u), 0);
     Object.assign(memo, { fronts, byId: Object.fromEntries(fronts.map(f => [f.id, f])),
-      assign: {}, fields: {}, columns: {} });
+      assign: {}, fields: {}, columns: {},
+      defenseBudget: homeDefense.length ?
+        Math.max(2, mobileStrength * SCENARIO_DEFENSE.mobilization[severity]) : 0 });
     const at = u => carried.get(u.id) || u;
     // Cached per unit: nothing moves while the units are ranked.
     const bestTravel = new Map(),
@@ -487,7 +579,8 @@
       f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
       const posture=(state.scenarioPostures||{})[f.id]||{};
       const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
-      f.state = f.operational && f.type==='defensive' ? 'holding' : defendingPhilippines
+      f.state = (f.operational || f.dynamicDefense) && f.type==='defensive' ?
+        'holding' : defendingPhilippines
         ? (f.anchor.owner === side ? 'holding' : 'attacking')
         : (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
       f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
@@ -1101,16 +1194,22 @@
       },
       enemy = mix((f.enemies || []).filter(u => !isShip(u))),
       ours = mix(mine);
-     const need = f.overseas
-      ? ['raider', 'medium', 'assault', 'heavy']
-      : f.type === 'defensive'
-        ? ['heavy', 'rocket', 'medium', 'support']
-        : enemy.total && enemy.Armor >= enemy.total * 0.5
-          ? ['assault', 'rocket', 'heavy', 'medium']
-          : ['medium', 'heavy', 'rocket', 'light'];
-    if (!f.overseas && ours.Artillery < ours.total * 0.2)
+     const defensive = g?.mode === 'scenario' && f.type === 'defensive';
+     const need = defensive && enemy.total && enemy.Armor >= enemy.total * 0.4
+       ? ['assault', 'rocket', 'heavy', 'medium', 'support']
+       : defensive && enemy.total && enemy.Artillery >= enemy.total * 0.35
+       ? ['raider', 'assault', 'medium', 'rocket', 'light']
+       : defensive && enemy.total && enemy.Infantry >= enemy.total * 0.5
+       ? ['medium', 'light', 'rocket', 'heavy', 'support']
+       : f.overseas ? ['raider', 'medium', 'assault', 'heavy']
+       : f.type === 'defensive' ? ['heavy', 'rocket', 'medium', 'support']
+       : enemy.total && enemy.Armor >= enemy.total * 0.5
+         ? ['assault', 'rocket', 'heavy', 'medium']
+         : ['medium', 'heavy', 'rocket', 'light'];
+    if (!f.overseas && ours.Artillery < ours.total * 0.2 &&
+        (!defensive || enemy.Artillery < enemy.total * 0.35))
       need.unshift(f.type === 'offensive' && f.objectives.some(o => o.fortified) ? 'siege' : 'rocket');
-    if (g?.mode === 'scenario') {
+    if (g?.mode === 'scenario' && f.type === 'offensive') {
       if (f.fortified && ours.Artillery < Math.max(1.5, ours.total * 0.3))
         need.unshift('siege', 'rocket', 'assault');
       else if (!unitAt(g, f.anchor) && f.anchor.shield < f.anchor.maxShield * 0.35)
@@ -1126,7 +1225,8 @@
     // instead of marching toward a city that is already theirs until next turn.
     if (g.mode === 'scenario') {
       const old = memo.byId[memo.assign[u.id]];
-      const friendlyDefense=old?.operational && old.type==='defensive' && old.anchor.owner===u.side;
+      const friendlyDefense=(old?.operational || old?.dynamicDefense) &&
+        old.type==='defensive' && old.anchor.owner===u.side;
       if (old && !friendlyDefense && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
         scenarioRememberCapture(g, u.side, old.anchor);
       const next = !old || (!friendlyDefense && !philippinesDefense(g, u.side) && !foe(g, old.anchor.owner, u.side))
