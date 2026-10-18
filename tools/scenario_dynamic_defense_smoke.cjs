@@ -48,6 +48,7 @@ const target = crisis.fronts.find(f => f.dynamicDefense &&
 if (!target) console.log('DEFENSE_DIAGNOSTICS', JSON.stringify({
   city: city.name, cityId: city.id,
   homeDefense: g.ai?.[side]?.homeDefense,
+  diagnostic: g.ai?.[side]?.defenseDebug?.[city.id],
   dynamic: crisis.fronts.filter(f => f.dynamicDefense).map(f => f.name),
   invaders: relocated.map(u => ({ type: u.type, at: [u.c,u.r],
     distance: api.dist(g,u,city),sameLand:api.massOf(g,u)===api.massOf(g,city) }))
