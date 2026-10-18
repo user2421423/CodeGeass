@@ -40,6 +40,7 @@ for (let i = 0; i < 8; i++) {
   api.reindex(g, u, old);
   relocated.push(u);
 }
+g.scenarioDefenseDebug = true;
 g.turn = (g.turn || 1) + 1;
 const crisis = E.aiPlan(g, side);
 const target = crisis.fronts.find(f => f.dynamicDefense &&
