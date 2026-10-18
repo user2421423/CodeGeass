@@ -108,6 +108,10 @@
     // Elite uses the same conversion and AI rules as the Invasion variant.
     if (!['normal','hard','challenge','elite'].includes(difficulty)) difficulty='normal';
     const g=japan.create('britannia','normal',seed);
+    // The base Invasion is fully initialized, but Division rebuilds its entire
+    // economy. Clear this marker until Division's starting reserves are set,
+    // otherwise one-time Research doubling runs against the temporary zeros.
+    g.startUnits=null;
     const cityByName=new Map(g.stations.map(s=>[s.name,s]));
     g.player=player;
     g.order=[player,...SIDES.filter(s=>s!==player)];
