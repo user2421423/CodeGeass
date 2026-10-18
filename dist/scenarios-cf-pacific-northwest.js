@@ -350,7 +350,7 @@
       if(!at||E.distance(origin,at,g)> (port?9:5))
         throw Error('No geographic city or usable harbour for '+name);
       const capital=name==='Seattle'||name==='Portland'||name==='Boise';
-      const shield=Math.round((fort?(tier===3?520:390):140+65*tier) / 50) * 50;
+      const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner:'britannia',
         tier,capital,capitalOf:capital?'britannia':null,fort:!!fort,
         gun:fort?name+' Coastal / Mountain Defence Battery':null,

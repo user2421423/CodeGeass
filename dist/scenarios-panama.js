@@ -287,7 +287,7 @@
       if(!at)throw Error('No valid site for Panama city '+name);
       cityKeys.add(E.key(at));
       const capital=name==='Panama City';
-      const shield=Math.round((fort?(capital?640:485):150+65*tier) / 50) * 50;
+      const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

@@ -193,7 +193,7 @@
         !g.stations.some(s=>s.c===t.c&&s.r===t.r),9);
       if(!at)throw Error('Cannot place Indochina city '+name);
       const capital=name==='Bangkok'||name==='Nanning';
-      const shield=Math.round((fort?400:120+60*tier) / 50) * 50;
+      const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
       g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,lab:0,refinery:0,

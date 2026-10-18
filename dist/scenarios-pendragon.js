@@ -253,7 +253,7 @@ function create(player=attacker,difficulty='normal',seed=startingSeed){
   const capital=name==='Pendragon';
   const inner=['Imperial Citadel','Western Imperial Gate','Eastern Imperial Gate',
    'Southern Imperial Gate','Northern Imperial Gate','Imperial Air Command','Royal Arsenal'].includes(name);
-  const shield=Math.round((capital?1100:inner?650:fort?390:160+60*tier) / 50) * 50;
+  const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
   g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
    capital,capitalOf:capital?'britannia':null,fort:!!fort,
    gun:fort?name+' Defensive Battery':null,lab:capital?1:0,refinery:0,

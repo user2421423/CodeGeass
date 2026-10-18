@@ -184,6 +184,8 @@
     foe,
     defaultOfficer,
     fortify,
+    cityDefenseHP,
+    scenarioCityDefenseHP,
     claim,
     kill,
     isReady,

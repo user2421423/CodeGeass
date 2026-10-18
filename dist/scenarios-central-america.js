@@ -374,7 +374,7 @@
       const capital=name==='San José'||name==='Managua'||
         name==='Tegucigalpa'||name==='San Salvador'||
         name==='Guatemala City'||name==='Belmopan';
-      const shield=Math.round((fort?(capital?540:390):140+50*tier) / 50) * 50;
+      const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
       g.stations.push({id:g.stations.length,name,c:spot.c,r:spot.r,
         owner,tier,capital,capitalOf:capital?owner:null,fort,
         gun:fort?name+' Defence Battery':null,lab:0,refinery:0,

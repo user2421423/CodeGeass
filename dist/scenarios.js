@@ -418,7 +418,7 @@
         (!required||required.has(E.key(t))) && !g.stations.some(s=>s.c===t.c && s.r===t.r),8);
       if (!at) throw new Error('No playable Japan land tile near '+name);
       const capital=name==='Tokyo Settlement' || name==='Kyoto' || name==='Fukuoka';
-      const shield=Math.round((fort?400:120+60*tier) / 50) * 50;
+      const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
       const s={id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
         capital,capitalOf:capital?owner:null,fort:!!fort,
         gun:fort?name+' Defensive Battery':null,

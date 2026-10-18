@@ -380,10 +380,23 @@
     return g?.era === 'ufn2018' ? 'Rise of the U.F.N. · 2018 a.t.b.' : 'World War · 2017 a.t.b.';
   }
 
+  // Shared starting city-defense values. Regional theaters keep their economy
+  // and HQ flags, but use the Conquest defense scale instead of custom HP formulas.
+  function cityDefenseHP(tier, fort = false, capital = false) {
+    if (capital) return 600;
+    if (fort) return 400;
+    return [0, 200, 250, 300][Math.max(1, Math.min(3, Math.trunc(Number(tier)) || 1))];
+  }
+  // Only canonical faction capitals get the 600-HP tier in regional scenarios.
+  // Regional command centers (e.g. Sydney, Ottawa, Mexico City) are not empire capitals.
+  function scenarioCityDefenseHP(tier, fort, name) {
+    const trueCapital = CITY_DATA.some(row => row[0] === name && row[5] === true);
+    return cityDefenseHP(tier, fort, trueCapital);
+  }
   // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.
   function cityBase([name, , , , tier, capital = false, fort = false]) {
     return {
-      maxShield: capital ? 600 : fort ? 400 : Math.round((120 + 60 * tier) / 50) * 50,
+      maxShield: cityDefenseHP(tier, fort, capital),
       // Capitals: 50 plus the 15 their old refinery exported (refineries now need a Sakuradite deposit).
       income: capital ? 65 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
       industry: capital ? 30 : 6 * tier,

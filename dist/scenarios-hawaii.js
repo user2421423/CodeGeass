@@ -195,7 +195,7 @@
       if(wanted!=null&&component!==wanted)throw Error('City escaped island '+name);
       islandComponent.set(island,component);
       const capital=name==='Honolulu';
-      const shield=Math.round((fort?(capital?550:tier===3?430:350):150+45*tier) / 50) * 50;
+      const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
       const s={id:g.stations.length,name,c:at.c,r:at.r,owner:'britannia',tier,
         capital,capitalOf:capital?'britannia':null,fort:!!fort,
         gun:fort?name+' Coastal Battery':null,lab:airfield?1:0,refinery:0,

@@ -1640,7 +1640,7 @@ function create(player='eu',difficulty='normal',seed=201740){
    !g.stations.some(s=>s.c===t.c&&s.r===t.r),12);
   if(!at)throw Error('No valid dry land for '+name);
   const capital=['Salt Lake City','Denver','Scottsbluff','Pueblo'].includes(name);
-  const shield=Math.round((capital?560:fort?360+55*tier:125+65*tier) / 50) * 50;
+  const shield=E.scenarioCityDefenseHP(tier, !!fort, name);
   g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier,
    capital,capitalOf:capital?owner:null,fort:!!fort,
    gun:fort?name+' Mountain Battery':null,lab:0,refinery:0,
