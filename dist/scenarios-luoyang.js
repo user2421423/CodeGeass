@@ -351,7 +351,7 @@
       // an explicit scenario lineup prevents fallback to Britannian frames.
       lineup:{cf:{scout:'gun_ru',assault:'gun_ru_assault',raider:'chuyen',
         light:'gun_ru_light',medium:'chuyen_medium',heavy:'chuyen_heavy',
-        super:'chuyen_super',support:'gun_ru_support',
+        super:'shen_hu',support:'gun_ru_support',
         rocket:'gun_ru_rocket',siege:'gun_ru_siege'}}
     };
     for(const s of [...SIDES,'neutral']){
