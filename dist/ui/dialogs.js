@@ -320,39 +320,97 @@ function generalsDialog(side = generalsSide) {
   focusDialog();
 }
 let archiveSide = null,
-  archiveBack = 'game';
-// Every non-Elite frame: the three powers' lineups, navies and campaign-only frames, then the campaign sides and neutrals.
+  archiveBack = 'game',
+  archiveView = null,
+  archiveBranch = 'Infantry';
 const ARCHIVE_SIDES = [...E.MAJORS, 'eb', 'bk', 'jlf', 'neutral'],
   ARCHIVE_BRANCHES = [...BRANCH_LIST, 'Naval'];
-function archiveTypes(side, branch) {
-  if (branch === 'Naval') return E.NAVAL[side] ? [...new Set(Object.values(E.NAVAL[side]))] : [];
-  // A faction may deliberately map several standard class slots to one Code Geass frame. Show each actual frame once.
-  const lineup = E.ROSTER[side] ? E.CLASS_ORDER.map(cls => E.ROSTER[side][cls]) : [],
-    own = Object.keys(E.TYPES).filter(k => E.TYPES[k].side === side && !E.TYPES[k].naval);
-  return [...new Set([...lineup, ...own])].filter(k => k && !E.TYPES[k].elite && E.TYPES[k].branch === branch);
+
+// Separate playable rosters by era. Extra frames associated with a faction
+// should not appear alongside its ten standard factory classes.
+function archiveRoster(side, view) {
+  if (side === 'cf' && view === 'world') return E.LINEUPS.cf2017;
+  if (side === 'cf' && view === 'ufn') return E.ROSTER.bk;
+  return E.ROSTER[side] || {};
 }
-function archiveDialog(branch = 'Infantry', side = archiveSide || game.player) {
+function archiveSpecialTypes(side) {
+  const known = new Set(Object.values(E.ROSTER[side] || {}));
+  if (side === 'cf') {
+    for (const id of Object.values(E.LINEUPS.cf2017)) known.add(id);
+    for (const id of Object.values(E.ROSTER.bk)) known.add(id);
+  }
+  return Object.keys(E.TYPES).filter(id => {
+    const type = E.TYPES[id];
+    return type.side === side && !type.elite && !type.naval && !known.has(id);
+  });
+}
+function archiveViews(side) {
+  if (side === 'cf') return [
+    { id: 'scenario', label: 'Regional scenarios',
+      note: 'Default Chinese Federation factory roster for most regional scenarios, including Australia. Luoyang and Mexican Heartland use the separate 2017 roster instead.' },
+    { id: 'world', label: '2017 / Luoyang / Mexico',
+      note: 'The indigenous Gun-Ru and Chuyen lineup used in World Conquest (2017), and explicitly by the Luoyang and Mexican Heartland scenarios.' },
+    { id: 'ufn', label: 'U.F.N. 2018',
+      note: 'The 2018 U.F.N. Conquest uses the Black Knights field roster for the Chinese Federation. These are not extra factory choices in regional scenarios.' },
+    { id: 'story', label: 'Story / special',
+      note: 'Special Chinese Federation machines outside the standard ten-class factory rosters. These are not generally buildable.' },
+  ];
+  if (side === 'neutral') return [
+    { id: 'story', label: 'Special units',
+      note: 'Neutral and Story Mode units. These are not a normal faction factory roster.' },
+  ];
+  const views = [
+    { id: 'standard', label: 'Standard lineup',
+      note: side === 'bk'
+        ? 'The Black Knights field ten regular class slots. Additional character-specific machines belong under Story / special or Elite Forces.'
+        : 'The faction\'s standard ten class slots. A mission may separately supply special starting units or a scenario-specific lineup.' },
+  ];
+  if (archiveSpecialTypes(side).length) views.push({
+    id: 'story', label: 'Story / special',
+    note: 'Additional campaign/story models not in the standard factory lineup. Some may appear as starting forces; this does not make them regular recruit options.',
+  });
+  return views;
+}
+function archiveDefaultView(side) {
+  if (side !== 'cf') return side === 'neutral' ? 'story' : 'standard';
+  if (game?.mode === 'conquest' && game.era === 'world') return 'world';
+  if (game?.mode === 'conquest' && game.era === 'ufn2018') return 'ufn';
+  if (game?.mode === 'scenario' && game.lineup?.cf &&
+      E.CLASS_ORDER.every(cls => E.lineupOf(game, 'cf')[cls] === E.LINEUPS.cf2017[cls])) return 'world';
+  return 'scenario';
+}
+function archiveTypes(side, branch, view = archiveDefaultView(side)) {
+  if (view === 'story') return archiveSpecialTypes(side).filter(id => E.TYPES[id].branch === branch);
+  if (branch === 'Naval') {
+    const navySide = side === 'cf' && view === 'ufn' && E.NAVAL.bk ? 'bk' : side;
+    return E.NAVAL[navySide] ? [...new Set(Object.values(E.NAVAL[navySide]))] : [];
+  }
+  const lineup = archiveRoster(side, view);
+  return [...new Set(E.CLASS_ORDER.map(cls => lineup[cls]))]
+    .filter(id => id && E.TYPES[id] && !E.TYPES[id].elite && E.TYPES[id].branch === branch);
+}
+function archiveDialog(branch = 'Infantry', side = archiveSide || game.player, view = null) {
   if (!ARCHIVE_SIDES.includes(side)) side = game.player;
+  if (side !== archiveSide) archiveView = null;
   archiveSide = side;
-  const branches = ARCHIVE_BRANCHES.filter(b => archiveTypes(side, b).length);
+  const views = archiveViews(side);
+  if (view) archiveView = view;
+  if (!views.some(v => v.id === archiveView)) archiveView = archiveDefaultView(side);
+  const branches = ARCHIVE_BRANCHES.filter(b => archiveTypes(side, b, archiveView).length);
   if (!branches.includes(branch)) branch = branches[0];
-  const types = archiveTypes(side, branch),
+  archiveBranch = branch;
+  const types = archiveTypes(side, branch, archiveView),
     f = F(side),
-    note =
-      branch === 'Naval'
-        ? 'Navies are Conquest-only and built at ports. Every power’s equivalent units share the same numbers; only names and art differ.'
-        : E.isMajor(game, side)
-          ? 'Lineups follow the Code Geass wiki: Britannia with Euro Britannia, the E.U. with wZERO and the Star of Madrid, and the Federation with the Jabalpur-built Black Knights frames and the Burai Kai. Configurations are the game’s loadouts of a wiki frame. Story Mode-only frames appear in story missions, not in Conquest factories.'
-          : E.ROSTER[side]
-            ? 'The frames this side fields in story missions, including those it shares with the major powers. Story Mode-only frames are not built in Conquest.'
-            : 'Neutral garrisons and the Geass Order’s Siegfried. Story Mode-only frames are not built in Conquest.';
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare archive"><div class="dialog-head"><div><div class="eyebrow">Order of battle</div><h2>Knightmare archive</h2><p>${f.name} frames. Values shown for one frame.${f.doctrine ? ` <b>${f.doctrine}:</b> ${f.doctrineText}` : ''}</p></div><button class="small close" data-action="archive-close">Close</button></div><div class="tabs">${ARCHIVE_SIDES.map(s => `<button data-archive-side="${s}" class="${s === side ? 'active' : ''}">${F(s).short}</button>`).join('')}</div><div class="tabs">${branches.map(b => `<button data-archive-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div class="cards">${types
+    landCount = new Set(BRANCH_LIST.flatMap(b => archiveTypes(side, b, archiveView))).size,
+    note = views.find(v => v.id === archiveView).note +
+      (branch === 'Naval' ? ' Naval units are launched from ports, not ordinary factories.' : '');
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare archive"><div class="dialog-head"><div><div class="eyebrow">Order of battle</div><h2>Knightmare archive</h2><p>${f.name} frames. Values shown for one frame.${f.doctrine ? ` <b>${f.doctrine}:</b> ${f.doctrineText}` : ''}</p></div><button class="small close" data-action="archive-close">Close</button></div><div class="tabs">${ARCHIVE_SIDES.map(s => `<button data-archive-side="${s}" class="${s === side ? 'active' : ''}">${F(s).short}</button>`).join('')}</div><div class="tabs" role="group" aria-label="Roster selection">${views.map(v => `<button data-archive-view="${v.id}" class="${v.id === archiveView ? 'active' : ''}">${v.label}</button>`).join('')}</div><p class="description">${landCount} distinct land model${landCount === 1 ? '' : 's'} in this selection${archiveView === 'story' ? ' (not a standard factory lineup)' : ' across the ten standard class slots'}.</p><div class="tabs">${branches.map(b => `<button data-archive-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div class="cards">${types
     .map(k => {
       const t = E.TYPES[k],
         capacity = t.capacity ? E.carrierCapacity(game, { type: k, side }) : 0;
-      return `<article class="unit-card">${ART.unit(k, 'catalog-ship', side)}<span class="unit-code">${t.role} · ${t.wc} · Tier ${t.tier}${t.campaign ? ' · Story Mode only' : ''}</span><h3>${t.name}</h3><span class="weapon-focus">${t.model} · ${t.gen}</span><p style="margin-top:10px">${t.desc}</p><p class="lore">${t.lore}<br><b>${t.weapon}</b></p><div class="unit-spec"><span>HP ${t.hp}</span><span>${ICONS.use('atk')}${t.attack}</span><span>${ICONS.use('def')}${t.armor}</span><span>${ICONS.use('mov')}${t.move}</span><span>${ICONS.use('rng')}${t.min === t.max ? t.max : t.min + '–' + t.max}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}${capacity ? `<span>Carries ${capacity}</span>` : ''}</div><div class="cost">${costHTML(E.price(k, 1, game, side))}</div></article>`;
+      return `<article class="unit-card">${ART.unit(k, 'catalog-ship', side)}<span class="unit-code">${t.role} · ${t.wc} · Tier ${t.tier}${archiveView === 'story' ? ' · Special/story unit' : ''}</span><h3>${t.name}</h3><span class="weapon-focus">${t.model} · ${t.gen}</span><p style="margin-top:10px">${t.desc}</p><p class="lore">${t.lore}<br><b>${t.weapon}</b></p><div class="unit-spec"><span>HP ${t.hp}</span><span>${ICONS.use('atk')}${t.attack}</span><span>${ICONS.use('def')}${t.armor}</span><span>${ICONS.use('mov')}${t.move}</span><span>${ICONS.use('rng')}${t.min === t.max ? t.max : t.min + '–' + t.max}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}${capacity ? `<span>Carries ${capacity}</span>` : ''}</div><div class="cost">${costHTML(E.price(k, 1, game, side))}</div></article>`;
     })
-    .join('')}</div><p class="description">${note}</p></section></div>`;
+    .join('')}</div><p class="description">${note} Elite Forces are listed separately in Elite Forces HQ.</p></section></div>`;
   focusDialog();
 }
 // A power's strategic weapons as intelligence sees them: projects under way and warheads ready.
