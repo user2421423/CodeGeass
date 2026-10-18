@@ -217,9 +217,12 @@ function getSave(key = SAVE_KEY) {
   try {
     const raw=JSON.parse(localStorage.getItem(key)), g = E.unpackSave(raw);
     if(g && raw?.weeklyScenario)g.weeklyScenario={...raw.weeklyScenario};
-    if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player])
+    if (g?.game === 'knightmare' && g.tiles?.length === g.cols * g.rows && g.units && g.stations && E.FACTIONS[g.player]) {
       // Browsing a save must not migrate it with missing scenario rules.
-      return g.mode === 'scenario' && !E.scenarios?.byId?.[g.scenario?.id] ? g : E.migrateSave(g);
+      const migrated=g.mode === 'scenario' && !E.scenarios?.byId?.[g.scenario?.id] ? g : E.migrateSave(g);
+      if(migrated && raw?.weeklyScenario)migrated.weeklyScenario={...raw.weeklyScenario};
+      return migrated;
+    }
   } catch (e) {}
   return null;
 }
