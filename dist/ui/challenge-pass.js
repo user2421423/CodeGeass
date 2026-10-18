@@ -256,7 +256,7 @@ const CHALLENGE_PASS = (() => {
           <div class="cp-roadmap-chapter-head"><div><span class="cp-eyebrow">CHAPTER ${String(chapter + 1).padStart(2, '0')}</span>
           <h3>${title}</h3></div><span>${items[0].at}–${items[items.length - 1].at} CP · ${claimedCount}/8 claimed</span></div>
           <div class="cp-roadmap-scroll" tabindex="0" aria-label="Scroll ${title} rewards">
-            <div class="cp-roadmap-lane" style="--cp-filled:${claimedCount / items.length * 100}%">
+            <div class="cp-roadmap-lane"><span class="cp-roadmap-rail" aria-hidden="true"><span style="width:${claimedCount / items.length * 100}%"></span></span>
               ${items.map(item => {
                 const claimed = !!s.milestones[item.at], ready = cp >= item.at && first?.at === item.at;
                 const kind = item.kind === 'high-command' ? 'capacity' : item.kind;
