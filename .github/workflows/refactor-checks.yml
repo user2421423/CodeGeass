@@ -21,3 +21,4 @@ jobs:
         run: |
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
+          node tools/federation_era_roster_smoke.cjs
