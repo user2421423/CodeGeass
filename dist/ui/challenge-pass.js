@@ -81,10 +81,13 @@ const CHALLENGE_PASS = (() => {
     [150, 'Rare'], [350, 'Rare'], [550, 'Epic'], [850, 'Epic'],
     [1150, 'Legendary'], [1350, 'Legendary'],
   ]);
-  const tokenAmounts = [...Array(10).fill(200), ...Array(7).fill(300), ...Array(3).fill(500), 600];
+  // Preserve the current token amounts until the proposed reward-economy rebalance is approved.
+  // The 1,600-CP final milestone now awards a permanent High Command position.
+  const tokenAmounts = [...Array(10).fill(200), ...Array(7).fill(300), ...Array(3).fill(500)];
   let tokenIndex = 0;
   const MILESTONES = Array.from({ length: 32 }, (_, i) => {
     const at = (i + 1) * 50;
+    if (at === 1600) return { at, kind: 'high-command', amount: 1 };
     if (COSMETICS.has(at)) return { at, kind: 'cosmetic', name: COSMETICS.get(at) };
     if (FRAGMENTS.has(at)) return { at, kind: 'fragments', amount: 10, rarity: FRAGMENTS.get(at) };
     return { at, kind: 'tokens', amount: tokenAmounts[tokenIndex++] };
@@ -178,6 +181,8 @@ const CHALLENGE_PASS = (() => {
     const earlier = MILESTONES.find(item => item.at < at && !s.milestones[item.at]);
     if (!milestone || earned(s) < at || s.milestones[at] || earlier)
       return { ok: false, reason: 'Milestone is locked, already claimed, or out of order.' };
+    // A claimed 1,600-CP milestone is the durable +1 capacity entitlement;
+    // the engine reads this flag directly and cannot award it twice.
     if (milestone.kind === 'tokens') profile.tokens = (profile.tokens || 0) + milestone.amount;
     if (milestone.kind === 'cosmetic') s.cosmetics[milestone.name] = true;
     if (milestone.kind === 'fragments') {
@@ -200,6 +205,7 @@ const CHALLENGE_PASS = (() => {
   }
   function rewardText(item) {
     if (item.kind === 'tokens') return '+' + item.amount + ' Command Tokens';
+    if (item.kind === 'high-command') return '+1 permanent High Command position';
     if (item.kind === 'fragments') return item.amount + ' selectable ' + item.rarity + ' fragments';
     return item.name;
   }
@@ -231,17 +237,45 @@ const CHALLENGE_PASS = (() => {
         ${available ? `<button class="primary" data-challenge-claim="${esc(obj.id)}">Claim</button>` : ''}
       </div></article>`;
   }
+  function milestoneSymbol(item) {
+    if (item.kind === 'tokens') return '✧';
+    if (item.kind === 'fragments') return '◆';
+    if (item.kind === 'high-command') return '★';
+    return { '2017 Command Seal': '✦', '2018 Field Banner': '⚑',
+      'Command Profile Frame': '▣', 'Conquest Veteran Banner': '⚑',
+      'Supreme Command Crest': '♛' }[item.name] || '✦';
+  }
   function milestonesHTML(s, cp) {
     const first = MILESTONES.find(m => !s.milestones[m.at]);
-    return `<div class="cp-milestone-list">${MILESTONES.map(item => {
-      const claimed = !!s.milestones[item.at], ready = cp >= item.at && first?.at === item.at;
-      return `<div class="cp-milestone ${claimed ? 'cp-done' : ready ? 'cp-ready' : ''}">
-        <span class="cp-milestone-number">${item.at} CP</span>
-        <span class="cp-milestone-label">${esc(rewardText(item))}</span>
-        ${claimed ? '<span class="cp-small">✓ Claimed</span>' :
-          ready ? `<button class="primary" data-challenge-milestone="${item.at}">Claim</button>` :
-          '<span class="cp-small">Locked</span>'}</div>`;
-    }).join('')}</div>`;
+    const chapters = ['The Opening Campaign', 'Rising Influence', 'Imperial Ascendancy', 'Supreme Command'];
+    return `<div class="cp-roadmap" aria-label="Challenge Pass reward roadmap">
+      ${chapters.map((title, chapter) => {
+        const items = MILESTONES.slice(chapter * 8, (chapter + 1) * 8);
+        const claimedCount = items.filter(item => s.milestones[item.at]).length;
+        return `<section class="cp-roadmap-chapter" aria-label="Chapter ${chapter + 1}: ${title}">
+          <div class="cp-roadmap-chapter-head"><div><span class="cp-eyebrow">CHAPTER ${String(chapter + 1).padStart(2, '0')}</span>
+          <h3>${title}</h3></div><span>${items[0].at}–${items[items.length - 1].at} CP · ${claimedCount}/8 claimed</span></div>
+          <div class="cp-roadmap-scroll" tabindex="0" aria-label="Scroll ${title} rewards">
+            <div class="cp-roadmap-lane" style="--cp-filled:${claimedCount / items.length * 100}%">
+              ${items.map(item => {
+                const claimed = !!s.milestones[item.at], ready = cp >= item.at && first?.at === item.at;
+                const kind = item.kind === 'high-command' ? 'capacity' : item.kind;
+                const status = claimed ? 'Claimed' : ready ? 'Ready' : cp >= item.at ? 'Available after earlier rewards' : 'Locked';
+                return `<article class="cp-roadmap-tile cp-kind-${kind} ${claimed ? 'cp-done' : ready ? 'cp-ready' : ''}" aria-label="${item.at} CP: ${esc(rewardText(item))}. ${status}">
+                  <span class="cp-roadmap-step">${item.at} CP</span>
+                  <div class="cp-roadmap-node" aria-hidden="true"><span class="cp-roadmap-glyph">${milestoneSymbol(item)}</span></div>
+                  <div class="cp-roadmap-reward"><span class="cp-roadmap-type">${kind === 'capacity' ? 'PERMANENT UPGRADE' : kind.toUpperCase()}</span>
+                    <strong>${esc(rewardText(item))}</strong></div>
+                  ${claimed ? '<span class="cp-roadmap-status">✓ Claimed</span>' :
+                    ready ? `<button class="primary" data-challenge-milestone="${item.at}" aria-label="Claim ${esc(rewardText(item))}">Claim</button>` :
+                    `<span class="cp-roadmap-status">${status}</span>`}
+                </article>`;
+              }).join('')}
+            </div>
+          </div>
+        </section>`;
+      }).join('')}
+    </div>`;
   }
   function availableCount(s) {
     return TRACKS.reduce((n, t) => n + Number(canClaim(s, t.id)), 0) +
@@ -298,7 +332,7 @@ const CHALLENGE_PASS = (() => {
         ${tabs.map(([id,label]) => `<button class="${currentTab === id ? 'active' : ''}" data-challenge-tab="${id}">${label}</button>`).join('')}</nav>
       <div class="cp-content">
         ${liveRunHTML()}
-        ${currentTab === 'rewards' ? '<p class="cp-intro">Claim milestones in order. Elite fragment rewards let you choose any eligible Force of the stated rarity.</p>' :
+        ${currentTab === 'rewards' ? '<p class="cp-intro">Follow the reward roadmap from 50 to 1,600 CP. Claim in order; eligible Elite fragments remain selectable. The final reward permanently adds one Global High Command position.</p>' :
           '<p class="cp-intro">Win new Conquests to qualify. Claim the current stage to reveal the next; higher difficulty counts for lower mastery and mobilization stages, but speed tracks require their exact difficulty.</p>'}
         <div class="${currentTab === 'rewards' ? '' : 'cp-grid'}">${visible}</div>
         ${currentTab === 'rewards' && cosmetics.length ? `<h3>Unlocked cosmetics</h3><div class="cp-cosmetics">
