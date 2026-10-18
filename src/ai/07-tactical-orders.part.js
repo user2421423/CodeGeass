@@ -266,7 +266,7 @@
         sc += aiOperationalMoveBias(g, u, p, memo, enemies, freeAllies);
         return sc;
       };
-      let best = null;
+      let best = null,
         bestScore = -Infinity;
       for (const p of spots) {
         let sc = placeScore(p);
