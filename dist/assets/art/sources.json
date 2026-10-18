@@ -353,10 +353,10 @@
     {
       "kind": "units",
       "id": "estrella_cc",
-      "file": "units/estrella_cc_fernando-c95f88e9b062.png",
-      "page": "https://hobbyjapan.co.jp/codegeass/season1/extra.html",
-      "image": "https://hobbyjapan.co.jp/codegeass/season1/imgs/2014102401.jpg",
-      "method": "Official Hobby Japan Oz the Reflection color-reference art: Fernando Noriega green Estrella cropped from the left half; connected white background removed for transparent game sprite."
+      "file": "units/estrella_cc_custom-56da3a58c9d6.webp",
+      "page": null,
+      "image": null,
+      "method": "Owner-supplied custom Estrella Close-Combat illustration (2026-10-18); resized and optimized as a transparent 384 × 384 WebP game sprite. Original uploaded in ChatGPT conversation."
     },
     {
       "kind": "units",
