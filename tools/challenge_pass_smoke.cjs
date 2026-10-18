@@ -117,7 +117,7 @@ for (const milestone of CP.MILESTONES) {
   assert.equal(CP.claimMilestone(milestone.at).ok,true,'milestone ' + milestone.at);
 }
 assert.equal(CP.claimMilestone(1600).ok,false,'final reward is not repeatable');
-assert.equal(profile.tokens,105600,'all original 6,200 tokens remain including final 600');
+assert.equal(profile.tokens,106200,'all original 6,200 tokens remain including final 600');
 assert.equal(E.highCommandCapacity(profile),3,'bonus seat permanently stacks on the base two');
 assert.equal(E.highCommandExpansionPrice(profile),1800,'bonus does not skip the 1,800-token tier');
 assert.equal(E.expandHighCommand(profile).ok,true);
