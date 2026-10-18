@@ -331,6 +331,11 @@ function draw(time, dt) {
       }
     }
   }
+  // Dynamic-unit work is measured only when a benchmark explicitly opts in.
+  // No per-frame arrays or timers are retained in normal gameplay.
+  const dynamicTimingStart =
+    typeof window !== 'undefined' && window.KNIGHTMARE_MAP_PERF?.traceDynamic
+      ? performance.now() : null;
   // Group indicators share the same optional overlay in Conquest and Scenarios.
   const groupMembership = new Map();
   if (strategicOverlay) for (const gr of strategicOverlayGroups())
@@ -441,6 +446,14 @@ function draw(time, dt) {
       if (u.cmd)
         for (const x of xs)
           drawAdmiralPin(u, { x, y: base.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
+  if (dynamicTimingStart !== null) {
+    const ms = performance.now() - dynamicTimingStart;
+    mapAtlasPerformance.dynamicUnitRenderMs += ms;
+    mapAtlasPerformance.dynamicUnitFrames++;
+    mapAtlasPerformance.dynamicUnitMaxMs = Math.max(mapAtlasPerformance.dynamicUnitMaxMs, ms);
+    mapAtlasPerformance.dynamicVisibleUnitTotal += living.length;
+    mapAtlasPerformance.dynamicOffscreenUnitTotal += game.units.length - living.length;
+  }
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
