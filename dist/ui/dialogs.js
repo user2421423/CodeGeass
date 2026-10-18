@@ -469,9 +469,58 @@ function fleijaManual() {
 function helpDialog() {
   modal.innerHTML = `<div class="overlay"><section class="dialog" role="dialog" aria-modal="true" aria-label="Field manual">
     <div class="dialog-head"><div><div class="eyebrow">Field manual</div><h2>Controls &amp; mechanics</h2></div><button class="small close" data-action="help-close">Close</button></div>
+
+    <section class="shortcut-reference" aria-labelledby="keyboard-shortcuts-heading">
+      <h3 id="keyboard-shortcuts-heading">Keyboard shortcuts</h3>
+      <p class="shortcut-note">Battlefield shortcuts work when no dialog or text field is active. Unit commands require an eligible friendly unit; disabled actions cannot be forced with a shortcut.</p>
+      <div class="shortcut-grid">
+        <section class="shortcut-group" aria-label="Unit commands">
+          <h4>Unit commands &amp; orders</h4>
+          <dl>
+            <div><dt><kbd>A</kbd></dt><dd>Assign a commander to a unit without one (not ships)</dd></div>
+            <div><dt><kbd>F</kbd></dt><dd>Add a frame / reinforce an eligible non-Elite unit</dd></div>
+            <div><dt><kbd>R</kbd></dt><dd>Repair the selected unit, when repairs are available</dd></div>
+            <div><dt><kbd>H</kbd></dt><dd>Hold position; use the unit's remaining actions</dd></div>
+            <div><dt><kbd>G</kbd></dt><dd>Choose or change the selected unit's auto-move destination</dd></div>
+            <div><dt><kbd>C</kbd></dt><dd>Clear a standing destination or cancel destination selection</dd></div>
+            <div><dt><kbd>Z</kbd></dt><dd>Undo an eligible move before attacking</dd></div>
+          </dl>
+        </section>
+        <section class="shortcut-group" aria-label="Map and turn commands">
+          <h4>Map &amp; turn</h4>
+          <dl>
+            <div><dt><kbd>N</kbd></dt><dd>Go to the next ready unit</dd></div>
+            <div><dt><kbd>Enter</kbd></dt><dd>End your turn (not when a button or link is focused)</dd></div>
+            <div><dt><kbd>Space</kbd></dt><dd>Select / act on the hovered hex when the map canvas is focused</dd></div>
+            <div><dt><kbd>Arrow keys</kbd></dt><dd>Move the hex cursor, centering the map if necessary</dd></div>
+            <div><dt><kbd>V</kbd></dt><dd>Toggle the strategic army-group overlay in Conquest or Scenarios</dd></div>
+            <div><dt><kbd>0</kbd></dt><dd>Zoom out to the world view</dd></div>
+            <div><dt><kbd>+</kbd> / <kbd>=</kbd></dt><dd>Zoom in</dd></div>
+            <div><dt><kbd>−</kbd></dt><dd>Zoom out</dd></div>
+            <div><dt><kbd>Esc</kbd></dt><dd>Cancel targeting, routing or selection; close the carrier hold</dd></div>
+          </dl>
+        </section>
+        <section class="shortcut-group" aria-label="Carrier commands">
+          <h4>Carrier deployment</h4>
+          <dl>
+            <div><dt><kbd>D</kbd></dt><dd>Open or close the selected ship's carrier hold</dd></div>
+            <div><dt><kbd>1</kbd></dt><dd>Choose the first cargo row while the hold is open</dd></div>
+            <div><dt><kbd>2</kbd></dt><dd>Choose the second cargo row while the hold is open</dd></div>
+          </dl>
+        </section>
+        <section class="shortcut-group" aria-label="Menus and keyboard navigation">
+          <h4>Menus &amp; navigation</h4>
+          <dl>
+            <div><dt><kbd>Esc</kbd></dt><dd>Close a dialog or return to the previous screen where supported</dd></div>
+            <div><dt><kbd>V</kbd></dt><dd>Toggle strategic overlay even while the Army Groups dialog is open</dd></div>
+            <div><dt><kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd></dt><dd>Move focus forward or backward within a dialog</dd></div>
+            <div><dt><kbd>Enter</kbd> / <kbd>Space</kbd></dt><dd>Activate focused mode cards or commander portraits</dd></div>
+          </dl>
+        </section>
+      </div>
+      <p class="shortcut-note">Other map controls: drag to pan and scroll to zoom. WASD does not pan.</p>
+    </section>
     <div class="help-grid">
-      <div><b>Unit shortcuts</b><p><b>A</b> Assign commander (not carriers) · <b>D</b> Open carrier hold, then <b>1 / 2</b> select top/bottom cargo · <b>F</b> Add frame · <b>R</b> Repair · <b>H</b> Hold position · <b>G</b> Set/change destination · <b>C</b> Stop auto-move / clear destination.</p></div>
-      <div><b>Map shortcuts</b><p><b>N</b> Next ready unit · <b>Z</b> Undo a move before attacking · <b>Arrow keys</b> Move hex cursor · <b>Enter</b> End turn · <b>Space</b> Select hovered hex (map focused) · <b>Esc</b> Cancel or close · <b>0</b> World view. Drag to pan; scroll or <b>+ / −</b> to zoom. WASD does not pan.</p></div>
       <div><b>Movement &amp; combat</b><p>Select a unit; click <b>green</b> hexes to move and <b>red</b> hexes to attack. Units normally move and attack once per turn; attacking ends movement. Some Armor units can attack again after a kill. Defending units can counterattack when in range. Hold consumes the unit's remaining actions.</p></div>
       <div><b>Standing orders</b><p>Press <b>G</b>, then click a destination. The unit moves toward it automatically at the beginning of your turns, but never attacks automatically. Press <b>C</b> to stop. You can still attack after an automatic move if eligible.</p></div>
       <div><b>Carriers &amp; amphibious units</b><p>Carriers hold Knightmares: select a carrier, press <b>D</b> (or choose <b>Deploy units</b>), press <b>1</b> for the first cargo row or <b>2</b> for the second (or click Launch), then choose a highlighted land hex. Units can launch the same turn they board and act after launching. Amphibious frames, sea transports and carrier troops can capture undefended enemy cities on landing, even with defenses remaining; carriers cannot occupy cities. Portman-type amphibious units fight at sea and regain movement and attack once per turn when landing.</p></div>
