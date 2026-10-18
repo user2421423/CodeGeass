@@ -154,7 +154,8 @@
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
             (d ? commanderValue(g, d) + focusValue(g, u, d, pr, memo) : 0) -
-            pr.counter * 0.5;
+            pr.counter * 0.5 +
+            aiOperationalAttackBias(g, u, p, d, s, memo);
           // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
           const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);
           return { p, score: humanTarget ? score * (1 + playerPriorityBonus(g, u.side)) : score };
@@ -262,9 +263,10 @@
             adjacent(g, p).filter(q => !isSea(q) && !TERRAIN[q.terrain]?.blocked).length <= 2 &&
             freeAllies.filter(v => !v.moved && dist(g, v, p) <= 2).length >= 2)
           sc -= 24; // avoid parking in the only route through a narrow pass
+        sc += aiOperationalMoveBias(g, u, p, memo, enemies, freeAllies);
         return sc;
       };
-      let best = null,
+      let best = null;
         bestScore = -Infinity;
       for (const p of spots) {
         let sc = placeScore(p);
