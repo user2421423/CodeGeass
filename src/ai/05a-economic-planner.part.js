@@ -120,3 +120,5 @@
     bySide.set(side, result);
     return result;
   }
+  // Exposed for deterministic diagnostics; no AI planning state is persisted.
+  E.aiEconomicPlan = aiEconomicPlan;
