@@ -47,7 +47,10 @@ assert.equal(E.ELITE_FORCES.akatsuki_zikisan.lv3.aura.range, 2);
 assert.deepEqual(E.ELITE_FORCES.akatsuki_zikisan.lv5.aura,
   { range: 2, value: 0.15, branches: ['Infantry', 'Armor'] });
 assert.equal(E.ELITE_FORCES.vincent_ward.lv5.moveAfterKill, true);
-assert.equal(E.ELITE_FORCES.japan_bk_amphibious.lv5.coastalMoveAfterKill, true);
+assert.equal(E.ELITE_FORCES.japan_bk_amphibious.lv5.coastalMoveAfterKill, undefined,
+  'Gekka coastal movement is now included in every amphibious Elite at every level');
+assert.equal(E.ELITE_FORCES.japan_bk_amphibious.lv5.landingStrike, 0.30,
+  'Gekka Lv.5 retains its improved water-to-land damage');
 assert.equal(E.ELITE_FORCES.japan_bk_amphibious.lv5.coastalRefresh, undefined);
 assert.deepEqual(E.ELITE_FORCES.lancelot_albion.lv5,
   { float: true, move: 2, moveAfterAttack: true, refire: true, splash: 0.20, breakthrough: true });
