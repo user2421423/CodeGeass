@@ -59,7 +59,7 @@ for (const era of ['world','ufn2018']){
     checkGame(g,era+' '+difficulty);
     if(difficulty==='normal'){
       const injected = E.newUnit(g,era==='world'?'akatsuki':'gun_ru','cf',0,0);
-      assert.equal(injected.type,era==='world'?'akatsuki':'burai',era+' scripted ordinary unit');
+      assert.equal(injected.type,era==='world'?'chuyen_medium':'burai',era+' scripted ordinary unit');
       g.units.pop();
       const importedMarine=E.newUnit(g,era==='world'?'bk_amphibious_ii':'shui_gun_ru_ii','cf',0,0);
       assert.equal(importedMarine.type,era==='world'?'shui_gun_ru_ii':'bk_amphibious_ii',era+' scripted navy');
