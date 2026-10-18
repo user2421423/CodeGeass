@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/estrella-close-combat-one-time.yml'
+      - 'tools/update_estrella_cc_art.py'
 
 permissions:
   contents: write
