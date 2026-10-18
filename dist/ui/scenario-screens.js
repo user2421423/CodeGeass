@@ -3,6 +3,7 @@
 let scenarioSide = 'britannia';
 let scenarioKind = 'invasion-japan';
 let scenarioDifficulty = 'normal';
+let scenarioWeeklySelected = false;
 let scenarioRoutingGroup = null;
 // Training needs only the common geography, never the regional battle library.
 function withScenarios(then) { return withGameAssets(ensureGeography, then); }
@@ -96,7 +97,7 @@ function scenarioCatalogRefresh() {
     (scenarioLibraryTheater==='all'||scenarioTheaterOf(id)===scenarioLibraryTheater)&&
     (!term||(title+' '+note+' '+scenarioTheaterOf(id)).toLocaleLowerCase().includes(term)));
   const groups=scenarioLibraryTheater==='all'?SCENARIO_THEATERS:SCENARIO_THEATERS.filter(g=>g.id===scenarioLibraryTheater);
-  root.innerHTML=groups.map(group=>{
+  const normalCatalog=groups.map(group=>{
     const rows=entries.filter(entry=>group.ids.includes(entry.id));
     if(!rows.length) return '';
     const buttons=rows.map(({id,title,note})=>`<button class="scenario-entry ${id===scenarioKind?'active':''}" type="button" data-scenario-kind="${esc(id)}" aria-pressed="${id===scenarioKind}" title="${esc(title)}">
@@ -106,12 +107,15 @@ function scenarioCatalogRefresh() {
     </button>`).join('');
     return `<section class="scenario-catalog-section" aria-label="${esc(group.label)}">
       <div class="scenario-catalog-group">${esc(group.label)}<span>${rows.length}</span></div>${buttons}</section>`;
-  }).join('') || `<p class="scenario-catalog-empty">No matching operations. Try another theater or search term.</p>`;
+  }).join('');
+  const weeklyCatalog=scenarioLibraryTheater==='all' ? weeklyScenarioCatalogHTML(term) : '';
+  root.innerHTML=weeklyCatalog + (normalCatalog || (weeklyCatalog ? '' : `<p class="scenario-catalog-empty">No matching operations. Try another theater or search term.</p>`));
   const count=modal.querySelector('#scenario-filter-count');
   if(count)count.textContent=entries.length+' of '+SCENARIO_MANIFEST.length+' operations';
 }
 
 function scenarioDialog() {
+  if (scenarioWeeklySelected) scenarioKind=weeklyScenarioCurrent().scenarioId;
   const model=scenarioModel();
   // Load the high-resolution map while the player reads the scenario briefing
   // so the first gameplay frame is crisp instead of a blurred placeholder.
@@ -124,7 +128,7 @@ function scenarioDialog() {
   const activeFaction=document.activeElement?.dataset?.scenarioFaction;
   if(!model.sides.includes(scenarioSide))scenarioSide=model.sides[0];
   const brief=model.meta?.text || {};
-  const saved=getSave(SCENARIO_KEY);
+  const saved=scenarioWeeklySelected ? weeklyScenarioSavedGame() : getSave(SCENARIO_KEY);
   const savedModel=saved&&!saved.over&&scenarioModel(saved.scenario?.id);
   // Read pre-generated map and force metadata. Never build a scenario just to browse.
   const imageMeta=typeof SCENARIO_STATIC_MAPS==='undefined'?{}:(SCENARIO_STATIC_MAPS[scenarioKind]||{});
@@ -153,7 +157,7 @@ function scenarioDialog() {
     .map(([id,d])=>`<option value="${esc(id)}" ${scenarioDifficulty===id?'selected':''}>${esc(d.name)}</option>`).join('');
   const filterButtons=[{id:'all',label:'All theaters'},...SCENARIO_THEATERS].map(group=>
     `<button type="button" class="scenario-theater ${scenarioLibraryTheater===group.id?'active':''}" data-scenario-theater="${esc(group.id)}" aria-pressed="${scenarioLibraryTheater===group.id}">${esc(group.label)}</button>`).join('');
-  const saveButton=savedModel?`<button class="scenario-resume" data-action="continue-scenario" type="button"><strong>Continue saved operation</strong><small>${esc(savedModel.title)} · Turn ${saved.turn}</small></button>`:'';
+  const saveButton=savedModel?`<button class="scenario-resume" data-action="${scenarioWeeklySelected?'continue-weekly-scenario':'continue-scenario'}" type="button"><strong>Continue saved operation</strong><small>${esc(savedModel.title)} · Turn ${saved.turn}</small></button>`:'';
   modal.innerHTML=`<div class="overlay scenario-library-overlay">
     <section class="dialog scenario-library scenario-library--${SCENARIO_MENU_STYLE}" role="dialog" aria-modal="true" aria-label="Scenario selection" aria-describedby="scenario-library-description">
       <header class="scenario-library-header">
@@ -171,6 +175,7 @@ function scenarioDialog() {
           <div class="scenario-operation-header">
             <span class="scenario-operation-index">${esc(brief.era||'Regional campaign')} <span class="scenario-operation-slash">/</span> ${esc(meta?.note||'Regional operation')}</span>
             <h2>${esc(model.title)}</h2>
+            ${scenarioWeeklySelected ? '<p class="scenario-weekly-heading">★ SCENARIO OF THE WEEK · CUMULATIVE REWARDS</p>' : ''}
           </div>
           <div class="scenario-stage-body">
             <div class="scenario-map-side">
@@ -184,13 +189,14 @@ function scenarioDialog() {
               <section class="scenario-brief-text"><div class="scenario-brief-eyebrow">OPERATION BRIEF</div><p>${esc(brief.intro||'Control the battlefield and defeat rival armies.')}</p>
                 ${brief.terrain ? '<p class="mode-note">'+esc(brief.terrain)+'</p>' : ''}<details class="scenario-diplomacy-details"><summary>Opening diplomacy</summary><p>${esc(brief.diplomacy||'All rival factions are hostile.')}</p></details>
               </section>
+              ${scenarioWeeklySelected ? weeklyScenarioInfoHTML(scenarioDifficulty) : ''}
               <section class="scenario-brief-factions"><div class="scenario-brief-eyebrow">YOUR COMMAND</div><div class="scenario-side-grid" role="group" aria-label="Select playable faction">${sides}</div></section>
             </aside>
           </div>
         </main>
       </div>
       <footer class="scenario-library-footer">
-        <div class="scenario-footer-saves">${saveButton}<span class="scenario-save-notice">Regional scenarios save independently · Total conquest victory</span></div>
+        <div class="scenario-footer-saves">${saveButton}<span class="scenario-save-notice">${scenarioWeeklySelected ? 'Weekly event saves separately · Rewards once per difficulty per week' : 'Regional scenarios save independently · Total conquest victory'}</span></div>
         <div class="scenario-footer-launch"><div class="scenario-difficulty"><label for="scenario-difficulty">Difficulty</label><select id="scenario-difficulty" class="select">${difficulties}</select></div>
           <button class="scenario-deploy primary" type="button" data-action="start-scenario">Deploy ${esc(E.FACTIONS[scenarioSide]?.short||'forces')} <span aria-hidden="true">→</span></button></div>
       </footer>
@@ -237,6 +243,10 @@ function startLoadedScenario(id, side, difficulty, campaignContext) {
   scenarioKind=id; scenarioSide=side; scenarioDifficulty=difficulty;
   resetSession();
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
+  if (scenarioWeeklySelected && !campaignContext && id===weeklyScenarioCurrent().scenarioId) {
+    const weekly=weeklyScenarioCurrent();
+    game.weeklyScenario={weekId:weekly.id,scenarioId:id};
+  }
   if (campaignContext) {
     game.warCampaign = { ...campaignContext };
     // World Campaign also imports persistent Elite levels, but not HQ research.
