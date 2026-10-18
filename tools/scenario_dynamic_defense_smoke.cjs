@@ -44,6 +44,7 @@ for (let i = 0; i < 8; i++) {
 for (const u of g.units.filter(u => u.hp > 0 && u.side === side &&
   api.massOf(g,u) === api.massOf(g,city) && api.dist(g,u,city) <= 10))
   u.hp = Math.max(1, Math.floor(u.hp * 0.2));
+city.shield = Math.round(city.maxShield * 0.2);
 g.turn = (g.turn || 1) + 1;
 const crisis = E.aiPlan(g, side);
 const target = crisis.fronts.find(f => f.dynamicDefense &&

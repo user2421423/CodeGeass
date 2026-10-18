@@ -117,7 +117,7 @@
   const SCENARIO_DEFENSE = {
     enterRatio: 1.25, exitRatio: 0.70, releaseTurns: 2, respondTurns: 3,
     maxFronts: 6, clusterRadius: 6,
-    selective: true, preserveOffense: true, leanProduction: true,
+    selective: true, preserveOffense: true, leanProduction: true, emergencyOnly: true,
     mobilization: { moderate: 0.25, major: 0.40, critical: 0.60 }
   };
   function scenarioHomeDefense(g, side, own, opponents) {
@@ -162,8 +162,14 @@
       const captureSoon = exposed && incoming.some(x => x.immediate && canCapture(x.u));
       const vulnerable = incoming.some(x => x.distance <= 3) ||
         (city.shield || 0) < (city.maxShield || 0) * 0.6;
-      const enter = (threat >= Math.max(2, friendly * SCENARIO_DEFENSE.enterRatio) &&
-        (!SCENARIO_DEFENSE.selective || vulnerable)) || captureSoon;
+      const urgent = incoming.some(x => x.immediate && x.distance <= 2) ||
+        (city.shield || 0) < (city.maxShield || 0) * 0.65;
+      const enterThreshold = SCENARIO_DEFENSE.emergencyOnly ? 1.6 :
+        SCENARIO_DEFENSE.enterRatio;
+      const enter = (threat >= Math.max(SCENARIO_DEFENSE.emergencyOnly ? 3 : 2,
+          friendly * enterThreshold) &&
+        (!SCENARIO_DEFENSE.selective || vulnerable) &&
+        (!SCENARIO_DEFENSE.emergencyOnly || urgent)) || captureSoon;
       const quiet = !enter && (threat === 0 ||
         threat < friendly * SCENARIO_DEFENSE.exitRatio) && !captureSoon
         ? (old?.quiet || 0) + 1 : 0;
@@ -585,7 +591,9 @@
       assign: {}, fields: {}, columns: {},
       defenseBudget: homeDefense.length ?
         Math.max(2, mobileStrength * (SCENARIO_DEFENSE.preserveOffense ?
-          { moderate: 0.15, major: 0.25, critical: 0.45 }[severity] :
+          (SCENARIO_DEFENSE.emergencyOnly ?
+            { moderate: 0.12, major: 0.20, critical: 0.40 }[severity] :
+            { moderate: 0.15, major: 0.25, critical: 0.45 }[severity]) :
           SCENARIO_DEFENSE.mobilization[severity])) : 0 });
     const at = u => carried.get(u.id) || u;
     // Cached per unit: nothing moves while the units are ranked.
