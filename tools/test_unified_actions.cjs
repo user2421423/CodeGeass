@@ -22,7 +22,7 @@ function cityFixture(cls = 'scout', withDefender = false, seed = 317) {
     const p = E.adjacent(g, s).find(t =>
       !E.isSea(t) && !E.internal.TERRAIN[t.terrain]?.blocked &&
       !E.unitAt(g, t) && !E.stationAt(g, t));
-    if (p && (!withDefender || !E.unitAt(g, s))) { city = s; spot = p; break; }
+    if (p && !E.unitAt(g, s)) { city = s; spot = p; break; }
   }
   assert.ok(city && spot, 'expected an unoccupied approach to an EU city');
   const actor = E.newUnit(g, type, SIDE, spot.c, spot.r);
