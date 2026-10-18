@@ -884,8 +884,9 @@
     "units": [
       {
         "id": "gun_ru_assault",
-        "file": "units/gun_ru_assault-5ef384845a87.webp",
-        "original": "units/gun_ru-e7776a73350d.png"
+        "file": "units/gun_ru_assault-affd52ac829b.webp",
+        "original": "units/gun_ru-e7776a73350d.png",
+        "spriteDescription": "User-approved heavy armored Gun-Ru Assault design with no visible guns or launchers"
       },
       {
         "id": "gun_ru_light",

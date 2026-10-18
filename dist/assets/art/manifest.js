@@ -249,7 +249,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/zangetsu-4e4cb3c3bd61.png"
     },
     "gun_ru_assault": {
-      "src": "units/gun_ru_assault-5ef384845a87.webp"
+      "src": "units/gun_ru_assault-affd52ac829b.webp"
     },
     "gun_ru_light": {
       "src": "units/gun_ru_light-ca3d7e73843b.webp"
