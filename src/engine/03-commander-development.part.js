@@ -32,7 +32,15 @@
   function ratingCap(rank, branch = 'armor') {
     return [2, 4, 6][commandStage(rank)];
   }
-  function highCommandCapacity(profile) { return Math.max(2, Math.min(6, profile?.highCommandCapacity || 2)); }
+  // Paid positions retain their original two-to-six pricing ladder.
+  // Challenge Pass adds a separate, permanent seventh position on top.
+  function purchasedHighCommandCapacity(profile) {
+    return Math.max(2, Math.min(6, profile?.highCommandCapacity || 2));
+  }
+  function highCommandCapacity(profile) {
+    return purchasedHighCommandCapacity(profile) +
+      (profile?.challengePass?.milestones?.[1600] === true ? 1 : 0);
+  }
   function recruitPrice(k) {
     const a = COMMANDERS[k];
     return a?.recruit ?? ({ standard: 200, distinguished: 300, legendary: 400 })[commissionOf(k)];
@@ -112,7 +120,7 @@
     // One-time migration: preserve saved ratings as inactive beyond new rank caps.
     if (profile.commanderProgressionVersion !== 1) {
       profile.commanderProgressionVersion = 1;
-      profile.highCommandCapacity = highCommandCapacity(profile);
+      profile.highCommandCapacity = purchasedHighCommandCapacity(profile);
       const high = Object.keys(profile.roster).filter(k => COMMANDERS[k] && profile.roster[k].rank >= 8)
         .sort((a, b) => profile.roster[b].rank - profile.roster[a].rank || a.localeCompare(b));
       for (const k of high.slice(highCommandCapacity(profile))) relinquishHighCommand(profile, k, 1);
@@ -123,10 +131,10 @@
     return Object.entries(roster(profile)).filter(([k,o]) => COMMANDERS[k] && o.rank >= 8).length;
   }
   function highCommandExpansionPrice(profile) {
-    return HIGH_COMMAND_EXPANSION_PRICES[highCommandCapacity(profile) + 1] ?? null;
+    return HIGH_COMMAND_EXPANSION_PRICES[purchasedHighCommandCapacity(profile) + 1] ?? null;
   }
   function expandHighCommandReason(profile) {
-    if (highCommandCapacity(profile) >= 6) return 'Maximum of six High Command positions';
+    if (purchasedHighCommandCapacity(profile) >= 6) return 'All six purchasable High Command positions unlocked';
     const price = highCommandExpansionPrice(profile);
     return price == null ? 'High Command expansion unavailable' : tokenShort(profile, price);
   }
@@ -134,8 +142,8 @@
     const why = expandHighCommandReason(profile);
     if (why) return { ok: false, reason: why };
     profile.tokens -= highCommandExpansionPrice(profile);
-    profile.highCommandCapacity = highCommandCapacity(profile) + 1;
-    return { ok: true, capacity: profile.highCommandCapacity };
+    profile.highCommandCapacity = purchasedHighCommandCapacity(profile) + 1;
+    return { ok: true, capacity: highCommandCapacity(profile) };
   }
   function commissionUpgradePrice(profile, k) {
     const current = commissionOf(k, roster(profile)[k]);
