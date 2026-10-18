@@ -12,7 +12,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/akatsuki_air-c649000bc081.png"
     },
     "akatsuki_flight": {
-      "src": "units/akatsuki_flight-c649000bc081.png"
+      "src": "units/burai_powered_raider-fb8f96d8fde3.png"
     },
     "akatsuki_heavy": {
       "src": "units/akatsuki_heavy-7c180ab2623f.png"
@@ -39,10 +39,10 @@ globalThis.KnightmareArtManifest = {
       "src": "units/bamides-112358cce84d.png"
     },
     "bk_amphibious": {
-      "src": "units/burai-6f5b891028e0.png"
+      "src": "units/bk_amphibious-c00231e00ccf.png"
     },
     "bk_amphibious_ii": {
-      "src": "units/gekka-6c896ee459cb.png"
+      "src": "units/bk_amphibious_ii-dc29ece82055.png"
     },
     "bk_carrier": {
       "src": "units/generic_carrier-bf5e0799d818.png"
@@ -105,7 +105,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/hummel_battery-11b7539ef1e2.png"
     },
     "elite_japan_bk_amphibious": {
-      "src": "units/gekka-6c896ee459cb.png"
+      "src": "units/bk_amphibious_ii-dc29ece82055.png"
     },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
@@ -249,7 +249,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/zangetsu-4e4cb3c3bd61.png"
     },
     "gun_ru_assault": {
-      "src": "units/gun_ru_assault-5ef384845a87.webp"
+      "src": "units/gun_ru_assault-affd52ac829b.webp"
     },
     "gun_ru_light": {
       "src": "units/gun_ru_light-ca3d7e73843b.webp"

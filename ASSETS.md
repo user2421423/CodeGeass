@@ -43,6 +43,14 @@ license does not license the studio artwork.
 - Shui Gun-Ru (green and red) and Shui Gun-Ru II (green and gold) are owner-supplied artwork (added 2026-10-07; origin
   not recorded). Their grey backdrop and floor shadow were removed by an edge flood fill of light neutral grey.
 - Every Knightmare type and commander has published art. Procedural drawings remain only as runtime safety fallbacks.
+- The Black Knights Raider uses an owner-approved custom Burai Powered Raider sprite generated with built-in
+  imagegen: black and charcoal armor, oversized twin scissor claws, and ankle landspinners. It replaces the reused
+  Akatsuki flight artwork while retaining the historical `akatsuki_flight` ID for save and scenario compatibility.
+- Black Knights Amphibious I uses Guren Type-01 artwork from the official Oz mechanic page; Amphibious II uses
+  the Gekka Shiden artwork selected by the owner from RoboInfo. Built-in imagegen isolated the full-body designs
+  on transparent backgrounds, with no marine equipment added. These are game-specific marine adaptations.
+  The Black Knights amphibious elite shares the regular Amphibious II sprite; other elites and carriers retain
+  their existing artwork. Source URLs and processing notes are recorded in `sources.json`.
 
 ## Preparing and publishing art
 

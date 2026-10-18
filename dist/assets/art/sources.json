@@ -713,10 +713,11 @@
     {
       "kind": "units",
       "id": "akatsuki_flight",
-      "file": "units/akatsuki_flight-c649000bc081.png",
-      "page": "https://codegeass.fandom.com/wiki/Akatsuki_Command_Model_Zikisan",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/d/dd/Type-05-jikisan-air-full.jpg/revision/latest",
-      "method": "Shares the flight-enabled Akatsuki render used for the Akatsuki Zikisan Air Glide"
+      "file": "units/burai_powered_raider-fb8f96d8fde3.png",
+      "page": null,
+      "image": null,
+      "method": "Owner-approved custom Burai Powered Raider generated with built-in imagegen on 2026-10-18: black/charcoal compact mecha with twin oversized scissor claws and ankle landspinners; transparent background, trimmed and resized to 640 px. A game-specific Raider adaptation, not official design artwork.",
+      "sha256": "fb8f96d8fde3ce2da6e504bb51b47e7aa749d10e9b570510f1ee637031ddf5c1"
     },
     {
       "kind": "portraits",
@@ -845,6 +846,33 @@
       "page": null,
       "image": null,
       "method": "Owner-supplied artwork (added 2026-10-07, origin not recorded); grey backdrop and floor shadow removed by an edge flood fill of light neutral grey, then trimmed and scaled to 640 px."
+    },
+    {
+      "kind": "units",
+      "id": "bk_amphibious",
+      "file": "units/bk_amphibious-c00231e00ccf.png",
+      "page": "https://www.geass-hobby.jp/oz/mechanic/11.html",
+      "image": "https://www.geass-hobby.jp/oz/mechanic/images/11.jpg",
+      "sourceSha256": "0f7cf643b0313976047c64a8df5828226aeb6f149b3da63ccd6217fcfe57632f",
+      "method": "Selected reference artwork isolated using built-in imagegen background-extraction; transparent full-body sprite trimmed and resized to 640 px. Game-specific marine adaptation; no marine equipment added to the design.",
+      "retrievedOn": "2026-10-18"
+    },
+    {
+      "kind": "units",
+      "id": "bk_amphibious_ii",
+      "file": "units/bk_amphibious_ii-dc29ece82055.png",
+      "page": "https://srw.wingzero.tw/zh-TW/works/154/mecha/4352",
+      "image": "https://srw.wingzero.tw/assets/robot/8e7fa-gekka-shiden.webp",
+      "sourceSha256": "a38f2f68f14e81d0548899bb5699842a898f059e2c3bf8e63a0192b135a7bfa2",
+      "method": "Selected reference artwork isolated using built-in imagegen background-extraction; transparent full-body sprite trimmed and resized to 640 px. Game-specific marine adaptation; no marine equipment added to the design.",
+      "retrievedOn": "2026-10-18"
+    },
+    {
+      "kind": "units",
+      "id": "elite_japan_bk_amphibious",
+      "file": "units/bk_amphibious_ii-dc29ece82055.png",
+      "page": "https://srw.wingzero.tw/zh-TW/works/154/mecha/4352",
+      "method": "Shares the regular Black Knights Amphibious II Gekka Shiden sprite at the repository owner's request; elite stats and identity unchanged."
     }
   ],
   "drawnFallbacks": {
@@ -884,8 +912,9 @@
     "units": [
       {
         "id": "gun_ru_assault",
-        "file": "units/gun_ru_assault-5ef384845a87.webp",
-        "original": "units/gun_ru-e7776a73350d.png"
+        "file": "units/gun_ru_assault-affd52ac829b.webp",
+        "original": "units/gun_ru-e7776a73350d.png",
+        "spriteDescription": "User-approved heavy armored Gun-Ru Assault design with no visible guns or launchers"
       },
       {
         "id": "gun_ru_light",
