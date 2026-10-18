@@ -379,15 +379,111 @@
     newcomerKilled(g,v,attacker);
     hooks.kill?.(g, v, attacker, by);
   }
+  // Centralized post-volley action restoration. Distinguish a frame kill from a
+  // newly destroyed city shield: both qualify for movement refresh where the
+  // unit/skill allows it, but only true kills grant kill-only rewards.
+  function applyAttackConsequences(g, a, d, s, destroyed, defensesDestroyed, timeStop, movementBeforeAttack, f, aef) {
+    const eliteBreakthrough = !!aef.breakthrough,
+      eliteRelentless = !!aef.relentless;
+    // Light Armor has no kill-based Breakthrough. Medium, heavy, super-heavy
+    // and Amphibious II frames (ordinary or elite) can chain killing attacks
+    // indefinitely; existing other Breakthrough elites retain that benefit.
+    const type = TYPES[a.type];
+    const hasBreakthrough = !(type.cls === 'light' && !type.naval) &&
+      !!(type.breakthrough || eliteBreakthrough);
+    const unlimitedChain = hasBreakthrough &&
+      (type.elite || type.naval === 'amphibious' ||
+        ['medium', 'heavy', 'super'].includes(type.cls));
+    const cap = unlimitedChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
+    let breakthrough = false;
+    if (destroyed && a.hp > 0 && hasBreakthrough && a.chain < cap) {
+      // Breakthrough refreshes the attack. Heavy and super-heavy movement
+      // is governed separately by their two-move-per-turn limit.
+      a.chain++;
+      a.attacked = false;
+      if ((TYPES[a.type].relentless || eliteRelentless)) a.moved = false;
+      breakthrough = true;
+    } else if (destroyed && a.hp > 0 && (TYPES[a.type].relentless || eliteRelentless)) {
+      // Relentless frames also fire again after a kill when Breakthrough is unavailable.
+      a.attacked = false;
+      breakthrough = true;
+    }
+    // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
+    if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
+      a.aceTurn = g.turn;
+      if (breakthrough) grantReposition(a, 2);
+      else { a.attacked = false; breakthrough = true; }
+    }
+    // Only Siege Artillery and units with Breakthrough earn a follow-up attack
+    // for destroying city defenses. A simultaneous kill cannot bank a second attack.
+    if (defensesDestroyed && a.hp > 0 && a.attacked &&
+        (hasBreakthrough || (type.cls === 'siege' && type.branch === 'Artillery'))) {
+      a.attacked = false;
+      breakthrough = true;
+    }
+    // Kallen's first city-defense break grants the same reposition as a kill
+    // when the frame's own Breakthrough has already restored its attack.
+    if (defensesDestroyed && !destroyed && breakthrough && a.hp > 0 &&
+        f.ace && a.aceTurn !== g.turn) {
+      a.aceTurn = g.turn;
+      grantReposition(a, 2);
+    }
+    // Every amphibious Elite (all factions, any Elite level) can chain both
+    // movement and attacks after a kill or city-defense break, even if it moved
+    // before firing. Normal Amphibious II keeps attack-only Breakthrough.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 &&
+        type.elite && type.naval === 'amphibious') {
+      a.attacked = false;
+      a.moved = false;
+      a.skillReposition = 0;
+      a.eliteMoveAfterKill = true;
+      breakthrough = true;
+    }
+    if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
+    // Kill-triggered Elite movement also triggers when city defenses fall.
+    // Vincent Ward's Lv.5 refresh remains limited to its first qualifying
+    // event per turn; its unlimited Breakthrough attack chain is unchanged.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 && aef.moveAfterKill &&
+        (a.elite !== 'vincent_ward' || a.expVincentMoveTurn !== g.turn)) {
+      if (a.elite === 'vincent_ward') a.expVincentMoveTurn = g.turn;
+      a.moved = false;
+      a.skillReposition = 0;
+      a.eliteMoveAfterKill = true;
+    }
+    // Heavy/super-heavy frames reposition after kills or city-defense breaks,
+    // but never more than twice in a single turn.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 &&
+        isHeavyChainMover(a) && !heavyMoveLimitReached(g, a)) {
+      a.moved = false;
+      a.skillReposition = 0;
+    }
+    afterCommanderAttack(g,a,d,s,destroyed,timeStop,defensesDestroyed);
+    // A kill only primes momentum if an existing breakthrough or signature
+    // ability actually granted another attack. It never grants one itself.
+    if (destroyed && a.hp > 0 && !a.attacked &&
+        !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor')
+      a.expAssaultMomentumTurn = g.turn;
+    // Preserve movement that was available before an attack refreshed another
+    // shot. A new move is granted only by a class, Elite or commander ability.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 && !a.attacked && movementBeforeAttack) {
+      a.moved = false;
+      if (!(TYPES[a.type].relentless || eliteRelentless || aef.moveAfterAttack || aef.moveAfterKill)) {
+        if (!movementBeforeAttack.skillReposition && !movementBeforeAttack.withdrawMove) {
+          a.skillReposition = 0;
+          a.withdrawMove = false;
+        } else {
+          a.skillReposition = Math.max(a.skillReposition, movementBeforeAttack.skillReposition);
+          a.withdrawMove ||= movementBeforeAttack.withdrawMove;
+        }
+      }
+    }
+
+    return breakthrough;
+  }
   function attack(g, id, c, r) {
-    const a = g.units.find(u => u.id === id);
-    if (!a) return { ok: false, reason: 'Unit not found.' };
-    const why =
-      turnReason(g, a.side) ||
-      (a.hp <= 0 ? 'Unit destroyed' : a.morale <= -3 ? 'Unit is confused' : a.attacked ? 'Already fired' : null);
-    if (why) return { ok: false, reason: why };
-    const pr = preview(g, id, c, r);
-    if (!pr) return { ok: false, reason: atSea(g, a) ? 'Embarked units cannot fire.' : 'No hostile target in range.' };
+    const check = validateAction(g, { kind: 'attack', id, c, r });
+    if (!check.ok) return check;
+    const a = check.actor, pr = check.preview;
     const p = tile(g, c, r),
       d = unitAt(g, p),
       s = stationAt(g, p),
@@ -493,101 +589,7 @@
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
-    const eliteBreakthrough = !!aef.breakthrough,
-      eliteRelentless = !!aef.relentless;
-    // Light Armor has no kill-based Breakthrough. Medium, heavy, super-heavy
-    // and Amphibious II frames (ordinary or elite) can chain killing attacks
-    // indefinitely; existing other Breakthrough elites retain that benefit.
-    const type = TYPES[a.type];
-    const hasBreakthrough = !(type.cls === 'light' && !type.naval) &&
-      !!(type.breakthrough || eliteBreakthrough);
-    const unlimitedChain = hasBreakthrough &&
-      (type.elite || type.naval === 'amphibious' ||
-        ['medium', 'heavy', 'super'].includes(type.cls));
-    const cap = unlimitedChain ? Infinity : (f.refire || aef.refire ? 2 : 1);
-    let breakthrough = false;
-    if (destroyed && a.hp > 0 && hasBreakthrough && a.chain < cap) {
-      // Breakthrough refreshes the attack. Heavy and super-heavy movement
-      // is governed separately by their two-move-per-turn limit.
-      a.chain++;
-      a.attacked = false;
-      if ((TYPES[a.type].relentless || eliteRelentless)) a.moved = false;
-      breakthrough = true;
-    } else if (destroyed && a.hp > 0 && (TYPES[a.type].relentless || eliteRelentless)) {
-      // Relentless frames also fire again after a kill when Breakthrough is unavailable.
-      a.attacked = false;
-      breakthrough = true;
-    }
-    // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
-    if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
-      a.aceTurn = g.turn;
-      if (breakthrough) grantReposition(a, 2);
-      else { a.attacked = false; breakthrough = true; }
-    }
-    // Only Siege Artillery and units with Breakthrough earn a follow-up attack
-    // for destroying city defenses. A simultaneous kill cannot bank a second attack.
-    if (defensesDestroyed && a.hp > 0 && a.attacked &&
-        (hasBreakthrough || (type.cls === 'siege' && type.branch === 'Artillery'))) {
-      a.attacked = false;
-      breakthrough = true;
-    }
-    // Kallen's first city-defense break grants the same reposition as a kill
-    // when the frame's own Breakthrough has already restored its attack.
-    if (defensesDestroyed && !destroyed && breakthrough && a.hp > 0 &&
-        f.ace && a.aceTurn !== g.turn) {
-      a.aceTurn = g.turn;
-      grantReposition(a, 2);
-    }
-    // Every amphibious Elite (all factions, any Elite level) can chain both
-    // movement and attacks after a kill or city-defense break, even if it moved
-    // before firing. Normal Amphibious II keeps attack-only Breakthrough.
-    if ((destroyed || defensesDestroyed) && a.hp > 0 &&
-        type.elite && type.naval === 'amphibious') {
-      a.attacked = false;
-      a.moved = false;
-      a.skillReposition = 0;
-      a.eliteMoveAfterKill = true;
-      breakthrough = true;
-    }
-    if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
-    // Kill-triggered Elite movement also triggers when city defenses fall.
-    // Vincent Ward's Lv.5 refresh remains limited to its first qualifying
-    // event per turn; its unlimited Breakthrough attack chain is unchanged.
-    if ((destroyed || defensesDestroyed) && a.hp > 0 && aef.moveAfterKill &&
-        (a.elite !== 'vincent_ward' || a.expVincentMoveTurn !== g.turn)) {
-      if (a.elite === 'vincent_ward') a.expVincentMoveTurn = g.turn;
-      a.moved = false;
-      a.skillReposition = 0;
-      a.eliteMoveAfterKill = true;
-    }
-    // Heavy/super-heavy frames reposition after kills or city-defense breaks,
-    // but never more than twice in a single turn.
-    if ((destroyed || defensesDestroyed) && a.hp > 0 &&
-        isHeavyChainMover(a) && !heavyMoveLimitReached(g, a)) {
-      a.moved = false;
-      a.skillReposition = 0;
-    }
-    afterCommanderAttack(g,a,d,s,destroyed,timeStop,defensesDestroyed);
-    // A kill only primes momentum if an existing breakthrough or signature
-    // ability actually granted another attack. It never grants one itself.
-    if (destroyed && a.hp > 0 && !a.attacked &&
-        !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor')
-      a.expAssaultMomentumTurn = g.turn;
-    // Preserve movement that was available before an attack refreshed another
-    // shot. A new move is granted only by a class, Elite or commander ability.
-    if ((destroyed || defensesDestroyed) && a.hp > 0 && !a.attacked && movementBeforeAttack) {
-      a.moved = false;
-      if (!(TYPES[a.type].relentless || eliteRelentless || aef.moveAfterAttack || aef.moveAfterKill)) {
-        if (!movementBeforeAttack.skillReposition && !movementBeforeAttack.withdrawMove) {
-          a.skillReposition = 0;
-          a.withdrawMove = false;
-        } else {
-          a.skillReposition = Math.max(a.skillReposition, movementBeforeAttack.skillReposition);
-          a.withdrawMove ||= movementBeforeAttack.withdrawMove;
-        }
-      }
-    }
-
+    const breakthrough = applyAttackConsequences(g, a, d, s, destroyed, defensesDestroyed, timeStop, movementBeforeAttack, f, aef);
     // Resolve Mutsuki's guerrilla reward after the kill and final attack flags.
     const guerrillaPosition=(destroyed||defensesDestroyed)&&['forest','mountain'].includes(tile(g,a.c,a.r)?.terrain)&&
       ['Infantry','Armor'].includes(TYPES[a.type].branch)&&
