@@ -215,6 +215,29 @@
     if (g.eliteDeployed) for (const id of Object.keys(g.eliteDeployed))
       if (/(?:japan|europe)_.*_carrier/.test(id)) delete g.eliteDeployed[id];
     if (!g.units.every(u => TYPES[u.type])) return null;
+    // Existing saves keep their positions, commanders, action state and damage.
+    // Retire accidental cross-era Chinese/UFN equipment (including embarked
+    // cargo), rather than retaining old sprites after the faction roster fix.
+    for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
+      if (u.side !== 'cf') continue;
+      const correct = eraUnitType(g, u.type, u.side);
+      if (correct === u.type) continue;
+      const oldMax = Math.max(1, maxHP(u)), fraction = u.hp / oldMax;
+      u.type = correct;
+      u.elite = ELITE_TYPE_TO_ID[correct] || null;
+      if (u.elite) {
+        u.eliteLevel = Math.max(1, u.eliteLevel || 1);
+        u.stack = 1;
+      } else {
+        u.eliteLevel = 0;
+        delete u.eliteStart;
+      }
+      u.hpTech = hullTech(g, u);
+      u.hp = fraction > 0 ? Math.max(1, Math.min(maxHP(u), Math.round(maxHP(u) * fraction))) : 0;
+    }
+    if (g.scenario?.eliteRosters) for (const side of Object.keys(g.scenario.eliteRosters))
+      g.scenario.eliteRosters[side] = g.scenario.eliteRosters[side]
+        .filter(id => eliteEligible(g, side, id));
     if (g.mode === 'conquest') {
       const cfg = CONQUESTS[g.era || 'world'];
       if (!cfg) return null;
