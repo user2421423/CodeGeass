@@ -21,7 +21,8 @@
       : 3;
     if (g.mode === 'scenario') {
       const memo=aiPlan(g,u.side);
-      return tactical-trafficBoost(g,u,memo);
+      const assigned=memo.byId?.[memo.assign?.[u.id]];
+      return tactical-(assigned?.dynamicDefense?10:0)-trafficBoost(g,u,memo);
     }
     const memo = aiPlan(g, u.side),
       assignedFront = memo.byId?.[memo.assign?.[u.id]],
@@ -204,6 +205,14 @@
           guardBonus = !onGuard ? 0 : guard.id != null && !enemies.some(v => dist(g, v, guard) <= 2) ? -40 : 25;
         sc -= guard ? dist(g, p, guard) * 30 - guardBonus : u.hold ? 0 : fieldAt(p) * 8;
         if (u.hold) sc -= Math.max(0, dist(g, p, u.hold) - (u.hold.radius ?? 2)) * 40;
+        if (g.mode === 'scenario' && front?.dynamicDefense) {
+          const distance=dist(g,p,front.anchor);
+          sc-=Math.max(0,distance-3)*42;
+          if (distance>=1 && distance<=3)
+            sc+=(TERRAIN[p.terrain]?.cover||0)*10;
+          if (station?.id===front.anchor.id &&
+              !enemies.some(v=>dist(g,v,front.anchor)<=5)) sc-=25;
+        }
         if (g.mode === 'scenario' && front) {
           // Columns converge without waiting or retreating: a modest cohesion
           // bonus cannot outweigh movement toward the enemy objective.

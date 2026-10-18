@@ -259,18 +259,33 @@
         const sample = allUnits(g).find(u => u.side === side && u.hp > 0 && canCapture(u) && !isShip(u)),
           proxy = sample && { ...sample, id: 'factory:' + s.id, c: s.c, r: s.r },
           route = f => scenarioTravel(g, proxy || s, f);
-        return choices.slice().sort((a,b) => {
-          const score = f => (f.deficit??Math.max(0,f.desiredStrength-f.assigned))*2 /
-            (1+route(f)) + (f.state==='regrouping'?2:0);
+        const connected = choices.filter(f => Number.isFinite(route(f))),
+          reachable = connected.filter(f => !f.dynamicDefense || route(f) <= 5);
+        const choice = (reachable.length ? reachable : connected).slice().sort((a,b) => {
+          const score = f => (f.deficit??Math.max(0,f.desiredStrength-f.assigned))*
+            (f.dynamicDefense ?
+              (SCENARIO_DEFENSE.leanProduction ? 2.25 : 3.5) : 2) /
+              (1+route(f)) + (f.state==='regrouping'?2:0);
           return score(b)-score(a)||route(a)-route(b)||a.anchor.id-b.anchor.id;
-        })[0];
+        })[0] || null;
+        if (g.aiDefenseTrace) {
+          const trace = g.aiDefenseTrace[side]?.at(-1);
+          if (trace?.turn === g.turn)
+            (trace.factorySelections ||= {})[s.id] = !!choice?.dynamicDefense;
+        }
+        return choice;
       },
       scenarioUrgency = s => {
         const f = scenarioServes(s);
         if (!f) return 0;
         const shortage = f.deficit ?? Math.max(0,f.desiredStrength-f.assigned);
         const travel = frontArrival(g,s,f);
-        return shortage*3/(1+Math.min(10,travel)/3) + (f.state==='regrouping'?2:0);
+        return shortage*3/(1+Math.min(10,travel)/3) +
+          (f.dynamicDefense && travel <= (SCENARIO_DEFENSE.leanProduction?3:5) ?
+            (SCENARIO_DEFENSE.leanProduction ?
+              (f.defenseSeverity==='critical'?4:2) :
+              (f.defenseSeverity==='critical'?8:5)) : 0) +
+          (f.state==='regrouping'?2:0);
       },
       serves = s => {
         if (g.mode === 'scenario') return scenarioServes(s);
@@ -481,7 +496,7 @@
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
-            ? ['heavy', 'siege', 'medium', 'rocket', 'light', 'assault', 'support', 'scout']
+            ? ['heavy', 'siege', 'medium', 'rocket', ...(g.mode === 'scenario' ? ['raider'] : []), 'light', 'assault', 'support', 'scout']
             : s.tier === 2
               ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
               : ['light', 'support', 'assault', 'scout'],
@@ -509,6 +524,14 @@
       c.credits <= spendable() && c.industry <= e.industry - reserveInd &&
       (c.sakuradite || 0) <= (e.sakuradite || 0) - reserveSak;
     // The frame the front asks for comes first, in the largest formation affordable, then the next frame on the menu.
+    const recordBuild = (s) => {
+      if (!g.aiDefenseTrace) return;
+      const trace = g.aiDefenseTrace[side]?.at(-1);
+      if (trace?.turn !== g.turn) return;
+      const f = serves(s);
+      if (f?.dynamicDefense) trace.defensiveBuilds = (trace.defensiveBuilds || 0) + 1;
+      else trace.offensiveBuilds = (trace.offensiveBuilds || 0) + 1;
+    };
     const tryBuild = (s, menu, sizes) => {
       const defender = unitAt(g, s),
         vacating = defender?.side === side && isReady(g, defender) && !defender.moved && front(s) <= 2 ? defender : null,
@@ -534,7 +557,10 @@
             if (!m.ok) continue;
             g.vacated.push({ id: vacating.id, orders: [{ kind: 'move', ...m, id: vacating.id }] });
           }
-          if (recruitAIElite(g, s.id, id).ok) return true;
+          if (recruitAIElite(g, s.id, id).ok) {
+            recordBuild(s);
+            return true;
+          }
         }
         return false;
       }
@@ -553,7 +579,10 @@
             g.vacated.push({ id: vacating.id, orders: [{ kind: 'move', ...m, id: vacating.id }] });
           }
           // No other spending occurs between validating the replacement, clearing the city and recruiting.
-          if (recruit(g, s.id, type, n).ok) return true;
+          if (recruit(g, s.id, type, n).ok) {
+            recordBuild(s);
+            return true;
+          }
         }
       return false;
     };
