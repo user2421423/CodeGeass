@@ -22,3 +22,17 @@ jobs:
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
           node tools/federation_era_roster_smoke.cjs
+      - name: Unified action engine regression suite
+        run: node tools/test_unified_actions.cjs
+      - name: Benchmark combat against current main
+        run: |
+          git fetch --depth=1 origin main:refs/remotes/origin/main
+          git worktree add --detach /tmp/codegeass-combat-main origin/main
+          ( cd /tmp/codegeass-combat-main && node tools/build_sources.cjs )
+          node tools/benchmark_unified_actions.cjs /tmp/codegeass-combat-main/dist/engine.js > /tmp/combat-main.json
+          node tools/benchmark_unified_actions.cjs dist/engine.js > /tmp/combat-refactor.json
+          node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('/tmp/combat-main.json'));const b=JSON.parse(fs.readFileSync('/tmp/combat-refactor.json'));const pct=(b.medianMicrosecondsPerAttack/a.medianMicrosecondsPerAttack-1)*100;console.log(JSON.stringify({main:a,refactor:b,changePercent:pct},null,2));if(pct>5)console.log('WARNING: >5% combat cost increase; investigate benchmark noise and profile before merge.')"
+      - name: Compare seeded scenario fingerprints with committed baseline
+        run: |
+          node tools/scenario_sim.cjs --all > /tmp/unified-combat-sim.txt
+          diff -u tools/data/sim_baseline.txt /tmp/unified-combat-sim.txt
