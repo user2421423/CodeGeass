@@ -3,7 +3,7 @@
 let scenarioSide = 'britannia';
 let scenarioKind = 'invasion-japan';
 let scenarioDifficulty = 'normal';
-let scenarioWeeklySelected = false;
+let scenarioWeeklySelected = true;
 let scenarioRoutingGroup = null;
 // Training needs only the common geography, never the regional battle library.
 function withScenarios(then) { return withGameAssets(ensureGeography, then); }
