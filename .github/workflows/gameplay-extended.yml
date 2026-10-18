@@ -49,7 +49,7 @@ jobs:
       - name: Full regression catalog
         run: node tools/gameplay_regressions.cjs --all --output-dir artifacts/regressions-extended
       - name: Check all deterministic baselines
-        run: node tools/sim_baseline_check.cjs --all
+        run: node tools/sim_baseline_check.cjs --all --compare-base main
       - name: Mass AI-vs-AI tournament
         if: success()
         run: |
