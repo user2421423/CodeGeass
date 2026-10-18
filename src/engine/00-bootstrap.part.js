@@ -84,24 +84,54 @@
       ]),
     ),
     ...LINEUPS,
+    // The default Chinese inventory is the native 2017 roster, including
+    // callers that inspect ROSTER.cf without a game context.
+    cf: { ...LINEUPS.cf2017 },
   };
-  // The 2018 U.F.N. has the Black Knights' complete field lineup, not
-  // separate Chinese Federation or E.U. factory inventories. This reads the
-  // scenario ID, so it also applies to saves made before the roster change.
+  // The 2018 U.F.N. deliberately retains the 'cf' engine side for save and
+  // diplomacy compatibility, but its equipment belongs to the Black Knights.
   function ufnBlackKnights(g, side) {
     return g?.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf';
   }
-  function worldChina(g, side) {
-    return g?.mode === 'conquest' && g.era === 'world' && side === 'cf';
+  function federationLineup(g, side) {
+    if (side !== 'cf') return null;
+    return ufnBlackKnights(g, side) ? LINEUPS.bk : LINEUPS.cf2017;
   }
   function typeFor(side, cls, g = null) {
-    if (ufnBlackKnights(g, side)) return ROSTER.bk[cls] || ROSTER.cf[cls];
-    if (worldChina(g, side)) return LINEUPS.cf2017[cls];
+    const federation = federationLineup(g, side);
+    if (federation) return federation[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
-    if (ufnBlackKnights(g, side)) return { ...ROSTER.bk };
-    if (worldChina(g, side)) return { ...LINEUPS.cf2017 };
+    const federation = federationLineup(g, side);
+    if (federation) return { ...federation };
     return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
+  }
+  // Keep explicit scripted scenario units and imported saves era-accurate.
+  // Preserve the unit's class and allegiance; only change the equipment ID.
+  function eraUnitType(g, type, side) {
+    const t = TYPES[type];
+    if (side !== 'cf' || !t) return type;
+    if (t.naval) {
+      // Ordinary ships and marines use the era's navy; Elite marines use
+      // their own era-checked deployment path below.
+      if (t.elite) return eliteEligible(g, side, ELITE_TYPE_TO_ID[type]) ? type :
+        (navalRoster(g, side)[t.tier >= 2 ? 'amphibious2' : 'amphibious'] || type);
+      const navy = navalRoster(g, side);
+      if (Object.values(navy).includes(type)) return type;
+      return navy[t.naval === 'ship' ? 'carrier' : t.tier >= 2 ? 'amphibious2' : 'amphibious'] || type;
+    }
+    if (t.elite) {
+      const id = ELITE_TYPE_TO_ID[type];
+      if (eliteEligible(g, side, id)) return type;
+      // No cross-era Elite equipment: use a native Elite of the SAME class
+      // when one exists, otherwise retain that class's ordinary frame.
+      const native = Object.keys(ELITE_FORCES).find(key =>
+        eliteEligible(g, side, key) && TYPES[ELITE_FORCES[key].type].cls === t.cls &&
+        !TYPES[ELITE_FORCES[key].type].naval);
+      return native ? ELITE_FORCES[native].type : typeFor(side, t.cls, g);
+    }
+    const roster = federationLineup(g, side);
+    return Object.values(roster).includes(type) ? type : roster[t.cls] || type;
   }
 
