@@ -28,6 +28,7 @@
     "src/ai/03-guard-assignment.part.js",
     "src/ai/04-recovery.part.js",
     "src/ai/05-naval.part.js",
+    "src/ai/05a-economic-planner.part.js",
     "src/ai/06-production.part.js",
     "src/ai/06a-tactical-coordination.part.js",
     "src/ai/07-tactical-orders.part.js"
