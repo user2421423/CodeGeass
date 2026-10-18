@@ -486,7 +486,7 @@
       // Tier-1 frames (no Sakuradite) follow as fallbacks when Sakuradite runs short.
       const classes =
           s.tier >= 3
-            ? ['heavy', 'siege', 'medium', 'rocket', 'raider', 'light', 'assault', 'support', 'scout']
+            ? ['heavy', 'siege', 'medium', 'rocket', ...(g.mode === 'scenario' ? ['raider'] : []), 'light', 'assault', 'support', 'scout']
             : s.tier === 2
               ? ['medium', 'rocket', 'raider', 'light', 'support', 'assault', 'scout']
               : ['light', 'support', 'assault', 'scout'],
