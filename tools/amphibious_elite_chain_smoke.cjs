@@ -8,8 +8,7 @@ const side = 'britannia';
 const enemy = 'eu';
 const adjacent = (g, p) => E.internal.adjacent(g, p);
 const clearLand = (g, p) =>
-  p && !E.isSea(p) && !E.internal.stationAt(g, p) &&
-  p.terrain !== 'mountain' && p.terrain !== 'tundra';
+  p && p.terrain === 'plains' && !E.internal.stationAt(g, p);
 const key = p => p.c + ',' + p.r;
 
 function setup(type, level) {
