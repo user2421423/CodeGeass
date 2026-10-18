@@ -353,10 +353,10 @@
     {
       "kind": "units",
       "id": "estrella_cc",
-      "file": "units/estrella_cc-4ebf772963e3.png",
-      "page": "https://codegeass.fandom.com/wiki/Estrella",
-      "image": "https://static.wikia.nocookie.net/codegeass/images/2/2e/Estrella-Fernando.jpg/revision/latest",
-      "method": "Fernando Noriega colors (stun tonfa unit); white background removed and trimmed"
+      "file": "units/estrella_cc_fernando-c95f88e9b062.png",
+      "page": "https://hobbyjapan.co.jp/codegeass/season1/extra.html",
+      "image": "https://hobbyjapan.co.jp/codegeass/season1/imgs/2014102401.jpg",
+      "method": "Official Hobby Japan Oz the Reflection color-reference art: Fernando Noriega green Estrella cropped from the left half; connected white background removed for transparent game sprite."
     },
     {
       "kind": "units",
