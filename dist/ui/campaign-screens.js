@@ -190,6 +190,7 @@ function restoreLoadedGame(s) {
   if (s.mode === 'scenario') {
     const profile = loadProfile();
     game = E.applyRoster(s.warCampaign ? E.applyElites(s, profile) : s, profile);
+    if (s.weeklyScenario) game.weeklyScenario = { ...s.weeklyScenario };
   } else game = E.applyProfile(s, loadProfile());
   if (game.mode === 'campaign') {
     missionDifficulty = game.difficulty || 'normal';
