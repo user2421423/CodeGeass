@@ -42,17 +42,19 @@ The preferred candidate is the **strict** (conservative, imminent-threat) profil
 
 The original unrebalanced prototype had won all four initial Australian seeds for Britannia. Its original four-seed AI trace recorded average defensive recruitments **Britannia 1.5 / Federation 15.3 / Europia 13.0**, explaining much of the asymmetric over-defending. The strict profile reduced this disparity markedly.
 
-## Other scenario checks (four matched seeds each)
+## Other scenario checks (ten matched seeds each)
 
-Four seeds: `11 37 59 83`. Runs use the same code controls and difficulty settings.
+Seeds: `11 37 59 83 101 137 211 307 409 503`. The strict profile used the same current-main engine snapshot as the aligned first-four runs; the six additional strict runs completed in [extended validation](https://github.com/user2421423/CodeGeass/actions/runs/39108766268), all without errors. For the main control's six additional seeds, see [main-versus-combined confirmation](https://github.com/user2421423/CodeGeass/actions/runs/39107464082). All games were all-AI and retained the identical side, difficulty and seed between variants.
 
-| Scenario | main | Strict feature | Notes |
+| Scenario | main after the turn cap | Strict feature after the turn cap | Interpretation |
 |---|---|---|---|
-| Division of Japan, Hard, BR selected, 50 turns | Britannia eliminated in all four; 93.8 average ownership changes | Britannia eliminated in all four; **70.3** ownership changes | Defense did not rescue the weaker Britannian position; capturing continued |
-| Invasion of Japan, Challenge, BR selected, 50 turns | Federation won 3/4; one unfinished | Federation won 2/4; two unfinished | Modest improvement to Britannian survival; no universal outcome change |
-| European War, Normal, EU selected, 35-turn cap | Euro Britannia won all four | Euro Britannia won all four | Overall winners unchanged |
+| Division of Japan, **Hard**, Britannia selected, **50 turns** | Britannia eliminated in **10/10**; **91.1** average city ownership changes | Britannia eliminated in **10/10**; **68.0** ownership changes | Still unable to rescue Britannia, though city control is less volatile |
+| Invasion of Japan, **Challenge**, Britannia selected, **50 turns** | Federation won **6/10**, other 4 unfinished; Britannia averaged **2.9 cities** | Federation won **3/10**, other 7 unfinished; Britannia averaged **8.0 cities** | Defenders survive substantially longer, without obtaining an easy victory |
+| European War, **Normal**, EU selected, **35-turn cap** | Euro Britannia won **10/10** | Euro Britannia won **10/10** | Winner unchanged |
 
-All these runs reported zero simulation errors. The Philippines scenario's special island-defense exception passed the separate regression checks. These samples are limited and are not a guarantee against longer-game or human-vs-AI problems.
+Strict Invasion of Japan achieved about **93.3** average city ownership changes, similar to the main control's approximately **95.3**, indicating that extra survival did not result in a widespread loss of territorial activity in that scenario. Division of Japan showed reduced city churn but still no Britannian recovery. There were **zero recorded simulation errors** in all extra strict-seed runs.
+
+The Philippines scenario's special island-defense exception passed the separate regression checks. Human-vs-AI behavior, alternate side selections, and additional difficulty settings have not been comprehensively benchmarked.
 
 ## Validation
 
@@ -62,7 +64,8 @@ All these runs reported zero simulation errors. The Philippines scenario's speci
 - [First 4-seed independent-adjustment screen](https://github.com/user2421423/CodeGeass/actions/runs/39107176039).
 - [Six extra seeds, making ten combined seeds](https://github.com/user2421423/CodeGeass/actions/runs/39107464082).
 - [Latest-main aligned strict confirmation](https://github.com/user2421423/CodeGeass/actions/runs/39108071068).
+- [Six further strict seeds in the remaining three scenarios](https://github.com/user2421423/CodeGeass/actions/runs/39108766268).
 
 ## Recommendation
 
-Keep the **strict default** on the feature branch for review. It improves emergency targeting and returns to ordinary offense as threats pass, while making Australia more decisive and reducing defensive overproduction by the two factions previously affected most. **Do not automatically merge into main:** conduct a final human playtest or review the remaining faction asymmetry before approval. There are no new defensive damage buffs, resource bonuses, or Counteroffensive state.
+Keep the **strict default** on the feature branch for review. It improves emergency targeting and returns to ordinary offense as threats pass, while making Australia more decisive and reducing defensive overproduction by the two factions previously affected most. **Do not automatically merge into main:** conduct a final human playtest or review the remaining faction asymmetry before approval. The full validation covers ten seeds in each of four scenarios, with unchanged engine rules for main-versus-strict controls. There are no new defensive damage buffs, resource bonuses, or Counteroffensive state.
