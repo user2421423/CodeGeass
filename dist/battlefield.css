@@ -3357,7 +3357,74 @@ button.danger:hover:not(:disabled) {
 .ops-command-grid strong{color:#f0f0e2;font-size:13px;overflow-wrap:anywhere}
 .ops-alerts{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
 .ops-alerts span{padding:5px 8px;background:#473a31;border:1px solid #aa7b55;color:#ffe0b7;font-size:12px}
-@media(max-width:640px){.ops-command-grid{grid-template-columns:1fr}.operations-views button{flex:1;min-width:90px}}
+@media(max-width:640px){.ops-command-grid{grid-template-columns:1fr}.operations-views button{flex:1;min-width:90px}} 
+
+/* Army Group dialog: consistent controls regardless of primary/small state.
+   Keep this scoped so regular conquest and scenario buttons are unaffected. */
+.dialog[aria-label="Army groups"] button {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 44px;
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.25;
+  white-space: normal;
+}
+.dialog[aria-label="Army groups"] .scenario-group-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+.dialog[aria-label="Army groups"] .scenario-group-buttons > button {
+  flex: 0 1 164px;
+  width: 164px;
+  margin: 0;
+  text-align: center;
+}
+.dialog[aria-label="Army groups"] .scenario-group-buttons > .mode-note {
+  flex: 1 1 100%;
+}
+.dialog[aria-label="Army groups"] .ops-group-row > .scenario-group-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 0 0 360px;
+  align-self: center;
+}
+.dialog[aria-label="Army groups"] .ops-group-row .scenario-group-buttons > button {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+/* Override the otherwise oversized primary buttons in conquest rows. */
+.dialog[aria-label="Army groups"] .conquest-row .primary {
+  min-width: 0;
+  font-size: 13px;
+}
+.dialog[aria-label="Army groups"] .dialog-footer {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dialog[aria-label="Army groups"] .dialog-footer > button {
+  flex: 0 1 164px;
+  width: 164px;
+}
+.dialog[aria-label="Army groups"] .operations-views button {
+  flex: 0 1 164px;
+  min-height: 44px;
+}
+@media (max-width: 700px) {
+  .dialog[aria-label="Army groups"] .ops-group-row > .scenario-group-buttons {
+    flex: none;
+    width: 100%;
+  }
+}
+@media (max-width: 420px) {
+  .dialog[aria-label="Army groups"] .ops-group-row > .scenario-group-buttons {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 
 /* Section 7 — Compact command HUD. Explicit scope prevents changes to start-menu dialogs. */
 .topbar.hud-v2 {
