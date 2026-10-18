@@ -298,6 +298,8 @@
     shortfall,
     repairReason,
     reinforceReason,
+    validateAction,
+    resolveAction,
     buyReason,
     buildReason,
     cityTierReason,
