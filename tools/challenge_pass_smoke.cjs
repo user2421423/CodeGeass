@@ -27,9 +27,11 @@ assert.equal(CP.MAX_CP, 1850, '1,850 permanent CP');
 assert.equal(CP.TRACKS.length, 16, 'six faction, eight speed, two mobilization');
 assert.equal(CP.STRATEGIC.length, 12, 'six strategic achievements per era');
 assert.equal(CP.MILESTONES.length, 32, '50-CP milestone spacing through 1,600 CP');
-assert.equal(CP.MILESTONES.filter(x=>x.kind==='tokens').reduce((n,x)=>n+x.amount,0),6200);
+assert.equal(CP.MILESTONES.filter(x=>x.kind==='tokens').reduce((n,x)=>n+x.amount,0),5600);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='fragments').reduce((n,x)=>n+x.amount,0),60);
 assert.equal(CP.MILESTONES.filter(x=>x.kind==='cosmetic').length,5);
+assert.deepEqual(CP.MILESTONES.filter(x=>x.kind==='high-command').map(x=>x.at),[1600]);
+assert.equal(CP.MILESTONES.find(x=>x.at===1600).amount,1);
 const mk = (era = 'world', difficulty = 'normal', side = 'britannia', turn = 45, id = 'run1') =>
   ({ mode: 'conquest', era, difficulty, player: side, turn, over: {winner:side}, rewardClaimId:id, units:[] });
 const normal = mk();
@@ -95,4 +97,32 @@ assert.match(dialog.innerHTML,/Conquest Challenge Pass/);
 assert.match(dialog.innerHTML,/New frames: /);
 CP.open('rewards');
 assert.match(dialog.innerHTML,/1,600 CP/);
+assert.match(dialog.innerHTML,/cp-roadmap-chapter/);
+assert.match(dialog.innerHTML,/Supreme Command/);
+assert.match(dialog.innerHTML,/permanent High Command position/);
+
+// Final reward is permanent, idempotent, and additive to paid High Command capacity.
+profile = { tokens: 100000 };
+const passState = CP.state(profile);
+for (const track of CP.TRACKS)
+  track.stages.forEach((stage, i) => { passState.claimed[track.id + ':' + i] = true; });
+for (const obj of CP.STRATEGIC) passState.claimed[obj.id] = true;
+assert.equal(CP.earned(passState),1850);
+assert.equal(E.highCommandCapacity(profile),2);
+assert.equal(E.highCommandExpansionPrice(profile),1800);
+for (const milestone of CP.MILESTONES) {
+  assert.equal(CP.claimMilestone(milestone.at).ok,true,'milestone ' + milestone.at);
+}
+assert.equal(CP.claimMilestone(1600).ok,false,'final reward is not repeatable');
+assert.equal(E.highCommandCapacity(profile),3,'bonus seat permanently stacks on the base two');
+assert.equal(E.highCommandExpansionPrice(profile),1800,'bonus does not skip the 1,800-token tier');
+assert.equal(E.expandHighCommand(profile).ok,true);
+assert.equal(E.highCommandCapacity(profile),4,'purchased capacity stacks with the pass bonus');
+assert.equal(E.highCommandExpansionPrice(profile),3200);
+assert.equal(E.expandHighCommand(profile).ok,true);
+assert.equal(E.expandHighCommand(profile).ok,true);
+assert.equal(E.expandHighCommand(profile).ok,true);
+assert.equal(E.highCommandCapacity(profile),7,'six purchasable seats plus one bonus seat');
+assert.equal(E.highCommandExpansionPrice(profile),null);
+
 console.log('Conquest Challenge Pass objectives, eligibility, claims, rewards, save safety and UI: PASS');
