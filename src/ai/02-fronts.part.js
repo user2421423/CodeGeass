@@ -153,6 +153,9 @@
       const captureSoon = exposed && incoming.some(x => x.immediate && canCapture(x.u));
       const enter = threat >= Math.max(2, friendly * SCENARIO_DEFENSE.enterRatio) ||
         captureSoon;
+      if (g.scenarioDefenseDebug) (state.defenseDebug ||= {})[city.id] =
+        { name: city.name, incoming: incoming.length, threat, friendly,
+          enter, captureSoon };
       const quiet = !enter && (threat === 0 ||
         threat < friendly * SCENARIO_DEFENSE.exitRatio) && !captureSoon
         ? (old?.quiet || 0) + 1 : 0;
