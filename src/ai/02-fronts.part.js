@@ -317,7 +317,7 @@
       wing = memo.wings?.[u.id],
       // Threatened home hubs remain eligible within an offensive theater.
       matched = wing && availableTargets.filter(f=>f.anchor.owner===wing ||
-        (f.operational && f.type==='defensive')),
+        ((f.operational || f.dynamicDefense) && f.type==='defensive')),
       fronts = matched?.length ? matched : availableTargets;
     if (!fronts.length) return null;
     const committed = memo.fronts.filter(f => f.dynamicDefense)
@@ -333,11 +333,15 @@
         scenarioCityCost(g,u,a)-scenarioCityCost(g,u,b) ||
         a.anchor.id-b.anchor.id)[0];
     }
+    // Only the explicit emergency dispatcher may assign mobile strength to
+    // home defense: regular offensive selection must respect the diversion cap.
+    const regular = fronts.filter(f => !f.dynamicDefense);
+    if (!regular.length) return null;
     const limit = memo.fronts.length <= 2 ? SCENARIO_COLUMN.finalUnits : SCENARIO_COLUMN.maxUnits;
-    const understrength = fronts.filter(f => f.members.length < limit &&
+    const understrength = regular.filter(f => f.members.length < limit &&
       f.assigned < f.desiredStrength);
-    const withRoom = fronts.filter(f => f.members.length < limit);
-    const candidates = understrength.length ? understrength : withRoom.length ? withRoom : fronts;
+    const withRoom = regular.filter(f => f.members.length < limit);
+    const candidates = understrength.length ? understrength : withRoom.length ? withRoom : regular;
     const costs = new Map();
     const cost = f => costs.get(f) ?? costs.set(f, scenarioCityCost(g, u, f)).get(f);
     // Keep a column intact unless its target falls or a substantially
