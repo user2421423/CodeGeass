@@ -1,0 +1,76 @@
+name: Gameplay testing (extended tournament)
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: 'Comma-separated scenario IDs, or all'
+        required: true
+        default: 'all'
+        type: string
+      difficulties:
+        description: 'Difficulty levels'
+        required: true
+        default: 'normal,hard,challenge,elite'
+        type: string
+      seeds:
+        description: 'Comma-separated deterministic seeds'
+        required: true
+        default: '11,29,47'
+        type: string
+      turns:
+        description: 'Turn limits / independent horizons'
+        required: true
+        default: '20,50,100'
+        type: string
+      max_games:
+        description: 'Maximum games'
+        required: true
+        default: '10000'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gameplay-extended
+  cancel-in-progress: false
+
+jobs:
+  tournament:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build engine
+        run: node tools/build_sources.cjs
+      - name: Full regression catalog
+        run: node tools/gameplay_regressions.cjs --all --output-dir artifacts/regressions-extended
+      - name: Check all deterministic baselines
+        run: node tools/sim_baseline_check.cjs --all
+      - name: Mass AI-vs-AI tournament
+        if: success()
+        run: |
+          node tools/scenario_tournament.cjs \
+            --scenarios "$SCENARIOS" \
+            --difficulties "$DIFFICULTIES" \
+            --seeds "$SEEDS" \
+            --turns "$TURNS" \
+            --max-games "$MAX_GAMES" \
+            --output-dir artifacts/tournament-extended
+        env:
+          SCENARIOS: ${{ inputs.scenarios }}
+          DIFFICULTIES: ${{ inputs.difficulties }}
+          SEEDS: ${{ inputs.seeds }}
+          TURNS: ${{ inputs.turns }}
+          MAX_GAMES: ${{ inputs.max_games }}
+      - name: Upload reproducible raw data and findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameplay-extended-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 30
