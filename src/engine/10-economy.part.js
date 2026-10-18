@@ -189,13 +189,20 @@
   // port and its separate one-unit-per-turn shipyard slot.
   // Mission-owned roster snapshots provide an explicit, save-safe borrowing map.
   // Outside Elite Campaign, ordinary faction unlock/recruit rules remain unchanged.
+  // Native Chinese Federation Elite Forces, distinct from Jabalpur's
+  // Black Knights/Guren/Akatsuki machines. Saved HQ unlocks are never deleted;
+  // incompatible equipment is simply not deployable in the wrong era.
+  const FEDERATION_2017_ELITES = new Set(['chuyen', 'wang_hu', 'shen_hu', 'shui_gun_ru_ii']);
   function eliteEligible(g, side, id) {
     const e = ELITE_FORCES[id];
     if (!e) return false;
+    if (side === 'cf') {
+      if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
+      if (!FEDERATION_2017_ELITES.has(id)) return false;
+    }
     const roster = eliteCampaign(g) ? g.campaign?.eliteRosters?.[side] :
       scenarioMeta(g).eliteRosterOnly ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
-    if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
     return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
