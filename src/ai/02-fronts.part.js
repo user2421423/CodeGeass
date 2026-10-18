@@ -134,7 +134,8 @@
           (!isShip(u) || (u.cargo || []).length > 0);
         if (!sameLand && !atCoast) return [];
         const immediate = threatTo(g, u, city) > 0;
-        const approach = sameLand && approachingThreat(g, u, city);
+        const approach = sameLand && (approachingThreat(g, u, city) ||
+          scenarioTravel(g, u, { anchor: city, side }) <= 2);
         const landing = atCoast && distance <= 5;
         if (!immediate && !approach && !landing) return [];
         const strength = isShip(u) ? (u.cargo || []).reduce((n, v) =>
