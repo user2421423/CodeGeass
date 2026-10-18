@@ -94,12 +94,13 @@
     const d = depositOf(g, s),
       y = d ? depositYield(g, d) : { sakuradite: 0, credits: 0 },
       output = cityOutput(g, s),
-      local = s.divisionIncome || {};
+      local = s.divisionIncome || {},
+      regional = s.regionalIncome || {};
     return {
-      credits: output.credits + y.credits + (local.credits || 0),
-      industry: Math.round(output.industry + (local.industry || 0)),
-      science: Math.round(output.science + (local.science || 0)),
-      sakuradite: y.sakuradite + (local.sakuradite || 0),
+      credits: output.credits + y.credits + (local.credits || 0) + (regional.credits || 0),
+      industry: Math.round(output.industry + (local.industry || 0) + (regional.industry || 0)),
+      science: Math.round(output.science + (local.science || 0) + (regional.science || 0)),
+      sakuradite: y.sakuradite + (local.sakuradite || 0) + (regional.sakuradite || 0),
     };
   }
   // Infantry or Armor moving onto a mine seizes it; it has no defenses.

@@ -1,5 +1,68 @@
   // ======== Economy and cities ========
+  const REGIONAL_RESOURCES = ['credits','industry','science','sakuradite'];
+  const CITYLESS_WARCHEST_TURNS = 10;
+
+  // All regional battles keep their authored opening income targets and
+  // difficulty-adjusted reserves. Once their setup is complete, transfer the
+  // former fixed funding into the original cities. Thereafter, capturing a city
+  // transfers its supplemental output with it. Seaborne forces which start
+  // without cities get ten turns of their former income upfront, then earn
+  // nothing until taking a city.
+  function localizeScenarioIncome(g) {
+    if (g?.mode !== 'scenario' || !g.scenario ||
+        g.scenario.economyLocalized || g.scenario.localizingIncome) return false;
+    const funding = g.scenario.funding || {};
+    const sides = Object.keys(funding);
+    if (!sides.length) return false;
+    g.scenario.localizingIncome = true;
+    try {
+      for (const side of sides) {
+        const cities = g.stations.filter(s => s.owner === side)
+          .sort((a,b) => a.id - b.id);
+        if (!cities.length) {
+          // Do not give a continuing subsidy to armies offshore or in transit.
+          // Their extra war chest preserves the original income rate for ten
+          // turns of military spending, even if a city is never captured.
+          const oldIncome = income(g,side);
+          const wallet = funds(g,side);
+          for (const resource of REGIONAL_RESOURCES)
+            wallet[resource] = Math.max(wallet[resource] || 0,
+              Math.max(0,Math.round(oldIncome[resource] * CITYLESS_WARCHEST_TURNS)));
+          continue;
+        }
+        for (const resource of REGIONAL_RESOURCES) {
+          const bonus = (funding[side]?.[resource] || 0) +
+            (resource === 'sakuradite' ? SAKURADITE.national : 0);
+          // Spread the complete former subsidy across starting cities. Keep
+          // fractional remainders on the first city so totals are unchanged.
+          const whole=Math.trunc(bonus), each=Math.trunc(whole/cities.length),
+            remainder=whole-each*cities.length;
+          for (let i=0;i<cities.length;i++) {
+            const amount=each+(i===0?remainder+(bonus-whole):0);
+            if (!amount) continue;
+            cities[i].regionalIncome ||= {};
+            cities[i].regionalIncome[resource] =
+              (cities[i].regionalIncome[resource] || 0) + amount;
+          }
+        }
+      }
+      g.scenario.funding = {};
+      g.scenario.economyLocalized = true;
+      return true;
+    } finally {
+      delete g.scenario.localizingIncome;
+    }
+  }
+
   function income(g, side) {
+    // Regional constructors set startUnits only after calculating and storing
+    // their opening resource reserves. This safely localizes funding on the
+    // first post-construction income query for any scenario or campaign battle.
+    if (g.mode === 'scenario' && g.startUnits && !g.scenario?.localizingIncome)
+      localizeScenarioIncome(g);
+    if (g.scenario?.economyLocalized && g.mode === 'scenario' &&
+        !g.stations.some(s => s.owner === side))
+      return {credits:0,industry:0,science:0,sakuradite:0};
     const refining = 1 + techValue(g, side, 'cities.refining');
     const total = g.stations
       .filter(s => s.owner === side)
@@ -17,9 +80,11 @@
         }
         a.industry += y.industry;
         a.science += y.science;
-        // Division of Japan's extra production is owned by the city itself.
-        for(const resource of ['credits','industry','science','sakuradite'])
-          a[resource] += s.divisionIncome?.[resource] || 0;
+        // Scenario balancing income is owned by the city and transfers on
+        // capture instead of surviving as a permanent off-map stipend.
+        for(const resource of REGIONAL_RESOURCES)
+          a[resource] += (s.divisionIncome?.[resource] || 0) +
+            (s.regionalIncome?.[resource] || 0);
         return a;
       }, { credits: 0, industry: 0, science: 0, sakuradite: 0 });
     total.industry = Math.round(total.industry);
@@ -30,13 +95,16 @@
       total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
-    // Division of Japan puts even the national allotment in its cities.
-    if (g.scenario?.id !== 'division-japan' && g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side)) total.sakuradite += SAKURADITE.national;
+    // Regional scenarios localize the national Sakuradite allotment into
+    // cities as well; Conquest retains its national grant.
+    if (g.scenario?.id !== 'division-japan' && !g.scenario?.economyLocalized &&
+        g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side))
+      total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
-    // Regional operations receive fixed off-map military funding in addition
-    // to city output. Captured cities still add (or remove) their normal
-    // earnings. Do not give stipends to eliminated powers.
-    const support = g.mode === 'scenario' && alive(g, side) &&
+    // Only during scenario construction and one-time migration do the authored
+    // funding targets exist as virtual stipends. They are retired on launch.
+    const support = g.mode === 'scenario' && !g.scenario?.economyLocalized &&
+      alive(g, side) &&
       (g.stations.some(s => s.owner === side) ||
         g.scenario?.citylessFunding?.includes(side)) ? g.scenario?.funding?.[side] : null;
     if (support) for (const resource of ['credits','industry','science','sakuradite'])

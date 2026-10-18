@@ -169,6 +169,10 @@
       }
       g.scenario.funding = {};
     }
+    // Existing saved regional battles also migrate their original funding
+    // into cities. Do this once; already-localized saves are unchanged.
+    if (regional && g.scenario.id !== 'division-japan')
+      localizeScenarioIncome(g);
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;

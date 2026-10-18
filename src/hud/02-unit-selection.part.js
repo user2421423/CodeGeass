@@ -57,7 +57,7 @@ function resource(icon, label, title, value, perTurn) {
   // Keep resource balances and income together so a compact or mobile HUD
   // displays the per-turn rate beneath the balance rather than hiding it.
   const values = `<span class="res-values"><b>${count(value)}</b>${perTurn == null ? '' :
-    `<span class="hud-income ${perTurn < 0 ? 'negative' : 'positive'}" aria-hidden="true">${signed}<small class="income-unit">/turn</small></span>`}</span>`;
+    `<span class="hud-income ${perTurn < 0 ? 'negative' : 'positive'}" aria-hidden="true">${signed}</span>`}</span>`;
   return `<div class="resource res-${icon}" tabindex="0" role="status" title="${esc(label + ': ' + count(value) + '. ' + title + '. ' + detail)}" aria-label="${esc(label + ': ' + count(value) + '. ' + detail)}">${ICONS.use(icon, 'res-icon')}<span class="label">${esc(label)}</span>${values}</div>`;
 }
 // Costs render as resource tokens; zero amounts are omitted unless all is set.

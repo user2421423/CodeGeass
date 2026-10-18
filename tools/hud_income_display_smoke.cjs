@@ -24,11 +24,12 @@ for(const [icon,name] of [
   assert.match(result,/class="res-values"/,'Balance and rate stay together');
   assert.match(result,/>1,970<\/b>/,'Resource balance is visible');
   assert.match(result,/hud-income positive/,'Positive rate is visibly marked');
-  assert.match(result,/\+420<small class="income-unit">\/turn<\/small>/,'Per-turn amount is visible');
+  assert.match(result,/\+420<\/span>/,'Per-turn amount is visible without suffix');
+  assert.doesNotMatch(result,/\/turn/,'The HUD no longer prints /turn');
   assert.match(result,/aria-label="[^"]*Per turn: \+420/,'Screen reader retains the income rate');
 }
 assert.match(resource('credits','Credits','description',250,-10),/hud-income negative/);
-assert.match(resource('credits','Credits','description',250,-10),/−10<small class="income-unit">\/turn<\/small>/);
+assert.match(resource('credits','Credits','description',250,-10),/−10<\/span>/);
 const token=resource('token','Tokens','HQ',200);
 assert.doesNotMatch(token,/hud-income/,'Non-income resources should not show /turn');
 assert.match(css,/\.hud-v2 \.resource \.hud-income\s*\{\s*display:\s*block/,'HUD makes income visible');

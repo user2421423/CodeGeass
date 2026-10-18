@@ -49,6 +49,8 @@ jobs:
         run: node tools/repair_and_port_healing_smoke.cjs
       - name: Verify Division of Japan city income and repeated factory production
         run: node tools/division_income_factory_smoke.cjs
+      - name: Verify every regional scenario uses city-based income and cityless invasion war chests
+        run: node tools/regional_city_income_smoke.cjs
       - name: Verify World Campaign Elite HQ levels
         run: node tools/world_campaign_elite_levels_smoke.cjs
       - name: Verify World Campaign victory geography and territorial colors
