@@ -46,6 +46,7 @@ function simulate(scenario,player,difficulty,seed,turns,observer=null){
   for(const side of g.order){
    if(!E.alive(g,side))continue;
    if(!(turn===1&&side===g.order[0]))E.beginTurn(g,side,turn>1);
+   if(observer) observer({g,side,turn,stage:'before',aiMs:0});
    const started=observer?process.hrtime.bigint():null;
    E.aiProduction(g);observe();
    const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
@@ -67,7 +68,7 @@ function simulate(scenario,player,difficulty,seed,turns,observer=null){
     // Full AI-vs-AI is not ended by a human-specific loss screen, but the first one is recorded.
     if(g.over){r.firstOver??=g.over.reason||'over';g.over=null;}
    }
-   if(observer) observer({g,side,turn,aiMs:Number(process.hrtime.bigint()-started)/1e6});
+   if(observer) observer({g,side,turn,stage:'after',aiMs:Number(process.hrtime.bigint()-started)/1e6});
    if(end)break;
   }
   r.snapshots.push({turn,cities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
