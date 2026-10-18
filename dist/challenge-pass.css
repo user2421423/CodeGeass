@@ -79,8 +79,8 @@
 .cp-roadmap-chapter-head>span{font-size:12px;color:#bac9d6;text-align:right}
 .cp-roadmap-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-color:#9b804f #182b3a;scrollbar-width:thin;padding:5px 0 12px}
 .cp-roadmap-lane{display:flex;gap:12px;position:relative;min-width:max-content;isolation:isolate}
-.cp-roadmap-lane:before{content:"";position:absolute;left:60px;right:60px;top:49px;height:5px;border-radius:5px;background:#3d5261;z-index:-1}
-.cp-roadmap-lane:after{content:"";position:absolute;left:60px;width:calc((100% - 120px)*var(--cp-filled));top:49px;height:5px;border-radius:5px;background:#bf9b5d;z-index:-1;max-width:calc(100% - 120px)}
+.cp-roadmap-rail{position:absolute;left:60px;right:60px;top:49px;height:5px;border-radius:5px;background:#3d5261;z-index:-1}
+.cp-roadmap-rail>span{display:block;height:100%;border-radius:5px;background:#bf9b5d}
 .cp-roadmap-tile{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:9px;width:163px;min-height:214px;padding:9px 10px 11px;text-align:center;border:1px solid #4a6071;border-radius:9px;background:linear-gradient(170deg,#1d3749,#14293a);white-space:normal;position:relative}
 .cp-roadmap-tile.cp-ready{border-color:#e1bc78;box-shadow:0 0 0 1px #e1bc7855,0 0 18px #d7ac5338;background:linear-gradient(165deg,#403d2d,#1a3746)}
 .cp-roadmap-tile.cp-done{border-color:#688f79}
