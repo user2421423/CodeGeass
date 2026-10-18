@@ -1,0 +1,79 @@
+name: AI economic planner validation
+on:
+  pull_request:
+    paths:
+      - 'src/ai/**'
+      - 'tools/ai_economy*'
+      - 'tools/scenario_sim.cjs'
+      - 'tools/bundles.json'
+      - '.github/workflows/ai-economic-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build sources
+        run: node tools/build_sources.cjs
+      - name: Economic budget regression cases
+        run: node tools/ai_economic_planner_smoke.cjs
+      - name: Existing production and research rules
+        run: |
+          node tools/frame_research_economy_smoke.cjs
+          node tools/city_tier_upgrade_smoke.cjs
+          node tools/repair_and_port_healing_smoke.cjs
+          node tools/scenario_dynamic_defense_smoke.cjs
+      - name: All scenario simulation fingerprints (do not accept changed baselines automatically)
+        run: node tools/scenario_sim.cjs --all > scenario-ai-economy-fingerprints.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-economy-fingerprints
+          path: scenario-ai-economy-fingerprints.txt
+          if-no-files-found: ignore
+
+  paired-evaluation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install identical instrumentation in both checkouts
+        run: |
+          cp candidate/tools/scenario_sim.cjs baseline/tools/scenario_sim.cjs
+          cp candidate/tools/ai_economy_tournament.cjs baseline/tools/ai_economy_tournament.cjs
+      - name: Build and benchmark main
+        working-directory: baseline
+        run: |
+          node tools/build_sources.cjs
+          node tools/ai_economy_tournament.cjs --turns 16 --seeds 11,23 --out "${{ runner.temp }}/ai-economy-main.json"
+      - name: Build and benchmark feature branch
+        working-directory: candidate
+        run: |
+          node tools/build_sources.cjs
+          node tools/ai_economy_tournament.cjs --turns 16 --seeds 11,23 --out "${{ runner.temp }}/ai-economy-feature.json" --compare "${{ runner.temp }}/ai-economy-main.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-economy-paired-comparison
+          path: |
+            ${{ runner.temp }}/ai-economy-main.json
+            ${{ runner.temp }}/ai-economy-feature.json
+            ${{ runner.temp }}/ai-economy-feature-comparison.md
+          if-no-files-found: ignore
