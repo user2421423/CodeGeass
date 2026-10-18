@@ -35,6 +35,7 @@ const next=plan();
 assert.notEqual(next,p,'forecast invalidates after turn change');
 // Danger overrides optional development without blocking emergency field spending.
 g.turn++;
+allies[0].shield=allies[0].maxShield*0.3;
 const threatened=plan(()=>1);
 assert.equal(threatened.critical,true);
 assert.equal(threatened.mode,'defensive');
