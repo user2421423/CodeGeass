@@ -1,0 +1,43 @@
+name: Gameplay regression checks
+on:
+  pull_request:
+  push:
+    branches: ['feature/gameplay-test-tournament']
+permissions:
+  contents: read
+concurrency:
+  group: gameplay-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fast interaction, tooling and existing regression tests
+        run: node tools/gameplay_checks.cjs fast | tee gameplay-fast.tap
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-fast
+          path: gameplay-fast.tap
+  deterministic-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
+      - name: Compare exact fingerprints with the documented defect-fix baseline
+        run: node tools/check_sim_baseline.cjs --scenarios eu-greenland,division-japan,battle-luoyang --actual gameplay-fingerprints.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-fingerprints
+          path: gameplay-fingerprints.txt

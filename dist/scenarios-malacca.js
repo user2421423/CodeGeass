@@ -118,9 +118,9 @@
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters={
       cf:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('cf')),
+        E.eliteEligible(g,'cf',id)),
       britannia:eliteIds.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes('britannia'))
+        E.eliteEligible(g,'britannia',id))
     };
     // Connected waters include the Gulf of Thailand, Gulf of Tonkin and South China Sea.
     // Every shipyard launches at an adjacent navigable hex.

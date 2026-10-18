@@ -1,0 +1,4109 @@
+{
+  "historicalToAuditedMain": [
+    {
+      "key": "setup area-18 britannia challenge",
+      "expected": "setup area-18 britannia challenge eafb39cb",
+      "actual": "setup area-18 britannia challenge ac1fdfbe"
+    },
+    {
+      "key": "setup area-18 britannia elite",
+      "expected": "setup area-18 britannia elite 0886b35a",
+      "actual": "setup area-18 britannia elite e2c1bd93"
+    },
+    {
+      "key": "setup area-18 britannia hard",
+      "expected": "setup area-18 britannia hard 6a116813",
+      "actual": "setup area-18 britannia hard 0e942c54"
+    },
+    {
+      "key": "setup area-18 britannia normal",
+      "expected": "setup area-18 britannia normal 7f733efc",
+      "actual": "setup area-18 britannia normal c81f7821"
+    },
+    {
+      "key": "setup area-18 cf challenge",
+      "expected": "setup area-18 cf challenge e9285ae2",
+      "actual": "setup area-18 cf challenge 9e25ec6d"
+    },
+    {
+      "key": "setup area-18 cf elite",
+      "expected": "setup area-18 cf elite 036d6718",
+      "actual": "setup area-18 cf elite 88be3519"
+    },
+    {
+      "key": "setup area-18 cf hard",
+      "expected": "setup area-18 cf hard 44863c40",
+      "actual": "setup area-18 cf hard 79e23507"
+    },
+    {
+      "key": "setup area-18 cf normal",
+      "expected": "setup area-18 cf normal d6c31557",
+      "actual": "setup area-18 cf normal bd3a4ccc"
+    },
+    {
+      "key": "setup area-18 eu challenge",
+      "expected": "setup area-18 eu challenge 7a47becc",
+      "actual": "setup area-18 eu challenge 9013f417"
+    },
+    {
+      "key": "setup area-18 eu elite",
+      "expected": "setup area-18 eu elite e99a7987",
+      "actual": "setup area-18 eu elite e775d455"
+    },
+    {
+      "key": "setup area-18 eu hard",
+      "expected": "setup area-18 eu hard e5a0b956",
+      "actual": "setup area-18 eu hard bec9457f"
+    },
+    {
+      "key": "setup area-18 eu normal",
+      "expected": "setup area-18 eu normal 4e781e68",
+      "actual": "setup area-18 eu normal a35a2aab"
+    },
+    {
+      "key": "setup battle-luoyang britannia challenge",
+      "expected": "setup battle-luoyang britannia challenge 9c80b454",
+      "actual": "setup battle-luoyang britannia challenge 6ee0a6e1"
+    },
+    {
+      "key": "setup battle-luoyang britannia elite",
+      "expected": "setup battle-luoyang britannia elite 047a36e4",
+      "actual": "setup battle-luoyang britannia elite 750f71f2"
+    },
+    {
+      "key": "setup battle-luoyang britannia hard",
+      "expected": "setup battle-luoyang britannia hard 609dfc61",
+      "actual": "setup battle-luoyang britannia hard 6eee7590"
+    },
+    {
+      "key": "setup battle-luoyang britannia normal",
+      "expected": "setup battle-luoyang britannia normal 4da80ea1",
+      "actual": "setup battle-luoyang britannia normal 70247c40"
+    },
+    {
+      "key": "setup battle-luoyang cf challenge",
+      "expected": "setup battle-luoyang cf challenge 384f40a6",
+      "actual": "setup battle-luoyang cf challenge 5ad1faa3"
+    },
+    {
+      "key": "setup battle-luoyang cf elite",
+      "expected": "setup battle-luoyang cf elite e8b003c1",
+      "actual": "setup battle-luoyang cf elite d6f04998"
+    },
+    {
+      "key": "setup battle-luoyang cf hard",
+      "expected": "setup battle-luoyang cf hard 2cfb5f39",
+      "actual": "setup battle-luoyang cf hard d2b94f08"
+    },
+    {
+      "key": "setup battle-luoyang cf normal",
+      "expected": "setup battle-luoyang cf normal ba075306",
+      "actual": "setup battle-luoyang cf normal 76d5a971"
+    },
+    {
+      "key": "setup bering-strait britannia challenge",
+      "expected": "setup bering-strait britannia challenge 678e7792",
+      "actual": "setup bering-strait britannia challenge a874daf2"
+    },
+    {
+      "key": "setup bering-strait britannia elite",
+      "expected": "setup bering-strait britannia elite 23f45d80",
+      "actual": "setup bering-strait britannia elite c548fe77"
+    },
+    {
+      "key": "setup bering-strait britannia hard",
+      "expected": "setup bering-strait britannia hard ddf319df",
+      "actual": "setup bering-strait britannia hard 028d1701"
+    },
+    {
+      "key": "setup bering-strait britannia normal",
+      "expected": "setup bering-strait britannia normal d96081f4",
+      "actual": "setup bering-strait britannia normal 87522df6"
+    },
+    {
+      "key": "setup bering-strait eu challenge",
+      "expected": "setup bering-strait eu challenge 9c1e9f0f",
+      "actual": "setup bering-strait eu challenge 383714cd"
+    },
+    {
+      "key": "setup bering-strait eu elite",
+      "expected": "setup bering-strait eu elite f0a4384a",
+      "actual": "setup bering-strait eu elite 0cd768d7"
+    },
+    {
+      "key": "setup bering-strait eu hard",
+      "expected": "setup bering-strait eu hard f0e343d9",
+      "actual": "setup bering-strait eu hard 1b9461e3"
+    },
+    {
+      "key": "setup bering-strait eu normal",
+      "expected": "setup bering-strait eu normal 64902e62",
+      "actual": "setup bering-strait eu normal b7691306"
+    },
+    {
+      "key": "setup bf-malacca britannia challenge",
+      "expected": "setup bf-malacca britannia challenge 3192e5d3",
+      "actual": "setup bf-malacca britannia challenge 0b36007b"
+    },
+    {
+      "key": "setup bf-malacca britannia elite",
+      "expected": "setup bf-malacca britannia elite a7f3244e",
+      "actual": "setup bf-malacca britannia elite 39008e00"
+    },
+    {
+      "key": "setup bf-malacca britannia hard",
+      "expected": "setup bf-malacca britannia hard e263e996",
+      "actual": "setup bf-malacca britannia hard 21c89adc"
+    },
+    {
+      "key": "setup bf-malacca britannia normal",
+      "expected": "setup bf-malacca britannia normal 2a9401da",
+      "actual": "setup bf-malacca britannia normal b3fcca0c"
+    },
+    {
+      "key": "setup bf-malacca cf challenge",
+      "expected": "setup bf-malacca cf challenge 914770e0",
+      "actual": "setup bf-malacca cf challenge 6516a4c6"
+    },
+    {
+      "key": "setup bf-malacca cf elite",
+      "expected": "setup bf-malacca cf elite f609d2e8",
+      "actual": "setup bf-malacca cf elite 39160aee"
+    },
+    {
+      "key": "setup bf-malacca cf hard",
+      "expected": "setup bf-malacca cf hard cc6aa65a",
+      "actual": "setup bf-malacca cf hard e668214c"
+    },
+    {
+      "key": "setup bf-malacca cf normal",
+      "expected": "setup bf-malacca cf normal 4abb309f",
+      "actual": "setup bf-malacca cf normal fb046523"
+    },
+    {
+      "key": "setup bf-south-china britannia challenge",
+      "expected": "setup bf-south-china britannia challenge 44d8c748",
+      "actual": "setup bf-south-china britannia challenge 8614733c"
+    },
+    {
+      "key": "setup bf-south-china britannia elite",
+      "expected": "setup bf-south-china britannia elite a79bf8bf",
+      "actual": "setup bf-south-china britannia elite 9bb980c8"
+    },
+    {
+      "key": "setup bf-south-china britannia hard",
+      "expected": "setup bf-south-china britannia hard ccb4aaca",
+      "actual": "setup bf-south-china britannia hard 5f3ff076"
+    },
+    {
+      "key": "setup bf-south-china britannia normal",
+      "expected": "setup bf-south-china britannia normal c4554d07",
+      "actual": "setup bf-south-china britannia normal 9c5ce651"
+    },
+    {
+      "key": "setup bf-south-china cf challenge",
+      "expected": "setup bf-south-china cf challenge 78da474b",
+      "actual": "setup bf-south-china cf challenge 9db98121"
+    },
+    {
+      "key": "setup bf-south-china cf elite",
+      "expected": "setup bf-south-china cf elite 0ac77aa7",
+      "actual": "setup bf-south-china cf elite fdf1e876"
+    },
+    {
+      "key": "setup bf-south-china cf hard",
+      "expected": "setup bf-south-china cf hard aae0d89f",
+      "actual": "setup bf-south-china cf hard c77b9e2d"
+    },
+    {
+      "key": "setup bf-south-china cf normal",
+      "expected": "setup bf-south-china cf normal 896eacd2",
+      "actual": "setup bf-south-china cf normal f06fa35e"
+    },
+    {
+      "key": "setup bf-yangtze britannia challenge",
+      "expected": "setup bf-yangtze britannia challenge 8916ef95",
+      "actual": "setup bf-yangtze britannia challenge 11096503"
+    },
+    {
+      "key": "setup bf-yangtze britannia elite",
+      "expected": "setup bf-yangtze britannia elite de81370f",
+      "actual": "setup bf-yangtze britannia elite 1e65250f"
+    },
+    {
+      "key": "setup bf-yangtze britannia hard",
+      "expected": "setup bf-yangtze britannia hard 1977479d",
+      "actual": "setup bf-yangtze britannia hard b3072497"
+    },
+    {
+      "key": "setup bf-yangtze britannia normal",
+      "expected": "setup bf-yangtze britannia normal a0ee2245",
+      "actual": "setup bf-yangtze britannia normal 6b78db09"
+    },
+    {
+      "key": "setup bf-yangtze cf challenge",
+      "expected": "setup bf-yangtze cf challenge b573daea",
+      "actual": "setup bf-yangtze cf challenge 7b41913a"
+    },
+    {
+      "key": "setup bf-yangtze cf elite",
+      "expected": "setup bf-yangtze cf elite bb613bfe",
+      "actual": "setup bf-yangtze cf elite 108da551"
+    },
+    {
+      "key": "setup bf-yangtze cf hard",
+      "expected": "setup bf-yangtze cf hard ae953bc3",
+      "actual": "setup bf-yangtze cf hard 73828d81"
+    },
+    {
+      "key": "setup bf-yangtze cf normal",
+      "expected": "setup bf-yangtze cf normal fc0dfe4a",
+      "actual": "setup bf-yangtze cf normal 0c08181c"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia challenge",
+      "expected": "setup britannia-iraq-iran britannia challenge 6e6b5072",
+      "actual": "setup britannia-iraq-iran britannia challenge 17d0dc32"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia elite",
+      "expected": "setup britannia-iraq-iran britannia elite e98e0fc5",
+      "actual": "setup britannia-iraq-iran britannia elite 23015be4"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia hard",
+      "expected": "setup britannia-iraq-iran britannia hard b3b7e41e",
+      "actual": "setup britannia-iraq-iran britannia hard 063a32c4"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia normal",
+      "expected": "setup britannia-iraq-iran britannia normal 8fb849f1",
+      "actual": "setup britannia-iraq-iran britannia normal 5e355b5b"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf challenge",
+      "expected": "setup britannia-iraq-iran cf challenge a55d7ba1",
+      "actual": "setup britannia-iraq-iran cf challenge 094fe01d"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf elite",
+      "expected": "setup britannia-iraq-iran cf elite 14a6c3fc",
+      "actual": "setup britannia-iraq-iran cf elite d85bb2ff"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf hard",
+      "expected": "setup britannia-iraq-iran cf hard 45f4ebef",
+      "actual": "setup britannia-iraq-iran cf hard a878951f"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf normal",
+      "expected": "setup britannia-iraq-iran cf normal 9b9133ec",
+      "actual": "setup britannia-iraq-iran cf normal a2c78934"
+    },
+    {
+      "key": "setup britannia-siberia britannia challenge",
+      "expected": "setup britannia-siberia britannia challenge 65de981a",
+      "actual": "setup britannia-siberia britannia challenge 38a66bef"
+    },
+    {
+      "key": "setup britannia-siberia britannia elite",
+      "expected": "setup britannia-siberia britannia elite 2490d1e0",
+      "actual": "setup britannia-siberia britannia elite 13dc570d"
+    },
+    {
+      "key": "setup britannia-siberia britannia hard",
+      "expected": "setup britannia-siberia britannia hard 768449f6",
+      "actual": "setup britannia-siberia britannia hard f9129c01"
+    },
+    {
+      "key": "setup britannia-siberia britannia normal",
+      "expected": "setup britannia-siberia britannia normal 8cb9ea19",
+      "actual": "setup britannia-siberia britannia normal c25e7a28"
+    },
+    {
+      "key": "setup britannia-siberia eu challenge",
+      "expected": "setup britannia-siberia eu challenge 4d7f9063",
+      "actual": "setup britannia-siberia eu challenge 37d1c3a6"
+    },
+    {
+      "key": "setup britannia-siberia eu elite",
+      "expected": "setup britannia-siberia eu elite c5819919",
+      "actual": "setup britannia-siberia eu elite 390f5605"
+    },
+    {
+      "key": "setup britannia-siberia eu hard",
+      "expected": "setup britannia-siberia eu hard 1beb4075",
+      "actual": "setup britannia-siberia eu hard 5b8ad618"
+    },
+    {
+      "key": "setup britannia-siberia eu normal",
+      "expected": "setup britannia-siberia eu normal 7ebfe6f9",
+      "actual": "setup britannia-siberia eu normal 61b722c8"
+    },
+    {
+      "key": "setup britannia-western-russia britannia challenge",
+      "expected": "setup britannia-western-russia britannia challenge 14c47af3",
+      "actual": "setup britannia-western-russia britannia challenge 7c55e414"
+    },
+    {
+      "key": "setup britannia-western-russia britannia elite",
+      "expected": "setup britannia-western-russia britannia elite e909055b",
+      "actual": "setup britannia-western-russia britannia elite 8a2ac979"
+    },
+    {
+      "key": "setup britannia-western-russia britannia hard",
+      "expected": "setup britannia-western-russia britannia hard 4dd79dc2",
+      "actual": "setup britannia-western-russia britannia hard e30a85f5"
+    },
+    {
+      "key": "setup britannia-western-russia britannia normal",
+      "expected": "setup britannia-western-russia britannia normal 768d36f7",
+      "actual": "setup britannia-western-russia britannia normal a831306a"
+    },
+    {
+      "key": "setup britannia-western-russia eu challenge",
+      "expected": "setup britannia-western-russia eu challenge d5613e81",
+      "actual": "setup britannia-western-russia eu challenge 710fe840"
+    },
+    {
+      "key": "setup britannia-western-russia eu elite",
+      "expected": "setup britannia-western-russia eu elite 1384b356",
+      "actual": "setup britannia-western-russia eu elite f08405bf"
+    },
+    {
+      "key": "setup britannia-western-russia eu hard",
+      "expected": "setup britannia-western-russia eu hard 65a75e13",
+      "actual": "setup britannia-western-russia eu hard 14a087b6"
+    },
+    {
+      "key": "setup britannia-western-russia eu normal",
+      "expected": "setup britannia-western-russia eu normal 987aa18f",
+      "actual": "setup britannia-western-russia eu normal d78e8402"
+    },
+    {
+      "key": "setup cf-central-america britannia challenge",
+      "expected": "setup cf-central-america britannia challenge 31b9c96f",
+      "actual": "setup cf-central-america britannia challenge fe28b13a"
+    },
+    {
+      "key": "setup cf-central-america britannia elite",
+      "expected": "setup cf-central-america britannia elite 28320006",
+      "actual": "setup cf-central-america britannia elite 9b774330"
+    },
+    {
+      "key": "setup cf-central-america britannia hard",
+      "expected": "setup cf-central-america britannia hard c97a60d8",
+      "actual": "setup cf-central-america britannia hard 78edd145"
+    },
+    {
+      "key": "setup cf-central-america britannia normal",
+      "expected": "setup cf-central-america britannia normal 4e6712ba",
+      "actual": "setup cf-central-america britannia normal b0903261"
+    },
+    {
+      "key": "setup cf-central-america cf challenge",
+      "expected": "setup cf-central-america cf challenge 64a688bb",
+      "actual": "setup cf-central-america cf challenge a8f5dcfe"
+    },
+    {
+      "key": "setup cf-central-america cf elite",
+      "expected": "setup cf-central-america cf elite 22862974",
+      "actual": "setup cf-central-america cf elite eb6e4a7f"
+    },
+    {
+      "key": "setup cf-central-america cf hard",
+      "expected": "setup cf-central-america cf hard 69b6266d",
+      "actual": "setup cf-central-america cf hard 10239cb8"
+    },
+    {
+      "key": "setup cf-central-america cf normal",
+      "expected": "setup cf-central-america cf normal 429bbbc3",
+      "actual": "setup cf-central-america cf normal 2408533c"
+    },
+    {
+      "key": "setup cf-mexico britannia challenge",
+      "expected": "setup cf-mexico britannia challenge 256bb875",
+      "actual": "setup cf-mexico britannia challenge a12a4fa6"
+    },
+    {
+      "key": "setup cf-mexico britannia elite",
+      "expected": "setup cf-mexico britannia elite c23fe255",
+      "actual": "setup cf-mexico britannia elite 7b758df3"
+    },
+    {
+      "key": "setup cf-mexico britannia hard",
+      "expected": "setup cf-mexico britannia hard 909d17ce",
+      "actual": "setup cf-mexico britannia hard 44e9e3c3"
+    },
+    {
+      "key": "setup cf-mexico britannia normal",
+      "expected": "setup cf-mexico britannia normal 7da493f2",
+      "actual": "setup cf-mexico britannia normal 730da577"
+    },
+    {
+      "key": "setup cf-mexico cf challenge",
+      "expected": "setup cf-mexico cf challenge b4c21ab9",
+      "actual": "setup cf-mexico cf challenge e7f0da18"
+    },
+    {
+      "key": "setup cf-mexico cf elite",
+      "expected": "setup cf-mexico cf elite f5d487e7",
+      "actual": "setup cf-mexico cf elite 2ec7094f"
+    },
+    {
+      "key": "setup cf-mexico cf hard",
+      "expected": "setup cf-mexico cf hard 30d62507",
+      "actual": "setup cf-mexico cf hard 6d694638"
+    },
+    {
+      "key": "setup cf-mexico cf normal",
+      "expected": "setup cf-mexico cf normal 26e384fd",
+      "actual": "setup cf-mexico cf normal a4c0f522"
+    },
+    {
+      "key": "setup cf-new-zealand britannia challenge",
+      "expected": "setup cf-new-zealand britannia challenge 1e6704e8",
+      "actual": "setup cf-new-zealand britannia challenge a76832b3"
+    },
+    {
+      "key": "setup cf-new-zealand britannia elite",
+      "expected": "setup cf-new-zealand britannia elite ad20d23c",
+      "actual": "setup cf-new-zealand britannia elite ae63ce47"
+    },
+    {
+      "key": "setup cf-new-zealand britannia hard",
+      "expected": "setup cf-new-zealand britannia hard 4921363e",
+      "actual": "setup cf-new-zealand britannia hard 3f023367"
+    },
+    {
+      "key": "setup cf-new-zealand britannia normal",
+      "expected": "setup cf-new-zealand britannia normal 2b404528",
+      "actual": "setup cf-new-zealand britannia normal 89419b15"
+    },
+    {
+      "key": "setup cf-new-zealand cf challenge",
+      "expected": "setup cf-new-zealand cf challenge 08fdb638",
+      "actual": "setup cf-new-zealand cf challenge 0d526269"
+    },
+    {
+      "key": "setup cf-new-zealand cf elite",
+      "expected": "setup cf-new-zealand cf elite 4457257f",
+      "actual": "setup cf-new-zealand cf elite 398ac75c"
+    },
+    {
+      "key": "setup cf-new-zealand cf hard",
+      "expected": "setup cf-new-zealand cf hard 5000db89",
+      "actual": "setup cf-new-zealand cf hard ff5200ec"
+    },
+    {
+      "key": "setup cf-new-zealand cf normal",
+      "expected": "setup cf-new-zealand cf normal 272aafbf",
+      "actual": "setup cf-new-zealand cf normal c012353e"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia challenge",
+      "expected": "setup cf-pacific-northwest britannia challenge 6735f1c9",
+      "actual": "setup cf-pacific-northwest britannia challenge b0007dd4"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia elite",
+      "expected": "setup cf-pacific-northwest britannia elite 66e19189",
+      "actual": "setup cf-pacific-northwest britannia elite 8a45412e"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia hard",
+      "expected": "setup cf-pacific-northwest britannia hard 9d69077d",
+      "actual": "setup cf-pacific-northwest britannia hard cc64ccc6"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia normal",
+      "expected": "setup cf-pacific-northwest britannia normal c6bb56d5",
+      "actual": "setup cf-pacific-northwest britannia normal d2207dba"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf challenge",
+      "expected": "setup cf-pacific-northwest cf challenge 04ac241b",
+      "actual": "setup cf-pacific-northwest cf challenge 0ef3ab80"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf elite",
+      "expected": "setup cf-pacific-northwest cf elite 9e327c0e",
+      "actual": "setup cf-pacific-northwest cf elite ca80f6ef"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf hard",
+      "expected": "setup cf-pacific-northwest cf hard d2225f3e",
+      "actual": "setup cf-pacific-northwest cf hard 8f98413b"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf normal",
+      "expected": "setup cf-pacific-northwest cf normal 851025e2",
+      "actual": "setup cf-pacific-northwest cf normal 55c25ed5"
+    },
+    {
+      "key": "setup cf-panama britannia challenge",
+      "expected": "setup cf-panama britannia challenge 2b39bf91",
+      "actual": "setup cf-panama britannia challenge 251deb0a"
+    },
+    {
+      "key": "setup cf-panama britannia elite",
+      "expected": "setup cf-panama britannia elite a9649b24",
+      "actual": "setup cf-panama britannia elite 77d36eb4"
+    },
+    {
+      "key": "setup cf-panama britannia hard",
+      "expected": "setup cf-panama britannia hard 181cb97c",
+      "actual": "setup cf-panama britannia hard 9b8519d5"
+    },
+    {
+      "key": "setup cf-panama britannia normal",
+      "expected": "setup cf-panama britannia normal 6e930b6a",
+      "actual": "setup cf-panama britannia normal cba4b09f"
+    },
+    {
+      "key": "setup cf-panama cf challenge",
+      "expected": "setup cf-panama cf challenge 5a9e4bc6",
+      "actual": "setup cf-panama cf challenge e8717a7f"
+    },
+    {
+      "key": "setup cf-panama cf elite",
+      "expected": "setup cf-panama cf elite 5548e2a8",
+      "actual": "setup cf-panama cf elite 0a13e922"
+    },
+    {
+      "key": "setup cf-panama cf hard",
+      "expected": "setup cf-panama cf hard 83cd1640",
+      "actual": "setup cf-panama cf hard 423e75f5"
+    },
+    {
+      "key": "setup cf-panama cf normal",
+      "expected": "setup cf-panama cf normal 48b341ed",
+      "actual": "setup cf-panama cf normal 22b5064c"
+    },
+    {
+      "key": "setup cf-pendragon britannia challenge",
+      "expected": "setup cf-pendragon britannia challenge a04e2761",
+      "actual": "setup cf-pendragon britannia challenge 4726ffb8"
+    },
+    {
+      "key": "setup cf-pendragon britannia elite",
+      "expected": "setup cf-pendragon britannia elite 3b0e3f8c",
+      "actual": "setup cf-pendragon britannia elite a393b0f9"
+    },
+    {
+      "key": "setup cf-pendragon britannia hard",
+      "expected": "setup cf-pendragon britannia hard 3e8abc6f",
+      "actual": "setup cf-pendragon britannia hard 89d8656e"
+    },
+    {
+      "key": "setup cf-pendragon britannia normal",
+      "expected": "setup cf-pendragon britannia normal d199ef91",
+      "actual": "setup cf-pendragon britannia normal f0a78bd6"
+    },
+    {
+      "key": "setup cf-pendragon cf challenge",
+      "expected": "setup cf-pendragon cf challenge 4674c5fa",
+      "actual": "setup cf-pendragon cf challenge 53842e33"
+    },
+    {
+      "key": "setup cf-pendragon cf elite",
+      "expected": "setup cf-pendragon cf elite 33f7ef69",
+      "actual": "setup cf-pendragon cf elite ac5be40a"
+    },
+    {
+      "key": "setup cf-pendragon cf hard",
+      "expected": "setup cf-pendragon cf hard 85901c08",
+      "actual": "setup cf-pendragon cf hard 62174e9f"
+    },
+    {
+      "key": "setup cf-pendragon cf normal",
+      "expected": "setup cf-pendragon cf normal 9f851b48",
+      "actual": "setup cf-pendragon cf normal ae9e9e87"
+    },
+    {
+      "key": "setup conquest-indochina britannia challenge",
+      "expected": "setup conquest-indochina britannia challenge 174d6b3f",
+      "actual": "setup conquest-indochina britannia challenge 594ccb6d"
+    },
+    {
+      "key": "setup conquest-indochina britannia elite",
+      "expected": "setup conquest-indochina britannia elite 30e30fc3",
+      "actual": "setup conquest-indochina britannia elite fde22cae"
+    },
+    {
+      "key": "setup conquest-indochina britannia hard",
+      "expected": "setup conquest-indochina britannia hard 9343c310",
+      "actual": "setup conquest-indochina britannia hard 69bc8a38"
+    },
+    {
+      "key": "setup conquest-indochina britannia normal",
+      "expected": "setup conquest-indochina britannia normal fd84674b",
+      "actual": "setup conquest-indochina britannia normal 02fed5bd"
+    },
+    {
+      "key": "setup conquest-indochina cf challenge",
+      "expected": "setup conquest-indochina cf challenge ad375445",
+      "actual": "setup conquest-indochina cf challenge 7079b9e1"
+    },
+    {
+      "key": "setup conquest-indochina cf elite",
+      "expected": "setup conquest-indochina cf elite a0c9aab9",
+      "actual": "setup conquest-indochina cf elite 74c13bd7"
+    },
+    {
+      "key": "setup conquest-indochina cf hard",
+      "expected": "setup conquest-indochina cf hard f568670e",
+      "actual": "setup conquest-indochina cf hard 8cce35f2"
+    },
+    {
+      "key": "setup conquest-indochina cf normal",
+      "expected": "setup conquest-indochina cf normal 1f4708d9",
+      "actual": "setup conquest-indochina cf normal 5dc7a5cf"
+    },
+    {
+      "key": "setup crossing-urals britannia challenge",
+      "expected": "setup crossing-urals britannia challenge 5c6aa052",
+      "actual": "setup crossing-urals britannia challenge 21e8d769"
+    },
+    {
+      "key": "setup crossing-urals britannia elite",
+      "expected": "setup crossing-urals britannia elite 8a4487f0",
+      "actual": "setup crossing-urals britannia elite 633f2e2b"
+    },
+    {
+      "key": "setup crossing-urals britannia hard",
+      "expected": "setup crossing-urals britannia hard b83f0929",
+      "actual": "setup crossing-urals britannia hard 94445bc2"
+    },
+    {
+      "key": "setup crossing-urals britannia normal",
+      "expected": "setup crossing-urals britannia normal 1848a6a2",
+      "actual": "setup crossing-urals britannia normal 5a9695cd"
+    },
+    {
+      "key": "setup crossing-urals eu challenge",
+      "expected": "setup crossing-urals eu challenge 96623fc4",
+      "actual": "setup crossing-urals eu challenge ac63c503"
+    },
+    {
+      "key": "setup crossing-urals eu elite",
+      "expected": "setup crossing-urals eu elite c0ff5244",
+      "actual": "setup crossing-urals eu elite f920c32b"
+    },
+    {
+      "key": "setup crossing-urals eu hard",
+      "expected": "setup crossing-urals eu hard ff3d8085",
+      "actual": "setup crossing-urals eu hard c4358e5e"
+    },
+    {
+      "key": "setup crossing-urals eu normal",
+      "expected": "setup crossing-urals eu normal 913ce758",
+      "actual": "setup crossing-urals eu normal eb78d777"
+    },
+    {
+      "key": "setup division-japan britannia challenge",
+      "expected": "setup division-japan britannia challenge cf7abb85",
+      "actual": "setup division-japan britannia challenge 91ab4a29"
+    },
+    {
+      "key": "setup division-japan britannia elite",
+      "expected": "setup division-japan britannia elite 10e55ac7",
+      "actual": "setup division-japan britannia elite 8136eef8"
+    },
+    {
+      "key": "setup division-japan britannia hard",
+      "expected": "setup division-japan britannia hard d4c3cf8d",
+      "actual": "setup division-japan britannia hard 68a1e16d"
+    },
+    {
+      "key": "setup division-japan britannia normal",
+      "expected": "setup division-japan britannia normal ff0c86c2",
+      "actual": "setup division-japan britannia normal 9c7918bb"
+    },
+    {
+      "key": "setup division-japan cf challenge",
+      "expected": "setup division-japan cf challenge a8bd7593",
+      "actual": "setup division-japan cf challenge 125cae78"
+    },
+    {
+      "key": "setup division-japan cf elite",
+      "expected": "setup division-japan cf elite 8ef0aa55",
+      "actual": "setup division-japan cf elite 3baf7240"
+    },
+    {
+      "key": "setup division-japan cf hard",
+      "expected": "setup division-japan cf hard 115c684a",
+      "actual": "setup division-japan cf hard 1ad63e23"
+    },
+    {
+      "key": "setup division-japan cf normal",
+      "expected": "setup division-japan cf normal 99d9b455",
+      "actual": "setup division-japan cf normal e786c1ee"
+    },
+    {
+      "key": "setup division-japan eu challenge",
+      "expected": "setup division-japan eu challenge a24d22da",
+      "actual": "setup division-japan eu challenge 8ec7ac84"
+    },
+    {
+      "key": "setup division-japan eu elite",
+      "expected": "setup division-japan eu elite bc25d5ea",
+      "actual": "setup division-japan eu elite 9ae03300"
+    },
+    {
+      "key": "setup division-japan eu hard",
+      "expected": "setup division-japan eu hard 0c337b85",
+      "actual": "setup division-japan eu hard 1331ba39"
+    },
+    {
+      "key": "setup division-japan eu normal",
+      "expected": "setup division-japan eu normal 0720f612",
+      "actual": "setup division-japan eu normal c47b91e5"
+    },
+    {
+      "key": "setup eu-great-lakes britannia challenge",
+      "expected": "setup eu-great-lakes britannia challenge ec0186e2",
+      "actual": "setup eu-great-lakes britannia challenge 0b46fc35"
+    },
+    {
+      "key": "setup eu-great-lakes britannia elite",
+      "expected": "setup eu-great-lakes britannia elite 103afe7c",
+      "actual": "setup eu-great-lakes britannia elite 9c19d14f"
+    },
+    {
+      "key": "setup eu-great-lakes britannia hard",
+      "expected": "setup eu-great-lakes britannia hard 58c52efd",
+      "actual": "setup eu-great-lakes britannia hard 0b2125e6"
+    },
+    {
+      "key": "setup eu-great-lakes britannia normal",
+      "expected": "setup eu-great-lakes britannia normal c487cd21",
+      "actual": "setup eu-great-lakes britannia normal 2d518cf8"
+    },
+    {
+      "key": "setup eu-great-lakes eu challenge",
+      "expected": "setup eu-great-lakes eu challenge c4ab7648",
+      "actual": "setup eu-great-lakes eu challenge 9f0b1d1d"
+    },
+    {
+      "key": "setup eu-great-lakes eu elite",
+      "expected": "setup eu-great-lakes eu elite d57524eb",
+      "actual": "setup eu-great-lakes eu elite aefa9cef"
+    },
+    {
+      "key": "setup eu-great-lakes eu hard",
+      "expected": "setup eu-great-lakes eu hard ab93e150",
+      "actual": "setup eu-great-lakes eu hard 9887c445"
+    },
+    {
+      "key": "setup eu-great-lakes eu normal",
+      "expected": "setup eu-great-lakes eu normal a23a7f93",
+      "actual": "setup eu-great-lakes eu normal 88a00c8e"
+    },
+    {
+      "key": "setup eu-greenland britannia challenge",
+      "expected": "setup eu-greenland britannia challenge 93edbfa7",
+      "actual": "setup eu-greenland britannia challenge f593e89e"
+    },
+    {
+      "key": "setup eu-greenland britannia elite",
+      "expected": "setup eu-greenland britannia elite e1bc2c93",
+      "actual": "setup eu-greenland britannia elite a30ade81"
+    },
+    {
+      "key": "setup eu-greenland britannia hard",
+      "expected": "setup eu-greenland britannia hard 0197b474",
+      "actual": "setup eu-greenland britannia hard ca2dcc85"
+    },
+    {
+      "key": "setup eu-greenland britannia normal",
+      "expected": "setup eu-greenland britannia normal 18344bb6",
+      "actual": "setup eu-greenland britannia normal 769757a7"
+    },
+    {
+      "key": "setup eu-greenland eu challenge",
+      "expected": "setup eu-greenland eu challenge 95e8322e",
+      "actual": "setup eu-greenland eu challenge 8b50bb87"
+    },
+    {
+      "key": "setup eu-greenland eu elite",
+      "expected": "setup eu-greenland eu elite 85fdc299",
+      "actual": "setup eu-greenland eu elite b8bf0dd3"
+    },
+    {
+      "key": "setup eu-greenland eu hard",
+      "expected": "setup eu-greenland eu hard cde6823f",
+      "actual": "setup eu-greenland eu hard ce2bd18a"
+    },
+    {
+      "key": "setup eu-greenland eu normal",
+      "expected": "setup eu-greenland eu normal 062af702",
+      "actual": "setup eu-greenland eu normal 3b882617"
+    },
+    {
+      "key": "setup eu-panama britannia challenge",
+      "expected": "setup eu-panama britannia challenge 6224b440",
+      "actual": "setup eu-panama britannia challenge 60b1387f"
+    },
+    {
+      "key": "setup eu-panama britannia elite",
+      "expected": "setup eu-panama britannia elite 1c5e1c55",
+      "actual": "setup eu-panama britannia elite 3fdb9fe3"
+    },
+    {
+      "key": "setup eu-panama britannia hard",
+      "expected": "setup eu-panama britannia hard f0b172f0",
+      "actual": "setup eu-panama britannia hard f20b9243"
+    },
+    {
+      "key": "setup eu-panama britannia normal",
+      "expected": "setup eu-panama britannia normal 565721b2",
+      "actual": "setup eu-panama britannia normal 1931ce79"
+    },
+    {
+      "key": "setup eu-panama eu challenge",
+      "expected": "setup eu-panama eu challenge 2c1d8003",
+      "actual": "setup eu-panama eu challenge bbc70710"
+    },
+    {
+      "key": "setup eu-panama eu elite",
+      "expected": "setup eu-panama eu elite 2f0e9a21",
+      "actual": "setup eu-panama eu elite b143a0b7"
+    },
+    {
+      "key": "setup eu-panama eu hard",
+      "expected": "setup eu-panama eu hard 2c24c721",
+      "actual": "setup eu-panama eu hard d177f0d6"
+    },
+    {
+      "key": "setup eu-panama eu normal",
+      "expected": "setup eu-panama eu normal 27863a4a",
+      "actual": "setup eu-panama eu normal 5763a859"
+    },
+    {
+      "key": "setup eu-pendragon britannia challenge",
+      "expected": "setup eu-pendragon britannia challenge 1b9236ad",
+      "actual": "setup eu-pendragon britannia challenge 402f079a"
+    },
+    {
+      "key": "setup eu-pendragon britannia elite",
+      "expected": "setup eu-pendragon britannia elite c8512162",
+      "actual": "setup eu-pendragon britannia elite 2c5d3af2"
+    },
+    {
+      "key": "setup eu-pendragon britannia hard",
+      "expected": "setup eu-pendragon britannia hard 5895f771",
+      "actual": "setup eu-pendragon britannia hard e65db3e8"
+    },
+    {
+      "key": "setup eu-pendragon britannia normal",
+      "expected": "setup eu-pendragon britannia normal 34f71a82",
+      "actual": "setup eu-pendragon britannia normal 8e133bc3"
+    },
+    {
+      "key": "setup eu-pendragon eu challenge",
+      "expected": "setup eu-pendragon eu challenge db7390cf",
+      "actual": "setup eu-pendragon eu challenge 393cbeac"
+    },
+    {
+      "key": "setup eu-pendragon eu elite",
+      "expected": "setup eu-pendragon eu elite c2b19669",
+      "actual": "setup eu-pendragon eu elite 02d821fa"
+    },
+    {
+      "key": "setup eu-pendragon eu hard",
+      "expected": "setup eu-pendragon eu hard 16c38f61",
+      "actual": "setup eu-pendragon eu hard 875ef484"
+    },
+    {
+      "key": "setup eu-pendragon eu normal",
+      "expected": "setup eu-pendragon eu normal 547ad74a",
+      "actual": "setup eu-pendragon eu normal 72dc5843"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia challenge",
+      "expected": "setup eu-rocky-mountains britannia challenge 002f6cec",
+      "actual": "setup eu-rocky-mountains britannia challenge b81fb353"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia elite",
+      "expected": "setup eu-rocky-mountains britannia elite e96ca885",
+      "actual": "setup eu-rocky-mountains britannia elite c201ddc5"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia hard",
+      "expected": "setup eu-rocky-mountains britannia hard ca1e0074",
+      "actual": "setup eu-rocky-mountains britannia hard 2f391383"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia normal",
+      "expected": "setup eu-rocky-mountains britannia normal b7b6f02b",
+      "actual": "setup eu-rocky-mountains britannia normal 9057c1ee"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu challenge",
+      "expected": "setup eu-rocky-mountains eu challenge 416dc1a2",
+      "actual": "setup eu-rocky-mountains eu challenge 697b70d7"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu elite",
+      "expected": "setup eu-rocky-mountains eu elite f186cfca",
+      "actual": "setup eu-rocky-mountains eu elite 822daa0f"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu hard",
+      "expected": "setup eu-rocky-mountains eu hard baf0c818",
+      "actual": "setup eu-rocky-mountains eu hard 6241620f"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu normal",
+      "expected": "setup eu-rocky-mountains eu normal e1015b13",
+      "actual": "setup eu-rocky-mountains eu normal 0e1745e2"
+    },
+    {
+      "key": "setup european-war eb challenge",
+      "expected": "setup european-war eb challenge 7723dfbc",
+      "actual": "setup european-war eb challenge 7cad27f2"
+    },
+    {
+      "key": "setup european-war eb elite",
+      "expected": "setup european-war eb elite 4ab7b2ba",
+      "actual": "setup european-war eb elite fe52a0fc"
+    },
+    {
+      "key": "setup european-war eb hard",
+      "expected": "setup european-war eb hard 04cd4b44",
+      "actual": "setup european-war eb hard d69e969a"
+    },
+    {
+      "key": "setup european-war eb normal",
+      "expected": "setup european-war eb normal 69457c19",
+      "actual": "setup european-war eb normal 55c2c1af"
+    },
+    {
+      "key": "setup european-war eu challenge",
+      "expected": "setup european-war eu challenge 40fece1f",
+      "actual": "setup european-war eu challenge 502188f5"
+    },
+    {
+      "key": "setup european-war eu elite",
+      "expected": "setup european-war eu elite 448e6173",
+      "actual": "setup european-war eu elite 59c127d2"
+    },
+    {
+      "key": "setup european-war eu hard",
+      "expected": "setup european-war eu hard 4009eff0",
+      "actual": "setup european-war eu hard 52c2c502"
+    },
+    {
+      "key": "setup european-war eu normal",
+      "expected": "setup european-war eu normal 0e084748",
+      "actual": "setup european-war eu normal 97782d2a"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia challenge",
+      "expected": "setup invasion-american-east-coast britannia challenge ecf9168d",
+      "actual": "setup invasion-american-east-coast britannia challenge be5266e4"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia elite",
+      "expected": "setup invasion-american-east-coast britannia elite 1401a9ca",
+      "actual": "setup invasion-american-east-coast britannia elite 6975e940"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia hard",
+      "expected": "setup invasion-american-east-coast britannia hard 9ddf2c08",
+      "actual": "setup invasion-american-east-coast britannia hard 2a86847b"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia normal",
+      "expected": "setup invasion-american-east-coast britannia normal b3a528f7",
+      "actual": "setup invasion-american-east-coast britannia normal 2ad15114"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu challenge",
+      "expected": "setup invasion-american-east-coast eu challenge 19481205",
+      "actual": "setup invasion-american-east-coast eu challenge 0a6376ac"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu elite",
+      "expected": "setup invasion-american-east-coast eu elite fabcc8c3",
+      "actual": "setup invasion-american-east-coast eu elite ecf81211"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu hard",
+      "expected": "setup invasion-american-east-coast eu hard 2dc686e7",
+      "actual": "setup invasion-american-east-coast eu hard c1ca1b1e"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu normal",
+      "expected": "setup invasion-american-east-coast eu normal 49c93f83",
+      "actual": "setup invasion-american-east-coast eu normal a2aff5c8"
+    },
+    {
+      "key": "setup invasion-brazil britannia challenge",
+      "expected": "setup invasion-brazil britannia challenge 34d4645f",
+      "actual": "setup invasion-brazil britannia challenge 5d0a112a"
+    },
+    {
+      "key": "setup invasion-brazil britannia elite",
+      "expected": "setup invasion-brazil britannia elite 45b89638",
+      "actual": "setup invasion-brazil britannia elite 4418da25"
+    },
+    {
+      "key": "setup invasion-brazil britannia hard",
+      "expected": "setup invasion-brazil britannia hard a30bfb4a",
+      "actual": "setup invasion-brazil britannia hard 534aa931"
+    },
+    {
+      "key": "setup invasion-brazil britannia normal",
+      "expected": "setup invasion-brazil britannia normal 5ddd329b",
+      "actual": "setup invasion-brazil britannia normal e782ee48"
+    },
+    {
+      "key": "setup invasion-brazil eu challenge",
+      "expected": "setup invasion-brazil eu challenge 50c97b9f",
+      "actual": "setup invasion-brazil eu challenge 0766a480"
+    },
+    {
+      "key": "setup invasion-brazil eu elite",
+      "expected": "setup invasion-brazil eu elite b74da809",
+      "actual": "setup invasion-brazil eu elite dd42491b"
+    },
+    {
+      "key": "setup invasion-brazil eu hard",
+      "expected": "setup invasion-brazil eu hard 5c6948e4",
+      "actual": "setup invasion-brazil eu hard cf28e9e9"
+    },
+    {
+      "key": "setup invasion-brazil eu normal",
+      "expected": "setup invasion-brazil eu normal 48d0c6b1",
+      "actual": "setup invasion-brazil eu normal faa602e2"
+    },
+    {
+      "key": "setup invasion-california britannia challenge",
+      "expected": "setup invasion-california britannia challenge ab2c6dc5",
+      "actual": "setup invasion-california britannia challenge 9362c52f"
+    },
+    {
+      "key": "setup invasion-california britannia elite",
+      "expected": "setup invasion-california britannia elite 9eaeb177",
+      "actual": "setup invasion-california britannia elite 2f5bf54f"
+    },
+    {
+      "key": "setup invasion-california britannia hard",
+      "expected": "setup invasion-california britannia hard 3d0670a9",
+      "actual": "setup invasion-california britannia hard 1298e8c3"
+    },
+    {
+      "key": "setup invasion-california britannia normal",
+      "expected": "setup invasion-california britannia normal 9e099c65",
+      "actual": "setup invasion-california britannia normal a8c4f22b"
+    },
+    {
+      "key": "setup invasion-california cf challenge",
+      "expected": "setup invasion-california cf challenge f74c55d9",
+      "actual": "setup invasion-california cf challenge 535b54c9"
+    },
+    {
+      "key": "setup invasion-california cf elite",
+      "expected": "setup invasion-california cf elite 40feced9",
+      "actual": "setup invasion-california cf elite 5e54a971"
+    },
+    {
+      "key": "setup invasion-california cf hard",
+      "expected": "setup invasion-california cf hard 6c83f792",
+      "actual": "setup invasion-california cf hard bfc53e8a"
+    },
+    {
+      "key": "setup invasion-california cf normal",
+      "expected": "setup invasion-california cf normal 0006ff38",
+      "actual": "setup invasion-california cf normal 1989dd14"
+    },
+    {
+      "key": "setup invasion-canada britannia challenge",
+      "expected": "setup invasion-canada britannia challenge 1156da0d",
+      "actual": "setup invasion-canada britannia challenge ba728e5b"
+    },
+    {
+      "key": "setup invasion-canada britannia elite",
+      "expected": "setup invasion-canada britannia elite aed03acb",
+      "actual": "setup invasion-canada britannia elite 520834c4"
+    },
+    {
+      "key": "setup invasion-canada britannia hard",
+      "expected": "setup invasion-canada britannia hard 801f3044",
+      "actual": "setup invasion-canada britannia hard 44961086"
+    },
+    {
+      "key": "setup invasion-canada britannia normal",
+      "expected": "setup invasion-canada britannia normal 58ba9f6f",
+      "actual": "setup invasion-canada britannia normal c717fecb"
+    },
+    {
+      "key": "setup invasion-canada eu challenge",
+      "expected": "setup invasion-canada eu challenge 94273008",
+      "actual": "setup invasion-canada eu challenge ac6c1134"
+    },
+    {
+      "key": "setup invasion-canada eu elite",
+      "expected": "setup invasion-canada eu elite 1c3c017b",
+      "actual": "setup invasion-canada eu elite fe300505"
+    },
+    {
+      "key": "setup invasion-canada eu hard",
+      "expected": "setup invasion-canada eu hard 9fcae92c",
+      "actual": "setup invasion-canada eu hard 82c970ae"
+    },
+    {
+      "key": "setup invasion-canada eu normal",
+      "expected": "setup invasion-canada eu normal ed13e9c9",
+      "actual": "setup invasion-canada eu normal c4fb7c6b"
+    },
+    {
+      "key": "setup invasion-caribbean britannia challenge",
+      "expected": "setup invasion-caribbean britannia challenge 158b5db6",
+      "actual": "setup invasion-caribbean britannia challenge d7d46db3"
+    },
+    {
+      "key": "setup invasion-caribbean britannia elite",
+      "expected": "setup invasion-caribbean britannia elite d4753093",
+      "actual": "setup invasion-caribbean britannia elite b7b3d9a9"
+    },
+    {
+      "key": "setup invasion-caribbean britannia hard",
+      "expected": "setup invasion-caribbean britannia hard 16e40277",
+      "actual": "setup invasion-caribbean britannia hard d13f952c"
+    },
+    {
+      "key": "setup invasion-caribbean britannia normal",
+      "expected": "setup invasion-caribbean britannia normal d4485dd8",
+      "actual": "setup invasion-caribbean britannia normal dd604845"
+    },
+    {
+      "key": "setup invasion-caribbean eu challenge",
+      "expected": "setup invasion-caribbean eu challenge 72606b48",
+      "actual": "setup invasion-caribbean eu challenge f759c623"
+    },
+    {
+      "key": "setup invasion-caribbean eu elite",
+      "expected": "setup invasion-caribbean eu elite e7e01050",
+      "actual": "setup invasion-caribbean eu elite 91e408d0"
+    },
+    {
+      "key": "setup invasion-caribbean eu hard",
+      "expected": "setup invasion-caribbean eu hard ef1d3f9d",
+      "actual": "setup invasion-caribbean eu hard afdcc13c"
+    },
+    {
+      "key": "setup invasion-caribbean eu normal",
+      "expected": "setup invasion-caribbean eu normal 9b1a67fc",
+      "actual": "setup invasion-caribbean eu normal b497eddd"
+    },
+    {
+      "key": "setup invasion-hawaii britannia challenge",
+      "expected": "setup invasion-hawaii britannia challenge 952c9c19",
+      "actual": "setup invasion-hawaii britannia challenge 53ddc8ae"
+    },
+    {
+      "key": "setup invasion-hawaii britannia elite",
+      "expected": "setup invasion-hawaii britannia elite 4484ccd7",
+      "actual": "setup invasion-hawaii britannia elite 73f264f3"
+    },
+    {
+      "key": "setup invasion-hawaii britannia hard",
+      "expected": "setup invasion-hawaii britannia hard 2bde1c86",
+      "actual": "setup invasion-hawaii britannia hard 1084d02b"
+    },
+    {
+      "key": "setup invasion-hawaii britannia normal",
+      "expected": "setup invasion-hawaii britannia normal 40e0c840",
+      "actual": "setup invasion-hawaii britannia normal 691faa01"
+    },
+    {
+      "key": "setup invasion-hawaii cf challenge",
+      "expected": "setup invasion-hawaii cf challenge 26223f19",
+      "actual": "setup invasion-hawaii cf challenge 580720ea"
+    },
+    {
+      "key": "setup invasion-hawaii cf elite",
+      "expected": "setup invasion-hawaii cf elite c209ccc3",
+      "actual": "setup invasion-hawaii cf elite 3bae71fb"
+    },
+    {
+      "key": "setup invasion-hawaii cf hard",
+      "expected": "setup invasion-hawaii cf hard 76716307",
+      "actual": "setup invasion-hawaii cf hard a9640e50"
+    },
+    {
+      "key": "setup invasion-hawaii cf normal",
+      "expected": "setup invasion-hawaii cf normal 3612c089",
+      "actual": "setup invasion-hawaii cf normal 8e3c3cec"
+    },
+    {
+      "key": "setup invasion-japan bk challenge",
+      "expected": "setup invasion-japan bk challenge 941be2dd",
+      "actual": "setup invasion-japan bk challenge 7c460956"
+    },
+    {
+      "key": "setup invasion-japan bk elite",
+      "expected": "setup invasion-japan bk elite 874ddde6",
+      "actual": "setup invasion-japan bk elite 3acedce9"
+    },
+    {
+      "key": "setup invasion-japan bk hard",
+      "expected": "setup invasion-japan bk hard 8e7bb889",
+      "actual": "setup invasion-japan bk hard 9737332a"
+    },
+    {
+      "key": "setup invasion-japan bk normal",
+      "expected": "setup invasion-japan bk normal 365f4e6b",
+      "actual": "setup invasion-japan bk normal 983f8276"
+    },
+    {
+      "key": "setup invasion-japan britannia challenge",
+      "expected": "setup invasion-japan britannia challenge 88841e61",
+      "actual": "setup invasion-japan britannia challenge 58d83ce2"
+    },
+    {
+      "key": "setup invasion-japan britannia elite",
+      "expected": "setup invasion-japan britannia elite 010b6d3e",
+      "actual": "setup invasion-japan britannia elite cd8408ae"
+    },
+    {
+      "key": "setup invasion-japan britannia hard",
+      "expected": "setup invasion-japan britannia hard fb752d6f",
+      "actual": "setup invasion-japan britannia hard a9d992c4"
+    },
+    {
+      "key": "setup invasion-japan britannia normal",
+      "expected": "setup invasion-japan britannia normal aa64dcd0",
+      "actual": "setup invasion-japan britannia normal e9085bbd"
+    },
+    {
+      "key": "setup invasion-japan cf challenge",
+      "expected": "setup invasion-japan cf challenge b491bd76",
+      "actual": "setup invasion-japan cf challenge ddfb8eb3"
+    },
+    {
+      "key": "setup invasion-japan cf elite",
+      "expected": "setup invasion-japan cf elite fd287bb7",
+      "actual": "setup invasion-japan cf elite da6ed904"
+    },
+    {
+      "key": "setup invasion-japan cf hard",
+      "expected": "setup invasion-japan cf hard 00c8a31e",
+      "actual": "setup invasion-japan cf hard 3ce12aff"
+    },
+    {
+      "key": "setup invasion-japan cf normal",
+      "expected": "setup invasion-japan cf normal ae26a061",
+      "actual": "setup invasion-japan cf normal c94ee880"
+    },
+    {
+      "key": "setup invasion-korea britannia challenge",
+      "expected": "setup invasion-korea britannia challenge d4540733",
+      "actual": "setup invasion-korea britannia challenge 8f27df11"
+    },
+    {
+      "key": "setup invasion-korea britannia elite",
+      "expected": "setup invasion-korea britannia elite 74475dc8",
+      "actual": "setup invasion-korea britannia elite 1a9b3907"
+    },
+    {
+      "key": "setup invasion-korea britannia hard",
+      "expected": "setup invasion-korea britannia hard 541d531f",
+      "actual": "setup invasion-korea britannia hard 44d49423"
+    },
+    {
+      "key": "setup invasion-korea britannia normal",
+      "expected": "setup invasion-korea britannia normal 470878cf",
+      "actual": "setup invasion-korea britannia normal b6adb237"
+    },
+    {
+      "key": "setup invasion-korea cf challenge",
+      "expected": "setup invasion-korea cf challenge 1264bb61",
+      "actual": "setup invasion-korea cf challenge 0720fc51"
+    },
+    {
+      "key": "setup invasion-korea cf elite",
+      "expected": "setup invasion-korea cf elite 569b88fc",
+      "actual": "setup invasion-korea cf elite 97294019"
+    },
+    {
+      "key": "setup invasion-korea cf hard",
+      "expected": "setup invasion-korea cf hard b4a183b6",
+      "actual": "setup invasion-korea cf hard c1036410"
+    },
+    {
+      "key": "setup invasion-korea cf normal",
+      "expected": "setup invasion-korea cf normal 192cdeb4",
+      "actual": "setup invasion-korea cf normal 542a9172"
+    },
+    {
+      "key": "setup invasion-south-africa britannia challenge",
+      "expected": "setup invasion-south-africa britannia challenge 0d8353d0",
+      "actual": "setup invasion-south-africa britannia challenge cc1d6311"
+    },
+    {
+      "key": "setup invasion-south-africa britannia elite",
+      "expected": "setup invasion-south-africa britannia elite fad626a5",
+      "actual": "setup invasion-south-africa britannia elite 2b4411a8"
+    },
+    {
+      "key": "setup invasion-south-africa britannia hard",
+      "expected": "setup invasion-south-africa britannia hard a6fc4ba3",
+      "actual": "setup invasion-south-africa britannia hard cd2eac38"
+    },
+    {
+      "key": "setup invasion-south-africa britannia normal",
+      "expected": "setup invasion-south-africa britannia normal ab7ea7cd",
+      "actual": "setup invasion-south-africa britannia normal d8c9737e"
+    },
+    {
+      "key": "setup invasion-south-africa eu challenge",
+      "expected": "setup invasion-south-africa eu challenge 580a761d",
+      "actual": "setup invasion-south-africa eu challenge c670a92a"
+    },
+    {
+      "key": "setup invasion-south-africa eu elite",
+      "expected": "setup invasion-south-africa eu elite 44c0d4b8",
+      "actual": "setup invasion-south-africa eu elite ca7171eb"
+    },
+    {
+      "key": "setup invasion-south-africa eu hard",
+      "expected": "setup invasion-south-africa eu hard ea9bac32",
+      "actual": "setup invasion-south-africa eu hard a193cc83"
+    },
+    {
+      "key": "setup invasion-south-africa eu normal",
+      "expected": "setup invasion-south-africa eu normal d745e5cf",
+      "actual": "setup invasion-south-africa eu normal 0487df7c"
+    },
+    {
+      "key": "setup invasion-turkey britannia challenge",
+      "expected": "setup invasion-turkey britannia challenge 92efe512",
+      "actual": "setup invasion-turkey britannia challenge abeaa189"
+    },
+    {
+      "key": "setup invasion-turkey britannia elite",
+      "expected": "setup invasion-turkey britannia elite 3e1abf9a",
+      "actual": "setup invasion-turkey britannia elite ffac58f3"
+    },
+    {
+      "key": "setup invasion-turkey britannia hard",
+      "expected": "setup invasion-turkey britannia hard a80aeb6d",
+      "actual": "setup invasion-turkey britannia hard 15a68a6e"
+    },
+    {
+      "key": "setup invasion-turkey britannia normal",
+      "expected": "setup invasion-turkey britannia normal 705b0600",
+      "actual": "setup invasion-turkey britannia normal 98ecbaad"
+    },
+    {
+      "key": "setup invasion-turkey eu challenge",
+      "expected": "setup invasion-turkey eu challenge c29a7ec0",
+      "actual": "setup invasion-turkey eu challenge 0362dd15"
+    },
+    {
+      "key": "setup invasion-turkey eu elite",
+      "expected": "setup invasion-turkey eu elite e7bee30d",
+      "actual": "setup invasion-turkey eu elite 486afc18"
+    },
+    {
+      "key": "setup invasion-turkey eu hard",
+      "expected": "setup invasion-turkey eu hard 1bfcbd04",
+      "actual": "setup invasion-turkey eu hard e0af16a5"
+    },
+    {
+      "key": "setup invasion-turkey eu normal",
+      "expected": "setup invasion-turkey eu normal 1dfe2488",
+      "actual": "setup invasion-turkey eu normal dd41ea55"
+    },
+    {
+      "key": "setup operation-stonehenge britannia challenge",
+      "expected": "setup operation-stonehenge britannia challenge 0dadfdfd",
+      "actual": "setup operation-stonehenge britannia challenge 1a7e20ab"
+    },
+    {
+      "key": "setup operation-stonehenge britannia elite",
+      "expected": "setup operation-stonehenge britannia elite 2bbe33cc",
+      "actual": "setup operation-stonehenge britannia elite 9ce613c0"
+    },
+    {
+      "key": "setup operation-stonehenge britannia hard",
+      "expected": "setup operation-stonehenge britannia hard a66ef008",
+      "actual": "setup operation-stonehenge britannia hard e89857b2"
+    },
+    {
+      "key": "setup operation-stonehenge britannia normal",
+      "expected": "setup operation-stonehenge britannia normal 74bde75f",
+      "actual": "setup operation-stonehenge britannia normal 164e3935"
+    },
+    {
+      "key": "setup operation-stonehenge eu challenge",
+      "expected": "setup operation-stonehenge eu challenge f7f25824",
+      "actual": "setup operation-stonehenge eu challenge 27f7928c"
+    },
+    {
+      "key": "setup operation-stonehenge eu elite",
+      "expected": "setup operation-stonehenge eu elite abc59316",
+      "actual": "setup operation-stonehenge eu elite 1605a813"
+    },
+    {
+      "key": "setup operation-stonehenge eu hard",
+      "expected": "setup operation-stonehenge eu hard a4795f5b",
+      "actual": "setup operation-stonehenge eu hard 889dcd73"
+    },
+    {
+      "key": "setup operation-stonehenge eu normal",
+      "expected": "setup operation-stonehenge eu normal 49a0682f",
+      "actual": "setup operation-stonehenge eu normal 65feb60f"
+    },
+    {
+      "key": "setup philippines-invasion britannia challenge",
+      "expected": "setup philippines-invasion britannia challenge c5d0bb38",
+      "actual": "setup philippines-invasion britannia challenge 5168fbc0"
+    },
+    {
+      "key": "setup philippines-invasion britannia elite",
+      "expected": "setup philippines-invasion britannia elite ae74c56c",
+      "actual": "setup philippines-invasion britannia elite 6a47e5be"
+    },
+    {
+      "key": "setup philippines-invasion britannia hard",
+      "expected": "setup philippines-invasion britannia hard c255f81e",
+      "actual": "setup philippines-invasion britannia hard cf4979d6"
+    },
+    {
+      "key": "setup philippines-invasion britannia normal",
+      "expected": "setup philippines-invasion britannia normal f4cc63d5",
+      "actual": "setup philippines-invasion britannia normal f0911157"
+    },
+    {
+      "key": "setup philippines-invasion cf challenge",
+      "expected": "setup philippines-invasion cf challenge ae255553",
+      "actual": "setup philippines-invasion cf challenge 56edc943"
+    },
+    {
+      "key": "setup philippines-invasion cf elite",
+      "expected": "setup philippines-invasion cf elite 2384715a",
+      "actual": "setup philippines-invasion cf elite 554ec5f7"
+    },
+    {
+      "key": "setup philippines-invasion cf hard",
+      "expected": "setup philippines-invasion cf hard 3fb2f1a4",
+      "actual": "setup philippines-invasion cf hard 8b13d828"
+    },
+    {
+      "key": "setup philippines-invasion cf normal",
+      "expected": "setup philippines-invasion cf normal 35a26e90",
+      "actual": "setup philippines-invasion cf normal 647aa3fc"
+    },
+    {
+      "key": "setup war-for-australia britannia challenge",
+      "expected": "setup war-for-australia britannia challenge 3714f39c",
+      "actual": "setup war-for-australia britannia challenge cb1f1786"
+    },
+    {
+      "key": "setup war-for-australia britannia elite",
+      "expected": "setup war-for-australia britannia elite 443d838c",
+      "actual": "setup war-for-australia britannia elite 7c4e6336"
+    },
+    {
+      "key": "setup war-for-australia britannia hard",
+      "expected": "setup war-for-australia britannia hard 78563df6",
+      "actual": "setup war-for-australia britannia hard 1ae11a8e"
+    },
+    {
+      "key": "setup war-for-australia britannia normal",
+      "expected": "setup war-for-australia britannia normal 9a5cd271",
+      "actual": "setup war-for-australia britannia normal d5e8fab9"
+    },
+    {
+      "key": "setup war-for-australia cf challenge",
+      "expected": "setup war-for-australia cf challenge 52ffd860",
+      "actual": "setup war-for-australia cf challenge 6edcbb42"
+    },
+    {
+      "key": "setup war-for-australia cf elite",
+      "expected": "setup war-for-australia cf elite a50cc84f",
+      "actual": "setup war-for-australia cf elite 1b42f649"
+    },
+    {
+      "key": "setup war-for-australia cf hard",
+      "expected": "setup war-for-australia cf hard 15c25aa8",
+      "actual": "setup war-for-australia cf hard afa18a7a"
+    },
+    {
+      "key": "setup war-for-australia cf normal",
+      "expected": "setup war-for-australia cf normal 2c4b8f20",
+      "actual": "setup war-for-australia cf normal ce183966"
+    },
+    {
+      "key": "setup war-for-australia eu challenge",
+      "expected": "setup war-for-australia eu challenge 0726ba76",
+      "actual": "setup war-for-australia eu challenge 3bbad7b2"
+    },
+    {
+      "key": "setup war-for-australia eu elite",
+      "expected": "setup war-for-australia eu elite 81aee16f",
+      "actual": "setup war-for-australia eu elite 21d8defa"
+    },
+    {
+      "key": "setup war-for-australia eu hard",
+      "expected": "setup war-for-australia eu hard d0d9c272",
+      "actual": "setup war-for-australia eu hard 60540e8c"
+    },
+    {
+      "key": "setup war-for-australia eu normal",
+      "expected": "setup war-for-australia eu normal 33543453",
+      "actual": "setup war-for-australia eu normal 35211965"
+    },
+    {
+      "key": "sim area-18 britannia normal 11 2",
+      "expected": "sim area-18 britannia normal 11 2 80bda3d4 2619af2b cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+      "actual": "sim area-18 britannia normal 11 2 96bc521d 99c443e5 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0"
+    },
+    {
+      "key": "sim area-18 cf normal 11 2",
+      "expected": "sim area-18 cf normal 11 2 54efde68 baf8af58 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+      "actual": "sim area-18 cf normal 11 2 049a470b f6849783 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0"
+    },
+    {
+      "key": "sim area-18 eu normal 11 2",
+      "expected": "sim area-18 eu normal 11 2 9b058fa7 bb7565b4 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+      "actual": "sim area-18 eu normal 11 2 a782e512 b0cc8519 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0"
+    },
+    {
+      "key": "sim battle-luoyang britannia normal 11 2",
+      "expected": "sim battle-luoyang britannia normal 11 2 3173ac4b 057008c9 cities={\"britannia\":32,\"cf\":51} errors=0",
+      "actual": "sim battle-luoyang britannia normal 11 2 76946cfd 4dc11f63 cities={\"britannia\":32,\"cf\":51} errors=0"
+    },
+    {
+      "key": "sim battle-luoyang cf normal 11 2",
+      "expected": "sim battle-luoyang cf normal 11 2 03c32e54 3ac1e8ef cities={\"britannia\":31,\"cf\":52} errors=0",
+      "actual": "sim battle-luoyang cf normal 11 2 2315fd61 e32b6978 cities={\"britannia\":33,\"cf\":50} errors=0"
+    },
+    {
+      "key": "sim bering-strait britannia normal 11 2",
+      "expected": "sim bering-strait britannia normal 11 2 be5101e8 c98817b8 cities={\"britannia\":14,\"eu\":14} errors=0",
+      "actual": "sim bering-strait britannia normal 11 2 c19bfd81 9b4f34f1 cities={\"britannia\":15,\"eu\":13} errors=0"
+    },
+    {
+      "key": "sim bering-strait eu normal 11 2",
+      "expected": "sim bering-strait eu normal 11 2 9d9e3c26 4c777446 cities={\"britannia\":14,\"eu\":14} errors=0",
+      "actual": "sim bering-strait eu normal 11 2 18431fd4 05bb7b50 cities={\"britannia\":14,\"eu\":14} errors=0"
+    },
+    {
+      "key": "sim bf-malacca britannia normal 11 2",
+      "expected": "sim bf-malacca britannia normal 11 2 5b650bbc 032344c0 cities={\"britannia\":9,\"cf\":45} errors=0",
+      "actual": "sim bf-malacca britannia normal 11 2 d7c6ff69 917b5741 cities={\"britannia\":11,\"cf\":43} errors=0"
+    },
+    {
+      "key": "sim bf-malacca cf normal 11 2",
+      "expected": "sim bf-malacca cf normal 11 2 6f0adab8 11f2844f cities={\"britannia\":10,\"cf\":44} errors=0",
+      "actual": "sim bf-malacca cf normal 11 2 1f4f16a3 52037cdf cities={\"britannia\":10,\"cf\":44} errors=0"
+    },
+    {
+      "key": "sim bf-south-china britannia normal 11 2",
+      "expected": "sim bf-south-china britannia normal 11 2 f6df7f6c 43e68263 cities={\"britannia\":15,\"cf\":50} errors=0",
+      "actual": "sim bf-south-china britannia normal 11 2 d080cbee a0784ece cities={\"britannia\":16,\"cf\":49} errors=0"
+    },
+    {
+      "key": "sim bf-south-china cf normal 11 2",
+      "expected": "sim bf-south-china cf normal 11 2 2c641668 7133583d cities={\"britannia\":14,\"cf\":51} errors=0",
+      "actual": "sim bf-south-china cf normal 11 2 9591bce6 2fd89bd0 cities={\"britannia\":16,\"cf\":49} errors=0"
+    },
+    {
+      "key": "sim bf-yangtze britannia normal 11 2",
+      "expected": "sim bf-yangtze britannia normal 11 2 18298a89 1286cf34 cities={\"britannia\":23,\"cf\":37} errors=0",
+      "actual": "sim bf-yangtze britannia normal 11 2 27e31950 9c9fe22a cities={\"britannia\":22,\"cf\":38} errors=0"
+    },
+    {
+      "key": "sim bf-yangtze cf normal 11 2",
+      "expected": "sim bf-yangtze cf normal 11 2 aae04e40 90645df3 cities={\"britannia\":24,\"cf\":36} errors=0",
+      "actual": "sim bf-yangtze cf normal 11 2 f8178b4b 78855481 cities={\"britannia\":24,\"cf\":36} errors=0"
+    },
+    {
+      "key": "sim britannia-iraq-iran britannia normal 11 2",
+      "expected": "sim britannia-iraq-iran britannia normal 11 2 678d30ca 533ab139 cities={\"britannia\":16,\"cf\":68} errors=0",
+      "actual": "sim britannia-iraq-iran britannia normal 11 2 8aa8b0cb 0c7e4547 cities={\"britannia\":17,\"cf\":67} errors=0"
+    },
+    {
+      "key": "sim britannia-iraq-iran cf normal 11 2",
+      "expected": "sim britannia-iraq-iran cf normal 11 2 752f408b 7f68188d cities={\"britannia\":18,\"cf\":66} errors=0",
+      "actual": "sim britannia-iraq-iran cf normal 11 2 0eda1040 83ba1689 cities={\"britannia\":19,\"cf\":65} errors=0"
+    },
+    {
+      "key": "sim britannia-siberia britannia normal 11 2",
+      "expected": "sim britannia-siberia britannia normal 11 2 59ff4761 a87af106 cities={\"britannia\":13,\"eu\":36} errors=0",
+      "actual": "sim britannia-siberia britannia normal 11 2 b212b9d9 01349313 cities={\"britannia\":12,\"eu\":37} errors=0"
+    },
+    {
+      "key": "sim britannia-siberia eu normal 11 2",
+      "expected": "sim britannia-siberia eu normal 11 2 1dc8dec4 417622bf cities={\"britannia\":13,\"eu\":36} errors=0",
+      "actual": "sim britannia-siberia eu normal 11 2 9bfd1db0 af156e8c cities={\"britannia\":12,\"eu\":37} errors=0"
+    },
+    {
+      "key": "sim britannia-western-russia britannia normal 11 2",
+      "expected": "sim britannia-western-russia britannia normal 11 2 0d99bb19 ff865570 cities={\"britannia\":12,\"eu\":29} errors=0",
+      "actual": "sim britannia-western-russia britannia normal 11 2 f1221d81 28ffbf77 cities={\"britannia\":12,\"eu\":29} errors=0"
+    },
+    {
+      "key": "sim britannia-western-russia eu normal 11 2",
+      "expected": "sim britannia-western-russia eu normal 11 2 1eeccd48 64df41f7 cities={\"britannia\":12,\"eu\":29} errors=0",
+      "actual": "sim britannia-western-russia eu normal 11 2 7dd2b963 ffd4e284 cities={\"britannia\":12,\"eu\":29} errors=0"
+    },
+    {
+      "key": "sim cf-central-america britannia normal 11 2",
+      "expected": "sim cf-central-america britannia normal 11 2 649cdfeb a9a1fd94 cities={\"cf\":2,\"britannia\":79} errors=0",
+      "actual": "sim cf-central-america britannia normal 11 2 abc44b16 249a4255 cities={\"cf\":2,\"britannia\":79} errors=0"
+    },
+    {
+      "key": "sim cf-central-america cf normal 11 2",
+      "expected": "sim cf-central-america cf normal 11 2 2a2d0090 df2702b3 cities={\"cf\":2,\"britannia\":79} errors=0",
+      "actual": "sim cf-central-america cf normal 11 2 6ec6b8c0 ddd4e8ab cities={\"cf\":2,\"britannia\":79} errors=0"
+    },
+    {
+      "key": "sim cf-mexico britannia normal 11 2",
+      "expected": "sim cf-mexico britannia normal 11 2 4f0cd670 bd1d5003 cities={\"cf\":6,\"britannia\":74} errors=0",
+      "actual": "sim cf-mexico britannia normal 11 2 b71097c0 1101d98c cities={\"cf\":6,\"britannia\":74} errors=0"
+    },
+    {
+      "key": "sim cf-mexico cf normal 11 2",
+      "expected": "sim cf-mexico cf normal 11 2 20b753c5 7be2f918 cities={\"cf\":6,\"britannia\":74} errors=0",
+      "actual": "sim cf-mexico cf normal 11 2 fdc53222 548d7f22 cities={\"cf\":7,\"britannia\":73} errors=0"
+    },
+    {
+      "key": "sim cf-new-zealand britannia normal 11 2",
+      "expected": "sim cf-new-zealand britannia normal 11 2 397b6e60 d4a85a7b cities={\"cf\":3,\"britannia\":60} errors=0",
+      "actual": "sim cf-new-zealand britannia normal 11 2 1ca9b2ed c8a69456 cities={\"cf\":1,\"britannia\":62} errors=0"
+    },
+    {
+      "key": "sim cf-new-zealand cf normal 11 2",
+      "expected": "sim cf-new-zealand cf normal 11 2 24d1849b 80921099 cities={\"cf\":3,\"britannia\":60} errors=0",
+      "actual": "sim cf-new-zealand cf normal 11 2 0a298085 372cd3b2 cities={\"cf\":3,\"britannia\":60} errors=0"
+    },
+    {
+      "key": "sim cf-pacific-northwest britannia normal 11 2",
+      "expected": "sim cf-pacific-northwest britannia normal 11 2 cb37a189 d2a3267f cities={\"cf\":1,\"britannia\":62} errors=0",
+      "actual": "sim cf-pacific-northwest britannia normal 11 2 f4b96d40 7fc43013 cities={\"cf\":2,\"britannia\":61} errors=0"
+    },
+    {
+      "key": "sim cf-pacific-northwest cf normal 11 2",
+      "expected": "sim cf-pacific-northwest cf normal 11 2 9ee31f7a adb437f5 cities={\"cf\":1,\"britannia\":62} errors=0",
+      "actual": "sim cf-pacific-northwest cf normal 11 2 dbdcfd48 50d31caa cities={\"cf\":1,\"britannia\":62} errors=0"
+    },
+    {
+      "key": "sim cf-panama britannia normal 11 2",
+      "expected": "sim cf-panama britannia normal 11 2 d37cff3d e142fb48 cities={\"cf\":3,\"britannia\":27} errors=0",
+      "actual": "sim cf-panama britannia normal 11 2 5c01baca ef366c59 cities={\"cf\":3,\"britannia\":27} errors=0"
+    },
+    {
+      "key": "sim cf-panama cf normal 11 2",
+      "expected": "sim cf-panama cf normal 11 2 3b18d661 b969a9d8 cities={\"cf\":3,\"britannia\":27} errors=0",
+      "actual": "sim cf-panama cf normal 11 2 2311c980 7ad6fd6c cities={\"cf\":4,\"britannia\":26} errors=0"
+    },
+    {
+      "key": "sim cf-pendragon britannia normal 11 2",
+      "expected": "sim cf-pendragon britannia normal 11 2 3c8f1ad2 41409c4b cities={\"cf\":18,\"britannia\":52} errors=0",
+      "actual": "sim cf-pendragon britannia normal 11 2 679e3113 42928e08 cities={\"cf\":18,\"britannia\":52} errors=0"
+    },
+    {
+      "key": "sim cf-pendragon cf normal 11 2",
+      "expected": "sim cf-pendragon cf normal 11 2 d97eb5a8 692fa1e6 cities={\"cf\":18,\"britannia\":52} errors=0",
+      "actual": "sim cf-pendragon cf normal 11 2 d23b64a5 c72e5702 cities={\"cf\":18,\"britannia\":52} errors=0"
+    },
+    {
+      "key": "sim conquest-indochina britannia normal 11 2",
+      "expected": "sim conquest-indochina britannia normal 11 2 f77cab4a c18b537d cities={\"britannia\":24,\"cf\":20} errors=0",
+      "actual": "sim conquest-indochina britannia normal 11 2 3efd056b 12ecbe24 cities={\"britannia\":25,\"cf\":19} errors=0"
+    },
+    {
+      "key": "sim conquest-indochina cf normal 11 2",
+      "expected": "sim conquest-indochina cf normal 11 2 8a9d5711 9a454af2 cities={\"britannia\":24,\"cf\":20} errors=0",
+      "actual": "sim conquest-indochina cf normal 11 2 7606f390 9df4a2ad cities={\"britannia\":24,\"cf\":20} errors=0"
+    },
+    {
+      "key": "sim crossing-urals britannia normal 11 2",
+      "expected": "sim crossing-urals britannia normal 11 2 813f947f f0621e2b cities={\"britannia\":18,\"eu\":22} errors=0",
+      "actual": "sim crossing-urals britannia normal 11 2 531d7351 d573b733 cities={\"britannia\":19,\"eu\":21} errors=0"
+    },
+    {
+      "key": "sim crossing-urals eu normal 11 2",
+      "expected": "sim crossing-urals eu normal 11 2 25145e97 8d4fa75b cities={\"britannia\":17,\"eu\":23} errors=0",
+      "actual": "sim crossing-urals eu normal 11 2 6ac71d86 f79013bd cities={\"britannia\":16,\"eu\":24} errors=0"
+    },
+    {
+      "key": "sim division-japan britannia normal 11 2",
+      "expected": "sim division-japan britannia normal 11 2 3d2dbb3e e6a79169 cities={\"britannia\":16,\"eu\":11,\"cf\":17} errors=0",
+      "actual": "sim division-japan britannia normal 11 2 32b3ab8d fb849296 cities={\"britannia\":17,\"eu\":11,\"cf\":16} errors=0"
+    },
+    {
+      "key": "sim division-japan cf normal 11 2",
+      "expected": "sim division-japan cf normal 11 2 6d513189 a590a2bb cities={\"britannia\":17,\"eu\":10,\"cf\":17} errors=0",
+      "actual": "sim division-japan cf normal 11 2 89f4ee68 9f7210b2 cities={\"britannia\":17,\"eu\":10,\"cf\":17} errors=0"
+    },
+    {
+      "key": "sim division-japan eu normal 11 2",
+      "expected": "sim division-japan eu normal 11 2 1f7ccb7c 151aaa87 cities={\"britannia\":15,\"eu\":12,\"cf\":17} errors=0",
+      "actual": "sim division-japan eu normal 11 2 f1892bb4 f4affa27 cities={\"britannia\":17,\"eu\":10,\"cf\":17} errors=0"
+    },
+    {
+      "key": "sim eu-great-lakes britannia normal 11 2",
+      "expected": "sim eu-great-lakes britannia normal 11 2 efb62cfb 887ef8c6 cities={\"eu\":19,\"britannia\":37} errors=0",
+      "actual": "sim eu-great-lakes britannia normal 11 2 8a737ea8 31367b8b cities={\"eu\":18,\"britannia\":38} errors=0"
+    },
+    {
+      "key": "sim eu-great-lakes eu normal 11 2",
+      "expected": "sim eu-great-lakes eu normal 11 2 0b039391 6d2e55fc cities={\"eu\":19,\"britannia\":37} errors=0",
+      "actual": "sim eu-great-lakes eu normal 11 2 a46b7810 a5b487bf cities={\"eu\":17,\"britannia\":39} errors=0"
+    },
+    {
+      "key": "sim eu-greenland britannia normal 11 2",
+      "expected": "sim eu-greenland britannia normal 11 2 372708c7 c6d0226e cities={\"britannia\":16,\"eu\":2} errors=0",
+      "actual": "sim eu-greenland britannia normal 11 2 fb66e2cd 9df0d1a6 cities={\"britannia\":16,\"eu\":2} errors=0"
+    },
+    {
+      "key": "sim eu-greenland eu normal 11 2",
+      "expected": "sim eu-greenland eu normal 11 2 86733004 18f1a04e cities={\"britannia\":17,\"eu\":1} errors=0",
+      "actual": "sim eu-greenland eu normal 11 2 fe08bda5 a55c439f cities={\"britannia\":17,\"eu\":1} errors=0"
+    },
+    {
+      "key": "sim eu-panama britannia normal 11 2",
+      "expected": "sim eu-panama britannia normal 11 2 8da3c169 ac60b003 cities={\"eu\":0,\"britannia\":30} errors=0",
+      "actual": "sim eu-panama britannia normal 11 2 a734ad82 f7159a13 cities={\"eu\":1,\"britannia\":29} errors=0"
+    },
+    {
+      "key": "sim eu-panama eu normal 11 2",
+      "expected": "sim eu-panama eu normal 11 2 7fcbb672 ae9c7766 cities={\"eu\":0,\"britannia\":30} errors=0",
+      "actual": "sim eu-panama eu normal 11 2 10a7de7e e376caa4 cities={\"eu\":1,\"britannia\":29} errors=0"
+    },
+    {
+      "key": "sim eu-pendragon britannia normal 11 2",
+      "expected": "sim eu-pendragon britannia normal 11 2 637751b8 29083e05 cities={\"eu\":22,\"britannia\":48} errors=0",
+      "actual": "sim eu-pendragon britannia normal 11 2 0cf889ce dcf692d5 cities={\"eu\":22,\"britannia\":48} errors=0"
+    },
+    {
+      "key": "sim eu-pendragon eu normal 11 2",
+      "expected": "sim eu-pendragon eu normal 11 2 1c6d786f 64fa100d cities={\"eu\":22,\"britannia\":48} errors=0",
+      "actual": "sim eu-pendragon eu normal 11 2 af2f35a6 a7bb7346 cities={\"eu\":22,\"britannia\":48} errors=0"
+    },
+    {
+      "key": "sim eu-rocky-mountains britannia normal 11 2",
+      "expected": "sim eu-rocky-mountains britannia normal 11 2 19bc8e2a 84474c7e cities={\"eu\":28,\"britannia\":73} errors=0",
+      "actual": "sim eu-rocky-mountains britannia normal 11 2 93583bf0 f02efddd cities={\"eu\":28,\"britannia\":73} errors=0"
+    },
+    {
+      "key": "sim eu-rocky-mountains eu normal 11 2",
+      "expected": "sim eu-rocky-mountains eu normal 11 2 b35973b0 7064ae3e cities={\"eu\":27,\"britannia\":74} errors=0",
+      "actual": "sim eu-rocky-mountains eu normal 11 2 6e2d3dfe 55e8d26c cities={\"eu\":27,\"britannia\":74} errors=0"
+    },
+    {
+      "key": "sim european-war eb normal 11 2",
+      "expected": "sim european-war eb normal 11 2 e06c27c9 35643959 cities={\"eu\":28,\"eb\":16} errors=0",
+      "actual": "sim european-war eb normal 11 2 f82df7e0 d234e867 cities={\"eu\":26,\"eb\":18} errors=0"
+    },
+    {
+      "key": "sim european-war eu normal 11 2",
+      "expected": "sim european-war eu normal 11 2 56ce86a5 25872b2f cities={\"eu\":28,\"eb\":16} errors=0",
+      "actual": "sim european-war eu normal 11 2 d662bef0 907efc6b cities={\"eu\":27,\"eb\":17} errors=0"
+    },
+    {
+      "key": "sim invasion-american-east-coast britannia normal 11 2",
+      "expected": "sim invasion-american-east-coast britannia normal 11 2 ecf4f976 668b2c0c cities={\"eu\":2,\"britannia\":60} errors=0",
+      "actual": "sim invasion-american-east-coast britannia normal 11 2 5f57a3ea 1f5fe136 cities={\"eu\":4,\"britannia\":58} errors=0"
+    },
+    {
+      "key": "sim invasion-american-east-coast eu normal 11 2",
+      "expected": "sim invasion-american-east-coast eu normal 11 2 d11b75d6 e26b1052 cities={\"eu\":2,\"britannia\":60} errors=0",
+      "actual": "sim invasion-american-east-coast eu normal 11 2 7b84b9a3 a69f28bc cities={\"eu\":2,\"britannia\":60} errors=0"
+    },
+    {
+      "key": "sim invasion-brazil britannia normal 11 2",
+      "expected": "sim invasion-brazil britannia normal 11 2 aad6ce86 2bf69550 cities={\"eu\":2,\"britannia\":55} errors=0",
+      "actual": "sim invasion-brazil britannia normal 11 2 8edf2d2d 8669449c cities={\"eu\":7,\"britannia\":50} errors=0"
+    },
+    {
+      "key": "sim invasion-brazil eu normal 11 2",
+      "expected": "sim invasion-brazil eu normal 11 2 1860981f be6171d2 cities={\"eu\":2,\"britannia\":55} errors=0",
+      "actual": "sim invasion-brazil eu normal 11 2 8c22b28b ef2a9bd9 cities={\"eu\":4,\"britannia\":53} errors=0"
+    },
+    {
+      "key": "sim invasion-california britannia normal 11 2",
+      "expected": "sim invasion-california britannia normal 11 2 8a7ce186 7e3e0c8b cities={\"cf\":15,\"britannia\":48} errors=0",
+      "actual": "sim invasion-california britannia normal 11 2 9aa949a4 f52c527a cities={\"cf\":17,\"britannia\":46} errors=0"
+    },
+    {
+      "key": "sim invasion-california cf normal 11 2",
+      "expected": "sim invasion-california cf normal 11 2 838dd80c a88c107b cities={\"cf\":15,\"britannia\":48} errors=0",
+      "actual": "sim invasion-california cf normal 11 2 d4d1f10a efd0dec8 cities={\"cf\":17,\"britannia\":46} errors=0"
+    },
+    {
+      "key": "sim invasion-canada britannia normal 11 2",
+      "expected": "sim invasion-canada britannia normal 11 2 daa4fae2 6ed0ac8e cities={\"eu\":11,\"britannia\":63} errors=0",
+      "actual": "sim invasion-canada britannia normal 11 2 5ed77808 1bfedf8b cities={\"eu\":8,\"britannia\":66} errors=0"
+    },
+    {
+      "key": "sim invasion-canada eu normal 11 2",
+      "expected": "sim invasion-canada eu normal 11 2 b22b5242 4a860427 cities={\"eu\":9,\"britannia\":65} errors=0",
+      "actual": "sim invasion-canada eu normal 11 2 e67b67c8 7c60a793 cities={\"eu\":10,\"britannia\":64} errors=0"
+    },
+    {
+      "key": "sim invasion-caribbean britannia normal 11 2",
+      "expected": "sim invasion-caribbean britannia normal 11 2 2deb8d0e bf86df0b cities={\"eu\":5,\"britannia\":36} errors=0",
+      "actual": "sim invasion-caribbean britannia normal 11 2 f5d9d2f1 501cdc99 cities={\"eu\":6,\"britannia\":35} errors=0"
+    },
+    {
+      "key": "sim invasion-caribbean eu normal 11 2",
+      "expected": "sim invasion-caribbean eu normal 11 2 d18a8ca4 76f8afe3 cities={\"eu\":4,\"britannia\":37} errors=0",
+      "actual": "sim invasion-caribbean eu normal 11 2 fa6fc07c 9d19b641 cities={\"eu\":5,\"britannia\":36} errors=0"
+    },
+    {
+      "key": "sim invasion-hawaii britannia normal 11 2",
+      "expected": "sim invasion-hawaii britannia normal 11 2 6b6db8b6 991c04cb cities={\"cf\":2,\"britannia\":28} errors=0",
+      "actual": "sim invasion-hawaii britannia normal 11 2 91e8c951 7d512d68 cities={\"cf\":2,\"britannia\":28} errors=0"
+    },
+    {
+      "key": "sim invasion-hawaii cf normal 11 2",
+      "expected": "sim invasion-hawaii cf normal 11 2 6ec56db7 cc708f07 cities={\"cf\":1,\"britannia\":29} errors=0",
+      "actual": "sim invasion-hawaii cf normal 11 2 0c35b840 3b28e156 cities={\"cf\":1,\"britannia\":29} errors=0"
+    },
+    {
+      "key": "sim invasion-japan bk normal 11 2",
+      "expected": "sim invasion-japan bk normal 11 2 be2d57d8 8f383f84 cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0",
+      "actual": "sim invasion-japan bk normal 11 2 776e1d8e d3a602fb cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0"
+    },
+    {
+      "key": "sim invasion-japan britannia normal 11 2",
+      "expected": "sim invasion-japan britannia normal 11 2 a8edd92b d3425165 cities={\"britannia\":29,\"bk\":5,\"cf\":10} errors=0",
+      "actual": "sim invasion-japan britannia normal 11 2 728fabe1 b29e68a2 cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0"
+    },
+    {
+      "key": "sim invasion-japan cf normal 11 2",
+      "expected": "sim invasion-japan cf normal 11 2 331644c2 8b5c0b38 cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0",
+      "actual": "sim invasion-japan cf normal 11 2 8318fa70 1ecc8dec cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0"
+    },
+    {
+      "key": "sim invasion-korea britannia normal 11 2",
+      "expected": "sim invasion-korea britannia normal 11 2 baa09443 ad233dbe cities={\"britannia\":11,\"cf\":44} errors=0",
+      "actual": "sim invasion-korea britannia normal 11 2 c9ee4822 e3b71a7f cities={\"britannia\":13,\"cf\":42} errors=0"
+    },
+    {
+      "key": "sim invasion-korea cf normal 11 2",
+      "expected": "sim invasion-korea cf normal 11 2 e275b05c a0d78978 cities={\"britannia\":11,\"cf\":44} errors=0",
+      "actual": "sim invasion-korea cf normal 11 2 b37dc500 7987805a cities={\"britannia\":15,\"cf\":40} errors=0"
+    },
+    {
+      "key": "sim invasion-south-africa britannia normal 11 2",
+      "expected": "sim invasion-south-africa britannia normal 11 2 ec044b65 27d046a5 cities={\"britannia\":0,\"eu\":47} errors=0",
+      "actual": "sim invasion-south-africa britannia normal 11 2 77ab5ac2 03c674f9 cities={\"britannia\":0,\"eu\":47} errors=0"
+    },
+    {
+      "key": "sim invasion-south-africa eu normal 11 2",
+      "expected": "sim invasion-south-africa eu normal 11 2 747f7bc4 f11d136a cities={\"britannia\":2,\"eu\":45} errors=0",
+      "actual": "sim invasion-south-africa eu normal 11 2 18a9a0de 8d4b89e6 cities={\"britannia\":2,\"eu\":45} errors=0"
+    },
+    {
+      "key": "sim invasion-turkey britannia normal 11 2",
+      "expected": "sim invasion-turkey britannia normal 11 2 4a908ccc e817f65f cities={\"britannia\":14,\"eu\":45} errors=0",
+      "actual": "sim invasion-turkey britannia normal 11 2 fd4fea65 2aff3523 cities={\"britannia\":17,\"eu\":42} errors=0"
+    },
+    {
+      "key": "sim invasion-turkey eu normal 11 2",
+      "expected": "sim invasion-turkey eu normal 11 2 9c2fdb4b 037f5b92 cities={\"britannia\":15,\"eu\":44} errors=0",
+      "actual": "sim invasion-turkey eu normal 11 2 e19b97a2 8518fc18 cities={\"britannia\":15,\"eu\":44} errors=0"
+    },
+    {
+      "key": "sim operation-stonehenge britannia normal 11 2",
+      "expected": "sim operation-stonehenge britannia normal 11 2 c1d81422 4e1788ef cities={\"britannia\":4,\"eu\":33} errors=0",
+      "actual": "sim operation-stonehenge britannia normal 11 2 8a9e21c6 e0962c4c cities={\"britannia\":4,\"eu\":33} errors=0"
+    },
+    {
+      "key": "sim operation-stonehenge eu normal 11 2",
+      "expected": "sim operation-stonehenge eu normal 11 2 95aa29ee d6211ac2 cities={\"britannia\":3,\"eu\":34} errors=0",
+      "actual": "sim operation-stonehenge eu normal 11 2 f8bf7358 27511aa6 cities={\"britannia\":4,\"eu\":33} errors=0"
+    },
+    {
+      "key": "sim philippines-invasion britannia normal 11 2",
+      "expected": "sim philippines-invasion britannia normal 11 2 13c06231 f94ad2f2 cities={\"britannia\":3,\"cf\":34} errors=0",
+      "actual": "sim philippines-invasion britannia normal 11 2 dc349062 972f4cef cities={\"britannia\":3,\"cf\":34} errors=0"
+    },
+    {
+      "key": "sim philippines-invasion cf normal 11 2",
+      "expected": "sim philippines-invasion cf normal 11 2 2385808a bcd08aed cities={\"britannia\":3,\"cf\":34} errors=0",
+      "actual": "sim philippines-invasion cf normal 11 2 bd0faf3a 644701a4 cities={\"britannia\":3,\"cf\":34} errors=0"
+    },
+    {
+      "key": "sim war-for-australia britannia normal 11 2",
+      "expected": "sim war-for-australia britannia normal 11 2 04d50c4a 68b0a4b3 cities={\"britannia\":20,\"cf\":14,\"eu\":14} errors=0",
+      "actual": "sim war-for-australia britannia normal 11 2 e1f6efb4 47a4e803 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0"
+    },
+    {
+      "key": "sim war-for-australia cf normal 11 2",
+      "expected": "sim war-for-australia cf normal 11 2 9d2758d7 9ae9ff9d cities={\"britannia\":20,\"cf\":14,\"eu\":14} errors=0",
+      "actual": "sim war-for-australia cf normal 11 2 3650874c 6f39dd24 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0"
+    },
+    {
+      "key": "sim war-for-australia eu normal 11 2",
+      "expected": "sim war-for-australia eu normal 11 2 0ccae8ea 5702f4ca cities={\"britannia\":20,\"cf\":14,\"eu\":14} errors=0",
+      "actual": "sim war-for-australia eu normal 11 2 c1e24665 9f1db74b cities={\"britannia\":20,\"cf\":16,\"eu\":12} errors=0"
+    }
+  ],
+  "auditedMainToCorrected": [
+    {
+      "key": "setup bf-malacca britannia challenge",
+      "expected": "setup bf-malacca britannia challenge 0b36007b",
+      "actual": "setup bf-malacca britannia challenge a6bacc6d"
+    },
+    {
+      "key": "setup bf-malacca britannia elite",
+      "expected": "setup bf-malacca britannia elite 39008e00",
+      "actual": "setup bf-malacca britannia elite 327e8565"
+    },
+    {
+      "key": "setup bf-malacca britannia hard",
+      "expected": "setup bf-malacca britannia hard 21c89adc",
+      "actual": "setup bf-malacca britannia hard c371edd4"
+    },
+    {
+      "key": "setup bf-malacca britannia normal",
+      "expected": "setup bf-malacca britannia normal b3fcca0c",
+      "actual": "setup bf-malacca britannia normal 45eb1d64"
+    },
+    {
+      "key": "setup bf-malacca cf challenge",
+      "expected": "setup bf-malacca cf challenge 6516a4c6",
+      "actual": "setup bf-malacca cf challenge 932590b6"
+    },
+    {
+      "key": "setup bf-malacca cf elite",
+      "expected": "setup bf-malacca cf elite 39160aee",
+      "actual": "setup bf-malacca cf elite 9e3fcf79"
+    },
+    {
+      "key": "setup bf-malacca cf hard",
+      "expected": "setup bf-malacca cf hard e668214c",
+      "actual": "setup bf-malacca cf hard 8ddf0d24"
+    },
+    {
+      "key": "setup bf-malacca cf normal",
+      "expected": "setup bf-malacca cf normal fb046523",
+      "actual": "setup bf-malacca cf normal a8e17b05"
+    },
+    {
+      "key": "setup cf-mexico britannia challenge",
+      "expected": "setup cf-mexico britannia challenge a12a4fa6",
+      "actual": "setup cf-mexico britannia challenge 2ce27546"
+    },
+    {
+      "key": "setup cf-mexico britannia elite",
+      "expected": "setup cf-mexico britannia elite 7b758df3",
+      "actual": "setup cf-mexico britannia elite 231bac3f"
+    },
+    {
+      "key": "setup cf-mexico britannia hard",
+      "expected": "setup cf-mexico britannia hard 44e9e3c3",
+      "actual": "setup cf-mexico britannia hard 42a3d2c5"
+    },
+    {
+      "key": "setup cf-mexico britannia normal",
+      "expected": "setup cf-mexico britannia normal 730da577",
+      "actual": "setup cf-mexico britannia normal eb50f7b1"
+    },
+    {
+      "key": "setup cf-mexico cf challenge",
+      "expected": "setup cf-mexico cf challenge e7f0da18",
+      "actual": "setup cf-mexico cf challenge b33c49f0"
+    },
+    {
+      "key": "setup cf-mexico cf elite",
+      "expected": "setup cf-mexico cf elite 2ec7094f",
+      "actual": "setup cf-mexico cf elite db5bfe9b"
+    },
+    {
+      "key": "setup cf-mexico cf hard",
+      "expected": "setup cf-mexico cf hard 6d694638",
+      "actual": "setup cf-mexico cf hard 178e8f50"
+    },
+    {
+      "key": "setup cf-mexico cf normal",
+      "expected": "setup cf-mexico cf normal a4c0f522",
+      "actual": "setup cf-mexico cf normal bcf712da"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia challenge",
+      "expected": "setup cf-pacific-northwest britannia challenge b0007dd4",
+      "actual": "setup cf-pacific-northwest britannia challenge 5341725a"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia elite",
+      "expected": "setup cf-pacific-northwest britannia elite 8a45412e",
+      "actual": "setup cf-pacific-northwest britannia elite d2014371"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia hard",
+      "expected": "setup cf-pacific-northwest britannia hard cc64ccc6",
+      "actual": "setup cf-pacific-northwest britannia hard 392b052c"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia normal",
+      "expected": "setup cf-pacific-northwest britannia normal d2207dba",
+      "actual": "setup cf-pacific-northwest britannia normal a7084048"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf challenge",
+      "expected": "setup cf-pacific-northwest cf challenge 0ef3ab80",
+      "actual": "setup cf-pacific-northwest cf challenge c8d9f15e"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf elite",
+      "expected": "setup cf-pacific-northwest cf elite ca80f6ef",
+      "actual": "setup cf-pacific-northwest cf elite 80a08f45"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf hard",
+      "expected": "setup cf-pacific-northwest cf hard 8f98413b",
+      "actual": "setup cf-pacific-northwest cf hard af94812b"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf normal",
+      "expected": "setup cf-pacific-northwest cf normal 55c25ed5",
+      "actual": "setup cf-pacific-northwest cf normal dae4ce35"
+    },
+    {
+      "key": "setup cf-panama britannia challenge",
+      "expected": "setup cf-panama britannia challenge 251deb0a",
+      "actual": "setup cf-panama britannia challenge 7ca3f092"
+    },
+    {
+      "key": "setup cf-panama britannia elite",
+      "expected": "setup cf-panama britannia elite 77d36eb4",
+      "actual": "setup cf-panama britannia elite 43615b4a"
+    },
+    {
+      "key": "setup cf-panama britannia hard",
+      "expected": "setup cf-panama britannia hard 9b8519d5",
+      "actual": "setup cf-panama britannia hard 79eb43e3"
+    },
+    {
+      "key": "setup cf-panama britannia normal",
+      "expected": "setup cf-panama britannia normal cba4b09f",
+      "actual": "setup cf-panama britannia normal cb9641f5"
+    },
+    {
+      "key": "setup cf-panama cf challenge",
+      "expected": "setup cf-panama cf challenge e8717a7f",
+      "actual": "setup cf-panama cf challenge 10a2aa95"
+    },
+    {
+      "key": "setup cf-panama cf elite",
+      "expected": "setup cf-panama cf elite 0a13e922",
+      "actual": "setup cf-panama cf elite d5745b9e"
+    },
+    {
+      "key": "setup cf-panama cf hard",
+      "expected": "setup cf-panama cf hard 423e75f5",
+      "actual": "setup cf-panama cf hard 05d589c3"
+    },
+    {
+      "key": "setup cf-panama cf normal",
+      "expected": "setup cf-panama cf normal 22b5064c",
+      "actual": "setup cf-panama cf normal a2569f64"
+    },
+    {
+      "key": "sim bf-malacca britannia normal 11 2",
+      "expected": "sim bf-malacca britannia normal 11 2 d7c6ff69 917b5741 cities={\"britannia\":11,\"cf\":43} errors=0",
+      "actual": "sim bf-malacca britannia normal 11 2 618341f9 917b5741 cities={\"britannia\":11,\"cf\":43} errors=0"
+    },
+    {
+      "key": "sim bf-malacca cf normal 11 2",
+      "expected": "sim bf-malacca cf normal 11 2 1f4f16a3 52037cdf cities={\"britannia\":10,\"cf\":44} errors=0",
+      "actual": "sim bf-malacca cf normal 11 2 0074da05 52037cdf cities={\"britannia\":10,\"cf\":44} errors=0"
+    },
+    {
+      "key": "sim cf-mexico britannia normal 11 2",
+      "expected": "sim cf-mexico britannia normal 11 2 b71097c0 1101d98c cities={\"cf\":6,\"britannia\":74} errors=0",
+      "actual": "sim cf-mexico britannia normal 11 2 5f5163f8 1101d98c cities={\"cf\":6,\"britannia\":74} errors=0"
+    },
+    {
+      "key": "sim cf-mexico cf normal 11 2",
+      "expected": "sim cf-mexico cf normal 11 2 fdc53222 548d7f22 cities={\"cf\":7,\"britannia\":73} errors=0",
+      "actual": "sim cf-mexico cf normal 11 2 e1492872 548d7f22 cities={\"cf\":7,\"britannia\":73} errors=0"
+    },
+    {
+      "key": "sim cf-pacific-northwest britannia normal 11 2",
+      "expected": "sim cf-pacific-northwest britannia normal 11 2 f4b96d40 7fc43013 cities={\"cf\":2,\"britannia\":61} errors=0",
+      "actual": "sim cf-pacific-northwest britannia normal 11 2 9084f4a0 7fc43013 cities={\"cf\":2,\"britannia\":61} errors=0"
+    },
+    {
+      "key": "sim cf-pacific-northwest cf normal 11 2",
+      "expected": "sim cf-pacific-northwest cf normal 11 2 dbdcfd48 50d31caa cities={\"cf\":1,\"britannia\":62} errors=0",
+      "actual": "sim cf-pacific-northwest cf normal 11 2 80bf4fd8 50d31caa cities={\"cf\":1,\"britannia\":62} errors=0"
+    },
+    {
+      "key": "sim cf-panama britannia normal 11 2",
+      "expected": "sim cf-panama britannia normal 11 2 5c01baca ef366c59 cities={\"cf\":3,\"britannia\":27} errors=0",
+      "actual": "sim cf-panama britannia normal 11 2 1a02db78 ef366c59 cities={\"cf\":3,\"britannia\":27} errors=0"
+    },
+    {
+      "key": "sim cf-panama cf normal 11 2",
+      "expected": "sim cf-panama cf normal 11 2 2311c980 7ad6fd6c cities={\"cf\":4,\"britannia\":26} errors=0",
+      "actual": "sim cf-panama cf normal 11 2 3076f998 7ad6fd6c cities={\"cf\":4,\"britannia\":26} errors=0"
+    }
+  ],
+  "historicalToCorrected": [
+    {
+      "key": "setup area-18 britannia challenge",
+      "expected": "setup area-18 britannia challenge eafb39cb",
+      "actual": "setup area-18 britannia challenge ac1fdfbe"
+    },
+    {
+      "key": "setup area-18 britannia elite",
+      "expected": "setup area-18 britannia elite 0886b35a",
+      "actual": "setup area-18 britannia elite e2c1bd93"
+    },
+    {
+      "key": "setup area-18 britannia hard",
+      "expected": "setup area-18 britannia hard 6a116813",
+      "actual": "setup area-18 britannia hard 0e942c54"
+    },
+    {
+      "key": "setup area-18 britannia normal",
+      "expected": "setup area-18 britannia normal 7f733efc",
+      "actual": "setup area-18 britannia normal c81f7821"
+    },
+    {
+      "key": "setup area-18 cf challenge",
+      "expected": "setup area-18 cf challenge e9285ae2",
+      "actual": "setup area-18 cf challenge 9e25ec6d"
+    },
+    {
+      "key": "setup area-18 cf elite",
+      "expected": "setup area-18 cf elite 036d6718",
+      "actual": "setup area-18 cf elite 88be3519"
+    },
+    {
+      "key": "setup area-18 cf hard",
+      "expected": "setup area-18 cf hard 44863c40",
+      "actual": "setup area-18 cf hard 79e23507"
+    },
+    {
+      "key": "setup area-18 cf normal",
+      "expected": "setup area-18 cf normal d6c31557",
+      "actual": "setup area-18 cf normal bd3a4ccc"
+    },
+    {
+      "key": "setup area-18 eu challenge",
+      "expected": "setup area-18 eu challenge 7a47becc",
+      "actual": "setup area-18 eu challenge 9013f417"
+    },
+    {
+      "key": "setup area-18 eu elite",
+      "expected": "setup area-18 eu elite e99a7987",
+      "actual": "setup area-18 eu elite e775d455"
+    },
+    {
+      "key": "setup area-18 eu hard",
+      "expected": "setup area-18 eu hard e5a0b956",
+      "actual": "setup area-18 eu hard bec9457f"
+    },
+    {
+      "key": "setup area-18 eu normal",
+      "expected": "setup area-18 eu normal 4e781e68",
+      "actual": "setup area-18 eu normal a35a2aab"
+    },
+    {
+      "key": "setup battle-luoyang britannia challenge",
+      "expected": "setup battle-luoyang britannia challenge 9c80b454",
+      "actual": "setup battle-luoyang britannia challenge 6ee0a6e1"
+    },
+    {
+      "key": "setup battle-luoyang britannia elite",
+      "expected": "setup battle-luoyang britannia elite 047a36e4",
+      "actual": "setup battle-luoyang britannia elite 750f71f2"
+    },
+    {
+      "key": "setup battle-luoyang britannia hard",
+      "expected": "setup battle-luoyang britannia hard 609dfc61",
+      "actual": "setup battle-luoyang britannia hard 6eee7590"
+    },
+    {
+      "key": "setup battle-luoyang britannia normal",
+      "expected": "setup battle-luoyang britannia normal 4da80ea1",
+      "actual": "setup battle-luoyang britannia normal 70247c40"
+    },
+    {
+      "key": "setup battle-luoyang cf challenge",
+      "expected": "setup battle-luoyang cf challenge 384f40a6",
+      "actual": "setup battle-luoyang cf challenge 5ad1faa3"
+    },
+    {
+      "key": "setup battle-luoyang cf elite",
+      "expected": "setup battle-luoyang cf elite e8b003c1",
+      "actual": "setup battle-luoyang cf elite d6f04998"
+    },
+    {
+      "key": "setup battle-luoyang cf hard",
+      "expected": "setup battle-luoyang cf hard 2cfb5f39",
+      "actual": "setup battle-luoyang cf hard d2b94f08"
+    },
+    {
+      "key": "setup battle-luoyang cf normal",
+      "expected": "setup battle-luoyang cf normal ba075306",
+      "actual": "setup battle-luoyang cf normal 76d5a971"
+    },
+    {
+      "key": "setup bering-strait britannia challenge",
+      "expected": "setup bering-strait britannia challenge 678e7792",
+      "actual": "setup bering-strait britannia challenge a874daf2"
+    },
+    {
+      "key": "setup bering-strait britannia elite",
+      "expected": "setup bering-strait britannia elite 23f45d80",
+      "actual": "setup bering-strait britannia elite c548fe77"
+    },
+    {
+      "key": "setup bering-strait britannia hard",
+      "expected": "setup bering-strait britannia hard ddf319df",
+      "actual": "setup bering-strait britannia hard 028d1701"
+    },
+    {
+      "key": "setup bering-strait britannia normal",
+      "expected": "setup bering-strait britannia normal d96081f4",
+      "actual": "setup bering-strait britannia normal 87522df6"
+    },
+    {
+      "key": "setup bering-strait eu challenge",
+      "expected": "setup bering-strait eu challenge 9c1e9f0f",
+      "actual": "setup bering-strait eu challenge 383714cd"
+    },
+    {
+      "key": "setup bering-strait eu elite",
+      "expected": "setup bering-strait eu elite f0a4384a",
+      "actual": "setup bering-strait eu elite 0cd768d7"
+    },
+    {
+      "key": "setup bering-strait eu hard",
+      "expected": "setup bering-strait eu hard f0e343d9",
+      "actual": "setup bering-strait eu hard 1b9461e3"
+    },
+    {
+      "key": "setup bering-strait eu normal",
+      "expected": "setup bering-strait eu normal 64902e62",
+      "actual": "setup bering-strait eu normal b7691306"
+    },
+    {
+      "key": "setup bf-malacca britannia challenge",
+      "expected": "setup bf-malacca britannia challenge 3192e5d3",
+      "actual": "setup bf-malacca britannia challenge a6bacc6d"
+    },
+    {
+      "key": "setup bf-malacca britannia elite",
+      "expected": "setup bf-malacca britannia elite a7f3244e",
+      "actual": "setup bf-malacca britannia elite 327e8565"
+    },
+    {
+      "key": "setup bf-malacca britannia hard",
+      "expected": "setup bf-malacca britannia hard e263e996",
+      "actual": "setup bf-malacca britannia hard c371edd4"
+    },
+    {
+      "key": "setup bf-malacca britannia normal",
+      "expected": "setup bf-malacca britannia normal 2a9401da",
+      "actual": "setup bf-malacca britannia normal 45eb1d64"
+    },
+    {
+      "key": "setup bf-malacca cf challenge",
+      "expected": "setup bf-malacca cf challenge 914770e0",
+      "actual": "setup bf-malacca cf challenge 932590b6"
+    },
+    {
+      "key": "setup bf-malacca cf elite",
+      "expected": "setup bf-malacca cf elite f609d2e8",
+      "actual": "setup bf-malacca cf elite 9e3fcf79"
+    },
+    {
+      "key": "setup bf-malacca cf hard",
+      "expected": "setup bf-malacca cf hard cc6aa65a",
+      "actual": "setup bf-malacca cf hard 8ddf0d24"
+    },
+    {
+      "key": "setup bf-malacca cf normal",
+      "expected": "setup bf-malacca cf normal 4abb309f",
+      "actual": "setup bf-malacca cf normal a8e17b05"
+    },
+    {
+      "key": "setup bf-south-china britannia challenge",
+      "expected": "setup bf-south-china britannia challenge 44d8c748",
+      "actual": "setup bf-south-china britannia challenge 8614733c"
+    },
+    {
+      "key": "setup bf-south-china britannia elite",
+      "expected": "setup bf-south-china britannia elite a79bf8bf",
+      "actual": "setup bf-south-china britannia elite 9bb980c8"
+    },
+    {
+      "key": "setup bf-south-china britannia hard",
+      "expected": "setup bf-south-china britannia hard ccb4aaca",
+      "actual": "setup bf-south-china britannia hard 5f3ff076"
+    },
+    {
+      "key": "setup bf-south-china britannia normal",
+      "expected": "setup bf-south-china britannia normal c4554d07",
+      "actual": "setup bf-south-china britannia normal 9c5ce651"
+    },
+    {
+      "key": "setup bf-south-china cf challenge",
+      "expected": "setup bf-south-china cf challenge 78da474b",
+      "actual": "setup bf-south-china cf challenge 9db98121"
+    },
+    {
+      "key": "setup bf-south-china cf elite",
+      "expected": "setup bf-south-china cf elite 0ac77aa7",
+      "actual": "setup bf-south-china cf elite fdf1e876"
+    },
+    {
+      "key": "setup bf-south-china cf hard",
+      "expected": "setup bf-south-china cf hard aae0d89f",
+      "actual": "setup bf-south-china cf hard c77b9e2d"
+    },
+    {
+      "key": "setup bf-south-china cf normal",
+      "expected": "setup bf-south-china cf normal 896eacd2",
+      "actual": "setup bf-south-china cf normal f06fa35e"
+    },
+    {
+      "key": "setup bf-yangtze britannia challenge",
+      "expected": "setup bf-yangtze britannia challenge 8916ef95",
+      "actual": "setup bf-yangtze britannia challenge 11096503"
+    },
+    {
+      "key": "setup bf-yangtze britannia elite",
+      "expected": "setup bf-yangtze britannia elite de81370f",
+      "actual": "setup bf-yangtze britannia elite 1e65250f"
+    },
+    {
+      "key": "setup bf-yangtze britannia hard",
+      "expected": "setup bf-yangtze britannia hard 1977479d",
+      "actual": "setup bf-yangtze britannia hard b3072497"
+    },
+    {
+      "key": "setup bf-yangtze britannia normal",
+      "expected": "setup bf-yangtze britannia normal a0ee2245",
+      "actual": "setup bf-yangtze britannia normal 6b78db09"
+    },
+    {
+      "key": "setup bf-yangtze cf challenge",
+      "expected": "setup bf-yangtze cf challenge b573daea",
+      "actual": "setup bf-yangtze cf challenge 7b41913a"
+    },
+    {
+      "key": "setup bf-yangtze cf elite",
+      "expected": "setup bf-yangtze cf elite bb613bfe",
+      "actual": "setup bf-yangtze cf elite 108da551"
+    },
+    {
+      "key": "setup bf-yangtze cf hard",
+      "expected": "setup bf-yangtze cf hard ae953bc3",
+      "actual": "setup bf-yangtze cf hard 73828d81"
+    },
+    {
+      "key": "setup bf-yangtze cf normal",
+      "expected": "setup bf-yangtze cf normal fc0dfe4a",
+      "actual": "setup bf-yangtze cf normal 0c08181c"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia challenge",
+      "expected": "setup britannia-iraq-iran britannia challenge 6e6b5072",
+      "actual": "setup britannia-iraq-iran britannia challenge 17d0dc32"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia elite",
+      "expected": "setup britannia-iraq-iran britannia elite e98e0fc5",
+      "actual": "setup britannia-iraq-iran britannia elite 23015be4"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia hard",
+      "expected": "setup britannia-iraq-iran britannia hard b3b7e41e",
+      "actual": "setup britannia-iraq-iran britannia hard 063a32c4"
+    },
+    {
+      "key": "setup britannia-iraq-iran britannia normal",
+      "expected": "setup britannia-iraq-iran britannia normal 8fb849f1",
+      "actual": "setup britannia-iraq-iran britannia normal 5e355b5b"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf challenge",
+      "expected": "setup britannia-iraq-iran cf challenge a55d7ba1",
+      "actual": "setup britannia-iraq-iran cf challenge 094fe01d"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf elite",
+      "expected": "setup britannia-iraq-iran cf elite 14a6c3fc",
+      "actual": "setup britannia-iraq-iran cf elite d85bb2ff"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf hard",
+      "expected": "setup britannia-iraq-iran cf hard 45f4ebef",
+      "actual": "setup britannia-iraq-iran cf hard a878951f"
+    },
+    {
+      "key": "setup britannia-iraq-iran cf normal",
+      "expected": "setup britannia-iraq-iran cf normal 9b9133ec",
+      "actual": "setup britannia-iraq-iran cf normal a2c78934"
+    },
+    {
+      "key": "setup britannia-siberia britannia challenge",
+      "expected": "setup britannia-siberia britannia challenge 65de981a",
+      "actual": "setup britannia-siberia britannia challenge 38a66bef"
+    },
+    {
+      "key": "setup britannia-siberia britannia elite",
+      "expected": "setup britannia-siberia britannia elite 2490d1e0",
+      "actual": "setup britannia-siberia britannia elite 13dc570d"
+    },
+    {
+      "key": "setup britannia-siberia britannia hard",
+      "expected": "setup britannia-siberia britannia hard 768449f6",
+      "actual": "setup britannia-siberia britannia hard f9129c01"
+    },
+    {
+      "key": "setup britannia-siberia britannia normal",
+      "expected": "setup britannia-siberia britannia normal 8cb9ea19",
+      "actual": "setup britannia-siberia britannia normal c25e7a28"
+    },
+    {
+      "key": "setup britannia-siberia eu challenge",
+      "expected": "setup britannia-siberia eu challenge 4d7f9063",
+      "actual": "setup britannia-siberia eu challenge 37d1c3a6"
+    },
+    {
+      "key": "setup britannia-siberia eu elite",
+      "expected": "setup britannia-siberia eu elite c5819919",
+      "actual": "setup britannia-siberia eu elite 390f5605"
+    },
+    {
+      "key": "setup britannia-siberia eu hard",
+      "expected": "setup britannia-siberia eu hard 1beb4075",
+      "actual": "setup britannia-siberia eu hard 5b8ad618"
+    },
+    {
+      "key": "setup britannia-siberia eu normal",
+      "expected": "setup britannia-siberia eu normal 7ebfe6f9",
+      "actual": "setup britannia-siberia eu normal 61b722c8"
+    },
+    {
+      "key": "setup britannia-western-russia britannia challenge",
+      "expected": "setup britannia-western-russia britannia challenge 14c47af3",
+      "actual": "setup britannia-western-russia britannia challenge 7c55e414"
+    },
+    {
+      "key": "setup britannia-western-russia britannia elite",
+      "expected": "setup britannia-western-russia britannia elite e909055b",
+      "actual": "setup britannia-western-russia britannia elite 8a2ac979"
+    },
+    {
+      "key": "setup britannia-western-russia britannia hard",
+      "expected": "setup britannia-western-russia britannia hard 4dd79dc2",
+      "actual": "setup britannia-western-russia britannia hard e30a85f5"
+    },
+    {
+      "key": "setup britannia-western-russia britannia normal",
+      "expected": "setup britannia-western-russia britannia normal 768d36f7",
+      "actual": "setup britannia-western-russia britannia normal a831306a"
+    },
+    {
+      "key": "setup britannia-western-russia eu challenge",
+      "expected": "setup britannia-western-russia eu challenge d5613e81",
+      "actual": "setup britannia-western-russia eu challenge 710fe840"
+    },
+    {
+      "key": "setup britannia-western-russia eu elite",
+      "expected": "setup britannia-western-russia eu elite 1384b356",
+      "actual": "setup britannia-western-russia eu elite f08405bf"
+    },
+    {
+      "key": "setup britannia-western-russia eu hard",
+      "expected": "setup britannia-western-russia eu hard 65a75e13",
+      "actual": "setup britannia-western-russia eu hard 14a087b6"
+    },
+    {
+      "key": "setup britannia-western-russia eu normal",
+      "expected": "setup britannia-western-russia eu normal 987aa18f",
+      "actual": "setup britannia-western-russia eu normal d78e8402"
+    },
+    {
+      "key": "setup cf-central-america britannia challenge",
+      "expected": "setup cf-central-america britannia challenge 31b9c96f",
+      "actual": "setup cf-central-america britannia challenge fe28b13a"
+    },
+    {
+      "key": "setup cf-central-america britannia elite",
+      "expected": "setup cf-central-america britannia elite 28320006",
+      "actual": "setup cf-central-america britannia elite 9b774330"
+    },
+    {
+      "key": "setup cf-central-america britannia hard",
+      "expected": "setup cf-central-america britannia hard c97a60d8",
+      "actual": "setup cf-central-america britannia hard 78edd145"
+    },
+    {
+      "key": "setup cf-central-america britannia normal",
+      "expected": "setup cf-central-america britannia normal 4e6712ba",
+      "actual": "setup cf-central-america britannia normal b0903261"
+    },
+    {
+      "key": "setup cf-central-america cf challenge",
+      "expected": "setup cf-central-america cf challenge 64a688bb",
+      "actual": "setup cf-central-america cf challenge a8f5dcfe"
+    },
+    {
+      "key": "setup cf-central-america cf elite",
+      "expected": "setup cf-central-america cf elite 22862974",
+      "actual": "setup cf-central-america cf elite eb6e4a7f"
+    },
+    {
+      "key": "setup cf-central-america cf hard",
+      "expected": "setup cf-central-america cf hard 69b6266d",
+      "actual": "setup cf-central-america cf hard 10239cb8"
+    },
+    {
+      "key": "setup cf-central-america cf normal",
+      "expected": "setup cf-central-america cf normal 429bbbc3",
+      "actual": "setup cf-central-america cf normal 2408533c"
+    },
+    {
+      "key": "setup cf-mexico britannia challenge",
+      "expected": "setup cf-mexico britannia challenge 256bb875",
+      "actual": "setup cf-mexico britannia challenge 2ce27546"
+    },
+    {
+      "key": "setup cf-mexico britannia elite",
+      "expected": "setup cf-mexico britannia elite c23fe255",
+      "actual": "setup cf-mexico britannia elite 231bac3f"
+    },
+    {
+      "key": "setup cf-mexico britannia hard",
+      "expected": "setup cf-mexico britannia hard 909d17ce",
+      "actual": "setup cf-mexico britannia hard 42a3d2c5"
+    },
+    {
+      "key": "setup cf-mexico britannia normal",
+      "expected": "setup cf-mexico britannia normal 7da493f2",
+      "actual": "setup cf-mexico britannia normal eb50f7b1"
+    },
+    {
+      "key": "setup cf-mexico cf challenge",
+      "expected": "setup cf-mexico cf challenge b4c21ab9",
+      "actual": "setup cf-mexico cf challenge b33c49f0"
+    },
+    {
+      "key": "setup cf-mexico cf elite",
+      "expected": "setup cf-mexico cf elite f5d487e7",
+      "actual": "setup cf-mexico cf elite db5bfe9b"
+    },
+    {
+      "key": "setup cf-mexico cf hard",
+      "expected": "setup cf-mexico cf hard 30d62507",
+      "actual": "setup cf-mexico cf hard 178e8f50"
+    },
+    {
+      "key": "setup cf-mexico cf normal",
+      "expected": "setup cf-mexico cf normal 26e384fd",
+      "actual": "setup cf-mexico cf normal bcf712da"
+    },
+    {
+      "key": "setup cf-new-zealand britannia challenge",
+      "expected": "setup cf-new-zealand britannia challenge 1e6704e8",
+      "actual": "setup cf-new-zealand britannia challenge a76832b3"
+    },
+    {
+      "key": "setup cf-new-zealand britannia elite",
+      "expected": "setup cf-new-zealand britannia elite ad20d23c",
+      "actual": "setup cf-new-zealand britannia elite ae63ce47"
+    },
+    {
+      "key": "setup cf-new-zealand britannia hard",
+      "expected": "setup cf-new-zealand britannia hard 4921363e",
+      "actual": "setup cf-new-zealand britannia hard 3f023367"
+    },
+    {
+      "key": "setup cf-new-zealand britannia normal",
+      "expected": "setup cf-new-zealand britannia normal 2b404528",
+      "actual": "setup cf-new-zealand britannia normal 89419b15"
+    },
+    {
+      "key": "setup cf-new-zealand cf challenge",
+      "expected": "setup cf-new-zealand cf challenge 08fdb638",
+      "actual": "setup cf-new-zealand cf challenge 0d526269"
+    },
+    {
+      "key": "setup cf-new-zealand cf elite",
+      "expected": "setup cf-new-zealand cf elite 4457257f",
+      "actual": "setup cf-new-zealand cf elite 398ac75c"
+    },
+    {
+      "key": "setup cf-new-zealand cf hard",
+      "expected": "setup cf-new-zealand cf hard 5000db89",
+      "actual": "setup cf-new-zealand cf hard ff5200ec"
+    },
+    {
+      "key": "setup cf-new-zealand cf normal",
+      "expected": "setup cf-new-zealand cf normal 272aafbf",
+      "actual": "setup cf-new-zealand cf normal c012353e"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia challenge",
+      "expected": "setup cf-pacific-northwest britannia challenge 6735f1c9",
+      "actual": "setup cf-pacific-northwest britannia challenge 5341725a"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia elite",
+      "expected": "setup cf-pacific-northwest britannia elite 66e19189",
+      "actual": "setup cf-pacific-northwest britannia elite d2014371"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia hard",
+      "expected": "setup cf-pacific-northwest britannia hard 9d69077d",
+      "actual": "setup cf-pacific-northwest britannia hard 392b052c"
+    },
+    {
+      "key": "setup cf-pacific-northwest britannia normal",
+      "expected": "setup cf-pacific-northwest britannia normal c6bb56d5",
+      "actual": "setup cf-pacific-northwest britannia normal a7084048"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf challenge",
+      "expected": "setup cf-pacific-northwest cf challenge 04ac241b",
+      "actual": "setup cf-pacific-northwest cf challenge c8d9f15e"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf elite",
+      "expected": "setup cf-pacific-northwest cf elite 9e327c0e",
+      "actual": "setup cf-pacific-northwest cf elite 80a08f45"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf hard",
+      "expected": "setup cf-pacific-northwest cf hard d2225f3e",
+      "actual": "setup cf-pacific-northwest cf hard af94812b"
+    },
+    {
+      "key": "setup cf-pacific-northwest cf normal",
+      "expected": "setup cf-pacific-northwest cf normal 851025e2",
+      "actual": "setup cf-pacific-northwest cf normal dae4ce35"
+    },
+    {
+      "key": "setup cf-panama britannia challenge",
+      "expected": "setup cf-panama britannia challenge 2b39bf91",
+      "actual": "setup cf-panama britannia challenge 7ca3f092"
+    },
+    {
+      "key": "setup cf-panama britannia elite",
+      "expected": "setup cf-panama britannia elite a9649b24",
+      "actual": "setup cf-panama britannia elite 43615b4a"
+    },
+    {
+      "key": "setup cf-panama britannia hard",
+      "expected": "setup cf-panama britannia hard 181cb97c",
+      "actual": "setup cf-panama britannia hard 79eb43e3"
+    },
+    {
+      "key": "setup cf-panama britannia normal",
+      "expected": "setup cf-panama britannia normal 6e930b6a",
+      "actual": "setup cf-panama britannia normal cb9641f5"
+    },
+    {
+      "key": "setup cf-panama cf challenge",
+      "expected": "setup cf-panama cf challenge 5a9e4bc6",
+      "actual": "setup cf-panama cf challenge 10a2aa95"
+    },
+    {
+      "key": "setup cf-panama cf elite",
+      "expected": "setup cf-panama cf elite 5548e2a8",
+      "actual": "setup cf-panama cf elite d5745b9e"
+    },
+    {
+      "key": "setup cf-panama cf hard",
+      "expected": "setup cf-panama cf hard 83cd1640",
+      "actual": "setup cf-panama cf hard 05d589c3"
+    },
+    {
+      "key": "setup cf-panama cf normal",
+      "expected": "setup cf-panama cf normal 48b341ed",
+      "actual": "setup cf-panama cf normal a2569f64"
+    },
+    {
+      "key": "setup cf-pendragon britannia challenge",
+      "expected": "setup cf-pendragon britannia challenge a04e2761",
+      "actual": "setup cf-pendragon britannia challenge 4726ffb8"
+    },
+    {
+      "key": "setup cf-pendragon britannia elite",
+      "expected": "setup cf-pendragon britannia elite 3b0e3f8c",
+      "actual": "setup cf-pendragon britannia elite a393b0f9"
+    },
+    {
+      "key": "setup cf-pendragon britannia hard",
+      "expected": "setup cf-pendragon britannia hard 3e8abc6f",
+      "actual": "setup cf-pendragon britannia hard 89d8656e"
+    },
+    {
+      "key": "setup cf-pendragon britannia normal",
+      "expected": "setup cf-pendragon britannia normal d199ef91",
+      "actual": "setup cf-pendragon britannia normal f0a78bd6"
+    },
+    {
+      "key": "setup cf-pendragon cf challenge",
+      "expected": "setup cf-pendragon cf challenge 4674c5fa",
+      "actual": "setup cf-pendragon cf challenge 53842e33"
+    },
+    {
+      "key": "setup cf-pendragon cf elite",
+      "expected": "setup cf-pendragon cf elite 33f7ef69",
+      "actual": "setup cf-pendragon cf elite ac5be40a"
+    },
+    {
+      "key": "setup cf-pendragon cf hard",
+      "expected": "setup cf-pendragon cf hard 85901c08",
+      "actual": "setup cf-pendragon cf hard 62174e9f"
+    },
+    {
+      "key": "setup cf-pendragon cf normal",
+      "expected": "setup cf-pendragon cf normal 9f851b48",
+      "actual": "setup cf-pendragon cf normal ae9e9e87"
+    },
+    {
+      "key": "setup conquest-indochina britannia challenge",
+      "expected": "setup conquest-indochina britannia challenge 174d6b3f",
+      "actual": "setup conquest-indochina britannia challenge 594ccb6d"
+    },
+    {
+      "key": "setup conquest-indochina britannia elite",
+      "expected": "setup conquest-indochina britannia elite 30e30fc3",
+      "actual": "setup conquest-indochina britannia elite fde22cae"
+    },
+    {
+      "key": "setup conquest-indochina britannia hard",
+      "expected": "setup conquest-indochina britannia hard 9343c310",
+      "actual": "setup conquest-indochina britannia hard 69bc8a38"
+    },
+    {
+      "key": "setup conquest-indochina britannia normal",
+      "expected": "setup conquest-indochina britannia normal fd84674b",
+      "actual": "setup conquest-indochina britannia normal 02fed5bd"
+    },
+    {
+      "key": "setup conquest-indochina cf challenge",
+      "expected": "setup conquest-indochina cf challenge ad375445",
+      "actual": "setup conquest-indochina cf challenge 7079b9e1"
+    },
+    {
+      "key": "setup conquest-indochina cf elite",
+      "expected": "setup conquest-indochina cf elite a0c9aab9",
+      "actual": "setup conquest-indochina cf elite 74c13bd7"
+    },
+    {
+      "key": "setup conquest-indochina cf hard",
+      "expected": "setup conquest-indochina cf hard f568670e",
+      "actual": "setup conquest-indochina cf hard 8cce35f2"
+    },
+    {
+      "key": "setup conquest-indochina cf normal",
+      "expected": "setup conquest-indochina cf normal 1f4708d9",
+      "actual": "setup conquest-indochina cf normal 5dc7a5cf"
+    },
+    {
+      "key": "setup crossing-urals britannia challenge",
+      "expected": "setup crossing-urals britannia challenge 5c6aa052",
+      "actual": "setup crossing-urals britannia challenge 21e8d769"
+    },
+    {
+      "key": "setup crossing-urals britannia elite",
+      "expected": "setup crossing-urals britannia elite 8a4487f0",
+      "actual": "setup crossing-urals britannia elite 633f2e2b"
+    },
+    {
+      "key": "setup crossing-urals britannia hard",
+      "expected": "setup crossing-urals britannia hard b83f0929",
+      "actual": "setup crossing-urals britannia hard 94445bc2"
+    },
+    {
+      "key": "setup crossing-urals britannia normal",
+      "expected": "setup crossing-urals britannia normal 1848a6a2",
+      "actual": "setup crossing-urals britannia normal 5a9695cd"
+    },
+    {
+      "key": "setup crossing-urals eu challenge",
+      "expected": "setup crossing-urals eu challenge 96623fc4",
+      "actual": "setup crossing-urals eu challenge ac63c503"
+    },
+    {
+      "key": "setup crossing-urals eu elite",
+      "expected": "setup crossing-urals eu elite c0ff5244",
+      "actual": "setup crossing-urals eu elite f920c32b"
+    },
+    {
+      "key": "setup crossing-urals eu hard",
+      "expected": "setup crossing-urals eu hard ff3d8085",
+      "actual": "setup crossing-urals eu hard c4358e5e"
+    },
+    {
+      "key": "setup crossing-urals eu normal",
+      "expected": "setup crossing-urals eu normal 913ce758",
+      "actual": "setup crossing-urals eu normal eb78d777"
+    },
+    {
+      "key": "setup division-japan britannia challenge",
+      "expected": "setup division-japan britannia challenge cf7abb85",
+      "actual": "setup division-japan britannia challenge 91ab4a29"
+    },
+    {
+      "key": "setup division-japan britannia elite",
+      "expected": "setup division-japan britannia elite 10e55ac7",
+      "actual": "setup division-japan britannia elite 8136eef8"
+    },
+    {
+      "key": "setup division-japan britannia hard",
+      "expected": "setup division-japan britannia hard d4c3cf8d",
+      "actual": "setup division-japan britannia hard 68a1e16d"
+    },
+    {
+      "key": "setup division-japan britannia normal",
+      "expected": "setup division-japan britannia normal ff0c86c2",
+      "actual": "setup division-japan britannia normal 9c7918bb"
+    },
+    {
+      "key": "setup division-japan cf challenge",
+      "expected": "setup division-japan cf challenge a8bd7593",
+      "actual": "setup division-japan cf challenge 125cae78"
+    },
+    {
+      "key": "setup division-japan cf elite",
+      "expected": "setup division-japan cf elite 8ef0aa55",
+      "actual": "setup division-japan cf elite 3baf7240"
+    },
+    {
+      "key": "setup division-japan cf hard",
+      "expected": "setup division-japan cf hard 115c684a",
+      "actual": "setup division-japan cf hard 1ad63e23"
+    },
+    {
+      "key": "setup division-japan cf normal",
+      "expected": "setup division-japan cf normal 99d9b455",
+      "actual": "setup division-japan cf normal e786c1ee"
+    },
+    {
+      "key": "setup division-japan eu challenge",
+      "expected": "setup division-japan eu challenge a24d22da",
+      "actual": "setup division-japan eu challenge 8ec7ac84"
+    },
+    {
+      "key": "setup division-japan eu elite",
+      "expected": "setup division-japan eu elite bc25d5ea",
+      "actual": "setup division-japan eu elite 9ae03300"
+    },
+    {
+      "key": "setup division-japan eu hard",
+      "expected": "setup division-japan eu hard 0c337b85",
+      "actual": "setup division-japan eu hard 1331ba39"
+    },
+    {
+      "key": "setup division-japan eu normal",
+      "expected": "setup division-japan eu normal 0720f612",
+      "actual": "setup division-japan eu normal c47b91e5"
+    },
+    {
+      "key": "setup eu-great-lakes britannia challenge",
+      "expected": "setup eu-great-lakes britannia challenge ec0186e2",
+      "actual": "setup eu-great-lakes britannia challenge 0b46fc35"
+    },
+    {
+      "key": "setup eu-great-lakes britannia elite",
+      "expected": "setup eu-great-lakes britannia elite 103afe7c",
+      "actual": "setup eu-great-lakes britannia elite 9c19d14f"
+    },
+    {
+      "key": "setup eu-great-lakes britannia hard",
+      "expected": "setup eu-great-lakes britannia hard 58c52efd",
+      "actual": "setup eu-great-lakes britannia hard 0b2125e6"
+    },
+    {
+      "key": "setup eu-great-lakes britannia normal",
+      "expected": "setup eu-great-lakes britannia normal c487cd21",
+      "actual": "setup eu-great-lakes britannia normal 2d518cf8"
+    },
+    {
+      "key": "setup eu-great-lakes eu challenge",
+      "expected": "setup eu-great-lakes eu challenge c4ab7648",
+      "actual": "setup eu-great-lakes eu challenge 9f0b1d1d"
+    },
+    {
+      "key": "setup eu-great-lakes eu elite",
+      "expected": "setup eu-great-lakes eu elite d57524eb",
+      "actual": "setup eu-great-lakes eu elite aefa9cef"
+    },
+    {
+      "key": "setup eu-great-lakes eu hard",
+      "expected": "setup eu-great-lakes eu hard ab93e150",
+      "actual": "setup eu-great-lakes eu hard 9887c445"
+    },
+    {
+      "key": "setup eu-great-lakes eu normal",
+      "expected": "setup eu-great-lakes eu normal a23a7f93",
+      "actual": "setup eu-great-lakes eu normal 88a00c8e"
+    },
+    {
+      "key": "setup eu-greenland britannia challenge",
+      "expected": "setup eu-greenland britannia challenge 93edbfa7",
+      "actual": "setup eu-greenland britannia challenge f593e89e"
+    },
+    {
+      "key": "setup eu-greenland britannia elite",
+      "expected": "setup eu-greenland britannia elite e1bc2c93",
+      "actual": "setup eu-greenland britannia elite a30ade81"
+    },
+    {
+      "key": "setup eu-greenland britannia hard",
+      "expected": "setup eu-greenland britannia hard 0197b474",
+      "actual": "setup eu-greenland britannia hard ca2dcc85"
+    },
+    {
+      "key": "setup eu-greenland britannia normal",
+      "expected": "setup eu-greenland britannia normal 18344bb6",
+      "actual": "setup eu-greenland britannia normal 769757a7"
+    },
+    {
+      "key": "setup eu-greenland eu challenge",
+      "expected": "setup eu-greenland eu challenge 95e8322e",
+      "actual": "setup eu-greenland eu challenge 8b50bb87"
+    },
+    {
+      "key": "setup eu-greenland eu elite",
+      "expected": "setup eu-greenland eu elite 85fdc299",
+      "actual": "setup eu-greenland eu elite b8bf0dd3"
+    },
+    {
+      "key": "setup eu-greenland eu hard",
+      "expected": "setup eu-greenland eu hard cde6823f",
+      "actual": "setup eu-greenland eu hard ce2bd18a"
+    },
+    {
+      "key": "setup eu-greenland eu normal",
+      "expected": "setup eu-greenland eu normal 062af702",
+      "actual": "setup eu-greenland eu normal 3b882617"
+    },
+    {
+      "key": "setup eu-panama britannia challenge",
+      "expected": "setup eu-panama britannia challenge 6224b440",
+      "actual": "setup eu-panama britannia challenge 60b1387f"
+    },
+    {
+      "key": "setup eu-panama britannia elite",
+      "expected": "setup eu-panama britannia elite 1c5e1c55",
+      "actual": "setup eu-panama britannia elite 3fdb9fe3"
+    },
+    {
+      "key": "setup eu-panama britannia hard",
+      "expected": "setup eu-panama britannia hard f0b172f0",
+      "actual": "setup eu-panama britannia hard f20b9243"
+    },
+    {
+      "key": "setup eu-panama britannia normal",
+      "expected": "setup eu-panama britannia normal 565721b2",
+      "actual": "setup eu-panama britannia normal 1931ce79"
+    },
+    {
+      "key": "setup eu-panama eu challenge",
+      "expected": "setup eu-panama eu challenge 2c1d8003",
+      "actual": "setup eu-panama eu challenge bbc70710"
+    },
+    {
+      "key": "setup eu-panama eu elite",
+      "expected": "setup eu-panama eu elite 2f0e9a21",
+      "actual": "setup eu-panama eu elite b143a0b7"
+    },
+    {
+      "key": "setup eu-panama eu hard",
+      "expected": "setup eu-panama eu hard 2c24c721",
+      "actual": "setup eu-panama eu hard d177f0d6"
+    },
+    {
+      "key": "setup eu-panama eu normal",
+      "expected": "setup eu-panama eu normal 27863a4a",
+      "actual": "setup eu-panama eu normal 5763a859"
+    },
+    {
+      "key": "setup eu-pendragon britannia challenge",
+      "expected": "setup eu-pendragon britannia challenge 1b9236ad",
+      "actual": "setup eu-pendragon britannia challenge 402f079a"
+    },
+    {
+      "key": "setup eu-pendragon britannia elite",
+      "expected": "setup eu-pendragon britannia elite c8512162",
+      "actual": "setup eu-pendragon britannia elite 2c5d3af2"
+    },
+    {
+      "key": "setup eu-pendragon britannia hard",
+      "expected": "setup eu-pendragon britannia hard 5895f771",
+      "actual": "setup eu-pendragon britannia hard e65db3e8"
+    },
+    {
+      "key": "setup eu-pendragon britannia normal",
+      "expected": "setup eu-pendragon britannia normal 34f71a82",
+      "actual": "setup eu-pendragon britannia normal 8e133bc3"
+    },
+    {
+      "key": "setup eu-pendragon eu challenge",
+      "expected": "setup eu-pendragon eu challenge db7390cf",
+      "actual": "setup eu-pendragon eu challenge 393cbeac"
+    },
+    {
+      "key": "setup eu-pendragon eu elite",
+      "expected": "setup eu-pendragon eu elite c2b19669",
+      "actual": "setup eu-pendragon eu elite 02d821fa"
+    },
+    {
+      "key": "setup eu-pendragon eu hard",
+      "expected": "setup eu-pendragon eu hard 16c38f61",
+      "actual": "setup eu-pendragon eu hard 875ef484"
+    },
+    {
+      "key": "setup eu-pendragon eu normal",
+      "expected": "setup eu-pendragon eu normal 547ad74a",
+      "actual": "setup eu-pendragon eu normal 72dc5843"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia challenge",
+      "expected": "setup eu-rocky-mountains britannia challenge 002f6cec",
+      "actual": "setup eu-rocky-mountains britannia challenge b81fb353"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia elite",
+      "expected": "setup eu-rocky-mountains britannia elite e96ca885",
+      "actual": "setup eu-rocky-mountains britannia elite c201ddc5"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia hard",
+      "expected": "setup eu-rocky-mountains britannia hard ca1e0074",
+      "actual": "setup eu-rocky-mountains britannia hard 2f391383"
+    },
+    {
+      "key": "setup eu-rocky-mountains britannia normal",
+      "expected": "setup eu-rocky-mountains britannia normal b7b6f02b",
+      "actual": "setup eu-rocky-mountains britannia normal 9057c1ee"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu challenge",
+      "expected": "setup eu-rocky-mountains eu challenge 416dc1a2",
+      "actual": "setup eu-rocky-mountains eu challenge 697b70d7"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu elite",
+      "expected": "setup eu-rocky-mountains eu elite f186cfca",
+      "actual": "setup eu-rocky-mountains eu elite 822daa0f"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu hard",
+      "expected": "setup eu-rocky-mountains eu hard baf0c818",
+      "actual": "setup eu-rocky-mountains eu hard 6241620f"
+    },
+    {
+      "key": "setup eu-rocky-mountains eu normal",
+      "expected": "setup eu-rocky-mountains eu normal e1015b13",
+      "actual": "setup eu-rocky-mountains eu normal 0e1745e2"
+    },
+    {
+      "key": "setup european-war eb challenge",
+      "expected": "setup european-war eb challenge 7723dfbc",
+      "actual": "setup european-war eb challenge 7cad27f2"
+    },
+    {
+      "key": "setup european-war eb elite",
+      "expected": "setup european-war eb elite 4ab7b2ba",
+      "actual": "setup european-war eb elite fe52a0fc"
+    },
+    {
+      "key": "setup european-war eb hard",
+      "expected": "setup european-war eb hard 04cd4b44",
+      "actual": "setup european-war eb hard d69e969a"
+    },
+    {
+      "key": "setup european-war eb normal",
+      "expected": "setup european-war eb normal 69457c19",
+      "actual": "setup european-war eb normal 55c2c1af"
+    },
+    {
+      "key": "setup european-war eu challenge",
+      "expected": "setup european-war eu challenge 40fece1f",
+      "actual": "setup european-war eu challenge 502188f5"
+    },
+    {
+      "key": "setup european-war eu elite",
+      "expected": "setup european-war eu elite 448e6173",
+      "actual": "setup european-war eu elite 59c127d2"
+    },
+    {
+      "key": "setup european-war eu hard",
+      "expected": "setup european-war eu hard 4009eff0",
+      "actual": "setup european-war eu hard 52c2c502"
+    },
+    {
+      "key": "setup european-war eu normal",
+      "expected": "setup european-war eu normal 0e084748",
+      "actual": "setup european-war eu normal 97782d2a"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia challenge",
+      "expected": "setup invasion-american-east-coast britannia challenge ecf9168d",
+      "actual": "setup invasion-american-east-coast britannia challenge be5266e4"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia elite",
+      "expected": "setup invasion-american-east-coast britannia elite 1401a9ca",
+      "actual": "setup invasion-american-east-coast britannia elite 6975e940"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia hard",
+      "expected": "setup invasion-american-east-coast britannia hard 9ddf2c08",
+      "actual": "setup invasion-american-east-coast britannia hard 2a86847b"
+    },
+    {
+      "key": "setup invasion-american-east-coast britannia normal",
+      "expected": "setup invasion-american-east-coast britannia normal b3a528f7",
+      "actual": "setup invasion-american-east-coast britannia normal 2ad15114"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu challenge",
+      "expected": "setup invasion-american-east-coast eu challenge 19481205",
+      "actual": "setup invasion-american-east-coast eu challenge 0a6376ac"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu elite",
+      "expected": "setup invasion-american-east-coast eu elite fabcc8c3",
+      "actual": "setup invasion-american-east-coast eu elite ecf81211"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu hard",
+      "expected": "setup invasion-american-east-coast eu hard 2dc686e7",
+      "actual": "setup invasion-american-east-coast eu hard c1ca1b1e"
+    },
+    {
+      "key": "setup invasion-american-east-coast eu normal",
+      "expected": "setup invasion-american-east-coast eu normal 49c93f83",
+      "actual": "setup invasion-american-east-coast eu normal a2aff5c8"
+    },
+    {
+      "key": "setup invasion-brazil britannia challenge",
+      "expected": "setup invasion-brazil britannia challenge 34d4645f",
+      "actual": "setup invasion-brazil britannia challenge 5d0a112a"
+    },
+    {
+      "key": "setup invasion-brazil britannia elite",
+      "expected": "setup invasion-brazil britannia elite 45b89638",
+      "actual": "setup invasion-brazil britannia elite 4418da25"
+    },
+    {
+      "key": "setup invasion-brazil britannia hard",
+      "expected": "setup invasion-brazil britannia hard a30bfb4a",
+      "actual": "setup invasion-brazil britannia hard 534aa931"
+    },
+    {
+      "key": "setup invasion-brazil britannia normal",
+      "expected": "setup invasion-brazil britannia normal 5ddd329b",
+      "actual": "setup invasion-brazil britannia normal e782ee48"
+    },
+    {
+      "key": "setup invasion-brazil eu challenge",
+      "expected": "setup invasion-brazil eu challenge 50c97b9f",
+      "actual": "setup invasion-brazil eu challenge 0766a480"
+    },
+    {
+      "key": "setup invasion-brazil eu elite",
+      "expected": "setup invasion-brazil eu elite b74da809",
+      "actual": "setup invasion-brazil eu elite dd42491b"
+    },
+    {
+      "key": "setup invasion-brazil eu hard",
+      "expected": "setup invasion-brazil eu hard 5c6948e4",
+      "actual": "setup invasion-brazil eu hard cf28e9e9"
+    },
+    {
+      "key": "setup invasion-brazil eu normal",
+      "expected": "setup invasion-brazil eu normal 48d0c6b1",
+      "actual": "setup invasion-brazil eu normal faa602e2"
+    },
+    {
+      "key": "setup invasion-california britannia challenge",
+      "expected": "setup invasion-california britannia challenge ab2c6dc5",
+      "actual": "setup invasion-california britannia challenge 9362c52f"
+    },
+    {
+      "key": "setup invasion-california britannia elite",
+      "expected": "setup invasion-california britannia elite 9eaeb177",
+      "actual": "setup invasion-california britannia elite 2f5bf54f"
+    },
+    {
+      "key": "setup invasion-california britannia hard",
+      "expected": "setup invasion-california britannia hard 3d0670a9",
+      "actual": "setup invasion-california britannia hard 1298e8c3"
+    },
+    {
+      "key": "setup invasion-california britannia normal",
+      "expected": "setup invasion-california britannia normal 9e099c65",
+      "actual": "setup invasion-california britannia normal a8c4f22b"
+    },
+    {
+      "key": "setup invasion-california cf challenge",
+      "expected": "setup invasion-california cf challenge f74c55d9",
+      "actual": "setup invasion-california cf challenge 535b54c9"
+    },
+    {
+      "key": "setup invasion-california cf elite",
+      "expected": "setup invasion-california cf elite 40feced9",
+      "actual": "setup invasion-california cf elite 5e54a971"
+    },
+    {
+      "key": "setup invasion-california cf hard",
+      "expected": "setup invasion-california cf hard 6c83f792",
+      "actual": "setup invasion-california cf hard bfc53e8a"
+    },
+    {
+      "key": "setup invasion-california cf normal",
+      "expected": "setup invasion-california cf normal 0006ff38",
+      "actual": "setup invasion-california cf normal 1989dd14"
+    },
+    {
+      "key": "setup invasion-canada britannia challenge",
+      "expected": "setup invasion-canada britannia challenge 1156da0d",
+      "actual": "setup invasion-canada britannia challenge ba728e5b"
+    },
+    {
+      "key": "setup invasion-canada britannia elite",
+      "expected": "setup invasion-canada britannia elite aed03acb",
+      "actual": "setup invasion-canada britannia elite 520834c4"
+    },
+    {
+      "key": "setup invasion-canada britannia hard",
+      "expected": "setup invasion-canada britannia hard 801f3044",
+      "actual": "setup invasion-canada britannia hard 44961086"
+    },
+    {
+      "key": "setup invasion-canada britannia normal",
+      "expected": "setup invasion-canada britannia normal 58ba9f6f",
+      "actual": "setup invasion-canada britannia normal c717fecb"
+    },
+    {
+      "key": "setup invasion-canada eu challenge",
+      "expected": "setup invasion-canada eu challenge 94273008",
+      "actual": "setup invasion-canada eu challenge ac6c1134"
+    },
+    {
+      "key": "setup invasion-canada eu elite",
+      "expected": "setup invasion-canada eu elite 1c3c017b",
+      "actual": "setup invasion-canada eu elite fe300505"
+    },
+    {
+      "key": "setup invasion-canada eu hard",
+      "expected": "setup invasion-canada eu hard 9fcae92c",
+      "actual": "setup invasion-canada eu hard 82c970ae"
+    },
+    {
+      "key": "setup invasion-canada eu normal",
+      "expected": "setup invasion-canada eu normal ed13e9c9",
+      "actual": "setup invasion-canada eu normal c4fb7c6b"
+    },
+    {
+      "key": "setup invasion-caribbean britannia challenge",
+      "expected": "setup invasion-caribbean britannia challenge 158b5db6",
+      "actual": "setup invasion-caribbean britannia challenge d7d46db3"
+    },
+    {
+      "key": "setup invasion-caribbean britannia elite",
+      "expected": "setup invasion-caribbean britannia elite d4753093",
+      "actual": "setup invasion-caribbean britannia elite b7b3d9a9"
+    },
+    {
+      "key": "setup invasion-caribbean britannia hard",
+      "expected": "setup invasion-caribbean britannia hard 16e40277",
+      "actual": "setup invasion-caribbean britannia hard d13f952c"
+    },
+    {
+      "key": "setup invasion-caribbean britannia normal",
+      "expected": "setup invasion-caribbean britannia normal d4485dd8",
+      "actual": "setup invasion-caribbean britannia normal dd604845"
+    },
+    {
+      "key": "setup invasion-caribbean eu challenge",
+      "expected": "setup invasion-caribbean eu challenge 72606b48",
+      "actual": "setup invasion-caribbean eu challenge f759c623"
+    },
+    {
+      "key": "setup invasion-caribbean eu elite",
+      "expected": "setup invasion-caribbean eu elite e7e01050",
+      "actual": "setup invasion-caribbean eu elite 91e408d0"
+    },
+    {
+      "key": "setup invasion-caribbean eu hard",
+      "expected": "setup invasion-caribbean eu hard ef1d3f9d",
+      "actual": "setup invasion-caribbean eu hard afdcc13c"
+    },
+    {
+      "key": "setup invasion-caribbean eu normal",
+      "expected": "setup invasion-caribbean eu normal 9b1a67fc",
+      "actual": "setup invasion-caribbean eu normal b497eddd"
+    },
+    {
+      "key": "setup invasion-hawaii britannia challenge",
+      "expected": "setup invasion-hawaii britannia challenge 952c9c19",
+      "actual": "setup invasion-hawaii britannia challenge 53ddc8ae"
+    },
+    {
+      "key": "setup invasion-hawaii britannia elite",
+      "expected": "setup invasion-hawaii britannia elite 4484ccd7",
+      "actual": "setup invasion-hawaii britannia elite 73f264f3"
+    },
+    {
+      "key": "setup invasion-hawaii britannia hard",
+      "expected": "setup invasion-hawaii britannia hard 2bde1c86",
+      "actual": "setup invasion-hawaii britannia hard 1084d02b"
+    },
+    {
+      "key": "setup invasion-hawaii britannia normal",
+      "expected": "setup invasion-hawaii britannia normal 40e0c840",
+      "actual": "setup invasion-hawaii britannia normal 691faa01"
+    },
+    {
+      "key": "setup invasion-hawaii cf challenge",
+      "expected": "setup invasion-hawaii cf challenge 26223f19",
+      "actual": "setup invasion-hawaii cf challenge 580720ea"
+    },
+    {
+      "key": "setup invasion-hawaii cf elite",
+      "expected": "setup invasion-hawaii cf elite c209ccc3",
+      "actual": "setup invasion-hawaii cf elite 3bae71fb"
+    },
+    {
+      "key": "setup invasion-hawaii cf hard",
+      "expected": "setup invasion-hawaii cf hard 76716307",
+      "actual": "setup invasion-hawaii cf hard a9640e50"
+    },
+    {
+      "key": "setup invasion-hawaii cf normal",
+      "expected": "setup invasion-hawaii cf normal 3612c089",
+      "actual": "setup invasion-hawaii cf normal 8e3c3cec"
+    },
+    {
+      "key": "setup invasion-japan bk challenge",
+      "expected": "setup invasion-japan bk challenge 941be2dd",
+      "actual": "setup invasion-japan bk challenge 7c460956"
+    },
+    {
+      "key": "setup invasion-japan bk elite",
+      "expected": "setup invasion-japan bk elite 874ddde6",
+      "actual": "setup invasion-japan bk elite 3acedce9"
+    },
+    {
+      "key": "setup invasion-japan bk hard",
+      "expected": "setup invasion-japan bk hard 8e7bb889",
+      "actual": "setup invasion-japan bk hard 9737332a"
+    },
+    {
+      "key": "setup invasion-japan bk normal",
+      "expected": "setup invasion-japan bk normal 365f4e6b",
+      "actual": "setup invasion-japan bk normal 983f8276"
+    },
+    {
+      "key": "setup invasion-japan britannia challenge",
+      "expected": "setup invasion-japan britannia challenge 88841e61",
+      "actual": "setup invasion-japan britannia challenge 58d83ce2"
+    },
+    {
+      "key": "setup invasion-japan britannia elite",
+      "expected": "setup invasion-japan britannia elite 010b6d3e",
+      "actual": "setup invasion-japan britannia elite cd8408ae"
+    },
+    {
+      "key": "setup invasion-japan britannia hard",
+      "expected": "setup invasion-japan britannia hard fb752d6f",
+      "actual": "setup invasion-japan britannia hard a9d992c4"
+    },
+    {
+      "key": "setup invasion-japan britannia normal",
+      "expected": "setup invasion-japan britannia normal aa64dcd0",
+      "actual": "setup invasion-japan britannia normal e9085bbd"
+    },
+    {
+      "key": "setup invasion-japan cf challenge",
+      "expected": "setup invasion-japan cf challenge b491bd76",
+      "actual": "setup invasion-japan cf challenge ddfb8eb3"
+    },
+    {
+      "key": "setup invasion-japan cf elite",
+      "expected": "setup invasion-japan cf elite fd287bb7",
+      "actual": "setup invasion-japan cf elite da6ed904"
+    },
+    {
+      "key": "setup invasion-japan cf hard",
+      "expected": "setup invasion-japan cf hard 00c8a31e",
+      "actual": "setup invasion-japan cf hard 3ce12aff"
+    },
+    {
+      "key": "setup invasion-japan cf normal",
+      "expected": "setup invasion-japan cf normal ae26a061",
+      "actual": "setup invasion-japan cf normal c94ee880"
+    },
+    {
+      "key": "setup invasion-korea britannia challenge",
+      "expected": "setup invasion-korea britannia challenge d4540733",
+      "actual": "setup invasion-korea britannia challenge 8f27df11"
+    },
+    {
+      "key": "setup invasion-korea britannia elite",
+      "expected": "setup invasion-korea britannia elite 74475dc8",
+      "actual": "setup invasion-korea britannia elite 1a9b3907"
+    },
+    {
+      "key": "setup invasion-korea britannia hard",
+      "expected": "setup invasion-korea britannia hard 541d531f",
+      "actual": "setup invasion-korea britannia hard 44d49423"
+    },
+    {
+      "key": "setup invasion-korea britannia normal",
+      "expected": "setup invasion-korea britannia normal 470878cf",
+      "actual": "setup invasion-korea britannia normal b6adb237"
+    },
+    {
+      "key": "setup invasion-korea cf challenge",
+      "expected": "setup invasion-korea cf challenge 1264bb61",
+      "actual": "setup invasion-korea cf challenge 0720fc51"
+    },
+    {
+      "key": "setup invasion-korea cf elite",
+      "expected": "setup invasion-korea cf elite 569b88fc",
+      "actual": "setup invasion-korea cf elite 97294019"
+    },
+    {
+      "key": "setup invasion-korea cf hard",
+      "expected": "setup invasion-korea cf hard b4a183b6",
+      "actual": "setup invasion-korea cf hard c1036410"
+    },
+    {
+      "key": "setup invasion-korea cf normal",
+      "expected": "setup invasion-korea cf normal 192cdeb4",
+      "actual": "setup invasion-korea cf normal 542a9172"
+    },
+    {
+      "key": "setup invasion-south-africa britannia challenge",
+      "expected": "setup invasion-south-africa britannia challenge 0d8353d0",
+      "actual": "setup invasion-south-africa britannia challenge cc1d6311"
+    },
+    {
+      "key": "setup invasion-south-africa britannia elite",
+      "expected": "setup invasion-south-africa britannia elite fad626a5",
+      "actual": "setup invasion-south-africa britannia elite 2b4411a8"
+    },
+    {
+      "key": "setup invasion-south-africa britannia hard",
+      "expected": "setup invasion-south-africa britannia hard a6fc4ba3",
+      "actual": "setup invasion-south-africa britannia hard cd2eac38"
+    },
+    {
+      "key": "setup invasion-south-africa britannia normal",
+      "expected": "setup invasion-south-africa britannia normal ab7ea7cd",
+      "actual": "setup invasion-south-africa britannia normal d8c9737e"
+    },
+    {
+      "key": "setup invasion-south-africa eu challenge",
+      "expected": "setup invasion-south-africa eu challenge 580a761d",
+      "actual": "setup invasion-south-africa eu challenge c670a92a"
+    },
+    {
+      "key": "setup invasion-south-africa eu elite",
+      "expected": "setup invasion-south-africa eu elite 44c0d4b8",
+      "actual": "setup invasion-south-africa eu elite ca7171eb"
+    },
+    {
+      "key": "setup invasion-south-africa eu hard",
+      "expected": "setup invasion-south-africa eu hard ea9bac32",
+      "actual": "setup invasion-south-africa eu hard a193cc83"
+    },
+    {
+      "key": "setup invasion-south-africa eu normal",
+      "expected": "setup invasion-south-africa eu normal d745e5cf",
+      "actual": "setup invasion-south-africa eu normal 0487df7c"
+    },
+    {
+      "key": "setup invasion-turkey britannia challenge",
+      "expected": "setup invasion-turkey britannia challenge 92efe512",
+      "actual": "setup invasion-turkey britannia challenge abeaa189"
+    },
+    {
+      "key": "setup invasion-turkey britannia elite",
+      "expected": "setup invasion-turkey britannia elite 3e1abf9a",
+      "actual": "setup invasion-turkey britannia elite ffac58f3"
+    },
+    {
+      "key": "setup invasion-turkey britannia hard",
+      "expected": "setup invasion-turkey britannia hard a80aeb6d",
+      "actual": "setup invasion-turkey britannia hard 15a68a6e"
+    },
+    {
+      "key": "setup invasion-turkey britannia normal",
+      "expected": "setup invasion-turkey britannia normal 705b0600",
+      "actual": "setup invasion-turkey britannia normal 98ecbaad"
+    },
+    {
+      "key": "setup invasion-turkey eu challenge",
+      "expected": "setup invasion-turkey eu challenge c29a7ec0",
+      "actual": "setup invasion-turkey eu challenge 0362dd15"
+    },
+    {
+      "key": "setup invasion-turkey eu elite",
+      "expected": "setup invasion-turkey eu elite e7bee30d",
+      "actual": "setup invasion-turkey eu elite 486afc18"
+    },
+    {
+      "key": "setup invasion-turkey eu hard",
+      "expected": "setup invasion-turkey eu hard 1bfcbd04",
+      "actual": "setup invasion-turkey eu hard e0af16a5"
+    },
+    {
+      "key": "setup invasion-turkey eu normal",
+      "expected": "setup invasion-turkey eu normal 1dfe2488",
+      "actual": "setup invasion-turkey eu normal dd41ea55"
+    },
+    {
+      "key": "setup operation-stonehenge britannia challenge",
+      "expected": "setup operation-stonehenge britannia challenge 0dadfdfd",
+      "actual": "setup operation-stonehenge britannia challenge 1a7e20ab"
+    },
+    {
+      "key": "setup operation-stonehenge britannia elite",
+      "expected": "setup operation-stonehenge britannia elite 2bbe33cc",
+      "actual": "setup operation-stonehenge britannia elite 9ce613c0"
+    },
+    {
+      "key": "setup operation-stonehenge britannia hard",
+      "expected": "setup operation-stonehenge britannia hard a66ef008",
+      "actual": "setup operation-stonehenge britannia hard e89857b2"
+    },
+    {
+      "key": "setup operation-stonehenge britannia normal",
+      "expected": "setup operation-stonehenge britannia normal 74bde75f",
+      "actual": "setup operation-stonehenge britannia normal 164e3935"
+    },
+    {
+      "key": "setup operation-stonehenge eu challenge",
+      "expected": "setup operation-stonehenge eu challenge f7f25824",
+      "actual": "setup operation-stonehenge eu challenge 27f7928c"
+    },
+    {
+      "key": "setup operation-stonehenge eu elite",
+      "expected": "setup operation-stonehenge eu elite abc59316",
+      "actual": "setup operation-stonehenge eu elite 1605a813"
+    },
+    {
+      "key": "setup operation-stonehenge eu hard",
+      "expected": "setup operation-stonehenge eu hard a4795f5b",
+      "actual": "setup operation-stonehenge eu hard 889dcd73"
+    },
+    {
+      "key": "setup operation-stonehenge eu normal",
+      "expected": "setup operation-stonehenge eu normal 49a0682f",
+      "actual": "setup operation-stonehenge eu normal 65feb60f"
+    },
+    {
+      "key": "setup philippines-invasion britannia challenge",
+      "expected": "setup philippines-invasion britannia challenge c5d0bb38",
+      "actual": "setup philippines-invasion britannia challenge 5168fbc0"
+    },
+    {
+      "key": "setup philippines-invasion britannia elite",
+      "expected": "setup philippines-invasion britannia elite ae74c56c",
+      "actual": "setup philippines-invasion britannia elite 6a47e5be"
+    },
+    {
+      "key": "setup philippines-invasion britannia hard",
+      "expected": "setup philippines-invasion britannia hard c255f81e",
+      "actual": "setup philippines-invasion britannia hard cf4979d6"
+    },
+    {
+      "key": "setup philippines-invasion britannia normal",
+      "expected": "setup philippines-invasion britannia normal f4cc63d5",
+      "actual": "setup philippines-invasion britannia normal f0911157"
+    },
+    {
+      "key": "setup philippines-invasion cf challenge",
+      "expected": "setup philippines-invasion cf challenge ae255553",
+      "actual": "setup philippines-invasion cf challenge 56edc943"
+    },
+    {
+      "key": "setup philippines-invasion cf elite",
+      "expected": "setup philippines-invasion cf elite 2384715a",
+      "actual": "setup philippines-invasion cf elite 554ec5f7"
+    },
+    {
+      "key": "setup philippines-invasion cf hard",
+      "expected": "setup philippines-invasion cf hard 3fb2f1a4",
+      "actual": "setup philippines-invasion cf hard 8b13d828"
+    },
+    {
+      "key": "setup philippines-invasion cf normal",
+      "expected": "setup philippines-invasion cf normal 35a26e90",
+      "actual": "setup philippines-invasion cf normal 647aa3fc"
+    },
+    {
+      "key": "setup war-for-australia britannia challenge",
+      "expected": "setup war-for-australia britannia challenge 3714f39c",
+      "actual": "setup war-for-australia britannia challenge cb1f1786"
+    },
+    {
+      "key": "setup war-for-australia britannia elite",
+      "expected": "setup war-for-australia britannia elite 443d838c",
+      "actual": "setup war-for-australia britannia elite 7c4e6336"
+    },
+    {
+      "key": "setup war-for-australia britannia hard",
+      "expected": "setup war-for-australia britannia hard 78563df6",
+      "actual": "setup war-for-australia britannia hard 1ae11a8e"
+    },
+    {
+      "key": "setup war-for-australia britannia normal",
+      "expected": "setup war-for-australia britannia normal 9a5cd271",
+      "actual": "setup war-for-australia britannia normal d5e8fab9"
+    },
+    {
+      "key": "setup war-for-australia cf challenge",
+      "expected": "setup war-for-australia cf challenge 52ffd860",
+      "actual": "setup war-for-australia cf challenge 6edcbb42"
+    },
+    {
+      "key": "setup war-for-australia cf elite",
+      "expected": "setup war-for-australia cf elite a50cc84f",
+      "actual": "setup war-for-australia cf elite 1b42f649"
+    },
+    {
+      "key": "setup war-for-australia cf hard",
+      "expected": "setup war-for-australia cf hard 15c25aa8",
+      "actual": "setup war-for-australia cf hard afa18a7a"
+    },
+    {
+      "key": "setup war-for-australia cf normal",
+      "expected": "setup war-for-australia cf normal 2c4b8f20",
+      "actual": "setup war-for-australia cf normal ce183966"
+    },
+    {
+      "key": "setup war-for-australia eu challenge",
+      "expected": "setup war-for-australia eu challenge 0726ba76",
+      "actual": "setup war-for-australia eu challenge 3bbad7b2"
+    },
+    {
+      "key": "setup war-for-australia eu elite",
+      "expected": "setup war-for-australia eu elite 81aee16f",
+      "actual": "setup war-for-australia eu elite 21d8defa"
+    },
+    {
+      "key": "setup war-for-australia eu hard",
+      "expected": "setup war-for-australia eu hard d0d9c272",
+      "actual": "setup war-for-australia eu hard 60540e8c"
+    },
+    {
+      "key": "setup war-for-australia eu normal",
+      "expected": "setup war-for-australia eu normal 33543453",
+      "actual": "setup war-for-australia eu normal 35211965"
+    },
+    {
+      "key": "sim area-18 britannia normal 11 2",
+      "expected": "sim area-18 britannia normal 11 2 80bda3d4 2619af2b cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+      "actual": "sim area-18 britannia normal 11 2 96bc521d 99c443e5 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0"
+    },
+    {
+      "key": "sim area-18 cf normal 11 2",
+      "expected": "sim area-18 cf normal 11 2 54efde68 baf8af58 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+      "actual": "sim area-18 cf normal 11 2 049a470b f6849783 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0"
+    },
+    {
+      "key": "sim area-18 eu normal 11 2",
+      "expected": "sim area-18 eu normal 11 2 9b058fa7 bb7565b4 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+      "actual": "sim area-18 eu normal 11 2 a782e512 b0cc8519 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0"
+    },
+    {
+      "key": "sim battle-luoyang britannia normal 11 2",
+      "expected": "sim battle-luoyang britannia normal 11 2 3173ac4b 057008c9 cities={\"britannia\":32,\"cf\":51} errors=0",
+      "actual": "sim battle-luoyang britannia normal 11 2 76946cfd 4dc11f63 cities={\"britannia\":32,\"cf\":51} errors=0"
+    },
+    {
+      "key": "sim battle-luoyang cf normal 11 2",
+      "expected": "sim battle-luoyang cf normal 11 2 03c32e54 3ac1e8ef cities={\"britannia\":31,\"cf\":52} errors=0",
+      "actual": "sim battle-luoyang cf normal 11 2 2315fd61 e32b6978 cities={\"britannia\":33,\"cf\":50} errors=0"
+    },
+    {
+      "key": "sim bering-strait britannia normal 11 2",
+      "expected": "sim bering-strait britannia normal 11 2 be5101e8 c98817b8 cities={\"britannia\":14,\"eu\":14} errors=0",
+      "actual": "sim bering-strait britannia normal 11 2 c19bfd81 9b4f34f1 cities={\"britannia\":15,\"eu\":13} errors=0"
+    },
+    {
+      "key": "sim bering-strait eu normal 11 2",
+      "expected": "sim bering-strait eu normal 11 2 9d9e3c26 4c777446 cities={\"britannia\":14,\"eu\":14} errors=0",
+      "actual": "sim bering-strait eu normal 11 2 18431fd4 05bb7b50 cities={\"britannia\":14,\"eu\":14} errors=0"
+    },
+    {
+      "key": "sim bf-malacca britannia normal 11 2",
+      "expected": "sim bf-malacca britannia normal 11 2 5b650bbc 032344c0 cities={\"britannia\":9,\"cf\":45} errors=0",
+      "actual": "sim bf-malacca britannia normal 11 2 618341f9 917b5741 cities={\"britannia\":11,\"cf\":43} errors=0"
+    },
+    {
+      "key": "sim bf-malacca cf normal 11 2",
+      "expected": "sim bf-malacca cf normal 11 2 6f0adab8 11f2844f cities={\"britannia\":10,\"cf\":44} errors=0",
+      "actual": "sim bf-malacca cf normal 11 2 0074da05 52037cdf cities={\"britannia\":10,\"cf\":44} errors=0"
+    },
+    {
+      "key": "sim bf-south-china britannia normal 11 2",
+      "expected": "sim bf-south-china britannia normal 11 2 f6df7f6c 43e68263 cities={\"britannia\":15,\"cf\":50} errors=0",
+      "actual": "sim bf-south-china britannia normal 11 2 d080cbee a0784ece cities={\"britannia\":16,\"cf\":49} errors=0"
+    },
+    {
+      "key": "sim bf-south-china cf normal 11 2",
+      "expected": "sim bf-south-china cf normal 11 2 2c641668 7133583d cities={\"britannia\":14,\"cf\":51} errors=0",
+      "actual": "sim bf-south-china cf normal 11 2 9591bce6 2fd89bd0 cities={\"britannia\":16,\"cf\":49} errors=0"
+    },
+    {
+      "key": "sim bf-yangtze britannia normal 11 2",
+      "expected": "sim bf-yangtze britannia normal 11 2 18298a89 1286cf34 cities={\"britannia\":23,\"cf\":37} errors=0",
+      "actual": "sim bf-yangtze britannia normal 11 2 27e31950 9c9fe22a cities={\"britannia\":22,\"cf\":38} errors=0"
+    },
+    {
+      "key": "sim bf-yangtze cf normal 11 2",
+      "expected": "sim bf-yangtze cf normal 11 2 aae04e40 90645df3 cities={\"britannia\":24,\"cf\":36} errors=0",
+      "actual": "sim bf-yangtze cf normal 11 2 f8178b4b 78855481 cities={\"britannia\":24,\"cf\":36} errors=0"
+    },
+    {
+      "key": "sim britannia-iraq-iran britannia normal 11 2",
+      "expected": "sim britannia-iraq-iran britannia normal 11 2 678d30ca 533ab139 cities={\"britannia\":16,\"cf\":68} errors=0",
+      "actual": "sim britannia-iraq-iran britannia normal 11 2 8aa8b0cb 0c7e4547 cities={\"britannia\":17,\"cf\":67} errors=0"
+    },
+    {
+      "key": "sim britannia-iraq-iran cf normal 11 2",
+      "expected": "sim britannia-iraq-iran cf normal 11 2 752f408b 7f68188d cities={\"britannia\":18,\"cf\":66} errors=0",
+      "actual": "sim britannia-iraq-iran cf normal 11 2 0eda1040 83ba1689 cities={\"britannia\":19,\"cf\":65} errors=0"
+    },
+    {
+      "key": "sim britannia-siberia britannia normal 11 2",
+      "expected": "sim britannia-siberia britannia normal 11 2 59ff4761 a87af106 cities={\"britannia\":13,\"eu\":36} errors=0",
+      "actual": "sim britannia-siberia britannia normal 11 2 b212b9d9 01349313 cities={\"britannia\":12,\"eu\":37} errors=0"
+    },
+    {
+      "key": "sim britannia-siberia eu normal 11 2",
+      "expected": "sim britannia-siberia eu normal 11 2 1dc8dec4 417622bf cities={\"britannia\":13,\"eu\":36} errors=0",
+      "actual": "sim britannia-siberia eu normal 11 2 9bfd1db0 af156e8c cities={\"britannia\":12,\"eu\":37} errors=0"
+    },
+    {
+      "key": "sim britannia-western-russia britannia normal 11 2",
+      "expected": "sim britannia-western-russia britannia normal 11 2 0d99bb19 ff865570 cities={\"britannia\":12,\"eu\":29} errors=0",
+      "actual": "sim britannia-western-russia britannia normal 11 2 f1221d81 28ffbf77 cities={\"britannia\":12,\"eu\":29} errors=0"
+    },
+    {
+      "key": "sim britannia-western-russia eu normal 11 2",
+      "expected": "sim britannia-western-russia eu normal 11 2 1eeccd48 64df41f7 cities={\"britannia\":12,\"eu\":29} errors=0",
+      "actual": "sim britannia-western-russia eu normal 11 2 7dd2b963 ffd4e284 cities={\"britannia\":12,\"eu\":29} errors=0"
+    },
+    {
+      "key": "sim cf-central-america britannia normal 11 2",
+      "expected": "sim cf-central-america britannia normal 11 2 649cdfeb a9a1fd94 cities={\"cf\":2,\"britannia\":79} errors=0",
+      "actual": "sim cf-central-america britannia normal 11 2 abc44b16 249a4255 cities={\"cf\":2,\"britannia\":79} errors=0"
+    },
+    {
+      "key": "sim cf-central-america cf normal 11 2",
+      "expected": "sim cf-central-america cf normal 11 2 2a2d0090 df2702b3 cities={\"cf\":2,\"britannia\":79} errors=0",
+      "actual": "sim cf-central-america cf normal 11 2 6ec6b8c0 ddd4e8ab cities={\"cf\":2,\"britannia\":79} errors=0"
+    },
+    {
+      "key": "sim cf-mexico britannia normal 11 2",
+      "expected": "sim cf-mexico britannia normal 11 2 4f0cd670 bd1d5003 cities={\"cf\":6,\"britannia\":74} errors=0",
+      "actual": "sim cf-mexico britannia normal 11 2 5f5163f8 1101d98c cities={\"cf\":6,\"britannia\":74} errors=0"
+    },
+    {
+      "key": "sim cf-mexico cf normal 11 2",
+      "expected": "sim cf-mexico cf normal 11 2 20b753c5 7be2f918 cities={\"cf\":6,\"britannia\":74} errors=0",
+      "actual": "sim cf-mexico cf normal 11 2 e1492872 548d7f22 cities={\"cf\":7,\"britannia\":73} errors=0"
+    },
+    {
+      "key": "sim cf-new-zealand britannia normal 11 2",
+      "expected": "sim cf-new-zealand britannia normal 11 2 397b6e60 d4a85a7b cities={\"cf\":3,\"britannia\":60} errors=0",
+      "actual": "sim cf-new-zealand britannia normal 11 2 1ca9b2ed c8a69456 cities={\"cf\":1,\"britannia\":62} errors=0"
+    },
+    {
+      "key": "sim cf-new-zealand cf normal 11 2",
+      "expected": "sim cf-new-zealand cf normal 11 2 24d1849b 80921099 cities={\"cf\":3,\"britannia\":60} errors=0",
+      "actual": "sim cf-new-zealand cf normal 11 2 0a298085 372cd3b2 cities={\"cf\":3,\"britannia\":60} errors=0"
+    },
+    {
+      "key": "sim cf-pacific-northwest britannia normal 11 2",
+      "expected": "sim cf-pacific-northwest britannia normal 11 2 cb37a189 d2a3267f cities={\"cf\":1,\"britannia\":62} errors=0",
+      "actual": "sim cf-pacific-northwest britannia normal 11 2 9084f4a0 7fc43013 cities={\"cf\":2,\"britannia\":61} errors=0"
+    },
+    {
+      "key": "sim cf-pacific-northwest cf normal 11 2",
+      "expected": "sim cf-pacific-northwest cf normal 11 2 9ee31f7a adb437f5 cities={\"cf\":1,\"britannia\":62} errors=0",
+      "actual": "sim cf-pacific-northwest cf normal 11 2 80bf4fd8 50d31caa cities={\"cf\":1,\"britannia\":62} errors=0"
+    },
+    {
+      "key": "sim cf-panama britannia normal 11 2",
+      "expected": "sim cf-panama britannia normal 11 2 d37cff3d e142fb48 cities={\"cf\":3,\"britannia\":27} errors=0",
+      "actual": "sim cf-panama britannia normal 11 2 1a02db78 ef366c59 cities={\"cf\":3,\"britannia\":27} errors=0"
+    },
+    {
+      "key": "sim cf-panama cf normal 11 2",
+      "expected": "sim cf-panama cf normal 11 2 3b18d661 b969a9d8 cities={\"cf\":3,\"britannia\":27} errors=0",
+      "actual": "sim cf-panama cf normal 11 2 3076f998 7ad6fd6c cities={\"cf\":4,\"britannia\":26} errors=0"
+    },
+    {
+      "key": "sim cf-pendragon britannia normal 11 2",
+      "expected": "sim cf-pendragon britannia normal 11 2 3c8f1ad2 41409c4b cities={\"cf\":18,\"britannia\":52} errors=0",
+      "actual": "sim cf-pendragon britannia normal 11 2 679e3113 42928e08 cities={\"cf\":18,\"britannia\":52} errors=0"
+    },
+    {
+      "key": "sim cf-pendragon cf normal 11 2",
+      "expected": "sim cf-pendragon cf normal 11 2 d97eb5a8 692fa1e6 cities={\"cf\":18,\"britannia\":52} errors=0",
+      "actual": "sim cf-pendragon cf normal 11 2 d23b64a5 c72e5702 cities={\"cf\":18,\"britannia\":52} errors=0"
+    },
+    {
+      "key": "sim conquest-indochina britannia normal 11 2",
+      "expected": "sim conquest-indochina britannia normal 11 2 f77cab4a c18b537d cities={\"britannia\":24,\"cf\":20} errors=0",
+      "actual": "sim conquest-indochina britannia normal 11 2 3efd056b 12ecbe24 cities={\"britannia\":25,\"cf\":19} errors=0"
+    },
+    {
+      "key": "sim conquest-indochina cf normal 11 2",
+      "expected": "sim conquest-indochina cf normal 11 2 8a9d5711 9a454af2 cities={\"britannia\":24,\"cf\":20} errors=0",
+      "actual": "sim conquest-indochina cf normal 11 2 7606f390 9df4a2ad cities={\"britannia\":24,\"cf\":20} errors=0"
+    },
+    {
+      "key": "sim crossing-urals britannia normal 11 2",
+      "expected": "sim crossing-urals britannia normal 11 2 813f947f f0621e2b cities={\"britannia\":18,\"eu\":22} errors=0",
+      "actual": "sim crossing-urals britannia normal 11 2 531d7351 d573b733 cities={\"britannia\":19,\"eu\":21} errors=0"
+    },
+    {
+      "key": "sim crossing-urals eu normal 11 2",
+      "expected": "sim crossing-urals eu normal 11 2 25145e97 8d4fa75b cities={\"britannia\":17,\"eu\":23} errors=0",
+      "actual": "sim crossing-urals eu normal 11 2 6ac71d86 f79013bd cities={\"britannia\":16,\"eu\":24} errors=0"
+    },
+    {
+      "key": "sim division-japan britannia normal 11 2",
+      "expected": "sim division-japan britannia normal 11 2 3d2dbb3e e6a79169 cities={\"britannia\":16,\"eu\":11,\"cf\":17} errors=0",
+      "actual": "sim division-japan britannia normal 11 2 32b3ab8d fb849296 cities={\"britannia\":17,\"eu\":11,\"cf\":16} errors=0"
+    },
+    {
+      "key": "sim division-japan cf normal 11 2",
+      "expected": "sim division-japan cf normal 11 2 6d513189 a590a2bb cities={\"britannia\":17,\"eu\":10,\"cf\":17} errors=0",
+      "actual": "sim division-japan cf normal 11 2 89f4ee68 9f7210b2 cities={\"britannia\":17,\"eu\":10,\"cf\":17} errors=0"
+    },
+    {
+      "key": "sim division-japan eu normal 11 2",
+      "expected": "sim division-japan eu normal 11 2 1f7ccb7c 151aaa87 cities={\"britannia\":15,\"eu\":12,\"cf\":17} errors=0",
+      "actual": "sim division-japan eu normal 11 2 f1892bb4 f4affa27 cities={\"britannia\":17,\"eu\":10,\"cf\":17} errors=0"
+    },
+    {
+      "key": "sim eu-great-lakes britannia normal 11 2",
+      "expected": "sim eu-great-lakes britannia normal 11 2 efb62cfb 887ef8c6 cities={\"eu\":19,\"britannia\":37} errors=0",
+      "actual": "sim eu-great-lakes britannia normal 11 2 8a737ea8 31367b8b cities={\"eu\":18,\"britannia\":38} errors=0"
+    },
+    {
+      "key": "sim eu-great-lakes eu normal 11 2",
+      "expected": "sim eu-great-lakes eu normal 11 2 0b039391 6d2e55fc cities={\"eu\":19,\"britannia\":37} errors=0",
+      "actual": "sim eu-great-lakes eu normal 11 2 a46b7810 a5b487bf cities={\"eu\":17,\"britannia\":39} errors=0"
+    },
+    {
+      "key": "sim eu-greenland britannia normal 11 2",
+      "expected": "sim eu-greenland britannia normal 11 2 372708c7 c6d0226e cities={\"britannia\":16,\"eu\":2} errors=0",
+      "actual": "sim eu-greenland britannia normal 11 2 fb66e2cd 9df0d1a6 cities={\"britannia\":16,\"eu\":2} errors=0"
+    },
+    {
+      "key": "sim eu-greenland eu normal 11 2",
+      "expected": "sim eu-greenland eu normal 11 2 86733004 18f1a04e cities={\"britannia\":17,\"eu\":1} errors=0",
+      "actual": "sim eu-greenland eu normal 11 2 fe08bda5 a55c439f cities={\"britannia\":17,\"eu\":1} errors=0"
+    },
+    {
+      "key": "sim eu-panama britannia normal 11 2",
+      "expected": "sim eu-panama britannia normal 11 2 8da3c169 ac60b003 cities={\"eu\":0,\"britannia\":30} errors=0",
+      "actual": "sim eu-panama britannia normal 11 2 a734ad82 f7159a13 cities={\"eu\":1,\"britannia\":29} errors=0"
+    },
+    {
+      "key": "sim eu-panama eu normal 11 2",
+      "expected": "sim eu-panama eu normal 11 2 7fcbb672 ae9c7766 cities={\"eu\":0,\"britannia\":30} errors=0",
+      "actual": "sim eu-panama eu normal 11 2 10a7de7e e376caa4 cities={\"eu\":1,\"britannia\":29} errors=0"
+    },
+    {
+      "key": "sim eu-pendragon britannia normal 11 2",
+      "expected": "sim eu-pendragon britannia normal 11 2 637751b8 29083e05 cities={\"eu\":22,\"britannia\":48} errors=0",
+      "actual": "sim eu-pendragon britannia normal 11 2 0cf889ce dcf692d5 cities={\"eu\":22,\"britannia\":48} errors=0"
+    },
+    {
+      "key": "sim eu-pendragon eu normal 11 2",
+      "expected": "sim eu-pendragon eu normal 11 2 1c6d786f 64fa100d cities={\"eu\":22,\"britannia\":48} errors=0",
+      "actual": "sim eu-pendragon eu normal 11 2 af2f35a6 a7bb7346 cities={\"eu\":22,\"britannia\":48} errors=0"
+    },
+    {
+      "key": "sim eu-rocky-mountains britannia normal 11 2",
+      "expected": "sim eu-rocky-mountains britannia normal 11 2 19bc8e2a 84474c7e cities={\"eu\":28,\"britannia\":73} errors=0",
+      "actual": "sim eu-rocky-mountains britannia normal 11 2 93583bf0 f02efddd cities={\"eu\":28,\"britannia\":73} errors=0"
+    },
+    {
+      "key": "sim eu-rocky-mountains eu normal 11 2",
+      "expected": "sim eu-rocky-mountains eu normal 11 2 b35973b0 7064ae3e cities={\"eu\":27,\"britannia\":74} errors=0",
+      "actual": "sim eu-rocky-mountains eu normal 11 2 6e2d3dfe 55e8d26c cities={\"eu\":27,\"britannia\":74} errors=0"
+    },
+    {
+      "key": "sim european-war eb normal 11 2",
+      "expected": "sim european-war eb normal 11 2 e06c27c9 35643959 cities={\"eu\":28,\"eb\":16} errors=0",
+      "actual": "sim european-war eb normal 11 2 f82df7e0 d234e867 cities={\"eu\":26,\"eb\":18} errors=0"
+    },
+    {
+      "key": "sim european-war eu normal 11 2",
+      "expected": "sim european-war eu normal 11 2 56ce86a5 25872b2f cities={\"eu\":28,\"eb\":16} errors=0",
+      "actual": "sim european-war eu normal 11 2 d662bef0 907efc6b cities={\"eu\":27,\"eb\":17} errors=0"
+    },
+    {
+      "key": "sim invasion-american-east-coast britannia normal 11 2",
+      "expected": "sim invasion-american-east-coast britannia normal 11 2 ecf4f976 668b2c0c cities={\"eu\":2,\"britannia\":60} errors=0",
+      "actual": "sim invasion-american-east-coast britannia normal 11 2 5f57a3ea 1f5fe136 cities={\"eu\":4,\"britannia\":58} errors=0"
+    },
+    {
+      "key": "sim invasion-american-east-coast eu normal 11 2",
+      "expected": "sim invasion-american-east-coast eu normal 11 2 d11b75d6 e26b1052 cities={\"eu\":2,\"britannia\":60} errors=0",
+      "actual": "sim invasion-american-east-coast eu normal 11 2 7b84b9a3 a69f28bc cities={\"eu\":2,\"britannia\":60} errors=0"
+    },
+    {
+      "key": "sim invasion-brazil britannia normal 11 2",
+      "expected": "sim invasion-brazil britannia normal 11 2 aad6ce86 2bf69550 cities={\"eu\":2,\"britannia\":55} errors=0",
+      "actual": "sim invasion-brazil britannia normal 11 2 8edf2d2d 8669449c cities={\"eu\":7,\"britannia\":50} errors=0"
+    },
+    {
+      "key": "sim invasion-brazil eu normal 11 2",
+      "expected": "sim invasion-brazil eu normal 11 2 1860981f be6171d2 cities={\"eu\":2,\"britannia\":55} errors=0",
+      "actual": "sim invasion-brazil eu normal 11 2 8c22b28b ef2a9bd9 cities={\"eu\":4,\"britannia\":53} errors=0"
+    },
+    {
+      "key": "sim invasion-california britannia normal 11 2",
+      "expected": "sim invasion-california britannia normal 11 2 8a7ce186 7e3e0c8b cities={\"cf\":15,\"britannia\":48} errors=0",
+      "actual": "sim invasion-california britannia normal 11 2 9aa949a4 f52c527a cities={\"cf\":17,\"britannia\":46} errors=0"
+    },
+    {
+      "key": "sim invasion-california cf normal 11 2",
+      "expected": "sim invasion-california cf normal 11 2 838dd80c a88c107b cities={\"cf\":15,\"britannia\":48} errors=0",
+      "actual": "sim invasion-california cf normal 11 2 d4d1f10a efd0dec8 cities={\"cf\":17,\"britannia\":46} errors=0"
+    },
+    {
+      "key": "sim invasion-canada britannia normal 11 2",
+      "expected": "sim invasion-canada britannia normal 11 2 daa4fae2 6ed0ac8e cities={\"eu\":11,\"britannia\":63} errors=0",
+      "actual": "sim invasion-canada britannia normal 11 2 5ed77808 1bfedf8b cities={\"eu\":8,\"britannia\":66} errors=0"
+    },
+    {
+      "key": "sim invasion-canada eu normal 11 2",
+      "expected": "sim invasion-canada eu normal 11 2 b22b5242 4a860427 cities={\"eu\":9,\"britannia\":65} errors=0",
+      "actual": "sim invasion-canada eu normal 11 2 e67b67c8 7c60a793 cities={\"eu\":10,\"britannia\":64} errors=0"
+    },
+    {
+      "key": "sim invasion-caribbean britannia normal 11 2",
+      "expected": "sim invasion-caribbean britannia normal 11 2 2deb8d0e bf86df0b cities={\"eu\":5,\"britannia\":36} errors=0",
+      "actual": "sim invasion-caribbean britannia normal 11 2 f5d9d2f1 501cdc99 cities={\"eu\":6,\"britannia\":35} errors=0"
+    },
+    {
+      "key": "sim invasion-caribbean eu normal 11 2",
+      "expected": "sim invasion-caribbean eu normal 11 2 d18a8ca4 76f8afe3 cities={\"eu\":4,\"britannia\":37} errors=0",
+      "actual": "sim invasion-caribbean eu normal 11 2 fa6fc07c 9d19b641 cities={\"eu\":5,\"britannia\":36} errors=0"
+    },
+    {
+      "key": "sim invasion-hawaii britannia normal 11 2",
+      "expected": "sim invasion-hawaii britannia normal 11 2 6b6db8b6 991c04cb cities={\"cf\":2,\"britannia\":28} errors=0",
+      "actual": "sim invasion-hawaii britannia normal 11 2 91e8c951 7d512d68 cities={\"cf\":2,\"britannia\":28} errors=0"
+    },
+    {
+      "key": "sim invasion-hawaii cf normal 11 2",
+      "expected": "sim invasion-hawaii cf normal 11 2 6ec56db7 cc708f07 cities={\"cf\":1,\"britannia\":29} errors=0",
+      "actual": "sim invasion-hawaii cf normal 11 2 0c35b840 3b28e156 cities={\"cf\":1,\"britannia\":29} errors=0"
+    },
+    {
+      "key": "sim invasion-japan bk normal 11 2",
+      "expected": "sim invasion-japan bk normal 11 2 be2d57d8 8f383f84 cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0",
+      "actual": "sim invasion-japan bk normal 11 2 776e1d8e d3a602fb cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0"
+    },
+    {
+      "key": "sim invasion-japan britannia normal 11 2",
+      "expected": "sim invasion-japan britannia normal 11 2 a8edd92b d3425165 cities={\"britannia\":29,\"bk\":5,\"cf\":10} errors=0",
+      "actual": "sim invasion-japan britannia normal 11 2 728fabe1 b29e68a2 cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0"
+    },
+    {
+      "key": "sim invasion-japan cf normal 11 2",
+      "expected": "sim invasion-japan cf normal 11 2 331644c2 8b5c0b38 cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0",
+      "actual": "sim invasion-japan cf normal 11 2 8318fa70 1ecc8dec cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0"
+    },
+    {
+      "key": "sim invasion-korea britannia normal 11 2",
+      "expected": "sim invasion-korea britannia normal 11 2 baa09443 ad233dbe cities={\"britannia\":11,\"cf\":44} errors=0",
+      "actual": "sim invasion-korea britannia normal 11 2 c9ee4822 e3b71a7f cities={\"britannia\":13,\"cf\":42} errors=0"
+    },
+    {
+      "key": "sim invasion-korea cf normal 11 2",
+      "expected": "sim invasion-korea cf normal 11 2 e275b05c a0d78978 cities={\"britannia\":11,\"cf\":44} errors=0",
+      "actual": "sim invasion-korea cf normal 11 2 b37dc500 7987805a cities={\"britannia\":15,\"cf\":40} errors=0"
+    },
+    {
+      "key": "sim invasion-south-africa britannia normal 11 2",
+      "expected": "sim invasion-south-africa britannia normal 11 2 ec044b65 27d046a5 cities={\"britannia\":0,\"eu\":47} errors=0",
+      "actual": "sim invasion-south-africa britannia normal 11 2 77ab5ac2 03c674f9 cities={\"britannia\":0,\"eu\":47} errors=0"
+    },
+    {
+      "key": "sim invasion-south-africa eu normal 11 2",
+      "expected": "sim invasion-south-africa eu normal 11 2 747f7bc4 f11d136a cities={\"britannia\":2,\"eu\":45} errors=0",
+      "actual": "sim invasion-south-africa eu normal 11 2 18a9a0de 8d4b89e6 cities={\"britannia\":2,\"eu\":45} errors=0"
+    },
+    {
+      "key": "sim invasion-turkey britannia normal 11 2",
+      "expected": "sim invasion-turkey britannia normal 11 2 4a908ccc e817f65f cities={\"britannia\":14,\"eu\":45} errors=0",
+      "actual": "sim invasion-turkey britannia normal 11 2 fd4fea65 2aff3523 cities={\"britannia\":17,\"eu\":42} errors=0"
+    },
+    {
+      "key": "sim invasion-turkey eu normal 11 2",
+      "expected": "sim invasion-turkey eu normal 11 2 9c2fdb4b 037f5b92 cities={\"britannia\":15,\"eu\":44} errors=0",
+      "actual": "sim invasion-turkey eu normal 11 2 e19b97a2 8518fc18 cities={\"britannia\":15,\"eu\":44} errors=0"
+    },
+    {
+      "key": "sim operation-stonehenge britannia normal 11 2",
+      "expected": "sim operation-stonehenge britannia normal 11 2 c1d81422 4e1788ef cities={\"britannia\":4,\"eu\":33} errors=0",
+      "actual": "sim operation-stonehenge britannia normal 11 2 8a9e21c6 e0962c4c cities={\"britannia\":4,\"eu\":33} errors=0"
+    },
+    {
+      "key": "sim operation-stonehenge eu normal 11 2",
+      "expected": "sim operation-stonehenge eu normal 11 2 95aa29ee d6211ac2 cities={\"britannia\":3,\"eu\":34} errors=0",
+      "actual": "sim operation-stonehenge eu normal 11 2 f8bf7358 27511aa6 cities={\"britannia\":4,\"eu\":33} errors=0"
+    },
+    {
+      "key": "sim philippines-invasion britannia normal 11 2",
+      "expected": "sim philippines-invasion britannia normal 11 2 13c06231 f94ad2f2 cities={\"britannia\":3,\"cf\":34} errors=0",
+      "actual": "sim philippines-invasion britannia normal 11 2 dc349062 972f4cef cities={\"britannia\":3,\"cf\":34} errors=0"
+    },
+    {
+      "key": "sim philippines-invasion cf normal 11 2",
+      "expected": "sim philippines-invasion cf normal 11 2 2385808a bcd08aed cities={\"britannia\":3,\"cf\":34} errors=0",
+      "actual": "sim philippines-invasion cf normal 11 2 bd0faf3a 644701a4 cities={\"britannia\":3,\"cf\":34} errors=0"
+    },
+    {
+      "key": "sim war-for-australia britannia normal 11 2",
+      "expected": "sim war-for-australia britannia normal 11 2 04d50c4a 68b0a4b3 cities={\"britannia\":20,\"cf\":14,\"eu\":14} errors=0",
+      "actual": "sim war-for-australia britannia normal 11 2 e1f6efb4 47a4e803 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0"
+    },
+    {
+      "key": "sim war-for-australia cf normal 11 2",
+      "expected": "sim war-for-australia cf normal 11 2 9d2758d7 9ae9ff9d cities={\"britannia\":20,\"cf\":14,\"eu\":14} errors=0",
+      "actual": "sim war-for-australia cf normal 11 2 3650874c 6f39dd24 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0"
+    },
+    {
+      "key": "sim war-for-australia eu normal 11 2",
+      "expected": "sim war-for-australia eu normal 11 2 0ccae8ea 5702f4ca cities={\"britannia\":20,\"cf\":14,\"eu\":14} errors=0",
+      "actual": "sim war-for-australia eu normal 11 2 c1e24665 9f1db74b cities={\"britannia\":20,\"cf\":16,\"eu\":12} errors=0"
+    }
+  ],
+  "independentCaptures": []
+}

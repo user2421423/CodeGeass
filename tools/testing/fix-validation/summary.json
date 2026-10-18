@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "scope": "Follow-up fixes for the three confirmed gameplay bugs and inherited deterministic-baseline drift; original audit evidence unchanged.",
+  "suites": {
+    "fast": {
+      "tests": 62,
+      "pass": 62,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "full": {
+      "tests": 386,
+      "pass": 386,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  "matrices": [
+    {
+      "name": "affected",
+      "planned": 20,
+      "completed": 20,
+      "errors": 0,
+      "timeouts": 0,
+      "totalCompletedTurns": 100,
+      "provenance": {
+        "revision": "a67c29b2d01700c96df736b225bd892bd4232cc7",
+        "digestVersion": 2,
+        "engineDigest": "11b739be101503380bd7e7fb5d3a1c746cc8eb38bc0a633d72dcb71f302e3363",
+        "toolingDigest": "6644a5f70498db5f552a919c29ab52f2b45ad529b07efedb9c4859487c0c0ca2",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "cf-pacific-northwest",
+          "bf-malacca",
+          "cf-mexico",
+          "cf-panama",
+          "eu-panama"
+        ],
+        "players": [
+          "all"
+        ],
+        "difficulties": [
+          "elite"
+        ],
+        "jobs": 4,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-fixes-affected-final",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          5
+        ],
+        "shard": "0/1",
+        "expectedShards": null
+      }
+    },
+    {
+      "name": "panama-20-turn",
+      "planned": 2,
+      "completed": 2,
+      "errors": 0,
+      "timeouts": 0,
+      "totalCompletedTurns": 40,
+      "provenance": {
+        "revision": "a67c29b2d01700c96df736b225bd892bd4232cc7",
+        "digestVersion": 2,
+        "engineDigest": "11b739be101503380bd7e7fb5d3a1c746cc8eb38bc0a633d72dcb71f302e3363",
+        "toolingDigest": "6644a5f70498db5f552a919c29ab52f2b45ad529b07efedb9c4859487c0c0ca2",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-panama"
+        ],
+        "players": [
+          "eu"
+        ],
+        "difficulties": [
+          "elite"
+        ],
+        "jobs": 2,
+        "timeoutMs": 600000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-fixes-panama-long",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          20
+        ],
+        "shard": "0/1",
+        "expectedShards": null
+      }
+    }
+  ],
+  "baseline": {
+    "capturedAtUTC": "2026-10-18T14:30:05.218529+00:00",
+    "node": "v24.19.0",
+    "independentCapturesIdentical": true,
+    "captureASHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
+    "captureBSHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
+    "retainedCaptureB": "tools/testing/fix-validation/post-fix-fingerprints.txt",
+    "comparisonEvidence": "tools/testing/fix-validation/baseline-comparison.json",
+    "mismatches": {
+      "historicalToAuditedMain": 390,
+      "auditedMainToCorrected": 40,
+      "historicalToCorrected": 390,
+      "independentCaptures": 0
+    }
+  },
+  "prBaseline": {
+    "lines": 35,
+    "mismatches": 0
+  },
+  "commands": [
+    "node tools/gameplay_checks.cjs fast",
+    "node tools/gameplay_checks.cjs full",
+    "node tools/scenario_sim.cjs --all # two independent captures",
+    "node tools/check_sim_baseline.cjs --scenarios eu-greenland,division-japan,battle-luoyang --actual /tmp/kc-fixed-ci-fingerprints.txt",
+    "node tools/gameplay_tournament.cjs --scenarios cf-pacific-northwest,bf-malacca,cf-mexico,cf-panama,eu-panama --difficulties elite --seeds 11,29 --horizons 5 --jobs 4 --output /tmp/kc-fixes-affected-final",
+    "node tools/gameplay_tournament.cjs --scenarios eu-panama --players eu --difficulties elite --seeds 11,29 --horizons 20 --jobs 2 --timeout-ms 600000 --output /tmp/kc-fixes-panama-long"
+  ]
+}

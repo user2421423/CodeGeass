@@ -1,0 +1,309 @@
+Built dist/engine.js
+Built dist/engine/ai.js
+Built dist/missions.js
+Built dist/ui/renderer.js
+Built dist/ui/hud.js
+TAP version 13
+# Subtest: front inactivity is tracked separately and an attack resets its quiet interval
+ok 1 - front inactivity is tracked separately and an attack resets its quiet interval
+  ---
+  duration_ms: 1.419864
+  type: 'test'
+  ...
+# Subtest: carrier units without assignments are not invented as fronts; operation names work
+ok 2 - carrier units without assignments are not invented as fronts; operation names work
+  ---
+  duration_ms: 0.894563
+  type: 'test'
+  ...
+# Subtest: city shield break refreshes breakthrough once; an empty shield cannot farm actions
+ok 3 - city shield break refreshes breakthrough once; an empty shield cannot farm actions
+  ---
+  duration_ms: 163.100043
+  type: 'test'
+  ...
+# Subtest: heavy moves twice across shield break and kill; attacks continue but movement cap survives save
+ok 4 - heavy moves twice across shield break and kill; attacks continue but movement cap survives save
+  ---
+  duration_ms: 84.748159
+  type: 'test'
+  ...
+# Subtest: Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp
+ok 5 - Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp
+  ---
+  duration_ms: 63.230406
+  type: 'test'
+  ...
+# Subtest: city tier upgrade spends exact resources, survives loading and retains once-per-turn lock
+ok 6 - city tier upgrade spends exact resources, survives loading and retains once-per-turn lock
+  ---
+  duration_ms: 50.125131
+  type: 'test'
+  ...
+# Subtest: damaged CF and UFN cargo migrate by era without losing damage or turn state
+ok 7 - damaged CF and UFN cargo migrate by era without losing damage or turn state
+  ---
+  duration_ms: 148.988587
+  type: 'test'
+  ...
+# Subtest: carrier landing captures zero-shield enemy city and keeps cargo ready across loading
+ok 8 - carrier landing captures zero-shield enemy city and keeps cargo ready across loading
+  ---
+  duration_ms: 51.281438
+  type: 'test'
+  ...
+# Subtest: regional compact saves round-trip terrain, ownership and deterministic continuation
+ok 9 - regional compact saves round-trip terrain, ownership and deterministic continuation
+  ---
+  duration_ms: 426.605582
+  type: 'test'
+  ...
+# Subtest: conquest capital loss alone does not win; last opposing cities do
+ok 10 - conquest capital loss alone does not win; last opposing cities do
+  ---
+  duration_ms: 61.839254
+  type: 'test'
+  ...
+# Subtest: campaign difficulty/mastery rewards cannot be claimed again after profile persistence
+ok 11 - campaign difficulty/mastery rewards cannot be claimed again after profile persistence
+  ---
+  duration_ms: 1.901981
+  type: 'test'
+  ...
+# Subtest: existing regression: amphibious_elite_chain_smoke.cjs
+ok 12 - existing regression: amphibious_elite_chain_smoke.cjs
+  ---
+  duration_ms: 579.773909
+  type: 'test'
+  ...
+# Subtest: existing regression: city_defense_movement_refresh_smoke.cjs
+ok 13 - existing regression: city_defense_movement_refresh_smoke.cjs
+  ---
+  duration_ms: 1163.047399
+  type: 'test'
+  ...
+# Subtest: existing regression: city_tier_upgrade_smoke.cjs
+ok 14 - existing regression: city_tier_upgrade_smoke.cjs
+  ---
+  duration_ms: 151.2692
+  type: 'test'
+  ...
+# Subtest: existing regression: elite_class_standardization_smoke.cjs
+ok 15 - existing regression: elite_class_standardization_smoke.cjs
+  ---
+  duration_ms: 75.046489
+  type: 'test'
+  ...
+# Subtest: existing regression: federation_era_roster_smoke.cjs
+ok 16 - existing regression: federation_era_roster_smoke.cjs
+  ---
+  duration_ms: 937.480818
+  type: 'test'
+  ...
+# Subtest: existing regression: frame_research_economy_smoke.cjs
+ok 17 - existing regression: frame_research_economy_smoke.cjs
+  ---
+  duration_ms: 1209.145185
+  type: 'test'
+  ...
+# Subtest: existing regression: repair_and_port_healing_smoke.cjs
+ok 18 - existing regression: repair_and_port_healing_smoke.cjs
+  ---
+  duration_ms: 265.088078
+  type: 'test'
+  ...
+# Subtest: existing regression: research_200_combat_smoke.cjs
+ok 19 - existing regression: research_200_combat_smoke.cjs
+  ---
+  duration_ms: 137.385075
+  type: 'test'
+  ...
+# Subtest: existing regression: research_mobility_smoke.cjs
+ok 20 - existing regression: research_mobility_smoke.cjs
+  ---
+  duration_ms: 137.929236
+  type: 'test'
+  ...
+# Subtest: existing regression: reward_economy_smoke.cjs
+ok 21 - existing regression: reward_economy_smoke.cjs
+  ---
+  duration_ms: 84.279037
+  type: 'test'
+  ...
+# Subtest: existing regression: ufn2018_smoke.cjs
+ok 22 - existing regression: ufn2018_smoke.cjs
+  ---
+  duration_ms: 9603.162613
+  type: 'test'
+  ...
+# Subtest: existing regression: world_campaign_elite_levels_smoke.cjs
+ok 23 - existing regression: world_campaign_elite_levels_smoke.cjs
+  ---
+  duration_ms: 194.725538
+  type: 'test'
+  ...
+# Subtest: matrix covers manifest scenarios, four difficulties and every playable faction
+ok 24 - matrix covers manifest scenarios, four difficulties and every playable faction
+  ---
+  duration_ms: 5.277687
+  type: 'test'
+  ...
+# Subtest: shards partition the complete matrix without dropping or repeating matches
+ok 25 - shards partition the complete matrix without dropping or repeating matches
+  ---
+  duration_ms: 0.882004
+  type: 'test'
+  ...
+# Subtest: merging cannot report full coverage when an entire shard is missing
+ok 26 - merging cannot report full coverage when an entire shard is missing
+  ---
+  duration_ms: 0.384224
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds NaN
+ok 27 - invalid matrix rejected: --seeds NaN
+  ---
+  duration_ms: 0.189888
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --horizons 0
+ok 28 - invalid matrix rejected: --horizons 0
+  ---
+  duration_ms: 0.155739
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --horizons 151
+ok 29 - invalid matrix rejected: --horizons 151
+  ---
+  duration_ms: 0.267542
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --jobs 0
+ok 30 - invalid matrix rejected: --jobs 0
+  ---
+  duration_ms: 0.138213
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --difficulties easy
+ok 31 - invalid matrix rejected: --difficulties easy
+  ---
+  duration_ms: 0.118724
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --players nobody
+ok 32 - invalid matrix rejected: --players nobody
+  ---
+  duration_ms: 0.245421
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --scenarios typo
+ok 33 - invalid matrix rejected: --scenarios typo
+  ---
+  duration_ms: 0.246522
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --shard 8/8
+ok 34 - invalid matrix rejected: --shard 8/8
+  ---
+  duration_ms: 0.177851
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --unknown
+ok 35 - invalid matrix rejected: --unknown
+  ---
+  duration_ms: 0.101208
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds
+ok 36 - invalid matrix rejected: --seeds
+  ---
+  duration_ms: 0.159595
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds 11 --seeds 12
+ok 37 - invalid matrix rejected: --seeds 11 --seeds 12
+  ---
+  duration_ms: 0.058827
+  type: 'test'
+  ...
+# Subtest: seed zero and maximum uint32 seed are accepted without signed overflow
+ok 38 - seed zero and maximum uint32 seed are accepted without signed overflow
+  ---
+  duration_ms: 0.161217
+  type: 'test'
+  ...
+# Subtest: optional observers preserve exact legacy state and result fingerprints
+ok 39 - optional observers preserve exact legacy state and result fingerprints
+  ---
+  duration_ms: 3942.256478
+  type: 'test'
+  ...
+# Subtest: initial carrier cargo is not production or a casualty; observers do not write state
+ok 40 - initial carrier cargo is not production or a casualty; observers do not write state
+  ---
+  duration_ms: 0.431151
+  type: 'test'
+  ...
+# Subtest: scripted formations and factory production have separate counts
+ok 41 - scripted formations and factory production have separate counts
+  ---
+  duration_ms: 0.158972
+  type: 'test'
+  ...
+# Subtest: cargo attacks nested inside a carrier order are attributed to the cargo, not naval fire
+ok 42 - cargo attacks nested inside a carrier order are attributed to the cargo, not naval fire
+  ---
+  duration_ms: 0.188185
+  type: 'test'
+  ...
+# Subtest: Wilson intervals retain uncertainty for tiny samples and tighten for repeated outcomes
+ok 43 - Wilson intervals retain uncertainty for tiny samples and tighten for repeated outcomes
+  ---
+  duration_ms: 0.182136
+  type: 'test'
+  ...
+# Subtest: censored games and failures stay separate; horizons are not pooled
+ok 44 - censored games and failures stay separate; horizons are not pooled
+  ---
+  duration_ms: 0.510246
+  type: 'test'
+  ...
+# Subtest: CSV quotes separators and paired comparison requires the exact horizon and seed
+ok 45 - CSV quotes separators and paired comparison requires the exact horizon and seed
+  ---
+  duration_ms: 0.309032
+  type: 'test'
+  ...
+# Subtest: fingerprint comparison notices missing and changed baseline entries
+ok 46 - fingerprint comparison notices missing and changed baseline entries
+  ---
+  duration_ms: 0.265909
+  type: 'test'
+  ...
+# Subtest: interrupted shard reports recover complete journal rows and ignore a torn final row
+ok 47 - interrupted shard reports recover complete journal rows and ignore a torn final row
+  ---
+  duration_ms: 0.601049
+  type: 'test'
+  ...
+# Subtest: a worker timeout returns an explicit failed match
+ok 48 - a worker timeout returns an explicit failed match
+  ---
+  duration_ms: 12.849223
+  type: 'test'
+  ...
+# Subtest: end-to-end output, deterministic replay, resume and source mismatch rejection
+ok 49 - end-to-end output, deterministic replay, resume and source mismatch rejection
+  ---
+  duration_ms: 1724.931299
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14714.721351

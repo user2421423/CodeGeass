@@ -141,6 +141,9 @@
           const d = unitAt(g, p),
             s = stationAt(g, p),
             pr = preview(g, id, p.c, p.r);
+          // Transport and chained orders can invalidate an enumerated target.
+          // Score only candidates the combat engine can still preview.
+          if (!pr) return null;
           const score =
             pr.unit +
             pr.shield * 0.7 +
@@ -159,6 +162,7 @@
           const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);
           return { p, score: humanTarget ? score * (1 + playerPriorityBonus(g, u.side)) : score };
         })
+        .filter(Boolean)
         .sort((a, b) => b.score - a.score)[0];
     const maneuver = () => {
       if (u.moved || u.attacked || steered) return;
@@ -274,12 +278,15 @@
         u.movedDistance = (oldDistance || 0) + dist(g, old, p);
         u.moved = true;
         reindex(g, u, old);
-        const shot = choose();
-        u.c = old.c;
-        u.r = old.r;
-        u.movedDistance = oldDistance;
-        u.moved = oldMoved;
-        reindex(g, u, p);
+        let shot;
+        try { shot = choose(); }
+        finally {
+          u.c = old.c;
+          u.r = old.r;
+          u.movedDistance = oldDistance;
+          u.moved = oldMoved;
+          reindex(g, u, p);
+        }
         if (shot) sc += shot.score * 0.6;
         if (sc > bestScore) {
           bestScore = sc;

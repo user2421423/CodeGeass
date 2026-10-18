@@ -1,0 +1,112 @@
+name: Extensive gameplay tournament
+on:
+  workflow_dispatch:
+    inputs:
+      preset:
+        description: Matrix size (deep should usually select a few scenarios)
+        type: choice
+        options: [quick, standard, deep]
+        default: standard
+      scenarios:
+        description: Comma-separated scenario IDs or all
+        default: all
+        type: string
+      seeds:
+        description: Optional comma-separated uint32 seeds; blank uses preset
+        default: ''
+        type: string
+      horizons:
+        description: Optional comma-separated horizons 1..150; blank uses preset
+        default: ''
+        type: string
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Full strict regression suite (includes all scenario roster combinations)
+        run: node tools/gameplay_checks.cjs full | tee gameplay-full.tap
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gameplay-full
+          path: gameplay-full.tap
+  deterministic-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/build_sources.cjs
+      - name: Compare with documented defect-fix baseline
+        run: node tools/check_sim_baseline.cjs --actual baseline-actual.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deterministic-baseline-actual
+          path: baseline-actual.txt
+  tournament:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/build_sources.cjs
+      - name: Run deterministic all-AI matches
+        env:
+          PRESET: ${{ inputs.preset }}
+          SCENARIOS: ${{ inputs.scenarios }}
+          SEEDS: ${{ inputs.seeds }}
+          HORIZONS: ${{ inputs.horizons }}
+          SHARD: ${{ matrix.shard }}
+        shell: bash
+        run: |
+          args=(--preset "$PRESET" --scenarios "$SCENARIOS" --difficulties all --shard "$SHARD/16" --jobs 2 --output tournament)
+          if [[ -n "$SEEDS" ]]; then args+=(--seeds "$SEEDS"); fi
+          if [[ -n "$HORIZONS" ]]; then args+=(--horizons "$HORIZONS"); fi
+          node tools/gameplay_tournament.cjs "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tournament-${{ matrix.shard }}
+          path: tournament/
+          retention-days: 30
+  merge-reports:
+    if: always()
+    needs: tournament
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/build_sources.cjs
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-*
+          path: shards
+      - name: Merge completed and failed matches without pooling horizons
+        run: |
+          files=$(find shards -name results.json -print | sort | paste -sd, -)
+          test -n "$files"
+          node tools/gameplay_tournament.cjs --merge "$files" --expected-shards 16 --output combined
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tournament-combined
+          path: combined/
+          retention-days: 30

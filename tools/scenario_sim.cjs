@@ -16,8 +16,9 @@ for(const f of fs.readdirSync(DIST).filter(f=>/^(scenarios.*|.*-landmask|.*-geog
   require(path.join(DIST,f));
 const DIFFICULTIES=['normal','hard','challenge','elite'];
 
-function simulate(scenario,player,difficulty,seed,turns){
+function simulate(scenario,player,difficulty,seed,turns,hooks=null){
  const g=scenario.create(player,difficulty,seed),sides=scenario.sides;
+ hooks?.init?.(g);
  const zeros=()=>Object.fromEntries(sides.map(s=>[s,0]));
  const r={scenario:scenario.id,player,difficulty,seed,maxTurns:turns,
   startingCities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
@@ -42,25 +43,34 @@ function simulate(scenario,player,difficulty,seed,turns){
  let end=false;
  for(let turn=1;turn<=turns&&!end;turn++){
   g.turn=turn;
+  hooks?.before?.(g,'scenario.onTurn');
   if(turn>1)scenario.onTurn?.(g);
+  hooks?.observe?.(g,'script');
   for(const side of g.order){
    if(!E.alive(g,side))continue;
+   hooks?.before?.(g,'beginTurn');
    if(!(turn===1&&side===g.order[0]))E.beginTurn(g,side,turn>1);
-   E.aiProduction(g);observe();
+   hooks?.observe?.(g,'beginTurn');
+   hooks?.before?.(g,'production');
+   E.aiProduction(g);observe();hooks?.observe?.(g,'production');
    const ids=g.units.filter(u=>u.hp>0&&u.side===side&&!u.attacked)
      .sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id).map(u=>u.id);
    for(let i=0;i<ids.length;i++){
     const j=E.aiNextActor(g,ids,i);if(j>i&&j<ids.length)[ids[i],ids[j]]=[ids[j],ids[i]];
     const u=g.units.find(v=>v.id===ids[i]);
     if(!u||u.hp<=0||u.side!==side)continue;
+    hooks?.before?.(g,'aiOrder',u);
     try{
-     for(const event of E.aiOrder(g,u.id)||[]){
+     const events=E.aiOrder(g,u.id)||[];
+     hooks?.events?.(g,u,events);
+     for(const event of events){
       if(event.kind==='attack')r.attacks[side]++;
       if(E.TYPES[u.type]?.naval&&(event.kind==='move'||event.kind==='attack'||event.kind==='deploy'))r.navalActions[side]++;
       if(E.TYPES[u.type]?.naval&&(event.kind==='move'||event.kind==='deploy'))r.navalMoves[side]++;
      }
-    }catch(e){r.errors.push({turn,side,id:u.id,message:String(e)});}
-    observe();
+    }catch(e){hooks?.error?.(g,e,u);r.errors.push({turn,side,id:u.id,message:String(e)});}
+    observe();hooks?.observe?.(g,'aiOrder');
+    hooks?.before?.(g,'winner',u);
     const won=scenario.winner(g);
     if(won){r.winner=won.winner;end=true;break;}
     // Full AI-vs-AI is not ended by a human-specific loss screen, but the first one is recorded.
@@ -68,6 +78,7 @@ function simulate(scenario,player,difficulty,seed,turns){
    }
    if(end)break;
   }
+  hooks?.turn?.(g);
   r.snapshots.push({turn,cities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
    units:Object.fromEntries(sides.map(s=>[s,g.units.filter(v=>v.side===s&&v.hp>0).length]))});
  }
@@ -81,6 +92,7 @@ function fingerprint(value){
  return h.toString(16).padStart(8,'0');
 }
 
+if(require.main === module){
 if(process.argv[2]==='--all'){
  const seed=Number(process.argv[3]||11),turns=Number(process.argv[4]||2),only=process.argv.slice(5);
  for(const id of Object.keys(E.scenarios.byId).sort().filter(id=>!only.length||only.includes(id))){
@@ -105,3 +117,6 @@ if(process.argv[2]==='--all'){
  console.log('SCENARIO_SIM '+JSON.stringify(r));
  if(r.errors.length)process.exitCode=1;
 }
+
+}
+module.exports={simulate,fingerprint,E,DIFFICULTIES};

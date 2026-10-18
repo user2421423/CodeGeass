@@ -1,0 +1,387 @@
+Built dist/engine.js
+Built dist/engine/ai.js
+Built dist/missions.js
+Built dist/ui/renderer.js
+Built dist/ui/hud.js
+TAP version 13
+# Subtest: front inactivity is tracked separately and an attack resets its quiet interval
+ok 1 - front inactivity is tracked separately and an attack resets its quiet interval
+  ---
+  duration_ms: 1.347587
+  type: 'test'
+  ...
+# Subtest: carrier units without assignments are not invented as fronts; operation names work
+ok 2 - carrier units without assignments are not invented as fronts; operation names work
+  ---
+  duration_ms: 1.320831
+  type: 'test'
+  ...
+# Subtest: city shield break refreshes breakthrough once; an empty shield cannot farm actions
+ok 3 - city shield break refreshes breakthrough once; an empty shield cannot farm actions
+  ---
+  duration_ms: 233.82725
+  type: 'test'
+  ...
+# Subtest: heavy moves twice across shield break and kill; attacks continue but movement cap survives save
+ok 4 - heavy moves twice across shield break and kill; attacks continue but movement cap survives save
+  ---
+  duration_ms: 111.219642
+  type: 'test'
+  ...
+# Subtest: Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp
+ok 5 - Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp
+  ---
+  duration_ms: 87.108435
+  type: 'test'
+  ...
+# Subtest: city tier upgrade spends exact resources, survives loading and retains once-per-turn lock
+ok 6 - city tier upgrade spends exact resources, survives loading and retains once-per-turn lock
+  ---
+  duration_ms: 70.192253
+  type: 'test'
+  ...
+# Subtest: damaged CF and UFN cargo migrate by era without losing damage or turn state
+ok 7 - damaged CF and UFN cargo migrate by era without losing damage or turn state
+  ---
+  duration_ms: 198.237457
+  type: 'test'
+  ...
+# Subtest: carrier landing captures zero-shield enemy city and keeps cargo ready across loading
+ok 8 - carrier landing captures zero-shield enemy city and keeps cargo ready across loading
+  ---
+  duration_ms: 67.018294
+  type: 'test'
+  ...
+# Subtest: regional compact saves round-trip terrain, ownership and deterministic continuation
+ok 9 - regional compact saves round-trip terrain, ownership and deterministic continuation
+  ---
+  duration_ms: 480.181383
+  type: 'test'
+  ...
+# Subtest: conquest capital loss alone does not win; last opposing cities do
+ok 10 - conquest capital loss alone does not win; last opposing cities do
+  ---
+  duration_ms: 67.183809
+  type: 'test'
+  ...
+# Subtest: campaign difficulty/mastery rewards cannot be claimed again after profile persistence
+ok 11 - campaign difficulty/mastery rewards cannot be claimed again after profile persistence
+  ---
+  duration_ms: 4.209943
+  type: 'test'
+  ...
+# Subtest: save/load preserves regional HQ defense capacity: area-18/normal
+ok 12 - save/load preserves regional HQ defense capacity: area-18/normal
+  ---
+  duration_ms: 155.380254
+  type: 'test'
+  ...
+# Subtest: save/load preserves regional HQ defense capacity: area-18/elite
+ok 13 - save/load preserves regional HQ defense capacity: area-18/elite
+  ---
+  duration_ms: 143.164709
+  type: 'test'
+  ...
+# Subtest: Elite Panama Atlantic AI completes two turns without an invalid-preview crash
+ok 14 - Elite Panama Atlantic AI completes two turns without an invalid-preview crash
+  ---
+  duration_ms: 2519.112378
+  type: 'test'
+  ...
+# Subtest: regional HQ factory/lab upgrades cannot acquire true-capital defenses
+ok 15 - regional HQ factory/lab upgrades cannot acquire true-capital defenses
+  ---
+  duration_ms: 73.021554
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/cf/elite
+ok 16 - setup/roster cf-pacific-northwest/cf/elite
+  ---
+  duration_ms: 235.468659
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/britannia/elite
+ok 17 - setup/roster cf-pacific-northwest/britannia/elite
+  ---
+  duration_ms: 275.080469
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/britannia/elite
+ok 18 - setup/roster bf-malacca/britannia/elite
+  ---
+  duration_ms: 131.131261
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/cf/elite
+ok 19 - setup/roster bf-malacca/cf/elite
+  ---
+  duration_ms: 123.652656
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/cf/elite
+ok 20 - setup/roster cf-mexico/cf/elite
+  ---
+  duration_ms: 276.196854
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/britannia/elite
+ok 21 - setup/roster cf-mexico/britannia/elite
+  ---
+  duration_ms: 250.510819
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/cf/elite
+ok 22 - setup/roster cf-panama/cf/elite
+  ---
+  duration_ms: 152.196033
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/britannia/elite
+ok 23 - setup/roster cf-panama/britannia/elite
+  ---
+  duration_ms: 137.841485
+  type: 'test'
+  ...
+# Subtest: existing regression: amphibious_elite_chain_smoke.cjs
+ok 24 - existing regression: amphibious_elite_chain_smoke.cjs
+  ---
+  duration_ms: 823.008411
+  type: 'test'
+  ...
+# Subtest: existing regression: city_defense_movement_refresh_smoke.cjs
+ok 25 - existing regression: city_defense_movement_refresh_smoke.cjs
+  ---
+  duration_ms: 1668.706222
+  type: 'test'
+  ...
+# Subtest: existing regression: city_tier_upgrade_smoke.cjs
+ok 26 - existing regression: city_tier_upgrade_smoke.cjs
+  ---
+  duration_ms: 277.896055
+  type: 'test'
+  ...
+# Subtest: existing regression: elite_class_standardization_smoke.cjs
+ok 27 - existing regression: elite_class_standardization_smoke.cjs
+  ---
+  duration_ms: 127.991208
+  type: 'test'
+  ...
+# Subtest: existing regression: federation_era_roster_smoke.cjs
+ok 28 - existing regression: federation_era_roster_smoke.cjs
+  ---
+  duration_ms: 2307.797482
+  type: 'test'
+  ...
+# Subtest: existing regression: frame_research_economy_smoke.cjs
+ok 29 - existing regression: frame_research_economy_smoke.cjs
+  ---
+  duration_ms: 3165.714971
+  type: 'test'
+  ...
+# Subtest: existing regression: repair_and_port_healing_smoke.cjs
+ok 30 - existing regression: repair_and_port_healing_smoke.cjs
+  ---
+  duration_ms: 793.791701
+  type: 'test'
+  ...
+# Subtest: existing regression: research_200_combat_smoke.cjs
+ok 31 - existing regression: research_200_combat_smoke.cjs
+  ---
+  duration_ms: 327.704889
+  type: 'test'
+  ...
+# Subtest: existing regression: research_mobility_smoke.cjs
+ok 32 - existing regression: research_mobility_smoke.cjs
+  ---
+  duration_ms: 313.961153
+  type: 'test'
+  ...
+# Subtest: existing regression: reward_economy_smoke.cjs
+ok 33 - existing regression: reward_economy_smoke.cjs
+  ---
+  duration_ms: 162.495805
+  type: 'test'
+  ...
+# Subtest: existing regression: ufn2018_smoke.cjs
+ok 34 - existing regression: ufn2018_smoke.cjs
+  ---
+  duration_ms: 20119.031811
+  type: 'test'
+  ...
+# Subtest: existing regression: world_campaign_elite_levels_smoke.cjs
+ok 35 - existing regression: world_campaign_elite_levels_smoke.cjs
+  ---
+  duration_ms: 320.304625
+  type: 'test'
+  ...
+# Subtest: baseline reconciliation preserves both original references and records the new digest
+ok 36 - baseline reconciliation preserves both original references and records the new digest
+  ---
+  duration_ms: 2.015516
+  type: 'test'
+  ...
+# Subtest: matrix covers manifest scenarios, four difficulties and every playable faction
+ok 37 - matrix covers manifest scenarios, four difficulties and every playable faction
+  ---
+  duration_ms: 5.793638
+  type: 'test'
+  ...
+# Subtest: shards partition the complete matrix without dropping or repeating matches
+ok 38 - shards partition the complete matrix without dropping or repeating matches
+  ---
+  duration_ms: 1.176761
+  type: 'test'
+  ...
+# Subtest: merging cannot report full coverage when an entire shard is missing
+ok 39 - merging cannot report full coverage when an entire shard is missing
+  ---
+  duration_ms: 0.544908
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds NaN
+ok 40 - invalid matrix rejected: --seeds NaN
+  ---
+  duration_ms: 0.501888
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --horizons 0
+ok 41 - invalid matrix rejected: --horizons 0
+  ---
+  duration_ms: 0.135672
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --horizons 151
+ok 42 - invalid matrix rejected: --horizons 151
+  ---
+  duration_ms: 0.177411
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --jobs 0
+ok 43 - invalid matrix rejected: --jobs 0
+  ---
+  duration_ms: 0.141042
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --difficulties easy
+ok 44 - invalid matrix rejected: --difficulties easy
+  ---
+  duration_ms: 0.411519
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --players nobody
+ok 45 - invalid matrix rejected: --players nobody
+  ---
+  duration_ms: 0.360557
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --scenarios typo
+ok 46 - invalid matrix rejected: --scenarios typo
+  ---
+  duration_ms: 0.122785
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --shard 8/8
+ok 47 - invalid matrix rejected: --shard 8/8
+  ---
+  duration_ms: 0.215225
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --unknown
+ok 48 - invalid matrix rejected: --unknown
+  ---
+  duration_ms: 0.066165
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds
+ok 49 - invalid matrix rejected: --seeds
+  ---
+  duration_ms: 0.204092
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds 11 --seeds 12
+ok 50 - invalid matrix rejected: --seeds 11 --seeds 12
+  ---
+  duration_ms: 0.067451
+  type: 'test'
+  ...
+# Subtest: seed zero and maximum uint32 seed are accepted without signed overflow
+ok 51 - seed zero and maximum uint32 seed are accepted without signed overflow
+  ---
+  duration_ms: 0.361309
+  type: 'test'
+  ...
+# Subtest: optional observers preserve exact legacy state and result fingerprints
+ok 52 - optional observers preserve exact legacy state and result fingerprints
+  ---
+  duration_ms: 7043.48591
+  type: 'test'
+  ...
+# Subtest: initial carrier cargo is not production or a casualty; observers do not write state
+ok 53 - initial carrier cargo is not production or a casualty; observers do not write state
+  ---
+  duration_ms: 0.76425
+  type: 'test'
+  ...
+# Subtest: scripted formations and factory production have separate counts
+ok 54 - scripted formations and factory production have separate counts
+  ---
+  duration_ms: 0.399726
+  type: 'test'
+  ...
+# Subtest: cargo attacks nested inside a carrier order are attributed to the cargo, not naval fire
+ok 55 - cargo attacks nested inside a carrier order are attributed to the cargo, not naval fire
+  ---
+  duration_ms: 0.279595
+  type: 'test'
+  ...
+# Subtest: Wilson intervals retain uncertainty for tiny samples and tighten for repeated outcomes
+ok 56 - Wilson intervals retain uncertainty for tiny samples and tighten for repeated outcomes
+  ---
+  duration_ms: 0.300418
+  type: 'test'
+  ...
+# Subtest: censored games and failures stay separate; horizons are not pooled
+ok 57 - censored games and failures stay separate; horizons are not pooled
+  ---
+  duration_ms: 1.338275
+  type: 'test'
+  ...
+# Subtest: CSV quotes separators and paired comparison requires the exact horizon and seed
+ok 58 - CSV quotes separators and paired comparison requires the exact horizon and seed
+  ---
+  duration_ms: 0.960776
+  type: 'test'
+  ...
+# Subtest: fingerprint comparison notices missing and changed baseline entries
+ok 59 - fingerprint comparison notices missing and changed baseline entries
+  ---
+  duration_ms: 0.348019
+  type: 'test'
+  ...
+# Subtest: interrupted shard reports recover complete journal rows and ignore a torn final row
+ok 60 - interrupted shard reports recover complete journal rows and ignore a torn final row
+  ---
+  duration_ms: 1.123553
+  type: 'test'
+  ...
+# Subtest: a worker timeout returns an explicit failed match
+ok 61 - a worker timeout returns an explicit failed match
+  ---
+  duration_ms: 37.472584
+  type: 'test'
+  ...
+# Subtest: end-to-end output, deterministic replay, resume and source mismatch rejection
+ok 62 - end-to-end output, deterministic replay, resume and source mismatch rejection
+  ---
+  duration_ms: 3183.05825
+  type: 'test'
+  ...
+1..62
+# tests 62
+# suites 0
+# pass 62
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33775.893273

@@ -297,7 +297,11 @@
         return type&& (base.naval?type.naval===base.naval:
           !type.naval&&type.branch===base.branch);
       });
-      const pool=candidates.length?candidates:fallback;
+      // The 2017 Federation has no native Elite in every branch. Match the
+      // shared scenario converter's native land fallback rather than borrowing
+      // a Black Knights frame or failing the scenario setup.
+      const land=roster.filter(id=>!E.TYPES[E.ELITE_FORCES[id]?.type]?.naval);
+      const pool=candidates.length?candidates:fallback.length?fallback:base.naval?[]:land;
       if(!pool.length)throw Error('Missing faction Elite for '+u.side+' '+u.type);
       const key=u.side+':'+base.cls;
       const id=pool[(used[key]||0)%pool.length];used[key]=(used[key]||0)+1;
@@ -334,7 +338,7 @@
     const ids=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(s=>[s,
       ids.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes(s))]));
+        E.eliteEligible(g,s,id))]));
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),share=COVERAGE[r][c];
       return {c,r,owner:null,terrain:share===0?'sea':share===1?'coast':landscape(p)};

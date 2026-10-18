@@ -13,3 +13,6 @@ dist/local-art/*
 /dist/missions.js
 /dist/ui/renderer.js
 /dist/ui/hud.js
+
+# Local gameplay evidence is generated; curated findings live in tools/testing/.
+/tools/results/

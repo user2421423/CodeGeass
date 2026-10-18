@@ -1,0 +1,2331 @@
+Built dist/engine.js
+Built dist/engine/ai.js
+Built dist/missions.js
+Built dist/ui/renderer.js
+Built dist/ui/hud.js
+TAP version 13
+# Subtest: front inactivity is tracked separately and an attack resets its quiet interval
+ok 1 - front inactivity is tracked separately and an attack resets its quiet interval
+  ---
+  duration_ms: 2.024103
+  type: 'test'
+  ...
+# Subtest: carrier units without assignments are not invented as fronts; operation names work
+ok 2 - carrier units without assignments are not invented as fronts; operation names work
+  ---
+  duration_ms: 1.504073
+  type: 'test'
+  ...
+# Subtest: city shield break refreshes breakthrough once; an empty shield cannot farm actions
+ok 3 - city shield break refreshes breakthrough once; an empty shield cannot farm actions
+  ---
+  duration_ms: 569.262656
+  type: 'test'
+  ...
+# Subtest: heavy moves twice across shield break and kill; attacks continue but movement cap survives save
+ok 4 - heavy moves twice across shield break and kill; attacks continue but movement cap survives save
+  ---
+  duration_ms: 270.704805
+  type: 'test'
+  ...
+# Subtest: Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp
+ok 5 - Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp
+  ---
+  duration_ms: 193.725512
+  type: 'test'
+  ...
+# Subtest: city tier upgrade spends exact resources, survives loading and retains once-per-turn lock
+ok 6 - city tier upgrade spends exact resources, survives loading and retains once-per-turn lock
+  ---
+  duration_ms: 172.311826
+  type: 'test'
+  ...
+# Subtest: damaged CF and UFN cargo migrate by era without losing damage or turn state
+ok 7 - damaged CF and UFN cargo migrate by era without losing damage or turn state
+  ---
+  duration_ms: 332.627369
+  type: 'test'
+  ...
+# Subtest: carrier landing captures zero-shield enemy city and keeps cargo ready across loading
+ok 8 - carrier landing captures zero-shield enemy city and keeps cargo ready across loading
+  ---
+  duration_ms: 124.174646
+  type: 'test'
+  ...
+# Subtest: regional compact saves round-trip terrain, ownership and deterministic continuation
+ok 9 - regional compact saves round-trip terrain, ownership and deterministic continuation
+  ---
+  duration_ms: 885.131914
+  type: 'test'
+  ...
+# Subtest: conquest capital loss alone does not win; last opposing cities do
+ok 10 - conquest capital loss alone does not win; last opposing cities do
+  ---
+  duration_ms: 125.915997
+  type: 'test'
+  ...
+# Subtest: campaign difficulty/mastery rewards cannot be claimed again after profile persistence
+ok 11 - campaign difficulty/mastery rewards cannot be claimed again after profile persistence
+  ---
+  duration_ms: 3.042286
+  type: 'test'
+  ...
+# Subtest: save/load preserves regional HQ defense capacity: area-18/normal
+ok 12 - save/load preserves regional HQ defense capacity: area-18/normal
+  ---
+  duration_ms: 162.497758
+  type: 'test'
+  ...
+# Subtest: save/load preserves regional HQ defense capacity: area-18/elite
+ok 13 - save/load preserves regional HQ defense capacity: area-18/elite
+  ---
+  duration_ms: 140.618438
+  type: 'test'
+  ...
+# Subtest: Elite Panama Atlantic AI completes two turns without an invalid-preview crash
+ok 14 - Elite Panama Atlantic AI completes two turns without an invalid-preview crash
+  ---
+  duration_ms: 3000.66597
+  type: 'test'
+  ...
+# Subtest: regional HQ factory/lab upgrades cannot acquire true-capital defenses
+ok 15 - regional HQ factory/lab upgrades cannot acquire true-capital defenses
+  ---
+  duration_ms: 121.647024
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/britannia/normal
+ok 16 - setup/roster area-18/britannia/normal
+  ---
+  duration_ms: 198.358331
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/britannia/hard
+ok 17 - setup/roster area-18/britannia/hard
+  ---
+  duration_ms: 130.98573
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/britannia/challenge
+ok 18 - setup/roster area-18/britannia/challenge
+  ---
+  duration_ms: 97.343665
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/britannia/elite
+ok 19 - setup/roster area-18/britannia/elite
+  ---
+  duration_ms: 152.49896
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/eu/normal
+ok 20 - setup/roster area-18/eu/normal
+  ---
+  duration_ms: 138.737405
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/eu/hard
+ok 21 - setup/roster area-18/eu/hard
+  ---
+  duration_ms: 108.109382
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/eu/challenge
+ok 22 - setup/roster area-18/eu/challenge
+  ---
+  duration_ms: 91.026959
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/eu/elite
+ok 23 - setup/roster area-18/eu/elite
+  ---
+  duration_ms: 96.42976
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/cf/normal
+ok 24 - setup/roster area-18/cf/normal
+  ---
+  duration_ms: 82.522626
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/cf/hard
+ok 25 - setup/roster area-18/cf/hard
+  ---
+  duration_ms: 82.836002
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/cf/challenge
+ok 26 - setup/roster area-18/cf/challenge
+  ---
+  duration_ms: 88.615862
+  type: 'test'
+  ...
+# Subtest: setup/roster area-18/cf/elite
+ok 27 - setup/roster area-18/cf/elite
+  ---
+  duration_ms: 84.418792
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/britannia/normal
+ok 28 - setup/roster war-for-australia/britannia/normal
+  ---
+  duration_ms: 130.854038
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/britannia/hard
+ok 29 - setup/roster war-for-australia/britannia/hard
+  ---
+  duration_ms: 108.555914
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/britannia/challenge
+ok 30 - setup/roster war-for-australia/britannia/challenge
+  ---
+  duration_ms: 77.131249
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/britannia/elite
+ok 31 - setup/roster war-for-australia/britannia/elite
+  ---
+  duration_ms: 88.357738
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/cf/normal
+ok 32 - setup/roster war-for-australia/cf/normal
+  ---
+  duration_ms: 66.553851
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/cf/hard
+ok 33 - setup/roster war-for-australia/cf/hard
+  ---
+  duration_ms: 70.841955
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/cf/challenge
+ok 34 - setup/roster war-for-australia/cf/challenge
+  ---
+  duration_ms: 85.005269
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/cf/elite
+ok 35 - setup/roster war-for-australia/cf/elite
+  ---
+  duration_ms: 64.767506
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/eu/normal
+ok 36 - setup/roster war-for-australia/eu/normal
+  ---
+  duration_ms: 73.214937
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/eu/hard
+ok 37 - setup/roster war-for-australia/eu/hard
+  ---
+  duration_ms: 79.150684
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/eu/challenge
+ok 38 - setup/roster war-for-australia/eu/challenge
+  ---
+  duration_ms: 85.628994
+  type: 'test'
+  ...
+# Subtest: setup/roster war-for-australia/eu/elite
+ok 39 - setup/roster war-for-australia/eu/elite
+  ---
+  duration_ms: 75.528142
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/britannia/normal
+ok 40 - setup/roster bering-strait/britannia/normal
+  ---
+  duration_ms: 64.073736
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/britannia/hard
+ok 41 - setup/roster bering-strait/britannia/hard
+  ---
+  duration_ms: 41.396391
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/britannia/challenge
+ok 42 - setup/roster bering-strait/britannia/challenge
+  ---
+  duration_ms: 33.423883
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/britannia/elite
+ok 43 - setup/roster bering-strait/britannia/elite
+  ---
+  duration_ms: 28.897547
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/eu/normal
+ok 44 - setup/roster bering-strait/eu/normal
+  ---
+  duration_ms: 30.886562
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/eu/hard
+ok 45 - setup/roster bering-strait/eu/hard
+  ---
+  duration_ms: 23.38312
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/eu/challenge
+ok 46 - setup/roster bering-strait/eu/challenge
+  ---
+  duration_ms: 21.672626
+  type: 'test'
+  ...
+# Subtest: setup/roster bering-strait/eu/elite
+ok 47 - setup/roster bering-strait/eu/elite
+  ---
+  duration_ms: 23.563763
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/eu/normal
+ok 48 - setup/roster invasion-brazil/eu/normal
+  ---
+  duration_ms: 265.114306
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/eu/hard
+ok 49 - setup/roster invasion-brazil/eu/hard
+  ---
+  duration_ms: 202.49427
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/eu/challenge
+ok 50 - setup/roster invasion-brazil/eu/challenge
+  ---
+  duration_ms: 225.777242
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/eu/elite
+ok 51 - setup/roster invasion-brazil/eu/elite
+  ---
+  duration_ms: 226.219021
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/britannia/normal
+ok 52 - setup/roster invasion-brazil/britannia/normal
+  ---
+  duration_ms: 215.199733
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/britannia/hard
+ok 53 - setup/roster invasion-brazil/britannia/hard
+  ---
+  duration_ms: 242.415992
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/britannia/challenge
+ok 54 - setup/roster invasion-brazil/britannia/challenge
+  ---
+  duration_ms: 189.427346
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-brazil/britannia/elite
+ok 55 - setup/roster invasion-brazil/britannia/elite
+  ---
+  duration_ms: 183.729235
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/cf/normal
+ok 56 - setup/roster invasion-california/cf/normal
+  ---
+  duration_ms: 225.193002
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/cf/hard
+ok 57 - setup/roster invasion-california/cf/hard
+  ---
+  duration_ms: 210.778379
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/cf/challenge
+ok 58 - setup/roster invasion-california/cf/challenge
+  ---
+  duration_ms: 172.310754
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/cf/elite
+ok 59 - setup/roster invasion-california/cf/elite
+  ---
+  duration_ms: 148.793008
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/britannia/normal
+ok 60 - setup/roster invasion-california/britannia/normal
+  ---
+  duration_ms: 184.346442
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/britannia/hard
+ok 61 - setup/roster invasion-california/britannia/hard
+  ---
+  duration_ms: 165.957684
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/britannia/challenge
+ok 62 - setup/roster invasion-california/britannia/challenge
+  ---
+  duration_ms: 190.636413
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-california/britannia/elite
+ok 63 - setup/roster invasion-california/britannia/elite
+  ---
+  duration_ms: 160.805279
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/eu/normal
+ok 64 - setup/roster invasion-canada/eu/normal
+  ---
+  duration_ms: 213.703011
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/eu/hard
+ok 65 - setup/roster invasion-canada/eu/hard
+  ---
+  duration_ms: 158.606148
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/eu/challenge
+ok 66 - setup/roster invasion-canada/eu/challenge
+  ---
+  duration_ms: 210.22209
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/eu/elite
+ok 67 - setup/roster invasion-canada/eu/elite
+  ---
+  duration_ms: 215.741008
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/britannia/normal
+ok 68 - setup/roster invasion-canada/britannia/normal
+  ---
+  duration_ms: 158.811531
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/britannia/hard
+ok 69 - setup/roster invasion-canada/britannia/hard
+  ---
+  duration_ms: 141.426577
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/britannia/challenge
+ok 70 - setup/roster invasion-canada/britannia/challenge
+  ---
+  duration_ms: 192.072314
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-canada/britannia/elite
+ok 71 - setup/roster invasion-canada/britannia/elite
+  ---
+  duration_ms: 199.088474
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/eu/normal
+ok 72 - setup/roster invasion-caribbean/eu/normal
+  ---
+  duration_ms: 90.899033
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/eu/hard
+ok 73 - setup/roster invasion-caribbean/eu/hard
+  ---
+  duration_ms: 96.177765
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/eu/challenge
+ok 74 - setup/roster invasion-caribbean/eu/challenge
+  ---
+  duration_ms: 75.18604
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/eu/elite
+ok 75 - setup/roster invasion-caribbean/eu/elite
+  ---
+  duration_ms: 52.642754
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/britannia/normal
+ok 76 - setup/roster invasion-caribbean/britannia/normal
+  ---
+  duration_ms: 53.498848
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/britannia/hard
+ok 77 - setup/roster invasion-caribbean/britannia/hard
+  ---
+  duration_ms: 60.753481
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/britannia/challenge
+ok 78 - setup/roster invasion-caribbean/britannia/challenge
+  ---
+  duration_ms: 84.706502
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-caribbean/britannia/elite
+ok 79 - setup/roster invasion-caribbean/britannia/elite
+  ---
+  duration_ms: 52.043688
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/cf/normal
+ok 80 - setup/roster cf-central-america/cf/normal
+  ---
+  duration_ms: 325.365099
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/cf/hard
+ok 81 - setup/roster cf-central-america/cf/hard
+  ---
+  duration_ms: 261.089252
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/cf/challenge
+ok 82 - setup/roster cf-central-america/cf/challenge
+  ---
+  duration_ms: 289.269448
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/cf/elite
+ok 83 - setup/roster cf-central-america/cf/elite
+  ---
+  duration_ms: 507.268033
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/britannia/normal
+ok 84 - setup/roster cf-central-america/britannia/normal
+  ---
+  duration_ms: 252.061533
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/britannia/hard
+ok 85 - setup/roster cf-central-america/britannia/hard
+  ---
+  duration_ms: 251.874292
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/britannia/challenge
+ok 86 - setup/roster cf-central-america/britannia/challenge
+  ---
+  duration_ms: 269.354669
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-central-america/britannia/elite
+ok 87 - setup/roster cf-central-america/britannia/elite
+  ---
+  duration_ms: 254.795214
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/cf/normal
+ok 88 - setup/roster cf-pacific-northwest/cf/normal
+  ---
+  duration_ms: 245.318323
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/cf/hard
+ok 89 - setup/roster cf-pacific-northwest/cf/hard
+  ---
+  duration_ms: 212.14423
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/cf/challenge
+ok 90 - setup/roster cf-pacific-northwest/cf/challenge
+  ---
+  duration_ms: 271.961344
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/cf/elite
+ok 91 - setup/roster cf-pacific-northwest/cf/elite
+  ---
+  duration_ms: 198.737109
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/britannia/normal
+ok 92 - setup/roster cf-pacific-northwest/britannia/normal
+  ---
+  duration_ms: 187.395715
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/britannia/hard
+ok 93 - setup/roster cf-pacific-northwest/britannia/hard
+  ---
+  duration_ms: 183.05859
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/britannia/challenge
+ok 94 - setup/roster cf-pacific-northwest/britannia/challenge
+  ---
+  duration_ms: 188.974841
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pacific-northwest/britannia/elite
+ok 95 - setup/roster cf-pacific-northwest/britannia/elite
+  ---
+  duration_ms: 189.93925
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/britannia/normal
+ok 96 - setup/roster invasion-japan/britannia/normal
+  ---
+  duration_ms: 137.279705
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/britannia/hard
+ok 97 - setup/roster invasion-japan/britannia/hard
+  ---
+  duration_ms: 94.57408
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/britannia/challenge
+ok 98 - setup/roster invasion-japan/britannia/challenge
+  ---
+  duration_ms: 88.297791
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/britannia/elite
+ok 99 - setup/roster invasion-japan/britannia/elite
+  ---
+  duration_ms: 94.007245
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/bk/normal
+ok 100 - setup/roster invasion-japan/bk/normal
+  ---
+  duration_ms: 99.997676
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/bk/hard
+ok 101 - setup/roster invasion-japan/bk/hard
+  ---
+  duration_ms: 88.77871
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/bk/challenge
+ok 102 - setup/roster invasion-japan/bk/challenge
+  ---
+  duration_ms: 72.961062
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/bk/elite
+ok 103 - setup/roster invasion-japan/bk/elite
+  ---
+  duration_ms: 85.870217
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/cf/normal
+ok 104 - setup/roster invasion-japan/cf/normal
+  ---
+  duration_ms: 82.421383
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/cf/hard
+ok 105 - setup/roster invasion-japan/cf/hard
+  ---
+  duration_ms: 82.116463
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/cf/challenge
+ok 106 - setup/roster invasion-japan/cf/challenge
+  ---
+  duration_ms: 79.638461
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-japan/cf/elite
+ok 107 - setup/roster invasion-japan/cf/elite
+  ---
+  duration_ms: 81.040056
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/britannia/normal
+ok 108 - setup/roster division-japan/britannia/normal
+  ---
+  duration_ms: 102.369109
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/britannia/hard
+ok 109 - setup/roster division-japan/britannia/hard
+  ---
+  duration_ms: 105.738642
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/britannia/challenge
+ok 110 - setup/roster division-japan/britannia/challenge
+  ---
+  duration_ms: 105.090074
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/britannia/elite
+ok 111 - setup/roster division-japan/britannia/elite
+  ---
+  duration_ms: 125.279201
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/eu/normal
+ok 112 - setup/roster division-japan/eu/normal
+  ---
+  duration_ms: 97.91566
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/eu/hard
+ok 113 - setup/roster division-japan/eu/hard
+  ---
+  duration_ms: 103.245876
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/eu/challenge
+ok 114 - setup/roster division-japan/eu/challenge
+  ---
+  duration_ms: 98.407885
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/eu/elite
+ok 115 - setup/roster division-japan/eu/elite
+  ---
+  duration_ms: 103.251886
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/cf/normal
+ok 116 - setup/roster division-japan/cf/normal
+  ---
+  duration_ms: 106.601331
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/cf/hard
+ok 117 - setup/roster division-japan/cf/hard
+  ---
+  duration_ms: 93.592029
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/cf/challenge
+ok 118 - setup/roster division-japan/cf/challenge
+  ---
+  duration_ms: 107.940691
+  type: 'test'
+  ...
+# Subtest: setup/roster division-japan/cf/elite
+ok 119 - setup/roster division-japan/cf/elite
+  ---
+  duration_ms: 109.727195
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/eu/normal
+ok 120 - setup/roster invasion-american-east-coast/eu/normal
+  ---
+  duration_ms: 241.358621
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/eu/hard
+ok 121 - setup/roster invasion-american-east-coast/eu/hard
+  ---
+  duration_ms: 199.177815
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/eu/challenge
+ok 122 - setup/roster invasion-american-east-coast/eu/challenge
+  ---
+  duration_ms: 200.178353
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/eu/elite
+ok 123 - setup/roster invasion-american-east-coast/eu/elite
+  ---
+  duration_ms: 202.203334
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/britannia/normal
+ok 124 - setup/roster invasion-american-east-coast/britannia/normal
+  ---
+  duration_ms: 190.321503
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/britannia/hard
+ok 125 - setup/roster invasion-american-east-coast/britannia/hard
+  ---
+  duration_ms: 178.923376
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/britannia/challenge
+ok 126 - setup/roster invasion-american-east-coast/britannia/challenge
+  ---
+  duration_ms: 189.756218
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-american-east-coast/britannia/elite
+ok 127 - setup/roster invasion-american-east-coast/britannia/elite
+  ---
+  duration_ms: 181.120682
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eu/normal
+ok 128 - setup/roster european-war/eu/normal
+  ---
+  duration_ms: 107.981132
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eu/hard
+ok 129 - setup/roster european-war/eu/hard
+  ---
+  duration_ms: 96.868677
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eu/challenge
+ok 130 - setup/roster european-war/eu/challenge
+  ---
+  duration_ms: 85.013542
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eu/elite
+ok 131 - setup/roster european-war/eu/elite
+  ---
+  duration_ms: 54.278828
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eb/normal
+ok 132 - setup/roster european-war/eb/normal
+  ---
+  duration_ms: 55.936809
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eb/hard
+ok 133 - setup/roster european-war/eb/hard
+  ---
+  duration_ms: 86.719849
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eb/challenge
+ok 134 - setup/roster european-war/eb/challenge
+  ---
+  duration_ms: 86.053495
+  type: 'test'
+  ...
+# Subtest: setup/roster european-war/eb/elite
+ok 135 - setup/roster european-war/eb/elite
+  ---
+  duration_ms: 75.69144
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/eu/normal
+ok 136 - setup/roster eu-great-lakes/eu/normal
+  ---
+  duration_ms: 833.290385
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/eu/hard
+ok 137 - setup/roster eu-great-lakes/eu/hard
+  ---
+  duration_ms: 753.227284
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/eu/challenge
+ok 138 - setup/roster eu-great-lakes/eu/challenge
+  ---
+  duration_ms: 714.534322
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/eu/elite
+ok 139 - setup/roster eu-great-lakes/eu/elite
+  ---
+  duration_ms: 718.414272
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/britannia/normal
+ok 140 - setup/roster eu-great-lakes/britannia/normal
+  ---
+  duration_ms: 709.986708
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/britannia/hard
+ok 141 - setup/roster eu-great-lakes/britannia/hard
+  ---
+  duration_ms: 726.429305
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/britannia/challenge
+ok 142 - setup/roster eu-great-lakes/britannia/challenge
+  ---
+  duration_ms: 866.116713
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-great-lakes/britannia/elite
+ok 143 - setup/roster eu-great-lakes/britannia/elite
+  ---
+  duration_ms: 783.45614
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/britannia/normal
+ok 144 - setup/roster eu-greenland/britannia/normal
+  ---
+  duration_ms: 119.666185
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/britannia/hard
+ok 145 - setup/roster eu-greenland/britannia/hard
+  ---
+  duration_ms: 81.990052
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/britannia/challenge
+ok 146 - setup/roster eu-greenland/britannia/challenge
+  ---
+  duration_ms: 91.561561
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/britannia/elite
+ok 147 - setup/roster eu-greenland/britannia/elite
+  ---
+  duration_ms: 94.175797
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/eu/normal
+ok 148 - setup/roster eu-greenland/eu/normal
+  ---
+  duration_ms: 93.491644
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/eu/hard
+ok 149 - setup/roster eu-greenland/eu/hard
+  ---
+  duration_ms: 62.874693
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/eu/challenge
+ok 150 - setup/roster eu-greenland/eu/challenge
+  ---
+  duration_ms: 58.616618
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-greenland/eu/elite
+ok 151 - setup/roster eu-greenland/eu/elite
+  ---
+  duration_ms: 60.743412
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/cf/normal
+ok 152 - setup/roster invasion-hawaii/cf/normal
+  ---
+  duration_ms: 66.315947
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/cf/hard
+ok 153 - setup/roster invasion-hawaii/cf/hard
+  ---
+  duration_ms: 69.233994
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/cf/challenge
+ok 154 - setup/roster invasion-hawaii/cf/challenge
+  ---
+  duration_ms: 49.509292
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/cf/elite
+ok 155 - setup/roster invasion-hawaii/cf/elite
+  ---
+  duration_ms: 71.596463
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/britannia/normal
+ok 156 - setup/roster invasion-hawaii/britannia/normal
+  ---
+  duration_ms: 61.621811
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/britannia/hard
+ok 157 - setup/roster invasion-hawaii/britannia/hard
+  ---
+  duration_ms: 56.911304
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/britannia/challenge
+ok 158 - setup/roster invasion-hawaii/britannia/challenge
+  ---
+  duration_ms: 60.694461
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-hawaii/britannia/elite
+ok 159 - setup/roster invasion-hawaii/britannia/elite
+  ---
+  duration_ms: 59.800862
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/britannia/normal
+ok 160 - setup/roster conquest-indochina/britannia/normal
+  ---
+  duration_ms: 158.580191
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/britannia/hard
+ok 161 - setup/roster conquest-indochina/britannia/hard
+  ---
+  duration_ms: 138.217269
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/britannia/challenge
+ok 162 - setup/roster conquest-indochina/britannia/challenge
+  ---
+  duration_ms: 115.882894
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/britannia/elite
+ok 163 - setup/roster conquest-indochina/britannia/elite
+  ---
+  duration_ms: 126.446886
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/cf/normal
+ok 164 - setup/roster conquest-indochina/cf/normal
+  ---
+  duration_ms: 97.853665
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/cf/hard
+ok 165 - setup/roster conquest-indochina/cf/hard
+  ---
+  duration_ms: 71.729681
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/cf/challenge
+ok 166 - setup/roster conquest-indochina/cf/challenge
+  ---
+  duration_ms: 70.343692
+  type: 'test'
+  ...
+# Subtest: setup/roster conquest-indochina/cf/elite
+ok 167 - setup/roster conquest-indochina/cf/elite
+  ---
+  duration_ms: 83.109915
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/britannia/normal
+ok 168 - setup/roster britannia-iraq-iran/britannia/normal
+  ---
+  duration_ms: 467.182686
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/britannia/hard
+ok 169 - setup/roster britannia-iraq-iran/britannia/hard
+  ---
+  duration_ms: 433.295927
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/britannia/challenge
+ok 170 - setup/roster britannia-iraq-iran/britannia/challenge
+  ---
+  duration_ms: 476.550551
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/britannia/elite
+ok 171 - setup/roster britannia-iraq-iran/britannia/elite
+  ---
+  duration_ms: 473.442386
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/cf/normal
+ok 172 - setup/roster britannia-iraq-iran/cf/normal
+  ---
+  duration_ms: 457.020215
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/cf/hard
+ok 173 - setup/roster britannia-iraq-iran/cf/hard
+  ---
+  duration_ms: 471.829729
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/cf/challenge
+ok 174 - setup/roster britannia-iraq-iran/cf/challenge
+  ---
+  duration_ms: 435.758998
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-iraq-iran/cf/elite
+ok 175 - setup/roster britannia-iraq-iran/cf/elite
+  ---
+  duration_ms: 511.369886
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/britannia/normal
+ok 176 - setup/roster invasion-korea/britannia/normal
+  ---
+  duration_ms: 232.915896
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/britannia/hard
+ok 177 - setup/roster invasion-korea/britannia/hard
+  ---
+  duration_ms: 199.211661
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/britannia/challenge
+ok 178 - setup/roster invasion-korea/britannia/challenge
+  ---
+  duration_ms: 193.915754
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/britannia/elite
+ok 179 - setup/roster invasion-korea/britannia/elite
+  ---
+  duration_ms: 183.445828
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/cf/normal
+ok 180 - setup/roster invasion-korea/cf/normal
+  ---
+  duration_ms: 187.013233
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/cf/hard
+ok 181 - setup/roster invasion-korea/cf/hard
+  ---
+  duration_ms: 181.128984
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/cf/challenge
+ok 182 - setup/roster invasion-korea/cf/challenge
+  ---
+  duration_ms: 181.577481
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-korea/cf/elite
+ok 183 - setup/roster invasion-korea/cf/elite
+  ---
+  duration_ms: 206.518395
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/britannia/normal
+ok 184 - setup/roster battle-luoyang/britannia/normal
+  ---
+  duration_ms: 371.192749
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/britannia/hard
+ok 185 - setup/roster battle-luoyang/britannia/hard
+  ---
+  duration_ms: 352.926221
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/britannia/challenge
+ok 186 - setup/roster battle-luoyang/britannia/challenge
+  ---
+  duration_ms: 333.796963
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/britannia/elite
+ok 187 - setup/roster battle-luoyang/britannia/elite
+  ---
+  duration_ms: 324.269776
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/cf/normal
+ok 188 - setup/roster battle-luoyang/cf/normal
+  ---
+  duration_ms: 337.212947
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/cf/hard
+ok 189 - setup/roster battle-luoyang/cf/hard
+  ---
+  duration_ms: 337.296377
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/cf/challenge
+ok 190 - setup/roster battle-luoyang/cf/challenge
+  ---
+  duration_ms: 335.712605
+  type: 'test'
+  ...
+# Subtest: setup/roster battle-luoyang/cf/elite
+ok 191 - setup/roster battle-luoyang/cf/elite
+  ---
+  duration_ms: 343.78172
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/britannia/normal
+ok 192 - setup/roster bf-malacca/britannia/normal
+  ---
+  duration_ms: 212.720599
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/britannia/hard
+ok 193 - setup/roster bf-malacca/britannia/hard
+  ---
+  duration_ms: 189.966061
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/britannia/challenge
+ok 194 - setup/roster bf-malacca/britannia/challenge
+  ---
+  duration_ms: 181.683028
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/britannia/elite
+ok 195 - setup/roster bf-malacca/britannia/elite
+  ---
+  duration_ms: 184.953949
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/cf/normal
+ok 196 - setup/roster bf-malacca/cf/normal
+  ---
+  duration_ms: 169.501646
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/cf/hard
+ok 197 - setup/roster bf-malacca/cf/hard
+  ---
+  duration_ms: 177.69669
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/cf/challenge
+ok 198 - setup/roster bf-malacca/cf/challenge
+  ---
+  duration_ms: 173.284739
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-malacca/cf/elite
+ok 199 - setup/roster bf-malacca/cf/elite
+  ---
+  duration_ms: 182.872982
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/cf/normal
+ok 200 - setup/roster cf-mexico/cf/normal
+  ---
+  duration_ms: 544.91022
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/cf/hard
+ok 201 - setup/roster cf-mexico/cf/hard
+  ---
+  duration_ms: 488.691377
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/cf/challenge
+ok 202 - setup/roster cf-mexico/cf/challenge
+  ---
+  duration_ms: 478.734564
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/cf/elite
+ok 203 - setup/roster cf-mexico/cf/elite
+  ---
+  duration_ms: 520.404173
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/britannia/normal
+ok 204 - setup/roster cf-mexico/britannia/normal
+  ---
+  duration_ms: 471.738876
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/britannia/hard
+ok 205 - setup/roster cf-mexico/britannia/hard
+  ---
+  duration_ms: 482.918943
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/britannia/challenge
+ok 206 - setup/roster cf-mexico/britannia/challenge
+  ---
+  duration_ms: 469.608585
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-mexico/britannia/elite
+ok 207 - setup/roster cf-mexico/britannia/elite
+  ---
+  duration_ms: 471.369406
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/cf/normal
+ok 208 - setup/roster cf-new-zealand/cf/normal
+  ---
+  duration_ms: 184.880019
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/cf/hard
+ok 209 - setup/roster cf-new-zealand/cf/hard
+  ---
+  duration_ms: 172.637116
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/cf/challenge
+ok 210 - setup/roster cf-new-zealand/cf/challenge
+  ---
+  duration_ms: 165.217637
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/cf/elite
+ok 211 - setup/roster cf-new-zealand/cf/elite
+  ---
+  duration_ms: 163.311408
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/britannia/normal
+ok 212 - setup/roster cf-new-zealand/britannia/normal
+  ---
+  duration_ms: 161.662321
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/britannia/hard
+ok 213 - setup/roster cf-new-zealand/britannia/hard
+  ---
+  duration_ms: 163.693194
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/britannia/challenge
+ok 214 - setup/roster cf-new-zealand/britannia/challenge
+  ---
+  duration_ms: 157.439292
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-new-zealand/britannia/elite
+ok 215 - setup/roster cf-new-zealand/britannia/elite
+  ---
+  duration_ms: 161.981816
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/eu/normal
+ok 216 - setup/roster eu-panama/eu/normal
+  ---
+  duration_ms: 256.542887
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/eu/hard
+ok 217 - setup/roster eu-panama/eu/hard
+  ---
+  duration_ms: 242.147785
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/eu/challenge
+ok 218 - setup/roster eu-panama/eu/challenge
+  ---
+  duration_ms: 231.967026
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/eu/elite
+ok 219 - setup/roster eu-panama/eu/elite
+  ---
+  duration_ms: 220.23579
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/britannia/normal
+ok 220 - setup/roster eu-panama/britannia/normal
+  ---
+  duration_ms: 237.439362
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/britannia/hard
+ok 221 - setup/roster eu-panama/britannia/hard
+  ---
+  duration_ms: 223.701187
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/britannia/challenge
+ok 222 - setup/roster eu-panama/britannia/challenge
+  ---
+  duration_ms: 238.362126
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-panama/britannia/elite
+ok 223 - setup/roster eu-panama/britannia/elite
+  ---
+  duration_ms: 212.523121
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/cf/normal
+ok 224 - setup/roster cf-panama/cf/normal
+  ---
+  duration_ms: 221.033767
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/cf/hard
+ok 225 - setup/roster cf-panama/cf/hard
+  ---
+  duration_ms: 225.362011
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/cf/challenge
+ok 226 - setup/roster cf-panama/cf/challenge
+  ---
+  duration_ms: 217.117169
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/cf/elite
+ok 227 - setup/roster cf-panama/cf/elite
+  ---
+  duration_ms: 231.820406
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/britannia/normal
+ok 228 - setup/roster cf-panama/britannia/normal
+  ---
+  duration_ms: 233.72287
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/britannia/hard
+ok 229 - setup/roster cf-panama/britannia/hard
+  ---
+  duration_ms: 223.816232
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/britannia/challenge
+ok 230 - setup/roster cf-panama/britannia/challenge
+  ---
+  duration_ms: 232.723025
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-panama/britannia/elite
+ok 231 - setup/roster cf-panama/britannia/elite
+  ---
+  duration_ms: 226.455375
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/eu/normal
+ok 232 - setup/roster eu-pendragon/eu/normal
+  ---
+  duration_ms: 727.799226
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/eu/hard
+ok 233 - setup/roster eu-pendragon/eu/hard
+  ---
+  duration_ms: 724.230816
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/eu/challenge
+ok 234 - setup/roster eu-pendragon/eu/challenge
+  ---
+  duration_ms: 686.795289
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/eu/elite
+ok 235 - setup/roster eu-pendragon/eu/elite
+  ---
+  duration_ms: 707.180512
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/britannia/normal
+ok 236 - setup/roster eu-pendragon/britannia/normal
+  ---
+  duration_ms: 710.73
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/britannia/hard
+ok 237 - setup/roster eu-pendragon/britannia/hard
+  ---
+  duration_ms: 706.111863
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/britannia/challenge
+ok 238 - setup/roster eu-pendragon/britannia/challenge
+  ---
+  duration_ms: 748.937593
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-pendragon/britannia/elite
+ok 239 - setup/roster eu-pendragon/britannia/elite
+  ---
+  duration_ms: 758.646473
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/cf/normal
+ok 240 - setup/roster cf-pendragon/cf/normal
+  ---
+  duration_ms: 724.99713
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/cf/hard
+ok 241 - setup/roster cf-pendragon/cf/hard
+  ---
+  duration_ms: 707.620674
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/cf/challenge
+ok 242 - setup/roster cf-pendragon/cf/challenge
+  ---
+  duration_ms: 697.900958
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/cf/elite
+ok 243 - setup/roster cf-pendragon/cf/elite
+  ---
+  duration_ms: 546.790883
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/britannia/normal
+ok 244 - setup/roster cf-pendragon/britannia/normal
+  ---
+  duration_ms: 583.133436
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/britannia/hard
+ok 245 - setup/roster cf-pendragon/britannia/hard
+  ---
+  duration_ms: 481.260918
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/britannia/challenge
+ok 246 - setup/roster cf-pendragon/britannia/challenge
+  ---
+  duration_ms: 511.771396
+  type: 'test'
+  ...
+# Subtest: setup/roster cf-pendragon/britannia/elite
+ok 247 - setup/roster cf-pendragon/britannia/elite
+  ---
+  duration_ms: 527.306664
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/britannia/normal
+ok 248 - setup/roster philippines-invasion/britannia/normal
+  ---
+  duration_ms: 57.773874
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/britannia/hard
+ok 249 - setup/roster philippines-invasion/britannia/hard
+  ---
+  duration_ms: 43.961219
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/britannia/challenge
+ok 250 - setup/roster philippines-invasion/britannia/challenge
+  ---
+  duration_ms: 42.293635
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/britannia/elite
+ok 251 - setup/roster philippines-invasion/britannia/elite
+  ---
+  duration_ms: 42.250239
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/cf/normal
+ok 252 - setup/roster philippines-invasion/cf/normal
+  ---
+  duration_ms: 37.815695
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/cf/hard
+ok 253 - setup/roster philippines-invasion/cf/hard
+  ---
+  duration_ms: 40.878489
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/cf/challenge
+ok 254 - setup/roster philippines-invasion/cf/challenge
+  ---
+  duration_ms: 41.138523
+  type: 'test'
+  ...
+# Subtest: setup/roster philippines-invasion/cf/elite
+ok 255 - setup/roster philippines-invasion/cf/elite
+  ---
+  duration_ms: 40.69026
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/eu/normal
+ok 256 - setup/roster eu-rocky-mountains/eu/normal
+  ---
+  duration_ms: 551.366278
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/eu/hard
+ok 257 - setup/roster eu-rocky-mountains/eu/hard
+  ---
+  duration_ms: 510.48086
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/eu/challenge
+ok 258 - setup/roster eu-rocky-mountains/eu/challenge
+  ---
+  duration_ms: 584.993091
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/eu/elite
+ok 259 - setup/roster eu-rocky-mountains/eu/elite
+  ---
+  duration_ms: 574.98696
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/britannia/normal
+ok 260 - setup/roster eu-rocky-mountains/britannia/normal
+  ---
+  duration_ms: 577.581709
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/britannia/hard
+ok 261 - setup/roster eu-rocky-mountains/britannia/hard
+  ---
+  duration_ms: 545.910706
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/britannia/challenge
+ok 262 - setup/roster eu-rocky-mountains/britannia/challenge
+  ---
+  duration_ms: 577.661372
+  type: 'test'
+  ...
+# Subtest: setup/roster eu-rocky-mountains/britannia/elite
+ok 263 - setup/roster eu-rocky-mountains/britannia/elite
+  ---
+  duration_ms: 558.495653
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/britannia/normal
+ok 264 - setup/roster britannia-siberia/britannia/normal
+  ---
+  duration_ms: 143.062333
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/britannia/hard
+ok 265 - setup/roster britannia-siberia/britannia/hard
+  ---
+  duration_ms: 78.457534
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/britannia/challenge
+ok 266 - setup/roster britannia-siberia/britannia/challenge
+  ---
+  duration_ms: 82.76244
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/britannia/elite
+ok 267 - setup/roster britannia-siberia/britannia/elite
+  ---
+  duration_ms: 82.153771
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/eu/normal
+ok 268 - setup/roster britannia-siberia/eu/normal
+  ---
+  duration_ms: 76.452341
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/eu/hard
+ok 269 - setup/roster britannia-siberia/eu/hard
+  ---
+  duration_ms: 85.135159
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/eu/challenge
+ok 270 - setup/roster britannia-siberia/eu/challenge
+  ---
+  duration_ms: 79.050971
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-siberia/eu/elite
+ok 271 - setup/roster britannia-siberia/eu/elite
+  ---
+  duration_ms: 81.482334
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/britannia/normal
+ok 272 - setup/roster invasion-south-africa/britannia/normal
+  ---
+  duration_ms: 119.448695
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/britannia/hard
+ok 273 - setup/roster invasion-south-africa/britannia/hard
+  ---
+  duration_ms: 97.8046
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/britannia/challenge
+ok 274 - setup/roster invasion-south-africa/britannia/challenge
+  ---
+  duration_ms: 84.304034
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/britannia/elite
+ok 275 - setup/roster invasion-south-africa/britannia/elite
+  ---
+  duration_ms: 82.169558
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/eu/normal
+ok 276 - setup/roster invasion-south-africa/eu/normal
+  ---
+  duration_ms: 89.220154
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/eu/hard
+ok 277 - setup/roster invasion-south-africa/eu/hard
+  ---
+  duration_ms: 87.046767
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/eu/challenge
+ok 278 - setup/roster invasion-south-africa/eu/challenge
+  ---
+  duration_ms: 105.342014
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-south-africa/eu/elite
+ok 279 - setup/roster invasion-south-africa/eu/elite
+  ---
+  duration_ms: 108.539763
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/britannia/normal
+ok 280 - setup/roster bf-south-china/britannia/normal
+  ---
+  duration_ms: 347.828017
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/britannia/hard
+ok 281 - setup/roster bf-south-china/britannia/hard
+  ---
+  duration_ms: 295.083712
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/britannia/challenge
+ok 282 - setup/roster bf-south-china/britannia/challenge
+  ---
+  duration_ms: 193.067518
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/britannia/elite
+ok 283 - setup/roster bf-south-china/britannia/elite
+  ---
+  duration_ms: 195.755932
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/cf/normal
+ok 284 - setup/roster bf-south-china/cf/normal
+  ---
+  duration_ms: 197.846708
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/cf/hard
+ok 285 - setup/roster bf-south-china/cf/hard
+  ---
+  duration_ms: 203.182416
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/cf/challenge
+ok 286 - setup/roster bf-south-china/cf/challenge
+  ---
+  duration_ms: 216.765813
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-south-china/cf/elite
+ok 287 - setup/roster bf-south-china/cf/elite
+  ---
+  duration_ms: 201.056851
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/britannia/normal
+ok 288 - setup/roster operation-stonehenge/britannia/normal
+  ---
+  duration_ms: 107.192031
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/britannia/hard
+ok 289 - setup/roster operation-stonehenge/britannia/hard
+  ---
+  duration_ms: 73.126779
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/britannia/challenge
+ok 290 - setup/roster operation-stonehenge/britannia/challenge
+  ---
+  duration_ms: 65.182241
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/britannia/elite
+ok 291 - setup/roster operation-stonehenge/britannia/elite
+  ---
+  duration_ms: 70.067653
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/eu/normal
+ok 292 - setup/roster operation-stonehenge/eu/normal
+  ---
+  duration_ms: 58.447276
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/eu/hard
+ok 293 - setup/roster operation-stonehenge/eu/hard
+  ---
+  duration_ms: 69.799545
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/eu/challenge
+ok 294 - setup/roster operation-stonehenge/eu/challenge
+  ---
+  duration_ms: 53.26513
+  type: 'test'
+  ...
+# Subtest: setup/roster operation-stonehenge/eu/elite
+ok 295 - setup/roster operation-stonehenge/eu/elite
+  ---
+  duration_ms: 71.001081
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/britannia/normal
+ok 296 - setup/roster invasion-turkey/britannia/normal
+  ---
+  duration_ms: 132.149026
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/britannia/hard
+ok 297 - setup/roster invasion-turkey/britannia/hard
+  ---
+  duration_ms: 116.299952
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/britannia/challenge
+ok 298 - setup/roster invasion-turkey/britannia/challenge
+  ---
+  duration_ms: 95.526922
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/britannia/elite
+ok 299 - setup/roster invasion-turkey/britannia/elite
+  ---
+  duration_ms: 103.064429
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/eu/normal
+ok 300 - setup/roster invasion-turkey/eu/normal
+  ---
+  duration_ms: 107.270069
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/eu/hard
+ok 301 - setup/roster invasion-turkey/eu/hard
+  ---
+  duration_ms: 98.711848
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/eu/challenge
+ok 302 - setup/roster invasion-turkey/eu/challenge
+  ---
+  duration_ms: 100.164958
+  type: 'test'
+  ...
+# Subtest: setup/roster invasion-turkey/eu/elite
+ok 303 - setup/roster invasion-turkey/eu/elite
+  ---
+  duration_ms: 104.137639
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/britannia/normal
+ok 304 - setup/roster crossing-urals/britannia/normal
+  ---
+  duration_ms: 74.652606
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/britannia/hard
+ok 305 - setup/roster crossing-urals/britannia/hard
+  ---
+  duration_ms: 62.954635
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/britannia/challenge
+ok 306 - setup/roster crossing-urals/britannia/challenge
+  ---
+  duration_ms: 61.708524
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/britannia/elite
+ok 307 - setup/roster crossing-urals/britannia/elite
+  ---
+  duration_ms: 62.236274
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/eu/normal
+ok 308 - setup/roster crossing-urals/eu/normal
+  ---
+  duration_ms: 64.443241
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/eu/hard
+ok 309 - setup/roster crossing-urals/eu/hard
+  ---
+  duration_ms: 62.096071
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/eu/challenge
+ok 310 - setup/roster crossing-urals/eu/challenge
+  ---
+  duration_ms: 57.633183
+  type: 'test'
+  ...
+# Subtest: setup/roster crossing-urals/eu/elite
+ok 311 - setup/roster crossing-urals/eu/elite
+  ---
+  duration_ms: 59.508602
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/britannia/normal
+ok 312 - setup/roster britannia-western-russia/britannia/normal
+  ---
+  duration_ms: 103.31047
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/britannia/hard
+ok 313 - setup/roster britannia-western-russia/britannia/hard
+  ---
+  duration_ms: 71.452096
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/britannia/challenge
+ok 314 - setup/roster britannia-western-russia/britannia/challenge
+  ---
+  duration_ms: 72.069151
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/britannia/elite
+ok 315 - setup/roster britannia-western-russia/britannia/elite
+  ---
+  duration_ms: 79.395342
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/eu/normal
+ok 316 - setup/roster britannia-western-russia/eu/normal
+  ---
+  duration_ms: 75.235686
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/eu/hard
+ok 317 - setup/roster britannia-western-russia/eu/hard
+  ---
+  duration_ms: 74.690935
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/eu/challenge
+ok 318 - setup/roster britannia-western-russia/eu/challenge
+  ---
+  duration_ms: 76.424087
+  type: 'test'
+  ...
+# Subtest: setup/roster britannia-western-russia/eu/elite
+ok 319 - setup/roster britannia-western-russia/eu/elite
+  ---
+  duration_ms: 83.047457
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/britannia/normal
+ok 320 - setup/roster bf-yangtze/britannia/normal
+  ---
+  duration_ms: 274.164144
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/britannia/hard
+ok 321 - setup/roster bf-yangtze/britannia/hard
+  ---
+  duration_ms: 266.387398
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/britannia/challenge
+ok 322 - setup/roster bf-yangtze/britannia/challenge
+  ---
+  duration_ms: 233.793203
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/britannia/elite
+ok 323 - setup/roster bf-yangtze/britannia/elite
+  ---
+  duration_ms: 233.755048
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/cf/normal
+ok 324 - setup/roster bf-yangtze/cf/normal
+  ---
+  duration_ms: 224.061876
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/cf/hard
+ok 325 - setup/roster bf-yangtze/cf/hard
+  ---
+  duration_ms: 217.832417
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/cf/challenge
+ok 326 - setup/roster bf-yangtze/cf/challenge
+  ---
+  duration_ms: 250.307026
+  type: 'test'
+  ...
+# Subtest: setup/roster bf-yangtze/cf/elite
+ok 327 - setup/roster bf-yangtze/cf/elite
+  ---
+  duration_ms: 276.778164
+  type: 'test'
+  ...
+# Subtest: existing regression: amphibious_elite_chain_smoke.cjs
+ok 328 - existing regression: amphibious_elite_chain_smoke.cjs
+  ---
+  duration_ms: 1164.106759
+  type: 'test'
+  ...
+# Subtest: existing regression: army_group_unlimited_smoke.cjs
+ok 329 - existing regression: army_group_unlimited_smoke.cjs
+  ---
+  duration_ms: 322.898028
+  type: 'test'
+  ...
+# Subtest: existing regression: challenge_pass_smoke.cjs
+ok 330 - existing regression: challenge_pass_smoke.cjs
+  ---
+  duration_ms: 394.020139
+  type: 'test'
+  ...
+# Subtest: existing regression: city_defense_movement_refresh_smoke.cjs
+ok 331 - existing regression: city_defense_movement_refresh_smoke.cjs
+  ---
+  duration_ms: 1785.17759
+  type: 'test'
+  ...
+# Subtest: existing regression: city_tier_upgrade_smoke.cjs
+ok 332 - existing regression: city_tier_upgrade_smoke.cjs
+  ---
+  duration_ms: 256.195818
+  type: 'test'
+  ...
+# Subtest: existing regression: commander_assignment_smoke.cjs
+ok 333 - existing regression: commander_assignment_smoke.cjs
+  ---
+  duration_ms: 333.673151
+  type: 'test'
+  ...
+# Subtest: existing regression: commander_progression_smoke.cjs
+ok 334 - existing regression: commander_progression_smoke.cjs
+  ---
+  duration_ms: 120.034861
+  type: 'test'
+  ...
+# Subtest: existing regression: division_income_factory_smoke.cjs
+ok 335 - existing regression: division_income_factory_smoke.cjs
+  ---
+  duration_ms: 1507.250611
+  type: 'test'
+  ...
+# Subtest: existing regression: elite_class_standardization_smoke.cjs
+ok 336 - existing regression: elite_class_standardization_smoke.cjs
+  ---
+  duration_ms: 144.128194
+  type: 'test'
+  ...
+# Subtest: existing regression: elite_lootboxes_smoke.cjs
+ok 337 - existing regression: elite_lootboxes_smoke.cjs
+  ---
+  duration_ms: 94.067092
+  type: 'test'
+  ...
+# Subtest: existing regression: elite_reward_max_level_smoke.cjs
+ok 338 - existing regression: elite_reward_max_level_smoke.cjs
+  ---
+  duration_ms: 88.130574
+  type: 'test'
+  ...
+# Subtest: existing regression: federation_era_roster_smoke.cjs
+ok 339 - existing regression: federation_era_roster_smoke.cjs
+  ---
+  duration_ms: 1525.926744
+  type: 'test'
+  ...
+# Subtest: existing regression: frame_research_economy_smoke.cjs
+ok 340 - existing regression: frame_research_economy_smoke.cjs
+  ---
+  duration_ms: 1809.640298
+  type: 'test'
+  ...
+# Subtest: existing regression: hud_income_display_smoke.cjs
+ok 341 - existing regression: hud_income_display_smoke.cjs
+  ---
+  duration_ms: 100.699184
+  type: 'test'
+  ...
+# Subtest: existing regression: interactive_tutorial_smoke.cjs
+ok 342 - existing regression: interactive_tutorial_smoke.cjs
+  ---
+  duration_ms: 255.242612
+  type: 'test'
+  ...
+# Subtest: existing regression: next_unit_fortress_beam_smoke.cjs
+ok 343 - existing regression: next_unit_fortress_beam_smoke.cjs
+  ---
+  duration_ms: 85.8731
+  type: 'test'
+  ...
+# Subtest: existing regression: regional_city_income_smoke.cjs
+ok 344 - existing regression: regional_city_income_smoke.cjs
+  ---
+  duration_ms: 12377.169962
+  type: 'test'
+  ...
+# Subtest: existing regression: regular_class_standardization_smoke.cjs
+ok 345 - existing regression: regular_class_standardization_smoke.cjs
+  ---
+  duration_ms: 186.891941
+  type: 'test'
+  ...
+# Subtest: existing regression: repair_and_port_healing_smoke.cjs
+ok 346 - existing regression: repair_and_port_healing_smoke.cjs
+  ---
+  duration_ms: 705.573142
+  type: 'test'
+  ...
+# Subtest: existing regression: research_200_combat_smoke.cjs
+ok 347 - existing regression: research_200_combat_smoke.cjs
+  ---
+  duration_ms: 298.465336
+  type: 'test'
+  ...
+# Subtest: existing regression: research_branch_redesign_smoke.cjs
+ok 348 - existing regression: research_branch_redesign_smoke.cjs
+  ---
+  duration_ms: 286.547293
+  type: 'test'
+  ...
+# Subtest: existing regression: research_mobility_smoke.cjs
+ok 349 - existing regression: research_mobility_smoke.cjs
+  ---
+  duration_ms: 240.793123
+  type: 'test'
+  ...
+# Subtest: existing regression: research_progression_smoke.cjs
+ok 350 - existing regression: research_progression_smoke.cjs
+  ---
+  duration_ms: 324.273674
+  type: 'test'
+  ...
+# Subtest: existing regression: research_standardization_smoke.cjs
+ok 351 - existing regression: research_standardization_smoke.cjs
+  ---
+  duration_ms: 189.595807
+  type: 'test'
+  ...
+# Subtest: existing regression: reward_economy_smoke.cjs
+ok 352 - existing regression: reward_economy_smoke.cjs
+  ---
+  duration_ms: 157.594896
+  type: 'test'
+  ...
+# Subtest: existing regression: scenario_city_defenses_smoke.cjs
+ok 353 - existing regression: scenario_city_defenses_smoke.cjs
+  ---
+  duration_ms: 197.985885
+  type: 'test'
+  ...
+# Subtest: existing regression: scenario_dynamic_defense_smoke.cjs
+ok 354 - existing regression: scenario_dynamic_defense_smoke.cjs
+  ---
+  duration_ms: 1943.51693
+  type: 'test'
+  ...
+# Subtest: existing regression: story_canterbury_movement_smoke.cjs
+ok 355 - existing regression: story_canterbury_movement_smoke.cjs
+  ---
+  duration_ms: 165.905713
+  type: 'test'
+  ...
+# Subtest: existing regression: tutorial_academy_smoke.cjs
+ok 356 - existing regression: tutorial_academy_smoke.cjs
+  ---
+  duration_ms: 1963.932888
+  type: 'test'
+  ...
+# Subtest: existing regression: ufn2018_smoke.cjs
+ok 357 - existing regression: ufn2018_smoke.cjs
+  ---
+  duration_ms: 21699.783546
+  type: 'test'
+  ...
+# Subtest: existing regression: world_campaign_elite_levels_smoke.cjs
+ok 358 - existing regression: world_campaign_elite_levels_smoke.cjs
+  ---
+  duration_ms: 292.07906
+  type: 'test'
+  ...
+# Subtest: existing regression: world_campaign_map_colors_smoke.cjs
+ok 359 - existing regression: world_campaign_map_colors_smoke.cjs
+  ---
+  duration_ms: 395.52833
+  type: 'test'
+  ...
+# Subtest: baseline reconciliation preserves both original references and records the new digest
+ok 360 - baseline reconciliation preserves both original references and records the new digest
+  ---
+  duration_ms: 1.974451
+  type: 'test'
+  ...
+# Subtest: matrix covers manifest scenarios, four difficulties and every playable faction
+ok 361 - matrix covers manifest scenarios, four difficulties and every playable faction
+  ---
+  duration_ms: 5.960194
+  type: 'test'
+  ...
+# Subtest: shards partition the complete matrix without dropping or repeating matches
+ok 362 - shards partition the complete matrix without dropping or repeating matches
+  ---
+  duration_ms: 1.313911
+  type: 'test'
+  ...
+# Subtest: merging cannot report full coverage when an entire shard is missing
+ok 363 - merging cannot report full coverage when an entire shard is missing
+  ---
+  duration_ms: 0.54463
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds NaN
+ok 364 - invalid matrix rejected: --seeds NaN
+  ---
+  duration_ms: 0.248691
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --horizons 0
+ok 365 - invalid matrix rejected: --horizons 0
+  ---
+  duration_ms: 0.139726
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --horizons 151
+ok 366 - invalid matrix rejected: --horizons 151
+  ---
+  duration_ms: 0.176073
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --jobs 0
+ok 367 - invalid matrix rejected: --jobs 0
+  ---
+  duration_ms: 0.113361
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --difficulties easy
+ok 368 - invalid matrix rejected: --difficulties easy
+  ---
+  duration_ms: 0.19583
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --players nobody
+ok 369 - invalid matrix rejected: --players nobody
+  ---
+  duration_ms: 0.726764
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --scenarios typo
+ok 370 - invalid matrix rejected: --scenarios typo
+  ---
+  duration_ms: 0.168886
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --shard 8/8
+ok 371 - invalid matrix rejected: --shard 8/8
+  ---
+  duration_ms: 0.137897
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --unknown
+ok 372 - invalid matrix rejected: --unknown
+  ---
+  duration_ms: 0.062897
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds
+ok 373 - invalid matrix rejected: --seeds
+  ---
+  duration_ms: 0.171643
+  type: 'test'
+  ...
+# Subtest: invalid matrix rejected: --seeds 11 --seeds 12
+ok 374 - invalid matrix rejected: --seeds 11 --seeds 12
+  ---
+  duration_ms: 0.068003
+  type: 'test'
+  ...
+# Subtest: seed zero and maximum uint32 seed are accepted without signed overflow
+ok 375 - seed zero and maximum uint32 seed are accepted without signed overflow
+  ---
+  duration_ms: 0.458022
+  type: 'test'
+  ...
+# Subtest: optional observers preserve exact legacy state and result fingerprints
+ok 376 - optional observers preserve exact legacy state and result fingerprints
+  ---
+  duration_ms: 5505.633639
+  type: 'test'
+  ...
+# Subtest: initial carrier cargo is not production or a casualty; observers do not write state
+ok 377 - initial carrier cargo is not production or a casualty; observers do not write state
+  ---
+  duration_ms: 0.441036
+  type: 'test'
+  ...
+# Subtest: scripted formations and factory production have separate counts
+ok 378 - scripted formations and factory production have separate counts
+  ---
+  duration_ms: 0.184794
+  type: 'test'
+  ...
+# Subtest: cargo attacks nested inside a carrier order are attributed to the cargo, not naval fire
+ok 379 - cargo attacks nested inside a carrier order are attributed to the cargo, not naval fire
+  ---
+  duration_ms: 0.156718
+  type: 'test'
+  ...
+# Subtest: Wilson intervals retain uncertainty for tiny samples and tighten for repeated outcomes
+ok 380 - Wilson intervals retain uncertainty for tiny samples and tighten for repeated outcomes
+  ---
+  duration_ms: 0.21414
+  type: 'test'
+  ...
+# Subtest: censored games and failures stay separate; horizons are not pooled
+ok 381 - censored games and failures stay separate; horizons are not pooled
+  ---
+  duration_ms: 1.008428
+  type: 'test'
+  ...
+# Subtest: CSV quotes separators and paired comparison requires the exact horizon and seed
+ok 382 - CSV quotes separators and paired comparison requires the exact horizon and seed
+  ---
+  duration_ms: 0.729171
+  type: 'test'
+  ...
+# Subtest: fingerprint comparison notices missing and changed baseline entries
+ok 383 - fingerprint comparison notices missing and changed baseline entries
+  ---
+  duration_ms: 0.64225
+  type: 'test'
+  ...
+# Subtest: interrupted shard reports recover complete journal rows and ignore a torn final row
+ok 384 - interrupted shard reports recover complete journal rows and ignore a torn final row
+  ---
+  duration_ms: 0.801995
+  type: 'test'
+  ...
+# Subtest: a worker timeout returns an explicit failed match
+ok 385 - a worker timeout returns an explicit failed match
+  ---
+  duration_ms: 15.441868
+  type: 'test'
+  ...
+# Subtest: end-to-end output, deterministic replay, resume and source mismatch rejection
+ok 386 - end-to-end output, deterministic replay, resume and source mismatch rejection
+  ---
+  duration_ms: 2761.627207
+  type: 'test'
+  ...
+1..386
+# tests 386
+# suites 0
+# pass 386
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 69916.507273

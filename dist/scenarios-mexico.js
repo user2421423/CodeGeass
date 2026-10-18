@@ -249,7 +249,7 @@
     const elites=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,
       elites.filter(id=>!E.ELITE_FORCES[id].scenarioOnly&&
-        E.ELITE_FORCES[id].availableTo.includes(side))]));
+        E.eliteEligible(g,side,id))]));
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
       const c=i%COLS,r=(i/COLS)|0,kind=COAST_ROWS[r][c],p=geo(c,r);
       return {c,r,owner:null,terrain:kind===0?'sea':kind===1?'coast':landscape(p)};
