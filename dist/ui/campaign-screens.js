@@ -199,6 +199,7 @@ function restoreLoadedGame(s) {
     scenarioKind = game.scenario.id;
     scenarioSide = game.player;
     scenarioDifficulty = game.difficulty || 'normal';
+    scenarioWeeklySelected = !!game.weeklyScenario;
   }
   setWorld();
   selection = null;
