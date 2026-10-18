@@ -358,7 +358,14 @@ document.addEventListener('click', e => {
     generalsDialog(d.generalsSide);
     return;
   }
+  if (d.scenarioWeekly) {
+    scenarioWeeklySelected=true;
+    scenarioKind=weeklyScenarioCurrent().scenarioId;
+    scenarioSide=scenarioModel()?.sides?.[0] || 'britannia';
+    scenarioDialog();return;
+  }
   if (d.scenarioKind) {
+    scenarioWeeklySelected=false;
     scenarioKind=d.scenarioKind;
     scenarioSide='britannia';
     scenarioDialog();return;
@@ -476,7 +483,11 @@ document.addEventListener('click', e => {
       startMenu();
       break;
     case 'start-scenario':
-      confirmReplace(SCENARIO_KEY, 'scenario', () => startScenario());
+      confirmReplace(scenarioWeeklySelected ? WEEKLY_SCENARIO_KEY : SCENARIO_KEY, 'scenario', () => startScenario());
+      break;
+    case 'continue-weekly-scenario':
+      if (weeklyScenarioSavedGame()) resumeSavedGame(WEEKLY_SCENARIO_KEY);
+      else { toast('There is no active weekly operation to continue.'); scenarioDialog(); }
       break;
     case 'continue-scenario':
       resumeSavedGame(SCENARIO_KEY);
