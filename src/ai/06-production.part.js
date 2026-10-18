@@ -263,8 +263,9 @@
           reachable = connected.filter(f => !f.dynamicDefense || route(f) <= 5);
         return (reachable.length ? reachable : connected).slice().sort((a,b) => {
           const score = f => (f.deficit??Math.max(0,f.desiredStrength-f.assigned))*
-            (f.dynamicDefense ? 3.5 : 2) / (1+route(f)) +
-            (f.state==='regrouping'?2:0);
+            (f.dynamicDefense ?
+              (SCENARIO_DEFENSE.leanProduction ? 2.25 : 3.5) : 2) /
+              (1+route(f)) + (f.state==='regrouping'?2:0);
           return score(b)-score(a)||route(a)-route(b)||a.anchor.id-b.anchor.id;
         })[0] || null;
       },
@@ -274,7 +275,10 @@
         const shortage = f.deficit ?? Math.max(0,f.desiredStrength-f.assigned);
         const travel = frontArrival(g,s,f);
         return shortage*3/(1+Math.min(10,travel)/3) +
-          (f.dynamicDefense && travel <= 5 ? (f.defenseSeverity==='critical'?8:5) : 0) +
+          (f.dynamicDefense && travel <= (SCENARIO_DEFENSE.leanProduction?3:5) ?
+            (SCENARIO_DEFENSE.leanProduction ?
+              (f.defenseSeverity==='critical'?4:2) :
+              (f.defenseSeverity==='critical'?8:5)) : 0) +
           (f.state==='regrouping'?2:0);
       },
       serves = s => {

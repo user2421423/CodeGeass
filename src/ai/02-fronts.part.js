@@ -117,6 +117,7 @@
   const SCENARIO_DEFENSE = {
     enterRatio: 1.25, exitRatio: 0.70, releaseTurns: 2, respondTurns: 3,
     maxFronts: 6, clusterRadius: 6,
+    selective: true, preserveOffense: true, leanProduction: true,
     mobilization: { moderate: 0.25, major: 0.40, critical: 0.60 }
   };
   function scenarioHomeDefense(g, side, own, opponents) {
@@ -138,9 +139,17 @@
           scenarioTravel(g, u, { anchor: city, side }) <= 2);
         const landing = atCoast && distance <= 5;
         if (!immediate && !approach && !landing) return [];
+        // Avoid interpreting a moving army as an imminent threat to
+        // every nearby friendly city on its route.
+        if (SCENARIO_DEFENSE.selective && !immediate &&
+            !(sameLand && distance <= 4 &&
+              scenarioTravel(g, u, { anchor: city, side }) <= 1.5) &&
+            !(atCoast && distance <= 3)) return [];
         const strength = isShip(u) ? (u.cargo || []).reduce((n, v) =>
           n + unitStrength(v), 0) : unitStrength(u);
-        return [{ u, immediate, strength: strength * (immediate ? 1 : 0.65) }];
+        const weight = immediate ? 1 :
+          SCENARIO_DEFENSE.selective && distance > 2 ? 0.50 : 0.65;
+        return [{ u, immediate, distance, strength: strength * weight }];
       });
       const threat = incoming.reduce((n, x) => n + x.strength, 0),
         old = previous[city.id];
@@ -151,8 +160,10 @@
       const exposed = (city.shield || 0) <= Math.max(0, (city.maxShield || 0) * 0.2) &&
         !unitAt(g, city);
       const captureSoon = exposed && incoming.some(x => x.immediate && canCapture(x.u));
-      const enter = threat >= Math.max(2, friendly * SCENARIO_DEFENSE.enterRatio) ||
-        captureSoon;
+      const vulnerable = incoming.some(x => x.distance <= 3) ||
+        (city.shield || 0) < (city.maxShield || 0) * 0.6;
+      const enter = (threat >= Math.max(2, friendly * SCENARIO_DEFENSE.enterRatio) &&
+        (!SCENARIO_DEFENSE.selective || vulnerable)) || captureSoon;
       const quiet = !enter && (threat === 0 ||
         threat < friendly * SCENARIO_DEFENSE.exitRatio) && !captureSoon
         ? (old?.quiet || 0) + 1 : 0;
@@ -173,7 +184,8 @@
       const nearby = fronts.find(f => massOf(g, f.city) === massOf(g, request.city) &&
         dist(g, f.city, request.city) <= SCENARIO_DEFENSE.clusterRadius);
       if (nearby) nearby.protectedCities.push(request.city.id);
-      else if (fronts.length < SCENARIO_DEFENSE.maxFronts) fronts.push(request);
+      else if (fronts.length < (SCENARIO_DEFENSE.selective ? 3 :
+        SCENARIO_DEFENSE.maxFronts)) fronts.push(request);
     }
     state.homeDefense = next;
     return fronts;
@@ -327,7 +339,13 @@
       const responders = fronts.filter(f => f.dynamicDefense &&
         f.assigned < f.desiredStrength &&
         scenarioTravel(g, u, f) <= SCENARIO_DEFENSE.respondTurns &&
-        (atSea(g, u) || massOf(g, u) === massOf(g, f.anchor)));
+        (atSea(g, u) || massOf(g, u) === massOf(g, f.anchor)) &&
+        // Keep the head of a viable assault column fighting. Nearby reserves
+        // still respond; an imminent capture may override this restriction.
+        (!SCENARIO_DEFENSE.preserveOffense || f.defenseSeverity === 'critical' ||
+          !old || old.type !== 'offensive' ||
+          dist(g, u, old.anchor) > 5 ||
+          f.enemyStrength > f.arrivingFour * 2));
       if (responders.length) return responders.sort((a,b) =>
         (b.defenseSeverity === 'critical' ? 2 : b.defenseSeverity === 'major' ? 1 : 0) -
         (a.defenseSeverity === 'critical' ? 2 : a.defenseSeverity === 'major' ? 1 : 0) ||
@@ -566,7 +584,9 @@
     Object.assign(memo, { fronts, byId: Object.fromEntries(fronts.map(f => [f.id, f])),
       assign: {}, fields: {}, columns: {},
       defenseBudget: homeDefense.length ?
-        Math.max(2, mobileStrength * SCENARIO_DEFENSE.mobilization[severity]) : 0 });
+        Math.max(2, mobileStrength * (SCENARIO_DEFENSE.preserveOffense ?
+          { moderate: 0.15, major: 0.25, critical: 0.45 }[severity] :
+          SCENARIO_DEFENSE.mobilization[severity])) : 0 });
     const at = u => carried.get(u.id) || u;
     // Cached per unit: nothing moves while the units are ranked.
     const bestTravel = new Map(),
@@ -604,6 +624,21 @@
     state.columns = Object.fromEntries(fronts.filter(f => f.members.length).map(f =>
       [f.id, { city: f.anchor.id, units: f.members.slice(), strength: f.assigned, since: g.turn }]));
     memo.staging = fronts.find(f => f.overseas && f.assigned > 0 && f.rally)?.rally || null;
+    // Opt-in diagnostics for AI-vs-AI comparisons; never store this on saves.
+    if (g.aiDefenseTrace) {
+      (g.aiDefenseTrace[side] ||= []).push({
+        turn:g.turn, fronts:fronts.filter(f=>f.dynamicDefense)
+          .map(f=>({city:f.anchor.name,assigned:+f.assigned.toFixed(2),
+            deficit:+f.deficit.toFixed(2),severity:f.defenseSeverity})),
+        budget:+memo.defenseBudget.toFixed(2),
+        defendingStrength:+fronts.filter(f=>f.dynamicDefense)
+          .reduce((n,f)=>n+f.assigned,0).toFixed(2),
+        offensiveStrength:+fronts.filter(f=>f.type==='offensive')
+          .reduce((n,f)=>n+f.assigned,0).toFixed(2),
+        attacking:fronts.filter(f=>f.type==='offensive'&&f.state==='attacking').length,
+        regrouping:fronts.filter(f=>f.state==='regrouping').length
+      });
+    }
   }
   // Anticipate second-turn land approaches on a continuous landmass. The exact next-turn
   // threat forecast remains threatTo(); this is a bounded early warning, not an assertion
