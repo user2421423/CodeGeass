@@ -531,11 +531,18 @@
       a.attacked = false;
       breakthrough = true;
     }
+    // Kallen's first city-defense break grants the same reposition as a kill
+    // when the frame's own Breakthrough has already restored its attack.
+    if (defensesDestroyed && !destroyed && breakthrough && a.hp > 0 &&
+        f.ace && a.aceTurn !== g.turn) {
+      a.aceTurn = g.turn;
+      grantReposition(a, 2);
+    }
     // Every amphibious Elite (all factions, any Elite level) can chain both
-    // movement and attacks after a direct kill, even if it moved before firing.
-    // Normal Amphibious II keeps attack-only Breakthrough. City shield breaks
-    // without a unit kill do not refresh elite movement.
-    if (destroyed && a.hp > 0 && type.elite && type.naval === 'amphibious') {
+    // movement and attacks after a kill or city-defense break, even if it moved
+    // before firing. Normal Amphibious II keeps attack-only Breakthrough.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 &&
+        type.elite && type.naval === 'amphibious') {
       a.attacked = false;
       a.moved = false;
       a.skillReposition = 0;
@@ -543,30 +550,31 @@
       breakthrough = true;
     }
     if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
-    // Vincent Ward's Lv.5 movement refresh is limited to its first kill
-    // each turn; its separate unlimited Breakthrough attack chain remains intact.
-    if (destroyed && a.hp > 0 && aef.moveAfterKill &&
+    // Kill-triggered Elite movement also triggers when city defenses fall.
+    // Vincent Ward's Lv.5 refresh remains limited to its first qualifying
+    // event per turn; its unlimited Breakthrough attack chain is unchanged.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 && aef.moveAfterKill &&
         (a.elite !== 'vincent_ward' || a.expVincentMoveTurn !== g.turn)) {
       if (a.elite === 'vincent_ward') a.expVincentMoveTurn = g.turn;
       a.moved = false;
       a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
     }
-    // All heavy/super-heavy frames, including Elite variants, can reposition
-    // after a kill, but never more than twice in a single turn.
-    if (destroyed && a.hp > 0 && isHeavyChainMover(a) && !heavyMoveLimitReached(g, a)) {
+    // Heavy/super-heavy frames reposition after kills or city-defense breaks,
+    // but never more than twice in a single turn.
+    if ((destroyed || defensesDestroyed) && a.hp > 0 &&
+        isHeavyChainMover(a) && !heavyMoveLimitReached(g, a)) {
       a.moved = false;
       a.skillReposition = 0;
     }
-    afterCommanderAttack(g,a,d,s,destroyed,timeStop);
+    afterCommanderAttack(g,a,d,s,destroyed,timeStop,defensesDestroyed);
     // A kill only primes momentum if an existing breakthrough or signature
     // ability actually granted another attack. It never grants one itself.
     if (destroyed && a.hp > 0 && !a.attacked &&
         !TYPES[a.type].naval && TYPES[a.type].branch === 'Armor')
       a.expAssaultMomentumTurn = g.turn;
-    // Preserve the movement that was already available when a killing attack
-    // refreshes another shot. Do not grant an extra move to a unit that had
-    // spent it; existing Relentless, elite and commander rewards still apply.
+    // Preserve movement that was available before an attack refreshed another
+    // shot. A new move is granted only by a class, Elite or commander ability.
     if ((destroyed || defensesDestroyed) && a.hp > 0 && !a.attacked && movementBeforeAttack) {
       a.moved = false;
       if (!(TYPES[a.type].relentless || eliteRelentless || aef.moveAfterAttack || aef.moveAfterKill)) {
@@ -581,7 +589,7 @@
     }
 
     // Resolve Mutsuki's guerrilla reward after the kill and final attack flags.
-    const guerrillaPosition=destroyed&&['forest','mountain'].includes(tile(g,a.c,a.r)?.terrain)&&
+    const guerrillaPosition=(destroyed||defensesDestroyed)&&['forest','mountain'].includes(tile(g,a.c,a.r)?.terrain)&&
       ['Infantry','Armor'].includes(TYPES[a.type].branch)&&
       g.units.some(v=>v.hp>0&&v.side===a.side&&v.cmd==='mutsuki'&&dist(g,v,a)<=2);
     if(guerrillaPosition&&a.hp>0&&a.expGuerrillaMoveTurn!==g.turn){
