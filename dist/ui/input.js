@@ -209,6 +209,10 @@ document.addEventListener('click', e => {
     openShop(shop.station, d.branch);
     return;
   }
+  if (d.cityTier) {
+    doAction(() => E.upgradeCityTier(game, +d.cityTier));
+    return;
+  }
   if (d.build) {
     doAction(() => E.build(game, +d.stationId, d.build));
     return;

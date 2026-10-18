@@ -379,7 +379,7 @@
     factory: {
       name: 'Knightmare factory',
       field: 'tier',
-      desc: 'Unlocks heavier frames (level 2: mainline, raider and rocket; level 3: heavy, super-heavy and siege). +10 industry and +50 defense per level.',
+      desc: 'Unlocks heavier frames (level 2: mainline, raider and rocket; level 3: heavy, super-heavy and siege). +10 industry per level. Only City Tier upgrades raise city defenses.',
     },
     lab: {
       name: 'Research lab',
@@ -408,6 +408,31 @@
     if (kind === 'port') return { credits: 140 * (l + 1), industry: 35 * (l + 1) };
     return { credits: 120 * (l + 1), industry: 30 * (l + 1) };
   }
+  // Advance one city tier per owner turn, independently of factories.
+  // New maximum HP does not restore HP lost to combat.
+  function upgradeCityTier(g, id) {
+    const s = g.stations.find(v => v.id === id);
+    const why = cityTierReason(g, s);
+    if (why) return { ok: false, reason: why };
+    const previous = cityTierOf(s), cost = decreePrice(cityTierCost(s), s);
+    warSpend(g, s.owner, cost, 'construction');
+    spend(funds(g, s.owner), cost);
+    if (s.expDecree) delete s.expDecree;
+    s.cityTier = previous + 1;
+    s.cityTierUpgradedTurn = g.turn;
+    s.income += previous === 1 ? 8 : previous === 2 ? 10 : 0;
+    if (s.cityTier === 4) {
+      s.fort = true;
+      s.gun ||= s.name + ' battery';
+      s.gunReady = Math.max(s.gunReady || 0, g.turn + 1);
+    }
+    s.maxShield = cityDefenseHP(s.cityTier, !!s.fort, !!s.capital) + (s.fortBonus || 0);
+    s.shield = Math.min(s.shield, s.maxShield);
+    if (g.mode === 'conquest' && s.owner === g.player && g.challengePassRun?.version === 1)
+      g.challengePassRun.constructed = true;
+    log(g, `${s.name}: upgraded to ${s.cityTier === 4 ? 'Fortress City' : 'City Level ' + s.cityTier}.`, s.owner);
+    return { ok: true, tier: s.cityTier };
+  }
   // Remember each city's output before building contributions, including custom campaign cities.
   // World-city data also recovers the foundation in older saves whose factories were already damaged.
   // The foundation can be negative: some starting factories have less output than upgrades add.
@@ -427,7 +452,7 @@
     const base = buildingFoundation(g, s);
     s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
     s.science = Math.max(0, base.science + 8 * (s.lab || 0));
-    s.maxShield = Math.max(0, base.maxShield + 50 * (s.tier || 0) + (s.fortBonus || 0));
+    s.maxShield = cityDefenseHP(cityTierOf(s), !!s.fort, !!s.capital) + (s.fortBonus || 0);
   }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),
@@ -445,14 +470,11 @@
       s.portAt = { c: t.c, r: t.r };
       s.portOwner = s.owner;
     }
+    s.cityTier ??= cityTierOf(s); // Preserve city tier before any factory changes.
     s[b.field] = buildingLevel(s, kind) + 1;
     if (g.mode === 'conquest' && s.owner === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.constructed = true;
-    if (kind === 'factory') {
-      syncBuildings(g, s);
-      // Captured cities stay undefended for the capture turn, even after factory upgrades.
-      if (s.capturedTurn !== g.turn) s.shield = Math.min(s.maxShield, s.shield + 50);
-    } else if (kind === 'lab') syncBuildings(g, s);
+    if (kind === 'factory' || kind === 'lab') syncBuildings(g, s);
     log(g, `${s.name}: ${b.name} upgraded to level ${s[b.field]}.`, s.owner);
     return { ok: true };
   }

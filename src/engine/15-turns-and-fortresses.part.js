@@ -380,11 +380,18 @@
     return g?.era === 'ufn2018' ? 'Rise of the U.F.N. · 2018 a.t.b.' : 'World War · 2017 a.t.b.';
   }
 
-  // Shared starting city-defense values. Regional theaters keep their economy
-  // and HQ flags, but use the Conquest defense scale instead of custom HP formulas.
+  // City development is separate from the factory production tier.
+  function cityTierOf(s) {
+    return Math.max(1, Math.min(4, Math.trunc(Number(s?.cityTier ?? (s?.fort ? 4 : s?.tier)) || 1)));
+  }
+  function cityTierCost(s) {
+    return [{ credits: 200, industry: 50 }, { credits: 300, industry: 75 },
+      { credits: 500, industry: 125 }][cityTierOf(s) - 1] || null;
+  }
+  // Shared defenses: factory and research-lab levels do not affect base HP.
   function cityDefenseHP(tier, fort = false, capital = false) {
     if (capital) return 600;
-    if (fort) return 400;
+    if (fort || tier >= 4) return 400;
     return [0, 200, 250, 300][Math.max(1, Math.min(3, Math.trunc(Number(tier)) || 1))];
   }
   // Only canonical faction capitals get the 600-HP tier in regional scenarios.

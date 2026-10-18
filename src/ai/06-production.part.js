@@ -156,6 +156,30 @@
     const heavySak = yard3.length ? price(typeFor(side, 'heavy', g), 1, g, side).sakuradite : 0;
     const keepsHeavy = (type, c) =>
       !c.sakuradite || TYPES[type].tier >= 3 || (e.sakuradite || 0) - c.sakuradite >= heavySak;
+    // City development: spend surplus on economic growth in safe cities or
+    // fortress batteries on defensible approaches, reserving frontline unit funds.
+    if (g.turn >= 2) {
+      const candidates = bases
+        .filter(s => !cityTierReason(g, s) && s.shield >= s.maxShield * 0.5)
+        .map(s => {
+          const d = front(s), tier = cityTierOf(s);
+          const fortress = tier === 3 && d >= 3 && d <= 7;
+          const economic = tier < 3 && d >= 5;
+          return { s, d, useful: fortress || economic,
+            score: (fortress ? 120 : economic ? 60 : 0) + (s.capital ? 15 : 0) +
+              (s.portLevel ? 8 : 0) + (d <= 7 ? 12 - d : 0) - 3 * (tier - 1) };
+        })
+        .filter(v => v.useful)
+        .sort((a, b) => b.score - a.score || a.s.id - b.s.id);
+      const limit = Math.min(3, Math.max(1, Math.ceil(bases.length / 25)));
+      let built = 0;
+      for (const { s, d } of candidates) {
+        if (built >= limit) break;
+        if (d <= 2 || (d < 5 && s.shield < s.maxShield * 0.75)) continue;
+        const cost = decreePrice(cityTierCost(s), s);
+        if (developmentAffordable(cost) && upgradeCityTier(g, s.id).ok) built++;
+      }
+    }
     // 3. Upgrade one building per turn when there is surplus: Sakuradite refineries first (richest deposit first),
     // then the lowest-level factory or lab at the safest city.
     if (g.turn >= 2) {

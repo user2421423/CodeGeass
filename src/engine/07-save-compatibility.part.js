@@ -179,6 +179,18 @@
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
+    // Legacy saves tied HP to factory tiers. Pin a distinct city tier and
+    // retain existing battle damage while dropping old factory HP bonuses.
+    for (const s of g.stations || []) {
+      if (s.cityTier != null) continue;
+      const startingTier = g.mode === 'conquest'
+        ? CITY_DATA.find(row => row[0] === s.name)?.[4] : null;
+      s.cityTier = s.fort ? 4 :
+        Math.max(1, Math.min(3, Math.trunc(Number(startingTier ?? s.tier) || 1)));
+      const damage = Math.max(0, (s.maxShield || 0) - (s.shield || 0));
+      s.maxShield = cityDefenseHP(s.cityTier, !!s.fort, !!s.capital) + (s.fortBonus || 0);
+      s.shield = Math.max(0, s.maxShield - damage);
+    }
     // Preserve saves containing retired scenario-only Elite carrier-battleships.
     const legacyCarriers = {
       elite_europe_eu_carrier: 'eu_carrier',

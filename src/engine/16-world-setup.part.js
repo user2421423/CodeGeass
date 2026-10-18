@@ -258,13 +258,10 @@
   // agree; a raw change to s.tier would leave these statistics out of sync.
   function raiseFactoryTier(g, s, tier) {
       if (s.tier >= tier) return;
-      const oldShield = s.shield, oldMaxShield = s.maxShield;
-      buildingFoundation(g, s); // Snapshot the original city's Tier-I/II foundations.
+      s.cityTier ??= cityTierOf(s);
+      buildingFoundation(g, s); // Preserve the factory's economic foundations.
       s.tier = tier;
-      syncBuildings(g, s);
-      // Equivalent to buying the missing factory upgrades: newly gained
-      // shield capacity starts repaired, while existing damage stays intact.
-      s.shield = Math.min(s.maxShield, oldShield + Math.max(0, s.maxShield - oldMaxShield));
+      syncBuildings(g, s); // Factory tiers never add or restore city HP.
   }
   function prepareEliteConquestFactories(g) {
     if (!eliteConquest(g)) return;
@@ -528,6 +525,7 @@
         r: at.r,
         owner,
         tier,
+        cityTier: fort ? 4 : tier,
         lab: capital ? 1 : 0,
         refinery: 0,
         capital,
