@@ -218,13 +218,13 @@ const CHALLENGE_PASS = (() => {
   function milestoneIcon(item) {
     if (item.kind === 'cosmetic') return cosmeticIcon(item.name);
     if (item.kind === 'fragments')
-      return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4 43 22 24 44 5 22Z" fill="#385a78" stroke="#bfe7ff" stroke-width="2.5"/><path d="M5 22h38M15 12l9 32 9-32" stroke="#c9e9ff" stroke-width="1.5" fill="none"/></svg>';
+      return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 18 24 8l16 10-16 10Z" fill="#a68750" stroke="#ffdfa1" stroke-width="2"/><path d="M8 18v19l16 8V28Zm32 0v19l-16 8V28Z" fill="#405a6b" stroke="#dfc58a" stroke-width="2"/><path d="M24 8v37M8 18l16 10 16-10" fill="none" stroke="#f3d49a" stroke-width="2"/></svg>';
     return '<svg class="cp-reward-symbol" viewBox="0 0 48 48" aria-hidden="true"><circle cx="18" cy="19" r="13" fill="#87683a" stroke="#f0c979" stroke-width="2"/><circle cx="30" cy="29" r="13" fill="#b58b45" stroke="#ffe4a6" stroke-width="2"/><path d="M30 21v16m-6-12h12m-12 8h12" stroke="#fff2ca" stroke-width="2"/></svg>';
   }
   function rewardText(item) {
     if (item.kind === 'tokens') return '+' + item.amount + ' Command Tokens' + (item.highCommandBonus ? ' and +1 permanent High Command position' : '');
     if (item.kind === 'high-command') return '+1 permanent High Command position';
-    if (item.kind === 'fragments') return item.amount + ' selectable ' + item.rarity + ' fragments';
+    if (item.kind === 'fragments') return item.rarity + ' Elite loot box · ' + item.amount + ' selectable fragments';
     return item.name;
   }
   function trackCard(track, s) {
