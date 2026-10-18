@@ -33,3 +33,5 @@ Unresolved matches are censored, **not** counted as victories or defeats. Wilson
 ## Baseline discipline and follow-ups
 
 Never automatically rewrite `tools/data/sim_baseline.txt`. If comparisons fail against unchanged `main`, document the pre-existing drift rather than silently updating the reference. For gameplay changes authorized separately, explain every changed fingerprint and update it only in the intended change PR. Compare 8–20 independent seeds over 50–100 turns before claiming scenario imbalance. Reproduce errors first; browser UI flows, player input, save migrations and commander-skill combinations still merit separate tests under their ownership lanes.
+
+Baseline audit option: `node tools/sim_baseline_check.cjs --all --compare-base main` computes the same fingerprint set using the simulator from `main`, then fails only on *new* fingerprint changes while writing an explicit artifact that records historical divergence from `tools/data/sim_baseline.txt`. The strict command without `--compare-base` still fails on all stored baseline drift.
