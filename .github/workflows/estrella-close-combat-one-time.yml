@@ -1,0 +1,47 @@
+name: One-time Estrella Close-Combat artwork update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/estrella-close-combat-one-time.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  replace-sprite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install image conversion dependency
+        run: python -m pip install --disable-pip-version-check pillow
+      - name: Crop official Fernando green Estrella art and publish it locally
+        run: python tools/update_estrella_cc_art.py
+      - name: Stage updated source and fingerprinted sprite
+        run: |
+          git add dist/assets/art/manifest.json dist/assets/art/manifest.js dist/assets/art/sources.json
+          git add dist/assets/art/units/estrella_cc_fernando-*.png
+      - name: Verify published asset manifests and unit art
+        run: |
+          node tools/build_sources.cjs
+          node tools/validate_assets.cjs --tracked
+      - name: Commit official green Estrella sprite to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --cached --quiet; then
+            echo "No artwork change to commit"
+            exit 0
+          fi
+          git commit -m "Replace E.U. close-combat Estrella sprite with official Fernando green art"
+          git push origin HEAD:main
