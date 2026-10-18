@@ -55,7 +55,7 @@ for(const cls of CLASSES){
 }
 for (const era of ['world','ufn2018']){
   for (const difficulty of ['normal','hard','challenge','elite']){
-    const g=E.createGame('britannia',difficulty,417,era);
+    const g=E.createGame('britannia',difficulty,'conquest',417,era);
     checkGame(g,era+' '+difficulty);
     if(difficulty==='normal'){
       const injected = E.newUnit(g,era==='world'?'akatsuki':'gun_ru','cf',0,0);
