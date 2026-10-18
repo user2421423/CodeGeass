@@ -1354,3 +1354,22 @@ a {
 
 /* The Black Knights source standard is square; preserve that exact silhouette. */
 .faction.bk .faction-banner { width: 66px; aspect-ratio: 1 / 1; }
+
+
+/* Field Manual: complete, scan-friendly keyboard reference. */
+.shortcut-reference { margin: 22px 0 26px; }
+.shortcut-reference h3 { color: var(--gold); font-size: 20px; margin: 0 0 8px; }
+.shortcut-reference .shortcut-note { font-size: 13px; line-height: 1.55; color: #b3c4d7; margin: 9px 0 14px; }
+.shortcut-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.shortcut-group { min-width: 0; padding: 15px; border: 1px solid #3f526b; border-radius: 6px; background: #122235; }
+.shortcut-group h4 { color: var(--gold); font-size: 14px; margin: 0 0 9px; }
+.shortcut-group dl { margin: 0; }
+.shortcut-group dl > div { display: grid; grid-template-columns: minmax(72px, auto) 1fr; align-items: start; gap: 12px; padding: 7px 0; border-top: 1px solid #31445b; }
+.shortcut-group dt, .shortcut-group dd { font-size: 13px; line-height: 1.5; margin: 0; }
+.shortcut-group dd { color: #c5d4e2; }
+.shortcut-group kbd { display: inline-block; padding: 1px 6px; border: 1px solid #60738a; border-bottom-width: 2px; border-radius: 4px; background: #22354a; color: #edf3f9; font: 600 12px/1.5 inherit; font-family: inherit; white-space: nowrap; }
+@media (max-width: 700px) {
+  .shortcut-grid { grid-template-columns: minmax(0, 1fr); }
+  .shortcut-group { padding: 12px; }
+  .shortcut-group dl > div { grid-template-columns: minmax(72px, auto) 1fr; gap: 10px; }
+}
