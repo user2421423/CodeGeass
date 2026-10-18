@@ -139,7 +139,7 @@
       : plan.warhead ? FLEIJA.cost.sakuradite : 0;
     // Protect Research for an imminent strategic project, but do not hoard it
     // from the start of the war at the expense of useful armored production.
-    const reserveScience = !economic.critical && defenseSaving && e.science >= ELIMINATOR.cost.science * 0.8
+    const reserveScience = economic.critical ? 0 : defenseSaving && e.science >= ELIMINATOR.cost.science * 0.8
       ? ELIMINATOR.cost.science
       : warSaving && e.science >= FLEIJA.cost.science * 0.8
         ? FLEIJA.cost.science : 0;
