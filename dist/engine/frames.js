@@ -258,7 +258,7 @@
       desc: 'Amphibious I crosses seas and beaches but cannot fire again from a kill.',
       hp: 210, attack: 45, armor: 17, move: 1, seaMove: 6, min: 1, max: 1, crit: 0.08, pen: 0.15, cost: 120, industry: 30, tier: 1, port: 1 },
     AMPHIBIOUS_II = { ...AMPHIBIOUS, breakthrough: true,
-      desc: 'Amphibious II: every kill refreshes its attack without a kill-chain limit, for regular and elite frames.',
+      desc: 'Amphibious II: every kill refreshes attacks without a chain limit. Elite amphibious units also regain movement after every kill.',
       hp: 260, attack: 55, armor: 22, seaMove: 7, crit: 0.1, pen: 0.2, aquatic: 0.15, cost: 175, industry: 45, sakuradite: 3, tier: 2 },
     // Unlike fire support, a warship's guns do not suppress: any unit with the range returns its fire.
     CARRIER = { cls: 'support', naval: 'ship', hp: 520, attack: 82, armor: 44, move: 10, min: 1, max: 2, capacity: 2, crit: 0.08, pen: 0.3, cost: 520, industry: 150, sakuradite: 15, tier: 1, port: 2, noCounter: false,
@@ -1416,11 +1416,11 @@
     },
     japan_bk_amphibious: {
       type: 'elite_japan_bk_amphibious', faction: 'black_knights', availableTo: ['bk'],
-      rarity: 'Rare', skill: 'Marine Assault · Coastal Reposition',
+      rarity: 'Rare', skill: 'Marine Assault · Coastal Strike',
       lv3Text: '+20% damage when attacking land targets or coastal city defenses directly from water.',
-      lv5Text: '+30% water-to-land damage; the first coastal-defender kill each turn restores movement (attacks keep chaining).',
+      lv5Text: '+30% water-to-land damage (movement and attack refresh after kills are now innate to all amphibious elites).',
       lv3: { landingStrike: 0.20 },
-      lv5: { landingStrike: 0.30, coastalMoveAfterKill: true },
+      lv5: { landingStrike: 0.30 },
     },
   };
   const data = (root.KnightmareData ||= {});
