@@ -1,0 +1,708 @@
+{
+  "schema": 1,
+  "auditedMain": "09458d5900b994d6a2a3f23b59e22f6b955cfcd3",
+  "note": "revision in each batch provenance is the local reconstructed validation snapshot; auditedMain identifies the remote source. Source/gameplay files were verified against GitHub blob SHAs. Later batches add front/cargo/error telemetry without gameplay changes.",
+  "attempts": 673,
+  "uniqueConfigurations": 666,
+  "uniqueErrors": 2,
+  "broadCoverage": {
+    "planned": 624,
+    "recorded": 624,
+    "scenarios": 37,
+    "playablePerspectives": 78,
+    "difficulties": 4,
+    "seeds": [
+      11,
+      29
+    ],
+    "horizons": [
+      2
+    ]
+  },
+  "longStatistics": [
+    {
+      "id": "area-18/britannia/normal/100",
+      "scenario": "area-18",
+      "player": "britannia",
+      "difficulty": "normal",
+      "turns": 100,
+      "attempted": 2,
+      "valid": 2,
+      "independentSeeds": 2,
+      "wins": 2,
+      "unresolved": 0,
+      "errors": 0,
+      "winInterval95": [
+        0.34238022750665303,
+        1
+      ],
+      "meanCityShare": 1,
+      "minCityShare": 1,
+      "maxCityShare": 1,
+      "attacksPerTurn": 36.43571428571428,
+      "landings": 575,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "eu-greenland/britannia/normal/50",
+      "scenario": "eu-greenland",
+      "player": "britannia",
+      "difficulty": "normal",
+      "turns": 50,
+      "attempted": 8,
+      "valid": 8,
+      "independentSeeds": 8,
+      "wins": 3,
+      "unresolved": 5,
+      "errors": 0,
+      "winInterval95": [
+        0.13684428582359742,
+        0.6942576053973727
+      ],
+      "meanCityShare": 0.9305555555555556,
+      "minCityShare": 0.8333333333333334,
+      "maxCityShare": 1,
+      "attacksPerTurn": 15.941063988095237,
+      "landings": 2995,
+      "stalledRuns": 5,
+      "quietFrontRuns": null,
+      "evidence": "repeated dominance; investigate objectives and hold-out seeds"
+    },
+    {
+      "id": "eu-greenland/britannia/normal/100",
+      "scenario": "eu-greenland",
+      "player": "britannia",
+      "difficulty": "normal",
+      "turns": 100,
+      "attempted": 1,
+      "valid": 1,
+      "independentSeeds": 1,
+      "wins": 0,
+      "unresolved": 1,
+      "errors": 0,
+      "winInterval95": [
+        0,
+        0.7934506856227626
+      ],
+      "meanCityShare": 0.8333333333333334,
+      "minCityShare": 0.8333333333333334,
+      "maxCityShare": 0.8333333333333334,
+      "attacksPerTurn": 8.57,
+      "landings": 634,
+      "stalledRuns": 1,
+      "quietFrontRuns": 1,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "invasion-turkey/eu/normal/50",
+      "scenario": "invasion-turkey",
+      "player": "eu",
+      "difficulty": "normal",
+      "turns": 50,
+      "attempted": 8,
+      "valid": 8,
+      "independentSeeds": 8,
+      "wins": 4,
+      "unresolved": 2,
+      "errors": 0,
+      "winInterval95": [
+        0.21521606221387757,
+        0.7847839377861224
+      ],
+      "meanCityShare": 0.646186440677966,
+      "minCityShare": 0,
+      "maxCityShare": 1,
+      "attacksPerTurn": 35.72605864289375,
+      "landings": 2764,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "area-18/britannia/normal/20",
+      "scenario": "area-18",
+      "player": "britannia",
+      "difficulty": "normal",
+      "turns": 20,
+      "attempted": 2,
+      "valid": 2,
+      "independentSeeds": 2,
+      "wins": 0,
+      "unresolved": 2,
+      "errors": 0,
+      "winInterval95": [
+        0,
+        0.6576197724933469
+      ],
+      "meanCityShare": 0.5697674418604651,
+      "minCityShare": 0.4883720930232558,
+      "maxCityShare": 0.6511627906976745,
+      "attacksPerTurn": 45.025,
+      "landings": 426,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "invasion-turkey/britannia/normal/50",
+      "scenario": "invasion-turkey",
+      "player": "britannia",
+      "difficulty": "normal",
+      "turns": 50,
+      "attempted": 8,
+      "valid": 8,
+      "independentSeeds": 8,
+      "wins": 1,
+      "unresolved": 4,
+      "errors": 0,
+      "winInterval95": [
+        0.02241749145005667,
+        0.4708881822128535
+      ],
+      "meanCityShare": 0.4258474576271187,
+      "minCityShare": 0,
+      "maxCityShare": 1,
+      "attacksPerTurn": 36.406251899696045,
+      "landings": 2700,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "eu-greenland/eu/normal/5",
+      "scenario": "eu-greenland",
+      "player": "eu",
+      "difficulty": "normal",
+      "turns": 5,
+      "attempted": 2,
+      "valid": 2,
+      "independentSeeds": 2,
+      "wins": 0,
+      "unresolved": 2,
+      "errors": 0,
+      "winInterval95": [
+        0,
+        0.6576197724933469
+      ],
+      "meanCityShare": 0.05555555555555555,
+      "minCityShare": 0.05555555555555555,
+      "maxCityShare": 0.05555555555555555,
+      "attacksPerTurn": 49.400000000000006,
+      "landings": 170,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "eu-greenland/eu/normal/50",
+      "scenario": "eu-greenland",
+      "player": "eu",
+      "difficulty": "normal",
+      "turns": 50,
+      "attempted": 8,
+      "valid": 8,
+      "independentSeeds": 8,
+      "wins": 0,
+      "unresolved": 1,
+      "errors": 0,
+      "winInterval95": [
+        0,
+        0.32440756488388023
+      ],
+      "meanCityShare": 0.006944444444444444,
+      "minCityShare": 0,
+      "maxCityShare": 0.05555555555555555,
+      "attacksPerTurn": 22.16345238095238,
+      "landings": 2049,
+      "stalledRuns": 1,
+      "quietFrontRuns": null,
+      "evidence": "repeated disadvantage; investigate objectives and hold-out seeds"
+    },
+    {
+      "id": "eu-greenland/eu/normal/100",
+      "scenario": "eu-greenland",
+      "player": "eu",
+      "difficulty": "normal",
+      "turns": 100,
+      "attempted": 2,
+      "valid": 2,
+      "independentSeeds": 2,
+      "wins": 0,
+      "unresolved": 0,
+      "errors": 0,
+      "winInterval95": [
+        0,
+        0.6576197724933469
+      ],
+      "meanCityShare": 0,
+      "minCityShare": 0,
+      "maxCityShare": 0,
+      "attacksPerTurn": 23.90714285714286,
+      "landings": 444,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    },
+    {
+      "id": "invasion-turkey/britannia/normal/100",
+      "scenario": "invasion-turkey",
+      "player": "britannia",
+      "difficulty": "normal",
+      "turns": 100,
+      "attempted": 1,
+      "valid": 1,
+      "independentSeeds": 1,
+      "wins": 0,
+      "unresolved": 0,
+      "errors": 0,
+      "winInterval95": [
+        0,
+        0.7934506856227626
+      ],
+      "meanCityShare": 0,
+      "minCityShare": 0,
+      "maxCityShare": 0,
+      "attacksPerTurn": 33.377049180327866,
+      "landings": 390,
+      "stalledRuns": 0,
+      "quietFrontRuns": null,
+      "evidence": "insufficient evidence of imbalance"
+    }
+  ],
+  "batches": [
+    {
+      "name": "kc-wide",
+      "provenance": {
+        "revision": "8f4f9f49500ab87ceba59fefac8306394ead0305",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "8bace47f2c56c10b2e14f5c1bb5a51b3fc8f8581df7d692d749caa313e105bde",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "area-18",
+          "battle-luoyang",
+          "bering-strait",
+          "bf-malacca",
+          "bf-south-china",
+          "bf-yangtze",
+          "britannia-iraq-iran",
+          "britannia-siberia",
+          "britannia-western-russia",
+          "cf-central-america",
+          "cf-mexico",
+          "cf-new-zealand",
+          "cf-pacific-northwest",
+          "cf-panama",
+          "cf-pendragon",
+          "conquest-indochina",
+          "crossing-urals",
+          "division-japan",
+          "eu-great-lakes",
+          "eu-greenland",
+          "eu-panama",
+          "eu-pendragon",
+          "eu-rocky-mountains",
+          "european-war",
+          "invasion-american-east-coast",
+          "invasion-brazil",
+          "invasion-california",
+          "invasion-canada",
+          "invasion-caribbean",
+          "invasion-hawaii",
+          "invasion-japan",
+          "invasion-korea",
+          "invasion-south-africa",
+          "invasion-turkey",
+          "operation-stonehenge",
+          "philippines-invasion",
+          "war-for-australia"
+        ],
+        "players": [
+          "all"
+        ],
+        "difficulties": [
+          "normal",
+          "hard",
+          "challenge",
+          "elite"
+        ],
+        "jobs": 6,
+        "timeoutMs": 120000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-wide",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          2
+        ],
+        "shard": "0/1"
+      },
+      "planned": 624,
+      "recorded": 624,
+      "errors": 2
+    },
+    {
+      "name": "kc-long",
+      "provenance": {
+        "revision": "8f4f9f49500ab87ceba59fefac8306394ead0305",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "8bace47f2c56c10b2e14f5c1bb5a51b3fc8f8581df7d692d749caa313e105bde",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-greenland"
+        ],
+        "players": [
+          "eu"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 3,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-long",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          5,
+          50,
+          100
+        ],
+        "shard": "0/1"
+      },
+      "planned": 6,
+      "recorded": 6,
+      "errors": 0
+    },
+    {
+      "name": "kc-turkey",
+      "provenance": {
+        "revision": "8f4f9f49500ab87ceba59fefac8306394ead0305",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "8bace47f2c56c10b2e14f5c1bb5a51b3fc8f8581df7d692d749caa313e105bde",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "invasion-turkey"
+        ],
+        "players": [
+          "britannia",
+          "eu"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 4,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-turkey",
+        "seeds": [
+          11,
+          29,
+          47,
+          71,
+          101,
+          131,
+          173,
+          211
+        ],
+        "horizons": [
+          50
+        ],
+        "shard": "0/1"
+      },
+      "planned": 16,
+      "recorded": 16,
+      "errors": 0
+    },
+    {
+      "name": "kc-area18",
+      "provenance": {
+        "revision": "8f4f9f49500ab87ceba59fefac8306394ead0305",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "8bace47f2c56c10b2e14f5c1bb5a51b3fc8f8581df7d692d749caa313e105bde",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "area-18"
+        ],
+        "players": [
+          "britannia"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 2,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-area18",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          20,
+          100
+        ],
+        "shard": "0/1"
+      },
+      "planned": 4,
+      "recorded": 4,
+      "errors": 0
+    },
+    {
+      "name": "kc-greenland",
+      "provenance": {
+        "revision": "4b1c68ce07cc985eb6e3fdf481c430af579e6d82",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "8bace47f2c56c10b2e14f5c1bb5a51b3fc8f8581df7d692d749caa313e105bde",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-greenland"
+        ],
+        "players": [
+          "all"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 2,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-greenland",
+        "seeds": [
+          11,
+          29,
+          47,
+          71,
+          101,
+          131,
+          173,
+          211
+        ],
+        "horizons": [
+          50
+        ],
+        "shard": "0/1"
+      },
+      "planned": 16,
+      "recorded": 16,
+      "errors": 0
+    },
+    {
+      "name": "kc-hundred",
+      "provenance": {
+        "revision": "4b1c68ce07cc985eb6e3fdf481c430af579e6d82",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "8bace47f2c56c10b2e14f5c1bb5a51b3fc8f8581df7d692d749caa313e105bde",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "invasion-turkey"
+        ],
+        "players": [
+          "britannia"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 1,
+        "timeoutMs": 600000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-hundred",
+        "seeds": [
+          29
+        ],
+        "horizons": [
+          100
+        ],
+        "shard": "0/1"
+      },
+      "planned": 1,
+      "recorded": 1,
+      "errors": 0
+    },
+    {
+      "name": "kc-final-telemetry",
+      "provenance": {
+        "revision": "4b1c68ce07cc985eb6e3fdf481c430af579e6d82",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "439157c3771565c5c14d1b8bc8789400c7c8f0f383933666ec9830a5efab612c",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-greenland"
+        ],
+        "players": [
+          "britannia"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 1,
+        "timeoutMs": 600000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-final-telemetry",
+        "seeds": [
+          47
+        ],
+        "horizons": [
+          100
+        ],
+        "shard": "0/1"
+      },
+      "planned": 1,
+      "recorded": 1,
+      "errors": 0
+    },
+    {
+      "name": "kc-panama-diagnostics",
+      "provenance": {
+        "revision": "4b1c68ce07cc985eb6e3fdf481c430af579e6d82",
+        "engineDigest": "edfc1194dfd2a6e851828ec85e0be490ec67286525256cba232faab81500b80a",
+        "toolingDigest": "f23702c0e4830ea662def9812971db4a0336c60782d17177f80b3eb8e7e051a7",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-panama"
+        ],
+        "players": [
+          "eu"
+        ],
+        "difficulties": [
+          "elite"
+        ],
+        "jobs": 2,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-panama-diagnostics",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          2
+        ],
+        "shard": "0/1"
+      },
+      "planned": 2,
+      "recorded": 2,
+      "errors": 2
+    },
+    {
+      "name": "kc-final-hundred",
+      "provenance": {
+        "revision": "4b1c68ce07cc985eb6e3fdf481c430af579e6d82",
+        "digestVersion": 2,
+        "engineDigest": "17be2b3031977b987b3a112e24b8c99a0caa4dbde0c8ef5820cada6dafd5ab1c",
+        "toolingDigest": "13dd7e1b9b5b09a412563bafb31107a509eb90db9997e32a811faa77059d6915",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-greenland"
+        ],
+        "players": [
+          "britannia"
+        ],
+        "difficulties": [
+          "normal"
+        ],
+        "jobs": 1,
+        "timeoutMs": 600000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-final-hundred",
+        "seeds": [
+          47
+        ],
+        "horizons": [
+          100
+        ],
+        "shard": "0/1",
+        "compare": "/tmp/kc-final-telemetry/results.json"
+      },
+      "planned": 1,
+      "recorded": 1,
+      "errors": 0
+    },
+    {
+      "name": "kc-final-errors",
+      "provenance": {
+        "revision": "4b1c68ce07cc985eb6e3fdf481c430af579e6d82",
+        "digestVersion": 2,
+        "engineDigest": "17be2b3031977b987b3a112e24b8c99a0caa4dbde0c8ef5820cada6dafd5ab1c",
+        "toolingDigest": "13dd7e1b9b5b09a412563bafb31107a509eb90db9997e32a811faa77059d6915",
+        "node": "v24.19.0"
+      },
+      "configuration": {
+        "scenarios": [
+          "eu-panama"
+        ],
+        "players": [
+          "eu"
+        ],
+        "difficulties": [
+          "elite"
+        ],
+        "jobs": 2,
+        "timeoutMs": 300000,
+        "stallTurns": 8,
+        "output": "/tmp/kc-final-errors",
+        "seeds": [
+          11,
+          29
+        ],
+        "horizons": [
+          2
+        ],
+        "shard": "0/1"
+      },
+      "planned": 2,
+      "recorded": 2,
+      "errors": 2
+    }
+  ],
+  "fingerprints": {
+    "lines": 390,
+    "mainSha256": "9b9c657956cdd13d0b3aca2d67d1cc30d5207664af8f9061c81445b2c9227120",
+    "featureSha256": "9b9c657956cdd13d0b3aca2d67d1cc30d5207664af8f9061c81445b2c9227120",
+    "byteIdentical": true,
+    "branchVsMainMismatches": 0,
+    "historicalReferenceMismatches": 390,
+    "historicalReferenceSha256": "5e4f1ae0742784af34dd90a2aede0bf19e2183f354daace87a6f4dc07798dc31"
+  },
+  "hundredTurn": {
+    "scenario": "eu-greenland",
+    "completed": 100,
+    "winner": null
+  },
+  "tests": {
+    "fast": {
+      "passed": 49,
+      "failed": 0
+    },
+    "full": {
+      "passed": 373,
+      "failed": 11,
+      "total": 384
+    },
+    "map": "map OK: 573 hexes differ from the lock, all inside the redrawn regions and fix lists"
+  },
+  "curatedFormat": "Per-match JSON retains captures, faction losses, realized production by type, reinforcements, attacks, moves, naval counts, stalls and final state. Full timelines/landing logs/front samples are generated by the harness; the 100-turn full match is retained separately."
+}
