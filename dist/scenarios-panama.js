@@ -262,7 +262,7 @@
       ]};
     const eliteIds=Object.keys(E.ELITE_FORCES);
     g.scenario.eliteRosters=Object.fromEntries(SIDES.map(s=>[s,eliteIds.filter(id=>
-      !E.ELITE_FORCES[id].scenarioOnly&&E.ELITE_FORCES[id].availableTo.includes(s))]));
+      !E.ELITE_FORCES[id].scenarioOnly&&E.eliteEligible(g,s,id))]));
     const packed=root.PANAMA_COAST_BITS || (typeof require==='function'?require('./panama-landmask.js'):null);
     if(typeof packed!=='string')throw Error('Missing Panama GSHHG shoreline');
     const raw=typeof atob==='function'?atob(packed):Buffer.from(packed,'base64').toString('latin1');
