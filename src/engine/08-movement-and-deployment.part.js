@@ -1,4 +1,7 @@
   function newUnit(g, type, side, c, r, stack = 1, cmd = null, ready = true) {
+    // Normalize ALL scenario-scripted and recruited Chinese/UFN frames at birth;
+    // faction allegiance and the frame's combat class remain unchanged.
+    type = eraUnitType(g, type, side);
     const u = {
       id: g.nextId++,
       type,

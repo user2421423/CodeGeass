@@ -330,13 +330,13 @@
         id = { britannia:'portman_ii', cf:'shui_gun_ru_ii',
           bk:'japan_bk_amphibious', eu:'panzer_frosch_ii' }[u.side];
       } else {
-        const pool = Object.entries(ELITE_FORCES).filter(([, e]) =>
-          !e.scenarioOnly && !TYPES[e.type].naval && e.availableTo.includes(u.side));
+        const pool = Object.entries(ELITE_FORCES).filter(([id, e]) =>
+          !e.scenarioOnly && !TYPES[e.type].naval && eliteEligible(g, u.side, id));
         const byClass = pool.filter(([, e]) => TYPES[e.type].cls === old.cls),
           byBranch = pool.filter(([, e]) => TYPES[e.type].branch === old.branch),
           choices = byClass.length ? byClass : byBranch.length ? byBranch : pool;
         if (!choices.length) throw new Error('Missing Japan Elite roster for ' + u.side);
-        id = u.cmd && signature[u.cmd] && ELITE_FORCES[signature[u.cmd]]?.availableTo.includes(u.side)
+        id = u.cmd && signature[u.cmd] && eliteEligible(g, u.side, signature[u.cmd])
           ? signature[u.cmd] : choices[(used[u.side + ':' + old.cls] || 0) % choices.length][0];
         used[u.side + ':' + old.cls] = (used[u.side + ':' + old.cls] || 0) + 1;
       }
@@ -410,7 +410,7 @@
       const roster = g.scenario.eliteRosters[u.side] || [];
       let id = old.naval ? naval[u.side]?.[old.naval] : null;
       if (!old.naval) {
-        const pool = roster.filter(id => !TYPES[ELITE_FORCES[id]?.type]?.naval);
+        const pool = roster.filter(id => eliteEligible(g, u.side, id) && !TYPES[ELITE_FORCES[id]?.type]?.naval);
         const sameClass = pool.filter(id => TYPES[ELITE_FORCES[id].type].cls === old.cls);
         const sameBranch = pool.filter(id => TYPES[ELITE_FORCES[id].type].branch === old.branch);
         const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
@@ -421,7 +421,7 @@
           ? signature : choices[(used[n] || 0) % choices.length];
         used[n] = (used[n] || 0) + 1;
       }
-      if (!id || !roster.includes(id) || !ELITE_FORCES[id])
+      if (!id || !roster.includes(id) || !eliteEligible(g, u.side, id))
         throw new Error('Missing European naval/land Elite Force for '+u.side+': '+u.type);
       u.type = ELITE_FORCES[id].type;
       u.elite = id;

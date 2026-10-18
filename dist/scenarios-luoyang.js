@@ -346,13 +346,9 @@
       eliteDeployed:{},arsenal:{britannia:0,cf:0},
       automation:{enabled:false,autoUpgrade:true,stack:1,reserve:{},cities:{}},
       mapRevision:0,teams:null,factions:{},
-      // Reuse the established 2017 Chinese Federation roster. Some native
-      // Chinese super-heavy and artillery models are worldOnly in global HQ;
-      // an explicit scenario lineup prevents fallback to Britannian frames.
-      lineup:{cf:{scout:'gun_ru',assault:'gun_ru_assault',raider:'chuyen',
-        light:'gun_ru_light',medium:'chuyen_medium',heavy:'chuyen_heavy',
-        super:'shen_hu',support:'gun_ru_support',
-        rocket:'gun_ru_rocket',siege:'gun_ru_siege'}}
+      // The shared 2017 Chinese roster supplies the correct class-to-frame mapping:
+      // Raider = Gun-Ru Mobile; Light Armor = Chuyen; Super-heavy = Shen Hu.
+      lineup:{cf:{...E.LINEUPS.cf2017}}
     };
     for(const s of [...SIDES,'neutral']){
       g.economy[s]={credits:0,industry:0,science:0,sakuradite:0};
