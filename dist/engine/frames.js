@@ -1214,7 +1214,7 @@
     cornelia_gloucester: {
       type: 'elite_cornelia_gloucester', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare', skill: 'Royal Guard Raid',
       lv3Text: '+25% damage on or next to any city, friendly or enemy.',
-      lv5Text: '+50% damage near any city; a kill restores movement.',
+      lv5Text: '+50% damage near any city; a kill or city-defense break restores movement.',
       lv3: { cityAttack: 0.25 }, lv5: { cityAttack: 0.50, moveAfterKill: true },
     },
     lancelot: {
@@ -1288,7 +1288,7 @@
       type: 'elite_alexander_liberte', faction: 'eu', availableTo: ['eu'], rarity: 'Legendary',
       skill: 'Brain Raid Overdrive',
       lv3Text: '+20% damage and +25% counter-fire.',
-      lv5Text: '+30% damage, +40% counter-fire; a kill restores movement.',
+      lv5Text: '+30% damage, +40% counter-fire; a kill or city-defense break restores movement.',
       lv3: { dmg: 0.20, counter: 0.25 },
       lv5: { dmg: 0.30, counter: 0.40, moveAfterKill: true },
     },
@@ -1296,7 +1296,7 @@
       type: 'elite_ryo_valiant', faction: 'eu', availableTo: ['eu'], rarity: 'Epic',
       skill: 'Hot-Blooded Charge',
       lv3Text: '+20% damage and +15% armor penetration.',
-      lv5Text: '+35% damage, +25% penetration; a kill restores movement.',
+      lv5Text: '+35% damage, +25% penetration; a kill or city-defense break restores movement.',
       lv3: { dmg: 0.20, pen: 0.15 },
       lv5: { dmg: 0.35, pen: 0.25, moveAfterKill: true },
     },
@@ -1319,7 +1319,7 @@
     chuyen: {
       type: 'elite_chuyen', faction: 'cf', availableTo: ['cf'], rarity: 'Rare', skill: 'Monkey King Pole',
       lv3Text: '+20% damage and +20% counter-fire.',
-      lv5Text: '+35% damage, +30% counter-fire; a kill restores movement.',
+      lv5Text: '+35% damage, +30% counter-fire; a kill or city-defense break restores movement.',
       lv3: { dmg: 0.20, counter: 0.20 },
       lv5: { dmg: 0.35, counter: 0.30, moveAfterKill: true },
     },
@@ -1359,7 +1359,7 @@
       type: 'elite_vincent_ward', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
       skill: 'Ward Fire Control',
       lv3Text: '+15% damage and +10% armor penetration.',
-      lv5Text: '+25% damage and +20% penetration; the first kill each turn restores movement.',
+      lv5Text: '+25% damage and +20% penetration; the first kill or city-defense break each turn restores movement.',
       lv3: { dmg: 0.15, pen: 0.10 }, lv5: { dmg: 0.25, pen: 0.20, moveAfterKill: true },
     },
     sutherland_air: {
@@ -1418,7 +1418,7 @@
       type: 'elite_japan_bk_amphibious', faction: 'black_knights', availableTo: ['bk'],
       rarity: 'Rare', skill: 'Marine Assault · Coastal Strike',
       lv3Text: '+20% damage when attacking land targets or coastal city defenses directly from water.',
-      lv5Text: '+30% water-to-land damage (movement and attack refresh after kills are now innate to all amphibious elites).',
+      lv5Text: '+30% water-to-land damage (movement and attack refresh after kills or city-defense breaks are innate to all amphibious elites).',
       lv3: { landingStrike: 0.20 },
       lv5: { landingStrike: 0.30 },
     },

@@ -36,6 +36,7 @@
     cityTierReason,
     cityTierOf,
     cityTierCost,
+    decreePrice,
     upgradeCityTier,
     buildingLevel,
     canBoard,
@@ -108,5 +109,3 @@
     typeFor,
     unitAt,
   } = E.internal;
-  // The city-tier AI uses the shared decree-aware price helper exposed publicly by the engine.
-  const decreePrice = E.decreePrice;
