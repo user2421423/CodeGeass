@@ -239,7 +239,7 @@
       tier: 3,
       crit: 0.25,
       critMult: 1.9,
-      pen: 0.8,
+      pen: 0.65,
       noCounter: true,
       siege: 2,
       rule: 'Range 2 heavy gun; cannot fire at adjacent targets. +100% damage to city defenses, 80% armor penetration, base movement 1. No counter-fire.',
