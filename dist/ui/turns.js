@@ -169,8 +169,8 @@ function queueEliteReward(profile, operation, key, amount, source) {
   const side = operation.player === 'eb' ? 'britannia'
     : operation.era === 'ufn2018' && operation.player === 'cf' ? 'bk' : operation.player;
   const allowed = ELITE_REWARD_RARITIES[operation.difficulty] || ELITE_REWARD_RARITIES.normal;
-  // World Campaign rewards are faction-independent. Story and Conquest remain faction-bound.
-  const worldCampaign = key.startsWith('world:');
+  // World Campaign and weekly events are faction-independent. Story and Conquest stay faction-bound.
+  const worldCampaign = key.startsWith('world:') || key.startsWith('weekly:');
   const options = Object.entries(E.ELITE_FORCES).filter(([, elite]) =>
     !elite.scenarioOnly && allowed.includes(elite.rarity) &&
     (worldCampaign || elite.availableTo.includes(side)))
@@ -191,7 +191,7 @@ function eligibleEliteRewardOptions(award, profile = loadProfile()) {
   const canReceive = id =>
     !!E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly &&
     records[id]?.level < E.ELITE_MAX_LEVEL;
-  if (!award.key?.startsWith('world:'))
+  if (!award.key?.startsWith('world:') && !award.key?.startsWith('weekly:'))
     return (award.options || []).filter(canReceive);
   // World Campaign, including its Challenge Pass milestones, remains
   // faction-independent and respects the original difficulty/rarity.
@@ -379,6 +379,11 @@ function resultDialog() {
     claimScenarioHonors();
     const won=game.over.winner===game.player;
     const lost=!!game.over.eliminated;
+    const weeklyResult=game.weeklyScenario && won ? claimWeeklyScenarioReward(game) : null;
+    if (weeklyResult && !weeklyResult.ok && !weeklyResult.expired) {
+      toast(weeklyResult.reason, true);
+      return;
+    }
     let campaignNotice='';
     if (game.warCampaign) {
       if (won && !game.warCampaign.recorded) {
@@ -409,7 +414,8 @@ function resultDialog() {
       '<p>'+esc(game.over.reason)+'</p>'+
       honorsEarnedHTML()+
       militaryPresentation.summaryHTML()+
-      (game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant territory and unlock new tiers.')+'</p>'+
+      (game.weeklyScenario ? weeklyScenarioResultHTML(won ? weeklyResult : {ok:false,reason:'Victory is required to earn weekly rewards.'}) + (won ? pendingEliteChoiceHTML() : '') :
+      game.warCampaign ? '<p class="description">'+esc(campaignNotice || 'Campaign battles grant territory and unlock new tiers.')+'</p>'+
         (game.warCampaign.hqReward?.tokens ? '<div class="reward"><b>+'+game.warCampaign.hqReward.tokens+' command tokens</b> · World Campaign rewards</div>' : '')+pendingEliteChoiceHTML() :
         '<p class="description">Standalone scenarios award personal honors only; no HQ tokens or Elite fragments.</p>')+
       '<div class="dialog-footer"><button data-action="close">Inspect map</button>'+
