@@ -38,7 +38,9 @@ for(const side of ['britannia','eu','cf']){
 for(const era of ['world','ufn2018']){
   const g=E.createGame('britannia','normal','conquest',71,era);
   for(const side of g.majors){
-    assert.equal(g.economy[side].science,80,'Conquest opening Research doubled '+era+'/'+side);
+    const original=E.CONQUESTS[era].initialTreasury?.[side]?.science ?? 40;
+    assert.equal(g.economy[side].science,2*original,
+      'Conquest opening Research doubled '+era+'/'+side);
   }
   const inc=E.income(g,'britannia').science;
   assert.ok(inc>0,'Conquest produces Research');
