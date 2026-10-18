@@ -1,0 +1,53 @@
+name: Gameplay testing (PR fast)
+on:
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'src/**'
+      - 'dist/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gameplay-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build sectioned engine and AI bundles
+        run: node tools/build_sources.cjs
+      - name: Validate pure tournament statistics
+        run: node tools/tournament_stats_test.cjs
+      - name: Seeded regional integration smoke tournament
+        run: |
+          node tools/scenario_tournament.cjs \
+            --scenarios division-japan,invasion-japan \
+            --difficulties normal --seeds 11 --turns 2 \
+            --max-games 10 --output-dir artifacts/tournament-pr
+      - name: Four-difficulty smoke and 50-turn endurance sample
+        run: |
+          node tools/scenario_tournament.cjs \
+            --scenarios division-japan --players britannia \
+            --difficulties normal,hard,challenge,elite --seeds 11 \
+            --turns 2 --max-games 4 --output-dir artifacts/four-difficulty
+          node tools/scenario_tournament.cjs \
+            --scenarios division-japan --players britannia \
+            --difficulties normal --seeds 11,29 --turns 50 \
+            --max-games 2 --output-dir artifacts/endurance
+      - name: Existing mechanics and cross-system regressions
+        run: node tools/gameplay_regressions.cjs --fast --output-dir artifacts/regressions-pr
+      - name: Preserve selected deterministic simulator baselines
+        run: node tools/sim_baseline_check.cjs --compare-base main
+      - name: Upload reports (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameplay-fast-reports
+          path: artifacts/
+          if-no-files-found: ignore

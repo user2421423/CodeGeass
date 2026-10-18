@@ -16,8 +16,9 @@ for(const f of fs.readdirSync(DIST).filter(f=>/^(scenarios.*|.*-landmask|.*-geog
   require(path.join(DIST,f));
 const DIFFICULTIES=['normal','hard','challenge','elite'];
 
-function simulate(scenario,player,difficulty,seed,turns){
+function simulate(scenario,player,difficulty,seed,turns,instrumentation=null){
  const g=scenario.create(player,difficulty,seed),sides=scenario.sides;
+ instrumentation?.onStart?.(g);
  const zeros=()=>Object.fromEntries(sides.map(s=>[s,0]));
  const r={scenario:scenario.id,player,difficulty,seed,maxTurns:turns,
   startingCities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
@@ -33,7 +34,7 @@ function simulate(scenario,player,difficulty,seed,turns){
   const living=new Map();
   // Units aboard a carrier are alive but temporarily absent from g.units.
   for(const u of g.units.flatMap(u=>[u,...(u.cargo||[])])){
-   if(!known.has(u.id)){known.add(u.id);r.production[u.side]++;}
+   if(!known.has(u.id)){known.add(u.id);r.production[u.side]++;instrumentation?.onUnitCreated?.(u,g.turn);}
    if(u.hp>0)living.set(u.id,u.side);
   }
   for(const [id,side] of previousAlive)if(!living.has(id))r.losses[side]++;
@@ -55,6 +56,7 @@ function simulate(scenario,player,difficulty,seed,turns){
     if(!u||u.hp<=0||u.side!==side)continue;
     try{
      for(const event of E.aiOrder(g,u.id)||[]){
+      instrumentation?.onEvent?.(event,u,g.turn,g);
       if(event.kind==='attack')r.attacks[side]++;
       if(E.TYPES[u.type]?.naval&&(event.kind==='move'||event.kind==='attack'||event.kind==='deploy'))r.navalActions[side]++;
       if(E.TYPES[u.type]?.naval&&(event.kind==='move'||event.kind==='deploy'))r.navalMoves[side]++;
@@ -70,6 +72,7 @@ function simulate(scenario,player,difficulty,seed,turns){
   }
   r.snapshots.push({turn,cities:Object.fromEntries(sides.map(s=>[s,g.stations.filter(v=>v.owner===s).length])),
    units:Object.fromEntries(sides.map(s=>[s,g.units.filter(v=>v.side===s&&v.hp>0).length]))});
+  instrumentation?.onTurn?.(g,r.snapshots.at(-1));
  }
  r.openingStall=r.captures.length===0&&r.snapshots.length>=3;
  return {r,g};
@@ -81,6 +84,7 @@ function fingerprint(value){
  return h.toString(16).padStart(8,'0');
 }
 
+if(require.main===module){
 if(process.argv[2]==='--all'){
  const seed=Number(process.argv[3]||11),turns=Number(process.argv[4]||2),only=process.argv.slice(5);
  for(const id of Object.keys(E.scenarios.byId).sort().filter(id=>!only.length||only.includes(id))){
@@ -105,3 +109,7 @@ if(process.argv[2]==='--all'){
  console.log('SCENARIO_SIM '+JSON.stringify(r));
  if(r.errors.length)process.exitCode=1;
 }
+
+}
+// Only opt-in observation hooks are added; legacy fingerprint output stays unchanged.
+module.exports={simulate,DIFFICULTIES,scenarios:E.scenarios.byId,engine:E};
