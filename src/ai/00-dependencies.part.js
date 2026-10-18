@@ -36,6 +36,7 @@
     cityTierReason,
     cityTierOf,
     cityTierCost,
+    decreePrice,
     upgradeCityTier,
     buildingLevel,
     canBoard,
