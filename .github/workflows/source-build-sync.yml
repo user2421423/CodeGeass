@@ -23,6 +23,8 @@ jobs:
         run: node tools/amphibious_elite_chain_smoke.cjs
       - name: Verify Elite fragment reward max-level safety
         run: node tools/elite_reward_max_level_smoke.cjs
+      - name: Verify shared Elite loot boxes and rarity-safe level previews
+        run: node tools/elite_lootboxes_smoke.cjs
       - name: Verify regular class standardization
         run: node tools/regular_class_standardization_smoke.cjs
       - name: Verify Story Mode Canterbury movement
