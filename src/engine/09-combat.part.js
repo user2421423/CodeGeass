@@ -531,15 +531,16 @@
       a.attacked = false;
       breakthrough = true;
     }
-    // Gekka Lv.5: one reposition after a coastal-defender kill each turn.
-    // Type II Breakthrough already restores the attack; this only restores movement.
-    // The turn stamp stops later coastal kills from granting unlimited movement.
-    if (destroyed && a.hp > 0 && aef.coastalMoveAfterKill &&
-        a.expCoastalMoveTurn !== g.turn && coastalLand(g, d)) {
-      a.expCoastalMoveTurn = g.turn;
+    // Every amphibious Elite (all factions, any Elite level) can chain both
+    // movement and attacks after a direct kill, even if it moved before firing.
+    // Normal Amphibious II keeps attack-only Breakthrough. City shield breaks
+    // without a unit kill do not refresh elite movement.
+    if (destroyed && a.hp > 0 && type.elite && type.naval === 'amphibious') {
+      a.attacked = false;
       a.moved = false;
       a.skillReposition = 0;
       a.eliteMoveAfterKill = true;
+      breakthrough = true;
     }
     if (a.hp > 0 && aef.moveAfterAttack) { a.moved = false; a.skillReposition = 0; }
     // Vincent Ward's Lv.5 movement refresh is limited to its first kill
