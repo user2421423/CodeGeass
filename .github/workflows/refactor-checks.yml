@@ -4,6 +4,10 @@ on:
     branches: ['refactor/**']
   pull_request:
 
+concurrency:
+  group: refactor-validation-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -34,5 +38,15 @@ jobs:
           node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('/tmp/combat-main.json'));const b=JSON.parse(fs.readFileSync('/tmp/combat-refactor.json'));const pct=(b.medianMicrosecondsPerAttack/a.medianMicrosecondsPerAttack-1)*100;console.log(JSON.stringify({main:a,refactor:b,changePercent:pct},null,2));if(pct>5)console.log('WARNING: >5% combat cost increase; investigate benchmark noise and profile before merge.')"
       - name: Compare seeded scenario fingerprints with committed baseline
         run: |
-          node tools/scenario_sim.cjs --all > /tmp/unified-combat-sim.txt
+          # Four independent deterministic shards reduce wall-clock time
+          # while preserving the baseline's sorted scenario output order.
+          awk '$1 == "setup" { print $2 }' tools/data/sim_baseline.txt | uniq > /tmp/unified-scenario-ids
+          split -l 10 -d -a 2 /tmp/unified-scenario-ids /tmp/unified-sim-shard-
+          pids=()
+          for shard in /tmp/unified-sim-shard-*; do
+            node tools/scenario_sim.cjs --all 11 2 $(cat "$shard") > "${shard}.out" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          cat /tmp/unified-sim-shard-*.out > /tmp/unified-combat-sim.txt
           diff -u tools/data/sim_baseline.txt /tmp/unified-combat-sim.txt
