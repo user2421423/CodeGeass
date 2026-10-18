@@ -4,7 +4,8 @@
 (function (E) {
   'use strict';
   const MAX_GROUPS = 12;
-  const MAX_UNITS = 24;
+  // Preferred size for automatic scenario organization, not a membership cap.
+  const AUTO_GROUP_PREFERRED_SIZE = 24;
   const groupLimit = g => g.mode === 'scenario' ? 40 : MAX_GROUPS;
 
   // Legacy saves used Defend; upgrade it to passive Hold Position on first access.
@@ -61,7 +62,6 @@
     const u = g.units.find(v => v.id === unitId && v.hp > 0 && v.side === g.player);
     if (!u) return { ok: false, reason: 'Unit unavailable' };
     if (group.units.includes(unitId)) return { ok: false, reason: 'Already assigned' };
-    if (group.units.length >= MAX_UNITS) return { ok: false, reason: 'Maximum 24 units per group' };
     const previous = groups(g).find(gr => gr.units.includes(unitId));
     if (previous) {
       previous.units = previous.units.filter(id => id !== unitId);
@@ -530,9 +530,13 @@
         .sort((a,b)=>(sources.get(b.id)===source)-(sources.get(a.id)===source) ||
           E.distance(positions.get(a.id)||a,location,g)-E.distance(positions.get(b.id)||b,location,g) || a.id-b.id);
       const slots=groupLimit(g)-groups(g).length;
-      const forceFill=Math.ceil(pending.length/MAX_UNITS)>=slots;
-      const members=eligible.filter(u=>forceFill || sources.get(u.id)===source ||
-        E.distance(positions.get(u.id)||u,location,g)<=12).slice(0,MAX_UNITS);
+      const forceFill=Math.ceil(pending.length/AUTO_GROUP_PREFERRED_SIZE)>=slots;
+      // Auto-organize into manageable groups where possible, without imposing
+      // a maximum size. The last available group collects any leftovers.
+      const targetSize=Math.max(AUTO_GROUP_PREFERRED_SIZE,Math.ceil(pending.length/slots));
+      const members=slots===1 ? pending.slice() :
+        eligible.filter(u=>forceFill || sources.get(u.id)===source ||
+          E.distance(positions.get(u.id)||u,location,g)<=12).slice(0,targetSize);
       const result=create(g);if(!result.ok)break;
       const gr=result.group,label=source?.name || (fleet?'Fleet':'Field Army');
       const suffix=groups(g).filter(v=>v!==gr && (v.sourceLabel||v.name)===label).length;
