@@ -51,9 +51,9 @@ assert.ok(u.damage().unit>damageBefore,'Assault Momentum boosts follow-on attack
 // the same research ID, preserving 76 technologies and 200 upgrades.
 const exploitation = E.TECH_TREE.armor.nodes.assault;
 assert.equal(exploitation.name, 'Armored Exploitation');
-assert.deepEqual(exploitation.values, [0.10, 0.20]);
-assert.deepEqual(exploitation.costs, [100, 200]);
-assert.deepEqual(exploitation.tiers, [2, 4]);
+assert.deepEqual(exploitation.values, [0.10, 0.20, 0.30, 0.40]);
+assert.deepEqual(exploitation.costs, [100, 200, 300, 400]);
+assert.deepEqual(exploitation.tiers, [2, 4, 4, 4]);
 assert.deepEqual(exploitation.req, ['guns', 2]);
 assert.equal(E.TECH_TREE.armor.nodes.momentum.req[0], 'assault');
 assert.equal(E.normalizeResearch({ 'armor.assault': 2 })['armor.assault'], 2,
