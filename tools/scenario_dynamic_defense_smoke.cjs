@@ -23,7 +23,7 @@ assert(enemies.length >= 8, 'requires at least eight hostile land formations');
 
 const options = ownCities.map(city => {
   const free = g.tiles.filter(p => p && !api.isSea(p) &&
-    !E.TERRAIN[p.terrain]?.blocked && api.massOf(g, p) === api.massOf(g, city) &&
+    !api.TERRAIN[p.terrain]?.blocked && api.massOf(g, p) === api.massOf(g, city) &&
     api.dist(g, p, city) >= 1 && api.dist(g, p, city) <= 3 &&
     !api.unitAt(g, p) && !api.stationAt(g, p));
   const defenders = g.units.filter(u => u.side === side && u.hp > 0 &&
