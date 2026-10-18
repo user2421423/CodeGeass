@@ -184,7 +184,7 @@ test('ranged attacker does not receive illegal short-range retaliation', () => {
   E.internal.reindex(g, actor, before);
   const pr = E.preview(g, actor.id, city.c, city.r);
   assert.ok(pr);
-  assert.equal(pr.counterAllowed, false);
+  assert.ok(!pr.counterAllowed, 'out-of-range defender cannot counter');
   const r = E.attack(g, actor.id, city.c, city.r);
   assert.ok(r.ok);
   assert.equal(r.counter, 0);
