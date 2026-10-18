@@ -986,6 +986,19 @@
     throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
+  // Keep Augustus in friendly territory in both eras. In 2017 his original
+  // Fukuoka staging point is overcrowded, which can displace him into Korea.
+  // These starting-roster coordinates apply to every Conquest difficulty.
+  for (const [era, armies, lon, lat] of [
+    ['world', root.KnightmareData.ARMY_DATA, -84, 39], // Britannian North America
+    ['ufn2018', ufn2018.armies, 33, 54], // Euro Britannian western Russia
+  ]) {
+    const matches = armies.filter(army => army[5] === 'augustus');
+    if (matches.length !== 1)
+      throw new Error('Expected exactly one Augustus starting unit in ' + era);
+    matches[0][2] = lon;
+    matches[0][3] = lat;
+  }
   const CONQUESTS = {
     world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null, expectedCities: { britannia: 51, eu: 58, cf: 47, neutral: 12 } },
     ufn2018,
