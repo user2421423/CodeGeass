@@ -21,6 +21,8 @@ jobs:
         run: node tools/elite_class_standardization_smoke.cjs
       - name: Verify Amphibious Elite repeatable movement and attack chains
         run: node tools/amphibious_elite_chain_smoke.cjs
+      - name: Verify city-defense movement refreshes and action limits
+        run: node tools/city_defense_movement_refresh_smoke.cjs
       - name: Verify Elite fragment reward max-level safety
         run: node tools/elite_reward_max_level_smoke.cjs
       - name: Verify shared Elite loot boxes and rarity-safe level previews

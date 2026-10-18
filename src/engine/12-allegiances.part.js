@@ -109,7 +109,7 @@
     // Preserve a frame's unrestricted restored movement; a skill only fills a missing movement action.
     if (u.moved) { u.moved = false; u.skillReposition = range; }
   }
-  function afterCommanderAttack(g, a, d, city, destroyed, timeStop) {
+  function afterCommanderAttack(g, a, d, city, destroyed, timeStop, defensesDestroyed = false) {
     const f = fx(a);
     if (d?.hp > 0) {
       if (f.targetMark) addTargetMark(d, { side: a.side, source: a.id, damage: f.targetMark });
@@ -133,8 +133,15 @@
     if (a.hp <= 0) return;
     if ((f.adaptiveBreakthrough&&a.movedDistance>=3||f.highland&&tile(g,a.c,a.r)?.terrain==='mountain'||f.blackSeaFox&&tile(g,a.c,a.r)?.terrain==='mountain'||f.swordplay&&d&&dist(g,a,d)===1)&&a.repositionTurn!==g.turn){a.repositionTurn=g.turn;grantReposition(a,2);}
     if (f.reposition && a.repositionTurn !== g.turn) { a.repositionTurn = g.turn; grantReposition(a, f.reposition); }
+    // City defense breakthroughs share the kill-based movement reward, but
+    // do not trigger unrelated kill-only healing or inspiration effects.
+    if (destroyed || defensesDestroyed) {
+      if (f.killReposition && a.killRepositionTurn !== g.turn) {
+        a.killRepositionTurn = g.turn;
+        grantReposition(a, f.killReposition);
+      }
+    }
     if (!destroyed) return;
-    if (f.killReposition && a.killRepositionTurn !== g.turn) { a.killRepositionTurn = g.turn; grantReposition(a, f.killReposition); }
     if (f.killHeal && a.killHealTurn !== g.turn) { a.killHealTurn = g.turn; a.hp = Math.min(maxHP(a), a.hp + Math.round(maxHP(a) * f.killHeal)); }
     if (f.assaultLeader && a.assaultLeaderTurn !== g.turn) {
       a.assaultLeaderTurn = g.turn;

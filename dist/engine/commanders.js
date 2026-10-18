@@ -202,7 +202,7 @@
       role: 'Armor',
       hull: 'Ahuramazda',
       skill: "Relentless Pursuit",
-      desc: "Gains +15 percentage points of critical chance after moving at least 2 hexes that turn. His first kill each turn grants a reposition of up to 2 hexes, not another attack.",
+      desc: "Gains +15 percentage points of critical chance after moving at least 2 hexes that turn. His first kill or city-defense break each turn grants a reposition of up to 2 hexes, not another attack.",
       stats: {"dmg": 0.15, "attackOnly": true},
       fx: {"killReposition":2,"chargeCrit":0.15},
       title: 'Ashra Corps',
