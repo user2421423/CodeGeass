@@ -879,14 +879,9 @@
   },
   "generatedSpriteVariants": {
     "date": "2026-10-18",
-    "scope": "2017 Chinese Federation common-unit sprite replacements",
-    "method": "User-approved original AI-generated artwork, resized to 640 px transparent WebP without changes to game statistics or unit mechanics",
+    "scope": "2017 Chinese Federation regular unit variants (standard Gun-Ru scout uses original artwork)",
+    "method": "Nine user-approved AI-generated unit variants, resized to transparent 640px WebP; original standard Gun-Ru scout sprite restored",
     "units": [
-      {
-        "id": "gun_ru",
-        "file": "units/gun_ru-25191c921b75.webp",
-        "original": "units/gun_ru-e7776a73350d.png"
-      },
       {
         "id": "gun_ru_assault",
         "file": "units/gun_ru_assault-5ef384845a87.webp",
@@ -932,6 +927,12 @@
         "file": "units/chuyen_super-d6bdd3fffcc6.webp",
         "original": "units/chuyen-427d2c85b500.png"
       }
-    ]
+    ],
+    "restoredStandardInfantry": {
+      "id": "gun_ru",
+      "file": "units/gun_ru-e7776a73350d.png",
+      "replaced": "units/gun_ru-25191c921b75.webp",
+      "reason": "Restore original standard Chinese Federation scout artwork while retaining the nine other approved sprites"
+    }
   }
 }

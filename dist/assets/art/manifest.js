@@ -183,7 +183,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/gracchus-791078ba5bcf.png"
     },
     "gun_ru": {
-      "src": "units/gun_ru-25191c921b75.webp"
+      "src": "units/gun_ru-e7776a73350d.png"
     },
     "hummel_battery": {
       "src": "units/hummel_battery-11b7539ef1e2.png"
