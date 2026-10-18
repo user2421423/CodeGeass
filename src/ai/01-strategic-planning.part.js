@@ -125,7 +125,9 @@
   // still evaluated and executed by the existing engine APIs.
   function aiOperationalAttackBias(g, u, p, defender, station, memo) {
     const op = memo.operationByUnit?.[u.id];
-    if (!op) return 0;
+    if (!op || memo.assign?.[u.id] !== op.frontId ||
+        (op.type !== 'defend_city' && op.type !== 'defend_capital' &&
+         !foe(g, stationAt(g, op.target)?.owner, u.side))) return 0;
     const d = dist(g, p, op.target),
       capture = op.type === 'capture_city' || op.type === 'breakthrough' || op.type === 'secure_port';
     if (capture) {
@@ -142,7 +144,9 @@
   }
   function aiOperationalMoveBias(g, u, p, memo, enemies, friends) {
     const op = memo.operationByUnit?.[u.id];
-    if (!op || !p || isSea(p)) return 0;
+    if (!op || !p || isSea(p) || memo.assign?.[u.id] !== op.frontId ||
+        (op.type !== 'defend_city' && op.type !== 'defend_capital' &&
+         !foe(g, stationAt(g, op.target)?.owner, u.side))) return 0;
     const nearby = enemies.filter(v => dist(g, v, p) <= 3).length,
       cover = friends.filter(v => !isShip(v) && !atSea(g, v) && dist(g, v, p) <= 2).length,
       branch = TYPES[u.type]?.branch;
