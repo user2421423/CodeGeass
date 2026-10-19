@@ -57,7 +57,7 @@
         // Follow the *next incomplete* victory objective, including allied territory;
         // never disclose hidden information, change movement rules or teleport units.
         const escapeMissions = new Set(['bk5', 'bk_rescue', 'bk_yokosuka2', 'br_yokosuka2']);
-        if (side === g.player && escapeMissions.has(g.campaign?.id)) {
+        if (side === g.player && g.difficulty === 'normal' && escapeMissions.has(g.campaign?.id)) {
           const mission = E.campaign?.mission?.(g.campaign.id);
           const stages = Array.isArray(mission?.win) ? mission.win : [mission?.win];
           const stage = stages.find(rule => {
@@ -80,14 +80,6 @@
           } else {
             g.campaign.aiObjective = null;
           }
-        }
-        // Normal Story defenses concentrate on the required protected city,
-        // rather than abandoning it to attack incidental enemy outposts.
-        if (side === g.player &&
-            new Set(['br7','br_execution','br_mausoleum','br_xiaopei']).has(g.campaign?.id)) {
-          const m = E.campaign?.mission?.(g.campaign.id);
-          const protectedCity = g.stations.find(s => (m?.lose?.cities || []).includes(s.name));
-          if (protectedCity) g.campaign.goals[side] = [[protectedCity.c, protectedCity.r, -22]];
         }
         memo[side].field = goalField(g, side);
       }
