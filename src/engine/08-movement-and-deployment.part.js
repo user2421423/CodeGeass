@@ -70,6 +70,11 @@
     if(u.expJammedActive)n=Math.max(1,n-2);
     n += f.move || 0;
     if (u.expImperialCommand) n += 2;
+    // Banked first-strike movement adds to a later full movement action.
+    // An immediate postattack reposition instead spends from the bank itself.
+    if (f.firstStrike && !u.expKallenReposition && !u.skillReposition &&
+        t.naval !== 'ship') n += u.expKallenMoveBank || 0;
+    if (u.expKallenSlowActive) n = Math.max(1, n - 2);
     return n;
   }
   function terrainStepCost(g, t) {
@@ -132,8 +137,10 @@
       amphibious = t.naval === 'amphibious',
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
-      budget = u.skillReposition ? Math.min(landMove, u.skillReposition) : ship ? landMove : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
-      boards = !u.skillReposition && !t.naval && u.deployedTurn !== g.turn,
+      budget = u.expKallenReposition ? (u.expKallenMoveBank || 0)
+        : u.skillReposition ? Math.min(landMove, u.skillReposition)
+        : ship ? landMove : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
+      boards = !u.skillReposition && !u.expKallenReposition && !t.naval && u.deployedTurn !== g.turn,
       stateKey = p => key(p),
       costs = new Map([[stateKey(start), 0]]),
       queue = [{ p: start, cost: 0, order: 0 }];
@@ -375,6 +382,14 @@
       fromSea = isSea(tile(g, u.c, u.r)),
       t = TYPES[u.type],
       carrier = unitAt(g, dest);
+    // Consume actual movement cost, not the whole bonus pool. Earned points
+    // that cannot be used this turn remain available on Kallen's next turn.
+    const kallenReposition = !!fx(u).firstStrike && !!u.expKallenReposition;
+    const kallenNormalBonus = !!fx(u).firstStrike && !kallenReposition &&
+      !u.skillReposition && !u.withdrawMove && !t.naval && !fromSea;
+    const kallenBaseMove = kallenNormalBonus ? movement(g, u) - (u.expKallenMoveBank || 0) : 0;
+    const kallenSpent = kallenReposition ? moveCost :
+      kallenNormalBonus ? Math.max(0, moveCost - kallenBaseMove) : 0;
     // A legal move consumes the single post-attack Brain Raid movement grant.
     delete u.expAkitoMoveReady;
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
@@ -388,6 +403,8 @@
       u.guardReady = false;
       u.skillReposition = 0;
       u.withdrawMove = false;
+      if (kallenSpent) u.expKallenMoveBank = Math.max(0, (u.expKallenMoveBank || 0) - kallenSpent);
+      delete u.expKallenReposition;
       u.movedDistance = (u.movedDistance || 0) + dist(g, from, dest);
       u.lastTurnMoved = true;
       u.boardedTurn = g.turn;
@@ -421,6 +438,16 @@
     u.skillReposition = 0;
     u.withdrawMove = false;
     u.eliteMoveAfterKill = false;
+    if (kallenSpent) u.expKallenMoveBank = Math.max(0, (u.expKallenMoveBank || 0) - kallenSpent);
+    // Multiple earned movement points may be spent in successive legal
+    // repositions, subject to the existing heavy-frame action limit.
+    if (kallenReposition && u.expKallenMoveBank > 0 &&
+        !heavyMoveLimitReached(g, u) && !freshLanding) {
+      u.moved = false;
+      u.skillReposition = u.expKallenMoveBank;
+    } else {
+      delete u.expKallenReposition;
+    }
     // Tactical redeployment preserves the original normal movement action.
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
     if(u.expShadowMove){u.moved=true;delete u.expShadowMove;}
