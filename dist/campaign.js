@@ -436,6 +436,28 @@
     const m = mission(g.campaign.id);
     g.campaign.eliteRosters = Object.fromEntries([...new Set([...g.order, 'neutral'])].map(s =>
       [s, eliteRoster(s, { teams: g.teams, order: g.order, storyUnits: m?.units || [] })]));
+    // Migrate old saves that contain obsolete Federation/UFN or cross-faction
+    // units, retaining their owner, HP fraction, position and commander.
+    for (const u of g.units || []) {
+      if (!E.TYPES[u.type]) continue;
+      const oldMax = E.maxHP(u);
+      const hpFraction = oldMax ? Math.max(0, Math.min(1, u.hp / oldMax)) : 0;
+      let type = storyFactionType(g, u.side, u.type);
+      if (u.elite && !E.eliteEligible(g, u.side, u.elite)) {
+        const pool = g.campaign.eliteRosters[u.side] || [];
+        const cls = E.TYPES[u.type].cls;
+        const replacement = pool.find(id => E.TYPES[E.ELITE_FORCES[id].type].cls === cls) || pool[0];
+        if (replacement) type = E.ELITE_FORCES[replacement].type;
+      }
+      if (type !== u.type) {
+        u.type = type;
+        u.elite = Object.keys(E.ELITE_FORCES).find(id => E.ELITE_FORCES[id].type === type) || null;
+        u.eliteLevel = u.elite ? Math.max(1, u.eliteLevel || 1) : 0;
+        if (u.elite) u.stack = 1;
+        u.hpTech = E.hullTech(g, u);
+        u.hp = u.hp <= 0 ? 0 : Math.max(1, Math.round(E.maxHP(u) * hpFraction));
+      }
+    }
     if (isEliteCampaign(g)) return g;
     for (const u of g.units || []) {
       // Player HQ recruits must not be mistaken for scripted aces on save/load.
