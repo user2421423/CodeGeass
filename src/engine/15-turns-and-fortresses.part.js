@@ -103,6 +103,9 @@
         if(v.expShadowMove){v.moved=true;v.skillReposition=0;delete v.expShadowMove;}
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
+        // Expire Rolo's freeze only AFTER this faction has lost its entire
+        // next turn, never at the start of its disabled activation.
+        delete v.expRoloFrozen;
         // Slow lasts through the target faction's next action phase.
         delete v.expKallenSlowActive;
         if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;
@@ -172,7 +175,7 @@
       u.expPinnedWeakenActive=u.expPinnedWeakenNext||0;delete u.expPinnedWeakenNext;
       u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
       if(u.expZiWeakenNext){u.despairWeakened={side:u.side,source:'zi',value:u.expZiWeakenNext};delete u.expZiWeakenNext;}
-      if(u.expDisabledActive){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
+      if(u.expDisabledActive || u.expRoloFrozen){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
       delete u.expOverwatch;delete u.expLink;
       u.chain = 0;
       u.eliteMoveAfterKill = false;
