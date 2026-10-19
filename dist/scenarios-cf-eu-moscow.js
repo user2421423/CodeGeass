@@ -6,10 +6,10 @@
   const E=root.Knightmare||(typeof require==='function'?require('./engine.js'):null);
   const ID='cf-eu-moscow',KEY='cfEuMoscow',SIDES=['cf','eu'];
   const COLS=160,ROWS=100;
-  const BOUNDS={west:31.4,east:50.4,north:60.0,south:52.0};
+  const BOUNDS={west:31.4,east:50.9,north:60.0,south:52.0};
   const K=Math.cos(56*Math.PI/180);
-  const PROJECTION={centerLon:40.9,centerLat:56,angle:0,
-    uMin:-9.5*K,uMax:9.5*K,vMin:-4,vMax:4};
+  const PROJECTION={centerLon:41.15,centerLat:56,angle:0,
+    uMin:-9.75*K,uMax:9.75*K,vMin:-4,vMax:4};
   // [name, longitude, latitude, controller, industrial tier, fortified].
   // Faction control is alternate-history; settlements are real geographic sites.
   const CITIES=[
