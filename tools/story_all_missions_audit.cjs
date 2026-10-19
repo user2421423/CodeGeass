@@ -132,6 +132,13 @@ for(const {campaignId,mission:m} of all){
    trials};
  rows.push(row);
  if(def.checks.length) problems.push({id:m.id,checks:def.checks});
+ if(wins <= 2) {
+   console.log('AUDIT_DIAG '+m.id+' '+JSON.stringify(trials.map(r=>({
+     s:r.seed,turn:r.turn,w:r.winner,reason:r.reason,
+     playerAlive:r.playerRemaining,enemyAlive:r.enemyRemaining,
+     caps:(r.captures||[]).map(c=>c.city+':'+c.from+'>'+c.to).slice(0,7)
+   }))));
+ }
  console.log('AUDIT '+campaignId+' '+m.id+' '+wins+'/'+trials.length+' wins; losses='+losses+
    ' unresolved='+timeouts+' errors='+errors+' firstLoss='+row.firstDefeat+
    ' starting='+JSON.stringify(def.initial)+' objective='+def.objective+
