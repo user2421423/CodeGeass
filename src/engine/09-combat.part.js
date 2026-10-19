@@ -2,7 +2,9 @@
     let bonus = 0;
     for (const a of g.units) {
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
-      if (a.cmd && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      // Leila's new skill replaces both her old +12% damage aura and the
+      // default commander +8% damage aura; she provides defense instead.
+      if (a.cmd && a.cmd !== 'leila' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -214,6 +216,9 @@
         attack *= 0.80;
       // Commander signature abilities (defender side).
       if (tf.taken) attack *= tf.taken;
+      // Non-stacking Blue Geass protection, including Leila herself and
+      // friendly formations at exactly two hexes. No offensive bonus.
+      if (leilaCommand(g, target)) attack *= 0.9;
       const tef = eliteFx(target);
       if (tef.taken) attack *= tef.taken;
       if (tef.seaTaken && isSea(tile(g, target.c, target.r))) attack *= tef.seaTaken;

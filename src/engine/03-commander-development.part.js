@@ -243,9 +243,20 @@
   function auraRange(a) {
     return fx(a).aura?.range || 1;
   }
+  // Leila's Blue Geass protects herself and every same-side formation in the
+  // two-hex command radius. The effect does not increase Steady morale to High.
+  function leilaCommand(g, v) {
+    return g.units.some(m => m.hp > 0 && m.side === v.side && !atSea(g, m) &&
+      fx(m).steadfastCommand && dist(g, m, v) <= fx(m).steadfastCommand.range);
+  }
+  function applyLeilaMoraleFloor(g) {
+    for (const v of g.units)
+      if (v.hp > 0 && v.morale < 0 && leilaCommand(g, v)) v.morale = 0;
+  }
   // Lowest morale a unit can be pushed to: steady for commanders with a floor; Fernando's calm stops confusion and
   // Ohgi's Organizer keeps adjacent units at Low or better.
   function moraleFloor(g, v) {
+    if (leilaCommand(g, v)) return 0;
     if(g.units.some(m=>m.hp>0&&!atSea(g,m)&&m.side===v.side&&fx(m).imperialAuthority&&dist(g,m,v)<=3))return 0;
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(

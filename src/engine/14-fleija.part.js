@@ -407,6 +407,8 @@
           crippled.push(v.id);
         } else {
           v.morale = Math.min(v.morale ?? 0, -1);
+          // Blue Geass also protects against the outer-ring morale shock.
+          if (leilaCommand(g, v)) v.morale = Math.max(0, v.morale);
           damaged.push(v.id);
         }
       }

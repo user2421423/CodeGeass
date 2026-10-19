@@ -138,6 +138,9 @@
       for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
         passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
+    // Existing negative morale is brought up to Steady immediately while
+    // protected; this never promotes a unit from Steady to High.
+    applyLeilaMoraleFloor(g);
     for (const u of mine) {
       u.entrenched = false;
       u.lastTurnMoved = false;
@@ -185,7 +188,9 @@
       const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];
       const repairLevel = genericLevel(g, u, repairSkill);
       if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
-      const auras = mine.filter(v => v.hp > 0 && v.cmd && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
+      // Leila's new Steady floor must not inherit the generic commander
+      // morale-increase aura (which would incorrectly raise 0 to High).
+      const auras = mine.filter(v => v.hp > 0 && v.cmd && v.cmd !== 'leila' && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
       // Ohgi's Organizer: the morale step comes even when surrounded.

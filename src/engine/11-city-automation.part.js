@@ -173,6 +173,7 @@
       g.challengePassRun.assigned[k] = true;
     u.cmdRank = g.roster[k].rank;
     u.hp += maxHP(u) - old;
+    if (k === 'leila') applyLeilaMoraleFloor(g);
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
     return { ok: true };
   }
@@ -182,9 +183,12 @@
     const kind = COMMANDERS[u.cmd].action.kind;
     if (kind === 'command') return commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    // Synchronized Maneuver refreshes Leila too, and any friendly on-map
+    // formation (including naval units) that has spent its movement or attack.
+    if (kind === 'withdraw') return g.units.filter(v => v.hp > 0 && v.side === u.side &&
+      dist(g, u, v) <= 2 && (v.moved || v.attacked));
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
-      (kind === 'cleanse' ? v.side === u.side : kind === 'withdraw' ? v.id !== u.id && v.side === u.side && v.attacked && v.morale > -3
-        : foe(g, v.side, u.side)));
+      (kind === 'cleanse' ? v.side === u.side : foe(g, v.side, u.side)));
   }
   function feint(g, id, targetId = null) {
     const check = validateAction(g, { kind: 'commander', id });
@@ -210,7 +214,12 @@
     }
     for (const v of options) {
       if (action.kind === 'cleanse') { v.morale = Math.max(0, v.morale); v.moraleWard = { side: u.side }; }
-      else if (action.kind === 'withdraw') { v.moved = false; v.withdrawMove = true; v.skillReposition = 0; }
+      else if (action.kind === 'withdraw') {
+        v.moved = false;
+        v.withdrawMove = true; // One FULL legal movement action, including after attacking.
+        v.skillReposition = 0;
+        // Never restore v.attacked: the command does not grant additional attacks.
+      }
       else lowerMorale(g, v, 2);
     }
     u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;

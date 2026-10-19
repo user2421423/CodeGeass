@@ -35,6 +35,8 @@
     u.hpTech = hullTech(g, u);
     u.hp = maxHP(u);
     g.units.push(u);
+    // Scenario-created Leila immediately protects nearby formations from low morale.
+    if (cmd === 'leila') applyLeilaMoraleFloor(g);
     // Challenge Pass: count newly created frames, including ships, amphibious and Elite Forces.
     if (g.mode === 'conquest' && side === g.player && g.challengePassRun?.version === 1) {
       g.challengePassRun.produced += u.stack;
@@ -422,6 +424,9 @@
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
     if(u.expShadowMove){u.moved=true;delete u.expShadowMove;}
     reindex(g,u,from);
+    // The Steady floor takes effect as soon as Leila or an ally enters her radius.
+    if (u.cmd === 'leila') applyLeilaMoraleFloor(g);
+    else if (u.morale < 0 && leilaCommand(g, u)) u.morale = 0;
     const hostileReaction = newcomerOverwatch(g,u);
     if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true,hostileReaction};}
     // Moving through enemy or neutral territory never changes its map color.
