@@ -3,6 +3,25 @@
 'use strict';
 const ELITE_BOX_RARITY_ORDER = Object.freeze({ Rare: 0, Epic: 1, Legendary: 2, Any: 3 });
 
+// Order every Elite roster Infantry (scout/assault/raider), Artillery
+// (support/rocket/siege), Armor (light/medium/heavy/super), then naval.
+const ELITE_CLASS_DISPLAY_ORDER = Object.freeze({
+  scout: 0, assault: 1, raider: 2,
+  support: 3, rocket: 4, siege: 5,
+  light: 6, medium: 7, heavy: 8, super: 9,
+});
+function eliteDisplayOrder(id) {
+  const type = E.TYPES[E.ELITE_FORCES[id].type];
+  if (type.naval === 'amphibious') return 10;
+  if (type.naval === 'ship') return 11;
+  return ELITE_CLASS_DISPLAY_ORDER[type.cls] ?? 12;
+}
+function compareEliteDisplayOrder(a, b) {
+  return eliteDisplayOrder(a) - eliteDisplayOrder(b) ||
+    E.TYPES[E.ELITE_FORCES[a].type].name.localeCompare(E.TYPES[E.ELITE_FORCES[b].type].name) ||
+    a.localeCompare(b);
+}
+
 function eliteBoxRarityOrder(rarity) {
   return ELITE_BOX_RARITY_ORDER[rarity] ?? 4;
 }
@@ -10,7 +29,7 @@ function eliteBoxSortedOptions(award, profile) {
   return eligibleEliteRewardOptions(award, profile).sort((a, b) => {
     const first = E.ELITE_FORCES[a], second = E.ELITE_FORCES[b];
     return eliteBoxRarityOrder(first.rarity) - eliteBoxRarityOrder(second.rarity) ||
-      E.TYPES[first.type].name.localeCompare(E.TYPES[second.type].name);
+      compareEliteDisplayOrder(a, b);
   });
 }
 // Used by both the actual Elite factory cards and the fragment-choice preview;
