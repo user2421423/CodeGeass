@@ -89,9 +89,22 @@ function eliteLootBoxPickerHTML(key, level = 1, profile = loadProfile()) {
     '<span class="elite-box-level-ticks">Lv.1 <span>Lv.' + E.ELITE_MAX_LEVEL + '</span></span></label></div>' +
     '<div class="elite-lootbox-comparison">' + eliteLootBoxComparisonHTML(key, chosen, profile) + '</div>';
 }
-function eliteLootBoxPanelHTML(profile = loadProfile()) {
-  const pending = (profile.pendingEliteRewards || []).slice().sort((a, b) =>
-    eliteBoxRarityOrder(a.rarity) - eliteBoxRarityOrder(b.rarity));
+// Derive an unambiguous origin even for Story rewards saved by older versions
+// that only recorded "Story Mode 3★" without the mission name.
+function eliteRewardOrigin(award) {
+  if (award.key?.startsWith('story:')) {
+    const [, id, difficulty] = award.key.split(':');
+    const mission = E.campaign?.mission?.(id);
+    const tier = { normal: 'Normal', hard: 'Hard', challenge: 'Challenge', elite: 'Elite' }[difficulty] || difficulty;
+    return 'Story Mode · ' + (mission?.title || id) + ' · ' + tier + ' 3★';
+  }
+  return award.source || 'Elite fragment reward';
+}
+function eliteLootBoxPanelHTML(profile = loadProfile(), rewardKey = null) {
+  const pending = (profile.pendingEliteRewards || [])
+    .filter(award => rewardKey === null || award.key === rewardKey)
+    .slice().sort((a, b) =>
+      eliteBoxRarityOrder(a.rarity) - eliteBoxRarityOrder(b.rarity));
   if (!pending.length) return '';
   const cards = pending.map(award => {
     const options = eliteBoxSortedOptions(award, profile);
@@ -102,7 +115,7 @@ function eliteLootBoxPanelHTML(profile = loadProfile()) {
       '<div class="elite-lootbox-heading"><span class="elite-lootbox-symbol" aria-hidden="true">◆</span>' +
       '<div><span class="elite-lootbox-rarity">' + esc(rarity === 'Any' ? 'Any rarity' : rarity) +
       ' Elite loot box</span><b>+' + award.amount + ' selectable fragments</b>' +
-      '<small>' + esc(award.source) + ' · ' + options.length + ' eligible Elite Forces</small></div></div>' +
+      '<small>Source: ' + esc(eliteRewardOrigin(award)) + ' · ' + options.length + ' eligible Elite Forces</small></div></div>' +
       (disabled ? '<p class="elite-lootbox-blocked">All eligible Elite Forces are at maximum level. This reward remains unclaimed and saved.</p>' :
         '<button class="elite-lootbox-open" data-reward-open="' + esc(award.key) +
         '" aria-expanded="false">Open box · Choose Elite</button>') +
