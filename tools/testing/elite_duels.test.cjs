@@ -59,3 +59,38 @@ test('elite L5 full-engine duel benchmark (informational until tuning is approve
   console.log('ELITE_DUEL_REPORT '+JSON.stringify({seedsPerInitiative:SEEDS,n:results.length,results}));
   assert.equal(results.length,entries.length);
 });
+
+test('calibration search: conservative class attack changes and targeted level-5 defense',()=>{
+ const attackProposal={raider:155,medium:160,heavy:165,super:175,rocket:140,siege:135,amphibious:145};
+ const original={};
+ for(const [id,e] of entries){
+   const t=E.TYPES[e.type],cls=t.naval==='amphibious'?'amphibious':t.cls;
+   original[id]=t.attack;
+   t.attack=attackProposal[cls]??t.attack;
+ }
+ function stats(id,e,trialSeeds=72){
+  let win=0,lowest=1;for(const first of [false,true])for(let s=1;s<=trialSeeds;s++){
+    const d=duel(id,e.type,(((s*2654435761)>>>0)^(first?0xcab005e:0xa19e9a))>>>0,first);
+    win+=d.won?1:0; lowest=Math.min(lowest,d.remaining);
+  }return {winPct:100*win/(trialSeeds*2),minHpPct:100*lowest};
+ }
+ const proposed=[];
+ for(const [id,e] of entries) {
+   const t=E.TYPES[e.type],cls=t.naval==='amphibious'?'amphibious':t.cls;
+   const saved={...e.lv5},pre=stats(id,e);
+   let best=null,st=pre;
+   if(pre.winPct<100||pre.minHpPct<52){
+    const originalTaken=e.lv5?.taken??1;
+    for(let n=1;n<=16;n++){
+      const taken=Number(Math.max(.20,originalTaken-n*.05).toFixed(2));
+      e.lv5={...saved,taken};
+      st=stats(id,e);
+      if(st.winPct===100 && st.minHpPct>=52) {best=taken;break;}
+    }
+   }
+   proposed.push({id,cls,oldAttack:original[id],newAttack:t.attack,takenBefore:saved.taken??1,takenAfter:best??(saved.taken??1),baselineCandidate:pre,final:st,pass:st.winPct===100&&st.minHpPct>=50});
+   e.lv5=saved;
+ }
+ console.log('ELITE_CALIBRATION_REPORT '+JSON.stringify({attackProposal,proposed}));
+ for(const [id,e] of entries)E.TYPES[e.type].attack=original[id];
+});
