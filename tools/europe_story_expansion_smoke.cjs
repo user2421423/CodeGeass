@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 'use strict';
-// Full-engine checks for the four approved European Story additions.
+// Full-engine checks for the six approved European Story additions.
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
 const E = require('../dist/engine.js');
 const CP = require('../dist/campaign.js');
-const ids = ['eb_el_alamein', 'eb_italy', 'eu_lakeside_rescue', 'eu_apollo'];
+const ids = ['eb_el_alamein', 'eb_italy', 'eu_lakeside_rescue', 'eu_apollo', 'eb_hold_petersburg', 'eu_white_death'];
 const modes = Object.keys(CP.DIFFICULTIES);
 const make = (id, mode = 'normal') => CP.createMission(id, 20261019, mode);
 const city = (g, name) => g.stations.find(s => s.name === name);
@@ -12,9 +14,9 @@ const allUnits = g => g.units.flatMap(u => [u, ...(u.cargo || [])]);
 
 for (const cid of ['eb_europe', 'eu_europe']) {
   const camp = CP.CAMPAIGNS[cid];
-  assert.equal(camp.missions.length, 10, cid + ' has ten missions');
-  assert.equal(new Set(camp.missions.map(m => m.id)).size, 10);
-  assert.deepEqual(CP.milestoneStatus({}, cid).map(m => m.stars), [15, 23, 30]);
+  assert.equal(camp.missions.length, 11, cid + ' has eleven missions');
+  assert.equal(new Set(camp.missions.map(m => m.id)).size, 11);
+  assert.deepEqual(CP.milestoneStatus({}, cid).map(m => m.stars), [17, 25, 33]);
   const profile = { campaign: {} };
   for (const [index, m] of camp.missions.entries()) {
     assert.equal(m.index, index);
@@ -27,6 +29,11 @@ assert.equal(CP.next('eu_weisswolf'), 'eu_lakeside_rescue');
 assert.equal(CP.next('eu_lakeside_rescue'), 'eu_apollo');
 assert.equal(CP.next('eu_apollo'), 'eu_assault');
 assert.equal(CP.next('eb_assault'), 'eb_italy');
+assert.equal(CP.next('eb_el_alamein'), 'eb_hold_petersburg');
+assert.equal(CP.next('eb_hold_petersburg'), 'eb_narva');
+assert.equal(CP.next('eu_paris'), 'eu_white_death');
+assert.equal(CP.next('eu_white_death'), null);
+assert.equal(CP.mission('eb_retake_slonim'), null, 'only the final two selections are added');
 assert.equal(CP.unlocked({ campaign: { eb_narva: 3 } }, 'eb_narva'), true,
   'inserting a prologue must not lock a previously completed mission');
 
@@ -138,7 +145,66 @@ city(defense, 'E.U. Artillery Position').owner = defense.player;
 assert.equal(E.hooks.decide(defense), null, 'early capture does not bypass the defensive phase');
 defense.turn = 9;
 assert.equal(E.hooks.decide(defense).winner, defense.player);
-console.log('Europe Story expansion: PASS (4 missions x 4 difficulties, progression, objectives, carriers, saves and rewards)');
+
+// Both new missions enforce their defensive phase, mandatory objective and
+// commander/route protection independently on every difficulty.
+for (const mode of modes) {
+  const g = make('eb_hold_petersburg', mode);
+  city(g, 'Narva Withdrawal Junction').owner = g.player;
+  assert.equal(E.hooks.decide(g), null, 'early counterattack cannot skip city defense');
+  g.turn = 9;
+  assert.equal(E.hooks.decide(g)?.winner, g.player);
+  assert.equal(g.over.stars, 3, 'both mastery objectives are satisfiable');
+  const stalled = make('eb_hold_petersburg', mode); stalled.turn = 9;
+  assert.equal(E.hooks.decide(stalled), null, 'holding alone cannot skip the junction');
+  for (const id of ['eb_hold_petersburg', 'eu_white_death']) {
+    const m = CP.mission(id), failed = make(id, mode);
+    failed.campaign.killed.push(m.lose.cmd[0]);
+    assert.notEqual(E.hooks.decide(failed)?.winner, failed.player);
+    const lost = make(id, mode); lost.campaign.lostCities.push(m.lose.cities[0]);
+    assert.notEqual(E.hooks.decide(lost)?.winner, lost.player);
+  }
+  const eu = make('eu_white_death', mode), exit = city(eu, 'Evacuation Route');
+  Object.assign(eu.units.find(u => u.cmd === 'oscar'), { c: exit.c, r: exit.r });
+  assert.equal(E.hooks.decide(eu), null, 'early arrival must still cover the withdrawal');
+  eu.turn = 4; E.hooks.turn(eu, eu.player);
+  assert.equal(allUnits(eu).filter(u => u.cmd === 'suzaku').length, 1);
+  const saved = JSON.parse(JSON.stringify(eu)); CP.normalizeUnits(saved);
+  E.hooks.turn(saved, saved.player);
+  assert.equal(allUnits(saved).filter(u => u.cmd === 'suzaku').length, 1, 'arrival is not duplicated after load');
+  const suzaku = saved.units.find(u => u.cmd === 'suzaku');
+  assert.ok(suzaku.hp > 0 && (mode !== 'normal' || !suzaku.elite));
+  const seen = new Set();
+  for (const u of saved.units) {
+    assert.ok(!seen.has(E.key(u)), 'scripted arrival has a free deployment hex'); seen.add(E.key(u));
+    assert.equal(E.isSea(E.tile(saved, u.c, u.r)), E.TYPES[u.type].naval === 'ship');
+  }
+  saved.turn = 7;
+  assert.equal(E.hooks.decide(saved)?.winner, saved.player, 'evacuation succeeds with Suzaku still alive');
+  assert.equal(saved.over.stars, 3);
+  const missing = make('eu_white_death', mode); missing.turn = 7;
+  assert.equal(E.hooks.decide(missing), null, 'Oscar must personally reach the route');
+}
+
+// Use the real reward-box UI functions to verify both missions pay E.U.
+// fragments, including the Euro Britannian chapter, at the standard rarities.
+const rewardProfile = { elites: {}, pendingEliteRewards: [], claimedEliteChoices: {} };
+const ctx = { E, loadProfile: () => rewardProfile, saveProfile: () => true, esc: String };
+vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(require.resolve('../dist/ui/turns.js'), 'utf8'), ctx);
+const rewardAPI = vm.runInContext('({queueEliteReward, eligibleEliteRewardOptions})', ctx);
+for (const id of ['eb_hold_petersburg', 'eu_white_death'])
+ for (const [mode, rarity] of Object.entries({ normal: 'Rare', hard: 'Epic', challenge: 'Legendary', elite: 'Any' })) {
+  const key = 'story:' + id + ':' + mode, g = make(id, mode);
+  assert.equal(rewardAPI.queueEliteReward(rewardProfile, g, key, 10, 'Story 3★'), true);
+  const box = rewardProfile.pendingEliteRewards.find(r => r.key === key);
+  assert.equal(box.side, 'eu'); assert.equal(box.amount, 10); assert.equal(box.rarity, rarity);
+  const options = Array.from(rewardAPI.eligibleEliteRewardOptions(box, rewardProfile));
+  assert.ok(options.length && options.every(id => E.ELITE_FORCES[id].availableTo.includes('eu') &&
+    (rarity === 'Any' || E.ELITE_FORCES[id].rarity === rarity)));
+  assert.equal(rewardAPI.queueEliteReward(rewardProfile, g, key, 10, 'Story 3★'), false);
+ }
+console.log('Europe Story expansion: PASS (6 additions x 4 difficulties; eleven missions each, objectives, carriers, saves and E.U. rewards)');
 
 // Optional deterministic gameplay trials: enemy tactical AI remains fully active.
 // The player uses tactical AI plus explicit escort/control-room movement orders.
@@ -152,6 +218,14 @@ for(const id of ids)for(const seed of [11,43,79]){
    const side=g.order[i];if(!(turn===1&&i===0))E.beginTurn(g,side,turn>1);
    if(g.over)break;
    E.aiProduction(g);
+   if(side===g.player&&id==='eu_white_death'){
+    const target=city(g,'Evacuation Route'), blocker=E.unitAt(g,target);
+    if(blocker?.side===side&&blocker.cmd!=='oscar'){
+     const spare=[...E.reachable(g,blocker).keys()].map(k=>{const[c,r]=k.split(',').map(Number);return E.tile(g,c,r);})
+      .find(t=>!E.isSea(t)&&!E.stationAt(g,t));
+     if(spare)E.move(g,blocker.id,spare.c,spare.r);
+    }
+   }
    if(side===g.player&&id==='eu_apollo'){
     const control=g.stations.find(s=>s.name==='Apollo’s Chariot Launch Control');
     const blocker=E.unitAt(g,control);
@@ -162,6 +236,14 @@ for(const id of ids)for(const seed of [11,43,79]){
    }
    const units=g.units.filter(u=>u.side===side&&u.hp>0).sort((a,b)=>E.aiOrderPriority(g,a)-E.aiOrderPriority(g,b)||a.id-b.id);
    for(const u of units){if(g.over||u.hp<=0)continue;
+    if(side===g.player&&u.cmd==='oscar'&&id==='eu_white_death'){
+     const target=city(g,'Evacuation Route');
+     const field=E.internal.goalField(g,side,[[target,0]],'land'),value=p=>field[p.r*g.cols+p.c];
+     const choices=[...E.reachable(g,u).keys()].map(k=>{const[c,r]=k.split(',').map(Number);return E.tile(g,c,r);})
+      .filter(t=>!E.isSea(t)).sort((a,b)=>value(a)-value(b));
+     if(choices[0]&&value(choices[0])<value(u))E.move(g,u.id,choices[0].c,choices[0].r);
+     E.hooks.decide(g);continue;
+    }
     // A player-like escort order after Leila has been rescued; all combat uses real AI.
     if(side===g.player&&u.cmd==='leila'&&id==='eu_lakeside_rescue'){
      const target=g.stations.find(s=>s.name==='Evacuation Jetty');

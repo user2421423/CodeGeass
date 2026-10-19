@@ -77,6 +77,24 @@
     'ppppuuuuuu.uuuuuuupppp',
     'pppppuuuuu.uuuuuuppppp',
   ];
+  // The earlier 132nd Regiment operation, before Narva. Tactical reconstruction
+  // of the western approaches, distinct from Shin's later palace coup.
+  const PETERSBURG_APPROACHES = [
+    'ffffffppppppp.uuuuuuuuuuuu',
+    'fffffpppppppp.uuuuuuuuuuuu',
+    'ffffppppppppp.uuuuuuuuuuuu',
+    'fffpppppuuuuu.uuuuuuuuuuuu',
+    'ppppppppuuuuuuuuuuuuuuuuuu',
+    'fffpppppuuuuu.uuuuuuuuuuuu',
+    'fffpppppuuuuu.uuuuuuuuuuuu',
+    'ppppppppuuuuuuuuuuuuuuuuuu',
+    'fffpppppuuuuu.uuuuuuuuuuuu',
+    'fffpppppuuuuu.uuuuuuuuuuuu',
+    'ppppppppuuuuuuuuuuuuuuuuuu',
+    'ffffppppppppp.uuuuuuuuuuuu',
+    'fffffpppppppp.uuuuuuuuuuuu',
+    'ffffffppppppp.uuuuuuuuuuuu',
+  ];
   // Castle Weisswolf: a walled fortress in the mountains, a minefield across the western approach.
   const WEISSWOLF = [
     'ffffffppppppppmmmmmmmm',

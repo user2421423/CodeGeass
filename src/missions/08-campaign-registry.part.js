@@ -66,8 +66,8 @@
       side: 'eb',
       portrait: 'shin',
       years: '2017–2018 a.t.b.',
-      desc: 'The imperial war against Europia: an El Alamein prologue, the knights of Akito the Exiled, the Italian landing with Schneizel and Suzaku, and the march on Paris.',
-      missions: pick(['eb_el_alamein', 'eb_narva', 'eb_slonim', 'br6', 'eb_petersburg', 'eb_ark', 'eb_weisswolf', 'eb_assault', 'eb_italy', 'eb_fall']),
+      desc: 'The imperial war against Europia: El Alamein, holding Sankt Petersburg before Narva, the knights of Akito the Exiled, the Italian landing with Schneizel and Suzaku, and the march on Paris.',
+      missions: pick(['eb_el_alamein', 'eb_hold_petersburg', 'eb_narva', 'eb_slonim', 'br6', 'eb_petersburg', 'eb_ark', 'eb_weisswolf', 'eb_assault', 'eb_italy', 'eb_fall']),
     },
     eu_europe: {
       name: 'Europia United',
@@ -75,9 +75,9 @@
       season: 3,
       side: 'eu',
       portrait: 'leila',
-      years: '2017 a.t.b.',
-      desc: 'Akito the Exiled: wZERO from Narva and Slonim to the Gallia Grande, the lakeside rescue of Leila, stopping Apollo’s Chariot, the final defense of Weisswolf and Smilas’s coup.',
-      missions: pick(['eu_narva', 'eu_ambush', 'eu_slonim', 'eu_front', 'eu_ark', 'eu_weisswolf', 'eu_lakeside_rescue', 'eu_apollo', 'eu_assault', 'eu_paris']),
+      years: '2017–2018 a.t.b.',
+      desc: 'wZERO from Narva and Slonim to the Gallia Grande, the lakeside rescue, stopping Apollo’s Chariot, Weisswolf and Smilas’s coup; then the regular E.U. army faces Suzaku at the Italian coast.',
+      missions: pick(['eu_narva', 'eu_ambush', 'eu_slonim', 'eu_front', 'eu_ark', 'eu_weisswolf', 'eu_lakeside_rescue', 'eu_apollo', 'eu_assault', 'eu_paris', 'eu_white_death']),
     },
   };
   // The story arcs as mission-based campaigns, each played from either side: the two seasons and Akito the Exiled's war in Europe.
