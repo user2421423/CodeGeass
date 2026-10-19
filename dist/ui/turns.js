@@ -178,23 +178,36 @@ function queueEliteReward(profile, operation, key, amount, source) {
   if (!options.length) return false;
   profile.pendingEliteRewards.push({
     key, amount, source, options, rarity: allowed.length === 1 ? allowed[0] : 'Any',
+    side: worldCampaign ? null : side, // Retain faction identity across rarity changes.
   });
   return true;
 }
-// Expand pre-update, still-unclaimed World Campaign choices on demand without
-// rewriting profile saves, refunding claims, or touching Story/Conquest rewards.
+// Keep pending reward choices consistent with current rarities, including
+// rewards earned before an Elite changed its class-based rarity.
 function eligibleEliteRewardOptions(award, profile = loadProfile()) {
   if (!award) return [];
-  // Read current HQ progress at selection time: old, still-pending rewards
-  // must also stop offering elites which have since reached the level cap.
   const records = E.eliteProfile(profile);
   const canReceive = id =>
     !!E.ELITE_FORCES[id] && !E.ELITE_FORCES[id].scenarioOnly &&
     records[id]?.level < E.ELITE_MAX_LEVEL;
-  if (!award.key?.startsWith('world:') && !award.key?.startsWith('weekly:'))
-    return (award.options || []).filter(canReceive);
-  // World Campaign, including its Challenge Pass milestones, remains
-  // faction-independent and respects the original difficulty/rarity.
+  if (!award.key?.startsWith('world:') && !award.key?.startsWith('weekly:')) {
+    // Story/Conquest rewards are faction-bound. Old records lack side, but
+    // their original eligibility snapshot contains only that faction.
+    const legacySides = new Set((award.options || [])
+      .flatMap(id => E.ELITE_FORCES[id]?.availableTo || []));
+    const side = award.side || (legacySides.size === 1 ? [...legacySides][0] : null);
+    const rarities = award.rarity === 'Any'
+      ? ELITE_REWARD_RARITIES.elite : [award.rarity];
+    if (!side)
+      return (award.options || []).filter(id =>
+        canReceive(id) && rarities.includes(E.ELITE_FORCES[id].rarity));
+    return Object.entries(E.ELITE_FORCES)
+      .filter(([id, elite]) =>
+        elite.availableTo.includes(side) && rarities.includes(elite.rarity) && canReceive(id))
+      .map(([id]) => id);
+  }
+  // World Campaign/weekly rewards remain cross-faction and use their
+  // original difficulty, regardless of previous cached choices.
   const difficulty = award.key.split(':').pop();
   const rarities = ELITE_REWARD_RARITIES[difficulty] || [];
   return Object.entries(E.ELITE_FORCES)

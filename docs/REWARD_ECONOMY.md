@@ -4,6 +4,16 @@ All rewards are **one-time per reward key**, with clean hundreds of command toke
 
 ## Rarity restrictions
 
+Rarity is determined by Elite Force combat class:
+
+| Rarity | Combat classes | Total | Per faction |
+| --- | --- | ---: | ---: |
+| Rare | Raider, Medium Armor, Amphibious | 12 | 3 |
+| Epic | Heavy Armor, Rocket Artillery, Siege Artillery | 12 | 3 |
+| Legendary | Super Heavy Armor | 4 | 1 |
+
+The permanent HQ Elite roster consists of 28 units across Britannia, Black Knights, Europia United, and the Chinese Federation. Euro Britannia shares Britannia's eligible HQ choices. Rarity standardization does **not** alter class stats, combat abilities, upgrade prices, accumulated fragments, HQ levels, or previously claimed rewards. Unclaimed Story and Conquest reward pools are re-evaluated using their original faction and rarity, including earlier saved awards. Unclaimed World Campaign rewards continue to refresh globally.
+
 - **Normal:** choose one **Rare** Elite Force.
 - **Hard:** choose one **Epic** Elite Force.
 - **Challenge:** choose one **Legendary** Elite Force.

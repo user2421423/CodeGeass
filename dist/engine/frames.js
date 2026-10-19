@@ -1234,7 +1234,7 @@
       lv3: { vsArmor: 0.35, pen: 0.20, noCounter: true }, lv5: { vsArmor: 0.50, pen: 0.30, noCounter: true, stun: true },
     },
     tohdoh_gekka: {
-      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic', skill: 'Four Holy Swords',
+      type: 'elite_tohdoh_gekka', faction: 'black_knights', availableTo: ['bk'], rarity: 'Rare', skill: 'Four Holy Swords',
       lv3Text: 'Adjacent friendly Infantry and Armor deal +12% damage.',
       lv5Text: 'Aura rises to +18%; Tohdoh gains +25% counter-fire.',
       lv3: { aura: { range: 1, value: 0.12, branches: ['Infantry', 'Armor'] } },
@@ -1248,7 +1248,7 @@
       lv3: { float: true, vsCity: 0.50, splash: 0.30 }, lv5: { float: true, vsCity: 0.75, splash: 0.50, range: 1 },
     },
     gawain: {
-      type: 'elite_gawain', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
+      type: 'elite_gawain', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic',
       skill: 'Hadron Beam Barrage · Druid System',
       lv3Text: 'Rocket-class beam barrage: +1 range and 20% extra splash from twin Hadron Cannons. Ignores terrain movement costs.',
       lv5Text: '35% extra splash; allies within 2 hexes gain +20% targeting damage. Ignores terrain movement costs.',
@@ -1256,7 +1256,7 @@
       lv5: { float: true, range: 1, splash: 0.35, aura: { range: 2, value: 0.20 } },
     },
     shinkiro: {
-      type: 'elite_shinkiro', faction: 'black_knights', availableTo: ['bk'], rarity: 'Legendary',
+      type: 'elite_shinkiro', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic',
       skill: 'Absolute Defense Territory',
       lv3Text: 'Takes 35% less damage. Ignores terrain movement costs.',
       lv5Text: 'Takes 45% less damage; adjacent allies take 15% less. Ignores terrain movement costs.',
@@ -1303,7 +1303,7 @@
       lv5: { dmg: 0.35, pen: 0.25, moveAfterKill: true },
     },
     ayano_valiant: {
-      type: 'elite_ayano_valiant', faction: 'eu', availableTo: ['eu'], rarity: 'Epic',
+      type: 'elite_ayano_valiant', faction: 'eu', availableTo: ['eu'], rarity: 'Rare',
       skill: 'Mobile Swordmaster',
       lv3Text: '+35% damage against Armor with no counter-fire; fast raider movement.',
       lv5Text: '+50% vs Armor, +20% penetration and no counter-fire; fast raider movement.',
@@ -1326,7 +1326,7 @@
       lv5: { dmg: 0.35, counter: 0.30, moveAfterKill: true },
     },
     guren_type01: {
-      type: 'elite_guren_type01', faction: 'black_knights', availableTo: ['bk'], rarity: 'Epic',
+      type: 'elite_guren_type01', faction: 'black_knights', availableTo: ['bk'], rarity: 'Rare',
       skill: 'Jabalpur Prototype',
       lv3Text: '+30% damage against Armor and +15% penetration.',
       lv5Text: '+45% vs Armor, +25% penetration; targets cannot counter-fire.',
@@ -1342,7 +1342,7 @@
       lv5: { taken: 0.70, protect: { range: 1, value: 0.90 } },
     },
     akatsuki_zikisan: {
-      type: 'elite_akatsuki_zikisan', faction: 'cf', availableTo: ['cf'], rarity: 'Epic',
+      type: 'elite_akatsuki_zikisan', faction: 'cf', availableTo: ['cf'], rarity: 'Rare',
       skill: 'Zikisan Command',
       lv3Text: 'Friendly Infantry and Armor within 2 hexes deal +10% damage.',
       lv5Text: '2-hex aura rises to +15%; the Zikisan gains +25% counter-fire.',
@@ -1358,7 +1358,7 @@
       lv5: { range: 1, pen: 0.30, splash: 0.40 },
     },
     vincent_ward: {
-      type: 'elite_vincent_ward', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
+      type: 'elite_vincent_ward', faction: 'britannia', availableTo: ['britannia'], rarity: 'Rare',
       skill: 'Ward Fire Control',
       lv3Text: '+15% damage and +10% armor penetration.',
       lv5Text: '+25% damage and +20% penetration; the first kill or city-defense break each turn restores movement.',

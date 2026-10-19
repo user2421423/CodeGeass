@@ -21,6 +21,8 @@ jobs:
         run: node tools/scenario_dynamic_defense_smoke.cjs
       - name: Verify Elite class stats and abilities
         run: node tools/elite_class_standardization_smoke.cjs
+      - name: Verify Elite rarities, faction parity and saved reward choices
+        run: node tools/elite_rarity_by_class_smoke.cjs
       - name: Verify Amphibious Elite repeatable movement and attack chains
         run: node tools/amphibious_elite_chain_smoke.cjs
       - name: Verify city-defense movement refreshes and action limits
