@@ -120,25 +120,25 @@
   // [faction, staging city, Army Group name, class, formation count, commander].
   // 3 distinct Chinese approaches and E.U. forward / inner / rear belts.
   const ARMIES=[
-    ['cf','Kazan','Northern Volga Army','heavy',11,'xingke'],
-    ['cf','Kazan','Northern Volga Army','rocket',7,'gaohai'],
-    ['cf','Kirov','Northern Volga Army','heavy',8,'honggu'],
+    ['cf','Kazan','Northern Volga Army','heavy',14,'xingke'],
+    ['cf','Kazan','Northern Volga Army','rocket',10,'gaohai'],
+    ['cf','Kirov','Northern Volga Army','heavy',11,'honggu'],
     ['cf','Kotelnich','Northern Volga Army','medium',6],
-    ['cf','Sharya','Northern Volga Army','raider',5],
+    ['cf','Sharya','Northern Volga Army','raider',7],
     ['cf','Yuryevets','Northern Volga Army','rocket',5],
-    ['cf','Cheboksary','Central Breakthrough Army','heavy',10,'cao'],
+    ['cf','Cheboksary','Central Breakthrough Army','heavy',14,'cao'],
     ['cf','Cheboksary','Central Breakthrough Army','assault',6],
-    ['cf','Nizhny Novgorod','Central Breakthrough Army','super',5,'zhaohao'],
-    ['cf','Nizhny Novgorod','Central Breakthrough Army','siege',6],
+    ['cf','Nizhny Novgorod','Central Breakthrough Army','super',7,'zhaohao'],
+    ['cf','Nizhny Novgorod','Central Breakthrough Army','siege',8],
     ['cf','Nizhny Novgorod','Central Breakthrough Army','rocket',7],
     ['cf','Gorodets','Central Breakthrough Army','support',5],
-    ['cf','Arzamas','Central Breakthrough Army','heavy',9,'meiling'],
-    ['cf','Saransk','Southern Encirclement Army','heavy',10,'leifeng'],
-    ['cf','Saransk','Southern Encirclement Army','rocket',6,'huangqian'],
-    ['cf','Penza','Southern Encirclement Army','assault',8],
-    ['cf','Murom','Southern Encirclement Army','heavy',8,'lifeng'],
+    ['cf','Arzamas','Central Breakthrough Army','heavy',12,'meiling'],
+    ['cf','Saransk','Southern Encirclement Army','heavy',13,'leifeng'],
+    ['cf','Saransk','Southern Encirclement Army','rocket',8,'huangqian'],
+    ['cf','Penza','Southern Encirclement Army','assault',10],
+    ['cf','Murom','Southern Encirclement Army','heavy',11,'lifeng'],
     ['cf','Sergach','Southern Encirclement Army','medium',6],
-    ['cf','Alatyr','Southern Encirclement Army','rocket',4],
+    ['cf','Alatyr','Southern Encirclement Army','rocket',5],
     ['cf','Ulyanovsk','Volga Strategic Reserve','heavy',6,'chengzhong'],
     ['cf','Yoshkar-Ola','Volga Strategic Reserve','medium',5],
     ['cf','Chistopol','Volga Strategic Reserve','assault',4],
@@ -175,7 +175,7 @@
     ['eu','Oryol','Southern Bastion','assault',4]
   ];
   const FUNDING={
-    cf:{credits:840,industry:570,science:105,sakuradite:54},
+    cf:{credits:1080,industry:710,science:115,sakuradite:60},
     eu:{credits:910,industry:600,science:110,sakuradite:56}
   };
   function geo(c,r){
