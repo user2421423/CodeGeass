@@ -107,29 +107,29 @@
 
   // E.U. vs Chinese Federation (13 battles): reuse the three global wars, then
   // reserve ten distinct two-sided regional scenarios for independent agents.
-  // Null scenario IDs are intentionally unplayable until an actual 'eu'/'cf'
-  // scenario model exists. Do NOT point Luoyang at Britannia's existing model.
+  // All ten regional scenarios are registered with separate eu-cf-* runtime IDs;
+  // the original Britannian Luoyang remains independent.
   const euFederationRows = [
     [1,shared],
     [2,[
-      ['kazakhstan','Invasion of Kazakhstan',null,'Kazakhstan',[67,48],[46,40,88,56],'Advance from Europia-controlled Russia into the Kazakh steppe; large armored offensives.'],
-      ['persia','Invasion of Persia',null,'Persia',[52.5,32],[43,24,64,40],'Advance from the Caucasus and western approaches into Chinese-controlled Iran.'],
+      ['kazakhstan','Invasion of Kazakhstan','eu-cf-kazakhstan','Kazakhstan',[67,48],[46,40,88,56],'Advance from Europia-controlled Russia into the Kazakh steppe; large armored offensives.'],
+      ['persia','Invasion of Persia','eu-cf-persia','Persia',[52.5,32],[43,24,64,40],'Advance from the Caucasus and western approaches into Chinese-controlled Iran.'],
     ]],
     [3,[
-      ['xinjiang','Battle for Xinjiang',null,'Xinjiang',[86,42],[73,35,98,49],'Push east from Kazakhstan through the deserts and mountain corridors around Urumqi.'],
-      ['india','Invasion of India',null,'India',[78,23],[67,8,97,36],'Drive east from Persia with a broad continental offensive and optional Arabian Sea landings.'],
-      ['mongolia','Invasion of Mongolia',null,'Mongolia',[104,46],[87,41,120,53],'Attack south from Siberia across the Mongolian steppe.'],
-      ['manchuria','Invasion of Manchuria',null,'Manchuria',[126,45],[117,40,135,53],'Follow the Mongolian offensive into Northeast China from Mongolia and Siberia.'],
+      ['xinjiang','Battle for Xinjiang','eu-cf-xinjiang','Xinjiang',[86,42],[73,35,98,49],'Push east from Kazakhstan through the deserts and mountain corridors around Urumqi.'],
+      ['india','Invasion of India','eu-cf-india','India',[78,23],[67,8,97,36],'Drive east from Persia with a broad continental offensive and optional Arabian Sea landings.'],
+      ['mongolia','Invasion of Mongolia','eu-cf-mongolia','Mongolia',[104,46],[87,41,120,53],'Attack south from Siberia across the Mongolian steppe.'],
+      ['manchuria','Invasion of Manchuria','eu-cf-manchuria','Manchuria',[126,45],[117,40,135,53],'Follow the Mongolian offensive into Northeast China from Mongolia and Siberia.'],
     ]],
     [4,[
-      ['himalayas','Crossing the Himalayas',null,'Himalayas and Tibet',[86.5,30],[74,26,97,36],'Cross the Himalayan passes north from India into Chinese-held Tibet.'],
+      ['himalayas','Crossing the Himalayas','eu-cf-himalayas','Himalayas and Tibet',[86.5,30],[74,26,97,36],'Cross the Himalayan passes north from India into Chinese-held Tibet.'],
     ]],
     [5,[
-      ['sichuan','Invasion of Sichuan',null,'Sichuan',[104,30.5],[97,26,110,34],'Descend from Tibet into the fortified Sichuan Basin around Chengdu.'],
-      ['beijing','Battle of Beijing',null,'Beijing',[116.4,39.9],[112,36.7,121,42],'Push south from Manchuria and take the fortified northern Chinese capital region.'],
+      ['sichuan','Invasion of Sichuan','eu-cf-sichuan','Sichuan',[104,30.5],[97,26,110,34],'Descend from Tibet into the fortified Sichuan Basin around Chengdu.'],
+      ['beijing','Battle of Beijing','eu-cf-beijing','Beijing',[116.4,39.9],[112,36.7,121,42],'Push south from Manchuria and take the fortified northern Chinese capital region.'],
     ]],
     [6,[
-      ['luoyang','Battle of Luoyang',null,'Luoyang',[112.5,34.6],[109,32,117,37],'Converge from the northern and southern fronts against the Federation imperial capital.'],
+      ['luoyang','Battle of Luoyang','eu-cf-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Converge from the northern and southern fronts against the Federation imperial capital.'],
     ]],
   ];
   // Approximate national/state contours where a rectangular theater would
