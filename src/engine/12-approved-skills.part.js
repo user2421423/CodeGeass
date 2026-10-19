@@ -128,7 +128,7 @@
     let m=1;
     if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
 
-    if(target.cmd==='jeremiah'&&g.units.some(v=>v.hp>0&&v.id!==target.id&&v.side===target.side&&!!v.cmd&&dist(g,v,target)===1))m*=.85;
+    if(target.cmd==='jeremiah')m*=.85;
     if(beachheadSupport(g,target))m*=.85;
     m*=hongGuGuardian(g,target);
     if(preparedPosition(g,target))m*=.85;
@@ -152,7 +152,7 @@
     if(target?.cmd&&amount>=target.hp){
       const half=Math.round(amount*.5);
       const guard=g.units.find(v=>v.cmd==='jeremiah'&&v.hp>half&&v.id!==target.id&&v.side===target.side&&
-        !atSea(g,v)&&v.expLoyaltyTurn!==g.turn&&dist(g,v,target)===1);
+        !atSea(g,v)&&v.expLoyaltyTurn!==g.turn&&dist(g,v,target)<=2);
       if(guard){
         guard.hp-=half;guard.expLoyaltyTurn=g.turn;
         recordWarEvent(g,'damage',guard.side,{targetSide:guard.side,value:half,unitId:guard.id,group:warGroup(g,guard)});

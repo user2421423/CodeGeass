@@ -152,6 +152,7 @@
       }
       // Lasts through opponents' turns; expires on this formation's next turn.
       delete u.expImperialCommand;
+      delete u.expGeassCancelled;
       u.expKallenSlowActive = !!u.expKallenSlowNext;
       delete u.expKallenSlowNext;
       if (u.cmd === 'kallen') u.expKallenFirstTargets = [];

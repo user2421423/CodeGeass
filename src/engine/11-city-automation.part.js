@@ -186,6 +186,8 @@
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
+      foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
     if (kind === 'protection') return g.units.filter(v => v.hp > 0 &&
       v.side === u.side && v.id !== u.id && !atSea(g, v) && dist(g, u, v) <= 2);
@@ -206,6 +208,26 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'geassCancel') {
+      const v = targetId == null ? [...options].sort((a,b) =>
+        Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id)[0]
+        : options.find(w => w.id === targetId);
+      if (!v) return {ok:false,reason:'Choose an enemy formation within 2 hexes'};
+      // Dispel temporary commander-granted benefits, not intrinsic skills,
+      // research or elite upgrades. Also lift Geass-induced negative statuses.
+      for (const key of ['expImperialCommand','expCCProtection','expKallenReposition',
+        'expKallenMoveBank','expAkitoMoveReady','expZeroGeass']) {
+        if (key === 'expZeroGeass' && v.expZeroGeass)
+          v.morale = Math.min(1,v.morale+(v.expZeroGeass.moraleLost||0));
+        delete v[key];
+      }
+      // Suppress active use through the target's next faction activation.
+      v.expGeassCancelled = true;
+      u.feintCD = 0;
+      u.feintUsedTurn = g.turn;
+      log(g,`Geass Canceller disrupts ${COMMANDERS[v.cmd]?.short||TYPES[v.type].short}.`,u.side);
+      return {ok:true,target:v.id,affected:1};
+    }
     if (action.kind === 'protection') {
       // Player picks an ally explicitly; the AI chooses the ally most in need.
       const v = targetId == null ? [...options].sort((a, b) =>
