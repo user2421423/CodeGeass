@@ -2826,6 +2826,18 @@ button.danger:hover:not(:disabled) {
 .elite-fragments b {
   color: var(--gold);
 }
+/* An HQ fragment action becomes green only when it can be purchased. */
+.elite-card button.elite-upgrade-ready:not(:disabled) {
+  background: linear-gradient(145deg, #5fe0a0, #2c9c72);
+  border-color: #98f5be;
+  color: #081d18;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px #72dca54d, 0 3px 12px #176d4b55;
+}
+.elite-card button.elite-upgrade-ready:hover:not(:disabled) {
+  background: linear-gradient(145deg, #8bf5b9, #45b989);
+  border-color: #c0ffda;
+}
 
 /* ---- Campaign ---- */
 .campaign-row {
