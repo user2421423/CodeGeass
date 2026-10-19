@@ -389,10 +389,9 @@
       cost: 150,
       role: 'Infantry',
       hull: 'Gun-Ru command',
-      skill: "Thirty-Six Stratagems",
-      desc: "Command aura: 1 hex, +10% damage; nearby allies recover morale faster. Every 3 turns, mark an enemy within 2 hexes: allies within 2 hexes of Xianglin can attack it without counter-fire until her next turn.",
-      fx: {"aura": {"range": 1, "value": 0.1}, "rally": 2, "strategist": 2},
-      action: {"name": "Thirty-Six Stratagems", "verb": "Thirty-Six Stratagems", "kind": "stratagem", "desc": "Choose an enemy within 2 hexes; nearby allies attack it without counter-fire."},
+      skill: 'Exploit Weakness',
+      desc: 'Passive: when at least two friendly formations are adjacent to an enemy, Xianglin and friendly formations within 2 hexes of her deal +30% damage on direct initiating attacks against that enemy, which cannot counterattack. Applies once regardless of multiple Xianglins. No old command aura, rally or active mark.',
+      fx: { exploitWeakness: true },
       title: 'Xingke’s tactician',
     },
     honggu: {
