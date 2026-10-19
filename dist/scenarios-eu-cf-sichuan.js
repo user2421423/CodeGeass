@@ -152,16 +152,16 @@
   // Distinct standard formations, capped at normal three-frame stacks.
   // Deployments emphasize EU weight at the passes and CF basin reserves.
   const ARMIES=[
-    ['eu','Chamdo','heavy',8,'akito'],['eu','Chamdo','rocket',6,'yukiya'],
+    ['eu','Chamdo','heavy',11,'akito'],['eu','Chamdo','rocket',8,'yukiya'],
     ['eu','Chamdo','assault',5,'ryo'],['eu','Chamdo','siege',4],
-    ['eu','Jomda','heavy',7,'leila'],['eu','Jomda','medium',5],
-    ['eu','Gonjo','raider',7,'ayano'],['eu','Gonjo','rocket',4],
+    ['eu','Jomda','heavy',9,'leila'],['eu','Jomda','medium',5],
+    ['eu','Gonjo','raider',9,'ayano'],['eu','Gonjo','rocket',4],
     ['eu','Riwoche','heavy',5,'oscar'],['eu','Riwoche','support',3],
     ['eu','Dengqen','medium',3,'klaus'],['eu','Banbar','assault',3],
-    ['eu','Markam','heavy',8,'smilas'],['eu','Markam','rocket',7],
-    ['eu','Markam','siege',5],['eu','Zogang','heavy',7,'fernando'],
-    ['eu','Zogang','assault',5],['eu','Baxoi','medium',6,'olivia'],
-    ['eu','Baxoi','rocket',4],['eu','Bomi','heavy',5,'anna'],
+    ['eu','Markam','heavy',11,'smilas'],['eu','Markam','rocket',9],
+    ['eu','Markam','siege',6],['eu','Zogang','heavy',9,'fernando'],
+    ['eu','Zogang','assault',5],['eu','Baxoi','medium',7,'olivia'],
+    ['eu','Baxoi','rocket',4],['eu','Bomi','heavy',6,'anna'],
     ['eu','Bomi','assault',3],['eu','Nyingchi','raider',3],
     ['eu','Rawu','medium',3],['eu','Baxoi','support',2],
     ['cf','Dege','heavy',4,'xingke'],['cf','Dege','rocket',3,'gaohai'],
