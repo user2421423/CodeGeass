@@ -8,7 +8,7 @@
 - **Map:** 176 × 112 hexes, 114.3°–125.2° E and 37.4°–43.3° N; Beijing–Tianjin–Hebei–Liaoxi–southern Manchuria.
 - **Cities:** 56 total; 17 initial E.U. and 39 initial Chinese Federation.
 - **Harbours:** 11 independently capturable sea-hex ports, distributed across Bohai / Liaodong Bay and Liaodong Peninsula.
-- **Starting military formations:** 129 E.U. and 101 Federation ground formations plus 7 E.U. and 9 Federation warships (136 and 110 including ships). *The scenario uses standard class stats and faction-specific frames; no synthetic combat buffs.*
+- **Starting military formations:** 117 E.U. and 89 Federation ground formations plus 12 E.U. and 12 Federation warships (129 and 101 total, respectively). *The scenario uses standard class stats and faction-specific frames; no synthetic combat buffs.*
 - **Initial naval classes:** E.U. `eu_carrier`, `panzer_frosch_ii`; Federation `cf_carrier`, `shui_gun_ru_ii`.
 - **Victory:** Capture *all* cities, without timers, scripted victory, or fake campaign completion.
 
@@ -32,7 +32,7 @@ This scenario file is **intentionally absent** from the shared manifest, catalog
 
 ## Validation performed on this isolated lane
 
-A V8 setup smoke harness loaded the scenario with a restricted engine-API stub and tested `create` with seed **11** as both `eu` and `cf` on all four difficulties. The checks verified: all 56 cities on traversable land, formation tiles valid, no ground units at sea, 11 unique sea-water port locations, non-overlapping starting deployments, both economies initialized, correct Army Group structures and Elite setup entry point. Commander IDs and naval type identifiers were individually cross-checked against `dist/engine/commanders.js` and `dist/engine/frames.js`. The initial version passed these structural checks; the subsequent balancing commit changes formation counts and AI route names only.
+A V8 setup smoke harness loaded the scenario with a restricted engine-API stub and tested `create` with seed **11** as both `eu` and `cf` on all four difficulties. The checks verified: all 56 cities on traversable land, formation tiles valid, no ground units at sea, 11 unique sea-water port locations, non-overlapping starting deployments, both economies initialized, correct Army Group structures and Elite setup entry point. Commander IDs and naval type identifiers were individually cross-checked against `dist/engine/commanders.js` and `dist/engine/frames.js`. A repeated setup test after the balancing commit passed all eight faction/difficulty combinations using an odd-row hex-distance stub: 56 cities, 230 initial total units, no sea-ground deployment mismatches, 11/11 unique port cells on one contiguous sea component, and 24/24 warships in that same navigable component. The tests do not exercise the real engine.
 
 **Not yet verified against the actual built engine:** seeded multi-turn AI-vs-AI simulation, AI production, long-game capture/attrition, actual Elite transformation, save/reload, terrain/port rendering on device, entire campaign baseline, or objective winnability. A structural stub must **not** be counted as passing those tests.
 
