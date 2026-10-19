@@ -687,6 +687,7 @@
   };
   const MISSION_ELITE = {
     bk1: 'guren_mkii',
+    bk_saitama: 'guren_mkii',
     bk2: 'guren_mkii',
     bk3: 'guren_mkii',
     bk_yokosuka: 'guren_mkii',
@@ -758,7 +759,7 @@
   }
   function unlocked(profile, id) {
     const m = mission(id);
-    return !!m && (m.index === 0 || best(profile, CAMPAIGNS[m.campaign].missions[m.index - 1].id) > 0);
+    return !!m && (m.index === 0 || best(profile, id) > 0 || best(profile, CAMPAIGNS[m.campaign].missions[m.index - 1].id) > 0);
   }
   function starElite(id) {
     const m = mission(id);

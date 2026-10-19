@@ -11,7 +11,7 @@
       portrait: 'zero',
       years: '2017 a.t.b.',
       desc: 'Season 1, Lelouch of the Rebellion: from the Shinjuku Ghetto to the Black Rebellion, Zero builds an army out of a resistance cell.',
-      missions: pick(['bk1', 'bk2', 'bk3', 'bk_yokosuka', 'bk_tohdoh', 'bk_shikine', 'bk_fukuoka', 'bk_saz', 'bk4']),
+      missions: pick(['bk1', 'bk_saitama', 'bk2', 'bk3', 'bk_yokosuka', 'bk_tohdoh', 'bk_shikine', 'bk_fukuoka', 'bk_saz', 'bk4']),
     },
     britannia_s1: {
       name: 'Holy Britannian Empire',
