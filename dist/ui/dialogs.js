@@ -70,7 +70,7 @@ function openEliteShop(id, navalOnly = false) {
     const allowed = E.eliteEligible(game, game.player, k);
     return allowed && !!t.naval === navalOnly &&
       (!e.scenarioOnly || (game.mode === 'scenario' && game.difficulty === 'elite'));
-  });
+  }).sort(compareEliteDisplayOrder);
   const tabs = shopTabs(navalOnly)
     .map(b => `<button data-branch="${b}" class="${b === shop.branch ? 'active' : ''}">${b}</button>`)
     .join('');
@@ -100,7 +100,7 @@ function eliteDialog(faction = eliteFaction) {
   const p = loadProfile();
   E.eliteProfile(p);
   saveProfile(p);
-  const ids = Object.keys(E.ELITE_FORCES).filter(k => !E.ELITE_FORCES[k].scenarioOnly && E.ELITE_FORCES[k].faction === faction);
+  const ids = Object.keys(E.ELITE_FORCES).filter(k => !E.ELITE_FORCES[k].scenarioOnly && E.ELITE_FORCES[k].faction === faction).sort(compareEliteDisplayOrder);
   const tabs = [
     ['britannia', 'Britannia'],
     ['eu', 'E.U.'],
@@ -117,7 +117,7 @@ function eliteDialog(faction = eliteFaction) {
       cost = rec.level >= E.ELITE_MAX_LEVEL ? 0 : E.ELITE_UPGRADE_FRAGMENTS[next],
       why = E.eliteUpgradeReason(p, k),
       label = rec.level === 0 ? 'Unlock' : rec.level >= E.ELITE_MAX_LEVEL ? 'Maximum level' : `Upgrade to Lv.${next}`;
-    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${eliteClassLabel(t)} · ${e.rarity} · ${rec.level ? `Lv.${rec.level}/${E.ELITE_MAX_LEVEL}` : 'Locked'}</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${rec.level >= 5 ? 'Active Lv.5: ' + e.lv5Text : rec.level >= 3 ? 'Active Lv.3: ' + e.lv3Text : 'Unlocks at Lv.3: ' + e.lv3Text}</p><p class="lore">Lv.5: ${e.lv5Text}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span><span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="elite-fragments"><b>${rec.fragments}</b> fragments${cost ? ` · ${cost} needed for ${rec.level ? 'next level' : 'unlock'}` : ''}</div>${act(`data-elite-upgrade="${k}"`, label, why, cost ? `Spend ${cost} fragments` : '', '', false)}</article>`;
+    return `<article class="unit-card elite-card ${rec.level ? '' : 'locked'}">${ART.unit(e.type, 'catalog-ship', t.side)}<span class="unit-code">${eliteClassLabel(t)} · ${e.rarity} · ${rec.level ? `Lv.${rec.level}/${E.ELITE_MAX_LEVEL}` : 'Locked'}</span><h3>${t.name}</h3><span class="weapon-focus">${t.role} · ${e.skill}</span><p>${rec.level >= 5 ? 'Active Lv.5: ' + e.lv5Text : rec.level >= 3 ? 'Active Lv.3: ' + e.lv3Text : 'Unlocks at Lv.3: ' + e.lv3Text}</p><p class="lore">Lv.5: ${e.lv5Text}</p><div class="unit-spec"><span>HP ${stats.hp}</span><span>${ICONS.use('atk')}${stats.attack}</span><span>${ICONS.use('def')}${stats.armor}</span><span>${ICONS.use('mov')}${stats.move}</span><span>${ICONS.use('rng')}${stats.min === stats.max ? stats.max : stats.min + '–' + stats.max}</span></div><div class="elite-fragments"><b>${rec.fragments}</b> fragments${cost ? ` · ${cost} needed for ${rec.level ? 'next level' : 'unlock'}` : ''}</div>${act(`data-elite-upgrade="${k}"`, label, why, cost ? `Spend ${cost} fragments` : '', why ? '' : 'elite-upgrade-ready', false)}</article>`;
   }).join('');
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Elite Forces HQ"><div class="dialog-head"><div><div class="eyebrow">Command HQ · persistent across operations</div><h2>Elite Forces</h2><p>Collect fragments → unlock a unique Knightmare → raise it to Elite Lv.5. Signature abilities unlock at Lv.3 and reach their final form at Lv.5.</p></div><button class="small close" data-action="elite-close">Close</button></div><div class="tabs">${tabs}</div><div class="info-strip">Each unlocked Elite Force may deploy once per operation. Cornelia's Gloucester and the Guren Mk II unlock at Lv.1 after their third Story Mode missions. Fragment rewards go to one selected eligible Elite. Normal: Rare; Hard: Epic; Challenge: Legendary; Elite: any rarity.</div>${pendingEliteChoiceHTML(p)}<div class="cards">${cards}</div></section></div>`;
   focusDialog();
