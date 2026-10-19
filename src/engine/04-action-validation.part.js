@@ -233,7 +233,7 @@
       || (u.feintUsedTurn === g.turn ? 'Already used this turn' : (action.cooldown ?? 3) > 0 && u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
     if (why) return why;
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
-    if (action.kind === 'special') return actionTargets(g,u).length ? null : 'No eligible targets in range';
+    if (action.kind === 'special' || action.kind === 'protection') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
       ? 'No enemy within 2 hexes' : action.kind === 'command' ? (u.cmd === 'zero' ? 'No eligible friendly or enemy formation within 2 hexes' : 'No friendly unit within 2 hexes has acted')
       : action.kind === 'withdraw' ? 'Neither Leila nor a friendly formation within 2 hexes has moved or fired' : 'No enemy within 2 hexes';

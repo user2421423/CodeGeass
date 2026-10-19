@@ -217,6 +217,9 @@
       // Commander signature abilities (defender side).
       if (tf.taken) attack *= tf.taken;
       if (target.expImperialCommand) attack *= 0.75;
+      // The charge remains intact during previews, then is spent by the
+      // actual direct hit, counterattack or splash resolution.
+      if (target.expCCProtection) attack *= 0.70;
       // Non-stacking Blue Geass protection, including Leila herself and
       // friendly formations at exactly two hexes. No offensive bonus.
       if (leilaCommand(g, target)) attack *= 0.9;
@@ -341,11 +344,12 @@
         +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.15:0)),
     };
   }
-  // force: nothing survives (F.L.E.I.J.A.); otherwise C.C.'s Code Bearer saves her unit once per operation.
+  // force: nothing survives (F.L.E.I.J.A.); C.C.'s Code Bearer
+  // can save one lethal hit per global turn, without granting invulnerability.
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null) {
     if (v.hp > 0) return;
-    if ((fx(v).undying && !v.undyingUsed || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
+    if ((fx(v).undying && v.undyingUsedTurn !== g.turn || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
       // A commander who forces a lethal Code Bearer / Final Stand activation
       // has still earned a Valor citation, despite the scripted survival.
       if (v.cmd && attacker?.cmd)
@@ -362,7 +366,7 @@
         return;
       }
       v.hp = 1;
-      v.undyingUsed = true;
+      v.undyingUsedTurn = g.turn;
       log(g, `${COMMANDERS[v.cmd].short} survives a lethal blow: Code Bearer.`, v.side);
       return;
     }
@@ -555,6 +559,7 @@
     if(a.expSmilasSuppression)delete a.expSmilasSuppression;
     if (d) {
       dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
+      if (d.expCCProtection) delete d.expCCProtection;
       consumeDefensiveSkills(g, d, a);
       const priorHP=d.hp;
       d.hp = Math.max(0, d.hp - dmg);
@@ -604,6 +609,7 @@
       if(d.guardReady&&d.held&&skillNear(g,d,'defensiveDoctrine',2)&&d.expSmilasCounterTurn!==g.turn){
         d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;
       }
+      if (a.expCCProtection) delete a.expCCProtection;
       const priorHP=a.hp;
       a.hp = Math.max(0, a.hp - retaliation);
       recordWarEvent(g,'damage',d.side,{targetSide:a.side,value:priorHP-a.hp,unitId:d.id,group:warGroup(g,d)});
@@ -613,6 +619,7 @@
     if (splashHits.length) {
       for (const { unit: v, amount } of splashHits) {
         if (v.hp <= 0) continue;
+        if (v.expCCProtection) delete v.expCCProtection;
         const priorHP=v.hp;
         v.hp = Math.max(0, v.hp - amount);
         recordWarEvent(g,'damage',a.side,{targetSide:v.side,value:priorHP-v.hp,unitId:a.id,group:warGroup(g,a)});

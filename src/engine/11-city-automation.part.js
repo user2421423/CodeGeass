@@ -186,6 +186,9 @@
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    // C.C. protects one ally, not herself; all playable land formations qualify.
+    if (kind === 'protection') return g.units.filter(v => v.hp > 0 &&
+      v.side === u.side && v.id !== u.id && !atSea(g, v) && dist(g, u, v) <= 2);
     // Imperial Command affects every on-map friendly formation in range,
     // including Lelouch himself. No target selection is required.
     if (kind === 'imperial') return g.units.filter(v => v.hp > 0 &&
@@ -203,6 +206,21 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'protection') {
+      // Player picks an ally explicitly; the AI chooses the ally most in need.
+      const v = targetId == null ? [...options].sort((a, b) =>
+        (maxHP(b) - b.hp) - (maxHP(a) - a.hp) ||
+        a.morale - b.morale || a.id - b.id)[0] : options.find(w => w.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose an eligible ally within 2 hexes' };
+      v.hp = Math.min(maxHP(v), v.hp + Math.round(maxHP(v) * 0.15));
+      v.morale = Math.max(0, v.morale);
+      // One-hit protection is not additive: recasting replaces its charge.
+      v.expCCProtection = { source: u.id, side: u.side };
+      u.feintCD = 0;
+      u.feintUsedTurn = g.turn;
+      log(g, `C.C.'s Protection shields ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short}.`, u.side);
+      return { ok: true, target: v.id, affected: 1 };
+    }
     if (action.kind === 'imperial') {
       // One-turn support; repeated commanders refresh rather than stack.
       for (const v of options) {

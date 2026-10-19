@@ -563,9 +563,10 @@
       role: 'Armor',
       hull: 'Black Knights command',
       title: 'Zero’s accomplice',
-      skill: 'Code Bearer',
-      desc: 'Never confused; her unit repairs 5% of its frame each turn. Once per operation, a blow that would destroy it leaves it at 1 HP instead.',
+      skill: "C.C.'s Protection",
+      desc: "Once per turn, choose an ally within 2 hexes: heal 15% maximum HP, raise negative morale to 0 without lowering High morale (+1), and reduce the next incoming attack's damage by 30%. Code Bearer (passive): cannot be confused, regenerates 5% maximum HP each turn, and survives one lethal blow per turn at 1 HP.",
       fx: { floor: -2, regen: 0.05, undying: true },
+      action: { name: "C.C.'s Protection", verb: "C.C.'s Protection", kind: 'protection', target: 'ally', range: 2, cooldown: 0, desc: 'Choose one ally within 2 hexes: restore 15% maximum HP, raise negative morale to 0 (never reduce +1), and shield against 30% of the next incoming attack.' },
       recruit: 300,
     },
     ohgi: {
