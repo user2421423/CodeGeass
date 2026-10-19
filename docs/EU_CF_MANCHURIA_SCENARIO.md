@@ -7,12 +7,12 @@
 - Ten E.U.-controlled staging centers including Chita, Borzya, Zabaykalsk, Choibalsan, Blagoveshchensk and Khabarovsk. The Chinese Federation holds 39 northeast Chinese cities, including Manzhouli, Qiqihar, Harbin, Changchun, Jilin, Shenyang, Anshan, Dalian and Dandong.
 - Northeast China industrial / railway axis: Qiqihar–Daqing–Harbin–Changchun–Siping–Shenyang–Dalian. Hailar and Manzhouli defend the western approach; Heihe and Jiamusi defend the Amur / north-east approaches.
 - Major geographical waterways are represented as map overlays: Amur/Argun, Nen, Songhua, Liao and Yalu. The Great Khingan and Changbai forests/mountains are present; passable railway/valley approaches remain.
-- Coastal atlas source: existing `dist/korea-landmask.js` (southern/eastern coast) plus scenario-owned Liaodong/Bohai continuation. Mixed coasts use 25 subhex samples with 20/80 cutoffs. Dalian, Yingkou, Panjin and Huludao have discrete city-adjacent capturable ports and conventional Chinese fleets.
+- Coastal atlas source: existing `dist/korea-landmask.js` (southern/eastern coast) plus scenario-owned Liaodong/Bohai continuation. Mixed coasts use 25 subhex samples with 20/80 cutoffs. Dalian, Yingkou and Huludao have discrete city-adjacent capturable ports and conventional Chinese fleets.
 
 ## Setup and mechanics
 - Two playable factions (`eu`, `cf`), standard `E.typeFor` classes, named commanders, per-city Army Groups, `E.prepareEliteEurope` on Elite, faction-filtered `eliteRosters`.
 - Normal / Hard / Challenge / Elite setups, normal city-level income/industry/science and `E.income`-calibrated scenario funding; no scenario-specific forced research or free technologies.
-- EU ground formations: **117**; CF ground formations: **149**. Defenders have more industrial cities and fortified urban strongholds; the invasion relies on opening force superiority. Balance by formation counts, not global unit stats.
+- EU ground formations: **166**; CF ground formations: **145**. Defenders have more industrial cities and fortified urban strongholds; opening E.U. force superiority is intended to counter that advantage. This is a starting-number balance hypothesis pending full-engine AI simulations. Balance by formation counts, not global unit stats.
 - `meta.ai`: europe doctrine, recovery, EU route bias, northern operational axes and Chinese hub defense. Standard AI production remains enabled. Winner is determined exclusively by one side controlling all 49 cities. No scripted time-limit victory.
 - Performance: 16,128 hexes and no costly per-frame procedural terrain generation; terrain is generated once during scenario setup.
 
