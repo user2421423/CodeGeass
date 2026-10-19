@@ -167,6 +167,7 @@
         ['cf', 'chuyen', 18, 4, 2],
         ['cf', 'gun_ru_support', 16, 8, 1],
         ['cf', 'gun_ru', 18, 9, 1, null, { normalOnly: true }],
+        ['cf', 'gun_ru', 18, 6, 2, null, { normalOnly: true }],
         ['bk', 'zangetsu', 10, 4, 1, 'tohdoh'],
         ['bk', 'akatsuki_zikisan', 11, 7, 1, 'asahina'],
         ['bk', 'akatsuki', 11, 5, 2],

@@ -410,6 +410,8 @@
         [B, 'sutherland', 15, 2, 1],
         [B, 'sutherland', 16, 9, 1],
         [B, 'sutherland', 17, 5, 1],
+        [B, 'gloucester', 13, 4, 2, null, { normalOnly: true }],
+        [B, 'gloucester', 15, 10, 2, null, { normalOnly: true }],
         [K, 'burai', 4, 6, 2, 'zero'],
         [K, 'elite_guren_mkii', 5, 4, 1, 'kallen'],
         [K, 'burai', 4, 8, 1, 'cc'],
@@ -446,7 +448,7 @@
           spawn: [
             [K, 'burai', 1, 5, 1, 'ohgi'],
             [K, 'burai_kai', 1, 9, 2, 'sugiyama'],
-            [K, 'burai_kai', 1, 3, 2, 'minami'],
+            [K, 'burai_kai', 1, 3, 2, 'minami', { skipNormal: true }],
           ],
         },
         {
@@ -588,6 +590,7 @@
         [B, 'vincent_ward', 5, 9, 2],
         [B, 'gareth', 4, 6, 1],
         [B, 'gareth', 5, 1, 1],
+        [B, 'gloucester', 7, 3, 2, null, { normalOnly: true }],
         ['neutral', 'brighton', 17, 6, 1, 'bismarck'],
         ['neutral', 'vincent_commander', 16, 4, 2, 'monica'],
         ['neutral', 'vincent_commander', 16, 9, 2, 'dorothea'],
