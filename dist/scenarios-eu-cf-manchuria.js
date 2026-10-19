@@ -96,7 +96,7 @@
     for(const side of [...SIDES,'neutral']){
       g.economy[side]={credits:0,industry:0,science:0,sakuradite:0};g.tech[side]={};
     }
-    g.scenario={id:'eu-cf-manchuria',key:'manchuria',title:'Invasion of Manchuria',
+    g.scenario={id:'eu-cf-manchuria',key:'manchuria',title:'Invasion of Manchuria',version:1,
       phase:'northern-breakthrough',aiDoctrine:'europe',groups:[],funding:{},
       bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS};
     // Britannia uses compatible Britannian Elite Forces for this
