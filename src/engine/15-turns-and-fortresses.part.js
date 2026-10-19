@@ -103,6 +103,8 @@
         if(v.expShadowMove){v.moved=true;v.skillReposition=0;delete v.expShadowMove;}
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
+        // Slow lasts through the target faction's next action phase.
+        delete v.expKallenSlowActive;
         if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;
         if(v.expPuristCounter&&v.expPuristCounter.startTurn<g.turn)delete v.expPuristCounter;
         if(v.expSmilasSuppression&&v.expSmilasSuppressionTurn<g.turn)delete v.expSmilasSuppression;
@@ -150,6 +152,11 @@
       }
       // Lasts through opponents' turns; expires on this formation's next turn.
       delete u.expImperialCommand;
+      u.expKallenSlowActive = !!u.expKallenSlowNext;
+      delete u.expKallenSlowNext;
+      if (u.cmd === 'kallen') u.expKallenFirstTargets = [];
+      delete u.expKallenReposition;
+      // Do not clear expKallenMoveBank: unspent movement carries forward.
       u.entrenched = false;
       u.lastTurnMoved = false;
       u.guardReady = !!u.held;
