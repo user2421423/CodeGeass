@@ -10,13 +10,14 @@
   const BATTLE_KEY = 'knightmare-war-campaign-battle';
   // Campaign identifiers are independent of engine factions: Britannia can fight
   // different opponents without sharing progress, tiers or save-state selections.
-  const FACTIONS = ['eu', 'britannia', 'britannia-federation', 'federation-britannia', 'eu-federation'];
+  const FACTIONS = ['eu', 'britannia', 'britannia-federation', 'federation-britannia', 'eu-federation', 'federation-eu'];
   const CAMPAIGN_INFO = Object.freeze({
     eu: Object.freeze({label:'E.U. vs Britannia',side:'eu',opponent:'britannia'}),
     britannia: Object.freeze({label:'Britannia vs E.U.',side:'britannia',opponent:'eu'}),
     'britannia-federation': Object.freeze({label:'Britannia vs Federation',side:'britannia',opponent:'cf'}),
     'federation-britannia': Object.freeze({label:'Federation vs Britannia',side:'cf',opponent:'britannia'}),
     'eu-federation': Object.freeze({label:'E.U. vs Federation',side:'eu',opponent:'cf'}),
+    'federation-eu': Object.freeze({label:'Federation vs E.U.',side:'cf',opponent:'eu'}),
   });
   const campaignSide = campaign => CAMPAIGN_INFO[campaign]?.side || campaign;
   const tierLabels = {
@@ -25,6 +26,7 @@
     'britannia-federation': ['Global Conflicts','Opening Battles','Securing the Flanks','Invasion of South China','The Yangtze Front','The Imperial Capital'],
     'federation-britannia': ['Global Conflicts','Asian War','Pacific Expansion','American Beachheads','Central American War','Western America','Final Offensive'],
     'eu-federation': ['Global Conflicts','Opening the Eastern Front','Breaking the Federation Frontier','Crossing the Himalayas','Conquest of China','The Imperial Capital'],
+    'federation-eu': ['Global Conflicts','Opening Fronts','Continental Expansion','Breaking the E.U.','European Conquest','Final Offensive'],
   };
   // [id, title, existing scenario ID/null, geographic name, marker lon/lat,
   //  geographic bounds west/south/east/north, short campaign description].
@@ -132,10 +134,44 @@
       ['luoyang','Battle of Luoyang','eu-cf-luoyang','Luoyang',[112.5,34.6],[109,32,117,37],'Converge from the northern and southern fronts against the Federation imperial capital.'],
     ]],
   ];
+  // Federation vs E.U.: three shared global wars followed by ten independent
+  // two-sided scenarios. Planned missions have null runtime IDs until implemented:
+  // never alias an existing opposing-faction scenario simply to make it launchable.
+  const federationEuRows = [
+    [1,shared],
+    [2,[
+      ['siberia','Invasion of Siberia',null,'Siberia',[100,57],[65,48,141,70],'Invade E.U.-controlled Siberia from Manchuria and Mongolia; open the northern route.'],
+      ['caucasus','Invasion of the Caucasus',null,'Caucasus',[45,42],[38,38,51,46],'Attack north out of Persia into the Caucasus and southern Russia; force the mountain corridors.'],
+    ]],
+    [3,[
+      ['turkey','Invasion of Turkey',null,'Anatolia',[35,39],[26,35,45,43],'Advance from Persia and the Caucasus into Anatolia and toward Istanbul.'],
+      ['volga','Battle for the Volga',null,'Volga River',[47,51],[41,47,53,57],'Advance from the Caucasus and western Siberia to seize Volgograd, Saratov and Kazan.'],
+      ['suez','Crossing the Suez Canal',null,'Egypt',[31,29],[24,22,36,32],'Attack west from the Sinai staging area across the canal to capture Cairo, the Nile Delta and Alexandria.'],
+    ]],
+    [4,[
+      ['moscow','Battle for Moscow',null,'Moscow and Western Russia',[37.6,55.7],[29,51,46,61],'Break through from the Volga into the Moscow defensive region; capture the capital and its cities.'],
+      ['balkans','Balkan Offensive',null,'Balkans',[22,43],[13,36,30,48],'Push northwest from Turkey through Greece, Bulgaria, Serbia and neighboring Balkan states.'],
+      ['north-africa','North African Offensive',null,'North Africa',[12,32],[-9,19,26,38],'Advance west from Egypt through Libya, Tunisia and Algeria, securing Mediterranean ports.'],
+    ]],
+    [5,[
+      ['central-europe','Conquest of Central Europe',null,'Central Europe',[18,49],[9,46,25,56],'Invade Poland, Czechia, Slovakia, Hungary and Austria from Russia and the Balkans; exclude Germany.'],
+    ]],
+    [6,[
+      ['france','Invasion of France',null,'France',[2.35,48.85],[-5,42,8,51.3],'Land only from Mediterranean carrier and transport fleets near Marseille and Toulon, then advance to Paris.'],
+    ]],
+  ];
   // Approximate national/state contours where a rectangular theater would
   // otherwise tint substantial unrelated territory. The GSHHG atlas continues
   // to supply the authoritative coastlines and underlying land geometry.
   const REGION_POLYGONS=Object.freeze({
+    // Provisional regional political contours for nations absent from the small
+    // world atlas; replace with verified border data before each scenario is integrated.
+    'federation-eu-caucasus': [[38.5,40.9],[41.2,41.3],[43.7,41.1],[46.6,38.5],[49.2,40.5],[50.4,42.2],[48.7,44.1],[45.8,44.4],[43.3,42.9],[40,43.5]],
+    'federation-eu-suez': [[24.7,31.6],[30.1,31.5],[32.4,31.3],[34.8,29.4],[35.7,22],[25,22],[24.7,31.6]],
+    'federation-eu-balkans': [[13.5,45.4],[16,46.6],[19,46.7],[22,48],[25.5,48],[29.7,44.7],[28.5,41.8],[25.2,40.9],[24.3,38.1],[22,36.4],[20,39.4],[18,40],[16.1,42.9],[13.5,45.4]],
+    'federation-eu-north-africa': [[-8.7,27.7],[-5.6,35.9],[-1.3,35.9],[2.8,36.9],[9,37.1],[11,33.7],[15,32.8],[20.6,32.1],[25,31.9],[25,20],[9.4,19],[-1,19],[-8.7,27.7]],
+    'federation-eu-central-europe': [[9.6,47.3],[13.3,46.6],[16,46.5],[20.6,46.1],[22.6,47.8],[24,49],[24.3,54.3],[19.7,54.6],[16,55],[14.2,54],[14.1,51.1],[12.1,50.4],[12.1,49],[13.5,48.7],[12.5,47.6],[9.6,47.3]],
+    'federation-eu-france': [[-4.8,48.5],[-2.2,47.3],[-1.8,43.4],[0.4,42.7],[3.2,42.4],[6.9,43.8],[7.5,48.9],[5.8,49.6],[2.5,51],[-1.5,49.9],[-4.8,48.5]],
 
     // Approximate overlays for nations omitted from the small campaign atlas;
     // refine against authoritative boundaries when their scenarios are built.
@@ -196,6 +232,7 @@
     // Newly planned E.U.–Federation theaters; first three nations below use
     // REGION_POLYGONS because they are absent from COUNTRY_OUTLINES.
     'persia':['Iran'], xinjiang:['China'], manchuria:['China'],
+    volga:['Russia'],moscow:['Russia'],
     himalayas:['China'], sichuan:['China'], beijing:['China'],
     'pacific-northwest':['United States of America'],
     'pendragon-east':['United States of America'], 'pendragon-west':['United States of America'],
@@ -237,6 +274,7 @@
     const states=MISSION_STATES[suffix]||null;
     const names=MISSION_COUNTRIES[suffix]||null;
     const source=states?states.flatMap(name=>STATE_OUTLINES[name]||[])
+      :custom && faction==='federation-eu'?[custom]
       :suffix==='western-russia' && custom?[custom]
       :names?names.flatMap(name=>COUNTRY_OUTLINES[name]||[])
       :custom?[custom]:[];
@@ -279,6 +317,7 @@
       : faction==='britannia' ? [[1,shared],[2,[bering]],...brRows]
       : faction==='britannia-federation' ? brFederationRows
       : faction==='federation-britannia' ? federationBritanniaRows
+      : faction==='federation-eu' ? federationEuRows
       : euFederationRows;
     return [faction,Object.freeze(rows.map(([tier,items])=>Object.freeze({
       number:tier,title:tierLabels[faction][tier-1],
