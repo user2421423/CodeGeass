@@ -240,7 +240,9 @@
       }
     }
     if(vritraBypass&&attack<beforeDefenses)attack+=.2*(beforeDefenses-attack);
-    if (counter) attack *= !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
+    // Xingke's Perfect Counter replaces the ordinary 65% retaliation multiplier.
+    if (counter) attack *= f.perfectCounter ? 1
+      : !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
     return Math.max(1, Math.round(attack));
   }
   function preview(g, id, c, r) {
@@ -275,9 +277,10 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
+      !f.noCounterAttack &&
       !followUp &&
       !(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d?.cmd) &&
       !(f.timeStop && a.timeStopTurn !== g.turn) &&
@@ -302,12 +305,18 @@
       0,
       1,
     );
+    const counterAllowed = counter || senbaReaction;
+    const counterDamage = (senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
+      : counter ? power(g,d,a,stationAt(g,a),true) : 0) * suppressiveCounterFactor(g, a);
+    // Preview the approximate 5% reflection; the actual volley uses HP lost
+    // after damage rolls and interception, and reflects only if Xingke survives.
+    const counterReflection = counterAllowed && d.hp > unitDmg && fx(d).counterReflect
+      ? Math.round(Math.min(d.hp, unitDmg) * fx(d).counterReflect) : 0;
     return {
       unit: unitDmg,
       shield: shieldDmg,
-      counter: (senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65)) : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
-        suppressiveCounterFactor(g, a),
-      counterAllowed: counter||senbaReaction,
+      counter: counterDamage + counterReflection,
+      counterAllowed,
       crit,
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
@@ -533,14 +542,16 @@
     // Any prior suppression was included in preview and splash calculations;
     // clear it only after preparing the complete volley, not after the counterattack.
     let dmg = 0,
-      sd = 0;
+      sd = 0,
+      actualDefenderDamage = 0;
     if(a.expSmilasSuppression)delete a.expSmilasSuppression;
     if (d) {
       dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       consumeDefensiveSkills(g, d, a);
       const priorHP=d.hp;
       d.hp = Math.max(0, d.hp - dmg);
-      recordWarEvent(g,'damage',a.side,{targetSide:d.side,value:priorHP-d.hp,unitId:a.id,group:warGroup(g,a)});
+      actualDefenderDamage = priorHP - d.hp;
+      recordWarEvent(g,'damage',a.side,{targetSide:d.side,value:actualDefenderDamage,unitId:a.id,group:warGroup(g,a)});
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
@@ -570,13 +581,17 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       retaliation = Math.round(power(g,d,a,stationAt(g,a),true) *
         (senbaCounter ? .5/.65 : 1) * suppressiveCounterFactor(g, a) *
         (0.94+random(g)*.12));
+      // The reflected 5% is additional damage on EACH legal counterattack,
+      // computed from actual HP lost in this attack (not the raw preview).
+      if (fx(d).counterReflect)
+        retaliation += Math.round(actualDefenderDamage * fx(d).counterReflect);
       if(senbaCounter)d.expSenbaCounterTurn=g.turn;
       if(d.guardReady&&d.held&&skillNear(g,d,'defensiveDoctrine',2)&&d.expSmilasCounterTurn!==g.turn){
         d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;

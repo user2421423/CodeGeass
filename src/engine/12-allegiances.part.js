@@ -64,6 +64,8 @@
     let mult = 1;
     // Brain Raid strengthens both direct attacks and counter-fire.
     if (f.loneRaider && akitoIsolated(g, u)) mult *= 1 + f.loneRaider;
+    // Divine Tiger targets commander-led formations in both attacks and retaliation.
+    if (f.duelist && target?.cmd) mult *= 1 + f.duelist;
     if (counter) {
       if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
       return mult;
@@ -76,7 +78,6 @@
     if (f.combinedArms && friends.some(v => TYPES[v.type].branch !== TYPES[u.type].branch)) mult *= 1 + f.combinedArms;
     if (TYPES[u.type].branch === 'Armor' && friends.some(v => TYPES[v.type].branch === 'Armor') && skillNear(g, u, 'orderCommander', 1)) mult *= 1.15;
     if (!target) return mult;
-    if (f.duelist && target.cmd) mult *= 1 + f.duelist;
     if (f.intrigueBonus && target.cmd) mult *= 1 + f.intrigueBonus;
     if (f.finisher && target.hp / maxHP(target) < 0.5) mult *= 1 + f.finisher;
     if (f.opener && target.hp >= maxHP(target)) mult *= 1 + f.opener;
@@ -96,6 +97,7 @@
     if (skillNear(g, target, 'calmDefense', 1)) mult *= 0.9;
     if (target.guardReady && target.held && skillNear(g, target, 'veteranSupport', 1, false)) mult *= 0.9;
     if (f.loneTaken && akitoIsolated(g, target)) mult *= f.loneTaken;
+    if (f.duelistTaken && attacker?.cmd) mult *= f.duelistTaken;
     if(target.guardReady&&target.held&&skillNear(g,target,'defensiveDoctrine',2))mult*=.85;
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {

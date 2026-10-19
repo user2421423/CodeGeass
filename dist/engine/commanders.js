@@ -374,9 +374,8 @@
       role: 'Armor',
       hull: 'Shen Hu',
       skill: "Divine Tiger",
-      desc: "Attacks against commander-led enemies deal +25% damage.",
-      stats: {"crit": 0.2, "dmg": 0.05, "pen": 0.1},
-      fx: {"duelist": 0.25},
+      desc: "Divine Tiger: +30% damage against commander-led enemies and 30% less damage taken from them. Enemies cannot counterattack his initiating attacks. Every legal counterattack he makes deals full normal attack damage and additionally reflects 5% of the actual HP damage he received.",
+      fx: {"duelist": 0.3, "duelistTaken": 0.7, "noCounterAttack": true, "perfectCounter": true, "counterReflect": 0.05},
       title: 'Commander of the Empress’s guard',
     },
     xianglin: {
