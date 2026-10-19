@@ -265,13 +265,13 @@
     for (const v of g.units)
       if (v.hp > 0 && v.morale < 0 && leilaCommand(g, v)) v.morale = 0;
   }
-  // Lowest morale a unit can be pushed to: steady for commanders with a floor; Fernando's calm stops confusion and
-  // Ohgi's Organizer keeps adjacent units at Low or better.
+  // Lowest morale a unit can be pushed to: steady for commanders with a floor;
+  // Fernando's calm and other enduring protections can stop confusion.
   function moraleFloor(g, v) {
     if (leilaCommand(g, v)) return 0;
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
-      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=3) || (fx(m).commanderlessAttack && !v.cmd)) && dist(g, m, v) <= (fx(m).nationalUnity ? 3 : 2),
+      m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=3) || (fx(m).commanderlessAttack && !v.cmd)) && dist(g, m, v) <= (fx(m).nationalUnity ? 3 : 2),
     )
       ? -1
       : -3;
