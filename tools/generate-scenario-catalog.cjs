@@ -49,6 +49,16 @@ const dependencies = {
  'cf-central-america':['scenarios-central-america.js','central-america-underlay.js'],
  'cf-mexico':['scenarios-mexico.js'],
  'eu-rocky-mountains':['scenarios-rocky-mountains.js'],
+ 'eu-cf-kazakhstan':['scenarios-eu-cf-kazakhstan.js'],
+ 'eu-cf-persia':['iraq-iran-coast.js','scenarios-eu-cf-persia.js'],
+ 'eu-cf-xinjiang':['scenarios-eu-cf-xinjiang.js'],
+ 'eu-cf-india':['eu-cf-india-geography.js','scenarios-eu-cf-india.js'],
+ 'eu-cf-mongolia':['scenarios-eu-cf-mongolia.js'],
+ 'eu-cf-manchuria':['korea-landmask.js','scenarios-eu-cf-manchuria.js'],
+ 'eu-cf-himalayas':['scenarios-eu-cf-himalayas.js'],
+ 'eu-cf-sichuan':['scenarios-eu-cf-sichuan.js'],
+ 'eu-cf-beijing':['scenarios-eu-cf-beijing.js'],
+ 'eu-cf-luoyang':['scenarios-luoyang.js','scenarios-eu-cf-luoyang.js'],
 };
 const catalog = {};
 for (const { id } of vm.runInContext('SCENARIO_MANIFEST', context)) {
