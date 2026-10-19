@@ -41,7 +41,7 @@
       portrait: 'lelouch',
       years: '2018 a.t.b.',
       desc: 'R2: the Empire against the returned Zero, from the Chinese Consulate and the Federation to Kagoshima, Tokyo, Emperor Lelouch and the assault on Damocles.',
-      missions: pick(['br7', 'br_pacific', 'br_yokosuka2', 'br_xiaopei', 'br_mausoleum', 'br_kagoshima', 'br8', 'br_kamejima', 'br9', 'br10', 'br11']),
+      missions: pick(['br7', 'br_execution', 'br_pacific', 'br_yokosuka2', 'br_xiaopei', 'br_mausoleum', 'br_kagoshima', 'br8', 'br_kamejima', 'br9', 'br10', 'br11']),
     },
     cf_r2: {
       name: 'Chinese Federation',
