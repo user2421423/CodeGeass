@@ -1149,7 +1149,7 @@
       names: EUNUCH_NAMES,
       map: LUOYANG,
       cities: LUOYANG_CITIES.map(city => city[0] === 'Vermillion Forbidden City'
-        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 2400 }] : city),
+        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 3000 }] : city),
       economy: { britannia: 400 },
       hold: { neutral: 3 },
       goals: { bk: [[15, 4, -6]], cf: [[15, 4, -6]] },
