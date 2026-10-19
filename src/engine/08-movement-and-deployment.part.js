@@ -68,6 +68,7 @@
     // Every commander Mobility star grants +1 movement (1★ = +1 through 6★ = +6).
     n += mobilityStars;
     if(u.expJammedActive)n=Math.max(1,n-2);
+    if (u.expYukiyaElectronicActive) n = Math.max(1, n - 2);
     n += f.move || 0;
     if (u.expImperialCommand) n += 2;
     // Banked first-strike movement adds to a later full movement action.

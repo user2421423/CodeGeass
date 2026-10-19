@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'xianglin' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'xianglin' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -51,6 +51,9 @@
     if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
     if(u.expChengWeaken?.turns>0)attack*=1-u.expChengWeaken.value;
     if(!counter&&u.expSmilasSuppression)attack*=1-u.expSmilasSuppression;
+    // Yukiya's electronic disruption weakens all attacks (including counterfire)
+    // only during the victim's next activation.
+    if (u.expYukiyaElectronicActive) attack *= 0.75;
     if(!counter&&u.forcedOffensive)attack*=1.35;
     const gritSkill = { Infantry: 'bayonet_charge', Armor: 'tide_of_iron', Artillery: 'artillery_barrage' }[t.branch];
     const missingHpPenalty = 0.6 * (1 - clamp(u.hp / maxHP(u), 0, 1));
@@ -300,7 +303,8 @@
         (1 + (t.naval === 'amphibious' && s &&
           (s.portAt || adjacent(g, s).some(v => navigable(v)))
           ? techValue(g, a.side, 'amphibious.coastal') : 0)) *
-        (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) * bombardBonus(g, a, s);
+        (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) *
+        (f.yukiyaDemolition ? 1.40 : 1) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
           cityBase *
@@ -596,6 +600,8 @@
       // Sword Breaker weakens the armor of an adjacent formation through
       // its next complete action phase, including when the strike is dodged.
       if (f.swordmaster && dist(g, a, d) === 1) d.expAyanoSwordBreak = true;
+      // Applies at the start of the victim's next turn, not immediately.
+      if (f.yukiyaElectronic && d.hp > 0) d.expYukiyaElectronicNext = true;
       recordWarEvent(g,'damage',a.side,{targetSide:d.side,value:actualDefenderDamage,unitId:a.id,group:warGroup(g,a)});
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
@@ -607,6 +613,10 @@
       // Even after the defenses reach zero, another successful city assault
       // keeps its next regeneration suppressed.
       s.attackedSinceRegen = true;
+      // Block exactly the defender's next shield recovery; the existing
+      // shield-regeneration system clears this after that turn.
+      if (f.yukiyaDemolition)
+        s.expShieldRegenBlocked = { owner: s.owner, turns: 1 };
       if (pr.shield) {
         sd = Math.min(s.shield, Math.round(pr.shield * shieldMult));
         s.shield -= sd;

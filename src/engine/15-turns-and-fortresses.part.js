@@ -103,6 +103,9 @@
         if(v.expShadowMove){v.moved=true;v.skillReposition=0;delete v.expShadowMove;}
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
+        // Yukiya's electronic disruption expires only after the affected
+        // faction completes its next turn.
+        delete v.expYukiyaElectronicActive;
         // Sword Breaker persists throughout the affected side's next turn.
         delete v.expAyanoSwordBreak;
         // Expire Rolo's freeze only AFTER this faction has lost its entire
@@ -183,6 +186,8 @@
       u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
       u.expPinnedWeakenActive=u.expPinnedWeakenNext||0;delete u.expPinnedWeakenNext;
       u.expJammedActive=!!u.expJammedNext;delete u.expJammedNext;
+      u.expYukiyaElectronicActive = !!u.expYukiyaElectronicNext;
+      delete u.expYukiyaElectronicNext;
       if(u.expZiWeakenNext){u.despairWeakened={side:u.side,source:'zi',value:u.expZiWeakenNext};delete u.expZiWeakenNext;}
       if(u.expDisabledActive || u.expRoloFrozen){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
       delete u.expOverwatch;delete u.expLink;
