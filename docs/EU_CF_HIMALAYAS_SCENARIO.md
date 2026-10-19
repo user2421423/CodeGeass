@@ -29,7 +29,7 @@ Only the following scenario-owned files are committed:
 
 **Integrator-only changes (do not include in this PR):**
 
-1. Add `eu-cf-himalayas` to `dist/scenario-manifest.js` as an E.U.–Federation regional scenario with title **Crossing the Himalayas**, `sides:['eu','cf']`, a suitable scenario note, and `SCENARIO_FILES` entry `dist/scenarios-eu-cf-himalayas.js` (load after the core engine/AI). No external coastline data or other scenario modules are required.
+1. Add to `SCENARIO_MANIFEST` in `dist/scenario-manifest.js`: `{id:"eu-cf-himalayas",title:"Crossing the Himalayas",note:"57 cities · E.U. vs Chinese Federation"}`. Add **`'scenarios-eu-cf-himalayas.js'`** (without a `dist/` prefix) to `SCENARIO_FILES`; the loader resolves entries relative to `dist/` and loads the core engine/AI first. `sides:['eu','cf']` is provided by the module itself. No coastline data or other scenario modules are required.
 2. Regenerate `dist/scenario-catalog.js` with `node tools/generate-scenario-catalog.cjs` after the manifest entry.
 3. In `dist/war-campaign.js`, update **only** `eu-federation-himalayas`: `scenarioId:null` → `scenarioId:'eu-cf-himalayas'` after integration tests. Preserve the mission ordering (Manchuria 9 → Himalayas 10 → Sichuan 11).
 4. Coordinate expected new `scenario_sim --all` baseline lines with the tooling integrator; do not conceal changes in other scenarios.
