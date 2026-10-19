@@ -46,7 +46,20 @@
     events.push({ kind: 'feint', id: u.id, affected: activated.affected });
     return true;
   }
-  // Chinese patrol fleets contest invasion convoys near the Philippine islands,
+  // Charles uses Memory Rewrite against valuable, vulnerable formations.
+  function aiCharlesMemoryRewrite(g, u, events) {
+    if (u.cmd !== 'charles' || feintReason(g, u)) return false;
+    const choices = actionTargets(g, u).sort((a, b) =>
+      Number(!!b.cmd) - Number(!!a.cmd) ||
+      TYPES[b.type].attack * (b.stack || 1) - TYPES[a.type].attack * (a.stack || 1) ||
+      a.id - b.id);
+    if (!choices.length) return false;
+    const used = feint(g, u.id, choices[0].id);
+    if (!used?.ok) return false;
+    events.push({ kind: 'feint', id: u.id, target: used.target, affected: 1 });
+    return true;
+  }
+  // Chinese patrol fleets contest invasions near the Philippine islands,
   // but never sail to capture Britannia's remote Palau and Yap bases.
   // Ground defense and the global amphibious doctrine remain unchanged.
   function philippinesNavalInterception(g, u, events) {
@@ -141,6 +154,8 @@
       (!isShip(u) && !isSea(p) &&
         philippinesHome(g, g.stations[p.provinceCity]) &&
         (atSea(g, u) ? dist(g, u, p) === 1 : massOf(g, p) === massOf(g, u)));
+    // Use targeted memory rewriting before recovery moves Charles away.
+    aiCharlesMemoryRewrite(g, u, events);
     // Freeze valuable clusters before recovery moves Rolo away.
     aiRoloFreeze(g, u, events);
     if (u.hp <= 0 || g.over) return events;
@@ -205,7 +220,7 @@
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze'].includes(action.kind) && !feintReason(g, u)) {
+    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -388,10 +403,11 @@
     // Reevaluate positioning after each kill that restores movement/refire, within a bounded action budget.
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       maneuver();
-      // Reevaluate clustered threats after maneuvering, before firing.
+      // Reevaluate commander tactics after maneuvering, before firing.
+      aiCharlesMemoryRewrite(g, u, events);
       aiRoloFreeze(g, u, events);
       // A designation may only now be in range.
-      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze'].includes(action.kind) && !feintReason(g, u)) {
+      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite'].includes(action.kind) && !feintReason(g, u)) {
         const r = feint(g, id);
         if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
       }
