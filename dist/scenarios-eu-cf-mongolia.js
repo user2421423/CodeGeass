@@ -313,7 +313,7 @@ const api={id:ID,title:'Invasion of Mongolia',cols:COLS,rows:ROWS,
  rivers:RIVERS,mountainPasses:PASSES,operationalFronts:OPERATIONAL_FRONTS,
  ports:{},create,onTurn,objective,winner,strategicScore,orderGroup,geo,locate};
 api.meta={
- elite:true,saveVersion:1,
+ elite:true,saveVersion:1,terrainCosts:{mountain:2},
  ai:{doctrine:'europe',recovery:true},
  map:{centreSampled:true,overlays:['regionalRivers'],overviewMarkers:true},
  text:{
