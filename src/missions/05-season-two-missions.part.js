@@ -1051,11 +1051,11 @@
           { ...(u[6] || {}), skipNormal: true }] : u),
         [B, 'vincent_commander', 1, 6, 3, 'guilford', { normalOnly: true, hold: 0 }],
         [B, 'vincent_ward', 4, 1, 1, null, { normalOnly: true }],
-        [B, 'sutherland_air', 7, 5, 2, null, { normalOnly: true }],
+        [B, 'sutherland_air', 9, 4, 2, null, { normalOnly: true }],
         [B, 'portman_ii', 13, 5, 2, null, { normalOnly: true }],
         [B, 'portman_ii', 8, 6, 2, null, { normalOnly: true }],
         [B, 'portman_ii', 13, 6, 2, null, { normalOnly: true }],
-        [B, 'portman_ii', 7, 4, 3, null, { normalOnly: true }],
+        [B, 'portman_ii', 9, 5, 3, null, { normalOnly: true }],
         [B, 'portman_ii', 8, 5, 3, null, { normalOnly: true }],
         ...BAY_BK.map(u => u[1] === 'akatsuki_missile' && !u[5]
           ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5] ?? null,
