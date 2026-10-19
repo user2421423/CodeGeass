@@ -62,6 +62,23 @@
         : 0;
     return clamp(TYPES[u.type].pen + (fx(u).pen || 0) + (eliteFx(u).pen || 0) + engineering + harken, 0, 0.95);
   }
+  // Exploit Weakness: at least two surviving, deployed friendly formations
+  // must be adjacent to this specific enemy. The initiating attacker must be
+  // Xianglin herself or a friendly formation within 2 hexes of a living
+  // Xianglin. This is one non-stacking positional bonus, never a status mark.
+  function xianglinExploitWeakness(g, attacker, target) {
+    if (!attacker || !target || attacker.hp <= 0 || target.hp <= 0 ||
+        !foe(g, attacker.side, target.side) || atSea(g, attacker)) return false;
+    const nearby = g.units.filter(v =>
+      v.hp > 0 && v.side === attacker.side && !atSea(g, v) &&
+      dist(g, v, target) === 1);
+    if (nearby.length < 2) return false;
+    return g.units.some(v =>
+      v.hp > 0 && v.side === attacker.side && v.cmd === 'xianglin' &&
+      !atSea(g, v) && !v.auraDisrupted && fx(v).exploitWeakness &&
+      dist(g, v, attacker) <= 2 &&
+      (!attacker.expInformationWarfare || v.id === attacker.id));
+  }
   function commanderAttack(g, u, target, counter) {
     const f = fx(u), friends = friendlyNeighbors(g, u);
     let mult = 1;
