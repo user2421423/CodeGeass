@@ -63,14 +63,6 @@
   function aiOrder(g, id) {
     const u = g.units.find(u => u.id === id);
     if (!u || !isReady(g, u)) return [];
-    // Defensive Story AI: do not march the commander whose death fails the mission
-    // off his guarded HQ to chase attackers. The human player retains full control.
-    // Only these Normal Britannia missions have a rear-area command obligation.
-    if (g.mode === 'campaign' && g.difficulty === 'normal' &&
-        u.side === g.player &&
-        ((g.campaign?.id === 'br_yokosuka2' && u.cmd === 'guilford') ||
-         (g.campaign?.id === 'br_mausoleum' && u.cmd === 'schneizel')))
-      return [];
     const events = [],
       memo = aiPlan(g, u.side),
       guard = memo.guards?.[u.id],

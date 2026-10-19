@@ -1043,7 +1043,8 @@
       player: B,
       sides: [B, K],
       map: TOKYO_BAY,
-      cities: BAY_CITIES,
+      cities: BAY_CITIES.map(city => city[0] === 'Black Knights Submarine'
+        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 90 }] : city),
       economy: { britannia: 400 },
       hold: { bk: 2 },
       units: [...BAY_BRIT.map(u => u[5] === 'guilford'
@@ -1052,9 +1053,9 @@
         [B, 'vincent_commander', 1, 6, 3, 'guilford', { normalOnly: true, hold: 0 }],
         [B, 'vincent_ward', 4, 1, 1, null, { normalOnly: true }],
         [B, 'sutherland_air', 9, 4, 2, null, { normalOnly: true }],
-        [B, 'portman_ii', 13, 5, 2, null, { normalOnly: true }],
-        [B, 'portman_ii', 8, 6, 2, null, { normalOnly: true }],
-        [B, 'portman_ii', 13, 6, 2, null, { normalOnly: true }],
+        [B, 'portman_ii', 13, 5, 3, null, { normalOnly: true }],
+        [B, 'portman_ii', 8, 6, 3, null, { normalOnly: true }],
+        [B, 'portman_ii', 13, 6, 3, null, { normalOnly: true }],
         [B, 'portman_ii', 9, 5, 3, null, { normalOnly: true }],
         [B, 'portman_ii', 8, 5, 3, null, { normalOnly: true }],
         ...BAY_BK.map(u => u[1] === 'akatsuki_missile' && !u[5]
@@ -1149,7 +1150,7 @@
       names: EUNUCH_NAMES,
       map: LUOYANG,
       cities: LUOYANG_CITIES.map(city => city[0] === 'Vermillion Forbidden City'
-        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 3000 }] : city),
+        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 3400 }] : city),
       economy: { britannia: 400 },
       hold: { neutral: 3 },
       goals: { bk: [[15, 4, -6]], cf: [[15, 4, -6]] },
@@ -1175,6 +1176,8 @@
         ['neutral', 'gun_ru', 15, 4, 3, 'zhaohao', { normalOnly: true, hold: 1 }],
         ['neutral', 'gun_ru', 14, 3, 3, null, { normalOnly: true, hold: 1 }],
         ['neutral', 'gun_ru', 17, 4, 3, null, { normalOnly: true, hold: 1 }],
+        ['neutral', 'gun_ru', 13, 4, 3, null, { normalOnly: true, hold: 1 }],
+        ['neutral', 'gun_ru', 14, 6, 3, null, { normalOnly: true, hold: 1 }],
         ...LUOYANG_REBELS.filter(u => u[0] === K).map(u =>
           u[1] === 'akatsuki_missile'
             ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5] ?? null,

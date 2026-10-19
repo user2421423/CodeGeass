@@ -40,7 +40,7 @@ for (const [id, min] of Object.entries({
 // Mission-specific shields and deadlines must not alter harder difficulties.
 for (const [id,name,shield] of [
   ['br7','Sakuradite Refinery',1100],
-  ['br_mausoleum','Vermillion Forbidden City',3000],
+  ['br_mausoleum','Vermillion Forbidden City',3400],
   ['br_kagoshima','Kagoshima Settlement',1300],
   ['br10','Ikaruga',220],
   ['br10','Avalon Landing',750],
