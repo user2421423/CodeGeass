@@ -1,5 +1,12 @@
 name: Season 1 targeted balance retest
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/missions/**'
+      - 'src/ai/**'
+      - 'tools/story_r2_balance_probe.cjs'
+      - '.github/workflows/story-s1-targeted-balance.yml'
   pull_request:
     paths:
       - 'src/missions/**'
