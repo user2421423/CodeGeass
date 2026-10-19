@@ -69,6 +69,7 @@
     n += mobilityStars;
     if(u.expJammedActive)n=Math.max(1,n-2);
     n += f.move || 0;
+    if (u.expImperialCommand) n += 2;
     return n;
   }
   function terrainStepCost(g, t) {

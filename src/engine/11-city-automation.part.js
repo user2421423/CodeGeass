@@ -186,6 +186,10 @@
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    // Imperial Command affects every on-map friendly formation in range,
+    // including Lelouch himself. No target selection is required.
+    if (kind === 'imperial') return g.units.filter(v => v.hp > 0 &&
+      v.side === u.side && !atSea(g, v) && dist(g, u, v) <= 2);
     // Synchronized Maneuver refreshes Leila too, and any friendly on-map
     // formation (including naval units) that has spent its movement or attack.
     if (kind === 'withdraw') return g.units.filter(v => v.hp > 0 && v.side === u.side &&
@@ -199,6 +203,17 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'imperial') {
+      // One-turn support; repeated commanders refresh rather than stack.
+      for (const v of options) {
+        v.morale = 1;
+        v.expImperialCommand = { side: u.side, source: u.id, turn: g.turn };
+      }
+      u.feintCD = 0;
+      u.feintUsedTurn = g.turn;
+      log(g, `Imperial Command strengthens ${options.length} friendly formations.`, u.side);
+      return { ok: true, affected: options.length };
+    }
     if (['command', 'designate', 'stratagem'].includes(action.kind)) {
       const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
         : options.find(v => v.id === targetId);

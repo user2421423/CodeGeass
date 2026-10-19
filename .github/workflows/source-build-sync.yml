@@ -25,6 +25,8 @@ jobs:
         run: node tools/leila_synchronized_command_smoke.cjs
       - name: Verify Zero Geass Absolute Command dual-mode actions and passive removal
         run: node tools/zero_geass_absolute_command_smoke.cjs
+      - name: Verify Emperor Lelouch Imperial Command and Supreme Commander
+        run: node tools/lelouch_imperial_command_smoke.cjs
       - name: Verify commander active banners and Zero AI targeting
         run: node tools/commander_ability_banners_smoke.cjs
       - name: Verify dynamic Scenario AI defensive transitions and Philippine exception
