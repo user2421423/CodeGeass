@@ -12,7 +12,7 @@ Rarity is determined by Elite Force combat class:
 | Epic | Heavy Armor, Rocket Artillery, Siege Artillery | 12 | 3 |
 | Legendary | Super Heavy Armor | 4 | 1 |
 
-The permanent HQ Elite roster consists of 28 units across Britannia, Black Knights, Europia United, and the Chinese Federation. Euro Britannia shares Britannia's eligible HQ choices. Rarity standardization does **not** alter class stats, combat abilities, upgrade prices, accumulated fragments, HQ levels, or previously claimed rewards. Unclaimed Story and Conquest reward pools are re-evaluated using their original faction and rarity, including earlier saved awards. Unclaimed World Campaign rewards continue to refresh globally.
+The permanent HQ Elite roster consists of 28 units across Britannia, Black Knights, Europia United, and the Chinese Federation. Euro Britannia still uses Britannian Elite Forces for battlefield deployment, but its **Story Mode three-star fragment rewards offer Europia United Elite Forces**. Rarity standardization does **not** alter class stats, combat abilities, upgrade prices, accumulated fragments, HQ levels, or previously claimed rewards. Unclaimed Story and Conquest reward pools are re-evaluated using current mission-based reward eligibility and rarity, including earlier saved awards; claimed rewards remain unchanged. Unclaimed World Campaign rewards continue to refresh globally.
 
 - **Normal:** choose one **Rare** Elite Force.
 - **Hard:** choose one **Epic** Elite Force.

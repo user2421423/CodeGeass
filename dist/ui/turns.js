@@ -171,7 +171,10 @@ function queueEliteReward(profile, operation, key, amount, source) {
   const storyMission = key.startsWith('story:') ? E.campaign?.mission?.(key.split(':')[1]) : null;
   if (key.startsWith('story:') && !storyMission) return false;
   const player = storyMission?.player || operation.player;
-  const side = player === 'eb' ? 'britannia'
+  // Euro Britannia Story victories grant Europia United fragments, while its
+  // battlefield deployment roster (and non-Story fallback) stays Britannian.
+  const side = storyMission?.player === 'eb' ? 'eu'
+    : player === 'eb' ? 'britannia'
     : operation.era === 'ufn2018' && player === 'cf' ? 'bk' : player;
   const allowed = ELITE_REWARD_RARITIES[operation.difficulty] || ELITE_REWARD_RARITIES.normal;
   // World Campaign and weekly events are faction-independent. Story and Conquest stay faction-bound.
@@ -205,7 +208,8 @@ function eligibleEliteRewardOptions(award, profile = loadProfile()) {
     // For legacy Story rewards the mission registry is authoritative: never
     // offer another faction's Elite, even if an old options snapshot is mixed.
     if (storyReward && !storyMission) return []; // Keep unknown rewards saved, not claimable.
-    const storySide = storyMission?.player === 'eb' ? 'britannia' : storyMission?.player;
+    // Resolve saved/unclaimed Story rewards from the live registry, not their old cached side.
+    const storySide = storyMission?.player === 'eb' ? 'eu' : storyMission?.player;
     const side = storySide || award.side || (legacySides.size === 1 ? [...legacySides][0] : null);
     const rarities = award.rarity === 'Any'
       ? ELITE_REWARD_RARITIES.elite : [award.rarity];

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 const E = require('../dist/engine.js');
 const CP = require('../dist/campaign.js');
 
@@ -44,4 +47,61 @@ for (const [difficulty, tokens] of Object.entries({normal:500,hard:1000,challeng
   assert.equal(E.missionReward(g,2,cleared).repeat,true,'duplicate conquest win denied');
 }
 assert.deepEqual(E.eliteVictoryReward({},{}),{},'no broad elite drops on victories');
-console.log('Round-number token and targeted Elite-fragment progression: PASS');
+
+// Euro Britannia uses Britannian battle units but earns E.U. Elite fragments at 3★.
+// Test normal, hard, challenge, elite, mixed-era mission IDs, and pending legacy saves.
+const rewardUI = fs.readFileSync(path.join(__dirname, '../dist/ui/turns.js'), 'utf8');
+let rewardProfile = { elites: {}, pendingEliteRewards: [], claimedEliteChoices: {} };
+const ctx = {
+  E, loadProfile: () => rewardProfile,
+  saveProfile: value => { rewardProfile = value; return true; },
+  esc: String,
+};
+vm.createContext(ctx);
+vm.runInContext(rewardUI, ctx, { filename: 'turns.js' });
+const rewardAPI = vm.runInContext('({queueEliteReward,eligibleEliteRewardOptions})', ctx);
+const matchingEliteIds = (side, rarity) => Object.entries(E.ELITE_FORCES)
+  .filter(([, elite]) => !elite.scenarioOnly && elite.availableTo.includes(side) &&
+    (rarity === 'Any' || elite.rarity === rarity))
+  .map(([id]) => id).sort();
+const awardOptions = award => Array.from(
+  rewardAPI.eligibleEliteRewardOptions(award, rewardProfile)).sort();
+for (const [difficulty, rarity] of Object.entries({
+  normal: 'Rare', hard: 'Epic', challenge: 'Legendary', elite: 'Any',
+})) {
+  for (const id of ['eb_narva', 'br6', 'eb_fall']) {
+    assert.equal(E.campaign.mission(id).player, 'eb', id + ' is a Euro Britannia Story mission');
+    const key = 'story:' + id + ':' + difficulty;
+    assert.equal(rewardAPI.queueEliteReward(rewardProfile,
+      { player: 'eb', difficulty }, key, 10, 'Story Mode 3★'), true, key + ' queued');
+    const award = rewardProfile.pendingEliteRewards.find(entry => entry.key === key);
+    assert.equal(award.side, 'eu', key + ' reward faction');
+    assert.deepEqual(awardOptions(award), matchingEliteIds('eu', rarity), key + ' EU-only choices');
+    assert.equal(rewardAPI.queueEliteReward(rewardProfile,
+      { player: 'eb', difficulty }, key, 10, 'Story Mode 3★'), false,
+      key + ' cannot be duplicated');
+  }
+}
+// Existing unclaimed Euro Britannia awards must switch from Britannian to EU options.
+const legacyEuroAward = {
+  key: 'story:eb_weisswolf:hard', rarity: 'Epic', amount: 10,
+  side: 'britannia', options: ['lancelot', 'mordred', 'sutherland_air'],
+};
+assert.deepEqual(awardOptions(legacyEuroAward), matchingEliteIds('eu', 'Epic'));
+for (const [id, side] of [['br1', 'britannia'], ['bk1', 'bk'], ['eu_narva', 'eu']]) {
+  const key = 'story:' + id + ':normal';
+  assert.equal(rewardAPI.queueEliteReward(rewardProfile,
+    { player: 'eb', difficulty: 'normal' }, key, 10, 'Story Mode 3★'), true,
+    'mission registry overrides mismatched saved operation');
+  const award = rewardProfile.pendingEliteRewards.find(entry => entry.key === key);
+  assert.equal(award.side, side, id + ' keeps its own faction');
+  assert.deepEqual(awardOptions(award), matchingEliteIds(side, 'Rare'));
+}
+// Previously claimed awards are not paid twice or retroactively rewritten.
+const claimedKey = 'story:eb_slonim:normal';
+rewardProfile.claimedEliteChoices[claimedKey] = 'cornelia_gloucester';
+assert.equal(rewardAPI.queueEliteReward(rewardProfile,
+  { player: 'eb', difficulty: 'normal' }, claimedKey, 10, 'Story Mode 3★'), false);
+assert.equal(rewardProfile.claimedEliteChoices[claimedKey], 'cornelia_gloucester');
+
+console.log('Round-number token, Elite fragments, and Euro Britannia Story reward eligibility: PASS');
