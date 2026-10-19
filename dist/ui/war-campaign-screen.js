@@ -35,6 +35,18 @@ const WC_ROUTES={
     ['federation-britannia-pacific-northwest','federation-britannia-california'],
     ['federation-britannia-california','federation-britannia-pendragon-west'],
     ['federation-britannia-mexican-heartland','federation-britannia-pendragon-west']
+  ],
+  'eu-federation':[
+    ['eu-federation-kazakhstan','eu-federation-xinjiang'],
+    ['eu-federation-kazakhstan','eu-federation-mongolia'],
+    ['eu-federation-persia','eu-federation-india'],
+    ['eu-federation-mongolia','eu-federation-manchuria'],
+    ['eu-federation-india','eu-federation-himalayas'],
+    ['eu-federation-xinjiang','eu-federation-himalayas'],
+    ['eu-federation-himalayas','eu-federation-sichuan'],
+    ['eu-federation-manchuria','eu-federation-beijing'],
+    ['eu-federation-sichuan','eu-federation-luoyang'],
+    ['eu-federation-beijing','eu-federation-luoyang']
   ]
 };
 function wcProgress(){return WC.load(localStorage);}

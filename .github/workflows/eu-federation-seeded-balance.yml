@@ -1,0 +1,44 @@
+name: EU Federation seeded AI balance matrix
+
+on:
+  push:
+    branches:
+      - feature/eu-vs-federation-campaign-architecture
+    paths:
+      - 'dist/scenarios-eu-cf-*.js'
+      - 'tools/eu_cf_validation.cjs'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'dist/scenarios-eu-cf-*.js'
+      - 'tools/eu_cf_validation.cjs'
+
+jobs:
+  normal-and-elite-ai-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        scenario:
+          - kazakhstan
+          - persia
+          - xinjiang
+          - india
+          - mongolia
+          - manchuria
+          - himalayas
+          - sichuan
+          - beijing
+          - luoyang
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build real engine and AI
+        run: node tools/build_sources.cjs
+      - name: Simulate two starting factions, 2 Normal seeds (30/20 turns), and Elite (5 turns)
+        run: node tools/eu_cf_validation.cjs --sim ${{ matrix.scenario }}

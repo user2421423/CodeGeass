@@ -1,0 +1,1697 @@
+{
+  "tested_at": "2026-10-19",
+  "branch": "feature/eu-vs-federation-campaign-architecture",
+  "method": "Full-engine seeded AI-vs-AI, Normal difficulty, select both factions, seeds 11/37/91, 45 turn limit; standard tools/scenario_sim.cjs via GitHub Actions.",
+  "workflow_primary": "https://github.com/user2421423/CodeGeass/actions/runs/39218624440",
+  "workflow_kazakhstan_retest": "https://github.com/user2421423/CodeGeass/actions/runs/39219059864",
+  "caveats": [
+    "Each simulation chooses initial player and turn order, but both sides are fully AI controlled.",
+    "45 turns is a cutoff, not proof of victory or stalemate where unfinished.",
+    "The production proxy in scenario_sim.cjs can include initially embarked units as new units; avoid treating it as a precise factory-only count.",
+    "Balance estimates are prescriptions for retesting, not optimal settings."
+  ],
+  "valid_runs": 60,
+  "error_runs": 0,
+  "summary": [
+    {
+      "scenario": "eu-cf-kazakhstan",
+      "job": 117949787873,
+      "euWins": 6,
+      "cfWins": 0,
+      "ongoing": 0,
+      "totalCities": 65,
+      "rating": "Severely EU-favored",
+      "action": "+30–40 CF starting formations around Aktobe, Astana, Karaganda and eastern approaches; or trim 15–20 EU",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 25,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 12,
+            "cf": 53
+          },
+          "finalCities": {
+            "eu": 65,
+            "cf": 0
+          },
+          "cityCaptures": 71,
+          "lastCaptureTurn": 25,
+          "production": {
+            "eu": 44,
+            "cf": 26
+          },
+          "attacks": {
+            "eu": 928,
+            "cf": 344
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 28,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 12,
+            "cf": 53
+          },
+          "finalCities": {
+            "eu": 65,
+            "cf": 0
+          },
+          "cityCaptures": 81,
+          "lastCaptureTurn": 28,
+          "production": {
+            "eu": 55,
+            "cf": 28
+          },
+          "attacks": {
+            "eu": 976,
+            "cf": 448
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 27,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 12,
+            "cf": 53
+          },
+          "finalCities": {
+            "eu": 65,
+            "cf": 0
+          },
+          "cityCaptures": 83,
+          "lastCaptureTurn": 27,
+          "production": {
+            "eu": 53,
+            "cf": 27
+          },
+          "attacks": {
+            "eu": 931,
+            "cf": 369
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 30,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 12,
+            "cf": 53
+          },
+          "finalCities": {
+            "eu": 65,
+            "cf": 0
+          },
+          "cityCaptures": 91,
+          "lastCaptureTurn": 30,
+          "production": {
+            "eu": 53,
+            "cf": 39
+          },
+          "attacks": {
+            "eu": 1020,
+            "cf": 493
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 28,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 12,
+            "cf": 53
+          },
+          "finalCities": {
+            "eu": 65,
+            "cf": 0
+          },
+          "cityCaptures": 77,
+          "lastCaptureTurn": 28,
+          "production": {
+            "eu": 55,
+            "cf": 33
+          },
+          "attacks": {
+            "eu": 977,
+            "cf": 430
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 32,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 12,
+            "cf": 53
+          },
+          "finalCities": {
+            "eu": 65,
+            "cf": 0
+          },
+          "cityCaptures": 95,
+          "lastCaptureTurn": 32,
+          "production": {
+            "eu": 65,
+            "cf": 43
+          },
+          "attacks": {
+            "eu": 997,
+            "cf": 465
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-persia",
+      "job": 117948361461,
+      "euWins": 6,
+      "cfWins": 0,
+      "ongoing": 0,
+      "totalCities": 61,
+      "rating": "Severely EU-favored",
+      "action": "+25–35 CF starting formations around Zagros, Tehran, Isfahan; keep both sides' Gulf activity",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 32,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 17,
+            "cf": 44
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 0
+          },
+          "cityCaptures": 56,
+          "lastCaptureTurn": 32,
+          "production": {
+            "eu": 63,
+            "cf": 40
+          },
+          "attacks": {
+            "eu": 904,
+            "cf": 387
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 32,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 17,
+            "cf": 44
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 0
+          },
+          "cityCaptures": 62,
+          "lastCaptureTurn": 32,
+          "production": {
+            "eu": 66,
+            "cf": 40
+          },
+          "attacks": {
+            "eu": 942,
+            "cf": 368
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 33,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 17,
+            "cf": 44
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 0
+          },
+          "cityCaptures": 54,
+          "lastCaptureTurn": 33,
+          "production": {
+            "eu": 71,
+            "cf": 33
+          },
+          "attacks": {
+            "eu": 980,
+            "cf": 427
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 33,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 17,
+            "cf": 44
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 0
+          },
+          "cityCaptures": 74,
+          "lastCaptureTurn": 33,
+          "production": {
+            "eu": 76,
+            "cf": 36
+          },
+          "attacks": {
+            "eu": 926,
+            "cf": 406
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 29,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 17,
+            "cf": 44
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 0
+          },
+          "cityCaptures": 52,
+          "lastCaptureTurn": 29,
+          "production": {
+            "eu": 63,
+            "cf": 29
+          },
+          "attacks": {
+            "eu": 895,
+            "cf": 346
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 32,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 17,
+            "cf": 44
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 0
+          },
+          "cityCaptures": 72,
+          "lastCaptureTurn": 32,
+          "production": {
+            "eu": 62,
+            "cf": 40
+          },
+          "attacks": {
+            "eu": 966,
+            "cf": 392
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-xinjiang",
+      "job": 117948361687,
+      "euWins": 0,
+      "cfWins": 6,
+      "ongoing": 0,
+      "totalCities": 70,
+      "rating": "Severely CF-favored",
+      "action": "+25–35 EU starting formations across Dzungarian Gate, Ili Valley and Altai; alternatively remove 15–20 CF",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 42,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 19,
+            "cf": 51
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 70
+          },
+          "cityCaptures": 135,
+          "lastCaptureTurn": 42,
+          "production": {
+            "eu": 46,
+            "cf": 70
+          },
+          "attacks": {
+            "eu": 923,
+            "cf": 925
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 24,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 19,
+            "cf": 51
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 70
+          },
+          "cityCaptures": 105,
+          "lastCaptureTurn": 24,
+          "production": {
+            "eu": 28,
+            "cf": 36
+          },
+          "attacks": {
+            "eu": 579,
+            "cf": 742
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 25,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 19,
+            "cf": 51
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 70
+          },
+          "cityCaptures": 111,
+          "lastCaptureTurn": 25,
+          "production": {
+            "eu": 27,
+            "cf": 37
+          },
+          "attacks": {
+            "eu": 656,
+            "cf": 755
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 21,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 19,
+            "cf": 51
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 70
+          },
+          "cityCaptures": 67,
+          "lastCaptureTurn": 21,
+          "production": {
+            "eu": 21,
+            "cf": 38
+          },
+          "attacks": {
+            "eu": 454,
+            "cf": 676
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 39,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 19,
+            "cf": 51
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 70
+          },
+          "cityCaptures": 147,
+          "lastCaptureTurn": 39,
+          "production": {
+            "eu": 48,
+            "cf": 81
+          },
+          "attacks": {
+            "eu": 827,
+            "cf": 862
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 22,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 19,
+            "cf": 51
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 70
+          },
+          "cityCaptures": 71,
+          "lastCaptureTurn": 22,
+          "production": {
+            "eu": 23,
+            "cf": 34
+          },
+          "attacks": {
+            "eu": 535,
+            "cf": 697
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-india",
+      "job": 117948361370,
+      "euWins": 2,
+      "cfWins": 1,
+      "ongoing": 3,
+      "totalCities": 113,
+      "rating": "Most promising / mild EU edge",
+      "action": "Hold opening formations; extend inconclusive 45-turn runs to 75+ before retuning",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 42,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 102
+          },
+          "finalCities": {
+            "eu": 113,
+            "cf": 0
+          },
+          "cityCaptures": 146,
+          "lastCaptureTurn": 42,
+          "production": {
+            "eu": 132,
+            "cf": 68
+          },
+          "attacks": {
+            "eu": 1246,
+            "cf": 589
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 40,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 11,
+            "cf": 102
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 113
+          },
+          "cityCaptures": 101,
+          "lastCaptureTurn": 40,
+          "production": {
+            "eu": 90,
+            "cf": 90
+          },
+          "attacks": {
+            "eu": 1036,
+            "cf": 893
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 11,
+            "cf": 102
+          },
+          "finalCities": {
+            "eu": 100,
+            "cf": 13
+          },
+          "cityCaptures": 163,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 113,
+            "cf": 101
+          },
+          "attacks": {
+            "eu": 1320,
+            "cf": 716
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 11,
+            "cf": 102
+          },
+          "finalCities": {
+            "eu": 98,
+            "cf": 15
+          },
+          "cityCaptures": 167,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 138,
+            "cf": 90
+          },
+          "attacks": {
+            "eu": 1416,
+            "cf": 723
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 43,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 102
+          },
+          "finalCities": {
+            "eu": 113,
+            "cf": 0
+          },
+          "cityCaptures": 170,
+          "lastCaptureTurn": 43,
+          "production": {
+            "eu": 138,
+            "cf": 71
+          },
+          "attacks": {
+            "eu": 1305,
+            "cf": 640
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 11,
+            "cf": 102
+          },
+          "finalCities": {
+            "eu": 61,
+            "cf": 52
+          },
+          "cityCaptures": 124,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 122,
+            "cf": 88
+          },
+          "attacks": {
+            "eu": 1275,
+            "cf": 852
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-mongolia",
+      "job": 117948361438,
+      "euWins": 5,
+      "cfWins": 0,
+      "ongoing": 1,
+      "totalCities": 51,
+      "rating": "Severely EU-favored",
+      "action": "+25–35 CF starting formations, reinforcing Ulaanbaatar, Darkhan, northern roads and eastern reserves",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 25,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 40
+          },
+          "finalCities": {
+            "eu": 51,
+            "cf": 0
+          },
+          "cityCaptures": 88,
+          "lastCaptureTurn": 25,
+          "production": {
+            "eu": 41,
+            "cf": 23
+          },
+          "attacks": {
+            "eu": 806,
+            "cf": 490
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 23,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 40
+          },
+          "finalCities": {
+            "eu": 51,
+            "cf": 0
+          },
+          "cityCaptures": 82,
+          "lastCaptureTurn": 23,
+          "production": {
+            "eu": 32,
+            "cf": 25
+          },
+          "attacks": {
+            "eu": 862,
+            "cf": 435
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 11,
+            "cf": 40
+          },
+          "finalCities": {
+            "eu": 23,
+            "cf": 28
+          },
+          "cityCaptures": 112,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 62,
+            "cf": 63
+          },
+          "attacks": {
+            "eu": 1051,
+            "cf": 932
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 24,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 40
+          },
+          "finalCities": {
+            "eu": 51,
+            "cf": 0
+          },
+          "cityCaptures": 74,
+          "lastCaptureTurn": 24,
+          "production": {
+            "eu": 36,
+            "cf": 25
+          },
+          "attacks": {
+            "eu": 932,
+            "cf": 500
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 25,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 40
+          },
+          "finalCities": {
+            "eu": 51,
+            "cf": 0
+          },
+          "cityCaptures": 76,
+          "lastCaptureTurn": 25,
+          "production": {
+            "eu": 43,
+            "cf": 24
+          },
+          "attacks": {
+            "eu": 915,
+            "cf": 531
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 20,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 11,
+            "cf": 40
+          },
+          "finalCities": {
+            "eu": 51,
+            "cf": 0
+          },
+          "cityCaptures": 80,
+          "lastCaptureTurn": 20,
+          "production": {
+            "eu": 28,
+            "cf": 20
+          },
+          "attacks": {
+            "eu": 839,
+            "cf": 406
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-manchuria",
+      "job": 117948361457,
+      "euWins": 1,
+      "cfWins": 2,
+      "ongoing": 3,
+      "totalCities": 49,
+      "rating": "Mixed / promising",
+      "action": "Hold opening formations; extend three EU 47/49-city turn-45 runs to determine whether a mild EU advantage emerges",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 10,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 47,
+            "cf": 2
+          },
+          "cityCaptures": 95,
+          "lastCaptureTurn": 43,
+          "production": {
+            "eu": 115,
+            "cf": 68
+          },
+          "attacks": {
+            "eu": 1359,
+            "cf": 890
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 44,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 10,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 49
+          },
+          "cityCaptures": 106,
+          "lastCaptureTurn": 44,
+          "production": {
+            "eu": 74,
+            "cf": 88
+          },
+          "attacks": {
+            "eu": 1303,
+            "cf": 1150
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 10,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 47,
+            "cf": 2
+          },
+          "cityCaptures": 99,
+          "lastCaptureTurn": 37,
+          "production": {
+            "eu": 109,
+            "cf": 79
+          },
+          "attacks": {
+            "eu": 1455,
+            "cf": 821
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 43,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 10,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 49,
+            "cf": 0
+          },
+          "cityCaptures": 103,
+          "lastCaptureTurn": 43,
+          "production": {
+            "eu": 84,
+            "cf": 70
+          },
+          "attacks": {
+            "eu": 1566,
+            "cf": 923
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 10,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 47,
+            "cf": 2
+          },
+          "cityCaptures": 107,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 104,
+            "cf": 65
+          },
+          "attacks": {
+            "eu": 1449,
+            "cf": 871
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 38,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 10,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 49
+          },
+          "cityCaptures": 84,
+          "lastCaptureTurn": 38,
+          "production": {
+            "eu": 59,
+            "cf": 81
+          },
+          "attacks": {
+            "eu": 1132,
+            "cf": 1002
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-himalayas",
+      "job": 117948361512,
+      "euWins": 0,
+      "cfWins": 0,
+      "ongoing": 6,
+      "totalCities": 57,
+      "rating": "Strongly CF-favored",
+      "action": "+20–30 EU starting formations on playable Himalayan routes and supporting artillery; or remove 10–15 CF",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 31,
+            "cf": 26
+          },
+          "finalCities": {
+            "eu": 9,
+            "cf": 48
+          },
+          "cityCaptures": 64,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 66,
+            "cf": 75
+          },
+          "attacks": {
+            "eu": 581,
+            "cf": 735
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 31,
+            "cf": 26
+          },
+          "finalCities": {
+            "eu": 10,
+            "cf": 47
+          },
+          "cityCaptures": 59,
+          "lastCaptureTurn": 42,
+          "production": {
+            "eu": 66,
+            "cf": 78
+          },
+          "attacks": {
+            "eu": 635,
+            "cf": 812
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 31,
+            "cf": 26
+          },
+          "finalCities": {
+            "eu": 11,
+            "cf": 46
+          },
+          "cityCaptures": 66,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 65,
+            "cf": 77
+          },
+          "attacks": {
+            "eu": 634,
+            "cf": 837
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 31,
+            "cf": 26
+          },
+          "finalCities": {
+            "eu": 7,
+            "cf": 50
+          },
+          "cityCaptures": 58,
+          "lastCaptureTurn": 44,
+          "production": {
+            "eu": 62,
+            "cf": 73
+          },
+          "attacks": {
+            "eu": 624,
+            "cf": 815
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 31,
+            "cf": 26
+          },
+          "finalCities": {
+            "eu": 14,
+            "cf": 43
+          },
+          "cityCaptures": 59,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 63,
+            "cf": 78
+          },
+          "attacks": {
+            "eu": 631,
+            "cf": 791
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 31,
+            "cf": 26
+          },
+          "finalCities": {
+            "eu": 6,
+            "cf": 51
+          },
+          "cityCaptures": 67,
+          "lastCaptureTurn": 42,
+          "production": {
+            "eu": 59,
+            "cf": 93
+          },
+          "attacks": {
+            "eu": 599,
+            "cf": 749
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-sichuan",
+      "job": 117948361473,
+      "euWins": 0,
+      "cfWins": 5,
+      "ongoing": 1,
+      "totalCities": 62,
+      "rating": "CF-favored",
+      "action": "+12–20 EU formations at mountain exits around Batang/Dege/Kangding; keep defensive Chengdu core",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 45,
+          "winner": null,
+          "startingCities": {
+            "eu": 12,
+            "cf": 50
+          },
+          "finalCities": {
+            "eu": 40,
+            "cf": 22
+          },
+          "cityCaptures": 110,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 70,
+            "cf": 76
+          },
+          "attacks": {
+            "eu": 1096,
+            "cf": 743
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 42,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 12,
+            "cf": 50
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 62
+          },
+          "cityCaptures": 72,
+          "lastCaptureTurn": 42,
+          "production": {
+            "eu": 51,
+            "cf": 71
+          },
+          "attacks": {
+            "eu": 815,
+            "cf": 811
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 39,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 12,
+            "cf": 50
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 62
+          },
+          "cityCaptures": 68,
+          "lastCaptureTurn": 39,
+          "production": {
+            "eu": 49,
+            "cf": 60
+          },
+          "attacks": {
+            "eu": 776,
+            "cf": 817
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 35,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 12,
+            "cf": 50
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 62
+          },
+          "cityCaptures": 68,
+          "lastCaptureTurn": 35,
+          "production": {
+            "eu": 38,
+            "cf": 60
+          },
+          "attacks": {
+            "eu": 773,
+            "cf": 798
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 45,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 12,
+            "cf": 50
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 62
+          },
+          "cityCaptures": 76,
+          "lastCaptureTurn": 45,
+          "production": {
+            "eu": 57,
+            "cf": 77
+          },
+          "attacks": {
+            "eu": 946,
+            "cf": 888
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 34,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 12,
+            "cf": 50
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 62
+          },
+          "cityCaptures": 40,
+          "lastCaptureTurn": 34,
+          "production": {
+            "eu": 42,
+            "cf": 54
+          },
+          "attacks": {
+            "eu": 677,
+            "cf": 790
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-beijing",
+      "job": 117948361516,
+      "euWins": 0,
+      "cfWins": 6,
+      "ongoing": 0,
+      "totalCities": 56,
+      "rating": "Severely CF-favored",
+      "action": "+25–35 EU formations near Shanhaiguan, Jinzhou and Chengde, including siege/artillery; or remove 10–15 CF",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 42,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 17,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 56
+          },
+          "cityCaptures": 53,
+          "lastCaptureTurn": 42,
+          "production": {
+            "eu": 59,
+            "cf": 75
+          },
+          "attacks": {
+            "eu": 747,
+            "cf": 846
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 38,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 17,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 56
+          },
+          "cityCaptures": 59,
+          "lastCaptureTurn": 38,
+          "production": {
+            "eu": 57,
+            "cf": 63
+          },
+          "attacks": {
+            "eu": 600,
+            "cf": 726
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 34,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 17,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 56
+          },
+          "cityCaptures": 49,
+          "lastCaptureTurn": 34,
+          "production": {
+            "eu": 55,
+            "cf": 49
+          },
+          "attacks": {
+            "eu": 571,
+            "cf": 725
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 37,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 17,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 56
+          },
+          "cityCaptures": 57,
+          "lastCaptureTurn": 37,
+          "production": {
+            "eu": 61,
+            "cf": 64
+          },
+          "attacks": {
+            "eu": 536,
+            "cf": 710
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 41,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 17,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 56
+          },
+          "cityCaptures": 57,
+          "lastCaptureTurn": 41,
+          "production": {
+            "eu": 66,
+            "cf": 63
+          },
+          "attacks": {
+            "eu": 643,
+            "cf": 807
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 34,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 17,
+            "cf": 39
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 56
+          },
+          "cityCaptures": 35,
+          "lastCaptureTurn": 34,
+          "production": {
+            "eu": 55,
+            "cf": 58
+          },
+          "attacks": {
+            "eu": 441,
+            "cf": 671
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    },
+    {
+      "scenario": "eu-cf-luoyang",
+      "job": 117948361800,
+      "euWins": 1,
+      "cfWins": 5,
+      "ongoing": 0,
+      "totalCities": 83,
+      "rating": "Strongly CF-favored",
+      "action": "+25–35 EU ground formations across northern and southwestern bridgeheads, emphasizing city-assault support; preserve capital forts",
+      "rows": [
+        {
+          "side": "eu",
+          "seed": 11,
+          "turns": 22,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 18,
+            "cf": 65
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 83
+          },
+          "cityCaptures": 80,
+          "lastCaptureTurn": 22,
+          "production": {
+            "eu": 22,
+            "cf": 38
+          },
+          "attacks": {
+            "eu": 606,
+            "cf": 646
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 11,
+          "turns": 28,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 18,
+            "cf": 65
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 83
+          },
+          "cityCaptures": 116,
+          "lastCaptureTurn": 28,
+          "production": {
+            "eu": 28,
+            "cf": 50
+          },
+          "attacks": {
+            "eu": 704,
+            "cf": 731
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 37,
+          "turns": 24,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 18,
+            "cf": 65
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 83
+          },
+          "cityCaptures": 110,
+          "lastCaptureTurn": 24,
+          "production": {
+            "eu": 28,
+            "cf": 37
+          },
+          "attacks": {
+            "eu": 642,
+            "cf": 749
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 37,
+          "turns": 26,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 18,
+            "cf": 65
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 83
+          },
+          "cityCaptures": 92,
+          "lastCaptureTurn": 26,
+          "production": {
+            "eu": 30,
+            "cf": 50
+          },
+          "attacks": {
+            "eu": 674,
+            "cf": 696
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "eu",
+          "seed": 91,
+          "turns": 24,
+          "winner": "cf",
+          "startingCities": {
+            "eu": 18,
+            "cf": 65
+          },
+          "finalCities": {
+            "eu": 0,
+            "cf": 83
+          },
+          "cityCaptures": 128,
+          "lastCaptureTurn": 24,
+          "production": {
+            "eu": 25,
+            "cf": 35
+          },
+          "attacks": {
+            "eu": 676,
+            "cf": 818
+          },
+          "errors": 0,
+          "stagnated": false
+        },
+        {
+          "side": "cf",
+          "seed": 91,
+          "turns": 32,
+          "winner": "eu",
+          "startingCities": {
+            "eu": 18,
+            "cf": 65
+          },
+          "finalCities": {
+            "eu": 83,
+            "cf": 0
+          },
+          "cityCaptures": 133,
+          "lastCaptureTurn": 32,
+          "production": {
+            "eu": 52,
+            "cf": 34
+          },
+          "attacks": {
+            "eu": 1056,
+            "cf": 572
+          },
+          "errors": 0,
+          "stagnated": false
+        }
+      ]
+    }
+  ]
+}

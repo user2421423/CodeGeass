@@ -994,5 +994,274 @@ const SCENARIO_CATALOG = Object.freeze({
     "files": [
       "scenarios-luoyang.js"
     ]
+  },
+  "eu-cf-kazakhstan": {
+    "id": "eu-cf-kazakhstan",
+    "title": "Invasion of Kazakhstan",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 156,
+    "rows": 104,
+    "meta": {
+      "text": {
+        "terrain": "Open steppe favours armored mobility. Altai and Tien Shan mountain hexes cost 2 movement; named passes are traversable. Caspian fleets cannot enter other lakes.",
+        "era": "Kazakhstan · E.U.–Federation Eastern Front",
+        "intro": "Four Europian thrusts enter Kazakhstan from Russia, contesting the Caspian frontier, northern rails and eastern industrial belt. Take every city, without turn limits.",
+        "diplomacy": "Europia United and the Chinese Federation are hostile from turn 1. Caspian harbours are independently capturable; fleets never traverse disconnected lakes.",
+        "elite": "Normal faction Elite Forces, named commanders, research, production and difficulty scaling.",
+        "focus": {
+          "eu": "Orenburg",
+          "cf": "Astana"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-eu-cf-kazakhstan.js"
+    ]
+  },
+  "eu-cf-persia": {
+    "id": "eu-cf-persia",
+    "title": "Invasion of Persia",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 168,
+    "rows": 112,
+    "meta": {
+      "text": {
+        "terrain": "Zagros and Alborz mountains cost 2 movement. Valleys and named passes remain traversable; Persian Gulf water separates the coasts.",
+        "era": "Persia · Alternate 2017",
+        "intro": "Europia United invades Chinese-held Iran from Armenia, Azerbaijan, Iraq and the Persian Gulf. Break the Zagros toward Tehran and Isfahan, or land through Hormuz. Capture all 61 cities to win; no turn limit.",
+        "diplomacy": "Only the E.U. and Chinese Federation fight. All Iranian cities begin under Federation control. Gulf ports are independently capturable, and the Caspian is not connected to the Gulf.",
+        "elite": "Elite Persia uses standard faction-specific Elite Force conversion, named officers, production and research rules. Carrier hulls remain conventional.",
+        "focus": {
+          "eu": "Yerevan",
+          "cf": "Kermanshah"
+        }
+      }
+    },
+    "files": [
+      "iraq-iran-coast.js",
+      "scenarios-eu-cf-persia.js"
+    ]
+  },
+  "eu-cf-xinjiang": {
+    "id": "eu-cf-xinjiang",
+    "title": "Battle for Xinjiang",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 144,
+    "rows": 96,
+    "meta": {
+      "text": {
+        "terrain": "Mountain hexes cost 2 movement; marked passes and roads are traversable. Deserts cause normal desert attrition; blocked lake hexes cannot be crossed, and there are no naval ports.",
+        "era": "Xinjiang and eastern Kazakhstan · Alternate 2017",
+        "intro": "Europia United launches a four-axis invasion from Kazakhstan. Break through the Dzungarian Gate, Ili Valley and northern Altai while forcing the Tianshan passes. Capture all 70 cities with no turn limit.",
+        "diplomacy": "Only the E.U. and Chinese Federation fight. Kazakhstan is E.U.-held staging territory, while the Federation controls Xinjiang. Every remaining enemy city counts.",
+        "elite": "Faction-specific E.U. and Federation Elite Forces, research, upgraded rival commanders and standard rewards remain in force.",
+        "focus": {
+          "eu": "Dostyk",
+          "cf": "Ürümqi"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-eu-cf-xinjiang.js"
+    ]
+  },
+  "eu-cf-india": {
+    "id": "eu-cf-india",
+    "title": "Invasion of India",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 168,
+    "rows": 124,
+    "meta": {
+      "text": {
+        "era": "India · Alternate 2017",
+        "intro": "Europia United invades from Persia and Afghanistan, supported by Arabian Sea carrier landings at Sindh, Gujarat and Konkan. Fight across the Indus, Ganges and Deccan to capture every theatre city.",
+        "diplomacy": "Only E.U. and the Chinese Federation participate. Ports are individually capturable, factories and AI production remain active, and neither faction has a turn-limit victory.",
+        "elite": "Elite India follows standard faction-specific Elite Force conversion, commander progression and recruitment rules; carrier hulls remain standard naval units.",
+        "terrain": "Himalayan and Hindu Kush slopes raise movement costs. Khyber, Quetta and Jammu corridors remain playable.",
+        "focus": {
+          "eu": "Kandahar",
+          "cf": "New Delhi"
+        }
+      }
+    },
+    "files": [
+      "eu-cf-india-geography.js",
+      "scenarios-eu-cf-india.js"
+    ]
+  },
+  "eu-cf-mongolia": {
+    "id": "eu-cf-mongolia",
+    "title": "Invasion of Mongolia",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 164,
+    "rows": 96,
+    "meta": {
+      "text": {
+        "terrain": "The Altai, Khangai and Khentii massifs slow movement. Valleys and eastern steppe remain traversable; there are no sea routes.",
+        "era": "Mongolia · Alternate 2017",
+        "intro": "Europia United invades south from Siberia into Federation-held Mongolia. Four widely separated offensives must converge on a fortified Ulaanbaatar.",
+        "diplomacy": "E.U. and the Chinese Federation are at war from the first turn. Win by capturing every city; there is no turn limit.",
+        "elite": "Standard faction-legal Elite Forces, commanders and scenario difficulty rules are retained.",
+        "focus": {
+          "eu": "Kyakhta",
+          "cf": "Ulaanbaatar"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-eu-cf-mongolia.js"
+    ]
+  },
+  "eu-cf-manchuria": {
+    "id": "eu-cf-manchuria",
+    "title": "Invasion of Manchuria",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 144,
+    "rows": 112,
+    "meta": {
+      "text": {
+        "era": "Manchuria · Alternate 2017",
+        "intro": "E.U. field armies invade from Mongolia and Siberia. Break through the Great Khingan frontier, then seize Harbin, Changchun and Shenyang. Capture every one of 49 cities.",
+        "diplomacy": "E.U. and the Chinese Federation are hostile from turn one. Major rivers, railway corridors and three independent Liaodong ports shape the campaign. No turn limit.",
+        "elite": "Standard faction Elite Force conversion, research, commander and reinforcement rules remain in effect.",
+        "focus": {
+          "eu": "Zabaykalsk",
+          "cf": "Harbin"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "korea-landmask.js",
+      "scenarios-eu-cf-manchuria.js"
+    ]
+  },
+  "eu-cf-himalayas": {
+    "id": "eu-cf-himalayas",
+    "title": "Crossing the Himalayas",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 144,
+    "rows": 108,
+    "meta": {
+      "text": {
+        "era": "Himalayan Front · Alternate 2017",
+        "intro": "Europia United pushes north from India and Nepal across six principal mountain sectors into Tibet. Seven mapped high-altitude routes are genuinely passable; capture every city to win.",
+        "terrain": "Mountain hexes cost 2 movement and reduce damage by 25%; high plateau tundra inflicts standard 2.5% attrition. Dark peaks cannot be crossed. Pass corridors stay open.",
+        "diplomacy": "E.U. and Chinese Federation only. No invented ocean, warships, ports or naval shortcuts. Both sides hold producing cities and can recruit throughout the fight.",
+        "elite": "Elite difficulty uses the existing E.U./Federation Elite Force conversion, research and AI commander upgrades.",
+        "focus": {
+          "eu": "Kathmandu",
+          "cf": "Lhasa"
+        }
+      }
+    },
+    "files": [
+      "scenarios-eu-cf-himalayas.js"
+    ]
+  },
+  "eu-cf-sichuan": {
+    "id": "eu-cf-sichuan",
+    "title": "Invasion of Sichuan",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 148,
+    "rows": 108,
+    "meta": {
+      "text": {
+        "terrain": "Hengduan mountain slopes slow ground forces; the three mapped passes and basin roads are accessible.",
+        "era": "Eastern Tibet → Sichuan · E.U.–Federation War",
+        "intro": "E.U. armies break out of Tibet on northern, central and southern passes. Fortified Federation defenses cover western Sichuan; Chengdu commands the industrial basin and eastern reserves.",
+        "diplomacy": "Only E.U. and the Chinese Federation are present. This landlocked region has no seaports or naval units. All opposing cities must be captured; no turn limit.",
+        "elite": "Uses standard faction Elite Forces, Elite conversion, opposing commander ranks and factories. No scenario-only combat buffs.",
+        "focus": {
+          "eu": "Chamdo",
+          "cf": "Chengdu"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-eu-cf-sichuan.js"
+    ]
+  },
+  "eu-cf-beijing": {
+    "id": "eu-cf-beijing",
+    "title": "Battle of Beijing",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 176,
+    "rows": 112,
+    "meta": {
+      "text": {
+        "terrain": "Great Wall highlands cost extra movement; Shanhaiguan and the mapped mountain roads remain passable.",
+        "era": "Northern China · E.U.–Federation Campaign",
+        "intro": "From Manchuria, the E.U. drives south through the Liaoxi corridor towards Beijing and Tianjin. Defended mountain gateways, industrial cities and the Bohai coast create three linked fronts. No turn limit.",
+        "diplomacy": "Only the E.U. and Chinese Federation are hostile. Independent capturable harbours provide naval counterplay; factories and the normal research economy operate on both sides.",
+        "elite": "Elite difficulty uses the established faction Elite Forces and rival commander rules, without scenario-only weapons or reward overrides.",
+        "focus": {
+          "eu": "Jinzhou",
+          "cf": "Beijing"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-eu-cf-beijing.js"
+    ]
+  },
+  "eu-cf-luoyang": {
+    "id": "eu-cf-luoyang",
+    "title": "Battle of Luoyang — E.U. vs Federation",
+    "sides": [
+      "eu",
+      "cf"
+    ],
+    "cols": 174,
+    "rows": 116,
+    "meta": {
+      "text": {
+        "era": "Henan · E.U.–Federation World Campaign Finale",
+        "intro": "The E.U. converges from the north and southwest. Breach the Yellow River defense, seize Luoyang and conquer every Federation city without a turn limit.",
+        "diplomacy": "Two hostile factions, 83 inland cities and six playable bridge/fords. Eastern Henan is held by the Federation from the start.",
+        "elite": "Both factions use their own Elite Forces, the standard recruitment/research rules, and no unique combat buffs.",
+        "focus": {
+          "eu": "Anyang",
+          "cf": "Luoyang"
+        }
+      },
+      "saveVersion": 2
+    },
+    "files": [
+      "scenarios-luoyang.js",
+      "scenarios-eu-cf-luoyang.js"
+    ]
   }
 });
