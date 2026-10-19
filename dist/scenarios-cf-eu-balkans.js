@@ -163,6 +163,15 @@ const PASSES=[[26.20,41.77,.40],[25.88,40.85,.41],[25.57,41.93,.35],
  [24.75,42.14,.34],[23.09,42.02,.37],[23.16,41.71,.3],
  [22.94,40.64,.38],[21.90,43.32,.44],[21.43,42,.38],
  [20.46,44.79,.4],[25.97,43.85,.40]];
+const ROADS={
+ 'Thrace Sofia corridor':[[28.98,41.01],[27.51,40.98],[26.56,41.68],[26.20,41.77],[25.56,41.93],[24.75,42.14],[23.32,42.70],[21.90,43.32],[20.46,44.79]],
+ 'Via Egnatia':[[25.88,40.85],[25.40,41.12],[24.40,40.94],[23.55,41.09],[22.94,40.64],[20.85,39.66],[19.82,41.33]],
+ 'Morava Vardar corridor':[[22.94,40.64],[21.43,42.00],[21.90,43.32],[20.92,44.01],[20.46,44.79],[19.84,45.25]],
+ 'Black Sea coastal highway':[[28.98,41.01],[27.47,42.50],[27.92,43.22],[28.65,44.18]],
+ 'Danube routes':[[20.46,44.79],[23.79,44.32],[25.96,43.85],[26.10,44.43],[28.65,44.18]],
+ 'Adriatic coastal road':[[16.44,43.51],[17.81,43.34],[18.09,42.65],[19.09,42.10],[19.45,41.32],[19.49,40.47]],
+ 'Greek north south':[[22.94,40.64],[22.42,39.64],[22.95,39.36],[23.73,37.98],[23.64,37.94]]
+};
 const BRIDGES=['Edirne','Svilengrad','Plovdiv','Ruse','Vidin','Belgrade','Nis',
   'Skopje','Thessaloniki','Novi Sad','Craiova','Alexandroupoli'];
 function geo(c,r){return {lon:BOUNDS.west+(c+.5+.5*(r&1))*(BOUNDS.east-BOUNDS.west)/COLS,
@@ -236,7 +245,7 @@ function create(player='cf',difficulty='normal',seed=201720){
  }
  g.scenario={id:ID,key:KEY,title:'Balkan Offensive',version:1,
   phase:'thracian-breakthrough',aiDoctrine:'europe',groups:[],funding:{},
-  bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,
+  bounds:BOUNDS,projection:PROJECTION,rivers:RIVERS,roads:ROADS,
   riverCrossings:BRIDGES, mountainPasses:PASSES.map(v=>v.slice(0,2)),
   operationalFronts:[
    {name:'Thrace-Maritsa',attack:'cf',bases:['Edirne','Kirklareli'],route:['Svilengrad','Haskovo','Plovdiv','Sofia']},
@@ -448,7 +457,7 @@ api.meta={
  saveVersion:1,elite:true,eliteRosterOnly:true,
  terrainCosts:{mountain:2},
  map:{centreSampled:true,europeanRegion:true,coastBuffer:1,homeZoom:5.2,
-  overviewMarkers:true,overlays:['regionalRivers']},
+  overviewMarkers:true,overlays:['regionalRivers','roads']},
  ai:{doctrine:'europe',recovery:true,routeBias:'cf',synchronizedFlotillas:true,
   operationalAxes:{invader:'cf',defender:'eu',axes:{
    'Thracian Spearhead':['Svilengrad','Haskovo','Plovdiv','Sofia'],
