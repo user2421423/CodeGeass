@@ -429,6 +429,7 @@
         [K, 'burai_kai', 4, 5, 1, 'kallen'],
         [K, 'burai', 5, 7, 1, null, { normalOnly: true }],
         [K, 'burai', 5, 6, 2, null, { normalOnly: true }],
+        [K, 'burai_kai', 6, 5, 2, null, { normalOnly: true }],
         [B, 'vincent_commander', 9, 6, 1, 'rolo'],
         [B, 'sutherland', 8, 4, 1],
         [B, 'sutherland', 10, 5, 2],

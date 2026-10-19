@@ -197,9 +197,13 @@
           skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander;
       const placeScore = p => {
         const station = stationAt(g, p);
+        const storyObjective = g.mode === 'campaign' && u.side === g.player &&
+          g.campaign?.aiObjective?.side === u.side ? g.campaign.aiObjective : null;
         let sc = station && foe(g, station.owner, u.side) && !isShip(u) &&
           station.shield <= 0 && canCapture(u)
           ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        if (storyObjective && p.c === storyObjective.c && p.r === storyObjective.r &&
+            canCapture(u) && !isShip(u)) sc += 260;
         if (COMMANDERS[u.cmd]?.fx.treasury && station?.owner === u.side) sc += 250 + station.income * 4;
         const mine = siteAt(g, p);
         if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;

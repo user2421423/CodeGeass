@@ -415,6 +415,8 @@
         // Normal: immediate refinery perimeter, rather than only rear-line reinforcements.
         [B, 'vincent_ward', 13, 3, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'vincent_ward', 15, 3, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 12, 3, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 14, 2, 2, null, { normalOnly: true, hold: 1 }],
         [K, 'burai', 4, 6, 2, 'zero'],
         [K, 'elite_guren_mkii', 5, 4, 1, 'kallen'],
         [K, 'burai', 4, 8, 1, 'cc'],
@@ -450,7 +452,7 @@
           say: [['ohgi', 'The second group is ready. Moving out.']],
           spawn: [
             [K, 'burai', 1, 5, 1, 'ohgi'],
-            [K, 'burai_kai', 1, 9, 2, 'sugiyama'],
+            [K, 'burai_kai', 1, 9, 2, 'sugiyama', { skipNormal: true }],
             [K, 'burai_kai', 1, 3, 2, 'minami', { skipNormal: true }],
           ],
         },
@@ -660,6 +662,8 @@
         [B, 'gareth', 19, 7, 1],
         [B, 'gareth', 20, 4, 1],
         [B, 'gareth', 18, 6, 1],
+        [B, 'vincent_ward', 18, 5, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 20, 5, 2, null, { normalOnly: true, hold: 1 }],
         [K, 'elite_guren_seiten', 4, 5, 1, 'kallen', { hold: false }],
         [K, 'zangetsu', 4, 7, 1, 'tohdoh'],
         [K, 'akatsuki_zikisan', 5, 4, 1, 'chiba'],
