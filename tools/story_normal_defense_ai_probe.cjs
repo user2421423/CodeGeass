@@ -68,7 +68,7 @@ function testVariants(id, variants) {
   mission.units=original.concat(extra);
   mission.events=oldEvents.map(e=>e.spawn&&trim[e.turn]?
     {...e,spawn:e.spawn.map((u,i)=>i<trim[e.turn]
-      ?[...u.slice(0,6),{...(u[6]||{}),skipNormal:true}]:u)}:e);
+      ?Array.from({length:7},(_,k)=>k===6?{...(u[6]||{}),skipNormal:true}:u[k]??null):u)}:e);
   const results=seeds.map(seed=>play(id,seed));
   const wins=results.filter(r=>r.winner===mission.player).length;
   console.log('STORY BALANCE MATRIX '+id+' '+name+': Britannia AI '+wins+'/8 victories; '+results.map(r=>r.winner+':T'+r.turn).join(' '));
