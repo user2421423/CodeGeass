@@ -103,6 +103,8 @@
         if(v.expShadowMove){v.moved=true;v.skillReposition=0;delete v.expShadowMove;}
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
+        // Sword Breaker persists throughout the affected side's next turn.
+        delete v.expAyanoSwordBreak;
         // Expire Rolo's freeze only AFTER this faction has lost its entire
         // next turn, never at the start of its disabled activation.
         delete v.expRoloFrozen;

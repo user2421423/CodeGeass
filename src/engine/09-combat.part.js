@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -90,6 +90,8 @@
       attack *= 1 + f.firstStrike;
     if (!counter && f.liveOnAttack && u.hp / maxHP(u) < 0.5) attack *= 1 + f.liveOnAttack;
     if (counter && f.counter) attack *= 1 + f.counter;
+    // Ayano's swordplay counters only adjacent formations.
+    if (counter && f.swordmaster && target && dist(g, u, target) === 1) attack *= 1.5;
     if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
     attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
@@ -176,7 +178,11 @@
       g.units.some(v => v.hp > 0 && v.side === target.side && v.id !== target.id && !TYPES[v.type].naval && TYPES[v.type].branch === 'Armor' && dist(g, v, target) === 1)
         ? 5
         : 0;
-    const armor = target ? victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') + formationArmor : 35;
+    const armor = target
+      ? (victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') + formationArmor)
+        * (target.expAyanoSwordBreak ? 0.75 : 1)
+        * (f.swordmaster && dist(g, u, target) === 1 ? 0.60 : 1)
+      : 35;
     const vritraBypass=!counter&&f.elitePenSupport&&victim?.branch==='Armor'&&u.expVritraUsedTurn!==g.turn;
     // First anti-armor hit bypasses 20% of the entire target-defense reduction,
     // rather than adding a second penetration or cover modifier.
@@ -224,6 +230,7 @@
         attack *= 0.80;
       // Commander signature abilities (defender side).
       if (tf.taken) attack *= tf.taken;
+      if (tf.swordmaster && dist(g, u, target) === 1) attack *= 0.70;
       if (target.expImperialCommand) attack *= 0.75;
       // The charge remains intact during previews, then is spent by the
       // actual direct hit, counterattack or splash resolution.
@@ -577,6 +584,9 @@
       const priorHP=d.hp;
       d.hp = Math.max(0, d.hp - dmg);
       actualDefenderDamage = priorHP - d.hp;
+      // Sword Breaker weakens the armor of an adjacent formation through
+      // its next complete action phase, including when the strike is dodged.
+      if (f.swordmaster && dist(g, a, d) === 1) d.expAyanoSwordBreak = true;
       recordWarEvent(g,'damage',a.side,{targetSide:d.side,value:actualDefenderDamage,unitId:a.id,group:warGroup(g,a)});
       hit.push({ id: d.id, c: p.c, r: p.r, damage: dmg });
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
@@ -619,6 +629,7 @@
       if (fx(d).counterReflect)
         retaliation += Math.round(actualDefenderDamage * fx(d).counterReflect);
       if(senbaCounter)d.expSenbaCounterTurn=g.turn;
+      if (fx(d).swordmaster && dist(g, d, a) === 1) a.expAyanoSwordBreak = true;
       if(d.guardReady&&d.held&&skillNear(g,d,'defensiveDoctrine',2)&&d.expSmilasCounterTurn!==g.turn){
         d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;
       }
