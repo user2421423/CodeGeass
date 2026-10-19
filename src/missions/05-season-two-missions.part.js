@@ -1046,10 +1046,15 @@
       cities: BAY_CITIES,
       economy: { britannia: 400 },
       hold: { bk: 2 },
-      units: [...BAY_BRIT,
+      units: [...BAY_BRIT.map(u => u[5] === 'guilford'
+        ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5],
+          { ...(u[6] || {}), skipNormal: true }] : u),
+        [B, 'vincent_commander', 1, 6, 3, 'guilford', { normalOnly: true, hold: 0 }],
         [B, 'vincent_ward', 4, 1, 1, null, { normalOnly: true }],
         [B, 'sutherland_air', 8, 5, 2, null, { normalOnly: true }],
         [B, 'portman_ii', 13, 5, 2, null, { normalOnly: true }],
+        [B, 'portman_ii', 8, 6, 2, null, { normalOnly: true }],
+        [B, 'portman_ii', 13, 6, 2, null, { normalOnly: true }],
         ...BAY_BK, [K, 'akatsuki_flight', 9, 5, 1, null, { skipNormal: true }]],
       objective: 'Board the Black Knights’ submarine before they escape. Guilford must survive.',
       win: { capture: ['Black Knights Submarine'] },
@@ -1091,7 +1096,8 @@
       economy: { britannia: 300 },
       goals: { bk: [[20, 6, -6]] },
       units: [
-        [B, 'gareth', 20, 6, 1, 'schneizel'],
+        [B, 'gareth', 20, 6, 1, 'schneizel', { skipNormal: true }],
+        [B, 'gareth', 20, 6, 3, 'schneizel', { normalOnly: true, hold: 1 }],
         [B, 'vincent_ward', 17, 5, 2],
         [B, 'vincent_ward', 17, 7, 2],
         [B, 'sutherland', 18, 3, 2],
@@ -1101,6 +1107,7 @@
         [B, 'vincent_ward', 18, 5, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'vincent_ward', 18, 7, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'gloucester', 19, 7, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 18, 6, 2, null, { normalOnly: true, hold: 1 }],
         ...XIAOPEI_CF,
         ...XIAOPEI_BK.map(u => u[1] === 'akatsuki' && u[2] === 4 && u[3] === 8
           ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5] ?? null,
@@ -1136,7 +1143,8 @@
       teams: { britannia: 'empire', neutral: 'empire', bk: 'rebels', cf: 'rebels' },
       names: EUNUCH_NAMES,
       map: LUOYANG,
-      cities: LUOYANG_CITIES,
+      cities: LUOYANG_CITIES.map(city => city[0] === 'Vermillion Forbidden City'
+        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 1400 }] : city),
       economy: { britannia: 400 },
       hold: { neutral: 3 },
       goals: { bk: [[15, 4, -6]], cf: [[15, 4, -6]] },
@@ -1157,7 +1165,11 @@
         [B, 'vincent_ward', 16, 3, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'vincent_ward', 16, 5, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'gloucester', 20, 7, 2, null, { normalOnly: true, hold: 1 }],
-        ...LUOYANG_EUNUCHS,
+        ...LUOYANG_EUNUCHS.map(u => u[5] === 'zhaohao'
+          ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5], { ...(u[6] || {}), skipNormal: true }] : u),
+        ['neutral', 'gun_ru', 15, 4, 3, 'zhaohao', { normalOnly: true, hold: 1 }],
+        ['neutral', 'gun_ru', 14, 3, 3, null, { normalOnly: true, hold: 1 }],
+        ['neutral', 'gun_ru', 17, 4, 3, null, { normalOnly: true, hold: 1 }],
         ...LUOYANG_REBELS.filter(u => u[0] === K),
         [K, 'akatsuki', 7, 10, 2, null, { skipNormal: true }],
         ...LUOYANG_REBELS.filter(u => u[0] === 'cf'),
@@ -1244,13 +1256,16 @@
       teams: { bk: 'ufn', cf: 'ufn', britannia: 'empire' },
       names: UFN,
       map: KAGOSHIMA,
-      cities: KAGOSHIMA_CITIES,
+      cities: KAGOSHIMA_CITIES.map(city => city[0] === 'Kagoshima Settlement'
+        ? [...city.slice(0, 5), { ...(city[5] || {}), normalShield: 1300 }] : city),
       economy: { britannia: 500, bk: 300, cf: 300 },
       industry: { britannia: 200, bk: 120, cf: 120 },
       production: [K, 'cf'],
       goals: { bk: [[6, 5, -6]], cf: [[6, 5, -6]] },
       units: [
-        ...KAGOSHIMA_BRIT,
+        ...KAGOSHIMA_BRIT.map(u => u[5] === 'luciano'
+          ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5], { ...(u[6] || {}), skipNormal: true }] : u),
+        [B, 'vincent_commander', 6, 5, 3, 'luciano', { normalOnly: true, hold: 1 }],
         [B, 'brighton', 12, 2, 1, 'bismarck'],
         [B, 'vincent_ward', 9, 4, 1, null, { normalOnly: true }],
         [B, 'vincent_ward', 7, 4, 2, null, { normalOnly: true }],
@@ -1258,6 +1273,8 @@
         // Normal: close settlement defenders for both UFN landing directions.
         [B, 'vincent_ward', 6, 4, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'vincent_ward', 5, 5, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 7, 5, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 6, 6, 2, null, { normalOnly: true, hold: 1 }],
         // On Normal, omit one unnamed UFN missile group; keep all named opponents.
         ...KAGOSHIMA_BK.map(u => u[1] === 'akatsuki_missile'
           ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5] ?? null,
