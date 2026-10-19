@@ -12,7 +12,7 @@
   // Military formations and factories are alternate history. Coordinates are real locations.
   const CITIES=[["Ulaanbaatar",106.91,47.92,"cf",3,true],["Darkhan",105.93,49.49,"cf",3,true],["Erdenet",104.04,49.03,"cf",3,false],["Sukhbaatar",106.21,50.23,"cf",2,true],["Choibalsan",114.54,48.07,"cf",3,true],["Uliastai",96.84,47.74,"cf",2,true],["Hailar",119.76,49.21,"cf",3,true],["Manzhouli",117.38,49.59,"cf",3,true],["Yakeshi",120.73,49.29,"cf",2,false],["Genhe",121.52,50.78,"cf",2,true],["Heihe",127.5,50.25,"cf",3,true],["Mohe",122.54,52.97,"cf",2,true],["Fuyuan",134.28,48.36,"cf",3,true],["Kyzyl",94.45,51.72,"eu",3,true],["Kyakhta",106.45,50.36,"eu",2,true],["Chita",113.5,52.03,"eu",3,true],["Borzya",116.52,50.39,"eu",2,true],["Blagoveshchensk",127.53,50.28,"eu",3,true],["Belogorsk",128.47,50.92,"eu",2,false],["Birobidzhan",132.93,48.8,"eu",2,true],["Khabarovsk",135.07,48.48,"eu",3,true],["Komsomolsk-on-Amur",137,50.55,"eu",3,true],["Sovetskaya Gavan",140.28,48.97,"eu",2,true],["Anadyr",177.5,64.73,"eu",3,true],["Pevek",170.3,69.7,"eu",2,true],["Bilibino",166.45,68.05,"eu",2,false],["Magadan",150.8,59.56,"eu",3,true],["Susuman",148.15,62.78,"eu",2,false],["Ust-Nera",143.2,64.57,"eu",2,false],["Oymyakon",142.8,63.46,"eu",2,false],["Okhotsk",143.24,59.36,"eu",2,true],["Petropavlovsk-Kamchatsky",158.65,53.02,"eu",3,true],["Ust-Kamchatsk",162.54,56.22,"eu",2,false],["Palana",159.83,59.08,"eu",2,false],["Tomtor",143.08,63.27,"eu",1,false],["Ust-Maya",134.56,60.42,"eu",3,true],["Yakutsk",129.73,62.04,"eu",3,true],["Khandyga",135.6,62.65,"eu",3,true],["Aldan",125.4,58.61,"eu",3,true],["Neryungri",124.73,56.66,"eu",2,true],["Verkhoyansk",133.39,67.55,"eu",2,true],["Tiksi",128.87,71.64,"eu",2,true],["Mirny",113.98,62.54,"eu",3,true],["Lensk",114.91,60.73,"eu",2,false],["Olekminsk",120.41,60.38,"eu",2,false],["Vilyuysk",121.63,63.75,"eu",2,false],["Zhigansk",123.38,66.77,"eu",1,false],["Udachny",112.29,66.43,"eu",2,false],["Norilsk",88.2,69.35,"eu",3,true],["Dudinka",86.18,69.4,"eu",2,true],["Turukhansk",87.96,65.79,"eu",2,false],["Tura",100.43,64.27,"eu",2,false],["Vanavara",102.28,60.35,"eu",1,false],["Bratsk",101.61,56.15,"eu",3,true],["Ust-Ilimsk",102.66,58,"eu",2,false],["Irkutsk",104.29,52.29,"eu",3,true],["Ulan-Ude",107.58,51.83,"eu",2,false],["Severobaikalsk",109.32,55.63,"eu",2,false],["Krasnoyarsk",92.87,56.02,"eu",3,true],["Kansk",95.7,56.2,"eu",2,false],["Achinsk",90.5,56.27,"eu",2,false],["Abakan",91.44,53.72,"eu",2,false],["Novosibirsk",82.92,55.03,"eu",3,true],["Tomsk",84.95,56.48,"eu",3,true],["Kemerovo",86.08,55.35,"eu",2,false],["Omsk",73.37,54.99,"eu",3,true],["Tobolsk",68.25,58.2,"eu",2,false],["Surgut",73.4,61.25,"eu",3,true],["Nizhnevartovsk",76.55,60.94,"eu",2,false],["Khanty-Mansiysk",69.02,61,"eu",2,false],["Yeniseysk",92.17,58.45,"eu",2,false],["Dikson",80.55,73.5,"eu",2,true]];
   const ARMY_GROUPS=[["cf","Ulaanbaatar","heavy",10,"xianglin"],["cf","Ulaanbaatar","rocket",6,"gaohai"],["cf","Ulaanbaatar","assault",6,null],["cf","Ulaanbaatar","siege",3,null],["cf","Darkhan","heavy",7,"ren"],["cf","Darkhan","medium",4,null],["cf","Erdenet","medium",5,null],["cf","Uliastai","heavy",5,"zidien"],["cf","Choibalsan","heavy",10,"xingke"],["cf","Choibalsan","rocket",6,"honggu"],["cf","Choibalsan","assault",7,null],["cf","Hailar","super",9,"cao"],["cf","Hailar","rocket",6,"huangqian"],["cf","Hailar","siege",4,null],["cf","Manzhouli","heavy",7,"chengzhong"],["cf","Manzhouli","assault",5,"zhaohao"],["cf","Heihe","heavy",9,"meiling"],["cf","Heihe","rocket",6,"lifeng"],["cf","Mohe","medium",7,"leifeng"],["cf","Mohe","raider",3,null],["cf","Fuyuan","heavy",7,"vritra"],["cf","Fuyuan","assault",5,null],["cf","Genhe","medium",4,null],["eu","Kyakhta","medium",5,"klaus"],["eu","Kyakhta","rocket",3,null],["eu","Chita","heavy",7,"akito"],["eu","Chita","rocket",5,"yukiya"],["eu","Chita","assault",4,"ryo"],["eu","Borzya","heavy",5,"ayano"],["eu","Borzya","support",3,"anna"],["eu","Blagoveshchensk","heavy",6,"leila"],["eu","Blagoveshchensk","rocket",4,"smilas"],["eu","Khabarovsk","heavy",6,"olivia"],["eu","Khabarovsk","rocket",3,"fernando"],["eu","Yakutsk","heavy",6,"oscar"],["eu","Yakutsk","rocket",4,"margaret"],["eu","Yakutsk","assault",3,null],["eu","Khandyga","heavy",4,"marirrosa"],["eu","Khandyga","assault",2,null],["eu","Aldan","heavy",3,null],["eu","Irkutsk","heavy",6,"pierre"],["eu","Irkutsk","rocket",3,"eduardo"],["eu","Krasnoyarsk","heavy",4,null],["eu","Krasnoyarsk","siege",2,null],["eu","Novosibirsk","medium",4,null],["eu","Bratsk","medium",3,null],["eu","Omsk","medium",3,null],["eu","Norilsk","medium",2,null],["eu","Magadan","medium",4,null],["eu","Magadan","rocket",2,null],["eu","Tiksi","medium",2,null]];
-  const PORTS={"Anadyr":3,"Pevek":2,"Magadan":3,"Okhotsk":2,"Petropavlovsk-Kamchatsky":3,"Ust-Kamchatsk":2,"Palana":2,"Tiksi":3,"Dikson":2};
+  const PORTS={"Pevek":2,"Magadan":3,"Okhotsk":2,"Petropavlovsk-Kamchatsky":3,"Ust-Kamchatsk":2,"Palana":2,"Tiksi":3,"Dikson":2};
   const FLEETS=[["cf","Fuyuan","cf_carrier",3],["cf","Fuyuan","shui_gun_ru_ii",3],["eu","Tiksi","eu_carrier",2],["eu","Dikson","eu_carrier",1],["eu","Magadan","eu_carrier",2],["eu","Okhotsk","panzer_frosch_ii",2],["eu","Pevek","panzer_frosch_ii",2],["eu","Petropavlovsk-Kamchatsky","eu_carrier",2]];
   const FUNDING={"cf":{"credits":1550,"industry":990,"science":126,"sakuradite":94},"eu":{"credits":930,"industry":650,"science":104,"sakuradite":67}};
   function geo(c,r){
@@ -123,6 +123,8 @@
       return {c,r,owner:null,terrain:land?(mixedCoast?'coast':landscape(p,c,r)):'sea',
         biome:land&&p.lat>69?'tundra':land&&p.lat>62?'taiga':null};
     });
+    // The original Anadyr estuary is an isolated 7-hex mask pocket, so
+    // no fake open-sea Anadyr port is registered on this tactical grid.
     // The 19-point geographic mixed-coast mask is authoritative. Do not
     // turn fully dry land into coast merely because the next tile is sea.
     // This previously promoted 320 additional non-mixed land hexes.
@@ -213,7 +215,10 @@
       const fleet={id:'fleet-'+g.scenario.groups.length,side,
         name:name+' Fleet',origin:name,units:[]};
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
+        // The Federation flotilla is already at sea in the navigable Okhotsk basin.
+        // Fuyuan's nearest tidal water is a small disconnected mask pocket.
+        const seaAnchor=side==='cf'?locate(146,55):s;
+        const at=nearest(g,seaAnchor,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
           !g.stations.some(v=>v.portAt?.c===t.c&&v.portAt?.r===t.r),10);
         if(!at)throw Error('Cannot deploy navy at '+name);
         fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
@@ -285,7 +290,7 @@
     text:{
       era:'Siberia · Federation Northern Campaign',
       intro:'Federation Army Groups invade north from Mongolia and Manchuria. Break the Chita and Amur defenses, seize the Siberian railway, then conquer every theatre city. No turn limit.',
-      diplomacy:'The Chinese Federation and Europia United are at war from the first turn. Northern sea lanes, nine independent Pacific and Arctic ports, and inland industry are contested.',
+      diplomacy:'The Chinese Federation and Europia United are at war from the first turn. Northern sea lanes, eight independent Pacific and Arctic ports, and inland industry are contested.',
       elite:'Faction-legal Elite Forces, named officers and established HQ restrictions apply at Elite difficulty.',
       focus:{cf:'Hailar',eu:'Chita'}
     },
