@@ -6,8 +6,8 @@ const E = require('../dist/engine.js');
 // An existing save with an explicit empty roster must still own its free starters.
 const profile = { roster: {}, tokens: 1000 };
 const first = E.roster(profile);
-assert.deepEqual(Object.keys(first).sort(), ['cornelia', 'zero'], 'fresh profiles get exactly two commanders');
-for (const id of ['cornelia','zero']) {
+assert.deepEqual(Object.keys(first).sort(), ['akito', 'cornelia', 'xingke', 'zero'], 'fresh profiles get four commanders');
+for (const id of ['cornelia','zero','akito','xingke']) {
   assert.ok(first[id], `Missing persistent starter commander: ${id}`);
   assert.equal(first[id].ratings.mobility, 2, 'new personal commanders begin with at most two Mobility stars');
 }
@@ -34,7 +34,7 @@ const own = E.newUnit(g, type, g.player, script.c, script.r);
 assert.equal(own.cmd, null);
 
 E.applyRoster(g, profile);
-assert.ok(g.roster.zero && g.roster.cornelia, 'scenario receives persistent commanders');
+assert.ok(['zero','cornelia','akito','xingke'].every(k => g.roster[k]), 'scenario receives four HQ starters');
 assert.equal(script.cmdRank, authored.rank, 'scripted operation commander rank unchanged');
 assert.equal(script.hp, authored.hp, 'scripted operation commander HP unchanged');
 assert.equal(E.assignReason(g, own, 'cornelia'), null, 'HQ commander can be assigned to scenario unit');
@@ -44,6 +44,11 @@ assert.equal(own.cmd, 'cornelia');
 assert.equal(own.personal, true, 'personal commander remains distinct from scripted officers');
 assert.equal(own.cmdRank, 2, 'assigned commander uses persistent promotion');
 assert.match(E.assignReason(g, own, 'cornelia'), /Commanding/, 'same commander cannot be assigned twice');
+
+assert.equal(E.serves('akito', 'eu'), true);
+assert.equal(E.serves('xingke', 'cf'), true);
+assert.match(E.assignReason(g, own, 'akito'), /Serves another faction/);
+assert.match(E.assignReason(g, own, 'xingke'), /Serves another faction/);
 
 // A saved scenario can refresh its roster after further HQ recruitment/promotions.
 profile.roster.cornelia.rank = 3;

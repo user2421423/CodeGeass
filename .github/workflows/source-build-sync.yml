@@ -55,6 +55,8 @@ jobs:
         run: node tools/research_200_combat_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
+      - name: Verify four free HQ starters and old profile migration
+        run: node tools/starter_commanders_smoke.cjs
       - name: Verify commander skill refunds and development planning
         run: node tools/commander_progression_smoke.cjs
       - name: Verify victory tokens and Elite fragment progression

@@ -142,7 +142,7 @@ function loadProfile() {
     // One-time migration: anyone with a pre-existing profile keeps the old free
     // commanders and starter Elite fragment entitlements. Fresh profiles do not
     // receive them. Existing purchased records are never overwritten.
-    if (p.startingSetupVersion !== 2) {
+    if (p.startingSetupVersion !== 2 && p.startingSetupVersion !== 3) {
       if (saved) {
         p.legacyStarterEntitlements = true;
         p.roster ||= {};
@@ -153,6 +153,13 @@ function loadProfile() {
           if (!p.elites[id]) p.elites[id] = { level: 0, fragments: E.ELITE_UNLOCK_FRAGMENTS };
       }
       p.startingSetupVersion = 2;
+      changed = true;
+    }
+    // Grant the new E.U. and Chinese Federation starters to old and new profiles.
+    // E.roster inserts only absent commanders and never overwrites upgrades.
+    if (p.startingSetupVersion !== 3) {
+      E.roster(p);
+      p.startingSetupVersion = 3;
       changed = true;
     }
     if (p.researchVersion !== E.RESEARCH_VERSION) {

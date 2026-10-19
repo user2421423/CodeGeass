@@ -166,7 +166,9 @@ a clean playtest is not itself proof that a scenario is balanced.
   Julius designates targets, Leila enables coordinated withdrawals, Jeremiah cancels morale disruption and Rolo
   prevents counter-fire at an HP cost. Support, formation, pursuit, duel and siege skills give commanders distinct roles.
   See [the full commander rework](docs/COMMANDER_REWORK.md) for the 58-commander roster and exact starting values.
-  Operation commanders are fixed; your own commanders are recruited with command tokens, promoted through eleven ranks
+  Operation commanders are fixed. HQ accounts start with four free Rank 0 commanders: Cornelia (Britannia),
+  Zero (Black Knights), Akito (E.U.), and Li Xingke (Chinese Federation). Existing owners keep their upgrades;
+  returning players receive only missing starters. Other commanders are recruited with command tokens, promoted through eleven ranks
   (frame 112%–160%), given branch stars (up to 6) and medals.
 - **HQ research with command tokens:** 40 technologies in six trees (Infantry, Armor, Artillery, Sakuradite, Naval,
   Cities), tiers II–IV unlocked by victories, kept across operations and factions.
