@@ -7,6 +7,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const E = require('../dist/engine.js');
+require('../dist/missions.js');
+require('../dist/campaign.js');
 
 const expected = {
   raider: 'Rare', medium: 'Rare', amphibious: 'Rare',
@@ -44,12 +46,18 @@ const expectedOptions = (side, rarity) => Object.entries(E.ELITE_FORCES)
   .filter(([, e]) => e.availableTo.includes(side) && e.rarity === rarity)
   .map(([id]) => id).sort();
 
+// Story rewards must reference a real mission; Chinese Federation eligibility is
+// covered through Conquest until it has its own Story campaign.
+const storyMissionBySide = { britannia: 'br1', bk: 'bk1', eu: 'eu_narva' };
 for (const side of sides) {
   for (const [difficulty, rarity] of [
     ['normal', 'Rare'], ['hard', 'Epic'], ['challenge', 'Legendary'],
   ]) {
-    const key = 'story:' + side + ':' + difficulty;
-    assert.equal(API.queueEliteReward(profile, { player: side, difficulty }, key, 10, 'Story 3★'), true);
+    const key = storyMissionBySide[side]
+      ? 'story:' + storyMissionBySide[side] + ':' + difficulty
+      : 'conquest:cf:' + difficulty;
+    assert.equal(API.queueEliteReward(profile, { player: side, difficulty }, key, 10,
+      storyMissionBySide[side] ? 'Story 3★' : 'Conquest'), true);
     const reward = profile.pendingEliteRewards.find(r => r.key === key);
     assert.equal(reward.side, side);
     assert.deepEqual(options(reward), expectedOptions(side, rarity), key);
