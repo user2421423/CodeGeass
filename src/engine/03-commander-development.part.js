@@ -223,6 +223,14 @@
   function honorAction(g, u, kind) {
     const service = honorService(g, u);
     if (service && Object.hasOwn(service, kind)) service[kind] += 1;
+    if (service && kind === 'kills') {
+      // Only the most recent five direct kills can establish a three-turn burst.
+      // Persist the window so saving, reloading or reassigning cannot reset it.
+      service.killTurns = [...(service.killTurns || [])
+        .filter(turn => turn >= g.turn - 2 && turn <= g.turn), g.turn].slice(-5);
+      if (service.killTurns.length === 5)
+        award(g, u.side, 'marksman', 'Destroyed 5 enemy formations within 3 consecutive turns', u);
+    }
   }
   // Personal ratings over the rank cap remain saved but inactive. Mobility follows
   // the same rank-based active-star limits even for fixed operation commanders;
@@ -481,9 +489,12 @@
     const operation = g.mode === 'campaign' ? (g.campaign?.id || 'Story Mode') :
       g.mode === 'scenario' ? (g.scenario?.title || g.scenario?.id || 'Scenario') :
         (g.era || 'Conquest');
-    for (const s of services)
-      award(g, g.player, 'campaign', `Participated in the victorious ${operation} operation`,
-        { cmd: s.commander, personal: s.personal });
+    for (const s of services) {
+      const actions = (s.combats || 0) + (s.cities || 0);
+      if (actions >= 20)
+        award(g, g.player, 'campaign', `Completed ${actions} attacks and/or captures in the victorious ${operation} operation`,
+          { cmd: s.commander, personal: s.personal });
+    }
     const laurel = { hard: 'laurel_hard', challenge: 'laurel_challenge', elite: 'laurel_elite' }[g.difficulty];
     if (laurel && g.mode === 'conquest') {
       const best = services.filter(s => s.personal).sort((a, b) => {

@@ -391,7 +391,6 @@
           honorAction(g, attacker, 'commanderDefeats');
           award(g, attacker.side, 'valor', `Defeated ${COMMANDERS[v.cmd].short}`, attacker);
         }
-        if (instances[instance] === 5) award(g, attacker.side, 'marksman', 'Destroyed 5 enemy units', attacker);
       }
       attacker.kills++;
       attacker.xp = Math.min(5, attacker.xp + 1);

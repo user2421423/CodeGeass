@@ -908,8 +908,8 @@
   const MEDALS = {
     valor: { name: 'Order of Valor', desc: 'Defeated an enemy commander in battle.', earn: 'Personally defeat an enemy commander-led unit.' },
     star: { name: "Conqueror's Star", desc: 'Captured an enemy capital.', earn: 'Personally capture an enemy capital.' },
-    marksman: { name: 'Marksman Ribbon', desc: 'Five direct victories in a single operation.', earn: 'Personally destroy five enemy units in an operation.' },
-    campaign: { name: 'Campaign Ribbon', desc: 'Distinguished service in a victorious operation.', earn: 'Participate meaningfully in a victorious operation.' },
+    marksman: { name: 'Combat Excellence Ribbon', desc: 'Five direct victories within three consecutive turns.', earn: 'Personally destroy five enemy formations within three consecutive turns. One citation per operation.' },
+    campaign: { name: 'Campaign Ribbon', desc: 'Sustained service in a victorious operation.', earn: 'Win an operation after personally completing at least 20 attacks and/or city captures. One citation per operation.' },
     laurel_hard: { name: 'Bronze Laurel', desc: 'Most distinguished commander in a Hard conquest.', earn: 'Highest HQ contribution in a Hard conquest victory.' },
     laurel_challenge: { name: 'Silver Laurel', desc: 'Most distinguished commander in a Challenge conquest.', earn: 'Highest HQ contribution in a Challenge conquest victory.' },
     laurel_elite: { name: 'Golden Laurel', desc: 'Most distinguished commander in an Elite conquest.', earn: 'Highest HQ contribution in an Elite conquest victory.' },

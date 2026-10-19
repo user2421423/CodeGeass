@@ -31,7 +31,7 @@ for (const difficulty of ['normal', 'hard', 'challenge', 'elite']) {
     assert.equal(!!g.honorService, eligible, 'Only eligible modes track service');
     g.over = { winner: g.player };
     E.finalizeHonors(g);
-    const expected = eligible ? ['valor', 'marksman', 'campaign'] : [];
+    const expected = eligible ? ['valor', 'marksman'] : [];
     if (mode === 'conquest' && difficulty !== 'normal') expected.push('laurel_' + difficulty);
     assert.deepEqual((g.honorEvents || []).map(e => e.id), expected, 'Victory honors by mode');
 
