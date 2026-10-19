@@ -80,6 +80,11 @@
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
     // Commander signature abilities (attacker side).
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
+    // Only the first DIRECT attack against each individual enemy formation.
+    // Splash damage, counterattacks and city-only bombardment do not trigger it.
+    if (!counter && direct && target && f.firstStrike &&
+        !(u.expKallenFirstTargets || []).includes(target.id))
+      attack *= 1 + f.firstStrike;
     if (!counter && f.liveOnAttack && u.hp / maxHP(u) < 0.5) attack *= 1 + f.liveOnAttack;
     if (counter && f.counter) attack *= 1 + f.counter;
     if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
@@ -263,6 +268,9 @@
       d = unitAt(g, p),
       s = stationAt(g, p);
     const base = power(g, a, d, s),
+      // The unit-only first strike cannot multiply city-defense damage.
+      cityBase = d && f.firstStrike && !(a.expKallenFirstTargets || []).includes(d.id)
+        ? base / (1 + f.firstStrike) : base,
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
@@ -277,7 +285,7 @@
         (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
-          base *
+          cityBase *
             (t.boarding && d && TYPES[d.type].branch !== 'Armor' ? 1.50 : 1) *
             (t.siege || 1) *
             (d ? 0.8 : 1.45) *
@@ -437,12 +445,7 @@
       a.attacked = false;
       breakthrough = true;
     }
-    // Kallen's Ace of the Black Knights: her first kill each turn grants another attack.
-    if (destroyed && a.hp > 0 && f.ace && a.aceTurn !== g.turn) {
-      a.aceTurn = g.turn;
-      if (breakthrough) grantReposition(a, 2);
-      else { a.attacked = false; breakthrough = true; }
-    }
+
     // Only Siege Artillery and units with Breakthrough earn a follow-up attack
     // for destroying city defenses. A simultaneous kill cannot bank a second attack.
     if (defensesDestroyed && a.hp > 0 && a.attacked &&
@@ -450,13 +453,7 @@
       a.attacked = false;
       breakthrough = true;
     }
-    // Kallen's first city-defense break grants the same reposition as a kill
-    // when the frame's own Breakthrough has already restored its attack.
-    if (defensesDestroyed && !destroyed && breakthrough && a.hp > 0 &&
-        f.ace && a.aceTurn !== g.turn) {
-      a.aceTurn = g.turn;
-      grantReposition(a, 2);
-    }
+
     // Every amphibious Elite (all factions, any Elite level) can chain both
     // movement and attacks after a kill or city-defense break, even if it moved
     // before firing. Normal Amphibious II keeps attack-only Breakthrough.
@@ -528,6 +525,13 @@
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
       hit = [];
     const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
+    const kallenFirstStrike = !!d && !!f.firstStrike &&
+      !(a.expKallenFirstTargets || []).includes(d.id);
+    if (kallenFirstStrike) {
+      (a.expKallenFirstTargets ||= []).push(d.id);
+      // Applied only on the victim's next turn; multiple hits never stack.
+      d.expKallenSlowNext = true;
+    }
     const avoidance = genericLevel(g, a, TYPES[a.type].branch === 'Armor' ? 'blitzkrieg' : 'guerrilla');
     const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
     // A volley has one firing state: retaliation and kill rewards cannot change later splash hits.
@@ -691,6 +695,17 @@
       a.skillReposition = 0;
       a.withdrawMove = false;
     }
+    // Firing consumes the earlier reposition. A first attack on a NEW target
+    // earns one movement point, with no cap; this does not restore an attack.
+    delete a.expKallenReposition;
+    if (kallenFirstStrike && a.hp > 0)
+      a.expKallenMoveBank = (a.expKallenMoveBank || 0) + 1;
+    if (a.hp > 0 && f.firstStrike && a.expKallenMoveBank > 0 &&
+        a.moved && !heavyMoveLimitReached(g, a)) {
+      a.moved = false;
+      a.skillReposition = a.expKallenMoveBank;
+      a.expKallenReposition = true;
+    }
     // Skills and Elite Lv.5 bonuses may also reopen movement. Keep the attack
     // chain intact while closing movement after the second completed move.
     if (heavyMoveLimitReached(g, a)) {
@@ -698,6 +713,7 @@
       a.skillReposition = 0;
       a.withdrawMove = false;
       a.eliteMoveAfterKill = false;
+      delete a.expKallenReposition;
     }
     log(
       g,
