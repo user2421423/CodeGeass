@@ -247,7 +247,7 @@ function landscape(p,c,r){
       const at=nearest(g,locate(lon,lat),t=>
         t.terrain!=='sea'&&t.terrain!=='offmap'&&t.terrain!=='peak'&&
         !g.stations.some(s=>s.c===t.c&&s.r===t.r)&&
-        (!port||E.adjacent(g,t).some(n=>n.terrain==='sea'||n.terrain==='coast')),
+        (!port||E.adjacent(g,t).some(n=>n.terrain==='sea')),
         port?10:6);
       if(!at)throw Error('North African city inaccessible: '+name);
       const capital=['Alexandria','Cairo','Tripoli','Tunis','Algiers'].includes(name);
