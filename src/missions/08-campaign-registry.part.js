@@ -1,6 +1,6 @@
   // Two story seasons: Lelouch of the Rebellion (2010–2017) and R2 (2018), each played from
   // the Black Knights' side and from Britannia's. Mission ids are kept so saved stars carry over.
-  const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE].map(m => [m.id, m]));
+  const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
     bk_s1: {
@@ -42,6 +42,16 @@
       years: '2018 a.t.b.',
       desc: 'R2: the Empire against the returned Zero, from the Chinese Consulate and the Federation to Kagoshima, Tokyo, Emperor Lelouch and the assault on Damocles.',
       missions: pick(['br7', 'br_pacific', 'br_yokosuka2', 'br_xiaopei', 'br_mausoleum', 'br_kagoshima', 'br8', 'br_kamejima', 'br9', 'br10', 'br11']),
+    },
+    cf_r2: {
+      name: 'Chinese Federation',
+      short: 'Chinese Federation R2',
+      season: 2,
+      side: 'cf',
+      portrait: 'xingke',
+      years: '2018 a.t.b.',
+      desc: 'R2: Li Xingke rises against the High Eunuchs, pursues Zero and Kallen across the Federation, then joins the Black Knights to free Empress Tianzi. Ten tactical chapters adapt the Chinese Revolution.',
+      missions: pick(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'cf6', 'cf7', 'cf8', 'cf9', 'cf10']),
     },
     eb_europe: {
       name: 'Euro Britannia',
