@@ -57,4 +57,14 @@ assert.equal(E.campaign.createMission('br10',1357,'normal').campaign.turnLimit,2
 assert.equal(E.campaign.createMission('br10',1357,'hard').campaign.turnLimit,
   E.campaign.mission('br10').lose.turns + (E.campaign.DIFFICULTIES?.hard?.extraTurns || 0),
   'Hard mission deadline must remain unchanged');
+const palaceNormal=E.campaign.createMission('br_mausoleum',1357,'normal');
+palaceNormal.turn=7;
+assert.equal(E.hooks.decide(palaceNormal),null,'Normal palace must still hold through turn 7');
+palaceNormal.turn=8;
+assert.equal(E.hooks.decide(palaceNormal)?.winner,'britannia',
+  'Normal palace succeeds only after the seven-turn defense');
+const palaceHard=E.campaign.createMission('br_mausoleum',1357,'hard');
+palaceHard.turn=8;
+assert.equal(E.hooks.decide(palaceHard),null,
+  'Hard palace must still require the full ten-turn defense');
 console.log('Story normal objectives, deployments and reinforcements: PASS');

@@ -191,7 +191,12 @@
     if (c.destroy) return !g.units.some(u => u.hp > 0 && c.destroy.includes(u.side));
     if (c.kills) return cm.kills >= c.kills;
     if (c.turn) return g.turn >= c.turn;
-    if (c.hold) return g.turn > c.hold;
+    if (c.hold) {
+      // Mission-authored Normal-only hold target; Hard/Challenge/Elite retain
+      // the original condition and no side receives an automatic victory.
+      const relaxed = g.difficulty === 'normal' ? mission(g.campaign?.id)?.normalHold : null;
+      return g.turn > (Number.isFinite(relaxed) ? relaxed : c.hold);
+    }
     return false;
   }
   function stars(g) {
