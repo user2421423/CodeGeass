@@ -186,6 +186,8 @@
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    if (kind === 'freeze') return g.units.filter(v => v.hp > 0 &&
+      foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
     if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
@@ -208,6 +210,22 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'freeze') {
+      // Freeze everybody before the health cost; even a lethal activation works.
+      for (const v of options) {
+        v.expRoloFrozen = { source: u.id, side: u.side };
+        v.moved = true;
+        v.attacked = true;
+      }
+      const cost = Math.max(1, Math.round(maxHP(u) * 0.10));
+      u.hp = Math.max(0, u.hp - cost);
+      u.feintCD = action.cooldown ?? 3;
+      u.feintUsedTurn = g.turn;
+      log(g, `Rolo's Absolute Suspension freezes ${options.length} enemy formations and costs ${cost} HP.`, u.side);
+      if (u.hp <= 0) kill(g, u, null, true);
+      checkVictory(g);
+      return { ok: true, affected: options.length, cost, selfDestructed: u.hp <= 0 };
+    }
     if (action.kind === 'geassCancel') {
       const v = targetId == null ? [...options].sort((a,b) =>
         Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id)[0]
