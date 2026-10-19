@@ -22,6 +22,12 @@
       v => v.hp > 0 && !atSea(g, v) && v.side === u.side && (self || v.id !== u.id) && (!u.expInformationWarfare || v.id===u.id) && fx(v)[flag] &&
         (!v.auraDisrupted || !['orderCommander', 'screenedFire'].includes(flag)) && dist(g, v, u) <= range,
     );
+  // Akito's Brain Raid requires complete separation from friendly AND
+  // campaign-team allied formations, counting ships and the full two-hex ring.
+  function akitoIsolated(g, u) {
+    return !g.units.some(v => v.hp > 0 && v.id !== u.id &&
+      !foe(g, v.side, u.side) && dist(g, u, v) <= 2);
+  }
   function friendlyNeighbors(g, u, predicate = () => true) {
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && v.side === u.side && v.id !== u.id && dist(g, u, v) === 1 && predicate(v));
   }
@@ -56,6 +62,8 @@
   function commanderAttack(g, u, target, counter) {
     const f = fx(u), friends = friendlyNeighbors(g, u);
     let mult = 1;
+    // Brain Raid strengthens both direct attacks and counter-fire.
+    if (f.loneRaider && akitoIsolated(g, u)) mult *= 1 + f.loneRaider;
     if (counter) {
       if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
       return mult;
@@ -64,7 +72,6 @@
     if (!u.cmd && skillNear(g, u, 'commanderlessAttack', 2, false)) mult *= 1.15;
     if (TYPES[u.type].branch === 'Infantry' && skillNear(g, u, 'infantryCommand', 1, false)) mult *= 1.15;
     if (TYPES[u.type].branch === 'Armor' && skillNear(g, u, 'armorLeader', 2, false)) mult *= 1.1;
-    if (f.loneRaider && !friends.length) mult *= 1 + f.loneRaider;
     if (f.runCharge && u.movedDistance >= 2) mult *= 1 + f.runCharge;
     if (f.combinedArms && friends.some(v => TYPES[v.type].branch !== TYPES[u.type].branch)) mult *= 1 + f.combinedArms;
     if (TYPES[u.type].branch === 'Armor' && friends.some(v => TYPES[v.type].branch === 'Armor') && skillNear(g, u, 'orderCommander', 1)) mult *= 1.15;
@@ -88,7 +95,7 @@
     let mult = guarded ? 0.9 : 1;
     if (skillNear(g, target, 'calmDefense', 1)) mult *= 0.9;
     if (target.guardReady && target.held && skillNear(g, target, 'veteranSupport', 1, false)) mult *= 0.9;
-    if (f.loneRisk && !friends.length) mult *= f.loneRisk;
+    if (f.loneTaken && akitoIsolated(g, target)) mult *= f.loneTaken;
     if(target.guardReady&&target.held&&skillNear(g,target,'defensiveDoctrine',2))mult*=.85;
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {

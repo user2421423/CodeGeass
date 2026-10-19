@@ -118,7 +118,10 @@
   function reachable(g, u) {
     const found = new Map();
     const ef = eliteFx(u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove)) return found;
+    // Brain Raid restores the full normal movement budget after a shot,
+    // but only while Akito remains isolated; this never restores an attack.
+    const akitoFollowUp = !!u.expAkitoMoveReady && akitoIsolated(g, u);
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -369,6 +372,8 @@
       fromSea = isSea(tile(g, u.c, u.r)),
       t = TYPES[u.type],
       carrier = unitAt(g, dest);
+    // A legal move consumes the single post-attack Brain Raid movement grant.
+    delete u.expAkitoMoveReady;
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
     if (carrier && carrier !== u && carrier.side === u.side && canBoard(g, carrier)) {
       markMoveAction(g, u);

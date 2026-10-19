@@ -145,6 +145,7 @@
       u.movedDistance = 0;
       u.skillReposition = 0;
       u.withdrawMove = false;
+      delete u.expAkitoMoveReady;
       u.moved = false;
       u.attacked = false;
       u.expDisabledActive=!!u.expDisabledNext;delete u.expDisabledNext;

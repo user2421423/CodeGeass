@@ -650,6 +650,17 @@
         finally { Object.assign(a,actions); }
       }
     }
+    // Brain Raid: once per turn, an isolated Akito recovers a FULL movement
+    // action after any attack, including an unsuccessful attack or city volley.
+    // Keep the attack flag unchanged and respect existing heavy-frame caps.
+    if (a.hp > 0 && f.loneMove && a.expAkitoMoveTurn !== g.turn &&
+        akitoIsolated(g, a) && !heavyMoveLimitReached(g, a)) {
+      a.expAkitoMoveTurn = g.turn;
+      a.expAkitoMoveReady = true;
+      a.moved = false;
+      a.skillReposition = 0;
+      a.withdrawMove = false;
+    }
     // Skills and Elite Lv.5 bonuses may also reopen movement. Keep the attack
     // chain intact while closing movement after the second completed move.
     if (heavyMoveLimitReached(g, a)) {

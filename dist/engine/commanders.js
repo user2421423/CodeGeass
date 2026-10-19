@@ -230,10 +230,9 @@
       cost: 190,
       role: 'Infantry',
       hull: 'Alexander Liberte',
-      skill: "Brain Raid",
-      desc: "While no friendly unit is adjacent, attacks deal +30% damage but his unit takes 15% more damage.",
-      stats: {"crit": 0.2, "dmgBranch": {"Infantry": 0.1}, "counter": 0.1},
-      fx: {"loneRaider": 0.3, "loneRisk": 1.15},
+      skill: 'Brain Raid',
+      desc: 'With no friendly or allied formations within 2 hexes: deal 30% more attack and counter-fire damage, take 30% less damage, and recover one full legal move after attacking, once per turn. No extra attack.',
+      fx: { loneRaider: 0.3, loneTaken: 0.7, loneMove: true },
       title: 'The Wyvern of wZERO',
     },
     ryo: {
