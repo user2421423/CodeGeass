@@ -12,8 +12,8 @@
     camp.missions.forEach((m, i) => (ALL[m.id] = Object.assign(m, { campaign: cid, index: i })));
   const mission = id => ALL[id] || null;
 
-  // Elite Campaign inherits Challenge but converts all combatants to one-frame Elite Forces.
-  // Normal has no elites; Hard and Challenge permit only scripted Lv.1 commander elites.
+  // Elite difficulty converts scripted forces to one-frame elites. All Story difficulties
+  // permit HQ-unlocked Elite Forces at eligible player factories.
   const DIFFICULTIES = {
     normal: {
       name: 'Normal',
@@ -24,17 +24,17 @@
       enemyShield: 1,
       economy: 1.5,
       extraTurns: 0,
-      desc: 'Story mode: ordinary formations only (up to 3 frames, no Elite Forces), favorable scenario force counts and 50% more starting resources. Mission turn limits are unchanged.',
+      desc: 'Ordinary scripted formations (up to 3 frames), favorable starting forces and 50% more starting resources. HQ-unlocked Elite Forces may be deployed at eligible factories.',
     },
     hard: {
       ...E.DIFFICULTIES.hard,
       ranks: 1, // Preserve campaign's original commander progression.
-      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank; only named aces retain Lv.1 Elite Forces.',
+      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank; named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
     },
     challenge: {
       ...E.DIFFICULTIES.challenge,
       ranks: 2, // Conquest uses maximum rank; campaigns retain +2.
-      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%; only named aces retain Lv.1 Elite Forces.',
+      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%; named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
     },
     elite: {
       ...E.DIFFICULTIES.challenge,
@@ -97,7 +97,7 @@
   const friendly = (g, side) => side === g.player || !E.foe(g, side, g.player);
   const cityByName = (g, name) => g.stations.find(s => s.name === name);
   const unitWith = (g, k) => g.units.find(u => u.hp > 0 && u.cmd === k);
-  // Explicit temporary faction-to-roster fallbacks, limited to Elite Campaign.
+  // Story roster fallbacks: Euro Britannia borrows Britannian elites; JLF borrows Black Knights elites.
   const ELITE_ROSTER_FALLBACKS = Object.freeze({
     eb: 'britannia', // Euro Britannia
     jlf: 'bk',        // Japanese Liberation Front
@@ -121,21 +121,35 @@
     return regular;
   }
   function eliteRoster(side, g = null) {
+    // The 2017 Federation gets its native Elite Force roster, not UFN-era frames.
+    const nativeFederation = new Set(['chuyen', 'wang_hu', 'shen_hu', 'shui_gun_ru_ii']);
     const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
       const e = E.ELITE_FORCES[id];
-      return e.availableTo.includes(owner) && !E.TYPES[e.type].naval;
+      return owner === 'cf' ? nativeFederation.has(id) : e.availableTo.includes(owner);
     });
     const own = available(side);
     if (own.length) return own;
-    // Neutral story armies borrow their actual teammate's roster when one exists;
-    // fixed JLF and Euro Britannia fallbacks take precedence over team mapping.
+    // Neutral Chinese Eunuchs, for example, should use Chinese elite machines
+    // even when their diplomatic teammate is Britannia.
+    const specs = g?.storyUnits || (g?.campaign?.id && mission(g.campaign.id)?.units) || [];
+    const counts = {};
+    for (const spec of specs) if (spec[0] === side) {
+      const origin = E.TYPES[spec[1]]?.side;
+      if (origin && origin !== 'neutral') counts[origin] = (counts[origin] || 0) + 1;
+    }
+    const equipmentOwner = side === 'neutral'
+      ? Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] : null;
     const teammate = side === 'neutral' && g?.teams?.[side]
       ? g.order.find(s => s !== side && g.teams[s] === g.teams[side] && available(s).length)
       : null;
-    return available(teammate || ELITE_ROSTER_FALLBACKS[side] || 'britannia');
+    return available(equipmentOwner || ELITE_ROSTER_FALLBACKS[side] || teammate || 'britannia');
   }
   function eliteType(g, side, type, cmd = null) {
-    const original = E.TYPES[type], pool = g.campaign.eliteRosters[side] || eliteRoster(side, g);
+    const original = E.TYPES[type],
+      // Converting land combatants on Elite difficulty must never select a
+      // marine or warship, even though players may deploy naval HQ elites.
+      pool = (g.campaign.eliteRosters[side] || eliteRoster(side, g))
+        .filter(id => !E.TYPES[E.ELITE_FORCES[id].type].naval);
     if (!pool.length) throw new Error(`Missing elite roster for ${side}`);
     const current = pool.find(id => E.ELITE_FORCES[id].type === type);
     if (current) return current;
@@ -183,6 +197,21 @@
     return [true, ...m.stars.map(c => holds(g, c))];
   }
 
+  // Story factions retain their own equipment even if an old mission script
+  // accidentally supplies a native 2017 Chinese model to the wrong faction.
+  // Black Knights' Akatsuki and Gekka variants, captured Britannian machines,
+  // and the neutral Eunuchs' Chinese equipment are deliberate exceptions.
+  function storyFactionType(g, side, type) {
+    const t = E.TYPES[type];
+    if (!t || t.elite || side === 'neutral') return type;
+    const chinese2017 = Object.values(E.lineupOf(g, 'cf'));
+    const native = Object.values(E.lineupOf(g, side));
+    if (side === 'cf' && !native.includes(type)) return E.typeFor(side, t.cls, g);
+    if (side !== 'cf' && chinese2017.includes(type) && !native.includes(type))
+      return E.typeFor(side, t.cls, g);
+    return type;
+  }
+
   // ======== Building a mission ========
   // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal }].
   function placeUnit(g, spec) {
@@ -193,6 +222,7 @@
     if (opts.skipNormal && g.difficulty === 'normal') return null;
     let type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g),
       unitStack = stack;
+    type = storyFactionType(g, side, type);
     if (E.TYPES[type].elite && !isEliteCampaign(g) && !storyAceElite(g, cmd)) {
       type = ordinaryStoryType(g, side, type);
       unitStack = 3;
@@ -206,6 +236,8 @@
         if (d.stack) unitStack = Math.min(3, unitStack + 1);
       }
     }
+    // Difficulty upgrades must also respect each side's actual Story roster.
+    type = storyFactionType(g, side, type);
     const free = t =>
       t && !E.isSea(t) && !E.TERRAIN[t.terrain]?.blocked && !E.unitAt(g, t) && (!E.stationAt(g, t) || !E.foe(g, E.stationAt(g, t).owner, side));
     let at = E.tile(g, c, r);
@@ -338,10 +370,9 @@
         warnings: [],
         note: null,
         enemyPlaced: 0,
-        ...(difficultyId === 'elite' ? {
-          eliteSelections: {},
-          eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s => [s, eliteRoster(s, { teams: m.teams, order: sides })])),
-        } : {}),
+        eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s =>
+          [s, eliteRoster(s, { teams: m.teams, order: sides, storyUnits: m.units })])),
+        ...(difficultyId === 'elite' ? { eliteSelections: {} } : {}),
         turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
       },
     };
@@ -405,8 +436,37 @@
 
   // Adapt in-progress Story saves without losing position, identity or mission events.
   function normalizeUnits(g) {
-    if (g?.mode !== 'campaign' || isEliteCampaign(g)) return g;
+    if (g?.mode !== 'campaign') return g;
+    // Rebuild stale roster snapshots, preserving in-progress positions and ranks.
+    const m = mission(g.campaign.id);
+    g.campaign.eliteRosters = Object.fromEntries([...new Set([...g.order, 'neutral'])].map(s =>
+      [s, eliteRoster(s, { teams: g.teams, order: g.order, storyUnits: m?.units || [] })]));
+    // Migrate old saves that contain obsolete Federation/UFN or cross-faction
+    // units, retaining their owner, HP fraction, position and commander.
     for (const u of g.units || []) {
+      if (!E.TYPES[u.type]) continue;
+      const oldMax = E.maxHP(u);
+      const hpFraction = oldMax ? Math.max(0, Math.min(1, u.hp / oldMax)) : 0;
+      let type = storyFactionType(g, u.side, u.type);
+      if (u.elite && !E.eliteEligible(g, u.side, u.elite)) {
+        const pool = g.campaign.eliteRosters[u.side] || [];
+        const cls = E.TYPES[u.type].cls;
+        const replacement = pool.find(id => E.TYPES[E.ELITE_FORCES[id].type].cls === cls) || pool[0];
+        if (replacement) type = E.ELITE_FORCES[replacement].type;
+      }
+      if (type !== u.type) {
+        u.type = type;
+        u.elite = Object.keys(E.ELITE_FORCES).find(id => E.ELITE_FORCES[id].type === type) || null;
+        u.eliteLevel = u.elite ? Math.max(1, u.eliteLevel || 1) : 0;
+        if (u.elite) u.stack = 1;
+        u.hpTech = E.hullTech(g, u);
+        u.hp = u.hp <= 0 ? 0 : Math.max(1, Math.round(E.maxHP(u) * hpFraction));
+      }
+    }
+    if (isEliteCampaign(g)) return g;
+    for (const u of g.units || []) {
+      // Player HQ recruits must not be mistaken for scripted aces on save/load.
+      if (u.storyHQDeployed) continue;
       if (!E.TYPES[u.type]?.elite) {
         u.stack = Math.max(1, Math.min(3, u.stack || 1));
         continue;
@@ -463,12 +523,13 @@
     for (const up of asList(ev.upgrade)) {
       const u = unitWith(g, up.cmd);
       if (!u) continue;
+      const upgradeType = storyFactionType(g, u.side, up.type);
       const lost = E.maxHP(u) - u.hp,
-        scriptedElite = !!E.TYPES[up.type]?.elite,
+        scriptedElite = !!E.TYPES[upgradeType]?.elite,
         type = !isEliteCampaign(g) && scriptedElite && !storyAceElite(g, u.cmd)
-          ? ordinaryStoryType(g, u.side, up.type) : up.type,
+          ? ordinaryStoryType(g, u.side, upgradeType) : upgradeType,
         elite = Object.entries(E.ELITE_FORCES).find(([, e]) => e.type === type)?.[0] || null,
-        replacement = isEliteCampaign(g) ? eliteType(g, u.side, up.type, u.cmd) : elite;
+        replacement = isEliteCampaign(g) ? eliteType(g, u.side, upgradeType, u.cmd) : elite;
       u.type = replacement ? E.ELITE_FORCES[replacement].type : type;
       u.elite = replacement;
       u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, u.side, u.cmd, true) :

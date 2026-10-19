@@ -101,8 +101,8 @@
     ['cf', 'gun_ru', 7, 3, 2, null, { hold: 1 }],
     ['cf', 'gun_ru', 9, 7, 2],
     ['cf', 'gun_ru', 12, 7, 2],
-    ['cf', 'gekka_rocket', 11, 3, 1],
-    ['cf', 'gekka_rocket', 9, 3, 1],
+    ['cf', 'gun_ru_support', 11, 3, 1],
+    ['cf', 'gun_ru_support', 9, 3, 1],
     ['cf', 'gun_ru', 15, 2, 2, null, { hold: 1 }],
   ];
   const FUKUOKA_BK = [

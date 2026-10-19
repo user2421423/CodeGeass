@@ -33,6 +33,8 @@ jobs:
         run: node tools/regular_class_standardization_smoke.cjs
       - name: Verify Story Mode Canterbury movement
         run: node tools/story_canterbury_movement_smoke.cjs
+      - name: Verify Story Elite deployment and faction-specific unit rosters
+        run: node tools/story_elite_faction_roster_smoke.cjs
       - name: Verify HQ mobility research bonuses
         run: node tools/research_mobility_smoke.cjs
       - name: Verify standardized research prices and whole-campaign credits

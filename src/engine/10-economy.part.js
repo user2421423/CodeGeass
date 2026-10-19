@@ -200,7 +200,7 @@
       if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
       if (!FEDERATION_2017_ELITES.has(id)) return false;
     }
-    const roster = eliteCampaign(g) ? g.campaign?.eliteRosters?.[side] :
+    const roster = g.mode === 'campaign' ? g.campaign?.eliteRosters?.[side] :
       scenarioMeta(g).eliteRosterOnly ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
     return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
@@ -215,8 +215,6 @@
       availableLevel = e.scenarioOnly && eliteScenario(g) ? 1 : rec?.level;
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
-      (g.mode === 'campaign' && !eliteCampaign(g) ? 'Elite Forces are exclusive to Elite Story Mode factories' : null) ||
-      (naval && g.mode === 'campaign' ? 'Naval elites are unavailable in campaign' : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
       (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
@@ -251,6 +249,7 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
+    if (g.mode === 'campaign') u.storyHQDeployed = true;
     // Player factory/port recruits use their unlocked HQ level in every mode.
     // Preplaced converted elites have their own Lv.1 starting rule; recruitment never changes them.
     u.eliteLevel = rec.level;
