@@ -27,6 +27,33 @@ const SCENARIO_CATALOG = Object.freeze({
       "scenarios.js"
     ]
   },
+  "defense-japan": {
+    "id": "defense-japan",
+    "title": "Defense of Japan",
+    "sides": [
+      "bk",
+      "britannia"
+    ],
+    "cols": 110,
+    "rows": 84,
+    "meta": {
+      "text": {
+        "era": "Japan · Alternate 2017",
+        "intro": "The Black Knights control all 44 Japanese cities. Britannia begins at sea with loaded carriers and no bases or land forces ashore.",
+        "diplomacy": "The Black Knights and Britannia are enemies from turn 1. Capture all cities as Britannia, or destroy the cityless invasion as the Black Knights.",
+        "elite": "Elite Japan upgrades eligible land formations to faction Elite Forces while carriers remain conventional. Existing Elite difficulty research and commander rules apply.",
+        "focus": {
+          "bk": "Tokyo Settlement",
+          "britannia": ""
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios.js",
+      "scenarios-defense-japan.js"
+    ]
+  },
   "division-japan": {
     "id": "division-japan",
     "title": "The Division of Japan",
