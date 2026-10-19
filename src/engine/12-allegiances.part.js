@@ -93,7 +93,6 @@
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {
       if (f.foresight && target.foresightTurn !== g.turn) mult *= f.foresight;
-      if (f.liveOn && target.hp / maxHP(target) < 0.4 && target.liveOnTurn !== g.turn) mult *= f.liveOn;
       if (guarded && target.bodyguardTurn !== g.turn) mult *= 0.8;
     }
     return mult;
@@ -102,7 +101,6 @@
     const f = fx(target);
     if (f.guard && target.guardReady && target.held) target.guardStamp = guardStamp(g);
     if (f.foresight) target.foresightTurn = g.turn;
-    if (f.liveOn && target.hp / maxHP(target) < 0.4) target.liveOnTurn = g.turn;
     if (bodyguarded(g, target)) target.bodyguardTurn = g.turn;
   }
   function grantReposition(u, range) {
@@ -131,6 +129,10 @@
       if (a.hp > 0) a.hp = Math.max(1, a.hp - Math.round(maxHP(a) * f.timeStop));
     }
     if (a.hp <= 0) return;
+    // Cornelia's recovery rewards either a frame kill or a fresh city-defense
+    // break. A single volley that achieves both only heals once.
+    if (f.destroyHeal && (destroyed || defensesDestroyed))
+      a.hp = Math.min(maxHP(a), a.hp + Math.round(maxHP(a) * f.destroyHeal));
     if ((f.adaptiveBreakthrough&&a.movedDistance>=3||f.highland&&tile(g,a.c,a.r)?.terrain==='mountain'||f.blackSeaFox&&tile(g,a.c,a.r)?.terrain==='mountain'||f.swordplay&&d&&dist(g,a,d)===1)&&a.repositionTurn!==g.turn){a.repositionTurn=g.turn;grantReposition(a,2);}
     if (f.reposition && a.repositionTurn !== g.turn) { a.repositionTurn = g.turn; grantReposition(a, f.reposition); }
     // City defense breakthroughs share the kill-based movement reward, but
