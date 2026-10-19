@@ -70,7 +70,8 @@
       hold: { cf: 1 },
       goals: { bk: [[14, 6, -5]], cf: [[14, 6, -5]] },
       units: [
-        [B, 'gloucester', 11, 4, 2, 'guilford'],
+        [B, 'gloucester', 11, 4, 2, 'guilford', { skipNormal: true }],
+        [B, 'gloucester', 11, 4, 3, 'guilford', { normalOnly: true, hold: 1 }],
         [B, 'gloucester', 10, 7, 2],
         [B, 'gloucester', 13, 5, 2],
         [B, 'sutherland', 12, 6, 2],
@@ -795,7 +796,10 @@
       cities: PACIFIC_CITIES,
       economy: { bk: 400 },
       hold: { britannia: 3 },
-      units: [...PACIFIC_BK, [K, 'akatsuki_flight', 1, 6, 1, null, { normalOnly: true }],
+      units: [...PACIFIC_BK.map(u => u[5] === 'zero'
+        ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5], { ...(u[6] || {}), skipNormal: true }] : u),
+        [K, 'akatsuki_flight', 3, 6, 3, 'zero', { normalOnly: true, hold: 1 }],
+        [K, 'akatsuki_flight', 1, 6, 1, null, { normalOnly: true }],
         [K, 'akatsuki_flight', 5, 6, 2, null, { normalOnly: true }],
         [K, 'akatsuki_flight', 5, 8, 2, null, { normalOnly: true }],
         [K, 'akatsuki_flight', 4, 8, 2, null, { normalOnly: true }],
@@ -1134,7 +1138,8 @@
       hold: { neutral: 3 },
       goals: { bk: [[15, 4, -6]], cf: [[15, 4, -6]] },
       units: [
-        [B, 'gareth', 21, 6, 1, 'schneizel'],
+        [B, 'gareth', 21, 6, 1, 'schneizel', { skipNormal: true }],
+        [B, 'gareth', 21, 6, 3, 'schneizel', { normalOnly: true, hold: 1 }],
         [B, 'vincent_ward', 20, 5, 2],
         [B, 'vincent_ward', 20, 8, 2],
         [B, 'sutherland', 20, 3, 2],

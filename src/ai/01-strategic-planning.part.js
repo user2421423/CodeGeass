@@ -81,6 +81,14 @@
             g.campaign.aiObjective = null;
           }
         }
+        // Normal Story defenses concentrate on the required protected city,
+        // rather than abandoning it to attack incidental enemy outposts.
+        if (side === g.player &&
+            new Set(['br7','br_execution','br_mausoleum','br_xiaopei']).has(g.campaign?.id)) {
+          const m = E.campaign?.mission?.(g.campaign.id);
+          const protectedCity = g.stations.find(s => (m?.lose?.cities || []).includes(s.name));
+          if (protectedCity) g.campaign.goals[side] = [[protectedCity.c, protectedCity.r, -22]];
+        }
         memo[side].field = goalField(g, side);
       }
       else if (scenario) planScenarioOffense(g, side, memo[side]);

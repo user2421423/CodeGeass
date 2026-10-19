@@ -652,7 +652,8 @@
       industry: { britannia: 200 },
       hold: { bk: 4 },
       units: [
-        [B, 'elite_shinkiro', 19, 5, 1, 'lelouch'],
+        [B, 'elite_shinkiro', 19, 5, 1, 'lelouch', { skipNormal: true }],
+        [B, 'elite_shinkiro', 19, 5, 3, 'lelouch', { normalOnly: true, hold: 1 }],
         [B, 'elite_lancelot_albion', 17, 6, 1, 'suzaku'],
         [B, 'vincent_commander', 17, 9, 2, 'jeremiah'],
         [B, 'vincent_ward', 16, 3, 2],
