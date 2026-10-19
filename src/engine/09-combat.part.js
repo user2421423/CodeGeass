@@ -39,7 +39,12 @@
       ef = eliteFx(u),
       strike = !counter || !f.attackOnly;
     let attack = intrinsicAttack(g, u, counter) * (1 + 0.07 * Math.min(5, u.xp));
-    attack *= u.morale >= 1 ? 1.25 : u.morale === -1 ? 0.75 : u.morale === -2 ? 0.5 : u.morale <= -3 ? 0 : 1;
+    // Preview Cornelia's opening morale step before the volley without mutating game state.
+    // attack() applies the actual increase only after a legal attack is confirmed.
+    const morale = !counter && f.firstAttackMorale && u.firstAttackMoraleTurn !== g.turn && u.morale > -3
+      ? Math.min(1, u.morale + f.firstAttackMorale)
+      : u.morale;
+    attack *= morale >= 1 ? 1.25 : morale === -1 ? 0.75 : morale === -2 ? 0.5 : morale <= -3 ? 0 : 1;
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
     if(u.expChengWeaken?.turns>0)attack*=1-u.expChengWeaken.value;
@@ -73,6 +78,7 @@
     if (!counter && u.launched === g.turn && hasPort3(g, u.side)) attack *= 1 + techValue(g, u.side, 'naval.launch');
     // Commander signature abilities (attacker side).
     if (f.opening && !counter && !u.moved) attack *= 1 + f.opening;
+    if (!counter && f.liveOnAttack && u.hp / maxHP(u) < 0.5) attack *= 1 + f.liveOnAttack;
     if (counter && f.counter) attack *= 1 + f.counter;
     if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
     attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
@@ -218,6 +224,7 @@
       });
       if (protector) attack *= eliteFx(protector).protect.value;
       if (tf.belowHalf && target.hp / maxHP(target) < 0.5) attack *= tf.belowHalf;
+      if (tf.highMoraleTaken && target.morale >= 1) attack *= tf.highMoraleTaken;
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
@@ -286,6 +293,7 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
+        (f.liveOnCrit && a.hp / maxHP(a) < 0.5 ? f.liveOnCrit : 0) +
         (a.expCalibration ? .25 : 0) +
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
@@ -483,11 +491,16 @@
   function attack(g, id, c, r) {
     const check = validateAction(g, { kind: 'attack', id, c, r });
     if (!check.ok) return check;
-    const a = check.actor, pr = check.preview;
+    const a = check.actor, pr = check.preview, f = fx(a);
+    // The opening morale step was accounted for in the damage preview; persist
+    // it now, before any damage or counterfire, but only for a legal first attack.
+    if (f.firstAttackMorale && a.firstAttackMoraleTurn !== g.turn) {
+      a.firstAttackMoraleTurn = g.turn;
+      a.morale = Math.min(1, a.morale + f.firstAttackMorale);
+    }
     const p = tile(g, c, r),
       d = unitAt(g, p),
       s = stationAt(g, p),
-      f = fx(a),
       crit = random(g) < pr.crit,
       variance = 0.92 + random(g) * 0.16,
       mult = variance * (crit ? pr.critMult : 1),
