@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "campaign_id": "eu-federation",
+  "campaign_label": "E.U. vs Federation",
+  "architecture_branch": "feature/eu-vs-federation-campaign-architecture",
+  "world_campaign_registry": "dist/war-campaign.js",
+  "total_missions": 13,
+  "shared_existing": [
+    {
+      "number": 1,
+      "objective_id": "eu-federation-australia",
+      "scenario_id": "war-for-australia"
+    },
+    {
+      "number": 2,
+      "objective_id": "eu-federation-area-18",
+      "scenario_id": "area-18"
+    },
+    {
+      "number": 3,
+      "objective_id": "eu-federation-division-japan",
+      "scenario_id": "division-japan"
+    }
+  ],
+  "scenarios": [
+    {
+      "number": 4,
+      "tier": 2,
+      "key": "kazakhstan",
+      "title": "Invasion of Kazakhstan",
+      "runtime_id": "eu-cf-kazakhstan",
+      "map": "Kazakh steppe; Russian western entry, Federation eastern cities; broad tank fronts; Kazakhstan-specific borders.",
+      "campaign_objective_id": "eu-federation-kazakhstan",
+      "scenario_file": "dist/scenarios-eu-cf-kazakhstan.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 5,
+      "tier": 2,
+      "key": "persia",
+      "title": "Invasion of Persia",
+      "runtime_id": "eu-cf-persia",
+      "map": "E.U. attack from Caucasus and western Iranian approaches; Zagros passes, plateau, Persian Gulf; reuse Iraq–Iran terrain where accurate.",
+      "campaign_objective_id": "eu-federation-persia",
+      "scenario_file": "dist/scenarios-eu-cf-persia.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 6,
+      "tier": 3,
+      "key": "xinjiang",
+      "title": "Battle for Xinjiang",
+      "runtime_id": "eu-cf-xinjiang",
+      "map": "E.U. western entry from Kazakhstan; Urumqi; Tarim Basin, Tianshan and defensible but traversable passes.",
+      "campaign_objective_id": "eu-federation-xinjiang",
+      "scenario_file": "dist/scenarios-eu-cf-xinjiang.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 7,
+      "tier": 3,
+      "key": "india",
+      "title": "Invasion of India",
+      "runtime_id": "eu-cf-india",
+      "map": "E.U. advances from Persia via northwest and can land from the Arabian Sea; dense Indian cities, real coasts/ports and multiple fronts.",
+      "campaign_objective_id": "eu-federation-india",
+      "scenario_file": "dist/scenarios-eu-cf-india.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 8,
+      "tier": 3,
+      "key": "mongolia",
+      "title": "Invasion of Mongolia",
+      "runtime_id": "eu-cf-mongolia",
+      "map": "E.U. invades from Siberia into the Mongolian steppe; wide maneuver warfare and Ulaanbaatar defensive hub.",
+      "campaign_objective_id": "eu-federation-mongolia",
+      "scenario_file": "dist/scenarios-eu-cf-mongolia.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 9,
+      "tier": 3,
+      "key": "manchuria",
+      "title": "Invasion of Manchuria",
+      "runtime_id": "eu-cf-manchuria",
+      "map": "E.U. northern and western invasion from Siberia and Mongolia into Liaoning/Jilin/Heilongjiang; rivers and industrial cities.",
+      "campaign_objective_id": "eu-federation-manchuria",
+      "scenario_file": "dist/scenarios-eu-cf-manchuria.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 10,
+      "tier": 4,
+      "key": "himalayas",
+      "title": "Crossing the Himalayas",
+      "runtime_id": "eu-cf-himalayas",
+      "map": "E.U. advances north from conquered India into Chinese-held Tibet; deliberately passable Himalayan approaches, high attrition/defensive mountain routes.",
+      "campaign_objective_id": "eu-federation-himalayas",
+      "scenario_file": "dist/scenarios-eu-cf-himalayas.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 11,
+      "tier": 5,
+      "key": "sichuan",
+      "title": "Invasion of Sichuan",
+      "runtime_id": "eu-cf-sichuan",
+      "map": "E.U. enters from Tibet via mountain passes; Chengdu Basin, western Sichuan relief, river and mountain defensive lines.",
+      "campaign_objective_id": "eu-federation-sichuan",
+      "scenario_file": "dist/scenarios-eu-cf-sichuan.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 12,
+      "tier": 5,
+      "key": "beijing",
+      "title": "Battle of Beijing",
+      "runtime_id": "eu-cf-beijing",
+      "map": "E.U. southward offensive from Manchuria into northern China; Beijing, Tianjin and defensive river/mountain approaches.",
+      "campaign_objective_id": "eu-federation-beijing",
+      "scenario_file": "dist/scenarios-eu-cf-beijing.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    },
+    {
+      "number": 13,
+      "tier": 6,
+      "key": "luoyang",
+      "title": "Battle of Luoyang",
+      "runtime_id": "eu-cf-luoyang",
+      "map": "Distinct E.U. finale; reuse existing 83-city Luoyang geography without changing battle-luoyang; north and southwest E.U. assaults against fortified Chinese capital.",
+      "campaign_objective_id": "eu-federation-luoyang",
+      "scenario_file": "dist/scenarios-eu-cf-luoyang.js",
+      "starting_sides": [
+        "eu",
+        "cf"
+      ],
+      "status": "planned",
+      "scenarioId": null
+    }
+  ],
+  "integration": "Each independent agent branches from architecture branch; own its scenario module/map/doc only; integrator updates campaign scenarioId null -> runtime_id and adds manifest/catalog registrations after verification. Never change original Luoyang, older campaigns, shared engine or generated bundles.",
+  "mandatory": "Normal/Hard/Challenge/Elite; EU vs cf faction rosters; functional industry/production; Army Groups; commanders; terrain/coasts/ports accurate; AI offense and defense; no victory timers or fake completion; independent standalone visibility after integration; elite conversion and correct reward eligibility; tests and seeded simulations for both factions with plausible winnability; data-driven meta; no sweeping shared changes.",
+  "status": "architecture_only"
+}
