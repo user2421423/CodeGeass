@@ -1,0 +1,34 @@
+name: Defense of Japan scenario checks
+on:
+  pull_request:
+    paths:
+      - 'dist/scenarios-defense-japan.js'
+      - 'dist/scenario-manifest.js'
+      - 'dist/scenario-catalog.js'
+      - 'tools/generate-scenario-catalog.cjs'
+      - 'tools/defense_japan_smoke.cjs'
+      - '.github/workflows/defense-japan.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  defense-japan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build source sections
+        run: node tools/build_sources.cjs
+      - name: Confirm generated scenario catalog is in sync
+        run: |
+          node tools/generate-scenario-catalog.cjs
+          git diff --exit-code -- dist/scenario-catalog.js
+      - name: Defense of Japan invariants and short AI playtest
+        run: node tools/defense_japan_smoke.cjs
+      - name: Black Knights 10-turn seeded AI playtest
+        run: node tools/scenario_sim.cjs defense-japan bk normal 11 10
+      - name: Britannia 10-turn seeded AI playtest
+        run: node tools/scenario_sim.cjs defense-japan britannia normal 11 10
