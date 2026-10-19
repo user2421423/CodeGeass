@@ -11,7 +11,7 @@ Sakuradite sites and original ports as *The Invasion of Japan*.
 The original Invasion and Division of Japan scenarios are unchanged.
 
 * **Black Knights** initially own every Japanese city, every city-linked land
-  province and every harbor. They begin with 31 dispersed ground formations
+  province and every harbor. They begin with 29 dispersed ground formations
   plus seven ships and amphibious defenders around strategic coastal cities.
 * **Britannia** initially owns **zero cities and zero ports**. Its 18
   carrier-battleships are its **only units physically on the map**. Each carries
