@@ -17,7 +17,7 @@ const type = (side,branch) => Object.keys(E.TYPES).find(id => {
   const t = E.TYPES[id];
   return t.side === side && t.branch === branch && !t.naval && !t.elite && t.min === 1 && t.max === 1;
 });
-const bkArt = type('bk','Artillery'), bkInf = type('bk','Infantry'), brInf = type('britannia','Infantry');
+const bkArt = type('bk','Artillery') || type('cf','Artillery'), bkInf = type('bk','Infantry'), brInf = type('britannia','Infantry');
 assert.ok(bkArt && bkInf && brInf, 'Both sides need standard units');
 function setup(){
   const g=E.createGame('bk','normal','conquest',20261019,'world');
