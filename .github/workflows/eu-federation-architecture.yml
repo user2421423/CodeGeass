@@ -17,9 +17,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify World Campaign and campaign map JavaScript syntax
+      - name: Build generated engine source before regional metadata compilation
+        run: node tools/build_sources.cjs
+      - name: Check campaign and scenario loader syntax
         run: |
           node --check dist/war-campaign.js
           node --check dist/ui/war-campaign-screen.js
-      - name: Validate EU-Federation architecture, placeholder safety and old saves
+          node --check dist/scenario-manifest.js
+          node --check tools/generate-scenario-catalog.cjs
+      - name: Generate integrated catalog and verify EU-Federation registrations
+        run: |
+          node tools/generate-scenario-catalog.cjs
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+          const code = fs.readFileSync('dist/scenario-catalog.js', 'utf8');
+          const entries = vm.runInNewContext(code + '\nSCENARIO_CATALOG');
+          const keys = ['kazakhstan','persia','xinjiang','india','mongolia','manchuria','himalayas','sichuan','beijing','luoyang'];
+          const integrated = Object.fromEntries(keys.map(k => {
+            const id = 'eu-cf-' + k;
+            const x = entries[id];
+            if (!x || !x.sides.includes('eu') || !x.sides.includes('cf') || !x.files.length)
+              throw Error('Catalog entry incomplete: ' + id);
+            return [id, x];
+          }));
+          console.log('EU_CF_INTEGRATION_CATALOG_B64=' + Buffer.from(JSON.stringify(integrated)).toString('base64'));
+          NODE
+      - name: Validate EU-Federation campaign, launch contract and old saves
         run: node tools/eu_federation_campaign_smoke.cjs
