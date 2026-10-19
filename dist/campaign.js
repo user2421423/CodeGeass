@@ -125,8 +125,7 @@
     const nativeFederation = new Set(['chuyen', 'wang_hu', 'shen_hu', 'shui_gun_ru_ii']);
     const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
       const e = E.ELITE_FORCES[id];
-      return !E.TYPES[e.type].naval &&
-        (owner === 'cf' ? nativeFederation.has(id) : e.availableTo.includes(owner));
+      return owner === 'cf' ? nativeFederation.has(id) : e.availableTo.includes(owner);
     });
     const own = available(side);
     if (own.length) return own;
@@ -146,7 +145,11 @@
     return available(equipmentOwner || ELITE_ROSTER_FALLBACKS[side] || teammate || 'britannia');
   }
   function eliteType(g, side, type, cmd = null) {
-    const original = E.TYPES[type], pool = g.campaign.eliteRosters[side] || eliteRoster(side, g);
+    const original = E.TYPES[type],
+      // Converting land combatants on Elite difficulty must never select a
+      // marine or warship, even though players may deploy naval HQ elites.
+      pool = (g.campaign.eliteRosters[side] || eliteRoster(side, g))
+        .filter(id => !E.TYPES[E.ELITE_FORCES[id].type].naval);
     if (!pool.length) throw new Error(`Missing elite roster for ${side}`);
     const current = pool.find(id => E.ELITE_FORCES[id].type === type);
     if (current) return current;
