@@ -32,7 +32,7 @@
     if (kind === 'attack') {
       if (!actor) return { ok: false, reason: 'Unit not found.' };
       const why = turnReason(g, actor.side) ||
-        (actor.hp <= 0 ? 'Unit destroyed' : actor.expRoloFrozen ? 'Frozen by Absolute Suspension' : actor.morale <= -3 ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
+        (actor.hp <= 0 ? 'Unit destroyed' : actor.expRoloFrozen ? 'Frozen by Absolute Suspension' : (actor.expCharlesMemoryRewrite || actor.morale <= -3) ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
       if (why) return { ok: false, reason: why };
       const shot = preview(g, id, c, r);
       if (!shot) return { ok: false, reason: atSea(g, actor) ? 'Embarked units cannot fire.' : 'No hostile target in range.' };
