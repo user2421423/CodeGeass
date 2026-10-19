@@ -232,7 +232,9 @@
     const why = turnReason(g, u.side) || (u.hp <= 0 ? 'Unit destroyed' : u.expRoloFrozen ? 'Frozen by Absolute Suspension' : atSea(g, u) ? 'Embarked units cannot use command actions' : u.morale <= -3 ? 'Unit is confused' : null)
       || (u.feintUsedTurn === g.turn ? 'Already used this turn' : (action.cooldown ?? 3) > 0 && u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
     if (why) return why;
+    if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';
+    if (action.kind === 'memoryRewrite') return actionTargets(g, u).length ? null : 'No enemy susceptible to confusion within 3 hexes';
     if (action.kind === 'freeze') return actionTargets(g, u).length ? null : 'No adjacent enemy formations to freeze';
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
     if (action.kind === 'special' || action.kind === 'protection' || action.kind === 'geassCancel' || action.kind === 'checkmate') return actionTargets(g,u).length ? null : 'No eligible targets in range';
