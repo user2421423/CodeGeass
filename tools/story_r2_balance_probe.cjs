@@ -23,6 +23,8 @@ const focusAll = process.env.STORY_BALANCE_FOCUS_ALL === '1';
 const selectedMissions = (process.env.STORY_BALANCE_MISSIONS || '')
   .split(',').map(id => id.trim()).filter(Boolean);
 const missionFilter = new Set(selectedMissions);
+const traceMissions = new Set((process.env.STORY_BALANCE_TRACE_MISSIONS || '')
+  .split(',').map(id=>id.trim()).filter(Boolean));
 assert.equal(missionFilter.size, selectedMissions.length,
   'Mission audit filter must not include duplicates');
 assert.ok(seeds.length > 0 && seeds.length <= 15, 'Provide 1–15 seeds');
@@ -43,6 +45,7 @@ if (!selected.length) {
 function simulate(id, seed) {
   const m = E.campaign.mission(id), g = E.campaign.createMission(id, seed, 'normal');
   const deadline = Math.min(40, (g.campaign?.turnLimit || m.win?.hold || m.lose?.turns || 20) + 2);
+  const trace = [];
   for (let turn = 1; turn <= deadline && !g.over; turn++) {
     g.turn = turn;
     for (let i = 0; i < g.order.length && !g.over; i++) {
@@ -65,10 +68,23 @@ function simulate(id, seed) {
       }
     }
     E.hooks.decide(g);
+    if (traceMissions.has(id) && seed === 101) trace.push({
+      turn, over: g.over?.reason || null, kills: g.campaign?.kills,
+      target: g.campaign?.aiObjective || null,
+      commanders: g.units.filter(u => ['zero','tohdoh','cornelia'].includes(u.cmd) && u.hp>0)
+        .map(u=>({cmd:u.cmd,c:u.c,r:u.r,side:u.side,hold:u.hold||null,moved:u.moved||false})),
+      stations: g.stations.filter(x=>['Western Escape Route','Chofu Detention Center','Escape Route'].includes(x.name))
+        .map(x=>({name:x.name,owner:x.owner,c:x.c,r:x.r})),
+    });
   }
+  if (trace.length) console.log('STORY_BALANCE_TRACE '+id+' '+JSON.stringify(trace));
   return {
     seed, winner: g.over?.winner || null, turn: g.turn,
     reason: g.over?.reason || 'No decision before test limit',
+    commanderPositions: g.units.filter(u => ['zero','tohdoh','cornelia'].includes(u.cmd) && u.hp>0)
+      .map(u => ({cmd:u.cmd,c:u.c,r:u.r,hp:u.hp,side:u.side})),
+    missionKills: g.campaign?.kills || 0,
+    objectiveTarget: g.campaign?.aiObjective || null,
     friendlySurvivors: g.units.filter(u => u.hp > 0 && u.side === g.player).length,
     enemySurvivors: g.units.filter(u => u.hp > 0 && E.foe(g, u.side, g.player)).length,
     remainingObjectives: g.stations.filter(s => E.foe(g, s.owner, g.player)).map(s => s.name)
