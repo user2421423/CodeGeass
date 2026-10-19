@@ -142,6 +142,12 @@
     // protected; this never promotes a unit from Steady to High.
     applyLeilaMoraleFloor(g);
     for (const u of mine) {
+      // Geass Absolute Command's enemy-mode effects expire at the START
+      // of the affected faction's next turn, before ordinary morale recovery.
+      if (u.expZeroGeass) {
+        u.morale = Math.min(1, u.morale + (u.expZeroGeass.moraleLost || 0));
+        delete u.expZeroGeass;
+      }
       u.entrenched = false;
       u.lastTurnMoved = false;
       u.guardReady = !!u.held;
@@ -190,7 +196,7 @@
       if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
-      const auras = mine.filter(v => v.hp > 0 && v.cmd && v.cmd !== 'leila' && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
+      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
       // Ohgi's Organizer: the morale step comes even when surrounded.

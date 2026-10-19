@@ -266,7 +266,12 @@ function commandDialog(u) {
   const action = C(u.cmd).action, options = E.actionTargets(game, u);
   const cities = ['city', 'enemyCity'].includes(action.target), self = action.target === 'self';
   const enemy = ['enemy', 'enemyCommander', 'enemyCity'].includes(action.target) || ['designate', 'stratagem'].includes(action.kind);
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · ${action.cooldown===0?'Once per turn':'Every '+(action.cooldown||3)+' turns'}</div><h2>${self ? 'Activate ability' : cities ? 'Select a city' : enemy ? 'Select an enemy' : 'Select an ally'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${options.map(v => `<button data-command="${v.id}">${cities ? esc(v.name)+' · '+Math.ceil(v.shield)+' / '+v.maxShield+' shields' : (v.cmd ? esc(C(v.cmd).short) + ' · ' : '') + esc(E.TYPES[v.type].short) + ' ×' + v.stack + ' · ' + esc(nearestCityName(v))}</button>`).join('')}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
+  const zeroDual = u.cmd === 'zero' && action.kind === 'command';
+  const button = v => `<button data-command="${v.id}">${zeroDual ? (v.side === u.side ? 'Ally · Reset actions · ' : 'Enemy · Suppress counters · ') : ''}${cities ? esc(v.name)+' · '+Math.ceil(v.shield)+' / '+v.maxShield+' shields' : (v.cmd ? esc(C(v.cmd).short) + ' · ' : '') + esc(E.TYPES[v.type].short) + ' ×' + v.stack + ' · ' + esc(nearestCityName(v))}</button>`;
+  const choices = zeroDual
+    ? `<p><b>Friendly command</b></p>${options.filter(v => v.side === u.side).map(button).join('') || '<p>No eligible allies have acted.</p>'}<p><b>Enemy command</b></p>${options.filter(v => v.side !== u.side).map(button).join('') || '<p>No enemies in range.</p>'}`
+    : options.map(button).join('');
+  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · ${action.cooldown===0?'Once per turn':'Every '+(action.cooldown||3)+' turns'}</div><h2>${zeroDual ? 'Select an ally or enemy' : self ? 'Activate ability' : cities ? 'Select a city' : enemy ? 'Select an enemy' : 'Select an ally'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${choices}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
   focusDialog();
 }
 function admiralDialog() {

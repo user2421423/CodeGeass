@@ -11,10 +11,13 @@
     }
     return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
   }
-  // Zero's Tactical Command: friendly units within 2 hexes (not his own) that have already moved or fired.
+  // Geass Absolute Command: a fresh activation for ONE acted ally (never
+  // Zero himself), or disruption of ONE enemy. Both share the same use stamp.
   function commandTargets(g, u) {
     return g.units.filter(
-      v => v.hp > 0 && v.side === u.side && v.id !== u.id && (v.moved || v.attacked) && !atSea(g, v) && v.morale > -3 && dist(g, u, v) <= 2,
+      v => v.hp > 0 && v.side === u.side && v.id !== u.id &&
+        (v.moved || v.attacked || v.chain > 0) && !atSea(g, v) &&
+        v.morale > -3 && dist(g, u, v) <= 2,
     );
   }
   const skillNear = (g, u, flag, range, self = true) =>
@@ -178,6 +181,7 @@
     const out = [];
     if (u.skillMarks?.length) out.push('Designated target');
     if(u.expChengWeaken?.turns>0)out.push('Supply disruption: attack −15%');
+    if(u.expZeroGeass)out.push('Geass Absolute Command: counterattacks suppressed');
 
     if(u.expInformationWarfare)out.push('Information warfare: attack −20%, cover −25%, support suppressed');
     if(u.expPrecisionTarget?.turn===g.turn)out.push('Precision target: +25 penetration points, cover bypass 40%');
@@ -189,7 +193,7 @@
     if(u.expPinnedWeakenActive)out.push('Pinned: attack −25%');
     if(u.forcedOffensive||u.expForcedVulnerable)out.push(`Forced Offensive: ${u.forcedOffensive?'next attack +35%; ':''}${u.expForcedVulnerable?'incoming damage +15%':''}`);
     if(u.feintUsedTurn===g.turn&&COMMANDERS[u.cmd]?.action)out.push('Signature action used this turn');
-    else if(COMMANDERS[u.cmd]?.action&&!(u.feintCD>0))out.push('Signature action ready');
+    else if(COMMANDERS[u.cmd]?.action&&((COMMANDERS[u.cmd].action.cooldown ?? 3) === 0 || !(u.feintCD>0)))out.push('Signature action ready');
     if(u.expSalvageIndustry>0)out.push(`Salvage: +${u.expSalvageIndustry}/60 industry`);
     if(u.expSmilasSuppression)out.push('Suppressed: next attack −20%');
     if(u.expPuristCounter)out.push('Purist discipline: counterattack +20%');

@@ -181,7 +181,10 @@
   function actionTargets(g, u) {
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
-    if (kind === 'command') return commandTargets(g, u);
+    if (kind === 'command') return u.cmd === 'zero'
+      ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
+          foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
+      : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
     // Synchronized Maneuver refreshes Leila too, and any friendly on-map
     // formation (including naval units) that has spent its movement or attack.
@@ -200,16 +203,34 @@
       const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
         : options.find(v => v.id === targetId);
       if (!v) return { ok: false, reason: 'Choose a valid target within 2 hexes' };
-      if (action.kind === 'command') {
+      if (action.kind === 'command' && u.cmd === 'zero' && foe(g, v.side, u.side)) {
+        const before = v.morale;
+        lowerMorale(g, v, 2);
+        // Never inflict full confusion: do not push a target below -2,
+        // but also do not raise a unit already at -3.
+        v.morale = Math.max(v.morale, Math.min(before, -2));
+        v.expZeroGeass = {
+          source: u.id,
+          moraleLost: (v.expZeroGeass?.moraleLost || 0) + Math.max(0, before - v.morale),
+        };
+        // Counterattack suppression is checked by both preview and live
+        // combat, including special defensive reaction attacks.
+      } else if (action.kind === 'command') {
         v.moved = v.attacked = false;
+        v.chain = 0;
+        v.moveActionTurn = g.turn;
+        v.moveActionsThisTurn = 0;
+        v.movedDistance = 0;
+        v.eliteMoveAfterKill = false;
         v.skillReposition = 0;
         v.withdrawMove = false;
-        // Keep chain/ace/reposition stamps: an extra activation must not refresh once-per-turn skills.
+        // A new normal activation, NOT a new turn: retain once-per-turn
+        // stamps for commander skills, Elite perks and other special effects.
       } else addTargetMark(v, { side: u.side, source: u.id, range: 2,
         damage: action.kind === 'designate' ? 0.2 : 0, noCounter: action.kind === 'stratagem' });
       u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;
       u.feintUsedTurn = g.turn;
-      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? 'acts again' : 'designated'}.`, u.side);
+      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? (v.side === u.side ? 'receives a fresh activation' : 'is disrupted and cannot counterattack') : 'designated'}.`, u.side);
       return { ok: true, target: v.id, affected: 1 };
     }
     for (const v of options) {

@@ -235,7 +235,7 @@
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
     if (action.kind === 'special') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
-      ? 'No enemy within 2 hexes' : action.kind === 'command' ? 'No friendly unit within 2 hexes has acted'
+      ? 'No enemy within 2 hexes' : action.kind === 'command' ? (u.cmd === 'zero' ? 'No eligible friendly or enemy formation within 2 hexes' : 'No friendly unit within 2 hexes has acted')
       : action.kind === 'withdraw' ? 'Neither Leila nor a friendly formation within 2 hexes has moved or fired' : 'No enemy within 2 hexes';
   }
   // Bring the profile into an operation: a copy of your commanders (for assignment and personal units) and research.
