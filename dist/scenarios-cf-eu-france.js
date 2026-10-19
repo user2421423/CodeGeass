@@ -104,11 +104,11 @@
       ['medium',null],['heavy',null],['assault',null],['support',null],
       ['heavy',null],['rocket',null],['medium',null],['assault',null]]},
     {name:'Toulon Landing Fleet',target:'Toulon',at:[6.0,42.3],troops:[
-      ['heavy','zhaohao'],['assault','leifeng'],['heavy','xingke'],['rocket','leifeng'],
+      ['heavy','zhaohao'],['assault','lifeng'],['heavy','xingke'],['rocket','leifeng'],
       ['medium',null],['assault',null],['rocket',null],['heavy',null],
       ['medium',null],['support',null],['heavy',null],['assault',null]]},
     {name:'Riviera Landing Fleet',target:'Nice',at:[7.0,42.5],troops:[
-      ['heavy','leifeng'],['assault','xianglin'],['rocket',null],['medium',null],
+      ['heavy',null],['assault','xianglin'],['rocket',null],['medium',null],
       ['heavy',null],['assault',null],['rocket',null],['medium',null]]},
     {name:'Corsica Landing Fleet',target:'Ajaccio',at:[8.0,41.5],troops:[
       ['heavy',null],['assault',null],['medium',null],['rocket',null]]}
@@ -125,9 +125,9 @@
     Seine:[[2.95,48.43],[2.35,48.86],[1.85,49.02],[1.10,49.44],[0.12,49.5]],
     Loire:[[4.3,45.9],[3.1,46.2],[2.3,47.1],[1.91,47.9],
       [0.68,47.39],[-0.55,47.47],[-1.55,47.22]],
-    Garonne:[[0.58,43.88],[1.44,43.60],[0.14,44.30],[-0.58,44.84]],
+    Garonne:[[1.44,43.60],[1.00,43.98],[0.50,44.12],[0.14,44.30],[-0.58,44.84]],
   };
-  const BRIDGES=['Lyon','Valence','Avignon','Paris','Rouen','Tours','Orléans','Nantes','Toulouse','Bordeaux'];
+  const BRIDGES=['Lyon','Valence','Avignon','Paris','Tours','Orléans','Nantes','Toulouse','Bordeaux'];
   const FUNDING={cf:{credits:880,industry:500,science:100,sakuradite:45},
     eu:{credits:820,industry:530,science:100,sakuradite:46}};
   const SEA=n=>n.terrain==='sea';
@@ -299,6 +299,35 @@
       for(const s of local){const n=E.distance(t,s,g);if(n<d){d=n;city=s;}}
       t.owner=city.owner;t.provinceCity=city.id;
     }
+    // Cross the Rhone, Seine, Loire and Garonne at genuine river edges.
+    // Bridges near named cities bypass the movement penalty, never seal routes.
+    const riverSegments=Object.values(RIVERS).flatMap(line=>
+      line.slice(1).map((v,i)=>[line[i],v]));
+    function orientation(a,b,p){
+      return (b.lon-a.lon)*(p.lat-a.lat)-(b.lat-a.lat)*(p.lon-a.lon);
+    }
+    function crosses(a,b,p,q){
+      const l={lon:p[0],lat:p[1]},r={lon:q[0],lat:q[1]},
+        x=orientation(a,b,l),y=orientation(a,b,r),
+        u=orientation(l,r,a),v=orientation(l,r,b);
+      return ((x>0&&y<0)||(x<0&&y>0))&&
+             ((u>0&&v<0)||(u<0&&v>0));
+    }
+    const bridges=g.stations.filter(s=>BRIDGES.includes(s.name)),edges={};
+    for(const t of g.tiles){
+      if(t.terrain==='sea'||t.terrain==='offmap')continue;
+      const a=geo(t.c,t.r),from=t.r*COLS+t.c;
+      for(const n of E.adjacent(g,t)){
+        const to=n.r*COLS+n.c;
+        if(to<=from||n.terrain==='sea'||n.terrain==='offmap')continue;
+        if(bridges.some(s=>E.distance(s,t,g)<=1&&E.distance(s,n,g)<=1))
+          continue;
+        const b=geo(n.c,n.r);
+        if(riverSegments.some(([p,q])=>crosses(a,b,p,q)))
+          edges[from+':'+to]=true;
+      }
+    }
+    g.scenario.riverBarriers=edges;
     // Real port ownership is separate from adjacent city ownership.
     const reserved=new Set();
     for(const [name,level] of Object.entries(PORTS)){
