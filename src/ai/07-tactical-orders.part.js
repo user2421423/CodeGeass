@@ -87,6 +87,55 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // On Normal Story escape missions, the required named commander must
+    // actually walk to the exit instead of chasing incidental enemies.
+    // Uses reachable() and move() like a human player, and does not give
+    // free movement, teleportation, or immunity to counterfire.
+    const extraction = g.mode === 'campaign' && g.difficulty === 'normal' &&
+      u.side === g.player && g.campaign?.aiObjective?.type === 'reach' &&
+      ['bk_saitama', 'bk_tohdoh'].includes(g.campaign.id)
+      ? g.campaign.aiObjective : null;
+    const evacuation = extraction && u.cmd && extraction.by === u.cmd ? extraction : null;
+    // A different ally can stand on a friendly exit before the required
+    // commander gets there. Vacate that tile legally and keep it clear.
+    if (extraction && !evacuation && !u.moved &&
+        u.c === extraction.c && u.r === extraction.r) {
+      const candidates = [...reachable(g, u).keys()].map(k => {
+        const [c,r] = k.split(',').map(Number);
+        return tile(g,c,r);
+      }).filter(p => p && !unitAt(g,p) &&
+        !(p.c === extraction.c && p.r === extraction.r) &&
+        !isSea(p)).sort((a,b) =>
+        dist(g,a,extraction)-dist(g,b,extraction));
+      for (const p of candidates) {
+        const moved = move(g,id,p.c,p.r);
+        if (moved.ok) {
+          events.push({ kind:'move', ...moved, id });
+          return events;
+        }
+      }
+    }
+    if (evacuation && !u.moved) {
+      if (u.c === evacuation.c && u.r === evacuation.r) return events;
+      const target = tile(g, evacuation.c, evacuation.r);
+      const field = goalField(g, u.side, [[target, 0]], null, u);
+      const current = field[u.r * g.cols + u.c];
+      const options = [...reachable(g, u).keys()].map(k => {
+        const [c, r] = k.split(',').map(Number);
+        return tile(g, c, r);
+      }).filter(p => p && !unitAt(g, p) &&
+        Number.isFinite(field[p.r * g.cols + p.c]) &&
+        field[p.r * g.cols + p.c] < current)
+        .sort((a,b) => field[a.r*g.cols+a.c]-field[b.r*g.cols+b.c] ||
+          dist(g,a,evacuation)-dist(g,b,evacuation));
+      for (const p of options.slice(0, 5)) {
+        const moved = move(g, id, p.c, p.r);
+        if (moved.ok) {
+          events.push({ kind: 'move', ...moved, id });
+          return events;
+        }
+      }
+    }
     const islandDefender = philippinesDefense(g, u.side);
     const defenseStep = p => !islandDefender ||
       (!isShip(u) && !isSea(p) &&
@@ -197,7 +246,9 @@
           const [c, r] = k.split(',').map(Number);
           return tile(g, c, r);
         })
-        .filter(p => !unitAt(g, p) && defenseStep(p));
+        .filter(p => !unitAt(g, p) && defenseStep(p) &&
+          !(extraction && !evacuation &&
+            p.c === extraction.c && p.r === extraction.r));
       const enemies = g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, u) <= aiRange(g).enemyScan);
       const old = { c: u.c, r: u.r };
       // Overseas invasions assemble before embarking. Nearby land formations stage on the coast; units already at sea

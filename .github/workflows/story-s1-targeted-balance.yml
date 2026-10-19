@@ -1,0 +1,39 @@
+name: Season 1 targeted balance retest
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/missions/**'
+      - 'src/ai/**'
+      - 'tools/story_r2_balance_probe.cjs'
+      - '.github/workflows/story-s1-targeted-balance.yml'
+  pull_request:
+    paths:
+      - 'src/missions/**'
+      - 'src/ai/**'
+      - 'tools/story_r2_balance_probe.cjs'
+      - '.github/workflows/story-s1-targeted-balance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s1-targeted:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - name: Validate Normal/Hard/Challenge Story mission deployments
+        run: node tools/story_normal_objectives_and_balance_smoke.cjs
+      - name: Ten-seed self-play for the eight changed Season 1 missions only
+        env:
+          STORY_BALANCE_CAMPAIGNS: bk_s1,britannia_s1
+          STORY_BALANCE_MISSIONS: bk_saitama,bk2,bk_tohdoh,br1,br_mef,br5,br4,br_yokosuka
+          STORY_BALANCE_FOCUS_ALL: '1'
+          STORY_BALANCE_TRACE_MISSIONS: bk_saitama,bk_tohdoh
+        run: node tools/story_r2_balance_probe.cjs

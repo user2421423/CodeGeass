@@ -20,6 +20,13 @@ const focusSeeds = (process.env.STORY_BALANCE_FOCUS_SEEDS || '101,202,303,404,50
 const focus = new Set(['bk5','bk_rescue','bk_pacific','bk_yokosuka2','br7','br_execution',
   'br_yokosuka2','br_xiaopei','br_mausoleum','br10','br_kagoshima']);
 const focusAll = process.env.STORY_BALANCE_FOCUS_ALL === '1';
+const selectedMissions = (process.env.STORY_BALANCE_MISSIONS || '')
+  .split(',').map(id => id.trim()).filter(Boolean);
+const missionFilter = new Set(selectedMissions);
+const traceMissions = new Set((process.env.STORY_BALANCE_TRACE_MISSIONS || '')
+  .split(',').map(id=>id.trim()).filter(Boolean));
+assert.equal(missionFilter.size, selectedMissions.length,
+  'Mission audit filter must not include duplicates');
 assert.ok(seeds.length > 0 && seeds.length <= 15, 'Provide 1–15 seeds');
 assert.ok(focusSeeds.length >= 10 && focusSeeds.length <= 30, 'Provide 10–30 focused seeds');
 assert.equal(new Set(CAMPAIGN_IDS).size, CAMPAIGN_IDS.length,
@@ -38,6 +45,7 @@ if (!selected.length) {
 function simulate(id, seed) {
   const m = E.campaign.mission(id), g = E.campaign.createMission(id, seed, 'normal');
   const deadline = Math.min(40, (g.campaign?.turnLimit || m.win?.hold || m.lose?.turns || 20) + 2);
+  const trace = [];
   for (let turn = 1; turn <= deadline && !g.over; turn++) {
     g.turn = turn;
     for (let i = 0; i < g.order.length && !g.over; i++) {
@@ -60,10 +68,23 @@ function simulate(id, seed) {
       }
     }
     E.hooks.decide(g);
+    if (traceMissions.has(id) && seed === 101) trace.push({
+      turn, over: g.over?.reason || null, kills: g.campaign?.kills,
+      target: g.campaign?.aiObjective || null,
+      commanders: g.units.filter(u => ['zero','tohdoh','cornelia'].includes(u.cmd) && u.hp>0)
+        .map(u=>({cmd:u.cmd,c:u.c,r:u.r,side:u.side,hold:u.hold||null,moved:u.moved||false})),
+      stations: g.stations.filter(x=>['Western Escape Route','Chofu Detention Center','Escape Route'].includes(x.name))
+        .map(x=>({name:x.name,owner:x.owner,c:x.c,r:x.r})),
+    });
   }
+  if (trace.length) console.log('STORY_BALANCE_TRACE '+id+' '+JSON.stringify(trace));
   return {
     seed, winner: g.over?.winner || null, turn: g.turn,
     reason: g.over?.reason || 'No decision before test limit',
+    commanderPositions: g.units.filter(u => ['zero','tohdoh','cornelia'].includes(u.cmd) && u.hp>0)
+      .map(u => ({cmd:u.cmd,c:u.c,r:u.r,hp:u.hp,side:u.side})),
+    missionKills: g.campaign?.kills || 0,
+    objectiveTarget: g.campaign?.aiObjective || null,
     friendlySurvivors: g.units.filter(u => u.hp > 0 && u.side === g.player).length,
     enemySurvivors: g.units.filter(u => u.hp > 0 && E.foe(g, u.side, g.player)).length,
     remainingObjectives: g.stations.filter(s => E.foe(g, s.owner, g.player)).map(s => s.name)
@@ -74,6 +95,7 @@ for (const id of CAMPAIGN_IDS) {
   const camp = E.campaign.CAMPAIGNS[id];
   console.log('\n# ' + id);
   for (const m of camp.missions) {
+    if (missionFilter.size && !missionFilter.has(m.id)) continue;
     const trials = [];
     for (const seed of (focusAll || focus.has(m.id) ? focusSeeds : seeds)) {
       try {
@@ -102,6 +124,9 @@ function summarize(items) {
     errors: failures.filter(e => items.some(r => r.mission === e.mission))
   };
 }
+if (missionFilter.size)
+  assert.deepEqual(new Set(results.map(x=>x.mission)),missionFilter,
+    'Every explicitly selected mission must be tested once');
 const r2 = results.filter(r => R2_IDS.includes(r.campaign));
 console.log('R2_BALANCE_SUMMARY ' + JSON.stringify(summarize(r2)));
 console.log('STORY_BALANCE_SUMMARY ' + JSON.stringify(summarize(results)));
