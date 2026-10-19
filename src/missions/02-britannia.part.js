@@ -412,6 +412,9 @@
         [B, 'sutherland', 17, 5, 1],
         [B, 'gloucester', 13, 4, 2, null, { normalOnly: true }],
         [B, 'gloucester', 15, 10, 2, null, { normalOnly: true }],
+        // Normal: immediate refinery perimeter, rather than only rear-line reinforcements.
+        [B, 'vincent_ward', 13, 3, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 15, 3, 2, null, { normalOnly: true, hold: 1 }],
         [K, 'burai', 4, 6, 2, 'zero'],
         [K, 'elite_guren_mkii', 5, 4, 1, 'kallen'],
         [K, 'burai', 4, 8, 1, 'cc'],
@@ -494,6 +497,8 @@
         [B, 'sutherland', 8, 3, 1],
         [B, 'sutherland', 12, 10, 1],
         [B, 'gareth', 19, 5, 1],
+        // Normal: reserve protecting Government Bureau through the turn-ten hold.
+        [B, 'vincent_ward', 17, 5, 2, null, { normalOnly: true, hold: 2 }],
         [K, 'elite_shinkiro', 3, 6, 1, 'zero'],
         [K, 'elite_guren_mkii', 4, 8, 1, 'kallen'],
         [K, 'zangetsu', 4, 5, 1, 'tohdoh'],
@@ -729,6 +734,9 @@
         [B, 'gareth', 11, 12, 1],
         [B, 'gareth', 13, 11, 1],
         [B, 'gareth', 17, 10, 1],
+        // Normal: keep an infantry screen within one hex of Lelouch.
+        [B, 'vincent_ward', 12, 11, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 13, 12, 2, null, { normalOnly: true, hold: 1 }],
         ['neutral', 'gareth', 12, 1, 1, 'schneizel', { hold: 1 }],
         ['neutral', 'vincent_commander', 7, 3, 1, null, { hold: 1 }],
         ['neutral', 'vincent_commander', 17, 2, 1, null, { hold: 1 }],

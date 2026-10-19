@@ -732,6 +732,9 @@
         ['cf', 'chuyen', 17, 4, 1],
         ['neutral', 'gareth', 12, 1, 1, 'schneizel'],
         ['neutral', 'brighton', 11, 2, 1],
+        // Normal: screen Damocles itself against a turn-four rush.
+        ['neutral', 'vincent_ward', 11, 1, 2, null, { normalOnly: true, hold: 1 }],
+        ['neutral', 'vincent_ward', 13, 1, 2, null, { normalOnly: true, hold: 1 }],
         [B, 'elite_shinkiro', 12, 12, 1, 'lelouch', { hold: 1 }],
         [B, 'elite_lancelot_albion', 11, 10, 1, 'suzaku'],
         [B, 'vincent_commander', 14, 10, 2, 'jeremiah'],

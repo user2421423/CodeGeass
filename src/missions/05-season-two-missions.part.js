@@ -80,6 +80,9 @@
         [B, 'liverpool', 13, 9, 1],
         [B, 'gloucester', 14, 8, 1, null, { normalOnly: true }],
         [B, 'sutherland', 13, 2, 2, null, { normalOnly: true }],
+        // Normal: prevent an immediate G-1 Base collapse during the rescue.
+        [B, 'vincent_ward', 13, 6, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 14, 7, 2, null, { normalOnly: true, hold: 1 }],
         [K, 'burai', 2, 5, 1, 'zero', { hold: false }],
         [K, 'burai', 3, 6, 2],
         [K, 'burai', 5, 3, 2],
@@ -793,7 +796,8 @@
         [K, 'akatsuki_flight', 5, 6, 2, null, { normalOnly: true }],
         [K, 'akatsuki_flight', 5, 8, 2, null, { normalOnly: true }],
         [K, 'akatsuki_flight', 4, 8, 2, null, { normalOnly: true }],
-        [K, 'akatsuki_flight', 5, 9, 2, null, { normalOnly: true }], ...PACIFIC_BRIT, [B, 'sutherland_air', 12, 6, 1, null, { skipNormal: true }]],
+        [K, 'akatsuki_flight', 5, 9, 2, null, { normalOnly: true }],
+        [K, 'akatsuki_flight', 3, 5, 2, null, { normalOnly: true, hold: 2 }], ...PACIFIC_BRIT, [B, 'sutherland_air', 12, 6, 1, null, { skipNormal: true }]],
       objective: 'Capture the Governor’s Flagship. Zero must survive.',
       win: { capture: ['Governor’s Flagship'] },
       lose: { cmd: ['zero'], turns: 12 },
@@ -1120,6 +1124,9 @@
         [B, 'sutherland', 20, 10, 1],
         [B, 'vincent_commander', 19, 6, 1],
         [B, 'vincent_ward', 21, 4, 1, null, { normalOnly: true }],
+        // Normal: reinforce the actual Forbidden City perimeter, not just the east flank.
+        [B, 'vincent_ward', 16, 4, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 15, 5, 2, null, { normalOnly: true, hold: 1 }],
         ...LUOYANG_EUNUCHS,
         ...LUOYANG_REBELS.filter(u => u[0] === K),
         [K, 'akatsuki', 7, 10, 2, null, { skipNormal: true }],
@@ -1218,7 +1225,12 @@
         [B, 'vincent_ward', 9, 4, 1, null, { normalOnly: true }],
         [B, 'vincent_ward', 7, 4, 2, null, { normalOnly: true }],
         [B, 'vincent_ward', 8, 6, 2, null, { normalOnly: true }],
-        ...KAGOSHIMA_BK,
+        // Normal: close settlement defenders for both UFN landing directions.
+        [B, 'vincent_ward', 6, 4, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'vincent_ward', 5, 5, 2, null, { normalOnly: true, hold: 1 }],
+        // On Normal, omit one unnamed UFN missile group; keep all named opponents.
+        ...KAGOSHIMA_BK.map(u => u[1] === 'akatsuki_missile'
+          ? [...u.slice(0, 6), { ...(u[6] || {}), skipNormal: true }] : u),
         [K, 'akatsuki', 6, 10, 1, null, { skipNormal: true }],
         ...KAGOSHIMA_CF,
       ],
