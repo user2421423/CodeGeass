@@ -131,6 +131,7 @@ function updateSelection() {
   const selectionDock = $('selection-dock');
   const dockContent = dockHTML();
   selectionDock.innerHTML = dockContent;
+  selectionDock.classList.toggle('mobile-unit-expanded', dockExpanded);
   // Leave the map unobstructed when there is no selected unit, city, or terrain hex.
   selectionDock.style.display = dockContent ? '' : 'none';
   // AI playback and async game-state changes are not necessarily user input events.

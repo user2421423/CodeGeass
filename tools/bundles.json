@@ -59,6 +59,7 @@
     "src/hud/02-unit-selection.part.js",
     "src/hud/03-city-panels.part.js",
     "src/hud/04-orders-and-actions.part.js",
-    "src/hud/05-command-dock.part.js"
+    "src/hud/05-command-dock.part.js",
+    "src/hud/06-touch-controls.part.js"
   ]
 }

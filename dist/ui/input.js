@@ -728,7 +728,7 @@ document.addEventListener('click', e => {
     case 'zoom-in':
       changeZoom(1.2);
       break;
-    // Phone layout: the minimap and the objective are hidden until asked for (see mobile.css).
+    // Phone layout: the minimap and the objective are hidden until asked for (see hud-mobile.css).
     // Both open in the same corner, so showing one hides the other.
     case 'toggle-minimap':
       document.documentElement.classList.remove('show-objective');
