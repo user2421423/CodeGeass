@@ -10,9 +10,17 @@ organised, every system built so far, and the working conventions the owner expe
 ## 1. Premise
 
 Knightmare Conquest is a browser-based turn-based hex strategy game,
-themed on **Code Geass**. For now it has one mode, **Conquest**: a full world map in 2017 a.t.b. where the Holy
-Britannian Empire, the Europia United and the Chinese Federation fight each other (and the neutral powers) with
-Knightmare Frames.
+themed on **Code Geass**. The start menu offers four modes:
+
+- **World Conquest** (`E.CONQUESTS`): the full world map where the Holy Britannian Empire, the Europia United and the
+  Chinese Federation fight each other (and the neutral powers) with Knightmare Frames, as the 2017 world war or the
+  2018 U.F.N. war (`dist/engine/conquests.js`).
+- **Story Mode**: the mission-based campaigns below.
+- **Regional Scenarios**: standalone wars on detailed regional maps, listed in `dist/scenario-manifest.js` and the
+  README table; see [adding a scenario](docs/ADDING_A_SCENARIO.md).
+- **World Campaign** (`dist/war-campaign.js`): a persistent theater map that links regional battles.
+
+The rules below describe World Conquest unless they say otherwise.
 
 - Move each unit once and attack once per turn; click a green hex to move, a red hex to attack at once.
 - Units are 1–3 frames; commanders ride on units and give bonuses; morale, terrain and counter-fire matter. As in traditional hex strategy games,
@@ -24,24 +32,36 @@ Knightmare Frames.
   with no conquest turn limit; losing your last city loses the war.
 - Between operations, **command tokens** buy HQ research, recruit commanders, promote them and buy their stars.
 
-**Campaign:** three story arcs as mission-based campaigns, each played from either side: Season 1 and R2 (Black Knights or
-Britannia) and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.): 6 campaigns and 58 missions on
-hand-built tactical maps,
-reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (every mission is built and checked in
-`tests/core.test.cjs`); screens in `dist/ui/campaign-screens.js` (one mission boots in `tests/ui-smoke.cjs`). Mission balance is first-pass. See §4.
+**Campaign (Story Mode):** mission-based campaigns on hand-built tactical maps, listed in `CAMPAIGNS`
+(`src/missions/08-campaign-registry.part.js`): Season 1 and R2 (Black Knights or Britannia), the Chinese Federation in R2
+and Xingke's War for the UFN, and the Euro Britannia War from Akito the Exiled (Euro Britannia or the E.U.). 8 campaigns
+and 88 missions as of 2026-10-19, reached from the start menu. Rules in `dist/campaign.js` and `dist/missions.js` (built from `src/missions/`); screens in
+`dist/ui/campaign-screens.js`. Mission balance is first-pass. See §4.
 
-## 2. Running, testing and deploying
+## 2. Building, checking and deploying
 
-- **Run locally:** serve `dist/` with any static server (`python3 -m http.server -d dist`) and open it.
-- **Tests:** a deliberately small (YAGNI) safety net, not a full rules suite. `node --test tests/core.test.cjs` checks
-  that Conquest starts coherently for every power, the core breakthrough and movement rules, that a rival AI turn runs,
-  and that every campaign mission builds with valid references. `node tests/ui-smoke.cjs` loads the scripts
-  `index.html` lists in a stubbed DOM, plays a turn for all three Conquest powers and boots a campaign mission.
-  `node tools/validate_assets.cjs --tracked` checks the published artwork. Node 22. Add a focused test only when a
-  rule is fragile enough to need one. Node was not installed on the machine this was built on; the same tests were run through the macOS
-  JavaScriptCore shell (`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`) with a
-  small `require` shim.
-- **Deploy:** `.github/workflows/pages.yml` uploads `dist/` to GitHub Pages on every push to `main` after `core.test.cjs`, the UI smoke test and the tracked-asset check pass.
+- **Build first.** Five large scripts (`dist/engine.js`, `dist/engine/ai.js`, `dist/missions.js`, `dist/ui/renderer.js`,
+  `dist/ui/hud.js`) are build output, git-ignored and assembled from `src/**/*.part.js` in the order in
+  `tools/bundles.json`. Edit the parts, never the bundles, then run `python3 tools/build_sources.py` (or
+  `node tools/build_sources.cjs`; same output). Rebuild after every `git pull`. Everything else in `dist/` is edited in
+  place. See [the source guide](src/README.md).
+- **Run locally:** after building, `python3 -m http.server 8000 --directory dist` and open http://localhost:8000.
+- **Checks:** there is no regression test suite; `tests/` was deleted in f749e2d. The standing checks are
+  `node tools/validate_assets.cjs --tracked` (published artwork), `python3 tools/check_map.py` (world map lock) and
+  `node tools/scenario_sim.cjs --all`, which must reproduce `tools/data/sim_baseline.txt` unless a change is meant to
+  alter play. Focused `tools/*_smoke.cjs` scripts cover individual fixes, and `python3 tools/readme_scenarios.py --check`
+  fails when the README scenario table is out of date. Node 22.
+- **No Node on the owner's Mac.** Use Python for builds; Node scripts can run in the macOS JavaScriptCore shell
+  (`/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc`) with a small `require` shim.
+  jsc reproduces the baseline's setup lines but not all of its game lines, so use it only to compare two builds with
+  each other.
+- **CI:** `.github/workflows/source-build-sync.yml` builds and runs the smoke scripts and hex audits on every push to
+  `main` and every pull request; `refactor-checks.yml` adds the unified-action suite, a combat benchmark and the
+  seeded-scenario comparison against `main` on pull requests. Other workflows are per-scenario or manual.
+- **Deploy:** `.github/workflows/pages.yml` builds and checks the artwork, then uploads `dist/` to GitHub Pages on every
+  push to `main`. It does not wait for the other workflows. A `preview/<name>` branch is published at
+  `/previews/<name>/` next to the live game.
+- **Parallel sessions:** [docs/LANES.json](docs/LANES.json) assigns each area of the code to one lane.
 - **Formatting:** Prettier with `.prettierrc` (`printWidth 120`, `singleQuote`, `arrowParens: avoid`).
 
 ### Artwork handoff status
@@ -58,7 +78,8 @@ To add or replace public artwork, prepare it locally, run `tools/publish_art.py`
 
 ## 3. Code layout
 
-Everything ships from `dist/`; there is no bundler. Scripts load in this order from `index.html`:
+Everything ships from `dist/`; there is no runtime bundler (the five build-output scripts in §2 are concatenated from
+`src/`). Scripts load in this order from `index.html`:
 
 | File | Role |
 |---|---|
@@ -72,7 +93,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 | `dist/game.js` | Boots the UI once every `ui/*.js` file has loaded. |
 | `dist/style.css`, `dist/battlefield.css` | Base styles and the strategy HUD carried over from Galactic Command; Knightmare Conquest additions are at the end of `battlefield.css`. |
 | `tools/build_map.py` | Hand-drawn continent outlines (lon/lat) rasterized to the hex grid, with `REDRAW` regions from real coastlines (`tools/data/coast.json`, see §Map); `tools/check_map.py` locks the rest; `--inject dist/engine/world.js` rewrites the `// <world>` block. `tools/preview_map.py` renders a PNG (Pillow). |
-| `tests/` | `core.test.cjs` (engine and campaign integrity) and `ui-smoke.cjs` (loads the scripts `index.html` lists, in its order). |
+| `src/` | Editable parts of the five build-output scripts (`engine/`, `ai/`, `missions/`, `renderer/`, `hud/`); see §2. |
+| `dist/scenario-manifest.js`, `dist/scenarios*.js` | Regional scenarios: the manifest sets menu order and load order; each module carries its own map, armies and `meta`. `dist/scenario-catalog.js` is generated menu metadata (`tools/generate-scenario-catalog.cjs`). |
 
 ### Engine conventions
 
@@ -152,8 +174,7 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
   pick the hexes up in `migrateCoastalTerrain`. Cities, mines and starting armies are placed on solid land only.
 - Map lock: `tools/data/map_locked.txt` is the approved map. `python3 tools/check_map.py` (run in CI) fails when a hex
   outside the `REDRAW` regions and fix lists changes, or when `world.js` is out of date with `build_map.py`;
-  `--update` refreshes the lock after an approved change. `core.test.cjs` checks the islands, straits and joins
-  gameplay relies on, and that every city sits within one hex of its coordinates. To redraw another region from real
+  `--update` refreshes the lock after an approved change. To redraw another region from real
   coastlines, add it to `REDRAW`, run `tools/prepare_coast.py` with ne_10m_land.geojson, then `build_map.py --inject`.
 - Plains 1; forest 2 (−15% damage); mountains 2 (−25%); desert 1 (3% attrition); tundra 2 (2.5% attrition);
   Himalaya and Greenland ice cap impassable. Julius and float units ignore movement costs.
@@ -508,8 +529,8 @@ Everything ships from `dist/`; there is no bundler. Scripts load in this order f
 ## 5. Working with the owner
 
 - Treat the owner as the commander: carry out requests fully and report plainly what changed.
-- **Do not run tests or browser checks unless the owner asks.** Keep `core.test.cjs` and `ui-smoke.cjs` passing when
-  rules change, since the owner may ask for a test run and deploys depend on them.
+- **Do not run tests or browser checks unless the owner asks.** Deploys run only the build and the artwork check, so a
+  broken rule reaches the live game unless someone runs the §2 checks.
 - Commit each completed request (push once a remote exists; deploys happen from `main`).
 - Terminology: say **commanders** and **Knightmares / units**, not admirals or fleets. Britannia is the default side.
 - Keep explanations short and concrete; tables are welcome for lists of changes.

@@ -11,6 +11,8 @@ anyone else's files.
 | `dist/scenarios-<name>.js` | the scenario module: map, cities, armies, `create`, `onTurn`, `objective`, `winner`, and `meta` (below) |
 | `dist/<name>-landmask.js` etc. | its own map data, if any |
 | `dist/scenario-manifest.js` | one line in `SCENARIO_MANIFEST` (menu order, title, note) and its files in `SCENARIO_FILES`, each after the files it uses |
+| `tools/generate-scenario-catalog.cjs` | its files in `dependencies`; then run it after building to refresh `dist/scenario-catalog.js` (menu metadata) |
+| `README.md` | run `python3 tools/readme_scenarios.py` to regenerate the scenario table from the manifest and catalog |
 | `docs/<NAME>_SCENARIO.md` | design notes |
 | `dist/war-campaign.js` | only if it becomes a World Campaign objective (Campaigns lane) |
 

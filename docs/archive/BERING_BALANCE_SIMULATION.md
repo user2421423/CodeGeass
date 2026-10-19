@@ -3,7 +3,7 @@
 **Date:** 13 October 2026  
 **Branch:** `feature/bering-strait-crisis`  
 **Reproducible CI run:** https://github.com/user2421423/CodeGeass/actions/runs/38351826184  
-**Simulation source:** [`tools/bering_long_balance.cjs`](../tools/bering_long_balance.cjs)  
+**Simulation source:** [`tools/bering_long_balance.cjs`](../../tools/bering_long_balance.cjs)  
 **Gameplay modified?** No. This report and the simulation harness do not change AI decisions or the scenario's starting forces.
 
 ## Methodology
