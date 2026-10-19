@@ -295,8 +295,7 @@
       focus:{cf:'Yerevan',eu:'Erzurum'}},
     blurbs:{
       cf:'Strike Kars and Erzurum from the Caucasus and Iran, advance on Ankara, seize Black Sea harbours and force the Bosporus into Istanbul.',
-      eu:'Defend Van, Kars and the Armenian frontier in depth, sustain Ankara and western industry, then retake the Persian and Caucasus staging cities.'}}
-  ;
+      eu:'Defend Van, Kars and the Armenian frontier in depth, sustain Ankara and western industry, then retake the Persian and Caucasus staging cities.'}};
   E.scenarios={...(E.scenarios||{}),cfEuTurkey:api,
     byId:{...(E.scenarios?.byId||{}),'cf-eu-turkey':api}};
   if(typeof module!=='undefined')module.exports=api;
