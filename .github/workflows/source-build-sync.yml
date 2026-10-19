@@ -35,6 +35,8 @@ jobs:
         run: node tools/regular_class_standardization_smoke.cjs
       - name: Verify Story Mode Canterbury movement
         run: node tools/story_canterbury_movement_smoke.cjs
+      - name: Verify Story Normal objectives, deployment and balance support
+        run: node tools/story_normal_objectives_and_balance_smoke.cjs
       - name: Verify Story Elite deployment and faction-specific unit rosters
         run: node tools/story_elite_faction_roster_smoke.cjs
       - name: Verify starting Industry in all Story Mode missions and difficulties

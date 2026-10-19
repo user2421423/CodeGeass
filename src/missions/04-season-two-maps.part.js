@@ -50,8 +50,8 @@
     [B, 'sutherland_air', 16, 2, 1],
     [B, 'sutherland_air', 9, 9, 1],
     [B, 'sutherland_air', 16, 9, 1],
-    [B, 'vincent_ward', 2, 6, 2],
-    [B, 'vincent_ward', 3, 4, 2],
+    [B, 'vincent_ward', 1, 5, 2],
+    [B, 'vincent_ward', 2, 3, 2],
     [B, 'sutherland', 2, 9, 2],
   ];
   const WATER_WALL = [
@@ -134,7 +134,7 @@
     [B, 'sutherland', 8, 7, 2, null, { hold: 1 }],
     [B, 'gareth', 6, 3, 1],
     [B, 'vincent_ward', 13, 2, 2, null, { hold: 2 }],
-    [B, 'sutherland', 17, 6, 2],
+    [B, 'sutherland', 17, 5, 2],
     [B, 'sutherland', 19, 5, 1],
   ];
   const UFN = { cf: { name: 'UFN Federation Army', short: 'UFN', adj: 'UFN' } };

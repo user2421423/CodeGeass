@@ -180,7 +180,8 @@
     if (c.losses != null) return cm.losses <= c.losses;
     if (c.kill) return c.kill.every(k => cm.killed.includes(k));
     if (c.alive) return c.alive.every(k => !!unitWith(g, k));
-    if (c.capture) return c.capture.every(n => cityByName(g, n)?.owner === g.player);
+    // Allied captures satisfy coalition objectives without changing city ownership.
+    if (c.capture) return c.capture.every(n => friendly(g, cityByName(g, n)?.owner));
     if (c.keep) return c.keep.every(n => !cm.lostCities.includes(n));
     if (c.reach) return c.reach.every(n => {
       const s = cityByName(g, n);
