@@ -294,17 +294,17 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&!d.expZeroGeass&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
       !f.noCounterAttack &&
       !followUp &&
       !(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d?.cmd) &&
-      !(f.timeStop && a.timeStopTurn !== g.turn) &&
       !(f.dashStrike&&a.movedDistance>=3&&a.expDashTurn!==g.turn) &&
       !targetMarked(g, a, d).noCounter &&
       !!d &&
       !d.expZeroGeass &&
+      !d.expRoloFrozen &&
       !t.noCounter &&
       !ef.noCounter &&
       d.morale > -3 &&
@@ -365,7 +365,7 @@
       if(v.cmd==='urabe'){
         v.expFinalStandUsed=true;v.hp=1;
         log(g,'Urabe survives a lethal direct hit: Final Stand.',v.side);
-        if(attacker.hp>0&&!atSea(g,v)&&inRange(v,attacker,g)&&hostileTarget(g,v,attacker)){
+        if(attacker.hp>0&&!v.expRoloFrozen&&!atSea(g,v)&&inRange(v,attacker,g)&&hostileTarget(g,v,attacker)){
           const amount=power(g,v,attacker,stationAt(g,attacker),false);
           const oldHp=attacker.hp;attacker.hp=Math.max(0,attacker.hp-amount);
           recordWarEvent(g,'damage',v.side,{targetSide:attacker.side,value:oldHp-attacker.hp,unitId:v.id,group:warGroup(g,v)});
@@ -419,7 +419,7 @@
   // Centralized post-volley action restoration. Distinguish a frame kill from a
   // newly destroyed city shield: both qualify for movement refresh where the
   // unit/skill allows it, but only true kills grant kill-only rewards.
-  function applyAttackConsequences(g, a, d, s, destroyed, defensesDestroyed, timeStop, movementBeforeAttack, f, aef) {
+  function applyAttackConsequences(g, a, d, s, destroyed, defensesDestroyed, movementBeforeAttack, f, aef) {
     const eliteBreakthrough = !!aef.breakthrough,
       eliteRelentless = !!aef.relentless;
     // Light Armor has no kill-based Breakthrough. Medium, heavy, super-heavy
@@ -483,7 +483,7 @@
       a.moved = false;
       a.skillReposition = 0;
     }
-    afterCommanderAttack(g,a,d,s,destroyed,timeStop,defensesDestroyed);
+    afterCommanderAttack(g,a,d,s,destroyed,defensesDestroyed);
     // A kill only primes momentum if an existing breakthrough or signature
     // ability actually granted another attack. It never grants one itself.
     if (destroyed && a.hp > 0 && !a.attacked &&
@@ -524,7 +524,6 @@
       mult = variance * (crit ? pr.critMult : 1),
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
       hit = [];
-    const timeStop = !!f.timeStop && a.timeStopTurn !== g.turn;
     const kallenFirstStrike = !!d && !!f.firstStrike &&
       !(a.expKallenFirstTargets || []).includes(d.id);
     if (kallenFirstStrike) {
@@ -598,7 +597,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!d.expZeroGeass&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
@@ -636,7 +635,7 @@
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
-    const breakthrough = applyAttackConsequences(g, a, d, s, destroyed, defensesDestroyed, timeStop, movementBeforeAttack, f, aef);
+    const breakthrough = applyAttackConsequences(g, a, d, s, destroyed, defensesDestroyed, movementBeforeAttack, f, aef);
     // Resolve Mutsuki's guerrilla reward after the kill and final attack flags.
     const guerrillaPosition=(destroyed||defensesDestroyed)&&['forest','mountain'].includes(tile(g,a.c,a.r)?.terrain)&&
       ['Infantry','Armor'].includes(TYPES[a.type].branch)&&
