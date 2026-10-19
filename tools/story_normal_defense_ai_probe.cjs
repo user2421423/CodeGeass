@@ -43,8 +43,10 @@ const bk3=[
  [K,'sutherland',6,8,3,null,{normalOnly:true}],
  [K,'glasgow',5,3,2,null,{normalOnly:true}],
 ];
-const bk5=[...bk3,
- [K,'sutherland',7,7,3,null,{normalOnly:true}],
+const bk4=[...bk3,
+ [K,'sutherland',7,7,3,null,{normalOnly:true}]
+];
+const bk5=[...bk4,
  [K,'sutherland',7,9,3,null,{normalOnly:true}]
 ];
 const br3=[
@@ -52,8 +54,10 @@ const br3=[
  [B,'gloucester',13,8,3,null,{normalOnly:true,hold:2}],
  [B,'sutherland',11,5,3,null,{normalOnly:true,hold:2}],
 ];
-const br5=[...br3,
- [B,'gloucester',17,9,3,null,{normalOnly:true,hold:2}],
+const br4=[...br3,
+ [B,'gloucester',17,9,3,null,{normalOnly:true,hold:2}]
+];
+const br5=[...br4,
  [B,'sutherland',14,4,3,null,{normalOnly:true,hold:2}]
 ];
 function testVariants(id, variants) {
@@ -82,17 +86,14 @@ assert.ok(chofuWins>=2);
 testVariants('bk1',[
  ['current',[]],
  ['+3 strong',bk3],
+ ['+4 strong',bk4],
  ['+5 strong',bk5],
  ['+3 strong, Zero 3-stack',bk3,{zero3:true}],
- ['+5 strong, Zero 3-stack',bk5,{zero3:true}],
- ['+5 strong, Zero and Kallen 3-stack',bk5,{zero3:true,kallen3:true}],
- ['+3 strong, Zero 3-stack, fewer enemy',bk3,{zero3:true,lessEnemy:true}],
 ]);
 testVariants('br5',[
  ['current',[]],
  ['+3 strong defenders',br3],
+ ['+4 strong defenders',br4],
  ['+5 strong defenders',br5],
- ['+3 strong, fewer enemy',br3,{lessEnemy:true}],
- ['+5 strong, fewer enemy',br5,{lessEnemy:true}],
 ]);
 console.log('Finished Story Normal experimental force comparison');
