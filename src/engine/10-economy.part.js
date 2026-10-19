@@ -267,8 +267,7 @@
     if (producer === g.player || !eliteEligible(g, producer, id) ||
         (eliteConquest(g) && (naval || !isMajor(g, producer))) ||
         (eliteScenario(g) && !g.order.includes(producer)) ||
-        (eliteCampaign(g) && (naval || (!foe(g, producer, g.player) &&
-          !g.campaign?.production?.includes(producer)))) ||
+        (eliteCampaign(g) && naval) ||
         (e.scenarioOnly && !eliteScenario(g)))
       return 'Not an eligible Elite AI factory or port';
     return (
