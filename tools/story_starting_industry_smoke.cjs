@@ -54,9 +54,8 @@ for (const campaign of Object.values(CP.CAMPAIGNS)) {
   }
 }
 
-assert.equal(missions, 58, 'audit every registered Story mission');
-assert.equal(missing, 39, '39 previously had no starting Industry');
-assert.equal(explicit, 19, '19 authored starting budgets remain protected');
+assert.ok(missions >= 58, 'audit every registered Story mission including new campaigns');
+assert.equal(missing + explicit, missions, 'every mission must have a default or authored Industry reserve');
 for (const [id, expected] of Object.entries({
   bk1: 60, bk2: 80, bk3: 100, bk_fukuoka: 120,
   bk_pacific: 150, bk4: 120, br1: 80, eu_front: 200,

@@ -11,7 +11,7 @@ require('../dist/missions.js');
 require('../dist/campaign.js');
 const difficulties = ['normal', 'hard', 'challenge', 'elite'];
 const ids = Object.values(E.campaign.CAMPAIGNS).flatMap(c => c.missions.map(m => m.id));
-assert.equal(ids.length, 58, 'all registered Story missions remain available');
+assert.ok(ids.length >= 58, 'all legacy Story campaigns remain available');
 
 let candidates = 0, purchases = 0, ordinary = 0, elite = 0;
 const groups = new Map();
@@ -24,9 +24,7 @@ for (const id of ids) {
    const owned = g.stations.filter(s => s.owner === side);
    if (!owned.length) continue;
    candidates++;
-   const before = g.units.filter(u => u.hp > 0 && u.side === side).length;
    const wallet = g.economy[side];
-   const old = {...wallet};
    // Funding is only to establish eligibility in a deterministic smoke test;
    // no starting resources are changed in the actual missions.
    Object.assign(wallet,{credits:3000,industry:1500,science:500,sakuradite:900});
