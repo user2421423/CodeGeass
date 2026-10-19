@@ -308,6 +308,7 @@
       !!d &&
       !d.expZeroGeass &&
       !d.expRoloFrozen &&
+      !d.expCharlesMemoryRewrite &&
       !t.noCounter &&
       !ef.noCounter &&
       d.morale > -3 &&
