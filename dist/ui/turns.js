@@ -166,8 +166,13 @@ function queueEliteReward(profile, operation, key, amount, source) {
   profile.pendingEliteRewards ||= [];
   profile.claimedEliteChoices ||= {};
   if (profile.claimedEliteChoices[key] || profile.pendingEliteRewards.some(r => r.key === key)) return false;
-  const side = operation.player === 'eb' ? 'britannia'
-    : operation.era === 'ufn2018' && operation.player === 'cf' ? 'bk' : operation.player;
+  // Derive Story eligibility from the mission registry, not a stale
+  // or mismatched saved operation.player value.
+  const storyMission = key.startsWith('story:') ? E.campaign?.mission?.(key.split(':')[1]) : null;
+  if (key.startsWith('story:') && !storyMission) return false;
+  const player = storyMission?.player || operation.player;
+  const side = player === 'eb' ? 'britannia'
+    : operation.era === 'ufn2018' && player === 'cf' ? 'bk' : player;
   const allowed = ELITE_REWARD_RARITIES[operation.difficulty] || ELITE_REWARD_RARITIES.normal;
   // World Campaign and weekly events are faction-independent. Story and Conquest stay faction-bound.
   const worldCampaign = key.startsWith('world:') || key.startsWith('weekly:');
@@ -195,7 +200,13 @@ function eligibleEliteRewardOptions(award, profile = loadProfile()) {
     // their original eligibility snapshot contains only that faction.
     const legacySides = new Set((award.options || [])
       .flatMap(id => E.ELITE_FORCES[id]?.availableTo || []));
-    const side = award.side || (legacySides.size === 1 ? [...legacySides][0] : null);
+    const storyReward = award.key?.startsWith('story:');
+    const storyMission = storyReward ? E.campaign?.mission?.(award.key.split(':')[1]) : null;
+    // For legacy Story rewards the mission registry is authoritative: never
+    // offer another faction's Elite, even if an old options snapshot is mixed.
+    if (storyReward && !storyMission) return []; // Keep unknown rewards saved, not claimable.
+    const storySide = storyMission?.player === 'eb' ? 'britannia' : storyMission?.player;
+    const side = storySide || award.side || (legacySides.size === 1 ? [...legacySides][0] : null);
     const rarities = award.rarity === 'Any'
       ? ELITE_REWARD_RARITIES.elite : [award.rarity];
     if (!side)
@@ -224,10 +235,13 @@ function nextEliteReward(profile) {
   const index = eligibleIndex >= 0 ? eligibleIndex : 0;
   return { award: pending[index], index };
 }
-function pendingEliteChoiceHTML(profile = loadProfile()) {
-  // One shared loot-box component is used by every fragment-awarding game mode.
-  if (typeof eliteLootBoxPanelHTML === 'function') return eliteLootBoxPanelHTML(profile);
-  const { award } = nextEliteReward(profile);
+function pendingEliteChoiceHTML(profile = loadProfile(), rewardKey = null) {
+  // Results can scope to the just-earned reward; HQ still shows every
+  // unclaimed reward from Story, World Campaign, weekly events and Conquest.
+  if (typeof eliteLootBoxPanelHTML === 'function') return eliteLootBoxPanelHTML(profile, rewardKey);
+  const award = rewardKey === null
+    ? nextEliteReward(profile).award
+    : (profile.pendingEliteRewards || []).find(entry => entry.key === rewardKey);
   if (!award) return '';
   const options = eligibleEliteRewardOptions(award, profile);
   // Do not drop a one-time award if its entire rarity/faction pool is maxed.
