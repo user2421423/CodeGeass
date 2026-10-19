@@ -36,8 +36,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-kazakhstan"
     },
     {
       "number": 5,
@@ -52,8 +52,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-persia"
     },
     {
       "number": 6,
@@ -68,8 +68,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-xinjiang"
     },
     {
       "number": 7,
@@ -84,8 +84,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-india"
     },
     {
       "number": 8,
@@ -100,8 +100,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-mongolia"
     },
     {
       "number": 9,
@@ -116,8 +116,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-manchuria"
     },
     {
       "number": 10,
@@ -132,8 +132,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-himalayas"
     },
     {
       "number": 11,
@@ -148,8 +148,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-sichuan"
     },
     {
       "number": 12,
@@ -164,8 +164,8 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-beijing"
     },
     {
       "number": 13,
@@ -180,11 +180,23 @@
         "eu",
         "cf"
       ],
-      "status": "planned",
-      "scenarioId": null
+      "status": "integrated_pending_full_validation",
+      "scenarioId": "eu-cf-luoyang"
     }
   ],
-  "integration": "Each independent agent branches from architecture branch; own its scenario module/map/doc only; integrator updates campaign scenarioId null -> runtime_id and adds manifest/catalog registrations after verification. Never change original Luoyang, older campaigns, shared engine or generated bundles.",
+  "integration": "All 10 scenario PRs merged into architecture branch and registered in manifest/catalog generator and campaign registry. Still needs combined full-engine simulations, balance review, gameplay and visual checks before main.",
   "mandatory": "Normal/Hard/Challenge/Elite; EU vs cf faction rosters; functional industry/production; Army Groups; commanders; terrain/coasts/ports accurate; AI offense and defense; no victory timers or fake completion; independent standalone visibility after integration; elite conversion and correct reward eligibility; tests and seeded simulations for both factions with plausible winnability; data-driven meta; no sweeping shared changes.",
-  "status": "architecture_only"
+  "status": "integrated_pending_full_validation",
+  "merged_prs": {
+    "kazakhstan": 136,
+    "persia": 132,
+    "xinjiang": 135,
+    "india": 137,
+    "mongolia": 131,
+    "manchuria": 133,
+    "himalayas": 130,
+    "sichuan": 138,
+    "beijing": 134,
+    "luoyang": 129
+  }
 }
