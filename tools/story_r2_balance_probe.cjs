@@ -20,6 +20,11 @@ const focusSeeds = (process.env.STORY_BALANCE_FOCUS_SEEDS || '101,202,303,404,50
 const focus = new Set(['bk5','bk_rescue','bk_pacific','bk_yokosuka2','br7','br_execution',
   'br_yokosuka2','br_xiaopei','br_mausoleum','br10','br_kagoshima']);
 const focusAll = process.env.STORY_BALANCE_FOCUS_ALL === '1';
+const selectedMissions = (process.env.STORY_BALANCE_MISSIONS || '')
+  .split(',').map(id => id.trim()).filter(Boolean);
+const missionFilter = new Set(selectedMissions);
+assert.equal(missionFilter.size, selectedMissions.length,
+  'Mission audit filter must not include duplicates');
 assert.ok(seeds.length > 0 && seeds.length <= 15, 'Provide 1–15 seeds');
 assert.ok(focusSeeds.length >= 10 && focusSeeds.length <= 30, 'Provide 10–30 focused seeds');
 assert.equal(new Set(CAMPAIGN_IDS).size, CAMPAIGN_IDS.length,
@@ -74,6 +79,7 @@ for (const id of CAMPAIGN_IDS) {
   const camp = E.campaign.CAMPAIGNS[id];
   console.log('\n# ' + id);
   for (const m of camp.missions) {
+    if (missionFilter.size && !missionFilter.has(m.id)) continue;
     const trials = [];
     for (const seed of (focusAll || focus.has(m.id) ? focusSeeds : seeds)) {
       try {
@@ -102,6 +108,9 @@ function summarize(items) {
     errors: failures.filter(e => items.some(r => r.mission === e.mission))
   };
 }
+if (missionFilter.size)
+  assert.deepEqual(new Set(results.map(x=>x.mission)),missionFilter,
+    'Every explicitly selected mission must be tested once');
 const r2 = results.filter(r => R2_IDS.includes(r.campaign));
 console.log('R2_BALANCE_SUMMARY ' + JSON.stringify(summarize(r2)));
 console.log('STORY_BALANCE_SUMMARY ' + JSON.stringify(summarize(results)));

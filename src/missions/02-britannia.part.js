@@ -28,7 +28,7 @@
       cities: [
         ['Landing Zone', 18, 6, B, 1],
         ['Yokohama', 9, 8, 'jlf', 2],
-        ['Tokyo', 8, 3, 'jlf', 3, { fort: true, gun: 'Tokyo defenses' }],
+        ['Tokyo', 8, 3, 'jlf', 3, { fort: true, gun: 'Tokyo defenses', normalShield: 230 }],
       ],
       economy: { britannia: 300 },
       industry: { britannia: 80 },
@@ -44,6 +44,9 @@
         [B, 'glasgow', 16, 9, 1],
         [B, 'glasgow', 15, 5, 1, null, { normalOnly: true }],
         [B, 'glasgow', 15, 8, 1, null, { normalOnly: true }],
+        [B, 'glasgow', 14, 7, 3, null, { normalOnly: true }],
+        [B, 'glasgow', 14, 5, 3, null, { normalOnly: true }],
+        [B, 'glasgow', 14, 3, 3, null, { normalOnly: true }],
         ['jlf', 'jp_tank', 11, 5, 3, 'tohdoh', { hold: false }],
         ['jlf', 'jp_tank', 12, 3, 2, null, { hold: false }],
         ['jlf', 'jp_tank', 13, 6, 1, null, { hold: false, skipNormal: true }],
@@ -226,7 +229,10 @@
       economy: { britannia: 300 },
       hold: { jlf: 2 },
       units: [
-        [B, 'elite_cornelia_gloucester', 11, 11, 1, 'cornelia'],
+        [B, 'elite_cornelia_gloucester', 11, 11, 1, 'cornelia', { skipNormal: true }],
+        [B, 'elite_cornelia_gloucester', 11, 12, 1, 'cornelia', { normalOnly: true, hold: 1 }],
+        [B, 'gloucester', 10, 11, 3, null, { normalOnly: true, hold: 2 }],
+        [B, 'gloucester', 12, 11, 3, null, { normalOnly: true, hold: 2 }],
         [B, 'gloucester', 7, 10, 2, 'darlton'],
         [B, 'gloucester', 15, 10, 2, 'guilford'],
         [B, 'sutherland', 16, 8, 2, 'jeremiah'],
@@ -293,7 +299,7 @@
         ['Ashford Academy', 3, 7, K, 2],
         ['Settlement Gate', 8, 3, B, 1],
         ['Tokyo Tower', 12, 10, B, 2],
-        ['Government Bureau', 18, 6, B, 3, { fort: true, gun: 'Government Bureau' }],
+        ['Government Bureau', 18, 6, B, 3, { fort: true, gun: 'Government Bureau', normalShield: 1300 }],
       ],
       economy: { britannia: 400, bk: 400 },
       industry: { britannia: 120, bk: 150 },
@@ -317,6 +323,10 @@
         [B, 'gloucester', 17, 4, 3, null, { normalOnly: true, hold: 2 }],
         [B, 'gloucester', 13, 8, 3, null, { normalOnly: true, hold: 2 }],
         [B, 'sutherland', 11, 5, 3, null, { normalOnly: true, hold: 2 }],
+        [B, 'gloucester', 18, 5, 3, null, { normalOnly: true, hold: 1 }],
+        [B, 'gloucester', 18, 7, 3, null, { normalOnly: true, hold: 1 }],
+        [B, 'gloucester', 19, 6, 3, null, { normalOnly: true, hold: 1 }],
+        [B, 'sutherland', 19, 5, 3, null, { normalOnly: true, hold: 1 }],
         [K, 'elite_gawain', 4, 6, 1, 'zero'],
         [K, 'elite_guren_mkii', 5, 8, 1, 'kallen'],
         [K, 'elite_tohdoh_gekka', 5, 5, 1, 'tohdoh'],
@@ -327,6 +337,8 @@
         [K, 'gekka', 6, 4, 1, 'urabe'],
         [K, 'gekka', 6, 10, 1, 'senba', { skipNormal: true }],
         [K, 'burai', 7, 8, 2, 'inoue'],
+        // Normal only: omit one unnamed attacker in the opening wave.
+
       ],
       objective: 'Hold the Government Bureau until the end of turn 10.',
       win: { hold: 10 },
@@ -346,7 +358,7 @@
           say: [[null, 'More Black Knights pour in from the western ghettos.']],
           spawn: [
             [K, 'burai', 1, 4, 2],
-            [K, 'burai_kai', 1, 9, 2],
+            [K, 'burai_kai', 1, 9, 2, null, { skipNormal: true }],
           ],
         },
         {

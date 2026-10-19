@@ -56,7 +56,8 @@
         // Story escape and boarding missions are not ordinary annihilation battles.
         // Follow the *next incomplete* victory objective, including allied territory;
         // never disclose hidden information, change movement rules or teleport units.
-        const escapeMissions = new Set(['bk5', 'bk_rescue', 'bk_yokosuka2', 'br_yokosuka2']);
+        const escapeMissions = new Set(['bk5', 'bk_rescue', 'bk_yokosuka2', 'br_yokosuka2',
+          'bk_saitama', 'bk_tohdoh', 'bk2', 'br1', 'br_mef']);
         if (side === g.player && g.difficulty === 'normal' && escapeMissions.has(g.campaign?.id)) {
           const mission = E.campaign?.mission?.(g.campaign.id);
           const stages = Array.isArray(mission?.win) ? mission.win : [mission?.win];
@@ -76,7 +77,8 @@
           const goal = g.stations.find(s => s.name === name);
           if (goal) {
             g.campaign.goals[side] = [[goal.c, goal.r, -24]];
-            g.campaign.aiObjective = { side, c: goal.c, r: goal.r, type: stage.capture ? 'capture' : 'reach' };
+            g.campaign.aiObjective = { side, c: goal.c, r: goal.r,
+              type: stage.capture ? 'capture' : 'reach', by: stage.by || null };
           } else {
             g.campaign.aiObjective = null;
           }
