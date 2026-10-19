@@ -29,6 +29,7 @@ jobs:
           node tools/build_sources.cjs
           node tools/generate-scenario-catalog.cjs
           node tools/federation_eu_campaign_smoke.cjs
+          node tools/federation_eu_mechanics_smoke.cjs
           node --check dist/scenario-manifest.js
           node --check tools/scenario_sim.cjs
           node - <<'NODE'
