@@ -36,13 +36,63 @@ function play(id,seed) {
   return {seed,winner:g.over.winner,turn:g.turn,
     alive:g.units.filter(u=>u.hp>0&&u.side===g.player).length};
 }
-for(const id of ['br_tohdoh','br5','bk1']){
+
+const K='bk',B='britannia';
+const bk3=[
+ [K,'sutherland',6,6,3,null,{normalOnly:true}],
+ [K,'sutherland',6,8,3,null,{normalOnly:true}],
+ [K,'glasgow',5,3,2,null,{normalOnly:true}],
+];
+const bk5=[...bk3,
+ [K,'sutherland',7,7,3,null,{normalOnly:true}],
+ [K,'sutherland',7,9,3,null,{normalOnly:true}]
+];
+const br3=[
+ [B,'gloucester',17,4,3,null,{normalOnly:true,hold:2}],
+ [B,'gloucester',13,8,3,null,{normalOnly:true,hold:2}],
+ [B,'sutherland',11,5,3,null,{normalOnly:true,hold:2}],
+];
+const br5=[...br3,
+ [B,'gloucester',17,9,3,null,{normalOnly:true,hold:2}],
+ [B,'sutherland',14,4,3,null,{normalOnly:true,hold:2}]
+];
+function testVariants(id, variants) {
+ const camp=E.campaign.CAMPAIGNS[id==='bk1'?'bk_s1':'britannia_s1'];
+ const mission=camp.missions.find(m=>m.id===id),original=mission.units;
+ for(const [name,extra,opts={}] of variants){
+  mission.units=original.map(u=>{
+   let v=u;
+   if(opts.zero3&&u[5]==='zero'&&u[0]===K)v=[...u.slice(0,4),3,...u.slice(5)];
+   if(opts.kallen3&&u[5]==='kallen'&&u[0]===K)v=[...u.slice(0,4),3,...u.slice(5)];
+   if(opts.lessEnemy&&u[0]===(id==='bk1'?B:K)&&!u[5]&&u[1]===(id==='bk1'?'sutherland':'burai'))
+     v=[...u.slice(0,6),{...u[6],skipNormal:true}];
+   return v;
+  }).concat(extra);
   const results=seeds.map(seed=>play(id,seed));
-  const wins=results.filter(r=>r.winner===E.campaign.CAMPAIGNS[
-    id==='bk1'?'bk_s1':'britannia_s1'].side).length;
-  console.log(id+' Normal seeded AI-vs-AI: player '+wins+'/'+results.length+' wins');
-  console.log(results.map(r=>r.seed+':'+r.winner+'(T'+r.turn+')').join(' '));
-  if(id==='br_tohdoh')
-    assert.ok(wins>=2, 'Chofu detention center must be defensible in multiple seeded AI trials');
+  const wins=results.filter(r=>r.winner===mission.player).length;
+  const losses=results.filter(r=>r.winner!==mission.player).map(r=>r.turn);
+  console.log('STORY BALANCE MATRIX '+id+' '+name+': player AI '+wins+'/8 victories; losses on turns ['+losses.join(',')+']');
+ }
+ mission.units=original;
 }
-console.log('Seeded Story Normal full-engine probes complete');
+const chofu=seeds.map(seed=>play('br_tohdoh',seed));
+const chofuWins=chofu.filter(r=>r.winner==='britannia').length;
+console.log('STORY BALANCE MATRIX br_tohdoh deployed '+chofuWins+'/8');
+assert.ok(chofuWins>=2);
+testVariants('bk1',[
+ ['current',[]],
+ ['+3 strong',bk3],
+ ['+5 strong',bk5],
+ ['+3 strong, Zero 3-stack',bk3,{zero3:true}],
+ ['+5 strong, Zero 3-stack',bk5,{zero3:true}],
+ ['+5 strong, Zero and Kallen 3-stack',bk5,{zero3:true,kallen3:true}],
+ ['+3 strong, Zero 3-stack, fewer enemy',bk3,{zero3:true,lessEnemy:true}],
+]);
+testVariants('br5',[
+ ['current',[]],
+ ['+3 strong defenders',br3],
+ ['+5 strong defenders',br5],
+ ['+3 strong, fewer enemy',br3,{lessEnemy:true}],
+ ['+5 strong, fewer enemy',br5,{lessEnemy:true}],
+]);
+console.log('Finished Story Normal experimental force comparison');
