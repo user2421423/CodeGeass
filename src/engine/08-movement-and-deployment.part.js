@@ -106,7 +106,7 @@
     return TYPES[u.type].naval !== 'ship';
   }
   function isReady(g, u) {
-    return !g.over && g.phase === u.side && u.hp > 0 && u.morale > -3;
+    return !g.over && g.phase === u.side && u.hp > 0 && !u.expRoloFrozen && u.morale > -3;
   }
   // Count actual movement actions, not hex distance. This also covers abilities
   // that reset 'moved', and works on old saves where these fields are missing.
