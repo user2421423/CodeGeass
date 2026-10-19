@@ -167,7 +167,7 @@
   }
   function newcomerSupport(g,defender,attacker){
     if(!defender||attacker.hp<=0)return;
-    const assists=g.units.filter(v=>v.hp>0&&!v.expRoloFrozen&&v.side===defender.side&&v.id!==defender.id&&!atSea(g,v)&&inRange(v,attacker,g)&&
+    const assists=g.units.filter(v=>v.hp>0&&v.morale>-3&&!v.expCharlesMemoryRewrite&&!v.expRoloFrozen&&v.side===defender.side&&v.id!==defender.id&&!atSea(g,v)&&inRange(v,attacker,g)&&
       (v.expLink?.partner===defender.id&&v.expLinkTurn!==g.turn||
        fx(v).relief&&v.expReliefTurn!==g.turn&&dist(g,v,defender)<=2));
     const unit=assists.sort((a,b)=>b.hp-a.hp)[0];if(!unit)return;
@@ -177,7 +177,7 @@
     kill(g,attacker,unit);
   }
   function newcomerOverwatch(g,moved){
-    const guards=g.units.filter(v=>v.hp>0&&!v.expRoloFrozen&&v.expOverwatch&&foe(g,v.side,moved.side)&&!atSea(g,v)&&inRange(v,moved,g));
+    const guards=g.units.filter(v=>v.hp>0&&v.morale>-3&&!v.expCharlesMemoryRewrite&&!v.expRoloFrozen&&v.expOverwatch&&foe(g,v.side,moved.side)&&!atSea(g,v)&&inRange(v,moved,g));
     let reacted=false;
     for(const u of guards){
       if(moved.hp<=0)break;
