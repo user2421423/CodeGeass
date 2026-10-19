@@ -1263,5 +1263,274 @@ const SCENARIO_CATALOG = Object.freeze({
       "scenarios-luoyang.js",
       "scenarios-eu-cf-luoyang.js"
     ]
+  },
+  "cf-eu-siberia": {
+    "id": "cf-eu-siberia",
+    "title": "Invasion of Siberia",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 160,
+    "rows": 88,
+    "meta": {
+      "text": {
+        "era": "Siberia · Federation Northern Campaign",
+        "intro": "Federation Army Groups invade north from Mongolia and Manchuria. Break the Chita and Amur defenses, seize the Siberian railway, then conquer every theatre city. No turn limit.",
+        "diplomacy": "The Chinese Federation and Europia United are at war from the first turn. Northern sea lanes, eight independent Pacific and Arctic ports, and inland industry are contested.",
+        "elite": "Faction-legal Elite Forces, named officers and established HQ restrictions apply at Elite difficulty.",
+        "focus": {
+          "cf": "Hailar",
+          "eu": "Chita"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "siberia-landmask.js",
+      "scenarios-cf-eu-siberia.js"
+    ]
+  },
+  "cf-eu-caucasus": {
+    "id": "cf-eu-caucasus",
+    "title": "Invasion of the Caucasus",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 164,
+    "rows": 114,
+    "meta": {
+      "text": {
+        "era": "Caucasus · Alternate 2017",
+        "terrain": "Greater Caucasus ridgeline includes high impassable peaks, but Darial, Roki, Mamison, Klukhor and the eastern Caspian coastal gate are traversable. Mountains cost 2 movement.",
+        "intro": "The Chinese Federation drives north from Persia against Europian Azerbaijan, Georgia, Armenia and southern Russia. Cross the mountains through real passes, capture Baku and reach the northern plains. Victory requires every opposing city, without a turn limit.",
+        "diplomacy": "The Chinese Federation and Europia United are at war. Caspian and Black Sea fleets operate in separate waters. Capturable ports retain their own control.",
+        "elite": "Faction-specific Elite Forces, commanders and the standard HQ/research/reward rules apply.",
+        "focus": {
+          "cf": "Tabriz",
+          "eu": "Tbilisi"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-cf-eu-caucasus.js"
+    ]
+  },
+  "cf-eu-turkey": {
+    "id": "cf-eu-turkey",
+    "title": "Invasion of Turkey",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 144,
+    "rows": 104,
+    "meta": {
+      "text": {
+        "terrain": "Eastern Anatolia has rugged mountain defenses and several open pass corridors. Mountain terrain costs 2 movement; fleets use the actual Black Sea, Marmara and Mediterranean hexes.",
+        "era": "Anatolia · Alternate 2017",
+        "intro": "Federation armies advance from Georgia, Armenia, northwest Persia and northern Iraq into E.U.-held Anatolia. Take Ankara and cross the Bosporus to Istanbul and Thrace. All cities must fall: no turn limit.",
+        "diplomacy": "Two factions: the Chinese Federation and Europia United. The Black Sea and Mediterranean ports have separate capturable berth ownership; the Bosporus and Dardanelles connect the sea approaches.",
+        "elite": "All four difficulties retain faction-appropriate named commanders and Elite Force conversion. Each side has its own eligible roster and standard HQ restrictions.",
+        "focus": {
+          "cf": "Yerevan",
+          "eu": "Erzurum"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "turkey-landmask.js",
+      "scenarios-cf-eu-turkey.js"
+    ]
+  },
+  "cf-eu-volga": {
+    "id": "cf-eu-volga",
+    "title": "Battle for the Volga",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 164,
+    "rows": 112,
+    "meta": {
+      "text": {
+        "terrain": "Volga, Kama and Akhtuba crossings cost movement away from bridge cities. Forests slow the northern approaches. Caspian ports are capturable.",
+        "era": "Volga · Alternate 2017",
+        "intro": "Chinese Army Groups strike north from the Caucasus and west from Orenburg and Ufa to break the E.U. Volga riverline at Volgograd, Saratov, Samara and Kazan. Total conquest only, without a turn limit.",
+        "diplomacy": "The Chinese Federation and E.U. fight alone, and Caspian harbours are independent capturable ports.",
+        "elite": "Standard faction Elite Forces and HQ, repairs, rewards, production and research rules apply.",
+        "focus": {
+          "cf": "Elista",
+          "eu": "Volgograd"
+        }
+      }
+    },
+    "files": [
+      "scenarios-cf-eu-volga.js"
+    ]
+  },
+  "cf-eu-suez": {
+    "id": "cf-eu-suez",
+    "title": "Crossing the Suez Canal",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 144,
+    "rows": 112,
+    "meta": {
+      "text": {
+        "era": "Suez Canal and Nile Delta · Alternate 2017",
+        "intro": "The Chinese Federation attacks from Sinai across Qantara, Ismailia and Suez, backed by amphibious forces. Break the fortified E.U. west bank and advance through Cairo, Alexandria and the Nile Delta.",
+        "diplomacy": "Both factions are playable. All ports are individually capturable. Federation units survive the loss of all Sinai cities, and E.U. victory requires their elimination. No turn-limit victory.",
+        "terrain": "The canal is navigable water with three bridge/ferry corridors. The Nile and Delta branches impose a movement surcharge away from road bridges. Southern Sinai terrain restricts movement.",
+        "elite": "Elite uses faction-eligible Elite Forces and standard HQ restrictions. Carriers remain conventional. Rewards require real total conquest.",
+        "focus": {
+          "cf": "Qantara East",
+          "eu": "Ismailia"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-cf-eu-suez.js"
+    ]
+  },
+  "cf-eu-moscow": {
+    "id": "cf-eu-moscow",
+    "title": "Battle for Moscow",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 160,
+    "rows": 100,
+    "meta": {
+      "text": {
+        "era": "Western Russia · Federation–E.U. Campaign",
+        "intro": "After the Volga campaign, Chinese Army Groups press toward Moscow via the northern river towns, Vladimir and the southern Oka corridor. The E.U. fights from successive fortified belts. Every city must fall; there is no deadline.",
+        "diplomacy": "Only Federation and E.U. forces contest this inland theatre. Volga reservoirs support limited local flotillas; no fictional sea route or St. Petersburg objective.",
+        "elite": "Eligible faction Elite Forces, the usual opponent commander upgrades, research, HQ limits and rewards follow standard scenario rules.",
+        "focus": {
+          "cf": "Nizhny Novgorod",
+          "eu": "Moscow"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-cf-eu-moscow.js"
+    ]
+  },
+  "cf-eu-balkans": {
+    "id": "cf-eu-balkans",
+    "title": "Balkan Offensive",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 160,
+    "rows": 116,
+    "meta": {
+      "text": {
+        "era": "Balkans · Alternate 2017",
+        "terrain": "Rhodope, Balkan, Pindus, Dinaric and Carpathian ranges slow heavy armies. Thrace, Maritsa bridges and coastal routes remain passable.",
+        "intro": "The Chinese Federation advances from Turkish Thrace into Greece, Bulgaria and Serbia. Aegean, Adriatic and Black Sea fleets contest real ports. Conquer every city; no turn limit.",
+        "diplomacy": "Two opposing armies only: Federation and E.U. Turkish Thrace provides the Chinese staging area while the E.U. controls the Balkans and beyond.",
+        "elite": "Elite difficulty uses standard faction-specific Elite Forces and HQ restrictions; ships stay standard naval hulls. Enemy bonuses, production and research follow existing rules.",
+        "focus": {
+          "cf": "Edirne",
+          "eu": "Sofia"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "cf-eu-balkans-coast.js",
+      "scenarios-cf-eu-balkans.js"
+    ]
+  },
+  "cf-eu-north-africa": {
+    "id": "cf-eu-north-africa",
+    "title": "North African Offensive",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 176,
+    "rows": 108,
+    "meta": {
+      "text": {
+        "era": "North Africa · Alternate 2017",
+        "terrain": "Coastal plains, the Jebel Akhdar, Nafusa and Atlas hills, and traversable Sahara. The Mediterranean is open water with distinct ports.",
+        "intro": "Push west from Federation-held Egypt through Libya, Tunisia and Algeria. The E.U. can counterattack east. Both sides win only after complete city conquest, with no turn limit.",
+        "diplomacy": "Two factions only: Chinese Federation and Europia United. Ports are independently capturable; holding North African harbours sets the stage for a later sea assault on southern France.",
+        "elite": "Elite difficulty uses faction-restricted Elite Forces, standard HQ rules, commander ranks and normal research, repairs and recruitment.",
+        "focus": {
+          "cf": "Sallum",
+          "eu": "Tobruk"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-cf-eu-north-africa.js"
+    ]
+  },
+  "cf-eu-central-europe": {
+    "id": "cf-eu-central-europe",
+    "title": "Conquest of Central Europe",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 156,
+    "rows": 100,
+    "meta": {
+      "text": {
+        "terrain": "Sudetes, Carpathians, Tatras and Alps cost 2 movement; pass roads remain open. Vistula, Oder, Danube and Tisza river lines have bridge approaches.",
+        "era": "Central Europe · Alternate 2017",
+        "intro": "Federation Army Groups from Russia, Ukraine and the Balkans attack E.U. Poland, Czechia, Slovakia, Hungary and Austria. Germany is outside the theatre. Take every opposing city; no artificial turn clock.",
+        "diplomacy": "Two factions contest the five-country industrial heartland. Baltic harbours are independent capturable positions. Neither faction may enter Germany.",
+        "elite": "Standard faction-specific Elite Force rosters, named officers, HQ restrictions and enemy difficulty scaling apply.",
+        "focus": {
+          "cf": "Brest",
+          "eu": "Warsaw"
+        }
+      }
+    },
+    "files": [
+      "scenarios-cf-eu-central-europe.js"
+    ]
+  },
+  "cf-eu-france": {
+    "id": "cf-eu-france",
+    "title": "Invasion of France",
+    "sides": [
+      "cf",
+      "eu"
+    ],
+    "cols": 142,
+    "rows": 104,
+    "meta": {
+      "text": {
+        "era": "France · Federation final campaign · 2017 a.t.b.",
+        "terrain": "The Alps, Pyrenees and Massif Central shape overland access; only Mediterranean carriers provide the initial Chinese landing.",
+        "intro": "Chinese Federation carrier groups arrive from North African bases and land at Marseille and Toulon; no French city is initially Chinese. Drive through Lyon toward Paris and complete the conquest.",
+        "diplomacy": "France alone is in the theatre; Germany and Italy are outside the battlefield. Cityless expedition survival continues while the fleet and embarked troops live.",
+        "elite": "Elite France uses existing Chinese Federation and E.U. Elite Force rosters, faction commander limits and HQ research.",
+        "focus": {
+          "cf": "",
+          "eu": "Paris"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-cf-eu-france.js"
+    ]
   }
 });
