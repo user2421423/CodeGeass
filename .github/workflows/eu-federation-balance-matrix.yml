@@ -1,0 +1,29 @@
+name: EU-Federation multi-seed balance simulations
+
+on:
+  push:
+    paths:
+      - 'tools/eu_federation_balance_matrix.cjs'
+      - '.github/workflows/eu-federation-balance-matrix.yml'
+    branches:
+      - feature/eu-vs-federation-campaign-architecture
+  workflow_dispatch:
+
+jobs:
+  seeded-combat:
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        theatre: [kazakhstan, persia, xinjiang, india, mongolia, manchuria, himalayas, sichuan, beijing, luoyang]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build the actual game engine
+        run: node tools/build_sources.cjs
+      - name: Multi-seed AI-vs-AI (both sides, 45 turns, three seeds)
+        run: node tools/eu_federation_balance_matrix.cjs "eu-cf-${{ matrix.theatre }}" 45 11,37,91
