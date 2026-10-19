@@ -194,6 +194,21 @@
     return [true, ...m.stars.map(c => holds(g, c))];
   }
 
+  // Story factions retain their own equipment even if an old mission script
+  // accidentally supplies a native 2017 Chinese model to the wrong faction.
+  // Black Knights' Akatsuki and Gekka variants, captured Britannian machines,
+  // and the neutral Eunuchs' Chinese equipment are deliberate exceptions.
+  function storyFactionType(g, side, type) {
+    const t = E.TYPES[type];
+    if (!t || t.elite || side === 'neutral') return type;
+    const chinese2017 = Object.values(E.lineupOf(g, 'cf'));
+    const native = Object.values(E.lineupOf(g, side));
+    if (side === 'cf' && !native.includes(type)) return E.typeFor(side, t.cls, g);
+    if (side !== 'cf' && chinese2017.includes(type) && !native.includes(type))
+      return E.typeFor(side, t.cls, g);
+    return type;
+  }
+
   // ======== Building a mission ========
   // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal }].
   function placeUnit(g, spec) {
@@ -204,6 +219,7 @@
     if (opts.skipNormal && g.difficulty === 'normal') return null;
     let type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g),
       unitStack = stack;
+    type = storyFactionType(g, side, type);
     if (E.TYPES[type].elite && !isEliteCampaign(g) && !storyAceElite(g, cmd)) {
       type = ordinaryStoryType(g, side, type);
       unitStack = 3;
@@ -480,12 +496,13 @@
     for (const up of asList(ev.upgrade)) {
       const u = unitWith(g, up.cmd);
       if (!u) continue;
+      const upgradeType = storyFactionType(g, u.side, up.type);
       const lost = E.maxHP(u) - u.hp,
-        scriptedElite = !!E.TYPES[up.type]?.elite,
+        scriptedElite = !!E.TYPES[upgradeType]?.elite,
         type = !isEliteCampaign(g) && scriptedElite && !storyAceElite(g, u.cmd)
-          ? ordinaryStoryType(g, u.side, up.type) : up.type,
+          ? ordinaryStoryType(g, u.side, upgradeType) : upgradeType,
         elite = Object.entries(E.ELITE_FORCES).find(([, e]) => e.type === type)?.[0] || null,
-        replacement = isEliteCampaign(g) ? eliteType(g, u.side, up.type, u.cmd) : elite;
+        replacement = isEliteCampaign(g) ? eliteType(g, u.side, upgradeType, u.cmd) : elite;
       u.type = replacement ? E.ELITE_FORCES[replacement].type : type;
       u.elite = replacement;
       u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, u.side, u.cmd, true) :
