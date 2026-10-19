@@ -93,6 +93,8 @@ jobs:
         run: node tools/frame_research_economy_smoke.cjs
       - name: Verify Division of Japan city income and repeated factory production
         run: node tools/division_income_factory_smoke.cjs
+      - name: Verify Defense of Japan starting ownership, loaded carriers and victory conditions
+        run: node tools/defense_japan_smoke.cjs
       - name: Verify every regional scenario uses city-based income and cityless invasion war chests
         run: node tools/regional_city_income_smoke.cjs
       - name: Verify World Campaign Elite HQ levels
