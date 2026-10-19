@@ -59,6 +59,23 @@
     events.push({ kind: 'feint', id: u.id, target: used.target, affected: 1 });
     return true;
   }
+  // Ohgi heals a genuinely wounded comrade only when he can survive the cost.
+  // Give wounded commanders a slight priority without wasting the sacrifice
+  // on nearly full-health formations.
+  function aiOhgiHeal(g, u, events) {
+    if (u.cmd !== 'ohgi' || feintReason(g, u)) return false;
+    const options = actionTargets(g, u)
+      .filter(v => maxHP(v) - v.hp >= maxHP(v) * 0.20)
+      .sort((a, b) =>
+        (Math.min(maxHP(b) * 0.30, maxHP(b) - b.hp) / maxHP(b) + (b.cmd ? 0.05 : 0)) -
+        (Math.min(maxHP(a) * 0.30, maxHP(a) - a.hp) / maxHP(a) + (a.cmd ? 0.05 : 0)) ||
+        a.id - b.id);
+    if (!options.length) return false;
+    const r = feint(g, u.id, options[0].id);
+    if (!r?.ok) return false;
+    events.push({ kind: 'feint', id: u.id, target: r.target, healed: r.healed, cost: r.cost });
+    return true;
+  }
   // Chinese patrol fleets contest invasions near the Philippine islands,
   // but never sail to capture Britannia's remote Palau and Yap bases.
   // Ground defense and the global amphibious doctrine remain unchanged.
@@ -154,6 +171,8 @@
       (!isShip(u) && !isSea(p) &&
         philippinesHome(g, g.stations[p.provinceCity]) &&
         (atSea(g, u) ? dist(g, u, p) === 1 : massOf(g, p) === massOf(g, u)));
+    // Heal valuable nearby allies before moving out of range.
+    aiOhgiHeal(g, u, events);
     // Use targeted memory rewriting before recovery moves Charles away.
     aiCharlesMemoryRewrite(g, u, events);
     // Freeze valuable clusters before recovery moves Rolo away.
@@ -220,7 +239,7 @@
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite'].includes(action.kind) && !feintReason(g, u)) {
+    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -404,10 +423,11 @@
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       maneuver();
       // Reevaluate commander tactics after maneuvering, before firing.
+      aiOhgiHeal(g, u, events);
       aiCharlesMemoryRewrite(g, u, events);
       aiRoloFreeze(g, u, events);
       // A designation may only now be in range.
-      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite'].includes(action.kind) && !feintReason(g, u)) {
+      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal'].includes(action.kind) && !feintReason(g, u)) {
         const r = feint(g, id);
         if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
       }
