@@ -208,26 +208,22 @@
     if (!u.moved && u.withdrawMove) out.push('Withdrawal movement ready');
     return out.join(' · ');
   }
-  // Tohdoh's Miracle Worker: 1 for units beside him; 2 for Tohdoh himself with two or more friendly units adjacent.
-  function miracle(g, u) {
-    if (fx(u).miracle)
-      return g.units.filter(v => v.hp > 0 && v.side === u.side && v.id !== u.id && dist(g, v, u) === 1).length >= 2 ? 2 : 0;
-    return skillNear(g, u, 'miracle', 1, false) ? 1 : 0;
-  }
   const guardStamp = g => g.turn;
-  // Attack multiplier: Miracle Worker counter-fire, Urabe's Final Stand, Tamaki's Reckless Charge.
+  // Counterattack-only last stand: Tohdoh becomes dangerous after dropping
+  // strictly below 50% HP. Ordinary initiating attacks remain unchanged.
   function skillAttack(g, u, counter) {
     const f = fx(u);
-    let m = counter ? [1, 1.25, 1.4][miracle(g, u)] : 1;
+    let m = 1;
+    if (counter && f.lastStandCounter && u.hp / maxHP(u) < 0.5) m *= 1 + f.lastStandCounter;
     if (f.lastStand && u.hp / maxHP(u) < 0.5) m *= 1 + f.lastStand;
     if (f.charge && !counter && u.movedDistance>=2 && u.expTamakiUsedTurn!==g.turn) m *= 1 + f.charge;
     return m;
   }
-  // Damage-taken multiplier: Miracle Worker, Senba's Veteran's Guard, Katase's Prepared Position.
+  // Damage-taken multiplier: Senba's Veteran's Guard and other independent effects.
+  // Tohdoh's permanent 50% damage reduction is applied once through fx(taken).
   function skillDefense(g, target, counter, direct = true) {
-    const tf = fx(target),
-      ground = tile(g, target.c, target.r);
-    let m = [1, 0.9, 0.8][miracle(g, target)];
+    const tf = fx(target);
+    let m = 1;
     if (tf.guard && target.held && target.guardReady) m *= tf.guard;
     return m;
   }
