@@ -182,7 +182,7 @@ document.addEventListener('click', e => {
     const u = selectedUnit();
     closeModal();
     if (u) doAction(() => {
-      const result = E.feint(game, u.id, +d.command);
+      const result = useCommanderAbility(u.id, +d.command);
       if (result?.ok) E.suspendArmyGroupConquestUnit(game, u.id);
       return result;
     });
@@ -677,7 +677,7 @@ document.addEventListener('click', e => {
     case 'feint': {
       const u = selectedUnit();
       if (u && (['command','designate','stratagem'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
-      else if (u) doAction(() => E.feint(game, u.id));
+      else if (u) doAction(() => useCommanderAbility(u.id));
       break;
     }
     case 'reinforce': {

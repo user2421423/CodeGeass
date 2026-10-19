@@ -73,6 +73,12 @@ async function endTurn() {
           continue;
         }
         invalidateUIState();
+        // Rival turns normally skip move animations, but active signature
+        // abilities still announce themselves in Story and World Campaign.
+        for (const o of orders) if (o.kind === 'feint') {
+          const actor = game.units.find(v => v.id === o.id);
+          if (actor?.cmd) announceCommanderAbility(actor.cmd);
+        }
         const seen = orders.some(o => onScreen(o.to) || onScreen(o.from));
         if (seen) moralePopups(before);
         for (const o of orders) {

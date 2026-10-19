@@ -335,10 +335,41 @@
         if (m.ok) events.push({ kind: 'move', ...m, id });
       }
     }
-    // Zero and Leila use their actions after allied orders. UI ordering puts them last.
+    // Zero chooses between restoring a useful allied activation and suppressing
+  // an enemy threat. The same legal-target list powers the player picker.
+  // Never recursively issue allied orders to an enemy selected for Geass.
+  function zeroCommandTarget(g, u) {
+    const options = actionTargets(g, u);
+    if (!options.length) return null;
+    const allies = options.filter(v => v.side === u.side);
+    const enemies = options.filter(v => foe(g, v.side, u.side));
+    const strength = v => TYPES[v.type].attack * (v.stack || 1) * Math.max(.25, v.hp / Math.max(1, maxHP(v)));
+    const nearbyEnemy = v => g.units.some(e => e.hp > 0 && foe(g, e.side, v.side) &&
+      !atSea(g, e) && dist(g, v, e) <= rangeOf(g, v).max);
+    const bestAlly = allies.map(v => ({
+      unit: v,
+      score: strength(v) * (v.attacked ? 1.15 : .65) *
+        (nearbyEnemy(v) ? 1.45 : 0.65),
+    })).sort((a, b) => b.score - a.score || a.unit.id - b.unit.id)[0];
+    const bestEnemy = enemies.map(v => ({
+      unit: v,
+      score: strength(v) * (v.morale > -2 ? .45 : .15) *
+        (g.units.some(a => a.hp > 0 && a.side === u.side &&
+          dist(g, a, v) <= rangeOf(g, a).max) ? 1.5 : 0.65),
+    })).sort((a, b) => b.score - a.score || a.unit.id - b.unit.id)[0];
+    return (!bestEnemy || (bestAlly && bestAlly.score >= bestEnemy.score))
+      ? bestAlly?.unit : bestEnemy.unit;
+  }
+  // Zero and Leila use their actions after allied orders. UI ordering puts them last.
     if (action?.kind === 'command' && !g.over && u.hp > 0 && !feintReason(g, u)) {
-      const r = feint(g, id);
-      if (r.ok) events.push({ kind: 'feint', id, affected: 1 }, ...aiOrder(g, r.target));
+      const chosen = u.cmd === 'zero' ? zeroCommandTarget(g, u) : null;
+      const r = feint(g, id, chosen?.id);
+      if (r.ok) {
+        events.push({ kind: 'feint', id, affected: r.affected });
+        const refreshed = g.units.find(v => v.id === r.target);
+        if (refreshed && refreshed.side === u.side && refreshed.id !== u.id)
+          events.push(...aiOrder(g, refreshed.id));
+      }
     }
     if (action?.kind === 'withdraw' && !g.over && u.hp > 0 && !feintReason(g, u)) {
       const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);

@@ -3297,6 +3297,32 @@ button.danger:hover:not(:disabled) {
   transition: opacity .18s ease, transform .18s ease;
 }
 .turn-announcement.visible { opacity: 1; transform: translate(-50%, 0); }
+/* One-second active-ability announcement; distinct from F.L.E.I.J.A. and
+   ordinary toasts. Centered over the map and non-interactive on all screens. */
+.commander-ability-banner {
+  position: fixed; top: 27%; left: 50%; transform: translate(-50%, -10px);
+  z-index: 52; pointer-events: none; opacity: 0;
+  width: min(530px, calc(100vw - 32px)); box-sizing: border-box;
+  padding: 17px 24px; display: flex; flex-direction: column; gap: 5px;
+  text-align: center; border: 1px solid #d6b86e;
+  border-left: 5px solid #cda55a;
+  background: linear-gradient(105deg, #132336f5, #283447f7);
+  box-shadow: 0 12px 35px #000a;
+  transition: opacity .14s ease, transform .14s ease;
+}
+.commander-ability-banner[hidden] { display: none; }
+.commander-ability-banner.visible { opacity: 1; transform: translate(-50%, 0); }
+.commander-ability-banner small {
+  color: #d9be85; font-size: 10px; font-weight: 800; letter-spacing: .16em;
+}
+.commander-ability-banner strong {
+  color: #fff3d5; font: bold clamp(19px, 4.4vw, 29px) Georgia, serif;
+  overflow-wrap: anywhere;
+}
+.commander-ability-banner span { color: #c9d6df; font-size: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .commander-ability-banner { transition: none; }
+}
 .turn-announcement small { color: #d8c690; letter-spacing: .13em; font-size: 10px; text-transform: uppercase; }
 .turn-announcement strong { color: #f7f0d5; font: 29px Georgia, serif; }
 .turn-announcement span { color: #c0cdd4; font-size: 12px; }

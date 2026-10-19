@@ -12,6 +12,50 @@ const pendingNotices = [];
 let activeNotice = null;
 let noticeTimeout = null;
 let turnBannerTimeout = null;
+let abilityBannerTimeout = null;
+const abilityBannerQueue = [];
+let activeAbilityBanner = false;
+// Only Story Mode and World Campaign battles show active commander skill banners.
+function commanderBannerEnabled() {
+  return game?.mode === 'campaign' || (game?.mode === 'scenario' && !!game.warCampaign);
+}
+function playNextAbilityBanner() {
+  clearTimeout(abilityBannerTimeout);
+  const el = noticeNode('commander-ability-banner', 'commander-ability-banner');
+  const next = abilityBannerQueue.shift();
+  if (!next) {
+    activeAbilityBanner = false;
+    el.classList.remove('visible');
+    el.hidden = true;
+    return;
+  }
+  activeAbilityBanner = true;
+  el.innerHTML = '<small>COMMANDER ABILITY ACTIVATED</small><strong>' +
+    esc(next.name) + '</strong><span>' + esc(next.commander) + '</span>';
+  el.hidden = false;
+  el.classList.remove('visible');
+  void el.offsetWidth;
+  el.classList.add('visible');
+  abilityBannerTimeout = setTimeout(() => {
+    el.classList.remove('visible');
+    // Each activation receives its own ~1-second display, even when AI
+    // executes several abilities in rapid succession.
+    playNextAbilityBanner();
+  }, 1000);
+}
+function announceCommanderAbility(commanderId) {
+  if (!commanderBannerEnabled()) return;
+  const c = E.COMMANDERS[commanderId];
+  if (!c?.action) return; // Passive skills must never produce a banner.
+  abilityBannerQueue.push({ name: c.action.name || c.skill, commander: c.short || c.name });
+  if (!activeAbilityBanner) playNextAbilityBanner();
+}
+function useCommanderAbility(unitId, targetId = null) {
+  const unit = game.units.find(v => v.id === unitId);
+  const result = E.feint(game, unitId, targetId);
+  if (result?.ok && unit?.cmd) announceCommanderAbility(unit.cmd);
+  return result;
+}
 let politicalTimeout = null;
 let summaryCollapseTimeout = null;
 let summaryTurn = null;
@@ -148,6 +192,11 @@ function showPoliticalReport(title, description) {
 function resetNotificationUI() {
   clearTimeout(noticeTimeout);
   clearTimeout(turnBannerTimeout);
+  clearTimeout(abilityBannerTimeout);
+  abilityBannerQueue.length = 0;
+  activeAbilityBanner = false;
+  const ability = $('commander-ability-banner');
+  if (ability) { ability.classList.remove('visible'); ability.hidden = true; }
   clearTimeout(politicalTimeout);
   clearTimeout(summaryCollapseTimeout);
   activeNotice = null;
