@@ -26,5 +26,7 @@ jobs:
       - run: node tools/build_sources.cjs
       - name: Verify mission layouts, objective triggers and reinforcements
         run: node tools/story_normal_objectives_and_balance_smoke.cjs
+      - name: Validate escape, capture and boarding objective routes
+        run: node tools/story_objective_navigation_smoke.cjs
       - name: Run deterministic R2 Story Mode Normal self-play audit
         run: node tools/story_r2_balance_probe.cjs
