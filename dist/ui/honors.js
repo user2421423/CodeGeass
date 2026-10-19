@@ -21,6 +21,7 @@ function honorsForCommander(o,operationCommander=null){
       `<div><b>${esc(v.operation||game.scenario?.title||game.campaign?.id||'Operation')}</b> · ${esc(v.difficulty||game.difficulty||'normal')} · turn ${Number(v.turn)||1}<small>${esc(v.reason||'')}</small></div>`).join('')}</div></details>`).join('')+'</div>';
 }
 function honorsEarnedHTML(){
+  if(!E.canEarnHonors(game))return '';
   const events=game.honorEvents||[];
   if(!events.length)return '';
   return `<section class="honors-earned"><span class="label">Military honors · ${events.filter(e=>e.personal).length} HQ citations${events.some(e=>!e.personal)?' · scripted recognition':''}</span><div class="honors-earned-grid">${events.slice(0,12).map(e=>
@@ -30,7 +31,7 @@ function honorsHall(){
   generalOpen=null;
   const profile=loadProfile(),officers=Object.entries(E.roster(profile)),
     decorated=officers.filter(([,o])=>o.honors?.length),legacy=profile.legacyHonors||[];
-  modal.innerHTML=`<div class="overlay"><section class="dialog wide honors-hall" role="dialog" aria-modal="true" aria-label="Hall of Honors"><div class="dialog-head"><div><div class="eyebrow">Command HQ · Permanent records</div><h2>Hall of Honors</h2><p>Decorations record achievements. They grant no bonuses and cannot be transferred.</p></div><button class="small close" data-action="honors-close">Close</button></div><div class="honors-showcase">${HONOR_ORDER.map(id=>
+  modal.innerHTML=`<div class="overlay"><section class="dialog wide honors-hall" role="dialog" aria-modal="true" aria-label="Hall of Honors"><div class="dialog-head"><div><div class="eyebrow">Command HQ · Permanent records</div><h2>Hall of Honors</h2><p>Earn decorations in Campaign and World Conquest with personally assigned HQ commanders. They grant no bonuses and cannot be transferred.</p></div><button class="small close" data-action="honors-close">Close</button></div><div class="honors-showcase">${HONOR_ORDER.map(id=>
     `<article class="honors-catalog-item">${honorIcon(id)}<b>${esc(E.MEDALS[id].name)}</b><small>${esc(E.MEDALS[id].earn)}</small></article>`).join('')}</div><h3>Decorated commanders · ${decorated.length}</h3><div class="honors-roster">${decorated.length?decorated.map(([k,o])=>
     `<button class="honors-officer" data-general-open="${k}"><span>${esc(E.COMMANDERS[k]?.name||k)}<small>${esc(E.RANKS[o.rank])} · ${o.honors.reduce((n,h)=>n+(h.citations?.length||0),0)} citations</small></span><span class="honors-mini">${o.honors.slice(0,5).map(h=>honorIcon(h.id)).join('')}</span></button>`).join(''):'<p>No permanent decorations yet.</p>'}</div><details class="honors-legacy"><summary>Legacy Honors · ${legacy.reduce((n,m)=>n+(m.count||0),0)} historical medals</summary><p>These awards predate individual service records. Former owners are recorded where known, but cannot be verified as original recipients.</p>${legacy.map(m=>
     `<div class="honors-legacy-row">${honorIcon(m.id)}${esc(E.MEDALS[m.id]?.name||m.id)} ×${Number(m.count)||1}${m.formerOwner?` · Formerly equipped by ${esc(E.COMMANDERS[m.formerOwner]?.short||m.formerOwner)}`:''}</div>`).join('')||'<p>No historical medals.</p>'}</details></section></div>`;

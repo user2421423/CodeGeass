@@ -274,6 +274,7 @@
     removeGeneric,
     officer,
     medalSlots,
+    canEarnHonors,
     claimHonors,
     finalizeHonors,
     moraleFloor,

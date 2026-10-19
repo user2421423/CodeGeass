@@ -209,8 +209,12 @@
   // All ranks display any number of earned awards. Historical medal slots and
   // transferable loadouts were removed; this exists for old save compatibility.
   function medalSlots() { return 0; }
+  // Story Mode uses mode 'campaign'; the Campaign map launches regional wars.
+  function canEarnHonors(g) {
+    return g?.mode === 'conquest' || (g?.mode === 'scenario' && !!g.warCampaign);
+  }
   function honorService(g, u) {
-    if (!g || !u?.cmd || u.side !== g.player || !u.personal) return null;
+    if (!canEarnHonors(g) || !u?.cmd || u.side !== g.player || !u.personal) return null;
     const key = (u.personal ? 'hq:' : 'script:') + u.cmd;
     const stats = (g.honorService ||= {});
     return (stats[key] ||= { commander: u.cmd, personal: !!u.personal,
@@ -457,6 +461,7 @@
   function equipMedal() { return { ok: false, reason: equipReason() }; }
   function unequipMedal() { return { ok: false, reason: equipReason() }; }
   function award(g, side, id, reason, unit, key = reason) {
+    if (!canEarnHonors(g)) return;
     if (side !== g.player || !MEDALS[id] || !unit?.personal || !unit?.cmd || !COMMANDERS[unit.cmd]) return;
     const events = (g.honorEvents ||= []);
     // Repeat achievements become citations across operations, not spammable
@@ -468,7 +473,7 @@
     log(g, `${MEDALS[id].name}: ${COMMANDERS[unit.cmd].short} — ${reason}.`, side);
   }
   function finalizeHonors(g) {
-    if (!g.over || g.honorsFinalized) return;
+    if (!canEarnHonors(g) || !g.over || g.honorsFinalized) return;
     g.honorsFinalized = true;
     if (g.over.winner !== g.player) return;
     const services = Object.values(g.honorService || {})
@@ -491,9 +496,10 @@
         { cmd: best.commander, personal: true });
     }
   }
-  // Claim only after saving a unique operation ID. Standalone Scenarios use the
-  // same honors-only transaction without granting campaign currency or fragments.
+  // Claim only after saving a unique operation ID. Recheck eligibility so old
+  // Story Mode and standalone Scenario saves cannot claim pending decorations.
   function claimHonors(profile, g, claimId) {
+    if (!canEarnHonors(g)) return { awarded: [] };
     roster(profile);
     if (!claimId || (profile.honorClaims ||= {})[claimId]) return { awarded: [] };
     const awarded = [];
