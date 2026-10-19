@@ -41,7 +41,7 @@ for (const id of ids) {
     assert.ok(E.TYPES[u.type],id+': built unknown type '+u.type);
     assert.equal(!!E.TYPES[u.type].elite,difficulty==='elite',
       id+'/'+difficulty+'/'+side+': wrong factory class');
-    assert.equal(u.deployedTurn,g.turn,id+': unit must be unavailable immediately');
+    assert.ok(u.moved && u.attacked,id+': recruited unit must be unavailable until next turn');
    }
    assert.ok(wallet.credits>=0 && wallet.industry>=0 && wallet.science>=0 && wallet.sakuradite>=0,
      id+'/'+difficulty+'/'+side+': purchased with an overdraft');
