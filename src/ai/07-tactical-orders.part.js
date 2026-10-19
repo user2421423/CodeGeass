@@ -30,6 +30,22 @@
         (assignedFront?.type === 'defensive' && assignedFront.emergency);
     return emergency ? tactical - 10 : tactical - trafficBoost(g, u, memo);
   }
+  // Rolo freezes real threats rather than firing at the first weak target.
+  // The AI avoids lethal activation; a human player may still choose it.
+  function aiRoloFreeze(g, u, events) {
+    if (u.cmd !== 'rolo' || feintReason(g, u)) return false;
+    const victims = actionTargets(g, u).filter(v => !v.expRoloFrozen);
+    if (!victims.length) return false;
+    const cost = Math.max(1, Math.round(maxHP(u) * 0.10));
+    if (u.hp <= cost) return false;
+    const priority = victims.some(v => !!v.cmd || !!v.elite ||
+      TYPES[v.type].attack * (v.stack || 1) >= TYPES[u.type].attack * (u.stack || 1) * 1.6);
+    if (victims.length < 2 && !priority) return false;
+    const activated = feint(g, u.id);
+    if (!activated?.ok) return false;
+    events.push({ kind: 'feint', id: u.id, affected: activated.affected });
+    return true;
+  }
   // Chinese patrol fleets contest invasion convoys near the Philippine islands,
   // but never sail to capture Britannia's remote Palau and Yap bases.
   // Ground defense and the global amphibious doctrine remain unchanged.
@@ -76,6 +92,9 @@
       (!isShip(u) && !isSea(p) &&
         philippinesHome(g, g.stations[p.provinceCity]) &&
         (atSea(g, u) ? dist(g, u, p) === 1 : massOf(g, p) === massOf(g, u)));
+    // Freeze valuable clusters before recovery moves Rolo away.
+    aiRoloFreeze(g, u, events);
+    if (u.hp <= 0 || g.over) return events;
     const recovery = memo.recoveries?.get(u.id);
     if (recovery) {
       if (u.moved || u.attacked) return events;
@@ -131,7 +150,7 @@
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -312,8 +331,10 @@
     // Reevaluate positioning after each kill that restores movement/refire, within a bounded action budget.
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       maneuver();
+      // Reevaluate clustered threats after maneuvering, before firing.
+      aiRoloFreeze(g, u, events);
       // A designation may only now be in range.
-      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw'].includes(action.kind) && !feintReason(g, u)) {
+      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze'].includes(action.kind) && !feintReason(g, u)) {
         const r = feint(g, id);
         if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
       }
