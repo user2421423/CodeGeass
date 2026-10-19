@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-// Architecture-only regression smoke: do not invent playable scenarios.
+// Integrated registry smoke: launches only when the real requested model is registered.
 const assert = require('node:assert/strict');
 const WC = require('../dist/war-campaign.js');
 
@@ -9,16 +9,16 @@ const expected = [
   ['australia', 1, 'war-for-australia'],
   ['area-18', 1, 'area-18'],
   ['division-japan', 1, 'division-japan'],
-  ['kazakhstan', 2, null],
-  ['persia', 2, null],
-  ['xinjiang', 3, null],
-  ['india', 3, null],
-  ['mongolia', 3, null],
-  ['manchuria', 3, null],
-  ['himalayas', 4, null],
-  ['sichuan', 5, null],
-  ['beijing', 5, null],
-  ['luoyang', 6, null],
+  ['kazakhstan', 2, 'eu-cf-kazakhstan'],
+  ['persia', 2, 'eu-cf-persia'],
+  ['xinjiang', 3, 'eu-cf-xinjiang'],
+  ['india', 3, 'eu-cf-india'],
+  ['mongolia', 3, 'eu-cf-mongolia'],
+  ['manchuria', 3, 'eu-cf-manchuria'],
+  ['himalayas', 4, 'eu-cf-himalayas'],
+  ['sichuan', 5, 'eu-cf-sichuan'],
+  ['beijing', 5, 'eu-cf-beijing'],
+  ['luoyang', 6, 'eu-cf-luoyang'],
 ];
 
 assert(WC.FACTIONS.includes(key), 'Campaign selector must list E.U. vs Federation');
@@ -35,25 +35,36 @@ for (const [idx, [suffix, tier, scenarioId]] of expected.entries()) {
   assert.equal(m.scenarioId, scenarioId);
   assert.equal(m.battleSide, 'eu');
   assert.equal(m.campaignFaction, key);
-  assert.equal(m.status, scenarioId ? 'implemented' : 'planned');
+  assert.equal(m.status, 'implemented');
   assert.equal(m.final, idx === 12);
   assert.deepEqual(WC.ALL[m.id], m);
   assert(m.bounds.length === 4 && m.marker.length === 2, 'Map locator required');
 }
 assert.equal(new Set(all.map(m => m.id)).size, 13);
-assert.equal(all.filter(m => m.status === 'planned').length, 10);
-assert.equal(WC.PLACEHOLDERS.filter(m => m.campaignFaction === key).length, 10);
+assert.equal(all.filter(m => m.status === 'implemented').length, 13);
+assert.equal(WC.PLACEHOLDERS.filter(m => m.campaignFaction === key).length, 0);
 assert(WC.regionContains(all[3], 67, 48), 'Kazakhstan marker must lie inside its region');
 assert(WC.regionContains(all[6], 78, 23), 'India marker must lie inside its region');
 assert(WC.regionContains(all[7], 104, 46), 'Mongolia marker must lie inside its region');
 
 const progress = WC.testFixture(key, 2);
 assert.equal(WC.unlockedTier(progress, key), 2);
-assert.equal(WC.state(progress, key, 'eu-federation-kazakhstan'), 'planned');
+assert.equal(WC.state(progress, key, 'eu-federation-kazakhstan'), 'available');
 assert.deepEqual(
   WC.launch(progress, key, 'eu-federation-kazakhstan', {}),
-  { ok: false, reason: 'Planned — Scenario Not Yet Implemented' }
+  { ok: false, reason: 'Playable scenario is not registered for this faction.' }
 );
+const validModels = Object.fromEntries(all.filter(m=>m.scenarioId).map(m=>[m.scenarioId,{
+  sides:m.tier===1?['eu','cf','britannia']:['eu','cf'], create(){return {};},
+}]));
+for(const m of all.slice(3)){
+  const unlocked=WC.testFixture(key,m.tier);
+  const launched=WC.launch(unlocked,key,m.id,validModels);
+  assert.equal(launched.ok,true,'expected registered launch for '+m.id);
+  assert.equal(launched.scenarioId,m.scenarioId);
+  assert.equal(launched.battleSide,'eu');
+}
+
 assert.equal(
   WC.recordVictory({ getItem(){ return null; }, setItem(){} }, {
     warCampaign: { faction: key, missionId: 'eu-federation-luoyang',
@@ -82,4 +93,4 @@ for (const id of [
   'eu-pendragon-east', 'britannia-stonehenge',
   'britannia-federation-luoyang', 'federation-britannia-pendragon-west'
 ]) assert(WC.ALL[id] && WC.ALL[id].status === 'implemented', id);
-console.log('PASS: EU-Federation architecture, 13 objectives, placeholder safety, and save compatibility');
+console.log('PASS: EU-Federation 13 integrated objectives, model launch contracts, isolated victories and save compatibility');
