@@ -89,7 +89,7 @@
     ['cf', 'gun_ru', 11, 10, 2],
     ['cf', 'gun_ru', 13, 5, 2],
     ['cf', 'gun_ru', 13, 7, 2],
-    ['cf', 'gekka_rocket', 12, 6, 1],
+    ['cf', 'gun_ru_support', 12, 6, 1],
     ['cf', 'gun_ru', 16, 4, 2, null, { hold: 1 }],
     ['cf', 'gun_ru', 16, 10, 2, null, { hold: 1 }],
   ];
@@ -124,7 +124,7 @@
     ['cf', 'gun_ru', 17, 10, 2, 'xianglin'],
     ['cf', 'gun_ru', 19, 10, 2],
     ['cf', 'chuyen', 18, 12, 1],
-    ['cf', 'akatsuki_missile', 19, 12, 1],
+    ['cf', 'gun_ru_rocket', 19, 12, 1],
   ];
   const KAGOSHIMA_BRIT = [
     [B, 'vincent_commander', 6, 5, 1, 'luciano', { hold: 1 }],
