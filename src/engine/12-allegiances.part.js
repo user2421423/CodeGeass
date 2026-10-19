@@ -119,7 +119,7 @@
     // Preserve a frame's unrestricted restored movement; a skill only fills a missing movement action.
     if (u.moved) { u.moved = false; u.skillReposition = range; }
   }
-  function afterCommanderAttack(g, a, d, city, destroyed, timeStop, defensesDestroyed = false) {
+  function afterCommanderAttack(g, a, d, city, destroyed, defensesDestroyed = false) {
     const f = fx(a);
     if (d?.hp > 0) {
       if (f.targetMark) addTargetMark(d, { side: a.side, source: a.id, damage: f.targetMark });
@@ -136,10 +136,6 @@
         a.siegeMarkTurn = g.turn;
       }
     } else if (f.focusBombard) delete a.focusCity;
-    if (timeStop) {
-      a.timeStopTurn = g.turn;
-      if (a.hp > 0) a.hp = Math.max(1, a.hp - Math.round(maxHP(a) * f.timeStop));
-    }
     if (a.hp <= 0) return;
     // Cornelia's recovery rewards either a frame kill or a fresh city-defense
     // break. A single volley that achieves both only heals once.
@@ -189,6 +185,7 @@
     if(u.expShadowAttackTurn===g.turn)out.push('Shadow strike: next attack +30%, no commander counter');
     if(u.expMargaretRedeploy)out.push('Strategic redeployment: free 3-point move');
     if(u.expMargaretBonusTurn===g.turn)out.push('Strategic redeployment: next attack +15%');
+    if(u.expRoloFrozen)out.push('Absolute Suspension: frozen until the end of next turn; no moves, attacks, commands or counterattacks');
     if(u.expPinnedActive)out.push('Pinned: movement disabled');
     if(u.expPinnedWeakenActive)out.push('Pinned: attack −25%');
     if(u.forcedOffensive||u.expForcedVulnerable)out.push(`Forced Offensive: ${u.forcedOffensive?'next attack +35%; ':''}${u.expForcedVulnerable?'incoming damage +15%':''}`);
