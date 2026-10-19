@@ -24,7 +24,7 @@ Victory is **only** `api.winner` when all 56 stations belong to the same side. T
 ## Forces and economy
 
 Starting deployed **formation counts** before Elite conversion:
-- Federation: **147** land formations and **four** inland gunboats (**151 total**); 17 cities.
+- Federation: **180** land formations and **four** inland gunboats (**184 total**); 17 cities.
 - E.U.: **136** land formations and **four** inland gunboats (**140 total**); 39 cities.
 - Army Groups: **19** named formations in total (including four reservoir flotillas).
 
@@ -32,7 +32,7 @@ Named Federation officers include Xingke, Gao Hai, Honggu, Cao, Zhao Hao, Mei Li
 
 Both sides receive real city income and research resources, plus modest scenario-local `funding`, calculated *after* map city income. The setup uses standard production, research, economy, repair, commander and Army Group interfaces. Hard and Challenge augment the *opponent*, while Elite invokes the existing `E.prepareEliteEurope` and `meta.elite`; this scenario neither overrides HQ or Elite deployment restrictions nor modifies reward/medal rules.
 
-Normal balance aims for a concentrated Chinese first-wave numerical edge against a deeper and industrially stronger E.U. defense. The 151-versus-140 formation distribution is an **initial tuning hypothesis**, not a verified win-rate target. Prefer adding Chinese starting formations to forward Army Groups, or trimming excessive E.U. forward formations, if Chinese offensive simulations stagnate; reverse that bias if E.U. has no feasible counterattack.
+Normal balance aims for a stronger Chinese first-wave numerical edge against a deeper E.U. defense with many more recruitment cities. Federation starting credits/industry are higher to offset E.U. city count, while defending fortifications remain substantial. The 184-versus-140 formation distribution is an **initial tuning hypothesis**, not a verified win-rate target. Prefer adding Chinese starting formations to forward Army Groups, or trimming excessive E.U. forward formations, if Chinese offensive simulations stagnate; reverse that bias if E.U. has no feasible counterattack.
 
 ## Integration report — shared files to change **by the integrator**
 
@@ -48,7 +48,7 @@ No proposed changes to shared engine, AI, commanders, assets, core UI, other sce
 
 ## Validation and honest testing status
 
-**Completed in isolated JavaScript structural mock (not the real game engine):** syntax compilation; both `create(side,difficulty,seed)` combinations for 2 sides × 4 difficulties, seed 11; correct owner allocations, independent berths, land/sea deployment, non-immediate victory, and winner detection after full capture by either side. These passed before committing, with 56 city stations, 151 Federation and 140 E.U. total formations (including eight gunboats), four berths and 19 Army Groups.
+**Completed in isolated JavaScript structural mock (not the real game engine):** syntax compilation; both `create(side,difficulty,seed)` combinations for 2 sides × 4 difficulties, seed 11; correct owner allocations, independent berths, land/sea deployment, non-immediate victory, and winner detection after full capture by either side. These passed before committing, with 56 city stations, 184 Federation and 140 E.U. total formations (including eight gunboats), four berths and 19 Army Groups.
 
 **Not verified by the structural mock:** true combat/AI pathfinding, AI production and spending, naval moves across a reservoir, base-game save serialization/reload, HQ/reward credit, rendered mobile performance and regressions on the rest of the game. The setup mock can check data constraints but cannot establish gameplay winnability.
 
