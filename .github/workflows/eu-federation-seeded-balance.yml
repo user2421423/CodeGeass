@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - feature/eu-vs-federation-campaign-architecture
+    paths:
+      - 'dist/scenarios-eu-cf-*.js'
+      - 'tools/eu_cf_validation.cjs'
   pull_request:
     branches:
       - main
+    paths:
+      - 'dist/scenarios-eu-cf-*.js'
+      - 'tools/eu_cf_validation.cjs'
 
 jobs:
   normal-and-elite-ai-simulation:
