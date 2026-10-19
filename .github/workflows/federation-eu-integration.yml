@@ -11,16 +11,9 @@ on:
       - 'tools/scenario_sim.cjs'
       - 'tools/federation_eu_campaign_smoke.cjs'
       - '.github/workflows/federation-eu-integration.yml'
-  pull_request:
-    paths:
-      - 'dist/scenarios-cf-eu-*.js'
-      - 'dist/cf-eu-balkans-coast.js'
-      - 'dist/scenario-manifest.js'
-      - 'dist/war-campaign.js'
-      - 'tools/generate-scenario-catalog.cjs'
-      - 'tools/scenario_sim.cjs'
-      - 'tools/federation_eu_campaign_smoke.cjs'
-      - '.github/workflows/federation-eu-integration.yml'
+concurrency:
+  group: federation-eu-integration-feature
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -61,6 +54,26 @@ jobs:
             git commit -m "Regenerate scenario catalog for Federation-EU integration"
             git push origin HEAD:refs/heads/feature/federation-vs-eu-campaign-architecture
           fi
+  regression:
+    needs: registration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Checkout pre-integration main baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 38e519e789998010c5e336e170e6000c61205ab0
+          path: baseline
+      - name: Build both engines
+        run: |
+          node tools/build_sources.cjs
+          (cd baseline && node tools/build_sources.cjs)
+      - name: Compare deterministic existing missions with unchanged main
+        run: |
+          node tools/check_sim_baseline.cjs --base-root "$GITHUB_WORKSPACE/baseline" --scenarios war-for-australia,area-18,division-japan,conquest-indochina,cf-pendragon,european-war,operation-stonehenge,battle-luoyang,eu-cf-kazakhstan,eu-cf-luoyang
   scenarios:
     needs: registration
     runs-on: ubuntu-latest
