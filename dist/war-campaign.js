@@ -135,29 +135,29 @@
     ]],
   ];
   // Federation vs E.U.: three shared global wars followed by ten independent
-  // two-sided scenarios. Planned missions have null runtime IDs until implemented:
+  // two-sided scenarios. All ten objectives link to their own runtime IDs.
   // never alias an existing opposing-faction scenario simply to make it launchable.
   const federationEuRows = [
     [1,shared],
     [2,[
-      ['siberia','Invasion of Siberia',null,'Siberia',[100,57],[65,48,141,70],'Invade E.U.-controlled Siberia from Manchuria and Mongolia; open the northern route.'],
-      ['caucasus','Invasion of the Caucasus',null,'Caucasus',[45,42],[38,38,51,46],'Attack north out of Persia into the Caucasus and southern Russia; force the mountain corridors.'],
+      ['siberia','Invasion of Siberia','cf-eu-siberia','Siberia',[100,57],[65,48,141,70],'Invade E.U.-controlled Siberia from Manchuria and Mongolia; open the northern route.'],
+      ['caucasus','Invasion of the Caucasus','cf-eu-caucasus','Caucasus',[45,42],[38,38,51,46],'Attack north out of Persia into the Caucasus and southern Russia; force the mountain corridors.'],
     ]],
     [3,[
-      ['turkey','Invasion of Turkey',null,'Anatolia',[35,39],[26,35,45,43],'Advance from Persia and the Caucasus into Anatolia and toward Istanbul.'],
-      ['volga','Battle for the Volga',null,'Volga River',[47,51],[41,47,53,57],'Advance from the Caucasus and western Siberia to seize Volgograd, Saratov and Kazan.'],
-      ['suez','Crossing the Suez Canal',null,'Egypt',[31,29],[24,22,36,32],'Attack west from the Sinai staging area across the canal to capture Cairo, the Nile Delta and Alexandria.'],
+      ['turkey','Invasion of Turkey','cf-eu-turkey','Anatolia',[35,39],[26,35,45,43],'Advance from Persia and the Caucasus into Anatolia and toward Istanbul.'],
+      ['volga','Battle for the Volga','cf-eu-volga','Volga River',[47,51],[41,47,53,57],'Advance from the Caucasus and western Siberia to seize Volgograd, Saratov and Kazan.'],
+      ['suez','Crossing the Suez Canal','cf-eu-suez','Egypt',[31,29],[24,22,36,32],'Attack west from the Sinai staging area across the canal to capture Cairo, the Nile Delta and Alexandria.'],
     ]],
     [4,[
-      ['moscow','Battle for Moscow',null,'Moscow and Western Russia',[37.6,55.7],[29,51,46,61],'Break through from the Volga into the Moscow defensive region; capture the capital and its cities.'],
-      ['balkans','Balkan Offensive',null,'Balkans',[22,43],[13,36,30,48],'Push northwest from Turkey through Greece, Bulgaria, Serbia and neighboring Balkan states.'],
-      ['north-africa','North African Offensive',null,'North Africa',[12,32],[-9,19,26,38],'Advance west from Egypt through Libya, Tunisia and Algeria, securing Mediterranean ports.'],
+      ['moscow','Battle for Moscow','cf-eu-moscow','Moscow and Western Russia',[37.6,55.7],[29,51,46,61],'Break through from the Volga into the Moscow defensive region; capture the capital and its cities.'],
+      ['balkans','Balkan Offensive','cf-eu-balkans','Balkans',[22,43],[13,36,30,48],'Push northwest from Turkey through Greece, Bulgaria, Serbia and neighboring Balkan states.'],
+      ['north-africa','North African Offensive','cf-eu-north-africa','North Africa',[12,32],[-9,19,26,38],'Advance west from Egypt through Libya, Tunisia and Algeria, securing Mediterranean ports.'],
     ]],
     [5,[
-      ['central-europe','Conquest of Central Europe',null,'Central Europe',[18,49],[9,46,25,56],'Invade Poland, Czechia, Slovakia, Hungary and Austria from Russia and the Balkans; exclude Germany.'],
+      ['central-europe','Conquest of Central Europe','cf-eu-central-europe','Central Europe',[18,49],[9,46,25,56],'Invade Poland, Czechia, Slovakia, Hungary and Austria from Russia and the Balkans; exclude Germany.'],
     ]],
     [6,[
-      ['france','Invasion of France',null,'France',[2.35,48.85],[-5,42,8,51.3],'Land only from Mediterranean carrier and transport fleets near Marseille and Toulon, then advance to Paris.'],
+      ['france','Invasion of France','cf-eu-france','France',[2.35,48.85],[-5,42,8,51.3],'Land only from Mediterranean carrier and transport fleets near Marseille and Toulon, then advance to Paris.'],
     ]],
   ];
   // Approximate national/state contours where a rectangular theater would
