@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && a.cmd !== 'ohgi' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -61,6 +61,8 @@
     attack *= 1 + (u.expInformationWarfare?0:auraBonus(g,u));
     if(u.expInformationWarfare)attack*=.8;
     attack *= newcomerAttack(g,u,target,counter);
+    // Ohgi's half-health leadership supports outgoing attacks and counterfire.
+    if (ohgiSelflessLeadership(g, u)) attack *= 1.35;
     // Xianglin's coordination only strengthens direct initiating attacks.
     // Previews and resolved volleys share this calculation; splash damage
     // and defensive counterattacks never receive the +30% bonus.
@@ -238,6 +240,7 @@
         attack *= 0.80;
       // Commander signature abilities (defender side).
       if (tf.taken) attack *= tf.taken;
+      if (ohgiSelflessLeadership(g, target)) attack *= 0.75;
       if (tf.swordmaster && dist(g, u, target) === 1) attack *= 0.70;
       if (target.expImperialCommand) attack *= 0.75;
       // The charge remains intact during previews, then is spent by the
