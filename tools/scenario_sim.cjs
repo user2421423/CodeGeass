@@ -29,8 +29,10 @@ function simulate(scenario,player,difficulty,seed,turns,hooks=null){
   startingForces:Object.fromEntries(sides.map(s=>[s,g.units.filter(v=>v.side===s).length])),
   captures:[],losses:zeros(),production:zeros(),attacks:zeros(),
   navalActions:zeros(),navalMoves:zeros(),errors:[],snapshots:[],winner:null,firstOver:null,openingStall:false};
- let oldOwners=new Map(g.stations.map(s=>[s.id,s.owner])),known=new Set(g.units.map(u=>u.id)),
-  previousAlive=new Map(g.units.filter(u=>u.hp>0).map(u=>[u.id,u.side]));
+ // Loaded expedition cargo is part of the *starting* force, not production.
+ const initialUnits=g.units.flatMap(u=>[u,...(u.cargo||[])]);
+ let oldOwners=new Map(g.stations.map(s=>[s.id,s.owner])),known=new Set(initialUnits.map(u=>u.id)),
+  previousAlive=new Map(initialUnits.filter(u=>u.hp>0).map(u=>[u.id,u.side]));
  function observe(){
   for(const city of g.stations)if(oldOwners.get(city.id)!==city.owner){
    r.captures.push({turn:g.turn,city:city.name,from:oldOwners.get(city.id),to:city.owner});oldOwners.set(city.id,city.owner);
