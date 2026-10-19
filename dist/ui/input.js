@@ -676,7 +676,7 @@ document.addEventListener('click', e => {
       break;
     case 'feint': {
       const u = selectedUnit();
-      if (u && (['command','designate','stratagem','protection','geassCancel','checkmate'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
+      if (u && (['command','designate','stratagem','protection','geassCancel','checkmate','memoryRewrite'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
       else if (u) doAction(() => useCommanderAbility(u.id));
       break;
     }
