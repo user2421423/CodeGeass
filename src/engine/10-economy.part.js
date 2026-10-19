@@ -249,6 +249,7 @@
     g.eliteDeployed[id] = true;
     const u = newUnit(g, e.type, producer, p.c, p.r, 1, null, false);
     u.elite = id;
+    if (g.mode === 'campaign') u.storyHQDeployed = true;
     // Player factory/port recruits use their unlocked HQ level in every mode.
     // Preplaced converted elites have their own Lv.1 starting rule; recruitment never changes them.
     u.eliteLevel = rec.level;
