@@ -1230,7 +1230,8 @@
         [B, 'vincent_ward', 5, 5, 2, null, { normalOnly: true, hold: 1 }],
         // On Normal, omit one unnamed UFN missile group; keep all named opponents.
         ...KAGOSHIMA_BK.map(u => u[1] === 'akatsuki_missile'
-          ? [...u.slice(0, 6), { ...(u[6] || {}), skipNormal: true }] : u),
+          ? [u[0], u[1], u[2], u[3], u[4] ?? 1, u[5] ?? null,
+              { ...(u[6] || {}), skipNormal: true }] : u),
         [K, 'akatsuki', 6, 10, 1, null, { skipNormal: true }],
         ...KAGOSHIMA_CF,
       ],
