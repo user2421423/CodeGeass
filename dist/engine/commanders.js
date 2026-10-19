@@ -549,8 +549,9 @@
       hull: 'Four Holy Swords command',
       title: 'Chief of Military Affairs',
       skill: 'Miracle Worker',
-      desc: 'Adjacent friendly units counter-fire 25% harder and take 10% less damage. With 2 or more friendly units beside him, his own unit counter-fires 40% harder and takes 20% less damage.',
-      fx: { miracle: true },
+      desc: 'Passive: always receives 50% less combat damage. When below 50% maximum HP, his counterattacks deal 75% more damage. This affects Tohdoh alone, with no adjacent-unit bonuses.',
+      stats: { taken: 0.50 },
+      fx: { lastStandCounter: 0.75 },
       recruit: 400,
     },
     cc: {
