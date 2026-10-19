@@ -39,7 +39,17 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"cf-central-america",title:"Central American Offensive",note:"81 cities · 2 sides"},
   {id:"cf-mexico",title:"Conquest of the Mexican Heartland",note:"80 cities · 2 sides"},
   {id:"eu-rocky-mountains",title:"Crossing the Rocky Mountains",note:"101 cities · 2 sides"},
-  {id:"battle-luoyang",title:"Battle of Luoyang",note:"83 cities · 2 sides · final offensive"}
+  {id:"battle-luoyang",title:"Battle of Luoyang",note:"83 cities · 2 sides · final offensive"},
+  {id:"eu-cf-kazakhstan",title:"Invasion of Kazakhstan",note:"65 cities · 2 sides · steppe offensive"},
+  {id:"eu-cf-persia",title:"Invasion of Persia",note:"61 cities · 2 sides · Iranian plateau"},
+  {id:"eu-cf-xinjiang",title:"Battle for Xinjiang",note:"70 cities · 2 sides · Tianshan passes"},
+  {id:"eu-cf-india",title:"Invasion of India",note:"113 cities · 2 sides · Arabian Sea landings"},
+  {id:"eu-cf-mongolia",title:"Invasion of Mongolia",note:"51 cities · 2 sides · steppe war"},
+  {id:"eu-cf-manchuria",title:"Invasion of Manchuria",note:"49 cities · 2 sides · northeastern China"},
+  {id:"eu-cf-himalayas",title:"Crossing the Himalayas",note:"57 cities · 2 sides · mountain passes"},
+  {id:"eu-cf-sichuan",title:"Invasion of Sichuan",note:"62 cities · 2 sides · Chengdu Basin"},
+  {id:"eu-cf-beijing",title:"Battle of Beijing",note:"56 cities · 2 sides · northern China"},
+  {id:"eu-cf-luoyang",title:"Battle of Luoyang — E.U. vs Federation",note:"83 cities · 2 sides · E.U. finale"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.
 const SCENARIO_FILES = Object.freeze([
@@ -95,7 +105,18 @@ const SCENARIO_FILES = Object.freeze([
   'scenarios-central-america.js',
   'scenarios-mexico.js',
   'scenarios-rocky-mountains.js',
-  'central-america-underlay.js'
+  'central-america-underlay.js',
+  'scenarios-eu-cf-kazakhstan.js',
+  'scenarios-eu-cf-persia.js',
+  'scenarios-eu-cf-xinjiang.js',
+  'eu-cf-india-geography.js',
+  'scenarios-eu-cf-india.js',
+  'scenarios-eu-cf-mongolia.js',
+  'scenarios-eu-cf-manchuria.js',
+  'scenarios-eu-cf-himalayas.js',
+  'scenarios-eu-cf-sichuan.js',
+  'scenarios-eu-cf-beijing.js',
+  'scenarios-eu-cf-luoyang.js'
 ]);
 // Script promises are shared across callers; successful modules execute once per tab.
 const assetLoads = new Map();
