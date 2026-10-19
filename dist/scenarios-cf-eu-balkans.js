@@ -272,13 +272,29 @@ function create(player='cf',difficulty='normal',seed=201720){
  // Most Chinese ground forces start WEST of the Bosporus, in Turkish Thrace.
  const STRAITS=[
   [[29.06,41.21],[29.08,41.15],[29.02,41.10],[29.00,41.05],[28.99,40.99]],
-  [[26.18,40.03],[26.27,40.12],[26.39,40.22],[26.52,40.30],[26.64,40.37]]
+  [[26.18,40.03],[26.27,40.12],[26.39,40.22],[26.52,40.30],[26.64,40.37],[26.77,40.51],[26.92,40.56]]
  ];
  for(const t of g.tiles){
   if(t.terrain==='sea')continue;
   const p=geo(t.c,t.r);
-  if(STRAITS.some(line=>lineDistance(p,line)<.043))t.terrain='sea';
+  if(STRAITS.some(line=>lineDistance(p,line)<.15))t.terrain='sea';
  }
+ // Select only the largest navigable sea component for working harbours.
+ // Inland lagoons and raster artefacts cannot become naval spawn positions.
+ const checkedWater=new Set();let operationalSea=new Set();
+ for(const start of g.tiles){
+  if(start.terrain!=='sea'||checkedWater.has(E.key(start)))continue;
+  const queue=[start],connected=new Set([E.key(start)]);
+  checkedWater.add(E.key(start));
+  for(let i=0;i<queue.length;i++)for(const n of E.adjacent(g,queue[i])){
+   const key=E.key(n);
+   if(n.terrain!=='sea'||checkedWater.has(key))continue;
+   checkedWater.add(key);connected.add(key);queue.push(n);
+  }
+  if(connected.size>operationalSea.size)operationalSea=connected;
+ }
+ if(operationalSea.size<2000)throw Error('Balkan maritime basins are disconnected');
+ const navigable=t=>t.terrain==='sea'&&operationalSea.has(E.key(t));
  // A geographic river is a movement-edge penalty, not an uncrossable wall.
  function orientation(a,b,p){return (b.lon-a.lon)*(p.lat-a.lat)-(b.lat-a.lat)*(p.lon-a.lon);}
  function intersects(a,b,x,y){
@@ -294,7 +310,7 @@ function create(player='cf',difficulty='normal',seed=201720){
   const target=locate(lon,lat);
   const at=nearest(g,target,t=>t.terrain!=='sea'&&t.terrain!=='offmap'&&
    t.terrain!=='peak'&&!g.stations.some(s=>s.c===t.c&&s.r===t.r)&&
-   (!isPort||E.adjacent(g,t).some(n=>n.terrain==='sea')),isPort?13:6);
+   (!isPort||E.adjacent(g,t).some(n=>navigable(n))),isPort?13:6);
   if(!at)throw Error('Cannot place Balkan settlement '+name);
   const capital=['Istanbul','Sofia','Athens','Belgrade','Bucharest','Zagreb'].includes(name);
   const shield=E.scenarioCityDefenseHP(tier,!!fort,name);
@@ -372,7 +388,7 @@ function create(player='cf',difficulty='normal',seed=201720){
  const occupiedPorts=new Set();
  for(const [name,level] of Object.entries(PORTS)){
   const s=g.stations.find(v=>v.name===name);
-  const at=E.adjacent(g,s).filter(t=>t.terrain==='sea'&&!occupiedPorts.has(E.key(t)))
+  const at=E.adjacent(g,s).filter(t=>navigable(t)&&!occupiedPorts.has(E.key(t)))
    .sort((a,b)=>E.adjacent(g,b).filter(n=>n.terrain==='sea').length-
     E.adjacent(g,a).filter(n=>n.terrain==='sea').length)[0];
   if(!at)throw Error('Balkan port lacks water access: '+name);
@@ -385,7 +401,7 @@ function create(player='cf',difficulty='normal',seed=201720){
   const fleet={id:'fleet-'+g.scenario.groups.length,side,
    name:origin+' Fleet',origin,units:[]};
   for(let i=0;i<count;i++){
-   const at=nearest(g,s,t=>t.terrain==='sea'&&!E.unitAt(g,t)&&
+   const at=nearest(g,s,t=>navigable(t)&&!E.unitAt(g,t)&&
     !occupiedPorts.has(E.key(t))&&!g.stations.some(v=>v.c===t.c&&v.r===t.r),13);
    if(!at)throw Error('No deployment water for '+origin+' Fleet');
    fleet.units.push(E.newUnit(g,type,side,at.c,at.r).id);
