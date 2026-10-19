@@ -14,6 +14,16 @@ on:
       - 'src/ai/**'
       - 'dist/scenario-catalog.js'
       - '.github/workflows/federation-eu-integration.yml'
+  pull_request:
+    branches: ['main']
+    paths:
+      - '.github/workflows/federation-eu-integration.yml'
+      - 'docs/FEDERATION_EU_POSTMERGE_QA.md'
+      - 'dist/scenarios-cf-eu-*.js'
+      - 'src/ai/**'
+      - 'dist/scenario-manifest.js'
+      - 'dist/war-campaign.js'
+      - 'tools/federation_eu_*'
 concurrency:
   group: federation-eu-integration-${{ github.ref }}
   cancel-in-progress: true
