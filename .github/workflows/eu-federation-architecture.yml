@@ -32,16 +32,21 @@ jobs:
           const fs = require('node:fs');
           const vm = require('node:vm');
           const code = fs.readFileSync('dist/scenario-catalog.js', 'utf8');
+          const committedCode = require('node:child_process').execFileSync(
+            'git', ['show','HEAD:dist/scenario-catalog.js'], {encoding:'utf8'});
           const entries = vm.runInNewContext(code + '\nSCENARIO_CATALOG');
+          const committed = vm.runInNewContext(committedCode + '\nSCENARIO_CATALOG');
           const keys = ['kazakhstan','persia','xinjiang','india','mongolia','manchuria','himalayas','sichuan','beijing','luoyang'];
           const integrated = Object.fromEntries(keys.map(k => {
             const id = 'eu-cf-' + k;
             const x = entries[id];
             if (!x || !x.sides.includes('eu') || !x.sides.includes('cf') || !x.files.length)
               throw Error('Catalog entry incomplete: ' + id);
+            if (JSON.stringify(x) !== JSON.stringify(committed[id]))
+              throw Error('Committed catalog differs from generator: ' + id);
             return [id, x];
           }));
-          console.log('EU_CF_INTEGRATION_CATALOG_B64=' + Buffer.from(JSON.stringify(integrated)).toString('base64'));
+          console.log('Verified ' + Object.keys(integrated).length + ' EU-Federation generated catalog entries match the committed catalog');
           NODE
       - name: Validate EU-Federation campaign, launch contract and old saves
         run: node tools/eu_federation_campaign_smoke.cjs
