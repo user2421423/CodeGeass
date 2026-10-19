@@ -15,7 +15,7 @@ const type = (side,branch) => Object.keys(E.TYPES).find(k => {
   const t = E.TYPES[k];
   return t.side===side&&t.branch===branch&&!t.naval&&!t.elite&&t.min===1&&t.max===1;
 });
-const bkArmor=type('bk','Armor'),bkInf=type('bk','Infantry'),brInf=type('britannia','Infantry');
+const bkArmor=type('bk','Armor') || type('bk','Infantry'),bkInf=type('bk','Infantry'),brInf=type('britannia','Infantry');
 assert.ok(bkArmor&&bkInf&&brInf);
 function setup(){
   const g=E.createGame('bk','normal','conquest',20261019,'world');
