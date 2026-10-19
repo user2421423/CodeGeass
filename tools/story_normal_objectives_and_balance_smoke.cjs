@@ -27,7 +27,7 @@ const hostile = E.campaign.createMission('bk8', 1357, 'normal');
 hostile.stations.find(s => s.name === 'Kagoshima Settlement').owner = 'britannia';
 assert.equal(E.hooks.decide(hostile), null, 'Enemy ownership cannot win');
 for (const [id, min] of Object.entries({
-  bk1: 11, br5: 13, br_tohdoh: 14, bk_yokosuka: 11, bk_shikine: 11,
+  bk1: 11, br5: 16, br_tohdoh: 14, bk_yokosuka: 11, bk_shikine: 11,
   bk_pacific: 11, bk_xiaopei: 11, bk9: 12,
   eb_weisswolf: 13, eb_fall: 10, eu_ark: 9
 })) {

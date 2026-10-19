@@ -313,6 +313,10 @@
         [B, 'gloucester', 15, 5, 2, null, { normalOnly: true }],
         [B, 'sutherland', 17, 7, 2, null, { normalOnly: true }],
         [B, 'sutherland', 11, 10, 2, null, { normalOnly: true }],
+        // Normal defensive reserves respond to the Black Rebellion's early breakthrough.
+        [B, 'gloucester', 17, 4, 3, null, { normalOnly: true, hold: 2 }],
+        [B, 'gloucester', 13, 8, 3, null, { normalOnly: true, hold: 2 }],
+        [B, 'sutherland', 11, 5, 3, null, { normalOnly: true, hold: 2 }],
         [K, 'elite_gawain', 4, 6, 1, 'zero'],
         [K, 'elite_guren_mkii', 5, 8, 1, 'kallen'],
         [K, 'elite_tohdoh_gekka', 5, 5, 1, 'tohdoh'],
@@ -349,7 +353,7 @@
           turn: 5,
           say: [['tohdoh', 'The second wave is here. Press the Bureau!']],
           spawn: [
-            [K, 'gekka', 1, 6, 2],
+            [K, 'gekka', 1, 6, 2, null, { skipNormal: true }],
             [K, 'burai', 1, 11, 2, null, { skipNormal: true }],
             [K, 'burai', 1, 2, 2],
           ],

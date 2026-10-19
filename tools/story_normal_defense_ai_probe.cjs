@@ -91,4 +91,12 @@ testVariants('br5',[
  ['+5, skip 1 turn-3 and 2 turn-5 attackers',br5,{3:1,5:2}],
  ['+5, skip all waves',br5,{3:2,5:2}],
 ]);
-console.log('Finished Story Normal experimental force comparison');
+console.log('Finished Story Normal experimental force comparison');for(const [id,minimum] of [['br_tohdoh',2],['br5',3],['bk1',3]]){
+  const results=seeds.map(seed=>play(id,seed));
+  const player=E.campaign.CAMPAIGNS[id==='bk1'?'bk_s1':'britannia_s1'].side;
+  const wins=results.filter(r=>r.winner===player).length;
+  console.log(id+' Normal: '+wins+'/'+results.length+' player AI victories');
+  console.log(results.map(r=>r.seed+':'+r.winner+'(T'+r.turn+')').join(' '));
+  assert.ok(wins>=minimum,id+' Normal should be demonstrably winnable in repeated full-engine AI trials');
+}
+console.log('Story Normal seeded tactical gameplay regression: PASS');
