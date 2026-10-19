@@ -60,40 +60,35 @@ const br4=[...br3,
 const br5=[...br4,
  [B,'sutherland',14,4,3,null,{normalOnly:true,hold:2}]
 ];
+
 function testVariants(id, variants) {
- const camp=E.campaign.CAMPAIGNS[id==='bk1'?'bk_s1':'britannia_s1'];
- const mission=camp.missions.find(m=>m.id===id),original=mission.units;
- for(const [name,extra,opts={}] of variants){
-  mission.units=original.map(u=>{
-   let v=u;
-   if(opts.zero3&&u[5]==='zero'&&u[0]===K)v=[...u.slice(0,4),3,...u.slice(5)];
-   if(opts.kallen3&&u[5]==='kallen'&&u[0]===K)v=[...u.slice(0,4),3,...u.slice(5)];
-   if(opts.lessEnemy&&u[0]===(id==='bk1'?B:K)&&!u[5]&&u[1]===(id==='bk1'?'sutherland':'burai'))
-     v=[...u.slice(0,6),{...u[6],skipNormal:true}];
-   return v;
-  }).concat(extra);
+ const camp=E.campaign.CAMPAIGNS.britannia_s1;
+ const mission=camp.missions.find(m=>m.id===id),original=mission.units,oldEvents=mission.events;
+ for(const [name,extra,trim={}] of variants){
+  mission.units=original.concat(extra);
+  mission.events=oldEvents.map(e=>e.spawn&&trim[e.turn]?
+    {...e,spawn:e.spawn.map((u,i)=>i<trim[e.turn]
+      ?[...u.slice(0,6),{...(u[6]||{}),skipNormal:true}]:u)}:e);
   const results=seeds.map(seed=>play(id,seed));
   const wins=results.filter(r=>r.winner===mission.player).length;
-  const losses=results.filter(r=>r.winner!==mission.player).map(r=>r.turn);
-  console.log('STORY BALANCE MATRIX '+id+' '+name+': player AI '+wins+'/8 victories; losses on turns ['+losses.join(',')+']');
+  console.log('STORY BALANCE MATRIX '+id+' '+name+': Britannia AI '+wins+'/8 victories; '+results.map(r=>r.winner+':T'+r.turn).join(' '));
  }
- mission.units=original;
+ mission.units=original;mission.events=oldEvents;
 }
 const chofu=seeds.map(seed=>play('br_tohdoh',seed));
 const chofuWins=chofu.filter(r=>r.winner==='britannia').length;
 console.log('STORY BALANCE MATRIX br_tohdoh deployed '+chofuWins+'/8');
 assert.ok(chofuWins>=2);
-testVariants('bk1',[
- ['current',[]],
- ['+3 strong',bk3],
- ['+4 strong',bk4],
- ['+5 strong',bk5],
- ['+3 strong, Zero 3-stack',bk3,{zero3:true}],
-]);
+const shin=seeds.map(seed=>play('bk1',seed)),shinWins=shin.filter(r=>r.winner==='bk').length;
+console.log('STORY BALANCE MATRIX bk1 adjusted '+shinWins+'/8');
+assert.ok(shinWins>=3,'Shinjuku should be feasible for automated attackers');
 testVariants('br5',[
  ['current',[]],
  ['+3 strong defenders',br3],
- ['+4 strong defenders',br4],
- ['+5 strong defenders',br5],
+ ['+3, skip 2 turn-5 attackers',br3,{5:2}],
+ ['+3, skip 1 turn-3 and 2 turn-5 attackers',br3,{3:1,5:2}],
+ ['+3, skip all waves',br3,{3:2,5:2}],
+ ['+5, skip 1 turn-3 and 2 turn-5 attackers',br5,{3:1,5:2}],
+ ['+5, skip all waves',br5,{3:2,5:2}],
 ]);
 console.log('Finished Story Normal experimental force comparison');

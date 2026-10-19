@@ -25,6 +25,11 @@
         [K, 'sutherland', 4, 9, 1, 'inoue'],
         [K, 'sutherland', 5, 8, 2, null, { normalOnly: true }],
         [K, 'glasgow', 2, 4, 2, null, { normalOnly: true }],
+        // A reliable Normal opening force protects Zero on the way to the G-1.
+        [K, 'sutherland', 6, 6, 3, null, { normalOnly: true }],
+        [K, 'sutherland', 6, 8, 3, null, { normalOnly: true }],
+        [K, 'glasgow', 5, 3, 2, null, { normalOnly: true }],
+        [K, 'sutherland', 7, 7, 3, null, { normalOnly: true }],
         [B, 'sutherland', 10, 2, 2, null, { hold: false }],
         [B, 'sutherland', 11, 7, 1, null, { hold: false }],
         [B, 'glasgow', 9, 5, 1, null, { hold: false }],
