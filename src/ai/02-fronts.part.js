@@ -274,8 +274,8 @@
       if(i>=0)turns-=i===0?3.8:i===1?2.2:1;
       if(f.anchor.portAt && !g.stations.some(s=>s.owner===plan.invader&&
         s.name===name))turns-=.35;
-      if(g.scenario.supplyCorridors?.prairie.includes(name)&&
-        g.stations.some(s=>s.owner===plan.invader&&g.scenario.supplyCorridors?.prairie.includes(s.name)))
+      if(g.scenario.supplyCorridors?.prairie?.includes(name)&&
+        g.stations.some(s=>s.owner===plan.invader&&g.scenario.supplyCorridors?.prairie?.includes(s.name)))
         turns-=1.5; // Exploit a captured railway corridor.
     }else if(u.side===plan.defender){
       // Defender counterattacks concentrate on threatened arterial cities,
