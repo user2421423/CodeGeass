@@ -358,7 +358,7 @@ function landscape(p,c,r){
     sides:SIDES,bounds:BOUNDS,cityData:CITIES,armyGroups:ARMY_GROUPS,
     fleetData:FLEETS,ports:PORTS,create,onTurn,objective,winner,strategicScore,orderGroup};
   api.meta={
-    elite:true,saveVersion:1,
+    elite:true,eliteRosterOnly:true,saveVersion:1,
     map:{centreSampled:true,coastBuffer:1,overviewMarkers:true,homeZoom:2.4},
     ai:{doctrine:'europe',recovery:true,routeBias:'cf',
       operationalAxes:{invader:'cf',defender:'eu',axes:AXES,
