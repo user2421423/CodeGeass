@@ -380,7 +380,10 @@
       buildable: R1_BUILD,
       hold: { britannia: 3 },
       units: [
-        ...CHOFU_BK,
+        ...CHOFU_BK.map(u => u[5] === 'zero'
+          ? [u[0],u[1],u[2],u[3],u[4] ?? 1,u[5],
+            { ...(u[6] || {}), skipNormal:true }] : u),
+        [K, 'burai', 3, 10, 3, 'zero', { normalOnly:true }],
         [K, 'burai', 1, 10, 1, null, { normalOnly: true }],
         [K, 'burai', 5, 5, 2, null, { normalOnly: true }],
         ...CHOFU_BRIT,
