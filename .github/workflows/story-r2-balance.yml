@@ -1,0 +1,30 @@
+name: Story Mode R2 balance audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/missions/**'
+      - 'src/engine/**'
+      - 'src/ai/**'
+      - 'tools/story_r2_balance_probe.cjs'
+      - '.github/workflows/story-r2-balance.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r2-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - name: Verify mission layouts, objective triggers and reinforcements
+        run: node tools/story_normal_objectives_and_balance_smoke.cjs
+      - name: Run deterministic R2 Story Mode Normal self-play audit
+        run: node tools/story_r2_balance_probe.cjs
