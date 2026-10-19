@@ -40,7 +40,7 @@ assert.deepEqual(E.ELITE_FORCES.lancelot.lv3, { range: 1, taken: 0.85, pen: 0.10
 assert.deepEqual(E.ELITE_FORCES.guren_mkii.lv5,
   { vsArmor: 0.50, pen: 0.30, noCounter: true, stun: true });
 assert.deepEqual(E.ELITE_FORCES.gawain.lv5,
-  { float: true, range: 1, splash: 0.35, aura: { range: 2, value: 0.20 } });
+  { float: true, range: 1, splash: 0.35, aura: { range: 2, value: 0.20 }, taken: 0.65 });
 // Approved skill refinements must remain distinct from standard class stats.
 assert.equal(E.ELITE_FORCES.cornelia_gloucester.lv5.cityAttack, 0.50);
 assert.equal(E.ELITE_FORCES.akatsuki_zikisan.lv3.aura.range, 2);
@@ -53,7 +53,7 @@ assert.equal(E.ELITE_FORCES.japan_bk_amphibious.lv5.landingStrike, 0.30,
   'Gekka Lv.5 retains its improved water-to-land damage');
 assert.equal(E.ELITE_FORCES.japan_bk_amphibious.lv5.coastalRefresh, undefined);
 assert.deepEqual(E.ELITE_FORCES.lancelot_albion.lv5,
-  { float: true, move: 2, moveAfterAttack: true, refire: true, splash: 0.20, breakthrough: true });
+  { float: true, move: 2, moveAfterAttack: true, refire: true, splash: 0.20, breakthrough: true, taken: 0.90 });
 assert.deepEqual(E.ELITE_FORCES.guren_seiten.lv5,
   { float: true, move: 2, dmg: 0.30, splash: 0.35,
     noCounter: true, refire: true, breakthrough: true });
