@@ -243,8 +243,20 @@
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
-    const choose = () =>
-      targets(g, u)
+    // targets() from a hypothetical hex scans that hex's whole range disc, and most reachable hexes have nothing in it.
+    // Hostile hexes (units, cities) near anywhere `u` can reach are listed once, so each candidate hex only tests those.
+    const hostilePool = spots => {
+      if (g.wrap) return null;
+      const reach = Math.max(0, ...spots.map(p => dist(g, u, p))),
+        radius = reach + rangeOf(g, u).max + 3; // fire control, spotting and relay add at most 3 at another hex
+      const seen = new Set(), pool = [];
+      const add = p => { if (!seen.has(p) && dist(g, u, p) <= radius) { seen.add(p); pool.push(p); } };
+      for (const v of g.units) if (v.hp > 0 && foe(g, v.side, u.side)) add(tile(g, v.c, v.r));
+      for (const s of g.stations) if (foe(g, s.owner, u.side)) add(tile(g, s.c, s.r));
+      return pool;
+    };
+    const choose = pool =>
+      (pool ? targetsAmong(g, u, pool) : targets(g, u))
         .map(p => {
           const d = unitAt(g, p),
             s = stationAt(g, p),
@@ -387,31 +399,35 @@
           sc -= 24; // avoid parking in the only route through a narrow pass
         return sc;
       };
+      const pool = hostilePool(spots);
       let best = null,
         bestScore = -Infinity;
-      for (const p of spots) {
-        let sc = placeScore(p);
-        u.c = p.c;
-        u.r = p.r;
-        const oldDistance = u.movedDistance, oldMoved = u.moved;
-        u.movedDistance = (oldDistance || 0) + dist(g, old, p);
-        u.moved = true;
-        reindex(g, u, old);
-        let shot;
-        try { shot = choose(); }
-        finally {
-          u.c = old.c;
-          u.r = old.r;
-          u.movedDistance = oldDistance;
-          u.moved = oldMoved;
-          reindex(g, u, p);
+      memo.helperShots = new Map();
+      try {
+        for (const p of spots) {
+          let sc = placeScore(p);
+          u.c = p.c;
+          u.r = p.r;
+          const oldDistance = u.movedDistance, oldMoved = u.moved;
+          u.movedDistance = (oldDistance || 0) + dist(g, old, p);
+          u.moved = true;
+          reindex(g, u, old);
+          let shot;
+          try { shot = choose(pool); }
+          finally {
+            u.c = old.c;
+            u.r = old.r;
+            u.movedDistance = oldDistance;
+            u.moved = oldMoved;
+            reindex(g, u, p);
+          }
+          if (shot) sc += shot.score * 0.6;
+          if (sc > bestScore) {
+            bestScore = sc;
+            best = p;
+          }
         }
-        if (shot) sc += shot.score * 0.6;
-        if (sc > bestScore) {
-          bestScore = sc;
-          best = p;
-        }
-      }
+      } finally { memo.helperShots = null; }
       const current = choose(),
         stay = placeScore(tile(g, u.c, u.r)) + (current ? current.score * 0.6 : 0);
       if (best && bestScore > stay + 4) {

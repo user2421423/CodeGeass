@@ -289,6 +289,18 @@
       return d >= min && d <= max && hostileTarget(g, u, p);
     });
   }
+  // targets() restricted to `pool` (hexes to test), in the same order. For a unit standing on a hex with nothing
+  // in its range disc this skips scanning the disc; not for wrapped maps, whose disc order differs.
+  function targetsAmong(g, u, pool) {
+    if (atSea(g, u)) return [];
+    const { min, max } = rangeOf(g, u);
+    return pool
+      .filter(p => {
+        const d = dist(g, u, p);
+        return d >= min && d <= max && hostileTarget(g, u, p);
+      })
+      .sort((a, b) => a.c - (a.r >> 1) - (b.c - (b.r >> 1)) || a.r - b.r);
+  }
   function claim(g, p, owner) {
     if (g.mode !== 'campaign') {
       // Capturing a city transfers its entire fixed province, not the nearby

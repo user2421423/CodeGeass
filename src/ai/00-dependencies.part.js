@@ -105,6 +105,7 @@
     startProject,
     stationAt,
     targets,
+    targetsAmong,
     tile,
     typeFor,
     unitAt,

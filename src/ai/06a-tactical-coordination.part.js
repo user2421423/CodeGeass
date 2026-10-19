@@ -24,16 +24,25 @@
     memo.focusCache ||= new Map();
     const k = enemy.id + ':' + enemy.hp + ':' + u.id + ':' + u.c + ':' + u.r;
     if (memo.focusCache.has(k)) return memo.focusCache.get(k);
-    let potential = initial.unit, helpers = 0;
-    for (const v of g.units) {
-      if (helpers >= 7) break;
-      if (v.id === u.id || v.side !== u.side || v.hp <= 0 || v.attacked || v.morale <= -3 ||
-          dist(g, v, enemy) > Math.min(6, rangeOf(g, v).max)) continue;
-      const shot = preview(g, v.id, enemy.c, enemy.r);
-      if (!shot || shot.unit <= 0) continue;
-      potential += shot.unit;
-      helpers++;
+    // The other units' shots at `enemy`, which do not depend on the hex u is being tried on: a maneuver scan
+    // (memo.helperShots) computes them once per target instead of once per candidate hex.
+    const hk = enemy.id + ':' + enemy.hp;
+    let shots = memo.helperShots?.get(hk);
+    if (!shots) {
+      shots = [];
+      for (const v of g.units) {
+        if (shots.length >= 7) break;
+        if (v.id === u.id || v.side !== u.side || v.hp <= 0 || v.attacked || v.morale <= -3 ||
+            dist(g, v, enemy) > Math.min(6, rangeOf(g, v).max)) continue;
+        const shot = preview(g, v.id, enemy.c, enemy.r);
+        if (!shot || shot.unit <= 0) continue;
+        shots.push(shot.unit);
+      }
+      memo.helperShots?.set(hk, shots);
     }
+    const helpers = shots.length;
+    let potential = initial.unit;
+    for (const n of shots) potential += n;
     const marked = memo.focusTargets?.get(enemy.id);
     const feasible = helpers && potential >= enemy.hp * 0.92;
     const value = (feasible ? 100 + Math.min(45, commanderValue(g, enemy) * 0.3) : 0) +
