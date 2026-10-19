@@ -48,7 +48,7 @@ No proposed changes to shared engine, AI, commanders, assets, core UI, other sce
 
 ## Validation and honest testing status
 
-**Completed in isolated JavaScript structural mock (not the real game engine):** syntax compilation; both `create(side,difficulty,seed)` combinations for 2 sides × 4 difficulties, seed 11; correct owner allocations, independent berths, land/sea deployment, non-immediate victory, and winner detection after full capture by either side. These passed before committing, with 56 city stations, 184 Federation and 140 E.U. total formations (including eight gunboats), four berths and 19 Army Groups.
+**Completed in isolated JavaScript structural mock (not the real game engine):** JavaScript syntax compilation and **24 setup cases** (both factions × all four difficulties × seeds 11, 19, 41). Checked 56 unique city stations, 184 Chinese and 140 E.U. total starting formations (including eight gunboats), four independent water berths, correct land/water deployment, non-immediate victory, winners after genuine full capture, and JSON serialization of setup state. All 24 passed after final balancing. The two reservoir sea components each contain two ports and four friendly gunboats. The adjusted Rybinsk berth city is placed approximately 4 km from its WGS84 position.
 
 **Not verified by the structural mock:** true combat/AI pathfinding, AI production and spending, naval moves across a reservoir, base-game save serialization/reload, HQ/reward credit, rendered mobile performance and regressions on the rest of the game. The setup mock can check data constraints but cannot establish gameplay winnability.
 
