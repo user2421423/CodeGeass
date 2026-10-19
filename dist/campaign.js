@@ -205,7 +205,7 @@
   // and the neutral Eunuchs' Chinese equipment are deliberate exceptions.
   function storyFactionType(g, side, type) {
     const t = E.TYPES[type];
-    if (!t || t.elite || side === 'neutral') return type;
+    if (!t || t.elite || t.naval || side === 'neutral') return type;
     const chinese2017 = Object.values(E.lineupOf(g, 'cf'));
     const native = Object.values(E.lineupOf(g, side));
     if (side === 'cf' && !native.includes(type)) return E.typeFor(side, t.cls, g);
@@ -700,6 +700,7 @@
     eb_europe: 'lancelot',
     eu_europe: 'akito_liberte',
     cf_r2: 'shen_hu',
+    cf_ufn: 'shen_hu',
   };
   const MISSION_ELITE = {
     bk1: 'guren_mkii',

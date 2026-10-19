@@ -42,6 +42,7 @@
     "src/missions/06-akito-battlefields.part.js",
     "src/missions/07-europe-missions.part.js",
     "src/missions/07a-chinese-federation.part.js",
+    "src/missions/07b-xingke-ufn.part.js",
     "src/missions/08-campaign-registry.part.js"
   ],
   "dist/ui/renderer.js": [

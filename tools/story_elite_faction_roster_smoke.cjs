@@ -33,7 +33,7 @@ for (const campaign of Object.values(CP.CAMPAIGNS)) {
         if (u.side === 'cf') {
           if (u.elite) assert.ok(E.eliteEligible(g, 'cf', u.elite),
             mission.id + ': CF received foreign Elite Force ' + u.elite);
-          else assert.ok(chinese.has(u.type),
+          else assert.ok(chinese.has(u.type) || Object.values(E.NAVAL.cf).includes(u.type),
             mission.id + ': CF received foreign ordinary equipment ' + u.type);
         }
         if (u.side === 'britannia' || u.side === 'eu' || u.side === 'eb' || u.side === 'jlf')

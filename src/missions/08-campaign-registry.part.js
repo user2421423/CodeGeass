@@ -1,6 +1,6 @@
   // Two story seasons: Lelouch of the Rebellion (2010–2017) and R2 (2018), each played from
   // the Black Knights' side and from Britannia's. Mission ids are kept so saved stars carry over.
-  const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION].map(m => [m.id, m]));
+  const BY_ID = Object.fromEntries([...BLACK_KNIGHTS, ...BRITANNIA, ...EXTRA, ...EUROPE, ...CHINESE_FEDERATION, ...XINGKE_UFN].map(m => [m.id, m]));
   const pick = ids => ids.map(id => BY_ID[id]);
   const CAMPAIGNS = {
     bk_s1: {
@@ -53,6 +53,12 @@
       desc: 'R2: Li Xingke rises against the High Eunuchs, pursues Zero and Kallen across the Federation, then joins the Black Knights to free Empress Tianzi. Ten tactical chapters adapt the Chinese Revolution.',
       missions: pick(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'cf6', 'cf7', 'cf8', 'cf9', 'cf10']),
     },
+    cf_ufn: {
+      name: 'Xingke — War for the UFN', short: 'Xingke / UFN',
+      season: 4, side: 'cf', portrait: 'xingke', years: '2018 a.t.b.',
+      desc: 'A separate twelve-chapter follow-up to the Chinese Revolution: the southern landing at Kagoshima, the Fuji catastrophe, and the attack and boarding of the Avalon. Tactical chapters expand the anime engagements; all mastery rewards remain Federation fragments.',
+      missions: pick(['ufn1', 'ufn2', 'ufn3', 'ufn4', 'ufn5', 'ufn6', 'ufn7', 'ufn8', 'ufn9', 'ufn10', 'ufn11', 'ufn12']),
+    },
     eb_europe: {
       name: 'Euro Britannia',
       short: 'Euro Britannia',
@@ -79,6 +85,7 @@
     1: { name: 'Lelouch of the Rebellion', short: 'Season 1', years: '2010–2017 a.t.b.' },
     2: { name: 'Lelouch of the Rebellion R2', short: 'R2', years: '2018 a.t.b.' },
     3: { name: 'The Euro Britannia War', short: 'Europe', years: '2017–2018 a.t.b. · Akito the Exiled' },
+    4: { name: 'War for the UFN', short: 'UFN', years: '2018 a.t.b. · Xingke’s later war' },
   };
   root.KnightmareMissions = { CAMPAIGNS, SEASONS };
   if (typeof module !== 'undefined') module.exports = root.KnightmareMissions;
