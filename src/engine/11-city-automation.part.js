@@ -196,6 +196,9 @@
     if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
+    if (kind === 'ohgiHeal') return g.units.filter(v => v.hp > 0 &&
+      v.side === u.side && v.id !== u.id && !atSea(g, v) &&
+      dist(g, u, v) <= 2 && v.hp < maxHP(v));
     if (kind === 'protection') return g.units.filter(v => v.hp > 0 &&
       v.side === u.side && v.id !== u.id && !atSea(g, v) && dist(g, u, v) <= 2);
     // Imperial Command affects every on-map friendly formation in range,
@@ -215,6 +218,23 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'ohgiHeal') {
+      const cost = Math.max(1, Math.round(maxHP(u) * 0.20));
+      if (u.hp <= cost) return { ok: false, reason: 'Ohgi must survive the HP sacrifice' };
+      const v = targetId == null ? [...options].sort((a, b) =>
+        Math.min(maxHP(b) * 0.30, maxHP(b) - b.hp) -
+        Math.min(maxHP(a) * 0.30, maxHP(a) - a.hp) ||
+        Number(!!b.cmd) - Number(!!a.cmd) || a.id - b.id)[0]
+        : options.find(w => w.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose a wounded ally within 2 hexes' };
+      const healed = Math.min(maxHP(v) - v.hp, Math.max(1, Math.round(maxHP(v) * 0.30)));
+      v.hp += healed;
+      u.hp -= cost;
+      u.feintCD = action.cooldown ?? 3;
+      u.feintUsedTurn = g.turn;
+      log(g, `Ohgi sacrifices ${cost} HP to heal ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} for ${healed} HP.`, u.side);
+      return { ok: true, target: v.id, affected: 1, healed, cost };
+    }
     if (action.kind === 'memoryRewrite') {
       const v = targetId == null ? [...options].sort((a, b) =>
         Number(!!b.cmd) - Number(!!a.cmd) ||
