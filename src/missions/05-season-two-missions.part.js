@@ -79,7 +79,7 @@
         [B, 'sutherland', 9, 8, 2],
         [B, 'liverpool', 13, 9, 1],
         [B, 'gloucester', 14, 8, 1, null, { normalOnly: true }],
-        [B, 'sutherland', 13, 3, 2, null, { normalOnly: true }],
+        [B, 'sutherland', 13, 2, 2, null, { normalOnly: true }],
         [K, 'burai', 2, 5, 1, 'zero', { hold: false }],
         [K, 'burai', 3, 6, 2],
         [K, 'burai', 5, 3, 2],
