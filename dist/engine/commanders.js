@@ -15,9 +15,9 @@
       role: 'Armor',
       hull: 'Lancelot Conquista',
       skill: "Live On",
-      desc: "Morale never falls below Steady. Once per round, takes 50% less damage from a direct hit while below 40% HP.",
+      desc: "Always gains +20 percentage points critical chance and takes 5% less damage. Below 50% HP: deals +30% attack damage, gains +15 percentage points critical chance, and takes 25% less combat damage.",
       stats: {"crit": 0.2, "taken": 0.95},
-      fx: {"floor": 0, "liveOn": 0.5},
+      fx: {"liveOnAttack": 0.30, "liveOnCrit": 0.15, "belowHalf": 0.75},
       title: 'Knight of Seven',
     },
     cornelia: {
@@ -29,8 +29,8 @@
       role: 'Armor',
       hull: 'Gloucester (Cornelia custom)',
       skill: "Witch of Britannia",
-      desc: "Armor allies within 2 hexes deal +10% attack damage. Her first kill each turn inspires allies within 2 hexes: +20% attack damage for the rest of that turn (does not stack).",
-      fx: {"assaultLeader":0.2,"assaultRange":2,"armorLeader":0.1},
+      desc: "First attack each turn increases her morale by 1 level (up to High) before damage. Each attack that destroys an enemy unit or city defenses heals her for 5% maximum HP (once per attack). While at High morale, she takes 10% less incoming combat damage.",
+      fx: {"firstAttackMorale": 1, "destroyHeal": 0.05, "highMoraleTaken": 0.90},
       title: 'Second Princess',
     },
     bismarck: {
