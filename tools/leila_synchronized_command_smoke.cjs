@@ -44,10 +44,10 @@ function approx(actual,expected,tolerance=.07){
 // units in the third ring are not protected.
 {
   const b=setup();
-  assert.equal(E.internal.moraleFloor(b.g,b.leila),0);
-  assert.equal(E.internal.moraleFloor(b.g,b.near),0);
-  assert.equal(E.internal.moraleFloor(b.g,b.edge),0);
-  assert.equal(E.internal.moraleFloor(b.g,b.outside),-3);
+  assert.equal(E.moraleFloor(b.g,b.leila),0);
+  assert.equal(E.moraleFloor(b.g,b.near),0);
+  assert.equal(E.moraleFloor(b.g,b.edge),0);
+  assert.equal(E.moraleFloor(b.g,b.outside),-3);
   b.near.morale=-2;b.edge.morale=-3;b.leila.morale=-1;
   E.beginTurn(b.g,'eu',false);
   for(const v of [b.leila,b.near,b.edge])
