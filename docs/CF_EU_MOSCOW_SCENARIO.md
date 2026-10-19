@@ -24,8 +24,8 @@ Victory is **only** `api.winner` when all 56 stations belong to the same side. T
 ## Forces and economy
 
 Starting deployed **formation counts** before Elite conversion:
-- Federation: **151** land formations, four inland gunboats; 17 cities.
-- E.U.: **140** land formations, four inland gunboats; 39 cities.
+- Federation: **147** land formations and **four** inland gunboats (**151 total**); 17 cities.
+- E.U.: **136** land formations and **four** inland gunboats (**140 total**); 39 cities.
 - Army Groups: **19** named formations in total (including four reservoir flotillas).
 
 Named Federation officers include Xingke, Gao Hai, Honggu, Cao, Zhao Hao, Mei Ling, Lei Feng, Huang Qian, Li Feng and Cheng Zhong. E.U. officers include Akito, Yukiya, Leila, Ayano, Smilas, Anna, Oscar, Olivia, Ryo, Fernando, Klaus, Margaret, Pierre, Marirrosa and Eduardo. Unit types are generated using the faction's existing `typeFor`; dedicated naval types are the existing `shui_gun_ru_ii` and `panzer_frosch_ii`.
@@ -48,7 +48,7 @@ No proposed changes to shared engine, AI, commanders, assets, core UI, other sce
 
 ## Validation and honest testing status
 
-**Completed in isolated JavaScript structural mock (not the real game engine):** syntax compilation; both `create(side,difficulty,seed)` combinations for 2 sides × 4 difficulties, seed 11; correct owner allocations, independent berths, land/sea deployment, non-immediate victory, and winner detection after full capture by either side. These passed before committing, with 56 city stations, 151 Federation and 140 E.U. land formations plus eight gunboats, four berths and 19 Army Groups.
+**Completed in isolated JavaScript structural mock (not the real game engine):** syntax compilation; both `create(side,difficulty,seed)` combinations for 2 sides × 4 difficulties, seed 11; correct owner allocations, independent berths, land/sea deployment, non-immediate victory, and winner detection after full capture by either side. These passed before committing, with 56 city stations, 151 Federation and 140 E.U. total formations (including eight gunboats), four berths and 19 Army Groups.
 
 **Not verified by the structural mock:** true combat/AI pathfinding, AI production and spending, naval moves across a reservoir, base-game save serialization/reload, HQ/reward credit, rendered mobile performance and regressions on the rest of the game. The setup mock can check data constraints but cannot establish gameplay winnability.
 
