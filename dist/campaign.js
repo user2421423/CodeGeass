@@ -406,7 +406,9 @@
         eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s =>
           [s, eliteRoster(s, { teams: m.teams, order: sides, storyUnits: m.units })])),
         ...(difficultyId === 'elite' ? { eliteSelections: {} } : {}),
-        turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
+        turnLimit: m.lose?.turns
+          ? (difficultyId === 'normal' && Number.isFinite(m.normalTurns)
+              ? m.normalTurns : m.lose.turns) + (d.extraTurns || 0) : 0,
       },
     };
     if (d.economy && g.economy[g.player]) {
@@ -431,7 +433,9 @@
     for (const [name, c, r, owner, tier = 1, opts = {}] of m.cities) {
       const t = E.tile(g, c, r);
       if (!t || E.isSea(t) || E.TERRAIN[t.terrain]?.blocked) throw new Error(`${id}: ${name} is not on open land`);
-      let shield = opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
+      // Normal-only Story objective defenses; preserve Hard/Challenge/Elite values.
+      let shield = difficultyId === 'normal' && Number.isFinite(opts.normalShield)
+        ? opts.normalShield : opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
       if (E.foe(g, owner, g.player) && d.enemyShield) shield = Math.max(1, Math.round(shield * d.enemyShield));
       g.stations.push({
         id: g.stations.length,
