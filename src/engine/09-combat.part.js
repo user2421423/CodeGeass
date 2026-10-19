@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'xianglin' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -58,6 +58,11 @@
     attack *= 1 + (u.expInformationWarfare?0:auraBonus(g,u));
     if(u.expInformationWarfare)attack*=.8;
     attack *= newcomerAttack(g,u,target,counter);
+    // Xianglin's coordination only strengthens direct initiating attacks.
+    // Previews and resolved volleys share this calculation; splash damage
+    // and defensive counterattacks never receive the +30% bonus.
+    if (!counter && direct && target && xianglinExploitWeakness(g, u, target))
+      attack *= 1.30;
     // Checkmate boosts direct attacks and counterattacks against its marked
     // formation, without granting Schneizel a passive aura.
     if (target?.expCheckmate?.side === u.side) attack *= 1.25;
@@ -277,10 +282,13 @@
       f = fx(a),
       d = unitAt(g, p),
       s = stationAt(g, p);
-    const base = power(g, a, d, s),
-      // The unit-only first strike cannot multiply city-defense damage.
-      cityBase = d && f.firstStrike && !(a.expKallenFirstTargets || []).includes(d.id)
-        ? base / (1 + f.firstStrike) : base,
+    const xianglinOpening = !!d && xianglinExploitWeakness(g, a, d),
+      base = power(g, a, d, s),
+      // Xianglin's target-specific 30% damage and Kallen's first strike are
+      // unit-only bonuses; neither may amplify fortified city shields.
+      cityBase = base /
+        (d && f.firstStrike && !(a.expKallenFirstTargets || []).includes(d.id) ? 1 + f.firstStrike : 1) /
+        (xianglinOpening ? 1.30 : 1),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
     const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
@@ -304,11 +312,12 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
       !f.noCounterAttack &&
       !followUp &&
+      !xianglinOpening &&
       !(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d?.cmd) &&
       !(f.dashStrike&&a.movedDistance>=3&&a.expDashTurn!==g.turn) &&
       !targetMarked(g, a, d).noCounter &&
@@ -617,7 +626,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
