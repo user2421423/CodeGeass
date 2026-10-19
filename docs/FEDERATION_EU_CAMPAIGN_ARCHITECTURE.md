@@ -2,7 +2,7 @@
 
 **Branch:** `feature/federation-vs-eu-campaign-architecture` · **Campaign key:** `federation-eu` · **Engine side:** `cf` · **Opponent:** `eu`.
 
-**Architecture status:** World Campaign selector, tiers, regional map markers, political map overlays, and route arrows are registered. The three existing three-way global scenarios are immediately playable. The **ten new scenarios are placeholders with `scenarioId: null`** until independent builders deliver real implementations and the integrator tests and registers them. A placeholder is not a playable battle. Do not merge this architecture into `main` as a complete campaign before integration and approval.
+**Integration status (2026-10-19):** All ten independent scenario PRs have been merged into this architecture branch and registered in the World Campaign, scenario manifest, and catalog generator. The original three global battles remain unchanged. **Integration is not a balance/gameplay signoff**: actual four-difficulty and multi-seed full-engine QA, save/reward tests, map audits and cross-campaign regressions require review before merging into `main`.
 
 ## Approved 13-battle progression
 
@@ -11,16 +11,16 @@
 | 1 | 1 Global Conflicts | War for Australia | `federation-eu-australia` | `war-for-australia` | Existing |
 | 2 | 1 Global Conflicts | Conquest of Area 18 | `federation-eu-area-18` | `area-18` | Existing |
 | 3 | 1 Global Conflicts | Division of Japan | `federation-eu-division-japan` | `division-japan` | Existing |
-| 4 | 2 | Invasion of Siberia | `federation-eu-siberia` | `cf-eu-siberia` | Planned; null in registry |
-| 5 | 2 | Invasion of the Caucasus | `federation-eu-caucasus` | `cf-eu-caucasus` | Planned; null in registry |
-| 6 | 3 | Invasion of Turkey | `federation-eu-turkey` | `cf-eu-turkey` | Planned; null in registry |
-| 7 | 3 | Battle for the Volga | `federation-eu-volga` | `cf-eu-volga` | Planned; null in registry |
-| 8 | 3 | Crossing the Suez Canal | `federation-eu-suez` | `cf-eu-suez` | Planned; null in registry |
-| 9 | 4 | Battle for Moscow | `federation-eu-moscow` | `cf-eu-moscow` | Planned; null in registry |
-| 10 | 4 | Balkan Offensive | `federation-eu-balkans` | `cf-eu-balkans` | Planned; null in registry |
-| 11 | 4 | North African Offensive | `federation-eu-north-africa` | `cf-eu-north-africa` | Planned; null in registry |
-| 12 | 5 | Conquest of Central Europe | `federation-eu-central-europe` | `cf-eu-central-europe` | Planned; null in registry |
-| 13 | 6 | Invasion of France | `federation-eu-france` | `cf-eu-france` | Planned; null in registry |
+| 4 | 2 | Invasion of Siberia | `federation-eu-siberia` | `cf-eu-siberia` | Integrated; QA pending |
+| 5 | 2 | Invasion of the Caucasus | `federation-eu-caucasus` | `cf-eu-caucasus` | Integrated; QA pending |
+| 6 | 3 | Invasion of Turkey | `federation-eu-turkey` | `cf-eu-turkey` | Integrated; QA pending |
+| 7 | 3 | Battle for the Volga | `federation-eu-volga` | `cf-eu-volga` | Integrated; QA pending |
+| 8 | 3 | Crossing the Suez Canal | `federation-eu-suez` | `cf-eu-suez` | Integrated; QA pending |
+| 9 | 4 | Battle for Moscow | `federation-eu-moscow` | `cf-eu-moscow` | Integrated; QA pending |
+| 10 | 4 | Balkan Offensive | `federation-eu-balkans` | `cf-eu-balkans` | Integrated; QA pending |
+| 11 | 4 | North African Offensive | `federation-eu-north-africa` | `cf-eu-north-africa` | Integrated; QA pending |
+| 12 | 5 | Conquest of Central Europe | `federation-eu-central-europe` | `cf-eu-central-europe` | Integrated; QA pending |
+| 13 | 6 | Invasion of France | `federation-eu-france` | `cf-eu-france` | Integrated; QA pending |
 
 All battles in a tier must be completed to open the next; missions within a tier can be completed in any order. Tier mission counts: `[3,2,3,3,1,1]`.
 
@@ -34,9 +34,9 @@ The tier design is a gameplay unlock system, not a claim that each scenario star
 
 ## Implementation ownership and safety
 
-1. Make each scenario in its own `scenario/cf-eu-<key>` branch based on **this architecture branch**; create a PR targeting the architecture branch and leave it unmerged. Read `docs/FEDERATION_EU_SCENARIO_HANDOFFS.json`, `docs/LANES.json`, `docs/ADDING_A_SCENARIO.md`.
+1. All ten scenario branches have now been merged into **this architecture branch**. Future fixes should be integration-owned or narrow follow-up PRs targeting the architecture branch; keep `main` unchanged. Read `docs/FEDERATION_EU_SCENARIO_HANDOFFS.json`, `docs/LANES.json`, `docs/ADDING_A_SCENARIO.md`.
 2. Scenario owner edits **only** `dist/scenarios-cf-eu-<key>.js`, its scenario-local coast/landmask/underlay helpers, and `docs/CF_EU_<KEY>_SCENARIO.md`. Do not touch `main`, the campaign registries, engine rules, other scenarios, generated bundles, shared AI, or commander/elite data.
-3. Scenario builders **report** required `SCENARIO_MANIFEST`, `SCENARIO_FILES`, catalog and load-order entries, plus any shared-code request. A **single integrator** applies those shared changes and replaces the corresponding null `scenarioId` with a real `cf-eu-<key>` only after verifying a registered scenario supporting `cf` with `create(side,difficulty,seed)` and a real victory contract.
+3. Scenario builders **reported** required `SCENARIO_MANIFEST`, `SCENARIO_FILES`, catalog and load-order entries, plus any shared-code request. A **single integrator** has registered the ten modules and assigned each distinct `cf-eu-<key>` runtime ID. The actual registered-model and battle-victory contracts must still pass full-engine QA before release.
 4. Existing shared global wars stay untouched; new regional missions are two-sided **Federation vs E.U. only**. Existing Britannia campaigns, E.U.–Federation campaign, standalone regional scenarios, old save slots and previous victory credit remain independent. Never reuse an existing `britannia-*` scenario ID as the new Federation runtime.
 5. The world map currently uses **provisional border overlays** for regions absent from its small atlas (Caucasus, Egypt, Balkans, North Africa, Central Europe, France). **Integrators must replace these with verified boundaries** (or true per-country polygons), ensure no coastline/sea or excluded German territory is colored, and audit markers/route arrows before marking missions implemented. Tactical maps are independent from strategic political overlays.
 
@@ -52,3 +52,9 @@ The tier design is a gameplay unlock system, not a claim that each scenario star
 ## Parent smoke test
 
 The repository's `tools/federation_eu_campaign_smoke.cjs` verifies structural architecture and old-save safety. It **does not validate tactical battles**, which remain unimplemented until separate PR integration. Run with `node tools/federation_eu_campaign_smoke.cjs`.
+
+## Integration note — 2026-10-19
+
+Merged regional PRs: #146 Siberia, #142 Caucasus, #145 Turkey, #150 Volga, #143 Suez, #144 Moscow, #149 Balkans, #147 North Africa, #151 Central Europe and #148 France. All ten modules load via `dist/scenario-manifest.js`; generated catalog dependencies are declared in `tools/generate-scenario-catalog.cjs`.
+
+The strategic world overlays for Central Europe use the original five-country geographic boundaries, excluding Germany; the France overlay uses the French mainland/Corsica outlines. An initial integrated real-engine run exposed a null-safe supply-corridor bug in `src/ai/02-fronts.part.js`; the defensive optional access has been committed. `.github/workflows/federation-eu-integration.yml` carries multi-seed/two-side/four-difficulty and old-campaign deterministic tests. Treat any still-running or missing CI result as **unverified**; never infer balance success from structural tests.
