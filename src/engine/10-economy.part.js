@@ -318,12 +318,19 @@
       max: r.max,
     };
   }
-  // u: the unit being reinforced, for Inoue's Resistance Logistics discount (30% off credits and industry).
+  // Rakshata supports her own unit and adjacent allies. A single nearby
+  // engineer grants the full benefit; overlapping copies never stack.
+  function rakshataNear(g, u) {
+    return !!g && g.units.some(v => v.hp > 0 && v.side === u.side &&
+      fx(v).rakshataEngineering && dist(g, v, u) <= 1);
+  }
+  // u: the unit being reinforced, with Inoue and Rakshata discounts.
   function reinforceCost(type, g = null, side = null, u = null) {
     const p = price(type, 1, g, side),
-      k = u && g && logisticsNear(g, u) ? 0.7 : 1;
-    return { credits: Math.round(p.credits * k), industry: Math.round(p.industry * k),
-      sakuradite: p.sakuradite, science: p.science };
+      k = u && g && logisticsNear(g, u) ? 0.7 : 1,
+      engineering = u && g && rakshataNear(g, u) ? 0.5 : 1;
+    return { credits: Math.round(p.credits * k * engineering), industry: Math.round(p.industry * k * engineering),
+      sakuradite: Math.round(p.sakuradite * engineering), science: Math.round(p.science * engineering) };
   }
   // Manual repairs restore 20% of maximum HP for a fifth of the unit's build price.
   function repairCost(u, g = null) {
@@ -336,7 +343,8 @@
     const friendlyDock = g && isShip(u) && atFriendlyPort(g, u);
     const dockyard = friendlyDock ? 1 - techValue(g, u.side, 'naval.damage') : 1;
     const normalCost = Math.max(10, Math.round(baseRepairCost(u) * half * staff * camelot *
-      (g && logisticsNear(g, u) ? 0.7 : 1) * energyNetwork * dockyard));
+      (g && logisticsNear(g, u) ? 0.7 : 1) * energyNetwork * dockyard *
+      (g && rakshataNear(g, u) ? 0.5 : 1)));
     // A friendly city with zero defenses doubles land-unit repair costs.
     // If multiple friendly cities are in range, an intact one can supply the repair.
     if (g && !isShip(u)) {

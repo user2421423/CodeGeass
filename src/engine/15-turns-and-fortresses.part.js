@@ -210,6 +210,11 @@
       // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
       if (mine.some(m => m.hp > 0 && fx(m).royalCompassion && dist(g, m, u) <= 2))
         u.morale = Math.min(1, u.morale + 1);
+      // Rakshata: field repairs include her own formation and adjacent friendly
+      // land units, never ships. Multiple engineers do not stack.
+      if (TYPES[u.type].naval !== 'ship' &&
+          mine.some(m => m.hp > 0 && fx(m).rakshataEngineering && dist(g, m, u) <= 1))
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.10));
       // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
       if (u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
@@ -223,7 +228,7 @@
       if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
-      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
+      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
       // Ohgi's Organizer: the morale step comes even when surrounded.

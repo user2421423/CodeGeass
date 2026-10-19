@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'xianglin' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
