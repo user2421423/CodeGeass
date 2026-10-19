@@ -79,6 +79,17 @@
       dist(g, v, attacker) <= 2 &&
       (!attacker.expInformationWarfare || v.id === attacker.id));
   }
+  // Selfless Leadership is active only while Ohgi is alive and STRICTLY
+  // below half HP. Every qualifying ally, including Ohgi, receives one
+  // non-stacking offensive/defensive bonus while within two hexes.
+  function ohgiSelflessLeadership(g, recipient) {
+    if (!recipient || recipient.hp <= 0) return false;
+    return g.units.some(v => v.hp > 0 && v.side === recipient.side &&
+      v.cmd === 'ohgi' && !atSea(g, v) && !v.auraDisrupted &&
+      fx(v).selflessLeadership && v.hp < maxHP(v) * 0.5 &&
+      dist(g, v, recipient) <= 2 &&
+      (!recipient.expInformationWarfare || v.id === recipient.id));
+  }
   function commanderAttack(g, u, target, counter) {
     const f = fx(u), friends = friendlyNeighbors(g, u);
     let mult = 1;
