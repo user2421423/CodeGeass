@@ -565,7 +565,11 @@
       economy: { britannia: 250 },
       buildable: S1_BRIT,
       goals: { bk: [[12, 5, -6]] },
-      units: [...CHOFU_BRIT, [B, 'sutherland', 11, 4, 1, null, { normalOnly: true }], ...CHOFU_BK, [K, 'burai', 1, 10, 1, null, { skipNormal: true }]],
+      units: [...CHOFU_BRIT, [B, 'sutherland', 11, 4, 1, null, { normalOnly: true }],
+        // Keep a viable defensive line around the prison on Normal, even before Lancelot arrives.
+        [B, 'gloucester', 9, 7, 2, null, { normalOnly: true, hold: 2 }],
+        [B, 'sutherland', 11, 5, 2, null, { normalOnly: true, hold: 1 }],
+        [B, 'sutherland', 13, 4, 2, null, { normalOnly: true, hold: 2 }], ...CHOFU_BK, [K, 'burai', 1, 10, 1, null, { skipNormal: true }]],
       objective: 'Hold the Chofu Detention Center until the end of turn 9.',
       win: { hold: 9 },
       lose: { cities: ['Chofu Detention Center'] },

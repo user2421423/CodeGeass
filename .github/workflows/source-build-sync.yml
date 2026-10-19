@@ -37,6 +37,8 @@ jobs:
         run: node tools/story_canterbury_movement_smoke.cjs
       - name: Verify Story Normal objectives, deployment and balance support
         run: node tools/story_normal_objectives_and_balance_smoke.cjs
+      - name: Run seeded Story Normal detention-center gameplay viability probe
+        run: node tools/story_normal_defense_ai_probe.cjs
       - name: Verify Story Elite deployment and faction-specific unit rosters
         run: node tools/story_elite_faction_roster_smoke.cjs
       - name: Verify starting Industry in all Story Mode missions and difficulties
