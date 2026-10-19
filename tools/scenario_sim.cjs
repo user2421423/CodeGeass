@@ -12,6 +12,10 @@ const path=require('node:path');
 const E=require('../dist/engine.js');
 require('../dist/engine/ai.js');
 const DIST=path.join(__dirname,'../dist');
+// The Balkan scenario uses a separate packed coastline module; preload it for
+// Node full-engine simulations before the alphabetical scenarios-*.js sweep.
+const balkansCoast=path.join(DIST,'cf-eu-balkans-coast.js');
+if(fs.existsSync(balkansCoast))require(balkansCoast);
 for(const f of fs.readdirSync(DIST).filter(f=>/^(scenarios.*|.*-landmask|.*-geography)\.js$/.test(f)).sort())
   require(path.join(DIST,f));
 const DIFFICULTIES=['normal','hard','challenge','elite'];
