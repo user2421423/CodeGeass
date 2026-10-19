@@ -597,11 +597,7 @@
     { id: 'three_quarters', ratio: 0.75, label: '75% stars', tokens: 200, fragments: 0 },
     { id: 'master', ratio: 1, label: '100% stars', tokens: 300, fragments: 0 },
   ];
-  // A mission pays fragments toward a story-relevant Elite Force when possible. Euro Britannia does not have a
-  // persistent Elite roster of its own, so its mastery rewards feed Britannia's Lancelot progression.
-  // Guaranteed Level 1 HQ Elite rewards for the two introductory Story Mode arcs.
-  // The rewards are granted on victory regardless of the star score or difficulty.
-  const STORY_ELITE_UNLOCKS = { br_mef: 'cornelia_gloucester', bk3: 'guren_mkii' };
+  // Elite Force progression uses earnable fragments; story missions never grant HQ levels directly.
   const CAMPAIGN_ELITE = {
     bk_s1: 'guren_mkii',
     britannia_s1: 'lancelot',
@@ -774,7 +770,6 @@
     bestDifficulty,
     starElite,
     campaignElite,
-    STORY_ELITE_UNLOCKS,
     campaignStars,
     milestoneStatus,
     next,

@@ -49,6 +49,8 @@ jobs:
         run: node tools/commander_progression_smoke.cjs
       - name: Verify victory tokens and Elite fragment progression
         run: node tools/reward_economy_smoke.cjs
+      - name: Verify HQ Elite fragment purchases have no Story Mode prerequisites
+        run: node tools/story_elite_unlock_smoke.cjs
       - name: Verify interactive tutorial mechanics and isolation
         run: node tools/interactive_tutorial_smoke.cjs
       - name: Verify all eleven tutorial academy drills

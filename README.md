@@ -175,7 +175,7 @@ a clean playtest is not itself proof that a scenario is balanced.
   commanders and resources according to the mode. Elite scenarios feature
   one-frame Elite Forces and enhanced opposing officers; Campaign reward
   rules remain separate.
-- **Campaign mastery rewards:** 1★ still clears a mission and unlocks the next. Reaching 2★ and 3★ for the first time across any difficulty awards story-relevant Elite Force fragments, while each difficulty keeps its own token rewards. Every campaign also pays one-time rewards at 50%, 75% and 100% of its total stars.
+- **Campaign mastery rewards:** 1★ still clears a mission and unlocks the next. A first 3★ victory on each mission/difficulty awards 10 selectable Elite Force fragments of the applicable rarity (2★ awards none); stars also grant difficulty-specific command tokens. Every campaign pays one-time token milestones at 50%, 75% and 100% of its total stars. Story Mode never auto-unlocks a permanent HQ Elite; all HQ Elites can be unlocked with earned fragments, and existing owners retain their levels.
 - **Presentation:** strategy HUD, faction-coloured plates, HP rings, strength bars, commander portrait pins, a
   minimap, procedural terrain, drawn fallbacks for every Knightmare and commander, published image support, synthesized sound, camera shake.
 - **Published artwork:** finished sprites and portraits live in tracked `dist/assets/art/`. The startup manifest loads

@@ -12,14 +12,6 @@
     }
     return profile.elites;
   }
-  // Early Story Mode rewards grant the frame itself at Level 1, rather than merely
-  // fragments towards a purchase. Never downgrade an already upgraded Elite Force.
-  function unlockStoryElite(profile, id) {
-    const record = eliteRecord(profile, id);
-    if (!record || record.level >= 1) return false;
-    record.level = 1;
-    return true;
-  }
   function eliteRecord(profile, id) {
     return ELITE_FORCES[id] && !ELITE_FORCES[id].scenarioOnly ? eliteProfile(profile)[id] : null;
   }
@@ -51,12 +43,7 @@
     const e = ELITE_FORCES[id], rec = e && eliteRecord(profile, id);
     if (!rec) return 'Unknown Elite Force';
     if (rec.level >= ELITE_MAX_LEVEL) return 'Maximum Elite level reached';
-    // Fresh profiles cannot fragment-unlock the two story rewards early.
-    // Existing accounts retain their original entitlement.
-    const requiredMission = { cornelia_gloucester: 'br_mef', guren_mkii: 'bk3' }[id];
-    if (!rec.level && requiredMission && !profile.legacyStarterEntitlements &&
-        !(profile.campaign?.[requiredMission] > 0))
-      return 'Win the third Story Mode mission to unlock this Elite Force';
+    // All permanent HQ Elite Forces can be unlocked with fragments, without Story Mode prerequisites.
     const next = rec.level + 1,
       cost = ELITE_UPGRADE_FRAGMENTS[next];
     return rec.fragments < cost

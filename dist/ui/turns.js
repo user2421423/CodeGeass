@@ -335,9 +335,6 @@ function claimReward() {
         diff = game.difficulty || 'normal';
       byDifficulty[diff] = Math.max(byDifficulty[diff] || 0, r.stars);
       (p.campaign ||= {})[id] = Math.max(legacyBest, r.stars);
-      const guaranteedElite = CP.STORY_ELITE_UNLOCKS[id];
-      if (guaranteedElite && E.unlockStoryElite(p, guaranteedElite))
-        game.storyEliteUnlocked = guaranteedElite;
       // 3★ awards 10 fragments to one eligible Elite of the difficulty's rarity.
       // New 2★ results never award fragments. There are no mass-faction drops.
       if (r.fragmentChoice)
@@ -366,7 +363,7 @@ function claimReward() {
   // Pass progress is distinct from the once-per-era/faction/difficulty token reward.
   if (game.mode === 'conquest' && game.over?.winner === game.player)
     challengePassRecordVictory(p, game);
-  claims[game.rewardClaimId] = { reward: game.reward || null, eliteReward: game.eliteReward || null, storyEliteUnlocked: game.storyEliteUnlocked || null };
+  claims[game.rewardClaimId] = { reward: game.reward || null, eliteReward: game.eliteReward || null };
   if (!saveProfile(p)) {
     toast('Rewards are pending because command records could not be saved. Keep this operation and retry its result screen.', true);
     return false;

@@ -156,7 +156,6 @@
     ELITE_UPGRADE_FRAGMENTS,
     eliteProfile,
     eliteRecord,
-    unlockStoryElite,
     eliteStats,
     eliteFx,
     eliteUpgradeReason,

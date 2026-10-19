@@ -175,11 +175,6 @@ function loadProfile() {
       E.roster(p);
       changed = true;
     }
-    // Retroactively award the new third-mission Elites to players who have
-    // already beaten those battles, without reducing any existing Elite levels.
-    for (const [missionId, eliteId] of Object.entries({ br_mef: 'cornelia_gloucester', bk3: 'guren_mkii' }))
-      if ((p.campaign?.[missionId] || 0) > 0 && E.unlockStoryElite(p, eliteId))
-        changed = true;
     if (syncResearchCampaignCompletions(p)) changed = true;
     if (changed) localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
     return p;

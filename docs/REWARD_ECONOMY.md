@@ -22,7 +22,7 @@ Story Mode and Conquest fragment choices are faction-eligible only. **World Camp
 
 Stars and tokens are cumulative **per mission and difficulty**, paying only positive differences when improving a score. A 2★ victory never awards fragments. A first-ever 3★ performance for each difficulty earns a single fragment bundle.
 
-Story Mode campaign milestones: **100 tokens** at 50% stars; **200 tokens** at 75%; **300 tokens** at 100% (600 maximum for the campaign). Milestones award no fragments and are paid once. Existing guaranteed third-mission Level 1 unlocks for **Cornelia’s Gloucester** and **Guren Mk II** are unchanged.
+Story Mode campaign milestones: **100 tokens** at 50% stars; **200 tokens** at 75%; **300 tokens** at 100% (600 maximum for the campaign). Milestones award no fragments and are paid once. Story missions **never grant a free permanent HQ Elite Force level**. Cornelia’s Gloucester and Guren Mk-II can each be unlocked with fragments like any other Elite Force, without completing a specific Story Mode mission. Players who already own these Elites keep their existing levels and fragments.
 
 ## World Campaign
 
