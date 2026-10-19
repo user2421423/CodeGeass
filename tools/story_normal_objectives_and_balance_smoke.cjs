@@ -40,7 +40,7 @@ for (const [id, min] of Object.entries({
 // Mission-specific shields and deadlines must not alter harder difficulties.
 for (const [id,name,shield] of [
   ['br7','Sakuradite Refinery',1100],
-  ['br_mausoleum','Vermillion Forbidden City',1400],
+  ['br_mausoleum','Vermillion Forbidden City',2400],
   ['br_kagoshima','Kagoshima Settlement',1300],
   ['br10','Ikaruga',220],
   ['br10','Avalon Landing',750],
@@ -50,6 +50,9 @@ for (const [id,name,shield] of [
   assert.equal(normal.stations.find(s=>s.name===name).maxShield,shield,id+': Normal shield');
   assert.notEqual(hard.stations.find(s=>s.name===name).maxShield,shield,id+': Hard shield unchanged');
 }
+assert.deepEqual(E.campaign.createMission('br10',1357,'normal').campaign.goals.britannia,[[2,6,-22]]);
+assert.ok(!E.campaign.createMission('br10',1357,'hard').campaign.goals.britannia,
+  'Hard AI must retain original targets');
 assert.equal(E.campaign.createMission('br10',1357,'normal').campaign.turnLimit,24);
 assert.equal(E.campaign.createMission('br10',1357,'hard').campaign.turnLimit,
   E.campaign.mission('br10').lose.turns + (E.campaign.DIFFICULTIES?.hard?.extraTurns || 0),

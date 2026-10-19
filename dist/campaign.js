@@ -391,7 +391,8 @@
       campaign: {
         id,
         production: m.production || [],
-        goals: m.goals || {},
+        goals: difficultyId === 'normal' && m.normalGoals
+          ? { ...(m.goals || {}), ...m.normalGoals } : m.goals || {},
         hold: m.hold || {},
         losses: 0,
         kills: 0,

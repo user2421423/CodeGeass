@@ -653,6 +653,7 @@
       economy: { britannia: 500 },
       industry: { britannia: 200 },
       hold: { bk: 4 },
+      normalGoals: { britannia: [[2, 6, -22]] },
       units: [
         [B, 'elite_shinkiro', 19, 5, 1, 'lelouch', { skipNormal: true }],
         [B, 'elite_shinkiro', 19, 5, 3, 'lelouch', { normalOnly: true, hold: 1 }],
@@ -673,6 +674,11 @@
         [B, 'vincent_ward', 9, 7, 2, null, { normalOnly: true }],
         [B, 'vincent_ward', 8, 6, 2, null, { normalOnly: true }],
         [B, 'gareth', 10, 9, 1, null, { normalOnly: true }],
+        // Breakthrough assault column through the Fuji mountain corridor.
+        [B, 'vincent_commander', 7, 6, 3, null, { normalOnly: true }],
+        [B, 'vincent_ward', 7, 7, 3, null, { normalOnly: true }],
+        [B, 'gareth', 7, 5, 2, null, { normalOnly: true }],
+        [B, 'vincent_ward', 6, 7, 2, null, { normalOnly: true }],
         [K, 'elite_guren_seiten', 4, 5, 1, 'kallen', { hold: false }],
         [K, 'zangetsu', 4, 7, 1, 'tohdoh'],
         [K, 'akatsuki_zikisan', 5, 4, 1, 'chiba'],
