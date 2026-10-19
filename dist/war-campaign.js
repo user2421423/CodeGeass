@@ -10,12 +10,13 @@
   const BATTLE_KEY = 'knightmare-war-campaign-battle';
   // Campaign identifiers are independent of engine factions: Britannia can fight
   // different opponents without sharing progress, tiers or save-state selections.
-  const FACTIONS = ['eu', 'britannia', 'britannia-federation', 'federation-britannia'];
+  const FACTIONS = ['eu', 'britannia', 'britannia-federation', 'federation-britannia', 'eu-federation'];
   const CAMPAIGN_INFO = Object.freeze({
     eu: Object.freeze({label:'E.U. vs Britannia',side:'eu',opponent:'britannia'}),
     britannia: Object.freeze({label:'Britannia vs E.U.',side:'britannia',opponent:'eu'}),
     'britannia-federation': Object.freeze({label:'Britannia vs Federation',side:'britannia',opponent:'cf'}),
     'federation-britannia': Object.freeze({label:'Federation vs Britannia',side:'cf',opponent:'britannia'}),
+    'eu-federation': Object.freeze({label:'E.U. vs Federation',side:'eu',opponent:'cf'}),
   });
   const campaignSide = campaign => CAMPAIGN_INFO[campaign]?.side || campaign;
   const tierLabels = {
@@ -23,6 +24,7 @@
     britannia: ['Global Conflicts','Bering Strait','Imperial Expansion','The Eurasian Offensive','Conquest of Western Russia','The European War','Operation Stonehenge'],
     'britannia-federation': ['Global Conflicts','Opening Battles','Securing the Flanks','Invasion of South China','The Yangtze Front','The Imperial Capital'],
     'federation-britannia': ['Global Conflicts','Asian War','Pacific Expansion','American Beachheads','Central American War','Western America','Final Offensive'],
+    'eu-federation': ['Global Conflicts','Opening the Eastern Front','Breaking the Federation Frontier','Crossing the Himalayas','Conquest of China','The Imperial Capital'],
   };
   // [id, title, existing scenario ID/null, geographic name, marker lon/lat,
   //  geographic bounds west/south/east/north, short campaign description].
@@ -102,10 +104,60 @@
     ]],
     [7,[['pendragon-west','Battle of Pendragon — Western Offensive','cf-pendragon','Pendragon',[-117,37.5],[-120,35,-114,40],'Conquer the imperial capital and all remaining cities from the Californian west.']]],
   ];
+
+  // E.U. vs Chinese Federation (13 battles): reuse the three global wars, then
+  // reserve ten distinct two-sided regional scenarios for independent agents.
+  // Null scenario IDs are intentionally unplayable until an actual 'eu'/'cf'
+  // scenario model exists. Do NOT point Luoyang at Britannia's existing model.
+  const euFederationRows = [
+    [1,shared],
+    [2,[
+      ['kazakhstan','Invasion of Kazakhstan',null,'Kazakhstan',[67,48],[46,40,88,56],'Advance from Europia-controlled Russia into the Kazakh steppe; large armored offensives.'],
+      ['persia','Invasion of Persia',null,'Persia',[52.5,32],[43,24,64,40],'Advance from the Caucasus and western approaches into Chinese-controlled Iran.'],
+    ]],
+    [3,[
+      ['xinjiang','Battle for Xinjiang',null,'Xinjiang',[86,42],[73,35,98,49],'Push east from Kazakhstan through the deserts and mountain corridors around Urumqi.'],
+      ['india','Invasion of India',null,'India',[78,23],[67,8,97,36],'Drive east from Persia with a broad continental offensive and optional Arabian Sea landings.'],
+      ['mongolia','Invasion of Mongolia',null,'Mongolia',[104,46],[87,41,120,53],'Attack south from Siberia across the Mongolian steppe.'],
+      ['manchuria','Invasion of Manchuria',null,'Manchuria',[126,45],[117,40,135,53],'Follow the Mongolian offensive into Northeast China from Mongolia and Siberia.'],
+    ]],
+    [4,[
+      ['himalayas','Crossing the Himalayas',null,'Himalayas and Tibet',[86.5,30],[74,26,97,36],'Cross the Himalayan passes north from India into Chinese-held Tibet.'],
+    ]],
+    [5,[
+      ['sichuan','Invasion of Sichuan',null,'Sichuan',[104,30.5],[97,26,110,34],'Descend from Tibet into the fortified Sichuan Basin around Chengdu.'],
+      ['beijing','Battle of Beijing',null,'Beijing',[116.4,39.9],[112,36.7,121,42],'Push south from Manchuria and take the fortified northern Chinese capital region.'],
+    ]],
+    [6,[
+      ['luoyang','Battle of Luoyang',null,'Luoyang',[112.5,34.6],[109,32,117,37],'Converge from the northern and southern fronts against the Federation imperial capital.'],
+    ]],
+  ];
   // Approximate national/state contours where a rectangular theater would
   // otherwise tint substantial unrelated territory. The GSHHG atlas continues
   // to supply the authoritative coastlines and underlying land geometry.
   const REGION_POLYGONS=Object.freeze({
+
+    // Approximate overlays for nations omitted from the small campaign atlas;
+    // refine against authoritative boundaries when their scenarios are built.
+    'eu-federation-kazakhstan': [[46.5,49],[49.2,48.8],[50.6,46.7],[53.9,45.5],
+      [56.2,43.2],[60.3,42.2],[65,42.3],[68.5,42.2],[70.8,42.7],[73,43],
+      [78,43.1],[80.2,44.7],[86,47],[85.2,49],[81.5,50],[77.3,52],
+      [73,54],[68,55.5],[64,55],[61,54.3],[58,53.2],[55,50.8],
+      [52,51.7],[48,50],[46.5,49]],
+    'eu-federation-india': [[68,23.5],[69.3,22.5],[70.3,21.3],[72,21],
+      [72.6,19.6],[73.5,17.8],[74.1,15.4],[74.9,13.2],[76.2,10.8],
+      [77.6,8.1],[79,9],[79.8,11],[80.2,13.5],[81.4,16.3],
+      [83.2,18.2],[85.1,19.8],[86.4,20.5],[87.5,21.5],
+      [89.2,22.1],[92.5,23.2],[95.8,27],[93.7,28],[91,26.1],
+      [89.6,26.5],[88,27.8],[85.9,27.8],[83.6,29.3],
+      [81,30.4],[79,32.6],[76.6,34.4],[74.2,35.2],
+      [73,34],[71,34.7],[69.5,34],[68.2,32.5],[69,30.3],
+      [70.1,27.5],[68,24],[68,23.5]],
+    'eu-federation-mongolia': [[87.7,49.2],[92,50],[97,50.7],
+      [101.3,51.9],[105,50.7],[110,49.4],[114.3,50.1],
+      [118.6,49],[119.5,46.9],[116,45],[113,44],
+      [109,42.7],[105,42],[101,41.6],[96.2,42.3],
+      [92,45.8],[89.2,47.3],[87.7,49.2]],
     'britannia-western-russia': [[27.1,57.6],[28,58.3],[28,59.5],[29.2,60.1],
       [30,60.6],[31.8,61.5],[33.0,63.25],[52,63.25],[52,51.5],
       [35.5,51.5],[32,53.1],[30.6,55.2],[27.1,57.6]],
@@ -141,6 +193,10 @@
     'mexican-heartland':['Mexico'], 'mexico':['Mexico'], 'hawaii':['United States of America'],
     'new-york':['United States of America'], 'great-lakes':['United States of America'],
     'rocky-mountains':['United States of America'],
+    // Newly planned E.U.–Federation theaters; first three nations below use
+    // REGION_POLYGONS because they are absent from COUNTRY_OUTLINES.
+    'persia':['Iran'], xinjiang:['China'], manchuria:['China'],
+    himalayas:['China'], sichuan:['China'], beijing:['China'],
     'pacific-northwest':['United States of America'],
     'pendragon-east':['United States of America'], 'pendragon-west':['United States of America'],
     california:['United States of America'],
@@ -222,7 +278,8 @@
     const rows = faction==='eu' ? [[1,shared],[2,[bering]],...euRows]
       : faction==='britannia' ? [[1,shared],[2,[bering]],...brRows]
       : faction==='britannia-federation' ? brFederationRows
-      : federationBritanniaRows;
+      : faction==='federation-britannia' ? federationBritanniaRows
+      : euFederationRows;
     return [faction,Object.freeze(rows.map(([tier,items])=>Object.freeze({
       number:tier,title:tierLabels[faction][tier-1],
       missions:Object.freeze(items.map(row=>objective(faction,tier,row))),
