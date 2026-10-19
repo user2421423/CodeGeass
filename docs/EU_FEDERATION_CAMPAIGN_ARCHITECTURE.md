@@ -1,6 +1,6 @@
 # Europia United vs Chinese Federation — World Campaign architecture
 
-**Status:** Architecture only. This feature branch must not be merged into `main` without user approval. All ten regional battles beyond the first three are **planned**, not playable or complete.
+**Status:** Ten scenario PRs have been merged into the **architecture feature branch** and the central World Campaign registry, scenario manifest, and catalog now list all 13 battles. **Integration is not a gameplay/balance signoff.** Do not merge into `main` without user approval.
 
 **Campaign key:** `eu-federation`; **engine side:** `eu`; **opponent:** `cf`.
 **World Campaign registry:** `dist/war-campaign.js`.
@@ -14,26 +14,26 @@
 | 1 | 1 Global Conflicts | War for Australia | `eu-federation-australia` | `war-for-australia` | Existing |
 | 2 | 1 Global Conflicts | Conquest of Area 18 | `eu-federation-area-18` | `area-18` | Existing |
 | 3 | 1 Global Conflicts | Division of Japan | `eu-federation-division-japan` | `division-japan` | Existing |
-| 4 | 2 Opening Eastern Front | Invasion of Kazakhstan | `eu-federation-kazakhstan` | `eu-cf-kazakhstan` | Planned |
-| 5 | 2 Opening Eastern Front | Invasion of Persia | `eu-federation-persia` | `eu-cf-persia` | Planned |
-| 6 | 3 Federation Frontier | Battle for Xinjiang | `eu-federation-xinjiang` | `eu-cf-xinjiang` | Planned |
-| 7 | 3 Federation Frontier | Invasion of India | `eu-federation-india` | `eu-cf-india` | Planned |
-| 8 | 3 Federation Frontier | Invasion of Mongolia | `eu-federation-mongolia` | `eu-cf-mongolia` | Planned |
-| 9 | 3 Federation Frontier | Invasion of Manchuria | `eu-federation-manchuria` | `eu-cf-manchuria` | Planned |
-| 10 | 4 Himalayan Offensive | Crossing the Himalayas | `eu-federation-himalayas` | `eu-cf-himalayas` | Planned |
-| 11 | 5 Conquest of China | Invasion of Sichuan | `eu-federation-sichuan` | `eu-cf-sichuan` | Planned |
-| 12 | 5 Conquest of China | Battle of Beijing | `eu-federation-beijing` | `eu-cf-beijing` | Planned |
-| 13 | 6 Imperial Capital | Battle of Luoyang | `eu-federation-luoyang` | `eu-cf-luoyang` | Planned |
+| 4 | 2 Opening Eastern Front | Invasion of Kazakhstan | `eu-federation-kazakhstan` | `eu-cf-kazakhstan` | Integrated · needs full testing |
+| 5 | 2 Opening Eastern Front | Invasion of Persia | `eu-federation-persia` | `eu-cf-persia` | Integrated / unverified |
+| 6 | 3 Federation Frontier | Battle for Xinjiang | `eu-federation-xinjiang` | `eu-cf-xinjiang` | Integrated / unverified |
+| 7 | 3 Federation Frontier | Invasion of India | `eu-federation-india` | `eu-cf-india` | Integrated / unverified |
+| 8 | 3 Federation Frontier | Invasion of Mongolia | `eu-federation-mongolia` | `eu-cf-mongolia` | Integrated / unverified |
+| 9 | 3 Federation Frontier | Invasion of Manchuria | `eu-federation-manchuria` | `eu-cf-manchuria` | Integrated / unverified |
+| 10 | 4 Himalayan Offensive | Crossing the Himalayas | `eu-federation-himalayas` | `eu-cf-himalayas` | Integrated / unverified |
+| 11 | 5 Conquest of China | Invasion of Sichuan | `eu-federation-sichuan` | `eu-cf-sichuan` | Integrated / unverified |
+| 12 | 5 Conquest of China | Battle of Beijing | `eu-federation-beijing` | `eu-cf-beijing` | Integrated / unverified |
+| 13 | 6 Imperial Capital | Battle of Luoyang | `eu-federation-luoyang` | `eu-cf-luoyang` | Integrated / unverified |
 
 *Manchuria is in Tier 3, before Crossing the Himalayas in Tier 4.*
 Complete **all** missions within a tier to unlock the next tier; missions within a tier may be completed in any order. The northern route is Kazakhstan → Xinjiang / Mongolia → Manchuria → Beijing; the southern route is Persia → India → Himalayas → Sichuan; both converge on Luoyang.
 
-The first three are unchanged **three-way** regional scenarios, not new two-party remakes. All ten new battles are exclusively `eu` versus `cf`.
+The first three remain unchanged **three-way** regional scenarios, not new two-party remakes. The ten newly integrated battles are exclusively `eu` versus `cf`; their full-engine AI and balance validations are still pending.
 
 ## Why the proposed architecture is safe
 
 1. Uses the existing World Campaign `FACTIONS`, `CAMPAIGN_INFO`, tier registry, save slot, victory checks, world map selection and terrain color overlay. Existing four campaign IDs and saves are preserved without migration.
-2. All ten regional objectives have `scenarioId:null` and `status:'planned'`. They remain visible with their geographic markers, but **cannot launch**, credit victory, or unlock later tiers through fake progress.
+2. The ten regional objectives now point to their distinct `eu-cf-*` runtime scenario IDs, with matching menu/catalog registrations. They launch only when the actual two-sided scenario model loads; **only verified in-game victory** credits progress.
 3. Each future scenario has a **separate runtime ID** `eu-cf-<region>`. The final `eu-cf-luoyang` must **not replace, rename, retarget or modify** `battle-luoyang`, which is Britannia vs China. Reuse geographical and city definitions carefully, with a distinct E.U. deployment.
 4. A new `eu-federation` route list drives map arrows. The World Campaign UI derives the fifth faction selector from `WC.FACTIONS`; no new faction colors, unit definitions or global game rules are necessary.
 5. Campaign map boundary overlays use existing atlas countries for Iran and Chinese regions, and preliminary clipped polygons for Kazakhstan, India, Mongolia because they are absent from the campaign atlas. **Before each scenario's integration, refine these approximate overlays against verified geography**; don't recolor oceans or unrelated countries. These campaign overlays are distinct from tactical maps.
@@ -44,7 +44,7 @@ Each scenario builder should branch from **`feature/eu-vs-federation-campaign-ar
 
 **Scenario lane owns:** `dist/scenarios-eu-cf-<region>.js`, scenario-local map/coast/underlay helpers and `docs/EU_CF_<REGION>_SCENARIO.md`. Do not edit `dist/war-campaign.js`, `dist/ui/war-campaign-screen.js`, global commander/unit balance, `src/engine/**`, generated bundles, other scenarios, or `main`. Coordinate any exceptional shared-code need separately.
 
-To avoid ten concurrent edits of `dist/scenario-manifest.js`, each agent **reports** its required manifest/menu/SCENARIO_FILES entries, dependencies and load order, rather than committing changes to that shared file. An integrator adds those entries and refreshes `dist/scenario-catalog.js` using `tools/generate-scenario-catalog.cjs` (and checks the generated catalog) as each PR is accepted. The integrator alone replaces that campaign objective's `scenarioId:null` with the **verified** `eu-cf-* ` runtime ID. Other missions remain placeholders. No future agent should update other campaign rows.
+To avoid ten concurrent edits of `dist/scenario-manifest.js`, each agent **reports** its required manifest/menu/SCENARIO_FILES entries, dependencies and load order, rather than committing changes to that shared file. The integrator has now completed those registrations, the `SCENARIO_FILES` dependency ordering, catalog generation, and World Campaign runtime connections on this feature branch. All ten PRs are merged. Do not change the original Britannia–Federation Luoyang. Further changes need targeted testing and balance review before `main`.
 
 ## Common regional scenario acceptance criteria
 
@@ -75,4 +75,12 @@ Each of the following goes after this common preface:
 
 ## Focused architecture smoke test
 
-Run `node tools/eu_federation_campaign_smoke.cjs`. It verifies the fifth campaign, 13 objectives, three implemented shared missions, ten safely locked placeholders, expected ordering and save-key isolation. These architecture checks do **not** substitute for per-scenario tactical balance tests.
+Run `node tools/build_sources.cjs`, `node tools/generate-scenario-catalog.cjs` and `node tools/eu_federation_campaign_smoke.cjs`. CI compiles all ten source modules, checks their generated metadata/dependencies, all 13 registered campaign objectives, launch contracts and old saves. These checks are **not** combat/balance tests.
+
+## Integration update — 2026-10-19
+
+Merged into `feature/eu-vs-federation-campaign-architecture`: #136 Kazakhstan, #132 Persia, #135 Xinjiang, #137 India, #131 Mongolia, #133 Manchuria, #130 Himalayas, #138 Sichuan, #134 Beijing, and #129 Luoyang.
+
+All ten modules are registered in `dist/scenario-manifest.js`, `tools/generate-scenario-catalog.cjs`, and `dist/scenario-catalog.js`. The `eu-federation` campaign registry now points to real scenario models. The dedicated architecture CI builds source and generated metadata and verifies registry/save contracts. Tactical AI quality, multi-seed victories, balance, mobile rendering, real saves, and cross-campaign regressions await user-directed testing.
+
+`main` is unchanged by these integrations. The architecture PR #127 remains the parent draft until approval.
