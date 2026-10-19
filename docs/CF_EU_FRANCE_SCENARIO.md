@@ -18,7 +18,7 @@ The decisive routes are Marseille and Toulon -> Avignon/Valence -> Lyon -> Dijon
 - Eleven *independently capturable* port hexes: Marseille, Toulon, Nice, Ajaccio, Bastia, La Rochelle, Brest, Cherbourg, Le Havre, Calais and Dunkirk. Their `portOwner` and `portAt` are separate from station owner and station hex.
 - Geography uses an embedded coordinate-sampled outline of mainland France and Corsica, not an invented land route from the east. Adjacent sea tiles mark coast. The Alps, Pyrenees, and Massif Central add relief; the Rhone, Seine, Loire and Garonne have river-crossing edges and named bridge corridors.
 - The geographic outline is an approximate tactical trace, **not a high-precision official shoreline polygon**. Audit every coastal hex and port access against authoritative GIS data before final campaign integration; adjust only this scenario's geometry or a scenario-owned coastal helper.
-- The E.U. has 50 defensive land formations and eight naval units, including Mediterranean carriers and Frosch II interceptors; production and reinforcement after setup use shared industry/port/AI systems.
+- The E.U. has 48 defensive land formations and ten naval units, including Mediterranean carriers and Frosch II interceptors; production and reinforcement after setup use shared industry/port/AI systems.
 - Named E.U. commanders include Akito, Leila, Ayano, Pierre, Smilas and others. Named Federation commanders include Honggu, Cao, Meiling, Zhaohao and Xingke. Unit classes are created via `E.typeFor(side,cls,g)`, ensuring current faction and campaign-era frames.
 
 ## Rules and progression
