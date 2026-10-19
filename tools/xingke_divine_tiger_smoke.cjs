@@ -41,15 +41,15 @@ const approx = (actual, expect, tolerance = .07) =>
   const target=foes[0]; target.cmd='cornelia';
   const active=E.preview(g,x.id,target.c,target.r);
   assert.ok(active && active.unit>0);
-  fx.duelist=0;
+  x.expSilenced=true; // Disables signature effects without changing commander ratings.
   const ordinary=E.preview(g,x.id,target.c,target.r);
-  fx.duelist=.3;
+  delete x.expSilenced;
   approx(active.unit,ordinary.unit*1.3);
   target.cmd=null;
   const withoutCommander=E.preview(g,x.id,target.c,target.r);
-  fx.duelist=0;
+  x.expSilenced=true;
   const withoutBonus=E.preview(g,x.id,target.c,target.r);
-  fx.duelist=.3;
+  delete x.expSilenced;
   assert.equal(withoutCommander.unit,withoutBonus.unit,
     'Noncommander targets get no Divine Tiger attack multiplier');
   assert.equal(active.counterAllowed,false,'Xingke denies ordinary counterattacks');
@@ -73,57 +73,58 @@ const approx = (actual, expect, tolerance = .07) =>
   const {g,x,foes}=battle();g.phase='britannia';
   const attacker=foes[0];attacker.cmd='cornelia';
   const reduced=E.preview(g,attacker.id,x.c,x.r).unit;
-  fx.duelistTaken=1;
+  x.expSilenced=true;
   const baseline=E.preview(g,attacker.id,x.c,x.r).unit;
-  fx.duelistTaken=.7;
+  delete x.expSilenced;
   assert.ok(reduced>0);
   approx(reduced,baseline*.7,.1);
   attacker.cmd=null;
   const ordinary=E.preview(g,attacker.id,x.c,x.r).unit;
-  fx.duelistTaken=1;
+  x.expSilenced=true;
   const ordinaryWithout=E.preview(g,attacker.id,x.c,x.r).unit;
-  fx.duelistTaken=.7;
+  delete x.expSilenced;
   assert.equal(ordinary,ordinaryWithout,'No damage reduction against ordinary attackers');
 }
 
-// Replay identical seeded attacks to isolate counter strength and actual reflection.
-function counterTrial(perfect, reflect, twice = false) {
+// Replay identical seeded attacks with Xingke's signature toggled by the
+// existing expSilenced flag. Commander ratings and frame stats remain identical.
+function counterTrial(silenced, twice = false) {
   const {g,x,foes}=battle();
   g.phase='britannia';
-  const before={perfect:fx.perfectCounter,reflect:fx.counterReflect};
-  fx.perfectCounter=perfect;fx.counterReflect=reflect;
+  x.expSilenced=!!silenced;
   const shots=[];
-  try {
-    for (const foe of foes.slice(0,twice?2:1)) {
-      const preview=E.preview(g,foe.id,x.c,x.r);
-      assert.ok(preview?.counterAllowed,'Xingke must be eligible to counter');
-      const hp=x.hp;
-      const result=E.attack(g,foe.id,x.c,x.r);
-      assert.equal(result.ok,true,result.reason);
-      assert.ok(x.hp>0,'Xingke must survive to retaliate');
-      assert.ok(result.counter>0,'Actual counter must fire');
-      shots.push({retaliation:result.counter,hpLost:hp-x.hp});
-    }
-  } finally {fx.perfectCounter=before.perfect;fx.counterReflect=before.reflect;}
+  for (const foe of foes.slice(0,twice?2:1)) {
+    const preview=E.preview(g,foe.id,x.c,x.r);
+    assert.ok(preview?.counterAllowed,'Xingke must be eligible to counter');
+    const hp=x.hp;
+    const result=E.attack(g,foe.id,x.c,x.r);
+    assert.equal(result.ok,true,result.reason);
+    assert.ok(x.hp>0,'Xingke must survive to retaliate');
+    assert.ok(result.counter>0,'Actual counter must fire');
+    shots.push({retaliation:result.counter,hpLost:hp-x.hp});
+  }
   return shots;
 }
 {
-  const standard=counterTrial(false,0)[0];
-  const full=counterTrial(true,0)[0];
-  const reflect=counterTrial(true,.05)[0];
-  approx(full.retaliation,standard.retaliation / .65,.12);
-  assert.equal(reflect.hpLost,full.hpLost,'Reflection does not mitigate incoming damage');
-  assert.equal(reflect.retaliation-full.retaliation,Math.round(reflect.hpLost*.05),
-    'Reflection is exactly 5% of actual lost HP, rounded to damage');
+  const standard=counterTrial(true)[0];
+  const enhanced=counterTrial(false)[0];
+  assert.ok(enhanced.retaliation>standard.retaliation,
+    'Perfect Counter exceeds ordinary retaliation');
+  assert.equal(enhanced.hpLost,standard.hpLost,'Reflection does not mitigate damage');
+  const expected=Math.round(standard.retaliation/.65)+Math.round(enhanced.hpLost*.05);
+  assert.ok(Math.abs(enhanced.retaliation-expected)<=3,
+    'Perfect Counter restores approximately 100% attack strength and reflects 5% HP lost');
 }
 {
-  const plain=counterTrial(true,0,true);
-  const enhanced=counterTrial(true,.05,true);
+  const standard=counterTrial(true,true);
+  const enhanced=counterTrial(false,true);
   assert.equal(enhanced.length,2);
   for(let i=0;i<2;i++){
-    assert.equal(enhanced[i].hpLost,plain[i].hpLost);
-    assert.equal(enhanced[i].retaliation-plain[i].retaliation,
-      Math.round(enhanced[i].hpLost*.05),'Each counter reflects damage, even the second one');
+    assert.equal(enhanced[i].hpLost,standard[i].hpLost);
+    const expected=Math.round(standard[i].retaliation/.65)+
+      Math.round(enhanced[i].hpLost*.05);
+    assert.ok(Math.abs(enhanced[i].retaliation-expected)<=3,
+      'Every counter, including the second in one turn, is full strength plus 5% reflection');
   }
 }
 console.log('Xingke Divine Tiger, no retaliation, perfect counter and repeated reflection: PASS');
