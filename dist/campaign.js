@@ -735,6 +735,7 @@
     bk9: 'guren_seiten',
     bk10: 'guren_seiten',
     br7: 'lancelot',
+    br_execution: 'lancelot',
     br_pacific: 'lancelot',
     br_yokosuka2: 'lancelot',
     br_xiaopei: 'lancelot',
