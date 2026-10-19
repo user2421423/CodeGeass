@@ -1,0 +1,28 @@
+name: Story Mode full Normal audit
+on:
+  push:
+    branches: ['audit/story-mode-normal-all-campaigns-20261019']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  all-story-normal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build source bundles
+        run: node tools/build_sources.cjs
+      - name: Audit 58 Story missions, eight seeded battles each
+        run: node tools/story_all_missions_audit.cjs
+      - name: Upload complete Story Mode audit and trial results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: story-normal-audit
+          path: audit-output/
