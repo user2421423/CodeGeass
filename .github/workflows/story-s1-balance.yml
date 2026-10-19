@@ -1,0 +1,42 @@
+name: Story Mode Season 1 balance audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/missions/**'
+      - 'src/engine/**'
+      - 'src/ai/**'
+      - 'dist/campaign.js'
+      - 'tools/story_r2_balance_probe.cjs'
+      - '.github/workflows/story-s1-balance.yml'
+  pull_request:
+    paths:
+      - 'src/missions/**'
+      - 'src/engine/**'
+      - 'src/ai/**'
+      - 'dist/campaign.js'
+      - 'tools/story_r2_balance_probe.cjs'
+      - '.github/workflows/story-s1-balance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  season-one-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - name: Verify Story mission placements and mission objectives
+        run: node tools/story_normal_objectives_and_balance_smoke.cjs
+      - name: Test original Season 1 missions with ten seeds each
+        env:
+          STORY_BALANCE_CAMPAIGNS: bk_s1,britannia_s1
+          STORY_BALANCE_FOCUS_ALL: '1'
+          STORY_BALANCE_FOCUS_SEEDS: '101,202,303,404,505,606,707,808,909,1001'
+        run: node tools/story_r2_balance_probe.cjs
