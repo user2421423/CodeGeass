@@ -4,6 +4,10 @@ on:
     branches: ['refactor/**']
   pull_request:
 
+concurrency:
+  group: refactor-validation-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -22,3 +26,44 @@ jobs:
           node tools/validate_assets.cjs --tracked
           python3 tools/check_map.py
           node tools/federation_era_roster_smoke.cjs
+      - name: Unified action engine regression suite
+        run: node tools/test_unified_actions.cjs
+      - name: Benchmark combat against current main
+        run: |
+          git fetch --depth=1 origin main:refs/remotes/origin/main
+          git worktree add --detach /tmp/codegeass-combat-main origin/main
+          ( cd /tmp/codegeass-combat-main && node tools/build_sources.cjs )
+          node tools/benchmark_unified_actions.cjs /tmp/codegeass-combat-main/dist/engine.js > /tmp/combat-main.json
+          node tools/benchmark_unified_actions.cjs dist/engine.js > /tmp/combat-refactor.json
+          node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('/tmp/combat-main.json'));const b=JSON.parse(fs.readFileSync('/tmp/combat-refactor.json'));const pct=(b.medianMicrosecondsPerAttack/a.medianMicrosecondsPerAttack-1)*100;console.log(JSON.stringify({main:a,refactor:b,changePercent:pct},null,2));if(pct>5)console.log('WARNING: >5% combat cost increase; investigate benchmark noise and profile before merge.')"
+      - name: Compare seeded scenario fingerprints with committed baseline
+        run: |
+          # Four independent deterministic shards reduce wall-clock time
+          # while preserving the baseline's sorted scenario output order.
+          awk '$1 == "setup" { print $2 }' tools/data/sim_baseline.txt | uniq > /tmp/unified-scenario-ids
+          split -l 10 -d -a 2 /tmp/unified-scenario-ids /tmp/unified-sim-shard-
+          pids=()
+          for shard in /tmp/unified-sim-shard-*; do
+            node tools/scenario_sim.cjs --all 11 2 $(cat "$shard") > "${shard}.out" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          cat /tmp/unified-sim-shard-*.out > /tmp/unified-combat-sim.txt
+          # First determine whether any divergence is introduced by this branch.
+          # The committed baseline may already be stale against current main.
+          pids=()
+          for shard in /tmp/unified-sim-shard-[0-9][0-9]; do
+            ( cd /tmp/codegeass-combat-main && node tools/scenario_sim.cjs --all 11 2 $(cat "$shard") ) > "${shard}.main.out" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do wait "$pid"; done
+          cat /tmp/unified-sim-shard-*.main.out > /tmp/unified-combat-main.txt
+          echo "=== Refactor versus exactly current main ==="
+          diff -u /tmp/unified-combat-main.txt /tmp/unified-combat-sim.txt
+          echo "=== Committed baseline versus exactly current main ==="
+          if diff -u tools/data/sim_baseline.txt /tmp/unified-combat-main.txt > /tmp/preexisting-baseline-diff.txt; then
+            echo "Committed baseline matches main and refactor."
+          else
+            echo "::warning::Committed sim_baseline.txt is stale on unmodified main. Refactor matches main exactly; do NOT regenerate the baseline in this PR."
+            head -n 36 /tmp/preexisting-baseline-diff.txt
+          fi

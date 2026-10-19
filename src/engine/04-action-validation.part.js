@@ -13,6 +13,67 @@
   function turnReason(g, side) {
     return g.over ? 'Operation over' : g.phase !== side ? 'Not your turn' : null;
   }
+  // Authoritative preflight for tactical actions. This does not consume resources,
+  // random rolls, action flags or cooldowns. Specialized executors retain their
+  // effects but enter through this same legality check.
+  function validateAction(g, action) {
+    if (!action || !action.kind) return { ok: false, reason: 'Unknown action.' };
+    const { kind, id, c, r } = action;
+    if (kind === 'fortress') {
+      const station = g.stations.find(s => s.id === id);
+      if (!fortressReady(g, station)) return { ok: false, reason: 'The battery is not ready.' };
+      const defender = unitAt(g, { c, r });
+      if (!defender || !isFoe(g, defender.side, station.owner) ||
+          dist(g, station, defender) > fortressRange(g, station))
+        return { ok: false, reason: `No enemy unit within ${fortressRange(g, station)} hexes of the city.` };
+      return { ok: true, station, defender };
+    }
+    const actor = g.units.find(u => u.id === id && (kind !== 'deploy' || u.hp > 0));
+    if (kind === 'attack') {
+      if (!actor) return { ok: false, reason: 'Unit not found.' };
+      const why = turnReason(g, actor.side) ||
+        (actor.hp <= 0 ? 'Unit destroyed' : actor.morale <= -3 ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
+      if (why) return { ok: false, reason: why };
+      const shot = preview(g, id, c, r);
+      if (!shot) return { ok: false, reason: atSea(g, actor) ? 'Embarked units cannot fire.' : 'No hostile target in range.' };
+      return { ok: true, actor, preview: shot };
+    }
+    if (kind === 'move') {
+      if (!actor) return { ok: false, reason: 'Unit not found.' };
+      const destination = tile(g, c, r);
+      const cost = destination && reachable(g, actor).get(key(destination));
+      if (!destination || cost == null) return { ok: false, reason: 'That hex is not reachable this turn.' };
+      return { ok: true, actor, destination, cost };
+    }
+    if (kind === 'deploy') {
+      const why = actor ? deployReason(g, actor, action.index) : 'Carrier not found';
+      if (why) return { ok: false, reason: why };
+      const destination = deployTargets(g, actor, action.index).find(p => p.c === c && p.r === r);
+      if (!destination) return { ok: false, reason: 'Choose an empty land hex next to the carrier.' };
+      return { ok: true, actor, destination };
+    }
+    if (kind === 'repair' || kind === 'reinforce' || kind === 'commander') {
+      const why = kind === 'repair' ? repairReason(g, actor) :
+        kind === 'reinforce' ? reinforceReason(g, actor) : feintReason(g, actor);
+      return why ? { ok: false, reason: why } : { ok: true, actor };
+    }
+    return { ok: false, reason: 'Unknown action.' };
+  }
+  // Optional common dispatch. Existing UI/AI direct calls remain fully compatible,
+  // and every executor below independently preflights through validateAction.
+  function resolveAction(g, action) {
+    if (!action) return { ok: false, reason: 'Unknown action.' };
+    switch (action.kind) {
+      case 'attack': return attack(g, action.id, action.c, action.r);
+      case 'move': return move(g, action.id, action.c, action.r);
+      case 'deploy': return deploy(g, action.id, action.index, action.c, action.r);
+      case 'repair': return repair(g, action.id);
+      case 'reinforce': return reinforce(g, action.id);
+      case 'commander': return feint(g, action.id, action.targetId);
+      case 'fortress': return fireFortress(g, action.id, action.c, action.r);
+      default: return { ok: false, reason: 'Unknown action.' };
+    }
+  }
   function actedReason(u) {
     return u.morale <= -3
       ? 'Unit is confused'

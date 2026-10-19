@@ -248,11 +248,9 @@
     );
   }
   function deploy(g, shipId, i, c, r) {
-    const ship = g.units.find(v => v.id === shipId && v.hp > 0),
-      why = ship ? deployReason(g, ship, i) : 'Carrier not found';
-    if (why) return { ok: false, reason: why };
-    const t = deployTargets(g, ship, i).find(p => p.c === c && p.r === r);
-    if (!t) return { ok: false, reason: 'Choose an empty land hex next to the carrier.' };
+    const check = validateAction(g, { kind: 'deploy', id: shipId, index: i, c, r });
+    if (!check.ok) return check;
+    const ship = check.actor, t = check.destination;
     const [u] = ship.cargo.splice(i, 1);
     u.c = t.c;
     u.r = t.r;
@@ -364,12 +362,9 @@
     return { captured: s.name, annexed };
   }
   function move(g, id, c, r) {
-    const u = g.units.find(u => u.id === id);
-    if (!u) return { ok: false, reason: 'Unit not found.' };
-    const dest = tile(g, c, r),
-      reach = dest && reachable(g, u),
-      moveCost = dest && reach?.get(key(dest));
-    if (!dest || moveCost == null) return { ok: false, reason: 'That hex is not reachable this turn.' };
+    const check = validateAction(g, { kind: 'move', id, c, r });
+    if (!check.ok) return check;
+    const u = check.actor, dest = check.destination, moveCost = check.cost;
     const from = { c: u.c, r: u.r },
       fromSea = isSea(tile(g, u.c, u.r)),
       t = TYPES[u.type],

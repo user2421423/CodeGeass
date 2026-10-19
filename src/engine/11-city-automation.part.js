@@ -187,8 +187,9 @@
         : foe(g, v.side, u.side)));
   }
   function feint(g, id, targetId = null) {
-    const u = g.units.find(v => v.id === id), why = feintReason(g, u);
-    if (why) return { ok: false, reason: why };
+    const check = validateAction(g, { kind: 'commander', id });
+    if (!check.ok) return check;
+    const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
     if (['command', 'designate', 'stratagem'].includes(action.kind)) {

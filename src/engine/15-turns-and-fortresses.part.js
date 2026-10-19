@@ -256,11 +256,9 @@
       .map(u => tile(g, u.c, u.r));
   }
   function fireFortress(g, id, c, r) {
-    const s = g.stations.find(s => s.id === id);
-    if (!fortressReady(g, s)) return { ok: false, reason: 'The battery is not ready.' };
-    const foe = unitAt(g, { c, r });
-    if (!foe || !isFoe(g, foe.side, s.owner) || dist(g, s, foe) > fortressRange(g, s))
-      return { ok: false, reason: `No enemy unit within ${fortressRange(g, s)} hexes of the city.` };
+    const check = validateAction(g, { kind: 'fortress', id, c, r });
+    if (!check.ok) return check;
+    const s = check.station, foe = check.defender;
     const damage = fortressDamage(g, foe, s.owner),
       name = fortressName(s),
       hit = [];
