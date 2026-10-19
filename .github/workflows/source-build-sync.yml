@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify Akito Brain Raid isolation, damage and movement
+        run: node tools/akito_brain_raid_smoke.cjs
       - name: Verify dynamic Scenario AI defensive transitions and Philippine exception
         run: node tools/scenario_dynamic_defense_smoke.cjs
       - name: Verify Elite class stats and abilities
@@ -55,8 +57,6 @@ jobs:
         run: node tools/research_200_combat_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
-      - name: Verify Akito Brain Raid isolation, damage and movement
-        run: node tools/akito_brain_raid_smoke.cjs
       - name: Verify four free HQ starters and old profile migration
         run: node tools/starter_commanders_smoke.cjs
       - name: Verify commander skill refunds and development planning
