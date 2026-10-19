@@ -55,6 +55,12 @@ function passageDistance(p,waypoints){
   d=Math.min(d,segmentDistance(p,waypoints[i-1],waypoints[i]));
  return d;
 }
+// Plateau logistics roads are traversable even where the eastern syntaxis
+// and the southern Himalayan wall otherwise create scattered cliff hexes.
+const PLATEAU_ROADS=[
+ [[85.23,29.33],[87.64,29.08],[88.88,29.27],[89.6,28.92],
+  [91.13,29.65],[91.77,29.23],[94.36,29.65],[95.77,29.86]],
+ [[89.6,28.92],[90.87,28.37],[91.95,27.98]]];
 const RIDGE=[[74.4,34.6],[77.6,33.35],[79.6,31.65],[81.6,30.37],
  [84.2,29.15],[86.5,28.42],[88.9,28.18],[91.8,28.32],[94.2,29.15],[96.5,30.35]];
 function ridgeLatitude(lon){
@@ -67,11 +73,12 @@ function ridgeLatitude(lon){
 function landscape(p,c,r){
  const ridge=Math.abs(p.lat-ridgeLatitude(p.lon));
  const pass=Math.min(...PASSES.map(([,pts])=>passageDistance(p,pts)));
+ const supply=Math.min(...PLATEAU_ROADS.map(pts=>passageDistance(p,pts)));
  // Cliff bands are impassable only away from the seven through-valleys.
  // Western Karakoram and the eastern syntaxis create second defenses.
  const karakoram=p.lon<79.2&&p.lat>33.65;
  const eastWall=p.lon>93.1&&p.lat>28.2&&p.lat<30.5;
- if(pass>.44&&((ridge<.34)||(karakoram&&ridge<.62)||
+ if(pass>.44&&supply>.36&&((ridge<.34)||(karakoram&&ridge<.62)||
     (eastWall&&ridge<.50))&&((c*17+r*29)%11<9))return 'peak';
  if(pass<.26)return 'mountain';
  if(ridge<1.03||karakoram||eastWall)return 'mountain';
