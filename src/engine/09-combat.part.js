@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -567,6 +567,12 @@
       dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
       if (d.expCCProtection) delete d.expCCProtection;
       consumeDefensiveSkills(g, d, a);
+      // One independent Future Sight roll per incoming direct attack.
+      // No dodge roll is made for indirect splash or city shield damage.
+      if (fx(d).futureSightDodge && random(g) < fx(d).futureSightDodge) {
+        dmg = 0;
+        log(g, 'FUTURE SIGHT — EVADED', d.side);
+      }
       const priorHP=d.hp;
       d.hp = Math.max(0, d.hp - dmg);
       actualDefenderDamage = priorHP - d.hp;
@@ -616,6 +622,10 @@
         d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;
       }
       if (a.expCCProtection) delete a.expCCProtection;
+      if (fx(a).futureSightDodge && random(g) < fx(a).futureSightDodge) {
+        retaliation = 0;
+        log(g, 'FUTURE SIGHT — EVADED', a.side);
+      }
       const priorHP=a.hp;
       a.hp = Math.max(0, a.hp - retaliation);
       recordWarEvent(g,'damage',d.side,{targetSide:a.side,value:priorHP-a.hp,unitId:d.id,group:warGroup(g,d)});

@@ -42,9 +42,9 @@
       role: 'Armor',
       hull: 'Galahad',
       skill: "Future Sight",
-      desc: "The first direct enemy attack against his unit each round deals 30% less damage.",
-      stats: {"pen": 0.2, "dmg": 0.08},
-      fx: {"foresight": 0.7},
+      desc: "Future Sight: independently dodge 30% of all direct attacks, including counterattacks, taking zero damage on a successful dodge. No other commander bonuses.",
+      stats: {},
+      fx: {"futureSightDodge": 0.3},
       title: 'Knight of One',
     },
     julius: {
