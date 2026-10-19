@@ -158,6 +158,7 @@ function create(player='cf',difficulty='normal',seed=201712){
    edges[from+':'+to]=true;
   }
  }g.scenario.riverBarriers=edges;
+ const occupied=new Set(g.units.map(u=>u.c+':'+u.r));
  const groupMap=new Map();
  function group(side,name,origin){const key=side+':'+name;
   if(!groupMap.has(key)){const gr={id:'army-'+groupMap.size,side,name,origin,units:[]};
@@ -167,12 +168,12 @@ function create(player='cf',difficulty='normal',seed=201712){
   if(!s)throw Error('Army origin missing or wrong faction: '+name);
   for(let i=0;i<count;i++){
    const at=nearest(g,s,t=>t.terrain!=='sea'&&t.terrain!=='offmap'&&
-    !E.TERRAIN[t.terrain]?.blocked&&!E.unitAt(g,t)&&t.owner===side&&
+    !E.TERRAIN[t.terrain]?.blocked&&!occupied.has(E.key(t))&&t.owner===side&&
     (!E.stationAt(g,t)||E.stationAt(g,t).owner===side),18);
    if(!at)throw Error('Insufficient land deployment cells at '+name+'/'+side);
    const cmd=i===0?commander:null,stack=i===0?3:2;
    const u=E.newUnit(g,E.typeFor(side,cls,g),side,at.c,at.r,stack,cmd);
-   group(side,formation,name).units.push(u.id);
+   occupied.add(E.key(at));group(side,formation,name).units.push(u.id);
    if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
   }
  }
