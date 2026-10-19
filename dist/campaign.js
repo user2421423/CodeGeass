@@ -233,6 +233,8 @@
         if (d.stack) unitStack = Math.min(3, unitStack + 1);
       }
     }
+    // Difficulty upgrades must also respect each side's actual Story roster.
+    type = storyFactionType(g, side, type);
     const free = t =>
       t && !E.isSea(t) && !E.TERRAIN[t.terrain]?.blocked && !E.unitAt(g, t) && (!E.stationAt(g, t) || !E.foe(g, E.stationAt(g, t).owner, side));
     let at = E.tile(g, c, r);
