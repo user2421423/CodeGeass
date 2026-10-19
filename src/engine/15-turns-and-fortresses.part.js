@@ -106,6 +106,12 @@
         // Expire Rolo's freeze only AFTER this faction has lost its entire
         // next turn, never at the start of its disabled activation.
         delete v.expRoloFrozen;
+        // Charles's rewrite persists through the target's next full turn.
+        // Restore morale only as that faction's action phase finishes.
+        if (v.expCharlesMemoryRewrite) {
+          v.morale = v.expCharlesMemoryRewrite.previousMorale;
+          delete v.expCharlesMemoryRewrite;
+        }
         // Slow lasts through the target faction's next action phase.
         delete v.expKallenSlowActive;
         if(v.expChengWeaken?.turns>0&&!--v.expChengWeaken.turns)delete v.expChengWeaken;
@@ -229,6 +235,13 @@
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       // Ports supply shipyards, not passive naval healing. Ships must use an explicit
       // repair action (or a separate earned ability) to recover HP.
+      // End-of-turn-start morale recovery and allied rally effects cannot
+      // break the one-turn Geass confusion.
+      if (u.expCharlesMemoryRewrite) {
+        u.morale = -3;
+        u.moved = true;
+        u.attacked = true;
+      }
     }
     // Captured port control persists after the occupying ship sails away.
     g.strikes = [];
