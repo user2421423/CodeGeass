@@ -4,7 +4,7 @@
   "label": "Federation vs E.U.",
   "architecture_branch": "feature/federation-vs-eu-campaign-architecture",
   "base_branch": "main",
-  "status": "architecture_only",
+  "status": "integrated_pending_full_validation",
   "total_missions": 13,
   "tiers": [
     3,
@@ -49,11 +49,12 @@
       "scenario_id": "cf-eu-siberia",
       "scenario_file": "dist/scenarios-cf-eu-siberia.js",
       "scenario_doc": "docs/CF_EU_SIBERIA_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 146
     },
     {
       "n": 5,
@@ -70,11 +71,12 @@
       "scenario_id": "cf-eu-caucasus",
       "scenario_file": "dist/scenarios-cf-eu-caucasus.js",
       "scenario_doc": "docs/CF_EU_CAUCASUS_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 142
     },
     {
       "n": 6,
@@ -90,11 +92,12 @@
       "scenario_id": "cf-eu-turkey",
       "scenario_file": "dist/scenarios-cf-eu-turkey.js",
       "scenario_doc": "docs/CF_EU_TURKEY_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 145
     },
     {
       "n": 7,
@@ -111,11 +114,12 @@
       "scenario_id": "cf-eu-volga",
       "scenario_file": "dist/scenarios-cf-eu-volga.js",
       "scenario_doc": "docs/CF_EU_VOLGA_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 150
     },
     {
       "n": 8,
@@ -131,11 +135,12 @@
       "scenario_id": "cf-eu-suez",
       "scenario_file": "dist/scenarios-cf-eu-suez.js",
       "scenario_doc": "docs/CF_EU_SUEZ_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 143
     },
     {
       "n": 9,
@@ -151,11 +156,12 @@
       "scenario_id": "cf-eu-moscow",
       "scenario_file": "dist/scenarios-cf-eu-moscow.js",
       "scenario_doc": "docs/CF_EU_MOSCOW_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 144
     },
     {
       "n": 10,
@@ -172,11 +178,12 @@
       "scenario_id": "cf-eu-balkans",
       "scenario_file": "dist/scenarios-cf-eu-balkans.js",
       "scenario_doc": "docs/CF_EU_BALKANS_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 149
     },
     {
       "n": 11,
@@ -192,11 +199,12 @@
       "scenario_id": "cf-eu-north-africa",
       "scenario_file": "dist/scenarios-cf-eu-north-africa.js",
       "scenario_doc": "docs/CF_EU_NORTH_AFRICA_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 147
     },
     {
       "n": 12,
@@ -212,11 +220,12 @@
       "scenario_id": "cf-eu-central-europe",
       "scenario_file": "dist/scenarios-cf-eu-central-europe.js",
       "scenario_doc": "docs/CF_EU_CENTRAL_EUROPE_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 151
     },
     {
       "n": 13,
@@ -233,11 +242,12 @@
       "scenario_id": "cf-eu-france",
       "scenario_file": "dist/scenarios-cf-eu-france.js",
       "scenario_doc": "docs/CF_EU_FRANCE_SCENARIO.md",
-      "status": "planned_unregistered",
+      "status": "integrated_pending_full_validation",
       "sides": [
         "cf",
         "eu"
-      ]
+      ],
+      "pull_request": 148
     }
   ],
   "integration_contract": {
@@ -255,5 +265,18 @@
     "unbuilt_runtime": "null until integrator verifies actual registered module; never point to another faction's scenario by convenience",
     "completion": "real total conquest and proper engine victory only; no turn cap/auto-credit",
     "scenario_support": "cf/eu both sides; Normal, Hard, Challenge, Elite; AI production and HQ rules; seeded sim both sides; recruitment/research/industry; Army Groups; commanders; Elite Forces; saves/rewards; mobile; geography"
+  },
+  "integration": "Ten scenario PRs are merged into feature/federation-vs-eu-campaign-architecture and the campaign, manifest and catalog generator list all ten runtime IDs. Full-engine multi-seed/four-difficulty, AI combat, performance, saves, rewards and regressions are pending final CI review and balance signoff.",
+  "merged_prs": {
+    "siberia": 146,
+    "caucasus": 142,
+    "turkey": 145,
+    "volga": 150,
+    "suez": 143,
+    "moscow": 144,
+    "balkans": 149,
+    "north-africa": 147,
+    "central-europe": 151,
+    "france": 148
   }
 }
