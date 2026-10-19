@@ -269,7 +269,6 @@
   // Ohgi's Organizer keeps adjacent units at Low or better.
   function moraleFloor(g, v) {
     if (leilaCommand(g, v)) return 0;
-    if(g.units.some(m=>m.hp>0&&!atSea(g,m)&&m.side===v.side&&fx(m).imperialAuthority&&dist(g,m,v)<=3))return 0;
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
       m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).organizer && m.id !== v.id) || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=3) || (fx(m).commanderlessAttack && !v.cmd)) && dist(g, m, v) <= (fx(m).nationalUnity ? 3 : 2),
