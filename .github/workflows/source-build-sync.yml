@@ -35,6 +35,8 @@ jobs:
         run: node tools/story_canterbury_movement_smoke.cjs
       - name: Verify Story Elite deployment and faction-specific unit rosters
         run: node tools/story_elite_faction_roster_smoke.cjs
+      - name: Verify starting Industry in all Story Mode missions and difficulties
+        run: node tools/story_starting_industry_smoke.cjs
       - name: Verify HQ mobility research bonuses
         run: node tools/research_mobility_smoke.cjs
       - name: Verify standardized research prices and whole-campaign credits
