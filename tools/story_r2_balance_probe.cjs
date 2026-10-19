@@ -8,13 +8,14 @@ require('../dist/engine/ai.js');
 require('../dist/missions.js');
 require('../dist/campaign.js');
 
-const CAMPAIGN_IDS = ['bk_r2', 'britannia_r2', 'cf_r2'];
+const R2_IDS = ['bk_r2', 'britannia_r2', 'cf_r2'];
+const CAMPAIGN_IDS = [...R2_IDS, 'bk_s1', 'britannia_s1', 'eb_europe', 'eu_europe', 'cf_ufn'];
 const seeds = (process.env.STORY_BALANCE_SEEDS || '101,202,303')
   .split(',').map(s => Number(s.trim())).filter(Number.isFinite);
 assert.ok(seeds.length > 0 && seeds.length <= 15, 'Provide 1–15 seeds');
 const campaigns = CAMPAIGN_IDS.map(id => E.campaign.CAMPAIGNS[id]);
-assert.deepEqual(campaigns.map(c => c.missions.length), [12, 12, 10],
-  'Expect all 34 Season 2 Story Mode missions');
+assert.deepEqual(campaigns.map(c => c.missions.length), [12, 12, 10, 10, 10, 11, 11, 12],
+  'Expect all 88 registered Story Mode missions');
 
 function simulate(id, seed) {
   const m = E.campaign.mission(id), g = E.campaign.createMission(id, seed, 'normal');
@@ -67,19 +68,23 @@ for (const id of CAMPAIGN_IDS) {
     const wins = trials.filter(t => t.winner === m.player).length;
     const losses = trials.filter(t => t.winner && t.winner !== m.player).length;
     const undecided = trials.filter(t => !t.winner).length;
-    console.log('R2_BALANCE ' + m.id + ' | friendly ' + wins + '/' + trials.length +
+    console.log((R2_IDS.includes(id) ? 'R2_BALANCE ' : 'STORY_BALANCE ') + m.id + ' | friendly ' + wins + '/' + trials.length +
       ' | losses ' + losses + ' | undecided ' + undecided +
       ' | ' + trials.map(t => (t.winner || 'unresolved') + ':T' + t.turn).join(' '));
     results.push({ campaign: id, mission: m.id, title: m.title, wins, losses, undecided, trials });
   }
 }
-const summary = {
-  seedCount: seeds.length, totalMissions: results.length,
-  friendlyWins: results.reduce((n, r) => n + r.wins, 0),
-  missionsWithAnyAIWin: results.filter(r => r.wins > 0).length,
-  zeroAIWinMissions: results.filter(r => r.wins === 0).map(r => r.mission),
-  errors: failures
-};
-console.log('R2_BALANCE_SUMMARY ' + JSON.stringify(summary));
-console.log('R2_BALANCE_FULL_JSON ' + JSON.stringify(results));
+function summarize(items) {
+  return {
+    seedCount: seeds.length, totalMissions: items.length,
+    friendlyWins: items.reduce((n, r) => n + r.wins, 0),
+    missionsWithAnyAIWin: items.filter(r => r.wins > 0).length,
+    zeroAIWinMissions: items.filter(r => r.wins === 0).map(r => r.mission),
+    errors: failures.filter(e => items.some(r => r.mission === e.mission))
+  };
+}
+const r2 = results.filter(r => R2_IDS.includes(r.campaign));
+console.log('R2_BALANCE_SUMMARY ' + JSON.stringify(summarize(r2)));
+console.log('STORY_BALANCE_SUMMARY ' + JSON.stringify(summarize(results)));
+console.log('STORY_BALANCE_FULL_JSON ' + JSON.stringify(results));
 if (failures.length) process.exitCode = 1;
