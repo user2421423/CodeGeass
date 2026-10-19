@@ -10,6 +10,36 @@ require('../dist/missions.js');
 require('../dist/campaign.js');
 const id = 'br_tohdoh';
 const seeds = [101, 202, 303, 404, 505, 606, 707, 808];
+const m = E.campaign.CAMPAIGNS.britannia_s1.missions.find(m => m.id === id);
+const baseUnits = m.units;
+const baseEvents = m.events;
+const B = 'britannia';
+const extras3 = [
+  [B, 'gloucester', 9, 5, 3, null, { normalOnly:true, hold:2 }],
+  [B, 'gloucester', 10, 4, 3, null, { normalOnly:true, hold:2 }],
+  [B, 'sutherland', 12, 7, 3, null, { normalOnly:true, hold:2 }],
+];
+const extras5 = [
+  ...extras3,
+  [B, 'gracchus', 14, 6, 2, null, { normalOnly:true, hold:2 }],
+  [B, 'gloucester', 15, 7, 3, null, { normalOnly:true, hold:2 }],
+];
+const extras7 = [
+  ...extras5,
+  [B, 'sutherland', 9, 6, 3, null, { normalOnly:true, hold:2 }],
+  [B, 'gloucester', 14, 4, 3, null, { normalOnly:true, hold:2 }],
+];
+const variants = [
+  ['current', [], false],
+  ['+3 strong defenders', extras3, false],
+  ['+5 strong defenders', extras5, false],
+  ['+7 strong defenders', extras7, false],
+  ['+3 & nearby Lancelot', extras3, true],
+  ['+5 & nearby Lancelot', extras5, true],
+];
+for (const [name, extras, nearbySuzaku] of variants) {
+m.units = [...baseUnits, ...extras];
+m.events = nearbySuzaku ? baseEvents.map(e => e.turn === 3 ? { ...e, spawn: [[B, 'elite_lancelot', 15, 6, 1, 'suzaku']] } : e) : baseEvents;
 const results = [];
 for (const seed of seeds) {
   const g = E.campaign.createMission(id, seed, 'normal');
@@ -44,7 +74,9 @@ for (const seed of seeds) {
     alive:g.units.filter(u=>u.hp>0&&u.side==='britannia').length});
 }
 const wins=results.filter(r=>r.winner==='britannia').length;
-console.log('Chofu Detention Center, 8 seeded Normal full-AI games:');
-for (const result of results) console.log(JSON.stringify(result));
-console.log('Britannian defender AI victories: '+wins+' / '+results.length);
-assert.ok(wins>=1, 'Britannia should be able to successfully defend the detention center in at least one seeded full-AI game');
+console.log('CHOFU VARIANT '+name+' => '+wins+' / '+results.length+' Britannia defender wins');
+console.log(results.map(r=>r.winner+':T'+r.turn).join(' '));
+}
+m.units = baseUnits;
+m.events = baseEvents;
+console.log('Finished seeded Chofu balance comparison');
