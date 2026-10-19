@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "campaign_id": "federation-eu",
+  "label": "Federation vs E.U.",
+  "architecture_branch": "feature/federation-vs-eu-campaign-architecture",
+  "base_branch": "main",
+  "status": "architecture_only",
+  "total_missions": 13,
+  "tiers": [
+    3,
+    2,
+    3,
+    3,
+    1,
+    1
+  ],
+  "shared_existing": [
+    {
+      "n": 1,
+      "key": "australia",
+      "scenario_id": "war-for-australia",
+      "notes": "unchanged shared three-way battle"
+    },
+    {
+      "n": 2,
+      "key": "area-18",
+      "scenario_id": "area-18",
+      "notes": "unchanged shared three-way battle"
+    },
+    {
+      "n": 3,
+      "key": "division-japan",
+      "scenario_id": "division-japan",
+      "notes": "unchanged shared three-way battle"
+    }
+  ],
+  "scenarios": [
+    {
+      "n": 4,
+      "tier": 2,
+      "key": "siberia",
+      "title": "Invasion of Siberia",
+      "map": "Manchuria/Mongolia-to-Siberia northward offensive; Russian taiga, steppe, broad river corridors and genuine E.U. cities; viable approach from the south.",
+      "design": "Large Chinese Army Groups, mobility/supply pressure, rivers, realistic Siberian distances; do not treat the entire region as empty tundra.",
+      "reuse": [
+        "britannia-siberia"
+      ],
+      "objective_id": "federation-eu-siberia",
+      "scenario_id": "cf-eu-siberia",
+      "scenario_file": "dist/scenarios-cf-eu-siberia.js",
+      "scenario_doc": "docs/CF_EU_SIBERIA_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 5,
+      "tier": 2,
+      "key": "caucasus",
+      "title": "Invasion of the Caucasus",
+      "map": "Federation pushes north from Persia through Azerbaijan/Georgia and into E.U. southern Russia; Greater Caucasus passes, Caspian coast, Baku/Tbilisi/Vladikavkaz.",
+      "design": "Several traversable mountain axes, fortified E.U. positions, meaningful Caspian ports and inland industry, no geographically impossible mountain shortcut.",
+      "reuse": [
+        "britannia-iraq-iran",
+        "invasion-turkey"
+      ],
+      "objective_id": "federation-eu-caucasus",
+      "scenario_id": "cf-eu-caucasus",
+      "scenario_file": "dist/scenarios-cf-eu-caucasus.js",
+      "scenario_doc": "docs/CF_EU_CAUCASUS_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 6,
+      "tier": 3,
+      "key": "turkey",
+      "title": "Invasion of Turkey",
+      "map": "Federation attacks west from Persia/Caucasus into eastern Anatolia; Ankara and Istanbul objectives; Black Sea and Mediterranean geography.",
+      "design": "Eastern mountainous approach, Bosporus/strait crossing must actually work, naval options only where supported, defenders sufficiently entrenched.",
+      "reuse": [
+        "invasion-turkey"
+      ],
+      "objective_id": "federation-eu-turkey",
+      "scenario_id": "cf-eu-turkey",
+      "scenario_file": "dist/scenarios-cf-eu-turkey.js",
+      "scenario_doc": "docs/CF_EU_TURKEY_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 7,
+      "tier": 3,
+      "key": "volga",
+      "title": "Battle for the Volga",
+      "map": "Chinese offensives from Caucasus and east/western Siberian staging into E.U. Volga region; Volgograd, Saratov, Kazan, riverbanks and bridges.",
+      "design": "Multiple playable crossings, significant industry, defender riverline, strong Chinese Army Group axes; avoid crossing-free stalemates.",
+      "reuse": [
+        "britannia-western-russia",
+        "crossing-urals"
+      ],
+      "objective_id": "federation-eu-volga",
+      "scenario_id": "cf-eu-volga",
+      "scenario_file": "dist/scenarios-cf-eu-volga.js",
+      "scenario_doc": "docs/CF_EU_VOLGA_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 8,
+      "tier": 3,
+      "key": "suez",
+      "title": "Crossing the Suez Canal",
+      "map": "Chinese expedition staging in Sinai east of Suez, E.U. holding western canal bank, Cairo, Nile Delta and Alexandria; include Mediterranean and Red Sea where useful.",
+      "design": "Make actual canal water and bridges/ferries playable; defensible but breachable west bank; expedition survives without captured cities when eligible; avoid fake land bridge.",
+      "reuse": [
+        "area-18"
+      ],
+      "objective_id": "federation-eu-suez",
+      "scenario_id": "cf-eu-suez",
+      "scenario_file": "dist/scenarios-cf-eu-suez.js",
+      "scenario_doc": "docs/CF_EU_SUEZ_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 9,
+      "tier": 4,
+      "key": "moscow",
+      "title": "Battle for Moscow",
+      "map": "Federation advances from Volga into E.U. western Russian heartland around Moscow; defendable Moscow plus nearby real industrial cities and river systems.",
+      "design": "Decisive layered defense, balanced Chinese multi-axis offensive, appropriate production; do not include St Petersburg as a mandatory objective (user approved Moscow only).",
+      "reuse": [
+        "britannia-western-russia"
+      ],
+      "objective_id": "federation-eu-moscow",
+      "scenario_id": "cf-eu-moscow",
+      "scenario_file": "dist/scenarios-cf-eu-moscow.js",
+      "scenario_doc": "docs/CF_EU_MOSCOW_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 10,
+      "tier": 4,
+      "key": "balkans",
+      "title": "Balkan Offensive",
+      "map": "Federation drives northwest from Turkey through Bulgaria, Greece, Serbia and adjacent Balkan countries; authentic borders, rivers, mountains and Adriatic/Aegean coasts.",
+      "design": "Passable Thrace/Bosporus approaches; proper sea/coast, Balkans defenses with several advancing axes and port positions.",
+      "reuse": [
+        "european-war",
+        "invasion-turkey"
+      ],
+      "objective_id": "federation-eu-balkans",
+      "scenario_id": "cf-eu-balkans",
+      "scenario_file": "dist/scenarios-cf-eu-balkans.js",
+      "scenario_doc": "docs/CF_EU_BALKANS_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 11,
+      "tier": 4,
+      "key": "north-africa",
+      "title": "North African Offensive",
+      "map": "Chinese advances west from Egypt across Libya, Tunisia and Algeria; Tripoli, Benghazi, Tunis, Algiers, proper coast and Sahara geography.",
+      "design": "Med naval presence, ports capture, usable coastal invasion corridor, no impassable desert gaps; secure staging bases for southern France.",
+      "reuse": [
+        "area-18"
+      ],
+      "objective_id": "federation-eu-north-africa",
+      "scenario_id": "cf-eu-north-africa",
+      "scenario_file": "dist/scenarios-cf-eu-north-africa.js",
+      "scenario_doc": "docs/CF_EU_NORTH_AFRICA_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 12,
+      "tier": 5,
+      "key": "central-europe",
+      "title": "Conquest of Central Europe",
+      "map": "E.U. Poland, Czechia, Slovakia, Hungary and Austria; Federation attacks from conquered Russian/Balkan directions. Germany absolutely excluded from map and objectives.",
+      "design": "Industrial cities, rivers and mountains, dense defenses; do not drift west into Germany and do not use Germany as a staging/invasion corridor to France.",
+      "reuse": [
+        "european-war"
+      ],
+      "objective_id": "federation-eu-central-europe",
+      "scenario_id": "cf-eu-central-europe",
+      "scenario_file": "dist/scenarios-cf-eu-central-europe.js",
+      "scenario_doc": "docs/CF_EU_CENTRAL_EUROPE_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    },
+    {
+      "n": 13,
+      "tier": 6,
+      "key": "france",
+      "title": "Invasion of France",
+      "map": "Federation carriers/transports off southern France from captured North African Mediterranean bases; French coast Marseille/Toulon and advance via Lyon to Paris.",
+      "design": "France only; Federation starts with ships and embarked troops, ZERO French cities, no Germany land-entry front; E.U. holds all French cities initially. Genuine southern amphibious assault, France total conquest, cityless expedition rule.",
+      "reuse": [
+        "operation-stonehenge",
+        "european-war"
+      ],
+      "objective_id": "federation-eu-france",
+      "scenario_id": "cf-eu-france",
+      "scenario_file": "dist/scenarios-cf-eu-france.js",
+      "scenario_doc": "docs/CF_EU_FRANCE_SCENARIO.md",
+      "status": "planned_unregistered",
+      "sides": [
+        "cf",
+        "eu"
+      ]
+    }
+  ],
+  "integration_contract": {
+    "scenario_owner": "dist/scenarios-cf-eu-<key>.js and own geography helpers + docs/CF_EU_<KEY>_SCENARIO.md only",
+    "scenario_branch": "scenario/cf-eu-<key> from feature/federation-vs-eu-campaign-architecture",
+    "pr_target": "feature/federation-vs-eu-campaign-architecture",
+    "integrator_owned": [
+      "dist/war-campaign.js",
+      "dist/ui/war-campaign-screen.js",
+      "dist/scenario-manifest.js",
+      "tools/generate-scenario-catalog.cjs",
+      "dist/scenario-catalog.js",
+      "tools/data/sim_baseline.txt"
+    ],
+    "unbuilt_runtime": "null until integrator verifies actual registered module; never point to another faction's scenario by convenience",
+    "completion": "real total conquest and proper engine victory only; no turn cap/auto-credit",
+    "scenario_support": "cf/eu both sides; Normal, Hard, Challenge, Elite; AI production and HQ rules; seeded sim both sides; recruitment/research/industry; Army Groups; commanders; Elite Forces; saves/rewards; mobile; geography"
+  }
+}
