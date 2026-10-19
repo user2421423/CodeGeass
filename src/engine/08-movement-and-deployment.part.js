@@ -345,13 +345,6 @@
         g.turn<=sw.expBeachheadUntil&&(sw.id===u.id||(TYPES[u.type].naval==='amphibious'&&dist(g,sw,s)<=2)))
         sw.expBeachheadUntil=Math.min(sw.expBeachheadStart+3,sw.expBeachheadUntil+1);
 
-    if(u.cmd==='charles'&&u.expImperialCaptureTurn!==g.turn){
-      u.expImperialCaptureTurn=g.turn;
-      for(const v of g.units)if(v.hp>0&&v.side===u.side&&!atSea(g,v)&&v.attacked&&
-        v.expImperialRestoredTurn!==g.turn&&dist(g,u,v)<=3){
-        v.attacked=false;v.expImperialRestoredTurn=g.turn;
-      }
-    }
     if(u.cmd==='nonette' && u.expCaptureAttackTurn!==g.turn){u.attacked=false;u.expCaptureAttackTurn=g.turn;}
     if((u.cmd==='sugiyama'||(u.cmd==='anya'&&u.focusCity?.city===s.id))&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
     const kaguyas=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='kaguya'&&dist(g,v,s)<=3);
