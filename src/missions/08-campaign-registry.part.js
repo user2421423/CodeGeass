@@ -60,8 +60,8 @@
       side: 'eb',
       portrait: 'shin',
       years: '2017–2018 a.t.b.',
-      desc: 'Akito the Exiled from the knights’ side: St. Raphael at Narva, St. Michael at Slonim, Kingsley’s offensive, Shin’s coup, the Gallia Grande and Castle Weisswolf, then the march on Paris.',
-      missions: pick(['eb_narva', 'eb_slonim', 'br6', 'eb_petersburg', 'eb_ark', 'eb_weisswolf', 'eb_assault', 'eb_fall']),
+      desc: 'The imperial war against Europia: an El Alamein prologue, the knights of Akito the Exiled, the Italian landing with Schneizel and Suzaku, and the march on Paris.',
+      missions: pick(['eb_el_alamein', 'eb_narva', 'eb_slonim', 'br6', 'eb_petersburg', 'eb_ark', 'eb_weisswolf', 'eb_assault', 'eb_italy', 'eb_fall']),
     },
     eu_europe: {
       name: 'Europia United',
@@ -70,8 +70,8 @@
       side: 'eu',
       portrait: 'leila',
       years: '2017 a.t.b.',
-      desc: 'Akito the Exiled: Leila Malcal’s wZERO unit, from Narva, Ryo’s ambush and the orbital drop on Slonim to the Gallia Grande, Castle Weisswolf and Smilas’s coup in Paris.',
-      missions: pick(['eu_narva', 'eu_ambush', 'eu_slonim', 'eu_front', 'eu_ark', 'eu_weisswolf', 'eu_assault', 'eu_paris']),
+      desc: 'Akito the Exiled: wZERO from Narva and Slonim to the Gallia Grande, the lakeside rescue of Leila, stopping Apollo’s Chariot, the final defense of Weisswolf and Smilas’s coup.',
+      missions: pick(['eu_narva', 'eu_ambush', 'eu_slonim', 'eu_front', 'eu_ark', 'eu_weisswolf', 'eu_lakeside_rescue', 'eu_apollo', 'eu_assault', 'eu_paris']),
     },
   };
   // The story arcs as mission-based campaigns, each played from either side: the two seasons and Akito the Exiled's war in Europe.

@@ -56,6 +56,7 @@ for (const campaign of Object.values(CP.CAMPAIGNS)) {
 
 assert.ok(missions >= 58, 'audit every registered Story mission including new campaigns');
 assert.equal(missing + explicit, missions, 'every mission must have a default or authored Industry reserve');
+assert.equal(missions, Object.values(CP.CAMPAIGNS).reduce((n, c) => n + c.missions.length, 0), 'audit every registered Story mission');
 for (const [id, expected] of Object.entries({
   bk1: 60, bk2: 80, bk3: 100, bk_fukuoka: 120,
   bk_pacific: 150, bk4: 120, br1: 80, eu_front: 200,

@@ -6,12 +6,15 @@ require('../dist/missions.js');
 require('../dist/campaign.js');
 const missions = Object.values(globalThis.KnightmareMissions.CAMPAIGNS).flatMap(c => c.missions);
 assert.ok(missions.length >= 58, 'all legacy and newly registered missions included');
+assert.equal(new Set(missions.map(m => m.id)).size, missions.length, 'unique registered missions');
 for (const mission of missions) {
   for (const mode of ['normal', 'hard', 'challenge']) {
     const deployed = new Set();
     for (const [side, type, c, r, stack, cmd, options = {}] of mission.units) {
       if ((options.normalOnly && mode !== 'normal') || (options.skipNormal && mode === 'normal')) continue;
-      assert.ok(mission.map[r]?.[c] && !['.', 'x'].includes(mission.map[r][c]), mission.id + ' ' + mode + ': invalid deployment ' + type + '@' + c + ',' + r);
+      const terrain = mission.map[r]?.[c];
+      const ship = E.TYPES[type]?.naval === 'ship';
+      assert.ok(terrain && terrain !== 'x' && (ship ? terrain === '.' : terrain !== '.'), mission.id + ' ' + mode + ': invalid deployment ' + type + '@' + c + ',' + r);
       const pos = c + ',' + r;
       assert.ok(!deployed.has(pos), mission.id + ' ' + mode + ': overlap at ' + pos);
       deployed.add(pos);

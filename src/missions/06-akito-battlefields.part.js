@@ -394,3 +394,76 @@
     ['eu', 'alexander_drone', 13, 3, 2],
   ];
 
+
+  // S1 Episode 9 mentions this front; the desert supply battle is a tactical adaptation.
+  const EL_ALAMEIN = [
+    '........................',
+    '........................',
+    'dddddddddddddddddddddddd',
+    'dddddddddppppddddddddddd',
+    'dddddddddpuppddddduddddd',
+    'pppppppppppppppppppppppp',
+    'ppppuppppppppppppppppppp',
+    'pppppppppppppppppppppupp',
+    'dddddddddddddddddddddddd',
+    'dddpppppdddddddddddddddd',
+    'dddpppupdddddddddddddddd',
+    'dddpppppddddddmmmmmddddd',
+    'ddddddddddddddmmmmmddddd',
+    'ddddddddddddddmmmmmddddd',
+  ];
+
+  // R2 Episode 3: an offshore fleet lands on an unnamed Italian coast, not a named invented city.
+  const ITALIAN_COAST = [
+    '.........ppppppppppppmmmmm',
+    '.........ppppppppppppmmmmm',
+    '........ppppppppppfffppppp',
+    '........ppppppppppfffppppp',
+    '.......pppupppppppfffppppp',
+    '.......pppppppppppfffppppp',
+    '.......pppppppppppfffppppp',
+    '.......ppppuppppupfffppupp',
+    '.......pppppppppppfffppppp',
+    '.......pppppppppppfffppppp',
+    '.......pppupppppppfffppppp',
+    '.......pppppppppppfffppppp',
+    '........ppppppppppfffppppp',
+    '........ppppppppppfffppppp',
+    '.........ppppppppppppmmmmm',
+    '.........ppppppppppppmmmmm',
+  ];
+
+  // Episode 4: the surrender meeting across the lake, the rescue approach, and the evacuation jetty.
+  const WEISSWOLF_LAKESIDE = [
+    'fffppppppppppppppmmmmmmm',
+    'fffppppppppppppppmmmmmmm',
+    'fffppppppppppppppppppfff',
+    'fffupppppppppppppppppfff',
+    'fffpppppppppppppppppufff',
+    'fffppppppppppppppppppfff',
+    'fffpppppppppppuppppppfff',
+    'fffppppppppppppppppppfff',
+    '........pppppppppppppfff',
+    '........pppppppppppppfff',
+    '........pupppppppppppfff',
+    '.........ppppppppppppfff',
+    '.........ppppppppppppfff',
+    '.........ppppppppppppfff',
+  ];
+
+  // Episode 5: a parallel operation through Weisswolf corridors to the launch control room.
+  const APOLLO_CONTROL = [
+    'xxxxxxxxxxxxxxxxxxxxxx',
+    'xuuuuuuxuuuuuxuuuuuuux',
+    'xuuuuuuxuuuuuxuuuuuuux',
+    'xuuuuuuuuuuuuuuuuuuuux',
+    'xuuuuuuxuuuuuxuuuuuuux',
+    'xuuuuuuxuuuuuxuxxxxxux',
+    'xuuuuuuuuuuuuuuuuuuuux',
+    'xuuuuuuxuuuuuxuxxxxxux',
+    'xuuuuuuxuuuuuxuuuuuuux',
+    'xuuuuuuuuuuuuuuuuuuuux',
+    'xuuuuuuxuuuuuxuuuuuuux',
+    'xuuuuuuxuuuuuxuuuuuuux',
+    'xxxxxxxxxxxxxxxxxxxxxx',
+  ];

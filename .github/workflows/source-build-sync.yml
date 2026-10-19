@@ -41,6 +41,8 @@ jobs:
         run: node tools/story_canterbury_movement_smoke.cjs
       - name: Verify Story Normal objectives, deployment and balance support
         run: node tools/story_normal_objectives_and_balance_smoke.cjs
+      - name: Verify ten-mission European stories, carrier landings, rewards and seeded objectives
+        run: node tools/europe_story_expansion_smoke.cjs --playout
       - name: Run seeded Story Normal detention-center gameplay viability probe
         run: node tools/story_normal_defense_ai_probe.cjs
       - name: Verify Story Elite deployment and faction-specific unit rosters

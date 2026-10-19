@@ -40,7 +40,7 @@
       ...E.DIFFICULTIES.challenge,
       name: 'Elite', level: 3, tokens: 2.5, ranks: E.RANKS.length - 1,
       stack: false, extraTurns: 0,
-      desc: 'Challenge research, economy and reinforcements, but only one-frame Elite Forces. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
+      desc: 'Challenge research, economy and reinforcements, but land formations use one-frame Elite Forces; scripted carriers retain their hulls and cargo. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
     },
   };
   const difficulty = id => DIFFICULTIES[id] || DIFFICULTIES.normal;
@@ -96,7 +96,8 @@
   const asList = x => (Array.isArray(x) ? x : x ? [x] : []);
   const friendly = (g, side) => side === g.player || !E.foe(g, side, g.player);
   const cityByName = (g, name) => g.stations.find(s => s.name === name);
-  const unitWith = (g, k) => g.units.find(u => u.hp > 0 && u.cmd === k);
+  const storyUnits = g => g.units.flatMap(u => [u, ...(u.cargo || [])]);
+  const unitWith = (g, k) => storyUnits(g).find(u => u.hp > 0 && u.cmd === k);
   // Story roster fallbacks: Euro Britannia borrows Britannian elites; JLF borrows Black Knights elites.
   const ELITE_ROSTER_FALLBACKS = Object.freeze({
     eb: 'britannia', // Euro Britannia
@@ -229,8 +230,9 @@
   }
 
   // ======== Building a mission ========
-  // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal }].
-  function placeUnit(g, spec) {
+  // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal, cargo }].
+  // cargo contains full friendly land-unit specs; their coordinates follow the carrier.
+  function placeUnit(g, spec, carrier = null) {
     const [side, kind, c, r, stack = 1, cmd = null, opts = {}] = spec,
       d = difficulty(g.difficulty),
       enemy = E.foe(g, side, g.player);
@@ -244,7 +246,9 @@
       unitStack = 3;
     }
     unitStack = Math.max(1, Math.min(3, unitStack));
-    if (!E.TYPES[type].elite) {
+    // Carriers retain their hull/cargo rules on every difficulty, as in regional wars.
+    const ship = E.TYPES[type].naval === 'ship';
+    if (!E.TYPES[type].elite && !ship) {
       if (!enemy && side === g.player && d.playerStack) unitStack = Math.min(3, unitStack + d.playerStack);
       if (enemy && d.level) {
         const n = g.campaign.enemyPlaced++;
@@ -255,12 +259,12 @@
     // Difficulty upgrades must also respect each side's actual Story roster.
     type = storyFactionType(g, side, type);
     const free = t =>
-      t && !E.isSea(t) && !E.TERRAIN[t.terrain]?.blocked && !E.unitAt(g, t) && (!E.stationAt(g, t) || !E.foe(g, E.stationAt(g, t).owner, side));
-    let at = E.tile(g, c, r);
-    if (!free(at)) at = nearest(g, { c, r }, free);
+      t && (ship ? E.isSea(t) : !E.isSea(t)) && !E.TERRAIN[t.terrain]?.blocked && !E.unitAt(g, t) && (!E.stationAt(g, t) || !E.foe(g, E.stationAt(g, t).owner, side));
+    let at = carrier ? E.tile(g, carrier.c, carrier.r) : E.tile(g, c, r);
+    if (!carrier && !free(at)) at = nearest(g, { c, r }, free);
     if (!at) return null;
     if (isEliteCampaign(g) && cmd && unitWith(g, cmd)) return null;
-    if (isEliteCampaign(g)) {
+    if (isEliteCampaign(g) && !ship) {
       type = E.ELITE_FORCES[eliteType(g, side, type, cmd)].type;
       unitStack = 1;
     }
@@ -279,13 +283,25 @@
     if (cmd) u.cmdRank = E.officer(g, cmd).rank;
     u.hp = E.maxHP(u);
     if (enemy && d.enemyHp) u.hp = Math.max(1, Math.round(u.hp * d.enemyHp));
-    if (!E.isSea(at)) E.setTileOwner(g, at, side);
+    if (carrier) {
+      g.units.splice(g.units.indexOf(u), 1);
+      (carrier.cargo ||= []).push(u);
+    } else if (!E.isSea(at)) E.setTileOwner(g, at, side);
+    if (opts.cargo) {
+      if (!ship || opts.cargo.length > E.carrierCapacity(g, u))
+        throw new Error('Invalid Story carrier cargo: ' + kind);
+      for (const passenger of opts.cargo) {
+        if (passenger[0] !== side || E.TYPES[passenger[1]]?.naval)
+          throw new Error('Story cargo must be friendly land formations');
+        placeUnit(g, passenger, u);
+      }
+    }
     return u;
   }
 
   function addDifficultyReinforcements(g, d) {
     if (!d.extraPer) return;
-    const enemies = g.units.filter(u => u.hp > 0 && E.foe(g, u.side, g.player) && (isEliteCampaign(g) || !u.elite)),
+    const enemies = g.units.filter(u => u.hp > 0 && E.TYPES[u.type].naval !== 'ship' && E.foe(g, u.side, g.player) && (isEliteCampaign(g) || !u.elite)),
       extra = Math.ceil(enemies.length / d.extraPer);
     let made = 0;
     for (let i = 0; i < enemies.length && made < extra; i++) {
@@ -460,7 +476,7 @@
       [s, eliteRoster(s, { teams: g.teams, order: g.order, storyUnits: m?.units || [] })]));
     // Migrate old saves that contain obsolete Federation/UFN or cross-faction
     // units, retaining their owner, HP fraction, position and commander.
-    for (const u of g.units || []) {
+    for (const u of storyUnits(g)) {
       if (!E.TYPES[u.type]) continue;
       const oldMax = E.maxHP(u);
       const hpFraction = oldMax ? Math.max(0, Math.min(1, u.hp / oldMax)) : 0;
@@ -481,7 +497,7 @@
       }
     }
     if (isEliteCampaign(g)) return g;
-    for (const u of g.units || []) {
+    for (const u of storyUnits(g)) {
       // Player HQ recruits must not be mistaken for scripted aces on save/load.
       if (u.storyHQDeployed) continue;
       if (!E.TYPES[u.type]?.elite) {
@@ -745,6 +761,8 @@
     eu_front: 'leila_alexander',
     eu_ark: 'ryo_valiant',
     eu_weisswolf: 'yukiya_valiant',
+    eu_lakeside_rescue: 'leila_alexander',
+    eu_apollo: 'ayano_valiant',
     eu_assault: 'akito_liberte',
     eu_paris: 'akito_liberte',
   };

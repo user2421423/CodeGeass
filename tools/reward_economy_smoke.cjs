@@ -69,7 +69,7 @@ const awardOptions = award => Array.from(
 for (const [difficulty, rarity] of Object.entries({
   normal: 'Rare', hard: 'Epic', challenge: 'Legendary', elite: 'Any',
 })) {
-  for (const id of ['eb_narva', 'br6', 'eb_fall']) {
+  for (const id of ['eb_el_alamein', 'eb_italy', 'eb_narva', 'br6', 'eb_fall']) {
     assert.equal(E.campaign.mission(id).player, 'eb', id + ' is a Euro Britannia Story mission');
     const key = 'story:' + id + ':' + difficulty;
     assert.equal(rewardAPI.queueEliteReward(rewardProfile,
@@ -88,7 +88,7 @@ const legacyEuroAward = {
   side: 'britannia', options: ['lancelot', 'mordred', 'sutherland_air'],
 };
 assert.deepEqual(awardOptions(legacyEuroAward), matchingEliteIds('eu', 'Epic'));
-for (const [id, side] of [['br1', 'britannia'], ['bk1', 'bk'], ['eu_narva', 'eu']]) {
+for (const [id, side] of [['br1', 'britannia'], ['bk1', 'bk'], ['eu_narva', 'eu'], ['eu_lakeside_rescue', 'eu'], ['eu_apollo', 'eu']]) {
   const key = 'story:' + id + ':normal';
   assert.equal(rewardAPI.queueEliteReward(rewardProfile,
     { player: 'eb', difficulty: 'normal' }, key, 10, 'Story Mode 3★'), true,
