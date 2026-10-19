@@ -1,7 +1,7 @@
 name: Federation vs EU integrated scenario audit
 on:
   push:
-    branches: ['feature/federation-vs-eu-campaign-architecture']
+    branches: ['feature/federation-vs-eu-campaign-architecture', 'main']
     paths:
       - 'dist/scenarios-cf-eu-*.js'
       - 'dist/cf-eu-balkans-coast.js'
@@ -10,9 +10,12 @@ on:
       - 'tools/generate-scenario-catalog.cjs'
       - 'tools/scenario_sim.cjs'
       - 'tools/federation_eu_campaign_smoke.cjs'
+      - 'tools/federation_eu_mechanics_smoke.cjs'
+      - 'src/ai/**'
+      - 'dist/scenario-catalog.js'
       - '.github/workflows/federation-eu-integration.yml'
 concurrency:
-  group: federation-eu-integration-feature
+  group: federation-eu-integration-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: write
@@ -46,7 +49,7 @@ jobs:
           }
           NODE
       - name: Publish deterministic generated scenario catalog
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/federation-vs-eu-campaign-architecture'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
