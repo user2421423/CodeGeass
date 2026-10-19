@@ -29,3 +29,9 @@ node tools/scenario_sim.cjs eu-cf-luoyang cf elite 11 5
 ```
 
 Also exercise normal/hard/challenge/elite setup, factory recruitment and AI production, 50+ turn simulations if feasible, saves, city/crossing reachability, unit/commander ownership, and absence of CI regressions. **These are outstanding executable tests, not claimed successful results.** The standalone harness discovers `dist/scenarios-*.js` directly; browser/UI registration remains integrator-owned.
+
+## Observed checks (October 19, 2026)
+
+**Independent static checks against the committed scenario source:** 83/83 source-city names and coordinates preserved from the original; 18/65 initial city ownership; all 25 distinct named commanders were found in the engine roster and matched their assigned factions; every army base belongs to its formation's faction; all 13 front origins belong to the specified side and objectives exist. A hex connectivity audit reconstructed the inherited relief, Yellow River cells, bridges and pass roads: **83/83 cities place successfully, six named bridges/fords exist, and all 83 cities are reachable within one non-peak land component**, with 1,022 peak tiles and 164 river water tiles. This audit is **not** a combat AI simulation.
+
+**PR-triggered CI:** E.U.–Federation campaign architecture and Story Mode AI production checks passed. Source/build synchronization and gameplay deterministic-baseline checks reported failures in existing unrelated test cases (Kallen Breakthrough reposition, and existing Division Japan / Greenland scenario fingerprints, respectively); the Luoyang PR changes no shared engine or those scenarios. Recheck against the parent branch before treating failures as newly introduced. No full seeded Luoyang combat run has been completed and no Normal winnability conclusion can be claimed.
