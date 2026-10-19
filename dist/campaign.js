@@ -212,6 +212,21 @@
     return type;
   }
 
+  // Campaign designers may override a mission's Industry explicitly. For the
+  // other Story operations, provision the player's starting Industry according
+  // to their starting Credits, rather than silently giving them zero. Enemy
+  // starting reserves remain authored by each mission (usually zero).
+  function defaultStoryIndustry(credits) {
+    if (credits >= 600) return 250;
+    if (credits >= 500) return 200;
+    if (credits >= 400) return 150;
+    if (credits >= 300) return 120;
+    if (credits >= 250) return 100;
+    if (credits >= 200) return 80;
+    if (credits >= 150) return 60;
+    return 0;
+  }
+
   // ======== Building a mission ========
   // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal }].
   function placeUnit(g, spec) {
@@ -338,7 +353,8 @@
           s,
           // Story missions previously started with zero Research. Grant the
           // doubled 40-point Conquest baseline to each fighting faction.
-          { credits: m.economy?.[s] ?? 0, industry: m.industry?.[s] ?? 0,
+          { credits: m.economy?.[s] ?? 0,
+            industry: m.industry?.[s] ?? (s === m.player ? defaultStoryIndustry(m.economy?.[s] ?? 0) : 0),
             science: s === 'neutral' ? 0 : 80, sakuradite: m.sakuradite?.[s] ?? 150 },
         ]),
       ),
