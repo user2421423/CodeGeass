@@ -72,6 +72,9 @@ function locate(lon,lat){const r=Math.max(0,Math.min(ROWS-1,
  (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};}
 function seaAt(p){
  if(p.lat>coastLatitude(p.lon))return true;
+ // South of Ras Muhammad (27.73 N), the two gulfs join the Red Sea.
+ // Keep a navigable southern mouth instead of trapping Aqaba flotillas.
+ if(p.lat<27.74&&p.lon>=32.62&&p.lon<=35.10)return true;
  if(p.lat>=29.94&&p.lat<=31.28&&lineDistance(p,CANAL)<.080)return true;
  if(p.lat<29.966){
   const west=interpolate(p.lat,WEST_GULF),east=interpolate(p.lat,EAST_GULF);
