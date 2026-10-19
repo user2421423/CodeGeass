@@ -58,7 +58,8 @@ function percentile(values,p) {
     const cases=[];
     await page.evaluate(() => { window.benchmarkDrawTimes=[]; const original=draw; draw=function(...args) { const began=performance.now(); try { return original(...args); } finally { window.benchmarkDrawTimes.push(performance.now()-began); } }; });
     for(const id of SCENARIOS.filter(id=>!process.env.SCENARIO_IDS || process.env.SCENARIO_IDS.split(',').includes(id))) {
-      const result=await page.evaluate(async id=>{
+      const result=await page.evaluate(async ({id,capture})=>{
+        const screenshots={};
         const beganLoad = performance.now();
         if (id === 'world' || id === 'ufn2018') {
           setup.conquest=id; setup.side=E.CONQUESTS[id].selectable[0];
@@ -83,6 +84,8 @@ function percentile(values,p) {
         const startupMs = performance.now()-beganLoad;
         await new Promise(resolve=>setTimeout(resolve,400));
         window.KNIGHTMARE_MAP_PERF.reset();
+        // Optional on new renderers; ignored by historical revisions.
+        window.KNIGHTMARE_MAP_PERF.traceDynamic=true;
         window.benchmarkDrawTimes.length=0;
         const durations=[];
         // The same 48 camera moves in all theatres; cross into uncached areas,
@@ -99,6 +102,7 @@ function percentile(values,p) {
         }
         await new Promise(resolve=>setTimeout(resolve,500));
         const draws=window.benchmarkDrawTimes.slice();
+        const zoomDrawStart=window.benchmarkDrawTimes.length;
         const zoomTimes=[], zoomVisibleTimes=[], zoomSamples=[];
         for (const target of [24,32,38,32,24]) {
           zoom = Math.min(ZOOM_MAX, target/R/baseScale);
@@ -122,15 +126,40 @@ function percentile(values,p) {
           zoomTimes.push(queueMs);
           if(regional)zoomVisibleTimes.push(visibleMs);
           zoomSamples.push({target,visibleMs:regional?visibleMs:null,queueMs});
+          if (capture && target===38) {
+            draw(0,0); // A deterministic animation timestamp for parity tests.
+            screenshots.zoom38=canvas.toDataURL('image/png');
+          }
         }
-        return {scenario:id,startupMs,zoomSettleMs:Math.max(...zoomTimes),zoomVisibleMs:zoomVisibleTimes.length?Math.max(...zoomVisibleTimes):null,zoomSamples,hexes:game.cols*game.rows,
-          drawTimes:draws,frameP50Ms:durations.slice().sort((a,b)=>a-b)[23],
+        if (capture) {
+          draw(0,0);
+          screenshots.zoom24=canvas.toDataURL('image/png');
+        }
+        return {screenshots,scenario:id,startupMs,zoomSettleMs:Math.max(...zoomTimes),zoomVisibleMs:zoomVisibleTimes.length?Math.max(...zoomVisibleTimes):null,zoomSamples,hexes:game.cols*game.rows,
+          drawTimes:draws,zoomDrawTimes:window.benchmarkDrawTimes.slice(zoomDrawStart),
+          frameP50Ms:durations.slice().sort((a,b)=>a-b)[23],
           framesMs:durations,
           ...window.KNIGHTMARE_MAP_PERF.snapshot()};
-      },id);
-      cases.push({...result,frameP50Ms:percentile(result.framesMs,.5),frameP95Ms:percentile(result.framesMs,.95),drawP50Ms:percentile(result.drawTimes,.5),drawP95Ms:percentile(result.drawTimes,.95)});
+      },{id,capture:!!process.env.BENCHMARK_SCREENSHOT_DIR});
+      if (process.env.BENCHMARK_SCREENSHOT_DIR) {
+        const folder=process.env.BENCHMARK_SCREENSHOT_DIR;
+        fs.mkdirSync(folder,{recursive:true});
+        const prefix=process.env.BENCHMARK_SCREENSHOT_PREFIX||'snapshot';
+        for(const [zoom,data] of Object.entries(result.screenshots)) {
+          if(!data.startsWith('data:image/png;base64,'))throw Error('Unexpected canvas format');
+          fs.writeFileSync(path.join(folder,prefix+'-'+id+'-'+zoom+'.png'),
+            Buffer.from(data.slice('data:image/png;base64,'.length),'base64'));
+        }
+      }
+      delete result.screenshots;
+      cases.push({...result,frameP50Ms:percentile(result.framesMs,.5),frameP95Ms:percentile(result.framesMs,.95),
+        drawP50Ms:percentile(result.drawTimes,.5),drawP95Ms:percentile(result.drawTimes,.95),
+        zoomDrawP50Ms:percentile(result.zoomDrawTimes,.5),zoomDrawP95Ms:percentile(result.zoomDrawTimes,.95)});
       delete cases[cases.length-1].framesMs;
       delete cases[cases.length-1].drawTimes;
+      delete cases[cases.length-1].zoomDrawTimes;
+      if (result.dynamicUnitFrames)
+        cases[cases.length-1].dynamicUnitMeanMs = +(result.dynamicUnitRenderMs / result.dynamicUnitFrames).toFixed(3);
       await session.send('HeapProfiler.collectGarbage');
       const memory=await session.send('Performance.getMetrics');
       cases[cases.length-1].heapBytes=memory.metrics.find(m=>m.name==='JSHeapUsedSize').value;

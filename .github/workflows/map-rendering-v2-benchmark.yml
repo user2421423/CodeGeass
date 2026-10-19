@@ -1,0 +1,94 @@
+name: Map renderer V2 controlled benchmarks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/renderer/**'
+      - 'tools/benchmark_regional_maps.cjs'
+      - 'tools/compare_map_benchmarks.cjs'
+      - '.github/workflows/map-rendering-v2-benchmark.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  measured-compare:
+    name: Baseline vs candidate (Chromium desktop and emulated touch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Isolate the exact PR base and head
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch origin "$BASE_SHA" "$HEAD_SHA"
+          git worktree add --detach "$RUNNER_TEMP/map-before" "$BASE_SHA"
+          git worktree add --detach "$RUNNER_TEMP/map-after" "$HEAD_SHA"
+          (cd "$RUNNER_TEMP/map-before" && node tools/build_sources.cjs)
+          (cd "$RUNNER_TEMP/map-after" && node tools/build_sources.cjs)
+          mkdir -p "$RUNNER_TEMP/map-bench"
+
+      - name: Install existing benchmark driver
+        run: |
+          npm install --prefix "$RUNNER_TEMP/map-perf-deps" --no-save --no-package-lock playwright-core@1.57.0
+          command -v google-chrome || command -v chromium
+
+      - name: Repeated A/B pan, zoom and startup measurements
+        env:
+          SCENARIO_IDS: world,ufn2018,division-japan,war-for-australia,invasion-korea
+        run: |
+          set -euo pipefail
+          for pass in 1 2; do
+            for state in before after; do
+              for profile in desktop mobile; do
+                export NODE_PATH="$RUNNER_TEMP/map-perf-deps/node_modules"
+                export BENCHMARK_DIST="$RUNNER_TEMP/map-$state/dist"
+                export BENCHMARK_OUTPUT="$RUNNER_TEMP/map-bench/$profile-$state-$pass.json"
+                if [ "$pass" = 1 ]; then
+                  export BENCHMARK_SCREENSHOT_DIR="$RUNNER_TEMP/map-bench/screenshots"
+                  export BENCHMARK_SCREENSHOT_PREFIX="$profile-$state-$pass"
+                else
+                  unset BENCHMARK_SCREENSHOT_DIR BENCHMARK_SCREENSHOT_PREFIX || true
+                fi
+                if [ "$profile" = mobile ]; then
+                  export BENCHMARK_MOBILE=1
+                else
+                  unset BENCHMARK_MOBILE || true
+                fi
+                node "$GITHUB_WORKSPACE/tools/benchmark_regional_maps.cjs"
+              done
+            done
+          done
+          node "$GITHUB_WORKSPACE/tools/compare_map_benchmarks.cjs" "$RUNNER_TEMP/map-bench"
+          cat "$RUNNER_TEMP/map-bench/comparison.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw before/after evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-rendering-v2-compare
+          path: ${{ runner.temp }}/map-bench/
+          if-no-files-found: ignore
+
+      - name: Renderer-only static and gameplay checks
+        run: |
+          set -euo pipefail
+          node --check "$RUNNER_TEMP/map-after/dist/ui/renderer.js"
+          (cd "$RUNNER_TEMP/map-after" && node tools/validate_assets.cjs --tracked)
+          (cd "$RUNNER_TEMP/map-after" && python3 tools/check_map.py)
+          (cd "$RUNNER_TEMP/map-before" && node tools/scenario_sim.cjs --all > "$RUNNER_TEMP/map-bench/scenario-before.txt")
+          (cd "$RUNNER_TEMP/map-after" && node tools/scenario_sim.cjs --all > "$RUNNER_TEMP/map-bench/scenario-after.txt")
+          diff -u "$RUNNER_TEMP/map-bench/scenario-before.txt" "$RUNNER_TEMP/map-bench/scenario-after.txt"
+          for name in federation_era_roster_smoke commander_assignment_smoke repair_and_port_healing_smoke world_campaign_elite_levels_smoke; do
+            (cd "$RUNNER_TEMP/map-after" && node "tools/$name.cjs")
+          done
+

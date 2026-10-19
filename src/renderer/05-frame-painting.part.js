@@ -70,8 +70,10 @@ function draw(time, dt) {
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
       t = E.tile(game, cc, rr),
-      c = hexCenter(t),
-      style = movementTileStyle(t),
+      c = hexCenter(t);
+    // Range overlays can contain hundreds of hexes outside the camera.
+    if (!visible(c) || (!wraps() && (c.x < left || c.x > right))) continue;
+    const style = movementTileStyle(t),
       naval = E.isSea(t) || (movingShip && E.isCoast(t));
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
@@ -107,6 +109,7 @@ function draw(time, dt) {
   for (const k of targetCache) {
     const [cc, rr] = k.split(',').map(Number),
       c = hexCenter({ c: cc, r: rr });
+    if (!visible(c) || (!wraps() && (c.x < left || c.x > right))) continue;
     for (const x of copies(c.x)) {
       hexPath(x, c.y, R - 1.5);
       ctx.fillStyle = '#e8343050';
@@ -328,16 +331,42 @@ function draw(time, dt) {
       }
     }
   }
+  // Dynamic-unit work is measured only when a benchmark explicitly opts in.
+  // No per-frame arrays or timers are retained in normal gameplay.
+  const dynamicTimingStart =
+    typeof window !== 'undefined' && window.KNIGHTMARE_MAP_PERF?.traceDynamic
+      ? performance.now() : null;
   // Group indicators share the same optional overlay in Conquest and Scenarios.
   const groupMembership = new Map();
   if (strategicOverlay) for (const gr of strategicOverlayGroups())
     for (const id of gr.units) groupMembership.set(id, gr);
   const focusedGroup=strategicOverlay?activeArmyGroup():null;
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
-  const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
-  for (const u of living) {
-    const base = animatedPosition(u);
+  // Cull before sorting: offscreen formations need neither sprite drawing nor
+  // per-frame depth sorting. Keep the original row/column ordering for visible
+  // units, including overlapping stacks and animated movements.
+  // One pass over active movement VFX avoids searching the effects array
+  // separately for each (usually stationary) unit during combat animation.
+  const movingIds = effects.length ? new Set() : null;
+  if (movingIds) for (const effect of effects)
+    if (effect.kind === 'move' && effect.life > 0) movingIds.add(effect.unitId);
+  const living = [];
+  let aliveUnits = 0;
+  for (const u of game.units) {
+    if (u.hp <= 0) continue;
+    aliveUnits++;
+    const base = movingIds?.has(u.id) ? animatedPosition(u) : hexCenter(u);
     if (!visible(base)) continue;
+    // Non-wrapping maps previously painted every horizontal offscreen unit.
+    // The camera bounds already include 2R of overscan; retain another 2R
+    // for large frames, commander pins, and their shadows.
+    if (!wraps() && (base.x < left - R * 2 || base.x > right + R * 2)) continue;
+    const xs = copies(base.x);
+    if (!xs.length) continue;
+    living.push({u, base, xs});
+  }
+  living.sort((a, b) => a.u.r - b.u.r || a.u.c - b.u.c);
+  for (const {u, base, xs} of living) {
     const t = E.TYPES[u.type],
       sel = selection?.kind === 'unit' && selection.id === u.id,
       multi = multiSelectedIds.has(u.id),
@@ -345,7 +374,7 @@ function draw(time, dt) {
       groupColor = group ? strategicGroupColor(group) : '#ffd36e',
       sea = E.atSea(game, u),
       spent = u.side === game.player && game.phase === game.player ? !hasOrders(u) : u.moved && u.attacked;
-    for (const x of copies(base.x)) {
+    for (const x of xs) {
       if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
@@ -420,17 +449,25 @@ function draw(time, dt) {
     }
   }
   if (detail)
-    for (const u of living)
-      if (u.cmd) {
-        const p = animatedPosition(u);
-        if (!visible(p)) continue;
-        for (const x of copies(p.x)) drawAdmiralPin(u, { x, y: p.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
-      }
+    for (const {u, base, xs} of living)
+      if (u.cmd)
+        for (const x of xs)
+          drawAdmiralPin(u, { x, y: base.y }, scale, selection?.kind === 'unit' && selection.id === u.id);
+  if (dynamicTimingStart !== null) {
+    const ms = performance.now() - dynamicTimingStart;
+    mapAtlasPerformance.dynamicUnitRenderMs += ms;
+    mapAtlasPerformance.dynamicUnitFrames++;
+    mapAtlasPerformance.dynamicUnitMaxMs = Math.max(mapAtlasPerformance.dynamicUnitMaxMs, ms);
+    mapAtlasPerformance.dynamicVisibleUnitTotal += living.length;
+    mapAtlasPerformance.dynamicOffscreenUnitTotal += aliveUnits - living.length;
+  }
   for (const k of targetCache) {
     const [c, r] = k.split(',').map(Number),
       p = hexCenter({ c, r });
-    if (visible(p)) mapHasPulse = true;
-    for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
+    if (!visible(p) || (!wraps() && (p.x < left || p.x > right))) continue;
+    const xs = copies(p.x);
+    if (xs.length) mapHasPulse = true;
+    for (const x of xs) drawCrosshair({ x, y: p.y }, time, scale);
   }
   // The selected Eliminator carrier's cover, any warhead aimed inside it is neutralized: a faint wash and a bright
   // cyan outline along its edge, which stays readable over the movement range.
