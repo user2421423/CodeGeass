@@ -228,12 +228,9 @@
       if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
-      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
+      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata', 'ohgi'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
-      // Ohgi's Organizer: the morale step comes even when surrounded.
-      else if (nearby >= 3 && mine.some(m => m.hp > 0 && m.id !== u.id && fx(m).organizer && dist(g, m, u) <= 1))
-        u.morale = Math.min(1, u.morale + 1);
       const t = tile(g, u.c, u.r),
         attrition = TERRAIN[t.terrain]?.attrition;
       if (attrition) {
