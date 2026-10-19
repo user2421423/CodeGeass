@@ -107,7 +107,7 @@ function create(player='cf',difficulty='normal',seed=201712){
    waterFraction:water,waterBasin:seaAt(p)?'baltic':null,country:country||null};
  });
  for(const [name,lon,lat,owner,tier,fort] of CITIES){
-  const geographicCountry=countryAt({lon,lat});
+  const geographicCountry=countryAt({lon,lat})||({Swinoujscie:'POL',Klaipeda:'LTU',Belgrade:'SRB'})[name];
   if(!geographicCountry|| (owner==='eu'?!TARGET_COUNTRIES.includes(geographicCountry):!STAGING_COUNTRIES.includes(geographicCountry)))
    throw Error('City placed outside its faction theatre: '+name+'/'+geographicCountry);
   const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&t.terrain!=='offmap'&&
