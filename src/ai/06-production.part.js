@@ -27,9 +27,9 @@
       plan = ((g.ai ||= {})[side] ||= {}),
       memo = aiPlan(g, side),
       eliteCampaign = g.mode === 'campaign' && g.difficulty === 'elite',
-      eliteAI = eliteCampaign || eliteAIProduction(g),
-      // Story Mode production follows the same ordinary resource and factory
-      // checks as other game modes. There is no per-mission AI opt-in.
+      eliteAI = eliteCampaign || eliteAIProduction(g);
+    // Story Mode production follows the same ordinary resource and factory
+    // checks as other game modes. There is no per-mission AI opt-in.
     // Ensure new regional games finish one-time treasury initialization before
     // the AI examines budgets (including the doubled starting Research).
     const scienceIncome = income(g, side).science;
