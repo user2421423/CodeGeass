@@ -27,9 +27,9 @@
       plan = ((g.ai ||= {})[side] ||= {}),
       memo = aiPlan(g, side),
       eliteCampaign = g.mode === 'campaign' && g.difficulty === 'elite',
-      eliteAI = eliteCampaign || eliteAIProduction(g),
-      builds = g.mode !== 'campaign' || !!g.campaign?.production?.includes(side) ||
-        (eliteCampaign && foe(g, side, g.player));
+      eliteAI = eliteCampaign || eliteAIProduction(g);
+    // Story Mode production follows the same ordinary resource and factory
+    // checks as other game modes. There is no per-mission AI opt-in.
     // Ensure new regional games finish one-time treasury initialization before
     // the AI examines budgets (including the doubled starting Research).
     const scienceIncome = income(g, side).science;
@@ -63,7 +63,6 @@
       if (e.credits - repairCost(u, g) >= 60) repair(g, u.id);
     }
     g.vacated = [];
-    if (!builds) return;
     // 1b. Clear the factories, as a player would (a unit on the city hex blocks building there). A ready unit on a
     // quiet city carries out its orders first. Threatened cities clear their garrison only in tryBuild,
     // immediately before a replacement is purchased with the final resource reserves applied.

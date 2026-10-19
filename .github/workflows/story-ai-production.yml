@@ -1,0 +1,21 @@
+name: Story Mode AI production regression
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  story-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - name: All Story missions, four difficulties, funded and unfunded production
+        run: node tools/story_ai_production_smoke.cjs
