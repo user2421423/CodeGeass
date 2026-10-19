@@ -12,6 +12,7 @@ for (const file of files.filter(f => f !== 'central-america-underlay.js'))
   vm.runInContext(fs.readFileSync(path.join(dist, file), 'utf8'), context, { filename: file });
 const dependencies = {
  'invasion-japan':['scenarios.js'],
+ 'defense-japan':['scenarios.js','scenarios-defense-japan.js'],
  'division-japan':['scenarios.js','scenarios-division-japan.js'],
  'european-war':['europe-landmask.js','scenarios-europe.js'],
  'operation-stonehenge':['europe-landmask.js','scenarios-stonehenge.js'],
