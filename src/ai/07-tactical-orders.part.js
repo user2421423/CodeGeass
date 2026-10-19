@@ -187,7 +187,9 @@
         ashore = front && front.state !== 'attacking' && front.masses?.has(massOf(g, u)),
         safe = front && !enemies.some(v => dist(g, v, u) <= aiRange(g).enemyScan / 2),
         convoy = fromLand && !guard && !ashore &&
-          (g.mode === 'scenario' || landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe),
+          (g.mode === 'scenario' || landGroup >= 2 || (landGroup >= 1 && seaEscort >= 1) || safe ||
+            (g.mode === 'campaign' && g.campaign?.aiObjective?.side === u.side &&
+              ['bk_yokosuka2','br_yokosuka2'].includes(g.campaign.id))),
         currentField = fieldAt(old),
         mates = g.mode === 'scenario' && front ? (memo.columns?.[front.id] || [])
           .filter(id => id !== u.id).map(id => g.units.find(v => v.id === id))
@@ -197,9 +199,16 @@
           skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander;
       const placeScore = p => {
         const station = stationAt(g, p);
+        const storyObjective = g.mode === 'campaign' && u.side === g.player &&
+          g.campaign?.aiObjective?.side === u.side ? g.campaign.aiObjective : null;
         let sc = station && foe(g, station.owner, u.side) && !isShip(u) &&
           station.shield <= 0 && canCapture(u)
           ? 400 + (station.capitalOf ? 600 : 0) : 0;
+        if (storyObjective && p.c === storyObjective.c && p.r === storyObjective.r &&
+            canCapture(u) && !isShip(u)) sc += 260;
+        if (storyObjective && ['bk_yokosuka2','br_yokosuka2'].includes(g.campaign.id) &&
+            canCapture(u) && !isShip(u))
+          sc += (dist(g, old, storyObjective) - dist(g, p, storyObjective)) * 55;
         if (COMMANDERS[u.cmd]?.fx.treasury && station?.owner === u.side) sc += 250 + station.income * 4;
         const mine = siteAt(g, p);
         if (mine && foe(g, mine.owner, u.side) && canCapture(u)) sc += mine.base >= 30 ? 550 : 250;

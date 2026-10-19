@@ -52,7 +52,37 @@
             ? assignLuoyangGuards(g, side) : assignDivisionBritanniaGuards(g, side))
           : assignGuards(g, side) };
       if (recovery) planRecovery(g, side, memo[side]);
-      if (g.mode === 'campaign') memo[side].field = goalField(g, side);
+      if (g.mode === 'campaign') {
+        // Story escape and boarding missions are not ordinary annihilation battles.
+        // Follow the *next incomplete* victory objective, including allied territory;
+        // never disclose hidden information, change movement rules or teleport units.
+        const escapeMissions = new Set(['bk5', 'bk_rescue', 'bk_yokosuka2', 'br_yokosuka2']);
+        if (side === g.player && g.difficulty === 'normal' && escapeMissions.has(g.campaign?.id)) {
+          const mission = E.campaign?.mission?.(g.campaign.id);
+          const stages = Array.isArray(mission?.win) ? mission.win : [mission?.win];
+          const stage = stages.find(rule => {
+            if (rule?.capture) return rule.capture.some(n => {
+              const s = g.stations.find(s => s.name === n);
+              return s && foe(g, s.owner, side);
+            });
+            if (rule?.reach) return rule.reach.some(n => {
+              const s = g.stations.find(s => s.name === n);
+              return s && !g.units.some(u => u.hp > 0 && u.side === side &&
+                u.c === s.c && u.r === s.r && (!rule.by || u.cmd === rule.by));
+            });
+            return false;
+          });
+          const name = stage?.capture?.[0] || stage?.reach?.[0];
+          const goal = g.stations.find(s => s.name === name);
+          if (goal) {
+            g.campaign.goals[side] = [[goal.c, goal.r, -24]];
+            g.campaign.aiObjective = { side, c: goal.c, r: goal.r, type: stage.capture ? 'capture' : 'reach' };
+          } else {
+            g.campaign.aiObjective = null;
+          }
+        }
+        memo[side].field = goalField(g, side);
+      }
       else if (scenario) planScenarioOffense(g, side, memo[side]);
       else planFronts(g, side, memo[side]);
     }
