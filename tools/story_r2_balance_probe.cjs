@@ -9,18 +9,31 @@ require('../dist/missions.js');
 require('../dist/campaign.js');
 
 const R2_IDS = ['bk_r2', 'britannia_r2', 'cf_r2'];
-const CAMPAIGN_IDS = [...R2_IDS, 'bk_s1', 'britannia_s1', 'eb_europe', 'eu_europe', 'cf_ufn'];
+const DEFAULT_CAMPAIGN_IDS = [...R2_IDS, 'bk_s1', 'britannia_s1', 'eb_europe', 'eu_europe', 'cf_ufn'];
+const selected = (process.env.STORY_BALANCE_CAMPAIGNS || '')
+  .split(',').map(id => id.trim()).filter(Boolean);
+const CAMPAIGN_IDS = selected.length ? selected : DEFAULT_CAMPAIGN_IDS;
 const seeds = (process.env.STORY_BALANCE_SEEDS || '101,202,303')
   .split(',').map(s => Number(s.trim())).filter(Number.isFinite);
 const focusSeeds = (process.env.STORY_BALANCE_FOCUS_SEEDS || '101,202,303,404,505,606,707,808,909,1001')
   .split(',').map(s => Number(s.trim())).filter(Number.isFinite);
 const focus = new Set(['bk5','bk_rescue','bk_pacific','bk_yokosuka2','br7','br_execution',
   'br_yokosuka2','br_xiaopei','br_mausoleum','br10','br_kagoshima']);
+const focusAll = process.env.STORY_BALANCE_FOCUS_ALL === '1';
 assert.ok(seeds.length > 0 && seeds.length <= 15, 'Provide 1–15 seeds');
 assert.ok(focusSeeds.length >= 10 && focusSeeds.length <= 30, 'Provide 10–30 focused seeds');
+assert.equal(new Set(CAMPAIGN_IDS).size, CAMPAIGN_IDS.length,
+  'Campaign audit filter must not include duplicates');
 const campaigns = CAMPAIGN_IDS.map(id => E.campaign.CAMPAIGNS[id]);
-assert.deepEqual(campaigns.map(c => c.missions.length), [12, 12, 10, 10, 10, 11, 11, 12],
-  'Expect all 88 registered Story Mode missions');
+assert.ok(campaigns.length && campaigns.every(c => c && c.missions.length),
+  'All selected campaign IDs must exist');
+if (!selected.length) {
+  assert.deepEqual(campaigns.map(c => c.missions.length), [12, 12, 10, 10, 10, 11, 11, 12],
+    'Expect all 88 registered Story Mode missions');
+} else if (CAMPAIGN_IDS.join(',') === 'bk_s1,britannia_s1') {
+  assert.deepEqual(campaigns.map(c => c.missions.length), [10, 10],
+    'Expect all 20 original Season 1 missions');
+}
 
 function simulate(id, seed) {
   const m = E.campaign.mission(id), g = E.campaign.createMission(id, seed, 'normal');
@@ -62,7 +75,7 @@ for (const id of CAMPAIGN_IDS) {
   console.log('\n# ' + id);
   for (const m of camp.missions) {
     const trials = [];
-    for (const seed of (focus.has(m.id) ? focusSeeds : seeds)) {
+    for (const seed of (focusAll || focus.has(m.id) ? focusSeeds : seeds)) {
       try {
         trials.push(simulate(m.id, seed));
       } catch (e) {
@@ -81,7 +94,7 @@ for (const id of CAMPAIGN_IDS) {
 }
 function summarize(items) {
   return {
-    seedCount: seeds.length, focusedSeedCount: focusSeeds.length,
+    seedCount: seeds.length, focusedSeedCount: focusSeeds.length, focusAll,
     simulationCount: items.reduce((n,r) => n+r.trials.length,0), totalMissions: items.length,
     friendlyWins: items.reduce((n, r) => n + r.wins, 0),
     missionsWithAnyAIWin: items.filter(r => r.wins > 0).length,
