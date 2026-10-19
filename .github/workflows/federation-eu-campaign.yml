@@ -1,0 +1,26 @@
+name: Federation vs EU campaign architecture
+on:
+  pull_request:
+    paths:
+      - 'dist/war-campaign.js'
+      - 'dist/ui/war-campaign-screen.js'
+      - 'docs/FEDERATION_EU_**'
+      - 'tools/federation_eu_campaign_smoke.cjs'
+      - '.github/workflows/federation-eu-campaign.yml'
+  push:
+    branches:
+      - 'feature/federation-vs-eu-campaign-architecture'
+jobs:
+  architecture-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax and campaign contract
+        run: |
+          node --check dist/war-campaign.js
+          node --check dist/ui/war-campaign-screen.js
+          node --check tools/federation_eu_campaign_smoke.cjs
+          node tools/federation_eu_campaign_smoke.cjs

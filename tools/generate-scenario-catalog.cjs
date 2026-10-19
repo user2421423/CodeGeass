@@ -59,6 +59,16 @@ const dependencies = {
  'eu-cf-sichuan':['scenarios-eu-cf-sichuan.js'],
  'eu-cf-beijing':['scenarios-eu-cf-beijing.js'],
  'eu-cf-luoyang':['scenarios-luoyang.js','scenarios-eu-cf-luoyang.js'],
+ 'cf-eu-siberia':['siberia-landmask.js','scenarios-cf-eu-siberia.js'],
+ 'cf-eu-caucasus':['scenarios-cf-eu-caucasus.js'],
+ 'cf-eu-turkey':['turkey-landmask.js','scenarios-cf-eu-turkey.js'],
+ 'cf-eu-volga':['scenarios-cf-eu-volga.js'],
+ 'cf-eu-suez':['scenarios-cf-eu-suez.js'],
+ 'cf-eu-moscow':['scenarios-cf-eu-moscow.js'],
+ 'cf-eu-balkans':['cf-eu-balkans-coast.js','scenarios-cf-eu-balkans.js'],
+ 'cf-eu-north-africa':['scenarios-cf-eu-north-africa.js'],
+ 'cf-eu-central-europe':['scenarios-cf-eu-central-europe.js'],
+ 'cf-eu-france':['scenarios-cf-eu-france.js'],
 };
 const catalog = {};
 for (const { id } of vm.runInContext('SCENARIO_MANIFEST', context)) {

@@ -47,6 +47,18 @@ const WC_ROUTES={
     ['eu-federation-manchuria','eu-federation-beijing'],
     ['eu-federation-sichuan','eu-federation-luoyang'],
     ['eu-federation-beijing','eu-federation-luoyang']
+  ],
+  'federation-eu':[
+    ['federation-eu-siberia','federation-eu-volga'],
+    ['federation-eu-caucasus','federation-eu-volga'],
+    ['federation-eu-caucasus','federation-eu-turkey'],
+    ['federation-eu-area-18','federation-eu-suez'],
+    ['federation-eu-volga','federation-eu-moscow'],
+    ['federation-eu-turkey','federation-eu-balkans'],
+    ['federation-eu-suez','federation-eu-north-africa'],
+    ['federation-eu-moscow','federation-eu-central-europe'],
+    ['federation-eu-balkans','federation-eu-central-europe'],
+    ['federation-eu-north-africa','federation-eu-france']
   ]
 };
 function wcProgress(){return WC.load(localStorage);}

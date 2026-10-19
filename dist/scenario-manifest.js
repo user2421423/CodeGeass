@@ -49,7 +49,17 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"eu-cf-himalayas",title:"Crossing the Himalayas",note:"57 cities · 2 sides · mountain passes"},
   {id:"eu-cf-sichuan",title:"Invasion of Sichuan",note:"62 cities · 2 sides · Chengdu Basin"},
   {id:"eu-cf-beijing",title:"Battle of Beijing",note:"56 cities · 2 sides · northern China"},
-  {id:"eu-cf-luoyang",title:"Battle of Luoyang — E.U. vs Federation",note:"83 cities · 2 sides · E.U. finale"}
+  {id:"eu-cf-luoyang",title:"Battle of Luoyang — E.U. vs Federation",note:"83 cities · 2 sides · E.U. finale"},
+  {id:"cf-eu-siberia",title:"Invasion of Siberia",note:"72 cities · 2 sides · northern Chinese offensive"},
+  {id:"cf-eu-caucasus",title:"Invasion of the Caucasus",note:"67 cities · 2 sides · mountain campaign"},
+  {id:"cf-eu-turkey",title:"Invasion of Turkey — Federation vs E.U.",note:"71 cities · 2 sides · Anatolian offensive"},
+  {id:"cf-eu-volga",title:"Battle for the Volga",note:"69 cities · 2 sides · great river offensive"},
+  {id:"cf-eu-suez",title:"Crossing the Suez Canal",note:"46 cities · 2 sides · Egyptian crossing"},
+  {id:"cf-eu-moscow",title:"Battle for Moscow",note:"56 cities · 2 sides · Russian heartland"},
+  {id:"cf-eu-balkans",title:"Balkan Offensive",note:"57 cities · 2 sides · southeastern Europe"},
+  {id:"cf-eu-north-africa",title:"North African Offensive",note:"51 cities · 2 sides · Mediterranean campaign"},
+  {id:"cf-eu-central-europe",title:"Conquest of Central Europe — No Germany",note:"102 cities · 2 sides · Poland to Austria"},
+  {id:"cf-eu-france",title:"Invasion of France — Mediterranean Offensive",note:"34 cities · 2 sides · southern naval invasion"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.
 const SCENARIO_FILES = Object.freeze([
@@ -116,7 +126,18 @@ const SCENARIO_FILES = Object.freeze([
   'scenarios-eu-cf-himalayas.js',
   'scenarios-eu-cf-sichuan.js',
   'scenarios-eu-cf-beijing.js',
-  'scenarios-eu-cf-luoyang.js'
+  'scenarios-eu-cf-luoyang.js',
+  'scenarios-cf-eu-siberia.js',
+  'scenarios-cf-eu-caucasus.js',
+  'scenarios-cf-eu-turkey.js',
+  'scenarios-cf-eu-volga.js',
+  'scenarios-cf-eu-suez.js',
+  'scenarios-cf-eu-moscow.js',
+  'cf-eu-balkans-coast.js',
+  'scenarios-cf-eu-balkans.js',
+  'scenarios-cf-eu-north-africa.js',
+  'scenarios-cf-eu-central-europe.js',
+  'scenarios-cf-eu-france.js'
 ]);
 // Script promises are shared across callers; successful modules execute once per tab.
 const assetLoads = new Map();

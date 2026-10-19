@@ -1,0 +1,108 @@
+name: Federation vs EU integrated scenario audit
+on:
+  push:
+    branches: ['feature/federation-vs-eu-campaign-architecture']
+    paths:
+      - 'dist/scenarios-cf-eu-*.js'
+      - 'dist/cf-eu-balkans-coast.js'
+      - 'dist/scenario-manifest.js'
+      - 'dist/war-campaign.js'
+      - 'tools/generate-scenario-catalog.cjs'
+      - 'tools/scenario_sim.cjs'
+      - 'tools/federation_eu_campaign_smoke.cjs'
+      - '.github/workflows/federation-eu-integration.yml'
+concurrency:
+  group: federation-eu-integration-feature
+  cancel-in-progress: true
+permissions:
+  contents: write
+jobs:
+  registration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Build and scenario registration
+        run: |
+          node tools/build_sources.cjs
+          node tools/generate-scenario-catalog.cjs
+          node tools/federation_eu_campaign_smoke.cjs
+          node tools/federation_eu_mechanics_smoke.cjs
+          node --check dist/scenario-manifest.js
+          node --check tools/scenario_sim.cjs
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const context=vm.createContext({});
+          vm.runInContext(fs.readFileSync('dist/scenario-catalog.js','utf8')+';globalThis.catalog=SCENARIO_CATALOG;',context);
+          const catalog=context.catalog;
+          const names=['siberia','caucasus','turkey','volga','suez','moscow','balkans','north-africa','central-europe','france'];
+          for(const name of names){
+            const id='cf-eu-'+name,m=catalog[id];
+            if(!m||JSON.stringify([...m.sides].sort())!==JSON.stringify(['cf','eu'])) throw Error('Invalid catalog '+id);
+            if(!m.files.every(f=>fs.existsSync('dist/'+f)))throw Error('Missing file '+id);
+            console.log('REGISTERED',id,m.cols+'x'+m.rows,m.files.join(','));
+          }
+          NODE
+      - name: Publish deterministic generated scenario catalog
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/scenario-catalog.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Regenerate scenario catalog for Federation-EU integration"
+            git push origin HEAD:refs/heads/feature/federation-vs-eu-campaign-architecture
+          fi
+  regression:
+    needs: registration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Checkout pre-integration main baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 38e519e789998010c5e336e170e6000c61205ab0
+          path: baseline
+      - name: Build both engines
+        run: |
+          node tools/build_sources.cjs
+          (cd baseline && node tools/build_sources.cjs)
+      - name: Compare deterministic existing missions with unchanged main
+        run: |
+          node tools/check_sim_baseline.cjs --base-root "$GITHUB_WORKSPACE/baseline" --scenarios war-for-australia,area-18,division-japan,conquest-indochina,cf-pendragon,european-war,operation-stonehenge,battle-luoyang,eu-cf-kazakhstan,eu-cf-luoyang
+  scenarios:
+    needs: registration
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: ['siberia','caucasus','turkey','volga','suez','moscow','balkans','north-africa','central-europe','france']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Build engine and AI
+        run: node tools/build_sources.cjs
+      - name: Full engine - both sides, all four difficulties
+        run: |
+          set -o pipefail
+          for side in cf eu; do
+            for difficulty in normal hard challenge elite; do
+              node tools/scenario_sim.cjs cf-eu-${{ matrix.scenario }} "$side" "$difficulty" 11 2
+            done
+          done
+      - name: Multi-seed extended AI observation
+        run: |
+          set -o pipefail
+          for side in cf eu; do
+            for seed in 11 23 47; do
+              node tools/scenario_sim.cjs cf-eu-${{ matrix.scenario }} "$side" normal "$seed" 6
+            done
+            node tools/scenario_sim.cjs cf-eu-${{ matrix.scenario }} "$side" normal 71 18
+          done
