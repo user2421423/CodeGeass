@@ -190,6 +190,9 @@
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
     if (kind === 'checkmate') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3);
+    if (kind === 'memoryRewrite') return g.units.filter(v => v.hp > 0 &&
+      foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 3 &&
+      v.morale > -3 && !v.expCharlesMemoryRewrite && !v.moraleWard && moraleFloor(g, v) <= -3);
     if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
@@ -212,6 +215,21 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'memoryRewrite') {
+      const v = targetId == null ? [...options].sort((a, b) =>
+        Number(!!b.cmd) - Number(!!a.cmd) ||
+        TYPES[b.type].attack * (b.stack || 1) - TYPES[a.type].attack * (a.stack || 1) ||
+        a.id - b.id)[0] : options.find(w => w.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose a vulnerable enemy formation within 3 hexes' };
+      // Confused is the existing -3 morale state. Remember the previous
+      // morale so this single-turn rewrite does not cause lasting penalties.
+      v.expCharlesMemoryRewrite = { source: u.id, previousMorale: v.morale };
+      v.morale = -3;
+      u.feintCD = action.cooldown ?? 3;
+      u.feintUsedTurn = g.turn;
+      log(g, `Charles rewrites the memories of ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short}: Confused until its next turn ends.`, u.side);
+      return { ok: true, target: v.id, affected: 1 };
+    }
     if (action.kind === 'checkmate') {
       const v = targetId == null ? [...options].sort((a,b) =>
         Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id)[0]
