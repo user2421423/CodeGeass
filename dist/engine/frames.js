@@ -575,7 +575,7 @@
       weapon: 'Uruna Edge blades · Judgement rifle · Insect Mode',
       lore: "Akito Hyuga's final Alexander, rebuilt for extreme close-combat mobility and wZERO's most dangerous sorties.",
       desc: 'Fast ace elite. Brain Raid Overdrive becomes active at Elite Lv.3.',
-      hp: 750, attack: 145, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
+      hp: 750, attack: 175, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
       breakthrough: true, relentless: false,
     },
     elite_leila_alexander: {
@@ -589,7 +589,7 @@
       weapon: 'Judgement rifle · Uruna Edge knives · wZERO command link',
       lore: "Leila Malcal's command Alexander links wZERO's pilots and keeps the squadron fighting as one unit.",
       desc: 'Command-network elite. wZERO Command Link becomes active at Elite Lv.3.',
-      hp: 650, attack: 145, armor: 35, move: 4, min: 1, max: 1, cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4,
+      hp: 650, attack: 160, armor: 35, move: 4, min: 1, max: 1, cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4,
       breakthrough: true,
     },
     elite_ryo_valiant: {
@@ -603,7 +603,7 @@
       weapon: 'Heavy melee weapons · Judgement rifle',
       lore: "Ryo Sayama's Valiant is tuned for direct, high-speed breakthroughs and brutal close engagements.",
       desc: 'Breakthrough elite. Hot-Blooded Charge becomes active at Elite Lv.3.',
-      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
+      hp: 700, attack: 165, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
       breakthrough: true, relentless: false,
     },
     elite_ayano_valiant: {
@@ -617,7 +617,7 @@
       weapon: 'Augus Longray sword · Judgement rifle',
       lore: "Ayano Kosaka's personal Valiant is optimized around sword fighting and rapid anti-Knightmare attacks.",
       desc: 'Mobile anti-Knightmare raider. Swordmaster becomes active at Elite Lv.3.',
-      hp: 600, attack: 165, armor: 26, move: 5, min: 1, max: 1, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
+      hp: 600, attack: 155, armor: 26, move: 5, min: 1, max: 1, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
     },
     elite_yukiya_valiant: {
       side: 'eu',
@@ -647,7 +647,7 @@
       weapon: 'Baryon Cannon · Electrified Slash Harkens',
       lore: "Li Xingke's Divine Tiger pairs extraordinary pilot demands with one of the most powerful cannons outside Britannia.",
       desc: 'High-output super elite. Baryon Cannon becomes active at Elite Lv.3.',
-      hp: 750, attack: 145, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
+      hp: 750, attack: 175, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
       breakthrough: true, relentless: false,
     },
     elite_wang_hu: {
@@ -661,7 +661,7 @@
       weapon: 'Close-combat armament · Radiation Barrier',
       lore: "The Shen Hu's brother machine sacrifices the Baryon Cannon for a Radiation Barrier and more balanced close combat.",
       desc: 'Defensive heavy elite. Radiation Barrier becomes active at Elite Lv.3.',
-      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
+      hp: 700, attack: 165, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
       breakthrough: true, relentless: false,
     },
     elite_chuyen: {
@@ -675,7 +675,7 @@
       weapon: 'Electromagnetic Monkey King pole · Slash Harkens',
       lore: "Xu Lifeng's Chuyen exploits the mass-production Shen Hu derivative's agility with expert close-combat technique.",
       desc: 'High-mobility duelist. Monkey King Pole becomes active at Elite Lv.3.',
-      hp: 600, attack: 165, armor: 26, move: 5, min: 1, max: 1, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
+      hp: 600, attack: 155, armor: 26, move: 5, min: 1, max: 1, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
     },
     elite_guren_type01: {
       side: 'cf',
@@ -688,7 +688,7 @@
       weapon: 'Fork Knife · Grenade Launcher · Slash Harken',
       lore: "Rakshata's Jabalpur-built predecessor to the Guren Type-02, produced in small numbers before the Black Knights' famous machine.",
       desc: 'Prototype raider elite. Jabalpur Prototype becomes active at Elite Lv.3.',
-      hp: 600, attack: 165, armor: 26, move: 5, min: 1, max: 1, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
+      hp: 600, attack: 155, armor: 26, move: 5, min: 1, max: 1, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
     },
     elite_akatsuki_zikisan: {
       side: 'cf',
@@ -701,7 +701,7 @@
       weapon: 'Revolving Blade Sword · Radiation Wave barrier',
       lore: "The command-model Akatsuki combines mobile squadron armament with a Radiation Wave barrier for front-line leadership.",
       desc: 'Formation-command elite. Zikisan Command becomes active at Elite Lv.3.',
-      hp: 650, attack: 145, armor: 35, move: 4, min: 1, max: 1, cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4,
+      hp: 650, attack: 160, armor: 35, move: 4, min: 1, max: 1, cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4,
       breakthrough: true, relentless: false,
     },
 
@@ -718,7 +718,7 @@
       weapon: 'EM jousting lance · Chaos mines',
       lore: "Cornelia's personal Gloucester, tuned for aggressive urban breakthroughs and royal-guard assaults.",
       desc: 'Fast city-raiding elite. Royal Guard becomes active at Elite Lv.3.',
-      hp: 600, attack: 165, armor: 26, move: 5, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
+      hp: 600, attack: 155, armor: 26, move: 5, cost: 800, industry: 200, tier: 2, crit: 0.20, pen: 0.48,
       min: 1, max: 1,
     },
     elite_lancelot: {
@@ -732,7 +732,7 @@
       weapon: 'VARIS · MVS · Blaze Luminous',
       lore: "Lloyd Asplund's prototype seventh-generation Knightmare and the technological foundation of Britannia's later ace frames.",
       desc: 'Prototype ranged heavy elite. VARIS and Blaze Luminous become active at Elite Lv.3.',
-      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
+      hp: 700, attack: 165, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
       breakthrough: true, relentless: false,
     },
     elite_guren_mkii: {
@@ -746,7 +746,7 @@
       weapon: 'Radiant Wave Surger · Fork Knife · Hand gun',
       lore: "Rakshata's close-combat prototype built around the Radiant Wave Surger, fielded by the Black Knights.",
       desc: 'Close-range anti-armor elite. Radiant Wave Surger becomes active at Elite Lv.3.',
-      hp: 700, attack: 135, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
+      hp: 700, attack: 165, armor: 42, move: 4, min: 1, max: 2, cost: 1100, industry: 300, tier: 3, crit: 0.20, pen: 0.48,
       breakthrough: true, relentless: false,
     },
     elite_tohdoh_gekka: {
@@ -760,7 +760,7 @@
       weapon: 'Revolving Blade Sword · Custom hand gun',
       lore: "Kyoshiro Tohdoh's tuned Gekka leads the Four Holy Swords through coordinated close combat.",
       desc: 'High-mobility command elite. Four Holy Swords formation becomes active at Elite Lv.3.',
-      hp: 650, attack: 145, armor: 35, move: 4, min: 1, max: 1, cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4,
+      hp: 650, attack: 160, armor: 35, move: 4, min: 1, max: 1, cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4,
       breakthrough: true, relentless: false,
     },
     elite_mordred: {
@@ -818,7 +818,7 @@
       weapon: 'Super VARIS · MVS · Energy Wings',
       lore: "Suzaku's final Lancelot combines overwhelming ninth-generation output with Energy Wing mobility.",
       desc: 'Endgame aerial ace. Energy Wings become active at Elite Lv.3.',
-      hp: 750, attack: 145, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
+      hp: 750, attack: 175, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
       breakthrough: true, relentless: false,
     },
     elite_guren_seiten: {
@@ -832,7 +832,7 @@
       weapon: 'Radiant Wave Surger · Energy Wings · Fork Knife',
       lore: "Kallen's ultimate Guren is the Black Knights' ninth-generation counterpart to Lancelot Albion.",
       desc: 'Endgame aerial assault ace. Radiant Wave Burst and Energy Wings become active at Elite Lv.3.',
-      hp: 750, attack: 145, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
+      hp: 750, attack: 175, armor: 52, move: 4, min: 1, max: 2, cost: 1400, industry: 390, tier: 3, crit: 0.20, pen: 0.58,
       breakthrough: true, relentless: false,
     },
     // Standardized advanced-class elites for the three Conquest factions.
@@ -842,7 +842,7 @@
       gen: '7th generation', weapon: 'MVS lance · precision assault rifle',
       lore: 'A command-grade Ward leading the Britannian armored line with precise combined-arms fire.',
       desc: 'Mobile medium-armor elite. Ward Fire Control unlocks at Elite Lv.3.',
-      hp: 650, attack: 145, armor: 35, move: 4, min: 1, max: 1,
+      hp: 650, attack: 160, armor: 35, move: 4, min: 1, max: 1,
       cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4, breakthrough: true,
     },
     elite_sutherland_air: {
