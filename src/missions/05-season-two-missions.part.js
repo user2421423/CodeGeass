@@ -569,7 +569,11 @@
         // Keep a viable defensive line around the prison on Normal, even before Lancelot arrives.
         [B, 'gloucester', 9, 7, 2, null, { normalOnly: true, hold: 2 }],
         [B, 'sutherland', 11, 5, 2, null, { normalOnly: true, hold: 1 }],
-        [B, 'sutherland', 13, 4, 2, null, { normalOnly: true, hold: 2 }], ...CHOFU_BK, [K, 'burai', 1, 10, 1, null, { skipNormal: true }]],
+        [B, 'sutherland', 13, 4, 2, null, { normalOnly: true, hold: 2 }],
+        // A second prepared line must be strong enough to hold until Suzaku reaches Chofu.
+        [B, 'gloucester', 9, 5, 3, null, { normalOnly: true, hold: 2 }],
+        [B, 'gloucester', 10, 4, 3, null, { normalOnly: true, hold: 2 }],
+        [B, 'sutherland', 12, 7, 3, null, { normalOnly: true, hold: 2 }], ...CHOFU_BK, [K, 'burai', 1, 10, 1, null, { skipNormal: true }]],
       objective: 'Hold the Chofu Detention Center until the end of turn 9.',
       win: { hold: 9 },
       lose: { cities: ['Chofu Detention Center'] },
