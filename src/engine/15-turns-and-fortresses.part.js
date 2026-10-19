@@ -134,6 +134,7 @@
     for (const v of allUnits(g)) {
       if(v.expJoeDiagnosis?.until<g.turn)delete v.expJoeDiagnosis;
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
+      if (v.expCheckmate?.side === side) delete v.expCheckmate;
       for (const field of ['auraDisrupted', 'moraleWard', 'assaultInspired', 'despairWeakened']) if (v[field]?.side === side) delete v[field];
     }
     for (const city of g.stations){if(city.bombardMark?.side===side)delete city.bombardMark;if(city.expYoshidaBreak?.turn<g.turn)delete city.expYoshidaBreak;}
@@ -209,7 +210,7 @@
       if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
-      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
+      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
       // Ohgi's Organizer: the morale step comes even when surrounded.

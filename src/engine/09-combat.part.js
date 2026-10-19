@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -58,6 +58,9 @@
     attack *= 1 + (u.expInformationWarfare?0:auraBonus(g,u));
     if(u.expInformationWarfare)attack*=.8;
     attack *= newcomerAttack(g,u,target,counter);
+    // Checkmate boosts direct attacks and counterattacks against its marked
+    // formation, without granting Schneizel a passive aura.
+    if (target?.expCheckmate?.side === u.side) attack *= 1.25;
     if(!counter&&st&&foe(g,st.owner,u.side)&&fx(u).focusBombard&&u.focusCity?.city===st.id&&u.focusCity.lastTurn>=g.turn-1)
       attack*=1+Math.min(3,u.focusCity.count)*fx(u).focusBombard;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).

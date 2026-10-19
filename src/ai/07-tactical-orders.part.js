@@ -120,6 +120,12 @@
       return events;
     }
     // Trigger available newcomer abilities for AI-led armies, rather than leaving them player-only.
+    if(COMMANDERS[u.cmd]?.action?.kind==='checkmate'&&!feintReason(g,u)) {
+      const targets=actionTargets(g,u).sort((a,b)=>
+        Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id);
+      const used=feint(g,id,targets[0]?.id);
+      if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
+    }
     if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!playerOnlyReworkedActions.has(u.cmd)&&!feintReason(g,u)) {
       const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});

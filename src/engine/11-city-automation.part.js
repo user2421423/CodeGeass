@@ -188,6 +188,8 @@
     if (kind === 'special') return newcomerTargets(g,u);
     if (kind === 'freeze') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
+    if (kind === 'checkmate') return g.units.filter(v => v.hp > 0 &&
+      foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3);
     if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
@@ -210,6 +212,20 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'checkmate') {
+      const v = targetId == null ? [...options].sort((a,b) =>
+        Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id)[0]
+        : options.find(w => w.id === targetId);
+      if (!v) return {ok:false,reason:'Choose an enemy formation within 3 hexes'};
+      // A commander may designate only one formation at a time.
+      for (const other of g.units)
+        if (other.expCheckmate?.source === u.id) delete other.expCheckmate;
+      v.expCheckmate = {source:u.id,side:u.side};
+      u.feintCD = 0;
+      u.feintUsedTurn = g.turn;
+      log(g,`Checkmate: ${COMMANDERS[v.cmd]?.short||TYPES[v.type].short} is marked for concentrated fire.`,u.side);
+      return {ok:true,target:v.id,affected:1};
+    }
     if (action.kind === 'freeze') {
       // Freeze everybody before the health cost; even a lethal activation works.
       for (const v of options) {
