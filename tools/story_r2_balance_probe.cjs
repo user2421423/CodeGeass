@@ -15,7 +15,7 @@ const seeds = (process.env.STORY_BALANCE_SEEDS || '101,202,303')
 const focusSeeds = (process.env.STORY_BALANCE_FOCUS_SEEDS || '101,202,303,404,505,606,707,808,909,1001')
   .split(',').map(s => Number(s.trim())).filter(Number.isFinite);
 const focus = new Set(['bk5','bk_rescue','bk_pacific','bk_yokosuka2','br7','br_execution',
-  'br_yokosuka2','br_xiaopei','br_mausoleum','br10']);
+  'br_yokosuka2','br_xiaopei','br_mausoleum','br10','br_kagoshima']);
 assert.ok(seeds.length > 0 && seeds.length <= 15, 'Provide 1–15 seeds');
 assert.ok(focusSeeds.length >= 10 && focusSeeds.length <= 30, 'Provide 10–30 focused seeds');
 const campaigns = CAMPAIGN_IDS.map(id => E.campaign.CAMPAIGNS[id]);
@@ -24,7 +24,7 @@ assert.deepEqual(campaigns.map(c => c.missions.length), [12, 12, 10, 10, 10, 11,
 
 function simulate(id, seed) {
   const m = E.campaign.mission(id), g = E.campaign.createMission(id, seed, 'normal');
-  const deadline = Math.min(25, (m.lose?.turns || m.win?.hold || 20) + 2);
+  const deadline = Math.min(40, (g.campaign?.turnLimit || m.win?.hold || m.lose?.turns || 20) + 2);
   for (let turn = 1; turn <= deadline && !g.over; turn++) {
     g.turn = turn;
     for (let i = 0; i < g.order.length && !g.over; i++) {

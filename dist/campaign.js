@@ -191,7 +191,12 @@
     if (c.destroy) return !g.units.some(u => u.hp > 0 && c.destroy.includes(u.side));
     if (c.kills) return cm.kills >= c.kills;
     if (c.turn) return g.turn >= c.turn;
-    if (c.hold) return g.turn > c.hold;
+    if (c.hold) {
+      // Mission-authored Normal-only hold target; Hard/Challenge/Elite retain
+      // the original condition and no side receives an automatic victory.
+      const relaxed = g.difficulty === 'normal' ? mission(g.campaign?.id)?.normalHold : null;
+      return g.turn > (Number.isFinite(relaxed) ? relaxed : c.hold);
+    }
     return false;
   }
   function stars(g) {
@@ -391,7 +396,8 @@
       campaign: {
         id,
         production: m.production || [],
-        goals: m.goals || {},
+        goals: difficultyId === 'normal' && m.normalGoals
+          ? { ...(m.goals || {}), ...m.normalGoals } : m.goals || {},
         hold: m.hold || {},
         losses: 0,
         kills: 0,
@@ -406,7 +412,9 @@
         eliteRosters: Object.fromEntries([...new Set([...sides, 'neutral'])].map(s =>
           [s, eliteRoster(s, { teams: m.teams, order: sides, storyUnits: m.units })])),
         ...(difficultyId === 'elite' ? { eliteSelections: {} } : {}),
-        turnLimit: m.lose?.turns ? m.lose.turns + (d.extraTurns || 0) : 0,
+        turnLimit: m.lose?.turns
+          ? (difficultyId === 'normal' && Number.isFinite(m.normalTurns)
+              ? m.normalTurns : m.lose.turns) + (d.extraTurns || 0) : 0,
       },
     };
     if (d.economy && g.economy[g.player]) {
@@ -431,7 +439,9 @@
     for (const [name, c, r, owner, tier = 1, opts = {}] of m.cities) {
       const t = E.tile(g, c, r);
       if (!t || E.isSea(t) || E.TERRAIN[t.terrain]?.blocked) throw new Error(`${id}: ${name} is not on open land`);
-      let shield = opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
+      // Normal-only Story objective defenses; preserve Hard/Challenge/Elite values.
+      let shield = difficultyId === 'normal' && Number.isFinite(opts.normalShield)
+        ? opts.normalShield : opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
       if (E.foe(g, owner, g.player) && d.enemyShield) shield = Math.max(1, Math.round(shield * d.enemyShield));
       g.stations.push({
         id: g.stations.length,
