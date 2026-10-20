@@ -202,12 +202,12 @@ setup eu-greenland britannia normal 769757a7
 setup eu-greenland britannia hard ca2dcc85
 setup eu-greenland britannia challenge f593e89e
 setup eu-greenland britannia elite a30ade81
-sim eu-greenland britannia normal 11 2 5786a788 76f02518 cities={"britannia":16,"eu":2} errors=0
+sim eu-greenland britannia normal 11 2 7095887b 76f02518 cities={"britannia":16,"eu":2} errors=0
 setup eu-greenland eu normal 3b882617
 setup eu-greenland eu hard ce2bd18a
 setup eu-greenland eu challenge 8b50bb87
 setup eu-greenland eu elite b8bf0dd3
-sim eu-greenland eu normal 11 2 cce328b7 f0958a71 cities={"britannia":17,"eu":1} errors=0
+sim eu-greenland eu normal 11 2 5ab900d9 458e96dc cities={"britannia":17,"eu":1} errors=0
 setup eu-panama eu normal 5763a859
 setup eu-panama eu hard d177f0d6
 setup eu-panama eu challenge bbc70710
