@@ -170,7 +170,8 @@ a clean playtest is not itself proof that a scenario is balanced.
   formations aboard that launch onto any adjacent land. Each costs 1,800 credits, 500 industry, 150 science and
   60 Sakuradite, is built in one turn and has no per-power limit. Airships cannot enter or capture cities, ports or
   mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities, and repair beside a friendly
-  city. The AI builds them only in Conquest, from a clear surplus.
+  city. In Conquest the AI saves for them from turn 10 and keeps at most one per 20 cities (two at most);
+  regional-scenario AI does not build them.
 - **Standing orders:** select a unit, choose Set destination (or press G), and
   click a hex. Units follow the route on subsequent turns; orders can be
   changed or cancelled.

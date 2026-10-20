@@ -123,10 +123,18 @@
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
+    // Airships (Conquest only): from turn 10, a power with a level-3 factory saves for one
+    // airship at a time when no strategic weapon is being funded. The rules set no cap; the
+    // AI holds itself to one per 20 cities (at most two) so its field army keeps priority.
+    const airship = g.mode === 'conquest' && !eliteAI && g.turn >= 10 && airshipType(g, side),
+      airshipCost = airship && price(airship, 1, g, side),
+      airshipSaving = !!airship && !defenseSaving && !warSaving && yard3.length > 0 &&
+        own().filter(u => TYPES[u.type].air).length < Math.min(2, Math.floor(bases.length / 20));
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
     const reserve = eliteCampaign ? 0 : defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
-      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits) : 60;
+      : warSaving ? Math.min(e.credits, FLEIJA.cost.credits)
+      : airshipSaving ? Math.min(e.credits, airshipCost.credits) : 60;
     const reserveInd = defenseSaving
       ? Math.min(e.industry, ELIMINATOR.cost.industry)
       : warSaving ? Math.min(e.industry, FLEIJA.cost.industry) : 0;
@@ -420,17 +428,14 @@
         }
       }
     }
-    // 4c. Airships (Conquest only): a rare flagship bought from a clear surplus, so the
-    // field army keeps its normal budget. The rules set no cap; the AI holds itself to
-    // one per eight cities (at most three) and keeps Sakuradite for a heavy frame.
-    const airship = g.mode === 'conquest' && !eliteAI && airshipType(g, side);
-    if (airship) {
-      const flying = own().filter(u => TYPES[u.type].air).length,
-        cost = price(airship, 1, g, side),
-        yard = yard3.find(s => canBuy(g, s, airship, 1));
-      if (yard && flying < Math.min(3, Math.floor(bases.length / 8)) && developmentAffordable(cost) &&
-          (e.sakuradite || 0) - cost.sakuradite >= reserveSak + heavySak)
-        recruit(g, yard.id, airship, 1);
+    // 4c. Airships: spend the savings once they cover the whole price, keeping Sakuradite
+    // for a heavy frame. The rearmost free level-3 factory builds it.
+    if (airshipSaving && e.credits >= airshipCost.credits + 60 &&
+        e.industry - airshipCost.industry >= ordinaryBudget.industry &&
+        (e.science || 0) - airshipCost.science >= reserveScience &&
+        (e.sakuradite || 0) - airshipCost.sakuradite >= reserveSak + heavySak) {
+      const yard = yard3.slice().reverse().find(s => canBuy(g, s, airship, 1));
+      if (yard) recruit(g, yard.id, airship, 1);
     }
     // Formations first: every factory tries a 3- or 2-frame formation before
     // unfilled factories may produce an affordable single-frame unit. A successful
