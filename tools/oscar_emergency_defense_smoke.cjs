@@ -31,7 +31,7 @@ function setup(){
   assert.ok(ep,'Need common adjacent enemy');
   const enemy=E.newUnit(g,brInf,'britannia',ep.c,ep.r);
   const supportHex=E.within(g,protectedUnit,2).find(p=>clear(p)&&
-    d(g,protectedUnit,p)===2&&d(g,center,p)>=2&&
+    d(g,protectedUnit,p)===2&&d(g,p,ep)===1&&
     !E.internal.unitAt(g,p));
   assert.ok(supportHex,'Need ally within exactly two hexes of protected unit');
   const support=E.newUnit(g,euInf,'eu',supportHex.c,supportHex.r);
@@ -39,7 +39,10 @@ function setup(){
     d(g,protectedUnit,p)>=3&&!E.internal.unitAt(g,p));
   assert.ok(outsideHex);
   const outside=E.newUnit(g,euInf,'eu',outsideHex.c,outsideHex.r);
-  return {g,o,protectedUnit,enemy,support,outside,clear};
+  const outsideEnemyHex=E.adjacent(g,outsideHex).find(p=>clear(p)&&!E.internal.unitAt(g,p));
+  assert.ok(outsideEnemyHex,'Need hostile formation adjacent to uncovered ally');
+  const outsideEnemy=E.newUnit(g,brInf,'britannia',outsideEnemyHex.c,outsideEnemyHex.r);
+  return {g,o,protectedUnit,enemy,support,outside,outsideEnemy,clear};
 }
 function near(x,y,tolerance=.07){assert.ok(x>0&&Math.abs(x/y-1)<tolerance,
   'Expected '+x+' to be approximately '+y);}
@@ -50,7 +53,7 @@ function near(x,y,tolerance=.07){assert.ok(x>0&&Math.abs(x/y-1)<tolerance,
   const pre={
     marked:E.preview(b.g,b.enemy.id,b.protectedUnit.c,b.protectedUnit.r).unit,
     support:E.preview(b.g,b.enemy.id,b.support.c,b.support.r).unit,
-    outside:E.preview(b.g,b.enemy.id,b.outside.c,b.outside.r).unit
+    outside:E.preview(b.g,b.outsideEnemy.id,b.outside.c,b.outside.r).unit
   };
   const result=E.feint(b.g,b.o.id,b.protectedUnit.id);
   assert.equal(result.ok,true,result.reason);
@@ -59,7 +62,7 @@ function near(x,y,tolerance=.07){assert.ok(x>0&&Math.abs(x/y-1)<tolerance,
   assert.equal(b.protectedUnit.expOscarReposition,true);
   near(E.preview(b.g,b.enemy.id,b.protectedUnit.c,b.protectedUnit.r).unit,pre.marked*.8);
   near(E.preview(b.g,b.enemy.id,b.support.c,b.support.r).unit,pre.support*.9);
-  assert.equal(E.preview(b.g,b.enemy.id,b.outside.c,b.outside.r).unit,pre.outside,
+  assert.equal(E.preview(b.g,b.outsideEnemy.id,b.outside.c,b.outside.r).unit,pre.outside,
     'No protection beyond two hexes');
   assert.equal(E.feint(b.g,b.o.id,b.support.id).ok,false,'Once per turn');
   // Test save roundtrip while both buffs remain active.
