@@ -62,7 +62,8 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"cf-eu-france",title:"Invasion of France — Mediterranean Offensive",note:"34 cities · 2 sides · southern naval invasion"},
   {id:"rounds-rebellion",title:"Knights of the Round Rebellion",note:"2 sides · Pendragon succession war"},
   {id:"shin-independence",title:"Euro-Britannian Independence",note:"2 sides · Shin vs Empire"},
-  {id:"chinese-civil-war",title:"Chinese Civil War — The Imperial Restoration",note:"2 sides · Tianzi vs High Eunuchs"}
+  {id:"chinese-civil-war",title:"Chinese Civil War — The Imperial Restoration",note:"2 sides · Tianzi vs High Eunuchs"},
+  {id:"eu-military-coup",title:"E.U. Military Coup — Smilas vs Leila",note:"44 cities · 2 sides · E.U. civil war"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.
 const SCENARIO_FILES = Object.freeze([
@@ -144,7 +145,8 @@ const SCENARIO_FILES = Object.freeze([
   'scenarios-alternate-common.js',
   'scenarios-rounds-rebellion.js',
   'scenarios-shin-independence.js',
-  'scenarios-chinese-civil-war.js'
+  'scenarios-chinese-civil-war.js',
+  'scenarios-eu-coup.js'
 ]);
 // Script promises are shared across callers; successful modules execute once per tab.
 const assetLoads = new Map();
