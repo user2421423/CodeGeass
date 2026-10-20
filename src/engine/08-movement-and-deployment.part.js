@@ -77,6 +77,7 @@
     if (f.firstStrike && !u.expKallenReposition && !u.skillReposition &&
         t.naval !== 'ship') n += u.expKallenMoveBank || 0;
     if (u.expKallenSlowActive) n = Math.max(1, n - 2);
+    if(u.expMiguelSupply)n=Math.max(0,n-2);
     return n;
   }
   function terrainStepCost(g, t) {
@@ -460,6 +461,7 @@
       c.r = dest.r;
     }
     u.moved = true;
+    u.expRomeroMoved=true; // Once physically moved, Stand Fast stays off this turn.
     // Amphibious units gain one full extra movement and attack after landing each turn.
     // A per-turn stamp prevents unlimited actions by hopping across the coastline.
     const freshLanding = t.naval === 'amphibious' && fromSea && !isSea(dest) && u.landingRefreshTurn !== g.turn;
@@ -498,6 +500,10 @@
       u.eliteMoveAfterKill=originalActions.eliteMoveAfterKill;
       if(originalActions.akitoMoveReady)u.expAkitoMoveReady=originalActions.akitoMoveReady;
       delete u.expOscarReposition;
+    }
+    // The Last Promise banks one full extra move without bypassing heavy caps.
+    if(u.expToruExtraMove>0&&u.hp>0&&!heavyMoveLimitReached(g,u)){
+      u.expToruExtraMove--;u.moved=false;
     }
     // Tactical redeployment preserves the original normal movement action.
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
