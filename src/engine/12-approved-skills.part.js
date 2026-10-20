@@ -127,6 +127,60 @@
       g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).blackSeaFox&&dist(g,v,u)<=2))m*=1.25;
     return m;
   }
+  // Emergency Defense follows the designated formation. Non-stacking:
+  // its own 20% protection takes precedence over nearby allies' 10%.
+  function oscarDefenseMultiplier(g,target){
+    if(target?.hp<=0)return 1;
+    if(target.expOscarDefense?.side===target.side)return .8;
+    return g.units.some(v=>v.hp>0&&v.side===target.side&&v.expOscarDefense?.side===target.side&&
+      dist(g,v,target)<=2) ? .9 : 1;
+  }
+  // Oscar fires an independent full-strength reaction after an enemy's
+  // initiating attack against ANOTHER allied formation within 2 hexes.
+  // No normal attack action, retaliation, or attack-chain refresh is created.
+  function oscarGuardCounterstrike(g,attacker,defender){
+    if(!attacker||attacker.hp<=0||!defender||!foe(g,attacker.side,defender.side))return [];
+    const guards=g.units.filter(v=>v.hp>0&&fx(v).guardCounterstrike&&
+      v.id!==defender.id&&v.side===defender.side&&v.morale>-3&&
+      !v.expRoloFrozen&&!v.expCharlesMemoryRewrite&&!atSea(g,v)&&
+      dist(g,v,defender)<=2&&inRange(v,attacker,g)&&hostileTarget(g,v,attacker));
+    const strikes=[];
+    for(const oscar of guards){
+      if(attacker.hp<=0)break;
+      // A distinct enemy can trigger once per Oscar per global turn.
+      if(oscar.expOscarCounterTargets?.turn!==g.turn)
+        oscar.expOscarCounterTargets={turn:g.turn,ids:[]};
+      if(oscar.expOscarCounterTargets.ids.includes(attacker.id))continue;
+      oscar.expOscarCounterTargets.ids.push(attacker.id);
+      const station=stationAt(g,attacker),pr=preview(g,oscar.id,attacker.c,attacker.r);
+      if(!pr)continue;
+      const crit=random(g)<pr.crit;
+      const damage=Math.max(1,Math.round(pr.rawUnit*(.92+random(g)*.16)*
+        (crit?pr.critMult:1)));
+      if(attacker.expCCProtection)delete attacker.expCCProtection;
+      let incoming=newcomerIntercept(g,attacker,damage);
+      if(fx(attacker).futureSightDodge&&random(g)<fx(attacker).futureSightDodge){
+        incoming=0;
+        log(g,'FUTURE SIGHT — EVADED',attacker.side);
+      }
+      const before=attacker.hp;
+      const dealt=smilasDealCombatDamage(g,attacker,oscar,incoming);
+      recordWarEvent(g,'damage',oscar.side,{targetSide:attacker.side,
+        value:before-attacker.hp,unitId:oscar.id,group:warGroup(g,oscar)});
+      attacker.struck={turn:g.turn,side:oscar.side};
+      if(attacker.skillMarks?.length)
+        attacker.skillMarks=attacker.skillMarks.filter(m=>m.side!==oscar.side||!m.uses);
+      if(attacker.hp<=0){
+        attacker.expDirectIncoming=true;
+        kill(g,attacker,oscar,false,null,incoming);
+        delete attacker.expDirectIncoming;
+      }
+      log(g,'Oscar counterstrikes '+(COMMANDERS[attacker.cmd]?.short||TYPES[attacker.type].short)+
+        ' for '+dealt+' damage; no counterfire.',oscar.side);
+      strikes.push({oscar:oscar.id,target:attacker.id,damage:dealt});
+    }
+    return strikes;
+  }
   function newcomerDefense(g,target,attacker,counter,direct){
     let m=1;
     if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
