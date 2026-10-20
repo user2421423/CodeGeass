@@ -94,6 +94,7 @@
   function repairReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
+    if (u.expMiguelSupply) return 'Miguel has severed this formation\'s supply lines';
     const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
@@ -111,6 +112,7 @@
   function reinforceReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
+    if (u.expMiguelSupply) return 'Miguel has severed this formation\'s supply lines';
     const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
@@ -256,6 +258,7 @@
     if (action.kind === 'memoryRewrite') return actionTargets(g, u).length ? null : 'No enemy susceptible to confusion within 3 hexes';
     if (action.kind === 'freeze') return actionTargets(g, u).length ? null : 'No adjacent enemy formations to freeze';
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    if (action.kind === 'miguelSupply') return actionTargets(g,u).length ? null : 'No enemy within 3 hexes';
     if (action.kind === 'special' || action.kind === 'protection' || action.kind === 'oscarDefense' || action.kind === 'geassCancel' || action.kind === 'checkmate') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
       ? 'No enemy within 2 hexes' : action.kind === 'command' ? (u.cmd === 'zero' ? 'No eligible friendly or enemy formation within 2 hexes' : 'No friendly unit within 2 hexes has acted')
