@@ -16,6 +16,15 @@ let scenarioLibraryQuery = '';
 let scenarioLibraryTheater = 'all';
 const SCENARIO_THEATERS = Object.freeze([
   {
+    "id": "alternate-history",
+    "label": "Alternate History",
+    "ids": [
+      "rounds-rebellion",
+      "shin-independence",
+      "chinese-civil-war"
+    ]
+  },
+  {
     "id": "east-asia",
     "label": "East Asia",
     "ids": [
