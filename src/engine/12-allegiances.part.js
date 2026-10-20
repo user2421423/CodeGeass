@@ -43,7 +43,7 @@
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && v.side === u.side && v.id !== u.id && dist(g, u, v) === 1 && predicate(v));
   }
   function lowerMorale(g, u, steps) {
-    if (!u.moraleWard) u.morale = Math.max(moraleFloor(g, u), u.morale - steps);
+    if (!u.moraleWard) u.morale = Math.max(romeroStandFast(g,u) ? 0 : moraleFloor(g,u), u.morale - steps);
   }
   function addTargetMark(u, mark) {
     u.skillMarks ||= [];
