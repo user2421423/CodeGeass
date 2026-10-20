@@ -277,7 +277,7 @@
       role: 'Artillery',
       hull: 'Alexander Valiant (Yukiya version)',
       skill: "Demolition Expert / Electronic Warfare",
-      desc: "Demolition Expert: +40% damage against city shields; attacking a hostile city prevents shield regeneration on its next turn. Electronic Warfare: attacking an enemy reduces its movement by 2 and attack damage by 25% during its next turn.",
+      desc: "Demolition Expert: +50% damage against city shields and enemy units occupying city tiles; attacking a hostile city prevents shield regeneration on its next turn. Electronic Warfare: attacking an enemy reduces its movement by 2 and attack damage by 25% during its next turn.",
       stats: {},
       fx: {"yukiyaDemolition": true, "yukiyaElectronic": true},
       title: 'wZERO',
