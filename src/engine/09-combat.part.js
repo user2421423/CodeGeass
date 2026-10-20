@@ -397,12 +397,74 @@
         +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.15:0)),
     };
   }
-  // Combat damage is distributed immediately. A living adjacent ally can
-  // absorb half of an incoming Smilas hit, and die before any counterfire.
-  // The transferred hit is not itself an attack or a counterattack.
+  // Guilford's rescue resolves on actual combat damage, not in power()/preview():
+  // redirected hits bypass Guilford's own defenses and can kill him.
+  function guilfordCleanse(target) {
+    // No restoration of spent normal actions: cleanse incapacitating effects,
+    // not a free attack or move on an already-acted commander.
+    if (target.expCharlesMemoryRewrite?.previousMorale != null)
+      target.morale = Math.max(target.morale, target.expCharlesMemoryRewrite.previousMorale);
+    target.morale = Math.max(0, target.morale);
+    target.skillMarks = (target.skillMarks || []).filter(mark => mark.side === target.side);
+    const debuffs = [
+      'auraDisrupted', 'despairWeakened', 'expZeroGeass', 'expCharlesMemoryRewrite',
+      'expRoloFrozen', 'expGeassCancelled', 'expFernandoOverload',
+      'expDisabledNext', 'expDisabledActive', 'expPinnedNext', 'expPinnedActive',
+      'expPinnedWeakenNext', 'expPinnedWeakenActive', 'expJammedNext', 'expJammedActive',
+      'expYukiyaElectronicNext', 'expYukiyaElectronicActive',
+      'expKallenSlowNext', 'expKallenSlowActive', 'expAyanoSwordBreak',
+      'expZiWeakenNext', 'expChengWeaken', 'expSmilasSuppression',
+      'expSmilasSuppressionTurn', 'expInformationWarfare', 'expJoeDiagnosis',
+      'expCheckmate', 'expForcedVulnerable', 'expDecapitationMark'
+    ];
+    for (const key of debuffs) delete target[key];
+  }
+  function guilfordProtect(g, victim, attacker, amount) {
+    const incoming = Math.max(0, Math.round(amount || 0));
+    if (!incoming || !victim?.cmd || victim.hp <= 0 || !attacker ||
+        !foe(g, victim.side, attacker.side) || atSea(g, victim))
+      return incoming;
+    const guards = g.units.filter(v => v.hp > 0 && v.id !== victim.id &&
+      v.side === victim.side && v.cmd === 'guilford' && fx(v).guilfordGuard &&
+      !atSea(g,v) && dist(g,v,victim) === 1).sort((a,b) => a.id-b.id);
+    if (!guards.length) return incoming;
+    // A lethal hit triggers the once-per-turn complete rescue BEFORE the usual
+    // 50% sharing rule. Once spent, subsequent hits still share 50% normally.
+    const sacrifice = incoming >= victim.hp
+      ? guards.find(v => v.expGuilfordSacrificeUsedTurn !== g.turn) : null;
+    const guard = sacrifice || guards[0];
+    const redirected = sacrifice ? incoming : Math.round(incoming * .5);
+    const before = guard.hp;
+    guard.hp = Math.max(0, guard.hp - redirected);
+    if (sacrifice) {
+      guard.expGuilfordSacrificeUsedTurn = g.turn;
+      victim.expGuilfordSavedAttack = { turn:g.turn, attackerId:attacker.id };
+      guilfordCleanse(victim);
+    }
+    // Multiple threatened commanders can name different attackers; the +30%
+    // does not stack against a single attacker.
+    if (guard.hp > 0) {
+      const mark = guard.expGuilfordRetribution || { targets:[], turnsLeft:0 };
+      if (!mark.targets.includes(attacker.id)) mark.targets.push(attacker.id);
+      mark.turnsLeft = Math.max(mark.turnsLeft, g.phase === guard.side ? 2 : 1);
+      guard.expGuilfordRetribution = mark;
+    }
+    recordWarEvent(g,'damage',attacker.side,{targetSide:guard.side,
+      value:before-guard.hp,unitId:attacker.id,group:warGroup(g,attacker)});
+    log(g, sacrifice
+      ? 'Ultimate Sacrifice: Guilford absorbs a lethal strike and cleanses the protected commander.'
+      : 'My Princess, My Justice: Guilford intercepts half the strike.', guard.side);
+    // A sacrificed Guilford is a genuine combat casualty, but the rescued
+    // formation receives ZERO damage even if he is killed by the full blow.
+    if (guard.hp <= 0) kill(g,guard,attacker,false,null,redirected);
+    return sacrifice ? 0 : incoming - redirected;
+  }
+  // Combat damage is distributed immediately. Guilford's protection precedes
+  // Smilas's own damage-share rule; redirected hits are not new attacks.
   function smilasDealCombatDamage(g, victim, attacker, amount) {
+    const incoming = guilfordProtect(g,victim,attacker,amount);
     const priorHP = victim.hp;
-    const split = smilasDamageShare(g,victim,amount);
+    const split = smilasDamageShare(g,victim,incoming);
     // Intercept before applying the hit to Smilas, so a bodyguard killed
     // shielding a mortally wounded Smilas still triggers Sacrifices.
     if (split.ally && split.redirected > 0) {
@@ -848,6 +910,13 @@
       a.withdrawMove = false;
       a.eliteMoveAfterKill = false;
       delete a.expKallenReposition;
+    }
+    // Status debuffs inflicted later in the same volley must not undo a rescue.
+    for (const protectedAlly of g.units) {
+      if (protectedAlly.expGuilfordSavedAttack?.turn !== g.turn ||
+          protectedAlly.expGuilfordSavedAttack.attackerId !== a.id) continue;
+      guilfordCleanse(protectedAlly);
+      delete protectedAlly.expGuilfordSavedAttack;
     }
     log(
       g,

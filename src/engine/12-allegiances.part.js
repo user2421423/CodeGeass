@@ -138,6 +138,9 @@
     if (f.loneRaider && akitoIsolated(g, u)) mult *= 1 + f.loneRaider;
     // Divine Tiger targets commander-led formations in both attacks and retaliation.
     if (f.duelist && target?.cmd) mult *= 1 + f.duelist;
+    // Spearhead's Retribution applies to Guilford's initiating attacks and counterfire.
+    if (f.guilfordRetaliation && target && u.expGuilfordRetribution?.targets?.includes(target.id))
+      mult *= 1 + f.guilfordRetaliation;
     if (counter) {
       // Ryo's marked-target bonus also helps allied counterfire. His own
       // formation is excluded by targetMarked(), as on normal attacks.
@@ -252,6 +255,7 @@
     if (u.skillMarks?.length) out.push('Designated target');
     if(u.expChengWeaken?.turns>0)out.push('Supply disruption: attack −15%');
     if(u.expZeroGeass)out.push('Geass Absolute Command: counterattacks suppressed');
+    if(u.expGuilfordRetribution?.targets?.length)out.push("Spearhead's Retribution: +30% against attackers of guarded commanders");
 
     if(u.expInformationWarfare)out.push('Information warfare: attack −20%, cover −25%, support suppressed');
     if(u.expPrecisionTarget?.turn===g.turn)out.push('Precision target: +25 penetration points, cover bypass 40%');
