@@ -196,6 +196,9 @@
     if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
+    if (kind === 'expendableVanguard') return g.units.filter(v => v.hp > 0 &&
+      v.side === u.side && v.id !== u.id && !atSea(g, v) &&
+      dist(g, u, v) <= 2 && !v.expSmilasVanguardCharge);
     if (kind === 'ohgiHeal') return g.units.filter(v => v.hp > 0 &&
       v.side === u.side && v.id !== u.id && !atSea(g, v) &&
       dist(g, u, v) <= 2 && v.hp < maxHP(v));
@@ -218,6 +221,28 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'expendableVanguard') {
+      const v = targetId == null ? [...options].sort((a,b) =>
+        Number(!!b.cmd)-Number(!!a.cmd) ||
+        Number(!!b.attacked)-Number(!!a.attacked) ||
+        TYPES[b.type].attack*(b.stack||1)-TYPES[a.type].attack*(a.stack||1) ||
+        a.id-b.id)[0] : options.find(v => v.id === targetId);
+      if (!v) return { ok:false, reason:'Choose an eligible allied formation within 2 hexes' };
+      // A full activation is granted even if both actions were still unused.
+      // Keep once-per-turn special stamps and heavy-frame move caps intact.
+      v.moved = false;
+      v.attacked = false;
+      v.chain = 0;
+      v.skillReposition = 0;
+      v.withdrawMove = false;
+      v.eliteMoveAfterKill = false;
+      delete v.expAkitoMoveReady;
+      v.expSmilasVanguardCharge = true;
+      u.feintCD = action.cooldown ?? 3;
+      u.feintUsedTurn = g.turn;
+      log(g, `Expendable Vanguard sends ${COMMANDERS[v.cmd]?.short||TYPES[v.type].short} forward at a deadly cost.`,u.side);
+      return { ok:true, target:v.id, affected:1 };
+    }
     if (action.kind === 'ohgiHeal') {
       const cost = Math.max(1, Math.round(maxHP(u) * 0.20));
       if (u.hp <= cost) return { ok: false, reason: 'Ohgi must survive the HP sacrifice' };
