@@ -310,6 +310,21 @@
       for(const ally of g.units)if(ally.hp>0&&ally.side===v.side&&dist(g,ally,v)===1)
         ally.expPuristCounter={turns:1,startTurn:g.turn};
     if(!attacker)return;
+    // Spearhead's Retribution: a genuine kill of an enemy Guilford protected
+    // against restores normal movement and attack exactly once each turn.
+    if (attacker.cmd === 'guilford' && attacker.hp > 0 &&
+        attacker.expGuilfordRetribution?.targets?.includes(v.id) &&
+        attacker.expGuilfordRetributionKillTurn !== g.turn) {
+      attacker.expGuilfordRetributionKillTurn = g.turn;
+      attacker.attacked = false;
+      attacker.moved = heavyMoveLimitReached(g,attacker);
+      attacker.skillReposition = 0;
+      attacker.withdrawMove = false;
+      attacker.eliteMoveAfterKill = false;
+      const previous = attacker.expGuilfordRetributionRefresh;
+      attacker.expGuilfordRetributionRefresh = { turn:g.turn,
+        count:(previous?.turn===g.turn ? previous.count : 0)+1 };
+    }
     // Exploit the Opening: only an OTHER allied formation's actual kill can
     // refresh Ryo and the killer. No new attack is created on mere damage,
     // shields, a Ryo solo kill, or indirect deaths without an allied killer.
