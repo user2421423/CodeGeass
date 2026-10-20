@@ -17,9 +17,10 @@ const type = (side,branch) => Object.keys(E.TYPES).find(id => {
   const t = E.TYPES[id];
   return t.side === side && t.branch === branch && !t.naval && !t.elite && t.min === 1 && t.max === 1;
 });
-const bkArt = type('bk','Artillery') || type('cf','Artillery'), bkInf = type('bk','Infantry'), brInf = type('britannia','Infantry');
-assert.ok(bkArt && bkInf && brInf, 'Both sides need standard units');
-function setup(){
+const bkArt = type('bk','Artillery') || type('cf','Artillery'),
+  bkInf = type('bk','Infantry'), bkArmor = type('bk','Armor'), brInf = type('britannia','Infantry');
+assert.ok(bkArt && bkInf && bkArmor && brInf, 'Both sides need standard units');
+function setup(allyType=bkInf, allyCommander=null){
   const g=E.createGame('bk','normal','conquest',20261019,'world');
   g.units=[];g.phase='bk';
   const clear=p=>p.terrain==='plains'&&!E.internal.stationAt(g,p);
@@ -30,7 +31,7 @@ function setup(){
     dist(g,center,p)===radius&&!E.internal.unitAt(g,p)&&predicate(p));
   const zero=E.newUnit(g,bkArt,'bk',center.c,center.r,1,'zero');
   const p1=pick(1);assert.ok(p1);
-  const ally=E.newUnit(g,bkInf,'bk',p1.c,p1.r);
+  const ally=E.newUnit(g,allyType,'bk',p1.c,p1.r,1,allyCommander);
   const p2=pick(2,p=>dist(g,p,ally)===1);
   assert.ok(p2,'Enemy must be in second ring and adjacent to ally');
   const enemy=E.newUnit(g,brInf,'britannia',p2.c,p2.r);
@@ -87,6 +88,40 @@ function setup(){
   b.g.turn++;
   b.ally.moved=true;
   assert.equal(E.feintReason(b.g,b.zero),null,'Zero recharges on next turn');
+}
+// A Kallen reposition after Radiant Wave Assault must not make Zero's
+// fresh activation a one-point move. Keep the bank and first-strike history.
+for (const bank of [1, 2]) {
+  const b=setup(bkArmor,'kallen');
+  const k=b.ally;
+  k.expKallenMoveBank=bank;
+  k.expKallenFirstTargets=[b.enemy.id];
+  // Calculate the expected full activation without changing Kallen's earned bonuses.
+  const expected=[...E.reachable(b.g,k).keys()].sort();
+  assert.ok(expected.length>0,'Kallen must have a legal normal move');
+  // Kallen has already moved and attacked and now has a limited reposition.
+  k.moved=true;
+  k.attacked=true;
+  k.skillReposition=bank;
+  k.expKallenReposition=true;
+  k.moveActionTurn=b.g.turn;
+  k.moveActionsThisTurn=1;
+  assert.ok(E.actionTargets(b.g,b.zero).some(v=>v.id===k.id),'Zero can target acted Kallen');
+  const used=E.feint(b.g,b.zero.id,k.id);
+  assert.equal(used.ok,true,used.reason);
+  assert.equal(k.moved,false,'Zero restores Kallen movement');
+  assert.equal(k.attacked,false,'Zero restores Kallen attack');
+  assert.equal(k.expKallenReposition,undefined,'Stale limited reposition is cleared');
+  assert.equal(k.expKallenMoveBank,bank,'Earned movement points are preserved');
+  assert.deepEqual(k.expKallenFirstTargets,[b.enemy.id],'The same target cannot trigger Radiant Wave Assault twice');
+  assert.deepEqual([...E.reachable(b.g,k).keys()].sort(),expected,
+    'Zero grants full legal movement rather than the limited Kallen reposition');
+  const alreadyStruck=E.preview(b.g,k.id,b.enemy.c,b.enemy.r);
+  assert.ok(alreadyStruck && alreadyStruck.unit>0,'Refreshed Kallen can attack the previous target');
+  k.expKallenFirstTargets=[];
+  const freshStrike=E.preview(b.g,k.id,b.enemy.c,b.enemy.r);
+  assert.ok(freshStrike.unit>alreadyStruck.unit,'First strike remains available only for a new target');
+  k.expKallenFirstTargets=[b.enemy.id];
 }
 // Enemy mode: two morale levels, but no lower than -2, no counterattacks
 // (including reaction counters), and no friendly activation the same turn.
