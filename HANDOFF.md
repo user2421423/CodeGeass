@@ -291,6 +291,33 @@ Everything ships from `dist/`; there is no runtime bundler (the five build-outpu
   regular level-3 factory choices when armored or fortified fronts need them, with a protected ordinary-unit
   budget rather than a separate saving chance or purchase cooldown. Tier-I frames remain fallbacks when Sakuradite runs short.
 
+### Airships (added 2026-10-20) — AI is provisional
+
+One floating battleship per power, all with identical stats (`AIRSHIP` in `dist/engine/frames.js`): Britannia and
+Euro Britannia build the Logres class, the E.U. the Charlemagne class, the 2017 Federation the Shenlong class, and the
+Black Knights and the 2018 U.F.N. the Ikaruga class (`AIRSHIPS` / `airshipType` in `src/engine/06-terrain.part.js`).
+They are warships (`naval: 'ship'`) with `air: true`: `isAir` and `portBuilt` mark every place where they differ from
+Carrier-Battleships. Players build them at any level-3 city factory (Airship tab) for 1,800 credits, 500 industry,
+150 science and 60 Sakuradite, in one turn, with **no player cap**. They fly 10 hexes over any land, sea or peak,
+carry two formations, cannot enter or capture cities, ports or mines, get no terrain cover, take no bonus damage, never
+heal on their own and cannot add frames; manual Repair beside a friendly city is their only recovery. Not available in
+Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
+
+> **⚠ The AI side is a deliberately limited first pass and is expected to change.**
+>
+> - **Current limit: each AI power keeps at most ONE airship at a time** (`AI_AIRSHIP_LIMIT = 1` in
+>   `src/ai/06-production.part.js`). It saves for it only in World Conquest, from turn 10, with 20+ cities and a
+>   level-3 factory, and never while funding F.L.E.I.J.A. or an Eliminator. Regional-scenario and Story AI never build
+>   them, so the scenario simulation baseline is unaffected.
+> - **Why the logic is not good yet:** the AI has no airship-specific planning. Airships pass through the existing
+>   Carrier-Battleship code (`aiCarrier` in `src/ai/05-naval.part.js` and the front maneuver code), which was written
+>   for ships that stay on water. It therefore under-uses the airship's main strengths: it rarely flies inland over
+>   mountains, does not plan deep drops of its two formations behind enemy lines, and does not keep its flagship out
+>   of reach when damaged (it cannot heal on its own). Production is only a simple credit-saving rule, not a judgement
+>   of where an airship would help, and it was checked on just three 25–30-turn Conquest games.
+> - **Before raising the limit:** give airships their own AI orders (inland strikes, drops, retreat to repair), then
+>   compare several seeded Conquest games against `main` (outcomes vary by about 17 cities between seeds).
+
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 2, `cost`
   1,800 credits / 450 industry / 300 research / 150 Sakuradite, `turns` 4, `lab` 3, `labTurn` 15,

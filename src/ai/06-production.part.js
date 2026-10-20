@@ -123,13 +123,15 @@
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
-    // Airships (Conquest only): from turn 10, a power with a level-3 factory saves for one
-    // airship at a time when no strategic weapon is being funded. The rules set no cap; the
-    // AI holds itself to one per 20 cities (at most two) so its field army keeps priority.
+    // Airships (Conquest only): from turn 10, a power with 20+ cities and a level-3 factory
+    // saves for an airship when no strategic weapon is being funded. The rules set no cap for
+    // players; the AI keeps at most AI_AIRSHIP_LIMIT alive (a lost one may be replaced).
+    // Provisional: see HANDOFF.md, "Airships". Raise the limit only once AI use improves.
+    const AI_AIRSHIP_LIMIT = 1;
     const airship = g.mode === 'conquest' && !eliteAI && g.turn >= 10 && airshipType(g, side),
       airshipCost = airship && price(airship, 1, g, side),
       airshipSaving = !!airship && !defenseSaving && !warSaving && yard3.length > 0 &&
-        own().filter(u => TYPES[u.type].air).length < Math.min(2, Math.floor(bases.length / 20));
+        bases.length >= 20 && own().filter(u => TYPES[u.type].air).length < AI_AIRSHIP_LIMIT;
     // Reserve strategic-weapon funds as before; super-heavies no longer hoard resources.
     const reserve = eliteCampaign ? 0 : defenseSaving
       ? Math.min(e.credits, ELIMINATOR.cost.credits)
