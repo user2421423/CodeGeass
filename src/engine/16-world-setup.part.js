@@ -228,7 +228,35 @@
     const stronger = type => TYPES[type] && TYPES[type].hp >= t.hp && TYPES[type].attack >= t.attack;
     return [typeFor(u.side, next, g), typeFor(t.side, next, g)].find(stronger) || u.type;
   }
+  // Each strategic-campaign finale is also available as a standalone regional
+  // scenario. Give both factions a one-frame airship and a sealed warhead on
+  // turn 1. The engine enforces the turn-5 launch gate for both human and AI.
+  function prepareFinaleArsenals(g) {
+    if (!finaleScenario(g) || g.scenario.finaleArsenalInitialized) return g;
+    g.scenario.finaleArsenalInitialized = true;
+    g.arsenal ||= {};
+    const sides = (g.order || []).filter(side => side !== 'neutral');
+    for (const side of sides) {
+      g.arsenal[side] = Math.max(1, g.arsenal[side] || 0);
+      if (g.units.some(u => u.hp > 0 && u.side === side && TYPES[u.type]?.air)) continue;
+      const type = airshipType(g, side);
+      const home = g.stations.find(s => s.owner === side && s.capitalOf === side) ||
+        g.stations.filter(s => s.owner === side).sort((a, b) => b.tier - a.tier || a.id - b.id)[0] ||
+        g.units.find(u => u.side === side && u.hp > 0);
+      if (!type || !home) continue;
+      const free = t => t.terrain !== 'offmap' && t.terrain !== 'peak' &&
+        !unitAt(g, t) && !stationAt(g, t) &&
+        !g.stations.some(s => s.portAt?.c === t.c && s.portAt?.r === t.r);
+      // Prefer the faction's home territory. Seaborne attackers instead deploy
+      // beside their existing invasion fleets, without inventing a land base.
+      const at = nearest(g, home, t => free(t) && t.owner === side) ||
+        nearest(g, home, t => free(t) && t.terrain === 'sea');
+      if (at) newUnit(g, type, side, at.c, at.r);
+    }
+    return g;
+  }
   function applyScenarioDifficulty(g, difficulty = g.difficulty) {
+    prepareFinaleArsenals(g);
     const d = DIFFICULTIES[difficulty];
     if (!d?.level) return g;
     const rivals = scenarioRivals(g);

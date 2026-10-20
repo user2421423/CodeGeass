@@ -11,7 +11,7 @@ automatically saves progress in its own scenario slot (one active scenario save
 at a time), separate from Conquest and Campaign. Scenarios do not import HQ
 research or grant persistent HQ rewards. All use ordinary combat, city-based
 province capture, and the regional AI. Normal, Hard, Challenge, and Elite are
-available. Regional scenarios disable F.L.E.I.J.A. and generally end only when
+available. Regional scenarios disable F.L.E.I.J.A. except for the six World Campaign finales, where both sides start with one sealed warhead usable from turn 5. Scenarios generally end only when
 one power, or an allied coalition where applicable, conquers its enemies.
 
 <!-- scenarios:start -->
@@ -175,7 +175,7 @@ a clean playtest is not itself proof that a scenario is balanced.
   cannot add frames; the Repair action beside a friendly city is the only way to restore them. Every power starts a Conquest with one airship beside its capital. The
   AI flies its airship with dedicated orders (strikes, troop lifts and drops, retreating to repair) and only builds a
   replacement when it has lost it, keeping at most one at a time (a provisional limit; see HANDOFF.md).
-  Regional-scenario AI does not build them.
+  Regional-scenario AI does not build them. In the six World Campaign finales, both sides begin with one faction-specific airship (including offshore invasion forces).
 - **Standing orders:** select a unit, choose Set destination (or press G), and
   click a hex. Units follow the route on subsequent turns; orders can be
   changed or cancelled.

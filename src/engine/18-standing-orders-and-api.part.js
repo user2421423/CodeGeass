@@ -427,6 +427,7 @@
     refineReason,
     refine,
     // F.L.E.I.J.A.
+    finaleScenario,
     FLEIJA,
     ELIMINATOR,
     fleijaLabTurn,
