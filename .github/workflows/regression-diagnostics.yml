@@ -1,0 +1,44 @@
+name: Diagnose legacy simulation regressions
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/diagnose_sim_divergence.cjs'
+      - 'tools/cc_protection_smoke.cjs'
+      - '.github/workflows/regression-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Checkout the actual pre-campaign merge base
+        uses: actions/checkout@v4
+        with:
+          ref: 38e519e789998010c5e336e170e6000c61205ab0
+          path: baseline
+      - name: Build both versions
+        run: |
+          node tools/build_sources.cjs
+          (cd baseline && node tools/build_sources.cjs)
+      - name: Verify C.C. protection code and UI dispatch
+        run: node tools/cc_protection_smoke.cjs
+      - name: Determine exact source of simulation divergences
+        run: |
+          node tools/diagnose_sim_divergence.cjs "$GITHUB_WORKSPACE/baseline" area-18:britannia battle-luoyang:britannia division-japan:eu conquest-indochina:cf eu-greenland:eu
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scenario-divergence-diagnosis
+          path: scenario-divergence-diagnosis.json
+          if-no-files-found: ignore
+      - name: Verify whether the old baseline already failed before integration
+        continue-on-error: true
+        run: |
+          cd baseline
+          node tools/check_sim_baseline.cjs --scenarios eu-greenland,division-japan,battle-luoyang
