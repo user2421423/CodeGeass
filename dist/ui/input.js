@@ -441,7 +441,7 @@ document.addEventListener('click', e => {
   if (d.scenarioGroupFocus) { scenarioGroupFocus(d.scenarioGroupFocus); return; }
   if (d.campaignTab) return campaignDialog(d.campaignTab);
   if (d.mission) return briefingDialog(d.mission);
-  if (d.startMission) return confirmReplace(CAMPAIGN_KEY, 'campaign', () => startMission(d.startMission));
+  if (d.startMission) return startMission(d.startMission);
   if (d.admiral) {
     const u = selectedUnit(),
       r = u ? E.assign(game, u.id, d.admiral) : { ok: false, reason: 'Select a unit first.' };
@@ -519,9 +519,6 @@ document.addEventListener('click', e => {
     case 'continue':
       resumeSavedGame(chosenSaveKey());
       break;
-    case 'continue-mission':
-      resumeSavedGame(CAMPAIGN_KEY);
-      break;
     case 'campaign':
       campaignDialog();
       break;
@@ -534,7 +531,7 @@ document.addEventListener('click', e => {
     case 'mission-retry': {
       const id = game.campaign.id,
         difficulty = game.difficulty || 'normal';
-      confirmReplace(CAMPAIGN_KEY, 'close', () => startMission(id, difficulty));
+      startMission(id, difficulty);
       break;
     }
     case 'talk-next':

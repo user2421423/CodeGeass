@@ -19,7 +19,7 @@ const FACTION_BLURB = {
   },
 };
 function startMenu() {
-  // Separate saved operations remain intact: this screen is visual/navigation only.
+  // Story battles are ephemeral; persistent progress is shown through earned stars.
   const previous = modal.querySelector('.start-command');
   const scroll = previous?.scrollTop || 0;
   const focusedId = document.activeElement?.id;
@@ -37,7 +37,6 @@ function startMenu() {
   const era = E.ERAS[cfg.id] || E.ERAS.world;
   const saved = getSave(chosenSaveKey());
   const scenarioSave = getSave(SCENARIO_KEY);
-  const missionSave = getSave(CAMPAIGN_KEY);
   const worldCampaignSave = getSave(WAR_CAMPAIGN_BATTLE_KEY);
   const profile = loadProfile();
   const reward = conquestReward(setup.difficulty, profile, cfg.id, setup.side);
@@ -62,8 +61,6 @@ function startMenu() {
     </button>`;
   }).join('');
   const saveButton = saved ? `<button class="start-resume" data-action="continue">Continue conquest · Turn ${saved.turn}</button>` : '';
-  const missionResume = missionSave && (!missionSave.over || !missionSave.rewardClaimed) && CP?.mission(missionSave.campaign?.id)
-    ? `<div class="start-mode-resume"><button data-action="continue-mission">↳ Resume saved story mission · Turn ${missionSave.turn}</button></div>` : '';
   const scenarioResume = scenarioSave && !scenarioSave.over
     ? `<div class="start-mode-resume"><button data-action="continue-scenario">↳ Resume ${esc(scenarioSave.scenario?.title || 'scenario')} · Turn ${scenarioSave.turn}</button></div>` : '';
   // World Campaign keeps an independent battle slot from standalone scenarios.
@@ -109,9 +106,8 @@ function startMenu() {
             <section class="start-mode" style="--mode-accent:#d7aa64" data-open-mode="campaign" role="button" tabindex="0" aria-label="Open Story Mode">
               <span class="start-mode-serial" aria-hidden="true">I</span>
               <h3>Story Mode</h3>
-              <p>Follow the story through linked missions and decisive battles.</p>
+              <p>Play short linked missions. Completed stars and rewards are saved.</p>
               <div class="start-mode-bottom"><span class="start-mode-info">${campaigns.length} campaigns · ${earnedStars}/${missions.length * 3} ★</span><button data-action="campaign">Play story</button></div>
-              ${missionResume}
             </section>
             <section class="start-mode" style="--mode-accent:#6fa7be" data-open-mode="scenario" role="button" tabindex="0" aria-label="Open Regional Scenarios">
               <span class="start-mode-serial" aria-hidden="true">II</span>

@@ -56,9 +56,7 @@ function campaignRow(profile) {
 }
 function campaignDialog(cid = campaignTab) {
   const CP = E.campaign,
-    profile = loadProfile(),
-    saved = getSave(CAMPAIGN_KEY),
-    resume = saved && (!saved.over || !saved.rewardClaimed) && CP.mission(saved.campaign?.id);
+    profile = loadProfile();
   campaignTab = CP.CAMPAIGNS[cid] ? cid : Object.keys(CP.CAMPAIGNS)[0];
   const camp = CP.CAMPAIGNS[campaignTab],
     season = CP.SEASONS?.[camp.season] || { name: camp.name, short: camp.short },
@@ -93,7 +91,7 @@ function campaignDialog(cid = campaignTab) {
       return `<button class="mission-card${best ? ' cleared' : ''}" data-mission="${m.id}" ${open ? '' : `disabled title="Clear ${esc(camp.missions[i - 1].title)} first"`}><span class="mission-num">${open ? i + 1 : '🔒'}</span><span class="mission-info"><small>${m.year} · ${esc(m.place)}</small><b>${esc(m.title)}</b></span>${starRow(best)}</button>`;
     })
     .join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Story Mode"><div class="dialog-head"><div><div class="eyebrow">Story Mode · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><div>${resume ? `<button class="primary" data-action="continue-mission">Continue ${esc(resume.title)} · ${esc(E.campaign.DIFFICULTIES[saved.difficulty]?.name || 'Normal')} · turn ${saved.turn}</button>` : ''}</div><small class="notice">Missions unlock in order; 1★ is enough to progress. Story Mode milestones: ${milestoneText}. One mission in progress is saved at a time, apart from your conquest.</small></div></section></div>`;
+  modal.innerHTML = `<div class="overlay"><section class="dialog wide campaign-select" role="dialog" aria-modal="true" aria-label="Story Mode"><div class="dialog-head"><div><div class="eyebrow">Story Mode · ${esc(season.short)} · ${camp.years}</div><h2>${esc(season.name)}</h2><p><b>${esc(camp.name)}.</b> ${esc(camp.desc)}</p></div><button class="small close" data-action="campaign-close">Back</button></div><div class="season-tabs">${seasonTabs}</div><div class="toolbar-row"><div class="tabs">${tabs}</div><span class="campaign-total">★ ${got} / ${camp.missions.length * 3}</span></div><div class="campaign-layout">${ART.portrait(camp.portrait, 'campaign-portrait')}<div class="mission-grid">${cards}</div></div><div class="dialog-footer"><small class="notice">Missions unlock in order; 1★ is enough to progress. Story Mode milestones: ${milestoneText}. Battles cannot be resumed after leaving; completed missions, stars and rewards are saved.</small></div></section></div>`;
   focusDialog();
 }
 // Before a mission (live = false) or during one (live = true, with each star goal's current state).

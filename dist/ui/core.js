@@ -74,17 +74,18 @@ function setWorld() {
   WORLD_H = mapH(game);
 }
 setWorld();
-// Conquest, campaign missions and regional scenarios each have their own slot, so none replaces another.
+// Only long-form modes have battle save slots; Story Mode progression is stored in the profile.
 const SAVE_KEY = 'knightmare-conquest-save',
   UFN_SAVE_KEY = 'knightmare-ufn2018-save',
   chosenSaveKey = () => setup.conquest === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY,
-  CAMPAIGN_KEY = 'knightmare-conquest-mission',
   SCENARIO_KEY = 'knightmare-conquest-scenario',
   WEEKLY_SCENARIO_KEY = 'knightmare-weekly-scenario-save',
   WAR_CAMPAIGN_BATTLE_KEY = KnightmareWarCampaign.BATTLE_KEY,
   PROFILE_KEY = 'knightmare-conquest-profile',
-  saveKey = () => (game.mode === 'campaign' ? CAMPAIGN_KEY : game.mode === 'scenario' ? (game.warCampaign ? WAR_CAMPAIGN_BATTLE_KEY : game.weeklyScenario ? WEEKLY_SCENARIO_KEY : SCENARIO_KEY)
+  saveKey = () => (game.mode === 'scenario' ? (game.warCampaign ? WAR_CAMPAIGN_BATTLE_KEY : game.weeklyScenario ? WEEKLY_SCENARIO_KEY : SCENARIO_KEY)
     : game.era === 'ufn2018' ? UFN_SAVE_KEY : SAVE_KEY);
+// Retire the former Story battle slot without disturbing saved achievements, rewards or HQ progress.
+try { localStorage.removeItem('knightmare-conquest-mission'); } catch (_) { /* Storage may be unavailable. */ }
 const ownUnits = () => game.units.filter(u => u.hp > 0 && u.side === game.player),
   selectedUnit = () => (selection?.kind === 'unit' ? game.units.find(u => u.id === selection.id && u.hp > 0) : null),
   selectedStation = () => (selection?.kind === 'station' ? game.stations.find(s => s.id === selection.id) : null),
@@ -200,8 +201,8 @@ function saveProfile(p) {
   }
 }
 function save() {
-  // Training is ephemeral: never write to the scenario, conquest, mission or HQ saves.
-  if (game.mode === 'scenario' && game.scenario?.id === 'training-grounds') return true;
+  // Story battles and training are ephemeral. Story rewards and stars still persist via saveProfile().
+  if (game.mode === 'campaign' || (game.mode === 'scenario' && game.scenario?.id === 'training-grounds')) return true;
   if (game.phase !== game.player && !game.over) return false;
   try {
     const packed=E.packSave(game);
@@ -236,7 +237,7 @@ function unreadableSave(key = SAVE_KEY) {
     return false;
   }
 }
-// Each mode has one save slot. Starting over replaces it, so confirm first when it holds an unfinished or
+// Each saved battle mode has one slot. Starting over replaces it, so confirm first when it holds an unfinished or
 // unreadable operation. `cancel` is the action that returns to where the player came from.
 let pendingReplace = null;
 function confirmReplace(key, cancel, then) {
@@ -248,7 +249,7 @@ function confirmReplace(key, cancel, then) {
     ? 'The saved operation is from an older version of the game and can no longer be loaded.'
     : s.mode === 'scenario'
       ? `Your game of ${s.scenario?.title || 'this scenario'} in progress (turn ${s.turn}) will be lost.`
-      : `Your ${s.mode === 'campaign' ? 'mission' : 'conquest'} in progress (turn ${s.turn}) will be lost.`;
+      : `Your conquest in progress (turn ${s.turn}) will be lost.`;
   modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="Replace saved operation"><div class="eyebrow">Saved operation</div><h2>Start over?</h2><p>${what} Starting now replaces it.</p><div class="dialog-footer"><button data-action="${cancel}">Keep it</button><button class="primary" data-action="replace-confirm">Start over</button></div></section></div>`;
   focusDialog();
 }
