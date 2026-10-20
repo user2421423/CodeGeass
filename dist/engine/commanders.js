@@ -50,7 +50,7 @@
     julius: {
       name: 'Julius Kingsley',
       short: 'Julius',
-      side: 'britannia',
+      side: 'eb',
       commission: 'legendary',
       cost: 210,
       role: 'Armor',
@@ -140,7 +140,7 @@
     shin: {
       name: 'Shin Hyuga Shaing',
       short: 'Shin',
-      side: 'britannia',
+      side: 'eb',
       commission: 'distinguished',
       cost: 135,
       role: 'Armor',
@@ -199,7 +199,7 @@
     ashley: {
       name: 'Ashley Ashra',
       short: 'Ashley',
-      side: 'britannia',
+      side: 'eb',
       commission: 'standard',
       cost: 110,
       role: 'Armor',
@@ -733,7 +733,7 @@
     kewell: {
       name: 'Kewell Soresi',
       short: 'Kewell',
-      side: 'britannia',
+      side: 'eb',
       commission: 'standard',
       cost: 110,
       role: 'Armor',
@@ -793,7 +793,7 @@
     manfredi: {
       name: 'Michele Manfredi',
       short: 'Manfredi',
-      side: 'britannia',
+      side: 'eb',
       commission: 'legendary',
       cost: 195,
       role: 'Armor',
@@ -808,7 +808,7 @@
     farnese: {
       name: 'Andrea Farnese',
       short: 'Farnese',
-      side: 'britannia',
+      side: 'eb',
       commission: 'distinguished',
       cost: 145,
       role: 'Artillery',
@@ -823,7 +823,7 @@
     augustus: {
       name: 'Michael Augustus',
       short: 'Augustus',
-      side: 'britannia',
+      side: 'eb',
       commission: 'standard',
       cost: 110,
       role: 'Armor',
@@ -852,7 +852,7 @@
     marianne: {"name":"Marianne vi Britannia","short":"Marianne","side":"britannia","commission":"legendary","cost":200,"role":"Armor","hull":"Command frame","skill":"Lightning Offensive","desc":"First attack after moving at least 3 hexes gains 30% damage and prevents counterfire.","fx":{"dashStrike":true},"title":"Britannian Empire","recruit":400},
     oldrin: {"name":"Oldrin Zevon","short":"Oldrin","side":"britannia","commission":"legendary","cost":200,"role":"Armor","hull":"Command frame","skill":"Glinda Guardian","desc":"Intercepts 35% of first direct attack each round against adjacent ally; intercept cannot kill Oldrin.","fx":{"guardianIntercept":true},"title":"Britannian Empire","recruit":400},
     marrybell: {"name":"Marrybell mel Britannia","short":"Marrybell","side":"britannia","commission":"legendary","cost":200,"role":"Artillery","hull":"Command frame","skill":"Forced Offensive","desc":"Once per turn grant an ally +35% damage and 50% terrain-cover bypass for its next attack, but it takes 15% more damage until its next turn.","fx":{},"title":"Britannian Empire","recruit":400,"action":{"name":"Forced Offensive","verb":"Forced Offensive","kind":"special","target":"ally","range":2,"cooldown":0,"desc":"Choose an ally: next attack +35% damage and 50% terrain bypass; +15% incoming damage until its next turn."}},
-    norland: {"name":"Norland von Lunebelg","short":"Norland","side":"britannia","commission":"legendary","cost":200,"role":"Armor","hull":"Command frame","skill":"Einberg Overwatch","desc":"Every 3 turns, elite ally may fire once at 60% strength when an enemy enters attack range.","fx":{},"title":"Britannian Empire","recruit":400,"action":{"name":"Einberg Overwatch","verb":"Einberg Overwatch","kind":"special","target":"elite","range":2,"cooldown":3,"desc":"Every 3 turns, elite ally may fire once at 60% strength when an enemy enters attack range."}},
+    norland: {"name":"Norland von Lunebelg","short":"Norland","side":"eb","commission":"legendary","cost":200,"role":"Armor","hull":"Command frame","skill":"Einberg Overwatch","desc":"Every 3 turns, elite ally may fire once at 60% strength when an enemy enters attack range.","fx":{},"title":"Britannian Empire","recruit":400,"action":{"name":"Einberg Overwatch","verb":"Einberg Overwatch","kind":"special","target":"elite","range":2,"cooldown":3,"desc":"Every 3 turns, elite ally may fire once at 60% strength when an enemy enters attack range."}},
     sakuya: {"name":"Sakuya Sumeragi (Rozé)","short":"Sakuya","side":"bk","commission":"legendary","cost":200,"role":"Artillery","hull":"Command frame","skill":"Absolute Command","desc":"Every 4 turns disable enemy movement and attack for its next turn, not counterfire.","fx":{},"title":"Black Knights","recruit":400,"action":{"name":"Absolute Command","verb":"Absolute Command","kind":"special","target":"enemy","range":2,"cooldown":4,"desc":"Every 4 turns disable enemy movement and attack for its next turn, not counterfire."}},
     kaguya: {"name":"Kaguya Sumeragi","short":"Kaguya","side":"bk","commission":"distinguished","cost":140,"role":"Artillery","hull":"Command frame","skill":"National Unity","desc":"Allies within 3 hexes have morale floor −1. Capturing a city within 3 hexes heals nearby allies 10% maximum HP.","fx":{"nationalUnity":true},"title":"Black Knights","recruit":300},
     charles: {"name":"Charles zi Britannia","short":"Charles","side":"britannia","commission":"legendary","cost":200,"role":"Artillery","hull":"Command frame","skill":"Geass: Memory Rewrite","desc":"Once every 3 turns, choose one enemy within 3 hexes and make it Confused (morale -3) until the end of its next turn. Its prior morale returns afterward. Existing confusion immunities apply. No passive bonuses.","fx":{},"title":"Britannian Empire","recruit":400,"action":{"name":"Geass: Memory Rewrite","verb":"Geass: Memory Rewrite","kind":"memoryRewrite","target":"enemy","range":3,"cooldown":3,"desc":"Make one enemy Confused through its next full turn. It cannot act or counterattack while confused. The target's previous morale returns afterward."}},
