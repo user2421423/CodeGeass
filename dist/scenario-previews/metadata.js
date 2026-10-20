@@ -869,5 +869,19 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 142
       }
     }
+  },
+  "eu-military-coup": {
+    "cities": 44,
+    "formations": 100,
+    "sides": {
+      "junta": {
+        "cities": 28,
+        "formations": 50
+      },
+      "eu": {
+        "cities": 16,
+        "formations": 50
+      }
+    }
   }
 });
