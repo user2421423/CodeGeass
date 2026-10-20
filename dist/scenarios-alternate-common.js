@@ -14,7 +14,16 @@ function remapNested(value,translate){
   return typeof value==='string'?translate(value):value;
 }
 function define(config){
- const base=E.scenarios?.byId?.[config.parent];
+ // Some existing smoke tests import scenarios independently, outside
+ // browser manifest load order. Resolve the parent module on Node as needed.
+ let base=E.scenarios?.byId?.[config.parent];
+ if(!base&&typeof require==='function'){
+   const modules={'eu-pendragon':'scenarios-pendragon.js',
+     'european-war':'scenarios-europe.js','battle-luoyang':'scenarios-luoyang.js'};
+   const dependency=modules[config.parent];
+   if(dependency)require('./'+dependency);
+   base=E.scenarios?.byId?.[config.parent];
+ }
  if(!base)throw Error('Alternate-history parent not registered: '+config.parent);
  const SIDES=Object.freeze(Object.values(config.map));
  const translate=s=>config.map[s]||s;
