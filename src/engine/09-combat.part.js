@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && a.cmd !== 'ohgi' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && a.cmd !== 'ohgi' && a.cmd !== 'smilas' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -50,6 +50,7 @@
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
     if(u.expChengWeaken?.turns>0)attack*=1-u.expChengWeaken.value;
+    if (!counter && u.expSmilasVanguardCharge) attack *= 1.50;
     if(!counter&&u.expSmilasSuppression)attack*=1-u.expSmilasSuppression;
     // Yukiya's electronic disruption weakens all attacks (including counterfire)
     // only during the victim's next activation.
@@ -275,6 +276,9 @@
       }
     }
     if(vritraBypass&&attack<beforeDefenses)attack+=.2*(beforeDefenses-attack);
+    // Standing next to Smilas is always dangerous for his allies, independent
+    // of whether the current incoming hit is one he redirected.
+    if (target && smilasAdjacentShield(g,target)) attack *= 1.15;
     // Xingke's Perfect Counter replaces the ordinary 65% retaliation multiplier.
     if (counter) attack *= f.perfectCounter ? 1
       : !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
@@ -296,7 +300,9 @@
         (d && f.firstStrike && !(a.expKallenFirstTargets || []).includes(d.id) ? 1 + f.firstStrike : 1) /
         (xianglinOpening ? 1.30 : 1),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
-    const unitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
+    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
+    const smilasPreview = d ? smilasDamageShare(g,d,fullUnitDmg) : null;
+    const unitDmg = smilasPreview ? smilasPreview.primary : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
     const ef = eliteFx(a),
       raid = (1 + (!t.naval && t.branch === 'Infantry' ? techValue(g, a.side, 'infantry.mines') : 0)) *
@@ -361,6 +367,9 @@
       ? Math.round(Math.min(d.hp, unitDmg) * fx(d).counterReflect) : 0;
     return {
       unit: unitDmg,
+      rawUnit: fullUnitDmg,
+      shieldRedirect: smilasPreview?.redirected || 0,
+      shieldRedirectId: smilasPreview?.ally?.id || null,
       shield: shieldDmg,
       counter: counterDamage + counterReflection,
       counterAllowed,
@@ -379,10 +388,29 @@
         +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.15:0)),
     };
   }
+  // Combat damage is distributed immediately. A living adjacent ally can
+  // absorb half of an incoming Smilas hit, and die before any counterfire.
+  // The transferred hit is not itself an attack or a counterattack.
+  function smilasDealCombatDamage(g, victim, attacker, amount) {
+    const split = smilasDamageShare(g,victim,amount);
+    // Intercept before applying the hit to Smilas, so a bodyguard killed
+    // shielding a mortally wounded Smilas still triggers Sacrifices.
+    if (split.ally && split.redirected > 0) {
+      const ally = split.ally, before = ally.hp;
+      ally.hp = Math.max(0,ally.hp-split.redirected);
+      recordWarEvent(g,'damage',attacker.side,{
+        targetSide:ally.side,value:before-ally.hp,unitId:attacker.id,group:warGroup(g,attacker)});
+      // The full REDIRECTED killing blow (including its 15% exposure) is
+      // what Necessary Sacrifices measures, not the ally's remaining HP.
+      kill(g,ally,attacker,false,null,split.redirected);
+    }
+    victim.hp = Math.max(0,victim.hp-split.primary);
+    return split.primary;
+  }
   // force: nothing survives (F.L.E.I.J.A.); C.C.'s Code Bearer
   // can save one lethal hit per global turn, without granting invulnerability.
   // by: the side responsible when there is no attacking unit (a city battery).
-  function kill(g, v, attacker, force = false, by = null) {
+  function kill(g, v, attacker, force = false, by = null, incomingDamage = 0) {
     if (v.hp > 0) return;
     if ((fx(v).undying && v.undyingUsedTurn !== g.turn || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
       // A commander who forces a lethal Code Bearer / Final Stand activation
@@ -394,9 +422,10 @@
         log(g,'Urabe survives a lethal direct hit: Final Stand.',v.side);
         if(attacker.hp>0&&!v.expRoloFrozen&&!atSea(g,v)&&inRange(v,attacker,g)&&hostileTarget(g,v,attacker)){
           const amount=power(g,v,attacker,stationAt(g,attacker),false);
-          const oldHp=attacker.hp;attacker.hp=Math.max(0,attacker.hp-amount);
+          const oldHp=attacker.hp;
+          smilasDealCombatDamage(g,attacker,v,amount);
           recordWarEvent(g,'damage',v.side,{targetSide:attacker.side,value:oldHp-attacker.hp,unitId:v.id,group:warGroup(g,v)});
-          if(attacker.hp<=0){attacker.expDirectIncoming=true;kill(g,attacker,v);delete attacker.expDirectIncoming;}
+          if(attacker.hp<=0){attacker.expDirectIncoming=true;kill(g,attacker,v,false,null,amount);delete attacker.expDirectIncoming;}
         }
         return;
       }
@@ -406,6 +435,21 @@
       return;
     }
     v.hp = 0;
+    // Every confirmed combat death can reflect half the uncapped killing
+    // attack. No counterattack is created; reflection damage cannot itself
+    // trigger Necessary Sacrifices or retaliation.
+    const reflected = !force && !v.warCounted
+      ? smilasSacrificeReflection(g,v,attacker,incomingDamage) : 0;
+    if (reflected && attacker.hp > 0) {
+      const before = attacker.hp;
+      attacker.hp = Math.max(0,attacker.hp-reflected);
+      recordWarEvent(g,'damage',v.side,{
+        targetSide:attacker.side,value:before-attacker.hp,unitId:v.id,group:warGroup(g,v)});
+      log(g,`Necessary Sacrifices reflects ${reflected} damage onto ${COMMANDERS[attacker.cmd]?.short||TYPES[attacker.type].short}.`,v.side);
+      // No attack source or incomingDamage: an attacker killed by reflection
+      // gets ordinary survival checks, but cannot reflect or counter again.
+      if (attacker.hp <= 0) kill(g,attacker,null,false,v.side,0);
+    }
     dropCarriedEliminator(g, v, 'carrier destroyed');
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
@@ -584,11 +628,12 @@
     // Any prior suppression was included in preview and splash calculations;
     // clear it only after preparing the complete volley, not after the counterattack.
     let dmg = 0,
+      fullDirectDamage = 0,
       sd = 0,
       actualDefenderDamage = 0;
     if(a.expSmilasSuppression)delete a.expSmilasSuppression;
     if (d) {
-      dmg = newcomerIntercept(g,d,Math.round(pr.unit * mult));
+      dmg = newcomerIntercept(g,d,Math.round((pr.rawUnit ?? pr.unit) * mult));
       if (d.expCCProtection) delete d.expCCProtection;
       consumeDefensiveSkills(g, d, a);
       // One independent Future Sight roll per incoming direct attack.
@@ -597,8 +642,9 @@
         dmg = 0;
         log(g, 'FUTURE SIGHT — EVADED', d.side);
       }
-      const priorHP=d.hp;
-      d.hp = Math.max(0, d.hp - dmg);
+      const fullDmg = dmg, priorHP=d.hp;
+      fullDirectDamage = fullDmg;
+      dmg = smilasDealCombatDamage(g,d,a,fullDmg);
       actualDefenderDamage = priorHP - d.hp;
       // Sword Breaker weakens the armor of an adjacent formation through
       // its next complete action phase, including when the strike is dodged.
@@ -641,7 +687,7 @@
     let retaliation = 0;
     const senbaCounter=!!d&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    if (d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+    if (a.hp > 0 && d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       retaliation = Math.round(power(g,d,a,stationAt(g,a),true) *
         (senbaCounter ? .5/.65 : 1) * suppressiveCounterFactor(g, a) *
@@ -652,32 +698,40 @@
         retaliation += Math.round(actualDefenderDamage * fx(d).counterReflect);
       if(senbaCounter)d.expSenbaCounterTurn=g.turn;
       if (fx(d).swordmaster && dist(g, d, a) === 1) a.expAyanoSwordBreak = true;
-      if(d.guardReady&&d.held&&skillNear(g,d,'defensiveDoctrine',2)&&d.expSmilasCounterTurn!==g.turn){
-        d.expSmilasCounterTurn=g.turn;a.expSmilasSuppression=.2;a.expSmilasSuppressionTurn=g.turn;
-      }
       if (a.expCCProtection) delete a.expCCProtection;
       if (fx(a).futureSightDodge && random(g) < fx(a).futureSightDodge) {
         retaliation = 0;
         log(g, 'FUTURE SIGHT — EVADED', a.side);
       }
-      const priorHP=a.hp;
-      a.hp = Math.max(0, a.hp - retaliation);
+      const priorHP=a.hp, fullRetaliation=retaliation;
+      retaliation=smilasDealCombatDamage(g,a,d,fullRetaliation);
       recordWarEvent(g,'damage',d.side,{targetSide:a.side,value:priorHP-a.hp,unitId:d.id,group:warGroup(g,d)});
-      if (f.reflect) d.hp = Math.max(0, d.hp - Math.round(retaliation * f.reflect));
-      a.expDirectIncoming=true;kill(g,a,d);delete a.expDirectIncoming;
+      if (f.reflect && retaliation > 0) {
+        const priorDefenderHP=d.hp;
+        d.hp = Math.max(0,d.hp-Math.round(retaliation*f.reflect));
+        // This is reflection damage, not an enemy attack against the
+        // defender. Finalize its death without re-triggering Sacrifices.
+        if (priorDefenderHP > 0 && d.hp <= 0)
+          kill(g,d,null,false,a.side,0);
+      }
+      a.expDirectIncoming=true;kill(g,a,d,false,null,fullRetaliation);delete a.expDirectIncoming;
     }
     if (splashHits.length) {
       for (const { unit: v, amount } of splashHits) {
         if (v.hp <= 0) continue;
         if (v.expCCProtection) delete v.expCCProtection;
         const priorHP=v.hp;
-        v.hp = Math.max(0, v.hp - amount);
+        const landed=smilasDealCombatDamage(g,v,a,amount);
         recordWarEvent(g,'damage',a.side,{targetSide:v.side,value:priorHP-v.hp,unitId:a.id,group:warGroup(g,a)});
-        hit.push({ id: v.id, c: v.c, r: v.r, damage: amount });
-        kill(g, v, a);
+        hit.push({ id: v.id, c: v.c, r: v.r, damage: landed });
+        kill(g, v, a,false,null,amount);
       }
     }
-    if (d && d.hp <= 0){d.expDirectIncoming=true;kill(g,d,a);delete d.expDirectIncoming;}
+    if (d && d.hp <= 0 && !d.warCounted) {
+      d.expDirectIncoming=true;
+      kill(g,d,a,false,null,fullDirectDamage);
+      delete d.expDirectIncoming;
+    }
     if(d)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
@@ -689,6 +743,16 @@
       g.units.some(v=>v.hp>0&&v.side===a.side&&v.cmd==='mutsuki'&&dist(g,v,a)<=2);
     if(guerrillaPosition&&a.hp>0&&a.expGuerrillaMoveTurn!==g.turn){
       a.expGuerrillaMoveTurn=g.turn;grantReposition(a,1);
+    }
+    // The Expendable Vanguard charge is consumed by one completed initiating
+    // attack, including a city strike or a lethal counterfire response.
+    if (a.expSmilasVanguardCharge) {
+      delete a.expSmilasVanguardCharge;
+      if (a.hp > 0) {
+        const cost=Math.max(1,Math.round(maxHP(a)*0.20));
+        a.hp=Math.max(0,a.hp-cost);
+        if (a.hp <= 0) kill(g,a,null,false,null,0);
+      }
     }
     if(a.expPrecisionTarget){
       if(destroyed&&d?.id===a.expPrecisionTarget.id&&a.expPrecisionTarget.turn===g.turn&&a.hp>0)grantReposition(a,2);
