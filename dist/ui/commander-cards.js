@@ -289,7 +289,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     hqBack = 'game';
-    generalsDialog('eb');
+    generalsDialog('all');
   }, true);
 
   // The existing Commander Info interface is intentionally not restyled.
