@@ -67,7 +67,7 @@ Permanent personal damage, critical, penetration, resistance and counter-fire mo
 | Shinichirō Tamaki | Branch ratings, rank and Mobility | **Reckless Charge:** His first attack after moving deals 35% more damage, but his unit takes 25% more counter-fire. |
 | Tatewaki Katase | Branch ratings, rank and Mobility | **Prepared Position:** Friendly units within 1 hex take 15% less damage on mountains or next to a friendly city; friendly cities within 2 hexes restore 25% more defenses each turn. |
 | Naomi Inoue | Branch ratings, rank and Mobility | **Resistance Logistics:** Friendly units within 2 hexes pay 30% less to repair and reinforce and repair 5% more at friendly cities. |
-| Villetta Nu | Critical chance +10 percentage points | **Elite Pursuit:** Attacks deal +25% damage to enemies that moved during their preceding turn. |
+| Villetta Nu | No permanent personal bonuses | **Purist Interception:** Whenever a commanderless enemy formation moves adjacent, she immediately strikes at normal attack damage with no counterfire or normal attack-action cost. Each enemy can trigger once per turn; different enemies may trigger without a per-turn cap. All of Villetta's attacks against commanderless formations deal +15% damage. Commander-led enemies are unaffected. |
 | Kewell Soresi | Counter-fire +15% | **Purist Discipline:** Adjacent commanderless allies cannot fall below Low morale and deal +10% attack damage. |
 | Monica Krushevsky | Damage taken −10% | **Imperial Guard:** Her unit and adjacent allies take 10% less damage. Multiple copies do not stack. |
 | Dorothea Ernst | Damage +10% · Armor penetration +10 percentage points | **Combined Arms:** Deals +25% attack damage while adjacent to an ally from a different combat branch. |
