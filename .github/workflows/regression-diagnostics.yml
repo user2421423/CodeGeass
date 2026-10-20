@@ -26,6 +26,8 @@ jobs:
         run: |
           node tools/build_sources.cjs
           (cd baseline && node tools/build_sources.cjs)
+      - name: Verify observable comparison keeps meaningful failures strict
+        run: node tools/observable_regression_smoke.cjs
       - name: Verify C.C. protection code and UI dispatch
         run: node tools/cc_protection_smoke.cjs
       - name: Determine exact source of simulation divergences
