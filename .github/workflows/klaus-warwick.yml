@@ -1,0 +1,31 @@
+name: Klaus Warwick rework regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/engine/commanders.js'
+      - 'src/engine/**'
+      - 'src/ai/**'
+      - 'tools/klaus_warwick_smoke.cjs'
+      - '.github/workflows/klaus-warwick.yml'
+  pull_request:
+    paths:
+      - 'dist/engine/commanders.js'
+      - 'src/engine/**'
+      - 'src/ai/**'
+      - 'tools/klaus_warwick_smoke.cjs'
+      - '.github/workflows/klaus-warwick.yml'
+permissions:
+  contents: read
+jobs:
+  klaus-rework:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build game bundles
+        run: node tools/build_sources.cjs
+      - name: Check Klaus discounts and Loyalty to wZERO
+        run: node tools/klaus_warwick_smoke.cjs

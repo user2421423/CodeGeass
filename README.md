@@ -169,7 +169,9 @@ a clean playtest is not itself proof that a scenario is balanced.
   700 HP, attack 90, armor 50, range 1–2, 10 hexes a turn over any land, sea or impassable peak, and two Knightmare
   formations aboard that launch onto any adjacent land. Each costs 1,800 credits, 500 industry, 150 science and
   60 Sakuradite, is built in one turn and has no per-power limit. Airships cannot enter or capture cities, ports or
-  mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities, never heal on their own and
+  mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities,
+  can only be attacked or answered with return fire by Heavy and Super-heavy armor, Rocket and Siege artillery
+  (regular or Elite of those classes), warships, other airships, Float-equipped units and fortress batteries, never heal on their own and
   cannot add frames; the Repair action beside a friendly city is the only way to restore them. Every power starts a Conquest with one airship beside its capital. The
   AI flies its airship with dedicated orders (strikes, troop lifts and drops, retreating to repair) and only builds a
   replacement when it has lost it, keeping at most one at a time (a provisional limit; see HANDOFF.md).

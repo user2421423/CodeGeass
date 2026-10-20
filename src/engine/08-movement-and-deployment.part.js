@@ -130,7 +130,7 @@
     // Brain Raid restores the full normal movement budget after a shot,
     // but only while Akito remains isolated; this never restores an attack.
     const akitoFollowUp = !!u.expAkitoMoveReady && akitoIsolated(g, u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
+    if (!isReady(g, u) || u.expFernandoOverload || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -231,10 +231,18 @@
       d = dist(g, a, p);
     return d >= min && d <= max;
   }
+  // Only these can attack an airship or return its fire: Heavy and Super-heavy armor, Rocket and
+  // Siege artillery (regular or Elite of those classes), warships, other airships and Float-equipped
+  // units. Fortress batteries, which are not units, can also fire on them.
+  const AIR_DEFENSE_CLASSES = new Set(['heavy', 'super', 'rocket', 'siege']);
+  function canHitAir(u) {
+    const t = TYPES[u.type];
+    return t.naval === 'ship' || AIR_DEFENSE_CLASSES.has(t.cls) || !!t.float || !!eliteFx(u).float;
+  }
   function hostileTarget(g, u, p) {
     const target = unitAt(g, p),
       st = stationAt(g, p);
-    if (target) return foe(g, target.side, u.side);
+    if (target) return foe(g, target.side, u.side) && (!isAir(target) || canHitAir(u));
     return !!st && foe(g, st.owner, u.side) && st.shield > 0;
   }
   // Whether a unit still has any order besides holding position: firing, moving, repairing, reinforcing or an action.
@@ -356,13 +364,28 @@
     s.shield = 0;
     claim(g, s, u.side);
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
+    // Fernando must personally capture the city. This passive triggers once
+    // per faction turn, regardless of how many captures he chains.
+    if (u.cmd === 'fernando' && fx(u).popularUprising && u.expPopularUprisingTurn !== g.turn) {
+      u.expPopularUprisingTurn = g.turn;
+      for (const ally of g.units) {
+        if (ally.hp <= 0 || ally.side !== u.side || atSea(g, ally) || dist(g, u, ally) > 2) continue;
+        ally.hp = Math.min(maxHP(ally), ally.hp + Math.round(maxHP(ally) * 0.20));
+        ally.moved = false;
+        ally.skillReposition = 0;
+        // Keep attack usage and heavy movement limits intact, but allow
+        // a full legal movement action even if the ally already attacked.
+        ally.withdrawMove = !!ally.attacked;
+      }
+      log(g, 'Popular Uprising restores nearby allied formations.', u.side);
+    }
     if(adjacent(g,s).some(t=>isSea(t)))
       for(const sw of g.units)if(sw.hp>0&&sw.side===u.side&&sw.cmd==='sawasaki'&&sw.expBeachheadStart!=null&&
         g.turn<=sw.expBeachheadUntil&&(sw.id===u.id||(TYPES[u.type].naval==='amphibious'&&dist(g,sw,s)<=2)))
         sw.expBeachheadUntil=Math.min(sw.expBeachheadStart+3,sw.expBeachheadUntil+1);
 
     if(u.cmd==='nonette' && u.expCaptureAttackTurn!==g.turn){u.attacked=false;u.expCaptureAttackTurn=g.turn;}
-    if((u.cmd==='sugiyama'||(u.cmd==='anya'&&u.focusCity?.city===s.id))&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
+    if(u.cmd==='sugiyama'&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
     const kaguyas=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='kaguya'&&dist(g,v,s)<=3);
     if(kaguyas.length)for(const v of g.units)if(v.hp>0&&v.side===u.side&&!isAir(v)&&kaguyas.some(k=>dist(g,k,v)<=3))v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.1));
     if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;
@@ -480,8 +503,8 @@
     if(u.expShadowMove){u.moved=true;delete u.expShadowMove;}
     reindex(g,u,from);
     // The Steady floor takes effect as soon as Leila or an ally enters her radius.
-    if (u.cmd === 'leila') applyLeilaMoraleFloor(g);
-    else if (u.morale < 0 && leilaCommand(g, u)) u.morale = 0;
+    if (u.cmd === 'leila' || u.cmd === 'fernando') applyLeilaMoraleFloor(g);
+    else if (u.morale < 0 && moraleFloor(g, u) >= 0) u.morale = 0;
     const hostileReaction = newcomerOverwatch(g,u);
     if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true,hostileReaction};}
     // Moving through enemy or neutral territory never changes its map color.

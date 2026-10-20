@@ -274,6 +274,10 @@
       const m = berth && move(g, id, berth.c, berth.r);
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
+    // Troops far from their front board an airship in reach that serves it; aiAirship flies them forward.
+    const airship = !guard && u.deployedTurn !== g.turn && airBerth(g, u, memo, front),
+      ride = airship && move(g, id, airship.c, airship.r);
+    if (ride?.ok) return [...events, { kind: 'move', ...ride, id }];
     const action = COMMANDERS[u.cmd]?.action;
     if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);

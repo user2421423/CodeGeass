@@ -301,7 +301,10 @@ Carrier-Battleships. Players build them at any level-3 city factory (Airship tab
 150 science and 60 Sakuradite, in one turn, with **no player cap**. **Every power starts a World Conquest (2017 and
 2018) with one airship** on its own land beside its capital (`createGame` in `src/engine/16-world-setup.part.js`,
 placed after difficulty hardening so it is always a single frame; old saves are not given one). They fly 10 hexes over any land, sea or peak,
-carry two formations, cannot enter or capture cities, ports or mines, get no terrain cover, take no bonus damage, never
+carry two formations, cannot enter or capture cities, ports or mines, get no terrain cover, take no bonus damage, and
+can only be attacked (or answered with return fire or splash) by Heavy, Super-heavy, Rocket and Siege units, regular
+or Elite, plus warships, other airships, Float-equipped units and fortress batteries (`canHitAir` beside
+`hostileTarget` in `src/engine/08-movement-and-deployment.part.js`; the AI's `localThreat` ignores the rest). They never
 heal on their own and cannot add frames; manual Repair beside a friendly city is their only recovery. Not available in
 Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
 
@@ -311,19 +314,52 @@ Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
 >   `src/ai/06-production.part.js`). Since every power starts with one, the AI only builds a replacement after losing
 >   it: in World Conquest, from turn 10, with 20+ cities and a level-3 factory, never while funding F.L.E.I.J.A. or
 >   an Eliminator. Regional-scenario and Story AI never build them, so the scenario simulation baseline is unaffected.
-> - **Orders (`aiAirship` in `src/ai/05a-airships.part.js`)** run only for units with `air: true`; `aiOrder` hands
->   them over before any carrier or front logic. In order each turn: below half health it repairs beside a friendly
->   city or flies to the safest hex next to one; when healthy it lifts adjacent formations that could not fight this
->   turn; with troops aboard it drops them onto an empty enemy city (capturing it) or within 4 hexes of one; then it
->   takes the best-value shot from any hex in reach, counting return fire double; otherwise it waits safely beside the
->   friendly city nearest the enemy. Three 25–30-turn Conquest games: about 50 attacks per game, more than half of
->   moves inland, troop lifts and drops, up to two cities taken by drop, repeated repairs, no errors.
-> - **What is still weak:** each airship decides alone: it is not tied to the AI's fronts, army groups or objectives,
->   and only lifts troops that happen to stand next to it. Landing and danger scores are simple distance and
->   threat estimates. Conquest outcomes with airships were only compared on three games, which is far too few to
->   judge balance (results vary by about 17 cities between seeds).
-> - **Before raising the limit:** tie airship drops to front objectives, then compare 8+ seeded Conquest games
->   against `main`, looking at city counts and unit counts.
+> - **Orders (`aiAirship` in `src/ai/05a-airships.part.js`, tuning in `AIRLIFT`)** run only for units with
+>   `air: true`; `aiOrder` hands them over before any carrier or front logic. Each airship serves one **offensive
+>   front** (`airFront`, remembered in `g.ai[side].airships`): the nearest, counting each of up to three of that
+>   front's formations it could fly forward as 10 hexes nearer; it keeps its front while loaded, otherwise unless
+>   another scores 12 hexes better. The front's **goals** (`airGoals`) are its rally city while it assembles, else its
+>   enemy-held objectives. In order each turn: below half health it repairs beside a friendly city or flies to the
+>   safest hex next to one; from 60% health it lifts adjacent idle formations (its front's first); with troops aboard
+>   it drops them onto an open enemy city (capturing it), beside an open empty one they can walk into, or within 4
+>   hexes of its goals on the same landmass, else carries them toward the goals (after 3 turns aboard they land
+>   wherever is closest); empty, it takes a killing shot, else flies beside formations of its front still 8+ hexes
+>   from the goals and out of contact (`airRider`, which gives troops too far from every front theirs via `frontOf`)
+>   and lifts those that have not moved; otherwise it takes the best-value shot (return fire counts double), and with
+>   nothing to hit it fetches that front's troops from wherever they are, else waits near its rally city. On their
+>   own orders, such troops board an airship in reach that serves their front (`airBerth`, called from `aiOrder`,
+>   Conquest only), so it can fly them forward the same turn. `tools/airship_smoke.cjs` checks front-directed drops
+>   (a nearer enemy city is ignored), the fly-over pickup and the troops' own boarding.
+> - **Seeded comparison (2026-10-20), branch `feature/airship-ai-fronts` vs `main` (c38c4663):** AI-only World
+>   Conquest, 28 turns, seeds 11 23 37 41 59 67 73 89, run under jsc (compare builds only with each other). Mean ±
+>   sd over 8 games; airship stats are per game, all powers together:
+>
+>   | Era | Build | Britannia cities / units | E.U. or Euro Britannia | Federation / U.F.N. |
+>   |---|---|---|---|---|
+>   | 2017 | main | 52.8 ±1.5 / 50.9 ±7.2 | 67.8 ±8.7 / 23.2 ±5.5 | 38.4 ±8.5 / 34.5 ±9.8 |
+>   | 2017 | branch | 53.4 ±4.7 / 54.6 ±6.7 | 59.1 ±11.4 / 20.0 ±6.7 | 47.1 ±10.6 / 37.8 ±13.2 |
+>   | 2018 | main | 78.5 ±6.3 / 29.5 ±3.5 | 45.6 ±8.0 / 31.1 ±4.5 | 35.8 ±8.0 / 21.0 ±6.9 |
+>   | 2018 | branch | 76.6 ±5.8 / 32.2 ±3.3 | 48.8 ±10.1 / 32.8 ±7.6 | 34.5 ±12.2 / 20.2 ±8.7 |
+>
+>   | Era | Build | Attacks | Kills | Moves (inland) | Lifts | Drops | Captures by drop | Repairs | Lost |
+>   |---|---|---|---|---|---|---|---|---|---|
+>   | 2017 | main | 51.4 | 4.8 | 55.1 (35.1) | 8.6 | 8.1 | 2.0 | 8.5 | 1.5 |
+>   | 2017 | branch | 42.6 | 5.4 | 61.8 (40.1) | 9.2 | 8.9 | 0.5 | 8.1 | 0.9 |
+>   | 2018 | main | 54.5 | 7.4 | 56.2 (36.6) | 5.8 | 5.5 | 1.2 | 4.0 | 0.9 |
+>   | 2018 | branch | 46.2 | 6.9 | 62.8 (40.5) | 13.5 | 12.4 | 2.8 | 3.4 | 0.4 |
+>
+>   No errors. Every city and unit difference is inside one standard deviation. The 2017 E.U.−Federation shift
+>   (−9 / +9 cities) comes from two seeds (41 and 73) that swing about 30 cities each way, which is chaos, not a
+>   trend. Airships attack less, fly more, lift and drop more in 2018 (about twice as often) and are lost less
+>   often; captures by drop rose in 2018 and fell in 2017 (26 in total either way). Lifts count every formation
+>   seen newly aboard (some board during production); repairs include those made during production.
+>   Regional-scenario simulations (5 scenarios × all sides, seed 7, 6 turns) are identical to `main`.
+> - **Limit decision:** the comparison does not support more airships per AI power (no city or unit effect beyond
+>   seed noise), so `AI_AIRSHIP_LIMIT` stays 1.
+> - **What is still weak:** an airship serves one front alone, with no coordination with carriers, army groups or a
+>   second airship. Few formations qualify as riders (most are garrisons or already near their front), so ferrying
+>   stays rare next to strikes (strikes take about 31–35 of the ~55 airship turns in a 20-turn game). Landing and danger scores are simple
+>   distance and threat estimates.
 
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 2, `cost`

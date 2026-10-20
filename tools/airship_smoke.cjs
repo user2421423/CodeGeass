@@ -138,35 +138,45 @@ function setup() {
 }
 
 {
-  // No bonus damage: anti-ship, coastal and terrain bonuses all skip airships.
+  // Who can engage an airship: Heavy, Super-heavy, Rocket and Siege units (regular or Elite of those
+  // classes), warships, other airships and Float-equipped units. Everything else can neither attack nor
+  // return fire. Nothing deals bonus damage, and the airship gets no terrain cover.
   const { g } = setup();
-  const water = g.tiles.find(p => E.isSea(p) && E.adjacent(g, p).filter(E.isSea).length === 6 &&
-    !g.units.some(u => E.distance(u, p, g) <= 2));
-  const swimmer = E.newUnit(g, 'panzer_frosch_ii', 'eu', water.c, water.r);
-  const spot = E.adjacent(g, water)[0];
-  const ship = E.newUnit(g, 'logres_airship', 'britannia', spot.c, spot.r);
+  const field = g.tiles.find(p => p.terrain === 'plains' && !E.stationAt(g, p) &&
+    E.within(g, p, 2).every(q => !E.isSea(q) && !E.stationAt(g, q) && !E.TERRAIN[q.terrain]?.blocked) &&
+    !g.units.some(u => E.distance(u, p, g) <= 4));
+  assert.ok(field, 'Need an open plain');
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', field.c, field.r);
   g.phase = 'eu';
-  const asAirship = E.preview(g, swimmer.id, ship.c, ship.r);
-  E.TYPES.logres_airship.air = false;
-  const asWarship = E.preview(g, swimmer.id, ship.c, ship.r);
-  E.TYPES.logres_airship.air = true;
-  assert.ok(asAirship && asWarship);
-  const dmg = p => p.rawUnit;
-  assert.ok(dmg(asAirship) < dmg(asWarship), `Amphibious anti-ship bonus skipped (${dmg(asAirship)} < ${dmg(asWarship)})`);
-
-  // Over land, a forest gives no cover and no penalty.
-  const { g: h } = setup();
-  const field = h.tiles.find(p => p.terrain === 'plains' && !E.stationAt(h, p) &&
-    E.adjacent(h, p).filter(n => n.terrain === 'plains' && !E.stationAt(h, n)).length === 6 &&
-    !h.units.some(u => E.distance(u, p, h) <= 2));
-  const target = E.newUnit(h, 'logres_airship', 'britannia', field.c, field.r);
-  const gp = E.adjacent(h, field)[0];
-  const gunner = E.newUnit(h, E.typeFor('eu', 'light', h), 'eu', gp.c, gp.r);
-  h.phase = 'eu';
-  const open = dmg(E.preview(h, gunner.id, target.c, target.r));
+  const canEngage = type => {
+    const t = E.TYPES[type], at = E.within(g, field, t.max).find(q => E.distance(q, field, g) === t.max && !E.unitAt(g, q));
+    const v = E.newUnit(g, type, 'eu', at.c, at.r);
+    const ok = E.targets(g, v).some(q => q.c === field.c && q.r === field.r);
+    g.units.splice(g.units.indexOf(v), 1);
+    return ok;
+  };
+  for (const cls of E.CLASS_ORDER) {
+    const allowed = ['heavy', 'super', 'rocket', 'siege'].includes(cls);
+    assert.equal(canEngage(E.typeFor('eu', cls, g)), allowed, `Regular ${cls} ${allowed ? 'can' : 'cannot'} engage`);
+    const elite = Object.values(E.ELITE_FORCES).map(e => e.type)
+      .find(type => E.TYPES[type].cls === cls && !E.TYPES[type].naval && !E.TYPES[type].float);
+    if (elite) assert.equal(canEngage(elite), allowed, `Elite ${cls} ${allowed ? 'can' : 'cannot'} engage`);
+  }
+  assert.equal(canEngage('panzer_frosch_ii'), false, 'Amphibious frames cannot engage');
+  assert.equal(canEngage('charlemagne_airship'), true, 'Airships engage each other');
+  // Return fire follows the same rule.
+  g.phase = 'britannia';
+  const near = E.adjacent(g, field);
+  const inf = E.newUnit(g, E.typeFor('eu', 'scout', g), 'eu', near[0].c, near[0].r);
+  const heavy = E.newUnit(g, E.typeFor('eu', 'heavy', g), 'eu', near[3].c, near[3].r);
+  assert.equal(E.preview(g, ship.id, inf.c, inf.r).counter, 0, 'Infantry cannot return fire');
+  assert.ok(E.preview(g, ship.id, heavy.c, heavy.r).counter > 0, 'Heavy armor returns fire');
+  // No terrain cover over a forest.
+  g.phase = 'eu';
+  const open = E.preview(g, heavy.id, ship.c, ship.r).rawUnit;
   field.terrain = 'forest';
-  const wooded = dmg(E.preview(h, gunner.id, target.c, target.r));
-  assert.equal(wooded, open, 'No terrain cover for airships');
+  assert.equal(E.preview(g, heavy.id, ship.c, ship.r).rawUnit, open, 'No terrain cover for airships');
+  field.terrain = 'plains';
 }
 
 {
@@ -204,6 +214,80 @@ function setup() {
   E.aiOrder(g, ship.id);
   assert.equal(target.owner, 'britannia', 'Dropped troops take the open city');
   assert.equal(ship.cargo.length, 0);
+}
+
+// AI fronts: two shielded E.U. cities 10-14 hexes apart, the airship serving an offensive toward the farther one.
+function frontSetup() {
+  const g = world('britannia');
+  g.phase = 'britannia';
+  const open = s => !s.capitalOf && E.adjacent(g, s).filter(p => !E.isSea(p) && !E.stationAt(g, p) &&
+    !E.TERRAIN[p.terrain]?.blocked).length >= 4;
+  const cities = g.stations.filter(s => s.owner === 'eu' && open(s));
+  let aim, decoy;
+  for (const a of cities) {
+    decoy = cities.find(b => b !== a && E.distance(a, b, g) >= 10 && E.distance(a, b, g) <= 14 &&
+      g.stations.every(o => o === a || o === b || E.distance(o, a, g) > 4 && E.distance(o, b, g) > 4));
+    if (decoy) { aim = a; break; }
+  }
+  assert.ok(aim && decoy, 'Need two isolated E.U. cities');
+  g.units = g.units.filter(u => E.distance(u, aim, g) > 16 && E.distance(u, decoy, g) > 16);
+  aim.shield = decoy.shield = 50;
+  const memo = E.aiPlan(g, 'britannia');
+  const front = { id: 'smoke', side: 'britannia', type: 'offensive', state: 'attacking', assigned: 0, rally: null,
+    anchor: aim, objectives: [{ key: 's' + aim.id, c: aim.c, r: aim.r, owner: 'eu', value: 10 }] };
+  memo.fronts.unshift(front);
+  memo.byId.smoke = front;
+  const free = p => p && !E.isSea(p) && !E.stationAt(g, p) && !E.unitAt(g, p) && !E.TERRAIN[p.terrain]?.blocked;
+  return { g, memo, front, aim, decoy, free };
+}
+
+{
+  // AI: loaded troops land toward the airship's front objective, not beside the nearer enemy city.
+  const { g, memo, aim, decoy, free } = frontSetup();
+  const pad = E.within(g, decoy, 2).find(p => E.distance(p, decoy, g) === 2 && free(p) &&
+    E.distance(p, aim, g) >= E.distance(decoy, aim, g));
+  assert.ok(pad, 'Need a hex behind the decoy city');
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', pad.c, pad.r);
+  for (const cls of ['scout', 'medium']) {
+    const trooper = E.newUnit(g, E.typeFor('britannia', cls, g), 'britannia', pad.c, pad.r);
+    g.units.splice(g.units.indexOf(trooper), 1);
+    ship.cargo = [...(ship.cargo || []), trooper];
+  }
+  g.ai.britannia.airships = { [ship.id]: { front: 'smoke', since: g.turn } };
+  const drops = E.aiOrder(g, ship.id).filter(e => e.kind === 'deploy');
+  assert.equal(drops.length, 2, 'Both formations land');
+  for (const d of drops) {
+    assert.ok(E.distance(d.to, aim, g) <= 4, `Lands near the front's objective (${E.distance(d.to, aim, g)} hexes)`);
+    assert.ok(E.distance(d.to, decoy, g) > 4, 'Not beside the nearer city');
+  }
+  assert.ok(memo.byId.smoke, 'Plan unchanged');
+}
+
+{
+  // AI: an empty airship flies to a formation of its front far from the objective and lifts it; a formation that
+  // acts first boards an airship in reach that serves its front.
+  const { g, memo, aim, free } = frontSetup();
+  const home = g.tiles.filter(p => free(p) && E.distance(p, aim, g) >= 14 && E.distance(p, aim, g) <= 18 &&
+    g.stations.every(s => E.distance(s, p, g) > 3));
+  const spot = home.find(p => home.some(q => E.distance(p, q, g) === 6));
+  assert.ok(spot, 'Need open ground far from the objective');
+  const rider = E.newUnit(g, E.typeFor('britannia', 'medium', g), 'britannia', spot.c, spot.r);
+  memo.assign[rider.id] = 'smoke';
+  const start = home.find(q => E.distance(spot, q, g) === 6);
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', start.c, start.r);
+  g.ai.britannia.airships = { [ship.id]: { front: 'smoke', since: g.turn } };
+  E.aiOrder(g, ship.id);
+  assert.deepEqual(ship.cargo.map(u => u.id), [rider.id], 'Flies over and lifts the front\'s formation');
+
+  ship.cargo = [];
+  g.units.push(rider);
+  const next = E.adjacent(g, ship).find(free);
+  Object.assign(rider, { c: next.c, r: next.r, moved: false, attacked: false });
+  ship.moved = ship.attacked = false;
+  const walk = E.adjacent(g, rider).find(p => free(p) && E.distance(p, ship, g) === 2);
+  Object.assign(rider, { c: walk.c, r: walk.r });
+  E.aiOrder(g, rider.id);
+  assert.deepEqual(ship.cargo.map(u => u.id), [rider.id], 'Boards the airship serving its front');
 }
 
 {

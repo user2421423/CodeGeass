@@ -64,6 +64,8 @@
     attack *= newcomerAttack(g,u,target,counter);
     // Ohgi's half-health leadership supports outgoing attacks and counterfire.
     if (ohgiSelflessLeadership(g, u)) attack *= 1.35;
+    // Star of Madrid rewards wounded allies' initiating attacks and counterfire.
+    if (u.hp < maxHP(u) * 0.50 && starOfMadridNear(g, u)) attack *= 1.25;
     // Xianglin's coordination only strengthens direct initiating attacks.
     // Previews and resolved volleys share this calculation; splash damage
     // and defensive counterattacks never receive the +30% bonus.
@@ -72,8 +74,6 @@
     // Checkmate boosts direct attacks and counterattacks against its marked
     // formation, without granting Schneizel a passive aura.
     if (target?.expCheckmate?.side === u.side) attack *= 1.25;
-    if(!counter&&st&&foe(g,st.owner,u.side)&&fx(u).focusBombard&&u.focusCity?.city===st.id&&u.focusCity.lastTurn>=g.turn-1)
-      attack*=1+Math.min(3,u.focusCity.count)*fx(u).focusBombard;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     // Nothing deals bonus damage to airships: anti-ship and coastal bonuses skip them.
     const seaShip = target && isShip(target) && !isAir(target);
@@ -242,6 +242,8 @@
       )
         attack *= 0.80;
       // Commander signature abilities (defender side).
+      // -30% defense from Electrical Overload is +30% incoming combat damage.
+      if (target.expFernandoOverload && foe(g, target.side, u.side)) attack *= 1.30;
       if (tf.taken) attack *= tf.taken;
       if (ohgiSelflessLeadership(g, target)) attack *= 0.75;
       if (tf.swordmaster && dist(g, u, target) === 1) attack *= 0.70;
@@ -269,6 +271,7 @@
       // Oscar passively protects other allies within two hexes of himself.
       // His marked ally instead receives 20% protection even after moving away.
       attack *= oscarDefenseMultiplier(g,target);
+      if (target.expKlausLoyalty?.side === target.side) attack *= 0.8;
       attack *= skillDefense(g,target,counter,direct) *
         commanderDefense(g,target,u,counter,direct) *
         newcomerDefense(g,target,u,counter,direct);
@@ -304,7 +307,8 @@
         (d && f.firstStrike && !(a.expKallenFirstTargets || []).includes(d.id) ? 1 + f.firstStrike : 1) /
         (xianglinOpening ? 1.30 : 1),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
-    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
+    // Demolition Expert boosts direct hits on any enemy stationed in a city, even if its shield is down.
+    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1) * (f.yukiyaDemolition && s ? 1.50 : 1)) : 0;
     const smilasPreview = d ? smilasDamageShare(g,d,fullUnitDmg) : null;
     const unitDmg = smilasPreview ? smilasPreview.primary : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
@@ -317,7 +321,7 @@
           (s.portAt || adjacent(g, s).some(v => navigable(v)))
           ? techValue(g, a.side, 'amphibious.coastal') : 0)) *
         (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) *
-        (f.yukiyaDemolition ? 1.40 : 1) * bombardBonus(g, a, s);
+        (f.yukiyaDemolition ? 1.50 : 1) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
           cityBase *
@@ -329,9 +333,10 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
+      !a.expFernandoOverloadStrike &&
       !f.noCounterAttack &&
       !followUp &&
       !xianglinOpening &&
@@ -381,7 +386,9 @@
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
         techValue(g, a.side, `${branchOf(a.type)}.critpower`),
-      splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
+      // Marirrosa's sole passive replaces class splash with full-strength hits
+      // on every adjacent enemy, at any legal range (including range 1).
+      splash: f.estrellaBarrage ? 1 : (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
       armorPen: Math.min(.95,armorPenetration(g,a,d)
         + (!t.naval && t.branch === 'Armor' && d && !TYPES[d.type].naval && TYPES[d.type].branch === 'Armor'
           ? techValue(g, a.side, 'armor.precision') : 0)
@@ -392,16 +399,80 @@
         +(a.elite&&!TYPES[a.type].naval&&g.units.some(v=>v.cmd&&v.hp>0&&v.side===a.side&&fx(v).elitePenSupport&&dist(g,v,a)<=2)?.15:0)),
     };
   }
-  // Combat damage is distributed immediately. A living adjacent ally can
-  // absorb half of an incoming Smilas hit, and die before any counterfire.
-  // The transferred hit is not itself an attack or a counterattack.
+  // Guilford's rescue resolves on actual combat damage, not in power()/preview():
+  // redirected hits bypass Guilford's own defenses and can kill him.
+  function guilfordCleanse(target) {
+    // No restoration of spent normal actions: cleanse incapacitating effects,
+    // not a free attack or move on an already-acted commander.
+    if (target.expCharlesMemoryRewrite?.previousMorale != null)
+      target.morale = Math.max(target.morale, target.expCharlesMemoryRewrite.previousMorale);
+    target.morale = Math.max(0, target.morale);
+    target.skillMarks = (target.skillMarks || []).filter(mark => mark.side === target.side);
+    const debuffs = [
+      'auraDisrupted', 'despairWeakened', 'expZeroGeass', 'expCharlesMemoryRewrite',
+      'expRoloFrozen', 'expGeassCancelled', 'expFernandoOverload',
+      'expDisabledNext', 'expDisabledActive', 'expPinnedNext', 'expPinnedActive',
+      'expPinnedWeakenNext', 'expPinnedWeakenActive', 'expJammedNext', 'expJammedActive',
+      'expYukiyaElectronicNext', 'expYukiyaElectronicActive',
+      'expKallenSlowNext', 'expKallenSlowActive', 'expAyanoSwordBreak',
+      'expZiWeakenNext', 'expChengWeaken', 'expSmilasSuppression',
+      'expSmilasSuppressionTurn', 'expInformationWarfare', 'expJoeDiagnosis',
+      'expCheckmate', 'expForcedVulnerable', 'expDecapitationMark'
+    ];
+    for (const key of debuffs) delete target[key];
+  }
+  function guilfordProtect(g, victim, attacker, amount) {
+    const incoming = Math.max(0, Math.round(amount || 0));
+    if (!incoming || !victim?.cmd || victim.hp <= 0 || !attacker ||
+        !foe(g, victim.side, attacker.side) || atSea(g, victim))
+      return incoming;
+    const guards = g.units.filter(v => v.hp > 0 && v.id !== victim.id &&
+      v.side === victim.side && v.cmd === 'guilford' && fx(v).guilfordGuard &&
+      !atSea(g,v) && dist(g,v,victim) === 1).sort((a,b) => a.id-b.id);
+    if (!guards.length) return incoming;
+    // A lethal hit triggers the once-per-turn complete rescue BEFORE the usual
+    // 50% sharing rule. Once spent, subsequent hits still share 50% normally.
+    const sacrifice = incoming >= victim.hp
+      ? guards.find(v => v.expGuilfordSacrificeUsedTurn !== g.turn) : null;
+    const guard = sacrifice || guards[0];
+    const redirected = sacrifice ? incoming : Math.round(incoming * .5);
+    const before = guard.hp;
+    guard.hp = Math.max(0, guard.hp - redirected);
+    if (sacrifice) {
+      guard.expGuilfordSacrificeUsedTurn = g.turn;
+      victim.expGuilfordSavedAttack = { turn:g.turn, attackerId:attacker.id };
+      guilfordCleanse(victim);
+    }
+    // Multiple threatened commanders can name different attackers; the +30%
+    // does not stack against a single attacker.
+    if (guard.hp > 0) {
+      const mark = guard.expGuilfordRetribution || { targets:[], turnsLeft:0 };
+      if (!mark.targets.includes(attacker.id)) mark.targets.push(attacker.id);
+      mark.turnsLeft = Math.max(mark.turnsLeft, g.phase === guard.side ? 2 : 1);
+      guard.expGuilfordRetribution = mark;
+    }
+    recordWarEvent(g,'damage',attacker.side,{targetSide:guard.side,
+      value:before-guard.hp,unitId:attacker.id,group:warGroup(g,attacker)});
+    log(g, sacrifice
+      ? 'Ultimate Sacrifice: Guilford absorbs a lethal strike and cleanses the protected commander.'
+      : 'My Princess, My Justice: Guilford intercepts half the strike.', guard.side);
+    // A sacrificed Guilford is a genuine combat casualty, but the rescued
+    // formation receives ZERO damage even if he is killed by the full blow.
+    if (guard.hp <= 0) kill(g,guard,attacker,false,null,redirected);
+    return sacrifice ? 0 : incoming - redirected;
+  }
+  // Combat damage is distributed immediately. Guilford's protection precedes
+  // Smilas's own damage-share rule; redirected hits are not new attacks.
   function smilasDealCombatDamage(g, victim, attacker, amount) {
-    const split = smilasDamageShare(g,victim,amount);
+    const incoming = guilfordProtect(g,victim,attacker,amount);
+    const priorHP = victim.hp;
+    const split = smilasDamageShare(g,victim,incoming);
     // Intercept before applying the hit to Smilas, so a bodyguard killed
     // shielding a mortally wounded Smilas still triggers Sacrifices.
     if (split.ally && split.redirected > 0) {
       const ally = split.ally, before = ally.hp;
       ally.hp = Math.max(0,ally.hp-split.redirected);
+      klausLoyaltyAfterHit(g, ally, attacker, before);
       recordWarEvent(g,'damage',attacker.side,{
         targetSide:ally.side,value:before-ally.hp,unitId:attacker.id,group:warGroup(g,attacker)});
       // The full REDIRECTED killing blow (including its 15% exposure) is
@@ -409,6 +480,7 @@
       kill(g,ally,attacker,false,null,split.redirected);
     }
     victim.hp = Math.max(0,victim.hp-split.primary);
+    klausLoyaltyAfterHit(g, victim, attacker, priorHP);
     return split.primary;
   }
   // force: nothing survives (F.L.E.I.J.A.); C.C.'s Code Bearer
@@ -416,6 +488,17 @@
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null, incomingDamage = 0) {
     if (v.hp > 0) return;
+    // Marianne's Awakening: Anya survives an otherwise fatal hit at full HP.
+    // The per-formation stamp persists in saves and follows the game's global turns.
+    // Forced kills (F.L.E.I.J.A., lost carrier cargo) remain final.
+    if (!force && fx(v).marianneAwakening &&
+        (v.expMarianneAwakeningTurn == null ||
+         g.turn - v.expMarianneAwakeningTurn >= fx(v).marianneAwakening)) {
+      v.hp = maxHP(v);
+      v.expMarianneAwakeningTurn = g.turn;
+      log(g, "Marianne's Awakening restores Anya to full health.", v.side);
+      return;
+    }
     if ((fx(v).undying && v.undyingUsedTurn !== g.turn || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
       // A commander who forces a lethal Code Bearer / Final Stand activation
       // has still earned a Valor citation, despite the scripted survival.
@@ -610,7 +693,8 @@
     const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
     // A volley has one firing state: retaliation and kill rewards cannot change later splash hits.
     const splashHits = pr.splash ? g.units
-      .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1)
+      .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1 &&
+        (!isAir(v) || canHitAir(a)))
       .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
     // Keep track of any unused movement before firing; a kill that earns another attack
     // should not consume it. Limited skill repositioning must stay limited.
@@ -689,7 +773,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (a.hp > 0 && d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
@@ -736,7 +820,9 @@
       kill(g,d,a,false,null,fullDirectDamage);
       delete d.expDirectIncoming;
     }
-    if(d)newcomerSupport(g,d,a);
+    // No reactive supporting fire against an Estrella Barrage: its primary
+    // and adjacent victims cannot answer with retaliation of any kind.
+    if(d && !f.estrellaBarrage)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
@@ -829,6 +915,13 @@
       a.eliteMoveAfterKill = false;
       delete a.expKallenReposition;
     }
+    // Status debuffs inflicted later in the same volley must not undo a rescue.
+    for (const protectedAlly of g.units) {
+      if (protectedAlly.expGuilfordSavedAttack?.turn !== g.turn ||
+          protectedAlly.expGuilfordSavedAttack.attackerId !== a.id) continue;
+      guilfordCleanse(protectedAlly);
+      delete protectedAlly.expGuilfordSavedAttack;
+    }
     log(
       g,
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${defensesDestroyed ? ' · city defenses destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
@@ -836,7 +929,7 @@
     );
     // Full-strength free Oscar retaliation after an enemy initiates an
     // attack against an allied formation. This cannot produce counterfire.
-    const oscarReaction = d ? oscarGuardCounterstrike(g,a,d) : [];
+    const oscarReaction = d && !f.estrellaBarrage ? oscarGuardCounterstrike(g,a,d) : [];
     checkVictory(g);
     return {
       ok: true,

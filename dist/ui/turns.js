@@ -54,6 +54,14 @@ async function endTurn() {
         .map(u => u.id),
         minesBefore = (game.sites || []).map(d => d.owner);
       let quiet = 0;
+      // Revisit a Ryo whose movement/attack were restored after his AI order
+      // by an allied kill. Inspect just the few Ryo formations, not every
+      // unit for every AI order on the world map.
+      const ryoUnits = game.units.filter(v => v.cmd === 'ryo' && v.side === side);
+      const guilfordUnits = game.units.filter(v => v.cmd === 'guilford' && v.side === side);
+      const queuedRyoRefresh = new Map();
+      const queuedGuilfordRefresh = new Map();
+      let ryoExtraOrders = 0, guilfordExtraOrders = 0;
       for (let step = 0; step < ids.length; step++) {
         // Bounded reprioritization after earlier orders change the actual board.
         const next = E.aiNextActor(game, ids, step);
@@ -94,6 +102,25 @@ async function endTurn() {
           updateSelection();
           await pause(orders.some(o => o.kind === 'attack') ? 420 : 160);
         } else if (++quiet % 12 === 0) await pause(0);
+        if (ryoExtraOrders < 12) for (const ryo of ryoUnits) {
+          const refresh = ryo.expRyoOpeningRefresh;
+          if (ryo.cmd !== 'ryo' || ryo.hp <= 0 || ryo.side !== side ||
+              refresh?.turn !== game.turn ||
+              refresh.count <= (queuedRyoRefresh.get(ryo.id) || 0)) continue;
+          queuedRyoRefresh.set(ryo.id, refresh.count);
+          ids.push(ryo.id);
+          if (++ryoExtraOrders >= 12) break;
+        }
+        // Guilford can immediately spend an earned normal attack after
+        // killing a retribution target; bound requeue to prevent AI loops.
+        if (guilfordExtraOrders < 4) for (const guard of guilfordUnits) {
+          const refresh = guard.expGuilfordRetributionRefresh;
+          if (guard.hp <= 0 || refresh?.turn !== game.turn ||
+              refresh.count <= (queuedGuilfordRefresh.get(guard.id) || 0)) continue;
+          queuedGuilfordRefresh.set(guard.id, refresh.count);
+          ids.push(guard.id);
+          if (++guilfordExtraOrders >= 4) break;
+        }
       }
       if (token !== aiToken) return;
       const lost = (game.sites || []).filter((d, i) => minesBefore[i] === game.player && d.owner !== game.player);

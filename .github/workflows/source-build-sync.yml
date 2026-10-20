@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify Anna Clément engineering, Rapid Maintenance and Klaus discount transfer
+        run: node tools/anna_clement_smoke.cjs
       - name: Verify Akito Brain Raid isolation, damage and movement
         run: node tools/akito_brain_raid_smoke.cjs
       - name: Verify Li Xingke Divine Tiger and repeated Perfect Counter
@@ -29,6 +31,12 @@ jobs:
         run: node tools/smilas_every_turn_smoke.cjs
       - name: Verify Oscar Guard Counterstrike and Emergency Defense
         run: node tools/oscar_emergency_defense_smoke.cjs
+      - name: Verify Ryo marking, allied kill refresh, and AI replay
+        run: node tools/ryo_mark_opening_smoke.cjs
+      - name: Verify Marirrosa Estrella Barrage at every range and no counterattacks
+        run: node tools/marirrosa_estrella_barrage_smoke.cjs
+      - name: Verify Anya Marianne's Awakening lethal revival and 10-turn cooldown
+        run: node tools/anya_marianne_awakening_smoke.cjs
       - name: Verify Zero Geass Absolute Command dual-mode actions and passive removal
         run: node tools/zero_geass_absolute_command_smoke.cjs
       - name: Verify Emperor Lelouch Imperial Command and Supreme Commander

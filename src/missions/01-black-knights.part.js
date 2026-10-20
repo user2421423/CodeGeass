@@ -42,7 +42,7 @@
       objective: 'Capture the G-1 Base. Zero must survive.',
       win: { capture: ['G-1 Base'] },
       lose: { cmd: ['zero'], turns: 15 },
-      stars: [{ turns: 10 }, { losses: 1 }],
+      stars: [{ turns: 10 }, { losses: 2 }],
       victory: 'The G-1 falls. Clovis is alone with Zero, and a rebellion has begun.',
       events: [
         {

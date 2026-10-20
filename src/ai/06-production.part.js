@@ -414,14 +414,14 @@
                 (role === 'carrier' ? t.naval === 'ship' : t.naval === 'amphibious');
             });
             if (!id) continue;
-            const cost = elitePrice(id, 1);
+            const cost = eliteRecruitCost(g, port, id);
             if (navyAffordable(cost) && !aiEliteRecruitReason(g, port, id) &&
                 recruitAIElite(g, port.id, id).ok) {
               availableFleet.push(g.units[g.units.length - 1]);
               break;
             }
           } else {
-            const type = navy[role], cost = price(type, 1, g, side);
+            const type = navy[role], cost = recruitCost(g, port, type, 1);
             if (navyAffordable(cost) && canBuy(g, port, type, 1) && recruit(g, port.id, type, 1).ok) {
               availableFleet.push(g.units[g.units.length - 1]);
               break;
@@ -558,8 +558,8 @@
           .filter(p => reach.has(key(p)) && !isSea(p) && !stationAt(g, p) && !unitAt(g, p))
           .sort((a, b) => (TERRAIN[b.terrain]?.cover || 0) - (TERRAIN[a.terrain]?.cover || 0) || a.r - b.r || a.c - b.c)[0];
       const preferred = menu[0];
-      const desired = preferred && (eliteAI ? elitePrice(preferred) :
-        price(preferred, sizes[sizes.length - 1], g, side));
+      const desired = preferred && (eliteAI ? eliteRecruitCost(g, s, preferred) :
+        recruitCost(g, s, preferred, sizes[sizes.length - 1]));
       if (desired && researchOnlyShortage(desired)) {
         markResearchShortage();
         if (front(s) > 3 && (e.science || 0) + Math.max(0, scienceIncome) >= desired.science)
@@ -567,7 +567,7 @@
       }
       if (eliteAI) {
         for (const id of menu) {
-          const cost = elitePrice(id, eliteCampaign ? 3 : 1);
+          const cost = eliteRecruitCost(g, s, id);
           if (!affordable(cost) || aiEliteRecruitReason(g, s, id, spot ? vacating : null)) continue;
           if (vacating) {
             if (!spot) continue;
@@ -584,7 +584,7 @@
       }
       for (const type of menu)
         for (const n of sizes) {
-          const c = price(type, n, g, side);
+          const c = recruitCost(g, s, type, n);
           if (type === superType &&
               (!superDemand(serves(s)) ||
                 spendable() - c.credits < ordinaryBudget.credits ||

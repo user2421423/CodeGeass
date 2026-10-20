@@ -152,6 +152,30 @@
       science: Math.round(frameResearch(t) * (1 + 0.85 * (stack - 1))),
     };
   }
+  // Field Supply applies to the selected formation or the production hex.
+  // It never subsidizes other factions or a commander embarked at sea.
+  function klausSupplyNear(g, place, side) {
+    return !!g && !!place && g.units.some(v => v.hp > 0 && v.side === side &&
+      fx(v).fieldSupply && !atSea(g, v) && dist(g, v, place) <= 2);
+  }
+  // Anna's workshop works within two hexes, independently of city supply.
+  // Disabled or embarked commanders never provide field maintenance.
+  function annaMaintenanceNear(g, u) {
+    return !!g && !!u && g.units.some(v => v.hp > 0 && v.side === u.side &&
+      fx(v).annaMaintenance && !atSea(g, v) && dist(g, v, u) <= 2);
+  }
+  function halveResources(cost) {
+    return Object.fromEntries(Object.entries(cost).map(([key, amount]) =>
+      [key, Math.round(amount * 0.5)]));
+  }
+  function recruitCost(g, s, type, stack = 1) {
+    const t = TYPES[type];
+    if (!s || !t) return price(type, stack, g);
+    const producer = portBuilt(t) ? (s.portOwner || s.owner) : s.owner;
+    const place = portBuilt(t) && s.portAt ? s.portAt : s;
+    const cost = price(type, stack, g, producer);
+    return klausSupplyNear(g, place, producer) ? halveResources(cost) : cost;
+  }
   function canBuy(g, s, type, stack = 1, vacating = null) {
     return !buyReason(g, s, type, stack, vacating);
   }
@@ -165,7 +189,7 @@
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     // The decree belongs to the city owner, not an occupying third-party port operator.
     // Naval purchases consume it just like land purchases and building upgrades.
-    const cost = decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null);
+    const cost = decreePrice(recruitCost(g, s, type, stack), s.owner === producer ? s : null);
     if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
@@ -186,6 +210,13 @@
       sakuradite: SAKURADITE.elite[t.naval === 'amphibious' ? 'amphib' : t.cls] ?? 0,
       science: frameResearch(t),
     };
+  }
+  function eliteRecruitCost(g, s, id) {
+    const t = TYPES[ELITE_FORCES[id]?.type];
+    const producer = t && portBuilt(t) ? (s?.portOwner || s?.owner) : s?.owner;
+    const place = t && portBuilt(t) && s?.portAt ? s.portAt : s;
+    const cost = elitePrice(id);
+    return klausSupplyNear(g, place, producer) ? halveResources(cost) : cost;
   }
   // Land elites use a city factory; amphibious elites use the independently owned
   // port and its separate one-unit-per-turn shipyard slot.
@@ -229,7 +260,7 @@
       (g.eliteDeployed?.[id] ? 'Already deployed in this operation' : null) ||
       (naval && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
       (!recruitOptions(g, s, producer, e.type).length ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), decreePrice(elitePrice(id), s.owner === producer ? s : null))
+      shortfall(funds(g, producer), decreePrice(eliteRecruitCost(g, s, id), s.owner === producer ? s : null))
     );
   }
   function deployElite(g, stationId, id, profile = {}, position) {
@@ -242,7 +273,7 @@
       rec = e.scenarioOnly && eliteScenario(g) ? { level: 1 } : eliteRecord(profile, id),
       options = recruitOptions(g, s, producer, e.type),
       p = position ? options.find(v => v.c === position.c && v.r === position.r) : options[0],
-      cost = decreePrice(elitePrice(id), s.owner === producer ? s : null);
+      cost = decreePrice(eliteRecruitCost(g, s, id), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
     if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
@@ -285,7 +316,7 @@
       (!recruitOptions(g, s, producer, e.type).length &&
         !(vacating && !naval && unitAt(g, s) === vacating)
         ? (naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), decreePrice(elitePrice(id), s.owner === producer ? s : null))
+      shortfall(funds(g, producer), decreePrice(eliteRecruitCost(g, s, id), s.owner === producer ? s : null))
     );
   }
   function recruitAIElite(g, stationId, id) {
@@ -296,7 +327,7 @@
       producer = t.naval ? (s.portOwner || s.owner) : s.owner,
       p = recruitOptions(g, s, producer, e.type)[0],
       level = eliteCampaign(g) ? 3 : 1,
-      cost = decreePrice(elitePrice(id), s.owner === producer ? s : null);
+      cost = decreePrice(eliteRecruitCost(g, s, id), s.owner === producer ? s : null);
     if (!p) return { ok: false, reason: 'Deployment hex unavailable' };
     if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
@@ -332,13 +363,14 @@
   function reinforceCost(type, g = null, side = null, u = null) {
     const p = price(type, 1, g, side),
       k = u && g && logisticsNear(g, u) ? 0.7 : 1,
-      engineering = u && g && rakshataNear(g, u) ? 0.5 : 1;
-    return { credits: Math.round(p.credits * k * engineering), industry: Math.round(p.industry * k * engineering),
-      sakuradite: Math.round(p.sakuradite * engineering), science: Math.round(p.science * engineering) };
+      engineering = u && g && rakshataNear(g, u) ? 0.5 : 1,
+      supply = u && annaMaintenanceNear(g, u) ? 0.5 : 1;
+    return { credits: Math.round(p.credits * k * engineering * supply), industry: Math.round(p.industry * k * engineering * supply),
+      sakuradite: Math.round(p.sakuradite * engineering * supply), science: Math.round(p.science * engineering * supply) };
   }
   // Manual repairs restore 20% of maximum HP for a fifth of the unit's build price.
   function repairCost(u, g = null) {
-    const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
+    const half = g && annaMaintenanceNear(g, u) ? 0.5 : 1;
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
     const camelot = g && u.elite && !TYPES[u.type].naval && skillNear(g, u, 'combatEngineering', 2) ? 0.8 : 1;
     // Research discounts affect credits only: manual repairs still restore exactly 20% HP.
@@ -373,7 +405,8 @@
     if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.produced++;
     u.hp += maxHP(u) - old;
-    u.moved = u.attacked = true;
+    // Rapid Maintenance never spends or restores a formation's normal orders.
+    if (!annaMaintenanceNear(g, u)) u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} reinforced to ${u.stack} frames.`, u.side);
     return { ok: true };
   }
@@ -388,7 +421,7 @@
     u.hp += amount;
     if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.manualRepair = true;
-    u.moved = u.attacked = true;
+    if (!annaMaintenanceNear(g, u)) u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} repairs ${amount} frame.`, u.side);
     return { ok: true, amount };
   }
