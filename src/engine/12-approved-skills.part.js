@@ -193,7 +193,7 @@
     moved.expVillettaInterceptedTurn=g.turn;
     const station=stationAt(g,moved);
     const pr=preview(g,hunter.id,moved.c,moved.r);
-    const base=pr?.unit??Math.round(power(g,hunter,moved,station)*
+    const base=pr?.rawUnit??Math.round(power(g,hunter,moved,station)*
       (station&&foe(g,station.owner,hunter.side)&&station.shield>0?.55:1));
     const crit=!!pr&&random(g)<pr.crit;
     const damage=Math.max(1,Math.round(base*(.92+random(g)*.16)*
