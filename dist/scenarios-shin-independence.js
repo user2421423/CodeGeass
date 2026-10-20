@@ -7,6 +7,7 @@ define({
  phase:'shin-secession',
  map:{eu:'britannia',eb:'shinregime'},
  equipment:{britannia:'britannia',shinregime:'britannia'},
+ reinforcements:{britannia:26},
  commanders:{
   shinregime:['shin','ashley','manfredi','farnese','augustus'],
   britannia:['suzaku','schneizel','cornelia','julius','guilford','darlton','oldrin','marrybell']
