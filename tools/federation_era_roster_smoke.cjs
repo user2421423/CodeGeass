@@ -11,7 +11,7 @@ require('../dist/engine/ai.js');
 const NATIVE = E.LINEUPS.cf2017;
 const UFN = E.LINEUPS.bk;
 const CLASSES = E.CLASS_ORDER;
-const NATIVE_ELITES = new Set(['chuyen','wang_hu','shen_hu','shui_gun_ru_ii']);
+const NATIVE_ELITES = new Set(['chuyen','wang_hu','shen_hu','akatsuki_zikisan','akatsuki_missile','akatsuki_heavy','shui_gun_ru_ii']);
 const images = JSON.parse(fs.readFileSync(path.join(__dirname, '../dist/assets/art/manifest.json'), 'utf8')).units;
 const artAlias = {
   bk_carrier: 'cf_carrier',
@@ -27,7 +27,7 @@ function checkGame(g, label) {
   assert.deepEqual(E.lineupOf(g,'cf'),lineup,label + ': complete land roster');
   for (const cls of CLASSES)
     assert.equal(E.typeFor('cf',cls,g),lineup[cls],label + ': '+cls);
-  const allowed = new Set([...Object.values(lineup),...Object.values(navy)]);
+  const allowed = new Set([...Object.values(lineup),...Object.values(navy),E.airshipType(g,'cf')]);
   for(const u of g.units.filter(u=>u.side==='cf')){
     if(u.elite) {
       assert.ok(E.eliteEligible(g,'cf',u.elite),label+': illegal Elite '+u.type);
@@ -43,7 +43,6 @@ function checkGame(g, label) {
     assert.equal(E.eliteEligible(g,'cf','guren_mkii'),false,'2017 Chinese cannot deploy Black Knights Guren');
     for (const id of NATIVE_ELITES)
       assert.equal(E.eliteEligible(g,'cf',id),true,'2017 Chinese Elite: '+id);
-    assert.equal(E.eliteEligible(g,'cf','akatsuki_missile'),false,'2017 Chinese cannot deploy Akatsuki Elite');
   }
 }
 assert.equal(NATIVE.raider,'gun_ru_light','2017 raider is Gun-Ru Mobile');
@@ -72,4 +71,23 @@ for(const difficulty of ['normal','hard','challenge','elite']){
   const g=luoyang.create('britannia',difficulty,201701);
   checkGame(g,'Luoyang '+difficulty);
 }
+// Existing operation saves can still carry the old, incomplete roster snapshot.
+const saved = E.createGame('cf','normal','conquest',417,'world');
+saved.mode = 'campaign';
+saved.campaign = { eliteRosters: { cf: ['chuyen','wang_hu','shen_hu','shui_gun_ru_ii'] } };
+for (const id of NATIVE_ELITES)
+  assert.equal(E.eliteEligible(saved,'cf',id),true,'Old save retains native Federation elite '+id);
+const factory = saved.stations.find(s=>s.owner==='cf');
+factory.tier = 3;
+saved.phase = 'cf';
+saved.units = saved.units.filter(u=>u.c!==factory.c || u.r!==factory.r);
+Object.assign(saved.economy.cf,{credits:100000,industry:100000,science:100000,sakuradite:100000});
+const profile = {elites:{akatsuki_missile:{level:3,fragments:0}}};
+assert.equal(E.eliteDeployReason(saved,factory,'akatsuki_missile',profile),null,
+  'Previously hidden, HQ-unlocked missile elite can deploy from an old save');
+const deployed = E.deployElite(saved,factory.id,'akatsuki_missile',profile);
+assert.equal(deployed.ok,true,deployed.reason);
+assert.equal(deployed.unit.eliteLevel,3,'Factory retains HQ upgrade level');
+assert.match(E.eliteDeployReason(saved,factory,'akatsuki_missile',profile),/Already deployed/,
+  'Once-per-operation limit remains in force');
 console.log('Federation 2017 / UFN 2018 rosters, Elite eligibility, Luoyang and art: PASS');

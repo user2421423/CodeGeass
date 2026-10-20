@@ -25,7 +25,8 @@ for (const campaign of Object.values(CP.CAMPAIGNS)) {
       assert.equal(E.eliteEligible(g, 'bk', 'shen_hu'), false, 'Black Knights cannot deploy native Federation elites');
       assert.equal(E.eliteEligible(g, 'bk', 'guren_mkii'), true, 'Black Knights have Guren');
       assert.equal(E.eliteEligible(g, 'cf', 'shen_hu'), true, '2017 Chinese retain Shen Hu');
-      assert.equal(E.eliteEligible(g, 'cf', 'akatsuki_missile'), false, '2017 Chinese cannot deploy UFN-era Akatsuki missile');
+      for (const id of ['akatsuki_zikisan', 'akatsuki_missile', 'akatsuki_heavy'])
+        assert.equal(E.eliteEligible(g, 'cf', id), true, 'Federation factory retains ' + id);
       for (const u of g.units) {
         if (u.side === 'bk' && !u.elite)
           assert.ok(!chinese.has(u.type) || blackKnights.has(u.type),

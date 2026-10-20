@@ -99,11 +99,10 @@
     return regular;
   }
   function eliteRoster(side, g = null) {
-    // The 2017 Federation gets its native Elite Force roster, not UFN-era frames.
-    const nativeFederation = new Set(['chuyen', 'wang_hu', 'shen_hu', 'shui_gun_ru_ii']);
+    // Keep native faction rosters in sync with HQ, including Federation variants.
     const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
       const e = E.ELITE_FORCES[id];
-      return owner === 'cf' ? nativeFederation.has(id) : e.availableTo.includes(owner);
+      return e.availableTo.includes(owner);
     });
     const own = available(side);
     if (own.length) return own;
