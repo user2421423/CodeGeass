@@ -234,6 +234,8 @@
     if (why) return why;
     if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';
+    if (action.kind === 'expendableVanguard')
+      return actionTargets(g,u).length ? null : 'No eligible allied formation within 2 hexes';
     if (action.kind === 'ohgiHeal') {
       if (u.hp <= Math.max(1, Math.round(maxHP(u) * 0.20)))
         return 'Ohgi must survive the 20% maximum-HP sacrifice';
