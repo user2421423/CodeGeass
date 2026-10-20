@@ -29,6 +29,8 @@ jobs:
         run: node tools/smilas_every_turn_smoke.cjs
       - name: Verify Oscar Guard Counterstrike and Emergency Defense
         run: node tools/oscar_emergency_defense_smoke.cjs
+      - name: Verify Ryo marking, allied kill refresh, and AI replay
+        run: node tools/ryo_mark_opening_smoke.cjs
       - name: Verify Zero Geass Absolute Command dual-mode actions and passive removal
         run: node tools/zero_geass_absolute_command_smoke.cjs
       - name: Verify Emperor Lelouch Imperial Command and Supreme Commander
