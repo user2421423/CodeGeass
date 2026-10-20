@@ -51,10 +51,11 @@ const ids=['rounds-rebellion','shin-independence','chinese-civil-war','eu-milita
     const difficulties=Array.from(document.querySelectorAll('#scenario-difficulty option')).map(e=>e.value);
     const outer=dialog.getBoundingClientRect();
     return {id,title:document.querySelector('.scenario-operation-header h2')?.textContent,
-      sides,difficulties,imageWidth:image.naturalWidth,imageHeight:image.naturalHeight,
+      sides,difficulties,flagsReady:sides.every(side=>ART.flagSVG(side)?.includes('<svg')),imageWidth:image.naturalWidth,imageHeight:image.naturalHeight,
       dialogLeft:outer.left,dialogRight:outer.right,viewport:innerWidth};
    },id);
    assert.equal(result.sides.length,2,id+' needs two playable factions');
+   assert(result.flagsReady,id+' missing alternate-history faction standard');
    assert.deepEqual(result.difficulties,['normal','hard','challenge','elite']);
    assert.equal(result.imageWidth,1440,id+' preview should match game renderer');
    assert(result.dialogLeft>=-3&&result.dialogRight<=result.viewport+3,id+' dialog overflows mobile viewport');
