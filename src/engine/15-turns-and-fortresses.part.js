@@ -220,7 +220,8 @@
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       if (mine.some(m => m.hp > 0 && fx(m).reassure && dist(g, m, u) <= 2)) {
         u.morale = Math.min(1, u.morale + 1);
-        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
+        // Airships never heal on their own; only an explicit Repair restores them.
+        if (!TYPES[u.type].air) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       }
       if (fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
       const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];

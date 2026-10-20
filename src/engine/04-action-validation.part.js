@@ -111,7 +111,7 @@
     return (
       turnReason(g, u.side) ||
       (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
-      (isShip(u) ? 'Warships cannot be reinforced' : null) ||
+      (isAir(u) ? 'Airships cannot add frames' : isShip(u) ? 'Warships cannot be reinforced' : null) ||
       (u.stack >= 3 ? 'Already at 3 frames' : null) ||
       (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
       actedReason(u) ||

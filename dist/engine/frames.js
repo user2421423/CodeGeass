@@ -274,10 +274,10 @@
   // Airships: a warship hull held aloft by Float Systems (Conquest and regional scenarios).
   // Built at a level-3 factory, not a port; flies over land, sea and impassable peaks
   // but never enters a city. Every power's airship shares these numbers exactly.
-  const AIRSHIP = { cls: 'support', naval: 'ship', air: true, hp: 700, attack: 90, armor: 50, move: 6, min: 1, max: 2, capacity: 2,
+  const AIRSHIP = { cls: 'support', naval: 'ship', air: true, hp: 700, attack: 90, armor: 50, move: 10, min: 1, max: 2, capacity: 2,
       crit: 0.15, pen: 0.35, cost: 1800, industry: 500, sakuradite: 60, research: 150, tier: 3, port: 0, noCounter: false,
       gen: 'Floating battleship', role: 'Airship',
-      rule: 'Airship: flies 6 hexes over any terrain or sea, but cannot enter or capture cities, ports or mines. Guns at range 1–2. Carries two Knightmare formations and launches them onto any adjacent land. No terrain cover. Repairs beside a friendly city.' };
+      rule: 'Airship: flies 10 hexes over any terrain or sea, but cannot enter or capture cities, ports or mines. Guns at range 1–2. Carries two Knightmare formations and launches them onto any adjacent land. No terrain cover. Never heals on its own or adds frames: use Repair beside a friendly city.' };
   AIRSHIP.desc = AIRSHIP.rule;
   const KNIGHTMARES = {
     // Holy Britannian Empire (with Euro Britannia).

@@ -166,11 +166,11 @@ a clean playtest is not itself proof that a scenario is balanced.
 - **Airships (Conquest and regional scenarios):** every power can build its own floating battleship at a city with a
   level-3 factory: Britannia's Logres class (also Euro Britannia), the E.U.'s Charlemagne class, the 2017 Federation's
   Shenlong class and the Black Knights' Ikaruga class (the 2018 U.F.N. flies the Ikaruga). All four share one profile:
-  700 HP, attack 90, armor 50, range 1–2, 6 hexes a turn over any land, sea or impassable peak, and two Knightmare
+  700 HP, attack 90, armor 50, range 1–2, 10 hexes a turn over any land, sea or impassable peak, and two Knightmare
   formations aboard that launch onto any adjacent land. Each costs 1,800 credits, 500 industry, 150 science and
   60 Sakuradite, is built in one turn and has no per-power limit. Airships cannot enter or capture cities, ports or
-  mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities, and repair beside a friendly
-  city. In Conquest the AI saves for them from turn 10 and keeps at most one per 20 cities (two at most);
+  mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities, never heal on their own and
+  cannot add frames; the Repair action beside a friendly city is the only way to restore them. In Conquest the AI saves for them from turn 10 and keeps at most one per 20 cities (two at most);
   regional-scenario AI does not build them.
 - **Standing orders:** select a unit, choose Set destination (or press G), and
   click a hex. Units follow the route on subsequent turns; orders can be

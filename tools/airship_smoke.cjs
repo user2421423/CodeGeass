@@ -74,7 +74,7 @@ function setup() {
 }
 
 {
-  // Flight: six hexes over land, sea and peaks, never into a city.
+  // Flight: ten hexes over land, sea and peaks, never into a city.
   const { g, s } = setup();
   const coast = g.tiles.find(p => E.isSea(p) && E.distance(p, s, g) <= 12 &&
     E.adjacent(g, p).some(n => !E.isSea(n) && !E.stationAt(g, n) && !E.TERRAIN[n.terrain]?.blocked));
@@ -86,8 +86,8 @@ function setup() {
   assert.ok(hexes.some(p => E.isSea(p)), 'Flies over the sea');
   assert.ok(hexes.some(p => !E.isSea(p) && !E.isCoast(p)), 'Flies over inland terrain');
   assert.ok(hexes.every(p => !E.stationAt(g, p)), 'Never enters a city');
-  assert.ok(hexes.every(p => E.distance(p, ship, g) <= 6), 'Six hexes a turn');
-  assert.equal(Math.max(...[...reach.values()]), 6);
+  assert.ok(hexes.every(p => E.distance(p, ship, g) <= 10), 'Ten hexes a turn');
+  assert.equal(Math.max(...[...reach.values()]), 10);
   // A peak is passable only by air.
   const step = E.adjacent(g, ship).find(p => !E.isSea(p) && !E.stationAt(g, p) && !E.unitAt(g, p));
   const old = step.terrain;
@@ -123,6 +123,11 @@ function setup() {
   ship.c = nearCity.c;
   ship.r = nearCity.r;
   assert.equal(E.repairReason(g, ship), null);
+  assert.equal(E.reinforceReason(g, ship), 'Airships cannot add frames');
+  // No passive healing at the start of a turn, even beside a friendly city.
+  const hp = ship.hp;
+  E.beginTurn(g, 'britannia', true);
+  assert.equal(ship.hp, hp, 'Airships never heal on their own');
 
   // Standing orders can cross the sea to an inland hex.
   ship.moved = false;
