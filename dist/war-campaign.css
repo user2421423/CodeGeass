@@ -7,6 +7,25 @@
 .wc-factions button{display:flex;align-items:center;gap:8px;min-width:190px;padding:10px 15px;border:1px solid #40566a;background:#152d40;color:#c7d5e2;border-radius:8px;font-weight:700;cursor:pointer}
 .wc-factions button.active{border-color:var(--wc-faction-color);color:#fff;box-shadow:inset 0 -3px var(--wc-faction-color)}
 .wc-factions button:focus-visible,.wc-dialog button:focus-visible{outline:2px solid #f0d78e;outline-offset:2px}
+/* One sovereign selection, two independent war fronts — never six visible campaigns. */
+.wc-factions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:8px}
+.wc-factions button{min-width:0;justify-content:center;min-height:45px}
+.wc-front-heading{font-size:12px;letter-spacing:.03em;color:#b9cddd;margin:8px 0 7px}
+.wc-fronts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 15px}
+.wc-front-button{display:flex;flex-direction:column;align-items:flex-start;gap:5px;text-align:left;
+  background:#183247;color:#c5d6e2;border:1px solid #3d5a70;border-radius:8px;padding:11px 14px;
+  cursor:pointer;min-width:0;transition:background .15s,border-color .15s}
+.wc-front-button b{font-size:14px;line-height:1.25;color:#ecf0f3}
+.wc-front-button small{font-size:11px;color:#adc2ce}
+.wc-front-button.active{border-color:#e1c584;background:#31475a;box-shadow:inset 0 -3px #e1c584}
+@media(max-width:560px){
+  .wc-factions{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .wc-factions button{width:auto;padding:7px 4px;gap:4px;font-size:11px;flex-direction:column}
+  .wc-flag{width:30px;height:22px}
+  .wc-fronts{gap:7px}
+  .wc-front-button{padding:9px}
+  .wc-front-button b{font-size:12px}
+}
 .wc-flag{display:inline-flex;width:34px;height:25px;align-items:center;justify-content:center;overflow:hidden;border-radius:3px}
 .wc-flag svg{max-width:100%;max-height:100%}
 .wc-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,315px);gap:16px;min-height:0}

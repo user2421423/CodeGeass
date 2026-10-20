@@ -1,0 +1,39 @@
+name: Three-faction World Campaign save compatibility
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'dist/war-campaign.js'
+      - 'dist/ui/war-campaign-screen.js'
+      - 'dist/war-campaign.css'
+      - 'tools/three_faction_campaign_smoke.cjs'
+      - 'tools/three_faction_ui_smoke.cjs'
+      - '.github/workflows/three-faction-campaign.yml'
+  push:
+    branches: ['feature/three-faction-world-campaign']
+permissions:
+  contents: read
+jobs:
+  legacy-save-and-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build game
+        run: node tools/build_sources.cjs
+      - name: Check parsed campaign and UI scripts
+        run: |
+          node --check dist/war-campaign.js
+          node --check dist/ui/war-campaign-screen.js
+          node --check tools/three_faction_campaign_smoke.cjs
+          node --check tools/three_faction_ui_smoke.cjs
+      - name: Verify old six-ledger progress, completed wars and unified territory
+        run: node tools/three_faction_campaign_smoke.cjs
+      - name: Verify three-faction UI, two-front switching and single saved battle
+        run: node tools/three_faction_ui_smoke.cjs
+      - name: Keep all 13 Federation-EU mission identifiers and rewards intact
+        run: node tools/federation_eu_campaign_smoke.cjs
+      - name: Verify existing Federation-EU mechanics contracts
+        run: node tools/federation_eu_mechanics_smoke.cjs

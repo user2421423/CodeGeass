@@ -2,7 +2,7 @@
    Uses the 2017 GSHHG political atlas and an isolated worldSnapshot. */
 'use strict';
 const WC = KnightmareWarCampaign;
-let wcFaction='eu',wcTier=1,wcMission=null,wcDifficulty='normal',
+let wcFaction='eu',wcFront='eu',wcTier=1,wcMission=null,wcDifficulty='normal',
     wcCanvas=null,wcAtlas=null,wcWorld=null,wcHovered=null,
     wcView={zoom:1,x:0,y:0},wcDrag=null,wcFeedback='';
 const WC_ROUTES={
@@ -62,11 +62,13 @@ const WC_ROUTES={
   ]
 };
 function wcProgress(){return WC.load(localStorage);}
-function wcMapColor(){return E.FACTIONS[WC.campaignSide(wcFaction)].color;}
-function wcState(m){return WC.state(wcProgress(),wcFaction,m.id);}
+function wcMapColor(){return E.FACTIONS[wcFaction].color;}
+function wcState(m){return WC.state(wcProgress(),wcFront,m.id);}
 function wcSafe(s){return esc(s);}
-function wcFlag(f){return (ART.flagSVG(WC.campaignSide(f))||'');}
-function wcActiveMissions(){return WC.registry[wcFaction].flatMap(t=>t.missions);}
+function wcFlag(f){return (ART.flagSVG(f)||'');}
+function wcActiveMissions(){return WC.registry[wcFront].flatMap(t=>t.missions);}
+function wcFrontName(front){const o=WC.CAMPAIGN_INFO[front]?.opponent;return o==='cf'?'Chinese Federation':o==='eu'?'E.U.':'Britannia';}
+function wcFrontProgress(p,front){const all=WC.registry[front].flatMap(t=>t.missions);return all.filter(m=>WC.completed(p,front,m.id)).length+'/'+all.length;}
 function wcProject(lon,lat){
   return {x:(lon+180)/360*wcCanvas.width,
           y:(74-lat)/128*wcCanvas.height};
@@ -88,8 +90,7 @@ function wcGeoProject(lon,lat) {
           y:R+(74-lat)*1.5*R*75/128};
 }
 function wcPaintSecuredTerritories(c) {
-  const progress=wcProgress(), wins=wcActiveMissions()
-    .filter(m=>WC.completed(progress,wcFaction,m.id));
+  const progress=wcProgress(), wins=WC.completedMissionsForFaction(progress,wcFaction);
   if(!wins.length)return;
   // Clip to the actual world land silhouettes: a regional win must never
   // turn its rectangular theater's ocean into a faction-coloured patch.
@@ -138,7 +139,7 @@ function wcPaintSecuredTerritories(c) {
 function wcBuildAtlas(){
   // Paint a fresh political baseline, then apply precise captured borders;
   // coarse world hexes must never override geographic region boundaries.
-  wcWorld=WC.worldSnapshot(E,wcFaction,WC.fresh());
+  wcWorld=WC.unifiedWorldSnapshot(E,wcFaction,WC.fresh());
   wcAtlas=document.createElement('canvas');
   wcAtlas.width=1800;
   wcAtlas.height=Math.round(1800*mapH(wcWorld)/mapW(wcWorld));
@@ -159,9 +160,9 @@ function wcDraw(){
   c.drawImage(wcAtlas,wcView.x,wcView.y,w*wcView.zoom,h*wcView.zoom);
   c.save();c.beginPath();c.rect(0,0,w,h);c.clip();
   const all=wcActiveMissions(), color=wcMapColor(),
-        current=WC.unlockedTier(wcProgress(),wcFaction);
+        current=WC.unlockedTier(wcProgress(),wcFront);
   // Only tactical direction for the browsed/current front, never unit orders.
-  for(const [from,to] of WC_ROUTES[wcFaction]){
+  for(const [from,to] of WC_ROUTES[wcFront]){
     const a=WC.ALL[from],b=WC.ALL[to];
     if(!a||!b||Math.min(a.tier,b.tier)>current+1||
       (a.tier!==wcTier && b.tier!==wcTier))continue;
@@ -297,16 +298,16 @@ function wcAttach(){
   };
 }
 function wcMissionPanel(){
-  const p=wcProgress(),m=WC.ALL[wcMission],status=m?WC.state(p,wcFaction,m.id):null,
-        row=WC.registry[wcFaction].find(t=>t.number===wcTier),
-        done=row.missions.filter(o=>WC.completed(p,wcFaction,o.id)).length,
-        unlocked=WC.unlockedTier(p,wcFaction),
+  const p=wcProgress(),m=WC.ALL[wcMission],status=m?WC.state(p,wcFront,m.id):null,
+        row=WC.registry[wcFront].find(t=>t.number===wcTier),
+        done=row.missions.filter(o=>WC.completed(p,wcFront,o.id)).length,
+        unlocked=WC.unlockedTier(p,wcFront),
         battle=getSave(WC.BATTLE_KEY),
-        resume=battle && !battle.over && battle.warCampaign?.faction===wcFaction;
+        resume=battle && !battle.over && WC.displayFaction(battle.warCampaign?.faction)===wcFaction;
   let html='<div class="wc-detail-header"><span class="wc-tag">TIER '+wcTier+
     ' · '+done+'/'+row.missions.length+' COMPLETE</span><h3>'+wcSafe(row.title)+'</h3></div>'+
     '<div class="wc-objectives">'+row.missions.map(o=>{
-      const state=WC.state(p,wcFaction,o.id);
+      const state=WC.state(p,wcFront,o.id);
       return '<button class="wc-objective '+(o.id===wcMission?'active ':'')+state+
         '" data-wc-mission="'+o.id+'"><span class="wc-state">'+
         (state==='completed'?'✓':state==='locked'?'◇':state==='planned'?'!':'●')+
@@ -330,20 +331,23 @@ function wcMissionPanel(){
         ['normal','hard','challenge','elite'].map(d=>'<option value="'+d+'"'+(wcDifficulty===d?' selected':'')+'>'+wcSafe(E.DIFFICULTIES[d]?.name||d)+'</option>').join('')+'</select>';
       html+='<button class="primary wc-launch" data-action="wc-launch">'+(status==='completed'?'Replay regional war':'Launch regional war')+'</button>';
     }
-    if(status==='completed')html+='<p class="wc-record">Campaign victory recorded for '+wcSafe(E.FACTIONS[WC.campaignSide(wcFaction)].name)+'.</p>';
+    if(status==='completed')html+='<p class="wc-record">Campaign victory recorded for '+wcSafe(E.FACTIONS[wcFaction].name)+'.</p>';
     html+='</div>';
   }
-  if(resume)html+='<button class="wc-resume" data-action="wc-resume">Continue Campaign battle · turn '+battle.turn+'</button>';
+  if(resume)html+='<button class="wc-resume" data-action="wc-resume">Continue saved battle vs '+wcSafe(wcFrontName(battle.warCampaign.faction))+' · turn '+battle.turn+'</button>';
   return html;
 }
 function wcRefresh(){
-  const p=wcProgress(),tiers=WC.registry[wcFaction],
-        complete=tiers.flatMap(t=>t.missions).filter(m=>WC.completed(p,wcFaction,m.id)).length,
-        total=tiers.flatMap(t=>t.missions).length,
-        unlocked=WC.unlockedTier(p,wcFaction);
+  const p=wcProgress(),tiers=WC.registry[wcFront],
+        {done:complete,total}=WC.factionCompletion(p,wcFaction),
+        unlocked=WC.unlockedTier(p,wcFront);
   const top=modal.querySelector('#wc-progress');
-  if(top)top.textContent=total ? complete+'/'+total+' territories secured · Tier '+Math.min(unlocked,tiers.length)+' of '+tiers.length : 'No registered battles';
+  if(top)top.textContent=total ? complete+'/'+total+' territories secured across both fronts · Active front tier '+Math.min(unlocked,tiers.length)+' of '+tiers.length : 'No registered battles';
   const tabs=modal.querySelector('#wc-tiers');
+  const frontControls=modal.querySelector('#wc-fronts');
+  if(frontControls)frontControls.innerHTML=WC.frontsFor(wcFaction).map(front=>
+    '<button class="wc-front-button '+(wcFront===front?'active':'')+'" data-wc-front="'+front+'" aria-pressed="'+(wcFront===front)+'">'+
+    '<b>Against '+wcSafe(wcFrontName(front))+'</b><small>'+wcFrontProgress(p,front)+' objectives completed</small></button>').join('');
   if(tabs)tabs.innerHTML=tiers.map(t=>'<button class="'+(t.number===wcTier?'current ':'')+
     (t.number>unlocked?'locked':'')+'" data-wc-tier="'+t.number+'" aria-pressed="'+(t.number===wcTier)+'">'+
     '<b>'+t.number+'</b><small>'+wcSafe(t.title)+'</small></button>').join('');
@@ -359,34 +363,39 @@ function warCampaignDialog(message=''){
     zoom=3.2;render();
   }
   wcFeedback=message;
-  const p=wcProgress();wcFaction=p.selectedFaction;
-  wcTier=Math.min(WC.unlockedTier(p,wcFaction),WC.registry[wcFaction].length);
-  const row=WC.registry[wcFaction][wcTier-1];
-  wcMission=(row.missions.find(m=>!WC.completed(p,wcFaction,m.id))||row.missions[0])?.id||null;
+  const p=wcProgress();wcFront=p.selectedFaction;wcFaction=WC.displayFaction(wcFront);
+  wcTier=Math.min(WC.unlockedTier(p,wcFront),WC.registry[wcFront].length);
+  const row=WC.registry[wcFront][wcTier-1];
+  wcMission=(row.missions.find(m=>!WC.completed(p,wcFront,m.id))||row.missions[0])?.id||null;
   wcHovered=null;wcView={zoom:1,x:0,y:0};
   modal.innerHTML='<div class="overlay"><section class="dialog wc-dialog" role="dialog" aria-modal="true" aria-label="World Campaign">'+
     '<div class="wc-heading"><div><div class="eyebrow">Code Geass · Grand Strategy</div><h2>Campaign Mode</h2>'+
     '<p id="wc-progress"></p></div>'+
     '<div><button class="small close" data-action="wc-back">Back to menu</button></div></div>'+
-    '<div class="wc-factions">'+WC.FACTIONS.map(f=>'<button class="'+(f===wcFaction?'active':'')+
-    '" data-wc-faction="'+f+'" style="--wc-faction-color:'+E.FACTIONS[WC.campaignSide(f)].color+'">'+
-    '<span class="wc-flag">'+wcFlag(f)+'</span>'+wcSafe(WC.CAMPAIGN_INFO[f].label)+'</button>').join('')+'</div>'+
+    '<div class="wc-factions">'+WC.VISIBLE_FACTIONS.map(f=>'<button class="'+(f===wcFaction?'active':'')+
+    '" data-wc-faction="'+f+'" aria-pressed="'+(f===wcFaction)+'" style="--wc-faction-color:'+E.FACTIONS[f].color+'">'+
+    '<span class="wc-flag">'+wcFlag(f)+'</span>'+wcSafe(WC.VISIBLE_INFO[f].label)+'</button>').join('')+'</div>'+
+    '<div class="wc-front-heading">Choose an invasion front — advance against either or both rivals</div>'+
+    '<div class="wc-fronts" id="wc-fronts" role="group" aria-label="Invasion fronts"></div>'+
     (message?'<p class="wc-feedback" role="status">'+wcSafe(message)+'</p>':'')+pendingEliteChoiceHTML()+
     '<div class="wc-layout"><section class="wc-stage"><div class="wc-map-area"><canvas id="wc-map" aria-label="Strategic campaign world map: click regional objectives, drag to pan, use mouse wheel to zoom"></canvas>'+
     '<div class="wc-map-controls"><button data-action="wc-zoom-out" aria-label="Zoom out">−</button><button data-action="wc-reset" aria-label="Fit world map">WORLD</button><button data-action="wc-zoom-in" aria-label="Zoom in">+</button></div>'+
     '<div class="wc-map-legend"><span>● Ready</span><span>✓ Secured</span><span>! Planned</span><span>◇ Locked</span></div></div>'+
     '<div class="wc-tier-strip" id="wc-tiers"></div></section>'+
     '<aside class="wc-panel" id="wc-panel"></aside></div>'+
-    '<p class="wc-footnote">Territorial colors show your Campaign victories only. Conquest and standalone Scenarios are unchanged. Drag to pan · scroll to zoom.</p></section></div>';
+    '<p class="wc-footnote">Captured regions from both invasion fronts share your faction color. Each front progresses independently. There is still only one unfinished Campaign battle slot.</p></section></div>';
   wcCanvas=modal.querySelector('#wc-map');
   wcBuildAtlas();wcAttach();wcRefresh();focusDialog();
 }
 function wcSelectFaction(f){
-  if(!WC.FACTIONS.includes(f))return;
-  if(!WC.chooseFaction(localStorage,f)){toast('Unable to save your selected Campaign faction.');return;}
-  wcFaction=f;wcTier=Math.min(WC.unlockedTier(wcProgress(),f),WC.registry[f].length);
-  wcMission=WC.registry[f][wcTier-1].missions[0]?.id||null;
-  // Rebuild political map from initial 2017 geography for this faction's own wins.
+  if(!WC.VISIBLE_FACTIONS.includes(f))return;
+  if(!WC.chooseVisibleFaction(localStorage,f)){toast('Unable to save your selected Campaign faction.');return;}
+  warCampaignDialog();
+}
+function wcSelectFront(front){
+  if(!WC.frontsFor(wcFaction).includes(front))return;
+  if(!WC.chooseFaction(localStorage,front)){toast('Unable to save your invasion front.');return;}
+  // Switching fronts never overwrites or clears the single Campaign save.
   warCampaignDialog();
 }
 function wcLaunch(){
@@ -395,7 +404,7 @@ function wcLaunch(){
   return withGameAssets(() => prepareScenarioAssets(selected.scenarioId), () => wcLaunchLoaded(selected));
 }
 function wcLaunchLoaded(m){
-  const info=WC.launch(wcProgress(),wcFaction,m.id,E.scenarios?.byId);
+  const info=WC.launch(wcProgress(),wcFront,m.id,E.scenarios?.byId);
   if(!info.ok){toast(info.reason,true);return;}
   confirmReplace(WC.BATTLE_KEY,'war-campaign',()=>{
     scenarioKind=info.scenarioId;
@@ -406,7 +415,7 @@ function wcLaunchLoaded(m){
 }
 function wcResume(){
   const g=getSave(WC.BATTLE_KEY);
-  if(!g?.warCampaign || g.warCampaign.faction!==wcFaction){toast('No active Campaign battle for this faction.');return;}
+  if(!g?.warCampaign || WC.displayFaction(g.warCampaign.faction)!==wcFaction){toast('No active Campaign battle for this faction.');return;}
   resumeSavedGame(WC.BATTLE_KEY);
 }
 document.addEventListener('click',function(e){
@@ -414,7 +423,8 @@ document.addEventListener('click',function(e){
   const b=e.target.closest('button');if(!b || b.disabled)return;
   const d=b.dataset;
   if(d.wcFaction){wcSelectFaction(d.wcFaction);return;}
-  if(d.wcTier){wcTier=Number(d.wcTier);wcMission=WC.registry[wcFaction][wcTier-1].missions[0]?.id||null;wcRefresh();return;}
+  if(d.wcFront){wcSelectFront(d.wcFront);return;}
+  if(d.wcTier){wcTier=Number(d.wcTier);wcMission=WC.registry[wcFront][wcTier-1].missions[0]?.id||null;wcRefresh();return;}
   if(d.wcMission){wcMission=d.wcMission;wcTier=WC.ALL[wcMission].tier;wcRefresh();return;}
   if(d.action==='war-campaign'){withScenarios(()=>warCampaignDialog());return;}
   if(d.action==='wc-back'){startMenu();return;}
