@@ -266,8 +266,8 @@
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
-      // Oscar's selected ally receives 20% reduction; its surrounding
-      // friendly formations receive 10%, following the selected unit.
+      // Oscar passively protects other allies within two hexes of himself.
+      // His marked ally instead receives 20% protection even after moving away.
       attack *= oscarDefenseMultiplier(g,target);
       attack *= skillDefense(g,target,counter,direct) *
         commanderDefense(g,target,u,counter,direct) *
