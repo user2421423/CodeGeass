@@ -385,7 +385,7 @@
         sw.expBeachheadUntil=Math.min(sw.expBeachheadStart+3,sw.expBeachheadUntil+1);
 
     if(u.cmd==='nonette' && u.expCaptureAttackTurn!==g.turn){u.attacked=false;u.expCaptureAttackTurn=g.turn;}
-    if((u.cmd==='sugiyama'||(u.cmd==='anya'&&u.focusCity?.city===s.id))&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
+    if(u.cmd==='sugiyama'&&u.expCaptureMoveTurn!==g.turn){grantReposition(u,3);u.expCaptureMoveTurn=g.turn;}
     const kaguyas=g.units.filter(v=>v.hp>0&&v.side===u.side&&v.cmd==='kaguya'&&dist(g,v,s)<=3);
     if(kaguyas.length)for(const v of g.units)if(v.hp>0&&v.side===u.side&&!isAir(v)&&kaguyas.some(k=>dist(g,k,v)<=3))v.hp=Math.min(maxHP(v),v.hp+Math.round(maxHP(v)*.1));
     if (fx(u).specialOps && (s.gunReady || 0) > g.turn) s.gunReady--;

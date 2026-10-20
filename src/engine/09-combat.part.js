@@ -74,8 +74,6 @@
     // Checkmate boosts direct attacks and counterattacks against its marked
     // formation, without granting Schneizel a passive aura.
     if (target?.expCheckmate?.side === u.side) attack *= 1.25;
-    if(!counter&&st&&foe(g,st.owner,u.side)&&fx(u).focusBombard&&u.focusCity?.city===st.id&&u.focusCity.lastTurn>=g.turn-1)
-      attack*=1+Math.min(3,u.focusCity.count)*fx(u).focusBombard;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
     // Nothing deals bonus damage to airships: anti-ship and coastal bonuses skip them.
     const seaShip = target && isShip(target) && !isAir(target);
@@ -426,6 +424,17 @@
   // by: the side responsible when there is no attacking unit (a city battery).
   function kill(g, v, attacker, force = false, by = null, incomingDamage = 0) {
     if (v.hp > 0) return;
+    // Marianne's Awakening: Anya survives an otherwise fatal hit at full HP.
+    // The per-formation stamp persists in saves and follows the game's global turns.
+    // Forced kills (F.L.E.I.J.A., lost carrier cargo) remain final.
+    if (!force && fx(v).marianneAwakening &&
+        (v.expMarianneAwakeningTurn == null ||
+         g.turn - v.expMarianneAwakeningTurn >= fx(v).marianneAwakening)) {
+      v.hp = maxHP(v);
+      v.expMarianneAwakeningTurn = g.turn;
+      log(g, "Marianne's Awakening restores Anya to full health.", v.side);
+      return;
+    }
     if ((fx(v).undying && v.undyingUsedTurn !== g.turn || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
       // A commander who forces a lethal Code Bearer / Final Stand activation
       // has still earned a Valor citation, despite the scripted survival.
