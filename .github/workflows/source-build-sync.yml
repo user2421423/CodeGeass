@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify Anna Clément engineering, Rapid Maintenance and Klaus discount transfer
+        run: node tools/anna_clement_smoke.cjs
       - name: Verify Akito Brain Raid isolation, damage and movement
         run: node tools/akito_brain_raid_smoke.cjs
       - name: Verify Li Xingke Divine Tiger and repeated Perfect Counter
@@ -103,8 +105,6 @@ jobs:
         run: node tools/tutorial_academy_smoke.cjs
       - name: Verify manual repairs and port healing
         run: node tools/repair_and_port_healing_smoke.cjs
-      - name: Verify Anna Clément engineering, Rapid Maintenance and Klaus discount transfer
-        run: node tools/anna_clement_smoke.cjs
       - name: Verify advanced frame Research pricing and AI purchasing
         run: node tools/frame_research_economy_smoke.cjs
       - name: Verify Division of Japan city income and repeated factory production
