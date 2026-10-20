@@ -15,13 +15,10 @@ assert.equal(C.gaudefroy.fx.fortressArmor,.3);
 assert.equal(C.gaudefroy.fx.regen,.02);
 assert.equal(C.raymond.action.kind,'grandMastersAssault');
 assert.equal(C.raymond.action.cooldown,5);
-const type=(side,branch,predicate=()=>true)=>Object.keys(E.TYPES).find(id=>{
-  const t=E.TYPES[id];
-  return t.side===side&&t.branch===branch&&!t.naval&&!t.elite&&!t.airship&&predicate(t);
-});
-const brScout=E.typeFor('britannia','scout'),brInf=type('britannia','Infantry',t=>t.min<=1&&t.max>=1);
-const euInf=type('eu','Infantry',t=>t.min<=1&&t.max>=1);
-const euLong=type('eu','Artillery',t=>t.min<=3&&t.max>=3);
+const brScout=E.typeFor('britannia','scout'),
+      brInf=E.typeFor('britannia','scout'),
+      euInf=E.typeFor('eu','scout'),
+      euLong=E.typeFor('eu','rocket');
 assert.ok(brScout&&brInf&&euInf&&euLong,'Standard units must exist');
 function setup(){
   const g=E.createGame('britannia','normal','conquest',20261021,'world');
@@ -35,15 +32,15 @@ function setup(){
 // Any legal incoming direct attack receives counterfire regardless of range.
 {
   const {g,origin,clear}=setup();
-  const outer=E.within(g,origin,3).find(p=>clear(p)&&E.internal.dist(g,p,origin)===3);
+  const outer=E.within(g,origin,2).find(p=>clear(p)&&E.internal.dist(g,p,origin)===2);
   assert.ok(outer);
   const guard=E.newUnit(g,brInf,'britannia',origin.c,origin.r,1,'gaudefroy');
   const artillery=E.newUnit(g,euLong,'eu',outer.c,outer.r,1);
   const far=E.preview(g,artillery.id,guard.c,guard.r);
-  assert.ok(far&&far.counterAllowed&&far.counter>0,'Gaudefroy returns fire at 3 hexes');
+  assert.ok(far&&far.counterAllowed&&far.counter>0,'Gaudefroy returns fire at 2 hexes');
   guard.expSilenced=true;
   const normal=E.preview(g,artillery.id,guard.c,guard.r);
-  assert.equal(normal.counterAllowed,false,'Ordinary short-range infantry cannot retaliate at range 3');
+  assert.equal(normal.counterAllowed,false,'Ordinary short-range infantry cannot retaliate at range 2');
 }
 // City recovery ignores recent attack's half rate and Gaudefroy regains 2% HP.
 {
