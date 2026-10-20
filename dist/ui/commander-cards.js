@@ -278,6 +278,20 @@
     apply();
   }
 
+  // Euro Britannia's in-operation HQ entry must remain usable even when
+  // the normal game click router is busy with a mission-specific command.
+  // Handle this navigation at capture time; the HQ dialog itself still uses
+  // the same recruitment, upgrade and persistent-profile handlers.
+  document.addEventListener('click', event => {
+    const button = event.target.closest('button[data-action="generals"]');
+    if (!button || button.disabled || !game || game.player !== 'eb' ||
+        !modal.contains(button)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    hqBack = 'game';
+    generalsDialog('eb');
+  }, true);
+
   // The existing Commander Info interface is intentionally not restyled.
   // Opening portraits and recruitment/upgrade actions still use original handlers.
   const originalHQ = generalsDialog;
