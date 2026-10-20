@@ -190,7 +190,7 @@ function scenarioDialog() {
     const active=side===scenarioSide;
     const cities=imageMeta.sides?.[side]?.cities ?? '—';
     const units=imageMeta.sides?.[side]?.formations ?? '—';
-    const portraitKey={britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin'}[side];
+    const portraitKey={britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin',rounds:'bismarck',shinregime:'shin',loyalists:'xingke',eunuchs:'gaohai'}[side];
     const portrait=portraitKey?ART.portrait(portraitKey,'scenario-side-art'):'';
     const flag=ART.flagSVG(side);
     return `<button class="scenario-side-option ${active?'active':''}" type="button" data-scenario-faction="${esc(side)}" aria-pressed="${active}" style="--scenario-side-color:${side==='bk'?'#f0c94a':owner.color}">
