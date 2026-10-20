@@ -169,4 +169,65 @@ function setup() {
   assert.equal(wooded, open, 'No terrain cover for airships');
 }
 
+{
+  // Every Conquest power opens with exactly one single-frame airship beside its capital, on its own land.
+  for (const era of ['world', 'ufn2018']) for (const difficulty of ['normal', 'elite']) {
+    const g = E.createGame('britannia', difficulty, 'conquest', 20261020, era);
+    for (const side of g.majors) {
+      const mine = g.units.filter(u => u.side === side && E.TYPES[u.type].air);
+      assert.equal(mine.length, 1, `${era} ${difficulty}: ${side} starts with one airship`);
+      assert.equal(mine[0].type, E.airshipType(g, side));
+      assert.equal(mine[0].stack, 1);
+      const capital = g.stations.find(s => s.capitalOf === side);
+      if (capital) assert.ok(E.distance(mine[0], capital, g) <= 2, side + ' airship starts by its capital');
+      assert.equal(E.tile(g, mine[0].c, mine[0].r).owner, side);
+    }
+  }
+}
+
+{
+  // AI: an airship carrying troops drops them onto an open enemy city, which falls the same turn.
+  const g = world('britannia');
+  g.phase = 'britannia';
+  const target = g.stations.find(s => s.owner === 'eu' && !s.capitalOf &&
+    E.adjacent(g, s).filter(p => !E.isSea(p) && !E.stationAt(g, p) && !E.TERRAIN[p.terrain]?.blocked).length >= 4 &&
+    g.stations.every(o => o === s || E.distance(o, s, g) > 3));
+  assert.ok(target, 'Need an isolated E.U. city');
+  g.units = g.units.filter(u => E.distance(u, target, g) > 12);
+  target.shield = 0;
+  const pad = E.within(g, target, 5).find(p => E.distance(p, target, g) === 5 && !E.isSea(p) &&
+    !E.stationAt(g, p) && !E.TERRAIN[p.terrain]?.blocked);
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', pad.c, pad.r);
+  const trooper = E.newUnit(g, E.typeFor('britannia', 'scout', g), 'britannia', pad.c, pad.r);
+  g.units.splice(g.units.indexOf(trooper), 1);
+  ship.cargo = [trooper];
+  E.aiOrder(g, ship.id);
+  assert.equal(target.owner, 'britannia', 'Dropped troops take the open city');
+  assert.equal(ship.cargo.length, 0);
+}
+
+{
+  // AI: a badly damaged airship heads for a friendly city instead of fighting, then repairs beside it.
+  const g = world('britannia');
+  g.phase = 'britannia';
+  const home = g.stations.find(s => s.owner === 'britannia' && !s.capitalOf &&
+    E.adjacent(g, s).filter(p => !E.isSea(p) && !E.stationAt(g, p)).length >= 4);
+  g.units = g.units.filter(u => E.distance(u, home, g) > 14);
+  const far = E.within(g, home, 8).find(p => E.distance(p, home, g) === 8 && !E.stationAt(g, p) &&
+    !E.TERRAIN[p.terrain]?.blocked && g.stations.every(s => s.owner !== 'britannia' || E.distance(s, p, g) >= 3));
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', far.c, far.r);
+  ship.hp = Math.round(E.maxHP(ship) * 0.3);
+  const ownCity = p => Math.min(...g.stations.filter(s => s.owner === 'britannia').map(s => E.distance(s, p, g)));
+  const before = ownCity(ship);
+  E.aiOrder(g, ship.id);
+  assert.ok(ownCity(ship) < before, 'Wounded airship flies toward a friendly city');
+  if (ownCity(ship) <= 1) {
+    ship.moved = ship.attacked = false;
+    const hp = ship.hp;
+    Object.assign(E.internal.funds(g, 'britannia'), { credits: 5000 });
+    E.aiOrder(g, ship.id);
+    assert.ok(ship.hp > hp, 'Repairs once beside the city');
+  }
+}
+
 console.log('airship smoke: ok');

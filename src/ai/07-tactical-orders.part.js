@@ -252,6 +252,11 @@
         for (const friend of friends) events.push(...aiOrder(g, friend));
       }
     }
+    // Airships run their own orders (strike, lift and drop, retreat to repair); nothing else moves them.
+    if (isAir(u)) {
+      aiAirship(g, u, memo, events);
+      return events;
+    }
     // Navies: a carrier runs its own operation; idle troops board a carrier waiting within reach.
     const steered = islandDefender && isShip(u)
       ? philippinesNavalInterception(g, u, events)

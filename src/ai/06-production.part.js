@@ -123,10 +123,10 @@
     }
     const defenseSaving = plan.eliminator && (e.sakuradite || 0) >= ELIMINATOR.cost.sakuradite,
       warSaving = plan.warhead && (e.sakuradite || 0) >= FLEIJA.cost.sakuradite;
-    // Airships (Conquest only): from turn 10, a power with 20+ cities and a level-3 factory
-    // saves for an airship when no strategic weapon is being funded. The rules set no cap for
-    // players; the AI keeps at most AI_AIRSHIP_LIMIT alive (a lost one may be replaced).
-    // Provisional: see HANDOFF.md, "Airships". Raise the limit only once AI use improves.
+    // Airships (Conquest only): every power starts with one, so in practice this only replaces a
+    // lost airship. From turn 10, a power with 20+ cities and a level-3 factory saves for one when
+    // no strategic weapon is being funded. The rules set no cap for players; the AI keeps at most
+    // AI_AIRSHIP_LIMIT alive. Provisional: see HANDOFF.md, "Airships". Orders: aiAirship.
     const AI_AIRSHIP_LIMIT = 1;
     const airship = g.mode === 'conquest' && !eliteAI && g.turn >= 10 && airshipType(g, side),
       airshipCost = airship && price(airship, 1, g, side),

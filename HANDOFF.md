@@ -298,7 +298,9 @@ Euro Britannia build the Logres class, the E.U. the Charlemagne class, the 2017 
 Black Knights and the 2018 U.F.N. the Ikaruga class (`AIRSHIPS` / `airshipType` in `src/engine/06-terrain.part.js`).
 They are warships (`naval: 'ship'`) with `air: true`: `isAir` and `portBuilt` mark every place where they differ from
 Carrier-Battleships. Players build them at any level-3 city factory (Airship tab) for 1,800 credits, 500 industry,
-150 science and 60 Sakuradite, in one turn, with **no player cap**. They fly 10 hexes over any land, sea or peak,
+150 science and 60 Sakuradite, in one turn, with **no player cap**. **Every power starts a World Conquest (2017 and
+2018) with one airship** on its own land beside its capital (`createGame` in `src/engine/16-world-setup.part.js`,
+placed after difficulty hardening so it is always a single frame; old saves are not given one). They fly 10 hexes over any land, sea or peak,
 carry two formations, cannot enter or capture cities, ports or mines, get no terrain cover, take no bonus damage, never
 heal on their own and cannot add frames; manual Repair beside a friendly city is their only recovery. Not available in
 Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
@@ -306,17 +308,22 @@ Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
 > **⚠ The AI side is a deliberately limited first pass and is expected to change.**
 >
 > - **Current limit: each AI power keeps at most ONE airship at a time** (`AI_AIRSHIP_LIMIT = 1` in
->   `src/ai/06-production.part.js`). It saves for it only in World Conquest, from turn 10, with 20+ cities and a
->   level-3 factory, and never while funding F.L.E.I.J.A. or an Eliminator. Regional-scenario and Story AI never build
->   them, so the scenario simulation baseline is unaffected.
-> - **Why the logic is not good yet:** the AI has no airship-specific planning. Airships pass through the existing
->   Carrier-Battleship code (`aiCarrier` in `src/ai/05-naval.part.js` and the front maneuver code), which was written
->   for ships that stay on water. It therefore under-uses the airship's main strengths: it rarely flies inland over
->   mountains, does not plan deep drops of its two formations behind enemy lines, and does not keep its flagship out
->   of reach when damaged (it cannot heal on its own). Production is only a simple credit-saving rule, not a judgement
->   of where an airship would help, and it was checked on just three 25–30-turn Conquest games.
-> - **Before raising the limit:** give airships their own AI orders (inland strikes, drops, retreat to repair), then
->   compare several seeded Conquest games against `main` (outcomes vary by about 17 cities between seeds).
+>   `src/ai/06-production.part.js`). Since every power starts with one, the AI only builds a replacement after losing
+>   it: in World Conquest, from turn 10, with 20+ cities and a level-3 factory, never while funding F.L.E.I.J.A. or
+>   an Eliminator. Regional-scenario and Story AI never build them, so the scenario simulation baseline is unaffected.
+> - **Orders (`aiAirship` in `src/ai/05a-airships.part.js`)** run only for units with `air: true`; `aiOrder` hands
+>   them over before any carrier or front logic. In order each turn: below half health it repairs beside a friendly
+>   city or flies to the safest hex next to one; when healthy it lifts adjacent formations that could not fight this
+>   turn; with troops aboard it drops them onto an empty enemy city (capturing it) or within 4 hexes of one; then it
+>   takes the best-value shot from any hex in reach, counting return fire double; otherwise it waits safely beside the
+>   friendly city nearest the enemy. Three 25–30-turn Conquest games: about 50 attacks per game, more than half of
+>   moves inland, troop lifts and drops, up to two cities taken by drop, repeated repairs, no errors.
+> - **What is still weak:** each airship decides alone: it is not tied to the AI's fronts, army groups or objectives,
+>   and only lifts troops that happen to stand next to it. Landing and danger scores are simple distance and
+>   threat estimates. Conquest outcomes with airships were only compared on three games, which is far too few to
+>   judge balance (results vary by about 17 cities between seeds).
+> - **Before raising the limit:** tie airship drops to front objectives, then compare 8+ seeded Conquest games
+>   against `main`, looking at city counts and unit counts.
 
 ### F.L.E.I.J.A. (the superweapon)
 - Engine block "F.L.E.I.J.A." (after the Sakuradite block): `FLEIJA` holds every number (blast `radius` 2, `cost`

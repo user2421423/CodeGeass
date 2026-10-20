@@ -170,8 +170,10 @@ a clean playtest is not itself proof that a scenario is balanced.
   formations aboard that launch onto any adjacent land. Each costs 1,800 credits, 500 industry, 150 science and
   60 Sakuradite, is built in one turn and has no per-power limit. Airships cannot enter or capture cities, ports or
   mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities, never heal on their own and
-  cannot add frames; the Repair action beside a friendly city is the only way to restore them. In Conquest an AI power with 20+ cities saves for one from turn 10 and
-  keeps at most one at a time (a provisional limit; see HANDOFF.md); regional-scenario AI does not build them.
+  cannot add frames; the Repair action beside a friendly city is the only way to restore them. Every power starts a Conquest with one airship beside its capital. The
+  AI flies its airship with dedicated orders (strikes, troop lifts and drops, retreating to repair) and only builds a
+  replacement when it has lost it, keeping at most one at a time (a provisional limit; see HANDOFF.md).
+  Regional-scenario AI does not build them.
 - **Standing orders:** select a unit, choose Set destination (or press G), and
   click a hex. Units follow the route on subsequent turns; orders can be
   changed or cancelled.

@@ -41,6 +41,7 @@
     upgradeCityTier,
     buildingLevel,
     airshipType,
+    isAir,
     canBoard,
     carrierCapacity,
     canBuy,
