@@ -40,7 +40,7 @@ function setup(){
   assert.ok(far&&far.counterAllowed&&far.counter>0,'Gaudefroy returns fire at 2 hexes');
   guard.expSilenced=true;
   const normal=E.preview(g,artillery.id,guard.c,guard.r);
-  assert.equal(normal.counterAllowed,false,'Ordinary short-range infantry cannot retaliate at range 2');
+  assert.ok(!normal.counterAllowed,'Ordinary short-range infantry cannot retaliate at range 2');
 }
 // City recovery ignores recent attack's half rate and Gaudefroy regains 2% HP.
 {
