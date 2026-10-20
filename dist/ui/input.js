@@ -182,7 +182,7 @@ document.addEventListener('click', e => {
     const u = selectedUnit();
     closeModal();
     if (u) doAction(() => {
-      const result = useCommanderAbility(u.id, +d.command);
+      const result = useCommanderAbility(u.id, u.cmd === 'darlton' ? d.command : +d.command);
       if (result?.ok) E.suspendArmyGroupConquestUnit(game, u.id);
       return result;
     });
@@ -673,7 +673,7 @@ document.addEventListener('click', e => {
       break;
     case 'feint': {
       const u = selectedUnit();
-      if (u && (['command','designate','stratagem','protection','oscarDefense','geassCancel','checkmate','memoryRewrite','ohgiHeal','expendableVanguard','electricalOverload'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
+      if (u && (['command','designate','stratagem','protection','oscarDefense','geassCancel','checkmate','memoryRewrite','ohgiHeal','expendableVanguard','electricalOverload'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','darlton'].includes(u.cmd))) commandDialog(u);
       else if (u) doAction(() => useCommanderAbility(u.id));
       break;
     }

@@ -37,6 +37,8 @@ jobs:
         run: node tools/marirrosa_estrella_barrage_smoke.cjs
       - name: Verify Anya Marianne's Awakening lethal revival and 10-turn cooldown
         run: node tools/anya_marianne_awakening_smoke.cjs
+      - name: Verify Darlton Glaston summoning, protecting and vengeance
+        run: node tools/darlton_glaston_smoke.cjs
       - name: Verify Zero Geass Absolute Command dual-mode actions and passive removal
         run: node tools/zero_geass_absolute_command_smoke.cjs
       - name: Verify Emperor Lelouch Imperial Command and Supreme Commander

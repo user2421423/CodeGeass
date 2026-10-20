@@ -1,8 +1,34 @@
   // Approved newcomers: active powers and reactive combat effects.
   // Existing commanders retain their original skill definitions and mechanics.
+  // Elite Darlton formations summon a standard frame of the same class.
+  function darltonSummonType(g,u){
+    const current=TYPES[u.type];
+    if(!current)return null;
+    if(!current.elite)return u.type;
+    const regular=lineupOf(g,u.side)?.[current.cls];
+    return regular&&TYPES[regular]&&!TYPES[regular].elite?regular:null;
+  }
+  function darltonSummonTargets(g,u){
+    const type=darltonSummonType(g,u),t=TYPES[type];
+    if(!type||u.hp<=0||!t||atSea(g,u))return [];
+    const seen=new Set();
+    return within(g,u,2).filter(p=>{
+      const id=key(p);
+      if(seen.has(id))return false;
+      seen.add(id);
+      if(dist(g,u,p)<1||dist(g,u,p)>2||unitAt(g,p))return false;
+      const city=stationAt(g,p);
+      if(city&&city.owner!==u.side)return false;
+      if(t.air)return true;
+      if(TERRAIN[p.terrain]?.blocked)return false;
+      if(t.naval==='ship')return navigable(p)&&!city;
+      return !isSea(p)||t.naval==='amphibious';
+    }).map(p=>({...p,id:key(p)}));
+  }
   function newcomerTargets(g,u){
     const a=COMMANDERS[u?.cmd]?.action,k=a?.target,range=a?.range||0;
     if(!k)return [];
+    if(u.cmd==='darlton')return darltonSummonTargets(g,u);
     if(u.cmd==='gaohai')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)===1&&s.shield<s.maxShield&&g.stations.some(o=>o.owner===u.side&&o.c===u.c&&o.r===u.r&&o.shield>0));
     if(u.cmd==='huangqian')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)<=3&&s.shield<s.maxShield);
     if(u.cmd==='chengzhong')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)<=3);
@@ -22,11 +48,19 @@
   }
   function newcomerUse(g,u,targetId){
     const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
-    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
+    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret','darlton'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
     const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
     switch(u.cmd){
+      case 'darlton':{
+        const type=darltonSummonType(g,u);
+        if(!type)return {ok:false,reason:'No matching standard unit class for this formation.'};
+        const knight=newUnit(g,type,u.side,v.c,v.r,1,null,true);
+        knight.expDarltonSummonedBy=u.id;
+        log(g,'Darlton summons a Glaston Knight ('+TYPES[knight.type].short+') at hex '+v.c+','+v.r+'.',u.side);
+        break;
+      }
       case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
@@ -103,6 +137,7 @@
     
 
     if(!counter&&u.cmd==='sayoko'&&u.expShadowAttackTurn===g.turn)m*=1.3;
+    if(!counter&&u.cmd==='darlton'&&u.expDarltonVengeanceBonus)m*=1.5;
     if(!counter&&u.expMargaretBonusTurn===g.turn)m*=1.15;
     if(!counter&&['Infantry','Armor'].includes(TYPES[u.type].branch)&&['forest','mountain'].includes(terrain?.terrain)&&
       g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='mutsuki'&&dist(g,v,u)<=2))m*=1.2;
@@ -247,7 +282,8 @@
        fx(v).relief&&v.expReliefTurn!==g.turn&&dist(g,v,defender)<=2));
     const unit=assists.sort((a,b)=>b.hp-a.hp)[0];if(!unit)return;
     const n=Math.max(1,Math.round(power(g,unit,attacker,stationAt(g,attacker),true)*(fx(unit).relief?.6:.5)));
-    attacker.hp=Math.max(0,attacker.hp-n);
+    const taken=attacker.cmd==='darlton'?darltonProtect(g,attacker,unit,n):n;
+    attacker.hp=Math.max(0,attacker.hp-taken);
     if(fx(unit).relief)unit.expReliefTurn=g.turn;else unit.expLinkTurn=g.turn;
     kill(g,attacker,unit);
   }
@@ -299,7 +335,8 @@
       reacted=true;
       delete u.expOverwatch;
       const amount=Math.max(1,Math.round(power(g,u,moved,stationAt(g,moved))*.6));
-      moved.hp=Math.max(0,moved.hp-newcomerIntercept(g,moved,amount));
+      const incoming=newcomerIntercept(g,moved,amount);
+      moved.hp=Math.max(0,moved.hp-(moved.cmd==='darlton'?darltonProtect(g,moved,u,incoming):incoming));
       kill(g,moved,u);
     }
     if(moved.hp>0&&villettaIntercept(g,moved))reacted=true;
@@ -309,6 +346,20 @@
     if(!v.cmd&&g.units.some(k=>k.hp>0&&k.side===v.side&&k.cmd==='kewell'&&dist(g,k,v)<=2))
       for(const ally of g.units)if(ally.hp>0&&ally.side===v.side&&dist(g,ally,v)===1)
         ally.expPuristCounter={turns:1,startTurn:g.turn};
+    // A Father's Vengeance: the marked knight's confirmed loss empowers Darlton.
+    if(v.expDarltonSummonedBy!=null){
+      const father=g.units.find(w=>w.id===v.expDarltonSummonedBy&&w.hp>0&&w.cmd==='darlton'&&w.side===v.side);
+      if(father&&father.expDarltonVengeanceTurn!==g.turn){
+        father.expDarltonVengeanceTurn=g.turn;
+        father.attacked=false;
+        father.moved=heavyMoveLimitReached(g,father);
+        father.skillReposition=0;
+        father.withdrawMove=false;
+        father.eliteMoveAfterKill=false;
+        father.expDarltonVengeanceBonus=true;
+        log(g,"A Father's Vengeance restores Darlton's movement and attack and empowers his next attack.",father.side);
+      }
+    }
     if(!attacker)return;
     // Spearhead's Retribution: a genuine kill of an enemy Guilford protected
     // against restores normal movement and attack exactly once each turn.
