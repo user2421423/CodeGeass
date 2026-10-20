@@ -7,6 +7,7 @@ define({
  phase:'imperial-succession-war',
  map:{eu:'rounds',britannia:'britannia'},
  equipment:{rounds:'britannia',britannia:'britannia'},
+ reinforcements:{rounds:42},
  commanders:{
   rounds:['bismarck','gino','dorothea','monica','luciano','nonette','anya'],
   britannia:['lelouch','suzaku','jeremiah','villetta','guilford','oldrin','marrybell']
