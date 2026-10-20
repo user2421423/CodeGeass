@@ -386,7 +386,9 @@
       baseCritMult: (t.critMult || 1.55) + (f.critBonus || 0),
       critMult: (t.critMult || 1.55) + (f.critBonus || 0) +
         techValue(g, a.side, `${branchOf(a.type)}.critpower`),
-      splash: (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
+      // Marirrosa's sole passive replaces class splash with full-strength hits
+      // on every adjacent enemy, at any legal range (including range 1).
+      splash: f.estrellaBarrage ? 1 : (t.splash || 0) + (ef.splash || 0) + (!t.naval && t.branch === 'Artillery' && (t.splash || ef.splash) ? techValue(g, a.side, 'artillery.salvo') : 0),
       armorPen: Math.min(.95,armorPenetration(g,a,d)
         + (!t.naval && t.branch === 'Armor' && d && !TYPES[d.type].naval && TYPES[d.type].branch === 'Armor'
           ? techValue(g, a.side, 'armor.precision') : 0)
@@ -818,7 +820,9 @@
       kill(g,d,a,false,null,fullDirectDamage);
       delete d.expDirectIncoming;
     }
-    if(d)newcomerSupport(g,d,a);
+    // No reactive supporting fire against an Estrella Barrage: its primary
+    // and adjacent victims cannot answer with retaliation of any kind.
+    if(d && !f.estrellaBarrage)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
@@ -925,7 +929,7 @@
     );
     // Full-strength free Oscar retaliation after an enemy initiates an
     // attack against an allied formation. This cannot produce counterfire.
-    const oscarReaction = d ? oscarGuardCounterstrike(g,a,d) : [];
+    const oscarReaction = d && !f.estrellaBarrage ? oscarGuardCounterstrike(g,a,d) : [];
     checkVictory(g);
     return {
       ok: true,
