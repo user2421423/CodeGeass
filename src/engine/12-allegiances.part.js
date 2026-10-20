@@ -139,7 +139,9 @@
     // Divine Tiger targets commander-led formations in both attacks and retaliation.
     if (f.duelist && target?.cmd) mult *= 1 + f.duelist;
     if (counter) {
-      return mult;
+      // Ryo's marked-target bonus also helps allied counterfire. His own
+      // formation is excluded by targetMarked(), as on normal attacks.
+      return mult * (target ? 1 + targetMarked(g, u, target).damage : 1);
     }
     if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
     if (!u.cmd && skillNear(g, u, 'commanderlessAttack', 2, false)) mult *= 1.15;
