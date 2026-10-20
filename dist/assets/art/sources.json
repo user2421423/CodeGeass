@@ -1070,5 +1070,30 @@
         "prompt": "Full-body transparent Federation Shui Gun-Ru II coastal assault elite; jade, crimson and gold dome armor, three legs, naval cannon pods, heavy torpedoes and waterjets; anime cel shading."
       }
     ]
+  },
+  "federationEliteBackgroundCleanup": {
+    "entries": [
+      {
+        "id": "elite_akatsuki_heavy",
+        "file": "units/elite_akatsuki_heavy-transparent-6d8db0f08042.png",
+        "original": "units/elite_akatsuki_heavy-d57babce5ae4.webp",
+        "method": "AI-assisted white background removal with transparent alpha",
+        "prompt": "Remove the solid white background while preserving the existing full-body mech design, colors and equipment. Transparent cutout with no matte."
+      },
+      {
+        "id": "elite_akatsuki_missile",
+        "file": "units/elite_akatsuki_missile-transparent-1b134a9dc4c7.png",
+        "original": "units/elite_akatsuki_missile-bdca71449429.webp",
+        "method": "AI-assisted white background removal with transparent alpha",
+        "prompt": "Remove the solid white background while preserving the existing full-body mech design, colors and equipment. Transparent cutout with no matte."
+      },
+      {
+        "id": "elite_akatsuki_zikisan",
+        "file": "units/elite_akatsuki_zikisan-transparent-4500785c97d3.png",
+        "original": "units/elite_akatsuki_zikisan-b976edc422b2.webp",
+        "method": "AI-assisted white background removal with transparent alpha",
+        "prompt": "Remove the solid white background while preserving the existing full-body mech design, colors and equipment. Transparent cutout with no matte."
+      }
+    ]
   }
 }
