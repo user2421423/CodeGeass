@@ -231,10 +231,18 @@
       d = dist(g, a, p);
     return d >= min && d <= max;
   }
+  // Only these can attack an airship or return its fire: Heavy and Super-heavy armor, Rocket and
+  // Siege artillery (regular or Elite of those classes), warships, other airships and Float-equipped
+  // units. Fortress batteries, which are not units, can also fire on them.
+  const AIR_DEFENSE_CLASSES = new Set(['heavy', 'super', 'rocket', 'siege']);
+  function canHitAir(u) {
+    const t = TYPES[u.type];
+    return t.naval === 'ship' || AIR_DEFENSE_CLASSES.has(t.cls) || !!t.float || !!eliteFx(u).float;
+  }
   function hostileTarget(g, u, p) {
     const target = unitAt(g, p),
       st = stationAt(g, p);
-    if (target) return foe(g, target.side, u.side);
+    if (target) return foe(g, target.side, u.side) && (!isAir(target) || canHitAir(u));
     return !!st && foe(g, st.owner, u.side) && st.shield > 0;
   }
   // Whether a unit still has any order besides holding position: firing, moving, repairing, reinforcing or an action.

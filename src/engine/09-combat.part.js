@@ -620,7 +620,8 @@
     const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
     // A volley has one firing state: retaliation and kill rewards cannot change later splash hits.
     const splashHits = pr.splash ? g.units
-      .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1)
+      .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1 &&
+        (!isAir(v) || canHitAir(a)))
       .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
     // Keep track of any unused movement before firing; a kill that earns another attack
     // should not consume it. Limited skill repositioning must stay limited.

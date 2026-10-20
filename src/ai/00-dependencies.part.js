@@ -42,6 +42,7 @@
     buildingLevel,
     airshipType,
     isAir,
+    canHitAir,
     canBoard,
     carrierCapacity,
     canBuy,

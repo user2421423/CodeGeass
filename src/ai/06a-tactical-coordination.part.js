@@ -18,7 +18,7 @@
   function localThreat(g, u, p) {
     let expected = 0;
     for (const v of g.units) {
-      if (v.hp <= 0 || !foe(g, v.side, u.side) || atSea(g, v)) continue;
+      if (v.hp <= 0 || !foe(g, v.side, u.side) || atSea(g, v) || (isAir(u) && !canHitAir(v))) continue;
       const d = dist(g, v, p);
       if (d > 7) continue;
       const r = rangeOf(g, v).max;

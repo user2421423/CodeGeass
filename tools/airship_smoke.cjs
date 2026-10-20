@@ -138,35 +138,45 @@ function setup() {
 }
 
 {
-  // No bonus damage: anti-ship, coastal and terrain bonuses all skip airships.
+  // Who can engage an airship: Heavy, Super-heavy, Rocket and Siege units (regular or Elite of those
+  // classes), warships, other airships and Float-equipped units. Everything else can neither attack nor
+  // return fire. Nothing deals bonus damage, and the airship gets no terrain cover.
   const { g } = setup();
-  const water = g.tiles.find(p => E.isSea(p) && E.adjacent(g, p).filter(E.isSea).length === 6 &&
-    !g.units.some(u => E.distance(u, p, g) <= 2));
-  const swimmer = E.newUnit(g, 'panzer_frosch_ii', 'eu', water.c, water.r);
-  const spot = E.adjacent(g, water)[0];
-  const ship = E.newUnit(g, 'logres_airship', 'britannia', spot.c, spot.r);
+  const field = g.tiles.find(p => p.terrain === 'plains' && !E.stationAt(g, p) &&
+    E.within(g, p, 2).every(q => !E.isSea(q) && !E.stationAt(g, q) && !E.TERRAIN[q.terrain]?.blocked) &&
+    !g.units.some(u => E.distance(u, p, g) <= 4));
+  assert.ok(field, 'Need an open plain');
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', field.c, field.r);
   g.phase = 'eu';
-  const asAirship = E.preview(g, swimmer.id, ship.c, ship.r);
-  E.TYPES.logres_airship.air = false;
-  const asWarship = E.preview(g, swimmer.id, ship.c, ship.r);
-  E.TYPES.logres_airship.air = true;
-  assert.ok(asAirship && asWarship);
-  const dmg = p => p.rawUnit;
-  assert.ok(dmg(asAirship) < dmg(asWarship), `Amphibious anti-ship bonus skipped (${dmg(asAirship)} < ${dmg(asWarship)})`);
-
-  // Over land, a forest gives no cover and no penalty.
-  const { g: h } = setup();
-  const field = h.tiles.find(p => p.terrain === 'plains' && !E.stationAt(h, p) &&
-    E.adjacent(h, p).filter(n => n.terrain === 'plains' && !E.stationAt(h, n)).length === 6 &&
-    !h.units.some(u => E.distance(u, p, h) <= 2));
-  const target = E.newUnit(h, 'logres_airship', 'britannia', field.c, field.r);
-  const gp = E.adjacent(h, field)[0];
-  const gunner = E.newUnit(h, E.typeFor('eu', 'light', h), 'eu', gp.c, gp.r);
-  h.phase = 'eu';
-  const open = dmg(E.preview(h, gunner.id, target.c, target.r));
+  const canEngage = type => {
+    const t = E.TYPES[type], at = E.within(g, field, t.max).find(q => E.distance(q, field, g) === t.max && !E.unitAt(g, q));
+    const v = E.newUnit(g, type, 'eu', at.c, at.r);
+    const ok = E.targets(g, v).some(q => q.c === field.c && q.r === field.r);
+    g.units.splice(g.units.indexOf(v), 1);
+    return ok;
+  };
+  for (const cls of E.CLASS_ORDER) {
+    const allowed = ['heavy', 'super', 'rocket', 'siege'].includes(cls);
+    assert.equal(canEngage(E.typeFor('eu', cls, g)), allowed, `Regular ${cls} ${allowed ? 'can' : 'cannot'} engage`);
+    const elite = Object.values(E.ELITE_FORCES).map(e => e.type)
+      .find(type => E.TYPES[type].cls === cls && !E.TYPES[type].naval && !E.TYPES[type].float);
+    if (elite) assert.equal(canEngage(elite), allowed, `Elite ${cls} ${allowed ? 'can' : 'cannot'} engage`);
+  }
+  assert.equal(canEngage('panzer_frosch_ii'), false, 'Amphibious frames cannot engage');
+  assert.equal(canEngage('charlemagne_airship'), true, 'Airships engage each other');
+  // Return fire follows the same rule.
+  g.phase = 'britannia';
+  const near = E.adjacent(g, field);
+  const inf = E.newUnit(g, E.typeFor('eu', 'scout', g), 'eu', near[0].c, near[0].r);
+  const heavy = E.newUnit(g, E.typeFor('eu', 'heavy', g), 'eu', near[3].c, near[3].r);
+  assert.equal(E.preview(g, ship.id, inf.c, inf.r).counter, 0, 'Infantry cannot return fire');
+  assert.ok(E.preview(g, ship.id, heavy.c, heavy.r).counter > 0, 'Heavy armor returns fire');
+  // No terrain cover over a forest.
+  g.phase = 'eu';
+  const open = E.preview(g, heavy.id, ship.c, ship.r).rawUnit;
   field.terrain = 'forest';
-  const wooded = dmg(E.preview(h, gunner.id, target.c, target.r));
-  assert.equal(wooded, open, 'No terrain cover for airships');
+  assert.equal(E.preview(g, heavy.id, ship.c, ship.r).rawUnit, open, 'No terrain cover for airships');
+  field.terrain = 'plains';
 }
 
 {

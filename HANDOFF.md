@@ -301,7 +301,10 @@ Carrier-Battleships. Players build them at any level-3 city factory (Airship tab
 150 science and 60 Sakuradite, in one turn, with **no player cap**. **Every power starts a World Conquest (2017 and
 2018) with one airship** on its own land beside its capital (`createGame` in `src/engine/16-world-setup.part.js`,
 placed after difficulty hardening so it is always a single frame; old saves are not given one). They fly 10 hexes over any land, sea or peak,
-carry two formations, cannot enter or capture cities, ports or mines, get no terrain cover, take no bonus damage, never
+carry two formations, cannot enter or capture cities, ports or mines, get no terrain cover, take no bonus damage, and
+can only be attacked (or answered with return fire or splash) by Heavy, Super-heavy, Rocket and Siege units, regular
+or Elite, plus warships, other airships, Float-equipped units and fortress batteries (`canHitAir` beside
+`hostileTarget` in `src/engine/08-movement-and-deployment.part.js`; the AI's `localThreat` ignores the rest). They never
 heal on their own and cannot add frames; manual Repair beside a friendly city is their only recovery. Not available in
 Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
 

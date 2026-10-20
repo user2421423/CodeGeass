@@ -277,7 +277,7 @@
   const AIRSHIP = { cls: 'support', naval: 'ship', air: true, hp: 700, attack: 90, armor: 50, move: 10, min: 1, max: 2, capacity: 2,
       crit: 0.15, pen: 0.35, cost: 1800, industry: 500, sakuradite: 60, research: 150, tier: 3, port: 0, noCounter: false,
       gen: 'Floating battleship', role: 'Airship',
-      rule: 'Airship: flies 10 hexes over any terrain or sea, but cannot enter or capture cities, ports or mines. Guns at range 1–2. Carries two Knightmare formations and launches them onto any adjacent land. No terrain cover. Never heals on its own or adds frames: use Repair beside a friendly city.' };
+      rule: 'Airship: flies 10 hexes over any terrain or sea, but cannot enter or capture cities, ports or mines. Guns at range 1–2. Carries two Knightmare formations and launches them onto any adjacent land. Only Heavy, Super-heavy, Rocket and Siege units, warships, airships, Float-equipped units and fortress batteries can attack it or return its fire. No terrain cover. Never heals on its own or adds frames: use Repair beside a friendly city.' };
   AIRSHIP.desc = AIRSHIP.rule;
   const KNIGHTMARES = {
     // Holy Britannian Empire (with Euro Britannia).
