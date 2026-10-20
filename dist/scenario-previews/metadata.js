@@ -533,5 +533,299 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 142
       }
     }
+  },
+  "defense-japan": {
+    "cities": 44,
+    "formations": 90,
+    "sides": {
+      "bk": {
+        "cities": 44,
+        "formations": 36
+      },
+      "britannia": {
+        "cities": 0,
+        "formations": 54
+      }
+    }
+  },
+  "eu-cf-kazakhstan": {
+    "cities": 65,
+    "formations": 309,
+    "sides": {
+      "eu": {
+        "cities": 12,
+        "formations": 152
+      },
+      "cf": {
+        "cities": 53,
+        "formations": 157
+      }
+    }
+  },
+  "eu-cf-persia": {
+    "cities": 61,
+    "formations": 322,
+    "sides": {
+      "eu": {
+        "cities": 17,
+        "formations": 150
+      },
+      "cf": {
+        "cities": 44,
+        "formations": 172
+      }
+    }
+  },
+  "eu-cf-xinjiang": {
+    "cities": 70,
+    "formations": 266,
+    "sides": {
+      "eu": {
+        "cities": 19,
+        "formations": 146
+      },
+      "cf": {
+        "cities": 51,
+        "formations": 120
+      }
+    }
+  },
+  "eu-cf-india": {
+    "cities": 113,
+    "formations": 282,
+    "sides": {
+      "eu": {
+        "cities": 11,
+        "formations": 154
+      },
+      "cf": {
+        "cities": 102,
+        "formations": 128
+      }
+    }
+  },
+  "eu-cf-mongolia": {
+    "cities": 51,
+    "formations": 275,
+    "sides": {
+      "eu": {
+        "cities": 11,
+        "formations": 137
+      },
+      "cf": {
+        "cities": 40,
+        "formations": 138
+      }
+    }
+  },
+  "eu-cf-manchuria": {
+    "cities": 49,
+    "formations": 319,
+    "sides": {
+      "eu": {
+        "cities": 10,
+        "formations": 166
+      },
+      "cf": {
+        "cities": 39,
+        "formations": 153
+      }
+    }
+  },
+  "eu-cf-himalayas": {
+    "cities": 57,
+    "formations": 221,
+    "sides": {
+      "eu": {
+        "cities": 31,
+        "formations": 119
+      },
+      "cf": {
+        "cities": 26,
+        "formations": 102
+      }
+    }
+  },
+  "eu-cf-sichuan": {
+    "cities": 62,
+    "formations": 249,
+    "sides": {
+      "eu": {
+        "cities": 12,
+        "formations": 137
+      },
+      "cf": {
+        "cities": 50,
+        "formations": 112
+      }
+    }
+  },
+  "eu-cf-beijing": {
+    "cities": 56,
+    "formations": 258,
+    "sides": {
+      "eu": {
+        "cities": 17,
+        "formations": 157
+      },
+      "cf": {
+        "cities": 39,
+        "formations": 101
+      }
+    }
+  },
+  "eu-cf-luoyang": {
+    "cities": 83,
+    "formations": 278,
+    "sides": {
+      "eu": {
+        "cities": 18,
+        "formations": 158
+      },
+      "cf": {
+        "cities": 65,
+        "formations": 120
+      }
+    }
+  },
+  "cf-eu-siberia": {
+    "cities": 72,
+    "formations": 266,
+    "sides": {
+      "cf": {
+        "cities": 13,
+        "formations": 147
+      },
+      "eu": {
+        "cities": 59,
+        "formations": 119
+      }
+    }
+  },
+  "cf-eu-caucasus": {
+    "cities": 67,
+    "formations": 247,
+    "sides": {
+      "cf": {
+        "cities": 14,
+        "formations": 126
+      },
+      "eu": {
+        "cities": 53,
+        "formations": 121
+      }
+    }
+  },
+  "cf-eu-turkey": {
+    "cities": 71,
+    "formations": 337,
+    "sides": {
+      "cf": {
+        "cities": 13,
+        "formations": 158
+      },
+      "eu": {
+        "cities": 58,
+        "formations": 179
+      }
+    }
+  },
+  "cf-eu-volga": {
+    "cities": 69,
+    "formations": 289,
+    "sides": {
+      "cf": {
+        "cities": 30,
+        "formations": 157
+      },
+      "eu": {
+        "cities": 39,
+        "formations": 132
+      }
+    }
+  },
+  "cf-eu-suez": {
+    "cities": 46,
+    "formations": 198,
+    "sides": {
+      "cf": {
+        "cities": 17,
+        "formations": 108
+      },
+      "eu": {
+        "cities": 29,
+        "formations": 90
+      }
+    }
+  },
+  "cf-eu-moscow": {
+    "cities": 56,
+    "formations": 324,
+    "sides": {
+      "cf": {
+        "cities": 17,
+        "formations": 184
+      },
+      "eu": {
+        "cities": 39,
+        "formations": 140
+      }
+    }
+  },
+  "cf-eu-balkans": {
+    "cities": 57,
+    "formations": 229,
+    "sides": {
+      "cf": {
+        "cities": 8,
+        "formations": 91
+      },
+      "eu": {
+        "cities": 49,
+        "formations": 138
+      }
+    }
+  },
+  "cf-eu-north-africa": {
+    "cities": 51,
+    "formations": 275,
+    "sides": {
+      "cf": {
+        "cities": 9,
+        "formations": 120
+      },
+      "eu": {
+        "cities": 42,
+        "formations": 155
+      }
+    }
+  },
+  "cf-eu-central-europe": {
+    "cities": 102,
+    "formations": 474,
+    "sides": {
+      "cf": {
+        "cities": 20,
+        "formations": 237
+      },
+      "eu": {
+        "cities": 82,
+        "formations": 237
+      }
+    }
+  },
+  "cf-eu-france": {
+    "cities": 34,
+    "formations": 122,
+    "sides": {
+      "cf": {
+        "cities": 0,
+        "formations": 64
+      },
+      "eu": {
+        "cities": 34,
+        "formations": 58
+      }
+    }
   }
 });
