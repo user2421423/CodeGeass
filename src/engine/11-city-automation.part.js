@@ -194,6 +194,7 @@
   function actionTargets(g, u) {
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
+    if (kind === 'arkFleet') return g.stations.filter(s=>s.owner&&foe(g,s.owner,u.side));
     if (kind === 'command') return u.cmd === 'zero'
       ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2 &&
@@ -244,6 +245,29 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'arkFleet') {
+      const city=targetId==null?options[0]:options.find(s=>s.id===targetId);
+      if(!city)return {ok:false,reason:'Choose an enemy city'};
+      city.expArkFleet={source:u.id,owner:city.owner,turns:2};
+      for(const enemy of g.units)if(enemy.hp>0&&foe(g,enemy.side,u.side)&&!atSea(g,enemy)&&dist(g,enemy,city)<=3){
+        lowerMorale(g,enemy,1);
+        enemy.expArkFleetSlow={side:enemy.side,turns:2,penalty:2};
+      }
+      // Independent deployment timer; ordinary Ark Fleet use never resets it.
+      let airship=null;
+      if(u.arkFleetAirshipCD==null)u.arkFleetAirshipCD=10;
+      if(u.arkFleetAirshipCD<=0){
+        const type='logres_airship';
+        const bases=g.stations.filter(s=>s.owner===u.side).sort((a,b)=>dist(g,a,city)-dist(g,b,city)||b.tier-a.tier);
+        for(const base of bases){
+          const p=nearest(g,base,t=>solidLand(t)&&t.owner===u.side&&!unitAt(g,t)&&!stationAt(g,t));
+          if(p){airship=newUnit(g,type,u.side,p.c,p.r,1,null,false);u.arkFleetAirshipCD=10;break;}
+        }
+      }
+      u.feintCD=0;u.feintUsedTurn=g.turn;
+      log(g,'Ark Fleet spreads terror around '+city.name+(airship?' and deploys a free Logres airship':'' )+'.',u.side);
+      return {ok:true,target:city.id,affected:1,airship:airship?.id};
+    }
     if (action.kind === 'shinDeath') {
       const v=options.find(w=>w.id===targetId) || (targetId==null?options[0]:null);
       if(!v)return {ok:false,reason:'Choose an enemy within 2 hexes'};

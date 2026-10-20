@@ -111,6 +111,7 @@
   // Preserve the unit's class and allegiance; only change the equipment ID.
   function eraUnitType(g, type, side) {
     const t = TYPES[type];
+    if(side==='eb'&&t?.air)return 'logres_airship';
     if (side !== 'cf' || !t) return type;
     // The 2017 Federation flies the Shenlong; the 2018 U.F.N. flies the Ikaruga.
     if (t.air) return airshipType(g, side) || type;

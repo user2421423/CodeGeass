@@ -255,6 +255,7 @@
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
+      (s.expArkFleet?.owner === s.owner ? 'Ark Fleet terror prevents recruitment' : null) ||
       (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
       (e.scenarioOnly && !eliteScenario(g) ? 'Available only in the relevant Elite scenario' : null) ||

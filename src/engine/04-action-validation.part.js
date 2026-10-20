@@ -244,6 +244,7 @@
     if (why) return why;
     if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';
+    if (action.kind === 'arkFleet') return actionTargets(g,u).length ? null : 'No enemy city to disrupt';
     if (action.kind === 'electricalOverload') {
       if (u.attacked) return 'Already fired';
       return actionTargets(g, u).length ? null : 'No adjacent enemy in normal attack range';

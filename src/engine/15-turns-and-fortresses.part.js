@@ -172,6 +172,23 @@
       for (const passenger of ship.cargo || []) if (passenger.hp > 0 && passenger.side === side)
         passenger.feintCD = Math.max(0, (passenger.feintCD || 0) - 1);
     const mine = g.units.filter(u => u.hp > 0 && u.side === side);
+    // City disruption lasts for two full defender action phases, without
+    // accidentally expiring before the affected side can act.
+    for(const city of g.stations)if(city.expArkFleet?.owner===side){
+      city.expArkFleet.turns--;
+      if(city.expArkFleet.turns<=0)delete city.expArkFleet;
+    }
+    for(const enemy of g.units)if(enemy.hp>0&&enemy.side===side&&enemy.expArkFleetSlow){
+      enemy.expArkFleetSlow.turns--;
+      if(enemy.expArkFleetSlow.turns<=0)delete enemy.expArkFleetSlow;
+    }
+    // Information Warfare is a friendly-turn pulse, not a continuous aura.
+    for(const julius of mine.filter(v=>v.cmd==='julius'&&!atSea(g,v))){
+      if(julius.arkFleetAirshipCD==null)julius.arkFleetAirshipCD=10;
+      else julius.arkFleetAirshipCD=Math.max(0,julius.arkFleetAirshipCD-1);
+      for(const enemy of g.units)if(enemy.hp>0&&foe(g,enemy.side,side)&&!atSea(g,enemy)&&dist(g,julius,enemy)<=3)
+        lowerMorale(g,enemy,1);
+    }
     // Existing negative morale is brought up to Steady immediately while
     // protected; this never promotes a unit from Steady to High.
     applyLeilaMoraleFloor(g);
@@ -300,7 +317,7 @@
       const occupant=unitAt(g,s);
       const miguelBlocked=occupant?.side===side&&!!occupant.expMiguelSupply;
       const gaudefroyRate=occupant?.side===side ? fx(occupant).fortressRegeneration : 0;
-      const recovery=miguelBlocked||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
+      const recovery=miguelBlocked||s.expArkFleet?.owner===side||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
         ? 0 : gaudefroyRate ? (baseRate+administrationBonus)*gaudefroyRate
           : (s.attackedSinceRegen?baseRate*.5:baseRate)+administrationBonus;
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}

@@ -136,6 +136,23 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // Julius selects strategically valuable enemy cities, favoring front-line
+    // offensives, high shield strength, and concentrations of enemy troops.
+    if(u.cmd==='julius'&&!feintReason(g,u)){
+      const targets=actionTargets(g,u);
+      const score=s=>{
+        const enemy=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&dist(g,v,s)<=3);
+        const friendly=g.units.filter(v=>v.hp>0&&v.side===u.side&&dist(g,v,s)<=5);
+        return (s.capitalOf===s.owner?18:0)+(s.tier||1)*4+
+          (s.maxShield?12*s.shield/Math.max(1,s.maxShield):0)+
+          enemy.length*5+friendly.length*3+
+          (s.expArkFleet? -35:0)-
+          Math.min(20,dist(g,u,s));
+      };
+      targets.sort((a,b)=>score(b)-score(a)||String(a.id).localeCompare(String(b.id)));
+      const chosen=targets[0];
+      if(chosen){const r=feint(g,id,chosen.id);if(r.ok)events.push({kind:'feint',id,target:chosen.id,airship:r.airship});}
+    }
     // On Normal Story escape missions, the required named commander must
     // actually walk to the exit instead of chasing incidental enemies.
     // Uses reachable() and move() like a human player, and does not give
