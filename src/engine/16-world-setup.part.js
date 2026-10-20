@@ -826,8 +826,10 @@
     // Every power opens with one airship beside its capital (or its strongest city), on its own
     // land. Placed after difficulty hardening so it always starts as a single, unconverted frame.
     for (const side of majors) {
-      const type = airshipType(g, side),
-        home = g.stations.find(s => s.capitalOf === side) ||
+      // Euro Britannia is a separate 2018 faction, but flies Britannia's Logres.
+      // Ensure its capital belongs to its own faction before choosing a berth.
+      const type = side === 'eb' ? 'logres_airship' : airshipType(g, side),
+        home = g.stations.find(s => s.capitalOf === side && s.owner === side) ||
           g.stations.filter(s => s.owner === side).sort((a, b) => b.tier - a.tier || a.id - b.id)[0],
         at = type && home && nearest(g, home, t => solidLand(t) && t.owner === side && !unitAt(g, t) && !stationAt(g, t));
       if (at) newUnit(g, type, side, at.c, at.r);
