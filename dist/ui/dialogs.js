@@ -302,7 +302,7 @@ function officerCard(k, own) {
 // HQ → Commanders: your persistent roster for each faction, and the commanders still to recruit.
 // Euro Britannian commanders are shared with Britannia in the permanent HQ.
 // Keep this list aligned with the 2018 U.F.N. Euro Britannian starting roster.
-const EURO_BRITANNIAN_COMMANDERS = ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland'];
+const EURO_BRITANNIAN_COMMANDERS = ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'suzaku', 'schneizel', 'oldrin', 'marrybell'];
 let generalsSide = 'britannia';
 function generalsDialog(side = generalsSide) {
   generalsSide = side;
