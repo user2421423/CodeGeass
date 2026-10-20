@@ -9,6 +9,10 @@
       if (side === 'cf' && ['cf', 'eu', 'bk', 'jlf'].includes(a?.side)) return true;
       if (side === 'eb' && ['eb', 'britannia'].includes(a?.side)) return true;
     }
+    // Euro Britannia's Story campaign uses the shared imperial HQ pool.
+    // Britannia continues to use these officers as before.
+    if (side === 'eb' && ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland'].includes(k))
+      return true;
     return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
   }
   // Geass Absolute Command: a fresh activation for ONE acted ally (never
