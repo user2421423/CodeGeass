@@ -1239,15 +1239,15 @@
       rocket: 'jp_artillery',
       siege: 'raiko',
     },
-    // Euro Britannia borrows Britannia's regular 2017 frames, including Gareth siege artillery.
+    // Euro Britannia uses Britannian regular frames except for its own Vercingetorix heavy and Ahura Mazda super-heavy.
     eb: {
       scout: 'glasgow',
       assault: 'gloucester',
       raider: 'gracchus',
       light: 'sutherland',
       medium: 'vincent_ward',
-      heavy: 'vincent_commander',
-      super: 'brighton',
+      heavy: 'vercingetorix',
+      super: 'ahura_mazda',
       support: 'liverpool',
       rocket: 'sutherland_air',
       siege: 'gareth',
