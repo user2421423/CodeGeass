@@ -23,6 +23,8 @@ jobs:
         run: node tools/xingke_divine_tiger_smoke.cjs
       - name: Verify Leila Synchronized Command, Steady floor and mass movement
         run: node tools/leila_synchronized_command_smoke.cjs
+      - name: Verify Villetta Purist Interception and commanderless combat
+        run: node tools/villetta_purist_interception_smoke.cjs
       - name: Verify Zero Geass Absolute Command dual-mode actions and passive removal
         run: node tools/zero_geass_absolute_command_smoke.cjs
       - name: Verify Emperor Lelouch Imperial Command and Supreme Commander
