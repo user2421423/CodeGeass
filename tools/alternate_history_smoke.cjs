@@ -34,7 +34,7 @@ for(const [id,sides,cities,parent] of CASES){
      assert.equal(g.mode,'scenario');
      assert(g.units.length>0,id+' has no formations');
      assert(g.scenario.groups.length>0,id+' has no army groups');
-     assert.equal(g.scenario.commanderSides[side].length>0);
+     assert(g.scenario.commanderSides[side].length>0,id+' missing permitted commanders');
      for(const s of sides){
        assert(g.stations.some(st=>st.owner===s),id+' missing '+s+' cities');
        assert(g.units.some(u=>u.side===s),id+' missing '+s+' troops');
