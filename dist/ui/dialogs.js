@@ -306,7 +306,7 @@ function officerCard(k, own) {
     )}</div>${o.honors?.length ? `<div class="honors-mini">${o.honors.slice(0,3).map(h=>honorIcon(h.id)).join('')}</div>` : ''}<div class="officer-actions">${busy ? `<button class="small" disabled>Commanding ${E.TYPES[busy.type].short}</button>` : act(`data-admiral="${k}"`, 'Assign to selected unit', E.assignReason(game, own, k), costHTML({ credits: E.assignmentCost(game, k) }))}</div></section>`;
 }
 // HQ → Commanders: your persistent roster for each faction, and the commanders still to recruit.
-// Euro Britannian commanders are shared with Britannia in the permanent HQ.
+// Euro Britannia has eight exclusive officers and four officers shared with Britannia.
 // Keep this list aligned with the 2018 U.F.N. Euro Britannian starting roster.
 const EURO_BRITANNIAN_COMMANDERS = ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'suzaku', 'schneizel', 'oldrin', 'marrybell'];
 let generalsSide = 'all';
@@ -314,7 +314,7 @@ function generalsDialog(side = generalsSide) {
   generalsSide = side;
   generalOpen = null;
   const profile = loadProfile(),
-    list = Object.entries(E.COMMANDERS).filter(([k, a]) => side === 'all' || (side === 'bk' ? ['bk', 'jlf'].includes(a.side) : side === 'eb' ? EURO_BRITANNIAN_COMMANDERS.includes(k) : a.side === side)),
+    list = Object.entries(E.COMMANDERS).filter(([k, a]) => side === 'all' || (side === 'bk' ? ['bk', 'jlf'].includes(a.side) : side === 'eb' ? EURO_BRITANNIAN_COMMANDERS.includes(k) : side === 'britannia' ? a.side === 'britannia' : a.side === side)),
     mine = list.filter(([k]) => E.owns(profile, k)),
     locked = list.filter(([k]) => !E.owns(profile, k)),
     card = ([k, a]) => {
