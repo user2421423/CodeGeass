@@ -246,7 +246,7 @@
     if (action.kind === 'memoryRewrite') return actionTargets(g, u).length ? null : 'No enemy susceptible to confusion within 3 hexes';
     if (action.kind === 'freeze') return actionTargets(g, u).length ? null : 'No adjacent enemy formations to freeze';
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
-    if (action.kind === 'special' || action.kind === 'protection' || action.kind === 'geassCancel' || action.kind === 'checkmate') return actionTargets(g,u).length ? null : 'No eligible targets in range';
+    if (action.kind === 'special' || action.kind === 'protection' || action.kind === 'oscarDefense' || action.kind === 'geassCancel' || action.kind === 'checkmate') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
       ? 'No enemy within 2 hexes' : action.kind === 'command' ? (u.cmd === 'zero' ? 'No eligible friendly or enemy formation within 2 hexes' : 'No friendly unit within 2 hexes has acted')
       : action.kind === 'withdraw' ? 'Neither Leila nor a friendly formation within 2 hexes has moved or fired' : 'No enemy within 2 hexes';
