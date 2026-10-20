@@ -2,7 +2,7 @@
   // Two kinds of commander. Scenario commanders come with the operation, sit on their units with fixed stats
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
-  const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Marshal; higher ranks are Elite-only AI bonuses.
+  const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Supreme Commander, the highest rank for every side.
   const STARTERS = { britannia: ['cornelia'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
   function fx(u) {
     return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
@@ -172,10 +172,7 @@
     if (!k || !COMMANDERS[k]) return null;
     g.officers ||= {};
     const rec = (g.officers[k] ||= defaultOfficer(k));
-    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec,
-      (eliteAIProduction(g) && COMMANDERS[k].side !== g.player) ||
-        (eliteCampaign(g) && g.units?.some(u => u.cmd === k && foe(g, u.side, g.player)))
-          ? RANKS.length - 1 : HQ_RANK_CAP));
+    return rec.commanderVersion === COMMANDER_VERSION ? rec : (g.officers[k] = cleanOfficer(k, rec));
   }
   // The record behind a unit's commander: your commander for personal units, the scenario commander otherwise.
   function officerOf(g, u) {
@@ -402,7 +399,7 @@
       recorded : legacyGenericInvestment(level);
     return Math.round(invested * 0.9);
   }
-  // Full-development planner. Future stars require Marshal rank; all three
+  // Full-development planner. Future stars require Supreme Commander rank; all three
   // generic skills require Legendary Commission. These are accounted for in
   // the grand total, without purchasing anything or mutating the roster.
   function commanderPlan(profile, k) {

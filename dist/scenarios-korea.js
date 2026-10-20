@@ -425,11 +425,9 @@
     }
     for(const u of g.units)delete u.pendingPassengers;
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='normal'?1:
-        difficulty==='hard'?1.3:1.6;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
-        .map(([kind,amount])=>[kind,Math.round(amount*factor)-base[kind]]));
+        .map(([kind,amount])=>[kind,Math.round(amount)-base[kind]]));
       const current=E.income(g,side);
       for(const kind of Object.keys(FUNDING[side]))
         g.economy[side][kind]=current[kind]*(side==='britannia'?3:2);
@@ -437,12 +435,9 @@
     if(['hard','challenge'].includes(difficulty)){
       const enemies=g.units.flatMap(u=>[u,...(u.cargo||[])]).filter(u=>
         u.side!==player&&E.TYPES[u.type].naval!=='ship');
-      enemies.forEach((u,i)=>{
-        if(difficulty==='challenge'||i%2===0){
-          u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-        }
-      });
+      enemies.forEach(u=>E.addDifficultyFrames(u,difficulty));
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,
       g.units.reduce((n,u)=>n+(u.side===side?1:0)+
         (u.cargo||[]).filter(v=>v.side===side).length,0)]));

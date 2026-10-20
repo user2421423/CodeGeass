@@ -363,11 +363,9 @@
     for(const {ship,u} of passengers){(ship.cargo||=[]).push(u);g.units.splice(g.units.indexOf(u),1);}
     for(const ship of carriers)delete ship.pendingPassengers;
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='normal'?1:
-        difficulty==='hard'?1.3:1.6;
       const baseline=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
-        Object.entries(FUNDING[side]).map(([k,v])=>[k,Math.round(v*factor)-baseline[k]]));
+        Object.entries(FUNDING[side]).map(([k,v])=>[k,Math.round(v)-baseline[k]]));
       const income=E.income(g,side);
       for(const k of Object.keys(FUNDING[side]))
         g.economy[side][k]=income[k]*(side==='cf'?3:2);
@@ -377,11 +375,12 @@
         let i=0;
         for(const u of g.units.flatMap(v=>[v,...(v.cargo||[])]).filter(v=>
           v.side===side&&E.TYPES[v.type].naval!=='ship')){
-          if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+          E.addDifficultyFrames(u,difficulty);
           i++;
         }
       }
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,g.units.reduce((n,u)=>n+
       (u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0)]));
     E.log(g,'The Federation launches seven carrier-led invasions of both main islands while Britannia contests Cook Strait. Take every city without a turn limit.',player);

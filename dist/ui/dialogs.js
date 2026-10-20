@@ -232,14 +232,14 @@ function generalDialog(k, personal = false) {
   const plannerPanel = development ? `<details class="commander-plan">
     <summary>Development planner · ${count(development.total)} tokens remaining</summary>
     <div class="commander-plan-rows">
-      <div><span>Promotions to Marshal</span><b>${count(development.promotions)}</b></div>
+      <div><span>Promotions to Supreme Commander</span><b>${count(development.promotions)}</b></div>
       ${Object.entries(development.stars).map(([branch, tokens]) =>
         `<div><span>${esc(E.BRANCH_NAMES[branch])} to 6★</span><b>${count(tokens)}</b></div>`).join('')}
       <div><span>Legendary Commission</span><b>${count(development.commission)}</b></div>
       ${development.skills.map((tokens, i) =>
         `<div><span>Generic skill slot ${i + 1} to Lv.5</span><b>${count(tokens)}</b></div>`).join('')}
       <div class="commander-plan-total"><span>Remaining token investment</span><b>${count(development.total)}</b></div>
-    </div><small>Includes all four 6★ ratings, three Lv.5 generic skills and Marshal rank. Costs of shared High Command seat expansions are separate. ${development.highCommandSeat ? 'All current High Command seats are occupied.' : ''}</small>
+    </div><small>Includes all four 6★ ratings, three Lv.5 generic skills and Supreme Commander rank. Costs of shared High Command seat expansions are separate. ${development.highCommandSeat ? 'All current High Command seats are occupied.' : ''}</small>
   </details>` : '';
   const footer = personal
     ? owned

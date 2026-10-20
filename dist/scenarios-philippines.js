@@ -242,23 +242,22 @@
     }
     // The entire connected regional sea stays navigable for fleets.
     for(const side of SIDES){
-      const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
-        difficulty==='hard'?1.3:1;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
-          [resource,Math.round(n*factor)-base[resource]]));
+          [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*2;
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
-        for(const [i,u] of E.allUnits(g).filter(v=>v.side===side&&
-          E.TYPES[v.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+        for(const u of E.allUnits(g).filter(v=>v.side===side&&
+          E.TYPES[v.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
     }
     // Include troops inside carriers in starting strength and all difficulty modes.
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
     E.log(g,'China holds all Philippine cities. Britannia launches its amphibious invasion from Palau and Yap.',player);
     return g;

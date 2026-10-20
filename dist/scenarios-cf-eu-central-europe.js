@@ -192,16 +192,16 @@ function create(player='cf',difficulty='normal',seed=201712){
  }
  if(difficulty==='elite')E.prepareEliteEurope(g);
  for(const side of SIDES){
-  const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:difficulty==='hard'?1.3:1;
   const base=E.income(g,side);
-  g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side]).map(([key,n])=>[key,Math.round(n*factor)-base[key]]));
+  g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side]).map(([key,n])=>[key,Math.round(n)-base[key]]));
   const actual=E.income(g,side);for(const key of Object.keys(FUNDING[side]))g.economy[side][key]=actual[key]*2;
  }
  if(difficulty!=='normal'&&difficulty!=='elite'){
   for(const side of SIDES.filter(x=>x!==player))
-   for(const [i,u] of g.units.filter(x=>x.side===side&&!E.TYPES[x.type].naval).entries())
-    if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+   for(const u of g.units.filter(x=>x.side===side&&!E.TYPES[x.type].naval))
+    E.addDifficultyFrames(u,difficulty);
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
  E.log(g,'Federation armies press west from the Belarusian and Ukrainian approaches, across the Balkan-Carpathian and Danube fronts. Europe must defend its industrial heartland; every enemy city must fall.',player);
  return g;

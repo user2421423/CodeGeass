@@ -275,19 +275,18 @@ function create(player=attacker,difficulty='normal',seed=startingSeed){
  if(difficulty==='elite')E.prepareEliteEurope(g);
  if(difficulty==='hard'||difficulty==='challenge'){
   for(const side of SIDES.filter(v=>v!==player))
-   for(const [i,u] of g.units.filter(v=>v.side===side).entries())
-    if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+   for(const u of g.units.filter(v=>v.side===side))
+    E.addDifficultyFrames(u,difficulty);
  }
  for(const side of SIDES){
-  const factor=side===player?1:difficulty==='hard'?1.3:
-   ['challenge','elite'].includes(difficulty)?1.6:1;
   const base=E.income(g,side);
   g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
-   .map(([res,n])=>[res,Math.round(n*factor)-base[res]]));
+   .map(([res,n])=>[res,Math.round(n)-base[res]]));
   const actual=E.income(g,side);
   for(const res of Object.keys(FUNDING[side]))
    g.economy[side][res]=actual[res]*2;
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
  E.log(g,openingText,player);
  return g;

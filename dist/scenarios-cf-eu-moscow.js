@@ -400,23 +400,18 @@
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const multiplier=side===player?1:difficulty==='hard'?1.25:
-        ['challenge','elite'].includes(difficulty)?1.5:1;
       const current=E.income(g,side),desired=FUNDING[side];
       g.scenario.funding[side]=Object.fromEntries(Object.entries(desired).
-        map(([type,n])=>[type,Math.max(0,Math.round(n*multiplier)-current[type])]));
+        map(([type,n])=>[type,Math.max(0,Math.round(n)-current[type])]));
       const income=E.income(g,side);
       for(const resource of Object.keys(desired))
         g.economy[side][resource]=income[resource]*2;
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       g.units.filter(u=>u.side!==player&&!E.TYPES[u.type]?.naval).
-        forEach((u,i)=>{
-          if(difficulty==='challenge'||i%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
-        });
+        forEach(u=>E.addDifficultyFrames(u,difficulty));
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[
       side,g.units.filter(u=>u.side===side).length]));
     E.log(g,'The Federation advances from the Volga on three axes. E.U. outer lines, Moscow factories and deep reserves defend the capital; only complete conquest ends the battle.',player);

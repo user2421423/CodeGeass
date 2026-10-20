@@ -414,21 +414,18 @@
     for(const list of shipsByGroup.values())for(const ship of list)delete ship.pendingPassengers;
     if(difficulty==='hard'||difficulty==='challenge'){
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of E.allUnits(g).filter(v=>v.side===side&&!v.elite&&E.TYPES[v.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||i%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of E.allUnits(g).filter(v=>v.side===side&&!v.elite&&E.TYPES[v.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
     }
     for(const side of SIDES){
-      const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
-        difficulty==='hard'?1.3:1;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
-        Object.entries(funding[side]).map(([k,v])=>[k,Math.round(v*factor)-base[k]]));
+        Object.entries(funding[side]).map(([k,v])=>[k,Math.round(v)-base[k]]));
       const actual=E.income(g,side);
       for(const k of Object.keys(funding[side]))
         g.economy[side][k]=actual[k]*(side===attacker?3:2);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
     if(g.stations.some(s=>s.owner!== 'britannia'))
       throw Error('Britannia must own every Panamanian city initially');

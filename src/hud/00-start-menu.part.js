@@ -147,7 +147,7 @@ function startMenu() {
 }
 // Tokens still on offer for a first victory at this difficulty (before banked research).
 function conquestReward(difficulty, profile, era = 'world', side = 'britannia') {
-  if ((profile.cleared || {})[`conquest:${era}:${side}:${difficulty}`]) return 0;
+  if ((profile.cleared || {})[E.conquestKey(era, side, difficulty)]) return 0;
   const t = E.TOKEN_REWARD;
   return (t[difficulty] || t.normal) + (profile.wins || 0 ? 0 : t.first);
 }

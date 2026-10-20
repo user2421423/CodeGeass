@@ -189,23 +189,20 @@ function create(player='eu',difficulty='normal',seed=20261019){
  }
  if(difficulty==='elite')E.prepareEliteEurope(g);
  for(const side of SIDES){
-  const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
-   difficulty==='hard'?1.3:1;
   const base=E.income(g,side);
   g.scenario.funding[side]=Object.fromEntries(
    Object.entries(FUNDING[side]).map(([resource,n])=>
-    [resource,Math.round(n*factor)-base[resource]]));
+    [resource,Math.round(n)-base[resource]]));
   const actual=E.income(g,side);
   for(const resource of Object.keys(FUNDING[side]))
    g.economy[side][resource]=actual[resource]*2;
  }
  if(difficulty==='hard'||difficulty==='challenge'){
   for(const side of SIDES.filter(s=>s!==player))
-   for(const [i,u] of g.units.filter(u=>u.side===side).entries())
-    if(difficulty==='challenge'||i%2===0){
-     u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-    }
+   for(const u of g.units.filter(u=>u.side===side))
+    E.addDifficultyFrames(u,difficulty);
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(side=>[
   side,g.units.filter(u=>u.side===side).length]));
  E.log(g,'E.U. mountain corps advance from India and Nepal through the Ladakh, Lipulekh, Rasuwa, Kodari, Nathu La and Bum La corridors. Federation reserves defend Tibet and the plateau cities.',player);

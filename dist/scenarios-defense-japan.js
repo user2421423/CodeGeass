@@ -189,24 +189,20 @@
     // Keep the existing economic model: income is localized to the cities
     // after setup, while a cityless invader receives a finite war chest.
     for(const side of SIDES){
-      const factor=side===player?1:
-        (difficulty==='challenge'||difficulty==='elite')?1.6:
-        difficulty==='hard'?1.3:1;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(TARGET_INCOME[side]).map(([key,value])=>
-          [key,Math.max(0,Math.round(value*factor)-base[key])]));
+          [key,Math.max(0,Math.round(value)-base[key])]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(TARGET_INCOME[side]))
         g.economy[side][resource]=actual[resource]*(side==='britannia'?3:2);
     }
     if(difficulty!=='normal'&&difficulty!=='elite')
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of g.units.flatMap(v=>[v,...(v.cargo||[])])
-          .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||i%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of g.units.flatMap(v=>[v,...(v.cargo||[])])
+          .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,
       g.units.reduce((n,u)=>n+(u.side===side?1:0)+
         (u.cargo||[]).filter(v=>v.side===side).length,0)]));

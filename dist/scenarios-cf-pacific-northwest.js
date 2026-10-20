@@ -472,24 +472,21 @@
     // Difficulty scales the opponent, not the human player. On Elite all
     // starting non-carrier units are faction-appropriate Elite Forces.
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='hard'?1.3:
-        difficulty==='challenge'||difficulty==='elite'?1.6:1;
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,target])=>
-          [resource,Math.round(target*factor)-base[resource]]));
+          [resource,Math.round(target)-base[resource]]));
       const actual=E.income(g,side);
       for(const key of Object.keys(FUNDING[side]))
         g.economy[side][key]=actual[key]*(side==='cf'?3:2);
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [index,u] of g.units.flatMap(x=>[x,...(x.cargo||[])])
-          .filter(x=>x.side===side&&E.TYPES[x.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||index%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of g.units.flatMap(x=>[x,...(x.cargo||[])])
+          .filter(x=>x.side===side&&E.TYPES[x.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
       n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
     E.log(g,'The Chinese Federation arrives from the central Pacific in five separate carrier-led invasions. Britannia holds the coastal fortresses, Cascade passes and inland reserves.',player);

@@ -108,23 +108,42 @@
 
   ERAS.ufn2018 = { ...CONQUESTS.ufn2018, name: CONQUESTS.ufn2018.title };
 
-  // Operation difficulty. Normal is the operation as designed. Hard gives every rival power all tier I–II
-  // HQ research, upgrades every other enemy unit one class and adds one unit per four. Challenge gives them all
-  // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
+  // Operation difficulty. Normal is the operation as designed. The same rules apply to every rival power in
+  // Conquest, Story campaigns and regional scenarios:
+  //   techTier     free HQ research up to this tier
+  //   upgradeEvery every Nth starting unit moves up one class
+  //   stack        extra frames on every starting unit (capped at three)
+  //   extraPer     one reinforcement per N starting units, each with extraStack frames
+  //   ranks        commander promotions (capped at Supreme Commander)
+  //   income       multiplier on starting resources and on income every turn
+  // Descriptions are generated from these numbers; `note` adds anything they cannot express.
+  // `campaign` holds Story campaign overrides (dist/campaign.js merges them over the shared values):
+  //   economy      multiplier on the player's starting resources
+  const STORY_ACES = 'Named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.';
   const DIFFICULTIES = {
-    normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
+    normal: {
+      name: 'Normal', level: 0, tokens: 1, note: 'The world as it stands in 2017 a.t.b.',
+      campaign: {
+        economy: 1.5,
+        note: 'Ordinary scripted formations (up to 3 frames), favorable starting forces and 50% more starting resources. HQ-unlocked Elite Forces may be deployed at eligible factories.',
+      },
+    },
     elite: {
       name: 'Elite',
       level: 3,
       tokens: 2.5,
       techTier: 4,
       upgradeEvery: 1,
-      extraPer: 2,
-      stack: true,
-      ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
+      extraPer: 3,
+      extraStack: 1,
+      stack: 0, // Land units become single-frame Elite Forces.
+      ranks: HQ_RANK_CAP,
       income: 1.25,
       preserveNaval: true,
-      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      note: 'Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      campaign: {
+        note: 'Land formations use one-frame Elite Forces; scripted carriers retain their hulls and cargo. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
+      },
     },
     hard: {
       name: 'Hard',
@@ -132,10 +151,12 @@
       tokens: 1.5,
       techTier: 2,
       upgradeEvery: 2,
-      extraPer: 4,
+      extraPer: 6,
+      extraStack: 1,
+      stack: 1,
       ranks: 3,
-      income: 1,
-      desc: 'Rival powers have all tier I–II research, half their units are upgraded a class and there are more of them. Enemy commanders gain three ranks.',
+      income: 1.1,
+      campaign: { note: STORY_ACES },
     },
     challenge: {
       name: 'Challenge',
@@ -143,13 +164,108 @@
       tokens: 2,
       techTier: 4,
       upgradeEvery: 1,
-      extraPer: 2,
-      stack: true,
-      ranks: PROMOTE_COST.length - 1, // Every starting rank reaches Marshal.
+      extraPer: 3,
+      extraStack: 3,
+      stack: 2,
+      ranks: HQ_RANK_CAP,
       income: 1.25,
-      desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
+      campaign: { note: STORY_ACES },
     },
   };
+  function describeDifficulty(d) {
+    if (!d.level) return d.note || '';
+    const count = n => ['no', 'one', 'two', 'three', 'four', 'five', 'six'][n] ?? String(n),
+      frames = n => `${count(n)} frame${n === 1 ? '' : 's'}`,
+      parts = [
+        d.techTier >= 4 ? 'every technology' : `all tier I–${ROMAN[d.techTier]} research`,
+        d.upgradeEvery === 1 ? 'every unit upgraded a class' :
+          d.upgradeEvery === 2 ? 'half their units upgraded a class' : `one unit in ${d.upgradeEvery} upgraded a class`,
+      ];
+    if (d.stack) parts.push(`${d.stack === 1 ? 'an extra frame' : `${count(d.stack)} extra frames`} on every unit (up to three)`);
+    if (d.extraPer) parts.push(`one reinforcement per ${count(d.extraPer)} units, each with ${frames(d.extraStack || 1)}`);
+    if (d.income > 1) parts.push(`${Math.round((d.income - 1) * 100)}% more starting resources and income`);
+    const ranks = d.ranks >= HQ_RANK_CAP ? 'Enemy commanders reach Supreme Commander.' :
+      d.ranks ? `Enemy commanders gain ${d.ranks === 1 ? 'a rank' : `${count(d.ranks)} ranks`}.` : '';
+    return [`Rival powers get ${parts.join('; ')}.`, ranks, d.note].filter(Boolean).join(' ');
+  }
+  for (const d of Object.values(DIFFICULTIES)) d.desc = describeDifficulty(d);
+  // Hard adds one frame and Challenge two, capped at three. Elite Forces (and
+  // every unit on Elite difficulty) stay single frames.
+  function addDifficultyFrames(u, difficulty) {
+    const extra = difficulty === 'elite' ? 0 : DIFFICULTIES[difficulty]?.stack || 0;
+    if (!extra || u.elite) return;
+    u.stack = Math.min(3, u.stack + extra);
+    u.hp = maxHP(u);
+  }
+  // Reinforcements: copies of existing units (never super-heavies) on free friendly land beside them.
+  function addDifficultyReinforcements(g, d, sources, count) {
+    for (let n = 0, tries = 0; n < count && sources.length && tries < count * 6; tries++) {
+      const src = sources[Math.floor(random(g) * sources.length)],
+        spot = adjacent(g, src).find(
+          p =>
+            !isSea(p) &&
+            p.owner === src.side &&
+            !TERRAIN[p.terrain]?.blocked &&
+            !unitAt(g, p) &&
+            (!stationAt(g, p) || stationAt(g, p).owner === src.side),
+        );
+      if (!spot) continue;
+      const type = !src.elite && TYPES[src.type].cls === 'super' ? typeFor(src.side, 'heavy', g) : src.type,
+        u = newUnit(g, type, src.side, spot.c, spot.r, d.extraStack || 1);
+      if (u.elite) { u.eliteLevel = 1; u.eliteStart = true; }
+      n++;
+    }
+  }
+  // Regional scenarios give every rival the same research, class upgrades, reinforcements, ranks and
+  // starting resources as Conquest. Each scenario still picks which of its units get extra frames
+  // (addDifficultyFrames) before calling this. Elite scenarios have already run prepareElite*.
+  const scenarioRivals = g => (g.order || []).filter(side => side !== g.player);
+  function scenarioUpgrade(g, u) {
+    const t = TYPES[u.type], next = UPGRADE[t.cls];
+    if (t.naval) return upgradeType(u.type, u.side, g);
+    if (!next) return u.type;
+    // Prefer the unit's own lineup, and never "upgrade" to a weaker frame.
+    const stronger = type => TYPES[type] && TYPES[type].hp >= t.hp && TYPES[type].attack >= t.attack;
+    return [typeFor(u.side, next, g), typeFor(t.side, next, g)].find(stronger) || u.type;
+  }
+  function applyScenarioDifficulty(g, difficulty = g.difficulty) {
+    const d = DIFFICULTIES[difficulty];
+    if (!d?.level) return g;
+    const rivals = scenarioRivals(g);
+    for (const side of rivals) {
+      g.tech[side] = techUpToTier(d.techTier);
+      const e = g.economy[side];
+      if (e) for (const resource of ['credits', 'industry', 'sakuradite'])
+        if (e[resource]) e[resource] = Math.round(e[resource] * d.income);
+    }
+    allUnits(g).filter(u => u.hp > 0 && rivals.includes(u.side) && !u.elite).forEach((u, i) => {
+      if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = scenarioUpgrade(g, u);
+    });
+    const land = g.units.filter(u => u.hp > 0 && rivals.includes(u.side) && !TYPES[u.type].naval &&
+      (difficulty === 'elite' || !u.elite));
+    addDifficultyReinforcements(g, d, land, Math.ceil(land.length / d.extraPer));
+    return refreshScenarioRivals(g, difficulty);
+  }
+  // Promotes rival commanders (once each) and refreshes rival hull research and HP. Alternate-history
+  // scenarios call this again after reassigning commanders.
+  function refreshScenarioRivals(g, difficulty = g.difficulty) {
+    const d = DIFFICULTIES[difficulty];
+    if (!d?.level) return g;
+    const rivals = scenarioRivals(g), promoted = new Set(g.scenario?.difficultyPromoted || []);
+    for (const u of allUnits(g)) {
+      if (!rivals.includes(u.side)) continue;
+      const rec = u.cmd && g.officers?.[u.cmd];
+      if (rec && !promoted.has(u.cmd)) {
+        rec.rank = Math.min(HQ_RANK_CAP, (rec.rank || 0) + d.ranks);
+        promoted.add(u.cmd);
+      }
+      if (rec) u.cmdRank = rec.rank;
+      u.hpTech = hullTech(g, u);
+      u.hp = maxHP(u);
+    }
+    if (g.scenario) g.scenario.difficultyPromoted = [...promoted];
+    return g;
+  }
   function eliteConquest(g) {
     return g?.mode === 'conquest' && g.difficulty === 'elite';
   }
@@ -222,29 +338,12 @@
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
+      if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type, u.side, g);
-      if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
+      if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + d.stack);
     });
-    // Reinforcements: copies of existing enemy units (never super-heavies) on free land hexes beside them.
-    const extra = Math.ceil(enemyUnits.length / d.extraPer),
-      land = enemyUnits.filter(u => !TYPES[u.type].naval);
-    for (let n = 0, tries = 0; n < extra && tries < extra * 6; tries++) {
-      const src = land[Math.floor(random(g) * land.length)],
-        spot = adjacent(g, src).find(
-          p =>
-            !isSea(p) &&
-            p.owner === src.side &&
-            !TERRAIN[p.terrain]?.blocked &&
-            !unitAt(g, p) &&
-            (!stationAt(g, p) || stationAt(g, p).owner === src.side),
-        );
-      if (!spot) continue;
-      const type = TYPES[src.type].cls === 'super' ? typeFor(src.side, 'heavy', g) : src.type;
-      newUnit(g, type, src.side, spot.c, spot.r, src.stack);
-      n++;
-    }
+    addDifficultyReinforcements(g, d, enemyUnits.filter(u => !TYPES[u.type].naval), Math.ceil(enemyUnits.length / d.extraPer));
     for (const u of g.units)
       if (foes.includes(u.side)) {
         u.hpTech = hullTech(g, u);
