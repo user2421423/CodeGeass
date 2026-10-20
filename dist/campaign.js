@@ -216,7 +216,8 @@
   // cargo contains full friendly land-unit specs; their coordinates follow the carrier.
   function placeUnit(g, spec, carrier = null) {
     const [side, kind, c, r, stack = 1, originalCmd = null, opts = {}] = spec,
-      cmd = ({margaret:'romero',kate:'miguel',hilda:'masaki',chloe:'toru'})[originalCmd] || originalCmd,
+      mappedCmd = ({margaret:'romero',kate:'miguel',hilda:'masaki',chloe:'toru'})[originalCmd] || originalCmd,
+      cmd = E.COMMANDERS[mappedCmd] ? mappedCmd : null,
       d = difficulty(g.difficulty),
       enemy = E.foe(g, side, g.player);
     if (opts.normalOnly && g.difficulty !== 'normal') return null;
