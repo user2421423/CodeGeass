@@ -19,6 +19,27 @@
     'eu-federation': Object.freeze({label:'E.U. vs Federation',side:'eu',opponent:'cf'}),
     'federation-eu': Object.freeze({label:'Federation vs E.U.',side:'cf',opponent:'eu'}),
   });
+  // Three visible factions share six legacy objective ledgers. Never rename
+  // the objective IDs or campaign contexts: old victories and the one Campaign
+  // battle save slot depend on their stable IDs.
+  const VISIBLE_FACTIONS = Object.freeze(['britannia','eu','cf']);
+  const VISIBLE_INFO = Object.freeze({
+    britannia:Object.freeze({label:'Britannia',side:'britannia'}),
+    eu:Object.freeze({label:'E.U.',side:'eu'}),
+    cf:Object.freeze({label:'Chinese Federation',side:'cf'}),
+  });
+  const FRONT_CAMPAIGNS = Object.freeze({
+    britannia:Object.freeze(['britannia','britannia-federation']),
+    eu:Object.freeze(['eu','eu-federation']),
+    cf:Object.freeze(['federation-britannia','federation-eu']),
+  });
+  const displayFaction = campaign => CAMPAIGN_INFO[campaign]?.side==='cf'?'cf'
+    :CAMPAIGN_INFO[campaign]?.side==='eu'?'eu'
+    :CAMPAIGN_INFO[campaign]?.side==='britannia'?'britannia'
+    :VISIBLE_FACTIONS.includes(campaign)?campaign:null;
+  const frontsFor = faction => FRONT_CAMPAIGNS[faction] || [];
+  const openingSuffix = id => ['australia','area-18','division-japan']
+    .find(suffix=>id?.endsWith('-'+suffix)) || null;
   const campaignSide = campaign => CAMPAIGN_INFO[campaign]?.side || campaign;
   const tierLabels = {
     eu: ['Global Conflicts','Bering Strait','Overseas Invasions','Continental Landings','American Interior','Crossing the Rocky Mountains','Final Offensive'],
@@ -334,13 +355,25 @@
   })));
   const ALL = Object.freeze(Object.fromEntries(FACTIONS.flatMap(f=>registry[f].flatMap(t=>t.missions.map(m=>[m.id,m])))));
   const PLACEHOLDERS = Object.freeze(Object.values(ALL).filter(m=>m.status==='planned'));
-  function fresh(){return {version:1,selectedFaction:'eu',completed:Object.fromEntries(FACTIONS.map(f=>[f,{}]))};}
+  function fresh(){return {
+    version:1,selectedFaction:'eu',
+    selectedFronts:{britannia:'britannia',eu:'eu',cf:'federation-britannia'},
+    completed:Object.fromEntries(FACTIONS.map(f=>[f,{}])),
+  };}
   function load(storage) {
     let raw;
     try { raw=JSON.parse(storage.getItem(STORAGE_KEY)); } catch(_e){return fresh();}
     const p=fresh();
     if (!raw || raw.version!==1) return p;
     if (FACTIONS.includes(raw.selectedFaction)) p.selectedFaction=raw.selectedFaction;
+    // Optional UI preference; old version-1 saves do not have this field.
+    for(const faction of VISIBLE_FACTIONS){
+      const selected=raw.selectedFronts?.[faction];
+      if(frontsFor(faction).includes(selected))p.selectedFronts[faction]=selected;
+    }
+    p.selectedFronts[displayFaction(p.selectedFaction)]=p.selectedFaction;
+    // Preserve every legacy completion independently: no destructive migration
+    // or renamed objective keys. Shared-opening wins are combined at read time.
     for(const f of FACTIONS)
       for(const m of registry[f].flatMap(t=>t.missions))
         if(m.status==='implemented' && raw.completed && raw.completed[f] && raw.completed[f][m.id]===true)
@@ -351,7 +384,34 @@
     try { storage.setItem(STORAGE_KEY,JSON.stringify(progress)); return true; }
     catch(_e){ return false; }
   }
-  function completed(progress,faction,id){return !!(progress.completed && progress.completed[faction] && progress.completed[faction][id]);}
+  function completed(progress,faction,id){
+    if(progress?.completed?.[faction]?.[id]===true)return true;
+    // The three shared global missions count once for a faction regardless of
+    // which opposing-front ledger contains the old victory.
+    const opening=openingSuffix(id),m=ALL[id];
+    if(!opening || !m || m.campaignFaction!==faction)return false;
+    return frontsFor(displayFaction(faction)).some(track=>
+      progress?.completed?.[track]?.[track+'-'+opening]===true);
+  }
+  function completedMissionsForFaction(progress,faction){
+    return frontsFor(faction).flatMap(track=>registry[track].flatMap(t=>t.missions))
+      .filter(m=>completed(progress,m.campaignFaction,m.id));
+  }
+  function factionCompletion(progress,faction){
+    const seen=new Set();let done=0,total=0;
+    for(const track of frontsFor(faction))
+      for(const row of registry[track])for(const m of row.missions){
+        const key=openingSuffix(m.id)?'shared-'+openingSuffix(m.id):m.id;
+        if(seen.has(key))continue;
+        seen.add(key);total++;
+        if(completed(progress,track,m.id))done++;
+      }
+    return {done,total};
+  }
+  function preferredFront(progress,faction){
+    const front=progress?.selectedFronts?.[faction];
+    return frontsFor(faction).includes(front)?front:frontsFor(faction)[0]||null;
+  }
   function unlockedTier(progress,faction){
     if(!registry[faction]) return 0;
     for(const tier of registry[faction])
@@ -402,7 +462,13 @@
     if(!FACTIONS.includes(faction))return false;
     const p=load(storage);
     p.selectedFaction=faction;
+    p.selectedFronts[displayFaction(faction)]=faction;
     return persist(storage,p);
+  }
+  function chooseVisibleFaction(storage,faction){
+    if(!VISIBLE_FACTIONS.includes(faction))return false;
+    const p=load(storage);
+    return chooseFaction(storage,preferredFront(p,faction));
   }
   function regionContains(m,lon,lat){
     const [west,south,east,north]=m.bounds;
@@ -436,7 +502,30 @@
     world.mapRevision=(world.mapRevision||0)+1;
     return world;
   }
+  // Composite territorial view, independent of the selected invasion front.
+  function unifiedWorldSnapshot(engine,faction,progress){
+    const tracks=frontsFor(faction);
+    if(!tracks.length)return null;
+    const world=worldSnapshot(engine,tracks[0],fresh());
+    const wins=completedMissionsForFaction(progress,faction);
+    const owner=VISIBLE_INFO[faction].side;
+    for(const t of world.tiles){
+      if(t.terrain==='sea'||t.terrain==='offmap')continue;
+      const lon=engine.WORLD.lon0+(t.c+0.5+0.5*(t.r&1))*engine.WORLD.dlon,
+            lat=engine.WORLD.lat0-t.r*engine.WORLD.dlat;
+      if(wins.some(m=>regionContains(m,lon,lat)))t.owner=owner;
+    }
+    for(const st of world.stations){
+      const lon=engine.WORLD.lon0+(st.c+0.5+0.5*(st.r&1))*engine.WORLD.dlon,
+            lat=engine.WORLD.lat0-st.r*engine.WORLD.dlat;
+      if(wins.some(m=>regionContains(m,lon,lat)))st.owner=owner;
+    }
+    world.mapRevision=(world.mapRevision||0)+1;
+    return world;
+  }
   const api={STORAGE_KEY,BATTLE_KEY,FACTIONS,CAMPAIGN_INFO,campaignSide,registry,ALL,PLACEHOLDERS,
+    VISIBLE_FACTIONS,VISIBLE_INFO,FRONT_CAMPAIGNS,displayFaction,frontsFor,preferredFront,
+    completedMissionsForFaction,factionCompletion,chooseVisibleFaction,unifiedWorldSnapshot,
     fresh,load,persist,completed,unlockedTier,state,launch,recordVictory,chooseFaction,
     regionContains,worldSnapshot};
   // Fixture only exists in Node test runs; it is intentionally not reachable
