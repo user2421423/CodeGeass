@@ -29,6 +29,8 @@ jobs:
         run: node tools/villetta_purist_interception_smoke.cjs
       - name: Verify Smilas Expendable Vanguard recharges every turn
         run: node tools/smilas_every_turn_smoke.cjs
+      - name: Verify all four replacement E.U. commander abilities and save migration
+        run: node tools/eu_four_replacement_smoke.cjs
       - name: Verify Oscar Guard Counterstrike and Emergency Defense
         run: node tools/oscar_emergency_defense_smoke.cjs
       - name: Verify Ryo marking, allied kill refresh, and AI replay
