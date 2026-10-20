@@ -69,6 +69,9 @@ const dependencies = {
  'cf-eu-north-africa':['scenarios-cf-eu-north-africa.js'],
  'cf-eu-central-europe':['scenarios-cf-eu-central-europe.js'],
  'cf-eu-france':['scenarios-cf-eu-france.js'],
+ 'rounds-rebellion':['scenarios-pendragon.js','scenarios-alternate-common.js','scenarios-rounds-rebellion.js'],
+ 'shin-independence':['europe-landmask.js','scenarios-europe.js','scenarios-alternate-common.js','scenarios-shin-independence.js'],
+ 'chinese-civil-war':['scenarios-luoyang.js','scenarios-alternate-common.js','scenarios-chinese-civil-war.js'],
 };
 const catalog = {};
 for (const { id } of vm.runInContext('SCENARIO_MANIFEST', context)) {
