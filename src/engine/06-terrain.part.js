@@ -63,6 +63,16 @@
     NAVAL[side] || NAVAL[g?.scenario?.equipment?.[side]];
   const navalTypes = (g, side) => g?.mode === 'campaign' ? [] : Object.values(navalRoster(g, side) || {});
   const isShip = u => TYPES[u?.type]?.naval === 'ship';
+  // Airships are warships for cargo and combat, but fly over land and are built at a level-3 factory.
+  const AIRSHIPS = {
+    britannia: 'logres_airship', eb: 'logres_airship', eu: 'charlemagne_airship',
+    cf: 'shenlong_airship', bk: 'ikaruga_airship',
+  };
+  const airshipType = (g, side) => g?.mode === 'campaign' ? null :
+    ufnBlackKnights(g, side) ? AIRSHIPS.bk : AIRSHIPS[side] || null;
+  const isAir = u => !!TYPES[u?.type]?.air;
+  // Built at a port (amphibious frames and Carrier-Battleships), not a city factory.
+  const portBuilt = t => !!t?.naval && !t.air;
   // Ports: a city building on one sea hex beside the city (repair: PORT.repair by level).
   const PORT = { repair: [0, 0.1, 0.2, 0.3] };
   function portSite(g, s) {

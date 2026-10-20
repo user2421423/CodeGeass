@@ -3,14 +3,15 @@
 const BRANCH_LIST = ['Infantry', 'Armor', 'Artillery'];
 const ELITE_FACTORY_TAB = 'Elite Forces',
   ELITE_NAVAL_TAB = 'Elite Amphibious',
-  NAVAL_TAB = 'Naval';
-// The city factory's tabs: the three branches and Elite Forces. Naval units are built at the port (its own
-// shipyard, NAVAL_TAB only), which has a separate one-unit-per-turn slot.
+  NAVAL_TAB = 'Naval',
+  AIRSHIP_TAB = 'Airship';
+// The city factory's tabs: the three branches, the faction's airship and Elite Forces. Naval units are built at
+// the port (its own shipyard, NAVAL_TAB only), which has a separate one-unit-per-turn slot.
 const shopTabs = (port = false) =>
   game.mode === 'campaign' && game.difficulty === 'elite'
     ? (port ? [] : [ELITE_FACTORY_TAB])
     : port ? [NAVAL_TAB, ELITE_NAVAL_TAB]
-      : [...BRANCH_LIST, ELITE_FACTORY_TAB];
+      : [...BRANCH_LIST, ...(E.airshipType(game, game.player) ? [AIRSHIP_TAB] : []), ELITE_FACTORY_TAB];
 function openShop(id, branch = shop.branch) {
   const s = game.stations.find(s => s.id === id);
   if (!s || !interactive() || ((branch === NAVAL_TAB || branch === ELITE_NAVAL_TAB) ? (s.portOwner || s.owner) !== game.player : s.owner !== game.player)) return;
@@ -24,11 +25,14 @@ function openShop(id, branch = shop.branch) {
     catalog =
       branch === NAVAL_TAB
         ? E.navalTypes(game, game.player)
-        : game.buildable?.[game.player] || E.CLASS_ORDER.map(cls => lineup[cls]),
+        : branch === AIRSHIP_TAB
+          ? [E.airshipType(game, game.player)]
+          : game.buildable?.[game.player] || E.CLASS_ORDER.map(cls => lineup[cls]),
     // Campaign factions can deliberately reuse one frame for several class slots (Euro Britannia is the main
     // example). The factory should show that frame once, not duplicate the card for every slot it fills.
     types = [...new Set(catalog)].filter(
-      k => k && (branch === NAVAL_TAB ? E.TYPES[k].naval : E.TYPES[k].branch === branch && !E.TYPES[k].naval),
+      k => k && (branch === NAVAL_TAB ? E.TYPES[k].naval : branch === AIRSHIP_TAB ? E.TYPES[k].air :
+        E.TYPES[k].branch === branch && !E.TYPES[k].naval),
     );
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="${port ? 'Port shipyard' : 'Knightmare factory'}"><div class="dialog-head"><div><div class="eyebrow">${F(port ? (s.portOwner || s.owner) : s.owner).name} · ${port ? `Port of ${s.name} · Port level ${s.portLevel || 0}` : `${s.name} · Factory level ${s.tier}`}</div><h2>${port ? 'Launch a naval unit' : 'Roll out a Knightmare unit'}</h2><p>${costHTML({ credits: game.economy[game.player].credits, industry: game.economy[game.player].industry, science: game.economy[game.player].science || 0, sakuradite: game.economy[game.player].sakuradite || 0 }, true)}</p></div><button class="small close" data-action="close">Close</button></div><div class="toolbar-row"><div class="tabs">${shopTabs(port).map(b => `<button data-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div><label for="stack-select">Unit strength &nbsp;</label><select class="select" id="stack-select">${[1, 2, 3].map(n => `<option value="${n}" ${shop.stack === n ? 'selected' : ''}>${n} ${n === 1 ? 'frame' : 'frames'}</option>`).join('')}</select></div></div>${port ? (s.portProducedTurn === game.turn ? '<div class="info-strip">This port has launched its unit for this turn.</div>' : '<p class="description">Naval units launch onto this port hex, which must be empty: amphibious Knightmares need a level-1 port, Carrier-Battleships level 2. One a turn, separate from the city factory.</p>') : !free.length ? '<div class="info-strip">A unit is on the city. Move it off to build here again, even this turn.</div>' : '<p class="description">An empty city factory can build again in the same turn. New units deploy on the city hex and act next turn. Advanced frames also cost Sakuradite and small amounts of Research.</p>'}<div class="cards">${types
     .map(k => {

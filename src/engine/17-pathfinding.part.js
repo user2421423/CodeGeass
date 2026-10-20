@@ -12,12 +12,12 @@
   }
   // Path cost from every hex to the nearest city this side wants (rival capitals count extra), over land and sea.
   // `seeds` ([position, value] pairs) replaces the side-wide targets, e.g. with one front's objectives; `only`
-  // ('land' or 'sea') keeps the paths on one surface.
+  // ('land' or 'sea') keeps the paths on one surface; 'air' crosses everything at one point a hex.
   // Optional unit routing excludes hexes that reachable()/move() cannot traverse.
   // An inaccessible goal can still seed an approach: standing orders finish beside it.
   function routePassable(g, u, p) {
     const t = TYPES[u.type], st = stationAt(g, p), occ = unitAt(g, p);
-    if (t.naval === 'ship' && (!navigable(p) || st)) return false;
+    if (t.naval === 'ship' && ((!t.air && !navigable(p)) || st)) return false;
     if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) return false;
     return !occ || occ === u || (occ.side === u.side && (t.naval || !canBoard(g, occ)));
   }
@@ -96,11 +96,11 @@
         const j = nb[k];
         if (j < 0) continue;
         const n = tiles[j];
-        if (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n))) continue;
+        if (only !== 'air' && (TERRAIN[n.terrain]?.blocked || (only === 'sea' ? !navigable(n) : only === 'land' && isSea(n)))) continue;
         if (unit && !routePassable(g, unit, n)) continue;
         // Reverse search: the step from neighbour j toward goal i pays for i.
         const step = isSea(tiles[i]) || ignoreTerrain ? 1 : unit ? terrainCost(g, unit, tiles[i]) : terrainStepCost(g, tiles[i]);
-        const nd = d + (only === 'sea' ? 1 :
+        const nd = d + (only === 'sea' || only === 'air' ? 1 :
           (isSea(n) !== sea ? 4 : 0) + step + (rivers && !ignoreTerrain ? riverCrossingCost(g, tiles[i], n, unit) : 0));
         if (nd <= maxCost && nd < field[j]) {
           field[j] = nd;

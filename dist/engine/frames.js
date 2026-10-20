@@ -271,6 +271,14 @@
     // Unlike fire support, a warship's guns do not suppress: any unit with the range returns its fire.
     CARRIER = { cls: 'support', naval: 'ship', hp: 520, attack: 82, armor: 44, move: 10, min: 1, max: 2, capacity: 2, crit: 0.15, pen: 0.3, cost: 520, industry: 150, sakuradite: 15, tier: 1, port: 2, noCounter: false,
       rule: 'Warship: guns at range 1–2; any unit with the range returns fire. Carries two Knightmare formations and launches them onto the beach.' };
+  // Airships: a warship hull held aloft by Float Systems (Conquest and regional scenarios).
+  // Built at a level-3 factory, not a port; flies over land, sea and impassable peaks
+  // but never enters a city. Every power's airship shares these numbers exactly.
+  const AIRSHIP = { cls: 'support', naval: 'ship', air: true, hp: 700, attack: 90, armor: 50, move: 6, min: 1, max: 2, capacity: 2,
+      crit: 0.15, pen: 0.35, cost: 1800, industry: 500, sakuradite: 60, research: 150, tier: 3, port: 0, noCounter: false,
+      gen: 'Floating battleship', role: 'Airship',
+      rule: 'Airship: flies 6 hexes over any terrain or sea, but cannot enter or capture cities, ports or mines. Guns at range 1–2. Carries two Knightmare formations and launches them onto any adjacent land. No terrain cover. Repairs beside a friendly city.' };
+  AIRSHIP.desc = AIRSHIP.rule;
   const KNIGHTMARES = {
     // Holy Britannian Empire (with Euro Britannia).
     glasgow: {
@@ -1118,7 +1126,7 @@
       ...CARRIER,
       side: 'eu',
       name: 'Carrier-Battleship',
-      model: 'Charlemagne-class Carrier-Battleship',
+      model: 'E.U. Carrier-Battleship',
       gen: 'Warship',
       weapon: 'Railgun turrets · missile batteries · Knightmare catapults',
       lore: 'The E.U. Navy’s carrier, launching Knightmares straight onto a hostile coast (Rapid KMF Deployment).',
@@ -1149,6 +1157,38 @@
       gen: 'Warship',
       weapon: 'Heavy guns · missile batteries · Knightmare catapults',
       lore: 'The Federation Navy’s carrier, launching Knightmares straight onto a hostile coast (Rapid KMF Deployment).',
+    },
+    logres_airship: {
+      ...AIRSHIP,
+      side: 'britannia',
+      name: 'Logres-class Airship',
+      model: 'Logres-class aerial battleship',
+      weapon: 'Twin main turrets · missile batteries · Knightmare catapults',
+      lore: 'Britannia’s winged aerial battleship of the Aerial Armada, built on the Float System technology first proven by the Avalon.',
+    },
+    charlemagne_airship: {
+      ...AIRSHIP,
+      side: 'eu',
+      name: 'Charlemagne-class Airship',
+      model: 'Charlemagne-class floating battleship',
+      weapon: 'Twin railgun turrets · missile batteries · Knightmare catapults',
+      lore: 'A game-specific E.U. answer to the Britannian Aerial Armada: a Float-borne battleship and Knightmare carrier flying the stars of Europia.',
+    },
+    shenlong_airship: {
+      ...AIRSHIP,
+      side: 'cf',
+      name: 'Shenlong-class Airship',
+      model: 'Shenlong-class floating battleship',
+      weapon: 'Twin heavy turrets · missile batteries · Knightmare catapults',
+      lore: 'A game-specific Federation flagship of the Vermillion Forbidden City, a dragon-prowed Float-borne battleship and Knightmare carrier.',
+    },
+    ikaruga_airship: {
+      ...AIRSHIP,
+      side: 'bk',
+      name: 'Ikaruga-class Airship',
+      model: 'Ikaruga-class floating carrier',
+      weapon: 'Bow hadron cannon · missile batteries · Knightmare catapults',
+      lore: 'The Black Knights’ floating flagship, built by the Chinese Federation: Zero’s command ship and Knightmare carrier.',
     },
     bamides: {
       side: 'neutral',
@@ -1442,6 +1482,7 @@
     AMPHIBIOUS,
     AMPHIBIOUS_II,
     CARRIER,
+    AIRSHIP,
     KNIGHTMARES,
     LINEUPS,
     ELITE_MAX_LEVEL,

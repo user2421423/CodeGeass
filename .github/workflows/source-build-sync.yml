@@ -31,6 +31,8 @@ jobs:
         run: node tools/lelouch_imperial_command_smoke.cjs
       - name: Verify C.C.'s Protection, one-hit shield and per-turn Immortality
         run: node tools/cc_protection_smoke.cjs
+      - name: Verify airship production, flight, cargo and damage rules
+        run: node tools/airship_smoke.cjs
       - name: Verify commander active banners and Zero AI targeting
         run: node tools/commander_ability_banners_smoke.cjs
       - name: Verify dynamic Scenario AI defensive transitions and Philippine exception

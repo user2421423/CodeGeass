@@ -163,6 +163,14 @@ a clean playtest is not itself proof that a scenario is balanced.
   that fight at sea and cross the coast without stopping, and Carrier-Battleships whose two formations launch onto
   the beach ready to move and attack. Ports on coastal cities build and repair them; a Naval research branch improves
   them, and the AI carries out its own carrier invasions.
+- **Airships (Conquest and regional scenarios):** every power can build its own floating battleship at a city with a
+  level-3 factory: Britannia's Logres class (also Euro Britannia), the E.U.'s Charlemagne class, the 2017 Federation's
+  Shenlong class and the Black Knights' Ikaruga class (the 2018 U.F.N. flies the Ikaruga). All four share one profile:
+  700 HP, attack 90, armor 50, range 1–2, 6 hexes a turn over any land, sea or impassable peak, and two Knightmare
+  formations aboard that launch onto any adjacent land. Each costs 1,800 credits, 500 industry, 150 science and
+  60 Sakuradite, is built in one turn and has no per-power limit. Airships cannot enter or capture cities, ports or
+  mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities, and repair beside a friendly
+  city. The AI builds them only in Conquest, from a clear surplus.
 - **Standing orders:** select a unit, choose Set destination (or press G), and
   click a hex. Units follow the route on subsequent turns; orders can be
   changed or cancelled.

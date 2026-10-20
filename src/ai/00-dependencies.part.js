@@ -40,6 +40,7 @@
     decreePrice,
     upgradeCityTier,
     buildingLevel,
+    airshipType,
     canBoard,
     carrierCapacity,
     canBuy,

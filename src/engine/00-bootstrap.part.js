@@ -112,6 +112,8 @@
   function eraUnitType(g, type, side) {
     const t = TYPES[type];
     if (side !== 'cf' || !t) return type;
+    // The 2017 Federation flies the Shenlong; the 2018 U.F.N. flies the Ikaruga.
+    if (t.air) return airshipType(g, side) || type;
     if (t.naval) {
       // Ordinary ships and marines use the era's navy; Elite marines use
       // their own era-checked deployment path below.

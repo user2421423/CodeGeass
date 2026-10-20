@@ -29,12 +29,13 @@
     const landOwned = s.owner === side,
       portOwned = (s.portOwner || s.owner) === side,
       land = landOwned ? (g.buildable?.[side] || Object.values(lineupOf(g, side))) : [],
-      navy = portOwned && (s.portAt || (landOwned && portSite(g, s))) ? navalTypes(g, side) : [];
-    return [...new Set([...land, ...navy])]
+      navy = portOwned && (s.portAt || (landOwned && portSite(g, s))) ? navalTypes(g, side) : [],
+      air = landOwned && airshipType(g, side) ? [airshipType(g, side)] : [];
+    return [...new Set([...land, ...navy, ...air])]
       .filter(id => {
         const t = TYPES[id];
-        return t && !t.elite && !t.campaign && (t.naval ? portOwned : landOwned) &&
-          (t.side === side || t.side === 'neutral' || (g.buildable?.[side] || []).includes(id));
+        return t && !t.elite && !t.campaign && (portBuilt(t) ? portOwned : landOwned) &&
+          (t.side === side || t.side === 'neutral' || t.air || (g.buildable?.[side] || []).includes(id));
       })
       .sort((a, b) => {
         const ta = TYPES[a],
@@ -82,8 +83,8 @@
     const t = TYPES[unit];
     const order = [];
     // If a queued unit is blocked by infrastructure, upgrade that infrastructure first.
-    if (t?.naval && (s.portLevel || 0) < (t.port || 0)) order.push('port');
-    if (t && !t.naval && s.tier < t.tier) order.push('factory');
+    if (portBuilt(t) && (s.portLevel || 0) < (t.port || 0)) order.push('port');
+    if (t && !portBuilt(t) && s.tier < t.tier) order.push('factory');
     // Otherwise improve the economy in a predictable global order.
     order.push('refinery', 'lab', 'factory', 'port');
     return [...new Set(order)];
@@ -117,9 +118,9 @@
           }
         }
       }
-      if (!unit || (TYPES[unit].naval && s.portProducedTurn === g.turn)) continue;
+      if (!unit || (portBuilt(TYPES[unit]) && s.portProducedTurn === g.turn)) continue;
       const t = TYPES[unit],
-        producer = t.naval ? (s.portOwner || s.owner) : s.owner;
+        producer = portBuilt(t) ? (s.portOwner || s.owner) : s.owner;
       if (producer !== side) continue;
       const stack = t.naval === 'ship' ? 1 : a.stack,
         cost = decreePrice(price(unit, stack, g, side), s.owner === side ? s : null);

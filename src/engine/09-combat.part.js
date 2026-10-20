@@ -75,9 +75,11 @@
     if(!counter&&st&&foe(g,st.owner,u.side)&&fx(u).focusBombard&&u.focusCity?.city===st.id&&u.focusCity.lastTurn>=g.turn-1)
       attack*=1+Math.min(3,u.focusCity.count)*fx(u).focusBombard;
     // Portmans hunt transports and warships; the Portman II also fights harder in the water (Aquatic Combat).
-    if (t.naval === 'amphibious' && target && (atSea(g, target) || isShip(target))) attack *= 1.25;
-    if (t.naval === 'amphibious' && target && isShip(target)) attack *= 1 + techValue(g, u.side, 'amphibious.torpedoes');
-    if (t.naval === 'amphibious' && target && coastalLand(g, target))
+    // Nothing deals bonus damage to airships: anti-ship and coastal bonuses skip them.
+    const seaShip = target && isShip(target) && !isAir(target);
+    if (t.naval === 'amphibious' && target && (atSea(g, target) || seaShip)) attack *= 1.25;
+    if (t.naval === 'amphibious' && seaShip) attack *= 1 + techValue(g, u.side, 'amphibious.torpedoes');
+    if (t.naval === 'amphibious' && target && !isAir(target) && coastalLand(g, target))
       attack *= 1 + techValue(g, u.side, 'amphibious.clearance');
     if (t.naval === 'amphibious' && counter && coastalLand(g, u))
       attack *= 1 + techValue(g, u.side, 'amphibious.counterfire');
@@ -113,9 +115,9 @@
       attack *= 1 + ef.cityAttack;
     // Amphibious Elite abilities: the Lv.5 values replace, rather than stack with, Lv.3.
     const amphibiousAtSea = isSea(tile(g, u.c, u.r));
-    const coastalTarget = target || st;
+    const coastalTarget = target ? (isAir(target) ? null : target) : st;
     if (ef.vsNaval && target &&
-        (isShip(target) || (victim?.naval === 'amphibious' && isSea(tile(g, target.c, target.r)))))
+        (seaShip || (victim?.naval === 'amphibious' && isSea(tile(g, target.c, target.r)))))
       attack *= 1 + ef.vsNaval;
     if (counter && amphibiousAtSea && ef.seaCounter) attack *= 1 + ef.seaCounter;
     if (!counter && ef.coastalAttack && coastalTarget && coastalLand(g, coastalTarget))
@@ -270,7 +272,8 @@
         commanderDefense(g,target,u,counter,direct) *
         newcomerDefense(g,target,u,counter,direct);
       if (isSea(ground)) attack *= TYPES[target.type].naval ? 1 : 1 + seaPenalty(g, target.side);
-      else {
+      // Airships fly above the terrain: no cover, and no extra damage either.
+      else if (!isAir(target)) {
         const bypass=(target.expInformationWarfare?.side===u.side?.25:0)+(!counter&&u.expPrecisionTarget?.turn===g.turn&&u.expPrecisionTarget.id===target.id?.4:0)+(u.forcedOffensive?.5:0)+(target.expRadar?.side===u.side&&TYPES[u.type].branch==='Artillery'?1:0)+(fx(u).highland&&tile(g,u.c,u.r)?.terrain==='mountain'?.5:0)+(fx(u).adaptiveBreakthrough&&u.movedDistance>=3?.2:0)+(fx(u).ziAmbush&&u.movedDistance>=2&&u.expZiAmbushTurn!==g.turn?.3:0)+(f.blackSeaFox&&u.expEduardoMountainTurn!==g.turn&&tile(g,u.c,u.r)?.terrain==='mountain'?.25:0);
         attack*=1-(TERRAIN[ground.terrain]?.cover||0)*(1-Math.min(1,bypass));
       }

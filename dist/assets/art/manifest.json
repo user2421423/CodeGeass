@@ -270,6 +270,18 @@
     },
     "chuyen_super": {
       "src": "units/chuyen_super-d6bdd3fffcc6.webp"
+    },
+    "charlemagne_airship": {
+      "src": "units/charlemagne_airship-68c739faca41.png"
+    },
+    "ikaruga_airship": {
+      "src": "units/ikaruga_airship-5aa4fe56b1b7.png"
+    },
+    "logres_airship": {
+      "src": "units/logres_airship-c64e45752046.png"
+    },
+    "shenlong_airship": {
+      "src": "units/shenlong_airship-4b5139805ae7.png"
     }
   },
   "portraits": {

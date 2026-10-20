@@ -100,8 +100,8 @@
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (u.hp >= maxHP(u) ? 'Frame already intact' : null) ||
       (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
-      (isShip(u) && !atFriendlyPort(g, u) ? 'Warships must occupy a friendly-controlled port to repair' : null) ||
-      (!isShip(u) && !nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
+      (isShip(u) && !isAir(u) && !atFriendlyPort(g, u) ? 'Warships must occupy a friendly-controlled port to repair' : null) ||
+      ((!isShip(u) || isAir(u)) && !nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
       shortfall(funds(g, u.side), { credits: repairCost(u, g) })
     );
   }
@@ -125,27 +125,29 @@
   function buyReason(g, s, type, stack = 1, vacating = null) {
     const t = TYPES[type];
     if (!t || !s) return 'Unavailable';
-    const producer = t.naval ? (s.portOwner || s.owner) : s.owner;
+    // Airships are built in a city factory; amphibious frames and carriers at its port.
+    const port = portBuilt(t), producer = port ? (s.portOwner || s.owner) : s.owner;
     return (
-      (g.over ? 'Operation over' : producer !== g.phase ? (t.naval ? 'Not your port' : 'Not your city') : null) ||
+      (g.over ? 'Operation over' : producer !== g.phase ? (port ? 'Not your port' : 'Not your city') : null) ||
       (t.elite ? 'Deploy Elite Forces from the Elite Forces factory tab' : null) ||
       (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
       (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) ? t.naval !== 'ship' : !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
-      (!(producer === 'cf' ? [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)] :
-        (g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)])).includes(type)
+      ((t.air ? airshipType(g, producer) !== type :
+        !(producer === 'cf' ? [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)] :
+        (g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)])).includes(type))
         ? 'Not built by this faction'
         : null) ||
-      (!t.naval ? cityBusyReason(g, s) : null) ||
+      (!port ? cityBusyReason(g, s) : null) ||
       (s.expSupplyBlocked?.owner===s.owner?'City supply lines are disrupted':null) ||
-      (t.naval && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
-      (!t.naval && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
+      (port && (s.portLevel || 0) < t.port ? `Requires a level-${t.port} port` : null) ||
+      (!port && s.tier < t.tier ? `Requires factory level ${t.tier}` : null) ||
       (!Number.isInteger(stack) || stack < 1 || stack > 3 ? 'Choose 1–3 frames' : null) ||
       (t.naval === 'ship' && stack !== 1 ? 'Warships are built one at a time' : null) ||
       // A clear land factory can produce again this turn; ports remain
       // restricted to one naval launch per turn.
-      (t.naval && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
-      (!recruitOptions(g, s, producer, type).length && !(vacating && !t.naval && unitAt(g, s) === vacating)
-        ? (t.naval ? 'A unit is on the port' : 'A unit is on the city') : null) ||
+      (port && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
+      (!recruitOptions(g, s, producer, type).length && !(vacating && !port && unitAt(g, s) === vacating)
+        ? (port ? 'A unit is on the port' : 'A unit is on the city') : null) ||
       shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null))
     );
   }

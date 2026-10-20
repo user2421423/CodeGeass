@@ -8,6 +8,7 @@
   });
   function frameResearch(t) {
     if (!t) return 0;
+    if (t.air) return t.research;
     if (t.naval === 'ship') return 12;
     if (t.naval === 'amphibious') return t.tier >= 2 ? 4 : 0;
     return FRAME_RESEARCH[t.cls] || 0;
@@ -136,8 +137,9 @@
   // New units deploy on the city hex itself, naval units on the port's sea hex; nothing is built while a unit stands
   // there (move it off first).
   function recruitOptions(g, s, side, type = null) {
-    if ((TYPES[type]?.naval ? s.portOwner || s.owner : s.owner) !== side) return [];
-    const at = TYPES[type]?.naval ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
+    const port = portBuilt(TYPES[type]);
+    if ((port ? s.portOwner || s.owner : s.owner) !== side) return [];
+    const at = port ? s.portAt && tile(g, s.portAt.c, s.portAt.r) : tile(g, s.c, s.r);
     return at && !unitAt(g, at) ? [at] : [];
   }
   // Unit prices depend on the frame and stack size, not faction.
@@ -157,7 +159,7 @@
     const s = g.stations.find(s => s.id === stationId);
     const why = buyReason(g, s, type, stack);
     if (why) return { ok: false, reason: why };
-    const producer = TYPES[type].naval ? (s.portOwner || s.owner) : s.owner;
+    const producer = portBuilt(TYPES[type]) ? (s.portOwner || s.owner) : s.owner;
     const options = recruitOptions(g, s, producer, type);
     const p = position ? options.find(p => p.c === position.c && p.r === position.r) : options[0];
     if (!p) return { ok: false, reason: 'Deployment hex unavailable.' };
@@ -167,7 +169,7 @@
     if (s.expDecree && s.owner === producer) delete s.expDecree;
     warSpend(g,producer,cost,'production');
     spend(funds(g, producer), cost);
-    if (TYPES[type].naval) s.portProducedTurn = g.turn;
+    if (portBuilt(TYPES[type])) s.portProducedTurn = g.turn;
     else s.producedTurn = g.turn;
     const u = newUnit(g, type, producer, p.c, p.r, stack, null, false);
     log(g, `${TYPES[type].short} ×${stack} rolls out at ${s.name}. Ready next turn.`, producer);

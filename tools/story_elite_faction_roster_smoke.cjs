@@ -82,7 +82,8 @@ for (const difficulty of ['normal', 'hard', 'challenge']) {
 const ui = fs.readFileSync(require.resolve('../dist/ui/dialogs.js'), 'utf8');
 assert.match(ui, /: port \? \[NAVAL_TAB, ELITE_NAVAL_TAB\]/,
   'Story port tabs include Elite Amphibious');
-assert.match(ui, /\[\.\.\.BRANCH_LIST, ELITE_FACTORY_TAB\]/,
+// The airship tab sits between the branches and Elite Forces outside Story Mode.
+assert.match(ui, /\[\.\.\.BRANCH_LIST, (?:\.\.\.\(E\.airshipType\(game, game\.player\) \? \[AIRSHIP_TAB\] : \[\]\), )?ELITE_FACTORY_TAB\]/,
   'Story factory tabs include Elite Forces');
 
 console.log('Story elite deployment and faction roster regression: PASS (' + tested + ' missions x difficulties)');

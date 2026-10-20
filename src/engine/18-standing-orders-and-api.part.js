@@ -4,6 +4,7 @@
   // the sea only when the destination lies across it (amphibious frames go either way). It never attacks on its own.
   function gotoSurface(g, u, p) {
     const t = TYPES[u.type];
+    if (t.air) return 'air';
     if (t.naval === 'ship') return 'sea';
     return !t.naval && !atSea(g, u) && massOf(g, u) >= 0 && massOf(g, u) === massOf(g, p) ? 'land' : null;
   }
@@ -22,8 +23,10 @@
     const t = p && tile(g, p.c, p.r),
       naval = TYPES[u.type].naval;
     if (!t) return 'Choose a hex on the map';
-    if (TERRAIN[t.terrain]?.blocked) return 'Impassable terrain';
-    if (naval === 'ship' && (!navigable(t) || stationAt(g, t))) return 'Warships stay at sea';
+    const air = isAir(u);
+    if (TERRAIN[t.terrain]?.blocked && !air) return 'Impassable terrain';
+    if (air && stationAt(g, t)) return 'Airships cannot enter cities';
+    if (naval === 'ship' && !air && (!navigable(t) || stationAt(g, t))) return 'Warships stay at sea';
     if (!naval && isSea(t)) return 'Choose a land hex';
     if (t.c === u.c && t.r === u.r) return 'Already there';
     // Temporary occupancy or defenses may clear before the unit arrives.
@@ -165,6 +168,9 @@
     NAVAL,
     PORT,
     navalTypes,
+    AIRSHIPS,
+    airshipType,
+    portBuilt,
     portSite,
     normalizeResearch,
     allUnits,
@@ -521,6 +527,9 @@
       isCoast,
       navigable,
       isShip,
+      isAir,
+      portBuilt,
+      airshipType,
       launch,
       log,
       massOf,

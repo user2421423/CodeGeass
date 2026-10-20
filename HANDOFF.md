@@ -66,8 +66,8 @@ and 88 missions as of 2026-10-19, reached from the start menu. Rules in `dist/ca
 
 ### Artwork handoff status
 
-Published artwork is tracked and deployed from `dist/assets/art/`: **70 Knightmare sprites (31 Conquest frames
-including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames), 58 commander portraits and 3 building
+Published artwork is tracked and deployed from `dist/assets/art/`: **74 Knightmare sprites (31 Conquest frames
+including the Bamides, 19 Elite Forces, 11 campaign frames, 9 naval frames, 4 airships), 58 commander portraits and 3 building
 pictures (`buildings/city` drawn for every city, `buildings/port` on every port hex, `buildings/mine` on every mine
 on its own hex and in the mine panel; `ART.drawBuilding` / `ART.building`)**, registered
 synchronously by `manifest.js`. Source provenance and preparation details are recorded in
@@ -188,7 +188,7 @@ Everything ships from `dist/`; there is no runtime bundler (the five build-outpu
 - **Navies** (`NAVAL[side] = { amphibious, amphibious2, carrier }`, `navalTypes(g, side)`; Conquest only, outside the
   ten-class lineups, `naval: 'amphibious' | 'ship'` on the frame). Every power's equivalent units share one stat block
   (`AMPHIBIOUS`, `AMPHIBIOUS_II`, `CARRIER`); only names, models and art differ: Britannia's Portman, Portman II and
-  Dreadnought-class Carrier-Battleship, the E.U.'s Panzer-Frosch, Panzer-Frosch II and Charlemagne-class carrier, the
+  Dreadnought-class Carrier-Battleship, the E.U.'s Panzer-Frosch, Panzer-Frosch II and E.U. Carrier-Battleship, the
   Federation's Shui Gun-Ru, Shui Gun-Ru II and Federation carrier. Each power starts with 4 carriers and 6 amphibious
   formations (`NAVY_DATA`) and 4 ports (`PORT_DATA`: two level 2, two level 1).
   - Amphibious (210/45/17; type II 260/55/22 with Aquatic Combat +15% from a sea hex): base move 1 (3 on land in

@@ -873,6 +873,34 @@
       "file": "units/bk_amphibious_ii-dc29ece82055.png",
       "page": "https://srw.wingzero.tw/zh-TW/works/154/mecha/4352",
       "method": "Shares the regular Black Knights Amphibious II Gekka Shiden sprite at the repository owner's request; elite stats and identity unchanged."
+    },
+    {
+      "kind": "units",
+      "id": "charlemagne_airship",
+      "file": "units/charlemagne_airship-68c739faca41.png",
+      "page": null,
+      "method": "Owner-supplied artwork (added 2026-10-20) with a transparent background; trimmed with tools/local_art_prepare.py --no-cutout."
+    },
+    {
+      "kind": "units",
+      "id": "ikaruga_airship",
+      "file": "units/ikaruga_airship-5aa4fe56b1b7.png",
+      "page": "https://codegeass.fandom.com/wiki/Ikaruga",
+      "method": "Owner-supplied artwork (added 2026-10-20) with a transparent background; trimmed with tools/local_art_prepare.py --no-cutout."
+    },
+    {
+      "kind": "units",
+      "id": "logres_airship",
+      "file": "units/logres_airship-c64e45752046.png",
+      "page": "https://codegeass.fandom.com/wiki/Logres-class",
+      "method": "Owner-supplied artwork (added 2026-10-20) with a transparent background; trimmed with tools/local_art_prepare.py --no-cutout."
+    },
+    {
+      "kind": "units",
+      "id": "shenlong_airship",
+      "file": "units/shenlong_airship-4b5139805ae7.png",
+      "page": null,
+      "method": "Owner-supplied artwork (added 2026-10-20) with a transparent background; trimmed with tools/local_art_prepare.py --no-cutout."
     }
   ],
   "drawnFallbacks": {

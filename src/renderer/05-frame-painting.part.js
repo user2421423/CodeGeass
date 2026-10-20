@@ -66,7 +66,7 @@ function draw(time, dt) {
   TERRITORY_LABELS.draw(ctx, game, scale, WORLD_W, left, right, top, bottom, copiesBetween);
   // Terrain-specific movement highlights in every game mode:
   // green = ordinary land, cyan = amphibious coastline, blue = open sea.
-  const movingShip = E.TYPES[selectedUnit()?.type]?.naval === 'ship';
+  const movingShip = E.TYPES[selectedUnit()?.type]?.naval === 'ship' && !E.TYPES[selectedUnit()?.type]?.air;
   for (const k of readyCache.keys()) {
     const [cc, rr] = k.split(',').map(Number),
       t = E.tile(game, cc, rr),
@@ -396,7 +396,7 @@ function draw(time, dt) {
       }
       drawPlate(u, scale, sea, time, sel || multi);
       ctx.globalAlpha=spent?0.6:1;
-      const size = t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
+      const size = t.air ? R * 2.3 : t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
       ctx.shadowColor = '#000a';
       ctx.shadowBlur = 5;

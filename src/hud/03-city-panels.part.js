@@ -156,8 +156,8 @@ function automationUnitOptionsHTML(s, selected) {
     '<option value="">Off — manual production</option>',
     ...options.map(id => {
       const t = E.TYPES[id],
-        kind = t.naval ? 'Naval' : t.branch,
-        req = t.naval ? `Port ${t.port}` : `Factory ${t.tier}`;
+        kind = t.air ? 'Airship' : t.naval ? 'Naval' : t.branch,
+        req = E.portBuilt(t) ? `Port ${t.port}` : `Factory ${t.tier}`;
       return `<option value="${id}" ${selected === id ? 'selected' : ''}>${esc(t.name)} · ${esc(kind)} · ${req}</option>`;
     }),
   ].join('');

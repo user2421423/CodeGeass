@@ -346,7 +346,7 @@
           e.industry - reserveInd - (c.industry || 0) >= ordinaryBudget.industry,
         ownedPorts = () => coastal.filter(s => s.portLevel && (s.portOwner || s.owner) === side),
         fleetCount = (...roles) => availableFleet.filter(u => eliteScenario(g)
-          ? roles.some(r => r === 'carrier' ? TYPES[u.type].naval === 'ship' : TYPES[u.type].naval === 'amphibious')
+          ? roles.some(r => r === 'carrier' ? TYPES[u.type].naval === 'ship' && !TYPES[u.type].air : TYPES[u.type].naval === 'amphibious')
           : roles.some(r => u.type === navy[r])).length;
 
       const ports = ownedPorts();
@@ -419,6 +419,18 @@
           }
         }
       }
+    }
+    // 4c. Airships (Conquest only): a rare flagship bought from a clear surplus, so the
+    // field army keeps its normal budget. The rules set no cap; the AI holds itself to
+    // one per eight cities (at most three) and keeps Sakuradite for a heavy frame.
+    const airship = g.mode === 'conquest' && !eliteAI && airshipType(g, side);
+    if (airship) {
+      const flying = own().filter(u => TYPES[u.type].air).length,
+        cost = price(airship, 1, g, side),
+        yard = yard3.find(s => canBuy(g, s, airship, 1));
+      if (yard && flying < Math.min(3, Math.floor(bases.length / 8)) && developmentAffordable(cost) &&
+          (e.sakuradite || 0) - cost.sakuradite >= reserveSak + heavySak)
+        recruit(g, yard.id, airship, 1);
     }
     // Formations first: every factory tries a 3- or 2-frame formation before
     // unfilled factories may produce an affordable single-frame unit. A successful

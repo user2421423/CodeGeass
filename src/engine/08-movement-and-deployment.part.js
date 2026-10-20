@@ -135,6 +135,7 @@
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
       ship = t.naval === 'ship',
+      air = !!t.air,
       amphibious = t.naval === 'amphibious',
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
@@ -180,7 +181,8 @@
       const { p, cost } = pop();
       if (cost > costs.get(stateKey(p))) continue;
       for (const n of adjacent(g, p)) {
-        if (TERRAIN[n.terrain]?.blocked || (ship && !navigable(n)) ||
+        // Airships fly over impassable peaks and land alike; other warships keep to the water.
+        if ((!air && TERRAIN[n.terrain]?.blocked) || (ship && !air && !navigable(n)) ||
             (u.skillReposition && !t.naval && isSea(n) && !fromSea) ||
             ((u.expMargaretRedeploy||u.expShadowMove)&&isSea(n)!==fromSea)) continue;
         const occ = unitAt(g, n),
@@ -276,7 +278,7 @@
     // Only city captures transfer territory; ordinary landings cannot repaint it.
     const { captured, annexed } = captureCity(g, u, true);
     const seized = seizeDeposit(g, u, t);
-    log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} launches from the Carrier-Battleship.`, u.side);
+    log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} launches from the ${TYPES[ship.type].air ? TYPES[ship.type].name : 'Carrier-Battleship'}.`, u.side);
     checkVictory(g);
     return { ok: true, unit: u, to: { c: t.c, r: t.r }, captured, annexed, seized };
   }
@@ -322,7 +324,8 @@
   // A port is seized by entering its water hex, independently of its city and territory.
   function capturePort(g, u) {
     const s = portAtHex(g, u);
-    if (!s || !foe(g, s.portOwner || s.owner, u.side)) return null;
+    // Airships cannot seize ports, just as they cannot seize cities or mines.
+    if (!s || isAir(u) || !foe(g, s.portOwner || s.owner, u.side)) return null;
     const previousOwner=s.portOwner||s.owner;
     s.portOwner=u.side;
     recordWarEvent(g,'portCaptured',u.side,{cityId:s.id,city:s.name,previousOwner,unitId:u.id});
@@ -415,7 +418,7 @@
       u.lastTurnMoved = true;
       u.boardedTurn = g.turn;
       (carrier.cargo ||= []).push(u);
-      log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} boards the Carrier-Battleship.`, u.side);
+      log(g, `${COMMANDERS[u.cmd]?.short || TYPES[u.type].short} boards the ${TYPES[carrier.type].air ? TYPES[carrier.type].name : 'Carrier-Battleship'}.`, u.side);
       return { ok: true, from, to: { c: dest.c, r: dest.r }, loaded: carrier.id };
     }
     markMoveAction(g, u);
