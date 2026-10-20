@@ -117,8 +117,17 @@
   //   ranks        commander promotions (capped at Supreme Commander)
   //   income       multiplier on starting resources and on income every turn
   // Descriptions are generated from these numbers; `note` adds anything they cannot express.
+  // `campaign` holds Story campaign overrides (dist/campaign.js merges them over the shared values):
+  //   economy      multiplier on the player's starting resources
+  const STORY_ACES = 'Named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.';
   const DIFFICULTIES = {
-    normal: { name: 'Normal', level: 0, tokens: 1, note: 'The world as it stands in 2017 a.t.b.' },
+    normal: {
+      name: 'Normal', level: 0, tokens: 1, note: 'The world as it stands in 2017 a.t.b.',
+      campaign: {
+        economy: 1.5,
+        note: 'Ordinary scripted formations (up to 3 frames), favorable starting forces and 50% more starting resources. HQ-unlocked Elite Forces may be deployed at eligible factories.',
+      },
+    },
     elite: {
       name: 'Elite',
       level: 3,
@@ -132,6 +141,9 @@
       income: 1.25,
       preserveNaval: true,
       note: 'Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      campaign: {
+        note: 'Land formations use one-frame Elite Forces; scripted carriers retain their hulls and cargo. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
+      },
     },
     hard: {
       name: 'Hard',
@@ -143,7 +155,8 @@
       extraStack: 1,
       stack: 1,
       ranks: 3,
-      income: 1,
+      income: 1.1,
+      campaign: { note: STORY_ACES },
     },
     challenge: {
       name: 'Challenge',
@@ -156,6 +169,7 @@
       stack: 2,
       ranks: HQ_RANK_CAP,
       income: 1.25,
+      campaign: { note: STORY_ACES },
     },
   };
   function describeDifficulty(d) {

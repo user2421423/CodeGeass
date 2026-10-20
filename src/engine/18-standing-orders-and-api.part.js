@@ -268,6 +268,7 @@
     refreshScenarioRivals,
     UPGRADE,
     operationKey,
+    conquestKey,
     ROMAN,
     BRANCHES,
     BRANCH_NAMES,

@@ -333,8 +333,12 @@
   }
   // Flat, round-number rewards per era/faction/difficulty (no research bank).
   const TOKEN_REWARD = { normal: 500, hard: 1000, challenge: 1500, elite: 2000, first: 200 };
+  // The profile.cleared key for a Conquest victory; the start menu reads the same key.
+  function conquestKey(era = 'world', side = 'britannia', difficulty = 'normal') {
+    return `conquest:${era || 'world'}:${side || 'britannia'}:${DIFFICULTIES[difficulty] ? difficulty : 'normal'}`;
+  }
   function operationKey(g) {
-    return `conquest:${g.era || 'world'}:${g.player || 'britannia'}:${DIFFICULTIES[g.difficulty] ? g.difficulty : 'normal'}`;
+    return conquestKey(g.era, g.player, g.difficulty);
   }
   function missionReward(g, wins = 0, cleared = {}) {
     if (!g.over || g.over.winner !== g.player) return { total: 0, parts: [] };

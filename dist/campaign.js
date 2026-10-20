@@ -12,38 +12,14 @@
     camp.missions.forEach((m, i) => (ALL[m.id] = Object.assign(m, { campaign: cid, index: i })));
   const mission = id => ALL[id] || null;
 
-  // Elite difficulty converts scripted forces to one-frame elites. All Story difficulties
-  // permit HQ-unlocked Elite Forces at eligible player factories.
-  const DIFFICULTIES = {
-    normal: {
-      name: 'Normal',
-      level: 0,
-      tokens: 1,
-      playerStack: 0,
-      enemyHp: 1,
-      enemyShield: 1,
-      economy: 1.5,
-      extraTurns: 0,
-      desc: 'Ordinary scripted formations (up to 3 frames), favorable starting forces and 50% more starting resources. HQ-unlocked Elite Forces may be deployed at eligible factories.',
-    },
-    hard: {
-      ...E.DIFFICULTIES.hard,
-      ranks: 1, // Preserve campaign's original commander progression.
-      note: 'Named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
-    },
-    challenge: {
-      ...E.DIFFICULTIES.challenge,
-      ranks: 2, // Conquest uses maximum rank; campaigns retain +2.
-      note: 'Named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
-    },
-    elite: {
-      ...E.DIFFICULTIES.challenge,
-      name: 'Elite', level: 3, tokens: 2.5, ranks: E.RANKS.length - 1,
-      stack: 0, extraStack: 1, extraTurns: 0,
-      note: 'Land formations use one-frame Elite Forces; scripted carriers retain their hulls and cargo. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
-    },
-  };
-  for (const id of ['hard', 'challenge', 'elite']) DIFFICULTIES[id].desc = E.describeDifficulty(DIFFICULTIES[id]);
+  // Story difficulties are the engine's shared DIFFICULTIES with their `campaign` overrides
+  // merged in. Elite converts scripted forces to one-frame elites; every difficulty
+  // permits HQ-unlocked Elite Forces at eligible player factories.
+  const DIFFICULTIES = Object.fromEntries(['normal', 'hard', 'challenge', 'elite'].map(id => {
+    const { campaign, ...shared } = E.DIFFICULTIES[id],
+      d = { ...shared, ...campaign };
+    return [id, { ...d, desc: E.describeDifficulty(d) }];
+  }));
   const difficulty = id => DIFFICULTIES[id] || DIFFICULTIES.normal;
   const UPGRADE = {
     scout: 'assault',
@@ -255,7 +231,6 @@
     // Carriers retain their hull/cargo rules on every difficulty, as in regional wars.
     const ship = E.TYPES[type].naval === 'ship';
     if (!E.TYPES[type].elite && !ship) {
-      if (!enemy && side === g.player && d.playerStack) unitStack = Math.min(3, unitStack + d.playerStack);
       if (enemy && d.level) {
         const n = g.campaign.enemyPlaced++;
         if (n % d.upgradeEvery === 0 && !(cmd && E.TYPES[type].cls === 'heavy')) type = upgradedType(type, side, g);
@@ -288,7 +263,6 @@
     if (hold != null && hold !== false) u.hold = { c: at.c, r: at.r, radius: hold };
     if (cmd) u.cmdRank = E.officer(g, cmd).rank;
     u.hp = E.maxHP(u);
-    if (enemy && d.enemyHp) u.hp = Math.max(1, Math.round(u.hp * d.enemyHp));
     if (carrier) {
       g.units.splice(g.units.indexOf(u), 1);
       (carrier.cargo ||= []).push(u);
@@ -415,7 +389,7 @@
         ...(difficultyId === 'elite' ? { eliteSelections: {} } : {}),
         turnLimit: m.lose?.turns
           ? (difficultyId === 'normal' && Number.isFinite(m.normalTurns)
-              ? m.normalTurns : m.lose.turns) + (d.extraTurns || 0) : 0,
+              ? m.normalTurns : m.lose.turns) : 0,
       },
     };
     if (d.economy && g.economy[g.player]) {
@@ -443,7 +417,6 @@
       // Normal-only Story objective defenses; preserve Hard/Challenge/Elite values.
       let shield = difficultyId === 'normal' && Number.isFinite(opts.normalShield)
         ? opts.normalShield : opts.shield ?? (opts.fort ? 400 : 120 + 60 * tier);
-      if (E.foe(g, owner, g.player) && d.enemyShield) shield = Math.max(1, Math.round(shield * d.enemyShield));
       g.stations.push({
         id: g.stations.length,
         name,
