@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const E=require('../dist/engine.js');
 const C=E.COMMANDERS;
-assert.equal(Object.keys(C).length,98,'Four-for-four keeps the 98-command roster inherited from main (two Britannian slots previously removed)');
+assert.equal(Object.keys(C).length,100,'Two new Euro Britannian Grand Masters fill the two vacated Britannian commander slots');
 assert.equal(Object.values(C).filter(x=>x.side==='eu').length,22);
 for(const k of ['miguel','romero','masaki','toru']){
   assert.ok(C[k],k+' recruitable');
