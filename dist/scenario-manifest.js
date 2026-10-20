@@ -59,7 +59,11 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"cf-eu-balkans",title:"Balkan Offensive",note:"57 cities · 2 sides · southeastern Europe"},
   {id:"cf-eu-north-africa",title:"North African Offensive",note:"51 cities · 2 sides · Mediterranean campaign"},
   {id:"cf-eu-central-europe",title:"Conquest of Central Europe — No Germany",note:"102 cities · 2 sides · Poland to Austria"},
-  {id:"cf-eu-france",title:"Invasion of France — Mediterranean Offensive",note:"34 cities · 2 sides · southern naval invasion"}
+  {id:"cf-eu-france",title:"Invasion of France — Mediterranean Offensive",note:"34 cities · 2 sides · southern naval invasion"},
+  {id:"rounds-rebellion",title:"Knights of the Round Rebellion",note:"2 sides · Pendragon succession war"},
+  {id:"shin-independence",title:"Euro-Britannian Independence",note:"2 sides · Shin vs Empire"},
+  {id:"chinese-civil-war",title:"Chinese Civil War — The Imperial Restoration",note:"2 sides · Tianzi vs High Eunuchs"},
+  {id:"eu-military-coup",title:"E.U. Military Coup — Smilas vs Leila",note:"44 cities · 2 sides · E.U. civil war"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.
 const SCENARIO_FILES = Object.freeze([
@@ -137,7 +141,12 @@ const SCENARIO_FILES = Object.freeze([
   'scenarios-cf-eu-balkans.js',
   'scenarios-cf-eu-north-africa.js',
   'scenarios-cf-eu-central-europe.js',
-  'scenarios-cf-eu-france.js'
+  'scenarios-cf-eu-france.js',
+  'scenarios-alternate-common.js',
+  'scenarios-rounds-rebellion.js',
+  'scenarios-shin-independence.js',
+  'scenarios-chinese-civil-war.js',
+  'scenarios-eu-coup.js'
 ]);
 // Script promises are shared across callers; successful modules execute once per tab.
 const assetLoads = new Map();

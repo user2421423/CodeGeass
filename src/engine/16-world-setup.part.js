@@ -408,7 +408,8 @@
       // Carrier-battleships remain ordinary hulls even on Elite difficulty.
       if (old.naval === 'ship') continue;
       const roster = g.scenario.eliteRosters[u.side] || [];
-      let id = old.naval ? naval[u.side]?.[old.naval] : null;
+      let id = old.naval ? (naval[u.side]?.[old.naval] ||
+        g.scenario?.eliteNavalTypes?.[u.side]?.[old.naval]) : null;
       if (!old.naval) {
         const pool = roster.filter(id => eliteEligible(g, u.side, id) && !TYPES[ELITE_FORCES[id]?.type]?.naval);
         const sameClass = pool.filter(id => TYPES[ELITE_FORCES[id].type].cls === old.cls);

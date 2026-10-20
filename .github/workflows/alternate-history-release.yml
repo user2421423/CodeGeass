@@ -1,0 +1,125 @@
+name: Alternate History release audit
+on:
+  push:
+    branches: ['feature/alternate-history-civil-wars']
+    paths:
+      - '.github/workflows/alternate-history-release.yml'
+      - 'tools/alternate_history_*'
+      - 'dist/scenarios-alternate-common.js'
+      - 'dist/scenarios-rounds-rebellion.js'
+      - 'dist/scenarios-shin-independence.js'
+      - 'dist/scenarios-chinese-civil-war.js'
+      - 'dist/scenarios-eu-coup.js'
+      - 'dist/scenario-catalog.js'
+      - 'src/engine/**'
+      - 'dist/ui/scenario-screens.js'
+  pull_request:
+    branches: ['main']
+    paths:
+      - '.github/workflows/alternate-history-release.yml'
+      - 'tools/alternate_history_*'
+      - 'dist/scenarios-alternate-common.js'
+      - 'dist/scenarios-rounds-rebellion.js'
+      - 'dist/scenarios-shin-independence.js'
+      - 'dist/scenarios-chinese-civil-war.js'
+      - 'dist/scenarios-eu-coup.js'
+      - 'src/engine/**'
+permissions:
+  contents: write
+jobs:
+  save-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/checkout@v4
+        with:
+          ref: c517408ef733ba1611f30689f1f5111c70cbfda1
+          path: baseline
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Build new and baseline versions
+        run: |
+          node tools/build_sources.cjs
+          (cd baseline && node tools/build_sources.cjs)
+      - name: All faction, difficulty and legacy-save roundtrip tests
+        run: |
+          node tools/alternate_history_smoke.cjs
+          node tools/alternate_history_integration.cjs
+      - name: Compare unchanged scenarios against exact PR base
+        run: |
+          node tools/check_sim_baseline.cjs \
+            --base-root "$GITHUB_WORKSPACE/baseline" \
+            --compare exact \
+            --scenarios eu-greenland,division-japan,battle-luoyang,area-18,european-war,cf-pendragon,conquest-indochina,eu-cf-kazakhstan,eu-cf-luoyang
+  extended-balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [rounds-rebellion, shin-independence, chinese-civil-war, eu-military-coup]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Build sources
+        run: node tools/build_sources.cjs
+      - name: All sides, multi-seed Normal and other difficulties
+        run: |
+          set -euo pipefail
+          case "${{ matrix.scenario }}" in
+            rounds-rebellion) sides="rounds britannia";;
+            shin-independence) sides="britannia shinregime";;
+            chinese-civil-war) sides="loyalists eunuchs";;
+            eu-military-coup) sides="junta eu";;
+          esac
+          for side in $sides; do
+            for seed in 11 23 47; do
+              node tools/scenario_sim.cjs "${{ matrix.scenario }}" "$side" normal "$seed" 8
+            done
+            node tools/scenario_sim.cjs "${{ matrix.scenario }}" "$side" normal 71 24
+            for diff in hard challenge elite; do
+              node tools/scenario_sim.cjs "${{ matrix.scenario }}" "$side" "$diff" 11 4
+            done
+          done
+  preview-and-mobile:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/alternate-history-civil-wars
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Build sources
+        run: node tools/build_sources.cjs
+      - name: Install browser runner
+        run: npm install --prefix /tmp/alt-history-playwright --no-save --no-package-lock playwright-core@1.57.0
+      - name: Generate four politically accurate troop-free geographic previews
+        env:
+          NODE_PATH: /tmp/alt-history-playwright/node_modules
+          SCENARIO_IDS: rounds-rebellion,shin-independence,chinese-civil-war,eu-military-coup
+        run: node tools/generate-scenario-previews.cjs
+      - name: Verify alternate previews and responsive browser interaction
+        env:
+          NODE_PATH: /tmp/alt-history-playwright/node_modules
+        run: node tools/alternate_history_browser_check.cjs
+      - name: Commit real preview maps and accurate faction statistics to PR branch
+        run: |
+          git add -- \
+            dist/scenario-previews/rounds-rebellion.webp \
+            dist/scenario-previews/shin-independence.webp \
+            dist/scenario-previews/chinese-civil-war.webp \
+            dist/scenario-previews/eu-military-coup.webp \
+            dist/scenario-previews/metadata.js
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Render correct political previews for four alternate-history battles"
+            git pull --rebase origin feature/alternate-history-civil-wars
+            git push origin HEAD:feature/alternate-history-civil-wars
+          fi

@@ -10,6 +10,11 @@ const ART = (() => {
     ufn: { trim: '#f6cf67', glow: '#37bfa9', flag: '#f8cf32', flag2: '#e70701' },
     jlf: { trim: '#c9d6a0', glow: '#9fff7a', flag: '#3d4a2c', flag2: '#d8e2b0' },
     eb: { trim: '#e3c06a', glow: '#d2a8ff', flag: '#4b2a7a', flag2: '#e3c06a' },
+    rounds: { trim:'#c9a842', glow:'#e9dbab', flag:'#c9a842', flag2:'#292b3b' },
+    shinregime: { trim:'#9f7cdb', glow:'#d5b9ff', flag:'#8255c2', flag2:'#d4c0ef' },
+    loyalists: { trim:'#f3d36f', glow:'#f0e2b9', flag:'#d54445', flag2:'#f3d36f' },
+    eunuchs: { trim:'#9bc5d1', glow:'#bed5e0', flag:'#6a8fa5', flag2:'#e9edf1' },
+    junta: { trim:'#d1ab6b', glow:'#f2c78b', flag:'#997341', flag2:'#eee3ca' },
   };
   const P = pts => pts.map(p => p.map(v => +v.toFixed(1)).join(',')).join(' ');
   const poly = (pts, fill, extra = '') => `<polygon points="${P(pts)}" fill="${fill}" ${extra}/>`;
@@ -32,6 +37,17 @@ const ART = (() => {
   };
   function flagSVG(side) {
     if (side === 'ufn') return ufnFlagSVG();
+    // Alternate governments use distinct standards instead of blank faction
+    // portraits. Minimal heraldry remains crisp on mobile and game maps.
+    const rebelStandards = {
+      rounds: ['#242633','#c9a842','<path d="M36 16 82 65M84 16 37 65" stroke="#c9a842" stroke-width="9"/><circle cx="60" cy="40" r="17" fill="#242633" stroke="#f0dd8e" stroke-width="5"/>','Knights of the Round'],
+      shinregime: ['#3a2859','#ad8ade','<path d="M60 7 101 40 60 73 19 40Z" fill="#ad8ade"/><path d="M60 19 83 40 60 61 37 40Z" fill="#3a2859" stroke="#f1dfff" stroke-width="3"/>','Independent Euro Britannia'],
+      loyalists: ['#a52f37','#f0d581','<circle cx="60" cy="40" r="25" fill="none" stroke="#f0d581" stroke-width="7"/><path d="M60 15 80 40 60 65 40 40Z" fill="#f0d581"/>','Tianzi Imperial Loyalists'],
+      eunuchs: ['#34516b','#d4e1e9','<path d="M28 20H92V60H28Z" fill="none" stroke="#d4e1e9" stroke-width="6"/><path d="M44 22V58M60 22V58M76 22V58" stroke="#d4e1e9" stroke-width="5"/>','Chinese Eunuch Regime'],
+      junta: ['#624828','#d9b679','<path d="M60 13 94 60H26Z" fill="#d9b679"/><path d="M60 31 77 55H43Z" fill="#624828"/><path d="M42 14H78" stroke="#fff0d4" stroke-width="5"/>','Smilas Military Junta'],
+    };
+    const standard=rebelStandards[side];
+    if(standard)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+standard[3]+' flag"><rect width="120" height="80" fill="'+standard[0]+'"/><rect x="3" y="3" width="114" height="74" fill="none" stroke="'+standard[1]+'" stroke-width="3"/>'+standard[2]+'</svg>';
     const f = FACTION_FLAGS[side];
     return f ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f.width} ${f.height}" aria-label="${f.label}"><image width="${f.width}" height="${f.height}" href="${f.src}"/></svg>` : '';
   }

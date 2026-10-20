@@ -56,6 +56,12 @@
       capital: 'Sankt Petersburg',
       campaign: true,
     },
+    // Alternate History: standalone factions never appear in the world Conquest roster.
+    junta: { name:'Smilas Military Junta',short:'Military Junta',adj:'Junta',color:'#997341',letter:'M',capital:'Paris',campaign:true },
+    rounds: { name:'Knights of the Round',short:'Round Knights',adj:'Round Knight',color:'#C9A842',letter:'R',capital:'Pendragon',campaign:true },
+    shinregime: { name:'Independent Euro Britannia',short:'Shin Regime',adj:'Independent Euro-Britannian',color:'#8255C2',letter:'S',capital:'Sankt Petersburg',campaign:true },
+    loyalists: { name:'Tianzi Imperial Loyalists',short:'Imperial Loyalists',adj:'Imperial Loyalist',color:'#D54445',letter:'L',capital:'Luoyang',campaign:true },
+    eunuchs: { name:'Chinese Eunuch Regime',short:'Eunuch Regime',adj:'Eunuch Regime',color:'#6A8FA5',letter:'U',capital:'Luoyang',campaign:true },
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },
   };
   const MAJORS = ['britannia', 'eu', 'cf'];

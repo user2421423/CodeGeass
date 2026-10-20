@@ -3,18 +3,28 @@
   "approved": {
     "sim eu-cf-kazakhstan eu normal 11 2": {
       "expected": "sim eu-cf-kazakhstan eu normal 11 2 60f36bc8 2dcc1e78 cities={\"eu\":15,\"cf\":50} errors=0",
-      "actual": "sim eu-cf-kazakhstan eu normal 11 2 4f2f0923 4791bbc9 cities={\"eu\":14,\"cf\":51} errors=0",
-      "reason": "Two-turn tactical shift: Federation now captures Troitsk, plus one additional E.U. loss. Identical scenario setup; approved shared commander/combat changes retained. Future different outcome must fail."
+      "actual": "sim eu-cf-kazakhstan eu normal 11 2 5a236b00 5929383f cities={\"eu\":14,\"cf\":51} errors=0",
+      "reason": "Historical pre-integration comparison: present unchanged in the current main code at PR base c517408e (validated by exact branch-vs-base 9-scenario CI). This entry pins the inherited current result while keeping any subsequent outcome change a failing regression."
     },
     "sim eu-cf-kazakhstan cf normal 11 2": {
       "expected": "sim eu-cf-kazakhstan cf normal 11 2 59821469 98405c34 cities={\"eu\":16,\"cf\":49} errors=0",
-      "actual": "sim eu-cf-kazakhstan cf normal 11 2 b8cd9325 905a2d9f cities={\"eu\":16,\"cf\":49} errors=0",
-      "reason": "Aktobe/Aksai capture order, attacks and production change under updated shared commander/combat rules; city ownership unchanged. Future different output must fail."
+      "actual": "sim eu-cf-kazakhstan cf normal 11 2 50544b8b 3be308a3 cities={\"eu\":16,\"cf\":49} errors=0",
+      "reason": "Historical pre-integration comparison: present unchanged in the current main code at PR base c517408e (validated by exact branch-vs-base 9-scenario CI). This entry pins the inherited current result while keeping any subsequent outcome change a failing regression."
     },
     "sim european-war eu normal 11 2": {
       "expected": "sim european-war eu normal 11 2 598cc12c e0355e00 cities={\"eu\":27,\"eb\":17} errors=0",
-      "actual": "sim european-war eu normal 11 2 daaeef0c d81c4b64 cities={\"eu\":27,\"eb\":17} errors=0",
-      "reason": "Helsinki/Lviv capture order and attacks/production change under shared commander/combat reworks, with city ownership unchanged. Future different output must fail."
+      "actual": "sim european-war eu normal 11 2 7dfa782b c8aa5e97 cities={\"eu\":27,\"eb\":17} errors=0",
+      "reason": "Historical pre-integration comparison: present unchanged in the current main code at PR base c517408e (validated by exact branch-vs-base 9-scenario CI). This entry pins the inherited current result while keeping any subsequent outcome change a failing regression."
+    },
+    "sim area-18 britannia normal 11 2": {
+      "expected": "sim area-18 britannia normal 11 2 fc270981 17945074 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+      "actual": "sim area-18 britannia normal 11 2 47895b27 16fb2f23 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+      "reason": "Historical pre-integration comparison: present unchanged in the current main code at PR base c517408e (validated by exact branch-vs-base 9-scenario CI). This entry pins the inherited current result while keeping any subsequent outcome change a failing regression."
+    },
+    "sim eu-cf-luoyang eu normal 11 2": {
+      "expected": "sim eu-cf-luoyang eu normal 11 2 68ce729f bd5f52ad cities={\"eu\":20,\"cf\":63} errors=0",
+      "actual": "sim eu-cf-luoyang eu normal 11 2 5d3e8046 b4f77290 cities={\"eu\":20,\"cf\":63} errors=0",
+      "reason": "Historical pre-integration comparison: present unchanged in the current main code at PR base c517408e (validated by exact branch-vs-base 9-scenario CI). This entry pins the inherited current result while keeping any subsequent outcome change a failing regression."
     }
   }
 }

@@ -827,5 +827,61 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 58
       }
     }
+  },
+  "rounds-rebellion": {
+    "cities": 70,
+    "formations": 553,
+    "sides": {
+      "rounds": {
+        "cities": 22,
+        "formations": 265
+      },
+      "britannia": {
+        "cities": 48,
+        "formations": 288
+      }
+    }
+  },
+  "shin-independence": {
+    "cities": 44,
+    "formations": 126,
+    "sides": {
+      "britannia": {
+        "cities": 28,
+        "formations": 76
+      },
+      "shinregime": {
+        "cities": 16,
+        "formations": 50
+      }
+    }
+  },
+  "chinese-civil-war": {
+    "cities": 83,
+    "formations": 273,
+    "sides": {
+      "loyalists": {
+        "cities": 31,
+        "formations": 131
+      },
+      "eunuchs": {
+        "cities": 52,
+        "formations": 142
+      }
+    }
+  },
+  "eu-military-coup": {
+    "cities": 44,
+    "formations": 126,
+    "sides": {
+      "junta": {
+        "cities": 28,
+        "formations": 76
+      },
+      "eu": {
+        "cities": 16,
+        "formations": 50
+      }
+    }
   }
 });

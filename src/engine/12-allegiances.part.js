@@ -4,6 +4,10 @@
   const ALLIES = { bk: ['jlf'] };
   function serves(k, side, g = null) {
     const a = COMMANDERS[k];
+    // Alternate history governments have scenario-local officer allegiances.
+    // Their commander pools must not leak into regular world/campaign modes.
+    const scenarioRoster = g?.mode === 'scenario' ? g.scenario?.commanderSides?.[side] : null;
+    if (Array.isArray(scenarioRoster)) return !!a && scenarioRoster.includes(k);
     // In 2018, former E.U. and Black Knights commanders serve the united federation.
     if (g?.mode === 'conquest' && g.era === 'ufn2018') {
       if (side === 'cf' && ['cf', 'eu', 'bk', 'jlf'].includes(a?.side)) return true;
