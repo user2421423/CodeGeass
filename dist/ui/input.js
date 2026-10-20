@@ -634,11 +634,11 @@ document.addEventListener('click', e => {
       else closeModal();
       break;
     case 'generals':
-      generalsDialog(hqBack === 'game' ? game.player : generalsSide);
+      generalsDialog('all');
       break;
     case 'generals-start':
       hqBack = 'start';
-      generalsDialog(setup.side);
+      generalsDialog('all');
       break;
     case 'generals-close':
       if (hqBack === 'start') startMenu();
