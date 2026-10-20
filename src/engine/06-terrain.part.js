@@ -58,7 +58,9 @@
     bk: { amphibious: 'bk_amphibious', amphibious2: 'bk_amphibious_ii', carrier: 'bk_carrier' },
   };
   // The 2018 U.F.N. army uses Black Knights equipment, including its naval roster.
-  const navalRoster = (g, side) => ufnBlackKnights(g, side) ? NAVAL.bk : NAVAL[side];
+  // Scenario-only factions (alternate history) build the navy of the power whose equipment they use.
+  const navalRoster = (g, side) => ufnBlackKnights(g, side) ? NAVAL.bk :
+    NAVAL[side] || NAVAL[g?.scenario?.equipment?.[side]];
   const navalTypes = (g, side) => g?.mode === 'campaign' ? [] : Object.values(navalRoster(g, side) || {});
   const isShip = u => TYPES[u?.type]?.naval === 'ship';
   // Ports: a city building on one sea hex beside the city (repair: PORT.repair by level).

@@ -9,6 +9,12 @@ const PLATE = {
   ufn: { light: '#454b49', mid: '#202521', dark: '#0a1010', trim: '#f6cf67', bar: '#eec35f' },
   jlf: { light: '#4c8550', mid: '#224a28', dark: '#0f2613', trim: '#d4ebbd', bar: '#a9d68f' },
   eb: { light: '#6e4fa8', mid: '#3a2466', dark: '#1a0f33', trim: '#e3c06a', bar: '#cdb0f0' },
+  // Alternate-history regimes (scenario-only factions).
+  rounds: { light: '#8f7a35', mid: '#4a3d17', dark: '#221b08', trim: '#f0dd8e', bar: '#c9a842' },
+  shinregime: { light: '#7a55b8', mid: '#40276e', dark: '#1d1036', trim: '#d5b9ff', bar: '#ad8ade' },
+  loyalists: { light: '#b8434a', mid: '#6a1b20', dark: '#36090c', trim: '#f3d36f', bar: '#f0d581' },
+  eunuchs: { light: '#4f7690', mid: '#284257', dark: '#0f1f2c', trim: '#d4e1e9', bar: '#9bc5d1' },
+  junta: { light: '#8a6a3c', mid: '#4c381c', dark: '#241a0b', trim: '#f2c78b', bar: '#d9b679' },
 };
 const TERRAIN_FILL = {
   sea: '#174a6c',

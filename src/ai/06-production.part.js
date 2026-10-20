@@ -319,7 +319,7 @@
     // Spending on the fleet must still leave a normal two-frame Scout formation
     // affordable, so coastal construction cannot starve the field army.
     const navy = g.mode !== 'campaign' && !philippinesDefense(g, side) &&
-      (g.mode === 'conquest' && g.era === 'ufn2018' && side === 'cf' ? NAVAL.bk : NAVAL[side]);
+      navalRoster(g, side);
     if (navy) {
       const coastal = [
           ...bases.filter(s => portSite(g, s)),

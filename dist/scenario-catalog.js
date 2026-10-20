@@ -1544,6 +1544,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "rows": 126,
     "meta": {
       "text": {
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
         "era": "Pendragon · Alternate 2018 a.t.b.",
         "intro": "Bismarck unites the Knights of the Round, gathers reinforcements in Utah, and marches toward Pendragon rather than losing to Suzaku in a single encounter.",
         "diplomacy": "Emperor Lelouch and the Knights of the Round are at war from turn one. Neither side has allies.",
@@ -1553,7 +1554,7 @@ const SCENARIO_CATALOG = Object.freeze({
           "britannia": "Pendragon"
         }
       },
-      "saveVersion": 1
+      "saveVersion": 2
     },
     "files": [
       "scenarios-pendragon.js",
@@ -1581,7 +1582,7 @@ const SCENARIO_CATALOG = Object.freeze({
           "shinregime": "Minsk"
         }
       },
-      "saveVersion": 1
+      "saveVersion": 2
     },
     "files": [
       "europe-landmask.js",
@@ -1610,7 +1611,7 @@ const SCENARIO_CATALOG = Object.freeze({
           "eunuchs": "Luoyang"
         }
       },
-      "saveVersion": 1
+      "saveVersion": 2
     },
     "files": [
       "scenarios-luoyang.js",
@@ -1638,7 +1639,7 @@ const SCENARIO_CATALOG = Object.freeze({
           "junta": "Paris"
         }
       },
-      "saveVersion": 1
+      "saveVersion": 2
     },
     "files": [
       "europe-landmask.js",

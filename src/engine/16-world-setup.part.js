@@ -408,15 +408,14 @@
       // Carrier-battleships remain ordinary hulls even on Elite difficulty.
       if (old.naval === 'ship') continue;
       const roster = g.scenario.eliteRosters[u.side] || [];
-      let id = old.naval ? (naval[u.side]?.[old.naval] ||
-        g.scenario?.eliteNavalTypes?.[u.side]?.[old.naval]) : null;
+      let id = old.naval ? (naval[u.side] || naval[g.scenario.equipment?.[u.side]])?.[old.naval] : null;
       if (!old.naval) {
         const pool = roster.filter(id => eliteEligible(g, u.side, id) && !TYPES[ELITE_FORCES[id]?.type]?.naval);
         const sameClass = pool.filter(id => TYPES[ELITE_FORCES[id].type].cls === old.cls);
         const sameBranch = pool.filter(id => TYPES[ELITE_FORCES[id].type].branch === old.branch);
         const choices = sameClass.length ? sameClass : sameBranch.length ? sameBranch : pool;
         if (!choices.length) throw new Error('Missing European Elite Force for '+u.side);
-        const signature = signatures[u.cmd];
+        const signature = g.scenario.eliteSignatures?.[u.cmd] || signatures[u.cmd];
         const n = u.side+':'+old.cls;
         id = signature && roster.includes(signature)
           ? signature : choices[(used[n] || 0) % choices.length];

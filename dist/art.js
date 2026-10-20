@@ -35,18 +35,18 @@ const ART = (() => {
     cf: { src: 'assets/flags/cf.webp', width: 260, height: 173, label: 'Chinese Federation flag' },
     bk: { src: 'assets/flags/bk.webp', width: 260, height: 260, label: 'Black Knights flag' },
   };
+  // Alternate governments use distinct standards instead of blank faction
+  // portraits. Minimal heraldry remains crisp on mobile and game maps.
+  const REBEL_STANDARDS = {
+    rounds: ['#242633','#c9a842','<path d="M36 16 82 65M84 16 37 65" stroke="#c9a842" stroke-width="9"/><circle cx="60" cy="40" r="17" fill="#242633" stroke="#f0dd8e" stroke-width="5"/>','Knights of the Round'],
+    shinregime: ['#3a2859','#ad8ade','<path d="M60 7 101 40 60 73 19 40Z" fill="#ad8ade"/><path d="M60 19 83 40 60 61 37 40Z" fill="#3a2859" stroke="#f1dfff" stroke-width="3"/>','Independent Euro Britannia'],
+    loyalists: ['#a52f37','#f0d581','<circle cx="60" cy="40" r="25" fill="none" stroke="#f0d581" stroke-width="7"/><path d="M60 15 80 40 60 65 40 40Z" fill="#f0d581"/>','Tianzi Imperial Loyalists'],
+    eunuchs: ['#34516b','#d4e1e9','<path d="M28 20H92V60H28Z" fill="none" stroke="#d4e1e9" stroke-width="6"/><path d="M44 22V58M60 22V58M76 22V58" stroke="#d4e1e9" stroke-width="5"/>','Chinese Eunuch Regime'],
+    junta: ['#624828','#d9b679','<path d="M60 13 94 60H26Z" fill="#d9b679"/><path d="M60 31 77 55H43Z" fill="#624828"/><path d="M42 14H78" stroke="#fff0d4" stroke-width="5"/>','Smilas Military Junta'],
+  };
   function flagSVG(side) {
     if (side === 'ufn') return ufnFlagSVG();
-    // Alternate governments use distinct standards instead of blank faction
-    // portraits. Minimal heraldry remains crisp on mobile and game maps.
-    const rebelStandards = {
-      rounds: ['#242633','#c9a842','<path d="M36 16 82 65M84 16 37 65" stroke="#c9a842" stroke-width="9"/><circle cx="60" cy="40" r="17" fill="#242633" stroke="#f0dd8e" stroke-width="5"/>','Knights of the Round'],
-      shinregime: ['#3a2859','#ad8ade','<path d="M60 7 101 40 60 73 19 40Z" fill="#ad8ade"/><path d="M60 19 83 40 60 61 37 40Z" fill="#3a2859" stroke="#f1dfff" stroke-width="3"/>','Independent Euro Britannia'],
-      loyalists: ['#a52f37','#f0d581','<circle cx="60" cy="40" r="25" fill="none" stroke="#f0d581" stroke-width="7"/><path d="M60 15 80 40 60 65 40 40Z" fill="#f0d581"/>','Tianzi Imperial Loyalists'],
-      eunuchs: ['#34516b','#d4e1e9','<path d="M28 20H92V60H28Z" fill="none" stroke="#d4e1e9" stroke-width="6"/><path d="M44 22V58M60 22V58M76 22V58" stroke="#d4e1e9" stroke-width="5"/>','Chinese Eunuch Regime'],
-      junta: ['#624828','#d9b679','<path d="M60 13 94 60H26Z" fill="#d9b679"/><path d="M60 31 77 55H43Z" fill="#624828"/><path d="M42 14H78" stroke="#fff0d4" stroke-width="5"/>','Smilas Military Junta'],
-    };
-    const standard=rebelStandards[side];
+    const standard=REBEL_STANDARDS[side];
     if(standard)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+standard[3]+' flag"><rect width="120" height="80" fill="'+standard[0]+'"/><rect x="3" y="3" width="114" height="74" fill="none" stroke="'+standard[1]+'" stroke-width="3"/>'+standard[2]+'</svg>';
     const f = FACTION_FLAGS[side];
     return f ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f.width} ${f.height}" aria-label="${f.label}"><image width="${f.width}" height="${f.height}" href="${f.src}"/></svg>` : '';
@@ -269,9 +269,10 @@ const ART = (() => {
     drawFlag(ctx, side, x, y, w) {
       const standard = flagSVG(side);
       if (!standard) return false;
-      const img = side === 'ufn' ? image('flag|ufn', standard) : flagAssetImage(side);
+      const drawn = side === 'ufn' || REBEL_STANDARDS[side];
+      const img = drawn ? image('flag|' + side, standard) : flagAssetImage(side);
       if (!img) return false;
-      const h = w * (side === 'ufn' ? 594 / 831 : FACTION_FLAGS[side].height / FACTION_FLAGS[side].width);
+      const h = w * (side === 'ufn' ? 594 / 831 : drawn ? 80 / 120 : FACTION_FLAGS[side].height / FACTION_FLAGS[side].width);
       ctx.save();
       ctx.beginPath();
       ctx.strokeStyle = side === 'ufn' ? '#b79625' : '#b8b09a';

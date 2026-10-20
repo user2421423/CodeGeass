@@ -196,14 +196,16 @@
   function eliteEligible(g, side, id) {
     const e = ELITE_FORCES[id];
     if (!e) return false;
-    if (side === 'cf') {
+    // Scenario-only factions (alternate history) follow the rules of the power whose equipment they use.
+    const kit = g?.scenario?.equipment?.[side] || side;
+    if (kit === 'cf') {
       if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
       if (!FEDERATION_2017_ELITES.has(id)) return false;
     }
     const roster = g.mode === 'campaign' ? g.campaign?.eliteRosters?.[side] :
       scenarioMeta(g).eliteRosterOnly ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
-    return e.availableTo.includes(side) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
+    return e.availableTo.includes(kit) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],

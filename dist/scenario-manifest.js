@@ -60,9 +60,9 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"cf-eu-north-africa",title:"North African Offensive",note:"51 cities · 2 sides · Mediterranean campaign"},
   {id:"cf-eu-central-europe",title:"Conquest of Central Europe — No Germany",note:"102 cities · 2 sides · Poland to Austria"},
   {id:"cf-eu-france",title:"Invasion of France — Mediterranean Offensive",note:"34 cities · 2 sides · southern naval invasion"},
-  {id:"rounds-rebellion",title:"Knights of the Round Rebellion",note:"2 sides · Pendragon succession war"},
-  {id:"shin-independence",title:"Euro-Britannian Independence",note:"2 sides · Shin vs Empire"},
-  {id:"chinese-civil-war",title:"Chinese Civil War — The Imperial Restoration",note:"2 sides · Tianzi vs High Eunuchs"},
+  {id:"rounds-rebellion",title:"Knights of the Round Rebellion",note:"70 cities · 2 sides · Pendragon succession war"},
+  {id:"shin-independence",title:"Euro-Britannian Independence",note:"44 cities · 2 sides · Shin vs Empire"},
+  {id:"chinese-civil-war",title:"Chinese Civil War — The Imperial Restoration",note:"83 cities · 2 sides · Tianzi vs High Eunuchs"},
   {id:"eu-military-coup",title:"E.U. Military Coup — Smilas vs Leila",note:"44 cities · 2 sides · E.U. civil war"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.

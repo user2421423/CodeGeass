@@ -55,10 +55,9 @@ for(const [id,sides] of CASES){
     assert(g.scenario.eliteRosters[side].length>0);
    }
    const loaded=saveRoundtrip(g,id,player,difficulty);
+   // A side that loses its last city surrenders; its remaining army need not be hunted down.
    for(const station of loaded.stations)station.owner=player;
-   assert.equal(m.winner(loaded),null,id+' prematurely won with enemy units');
-   for(const unit of E.allUnits(loaded))if(unit.side!==player)unit.hp=0;
-   assert.equal(m.winner(loaded)?.winner,player);
+   assert.equal(m.winner(loaded)?.winner,player,id+' all-cities victory not recognized');
    console.log('ROUNDTRIP '+id+' '+player+' '+difficulty);
   }
  }

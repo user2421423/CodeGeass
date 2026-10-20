@@ -12,6 +12,9 @@ define({
   rounds:['bismarck','gino','dorothea','monica','luciano','nonette','anya'],
   britannia:['lelouch','suzaku','jeremiah','villetta','guilford','oldrin','marrybell']
  },
+ // Suzaku's Lancelots guard the Emperor; Anya's Mordred rides with the Rounds.
+ exclusiveElites:{lancelot:'britannia',lancelot_albion:'britannia',mordred:'rounds'},
+ eliteSignatures:{suzaku:'lancelot_albion',anya:'mordred'},
  opening:'Bismarck and the Knights of the Round have assembled a field army against Emperor Lelouch. Suzaku and the imperial guard defend Pendragon.',
  text:{
   era:'Pendragon · Alternate 2018 a.t.b.',

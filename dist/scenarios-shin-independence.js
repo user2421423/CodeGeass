@@ -12,6 +12,8 @@ define({
   shinregime:['shin','ashley','manfredi','farnese','augustus'],
   britannia:['suzaku','schneizel','cornelia','julius','guilford','darlton','oldrin','marrybell']
  },
+ // The Empire's own Knights keep the Lancelots and Mordred.
+ exclusiveElites:{lancelot:'britannia',lancelot_albion:'britannia',mordred:'britannia'},
  opening:'Shin declares an independent Euro-Britannian state. Britannian expeditionary armies advance into his territory from western European bridgeheads.',
  text:{
   era:'Europe · Alternate 2017 a.t.b.',

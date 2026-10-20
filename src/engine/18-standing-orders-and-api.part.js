@@ -471,6 +471,7 @@
       powersOf,
       isMajor,
       NAVAL,
+      navalRoster,
       TYPES,
       adjacent,
       aiLaunchTarget,

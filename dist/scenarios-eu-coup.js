@@ -16,6 +16,8 @@ define({
    eu:['leila','akito','ryo','ayano','yukiya','anna','klaus','oscar','ferilli'],
    junta:['smilas','olivia','eduardo','margaret','fernando','marirrosa','pierre']
  },
+ // Leila's and Akito's personal machines stay with the republic.
+ exclusiveElites:{leila_alexander:'eu',akito_liberte:'eu'},
  opening:'After conquering Paris, Gene Smilas declares his military dictatorship. Leila Malcal and Akito Hyuga lead the returning eastern field army to restore the E.U. republic.',
  text:{
    era:'Europia · Alternate 2017 a.t.b.',

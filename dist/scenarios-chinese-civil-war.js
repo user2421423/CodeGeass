@@ -8,10 +8,13 @@ define({
  map:{britannia:'loyalists',cf:'eunuchs'},
  equipment:{loyalists:'cf',eunuchs:'cf'},
  reinforcements:{loyalists:34},
+ // Zhao Hao, Gao Hai, Cheng Zhong, Xia Wang and Huang Qian are the High Eunuchs;
+ // General Cao keeps his post under them. Hong Gu sides with the Empress.
  commanders:{
-  loyalists:['xingke','xianglin','honggu','cao','zhaohao','leifeng','meiling','lifeng'],
-  eunuchs:['gaohai']
+  loyalists:['xingke','tianzi','xianglin','honggu','leifeng','meiling','lifeng'],
+  eunuchs:['zhaohao','gaohai','chengzhong','xiawang','huangqian','cao']
  },
+ eliteSignatures:{xingke:'shen_hu'},
  opening:'Li Xingke leads a Tianzi-loyalist rising toward Luoyang; the High Eunuchs defend their hold over the Vermilion Forbidden City.',
  text:{
   era:'China · Alternate 2018 a.t.b.',

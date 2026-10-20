@@ -181,7 +181,9 @@ function queueEliteReward(profile, operation, key, amount, source) {
   // battlefield deployment roster (and non-Story fallback) stays Britannian.
   const side = storyMission?.player === 'eb' ? 'eu'
     : player === 'eb' ? 'britannia'
-    : operation.era === 'ufn2018' && player === 'cf' ? 'bk' : player;
+    : operation.era === 'ufn2018' && player === 'cf' ? 'bk'
+    // Alternate-history regimes earn the Elite Forces of the power whose equipment they use.
+    : operation.scenario?.equipment?.[player] || player;
   const allowed = ELITE_REWARD_RARITIES[operation.difficulty] || ELITE_REWARD_RARITIES.normal;
   // World Campaign and weekly events are faction-independent. Story and Conquest stay faction-bound.
   const worldCampaign = key.startsWith('world:') || key.startsWith('weekly:');
