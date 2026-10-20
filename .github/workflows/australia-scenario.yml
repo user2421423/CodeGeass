@@ -1,7 +1,5 @@
 name: Australia three-way scenario regression
 on:
-  push:
-    branches: ['scenario/australia']
   pull_request:
     paths:
       - 'dist/scenarios-australia.js'

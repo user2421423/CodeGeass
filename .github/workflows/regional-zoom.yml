@@ -1,7 +1,5 @@
 name: Regional zoom and atlas continuity
 on:
-  push:
-    branches: ['preview/conquest-style-zoom-integrated']
   workflow_dispatch:
 permissions:
   contents: read

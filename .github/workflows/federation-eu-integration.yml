@@ -1,7 +1,7 @@
 name: Federation vs EU integrated scenario audit
 on:
   push:
-    branches: ['feature/federation-vs-eu-campaign-architecture', 'main']
+    branches: ['main']
     paths:
       - 'dist/scenarios-cf-eu-*.js'
       - 'dist/cf-eu-balkans-coast.js'
