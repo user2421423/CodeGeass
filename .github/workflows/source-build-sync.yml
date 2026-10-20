@@ -17,6 +17,10 @@ jobs:
           node-version: '22'
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify six Scenario Mode exclusives, independent factions and save compatibility
+        run: node tools/six_exclusive_smoke.cjs
+      - name: Verify six-way tournament AI production, attacks and captures
+        run: node tools/six_exclusive_ai.cjs rounds-tournament
       - name: Verify Anna Clément engineering, Rapid Maintenance and Klaus discount transfer
         run: node tools/anna_clement_smoke.cjs
       - name: Verify Akito Brain Raid isolation, damage and movement

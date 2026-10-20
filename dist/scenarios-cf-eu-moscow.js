@@ -160,7 +160,7 @@
     ['eu','Yaroslavl','Northern Reserve','rocket',3],
     ['eu','Tver','Western Volga Reserve','heavy',5,'klaus'],
     ['eu','Tver','Western Volga Reserve','siege',3],
-    ['eu','Moscow','Moscow Garrison','heavy',9,'margaret'],
+    ['eu','Moscow','Moscow Garrison','heavy',9,'romero'],
     ['eu','Moscow','Moscow Garrison','rocket',5,'pierre'],
     ['eu','Moscow','Moscow Garrison','siege',4],
     ['eu','Podolsk','Moscow Outer Ring','heavy',5,'marirrosa'],

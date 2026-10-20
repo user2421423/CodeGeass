@@ -1,0 +1,58 @@
+# Six Scenario Mode exclusive wars
+
+These operations are independent total-conquest wars, with stable IDs and the existing regional save slot. They do not enter `war-campaign.js`, change Story Mode, import a new global unit balance, or add incomplete commanders. The catalog now has 68 unique regional wars: 56 referenced by World Campaign and 12 standalone exclusives.
+
+## Geography and opening positions
+
+| ID | Theatre | Opening cities | Opening formations on Normal |
+| --- | --- | --- | --- |
+| `bk-civil-war` | Surveyed north-up Japan atlas | Zero's northeast/Tokyo; High Command's western regional organization | 45 / 59, including one Ikaruga each |
+| `rounds-tournament` | Pendragon / Nevada–California–Utah, 180 × 126 | 11–12 per Knight; weighted geographic districts around six headquarters | 14 per Knight; equal 600 credits, 300 Industry, 100 Research, 35 Sakuradite |
+| `geass-war` | Continental European atlas, 120 × 80 | Order 18 eastern cities; coalition 26 western cities | 114 / 104, including airships and real-port fleets |
+| `protagonists-antagonists` | Continental European atlas, 120 × 80 | Protagonists 28 western cities; antagonists 16 eastern cities | 104 / 104, including airships and real-port fleets |
+| `partition-britannia` | Continental U.S./Canada, 178 × 110 | E.U. 44 / Federation 31 / remnants 3 | 100 / 90 / 8 |
+| `ufn-civil-war` | Mainland China: Luoyang / Yellow River approaches, 174 × 116 | UFN 17 eastern cities / Federation 66 homeland cities | 66 / 106, including one airship each |
+
+The China operation is a detailed mainland regional theatre around the Yellow River, not an entire low-detail national rectangle. The UFN's expedition is based at Shangqiu and Jining, with five turns of opening income in reserve. Luoyang and Zhengzhou remain Federation-held. It includes no Japan.
+
+The Partition map uses only Natural Earth U.S. and Canadian country polygons, clipped to 141°W–52°W, 24°N–70°N, subtracting the existing GSHHG lakes. Alaska and the high Arctic are omitted to keep continental operations readable. There is no Mexican, Central American, Greenlandic or Caribbean playable territory. Country borders become theatre edges rather than invented coastlines. Ports require an actual adjacent navigable-water hex; no inland sea tiles are fabricated. The Rockies remain passable, and the Great Lakes remain water.
+
+Regenerate its coverage with `python3 tools/build_partition_geography.py path/to/ne_50m_admin_0_countries.geojson`. Source: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson (public domain). Runtime does not need GIS libraries or a network request.
+
+Britannia retains only Pierre, Rapid City and North Platte: three level-1 towns, 21 credits / 9 Industry / 3 Research / zero Sakuradite per turn; 140 credits / 45 Industry / 12 Research / 5 Sakuradite initially. Its eight formations have one frame each. Charles, Guilford and Darlton survive with ordinary equipment; there is no free elite or airship. This is deliberately a severe underdog, including when the AI controls it.
+
+## Commanders, identities and lore judgments
+
+Scenario rosters are explicit, save-safe lists in the individual modules. Every listed officer is deployed exactly once. `zero` represents Lelouch; `lelouch` and `julius` are excluded from both grand coalitions so one person cannot appear three times. No character is invented or restored to inflate the roster.
+
+* **Black Knights Civil War:** Zero, Kallen, C.C., Sayoko, Diethard, Kaguya and their personal/intelligence allies oppose Ohgi, Tohdoh, Chiba, the Four Holy Swords and the regional military leadership. This counterfactual keeps plausibly aligned earlier commanders alive; it does not claim all survived simultaneously in canon. Both governments use the Black Knights factory and elite inventory. Headquarters are Tokyo Settlement and Kyoto.
+* **Round Tournament:** the current roster contains Bismarck, Suzaku, Gino, Anya, Dorothea and Nonette. Luciano and Monica were removed before this branch, so this is six independent playable armies rather than an invented eight-to-twelve. Suzaku starts in Lancelot Albion and Anya in Mordred. Where a signature elite definition does not exist, use the closest existing imperial elite: Bismarck—Lancelot (heavy knight proxy), Gino—Florence (`vincent_ward`), Dorothea—Canterbury (`sutherland_air`), Nonette—Cornelia's Gloucester. These proxies are gameplay choices, not claims about canon ownership. Their existing commander abilities are unchanged.
+* **Geass War:** Zero, Charles, Marianne, Rolo, Bismarck, C.C., Leila, Shin, Marrybell and Sakuya form the Order. The coalition gets every other current commander after identity deduplication. Leila, Shin, Marrybell and Sakuya are included because nationality and narrative alignment do not determine Geass status. C.C. is included as a Code bearer. Anya is in the conventional coalition: hosting Marianne does not make Anya an independent Geass user. Akito is affected by Shin's Geass, not its wielder. Mao and V.V. have no current commander implementation and are omitted.
+* **Protagonists vs Antagonists:** redemption and eventual cooperation with the principal resistance protagonists place Suzaku, Jeremiah, Rolo, Gino, Anya, Cornelia and Ashley with Zero, Kallen, Akito, Xingke, Leila and C.C. Charles, Schneizel, Bismarck, Shin, Marianne, Norland, the Eunuch leadership, Smilas, the four Euro-Britannian orders and Marrybell's authoritarian phase oppose them. Ambiguous resistance/supporting characters default to the protagonists; named authoritarian commanders default to the antagonists. Miguel and Vritra join the antagonists based on their direct opposition to Xingke in Lost Stories, rather than being assigned by national uniform. This is an editorial crossover classification, not a moral judgment about every action in every continuity.
+* **UFN Civil War:** UFN uses Black Knights commanders, factories and elites. The Federation uses its complete current native roster, including commanders currently classified as Federation in the repository. No nationality metadata or commander power is rewritten globally.
+
+Lore references consulted: https://codegeass.fandom.com/wiki/Geass ; https://codegeass.fandom.com/wiki/Knights_of_the_Round ; https://codegeass.fandom.com/wiki/Nonette_Enneagram ; https://codegeass.fandom.com/wiki/Leila_Malcal ; https://codegeass.fandom.com/wiki/Marrybell_mel_Britannia ; https://codegeass.fandom.com/wiki/Miguel_de_Dalo . These support identity/status decisions, not the counterfactual territorial arrangement.
+
+## Shared implementation and AI
+
+`scenarios-exclusive-common.js` reuses physical map geometry and rebuilds ownership, provinces, armies, commanders, production rosters, resources and army groups. Parent difficulty effects, scripted diplomacy, strategic arsenals and objectives are discarded. New wars do not accidentally inherit the existing finale warheads or Japan's turn-10 alliance.
+
+* `g.scenario.rosterSources` records one or several existing national inventories; `g.buildable` exposes their deduplicated normal-frame union to the factory. Class defaults alternate national sources so AI production and class-based commander summons can field the mixed equipment too. Elite eligibility checks the explicit union. Naval and airship production retain a primary national inventory.
+* `g.scenario.independentPowers` makes power-membership queries use the actual regional turn order. Existing wars without that flag and World/Story games retain their previous behavior. Hostility, enemy-city objectives, independent economy/research state, AI turns, surrender, captured provinces and victory use the existing systems rather than a fixed two-side rival.
+* The existing European doctrine already searches all hostile cities and formations, chooses fronts, recruits, repairs, captures and replans as ownership changes. Every tournament army has its own side, team, economy, research and AI state; there are no hidden teams or permanent alliances. Commander abilities use the existing AI support and passives; this adds no new ability implementation.
+* City output transfers with occupation. There are no permanent off-map subsidies to a defeated faction. Last-city surrender disbands only the defeated army and leaves other hostile factions fighting. Player elimination ends the player's run without falsely awarding a third party total victory.
+* All four existing difficulties remain available. Shared Elite conversions, rival research/ranks/reinforcements, class statistics, repairs, FLEIJA rules and movement rules are retained.
+* New scenario faction definitions have complete UI colors, portraits, flags and canvas token palettes. Catalog browsing remains static/lazy. Six small previews and six detailed map backdrops use the actual ownership map and existing painter/caches.
+
+## Existing broken references encountered
+
+The starting revision `37c8ad80` had already removed `monica` and `luciano` from `COMMANDERS`, while seven regional modules still deployed or listed them. The untouched baseline `scenario_sim --all` stopped with `Unknown commander monica` in Central America. This branch removes those stale regional assignments (the formations and all their stats remain) and removes those two names from the old Round Rebellion officer pool. Four other modules rejected the old `margaret` ID before the engine could apply its existing Margaret → Romero migration; those authored references now use `romero`. No removed commander is reintroduced. Story source files and World Campaign sequences are not edited.
+
+## Reproducible checks
+
+Build with `python3 tools/build_sources.py` or `node tools/build_sources.cjs`.
+
+* `node tools/six_exclusive_smoke.cjs`: 68 player/difficulty starts, unique scenario IDs, campaign exclusion/counts, province/port ownership, valid non-overlapping units, unique officer allegiance, factory purchases, mixed-roster access, elite eligibility, regional save migration, total conquest, real last-city surrender and continuing multi-faction wars.
+* `node tools/six_exclusive_ai.cjs`: eight actual-engine all-AI turns in each new war; requires production and attacks by every faction and captures by every tournament Knight. `SEEDS=11,29 TURNS=8` extends the deterministic sample. This is an activity/viability check, not proof of equal win rates.
+* `BROWSER_EXECUTABLE_PATH=... node tools/six_exclusive_browser.cjs`: Chromium at 390 × 844 and 1440 × 900; actual faction selection clicks, all previews, real scenario deployments/saves, all six full rival cycles, JavaScript errors, mobile dialog bounds and representative screenshots.
+* Existing repository smoke checks, asset validation, world map lock and README synchronization remain separate regression checks; record their actual outcome in the final report.

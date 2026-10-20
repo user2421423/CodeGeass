@@ -883,5 +883,109 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 50
       }
     }
+  },
+  "bk-civil-war": {
+    "cities": 44,
+    "formations": 104,
+    "sides": {
+      "zero_loyalists": {
+        "cities": 18,
+        "formations": 45
+      },
+      "bk_command": {
+        "cities": 26,
+        "formations": 59
+      }
+    }
+  },
+  "rounds-tournament": {
+    "cities": 70,
+    "formations": 84,
+    "sides": {
+      "knight_bismarck": {
+        "cities": 12,
+        "formations": 14
+      },
+      "knight_suzaku": {
+        "cities": 12,
+        "formations": 14
+      },
+      "knight_gino": {
+        "cities": 11,
+        "formations": 14
+      },
+      "knight_anya": {
+        "cities": 12,
+        "formations": 14
+      },
+      "knight_dorothea": {
+        "cities": 12,
+        "formations": 14
+      },
+      "knight_nonette": {
+        "cities": 11,
+        "formations": 14
+      }
+    }
+  },
+  "geass-war": {
+    "cities": 44,
+    "formations": 218,
+    "sides": {
+      "geass_order": {
+        "cities": 18,
+        "formations": 114
+      },
+      "anti_geass": {
+        "cities": 26,
+        "formations": 104
+      }
+    }
+  },
+  "protagonists-antagonists": {
+    "cities": 44,
+    "formations": 208,
+    "sides": {
+      "protagonists": {
+        "cities": 28,
+        "formations": 104
+      },
+      "antagonists": {
+        "cities": 16,
+        "formations": 104
+      }
+    }
+  },
+  "partition-britannia": {
+    "cities": 78,
+    "formations": 198,
+    "sides": {
+      "eu": {
+        "cities": 44,
+        "formations": 100
+      },
+      "cf": {
+        "cities": 31,
+        "formations": 90
+      },
+      "remnants": {
+        "cities": 3,
+        "formations": 8
+      }
+    }
+  },
+  "ufn-civil-war": {
+    "cities": 83,
+    "formations": 172,
+    "sides": {
+      "ufn": {
+        "cities": 17,
+        "formations": 66
+      },
+      "cf": {
+        "cities": 66,
+        "formations": 106
+      }
+    }
   }
 });

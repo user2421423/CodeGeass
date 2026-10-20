@@ -133,7 +133,7 @@
     ['eu','Chifeng','Northern Encirclement','heavy',9,'smilas'],
     ['eu','Chifeng','Northern Encirclement','rocket',6,'eduardo'],
     ['eu','Beipiao','Northern Encirclement','raider',5],
-    ['eu','Yingkou','Bohai Coastal Army','heavy',8,'margaret'],
+    ['eu','Yingkou','Bohai Coastal Army','heavy',8,'romero'],
     ['eu','Yingkou','Bohai Coastal Army','assault',5,'olivia'],
     ['eu','Panjin','Bohai Coastal Army','medium',5],
     ['eu','Dalian','Bohai Amphibious Reserve','heavy',8,'pierre'],
