@@ -55,13 +55,11 @@ function setup(){
   const ally=b.spawn(2,'eu',b.around[0],null);
   const enemyPos=b.around.find(p=>range(b.g,p,ally)===1);
   const enemy=b.spawn(3,'britannia',enemyPos,null);
-  const protectedCounter=E.power(b.g,ally,enemy,E.internal.stationAt(b.g,enemy),true);
   const p=E.preview(b.g,enemy.id,ally.c,ally.r);
-  assert.ok(p&&p.unit>0);
+  assert.ok(p&&p.unit>0&&p.counter>0);
   ally.expRomeroMoved=true;
-  const exposedCounter=E.power(b.g,ally,enemy,E.internal.stationAt(b.g,enemy),true);
   const q=E.preview(b.g,enemy.id,ally.c,ally.r);
-  assert.ok(protectedCounter>exposedCounter*1.4,'Full counterattack rather than 65%');
+  assert.ok(p.counter>q.counter*1.4,'Full counterattack rather than 65%');
   assert.ok(q.unit>p.unit,'Stationary ally receives 25% less damage');
   ally.morale=0;ally.expRomeroMoved=false;
   E.beginTurn(b.g,'britannia',false);
