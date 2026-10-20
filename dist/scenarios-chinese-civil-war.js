@@ -7,6 +7,7 @@ define({
  phase:'tianzi-restoration',
  map:{britannia:'loyalists',cf:'eunuchs'},
  equipment:{loyalists:'cf',eunuchs:'cf'},
+ reinforcements:{loyalists:34},
  commanders:{
   loyalists:['xingke','xianglin','honggu','cao','zhaohao','leifeng','meiling','lifeng'],
   eunuchs:['gaohai']
