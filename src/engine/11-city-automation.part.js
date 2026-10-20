@@ -376,6 +376,9 @@
         v.eliteMoveAfterKill = false;
         v.skillReposition = 0;
         v.withdrawMove = false;
+        // Kallen's earned movement bank stays, but a pending limited
+        // reposition must not override the full movement Zero restores.
+        delete v.expKallenReposition;
         // A new normal activation, NOT a new turn: retain once-per-turn
         // stamps for commander skills, Elite perks and other special effects.
       } else addTargetMark(v, { side: u.side, source: u.id, range: 2,
