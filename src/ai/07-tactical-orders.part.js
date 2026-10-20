@@ -241,7 +241,18 @@
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
     }
     if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!playerOnlyReworkedActions.has(u.cmd)&&!feintReason(g,u)) {
-      const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
+      const targets=actionTargets(g,u);
+      // Place Darlton's summoned knights near the front, avoiding enemy contact
+      // when a safer supporting hex is available.
+      if(u.cmd==='darlton'){
+        const enemies=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side));
+        const score=p=>{
+          const nearest=enemies.length?Math.min(...enemies.map(v=>dist(g,v,p))):3;
+          return Math.abs(nearest-2)*2+(nearest<=1?10:0)+(p.owner!==u.side?1:0);
+        };
+        targets.sort((a,b)=>score(a)-score(b)||a.id.localeCompare(b.id));
+      }
+      const used=feint(g,id,targets[0]?.id);
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
     }
     // Withdraw already-fired allies before Leila's own movement can take her out of range.
