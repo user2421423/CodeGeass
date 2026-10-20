@@ -130,7 +130,7 @@
     // Brain Raid restores the full normal movement budget after a shot,
     // but only while Akito remains isolated; this never restores an attack.
     const akitoFollowUp = !!u.expAkitoMoveReady && akitoIsolated(g, u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
+    if (!isReady(g, u) || u.expFernandoOverload || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -356,6 +356,21 @@
     s.shield = 0;
     claim(g, s, u.side);
     if (fx(u).captureHeal) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).captureHeal));
+    // Fernando must personally capture the city. This passive triggers once
+    // per faction turn, regardless of how many captures he chains.
+    if (u.cmd === 'fernando' && fx(u).popularUprising && u.expPopularUprisingTurn !== g.turn) {
+      u.expPopularUprisingTurn = g.turn;
+      for (const ally of g.units) {
+        if (ally.hp <= 0 || ally.side !== u.side || atSea(g, ally) || dist(g, u, ally) > 2) continue;
+        ally.hp = Math.min(maxHP(ally), ally.hp + Math.round(maxHP(ally) * 0.20));
+        ally.moved = false;
+        ally.skillReposition = 0;
+        // Keep attack usage and heavy movement limits intact, but allow
+        // a full legal movement action even if the ally already attacked.
+        ally.withdrawMove = !!ally.attacked;
+      }
+      log(g, 'Popular Uprising restores nearby allied formations.', u.side);
+    }
     if(adjacent(g,s).some(t=>isSea(t)))
       for(const sw of g.units)if(sw.hp>0&&sw.side===u.side&&sw.cmd==='sawasaki'&&sw.expBeachheadStart!=null&&
         g.turn<=sw.expBeachheadUntil&&(sw.id===u.id||(TYPES[u.type].naval==='amphibious'&&dist(g,sw,s)<=2)))
@@ -480,8 +495,8 @@
     if(u.expShadowMove){u.moved=true;delete u.expShadowMove;}
     reindex(g,u,from);
     // The Steady floor takes effect as soon as Leila or an ally enters her radius.
-    if (u.cmd === 'leila') applyLeilaMoraleFloor(g);
-    else if (u.morale < 0 && leilaCommand(g, u)) u.morale = 0;
+    if (u.cmd === 'leila' || u.cmd === 'fernando') applyLeilaMoraleFloor(g);
+    else if (u.morale < 0 && moraleFloor(g, u) >= 0) u.morale = 0;
     const hostileReaction = newcomerOverwatch(g,u);
     if(u.hp<=0){checkVictory(g);return {ok:true,from,to:{c:dest.c,r:dest.r},destroyed:true,hostileReaction};}
     // Moving through enemy or neutral territory never changes its map color.

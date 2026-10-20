@@ -149,6 +149,9 @@
       // Emergency Defense lasts through opponents' turns, then expires at
       // the start of the designated ally's next friendly turn.
       if(v.expOscarDefense?.side===side)delete v.expOscarDefense;
+      // The stun persists through the opponent's turn, then expires when
+      // Fernando's faction receives its next turn.
+      if(v.expFernandoOverload?.side===side)delete v.expFernandoOverload;
       if(v.expKlausLoyalty?.side===side)delete v.expKlausLoyalty;
       if(v.expJoeDiagnosis?.until<g.turn)delete v.expJoeDiagnosis;
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
@@ -197,6 +200,7 @@
       delete u.expYukiyaElectronicNext;
       if(u.expZiWeakenNext){u.despairWeakened={side:u.side,source:'zi',value:u.expZiWeakenNext};delete u.expZiWeakenNext;}
       if(u.expDisabledActive || u.expRoloFrozen){u.moved=true;u.attacked=true;}else if(u.expPinnedActive)u.moved=true;
+       if(u.expFernandoOverload)u.moved=true;
       delete u.expOverwatch;delete u.expLink;
       u.chain = 0;
       u.eliteMoveAfterKill = false;

@@ -64,6 +64,8 @@
     attack *= newcomerAttack(g,u,target,counter);
     // Ohgi's half-health leadership supports outgoing attacks and counterfire.
     if (ohgiSelflessLeadership(g, u)) attack *= 1.35;
+    // Star of Madrid rewards wounded allies' initiating attacks and counterfire.
+    if (u.hp < maxHP(u) * 0.50 && starOfMadridNear(g, u)) attack *= 1.25;
     // Xianglin's coordination only strengthens direct initiating attacks.
     // Previews and resolved volleys share this calculation; splash damage
     // and defensive counterattacks never receive the +30% bonus.
@@ -242,6 +244,8 @@
       )
         attack *= 0.80;
       // Commander signature abilities (defender side).
+      // -30% defense from Electrical Overload is +30% incoming combat damage.
+      if (target.expFernandoOverload && foe(g, target.side, u.side)) attack *= 1.30;
       if (tf.taken) attack *= tf.taken;
       if (ohgiSelflessLeadership(g, target)) attack *= 0.75;
       if (tf.swordmaster && dist(g, u, target) === 1) attack *= 0.70;
@@ -331,9 +335,10 @@
       : 0;
     // Asahina's Rapid Assault: a target already hit this turn by his side cannot counter, and he crits more often.
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
-    const senbaReaction=!!d&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaReaction=!!d&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     const counter =
+      !a.expFernandoOverloadStrike &&
       !f.noCounterAttack &&
       !followUp &&
       !xianglinOpening &&
@@ -694,7 +699,7 @@
       lowerMorale(g, d, 1);
     }
     let retaliation = 0;
-    const senbaCounter=!!d&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
+    const senbaCounter=!!d&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (a.hp > 0 && d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.

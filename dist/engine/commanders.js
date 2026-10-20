@@ -351,9 +351,10 @@
       role: 'Infantry',
       hull: 'Estrella (Fernando custom)',
       title: 'Star of Madrid',
-      skill: 'Star of Madrid',
-      desc: "His unit and friendly units within 1 hex cannot fall below Low morale and take 10% less damage.",
-      fx: {"calm":true,"calmDefense":0.9},
+      skill: 'Star of Madrid / Popular Uprising / Electrical Overload',
+      desc: "Star of Madrid (passive): Fernando and friendly formations within 2 hexes cannot fall below Neutral morale; when below 50% HP, they deal +25% combat damage. Popular Uprising (passive, once per turn): when Fernando captures a city, he and allied formations within 2 hexes heal 20% max HP and refresh their full movement, without refreshing attacks. Electrical Overload (active, once per turn): Fernando attacks an adjacent enemy for normal attack damage without counterfire. The survivor cannot move and takes 30% more incoming combat damage until Fernando's next turn.",
+      fx: { starOfMadrid: true, popularUprising: true },
+      action: { name: 'Electrical Overload', verb: 'Electrical Overload', kind: 'electricalOverload', target: 'enemy', range: 1, cooldown: 0, desc: "Once per turn, attack one adjacent enemy for normal damage without counterfire, consuming Fernando's normal attack. If it survives, the enemy cannot move and takes +30% combat damage until Fernando's next turn." },
       recruit: 200,
     },
     marirrosa: {
