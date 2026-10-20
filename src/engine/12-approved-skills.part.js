@@ -310,6 +310,30 @@
       for(const ally of g.units)if(ally.hp>0&&ally.side===v.side&&dist(g,ally,v)===1)
         ally.expPuristCounter={turns:1,startTurn:g.turn};
     if(!attacker)return;
+    // Exploit the Opening: only an OTHER allied formation's actual kill can
+    // refresh Ryo and the killer. No new attack is created on mere damage,
+    // shields, a Ryo solo kill, or indirect deaths without an allied killer.
+    // Uses ordinary marked targets, so Yukiya's weaker mark cannot stack.
+    for(const mark of v.skillMarks||[]){
+      if(!mark.ryo||mark.side!==attacker.side||mark.source===attacker.id)continue;
+      const ryo=g.units.find(u=>u.id===mark.source&&u.cmd==='ryo'&&u.hp>0&&
+        u.side===attacker.side&&!atSea(g,u)&&fx(u).ryoOpening);
+      if(!ryo)continue;
+      for(const ally of [ryo,attacker]){
+        if(ally.hp<=0)continue;
+        ally.attacked=false;
+        // A full normal move, without resetting heavy-frame action counts or
+        // rearming any once-per-turn commander/Elite ability.
+        ally.moved=heavyMoveLimitReached(g,ally);
+        ally.skillReposition=0;
+        ally.withdrawMove=false;
+        ally.eliteMoveAfterKill=false;
+      }
+      // Small AI-turn signal: if Ryo acted earlier, the rival turn runner can
+      // let him spend his newly restored action without a complex new planner.
+      const prior=ryo.expRyoOpeningRefresh;
+      ryo.expRyoOpeningRefresh={turn:g.turn,count:(prior?.turn===g.turn?prior.count:0)+1};
+    }
     for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&dist(g,u,v)<=2){
       const gained=Math.min(20,60-(u.expSalvageIndustry||0));funds(g,u.side).industry+=Math.max(0,gained);u.expSalvageIndustry=(u.expSalvageIndustry||0)+Math.max(0,gained);
       u.expSalvageCount=(u.expSalvageCount||0)+1;
