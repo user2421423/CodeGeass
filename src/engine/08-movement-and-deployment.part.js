@@ -130,7 +130,7 @@
     // Brain Raid restores the full normal movement budget after a shot,
     // but only while Akito remains isolated; this never restores an attack.
     const akitoFollowUp = !!u.expAkitoMoveReady && akitoIsolated(g, u);
-    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || u.moved || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp)) return found;
+    if (!isReady(g, u) || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -139,10 +139,10 @@
       amphibious = t.naval === 'amphibious',
       landMove = movement(g, u),
       seaMv = amphibious ? amphibiousSea(g, u) : 0,
-      budget = u.expKallenReposition ? (u.expKallenMoveBank || 0)
+      budget = u.expOscarReposition ? 3 : u.expKallenReposition ? (u.expKallenMoveBank || 0)
         : u.skillReposition ? Math.min(landMove, u.skillReposition)
         : ship ? landMove : amphibious ? landMove * seaMv : fromSea ? seaMove(g, u) : landMove,
-      boards = !u.skillReposition && !u.expKallenReposition && !t.naval && u.deployedTurn !== g.turn,
+      boards = !u.expOscarReposition && !u.skillReposition && !u.expKallenReposition && !t.naval && u.deployedTurn !== g.turn,
       stateKey = p => key(p),
       costs = new Map([[stateKey(start), 0]]),
       queue = [{ p: start, cost: 0, order: 0 }];
@@ -184,7 +184,7 @@
         // Airships fly over impassable peaks and land alike; other warships keep to the water.
         if ((!air && TERRAIN[n.terrain]?.blocked) || (ship && !air && !navigable(n)) ||
             (u.skillReposition && !t.naval && isSea(n) && !fromSea) ||
-            ((u.expMargaretRedeploy||u.expShadowMove)&&isSea(n)!==fromSea)) continue;
+            ((u.expMargaretRedeploy||u.expShadowMove||u.expOscarReposition)&&isSea(n)!==fromSea)) continue;
         const occ = unitAt(g, n),
           st = stationAt(g, n);
         if (ship && st) continue;
@@ -196,7 +196,7 @@
         if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
         const step = isSea(n) ? 1 : terrainCost(g, u, n) + (rivers ? riverCrossingCost(g, p, n, u) : 0);
-        const nc = u.skillReposition
+        const nc = (u.skillReposition || u.expOscarReposition)
           ? cost + step
           : cross
           ? budget
@@ -393,14 +393,20 @@
       carrier = unitAt(g, dest);
     // Consume actual movement cost, not the whole bonus pool. Earned points
     // that cannot be used this turn remain available on Kallen's next turn.
-    const kallenReposition = !!fx(u).firstStrike && !!u.expKallenReposition;
-    const kallenNormalBonus = !!fx(u).firstStrike && !kallenReposition &&
+    const oscarFreeMove = !!u.expOscarReposition;
+    const originalActions = oscarFreeMove ? {
+      moved:u.moved,attacked:u.attacked,skillReposition:u.skillReposition,
+      withdrawMove:u.withdrawMove,eliteMoveAfterKill:u.eliteMoveAfterKill,
+      akitoMoveReady:u.expAkitoMoveReady
+    } : null;
+    const kallenReposition = !oscarFreeMove && !!fx(u).firstStrike && !!u.expKallenReposition;
+    const kallenNormalBonus = !oscarFreeMove && !!fx(u).firstStrike && !kallenReposition &&
       !u.skillReposition && !u.withdrawMove && !t.naval && !fromSea;
     const kallenBaseMove = kallenNormalBonus ? movement(g, u) - (u.expKallenMoveBank || 0) : 0;
     const kallenSpent = kallenReposition ? moveCost :
       kallenNormalBonus ? Math.max(0, moveCost - kallenBaseMove) : 0;
     // A legal move consumes the single post-attack Brain Raid movement grant.
-    delete u.expAkitoMoveReady;
+    if (!oscarFreeMove) delete u.expAkitoMoveReady;
     // Boarding: the Knightmare goes aboard (off the map) and its action ends.
     if (carrier && carrier !== u && carrier.side === u.side && canBoard(g, carrier)) {
       markMoveAction(g, u);
@@ -454,8 +460,20 @@
         !heavyMoveLimitReached(g, u) && !freshLanding) {
       u.moved = false;
       u.skillReposition = u.expKallenMoveBank;
-    } else {
+    } else if (!oscarFreeMove) {
       delete u.expKallenReposition;
+    }
+    // Oscar's 3-point reposition is free and independent of normal
+    // movement/attack. Restore whatever action availability existed at
+    // the moment of the reposition, including another earned reposition.
+    if (oscarFreeMove) {
+      u.moved=originalActions.moved;
+      u.attacked=originalActions.attacked;
+      u.skillReposition=originalActions.skillReposition;
+      u.withdrawMove=originalActions.withdrawMove;
+      u.eliteMoveAfterKill=originalActions.eliteMoveAfterKill;
+      if(originalActions.akitoMoveReady)u.expAkitoMoveReady=originalActions.akitoMoveReady;
+      delete u.expOscarReposition;
     }
     // Tactical redeployment preserves the original normal movement action.
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
