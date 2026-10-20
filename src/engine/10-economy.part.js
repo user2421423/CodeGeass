@@ -102,7 +102,8 @@
           a.industry+=y.industry*.25;
         }
         a.industry += y.industry;
-        a.science += y.science;
+        const lloydHere = g.units.some(u => u.hp > 0 && u.side === side && u.cmd === 'lloyd' && u.c === s.c && u.r === s.r);
+        a.science += y.science * (lloydHere ? 2 : 1);
         // Scenario balancing income is owned by the city and transfers on
         // capture instead of surviving as a permanent off-map stipend.
         for(const resource of REGIONAL_RESOURCES)
@@ -115,7 +116,9 @@
     // Sakuradite deposits: extraction by refinery level, with Japan's output allocated among the powers; a level-3
     // refinery also exports for credits.
     for (const d of g.sites || []) {
-      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1);
+      const host = depositHost(g, d);
+      const lloydAtHost = host && host.owner === side && g.units.some(u => u.hp > 0 && u.side === side && u.cmd === 'lloyd' && u.c === host.c && u.r === host.r);
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1) * (lloydAtHost ? 2 : 1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
     // Regional scenarios localize the national Sakuradite allotment into
