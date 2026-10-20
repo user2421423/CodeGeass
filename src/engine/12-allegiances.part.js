@@ -94,6 +94,39 @@
       dist(g, v, recipient) <= 2 &&
       (!recipient.expInformationWarfare || v.id === recipient.id));
   }
+  // All three Smilas mechanics are combat-state rules. They have no buff
+  // stamps, and never read the player's faction to decide whether to work.
+  function smilasAdjacentShield(g, target) {
+    return !!target && target.hp > 0 && !atSea(g,target) &&
+      g.units.some(v => v.hp > 0 && v.id !== target.id &&
+        v.side === target.side && v.cmd === 'smilas' &&
+        !atSea(g,v) && !v.auraDisrupted && fx(v).humanShields &&
+        dist(g,v,target) === 1);
+  }
+  function smilasDamageShare(g, victim, amount) {
+    const raw = Math.max(0, Math.round(amount || 0));
+    if (!victim || victim.hp <= 0 || victim.cmd !== 'smilas' ||
+        !fx(victim).humanShields || atSea(g,victim) || victim.auraDisrupted)
+      return { primary:raw, ally:null, redirected:0 };
+    const ally = g.units.filter(v => v.hp > 0 && v.id !== victim.id &&
+      v.side === victim.side && !atSea(g,v) &&
+      dist(g,v,victim) === 1)
+      .sort((a,b) => b.hp-a.hp || a.id-b.id)[0];
+    if (!ally) return { primary:raw, ally:null, redirected:0 };
+    const share = Math.round(raw * 0.50);
+    // Transfer damage bypasses the recipient's own defenses, but suffers
+    // the 15% Human Shields adjacency vulnerability exactly once.
+    return { primary:raw-share, ally, redirected:Math.round(share*115/100) };
+  }
+  function smilasSacrificeReflection(g, victim, attacker, incomingDamage) {
+    if (!victim || !attacker || !foe(g,victim.side,attacker.side) ||
+        !Number.isFinite(incomingDamage) || incomingDamage <= 0) return 0;
+    const supports = g.units.some(v => v.cmd === 'smilas' &&
+      v.side === victim.side && (v.hp > 0 || v.id === victim.id) &&
+      !atSea(g,v) && !v.auraDisrupted && fx(v).necessarySacrifices &&
+      dist(g,v,victim) <= 2);
+    return supports ? Math.round(incomingDamage*0.50) : 0;
+  }
   function commanderAttack(g, u, target, counter) {
     const f = fx(u), friends = friendlyNeighbors(g, u);
     let mult = 1;
@@ -102,7 +135,6 @@
     // Divine Tiger targets commander-led formations in both attacks and retaliation.
     if (f.duelist && target?.cmd) mult *= 1 + f.duelist;
     if (counter) {
-      if (u.guardReady && u.held && skillNear(g, u, 'defensiveDoctrine', 2)) mult *= 1.25;
       return mult;
     }
     if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
@@ -133,7 +165,6 @@
     if (target.guardReady && target.held && skillNear(g, target, 'veteranSupport', 1, false)) mult *= 0.9;
     if (f.loneTaken && akitoIsolated(g, target)) mult *= f.loneTaken;
     if (f.duelistTaken && attacker?.cmd) mult *= f.duelistTaken;
-    if(target.guardReady&&target.held&&skillNear(g,target,'defensiveDoctrine',2))mult*=.85;
     if (counter && f.swordplay && dist(g, attacker, target) === 1) mult *= f.swordplay;
     if (!counter && direct) {
       if (f.foresight && target.foresightTurn !== g.turn) mult *= f.foresight;
