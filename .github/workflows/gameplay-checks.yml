@@ -32,6 +32,8 @@ jobs:
           node-version: 22
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Check alternate-history faction rosters, geography and four difficulties
+        run: node tools/alternate_history_smoke.cjs
       - name: Compare exact fingerprints with the documented defect-fix baseline
         run: node tools/check_sim_baseline.cjs --scenarios eu-greenland,division-japan,battle-luoyang --actual gameplay-fingerprints.txt
       - uses: actions/upload-artifact@v4
