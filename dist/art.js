@@ -131,8 +131,6 @@ const ART = (() => {
   // New elite variants share the published image of their underlying standard frame.
   const ELITE_ART_ALIASES = {
     elite_sutherland_air: 'canterbury', // Shared Imperial rocket elite uses Canterbury artwork.
-    elite_portman_ii: 'portman_ii',
-    elite_shui_gun_ru_ii: 'shui_gun_ru_ii',
     elite_europe_eu_carrier: 'eu_carrier',
     elite_europe_eb_carrier: 'carrier_battleship',
     elite_japan_britannia_carrier: 'carrier_battleship',

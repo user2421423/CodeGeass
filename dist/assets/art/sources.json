@@ -1052,5 +1052,23 @@
         "prompt": "Distinct full-body Black Knights elite Gekka marine conversion; black and violet samurai armor, gold trim, sealed joints, heavy torpedo pods, compact waterjets and naval blade; transparent anime cel-shaded sprite."
       }
     ]
+  },
+  "amphibiousEliteArtwork": {
+    "entries": [
+      {
+        "id": "elite_portman_ii",
+        "file": "units/elite_portman_ii-ee9edd731519.png",
+        "method": "AI-generated distinct elite variant using the regular unit sprite as a design reference",
+        "reference": "units/portman_ii-0a2b145551d7.png",
+        "prompt": "Full-body transparent Britannian Portman II infiltration elite; navy-charcoal, ivory and gold armor, waterjets, torpedo tubes, hydroplanes and breaching lance; anime cel shading."
+      },
+      {
+        "id": "elite_shui_gun_ru_ii",
+        "file": "units/elite_shui_gun_ru_ii-bebdba72d3ec.png",
+        "method": "AI-generated distinct elite variant using the regular unit sprite as a design reference",
+        "reference": "units/shui_gun_ru_ii-52eebcb60e90.png",
+        "prompt": "Full-body transparent Federation Shui Gun-Ru II coastal assault elite; jade, crimson and gold dome armor, three legs, naval cannon pods, heavy torpedoes and waterjets; anime cel shading."
+      }
+    ]
   }
 }
