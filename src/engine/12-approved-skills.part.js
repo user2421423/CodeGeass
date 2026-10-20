@@ -138,6 +138,21 @@
     return g.units.some(v=>v.hp>0&&v.id!==target.id&&v.side===target.side&&
       fx(v).oscarGuardAura&&!atSea(g,v)&&dist(g,v,target)<=2) ? .9 : 1;
   }
+  // Klaus's rescue triggers only after an enemy attack crosses the
+  // 30%-HP threshold without killing the victim.
+  function klausLoyaltyAfterHit(g, victim, attacker, priorHP) {
+    if (!victim || !attacker || !foe(g, attacker.side, victim.side) ||
+        victim.hp <= 0 || victim.hp >= maxHP(victim) * 0.30 ||
+        priorHP < maxHP(victim) * 0.30) return;
+    const klaus = g.units.find(v => v.hp > 0 && v.side === victim.side &&
+      fx(v).klausLoyalty && !atSea(g, v) && dist(g, v, victim) <= 2 &&
+      v.expKlausLoyaltyTurn !== g.turn);
+    if (!klaus) return;
+    klaus.expKlausLoyaltyTurn = g.turn;
+    victim.hp = Math.min(maxHP(victim), victim.hp + Math.round(maxHP(victim) * 0.15));
+    victim.expKlausLoyalty = { side: victim.side, source: klaus.id };
+    log(g, 'Klaus rallies a critically wounded wZERO formation.', victim.side);
+  }
   // Oscar fires an independent full-strength reaction after an enemy's
   // initiating attack against ANOTHER allied formation within 2 hexes.
   // No normal attack action, retaliation, or attack-chain refresh is created.

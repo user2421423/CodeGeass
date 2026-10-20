@@ -269,6 +269,7 @@
       // Oscar passively protects other allies within two hexes of himself.
       // His marked ally instead receives 20% protection even after moving away.
       attack *= oscarDefenseMultiplier(g,target);
+      if (target.expKlausLoyalty?.side === target.side) attack *= 0.8;
       attack *= skillDefense(g,target,counter,direct) *
         commanderDefense(g,target,u,counter,direct) *
         newcomerDefense(g,target,u,counter,direct);
@@ -397,12 +398,14 @@
   // absorb half of an incoming Smilas hit, and die before any counterfire.
   // The transferred hit is not itself an attack or a counterattack.
   function smilasDealCombatDamage(g, victim, attacker, amount) {
+    const priorHP = victim.hp;
     const split = smilasDamageShare(g,victim,amount);
     // Intercept before applying the hit to Smilas, so a bodyguard killed
     // shielding a mortally wounded Smilas still triggers Sacrifices.
     if (split.ally && split.redirected > 0) {
       const ally = split.ally, before = ally.hp;
       ally.hp = Math.max(0,ally.hp-split.redirected);
+      klausLoyaltyAfterHit(g, ally, attacker, before);
       recordWarEvent(g,'damage',attacker.side,{
         targetSide:ally.side,value:before-ally.hp,unitId:attacker.id,group:warGroup(g,attacker)});
       // The full REDIRECTED killing blow (including its 15% exposure) is
@@ -410,6 +413,7 @@
       kill(g,ally,attacker,false,null,split.redirected);
     }
     victim.hp = Math.max(0,victim.hp-split.primary);
+    klausLoyaltyAfterHit(g, victim, attacker, priorHP);
     return split.primary;
   }
   // force: nothing survives (F.L.E.I.J.A.); C.C.'s Code Bearer

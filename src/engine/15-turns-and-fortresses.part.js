@@ -149,6 +149,7 @@
       // Emergency Defense lasts through opponents' turns, then expires at
       // the start of the designated ally's next friendly turn.
       if(v.expOscarDefense?.side===side)delete v.expOscarDefense;
+      if(v.expKlausLoyalty?.side===side)delete v.expKlausLoyalty;
       if(v.expJoeDiagnosis?.until<g.turn)delete v.expJoeDiagnosis;
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
       if (v.expCheckmate?.side === side) delete v.expCheckmate;

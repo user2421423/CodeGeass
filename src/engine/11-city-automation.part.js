@@ -123,7 +123,7 @@
         producer = portBuilt(t) ? (s.portOwner || s.owner) : s.owner;
       if (producer !== side) continue;
       const stack = t.naval === 'ship' ? 1 : a.stack,
-        cost = decreePrice(price(unit, stack, g, side), s.owner === side ? s : null);
+        cost = decreePrice(recruitCost(g, s, unit, stack), s.owner === side ? s : null);
       if (!automationReserveAllows(g, side, cost, reserve) || buyReason(g, s, unit, stack)) continue;
       const r = recruit(g, s.id, unit, stack);
       if (r.ok) {

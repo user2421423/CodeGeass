@@ -38,7 +38,7 @@ function openShop(id, branch = shop.branch) {
     .map(k => {
       const t = E.TYPES[k],
         n = t.naval === 'ship' ? 1 : shop.stack,
-        p = E.price(k, n, game, game.player),
+        p = E.decreePrice(E.recruitCost(game, s, k, n), s.owner === game.player ? s : null),
         can = E.canBuy(game, s, k, n),
         capacity = t.capacity ? E.carrierCapacity(game, { type: k, side: game.player }) : 0;
       return `<article class="unit-card ${!port && s.tier < t.tier ? 'locked' : ''}">${ART.unit(k, 'catalog-ship', game.player)}<span class="unit-code">${t.role} · Tier ${t.tier} · ×${n}</span><h3>${t.name}</h3><span class="weapon-focus">${t.model} · ${t.gen}</span><p>${t.desc}</p><p class="lore">${t.weapon}</p><div class="unit-spec"><span>HP ${Math.round(t.hp * (1 + 0.7 * (n - 1)))}</span><span>${ICONS.use('atk')}${Math.round(t.attack * (1 + 0.45 * (n - 1)))}</span><span>${ICONS.use('def')}${t.armor}</span><span>${ICONS.use('mov')}${E.movement(game, { type: k, side: game.player })}</span>${t.seaMove ? `<span>Sea ${t.seaMove}</span>` : ''}${capacity ? `<span>Carries ${capacity}</span>` : ''}<span>${ICONS.use('rng')}${rangeText({ type: k, side: game.player })}</span></div><div class="cost">${costHTML(p)}</div>${act(`data-recruit="${k}"`, 'Roll out', can ? null : E.buyReason(game, s, k, n))}</article>`;
@@ -85,7 +85,7 @@ function openEliteShop(id, navalOnly = false) {
       level = Math.max(1, rec?.level || 1),
       stats = E.eliteStats(k, level),
       t = E.TYPES[e.type],
-      cost = E.elitePrice(k, level),
+      cost = E.decreePrice(E.eliteRecruitCost(game, s, k), s.owner === owner ? s : null),
       why = E.eliteDeployReason(game, s, k, p),
       ability = level >= 5 ? e.lv5Text : level >= 3 ? e.lv3Text : 'Signature ability unlocks at Elite Lv.3.';
     return `<article class="unit-card elite-card ${rec?.level ? '' : 'locked'}">${eliteCardPresentationHTML(k, level, E.movement(game, { type: e.type, side: owner, elite: k, eliteLevel: level }))}<div class="elite-fragments">${rec?.level ? 'HQ Lv.' + level : 'Locked'} · Unique ×1</div><div class="cost">${costHTML(cost)}</div>${act(`data-elite-deploy="${k}"`, rec?.level ? 'Deploy elite' : 'Locked', why, rec?.level ? 'Once per operation · one unique frame' : `Fragments ${rec?.fragments}/${E.ELITE_UNLOCK_FRAGMENTS}`)}</article>`;

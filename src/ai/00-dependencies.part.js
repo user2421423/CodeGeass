@@ -56,6 +56,8 @@
     eliteAIProduction,
     eliteScenario,
     elitePrice,
+    eliteRecruitCost,
+    recruitCost,
     depositHost,
     depositOwner,
     dist,
