@@ -130,7 +130,7 @@
   // Emergency Defense follows the designated formation. Non-stacking:
   // its own 20% protection takes precedence over nearby allies' 10%.
   function oscarDefenseMultiplier(g,target){
-    if(target?.hp<=0)return 1;
+    if(!target||target.hp<=0)return 1;
     if(target.expOscarDefense?.side===target.side)return .8;
     return g.units.some(v=>v.hp>0&&v.side===target.side&&v.expOscarDefense?.side===target.side&&
       dist(g,v,target)<=2) ? .9 : 1;
