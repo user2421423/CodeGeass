@@ -186,15 +186,7 @@ function landscape(p){
  if(basin>.30)return 'desert';
  return ridge<.3?'forest':'desert';
 }
-function nearest(g,p,valid,radius=14){
- let best=null,d=Infinity;
- for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-  for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-   const t=E.tile(g,c,r);if(!t||!valid(t))continue;
-   const n=E.distance(p,t,g);if(n<d){d=n;best=t;}
-  }
- return best;
-}
+function nearest(g,p,valid,radius=14){return E.nearestTile(g,p,valid,radius);}
 function defineScenario(config){
  const {id:ID,title,attacker,staging,armies,defense,funding:FUNDING,
   startingSeed,openingText,attackerVictory,operationKey,approach,
@@ -204,20 +196,7 @@ function defineScenario(config){
  const CITIES=GEOGRAPHIC_CITIES.map(([name,lon,lat,_baselineOwner,tier,fort])=>
   [name,lon,lat,staging.has(name)?attacker:'britannia',tier,fort]);
  const ARMY_GROUPS=[...armies,...defense];
-function orderGroup(g,id,target){
- if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
- const gr=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
- if(!gr)return {ok:false,reason:'Army Group not found'};
- let assigned=0,failed=0;
- for(const uid of gr.units){
-  const u=g.units.find(v=>v.id===uid&&v.hp>0&&v.side===g.player);
-  if(!u)continue;
-  const result=E.setGoto(g,u.id,target.c,target.r);
-  if(result.ok)assigned++;else failed++;
- }
- if(assigned)gr.destination={c:target.c,r:target.r};
- return {ok:assigned>0,assigned,failed,reason:assigned?'':'No reachable formation'};
-}
+function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army Group not found','No reachable formation');}
 function create(player=attacker,difficulty='normal',seed=startingSeed){
  if(!SIDES.includes(player))throw Error('Unsupported Pendragon faction: '+player);
  if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

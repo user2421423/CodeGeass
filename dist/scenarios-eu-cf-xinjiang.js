@@ -25,11 +25,7 @@ function locate(lon,lat){const r=Math.max(0,Math.min(ROWS-1,
 Math.round((BOUNDS.north-lat)*ROWS/(BOUNDS.north-BOUNDS.south)-.5)));
 return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
 (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};}
-function nearest(g,p,valid,radius=10){let best=null,d=Infinity;
-for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-const t=E.tile(g,c,r);if(!t||!valid(t))continue;const n=E.distance(p,t,g);
-if(n<d){d=n;best=t;}}return best;}
+function nearest(g,p,valid,radius=10){return E.nearestTile(g,p,valid,radius);}
 // Relief follows the Tianshan, Altai, Dzungarian Alatau, Kunlun and Pamir arcs.
 const LAKES=[["Lake Balkhash",[[73.03,46.12],[73.45,46.4],[74.5,46.56],[75.4,46.57],[76.8,46.38],[78.5,46.19],[79.5,46.13],[78.5,45.86],[77.2,46.02],[75.5,45.92],[74.1,46.02]]],["Lake Alakol",[[81.25,46.28],[81.53,46.36],[81.94,46.32],[82.14,46.08],[82.03,45.82],[81.55,45.77],[81.27,45.93]]],["Lake Issyk-Kul",[[76.13,42.33],[76.25,42.6],[77.25,42.68],[78.2,42.59],[78.3,42.37],[77.4,42.28]]]];
 function inLake(p,poly){
@@ -76,20 +72,7 @@ function landscape(p,c,r){
  if(taklamakan||gurbantunggut||kumtag)return 'desert';
  return p.lat>47.7&&((c*17+r*13)%19)<2?'forest':'plains';
 }
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
 function create(player='eu',difficulty='normal',seed=201701){
 if(!SIDES.includes(player))throw Error('Unsupported Xinjiang faction: '+player);
 if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

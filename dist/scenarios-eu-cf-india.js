@@ -239,15 +239,7 @@ function locate(lon,lat){const r=Math.max(0,Math.min(ROWS-1,
  Math.round((BOUNDS.north-lat)*ROWS/(BOUNDS.north-BOUNDS.south)-.5)));
  return {r,c:Math.max(0,Math.min(COLS-1,
  Math.round((lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};}
-function nearest(g,p,valid,radius=12){
- let best=null,distance=Infinity;
- for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-  for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-   const t=E.tile(g,c,r);if(!t||!valid(t))continue;
-   const d=E.distance(p,t,g);if(d<distance){distance=d;best=t;}
-  }
- return best;
-}
+function nearest(g,p,valid,radius=12){return E.nearestTile(g,p,valid,radius);}
 function lineDistance(p,points){
  let best=Infinity;
  for(let i=1;i<points.length;i++){
@@ -270,20 +262,7 @@ function terrain(p,c,r){
  if(p.lon>74&&p.lon<86&&p.lat<19&&(c*11+r*7)%17<4)return 'forest';
  return 'plains';
 }
-function orderGroup(g,id,target){
- if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
- const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
- if(!group)return {ok:false,reason:'Army group not found'};
- let assigned=0,failed=0;
- for(const id of group.units){
-  const u=g.units.find(v=>v.id===id&&v.hp>0&&v.side===g.player);
-  if(!u)continue;
-  const res=E.setGoto(g,u.id,target.c,target.r);
-  if(res.ok)assigned++;else failed++;
- }
- if(assigned)group.destination={c:target.c,r:target.r};
- return {ok:assigned>0,assigned,failed,reason:assigned?'':'No formation can reach destination'};
-}
+function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No formation can reach destination');}
 function create(player='eu',difficulty='normal',seed=201717){
  if(!SIDES.includes(player))throw Error('Unsupported India faction '+player);
  if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

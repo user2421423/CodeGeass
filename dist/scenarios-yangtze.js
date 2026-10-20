@@ -253,16 +253,7 @@
       if(distanceToRiver(x+dx,y+dy)<1.24)n++;
     return n/SAMPLES.length;
   }
-  function nearest(g,p,allowed,radius=12){
-    let best=null,dist=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);if(!t||!allowed(t))continue;
-        const d=E.distance(p,t,g);
-        if(d<dist){dist=d;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,allowed,radius=12){return E.nearestTile(g,p,allowed,radius);}
   function flood(g,start,allowed){
     const seen=new Set([E.key(start)]),q=[start];
     for(let i=0;i<q.length;i++)for(const n of E.adjacent(g,q[i])){

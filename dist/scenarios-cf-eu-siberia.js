@@ -24,17 +24,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   // Altai/Sayan, Baikal, Stanovoy, Verkhoyansk, Chersky and Kamchatka ranges.
   const MOUNTAINS=[[87,51.5,4,2],[94,52.2,6,3],[109,54,5,3],[124,55.5,6,2.5],
     [135,66,5,5],[147,66,9,5],[160,57,4,5],[141,61,3,4]];
@@ -60,20 +50,7 @@
     angara:[[104.3,52.3],[103,55],[101.6,56.2],[98,57.0],[92.9,58.2]],
     amur:[[122.5,52.5],[125.0,50.3],[127.53,50.28],[132.93,48.8],[135.07,48.48],[140.0,49.3]]
   };
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function create(player='cf',difficulty='normal',seed=201701){
     if(!SIDES.includes(player))throw Error('Unsupported Federation Invasion of Siberia faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

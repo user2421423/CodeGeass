@@ -211,20 +211,7 @@
       }
     return best;
   }
-  function orderGroup(g,id,target) {
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const gr=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!gr)return {ok:false,reason:'Unknown task force'};
-    let assigned=0,failed=0;
-    for(const unitId of gr.units) {
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const result=E.setGoto(g,u.id,target.c,target.r);
-      if(result.ok)assigned++;else failed++;
-    }
-    if(assigned)gr.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No unit can reach destination'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Unknown task force','No unit can reach destination');}
   function create(player='cf',difficulty='normal',seed=201717){
     if(!SIDES.includes(player))throw Error('Unsupported New Zealand faction '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

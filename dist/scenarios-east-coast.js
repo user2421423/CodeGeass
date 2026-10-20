@@ -35,17 +35,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   // Mountains and wooded uplands follow the Appalachian spine and New England.
   const RIDGES=[[-71.5,44.7,1.6,2.2],[-73.7,43.4,1.3,1.8],[-75.2,41.4,1.6,2.5],[-78.2,38.1,1.7,3.1],[-81.2,35.6,1.5,2.7],[-83.4,34.5,1.3,2.1]];
   const WOODS=[[-69.7,45.5,3,3],[-73.1,43,3,3],[-77.0,39,2.3,3.1],[-80.1,35.5,2.5,3.2],[-82,31,2.6,2.8],[-81,28.6,2.1,2.8]];
@@ -53,20 +43,7 @@
     Math.exp(-(((p.lon-x)/w)**2+((p.lat-y)/h)**2)*1.6)));}
   function landscape(p){const m=density(p,RIDGES),f=density(p,WOODS);
     return m>.67?'mountain':m>.29||f>.41?'forest':'plains';}
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function create(player='eu',difficulty='normal',seed=201717){
     if(!SIDES.includes(player))throw Error('Unsupported Invasion of the American East Coast faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

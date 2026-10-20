@@ -149,15 +149,7 @@
     const m=density(p,MOUNTAINS),j=density(p,JUNGLE),low=density(p,PLAINS);
     return m>.59?'mountain':j>.40||m>.30&&low<.4?'forest':'plains';
   }
-  function nearest(g,p,valid,radius=12){
-    let best=null,dist=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);if(!t||!valid(t))continue;
-        const d=E.distance(p,t,g);if(d<dist){dist=d;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=12){return E.nearestTile(g,p,valid,radius);}
   function paintCanal(g){
     // Link locks and lakes over actual geographic centre-line, never carve
     // an arbitrary shortcut through the Darién, Chiriquí or the mountains.

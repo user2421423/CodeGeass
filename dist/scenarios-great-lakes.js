@@ -24,17 +24,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   // Uplands, northern forests and the urbanized industrial corridor.
   const MOUNTAINS=[[-88.5,46.1,2,.65],[-86.9,46.25,1.0,.56],[-85.1,46.5,1.5,.8],
     [-81.4,46.4,1.6,.6],[-79.5,45.2,1.1,.7]];
@@ -49,20 +39,7 @@
     return ((c*29+r*17)%37<3&&p.lat>44.6)?'forest':'plains';
   }
   const RIVERS={"StClair":[[-82.43,42.98],[-82.55,42.65]],"Detroit":[[-82.85,42.38],[-83.08,42.25],[-83.15,41.9]],"Niagara":[[-79.09,42.86],[-79.04,43.1],[-79.07,43.28]],"StLawrence":[[-76.47,44.18],[-76.05,44.3],[-75.62,44.48]],"GrandRiver":[[-80.72,43.65],[-80.22,43.38],[-79.89,43.24]],"Maumee":[[-84.8,41.55],[-84.07,41.56],[-83.47,41.66]]};
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function geographicLakes(){
     return root.GREAT_LAKES_GEOGRAPHY||(typeof require==='function'?
       require('./great-lakes-geography.js'):null);
