@@ -108,6 +108,9 @@
         // Unused Emergency Defense movement expires when the owner's
         // faction ends its turn; the defensive aura remains through rivals.
         delete v.expOscarReposition;
+        // Suppression remains for the target's full action phase.
+        delete v.expMiguelSupply;
+        delete v.expToruExtraAttack;delete v.expToruExtraMove;
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
         // Yukiya's electronic disruption expires only after the affected
@@ -190,12 +193,18 @@
       u.entrenched = false;
       u.lastTurnMoved = false;
       u.guardReady = !!u.held;
+      u.expRomeroMoved=false;
       u.movedDistance = 0;
       u.skillReposition = 0;
       u.withdrawMove = false;
       delete u.expAkitoMoveReady;
       u.moved = false;
       u.attacked = false;
+      if(u.expToruPromisePending){
+        u.expToruExtraAttack=Math.max(u.expToruExtraAttack||0,1);
+        u.expToruExtraMove=Math.max(u.expToruExtraMove||0,1);
+        delete u.expToruPromisePending;
+      }
       u.expDisabledActive=!!u.expDisabledNext;delete u.expDisabledNext;
       u.expPinnedActive=!!u.expPinnedNext;delete u.expPinnedNext;
       u.expPinnedWeakenActive=u.expPinnedWeakenNext||0;delete u.expPinnedWeakenNext;
@@ -216,10 +225,10 @@
       u.expDecapitationCd=Math.max(0,(u.expDecapitationCd||0)-1);
       const nearby = g.units.filter(v => v.hp > 0 && foe(g, v.side, side) && dist(g, u, v) === 1).length;
       let desired = nearby >= 3 ? -2 : nearby >= 2 ? -1 : 0;
-      desired = Math.max(moraleFloor(g, u), desired);
+      desired = Math.max(romeroStandFast(g,u) ? 0 : moraleFloor(g,u), desired);
       if (u.morale < desired) u.morale++;
       else if (u.morale > desired) u.morale--;
-      if (nearby >= 2) u.morale = Math.min(u.morale, desired);
+      if (nearby >= 2) u.morale = Math.max(romeroStandFast(g,u) ? 0 : -3,Math.min(u.morale, desired));
       // Anna's Clément Engineering supplies field repairs, not morale recovery.
 
       // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
@@ -227,18 +236,18 @@
         u.morale = Math.min(1, u.morale + 1);
       // Rakshata: field repairs include her own formation and adjacent friendly
       // land units, never ships. Multiple engineers do not stack.
-      if (TYPES[u.type].naval !== 'ship' &&
+      if (!u.expMiguelSupply && TYPES[u.type].naval !== 'ship' &&
           mine.some(m => m.hp > 0 && fx(m).rakshataEngineering && dist(g, m, u) <= 1))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.10));
       // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
-      if (u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
+      if (!u.expMiguelSupply && u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      if (!TYPES[u.type].air && annaMaintenanceNear(g, u))
+      if (!u.expMiguelSupply && !TYPES[u.type].air && annaMaintenanceNear(g, u))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      if (fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
+      if (!u.expMiguelSupply && fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
       const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];
       const repairLevel = genericLevel(g, u, repairSkill);
-      if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
+      if (!u.expMiguelSupply && repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
       const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata', 'ohgi', 'smilas', 'anna'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
@@ -253,10 +262,13 @@
       // City occupancy no longer heals frames by itself. Inoue's separate
       // Resistance Logistics bonus still applies to friendly city garrisons.
       const s = stationAt(g, u);
-      if (s?.owner === side && logisticsNear(g, u))
+      if (!u.expMiguelSupply && s?.owner === side && logisticsNear(g, u))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       // Ports supply shipyards, not passive naval healing. Ships must use an explicit
       // repair action (or a separate earned ability) to recover HP.
+      // Toru's banked promise always begins at High morale even if normal
+      // end-of-turn-start recovery would otherwise lower it.
+      if(u.expToruExtraAttack||u.expToruExtraMove)u.morale=1;
       // End-of-turn-start morale recovery and allied rally effects cannot
       // break the one-turn Geass confusion.
       if (u.expCharlesMemoryRewrite) {
@@ -274,7 +286,9 @@
       const administrationBonus=mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3) ? .15 : 0;
       // Incoming fire halves ordinary repair, but Huang Qian still restores
       // the full additional 15% maximum shields every friendly turn.
-      const recovery=s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
+      const occupant=unitAt(g,s);
+      const miguelBlocked=occupant?.side===side&&!!occupant.expMiguelSupply;
+      const recovery=miguelBlocked||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
         ? 0 : (s.attackedSinceRegen?baseRate*.5:baseRate)+administrationBonus;
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
       s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * recovery));
