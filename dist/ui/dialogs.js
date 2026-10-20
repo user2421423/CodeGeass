@@ -308,7 +308,7 @@ function officerCard(k, own) {
 // HQ → Commanders: your persistent roster for each faction, and the commanders still to recruit.
 // Euro Britannia has eight exclusive officers and four officers shared with Britannia.
 // Keep this list aligned with the 2018 U.F.N. Euro Britannian starting roster.
-const EURO_BRITANNIAN_COMMANDERS = ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'suzaku', 'schneizel', 'oldrin', 'marrybell'];
+const EURO_BRITANNIAN_COMMANDERS = ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'gaudefroy', 'raymond', 'suzaku', 'schneizel', 'oldrin', 'marrybell'];
 let generalsSide = 'all';
 function generalsDialog(side = generalsSide) {
   generalsSide = side;

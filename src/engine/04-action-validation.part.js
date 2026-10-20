@@ -240,7 +240,7 @@
     const action = COMMANDERS[u?.cmd]?.action;
     if (!u || !action) return 'This commander has no command action';
     const why = turnReason(g, u.side) || (u.hp <= 0 ? 'Unit destroyed' : u.expRoloFrozen ? 'Frozen by Absolute Suspension' : atSea(g, u) ? 'Embarked units cannot use command actions' : u.morale <= -3 ? 'Unit is confused' : null)
-      || (u.feintUsedTurn === g.turn ? 'Already used this turn' : (action.cooldown ?? 3) > 0 && u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
+      || (u.feintUsedTurn === g.turn && !(u.cmd === 'raymond' && !(u.feintCD > 0)) ? 'Already used this turn' : (action.cooldown ?? 3) > 0 && u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
     if (why) return why;
     if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';

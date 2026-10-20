@@ -178,6 +178,18 @@
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
     return { ok: true };
   }
+  // A bonus shot still requires the shooter's real range and weapon class.
+  function grandMastersParticipants(g, u, target) {
+    if (!target || target.hp <= 0 || !foe(g, target.side, u.side)) return [];
+    const eligible = w => w.hp > 0 && !atSea(g,w) &&
+      inRange(w,target,g) && hostileTarget(g,w,target);
+    const leader = eligible(u) ? [u] : [];
+    const allies = g.units.filter(w => w.id !== u.id && w.side === u.side &&
+      dist(g,u,w) <= 2 && eligible(w));
+    allies.sort((a,b) => power(g,b,target,stationAt(g,target)) -
+      power(g,a,target,stationAt(g,target)) || a.id - b.id);
+    return leader.concat(allies.slice(0,3));
+  }
   // Command actions share cooldown/range validation; only targeted actions require a picker.
   function actionTargets(g, u) {
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
@@ -195,6 +207,9 @@
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
     if (kind === 'checkmate') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3);
+    if (kind === 'grandMastersAssault') return g.units.filter(v => v.hp > 0 &&
+      foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3 &&
+      grandMastersParticipants(g,u,v).length > 0);
     if (kind === 'memoryRewrite') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 3 &&
       v.morale > -3 && !v.expCharlesMemoryRewrite && !v.moraleWard && moraleFloor(g, v) <= -3);
@@ -234,6 +249,56 @@
       u.feintCD=0;u.feintUsedTurn=g.turn;
       log(g,'Miguel severs the supply lines of '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
       return {ok:true,target:v.id,affected:1};
+    }
+    if (action.kind === 'grandMastersAssault') {
+      const v = targetId == null ? [...options].sort((a,b) =>
+        Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id)[0]
+        : options.find(w => w.id === targetId);
+      if (!v) return { ok:false, reason:'Choose a reachable enemy formation within 3 hexes' };
+      const participants = grandMastersParticipants(g,u,v);
+      if (!participants.length) return { ok:false, reason:'No allied weapon can reach the target' };
+      // Start cooldown before damage: allied kills may immediately shorten it.
+      u.feintCD = action.cooldown;
+      u.feintUsedTurn = g.turn;
+      let totalDamage=0, shieldDamage=0, fired=0;
+      for (const shooter of participants) {
+        if (v.hp <= 0 || g.over) break;
+        const shot = preview(g,shooter.id,v.c,v.r);
+        if (!shot) continue;
+        const city = stationAt(g,v);
+        if (city && foe(g,city.owner,shooter.side)) {
+          city.attackedSinceRegen = true;
+          const lost = Math.min(city.shield, Math.max(0,Math.round((shot.shield || 0)*.75)));
+          city.shield -= lost;
+          shieldDamage += lost;
+        }
+        let incoming = Math.max(1,Math.round((shot.rawUnit ?? shot.unit)*.75));
+        if (v.expCCProtection) delete v.expCCProtection;
+        consumeDefensiveSkills(g,v,shooter);
+        incoming = newcomerIntercept(g,v,incoming);
+        if (fx(v).futureSightDodge && random(g) < fx(v).futureSightDodge) {
+          incoming = 0;
+          log(g,'FUTURE SIGHT — EVADED',v.side);
+        }
+        const prior=v.hp;
+        smilasDealCombatDamage(g,v,shooter,incoming);
+        const dealt=prior-v.hp;
+        totalDamage += dealt;
+        fired++;
+        recordWarEvent(g,'damage',shooter.side,{targetSide:v.side,
+          value:dealt,unitId:shooter.id,group:warGroup(g,shooter)});
+        v.struck={turn:g.turn,side:shooter.side};
+        if(v.skillMarks?.length)v.skillMarks=v.skillMarks.filter(m=>m.side!==shooter.side||!m.uses);
+        if (v.hp <= 0) {
+          v.expDirectIncoming = true;
+          kill(g,v,shooter,false,null,incoming);
+          delete v.expDirectIncoming;
+        }
+      }
+      log(g,"Grand Master's Assault: "+fired+' participating shots, '+
+        totalDamage+' damage and '+shieldDamage+' city-shield damage.',u.side);
+      checkVictory(g);
+      return {ok:true,target:v.id,affected:fired,damage:totalDamage,shieldDamage};
     }
     if (action.kind === 'electricalOverload') {
       const v = targetId == null ? options[0] : options.find(w => w.id === targetId);

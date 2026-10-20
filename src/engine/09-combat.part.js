@@ -196,6 +196,7 @@
       ? (victim.armor + eliteScale(target).armor + unitTech(g, target, 'armor') + formationArmor)
         * (target.expAyanoSwordBreak ? 0.75 : 1)
         * (f.swordmaster && dist(g, u, target) === 1 ? 0.60 : 1)
+        * (fx(target).fortressArmor && stationAt(g, target)?.owner === target.side ? 1 + fx(target).fortressArmor : 1)
       : 35;
     const vritraBypass=!counter&&f.elitePenSupport&&victim?.branch==='Armor'&&u.expVritraUsedTurn!==g.turn;
     // First anti-armor hit bypasses 20% of the entire target-defense reduction,
@@ -288,8 +289,8 @@
     // of whether the current incoming hit is one he redirected.
     if (target && smilasAdjacentShield(g,target)) attack *= 1.15;
     // Xingke's Perfect Counter replaces the ordinary 65% retaliation multiplier.
-    if (counter) attack *= (f.perfectCounter || romeroStandFast(g,u)) ? 1
-      : !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
+    if (counter) attack *= f.unrestrictedCounter || ((f.perfectCounter || romeroStandFast(g,u)) ? 1
+      : !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65);
     return Math.max(1, Math.round(attack));
   }
   function preview(g, id, c, r) {
@@ -336,7 +337,7 @@
     const followUp = !!f.followUp && !!d && d.struck?.turn === g.turn && d.struck.side === a.side;
     const senbaReaction=!!d&&!a.expFernandoOverloadStrike&&!xianglinOpening&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    const counter =
+    const counter = (!!d && d.hp > 0 && fx(d).unrestrictedCounter && !atSea(g,d) && foe(g,d.side,a.side)) ||
       !a.expFernandoOverloadStrike &&
       !f.noCounterAttack &&
       !followUp &&
@@ -821,10 +822,10 @@
     let retaliation = 0;
     const senbaCounter=!!d&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    if (a.hp > 0 && d && d.hp > 0 && (senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+    if (a.hp > 0 && d && d.hp > 0 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       retaliation = Math.round(power(g,d,a,stationAt(g,a),true) *
-        (senbaCounter ? .5/.65 : 1) * suppressiveCounterFactor(g, a) *
+        (senbaCounter ? .5/.65 : 1) * (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) *
         (0.94+random(g)*.12));
       // The reflected 5% is additional damage on EACH legal counterattack,
       // computed from actual HP lost in this attack (not the raw preview).

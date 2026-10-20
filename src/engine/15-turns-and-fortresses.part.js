@@ -288,8 +288,10 @@
       // the full additional 15% maximum shields every friendly turn.
       const occupant=unitAt(g,s);
       const miguelBlocked=occupant?.side===side&&!!occupant.expMiguelSupply;
+      const gaudefroyRate=occupant?.side===side ? fx(occupant).fortressRegeneration : 0;
       const recovery=miguelBlocked||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
-        ? 0 : (s.attackedSinceRegen?baseRate*.5:baseRate)+administrationBonus;
+        ? 0 : gaudefroyRate ? (baseRate+administrationBonus)*gaudefroyRate
+          : (s.attackedSinceRegen?baseRate*.5:baseRate)+administrationBonus;
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
       s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * recovery));
       delete s.attackedSinceRegen;

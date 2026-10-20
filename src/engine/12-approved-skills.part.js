@@ -398,6 +398,20 @@
       }
     }
     if(!attacker)return;
+    // St. Uriel's Relentless Pursuit: another allied formation's confirmed kill
+    // within 3 hexes restores legal actions and advances Assault's cooldown.
+    if (foe(g, attacker.side, v.side)) for (const raymond of g.units) {
+      if (raymond.cmd !== 'raymond' || !fx(raymond).relentlessPursuit ||
+          raymond.hp <= 0 || raymond.id === attacker.id || raymond.side !== attacker.side ||
+          atSea(g, raymond) || dist(g, raymond, v) > 3) continue;
+      raymond.attacked = false;
+      raymond.moved = heavyMoveLimitReached(g, raymond);
+      raymond.skillReposition = 0;
+      raymond.withdrawMove = false;
+      raymond.eliteMoveAfterKill = false;
+      raymond.feintCD = Math.max(0, (raymond.feintCD || 0) - 1);
+      log(g, "Relentless Pursuit refreshes Raymond's actions and advances Grand Master's Assault.", raymond.side);
+    }
     // Spearhead's Retribution: a genuine kill of an enemy Guilford protected
     // against restores normal movement and attack exactly once each turn.
     if (attacker.cmd === 'guilford' && attacker.hp > 0 &&

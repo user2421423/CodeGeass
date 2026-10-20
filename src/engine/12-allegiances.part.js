@@ -15,7 +15,7 @@
     }
     // Euro Britannia's Story campaign uses the shared imperial HQ pool.
     // Britannia continues to use these officers as before.
-    if (side === 'eb' && ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'suzaku', 'schneizel', 'oldrin', 'marrybell'].includes(k))
+    if (side === 'eb' && ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'gaudefroy', 'raymond', 'suzaku', 'schneizel', 'oldrin', 'marrybell'].includes(k))
       return true;
     return !!a && (a.side === side || !!ALLIES[side]?.includes(a.side));
   }
