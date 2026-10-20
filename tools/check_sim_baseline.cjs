@@ -5,7 +5,7 @@ const path=require('node:path');
 const {spawnSync}=require('node:child_process');
 const ROOT=path.resolve(__dirname,'..');
 function parse(argv) {
-  const c={reference:path.join(ROOT,'tools/data/sim_baseline.txt'),actual:null,scenarios:[]};
+  const c={reference:path.join(ROOT,'tools/data/sim_baseline.txt'),actual:null,scenarios:[],compare:'exact'};
   for(let i=0;i<argv.length;i++) {
     const flag=argv[i],value=argv[++i];
     if(!value||value.startsWith('--'))throw Error('Missing value for '+flag);
@@ -13,6 +13,10 @@ function parse(argv) {
     else if(flag==='--base-root')c.baseRoot=path.resolve(value);
     else if(flag==='--actual')c.actual=path.resolve(value);
     else if(flag==='--scenarios')c.scenarios=value.split(',');
+    else if(flag==='--compare'){
+      if(!['exact','observable'].includes(value))throw Error('Unknown comparison '+value);
+      c.compare=value;
+    }
     else throw Error('Unknown option '+flag);
   }
   return c;
@@ -23,10 +27,23 @@ function capture(root,scenarios) {
   if(result.error||result.status!==0)throw Error('Baseline simulation failed: '+(result.error?.message||result.stderr));
   return result.stdout;
 }
-function differences(expected,actual) {
+// 'observable' is for *cross-revision* gameplay comparisons only: setup must
+// still be byte-exact, and after two turns we require identical battle-report
+// hashes, city ownership, and error counts. A game-state hash may legitimately
+// change for new approved commander effects (e.g. Yukiya electronic-support
+// fields, HP adjustments), so those are surfaced separately for review.
+function equivalent(before,after,compare='exact'){
+  if(before===after)return true;
+  if(compare!=='observable'||!before||!after||
+      !before.startsWith('sim ')||!after.startsWith('sim '))return false;
+  const a=before.split(' '),b=after.split(' ');
+  return a.length===b.length&&a.every((word,i)=>i===6||word===b[i]);
+}
+function differences(expected,actual,compare='exact') {
   const lines=s=>s.trim().split('\n').filter(Boolean), key=l=>l.split(' ').slice(0,l.startsWith('sim ')?6:4).join(' ');
   const before=new Map(lines(expected).map(l=>[key(l),l])),after=new Map(lines(actual).map(l=>[key(l),l]));
-  return [...new Set([...before.keys(),...after.keys()])].filter(k=>before.get(k)!==after.get(k))
+  return [...new Set([...before.keys(),...after.keys()])]
+    .filter(k=>!equivalent(before.get(k),after.get(k),compare))
     .map(k=>({key:k,expected:before.get(k)||null,actual:after.get(k)||null}));
 }
 function main() {
@@ -35,9 +52,16 @@ function main() {
   if(c.scenarios.length)expected=expected.split('\n').filter(l=>c.scenarios.includes(l.split(' ')[1])).join('\n')+'\n';
   if(!actual.trim()||!expected.trim())throw Error('Empty baseline selection');
   if(c.actual){fs.mkdirSync(path.dirname(c.actual),{recursive:true});fs.writeFileSync(c.actual,actual);}
-  const delta=differences(expected,actual);
+  const delta=differences(expected,actual,c.compare);
+  if(c.compare==='observable'){
+    const fullStateOnly=differences(expected,actual,'exact').filter(row=>
+      equivalent(row.expected,row.actual,'observable'));
+    console.log('Observability audit: '+fullStateOnly.length+
+      ' full-state-only changes retained for human review; outcome and setup checks stay strict.');
+    for(const row of fullStateOnly.slice(0,10))console.log('STATE_ONLY '+row.key);
+  }
   console.log(`${actual.trim().split('\n').length} fingerprint lines checked; ${delta.length} mismatches against ${c.baseRoot?'PR base':c.reference}.`);
   if(delta.length){console.error(JSON.stringify(delta.slice(0,12),null,2));process.exitCode=1;}
 }
 if(require.main===module){try{main();}catch(e){console.error(e.stack);process.exitCode=1;}}
-module.exports={differences,parse,capture};
+module.exports={differences,equivalent,parse,capture};
