@@ -132,6 +132,16 @@
   function migrateSave(g) {
     g = unpackSave(g);
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    // Existing operations migrate commanders, cargo, scenario allegiances
+    // and purchased officer progression without losing saved battle state.
+    for(const records of [g.officers,g.roster])if(records)
+      for(const [oldId,newId] of Object.entries(EU_ROSTER_REPLACEMENTS))if(records[oldId]){
+        records[newId] ||= records[oldId];delete records[oldId];
+      }
+    for(const u of g.units.flatMap(v=>[v,...(v.cargo||[])]))
+      if(u.cmd&&EU_ROSTER_REPLACEMENTS[u.cmd])u.cmd=EU_ROSTER_REPLACEMENTS[u.cmd];
+    for(const pool of Object.values(g.scenario?.commanderSides||{}))if(Array.isArray(pool))
+      for(let i=0;i<pool.length;i++)pool[i]=EU_ROSTER_REPLACEMENTS[pool[i]]||pool[i];
     const regional = g.mode === 'scenario';
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;

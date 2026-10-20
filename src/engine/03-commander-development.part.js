@@ -3,6 +3,7 @@
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Supreme Commander, the highest rank for every side.
+  const EU_ROSTER_REPLACEMENTS = Object.freeze({margaret:'romero',kate:'miguel',hilda:'masaki',chloe:'toru'});
   const STARTERS = { britannia: ['cornelia'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
   function fx(u) {
     return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
@@ -90,6 +91,11 @@
   // Every faction has a free starting HQ commander; existing roster upgrades are preserved.
   function roster(profile) {
     profile.roster ||= {};
+    // Carry retired E.U. commanders' HQ purchases and decorations into their
+    // named successors once, retaining all progress without extra slots.
+    for(const [oldId,newId] of Object.entries(EU_ROSTER_REPLACEMENTS))if(profile.roster[oldId]){
+      profile.roster[newId] ||= profile.roster[oldId];delete profile.roster[oldId];
+    }
     for (const k of Object.values(STARTERS).flat())
       if (!profile.roster[k]) profile.roster[k] = defaultOfficer(k, true);
     for (const [k, rec] of Object.entries(profile.roster))
