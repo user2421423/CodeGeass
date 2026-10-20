@@ -263,7 +263,9 @@
   function eliminatorDefender(g, attacker, p) {
     if (!p) return null;
     return (
-      eliminatorCharges(g)
+      [...eliminatorCharges(g), ...g.units
+        .filter(u => u.hp > 0 && u.cmd === 'lloyd' && isMajor(g, u.side))
+        .map(u => ({ c: u.c, r: u.r, owner: u.side, unit: u, ready: true, lloydPassive: true }))]
         .filter(h => h.ready && foe(g, h.owner, attacker) && isMajor(g, h.owner) && dist(g, h, p) <= ELIMINATOR.range)
         .sort(
           (a, b) =>
@@ -356,8 +358,10 @@
       // Two turns of research + two of production therefore beat the second warhead.
       const holder = defense.unit || defense.city;
       if (defense.city?.eliminatorProject?.ready <= g.turn) defense.city.eliminatorProject = null;
-      holder.eliminator = 0;
-      delete holder.eliminatorMoved;
+      if (!defense.lloydPassive) {
+        holder.eliminator = 0;
+        delete holder.eliminatorMoved;
+      }
       log(g, `F.L.E.I.J.A. Eliminator neutralizes the incoming warhead aimed at ${name}.`, defense.owner);
       return {
         ok: true,
