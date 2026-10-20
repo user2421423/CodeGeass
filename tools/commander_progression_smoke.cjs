@@ -11,7 +11,7 @@ assert.ok(standard, 'must have a recruitable standard commander');
 const recruit = E.recruitPrice(standard);
 assert.equal(E.recruitCommander(p, standard).ok, true);
 const plan = E.commanderPlan(p, standard);
-assert.equal(plan.promotions, 4310, 'promotions from Second Lieutenant to Marshal');
+assert.equal(plan.promotions, 4310, 'promotions from Second Lieutenant to Supreme Commander');
 assert.equal(plan.starTotal, 3040, 'all four branches from 2 to 6 stars');
 assert.equal(plan.commission, 550, 'Standard to Legendary Commission');
 assert.deepEqual(plan.skills, [1300, 1300, 1300], 'three Level 5 skills');

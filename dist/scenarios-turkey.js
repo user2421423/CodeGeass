@@ -207,8 +207,7 @@
     // The entire connected regional sea stays navigable for fleets.
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
-        difficulty==='hard'?1.3:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
@@ -219,8 +218,8 @@
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
-        for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
-          if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+        for(const u of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval))
+          E.addDifficultyFrames(u,difficulty);
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Britannia advances through the Taurus Mountains and toward Anatolia while the E.U. defends Ankara, Istanbul and the Bosporus-Dardanelles approaches.',player);

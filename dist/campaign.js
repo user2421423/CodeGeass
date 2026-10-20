@@ -29,12 +29,12 @@
     hard: {
       ...E.DIFFICULTIES.hard,
       ranks: 1, // Preserve campaign's original commander progression.
-      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, extra reinforcements appear and enemy commanders gain a rank; named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
+      desc: 'Conquest-style Hard: enemies gain tier I–II research, half their units upgrade a class, every formation gains an extra frame, extra reinforcements appear and enemy commanders gain a rank; named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
     },
     challenge: {
       ...E.DIFFICULTIES.challenge,
       ranks: 2, // Conquest uses maximum rank; campaigns retain +2.
-      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and reinforced, commanders gain two ranks and enemy income rises 25%; named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
+      desc: 'Conquest-style Challenge: enemies gain every technology, every formation is upgraded and gains two extra frames, reinforcements appear, commanders gain two ranks and enemy income rises 25%; named scripted aces retain Lv.1 elites. HQ-unlocked Elite Forces may be deployed.',
     },
     elite: {
       ...E.DIFFICULTIES.challenge,
@@ -258,7 +258,7 @@
       if (enemy && d.level) {
         const n = g.campaign.enemyPlaced++;
         if (n % d.upgradeEvery === 0 && !(cmd && E.TYPES[type].cls === 'heavy')) type = upgradedType(type, side, g);
-        if (d.stack) unitStack = Math.min(3, unitStack + 1);
+        if (d.stack) unitStack = Math.min(3, unitStack + d.stack);
       }
     }
     // Difficulty upgrades must also respect each side's actual Story roster.

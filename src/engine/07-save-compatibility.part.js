@@ -304,18 +304,18 @@
           // Recover that rank, including officers currently aboard carriers.
           const record = scenarioOfficers.length ? { ...rec,
             rank: Math.max(rec?.rank || 0, ...scenarioOfficers.map(u => u.cmdRank || 0)) } : rec;
-          records[k] = cleanOfficer(k, record,
-            which === 'officers' && (scenarioOfficers.length ||
-              (eliteConquest(g) && (g.era === 'ufn2018' ? !serves(k, g.player, g) : COMMANDERS[k].side !== g.player)) ||
-              (eliteCampaign(g) && allUnits(g).some(u => u.cmd === k && !u.personal && foe(g, u.side, g.player))))
-              ? RANKS.length - 1 : HQ_RANK_CAP);
+          // Saves from before the rank merge may hold the two retired ranks
+          // above Supreme Commander; cleanOfficer caps them at HQ_RANK_CAP.
+          records[k] = cleanOfficer(k, record);
         }
     if (g.mode !== 'campaign') automationState(g);
     for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
-      if (eliteScenario(g) && u.cmd && COMMANDERS[u.cmd]) {
-        const old = maxHP(u);
-        u.cmdRank = officerOf(g, u).rank;
-        if (u.hp > 0) u.hp = Math.max(1, maxHP(u) - (old - u.hp));
+      if (u.cmd && COMMANDERS[u.cmd] && (eliteScenario(g) || u.cmdRank > HQ_RANK_CAP)) {
+        // The retired ranks above Supreme Commander scaled frames to 208% and 216%.
+        const retired = { 11: 2.08, 12: 2.16 }[u.cmdRank],
+          old = retired ? maxHP({ ...u, cmdRank: HQ_RANK_CAP }) * retired / RANK_HP[HQ_RANK_CAP] : maxHP(u);
+        u.cmdRank = Math.min(HQ_RANK_CAP, officerOf(g, u)?.rank ?? u.cmdRank);
+        if (u.hp > 0) u.hp = Math.max(1, Math.round(maxHP(u) - (old - u.hp)));
       }
       const elite = u.elite || ELITE_TYPE_TO_ID[u.type];
       if (elite) {

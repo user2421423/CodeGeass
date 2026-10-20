@@ -262,6 +262,8 @@
     normalizeResearch,
     carrierCapacity,
     DIFFICULTIES,
+    scenarioIncomeFactor,
+    addDifficultyFrames,
     UPGRADE,
     operationKey,
     ROMAN,

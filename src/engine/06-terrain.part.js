@@ -149,7 +149,7 @@
     return base;
   }
 
-  // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Marshal).
+  // A commander's rank scales unit HP from 120% (Second Lieutenant) to 200% (Supreme Commander).
   function maxHP(u) {
     const es = eliteScale(u);
     return Math.round(

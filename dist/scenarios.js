@@ -522,8 +522,7 @@
     // upgrades change earned income normally. Higher difficulties strengthen
     // rival income as well as their initial land formations.
     for(const side of SIDES) {
-      const factor=side===player ? 1 : (difficulty==='challenge'||difficulty==='elite') ? 1.6 :
-        difficulty==='hard' ? 1.3 : 1;
+      const factor=side===player ? 1 : E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side),target=INCOME_TARGETS[side];
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(target).map(([resource,value])=>
@@ -533,10 +532,9 @@
         g.economy[side][resource]=actual[resource]*STARTING_RESERVE_TURNS[side];
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
-      const challenge=difficulty==='challenge';
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval&&!u.elite).entries())
-          if(challenge||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+        for(const u of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval&&!u.elite))
+          E.addDifficultyFrames(u,difficulty);
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Chinese Federation forces control Kyushu. Britannia and the Black Knights are temporarily allied.',player);

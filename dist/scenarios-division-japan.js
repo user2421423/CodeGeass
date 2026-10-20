@@ -206,7 +206,7 @@
     // among each power's original cities. The bonus remains on the city when
     // conquered; losing territory reduces income instead of preserving a stipend.
     for(const side of SIDES) {
-      const factor=side===player?1:(difficulty==='challenge'||difficulty==='elite')?1.6:difficulty==='hard'?1.3:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const before=E.income(g,side);
       const cities=g.stations.filter(s=>s.owner===side).sort((a,b)=>a.id-b.id);
       for(const [resource,target] of Object.entries(INCOME_TARGETS[side])) {
@@ -227,10 +227,8 @@
     }
     if(difficulty!=='normal' && difficulty!=='elite')
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval).entries())
-          if(difficulty==='challenge'||i%2===0) {
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval))
+          E.addDifficultyFrames(u,difficulty);
 
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     g.mapRevision=(g.mapRevision||0)+1;

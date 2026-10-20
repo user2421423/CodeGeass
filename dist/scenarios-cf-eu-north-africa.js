@@ -308,8 +308,7 @@ function landscape(p,c,r){
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const factor=side===player?1:['challenge','elite'].includes(difficulty)?1.6:
-        difficulty==='hard'?1.3:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([res,n])=>[res,Math.round(n*factor)-base[res]]));
@@ -319,8 +318,8 @@ function landscape(p,c,r){
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
-        for(const [i,u] of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval).entries())
-          if(difficulty==='challenge'||i%2===0){u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);}
+        for(const u of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval))
+          E.addDifficultyFrames(u,difficulty);
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'The Chinese Federation advances west from Egypt through Libya, Tunisia and Algeria. Control every city and capture Mediterranean ports for the next assault on southern France.',player);

@@ -416,15 +416,12 @@
       for(const ship of vessels)delete ship.pendingPassengers;
     if(difficulty==='hard'||difficulty==='challenge'){
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of E.allUnits(g).filter(v=>v.side===side&&
-          !v.elite&&E.TYPES[v.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||i%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of E.allUnits(g).filter(v=>v.side===side&&
+          !v.elite&&E.TYPES[v.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
     }
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='hard'?1.3:
-        ['challenge','elite'].includes(difficulty)?1.6:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const generated=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
         .map(([resource,n])=>[resource,Math.round(n*factor)-generated[resource]]));

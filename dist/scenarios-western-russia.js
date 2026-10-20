@@ -315,8 +315,7 @@
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='hard'?1.3:
-        ['challenge','elite'].includes(difficulty)?1.6:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
         .map(([res,n])=>[res,Math.round(n*factor)-base[res]]));
@@ -326,9 +325,7 @@
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       const rivals=g.units.filter(u=>u.side!==player&&!E.TYPES[u.type].naval);
-      for(const [i,u] of rivals.entries())if(difficulty==='challenge'||i%2===0){
-        u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-      }
+      for(const u of rivals)E.addDifficultyFrames(u,difficulty);
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Britannian Army Groups advance from the Volga into western Russia; Moscow and St. Petersburg anchor the E.U. defense.',player);

@@ -400,8 +400,7 @@
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const mult=side===player?1:difficulty==='hard'?1.25:
-        ['challenge','elite'].includes(difficulty)?1.5:1;
+      const mult=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side),wanted=FUNDING[side];
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(wanted).map(([kind,rate])=>
@@ -414,11 +413,8 @@
     // regional battles. Elite is handled exclusively by the shared system.
     if(difficulty==='hard'||difficulty==='challenge'){
       const adversaries=g.units.filter(u=>u.side!==player&&!u.elite);
-      for(const [i,u] of adversaries.entries())
-        if(difficulty==='challenge'||i%2===0){
-          u.stack=Math.min(3,u.stack+1);
-          u.hp=E.maxHP(u);
-        }
+      for(const u of adversaries)
+        E.addDifficultyFrames(u,difficulty);
     }
     g.startUnits=Object.fromEntries(
       SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));

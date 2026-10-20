@@ -109,8 +109,10 @@
   ERAS.ufn2018 = { ...CONQUESTS.ufn2018, name: CONQUESTS.ufn2018.title };
 
   // Operation difficulty. Normal is the operation as designed. Hard gives every rival power all tier I–II
-  // HQ research, upgrades every other enemy unit one class and adds one unit per four. Challenge gives them all
-  // research, upgrades every unit (with an extra frame), adds one unit per two and a richer treasury.
+  // HQ research, upgrades every other enemy unit one class, adds one frame to every enemy unit and one unit
+  // per four. Challenge gives them all research, upgrades every unit, adds two frames, one unit per two and
+  // a richer treasury. `stack` (extra frames, capped at three) and `scenarioIncome` (regional funding
+  // multiplier) are shared by Conquest, Story campaigns and regional scenarios.
   const DIFFICULTIES = {
     normal: { name: 'Normal', level: 0, tokens: 1, desc: 'The world as it stands in 2017 a.t.b.' },
     elite: {
@@ -120,11 +122,12 @@
       techTier: 4,
       upgradeEvery: 1,
       extraPer: 2,
-      stack: true,
-      ranks: RANKS.length - 1, // Two Elite-only AI ranks above Marshal.
+      stack: 2, // Land units then become single-frame Elite Forces.
+      ranks: HQ_RANK_CAP, // Every starting rank reaches Supreme Commander.
       income: 1.25,
+      scenarioIncome: 1.6,
       preserveNaval: true,
-      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, two ranks above Marshal. Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      desc: 'Inherits Challenge enemy research, reinforcements, extra frames and income. Enemy commanders reach Supreme Commander, the highest rank. Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
     },
     hard: {
       name: 'Hard',
@@ -133,9 +136,11 @@
       techTier: 2,
       upgradeEvery: 2,
       extraPer: 4,
+      stack: 1,
       ranks: 3,
       income: 1,
-      desc: 'Rival powers have all tier I–II research, half their units are upgraded a class and there are more of them. Enemy commanders gain three ranks.',
+      scenarioIncome: 1.3,
+      desc: 'Rival powers have all tier I–II research, half their units are upgraded a class, every unit gains an extra frame and there are more of them. Enemy commanders gain three ranks.',
     },
     challenge: {
       name: 'Challenge',
@@ -144,12 +149,25 @@
       techTier: 4,
       upgradeEvery: 1,
       extraPer: 2,
-      stack: true,
-      ranks: PROMOTE_COST.length - 1, // Every starting rank reaches Marshal.
+      stack: 2,
+      ranks: HQ_RANK_CAP, // Every starting rank reaches Supreme Commander.
       income: 1.25,
-      desc: 'Rival powers have every technology, every unit is upgraded with an extra frame, and their armies swell. Enemy commanders reach maximum rank.',
+      scenarioIncome: 1.6,
+      desc: 'Rival powers have every technology, every unit is upgraded with two extra frames, and their armies swell. Enemy commanders reach Supreme Commander.',
     },
   };
+  // Regional scenarios choose which sides and units qualify; the amounts come from DIFFICULTIES.
+  function scenarioIncomeFactor(difficulty) {
+    return DIFFICULTIES[difficulty]?.scenarioIncome || 1;
+  }
+  // Hard adds one frame and Challenge two, capped at three. Elite Forces (and
+  // every unit on Elite difficulty) stay single frames.
+  function addDifficultyFrames(u, difficulty) {
+    const extra = difficulty === 'elite' ? 0 : DIFFICULTIES[difficulty]?.stack || 0;
+    if (!extra || u.elite) return;
+    u.stack = Math.min(3, u.stack + extra);
+    u.hp = maxHP(u);
+  }
   function eliteConquest(g) {
     return g?.mode === 'conquest' && g.difficulty === 'elite';
   }
@@ -222,10 +240,10 @@
       if (g.economy[side]) g.economy[side].credits = Math.round(g.economy[side].credits * d.income);
     }
     for (const [k, a] of Object.entries(COMMANDERS))
-      if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(d.preserveNaval ? RANKS.length - 1 : HQ_RANK_CAP, g.officers[k].rank + d.ranks);
+      if ((g.era === 'ufn2018' ? !serves(k, g.player, g) : a.side !== g.player)) g.officers[k].rank = Math.min(HQ_RANK_CAP, g.officers[k].rank + d.ranks);
     enemyUnits.forEach((u, i) => {
       if (i % d.upgradeEvery === 0 && !(u.cmd && TYPES[u.type].cls === 'heavy')) u.type = upgradeType(u.type, u.side, g);
-      if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + 1);
+      if (d.stack && !u.elite) u.stack = Math.min(3, u.stack + d.stack);
     });
     // Reinforcements: copies of existing enemy units (never super-heavies) on free land hexes beside them.
     const extra = Math.ceil(enemyUnits.length / d.extraPer),

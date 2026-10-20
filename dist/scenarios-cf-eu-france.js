@@ -414,8 +414,7 @@
     }
     // Standard scenario funding supports a fleet without initial cities.
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='hard'?1.3:
-        ['challenge','elite'].includes(difficulty)?1.6:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([key,value])=>
@@ -426,11 +425,9 @@
     }
     if(difficulty==='hard'||difficulty==='challenge')
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [i,u] of g.units.flatMap(x=>[x,...(x.cargo||[])])
-          .filter(u=>u.side===side&&E.TYPES[u.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||i%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of g.units.flatMap(x=>[x,...(x.cargo||[])])
+          .filter(u=>u.side===side&&E.TYPES[u.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,
       g.units.reduce((n,u)=>n+(u.side===side?1:0)+
         (u.cargo||[]).filter(x=>x.side===side).length,0)]));

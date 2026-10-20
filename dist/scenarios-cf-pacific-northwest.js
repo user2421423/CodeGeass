@@ -472,8 +472,7 @@
     // Difficulty scales the opponent, not the human player. On Elite all
     // starting non-carrier units are faction-appropriate Elite Forces.
     for(const side of SIDES){
-      const factor=side===player?1:difficulty==='hard'?1.3:
-        difficulty==='challenge'||difficulty==='elite'?1.6:1;
+      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,target])=>
@@ -484,11 +483,9 @@
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       for(const side of SIDES.filter(s=>s!==player))
-        for(const [index,u] of g.units.flatMap(x=>[x,...(x.cargo||[])])
-          .filter(x=>x.side===side&&E.TYPES[x.type].naval!=='ship').entries())
-          if(difficulty==='challenge'||index%2===0){
-            u.stack=Math.min(3,u.stack+1);u.hp=E.maxHP(u);
-          }
+        for(const u of g.units.flatMap(x=>[x,...(x.cargo||[])])
+          .filter(x=>x.side===side&&E.TYPES[x.type].naval!=='ship'))
+          E.addDifficultyFrames(u,difficulty);
     }
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
       n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
