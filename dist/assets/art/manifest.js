@@ -147,7 +147,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/elite_florence.webp"
     },
     "elite_wang_hu": {
-      "src": "units/shen_hu-761ab82d666e.png"
+      "src": "units/elite_wang_hu-dac71d6eb6e7.webp"
     },
     "elite_yukiya_valiant": {
       "src": "units/alexander_mp-aba6042c8fcf.png"
