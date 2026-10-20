@@ -34,6 +34,18 @@
     return !t.naval && (t.branch === 'Infantry' || t.branch === 'Armor')
       ? 1 - techValue(g, u.side, `${branchOf(u.type)}.suppressive`) : 1;
   }
+  // Manfredi must be immediately adjacent to the enemy. Other friendly
+  // formations must also be adjacent; the attacking unit may count as one.
+  function manfrediSuperiority(g,attacker,target){
+    if(!attacker||!target||attacker.side===target.side)return 0;
+    const masters=g.units.filter(v=>v.hp>0&&v.cmd==='manfredi'&&v.side===attacker.side&&!atSea(g,v)&&dist(g,v,target)===1);
+    for(const master of masters){
+      const others=g.units.filter(v=>v.hp>0&&v.side===master.side&&v.id!==master.id&&!atSea(g,v)&&dist(g,v,target)===1);
+      if(others.length>=2)return 2;
+      if(others.length>=1)return 1;
+    }
+    return 0;
+  }
   function power(g, u, target, st, counter = false, direct = true) {
     const t = TYPES[u.type],
       victim = target ? TYPES[target.type] : null,
@@ -206,7 +218,7 @@
     // First anti-armor hit bypasses 20% of the entire target-defense reduction,
     // rather than adding a second penetration or cover modifier.
     const beforeDefenses=attack;
-    attack *= 100 / (100 + armor * (1 - pen) * 2);
+    attack *= 100 / (100 + armor * (1 - pen) * (counter||!target||manfrediSuperiority(g,u,target)<1?2:1));
     if (target) {
       const tf = fx(target),
         nearCity = g.stations.some(s => s.owner === target.side && dist(g, s, target) <= 1);
@@ -850,7 +862,7 @@
     let retaliation = 0;
     const senbaCounter=!!d&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    if (a.hp > 0 && d && d.hp > 0 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+    if (a.hp > 0 && d && d.hp > 0 && manfrediSuperiority(g,a,d)<2 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       retaliation = Math.round(power(g,d,a,stationAt(g,a),true) *
         (senbaCounter ? .5/.65 : 1) * (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) *
@@ -1009,6 +1021,15 @@
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${defensesDestroyed ? ' · city defenses destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
       a.side,
     );
+    // Grand Master's Offensive: one coordinated second wave per friendly
+    // turn. Only allies that had already spent an attack are refreshed.
+    if(a.cmd==='manfredi'&&a.hp>0&&a.expManfrediOffensiveTurn!==g.turn){
+      a.expManfrediOffensiveTurn=g.turn;
+      for(const ally of g.units)if(ally.hp>0&&ally.side===a.side&&ally.id!==a.id&&!atSea(g,ally)&&dist(g,a,ally)<=2&&ally.attacked){
+        ally.attacked=false;
+        ally.chain=0;
+      }
+    }
     // Full-strength free Oscar retaliation after an enemy initiates an
     // attack against an allied formation. This cannot produce counterfire.
     const oscarReaction = d && !f.estrellaBarrage ? oscarGuardCounterstrike(g,a,d) : [];

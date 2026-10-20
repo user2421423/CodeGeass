@@ -194,6 +194,7 @@
   function actionTargets(g, u) {
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
+    if (kind === 'manfrediRequisition') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=2&&!TYPES[v.type].elite&&v.stack<3);
     if (kind === 'arkFleet') return g.stations.filter(s=>s.owner&&foe(g,s.owner,u.side));
     if (kind === 'command') return u.cmd === 'zero'
       ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
@@ -245,6 +246,16 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if(action.kind==='manfrediRequisition'){
+      const v=targetId==null?options[0]:options.find(w=>w.id===targetId);
+      if(!v)return {ok:false,reason:'Choose a normal friendly formation within 2 hexes with room for another frame'};
+      const priorMax=maxHP(v);
+      v.stack++;
+      v.hp=Math.min(maxHP(v),v.hp+Math.max(1,Math.round(maxHP(v)-priorMax)));
+      u.feintCD=action.cooldown;u.feintUsedTurn=g.turn;
+      log(g,'Grand Master Manfredi adds a free frame to '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+      return {ok:true,target:v.id,affected:1,frames:1};
+    }
     if (action.kind === 'arkFleet') {
       const city=targetId==null?options[0]:options.find(s=>s.id===targetId);
       if(!city)return {ok:false,reason:'Choose an enemy city'};
