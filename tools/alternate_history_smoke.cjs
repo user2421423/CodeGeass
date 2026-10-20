@@ -12,11 +12,13 @@ require('../dist/scenarios-alternate-common.js');
 require('../dist/scenarios-rounds-rebellion.js');
 require('../dist/scenarios-shin-independence.js');
 require('../dist/scenarios-chinese-civil-war.js');
+require('../dist/scenarios-eu-coup.js');
 
 const CASES=[
   ['rounds-rebellion',['rounds','britannia'],70,'eu-pendragon'],
   ['shin-independence',['britannia','shinregime'],44,'european-war'],
-  ['chinese-civil-war',['loyalists','eunuchs'],83,'battle-luoyang']
+  ['chinese-civil-war',['loyalists','eunuchs'],83,'battle-luoyang'],
+  ['eu-military-coup',['junta','eu'],44,'european-war']
 ];
 for(const [id,sides,cities,parent] of CASES){
  const m=E.scenarios.byId[id],base=E.scenarios.byId[parent];
@@ -58,4 +60,4 @@ for(const [id,sides,cities,parent] of CASES){
  assert.equal(normal.scenario.id,parent,id+' mutated parent scenario');
  console.log('PASS '+id+' · 2 sides × 4 difficulties · normal parent unchanged');
 }
-console.log('All three alternate-history scenarios passed.');
+console.log('All four alternate-history scenarios passed.');
