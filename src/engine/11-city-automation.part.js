@@ -196,9 +196,12 @@
     const kind = COMMANDERS[u.cmd].action.kind;
     if (kind === 'command') return u.cmd === 'zero'
       ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
-          foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
+          foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2 &&
+          g.units.some(w=>w.hp>0&&w.id!==v.id&&w.side===v.side&&!atSea(g,w)&&inRange(v,w,g))))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    if (kind === 'shinDeath') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=2);
+    if (kind === 'maskFalls') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=3);
     if (kind === 'miguelSupply') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=3);
     if (kind === 'electricalOverload') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) === 1 &&
@@ -241,6 +244,42 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'shinDeath') {
+      const v=options.find(w=>w.id===targetId) || (targetId==null?options[0]:null);
+      if(!v)return {ok:false,reason:'Choose an enemy within 2 hexes'};
+      // The percentage defines base strike power, not unavoidable true damage.
+      // Scale through the same attack/defense power ratio used by ordinary combat.
+      const base=Math.max(1,Math.round(maxHP(v)*0.5));
+      const ordinary=Math.max(0,power(g,u,v,stationAt(g,v),false,false));
+      const unprotected=Math.max(1,power(g,u,null,null,false,false));
+      const damage=Math.max(1,Math.round(base*ordinary/unprotected));
+      const before=v.hp;
+      smilasDealCombatDamage(g,v,u,damage);
+      if(v.hp<=0){v.expDirectIncoming=true;kill(g,v,u,false,null,damage);delete v.expDirectIncoming;}
+      u.feintCD=action.cooldown;u.feintUsedTurn=g.turn;
+      log(g,'Command to Die strikes '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+      checkVictory(g);
+      return {ok:true,target:v.id,damage:before-v.hp};
+    }
+    if (action.kind === 'maskFalls') {
+      if(u.side!==g.player)return {ok:false,reason:'The AI cannot use The Mask Falls'};
+      const cost=Math.min(Math.max(0,u.hp-1),Math.round(maxHP(u)*0.8));
+      u.hp-=cost;u.moved=true;u.attacked=true;
+      for(const v of options){
+        if(v.id!==u.id){
+          v.moved=false;v.attacked=false;v.chain=0;v.moveActionsThisTurn=0;
+          v.movedDistance=0;v.skillReposition=0;v.eliteMoveAfterKill=false;
+          delete v.expKallenReposition;
+        }
+        // Death rally takes precedence only for units without an active Mask buff.
+        if(!v.expDeathEmperor){
+          v.expMaskFalls={side:u.side,source:u.id,attackReady:true};
+        }
+      }
+      u.feintCD=0;u.feintUsedTurn=g.turn;
+      log(g,'The Mask Falls: Lelouch sacrifices '+cost+' HP to rally '+options.length+' formations.',u.side);
+      return {ok:true,affected:options.length,cost};
+    }
     if(action.kind==='miguelSupply'){
       const v=targetId==null?[...options].sort((a,b)=>Number(!!b.cmd)-Number(!!a.cmd)||b.hp-a.hp||a.id-b.id)[0]
         :options.find(w=>w.id===targetId);
@@ -473,17 +512,21 @@
         : options.find(v => v.id === targetId);
       if (!v) return { ok: false, reason: 'Choose a valid target within 2 hexes' };
       if (action.kind === 'command' && u.cmd === 'zero' && foe(g, v.side, u.side)) {
-        const before = v.morale;
-        lowerMorale(g, v, 2);
-        // Never inflict full confusion: do not push a target below -2,
-        // but also do not raise a unit already at -3.
-        v.morale = Math.max(v.morale, Math.min(before, -2));
-        v.expZeroGeass = {
-          source: u.id,
-          moraleLost: (v.expZeroGeass?.moraleLost || 0) + Math.max(0, before - v.morale),
-        };
-        // Counterattack suppression is checked by both preview and live
-        // combat, including special defensive reaction attacks.
+        const victims=g.units.filter(w=>w.hp>0&&w.id!==v.id&&w.side===v.side&&!atSea(g,w)&&inRange(v,w,g))
+          .sort((a,b)=>dist(g,v,a)-dist(g,v,b)||a.id-b.id);
+        const w=victims[0];
+        if(!w)return {ok:false,reason:'No same-faction formation within weapon range'};
+        // A compelled strike bypasses hostility checks but not armor, terrain,
+        // city cover or ordinary counterfire eligibility.
+        const hit=Math.max(1,Math.round(power(g,v,w,stationAt(g,w),false,false)));
+        smilasDealCombatDamage(g,w,v,hit);
+        if(w.hp<=0){w.expDirectIncoming=true;kill(g,w,v,false,null,hit);delete w.expDirectIncoming;}
+        if(v.hp>0&&w.hp>0&&inRange(w,v,g)&&w.morale>-3&&!w.expRoloFrozen&&!w.expCharlesMemoryRewrite){
+          const retaliation=Math.max(1,Math.round(power(g,w,v,stationAt(g,v),true,false)));
+          smilasDealCombatDamage(g,v,w,retaliation);
+          if(v.hp<=0){v.expDirectIncoming=true;kill(g,v,w,false,null,retaliation);delete v.expDirectIncoming;}
+        }
+        checkVictory(g);
       } else if (action.kind === 'command') {
         v.moved = v.attacked = false;
         v.chain = 0;
@@ -502,7 +545,7 @@
         damage: action.kind === 'designate' ? 0.2 : 0, noCounter: action.kind === 'stratagem' });
       u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;
       u.feintUsedTurn = g.turn;
-      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? (v.side === u.side ? 'receives a fresh activation' : 'is disrupted and cannot counterattack') : 'designated'}.`, u.side);
+      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? (v.side === u.side ? 'receives a fresh activation' : 'is forced to attack its own faction') : 'designated'}.`, u.side);
       return { ok: true, target: v.id, affected: 1 };
     }
     for (const v of options) {

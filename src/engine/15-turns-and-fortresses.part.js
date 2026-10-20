@@ -175,6 +175,14 @@
     // Existing negative morale is brought up to Steady immediately while
     // protected; this never promotes a unit from Steady to High.
     applyLeilaMoraleFloor(g);
+    // Unbreakable Imperial Army is automatic, not an action or an aura that stacks.
+    const emperors=mine.filter(v=>v.cmd==='lelouch'&&!atSea(g,v));
+    for(const emperor of emperors)for(const ally of mine){
+      if(!atSea(g,ally)&&dist(g,emperor,ally)<=2){
+        ally.morale=1;
+        ally.expImperialCommand={side,source:emperor.id,turn:g.turn};
+      }
+    }
     for (const u of mine) {
       // Geass Absolute Command's enemy-mode effects expire at the START
       // of the affected faction's next turn, before ordinary morale recovery.
@@ -183,7 +191,9 @@
         delete u.expZeroGeass;
       }
       // Lasts through opponents' turns; expires on this formation's next turn.
-      delete u.expImperialCommand;
+      if(!u.expImperialCommand||u.expImperialCommand.turn!==g.turn)delete u.expImperialCommand;
+      delete u.expMaskFalls;
+      if(u.expDeathEmperor&&!--u.expDeathEmperor.turns)delete u.expDeathEmperor;
       delete u.expGeassCancelled;
       u.expKallenSlowActive = !!u.expKallenSlowNext;
       delete u.expKallenSlowNext;
@@ -229,6 +239,7 @@
       if (u.morale < desired) u.morale++;
       else if (u.morale > desired) u.morale--;
       if (nearby >= 2) u.morale = Math.max(romeroStandFast(g,u) ? 0 : -3,Math.min(u.morale, desired));
+      if(u.expImperialCommand||u.expDeathEmperor)u.morale=1;
       // Anna's Clément Engineering supplies field repairs, not morale recovery.
 
       // Euphemia: one additional morale recovery step within 2 hexes, no stacking.

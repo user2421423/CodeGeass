@@ -108,6 +108,10 @@
     if (counter && f.swordmaster && target && dist(g, u, target) === 1) attack *= 1.5;
     if (counter) attack *= 1 + 0.05 * genericLevel(g, u, 'crossfire');
     attack *= skillAttack(g, u, counter) * commanderAttack(g, u, target, counter);
+    if(!counter){
+      if(u.expMaskFalls?.attackReady)attack*=1.50;
+      else if(u.expDeathEmperor)attack*=1.50;
+    }
     if (ef.dmg && strike) attack *= 1 + ef.dmg;
     if (counter && ef.counter) attack *= 1 + ef.counter;
     if (ef.vsArmor && victim?.branch === 'Armor' && strike) attack *= 1 + ef.vsArmor;
@@ -249,7 +253,13 @@
       if (tf.taken) attack *= tf.taken;
       if (ohgiSelflessLeadership(g, target)) attack *= 0.75;
       if (tf.swordmaster && dist(g, u, target) === 1) attack *= 0.70;
-      if (target.expImperialCommand) attack *= 0.75;
+      // Death of the Emperor stacks multiplicatively with the 25% Imperial Army shield.
+      // Mask Falls never stacks with either of those protections.
+      if(target.expMaskFalls) attack *= 0.60;
+      else {
+        if(target.expImperialCommand) attack *= 0.75;
+        if(target.expDeathEmperor) attack *= 0.75;
+      }
       // The charge remains intact during previews, then is spent by the
       // actual direct hit, counterattack or splash resolution.
       if (target.expCCProtection) attack *= 0.70;
@@ -358,9 +368,7 @@
     const crit = clamp(
       t.crit +
         (f.crit || 0) +
-        // Supreme Commander is a non-stacking +10-point critical chance aura.
-        (skillNear(g, a, 'supremeCommander', 2) ? 0.10 : 0) +
-        (f.liveOnCrit && a.hp / maxHP(a) < 0.5 ? f.liveOnCrit : 0) +
+         (f.liveOnCrit && a.hp / maxHP(a) < 0.5 ? f.liveOnCrit : 0) +
         (a.expCalibration ? .25 : 0) +
         (f.chargeCrit && a.movedDistance >= 2 ? f.chargeCrit : 0) +
         0.06 * genericLevel(g, a, { Infantry: 'infantry_leader', Armor: 'armor_leader', Artillery: 'artillery_leader' }[t.branch]) +
@@ -564,6 +572,24 @@
       }
     }
     v.hp = 0;
+    if(v.cmd==='lelouch'&&!v.expDeathEmperorTriggered){
+      v.expDeathEmperorTriggered=true;
+      for(const ally of g.units){
+        if(ally.hp<=0||ally.id===v.id||ally.side!==v.side||atSea(g,ally)||dist(g,v,ally)>3||ally.expMaskFalls)continue;
+        ally.expDeathEmperor={side:v.side,turns:2};
+        ally.morale=1;ally.moved=false;ally.attacked=false;ally.chain=0;
+        ally.moveActionsThisTurn=0;ally.movedDistance=0;
+      }
+      log(g,'The Death of the Emperor rallies nearby Britannian formations.',v.side);
+    }
+    // All Hail Lelouch: one heal pulse per confirmed enemy formation destroyed.
+    if(attacker&&attacker.side!==v.side){
+      const emperors=g.units.filter(e=>e.hp>0&&e.cmd==='lelouch'&&e.side===attacker.side&&dist(g,e,attacker)<=3);
+      if(emperors.length)for(const ally of g.units){
+        if(ally.hp>0&&ally.side===attacker.side&&!atSea(g,ally)&&emperors.some(e=>dist(g,e,ally)<=3))
+          ally.hp=Math.min(maxHP(ally),ally.hp+Math.max(1,Math.round(maxHP(ally)*0.05)));
+      }
+    }
     // Every confirmed combat death can reflect half the uncapped killing
     // attack. No counterattack is created; reflection damage cannot itself
     // trigger Necessary Sacrifices or retaliation.
@@ -753,6 +779,7 @@
     if (a.expAssaultMomentumTurn === g.turn) delete a.expAssaultMomentumTurn;
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
     a.attacked = true;
+    if(a.expMaskFalls?.attackReady)a.expMaskFalls.attackReady=false;
     honorAction(g, a, 'combats');
     a.moved = true;
     a.skillReposition = 0;
