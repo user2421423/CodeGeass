@@ -42,6 +42,8 @@ jobs:
           node tools/scenario_sim.cjs shin-independence britannia normal 11 3
           node tools/scenario_sim.cjs chinese-civil-war loyalists normal 11 3
           node tools/scenario_sim.cjs chinese-civil-war eunuchs normal 11 3
+          node tools/scenario_sim.cjs eu-military-coup junta normal 11 3
+          node tools/scenario_sim.cjs eu-military-coup eu normal 11 3
       - name: Compare exact fingerprints with the documented defect-fix baseline
         run: node tools/check_sim_baseline.cjs --scenarios eu-greenland,division-japan,battle-luoyang --actual gameplay-fingerprints.txt
       - uses: actions/upload-artifact@v4
