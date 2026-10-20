@@ -293,9 +293,9 @@
       hull: 'Alexander Type-02 (escort)',
       title: 'Leila’s guardian',
       skill: "Guard's Counterstrike / Emergency Defense",
-      desc: "Guard's Counterstrike: when an enemy attacks another friendly formation within 2 hexes, Oscar automatically attacks that enemy at 100% normal damage if it is within weapon range, without spending his normal attack or allowing counterfire. Each enemy can trigger once per turn. Emergency Defense (once per turn): designate an ally within 2 hexes; it takes 20% less combat damage, while other allied formations within 2 hexes of it take 10% less damage, until Oscar's next turn. The selected ally also gains one free legal 3-point reposition without spending its normal movement or attack.",
-      fx: { guardCounterstrike: true },
-      action: { name: 'Emergency Defense', verb: 'Emergency Defense', kind: 'oscarDefense', target: 'ally', range: 2, cooldown: 0, desc: "Once per turn, select an ally within 2 hexes. It takes 20% less damage; other allies within 2 hexes of it take 10% less damage until Oscar's next turn. The selected ally can reposition up to 3 movement points once this turn, even after moving or attacking, without spending its normal actions." },
+      desc: "Guard's Counterstrike: when an enemy attacks another friendly formation within 2 hexes, Oscar automatically attacks that enemy at 100% normal damage if it is within weapon range, without spending his normal attack or allowing counterfire. Each enemy can trigger once per turn. Defensive Guard (passive): other friendly formations within 2 hexes of Oscar take 10% less combat damage, even when Emergency Defense is unused. Emergency Defense (once per turn): designate an ally within 2 hexes; it takes 20% less combat damage until Oscar's next turn, overriding rather than stacking with his passive 10% protection. The selected ally also gains one free legal 3-point reposition without spending its normal movement or attack.",
+      fx: { guardCounterstrike: true, oscarGuardAura: 0.9 },
+      action: { name: 'Emergency Defense', verb: 'Emergency Defense', kind: 'oscarDefense', target: 'ally', range: 2, cooldown: 0, desc: "Once per turn, select an ally within 2 hexes. It takes 20% less combat damage until Oscar's next turn, instead of the passive 10% guard reduction. The selected ally can reposition up to 3 movement points once this turn, even after moving or attacking, without spending its normal actions." },
       recruit: 200,
     },
     klaus: {
