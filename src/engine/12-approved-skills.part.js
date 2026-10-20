@@ -234,8 +234,45 @@
     }
     return strikes;
   }
+  // Romero holds a defensive line until each formation physically moves.
+  // Action refreshes do not erase the move flag, and multiple Romeros do
+  // not stack damage reduction or counterfire multipliers.
+  function romeroStandFast(g,u){
+    return !!u&&u.hp>0&&!u.expRomeroMoved&&g.units.some(v=>
+      v.hp>0&&v.cmd==='romero'&&fx(v).standFast&&v.side===u.side&&
+      !atSea(g,v)&&dist(g,v,u)<=2);
+  }
+  // Last Promise: a true enemy combat death (counterattack included).
+  // If Toru falls on the enemy turn, bank another legal action for allies'
+  // following friendly activation instead of erasing it at turn reset.
+  function toruLastPromise(g,toru,attacker){
+    if(toru.cmd!=='toru'||!fx(toru).lastPromise||toru.expToruPromiseUsed||
+       !attacker||!foe(g,toru.side,attacker.side))return;
+    toru.expToruPromiseUsed=true;
+    const immediate=g.phase===toru.side;
+    for(const ally of g.units){
+      if(ally.hp<=0||ally.id===toru.id||ally.side!==toru.side||
+         atSea(g,ally)||dist(g,toru,ally)>2)continue;
+      ally.morale=1;
+      ally.expToruPromiseDamage=true;
+      if(!immediate){
+        ally.expToruPromisePending=true;
+        continue;
+      }
+      // Previously exhausted actions refresh immediately; actions not yet
+      // spent receive a banked extra action after their first use.
+      if(ally.attacked)ally.attacked=false;
+      else ally.expToruExtraAttack=Math.max(ally.expToruExtraAttack||0,1);
+      if(ally.moved)ally.moved=heavyMoveLimitReached(g,ally);
+      else if(!heavyMoveLimitReached(g,ally))
+        ally.expToruExtraMove=Math.max(ally.expToruExtraMove||0,1);
+      ally.skillReposition=0;
+      ally.withdrawMove=false;
+    }
+    log(g,"The Last Promise: Toru's sacrifice rallies nearby allies.",toru.side);
+  }
   function newcomerDefense(g,target,attacker,counter,direct){
-    let m=1;
+    let m=romeroStandFast(g,target)?0.75:1;
     if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
 
     if(target.cmd==='jeremiah')m*=.85;
