@@ -206,6 +206,80 @@ function setup() {
   assert.equal(ship.cargo.length, 0);
 }
 
+// AI fronts: two shielded E.U. cities 10-14 hexes apart, the airship serving an offensive toward the farther one.
+function frontSetup() {
+  const g = world('britannia');
+  g.phase = 'britannia';
+  const open = s => !s.capitalOf && E.adjacent(g, s).filter(p => !E.isSea(p) && !E.stationAt(g, p) &&
+    !E.TERRAIN[p.terrain]?.blocked).length >= 4;
+  const cities = g.stations.filter(s => s.owner === 'eu' && open(s));
+  let aim, decoy;
+  for (const a of cities) {
+    decoy = cities.find(b => b !== a && E.distance(a, b, g) >= 10 && E.distance(a, b, g) <= 14 &&
+      g.stations.every(o => o === a || o === b || E.distance(o, a, g) > 4 && E.distance(o, b, g) > 4));
+    if (decoy) { aim = a; break; }
+  }
+  assert.ok(aim && decoy, 'Need two isolated E.U. cities');
+  g.units = g.units.filter(u => E.distance(u, aim, g) > 16 && E.distance(u, decoy, g) > 16);
+  aim.shield = decoy.shield = 50;
+  const memo = E.aiPlan(g, 'britannia');
+  const front = { id: 'smoke', side: 'britannia', type: 'offensive', state: 'attacking', assigned: 0, rally: null,
+    anchor: aim, objectives: [{ key: 's' + aim.id, c: aim.c, r: aim.r, owner: 'eu', value: 10 }] };
+  memo.fronts.unshift(front);
+  memo.byId.smoke = front;
+  const free = p => p && !E.isSea(p) && !E.stationAt(g, p) && !E.unitAt(g, p) && !E.TERRAIN[p.terrain]?.blocked;
+  return { g, memo, front, aim, decoy, free };
+}
+
+{
+  // AI: loaded troops land toward the airship's front objective, not beside the nearer enemy city.
+  const { g, memo, aim, decoy, free } = frontSetup();
+  const pad = E.within(g, decoy, 2).find(p => E.distance(p, decoy, g) === 2 && free(p) &&
+    E.distance(p, aim, g) >= E.distance(decoy, aim, g));
+  assert.ok(pad, 'Need a hex behind the decoy city');
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', pad.c, pad.r);
+  for (const cls of ['scout', 'medium']) {
+    const trooper = E.newUnit(g, E.typeFor('britannia', cls, g), 'britannia', pad.c, pad.r);
+    g.units.splice(g.units.indexOf(trooper), 1);
+    ship.cargo = [...(ship.cargo || []), trooper];
+  }
+  g.ai.britannia.airships = { [ship.id]: { front: 'smoke', since: g.turn } };
+  const drops = E.aiOrder(g, ship.id).filter(e => e.kind === 'deploy');
+  assert.equal(drops.length, 2, 'Both formations land');
+  for (const d of drops) {
+    assert.ok(E.distance(d.to, aim, g) <= 4, `Lands near the front's objective (${E.distance(d.to, aim, g)} hexes)`);
+    assert.ok(E.distance(d.to, decoy, g) > 4, 'Not beside the nearer city');
+  }
+  assert.ok(memo.byId.smoke, 'Plan unchanged');
+}
+
+{
+  // AI: an empty airship flies to a formation of its front far from the objective and lifts it; a formation that
+  // acts first boards an airship in reach that serves its front.
+  const { g, memo, aim, free } = frontSetup();
+  const home = g.tiles.filter(p => free(p) && E.distance(p, aim, g) >= 14 && E.distance(p, aim, g) <= 18 &&
+    g.stations.every(s => E.distance(s, p, g) > 3));
+  const spot = home.find(p => home.some(q => E.distance(p, q, g) === 6));
+  assert.ok(spot, 'Need open ground far from the objective');
+  const rider = E.newUnit(g, E.typeFor('britannia', 'medium', g), 'britannia', spot.c, spot.r);
+  memo.assign[rider.id] = 'smoke';
+  const start = home.find(q => E.distance(spot, q, g) === 6);
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', start.c, start.r);
+  g.ai.britannia.airships = { [ship.id]: { front: 'smoke', since: g.turn } };
+  E.aiOrder(g, ship.id);
+  assert.deepEqual(ship.cargo.map(u => u.id), [rider.id], 'Flies over and lifts the front\'s formation');
+
+  ship.cargo = [];
+  g.units.push(rider);
+  const next = E.adjacent(g, ship).find(free);
+  Object.assign(rider, { c: next.c, r: next.r, moved: false, attacked: false });
+  ship.moved = ship.attacked = false;
+  const walk = E.adjacent(g, rider).find(p => free(p) && E.distance(p, ship, g) === 2);
+  Object.assign(rider, { c: walk.c, r: walk.r });
+  E.aiOrder(g, rider.id);
+  assert.deepEqual(ship.cargo.map(u => u.id), [rider.id], 'Boards the airship serving its front');
+}
+
 {
   // AI: a badly damaged airship heads for a friendly city instead of fighting, then repairs beside it.
   const g = world('britannia');
