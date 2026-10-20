@@ -76,6 +76,25 @@
     events.push({ kind: 'feint', id: u.id, target: r.target, healed: r.healed, cost: r.cost });
     return true;
   }
+  // Smilas expends a comrade's next volley for extra damage. Prefer an
+  // already-fired, combat-ready formation; avoid charging helpless reserves.
+  function aiSmilasVanguard(g, u, events) {
+    if (u.cmd !== 'smilas' || feintReason(g,u)) return false;
+    const candidates=actionTargets(g,u).filter(v =>
+      v.hp > maxHP(v)*0.20 || v.attacked);
+    if (!candidates.length) return false;
+    const enemyNear=v=>g.units.some(w => w.hp>0 && foe(g,w.side,v.side) &&
+      !atSea(g,w) && dist(g,v,w) <= Math.max(3,rangeOf(g,v).max+1));
+    const priority=candidates.filter(enemyNear).sort((a,b) =>
+      Number(!!b.attacked)-Number(!!a.attacked) ||
+      TYPES[b.type].attack*(b.stack||1)-TYPES[a.type].attack*(a.stack||1) ||
+      b.hp-a.hp || a.id-b.id);
+    if (!priority.length) return false;
+    const r=feint(g,u.id,priority[0].id);
+    if (!r?.ok) return false;
+    events.push({kind:'feint',id:u.id,target:r.target,affected:1});
+    return true;
+  }
   // Chinese patrol fleets contest invasions near the Philippine islands,
   // but never sail to capture Britannia's remote Palau and Yap bases.
   // Ground defense and the global amphibious doctrine remain unchanged.
@@ -171,7 +190,8 @@
       (!isShip(u) && !isSea(p) &&
         philippinesHome(g, g.stations[p.provinceCity]) &&
         (atSea(g, u) ? dist(g, u, p) === 1 : massOf(g, p) === massOf(g, u)));
-    // Heal valuable nearby allies before moving out of range.
+    // Use sacrifices or medical support before moving out of range.
+    aiSmilasVanguard(g, u, events);
     aiOhgiHeal(g, u, events);
     // Use targeted memory rewriting before recovery moves Charles away.
     aiCharlesMemoryRewrite(g, u, events);
@@ -239,7 +259,7 @@
       if (m?.ok) return [...events, { kind: 'move', ...m, id }];
     }
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal'].includes(action.kind) && !feintReason(g, u)) {
+    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -439,11 +459,12 @@
     for (let chain = 0; chain < 8 && !u.attacked && !g.over && u.hp > 0; chain++) {
       maneuver();
       // Reevaluate commander tactics after maneuvering, before firing.
+      aiSmilasVanguard(g, u, events);
       aiOhgiHeal(g, u, events);
       aiCharlesMemoryRewrite(g, u, events);
       aiRoloFreeze(g, u, events);
       // A designation may only now be in range.
-      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal'].includes(action.kind) && !feintReason(g, u)) {
+      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard'].includes(action.kind) && !feintReason(g, u)) {
         const r = feint(g, id);
         if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
       }
