@@ -18,7 +18,8 @@ test('baseline reconciliation preserves both original references and records the
   assert.equal(hash('sim_baseline.legacy.txt'),'5e4f1ae0742784af34dd90a2aede0bf19e2183f354daace87a6f4dc07798dc31');
   assert.equal(hash('sim_baseline.audited-main-09458d5.txt'),'9b9c657956cdd13d0b3aca2d67d1cc30d5207664af8f9061c81445b2c9227120');
   assert.equal(hash('sim_baseline.txt'),metadata.current.sha256);
-  assert.equal(hash('../testing/fix-validation/post-fix-fingerprints.txt'),metadata.current.sha256);
+  // The second independent capture lives with the evidence of the latest refresh.
+  assert.equal(hash(path.relative(data,path.resolve(__dirname,'../..',metadata.verification.retainedCaptureB))),metadata.current.sha256);
   assert.equal(metadata.verification.independentCapturesIdentical,true);
   assert.equal(metadata.profile.seed,11);assert.equal(metadata.profile.turns,2);
 });

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "purpose": "Explicit reconciliation of inherited reference drift and reproduced defect repairs; prior captures remain immutable.",
+  "purpose": "Explicit reconciliation of inherited reference drift, reproduced defect repairs and intentional rule changes; prior captures remain immutable.",
   "auditedMain": "09458d5900b994d6a2a3f23b59e22f6b955cfcd3",
   "profile": {
     "seed": 11,
@@ -28,53 +28,76 @@
       "path": "tools/data/sim_baseline.audited-main-09458d5.txt",
       "sha256": "9b9c657956cdd13d0b3aca2d67d1cc30d5207664af8f9061c81445b2c9227120",
       "description": "Independently captured starting main; matched the original tooling-only implementation byte-for-byte."
+    },
+    {
+      "path": "tools/testing/smilas-rework-validation/pre-smilas-6f9ac77-fingerprints.txt",
+      "sha256": "f421ab5ec6c1c654eb86f73954d3364b7d74b7ed1e1d769ff80ac4fc167ddbba",
+      "description": "Node 22 capture at 6f9ac77 (main after #155, before the Smilas rework). Differs from the previous canonical file on 71 sim lines (all setup lines equal): commander reworks pushed to main on 2026-10-19 were never re-fingerprinted because PR CI only checks three scenarios."
     }
   ],
   "current": {
     "path": "tools/data/sim_baseline.txt",
-    "sha256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
-    "sourceRevision": "12dc5773718f743454e1be5fb50eedadd6d1df0f",
+    "sha256": "0edd2e2fe5ff626752bfe371f772b7d642b814b18c84599c15067c482a286fdf",
+    "sourceRevision": "c517408ef733ba1611f30689f1f5111c70cbfda1",
     "reason": [
-      "Skip invalid AI combat previews and restore temporary movement probes.",
-      "Use consistent regional HQ defense classification across loading and construction; infer independent city levels.",
-      "Filter four custom Elite converters through native-era eligibility rules."
+      "Gene Smilas rework (3f9e4fa4, c4e2d229, 753e1bc3, 3482fd7a, 28f0b520, 3b3c2460, be8b46ac; pushed directly to main 2026-10-20, documented in docs/COMMANDER_REWORK.md): Expendable Vanguard active, Human Shields and Necessary Sacrifices passives; Defensive Doctrine and his generic command/morale auras removed. Changes 32 sim lines, every one in a game where the E.U. fields Smilas (on the map or aboard a carrier); city counts change in area-18/britannia, britannia-siberia/britannia+eu and britannia-western-russia/britannia.",
+      "Drift already on main before Smilas (71 sim lines, 24 with different city counts): intentional commander reworks and balance commits pushed on 2026-10-19 (critical-chance standardization d0c76bf0; Cornelia/Suzaku, Akito, Xingke, Leila, Zero, Kallen, Jeremiah, Schneizel, Bismarck, Ayano, Xianglin, Yukiya, Rakshata, Ohgi). Per-line attribution: tools/testing/smilas-rework-validation/attribution.json.",
+      "Behaviour-preserving changes in the same range reproduce their parents on all 390 lines: #118 unified combat actions (c23dd334), a0c53d6e AI maneuver pruning, #155 (6f9ac777), #158 and #159 (c517408e)."
     ],
-    "fixedSourceSHA256": {
-      "src/ai/07-tactical-orders.part.js": "7cf6f570699e33fbe99586e789d5fc2c0b3eaf465485b022e6183d01243f61cf",
-      "src/engine/07-save-compatibility.part.js": "0fa7e4f9e42259ac584ae290dca34a84717731baf570c2c1fd78f200a381db0f",
-      "src/engine/10-economy.part.js": "932bdf77c532d766ee63fe513be4424f99779e549b7f1a80bb9a345c5214cf84",
-      "src/engine/15-turns-and-fortresses.part.js": "87d5df710316d6fd2ff407dd35e95f7ab269f670c15a495614f4ee9d87d827c1",
-      "dist/scenarios-cf-pacific-northwest.js": "63316d68fe9101d8b8f6aefc598e6815ee00882e9ac6ff777a0a0e06f53203c2",
-      "dist/scenarios-malacca.js": "0f389baf23c49cc6947d191729e3a744023a42a4409e5899ad5a4ba7e3f0c860",
-      "dist/scenarios-mexico.js": "3ffc8ab02175a3176b81d4a992ae51216d9bf4eeb3b7bd3c53304cc206f23744",
-      "dist/scenarios-panama.js": "aece105ecbb0bb6894534f1ebba6c754a2ae451b0ee2d9736c3480b0bcf28199"
-    },
     "observedDelta": {
-      "changedLinesFromAuditedMain": 40,
-      "setupLines": 32,
-      "simulationLines": 8,
-      "scenarios": [
-        "bf-malacca",
-        "cf-mexico",
-        "cf-pacific-northwest",
-        "cf-panama"
-      ],
-      "explanation": "Roster metadata changes appear at every setup difficulty; only Normal two-turn games are fingerprinted. AI/save fixes are covered by independent regressions."
+      "changedLinesFromPrevious": 73,
+      "setupLines": 0,
+      "simulationLines": 73,
+      "smilasRework": {
+        "simulationLines": 32,
+        "cityCountChanges": 4,
+        "base": "6f9ac777ac551da78051d11bb184bd0b29277a09"
+      },
+      "preexistingDrift": {
+        "simulationLines": 71,
+        "cityCountChanges": 24,
+        "from": "previous canonical file",
+        "to": "6f9ac777ac551da78051d11bb184bd0b29277a09"
+      },
+      "explanation": "30 lines changed both before and because of the Smilas rework. CI-checked eu-greenland changes only through Smilas (state and E.U.-side battle-report hashes; same cities)."
     }
   },
   "verification": {
-    "capturedAtUTC": "2026-10-18T14:30:05.218529+00:00",
-    "node": "v24.19.0",
+    "capturedAtUTC": "2026-10-20T02:19:24Z",
+    "node": "v22.23.3",
+    "capturedBy": "GitHub Actions run 39357584786 on 6de4ce2a (c517408e plus only the temporary capture workflow, removed before merge); three independent jobs",
     "independentCapturesIdentical": true,
-    "captureASHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
-    "captureBSHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
-    "retainedCaptureB": "tools/testing/fix-validation/post-fix-fingerprints.txt",
-    "comparisonEvidence": "tools/testing/fix-validation/baseline-comparison.json",
+    "captureASHA256": "0edd2e2fe5ff626752bfe371f772b7d642b814b18c84599c15067c482a286fdf",
+    "captureBSHA256": "0edd2e2fe5ff626752bfe371f772b7d642b814b18c84599c15067c482a286fdf",
+    "retainedCaptureB": "tools/testing/smilas-rework-validation/post-rework-fingerprints.txt",
+    "comparisonEvidence": "tools/testing/smilas-rework-validation/attribution.json",
     "mismatches": {
-      "historicalToAuditedMain": 390,
-      "auditedMainToCorrected": 40,
-      "historicalToCorrected": 390,
+      "previousToPreSmilas": 71,
+      "preSmilasToCurrent": 32,
+      "previousToCurrent": 73,
       "independentCaptures": 0
+    },
+    "previous": {
+      "capturedAtUTC": "2026-10-18T14:30:05.218529+00:00",
+      "node": "v24.19.0",
+      "independentCapturesIdentical": true,
+      "captureASHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
+      "captureBSHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
+      "retainedCaptureB": "tools/testing/fix-validation/post-fix-fingerprints.txt",
+      "comparisonEvidence": "tools/testing/fix-validation/baseline-comparison.json",
+      "mismatches": {
+        "historicalToAuditedMain": 390,
+        "auditedMainToCorrected": 40,
+        "historicalToCorrected": 390,
+        "independentCaptures": 0
+      }
     }
-  }
+  },
+  "history": [
+    {
+      "sha256": "849dcb822c7074eae6a76ea730b5e5ed2c50c6f3bc6946855e0912a45091c00b",
+      "sourceRevision": "12dc5773718f743454e1be5fb50eedadd6d1df0f",
+      "note": "b5ea99f6 (b844c2b) with seven battle-luoyang, division-japan and eu-greenland sim lines refreshed in cdc09b8a without a metadata update; that left tools/testing/tournament.test.cjs failing (hidden because the fast job pipes into tee)."
+    }
+  ]
 }

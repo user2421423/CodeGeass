@@ -1,0 +1,913 @@
+{
+ "method": "JavaScriptCore replay of node tools/scenario_sim.cjs --all 11 2 at every first-parent main commit touching engine, AI, commander/frame data or scenarios since 12dc577 (source of the b844c2b baseline); lines compared build-to-build only. Intermediate split commits that crash (21e1ef63, 340ddd5f, 8294107f) are skipped; 026fe1ea is skipped because 3a68ad80 restores its parent byte-for-byte. changedBy lists every change since 12dc577; the two eu-greenland lines were already refreshed to 6f9ac77 in cdc09b8a, so only their Smilas entry is new.",
+ "changedLines": 73,
+ "commits": {
+  "07db07d3 Rebase Kallen's Radiant Wave Assault on current main": 73,
+  "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare": 73,
+  "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite": 57,
+  "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement": 34,
+  "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)": 32,
+  "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures": 29,
+  "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes": 24,
+  "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II": 22,
+  "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only": 19,
+  "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement": 16,
+  "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting": 14,
+  "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter": 13,
+  "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes": 12,
+  "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes": 10,
+  "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking": 7,
+  "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer": 6,
+  "e3c86555 Rework Zero into dual-mode Geass Absolute Command with no passive aura": 3,
+  "e9487936 Reward Cornelia enemy and city-defense destructions with recovery": 1,
+  "f7691109 Carry Ohgi passive and healing core into integrated branch": 1,
+  "b90414d1 Carry Ohgi activation checks, AI and target picker": 1
+ },
+ "lines": {
+  "area-18 britannia": {
+   "committed": "sim area-18 britannia normal 11 2 96bc521d 99c443e5 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+   "current": "sim area-18 britannia normal 11 2 47895b27 16fb2f23 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "area-18 cf": {
+   "committed": "sim area-18 cf normal 11 2 049a470b f6849783 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+   "current": "sim area-18 cf normal 11 2 9b095429 87a0ac81 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "area-18 eu": {
+   "committed": "sim area-18 eu normal 11 2 a782e512 b0cc8519 cities={\"britannia\":14,\"eu\":14,\"cf\":15} errors=0",
+   "current": "sim area-18 eu normal 11 2 6bc7569e 57e9b332 cities={\"britannia\":14,\"eu\":15,\"cf\":14} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "bering-strait britannia": {
+   "committed": "sim bering-strait britannia normal 11 2 c19bfd81 9b4f34f1 cities={\"britannia\":15,\"eu\":13} errors=0",
+   "current": "sim bering-strait britannia normal 11 2 5e5528e2 e3789fdd cities={\"britannia\":15,\"eu\":13} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "bering-strait eu": {
+   "committed": "sim bering-strait eu normal 11 2 18431fd4 05bb7b50 cities={\"britannia\":14,\"eu\":14} errors=0",
+   "current": "sim bering-strait eu normal 11 2 3440585d 7446ffc4 cities={\"britannia\":14,\"eu\":14} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "bf-malacca britannia": {
+   "committed": "sim bf-malacca britannia normal 11 2 618341f9 917b5741 cities={\"britannia\":11,\"cf\":43} errors=0",
+   "current": "sim bf-malacca britannia normal 11 2 5a06d1b1 bb94a62d cities={\"britannia\":11,\"cf\":43} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "bf-malacca cf": {
+   "committed": "sim bf-malacca cf normal 11 2 0074da05 52037cdf cities={\"britannia\":10,\"cf\":44} errors=0",
+   "current": "sim bf-malacca cf normal 11 2 15d7dc51 2026340c cities={\"britannia\":10,\"cf\":44} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "bf-south-china britannia": {
+   "committed": "sim bf-south-china britannia normal 11 2 d080cbee a0784ece cities={\"britannia\":16,\"cf\":49} errors=0",
+   "current": "sim bf-south-china britannia normal 11 2 f3b144b3 285c4531 cities={\"britannia\":16,\"cf\":49} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "bf-south-china cf": {
+   "committed": "sim bf-south-china cf normal 11 2 9591bce6 2fd89bd0 cities={\"britannia\":16,\"cf\":49} errors=0",
+   "current": "sim bf-south-china cf normal 11 2 18dc5555 6e20e1c9 cities={\"britannia\":18,\"cf\":47} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "bf-yangtze britannia": {
+   "committed": "sim bf-yangtze britannia normal 11 2 27e31950 9c9fe22a cities={\"britannia\":22,\"cf\":38} errors=0",
+   "current": "sim bf-yangtze britannia normal 11 2 5353fbff 4a5f40e4 cities={\"britannia\":23,\"cf\":37} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "bf-yangtze cf": {
+   "committed": "sim bf-yangtze cf normal 11 2 f8178b4b 78855481 cities={\"britannia\":24,\"cf\":36} errors=0",
+   "current": "sim bf-yangtze cf normal 11 2 ed6c7fb2 553fc999 cities={\"britannia\":23,\"cf\":37} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "britannia-iraq-iran britannia": {
+   "committed": "sim britannia-iraq-iran britannia normal 11 2 8aa8b0cb 0c7e4547 cities={\"britannia\":17,\"cf\":67} errors=0",
+   "current": "sim britannia-iraq-iran britannia normal 11 2 51d3920d f9ba550e cities={\"britannia\":17,\"cf\":67} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer"
+   ]
+  },
+  "britannia-iraq-iran cf": {
+   "committed": "sim britannia-iraq-iran cf normal 11 2 0eda1040 83ba1689 cities={\"britannia\":19,\"cf\":65} errors=0",
+   "current": "sim britannia-iraq-iran cf normal 11 2 727d596d 47f23303 cities={\"britannia\":19,\"cf\":65} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "britannia-siberia britannia": {
+   "committed": "sim britannia-siberia britannia normal 11 2 b212b9d9 01349313 cities={\"britannia\":12,\"eu\":37} errors=0",
+   "current": "sim britannia-siberia britannia normal 11 2 286734e2 9927c619 cities={\"britannia\":13,\"eu\":36} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "britannia-siberia eu": {
+   "committed": "sim britannia-siberia eu normal 11 2 9bfd1db0 af156e8c cities={\"britannia\":12,\"eu\":37} errors=0",
+   "current": "sim britannia-siberia eu normal 11 2 574dde61 cad43d14 cities={\"britannia\":12,\"eu\":37} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "britannia-western-russia britannia": {
+   "committed": "sim britannia-western-russia britannia normal 11 2 f1221d81 28ffbf77 cities={\"britannia\":12,\"eu\":29} errors=0",
+   "current": "sim britannia-western-russia britannia normal 11 2 66a0a6c2 ba1ab88a cities={\"britannia\":11,\"eu\":30} errors=0",
+   "changedBy": [
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "britannia-western-russia eu": {
+   "committed": "sim britannia-western-russia eu normal 11 2 7dd2b963 ffd4e284 cities={\"britannia\":12,\"eu\":29} errors=0",
+   "current": "sim britannia-western-russia eu normal 11 2 f44bf909 596fcf2a cities={\"britannia\":12,\"eu\":29} errors=0",
+   "changedBy": [
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "cf-central-america britannia": {
+   "committed": "sim cf-central-america britannia normal 11 2 abc44b16 249a4255 cities={\"cf\":2,\"britannia\":79} errors=0",
+   "current": "sim cf-central-america britannia normal 11 2 8193ce2d 12008b83 cities={\"cf\":2,\"britannia\":79} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-central-america cf": {
+   "committed": "sim cf-central-america cf normal 11 2 6ec6b8c0 ddd4e8ab cities={\"cf\":2,\"britannia\":79} errors=0",
+   "current": "sim cf-central-america cf normal 11 2 0fb8f96d 98b63912 cities={\"cf\":2,\"britannia\":79} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-mexico britannia": {
+   "committed": "sim cf-mexico britannia normal 11 2 5f5163f8 1101d98c cities={\"cf\":6,\"britannia\":74} errors=0",
+   "current": "sim cf-mexico britannia normal 11 2 b0104ee6 7724e140 cities={\"cf\":6,\"britannia\":74} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-mexico cf": {
+   "committed": "sim cf-mexico cf normal 11 2 e1492872 548d7f22 cities={\"cf\":7,\"britannia\":73} errors=0",
+   "current": "sim cf-mexico cf normal 11 2 53fa58d9 64820368 cities={\"cf\":6,\"britannia\":74} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-new-zealand britannia": {
+   "committed": "sim cf-new-zealand britannia normal 11 2 1ca9b2ed c8a69456 cities={\"cf\":1,\"britannia\":62} errors=0",
+   "current": "sim cf-new-zealand britannia normal 11 2 6093d51e af6e3415 cities={\"cf\":1,\"britannia\":62} errors=0",
+   "changedBy": [
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-new-zealand cf": {
+   "committed": "sim cf-new-zealand cf normal 11 2 0a298085 372cd3b2 cities={\"cf\":3,\"britannia\":60} errors=0",
+   "current": "sim cf-new-zealand cf normal 11 2 69cf866c a1241f2e cities={\"cf\":3,\"britannia\":60} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-pacific-northwest britannia": {
+   "committed": "sim cf-pacific-northwest britannia normal 11 2 9084f4a0 7fc43013 cities={\"cf\":2,\"britannia\":61} errors=0",
+   "current": "sim cf-pacific-northwest britannia normal 11 2 f3bf6b94 7fc43013 cities={\"cf\":2,\"britannia\":61} errors=0",
+   "changedBy": [
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-pacific-northwest cf": {
+   "committed": "sim cf-pacific-northwest cf normal 11 2 80bf4fd8 50d31caa cities={\"cf\":1,\"britannia\":62} errors=0",
+   "current": "sim cf-pacific-northwest cf normal 11 2 b9b98a65 44e36740 cities={\"cf\":1,\"britannia\":62} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-panama britannia": {
+   "committed": "sim cf-panama britannia normal 11 2 1a02db78 ef366c59 cities={\"cf\":3,\"britannia\":27} errors=0",
+   "current": "sim cf-panama britannia normal 11 2 85d1d5b5 ea4a28d3 cities={\"cf\":4,\"britannia\":26} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-panama cf": {
+   "committed": "sim cf-panama cf normal 11 2 3076f998 7ad6fd6c cities={\"cf\":4,\"britannia\":26} errors=0",
+   "current": "sim cf-panama cf normal 11 2 1b92c9e4 ec85116a cities={\"cf\":4,\"britannia\":26} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "cf-pendragon britannia": {
+   "committed": "sim cf-pendragon britannia normal 11 2 679e3113 42928e08 cities={\"cf\":18,\"britannia\":52} errors=0",
+   "current": "sim cf-pendragon britannia normal 11 2 028be478 42928e08 cities={\"cf\":18,\"britannia\":52} errors=0",
+   "changedBy": [
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer"
+   ]
+  },
+  "cf-pendragon cf": {
+   "committed": "sim cf-pendragon cf normal 11 2 d23b64a5 c72e5702 cities={\"cf\":18,\"britannia\":52} errors=0",
+   "current": "sim cf-pendragon cf normal 11 2 5fa9dc1e ec7d2323 cities={\"cf\":18,\"britannia\":52} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer"
+   ]
+  },
+  "conquest-indochina britannia": {
+   "committed": "sim conquest-indochina britannia normal 11 2 3efd056b 12ecbe24 cities={\"britannia\":25,\"cf\":19} errors=0",
+   "current": "sim conquest-indochina britannia normal 11 2 faabeb2e 12ecbe24 cities={\"britannia\":25,\"cf\":19} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "conquest-indochina cf": {
+   "committed": "sim conquest-indochina cf normal 11 2 7606f390 9df4a2ad cities={\"britannia\":24,\"cf\":20} errors=0",
+   "current": "sim conquest-indochina cf normal 11 2 39c17528 469438f4 cities={\"britannia\":24,\"cf\":20} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "crossing-urals britannia": {
+   "committed": "sim crossing-urals britannia normal 11 2 531d7351 d573b733 cities={\"britannia\":19,\"eu\":21} errors=0",
+   "current": "sim crossing-urals britannia normal 11 2 d6cfe95b 01222d18 cities={\"britannia\":18,\"eu\":22} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "crossing-urals eu": {
+   "committed": "sim crossing-urals eu normal 11 2 6ac71d86 f79013bd cities={\"britannia\":16,\"eu\":24} errors=0",
+   "current": "sim crossing-urals eu normal 11 2 d7bdf7d9 564c95f1 cities={\"britannia\":17,\"eu\":23} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-great-lakes britannia": {
+   "committed": "sim eu-great-lakes britannia normal 11 2 8a737ea8 31367b8b cities={\"eu\":18,\"britannia\":38} errors=0",
+   "current": "sim eu-great-lakes britannia normal 11 2 9365c58e a1388738 cities={\"eu\":18,\"britannia\":38} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-great-lakes eu": {
+   "committed": "sim eu-great-lakes eu normal 11 2 a46b7810 a5b487bf cities={\"eu\":17,\"britannia\":39} errors=0",
+   "current": "sim eu-great-lakes eu normal 11 2 9b760da8 40d00368 cities={\"eu\":18,\"britannia\":38} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-greenland britannia": {
+   "committed": "sim eu-greenland britannia normal 11 2 5786a788 76f02518 cities={\"britannia\":16,\"eu\":2} errors=0",
+   "current": "sim eu-greenland britannia normal 11 2 7095887b 76f02518 cities={\"britannia\":16,\"eu\":2} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-greenland eu": {
+   "committed": "sim eu-greenland eu normal 11 2 cce328b7 f0958a71 cities={\"britannia\":17,\"eu\":1} errors=0",
+   "current": "sim eu-greenland eu normal 11 2 5ab900d9 458e96dc cities={\"britannia\":17,\"eu\":1} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-panama britannia": {
+   "committed": "sim eu-panama britannia normal 11 2 a734ad82 f7159a13 cities={\"eu\":1,\"britannia\":29} errors=0",
+   "current": "sim eu-panama britannia normal 11 2 b8e668ae f7159a13 cities={\"eu\":1,\"britannia\":29} errors=0",
+   "changedBy": [
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "eu-panama eu": {
+   "committed": "sim eu-panama eu normal 11 2 10a7de7e e376caa4 cities={\"eu\":1,\"britannia\":29} errors=0",
+   "current": "sim eu-panama eu normal 11 2 8f0d232b e376caa4 cities={\"eu\":1,\"britannia\":29} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "eu-pendragon britannia": {
+   "committed": "sim eu-pendragon britannia normal 11 2 0cf889ce dcf692d5 cities={\"eu\":22,\"britannia\":48} errors=0",
+   "current": "sim eu-pendragon britannia normal 11 2 a9e8f481 dcf692d5 cities={\"eu\":22,\"britannia\":48} errors=0",
+   "changedBy": [
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-pendragon eu": {
+   "committed": "sim eu-pendragon eu normal 11 2 af2f35a6 a7bb7346 cities={\"eu\":22,\"britannia\":48} errors=0",
+   "current": "sim eu-pendragon eu normal 11 2 6316b97c a7bb7346 cities={\"eu\":22,\"britannia\":48} errors=0",
+   "changedBy": [
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "eu-rocky-mountains britannia": {
+   "committed": "sim eu-rocky-mountains britannia normal 11 2 93583bf0 f02efddd cities={\"eu\":28,\"britannia\":73} errors=0",
+   "current": "sim eu-rocky-mountains britannia normal 11 2 d7e5fbe1 0a4c795f cities={\"eu\":28,\"britannia\":73} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "e9487936 Reward Cornelia enemy and city-defense destructions with recovery",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "eu-rocky-mountains eu": {
+   "committed": "sim eu-rocky-mountains eu normal 11 2 6e2d3dfe 55e8d26c cities={\"eu\":27,\"britannia\":74} errors=0",
+   "current": "sim eu-rocky-mountains eu normal 11 2 65b50ebc 0080e75e cities={\"eu\":27,\"britannia\":74} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "european-war eb": {
+   "committed": "sim european-war eb normal 11 2 f82df7e0 d234e867 cities={\"eu\":26,\"eb\":18} errors=0",
+   "current": "sim european-war eb normal 11 2 d679d99a 05aab5b3 cities={\"eu\":25,\"eb\":19} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "european-war eu": {
+   "committed": "sim european-war eu normal 11 2 d662bef0 907efc6b cities={\"eu\":27,\"eb\":17} errors=0",
+   "current": "sim european-war eu normal 11 2 7dfa782b c8aa5e97 cities={\"eu\":27,\"eb\":17} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-american-east-coast britannia": {
+   "committed": "sim invasion-american-east-coast britannia normal 11 2 5f57a3ea 1f5fe136 cities={\"eu\":4,\"britannia\":58} errors=0",
+   "current": "sim invasion-american-east-coast britannia normal 11 2 3851c84b 22ffd8be cities={\"eu\":2,\"britannia\":60} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-american-east-coast eu": {
+   "committed": "sim invasion-american-east-coast eu normal 11 2 7b84b9a3 a69f28bc cities={\"eu\":2,\"britannia\":60} errors=0",
+   "current": "sim invasion-american-east-coast eu normal 11 2 c027edbc 11dc7031 cities={\"eu\":4,\"britannia\":58} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-brazil britannia": {
+   "committed": "sim invasion-brazil britannia normal 11 2 8edf2d2d 8669449c cities={\"eu\":7,\"britannia\":50} errors=0",
+   "current": "sim invasion-brazil britannia normal 11 2 b99d0be6 889e0e47 cities={\"eu\":6,\"britannia\":51} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-brazil eu": {
+   "committed": "sim invasion-brazil eu normal 11 2 8c22b28b ef2a9bd9 cities={\"eu\":4,\"britannia\":53} errors=0",
+   "current": "sim invasion-brazil eu normal 11 2 93f33f4b 186f2046 cities={\"eu\":5,\"britannia\":52} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "217d618e Rework Ayano into adjacent-combat Swordmaster with armor breaking",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-california britannia": {
+   "committed": "sim invasion-california britannia normal 11 2 9aa949a4 f52c527a cities={\"cf\":17,\"britannia\":46} errors=0",
+   "current": "sim invasion-california britannia normal 11 2 f575c160 2f3918aa cities={\"cf\":16,\"britannia\":47} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-california cf": {
+   "committed": "sim invasion-california cf normal 11 2 d4d1f10a efd0dec8 cities={\"cf\":17,\"britannia\":46} errors=0",
+   "current": "sim invasion-california cf normal 11 2 640a1148 5bccb22b cities={\"cf\":19,\"britannia\":44} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "2350c395 Implement Li Xingke Divine Tiger and unlimited Perfect Counter",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "ff17ad79 Rework Rakshata as adjacent field repair and reinforcement engineer"
+   ]
+  },
+  "invasion-canada britannia": {
+   "committed": "sim invasion-canada britannia normal 11 2 5ed77808 1bfedf8b cities={\"eu\":8,\"britannia\":66} errors=0",
+   "current": "sim invasion-canada britannia normal 11 2 3982de44 97d34025 cities={\"eu\":8,\"britannia\":66} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-canada eu": {
+   "committed": "sim invasion-canada eu normal 11 2 e67b67c8 7c60a793 cities={\"eu\":10,\"britannia\":64} errors=0",
+   "current": "sim invasion-canada eu normal 11 2 d97fc1ef 4a9a9e5f cities={\"eu\":11,\"britannia\":63} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "7233fb5c Replace Schneizel passives with once-per-turn Checkmate targeting",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-caribbean britannia": {
+   "committed": "sim invasion-caribbean britannia normal 11 2 f5d9d2f1 501cdc99 cities={\"eu\":6,\"britannia\":35} errors=0",
+   "current": "sim invasion-caribbean britannia normal 11 2 9cba29cf 9b55fbd1 cities={\"eu\":6,\"britannia\":35} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-caribbean eu": {
+   "committed": "sim invasion-caribbean eu normal 11 2 fa6fc07c 9d19b641 cities={\"eu\":5,\"britannia\":36} errors=0",
+   "current": "sim invasion-caribbean eu normal 11 2 b602ae70 33d02f96 cities={\"eu\":6,\"britannia\":35} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-hawaii britannia": {
+   "committed": "sim invasion-hawaii britannia normal 11 2 91e8c951 7d512d68 cities={\"cf\":2,\"britannia\":28} errors=0",
+   "current": "sim invasion-hawaii britannia normal 11 2 e3a80921 7d512d68 cities={\"cf\":2,\"britannia\":28} errors=0",
+   "changedBy": [
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-hawaii cf": {
+   "committed": "sim invasion-hawaii cf normal 11 2 0c35b840 3b28e156 cities={\"cf\":1,\"britannia\":29} errors=0",
+   "current": "sim invasion-hawaii cf normal 11 2 53e29305 3b28e156 cities={\"cf\":1,\"britannia\":29} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-japan bk": {
+   "committed": "sim invasion-japan bk normal 11 2 776e1d8e d3a602fb cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0",
+   "current": "sim invasion-japan bk normal 11 2 4cb3181d 9902a0cc cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0",
+   "changedBy": [
+    "e3c86555 Rework Zero into dual-mode Geass Absolute Command with no passive aura",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-japan britannia": {
+   "committed": "sim invasion-japan britannia normal 11 2 728fabe1 b29e68a2 cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0",
+   "current": "sim invasion-japan britannia normal 11 2 f33804e8 d2a002af cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0",
+   "changedBy": [
+    "e3c86555 Rework Zero into dual-mode Geass Absolute Command with no passive aura",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-japan cf": {
+   "committed": "sim invasion-japan cf normal 11 2 8318fa70 1ecc8dec cities={\"britannia\":30,\"bk\":5,\"cf\":9} errors=0",
+   "current": "sim invasion-japan cf normal 11 2 ebcf334b f9c0e281 cities={\"britannia\":31,\"bk\":5,\"cf\":8} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "e3c86555 Rework Zero into dual-mode Geass Absolute Command with no passive aura",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "48285b8a Integrate Xianglin Exploit Weakness over latest commander changes",
+    "2a235754 Integrate Xianglin Exploit Weakness over latest commander changes",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "f7691109 Carry Ohgi passive and healing core into integrated branch",
+    "b90414d1 Carry Ohgi activation checks, AI and target picker"
+   ]
+  },
+  "invasion-korea britannia": {
+   "committed": "sim invasion-korea britannia normal 11 2 c9ee4822 e3b71a7f cities={\"britannia\":13,\"cf\":42} errors=0",
+   "current": "sim invasion-korea britannia normal 11 2 e950d051 2d46072d cities={\"britannia\":13,\"cf\":42} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-korea cf": {
+   "committed": "sim invasion-korea cf normal 11 2 b37dc500 7987805a cities={\"britannia\":15,\"cf\":40} errors=0",
+   "current": "sim invasion-korea cf normal 11 2 359c4c47 7987805a cities={\"britannia\":15,\"cf\":40} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-south-africa britannia": {
+   "committed": "sim invasion-south-africa britannia normal 11 2 77ab5ac2 03c674f9 cities={\"britannia\":0,\"eu\":47} errors=0",
+   "current": "sim invasion-south-africa britannia normal 11 2 55c1dd02 2e8edfd0 cities={\"britannia\":0,\"eu\":47} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "97ddf93b Rework Akito Brain Raid as isolated berserker with full postattack movement",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-south-africa eu": {
+   "committed": "sim invasion-south-africa eu normal 11 2 18a9a0de 8d4b89e6 cities={\"britannia\":2,\"eu\":45} errors=0",
+   "current": "sim invasion-south-africa eu normal 11 2 f50b6a19 8d4b89e6 cities={\"britannia\":2,\"eu\":45} errors=0",
+   "changedBy": [
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "invasion-turkey britannia": {
+   "committed": "sim invasion-turkey britannia normal 11 2 fd4fea65 2aff3523 cities={\"britannia\":17,\"eu\":42} errors=0",
+   "current": "sim invasion-turkey britannia normal 11 2 1875bdaf a45144fb cities={\"britannia\":17,\"eu\":42} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "invasion-turkey eu": {
+   "committed": "sim invasion-turkey eu normal 11 2 e19b97a2 8518fc18 cities={\"britannia\":15,\"eu\":44} errors=0",
+   "current": "sim invasion-turkey eu normal 11 2 5e209b05 8518fc18 cities={\"britannia\":15,\"eu\":44} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "38e519e7 Rework Bismarck Future Sight into 30% direct-attack dodge only",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "operation-stonehenge britannia": {
+   "committed": "sim operation-stonehenge britannia normal 11 2 8a9e21c6 e0962c4c cities={\"britannia\":4,\"eu\":33} errors=0",
+   "current": "sim operation-stonehenge britannia normal 11 2 ec45bc2a 2960f4f9 cities={\"britannia\":5,\"eu\":32} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "operation-stonehenge eu": {
+   "committed": "sim operation-stonehenge eu normal 11 2 f8bf7358 27511aa6 cities={\"britannia\":4,\"eu\":33} errors=0",
+   "current": "sim operation-stonehenge eu normal 11 2 d1a9aad3 27511aa6 cities={\"britannia\":4,\"eu\":33} errors=0",
+   "changedBy": [
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "philippines-invasion britannia": {
+   "committed": "sim philippines-invasion britannia normal 11 2 dc349062 972f4cef cities={\"britannia\":3,\"cf\":34} errors=0",
+   "current": "sim philippines-invasion britannia normal 11 2 b4f237ba 972f4cef cities={\"britannia\":3,\"cf\":34} errors=0",
+   "changedBy": [
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "philippines-invasion cf": {
+   "committed": "sim philippines-invasion cf normal 11 2 bd0faf3a 644701a4 cities={\"britannia\":3,\"cf\":34} errors=0",
+   "current": "sim philippines-invasion cf normal 11 2 c8518bb2 644701a4 cities={\"britannia\":3,\"cf\":34} errors=0",
+   "changedBy": [
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare"
+   ]
+  },
+  "war-for-australia britannia": {
+   "committed": "sim war-for-australia britannia normal 11 2 e1f6efb4 47a4e803 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0",
+   "current": "sim war-for-australia britannia normal 11 2 23876355 c7748d5a cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "war-for-australia cf": {
+   "committed": "sim war-for-australia cf normal 11 2 3650874c 6f39dd24 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0",
+   "current": "sim war-for-australia cf normal 11 2 f10fa1db 2d0f5141 cities={\"britannia\":21,\"cf\":15,\"eu\":12} errors=0",
+   "changedBy": [
+    "d0c76bf0 Balance: standardize base critical chance to 15% regular and 20% elite",
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "e757bb25 Rework Jeremiah with Geass Canceller and Absolute Loyalty II",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  },
+  "war-for-australia eu": {
+   "committed": "sim war-for-australia eu normal 11 2 c1e24665 9f1db74b cities={\"britannia\":20,\"cf\":16,\"eu\":12} errors=0",
+   "current": "sim war-for-australia eu normal 11 2 ee12976a 38a32559 cities={\"britannia\":20,\"cf\":15,\"eu\":13} errors=0",
+   "changedBy": [
+    "28499d40 Rebalance Cornelia Witch of Britannia and Suzaku Live On signatures",
+    "0a7e1a57 Replace Leila's skill with Steady command aura and per-turn synchronized movement",
+    "07db07d3 Rebase Kallen's Radiant Wave Assault on current main",
+    "8e45e4ee Integrate Xianglin Exploit Weakness over latest commander changes",
+    "87127518 Replace Yukiya Target Designation with Demolition Expert and Electronic Warfare",
+    "3f9e4fa4..be8b46ac Gene Smilas rework (pushed directly to main; engine identical at be8b46ac, 920b410b and c517408e)"
+   ]
+  }
+ }
+}

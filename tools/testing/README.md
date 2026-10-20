@@ -102,6 +102,8 @@ Never replace an unexplained failing reference. The historical baseline and inde
 
 The canonical `sim_baseline.txt` now describes the corrected rules. Its reconciliation is explicit: the historical file already differed on all 390 lines before this work; the follow-up repairs then intentionally changed AI error handling, regional city defenses and four Elite scenario rosters. Tests and affected simulations must pass before producing the new reference. No earlier reference or failed test evidence is deleted.
 
+On 2026-10-20 the reference was refreshed for the Gene Smilas rework and for commander-rework drift that had reached main without a refresh. The previous file is recorded under `history` in the metadata. The per-line attribution and both captures are in `tools/testing/smilas-rework-validation/`.
+
 ```sh
 # Strict comparison against the documented current reference.
 node tools/check_sim_baseline.cjs --actual tools/results/current-fingerprints.txt

@@ -24,6 +24,8 @@ on:
       - 'dist/scenario-manifest.js'
       - 'dist/war-campaign.js'
       - 'tools/federation_eu_*'
+      - 'tools/check_sim_baseline.cjs'
+      - 'tools/data/approved_legacy_changes.json'
 concurrency:
   group: federation-eu-integration-${{ github.ref }}
   cancel-in-progress: true
