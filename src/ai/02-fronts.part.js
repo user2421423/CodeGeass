@@ -578,7 +578,8 @@
         rally: home ? s : rally, objectives: [{ ...s, key: 's' + s.id, value: 10, seed: 0, fortified }],
         enemies: home?.enemies || opponents, enemyStrength: opposition,
         desiredStrength: home ? Math.max(2, home.threat * 1.25) :
-          Math.max(3, opposition * 1.15 + (fortified ? 3 : 1)),
+          Math.max(3, opposition * 1.15 + (fortified ? 3 : 1)) *
+            (1 + 0.25 * Math.min(4, state.scenarioPostures?.['j' + s.id]?.failures || 0)),
         assigned: 0, members: [], friendlyStrength: 0, target: 0,
         masses: new Set([mass]), seeds: [[s, 0]],
         score: 1, priority: 1, fortified,
@@ -605,19 +606,40 @@
         next = scenarioPick(g, memo, at(u), old);
       if (next) scenarioGive(g, memo, u, next);
     }
+    const living = new Set(allUnits(g).filter(u => u.hp > 0).map(u => u.id));
     for (const f of fronts) {
       f.friendlyStrength = f.assigned;
       f.arrivingFour = active.filter(u=>memo.assign[u.id]===f.id &&
         frontArrival(g,at(u),f)<=4).reduce((sum,u)=>sum+unitStrength(u),0);
       f.deficit = Math.max(0,f.desiredStrength-f.arrivingFour);
       const posture=(state.scenarioPostures||{})[f.id]||{};
-      const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4;
+      // A column that loses over half its formations without taking the city has
+      // failed. Each failure (at most four, one forgiven per six turns) asks for a
+      // quarter more strength, and the column regroups at its rally city for up to
+      // three turns until most of that strength can arrive, instead of trickling in.
+      let { failures = 0, failedTurn = 0, lostRun = 0, peak = 0 } = posture;
+      if (f.type === 'offensive') {
+        if (failures && g.turn - failedTurn >= 6) { failures--; failedTurn = g.turn; }
+        const before = posture.members || [];
+        lostRun += before.filter(id => !living.has(id)).length;
+        peak = Math.max(peak, before.length);
+        if (peak >= 3 && lostRun >= peak * 0.55) {
+          failures = Math.min(4, failures + 1);
+          failedTurn = g.turn;
+          lostRun = 0;
+          peak = f.members.length;
+        }
+      }
+      const crisis=f.enemyStrength>f.arrivingFour*1.5 && f.enemyStrength>=4,
+        repulsed = f.type === 'offensive' && failures && g.turn - failedTurn < 3 &&
+          f.rally && f.rally.id !== f.anchor.id && f.arrivingFour < f.desiredStrength * 0.7;
       f.state = (f.operational || f.dynamicDefense) && f.type==='defensive' ?
         'holding' : defendingPhilippines
         ? (f.anchor.owner === side ? 'holding' : 'attacking')
-        : (memo.doctrine==='division'||memo.doctrine==='europe') && crisis && f.rally ? 'regrouping' : 'attacking';
+        : ((memo.doctrine==='division'||memo.doctrine==='europe') && crisis || repulsed) && f.rally ? 'regrouping' : 'attacking';
       f.seeds = f.state==='regrouping' ? [[f.rally,0]] : [[f.anchor,0]];
-      (state.scenarioPostures ||= {})[f.id]={state:f.state,since:posture.state===f.state?posture.since:g.turn};
+      (state.scenarioPostures ||= {})[f.id]={state:f.state,since:posture.state===f.state?posture.since:g.turn,
+        ...(f.type === 'offensive' ? { failures, failedTurn, lostRun, peak, members: f.members.slice() } : {})};
       f.target = f.desiredStrength;
       f.need = frontNeeds(f, active.filter(u => memo.assign[u.id] === f.id), g);
       memo.columns[f.id] = f.members;
@@ -895,10 +917,19 @@
            (previous.posture === 'defensive' && f.quiet < FRONT.alertRecovery))
           ? 'alert' : 'offensive';
       // Offensives stage at the nearest own city on the target's landmass, else at the nearest own coastal city.
+      // After two failed assaults from the same city, stage at a different nearby one to try another approach.
       if (f.type === 'offensive') {
         const land = own.filter(s => massOf(g, s) === massOf(g, f.anchor));
         f.overseas = !land.length;
-        f.rally = byDist(f.anchor, land.length ? land : own.filter(s => coastTile(g, s)))[0] || null;
+        let staging = byDist(f.anchor, land.length ? land : own.filter(s => coastTile(g, s)));
+        const failed = (previous.failures || 0) >= 2 && staging.find(s => s.id === previous.failedRally);
+        if (failed) {
+          const others = staging.filter(s => s !== failed && dist(g, s, f.anchor) <= dist(g, failed, f.anchor) + 8);
+          if (others.length) staging = others;
+        }
+        f.rally = staging[0] || null;
+        f.caution = 1 + 0.25 * Math.min(4, previous.failures || 0);
+        f.desiredStrength *= f.caution;
       }
       // Track what can plausibly arrive within a tactical window. Distant
       // assignments still exist, but are not usable as near-term defenders.
@@ -1130,20 +1161,30 @@
           f.type === 'defensive' ? 'holding' : f.type === 'alert' ? 'alert' : 'attacking');
       else {
         if (st.state === 'holding' || st.state === 'alert' || st.state === 'regrouping') set('assembling');
+        // A failed assault is remembered: every failure (at most four) makes the next
+        // wave gather a quarter more strength first. One is forgiven per six quiet turns.
+        if (st.failures && g.turn - st.failedTurn >= 6) {
+          st.failures--;
+          st.failedTurn = g.turn;
+        }
+        const caution = 1 + 0.25 * Math.min(4, st.failures || 0);
         f.readyStrength = sum(mine.filter(u => dist(g, at(u), f.rally) <= FRONT.rally || aheadOfRally(g, f, at(u))));
-        f.attackThreshold = Math.max(2, Math.min(f.desiredStrength * 0.8, f.assigned * 0.5));
+        f.attackThreshold = Math.max(2 * caution, Math.min(f.desiredStrength * 0.8, f.assigned * Math.min(0.9, 0.5 * caution)));
         // Waiting alone does not make an army ready. After a short staging
         // period a smaller assault is allowed only when it can overpower its
         // nearby opposition; otherwise keep gathering instead of feeding units in.
         const limitedAssault = g.turn - st.since >= FRONT.wait &&
           f.readyStrength >= Math.max(1, f.assigned * 0.35) &&
-          f.readyStrength >= f.enemyStrength * 1.2;
+          f.readyStrength >= f.enemyStrength * 1.2 * caution;
         if (st.state === 'assembling' && (f.readyStrength >= f.attackThreshold || limitedAssault)) {
           set('attacking');
           st.force = f.assigned;
           if (side !== g.player && f.objectives.some(o => o.owner === g.player))
             log(g, `${(g.factions?.[side] || FACTIONS[side]).short} forces massed at ${f.rally.name} open an offensive toward ${f.name}.`, side);
-        } else if (st.state === 'attacking' && g.turn - st.since >= 2 && f.assigned < (st.force || 0) * 0.45) set('assembling');
+        } else if (st.state === 'attacking' && g.turn - st.since >= 2 && f.assigned < (st.force || 0) * 0.45) {
+          Object.assign(st, { failures: Math.min(4, (st.failures || 0) + 1), failedRally: f.rally.id, failedTurn: g.turn });
+          set('assembling');
+        }
       }
       f.state = st.state;
       f.friendlyStrength = f.assigned;
