@@ -60,6 +60,21 @@ const ids=['rounds-rebellion','shin-independence','chinese-civil-war','eu-milita
    assert.equal(result.imageWidth,1440,id+' preview should match game renderer');
    assert(result.dialogLeft>=-3&&result.dialogRight<=result.viewport+3,id+' dialog overflows mobile viewport');
    console.log('MOBILE_UI '+JSON.stringify(result));
+   // Exercise the real deployment path and shared single regional save slot on
+   // the same phone viewport, including the 500+ frame Pendragon scenario.
+   const deployed=await page.evaluate(id=>{
+     const side=E.scenarios.byId[id].sides[0],started=performance.now();
+     startLoadedScenario(id,side,'normal',null);
+     const elapsedMs=Math.round(performance.now()-started);
+     const restored=getSave(SCENARIO_KEY);
+     return {id,side,elapsedMs,units:game.units.length,tiles:game.tiles.length,
+       savedId:restored?.scenario?.id,savedPlayer:restored?.player};
+   },id);
+   assert.equal(deployed.savedId,id,id+' did not use the existing regional save slot');
+   assert.equal(deployed.savedPlayer,deployed.side,id+' changed player during save');
+   assert(deployed.units>0&&deployed.tiles>0,id+' mobile battlefield did not load');
+   assert(deployed.elapsedMs<30000,id+' initial mobile deployment exceeded 30 seconds');
+   console.log('MOBILE_DEPLOY '+JSON.stringify(deployed));
   }
   assert.deepEqual(errors,[],'Browser JS errors');
   console.log('PASS four faction selectors, four difficulty selectors, political previews and mobile dialog layout');
