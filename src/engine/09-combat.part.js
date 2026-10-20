@@ -51,6 +51,7 @@
     if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
     if(u.expChengWeaken?.turns>0)attack*=1-u.expChengWeaken.value;
     if (!counter && u.expSmilasVanguardCharge) attack *= 1.50;
+    if (!counter && u.expToruPromiseDamage) attack *= 1.30;
     if(!counter&&u.expSmilasSuppression)attack*=1-u.expSmilasSuppression;
     // Yukiya's electronic disruption weakens all attacks (including counterfire)
     // only during the victim's next activation.
@@ -287,7 +288,7 @@
     // of whether the current incoming hit is one he redirected.
     if (target && smilasAdjacentShield(g,target)) attack *= 1.15;
     // Xingke's Perfect Counter replaces the ordinary 65% retaliation multiplier.
-    if (counter) attack *= f.perfectCounter ? 1
+    if (counter) attack *= (f.perfectCounter || romeroStandFast(g,u)) ? 1
       : !t.naval && t.branch === 'Infantry' && techLevel(g, u.side, 'infantry.picket') >= 2 ? 0.90 : 0.65;
     return Math.max(1, Math.round(attack));
   }
@@ -542,6 +543,24 @@
       log(g, `${COMMANDERS[v.cmd].short} survives a lethal blow: Code Bearer.`, v.side);
       return;
     }
+    // The intrinsic survivals above (Anya, C.C., Urabe) and earlier combat
+    // diversions (Guilford, Darlton) take priority. Only an otherwise fatal
+    // enemy combat hit on another allied commander can trigger Masaki.
+    if(!force&&!v.expMasakiSacrificeUsed&&attacker&&v.cmd&&
+       foe(g,v.side,attacker.side)){
+      const rescuer=g.units.filter(m=>m.hp>0&&m.id!==v.id&&m.cmd==='masaki'&&
+        m.side===v.side&&!atSea(g,m)&&fx(m).ultimateGuardian&&
+        !m.expMasakiSacrificeUsed&&dist(g,m,v)<=2).sort((a,b)=>a.id-b.id)[0];
+      if(rescuer){
+        v.hp=maxHP(v);
+        rescuer.expMasakiSacrificeUsed=true;
+        rescuer.hp=0;
+        log(g,'Ultimate Guardian: Masaki sacrifices himself to restore '+
+          COMMANDERS[v.cmd].short+' to full HP.',v.side);
+        kill(g,rescuer,attacker,false,null,0);
+        return;
+      }
+    }
     v.hp = 0;
     // Every confirmed combat death can reflect half the uncapped killing
     // attack. No counterattack is created; reflection damage cannot itself
@@ -593,6 +612,8 @@
     }
     if (v.cmd) log(g, `${COMMANDERS[v.cmd].short}'s unit is lost.`, v.side);
     newcomerKilled(g,v,attacker);
+    // Toru must rally on a genuine death, including enemy counterfire.
+    if(!force&&attacker&&foe(g,v.side,attacker.side))toruLastPromise(g,v,attacker);
     hooks.kill?.(g, v, attacker, by);
   }
   // Centralized post-volley action restoration. Distinguish a frame kill from a
@@ -724,6 +745,8 @@
     const movementBeforeAttack = !a.moved
       ? { skillReposition: a.skillReposition || 0, withdrawMove: !!a.withdrawMove }
       : null;
+    // The Last Promise's first initiating strike consumes the +30% charge.
+    const toruPromiseShot=!!a.expToruPromiseDamage;
     // Consume earned Assault Momentum on the next volley, regardless of outcome.
     if (a.expAssaultMomentumTurn === g.turn) delete a.expAssaultMomentumTurn;
     a.expTamakiCharging=!!f.charge&&a.movedDistance>=2&&a.expTamakiUsedTurn!==g.turn;
@@ -867,6 +890,7 @@
         if (a.hp <= 0) kill(g,a,null,false,null,0);
       }
     }
+    if(toruPromiseShot)delete a.expToruPromiseDamage;
     if(a.expPrecisionTarget){
       if(destroyed&&d?.id===a.expPrecisionTarget.id&&a.expPrecisionTarget.turn===g.turn&&a.hp>0)grantReposition(a,2);
       delete a.expPrecisionTarget;
@@ -944,6 +968,12 @@
           protectedAlly.expGuilfordSavedAttack.attackerId !== a.id) continue;
       guilfordCleanse(protectedAlly);
       delete protectedAlly.expGuilfordSavedAttack;
+    }
+    // Banked Last Promise attacks are earned IN ADDITION to an ordinary
+    // attack and do not bypass commander skill cooldowns or kill-chain caps.
+    if(a.hp>0&&a.expToruExtraAttack>0&&a.attacked){
+      a.expToruExtraAttack--;
+      a.attacked=false;
     }
     log(
       g,
