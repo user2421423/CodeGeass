@@ -138,6 +138,21 @@
     return g.units.some(v=>v.hp>0&&v.id!==target.id&&v.side===target.side&&
       fx(v).oscarGuardAura&&!atSea(g,v)&&dist(g,v,target)<=2) ? .9 : 1;
   }
+  // Klaus's rescue triggers only after an enemy attack crosses the
+  // 30%-HP threshold without killing the victim.
+  function klausLoyaltyAfterHit(g, victim, attacker, priorHP) {
+    if (!victim || !attacker || !foe(g, attacker.side, victim.side) ||
+        victim.hp <= 0 || victim.hp >= maxHP(victim) * 0.30 ||
+        priorHP < maxHP(victim) * 0.30) return;
+    const klaus = g.units.find(v => v.hp > 0 && v.side === victim.side &&
+      fx(v).klausLoyalty && !atSea(g, v) && dist(g, v, victim) <= 2 &&
+      v.expKlausLoyaltyTurn !== g.turn);
+    if (!klaus) return;
+    klaus.expKlausLoyaltyTurn = g.turn;
+    victim.hp = Math.min(maxHP(victim), victim.hp + Math.round(maxHP(victim) * 0.15));
+    victim.expKlausLoyalty = { side: victim.side, source: klaus.id };
+    log(g, 'Klaus rallies a critically wounded wZERO formation.', victim.side);
+  }
   // Oscar fires an independent full-strength reaction after an enemy's
   // initiating attack against ANOTHER allied formation within 2 hexes.
   // No normal attack action, retaliation, or attack-chain refresh is created.
@@ -295,6 +310,30 @@
       for(const ally of g.units)if(ally.hp>0&&ally.side===v.side&&dist(g,ally,v)===1)
         ally.expPuristCounter={turns:1,startTurn:g.turn};
     if(!attacker)return;
+    // Exploit the Opening: only an OTHER allied formation's actual kill can
+    // refresh Ryo and the killer. No new attack is created on mere damage,
+    // shields, a Ryo solo kill, or indirect deaths without an allied killer.
+    // Uses ordinary marked targets, so Yukiya's weaker mark cannot stack.
+    for(const mark of v.skillMarks||[]){
+      if(!mark.ryo||mark.side!==attacker.side||mark.source===attacker.id)continue;
+      const ryo=g.units.find(u=>u.id===mark.source&&u.cmd==='ryo'&&u.hp>0&&
+        u.side===attacker.side&&!atSea(g,u)&&fx(u).ryoOpening);
+      if(!ryo)continue;
+      for(const ally of [ryo,attacker]){
+        if(ally.hp<=0)continue;
+        ally.attacked=false;
+        // A full normal move, without resetting heavy-frame action counts or
+        // rearming any once-per-turn commander/Elite ability.
+        ally.moved=heavyMoveLimitReached(g,ally);
+        ally.skillReposition=0;
+        ally.withdrawMove=false;
+        ally.eliteMoveAfterKill=false;
+      }
+      // Small AI-turn signal: if Ryo acted earlier, the rival turn runner can
+      // let him spend his newly restored action without a complex new planner.
+      const prior=ryo.expRyoOpeningRefresh;
+      ryo.expRyoOpeningRefresh={turn:g.turn,count:(prior?.turn===g.turn?prior.count:0)+1};
+    }
     for(const u of g.units)if(u.hp>0&&u.side===attacker.side&&fx(u).salvage&&dist(g,u,v)<=2){
       const gained=Math.min(20,60-(u.expSalvageIndustry||0));funds(g,u.side).industry+=Math.max(0,gained);u.expSalvageIndustry=(u.expSalvageIndustry||0)+Math.max(0,gained);
       u.expSalvageCount=(u.expSalvageCount||0)+1;

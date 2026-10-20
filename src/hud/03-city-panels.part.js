@@ -186,7 +186,7 @@ function cityAutomationPanel(s) {
       : why
         ? `Queued: ${t.name} ×${stack}. Waiting: ${why}.`
         : `Queued: ${t.name} ×${stack}. Ready for the next automation run.`;
-  return `<div class="target-box"><span class="label">${s.owner === game.player ? 'Auto-produce each turn' : 'Auto-produce naval units each turn'}</span><select class="select" data-city-unit="${s.id}" ${!interactive() ? 'disabled' : ''}>${automationUnitOptionsHTML(s, unit)}</select><small>${esc(status)}</small>${unit ? `<small>Current cost: ${costHTML(E.decreePrice(E.price(unit, stack, game, game.player), s.owner === game.player ? s : null))}. Formation size and resource reserves come from Production Command.</small>` : ''}<small>${a.enabled ? 'Runs after income is collected at the start of your turn.' : 'Automation is currently off globally. The queue will wait until Production Command is enabled.'}</small></div>`;
+  return `<div class="target-box"><span class="label">${s.owner === game.player ? 'Auto-produce each turn' : 'Auto-produce naval units each turn'}</span><select class="select" data-city-unit="${s.id}" ${!interactive() ? 'disabled' : ''}>${automationUnitOptionsHTML(s, unit)}</select><small>${esc(status)}</small>${unit ? `<small>Current cost: ${costHTML(E.decreePrice(E.recruitCost(game, s, unit, stack), s.owner === game.player ? s : null))}. Formation size and resource reserves come from Production Command.</small>` : ''}<small>${a.enabled ? 'Runs after income is collected at the start of your turn.' : 'Automation is currently off globally. The queue will wait until Production Command is enabled.'}</small></div>`;
 }
 function productionDialog() {
   if (game.mode !== 'conquest') return;

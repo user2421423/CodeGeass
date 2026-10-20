@@ -634,11 +634,11 @@ document.addEventListener('click', e => {
       else closeModal();
       break;
     case 'generals':
-      generalsDialog(hqBack === 'game' ? game.player : generalsSide);
+      generalsDialog('all');
       break;
     case 'generals-start':
       hqBack = 'start';
-      generalsDialog(setup.side);
+      generalsDialog('all');
       break;
     case 'generals-close':
       if (hqBack === 'start') startMenu();
@@ -673,7 +673,7 @@ document.addEventListener('click', e => {
       break;
     case 'feint': {
       const u = selectedUnit();
-      if (u && (['command','designate','stratagem','protection','oscarDefense','geassCancel','checkmate','memoryRewrite','ohgiHeal','expendableVanguard'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
+      if (u && (['command','designate','stratagem','protection','oscarDefense','geassCancel','checkmate','memoryRewrite','ohgiHeal','expendableVanguard','electricalOverload'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira'].includes(u.cmd))) commandDialog(u);
       else if (u) doAction(() => useCommanderAbility(u.id));
       break;
     }

@@ -138,13 +138,13 @@ globalThis.KnightmareArtManifest = {
       "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
     },
     "elite_sutherland_air": {
-      "src": "units/sutherland_air-cc57c87d038f.png"
+      "src": "units/elite_palomides.webp"
     },
     "elite_tohdoh_gekka": {
       "src": "units/elite_tohdoh_gekka-4dfd9d98b2b6.png"
     },
     "elite_vincent_ward": {
-      "src": "units/vincent_ward-474e03b4ee9c.png"
+      "src": "units/elite_florence.webp"
     },
     "elite_wang_hu": {
       "src": "units/shen_hu-761ab82d666e.png"

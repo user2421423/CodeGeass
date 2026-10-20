@@ -123,7 +123,7 @@
         producer = portBuilt(t) ? (s.portOwner || s.owner) : s.owner;
       if (producer !== side) continue;
       const stack = t.naval === 'ship' ? 1 : a.stack,
-        cost = decreePrice(price(unit, stack, g, side), s.owner === side ? s : null);
+        cost = decreePrice(recruitCost(g, s, unit, stack), s.owner === side ? s : null);
       if (!automationReserveAllows(g, side, cost, reserve) || buyReason(g, s, unit, stack)) continue;
       const r = recruit(g, s.id, unit, stack);
       if (r.ok) {
@@ -174,7 +174,7 @@
       g.challengePassRun.assigned[k] = true;
     u.cmdRank = g.roster[k].rank;
     u.hp += maxHP(u) - old;
-    if (k === 'leila') applyLeilaMoraleFloor(g);
+    if (k === 'leila' || k === 'fernando') applyLeilaMoraleFloor(g);
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
     return { ok: true };
   }
@@ -187,6 +187,9 @@
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    if (kind === 'electricalOverload') return g.units.filter(v => v.hp > 0 &&
+      foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) === 1 &&
+      inRange(u, v, g) && hostileTarget(g, u, v));
     if (kind === 'freeze') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
     if (kind === 'checkmate') return g.units.filter(v => v.hp > 0 &&
@@ -222,6 +225,25 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'electricalOverload') {
+      const v = targetId == null ? options[0] : options.find(w => w.id === targetId);
+      if (!v) return { ok: false, reason: 'Choose an adjacent enemy in attack range' };
+      // A regular damaging attack with its usual attack cost, but without
+      // either normal retaliation or Senba's special defensive reaction.
+      u.expFernandoOverloadStrike = true;
+      let result;
+      try { result = attack(g, u.id, v.c, v.r); }
+      finally { delete u.expFernandoOverloadStrike; }
+      if (!result.ok) return result;
+      if (v.hp > 0) {
+        v.expFernandoOverload = { source: u.id, side: u.side };
+        v.moved = true;
+      }
+      u.feintCD = 0;
+      u.feintUsedTurn = g.turn;
+      log(g, `Electrical Overload strikes ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short}.`, u.side);
+      return { ok: true, target: v.id, affected: v.hp > 0 ? 1 : 0, attack: result };
+    }
     if (action.kind === 'oscarDefense') {
       // Once per turn, select one allied formation, not Oscar himself.
       const v=targetId==null ? [...options].sort((a,b)=>

@@ -53,7 +53,7 @@
   function targetMarked(g, attacker, victim) {
     let damage = 0, noCounter = false;
     for (const m of victim?.skillMarks || []) {
-      if (m.side !== attacker.side) continue;
+      if (m.side !== attacker.side || (m.ryo && m.source === attacker.id)) continue;
       if (m.range) {
         const source = g.units.find(v => v.id === m.source && v.hp > 0 && !atSea(g, v));
         if (!source || dist(g, source, attacker) > m.range) continue;
@@ -139,7 +139,9 @@
     // Divine Tiger targets commander-led formations in both attacks and retaliation.
     if (f.duelist && target?.cmd) mult *= 1 + f.duelist;
     if (counter) {
-      return mult;
+      // Ryo's marked-target bonus also helps allied counterfire. His own
+      // formation is excluded by targetMarked(), as on normal attacks.
+      return mult * (target ? 1 + targetMarked(g, u, target).damage : 1);
     }
     if (u.assaultInspired) mult *= 1 + u.assaultInspired.value;
     if (!u.cmd && skillNear(g, u, 'commanderlessAttack', 2, false)) mult *= 1.15;
@@ -189,6 +191,11 @@
   function afterCommanderAttack(g, a, d, city, destroyed, defensesDestroyed = false) {
     const f = fx(a);
     if (d?.hp > 0) {
+      // One persistent mark per Ryo/target, created by his first surviving hit.
+      // Subsequent attacks cannot stack or strengthen it; ordinary target-mark
+      // expiry at this faction's next turn handles both player and AI battles.
+      if (f.ryoMark && !d.skillMarks?.some(m => m.ryo && m.side === a.side && m.source === a.id))
+        addTargetMark(d, { side: a.side, source: a.id, damage: f.ryoMark, ryo: true });
       if (f.targetMark) addTargetMark(d, { side: a.side, source: a.id, damage: f.targetMark });
       if (f.intrigue && d.cmd) d.auraDisrupted = { side: a.side };
     }

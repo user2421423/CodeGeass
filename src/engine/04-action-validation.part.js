@@ -148,7 +148,7 @@
       (port && s.portProducedTurn === g.turn ? 'This port already launched a unit this turn' : null) ||
       (!recruitOptions(g, s, producer, type).length && !(vacating && !port && unitAt(g, s) === vacating)
         ? (port ? 'A unit is on the port' : 'A unit is on the city') : null) ||
-      shortfall(funds(g, producer), decreePrice(price(type, stack, g, producer), s.owner === producer ? s : null))
+      shortfall(funds(g, producer), decreePrice(recruitCost(g, s, type, stack), s.owner === producer ? s : null))
     );
   }
   function decreePrice(cost,s){return s?.expDecree?{...cost,credits:Math.ceil((cost.credits||0)*.7),industry:Math.ceil((cost.industry||0)*.7)}:cost;}
@@ -236,6 +236,10 @@
     if (why) return why;
     if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';
+    if (action.kind === 'electricalOverload') {
+      if (u.attacked) return 'Already fired';
+      return actionTargets(g, u).length ? null : 'No adjacent enemy in normal attack range';
+    }
     if (action.kind === 'expendableVanguard')
       return actionTargets(g,u).length ? null : 'No eligible allied formation within 2 hexes';
     if (action.kind === 'ohgiHeal') {

@@ -130,8 +130,6 @@ const ART = (() => {
   // Published and development assets are the only sprites for units and commanders.
   // New elite variants share the published image of their underlying standard frame.
   const ELITE_ART_ALIASES = {
-    elite_vincent_ward: 'vincent_ward',
-    elite_sutherland_air: 'sutherland_air',
     elite_hummel_battery: 'hummel_battery',
     elite_akatsuki_missile: 'akatsuki_missile',
     elite_akatsuki_heavy: 'akatsuki_heavy',

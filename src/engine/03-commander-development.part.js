@@ -255,20 +255,24 @@
   function auraRange(a) {
     return fx(a).aura?.range || 1;
   }
-  // Leila's Blue Geass protects herself and every same-side formation in the
-  // two-hex command radius. The effect does not increase Steady morale to High.
+  // Leila and Fernando protect themselves and same-side formations nearby.
+  // Neither morale floor promotes Neutral morale to High.
   function leilaCommand(g, v) {
     return g.units.some(m => m.hp > 0 && m.side === v.side && !atSea(g, m) &&
       fx(m).steadfastCommand && dist(g, m, v) <= fx(m).steadfastCommand.range);
   }
+  function starOfMadridNear(g, v) {
+    return g.units.some(m => m.hp > 0 && m.side === v.side && !atSea(g, m) &&
+      fx(m).starOfMadrid && dist(g, m, v) <= 2);
+  }
   function applyLeilaMoraleFloor(g) {
     for (const v of g.units)
-      if (v.hp > 0 && v.morale < 0 && leilaCommand(g, v)) v.morale = 0;
+      if (v.hp > 0 && v.morale < 0 && moraleFloor(g, v) >= 0) v.morale = 0;
   }
-  // Lowest morale a unit can be pushed to: steady for commanders with a floor;
-  // Fernando's calm and other enduring protections can stop confusion.
+  // Lowest morale a unit can be pushed to: Leila and Fernando hold Neutral.
+  // Other commander floors and morale protections retain their existing rules.
   function moraleFloor(g, v) {
-    if (leilaCommand(g, v)) return 0;
+    if (leilaCommand(g, v) || starOfMadridNear(g, v)) return 0;
     if (fx(v).floor != null) return fx(v).floor;
     return g.units.some(
       m => m.hp > 0 && m.side === v.side && (fx(m).calm || (fx(m).discipline && !v.cmd && m.id !== v.id) || (fx(m).nationalUnity && dist(g,m,v)<=3) || (fx(m).commanderlessAttack && !v.cmd)) && dist(g, m, v) <= (fx(m).nationalUnity ? 3 : 2),
