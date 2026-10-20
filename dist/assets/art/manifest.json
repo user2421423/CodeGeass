@@ -382,9 +382,6 @@
       "fx": 0.5,
       "fy": 0.5
     },
-    "luciano": {
-      "src": "portraits/luciano-e90561c6a0a0.jpg"
-    },
     "manfredi": {
       "src": "portraits/manfredi-57a7bea25a0a.webp"
     },
@@ -398,9 +395,6 @@
     },
     "minami": {
       "src": "portraits/minami-020c7b02939d.webp"
-    },
-    "monica": {
-      "src": "portraits/monica-1648578c93a5.webp"
     },
     "nonette": {
       "src": "portraits/nonette-refresh-42facc7ea99a.jpg",
@@ -521,26 +515,6 @@
     },
     "olivia": {
       "src": "portraits/olivia-refresh-2f1e372a9dc9.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "margaret": {
-      "src": "portraits/margaret-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "hilda": {
-      "src": "portraits/hilda-refresh-b57bc0692f04.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "chloe": {
-      "src": "portraits/chloe-refresh-d8293febfba0.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "kate": {
-      "src": "portraits/kate-refresh-1a0672cb00ee.jpg",
       "fx": 0.5,
       "fy": 0.5
     },

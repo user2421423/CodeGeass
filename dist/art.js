@@ -226,7 +226,13 @@ const ART = (() => {
       const e = localEntry('portraits', k),
         style = e ? ` style="object-position:${(e.fx ?? 0.5) * 100}% ${(e.fy ?? 0.25) * 100}%"` : '',
         l = withLocal('portraits', k, style);
-      return `<span class="portrait-art${l.cls} ${extra}" aria-hidden="true">${l.html}</span>`;
+      // Real imagery only. Four pending E.U. portraits display factual text
+      // initials, never another character's misleading face.
+      const initials = {miguel:'MD',romero:'RB',masaki:'MH',toru:'TW'}[k];
+      const fallback=!e&&initials
+        ? `<span title="Character portrait pending" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-weight:800;color:#e8ebf3;background:linear-gradient(145deg,#18396c,#243d50)">${initials}</span>`
+        : '';
+      return `<span class="portrait-art${l.cls} ${extra}" aria-hidden="true">${l.html||fallback}</span>`;
     },
     // Canvas: draw a cached image centered at (x, y); false while the image is still decoding.
     drawUnit(ctx, type, side, x, y, w, h = w, flip = false) {
