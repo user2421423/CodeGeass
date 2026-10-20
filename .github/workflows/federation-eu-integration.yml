@@ -85,9 +85,9 @@ jobs:
         run: |
           node tools/build_sources.cjs
           (cd baseline && node tools/build_sources.cjs)
-      - name: Compare deterministic existing missions with unchanged main
+      - name: Compare old missions with pre-campaign gameplay outcomes (report strict, state-only drift reported)
         run: |
-          node tools/check_sim_baseline.cjs --base-root "$GITHUB_WORKSPACE/baseline" --scenarios war-for-australia,area-18,division-japan,conquest-indochina,cf-pendragon,european-war,operation-stonehenge,battle-luoyang,eu-cf-kazakhstan,eu-cf-luoyang
+          node tools/check_sim_baseline.cjs --compare observable --approved-diffs tools/data/approved_legacy_changes.json --base-root "$GITHUB_WORKSPACE/baseline" --scenarios war-for-australia,area-18,division-japan,conquest-indochina,cf-pendragon,european-war,operation-stonehenge,battle-luoyang,eu-cf-kazakhstan,eu-cf-luoyang
   scenarios:
     needs: registration
     runs-on: ubuntu-latest

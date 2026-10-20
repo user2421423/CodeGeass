@@ -1,0 +1,20 @@
+{
+  "base": "38e519e789998010c5e336e170e6000c61205ab0",
+  "approved": {
+    "sim eu-cf-kazakhstan eu normal 11 2": {
+      "expected": "sim eu-cf-kazakhstan eu normal 11 2 60f36bc8 2dcc1e78 cities={\"eu\":15,\"cf\":50} errors=0",
+      "actual": "sim eu-cf-kazakhstan eu normal 11 2 4f2f0923 4791bbc9 cities={\"eu\":14,\"cf\":51} errors=0",
+      "reason": "Two-turn tactical shift: Federation now captures Troitsk, plus one additional E.U. loss. Identical scenario setup; approved shared commander/combat changes retained. Future different outcome must fail."
+    },
+    "sim eu-cf-kazakhstan cf normal 11 2": {
+      "expected": "sim eu-cf-kazakhstan cf normal 11 2 59821469 98405c34 cities={\"eu\":16,\"cf\":49} errors=0",
+      "actual": "sim eu-cf-kazakhstan cf normal 11 2 b8cd9325 905a2d9f cities={\"eu\":16,\"cf\":49} errors=0",
+      "reason": "Aktobe/Aksai capture order, attacks and production change under updated shared commander/combat rules; city ownership unchanged. Future different output must fail."
+    },
+    "sim european-war eu normal 11 2": {
+      "expected": "sim european-war eu normal 11 2 598cc12c e0355e00 cities={\"eu\":27,\"eb\":17} errors=0",
+      "actual": "sim european-war eu normal 11 2 daaeef0c d81c4b64 cities={\"eu\":27,\"eb\":17} errors=0",
+      "reason": "Helsinki/Lviv capture order and attacks/production change under shared commander/combat reworks, with city ownership unchanged. Future different output must fail."
+    }
+  }
+}

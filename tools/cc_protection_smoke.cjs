@@ -100,5 +100,7 @@ function setup(){
   assert.ok(b.cc.hp>Math.round(E.maxHP(b.cc)*.5),'Retain 5% start-of-turn regeneration');
 }
 const ui=fs.readFileSync(require.resolve('../dist/ui/input.js'),'utf8');
-assert.match(ui,/\['command','designate','stratagem','protection'\]/,'Player action opens target picker');
+// Verify the ability remains in the commander-dialog dispatch regardless of
+// newly added action kinds; don't require an exact historical array literal.
+assert.match(ui,/\['command','designate','stratagem','protection'(?=[,\]])/,'Player action opens target picker');
 console.log("C.C.'s Protection and per-turn Code Bearer: PASS");

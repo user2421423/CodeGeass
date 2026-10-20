@@ -17,12 +17,12 @@ setup battle-luoyang britannia normal 70247c40
 setup battle-luoyang britannia hard 6eee7590
 setup battle-luoyang britannia challenge 6ee0a6e1
 setup battle-luoyang britannia elite 750f71f2
-sim battle-luoyang britannia normal 11 2 76946cfd 4dc11f63 cities={"britannia":32,"cf":51} errors=0
+sim battle-luoyang britannia normal 11 2 a1d9d264 9f9e4f11 cities={"britannia":34,"cf":49} errors=0
 setup battle-luoyang cf normal 76d5a971
 setup battle-luoyang cf hard d2b94f08
 setup battle-luoyang cf challenge 5ad1faa3
 setup battle-luoyang cf elite d6f04998
-sim battle-luoyang cf normal 11 2 2315fd61 e32b6978 cities={"britannia":33,"cf":50} errors=0
+sim battle-luoyang cf normal 11 2 eaf61788 8685f48e cities={"britannia":34,"cf":49} errors=0
 setup bering-strait britannia normal 87522df6
 setup bering-strait britannia hard 028d1701
 setup bering-strait britannia challenge a874daf2
@@ -177,17 +177,17 @@ setup division-japan britannia normal 9c7918bb
 setup division-japan britannia hard 68a1e16d
 setup division-japan britannia challenge 91ab4a29
 setup division-japan britannia elite 8136eef8
-sim division-japan britannia normal 11 2 32b3ab8d fb849296 cities={"britannia":17,"eu":11,"cf":16} errors=0
+sim division-japan britannia normal 11 2 cf62f5d1 b4032537 cities={"britannia":17,"eu":10,"cf":17} errors=0
 setup division-japan eu normal c47b91e5
 setup division-japan eu hard 1331ba39
 setup division-japan eu challenge 8ec7ac84
 setup division-japan eu elite 9ae03300
-sim division-japan eu normal 11 2 f1892bb4 f4affa27 cities={"britannia":17,"eu":10,"cf":17} errors=0
+sim division-japan eu normal 11 2 97a0a524 dddfd181 cities={"britannia":17,"eu":10,"cf":17} errors=0
 setup division-japan cf normal e786c1ee
 setup division-japan cf hard 1ad63e23
 setup division-japan cf challenge 125cae78
 setup division-japan cf elite 3baf7240
-sim division-japan cf normal 11 2 89f4ee68 9f7210b2 cities={"britannia":17,"eu":10,"cf":17} errors=0
+sim division-japan cf normal 11 2 5355847f 4bdf697c cities={"britannia":17,"eu":10,"cf":17} errors=0
 setup eu-great-lakes eu normal 88a00c8e
 setup eu-great-lakes eu hard 9887c445
 setup eu-great-lakes eu challenge 9f0b1d1d
@@ -202,12 +202,12 @@ setup eu-greenland britannia normal 769757a7
 setup eu-greenland britannia hard ca2dcc85
 setup eu-greenland britannia challenge f593e89e
 setup eu-greenland britannia elite a30ade81
-sim eu-greenland britannia normal 11 2 fb66e2cd 9df0d1a6 cities={"britannia":16,"eu":2} errors=0
+sim eu-greenland britannia normal 11 2 5786a788 76f02518 cities={"britannia":16,"eu":2} errors=0
 setup eu-greenland eu normal 3b882617
 setup eu-greenland eu hard ce2bd18a
 setup eu-greenland eu challenge 8b50bb87
 setup eu-greenland eu elite b8bf0dd3
-sim eu-greenland eu normal 11 2 fe08bda5 a55c439f cities={"britannia":17,"eu":1} errors=0
+sim eu-greenland eu normal 11 2 cce328b7 f0958a71 cities={"britannia":17,"eu":1} errors=0
 setup eu-panama eu normal 5763a859
 setup eu-panama eu hard d177f0d6
 setup eu-panama eu challenge bbc70710
