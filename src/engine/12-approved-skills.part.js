@@ -127,13 +127,16 @@
       g.units.some(v=>v.cmd&&v.hp>0&&v.side===u.side&&fx(v).blackSeaFox&&dist(g,v,u)<=2))m*=1.25;
     return m;
   }
-  // Emergency Defense follows the designated formation. Non-stacking:
-  // its own 20% protection takes precedence over nearby allies' 10%.
+  // Oscar's passive guard is centered on Oscar himself, always on
+  // while his commander effect is active, and protects OTHER friendly
+  // formations within two hexes. It never radiates from a selected ally.
+  // Emergency Defense keeps its independent moving 20% marked-unit
+  // protection and takes precedence rather than stacking with the aura.
   function oscarDefenseMultiplier(g,target){
     if(!target||target.hp<=0)return 1;
     if(target.expOscarDefense?.side===target.side)return .8;
-    return g.units.some(v=>v.hp>0&&v.side===target.side&&v.expOscarDefense?.side===target.side&&
-      dist(g,v,target)<=2) ? .9 : 1;
+    return g.units.some(v=>v.hp>0&&v.id!==target.id&&v.side===target.side&&
+      fx(v).oscarGuardAura&&!atSea(g,v)&&dist(g,v,target)<=2) ? .9 : 1;
   }
   // Oscar fires an independent full-strength reaction after an enemy's
   // initiating attack against ANOTHER allied formation within 2 hexes.
