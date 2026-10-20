@@ -463,8 +463,29 @@
   }
   // Combat damage is distributed immediately. Guilford's protection precedes
   // Smilas's own damage-share rule; redirected hits are not new attacks.
+  // Protect Our Father diverts half of an incoming hit once per turn.
+  // Only Darlton's own summoned knights qualify; redirected damage is not
+  // a new attack and can kill its recipient, triggering A Father's Vengeance.
+  function darltonProtect(g,victim,attacker,amount){
+    const incoming=Math.max(0,Math.round(amount||0));
+    if(!incoming||victim?.cmd!=='darlton'||victim.hp<=0||
+       victim.expDarltonProtectTurn===g.turn||!attacker||
+       !foe(g,victim.side,attacker.side)||atSea(g,victim))return incoming;
+    const knight=g.units.filter(w=>w.hp>0&&w.side===victim.side&&
+      w.expDarltonSummonedBy===victim.id&&!atSea(g,w)&&dist(g,w,victim)<=2)
+      .sort((a,b)=>dist(g,a,victim)-dist(g,b,victim)||a.id-b.id)[0];
+    if(!knight)return incoming;
+    const redirected=Math.round(incoming*.5),before=knight.hp;
+    victim.expDarltonProtectTurn=g.turn;
+    knight.hp=Math.max(0,knight.hp-redirected);
+    recordWarEvent(g,'damage',attacker.side,{targetSide:knight.side,
+      value:before-knight.hp,unitId:attacker.id,group:warGroup(g,attacker)});
+    log(g,'Protect Our Father: a Glaston Knight absorbs '+redirected+' combat damage.',victim.side);
+    if(knight.hp<=0)kill(g,knight,attacker,false,null,redirected);
+    return incoming-redirected;
+  }
   function smilasDealCombatDamage(g, victim, attacker, amount) {
-    const incoming = guilfordProtect(g,victim,attacker,amount);
+    const incoming = darltonProtect(g,victim,attacker,guilfordProtect(g,victim,attacker,amount));
     const priorHP = victim.hp;
     const split = smilasDamageShare(g,victim,incoming);
     // Intercept before applying the hit to Smilas, so a bodyguard killed
@@ -696,6 +717,8 @@
       .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1 &&
         (!isAir(v) || canHitAir(a)))
       .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
+    // Next initiating volley consumes vengeance, including its already-computed splash.
+    if(a.cmd==='darlton'&&a.expDarltonVengeanceBonus)delete a.expDarltonVengeanceBonus;
     // Keep track of any unused movement before firing; a kill that earns another attack
     // should not consume it. Limited skill repositioning must stay limited.
     const movementBeforeAttack = !a.moved
