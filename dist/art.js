@@ -132,8 +132,6 @@ const ART = (() => {
   const ELITE_ART_ALIASES = {
     elite_sutherland_air: 'canterbury', // Shared Imperial rocket elite uses Canterbury artwork.
     elite_hummel_battery: 'hummel_battery',
-    elite_akatsuki_missile: 'akatsuki_missile',
-    elite_akatsuki_heavy: 'akatsuki_heavy',
     elite_portman_ii: 'portman_ii',
     elite_panzer_frosch_ii: 'panzer_frosch_ii',
     elite_shui_gun_ru_ii: 'shui_gun_ru_ii',

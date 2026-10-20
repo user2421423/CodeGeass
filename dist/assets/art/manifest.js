@@ -69,13 +69,13 @@ globalThis.KnightmareArtManifest = {
       "src": "units/chuyen-99252cb6f888.webp"
     },
     "elite_akatsuki_heavy": {
-      "src": "units/akatsuki_heavy-7c180ab2623f.png"
+      "src": "units/elite_akatsuki_heavy-d57babce5ae4.webp"
     },
     "elite_akatsuki_missile": {
-      "src": "units/akatsuki_missile-0231df0f89b3.png"
+      "src": "units/elite_akatsuki_missile-bdca71449429.webp"
     },
     "elite_akatsuki_zikisan": {
-      "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
+      "src": "units/elite_akatsuki_zikisan-b976edc422b2.webp"
     },
     "elite_alexander_liberte": {
       "src": "units/alexander_elite-da3094ec72b4.png"
