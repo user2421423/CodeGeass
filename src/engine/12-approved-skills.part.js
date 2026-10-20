@@ -94,6 +94,9 @@
   }
   function newcomerAttack(g,u,target,counter){
     const f=fx(u),terrain=tile(g,u.c,u.r);let m=1;
+    // Villetta's commanderless hunter bonus applies to initiating,
+    // automatic interception, and defensive attacks on formations only.
+    if(target && !target.cmd && f.vsCommanderless)m*=1+f.vsCommanderless;
     if(!counter&&f.dashStrike&&u.movedDistance>=3&&u.expDashTurn!==g.turn)m*=1.3;
     if(!counter&&f.highland&&terrain?.terrain==='mountain')m*=1.35;
     if(!counter&&f.adaptiveBreakthrough&&u.movedDistance>=3)m*=1.2;
@@ -176,6 +179,46 @@
     if(fx(unit).relief)unit.expReliefTurn=g.turn;else unit.expLinkTurn=g.turn;
     kill(g,attacker,unit);
   }
+  // Villetta reacts to a commanderless enemy MOVING into an adjacent hex.
+  // This is an independent free strike: it never calls attack(), consumes
+  // a normal attack, refreshes a kill chain, or permits counterfire.
+  function villettaIntercept(g,moved){
+    if(moved.hp<=0||moved.cmd||moved.expVillettaInterceptedTurn===g.turn)return false;
+    const hunter=g.units.find(v=>v.hp>0&&fx(v).adjacentCommanderlessIntercept&&
+      v.morale>-3&&!v.expRoloFrozen&&!v.expCharlesMemoryRewrite&&
+      foe(g,v.side,moved.side)&&dist(g,v,moved)===1);
+    if(!hunter)return false;
+    // Mark on the target, not the hunter: different enemies can each trigger
+    // once this turn, even when Villetta has already made her normal attack.
+    moved.expVillettaInterceptedTurn=g.turn;
+    const station=stationAt(g,moved);
+    const pr=preview(g,hunter.id,moved.c,moved.r);
+    const base=pr?.unit??Math.round(power(g,hunter,moved,station)*
+      (station&&foe(g,station.owner,hunter.side)&&station.shield>0?.55:1));
+    const crit=!!pr&&random(g)<pr.crit;
+    const damage=Math.max(1,Math.round(base*(.92+random(g)*.16)*
+      (crit?pr.critMult:1)));
+    if(moved.expCCProtection)delete moved.expCCProtection;
+    let incoming=newcomerIntercept(g,moved,damage);
+    if(fx(moved).futureSightDodge&&random(g)<fx(moved).futureSightDodge){
+      incoming=0;
+      log(g,'FUTURE SIGHT — EVADED',moved.side);
+    }
+    const before=moved.hp;
+    const landed=smilasDealCombatDamage(g,moved,hunter,incoming);
+    recordWarEvent(g,'damage',hunter.side,{targetSide:moved.side,
+      value:before-moved.hp,unitId:hunter.id,group:warGroup(g,hunter)});
+    moved.struck={turn:g.turn,side:hunter.side};
+    if(moved.skillMarks?.length)moved.skillMarks=moved.skillMarks.filter(m=>m.side!==hunter.side||!m.uses);
+    if(moved.hp<=0){
+      moved.expDirectIncoming=true;
+      kill(g,moved,hunter,false,null,incoming);
+      delete moved.expDirectIncoming;
+    }
+    log(g,'Villetta intercepts a commanderless enemy'+
+      (crit?' (critical)':'')+': '+landed+' damage; no counterfire.',hunter.side);
+    return true;
+  }
   function newcomerOverwatch(g,moved){
     const guards=g.units.filter(v=>v.hp>0&&v.morale>-3&&!v.expCharlesMemoryRewrite&&!v.expRoloFrozen&&v.expOverwatch&&foe(g,v.side,moved.side)&&!atSea(g,v)&&inRange(v,moved,g));
     let reacted=false;
@@ -187,6 +230,7 @@
       moved.hp=Math.max(0,moved.hp-newcomerIntercept(g,moved,amount));
       kill(g,moved,u);
     }
+    if(moved.hp>0&&villettaIntercept(g,moved))reacted=true;
     return reacted;
   }
   function newcomerKilled(g,v,attacker){
