@@ -336,19 +336,18 @@ let archiveSide = null,
   archiveView = null,
   archiveBranch = 'Infantry';
 const ARCHIVE_SIDES = [...E.MAJORS, 'eb', 'bk', 'jlf', 'neutral'],
-  ARCHIVE_BRANCHES = [...BRANCH_LIST, 'Naval'];
+  ARCHIVE_BRANCHES = [...BRANCH_LIST, 'Airship', 'Naval'];
 
 // Separate playable rosters by era. Extra frames associated with a faction
 // should not appear alongside its ten standard factory classes.
 function archiveRoster(side, view) {
-  if (side === 'cf') return view === 'ufn' ? E.ROSTER.bk : E.LINEUPS.cf2017;
+  if (side === 'cf') return E.LINEUPS.cf2017;
   return E.ROSTER[side] || {};
 }
 function archiveSpecialTypes(side) {
   const known = new Set(Object.values(E.ROSTER[side] || {}));
   if (side === 'cf') {
     for (const id of Object.values(E.LINEUPS.cf2017)) known.add(id);
-    for (const id of Object.values(E.ROSTER.bk)) known.add(id);
   }
   return Object.keys(E.TYPES).filter(id => {
     const type = E.TYPES[id];
@@ -359,8 +358,6 @@ function archiveViews(side) {
   if (side === 'cf') return [
     { id: 'world', label: 'Chinese Federation 2017',
       note: 'The native Gun-Ru, Chuyen and Shen Hu lineup used in all 2017 Conquest, scenarios, World Campaign and Story Mode encounters with the Federation.' },
-    { id: 'ufn', label: 'U.F.N. 2018',
-      note: 'The 2018 U.F.N. Conquest uses the Black Knights field roster for the Chinese Federation. These are not extra factory choices in regional scenarios.' },
     { id: 'story', label: 'Story / special',
       note: 'Special Chinese Federation machines outside the standard ten-class factory rosters. These are not generally buildable.' },
   ];
@@ -382,13 +379,16 @@ function archiveViews(side) {
 }
 function archiveDefaultView(side) {
   if (side !== 'cf') return side === 'neutral' ? 'story' : 'standard';
-  return game?.mode === 'conquest' && game.era === 'ufn2018' ? 'ufn' : 'world';
+  return 'world';
 }
 function archiveTypes(side, branch, view = archiveDefaultView(side)) {
   if (view === 'story') return archiveSpecialTypes(side).filter(id => E.TYPES[id].branch === branch);
+  if (branch === 'Airship') {
+    const owner = side === 'eb' ? 'britannia' : side === 'jlf' ? 'bk' : side;
+    return Object.keys(E.TYPES).filter(id => E.TYPES[id].air && E.TYPES[id].side === owner);
+  }
   if (branch === 'Naval') {
-    const navySide = side === 'cf' && view === 'ufn' && E.NAVAL.bk ? 'bk' : side;
-    return E.NAVAL[navySide] ? [...new Set(Object.values(E.NAVAL[navySide]))] : [];
+    return E.NAVAL[side] ? [...new Set(Object.values(E.NAVAL[side]))] : [];
   }
   const lineup = archiveRoster(side, view);
   return [...new Set(E.CLASS_ORDER.map(cls => lineup[cls]))]
@@ -408,7 +408,8 @@ function archiveDialog(branch = 'Infantry', side = archiveSide || game.player, v
     f = F(side),
     landCount = new Set(BRANCH_LIST.flatMap(b => archiveTypes(side, b, archiveView))).size,
     note = views.find(v => v.id === archiveView).note +
-      (branch === 'Naval' ? ' Naval units are launched from ports, not ordinary factories.' : '');
+      (branch === 'Naval' ? ' Naval units are launched from ports, not ordinary factories.' :
+        branch === 'Airship' ? ' Airships are built at level-3 city factories.' : '');
   modal.innerHTML = `<div class="overlay"><section class="dialog wide" role="dialog" aria-modal="true" aria-label="Knightmare archive"><div class="dialog-head"><div><div class="eyebrow">Order of battle</div><h2>Knightmare archive</h2><p>${f.name} frames. Values shown for one frame.${f.doctrine ? ` <b>${f.doctrine}:</b> ${f.doctrineText}` : ''}</p></div><button class="small close" data-action="archive-close">Close</button></div><div class="tabs">${ARCHIVE_SIDES.map(s => `<button data-archive-side="${s}" class="${s === side ? 'active' : ''}">${F(s).short}</button>`).join('')}</div><div class="tabs" role="group" aria-label="Roster selection">${views.map(v => `<button data-archive-view="${v.id}" class="${v.id === archiveView ? 'active' : ''}">${v.label}</button>`).join('')}</div><p class="description">${landCount} distinct land model${landCount === 1 ? '' : 's'} in this selection${archiveView === 'story' ? ' (not a standard factory lineup)' : ' across the ten standard class slots'}.</p><div class="tabs">${branches.map(b => `<button data-archive-branch="${b}" class="${b === branch ? 'active' : ''}">${b}</button>`).join('')}</div><div class="cards">${types
     .map(k => {
       const t = E.TYPES[k],
