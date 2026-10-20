@@ -844,11 +844,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "shin-independence": {
     "cities": 44,
-    "formations": 100,
+    "formations": 126,
     "sides": {
       "britannia": {
         "cities": 28,
-        "formations": 50
+        "formations": 76
       },
       "shinregime": {
         "cities": 16,
@@ -872,11 +872,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "eu-military-coup": {
     "cities": 44,
-    "formations": 100,
+    "formations": 126,
     "sides": {
       "junta": {
         "cities": 28,
-        "formations": 50
+        "formations": 76
       },
       "eu": {
         "cities": 16,
