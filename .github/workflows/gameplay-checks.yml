@@ -34,6 +34,8 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Check alternate-history faction rosters, geography and four difficulties
         run: node tools/alternate_history_smoke.cjs
+      - name: Test alternate-history save roundtrips and commander restrictions
+        run: node tools/alternate_history_integration.cjs
       - name: Run alternate-history AI movement and production simulations
         run: |
           node tools/scenario_sim.cjs rounds-rebellion rounds normal 11 3
