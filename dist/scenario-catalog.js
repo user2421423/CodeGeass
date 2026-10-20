@@ -1532,5 +1532,90 @@ const SCENARIO_CATALOG = Object.freeze({
     "files": [
       "scenarios-cf-eu-france.js"
     ]
+  },
+  "rounds-rebellion": {
+    "id": "rounds-rebellion",
+    "title": "Knights of the Round Rebellion",
+    "sides": [
+      "rounds",
+      "britannia"
+    ],
+    "cols": 180,
+    "rows": 126,
+    "meta": {
+      "text": {
+        "era": "Pendragon · Alternate 2018 a.t.b.",
+        "intro": "Bismarck unites the Knights of the Round, gathers reinforcements in Utah, and marches toward Pendragon rather than losing to Suzaku in a single encounter.",
+        "diplomacy": "Emperor Lelouch and the Knights of the Round are at war from turn one. Neither side has allies.",
+        "elite": "Elite deploys faction-appropriate Britannian Elite Frames and keeps the familiar scenario research, single-frame and commander rules.",
+        "focus": {
+          "rounds": "Tooele",
+          "britannia": "Pendragon"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-pendragon.js",
+      "scenarios-alternate-common.js",
+      "scenarios-rounds-rebellion.js"
+    ]
+  },
+  "shin-independence": {
+    "id": "shin-independence",
+    "title": "Euro-Britannian Independence",
+    "sides": [
+      "britannia",
+      "shinregime"
+    ],
+    "cols": 120,
+    "rows": 80,
+    "meta": {
+      "text": {
+        "era": "Europe · Alternate 2017 a.t.b.",
+        "intro": "Shin Hyuga’s coup succeeds. His Euro-Britannian breakaway regime fights the Holy Britannian Empire itself, with no E.U. combatant.",
+        "diplomacy": "The Holy Britannian Empire and Shin’s independent regime are the only two warring factions.",
+        "elite": "Both sides recruit Britannian Elite Knightmares. Naval units and elite commander upgrades follow standard regional Elite rules.",
+        "focus": {
+          "britannia": "Paris",
+          "shinregime": "Minsk"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "europe-landmask.js",
+      "scenarios-europe.js",
+      "scenarios-alternate-common.js",
+      "scenarios-shin-independence.js"
+    ]
+  },
+  "chinese-civil-war": {
+    "id": "chinese-civil-war",
+    "title": "Chinese Civil War — The Imperial Restoration",
+    "sides": [
+      "loyalists",
+      "eunuchs"
+    ],
+    "cols": 174,
+    "rows": 116,
+    "meta": {
+      "text": {
+        "era": "China · Alternate 2018 a.t.b.",
+        "intro": "The High Eunuchs survive the original coup and mobilize loyal garrisons. Li Xingke unites imperial loyalists to restore Empress Tianzi’s authority.",
+        "diplomacy": "Tianzi loyalists and the High Eunuchs are at war. Both use Chinese Federation Knightmares; Britannia and the Black Knights do not intervene.",
+        "elite": "Both Chinese armies use the native 2017 Federation Elite Force roster, including Shen Hu and Wang Hu. All four difficulties remain available.",
+        "focus": {
+          "loyalists": "Xuchang",
+          "eunuchs": "Luoyang"
+        }
+      },
+      "saveVersion": 1
+    },
+    "files": [
+      "scenarios-luoyang.js",
+      "scenarios-alternate-common.js",
+      "scenarios-chinese-civil-war.js"
+    ]
   }
 });
