@@ -185,6 +185,17 @@
         }
       }
     }
+    // Every formation weighs the fire it can take next turn: the share of its
+    // health nearby enemies could strip, after terrain cover, which is worth
+    // most where shots can land. Wounded units weigh exposure most; healthy
+    // ones still advance along the goal field.
+    const exposure = p => {
+      // Garrisons and held positions keep their duty whatever the danger.
+      if (isSea(p) || guard || u.hold) return 0;
+      const cover = TERRAIN[p.terrain]?.cover || 0,
+        exposed = Math.min(2, localThreat(g, u, p) / Math.max(1, u.hp));
+      return exposed * (1 - cover) * 50 * Math.max(0, 1.1 - u.hp / maxHP(u)) - Math.min(1, exposed) * cover * 60;
+    };
     const islandDefender = philippinesDefense(g, u.side);
     const defenseStep = p => !islandDefender ||
       (!isShip(u) && !isSea(p) &&
@@ -405,6 +416,7 @@
           sc -= danger * 28;
           sc -= Math.abs(nearestEnemy - TYPES[u.type].max) * 6;
         } else sc -= nearestEnemy * 2;
+        sc -= exposure(p);
         const allies = needsNearbyAllies ? freeAllies.filter(v => dist(g, v, p) <= 2) : [];
         if (skill.loneRaider) sc -= allies.filter(v => dist(g, v, p) === 1).length * 18;
         if (skill.engineeringPen || skill.reassure || skill.repairSupply || skill.bodyguard || skill.defensiveDoctrine || skill.orderCommander)
@@ -487,10 +499,10 @@
     if (!u.moved && (u.attacked || u.skillReposition || u.withdrawMove) && !g.over && u.hp > 0) {
       // Scores are cached per hex: the board does not change while the candidates are ranked.
       const scored = new Map(),
-        score = p => scored.get(p) ?? scored.set(p, -fieldAt(p) * 8 - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30).get(p);
+        score = p => scored.get(p) ?? scored.set(p, -fieldAt(p) * 8 - exposure(p) - g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= rangeOf(g, v).max).length * 30).get(p);
       const picks = [...reachable(g, u).keys()].map(k => { const [c, r] = k.split(',').map(Number); return tile(g, c, r); })
         .filter(p => !unitAt(g, p) && defenseStep(p)).sort((a, b) => score(b) - score(a));
-      if (picks[0] && score(picks[0]) > score(u)) {
+      if (picks[0] && score(picks[0]) > score(tile(g, u.c, u.r))) {
         const m = move(g, id, picks[0].c, picks[0].r);
         if (m.ok) events.push({ kind: 'move', ...m, id });
       }
