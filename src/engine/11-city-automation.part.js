@@ -203,7 +203,7 @@
     if (kind === 'ohgiHeal') return g.units.filter(v => v.hp > 0 &&
       v.side === u.side && v.id !== u.id && !atSea(g, v) &&
       dist(g, u, v) <= 2 && v.hp < maxHP(v));
-    if (kind === 'protection') return g.units.filter(v => v.hp > 0 &&
+    if (kind === 'protection' || kind === 'oscarDefense') return g.units.filter(v => v.hp > 0 &&
       v.side === u.side && v.id !== u.id && !atSea(g, v) && dist(g, u, v) <= 2);
     // Imperial Command affects every on-map friendly formation in range,
     // including Lelouch himself. No target selection is required.
@@ -222,6 +222,25 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'oscarDefense') {
+      // Once per turn, select one allied formation, not Oscar himself.
+      const v=targetId==null ? [...options].sort((a,b)=>
+        Number(!!b.attacked)-Number(!!a.attacked) || a.hp/maxHP(a)-b.hp/maxHP(b) || a.id-b.id)[0]
+        : options.find(w=>w.id===targetId);
+      if(!v)return {ok:false,reason:'Choose an allied formation within 2 hexes'};
+      // One designated defensive center per Oscar; no hidden stacking.
+      for(const ally of g.units)
+        if(ally.expOscarDefense?.source===u.id)delete ally.expOscarDefense;
+      v.expOscarDefense={source:u.id,side:u.side};
+      // Separate movement permission: 3 legal movement points, not an
+      // action reset. A move consumes this free reposition first and leaves
+      // the normal move and attack flags exactly as they were.
+      v.expOscarReposition=true;
+      u.feintCD=0;
+      u.feintUsedTurn=g.turn;
+      log(g,`Oscar places ${COMMANDERS[v.cmd]?.short||TYPES[v.type].short} under Emergency Defense.`,u.side);
+      return {ok:true,target:v.id,affected:1,reposition:3};
+    }
     if (action.kind === 'expendableVanguard') {
       const v = targetId == null ? [...options].sort((a,b) =>
         Number(!!b.cmd)-Number(!!a.cmd) ||
