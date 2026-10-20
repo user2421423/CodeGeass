@@ -304,7 +304,8 @@
         (d && f.firstStrike && !(a.expKallenFirstTargets || []).includes(d.id) ? 1 + f.firstStrike : 1) /
         (xianglinOpening ? 1.30 : 1),
       shield = s && foe(g, s.owner, a.side) && s.shield > 0;
-    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1)) : 0;
+    // Demolition Expert boosts direct hits on any enemy stationed in a city, even if its shield is down.
+    const fullUnitDmg = d ? Math.round(base * (shield ? 0.55 : 1) * (f.yukiyaDemolition && s ? 1.50 : 1)) : 0;
     const smilasPreview = d ? smilasDamageShare(g,d,fullUnitDmg) : null;
     const unitDmg = smilasPreview ? smilasPreview.primary : 0;
     // Specialized infantry, artillery and naval research can increase city shield damage.
@@ -317,7 +318,7 @@
           (s.portAt || adjacent(g, s).some(v => navigable(v)))
           ? techValue(g, a.side, 'amphibious.coastal') : 0)) *
         (1 + (f.vsCity || 0)) * (1 + (ef.vsCity || 0)) *
-        (f.yukiyaDemolition ? 1.40 : 1) * bombardBonus(g, a, s);
+        (f.yukiyaDemolition ? 1.50 : 1) * bombardBonus(g, a, s);
     const shieldDmg = shield
       ? Math.round(
           cityBase *
