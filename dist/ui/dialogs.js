@@ -307,7 +307,7 @@ function officerCard(k, own) {
 // Euro Britannian commanders are shared with Britannia in the permanent HQ.
 // Keep this list aligned with the 2018 U.F.N. Euro Britannian starting roster.
 const EURO_BRITANNIAN_COMMANDERS = ['julius', 'shin', 'ashley', 'manfredi', 'farnese', 'augustus', 'kewell', 'norland', 'suzaku', 'schneizel', 'oldrin', 'marrybell'];
-let generalsSide = 'britannia';
+let generalsSide = 'all';
 function generalsDialog(side = generalsSide) {
   generalsSide = side;
   generalOpen = null;
