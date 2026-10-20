@@ -158,6 +158,12 @@
     return !!g && !!place && g.units.some(v => v.hp > 0 && v.side === side &&
       fx(v).fieldSupply && !atSea(g, v) && dist(g, v, place) <= 2);
   }
+  // Anna's workshop works within two hexes, independently of city supply.
+  // Disabled or embarked commanders never provide field maintenance.
+  function annaMaintenanceNear(g, u) {
+    return !!g && !!u && g.units.some(v => v.hp > 0 && v.side === u.side &&
+      fx(v).annaMaintenance && !atSea(g, v) && dist(g, v, u) <= 2);
+  }
   function halveResources(cost) {
     return Object.fromEntries(Object.entries(cost).map(([key, amount]) =>
       [key, Math.round(amount * 0.5)]));
@@ -358,13 +364,13 @@
     const p = price(type, 1, g, side),
       k = u && g && logisticsNear(g, u) ? 0.7 : 1,
       engineering = u && g && rakshataNear(g, u) ? 0.5 : 1,
-      supply = u && klausSupplyNear(g, u, u.side) ? 0.5 : 1;
+      supply = u && annaMaintenanceNear(g, u) ? 0.5 : 1;
     return { credits: Math.round(p.credits * k * engineering * supply), industry: Math.round(p.industry * k * engineering * supply),
       sakuradite: Math.round(p.sakuradite * engineering * supply), science: Math.round(p.science * engineering * supply) };
   }
   // Manual repairs restore 20% of maximum HP for a fifth of the unit's build price.
   function repairCost(u, g = null) {
-    const half = g && skillNear(g, u, 'repairSupply', 2) ? 0.5 : 1;
+    const half = g && annaMaintenanceNear(g, u) ? 0.5 : 1;
     const staff = g && skillNear(g, u, 'staffRepair', 1) ? 0.8 : 1;
     const camelot = g && u.elite && !TYPES[u.type].naval && skillNear(g, u, 'combatEngineering', 2) ? 0.8 : 1;
     // Research discounts affect credits only: manual repairs still restore exactly 20% HP.
@@ -399,7 +405,8 @@
     if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.produced++;
     u.hp += maxHP(u) - old;
-    u.moved = u.attacked = true;
+    // Rapid Maintenance never spends or restores a formation's normal orders.
+    if (!annaMaintenanceNear(g, u)) u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} reinforced to ${u.stack} frames.`, u.side);
     return { ok: true };
   }
@@ -414,7 +421,7 @@
     u.hp += amount;
     if (g.mode === 'conquest' && u.side === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.manualRepair = true;
-    u.moved = u.attacked = true;
+    if (!annaMaintenanceNear(g, u)) u.moved = u.attacked = true;
     log(g, `${TYPES[u.type].short} repairs ${amount} frame.`, u.side);
     return { ok: true, amount };
   }

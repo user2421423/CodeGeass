@@ -103,6 +103,8 @@ jobs:
         run: node tools/tutorial_academy_smoke.cjs
       - name: Verify manual repairs and port healing
         run: node tools/repair_and_port_healing_smoke.cjs
+      - name: Verify Anna Clément engineering, Rapid Maintenance and Klaus discount transfer
+        run: node tools/anna_clement_smoke.cjs
       - name: Verify advanced frame Research pricing and AI purchasing
         run: node tools/frame_research_economy_smoke.cjs
       - name: Verify Division of Japan city income and repeated factory production

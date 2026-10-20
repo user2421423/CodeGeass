@@ -220,7 +220,7 @@
       if (u.morale < desired) u.morale++;
       else if (u.morale > desired) u.morale--;
       if (nearby >= 2) u.morale = Math.min(u.morale, desired);
-      // Engineers within 2 hexes reassure: one extra morale step and 5% of the frame.
+      // Anna's Clément Engineering supplies field repairs, not morale recovery.
 
       // Euphemia: one additional morale recovery step within 2 hexes, no stacking.
       if (mine.some(m => m.hp > 0 && fx(m).royalCompassion && dist(g, m, u) <= 2))
@@ -233,18 +233,15 @@
       // Cécile: passive field maintenance applies only to friendly elite land Knightmares.
       if (u.elite && !TYPES[u.type].naval && mine.some(m => m.hp > 0 && fx(m).combatEngineering && dist(g, m, u) <= 2))
         u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      if (mine.some(m => m.hp > 0 && fx(m).reassure && dist(g, m, u) <= 2)) {
-        u.morale = Math.min(1, u.morale + 1);
-        // Airships never heal on their own; only an explicit Repair restores them.
-        if (!TYPES[u.type].air) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
-      }
+      if (!TYPES[u.type].air && annaMaintenanceNear(g, u))
+        u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.05));
       if (fx(u).regen) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * fx(u).regen));
       const repairSkill = { Infantry: 'replacement', Armor: 'machinist', Artillery: 'artillery_maintenance' }[TYPES[u.type].branch];
       const repairLevel = genericLevel(g, u, repairSkill);
       if (repairLevel) u.hp = Math.min(maxHP(u), u.hp + Math.round(maxHP(u) * 0.01 * repairLevel));
       // Leila's new Steady floor must not inherit the generic commander
       // morale-increase aura (which would incorrectly raise 0 to High).
-      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata', 'ohgi', 'smilas'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
+      const auras = mine.filter(v => v.hp > 0 && v.cmd && !['leila', 'zero', 'lelouch', 'schneizel', 'xianglin', 'rakshata', 'ohgi', 'smilas', 'anna'].includes(v.cmd) && v.id !== u.id && dist(g, u, v) <= auraRange(v)),
         aura = auras.find(v => fx(v).rally) || auras[0];
       if (aura && nearby < 3) u.morale = Math.min(1, u.morale + (fx(aura).rally || 1));
       const t = tile(g, u.c, u.r),

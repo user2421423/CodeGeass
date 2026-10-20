@@ -94,29 +94,35 @@
   function repairReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
+    const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
-      actedReason(u) ||
+      (u.morale <= -3 ? 'Unit is confused' : null) ||
+      (u.expRoloFrozen || u.expCharlesMemoryRewrite ? 'Unit is unable to act' : null) ||
+      (!rapid ? actedReason(u) : null) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
       (u.hp >= maxHP(u) ? 'Frame already intact' : null) ||
-      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
-      (isShip(u) && !isAir(u) && !atFriendlyPort(g, u) ? 'Warships must occupy a friendly-controlled port to repair' : null) ||
-      ((!isShip(u) || isAir(u)) && !nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
+      (!rapid && g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
+      (!rapid && isShip(u) && !isAir(u) && !atFriendlyPort(g, u) ? 'Warships must occupy a friendly-controlled port to repair' : null) ||
+      (!rapid && (!isShip(u) || isAir(u)) && !nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
       shortfall(funds(g, u.side), { credits: repairCost(u, g) })
     );
   }
   function reinforceReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
+    const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
       (u.elite ? 'Elite Forces are single unique frames and cannot be reinforced' : null) ||
       (isAir(u) ? 'Airships cannot add frames' : isShip(u) ? 'Warships cannot be reinforced' : null) ||
       (u.stack >= 3 ? 'Already at 3 frames' : null) ||
-      (g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
-      actedReason(u) ||
+      (u.morale <= -3 ? 'Unit is confused' : null) ||
+      (u.expRoloFrozen || u.expCharlesMemoryRewrite ? 'Unit is unable to act' : null) ||
+      (!rapid && g.stations.some(s=>s.expSupplyBlocked?.owner===u.side&&dist(g,u,s)<=1)?'City supply lines are disrupted':null) ||
+      (!rapid ? actedReason(u) : null) ||
       (atSea(g, u) ? 'Embarked at sea' : null) ||
-      (!nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
+      (!rapid && !nearFriendlyCity(g, u) ? 'No friendly city nearby' : null) ||
       shortfall(funds(g, u.side), reinforceCost(u.type, g, u.side, u))
     );
   }

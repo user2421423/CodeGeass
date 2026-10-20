@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
-// Klaus Warwick: city/shipyard production, repairs, reinforcements and emergency rescue.
+// Klaus Warwick: city/shipyard production and emergency rescue (repairs transferred to Anna).
 const assert=require('node:assert/strict');
 const E=require('../dist/engine.js');
 const K=E.COMMANDERS.klaus;
 assert.equal(K.skill,'Field Supply / Loyalty to wZERO');
 assert.equal(K.fx.fieldSupply,true);
 assert.equal(K.fx.klausLoyalty,true);
-assert.equal(K.fx.repairSupply,2);
+assert.equal(K.fx.repairSupply,undefined,'Klaus no longer discounts repairs');
 assert.equal(K.fx.regen,.08);
 const euScout=E.typeFor('eu','scout'),brMedium=E.typeFor('britannia','medium'),
   euMedium=E.typeFor('eu','medium');
@@ -37,8 +37,8 @@ function half(p){return Object.fromEntries(fields.map(key=>[key,Math.round((p[ke
  const rein=E.reinforceCost(euScout,g,'eu',ally),repair=E.repairCost(ally,g);
  klaus.expSilenced=true;
  const reinBase=E.reinforceCost(euScout,g,'eu',ally),repairBase=E.repairCost(ally,g);
- assert.deepEqual(rein,half(reinBase),'Additional formation frame pays half price');
- assert.ok(repair<repairBase,'Repair is discounted');
+ assert.deepEqual(rein,reinBase,'Klaus no longer discounts additional frames');
+ assert.equal(repair,repairBase,'Klaus no longer discounts repairs');
  assert.deepEqual(E.recruitCost(g,city,euScout,2),base,'Disabling Klaus removes the recruitment discount');
  delete klaus.expSilenced;
  g.units=g.units.filter(v=>v.id!==ally.id);
