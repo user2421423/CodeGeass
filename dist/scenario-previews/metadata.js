@@ -830,11 +830,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "rounds-rebellion": {
     "cities": 70,
-    "formations": 511,
+    "formations": 553,
     "sides": {
       "rounds": {
         "cities": 22,
-        "formations": 223
+        "formations": 265
       },
       "britannia": {
         "cities": 48,
@@ -858,11 +858,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
   },
   "chinese-civil-war": {
     "cities": 83,
-    "formations": 239,
+    "formations": 273,
     "sides": {
       "loyalists": {
         "cities": 31,
-        "formations": 97
+        "formations": 131
       },
       "eunuchs": {
         "cities": 52,
