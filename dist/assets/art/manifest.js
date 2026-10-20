@@ -78,10 +78,10 @@ globalThis.KnightmareArtManifest = {
       "src": "units/elite_akatsuki_zikisan-b976edc422b2.webp"
     },
     "elite_alexander_liberte": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
+      "src": "units/elite_alexander_liberte-6cad4a5e15dc.webp"
     },
     "elite_ayano_valiant": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
+      "src": "units/elite_ayano_valiant-99fcad4f692a.webp"
     },
     "elite_chuyen": {
       "src": "units/chuyen-427d2c85b500.png"
@@ -102,7 +102,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/elite_guren_mkii-ae467a56c715.png"
     },
     "elite_hummel_battery": {
-      "src": "units/hummel_battery-11b7539ef1e2.png"
+      "src": "units/elite_hummel_battery-d1e08aa4ff36.webp"
     },
     "elite_japan_bk_amphibious": {
       "src": "units/bk_amphibious_ii-dc29ece82055.png"
@@ -114,19 +114,19 @@ globalThis.KnightmareArtManifest = {
       "src": "units/elite_lancelot_albion-8650bf95c9be.png"
     },
     "elite_leila_alexander": {
-      "src": "units/alexander-4b4929ebecea.png"
+      "src": "units/elite_leila_alexander-37c3922b4da3.webp"
     },
     "elite_mordred": {
       "src": "units/elite_mordred-86a54d5a327a.png"
     },
     "elite_panzer_frosch_ii": {
-      "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
+      "src": "units/elite_panzer_frosch_ii-568172683de2.webp"
     },
     "elite_portman_ii": {
       "src": "units/portman_ii-0a2b145551d7.png"
     },
     "elite_ryo_valiant": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
+      "src": "units/elite_ryo_valiant-c677334c1c1c.webp"
     },
     "elite_shen_hu": {
       "src": "units/elite_shen_hu-cad3ac981ac8.webp"
@@ -150,7 +150,7 @@ globalThis.KnightmareArtManifest = {
       "src": "units/elite_wang_hu-dac71d6eb6e7.webp"
     },
     "elite_yukiya_valiant": {
-      "src": "units/alexander_mp-aba6042c8fcf.png"
+      "src": "units/elite_yukiya_valiant-c96e195db409.webp"
     },
     "estrella": {
       "src": "units/estrella-892bfb12bb42.png"

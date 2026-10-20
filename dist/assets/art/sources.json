@@ -991,5 +991,49 @@
       "replaced": "units/gun_ru-25191c921b75.webp",
       "reason": "Restore original standard Chinese Federation scout artwork while retaining the nine other approved sprites"
     }
+  },
+  "euEliteArtwork": {
+    "entries": [
+      {
+        "id": "elite_leila_alexander",
+        "file": "units/elite_leila_alexander-37c3922b4da3.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alex_reira.jpg"
+      },
+      {
+        "id": "elite_alexander_liberte",
+        "file": "units/elite_alexander_liberte-6cad4a5e15dc.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alex_liberte.jpg"
+      },
+      {
+        "id": "elite_ryo_valiant",
+        "file": "units/elite_ryo_valiant-c677334c1c1c.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alexv_ryo.jpg"
+      },
+      {
+        "id": "elite_ayano_valiant",
+        "file": "units/elite_ayano_valiant-99fcad4f692a.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alexv_aya.jpg"
+      },
+      {
+        "id": "elite_yukiya_valiant",
+        "file": "units/elite_yukiya_valiant-c96e195db409.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alexv_yuki.jpg"
+      },
+      {
+        "id": "elite_hummel_battery",
+        "file": "units/elite_hummel_battery-d1e08aa4ff36.webp",
+        "method": "AI-generated full-body elite artwork"
+      },
+      {
+        "id": "elite_panzer_frosch_ii",
+        "file": "units/elite_panzer_frosch_ii-568172683de2.webp",
+        "method": "AI-generated full-body elite artwork"
+      }
+    ]
   }
 }
