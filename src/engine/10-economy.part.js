@@ -238,7 +238,8 @@
     const roster = g.mode === 'campaign' ? g.campaign?.eliteRosters?.[side] :
       scenarioMeta(g).eliteRosterOnly ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
-    return e.availableTo.includes(kit) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
+    // Euro Britannia shares Britannia's full Imperial Elite Force roster in every mode.
+    return e.availableTo.includes(kit) || (side === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],

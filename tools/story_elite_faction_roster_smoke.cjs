@@ -79,6 +79,18 @@ for (const difficulty of ['normal', 'hard', 'challenge']) {
   assert.ok(E.eliteEligible(bk, 'bk', 'guren_mkii'));
 }
 
+// Canterbury replaces the Britannian rocket-elite presentation without
+// invalidating the existing HQ unlock ID; Euro Britannia inherits the Imperial elite roster.
+assert.equal(E.LINEUPS.eb.siege, 'gareth', 'Euro Britannia recruits standard Gareth siege artillery');
+assert.equal(E.TYPES[E.ELITE_FORCES.sutherland_air.type].name, 'Canterbury');
+assert.equal(E.TYPES[E.ELITE_FORCES.sutherland_air.type].cls, 'rocket');
+assert.equal(E.ELITE_FORCES.sutherland_air.skill, 'Canterbury Barrage');
+const imperial = CP.createMission('eb_weisswolf', 20261019, 'normal');
+assert.ok(E.eliteEligible(imperial, 'eb', 'sutherland_air'), 'Euro Britannia can deploy Canterbury');
+assert.ok(E.eliteEligible(imperial, 'britannia', 'sutherland_air'), 'Britannia can deploy Canterbury');
+assert.ok(E.eliteEligible(imperial, 'eb', 'lancelot'), 'Euro Britannia keeps the shared Imperial elite roster');
+assert.ok(imperial.units.some(u => u.side === 'eb' && u.type === 'gareth'), 'Euro Britannia fields Gareth');
+assert.ok(!imperial.units.some(u => u.side === 'eb' && u.type === 'canterbury'), 'No new regular Canterbury spawns');
 const ui = fs.readFileSync(require.resolve('../dist/ui/dialogs.js'), 'utf8');
 assert.match(ui, /: port \? \[NAVAL_TAB, ELITE_NAVAL_TAB\]/,
   'Story port tabs include Elite Amphibious');

@@ -859,12 +859,14 @@
       hp: 650, attack: 160, armor: 35, move: 4, min: 1, max: 1,
       cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4, breakthrough: true,
     },
+    // The historical elite_sutherland_air ID is retained to preserve existing
+    // Britannian rocket-elite HQ levels, fragments and saved deployments.
     elite_sutherland_air: {
       side: 'britannia', elite: true, cls: 'rocket', role: 'Elite rocket artillery',
-      name: 'Palomides', model: 'RZA-4EE · Knight of Four custom',
-      gen: '7th generation', weapon: 'Ten Hadron-cannon Slash Harkens · Float System',
-      lore: "Dorothea Ernst's heavily armed personal Knightmare, combining floating firepower with powerful Harken attacks.",
-      desc: 'Flying rocket elite. Airborne Salvo unlocks at Elite Lv.3.',
+      name: 'Canterbury', model: 'Euro-Britannian Canterbury · Imperial elite configuration',
+      gen: '5th generation', weapon: 'Long-range linear cannon · heavy bombardment battery',
+      lore: 'Euro Britannia’s Canterbury artillery is reserved as the shared Imperial elite rocket-artillery formation.',
+      desc: 'Shared Imperial rocket elite. Canterbury Barrage unlocks at Elite Lv.3.',
       hp: 550, attack: 140, armor: 22, move: 3, min: 2, max: 2,
       cost: 1050, industry: 280, tier: 2, crit: 0.20, pen: 0.62, noCounter: true, splash: 0.45,
     },
@@ -1007,6 +1009,8 @@
       lore: 'Ashley Ashra’s heavily armed frame, sent with him to guard the Gallia Grande.',
       campaign: true,
     },
+    // Retain the old mission-only Canterbury type for legacy saves; new operations
+    // field Gareth as standard siege artillery and Canterbury as an elite rocket.
     canterbury: {
       side: 'eb',
       cls: 'siege',
@@ -1235,7 +1239,7 @@
       rocket: 'jp_artillery',
       siege: 'raiko',
     },
-    // Euro Britannia borrows Britannia's regular 2017 frames plus its own Canterbury siege gun.
+    // Euro Britannia borrows Britannia's regular 2017 frames, including Gareth siege artillery.
     eb: {
       scout: 'glasgow',
       assault: 'gloucester',
@@ -1246,7 +1250,7 @@
       super: 'brighton',
       support: 'liverpool',
       rocket: 'sutherland_air',
-      siege: 'canterbury',
+      siege: 'gareth',
     },
   };
   const ELITE_MAX_LEVEL = 5;
@@ -1412,9 +1416,11 @@
       lv5Text: '+25% damage and +20% penetration; the first kill or city-defense break each turn restores movement.',
       lv3: { dmg: 0.15, pen: 0.10 }, lv5: { dmg: 0.25, pen: 0.20, moveAfterKill: true },
     },
+    // Preserve the existing Elite Force identifier so unlocked Palomides progress
+    // continues seamlessly as the replacement Canterbury elite.
     sutherland_air: {
       type: 'elite_sutherland_air', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
-      skill: 'Airborne Salvo',
+      skill: 'Canterbury Barrage',
       lv3Text: '+20% extra splash and +10% damage. Ignores terrain movement costs.',
       lv5Text: '+35% extra splash, +20% damage and +1 range. Ignores terrain movement costs.',
       lv3: { float: true, splash: 0.20, dmg: 0.10 }, lv5: { float: true, splash: 0.35, dmg: 0.20, range: 1 },
