@@ -242,11 +242,10 @@
     }
     // The entire connected regional sea stays navigable for fleets.
     for(const side of SIDES){
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
-          [resource,Math.round(n*factor)-base[resource]]));
+          [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*2;
@@ -258,6 +257,7 @@
           E.addDifficultyFrames(u,difficulty);
     }
     // Include troops inside carriers in starting strength and all difficulty modes.
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
     E.log(g,'China holds all Philippine cities. Britannia launches its amphibious invasion from Palau and Yap.',player);
     return g;

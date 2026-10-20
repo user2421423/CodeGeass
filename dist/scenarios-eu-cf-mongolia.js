@@ -258,11 +258,10 @@ function create(player='eu',difficulty='normal',seed=201701){
  }
  if(difficulty==='elite')E.prepareEliteEurope(g);
  for(const side of SIDES){
-  const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
   const base=E.income(g,side);
   g.scenario.funding[side]=Object.fromEntries(
    Object.entries(FUNDING[side]).map(([resource,n])=>
-    [resource,Math.round(n*factor)-base[resource]]));
+    [resource,Math.round(n)-base[resource]]));
   const income=E.income(g,side);
   for(const resource of Object.keys(FUNDING[side]))
    g.economy[side][resource]=income[resource]*2;
@@ -272,6 +271,7 @@ function create(player='eu',difficulty='normal',seed=201701){
    for(const u of g.units.filter(u=>u.side===side))
     E.addDifficultyFrames(u,difficulty);
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
  E.log(g,'E.U. forces invade from Siberia along the Altai, Selenge railway and eastern steppe fronts. Federation reserves hold Ulaanbaatar and the interior.',player);
  return g;

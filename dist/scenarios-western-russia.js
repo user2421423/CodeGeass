@@ -315,10 +315,9 @@
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
-        .map(([res,n])=>[res,Math.round(n*factor)-base[res]]));
+        .map(([res,n])=>[res,Math.round(n)-base[res]]));
       const actual=E.income(g,side);
       for(const res of Object.keys(FUNDING[side]))
         g.economy[side][res]=actual[res]*2;
@@ -327,6 +326,7 @@
       const rivals=g.units.filter(u=>u.side!==player&&!E.TYPES[u.type].naval);
       for(const u of rivals)E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Britannian Army Groups advance from the Volga into western Russia; Moscow and St. Petersburg anchor the E.U. defense.',player);
     return g;

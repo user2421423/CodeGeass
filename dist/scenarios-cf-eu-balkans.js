@@ -406,10 +406,9 @@ function create(player='cf',difficulty='normal',seed=201720){
  }
  if(difficulty==='elite')E.prepareEliteEurope(g);
  for(const side of SIDES){
-  const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
   const base=E.income(g,side);
   g.scenario.funding[side]=Object.fromEntries(
-   Object.entries(FUNDING[side]).map(([resource,n])=>[resource,Math.round(n*factor)-base[resource]]));
+   Object.entries(FUNDING[side]).map(([resource,n])=>[resource,Math.round(n)-base[resource]]));
   const actual=E.income(g,side);
   for(const res of Object.keys(FUNDING[side]))g.economy[side][res]=actual[res]*2;
  }
@@ -418,6 +417,7 @@ function create(player='cf',difficulty='normal',seed=201720){
    for(const u of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval))
     E.addDifficultyFrames(u,difficulty);
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
  E.log(g,'The Chinese Federation drives northwest out of Turkish Thrace into Bulgaria, Greece and Serbia. European defenses anchor the Rhodopes, Maritsa and Danube. Total conquest decides the battle.',player);
  return g;

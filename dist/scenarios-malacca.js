@@ -281,11 +281,10 @@
     }
     for(const carrier of g.units)delete carrier.pendingPassengers;
     for(const side of SIDES){
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
-          [resource,Math.round(n*factor)-base[resource]]));
+          [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*2;
@@ -295,6 +294,7 @@
         for(const u of E.allUnits(g).filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship'))
           E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,E.allUnits(g).filter(u=>u.side===side).length]));
     E.log(g,'Britannia strikes from southern Thailand while fleets contest Malacca and land on Sumatra and the Singapore approaches. China defends both shores and the shipping channel.',player);
     return g;

@@ -192,9 +192,8 @@ function create(player='cf',difficulty='normal',seed=201712){
  }
  if(difficulty==='elite')E.prepareEliteEurope(g);
  for(const side of SIDES){
-  const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
   const base=E.income(g,side);
-  g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side]).map(([key,n])=>[key,Math.round(n*factor)-base[key]]));
+  g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side]).map(([key,n])=>[key,Math.round(n)-base[key]]));
   const actual=E.income(g,side);for(const key of Object.keys(FUNDING[side]))g.economy[side][key]=actual[key]*2;
  }
  if(difficulty!=='normal'&&difficulty!=='elite'){
@@ -202,6 +201,7 @@ function create(player='cf',difficulty='normal',seed=201712){
    for(const u of g.units.filter(x=>x.side===side&&!E.TYPES[x.type].naval))
     E.addDifficultyFrames(u,difficulty);
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
  E.log(g,'Federation armies press west from the Belarusian and Ukrainian approaches, across the Balkan-Carpathian and Danube fronts. Europe must defend its industrial heartland; every enemy city must fall.',player);
  return g;

@@ -17,12 +17,14 @@ for (const player of SIDES) {
     const g = division.create(player,difficulty,2741);
     assert.deepEqual(g.scenario.funding,{},'Division has no off-map stipend');
     for (const side of SIDES) {
-      const factor = side === player ? 1 : difficulty === 'hard' ? 1.3 :
-        ['challenge','elite'].includes(difficulty) ? 1.6 : 1;
-      const actual = E.income(g,side);
+      // Difficulty no longer scales the authored targets; rivals' collected
+      // income is multiplied every turn by DIFFICULTIES[difficulty].income,
+      // and their free difficulty research may add to city output.
+      const actual = E.income(g,side), researched = side !== player && difficulty !== 'normal';
       for (const [resource,target] of Object.entries(TARGETS[side])) {
-        assert.equal(actual[resource],Math.round(target*factor),
-          `${difficulty}/${player}: ${side} starting ${resource} income`);
+        const message = `${difficulty}/${player}: ${side} starting ${resource} income`;
+        if (researched) assert.ok(actual[resource] >= target && actual[resource] <= target * 1.25, message);
+        else assert.equal(actual[resource],target,message);
       }
       assert.ok(g.stations.some(s=>s.owner===side && s.divisionIncome),
         `Starting cities must hold ${side}'s formerly off-map income`);

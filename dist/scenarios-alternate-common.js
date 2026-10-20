@@ -148,7 +148,11 @@ function define(config){
    g.scenario.eliteRosters=Object.fromEntries(SIDES.map(side=>[side,eliteRoster(g,side)]));
    // Named commanders belong to their alternate-history government alone.
    placeCommanders(g,player);
-   if(difficulty==='elite')E.prepareEliteEurope(g);
+   // The parent battle applied Hard/Challenge before commanders were reassigned;
+   // Elite was created on Normal, so it gets the whole shared setup here.
+   if(difficulty==='elite'){E.prepareEliteEurope(g);E.applyScenarioDifficulty(g,difficulty);}
+   else E.refreshScenarioRivals(g,difficulty);
+   E.applyScenarioDifficulty(g,difficulty);
    g.startUnits=Object.fromEntries(SIDES.map(side=>[side,
      E.allUnits(g).filter(u=>u.side===side&&u.hp>0).length]));
    g.mapRevision=(g.mapRevision||0)+1;

@@ -408,10 +408,9 @@
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const mult=side===player?1:E.scenarioIncomeFactor(difficulty);
       const current=E.income(g,side),desired=FUNDING[side];
       g.scenario.funding[side]=Object.fromEntries(Object.entries(desired).map(
-        ([type,amount])=>[type,Math.max(0,Math.round(amount*mult)-current[type])]));
+        ([type,amount])=>[type,Math.max(0,Math.round(amount)-current[type])]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(desired))
         g.economy[side][resource]=actual[resource]*2;
@@ -419,6 +418,7 @@
     if(difficulty==='hard'||difficulty==='challenge'){
       g.units.filter(u=>u.side!==player&&!E.TYPES[u.type]?.naval).forEach(u=>E.addDifficultyFrames(u,difficulty));
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[
       side,g.units.filter(u=>u.side===side).length]));
     E.log(g,'The E.U. advances from Manchuria through Shanhaiguan and the Great Wall approaches. The Federation defends Tangshan, Beijing and Tianjin while both fleets contest the Bohai Sea. Total conquest decides the campaign.',player);

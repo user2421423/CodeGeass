@@ -444,10 +444,9 @@ function create(player='eu',difficulty='normal',seed=201717){
  }
  for(const ship of carriers)delete ship.pendingPassengers;
  for(const side of SIDES){
-  const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
   const base=E.income(g,side);
   g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
-   .map(([res,n])=>[res,Math.round(n*factor)-base[res]]));
+   .map(([res,n])=>[res,Math.round(n)-base[res]]));
   const actual=E.income(g,side);
   for(const res of Object.keys(FUNDING[side]))
    g.economy[side][res]=actual[res]*2;
@@ -458,6 +457,7 @@ function create(player='eu',difficulty='normal',seed=201717){
     .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship'))
     E.addDifficultyFrames(u,difficulty);
  }
+ E.applyScenarioDifficulty(g,difficulty);
  g.startUnits=Object.fromEntries(SIDES.map(side=>[side,g.units.reduce((n,u)=>
   n+(u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0)]));
  E.log(g,'E.U. columns advance east from Persia and Afghanistan while three carrier corps attack Sindh, Gujarat and Konkan. Chinese Federation cities, ports and naval forces defend the Indian theatre.',player);

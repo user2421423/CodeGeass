@@ -418,14 +418,14 @@
           E.addDifficultyFrames(u,difficulty);
     }
     for(const side of SIDES){
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
-        Object.entries(funding[side]).map(([k,v])=>[k,Math.round(v*factor)-base[k]]));
+        Object.entries(funding[side]).map(([k,v])=>[k,Math.round(v)-base[k]]));
       const actual=E.income(g,side);
       for(const k of Object.keys(funding[side]))
         g.economy[side][k]=actual[k]*(side===attacker?3:2);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
     if(g.stations.some(s=>s.owner!== 'britannia'))
       throw Error('Britannia must own every Panamanian city initially');

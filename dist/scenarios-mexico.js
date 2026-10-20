@@ -421,14 +421,14 @@
           E.addDifficultyFrames(u,difficulty);
     }
     for(const side of SIDES){
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const generated=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(Object.entries(FUNDING[side])
-        .map(([resource,n])=>[resource,Math.round(n*factor)-generated[resource]]));
+        .map(([resource,n])=>[resource,Math.round(n)-generated[resource]]));
       const total=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=total[resource]*(side==='cf'?3:2);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(side=>[side,
       E.allUnits(g).filter(u=>u.side===side).length]));
     E.log(g,'The Chinese Federation advances from Guatemala toward Oaxaca, Puebla and Mexico City while carrier-led armies strike the Gulf and Pacific coasts. Only full-city conquest brings victory.',player);

@@ -408,11 +408,10 @@
     }
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const mult=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side),wanted=FUNDING[side];
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(wanted).map(([kind,rate])=>
-          [kind,Math.max(0,Math.round(rate*mult)-base[kind])]));
+          [kind,Math.max(0,Math.round(rate)-base[kind])]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(wanted))
         g.economy[side][resource]=actual[resource]*3;
@@ -424,6 +423,7 @@
       for(const u of adversaries)
         E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(
       SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Luoyang: E.U. armies converge from the north and southwest; the Federation holds its capital behind the Yellow River and defensive belts.',player);

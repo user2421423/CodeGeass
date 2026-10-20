@@ -254,10 +254,9 @@ function create(player='cf',difficulty='normal',seed=201705){
   }
   if(difficulty==='elite')E.prepareEliteEurope(g);
   for(const side of SIDES){
-    const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
     const base=E.income(g,side);
     g.scenario.funding[side]=Object.fromEntries(
-      Object.entries(FUNDING[side]).map(([res,n])=>[res,Math.round(n*factor)-base[res]]));
+      Object.entries(FUNDING[side]).map(([res,n])=>[res,Math.round(n)-base[res]]));
     const actual=E.income(g,side);
     for(const res of Object.keys(FUNDING[side]))g.economy[side][res]=actual[res]*2;
   }
@@ -265,6 +264,7 @@ function create(player='cf',difficulty='normal',seed=201705){
     for(const side of SIDES.filter(s=>s!==player))
       for(const u of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval))
         E.addDifficultyFrames(u,difficulty);
+  E.applyScenarioDifficulty(g,difficulty);
   g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
   E.log(g,'Chinese Federation columns push from Persia through Azerbaijan, Armenia and Georgia against fortified E.U. Caucasus defenses. The Black and Caspian seas remain separate. Take every city to win.',player);
   return g;

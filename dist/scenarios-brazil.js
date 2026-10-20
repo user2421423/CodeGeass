@@ -231,11 +231,10 @@
        depth[t.r*COLS+t.c]>30))t.terrain='offmap';
     // No scripted Sakuradite site: standard research and refinery balance.
     for(const side of SIDES){
-      const factor=side===player||!E.foe(g,side,player)?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
-          [resource,Math.round(n*factor)-base[resource]]));
+          [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*(side==='britannia'?2:3);
@@ -246,6 +245,7 @@
           .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship'))
           E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
       n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
     E.log(g,'Europia launches six carrier-supported landings on Britannian Brazil without mainland cities.',player);

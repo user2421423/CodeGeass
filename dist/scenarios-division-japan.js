@@ -206,11 +206,10 @@
     // among each power's original cities. The bonus remains on the city when
     // conquered; losing territory reduces income instead of preserving a stipend.
     for(const side of SIDES) {
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const before=E.income(g,side);
       const cities=g.stations.filter(s=>s.owner===side).sort((a,b)=>a.id-b.id);
       for(const [resource,target] of Object.entries(INCOME_TARGETS[side])) {
-        const extra=Math.max(0,Math.round(target*factor)-before[resource]);
+        const extra=Math.max(0,Math.round(target)-before[resource]);
         const whole=Math.floor(extra), each=Math.floor(whole/cities.length), remainder=whole%cities.length;
         for(let i=0;i<cities.length;i++) {
           const amount=each+(i<remainder?1:0)+(i===0?extra-whole:0);
@@ -230,6 +229,7 @@
         for(const u of g.units.filter(u=>u.side===side&&!E.TYPES[u.type].naval))
           E.addDifficultyFrames(u,difficulty);
 
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     g.mapRevision=(g.mapRevision||0)+1;
     E.log(g,'Alternate 2017: Japan is divided among Europia, Britannia, and the Chinese Federation. All three powers are at war.',player);

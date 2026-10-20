@@ -244,11 +244,10 @@
        depth[t.r*COLS+t.c]>30))t.terrain='offmap';
     // No scripted sites or deadlines; use the normal economy and research systems.
     for(const side of SIDES){
-      const factor=side===player||!E.foe(g,side,player)?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
-          [resource,Math.round(n*factor)-base[resource]]));
+          [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*(side==='eu'?2:3);
@@ -259,6 +258,7 @@
           .filter(v=>v.side===side&&E.TYPES[v.type].naval!=='ship'))
           E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.reduce((n,u)=>
       n+(u.side===s?1:0)+(u.cargo||[]).filter(v=>v.side===s).length,0)]));
     E.log(g,'Europia United begins offshore with four carrier-led landing groups; Britannia holds every Greenlandic coastal city.',player);

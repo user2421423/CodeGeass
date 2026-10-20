@@ -198,11 +198,10 @@
     // The entire connected regional sea stays navigable for fleets.
     if(difficulty==='elite')E.prepareEliteEurope(g);
     for(const side of SIDES){
-      const factor=side===player?1:E.scenarioIncomeFactor(difficulty);
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(FUNDING[side]).map(([resource,n])=>
-          [resource,Math.round(n*factor)-base[resource]]));
+          [resource,Math.round(n)-base[resource]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
         g.economy[side][resource]=actual[resource]*2;
@@ -212,6 +211,7 @@
         for(const u of g.units.filter(v=>v.side===side&&!E.TYPES[v.type].naval))
           E.addDifficultyFrames(u,difficulty);
     }
+    E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,g.units.filter(u=>u.side===s).length]));
     E.log(g,'Britannia attacks west from eastern Siberian footholds toward the Lena, Yenisei and Trans-Siberian railway, while E.U. field armies defend the interior.',player);
     return g;
