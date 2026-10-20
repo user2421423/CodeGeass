@@ -1588,20 +1588,7 @@ function nearest(g,p,valid,radius=19){
  }
  return null;
 }
-function orderGroup(g,id,target){
- if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
- const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
- if(!group)return {ok:false,reason:'Army group not found'};
- let assigned=0,failed=0;
- for(const uid of group.units){
-  const u=g.units.find(v=>v.id===uid&&v.hp>0&&v.side===g.player);
-  if(!u)continue;
-  const result=E.setGoto(g,u.id,target.c,target.r);
-  if(result.ok)assigned++;else failed++;
- }
- if(assigned)group.destination={c:target.c,r:target.r};
- return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group member can reach the destination'};
-}
+function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group member can reach the destination');}
 function create(player='eu',difficulty='normal',seed=201740){
  if(!SIDES.includes(player))throw Error('Unsupported Rocky Mountains faction '+player);
  if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

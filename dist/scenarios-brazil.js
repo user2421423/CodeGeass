@@ -26,17 +26,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   const MOUNTAINS=[[-43.4,-20,2.5,4.7],[-46.5,-22.7,3.1,3],[-50.1,-25.7,3.1,2.8],[-45.5,-16.3,4.7,2.9],[-40.2,-15.7,2.8,3],[-52.1,-14.1,5.8,3.3]];
   const FORESTS=[[-66,-3,14,9],[-57,-3,12,8],[-52,-1.5,10,6],[-61,-9,9,7],[-48,-8,6,7],[-41,-15,2.8,7],[-48,-24,3,4],[-51,-27,3,4]];
   const RIVERS={
@@ -59,20 +49,7 @@
     if(m>.68)return 'mountain';
     if(riverDistance(p)<.27||f>.42||m>.34)return 'forest';
     return 'plains';}
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function create(player='eu',difficulty='normal',seed=201734){
     if(!SIDES.includes(player))throw Error('Unsupported Invasion of Brazil faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

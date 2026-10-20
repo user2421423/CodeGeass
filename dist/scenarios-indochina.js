@@ -69,17 +69,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   const MOUNTAINS=[[103.8,24.5,2.3,1.7],[105.1,21.5,1.1,1.6],[105.1,19.1,.9,2.4],[106.8,16.5,.75,2.3],[107.3,13.8,1.05,2.6],[99.6,19,1.5,3.1],[101,21.8,1.4,2.1]];
   const FORESTS=[[103.3,18.9,2.4,3.7],[106.3,14.9,3,3],[104.2,12.3,2.6,2],[98.9,16.4,1.4,3.8]];
   const LOWLANDS=[[105.9,21,.9,.65],[106.6,10.7,1.6,1.1],[104.9,11.6,1.5,1.2],[102.8,17.6,.65,2.5],[105.6,15.5,.9,2]];
@@ -91,20 +81,7 @@
       mountain>.29||forest>.53||((c*29+r*17)%31<4&&p.lat>16)
         ?'forest':'plains';
   }
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function create(player='britannia',difficulty='normal',seed=201701){
     if(!SIDES.includes(player))throw Error('Unsupported Indochina faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

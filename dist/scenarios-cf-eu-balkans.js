@@ -211,20 +211,7 @@ function landscape(p,c,r){
  if((p.lat>43.1&&p.lon<22.7&&((c*17+r*11)%13)<3))return 'forest';
  return 'plains';
 }
-function orderGroup(g,id,target){
- if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
- const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
- if(!group)return {ok:false,reason:'Army Group not found'};
- let assigned=0,failed=0;
- for(const unitId of group.units){
-  const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-  if(!u)continue;
-  const res=E.setGoto(g,u.id,target.c,target.r);
-  if(res.ok)assigned++;else failed++;
- }
- if(assigned)group.destination={c:target.c,r:target.r};
- return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach this hex'};
-}
+function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army Group not found','No group unit can reach this hex');}
 function create(player='cf',difficulty='normal',seed=201720){
  if(!SIDES.includes(player))throw Error('Unsupported Balkan side: '+player);
  if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

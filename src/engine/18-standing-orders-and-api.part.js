@@ -37,6 +37,34 @@
     u.goto = { c: p.c, r: p.r };
     return { ok: true, goto: u.goto };
   }
+  // A regional scenario's Army Group order: route every living member to `target`.
+  // Scenarios pass their own wording for a missing group and an unreachable target.
+  function orderArmyGroup(g, id, target, missing, unreachable) {
+    if (g.mode !== 'scenario' || g.phase !== g.player) return { ok: false, reason: 'Not your turn' };
+    const group = g.scenario.groups.find(v => v.id === id && v.side === g.player);
+    if (!group) return { ok: false, reason: missing };
+    let assigned = 0, failed = 0;
+    for (const unitId of group.units) {
+      const u = g.units.find(v => v.id === unitId && v.hp > 0 && v.side === g.player);
+      if (!u) continue;
+      const res = setGoto(g, u.id, target.c, target.r);
+      if (res.ok) assigned++; else failed++;
+    }
+    if (assigned) group.destination = { c: target.c, r: target.r };
+    return { ok: assigned > 0, assigned, failed, reason: assigned ? '' : unreachable };
+  }
+  // The closest tile within `radius` rows and columns of `p` that passes `valid`.
+  function nearestTile(g, p, valid, radius) {
+    let best = null, d = Infinity;
+    for (let r = Math.max(0, p.r - radius); r <= Math.min(g.rows - 1, p.r + radius); r++)
+      for (let c = Math.max(0, p.c - radius); c <= Math.min(g.cols - 1, p.c + radius); c++) {
+        const t = tile(g, c, r);
+        if (!t || !valid(t)) continue;
+        const n = distance(p, t, g);
+        if (n < d) { d = n; best = t; }
+      }
+    return best;
+  }
   function clearGoto(g, id) {
     const u = g.units.find(v => v.id === id);
     if (!u?.goto) return { ok: false, reason: 'No destination set' };
@@ -367,6 +395,8 @@
     setGoto,
     clearGoto,
     runGotos,
+    orderArmyGroup,
+    nearestTile,
     canCapture,
     // Sakuradite.
     SAKURADITE,

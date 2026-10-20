@@ -25,17 +25,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   const MOUNTAINS=[[-125,53,8,6],[-122,57,7,6],[-129,61,7,5],[-116,50,7,4],[-114,60,7,7],[-63,52,4,5]];
   const FORESTS=[[-125,54,12,8],[-112,57,7,7],[-101,56,12,8],[-90,51,10,8],[-84,48,8,6],[-77,47,9,6],[-68,50,12,8],[-61,54,7,6]];
   const SHIELD=[[-87,53,17,10],[-79,55,11,8],[-95,57,12,7]];
@@ -52,20 +42,7 @@
     if(m>.30||f>.41||rock>.62)return 'forest';
     return ((c*19+r*23)%41<9&&p.lat>50&&p.lat<67)?'forest':'plains';
   }
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function create(player='eu',difficulty='normal',seed=201720){
     if(!SIDES.includes(player))throw Error('Unsupported Invasion of Canada faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

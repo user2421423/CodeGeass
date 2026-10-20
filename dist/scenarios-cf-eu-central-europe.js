@@ -64,16 +64,7 @@ function landscape(p,c,r){let mountain=Infinity;
   if((c*13+r*19)%7<3)return 'forest';
  if((c*17+r*11)%31<4)return 'forest';
  return 'plains';}
-function orderGroup(g,id,target){
- if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
- const gr=g.scenario.groups.find(x=>x.id===id&&x.side===g.player);
- if(!gr)return {ok:false,reason:'Army group not found'};
- let assigned=0,failed=0;for(const uid of gr.units){
-  const u=g.units.find(x=>x.id===uid&&x.hp>0&&x.side===g.player);
-  if(!u)continue;const result=E.setGoto(g,u.id,target.c,target.r);if(result.ok)assigned++;else failed++;
- }if(assigned)gr.destination={c:target.c,r:target.r};
- return {ok:assigned>0,assigned,failed,reason:assigned?'':'No reachable formation'};
-}
+function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No reachable formation');}
 function segmentsCross(a,b,x,y){
  const ori=(p,q,r)=>(q.lon-p.lon)*(r.lat-p.lat)-(q.lat-p.lat)*(r.lon-p.lon);
  const x0={lon:x[0],lat:x[1]},y0={lon:y[0],lat:y[1]};

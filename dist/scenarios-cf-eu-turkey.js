@@ -26,17 +26,7 @@
     return {r,c:Math.max(0,Math.min(COLS-1,Math.round(
       (lon-BOUNDS.west)*COLS/(BOUNDS.east-BOUNDS.west)-.5-.5*(r&1))))};
   }
-  function nearest(g,p,valid,radius=9){
-    let best=null,d=Infinity;
-    for(let r=Math.max(0,p.r-radius);r<=Math.min(g.rows-1,p.r+radius);r++)
-      for(let c=Math.max(0,p.c-radius);c<=Math.min(g.cols-1,p.c+radius);c++){
-        const t=E.tile(g,c,r);
-        if(!t||!valid(t))continue;
-        const n=E.distance(p,t,g);
-        if(n<d){d=n;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,p,valid,radius=9){return E.nearestTile(g,p,valid,radius);}
   const MOUNTAIN_PASSES=[[44.0,39.9,.30,.28],[43.1,40.65,.37,.30],[42.2,40.4,.37,.29],[43.5,37.8,.34,.25],[41.9,41.2,.29,.22]];
   const MOUNTAINS=[[30.3,37.1,2.2,.8],[34.0,37.3,2.0,.78],[36.7,37.45,1.5,.8],[39.6,38.7,1.7,1.0],[42.7,39.2,2.6,2.2],[35.5,41.1,2.0,.62],[39.7,40.7,2.6,.66]];
   const FORESTS=[[30.7,40.7,2.6,.75],[33.2,41.3,2.0,.8],[37.8,41.0,3.0,.7],[27.7,39.7,1.8,1.1]];
@@ -51,20 +41,7 @@
       mountain>.29||forest>.53||((c*29+r*17)%31<4&&p.lat>16)
         ?'forest':'plains';
   }
-  function orderGroup(g,id,target){
-    if(g.mode!=='scenario'||g.phase!==g.player)return {ok:false,reason:'Not your turn'};
-    const group=g.scenario.groups.find(v=>v.id===id&&v.side===g.player);
-    if(!group)return {ok:false,reason:'Army group not found'};
-    let assigned=0,failed=0;
-    for(const unitId of group.units){
-      const u=g.units.find(v=>v.id===unitId&&v.hp>0&&v.side===g.player);
-      if(!u)continue;
-      const res=E.setGoto(g,u.id,target.c,target.r);
-      if(res.ok)assigned++;else failed++;
-    }
-    if(assigned)group.destination={c:target.c,r:target.r};
-    return {ok:assigned>0,assigned,failed,reason:assigned?'':'No group unit can reach that hex'};
-  }
+  function orderGroup(g,id,target){return E.orderArmyGroup(g,id,target,'Army group not found','No group unit can reach that hex');}
   function create(player='cf',difficulty='normal',seed=201726){
     if(!SIDES.includes(player))throw Error('Unsupported Turkey faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';

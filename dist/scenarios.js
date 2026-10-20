@@ -127,17 +127,7 @@
     const c=Math.max(0,Math.min(COLS-1,Math.round((u-PROJECTION.uMin)*(COLS-1)/(PROJECTION.uMax-PROJECTION.uMin)-.5*(r&1))));
     return {c,r};
   }
-  function nearest(g, point, eligible, radius=12) {
-    let best=null, distance=Infinity;
-    for (let r=Math.max(0,point.r-radius);r<=Math.min(g.rows-1,point.r+radius);r++)
-      for (let c=Math.max(0,point.c-radius);c<=Math.min(g.cols-1,point.c+radius);c++) {
-        const t=E.tile(g,c,r);
-        if (!t || !eligible(t)) continue;
-        const d=E.distance(point,t,g);
-        if (d<distance) {distance=d;best=t;}
-      }
-    return best;
-  }
+  function nearest(g,point,eligible,radius=12){return E.nearestTile(g,point,eligible,radius);}
 
   // Approximate mountain corridors rather than the old random scatter of mountain tiles.
   // These zones represent Hokkaido's central range, Tohoku spine, Japan's central Alps,
