@@ -685,6 +685,27 @@ a {
 .unit-card.locked {
   opacity: 0.5;
 }
+/* HQ Elite Forces: a unit with enough fragments to unlock should be visibly actionable.
+   Preserve the muted presentation only while it cannot yet be unlocked. */
+.unit-card.elite-card.unlock-ready {
+  opacity: 1;
+  border-color: #8bd9b2;
+  background: linear-gradient(155deg, #1d3b3b, #17302e);
+  box-shadow: 0 0 0 1px #8bd9b244, 0 0 20px #50d59d2e;
+}
+.unit-card.elite-card.unlock-ready .elite-fragments {
+  color: #ddfae8;
+}
+.unit-card.elite-card.unlock-ready button[data-elite-upgrade]:not(:disabled) {
+  background: #57c99d;
+  border-color: #a0f1cd;
+  color: #09291f;
+  font-weight: 800;
+}
+.unit-card.elite-card.unlock-ready button[data-elite-upgrade]:hover:not(:disabled) {
+  background: #8ae0bd;
+  border-color: #c2ffe4;
+}
 .unit-card h3 {
   font-size: 22px;
   line-height: 1.2;
