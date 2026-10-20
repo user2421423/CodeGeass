@@ -27,10 +27,6 @@ const fakeStore=new Map();
 const storage={getItem:k=>fakeStore.get(k)||null,setItem:(k,v)=>fakeStore.set(k,v)};
 const raw={version:1,selectedFaction:'britannia-federation',completed:
  Object.fromEntries(WC.FACTIONS.map(f=>[f,{}]))};
-for(const key of ['britannia-australia','britannia-area-18','britannia-division-japan',
- 'britannia-siberia','britannia-federation-luoyang','eu-federation-kazakhstan',
- 'federation-eu-france','federation-britannia-hawaii'])
- raw.completed[key.slice(0,key.lastIndexOf('-') )] ||= {};
 // Store records with their TRUE historical ledger keys (some IDs are hyphenated).
 for(const f of WC.FACTIONS)
  for(const row of WC.registry[f])for(const m of row.missions)
