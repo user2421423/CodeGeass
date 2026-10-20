@@ -20,6 +20,7 @@ const SCENARIO_THEATERS = Object.freeze([
     "label": "East Asia",
     "ids": [
       "invasion-japan",
+      "defense-japan",
       "division-japan",
       "invasion-korea",
       "bf-south-china",
@@ -81,11 +82,50 @@ const SCENARIO_THEATERS = Object.freeze([
       "eu-pendragon",
       "cf-pendragon"
     ]
+  },
+  {
+    "id": "eu-federation",
+    "label": "E.U. vs Federation",
+    "ids": [
+      "eu-cf-kazakhstan",
+      "eu-cf-persia",
+      "eu-cf-xinjiang",
+      "eu-cf-india",
+      "eu-cf-mongolia",
+      "eu-cf-manchuria",
+      "eu-cf-himalayas",
+      "eu-cf-sichuan",
+      "eu-cf-beijing",
+      "eu-cf-luoyang"
+    ]
+  },
+  {
+    "id": "federation-eu",
+    "label": "Federation vs E.U.",
+    "ids": [
+      "cf-eu-siberia",
+      "cf-eu-caucasus",
+      "cf-eu-turkey",
+      "cf-eu-volga",
+      "cf-eu-suez",
+      "cf-eu-moscow",
+      "cf-eu-balkans",
+      "cf-eu-north-africa",
+      "cf-eu-central-europe",
+      "cf-eu-france"
+    ]
   }
 ]);
+// Unassigned scenarios stay visible in "All operations" instead of silently disappearing.
+const SCENARIO_UNGROUPED = SCENARIO_MANIFEST
+  .filter(({id})=>!SCENARIO_THEATERS.some(group=>group.ids.includes(id)))
+  .map(({id})=>id);
+const SCENARIO_LIBRARY_GROUPS = Object.freeze(SCENARIO_UNGROUPED.length
+  ? [...SCENARIO_THEATERS,{id:'other',label:'Other Operations',ids:SCENARIO_UNGROUPED}]
+  : SCENARIO_THEATERS);
 
 function scenarioTheaterOf(id) {
-  const group=SCENARIO_THEATERS.find(theater=>theater.ids.includes(id));
+  const group=SCENARIO_LIBRARY_GROUPS.find(theater=>theater.ids.includes(id));
   return group?.id || "other";
 }
 
@@ -96,7 +136,7 @@ function scenarioCatalogRefresh() {
   const entries=SCENARIO_MANIFEST.filter(({id,title,note})=>
     (scenarioLibraryTheater==='all'||scenarioTheaterOf(id)===scenarioLibraryTheater)&&
     (!term||(title+' '+note+' '+scenarioTheaterOf(id)).toLocaleLowerCase().includes(term)));
-  const groups=scenarioLibraryTheater==='all'?SCENARIO_THEATERS:SCENARIO_THEATERS.filter(g=>g.id===scenarioLibraryTheater);
+  const groups=scenarioLibraryTheater==='all'?SCENARIO_LIBRARY_GROUPS:SCENARIO_LIBRARY_GROUPS.filter(g=>g.id===scenarioLibraryTheater);
   const normalCatalog=groups.map(group=>{
     const rows=entries.filter(entry=>group.ids.includes(entry.id));
     if(!rows.length) return '';
@@ -155,7 +195,7 @@ function scenarioDialog() {
     .filter(([id])=>['normal','hard','challenge','elite'].includes(id))
     .sort((a,b)=>['normal','hard','challenge','elite'].indexOf(a[0])-['normal','hard','challenge','elite'].indexOf(b[0]))
     .map(([id,d])=>`<option value="${esc(id)}" ${scenarioDifficulty===id?'selected':''}>${esc(d.name)}</option>`).join('');
-  const filterButtons=[{id:'all',label:'All theaters'},...SCENARIO_THEATERS].map(group=>
+  const filterButtons=[{id:'all',label:'All operations'},...SCENARIO_LIBRARY_GROUPS].map(group=>
     `<button type="button" class="scenario-theater ${scenarioLibraryTheater===group.id?'active':''}" data-scenario-theater="${esc(group.id)}" aria-pressed="${scenarioLibraryTheater===group.id}">${esc(group.label)}</button>`).join('');
   const saveButton=savedModel?`<button class="scenario-resume" data-action="${scenarioWeeklySelected?'continue-weekly-scenario':'continue-scenario'}" type="button"><strong>Continue saved operation</strong><small>${esc(savedModel.title)} · Turn ${saved.turn}</small></button>`:'';
   modal.innerHTML=`<div class="overlay scenario-library-overlay">
@@ -168,7 +208,7 @@ function scenarioDialog() {
         <aside class="scenario-catalog" aria-label="Browse regional scenarios">
           <div class="scenario-catalog-heading"><strong>Scenario Index</strong><small id="scenario-filter-count"></small></div>
           <div class="scenario-search"><label for="scenario-library-query">Find an operation</label><input id="scenario-library-query" type="search" autocomplete="off" placeholder="Search battlefields…" aria-label="Search scenarios"></div>
-          <div class="scenario-theaters" role="group" aria-label="Filter scenario theater">${filterButtons}</div>
+          <div class="scenario-theaters" role="group" aria-label="Filter scenario group">${filterButtons}</div>
           <nav id="scenario-library-index" class="scenario-index" aria-label="Available regional scenarios"></nav>
         </aside>
         <main class="scenario-stage" aria-label="Selected regional operation">
