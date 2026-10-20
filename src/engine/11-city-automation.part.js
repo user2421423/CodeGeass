@@ -187,6 +187,7 @@
           foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    if (kind === 'miguelSupply') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=3);
     if (kind === 'electricalOverload') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) === 1 &&
       inRange(u, v, g) && hostileTarget(g, u, v));
@@ -225,6 +226,15 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if(action.kind==='miguelSupply'){
+      const v=targetId==null?[...options].sort((a,b)=>Number(!!b.cmd)-Number(!!a.cmd)||b.hp-a.hp||a.id-b.id)[0]
+        :options.find(w=>w.id===targetId);
+      if(!v)return {ok:false,reason:'Choose an enemy formation within 3 hexes'};
+      v.expMiguelSupply={source:u.id,side:u.side};
+      u.feintCD=0;u.feintUsedTurn=g.turn;
+      log(g,'Miguel severs the supply lines of '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+      return {ok:true,target:v.id,affected:1};
+    }
     if (action.kind === 'electricalOverload') {
       const v = targetId == null ? options[0] : options.find(w => w.id === targetId);
       if (!v) return { ok: false, reason: 'Choose an adjacent enemy in attack range' };
