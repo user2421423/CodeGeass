@@ -51,11 +51,14 @@ function define(config){
      const type=E.TYPES[u.type];
      u.side=translate(u.side);
      if(type?.naval==='ship'){
-       u.type=equipment[u.side]==='cf'?'cf_carrier':'carrier_battleship';
+       u.type=equipment[u.side]==='cf'?'cf_carrier':
+         equipment[u.side]==='eu'?'eu_carrier':'carrier_battleship';
      } else if(type?.naval==='amphibious'){
        u.type=equipment[u.side]==='cf'
-         ?(type.tier>=2?'shui_gun_ru_ii':'shui_gun_ru')
-         :(type.tier>=2?'portman_ii':'portman');
+         ?(type.tier>=2?'shui_gun_ru_ii':'shui_gun_ru'):
+          equipment[u.side]==='eu'?
+           (type.tier>=2?'panzer_frosch_ii':'panzer_frosch'):
+           (type.tier>=2?'portman_ii':'portman');
      } else if(type){
        u.type=E.typeFor(u.side,type.cls,g);
      }
@@ -76,7 +79,8 @@ function define(config){
      funding:remapKeys(previousFunding,translate),
      commanderSides:config.commanders,
      eliteNavalTypes:Object.fromEntries(SIDES.map(s=>[s,{
-       amphibious:equipment[s]==='cf'?'shui_gun_ru_ii':'portman_ii'
+       amphibious:equipment[s]==='cf'?'shui_gun_ru_ii':
+         equipment[s]==='eu'?'panzer_frosch_ii':'portman_ii'
      }]))
    };
    for(const key of ['operationalFronts','offensiveAxes','counterattackBases']){
