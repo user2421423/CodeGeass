@@ -101,6 +101,9 @@
         if(v.expInformationWarfare)delete v.expInformationWarfare;
         if(v.expMargaretRedeploy){v.moved=!!v.expMargaretRedeploy.wasMoved;v.skillReposition=0;delete v.expMargaretRedeploy;}
         if(v.expShadowMove){v.moved=true;v.skillReposition=0;delete v.expShadowMove;}
+        // Unused Emergency Defense movement expires when the owner's
+        // faction ends its turn; the defensive aura remains through rivals.
+        delete v.expOscarReposition;
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
         // Yukiya's electronic disruption expires only after the affected
@@ -143,6 +146,9 @@
         sakuradite:Math.round(inc.sakuradite*modifier)});
     }
     for (const v of allUnits(g)) {
+      // Emergency Defense lasts through opponents' turns, then expires at
+      // the start of the designated ally's next friendly turn.
+      if(v.expOscarDefense?.side===side)delete v.expOscarDefense;
       if(v.expJoeDiagnosis?.until<g.turn)delete v.expJoeDiagnosis;
       v.skillMarks = (v.skillMarks || []).filter(m => m.side !== side);
       if (v.expCheckmate?.side === side) delete v.expCheckmate;
