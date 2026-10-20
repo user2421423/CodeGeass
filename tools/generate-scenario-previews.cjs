@@ -4,7 +4,7 @@
  * No troops, city icons, mines, or other strategic markers are painted.
  * Browser scenario selector only fetches images; never creates preview games.
  */
-const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
+const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),vm=require('node:vm');
 const {chromium}=require('playwright-core');
 const DIST=path.resolve(__dirname,'../dist'),OUT=path.join(DIST,'scenario-previews');
 const SIZE={width:1440,height:900};
@@ -41,7 +41,12 @@ async function generate(){
   const ids=requestedIds.size?availableIds.filter(id=>requestedIds.has(id)):availableIds;
   if(requestedIds.size&&ids.length!==requestedIds.size)
    throw Error('Unknown scenario IDs: '+[...requestedIds].filter(id=>!availableIds.includes(id)).join(', '));
-  const metadata={};
+  // Preserve existing force statistics when exporting only a subset of scenarios.
+  // Otherwise previously generated battlefields unexpectedly lose their stats.
+  const metadataFile=path.join(OUT,'metadata.js');
+  const metadata=requestedIds.size && fs.existsSync(metadataFile)
+    ? {...vm.runInNewContext(fs.readFileSync(metadataFile,'utf8')+'\nSCENARIO_STATIC_MAPS')}
+    : {};
   console.log('Generating '+ids.length+' static map images: '+SIZE.width+' x '+SIZE.height);
   for(let i=0;i<ids.length;i++){
    const id=ids[i];
@@ -68,12 +73,16 @@ async function generate(){
    console.log((i+1)+'/'+ids.length+' '+id+' '+Math.round(bytes.length/1024)+'KiB');
    if(i%5===0)await page.evaluate(()=>{if(typeof gc==='function')gc()});
   }
-  if(Object.keys(metadata).length!==ids.length)throw Error('Not all previews exported');
-  // A selective visual refresh must not overwrite the full scenario metadata.
-  if(!requestedIds.size)fs.writeFileSync(path.join(OUT,'metadata.js'),
-   '/* Static scenario data exported with geographic map pictures. */\n'+
-   'const SCENARIO_STATIC_MAPS=Object.freeze('+JSON.stringify(metadata,null,2)+');\n');
-  console.log('Generated all '+ids.length+' geography-only pictures.');
+  if(ids.some(id=>!metadata[id])||(!requestedIds.size&&Object.keys(metadata).length!==ids.length))
+    throw Error('Not all preview metadata exported');
+  // Every successful selective run merges metadata for the requested scenarios
+  // while retaining statistics for every previously exported operation.
+  const updated='/* Static scenario data exported with geographic map pictures. */\n'
+    +'const SCENARIO_STATIC_MAPS=Object.freeze('+JSON.stringify(metadata,null,2)+');\n';
+  const tmpFile=metadataFile+'.tmp';
+  fs.writeFileSync(tmpFile,updated);
+  fs.renameSync(tmpFile,metadataFile);
+  console.log('Generated '+ids.length+' geography-only pictures; metadata now covers '+Object.keys(metadata).length+' scenarios.');
  }finally{
   if(browser)await browser.close();
   await new Promise(resolve=>server.close(resolve));
