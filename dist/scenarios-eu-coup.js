@@ -11,6 +11,7 @@ define({
  // its victorious eastern troops now rally to Leila against Smilas.
  map:{eu:'junta',eb:'eu'},
  equipment:{junta:'eu',eu:'eu'},
+ reinforcements:{junta:26},
  commanders:{
    eu:['leila','akito','ryo','ayano','yukiya','anna','klaus','oscar','ferilli'],
    junta:['smilas','olivia','eduardo','margaret','fernando','marirrosa','pierre']
