@@ -909,15 +909,14 @@
   function fillRosterCommands(armies, era) {
     const roster = root.KnightmareData.COMMANDERS;
     const is2018 = era === 'ufn2018';
-    const euro = new Set(['julius','shin','ashley','manfredi','farnese','augustus','kewell','norland']);
     const ownerOf = (id, officer) => is2018
-      ? (officer.side === 'britannia' ? (euro.has(id) ? 'eb' : 'britannia') : 'cf')
-      : officer.side;
+      ? (officer.side === 'eb' ? 'eb' : officer.side === 'britannia' ? 'britannia' : 'cf')
+      : (officer.side === 'eb' ? 'britannia' : officer.side);
     // Correct legacy 2018 assignments: the E.U.'s Klaus and Oscar cannot
     // command Euro Britannian units; both belong to the U.F.N. instead.
     if (is2018) for (const unit of armies)
       if (unit[0] === 'eb' && ['klaus','oscar'].includes(unit[5])) unit.splice(5, 2);
-    const availableOfficers = Object.entries(roster).filter(([, officer]) => is2018 || ['britannia','eu','cf'].includes(officer.side));
+    const availableOfficers = Object.entries(roster).filter(([, officer]) => is2018 || ['britannia','eb','eu','cf'].includes(officer.side));
     const used = new Set();
     for (const entry of armies) {
       const id = entry[5];
