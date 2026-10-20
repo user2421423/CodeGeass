@@ -100,6 +100,24 @@ function setup(){
   assert.equal(ally.morale,1,'High morale after pending reward');
 }
 {
+  // The Last Promise MUST also activate when Toru dies to counterfire
+  // during his own initiating attack, refreshing allies immediately.
+  const trial=setup();
+  const toru=trial.spawn(1,'eu',trial.c,'toru');
+  const ally=trial.spawn(2,'eu',trial.around[1],null);
+  const enemy=trial.spawn(3,'britannia',trial.around[0],null);
+  enemy.hp=9000;toru.hp=1;ally.attacked=ally.moved=true;ally.morale=-1;
+  const before=E.preview(trial.g,toru.id,enemy.c,enemy.r);
+  assert.ok(before&&before.counterAllowed,'Enemy can counter Toru in this test');
+  const attack=E.attack(trial.g,toru.id,enemy.c,enemy.r);
+  assert.equal(attack.ok,true,attack.reason);
+  assert.equal(toru.hp,0,'Toru dies to the counterattack');
+  assert.equal(ally.expToruPromiseDamage,true);
+  assert.equal(ally.morale,1);
+  assert.equal(ally.attacked,false,'Immediate allied attack refresh');
+  assert.equal(ally.moved,false,'Immediate allied movement refresh');
+}
+{
   // Old personal HQ and deployed commander IDs preserve prior progression.
   const b=setup();
   const old=b.spawn(1,'eu',b.c,'romero');
