@@ -1035,5 +1035,22 @@
         "method": "AI-generated full-body elite artwork"
       }
     ]
+  },
+  "blackKnightsEliteArtwork": {
+    "entries": [
+      {
+        "id": "elite_guren_type01",
+        "file": "units/elite_guren_type01-ce1184c817cf.webp",
+        "method": "AI-assisted background extraction and scan cleanup of full-body Guren Type-01 reference",
+        "source": "https://static.wikia.nocookie.net/codegeass/images/8/80/Guren_Mk-I.jpg",
+        "prompt": "Remove paper background and scan stripes; preserve original red prototype, pose and two ordinary arms; transparent full-body sprite."
+      },
+      {
+        "id": "elite_japan_bk_amphibious",
+        "file": "units/elite_japan_bk_amphibious-3e6184fee907.webp",
+        "method": "AI-generated elite variant based on the existing game-specific regular Gekka marine conversion",
+        "prompt": "Distinct full-body Black Knights elite Gekka marine conversion; black and violet samurai armor, gold trim, sealed joints, heavy torpedo pods, compact waterjets and naval blade; transparent anime cel-shaded sprite."
+      }
+    ]
   }
 }

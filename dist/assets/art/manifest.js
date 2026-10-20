@@ -99,13 +99,13 @@ globalThis.KnightmareArtManifest = {
       "src": "units/elite_guren_seiten.webp"
     },
     "elite_guren_type01": {
-      "src": "units/elite_guren_mkii-ae467a56c715.png"
+      "src": "units/elite_guren_type01-ce1184c817cf.webp"
     },
     "elite_hummel_battery": {
       "src": "units/elite_hummel_battery-d1e08aa4ff36.webp"
     },
     "elite_japan_bk_amphibious": {
-      "src": "units/bk_amphibious_ii-dc29ece82055.png"
+      "src": "units/elite_japan_bk_amphibious-3e6184fee907.webp"
     },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
