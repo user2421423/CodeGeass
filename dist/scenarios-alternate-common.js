@@ -68,6 +68,25 @@ function define(config){
      u.hpTech=0;
      u.hp=E.maxHP(u);
    }
+   // Reinforcements are newly raised, normal-priced class formations. They are
+   // placed on owned, unoccupied land along the active frontline, not on enemy
+   // cities. This alters starting army sizes rather than global combat stats.
+   for(const [side,number] of Object.entries(config.reinforcements||{})){
+     const enemies=g.stations.filter(s=>s.owner!==side);
+     const frontline=g.stations.filter(s=>s.owner===side).sort((a,b)=>{
+       const approach=s=>Math.min(...enemies.map(e=>E.distance(s,e,g)));
+       return approach(a)-approach(b);
+     }).slice(0,12);
+     if(!frontline.length)throw Error(ID+' missing reinforcement territory for '+side);
+     const roles=['heavy','medium','assault','rocket','support'];
+     for(let i=0;i<number;i++){
+       const station=frontline[i%frontline.length];
+       const spot=E.nearestTile(g,station,t=>!E.isSea(t)&&!E.unitAt(g,t)&&
+         (!E.stationAt(g,t)||E.stationAt(g,t).owner===side),6);
+       if(!spot)throw Error(ID+' cannot place reinforcement near '+station.name);
+       E.newUnit(g,E.typeFor(side,roles[i%roles.length],g),side,spot.c,spot.r,3);
+     }
+   }
    g.economy=remapKeys(currentEconomy,translate);
    g.tech=remapKeys(currentTech,translate);
    g.arsenal=remapKeys(currentArsenal,translate);
