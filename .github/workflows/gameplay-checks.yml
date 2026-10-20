@@ -34,6 +34,14 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Check alternate-history faction rosters, geography and four difficulties
         run: node tools/alternate_history_smoke.cjs
+      - name: Run alternate-history AI movement and production simulations
+        run: |
+          node tools/scenario_sim.cjs rounds-rebellion rounds normal 11 3
+          node tools/scenario_sim.cjs rounds-rebellion britannia normal 11 3
+          node tools/scenario_sim.cjs shin-independence shinregime normal 11 3
+          node tools/scenario_sim.cjs shin-independence britannia normal 11 3
+          node tools/scenario_sim.cjs chinese-civil-war loyalists normal 11 3
+          node tools/scenario_sim.cjs chinese-civil-war eunuchs normal 11 3
       - name: Compare exact fingerprints with the documented defect-fix baseline
         run: node tools/check_sim_baseline.cjs --scenarios eu-greenland,division-japan,battle-luoyang --actual gameplay-fingerprints.txt
       - uses: actions/upload-artifact@v4
