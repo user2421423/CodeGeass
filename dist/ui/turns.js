@@ -55,7 +55,9 @@ async function endTurn() {
         minesBefore = (game.sites || []).map(d => d.owner);
       let quiet = 0;
       // Revisit a Ryo whose movement/attack were restored after his AI order
-      // by an allied kill. Bound extra orders to keep rival turns responsive.
+      // by an allied kill. Inspect just the few Ryo formations, not every
+      // unit for every AI order on the world map.
+      const ryoUnits = game.units.filter(v => v.cmd === 'ryo' && v.side === side);
       const queuedRyoRefresh = new Map();
       let ryoExtraOrders = 0;
       for (let step = 0; step < ids.length; step++) {
@@ -98,7 +100,7 @@ async function endTurn() {
           updateSelection();
           await pause(orders.some(o => o.kind === 'attack') ? 420 : 160);
         } else if (++quiet % 12 === 0) await pause(0);
-        if (ryoExtraOrders < 12) for (const ryo of game.units) {
+        if (ryoExtraOrders < 12) for (const ryo of ryoUnits) {
           const refresh = ryo.expRyoOpeningRefresh;
           if (ryo.cmd !== 'ryo' || ryo.hp <= 0 || ryo.side !== side ||
               refresh?.turn !== game.turn ||
