@@ -96,10 +96,17 @@ breakCity(ashley);
 assert.equal(ashley.attacker.moved, false, 'Ashley can reposition after city shield break');
 assert.equal(ashley.attacker.skillReposition, 2, 'Ashley receives exactly two hexes');
 
+// Kallen's former two-hex Breakthrough reward has been replaced by
+// Radiant Wave Assault: she earns one movement point ONLY for first strikes
+// against distinct enemy formations, not for empty city-shield damage.
 const kallen = battle('vincent_ward', 1, 'kallen');
 breakCity(kallen);
-assert.equal(kallen.attacker.moved, false, 'Kallen gets Breakthrough reposition');
-assert.equal(kallen.attacker.skillReposition, 2, 'Kallen gets her two-hex reward');
+assert.equal(kallen.attacker.moved, true,
+  'A city shield alone does not activate Kallen\'s first-target movement');
+assert.equal(kallen.attacker.skillReposition || 0, 0,
+  'Kallen does not receive her removed two-hex Breakthrough reward');
+assert.equal(kallen.attacker.expKallenMoveBank || 0, 0,
+  'No movement point is earned without an enemy formation');
 
 // Mutsuki's network also grants movement after destroying defenses from forest.
 const guerrilla = battle('gloucester');
