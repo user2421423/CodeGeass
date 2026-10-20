@@ -1,0 +1,144 @@
+#!/usr/bin/env node
+'use strict';
+// Oscar: free full-strength guard retaliation, targeted moving protection,
+// and a free 3-point reposition that preserves normal movement/attack.
+const assert=require('node:assert/strict');
+const E=require('../dist/engine.js');
+const C=E.COMMANDERS.oscar;
+assert.equal(C.skill,"Guard's Counterstrike / Emergency Defense");
+assert.equal(C.action.kind,'oscarDefense');
+assert.equal(C.action.cooldown,0);
+assert.deepEqual(C.fx,{guardCounterstrike:true},'Old Shield of wZERO is removed');
+assert.equal(Object.hasOwn(C,'stats'),false,'No old personal combat bonuses');
+const d=E.internal.dist, hex=p=>p.c+','+p.r;
+const type=(side,branch)=>Object.keys(E.TYPES).find(k=>{
+  const t=E.TYPES[k];return t.side===side&&t.branch===branch&&!t.naval&&!t.elite&&t.min===1&&t.max===1;
+});
+const euArmor=type('eu','Armor'), euInf=type('eu','Infantry'), brInf=type('britannia','Infantry');
+assert.ok(euArmor&&euInf&&brInf,'Standard armor and infantry must exist');
+function setup(){
+  const g=E.createGame('eu','normal','conquest',20261020,'world');
+  g.units=[];g.phase='eu';
+  const clear=p=>p&&p.terrain==='plains'&&!E.internal.stationAt(g,p);
+  const center=g.tiles.find(p=>clear(p)&&E.adjacent(g,p).filter(clear).length===6&&
+    E.within(g,p,3).filter(clear).length>=30);
+  assert.ok(center,'Need sufficiently open terrain');
+  const o=E.newUnit(g,euArmor,'eu',center.c,center.r,1,'oscar');
+  const ap=E.adjacent(g,center).find(clear);
+  const protectedUnit=E.newUnit(g,euInf,'eu',ap.c,ap.r,2);
+  const ep=E.adjacent(g,center).find(p=>clear(p)&&
+    d(g,p,protectedUnit)===1&&!E.internal.unitAt(g,p));
+  assert.ok(ep,'Need common adjacent enemy');
+  const enemy=E.newUnit(g,brInf,'britannia',ep.c,ep.r);
+  const supportHex=E.within(g,protectedUnit,2).find(p=>clear(p)&&
+    d(g,protectedUnit,p)===2&&d(g,center,p)>=2&&
+    !E.internal.unitAt(g,p));
+  assert.ok(supportHex,'Need ally within exactly two hexes of protected unit');
+  const support=E.newUnit(g,euInf,'eu',supportHex.c,supportHex.r);
+  const outsideHex=E.within(g,protectedUnit,4).find(p=>clear(p)&&
+    d(g,protectedUnit,p)>=3&&!E.internal.unitAt(g,p));
+  assert.ok(outsideHex);
+  const outside=E.newUnit(g,euInf,'eu',outsideHex.c,outsideHex.r);
+  return {g,o,protectedUnit,enemy,support,outside,clear};
+}
+function near(x,y,tolerance=.07){assert.ok(x>0&&Math.abs(x/y-1)<tolerance,
+  'Expected '+x+' to be approximately '+y);}
+{
+  const b=setup();
+  assert.ok(E.actionTargets(b.g,b.o).some(x=>x.id===b.protectedUnit.id));
+  assert.ok(!E.actionTargets(b.g,b.o).some(x=>x.id===b.o.id),'Cannot designate Oscar himself');
+  const pre={
+    marked:E.preview(b.g,b.enemy.id,b.protectedUnit.c,b.protectedUnit.r).unit,
+    support:E.preview(b.g,b.enemy.id,b.support.c,b.support.r).unit,
+    outside:E.preview(b.g,b.enemy.id,b.outside.c,b.outside.r).unit
+  };
+  const result=E.feint(b.g,b.o.id,b.protectedUnit.id);
+  assert.equal(result.ok,true,result.reason);
+  assert.equal(result.reposition,3);
+  assert.equal(b.protectedUnit.expOscarDefense.source,b.o.id);
+  assert.equal(b.protectedUnit.expOscarReposition,true);
+  near(E.preview(b.g,b.enemy.id,b.protectedUnit.c,b.protectedUnit.r).unit,pre.marked*.8);
+  near(E.preview(b.g,b.enemy.id,b.support.c,b.support.r).unit,pre.support*.9);
+  assert.equal(E.preview(b.g,b.enemy.id,b.outside.c,b.outside.r).unit,pre.outside,
+    'No protection beyond two hexes');
+  assert.equal(E.feint(b.g,b.o.id,b.support.id).ok,false,'Once per turn');
+  // Test save roundtrip while both buffs remain active.
+  const loaded=E.migrateSave(JSON.parse(JSON.stringify(E.packSave(b.g))));
+  assert.ok(loaded);
+  assert.equal(loaded.units.find(u=>u.id===b.protectedUnit.id).expOscarDefense.source,b.o.id);
+  assert.equal(loaded.units.find(u=>u.id===b.protectedUnit.id).expOscarReposition,true);
+  E.beginTurn(b.g,'britannia',false);
+  assert.ok(b.protectedUnit.expOscarDefense,'Defense persists through the enemy turn');
+  assert.equal(b.protectedUnit.expOscarReposition,undefined,
+    'Unused free reposition expires with the recipient faction turn');
+  E.beginTurn(b.g,'eu',false);
+  assert.equal(b.protectedUnit.expOscarDefense,undefined,
+    'Protection expires at the start of next friendly turn');
+}
+{
+  const b=setup();
+  const ally=b.protectedUnit;
+  assert.equal(E.feint(b.g,b.o.id,ally.id).ok,true);
+  ally.moved=ally.attacked=true;
+  const options=E.reachable(b.g,ally);
+  assert.ok(options.size>0,'Reposition works even after movement and attack');
+  const dest=[...options.keys()].map(k=>{const [c,r]=k.split(',').map(Number);return E.tile(b.g,c,r)})
+    .find(p=>b.clear(p)&&!E.internal.unitAt(b.g,p)&&d(b.g,p,ally)>0);
+  assert.ok(dest);
+  const r=E.move(b.g,ally.id,dest.c,dest.r);
+  assert.equal(r.ok,true,r.reason);
+  assert.equal(ally.moved,true,'Reposition does not refund spent normal movement');
+  assert.equal(ally.attacked,true,'Reposition does not refund spent attack');
+  assert.equal(ally.expOscarReposition,undefined,'Free reposition is consumed once');
+  assert.equal(E.reachable(b.g,ally).size,0,'No duplicate reposition');
+}
+{
+  const b=setup(),ally=b.protectedUnit;
+  assert.equal(E.feint(b.g,b.o.id,ally.id).ok,true);
+  const dest=[...E.reachable(b.g,ally).keys()].map(k=>{
+    const [c,r]=k.split(',').map(Number);return E.tile(b.g,c,r)
+  }).find(p=>b.clear(p)&&!E.internal.unitAt(b.g,p));
+  assert.ok(dest);
+  const r=E.move(b.g,ally.id,dest.c,dest.r);
+  assert.equal(r.ok,true,r.reason);
+  assert.equal(ally.moved,false,'Free reposition does not spend unused normal movement');
+  assert.equal(ally.attacked,false,'Free reposition does not spend unused attack');
+  assert.ok(E.reachable(b.g,ally).size>0,'Ordinary movement still available');
+}
+// Guard's Counterstrike uses Oscar's full ordinary damage and cannot
+// counterattack again or consume his own attack.
+function guardTrial(disabled=false,repeat=false){
+  const b=setup();
+  const {g,o,protectedUnit,enemy}=b;
+  protectedUnit.morale=-3; // Suppress regular defender counterfire.
+  enemy.hp=9000; // Keep the same enemy alive for repeated-attack test.
+  if(disabled)o.expSilenced=true;
+  o.attacked=o.moved=true;
+  g.phase='britannia';
+  const before=enemy.hp,oscarHP=o.hp;
+  const target={c:protectedUnit.c,r:protectedUnit.r};
+  const first=E.attack(g,enemy.id,target.c,target.r);
+  assert.equal(first.ok,true,first.reason);
+  assert.equal(o.hp,oscarHP,'Guard counterstrike never invites enemy retaliation');
+  assert.equal(o.attacked,true,'Guard counterstrike never spends normal attack');
+  assert.equal(o.moved,true,'Guard counterstrike does not consume movement');
+  if(!disabled) {
+    assert.equal(first.oscarReaction.length,1,'Guard fires on enemy attack');
+    assert.equal(first.oscarReaction[0].oscar,o.id);
+  } else assert.equal(first.oscarReaction.length,0,'Silencing disables Guard');
+  if(repeat){
+    enemy.attacked=false;enemy.moved=false;
+    const hp=enemy.hp;
+    const second=E.attack(g,enemy.id,target.c,target.r);
+    assert.equal(second.ok,true,second.reason);
+    assert.equal(second.oscarReaction.length,0,'One reaction per distinct enemy per turn');
+    assert.equal(enemy.hp,hp,'No second Oscar volley against same enemy');
+  }
+  return {damage:before-enemy.hp};
+}
+{
+  const enabled=guardTrial(false).damage,disabled=guardTrial(true).damage;
+  assert.ok(enabled>disabled,'Full-strength reaction deals additional damage');
+  guardTrial(false,true);
+}
+console.log('Oscar full Guard Counterstrike, Emergency Defense, 3-point free move and save/turn expiry: PASS');
