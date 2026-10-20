@@ -1,0 +1,72 @@
+name: Complete missing scenario preview maps (one-time export)
+on:
+  push:
+    branches:
+      - 'preview/complete-scenario-previews-20261020'
+    paths:
+      - '.github/workflows/complete-scenario-previews.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: complete-scenario-previews
+  cancel-in-progress: false
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      SCENARIO_IDS: defense-japan,eu-cf-kazakhstan,eu-cf-persia,eu-cf-xinjiang,eu-cf-india,eu-cf-mongolia,eu-cf-manchuria,eu-cf-himalayas,eu-cf-sichuan,eu-cf-beijing,eu-cf-luoyang,cf-eu-siberia,cf-eu-caucasus,cf-eu-turkey,cf-eu-volga,cf-eu-suez,cf-eu-moscow,cf-eu-balkans,cf-eu-north-africa,cf-eu-central-europe,cf-eu-france
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser driver
+        run: |
+          npm install --prefix /tmp/preview-deps --no-save --no-package-lock playwright-core@1.57.0
+          command -v google-chrome || command -v google-chrome-stable || command -v chromium
+      - name: Build current game engine and renderer
+        run: node tools/build_sources.cjs
+      - name: Export missing 1440x900 preview maps and merge statistics
+        env:
+          NODE_PATH: /tmp/preview-deps/node_modules
+        run: node tools/generate-scenario-previews.cjs
+      - name: Export matching 4096x2560 battle-map backdrops
+        env:
+          NODE_PATH: /tmp/preview-deps/node_modules
+        run: node tools/generate-hires-regional-maps.cjs
+      - name: Verify all scenarios have valid raster assets and statistics
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert/strict');
+          const dist='dist',manifest=vm.runInNewContext(fs.readFileSync(path.join(dist,'scenario-manifest.js'),'utf8')+'\nSCENARIO_MANIFEST');
+          const maps=vm.runInNewContext(fs.readFileSync(path.join(dist,'scenario-previews/metadata.js'),'utf8')+'\nSCENARIO_STATIC_MAPS');
+          const ids=manifest.map(({id})=>id);
+          assert.equal(ids.length,58,'Expected all 58 registered operations');
+          assert.equal(Object.keys(maps).length,ids.length,'One metadata record per scenario');
+          for(const id of ids){
+            const meta=maps[id];
+            assert(meta && meta.cities>0 && meta.formations>=0 && Object.keys(meta.sides||{}).length>=2,'Invalid stats: '+id);
+            for(const folder of ['scenario-previews','scenario-hires']){
+              const f=path.join(dist,folder,id+'.webp');
+              assert(fs.existsSync(f),'Missing '+f);
+              const data=fs.readFileSync(f);
+              assert(data.length>=700 && data.toString('ascii',0,4)==='RIFF' && data.toString('ascii',8,12)==='WEBP','Invalid WebP: '+f);
+            }
+          }
+          console.log('PASS: '+ids.length+' scenarios, '+ids.length*2+' WebP assets, complete metadata.');
+          NODE
+      - name: Commit only freshly rendered images and metadata
+        run: |
+          git add dist/scenario-previews/ dist/scenario-hires/
+          if git diff --cached --quiet; then
+            echo "No preview assets changed"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Render missing E.U.–Federation and Japan scenario map previews"
+            git push origin HEAD:"${GITHUB_REF_NAME}"
+          fi
