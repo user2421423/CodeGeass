@@ -308,7 +308,7 @@ function generalsDialog(side = generalsSide) {
   generalsSide = side;
   generalOpen = null;
   const profile = loadProfile(),
-    list = Object.entries(E.COMMANDERS).filter(([, a]) => side === 'all' || (side === 'bk' ? ['bk', 'jlf'].includes(a.side) : side === 'eb' ? EURO_BRITANNIAN_COMMANDERS.includes(k) : a.side === side)),
+    list = Object.entries(E.COMMANDERS).filter(([k, a]) => side === 'all' || (side === 'bk' ? ['bk', 'jlf'].includes(a.side) : side === 'eb' ? EURO_BRITANNIAN_COMMANDERS.includes(k) : a.side === side)),
     mine = list.filter(([k]) => E.owns(profile, k)),
     locked = list.filter(([k]) => !E.owns(profile, k)),
     card = ([k, a]) => {
