@@ -60,7 +60,7 @@ function summon(g,father){
   const knight=summon(g,father);
   assert.equal(knight.type,E.lineupOf(g,'britannia')[E.TYPES[elite].cls],
     'Elite frame must summon regular faction equivalent');
-  assert.equal(E.TYPES[knight.type].elite,false);
+  assert.ok(!E.TYPES[knight.type].elite);
 }
 {
   const {g,father,clear}=battlefield(),knight=summon(g,father);
