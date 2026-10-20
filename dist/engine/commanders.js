@@ -337,7 +337,7 @@
       desc: 'Expendable Vanguard: once every turn, refresh one allied formation within 2 hexes for movement and attack, regardless of whether it has acted. Its next attack deals +50% damage, then it loses 20% maximum HP, potentially killing it. Human Shields: redirect 50% of combat damage aimed at Smilas to an adjacent ally; allies adjacent to him take 15% extra combat damage. Necessary Sacrifices: whenever an ally within 2 hexes is killed by an enemy attack, reflect 50% of the full killing-blow damage directly onto that enemy, without a counterattack or chain reaction.',
       stats: {},
       fx: { humanShields: true, necessarySacrifices: true },
-      action: { name: 'Expendable Vanguard', verb: 'Expendable Vanguard', kind: 'expendableVanguard', target: 'ally', range: 2, cooldown: 0, desc: 'Refresh an ally’s movement and attack (even if unused). Its next initiating attack deals +50% damage, then costs it 20% maximum HP. The cost can be lethal.' },
+      action: { name: 'Expendable Vanguard', verb: 'Expendable Vanguard', kind: 'expendableVanguard', target: 'ally', range: 2, cooldown: 0, desc: 'Once per turn: refresh an ally’s movement and attack (even if unused). Its next initiating attack deals +50% damage, then costs it 20% maximum HP. The cost can be lethal.' },
       title: 'Commander-in-Chief',
       recruit: 300,
     },
