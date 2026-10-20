@@ -1,12 +1,6 @@
 name: EU-Federation multi-seed balance simulations
 
 on:
-  push:
-    paths:
-      - 'tools/eu_federation_balance_matrix.cjs'
-      - '.github/workflows/eu-federation-balance-matrix.yml'
-    branches:
-      - feature/eu-vs-federation-campaign-architecture
   workflow_dispatch:
 
 jobs:

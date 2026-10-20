@@ -1,8 +1,11 @@
 name: Siberia scenario verification
 on:
-  push:
-    branches:
-      - scenario/britannia-siberia
+  pull_request:
+    paths:
+      - 'dist/scenarios-siberia.js'
+      - 'dist/siberia-landmask.js'
+      - 'tools/siberia_hex_audit.cjs'
+      - '.github/workflows/siberia-scenario.yml'
   workflow_dispatch:
 permissions:
   contents: read

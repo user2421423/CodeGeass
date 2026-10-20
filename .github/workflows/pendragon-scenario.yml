@@ -1,8 +1,10 @@
 name: Pendragon scenario verification
 on:
-  push:
-    branches:
-      - scenario/eu-pendragon
+  pull_request:
+    paths:
+      - 'dist/scenarios-pendragon.js'
+      - 'tools/pendragon_hex_audit.cjs'
+      - '.github/workflows/pendragon-scenario.yml'
   workflow_dispatch:
 permissions:
   contents: read

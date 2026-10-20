@@ -1,13 +1,9 @@
 name: EU-Federation campaign architecture
 
 on:
-  push:
-    branches:
-      - feature/eu-vs-federation-campaign-architecture
   pull_request:
     branches:
       - main
-      - feature/eu-vs-federation-campaign-architecture
 
 jobs:
   architecture-smoke:

@@ -1,8 +1,6 @@
 name: Gameplay regression checks
 on:
   pull_request:
-  push:
-    branches: ['feature/gameplay-test-tournament']
 permissions:
   contents: read
 concurrency:

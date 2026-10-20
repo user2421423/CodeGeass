@@ -1,8 +1,10 @@
 name: Hawaii scenario simulation
 on:
-  push:
-    branches:
-      - scenario/eu-hawaii
+  pull_request:
+    paths:
+      - 'dist/scenarios-hawaii.js'
+      - 'tools/simulate-hawaii.cjs'
+      - '.github/workflows/hawaii-scenario.yml'
   workflow_dispatch:
 permissions:
   contents: read

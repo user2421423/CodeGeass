@@ -1,7 +1,5 @@
 name: Operation Stonehenge scenario
 on:
-  push:
-    branches: ['scenario/operation-stonehenge']
   pull_request:
     paths:
       - 'dist/scenarios-stonehenge.js'

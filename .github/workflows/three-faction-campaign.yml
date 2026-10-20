@@ -9,8 +9,6 @@ on:
       - 'tools/three_faction_campaign_smoke.cjs'
       - 'tools/three_faction_ui_smoke.cjs'
       - '.github/workflows/three-faction-campaign.yml'
-  push:
-    branches: ['feature/three-faction-world-campaign']
 permissions:
   contents: read
 jobs:
