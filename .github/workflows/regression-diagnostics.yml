@@ -32,7 +32,7 @@ jobs:
         run: node tools/cc_protection_smoke.cjs
       - name: Determine exact source of simulation divergences
         run: |
-          node tools/diagnose_sim_divergence.cjs "$GITHUB_WORKSPACE/baseline" area-18:britannia battle-luoyang:britannia division-japan:eu conquest-indochina:cf eu-greenland:eu
+          node tools/diagnose_sim_divergence.cjs "$GITHUB_WORKSPACE/baseline" area-18:britannia battle-luoyang:britannia division-japan:eu conquest-indochina:cf eu-greenland:eu eu-cf-kazakhstan:eu eu-cf-kazakhstan:cf european-war:eu
       - uses: actions/upload-artifact@v4
         if: always()
         with:
