@@ -252,8 +252,8 @@
     if(u.expShadowAttackTurn===g.turn)out.push('Shadow strike: next attack +30%, no commander counter');
     if(u.expMargaretRedeploy)out.push('Strategic redeployment: free 3-point move');
     if(u.expOscarReposition)out.push('Emergency Defense: free 3-point reposition, without spending normal actions');
-    if(u.expOscarDefense)out.push('Emergency Defense: 20% damage reduction; adjacent support aura −10%');
-    else if(oscarDefenseMultiplier(g,u)<1)out.push('Emergency Defense: nearby ally shield −10%');
+    if(u.expOscarDefense)out.push('Emergency Defense: 20% damage reduction until next friendly turn');
+    else if(oscarDefenseMultiplier(g,u)<1)out.push('Oscar Guard: −10% damage from nearby Oscar');
     if(u.expMargaretBonusTurn===g.turn)out.push('Strategic redeployment: next attack +15%');
     if(u.expRoloFrozen)out.push('Absolute Suspension: frozen until the end of next turn; no moves, attacks, commands or counterattacks');
     if(u.expPinnedActive)out.push('Pinned: movement disabled');
