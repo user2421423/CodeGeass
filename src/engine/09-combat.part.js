@@ -266,8 +266,9 @@
       if (tf.counterTaken && counter) attack *= tf.counterTaken;
       if (tf.cityGuard && nearCity) attack *= tf.cityGuard;
       if (nearCity && skillNear(g, target, 'garrisonCommand', 1, false)) attack *= 0.9;
-      if (g.units.some(v => v.cmd && v.hp > 0 && v.side === target.side && fx(v).rearguard && dist(g, v, target) <= 1))
-        attack *= 0.9;
+      // Oscar's selected ally receives 20% reduction; its surrounding
+      // friendly formations receive 10%, following the selected unit.
+      attack *= oscarDefenseMultiplier(g,target);
       attack *= skillDefense(g,target,counter,direct) *
         commanderDefense(g,target,u,counter,direct) *
         newcomerDefense(g,target,u,counter,direct);
@@ -833,6 +834,9 @@
       `${COMMANDERS[a.cmd]?.short || TYPES[a.type].short}: ${crit ? 'critical hit · ' : ''}${dmg ? dmg + ' frame damage' : ''}${sd ? (dmg ? ' + ' : '') + sd + ' city damage' : ''}${destroyed ? ' · enemy destroyed' : ''}${defensesDestroyed ? ' · city defenses destroyed' : ''}${breakthrough ? ' · breakthrough' : ''}${retaliation ? ' · ' + retaliation + ' counter-fire' : ''}.`,
       a.side,
     );
+    // Full-strength free Oscar retaliation after an enemy initiates an
+    // attack against an allied formation. This cannot produce counterfire.
+    const oscarReaction = d ? oscarGuardCounterstrike(g,a,d) : [];
     checkVictory(g);
     return {
       ok: true,
@@ -843,6 +847,7 @@
       defensesDestroyed,
       crit,
       counter: retaliation,
+      oscarReaction,
       hit,
       destroyed,
       breakthrough,
