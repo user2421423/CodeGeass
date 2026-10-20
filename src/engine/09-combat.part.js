@@ -371,7 +371,8 @@
     );
     const counterAllowed = counter || senbaReaction;
     const counterDamage = (senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
-      : counter ? power(g,d,a,stationAt(g,a),true) : 0) * suppressiveCounterFactor(g, a);
+      : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
+      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a));
     // Preview the approximate 5% reflection; the actual volley uses HP lost
     // after damage rolls and interception, and reflects only if Xingke survives.
     const counterReflection = counterAllowed && d.hp > unitDmg && fx(d).counterReflect
