@@ -307,7 +307,7 @@
               : 35) : 0) +
             (s?.capitalOf ? 60 : 0) +
             (s?.project ? 120 : 0) +
-            (d ? commanderValue(g, d) + focusValue(g, u, d, pr, memo) : 0) -
+            (d ? commanderValue(g, d) + focusValue(g, u, d, pr, memo) + threatRemoved(g, d, pr.unit) : 0) -
             pr.counter * 0.5;
           // Conquest/Scenario: a legal attack on a hostile human unit or city scores higher (Campaign bonus is 0).
           const humanTarget = playerPriorityTarget(g, u.side, d?.side) || playerPriorityTarget(g, u.side, s?.owner);

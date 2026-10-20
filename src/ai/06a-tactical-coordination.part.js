@@ -5,6 +5,16 @@
     const mobility = Math.max(0, E.movement(g, v) - (TYPES[v.type]?.move || 0));
     return Math.min(150, 30 + rank * 13 + mobility * 7 + Math.max(0, maxHP(v) - 110) * 0.09);
   }
+  // Firepower a hit takes off the board: power falls by 60% of the share of health
+  // lost, and a kill removes what was left. Ranged formations count a quarter more.
+  function threatRemoved(g, v, damage) {
+    if (!v || v.hp <= 0 || damage <= 0) return 0;
+    const t = TYPES[v.type], full = maxHP(v);
+    if (!t || !full) return 0;
+    const firepower = (t.attack || 0) * (1 + 0.35 * Math.max(0, (v.stack || 1) - 1)) *
+      (rangeOf(g, v).max >= 3 ? 1.25 : 1);
+    return firepower * (damage >= v.hp ? 0.4 + 0.6 * v.hp / full : 0.6 * damage / full);
+  }
   function localThreat(g, u, p) {
     let expected = 0;
     for (const v of g.units) {
@@ -93,7 +103,8 @@
         const enemy = unitAt(g, p), city = stationAt(g, p);
         const value = shot.unit + shot.shield * 0.6 - shot.counter * 0.45 +
           (enemy && shot.unit >= enemy.hp ? 135 : 0) +
-          (enemy ? commanderValue(g, enemy) + focusValue(g, u, enemy, shot, memo) : 0) +
+          (enemy ? commanderValue(g, enemy) + focusValue(g, u, enemy, shot, memo) +
+            threatRemoved(g, enemy, shot.unit) : 0) +
           (city && foe(g, city.owner, u.side) && city.shield <= shot.shield ? 65 : 0);
         const human = playerPriorityTarget(g, u.side, enemy?.side) ||
           playerPriorityTarget(g, u.side, city?.owner);
