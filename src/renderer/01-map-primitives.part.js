@@ -318,14 +318,8 @@ function drawPlate(u, scale, sea, time = 0, highlighted = false) {
   ctx.strokeStyle = '#0c1924e0';
   ctx.lineWidth = Math.max(4, 3.4 / scale);
   ctx.stroke();
-  // Leave the player's original plate/ring untouched.
-  if (u.side !== game.player) {
-    ctx.beginPath();
-    ctx.ellipse(0, cy, rx + 6, ry + 6, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = Math.max(1.8, 1.7 / Math.max(scale, 0.2));
-    ctx.stroke();
-  }
+  // A single HP ring at tactical zoom for every formation.
+  // Do not add a second outer ellipse around allies or enemies.
   if (f > 0) {
     ctx.beginPath();
     ctx.ellipse(0, cy, rx + 2, ry + 2, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
