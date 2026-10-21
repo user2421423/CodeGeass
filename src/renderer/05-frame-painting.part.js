@@ -372,15 +372,17 @@ function draw(time, dt) {
         ctx.lineWidth = scenarioOverview
           ? 2 / Math.max(scale, 0.05) : 3 / Math.max(scale, 0.3);
         ctx.stroke();
-        // A full slim allegiance outline remains when the HP arc is almost gone.
-        ctx.beginPath();
-        ctx.arc(0, 0, radius + 2 / Math.max(scale, 0.2), 0, Math.PI * 2);
-        ctx.strokeStyle = unitRingColor(u);
-        ctx.lineWidth = 1.7 / Math.max(scale, 0.2);
-        ctx.stroke();
+        // Keep the original player token: only other factions get the added rim.
+        if (u.side !== game.player) {
+          ctx.beginPath();
+          ctx.arc(0, 0, radius + 2 / Math.max(scale, 0.2), 0, Math.PI * 2);
+          ctx.strokeStyle = unitRingColor(u);
+          ctx.lineWidth = 1.7 / Math.max(scale, 0.2);
+          ctx.stroke();
+        }
         if (integrity > 0) {
           ctx.beginPath();
-          ctx.arc(0, 0, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
+          ctx.arc(0, 0, u.side === game.player ? 15 : radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
           ctx.strokeStyle = unitRingColor(u);
           ctx.stroke();
         }
@@ -393,7 +395,7 @@ function draw(time, dt) {
           ctx.fillStyle = '#ffe3a0';
           ctx.fill();
         }
-        drawUnitFactionBadge(u, scale, true);
+        drawUnitFactionDot(u, scale, true, radius);
         if(group && u.side===game.player){
           outlinedText('G'+group.id,-18,-13,11,groupColor,scale,'Trebuchet MS',true);
           if(focusedGroup?.id===group.id){ctx.beginPath();ctx.arc(0,0,radius+4/Math.max(scale,0.3),0,Math.PI*2);ctx.strokeStyle=groupColor;ctx.lineWidth=2.8/Math.max(scale,0.3);ctx.stroke();}
@@ -440,7 +442,7 @@ function draw(time, dt) {
         outlinedText('G'+group.id,-30,17,15,groupColor,scale,'Trebuchet MS',true);
         if(focusedGroup?.id===group.id){ctx.beginPath();ctx.arc(0,0,R*0.90,0,Math.PI*2);ctx.strokeStyle=groupColor;ctx.lineWidth=2.8/Math.max(scale,0.3);ctx.stroke();}
       }
-      drawUnitFactionBadge(u, scale);
+      drawUnitFactionDot(u, scale);
       ctx.restore();
     }
   }
