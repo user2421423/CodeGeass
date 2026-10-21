@@ -492,7 +492,7 @@
       era:"Panama · Atlantic Offensive",
       intro:"Europia United attacks Britannian Panama solely from the Caribbean, fighting south through the canal. Every city must fall; no turn limit.",
       diplomacy:"The Panama Canal is navigable for fleets between the Atlantic and Pacific. Only the Centennial and Bridge of the Americas crossings permit land transit across the canal; ports are independently capturable.",
-      elite:"Elite Panama starts with faction-specific Elite Forces at standard scenario levels; rival named commanders reach Lv.5. Carrier hulls stay conventional.",
+      elite:"Elite Panama starts with faction-specific Elite Forces at standard scenario levels; rival named commanders reach Lv.3. Carrier hulls stay conventional.",
       focus:{
         eu:"",
         britannia:"Colon"
