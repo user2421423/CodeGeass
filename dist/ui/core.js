@@ -46,6 +46,8 @@ let detailOpen = false,
   saveOk = true,
   shake = 0,
   strikeMode = false, // choosing a F.L.E.I.J.A. target
+  abilityTargeting = null, // { unitId, commander, turn, kind }: a commander target on the map
+  abilityTargetCache = new Map(),
   deploying = null, // { ship, index }: choosing where a carried Knightmare lands
   armyGroupRouting = null, // army group id: choosing its shared destination
   routing = null, // unit id: choosing the destination of its standing order
@@ -282,6 +284,8 @@ function resetSession() {
   SFX.setAiTurn(false);
   hqBack = 'game';
   strikeMode = false;
+  abilityTargeting = null;
+  abilityTargetCache.clear();
   carrierHoldOpen = null;
   detailOpen = false;
   deploying = null;

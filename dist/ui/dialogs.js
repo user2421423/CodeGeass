@@ -265,20 +265,117 @@ function commanderCard(u) {
     .join(' · ')}</p></div>`;
 }
 // In an operation: assign your commanders to units. Operation commanders are listed but stay where they are.
-// Friendly activation and enemy designation use the same explicit target picker.
+// Explicit target metadata covers special actions; older actions without it
+// declare their target by kind. Area and self actions activate immediately.
+function commanderTargetKind(action) {
+  if (!action || action.target === 'self') return null;
+  if (action.target === 'hex') return 'hex';
+  if (['city', 'enemyCity'].includes(action.target) || action.kind === 'arkFleet') return 'city';
+  if (action.target || ['command', 'designate', 'stratagem', 'manfrediRequisition',
+      'shinDeath', 'grandMastersAssault'].includes(action.kind)) return 'unit';
+  return null;
+}
+function clearAbilityTargeting() {
+  const wasTargeting = !!abilityTargeting;
+  abilityTargeting = null;
+  abilityTargetCache.clear();
+  if (canvas) canvas.style.cursor = 'default';
+  if (wasTargeting && $('map-caption'))
+    $('map-caption').textContent = 'Green: move · Red: attack · Select a formation for orders';
+}
+function refreshAbilityTargets() {
+  if (!abilityTargeting) return;
+  const u = selectedUnit();
+  if (!interactive() || u?.id !== abilityTargeting.unitId || u?.side !== game.player ||
+      u?.cmd !== abilityTargeting.commander || game.turn !== abilityTargeting.turn ||
+      routing || armyGroupRouting || scenarioRoutingGroup || strikeMode || deploying || E.feintReason(game, u)) {
+    clearAbilityTargeting();
+    return;
+  }
+  if (abilityTargeting.revision !== uiStateRevision) {
+    abilityTargetCache = new Map(E.actionTargets(game, u).map(v => [E.key(v), v]));
+    abilityTargeting.revision = uiStateRevision;
+  }
+}
+function abilityTargetColor(target) {
+  if (abilityTargeting?.kind === 'hex') return '#ffe49c';
+  return (abilityTargeting?.kind === 'city' ? target.owner : target.side) === game.player
+    ? '#9eeaff' : '#ff8578';
+}
+function abilityTargetLabel(target) {
+  if (abilityTargeting?.kind === 'hex') return `Summon at hex ${target.c}, ${target.r}`;
+  if (abilityTargeting?.kind === 'city') return `${target.name} · ${Math.ceil(target.shield)} / ${target.maxShield} shields`;
+  const label = `${target.cmd ? C(target.cmd).short + ' · ' : ''}${E.TYPES[target.type].short} ×${target.stack}`;
+  return abilityTargeting?.commander === 'zero'
+    ? `${target.side === game.player ? 'Ally · Refresh actions' : 'Enemy · Force friendly fire'} · ${label}` : label;
+}
+function abilityTargetInstruction() {
+  if (!abilityTargeting) return '';
+  const action = C(abilityTargeting.commander).action;
+  const what = abilityTargeting.kind === 'hex' ? 'a gold summoning hex'
+    : abilityTargeting.kind === 'city' ? 'a highlighted city' : 'a highlighted formation';
+  return `${action.name} · Click or tap ${what} · ${abilityTargetCache.size} valid targets · Escape cancels`;
+}
+function abilityTargetDockHTML() {
+  const u = selectedUnit(), action = C(u.cmd).action;
+  return `<div class="dock-visual">${generalPortrait(u.cmd, 'dock-portrait', !!u.personal)}</div><div class="dock-unit" role="status" aria-live="polite"><span class="label">Choose ability target · ${abilityTargetCache.size} available</span><strong>${esc(action.name)}</strong><p class="ability-description">${esc(action.desc)}</p><p class="goto-line">Click or tap a highlighted target. Escape or Cancel to exit.</p></div><div class="dock-actions"><button class="small" data-action="ability-next-target">Next target</button><button class="small" data-action="ability-cancel">Cancel ability</button></div>`;
+}
+function nextAbilityTarget() {
+  refreshAbilityTargets();
+  if (!abilityTargeting) return;
+  const targets = [...abilityTargetCache.values()];
+  if (!targets.length) return;
+  abilityTargeting.index = ((abilityTargeting.index ?? -1) + 1) % targets.length;
+  const target = targets[abilityTargeting.index];
+  hover = E.tile(game, target.c, target.r);
+  centerOn(target);
+  $('map-caption').textContent = abilityTargetLabel(target);
+  canvas?.focus({ preventScroll: true });
+}
+function activateAbilityTarget(p) {
+  // Always revalidate against current rules. A stale highlight cannot spend a use.
+  if (!abilityTargeting) return;
+  abilityTargeting.revision = -1;
+  refreshAbilityTargets();
+  if (!abilityTargeting) { updateSelection(); return; }
+  const target = p && abilityTargetCache.get(E.key(p));
+  if (!target) {
+    toast('Choose a highlighted ability target, or cancel the ability.');
+    return;
+  }
+  const u = selectedUnit(), name = C(u.cmd).action.name, label = abilityTargetLabel(target);
+  const before = unitSnapshot(), visuals = combatVisualSnapshot();
+  const result = useCommanderAbility(u.id, target.id);
+  if (!result?.ok) {
+    toast(result?.reason || 'Ability unavailable.');
+    updateSelection();
+    return;
+  }
+  E.suspendArmyGroupConquestUnit(game, u.id);
+  clearAbilityTargeting();
+  if (result.attack?.ok) addCombatEffects(result.attack, u, visuals);
+  moralePopups(before);
+  refreshAndSave();
+  toast(`${name}: ${label}.`);
+}
+// Retain the existing entry point for tutorial/integration callers, without a modal list.
 function commandDialog(u) {
-  const action = C(u.cmd).action, options = E.actionTargets(game, u);
-  const cities = ['city', 'enemyCity'].includes(action.target), self = action.target === 'self', hex = action.target === 'hex';
-  const enemy = ['enemy', 'enemyCommander', 'enemyCity'].includes(action.target) || ['designate', 'stratagem'].includes(action.kind);
-  const zeroDual = u.cmd === 'zero' && action.kind === 'command';
-  const button = v => hex
-    ? `<button data-command="${v.id}">Hex ${v.c}, ${v.r} · ${esc(E.TERRAIN[v.terrain]?.name||v.terrain)} · near ${esc(nearestCityName(v))}</button>`
-    : `<button data-command="${v.id}">${zeroDual ? (v.side === u.side ? 'Ally · Reset actions · ' : 'Enemy · Suppress counters · ') : ''}${cities ? esc(v.name)+' · '+Math.ceil(v.shield)+' / '+v.maxShield+' shields' : (v.cmd ? esc(C(v.cmd).short) + ' · ' : '') + esc(E.TYPES[v.type].short) + ' ×' + v.stack + ' · ' + esc(nearestCityName(v))}</button>`;
-  const choices = zeroDual
-    ? `<p><b>Friendly command</b></p>${options.filter(v => v.side === u.side).map(button).join('') || '<p>No eligible allies have acted.</p>'}<p><b>Enemy command</b></p>${options.filter(v => v.side !== u.side).map(button).join('') || '<p>No enemies in range.</p>'}`
-    : options.map(button).join('');
-  modal.innerHTML = `<div class="overlay"><section class="dialog narrow" role="dialog" aria-modal="true" aria-label="${esc(action.name)}"><div class="eyebrow">${esc(action.name)} · ${action.cooldown===0?'Once per turn':'Every '+(action.cooldown||3)+' turns'}</div><h2>${zeroDual ? 'Select an ally or enemy' : self ? 'Activate ability' : hex ? 'Choose a summoning hex' : cities ? 'Select a city' : enemy ? 'Select an enemy' : 'Select an ally'}</h2><p>${esc(action.desc)}</p><div class="station-buttons">${choices}</div><div class="dialog-footer"><button data-action="close">Cancel</button></div></section></div>`;
-  focusDialog();
+  if (!u || u.side !== game.player || !interactive()) return;
+  const why = E.feintReason(game, u);
+  if (why) { toast(why); return; }
+  const kind = commanderTargetKind(C(u.cmd)?.action);
+  if (!kind) { doAction(() => useCommanderAbility(u.id)); return; }
+  closeModal();
+  routing = armyGroupRouting = scenarioRoutingGroup = deploying = null;
+  strikeMode = false;
+  carrierHoldOpen = null;
+  detailOpen = false;
+  multiSelectedIds.clear();
+  selection = { kind: 'unit', id: u.id };
+  abilityTargeting = { unitId: u.id, commander: u.cmd, turn: game.turn, kind };
+  updateSelection();
+  $('map-caption').textContent = abilityTargetInstruction();
+  toast(abilityTargetInstruction());
 }
 function admiralDialog() {
   // Tutorial loans Suzaku locally; never import or modify the player's permanent roster.

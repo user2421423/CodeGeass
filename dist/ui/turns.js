@@ -6,6 +6,7 @@ async function endTurn() {
   closeModal();
   undoStack = [];
   strikeMode = false;
+  clearAbilityTargeting();
   armyGroupRouting = null;
   save();
   dismissTurnSummary();

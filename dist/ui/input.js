@@ -178,16 +178,6 @@ document.addEventListener('click', e => {
     if (holder?.eliminator > 0) toast(`F.L.E.I.J.A. Eliminator handed to ${kind === 'city' ? holder.name : carrierName(holder)}.`, true);
     return;
   }
-  if (d.command) {
-    const u = selectedUnit();
-    closeModal();
-    if (u) doAction(() => {
-      const result = useCommanderAbility(u.id, u.cmd === 'darlton' ? d.command : +d.command);
-      if (result?.ok) E.suspendArmyGroupConquestUnit(game, u.id);
-      return result;
-    });
-    return;
-  }
   if (d.launch) {
     const [c, r] = d.launch.split(',').map(Number);
     launchAt({ c, r });
@@ -673,10 +663,17 @@ document.addEventListener('click', e => {
       break;
     case 'feint': {
       const u = selectedUnit();
-      if (u && (['command','designate','stratagem','protection','oscarDefense','miguelSupply','geassCancel','checkmate','memoryRewrite','ohgiHeal','expendableVanguard','electricalOverload'].includes(C(u.cmd)?.action?.kind)||['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','darlton'].includes(u.cmd))) commandDialog(u);
-      else if (u) doAction(() => useCommanderAbility(u.id));
+      commandDialog(u);
       break;
     }
+    case 'ability-cancel':
+      clearAbilityTargeting();
+      updateSelection();
+      toast('Ability selection cancelled.');
+      break;
+    case 'ability-next-target':
+      nextAbilityTarget();
+      break;
     case 'reinforce': {
       const u = selectedUnit();
       if (u) doAction(() => E.reinforce(game, u.id));
@@ -818,6 +815,21 @@ document.addEventListener('keydown', e => {
   }
   if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
   const k = e.key.toLowerCase();
+  // Keep arrow-key/Space targeting and camera navigation available. Other
+  // order shortcuts must not move or fire the caster during target selection.
+  if (abilityTargeting) {
+    if (k === 'escape') {
+      e.preventDefault();
+      clearAbilityTargeting();
+      updateSelection();
+      toast('Ability selection cancelled.');
+      return;
+    }
+    if (!e.key.startsWith('Arrow') && ![' ', '+', '=', '-', '0', 'v', 'tab'].includes(k)) {
+      if (k !== 'enter' || !e.target.closest('button')) e.preventDefault();
+      return;
+    }
+  }
   if (k === 'v' && !e.altKey && !e.ctrlKey && !e.metaKey && !e.repeat &&
       (game.mode === 'conquest' || game.mode === 'scenario')) {
     e.preventDefault();

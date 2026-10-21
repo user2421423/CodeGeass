@@ -996,3 +996,23 @@ body .mobile-unit-toggle,
     flex-shrink: 0;
   }
 }
+
+/* Target selection always exposes its exit and camera controls on touch screens. */
+@media (max-width: 700px), (pointer: coarse) {
+  body .selection-dock.ability-targeting-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) {
+    width: min(390px, calc(100vw - 20px));
+    max-width: calc(100vw - 20px);
+    max-height: min(210px, 35vh);
+    overflow: auto;
+  }
+  body .selection-dock.ability-targeting-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  body .selection-dock.ability-targeting-dock .ability-description {
+    display: none;
+  }
+  body .selection-dock.ability-targeting-dock:has(> .dock-unit):not(:has(.unit-dock-actions)) .dock-unit strong {
+    white-space: normal;
+  }
+}

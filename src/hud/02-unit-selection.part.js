@@ -98,19 +98,20 @@ function updateSelection() {
     readyRevision = uiStateRevision;
   }
   const u = selectedUnit();
+  refreshAbilityTargets();
   if (deploying && deploying.ship !== u?.id) deploying = null;
   if (routing && (routing !== u?.id || !interactive())) routing = null;
   const st = selectedStation();
-  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${armyGroupRouting}:${deploying?.ship}:${deploying?.index}:${interactive()}`;
+  const cacheKey = `${uiStateRevision}:${selection?.kind}:${selection?.id}:${routing}:${armyGroupRouting}:${deploying?.ship}:${deploying?.index}:${interactive()}:${abilityTargeting?.unitId}`;
   if (selectionCacheKey !== cacheKey) {
     readyCache =
-      u && u.side === game.player && interactive() && !routing && !armyGroupRouting
+      u && u.side === game.player && interactive() && !routing && !armyGroupRouting && !abilityTargeting
         ? deploying
           ? new Map(E.deployTargets(game, u, deploying.index).map(t => [E.key(t), 0]))
           : E.reachable(game, u)
         : new Map();
     targetCache = new Set(
-      interactive() && !deploying && !routing && !armyGroupRouting && u && u.side === game.player && !u.attacked && u.morale > -3
+      interactive() && !abilityTargeting && !deploying && !routing && !armyGroupRouting && u && u.side === game.player && !u.attacked && u.morale > -3
         ? E.targets(game, u).map(E.key)
         : st && st.owner === game.player && interactive()
           ? E.fortressTargets(game, st).map(E.key)
@@ -132,8 +133,10 @@ function updateSelection() {
   const dockContent = dockHTML();
   selectionDock.innerHTML = dockContent;
   selectionDock.classList.toggle('mobile-unit-expanded', dockExpanded);
+  selectionDock.classList.toggle('ability-targeting-dock', !!abilityTargeting);
   // Leave the map unobstructed when there is no selected unit, city, or terrain hex.
   selectionDock.style.display = dockContent ? '' : 'none';
+  if (abilityTargeting) $('map-caption').textContent = abilityTargetInstruction();
   // AI playback and async game-state changes are not necessarily user input events.
   if (typeof requestMapFrame === 'function') requestMapFrame();
 }

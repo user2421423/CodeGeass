@@ -261,6 +261,7 @@ function fireFortressAt(s, p) {
 function activateHex(p) {
   if (!p) return;
   if (typeof tutorialAllowHex === 'function' && !tutorialAllowHex(p)) return;
+  if (abilityTargeting) { activateAbilityTarget(p); return; }
   if (armyGroupRouting && (game.mode === 'conquest' || game.mode === 'scenario') && interactive()) {
     const id = armyGroupRouting;
     const result = E.orderArmyGroup(game, id, p.c, p.r);
@@ -381,7 +382,7 @@ function activateHex(p) {
 // Shift-click (or a long press on touch screens) adds a friendly formation to the selection or active army group.
 function canMultiSelect(u) {
   return interactive() && (game.mode === 'conquest' || game.mode === 'scenario') && u?.side === game.player &&
-    !routing && !armyGroupRouting && !scenarioRoutingGroup && !strikeMode && !deploying;
+    !routing && !armyGroupRouting && !scenarioRoutingGroup && !strikeMode && !deploying && !abilityTargeting;
 }
 function toggleMultiSelect(targetUnit) {
   if (activeArmyGroup()) {
@@ -401,6 +402,17 @@ let touchInput = false;
 function showHexInfo(x, y) {
   hover = hitHex(x, y);
   if (!hover) return;
+  if (abilityTargeting) {
+    const pin = abilityTargeting.kind === 'unit' && hitPin(x, y);
+    const city = abilityTargeting.kind === 'city' && hitVisualStation(x, y);
+    const p = pin || city;
+    if (p) hover = E.tile(game, p.c, p.r);
+    const target = abilityTargetCache.get(E.key(hover));
+    canvas.style.cursor = target ? 'crosshair' : 'not-allowed';
+    $('map-caption').textContent = target
+      ? `${touchInput ? 'Tap' : 'Click'}: ${abilityTargetLabel(target)}` : abilityTargetInstruction();
+    return;
+  }
   canvas.style.cursor = strikeMode || routing || armyGroupRouting
     ? 'crosshair'
     : hitStrategicArmyGroup(x, y) || readyCache.has(E.key(hover)) || targetCache.has(E.key(hover))
@@ -440,7 +452,7 @@ const touchMid = () => {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) };
 };
 function isAttackHex(p) {
-  if (!p || !interactive() || strikeMode || routing || armyGroupRouting || scenarioRoutingGroup || deploying) return false;
+  if (!p || !interactive() || abilityTargeting || strikeMode || routing || armyGroupRouting || scenarioRoutingGroup || deploying) return false;
   const k = E.key(p);
   return targetCache.has(k) && (selectedStation() || selectedUnit()?.side === game.player);
 }
@@ -530,7 +542,13 @@ function attachMap() {
         visualCity = hitVisualStation(e.clientX, e.clientY),
         isAction = p && (targetCache.has(E.key(p)) || readyCache.has(E.key(p)));
       const targetUnit = p && E.unitAt(game, p);
-      if (pointer.shift && canMultiSelect(targetUnit)) {
+      if (abilityTargeting) {
+        // Commander portraits and displaced coastal city artwork remain
+        // clickable targets rather than opening their information dialogs.
+        const target = abilityTargeting.kind === 'unit' && pin ||
+          abilityTargeting.kind === 'city' && visualCity;
+        activateAbilityTarget(target ? E.tile(game, target.c, target.r) : p);
+      } else if (pointer.shift && canMultiSelect(targetUnit)) {
         toggleMultiSelect(targetUnit);
       } else if (!pointer.shift && !strikeMode && !routing && !armyGroupRouting &&
           !scenarioRoutingGroup && !deploying && !isAction &&
