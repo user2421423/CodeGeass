@@ -80,10 +80,26 @@ for(const id of ['rounds-tournament','partition-britannia']){
 const tournament=E.scenarios.byId['rounds-tournament'].create();
 assert.equal(tournament.order.length,6);for(const side of tournament.order){assert.equal(tournament.startUnits[side],14);assert.equal(tournament.economy[side].credits,600);}
 const partition=E.scenarios.byId['partition-britannia'].create('remnants');
-assert.equal(partition.stations.filter(s=>s.owner==='remnants').length,3);assert.equal(partition.startUnits.remnants,8);
-assert.equal(E.income(partition,'remnants').credits,21);assert.equal(partition.economy.remnants.credits,140);
-assert(!partition.units.some(u=>u.side==='remnants'&&(u.elite||E.TYPES[u.type].air)));
-assert(E.income(partition,'eu').credits>20*E.income(partition,'remnants').credits);
+assert.equal(partition.stations.filter(s=>s.owner==='remnants').length,27);
+assert.equal(partition.stations.filter(s=>s.owner==='cf').length,21);
+assert.equal(partition.stations.filter(s=>s.owner==='eu').length,30);
+for(const name of ['Winnipeg','Minneapolis','Denver','Kansas City','Dallas','Houston','Yellowknife','Great Falls'])
+ assert.equal(partition.stations.find(s=>s.name===name).owner,'remnants','Britannian heartland missing '+name);
+for(const name of ['Salt Lake City','Los Angeles','Vancouver'])
+ assert.equal(partition.stations.find(s=>s.name===name).owner,'cf','Pacific occupation lost '+name);
+for(const name of ['Chicago','New York','Toronto'])
+ assert.equal(partition.stations.find(s=>s.name===name).owner,'eu','Atlantic occupation lost '+name);
+assert.equal(partition.startUnits.remnants,73);
+assert.equal(partition.units.filter(u=>u.side==='remnants'&&u.cmd).length,12);
+assert.equal(E.income(partition,'remnants').credits,618);
+assert.equal(partition.economy.remnants.credits,3*E.income(partition,'remnants').credits);
+assert.equal(partition.units.filter(u=>u.side==='remnants'&&E.TYPES[u.type].air).length,1);
+assert(!partition.units.some(u=>u.side==='remnants'&&u.elite));
+assert(partition.units.filter(u=>u.side==='remnants'&&!u.cmd&&!E.TYPES[u.type].air).every(u=>u.stack===2));
+const flagCtx=vm.createContext({Knightmare:E});
+vm.runInContext(fs.readFileSync('dist/art.js','utf8'),flagCtx);
+assert.match(vm.runInContext('ART.flagSVG("remnants")',flagCtx),/assets\\/flags\\/britannia\\.webp/);
+assert.equal(E.FACTIONS.remnants.color,E.FACTIONS.britannia.color);
 const geass=E.scenarios.byId['geass-war'].create();const heroes=E.scenarios.byId['protagonists-antagonists'].create();
 assert(E.serves('leila','geass_order',geass));assert(E.serves('shin','geass_order',geass));assert(!E.COMMANDERS.sakuya, 'Removed Rozé commander must not return');
 assert(E.serves('mao','geass_order',geass));assert(E.serves('shamna','geass_order',geass));

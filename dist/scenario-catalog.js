@@ -1804,14 +1804,14 @@ const SCENARIO_CATALOG = Object.freeze({
     "meta": {
       "text": {
         "era": "Alternate history · 2018 a.t.b.",
-        "intro": "The empire has lost its homeland. Europia United occupies the Atlantic states and eastern Canada; the Chinese Federation holds the Pacific and western Canada. Around Pierre, Rapid City and North Platte, three impoverished towns shelter Britannia’s last government. All three powers fight for total conquest.",
+        "intro": "Britannia still controls the North American heartland, from the Canadian Prairies through the Great Plains and Texas. Europia United occupies the Atlantic states and eastern Canada, while the Chinese Federation holds the Pacific coast and western Canada. All three powers fight for total conquest.",
         "terrain": "United States and Canada only, from the southern border to 70°N. Alaska is omitted; no Mexico, Greenland or Caribbean territory. Real country boundaries and Great Lakes; Rocky Mountain routes remain passable.",
         "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
         "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
         "focus": {
           "eu": "Chicago",
           "cf": "Salt Lake City",
-          "remnants": "Pierre"
+          "remnants": "Denver"
         }
       },
       "saveVersion": 1,

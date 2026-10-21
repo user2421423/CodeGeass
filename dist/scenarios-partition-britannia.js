@@ -26,9 +26,15 @@ const places=[
  ['Baltimore',-76.61,39.29],['Philadelphia',-75.17,39.95],['New York',-74.01,40.71],['Boston',-71.06,42.36],
  ['Buffalo',-78.88,42.89],['Portland Maine',-70.26,43.66],['Bangor',-68.77,44.80]
 ];
-const remnant=new Set(['Rapid City','Pierre','North Platte']);
-const owner=row=>remnant.has(row[0])?'remnants':row[1]<-99?'cf':'eu';
-const cityData=places.map(row=>[...row,owner(row),remnant.has(row[0])?1:3,false]);
+// The Empire retains a continuous continental heartland between the Pacific and
+// Atlantic occupations. The northern extensions keep Montana/NWT connected.
+const centralOutposts=new Set(['Great Falls','Yellowknife']);
+const heartlandHubs=new Set(['Winnipeg','Minneapolis','Denver','Kansas City','St Louis',
+ 'Dallas','Houston','San Antonio','Oklahoma City','Albuquerque','Omaha']);
+const owner=row=>centralOutposts.has(row[0])||row[1]>=-110&&row[1]<=-89.5
+ ?'remnants':row[1]<-110?'cf':'eu';
+const cityData=places.map(row=>[...row,owner(row),
+ owner(row)==='remnants'?(heartlandHubs.has(row[0])?3:2):3,false]);
 function geo(c,r){return {lon:B.west+(c+.5+.5*(r&1))*(B.east-B.west)/C,lat:B.north-(r+.5)*(B.north-B.south)/R};}
 function locate(lon,lat){const r=Math.max(0,Math.min(R-1,Math.round((B.north-lat)*R/(B.north-B.south)-.5)));return {r,c:Math.max(0,Math.min(C-1,Math.round((lon-B.west)*C/(B.east-B.west)-.5-.5*(r&1))))};}
 const portNames=new Set(['Vancouver','Victoria','Prince Rupert','Seattle','Portland','San Francisco','Los Angeles','San Diego','Halifax',"St John's",'Boston','New York','Miami','New Orleans']);
@@ -56,14 +62,15 @@ const geography={id:'partition-geography',title:'Continental North America',cols
  meta:{map:{centreSampled:true,coastBuffer:0,homeZoom:3.2,overviewMarkers:true}}};
 const byNation=source=>Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].side===source);
 const api=common.define({id:'partition-britannia',title:'The Partition of Britannia',geography,owner,
- intro:'The empire has lost its homeland. Europia United occupies the Atlantic states and eastern Canada; the Chinese Federation holds the Pacific and western Canada. Around Pierre, Rapid City and North Platte, three impoverished towns shelter Britannia’s last government. All three powers fight for total conquest.',
+ intro:'Britannia still controls the North American heartland, from the Canadian Prairies through the Great Plains and Texas. Europia United occupies the Atlantic states and eastern Canada, while the Chinese Federation holds the Pacific coast and western Canada. All three powers fight for total conquest.',
  terrain:'United States and Canada only, from the southern border to 70°N. Alaska is omitted; no Mexico, Greenland or Caribbean territory. Real country boundaries and Great Lakes; Rocky Mountain routes remain passable.',
- rosters:{eu:['eu'],cf:['cf'],remnants:['britannia']},commanders:{eu:byNation('eu'),cf:byNation('cf'),remnants:['charles','guilford','darlton']},
- focus:{eu:'Chicago',cf:'Salt Lake City',remnants:'Pierre'},forces:{eu:96,cf:86,remnants:8},stack:{remnants:1},reserve:{eu:3,cf:3,remnants:1},
- treasury:{remnants:{credits:140,industry:45,science:12,sakuradite:5}},
- airships:['eu','cf'],navy:['eu','cf'],signatures:{leila:'leila_alexander',akito:'akito_liberte',xingke:'shen_hu'},
- citySetup:s=>{if(s.owner==='remnants'){s.income=7;s.industry=3;s.science=1;s.lab=0;s.regionalIncome={sakuradite:0};}},
- blurbs:{eu:'Atlantic occupation: the largest urban and industrial base, with eastern Canadian and Great Lakes routes.',cf:'Pacific occupation: western Canada, Pacific fleets and a substantial field army.',remnants:'Extreme underdog: three poor towns, eight formations, no starting airship, no free elite army and a small treasury.'}
+ rosters:{eu:['eu'],cf:['cf'],remnants:['britannia']},commanders:{eu:byNation('eu'),cf:byNation('cf'),
+  remnants:['charles','schneizel','cornelia','bismarck','suzaku','gino','anya',
+   'jeremiah','guilford','darlton','villetta','lloyd']},
+ focus:{eu:'Chicago',cf:'Salt Lake City',remnants:'Denver'},forces:{eu:96,cf:86,remnants:72},
+ stack:{remnants:2},reserve:{eu:3,cf:3,remnants:3},
+ airships:['eu','cf','remnants'],navy:['eu','cf'],signatures:{leila:'leila_alexander',akito:'akito_liberte',xingke:'shen_hu'},
+ blurbs:{eu:'Atlantic occupation: major eastern urban and industrial centres, with Great Lakes access.',cf:'Pacific occupation: the western coast, western Canada and strong naval forces.',remnants:'Britannian heartland: 27 cities from the Prairies to Texas, veteran imperial officers, a substantial land army and a starting airship.'}
 });
 if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

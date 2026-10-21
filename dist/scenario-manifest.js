@@ -68,7 +68,7 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"rounds-tournament",title:"Knights of the Round Tournament",note:"70 cities · 6 sides · free-for-all"},
   {id:"geass-war",title:"The Geass War",note:"44 cities · 2 sides · Geass vs conventional"},
   {id:"protagonists-antagonists",title:"Protagonists vs Antagonists",note:"44 cities · 2 sides · multinational armies"},
-  {id:"partition-britannia",title:"The Partition of Britannia",note:"78 cities · 3 sides · extreme Britannian underdog"},
+  {id:"partition-britannia",title:"The Partition of Britannia",note:"78 cities · 3 sides · Britannian continental heartland"},
   {id:"ufn-civil-war",title:"UFN Civil War",note:"83 cities · 2 sides · mainland China"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.

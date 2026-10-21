@@ -68,7 +68,7 @@
     anti_geass: {"name": "Anti-Geass Coalition", "short": "Anti-Geass", "adj": "Anti-Geass", "color": "#4b94c9", "letter": "A", "capital": "Warsaw", "campaign": true, "scenarioOnly": true, "portrait": "suzaku"},
     protagonists: {"name": "Protagonists", "short": "Protagonists", "adj": "Protagonists", "color": "#b69a49", "letter": "P", "capital": "Warsaw", "campaign": true, "scenarioOnly": true, "portrait": "zero"},
     antagonists: {"name": "Antagonists", "short": "Antagonists", "adj": "Antagonists", "color": "#8f4055", "letter": "V", "capital": "Minsk", "campaign": true, "scenarioOnly": true, "portrait": "charles"},
-    remnants: {"name": "Britannian Remnants", "short": "Remnants", "adj": "Remnants", "color": "#87717c", "letter": "B", "capital": "Pierre", "campaign": true, "scenarioOnly": true, "portrait": "charles"},
+    remnants: {"name": "Britannian Remnants", "short": "Britannia", "adj": "Britannian", "color": "#e34b4b", "letter": "B", "capital": "Denver", "campaign": true, "scenarioOnly": true, "portrait": "charles"},
     ufn: {"name": "UFN / Black Knights", "short": "UFN", "adj": "UFN", "color": "#282c3d", "letter": "U", "capital": "Shangqiu", "campaign": true, "scenarioOnly": true, "portrait": "zero"},
     knight_bismarck: {"name": "Bismarck’s Round Army", "short": "Bismarck", "adj": "Bismarck", "color": "#c4a346", "letter": "B", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "bismarck"},
     knight_suzaku: {"name": "Suzaku’s Round Army", "short": "Suzaku", "adj": "Suzaku", "color": "#f5eee0", "letter": "S", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "suzaku"},

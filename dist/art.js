@@ -3,6 +3,7 @@ const ART = (() => {
   const INK = '#0b0d14';
   const FACTION_ART = {
     britannia: { trim: '#e3c06a', glow: '#8ff7ff', flag: '#b52f35', flag2: '#e3c06a' },
+    remnants: { trim: '#e3c06a', glow: '#8ff7ff', flag: '#b52f35', flag2: '#e3c06a' },
     eu: { trim: '#d7dde6', glow: '#ffd24a', flag: '#356fc8', flag2: '#f4d35e' },
     cf: { trim: '#f2c14e', glow: '#ff7a45', flag: '#b52a2a', flag2: '#f2c14e' },
     neutral: { trim: '#d8cfa6', glow: '#b8ff8a', flag: '#8a8466', flag2: '#e6dfc0' },
@@ -31,6 +32,7 @@ const ART = (() => {
   // Small WebP copies retain the original designs without redrawing the heraldry.
   const FACTION_FLAGS = {
     britannia: { src: 'assets/flags/britannia.webp', width: 260, height: 157, label: 'Holy Britannian Empire flag' },
+    remnants: { src: 'assets/flags/britannia.webp', width: 260, height: 157, label: 'Holy Britannian Empire flag' },
     eb: { src: 'assets/flags/eb.webp', width: 175, height: 116, label: 'Euro Britannia flag' },
     eu: { src: 'assets/flags/eu.webp', width: 260, height: 173, label: 'Europia United flag' },
     cf: { src: 'assets/flags/cf.webp', width: 260, height: 173, label: 'Chinese Federation flag' },
@@ -49,10 +51,11 @@ const ART = (() => {
     if (side === 'ufn') return ufnFlagSVG();
     const standard=REBEL_STANDARDS[side];
     if(standard)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+standard[3]+' flag"><rect width="120" height="80" fill="'+standard[0]+'"/><rect x="3" y="3" width="114" height="74" fill="none" stroke="'+standard[1]+'" stroke-width="3"/>'+standard[2]+'</svg>';
-    const scenarioFaction=globalThis.Knightmare?.FACTIONS?.[side];
-    if(scenarioFaction?.scenarioOnly)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+scenarioFaction.name+' flag"><rect width="120" height="80" fill="'+scenarioFaction.color+'"/><path d="M60 8 105 40 60 72 15 40Z" fill="none" stroke="#f4dfaa" stroke-width="4"/><text x="60" y="51" text-anchor="middle" font-size="32" font-family="serif" fill="#fff4d9">'+scenarioFaction.letter+'</text></svg>';
+    // Official artwork takes precedence over the generic scenario-faction emblem.
     const f = FACTION_FLAGS[side];
-    return f ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f.width} ${f.height}" aria-label="${f.label}"><image width="${f.width}" height="${f.height}" href="${f.src}"/></svg>` : '';
+    if(f)return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f.width} ${f.height}" aria-label="${f.label}"><image width="${f.width}" height="${f.height}" href="${f.src}"/></svg>`;
+    const scenarioFaction=globalThis.Knightmare?.FACTIONS?.[side];
+    return scenarioFaction?.scenarioOnly?'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+scenarioFaction.name+' flag"><rect width="120" height="80" fill="'+scenarioFaction.color+'"/><path d="M60 8 105 40 60 72 15 40Z" fill="none" stroke="#f4dfaa" stroke-width="4"/><text x="60" y="51" text-anchor="middle" font-size="32" font-family="serif" fill="#fff4d9">'+scenarioFaction.letter+'</text></svg>':'';
   }
   // ---- Cities ----
   function citySVG(kind, side) {
@@ -269,7 +272,7 @@ const ART = (() => {
     drawFlag(ctx, side, x, y, w) {
       const standard = flagSVG(side);
       if (!standard) return false;
-      const drawn = side === 'ufn' || REBEL_STANDARDS[side] || globalThis.Knightmare?.FACTIONS?.[side]?.scenarioOnly;
+      const drawn = side === 'ufn' || REBEL_STANDARDS[side] || (globalThis.Knightmare?.FACTIONS?.[side]?.scenarioOnly && !FACTION_FLAGS[side]);
       const img = drawn ? image('flag|' + side, standard) : flagAssetImage(side);
       if (!img) return false;
       const h = w * (side === 'ufn' ? 594 / 831 : drawn ? 80 / 120 : FACTION_FLAGS[side].height / FACTION_FLAGS[side].width);
@@ -324,4 +327,4 @@ const ART = (() => {
       .catch(() => {});
   return api;
 })();
-ART.preload(['britannia', 'eu', 'cf', 'neutral', 'bk', 'jlf', 'eb', 'ufn']);
+ART.preload(['britannia', 'remnants', 'eu', 'cf', 'neutral', 'bk', 'jlf', 'eb', 'ufn']);

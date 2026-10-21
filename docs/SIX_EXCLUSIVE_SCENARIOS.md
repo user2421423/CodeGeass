@@ -10,7 +10,7 @@ These operations are independent total-conquest wars, with stable IDs and the ex
 | `rounds-tournament` | Pendragon / Nevada–California–Utah, 180 × 126 | 11–12 per Knight; weighted geographic districts around six headquarters | 14 per Knight; equal 600 credits, 300 Industry, 100 Research, 35 Sakuradite |
 | `geass-war` | Continental European atlas, 120 × 80 | Order 18 eastern cities; coalition 26 western cities | 114 / 104, including airships and real-port fleets |
 | `protagonists-antagonists` | Continental European atlas, 120 × 80 | Protagonists 28 western cities; antagonists 16 eastern cities | 104 / 104, including airships and real-port fleets |
-| `partition-britannia` | Continental U.S./Canada, 178 × 110 | E.U. 44 / Federation 31 / remnants 3 | 100 / 90 / 8 |
+| `partition-britannia` | Continental U.S./Canada, 178 × 110 | E.U. 30 / Federation 21 / Britannian heartland 27 | 100 / 90 / 73 (including one Britannian airship) |
 | `ufn-civil-war` | Mainland China: Luoyang / Yellow River approaches, 174 × 116 | UFN 17 eastern cities / Federation 66 homeland cities | 66 / 106, including one airship each |
 
 The China operation is a detailed mainland regional theatre around the Yellow River, not an entire low-detail national rectangle. The UFN's expedition is based at Shangqiu and Jining, with five turns of opening income in reserve. Luoyang and Zhengzhou remain Federation-held. It includes no Japan.
@@ -19,7 +19,7 @@ The Partition map uses only Natural Earth U.S. and Canadian country polygons, cl
 
 Regenerate its coverage with `python3 tools/build_partition_geography.py path/to/ne_50m_admin_0_countries.geojson`. Source: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson (public domain). Runtime does not need GIS libraries or a network request.
 
-Britannia retains only Pierre, Rapid City and North Platte: three level-1 towns, 21 credits / 9 Industry / 3 Research / zero Sakuradite per turn; 140 credits / 45 Industry / 12 Research / 5 Sakuradite initially. Its eight formations have one frame each. Charles, Guilford and Darlton survive with ordinary equipment; there is no free elite or airship. This is deliberately a severe underdog, including when the AI controls it.
+Britannia controls a continuous central corridor of 27 cities from Yellowknife, Saskatchewan and Manitoba through Montana, the Dakotas, Colorado, Kansas and Missouri to Texas, New Mexico and Louisiana. Eleven major heartland hubs are tier 3 and the other sixteen are tier 2, producing 618 credits per turn before any difficulty modifiers; its opening treasury follows the same three-turn reserve as the other powers. It starts with 72 two-frame land formations and one airship. Charles, Schneizel, Cornelia, Bismarck, Suzaku, Gino, Anya, Jeremiah, Guilford, Darlton, Villetta and Lloyd command twelve of its formations. The E.U. retains the eastern cities and Great Lakes industrial centres; the Federation holds the Pacific coast and western Canada. The remnant faction remains save-compatible and now uses the existing Britannian flag and red-gold visual identity.
 
 ## Commanders, identities and lore judgments
 
