@@ -203,8 +203,6 @@
         [K, 'burai', 3, 7, 1, 'tamaki'],
         [K, 'burai', 1, 5, 1, 'sugiyama'],
         [K, 'burai', 4, 8, 1, null, { normalOnly: true }],
-        [K, 'burai', 8, 3, 3, null, { normalOnly: true }],
-        [K, 'burai', 7, 2, 3, null, { normalOnly: true }],
         ['jlf', 'burai_kai', 10, 3, 2],
         ['jlf', 'burai', 9, 1, 1],
         ['jlf', 'burai', 12, 2, 1, null, { skipNormal: true }],
