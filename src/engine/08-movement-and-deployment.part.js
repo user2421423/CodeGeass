@@ -225,7 +225,8 @@
         t.max +
         (eliteFx(u).range || 0) +
         (g && t.branch === 'Artillery' && !t.naval && techLevel(g, u.side, 'artillery.fire') >= 2 && (u.movedDistance || 0) === 0 ? 1 : 0) +
-        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0) + (u.expNavalRelay ? 1 : 0), // Minami's Ikaruga Fire Control
+        (g && t.branch === 'Artillery' && spotted(g, u) ? 1 : 0) + (u.expNavalRelay ? 1 : 0) +
+        (u.cmd === 'norland' && u.expNorlandTitan ? 1 : 0), // Foulbout Titan Mode extends all eligible weapons by one hex.
     };
   }
   function inRange(a, p, g) {

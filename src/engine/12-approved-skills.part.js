@@ -62,7 +62,7 @@
         break;
       }
       case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;
-      case 'norland':v.expOverwatch=true;break;
+      case 'norland':u.expNorlandTitan=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
       case 'lloyd':v.expCalibration=true;break;
       case 'sophie':{
@@ -401,21 +401,52 @@
     recordAbilityAttack(g,hunter,moved,before-moved.hp,crit);
     return true;
   }
+  // Loki Network fires at the first hostile formation to move within weapon range
+  // during EACH enemy faction phase. It is a free reaction, not an attack action:
+  // it cannot cause retaliation or use Norland's normal attack allowance.
   function newcomerOverwatch(g,moved){
-    const guards=g.units.filter(v=>v.hp>0&&v.morale>-3&&!v.expCharlesMemoryRewrite&&!v.expRoloFrozen&&v.expOverwatch&&foe(g,v.side,moved.side)&&!atSea(g,v)&&inRange(v,moved,g));
     let reacted=false;
-    for(const u of guards){
-      if(moved.hp<=0)break;
+    const phaseKey = g.turn + ':' + g.phase;
+    for (const u of g.units) {
+      if (moved.hp <= 0) break;
+      if (u.cmd !== 'norland' || !fx(u).lokiNetwork || u.hp <= 0 ||
+          u.expNorlandOverwatchPhase === phaseKey ||
+          u.morale <= -3 || u.expRoloFrozen || u.expCharlesMemoryRewrite ||
+          atSea(g,u) || !foe(g,u.side,moved.side) ||
+          !inRange(u,moved,g) || !hostileTarget(g,u,moved)) continue;
+      // Mark before resolving the hit, so kills and other nested effects
+      // cannot cause a second attack during this same enemy turn.
+      u.expNorlandOverwatchPhase = phaseKey;
       reacted=true;
-      delete u.expOverwatch;
-      const amount=Math.max(1,Math.round(power(g,u,moved,stationAt(g,moved))*.6));
-      const incoming=newcomerIntercept(g,moved,amount);
-      const before = moved.hp;
-      moved.hp=Math.max(0,moved.hp-(moved.cmd==='darlton'?darltonProtect(g,moved,u,incoming):incoming));
-      kill(g,moved,u);
-      recordAbilityAttack(g,u,moved,before-moved.hp);
+      const station=stationAt(g,moved);
+      const pr=preview(g,u.id,moved.c,moved.r);
+      const base=pr?.rawUnit ?? Math.round(power(g,u,moved,station) *
+        (station && foe(g,station.owner,u.side) && station.shield > 0 ? .55 : 1));
+      const crit=!!pr && random(g)<pr.crit;
+      const amount=Math.max(1,Math.round(base*(.92+random(g)*.16)*
+        (crit ? pr.critMult : 1)));
+      if(moved.expCCProtection)delete moved.expCCProtection;
+      let incoming=newcomerIntercept(g,moved,amount);
+      if(fx(moved).futureSightDodge && random(g)<fx(moved).futureSightDodge){
+        incoming=0;
+        recordAbilitySignal(g,moved,'EVADED','guard');
+        log(g,'FUTURE SIGHT — EVADED',moved.side);
+      }
+      const before=moved.hp;
+      const dealt=smilasDealCombatDamage(g,moved,u,incoming);
+      recordWarEvent(g,'damage',u.side,{targetSide:moved.side,
+        value:before-moved.hp,unitId:u.id,group:warGroup(g,u)});
+      moved.struck={turn:g.turn,side:u.side};
+      if(moved.skillMarks?.length)moved.skillMarks=moved.skillMarks.filter(m=>m.side!==u.side||!m.uses);
+      if(moved.hp<=0){
+        moved.expDirectIncoming=true;
+        kill(g,moved,u,false,null,incoming);
+        delete moved.expDirectIncoming;
+      }
+      log(g,'Loki Network: Norland fires for '+dealt+' damage; no counterfire.',u.side);
+      recordAbilityAttack(g,u,moved,before-moved.hp,crit);
     }
-    if(moved.hp>0&&villettaIntercept(g,moved))reacted=true;
+    if(moved.hp>0 && villettaIntercept(g,moved))reacted=true;
     return reacted;
   }
   function newcomerKilled(g,v,attacker){

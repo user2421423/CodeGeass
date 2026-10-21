@@ -206,6 +206,21 @@
       }
     }
     for (const u of mine) {
+      // Existing saved Norland formations may carry a Geass debuff from
+      // before his mask became passive. Undo it without touching other saves.
+      if (u.cmd === 'norland' && fx(u).geassProofMask) {
+        if (u.expCharlesMemoryRewrite?.previousMorale != null)
+          u.morale = u.expCharlesMemoryRewrite.previousMorale;
+        if (u.expZeroGeass)
+          u.morale = Math.min(1, u.morale + (u.expZeroGeass.moraleLost || 0));
+        delete u.expCharlesMemoryRewrite;
+        delete u.expZeroGeass;
+        delete u.expRoloFrozen;
+        delete u.expGeassCancelled;
+      }
+      // Titan Mode stays active across opponents' turns, ending when Norland's
+      // own faction next begins a turn. Cooldown continues independently.
+      if (u.cmd === 'norland') delete u.expNorlandTitan;
       // Geass Absolute Command's enemy-mode effects expire at the START
       // of the affected faction's next turn, before ordinary morale recovery.
       if (u.expZeroGeass) {

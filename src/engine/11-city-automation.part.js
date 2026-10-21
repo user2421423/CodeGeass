@@ -203,28 +203,28 @@
     if (kind === 'arkFleet') return g.stations.filter(s=>s.owner&&foe(g,s.owner,u.side));
     if (kind === 'command') return u.cmd === 'zero'
       ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
-          foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2 &&
+          foe(g, v.side, u.side) && !atSea(g, v) && !fx(v).geassProofMask && dist(g, u, v) <= 2 &&
           g.units.some(w=>w.hp>0&&w.id!==v.id&&w.side===v.side&&!atSea(g,w)&&inRange(v,w,g))))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
-    if (kind === 'shinDeath') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=2);
+    if (kind === 'shinDeath') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&!fx(v).geassProofMask&&dist(g,u,v)<=2);
     if (kind === 'maskFalls') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=3);
     if (kind === 'miguelSupply') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=3);
     if (kind === 'electricalOverload') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) === 1 &&
       inRange(u, v, g) && hostileTarget(g, u, v));
     if (kind === 'freeze') return g.units.filter(v => v.hp > 0 &&
-      foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
+      foe(g, v.side, u.side) && !atSea(g, v) && !fx(v).geassProofMask && dist(g, u, v) <= 1);
     if (kind === 'checkmate') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3);
     if (kind === 'grandMastersAssault') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3 &&
       grandMastersParticipants(g,u,v).length > 0);
     if (kind === 'memoryRewrite') return g.units.filter(v => v.hp > 0 &&
-      foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 3 &&
+      foe(g, v.side, u.side) && !atSea(g, v) && !fx(v).geassProofMask && dist(g, u, v) <= 3 &&
       v.morale > -3 && !v.expCharlesMemoryRewrite && !v.moraleWard && moraleFloor(g, v) <= -3);
     if (kind === 'geassCancel') return g.units.filter(v => v.hp > 0 &&
-      foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 2);
+      foe(g,v.side,u.side) && !atSea(g,v) && !fx(v).geassProofMask && dist(g,u,v) <= 2);
     // C.C. protects one ally, not herself; all playable land formations qualify.
     if (kind === 'expendableVanguard') return g.units.filter(v => v.hp > 0 &&
       v.side === u.side && v.id !== u.id && !atSea(g, v) &&

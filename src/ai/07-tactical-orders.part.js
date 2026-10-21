@@ -16,6 +16,7 @@
     const shieldGap = s => 1 - s.shield / Math.max(1, s.maxShield);
     switch (u.cmd) {
       case 'olivia': case 'sayoko': return null;
+      case 'norland': return canStrike(g,u) ? u : null;
       case 'gaohai': {
         const source = stationAt(g, u);
         return pickBest(options, s => shieldGap(s) - shieldGap(source) - 0.2 > 0 ? shieldGap(s) + threatened(s) : 0);

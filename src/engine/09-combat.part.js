@@ -59,6 +59,8 @@
       ? Math.min(1, u.morale + f.firstAttackMorale)
       : u.morale;
     attack *= morale >= 1 ? 1.25 : morale === -1 ? 0.75 : morale === -2 ? 0.5 : morale <= -3 ? 0 : 1;
+    // Foulbout Titan Mode empowers both initiating attacks and defensive counterfire.
+    if (u.cmd === 'norland' && u.expNorlandTitan) attack *= 1.30;
     if (u.despairWeakened) attack *= 1 - u.despairWeakened.value;
     if(u.expPinnedWeakenActive)attack*=1-u.expPinnedWeakenActive;
     if(u.expChengWeaken?.turns>0)attack*=1-u.expChengWeaken.value;
@@ -276,6 +278,7 @@
       // actual direct hit, counterattack or splash resolution.
       if (target.expCCProtection) attack *= 0.70;
       if (target.expFarneseWithdrawal) attack *= 0.70;
+      if (target.cmd === 'norland' && target.expNorlandTitan) attack *= 0.70;
       // Non-stacking Blue Geass protection, including Leila herself and
       // friendly formations at exactly two hexes. No offensive bonus.
       if (leilaCommand(g, target)) attack *= 0.9;
