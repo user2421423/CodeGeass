@@ -27,8 +27,8 @@ for (const player of ['britannia','eb','cf']) {
     player + ': unexpected off-front Britannian ' + (u.cmd || u.type) +
     ' at ' + u.c + ',' + u.r);
   for (const u of land) starts[region(u)]++;
-  assert.deepEqual(starts, {
-    'Middle East':8, 'Japan':5, 'Philippines':3, 'Siberia':4, 'African UFN front':10
+  // The world map's coarse Philippine island has two viable Britannian dry-land\n  // starts; the third forward-targeted formation stages in Japan instead.\n  assert.deepEqual(starts, {
+    'Middle East':8, 'Japan':6, 'Philippines':2, 'Siberia':4, 'African UFN front':10
   }, player + ': preserve intended land-front distribution');
   assert.equal(land.filter(u => u.cmd).length, 21, player + ': all 21 Britannian commanders deploy');
   assert.equal(region(land.find(u => u.cmd === 'charles')), 'Middle East');
