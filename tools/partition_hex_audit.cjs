@@ -89,7 +89,22 @@ for (const side of scenario.sides) {
     cities: restored.stations.map(s => [s.name, s.owner, s.c, s.r]),
     economy: restored.economy, terrain: restored.tiles.map(t => t.terrain),
   });
-  assert.equal(after, before, 'save roundtrip must preserve all game state for ' + side);
+  if (after !== before) {
+    const actual = JSON.parse(after), expected = JSON.parse(before);
+    for (const k of Object.keys(expected)) {
+      if (JSON.stringify(actual[k]) === JSON.stringify(expected[k])) continue;
+      if (k === 'terrain') {
+        const changes = [];
+        for (let i = 0; i < actual.terrain.length; i++)
+          if (actual.terrain[i] !== expected.terrain[i])
+            changes.push({index:i,from:expected.terrain[i],to:actual.terrain[i]});
+        assert.fail('roundtrip changed '+changes.length+' tiles for '+side+': '+JSON.stringify(changes.slice(0,25)));
+      }
+      assert.fail('roundtrip changed '+k+' for '+side+': '+JSON.stringify({
+        before:expected[k].slice?.(0,4) || expected[k],
+        after:actual[k].slice?.(0,4) || actual[k]}));
+    }
+  }
 }
 console.log(JSON.stringify({ auditedHexes: bytes.length,
   ocean: count[0], shore: count[1], inland: count[2], foreignLand: count[3],
