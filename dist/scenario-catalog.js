@@ -1819,6 +1819,11 @@ const SCENARIO_CATALOG = Object.freeze({
         "eu": "leila",
         "cf": "xingke",
         "remnants": "charles"
+      },
+      "blurbs": {
+              "eu": "Atlantic occupation: major eastern urban and industrial centres, with Great Lakes access.",
+              "cf": "Pacific occupation: the western coast, western Canada and strong naval forces.",
+              "remnants": "Britannian heartland: 27 cities from the Prairies to Texas, veteran imperial officers, a substantial land army and a starting airship."
       }
     },
     "files": [

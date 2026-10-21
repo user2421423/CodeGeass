@@ -200,9 +200,10 @@ function scenarioDialog() {
     const portraitKey=model.meta?.portraits?.[side]||E.FACTIONS[side]?.portrait||{britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin',rounds:'bismarck',shinregime:'shin',loyalists:'xingke',eunuchs:'gaohai',junta:'smilas'}[side];
     const portrait=portraitKey?ART.portrait(portraitKey,'scenario-side-art'):'';
     const flag=ART.flagSVG(side);
+    const sideBrief=model.meta?.blurbs?.[side];
     return `<button class="scenario-side-option ${active?'active':''}" type="button" data-scenario-faction="${esc(side)}" aria-pressed="${active}" style="--scenario-side-color:${side==='bk'?'#f0c94a':owner.color}">
       <span class="scenario-side-image" aria-hidden="true">${portrait}</span>
-      <span class="scenario-side-copy"><span class="scenario-side-name">${esc(owner.name)}</span><span class="scenario-side-stats">${cities} cities · ${units} formations</span></span>
+      <span class="scenario-side-copy"><span class="scenario-side-name">${esc(owner.name)}</span><span class="scenario-side-stats">${cities} cities · ${units} formations</span>${sideBrief?'<span class="scenario-side-summary">'+esc(sideBrief)+'</span>':''}</span>
       <span class="scenario-side-flag" aria-hidden="true">${flag||''}</span>
       <span class="scenario-side-mark" aria-hidden="true">${active?'✓':''}</span>
     </button>`;
