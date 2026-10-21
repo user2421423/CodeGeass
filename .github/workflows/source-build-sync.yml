@@ -23,6 +23,8 @@ jobs:
         run: node tools/andrea_farnese_smoke.cjs
       - name: Verify 2018 Britannian frontline-only starting deployments
         run: node tools/ufn2018_britannia_frontline_smoke.cjs
+      - name: Verify map selection for every targeted commander ability
+        run: node tools/ability_targeting_smoke.cjs
       - name: Verify 100 commander commissions and invested-save rebalance
         run: node tools/commission_rebalance_smoke.cjs
       - name: Verify Suzaku starter and existing HQ and battle-save migration

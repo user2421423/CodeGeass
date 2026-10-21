@@ -449,6 +449,22 @@ function draw(time, dt) {
     if (visible(p)) mapHasPulse = true;
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
   }
+  // Ability targets sit above unit artwork, independent of ordinary attack
+  // and movement highlights. Static outlines also work with reduced motion.
+  if (abilityTargeting) for (const target of abilityTargetCache.values()) {
+    const p = hexCenter(target);
+    if (!visible(p)) continue;
+    for (const x of copies(p.x)) {
+      ctx.save();
+      hexPath(x, p.y, R - 2);
+      ctx.strokeStyle = abilityTargetColor(target);
+      ctx.fillStyle = abilityTargetColor(target) + '26';
+      ctx.fill();
+      ctx.lineWidth = (hover && E.key(hover) === E.key(target) ? 4 : 2.5) / Math.max(scale, 0.4);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
   // The selected Eliminator carrier's cover, any warhead aimed inside it is neutralized: a faint wash and a bright
   // cyan outline along its edge, which stays readable over the movement range.
   const carrier = selection?.kind === 'unit' && game.units.find(u => u.id === selection.id && u.hp > 0);

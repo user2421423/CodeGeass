@@ -3,6 +3,7 @@ function dockFlag(side) {
   return `<span class="faction-flag ${side}${standard ? ' flag-art' : ''}" title="${esc(F(side).name)}">${standard || esc(F(side).letter)}</span>`;
 }
 function dockHTML() {
+  if (abilityTargeting) return abilityTargetDockHTML();
   const u = selectedUnit(),
     s = selectedStation();
   if (u) {
