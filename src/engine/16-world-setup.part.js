@@ -349,7 +349,7 @@
     if (t.naval) return t.naval === 'amphibious' && NAVAL[t.side] ? NAVAL[t.side].amphibious2 : type;
     if (!next || t.side === 'neutral') return type;
     // Challenge/Hard reinforcement upgrades must respect the U.F.N. lineup.
-    return typeFor(ufnBlackKnights(g, side) ? side : t.side, next, g);
+    return typeFor(side === 'eb' || ufnBlackKnights(g, side) ? side : t.side, next, g);
   }
   function techUpToTier(tier) {
     return Object.fromEntries(

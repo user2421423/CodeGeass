@@ -214,6 +214,7 @@
     unitStats,
     applyElites,
     lineupOf,
+    buildableTypes,
     COMMANDERS,
     RATINGS,
     TERRAIN_CODES,

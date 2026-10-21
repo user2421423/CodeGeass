@@ -264,10 +264,10 @@
       if (/(?:japan|europe)_.*_carrier/.test(id)) delete g.eliteDeployed[id];
     if (!g.units.every(u => TYPES[u.type])) return null;
     // Existing saves keep their positions, commanders, action state and damage.
-    // Retire accidental cross-era Chinese/UFN equipment (including embarked
-    // cargo), rather than retaining old sprites after the faction roster fix.
+    // Retire accidental cross-era Chinese/UFN equipment and Euro-Britannian
+    // borrowed heavy armor (including embarked cargo), preserving damage and orders.
     for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
-      if (u.side !== 'cf') continue;
+      if (u.side !== 'cf' && u.side !== 'eb') continue;
       const correct = eraUnitType(g, u.type, u.side);
       if (correct === u.type) continue;
       const oldMax = Math.max(1, maxHP(u)), fraction = u.hp / oldMax;

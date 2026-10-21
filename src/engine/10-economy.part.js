@@ -245,7 +245,7 @@
       scenarioMeta(g).eliteRosterOnly ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
     // Euro Britannia shares Britannia's full Imperial Elite Force roster in every mode.
-    return e.availableTo.includes(kit) || (side === 'eb' && e.availableTo.includes('britannia'));
+    return e.availableTo.includes(kit) || (kit === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],

@@ -6,7 +6,7 @@ define({
  id:'shin-independence',parent:'european-war',title:'Euro-Britannian Independence',
  phase:'shin-secession',
  map:{eu:'britannia',eb:'shinregime'},
- equipment:{britannia:'britannia',shinregime:'britannia'},
+ equipment:{britannia:'britannia',shinregime:'eb'},
  reinforcements:{britannia:26},
  commanders:{
   shinregime:['shin','ashley','manfredi','farnese','augustus'],
