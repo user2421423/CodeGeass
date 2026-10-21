@@ -38,7 +38,16 @@ for(const player of scenario.sides)for(const difficulty of difficulties){
     'Only Britannian land frames are embarked');
   assert.ok(embarked.every(u=>!g.units.includes(u)),
     'No Britannian formations start ashore');
-  assert.ok(g.units.some(u=>u.side==='bk'&&!E.TYPES[u.type].naval));
+  const defenders=g.units.filter(u=>u.side==='bk'&&!E.TYPES[u.type].naval);
+  const defenseNavy=g.units.filter(u=>u.side==='bk'&&E.TYPES[u.type].naval);
+  assert.equal(defenders.length,29,'Keep 29 Black Knights land formations');
+  assert.equal(defenseNavy.length,11,'Deploy eleven Black Knights naval formations');
+  assert.equal(defenseNavy.filter(u=>u.type==='bk_carrier').length,5);
+  assert.equal(defenseNavy.filter(u=>u.type==='bk_amphibious_ii').length,6);
+  assert.equal(g.scenario.citylessWarChestTurns,3);
+  if(difficulty==='normal')
+    assert.equal(defenders.reduce((sum,u)=>sum+u.stack,0),58,
+      'All Black Knights defenders are two-frame formations');
   assert.deepEqual(g.startUnits,{bk:g.units.filter(u=>u.side==='bk').length,britannia:54});
   assert.equal(scenario.winner(g),null,'No instant victory');
   assert.equal(scenario.meta.expeditionSide,'britannia');
@@ -57,6 +66,12 @@ for(const player of scenario.sides)for(const difficulty of difficulties){
     'A cityless invader earns no repeating income after setup');
   assert.ok(g.economy.britannia.credits>0,
     'Cityless invader has a finite opening war chest');
+  if(difficulty==='normal') {
+    assert.equal(g.economy.britannia.credits,1620,
+      'Britannia must receive three turns of credits, not ten');
+    assert.equal(g.economy.britannia.industry,990,
+      'Britannia must receive three turns of industry, not ten');
+  }
   if(difficulty==='elite'){
     assert.ok(embarked.every(u=>u.elite),'Elite scenario converts embarked land formations');
     assert.ok(g.units.filter(u=>u.side==='bk'&&!E.TYPES[u.type].naval)

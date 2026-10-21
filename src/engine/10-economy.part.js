@@ -46,9 +46,14 @@
           // turns of military spending, even if a city is never captured.
           const oldIncome = income(g,side);
           const wallet = funds(g,side);
+          // Individual invasion scenarios may specify a shorter finite reserve.
+          // Leave the ten-turn default unchanged for all existing scenarios.
+          const reserveTurns = Number.isInteger(g.scenario.citylessWarChestTurns) &&
+            g.scenario.citylessWarChestTurns > 0
+              ? g.scenario.citylessWarChestTurns : CITYLESS_WARCHEST_TURNS;
           for (const resource of REGIONAL_RESOURCES)
             wallet[resource] = Math.max(wallet[resource] || 0,
-              Math.max(0,Math.round(oldIncome[resource] * CITYLESS_WARCHEST_TURNS)));
+              Math.max(0,Math.round(oldIncome[resource] * reserveTurns)));
           continue;
         }
         for (const resource of REGIONAL_RESOURCES) {

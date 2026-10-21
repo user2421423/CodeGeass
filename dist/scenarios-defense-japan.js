@@ -9,8 +9,8 @@
   const TITLE = 'Defense of Japan';
   const CITY_COUNT = japan.cityData.length;
 
-  // All listed defenders are deployed ashore; the remaining cities have their
-  // existing city defenses, factories and production throughout the battle.
+  // All 29 defenders deploy ashore as two-frame formations (58 land frames).
+  // Other cities retain their existing defenses, factories and production.
   // [city, class, count, optional first-formation commander]
   const DEFENDERS = Object.freeze([
     ['Sapporo','medium',2,'tohdoh'], ['Sapporo','rocket',1],
@@ -25,10 +25,14 @@
     ['Fukuoka','medium',2], ['Nagasaki','rocket',1],
     ['Kagoshima','assault',1]
   ]);
+  // Eleven ships across the five threatened coasts: five carrier hulls and
+  // six amphibious interceptors. Ports and inland land formations stay intact.
   const DEFENDER_FLEETS = Object.freeze([
-    ['Sapporo','bk_carrier',1], ['Yokohama','bk_carrier',1],
+    ['Sapporo','bk_carrier',1], ['Sendai','bk_carrier',1],
+    ['Tokyo Settlement','bk_carrier',1], ['Yokohama','bk_carrier',1],
     ['Osaka','bk_carrier',1], ['Fukuoka','bk_amphibious_ii',2],
-    ['Shimonoseki','bk_amphibious_ii',1], ['Hiroshima','bk_amphibious_ii',1]
+    ['Shimonoseki','bk_amphibious_ii',1], ['Hiroshima','bk_amphibious_ii',1],
+    ['Matsue','bk_amphibious_ii',1], ['Nagasaki','bk_amphibious_ii',1]
   ]);
   // Every Britannian formation starts as one of two embarked troops per
   // carrier. There are NO Britannian cities, land units or escorts on the map.
@@ -100,6 +104,7 @@
     g.scenario={
       id:'defense-japan',title:TITLE,version:1,phase:'carrier-invasion',
       groups:[],funding:{},citylessFunding:['britannia'],
+      citylessWarChestTurns:3, // This invasion's finite reserve; other scenarios keep the global default.
       bounds:japan.bounds,projection:g.scenario.projection,
       coastalSea:g.scenario.coastalSea
     };
@@ -131,7 +136,7 @@
         if(!at)throw Error('No defender deployment hex at '+name);
         const cmd=i===0?commander:null;
         const u=E.newUnit(g,E.typeFor('bk',cls,g),'bk',at.c,at.r,
-          i===0?2:1,cmd);
+          2,cmd);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
         landGroup('bk',name).units.push(u.id);
       }
@@ -242,7 +247,7 @@
     ai:{doctrine:'invasion',synchronizedFlotillas:true},
     text:{
       era:'Japan · Alternate 2017',
-      intro:'The Black Knights control all 44 Japanese cities. Britannia begins at sea with loaded carriers and no bases or land forces ashore.',
+      intro:'The Black Knights defend all 44 Japanese cities with reinforced garrisons and eleven ships. Britannia arrives in loaded carriers with no bases ashore and a three-turn reserve.',
       diplomacy:'The Black Knights and Britannia are enemies from turn 1. Capture all cities as Britannia, or destroy the cityless invasion as the Black Knights.',
       elite:'Elite Japan upgrades eligible land formations to faction Elite Forces while carriers remain conventional. Existing Elite difficulty research and commander rules apply.',
       focus:{bk:'Tokyo Settlement',britannia:''}
