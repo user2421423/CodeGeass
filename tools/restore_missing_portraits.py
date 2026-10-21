@@ -4,6 +4,7 @@
 Run only on a machine with outbound network access (GitHub Actions).
 Each image must come from its named character's art or a documented character sheet.
 """
+import base64
 import hashlib
 import io
 import json
@@ -149,6 +150,20 @@ def main():
     )
     SOURCES.write_text(json.dumps(ledger, indent=2, ensure_ascii=False) + "\n")
     print("NEW RESTORED", len(set(SINGLE) | set(ASURA_BOXES)) - len(pending))
+    # Short-lived diagnostic: inspect a group shot to match each swordmaster to the
+    # correct face, rather than assigning the group image by assumed position.
+    try:
+        group_url = "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png"
+        group, checksum = download(group_url)
+        group.thumbnail((900, 620), Image.Resampling.LANCZOS)
+        preview = io.BytesIO()
+        group.save(preview, "JPEG", quality=74)
+        print("SWORDMASTER_REFERENCE_BEGIN")
+        print(base64.b64encode(preview.getvalue()).decode("ascii"))
+        print("SWORDMASTER_REFERENCE_END")
+        print("SWORDMASTER_REFERENCE_SHA256", checksum)
+    except Exception as exc:
+        print("Swordmaster reference unavailable:", str(exc), file=sys.stderr)
     print("STILL PENDING", ", ".join(sorted(pending | set(UNRESOLVED))) or "none")
     return 0 if len(ledger) else 1
 
