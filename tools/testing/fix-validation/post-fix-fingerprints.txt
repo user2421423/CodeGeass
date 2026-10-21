@@ -617,17 +617,17 @@ setup partition-britannia eu normal c387abbf
 setup partition-britannia eu hard c751fb7c
 setup partition-britannia eu challenge 27938a39
 setup partition-britannia eu elite 92852590
-sim partition-britannia eu normal 11 2 ae73c809 6ea8449c cities={"eu":31,"cf":24,"remnants":23} errors=0
+sim partition-britannia eu normal 11 2 1587feec b7827414 cities={"eu":31,"cf":24,"remnants":23} errors=0
 setup partition-britannia cf normal ca128666
 setup partition-britannia cf hard b0211998
 setup partition-britannia cf challenge e735c39e
 setup partition-britannia cf elite 9e41575f
-sim partition-britannia cf normal 11 2 955cacad d1e4633a cities={"eu":32,"cf":23,"remnants":23} errors=0
+sim partition-britannia cf normal 11 2 d29e2127 9a018209 cities={"eu":31,"cf":24,"remnants":23} errors=0
 setup partition-britannia remnants normal 30af1eab
 setup partition-britannia remnants hard eb98313f
 setup partition-britannia remnants challenge 15fd0e16
 setup partition-britannia remnants elite 41b8bb79
-sim partition-britannia remnants normal 11 2 8549b017 531977f3 cities={"eu":30,"cf":23,"remnants":25} errors=0
+sim partition-britannia remnants normal 11 2 81aac5b7 861d113d cities={"eu":31,"cf":24,"remnants":23} errors=0
 setup philippines-invasion britannia normal 2baf4159
 setup philippines-invasion britannia hard 1f84d9c6
 setup philippines-invasion britannia challenge 551d8920

@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "purpose": "Complete 68-scenario reference regenerated on main after the 118-commander roster, commander reworks, AI commander-action and airlift changes, and the signed regional-funding spread fix.",
-  "parentSourceRevision": "4fe11558",
+  "parentSourceRevision": "b8e4cfb0",
   "profile": {
     "seed": 11,
     "turns": 2,
@@ -33,12 +33,13 @@
   ],
   "current": {
     "path": "tools/data/sim_baseline.txt",
-    "sha256": "27e5bbb8b5793272459e82f83ab7600dcf38f1ad0bd940817fe459c1bdbf723b",
+    "sha256": "068998f770b19398697b83614037d350ec95253efddc90ced3f4c5bb3bd0624a",
     "reason": [
       "Upstream commander changes since 9a14d263 (118-commander roster, Lelouch/Zero/Shin/Ashley/Andrea and other reworks, base-stat removals) changed every setup fingerprint.",
       "AI now uses every commander active action (signature targets, Olivia/Fernando on the chosen target, Sayoko infiltration) and prioritizes airship troop lifts.",
       "Negative regional funding remainders are spread one unit per city (Defense of Japan), so no captured city becomes a loss.",
-      "Monica and Luciano regain the stat passives their 118-roster descriptions promise."
+      "Monica and Luciano regain the stat passives their 118-roster descriptions promise.",
+      "Partition of Britannia Chinese AI targeting fix (b8e4cfb0) changes its three game lines."
     ]
   },
   "verification": {
