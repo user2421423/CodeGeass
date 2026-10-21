@@ -8,6 +8,8 @@
   // killing shot, else flies to pick up troops of its front still far from the fighting (airRider; the troops board
   // it themselves through airBerth when they act first); then it takes the best-value shot, weighing return fire
   // heavily; with nothing to hit it fetches that front's troops from wherever they are, else waits near its front.
+  // Lifting is its main job: a pickup it can make this turn comes before any shot (it can still fire from the
+  // pickup hex), and the formations worth flying first are the hardest-hitting and those led by a commander.
   // `far`: troops this many hexes or more from their front's goals are worth a lift. `stale`: after this many
   // turns aboard, cargo lands wherever it is closest to its goals rather than ride on. `ready`: least health to
   // take troops aboard. `reach`, `fetch`: see 4b. `switch`, `rider`: see airFront.
@@ -41,6 +43,12 @@
     const aims = f.objectives.filter(o => !o.defend && foe(g, (stationAt(g, o) || o).owner, f.side));
     return aims.length ? aims : f.objectives.filter(o => !o.defend);
   }
+  // How much a formation is worth carrying: its firepower at its present health, plus a commander at its head.
+  function liftValue(g, v) {
+    const t = TYPES[v.type];
+    return (t?.attack || 0) * (1 + 0.35 * Math.max(0, (v.stack || 1) - 1)) * v.hp / maxHP(v) +
+      (v.cmd ? 60 + commanderValue(g, v) : 0);
+  }
   // A formation of front `f` worth flying forward: healthy, out of contact, free of other duties, and still far from
   // its goals (on any landmass: the airship flies over the sea too). Troops too far from every front for the planner
   // are given theirs here by frontOf, as they would be on their own orders.
@@ -52,15 +60,21 @@
         dist(g, w, v) <= E.movement(g, v) + rangeOf(g, v).max + 1)) return false;
     return frontOf(g, memo, v) === f;
   }
-  // A ground unit's side of the lift: board a ready airship in reach that serves the unit's own front.
+  // A ground unit's side of the lift: board a ready airship in reach that serves the unit's own front, unless
+  // more valuable formations of that front (liftValue) close enough to board it would fill its remaining room.
   function airBerth(g, u, memo, front) {
     if (g.mode !== 'conquest' || u.moved || !front) return null;
     const ships = g.units.filter(v => isAir(v) && v.side === u.side && canBoard(g, v) &&
       v.hp / maxHP(v) >= AIRLIFT.ready && dist(g, u, v) <= E.movement(g, u) + 1 &&
       g.ai?.[u.side]?.airships?.[v.id]?.front === front.id);
-    if (!ships.length || !airRider(g, memo, u, front, airGoals(g, front))) return null;
-    const reach = reachable(g, u);
-    return ships.sort((a, b) => dist(g, u, a) - dist(g, u, b) || a.id - b.id).find(v => reach.has(key(v))) || null;
+    const goals = airGoals(g, front);
+    if (!ships.length || !airRider(g, memo, u, front, goals)) return null;
+    const reach = reachable(g, u), worth = liftValue(g, u),
+      room = v => carrierCapacity(g, v) - (v.cargo?.length || 0),
+      better = v => g.units.filter(w => w !== u && !w.moved && liftValue(g, w) > worth &&
+        dist(g, w, v) <= E.movement(g, w) + 1 && airRider(g, memo, w, front, goals)).length;
+    return ships.sort((a, b) => dist(g, u, a) - dist(g, u, b) || a.id - b.id)
+      .find(v => reach.has(key(v)) && better(v) < room(v)) || null;
   }
   function aiAirship(g, u, memo, events) {
     if (!isAir(u) || !isReady(g, u)) return;
@@ -101,7 +115,7 @@
       return;
     }
     // 2. Lift: healthy, with room aboard, take adjacent formations that could not fight this turn anyway,
-    // troops of its own front first.
+    // troops of its own front first, then the most valuable (liftValue).
     const lift = () => {
       const idle = v => v.hp > 0 && v.side === side && v.id !== id && !isShip(v) && !atSea(g, v) &&
         isReady(g, v) && !v.moved && !v.attacked && !v.hold && !memo.guards?.[v.id] &&
@@ -110,7 +124,7 @@
           dist(g, w, v) <= E.movement(g, v) + rangeOf(g, v).max + 1);
       const ours = v => front && memo.assign?.[v.id] === front.id ? 1 : 0;
       for (const v of g.units.filter(v => dist(g, v, u) === 1 && idle(v))
-        .sort((a, b) => ours(b) - ours(a) || b.stack - a.stack || a.id - b.id)) {
+        .sort((a, b) => ours(b) - ours(a) || liftValue(g, b) - liftValue(g, a) || a.id - b.id)) {
         if (!canBoard(g, u)) break;
         const m = move(g, v.id, u.c, u.r);
         if (m.ok) events.push({ kind: 'move', ...m, id: v.id });
@@ -162,7 +176,8 @@
       if (post) fly(post);
     }
     // 4. Strike: try each firing hex in reach against each target in range of it. Return fire weighs
-    // double because the hull never heals on its own.
+    // double because the hull never heals on its own. `aim` keeps each hex's best score for choosing a pickup hex.
+    const aim = new Map();
     const shot = () => {
       const from = { c: u.c, r: u.r }, here = tile(g, u.c, u.r);
       const options = u.moved ? [here] : spots();
@@ -176,6 +191,7 @@
             const d = unitAt(g, q), s = stationAt(g, q);
             const score = pr.unit + pr.shield * 0.7 + (d && pr.unit >= d.hp ? 150 : 0) +
               (s ? 35 + (s.capitalOf ? 60 : 0) + (s.project ? 120 : 0) : 0) - pr.counter * 2 - danger(p);
+            if (score > (aim.get(p) ?? -Infinity)) aim.set(p, score);
             if (!best || score > best.score) best = { p, q, score };
           }
         }
@@ -189,28 +205,35 @@
       return true;
     };
     let strike = shot();
-    if (strike && strike.score >= 150 && fire(strike)) return;
-    // 4b. Pick up: empty and healthy, fly beside the front's troops still far from its goals: those that have not
-    // moved yet board at once, the rest next turn (airBerth). Beyond reach, close in: always for troops within two
-    // turns' flight, and for those within `reach` turns unless a shot worth `fetch` is on offer.
+    // 4b. Pick up: empty and healthy, fly beside the front's troops still far from its goals, weighing each by
+    // liftValue: those that have not moved yet board at once, the rest next turn (airBerth). Among equal pickups,
+    // prefer a hex it can also fire from. A pickup this turn beats any shot; a killing shot beats merely closing in.
+    // Beyond reach, close in on the most valuable: always for troops within two turns' flight, and for those within
+    // `reach` turns unless a shot worth `fetch` is on offer.
     const empty = !u.moved && !u.cargo?.length && health() >= AIRLIFT.ready && front,
       closeIn = riders => {
-        const near = riders.sort((a, b) => dist(g, a, u) - dist(g, b, u) || a.id - b.id)[0],
+        const near = riders.sort((a, b) => dist(g, a, u) - liftValue(g, a) / 25 - (dist(g, b, u) - liftValue(g, b) / 25) ||
+            a.id - b.id)[0],
           post = spots().sort((a, b) => dist(g, a, near) * 12 + danger(a) - (dist(g, b, near) * 12 + danger(b)))[0];
         if (post) fly(post);
       };
     if (empty) {
       const riders = g.units.filter(v => dist(g, v, u) <= AIRLIFT.reach * E.movement(g, u) && airRider(g, memo, v, front, goals));
-      if (riders.length && (!strike || strike.score < AIRLIFT.fetch || riders.some(v => dist(g, v, u) <= 2 * E.movement(g, u)))) {
-        const value = p => riders.reduce((a, v) => a + (dist(g, v, p) === 1 ? (v.moved ? 1 : 3) : 0), 0),
-          picks = spots().map(p => ({ p, v: value(p) })).filter(o => o.v > 0)
-            .sort((a, b) => b.v - a.v || danger(a.p) - danger(b.p) || nearest(goals, a.p) - nearest(goals, b.p));
-        if (picks.length) {
-          if (fly(picks[0].p)) lift();
-        } else closeIn(riders);
-        if (u.moved) strike = shot();
+      const value = p => riders.reduce((a, v) => a + (dist(g, v, p) === 1 ? liftValue(g, v) * (v.moved ? 1 : 3) : 0), 0),
+        picks = spots().map(p => ({ p, v: value(p) })).filter(o => o.v > 0)
+          .sort((a, b) => b.v - a.v || (aim.get(b.p) ?? 0) - (aim.get(a.p) ?? 0) || danger(a.p) - danger(b.p) ||
+            nearest(goals, a.p) - nearest(goals, b.p));
+      if (picks.length) {
+        if (fly(picks[0].p)) lift();
+        strike = shot();
+      } else {
+        if (strike && strike.score >= 150 && fire(strike)) return;
+        if (riders.length && (!strike || strike.score < AIRLIFT.fetch || riders.some(v => dist(g, v, u) <= 2 * E.movement(g, u)))) {
+          closeIn(riders);
+          if (u.moved) strike = shot();
+        }
       }
-    }
+    } else if (strike && strike.score >= 150 && fire(strike)) return;
     if (fire(strike)) return;
     // 5. Wait: with nothing to hit, fetch the front's farthest-back troops wherever they are; else hover where its
     // troops gather (its rally city, or the friendly city nearest its objectives; without a front, the friendly city

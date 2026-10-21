@@ -291,6 +291,55 @@ function frontSetup() {
 }
 
 {
+  // AI: with three formations of its front beside it, the airship lifts the commander-led and the hardest-hitting
+  // ones and leaves the plain scout.
+  const { g, memo, aim, free } = frontSetup();
+  const spot = g.tiles.find(p => free(p) && E.distance(p, aim, g) >= 14 && E.adjacent(g, p).filter(free).length >= 4 &&
+    g.stations.every(s => E.distance(s, p, g) > 3));
+  assert.ok(spot, 'Need open ground far from the objective');
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', spot.c, spot.r);
+  g.ai.britannia.airships = { [ship.id]: { front: 'smoke', since: g.turn } };
+  const [a, b, c] = E.adjacent(g, spot).filter(free);
+  const scout = E.newUnit(g, E.typeFor('britannia', 'scout', g), 'britannia', a.c, a.r);
+  const led = E.newUnit(g, E.typeFor('britannia', 'scout', g), 'britannia', b.c, b.r, 1, 'cornelia');
+  const heavy = E.newUnit(g, E.typeFor('britannia', 'heavy', g), 'britannia', c.c, c.r);
+  for (const v of [scout, led, heavy]) memo.assign[v.id] = 'smoke';
+  E.aiOrder(g, ship.id);
+  assert.deepEqual(ship.cargo.map(u => u.id).sort(), [led.id, heavy.id].sort(), 'Lifts the commander and the heavy');
+
+  // The scout acting on its own leaves the last seat to the stronger formation that can still reach it.
+  ship.cargo = [];
+  g.units.push(led, heavy);
+  Object.assign(led, { c: b.c, r: b.r, moved: false });
+  Object.assign(heavy, { c: c.c, r: c.r, moved: false });
+  ship.cargo = [led];
+  g.units.splice(g.units.indexOf(led), 1);
+  E.aiOrder(g, scout.id);
+  assert.ok(!ship.cargo.includes(scout), 'The scout does not take the heavy\'s seat');
+}
+
+{
+  // AI: a pickup this turn comes before a killing shot elsewhere.
+  const { g, memo, aim, free } = frontSetup();
+  const home = g.tiles.filter(p => free(p) && E.distance(p, aim, g) >= 14 && E.distance(p, aim, g) <= 18 &&
+    g.stations.every(s => E.distance(s, p, g) > 3));
+  const spot = home.find(p => home.some(q => E.distance(p, q, g) === 5 &&
+    g.tiles.some(t => free(t) && E.distance(t, q, g) === 5 && E.distance(t, p, g) >= 10)));
+  assert.ok(spot, 'Need room for a rider, the airship and a target');
+  const start = home.find(q => E.distance(spot, q, g) === 5 &&
+    g.tiles.some(t => free(t) && E.distance(t, q, g) === 5 && E.distance(t, spot, g) >= 10));
+  const prey = g.tiles.find(t => free(t) && E.distance(t, start, g) === 5 && E.distance(t, spot, g) >= 10);
+  const rider = E.newUnit(g, E.typeFor('britannia', 'medium', g), 'britannia', spot.c, spot.r);
+  memo.assign[rider.id] = 'smoke';
+  const ship = E.newUnit(g, 'logres_airship', 'britannia', start.c, start.r);
+  g.ai.britannia.airships = { [ship.id]: { front: 'smoke', since: g.turn } };
+  const target = E.newUnit(g, E.typeFor('eu', 'scout', g), 'eu', prey.c, prey.r);
+  target.hp = 1;
+  E.aiOrder(g, ship.id);
+  assert.deepEqual(ship.cargo.map(u => u.id), [rider.id], 'Lifts the formation instead of chasing the kill');
+}
+
+{
   // AI: a badly damaged airship heads for a friendly city instead of fighting, then repairs beside it.
   const g = world('britannia');
   g.phase = 'britannia';

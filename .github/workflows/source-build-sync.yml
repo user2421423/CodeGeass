@@ -47,6 +47,8 @@ jobs:
         run: node tools/airship_smoke.cjs
       - name: Verify commander active banners and Zero AI targeting
         run: node tools/commander_ability_banners_smoke.cjs
+      - name: Verify AI use of approved and reworked commander actions
+        run: node tools/ai_commander_signatures_smoke.cjs
       - name: Verify dynamic Scenario AI defensive transitions and Philippine exception
         run: node tools/scenario_dynamic_defense_smoke.cjs
       - name: Verify Elite class stats and abilities

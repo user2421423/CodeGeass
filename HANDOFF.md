@@ -323,13 +323,18 @@ Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
 >   safest hex next to one; from 60% health it lifts adjacent idle formations (its front's first); with troops aboard
 >   it drops them onto an open enemy city (capturing it), beside an open empty one they can walk into, or within 4
 >   hexes of its goals on the same landmass, else carries them toward the goals (after 3 turns aboard they land
->   wherever is closest); empty, it takes a killing shot, else flies beside formations of its front still 8+ hexes
->   from the goals and out of contact (`airRider`, which gives troops too far from every front theirs via `frontOf`)
->   and lifts those that have not moved; otherwise it takes the best-value shot (return fire counts double), and with
->   nothing to hit it fetches that front's troops from wherever they are, else waits near its rally city. On their
->   own orders, such troops board an airship in reach that serves their front (`airBerth`, called from `aiOrder`,
->   Conquest only), so it can fly them forward the same turn. `tools/airship_smoke.cjs` checks front-directed drops
->   (a nearer enemy city is ignored), the fly-over pickup and the troops' own boarding.
+>   wherever is closest); empty, it flies beside formations of its front still 8+ hexes from the goals and out of
+>   contact (`airRider`, which gives troops too far from every front theirs via `frontOf`) and lifts those that have
+>   not moved. **Lifting comes first:** a pickup it can make this turn beats any shot (it still fires from the pickup
+>   hex, which is preferred among equal pickups); only without one does a killing shot come before closing in on
+>   riders. Riders are weighed by `liftValue` (firepower at present health, plus 60 + `commanderValue` for a
+>   commander), so the airship seats commander-led and hard-hitting formations first and closes in on them. Otherwise
+>   it takes the best-value shot (return fire counts double), and with nothing to hit it fetches that front's troops
+>   from wherever they are, else waits near its rally city. On their own orders, such troops board an airship in
+>   reach that serves their front (`airBerth`, called from `aiOrder`, Conquest only), so it can fly them forward the
+>   same turn, unless more valuable formations of that front that could still board would fill its remaining room. `tools/airship_smoke.cjs` checks front-directed drops
+>   (a nearer enemy city is ignored), the fly-over pickup, the troops' own boarding, seat priority (commander and
+>   heavy before a plain scout) and pickup before a killing shot.
 > - **Seeded comparison (2026-10-20), branch `feature/airship-ai-fronts` vs `main` (c38c4663):** AI-only World
 >   Conquest, 28 turns, seeds 11 23 37 41 59 67 73 89, run under jsc (compare builds only with each other). Mean ±
 >   sd over 8 games; airship stats are per game, all powers together:
@@ -515,6 +520,14 @@ Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
   Ohgi `organizer`, Chiba `artist`, Asahina `followUp` (reads `u.struck`), Senba `guard` (needs `u.held`, set at turn
   start and cleared by `move()`), Urabe `lastStand`/`martyr`, Sugiyama `specialOps`, Minami `spotter`, Tamaki
   `charge`, Katase `prepared`, Inoue `logistics` (`reinforceCost(type, g, side, u)`).
+- **AI use of active abilities** (`src/ai/07-tactical-orders.part.js`): every commander action is AI-usable (the old
+  player-only list of 12 approved signatures was removed on 2026-10-21). `signaturePick` chooses the target for
+  `kind: 'special'` actions and holds the action when it would be wasted (Kate and Chloe heal only real wounds, Gao
+  Hai moves shields only to a clearly weaker city, Marrybell and Sophie buff a hard hitter that can still strike);
+  Olivia marks and Fernando fires Electrical Overload at the target already chosen to attack (`aiSignatureStrike`);
+  Sayoko infiltrates after moving or when firing in place (`aiSayokoShadow`); Margaret redeploys an ally that moved
+  without a target in range, which then acts again (`aiMargaretRedeploy`). Rolo, Charles, Ohgi, Smilas, Zero and Leila
+  keep their own helpers. Checked by `tools/ai_commander_signatures_smoke.cjs`.
 - A fourth rating, **Mobility** (1–6 stars), replaces fixed movement bonuses: 3★ +1 movement up to 6★ +4.
 - Starters Suzaku and Cornelia (Britannia), Leila and Akito (E.U.), Xingke and Xianglin (Federation).
   Recruit prices 400 / 300 / 200 tokens by stars. Eleven ranks from Second Lieutenant (112% frame) to Marshal (160%).

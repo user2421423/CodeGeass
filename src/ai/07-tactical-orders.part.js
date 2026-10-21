@@ -1,8 +1,78 @@
-  // The 29 reworked signatures are player-only active actions. Their passive
-  // rules still affect every faction through the normal engine combat pipeline.
-  const playerOnlyReworkedActions = new Set([
-    'marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','sayoko','margaret'
-  ]);
+  // Approved signature actions (kind 'special'): the AI picks the target the player would, and holds the action
+  // when it would be wasted. Olivia and Fernando use theirs on the target already chosen to fire on
+  // (aiSignatureStrike); Margaret's redeployment and Sayoko's infiltration need the board after movement.
+  const punch = v => (TYPES[v.type]?.attack || 0) * (1 + 0.35 * Math.max(0, (v.stack || 1) - 1));
+  const missing = v => 1 - v.hp / maxHP(v);
+  const pickBest = (list, score) => list.map(v => ({ v, s: score(v) })).filter(o => o.s > 0)
+    .sort((a, b) => b.s - a.s || (a.v.id ?? 0) - (b.v.id ?? 0))[0]?.v || null;
+  function enemyWithin(g, v, d) {
+    return g.units.some(w => w.hp > 0 && foe(g, w.side, v.side) && !atSea(g, w) && dist(g, v, w) <= d);
+  }
+  // Fresh enough to use a buff this turn: not yet fired, able to act, with an enemy it can reach.
+  const canStrike = (g, v) => !v.attacked && v.morale > -3 && !v.expRoloFrozen && !v.expCharlesMemoryRewrite &&
+    enemyWithin(g, v, (v.moved ? 0 : E.movement(g, v)) + rangeOf(g, v).max);
+  function signaturePick(g, u, options) {
+    const threatened = s => g.units.some(w => w.hp > 0 && foe(g, w.side, s.owner) && dist(g, w, s) <= 4) ? 1 : 0;
+    const shieldGap = s => 1 - s.shield / Math.max(1, s.maxShield);
+    switch (u.cmd) {
+      case 'olivia': case 'margaret': case 'sayoko': return null;
+      case 'gaohai': {
+        const source = stationAt(g, u);
+        return pickBest(options, s => shieldGap(s) - shieldGap(source) - 0.2 > 0 ? shieldGap(s) + threatened(s) : 0);
+      }
+      case 'huangqian': return pickBest(options, s => (s.maxShield - s.shield) * (1 + threatened(s)));
+      case 'chengzhong': return pickBest(options, s => 1 + g.units.filter(w => w.hp > 0 && w.side === s.owner && dist(g, w, s) <= 2).length +
+        (s.capitalOf ? 2 : 0) + shieldGap(s));
+      case 'sugiyama': return pickBest(options, s => 1 + shieldGap(s) * 2 + (s.capitalOf ? 1 : 0));
+      case 'diethard': return pickBest(options, v => commanderValue(g, v) + punch(v) * 0.2);
+      case 'kirihara': return pickBest(options, v => 1 + missing(v) * 100 + (v.cmd ? 5 : 0));
+    }
+    const k = COMMANDERS[u.cmd].action.target;
+    if (k === 'wounded') return pickBest(options, v => missing(v) >= (u.cmd === 'kate' ? 0.1 : 0.15) ? missing(v) + (v.cmd ? 0.05 : 0) : 0);
+    if (k === 'enemy' || k === 'enemyCommander') return pickBest(options, v => punch(v) + commanderValue(g, v));
+    // Allies (Marrybell, Sophie) and Elite Forces (Norland, Lloyd): a hard hitter that can still use it this turn.
+    return pickBest(options, v => canStrike(g, v) ? punch(v) + (v.cmd ? 30 : 0) : 0);
+  }
+  function aiSignature(g, u, events) {
+    if (COMMANDERS[u.cmd]?.action?.kind !== 'special' || feintReason(g, u)) return false;
+    const pick = signaturePick(g, u, actionTargets(g, u));
+    if (!pick) return false;
+    const used = feint(g, u.id, pick.id);
+    if (!used?.ok) return false;
+    events.push({ kind: 'feint', id: u.id, target: used.target, affected: used.affected });
+    return true;
+  }
+  // Olivia marks, and Fernando overloads, the very target the AI chose to fire on. Returns Fernando's attack
+  // (the overload is the attack itself); Olivia's mark is followed by her normal attack.
+  function aiSignatureStrike(g, u, target, events) {
+    if (!target || (u.cmd !== 'olivia' && COMMANDERS[u.cmd]?.action?.kind !== 'electricalOverload') ||
+      feintReason(g, u) || !actionTargets(g, u).some(v => v.id === target.id)) return null;
+    const used = feint(g, u.id, target.id);
+    if (!used?.ok) return null;
+    events.push({ kind: 'feint', id: u.id, target: used.target, affected: used.affected });
+    return used.attack || null;
+  }
+  // Sayoko infiltrates once she has moved (the action restores a 3-point move) or when she fires from where she
+  // stands: either way the next attack gains 30% and enemy commanders cannot answer it.
+  function aiSayokoShadow(g, u, events, shotReady) {
+    if (u.cmd !== 'sayoko' || u.attacked || feintReason(g, u) ||
+      !(u.moved ? enemyWithin(g, u, rangeOf(g, u).max + 3) : shotReady)) return false;
+    const used = feint(g, u.id, u.id);
+    if (!used?.ok) return false;
+    events.push({ kind: 'feint', id: u.id, target: u.id, affected: 1 });
+    return true;
+  }
+  // Margaret gives a free 3-point move (and +15% damage) to an ally that has moved but not fired and has an enemy
+  // just out of reach, then that ally acts again.
+  function aiMargaretRedeploy(g, u, events) {
+    if (u.cmd !== 'margaret' || feintReason(g, u)) return;
+    const v = pickBest(actionTargets(g, u), v => v.moved && v.morale > -3 && !targets(g, v).length &&
+      enemyWithin(g, v, rangeOf(g, v).max + 3) ? punch(v) + (v.cmd ? 30 : 0) : 0);
+    const used = v && feint(g, u.id, v.id);
+    if (!used?.ok) return;
+    events.push({ kind: 'feint', id: u.id, target: used.target, affected: 1 });
+    events.push(...aiOrder(g, v.id));
+  }
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
@@ -240,10 +310,7 @@
       const used=feint(g,id,targets[0]?.id);
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
     }
-    if(COMMANDERS[u.cmd]?.action?.kind==='special'&&!playerOnlyReworkedActions.has(u.cmd)&&!feintReason(g,u)) {
-      const targets=actionTargets(g,u), used=feint(g,id,targets[0]?.id);
-      if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
-    }
+    aiSignature(g, u, events);
     // Withdraw already-fired allies before Leila's own movement can take her out of range.
     if (COMMANDERS[u.cmd]?.action?.kind === 'withdraw' && !feintReason(g, u)) {
       const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);
@@ -279,7 +346,7 @@
       ride = airship && move(g, id, airship.c, airship.r);
     if (ride?.ok) return [...events, { kind: 'move', ...ride, id }];
     const action = COMMANDERS[u.cmd]?.action;
-    if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard'].includes(action.kind) && !feintReason(g, u)) {
+    if (action && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard', 'special', 'electricalOverload'].includes(action.kind) && !feintReason(g, u)) {
       const r = feint(g, id);
       if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
     }
@@ -484,15 +551,17 @@
       aiOhgiHeal(g, u, events);
       aiCharlesMemoryRewrite(g, u, events);
       aiRoloFreeze(g, u, events);
+      aiSignature(g, u, events);
+      if (u.cmd === 'sayoko' && aiSayokoShadow(g, u, events, !!choose())) maneuver();
       // A designation may only now be in range.
-      if (action && !playerOnlyReworkedActions.has(u.cmd) && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard'].includes(action.kind) && !feintReason(g, u)) {
+      if (action && !['command', 'withdraw', 'freeze', 'memoryRewrite', 'ohgiHeal', 'expendableVanguard', 'special', 'electricalOverload'].includes(action.kind) && !feintReason(g, u)) {
         const r = feint(g, id);
         if (r.ok) events.push({ kind: 'feint', id, affected: r.affected });
       }
       const shot = choose();
       if (!shot) break;
       const target = unitAt(g, shot.p);
-      const a = attack(g, id, shot.p.c, shot.p.r);
+      const a = aiSignatureStrike(g, u, target, events) || attack(g, id, shot.p.c, shot.p.r);
       if (a.ok) {
         events.push({ kind: 'attack', ...a, id });
         if (target) {
@@ -559,6 +628,7 @@
         for (const friend of friends) events.push(...aiOrder(g, friend));
       }
     }
+    if (!g.over && u.hp > 0) aiMargaretRedeploy(g, u, events);
     memo.focusCache?.clear();
     memo.trafficCache?.clear();
     return events;
