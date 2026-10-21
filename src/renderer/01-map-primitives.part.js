@@ -367,9 +367,8 @@ function unitAllegianceColor(g, u) {
 function unitRingColor(u) {
   return unitAllegianceColor(game, u);
 }
-// A faction-specific colour chip distinguishes multiple hostile factions and
-// allied armies without obscuring Knightmare artwork or requiring text labels.
-// The player's own formations keep their original, unbadged appearance.
+// The overview/minimap uses one existing marker per non-player formation;
+// fill that marker with this faction colour instead of adding a second dot.
 function unitFactionDotColor(g, u) {
   if (u.side === 'neutral') return '#a3a9b3';
   // Conquest 2018 stores the U.F.N. with the 'cf' side identifier.
@@ -377,22 +376,6 @@ function unitFactionDotColor(g, u) {
     ? 'ufn' : u.side;
   return HOSTILE_UNIT_COLORS[side] ||
     g.factions?.[side]?.color || E.FACTIONS[side]?.color || '#ff6b7b';
-}
-function drawUnitFactionDot(u, scale, overview = false, markerRadius = 15) {
-  if (u.side === game.player) return;
-  const invScale = 1 / Math.max(scale, 0.05);
-  ctx.save();
-  // Position beside the overview token rather than covering the formation.
-  if (overview) ctx.translate(markerRadius + 4.5 * invScale, -4 * invScale);
-  else ctx.translate(29, -30);
-  ctx.beginPath();
-  ctx.arc(0, 0, (overview ? 3.4 : 4.3) * invScale, 0, Math.PI * 2);
-  ctx.fillStyle = unitFactionDotColor(game, u);
-  ctx.fill();
-  ctx.strokeStyle = '#09131e';
-  ctx.lineWidth = 1.5 * invScale;
-  ctx.stroke();
-  ctx.restore();
 }
 // Campaign/scenario allies and the 2018 Britannian coalition share a team in the engine.
 function hostileUnit(u) {
