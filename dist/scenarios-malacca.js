@@ -263,7 +263,7 @@
         const index=usage.get(key)||0;usage.set(key,index+1);
         const id=pool[index%pool.length];
         u.type=E.ELITE_FORCES[id].type;u.elite=id;
-        u.eliteLevel=u.side===player?1:u.cmd?5:3;
+        u.eliteLevel=u.cmd&&E.foe(g,u.side,player)?3:1;
         u.stack=1;u.eliteStart=true;
         if(u.cmd&&u.side!==player&&g.officers[u.cmd]){
           g.officers[u.cmd].rank=E.RANKS.length-1;
