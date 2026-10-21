@@ -444,7 +444,6 @@ document.addEventListener('click', e => {
   if (d.armyDisband) {
     const group = E.armyGroup(game, +d.armyDisband);
     if (!group) return toast('Army group not found.');
-    if (!window.confirm('Delete ' + armyGroupLabel(group) + '? This removes its group orders and organization, but does not delete any units.')) return;
     const result = E.disbandArmyGroup(game, +d.armyDisband);
     if (result.ok) { if (activeArmyGroupId === +d.armyDisband) activeArmyGroupId = null; refreshAndSave(); armyGroupsDialog(); toast('Army group deleted. Units remain available.'); }
     else toast(result.reason);

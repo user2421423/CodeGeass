@@ -81,6 +81,32 @@ assert.doesNotMatch(ui, /\$\{live\.length\}\/24 units/);
 assert.match(ui, /chosen\.slice\(1\)/, 'Multi-selection creation adds all selected units');
 assert.doesNotMatch(ui, /gr\.units\.length\s*>=\s*24/);
 assert.doesNotMatch(ui, /live\.slice\(0,5\)/, 'Group overview hides member-type previews');
-assert.match(ui, /data-army-stance=/, 'Direct stance controls are present');
-assert.match(ui, /data-army-conquer=/, 'Direct city capture control is present');
-console.log('Unlimited army-group membership, UI paths and scenario auto-organization: PASS');
+// An army has one order dropdown on the overview and detail screens.
+assert.match(ui, /data-army-order=/, 'Army group order dropdown is available');
+assert.match(ui, /armyGroupOrderSelect\(v, 'overview'\)/, 'Overview uses the order dropdown');
+assert.match(ui, /armyGroupOrderSelect\(gr, 'detail'\)/, 'Details use the same dropdown');
+assert.match(ui, /data-army-disband=/, 'Each group can be deleted');
+assert.doesNotMatch(ui, /data-army-stance=/, 'Old separate stance buttons are removed');
+assert.doesNotMatch(ui, /data-army-conquer=/, 'Old capture toggle button is removed');
+assert.doesNotMatch(ui, /\$\{strategicOverlayControls\(\)\}/, 'Off / All Army Groups buttons are hidden');
+const input = fs.readFileSync('dist/ui/input.js', 'utf8');
+assert.match(input, /e\.target\.dataset\.armyOrder/, 'Dropdown change events are handled');
+assert.match(input, /E\.setArmyGroupConquest\(game, id, true\)/, 'Capture order is enabled by dropdown');
+assert.doesNotMatch(input, /window\.confirm/, 'Deleting a group never opens a confirmation prompt');
+
+// Render dropdown HTML independently: the currently active order must be selected.
+const selectorSource = ui.slice(ui.indexOf('function armyGroupOrderSelect'),
+  ui.indexOf('function activeArmyGroup'));
+const renderSelector = new Function('E', 'esc', 'interactive', 'armyGroupLabel',
+  selectorSource + '\nreturn armyGroupOrderSelect;')(
+  E, value => value, () => true, gr => gr.name || 'Army group');
+for (const [stance, label] of Object.entries(E.ARMY_GROUP_STANCES)) {
+  const html = renderSelector({ id: 12, stance }, 'overview');
+  assert.ok(html.includes(`<option value="${stance}" selected>${label}</option>`),
+    `${label} is preselected`);
+}
+const conquest = renderSelector({ id: 12, stance: 'assault', autoConquer: true }, 'detail');
+assert.ok(conquest.includes('<option value="conquer" selected>Capture Remaining Cities</option>'),
+  'Capture Remaining Cities is preselected when active');
+assert.ok(conquest.includes('data-army-order="12:detail"'), 'Details route order changes correctly');
+console.log('Unlimited army-group membership, auto-disband and order dropdown UI: PASS');
