@@ -78,7 +78,7 @@ const dependencies = {
  'geass-war':["europe-landmask.js", "scenarios-europe.js", "scenarios-exclusive-common.js", "scenarios-geass-war.js"],
  'protagonists-antagonists':["europe-landmask.js", "scenarios-europe.js", "scenarios-exclusive-common.js", "scenarios-protagonists-antagonists.js"],
  'partition-britannia':["partition-geography.js", "scenarios-exclusive-common.js", "scenarios-partition-britannia.js"],
- 'ufn-civil-war':["scenarios-luoyang.js", "scenarios-exclusive-common.js", "scenarios-ufn-civil-war.js"],
+ 'ufn-civil-war':["scenarios-exclusive-common.js", "scenarios-ufn-civil-war.js"],
 
 };
 const catalog = {};
