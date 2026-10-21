@@ -237,7 +237,7 @@ function scenarioDialog() {
             <div class="scenario-map-side">
               <div class="scenario-map-head"><span>OPERATIONAL MAP</span><span>${model.cols} × ${model.rows} HEXES</span></div>
               <div class="scenario-map-window">
-                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" alt="Geographic map of ${esc(model.title)} with no troops or unit markers" src="scenario-previews/${esc(scenarioKind)}.webp"><p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
+                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" alt="Geographic map of ${esc(model.title)} with no troops or unit markers" src="scenario-previews/${esc(scenarioKind)}.${scenarioKind==='ufn-civil-war'?'svg':'webp'}"><p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
               </div>
               <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount===null?'Static geographic preview':unitCount+' starting formations'}</span><span>${sideCount} playable powers</span></div>
             </div>

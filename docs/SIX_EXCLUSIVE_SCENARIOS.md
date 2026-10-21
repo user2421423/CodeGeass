@@ -11,9 +11,9 @@ These operations are independent total-conquest wars, with stable IDs and the ex
 | `geass-war` | Continental European atlas, 120 × 80 | Order 18 eastern cities; coalition 26 western cities | 114 / 104, including airships and real-port fleets |
 | `protagonists-antagonists` | Continental European atlas, 120 × 80 | Protagonists 28 western cities; antagonists 16 eastern cities | 104 / 104, including airships and real-port fleets |
 | `partition-britannia` | Continental U.S./Canada, 178 × 110 | E.U. 30 / Federation 21 / Britannian heartland 27 | 100 / 90 / 73 (including one Britannian airship) |
-| `ufn-civil-war` | Mainland China: Luoyang / Yellow River approaches, 174 × 116 | UFN 17 eastern cities / Federation 66 homeland cities | 66 / 106, including one airship each |
+| `ufn-civil-war` | Country-clipped mainland China, 200 × 120 | UFN 50 eastern/coastal cities / Federation 69 western/interior cities | 96 / 136, with one airship each |
 
-The China operation is a detailed mainland regional theatre around the Yellow River, not an entire low-detail national rectangle. The UFN's expedition is based at Shangqiu and Jining, with five turns of opening income in reserve. Luoyang and Zhengzhou remain Federation-held. It includes no Japan.
+The UFN Civil War uses China-wide mainland geography, including Xinjiang, Tibet, Inner Mongolia, Manchuria, the Yangtze basin and the southern coast. It is no longer restricted to the Luoyang battlefield. All 119 cities are Chinese; foreign territory and Taiwan remain off-map. The UFN controls 50 eastern and coastal cities with its capital at Nanjing; the Federation starts with 69 interior and western cities led from Luoyang. The separate Tianzi-versus-High-Eunuchs Chinese Civil War remains unchanged.
 
 The Partition map uses only Natural Earth U.S. and Canadian country polygons, clipped to 141°W–52°W, 24°N–70°N, subtracting the existing GSHHG lakes. Alaska and the high Arctic are omitted to keep continental operations readable. There is no Mexican, Central American, Greenlandic or Caribbean playable territory. Country borders become theatre edges rather than invented coastlines. Ports require an actual adjacent navigable-water hex; no inland sea tiles are fabricated. The Rockies remain passable, and the Great Lakes remain water.
 

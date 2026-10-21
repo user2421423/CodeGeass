@@ -79,6 +79,14 @@ for(const id of ['rounds-tournament','partition-britannia']){
 }
 const tournament=E.scenarios.byId['rounds-tournament'].create();
 assert.equal(tournament.order.length,6);for(const side of tournament.order){assert.equal(tournament.startUnits[side],14);assert.equal(tournament.economy[side].credits,600);}
+const china=E.scenarios.byId['ufn-civil-war'];
+assert.equal(china.cols,200);assert.equal(china.rows,120);
+const mainland=china.create('ufn','normal',57);
+assert.equal(mainland.stations.length,119);
+for(const name of ['Kashgar','Lhasa','Urumqi','Harbin','Shanghai','Nanjing','Guangzhou','Haikou'])
+ assert(mainland.stations.some(s=>s.name===name),'Missing mainland China city '+name);
+assert(mainland.tiles.some(t=>t.terrain==='offmap'),'Mainland China must exclude surrounding countries');
+assert.equal(mainland.stations.filter(s=>s.owner==='ufn').length,50);
 const partition=E.scenarios.byId['partition-britannia'].create('remnants');
 assert.equal(partition.stations.filter(s=>s.owner==='remnants').length,27);
 assert.equal(partition.stations.filter(s=>s.owner==='cf').length,21);

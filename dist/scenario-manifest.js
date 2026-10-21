@@ -69,7 +69,7 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"geass-war",title:"The Geass War",note:"44 cities · 2 sides · Geass vs conventional"},
   {id:"protagonists-antagonists",title:"Protagonists vs Antagonists",note:"44 cities · 2 sides · multinational armies"},
   {id:"partition-britannia",title:"The Partition of Britannia",note:"78 cities · 3 sides · Britannian continental heartland"},
-  {id:"ufn-civil-war",title:"UFN Civil War",note:"83 cities · 2 sides · mainland China"}
+  {id:"ufn-civil-war",title:"UFN Civil War",note:"119 cities · 2 sides · full mainland China"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.
 const SCENARIO_FILES = Object.freeze([

@@ -975,16 +975,16 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "ufn-civil-war": {
-    "cities": 83,
-    "formations": 172,
+    "cities": 119,
+    "formations": 232,
     "sides": {
       "ufn": {
-        "cities": 17,
-        "formations": 66
+        "cities": 50,
+        "formations": 96
       },
       "cf": {
-        "cities": 66,
-        "formations": 106
+        "cities": 69,
+        "formations": 136
       }
     }
   }
