@@ -182,6 +182,7 @@
   function grandMastersParticipants(g, u, target) {
     if (!target || target.hp <= 0 || !foe(g, target.side, u.side)) return [];
     const eligible = w => w.hp > 0 && !atSea(g,w) &&
+      w.expFarneseSlaughterTurn !== g.turn &&
       inRange(w,target,g) && hostileTarget(g,w,target);
     const leader = eligible(u) ? [u] : [];
     const allies = g.units.filter(w => w.id !== u.id && w.side === u.side &&
@@ -194,6 +195,9 @@
   function actionTargets(g, u) {
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
+    if (kind === 'farneseWithdrawal') return g.units.some(v =>
+      v.hp > 0 && v.side === u.side && dist(g,u,v) <= 3 &&
+      v.hp < maxHP(v) * 0.5) ? [u] : [];
     if (kind === 'manfrediRequisition') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=2&&!TYPES[v.type].elite&&v.stack<3);
     if (kind === 'arkFleet') return g.stations.filter(s=>s.owner&&foe(g,s.owner,u.side));
     if (kind === 'command') return u.cmd === 'zero'
@@ -246,6 +250,29 @@
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'farneseWithdrawal') {
+      let affected = 0;
+      for (const ally of g.units) {
+        if (ally.hp <= 0 || ally.side !== u.side || dist(g,u,ally) > 3 ||
+            ally.hp >= maxHP(ally) * 0.5) continue;
+        // Restore a spent move; bank a full extra move for units that have
+        // not yet spent their movement. Attack availability is unchanged.
+        if (ally.moved) {
+          if (!heavyMoveLimitReached(g,ally)) {
+            ally.moved = false; ally.withdrawMove = true;
+            ally.skillReposition = 0;
+          }
+        } else if (!heavyMoveLimitReached(g,ally)) {
+          ally.expFarneseExtraMove = Math.max(1,ally.expFarneseExtraMove||0);
+        }
+        ally.expFarneseWithdrawal = {side:ally.side,source:u.id};
+        affected++;
+      }
+      if (!affected) return {ok:false,reason:'No friendly formations below 50% HP within 3 hexes'};
+      u.feintCD = 0;u.feintUsedTurn = g.turn;
+      log(g,'Orderly Withdrawal grants '+affected+' endangered friendly formations movement and protection.',u.side);
+      return {ok:true,affected};
+    }
     if(action.kind==='manfrediRequisition'){
       const v=targetId==null?options[0]:options.find(w=>w.id===targetId);
       if(!v)return {ok:false,reason:'Choose a normal friendly formation within 2 hexes with room for another frame'};
