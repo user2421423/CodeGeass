@@ -967,13 +967,7 @@
       }
       used.add(id);
     }
-    // Preserve free formations for attaching purchased HQ officers. A complete
-    // starting cast must not disable the ordinary commander-assignment mechanic.
-    if (is2018) armies.push(
-      ['cf','medium',113.5,34,1,null,'bk'],
-      ['cf','assault',20.5,51.9,1,null,'bk'],
-      ['cf','rocket',36.6,-1.5,1,null,'bk']
-    );
+    // No extra unassigned U.F.N. reserves in the 2018 Conquest.
     if (used.size !== availableOfficers.length)
       throw new Error('Not every ' + era + ' commander has a starting deployment');
     return armies;
@@ -996,10 +990,15 @@
     throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
+  // All 2018 Britannian and U.F.N. ground starts require named commanders.
+  // Euro Britannia retains its anonymous land starts; navy is separate.
+  ufn2018.armies = ufn2018.armies.filter(formation =>
+    formation[5] || !['britannia', 'cf'].includes(formation[0]));
+
   // 2018-only coalition reinforcement: every *commander-led* Britannian and
   // Euro-Britannian starting land formation gets a full three-frame stack.
-  // Apply after the complete roster is assigned, including auto-filled slots.
-  // Leave uncommanded formations, both fleets and all U.F.N. units unchanged.
+  // Apply after all officers are assigned and unused ground units removed.
+  // Euro Britannian anonymous troops and U.F.N. commander stacks are untouched.
   for (const formation of ufn2018.armies)
     if (formation[5] && ['britannia', 'eb'].includes(formation[0]))
       formation[4] = 3;
