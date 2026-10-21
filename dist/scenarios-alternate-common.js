@@ -38,7 +38,7 @@ function define(config){
  function eliteRoster(g,side){
    return Object.keys(E.ELITE_FORCES).filter(id=>{
      const e=E.ELITE_FORCES[id];
-     return !e.scenarioOnly&&e.availableTo.includes(equipment[side])&&
+     return !e.scenarioOnly&&e.availableTo.includes(equipment[side]==='eb'?'britannia':equipment[side])&&
        (!exclusive[id]||exclusive[id]===side)&&E.eliteEligible(g,side,id);
    });
  }

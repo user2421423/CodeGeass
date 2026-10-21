@@ -141,7 +141,8 @@
       (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
       (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) ? t.naval !== 'ship' : !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       ((t.air ? airshipType(g, producer) !== type :
-        !(producer === 'cf' ? [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)] :
+        !(producer === 'eb' ? [...buildableTypes(g, producer), ...navalTypes(g, producer)] :
+        producer === 'cf' ? [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)] :
         (g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)])).includes(type))
         ? 'Not built by this faction'
         : null) ||

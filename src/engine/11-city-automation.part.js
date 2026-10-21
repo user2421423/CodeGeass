@@ -28,13 +28,14 @@
     if (!s) return [];
     const landOwned = s.owner === side,
       portOwned = (s.portOwner || s.owner) === side,
-      land = landOwned ? (g.buildable?.[side] || Object.values(lineupOf(g, side))) : [],
+      land = landOwned ? buildableTypes(g, side) : [],
       navy = portOwned && (s.portAt || (landOwned && portSite(g, s))) ? navalTypes(g, side) : [],
       air = landOwned && airshipType(g, side) ? [airshipType(g, side)] : [];
     return [...new Set([...land, ...navy, ...air])]
       .filter(id => {
         const t = TYPES[id];
-        return t && !t.elite && !t.campaign && (portBuilt(t) ? portOwned : landOwned) &&
+        return t && !t.elite && (!t.campaign || Object.values(lineupOf(g, side)).includes(id)) &&
+          (portBuilt(t) ? portOwned : landOwned) &&
           (t.side === side || t.side === 'neutral' || t.air || (g.buildable?.[side] || []).includes(id));
       })
       .sort((a, b) => {

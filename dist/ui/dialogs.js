@@ -27,6 +27,7 @@ function openShop(id, branch = shop.branch) {
         ? E.navalTypes(game, game.player)
         : branch === AIRSHIP_TAB
           ? [E.airshipType(game, game.player)]
+          : game.player === 'eb' ? E.buildableTypes(game, game.player)
           : game.buildable?.[game.player] || E.CLASS_ORDER.map(cls => lineup[cls]),
     // Campaign factions can deliberately reuse one frame for several class slots (Euro Britannia is the main
     // example). The factory should show that frame once, not duplicate the card for every slot it fills.

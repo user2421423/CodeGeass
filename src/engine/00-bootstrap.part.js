@@ -97,21 +97,46 @@
     if (side !== 'cf') return null;
     return ufnBlackKnights(g, side) ? LINEUPS.bk : LINEUPS.cf2017;
   }
+  // Euro Britannia has its own regular heavy and super-heavy in every mode.
+  // Scenario-specific mixed rosters may change its other classes, but not these two.
   function typeFor(side, cls, g = null) {
     const federation = federationLineup(g, side);
     if (federation) return federation[cls];
+    if (side === 'eb' && (cls === 'heavy' || cls === 'super')) return LINEUPS.eb[cls];
     return g?.lineup?.[side]?.[cls] || ROSTER[side]?.[cls] || ROSTER.britannia[cls];
   }
   function lineupOf(g, side) {
     const federation = federationLineup(g, side);
     if (federation) return { ...federation };
-    return { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
+    const lineup = { ...(ROSTER[side] || {}), ...(g?.lineup?.[side] || {}) };
+    if (side === 'eb') {
+      lineup.heavy = LINEUPS.eb.heavy;
+      lineup.super = LINEUPS.eb.super;
+    }
+    return lineup;
+  }
+  // A custom scenario's buildable union must not reintroduce Britannian
+  // regular heavies into Euro-Britannian factories and automation.
+  function buildableTypes(g, side) {
+    const available = g?.buildable?.[side] || Object.values(lineupOf(g, side));
+    if (side !== 'eb') return available;
+    const types = available.map(id => {
+      const t = TYPES[id];
+      return t && !t.elite && !t.naval && !t.air &&
+        (t.cls === 'heavy' || t.cls === 'super') ? LINEUPS.eb[t.cls] : id;
+    });
+    return [...new Set([...types, LINEUPS.eb.heavy, LINEUPS.eb.super])];
   }
   // Keep explicit scripted scenario units and imported saves era-accurate.
   // Preserve the unit's class and allegiance; only change the equipment ID.
   function eraUnitType(g, type, side) {
     const t = TYPES[type];
     if(side==='eb'&&t?.air)return 'logres_airship';
+    // Normalize ordinary armor at creation. Leave Elite Forces, naval units
+    // and explicitly neutral special/story models such as Siegfried intact.
+    if (side === 'eb' && t && !t.elite && !t.naval && t.side !== 'neutral' &&
+        (t.cls === 'heavy' || t.cls === 'super'))
+      return LINEUPS.eb[t.cls];
     if (side !== 'cf' || !t) return type;
     // The 2017 Federation flies the Shenlong; the 2018 U.F.N. flies the Ikaruga.
     if (t.air) return airshipType(g, side) || type;
