@@ -256,7 +256,34 @@
       },
     };
   }
+  // Transient presentation records stay outside saved game state. Nested
+  // attacks (such as Electrical Overload) share their outer action's queue.
+  const abilityVisualQueues = new WeakMap();
+  function collectAbilityVisuals(g, resolve) {
+    if (abilityVisualQueues.has(g)) return resolve();
+    const events = [];
+    abilityVisualQueues.set(g, events);
+    try {
+      const result = resolve();
+      if (result?.ok && events.length) result.abilityEffects = events;
+      return result;
+    } finally { abilityVisualQueues.delete(g); }
+  }
+  function recordAbilityAttack(g, attacker, target, damage, crit = false) {
+    const events = abilityVisualQueues.get(g);
+    if (!events) return;
+    const record = commanderCombatRecord(attacker,target,damage);
+    record.result.crit = crit;
+    events.push({kind:'attack',...record,target:{id:target.id,type:target.type,
+      side:target.side,stack:target.stack,c:target.c,r:target.r}});
+  }
+  function recordAbilitySignal(g, target, label, kind = 'buff') {
+    abilityVisualQueues.get(g)?.push({kind:'signal',to:{c:target.c,r:target.r},label,tone:kind});
+  }
   function feint(g, id, targetId = null) {
+    return collectAbilityVisuals(g, () => resolveFeint(g,id,targetId));
+  }
+  function resolveFeint(g, id, targetId = null) {
     const check = validateAction(g, { kind: 'commander', id });
     if (!check.ok) return check;
     const u = check.actor;
@@ -395,6 +422,7 @@
         incoming = newcomerIntercept(g,v,incoming);
         if (fx(v).futureSightDodge && random(g) < fx(v).futureSightDodge) {
           incoming = 0;
+          recordAbilitySignal(g,v,'EVADED','guard');
           log(g,'FUTURE SIGHT — EVADED',v.side);
         }
         const prior=v.hp;

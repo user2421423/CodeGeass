@@ -27,6 +27,8 @@ jobs:
         run: node tools/ability_targeting_smoke.cjs
       - name: Verify commander attacks animate each actual shooter without extra damage
         run: node tools/commander_attack_animations_smoke.cjs
+      - name: Verify passive reactions, survival effects and active support feedback
+        run: node tools/remaining_ability_effects_smoke.cjs
       - name: Verify 100 commander commissions and invested-save rebalance
         run: node tools/commission_rebalance_smoke.cjs
       - name: Verify Suzaku starter and existing HQ and battle-save migration

@@ -328,6 +328,7 @@ function activateHex(p) {
     }
     if (readyCache.has(E.key(p))) {
       const snapshot = JSON.stringify(E.packSave(game)),
+        visuals = combatVisualSnapshot(),
         wasSea = E.atSea(game, u),
         result = E.move(game, u.id, p.c, p.r);
       if (result.ok) {
@@ -349,6 +350,7 @@ function activateHex(p) {
           life: 0.45,
           max: 0.45,
         });
+        addAbilityEffects(result.abilityEffects,visuals,0.45);
         if (result.loaded) selection = { kind: 'unit', id: result.loaded };
         refreshAndSave(!irreversible);
         if (result.loaded) toast('Aboard the Carrier-Battleship. It can launch immediately.');

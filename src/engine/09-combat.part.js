@@ -467,6 +467,7 @@
       victim.expGuilfordSavedAttack = { turn:g.turn, attackerId:attacker.id };
       guilfordCleanse(victim);
     }
+    recordAbilitySignal(g,victim,sacrifice ? 'ULTIMATE SACRIFICE' : 'GUILFORD GUARD','guard');
     // Multiple threatened commanders can name different attackers; the +30%
     // does not stack against a single attacker.
     if (guard.hp > 0) {
@@ -501,6 +502,7 @@
     if(!knight)return incoming;
     const redirected=Math.round(incoming*.5),before=knight.hp;
     victim.expDarltonProtectTurn=g.turn;
+    recordAbilitySignal(g,victim,'PROTECT OUR FATHER','guard');
     knight.hp=Math.max(0,knight.hp-redirected);
     recordWarEvent(g,'damage',attacker.side,{targetSide:knight.side,
       value:before-knight.hp,unitId:attacker.id,group:warGroup(g,attacker)});
@@ -542,6 +544,7 @@
       v.hp = maxHP(v);
       v.expMarianneAwakeningTurn = g.turn;
       log(g, "Marianne's Awakening restores Anya to full health.", v.side);
+      recordAbilitySignal(g,v,"MARIANNE'S AWAKENING",'heal');
       return;
     }
     if ((fx(v).undying && v.undyingUsedTurn !== g.turn || v.cmd==='urabe'&&!v.expFinalStandUsed&&!!attacker&&!!v.expDirectIncoming) && !force) {
@@ -558,12 +561,15 @@
           smilasDealCombatDamage(g,attacker,v,amount);
           recordWarEvent(g,'damage',v.side,{targetSide:attacker.side,value:oldHp-attacker.hp,unitId:v.id,group:warGroup(g,v)});
           if(attacker.hp<=0){attacker.expDirectIncoming=true;kill(g,attacker,v,false,null,amount);delete attacker.expDirectIncoming;}
+          recordAbilityAttack(g,v,attacker,oldHp-attacker.hp);
         }
+        recordAbilitySignal(g,v,'FINAL STAND','guard');
         return;
       }
       v.hp = 1;
       v.undyingUsedTurn = g.turn;
       log(g, `${COMMANDERS[v.cmd].short} survives a lethal blow: Code Bearer.`, v.side);
+      recordAbilitySignal(g,v,'CODE BEARER','guard');
       return;
     }
     // The intrinsic survivals above (Anya, C.C., Urabe) and earlier combat
@@ -576,6 +582,7 @@
         !m.expMasakiSacrificeUsed&&dist(g,m,v)<=2).sort((a,b)=>a.id-b.id)[0];
       if(rescuer){
         v.hp=maxHP(v);
+        recordAbilitySignal(g,v,'ULTIMATE GUARDIAN','heal');
         rescuer.expMasakiSacrificeUsed=true;
         rescuer.hp=0;
         log(g,'Ultimate Guardian: Masaki sacrifices himself to restore '+
@@ -614,6 +621,7 @@
       recordWarEvent(g,'damage',v.side,{
         targetSide:attacker.side,value:before-attacker.hp,unitId:v.id,group:warGroup(g,v)});
       log(g,`Necessary Sacrifices reflects ${reflected} damage onto ${COMMANDERS[attacker.cmd]?.short||TYPES[attacker.type].short}.`,v.side);
+      recordAbilitySignal(g,attacker,'REFLECT −'+Math.max(0,before-attacker.hp),'debuff');
       // No attack source or incomingDamage: an attacker killed by reflection
       // gets ordinary survival checks, but cannot reflect or counter again.
       if (attacker.hp <= 0) kill(g,attacker,null,false,v.side,0);
@@ -756,6 +764,9 @@
     return breakthrough;
   }
   function attack(g, id, c, r) {
+    return collectAbilityVisuals(g, () => resolveAttack(g,id,c,r));
+  }
+  function resolveAttack(g, id, c, r) {
     const check = validateAction(g, { kind: 'attack', id, c, r });
     if (!check.ok) return check;
     const a = check.actor, pr = check.preview, f = fx(a);
@@ -824,6 +835,7 @@
       // No dodge roll is made for indirect splash or city shield damage.
       if (fx(d).futureSightDodge && random(g) < fx(d).futureSightDodge) {
         dmg = 0;
+        recordAbilitySignal(g,d,'EVADED','guard');
         log(g, 'FUTURE SIGHT — EVADED', d.side);
       }
       const fullDmg = dmg, priorHP=d.hp;
@@ -885,6 +897,7 @@
       if (a.expCCProtection) delete a.expCCProtection;
       if (fx(a).futureSightDodge && random(g) < fx(a).futureSightDodge) {
         retaliation = 0;
+        recordAbilitySignal(g,a,'EVADED','guard');
         log(g, 'FUTURE SIGHT — EVADED', a.side);
       }
       const priorHP=a.hp, fullRetaliation=retaliation;
