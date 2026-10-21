@@ -306,7 +306,7 @@
       const key=u.side+':'+base.cls;
       const id=pool[(used[key]||0)%pool.length];used[key]=(used[key]||0)+1;
       u.type=E.ELITE_FORCES[id].type;u.elite=id;
-      u.eliteLevel=u.side===player?1:u.cmd?5:3;
+      u.eliteLevel=u.cmd&&E.foe(g,u.side,player)?3:1;
       u.eliteStart=true;u.stack=1;
       if(u.cmd&&u.side!==player&&g.officers[u.cmd])
         g.officers[u.cmd].rank=E.RANKS.length-1;
