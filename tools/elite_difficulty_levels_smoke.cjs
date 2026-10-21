@@ -65,6 +65,24 @@ for (const model of Object.values(regionalEngine.scenarios.byId)) {
 assert.ok(scenarios >= 2, 'Elite regional scenario conversions should be tested');
 assert.ok(enemyAces > 0 && regularEnemies > 0, 'Both enemy commander and ordinary cases must be exercised');
 
+// The opening player armies are a direct regression for the old Normal-only
+// filter: Shinjuku had six player formations deleted on higher difficulties,
+// and the Britannian invasion had five.
+for (const [id, playerCount] of [['bk1', 11], ['br1', 12]]) {
+  for (const mode of ['normal', 'hard', 'challenge', 'elite']) {
+    const g = E.campaign.createMission(id, 20261021, mode);
+    assert.equal(g.units.filter(u => u.side === g.player).length, playerCount,
+      id + '/' + mode + ': expected all scripted player formations');
+  }
+}
+// Saitama intentionally has alternate Zero placements. Keeping the extra
+// player forces must never create a second Zero on Hard/Challenge/Elite.
+for (const mode of ['normal', 'hard', 'challenge', 'elite']) {
+  const g = E.campaign.createMission('bk_saitama', 20261021, mode);
+  assert.equal(unitsOf(g).filter(u => u.side === g.player && u.cmd === 'zero').length, 1,
+    'Saitama/' + mode + ': no duplicate Zero');
+}
+
 // Existing battle saves are not rewritten or damaged by the new starting balance.
 const saved = E.campaign.createMission('bk1', 20261021, 'elite');
 const legacyAce = unitsOf(saved).find(u => u.elite && u.cmd && E.foe(saved, u.side, saved.player));
