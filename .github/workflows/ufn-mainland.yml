@@ -7,6 +7,10 @@ on:
       - 'dist/scenario-manifest.js'
       - 'tools/generate-scenario-catalog.cjs'
       - 'tools/six_exclusive_smoke.cjs'
+      - 'dist/ui/scenario-screens.js'
+      - 'dist/scenario-redesign.css'
+      - 'dist/scenario-previews/ufn-civil-war.webp'
+      - 'tools/ufn_mainland_menu_browser.cjs'
       - '.github/workflows/ufn-mainland.yml'
   push:
     branches: [main]
@@ -15,10 +19,14 @@ on:
       - 'dist/scenario-catalog.js'
       - 'dist/scenario-manifest.js'
       - 'tools/six_exclusive_smoke.cjs'
+      - 'dist/ui/scenario-screens.js'
+      - 'dist/scenario-redesign.css'
+      - 'dist/scenario-previews/ufn-civil-war.webp'
+      - 'tools/ufn_mainland_menu_browser.cjs'
 jobs:
   mainland-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 16
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,3 +37,7 @@ jobs:
       - run: node tools/six_exclusive_smoke.cjs
       - run: node tools/scenario_sim.cjs ufn-civil-war ufn normal 11 2
       - run: node tools/scenario_sim.cjs ufn-civil-war cf normal 11 2
+      - name: Verify UFN national menu and mobile preview
+        run: |
+          npm install --prefix /tmp/ufn-browser-ci --no-save --no-package-lock playwright-core@1.57.0
+          NODE_PATH=/tmp/ufn-browser-ci/node_modules node tools/ufn_mainland_menu_browser.cjs
