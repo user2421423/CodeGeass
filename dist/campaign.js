@@ -218,7 +218,17 @@
       cmd = E.COMMANDERS[mappedCmd] ? mappedCmd : null,
       d = difficulty(g.difficulty),
       enemy = E.foe(g, side, g.player);
-    if (opts.normalOnly && g.difficulty !== 'normal') return null;
+    // Normal-only is an enemy/neutral difficulty restriction, not a reason to
+    // remove the player's scripted formations on Hard, Challenge or Elite.
+    // Some missions give a named player commander a separate higher-difficulty
+    // placement. Prefer that version rather than spawning the officer twice.
+    if (opts.normalOnly && g.difficulty !== 'normal') {
+      if (side !== g.player) return null;
+      if (cmd && (unitWith(g, cmd) || (mission(g.campaign.id)?.units || []).some(
+        ([otherSide, , , , , otherCmd, otherOpts = {}]) =>
+          otherSide === side && otherCmd === originalCmd && !otherOpts.normalOnly
+      ))) return null;
+    }
     if (opts.skipNormal && g.difficulty === 'normal') return null;
     let type = E.TYPES[kind] ? kind : E.typeFor(side, kind, g),
       unitStack = stack;
