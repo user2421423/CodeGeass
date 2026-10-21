@@ -692,6 +692,71 @@
       "src": "portraits/luciano-e90561c6a0a0.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "renelaurent": {
+      "src": "portraits/renelaurent-canon-89a8598292a6.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "kuzanmontoban": {
+      "src": "portraits/kuzanmontoban-canon-b87a0c1097ba.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "johanne": {
+      "src": "portraits/johanne-canon-dda4393738d8.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "janmanes": {
+      "src": "portraits/janmanes-canon-fd39a7384ef6.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "franzvallo": {
+      "src": "portraits/franzvallo-canon-50159c2098a6.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "alannecker": {
+      "src": "portraits/alannecker-canon-f92c291c5b36.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "simonmericourt": {
+      "src": "portraits/simonmericourt-canon-a60ce6b207ca.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "mao": {
+      "src": "portraits/mao-canon-1b7330e044df.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "shalio": {
+      "src": "portraits/shalio-canon-43c5100afecf.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "shamna": {
+      "src": "portraits/shamna-canon-d713fd9bda8a.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "bolvona": {
+      "src": "portraits/bolvona-canon-66127cf0ff6d.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "jeanrowe": {
+      "src": "portraits/jeanrowe-canon-d45df3361f87.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "augustahighland": {
+      "src": "portraits/augustahighland-canon-d560ef494828.jpg",
+      "fx": 0.5,
+      "fy": 0.42
     }
   },
   "buildings": {
