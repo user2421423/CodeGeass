@@ -579,7 +579,7 @@
       const chosen = u.cmd === 'zero' ? zeroCommandTarget(g, u) : null;
       const r = feint(g, id, chosen?.id);
       if (r.ok) {
-        events.push({ kind: 'feint', id, affected: r.affected });
+        events.push({ kind: 'feint', id, affected: r.affected, combat: r.combat });
         const refreshed = g.units.find(v => v.id === r.target);
         if (refreshed && refreshed.side === u.side && refreshed.id !== u.id)
           events.push(...aiOrder(g, refreshed.id));

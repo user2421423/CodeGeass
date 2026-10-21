@@ -344,7 +344,7 @@ function activateAbilityTarget(p) {
     return;
   }
   const u = selectedUnit(), name = C(u.cmd).action.name, label = abilityTargetLabel(target);
-  const before = unitSnapshot(), visuals = combatVisualSnapshot();
+  const before = unitSnapshot();
   const result = useCommanderAbility(u.id, target.id);
   if (!result?.ok) {
     toast(result?.reason || 'Ability unavailable.');
@@ -353,7 +353,6 @@ function activateAbilityTarget(p) {
   }
   E.suspendArmyGroupConquestUnit(game, u.id);
   clearAbilityTargeting();
-  if (result.attack?.ok) addCombatEffects(result.attack, u, visuals);
   moralePopups(before);
   refreshAndSave();
   toast(`${name}: ${label}.`);

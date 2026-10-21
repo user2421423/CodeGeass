@@ -87,6 +87,7 @@ async function endTurn() {
         for (const o of orders) if (o.kind === 'feint') {
           const actor = game.units.find(v => v.id === o.id);
           if (actor?.cmd) announceCommanderAbility(actor.cmd);
+          addCommanderCombatEffects({ ...o, ok:true }, actor, visuals);
         }
         const seen = orders.some(o => onScreen(o.to) || onScreen(o.from));
         if (seen) moralePopups(before);

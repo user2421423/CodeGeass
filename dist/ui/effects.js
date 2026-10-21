@@ -107,26 +107,27 @@ function spawnCombatBlast(to, delay = 0, heavy = false) {
   pushCombatVfx({ kind: 'blast', to: { c: to.c, r: to.r }, delay, duration, heavy,
     life: duration + delay, max: duration + delay });
 }
-function addCombatEffects(result, attacker, before = null) {
+function addCombatEffects(result, attacker, before = null, delay = 0) {
   if (!result || !attacker || (skipAI && aiSide)) return;
   const cls = E.TYPES[attacker.type].cls;
   const weapon = SFX.weapon(cls);
   const spec = VFX_WEAPONS[weapon] || VFX_WEAPONS.cannon;
   const compact = reducedMotion();
-  const impactAt = compact ? 0.08 : spec.impact;
+  const impactAt = delay + (compact ? 0.08 : spec.impact);
   const shown = onScreen(result.to) || onScreen(result.from);
-  const target = before && [...before.values()].find(u =>
-    u.c === result.to.c && u.r === result.to.r && u.side !== attacker.side);
+  const target = before && (result.targetId != null ? before.get(result.targetId) :
+    [...before.values()].find(u => u.c === result.to.c && u.r === result.to.r && u.side !== attacker.side));
   const counterWeapon = result.counter && target ? SFX.weapon(E.TYPES[target.type].cls) : null;
-  const counterDelay = counterWeapon ? (compact ? 0.09 : spec.impact + 0.07) : 0;
+  const counterDelay = counterWeapon ? delay + (compact ? 0.09 : spec.impact + 0.07) : 0;
   const counterImpactAt = counterWeapon
     ? counterDelay + (compact ? 0.08 : (VFX_WEAPONS[counterWeapon] || VFX_WEAPONS.cannon).impact)
     : 0;
   if (shown) {
     queueCombatShot(result.from, result.to, weapon, attacker.side, {
+      delay,
       crit: result.crit, shake: (HEAVY_SHAKE[cls] || 0) + (result.crit ? 4 : 0) + (result.destroyed ? 4 : 0),
     });
-    SFX.play(weapon, attacker.side);
+    SFX.play(weapon, attacker.side, delay);
     if (result.crit) SFX.play('crit', attacker.side, impactAt);
     if (result.destroyed) {
       SFX.play('explosion', attacker.side, impactAt);
@@ -167,4 +168,12 @@ function addCombatEffects(result, attacker, before = null) {
   }
   if (result.counter) popup(result.from, 'COUNTER −' + result.counter, '#9deaff',
     { size: 16, life: 1.8, pop: true, delay: counterImpactAt });
+}
+// Reuse normal weapon, impact, shield, counterfire and destruction effects.
+// A brief stagger makes each contributing formation's shot visible.
+function addCommanderCombatEffects(result, caster, before) {
+  if (!result?.ok) return;
+  if (result.attack?.ok) addCombatEffects(result.attack, caster, before);
+  (result.combat || []).forEach((strike, index) =>
+    addCombatEffects(strike.result, strike.attacker, before, index * (reducedMotion() ? 0.04 : 0.18)));
 }
