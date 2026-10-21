@@ -38,3 +38,5 @@ Mao and the Zilkhstan trio are grouped under the Chinese Federation for gameplay
 The core 118-entry commander roster is accessible through HQ and conquest. The two crossover scenarios exclude Sakuya and retain Norland while preserving their authored limited rosters; Mao and Shamna join the Geass side in Geass War. New-commander portraits remain pending with initials fallback. Commander ratings and the portrait manifest are synchronized.
 
 Checks: `node tools/commander_roster_audit.cjs`, `node tools/commander_118_roster_smoke.cjs`, and CI.
+
+**EU legacy migration:** Chloe Winkel is once again an independent commander. Earlier `chloe` → `toru` command aliases were removed; the remaining Margaret/Kate/Hilda save migrations still apply.

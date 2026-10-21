@@ -3,17 +3,19 @@
 const assert=require('node:assert/strict');
 const E=require('../dist/engine.js');
 const C=E.COMMANDERS;
-assert.equal(Object.keys(C).length,100,'Two new Euro Britannian Grand Masters fill the two vacated Britannian commander slots');
-assert.equal(Object.values(C).filter(x=>x.side==='eu').length,22);
+assert.equal(Object.keys(C).length,118,'Approved roster expanded to 118 commanders');
+assert.equal(Object.values(C).filter(x=>x.side==='eu').length,23);
 for(const k of ['miguel','romero','masaki','toru']){
   assert.ok(C[k],k+' recruitable');
   assert.equal(C[k].side,'eu');
   assert.ok(E.RATINGS[k],k+' has ratings');
 }
-for(const k of ['margaret','kate','hilda','chloe']){
+for(const k of ['margaret','kate','hilda']){
   assert.equal(C[k],undefined,k+' retired');
   assert.equal(E.RATINGS[k],undefined,k+' old ratings removed');
 }
+assert.equal(C.chloe.side,'eu','Chloe restored as a distinct EU commander');
+assert.ok(E.RATINGS.chloe,'Chloe has independent ratings');
 assert.equal(C.miguel.action.kind,'miguelSupply');
 assert.equal(C.miguel.action.cooldown,0);
 for(const [id,fx] of [['romero','standFast'],['masaki','ultimateGuardian'],['toru','lastPromise']])
@@ -129,4 +131,12 @@ function setup(){
   assert.equal(loaded.roster.romero.rank,4);
   assert.equal(loaded.roster.margaret,undefined);
 }
-console.log('E.U. four-for-four roster, disruption, Stand Fast, Guardian and Last Promise: PASS');
+// Restored Chloe remains distinct from Toru on newly spawned formations.
+{
+  const b=setup();
+  const chloe=b.spawn(1,'eu',b.c,'chloe');
+  const toru=b.spawn(2,'eu',b.around[1],'toru');
+  assert.equal(chloe.cmd,'chloe');
+  assert.equal(toru.cmd,'toru');
+}
+console.log('E.U. replacement migrations, restored Chloe, disruption, Stand Fast, Guardian and Last Promise: PASS');

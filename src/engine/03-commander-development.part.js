@@ -3,7 +3,8 @@
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Supreme Commander, the highest rank for every side.
-  const EU_ROSTER_REPLACEMENTS = Object.freeze({margaret:'romero',kate:'miguel',hilda:'masaki',chloe:'toru'});
+  // Chloe has returned as her own commander; do not migrate her into Toru.
+  const EU_ROSTER_REPLACEMENTS = Object.freeze({margaret:'romero',kate:'miguel',hilda:'masaki'});
   const STARTERS = { britannia: ['suzaku'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
   function fx(u) {
     return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
