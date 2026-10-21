@@ -140,9 +140,9 @@
       ranks: HQ_RANK_CAP,
       income: 1.25,
       preserveNaval: true,
-      note: 'Every starting land unit becomes an elite; AI starting commanders receive Lv.5 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
+      note: 'Every starting land unit becomes an elite; enemy starting commanders receive Lv.3 elite frames. Elite Forces are always single frames, on every side. Rival factories build unlimited elites by tier; player factories deploy each elite once plus normal units. Ships and amphibious units stay unchanged.',
       campaign: {
-        note: 'Land formations use one-frame Elite Forces; scripted carriers retain their hulls and cargo. Your Lv.1 armies face Lv.3 enemies, Lv.5 enemy aces and unlimited enemy elite production. Allied AI uses Lv.3 elites.',
+        note: 'Land formations use one-frame Elite Forces; scripted carriers retain their hulls and cargo. Your Lv.1 armies face Lv.1 ordinary enemies, Lv.3 enemy commander elites and unlimited enemy elite production. Allied AI uses Lv.1 elites.',
       },
     },
     hard: {
@@ -325,7 +325,7 @@
       used[u.side] = (used[u.side] || 0) + 1;
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      u.eliteLevel = u.cmd && u.side !== g.player ? 5 : 1;
+      u.eliteLevel = u.cmd && u.side !== g.player ? 3 : 1;
       u.eliteStart = true;
       u.stack = 1; // Elite Forces are single frames on every side, AI included.
       u.hpTech = hullTech(g, u);
@@ -407,7 +407,7 @@
   }
   // Elite Japan reuses Elite Conquest's frame conversion philosophy without
   // importing any persistent HQ research or commander upgrades. Starting units
-  // use Level 1 frames, except AI starting commanders on Level 5; HQ unlocks only matter at the player's factory.
+  // use Level 1 frames, except rival starting commanders on Level 3; HQ unlocks only matter at the player's factory.
   function prepareEliteJapan(g) {
     // Both Japan scenarios share this setup; the European War has its own.
     if (!eliteScenario(g) || scenarioMeta(g).elite !== 'japan') return g;
@@ -470,8 +470,8 @@
       if (!ELITE_FORCES[id]) throw new Error('Missing Japan naval Elite Force for ' + u.side);
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      // Elite scenario starting conversions begin at Lv.1 for both sides.
-      u.eliteLevel = 1;
+      // Elite rivals' commander-led starts are Lv.3; every other conversion is Lv.1.
+      u.eliteLevel = u.cmd && foe(g, u.side, g.player) ? 3 : 1;
       u.eliteStart = true;
       u.stack = 1; // Elite Forces are single frames on every side, AI included.
       if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
@@ -552,8 +552,8 @@
         throw new Error('Missing European naval/land Elite Force for '+u.side+': '+u.type);
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      // European War starting conversions are Lv.1; player-built elites use HQ levels.
-      u.eliteLevel = 1;
+      // Rival commander-led starts are Lv.3; other conversions are Lv.1. Player-built elites use HQ levels.
+      u.eliteLevel = u.cmd && foe(g, u.side, g.player) ? 3 : 1;
       u.eliteStart = true;
       u.stack = 1;
       if (u.cmd) u.cmdRank = g.officers[u.cmd]?.rank ?? u.cmdRank;
