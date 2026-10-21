@@ -15,6 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check commander registry formatting and faction counts
+        run: node tools/commander_roster_audit.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
       - name: Verify six Scenario Mode exclusives, independent factions and save compatibility
