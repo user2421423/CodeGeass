@@ -485,3 +485,87 @@
  .scenario-library--combined .scenario-difficulty .select{min-width:106px}
  .scenario-library--combined .scenario-deploy{min-width:130px}
 }
+
+
+/* UFN Civil War is a national campaign, not the old Luoyang region.
+   Keep its full geographic briefing and both opening headquarters readable. */
+.scenario-library--combined.scenario-library--china-mainland .scenario-brief{
+  max-height:min(44vh,330px)
+}
+.scenario-library--combined.scenario-library--china-mainland .scenario-brief-text{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:6px
+}
+.scenario-library--combined.scenario-library--china-mainland .scenario-brief-text>p{
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  font-size:11px;
+  line-height:1.5
+}
+.scenario-library--combined.scenario-library--china-mainland .scenario-brief-text>p.mode-note{
+  font-size:10px;
+  color:#cbb990
+}
+.scenario-library--combined.scenario-library--china-mainland .scenario-diplomacy-details{
+  justify-self:start
+}
+.scenario-library--combined.scenario-library--china-mainland .scenario-side-option{
+  height:114px;
+  min-height:114px;
+  padding-top:30px
+}
+.scenario-library--combined.scenario-library--china-mainland .scenario-side-summary{
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  font-size:10px;
+  line-height:1.3;
+  margin-top:1px
+}
+.scenario-mainland-opening{
+  position:absolute;
+  left:14px;
+  bottom:13px;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:9px 12px;
+  max-width:calc(100% - 28px);
+  background:rgba(13,25,37,.88);
+  border:1px solid rgba(203,181,142,.55);
+  color:#f2ece0;
+  font:600 11px/1.3 system-ui,sans-serif;
+  pointer-events:none
+}
+.scenario-mainland-opening span{
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+.scenario-mainland-opening i{
+  width:10px;
+  height:10px;
+  flex:0 0 10px;
+  border:1px solid rgba(255,255,255,.7)
+}
+@media(max-width:760px){
+  .scenario-library--combined.scenario-library--china-mainland .scenario-brief{
+    max-height:none
+  }
+  .scenario-library--combined.scenario-library--china-mainland .scenario-side-option{
+    height:112px;
+    min-height:112px;
+    padding:30px 8px 8px
+  }
+  .scenario-mainland-opening{
+    left:7px;
+    bottom:7px;
+    padding:6px 8px;
+    font-size:9px;
+    gap:4px
+  }
+}
