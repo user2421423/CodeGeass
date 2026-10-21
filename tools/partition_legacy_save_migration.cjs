@@ -36,7 +36,7 @@ captured.owner='remnants';
 const capturedProvince = g.tiles.find(t=>t.provinceCity===captured.id && t.terrain!=='sea');
 if(capturedProvince) capturedProvince.owner='remnants';
 const originalId = g.units.map(u=>u.id).sort((a,b)=>a-b);
-const carriers = g.units.filter(u=>E.TYPES[u.type]?.naval==='ship' && u.hp>0);
+const carriers = g.units.filter(u=>E.TYPES[u.type]?.naval==='ship' && !E.TYPES[u.type]?.air && u.hp>0);
 assert(carriers.length>=2,'two carriers required for legacy stranded-ship regression');
 // A pre-audit ship on the old false Mexico/Greenland sea would be stranded by
 // a direct 'sea' to 'offmap' rewrite. An old coast->inland ship also needs a
