@@ -47,7 +47,7 @@ function create(_,__,seed){
   return {c,r,owner:null,terrain:kind===0?'sea':kind===3?'offmap':kind===1?'coast':p.lat>61?'tundra':rocky?'mountain':p.lat>50||p.lon>-85?'forest':p.lon<-108&&p.lat<38?'desert':'plains'};
  });
  for(const [name,lon,lat,owner,tier] of cityData){
-  const at=E.nearestTile(g,locate(lon,lat),t=>!E.isSea(t)&&!g.stations.some(s=>s.c===t.c&&s.r===t.r),5);
+  const at=E.nearestTile(g,locate(lon,lat),t=>!E.isSea(t)&&!E.TERRAIN[t.terrain]?.blocked&&!g.stations.some(s=>s.c===t.c&&s.r===t.r),5);
   if(!at)throw Error('Partition city has no dry hex: '+name);
   g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier});
   // A surveyed coastal city is still a shore tile: keep mixed land/water access.
