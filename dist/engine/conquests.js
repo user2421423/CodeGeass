@@ -990,6 +990,15 @@
     throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
+  // Hawaii has only a couple of available land hexes at the world map scale.
+  // Its third starting formation formerly wandered to distant Alaska when
+  // occupied positions (including coastal hexes) exhausted the island.
+  // Keep the Hawaiian defenders local, and station Scholtz at Anchorage.
+  const scholtz2017 = root.KnightmareData.ARMY_DATA.filter(a => a[5] === 'scholtz');
+  if (scholtz2017.length !== 1)
+    throw new Error('Expected one Scholtz unit in the 2017 starting roster');
+  scholtz2017[0][2] = -149.9;
+  scholtz2017[0][3] = 61.2;
   // All 2018 Britannian and U.F.N. ground starts require named commanders.
   // Euro Britannia retains its anonymous land starts; navy is separate.
   ufn2018.armies = ufn2018.armies.filter(formation =>

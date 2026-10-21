@@ -635,7 +635,8 @@
       for (let c = 0; c < g.cols; c++)
         g.tiles.push({ c, r, terrain: TERRAIN_CODES[WORLD_ROWS[r]?.[c]] || 'sea', owner: null });
     const freeLand = t => !isSea(t) && !TERRAIN[t.terrain].blocked;
-    // Cities, mines and starting armies stand on solid land, never on a coast hex.
+    // Cities and mines need solid land; formations may start on friendly coast
+    // hexes, just as land units can enter and occupy them during gameplay.
     const solidLand = t => freeLand(t) && !isCoast(t);
     for (const [name, lon, lat, oldOwner, tier, oldCapital = false, fort = false, gun] of CITY_DATA) {
       const owner = cfg.ownership?.[name] || oldOwner;
@@ -806,14 +807,20 @@
       const alliedSiberianStart = cfg.id === 'ufn2018' && side === 'britannia' &&
         lon >= 90 && lon <= 120 && lat >= 48 && lat <= 60;
       const canStartOn = owner => owner === side || (alliedSiberianStart && owner === 'eb');
+      // Starting armies must never jump onto an opposing or unclaimed region.
+      // A coast hex is legitimate land for a Knightmare; excluding it used to
+      // push crowded Japanese starts through the global nearest-tile search.
       const at = nearest(
         g,
         hexOf(lon, lat),
-        t => solidLand(t) && !unitAt(g, t) &&
-          (cfg.id !== 'ufn2018' || canStartOn(t.owner)) &&
+        t => freeLand(t) && !unitAt(g, t) &&
+          canStartOn(t.owner) &&
           (!stationAt(g, t) || canStartOn(stationAt(g, t).owner)),
       );
-      if (at) newUnit(g, typeFor(ufnBlackKnights(g, side) ? 'bk' : (frameSource || side), cls, g), side, at.c, at.r, stack, cmd || null);
+      if (!at)
+        throw new Error('No friendly starting hex for ' + side + ' ' + cls +
+          ' near (' + lon + ', ' + lat + ') in ' + cfg.id);
+      newUnit(g, typeFor(ufnBlackKnights(g, side) ? 'bk' : (frameSource || side), cls, g), side, at.c, at.r, stack, cmd || null);
     }
     for (const [city, type, stack] of (cfg.garrisons || GARRISONS)) {
       const s = g.stations.find(s => s.name === city);
@@ -824,7 +831,8 @@
       if (s) openPort(g, s, level);
     }
     for (const [side, role, lon, lat, stack] of (cfg.navy || NAVY_DATA)) {
-      const at = nearest(g, hexOf(lon, lat), t => isSea(t) && !unitAt(g, t));
+      // Coastal water is navigable for warships; do not force a fleet out to a sea-only hex.
+      const at = nearest(g, hexOf(lon, lat), t => navigable(t) && !unitAt(g, t));
       if (at) newUnit(g, navalRoster(g, side)[role], side, at.c, at.r, stack);
     }
     setupSakuradite(g);
