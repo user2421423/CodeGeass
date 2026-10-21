@@ -21,6 +21,8 @@ jobs:
         run: node tools/commander_118_roster_smoke.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify Elite difficulty uses Level 1 enemies and Level 3 commander-led enemies
+        run: node tools/elite_difficulty_levels_smoke.cjs
       - name: Verify Andrea Farnese's Orderly Withdrawal, Honor the Fallen and End the Slaughter
         run: node tools/andrea_farnese_smoke.cjs
       - name: Verify 2017 world conquest starts on friendly land or coasts without regional drift
@@ -103,8 +105,6 @@ jobs:
         run: node tools/europe_story_expansion_smoke.cjs --playout
       - name: Run seeded Story Normal detention-center gameplay viability probe
         run: node tools/story_normal_defense_ai_probe.cjs
-      - name: Verify Elite difficulty uses Level 1 enemies and Level 3 commander-led enemies
-        run: node tools/elite_difficulty_levels_smoke.cjs
       - name: Verify Story Elite deployment and faction-specific unit rosters
         run: node tools/story_elite_faction_roster_smoke.cjs
       - name: Verify Story AI production for all six campaigns
