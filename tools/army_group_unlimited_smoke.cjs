@@ -41,20 +41,37 @@ assert.equal(first.group.units.length, 88);
 E.armyGroupPrune(g);
 assert.equal(first.group.units.length, 88, 'Prune retains all surviving members');
 
+// Empty groups retire automatically on removal, reassignment and casualties.
+const removed = E.createArmyGroup(g, members[89].id);
+assert.equal(removed.ok, true);
+const removal = E.removeArmyGroupUnit(g, removed.group.id, members[89].id);
+assert.equal(removal.ok, true);
+assert.equal(removal.disbanded, true);
+assert.equal(E.armyGroup(g, removed.group.id), undefined);
+const transferred = E.createArmyGroup(g, members[88].id);
+assert.equal(transferred.ok, true);
+assert.equal(E.addArmyGroupUnit(g, second.group.id, members[88].id).ok, true);
+assert.equal(E.armyGroup(g, transferred.group.id), undefined);
+const fallen = E.createArmyGroup(g, members[87].id);
+assert.equal(fallen.ok, true);
+members[87].hp = 0;
+E.armyGroupPrune(g);
+assert.equal(E.armyGroup(g, fallen.group.id), undefined);
+
 // Scenario auto-organization should still assign every unit when just one
 // group slot remains, rather than stopping at the old 24-unit cap.
 const {g: scenario, members: reinforcements} = gameWithUnits(85);
 scenario.mode = 'scenario';
 scenario.scenario = {groups: []};
 for (let i = 0; i < 39; i++)
-  assert.equal(E.createArmyGroup(scenario).ok, true);
+  assert.equal(E.createArmyGroup(scenario, reinforcements[i].id).ok, true);
 const organized = E.organizeScenarioArmies(scenario);
 assert.equal(organized.ok, true);
 assert.equal(organized.created, 1);
-assert.equal(organized.assigned, reinforcements.length);
+assert.equal(organized.assigned, reinforcements.length - 39);
 assert.equal(organized.remaining, 0);
 assert.equal(E.armyGroups(scenario).length, 40);
-assert.equal(E.armyGroups(scenario).at(-1).units.length, 85);
+assert.equal(E.armyGroups(scenario).at(-1).units.length, 46);
 assert.equal(E.createArmyGroup(scenario).ok, false,
   'Existing number-of-groups limit remains intact');
 
@@ -63,4 +80,7 @@ const ui = fs.readFileSync('dist/ui/army-groups.js', 'utf8');
 assert.doesNotMatch(ui, /\$\{live\.length\}\/24 units/);
 assert.match(ui, /chosen\.slice\(1\)/, 'Multi-selection creation adds all selected units');
 assert.doesNotMatch(ui, /gr\.units\.length\s*>=\s*24/);
+assert.doesNotMatch(ui, /live\.slice\(0,5\)/, 'Group overview hides member-type previews');
+assert.match(ui, /data-army-stance=/, 'Direct stance controls are present');
+assert.match(ui, /data-army-conquer=/, 'Direct city capture control is present');
 console.log('Unlimited army-group membership, UI paths and scenario auto-organization: PASS');
