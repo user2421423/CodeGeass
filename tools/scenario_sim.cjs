@@ -30,9 +30,8 @@ function simulate(scenario,player,difficulty,seed,turns,hooks=null){
   captures:[],losses:zeros(),production:zeros(),attacks:zeros(),
   navalActions:zeros(),navalMoves:zeros(),errors:[],snapshots:[],winner:null,firstOver:null,openingStall:false};
  // Loaded expedition cargo is part of the *starting* force, not production.
- // Keep the historic deterministic baseline unchanged for legacy scenarios;
- // the new Federation-EU expedition fixtures count initial cargo correctly.
- const initialUnits=scenario.id.startsWith('cf-eu-')
+ // Preserve historic baselines except for expedition tests which need cargo counted.
+ const initialUnits=(scenario.id.startsWith('cf-eu-') || scenario.id==='defense-japan')
    ?g.units.flatMap(u=>[u,...(u.cargo||[])]) :g.units;
  let oldOwners=new Map(g.stations.map(s=>[s.id,s.owner])),known=new Set(initialUnits.map(u=>u.id)),
   previousAlive=new Map(initialUnits.filter(u=>u.hp>0).map(u=>[u.id,u.side]));

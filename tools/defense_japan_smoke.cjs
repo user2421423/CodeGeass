@@ -43,7 +43,10 @@ for(const player of scenario.sides)for(const difficulty of difficulties){
   assert.equal(defenders.length,29,'Keep 29 Black Knights land formations');
   assert.equal(defenseNavy.length,11,'Deploy eleven Black Knights naval formations');
   assert.equal(defenseNavy.filter(u=>u.type==='bk_carrier').length,5);
-  assert.equal(defenseNavy.filter(u=>u.type==='bk_amphibious_ii').length,6);
+  assert.equal(defenseNavy.filter(u=>E.TYPES[u.type].naval==='amphibious').length,6);
+  if(difficulty!=='elite')
+    assert.equal(defenseNavy.filter(u=>u.type==='bk_amphibious_ii').length,6);
+  // Elite Japan intentionally converts amphibious hulls to scenario-specific elites.
   assert.equal(g.scenario.citylessWarChestTurns,3);
   if(difficulty==='normal')
     assert.equal(defenders.reduce((sum,u)=>sum+u.stack,0),58,
