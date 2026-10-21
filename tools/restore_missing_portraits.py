@@ -27,13 +27,13 @@ session.headers.update(HEADERS)
 # Coordinates are from the official 796 x 585 character sheets; scale with the image.
 ASURA_URL = "https://geass.jp/akito/img/chara_asura.jpg"
 ASURA_BOXES = {
-    "rene": (1, 347, 143, 548),
-    "kuzan": (136, 268, 309, 487),
+    "renelaurent": (1, 347, 143, 548),
+    "kuzanmontoban": (136, 268, 309, 487),
     "johanne": (300, 299, 474, 528),
-    "jan": (465, 342, 631, 544),
-    "franz": (620, 320, 795, 551),
-    "alan": (447, 75, 601, 295),
-    "simon": (611, 49, 785, 298),
+    "janmanes": (465, 342, 631, 544),
+    "franzvallo": (620, 320, 795, 551),
+    "alannecker": (447, 75, 601, 295),
+    "simonmericourt": (611, 49, 785, 298),
 }
 SINGLE = {
     "mao": [
