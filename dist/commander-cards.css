@@ -300,3 +300,117 @@
   .cc-compare-grid { grid-template-columns: 1fr; }
   .cc-compare-heading { flex-wrap: wrap; }
 }
+
+/* Commander info: independently scroll the dossier, never clip skills or the footer. */
+.dialog.wide.general-info {
+  display: flex;
+  flex-direction: column;
+  max-height: min(92dvh, calc(100dvh - 32px));
+  overflow: hidden;
+}
+.general-info .gi-head,
+.general-info .gi-foot { flex: 0 0 auto; }
+.general-info .gi-body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.general-info .gi-left,
+.general-info .gi-right { min-height: 0; }
+.general-info .gi-right {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+/* Generic skills occupy three equal-width WC4-style slots instead of vertical rows. */
+.general-info .gi-generics { margin-top: 12px; }
+.general-info .gi-generic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.general-info .gi-generic-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #56748c;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #2b4c67, #152c42);
+  overflow-wrap: anywhere;
+}
+.general-info .gi-generic-slot {
+  align-self: flex-start;
+  padding: 2px 7px;
+  border: 1px solid #718fa4;
+  border-radius: 4px;
+  color: #ffe09d;
+  background: #13293b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.general-info .gi-generic-title { font-size: 14px; line-height: 1.25; color: #fff; }
+.general-info .gi-generic-description {
+  display: block;
+  flex: 1 1 auto;
+  color: #c5d6e3;
+  line-height: 1.4;
+  font-size: 12px;
+}
+.general-info .gi-generic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+}
+.general-info .gi-generic-actions .token-buy {
+  max-width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+.general-info .gi-generic-refund {
+  display: block;
+  color: #9fb4c8;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.general-info .gi-generic-card.is-empty {
+  justify-content: center;
+  border-style: dashed;
+  background: #1d3549;
+}
+.general-info .gi-generic-card.is-empty b { color: #ebd9ae; }
+.general-info .gi-generic-learn { margin-top: 10px; }
+.general-info .gi-generic-learn summary { cursor: pointer; }
+.general-info .gi-generic-catalog { max-height: 230px; overflow-y: auto; margin-top: 6px; }
+.general-info .gi-generic-choice { padding: 6px 0; border-bottom: 1px solid #ffffff22; }
+.general-info .gi-generic-choice small { display: block; }
+@media (max-width: 760px) {
+  /* On narrow touch screens the whole dossier scrolls vertically, while cards swipe sideways. */
+  .general-info .gi-body { overflow-x: hidden; overflow-y: auto; }
+  .general-info .gi-right { overflow: visible; }
+  .general-info .gi-generic-grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(215px, 82%);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    padding-bottom: 7px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .general-info .gi-generic-card { scroll-snap-align: start; }
+}
+@media (max-width: 440px) {
+  .general-info .gi-generic-grid { grid-auto-columns: minmax(200px, 90%); }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  body #modal-root .dialog.wide.general-info {
+    max-height: calc(100dvh - 12px);
+    padding: 0;
+    overflow: hidden;
+  }
+}
