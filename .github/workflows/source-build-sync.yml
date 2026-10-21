@@ -19,14 +19,14 @@ jobs:
         run: node tools/commander_roster_audit.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify Andrea Farnese's Orderly Withdrawal, Honor the Fallen and End the Slaughter
+        run: node tools/andrea_farnese_smoke.cjs
       - name: Verify 2018 Britannian frontline-only starting deployments
         run: node tools/ufn2018_britannia_frontline_smoke.cjs
       - name: Verify 100 commander commissions and invested-save rebalance
         run: node tools/commission_rebalance_smoke.cjs
       - name: Verify Suzaku starter and existing HQ and battle-save migration
         run: node tools/starter_commanders_smoke.cjs
-      - name: Verify Andrea Farnese's Orderly Withdrawal, Honor the Fallen and End the Slaughter
-        run: node tools/andrea_farnese_smoke.cjs
       - name: Verify six Scenario Mode exclusives, independent factions and save compatibility
         run: node tools/six_exclusive_smoke.cjs
       - name: Verify six-way tournament AI production, attacks and captures
