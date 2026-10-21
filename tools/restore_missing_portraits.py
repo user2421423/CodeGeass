@@ -4,12 +4,10 @@
 Run only on a machine with outbound network access (GitHub Actions).
 Each image must come from its named character's art or a documented character sheet.
 """
-import base64
 import hashlib
 import io
 import json
 import sys
-from datetime import date
 from pathlib import Path
 
 import requests
@@ -58,10 +56,16 @@ SINGLE = {
         "https://geass.jp/akito/img/chara_Verance.jpg",
     ],
 }
-# The three knights appear together in the official anime. A trio still from a
-# fan-maintained illustrated gallery is useful, but the page does not reliably
-# identify their left-to-right positions. Do not silently assign uncertain faces.
-UNRESOLVED = ("brondello", "dore", "scholtz")
+# Screenshot of the named three Swordmasters. Individually identified by
+# physical characteristics described in Code Geass character documentation:
+# Brondello black-haired on left, Dore with long forehead locks at center,
+# Scholtz blond/short-haired on right. Positions verified from the actual image.
+SWORDMASTERS_URL = "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png"
+SWORDMASTER_BOXES = {
+    "brondello": (42, 27, 133, 153),
+    "dore": (163, 34, 244, 155),
+    "scholtz": (260, 34, 347, 156),
+}
 
 
 def download(url):
@@ -117,7 +121,7 @@ def main():
     ledger = {}
     if SOURCES.exists():
         ledger = json.loads(SOURCES.read_text())
-    pending = set(SINGLE) | set(ASURA_BOXES)
+    pending = set(SINGLE) | set(ASURA_BOXES) | set(SWORDMASTER_BOXES)
     pending -= set(manifest["portraits"])
     if pending & set(ASURA_BOXES):
         try:
@@ -129,6 +133,20 @@ def main():
                     pending.discard(id)
         except Exception as exc:
             print("SOURCE FAILED Asura team:", str(exc), file=sys.stderr)
+    if pending & set(SWORDMASTER_BOXES):
+        try:
+            group, digest = download(SWORDMASTERS_URL)
+            for id, box in SWORDMASTER_BOXES.items():
+                if id in pending:
+                    save(id, crop_scaled(group, box, base=(350, 158)),
+                         SWORDMASTERS_URL, digest,
+                         f"named three-Swordmaster group still {box} (350x158)", manifest, ledger)
+                    ledger[id]["method"] = ("Identified anime character from grouped still: "
+                        "Brondello black-haired left, Dore silver hair/forelocks middle, "
+                        "Scholtz short blond hair right; source low-resolution")
+                    pending.discard(id)
+        except Exception as exc:
+            print("SOURCE FAILED Swordmasters:", str(exc), file=sys.stderr)
     for id, urls in SINGLE.items():
         if id not in pending:
             continue
@@ -149,23 +167,9 @@ def main():
         json.dumps(manifest, indent=2, ensure_ascii=True) + ";\n"
     )
     SOURCES.write_text(json.dumps(ledger, indent=2, ensure_ascii=False) + "\n")
-    print("NEW RESTORED", len(set(SINGLE) | set(ASURA_BOXES)) - len(pending))
-    # Short-lived diagnostic: inspect a group shot to match each swordmaster to the
-    # correct face, rather than assigning the group image by assumed position.
-    try:
-        group_url = "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png"
-        group, checksum = download(group_url)
-        group.thumbnail((900, 620), Image.Resampling.LANCZOS)
-        preview = io.BytesIO()
-        group.save(preview, "JPEG", quality=74)
-        print("SWORDMASTER_REFERENCE_BEGIN")
-        print(base64.b64encode(preview.getvalue()).decode("ascii"))
-        print("SWORDMASTER_REFERENCE_END")
-        print("SWORDMASTER_REFERENCE_SHA256", checksum)
-    except Exception as exc:
-        print("Swordmaster reference unavailable:", str(exc), file=sys.stderr)
-    print("STILL PENDING", ", ".join(sorted(pending | set(UNRESOLVED))) or "none")
-    return 0 if len(ledger) else 1
+    print("PORTRAIT COVERAGE", len(manifest["portraits"]), "/118")
+    print("STILL PENDING", ", ".join(sorted(pending)) or "none")
+    return 0 if not pending else 1
 
 
 if __name__ == "__main__":
