@@ -180,6 +180,12 @@ function paintMapMarkers(b, g, width, height, dpr, allUnits = false) {
     b.arc(p.x * sx, p.y * sy, (allUnits ? 2.4 : 2.1) * dpr, 0, Math.PI * 2);
     b.fillStyle = unitFactionDotColor(g, u);
     b.fill();
+    // Outline the existing minimap dot; never place a second icon beside it.
+    if (E.foe(g, g.player, u.side)) {
+      b.strokeStyle = '#fff4dc';
+      b.lineWidth = 2.1 * dpr;
+      b.stroke();
+    }
     b.strokeStyle = '#071320';
     b.lineWidth = 1.1 * dpr;
     b.stroke();
