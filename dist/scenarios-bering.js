@@ -238,7 +238,7 @@
       era:"Bering Strait · Alternate 2017",
       intro:"Britannia versus Europia United: a two-front naval and amphibious war from Alaska to Kamchatka. Conquer every enemy city.",
       diplomacy:"Britannia and Europia United are at war from turn 1. There is no Chinese Federation involvement or scripted deadline.",
-      elite:"Elite Bering: land and amphibious forces begin as Lv.1 Elite Forces; enemy named commanders begin at Lv.5. Carriers remain conventional. Rival AI has advanced research and elite factories; players follow HQ unlock rules.",
+      elite:"Elite Bering: land and amphibious forces begin as Lv.1 Elite Forces; enemy named commanders begin at Lv.3. Carriers remain conventional. Rival AI has advanced research and elite factories; players follow HQ unlock rules.",
       focus:{
         britannia:"Nome",
         eu:"Provideniya"
