@@ -32,7 +32,7 @@
     if (kind === 'attack') {
       if (!actor) return { ok: false, reason: 'Unit not found.' };
       const why = turnReason(g, actor.side) ||
-        (actor.hp <= 0 ? 'Unit destroyed' : actor.expRoloFrozen ? 'Frozen by Absolute Suspension' : (actor.expCharlesMemoryRewrite || actor.morale <= -3) ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
+        (actor.hp <= 0 ? 'Unit destroyed' : actor.expRoloFrozen ? 'Frozen by Absolute Suspension' : actor.expFarneseSlaughterTurn === g.turn ? 'End the Slaughter: no attacks remaining' : (actor.expCharlesMemoryRewrite || actor.morale <= -3) ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
       if (why) return { ok: false, reason: why };
       const shot = preview(g, id, c, r);
       if (!shot) return { ok: false, reason: atSea(g, actor) ? 'Embarked units cannot fire.' : 'No hostile target in range.' };
@@ -244,6 +244,7 @@
     if (why) return why;
     if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';
+    if (action.kind === 'farneseWithdrawal') return actionTargets(g,u).length ? null : 'No friendly formations below 50% HP within 3 hexes';
     if (action.kind === 'manfrediRequisition') return actionTargets(g,u).length?null:'No normal friendly formation within 2 hexes has room for a frame';
     if (action.kind === 'arkFleet') return actionTargets(g,u).length ? null : 'No enemy city to disrupt';
     if (action.kind === 'electricalOverload') {
