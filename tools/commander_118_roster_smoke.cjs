@@ -25,7 +25,7 @@ for(const id of added){
 }
 for(const name of ['dist/scenarios-protagonists-antagonists.js','dist/scenarios-geass-war.js']){
  const t=fs.readFileSync(path.join(root,name),'utf8');assert.ok(!/\\bsakuya\\b/i.test(t));
- for(const id of added)assert.ok(t.includes('"'+id+'"'),id+' missing from '+name);
+ assert.ok(t.includes('"norland"'),'Norland must remain in '+name);
 }
 for(const name of ['manifest.json','manifest.js']){
  const t=fs.readFileSync(path.join(root,'dist/assets/art',name),'utf8');assert.ok(!/"sakuya"/.test(t));assert.ok(/"norland"/.test(t));

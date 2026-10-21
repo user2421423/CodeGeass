@@ -97,8 +97,7 @@ const config={
       "chaojielun",
       "zidien",
       "euphemia",
-      "cecile",
-      "chloe"
+      "cecile"
     ],
     "antagonists": [
       "charles",
@@ -123,25 +122,7 @@ const config={
       "eduardo",
       "ferilli",
       "miguel",
-      "vritra",
-      "monica",
-      "luciano",
-      "mao",
-      "shalio",
-      "shamna",
-      "bolvona",
-      "jeanrowe",
-      "johanne",
-      "brondello",
-      "dore",
-      "scholtz",
-      "renelaurent",
-      "janmanes",
-      "simonmericourt",
-      "kuzanmontoban",
-      "alannecker",
-      "franzvallo",
-      "augustahighland"
+      "vritra"
     ]
   },
   "focus": {

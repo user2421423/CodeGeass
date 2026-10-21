@@ -85,7 +85,8 @@ assert.equal(E.income(partition,'remnants').credits,21);assert.equal(partition.e
 assert(!partition.units.some(u=>u.side==='remnants'&&(u.elite||E.TYPES[u.type].air)));
 assert(E.income(partition,'eu').credits>20*E.income(partition,'remnants').credits);
 const geass=E.scenarios.byId['geass-war'].create();const heroes=E.scenarios.byId['protagonists-antagonists'].create();
-assert(E.serves('leila','geass_order',geass));assert(E.serves('shin','geass_order',geass));assert(E.serves('sakuya','geass_order',geass));
+assert(E.serves('leila','geass_order',geass));assert(E.serves('shin','geass_order',geass));assert(!E.COMMANDERS.sakuya, 'Removed Rozé commander must not return');
+assert(E.serves('mao','geass_order',geass));assert(E.serves('shamna','geass_order',geass));
 assert(E.serves('suzaku','anti_geass',geass));assert(E.serves('suzaku','protagonists',heroes));assert(E.serves('shin','antagonists',heroes));
 assert(!geass.units.some(u=>['lelouch','julius'].includes(u.cmd)));
 // HQ research remains the same shared system; new factions' local combat research survives packing.

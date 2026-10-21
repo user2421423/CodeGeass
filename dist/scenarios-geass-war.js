@@ -125,24 +125,7 @@ const config={
       "euphemia",
       "cecile",
       "eduardo",
-      "ferilli",
-      "monica",
-      "luciano",
-      "chloe",
-      "shalio",
-      "bolvona",
-      "jeanrowe",
-      "johanne",
-      "brondello",
-      "dore",
-      "scholtz",
-      "renelaurent",
-      "janmanes",
-      "simonmericourt",
-      "kuzanmontoban",
-      "alannecker",
-      "franzvallo",
-      "augustahighland"
+      "ferilli"
     ]
   },
   "focus": {

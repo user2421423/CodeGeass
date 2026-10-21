@@ -35,6 +35,6 @@ Mao and the Zilkhstan trio are grouped under the Chinese Federation for gameplay
 | Franz Vallo | Euro Britannia | standard | Deals 5% more attack damage. |
 | Augusta Henry Highland | Euro Britannia | distinguished | Takes 6% less incoming combat damage. |
 
-Protagonists vs Antagonists and Geass War scenario commander lists now include the additions and exclude Sakuya. Norland is retained. Geass War text, commander ratings and the portrait manifest are synchronized.
+The core 118-entry commander roster is accessible through HQ and conquest. The two crossover scenarios exclude Sakuya and retain Norland while preserving their authored limited rosters; Mao and Shamna join the Geass side in Geass War. New-commander portraits remain pending with initials fallback. Commander ratings and the portrait manifest are synchronized.
 
 Checks: `node tools/commander_roster_audit.cjs`, `node tools/commander_118_roster_smoke.cjs`, and CI.
