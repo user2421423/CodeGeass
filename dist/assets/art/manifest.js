@@ -1,4 +1,4 @@
-// Generated from manifest.json. Missing new commander portraits use explicit text initials only until verified character art is published.
+// Generated from manifest.json. Missing verified portraits use explicit initials.
 globalThis.KnightmareArtManifest = {
   "base": "assets/art/",
   "units": {
@@ -651,6 +651,31 @@ globalThis.KnightmareArtManifest = {
     },
     "ferilli": {
       "src": "portraits/ferilli-approved.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "gaudefroy": {
+      "src": "portraits/gaudefroy-53efe01ee52f.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "masaki": {
+      "src": "portraits/masaki-98032938af83.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "miguel": {
+      "src": "portraits/miguel-17e75ee96aa6.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "raymond": {
+      "src": "portraits/raymond-78e3d3a2df2f.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "toru": {
+      "src": "portraits/toru-84379c613f45.jpg",
       "fx": 0.5,
       "fy": 0.5
     }

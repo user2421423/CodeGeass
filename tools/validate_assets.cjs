@@ -54,11 +54,11 @@ for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS], ['
   if (kind === 'units')
     assert.equal(Object.keys(manifest[kind]).length, Object.keys(known).length, 'Missing real unit artwork');
   if (kind === 'portraits') {
-    // Pending verified portraits for four E.U. officers and two new Euro
-    // Britannian Grand Masters use explicit initials instead of wrong faces.
+    // Romero is the only officer still awaiting verified character artwork.
+    // His explicit initials remain visible instead of another character's face.
     // Every other commander MUST have real character art.
     const missing = Object.keys(known).filter(id => !Object.hasOwn(manifest[kind],id)).sort();
-    assert.deepEqual(missing,['gaudefroy','masaki','miguel','raymond','romero','toru'],
+    assert.deepEqual(missing,['romero'],
       'Unexpected missing character portraits; publish verified art before increasing the exceptions');
   }
   console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published${kind === 'buildings' ? '' : ' (real art only)'}.`);
