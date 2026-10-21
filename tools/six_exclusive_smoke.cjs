@@ -98,7 +98,7 @@ assert(!partition.units.some(u=>u.side==='remnants'&&u.elite));
 assert(partition.units.filter(u=>u.side==='remnants'&&!u.cmd&&!E.TYPES[u.type].air).every(u=>u.stack===2));
 const flagCtx=vm.createContext({Knightmare:E});
 vm.runInContext(fs.readFileSync('dist/art.js','utf8'),flagCtx);
-assert.match(vm.runInContext('ART.flagSVG("remnants")',flagCtx),/assets\\/flags\\/britannia\\.webp/);
+assert(vm.runInContext('ART.flagSVG("remnants")',flagCtx).includes('assets/flags/britannia.webp'));
 assert.equal(E.FACTIONS.remnants.color,E.FACTIONS.britannia.color);
 const geass=E.scenarios.byId['geass-war'].create();const heroes=E.scenarios.byId['protagonists-antagonists'].create();
 assert(E.serves('leila','geass_order',geass));assert(E.serves('shin','geass_order',geass));assert(!E.COMMANDERS.sakuya, 'Removed Rozé commander must not return');
