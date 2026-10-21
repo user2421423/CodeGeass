@@ -864,7 +864,7 @@
   ]
 ],
     garrisons: [["Sydney","sutherland",2],["Melbourne","glasgow",1],["Perth","glasgow",1],["Darwin","glasgow",1],["Brisbane","glasgow",1],["Adelaide","glasgow",1]],
-    initialTreasury: { britannia: { credits: 380, industry: 155, science: 30 }, eb: { credits: 210, industry: 85, science: 18 }, cf: { credits: 900, industry: 400, science: 70 } },
+    initialTreasury: { britannia: { credits: 650, industry: 260, science: 30 }, eb: { credits: 450, industry: 190, science: 18 }, cf: { credits: 800, industry: 350, science: 70 } },
   };
 
 
@@ -996,6 +996,13 @@
     throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
+  // 2018-only coalition reinforcement: every *commander-led* Britannian and
+  // Euro-Britannian starting land formation gets a full three-frame stack.
+  // Apply after the complete roster is assigned, including auto-filled slots.
+  // Leave uncommanded formations, both fleets and all U.F.N. units unchanged.
+  for (const formation of ufn2018.armies)
+    if (formation[5] && ['britannia', 'eb'].includes(formation[0]))
+      formation[4] = 3;
   // Keep Augustus in friendly territory in both eras. In 2017 his original
   // Fukuoka staging point is overcrowded, which can displace him into Korea.
   // These starting-roster coordinates apply to every Conquest difficulty.
