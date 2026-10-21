@@ -3,6 +3,25 @@
 let helpBack = 'game';
 document.addEventListener('change', e => {
   if (uiActionBusy || gameAssetTask) return;
+  if (e.target.dataset.armyOrder) {
+    const [idText, view] = e.target.dataset.armyOrder.split(':');
+    const id = +idText, gr = E.armyGroup(game, id);
+    if (!gr) return;
+    const previous = gr.autoConquer ? 'conquer' : (gr.stance || 'advance');
+    const next = e.target.value;
+    if (next === previous) return;
+    if (next === 'conquer') {
+      const result = E.setArmyGroupConquest(game, id, true);
+      if (!result.ok) { e.target.value = previous; toast(result.reason); return; }
+      E.planArmyGroupConquest(game, game.player);
+      refreshAndSave();
+      armyGroupsDialog(view === 'overview' ? null : id);
+      toast('Army group ordered to capture remaining cities.');
+    } else if (Object.hasOwn(E.ARMY_GROUP_STANCES, next)) {
+      armyGroupSetStance(id, next, view === 'overview');
+    } else e.target.value = previous;
+    return;
+  }
   const id = e.target.id;
   if (id === 'conquest-select') {
     setup.conquest = E.CONQUESTS[e.target.value] ? e.target.value : 'world';
@@ -423,8 +442,11 @@ document.addEventListener('click', e => {
     return;
   }
   if (d.armyDisband) {
+    const group = E.armyGroup(game, +d.armyDisband);
+    if (!group) return toast('Army group not found.');
+    if (!window.confirm('Delete ' + armyGroupLabel(group) + '? This removes its group orders and organization, but does not delete any units.')) return;
     const result = E.disbandArmyGroup(game, +d.armyDisband);
-    if (result.ok) { if (activeArmyGroupId === +d.armyDisband) activeArmyGroupId = null; refreshAndSave(); armyGroupsDialog(); toast('Army group disbanded.'); }
+    if (result.ok) { if (activeArmyGroupId === +d.armyDisband) activeArmyGroupId = null; refreshAndSave(); armyGroupsDialog(); toast('Army group deleted. Units remain available.'); }
     else toast(result.reason);
     return;
   }
