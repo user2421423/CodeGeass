@@ -829,6 +829,11 @@
     }
     setupSakuradite(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
+    // Hard and Challenge can create additional uncommanded reinforcements.
+    // In 2018 Britannia and the U.F.N. still begin with named ground forces only.
+    if (cfg.id === 'ufn2018')
+      g.units = g.units.filter(u =>
+        !(['britannia', 'cf'].includes(u.side) && !u.cmd && !TYPES[u.type].naval));
     convertConquestEliteStarts(g); // Also converts every Challenge-style land reinforcement.
     prepareEliteConquestFactories(g);
     // Every power opens with one airship beside its capital (or its strongest city), on its own
