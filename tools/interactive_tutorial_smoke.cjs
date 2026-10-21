@@ -57,7 +57,7 @@ assert.equal(assignment.ok, true, assignment.reason);
 assert.equal(recruit.unit.cmd, 'suzaku');
 
 assert.match(fs.readFileSync(require.resolve('../dist/ui/core.js'), 'utf8'),
-  /game\.scenario\?\.id === 'training-grounds'\) return true;/,
+  /game\.scenario\?\.id === 'training-grounds'\)+ return true;/,
   'save isolation must remain in place');
 
 console.log('Interactive tutorial: full training scenario flow PASS');

@@ -90,11 +90,12 @@ ward.attacker.expVincentMoveTurn = ward.g.turn;
 breakCity(ward);
 assert.equal(ward.attacker.moved, true, 'Vincent Ward once-per-turn limit preserved');
 
-// Commander reposition skills share the new trigger; other kill-only rewards do not.
+// Ashley's reworked Asura Strike Force / Luck of the Devil has no movement reward
+// (her old two-hex kill reposition was removed), so breaking a city grants none.
 const ashley = battle('gloucester', 1, 'ashley');
 breakCity(ashley);
-assert.equal(ashley.attacker.moved, false, 'Ashley can reposition after city shield break');
-assert.equal(ashley.attacker.skillReposition, 2, 'Ashley receives exactly two hexes');
+assert.equal(ashley.attacker.moved, true, 'Ashley gains no reposition from a city shield break');
+assert.equal(ashley.attacker.skillReposition || 0, 0, 'Ashley has no kill reposition');
 
 // Kallen's former two-hex Breakthrough reward has been replaced by
 // Radiant Wave Assault: she earns one movement point ONLY for first strikes

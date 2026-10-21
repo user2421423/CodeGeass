@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 // All regional scenarios: no external per-turn funding after launch.
-// Cityless amphibious invasions use a ten-turn initial war chest instead.
+// Cityless amphibious invasions use an initial war chest instead (ten turns unless the scenario sets
+// citylessWarChestTurns).
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -51,7 +52,8 @@ for(const [id,scenario] of entries){
       for(const resource of resources){
         assert.equal(now[resource],0,id+'/'+side+' cityless '+resource+' income is zero');
         assert.ok((g.economy[side][resource]||0)>=
-          Math.max(0,Math.round(before[side][resource]*10)),
+          // A scenario may set its own reserve (Defense of Japan: three turns); the default is ten.
+          Math.max(0,Math.round(before[side][resource]*(g.scenario.citylessWarChestTurns||10))),
           id+'/'+side+' cityless initial '+resource+' war chest is high enough');
       }
     }

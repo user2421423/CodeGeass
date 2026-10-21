@@ -17,8 +17,13 @@ const type = (side,branch) => Object.keys(E.TYPES).find(id => {
   const t = E.TYPES[id];
   return t.side === side && t.branch === branch && !t.naval && !t.elite && t.min === 1 && t.max === 1;
 });
+// The Black Knights' only regular Armor frame (Zangetsu) has 1-2 range, so Kallen's frame may be ranged.
+const anyRange = (side,branch) => Object.keys(E.TYPES).find(id => {
+  const t = E.TYPES[id];
+  return t.side === side && t.branch === branch && !t.naval && !t.elite;
+});
 const bkArt = type('bk','Artillery') || type('cf','Artillery'),
-  bkInf = type('bk','Infantry'), bkArmor = type('bk','Armor'), brInf = type('britannia','Infantry');
+  bkInf = type('bk','Infantry'), bkArmor = type('bk','Armor') || anyRange('bk','Armor'), brInf = type('britannia','Infantry');
 assert.ok(bkArt && bkInf && bkArmor && brInf, 'Both sides need standard units');
 function setup(allyType=bkInf, allyCommander=null){
   const g=E.createGame('bk','normal','conquest',20261019,'world');
@@ -37,7 +42,7 @@ function setup(allyType=bkInf, allyCommander=null){
   const enemy=E.newUnit(g,brInf,'britannia',p2.c,p2.r);
   const p3=pick(3);assert.ok(p3);
   const outside=E.newUnit(g,brInf,'britannia',p3.c,p3.r);
-  return {g,zero,ally,enemy,outside};
+  return {g,zero,ally,enemy,outside,pick};
 }
 // No passive attack aura: the same attack preview with Zero silenced.
 {
@@ -123,39 +128,36 @@ for (const bank of [1, 2]) {
   assert.ok(freshStrike.unit>alreadyStruck.unit,'First strike remains available only for a new target');
   k.expKallenFirstTargets=[b.enemy.id];
 }
-// Enemy mode: two morale levels, but no lower than -2, no counterattacks
-// (including reaction counters), and no friendly activation the same turn.
+// Enemy mode: the enemy attacks its nearest same-faction formation in weapon range at normal damage, and the
+// victim may counter. It shares the one use per turn with friendly mode.
 {
   const b=setup();
-  const before=E.preview(b.g,b.ally.id,b.enemy.c,b.enemy.r);
-  assert.equal(before.counterAllowed,true,'Adjacent enemy normally counters');
+  const near=E.adjacent(b.g,b.enemy).find(p=>p.terrain==='plains'&&!E.internal.stationAt(b.g,p)&&
+    !E.internal.unitAt(b.g,p)&&dist(b.g,b.zero,p)>=2);
+  assert.ok(near,'Need a hex beside the enemy for its comrade');
+  E.newUnit(b.g,brInf,'britannia',near.c,near.r);
+  // The engine picks the nearest same-faction formation in range (lowest id on ties).
+  const victim=b.g.units.filter(w=>w.side==='britannia'&&w.id!==b.enemy.id&&dist(b.g,w,b.enemy)<=1)
+    .sort((x,y)=>dist(b.g,x,b.enemy)-dist(b.g,y,b.enemy)||x.id-y.id)[0];
+  const victimHP=victim.hp, enemyHP=b.enemy.hp, moraleBefore=b.enemy.morale;
+  assert.ok(E.actionTargets(b.g,b.zero).some(v=>v.id===b.enemy.id),'Enemy with a comrade in range is targetable');
   const r=E.feint(b.g,b.zero.id,b.enemy.id);
   assert.equal(r.ok,true,r.reason);
-  assert.equal(b.enemy.morale,-2,'Steady enemy loses exactly two levels');
-  assert.equal(b.enemy.expZeroGeass.moraleLost,2);
-  const after=E.preview(b.g,b.ally.id,b.enemy.c,b.enemy.r);
-  assert.equal(after.counterAllowed,false,'Enemy cannot counterattack');
-  assert.equal(after.counter,0);
+  assert.equal(r.target,b.enemy.id);
+  assert.ok(victim.hp<victimHP,'The forced strike damages the same-faction formation');
+  assert.ok(b.enemy.hp<enemyHP,'The victim counterattacks normally');
+  assert.equal(b.enemy.morale,moraleBefore,'No morale penalty in the reworked enemy mode');
+  assert.equal(b.enemy.expZeroGeass,undefined,'No lingering counter suppression');
   assert.equal(E.feint(b.g,b.zero.id,b.ally.id).ok,false,'Friendly mode shares the use');
-  E.beginTurn(b.g,'britannia',false);
-  assert.equal(b.enemy.expZeroGeass,undefined,'Suppression expires at enemy turn start');
-  assert.ok(b.enemy.morale>=-1,'Temporary morale penalty was lifted before normal recovery');
-  const recovered=E.preview(b.g,b.ally.id,b.enemy.c,b.enemy.r);
-  assert.equal(recovered.counterAllowed,true,'Enemy can counterattack again');
-}
-// Caps, morale protection and range validation.
-for(const [initial,expected] of [[1,-1],[-1,-2],[-2,-2],[-3,-3]]){
-  const b=setup();b.enemy.morale=initial;
-  assert.equal(E.feint(b.g,b.zero.id,b.enemy.id).ok,true);
-  assert.equal(b.enemy.morale,expected,'Initial morale '+initial+' must cap correctly');
+  assert.match(E.feintReason(b.g,b.zero),/Already used this turn/);
 }
 {
+  // An enemy with no same-faction formation in its weapon range cannot be compelled.
   const b=setup();
-  b.enemy.moraleWard={side:'britannia'};
-  assert.equal(E.feint(b.g,b.zero.id,b.enemy.id).ok,true);
-  assert.equal(b.enemy.morale,0,'Morale immunity respected');
-  assert.equal(E.preview(b.g,b.ally.id,b.enemy.c,b.enemy.r).counterAllowed,false,
-    'Counterattack suppression remains useful against morale-immune enemies');
+  b.g.units=b.g.units.filter(v=>v!==b.outside);
+  assert.ok(!E.actionTargets(b.g,b.zero).some(v=>v.id===b.enemy.id),'Isolated enemy is not a target');
+  assert.equal(E.feint(b.g,b.zero.id,b.enemy.id).ok,false);
+  assert.equal(b.zero.feintUsedTurn,undefined,'A refused target does not consume the command');
 }
 {
   const b=setup();
@@ -164,7 +166,6 @@ for(const [initial,expected] of [[1,-1],[-1,-2],[-2,-2],[-3,-3]]){
 }
 // User-facing picker must expose both modes and share the same target action.
 const ui=fs.readFileSync(require.resolve('../dist/ui/dialogs.js'),'utf8');
-assert.match(ui,/Select an ally or enemy/);
-assert.match(ui,/Ally · Reset actions/);
-assert.match(ui,/Enemy · Suppress counters/);
+assert.match(ui,/Ally · Refresh actions/);
+assert.match(ui,/Enemy · Force friendly fire/);
 console.log('Zero Geass Absolute Command: PASS');

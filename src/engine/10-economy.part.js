@@ -61,10 +61,14 @@
             (resource === 'sakuradite' ? SAKURADITE.national : 0);
           // Spread the complete former subsidy across starting cities. Keep
           // fractional remainders on the first city so totals are unchanged.
+          // A negative remainder (signed funding, e.g. Defense of Japan) is
+          // spread one unit per city instead, so no single city becomes a
+          // loss for whoever captures it.
           const whole=Math.trunc(bonus), each=Math.trunc(whole/cities.length),
             remainder=whole-each*cities.length;
           for (let i=0;i<cities.length;i++) {
-            const amount=each+(i===0?remainder+(bonus-whole):0);
+            const amount=each+(remainder<0 ? (i<-remainder?-1:0)+(i===0?bonus-whole:0)
+              : (i===0?remainder+(bonus-whole):0));
             if (!amount) continue;
             cities[i].regionalIncome ||= {};
             cities[i].regionalIncome[resource] =

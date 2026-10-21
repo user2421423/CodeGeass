@@ -50,14 +50,17 @@ test('heavy moves twice across shield break and kill; attacks continue but movem
   assert.equal(again.moveActionsThisTurn,2);assert.equal(again.chain,u.chain);
   assert.equal(E.reachable(loaded,again).size,0);
 });
-test('Zero reactivation preserves heavy move-action cap and once-per-turn commander stamp',()=>{
+// Since the Geass Absolute Command rework (e3c86555) Zero grants a fresh normal activation, which resets the
+// heavy-frame move-action counter; once-per-turn special stamps still stay used.
+test('Zero reactivation restores heavy movement and keeps the once-per-turn commander stamp',()=>{
   const g=world(), {at}=field(g), heavy=E.newUnit(g,'vincent_commander',g.player,at.c,at.r);
   const p=E.adjacent(g,at).find(p=>!E.stationAt(g,p));
   const zero=E.newUnit(g,'glasgow',g.player,p.c,p.r,1,'zero');
   heavy.moved=heavy.attacked=true;heavy.moveActionTurn=g.turn;heavy.moveActionsThisTurn=2;
   heavy.expVincentMoveTurn=g.turn;
   assert.equal(E.feint(g,zero.id,heavy.id).ok,true);
-  assert.equal(heavy.attacked,false);assert.equal(E.reachable(g,heavy).size,0);
+  assert.equal(heavy.attacked,false);assert.equal(heavy.moveActionsThisTurn,0);
+  assert.ok(E.reachable(g,heavy).size>0,'fresh activation restores movement');
   assert.equal(heavy.expVincentMoveTurn,g.turn);
   assert.equal(E.feint(g,zero.id,heavy.id).ok,false,'signature action cannot repeat');
   const loaded=save(g), commander=loaded.units.find(u=>u.id===zero.id);

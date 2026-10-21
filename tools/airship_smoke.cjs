@@ -188,8 +188,11 @@ function setup() {
       assert.equal(mine.length, 1, `${era} ${difficulty}: ${side} starts with one airship`);
       assert.equal(mine[0].type, E.airshipType(g, side));
       assert.equal(mine[0].stack, 1);
-      const capital = g.stations.find(s => s.capitalOf === side);
-      if (capital) assert.ok(E.distance(mine[0], capital, g) <= 2, side + ' airship starts by its capital');
+      // In 2018 Britannia has no rear-area troops: its airship starts at Baghdad on the front instead.
+      const home = era === 'ufn2018' && side === 'britannia'
+        ? g.stations.find(s => s.name === 'Baghdad' && s.owner === side)
+        : g.stations.find(s => s.capitalOf === side);
+      if (home) assert.ok(E.distance(mine[0], home, g) <= 2, `${era}: ${side} airship starts by ${home.name}`);
       assert.equal(E.tile(g, mine[0].c, mine[0].r).owner, side);
     }
   }

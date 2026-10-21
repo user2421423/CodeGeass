@@ -1,7 +1,7 @@
 {
   "schema": 2,
-  "purpose": "Complete 68-scenario reference after six new exclusives and stale regional commander repairs; prior historical references retained.",
-  "parentSourceRevision": "37c8ad80",
+  "purpose": "Complete 68-scenario reference regenerated on main after the 118-commander roster, commander reworks, AI commander-action and airlift changes, and the signed regional-funding spread fix.",
+  "parentSourceRevision": "4fe11558",
   "profile": {
     "seed": 11,
     "turns": 2,
@@ -33,25 +33,20 @@
   ],
   "current": {
     "path": "tools/data/sim_baseline.txt",
-    "sha256": "1536477a8224f5824b912fc1549df5d45449e40b35bfc0998f247c97920a1cc5",
+    "sha256": "27e5bbb8b5793272459e82f83ab7600dcf38f1ad0bd940817fe459c1bdbf723b",
     "reason": [
-      "Six new Scenario Mode exclusives, with seventeen selectable factions.",
-      "Remove retired Monica/Luciano regional assignments; use the existing Margaret-to-Romero identity migration in four rejecting modules.",
-      "Expand the stale 37-scenario reference to all 68 current scenarios."
+      "Upstream commander changes since 9a14d263 (118-commander roster, Lelouch/Zero/Shin/Ashley/Andrea and other reworks, base-stat removals) changed every setup fingerprint.",
+      "AI now uses every commander active action (signature targets, Olivia/Fernando on the chosen target, Sayoko infiltration) and prioritizes airship troop lifts.",
+      "Negative regional funding remainders are spread one unit per city (Defense of Japan), so no captured city becomes a loss.",
+      "Monica and Luciano regain the stat passives their 118-roster descriptions promise."
     ]
   },
   "verification": {
-    "capturedAtUTC": "2026-10-20T18:20:41.656903+00:00",
-    "node": "v24.19.0",
+    "capturedAtUTC": "2026-10-21T08:00:28.971982+00:00",
+    "node": "v24.21.0 (Electron 43 ELECTRON_RUN_AS_NODE)",
     "aiErrors": 0,
-    "independentFullCapture": false,
-    "originalPrefixRecordsCompared": 95,
-    "originalPrefixIdentical": 70,
-    "originalPrefixExpectedDifferences": 25,
-    "expectedDifferenceScenarios": [
-      "area-18",
-      "britannia-iraq-iran"
-    ],
-    "explanation": "The untouched starting all-scenario run stopped at Unknown commander monica in Central America. Of its 95 earlier records, only the two authored retired-commander repairs differ. Full rerun completed after regional repairs."
+    "independentFullCapture": true,
+    "independentCapturesIdentical": true,
+    "explanation": "Two independent full runs of node tools/scenario_sim.cjs --all produced byte-identical 725-line output; post-fix-fingerprints.txt mirrors it."
   }
 }
