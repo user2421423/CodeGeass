@@ -288,7 +288,7 @@
     [EB, 'sutherland', 4, 6, 2],
     [EB, 'sutherland', 4, 4, 2],
     [EB, 'sutherland', 4, 8, 2],
-    [EB, 'canterbury', 1, 5, 1],
+    [EB, 'gareth', 1, 5, 1],
     [EB, 'liverpool', 1, 7, 1],
   ];
   const SIEGE_EU = [
@@ -346,7 +346,7 @@
     [EB, 'gloucester', 9, 4, 2],
     [EB, 'gloucester', 9, 8, 2],
     [EB, 'gloucester', 10, 6, 2],
-    [EB, 'canterbury', 5, 6, 1],
+    [EB, 'gareth', 5, 6, 1],
     [EB, 'sutherland', 7, 3, 2],
     [EB, 'sutherland', 7, 9, 2],
     [EB, 'liverpool', 6, 5, 1],

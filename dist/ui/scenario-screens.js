@@ -19,6 +19,12 @@ const SCENARIO_THEATERS = Object.freeze([
     "id": "alternate-history",
     "label": "Alternate History",
     "ids": [
+      "bk-civil-war",
+      "rounds-tournament",
+      "geass-war",
+      "protagonists-antagonists",
+      "partition-britannia",
+      "ufn-civil-war",
       "eu-military-coup",
       "rounds-rebellion",
       "shin-independence",
@@ -191,12 +197,13 @@ function scenarioDialog() {
     const active=side===scenarioSide;
     const cities=imageMeta.sides?.[side]?.cities ?? '—';
     const units=imageMeta.sides?.[side]?.formations ?? '—';
-    const portraitKey={britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin',rounds:'bismarck',shinregime:'shin',loyalists:'xingke',eunuchs:'gaohai',junta:'smilas'}[side];
+    const portraitKey=model.meta?.portraits?.[side]||E.FACTIONS[side]?.portrait||{britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin',rounds:'bismarck',shinregime:'shin',loyalists:'xingke',eunuchs:'gaohai',junta:'smilas'}[side];
     const portrait=portraitKey?ART.portrait(portraitKey,'scenario-side-art'):'';
     const flag=ART.flagSVG(side);
+    const sideBrief=model.meta?.blurbs?.[side];
     return `<button class="scenario-side-option ${active?'active':''}" type="button" data-scenario-faction="${esc(side)}" aria-pressed="${active}" style="--scenario-side-color:${side==='bk'?'#f0c94a':owner.color}">
       <span class="scenario-side-image" aria-hidden="true">${portrait}</span>
-      <span class="scenario-side-copy"><span class="scenario-side-name">${esc(owner.name)}</span><span class="scenario-side-stats">${cities} cities · ${units} formations</span></span>
+      <span class="scenario-side-copy"><span class="scenario-side-name">${esc(owner.name)}</span><span class="scenario-side-stats">${cities} cities · ${units} formations</span>${sideBrief?'<span class="scenario-side-summary">'+esc(sideBrief)+'</span>':''}</span>
       <span class="scenario-side-flag" aria-hidden="true">${flag||''}</span>
       <span class="scenario-side-mark" aria-hidden="true">${active?'✓':''}</span>
     </button>`;
@@ -231,7 +238,7 @@ function scenarioDialog() {
             <div class="scenario-map-side">
               <div class="scenario-map-head"><span>OPERATIONAL MAP</span><span>${model.cols} × ${model.rows} HEXES</span></div>
               <div class="scenario-map-window">
-                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" alt="Geographic map of ${esc(model.title)} with no troops or unit markers" src="scenario-previews/${esc(scenarioKind)}.webp"><p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
+                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" alt="Geographic map of ${esc(model.title)} with no troops or unit markers" src="scenario-previews/${esc(scenarioKind)}.${scenarioKind==='ufn-civil-war'?'svg':'webp'}"><p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
               </div>
               <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount===null?'Static geographic preview':unitCount+' starting formations'}</span><span>${sideCount} playable powers</span></div>
             </div>

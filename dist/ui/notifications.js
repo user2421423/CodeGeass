@@ -52,7 +52,15 @@ function announceCommanderAbility(commanderId) {
 }
 function useCommanderAbility(unitId, targetId = null) {
   const unit = game.units.find(v => v.id === unitId);
+  const visuals = combatVisualSnapshot();
+  let targets = E.actionTargets(game,unit);
+  if (E.COMMANDERS[unit?.cmd]?.action?.kind === 'farneseWithdrawal')
+    targets = game.units.filter(v=>v.hp>0&&v.side===unit.side&&
+      E.distance(unit,v,game)<=3&&v.hp<E.maxHP(v)*0.5);
+  const recipients = targets.map(v=>({id:v.id,c:v.c,r:v.r,side:v.side,owner:v.owner,hp:v.hp,shield:v.shield}));
   const result = E.feint(game, unitId, targetId);
+  if (result?.ok) addCommanderCombatEffects(result, unit, visuals);
+  if (result?.ok) addCommanderSupportEffects(result, unit, recipients);
   if (result?.ok && unit?.cmd) announceCommanderAbility(unit.cmd);
   return result;
 }

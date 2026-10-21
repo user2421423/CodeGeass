@@ -46,9 +46,14 @@
           // turns of military spending, even if a city is never captured.
           const oldIncome = income(g,side);
           const wallet = funds(g,side);
+          // Individual invasion scenarios may specify a shorter finite reserve.
+          // Leave the ten-turn default unchanged for all existing scenarios.
+          const reserveTurns = Number.isInteger(g.scenario.citylessWarChestTurns) &&
+            g.scenario.citylessWarChestTurns > 0
+              ? g.scenario.citylessWarChestTurns : CITYLESS_WARCHEST_TURNS;
           for (const resource of REGIONAL_RESOURCES)
             wallet[resource] = Math.max(wallet[resource] || 0,
-              Math.max(0,Math.round(oldIncome[resource] * CITYLESS_WARCHEST_TURNS)));
+              Math.max(0,Math.round(oldIncome[resource] * reserveTurns)));
           continue;
         }
         for (const resource of REGIONAL_RESOURCES) {
@@ -102,7 +107,8 @@
           a.industry+=y.industry*.25;
         }
         a.industry += y.industry;
-        a.science += y.science;
+        const lloydHere = g.units.some(u => u.hp > 0 && u.side === side && u.cmd === 'lloyd' && u.c === s.c && u.r === s.r);
+        a.science += y.science * (lloydHere ? 2 : 1);
         // Scenario balancing income is owned by the city and transfers on
         // capture instead of surviving as a permanent off-map stipend.
         for(const resource of REGIONAL_RESOURCES)
@@ -115,7 +121,9 @@
     // Sakuradite deposits: extraction by refinery level, with Japan's output allocated among the powers; a level-3
     // refinery also exports for credits.
     for (const d of g.sites || []) {
-      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1);
+      const host = depositHost(g, d);
+      const lloydAtHost = host && host.owner === side && g.units.some(u => u.hp > 0 && u.side === side && u.cmd === 'lloyd' && u.c === host.c && u.r === host.r);
+      total.sakuradite += (depositShares(g, d)[side] || 0) * refining * (g.units.some(u=>u.hp>0&&u.side===side&&fx(u).kyoto&&dist(g,u,d)<=2)?1.25:1) * (lloydAtHost ? 2 : 1);
       if (depositOwner(g, d) === side) total.credits += depositYield(g, d).credits;
     }
     // Regional scenarios localize the national Sakuradite allotment into
@@ -222,23 +230,27 @@
   // port and its separate one-unit-per-turn shipyard slot.
   // Mission-owned roster snapshots provide an explicit, save-safe borrowing map.
   // Outside Elite Campaign, ordinary faction unlock/recruit rules remain unchanged.
-  // Native Chinese Federation Elite Forces, distinct from Jabalpur's
-  // Black Knights/Guren/Akatsuki machines. Saved HQ unlocks are never deleted;
-  // incompatible equipment is simply not deployable in the wrong era.
-  const FEDERATION_2017_ELITES = new Set(['chuyen', 'wang_hu', 'shen_hu', 'shui_gun_ru_ii']);
+  // Faction ownership comes from ELITE_FORCES, including the Federation's
+  // command, missile and siege variants. The 2018 UFN still uses Black Knights equipment.
   function eliteEligible(g, side, id) {
     const e = ELITE_FORCES[id];
     if (!e) return false;
     // Scenario-only factions (alternate history) follow the rules of the power whose equipment they use.
     const kit = g?.scenario?.equipment?.[side] || side;
+    const coalition = g?.mode === 'scenario' && g.scenario?.rosterSources?.[side];
+    if (coalition) return (g.scenario.eliteRosters?.[side] || []).includes(id) &&
+      coalition.some(source => e.availableTo.includes(source));
     if (kit === 'cf') {
       if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
-      if (!FEDERATION_2017_ELITES.has(id)) return false;
+      // Older saves may retain a three-land-unit roster snapshot. Native
+      // Federation unlocks must not disappear because that snapshot is stale.
+      return e.availableTo.includes('cf');
     }
     const roster = g.mode === 'campaign' ? g.campaign?.eliteRosters?.[side] :
       scenarioMeta(g).eliteRosterOnly ? g.scenario.eliteRosters?.[side] : null;
     if (roster) return roster.includes(id);
-    return e.availableTo.includes(kit) || (g.era === 'ufn2018' && side === 'eb' && e.availableTo.includes('britannia'));
+    // Euro Britannia shares Britannia's full Imperial Elite Force roster in every mode.
+    return e.availableTo.includes(kit) || (kit === 'eb' && e.availableTo.includes('britannia'));
   }
   function eliteDeployReason(g, s, id, profile = {}) {
     const e = ELITE_FORCES[id],
@@ -251,6 +263,7 @@
     return (
       (g.over ? 'Operation over' : producer !== g.phase ? (naval ? 'Not your port' : 'Not your city') : null) ||
       (!naval ? cityBusyReason(g, s) : null) ||
+      (s.expArkFleet?.owner === s.owner ? 'Ark Fleet terror prevents recruitment' : null) ||
       (s.expSupplyBlocked?.owner === s.owner ? 'City supply lines are disrupted' : null) ||
       (!eliteEligible(g, producer, id) ? 'This Elite Force is not available to this faction' : null) ||
       (e.scenarioOnly && !eliteScenario(g) ? 'Available only in the relevant Elite scenario' : null) ||

@@ -522,12 +522,11 @@ Story Mode. Rules are checked by `tools/airship_smoke.cjs`.
   `charge`, Katase `prepared`, Inoue `logistics` (`reinforceCost(type, g, side, u)`).
 - **AI use of active abilities** (`src/ai/07-tactical-orders.part.js`): every commander action is AI-usable (the old
   player-only list of 12 approved signatures was removed on 2026-10-21). `signaturePick` chooses the target for
-  `kind: 'special'` actions and holds the action when it would be wasted (Kate and Chloe heal only real wounds, Gao
-  Hai moves shields only to a clearly weaker city, Marrybell and Sophie buff a hard hitter that can still strike);
-  Olivia marks and Fernando fires Electrical Overload at the target already chosen to attack (`aiSignatureStrike`);
-  Sayoko infiltrates after moving or when firing in place (`aiSayokoShadow`); Margaret redeploys an ally that moved
-  without a target in range, which then acts again (`aiMargaretRedeploy`). Rolo, Charles, Ohgi, Smilas, Zero and Leila
-  keep their own helpers. Checked by `tools/ai_commander_signatures_smoke.cjs`.
+  `kind: 'special'` actions and holds the action when it would be wasted (Gao Hai moves shields only to a clearly
+  weaker city, Kirihara resupplies the most wounded ally, Marrybell and Sophie buff a hard hitter that can still
+  strike, Darlton places knights about two hexes from the enemy); Olivia marks and Fernando fires Electrical Overload
+  at the target already chosen to attack (`aiSignatureStrike`); Sayoko infiltrates after moving or when firing in
+  place (`aiSayokoShadow`). Rolo, Charles, Ohgi, Smilas, Zero, Leila, Julius and Andrea keep their own helpers. Checked by `tools/ai_commander_signatures_smoke.cjs`.
 - A fourth rating, **Mobility** (1–6 stars), replaces fixed movement bonuses: 3★ +1 movement up to 6★ +4.
 - Starters Suzaku and Cornelia (Britannia), Leila and Akito (E.U.), Xingke and Xianglin (Federation).
   Recruit prices 400 / 300 / 200 tokens by stars. Eleven ranks from Second Lieutenant (112% frame) to Marshal (160%).

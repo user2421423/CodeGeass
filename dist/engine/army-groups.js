@@ -28,8 +28,8 @@
     return null;
   }
   function prune(g) {
-    const seen = new Set();
-    for (const gr of groups(g)) {
+    const seen = new Set(), list = groups(g);
+    for (const gr of list) {
       gr.units = (gr.units || []).filter(id => {
         // Keep members aboard carriers: they retain their IDs and rejoin the map when deployed.
         const alive = g.units.some(u => (u.id === id && u.hp > 0 && u.side === gr.side) ||
@@ -39,6 +39,8 @@
         return true;
       });
     }
+    // Automatically retire groups with no surviving members, including after casualties.
+    g.armyGroups = list.filter(gr => gr.units.length > 0);
   }
   function clearMatchingOrder(g, u, p) {
     if (u && p && u.goto?.c === p.c && u.goto?.r === p.r) delete u.goto;
@@ -67,6 +69,7 @@
       previous.units = previous.units.filter(id => id !== unitId);
       clearMatchingOrder(g, u, previous.destination);
       clearPlanned(g, previous, u);
+      if (!previous.units.length) g.armyGroups = groups(g).filter(gr => gr !== previous);
     }
     group.units.push(unitId);
     let routed = false;
@@ -85,7 +88,9 @@
     group.units = group.units.filter(id => id !== unitId);
     clearMatchingOrder(g, g.units.find(u => u.id === unitId), group.destination);
     clearPlanned(g, group, g.units.find(u => u.id === unitId));
-    return { ok: true };
+    const disbanded = group.units.length === 0;
+    if (disbanded) g.armyGroups = groups(g).filter(gr => gr !== group);
+    return { ok: true, disbanded };
   }
   function order(g, groupId, c, r) {
     const why = canEdit(g), group = find(g, groupId);

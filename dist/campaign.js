@@ -99,11 +99,10 @@
     return regular;
   }
   function eliteRoster(side, g = null) {
-    // The 2017 Federation gets its native Elite Force roster, not UFN-era frames.
-    const nativeFederation = new Set(['chuyen', 'wang_hu', 'shen_hu', 'shui_gun_ru_ii']);
+    // Keep native faction rosters in sync with HQ, including Federation variants.
     const available = owner => Object.keys(E.ELITE_FORCES).filter(id => {
       const e = E.ELITE_FORCES[id];
-      return owner === 'cf' ? nativeFederation.has(id) : e.availableTo.includes(owner);
+      return e.availableTo.includes(owner);
     });
     const own = available(side);
     if (own.length) return own;
@@ -215,7 +214,9 @@
   // Units: [side, type or class, c, r, stack = 1, commander = null, { hold, ready, normalOnly, skipNormal, cargo }].
   // cargo contains full friendly land-unit specs; their coordinates follow the carrier.
   function placeUnit(g, spec, carrier = null) {
-    const [side, kind, c, r, stack = 1, cmd = null, opts = {}] = spec,
+    const [side, kind, c, r, stack = 1, originalCmd = null, opts = {}] = spec,
+      mappedCmd = ({margaret:'romero',kate:'miguel',hilda:'masaki',chloe:'toru'})[originalCmd] || originalCmd,
+      cmd = E.COMMANDERS[mappedCmd] ? mappedCmd : null,
       d = difficulty(g.difficulty),
       enemy = E.foe(g, side, g.player);
     if (opts.normalOnly && g.difficulty !== 'normal') return null;

@@ -1,4 +1,7 @@
 // Validate exactly the files GitHub Pages ships, without network access or extra dependencies.
+// The 19 newly added commanders intentionally use the UI's existing initials
+// fallback pending character-specific art. All previously published portraits
+// remain mandatory, and any new/unapproved missing ID is a validation failure.
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -51,9 +54,19 @@ for (const [kind, known] of [['units', E.TYPES], ['portraits', E.COMMANDERS], ['
     for (const key of ['fx', 'fy']) if (typeof entry === 'object' && key in entry)
       assert(Number.isFinite(entry[key]) && entry[key] >= 0 && entry[key] <= 1, `Invalid portrait focus: ${id}.${key}`);
   }
-  if (kind === 'units' || kind === 'portraits')
-    assert.equal(Object.keys(manifest[kind]).length, Object.keys(known).length, `Missing real ${kind} artwork (no procedural fallback)`);
-  console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published${kind === 'buildings' ? '' : ' (real art only)'}.`);
+  if (kind === 'units')
+    assert.equal(Object.keys(manifest[kind]).length, Object.keys(known).length, 'Missing real unit artwork');
+  if (kind === 'portraits') {
+    // Existing commanders must retain locally hosted character art, including the
+    // owner's approved colorization of Romero's original manga portrait.
+    const missing = Object.keys(known).filter(id => !Object.hasOwn(manifest[kind],id)).sort();
+    const pendingApprovedArt = new Set(["monica","luciano","chloe","mao","shalio","shamna","bolvona","jeanrowe","johanne","brondello","dore","scholtz","renelaurent","janmanes","simonmericourt","kuzanmontoban","alannecker","franzvallo","augustahighland"]);
+    const unexpectedMissing = missing.filter(id => !pendingApprovedArt.has(id));
+    assert.deepEqual(unexpectedMissing, [], 'Unexpected missing commander portraits');
+    assert.ok([...pendingApprovedArt].every(id => Object.hasOwn(known, id)), 'Pending art list must only name real commanders');
+    if (missing.length) console.warn('Pending character art (' + missing.length + '): ' + missing.join(', '));
+  }
+  console.log(`${kind}: ${Object.keys(manifest[kind]).length}/${Object.keys(known).length} published${kind === 'buildings' ? '' : ' (validated hosted art)'}.`);
 }
 for (const name of tracked) assert(!/^dist\/(?:local-art\/(?!README\.md$)|assets\/art\/raw\/)/.test(name), `Raw/local-only art would leak into Pages: ${name}`);
 console.log('PASS: public entrypoint, startup manifest, image paths, signatures, and deployment boundaries.');

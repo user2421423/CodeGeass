@@ -27,27 +27,17 @@ function order(g, id, posts = {}) {
 const feints = (events, id) => events.filter(e => e.kind === 'feint' && e.id === id);
 
 {
-  // Kate heals the badly wounded neighbour, not the scratched one.
-  const { g, center, at } = field('eu');
-  const kate = E.newUnit(g, 'alexander_mp', 'eu', center.c, center.r, 1, 'kate');
-  const [a, b] = at(1);
-  const hurt = E.newUnit(g, 'estrella', 'eu', a.c, a.r), scratched = E.newUnit(g, 'estrella', 'eu', b.c, b.r);
+  // Kirihara's Energy Resupply goes to the most wounded ally in reach.
+  // Black Knights commanders lead Federation formations in World Conquest.
+  const { g, center, at } = field('cf');
+  const kirihara = E.newUnit(g, E.typeFor('cf', 'heavy', g), 'cf', center.c, center.r, 1, 'kirihara');
+  const [a, b] = at(2), scout = E.typeFor('cf', 'scout', g);
+  const hurt = E.newUnit(g, scout, 'cf', a.c, a.r), scratched = E.newUnit(g, scout, 'cf', b.c, b.r);
   hurt.hp = Math.round(E.maxHP(hurt) * 0.5);
   scratched.hp = E.maxHP(scratched) - 1;
   const before = hurt.hp;
-  const events = order(g, kate.id);
-  assert.equal(feints(events, kate.id)[0]?.target, hurt.id, 'Kate heals the badly wounded ally');
+  assert.equal(feints(order(g, kirihara.id), kirihara.id)[0]?.target, hurt.id, 'Kirihara resupplies the wounded ally');
   assert.ok(hurt.hp > before);
-  assert.equal(scratched.hp, E.maxHP(scratched) - 1);
-}
-
-{
-  // Kate holds Medical Stabilization when nobody beside her is meaningfully hurt.
-  const { g, center, at } = field('eu');
-  const kate = E.newUnit(g, 'alexander_mp', 'eu', center.c, center.r, 1, 'kate');
-  const a = at(1)[0], scratched = E.newUnit(g, 'estrella', 'eu', a.c, a.r);
-  scratched.hp = E.maxHP(scratched) - 1;
-  assert.equal(feints(order(g, kate.id), kate.id).length, 0, 'No heal wasted on a scratch');
 }
 
 {
@@ -96,21 +86,6 @@ const feints = (events, id) => events.filter(e => e.kind === 'feint' && e.id ===
     shot = events.findIndex(e => e.kind === 'attack' && e.id === olivia.id);
   assert.ok(mark >= 0 && shot > mark, 'Precision Breakthrough comes just before the attack');
   assert.equal(events[mark].target, foe.id);
-}
-
-{
-  // Margaret redeploys an ally that moved but has nothing in range, and the ally then fires.
-  const { g, center, at } = field('eu');
-  const margaret = E.newUnit(g, 'alexander_mp', 'eu', center.c, center.r, 1, 'margaret');
-  margaret.moved = margaret.attacked = true; // Margaret herself has already acted this turn.
-  const a = at(2)[0], ally = E.newUnit(g, 'alexander_mp', 'eu', a.c, a.r);
-  ally.moved = true;
-  const foe = g.tiles.find(q => E.distance(q, ally, g) === 3 && E.distance(q, center, g) >= 3 && !E.unitAt(g, q));
-  E.newUnit(g, 'estrella', 'britannia', foe.c, foe.r);
-  const post = g.tiles.find(q => E.distance(q, foe, g) === 1 && E.distance(q, ally, g) === 2 && !E.unitAt(g, q));
-  const events = order(g, margaret.id, { [ally.id]: post });
-  assert.equal(feints(events, margaret.id)[0]?.target, ally.id, 'Strategic Redeployment on the stalled ally');
-  assert.ok(ally.attacked, 'The redeployed ally attacks');
 }
 
 {

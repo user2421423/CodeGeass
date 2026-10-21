@@ -1,8 +1,34 @@
   // Approved newcomers: active powers and reactive combat effects.
   // Existing commanders retain their original skill definitions and mechanics.
+  // Elite Darlton formations summon a standard frame of the same class.
+  function darltonSummonType(g,u){
+    const current=TYPES[u.type];
+    if(!current)return null;
+    if(!current.elite)return u.type;
+    const regular=lineupOf(g,u.side)?.[current.cls];
+    return regular&&TYPES[regular]&&!TYPES[regular].elite?regular:null;
+  }
+  function darltonSummonTargets(g,u){
+    const type=darltonSummonType(g,u),t=TYPES[type];
+    if(!type||u.hp<=0||!t||atSea(g,u))return [];
+    const seen=new Set();
+    return within(g,u,2).filter(p=>{
+      const id=key(p);
+      if(seen.has(id))return false;
+      seen.add(id);
+      if(dist(g,u,p)<1||dist(g,u,p)>2||unitAt(g,p))return false;
+      const city=stationAt(g,p);
+      if(city&&city.owner!==u.side)return false;
+      if(t.air)return true;
+      if(TERRAIN[p.terrain]?.blocked)return false;
+      if(t.naval==='ship')return navigable(p)&&!city;
+      return !isSea(p)||t.naval==='amphibious';
+    }).map(p=>({...p,id:key(p)}));
+  }
   function newcomerTargets(g,u){
     const a=COMMANDERS[u?.cmd]?.action,k=a?.target,range=a?.range||0;
     if(!k)return [];
+    if(u.cmd==='darlton')return darltonSummonTargets(g,u);
     if(u.cmd==='gaohai')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)===1&&s.shield<s.maxShield&&g.stations.some(o=>o.owner===u.side&&o.c===u.c&&o.r===u.r&&o.shield>0));
     if(u.cmd==='huangqian')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)<=3&&s.shield<s.maxShield);
     if(u.cmd==='chengzhong')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)<=3);
@@ -22,11 +48,19 @@
   }
   function newcomerUse(g,u,targetId){
     const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
-    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
+    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret','darlton'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
     const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
     switch(u.cmd){
+      case 'darlton':{
+        const type=darltonSummonType(g,u);
+        if(!type)return {ok:false,reason:'No matching standard unit class for this formation.'};
+        const knight=newUnit(g,type,u.side,v.c,v.r,1,null,true);
+        knight.expDarltonSummonedBy=u.id;
+        log(g,'Darlton summons a Glaston Knight ('+TYPES[knight.type].short+') at hex '+v.c+','+v.r+'.',u.side);
+        break;
+      }
       case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;
       case 'norland':v.expOverwatch=true;break;
       case 'sakuya':v.expDisabledNext=true;break;
@@ -103,6 +137,7 @@
     
 
     if(!counter&&u.cmd==='sayoko'&&u.expShadowAttackTurn===g.turn)m*=1.3;
+    if(!counter&&u.cmd==='darlton'&&u.expDarltonVengeanceBonus)m*=1.5;
     if(!counter&&u.expMargaretBonusTurn===g.turn)m*=1.15;
     if(!counter&&['Infantry','Armor'].includes(TYPES[u.type].branch)&&['forest','mountain'].includes(terrain?.terrain)&&
       g.units.some(v=>v.hp>0&&v.side===u.side&&v.cmd==='mutsuki'&&dist(g,v,u)<=2))m*=1.2;
@@ -179,6 +214,7 @@
       let incoming=newcomerIntercept(g,attacker,damage);
       if(fx(attacker).futureSightDodge&&random(g)<fx(attacker).futureSightDodge){
         incoming=0;
+        recordAbilitySignal(g,attacker,'EVADED','guard');
         log(g,'FUTURE SIGHT — EVADED',attacker.side);
       }
       const before=attacker.hp;
@@ -196,11 +232,79 @@
       log(g,'Oscar counterstrikes '+(COMMANDERS[attacker.cmd]?.short||TYPES[attacker.type].short)+
         ' for '+dealt+' damage; no counterfire.',oscar.side);
       strikes.push({oscar:oscar.id,target:attacker.id,damage:dealt});
+      recordAbilityAttack(g,oscar,attacker,before-attacker.hp,crit);
     }
     return strikes;
   }
+  // Andrea reacts only to a confirmed death, after survival and rescue checks.
+  // His heal is once per round; his exhaustion has no cooldown.
+  function farneseOnDeath(g,v,attacker) {
+    for (const andrea of g.units) {
+      if (andrea.hp <= 0 || andrea.cmd !== 'farnese' || andrea.side !== v.side ||
+          atSea(g,andrea) || dist(g,andrea,v) > 3) continue;
+      const ability = fx(andrea);
+      if (ability.honorFallen && andrea.expFarneseHonorTurn !== g.turn) {
+        andrea.expFarneseHonorTurn = g.turn;
+        for (const ally of g.units) if (ally.hp > 0 && ally.side === andrea.side &&
+            dist(g,andrea,ally) <= 2) {
+          ally.hp = Math.min(maxHP(ally),ally.hp + Math.max(1,Math.round(maxHP(ally)*0.1)));
+          ally.morale = Math.max(0,ally.morale);
+          recordAbilitySignal(g,ally,'HONOR THE FALLEN','heal');
+        }
+        log(g,'Honor the Fallen: Andrea rallies and repairs nearby survivors.',andrea.side);
+      }
+      if (ability.endSlaughter && attacker && attacker.hp > 0 &&
+          foe(g,attacker.side,v.side)) {
+        attacker.expFarneseSlaughterTurn = g.turn;
+        attacker.attacked = true; attacker.moved = true;
+        attacker.skillReposition = 0; attacker.withdrawMove = false;
+        attacker.eliteMoveAfterKill = false;
+        attacker.expToruExtraAttack = 0; attacker.expToruExtraMove = 0;
+        recordAbilitySignal(g,attacker,'END THE SLAUGHTER','debuff');
+        log(g,'End the Slaughter exhausts the attacking formation.',andrea.side);
+      }
+    }
+  }
+  // Romero holds a defensive line until each formation physically moves.
+  // Action refreshes do not erase the move flag, and multiple Romeros do
+  // not stack damage reduction or counterfire multipliers.
+  function romeroStandFast(g,u){
+    return !!u&&u.hp>0&&!u.expRomeroMoved&&g.units.some(v=>
+      v.hp>0&&v.cmd==='romero'&&fx(v).standFast&&v.side===u.side&&
+      !atSea(g,v)&&dist(g,v,u)<=2);
+  }
+  // Last Promise: a true enemy combat death (counterattack included).
+  // If Toru falls on the enemy turn, bank another legal action for allies'
+  // following friendly activation instead of erasing it at turn reset.
+  function toruLastPromise(g,toru,attacker){
+    if(toru.cmd!=='toru'||!fx(toru).lastPromise||toru.expToruPromiseUsed||
+       !attacker||!foe(g,toru.side,attacker.side))return;
+    toru.expToruPromiseUsed=true;
+    const immediate=g.phase===toru.side;
+    for(const ally of g.units){
+      if(ally.hp<=0||ally.id===toru.id||ally.side!==toru.side||
+         atSea(g,ally)||dist(g,toru,ally)>2)continue;
+      ally.morale=1;
+      recordAbilitySignal(g,ally,'THE LAST PROMISE');
+      ally.expToruPromiseDamage=true;
+      if(!immediate){
+        ally.expToruPromisePending=true;
+        continue;
+      }
+      // Previously exhausted actions refresh immediately; actions not yet
+      // spent receive a banked extra action after their first use.
+      if(ally.attacked)ally.attacked=false;
+      else ally.expToruExtraAttack=Math.max(ally.expToruExtraAttack||0,1);
+      if(ally.moved)ally.moved=heavyMoveLimitReached(g,ally);
+      else if(!heavyMoveLimitReached(g,ally))
+        ally.expToruExtraMove=Math.max(ally.expToruExtraMove||0,1);
+      ally.skillReposition=0;
+      ally.withdrawMove=false;
+    }
+    log(g,"The Last Promise: Toru's sacrifice rallies nearby allies.",toru.side);
+  }
   function newcomerDefense(g,target,attacker,counter,direct){
-    let m=1;
+    let m=romeroStandFast(g,target)?0.75:1;
     if(g.units.some(v=>v.cmd&&v.hp>0&&v.side===target.side&&v.id!==target.id&&fx(v).expendable&&dist(g,v,target)===1))m*=1.15;
 
     if(target.cmd==='jeremiah')m*=.85;
@@ -233,10 +337,11 @@
         recordWarEvent(g,'damage',guard.side,{targetSide:guard.side,value:half,unitId:guard.id,group:warGroup(g,guard)});
         amount=Math.min(Math.max(0,target.hp-1),amount-half);
         log(g,'Jeremiah intercepts a lethal strike for '+(COMMANDERS[target.cmd]?.short||'an allied commander')+'.',guard.side);
+        recordAbilitySignal(g,target,'JEREMIAH INTERCEPT','guard');
       }
     }
     const guard=g.units.find(v=>v.cmd&&v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
-    if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
+    if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;recordAbilitySignal(g,target,'GUARDIAN INTERCEPT','guard');}
     if(target.expAfterimage)delete target.expAfterimage;
     return amount;
   }
@@ -247,9 +352,12 @@
        fx(v).relief&&v.expReliefTurn!==g.turn&&dist(g,v,defender)<=2));
     const unit=assists.sort((a,b)=>b.hp-a.hp)[0];if(!unit)return;
     const n=Math.max(1,Math.round(power(g,unit,attacker,stationAt(g,attacker),true)*(fx(unit).relief?.6:.5)));
-    attacker.hp=Math.max(0,attacker.hp-n);
+    const taken=attacker.cmd==='darlton'?darltonProtect(g,attacker,unit,n):n;
+    const before = attacker.hp;
+    attacker.hp=Math.max(0,attacker.hp-taken);
     if(fx(unit).relief)unit.expReliefTurn=g.turn;else unit.expLinkTurn=g.turn;
     kill(g,attacker,unit);
+    recordAbilityAttack(g,unit,attacker,before-attacker.hp);
   }
   // Villetta reacts to a commanderless enemy MOVING into an adjacent hex.
   // This is an independent free strike: it never calls attack(), consumes
@@ -274,6 +382,7 @@
     let incoming=newcomerIntercept(g,moved,damage);
     if(fx(moved).futureSightDodge&&random(g)<fx(moved).futureSightDodge){
       incoming=0;
+      recordAbilitySignal(g,moved,'EVADED','guard');
       log(g,'FUTURE SIGHT — EVADED',moved.side);
     }
     const before=moved.hp;
@@ -289,6 +398,7 @@
     }
     log(g,'Villetta intercepts a commanderless enemy'+
       (crit?' (critical)':'')+': '+landed+' damage; no counterfire.',hunter.side);
+    recordAbilityAttack(g,hunter,moved,before-moved.hp,crit);
     return true;
   }
   function newcomerOverwatch(g,moved){
@@ -299,8 +409,11 @@
       reacted=true;
       delete u.expOverwatch;
       const amount=Math.max(1,Math.round(power(g,u,moved,stationAt(g,moved))*.6));
-      moved.hp=Math.max(0,moved.hp-newcomerIntercept(g,moved,amount));
+      const incoming=newcomerIntercept(g,moved,amount);
+      const before = moved.hp;
+      moved.hp=Math.max(0,moved.hp-(moved.cmd==='darlton'?darltonProtect(g,moved,u,incoming):incoming));
       kill(g,moved,u);
+      recordAbilityAttack(g,u,moved,before-moved.hp);
     }
     if(moved.hp>0&&villettaIntercept(g,moved))reacted=true;
     return reacted;
@@ -309,7 +422,35 @@
     if(!v.cmd&&g.units.some(k=>k.hp>0&&k.side===v.side&&k.cmd==='kewell'&&dist(g,k,v)<=2))
       for(const ally of g.units)if(ally.hp>0&&ally.side===v.side&&dist(g,ally,v)===1)
         ally.expPuristCounter={turns:1,startTurn:g.turn};
+    // A Father's Vengeance: the marked knight's confirmed loss empowers Darlton.
+    if(v.expDarltonSummonedBy!=null){
+      const father=g.units.find(w=>w.id===v.expDarltonSummonedBy&&w.hp>0&&w.cmd==='darlton'&&w.side===v.side);
+      if(father&&father.expDarltonVengeanceTurn!==g.turn){
+        father.expDarltonVengeanceTurn=g.turn;
+        father.attacked=false;
+        father.moved=heavyMoveLimitReached(g,father);
+        father.skillReposition=0;
+        father.withdrawMove=false;
+        father.eliteMoveAfterKill=false;
+        father.expDarltonVengeanceBonus=true;
+        log(g,"A Father's Vengeance restores Darlton's movement and attack and empowers his next attack.",father.side);
+      }
+    }
     if(!attacker)return;
+    // St. Uriel's Relentless Pursuit: another allied formation's confirmed kill
+    // within 3 hexes restores legal actions and advances Assault's cooldown.
+    if (foe(g, attacker.side, v.side)) for (const raymond of g.units) {
+      if (raymond.cmd !== 'raymond' || !fx(raymond).relentlessPursuit ||
+          raymond.hp <= 0 || raymond.id === attacker.id || raymond.side !== attacker.side ||
+          atSea(g, raymond) || dist(g, raymond, v) > 3) continue;
+      raymond.attacked = false;
+      raymond.moved = heavyMoveLimitReached(g, raymond);
+      raymond.skillReposition = 0;
+      raymond.withdrawMove = false;
+      raymond.eliteMoveAfterKill = false;
+      raymond.feintCD = Math.max(0, (raymond.feintCD || 0) - 1);
+      log(g, "Relentless Pursuit refreshes Raymond's actions and advances Grand Master's Assault.", raymond.side);
+    }
     // Spearhead's Retribution: a genuine kill of an enemy Guilford protected
     // against restores normal movement and attack exactly once each turn.
     if (attacker.cmd === 'guilford' && attacker.hp > 0 &&

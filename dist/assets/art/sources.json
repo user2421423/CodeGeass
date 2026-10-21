@@ -991,5 +991,109 @@
       "replaced": "units/gun_ru-25191c921b75.webp",
       "reason": "Restore original standard Chinese Federation scout artwork while retaining the nine other approved sprites"
     }
+  },
+  "euEliteArtwork": {
+    "entries": [
+      {
+        "id": "elite_leila_alexander",
+        "file": "units/elite_leila_alexander-37c3922b4da3.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alex_reira.jpg"
+      },
+      {
+        "id": "elite_alexander_liberte",
+        "file": "units/elite_alexander_liberte-6cad4a5e15dc.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alex_liberte.jpg"
+      },
+      {
+        "id": "elite_ryo_valiant",
+        "file": "units/elite_ryo_valiant-c677334c1c1c.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alexv_ryo.jpg"
+      },
+      {
+        "id": "elite_ayano_valiant",
+        "file": "units/elite_ayano_valiant-99fcad4f692a.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alexv_aya.jpg"
+      },
+      {
+        "id": "elite_yukiya_valiant",
+        "file": "units/elite_yukiya_valiant-c96e195db409.webp",
+        "method": "AI-assisted transparent extraction and enlargement from official full-body design sheet",
+        "source": "https://geass.jp/akito/img/kmf_Alexv_yuki.jpg"
+      },
+      {
+        "id": "elite_hummel_battery",
+        "file": "units/elite_hummel_battery-d1e08aa4ff36.webp",
+        "method": "AI-generated full-body elite artwork"
+      },
+      {
+        "id": "elite_panzer_frosch_ii",
+        "file": "units/elite_panzer_frosch_ii-568172683de2.webp",
+        "method": "AI-generated full-body elite artwork"
+      }
+    ]
+  },
+  "blackKnightsEliteArtwork": {
+    "entries": [
+      {
+        "id": "elite_guren_type01",
+        "file": "units/elite_guren_type01-ce1184c817cf.webp",
+        "method": "AI-assisted background extraction and scan cleanup of full-body Guren Type-01 reference",
+        "source": "https://static.wikia.nocookie.net/codegeass/images/8/80/Guren_Mk-I.jpg",
+        "prompt": "Remove paper background and scan stripes; preserve original red prototype, pose and two ordinary arms; transparent full-body sprite."
+      },
+      {
+        "id": "elite_japan_bk_amphibious",
+        "file": "units/elite_japan_bk_amphibious-3e6184fee907.webp",
+        "method": "AI-generated elite variant based on the existing game-specific regular Gekka marine conversion",
+        "prompt": "Distinct full-body Black Knights elite Gekka marine conversion; black and violet samurai armor, gold trim, sealed joints, heavy torpedo pods, compact waterjets and naval blade; transparent anime cel-shaded sprite."
+      }
+    ]
+  },
+  "amphibiousEliteArtwork": {
+    "entries": [
+      {
+        "id": "elite_portman_ii",
+        "file": "units/elite_portman_ii-ee9edd731519.png",
+        "method": "AI-generated distinct elite variant using the regular unit sprite as a design reference",
+        "reference": "units/portman_ii-0a2b145551d7.png",
+        "prompt": "Full-body transparent Britannian Portman II infiltration elite; navy-charcoal, ivory and gold armor, waterjets, torpedo tubes, hydroplanes and breaching lance; anime cel shading."
+      },
+      {
+        "id": "elite_shui_gun_ru_ii",
+        "file": "units/elite_shui_gun_ru_ii-bebdba72d3ec.png",
+        "method": "AI-generated distinct elite variant using the regular unit sprite as a design reference",
+        "reference": "units/shui_gun_ru_ii-52eebcb60e90.png",
+        "prompt": "Full-body transparent Federation Shui Gun-Ru II coastal assault elite; jade, crimson and gold dome armor, three legs, naval cannon pods, heavy torpedoes and waterjets; anime cel shading."
+      }
+    ]
+  },
+  "federationEliteBackgroundCleanup": {
+    "entries": [
+      {
+        "id": "elite_akatsuki_heavy",
+        "file": "units/elite_akatsuki_heavy-transparent-6d8db0f08042.png",
+        "original": "units/elite_akatsuki_heavy-d57babce5ae4.webp",
+        "method": "AI-assisted white background removal with transparent alpha",
+        "prompt": "Remove the solid white background while preserving the existing full-body mech design, colors and equipment. Transparent cutout with no matte."
+      },
+      {
+        "id": "elite_akatsuki_missile",
+        "file": "units/elite_akatsuki_missile-transparent-1b134a9dc4c7.png",
+        "original": "units/elite_akatsuki_missile-bdca71449429.webp",
+        "method": "AI-assisted white background removal with transparent alpha",
+        "prompt": "Remove the solid white background while preserving the existing full-body mech design, colors and equipment. Transparent cutout with no matte."
+      },
+      {
+        "id": "elite_akatsuki_zikisan",
+        "file": "units/elite_akatsuki_zikisan-transparent-4500785c97d3.png",
+        "original": "units/elite_akatsuki_zikisan-b976edc422b2.webp",
+        "method": "AI-assisted white background removal with transparent alpha",
+        "prompt": "Remove the solid white background while preserving the existing full-body mech design, colors and equipment. Transparent cutout with no matte."
+      }
+    ]
   }
 }

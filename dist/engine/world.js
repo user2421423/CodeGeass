@@ -476,16 +476,6 @@
     ['cf', 'light', 87.6, 43.8, 2],
     ['cf', 'medium', 106.9, 47.9, 2],
     ['cf', 'light', 128.5, 44.5, 2],
-    // Eight additional Chinese frontline formations (tested D deployment):
-    // Iran, Central Asia and Northeast Asia; each starts with two frames.
-    ['cf', 'heavy', 54.8, 34.8, 2],
-    ['cf', 'rocket', 65.7, 39.5, 2],
-    ['cf', 'medium', 72.7, 42.4, 2],
-    ['cf', 'heavy', 130.8, 46.2, 2],
-    ['cf', 'medium', 56.5, 38.7, 2],
-    ['cf', 'rocket', 68.2, 38.8, 2],
-    ['cf', 'heavy', 128.2, 48.3, 2],
-    ['cf', 'medium', 123.2, 42.4, 2],
   ];
   // Neutral garrisons: [city, type, frames].
   const GARRISONS = [

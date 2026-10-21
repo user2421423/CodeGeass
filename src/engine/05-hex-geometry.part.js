@@ -93,7 +93,7 @@
   function funds(g, side) {
     return g.economy[side];
   }
-  function powersOf(g) { return g?.mode === 'conquest' && Array.isArray(g.majors) ? g.majors : MAJORS; }
+  function powersOf(g) { if (g?.mode === 'scenario' && g.scenario?.independentPowers) return g.order; return g?.mode === 'conquest' && Array.isArray(g.majors) ? g.majors : MAJORS; }
   function isMajor(g, side) { return powersOf(g).includes(side); }
   function hostilePowers(g, side) { return powersOf(g).filter(other => other !== side && foe(g, other, side)); }
   function alive(g, side) {

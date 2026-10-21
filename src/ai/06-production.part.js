@@ -50,7 +50,7 @@
     }
     // 0b. F.L.E.I.J.A.: one ready warhead maximum; rival Eliminator sites are unknown.
     g.launches = [];
-    if (g.mode !== 'scenario' && (g.arsenal?.[side] || 0) > 0 && !g.over) {
+    if ((g.mode !== 'scenario' || (E.finaleScenario(g) && g.turn >= 5)) && (g.arsenal?.[side] || 0) > 0 && !g.over) {
       const p = aiLaunchTarget(g, side),
         shot = p && launch(g, side, p.c, p.r);
       if (shot?.ok) g.launches.push(shot);

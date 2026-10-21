@@ -3382,6 +3382,9 @@ button.danger:hover:not(:disabled) {
 .ops-disclaimer{color:#b5c8cb;font-size:12px;line-height:1.4;margin:5px 0 12px}
 .ops-group-row{border-left:4px solid var(--ops-group-color,#e3c677);padding-left:12px}
 .ops-group-id{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--ops-group-color,#e3c677);color:var(--ops-group-color,#e3c677);background:#132937;padding:3px 8px;font-size:12px;font-weight:800;letter-spacing:.04em}
+.dialog[aria-label="Army groups"] .ops-group-title{min-height:32px;padding:0;border:0;background:transparent;color:inherit;font:inherit;line-height:inherit;text-align:left}
+.dialog[aria-label="Army groups"] .ops-group-title:hover,.dialog[aria-label="Army groups"] .ops-group-title:focus-visible{text-decoration:underline}
+.ops-edit-hint{font-size:13px;opacity:.7}
 .ops-phase{display:inline-block;font-weight:700;color:#d5e6e8}
 .ops-phase-blocked,.ops-phase-empty,.ops-phase-no-objective{color:#ffb9a1}
 .ops-row-alert{font-size:12px;color:#ffd1ac;margin:6px 0}
@@ -3459,7 +3462,7 @@ button.danger:hover:not(:disabled) {
 }
 @media (max-width: 420px) {
   .dialog[aria-label="Army groups"] .ops-group-row > .scenario-group-buttons {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }
 

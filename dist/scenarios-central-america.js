@@ -196,7 +196,7 @@
     ['Puerto Cabezas','Eastern Coastal Reserve',[['medium',4,null],['rocket',2,null]]],
     ['Tegucigalpa','Honduran Central Army',[['heavy',6,'suzaku'],['siege',3,null],['rocket',3,null]]],
     ['Comayagua','Honduran Mountain Reserve',[['heavy',5,'schneizel'],['rocket',3,null]]],
-    ['San Pedro Sula','Sula Industrial Army',[['heavy',6,'monica'],['rocket',3,null]]],
+    ['San Pedro Sula','Sula Industrial Army',[['heavy',6,null],['rocket',3,null]]],
     ['La Ceiba','North Caribbean Defence',[['heavy',4,'villetta'],['medium',3,null]]],
     ['Puerto Cortés','Caribbean Naval Guard',[['heavy',3,null],['rocket',3,null]]],
     ['Choluteca','Fonseca Gate',[['heavy',4,null],['rocket',2,null]]],

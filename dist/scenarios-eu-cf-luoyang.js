@@ -172,7 +172,7 @@
     ['eu','Nanyang','super',10,'eduardo'],
     ['eu','Nanyang','rocket',7,'ferilli'],
     ['eu','Nanyang','siege',6],
-    ['eu','Dengzhou','heavy',8,'margaret'],
+    ['eu','Dengzhou','heavy',8,'romero'],
     ['eu','Dengzhou','assault',6,'pierre'],
     ['eu','Xichuan','heavy',7,'fernando'],
     ['eu','Xichuan','raider',4],

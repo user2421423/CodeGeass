@@ -1,7 +1,17 @@
 name: Defense of Japan scenario checks
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/scenarios-defense-japan.js'
+      - 'src/engine/10-economy.part.js'
+      - 'tools/defense_japan_smoke.cjs'
+      - 'tools/defense_japan_balance.cjs'
+      - '.github/workflows/defense-japan.yml'
   pull_request:
     paths:
+      - 'src/engine/10-economy.part.js'
+      - 'tools/defense_japan_balance.cjs'
       - 'dist/scenarios-defense-japan.js'
       - 'dist/scenario-manifest.js'
       - 'dist/scenario-catalog.js'
@@ -30,3 +40,24 @@ jobs:
         run: node tools/scenario_sim.cjs defense-japan bk normal 11 10
       - name: Britannia 10-turn seeded AI playtest
         run: node tools/scenario_sim.cjs defense-japan britannia normal 11 10
+  balance-simulations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { player: bk, difficulty: normal, seed: 11 }
+          - { player: bk, difficulty: normal, seed: 37 }
+          - { player: bk, difficulty: normal, seed: 59 }
+          - { player: britannia, difficulty: normal, seed: 11 }
+          - { player: bk, difficulty: hard, seed: 11 }
+          - { player: bk, difficulty: challenge, seed: 11 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - name: Defense of Japan 25-turn balance simulation
+        run: node tools/defense_japan_balance.cjs ${{ matrix.player }} ${{ matrix.difficulty }} ${{ matrix.seed }} 25

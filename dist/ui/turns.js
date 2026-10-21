@@ -6,6 +6,7 @@ async function endTurn() {
   closeModal();
   undoStack = [];
   strikeMode = false;
+  clearAbilityTargeting();
   armyGroupRouting = null;
   save();
   dismissTurnSummary();
@@ -86,6 +87,7 @@ async function endTurn() {
         for (const o of orders) if (o.kind === 'feint') {
           const actor = game.units.find(v => v.id === o.id);
           if (actor?.cmd) announceCommanderAbility(actor.cmd);
+          addCommanderCombatEffects({ ...o, ok:true }, actor, visuals);
         }
         const seen = orders.some(o => onScreen(o.to) || onScreen(o.from));
         if (seen) moralePopups(before);
@@ -96,6 +98,7 @@ async function endTurn() {
           else if (o.kind === 'move' || o.kind === 'deploy') {
             SFX.play('move', side);
             effects.push({ kind: 'move', unitId: o.kind === 'deploy' ? o.id : id, from: o.from, to: o.to, color: F(side).color, life: 0.5, max: 0.5 });
+            addAbilityEffects(o.abilityEffects,visuals,0.5);
           }
         }
         if (seen && !skipAI) {

@@ -68,19 +68,19 @@
       "src": "units/chuyen-99252cb6f888.webp"
     },
     "elite_akatsuki_heavy": {
-      "src": "units/akatsuki_heavy-7c180ab2623f.png"
+      "src": "units/elite_akatsuki_heavy-transparent-6d8db0f08042.png"
     },
     "elite_akatsuki_missile": {
-      "src": "units/akatsuki_missile-0231df0f89b3.png"
+      "src": "units/elite_akatsuki_missile-transparent-1b134a9dc4c7.png"
     },
     "elite_akatsuki_zikisan": {
-      "src": "units/akatsuki_zikisan-ca4e4c5cca20.png"
+      "src": "units/elite_akatsuki_zikisan-transparent-4500785c97d3.png"
     },
     "elite_alexander_liberte": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
+      "src": "units/elite_alexander_liberte-6cad4a5e15dc.webp"
     },
     "elite_ayano_valiant": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
+      "src": "units/elite_ayano_valiant-99fcad4f692a.webp"
     },
     "elite_chuyen": {
       "src": "units/chuyen-427d2c85b500.png"
@@ -98,13 +98,13 @@
       "src": "units/elite_guren_seiten.webp"
     },
     "elite_guren_type01": {
-      "src": "units/elite_guren_mkii-ae467a56c715.png"
+      "src": "units/elite_guren_type01-ce1184c817cf.webp"
     },
     "elite_hummel_battery": {
-      "src": "units/hummel_battery-11b7539ef1e2.png"
+      "src": "units/elite_hummel_battery-d1e08aa4ff36.webp"
     },
     "elite_japan_bk_amphibious": {
-      "src": "units/bk_amphibious_ii-dc29ece82055.png"
+      "src": "units/elite_japan_bk_amphibious-3e6184fee907.webp"
     },
     "elite_lancelot": {
       "src": "units/elite_lancelot-dc7e3a1ebabc.png"
@@ -113,28 +113,28 @@
       "src": "units/elite_lancelot_albion-8650bf95c9be.png"
     },
     "elite_leila_alexander": {
-      "src": "units/alexander-4b4929ebecea.png"
+      "src": "units/elite_leila_alexander-37c3922b4da3.webp"
     },
     "elite_mordred": {
       "src": "units/elite_mordred-86a54d5a327a.png"
     },
     "elite_panzer_frosch_ii": {
-      "src": "units/panzer_frosch_ii-ecb43e7e371a.png"
+      "src": "units/elite_panzer_frosch_ii-568172683de2.webp"
     },
     "elite_portman_ii": {
-      "src": "units/portman_ii-0a2b145551d7.png"
+      "src": "units/elite_portman_ii-ee9edd731519.png"
     },
     "elite_ryo_valiant": {
-      "src": "units/alexander_elite-da3094ec72b4.png"
+      "src": "units/elite_ryo_valiant-c677334c1c1c.webp"
     },
     "elite_shen_hu": {
-      "src": "units/shen_hu-761ab82d666e.png"
+      "src": "units/elite_shen_hu-cad3ac981ac8.webp"
     },
     "elite_shinkiro": {
       "src": "units/elite_shinkiro-5874485eb1c1.png"
     },
     "elite_shui_gun_ru_ii": {
-      "src": "units/shui_gun_ru_ii-52eebcb60e90.png"
+      "src": "units/elite_shui_gun_ru_ii-bebdba72d3ec.png"
     },
     "elite_sutherland_air": {
       "src": "units/elite_palomides.webp"
@@ -146,10 +146,10 @@
       "src": "units/elite_florence.webp"
     },
     "elite_wang_hu": {
-      "src": "units/shen_hu-761ab82d666e.png"
+      "src": "units/elite_wang_hu-dac71d6eb6e7.webp"
     },
     "elite_yukiya_valiant": {
-      "src": "units/alexander_mp-aba6042c8fcf.png"
+      "src": "units/elite_yukiya_valiant-c96e195db409.webp"
     },
     "estrella": {
       "src": "units/estrella-892bfb12bb42.png"
@@ -382,9 +382,6 @@
       "fx": 0.5,
       "fy": 0.5
     },
-    "luciano": {
-      "src": "portraits/luciano-e90561c6a0a0.jpg"
-    },
     "manfredi": {
       "src": "portraits/manfredi-57a7bea25a0a.webp"
     },
@@ -398,9 +395,6 @@
     },
     "minami": {
       "src": "portraits/minami-020c7b02939d.webp"
-    },
-    "monica": {
-      "src": "portraits/monica-1648578c93a5.webp"
     },
     "nonette": {
       "src": "portraits/nonette-refresh-42facc7ea99a.jpg",
@@ -489,11 +483,6 @@
       "fx": 0.5,
       "fy": 0.5
     },
-    "sakuya": {
-      "src": "portraits/sakuya-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
     "kaguya": {
       "src": "portraits/kaguya-approved.jpg",
       "fx": 0.5,
@@ -521,26 +510,6 @@
     },
     "olivia": {
       "src": "portraits/olivia-refresh-2f1e372a9dc9.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "margaret": {
-      "src": "portraits/margaret-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "hilda": {
-      "src": "portraits/hilda-refresh-b57bc0692f04.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "chloe": {
-      "src": "portraits/chloe-refresh-d8293febfba0.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
-    "kate": {
-      "src": "portraits/kate-refresh-1a0672cb00ee.jpg",
       "fx": 0.5,
       "fy": 0.5
     },
@@ -678,6 +647,131 @@
       "src": "portraits/ferilli-approved.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "gaudefroy": {
+      "src": "portraits/gaudefroy-53efe01ee52f.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "masaki": {
+      "src": "portraits/masaki-98032938af83.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "miguel": {
+      "src": "portraits/miguel-17e75ee96aa6.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "raymond": {
+      "src": "portraits/raymond-78e3d3a2df2f.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "toru": {
+      "src": "portraits/toru-84379c613f45.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "romero": {
+      "src": "portraits/romero-colorized-9b76d21169aa.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "chloe": {
+      "src": "portraits/chloe-refresh-d8293febfba0.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "monica": {
+      "src": "portraits/monica-1648578c93a5.webp",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "luciano": {
+      "src": "portraits/luciano-e90561c6a0a0.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "renelaurent": {
+      "src": "portraits/renelaurent-canon-89a8598292a6.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "kuzanmontoban": {
+      "src": "portraits/kuzanmontoban-canon-b87a0c1097ba.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "johanne": {
+      "src": "portraits/johanne-canon-dda4393738d8.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "janmanes": {
+      "src": "portraits/janmanes-canon-fd39a7384ef6.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "franzvallo": {
+      "src": "portraits/franzvallo-canon-50159c2098a6.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "alannecker": {
+      "src": "portraits/alannecker-canon-f92c291c5b36.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "simonmericourt": {
+      "src": "portraits/simonmericourt-canon-a60ce6b207ca.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "mao": {
+      "src": "portraits/mao-canon-1b7330e044df.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "shalio": {
+      "src": "portraits/shalio-canon-43c5100afecf.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "shamna": {
+      "src": "portraits/shamna-canon-d713fd9bda8a.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "bolvona": {
+      "src": "portraits/bolvona-canon-66127cf0ff6d.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "jeanrowe": {
+      "src": "portraits/jeanrowe-canon-d45df3361f87.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "augustahighland": {
+      "src": "portraits/augustahighland-canon-d560ef494828.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "brondello": {
+      "src": "portraits/brondello-canon-5d538143ac08.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "dore": {
+      "src": "portraits/dore-canon-8efaf27cdc3c.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "scholtz": {
+      "src": "portraits/scholtz-canon-41d6977245ff.jpg",
+      "fx": 0.5,
+      "fy": 0.42
     }
   },
   "buildings": {

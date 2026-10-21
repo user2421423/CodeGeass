@@ -9,26 +9,36 @@
   const TITLE = 'Defense of Japan';
   const CITY_COUNT = japan.cityData.length;
 
-  // All listed defenders are deployed ashore; the remaining cities have their
-  // existing city defenses, factories and production throughout the battle.
+  // 34 two-frame formations (68 land frames); five additional two-frame units
+  // reinforce the five invasion fronts without altering commander placements.
+  // Other cities retain their existing defenses, factories and production.
   // [city, class, count, optional first-formation commander]
   const DEFENDERS = Object.freeze([
     ['Sapporo','medium',2,'tohdoh'], ['Sapporo','rocket',1],
+    ['Sapporo','assault',1], // +2 frames: northern beachhead reserve
     ['Aomori','scout',1], ['Sendai','assault',2,'asahina'],
+    ['Sendai','rocket',1], // +2 frames: Tohoku coastal artillery
     ['Niigata','rocket',1,'chiba'],
-    ['Tokyo Settlement','heavy',2,'zero'], ['Yokohama','medium',1,'kallen'],
+    ['Tokyo Settlement','heavy',2,'zero'], ['Chiba','heavy',1], // +2: Kanto anti-landing reserve
+    ['Yokohama','medium',1,'kallen'],
     ['Saitama','assault',1], ['Nagoya','medium',2,'ohgi'],
     ['Kanazawa','rocket',1], ['Kyoto','heavy',1],
     ['Osaka','medium',2], ['Kobe','assault',1], ['Nara','support',1],
-    ['Hiroshima','medium',2], ['Shimonoseki','assault',2],
+    ['Hiroshima','medium',2], ['Matsue','medium',1], // +2: western Honshu interception
+    ['Shimonoseki','assault',2],
     ['Takamatsu','light',1], ['Matsuyama','assault',1],
     ['Fukuoka','medium',2], ['Nagasaki','rocket',1],
+    ['Nagasaki','assault',1], // +2: Kyushu landing response
     ['Kagoshima','assault',1]
   ]);
+  // Eleven ships across the five threatened coasts: five carrier hulls and
+  // six amphibious interceptors. Ports and inland land formations stay intact.
   const DEFENDER_FLEETS = Object.freeze([
-    ['Sapporo','bk_carrier',1], ['Yokohama','bk_carrier',1],
+    ['Sapporo','bk_carrier',1], ['Sendai','bk_carrier',1],
+    ['Tokyo Settlement','bk_carrier',1], ['Yokohama','bk_carrier',1],
     ['Osaka','bk_carrier',1], ['Fukuoka','bk_amphibious_ii',2],
-    ['Shimonoseki','bk_amphibious_ii',1], ['Hiroshima','bk_amphibious_ii',1]
+    ['Shimonoseki','bk_amphibious_ii',1], ['Hiroshima','bk_amphibious_ii',1],
+    ['Matsue','bk_amphibious_ii',1], ['Nagasaki','bk_amphibious_ii',1]
   ]);
   // Every Britannian formation starts as one of two embarked troops per
   // carrier. There are NO Britannian cities, land units or escorts on the map.
@@ -50,8 +60,11 @@
       ['medium','villetta'],['assault'],['heavy'],
       ['rocket'],['medium'],['light']]}
   ]);
+  // Black Knights' opening and recurring economic levels are half of the
+  // Britannian expedition's nominal funding target (rounding odd science up).
+  // Britannia has no *recurring* income while it remains cityless.
   const TARGET_INCOME = Object.freeze({
-    bk:{credits:620,industry:350,science:65,sakuradite:32},
+    bk:{credits:270,industry:165,science:28,sakuradite:13},
     britannia:{credits:540,industry:330,science:55,sakuradite:26}
   });
   function nearest(g, origin, valid, radius=14) {
@@ -100,6 +113,7 @@
     g.scenario={
       id:'defense-japan',title:TITLE,version:1,phase:'carrier-invasion',
       groups:[],funding:{},citylessFunding:['britannia'],
+      citylessWarChestTurns:3, // This invasion's finite reserve; other scenarios keep the global default.
       bounds:japan.bounds,projection:g.scenario.projection,
       coastalSea:g.scenario.coastalSea
     };
@@ -131,7 +145,7 @@
         if(!at)throw Error('No defender deployment hex at '+name);
         const cmd=i===0?commander:null;
         const u=E.newUnit(g,E.typeFor('bk',cls,g),'bk',at.c,at.r,
-          i===0?2:1,cmd);
+          2,cmd);
         if(cmd&&g.officers[cmd]){u.cmdRank=g.officers[cmd].rank;u.hp=E.maxHP(u);}
         landGroup('bk',name).units.push(u.id);
       }
@@ -192,10 +206,14 @@
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(TARGET_INCOME[side]).map(([key,value])=>
-          [key,Math.max(0,Math.round(value)-base[key])]));
+          // Signed city funding is necessary because the 44 existing Black
+          // Knights cities alone can exceed half Britannia's funding levels.
+          [key,side==='bk'?Math.round(value)-base[key]
+            :Math.max(0,Math.round(value)-base[key])]));
       const actual=E.income(g,side);
+      // Equal three-turn reserves: the BK treasury is ~half Britannia's.
       for(const resource of Object.keys(TARGET_INCOME[side]))
-        g.economy[side][resource]=actual[resource]*(side==='britannia'?3:2);
+        g.economy[side][resource]=actual[resource]*3;
     }
     if(difficulty!=='normal'&&difficulty!=='elite')
       for(const side of SIDES.filter(s=>s!==player))
@@ -242,7 +260,7 @@
     ai:{doctrine:'invasion',synchronizedFlotillas:true},
     text:{
       era:'Japan · Alternate 2017',
-      intro:'The Black Knights control all 44 Japanese cities. Britannia begins at sea with loaded carriers and no bases or land forces ashore.',
+      intro:'The Black Knights defend all 44 Japanese cities with 68 land frames and eleven ships but only half the Britannian nominal economic funding. Britannia arrives in loaded carriers with no bases ashore and a three-turn reserve.',
       diplomacy:'The Black Knights and Britannia are enemies from turn 1. Capture all cities as Britannia, or destroy the cityless invasion as the Black Knights.',
       elite:'Elite Japan upgrades eligible land formations to faction Elite Forces while carriers remain conventional. Existing Elite difficulty research and commander rules apply.',
       focus:{bk:'Tokyo Settlement',britannia:''}

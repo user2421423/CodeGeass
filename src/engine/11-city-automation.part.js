@@ -28,13 +28,14 @@
     if (!s) return [];
     const landOwned = s.owner === side,
       portOwned = (s.portOwner || s.owner) === side,
-      land = landOwned ? (g.buildable?.[side] || Object.values(lineupOf(g, side))) : [],
+      land = landOwned ? buildableTypes(g, side) : [],
       navy = portOwned && (s.portAt || (landOwned && portSite(g, s))) ? navalTypes(g, side) : [],
       air = landOwned && airshipType(g, side) ? [airshipType(g, side)] : [];
     return [...new Set([...land, ...navy, ...air])]
       .filter(id => {
         const t = TYPES[id];
-        return t && !t.elite && !t.campaign && (portBuilt(t) ? portOwned : landOwned) &&
+        return t && !t.elite && (!t.campaign || Object.values(lineupOf(g, side)).includes(id)) &&
+          (portBuilt(t) ? portOwned : landOwned) &&
           (t.side === side || t.side === 'neutral' || t.air || (g.buildable?.[side] || []).includes(id));
       })
       .sort((a, b) => {
@@ -178,15 +179,37 @@
     log(g, `${a.short} takes command of ${TYPES[u.type].short}.`, u.side);
     return { ok: true };
   }
+  // A bonus shot still requires the shooter's real range and weapon class.
+  function grandMastersParticipants(g, u, target) {
+    if (!target || target.hp <= 0 || !foe(g, target.side, u.side)) return [];
+    const eligible = w => w.hp > 0 && !atSea(g,w) &&
+      w.expFarneseSlaughterTurn !== g.turn &&
+      inRange(w,target,g) && hostileTarget(g,w,target);
+    const leader = eligible(u) ? [u] : [];
+    const allies = g.units.filter(w => w.id !== u.id && w.side === u.side &&
+      dist(g,u,w) <= 2 && eligible(w));
+    allies.sort((a,b) => power(g,b,target,stationAt(g,target)) -
+      power(g,a,target,stationAt(g,target)) || a.id - b.id);
+    return leader.concat(allies.slice(0,3));
+  }
   // Command actions share cooldown/range validation; only targeted actions require a picker.
   function actionTargets(g, u) {
     if (!u || !COMMANDERS[u.cmd]?.action) return [];
     const kind = COMMANDERS[u.cmd].action.kind;
+    if (kind === 'farneseWithdrawal') return g.units.some(v =>
+      v.hp > 0 && v.side === u.side && dist(g,u,v) <= 3 &&
+      v.hp < maxHP(v) * 0.5) ? [u] : [];
+    if (kind === 'manfrediRequisition') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=2&&!TYPES[v.type].elite&&v.stack<3);
+    if (kind === 'arkFleet') return g.stations.filter(s=>s.owner&&foe(g,s.owner,u.side));
     if (kind === 'command') return u.cmd === 'zero'
       ? commandTargets(g, u).concat(g.units.filter(v => v.hp > 0 &&
-          foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2))
+          foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 2 &&
+          g.units.some(w=>w.hp>0&&w.id!==v.id&&w.side===v.side&&!atSea(g,w)&&inRange(v,w,g))))
       : commandTargets(g, u);
     if (kind === 'special') return newcomerTargets(g,u);
+    if (kind === 'shinDeath') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=2);
+    if (kind === 'maskFalls') return g.units.filter(v=>v.hp>0&&v.side===u.side&&!atSea(g,v)&&dist(g,u,v)<=3);
+    if (kind === 'miguelSupply') return g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&!atSea(g,v)&&dist(g,u,v)<=3);
     if (kind === 'electricalOverload') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) === 1 &&
       inRange(u, v, g) && hostileTarget(g, u, v));
@@ -194,6 +217,9 @@
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 1);
     if (kind === 'checkmate') return g.units.filter(v => v.hp > 0 &&
       foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3);
+    if (kind === 'grandMastersAssault') return g.units.filter(v => v.hp > 0 &&
+      foe(g,v.side,u.side) && !atSea(g,v) && dist(g,u,v) <= 3 &&
+      grandMastersParticipants(g,u,v).length > 0);
     if (kind === 'memoryRewrite') return g.units.filter(v => v.hp > 0 &&
       foe(g, v.side, u.side) && !atSea(g, v) && dist(g, u, v) <= 3 &&
       v.morale > -3 && !v.expCharlesMemoryRewrite && !v.moraleWard && moraleFloor(g, v) <= -3);
@@ -219,12 +245,208 @@
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
       (kind === 'cleanse' ? v.side === u.side : foe(g, v.side, u.side)));
   }
+  // Cosmetic combat records describe strikes already resolved by the rules.
+  // They never execute a second attack or spend a formation's normal actions.
+  function commanderCombatRecord(attacker, target, damage, shieldDamage = 0, counter = 0) {
+    return {
+      attacker: { id:attacker.id, type:attacker.type, side:attacker.side, c:attacker.c, r:attacker.r },
+      result: {
+        ok:true, from:{c:attacker.c,r:attacker.r}, to:{c:target.c,r:target.r}, targetId:target.id,
+        hit:[{id:target.id,c:target.c,r:target.r,damage:Math.max(0,damage)}],
+        shieldDamage, counter:Math.max(0,counter), destroyed:target.hp<=0, crit:false,
+      },
+    };
+  }
+  // Transient presentation records stay outside saved game state. Nested
+  // attacks (such as Electrical Overload) share their outer action's queue.
+  const abilityVisualQueues = new WeakMap();
+  function collectAbilityVisuals(g, resolve) {
+    if (abilityVisualQueues.has(g)) return resolve();
+    const events = [];
+    abilityVisualQueues.set(g, events);
+    try {
+      const result = resolve();
+      if (result?.ok && events.length) result.abilityEffects = events;
+      return result;
+    } finally { abilityVisualQueues.delete(g); }
+  }
+  function recordAbilityAttack(g, attacker, target, damage, crit = false) {
+    const events = abilityVisualQueues.get(g);
+    if (!events) return;
+    const record = commanderCombatRecord(attacker,target,damage);
+    record.result.crit = crit;
+    events.push({kind:'attack',...record,target:{id:target.id,type:target.type,
+      side:target.side,stack:target.stack,c:target.c,r:target.r}});
+  }
+  function recordAbilitySignal(g, target, label, kind = 'buff') {
+    abilityVisualQueues.get(g)?.push({kind:'signal',to:{c:target.c,r:target.r},label,tone:kind});
+  }
   function feint(g, id, targetId = null) {
+    return collectAbilityVisuals(g, () => resolveFeint(g,id,targetId));
+  }
+  function resolveFeint(g, id, targetId = null) {
     const check = validateAction(g, { kind: 'commander', id });
     if (!check.ok) return check;
     const u = check.actor;
     const action = COMMANDERS[u.cmd].action, options = actionTargets(g, u);
     if (action.kind === 'special') return newcomerUse(g,u,targetId);
+    if (action.kind === 'farneseWithdrawal') {
+      let affected = 0;
+      for (const ally of g.units) {
+        if (ally.hp <= 0 || ally.side !== u.side || dist(g,u,ally) > 3 ||
+            ally.hp >= maxHP(ally) * 0.5) continue;
+        // Restore a spent move; bank a full extra move for units that have
+        // not yet spent their movement. Attack availability is unchanged.
+        if (ally.moved) {
+          if (!heavyMoveLimitReached(g,ally)) {
+            ally.moved = false; ally.withdrawMove = true;
+            ally.skillReposition = 0;
+          }
+        } else if (!heavyMoveLimitReached(g,ally)) {
+          ally.expFarneseExtraMove = Math.max(1,ally.expFarneseExtraMove||0);
+        }
+        ally.expFarneseWithdrawal = {side:ally.side,source:u.id};
+        affected++;
+      }
+      if (!affected) return {ok:false,reason:'No friendly formations below 50% HP within 3 hexes'};
+      u.feintCD = 0;u.feintUsedTurn = g.turn;
+      log(g,'Orderly Withdrawal grants '+affected+' endangered friendly formations movement and protection.',u.side);
+      return {ok:true,affected};
+    }
+    if(action.kind==='manfrediRequisition'){
+      const v=targetId==null?options[0]:options.find(w=>w.id===targetId);
+      if(!v)return {ok:false,reason:'Choose a normal friendly formation within 2 hexes with room for another frame'};
+      const priorMax=maxHP(v);
+      v.stack++;
+      v.hp=Math.min(maxHP(v),v.hp+Math.max(1,Math.round(maxHP(v)-priorMax)));
+      u.feintCD=action.cooldown;u.feintUsedTurn=g.turn;
+      log(g,'Grand Master Manfredi adds a free frame to '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+      return {ok:true,target:v.id,affected:1,frames:1};
+    }
+    if (action.kind === 'arkFleet') {
+      const city=targetId==null?options[0]:options.find(s=>s.id===targetId);
+      if(!city)return {ok:false,reason:'Choose an enemy city'};
+      city.expArkFleet={source:u.id,owner:city.owner,turns:2};
+      for(const enemy of g.units)if(enemy.hp>0&&foe(g,enemy.side,u.side)&&!atSea(g,enemy)&&dist(g,enemy,city)<=3){
+        lowerMorale(g,enemy,1);
+        enemy.expArkFleetSlow={side:enemy.side,turns:2,penalty:2};
+      }
+      // Independent deployment timer; ordinary Ark Fleet use never resets it.
+      let airship=null;
+      if(u.arkFleetAirshipCD==null)u.arkFleetAirshipCD=10;
+      if(u.arkFleetAirshipCD<=0){
+        const type='logres_airship';
+        const bases=g.stations.filter(s=>s.owner===u.side).sort((a,b)=>dist(g,a,city)-dist(g,b,city)||b.tier-a.tier);
+        for(const base of bases){
+          const p=nearest(g,base,t=>!isSea(t)&&!TERRAIN[t.terrain]?.blocked&&t.owner===u.side&&!unitAt(g,t)&&!stationAt(g,t));
+          if(p){airship=newUnit(g,type,u.side,p.c,p.r,1,null,false);u.arkFleetAirshipCD=10;break;}
+        }
+      }
+      u.feintCD=0;u.feintUsedTurn=g.turn;
+      log(g,'Ark Fleet spreads terror around '+city.name+(airship?' and deploys a free Logres airship':'' )+'.',u.side);
+      return {ok:true,target:city.id,affected:1,airship:airship?.id};
+    }
+    if (action.kind === 'shinDeath') {
+      const v=options.find(w=>w.id===targetId) || (targetId==null?options[0]:null);
+      if(!v)return {ok:false,reason:'Choose an enemy within 2 hexes'};
+      // The percentage defines base strike power, not unavoidable true damage.
+      // Scale through the same attack/defense power ratio used by ordinary combat.
+      const base=Math.max(1,Math.round(maxHP(v)*0.5));
+      const ordinary=Math.max(0,power(g,u,v,stationAt(g,v),false,false));
+      const unprotected=Math.max(1,power(g,u,null,null,false,false));
+      const damage=Math.max(1,Math.round(base*ordinary/unprotected));
+      const before=v.hp;
+      smilasDealCombatDamage(g,v,u,damage);
+      if(v.hp<=0){v.expDirectIncoming=true;kill(g,v,u,false,null,damage);delete v.expDirectIncoming;}
+      u.feintCD=action.cooldown;u.feintUsedTurn=g.turn;
+      log(g,'Command to Die strikes '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+      checkVictory(g);
+      return {ok:true,target:v.id,damage:before-v.hp,
+        combat:[commanderCombatRecord(u,v,before-v.hp)]};
+    }
+    if (action.kind === 'maskFalls') {
+      if(u.side!==g.player)return {ok:false,reason:'The AI cannot use The Mask Falls'};
+      const cost=Math.min(Math.max(0,u.hp-1),Math.round(maxHP(u)*0.8));
+      u.hp-=cost;u.moved=true;u.attacked=true;
+      for(const v of options){
+        if(v.id!==u.id){
+          v.moved=false;v.attacked=false;v.chain=0;v.moveActionsThisTurn=0;
+          v.movedDistance=0;v.skillReposition=0;v.eliteMoveAfterKill=false;
+          delete v.expKallenReposition;
+        }
+        // Death rally takes precedence only for units without an active Mask buff.
+        if(!v.expDeathEmperor){
+          v.expMaskFalls={side:u.side,source:u.id,attackReady:true};
+        }
+      }
+      u.feintCD=0;u.feintUsedTurn=g.turn;
+      log(g,'The Mask Falls: Lelouch sacrifices '+cost+' HP to rally '+options.length+' formations.',u.side);
+      return {ok:true,affected:options.length,cost};
+    }
+    if(action.kind==='miguelSupply'){
+      const v=targetId==null?[...options].sort((a,b)=>Number(!!b.cmd)-Number(!!a.cmd)||b.hp-a.hp||a.id-b.id)[0]
+        :options.find(w=>w.id===targetId);
+      if(!v)return {ok:false,reason:'Choose an enemy formation within 3 hexes'};
+      v.expMiguelSupply={source:u.id,side:u.side};
+      u.feintCD=0;u.feintUsedTurn=g.turn;
+      log(g,'Miguel severs the supply lines of '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+      return {ok:true,target:v.id,affected:1};
+    }
+    if (action.kind === 'grandMastersAssault') {
+      const v = targetId == null ? [...options].sort((a,b) =>
+        Number(!!b.cmd)-Number(!!a.cmd) || b.hp-a.hp || a.id-b.id)[0]
+        : options.find(w => w.id === targetId);
+      if (!v) return { ok:false, reason:'Choose a reachable enemy formation within 3 hexes' };
+      const participants = grandMastersParticipants(g,u,v);
+      if (!participants.length) return { ok:false, reason:'No allied weapon can reach the target' };
+      // Start cooldown before damage: allied kills may immediately shorten it.
+      u.feintCD = action.cooldown;
+      u.feintUsedTurn = g.turn;
+      let totalDamage=0, shieldDamage=0, fired=0;
+      const combat = [];
+      for (const shooter of participants) {
+        if (v.hp <= 0 || g.over) break;
+        const shot = preview(g,shooter.id,v.c,v.r);
+        if (!shot) continue;
+        const city = stationAt(g,v);
+        let shotShieldDamage = 0;
+        if (city && foe(g,city.owner,shooter.side)) {
+          city.attackedSinceRegen = true;
+          const lost = Math.min(city.shield, Math.max(0,Math.round((shot.shield || 0)*.75)));
+          city.shield -= lost;
+          shieldDamage += lost;
+          shotShieldDamage = lost;
+        }
+        let incoming = Math.max(1,Math.round((shot.rawUnit ?? shot.unit)*.75));
+        if (v.expCCProtection) delete v.expCCProtection;
+        consumeDefensiveSkills(g,v,shooter);
+        incoming = newcomerIntercept(g,v,incoming);
+        if (fx(v).futureSightDodge && random(g) < fx(v).futureSightDodge) {
+          incoming = 0;
+          recordAbilitySignal(g,v,'EVADED','guard');
+          log(g,'FUTURE SIGHT — EVADED',v.side);
+        }
+        const prior=v.hp;
+        smilasDealCombatDamage(g,v,shooter,incoming);
+        const dealt=prior-v.hp;
+        totalDamage += dealt;
+        fired++;
+        recordWarEvent(g,'damage',shooter.side,{targetSide:v.side,
+          value:dealt,unitId:shooter.id,group:warGroup(g,shooter)});
+        v.struck={turn:g.turn,side:shooter.side};
+        if(v.skillMarks?.length)v.skillMarks=v.skillMarks.filter(m=>m.side!==shooter.side||!m.uses);
+        if (v.hp <= 0) {
+          v.expDirectIncoming = true;
+          kill(g,v,shooter,false,null,incoming);
+          delete v.expDirectIncoming;
+        }
+        combat.push(commanderCombatRecord(shooter,v,dealt,shotShieldDamage));
+      }
+      log(g,"Grand Master's Assault: "+fired+' participating shots, '+
+        totalDamage+' damage and '+shieldDamage+' city-shield damage.',u.side);
+      checkVictory(g);
+      return {ok:true,target:v.id,affected:fired,damage:totalDamage,shieldDamage,combat};
+    }
     if (action.kind === 'electricalOverload') {
       const v = targetId == null ? options[0] : options.find(w => w.id === targetId);
       if (!v) return { ok: false, reason: 'Choose an adjacent enemy in attack range' };
@@ -394,21 +616,28 @@
       return { ok: true, affected: options.length };
     }
     if (['command', 'designate', 'stratagem'].includes(action.kind)) {
+      const combat = [];
       const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
         : options.find(v => v.id === targetId);
       if (!v) return { ok: false, reason: 'Choose a valid target within 2 hexes' };
       if (action.kind === 'command' && u.cmd === 'zero' && foe(g, v.side, u.side)) {
-        const before = v.morale;
-        lowerMorale(g, v, 2);
-        // Never inflict full confusion: do not push a target below -2,
-        // but also do not raise a unit already at -3.
-        v.morale = Math.max(v.morale, Math.min(before, -2));
-        v.expZeroGeass = {
-          source: u.id,
-          moraleLost: (v.expZeroGeass?.moraleLost || 0) + Math.max(0, before - v.morale),
-        };
-        // Counterattack suppression is checked by both preview and live
-        // combat, including special defensive reaction attacks.
+        const victims=g.units.filter(w=>w.hp>0&&w.id!==v.id&&w.side===v.side&&!atSea(g,w)&&inRange(v,w,g))
+          .sort((a,b)=>dist(g,v,a)-dist(g,v,b)||a.id-b.id);
+        const w=victims[0];
+        if(!w)return {ok:false,reason:'No same-faction formation within weapon range'};
+        // A compelled strike bypasses hostility checks but not armor, terrain,
+        // city cover or ordinary counterfire eligibility.
+        const hit=Math.max(1,Math.round(power(g,v,w,stationAt(g,w),false,false)));
+        const priorTargetHP = w.hp, priorAttackerHP = v.hp;
+        smilasDealCombatDamage(g,w,v,hit);
+        if(w.hp<=0){w.expDirectIncoming=true;kill(g,w,v,false,null,hit);delete w.expDirectIncoming;}
+        if(v.hp>0&&w.hp>0&&inRange(w,v,g)&&w.morale>-3&&!w.expRoloFrozen&&!w.expCharlesMemoryRewrite){
+          const retaliation=Math.max(1,Math.round(power(g,w,v,stationAt(g,v),true,false)));
+          smilasDealCombatDamage(g,v,w,retaliation);
+          if(v.hp<=0){v.expDirectIncoming=true;kill(g,v,w,false,null,retaliation);delete v.expDirectIncoming;}
+        }
+        combat.push(commanderCombatRecord(v,w,priorTargetHP-w.hp,0,priorAttackerHP-v.hp));
+        checkVictory(g);
       } else if (action.kind === 'command') {
         v.moved = v.attacked = false;
         v.chain = 0;
@@ -427,8 +656,8 @@
         damage: action.kind === 'designate' ? 0.2 : 0, noCounter: action.kind === 'stratagem' });
       u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;
       u.feintUsedTurn = g.turn;
-      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? (v.side === u.side ? 'receives a fresh activation' : 'is disrupted and cannot counterattack') : 'designated'}.`, u.side);
-      return { ok: true, target: v.id, affected: 1 };
+      log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? (v.side === u.side ? 'receives a fresh activation' : 'is forced to attack its own faction') : 'designated'}.`, u.side);
+      return { ok: true, target: v.id, affected: 1, combat };
     }
     for (const v of options) {
       if (action.kind === 'cleanse') { v.morale = Math.max(0, v.morale); v.moraleWard = { side: u.side }; }

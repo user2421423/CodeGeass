@@ -398,11 +398,28 @@ function draw(time, dt) {
       ctx.globalAlpha=spent?0.6:1;
       const size = t.air ? R * 2.3 : t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
         flip = u.side !== game.player;
+      // Airships sit at a fixed altitude above their hex. Only the artwork
+      // lifts; the ground shadow, health ring, bars and selection stay anchored.
+      const lift = t.air ? R * 0.35 : 0;
+      if (t.air) {
+        ctx.save();
+        ctx.translate(5, 10);
+        ctx.scale(R * 0.95, R * 0.28);
+        const shadow = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+        shadow.addColorStop(0, '#00000066');
+        shadow.addColorStop(0.55, '#00000038');
+        shadow.addColorStop(1, '#00000000');
+        ctx.fillStyle = shadow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
       ctx.shadowColor = '#000a';
-      ctx.shadowBlur = 5;
-      ctx.shadowOffsetY = 4;
+      ctx.shadowBlur = t.air ? 0 : 5;
+      ctx.shadowOffsetY = t.air ? 0 : 4;
       // Formation strength is shown by bars; draw exactly one unit sprite.
-      ART.drawUnit(ctx, u.type, u.side, flip ? 4 : -4, -10, size, size, flip);
+      ART.drawUnit(ctx, u.type, u.side, flip ? 4 : -4, -10 - lift, size, size, flip);
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
       ctx.globalAlpha = 1;
@@ -431,6 +448,22 @@ function draw(time, dt) {
       p = hexCenter({ c, r });
     if (visible(p)) mapHasPulse = true;
     for (const x of copies(p.x)) drawCrosshair({ x, y: p.y }, time, scale);
+  }
+  // Ability targets sit above unit artwork, independent of ordinary attack
+  // and movement highlights. Static outlines also work with reduced motion.
+  if (abilityTargeting) for (const target of abilityTargetCache.values()) {
+    const p = hexCenter(target);
+    if (!visible(p)) continue;
+    for (const x of copies(p.x)) {
+      ctx.save();
+      hexPath(x, p.y, R - 2);
+      ctx.strokeStyle = abilityTargetColor(target);
+      ctx.fillStyle = abilityTargetColor(target) + '26';
+      ctx.fill();
+      ctx.lineWidth = (hover && E.key(hover) === E.key(target) ? 4 : 2.5) / Math.max(scale, 0.4);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
   // The selected Eliminator carrier's cover, any warhead aimed inside it is neutralized: a faint wash and a bright
   // cyan outline along its edge, which stays readable over the movement range.
@@ -670,6 +703,20 @@ function draw(time, dt) {
       ctx.strokeStyle = '#ffe6f3';
       ctx.lineWidth = 3 / Math.max(scale, 0.4);
       ctx.stroke();
+    } else if (e.kind === 'ability') {
+      const elapsed = e.max - e.life - e.delay;
+      if (elapsed >= 0) {
+        const age = Math.min(1,elapsed/e.duration);
+        ctx.globalAlpha = (1-age)*0.8;
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 3/Math.max(scale,0.4);
+        ctx.beginPath();
+        ctx.arc(bx,b0.y,R*(0.45+age*0.55),0,Math.PI*2);
+        ctx.stroke();
+        ctx.globalAlpha = (1-age)*0.12;
+        ctx.fillStyle = e.color;
+        ctx.fill();
+      }
     } else if (e.kind === 'ring') {
       // Campaign blasts and Gefjun Disturbers: a wave that sweeps out over the hexes they hit.
       const grow = 1 - fade,

@@ -15,8 +15,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check commander registry formatting and faction counts
+        run: node tools/commander_roster_audit.cjs
+      - name: Verify approved 118-commander roster, factions and restrained passives
+        run: node tools/commander_118_roster_smoke.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify Andrea Farnese's Orderly Withdrawal, Honor the Fallen and End the Slaughter
+        run: node tools/andrea_farnese_smoke.cjs
+      - name: Verify 2018 Britannian frontline-only starting deployments
+        run: node tools/ufn2018_britannia_frontline_smoke.cjs
+      - name: Verify map selection for every targeted commander ability
+        run: node tools/ability_targeting_smoke.cjs
+      - name: Verify commander attacks animate each actual shooter without extra damage
+        run: node tools/commander_attack_animations_smoke.cjs
+      - name: Verify passive reactions, survival effects and active support feedback
+        run: node tools/remaining_ability_effects_smoke.cjs
+      - name: Verify 118 commander commissions and invested-save rebalance
+        run: node tools/commission_rebalance_smoke.cjs
+      - name: Verify Suzaku starter and existing HQ and battle-save migration
+        run: node tools/starter_commanders_smoke.cjs
+      - name: Verify six Scenario Mode exclusives, independent factions and save compatibility
+        run: node tools/six_exclusive_smoke.cjs
+      - name: Verify six-way tournament AI production, attacks and captures
+        run: node tools/six_exclusive_ai.cjs rounds-tournament
       - name: Verify Anna Clément engineering, Rapid Maintenance and Klaus discount transfer
         run: node tools/anna_clement_smoke.cjs
       - name: Verify Akito Brain Raid isolation, damage and movement
@@ -29,6 +51,8 @@ jobs:
         run: node tools/villetta_purist_interception_smoke.cjs
       - name: Verify Smilas Expendable Vanguard recharges every turn
         run: node tools/smilas_every_turn_smoke.cjs
+      - name: Verify all four replacement E.U. commander abilities and save migration
+        run: node tools/eu_four_replacement_smoke.cjs
       - name: Verify Oscar Guard Counterstrike and Emergency Defense
         run: node tools/oscar_emergency_defense_smoke.cjs
       - name: Verify Ryo marking, allied kill refresh, and AI replay
@@ -37,6 +61,8 @@ jobs:
         run: node tools/marirrosa_estrella_barrage_smoke.cjs
       - name: Verify Anya Marianne's Awakening lethal revival and 10-turn cooldown
         run: node tools/anya_marianne_awakening_smoke.cjs
+      - name: Verify Darlton Glaston summoning, protecting and vengeance
+        run: node tools/darlton_glaston_smoke.cjs
       - name: Verify Zero Geass Absolute Command dual-mode actions and passive removal
         run: node tools/zero_geass_absolute_command_smoke.cjs
       - name: Verify Emperor Lelouch Imperial Command and Supreme Commander
@@ -93,8 +119,6 @@ jobs:
         run: node tools/research_200_combat_smoke.cjs
       - name: Verify commander roster and assignment
         run: node tools/commander_assignment_smoke.cjs
-      - name: Verify four free HQ starters and old profile migration
-        run: node tools/starter_commanders_smoke.cjs
       - name: Verify commander skill refunds and development planning
         run: node tools/commander_progression_smoke.cjs
       - name: Verify victory tokens and Elite fragment progression

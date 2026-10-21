@@ -32,7 +32,7 @@
     if (kind === 'attack') {
       if (!actor) return { ok: false, reason: 'Unit not found.' };
       const why = turnReason(g, actor.side) ||
-        (actor.hp <= 0 ? 'Unit destroyed' : actor.expRoloFrozen ? 'Frozen by Absolute Suspension' : (actor.expCharlesMemoryRewrite || actor.morale <= -3) ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
+        (actor.hp <= 0 ? 'Unit destroyed' : actor.expRoloFrozen ? 'Frozen by Absolute Suspension' : actor.expFarneseSlaughterTurn === g.turn ? 'End the Slaughter: no attacks remaining' : (actor.expCharlesMemoryRewrite || actor.morale <= -3) ? 'Unit is confused' : actor.attacked ? 'Already fired' : null);
       if (why) return { ok: false, reason: why };
       const shot = preview(g, id, c, r);
       if (!shot) return { ok: false, reason: atSea(g, actor) ? 'Embarked units cannot fire.' : 'No hostile target in range.' };
@@ -94,6 +94,7 @@
   function repairReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
+    if (u.expMiguelSupply) return 'Miguel has severed this formation\'s supply lines';
     const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
@@ -111,6 +112,7 @@
   function reinforceReason(g, u) {
     if (!u) return 'Select a unit';
     if (u.hp <= 0) return 'Unit destroyed';
+    if (u.expMiguelSupply) return 'Miguel has severed this formation\'s supply lines';
     const rapid = annaMaintenanceNear(g, u);
     return (
       turnReason(g, u.side) ||
@@ -139,7 +141,8 @@
       (eliteCampaign(g) && !t.naval ? 'Elite Campaign factories produce only Elite Forces' : null) ||
       (eliteAIProduction(g) && producer !== g.player && (eliteScenario(g) ? t.naval !== 'ship' : !t.naval) ? 'Rival factories can only produce Elite Forces' : null) ||
       ((t.air ? airshipType(g, producer) !== type :
-        !(producer === 'cf' ? [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)] :
+        !(producer === 'eb' ? [...buildableTypes(g, producer), ...navalTypes(g, producer)] :
+        producer === 'cf' ? [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)] :
         (g.buildable?.[producer] || [...Object.values(lineupOf(g, producer)), ...navalTypes(g, producer)])).includes(type))
         ? 'Not built by this faction'
         : null) ||
@@ -238,10 +241,13 @@
     const action = COMMANDERS[u?.cmd]?.action;
     if (!u || !action) return 'This commander has no command action';
     const why = turnReason(g, u.side) || (u.hp <= 0 ? 'Unit destroyed' : u.expRoloFrozen ? 'Frozen by Absolute Suspension' : atSea(g, u) ? 'Embarked units cannot use command actions' : u.morale <= -3 ? 'Unit is confused' : null)
-      || (u.feintUsedTurn === g.turn ? 'Already used this turn' : (action.cooldown ?? 3) > 0 && u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
+      || (u.feintUsedTurn === g.turn && !(u.cmd === 'raymond' && !(u.feintCD > 0)) ? 'Already used this turn' : (action.cooldown ?? 3) > 0 && u.feintCD > 0 ? `Ready in ${u.feintCD} turns` : null);
     if (why) return why;
     if (u.expCharlesMemoryRewrite) return 'Confused by Geass: Memory Rewrite';
     if (u.expGeassCancelled) return 'Geass Canceller prevents this commander action';
+    if (action.kind === 'farneseWithdrawal') return actionTargets(g,u).length ? null : 'No friendly formations below 50% HP within 3 hexes';
+    if (action.kind === 'manfrediRequisition') return actionTargets(g,u).length?null:'No normal friendly formation within 2 hexes has room for a frame';
+    if (action.kind === 'arkFleet') return actionTargets(g,u).length ? null : 'No enemy city to disrupt';
     if (action.kind === 'electricalOverload') {
       if (u.attacked) return 'Already fired';
       return actionTargets(g, u).length ? null : 'No adjacent enemy in normal attack range';
@@ -256,6 +262,7 @@
     if (action.kind === 'memoryRewrite') return actionTargets(g, u).length ? null : 'No enemy susceptible to confusion within 3 hexes';
     if (action.kind === 'freeze') return actionTargets(g, u).length ? null : 'No adjacent enemy formations to freeze';
     if (action.kind === 'cleanse') return actionTargets(g, u).some(v => v.morale < 0 || !v.moraleWard) ? null : 'Nearby allies are already protected';
+    if (action.kind === 'miguelSupply') return actionTargets(g,u).length ? null : 'No enemy within 3 hexes';
     if (action.kind === 'special' || action.kind === 'protection' || action.kind === 'oscarDefense' || action.kind === 'geassCancel' || action.kind === 'checkmate') return actionTargets(g,u).length ? null : 'No eligible targets in range';
     return actionTargets(g, u).length ? null : ['designate', 'stratagem'].includes(action.kind)
       ? 'No enemy within 2 hexes' : action.kind === 'command' ? (u.cmd === 'zero' ? 'No eligible friendly or enemy formation within 2 hexes' : 'No friendly unit within 2 hexes has acted')
@@ -293,6 +300,9 @@
     // Regional scenarios also need personal HQ commanders. Their scripted officers
     // remain untouched, including their authored ranks and special Elite bonuses.
     g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
+    // Newly created or HQ-refreshed battles already use the Suzaku starter
+    // policy. Do not re-migrate later Cornelia recruitments on next load.
+    g.britanniaStarterMigrationVersion = 1;
     for (const u of allUnits(g)) {
       if (!u.cmd || (g.mode === 'scenario' && !u.personal)) continue;
       const old = maxHP(u);

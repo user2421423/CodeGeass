@@ -228,7 +228,35 @@
     const stronger = type => TYPES[type] && TYPES[type].hp >= t.hp && TYPES[type].attack >= t.attack;
     return [typeFor(u.side, next, g), typeFor(t.side, next, g)].find(stronger) || u.type;
   }
+  // Each strategic-campaign finale is also available as a standalone regional
+  // scenario. Give both factions a one-frame airship and a sealed warhead on
+  // turn 1. The engine enforces the turn-5 launch gate for both human and AI.
+  function prepareFinaleArsenals(g) {
+    if (!finaleScenario(g) || g.scenario.finaleArsenalInitialized) return g;
+    g.scenario.finaleArsenalInitialized = true;
+    g.arsenal ||= {};
+    const sides = (g.order || []).filter(side => side !== 'neutral');
+    for (const side of sides) {
+      g.arsenal[side] = Math.max(1, g.arsenal[side] || 0);
+      if (g.units.some(u => u.hp > 0 && u.side === side && TYPES[u.type]?.air)) continue;
+      const type = airshipType(g, side);
+      const home = g.stations.find(s => s.owner === side && s.capitalOf === side) ||
+        g.stations.filter(s => s.owner === side).sort((a, b) => b.tier - a.tier || a.id - b.id)[0] ||
+        g.units.find(u => u.side === side && u.hp > 0);
+      if (!type || !home) continue;
+      const free = t => t.terrain !== 'offmap' && t.terrain !== 'peak' &&
+        !unitAt(g, t) && !stationAt(g, t) &&
+        !g.stations.some(s => s.portAt?.c === t.c && s.portAt?.r === t.r);
+      // Prefer the faction's home territory. Seaborne attackers instead deploy
+      // beside their existing invasion fleets, without inventing a land base.
+      const at = nearest(g, home, t => free(t) && t.owner === side) ||
+        nearest(g, home, t => free(t) && t.terrain === 'sea');
+      if (at) newUnit(g, type, side, at.c, at.r);
+    }
+    return g;
+  }
   function applyScenarioDifficulty(g, difficulty = g.difficulty) {
+    prepareFinaleArsenals(g);
     const d = DIFFICULTIES[difficulty];
     if (!d?.level) return g;
     const rivals = scenarioRivals(g);
@@ -321,7 +349,7 @@
     if (t.naval) return t.naval === 'amphibious' && NAVAL[t.side] ? NAVAL[t.side].amphibious2 : type;
     if (!next || t.side === 'neutral') return type;
     // Challenge/Hard reinforcement upgrades must respect the U.F.N. lineup.
-    return typeFor(ufnBlackKnights(g, side) ? side : t.side, next, g);
+    return typeFor(side === 'eb' || ufnBlackKnights(g, side) ? side : t.side, next, g);
   }
   function techUpToTier(tier) {
     return Object.fromEntries(
@@ -772,10 +800,18 @@
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
     for (const [side, cls, lon, lat, stack, cmd, frameSource] of (cfg.armies || ARMY_DATA)) {
+      // The Britannian 2018 Siberian expeditionary contingent starts on
+      // allied Euro-Britannian land. No ownership changes and no cross-team
+      // placement permission for any other formation or Conquest era.
+      const alliedSiberianStart = cfg.id === 'ufn2018' && side === 'britannia' &&
+        lon >= 90 && lon <= 120 && lat >= 48 && lat <= 60;
+      const canStartOn = owner => owner === side || (alliedSiberianStart && owner === 'eb');
       const at = nearest(
         g,
         hexOf(lon, lat),
-        t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
+        t => solidLand(t) && !unitAt(g, t) &&
+          (cfg.id !== 'ufn2018' || canStartOn(t.owner)) &&
+          (!stationAt(g, t) || canStartOn(stationAt(g, t).owner)),
       );
       if (at) newUnit(g, typeFor(ufnBlackKnights(g, side) ? 'bk' : (frameSource || side), cls, g), side, at.c, at.r, stack, cmd || null);
     }
@@ -793,13 +829,23 @@
     }
     setupSakuradite(g);
     if (DIFFICULTIES[difficulty]?.level) harden(g, DIFFICULTIES[difficulty]);
+    // Hard and Challenge can create additional uncommanded reinforcements.
+    // In 2018 Britannia and the U.F.N. still begin with named ground forces only.
+    if (cfg.id === 'ufn2018')
+      g.units = g.units.filter(u =>
+        !(['britannia', 'cf'].includes(u.side) && !u.cmd && !TYPES[u.type].naval));
     convertConquestEliteStarts(g); // Also converts every Challenge-style land reinforcement.
     prepareEliteConquestFactories(g);
     // Every power opens with one airship beside its capital (or its strongest city), on its own
     // land. Placed after difficulty hardening so it always starts as a single, unconverted frame.
     for (const side of majors) {
-      const type = airshipType(g, side),
-        home = g.stations.find(s => s.capitalOf === side) ||
+      // Euro Britannia is a separate 2018 faction, but flies Britannia's Logres.
+      // Ensure its capital belongs to its own faction before choosing a berth.
+      const type = side === 'eb' ? 'logres_airship' : airshipType(g, side),
+        // In 2018 Britannia has no rear-area starting troops, including its airship.
+        forwardHome = cfg.id === 'ufn2018' && side === 'britannia'
+          ? g.stations.find(s => s.name === 'Baghdad' && s.owner === side) : null,
+        home = forwardHome || g.stations.find(s => s.capitalOf === side && s.owner === side) ||
           g.stations.filter(s => s.owner === side).sort((a, b) => b.tier - a.tier || a.id - b.id)[0],
         at = type && home && nearest(g, home, t => solidLand(t) && t.owner === side && !unitAt(g, t) && !stationAt(g, t));
       if (at) newUnit(g, type, side, at.c, at.r);

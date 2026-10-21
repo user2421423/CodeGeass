@@ -1,6 +1,6 @@
   // Approved signature actions (kind 'special'): the AI picks the target the player would, and holds the action
   // when it would be wasted. Olivia and Fernando use theirs on the target already chosen to fire on
-  // (aiSignatureStrike); Margaret's redeployment and Sayoko's infiltration need the board after movement.
+  // (aiSignatureStrike); Sayoko's infiltration needs the board after movement.
   const punch = v => (TYPES[v.type]?.attack || 0) * (1 + 0.35 * Math.max(0, (v.stack || 1) - 1));
   const missing = v => 1 - v.hp / maxHP(v);
   const pickBest = (list, score) => list.map(v => ({ v, s: score(v) })).filter(o => o.s > 0)
@@ -15,7 +15,7 @@
     const threatened = s => g.units.some(w => w.hp > 0 && foe(g, w.side, s.owner) && dist(g, w, s) <= 4) ? 1 : 0;
     const shieldGap = s => 1 - s.shield / Math.max(1, s.maxShield);
     switch (u.cmd) {
-      case 'olivia': case 'margaret': case 'sayoko': return null;
+      case 'olivia': case 'sayoko': return null;
       case 'gaohai': {
         const source = stationAt(g, u);
         return pickBest(options, s => shieldGap(s) - shieldGap(source) - 0.2 > 0 ? shieldGap(s) + threatened(s) : 0);
@@ -26,9 +26,18 @@
       case 'sugiyama': return pickBest(options, s => 1 + shieldGap(s) * 2 + (s.capitalOf ? 1 : 0));
       case 'diethard': return pickBest(options, v => commanderValue(g, v) + punch(v) * 0.2);
       case 'kirihara': return pickBest(options, v => 1 + missing(v) * 100 + (v.cmd ? 5 : 0));
+      case 'darlton': {
+        // Place Darlton's summoned knights near the front, avoiding enemy contact
+        // when a safer supporting hex is available.
+        const enemies=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side));
+        const score=p=>{
+          const nearest=enemies.length?Math.min(...enemies.map(v=>dist(g,v,p))):3;
+          return Math.abs(nearest-2)*2+(nearest<=1?10:0)+(p.owner!==u.side?1:0);
+        };
+        return options.slice().sort((a,b)=>score(a)-score(b)||String(a.id).localeCompare(String(b.id)))[0]||null;
+      }
     }
     const k = COMMANDERS[u.cmd].action.target;
-    if (k === 'wounded') return pickBest(options, v => missing(v) >= (u.cmd === 'kate' ? 0.1 : 0.15) ? missing(v) + (v.cmd ? 0.05 : 0) : 0);
     if (k === 'enemy' || k === 'enemyCommander') return pickBest(options, v => punch(v) + commanderValue(g, v));
     // Allies (Marrybell, Sophie) and Elite Forces (Norland, Lloyd): a hard hitter that can still use it this turn.
     return pickBest(options, v => canStrike(g, v) ? punch(v) + (v.cmd ? 30 : 0) : 0);
@@ -62,17 +71,6 @@
     events.push({ kind: 'feint', id: u.id, target: u.id, affected: 1 });
     return true;
   }
-  // Margaret gives a free 3-point move (and +15% damage) to an ally that has moved but not fired and has an enemy
-  // just out of reach, then that ally acts again.
-  function aiMargaretRedeploy(g, u, events) {
-    if (u.cmd !== 'margaret' || feintReason(g, u)) return;
-    const v = pickBest(actionTargets(g, u), v => v.moved && v.morale > -3 && !targets(g, v).length &&
-      enemyWithin(g, v, rangeOf(g, v).max + 3) ? punch(v) + (v.cmd ? 30 : 0) : 0);
-    const used = v && feint(g, u.id, v.id);
-    if (!used?.ok) return;
-    events.push({ kind: 'feint', id: u.id, target: used.target, affected: 1 });
-    events.push(...aiOrder(g, v.id));
-  }
   function coastTile(g, p) {
     return !isSea(p) && adjacent(g, p).some(isSea);
   }
@@ -81,7 +79,7 @@
   // Command and withdrawal leaders act last so their actions can coordinate allies.
   // In Conquest, formations responding to an immediate defensive emergency act first.
   function aiOrderPriority(g, u) {
-    const commander = ['command', 'withdraw'].includes(COMMANDERS[u.cmd]?.action?.kind);
+    const commander = ['command', 'withdraw', 'farneseWithdrawal'].includes(COMMANDERS[u.cmd]?.action?.kind);
     if (g.mode !== 'scenario' && g.mode !== 'conquest') return commander ? 9 : 1;
     const type = TYPES[u.type];
     const tactical = commander ? 9
@@ -206,6 +204,23 @@
       forward = front?.state === 'assembling' && aheadOfRally(g, front, u),
       home = { c: u.c, r: u.r },
       fieldAt = forward ? p => dist(g, p, home) : fieldFor(g, memo, u);
+    // Julius selects strategically valuable enemy cities, favoring front-line
+    // offensives, high shield strength, and concentrations of enemy troops.
+    if(u.cmd==='julius'&&!feintReason(g,u)){
+      const targets=actionTargets(g,u);
+      const score=s=>{
+        const enemy=g.units.filter(v=>v.hp>0&&foe(g,v.side,u.side)&&dist(g,v,s)<=3);
+        const friendly=g.units.filter(v=>v.hp>0&&v.side===u.side&&dist(g,v,s)<=5);
+        return (s.capitalOf===s.owner?18:0)+(s.tier||1)*4+
+          (s.maxShield?12*s.shield/Math.max(1,s.maxShield):0)+
+          enemy.length*5+friendly.length*3+
+          (s.expArkFleet? -35:0)-
+          Math.min(20,dist(g,u,s));
+      };
+      targets.sort((a,b)=>score(b)-score(a)||String(a.id).localeCompare(String(b.id)));
+      const chosen=targets[0];
+      if(chosen){const r=feint(g,id,chosen.id);if(r.ok)events.push({kind:'feint',id,target:chosen.id,airship:r.airship});}
+    }
     // On Normal Story escape missions, the required named commander must
     // actually walk to the exit instead of chasing incidental enemies.
     // Uses reachable() and move() like a human player, and does not give
@@ -311,6 +326,11 @@
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
     }
     aiSignature(g, u, events);
+    // Protect endangered allies before the AI moves Andrea outside their radius.
+    if (u.cmd === 'farnese' && !feintReason(g,u)) {
+      const r = feint(g,u.id);
+      if (r.ok) events.push({kind:'feint',id:u.id,affected:r.affected});
+    }
     // Withdraw already-fired allies before Leila's own movement can take her out of range.
     if (COMMANDERS[u.cmd]?.action?.kind === 'withdraw' && !feintReason(g, u)) {
       const friends = actionTargets(g, u).map(v => v.id), r = feint(g, id);
@@ -615,7 +635,7 @@
       const chosen = u.cmd === 'zero' ? zeroCommandTarget(g, u) : null;
       const r = feint(g, id, chosen?.id);
       if (r.ok) {
-        events.push({ kind: 'feint', id, affected: r.affected });
+        events.push({ kind: 'feint', id, affected: r.affected, combat: r.combat, abilityEffects:r.abilityEffects });
         const refreshed = g.units.find(v => v.id === r.target);
         if (refreshed && refreshed.side === u.side && refreshed.id !== u.id)
           events.push(...aiOrder(g, refreshed.id));
@@ -628,7 +648,6 @@
         for (const friend of friends) events.push(...aiOrder(g, friend));
       }
     }
-    if (!g.over && u.hp > 0) aiMargaretRedeploy(g, u, events);
     memo.focusCache?.clear();
     memo.trafficCache?.clear();
     return events;

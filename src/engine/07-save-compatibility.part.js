@@ -132,6 +132,51 @@
   function migrateSave(g) {
     g = unpackSave(g);
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    // Existing operations migrate commanders, cargo, scenario allegiances
+    // and purchased officer progression without losing saved battle state.
+    for(const records of [g.officers,g.roster])if(records)
+      for(const [oldId,newId] of Object.entries(EU_ROSTER_REPLACEMENTS))if(records[oldId]){
+        records[newId] ||= records[oldId];delete records[oldId];
+      }
+    // Existing battle snapshots migrate independently of the persistent profile.
+    if (g.commissionRebalanceVersion !== 1) {
+      rebalanceSavedCommissions(g.officers);
+      rebalanceSavedCommissions(g.roster);
+      g.commissionRebalanceVersion = 1;
+    }
+    for(const u of g.units.flatMap(v=>[v,...(v.cargo||[])]))
+      if(u.cmd&&EU_ROSTER_REPLACEMENTS[u.cmd])u.cmd=EU_ROSTER_REPLACEMENTS[u.cmd];
+    for(const pool of Object.values(g.scenario?.commanderSides||{}))if(Array.isArray(pool))
+      for(let i=0;i<pool.length;i++)pool[i]=EU_ROSTER_REPLACEMENTS[pool[i]]||pool[i];
+    // Saved battles keep their own snapshot of the HQ roster and personal unit
+    // assignments. Apply the Britannian starter swap once, independently of the
+    // profile migration; leave scripted (non-personal) Cornelia units untouched.
+    // The version flag allows players to recruit Cornelia normally afterwards.
+    if (g.britanniaStarterMigrationVersion !== 1) {
+      const personal = g.units.flatMap(u => [u, ...(u.cargo || [])])
+        .filter(u => u.personal);
+      const legacyAssignments = personal.filter(u => u.cmd === 'cornelia');
+      if (g.roster?.cornelia || legacyAssignments.length) {
+        g.roster ||= {};
+        g.roster.suzaku ||= defaultOfficer('suzaku', true);
+        delete g.roster.cornelia; // Do not transfer investment or grant a refund.
+        let suzakuDeployed = personal.some(u => u.cmd === 'suzaku' && u.hp > 0);
+        for (const u of legacyAssignments) {
+          if (!suzakuDeployed && u.hp > 0) {
+            u.cmd = 'suzaku';
+            u.cmdRank = g.roster.suzaku.rank;
+            suzakuDeployed = true;
+          } else {
+            // Suzaku cannot be personally deployed twice in the same battle.
+            u.cmd = null;
+            u.cmdRank = 0;
+            u.personal = false;
+            if (u.hp > 0) u.hp = Math.min(u.hp, maxHP(u));
+          }
+        }
+      }
+      g.britanniaStarterMigrationVersion = 1;
+    }
     const regional = g.mode === 'scenario';
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
@@ -219,10 +264,10 @@
       if (/(?:japan|europe)_.*_carrier/.test(id)) delete g.eliteDeployed[id];
     if (!g.units.every(u => TYPES[u.type])) return null;
     // Existing saves keep their positions, commanders, action state and damage.
-    // Retire accidental cross-era Chinese/UFN equipment (including embarked
-    // cargo), rather than retaining old sprites after the faction roster fix.
+    // Retire accidental cross-era Chinese/UFN equipment and Euro-Britannian
+    // borrowed heavy armor (including embarked cargo), preserving damage and orders.
     for (const u of g.units.flatMap(v => [v, ...(v.cargo || [])])) {
-      if (u.side !== 'cf') continue;
+      if (u.side !== 'cf' && u.side !== 'eb') continue;
       const correct = eraUnitType(g, u.type, u.side);
       if (correct === u.type) continue;
       const oldMax = Math.max(1, maxHP(u)), fraction = u.hp / oldMax;

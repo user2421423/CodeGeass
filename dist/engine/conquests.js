@@ -864,20 +864,21 @@
   ]
 ],
     garrisons: [["Sydney","sutherland",2],["Melbourne","glasgow",1],["Perth","glasgow",1],["Darwin","glasgow",1],["Brisbane","glasgow",1],["Adelaide","glasgow",1]],
-    initialTreasury: { britannia: { credits: 380, industry: 155, science: 30 }, eb: { credits: 210, industry: 85, science: 18 }, cf: { credits: 900, industry: 400, science: 70 } },
+    initialTreasury: { britannia: { credits: 650, industry: 260, science: 30 }, eb: { credits: 450, industry: 190, science: 18 }, cf: { credits: 800, industry: 350, science: 70 } },
   };
 
 
-  // France and Iberia are now Euro Britannian. Rebase the Britannian
-  // forces previously stationed there to the remaining African holdings.
-  for (const army of ufn2018.armies) {
-    if (army[0] !== 'britannia') continue;
-    const p = {
-      '2.35,48.85':[3,36.7], '-3.7,40.4':[-7.6,33.6],
-      '2.2,41.4':[13.2,32.9], '-5.35,36.14':[10,33.3]
-    }[army[2]+','+army[3]];
-    if (p) [army[2],army[3]] = p;
-  }
+  // 2018 only: Britannia abandons its inland and overseas garrisons in favour
+  // of the active coalition frontiers. Keep every formation's class, stack and
+  // named commander intact. In array order: Middle East, Japan, Philippines,
+  // allied Euro-Britannian Siberia and U.F.N.-bordering African sectors.
+  const britannianForwardLand = [[44.4,33.3], [104.3,52.3], [101.6,51.3], [108,53.3], [32,16], [15.1,12.1], [121.4,17], [124,14.4], [139.7,35.7], [135.8,35], [130.4,33.6], [142.4,43.1], [121,14.6], [138,35.2], [36.3,33.5], [43.2,35.5], [52,27.5], [46.1,31.5], [32.2,16.5], [31.2,30], [15.6,10.9], [34.5,14.6], [32.5,15.6], [29,-24], [16.6,-10.3], [14.5,8.7], [29,-23], [48.5,29.4], [54,26], [107.2,51.3]];
+  const britannian2018Land = ufn2018.armies.filter(army => army[0] === 'britannia');
+  if (britannian2018Land.length !== britannianForwardLand.length)
+    throw new Error('Review the 2018 Britannian land deployment after changing its roster');
+  britannian2018Land.forEach((army, i) => {
+    [army[2], army[3]] = britannianForwardLand[i];
+  });
   // The U.F.N. retains Warsaw as a salient; its formations formerly based in
   // Amsterdam, Berlin, Minsk and Kiev deploy on allied ground instead.
   // Four existing Euro Britannian reinforcements garrison those cities,
@@ -902,6 +903,16 @@
     ['eb','amphibious2',-5.5,35.7,1]
   );
 
+  // The 2018 Britannian fleet likewise starts exclusively in contested waters:
+  // Japan, the Philippines, and the Red Sea / Horn of Africa.
+  const britannianForwardNavy = [[124.7,16.8], [140,39.4], [135,34], [132,33], [124.5,12], [39.2,19], [40.8,13]];
+  const britannian2018Navy = ufn2018.navy.filter(ship => ship[0] === 'britannia');
+  if (britannian2018Navy.length !== britannianForwardNavy.length)
+    throw new Error('Review the 2018 Britannian naval deployment after changing its roster');
+  britannian2018Navy.forEach((ship, i) => {
+    [ship[2], ship[3]] = britannianForwardNavy[i];
+  });
+
   // Every eligible roster officer receives one named starting command in each
   // Conquest. Prefer existing anonymous formations; only create fresh formations
   // if a coalition has more officers than deployed units (the 2018 U.F.N.).
@@ -909,15 +920,14 @@
   function fillRosterCommands(armies, era) {
     const roster = root.KnightmareData.COMMANDERS;
     const is2018 = era === 'ufn2018';
-    const euro = new Set(['julius','shin','ashley','manfredi','farnese','augustus','kewell','norland']);
     const ownerOf = (id, officer) => is2018
-      ? (officer.side === 'britannia' ? (euro.has(id) ? 'eb' : 'britannia') : 'cf')
-      : officer.side;
+      ? (officer.side === 'eb' ? 'eb' : officer.side === 'britannia' ? 'britannia' : 'cf')
+      : (officer.side === 'eb' ? 'britannia' : officer.side);
     // Correct legacy 2018 assignments: the E.U.'s Klaus and Oscar cannot
     // command Euro Britannian units; both belong to the U.F.N. instead.
     if (is2018) for (const unit of armies)
       if (unit[0] === 'eb' && ['klaus','oscar'].includes(unit[5])) unit.splice(5, 2);
-    const availableOfficers = Object.entries(roster).filter(([, officer]) => is2018 || ['britannia','eu','cf'].includes(officer.side));
+    const availableOfficers = Object.entries(roster).filter(([, officer]) => is2018 || ['britannia','eb','eu','cf'].includes(officer.side));
     const used = new Set();
     for (const entry of armies) {
       const id = entry[5];
@@ -957,13 +967,7 @@
       }
       used.add(id);
     }
-    // Preserve free formations for attaching purchased HQ officers. A complete
-    // starting cast must not disable the ordinary commander-assignment mechanic.
-    if (is2018) armies.push(
-      ['cf','medium',113.5,34,1,null,'bk'],
-      ['cf','assault',20.5,51.9,1,null,'bk'],
-      ['cf','rocket',36.6,-1.5,1,null,'bk']
-    );
+    // No extra unassigned U.F.N. reserves in the 2018 Conquest.
     if (used.size !== availableOfficers.length)
       throw new Error('Not every ' + era + ' commander has a starting deployment');
     return armies;
@@ -986,6 +990,18 @@
     throw new Error('2017 EU starting army changed; review Chinese-border deployment');
   fillRosterCommands(root.KnightmareData.ARMY_DATA, 'world');
   fillRosterCommands(ufn2018.armies, 'ufn2018');
+  // All 2018 Britannian and U.F.N. ground starts require named commanders.
+  // Euro Britannia retains its anonymous land starts; navy is separate.
+  ufn2018.armies = ufn2018.armies.filter(formation =>
+    formation[5] || !['britannia', 'cf'].includes(formation[0]));
+
+  // 2018-only coalition reinforcement: every *commander-led* Britannian and
+  // Euro-Britannian starting land formation gets a full three-frame stack.
+  // Apply after all officers are assigned and unused ground units removed.
+  // Euro Britannian anonymous troops and U.F.N. commander stacks are untouched.
+  for (const formation of ufn2018.armies)
+    if (formation[5] && ['britannia', 'eb'].includes(formation[0]))
+      formation[4] = 3;
   // Keep Augustus in friendly territory in both eras. In 2017 his original
   // Fukuoka staging point is overcrowded, which can displace him into Korea.
   // These starting-roster coordinates apply to every Conquest difficulty.

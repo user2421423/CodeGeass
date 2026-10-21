@@ -62,6 +62,20 @@
     shinregime: { name:'Independent Euro Britannia',short:'Shin Regime',adj:'Independent Euro-Britannian',color:'#8255C2',letter:'S',capital:'Sankt Petersburg',campaign:true },
     loyalists: { name:'Tianzi Imperial Loyalists',short:'Imperial Loyalists',adj:'Imperial Loyalist',color:'#D54445',letter:'L',capital:'Luoyang',campaign:true },
     eunuchs: { name:'Chinese Eunuch Regime',short:'Eunuch Regime',adj:'Eunuch Regime',color:'#6A8FA5',letter:'U',capital:'Luoyang',campaign:true },
+    zero_loyalists: {"name": "Zero Loyalists", "short": "Zero Loyalists", "adj": "Zero Loyalists", "color": "#18181f", "letter": "Z", "capital": "Tokyo Settlement", "campaign": true, "scenarioOnly": true, "portrait": "zero"},
+    bk_command: {"name": "Black Knights High Command", "short": "High Command", "adj": "High Command", "color": "#507d70", "letter": "H", "capital": "Kyoto", "campaign": true, "scenarioOnly": true, "portrait": "ohgi"},
+    geass_order: {"name": "Geass Order", "short": "Geass Order", "adj": "Geass Order", "color": "#a14ec4", "letter": "G", "capital": "Moscow", "campaign": true, "scenarioOnly": true, "portrait": "zero"},
+    anti_geass: {"name": "Anti-Geass Coalition", "short": "Anti-Geass", "adj": "Anti-Geass", "color": "#4b94c9", "letter": "A", "capital": "Warsaw", "campaign": true, "scenarioOnly": true, "portrait": "suzaku"},
+    protagonists: {"name": "Protagonists", "short": "Protagonists", "adj": "Protagonists", "color": "#b69a49", "letter": "P", "capital": "Warsaw", "campaign": true, "scenarioOnly": true, "portrait": "zero"},
+    antagonists: {"name": "Antagonists", "short": "Antagonists", "adj": "Antagonists", "color": "#8f4055", "letter": "V", "capital": "Minsk", "campaign": true, "scenarioOnly": true, "portrait": "charles"},
+    remnants: {"name": "Britannian Remnants", "short": "Britannia", "adj": "Britannian", "color": "#e34b4b", "letter": "B", "capital": "Denver", "campaign": true, "scenarioOnly": true, "portrait": "charles"},
+    ufn: {"name": "UFN / Black Knights", "short": "UFN", "adj": "UFN", "color": "#282c3d", "letter": "U", "capital": "Shangqiu", "campaign": true, "scenarioOnly": true, "portrait": "zero"},
+    knight_bismarck: {"name": "Bismarck’s Round Army", "short": "Bismarck", "adj": "Bismarck", "color": "#c4a346", "letter": "B", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "bismarck"},
+    knight_suzaku: {"name": "Suzaku’s Round Army", "short": "Suzaku", "adj": "Suzaku", "color": "#f5eee0", "letter": "S", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "suzaku"},
+    knight_gino: {"name": "Gino’s Round Army", "short": "Gino", "adj": "Gino", "color": "#4e9dca", "letter": "G", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "gino"},
+    knight_anya: {"name": "Anya’s Round Army", "short": "Anya", "adj": "Anya", "color": "#c27dbb", "letter": "A", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "anya"},
+    knight_dorothea: {"name": "Dorothea’s Round Army", "short": "Dorothea", "adj": "Dorothea", "color": "#6da87b", "letter": "D", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "dorothea"},
+    knight_nonette: {"name": "Nonette’s Round Army", "short": "Nonette", "adj": "Nonette", "color": "#bd6847", "letter": "N", "capital": "Pendragon", "campaign": true, "scenarioOnly": true, "portrait": "nonette"},
     neutral: { name: 'Neutral powers', short: 'Neutral', adj: 'Neutral', color: '#c2bd9f', letter: 'N' },
   };
   const MAJORS = ['britannia', 'eu', 'cf'];
@@ -859,12 +873,14 @@
       hp: 650, attack: 160, armor: 35, move: 4, min: 1, max: 1,
       cost: 900, industry: 240, tier: 2, crit: 0.20, pen: 0.4, breakthrough: true,
     },
+    // The historical elite_sutherland_air ID is retained to preserve existing
+    // Britannian rocket-elite HQ levels, fragments and saved deployments.
     elite_sutherland_air: {
       side: 'britannia', elite: true, cls: 'rocket', role: 'Elite rocket artillery',
-      name: 'Palomides', model: 'RZA-4EE · Knight of Four custom',
-      gen: '7th generation', weapon: 'Ten Hadron-cannon Slash Harkens · Float System',
-      lore: "Dorothea Ernst's heavily armed personal Knightmare, combining floating firepower with powerful Harken attacks.",
-      desc: 'Flying rocket elite. Airborne Salvo unlocks at Elite Lv.3.',
+      name: 'Canterbury', model: 'Euro-Britannian Canterbury · Imperial elite configuration',
+      gen: '5th generation', weapon: 'Long-range linear cannon · heavy bombardment battery',
+      lore: 'Euro Britannia’s Canterbury artillery is reserved as the shared Imperial elite rocket-artillery formation.',
+      desc: 'Shared Imperial rocket elite. Canterbury Barrage unlocks at Elite Lv.3.',
       hp: 550, attack: 140, armor: 22, move: 3, min: 2, max: 2,
       cost: 1050, industry: 280, tier: 2, crit: 0.20, pen: 0.62, noCounter: true, splash: 0.45,
     },
@@ -1007,6 +1023,8 @@
       lore: 'Ashley Ashra’s heavily armed frame, sent with him to guard the Gallia Grande.',
       campaign: true,
     },
+    // Retain the old mission-only Canterbury type for legacy saves; new operations
+    // field Gareth as standard siege artillery and Canterbury as an elite rocket.
     canterbury: {
       side: 'eb',
       cls: 'siege',
@@ -1235,18 +1253,18 @@
       rocket: 'jp_artillery',
       siege: 'raiko',
     },
-    // Euro Britannia borrows Britannia's regular 2017 frames plus its own Canterbury siege gun.
+    // Euro Britannia uses Britannian regular frames except for its own Vercingetorix heavy and Ahura Mazda super-heavy.
     eb: {
       scout: 'glasgow',
       assault: 'gloucester',
       raider: 'gracchus',
       light: 'sutherland',
       medium: 'vincent_ward',
-      heavy: 'vincent_commander',
-      super: 'brighton',
+      heavy: 'vercingetorix',
+      super: 'ahura_mazda',
       support: 'liverpool',
       rocket: 'sutherland_air',
-      siege: 'canterbury',
+      siege: 'gareth',
     },
   };
   const ELITE_MAX_LEVEL = 5;
@@ -1412,9 +1430,11 @@
       lv5Text: '+25% damage and +20% penetration; the first kill or city-defense break each turn restores movement.',
       lv3: { dmg: 0.15, pen: 0.10 }, lv5: { dmg: 0.25, pen: 0.20, moveAfterKill: true },
     },
+    // Preserve the existing Elite Force identifier so unlocked Palomides progress
+    // continues seamlessly as the replacement Canterbury elite.
     sutherland_air: {
       type: 'elite_sutherland_air', faction: 'britannia', availableTo: ['britannia'], rarity: 'Epic',
-      skill: 'Airborne Salvo',
+      skill: 'Canterbury Barrage',
       lv3Text: '+20% extra splash and +10% damage. Ignores terrain movement costs.',
       lv5Text: '+35% extra splash, +20% damage and +1 range. Ignores terrain movement costs.',
       lv3: { float: true, splash: 0.20, dmg: 0.10 }, lv5: { float: true, splash: 0.35, dmg: 0.20, range: 1 },

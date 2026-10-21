@@ -1,6 +1,15 @@
   // ======== F.L.E.I.J.A.: the Sakuradite superweapon ========
   // The high-resolution world uses roughly 200 km hexes. A warhead reaches two rings: the first is catastrophic,
   // while the second is a weaker blast fringe. Campaign maps can still pass an explicit radius to blastArea().
+  // Six World Campaign finales share their regional battles with Scenario Mode.
+  // Outside these battles the long-standing scenario superweapon ban remains.
+  const FINALE_SCENARIO_IDS = new Set([
+    'eu-pendragon', 'cf-pendragon', 'battle-luoyang',
+    'eu-cf-luoyang', 'cf-eu-france', 'operation-stonehenge'
+  ]);
+  function finaleScenario(g) {
+    return g?.mode === 'scenario' && FINALE_SCENARIO_IDS.has(g.scenario?.id);
+  }
   const FLEIJA = {
     radius: 2,
     cost: { credits: 1800, industry: 450, science: 300, sakuradite: 150 },
@@ -263,7 +272,9 @@
   function eliminatorDefender(g, attacker, p) {
     if (!p) return null;
     return (
-      eliminatorCharges(g)
+      [...eliminatorCharges(g), ...g.units
+        .filter(u => u.hp > 0 && u.cmd === 'lloyd' && isMajor(g, u.side))
+        .map(u => ({ c: u.c, r: u.r, owner: u.side, unit: u, ready: true, lloydPassive: true }))]
         .filter(h => h.ready && foe(g, h.owner, attacker) && isMajor(g, h.owner) && dist(g, h, p) <= ELIMINATOR.range)
         .sort(
           (a, b) =>
@@ -279,11 +290,13 @@
     return stationAt(g, p)?.name || siteAt(g, p)?.name || (near ? `near ${near.name}` : `hex ${p.c},${p.r}`);
   }
   function launchReason(g, side, p) {
-    if (g.mode === 'scenario') return 'F.L.E.I.J.A. is unavailable in regional scenarios';
+    if (g.mode === 'scenario' && !finaleScenario(g)) return 'F.L.E.I.J.A. is unavailable in regional scenarios';
+    if (finaleScenario(g) && g.turn < 5) return 'F.L.E.I.J.A. unlocks on turn 5';
     if (g.over) return 'Operation over';
     if (g.phase !== side) return 'Not your turn';
     if (!(g.arsenal?.[side] > 0)) return 'No F.L.E.I.J.A. warhead in the arsenal';
-    if (!g.stations.some(s => s.owner === side)) return 'No city to launch from';
+    // Stonehenge's expeditionary side starts offshore without a city.
+    if (!finaleScenario(g) && !g.stations.some(s => s.owner === side)) return 'No city to launch from';
     if (!p || !tile(g, p.c, p.r)) return 'Choose a target hex';
     // No allied or own casualties, property damage, mine loss or city destruction anywhere in the blast radius.
     if (g.era === 'ufn2018' && blastArea(g, p).some(t => {
@@ -356,8 +369,10 @@
       // Two turns of research + two of production therefore beat the second warhead.
       const holder = defense.unit || defense.city;
       if (defense.city?.eliminatorProject?.ready <= g.turn) defense.city.eliminatorProject = null;
-      holder.eliminator = 0;
-      delete holder.eliminatorMoved;
+      if (!defense.lloydPassive) {
+        holder.eliminator = 0;
+        delete holder.eliminatorMoved;
+      }
       log(g, `F.L.E.I.J.A. Eliminator neutralizes the incoming warhead aimed at ${name}.`, defense.owner);
       return {
         ok: true,
@@ -376,7 +391,7 @@
         hit: [],
       };
     }
-    const unlocksEliminator = eliminatorTurn(g) == null;
+    const unlocksEliminator = g.mode !== 'scenario' && eliminatorTurn(g) == null;
     const destroyed = [],
       crippled = [],
       damaged = [],
@@ -414,9 +429,18 @@
       }
       if (s) {
         if (blastDistance === 0) {
-          const lost = destroyCity(g, s);
-          if (lost) depleted.push(lost);
-          cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
+          if (finaleScenario(g)) {
+            // Regional finale victories require conquering *every* city. Do not
+            // delete a city (and make that victory impossible) after a strike.
+            // The ground-zero city loses all defenses and infrastructure instead.
+            ruin(g, s, Infinity);
+            s.attackedSinceRegen = true;
+            cities.push({ name: s.name, severity: 'ground', destroyed: false, owner: s.owner });
+          } else {
+            const lost = destroyCity(g, s);
+            if (lost) depleted.push(lost);
+            cities.push({ name: s.name, severity: 'ground', destroyed: true, owner: s.owner });
+          }
         } else if (ring) {
           ruin(g, s, 1);
           s.attackedSinceRegen = true;

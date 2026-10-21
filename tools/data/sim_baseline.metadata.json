@@ -1,7 +1,7 @@
 {
-  "schema": 1,
-  "purpose": "Explicit reconciliation of inherited reference drift and reproduced defect repairs; prior captures remain immutable.",
-  "auditedMain": "09458d5900b994d6a2a3f23b59e22f6b955cfcd3",
+  "schema": 2,
+  "purpose": "Complete 68-scenario reference after six new exclusives and stale regional commander repairs; prior historical references retained.",
+  "parentSourceRevision": "37c8ad80",
   "profile": {
     "seed": 11,
     "turns": 2,
@@ -15,66 +15,43 @@
       "normal"
     ],
     "command": "node tools/scenario_sim.cjs --all",
-    "lines": 390,
-    "limits": "Only Normal is simulated, for two turns; Elite combat and save/load repairs require the independent regression suite."
+    "lines": 725,
+    "scenarios": 68,
+    "simulations": 145
   },
   "archives": [
     {
-      "path": "tools/data/sim_baseline.legacy.txt",
-      "sha256": "5e4f1ae0742784af34dd90a2aede0bf19e2183f354daace87a6f4dc07798dc31",
-      "description": "Unchanged historical reference; already differed on all 390 lines before this work."
+      "path": "tools/data/sim_baseline.before-six-exclusives.txt",
+      "sha256": "fe8e2d4295259b9c8e631e2ff8cd042fe57d9a9062fe7102cd19fe7a5b2ca675",
+      "description": "Previous committed 390-record reference, already stale at the starting revision."
     },
     {
-      "path": "tools/data/sim_baseline.audited-main-09458d5.txt",
-      "sha256": "9b9c657956cdd13d0b3aca2d67d1cc30d5207664af8f9061c81445b2c9227120",
-      "description": "Independently captured starting main; matched the original tooling-only implementation byte-for-byte."
+      "path": "tools/data/sim_baseline.before-six-exclusives.metadata.json",
+      "sha256": "3da50eed7a5fa9890f98be76601a6f7794bd3273457ef19b366435525e4efc3c",
+      "description": "Preserved previous reference metadata and its historical archives."
     }
   ],
   "current": {
     "path": "tools/data/sim_baseline.txt",
-    "sha256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
-    "sourceRevision": "12dc5773718f743454e1be5fb50eedadd6d1df0f",
+    "sha256": "1536477a8224f5824b912fc1549df5d45449e40b35bfc0998f247c97920a1cc5",
     "reason": [
-      "Skip invalid AI combat previews and restore temporary movement probes.",
-      "Use consistent regional HQ defense classification across loading and construction; infer independent city levels.",
-      "Filter four custom Elite converters through native-era eligibility rules."
-    ],
-    "fixedSourceSHA256": {
-      "src/ai/07-tactical-orders.part.js": "7cf6f570699e33fbe99586e789d5fc2c0b3eaf465485b022e6183d01243f61cf",
-      "src/engine/07-save-compatibility.part.js": "0fa7e4f9e42259ac584ae290dca34a84717731baf570c2c1fd78f200a381db0f",
-      "src/engine/10-economy.part.js": "932bdf77c532d766ee63fe513be4424f99779e549b7f1a80bb9a345c5214cf84",
-      "src/engine/15-turns-and-fortresses.part.js": "87d5df710316d6fd2ff407dd35e95f7ab269f670c15a495614f4ee9d87d827c1",
-      "dist/scenarios-cf-pacific-northwest.js": "63316d68fe9101d8b8f6aefc598e6815ee00882e9ac6ff777a0a0e06f53203c2",
-      "dist/scenarios-malacca.js": "0f389baf23c49cc6947d191729e3a744023a42a4409e5899ad5a4ba7e3f0c860",
-      "dist/scenarios-mexico.js": "3ffc8ab02175a3176b81d4a992ae51216d9bf4eeb3b7bd3c53304cc206f23744",
-      "dist/scenarios-panama.js": "aece105ecbb0bb6894534f1ebba6c754a2ae451b0ee2d9736c3480b0bcf28199"
-    },
-    "observedDelta": {
-      "changedLinesFromAuditedMain": 40,
-      "setupLines": 32,
-      "simulationLines": 8,
-      "scenarios": [
-        "bf-malacca",
-        "cf-mexico",
-        "cf-pacific-northwest",
-        "cf-panama"
-      ],
-      "explanation": "Roster metadata changes appear at every setup difficulty; only Normal two-turn games are fingerprinted. AI/save fixes are covered by independent regressions."
-    }
+      "Six new Scenario Mode exclusives, with seventeen selectable factions.",
+      "Remove retired Monica/Luciano regional assignments; use the existing Margaret-to-Romero identity migration in four rejecting modules.",
+      "Expand the stale 37-scenario reference to all 68 current scenarios."
+    ]
   },
   "verification": {
-    "capturedAtUTC": "2026-10-18T14:30:05.218529+00:00",
+    "capturedAtUTC": "2026-10-20T18:20:41.656903+00:00",
     "node": "v24.19.0",
-    "independentCapturesIdentical": true,
-    "captureASHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
-    "captureBSHA256": "b5ea99f605db145cff1b724b08461008323cd49f2fe8e146222499b25fd199cb",
-    "retainedCaptureB": "tools/testing/fix-validation/post-fix-fingerprints.txt",
-    "comparisonEvidence": "tools/testing/fix-validation/baseline-comparison.json",
-    "mismatches": {
-      "historicalToAuditedMain": 390,
-      "auditedMainToCorrected": 40,
-      "historicalToCorrected": 390,
-      "independentCaptures": 0
-    }
+    "aiErrors": 0,
+    "independentFullCapture": false,
+    "originalPrefixRecordsCompared": 95,
+    "originalPrefixIdentical": 70,
+    "originalPrefixExpectedDifferences": 25,
+    "expectedDifferenceScenarios": [
+      "area-18",
+      "britannia-iraq-iran"
+    ],
+    "explanation": "The untouched starting all-scenario run stopped at Unknown commander monica in Central America. Of its 95 earlier records, only the two authored retired-commander repairs differ. Full rerun completed after regional repairs."
   }
 }

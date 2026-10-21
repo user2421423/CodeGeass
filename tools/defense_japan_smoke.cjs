@@ -38,7 +38,26 @@ for(const player of scenario.sides)for(const difficulty of difficulties){
     'Only Britannian land frames are embarked');
   assert.ok(embarked.every(u=>!g.units.includes(u)),
     'No Britannian formations start ashore');
-  assert.ok(g.units.some(u=>u.side==='bk'&&!E.TYPES[u.type].naval));
+  const defenders=g.units.filter(u=>u.side==='bk'&&!E.TYPES[u.type].naval);
+  const defenseNavy=g.units.filter(u=>u.side==='bk'&&E.TYPES[u.type].naval);
+  assert.ok(defenders.length>=34,'Keep all 34 authored Black Knights formations');
+  if(difficulty==='normal')assert.equal(defenders.length,34);
+  // Harder rivals may gain extra land reinforcements or upgrade their types.
+  assert.equal(defenseNavy.length,11,'Deploy eleven Black Knights naval formations');
+  assert.equal(defenseNavy.filter(u=>E.TYPES[u.type].naval==='ship').length,5);
+  assert.equal(defenseNavy.filter(u=>E.TYPES[u.type].naval==='amphibious').length,6);
+  if(difficulty==='normal')
+    assert.equal(defenseNavy.filter(u=>u.type==='bk_amphibious_ii').length,6);
+  // Elite Japan intentionally converts amphibious hulls to scenario-specific elites.
+  assert.equal(g.scenario.citylessWarChestTurns,3);
+  if(difficulty==='normal') {
+    assert.equal(defenders.reduce((sum,u)=>sum+u.stack,0),68,
+      'Five additional two-frame formations bring BK land strength to 68 frames');
+    for(const cityName of ['Sapporo','Sendai','Chiba','Matsue','Nagasaki'])
+      assert.ok(g.scenario.groups.some(v=>v.side==='bk' && v.origin===cityName &&
+        v.units.some(id=>defenders.some(u=>u.id===id))),
+        'Missing a defender at the '+cityName+' invasion front');
+  }
   assert.deepEqual(g.startUnits,{bk:g.units.filter(u=>u.side==='bk').length,britannia:54});
   assert.equal(scenario.winner(g),null,'No instant victory');
   assert.equal(scenario.meta.expeditionSide,'britannia');
@@ -57,6 +76,21 @@ for(const player of scenario.sides)for(const difficulty of difficulties){
     'A cityless invader earns no repeating income after setup');
   assert.ok(g.economy.britannia.credits>0,
     'Cityless invader has a finite opening war chest');
+  if(difficulty==='normal') {
+    assert.deepEqual(E.income(g,'bk'),
+      {credits:270,industry:165,science:28,sakuradite:13},
+      'BK must actually receive half the Britannian funding targets');
+    assert.equal(g.economy.bk.credits,810,
+      'BK starts with half the Britannian three-turn credit reserve');
+    assert.equal(g.economy.bk.industry,495,
+      'BK starts with half the Britannian three-turn industry reserve');
+    assert.equal(g.economy.bk.sakuradite,39,
+      'BK starts with half the Britannian three-turn sakuradite reserve');
+    assert.equal(g.economy.britannia.credits,1620,
+      'Britannia must receive three turns of credits, not ten');
+    assert.equal(g.economy.britannia.industry,990,
+      'Britannia must receive three turns of industry, not ten');
+  }
   if(difficulty==='elite'){
     assert.ok(embarked.every(u=>u.elite),'Elite scenario converts embarked land formations');
     assert.ok(g.units.filter(u=>u.side==='bk'&&!E.TYPES[u.type].naval)

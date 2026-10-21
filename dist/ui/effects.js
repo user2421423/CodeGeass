@@ -44,6 +44,7 @@ function turnStartPopups(before, side) {
     const b = before.get(u.id);
     if (!b || u.hp <= 0 || struck.has(u.id) || !onScreen(u)) continue;
     if (u.side === side && u.hp < b.hp) popup(u, `ATTRITION −${Math.round(b.hp - u.hp)}`, '#f2b35c', { life: 2.1 });
+    if (u.side === side && u.hp > b.hp) abilityPulse(u,'+'+Math.round(u.hp-b.hp)+' HP','heal');
     if (u.morale < b.morale) popup(u, moraleLabel(u.morale), '#d9a6ff', { dy: 30, life: 2.1 });
   }
 }
@@ -107,26 +108,27 @@ function spawnCombatBlast(to, delay = 0, heavy = false) {
   pushCombatVfx({ kind: 'blast', to: { c: to.c, r: to.r }, delay, duration, heavy,
     life: duration + delay, max: duration + delay });
 }
-function addCombatEffects(result, attacker, before = null) {
+function addCombatEffects(result, attacker, before = null, delay = 0) {
   if (!result || !attacker || (skipAI && aiSide)) return;
   const cls = E.TYPES[attacker.type].cls;
   const weapon = SFX.weapon(cls);
   const spec = VFX_WEAPONS[weapon] || VFX_WEAPONS.cannon;
   const compact = reducedMotion();
-  const impactAt = compact ? 0.08 : spec.impact;
+  const impactAt = delay + (compact ? 0.08 : spec.impact);
   const shown = onScreen(result.to) || onScreen(result.from);
-  const target = before && [...before.values()].find(u =>
-    u.c === result.to.c && u.r === result.to.r && u.side !== attacker.side);
+  const target = before && (result.targetId != null ? before.get(result.targetId) :
+    [...before.values()].find(u => u.c === result.to.c && u.r === result.to.r && u.side !== attacker.side));
   const counterWeapon = result.counter && target ? SFX.weapon(E.TYPES[target.type].cls) : null;
-  const counterDelay = counterWeapon ? (compact ? 0.09 : spec.impact + 0.07) : 0;
+  const counterDelay = counterWeapon ? delay + (compact ? 0.09 : spec.impact + 0.07) : 0;
   const counterImpactAt = counterWeapon
     ? counterDelay + (compact ? 0.08 : (VFX_WEAPONS[counterWeapon] || VFX_WEAPONS.cannon).impact)
     : 0;
   if (shown) {
     queueCombatShot(result.from, result.to, weapon, attacker.side, {
+      delay,
       crit: result.crit, shake: (HEAVY_SHAKE[cls] || 0) + (result.crit ? 4 : 0) + (result.destroyed ? 4 : 0),
     });
-    SFX.play(weapon, attacker.side);
+    SFX.play(weapon, attacker.side, delay);
     if (result.crit) SFX.play('crit', attacker.side, impactAt);
     if (result.destroyed) {
       SFX.play('explosion', attacker.side, impactAt);
@@ -160,6 +162,8 @@ function addCombatEffects(result, attacker, before = null) {
     { dy: 20, size: 14, delay: impactAt });
   for (const h of result.hit || []) {
     const main = h.c === result.to.c && h.r === result.to.r;
+    if (!main && h.damage > 0 && game.units.some(u=>u.id===h.id&&u.hp>0))
+      spawnCombatBlast(h,impactAt,false);
     if (main && result.crit) popup(h, '−' + h.damage + ' CRIT!', '#ffefad',
       { size: 21, life: 1.9, pop: true, delay: impactAt });
     else popup(h, '−' + h.damage, main ? '#ffb3a3' : '#ff9a7a',
@@ -167,4 +171,59 @@ function addCombatEffects(result, attacker, before = null) {
   }
   if (result.counter) popup(result.from, 'COUNTER −' + result.counter, '#9deaff',
     { size: 16, life: 1.8, pop: true, delay: counterImpactAt });
+  addAbilityEffects(result.abilityEffects, before, Math.max(impactAt,counterImpactAt) + 0.12);
+}
+// Reuse normal weapon, impact, shield, counterfire and destruction effects.
+// A brief stagger makes each contributing formation's shot visible.
+function addCommanderCombatEffects(result, caster, before) {
+  if (!result?.ok) return;
+  if (result.attack?.ok) addCombatEffects(result.attack, caster, before);
+  (result.combat || []).forEach((strike, index) =>
+    addCombatEffects(strike.result, strike.attacker, before, index * (reducedMotion() ? 0.04 : 0.18)));
+  addAbilityEffects(result.abilityEffects, before, (result.combat?.length || 0) * 0.18 + 0.4);
+}
+const ABILITY_TONES = { heal:'#9af5aa', guard:'#9eeaff', buff:'#ffe49c', debuff:'#d9a6ff', summon:'#ffd16b' };
+function abilityPulse(to, label, tone = 'buff', delay = 0) {
+  if (!to || !onScreen(to) || (skipAI && aiSide)) return;
+  const duration = reducedMotion() ? 0.18 : 0.65, color = ABILITY_TONES[tone] || ABILITY_TONES.buff;
+  // Keep battlefield feedback bounded even for a large area ability.
+  if (effects.filter(e=>e.kind==='ability').length >= 48) return;
+  effects.push({kind:'ability',to:{c:to.c,r:to.r},color,delay,duration,
+    life:duration+delay,max:duration+delay});
+  if (label) popup(to,label,color,{size:12,dy:38,life:1.2,delay});
+  requestMapFrame();
+}
+function addAbilityEffects(events, before, delay = 0) {
+  if (skipAI && aiSide) return;
+  (events || []).forEach((event,index)=>{
+    const at = delay + index * (reducedMotion() ? 0.02 : 0.12);
+    if (event.kind === 'signal') abilityPulse(event.to,event.label,event.tone,at);
+    else if (event.kind === 'attack') {
+      // Reactions may strike a unit after movement. Its firing-time position
+      // is authoritative for counterfire/wrecks, including a lethal interception.
+      const positions = new Map(before || []);
+      if (event.target) positions.set(event.target.id,event.target);
+      addCombatEffects(event.result,event.attacker,positions,at);
+    }
+  });
+}
+function addCommanderSupportEffects(result, caster, targets) {
+  if (!result?.ok || !caster || result.attack?.ok || result.combat?.length || (skipAI && aiSide)) return;
+  const action = E.COMMANDERS[caster.cmd]?.action;
+  const recipients = result.target != null ? targets.filter(t=>t.id===result.target) : targets;
+  for (const previous of recipients) {
+    const city = ['city','enemyCity'].includes(action?.target) || action?.kind === 'arkFleet';
+    const current = city ? game.stations.find(s=>s.id===previous.id) : game.units.find(u=>u.id===previous.id);
+    const heal = Math.max(0,(current?.hp || 0)-(previous.hp || 0));
+    const shields = Math.max(0,(current?.shield || 0)-(previous.shield || 0));
+    const enemy = (city ? previous.owner : previous.side) !== caster.side;
+    const guard = ['protection','oscarDefense'].includes(action?.kind);
+    const tone = action?.target==='hex' ? 'summon' : heal || shields ? 'heal' : enemy ? 'debuff' : guard ? 'guard' : 'buff';
+    abilityPulse(previous,heal ? '+'+heal+' HP' : shields ? '+'+shields+' DEF' : action?.name,tone);
+    if (caster.cmd === 'sophie' && current?.expLink?.partner != null) {
+      const partner = game.units.find(u=>u.id===current.expLink.partner);
+      if (partner) abilityPulse(partner,action.name,'buff');
+    }
+  }
+  if (result.cost > 0) popup(caster,'COST −'+result.cost+' HP','#f2b35c',{size:13,dy:55});
 }

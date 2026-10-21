@@ -3,7 +3,9 @@
   // (g.officers) and are never upgraded. Your commanders (profile.roster) are bought once, upgraded in HQ, kept
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Supreme Commander, the highest rank for every side.
-  const STARTERS = { britannia: ['cornelia'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
+  // Chloe has returned as her own commander; do not migrate her into Toru.
+  const EU_ROSTER_REPLACEMENTS = Object.freeze({margaret:'romero',kate:'miguel',hilda:'masaki'});
+  const STARTERS = { britannia: ['suzaku'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
   function fx(u) {
     return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }
@@ -11,9 +13,10 @@
   const COMMISSION_NAMES = { standard: 'Standard', distinguished: 'Distinguished', legendary: 'Legendary' };
   const COMMISSION_ORDER = ['standard', 'distinguished', 'legendary'];
   const HIGH_COMMAND_BASE_CAPACITY = 2;
-  // Approved permanent HQ upgrades. Each entry is the incremental price for the next level.
+  const HIGH_COMMAND_MAX_PURCHASED_CAPACITY = 10;
+  // Each High Command expansion is permanent; the Challenge Pass bonus is separate.
   const COMMISSION_UPGRADE_PRICES = { distinguished: 200, legendary: 350 };
-  const HIGH_COMMAND_EXPANSION_PRICES = { 3: 1800, 4: 3200, 5: 5500, 6: 9000 };
+  const HIGH_COMMAND_EXPANSION_PRICES = { 3: 1000, 4: 2000, 5: 3000, 6: 4000, 7: 5000, 8: 6000, 9: 7000, 10: 8000 };
   function commissionName(c) { return COMMISSION_NAMES[c] || 'Standard'; }
   function commissionOf(k, officer = null) {
     const tier = officer?.commission || COMMANDERS[k]?.commission || 'standard';
@@ -30,12 +33,13 @@
       + 30 * commandStage(officer?.rank ?? 0);
   }
   function ratingCap(rank, branch = 'armor') {
-    return [2, 4, 6][commandStage(rank)];
+    // New stars unlock at Captain, Lieutenant Colonel, Brigadier General and Lieutenant General.
+    return rank >= 8 ? 6 : rank >= 6 ? 5 : rank >= 4 ? 4 : rank >= 2 ? 3 : 2;
   }
-  // Paid positions retain their original two-to-six pricing ladder.
-  // Challenge Pass adds a separate, permanent seventh position on top.
+  // Purchased positions run from two to ten; Challenge Pass adds one separate bonus seat.
   function purchasedHighCommandCapacity(profile) {
-    return Math.max(2, Math.min(6, profile?.highCommandCapacity || 2));
+    return Math.max(HIGH_COMMAND_BASE_CAPACITY,
+      Math.min(HIGH_COMMAND_MAX_PURCHASED_CAPACITY, profile?.highCommandCapacity || HIGH_COMMAND_BASE_CAPACITY));
   }
   function highCommandCapacity(profile) {
     return purchasedHighCommandCapacity(profile) +
@@ -87,9 +91,64 @@
           rec.genericSpending[id] >= 0 ? rec.genericSpending[id] : legacyGenericInvestment(level)])),
     };
   }
+  // One-time baseline rebalance. Retain purchased higher commissions and grandfather
+  // saved commission slots when demotion would hide invested generic skills.
+  const COMMISSION_REBALANCE_PREVIOUS = Object.freeze({
+    schneizel: 'distinguished',
+    shin: 'distinguished',
+    guilford: 'standard',
+    ryo: 'distinguished',
+    yukiya: 'standard',
+    anna: 'standard',
+    smilas: 'distinguished',
+    fernando: 'standard',
+    marirrosa: 'standard',
+    honggu: 'standard',
+    cao: 'standard',
+    leifeng: 'distinguished',
+    meiling: 'standard',
+    rakshata: 'distinguished',
+    cc: 'distinguished',
+    senba: 'standard',
+    urabe: 'standard',
+    dorothea: 'distinguished',
+    nonette: 'distinguished',
+    marianne: 'legendary',
+    oldrin: 'legendary',
+    marrybell: 'legendary',
+    norland: 'legendary',
+    kaguya: 'distinguished',
+    vritra: 'standard',
+    euphemia: 'distinguished',
+    cecile: 'distinguished',
+  });
+  function rebalanceSavedCommissions(records) {
+    if (!records || typeof records !== 'object') return;
+    for (const [id, previous] of Object.entries(COMMISSION_REBALANCE_PREVIOUS)) {
+      const officer = records[id];
+      if (!officer || !COMMANDERS[id]) continue;
+      const next = COMMANDERS[id].commission;
+      const oldIndex = COMMISSION_ORDER.indexOf(previous);
+      const savedIndex = COMMISSION_ORDER.indexOf(officer.commission || previous);
+      const newIndex = COMMISSION_ORDER.indexOf(next);
+      if (oldIndex < 0 || savedIndex < 0 || newIndex < 0) continue;
+      if (newIndex > oldIndex && savedIndex < newIndex) {
+        officer.commission = next; // Free new baseline, preserving higher paid upgrades.
+      } else if (newIndex < oldIndex && savedIndex === oldIndex) {
+        const usedSlots = Object.values(officer.generics || {})
+          .filter(level => Number(level) > 0).length;
+        if (usedSlots <= newIndex + 1) officer.commission = next;
+      }
+    }
+  }
   // Every faction has a free starting HQ commander; existing roster upgrades are preserved.
   function roster(profile) {
     profile.roster ||= {};
+    // Carry retired E.U. commanders' HQ purchases and decorations into their
+    // named successors once, retaining all progress without extra slots.
+    for(const [oldId,newId] of Object.entries(EU_ROSTER_REPLACEMENTS))if(profile.roster[oldId]){
+      profile.roster[newId] ||= profile.roster[oldId];delete profile.roster[oldId];
+    }
     for (const k of Object.values(STARTERS).flat())
       if (!profile.roster[k]) profile.roster[k] = defaultOfficer(k, true);
     for (const [k, rec] of Object.entries(profile.roster))
@@ -100,6 +159,11 @@
           profile.tokens = (profile.tokens || 0) + STAR_COST[star];
         profile.roster[k] = cleanOfficer(k, rec);
       }
+    // Apply the adjusted baseline once to existing recruited commanders.
+    if (profile.commissionRebalanceVersion !== 1) {
+      rebalanceSavedCommissions(profile.roster);
+      profile.commissionRebalanceVersion = 1;
+    }
     // Migrate shared and equipped legacy medals into an account archive. Original
     // transferable medals have no trustworthy individual recipient; never invent one.
     if (profile.honorsVersion !== 1) {
@@ -134,7 +198,7 @@
     return HIGH_COMMAND_EXPANSION_PRICES[purchasedHighCommandCapacity(profile) + 1] ?? null;
   }
   function expandHighCommandReason(profile) {
-    if (purchasedHighCommandCapacity(profile) >= 6) return 'All six purchasable High Command positions unlocked';
+    if (purchasedHighCommandCapacity(profile) >= HIGH_COMMAND_MAX_PURCHASED_CAPACITY) return 'All ten purchasable High Command positions unlocked';
     const price = highCommandExpansionPrice(profile);
     return price == null ? 'High Command expansion unavailable' : tokenShort(profile, price);
   }

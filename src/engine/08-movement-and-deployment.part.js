@@ -1,4 +1,5 @@
   function newUnit(g, type, side, c, r, stack = 1, cmd = null, ready = true) {
+    cmd=EU_ROSTER_REPLACEMENTS[cmd]||cmd;
     // Normalize ALL scenario-scripted and recruited Chinese/UFN frames at birth;
     // faction allegiance and the frame's combat class remain unchanged.
     type = eraUnitType(g, type, side);
@@ -76,6 +77,7 @@
     if (f.firstStrike && !u.expKallenReposition && !u.skillReposition &&
         t.naval !== 'ship') n += u.expKallenMoveBank || 0;
     if (u.expKallenSlowActive) n = Math.max(1, n - 2);
+    if(u.expMiguelSupply)n=Math.max(0,n-2);
     return n;
   }
   function terrainStepCost(g, t) {
@@ -130,7 +132,7 @@
     // Brain Raid restores the full normal movement budget after a shot,
     // but only while Akito remains isolated; this never restores an attack.
     const akitoFollowUp = !!u.expAkitoMoveReady && akitoIsolated(g, u);
-    if (!isReady(g, u) || u.expFernandoOverload || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
+    if (!isReady(g, u) || u.expFarneseSlaughterTurn === g.turn || u.expFernandoOverload || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -407,6 +409,9 @@
     return { captured: s.name, annexed };
   }
   function move(g, id, c, r) {
+    return collectAbilityVisuals(g, () => resolveMove(g,id,c,r));
+  }
+  function resolveMove(g, id, c, r) {
     const check = validateAction(g, { kind: 'move', id, c, r });
     if (!check.ok) return check;
     const u = check.actor, dest = check.destination, moveCost = check.cost;
@@ -459,6 +464,7 @@
       c.r = dest.r;
     }
     u.moved = true;
+    u.expRomeroMoved=true; // Once physically moved, Stand Fast stays off this turn.
     // Amphibious units gain one full extra movement and attack after landing each turn.
     // A per-turn stamp prevents unlimited actions by hopping across the coastline.
     const freshLanding = t.naval === 'amphibious' && fromSea && !isSea(dest) && u.landingRefreshTurn !== g.turn;
@@ -497,6 +503,18 @@
       u.eliteMoveAfterKill=originalActions.eliteMoveAfterKill;
       if(originalActions.akitoMoveReady)u.expAkitoMoveReady=originalActions.akitoMoveReady;
       delete u.expOscarReposition;
+    }
+    // The Last Promise banks one full extra move without bypassing heavy caps.
+    if(u.expToruExtraMove>0&&u.hp>0&&!heavyMoveLimitReached(g,u)){
+      u.expToruExtraMove--;u.moved=false;
+    }
+    // An unspent original move followed by Orderly Withdrawal earns one more
+    // full movement action, respecting the existing heavy-frame two-move cap.
+    if(u.expFarneseExtraMove > 0 && u.hp > 0 && !heavyMoveLimitReached(g,u) &&
+       u.expFarneseSlaughterTurn !== g.turn && !oscarFreeMove) {
+      u.expFarneseExtraMove--;
+      u.moved=false;
+      u.withdrawMove=true;
     }
     // Tactical redeployment preserves the original normal movement action.
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}

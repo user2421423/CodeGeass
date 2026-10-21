@@ -1,0 +1,114 @@
+{
+  "renelaurent": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (1, 347, 143, 548) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/renelaurent-canon-89a8598292a6.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "kuzanmontoban": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (136, 268, 309, 487) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/kuzanmontoban-canon-b87a0c1097ba.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "johanne": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (300, 299, 474, 528) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/johanne-canon-dda4393738d8.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "janmanes": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (465, 342, 631, 544) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/janmanes-canon-fd39a7384ef6.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "franzvallo": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (620, 320, 795, 551) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/franzvallo-canon-50159c2098a6.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "alannecker": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (447, 75, 601, 295) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/alannecker-canon-f92c291c5b36.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "simonmericourt": {
+    "source": "https://geass.jp/akito/img/chara_asura.jpg",
+    "sourceSha256": "f8409846dfac4deb970e40c608d5d0af54b882902af4240a606df84828cf38c0",
+    "crop": "official Asura team sheet (611, 49, 785, 298) (796x585)",
+    "publishedFile": "dist/assets/art/portraits/simonmericourt-canon-a60ce6b207ca.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "mao": {
+    "source": "https://i.pinimg.com/1200x/4a/6f/6b/4a6f6b1afae2e8dfd0c9e5de2985a898.jpg",
+    "sourceSha256": "18170da042174e9c2d51b97eec224527aac4f21b5d73f604d4aa8f54b8092095",
+    "crop": "named individual portrait / official character turnaround",
+    "publishedFile": "dist/assets/art/portraits/mao-canon-1b7330e044df.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "shalio": {
+    "source": "https://ami.animecharactersdatabase.com/uploads/chars/38889-1990683981.png",
+    "sourceSha256": "45e4e9f965b85b50d74b2da1eb1d070b202d12547a03bc73c016d9200616ee55",
+    "crop": "named individual portrait / official character turnaround",
+    "publishedFile": "dist/assets/art/portraits/shalio-canon-43c5100afecf.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "shamna": {
+    "source": "https://geass.jp/R-geass/img/about/img17.jpg",
+    "sourceSha256": "8f4b601a5417026e9b20c6d8a3ddf80c950a30adc4794d51c374964fd1a62121",
+    "crop": "named individual portrait / official character turnaround",
+    "publishedFile": "dist/assets/art/portraits/shamna-canon-d713fd9bda8a.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "bolvona": {
+    "source": "https://ami.animecharactersdatabase.com/uploads/chars/38889-2032757953.png",
+    "sourceSha256": "a9a3939d4b112d719a42f743912bc8ce12feed1ea765b297d2baf9364e31493f",
+    "crop": "named individual portrait / official character turnaround",
+    "publishedFile": "dist/assets/art/portraits/bolvona-canon-66127cf0ff6d.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "jeanrowe": {
+    "source": "https://ami.animecharactersdatabase.com/uploads/chars/6186-1237934728.jpg",
+    "sourceSha256": "9ca414f1ebbfd08dc8d02891776497c4eaaa01da9b5466c181554d24a22f12b4",
+    "crop": "named individual portrait / official character turnaround",
+    "publishedFile": "dist/assets/art/portraits/jeanrowe-canon-d45df3361f87.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "augustahighland": {
+    "source": "https://geass.jp/akito/img/chara_Verance.jpg",
+    "sourceSha256": "86a80b204c209ea07f68d7538232514d46b3a2cd2d2ce832ea0d1fac8611fcab",
+    "crop": "named individual portrait / official character turnaround",
+    "publishedFile": "dist/assets/art/portraits/augustahighland-canon-d560ef494828.jpg",
+    "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "brondello": {
+    "source": "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png",
+    "sourceSha256": "592c05e7aaa2f137d9f8e217c93a7ade84dce0dd3e18cffa19935a0e06913bc0",
+    "crop": "named three-Swordmaster group still (42, 27, 133, 153) (350x158)",
+    "publishedFile": "dist/assets/art/portraits/brondello-canon-5d538143ac08.jpg",
+    "method": "Identified anime character from grouped still: Brondello black-haired left, Dore silver hair/forelocks middle, Scholtz short blond hair right; source low-resolution"
+  },
+  "dore": {
+    "source": "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png",
+    "sourceSha256": "592c05e7aaa2f137d9f8e217c93a7ade84dce0dd3e18cffa19935a0e06913bc0",
+    "crop": "named three-Swordmaster group still (163, 34, 244, 155) (350x158)",
+    "publishedFile": "dist/assets/art/portraits/dore-canon-8efaf27cdc3c.jpg",
+    "method": "Identified anime character from grouped still: Brondello black-haired left, Dore silver hair/forelocks middle, Scholtz short blond hair right; source low-resolution"
+  },
+  "scholtz": {
+    "source": "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png",
+    "sourceSha256": "592c05e7aaa2f137d9f8e217c93a7ade84dce0dd3e18cffa19935a0e06913bc0",
+    "crop": "named three-Swordmaster group still (260, 34, 347, 156) (350x158)",
+    "publishedFile": "dist/assets/art/portraits/scholtz-canon-41d6977245ff.jpg",
+    "method": "Identified anime character from grouped still: Brondello black-haired left, Dore silver hair/forelocks middle, Scholtz short blond hair right; source low-resolution"
+  }
+}

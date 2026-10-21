@@ -63,7 +63,13 @@ const SCENARIO_MANIFEST = Object.freeze([
   {id:"rounds-rebellion",title:"Knights of the Round Rebellion",note:"70 cities · 2 sides · Pendragon succession war"},
   {id:"shin-independence",title:"Euro-Britannian Independence",note:"44 cities · 2 sides · Shin vs Empire"},
   {id:"chinese-civil-war",title:"Chinese Civil War — The Imperial Restoration",note:"83 cities · 2 sides · Tianzi vs High Eunuchs"},
-  {id:"eu-military-coup",title:"E.U. Military Coup — Smilas vs Leila",note:"44 cities · 2 sides · E.U. civil war"}
+  {id:"eu-military-coup",title:"E.U. Military Coup — Smilas vs Leila",note:"44 cities · 2 sides · E.U. civil war"},
+  {id:"bk-civil-war",title:"Black Knights Civil War",note:"44 cities · 2 sides · organizational split"},
+  {id:"rounds-tournament",title:"Knights of the Round Tournament",note:"70 cities · 6 sides · free-for-all"},
+  {id:"geass-war",title:"The Geass War",note:"44 cities · 2 sides · Geass vs conventional"},
+  {id:"protagonists-antagonists",title:"Protagonists vs Antagonists",note:"44 cities · 2 sides · multinational armies"},
+  {id:"partition-britannia",title:"The Partition of Britannia",note:"78 cities · 3 sides · Britannian continental heartland"},
+  {id:"ufn-civil-war",title:"UFN Civil War",note:"119 cities · 2 sides · full mainland China"}
 ]);
 // Scenario modules and their map data, in load order: each file loads after the files it uses.
 const SCENARIO_FILES = Object.freeze([
@@ -146,7 +152,15 @@ const SCENARIO_FILES = Object.freeze([
   'scenarios-rounds-rebellion.js',
   'scenarios-shin-independence.js',
   'scenarios-chinese-civil-war.js',
-  'scenarios-eu-coup.js'
+  'scenarios-eu-coup.js',
+  'scenarios-exclusive-common.js',
+  'partition-geography.js',
+  'scenarios-bk-civil-war.js',
+  'scenarios-rounds-tournament.js',
+  'scenarios-geass-war.js',
+  'scenarios-protagonists-antagonists.js',
+  'scenarios-partition-britannia.js',
+  'scenarios-ufn-civil-war.js'
 ]);
 // Script promises are shared across callers; successful modules execute once per tab.
 const assetLoads = new Map();

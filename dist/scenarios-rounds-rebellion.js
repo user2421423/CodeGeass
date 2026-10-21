@@ -9,7 +9,7 @@ define({
  equipment:{rounds:'britannia',britannia:'britannia'},
  reinforcements:{rounds:42},
  commanders:{
-  rounds:['bismarck','gino','dorothea','monica','luciano','nonette','anya'],
+  rounds:['bismarck','gino','dorothea','nonette','anya'],
   britannia:['lelouch','suzaku','jeremiah','villetta','guilford','oldrin','marrybell']
  },
  // Suzaku's Lancelots guard the Emperor; Anya's Mordred rides with the Rounds.

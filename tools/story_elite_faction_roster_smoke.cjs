@@ -25,7 +25,8 @@ for (const campaign of Object.values(CP.CAMPAIGNS)) {
       assert.equal(E.eliteEligible(g, 'bk', 'shen_hu'), false, 'Black Knights cannot deploy native Federation elites');
       assert.equal(E.eliteEligible(g, 'bk', 'guren_mkii'), true, 'Black Knights have Guren');
       assert.equal(E.eliteEligible(g, 'cf', 'shen_hu'), true, '2017 Chinese retain Shen Hu');
-      assert.equal(E.eliteEligible(g, 'cf', 'akatsuki_missile'), false, '2017 Chinese cannot deploy UFN-era Akatsuki missile');
+      for (const id of ['akatsuki_zikisan', 'akatsuki_missile', 'akatsuki_heavy'])
+        assert.equal(E.eliteEligible(g, 'cf', id), true, 'Federation factory retains ' + id);
       for (const u of g.units) {
         if (u.side === 'bk' && !u.elite)
           assert.ok(!chinese.has(u.type) || blackKnights.has(u.type),
@@ -79,6 +80,18 @@ for (const difficulty of ['normal', 'hard', 'challenge']) {
   assert.ok(E.eliteEligible(bk, 'bk', 'guren_mkii'));
 }
 
+// Canterbury replaces the Britannian rocket-elite presentation without
+// invalidating the existing HQ unlock ID; Euro Britannia inherits the Imperial elite roster.
+assert.equal(E.LINEUPS.eb.siege, 'gareth', 'Euro Britannia recruits standard Gareth siege artillery');
+assert.equal(E.TYPES[E.ELITE_FORCES.sutherland_air.type].name, 'Canterbury');
+assert.equal(E.TYPES[E.ELITE_FORCES.sutherland_air.type].cls, 'rocket');
+assert.equal(E.ELITE_FORCES.sutherland_air.skill, 'Canterbury Barrage');
+const imperial = CP.createMission('eb_weisswolf', 20261019, 'normal');
+assert.ok(E.eliteEligible(imperial, 'eb', 'sutherland_air'), 'Euro Britannia can deploy Canterbury');
+assert.ok(E.eliteEligible(imperial, 'britannia', 'sutherland_air'), 'Britannia can deploy Canterbury');
+assert.ok(E.eliteEligible(imperial, 'eb', 'lancelot'), 'Euro Britannia keeps the shared Imperial elite roster');
+assert.ok(imperial.units.some(u => u.side === 'eb' && u.type === 'gareth'), 'Euro Britannia fields Gareth');
+assert.ok(!imperial.units.some(u => u.side === 'eb' && u.type === 'canterbury'), 'No new regular Canterbury spawns');
 const ui = fs.readFileSync(require.resolve('../dist/ui/dialogs.js'), 'utf8');
 assert.match(ui, /: port \? \[NAVAL_TAB, ELITE_NAVAL_TAB\]/,
   'Story port tabs include Elite Amphibious');
