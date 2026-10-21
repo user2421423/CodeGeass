@@ -399,7 +399,7 @@
         if(!pool.length)continue;
         const index=usage.get(u.side+old.cls)||0;
         const id=pool[index%pool.length];usage.set(u.side+old.cls,index+1);
-        u.type=E.ELITE_FORCES[id].type;u.elite=id;u.eliteLevel=u.side===player?1:u.cmd?5:3;
+        u.type=E.ELITE_FORCES[id].type;u.elite=id;u.eliteLevel=u.cmd&&E.foe(g,u.side,player)?3:1;
         u.stack=1;u.eliteStart=true;
         if(u.cmd&&u.side!==player){
           g.officers[u.cmd].rank=E.RANKS.length-1;u.cmdRank=E.RANKS.length-1;
