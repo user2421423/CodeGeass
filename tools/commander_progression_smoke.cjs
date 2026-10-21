@@ -71,4 +71,54 @@ assert.equal(E.removeGeneric(p, standard, skill).ok, true);
 for (let i = 1; i <= 4; i++) assert.equal(E.buyGeneric(p, standard, skill).ok, true);
 assert.ok(p.tokens < beforeLoop, 'repurchasing a removed skill must cost tokens');
 
-console.log('Commander skill refund and development planner: PASS');
+// Four intermediate promotion milestones unlock one additional star each.
+const expectedCaps = [2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6];
+for (const branch of Object.keys(E.BRANCH_NAMES)) {
+  assert.deepEqual(E.RANKS.map((_, rank) => E.ratingCap(rank, branch)), expectedCaps,
+    branch + ' rank-by-rank star cap');
+}
+const rankProfile = { tokens: 100000, roster: {} };
+E.roster(rankProfile);
+assert.equal(E.recruitCommander(rankProfile, standard).ok, true);
+const rankOfficer = rankProfile.roster[standard];
+for (const [rank, cap] of [[0, 2], [2, 3], [4, 4], [6, 5], [8, 6]]) {
+  rankOfficer.rank = rank;
+  while (rankOfficer.ratings.armor < cap)
+    assert.equal(E.buyStar(rankProfile, standard, 'armor').ok, true);
+  assert.match(E.starReason(rankProfile, standard, 'armor'),
+    cap === 6 ? /Already six stars/ : new RegExp('Rank-limited to ' + cap + ' stars'));
+}
+// A commander retired to Major General retains five stars but relinquishes the sixth.
+const retire = E.retireCommission(rankProfile, standard);
+assert.equal(retire.ok, true);
+assert.equal(rankOfficer.rank, 7);
+assert.equal(rankOfficer.ratings.armor, 5);
+assert.equal(E.ratingCap(rankOfficer.rank, 'armor'), 5);
+
+// High Command is global across factions and grows from 2 to 10 purchased seats.
+const seats = { tokens: 100000, roster: {} };
+const starterIds = Object.keys(E.roster(seats));
+assert.ok(starterIds.length >= 3);
+seats.roster[starterIds[0]].rank = 8;
+seats.roster[starterIds[1]].rank = 8;
+seats.roster[starterIds[2]].rank = 7;
+assert.equal(E.highCommandUsed(seats), 2);
+assert.match(E.promoteReason(seats, starterIds[2]), /All High Command slots/);
+for (let target = 3; target <= 10; target++) {
+  assert.equal(E.highCommandExpansionPrice(seats), (target - 2) * 1000);
+  assert.equal(E.expandHighCommand(seats).ok, true);
+  assert.equal(E.highCommandCapacity(seats), target);
+}
+assert.equal(E.promote(seats, starterIds[2]).ok, true);
+assert.equal(E.highCommandCapacity(seats), 10);
+assert.equal(E.highCommandExpansionPrice(seats), null);
+assert.equal(E.expandHighCommand(seats).ok, false);
+assert.equal(100000 - seats.tokens,
+  36000 + E.PROMOTE_COST[8], 'eight expansions cost 36,000 tokens in total');
+
+// Existing capacities above six remain valid when saved or normalized.
+const legacyExpanded = { tokens: 0, roster: {}, highCommandCapacity: 9 };
+E.roster(legacyExpanded);
+assert.equal(E.highCommandCapacity(legacyExpanded), 9);
+
+console.log('Commander skill refund, rank thresholds and High Command expansion: PASS');

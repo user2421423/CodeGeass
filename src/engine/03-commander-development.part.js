@@ -13,9 +13,10 @@
   const COMMISSION_NAMES = { standard: 'Standard', distinguished: 'Distinguished', legendary: 'Legendary' };
   const COMMISSION_ORDER = ['standard', 'distinguished', 'legendary'];
   const HIGH_COMMAND_BASE_CAPACITY = 2;
-  // Approved permanent HQ upgrades. Each entry is the incremental price for the next level.
+  const HIGH_COMMAND_MAX_PURCHASED_CAPACITY = 10;
+  // Each High Command expansion is permanent; the Challenge Pass bonus is separate.
   const COMMISSION_UPGRADE_PRICES = { distinguished: 200, legendary: 350 };
-  const HIGH_COMMAND_EXPANSION_PRICES = { 3: 1800, 4: 3200, 5: 5500, 6: 9000 };
+  const HIGH_COMMAND_EXPANSION_PRICES = { 3: 1000, 4: 2000, 5: 3000, 6: 4000, 7: 5000, 8: 6000, 9: 7000, 10: 8000 };
   function commissionName(c) { return COMMISSION_NAMES[c] || 'Standard'; }
   function commissionOf(k, officer = null) {
     const tier = officer?.commission || COMMANDERS[k]?.commission || 'standard';
@@ -32,12 +33,13 @@
       + 30 * commandStage(officer?.rank ?? 0);
   }
   function ratingCap(rank, branch = 'armor') {
-    return [2, 4, 6][commandStage(rank)];
+    // New stars unlock at Captain, Lieutenant Colonel, Brigadier General and Lieutenant General.
+    return rank >= 8 ? 6 : rank >= 6 ? 5 : rank >= 4 ? 4 : rank >= 2 ? 3 : 2;
   }
-  // Paid positions retain their original two-to-six pricing ladder.
-  // Challenge Pass adds a separate, permanent seventh position on top.
+  // Purchased positions run from two to ten; Challenge Pass adds one separate bonus seat.
   function purchasedHighCommandCapacity(profile) {
-    return Math.max(2, Math.min(6, profile?.highCommandCapacity || 2));
+    return Math.max(HIGH_COMMAND_BASE_CAPACITY,
+      Math.min(HIGH_COMMAND_MAX_PURCHASED_CAPACITY, profile?.highCommandCapacity || HIGH_COMMAND_BASE_CAPACITY));
   }
   function highCommandCapacity(profile) {
     return purchasedHighCommandCapacity(profile) +
@@ -196,7 +198,7 @@
     return HIGH_COMMAND_EXPANSION_PRICES[purchasedHighCommandCapacity(profile) + 1] ?? null;
   }
   function expandHighCommandReason(profile) {
-    if (purchasedHighCommandCapacity(profile) >= 6) return 'All six purchasable High Command positions unlocked';
+    if (purchasedHighCommandCapacity(profile) >= HIGH_COMMAND_MAX_PURCHASED_CAPACITY) return 'All ten purchasable High Command positions unlocked';
     const price = highCommandExpansionPrice(profile);
     return price == null ? 'High Command expansion unavailable' : tokenShort(profile, price);
   }

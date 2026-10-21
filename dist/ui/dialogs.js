@@ -245,10 +245,10 @@ function generalDialog(k, personal = false) {
   const seatPanel = editable
     ? `<div class="gi-ability"><span class="label">Global High Command · ${E.highCommandUsed(profile)}/${E.highCommandCapacity(profile)}</span>
        <p>${E.commandStageName(o.rank)} · positions shared across every faction.</p>
-       ${o.rank >= 8 ? `<button class="small" data-retire-commission="${k}" title="Demote to Major General, forfeit fifth/sixth stars, refund 90% of lost expenditures">Retire High Command · refund ${E.retireCommissionPreview(profile,k)} tokens</button>` : ''}
+       ${o.rank >= 8 ? `<button class="small" data-retire-commission="${k}" title="Demote to Major General, forfeit sixth stars, refund 90% of lost expenditures">Retire High Command · refund ${E.retireCommissionPreview(profile,k)} tokens</button>` : ''}
        ${E.highCommandExpansionPrice(profile) != null
          ? tokenButton('data-expand-high-command="1"', E.highCommandExpansionPrice(profile), E.expandHighCommandReason(profile), 'Expand High Command ')
-         : '<small>All six purchasable positions unlocked; Challenge Pass final milestone adds a bonus position.</small>'}</div>`
+         : '<small>All ten purchasable positions unlocked; Challenge Pass final milestone adds a bonus position.</small>'}</div>`
     : '';
   const development = editable ? E.commanderPlan(profile, k) : null;
   const plannerPanel = development ? `<details class="commander-plan">

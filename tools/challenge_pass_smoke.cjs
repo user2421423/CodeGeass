@@ -119,21 +119,24 @@ for (const track of CP.TRACKS)
 for (const obj of CP.STRATEGIC) passState.claimed[obj.id] = true;
 assert.equal(CP.earned(passState),1850);
 assert.equal(E.highCommandCapacity(profile),2);
-assert.equal(E.highCommandExpansionPrice(profile),1800);
+assert.equal(E.highCommandExpansionPrice(profile),1000);
 for (const milestone of CP.MILESTONES) {
   assert.equal(CP.claimMilestone(milestone.at).ok,true,'milestone ' + milestone.at);
 }
 assert.equal(CP.claimMilestone(1600).ok,false,'final reward is not repeatable');
 assert.equal(profile.tokens,106200,'all original 6,200 tokens remain including final 600');
 assert.equal(E.highCommandCapacity(profile),3,'bonus seat permanently stacks on the base two');
-assert.equal(E.highCommandExpansionPrice(profile),1800,'bonus does not skip the 1,800-token tier');
+assert.equal(E.highCommandExpansionPrice(profile),1000,'bonus does not skip the 1,000-token tier');
 assert.equal(E.expandHighCommand(profile).ok,true);
 assert.equal(E.highCommandCapacity(profile),4,'purchased capacity stacks with the pass bonus');
-assert.equal(E.highCommandExpansionPrice(profile),3200);
-assert.equal(E.expandHighCommand(profile).ok,true);
-assert.equal(E.expandHighCommand(profile).ok,true);
-assert.equal(E.expandHighCommand(profile).ok,true);
-assert.equal(E.highCommandCapacity(profile),7,'six purchasable seats plus one bonus seat');
+for (let target = 4; target <= 10; target++) {
+  assert.equal(E.highCommandExpansionPrice(profile), (target - 2) * 1000,
+    'price for purchased position ' + target);
+  assert.equal(E.expandHighCommand(profile).ok, true);
+  assert.equal(E.highCommandCapacity(profile), target + 1, 'one bonus seat remains additive');
+}
+assert.equal(E.highCommandCapacity(profile),11,'ten purchasable seats plus one bonus seat');
 assert.equal(E.highCommandExpansionPrice(profile),null);
+assert.equal(E.expandHighCommand(profile).ok,false,'no eleventh purchased seat');
 
 console.log('Conquest Challenge Pass objectives, eligibility, claims, rewards, save safety and UI: PASS');
