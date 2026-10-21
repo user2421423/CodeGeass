@@ -234,6 +234,33 @@
     }
     return strikes;
   }
+  // Andrea reacts only to a confirmed death, after survival and rescue checks.
+  // His heal is once per round; his exhaustion has no cooldown.
+  function farneseOnDeath(g,v,attacker) {
+    for (const andrea of g.units) {
+      if (andrea.hp <= 0 || andrea.cmd !== 'farnese' || andrea.side !== v.side ||
+          atSea(g,andrea) || dist(g,andrea,v) > 3) continue;
+      const ability = fx(andrea);
+      if (ability.honorFallen && andrea.expFarneseHonorTurn !== g.turn) {
+        andrea.expFarneseHonorTurn = g.turn;
+        for (const ally of g.units) if (ally.hp > 0 && ally.side === andrea.side &&
+            dist(g,andrea,ally) <= 2) {
+          ally.hp = Math.min(maxHP(ally),ally.hp + Math.max(1,Math.round(maxHP(ally)*0.1)));
+          ally.morale = Math.max(0,ally.morale);
+        }
+        log(g,'Honor the Fallen: Andrea rallies and repairs nearby survivors.',andrea.side);
+      }
+      if (ability.endSlaughter && attacker && attacker.hp > 0 &&
+          foe(g,attacker.side,v.side)) {
+        attacker.expFarneseSlaughterTurn = g.turn;
+        attacker.attacked = true; attacker.moved = true;
+        attacker.skillReposition = 0; attacker.withdrawMove = false;
+        attacker.eliteMoveAfterKill = false;
+        attacker.expToruExtraAttack = 0; attacker.expToruExtraMove = 0;
+        log(g,'End the Slaughter exhausts the attacking formation.',andrea.side);
+      }
+    }
+  }
   // Romero holds a defensive line until each formation physically moves.
   // Action refreshes do not erase the move flag, and multiple Romeros do
   // not stack damage reduction or counterfire multipliers.
