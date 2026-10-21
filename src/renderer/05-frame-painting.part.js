@@ -374,11 +374,11 @@ function draw(time, dt) {
         ctx.lineWidth = scenarioOverview
           ? 2 / Math.max(scale, 0.05) : 3 / Math.max(scale, 0.3);
         ctx.stroke();
-        // On enemy formations, redraw the SAME circle with a pale silhouette
-        // and dark inner rim. The contrast survives matching territory colours
-        // without a second adjacent dot or any new marker on friendly units.
-        const enemy = u.side !== game.player && hostileUnit(u);
-        if (enemy) {
+        // Allies share the enemy's high-contrast treatment: one original
+        // faction-plate circle, no centre pip or second, adjacent faction dot.
+        // Keep the player's own marker exactly as before.
+        const nonPlayer = u.side !== game.player && u.side !== 'neutral';
+        if (nonPlayer) {
           ctx.strokeStyle = '#fff4dc';
           ctx.lineWidth = 4.5 / Math.max(scale, 0.05);
           ctx.stroke();
@@ -390,8 +390,9 @@ function draw(time, dt) {
           ctx.beginPath();
           ctx.arc(0, 0, u.side === game.player ? 15 : radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * integrity);
           ctx.strokeStyle = unitRingColor(u);
-          // Bright faction-specific HP arc stays readable against the dark rim.
-          if (enemy) ctx.lineWidth = 2.25 / Math.max(scale, 0.05);
+          // The existing HP arc is painted on the SAME circle edge, not
+          // as a separate concentric ring.
+          if (nonPlayer) ctx.lineWidth = 2.25 / Math.max(scale, 0.05);
           ctx.stroke();
         }
         ctx.shadowBlur = 0;
