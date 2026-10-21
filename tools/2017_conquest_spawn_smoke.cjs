@@ -32,7 +32,7 @@ for (const difficulty of ['normal', 'hard', 'challenge', 'elite']) {
         label + ': land start must be traversable (coast is valid)');
       assert.equal(t.owner, side,
         label + ': cannot start on enemy, neutral or unclaimed territory');
-      assert.ok(E.dist(g, u, hexOf(lon, lat)) <= 9,
+      assert.ok(E.distance(u, hexOf(lon, lat), g) <= 9,
         label + ': spawn must remain near its scripted geographic anchor');
       if (side === 'britannia' && lon >= 129 && lon <= 144 && lat >= 30 && lat <= 46) {
         assert.ok(u.c >= 154 && u.c <= 163 && u.r >= 16 && u.r <= 27,
