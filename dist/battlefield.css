@@ -3385,6 +3385,14 @@ button.danger:hover:not(:disabled) {
 .dialog[aria-label="Army groups"] .ops-group-title{min-height:32px;padding:0;border:0;background:transparent;color:inherit;font:inherit;line-height:inherit;text-align:left}
 .dialog[aria-label="Army groups"] .ops-group-title:hover,.dialog[aria-label="Army groups"] .ops-group-title:focus-visible{text-decoration:underline}
 .ops-edit-hint{font-size:13px;opacity:.7}
+.dialog[aria-label="Army groups"] .ops-group-order-control{display:flex;flex:1 1 100%;flex-direction:column;gap:5px;min-width:0;grid-column:1/-1}
+.dialog[aria-label="Army groups"] .ops-group-order-control label{font-size:12px;font-weight:700;color:#b5c8cb}
+.dialog[aria-label="Army groups"] .ops-group-order-select{box-sizing:border-box;width:100%;min-width:0;min-height:44px;border:1px solid #697f7d;border-radius:6px;background:#192c32;color:#e6e7d6;padding:9px 12px;font:inherit;font-size:14px;cursor:pointer}
+.dialog[aria-label="Army groups"] .ops-group-order-select:focus-visible{outline:2px solid #9be5f3;outline-offset:2px}
+.dialog[aria-label="Army groups"] .ops-group-order-select:disabled{opacity:.55;cursor:not-allowed}
+.dialog[aria-label="Army groups"] button.ops-delete-group{border-color:#986269;color:#ffb9b9;background:#39262c}
+.dialog[aria-label="Army groups"] button.ops-delete-group:hover{border-color:#e8a6a6;background:#513138}
+
 .ops-phase{display:inline-block;font-weight:700;color:#d5e6e8}
 .ops-phase-blocked,.ops-phase-empty,.ops-phase-no-objective{color:#ffb9a1}
 .ops-row-alert{font-size:12px;color:#ffd1ac;margin:6px 0}
