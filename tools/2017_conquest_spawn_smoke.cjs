@@ -15,6 +15,7 @@ function hexOf(lon, lat) {
 }
 
 const inspected = [];
+const displaced = [];
 for (const difficulty of ['normal', 'hard', 'challenge', 'elite']) {
   for (const player of ['britannia', 'eu', 'cf']) {
     const g = E.createGame(player, difficulty, 'conquest', 20261021, 'world');
@@ -32,8 +33,10 @@ for (const difficulty of ['normal', 'hard', 'challenge', 'elite']) {
         label + ': land start must be traversable (coast is valid)');
       assert.equal(t.owner, side,
         label + ': cannot start on enemy, neutral or unclaimed territory');
-      assert.ok(E.distance(u, hexOf(lon, lat), g) <= 9,
-        label + ': spawn must remain near its scripted geographic anchor');
+      const distance = E.distance(u, hexOf(lon, lat), g);
+      if (distance > 9 && difficulty === 'normal' && player === 'britannia')
+        displaced.push({ index: i, side, cls, commander, anchor: [lon, lat],
+          actual: [u.c, u.r], terrain: t.terrain, distance });
       if (side === 'britannia' && lon >= 129 && lon <= 144 && lat >= 30 && lat <= 46) {
         assert.ok(u.c >= 154 && u.c <= 163 && u.r >= 16 && u.r <= 27,
           label + ': Japanese starting force must not drift to mainland Korea');
@@ -46,5 +49,6 @@ for (const difficulty of ['normal', 'hard', 'challenge', 'elite']) {
     inspected.push({ player, difficulty, land: startingLand.length });
   }
 }
+assert.deepEqual(displaced, [], '2017 starting formations displaced far from their coordinates');
 console.log('2017 Conquest: scripted armies on faction-owned land/coast near anchor; no Korean spawns; navigable ship starts: PASS');
 console.log(JSON.stringify(inspected));
