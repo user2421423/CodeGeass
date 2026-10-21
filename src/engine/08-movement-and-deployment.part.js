@@ -132,7 +132,7 @@
     // Brain Raid restores the full normal movement budget after a shot,
     // but only while Akito remains isolated; this never restores an attack.
     const akitoFollowUp = !!u.expAkitoMoveReady && akitoIsolated(g, u);
-    if (!isReady(g, u) || u.expFernandoOverload || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
+    if (!isReady(g, u) || u.expFarneseSlaughterTurn === g.turn || u.expFernandoOverload || u.expDisabledActive || u.expPinnedActive || (u.expJammedActive && u.attacked) || (u.moved && !u.expOscarReposition) || heavyMoveLimitReached(g, u) || (u.attacked && !ef.moveAfterAttack && !u.eliteMoveAfterKill && !u.skillReposition && !u.withdrawMove && !akitoFollowUp && !u.expOscarReposition)) return found;
     const t = TYPES[u.type],
       start = tile(g, u.c, u.r),
       fromSea = isSea(start),
@@ -504,6 +504,14 @@
     // The Last Promise banks one full extra move without bypassing heavy caps.
     if(u.expToruExtraMove>0&&u.hp>0&&!heavyMoveLimitReached(g,u)){
       u.expToruExtraMove--;u.moved=false;
+    }
+    // An unspent original move followed by Orderly Withdrawal earns one more
+    // full movement action, respecting the existing heavy-frame two-move cap.
+    if(u.expFarneseExtraMove > 0 && u.hp > 0 && !heavyMoveLimitReached(g,u) &&
+       u.expFarneseSlaughterTurn !== g.turn && !oscarFreeMove) {
+      u.expFarneseExtraMove--;
+      u.moved=false;
+      u.withdrawMove=true;
     }
     // Tactical redeployment preserves the original normal movement action.
     if(u.expMargaretRedeploy){u.moved=!!u.expMargaretRedeploy.wasMoved;delete u.expMargaretRedeploy;}
