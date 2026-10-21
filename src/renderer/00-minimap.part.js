@@ -165,17 +165,25 @@ function paintMapMarkers(b, g, width, height, dpr, allUnits = false) {
       b.fillStyle = '#ff6fb5';
       b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
     }
-  // Show all living formations, not only the player. The same allegiance
-  // palette as the full map applies to each faction in both views.
-  for (const u of g.units)
-    if (u.hp > 0) {
-      const p = hexCenter(u),
-        z = (allUnits ? 3.5 : 2.8) * dpr;
-      b.fillStyle = '#061320';
-      b.fillRect(p.x * sx - z / 2 - dpr, p.y * sy - z / 2 - dpr, z + 2 * dpr, z + 2 * dpr);
-      b.fillStyle = unitAllegianceColor(g, u);
+  // The player's original green minimap marker stays unchanged.
+  // Other formations use distinct faction-coloured dots.
+  for (const u of g.units) {
+    if (u.hp <= 0) continue;
+    const p = hexCenter(u);
+    if (u.side === g.player) {
+      const z = (allUnits ? 3.5 : 2) * dpr;
+      b.fillStyle = allUnits ? col(u.side) : '#7dffb0';
       b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
+      continue;
     }
+    b.beginPath();
+    b.arc(p.x * sx, p.y * sy, (allUnits ? 2.4 : 2.1) * dpr, 0, Math.PI * 2);
+    b.fillStyle = unitFactionDotColor(g, u);
+    b.fill();
+    b.strokeStyle = '#071320';
+    b.lineWidth = 1.1 * dpr;
+    b.stroke();
+  }
 }
 function hexPath(x, y, r) {
   ctx.beginPath();
