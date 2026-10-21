@@ -318,12 +318,14 @@ function drawPlate(u, scale, sea, time = 0, highlighted = false) {
   ctx.strokeStyle = '#0c1924e0';
   ctx.lineWidth = Math.max(4, 3.4 / scale);
   ctx.stroke();
-  // Thin full-length outer rim keeps ownership legible at very low HP.
-  ctx.beginPath();
-  ctx.ellipse(0, cy, rx + 6, ry + 6, 0, 0, Math.PI * 2);
-  ctx.strokeStyle = ringColor;
-  ctx.lineWidth = Math.max(1.8, 1.7 / Math.max(scale, 0.2));
-  ctx.stroke();
+  // Leave the player's original plate/ring untouched.
+  if (u.side !== game.player) {
+    ctx.beginPath();
+    ctx.ellipse(0, cy, rx + 6, ry + 6, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = Math.max(1.8, 1.7 / Math.max(scale, 0.2));
+    ctx.stroke();
+  }
   if (f > 0) {
     ctx.beginPath();
     ctx.ellipse(0, cy, rx + 2, ry + 2, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
@@ -351,17 +353,8 @@ const HOSTILE_UNIT_COLORS = Object.freeze({
   knight_anya: '#e7a3dc', knight_dorothea: '#8ad6a1',
   knight_nonette: '#de9a6c',
 });
-const UNIT_FACTION_CODES = Object.freeze({
-  britannia:'BR', cf:'CF', eu:'EU', eb:'EB', bk:'BK', jlf:'JLF',
-  ufn:'UF', junta:'MJ', rounds:'KR', shinregime:'SR', loyalists:'IL',
-  eunuchs:'ER', zero_loyalists:'ZL', bk_command:'HC',
-  geass_order:'GO', anti_geass:'AG', protagonists:'PRO',
-  antagonists:'ANT', remnants:'REM', knight_bismarck:'KB',
-  knight_suzaku:'KS', knight_gino:'KG', knight_anya:'KA',
-  knight_dorothea:'KD', knight_nonette:'KN', neutral:'N',
-});
 function unitAllegianceColor(g, u) {
-  if (u.side === g.player) return '#38e6ad'; // Player
+  if (u.side === g.player) return '#f2c76a'; // Original player health ring
   if (u.side === 'neutral') return '#a3a9b3';
   if (!E.foe(g, g.player, u.side)) return '#70c8ff'; // Actual current ally
   // The 2018 U.F.N. is stored as 'cf' for save compatibility.
@@ -374,36 +367,31 @@ function unitAllegianceColor(g, u) {
 function unitRingColor(u) {
   return unitAllegianceColor(game, u);
 }
-// Tiny shield over the right shoulder at tactical zoom, letters inside the
-// formation dot at strategic zoom. Does not modify formation assets.
-function drawUnitFactionBadge(u, scale, overview = false) {
-  const side = artSide(u.side);
-  const label = UNIT_FACTION_CODES[side] || side.replace(/[^a-z0-9]/gi, '').slice(0, 3).toUpperCase();
+// A faction-specific colour chip distinguishes multiple hostile factions and
+// allied armies without obscuring Knightmare artwork or requiring text labels.
+// The player's own formations keep their original, unbadged appearance.
+function unitFactionDotColor(g, u) {
+  if (u.side === 'neutral') return '#a3a9b3';
+  // Conquest 2018 stores the U.F.N. with the 'cf' side identifier.
+  const side = g.mode === 'conquest' && g.era === 'ufn2018' && u.side === 'cf'
+    ? 'ufn' : u.side;
+  return HOSTILE_UNIT_COLORS[side] ||
+    g.factions?.[side]?.color || E.FACTIONS[side]?.color || '#ff6b7b';
+}
+function drawUnitFactionDot(u, scale, overview = false, markerRadius = 15) {
+  if (u.side === game.player) return;
+  const invScale = 1 / Math.max(scale, 0.05);
   ctx.save();
-  if (!overview) ctx.translate(29, -30);
-  ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
-  ctx.font = "bold 10px 'Trebuchet MS'";
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  if (overview) {
-    ctx.strokeStyle = '#071320';
-    ctx.lineWidth = 2.8;
-    ctx.strokeText(label, 0, 0);
-    ctx.fillStyle = '#fffdf2';
-    ctx.fillText(label, 0, 0);
-  } else {
-    const width = Math.max(19, ctx.measureText(label).width + 9);
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(-width / 2, -8, width, 16, 5);
-    else ctx.rect(-width / 2, -8, width, 16);
-    ctx.fillStyle = '#0c1628ed';
-    ctx.fill();
-    ctx.strokeStyle = unitRingColor(u);
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#fffdf2';
-    ctx.fillText(label, 0, 0);
-  }
+  // Position beside the overview token rather than covering the formation.
+  if (overview) ctx.translate(markerRadius + 4.5 * invScale, -4 * invScale);
+  else ctx.translate(29, -30);
+  ctx.beginPath();
+  ctx.arc(0, 0, (overview ? 3.4 : 4.3) * invScale, 0, Math.PI * 2);
+  ctx.fillStyle = unitFactionDotColor(game, u);
+  ctx.fill();
+  ctx.strokeStyle = '#09131e';
+  ctx.lineWidth = 1.5 * invScale;
+  ctx.stroke();
   ctx.restore();
 }
 // Campaign/scenario allies and the 2018 Britannian coalition share a team in the engine.
