@@ -33,6 +33,38 @@ for (const player of ['britannia','eb','cf']) {
     'Middle East':8, 'Japan':6, 'Philippines':2, 'Siberia':4, 'African UFN front':10
   }, player + ': preserve intended land-front distribution');
   assert.equal(land.filter(u => u.cmd).length, 21, player + ': all 21 Britannian commanders deploy');
+  const alliedLand = g.units.filter(u => u.side === 'eb' && !E.TYPES[u.type].naval);
+  const ufnLand = g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval);
+  const namedBritannia = land.filter(u => u.cmd);
+  const namedEuroBritannia = alliedLand.filter(u => u.cmd);
+  assert.equal(alliedLand.length, 38, player + ': all Euro-Britannian land formations spawn');
+  assert.equal(namedEuroBritannia.length, 10, player + ': all Euro-Britannian commanders deploy');
+  assert.ok([...namedBritannia, ...namedEuroBritannia].every(u => u.stack === 3),
+    player + ': every Britannian and Euro-Britannian commander leads exactly three frames');
+  assert.equal(ufnLand.length, 72, player + ': U.F.N. formation count remains unchanged');
+  assert.equal(ufnLand.filter(u => u.cmd).length, 69,
+    player + ': all U.F.N. commanders and formations remain deployed');
+  assert.equal(ufnLand.reduce((total,u) => total + u.stack, 0), 107,
+    player + ': U.F.N. retains its original starting frame count');
+  assert.deepEqual(
+    ['britannia','eb','cf'].map(side => [side,
+      g.economy[side].credits, g.economy[side].industry, g.economy[side].science]),
+    [['britannia',650,260,60],['eb',450,190,36],['cf',800,350,140]],
+    player + ': use the approved 2018 starting resources without changing science');
+  if (player === 'cf') console.log('UFN2018_BALANCE ' + JSON.stringify(
+    Object.fromEntries(['britannia','eb','cf'].map(side => {
+      const units = g.units.filter(u => u.side === side && !E.TYPES[u.type].naval);
+      return [side, {
+        formations: units.length,
+        frames: units.reduce((total,u)=>total+u.stack,0),
+        commanderLed: units.filter(u=>u.cmd).length,
+        commanderFrames: units.filter(u=>u.cmd).reduce((total,u)=>total+u.stack,0),
+        startingCredits: g.economy[side].credits,
+        startingIndustry: g.economy[side].industry,
+        startingScience: g.economy[side].science
+      }];
+    }))
+  ));
   assert.equal(region(land.find(u => u.cmd === 'charles')), 'Middle East');
   assert.equal(region(land.find(u => u.cmd === 'bismarck')), 'Siberia');
   assert.equal(region(air[0]), 'Middle East');
@@ -42,6 +74,7 @@ for (const player of ['britannia','eb','cf']) {
   }
 }
 const world = E.createGame('britannia','normal','conquest',20261021,'world');
+assert.equal(world.economy.britannia.credits, 500, '2017 starting treasury remains untouched');
 assert.ok(world.units.some(u => u.side === 'britannia' && region(u) === 'OUTSIDE'),
   'The 2017 world war keeps its original worldwide Britannian deployments');
 console.log('2018 Britannian frontlines, navy, airship, Siberian allied staging, and 2017 isolation: PASS');
