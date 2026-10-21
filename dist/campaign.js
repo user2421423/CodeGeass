@@ -145,11 +145,10 @@
     used[key] = (used[key] || 0) + 1;
     return selected;
   }
-  // Named scripted aces on Hard and Challenge remain at Elite Lv.1.
-  const eliteLevelFor = (g, side) =>
-    isEliteCampaign(g) ? (side === g.player ? 1 : 3) : 1;
-  const campaignEliteLevel = (g, side, cmd, special = false) =>
-    side === g.player ? 1 : E.foe(g, side, g.player) && (cmd || special) ? 5 : 3;
+  // Scripted aces on Hard and Challenge remain Lv.1. On Elite, only
+  // rival commander-led formations rise to Lv.3; other elites stay Lv.1.
+  const campaignEliteLevel = (g, side, cmd) =>
+    isEliteCampaign(g) && E.foe(g, side, g.player) && cmd ? 3 : 1;
   // One condition, checked against the live game.
   function holds(g, c) {
     const cm = g.campaign;
@@ -255,9 +254,9 @@
         Math.min(E.RANKS.length - 1, E.defaultOfficer(cmd).rank + d.ranks);
     const u = E.newUnit(g, type, side, at.c, at.r, E.TYPES[type].elite ? 1 : unitStack, cmd, opts.ready !== false);
     if (u.elite) {
-      // All automatically converted starting formations begin at Lv.1.
-      // Player factory recruits instead use the HQ level; later scripted upgrades stay separate.
-      u.eliteLevel = isEliteCampaign(g) ? 1 : eliteLevelFor(g, side);
+      // Rival commander-led starts are Lv.3 on Elite; other starts remain Lv.1.
+      // Player factory recruits use their unlocked HQ level separately.
+      u.eliteLevel = campaignEliteLevel(g, side, cmd);
       if (isEliteCampaign(g)) u.eliteStart = true;
     }
     const hold = opts.hold ?? g.campaign.hold?.[side];
@@ -550,8 +549,7 @@
         replacement = isEliteCampaign(g) ? eliteType(g, u.side, upgradeType, u.cmd) : elite;
       u.type = replacement ? E.ELITE_FORCES[replacement].type : type;
       u.elite = replacement;
-      u.eliteLevel = isEliteCampaign(g) ? campaignEliteLevel(g, u.side, u.cmd, true) :
-        replacement ? eliteLevelFor(g, u.side) : 0;
+      u.eliteLevel = replacement ? campaignEliteLevel(g, u.side, u.cmd) : 0;
       u.stack = replacement ? 1 : scriptedElite ? 3 : Math.max(1, Math.min(3, u.stack));
       if (isEliteCampaign(g)) u.eliteStart = true;
       else if (!replacement) delete u.eliteStart;
