@@ -11,7 +11,7 @@
   // Command and withdrawal leaders act last so their actions can coordinate allies.
   // In Conquest, formations responding to an immediate defensive emergency act first.
   function aiOrderPriority(g, u) {
-    const commander = ['command', 'withdraw'].includes(COMMANDERS[u.cmd]?.action?.kind);
+    const commander = ['command', 'withdraw', 'farneseWithdrawal'].includes(COMMANDERS[u.cmd]?.action?.kind);
     if (g.mode !== 'scenario' && g.mode !== 'conquest') return commander ? 9 : 1;
     const type = TYPES[u.type];
     const tactical = commander ? 9
@@ -271,6 +271,11 @@
       }
       const used=feint(g,id,targets[0]?.id);
       if(used?.ok)events.push({kind:'feint',id,affected:used.affected});
+    }
+    // Protect endangered allies before the AI moves Andrea outside their radius.
+    if (u.cmd === 'farnese' && !feintReason(g,u)) {
+      const r = feint(g,u.id);
+      if (r.ok) events.push({kind:'feint',id:u.id,affected:r.affected});
     }
     // Withdraw already-fired allies before Leila's own movement can take her out of range.
     if (COMMANDERS[u.cmd]?.action?.kind === 'withdraw' && !feintReason(g, u)) {
