@@ -502,7 +502,7 @@
     },
     // ======== Commander expansion: Black Knights, JLF and additional Britannian officers ========
     zero: {
-      name: 'Lelouch vi Britannia / Zero',
+      name: 'Zero',
       short: 'Zero',
       side: 'bk',
       commission: 'legendary',
