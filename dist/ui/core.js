@@ -356,6 +356,20 @@ async function resumeSavedGame(key) {
   }, () => {
     const saved = getSave(key);
     if (!saved) throw new Error('This saved operation cannot be loaded.');
-    return restoreLoadedGame(saved);
+    // Upgrade the original scenario save slot only *after* restoring successfully.
+    // Failed loads retain their untouched localStorage payload for recovery.
+    const wasLegacyPartition = saved.mode === 'scenario' &&
+      saved.scenario?.id === 'partition-britannia' &&
+      saved.scenario.partitionTerrainAudit === 1;
+    const stillLegacyOnDisk = wasLegacyPartition && (() => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(key));
+        return raw?.scenario?.id === 'partition-britannia' &&
+          raw.scenario.partitionTerrainAudit !== 1;
+      } catch (_) { return false; }
+    })();
+    const result = restoreLoadedGame(saved);
+    if (stillLegacyOnDisk) save();
+    return result;
   });
 }
