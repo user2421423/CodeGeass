@@ -1,0 +1,65 @@
+name: Partition geography full hex audit
+on:
+  push:
+    branches: ['fix/partition-hex-geography-audit-20261021']
+    paths:
+      - 'tools/build_partition_geography.py'
+      - 'dist/scenarios-partition-britannia.js'
+      - 'tools/partition_hex_audit.cjs'
+      - '.github/workflows/partition-hex-audit.yml'
+  pull_request:
+    paths:
+      - 'tools/build_partition_geography.py'
+      - 'dist/partition-geography.js'
+      - 'dist/scenarios-partition-britannia.js'
+      - 'tools/partition_hex_audit.cjs'
+      - '.github/workflows/partition-hex-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit-all-hexes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal raster dependency
+        run: python -m pip install Pillow==11.3.0
+      - name: Fetch Natural Earth 1:50m country polygons
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson \
+            --output /tmp/partition-countries.geojson
+      - name: Regenerate and compare all 19,580 geographic hex classifications
+        run: |
+          python tools/build_partition_geography.py /tmp/partition-countries.geojson
+          cat tools/data/partition_geography_audit.json
+      - name: Build and audit active battle, coastal cities and packed saves
+        run: |
+          node tools/build_sources.cjs
+          node tools/partition_hex_audit.cjs
+          node tools/partition_ai_regression.cjs
+          node tools/six_exclusive_smoke.cjs
+      - name: Ensure review branch has reproducible geography
+        if: github.event_name == 'pull_request'
+        run: git diff --exit-code -- dist/partition-geography.js
+      - name: Commit rasterized hex asset to the audit branch
+        if: github.event_name == 'push' && github.ref_name == 'fix/partition-hex-geography-audit-20261021'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dist/partition-geography.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Raster-audit 19,580 Partition land, shore, sea and nonplayable foreign-land hexes"
+            git push origin HEAD:fix/partition-hex-geography-audit-20261021
+          fi

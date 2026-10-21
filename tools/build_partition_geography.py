@@ -1,43 +1,132 @@
 #!/usr/bin/env python3
-"""Build country-clipped continental US/Canada coverage from Natural Earth 1:50m.
+"""Raster-audit the North American scenario against Natural Earth 1:50m countries
+and the game's GSHHG inland-water atlas.
+
 Usage: python3 tools/build_partition_geography.py ne_50m_admin_0_countries.geojson
-Source (public domain): https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson
-Lakes use the game's existing public-domain GSHHG atlas. No runtime GIS dependency.
+
+Coverage bytes: 0 = actual water, 1 = playable mixed shore/coast,
+2 = playable dry land, 3 = nonplayable *land* beyond US/Canada borders.
+The global land mask matters: Mexico/Greenland must not be invented ocean or
+made navigable 'coast' just because the playable country polygon ends there.
+Keep dimensions, coordinates, city IDs and scenario save version unchanged.
 """
-import json,sys,base64
+import base64
+import collections
+import json
+import sys
 from pathlib import Path
 from PIL import Image, ImageDraw
-ROOT=Path(__file__).resolve().parents[1]
-COLS,ROWS=178,110
-W,E,N,S=-141,-52,70,24
-SCALE=16
-im=Image.new('L',(COLS*SCALE,ROWS*SCALE),0)
-draw=ImageDraw.Draw(im)
-def points(ring):return [((x-W)/(E-W)*im.width,(N-y)/(N-S)*im.height) for x,y in ring]
-features=json.loads(Path(sys.argv[1]).read_text())['features']
-for f in features:
- if f['properties'].get('ADMIN') not in ['United States of America','Canada']:continue
- geom=f['geometry'];polys=geom['coordinates'] if geom['type']=='MultiPolygon' else [geom['coordinates']]
- for rings in polys:
-  # Alaska is intentionally outside the continental theatre, including its panhandle.
-  if f['properties']['ADMIN']=='United States of America' and max(y for x,y in rings[0])>54:continue
-  draw.polygon(points(rings[0]),fill=255)
-  for hole in rings[1:]:draw.polygon(points(hole),fill=0)
-s=(ROOT/'dist/ui/geography-data.js').read_text();data=json.loads(s[s.index('{'):s.rindex('}')+1])
-for ring in data['water']:
- if any(W<=x<=E and S<=y<=N for x,y in ring):draw.polygon(points(ring),fill=0)
-def dry(x,y):
- x,y=int(x),int(y)
- return 0<=x<im.width and 0<=y<im.height and bool(im.getpixel((x,y)))
-coverage=[]
+
+ROOT = Path(__file__).resolve().parents[1]
+COLS, ROWS = 178, 110
+W, E, N, S = -141, -52, 70, 24
+SCALE = 16
+width, height = COLS * SCALE, ROWS * SCALE
+countries = Image.new('L', (width, height), 0)
+physical = Image.new('L', (width, height), 0)
+nation_draw, physical_draw = ImageDraw.Draw(countries), ImageDraw.Draw(physical)
+
+def coords(ring):
+    return [((lon - W) / (E - W) * width, (N - lat) / (N - S) * height)
+            for lon, lat in ring]
+
+def intersects(ring):
+    return (min(x for x, _ in ring) <= E and max(x for x, _ in ring) >= W
+            and min(y for _, y in ring) <= N and max(y for _, y in ring) >= S)
+
+features = json.loads(Path(sys.argv[1]).read_text())['features']
+for feature in features:
+    geometry = feature.get('geometry') or {}
+    if geometry.get('type') not in ('MultiPolygon', 'Polygon'):
+        continue
+    admin = feature.get('properties', {}).get('ADMIN')
+    polygons = (geometry['coordinates'] if geometry['type'] == 'MultiPolygon'
+                else [geometry['coordinates']])
+    for rings in polygons:
+        exterior = rings[0]
+        if not intersects(exterior):
+            continue
+        outlines = [coords(ring) for ring in rings]
+        # All countries contribute to *physical land* even when excluded from
+        # gameplay. This prevents a false ocean along the Mexico/US boundary.
+        physical_draw.polygon(outlines[0], fill=255)
+        for hole in outlines[1:]:
+            physical_draw.polygon(hole, fill=0)
+        if admin not in ('United States of America', 'Canada'):
+            continue
+        # Alaska, including its panhandle, lies outside this theater.
+        if admin == 'United States of America' and max(lat for _, lat in exterior) > 54:
+            continue
+        nation_draw.polygon(outlines[0], fill=255)
+        for hole in outlines[1:]:
+            nation_draw.polygon(hole, fill=0)
+
+source = (ROOT / 'dist/ui/geography-data.js').read_text()
+atlas = json.loads(source[source.index('{'):source.rindex('}') + 1])
+for ring in atlas['water']:
+    if intersects(ring):
+        poly = coords(ring)
+        nation_draw.polygon(poly, fill=0)
+        physical_draw.polygon(poly, fill=0)
+
+nation_pixels = countries.load()
+physical_pixels = physical.load()
+
+def dry(pixels, x, y):
+    x, y = int(x), int(y)
+    return 0 <= x < width and 0 <= y < height and pixels[x, y] > 0
+
+# Cover the interior of each hex footprint rather than using seven points;
+# the center remains authoritative for land/sea *playability*. Fine sampling
+# detects narrow bays, shorelines, islands and Great Lakes margins more reliably.
+# Avoid drawing 'coast' on the US/Mexico or US/Canada political boundary: only
+# actual physical water matters.
+footprint = [(dx / 10, dy / 10) for dy in range(-4, 5)
+             for dx in range(-4, 5) if abs(dx) + abs(dy) <= 7]
+coverage = []
 for r in range(ROWS):
- for c in range(COLS):
-  x=(c+.5+.5*(r%2))*SCALE;y=(r+.5)*SCALE
-  samples=[dry(x+dx*SCALE,y+dy*SCALE) for dx,dy in [(0,0),(-.3,0),(.3,0),(0,-.3),(0,.3),(-.2,.2),(.2,-.2)]]
-  fraction=sum(samples)/len(samples)
-  # Land access requires a dry centre, preserving political borders and lake channels.
-  coverage.append(0 if not samples[0] else 1 if .2<fraction<.8 else 2)
-encoded=base64.b64encode(bytes(coverage)).decode()
-asset={'cols':COLS,'rows':ROWS,'bounds':{'west':W,'east':E,'north':N,'south':S},'coverage':encoded}
-(ROOT/'dist/partition-geography.js').write_text('/* Generated by tools/build_partition_geography.py. Natural Earth US/Canada only; GSHHG lakes. */\n(function(root){const data='+json.dumps(asset,separators=(',',':'))+';root.PARTITION_GEOGRAPHY=data;if(typeof module!=="undefined")module.exports=data;})(typeof window!=="undefined"?window:globalThis);\n')
-print('Generated',COLS*ROWS,'US/Canada hexes;',sum(x>0 for x in coverage),'dry centres')
+    for c in range(COLS):
+        x = (c + .5 + .5 * (r & 1)) * SCALE
+        y = (r + .5) * SCALE
+        if dry(nation_pixels, x, y):
+            physical_fraction = sum(dry(physical_pixels, x + dx * SCALE,
+                                        y + dy * SCALE)
+                                    for dx, dy in footprint) / len(footprint)
+            coverage.append(1 if physical_fraction < .88 else 2)
+        elif dry(physical_pixels, x, y):
+            coverage.append(3)  # Mexican, Greenlandic, Alaskan, etc. land
+        else:
+            coverage.append(0)
+
+target = ROOT / 'dist/partition-geography.js'
+old = []
+if target.exists():
+    text = target.read_text()
+    old_data = json.loads(text[text.index('data=') + 5:text.index(';root.')])
+    old = list(base64.b64decode(old_data['coverage']))
+    if len(old) != len(coverage):
+        raise ValueError('Do not change this scenario\'s map dimensions')
+asset = {'cols': COLS, 'rows': ROWS,
+         'bounds': {'west': W, 'east': E, 'north': N, 'south': S},
+         'coverage': base64.b64encode(bytes(coverage)).decode()}
+target.write_text('/* Generated by tools/build_partition_geography.py. Natural Earth US/Canada only; GSHHG lakes; outside land blocked. */\n'
+                  '(function(root){const data=' + json.dumps(asset, separators=(',', ':'))
+                  + ';root.PARTITION_GEOGRAPHY=data;if(typeof module!=="undefined")module.exports=data;})(typeof window!=="undefined"?window:globalThis);\n')
+
+count = dict(sorted(collections.Counter(coverage).items()))
+changed = [(i % COLS, i // COLS, before, after)
+           for i, (before, after) in enumerate(zip(old, coverage))
+           if before != after]
+transitions = dict(sorted(collections.Counter(
+    f'{a}->{b}' for _, _, a, b in changed).items()))
+report = {
+    'reference': 'Natural Earth 1:50m countries; game GSHHG water polygons',
+    'grid': [COLS, ROWS], 'cells': COLS * ROWS,
+    'count': count, 'changedCells': len(changed),
+    'transitions': transitions, 'sampleChangedHexes': changed[:60],
+    'playableWaterToLand': sum(a == 0 and b in (1, 2) for _, _, a, b in changed),
+    'playableLandToWater': sum(a in (1, 2) and b == 0 for _, _, a, b in changed),
+}
+(ROOT / 'tools/data/partition_geography_audit.json').write_text(
+    json.dumps(report, indent=2, sort_keys=True) + '\n')
+print(json.dumps({k: v for k, v in report.items() if k != 'sampleChangedHexes'}, sort_keys=True))
