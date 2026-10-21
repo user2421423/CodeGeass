@@ -570,9 +570,9 @@
       hull: 'Black Knights command',
       title: 'Second-in-command',
       skill: 'The Reluctant Protector / Selfless Leadership',
-      desc: 'The Reluctant Protector: Every 3 turns, heal one wounded ally within 2 hexes by 30% of its maximum HP at the cost of 20% of Ohgi’s maximum HP; cannot use if the sacrifice would kill him. Selfless Leadership: While Ohgi is below 50% maximum HP, he and friendly formations within 2 hexes deal +35% combat damage and take 25% less combat damage.',
+      desc: 'The Reluctant Protector: Once per turn, heal one wounded ally within 2 hexes by 30% of its maximum HP at the cost of 20% of Ohgi’s maximum HP; cannot use if the sacrifice would kill him. Selfless Leadership: While Ohgi is below 50% maximum HP, he and friendly formations within 2 hexes deal +35% combat damage and take 25% less combat damage.',
       fx: { selflessLeadership: true },
-      action: { name: 'The Reluctant Protector', verb: 'The Reluctant Protector', kind: 'ohgiHeal', target: 'ally', range: 2, cooldown: 3, desc: 'Heal one wounded ally within 2 hexes by 30% maximum HP. Ohgi pays 20% of his own maximum HP; unusable if this would kill him.' },
+      action: { name: 'The Reluctant Protector', verb: 'The Reluctant Protector', kind: 'ohgiHeal', target: 'ally', range: 2, cooldown: 0, desc: 'Heal one wounded ally within 2 hexes by 30% maximum HP. Ohgi pays 20% of his own maximum HP; unusable if this would kill him.' },
       recruit: 300,
     },
     chiba: {
