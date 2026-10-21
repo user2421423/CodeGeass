@@ -409,6 +409,9 @@
     return { captured: s.name, annexed };
   }
   function move(g, id, c, r) {
+    return collectAbilityVisuals(g, () => resolveMove(g,id,c,r));
+  }
+  function resolveMove(g, id, c, r) {
     const check = validateAction(g, { kind: 'move', id, c, r });
     if (!check.ok) return check;
     const u = check.actor, dest = check.destination, moveCost = check.cost;

@@ -331,10 +331,11 @@ function runPlayerAutomatedOrders() {
   for (const m of orders.moved) {
     effects.push({ kind: 'move', unitId: m.id, from: m.from, to: m.to,
       color: F(game.player).color, life: 0.6, max: 0.6 });
+    addAbilityEffects(m.abilityEffects,combatBefore,0.6);
   }
   if (orders.moved.length) SFX.play('move', game.player);
   for (const shot of fire.fired) {
-    const attacker = game.units.find(u => u.id === shot.id && u.hp > 0);
+    const attacker = game.units.find(u => u.id === shot.id) || combatBefore.get(shot.id);
     if (attacker) addCombatEffects(shot, attacker, combatBefore);
   }
   return orders;

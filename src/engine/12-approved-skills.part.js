@@ -214,6 +214,7 @@
       let incoming=newcomerIntercept(g,attacker,damage);
       if(fx(attacker).futureSightDodge&&random(g)<fx(attacker).futureSightDodge){
         incoming=0;
+        recordAbilitySignal(g,attacker,'EVADED','guard');
         log(g,'FUTURE SIGHT — EVADED',attacker.side);
       }
       const before=attacker.hp;
@@ -231,6 +232,7 @@
       log(g,'Oscar counterstrikes '+(COMMANDERS[attacker.cmd]?.short||TYPES[attacker.type].short)+
         ' for '+dealt+' damage; no counterfire.',oscar.side);
       strikes.push({oscar:oscar.id,target:attacker.id,damage:dealt});
+      recordAbilityAttack(g,oscar,attacker,before-attacker.hp,crit);
     }
     return strikes;
   }
@@ -247,6 +249,7 @@
             dist(g,andrea,ally) <= 2) {
           ally.hp = Math.min(maxHP(ally),ally.hp + Math.max(1,Math.round(maxHP(ally)*0.1)));
           ally.morale = Math.max(0,ally.morale);
+          recordAbilitySignal(g,ally,'HONOR THE FALLEN','heal');
         }
         log(g,'Honor the Fallen: Andrea rallies and repairs nearby survivors.',andrea.side);
       }
@@ -257,6 +260,7 @@
         attacker.skillReposition = 0; attacker.withdrawMove = false;
         attacker.eliteMoveAfterKill = false;
         attacker.expToruExtraAttack = 0; attacker.expToruExtraMove = 0;
+        recordAbilitySignal(g,attacker,'END THE SLAUGHTER','debuff');
         log(g,'End the Slaughter exhausts the attacking formation.',andrea.side);
       }
     }
@@ -281,6 +285,7 @@
       if(ally.hp<=0||ally.id===toru.id||ally.side!==toru.side||
          atSea(g,ally)||dist(g,toru,ally)>2)continue;
       ally.morale=1;
+      recordAbilitySignal(g,ally,'THE LAST PROMISE');
       ally.expToruPromiseDamage=true;
       if(!immediate){
         ally.expToruPromisePending=true;
@@ -332,10 +337,11 @@
         recordWarEvent(g,'damage',guard.side,{targetSide:guard.side,value:half,unitId:guard.id,group:warGroup(g,guard)});
         amount=Math.min(Math.max(0,target.hp-1),amount-half);
         log(g,'Jeremiah intercepts a lethal strike for '+(COMMANDERS[target.cmd]?.short||'an allied commander')+'.',guard.side);
+        recordAbilitySignal(g,target,'JEREMIAH INTERCEPT','guard');
       }
     }
     const guard=g.units.find(v=>v.cmd&&v.hp>1&&v.side===target.side&&v.id!==target.id&&fx(v).guardianIntercept&&v.expGuardTurn!==g.turn&&dist(g,v,target)===1);
-    if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;}
+    if(guard){const diverted=Math.min(guard.hp-1,Math.round(amount*.35));guard.hp-=diverted;amount-=diverted;guard.expGuardTurn=g.turn;recordAbilitySignal(g,target,'GUARDIAN INTERCEPT','guard');}
     if(target.expAfterimage)delete target.expAfterimage;
     return amount;
   }
@@ -347,9 +353,11 @@
     const unit=assists.sort((a,b)=>b.hp-a.hp)[0];if(!unit)return;
     const n=Math.max(1,Math.round(power(g,unit,attacker,stationAt(g,attacker),true)*(fx(unit).relief?.6:.5)));
     const taken=attacker.cmd==='darlton'?darltonProtect(g,attacker,unit,n):n;
+    const before = attacker.hp;
     attacker.hp=Math.max(0,attacker.hp-taken);
     if(fx(unit).relief)unit.expReliefTurn=g.turn;else unit.expLinkTurn=g.turn;
     kill(g,attacker,unit);
+    recordAbilityAttack(g,unit,attacker,before-attacker.hp);
   }
   // Villetta reacts to a commanderless enemy MOVING into an adjacent hex.
   // This is an independent free strike: it never calls attack(), consumes
@@ -374,6 +382,7 @@
     let incoming=newcomerIntercept(g,moved,damage);
     if(fx(moved).futureSightDodge&&random(g)<fx(moved).futureSightDodge){
       incoming=0;
+      recordAbilitySignal(g,moved,'EVADED','guard');
       log(g,'FUTURE SIGHT — EVADED',moved.side);
     }
     const before=moved.hp;
@@ -389,6 +398,7 @@
     }
     log(g,'Villetta intercepts a commanderless enemy'+
       (crit?' (critical)':'')+': '+landed+' damage; no counterfire.',hunter.side);
+    recordAbilityAttack(g,hunter,moved,before-moved.hp,crit);
     return true;
   }
   function newcomerOverwatch(g,moved){
@@ -400,8 +410,10 @@
       delete u.expOverwatch;
       const amount=Math.max(1,Math.round(power(g,u,moved,stationAt(g,moved))*.6));
       const incoming=newcomerIntercept(g,moved,amount);
+      const before = moved.hp;
       moved.hp=Math.max(0,moved.hp-(moved.cmd==='darlton'?darltonProtect(g,moved,u,incoming):incoming));
       kill(g,moved,u);
+      recordAbilityAttack(g,u,moved,before-moved.hp);
     }
     if(moved.hp>0&&villettaIntercept(g,moved))reacted=true;
     return reacted;

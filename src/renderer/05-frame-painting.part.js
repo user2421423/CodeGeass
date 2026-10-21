@@ -703,6 +703,20 @@ function draw(time, dt) {
       ctx.strokeStyle = '#ffe6f3';
       ctx.lineWidth = 3 / Math.max(scale, 0.4);
       ctx.stroke();
+    } else if (e.kind === 'ability') {
+      const elapsed = e.max - e.life - e.delay;
+      if (elapsed >= 0) {
+        const age = Math.min(1,elapsed/e.duration);
+        ctx.globalAlpha = (1-age)*0.8;
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 3/Math.max(scale,0.4);
+        ctx.beginPath();
+        ctx.arc(bx,b0.y,R*(0.45+age*0.55),0,Math.PI*2);
+        ctx.stroke();
+        ctx.globalAlpha = (1-age)*0.12;
+        ctx.fillStyle = e.color;
+        ctx.fill();
+      }
     } else if (e.kind === 'ring') {
       // Campaign blasts and Gefjun Disturbers: a wave that sweeps out over the hexes they hit.
       const grow = 1 - fade,

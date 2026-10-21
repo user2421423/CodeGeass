@@ -147,7 +147,8 @@
         continue;
       }
       u.autoOrderTurn = g.turn;
-      report.moved.push({ id: u.id, from: m.from, to: m.to, captured: m.captured, seized: m.seized, annexed: m.annexed });
+      report.moved.push({ id: u.id, from: m.from, to: m.to, captured: m.captured, seized: m.seized, annexed: m.annexed,
+        ...(m.abilityEffects ? {abilityEffects:m.abilityEffects} : {}) });
       if (gotoDone(g, u, dest) && !(assault && dest && dist(g, u, dest) <= 1 &&
         ((unitAt(g, dest) && unitAt(g, dest) !== u && foe(g, unitAt(g, dest).side, side)) ||
          (stationAt(g, dest) && foe(g, stationAt(g, dest).owner, side) && stationAt(g, dest).shield > 0)))) {

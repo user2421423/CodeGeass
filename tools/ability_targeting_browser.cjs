@@ -53,6 +53,7 @@ const ids=Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].action&&!immediate
     const result=await page.evaluate(()=>({selecting:!!abilityTargeting,used:selectedUnit()?.feintUsedTurn,turn:game.turn}));
     assert.equal(result.selecting,false,id+' selection completes with '+(mobile?'tap':'mouse click'));
     assert.equal(result.used,result.turn,id+' spends one ability use');
+    assert.equal(await page.evaluate(()=>effects.some(e=>e.kind==='shot'||e.kind==='ability')),true,id+' displays an attack or support effect');
    }
    // A map-selected Assault animates every actual shooter through the normal
    // weapon pipeline in desktop and both touch layouts.
@@ -72,6 +73,30 @@ const ids=Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].action&&!immediate
    assert.equal(volley.length,2,'Raymond and the supporting artillery each animate');
    assert.ok(new Set(volley.map(v=>v.weapon)).size===2,'Shooters retain their own weapon animation');
    assert.ok(volley[1].delay>volley[0].delay,'Individual shots are staggered');
+   // The ordinary attack click also includes Oscar's independent response.
+   await setup('suzaku');
+   const reaction=await page.evaluate(()=>{
+    const actor=selectedUnit(),enemy=game.units.find(v=>v.side==='eu');actor.hp=50000;enemy.hp=50000;enemy.cmd=null;
+    const p=E.within(game,enemy,2).find(p=>!E.unitAt(game,p)&&E.distance(p,actor,game)===1);
+    const guard=E.newUnit(game,E.typeFor('eu','heavy'),'eu',p.c,p.r,1,'oscar');
+    render();centerOn(actor);return{target:enemy,guard};
+   });
+   const reactionPoint=await point(reaction.target);
+   if(mobile){await page.touchscreen.tap(reactionPoint.x,reactionPoint.y);await page.touchscreen.tap(reactionPoint.x,reactionPoint.y);}
+   else await page.mouse.click(reactionPoint.x,reactionPoint.y);
+   assert.equal(await page.evaluate(guard=>effects.some(e=>e.kind==='shot'&&e.from.c===guard.c&&e.from.r===guard.r),reaction.guard),true,'Oscar fires his own weapon animation');
+   // Movement-triggered interception reaches the same effects path.
+   await setup('suzaku');
+   const approach=await page.evaluate(()=>{
+    const actor=selectedUnit();actor.cmd=null;actor.hp=50000;game.units=[actor];
+    const guard=E.newUnit(game,E.typeFor('eu','heavy'),'eu',8,5,1,'villetta');
+    const dest=E.within(game,actor,3).find(p=>!E.unitAt(game,p)&&E.distance(p,guard,game)===1&&E.reachable(game,actor).has(E.key(p)));
+    render();centerOn(dest);return{dest,guard};
+   });
+   const approachPoint=await point(approach.dest);
+   if(mobile)await page.touchscreen.tap(approachPoint.x,approachPoint.y);
+   else await page.mouse.click(approachPoint.x,approachPoint.y);
+   assert.equal(await page.evaluate(({guard,dest})=>effects.some(e=>e.kind==='shot'&&e.from.c===guard.c&&e.from.r===guard.r&&e.to.c===dest.c&&e.to.r===dest.r),approach),true,'Villetta intercepts at the movement destination');
    // Clicking a commander portrait selects its unit, including Shift-clicks.
    await setup('cc');
    const portrait=await page.evaluate(()=>{
