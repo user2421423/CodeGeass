@@ -677,6 +677,21 @@
       "src": "portraits/romero-colorized-9b76d21169aa.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "chloe": {
+      "src": "portraits/chloe-refresh-d8293febfba0.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "monica": {
+      "src": "portraits/monica-1648578c93a5.webp",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "luciano": {
+      "src": "portraits/luciano-e90561c6a0a0.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     }
   },
   "buildings": {
