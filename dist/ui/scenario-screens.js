@@ -185,12 +185,23 @@ function scenarioDialog() {
   if(!model.sides.includes(scenarioSide))scenarioSide=model.sides[0];
   const brief=model.meta?.text || {};
   const saved=scenarioWeeklySelected ? weeklyScenarioSavedGame() : getSave(SCENARIO_KEY);
-  const savedModel=saved&&!saved.over&&scenarioModel(saved.scenario?.id);
+  // A save from the original Luoyang-sized UFN Civil War cannot be resumed on
+  // the new mainland battlefield; do not advertise that obsolete save in the menu.
+  const obsoleteChinaSave=saved?.scenario?.id==='ufn-civil-war'&&
+    (saved.cols!==200||saved.rows!==120);
+  const savedModel=saved&&!saved.over&&!obsoleteChinaSave&&scenarioModel(saved.scenario?.id);
   // Read pre-generated map and force metadata. Never build a scenario just to browse.
   const imageMeta=typeof SCENARIO_STATIC_MAPS==='undefined'?{}:(SCENARIO_STATIC_MAPS[scenarioKind]||{});
   const meta=SCENARIO_MANIFEST.find(entry=>entry.id===scenarioKind);
   const cityCount=imageMeta.cities ?? (Number(meta?.note?.match(/\d+(?= cities)/)?.[0])||'—');
   const unitCount=imageMeta.formations ?? null;
+  const chinaMainland=scenarioKind==='ufn-civil-war';
+  const chinaOpeningLegend=chinaMainland
+    ? '<div class="scenario-mainland-opening" aria-label="UFN Civil War opening positions">' +
+      '<span><i style="background:'+esc(E.FACTIONS.ufn.color)+'"></i>UFN · Nanjing · '+esc(imageMeta.sides?.ufn?.cities??'—')+' cities</span>' +
+      '<span><i style="background:'+esc(E.FACTIONS.cf.color)+'"></i>Federation · Luoyang · '+esc(imageMeta.sides?.cf?.cities??'—')+' cities</span>' +
+      '</div>'
+    : '';
   const sideCount=model.sides.length;
   const sides=model.sides.map(side=>{
     const owner=E.FACTIONS[side];
@@ -216,7 +227,7 @@ function scenarioDialog() {
     `<button type="button" class="scenario-theater ${scenarioLibraryTheater===group.id?'active':''}" data-scenario-theater="${esc(group.id)}" aria-pressed="${scenarioLibraryTheater===group.id}">${esc(group.label)}</button>`).join('');
   const saveButton=savedModel?`<button class="scenario-resume" data-action="${scenarioWeeklySelected?'continue-weekly-scenario':'continue-scenario'}" type="button"><strong>Continue saved operation</strong><small>${esc(savedModel.title)} · Turn ${saved.turn}</small></button>`:'';
   modal.innerHTML=`<div class="overlay scenario-library-overlay">
-    <section class="dialog scenario-library scenario-library--${SCENARIO_MENU_STYLE}" role="dialog" aria-modal="true" aria-label="Scenario selection" aria-describedby="scenario-library-description">
+    <section class="dialog scenario-library scenario-library--${SCENARIO_MENU_STYLE}${chinaMainland?' scenario-library--china-mainland':''}" role="dialog" aria-modal="true" aria-label="Scenario selection" aria-describedby="scenario-library-description">
       <header class="scenario-library-header">
         <div class="scenario-library-heading"><span class="scenario-library-eyebrow">CODE GEASS / STRATEGIC WAR ARCHIVES</span><h1>Regional Operations</h1><p id="scenario-library-description">Select the theater, study its geography, and take command.</p></div>
         <button type="button" class="scenario-library-back" data-action="scenario-close">← Main menu</button>
@@ -236,9 +247,9 @@ function scenarioDialog() {
           </div>
           <div class="scenario-stage-body">
             <div class="scenario-map-side">
-              <div class="scenario-map-head"><span>OPERATIONAL MAP</span><span>${model.cols} × ${model.rows} HEXES</span></div>
+              <div class="scenario-map-head"><span>${chinaMainland?'MAINLAND CHINA · NATIONAL THEATRE':'OPERATIONAL MAP'}</span><span>${model.cols} × ${model.rows} HEXES</span></div>
               <div class="scenario-map-window">
-                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" alt="Geographic map of ${esc(model.title)} with no troops or unit markers" src="scenario-previews/${esc(scenarioKind)}.${scenarioKind==='ufn-civil-war'?'svg':'webp'}"><p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
+                <img id="scenario-preview-map" class="scenario-preview-image" loading="eager" decoding="async" data-fallback-preview="${chinaMainland?'svg':''}" alt="${chinaMainland?'Mainland China, including UFN and Federation starting territory':'Geographic map of '+esc(model.title)+' with no troops or unit markers'}" src="scenario-previews/${esc(scenarioKind)}.webp">${chinaOpeningLegend}<p class="scenario-map-unavailable" aria-live="polite" hidden>Preview image unavailable. The scenario remains playable.</p>
               </div>
               <div class="scenario-map-legend"><span>${cityCount} cities</span><span>${unitCount===null?'Static geographic preview':unitCount+' starting formations'}</span><span>${sideCount} playable powers</span></div>
             </div>
@@ -282,6 +293,12 @@ function scenarioDialog() {
   });
   const staticMap=modal.querySelector('#scenario-preview-map');
   if(staticMap)staticMap.addEventListener('error',()=>{
+    // The checked-in SVG is a fallback if the generated mainland preview is unavailable.
+    if(staticMap.dataset.fallbackPreview==='svg'&&!staticMap.dataset.fallbackUsed){
+      staticMap.dataset.fallbackUsed='true';
+      staticMap.src='scenario-previews/ufn-civil-war.svg';
+      return;
+    }
     staticMap.hidden=true;
     const message=modal.querySelector('.scenario-map-unavailable');
     if(message)message.hidden=false;
