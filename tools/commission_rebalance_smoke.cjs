@@ -23,7 +23,7 @@ assert.equal(E.COMMANDERS.norland.commission, 'distinguished');
 assert.equal(E.COMMANDERS.rolo.commission, 'distinguished');
 assert.equal(E.COMMANDERS.darlton.commission, 'standard');
 const oldOfficer = (id, commission, generics = {}) =>
-  {...E.defaultOfficer(id, true), commission, generics, rank: 5};
+  ({...E.defaultOfficer(id, true), commission, generics, rank: 5});
 const investedGenerics = Object.fromEntries(
   Object.keys(E.GENERIC_SKILLS).slice(0, 3).map(k => [k, 2]));
 assert.equal(Object.keys(investedGenerics).length, 3);
