@@ -97,6 +97,9 @@
     // Entrenchment is earned when a power finishes its turn without moving the Infantry unit.
     // The protection persists through rival turns, then ends when that power's next turn begins.
     const outgoing = g.phase;
+    // Suppression lasts through only this current faction turn, including
+    // when a formation kills by off-turn counterfire.
+    for (const v of g.units) delete v.expFarneseSlaughterTurn;
     if(outgoing){for(const v of g.units)if(v.side===outgoing){
         // Retaliation lasts through Guilford's NEXT full friendly action phase.
         if (v.expGuilfordRetribution &&
@@ -111,6 +114,7 @@
         // Suppression remains for the target's full action phase.
         delete v.expMiguelSupply;
         delete v.expToruExtraAttack;delete v.expToruExtraMove;
+        delete v.expFarneseExtraMove;
         delete v.expMargaretBonusTurn;delete v.expShadowAttackTurn;delete v.expPrecisionTarget;
         delete v.expSilenced;
         // Yukiya's electronic disruption expires only after the affected
@@ -156,6 +160,7 @@
       // Emergency Defense lasts through opponents' turns, then expires at
       // the start of the designated ally's next friendly turn.
       if(v.expOscarDefense?.side===side)delete v.expOscarDefense;
+      if(v.expFarneseWithdrawal?.side===side)delete v.expFarneseWithdrawal;
       // The stun persists through the opponent's turn, then expires when
       // Fernando's faction receives its next turn.
       if(v.expFernandoOverload?.side===side)delete v.expFernandoOverload;
