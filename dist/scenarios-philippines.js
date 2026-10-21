@@ -292,7 +292,7 @@
       era:"Philippine Archipelago · Alternate 2017",
       intro:"Britannia launches an offshore carrier-supported assault on the Chinese Federation’s fortified Philippine archipelago. China controls every Philippine city on turn 1.",
       diplomacy:"Britannia and the Chinese Federation are at war immediately. No scripted alliance or deadline. Victory requires taking all 37 theatre cities.",
-      elite:"Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; AI named commanders begin at Lv.5. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.",
+      elite:"Elite Philippines: starting land and amphibious formations become single-frame Elite Forces; enemy named commanders begin at Lv.3. Carriers remain conventional. Elite recruitment follows the existing HQ and AI difficulty rules.",
       focus:{
         britannia:"Koror",
         cf:"Manila"
