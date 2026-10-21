@@ -143,7 +143,7 @@ function loadProfile() {
     // One-time migration: anyone with a pre-existing profile keeps the old free
     // commanders and starter Elite fragment entitlements. Fresh profiles do not
     // receive them. Existing purchased records are never overwritten.
-    if (p.startingSetupVersion !== 2 && p.startingSetupVersion !== 3) {
+    if (![2, 3, 4].includes(p.startingSetupVersion)) {
       if (saved) {
         p.legacyStarterEntitlements = true;
         p.roster ||= {};
@@ -156,11 +156,16 @@ function loadProfile() {
       p.startingSetupVersion = 2;
       changed = true;
     }
-    // Grant the new E.U. and Chinese Federation starters to old and new profiles.
-    // E.roster inserts only absent commanders and never overwrites upgrades.
-    if (p.startingSetupVersion !== 3) {
-      E.roster(p);
-      p.startingSetupVersion = 3;
+    // One-time Britannia starter swap, on every existing profile (including
+    // legacy profiles). Discard Cornelia's HQ record and all investment without
+    // refunding it. Existing Suzaku records, ranks and upgrades take precedence.
+    // Remove Cornelia BEFORE E.roster, which can refund obsolete star spending
+    // on old records. Recruited Cornelia may be retained after version 4.
+    if (p.startingSetupVersion !== 4) {
+      p.roster ||= {};
+      delete p.roster.cornelia;
+      E.roster(p); // Grant Suzaku and any missing starters from the other factions.
+      p.startingSetupVersion = 4;
       changed = true;
     }
     if (p.researchVersion !== E.RESEARCH_VERSION) {

@@ -298,6 +298,9 @@
     // Regional scenarios also need personal HQ commanders. Their scripted officers
     // remain untouched, including their authored ranks and special Elite bonuses.
     g.roster = Object.fromEntries(Object.entries(roster(profile)).map(([k, rec]) => [k, cleanOfficer(k, rec)]));
+    // Newly created or HQ-refreshed battles already use the Suzaku starter
+    // policy. Do not re-migrate later Cornelia recruitments on next load.
+    g.britanniaStarterMigrationVersion = 1;
     for (const u of allUnits(g)) {
       if (!u.cmd || (g.mode === 'scenario' && !u.personal)) continue;
       const old = maxHP(u);

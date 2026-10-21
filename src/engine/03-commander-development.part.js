@@ -4,7 +4,7 @@
   // between operations and assignable in any operation, even beside the scenario's own version (u.personal).
   const HQ_RANK_CAP = PROMOTE_COST.length - 1; // Supreme Commander, the highest rank for every side.
   const EU_ROSTER_REPLACEMENTS = Object.freeze({margaret:'romero',kate:'miguel',hilda:'masaki',chloe:'toru'});
-  const STARTERS = { britannia: ['cornelia'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
+  const STARTERS = { britannia: ['suzaku'], bk: ['zero'], eu: ['akito'], cf: ['xingke'] };
   function fx(u) {
     return u?.expSilenced ? NOFX : (u?.cmd && COMMANDER_EFFECTS[u.cmd]) || NOFX;
   }

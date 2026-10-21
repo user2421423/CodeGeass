@@ -142,6 +142,35 @@
       if(u.cmd&&EU_ROSTER_REPLACEMENTS[u.cmd])u.cmd=EU_ROSTER_REPLACEMENTS[u.cmd];
     for(const pool of Object.values(g.scenario?.commanderSides||{}))if(Array.isArray(pool))
       for(let i=0;i<pool.length;i++)pool[i]=EU_ROSTER_REPLACEMENTS[pool[i]]||pool[i];
+    // Saved battles keep their own snapshot of the HQ roster and personal unit
+    // assignments. Apply the Britannian starter swap once, independently of the
+    // profile migration; leave scripted (non-personal) Cornelia units untouched.
+    // The version flag allows players to recruit Cornelia normally afterwards.
+    if (g.britanniaStarterMigrationVersion !== 1) {
+      const personal = g.units.flatMap(u => [u, ...(u.cargo || [])])
+        .filter(u => u.personal);
+      const legacyAssignments = personal.filter(u => u.cmd === 'cornelia');
+      if (g.roster?.cornelia || legacyAssignments.length) {
+        g.roster ||= {};
+        g.roster.suzaku ||= defaultOfficer('suzaku', true);
+        delete g.roster.cornelia; // Do not transfer investment or grant a refund.
+        let suzakuDeployed = personal.some(u => u.cmd === 'suzaku' && u.hp > 0);
+        for (const u of legacyAssignments) {
+          if (!suzakuDeployed && u.hp > 0) {
+            u.cmd = 'suzaku';
+            u.cmdRank = g.roster.suzaku.rank;
+            suzakuDeployed = true;
+          } else {
+            // Suzaku cannot be personally deployed twice in the same battle.
+            u.cmd = null;
+            u.cmdRank = 0;
+            u.personal = false;
+            if (u.hp > 0) u.hp = Math.min(u.hp, maxHP(u));
+          }
+        }
+      }
+      g.britanniaStarterMigrationVersion = 1;
+    }
     const regional = g.mode === 'scenario';
     // Regional scenarios carry their own map; the world-map checks and repairs below do not apply to them.
     if (regional && (!g.scenario?.id || !(g.cols > 0) || g.tiles?.length !== g.cols * g.rows)) return null;
