@@ -19,6 +19,8 @@ jobs:
         run: node tools/commander_roster_audit.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify 100 commander commissions and invested-save rebalance
+        run: node tools/commission_rebalance_smoke.cjs
       - name: Verify Suzaku starter and existing HQ and battle-save migration
         run: node tools/starter_commanders_smoke.cjs
       - name: Verify six Scenario Mode exclusives, independent factions and save compatibility

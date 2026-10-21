@@ -88,6 +88,56 @@
           rec.genericSpending[id] >= 0 ? rec.genericSpending[id] : legacyGenericInvestment(level)])),
     };
   }
+  // One-time baseline rebalance. Retain purchased higher commissions and grandfather
+  // saved commission slots when demotion would hide invested generic skills.
+  const COMMISSION_REBALANCE_PREVIOUS = Object.freeze({
+    schneizel: 'distinguished',
+    shin: 'distinguished',
+    guilford: 'standard',
+    ryo: 'distinguished',
+    yukiya: 'standard',
+    anna: 'standard',
+    smilas: 'distinguished',
+    fernando: 'standard',
+    marirrosa: 'standard',
+    honggu: 'standard',
+    cao: 'standard',
+    leifeng: 'distinguished',
+    meiling: 'standard',
+    rakshata: 'distinguished',
+    cc: 'distinguished',
+    senba: 'standard',
+    urabe: 'standard',
+    dorothea: 'distinguished',
+    nonette: 'distinguished',
+    marianne: 'legendary',
+    oldrin: 'legendary',
+    marrybell: 'legendary',
+    norland: 'legendary',
+    kaguya: 'distinguished',
+    vritra: 'standard',
+    euphemia: 'distinguished',
+    cecile: 'distinguished',
+  });
+  function rebalanceSavedCommissions(records) {
+    if (!records || typeof records !== 'object') return;
+    for (const [id, previous] of Object.entries(COMMISSION_REBALANCE_PREVIOUS)) {
+      const officer = records[id];
+      if (!officer || !COMMANDERS[id]) continue;
+      const next = COMMANDERS[id].commission;
+      const oldIndex = COMMISSION_ORDER.indexOf(previous);
+      const savedIndex = COMMISSION_ORDER.indexOf(officer.commission || previous);
+      const newIndex = COMMISSION_ORDER.indexOf(next);
+      if (oldIndex < 0 || savedIndex < 0 || newIndex < 0) continue;
+      if (newIndex > oldIndex && savedIndex < newIndex) {
+        officer.commission = next; // Free new baseline, preserving higher paid upgrades.
+      } else if (newIndex < oldIndex && savedIndex === oldIndex) {
+        const usedSlots = Object.values(officer.generics || {})
+          .filter(level => Number(level) > 0).length;
+        if (usedSlots <= newIndex + 1) officer.commission = next;
+      }
+    }
+  }
   // Every faction has a free starting HQ commander; existing roster upgrades are preserved.
   function roster(profile) {
     profile.roster ||= {};
@@ -106,6 +156,11 @@
           profile.tokens = (profile.tokens || 0) + STAR_COST[star];
         profile.roster[k] = cleanOfficer(k, rec);
       }
+    // Apply the adjusted baseline once to existing recruited commanders.
+    if (profile.commissionRebalanceVersion !== 1) {
+      rebalanceSavedCommissions(profile.roster);
+      profile.commissionRebalanceVersion = 1;
+    }
     // Migrate shared and equipped legacy medals into an account archive. Original
     // transferable medals have no trustworthy individual recipient; never invent one.
     if (profile.honorsVersion !== 1) {

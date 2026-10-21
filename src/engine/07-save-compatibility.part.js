@@ -138,6 +138,12 @@
       for(const [oldId,newId] of Object.entries(EU_ROSTER_REPLACEMENTS))if(records[oldId]){
         records[newId] ||= records[oldId];delete records[oldId];
       }
+    // Existing battle snapshots migrate independently of the persistent profile.
+    if (g.commissionRebalanceVersion !== 1) {
+      rebalanceSavedCommissions(g.officers);
+      rebalanceSavedCommissions(g.roster);
+      g.commissionRebalanceVersion = 1;
+    }
     for(const u of g.units.flatMap(v=>[v,...(v.cargo||[])]))
       if(u.cmd&&EU_ROSTER_REPLACEMENTS[u.cmd])u.cmd=EU_ROSTER_REPLACEMENTS[u.cmd];
     for(const pool of Object.values(g.scenario?.commanderSides||{}))if(Array.isArray(pool))
