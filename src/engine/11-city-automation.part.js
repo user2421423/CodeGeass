@@ -338,7 +338,7 @@
         const type='logres_airship';
         const bases=g.stations.filter(s=>s.owner===u.side).sort((a,b)=>dist(g,a,city)-dist(g,b,city)||b.tier-a.tier);
         for(const base of bases){
-          const p=nearest(g,base,t=>solidLand(t)&&t.owner===u.side&&!unitAt(g,t)&&!stationAt(g,t));
+          const p=nearest(g,base,t=>!isSea(t)&&!TERRAIN[t.terrain]?.blocked&&t.owner===u.side&&!unitAt(g,t)&&!stationAt(g,t));
           if(p){airship=newUnit(g,type,u.side,p.c,p.r,1,null,false);u.arkFleetAirshipCD=10;break;}
         }
       }
