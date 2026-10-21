@@ -12,7 +12,7 @@ const start = source.indexOf('  const COMMANDERS = {');
 const end = source.indexOf('\n  };', start);
 assert.ok(start >= 0 && end > start, 'Commander registry must exist');
 const registry = source.slice(start, end);
-const multilineIds = [...registry.matchAll(/^    ([A-Za-z0-9_]+): \\{$/gm)].map(match => match[1]);
+const multilineIds = [...registry.matchAll(/^    ([A-Za-z0-9_]+): [{]$/gm)].map(match => match[1]);
 const actualIds = Object.keys(COMMANDERS);
 assert.equal(multilineIds.length, actualIds.length,
   'Each commander must use a multiline definition: four-space key/open brace, then indented fields on following lines');
