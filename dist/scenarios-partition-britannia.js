@@ -61,7 +61,13 @@ function create(_,__,seed){
 const geography={id:'partition-geography',title:'Continental North America',cols:C,rows:R,sides:['eu','cf','remnants'],bounds:B,cityData,create,
  meta:{map:{centreSampled:true,coastBuffer:0,homeZoom:3.2,overviewMarkers:true}}};
 const byNation=source=>Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].side===source);
+// This is a west-to-east war with Britannia physically separating the two occupiers.
+// Never split Chinese or E.U. armies into fixed opposing theaters: it assigns
+// rear-area formations to unreachable distant goals across the imperial front.
+// Local assault columns instead pursue accessible hostile cities, then retarget
+// after each capture. This is runtime AI metadata, not part of the save format.
 const api=common.define({id:'partition-britannia',title:'The Partition of Britannia',geography,owner,
+ ai:{doctrine:'assault'},
  intro:'Britannia still controls the North American heartland, from the Canadian Prairies through the Great Plains and Texas. Europia United occupies the Atlantic states and eastern Canada, while the Chinese Federation holds the Pacific coast and western Canada. All three powers fight for total conquest.',
  terrain:'United States and Canada only, from the southern border to 70°N. Alaska is omitted; no Mexico, Greenland or Caribbean territory. Real country boundaries and Great Lakes; Rocky Mountain routes remain passable.',
  rosters:{eu:['eu'],cf:['cf'],remnants:['britannia']},commanders:{eu:byNation('eu'),cf:byNation('cf'),

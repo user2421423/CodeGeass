@@ -141,7 +141,7 @@ function define(config){
   return side?{winner:side,team:side,reason:E.FACTIONS[side].name+' controls every city.'}:null;}
  const api={...base,id:config.id,title:config.title,sides,cityData:cities,create,onTurn:()=>false,objective,winner};
  delete api.armyGroups;delete api.operationalFronts;
- api.meta={saveVersion:1,elite:true,eliteRosterOnly:true,ai:{doctrine:'europe',recovery:true},
+ api.meta={saveVersion:1,elite:true,eliteRosterOnly:true,ai:{doctrine:'europe',recovery:true,...config.ai},
   map:{...(base.meta?.map||{}),overviewMarkers:true},
   text:{era:config.era||'Alternate history · 2018 a.t.b.',intro:config.intro,
    terrain:config.terrain||base.meta?.text?.terrain,
