@@ -19,6 +19,8 @@ jobs:
         run: node tools/commander_roster_audit.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
+      - name: Verify 2018 Britannian frontline-only starting deployments
+        run: node tools/ufn2018_britannia_frontline_smoke.cjs
       - name: Verify 100 commander commissions and invested-save rebalance
         run: node tools/commission_rebalance_smoke.cjs
       - name: Verify Suzaku starter and existing HQ and battle-save migration

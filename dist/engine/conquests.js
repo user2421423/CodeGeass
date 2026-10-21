@@ -868,16 +868,17 @@
   };
 
 
-  // France and Iberia are now Euro Britannian. Rebase the Britannian
-  // forces previously stationed there to the remaining African holdings.
-  for (const army of ufn2018.armies) {
-    if (army[0] !== 'britannia') continue;
-    const p = {
-      '2.35,48.85':[3,36.7], '-3.7,40.4':[-7.6,33.6],
-      '2.2,41.4':[13.2,32.9], '-5.35,36.14':[10,33.3]
-    }[army[2]+','+army[3]];
-    if (p) [army[2],army[3]] = p;
-  }
+  // 2018 only: Britannia abandons its inland and overseas garrisons in favour
+  // of the active coalition frontiers. Keep every formation's class, stack and
+  // named commander intact. In array order: Middle East, Japan, Philippines,
+  // allied Euro-Britannian Siberia and U.F.N.-bordering African sectors.
+  const britannianForwardLand = [[44.4,33.3], [104.3,52.3], [101.6,51.3], [108,53.3], [32,16], [15.1,12.1], [121.4,17], [124,14.4], [139.7,35.7], [135.8,35], [130.4,33.6], [142.4,43.1], [121,14.6], [138,35.2], [36.3,33.5], [43.2,35.5], [52,27.5], [46.1,31.5], [32.2,16.5], [31.2,30], [15.6,10.9], [34.5,14.6], [32.5,15.6], [29,-24], [16.6,-10.3], [14.5,8.7], [29,-23], [48.5,29.4], [54,26], [107.2,51.3]];
+  const britannian2018Land = ufn2018.armies.filter(army => army[0] === 'britannia');
+  if (britannian2018Land.length !== britannianForwardLand.length)
+    throw new Error('Review the 2018 Britannian land deployment after changing its roster');
+  britannian2018Land.forEach((army, i) => {
+    [army[2], army[3]] = britannianForwardLand[i];
+  });
   // The U.F.N. retains Warsaw as a salient; its formations formerly based in
   // Amsterdam, Berlin, Minsk and Kiev deploy on allied ground instead.
   // Four existing Euro Britannian reinforcements garrison those cities,
@@ -901,6 +902,16 @@
     ['eb','carrier',-8.5,47,1], ['eb','carrier',28.9,42,1],
     ['eb','amphibious2',-5.5,35.7,1]
   );
+
+  // The 2018 Britannian fleet likewise starts exclusively in contested waters:
+  // Japan, the Philippines, and the Red Sea / Horn of Africa.
+  const britannianForwardNavy = [[124.7,16.8], [140,39.4], [135,34], [132,33], [124.5,12], [39.2,19], [40.8,13]];
+  const britannian2018Navy = ufn2018.navy.filter(ship => ship[0] === 'britannia');
+  if (britannian2018Navy.length !== britannianForwardNavy.length)
+    throw new Error('Review the 2018 Britannian naval deployment after changing its roster');
+  britannian2018Navy.forEach((ship, i) => {
+    [ship[2], ship[3]] = britannianForwardNavy[i];
+  });
 
   // Every eligible roster officer receives one named starting command in each
   // Conquest. Prefer existing anonymous formations; only create fresh formations

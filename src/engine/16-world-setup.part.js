@@ -800,10 +800,18 @@
     attachUnclaimedNewZealand(g);
     assignCityProvinces(g);
     for (const [side, cls, lon, lat, stack, cmd, frameSource] of (cfg.armies || ARMY_DATA)) {
+      // The Britannian 2018 Siberian expeditionary contingent starts on
+      // allied Euro-Britannian land. No ownership changes and no cross-team
+      // placement permission for any other formation or Conquest era.
+      const alliedSiberianStart = cfg.id === 'ufn2018' && side === 'britannia' &&
+        lon >= 90 && lon <= 120 && lat >= 48 && lat <= 60;
+      const canStartOn = owner => owner === side || (alliedSiberianStart && owner === 'eb');
       const at = nearest(
         g,
         hexOf(lon, lat),
-        t => solidLand(t) && !unitAt(g, t) && (cfg.id !== 'ufn2018' || t.owner === side) && (!stationAt(g, t) || stationAt(g, t).owner === side),
+        t => solidLand(t) && !unitAt(g, t) &&
+          (cfg.id !== 'ufn2018' || canStartOn(t.owner)) &&
+          (!stationAt(g, t) || canStartOn(stationAt(g, t).owner)),
       );
       if (at) newUnit(g, typeFor(ufnBlackKnights(g, side) ? 'bk' : (frameSource || side), cls, g), side, at.c, at.r, stack, cmd || null);
     }
@@ -829,7 +837,10 @@
       // Euro Britannia is a separate 2018 faction, but flies Britannia's Logres.
       // Ensure its capital belongs to its own faction before choosing a berth.
       const type = side === 'eb' ? 'logres_airship' : airshipType(g, side),
-        home = g.stations.find(s => s.capitalOf === side && s.owner === side) ||
+        // In 2018 Britannia has no rear-area starting troops, including its airship.
+        forwardHome = cfg.id === 'ufn2018' && side === 'britannia'
+          ? g.stations.find(s => s.name === 'Baghdad' && s.owner === side) : null,
+        home = forwardHome || g.stations.find(s => s.capitalOf === side && s.owner === side) ||
           g.stations.filter(s => s.owner === side).sort((a, b) => b.tier - a.tier || a.id - b.id)[0],
         at = type && home && nearest(g, home, t => solidLand(t) && t.owner === side && !unitAt(g, t) && !stationAt(g, t));
       if (at) newUnit(g, type, side, at.c, at.r);
