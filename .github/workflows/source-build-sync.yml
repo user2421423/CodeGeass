@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
       - name: Check commander registry formatting and faction counts
         run: node tools/commander_roster_audit.cjs
+      - name: Verify approved 118-commander roster, factions and restrained passives
+        run: node tools/commander_118_roster_smoke.cjs
       - name: Build game bundles
         run: node tools/build_sources.cjs
       - name: Verify Andrea Farnese's Orderly Withdrawal, Honor the Fallen and End the Slaughter
@@ -29,7 +31,7 @@ jobs:
         run: node tools/commander_attack_animations_smoke.cjs
       - name: Verify passive reactions, survival effects and active support feedback
         run: node tools/remaining_ability_effects_smoke.cjs
-      - name: Verify 100 commander commissions and invested-save rebalance
+      - name: Verify 118 commander commissions and invested-save rebalance
         run: node tools/commission_rebalance_smoke.cjs
       - name: Verify Suzaku starter and existing HQ and battle-save migration
         run: node tools/starter_commanders_smoke.cjs

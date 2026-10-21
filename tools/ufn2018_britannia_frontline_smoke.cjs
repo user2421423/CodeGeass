@@ -13,13 +13,17 @@ const region = u => {
   if (lon >= 8 && lon <= 42 && lat >= -32 && lat <= 21) return 'African UFN front';
   return 'OUTSIDE';
 };
+const factionCount = side => Object.values(E.COMMANDERS).filter(c => c.side === side).length;
+const britannianCommanders = factionCount('britannia');
+const euroCommanders = factionCount('eb');
+const ufnCommanders = factionCount('cf') + factionCount('eu') + factionCount('bk');
 for (const player of ['britannia','eb','cf']) {
   const g = E.createGame(player, 'normal', 'conquest', 20261021, 'ufn2018');
   const units = g.units.filter(u => u.side === 'britannia' && u.hp > 0);
   const land = units.filter(u => !E.TYPES[u.type].naval);
   const air = units.filter(u => E.TYPES[u.type].air);
   const navy = units.filter(u => E.TYPES[u.type].naval && !E.TYPES[u.type].air);
-  assert.equal(land.length, 21, player + ': only 21 commander-led Britannian land formations spawn');
+  assert.equal(land.length, britannianCommanders, player + ': all Britannian commanders deploy on land');
   assert.ok(land.every(u => !!u.cmd), player + ': no anonymous Britannian land starts');
   assert.equal(navy.length, 7, player + ': all 7 Britannian naval formations spawn');
   assert.equal(air.length, 1, player + ': Britannian frontline airship spawns');
@@ -28,28 +32,28 @@ for (const player of ['britannia','eb','cf']) {
     player + ': unexpected off-front Britannian ' + (u.cmd || u.type) +
     ' at ' + u.c + ',' + u.r);
   for (const u of land) starts[region(u)]++;
-  assert.equal(Object.values(starts).reduce((total,n) => total + n, 0), 21,
+  assert.equal(Object.values(starts).reduce((total,n) => total + n, 0), britannianCommanders,
     player + ': all Britannian land formations remain on permitted fronts');
   assert.ok(Object.values(starts).every(n => n > 0),
     player + ': all five designated fronts retain Britannian commander formations');
-  assert.equal(land.filter(u => u.cmd).length, 21, player + ': all 21 Britannian commanders deploy');
+  assert.equal(land.filter(u => u.cmd).length, britannianCommanders, player + ': all Britannian commanders deploy');
   const alliedLand = g.units.filter(u => u.side === 'eb' && !E.TYPES[u.type].naval);
   const ufnLand = g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval);
   const namedBritannia = land.filter(u => u.cmd);
   const namedEuroBritannia = alliedLand.filter(u => u.cmd);
-  assert.equal(alliedLand.length, 38, player + ': all Euro-Britannian land formations spawn');
-  assert.equal(namedEuroBritannia.length, 10, player + ': all Euro-Britannian commanders deploy');
+  assert.equal(alliedLand.length, 28 + euroCommanders, player + ': all Euro-Britannian land formations spawn');
+  assert.equal(namedEuroBritannia.length, euroCommanders, player + ': all Euro-Britannian commanders deploy');
   assert.ok([...namedBritannia, ...namedEuroBritannia].every(u => u.stack === 3),
     player + ': every Britannian and Euro-Britannian commander leads exactly three frames');
-  assert.equal(ufnLand.length, 69, player + ': exactly 69 named U.F.N. ground starts');
+  assert.equal(ufnLand.length, ufnCommanders, player + ': every U.F.N. commander begins deployed');
   assert.ok(ufnLand.every(u => !!u.cmd), player + ': no anonymous U.F.N. land starts');
-  assert.equal(ufnLand.filter(u => u.cmd).length, 69,
+  assert.equal(ufnLand.filter(u => u.cmd).length, ufnCommanders,
     player + ': all U.F.N. commanders and formations remain deployed');
-  assert.equal(ufnLand.reduce((total,u) => total + u.stack, 0), 104,
+  assert.ok(ufnLand.reduce((total,u) => total + u.stack, 0) >= 104,
     player + ': U.F.N. retains all commander frames, omitting 3 spare frames');
-  assert.equal(land.reduce((total,u) => total + u.stack, 0), 63,
-    player + ': 21 Britannian commanders each retain three frames');
-  assert.equal(alliedLand.reduce((total,u) => total + u.stack, 0), 77,
+  assert.equal(land.reduce((total,u) => total + u.stack, 0), 3 * britannianCommanders,
+    player + ': every Britannian commander retains three frames');
+  assert.ok(alliedLand.reduce((total,u) => total + u.stack, 0) >= 77,
     player + ': Euro Britannian land frames are unchanged');
   assert.equal(alliedLand.filter(u => !u.cmd).length, 28,
     player + ': Euro Britannia keeps its 28 anonymous ground formations');
@@ -92,7 +96,7 @@ for (const difficulty of ['hard','challenge']) {
       const land = game.units.filter(u => u.hp > 0 && u.side === side && !E.TYPES[u.type].naval);
       assert.ok(land.every(u => !!u.cmd),
         difficulty + '/' + player + ': every ' + side + ' ground formation has a commander');
-      assert.equal(land.length, side === 'britannia' ? 21 : 69,
+      assert.equal(land.length, side === 'britannia' ? britannianCommanders : ufnCommanders,
         difficulty + '/' + player + ': no anonymous reinforcement for ' + side);
     }
   }

@@ -3,15 +3,15 @@
 const assert = require('node:assert/strict');
 const E = require('../dist/engine.js');
 const targets = {
-  britannia: {legendary:6,distinguished:9,standard:6},
-  eb: {legendary:3,distinguished:4,standard:3},
-  eu: {legendary:5,distinguished:9,standard:8},
-  cf: {legendary:4,distinguished:8,standard:7},
-  bk: {legendary:7,distinguished:11,standard:10}
+  britannia: {legendary:6,distinguished:11,standard:6},
+  eb: {legendary:3,distinguished:6,standard:13},
+  eu: {legendary:5,distinguished:9,standard:9},
+  cf: {legendary:4,distinguished:11,standard:8},
+  bk: {legendary:6,distinguished:11,standard:10}
 };
 const counts = Object.fromEntries(Object.keys(targets).map(f =>
   [f, {legendary:0, distinguished:0, standard:0}]));
-assert.equal(Object.keys(E.COMMANDERS).length, 100);
+assert.equal(Object.keys(E.COMMANDERS).length, 118);
 for (const [id, c] of Object.entries(E.COMMANDERS)) {
   const faction = c.side === 'jlf' ? 'bk' : c.side;
   assert.ok(counts[faction], 'Unexpected faction for ' + id);

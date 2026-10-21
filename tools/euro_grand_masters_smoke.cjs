@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const E=require('../dist/engine.js');
 const C=E.COMMANDERS;
-assert.equal(Object.keys(C).length,100,'The two Grand Masters restore the 100-commander total');
+assert.equal(Object.keys(C).length,118,'The 118-commander roster retains both Grand Masters');
 for(const id of ['gaudefroy','raymond']){
   assert.equal(C[id].side,'eb');
   assert.equal(C[id].role,'Armor');
