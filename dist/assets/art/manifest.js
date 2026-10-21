@@ -1,4 +1,4 @@
-// Generated from manifest.json. Missing verified portraits use explicit initials.
+// Generated from manifest.json. All commanders have locally hosted portraits.
 globalThis.KnightmareArtManifest = {
   "base": "assets/art/",
   "units": {
@@ -676,6 +676,11 @@ globalThis.KnightmareArtManifest = {
     },
     "toru": {
       "src": "portraits/toru-84379c613f45.jpg",
+      "fx": 0.5,
+      "fy": 0.5
+    },
+    "romero": {
+      "src": "portraits/romero-colorized-9b76d21169aa.jpg",
       "fx": 0.5,
       "fy": 0.5
     }

@@ -261,6 +261,17 @@
       "originalSha256": "7a65223862fff9ca3a9e37fe677e0e20498e7cf9bd1a76222fdc3d97bfa0551e",
       "file": "dist/assets/art/portraits/miguel-17e75ee96aa6.jpg",
       "date": "2026-10-21"
+    },
+    {
+      "id": "romero",
+      "name": "Romero Barclay",
+      "source": "Owner-supplied manga panel image(20261021-014450).png",
+      "originalSha256": "4155531d0042b692856fc19f0fb4f17b759f20b055d80901f0625ad466bb525e",
+      "generatedSha256": "9e3f3aa33c329c99eca739d548c49fe98ec11ba2fac98ab1bffbc1046e5fa27d",
+      "method": "Owner-approved imagegen colorization and cleanup of the supplied manga portrait; text and panel background removed, then resized for the game.",
+      "colorStatus": "Interpretive fan colors, not verified official colors.",
+      "file": "dist/assets/art/portraits/romero-colorized-9b76d21169aa.jpg",
+      "date": "2026-10-21"
     }
   ]
 }

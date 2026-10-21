@@ -677,6 +677,11 @@
       "src": "portraits/toru-84379c613f45.jpg",
       "fx": 0.5,
       "fy": 0.5
+    },
+    "romero": {
+      "src": "portraits/romero-colorized-9b76d21169aa.jpg",
+      "fx": 0.5,
+      "fy": 0.5
     }
   },
   "buildings": {
