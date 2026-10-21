@@ -318,6 +318,12 @@ function drawPlate(u, scale, sea, time = 0, highlighted = false) {
   ctx.strokeStyle = '#0c1924e0';
   ctx.lineWidth = Math.max(4, 3.4 / scale);
   ctx.stroke();
+  // Thin full-length outer rim keeps ownership legible at very low HP.
+  ctx.beginPath();
+  ctx.ellipse(0, cy, rx + 6, ry + 6, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = ringColor;
+  ctx.lineWidth = Math.max(1.8, 1.7 / Math.max(scale, 0.2));
+  ctx.stroke();
   if (f > 0) {
     ctx.beginPath();
     ctx.ellipse(0, cy, rx + 2, ry + 2, 0, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * f);
@@ -328,11 +334,77 @@ function drawPlate(u, scale, sea, time = 0, highlighted = false) {
   ctx.shadowBlur = 0;
   ctx.restore();
 }
-// Color reflects allegiance; arc length independently shows remaining frame integrity.
-// Neutral garrisons are not allied even though the engine treats them as attackable foes.
+// Persistent allegiance cues are display-only. Keep the save's original side and
+// resolve alliances through the engine, including temporary scenario coalitions.
+// Enemy factions use distinct accents: Britannia red, China orange, E.U. indigo, etc.
+// Codes on the tokens disambiguate factions even when two palettes look similar.
+const HOSTILE_UNIT_COLORS = Object.freeze({
+  britannia: '#ff5f74', cf: '#ff9b51', eu: '#7285ff',
+  eb: '#bc8bff', bk: '#e6c64d', jlf: '#a6e080', ufn: '#f0ca62',
+  junta: '#ca9a62', rounds: '#e1c455', shinregime: '#a87cff',
+  loyalists: '#ff6b80', eunuchs: '#76c6df',
+  zero_loyalists: '#e6c04e', bk_command: '#75c7aa',
+  geass_order: '#c388f5', anti_geass: '#72c1ef',
+  protagonists: '#f2d16e', antagonists: '#e780a1',
+  remnants: '#ff5f74', knight_bismarck: '#d9b43f',
+  knight_suzaku: '#f5e4b8', knight_gino: '#77b5e9',
+  knight_anya: '#e7a3dc', knight_dorothea: '#8ad6a1',
+  knight_nonette: '#de9a6c',
+});
+const UNIT_FACTION_CODES = Object.freeze({
+  britannia:'BR', cf:'CF', eu:'EU', eb:'EB', bk:'BK', jlf:'JLF',
+  ufn:'UF', junta:'MJ', rounds:'KR', shinregime:'SR', loyalists:'IL',
+  eunuchs:'ER', zero_loyalists:'ZL', bk_command:'HC',
+  geass_order:'GO', anti_geass:'AG', protagonists:'PRO',
+  antagonists:'ANT', remnants:'REM', knight_bismarck:'KB',
+  knight_suzaku:'KS', knight_gino:'KG', knight_anya:'KA',
+  knight_dorothea:'KD', knight_nonette:'KN', neutral:'N',
+});
+function unitAllegianceColor(g, u) {
+  if (u.side === g.player) return '#38e6ad'; // Player
+  if (u.side === 'neutral') return '#a3a9b3';
+  if (!E.foe(g, g.player, u.side)) return '#70c8ff'; // Actual current ally
+  // The 2018 U.F.N. is stored as 'cf' for save compatibility.
+  const side = g.mode === 'conquest' && g.era === 'ufn2018' && u.side === 'cf'
+    ? 'ufn' : u.side;
+  return HOSTILE_UNIT_COLORS[side] ||
+    g.factions?.[side]?.color || E.FACTIONS[side]?.color || '#ff6b7b';
+}
+// Arc length shows remaining HP; the ring's colour shows allegiance/faction.
 function unitRingColor(u) {
-  if (u.side === 'neutral') return '#9ca3af';
-  return hostileUnit(u) ? '#ff334d' : '#f2c76a';
+  return unitAllegianceColor(game, u);
+}
+// Tiny shield over the right shoulder at tactical zoom, letters inside the
+// formation dot at strategic zoom. Does not modify formation assets.
+function drawUnitFactionBadge(u, scale, overview = false) {
+  const side = artSide(u.side);
+  const label = UNIT_FACTION_CODES[side] || side.replace(/[^a-z0-9]/gi, '').slice(0, 3).toUpperCase();
+  ctx.save();
+  if (!overview) ctx.translate(29, -30);
+  ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
+  ctx.font = "bold 10px 'Trebuchet MS'";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  if (overview) {
+    ctx.strokeStyle = '#071320';
+    ctx.lineWidth = 2.8;
+    ctx.strokeText(label, 0, 0);
+    ctx.fillStyle = '#fffdf2';
+    ctx.fillText(label, 0, 0);
+  } else {
+    const width = Math.max(19, ctx.measureText(label).width + 9);
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(-width / 2, -8, width, 16, 5);
+    else ctx.rect(-width / 2, -8, width, 16);
+    ctx.fillStyle = '#0c1628ed';
+    ctx.fill();
+    ctx.strokeStyle = unitRingColor(u);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fffdf2';
+    ctx.fillText(label, 0, 0);
+  }
+  ctx.restore();
 }
 // Campaign/scenario allies and the 2018 Britannian coalition share a team in the engine.
 function hostileUnit(u) {
