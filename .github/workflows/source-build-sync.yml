@@ -23,6 +23,8 @@ jobs:
         run: node tools/build_sources.cjs
       - name: Verify Andrea Farnese's Orderly Withdrawal, Honor the Fallen and End the Slaughter
         run: node tools/andrea_farnese_smoke.cjs
+      - name: Verify 2017 world conquest starts on friendly land or coasts without regional drift
+        run: node tools/2017_conquest_spawn_smoke.cjs
       - name: Verify 2018 Britannian frontline-only starting deployments
         run: node tools/ufn2018_britannia_frontline_smoke.cjs
       - name: Verify map selection for every targeted commander ability
