@@ -1834,18 +1834,19 @@ const SCENARIO_CATALOG = Object.freeze({
       "ufn",
       "cf"
     ],
-    "cols": 174,
-    "rows": 116,
+    "cols": 200,
+    "rows": 120,
     "meta": {
       "text": {
         "era": "Alternate history · 2018 a.t.b.",
-        "intro": "The Chinese Federation rejects UFN authority. The Black Knights launch an expedition from secured eastern railheads around Jining and Shangqiu into the Yellow River heartland. The Federation holds Luoyang, Zhengzhou and most of the homeland; neither government accepts a negotiated settlement.",
+        "intro": "Alternate history: the UFN fractures across mainland China. The Black Knights and UFN-aligned eastern cities establish a rival government at Nanjing, while the Chinese Federation consolidates its western and interior provinces around Luoyang. The conflict now reaches Xinjiang, Tibet, Manchuria, Shanghai and the far south.",
         "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
         "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
         "focus": {
-          "ufn": "Shangqiu",
+          "ufn": "Nanjing",
           "cf": "Luoyang"
-        }
+        },
+        "terrain": "All mainland China is playable, from Kashgar and Lhasa to Harbin and Guangzhou. No foreign provinces or Taiwan."
       },
       "saveVersion": 1,
       "portraits": {
@@ -1854,7 +1855,6 @@ const SCENARIO_CATALOG = Object.freeze({
       }
     },
     "files": [
-      "scenarios-luoyang.js",
       "scenarios-exclusive-common.js",
       "scenarios-ufn-civil-war.js"
     ]
