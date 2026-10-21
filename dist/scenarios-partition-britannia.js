@@ -61,6 +61,97 @@ function create(_,__,seed){
  }
  return g;
 }
+
+// Upgrade existing Partition saves in place. The scenario's saveVersion stays 1:
+// a saved campaign's political ownership, battle damage, constructions, unit
+// stats and tactical orders are never replaced by a freshly generated scenario.
+const PARTITION_TERRAIN_AUDIT = 1;
+function migrateSavedTerrain(g) {
+ if (g?.scenario?.id !== 'partition-britannia' ||
+     g.scenario.partitionTerrainAudit === PARTITION_TERRAIN_AUDIT ||
+     g.cols !== C || g.rows !== R || g.tiles?.length !== C * R) return false;
+ const coverage = atob(GEO.coverage);
+ if (coverage.length !== g.tiles.length) return false;
+ const cities = new Set(g.stations.map(s => s.r * C + s.c));
+ const biome = (c, r) => {
+   const p = geo(c,r), rocky = p.lon > -122 && p.lon < -104 && p.lat > 35 && p.lat < 61;
+   return p.lat > 61 ? 'tundra' : rocky ? 'mountain' :
+     p.lat > 50 || p.lon > -85 ? 'forest' :
+     p.lon < -108 && p.lat < 38 ? 'desert' : 'plains';
+ };
+ // Terrain of a new-game hex, including the existing city-on-plains rule.
+ // This is a reference only: never copy new-game units, provinces or owners.
+ const intended = Array.from({length: C * R}, (_,i) => {
+   const kind = coverage.charCodeAt(i), c = i % C, r = (i / C) | 0;
+   return kind === 0 ? 'sea' : kind === 3 ? 'offmap' :
+     kind === 1 ? 'coast' : cities.has(i) ? 'plains' : biome(c,r);
+ });
+ const navigable = terrain => terrain === 'sea' || terrain === 'coast';
+ const cell = p => p.r * C + p.c;
+ const ports = new Set(g.stations.filter(s=>s.portAt).map(s=>cell(s.portAt)));
+ const preserved = new Set();
+ // A few old saves could contain a purchased harbor on what was incorrectly
+ // marked as Mexican/foreign ocean. Prefer a real adjacent sea or coast hex.
+ for (const s of g.stations) {
+   if (!s.portAt || navigable(intended[cell(s.portAt)])) continue;
+   const previous = cell(s.portAt);
+   ports.delete(previous);
+   const options = E.adjacent(g,s).filter(t => navigable(intended[cell(t)]) &&
+     !ports.has(cell(t)) && !g.stations.some(city => cell(city) === cell(t)))
+     .sort((a,b) => Number(intended[cell(a)] !== 'sea') -
+       Number(intended[cell(b)] !== 'sea') || cell(a)-cell(b));
+   if (options.length) {
+     s.portAt = {c:options[0].c,r:options[0].r};
+     ports.add(cell(options[0]));
+   } else {
+     // Keep a playable legacy harbor only when geography offers no legal new
+     // berth; never silently destroy an upgraded, player-owned shipyard.
+     preserved.add(previous);
+     ports.add(previous);
+   }
+ }
+ const taken = new Set(g.units.filter(u=>u.hp>0).map(u=>cell(u)));
+ // Units located on the former false ocean cannot be left on blocked land.
+ // A ship left on an old coast that is now inland must also be moved to water.
+ // Relocate to the nearest free legal hex, without spending movement, changing
+ // the turn, replacing formations, or resetting carrier cargo and abilities.
+ for (const u of g.units.filter(u=>u.hp>0)) {
+   const oldCell = cell(u), target = intended[oldCell];
+   const ship = E.TYPES[u.type]?.naval === 'ship';
+   if (target !== 'offmap' && !(ship && !navigable(target))) continue;
+   const eligible = t => {
+     const index = cell(t), terrain = intended[index];
+     return !taken.has(index) && !g.stations.some(s => cell(s) === index) &&
+       !E.TERRAIN[terrain]?.blocked &&
+       (ship ? navigable(terrain) : target === 'offmap' && u.type &&
+         (g.tiles[oldCell].terrain === 'sea' ? navigable(terrain) : terrain !== 'offmap'));
+   };
+   // Former water retains water movement status whenever possible.
+   const destination = E.nearestTile(g,u,t=>eligible(t)&&intended[cell(t)]==='sea',Math.max(C,R)) ||
+     E.nearestTile(g,u,eligible,Math.max(C,R));
+   if (destination) {
+     taken.delete(oldCell);taken.add(cell(destination));
+     u.c=destination.c;u.r=destination.r;
+     for (const cargo of u.cargo || []) { cargo.c=u.c;cargo.r=u.r; }
+   } else preserved.add(oldCell); // never erase or strand a formation
+ }
+ let updated = 0;
+ for (let i = 0; i < g.tiles.length; i++) {
+   const t = g.tiles[i], next = intended[i];
+   if (preserved.has(i)) continue;
+   // A battle-created crater or city ruin must survive any map correction.
+   if (t.terrain === 'crater' || t.terrain === 'urban') continue;
+   if (t.terrain !== next) { E.setTileTerrain(g,t,next); updated++; }
+   if (next === 'offmap') {
+     E.setTileOwner(g,t,null);
+     delete t.provinceCity;
+   }
+ }
+ // Idempotent even when the save is browsed again before its next auto-save.
+ g.scenario.partitionTerrainAudit = PARTITION_TERRAIN_AUDIT;
+ return updated > 0;
+}
+
 const geography={id:'partition-geography',title:'Continental North America',cols:C,rows:R,sides:['eu','cf','remnants'],bounds:B,cityData,create,
  meta:{map:{centreSampled:true,coastBuffer:0,homeZoom:3.2,overviewMarkers:true}}};
 const byNation=source=>Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].side===source);
@@ -86,5 +177,6 @@ const api=common.define({id:'partition-britannia',title:'The Partition of Britan
  airships:['eu','cf','remnants'],navy:['eu','cf'],signatures:{leila:'leila_alexander',akito:'akito_liberte',xingke:'shen_hu'},
  blurbs:{eu:'Atlantic occupation: major eastern urban and industrial centres, with Great Lakes access.',cf:'Pacific occupation: the western coast, western Canada and strong naval forces.',remnants:'Britannian heartland: 27 cities from the Prairies to Texas, veteran imperial officers, a substantial land army and a starting airship.'}
 });
+api.migrateSavedTerrain=migrateSavedTerrain;
 if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
