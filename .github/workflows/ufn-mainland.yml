@@ -1,0 +1,31 @@
+name: UFN Mainland Civil War integrity
+on:
+  pull_request:
+    paths:
+      - 'dist/scenarios-ufn-civil-war.js'
+      - 'dist/scenario-catalog.js'
+      - 'dist/scenario-manifest.js'
+      - 'tools/generate-scenario-catalog.cjs'
+      - 'tools/six_exclusive_smoke.cjs'
+      - '.github/workflows/ufn-mainland.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'dist/scenarios-ufn-civil-war.js'
+      - 'dist/scenario-catalog.js'
+      - 'dist/scenario-manifest.js'
+      - 'tools/six_exclusive_smoke.cjs'
+jobs:
+  mainland-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - run: node tools/generate-scenario-catalog.cjs
+      - run: node tools/six_exclusive_smoke.cjs
+      - run: node tools/scenario_sim.cjs ufn-civil-war ufn normal 11 2
+      - run: node tools/scenario_sim.cjs ufn-civil-war cf normal 11 2
