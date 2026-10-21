@@ -224,6 +224,11 @@
     // The high-resolution conquest rebuild cannot safely load saves from the old 100 × 42 world.
     if (g.mode !== 'campaign' && !regional && (g.cols !== WORLD.cols || g.rows !== WORLD.rows || g.tiles?.length !== WORLD.cols * WORLD.rows)) return null;
     if (g.rulesVersion !== RULES_VERSION) return null;
+    // Optional scenario-owned, one-time terrain migration. The scenario asset
+    // has already loaded before resumeSavedGame calls migrateSave, so this
+    // updates the actual saved board rather than starting a replacement war.
+    // Other scenarios and their save versions remain entirely unchanged.
+    if (regional) root.Knightmare?.scenarios?.byId?.[g.scenario.id]?.migrateSavedTerrain?.(g);
     // Legacy saves tied HP to factory tiers. Pin a distinct city tier and
     // retain existing battle damage while dropping old factory HP bonuses.
     // Revisit regional saves with an existing cityTier as well: earlier loads
