@@ -1,0 +1,19 @@
+MOBILE_UI {"id":"bk-civil-war","title":"Black Knights Civil War","sides":["zero_loyalists","bk_command"],"difficulties":["normal","hard","challenge","elite"],"flagsReady":true,"imageWidth":1440,"imageHeight":900,"dialogLeft":3,"dialogRight":387,"viewport":390}
+MOBILE_DEPLOY {"id":"bk-civil-war","side":"zero_loyalists","elapsedMs":393,"units":104,"tiles":9240,"savedId":"bk-civil-war","savedPlayer":"zero_loyalists"}
+MOBILE_UI {"id":"rounds-tournament","title":"Knights of the Round Tournament","sides":["knight_bismarck","knight_suzaku","knight_gino","knight_anya","knight_dorothea","knight_nonette"],"difficulties":["normal","hard","challenge","elite"],"flagsReady":true,"imageWidth":1440,"imageHeight":900,"dialogLeft":3,"dialogRight":387,"viewport":390}
+MOBILE_DEPLOY {"id":"rounds-tournament","side":"knight_bismarck","elapsedMs":595,"units":84,"tiles":22680,"savedId":"rounds-tournament","savedPlayer":"knight_bismarck"}
+MOBILE_UI {"id":"geass-war","title":"The Geass War","sides":["geass_order","anti_geass"],"difficulties":["normal","hard","challenge","elite"],"flagsReady":true,"imageWidth":1440,"imageHeight":900,"dialogLeft":3,"dialogRight":387,"viewport":390}
+MOBILE_DEPLOY {"id":"geass-war","side":"geass_order","elapsedMs":217,"units":218,"tiles":9600,"savedId":"geass-war","savedPlayer":"geass_order"}
+MOBILE_UI {"id":"protagonists-antagonists","title":"Protagonists vs Antagonists","sides":["protagonists","antagonists"],"difficulties":["normal","hard","challenge","elite"],"flagsReady":true,"imageWidth":1440,"imageHeight":900,"dialogLeft":3,"dialogRight":387,"viewport":390}
+MOBILE_DEPLOY {"id":"protagonists-antagonists","side":"protagonists","elapsedMs":189,"units":208,"tiles":9600,"savedId":"protagonists-antagonists","savedPlayer":"protagonists"}
+MOBILE_UI {"id":"partition-britannia","title":"The Partition of Britannia","sides":["eu","cf","remnants"],"difficulties":["normal","hard","challenge","elite"],"flagsReady":true,"imageWidth":1440,"imageHeight":900,"dialogLeft":3,"dialogRight":387,"viewport":390}
+MOBILE_DEPLOY {"id":"partition-britannia","side":"eu","elapsedMs":291,"units":198,"tiles":19580,"savedId":"partition-britannia","savedPlayer":"eu"}
+MOBILE_UI {"id":"ufn-civil-war","title":"UFN Civil War","sides":["ufn","cf"],"difficulties":["normal","hard","challenge","elite"],"flagsReady":true,"imageWidth":1440,"imageHeight":900,"dialogLeft":3,"dialogRight":387,"viewport":390}
+MOBILE_DEPLOY {"id":"ufn-civil-war","side":"ufn","elapsedMs":377,"units":172,"tiles":20184,"savedId":"ufn-civil-war","savedPlayer":"ufn"}
+DESKTOP_RIVAL_CYCLE {"id":"bk-civil-war","turn":2,"phase":"zero_loyalists","player":"zero_loyalists","elapsedMs":1025,"aiSides":["bk_command"],"over":null}
+DESKTOP_RIVAL_CYCLE {"id":"rounds-tournament","turn":2,"phase":"knight_bismarck","player":"knight_bismarck","elapsedMs":3764,"aiSides":["knight_suzaku","knight_gino","knight_anya","knight_dorothea","knight_nonette"],"over":null}
+DESKTOP_RIVAL_CYCLE {"id":"geass-war","turn":2,"phase":"geass_order","player":"geass_order","elapsedMs":2224,"aiSides":["anti_geass"],"over":null}
+DESKTOP_RIVAL_CYCLE {"id":"protagonists-antagonists","turn":2,"phase":"protagonists","player":"protagonists","elapsedMs":1629,"aiSides":["antagonists"],"over":null}
+DESKTOP_RIVAL_CYCLE {"id":"partition-britannia","turn":2,"phase":"eu","player":"eu","elapsedMs":2556,"aiSides":["cf","remnants"],"over":null}
+DESKTOP_RIVAL_CYCLE {"id":"ufn-civil-war","turn":2,"phase":"ufn","player":"ufn","elapsedMs":1824,"aiSides":["cf"],"over":null}
+PASS six scenario selectors, political previews, deployments, save slot and mobile dialog layout

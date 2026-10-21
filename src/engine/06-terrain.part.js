@@ -69,7 +69,7 @@
     cf: 'shenlong_airship', bk: 'ikaruga_airship',
   };
   const airshipType = (g, side) => g?.mode === 'campaign' ? null :
-    ufnBlackKnights(g, side) ? AIRSHIPS.bk : AIRSHIPS[side] || null;
+    ufnBlackKnights(g, side) ? AIRSHIPS.bk : AIRSHIPS[side] || (g?.scenario?.independentPowers ? AIRSHIPS[g.scenario.equipment?.[side]] : null) || null;
   const isAir = u => !!TYPES[u?.type]?.air;
   // Built at a port (amphibious frames and Carrier-Battleships), not a city factory.
   const portBuilt = t => !!t?.naval && !t.air;

@@ -48,6 +48,8 @@ const ART = (() => {
     if (side === 'ufn') return ufnFlagSVG();
     const standard=REBEL_STANDARDS[side];
     if(standard)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+standard[3]+' flag"><rect width="120" height="80" fill="'+standard[0]+'"/><rect x="3" y="3" width="114" height="74" fill="none" stroke="'+standard[1]+'" stroke-width="3"/>'+standard[2]+'</svg>';
+    const scenarioFaction=globalThis.Knightmare?.FACTIONS?.[side];
+    if(scenarioFaction?.scenarioOnly)return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" aria-label="'+scenarioFaction.name+' flag"><rect width="120" height="80" fill="'+scenarioFaction.color+'"/><path d="M60 8 105 40 60 72 15 40Z" fill="none" stroke="#f4dfaa" stroke-width="4"/><text x="60" y="51" text-anchor="middle" font-size="32" font-family="serif" fill="#fff4d9">'+scenarioFaction.letter+'</text></svg>';
     const f = FACTION_FLAGS[side];
     return f ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f.width} ${f.height}" aria-label="${f.label}"><image width="${f.width}" height="${f.height}" href="${f.src}"/></svg>` : '';
   }
@@ -266,7 +268,7 @@ const ART = (() => {
     drawFlag(ctx, side, x, y, w) {
       const standard = flagSVG(side);
       if (!standard) return false;
-      const drawn = side === 'ufn' || REBEL_STANDARDS[side];
+      const drawn = side === 'ufn' || REBEL_STANDARDS[side] || globalThis.Knightmare?.FACTIONS?.[side]?.scenarioOnly;
       const img = drawn ? image('flag|' + side, standard) : flagAssetImage(side);
       if (!img) return false;
       const h = w * (side === 'ufn' ? 594 / 831 : drawn ? 80 / 120 : FACTION_FLAGS[side].height / FACTION_FLAGS[side].width);

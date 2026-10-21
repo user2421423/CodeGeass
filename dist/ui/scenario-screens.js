@@ -19,6 +19,12 @@ const SCENARIO_THEATERS = Object.freeze([
     "id": "alternate-history",
     "label": "Alternate History",
     "ids": [
+      "bk-civil-war",
+      "rounds-tournament",
+      "geass-war",
+      "protagonists-antagonists",
+      "partition-britannia",
+      "ufn-civil-war",
       "eu-military-coup",
       "rounds-rebellion",
       "shin-independence",
@@ -191,7 +197,7 @@ function scenarioDialog() {
     const active=side===scenarioSide;
     const cities=imageMeta.sides?.[side]?.cities ?? '—';
     const units=imageMeta.sides?.[side]?.formations ?? '—';
-    const portraitKey={britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin',rounds:'bismarck',shinregime:'shin',loyalists:'xingke',eunuchs:'gaohai',junta:'smilas'}[side];
+    const portraitKey=model.meta?.portraits?.[side]||E.FACTIONS[side]?.portrait||{britannia:'suzaku',eu:'leila',cf:'xingke',bk:'lelouch',eb:'shin',rounds:'bismarck',shinregime:'shin',loyalists:'xingke',eunuchs:'gaohai',junta:'smilas'}[side];
     const portrait=portraitKey?ART.portrait(portraitKey,'scenario-side-art'):'';
     const flag=ART.flagSVG(side);
     return `<button class="scenario-side-option ${active?'active':''}" type="button" data-scenario-faction="${esc(side)}" aria-pressed="${active}" style="--scenario-side-color:${side==='bk'?'#f0c94a':owner.color}">

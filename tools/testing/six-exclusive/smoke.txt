@@ -1,0 +1,9 @@
+PASS bk-civil-war all factions × four difficulties, ownership, deployments, production, save/load and victory
+PASS rounds-tournament all factions × four difficulties, ownership, deployments, production, save/load and victory
+PASS geass-war all factions × four difficulties, ownership, deployments, production, save/load and victory
+PASS protagonists-antagonists all factions × four difficulties, ownership, deployments, production, save/load and victory
+PASS partition-britannia all factions × four difficulties, ownership, deployments, production, save/load and victory
+PASS ufn-civil-war all factions × four difficulties, ownership, deployments, production, save/load and victory
+PASS rounds-tournament last-city elimination continues multi-faction war
+PASS partition-britannia last-city elimination continues multi-faction war
+PASS 68 starts; 68 total, 56 campaign, 12 exclusives; research and existing world factions preserved

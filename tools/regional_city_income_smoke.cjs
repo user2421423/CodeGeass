@@ -24,7 +24,10 @@ for(const [id,scenario] of entries){
     assert.equal(sides.length,0,'Division already uses locally assigned production');
     continue;
   }
-  assert.ok(sides.length>0,'Expected initial scenario funding: '+id);
+  if(g.scenario.economyLocalized){
+    assert.equal(sides.length,0,'Already-localized scenarios cannot retain off-map funding: '+id);
+    sides.push(...scenario.sides);
+  }else assert.ok(sides.length>0,'Expected initial scenario funding: '+id);
   const startUnits=g.startUnits;
   g.startUnits=null; // Inspect the authored opening targets before localization.
   const before=Object.fromEntries(sides.map(side=>[side,E.income(g,side)]));

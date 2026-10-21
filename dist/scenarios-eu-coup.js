@@ -14,7 +14,7 @@ define({
  reinforcements:{junta:26},
  commanders:{
    eu:['leila','akito','ryo','ayano','yukiya','anna','klaus','oscar','ferilli'],
-   junta:['smilas','olivia','eduardo','margaret','fernando','marirrosa','pierre']
+   junta:['smilas','olivia','eduardo','romero','fernando','marirrosa','pierre']
  },
  // Leila's and Akito's personal machines stay with the republic.
  exclusiveElites:{leila_alexander:'eu',akito_liberte:'eu'},

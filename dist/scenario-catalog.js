@@ -15,7 +15,7 @@ const SCENARIO_CATALOG = Object.freeze({
         "era": "Japan · 2017 a.t.b.",
         "intro": "Three playable powers in the Japanese theatre, with an alliance that ends on turn 10.",
         "diplomacy": "Britannia and the Black Knights are allied until turn 10.",
-        "elite": "All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.",
+        "elite": "All automatically converted starting units are Lv.1 elites, including rival commanders. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player-deployed elites use their unlocked HQ level (up to Lv.5); mission carriers retain their existing rules.",
         "focus": {
           "britannia": "Nagoya",
           "bk": "Kyoto",
@@ -69,7 +69,7 @@ const SCENARIO_CATALOG = Object.freeze({
         "era": "Japan · Alternate 2017",
         "intro": "Alternate 2017: Britannia, Europia and China fight for a divided Japan from the first turn.",
         "diplomacy": "No alliances: all three powers are hostile from turn 1.",
-        "elite": "All starting units are elite; AI-controlled starting commanders have Lv.5 frames, while player units and uncommanded AI units start at Lv.1. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player elite recruitment requires HQ unlocks; mission carriers are available without permanent unlocks.",
+        "elite": "All automatically converted starting units are Lv.1 elites, including rival commanders. Rival factions recruit unlimited elites with Supreme Commander officers, full research, and Challenge advantages. Player-deployed elites use their unlocked HQ level (up to Lv.5); mission carriers retain their existing rules.",
         "focus": {
           "britannia": "Nagoya",
           "eu": "Sendai",
@@ -96,7 +96,7 @@ const SCENARIO_CATALOG = Object.freeze({
         "era": "Europe · 2017 a.t.b.",
         "intro": "Euro Britannia versus Europia United. No scripted turn limit: capture every enemy city.",
         "diplomacy": "Both sides are hostile from turn 1. Europia United has the larger industrial economy; Euro Britannia begins with a heavier eastern field army.",
-        "elite": "Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, except AI named commanders at Lv.5. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player Elite Force unlocks follow HQ rules.",
+        "elite": "Elite Europe: both armies and fleets begin as single-frame Lv.1 elites, including rival starting commanders. Euro Britannia borrows Britannian Elite Forces. AI factories produce unlimited Lv.1 elites with full research; player-deployed elites use their unlocked HQ levels (up to Lv.5).",
         "focus": {
           "eu": "Warsaw",
           "eb": "Minsk"
@@ -318,7 +318,7 @@ const SCENARIO_CATALOG = Object.freeze({
           "cf": "Dammam"
         }
       },
-      "saveVersion": 2
+      "saveVersion": 5
     },
     "files": [
       "area18-landmask.js",
@@ -1646,6 +1646,217 @@ const SCENARIO_CATALOG = Object.freeze({
       "scenarios-europe.js",
       "scenarios-alternate-common.js",
       "scenarios-eu-coup.js"
+    ]
+  },
+  "bk-civil-war": {
+    "id": "bk-civil-war",
+    "title": "Black Knights Civil War",
+    "sides": [
+      "zero_loyalists",
+      "bk_command"
+    ],
+    "cols": 110,
+    "rows": 84,
+    "meta": {
+      "text": {
+        "era": "Alternate history · 2018 a.t.b.",
+        "intro": "Zero refuses to abandon the Black Knights after his identity is exposed. Kallen, C.C. and his personal loyalists hold Tokyo and the north; Ohgi and Tohdoh rally the regional commands from Kyoto. Command, intelligence and front-line loyalties divide the organization.",
+        "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
+        "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
+        "focus": {
+          "zero_loyalists": "Tokyo Settlement",
+          "bk_command": "Kyoto"
+        }
+      },
+      "saveVersion": 1,
+      "portraits": {
+        "zero_loyalists": "zero",
+        "bk_command": "ohgi"
+      }
+    },
+    "files": [
+      "scenarios.js",
+      "scenarios-exclusive-common.js",
+      "scenarios-bk-civil-war.js"
+    ]
+  },
+  "rounds-tournament": {
+    "id": "rounds-tournament",
+    "title": "Knights of the Round Tournament",
+    "sides": [
+      "knight_bismarck",
+      "knight_suzaku",
+      "knight_gino",
+      "knight_anya",
+      "knight_dorothea",
+      "knight_nonette"
+    ],
+    "cols": 180,
+    "rows": 126,
+    "meta": {
+      "text": {
+        "era": "Alternate history · 2018 a.t.b.",
+        "intro": "An imperial field exercise across the Great Basin becomes a war of six independent Round Knights. Bismarck, Suzaku, Gino, Anya, Dorothea and Nonette each command a private army. Every banner is an enemy; the last Knight holding every city wins.",
+        "terrain": "Mountains cost 2 movement; plains and marked passes cost 1. Float units ignore the extra terrain cost.",
+        "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
+        "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
+        "focus": {
+          "knight_bismarck": "Reno",
+          "knight_suzaku": "Las Vegas",
+          "knight_gino": "Tooele",
+          "knight_anya": "Ely",
+          "knight_dorothea": "Bishop",
+          "knight_nonette": "Pendragon"
+        }
+      },
+      "saveVersion": 1,
+      "portraits": {
+        "knight_bismarck": "bismarck",
+        "knight_suzaku": "suzaku",
+        "knight_gino": "gino",
+        "knight_anya": "anya",
+        "knight_dorothea": "dorothea",
+        "knight_nonette": "nonette"
+      }
+    },
+    "files": [
+      "scenarios-pendragon.js",
+      "scenarios-exclusive-common.js",
+      "scenarios-rounds-tournament.js"
+    ]
+  },
+  "geass-war": {
+    "id": "geass-war",
+    "title": "The Geass War",
+    "sides": [
+      "geass_order",
+      "anti_geass"
+    ],
+    "cols": 120,
+    "rows": 80,
+    "meta": {
+      "text": {
+        "era": "Alternate history · 2018 a.t.b.",
+        "intro": "Geass and Code supersede nationality. Zero, Charles, Marianne, Rolo, Bismarck, C.C., Leila, Shin, Marrybell and Sakuya unite in the east. Every other represented commander joins the conventional coalition in the west. Superior numbers confront the concentration of supernatural command abilities.",
+        "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
+        "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
+        "focus": {
+          "geass_order": "Moscow",
+          "anti_geass": "Warsaw"
+        }
+      },
+      "saveVersion": 1,
+      "portraits": {
+        "geass_order": "zero",
+        "anti_geass": "suzaku"
+      }
+    },
+    "files": [
+      "europe-landmask.js",
+      "scenarios-europe.js",
+      "scenarios-exclusive-common.js",
+      "scenarios-geass-war.js"
+    ]
+  },
+  "protagonists-antagonists": {
+    "id": "protagonists-antagonists",
+    "title": "Protagonists vs Antagonists",
+    "sides": [
+      "protagonists",
+      "antagonists"
+    ],
+    "cols": 120,
+    "rows": 80,
+    "meta": {
+      "text": {
+        "era": "Alternate history · 2018 a.t.b.",
+        "intro": "Former enemies choose a new side. Zero, Suzaku, Kallen, Akito, Xingke and Leila lead the protagonists from western Europe. Charles, Schneizel, Bismarck, Shin and the imperial regimes gather in the east. Redemption and opposition to the ruling regimes decide ambiguous allegiances.",
+        "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
+        "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
+        "focus": {
+          "protagonists": "Warsaw",
+          "antagonists": "Minsk"
+        }
+      },
+      "saveVersion": 1,
+      "portraits": {
+        "protagonists": "suzaku",
+        "antagonists": "charles"
+      }
+    },
+    "files": [
+      "europe-landmask.js",
+      "scenarios-europe.js",
+      "scenarios-exclusive-common.js",
+      "scenarios-protagonists-antagonists.js"
+    ]
+  },
+  "partition-britannia": {
+    "id": "partition-britannia",
+    "title": "The Partition of Britannia",
+    "sides": [
+      "eu",
+      "cf",
+      "remnants"
+    ],
+    "cols": 178,
+    "rows": 110,
+    "meta": {
+      "text": {
+        "era": "Alternate history · 2018 a.t.b.",
+        "intro": "The empire has lost its homeland. Europia United occupies the Atlantic states and eastern Canada; the Chinese Federation holds the Pacific and western Canada. Around Pierre, Rapid City and North Platte, three impoverished towns shelter Britannia’s last government. All three powers fight for total conquest.",
+        "terrain": "United States and Canada only, from the southern border to 70°N. Alaska is omitted; no Mexico, Greenland or Caribbean territory. Real country boundaries and Great Lakes; Rocky Mountain routes remain passable.",
+        "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
+        "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
+        "focus": {
+          "eu": "Chicago",
+          "cf": "Salt Lake City",
+          "remnants": "Pierre"
+        }
+      },
+      "saveVersion": 1,
+      "portraits": {
+        "eu": "leila",
+        "cf": "xingke",
+        "remnants": "charles"
+      }
+    },
+    "files": [
+      "partition-geography.js",
+      "scenarios-exclusive-common.js",
+      "scenarios-partition-britannia.js"
+    ]
+  },
+  "ufn-civil-war": {
+    "id": "ufn-civil-war",
+    "title": "UFN Civil War",
+    "sides": [
+      "ufn",
+      "cf"
+    ],
+    "cols": 174,
+    "rows": 116,
+    "meta": {
+      "text": {
+        "era": "Alternate history · 2018 a.t.b.",
+        "intro": "The Chinese Federation rejects UFN authority. The Black Knights launch an expedition from secured eastern railheads around Jining and Shangqiu into the Yellow River heartland. The Federation holds Luoyang, Zhengzhou and most of the homeland; neither government accepts a negotiated settlement.",
+        "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
+        "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
+        "focus": {
+          "ufn": "Shangqiu",
+          "cf": "Luoyang"
+        }
+      },
+      "saveVersion": 1,
+      "portraits": {
+        "ufn": "zero",
+        "cf": "xingke"
+      }
+    },
+    "files": [
+      "scenarios-luoyang.js",
+      "scenarios-exclusive-common.js",
+      "scenarios-ufn-civil-war.js"
     ]
   }
 });

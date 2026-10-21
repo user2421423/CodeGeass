@@ -16,6 +16,10 @@ const PLATE = {
   eunuchs: { light: '#4f7690', mid: '#284257', dark: '#0f1f2c', trim: '#d4e1e9', bar: '#9bc5d1' },
   junta: { light: '#8a6a3c', mid: '#4c381c', dark: '#241a0b', trim: '#f2c78b', bar: '#d9b679' },
 };
+// Scenario-only factions use the same complete token palette contract as nations.
+// Populate once when the renderer loads; no per-unit or per-frame allocation.
+for(const [side,faction] of Object.entries(E.FACTIONS))if(faction.scenarioOnly&&!PLATE[side])
+  PLATE[side]={light:faction.color,mid:'#30313e',dark:'#15151f',trim:faction.color,bar:'#e5d2a1'};
 const TERRAIN_FILL = {
   sea: '#174a6c',
   coast: '#4c8a7d',

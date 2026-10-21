@@ -1,0 +1,27 @@
+[
+  {
+    "script": "zero_geass_absolute_command_smoke.cjs",
+    "branchExit": 1,
+    "pristine37c8ad80Exit": 1
+  },
+  {
+    "script": "lelouch_imperial_command_smoke.cjs",
+    "branchExit": 1,
+    "pristine37c8ad80Exit": 1
+  },
+  {
+    "script": "commander_ability_banners_smoke.cjs",
+    "branchExit": 1,
+    "pristine37c8ad80Exit": 1
+  },
+  {
+    "script": "story_normal_defense_ai_probe.cjs",
+    "branchExit": 1,
+    "pristine37c8ad80Exit": 1
+  },
+  {
+    "script": "interactive_tutorial_smoke.cjs",
+    "branchExit": 1,
+    "pristine37c8ad80Exit": 1
+  }
+]

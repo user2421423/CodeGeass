@@ -232,6 +232,9 @@
     if (!e) return false;
     // Scenario-only factions (alternate history) follow the rules of the power whose equipment they use.
     const kit = g?.scenario?.equipment?.[side] || side;
+    const coalition = g?.mode === 'scenario' && g.scenario?.rosterSources?.[side];
+    if (coalition) return (g.scenario.eliteRosters?.[side] || []).includes(id) &&
+      coalition.some(source => e.availableTo.includes(source));
     if (kit === 'cf') {
       if (ufnBlackKnights(g, side)) return e.availableTo.includes('bk');
       // Older saves may retain a three-land-unit roster snapshot. Native
