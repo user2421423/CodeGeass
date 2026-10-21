@@ -89,5 +89,26 @@
     "crop": "named individual portrait / official character turnaround",
     "publishedFile": "dist/assets/art/portraits/augustahighland-canon-d560ef494828.jpg",
     "method": "Face/upper-body crop from identified character art; no identity substitution"
+  },
+  "brondello": {
+    "source": "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png",
+    "sourceSha256": "592c05e7aaa2f137d9f8e217c93a7ade84dce0dd3e18cffa19935a0e06913bc0",
+    "crop": "named three-Swordmaster group still (42, 27, 133, 153) (350x158)",
+    "publishedFile": "dist/assets/art/portraits/brondello-canon-5d538143ac08.jpg",
+    "method": "Identified anime character from grouped still: Brondello black-haired left, Dore silver hair/forelocks middle, Scholtz short blond hair right; source low-resolution"
+  },
+  "dore": {
+    "source": "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png",
+    "sourceSha256": "592c05e7aaa2f137d9f8e217c93a7ade84dce0dd3e18cffa19935a0e06913bc0",
+    "crop": "named three-Swordmaster group still (163, 34, 244, 155) (350x158)",
+    "publishedFile": "dist/assets/art/portraits/dore-canon-8efaf27cdc3c.jpg",
+    "method": "Identified anime character from grouped still: Brondello black-haired left, Dore silver hair/forelocks middle, Scholtz short blond hair right; source low-resolution"
+  },
+  "scholtz": {
+    "source": "https://static.tvtropes.org/pmwiki/pub/images/sword_masters_of_st_michael.png",
+    "sourceSha256": "592c05e7aaa2f137d9f8e217c93a7ade84dce0dd3e18cffa19935a0e06913bc0",
+    "crop": "named three-Swordmaster group still (260, 34, 347, 156) (350x158)",
+    "publishedFile": "dist/assets/art/portraits/scholtz-canon-41d6977245ff.jpg",
+    "method": "Identified anime character from grouped still: Brondello black-haired left, Dore silver hair/forelocks middle, Scholtz short blond hair right; source low-resolution"
   }
 }

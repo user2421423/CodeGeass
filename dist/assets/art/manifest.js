@@ -758,6 +758,21 @@ globalThis.KnightmareArtManifest = {
       "src": "portraits/augustahighland-canon-d560ef494828.jpg",
       "fx": 0.5,
       "fy": 0.42
+    },
+    "brondello": {
+      "src": "portraits/brondello-canon-5d538143ac08.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "dore": {
+      "src": "portraits/dore-canon-8efaf27cdc3c.jpg",
+      "fx": 0.5,
+      "fy": 0.42
+    },
+    "scholtz": {
+      "src": "portraits/scholtz-canon-41d6977245ff.jpg",
+      "fx": 0.5,
+      "fy": 0.42
     }
   },
   "buildings": {
