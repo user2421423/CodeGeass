@@ -4,7 +4,7 @@
       if (a.hp <= 0 || a.side !== u.side || a.id === u.id) continue;
       // Leila's new skill replaces both her old +12% damage aura and the
       // default commander +8% damage aura; she provides defense instead.
-      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && a.cmd !== 'ohgi' && a.cmd !== 'smilas' && !a.auraDisrupted && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
+      if (a.cmd && a.cmd !== 'leila' && a.cmd !== 'zero' && a.cmd !== 'lelouch' && a.cmd !== 'schneizel' && a.cmd !== 'bismarck' && a.cmd !== 'ayano' && a.cmd !== 'yukiya' && a.cmd !== 'rakshata' && a.cmd !== 'xianglin' && a.cmd !== 'ohgi' && a.cmd !== 'smilas' && !a.auraDisrupted && (a.cmd !== 'ashley' || !atSea(g, a)) && dist(g, a, u) <= auraRange(a)) bonus = Math.max(bonus, fx(a).aura?.value || 0.08);
       const ea = eliteFx(a).aura;
       if (ea && dist(g, a, u) <= ea.range && (!ea.branches || ea.branches.includes(TYPES[u.type].branch)))
         bonus = Math.max(bonus, ea.value);
@@ -378,7 +378,7 @@
       !atSea(g, d) &&
       inRange(d, a, g) &&
       hostileTarget(g, d, a);
-    const crit = clamp(
+    const crit = f.guaranteedCrit ? 1 : clamp(
       t.crit +
         (f.crit || 0) +
          (f.liveOnCrit && a.hp / maxHP(a) < 0.5 ? f.liveOnCrit : 0) +
@@ -391,9 +391,15 @@
       1,
     );
     const counterAllowed = counter || senbaReaction;
+    // Luck of the Devil applies to defensive counterfire, not just initiated volleys.
+    // Ordinary commanders' counterfire remains non-critical.
+    const counterCritMult = d && fx(d).guaranteedCrit
+      ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
+        techValue(g, d.side, `${branchOf(d.type)}.critpower`)
+      : 1;
     const counterDamage = (senbaReaction ? Math.round(power(g,d,a,stationAt(g,a),true)*(.5/.65))
       : counter ? power(g,d,a,stationAt(g,a),true) : 0) *
-      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a));
+      (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) * counterCritMult;
     // Preview the approximate 5% reflection; the actual volley uses HP lost
     // after damage rolls and interception, and reflects only if Xingke survives.
     const counterReflection = counterAllowed && d.hp > unitDmg && fx(d).counterReflect
@@ -657,6 +663,16 @@
           award(g, attacker.side, 'valor', `Defeated ${COMMANDERS[v.cmd].short}`, attacker);
         }
       }
+      // Asura Strike Force: actual combat kills, including lethal counterfire,
+      // rally Ashley and friendly on-map formations within two hexes. Forced
+      // deaths (e.g. carrier cargo) and non-hostile deaths do not trigger it.
+      if (fx(attacker).asuraStrikeForce && foe(g, v.side, attacker.side)) {
+        for (const ally of g.units) {
+          if (ally.hp > 0 && ally.side === attacker.side && !atSea(g, ally) &&
+              dist(g, attacker, ally) <= 2)
+            ally.morale = Math.min(1, ally.morale + 1);
+        }
+      }
       attacker.kills++;
       attacker.xp = Math.min(5, attacker.xp + 1);
       attacker.morale = clamp(attacker.morale + 1, -3, 1);
@@ -885,9 +901,15 @@
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
     if (a.hp > 0 && d && d.hp > 0 && manfrediSuperiority(g,a,d)<2 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
+      // Guaranteed critical counterfire uses the same critical multiplier as
+      // a normal attacking volley; other defenders keep ordinary counterfire.
+      const counterCritMult = fx(d).guaranteedCrit
+        ? (TYPES[d.type].critMult || 1.55) + (fx(d).critBonus || 0) +
+          techValue(g, d.side, `${branchOf(d.type)}.critpower`)
+        : 1;
       retaliation = Math.round(power(g,d,a,stationAt(g,a),true) *
         (senbaCounter ? .5/.65 : 1) * (fx(d).unrestrictedCounter ? 1 : suppressiveCounterFactor(g, a)) *
-        (0.94+random(g)*.12));
+        counterCritMult * (0.94+random(g)*.12));
       // The reflected 5% is additional damage on EACH legal counterattack,
       // computed from actual HP lost in this attack (not the raw preview).
       if (fx(d).counterReflect)
