@@ -281,7 +281,7 @@
       era:"Southern Africa · Alternate 2017",
       intro:"Four Britannian carrier groups attack E.U.-controlled southern Africa from the Atlantic and Indian Oceans. Britannia owns no cities at the start.",
       diplomacy:"Only Britannia and Europia United are at war. No turn limit: conquer every enemy city or eliminate the invading expedition.",
-      elite:"Elite South Africa: eligible Lv.1 Elite Forces replace transported land formations; named AI commanders reach Lv.5. Carriers and fleet escorts remain conventional.",
+      elite:"Elite South Africa: eligible Lv.1 Elite Forces replace transported land formations; enemy named commanders begin at Lv.3. Carriers and fleet escorts remain conventional.",
       focus:{
         britannia:"",
         eu:"Cape Town"
