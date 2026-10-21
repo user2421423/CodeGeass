@@ -275,6 +275,7 @@
       // The charge remains intact during previews, then is spent by the
       // actual direct hit, counterattack or splash resolution.
       if (target.expCCProtection) attack *= 0.70;
+      if (target.expFarneseWithdrawal) attack *= 0.70;
       // Non-stacking Blue Geass protection, including Leila herself and
       // friendly formations at exactly two hexes. No offensive bonus.
       if (leilaCommand(g, target)) attack *= 0.9;
@@ -621,7 +622,9 @@
     if(!v.warCounted){v.warCounted=true;
       recordWarEvent(g,'unitDestroyed',attacker?.side||by||v.side,{unitId:v.id,unitType:v.type,
         unitSide:v.side,commander:v.cmd||null,personal:!!v.personal,byCombat:!!attacker||!!by,
-        group:warGroup(g,attacker),invasion:!!v.landingRefreshTurn&&v.landingRefreshTurn===g.turn});}
+        group:warGroup(g,attacker),invasion:!!v.landingRefreshTurn&&v.landingRefreshTurn===g.turn});
+      farneseOnDeath(g,v,attacker);
+    }
     // A sunk Carrier-Battleship takes the Knightmares aboard down with it.
     for (const c of v.cargo?.splice(0) || []) {
       c.hp = 0;
@@ -744,6 +747,12 @@
       }
     }
 
+    // The kill's suppression overrides every chain and elite action refresh.
+    if (a.expFarneseSlaughterTurn === g.turn) {
+      a.moved = true; a.attacked = true;
+      a.withdrawMove = false; a.skillReposition = 0;
+      a.eliteMoveAfterKill = false;
+    }
     return breakthrough;
   }
   function attack(g, id, c, r) {
@@ -1029,6 +1038,13 @@
         ally.attacked=false;
         ally.chain=0;
       }
+    }
+    // Post-volley commander refreshes cannot undo Andrea's exhaustion.
+    if (a.expFarneseSlaughterTurn === g.turn) {
+      a.moved = true; a.attacked = true;
+      a.withdrawMove = false; a.skillReposition = 0;
+      a.eliteMoveAfterKill = false;
+      a.expToruExtraAttack = 0; a.expToruExtraMove = 0;
     }
     // Full-strength free Oscar retaliation after an enemy initiates an
     // attack against an allied formation. This cannot produce counterfire.
