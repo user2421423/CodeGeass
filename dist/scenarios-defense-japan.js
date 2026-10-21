@@ -260,7 +260,7 @@
     ai:{doctrine:'invasion',synchronizedFlotillas:true},
     text:{
       era:'Japan · Alternate 2017',
-      intro:'The Black Knights defend all 44 Japanese cities with 68 land frames and eleven ships but only half Britannia's nominal economic funding. Britannia arrives in loaded carriers with no bases ashore and a three-turn reserve.',
+      intro:'The Black Knights defend all 44 Japanese cities with 68 land frames and eleven ships but only half the Britannian nominal economic funding. Britannia arrives in loaded carriers with no bases ashore and a three-turn reserve.',
       diplomacy:'The Black Knights and Britannia are enemies from turn 1. Capture all cities as Britannia, or destroy the cityless invasion as the Black Knights.',
       elite:'Elite Japan upgrades eligible land formations to faction Elite Forces while carriers remain conventional. Existing Elite difficulty research and commander rules apply.',
       focus:{bk:'Tokyo Settlement',britannia:''}
