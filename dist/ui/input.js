@@ -390,15 +390,16 @@ document.addEventListener('click', e => {
   if (d.armyActivate !== undefined) { armyGroupActivate(d.armyActivate ? +d.armyActivate : null); return; }
   if (d.armyAddSelection) { armyGroupAddSelection(+d.armyAddSelection); return; }
   if (d.armyStance) {
-    const [id, stance] = d.armyStance.split(':');
-    armyGroupSetStance(+id, stance);
+    const [id, stance, view] = d.armyStance.split(':');
+    armyGroupSetStance(+id, stance, view === 'overview');
     return;
   }
   if (d.armyConquer) {
-    const id = +d.armyConquer, gr = E.armyGroup(game, id);
+    const [idText, view] = d.armyConquer.split(':');
+    const id = +idText, gr = E.armyGroup(game, id);
     const r = E.setArmyGroupConquest(game, id, !gr?.autoConquer);
     if (!r.ok) toast(r.reason);
-    else { E.planArmyGroupConquest(game, game.player); refreshAndSave(); armyGroupsDialog(id); }
+    else { E.planArmyGroupConquest(game, game.player); refreshAndSave(); armyGroupsDialog(view === 'overview' ? null : id); }
     return;
   }
   if (d.armyRoute) { armyGroupStartRouting(+d.armyRoute); return; }
@@ -410,7 +411,8 @@ document.addEventListener('click', e => {
     if (result.ok) {
       refreshAndSave();
       armyGroupsDialog(groupId);
-      toast(d.armyAdd ? 'Knightmare assigned to army group.' : 'Knightmare removed from army group.');
+      toast(result.disbanded ? 'Last unit removed: army group automatically disbanded.' :
+        d.armyAdd ? 'Knightmare assigned to army group.' : 'Knightmare removed from army group.');
     } else toast(result.reason);
     return;
   }
