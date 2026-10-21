@@ -677,7 +677,7 @@
     katase: {
       name: 'Tatewaki Katase',
       short: 'Katase',
-      side: 'jlf',
+      side: 'bk',
       commission: 'distinguished',
       cost: 145,
       role: 'Artillery',
