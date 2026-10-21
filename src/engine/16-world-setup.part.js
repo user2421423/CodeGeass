@@ -325,7 +325,7 @@
       used[u.side] = (used[u.side] || 0) + 1;
       u.type = ELITE_FORCES[id].type;
       u.elite = id;
-      u.eliteLevel = u.cmd && u.side !== g.player ? 3 : 1;
+      u.eliteLevel = u.cmd && foe(g, u.side, g.player) ? 3 : 1;
       u.eliteStart = true;
       u.stack = 1; // Elite Forces are single frames on every side, AI included.
       u.hpTech = hullTech(g, u);
