@@ -165,15 +165,15 @@ function paintMapMarkers(b, g, width, height, dpr, allUnits = false) {
       b.fillStyle = '#ff6fb5';
       b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
     }
+  // Show all living formations, not only the player. The same allegiance
+  // palette as the full map applies to each faction in both views.
   for (const u of g.units)
-    if (u.hp > 0 && (allUnits || u.side === g.player)) {
+    if (u.hp > 0) {
       const p = hexCenter(u),
-        z = (allUnits ? 3.5 : 2) * dpr;
-      if (allUnits) {
-        b.fillStyle = '#000';
-        b.fillRect(p.x * sx - z / 2 - dpr, p.y * sy - z / 2 - dpr, z + 2 * dpr, z + 2 * dpr);
-      }
-      b.fillStyle = allUnits ? col(u.side) : '#7dffb0';
+        z = (allUnits ? 3.5 : 2.8) * dpr;
+      b.fillStyle = '#061320';
+      b.fillRect(p.x * sx - z / 2 - dpr, p.y * sy - z / 2 - dpr, z + 2 * dpr, z + 2 * dpr);
+      b.fillStyle = unitAllegianceColor(g, u);
       b.fillRect(p.x * sx - z / 2, p.y * sy - z / 2, z, z);
     }
 }
