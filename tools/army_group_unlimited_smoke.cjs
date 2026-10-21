@@ -92,7 +92,7 @@ assert.doesNotMatch(ui, /\$\{strategicOverlayControls\(\)\}/, 'Off / All Army Gr
 const input = fs.readFileSync('dist/ui/input.js', 'utf8');
 assert.match(input, /e\.target\.dataset\.armyOrder/, 'Dropdown change events are handled');
 assert.match(input, /E\.setArmyGroupConquest\(game, id, true\)/, 'Capture order is enabled by dropdown');
-assert.match(input, /window\.confirm/, 'Deleting a group requires confirmation');
+assert.doesNotMatch(input, /window\.confirm/, 'Deleting a group never opens a confirmation prompt');
 
 // Render dropdown HTML independently: the currently active order must be selected.
 const selectorSource = ui.slice(ui.indexOf('function armyGroupOrderSelect'),
