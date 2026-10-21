@@ -1,0 +1,43 @@
+name: Partition existing-save geography migration
+on:
+  pull_request:
+    paths:
+      - 'dist/scenarios-partition-britannia.js'
+      - 'src/engine/07-save-compatibility.part.js'
+      - 'dist/ui/core.js'
+      - 'tools/partition_legacy_save_migration.cjs'
+      - 'tools/data/partition_legacy_hex_delta.json'
+      - '.github/workflows/partition-legacy-save-migration.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'dist/scenarios-partition-britannia.js'
+      - 'src/engine/07-save-compatibility.part.js'
+      - 'dist/ui/core.js'
+      - 'tools/partition_legacy_save_migration.cjs'
+      - '.github/workflows/partition-legacy-save-migration.yml'
+  workflow_dispatch:
+
+jobs:
+  migrate-existing-save:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build generated engine from editable parts
+        run: node tools/build_sources.cjs
+      - name: Validate syntax
+        run: |
+          node --check dist/scenarios-partition-britannia.js
+          node --check dist/ui/core.js
+          node --check tools/partition_legacy_save_migration.cjs
+      - name: Audit complete legacy terrain migration and unchanged progress
+        run: node tools/partition_legacy_save_migration.cjs
+      - name: Verify regular Partition game and save tests still work
+        run: |
+          node tools/partition_hex_audit.cjs
+          node tools/partition_ai_regression.cjs
+          node tools/six_exclusive_smoke.cjs
