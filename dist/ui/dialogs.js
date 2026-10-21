@@ -199,6 +199,9 @@ function generalDialog(k, personal = false) {
     top = o.rank >= E.PROMOTE_COST.length - 1,
     stars = (n, cap) => Array.from({ length: E.MAX_RATING }, (_, i) =>
       `<i class="${i >= cap ? 'locked' : i < n ? 'on' : ''}" title="${i >= cap ? 'Locked by rank' : i < n ? 'Owned' : 'Available'}">${i >= cap ? '×' : '★'}</i>`).join('');
+  // Preserve the details scroll position across upgrades and replacements.
+  const priorInfoScroll = generalOpen?.k === k && generalOpen?.personal === personal
+    ? (modal.querySelector('.general-info .gi-right')?.scrollTop || 0) : 0;
   generalOpen = { k, personal };
   const ratings = Object.entries(E.BRANCH_NAMES)
     .map(
@@ -209,17 +212,36 @@ function generalDialog(k, personal = false) {
   const medals = `<section class="honors-panel"><div class="honors-panel-head"><span class="label">Military honors · ${personal ? 'Permanent service record' : 'Operation recognition'}</span><button class="small" data-action="honors">Hall of Honors</button></div>${honorsForCommander(o, personal ? null : k)}${personal && !owned ? '<small>Recruit this commander to begin a permanent service record.</small>' : ''}</section>`;
   const skills = Object.entries(o.generics || {});
   const capacity = E.genericSlots(k, o);
-  const skillPanel = `<div class="gi-ability" style="margin-top:12px"><span class="label">${E.commissionName(o.commission || a.commission)} Commission · Generic skills ${skills.length}/${capacity} slots</span>
+  // WC4-style fixed slot positions, with all three skills presented in one row.
+  const slotCards = Array.from({ length: capacity }, (_, slot) => {
+    const entry = skills[slot];
+    if (!entry) return `<article class="gi-generic-card is-empty" role="listitem">
+      <span class="gi-generic-slot">Slot ${slot + 1}</span>
+      <b>Empty skill slot</b>
+      <small>Learn a generic skill below to fill this slot.</small>
+    </article>`;
+    const [id, level] = entry;
+    return `<article class="gi-generic-card" role="listitem">
+      <span class="gi-generic-slot">Slot ${slot + 1}</span>
+      <b class="gi-generic-title">${esc(E.GENERIC_SKILLS[id]?.name || id)} · Lv.${level}/5</b>
+      <small class="gi-generic-description">${esc(E.genericDescription(id, level))}</small>
+      ${editable ? `<div class="gi-generic-actions">
+        ${level < 5 ? tokenButton(`data-buy-generic="${id}" data-officer="${k}"`, E.genericCost(level), E.genericReason(profile, k, id), 'Upgrade ') : '<span class="label">MAX</span>'}
+        ${tokenButton(`data-remove-generic="${id}" data-officer="${k}"`, E.GENERIC_RESPEC_COST, E.removeGenericReason(profile, k, id), 'Replace ')}
+      </div><small class="gi-generic-refund">Replace refunds ${count(E.genericRefundPreview(profile, k, id))} tokens (90% invested, less the 40-token fee).</small>` : ''}
+    </article>`;
+  }).join('');
+  const skillPanel = `<section class="gi-ability gi-generics">
+    <span class="label">${E.commissionName(o.commission || a.commission)} Commission · Generic skills ${skills.length}/${capacity} slots</span>
     ${editable && E.commissionOf(k,o) !== 'legendary' ? `<p>${tokenButton(`data-upgrade-commission="${k}"`, E.commissionUpgradePrice(profile, k), E.upgradeCommissionReason(profile, k), 'Upgrade Commission ')}</p>` : ''}
-    <p style="font-size:12px">The unique skill stays fixed. Generic skills are bought with command tokens.</p>
-    ${skills.map(([id, level]) => `<div style="padding:8px 0;border-bottom:1px solid #ffffff22"><b>${esc(E.GENERIC_SKILLS[id]?.name || id)} · Lv.${level}/5</b><small style="display:block">${esc(E.genericDescription(id, level))}</small>
-    ${editable ? `${level < 5 ? tokenButton(`data-buy-generic="${id}" data-officer="${k}"`, E.genericCost(level), E.genericReason(profile, k, id), 'Upgrade ') : '<span class="label">MAX</span>'}
-      <small style="display:block">Replace: refund ${count(E.genericRefundPreview(profile, k, id))} tokens (90% of invested amount), minus the 40-token fee.</small>
-      ${tokenButton(`data-remove-generic="${id}" data-officer="${k}"`, E.GENERIC_RESPEC_COST, E.removeGenericReason(profile, k, id), 'Replace ')}` : ''}</div>`).join('')}
-    ${editable && skills.length < capacity ? `<details style="margin-top:8px"><summary>Learn generic skill (${capacity - skills.length} empty)</summary>
-      <div style="max-height:230px;overflow:auto">${Object.entries(E.GENERIC_SKILLS).filter(([id]) => !o.generics?.[id]).map(([id, skill]) =>
-        `<div style="padding:6px 0;border-bottom:1px solid #ffffff22"><b>${esc(skill.name)}</b><small style="display:block">${esc(E.genericDescription(id, 5))}</small>
-          ${tokenButton(`data-buy-generic="${id}" data-officer="${k}"`, E.genericCost(0), E.genericReason(profile, k, id), 'Learn ')}</div>`).join('')}</div></details>` : capacity === 0 ? '<p>No generic slots at this tier.</p>' : ''}</div>`;
+    <p>The unique skill stays fixed. Generic skills are bought with command tokens.</p>
+    ${capacity ? `<div class="gi-generic-grid" role="list" aria-label="Generic skill slots">${slotCards}</div>` : '<p>No generic slots at this tier.</p>'}
+    ${editable && skills.length < capacity ? `<details class="gi-generic-learn">
+      <summary>Learn generic skill (${capacity - skills.length} empty)</summary>
+      <div class="gi-generic-catalog">${Object.entries(E.GENERIC_SKILLS).filter(([id]) => !o.generics?.[id]).map(([id, skill]) =>
+        `<div class="gi-generic-choice"><b>${esc(skill.name)}</b><small>${esc(E.genericDescription(id, 5))}</small>
+          ${tokenButton(`data-buy-generic="${id}" data-officer="${k}"`, E.genericCost(0), E.genericReason(profile, k, id), 'Learn ')}</div>`).join('')}</div></details>` : ''}
+  </section>`;
   const seatPanel = editable
     ? `<div class="gi-ability"><span class="label">Global High Command · ${E.highCommandUsed(profile)}/${E.highCommandCapacity(profile)}</span>
        <p>${E.commandStageName(o.rank)} · positions shared across every faction.</p>
@@ -253,6 +275,8 @@ function generalDialog(k, personal = false) {
     game.missionKills?.[k] ? `${game.missionKills[k]} kills this operation` : '',
   ].filter(Boolean).join(' · ');
   modal.innerHTML = `<div class="overlay"><section class="dialog wide general-info ${a.side}" role="dialog" aria-modal="true" aria-label="Commander info"><div class="gi-head"><button class="small close" data-action="general-close" aria-label="Close">✕</button><h2>Commander Info</h2></div><div class="gi-body"><div class="gi-left"><div class="gi-nameplate"><span class="gi-stars-top">${E.commissionName(o.commission || a.commission)} Commission · ${E.genericSlots(k,o)} generic slots</span><b>${a.name}</b></div><div class="gi-portrait">${ART.portrait(k, 'gi-portrait-art')}</div><div class="gi-rank"><div class="gi-rank-line"><span class="gi-insignia">✦</span><span>${E.RANKS[o.rank]} · ${E.commandStageName(o.rank)}</span></div><div class="gi-rank-line"><span class="gi-heart">❤</span><span>${Math.round(E.RANK_HP[o.rank] * 100)}% unit frame</span></div><div class="gi-kind ${personal ? 'mine' : ''}">${personal ? 'Your commander' : own ? 'Operation commander' : 'Rival commander'}</div>${personal && o.honors?.length ? `<div class="honors-mini gi-honor-rack">${o.honors.slice(0,3).map(h=>honorIcon(h.id)).join('')}${o.honors.length>3?`<small>+${o.honors.length-3}</small>`:''}</div>` : ''}</div></div><div class="gi-right"><div class="gi-ratings">${ratings}</div><div class="gi-ability"><span class="label">${a.skill} · ${a.title}</span><p><b>${a.action ? 'Active' : 'Passive'}${a.action ? ' · Range '+(a.action.range||0)+' · '+(a.action.cooldown===0?'Once per turn':'Cooldown '+(a.action.cooldown||3)+' turns') : ''}</b></p><p>${a.desc}</p>${unit && E.commanderStatusText(game,unit) ? `<small>${esc(E.commanderStatusText(game,unit))}</small>` : ''}${commanderBaseHTML(k)}${deploymentDetails ? `<small>${esc(deploymentDetails)}</small>` : ''}</div><div class="gi-ladder"><span class="label">Rank · ${o.rank + 1} of ${editable ? E.PROMOTE_COST.length : E.RANKS.length}</span><div class="gi-pips">${(editable ? E.RANKS.slice(0, E.PROMOTE_COST.length) : E.RANKS).map((r, i) => `<i class="${i < o.rank ? 'done' : i === o.rank ? 'now' : ''}" title="${r} · ${Math.round(E.RANK_HP[i] * 100)}% unit frame${i ? ` · ${E.PROMOTE_COST[i]} tokens` : ''}"></i>`).join('')}</div></div>${skillPanel}${plannerPanel}${seatPanel}${medals}${footer}</div></div><div class="gi-foot">${personal || own ? '<button class="small" data-action="generals">HQ commanders</button>' : ''}${hqBack === 'game' ? '<button class="small" data-action="admirals">Assign commanders</button>' : ''}</div></section></div>`;
+  const infoScroller = modal.querySelector('.general-info .gi-right');
+  if (infoScroller) infoScroller.scrollTop = priorInfoScroll;
   focusDialog();
 }
 function commanderCard(u) {
