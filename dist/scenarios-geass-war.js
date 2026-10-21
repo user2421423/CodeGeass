@@ -7,7 +7,7 @@ const config={
   "id": "geass-war",
   "title": "The Geass War",
   "parent": "european-war",
-  "intro": "Geass and Code supersede nationality. Zero, Charles, Marianne, Rolo, Bismarck, C.C., Leila, Shin, Marrybell and Sakuya unite in the east. Every other represented commander joins the conventional coalition in the west. Superior numbers confront the concentration of supernatural command abilities.",
+  "intro": "Geass and Code supersede nationality. Zero, Charles, Marianne, Rolo, Bismarck, C.C., Leila, Shin, Marrybell, Mao and Shamna unite in the east. Every other represented commander joins the conventional coalition in the west. Superior numbers confront the concentration of supernatural command abilities.",
   "rosters": {
     "geass_order": [
       "britannia",
@@ -34,7 +34,8 @@ const config={
       "leila",
       "shin",
       "marrybell",
-      "sakuya"
+      "mao",
+      "shamna"
     ],
     "anti_geass": [
       "suzaku",
@@ -124,7 +125,24 @@ const config={
       "euphemia",
       "cecile",
       "eduardo",
-      "ferilli"
+      "ferilli",
+      "monica",
+      "luciano",
+      "chloe",
+      "shalio",
+      "bolvona",
+      "jeanrowe",
+      "johanne",
+      "brondello",
+      "dore",
+      "scholtz",
+      "renelaurent",
+      "janmanes",
+      "simonmericourt",
+      "kuzanmontoban",
+      "alannecker",
+      "franzvallo",
+      "augustahighland"
     ]
   },
   "focus": {
@@ -140,7 +158,6 @@ const config={
     "rolo": "vincent_ward",
     "marianne": "mordred",
     "marrybell": "lancelot",
-    "sakuya": "guren_mkii",
     "zero": "shinkiro",
     "kallen": "guren_seiten",
     "suzaku": "lancelot_albion",

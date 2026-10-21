@@ -68,7 +68,6 @@ const config={
       "dorothea",
       "nonette",
       "oldrin",
-      "sakuya",
       "kaguya",
       "lloyd",
       "sophie",
@@ -98,7 +97,8 @@ const config={
       "chaojielun",
       "zidien",
       "euphemia",
-      "cecile"
+      "cecile",
+      "chloe"
     ],
     "antagonists": [
       "charles",
@@ -123,7 +123,25 @@ const config={
       "eduardo",
       "ferilli",
       "miguel",
-      "vritra"
+      "vritra",
+      "monica",
+      "luciano",
+      "mao",
+      "shalio",
+      "shamna",
+      "bolvona",
+      "jeanrowe",
+      "johanne",
+      "brondello",
+      "dore",
+      "scholtz",
+      "renelaurent",
+      "janmanes",
+      "simonmericourt",
+      "kuzanmontoban",
+      "alannecker",
+      "franzvallo",
+      "augustahighland"
     ]
   },
   "focus": {

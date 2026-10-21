@@ -484,11 +484,6 @@ globalThis.KnightmareArtManifest = {
       "fx": 0.5,
       "fy": 0.5
     },
-    "sakuya": {
-      "src": "portraits/sakuya-approved.jpg",
-      "fx": 0.5,
-      "fy": 0.5
-    },
     "kaguya": {
       "src": "portraits/kaguya-approved.jpg",
       "fx": 0.5,

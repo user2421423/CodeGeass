@@ -1737,7 +1737,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "meta": {
       "text": {
         "era": "Alternate history · 2018 a.t.b.",
-        "intro": "Geass and Code supersede nationality. Zero, Charles, Marianne, Rolo, Bismarck, C.C., Leila, Shin, Marrybell and Sakuya unite in the east. Every other represented commander joins the conventional coalition in the west. Superior numbers confront the concentration of supernatural command abilities.",
+        "intro": "Geass and Code supersede nationality. Zero, Charles, Marianne, Rolo, Bismarck, C.C., Leila, Shin, Marrybell, Mao and Shamna unite in the east. Every other represented commander joins the conventional coalition in the west. Superior numbers confront the concentration of supernatural command abilities.",
         "diplomacy": "Every faction is hostile to every other faction from turn one. Total conquest; no alliances or turn limit.",
         "elite": "Named signature elites start at Lv.1. Elite difficulty uses the established single-frame, research and rival commander rules.",
         "focus": {
