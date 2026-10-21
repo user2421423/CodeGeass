@@ -244,6 +244,18 @@
     return g.units.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, u, v) <= (kind === 'cleanse' ? 1 : 2) &&
       (kind === 'cleanse' ? v.side === u.side : foe(g, v.side, u.side)));
   }
+  // Cosmetic combat records describe strikes already resolved by the rules.
+  // They never execute a second attack or spend a formation's normal actions.
+  function commanderCombatRecord(attacker, target, damage, shieldDamage = 0, counter = 0) {
+    return {
+      attacker: { id:attacker.id, type:attacker.type, side:attacker.side, c:attacker.c, r:attacker.r },
+      result: {
+        ok:true, from:{c:attacker.c,r:attacker.r}, to:{c:target.c,r:target.r}, targetId:target.id,
+        hit:[{id:target.id,c:target.c,r:target.r,damage:Math.max(0,damage)}],
+        shieldDamage, counter:Math.max(0,counter), destroyed:target.hp<=0, crit:false,
+      },
+    };
+  }
   function feint(g, id, targetId = null) {
     const check = validateAction(g, { kind: 'commander', id });
     if (!check.ok) return check;
@@ -321,7 +333,8 @@
       u.feintCD=action.cooldown;u.feintUsedTurn=g.turn;
       log(g,'Command to Die strikes '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
       checkVictory(g);
-      return {ok:true,target:v.id,damage:before-v.hp};
+      return {ok:true,target:v.id,damage:before-v.hp,
+        combat:[commanderCombatRecord(u,v,before-v.hp)]};
     }
     if (action.kind === 'maskFalls') {
       if(u.side!==g.player)return {ok:false,reason:'The AI cannot use The Mask Falls'};
@@ -362,16 +375,19 @@
       u.feintCD = action.cooldown;
       u.feintUsedTurn = g.turn;
       let totalDamage=0, shieldDamage=0, fired=0;
+      const combat = [];
       for (const shooter of participants) {
         if (v.hp <= 0 || g.over) break;
         const shot = preview(g,shooter.id,v.c,v.r);
         if (!shot) continue;
         const city = stationAt(g,v);
+        let shotShieldDamage = 0;
         if (city && foe(g,city.owner,shooter.side)) {
           city.attackedSinceRegen = true;
           const lost = Math.min(city.shield, Math.max(0,Math.round((shot.shield || 0)*.75)));
           city.shield -= lost;
           shieldDamage += lost;
+          shotShieldDamage = lost;
         }
         let incoming = Math.max(1,Math.round((shot.rawUnit ?? shot.unit)*.75));
         if (v.expCCProtection) delete v.expCCProtection;
@@ -395,11 +411,12 @@
           kill(g,v,shooter,false,null,incoming);
           delete v.expDirectIncoming;
         }
+        combat.push(commanderCombatRecord(shooter,v,dealt,shotShieldDamage));
       }
       log(g,"Grand Master's Assault: "+fired+' participating shots, '+
         totalDamage+' damage and '+shieldDamage+' city-shield damage.',u.side);
       checkVictory(g);
-      return {ok:true,target:v.id,affected:fired,damage:totalDamage,shieldDamage};
+      return {ok:true,target:v.id,affected:fired,damage:totalDamage,shieldDamage,combat};
     }
     if (action.kind === 'electricalOverload') {
       const v = targetId == null ? options[0] : options.find(w => w.id === targetId);
@@ -570,6 +587,7 @@
       return { ok: true, affected: options.length };
     }
     if (['command', 'designate', 'stratagem'].includes(action.kind)) {
+      const combat = [];
       const v = targetId == null ? options.sort((a, b) => TYPES[b.type].attack * b.stack - TYPES[a.type].attack * a.stack || a.id - b.id)[0]
         : options.find(v => v.id === targetId);
       if (!v) return { ok: false, reason: 'Choose a valid target within 2 hexes' };
@@ -581,6 +599,7 @@
         // A compelled strike bypasses hostility checks but not armor, terrain,
         // city cover or ordinary counterfire eligibility.
         const hit=Math.max(1,Math.round(power(g,v,w,stationAt(g,w),false,false)));
+        const priorTargetHP = w.hp, priorAttackerHP = v.hp;
         smilasDealCombatDamage(g,w,v,hit);
         if(w.hp<=0){w.expDirectIncoming=true;kill(g,w,v,false,null,hit);delete w.expDirectIncoming;}
         if(v.hp>0&&w.hp>0&&inRange(w,v,g)&&w.morale>-3&&!w.expRoloFrozen&&!w.expCharlesMemoryRewrite){
@@ -588,6 +607,7 @@
           smilasDealCombatDamage(g,v,w,retaliation);
           if(v.hp<=0){v.expDirectIncoming=true;kill(g,v,w,false,null,retaliation);delete v.expDirectIncoming;}
         }
+        combat.push(commanderCombatRecord(v,w,priorTargetHP-w.hp,0,priorAttackerHP-v.hp));
         checkVictory(g);
       } else if (action.kind === 'command') {
         v.moved = v.attacked = false;
@@ -608,7 +628,7 @@
       u.feintCD = COMMANDERS[u.cmd].action.cooldown ?? 3;
       u.feintUsedTurn = g.turn;
       log(g, `${action.verb}: ${COMMANDERS[v.cmd]?.short || TYPES[v.type].short} ${action.kind === 'command' ? (v.side === u.side ? 'receives a fresh activation' : 'is forced to attack its own faction') : 'designated'}.`, u.side);
-      return { ok: true, target: v.id, affected: 1 };
+      return { ok: true, target: v.id, affected: 1, combat };
     }
     for (const v of options) {
       if (action.kind === 'cleanse') { v.morale = Math.max(0, v.morale); v.moraleWard = { side: u.side }; }

@@ -54,6 +54,24 @@ const ids=Object.keys(E.COMMANDERS).filter(k=>E.COMMANDERS[k].action&&!immediate
     assert.equal(result.selecting,false,id+' selection completes with '+(mobile?'tap':'mouse click'));
     assert.equal(result.used,result.turn,id+' spends one ability use');
    }
+   // A map-selected Assault animates every actual shooter through the normal
+   // weapon pipeline in desktop and both touch layouts.
+   await setup('raymond');
+   const assaultTarget=await page.evaluate(()=>{
+    const actor=selectedUnit(),enemy=game.units.find(v=>v.side==='eu');enemy.hp=50000;
+    const type=E.typeFor('britannia','rocket'),t=E.TYPES[type];
+    const p=E.within(game,actor,2).find(p=>!E.unitAt(game,p)&&
+      E.distance(p,enemy,game)>=t.min&&E.distance(p,enemy,game)<=t.max);
+    E.newUnit(game,type,game.player,p.c,p.r);
+    invalidateUIState();effects=[];commandDialog(actor);centerOn(enemy);return enemy;
+   });
+   const assaultPoint=await point(assaultTarget);
+   if(mobile)await page.touchscreen.tap(assaultPoint.x,assaultPoint.y);
+   else await page.mouse.click(assaultPoint.x,assaultPoint.y);
+   const volley=await page.evaluate(()=>effects.filter(e=>e.kind==='shot').map(e=>({from:e.from,weapon:e.weapon,delay:e.delay})));
+   assert.equal(volley.length,2,'Raymond and the supporting artillery each animate');
+   assert.ok(new Set(volley.map(v=>v.weapon)).size===2,'Shooters retain their own weapon animation');
+   assert.ok(volley[1].delay>volley[0].delay,'Individual shots are staggered');
    // Clicking a commander portrait selects its unit, including Shift-clicks.
    await setup('cc');
    const portrait=await page.evaluate(()=>{

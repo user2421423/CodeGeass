@@ -52,7 +52,9 @@ function announceCommanderAbility(commanderId) {
 }
 function useCommanderAbility(unitId, targetId = null) {
   const unit = game.units.find(v => v.id === unitId);
+  const visuals = combatVisualSnapshot();
   const result = E.feint(game, unitId, targetId);
+  if (result?.ok) addCommanderCombatEffects(result, unit, visuals);
   if (result?.ok && unit?.cmd) announceCommanderAbility(unit.cmd);
   return result;
 }
