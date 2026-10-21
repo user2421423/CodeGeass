@@ -91,6 +91,14 @@ for(const name of ['Chicago','New York','Toronto'])
  assert.equal(partition.stations.find(s=>s.name===name).owner,'eu','Atlantic occupation lost '+name);
 assert.equal(partition.startUnits.remnants,73);
 assert.equal(partition.units.filter(u=>u.side==='remnants'&&u.cmd).length,12);
+for(const [cmd,home] of Object.entries({
+ charles:'Denver',schneizel:'Minneapolis',cornelia:'Dallas',bismarck:'Kansas City',
+ suzaku:'Albuquerque',gino:'Great Falls',anya:'Winnipeg',jeremiah:'New Orleans',
+ guilford:'St Louis',darlton:'Omaha',villetta:'San Antonio',lloyd:'Houston'
+})){
+ const officer=partition.units.find(u=>u.cmd===cmd),station=partition.stations.find(s=>s.name===home);
+ assert(officer&&station&&E.distance(officer,station,partition)<=2,'Officer starting front: '+cmd);
+}
 assert.equal(E.income(partition,'remnants').credits,618);
 assert.equal(partition.economy.remnants.credits,3*E.income(partition,'remnants').credits);
 assert.equal(partition.units.filter(u=>u.side==='remnants'&&E.TYPES[u.type].air).length,1);

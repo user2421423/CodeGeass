@@ -67,6 +67,11 @@ const api=common.define({id:'partition-britannia',title:'The Partition of Britan
  rosters:{eu:['eu'],cf:['cf'],remnants:['britannia']},commanders:{eu:byNation('eu'),cf:byNation('cf'),
   remnants:['charles','schneizel','cornelia','bismarck','suzaku','gino','anya',
    'jeremiah','guilford','darlton','villetta','lloyd']},
+ // Disperse the imperial command across the eastern and western approaches.
+ commanderHomes:{remnants:{charles:'Denver',schneizel:'Minneapolis',cornelia:'Dallas',
+  bismarck:'Kansas City',suzaku:'Albuquerque',gino:'Great Falls',anya:'Winnipeg',
+  jeremiah:'New Orleans',guilford:'St Louis',darlton:'Omaha',
+  villetta:'San Antonio',lloyd:'Houston'}},
  focus:{eu:'Chicago',cf:'Salt Lake City',remnants:'Denver'},forces:{eu:96,cf:86,remnants:72},
  stack:{remnants:2},reserve:{eu:3,cf:3,remnants:3},
  airships:['eu','cf','remnants'],navy:['eu','cf'],signatures:{leila:'leila_alexander',akito:'akito_liberte',xingke:'shen_hu'},

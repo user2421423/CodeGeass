@@ -97,7 +97,9 @@ function define(config){
    focus.capital=true;focus.capitalOf=side;
    const pool=config.commanders[side]||[];
    for(const cmd of pool){
-    const i=pool.indexOf(cmd),home=i===0?focus:own[i%own.length];
+    const i=pool.indexOf(cmd),assigned=config.commanderHomes?.[side]?.[cmd];
+    const home=assigned?own.find(s=>s.name===assigned):i===0?focus:own[i%own.length];
+    if(!home)throw Error(config.id+' commander '+cmd+' missing owned starting city '+assigned);
     const signature=config.signatures?.[cmd];
     spawn(side,home,signature?E.TYPES[E.ELITE_FORCES[signature].type].cls:'heavy',cmd,signature);
    }
