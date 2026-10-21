@@ -117,7 +117,9 @@ function migrateSavedTerrain(g) {
  // the turn, replacing formations, or resetting carrier cargo and abilities.
  for (const u of g.units.filter(u=>u.hp>0)) {
    const oldCell = cell(u), target = intended[oldCell];
-   const ship = E.TYPES[u.type]?.naval === 'ship';
+   // Airships are tagged naval for combat, but legally hover over dry land.
+   // Only actual surface ships require water; do not move starting airships.
+   const ship = E.TYPES[u.type]?.naval === 'ship' && !E.TYPES[u.type]?.air;
    if (target !== 'offmap' && !(ship && !navigable(target))) continue;
    const eligible = t => {
      const index = cell(t), terrain = intended[index];
