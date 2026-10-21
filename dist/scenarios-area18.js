@@ -268,7 +268,7 @@
       era:"Arabian Peninsula · Alternate 2017",
       intro:"A three-way war for the Arabian Peninsula: Britannia dominates the south, Europia United the west and center, and the Chinese Federation the Gulf coast and east. Capture all 43 cities.",
       diplomacy:"Britannia, Europia United and the Chinese Federation are all hostile from turn 1. No betrayals, nuclear weapons or campaign deadline.",
-      elite:"Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.5; carriers remain conventional. Research and Elite Force production follow existing scenario rules.",
+      elite:"Elite Area 18: each power begins with eligible Lv.1 Elite Forces. Rival named commanders start at Lv.3; carriers remain conventional. Research and Elite Force production follow existing scenario rules.",
       focus:{
         britannia:"Sana'a",
         eu:"Riyadh",
