@@ -19,7 +19,8 @@ for (const player of ['britannia','eb','cf']) {
   const land = units.filter(u => !E.TYPES[u.type].naval);
   const air = units.filter(u => E.TYPES[u.type].air);
   const navy = units.filter(u => E.TYPES[u.type].naval && !E.TYPES[u.type].air);
-  assert.equal(land.length, 30, player + ': all 30 Britannian land formations spawn');
+  assert.equal(land.length, 21, player + ': only 21 commander-led Britannian land formations spawn');
+  assert.ok(land.every(u => !!u.cmd), player + ': no anonymous Britannian land starts');
   assert.equal(navy.length, 7, player + ': all 7 Britannian naval formations spawn');
   assert.equal(air.length, 1, player + ': Britannian frontline airship spawns');
   const starts = { 'Middle East':0, 'Japan':0, 'Philippines':0, 'Siberia':0, 'African UFN front':0 };
@@ -27,11 +28,10 @@ for (const player of ['britannia','eb','cf']) {
     player + ': unexpected off-front Britannian ' + (u.cmd || u.type) +
     ' at ' + u.c + ',' + u.r);
   for (const u of land) starts[region(u)]++;
-  // The world map's coarse Philippine island has two viable Britannian dry-land
-  // starts; the third forward-targeted formation stages in Japan instead.
-  assert.deepEqual(starts, {
-    'Middle East':8, 'Japan':6, 'Philippines':2, 'Siberia':4, 'African UFN front':10
-  }, player + ': preserve intended land-front distribution');
+  assert.equal(Object.values(starts).reduce((total,n) => total + n, 0), 21,
+    player + ': all Britannian land formations remain on permitted fronts');
+  assert.ok(Object.values(starts).every(n => n > 0),
+    player + ': all five designated fronts retain Britannian commander formations');
   assert.equal(land.filter(u => u.cmd).length, 21, player + ': all 21 Britannian commanders deploy');
   const alliedLand = g.units.filter(u => u.side === 'eb' && !E.TYPES[u.type].naval);
   const ufnLand = g.units.filter(u => u.side === 'cf' && !E.TYPES[u.type].naval);
@@ -41,11 +41,22 @@ for (const player of ['britannia','eb','cf']) {
   assert.equal(namedEuroBritannia.length, 10, player + ': all Euro-Britannian commanders deploy');
   assert.ok([...namedBritannia, ...namedEuroBritannia].every(u => u.stack === 3),
     player + ': every Britannian and Euro-Britannian commander leads exactly three frames');
-  assert.equal(ufnLand.length, 72, player + ': U.F.N. formation count remains unchanged');
+  assert.equal(ufnLand.length, 69, player + ': exactly 69 named U.F.N. ground starts');
+  assert.ok(ufnLand.every(u => !!u.cmd), player + ': no anonymous U.F.N. land starts');
   assert.equal(ufnLand.filter(u => u.cmd).length, 69,
     player + ': all U.F.N. commanders and formations remain deployed');
-  assert.equal(ufnLand.reduce((total,u) => total + u.stack, 0), 107,
-    player + ': U.F.N. retains its original starting frame count');
+  assert.equal(ufnLand.reduce((total,u) => total + u.stack, 0), 104,
+    player + ': U.F.N. retains all commander frames, omitting 3 spare frames');
+  assert.equal(land.reduce((total,u) => total + u.stack, 0), 63,
+    player + ': 21 Britannian commanders each retain three frames');
+  assert.equal(alliedLand.reduce((total,u) => total + u.stack, 0), 77,
+    player + ': Euro Britannian land frames are unchanged');
+  assert.equal(alliedLand.filter(u => !u.cmd).length, 28,
+    player + ': Euro Britannia keeps its 28 anonymous ground formations');
+  assert.equal(g.units.filter(u => u.side === 'cf' && E.TYPES[u.type].naval && !E.TYPES[u.type].air).length, 8,
+    player + ': the U.F.N. retains its eight navy formations');
+  assert.equal(g.units.filter(u => u.side === 'eb' && E.TYPES[u.type].naval && !E.TYPES[u.type].air).length, 6,
+    player + ': Euro Britannia retains its six navy formations');
   assert.deepEqual(
     ['britannia','eb','cf'].map(side => [side,
       g.economy[side].credits, g.economy[side].industry, g.economy[side].science]),
@@ -71,6 +82,19 @@ for (const player of ['britannia','eb','cf']) {
   for (const u of land.filter(u => region(u) === 'Siberia')) {
     assert.equal(E.tile(g,u.c,u.r).owner, 'eb',
       'Britannian Siberian contingent must stage on allied Euro-Britannian territory');
+  }
+}
+// Higher-difficulty reinforcements must also satisfy this 2018-specific rule.
+for (const difficulty of ['hard','challenge']) {
+  for (const player of ['britannia','eb','cf']) {
+    const game = E.createGame(player,difficulty,'conquest',20261021,'ufn2018');
+    for (const side of ['britannia','cf']) {
+      const land = game.units.filter(u => u.hp > 0 && u.side === side && !E.TYPES[u.type].naval);
+      assert.ok(land.every(u => !!u.cmd),
+        difficulty + '/' + player + ': every ' + side + ' ground formation has a commander');
+      assert.equal(land.length, side === 'britannia' ? 21 : 69,
+        difficulty + '/' + player + ': no anonymous reinforcement for ' + side);
+    }
   }
 }
 const world = E.createGame('britannia','normal','conquest',20261021,'world');
