@@ -30,6 +30,19 @@ for (const camp of Object.values(E.campaign.CAMPAIGNS)) {
   for (const mission of camp.missions) {
     const g = E.campaign.createMission(mission.id, 20261021, 'elite');
     check(g, 'Story ' + mission.id);
+    // Extra player formations authored for Normal must survive all harder
+    // modes too. The game still converts their land frames to single elites
+    // on Elite difficulty and does not restore enemy Normal-only garrisons.
+    if (mission.units.some(spec => spec[0] === mission.player && spec[6]?.normalOnly)) {
+      const normal = E.campaign.createMission(mission.id, 20261021, 'normal');
+      const baseline = unitsOf(normal).filter(u => u.side === normal.player).length;
+      for (const mode of ['hard', 'challenge', 'elite']) {
+        const harder = mode === 'elite' ? g : E.campaign.createMission(mission.id, 20261021, mode);
+        const total = unitsOf(harder).filter(u => u.side === harder.player).length;
+        assert.ok(total >= baseline, 'Story ' + mission.id + '/' + mode +
+          ': dropped player starting units (' + total + ' vs Normal ' + baseline + ')');
+      }
+    }
     missions++;
   }
 }
