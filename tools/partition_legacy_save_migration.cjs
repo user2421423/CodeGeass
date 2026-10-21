@@ -22,7 +22,12 @@ for (const id of all) {
  assert(id>=0 && id<target.length && !positions.has(id));
  positions.add(id);
 }
-const g = scenario.create('remnants','normal',11);
+// Run all ordinary save migrations first so this test isolates *only* the
+// subsequent geography upgrade from the game's normal officer/city upgrades.
+const g = E.migrateSave(JSON.parse(JSON.stringify(E.packSave(
+ scenario.create('remnants','normal',11)))));
+assert(g);
+delete g.scenario.partitionTerrainAudit;
 g.turn=17;
 g.economy.remnants.credits+=1234;
 g.economy.cf.industry+=213;
