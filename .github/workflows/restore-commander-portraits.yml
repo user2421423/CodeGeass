@@ -23,10 +23,11 @@ jobs:
         run: pip install pillow requests
       - name: Download and crop identified character art
         run: python tools/restore_missing_portraits.py
-      - name: Verify artwork references and image files
+      - name: Build and validate all published artwork
         run: |
-          node tools/commander_portrait_audit.cjs
-          node tools/validate_assets.cjs --tracked || true
+          node tools/build_sources.cjs
+          node tools/commander_portrait_audit.cjs --strict
+          node tools/validate_assets.cjs --tracked
       - name: Commit recovered portraits to main
         run: |
           git config user.name "github-actions[bot]"
