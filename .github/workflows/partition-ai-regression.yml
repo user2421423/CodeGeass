@@ -1,0 +1,29 @@
+name: Partition AI save and movement regression
+
+on:
+  pull_request:
+    paths:
+      - 'dist/scenarios-exclusive-common.js'
+      - 'dist/scenarios-partition-britannia.js'
+      - 'tools/partition_ai_regression.cjs'
+      - '.github/workflows/partition-ai-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'dist/scenarios-exclusive-common.js'
+      - 'dist/scenarios-partition-britannia.js'
+      - 'tools/partition_ai_regression.cjs'
+      - '.github/workflows/partition-ai-regression.yml'
+  workflow_dispatch:
+
+jobs:
+  partition-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/build_sources.cjs
+      - run: node tools/partition_ai_regression.cjs
