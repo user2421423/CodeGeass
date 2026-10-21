@@ -44,12 +44,15 @@ function create(_,__,seed){
  g.scenario={bounds:B,projection:{centerLon:lon,centerLat:lat,angle:0,uMin:(B.west-lon)*k,uMax:(B.east-lon)*k,vMin:B.south-lat,vMax:B.north-lat}};
  g.tiles=Array.from({length:C*R},(_,i)=>{const c=i%C,r=(i/C)|0,p=geo(c,r),kind=raw.charCodeAt(i);
   const rocky=p.lon>-122&&p.lon<-104&&p.lat>35&&p.lat<61;
-  return {c,r,owner:null,terrain:kind===0?'sea':kind===1?'coast':p.lat>61?'tundra':rocky?'mountain':p.lat>50||p.lon>-85?'forest':p.lon<-108&&p.lat<38?'desert':'plains'};
+  return {c,r,owner:null,terrain:kind===0?'sea':kind===3?'offmap':kind===1?'coast':p.lat>61?'tundra':rocky?'mountain':p.lat>50||p.lon>-85?'forest':p.lon<-108&&p.lat<38?'desert':'plains'};
  });
  for(const [name,lon,lat,owner,tier] of cityData){
   const at=E.nearestTile(g,locate(lon,lat),t=>!E.isSea(t)&&!g.stations.some(s=>s.c===t.c&&s.r===t.r),5);
   if(!at)throw Error('Partition city has no dry hex: '+name);
-  g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier});at.terrain='plains';
+  g.stations.push({id:g.stations.length,name,c:at.c,r:at.r,owner,tier});
+  // A surveyed coastal city is still a shore tile: keep mixed land/water access.
+  // Only inland city biomes become plains, as in the existing scenario.
+  if(at.terrain!=='coast')at.terrain='plains';
  }
  for(const s of g.stations)if(portNames.has(s.name)){
   // Use only navigable neighbouring sea, with no invented inland port tiles.
