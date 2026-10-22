@@ -19,7 +19,7 @@ assert.equal(E.carrierCapacity(g, carrier), 2, 'Carriers keep their two-formatio
 // already aboard and may launch immediately when a beach becomes available.
 const approach = [...E.reachable(g, carrier).keys()]
   .map(k => { const [c, r] = k.split(',').map(Number); return E.tile(g, c, r); })
-  .find(p => p && E.deployTargetsAt(g, p, carrier.side, true).length);
+  .find(p => p && E.deployTargets(g, { ...carrier, c: p.c, r: p.r }, 0).length);
 assert(approach, 'Starting carrier must be able to approach at least one landing hex');
 assert.equal(E.move(g, carrier.id, approach.c, approach.r).ok, true, 'Carrier can sail to a beach');
 assert.equal(E.deployReason(g, carrier, 0), null, 'Preloaded legacy cargo should be ready');
