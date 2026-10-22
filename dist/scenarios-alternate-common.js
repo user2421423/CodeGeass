@@ -134,6 +134,8 @@ function define(config){
      }
    }
    g.economy=remapKeys(currentEconomy,translate);
+   // Each alternate-history battle authors its own opening stockpiles.
+   for(const [side,treasury] of Object.entries(config.openingTreasury||{}))Object.assign(g.economy[side],treasury);
    g.tech=remapKeys(currentTech,translate);
    g.arsenal=remapKeys(currentArsenal,translate);
    g.order=[player,...SIDES.filter(s=>s!==player)];
