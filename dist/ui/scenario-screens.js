@@ -321,6 +321,8 @@ function startLoadedScenario(id, side, difficulty, campaignContext) {
   scenarioKind=id; scenarioSide=side; scenarioDifficulty=difficulty;
   resetSession();
   game=model.create(side,scenarioDifficulty,Date.now()>>>0);
+  // All modes (standalone, weekly and world-campaign) share the same force limit.
+  KnightmareScenarioForces.reduce(game);
   if (scenarioWeeklySelected && !campaignContext && id===weeklyScenarioCurrent().scenarioId) {
     const weekly=weeklyScenarioCurrent();
     game.weeklyScenario={weekId:weekly.id,scenarioId:id};

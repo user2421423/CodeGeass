@@ -53,6 +53,7 @@ async function generate(){
    const result=await page.evaluate(({id,width,height})=>{
     const m=E.scenarios.byId[id];if(!m)throw Error('Missing model: '+id);
     const g=m.create(m.sides[0],'normal',246801);
+    KnightmareScenarioForces.reduce(g);
     const sides=Object.fromEntries(m.sides.map(side=>[side,{
      cities:g.stations.filter(st=>st.owner===side).length,
      formations:g.units.reduce((n,u)=>n+(u.side===side?1:0)+(u.cargo||[]).filter(v=>v.side===side).length,0)
