@@ -191,37 +191,11 @@
       g.cityStandardMigrated=true;
       standardizeCities(g,true);
     }
-    // Prior Division of Japan saves stored permanent off-map stipends. Move
-    // them into the original starting cities, including the universal national
-    // Sakuradite allotment, without resetting accumulated resources or territory.
-    if (regional && g.scenario.id === 'division-japan' &&
-        Object.keys(g.scenario.funding || {}).length) {
-      if (!g.stations.some(s => s.divisionIncome)) {
-        const startingRegions = root.Knightmare?.scenarios?.divisionJapan?.regions;
-        for (const [side, support] of Object.entries(g.scenario.funding)) {
-          const cities = g.stations.filter(s => startingRegions?.[side]?.includes(s.name))
-            .sort((a, b) => a.id - b.id);
-          // If the original scenario registry is missing, prefer the current
-          // cities to discarding earned income from a legacy save.
-          const recipients = cities.length ? cities :
-            g.stations.filter(s => s.owner === side).sort((a, b) => a.id - b.id);
-          if (!recipients.length) continue;
-          for (const resource of ['credits','industry','science','sakuradite']) {
-            const extra = Math.max(0, (support?.[resource] || 0) +
-              (resource === 'sakuradite' ? SAKURADITE.national : 0));
-            const whole = Math.floor(extra), each = Math.floor(whole / recipients.length),
-              remainder = whole % recipients.length;
-            for (let i = 0; i < recipients.length; i++) {
-              const amount = each + (i < remainder ? 1 : 0) + (i === 0 ? extra - whole : 0);
-              if (!amount) continue;
-              recipients[i].divisionIncome ||= {};
-              recipients[i].divisionIncome[resource] =
-                (recipients[i].divisionIncome[resource] || 0) + amount;
-            }
-          }
-        }
-      }
-      g.scenario.funding = {};
+    // Retire legacy Division of Japan recurring city subsidies. Starting
+    // reserves and captured infrastructure are already in the saved state.
+    if(regional&&g.scenario.id==='division-japan'){
+      g.scenario.funding={};
+      g.scenario.economyLocalized=false;
     }
     // Existing saved regional battles also migrate their original funding
     // into cities. Do this once; already-localized saves are unchanged.
