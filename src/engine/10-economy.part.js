@@ -26,31 +26,105 @@
 
   // Replace scripted recurring subsidies with city-tier development. Scenario
   // starting cash remains authored; cityless expeditions retain finite reserves.
+  // Reconcile every regional battle against its authored credit targets using
+  // *only* genuine city tiers. A fortress is always city level 4 with a battery;
+  // demoting one removes its battery as well. Factories and labs are untouched.
   function balanceScenarioTiers(g, targets) {
-    if(!g?.stations?.length)return;
-    g.scenario ||= {};
+    if (!g?.stations?.length || !g.scenario) return;
+    const stats = CITY_STANDARD_STATS;
+    const sides = Object.entries(targets || {}).filter(([side, wanted]) =>
+      Number.isFinite(wanted?.credits) && g.stations.some(s => s.owner === side));
+    if (!sides.length) return;
+    const bounds = Object.fromEntries(sides.map(([side, wanted]) => {
+      const cities = g.stations.filter(s => s.owner === side);
+      const min = cities.reduce((n,s) => n + (s.nationalCapital ? stats.capital.credits : stats[1].credits), 0);
+      const max = cities.reduce((n,s) => n + (s.nationalCapital ? stats.capital.credits : stats[4].credits), 0);
+      return [side, {min, max, requested:Math.max(1,Math.round(wanted.credits))}];
+    }));
+    // If a small invasion army cannot earn its old budget even with all its
+    // cities at level 4, proportionally reduce the opposing targets too.
+    // If that is still impossible (e.g. Canada has 68 defending cities and
+    // the invasion holds only six), clamp to each side's legal tier limits.
+    const lowestScale = Math.max(...Object.values(bounds).map(b => b.min / b.requested));
+    const highestScale = Math.min(...Object.values(bounds).map(b => b.max / b.requested));
+    const scale = lowestScale <= highestScale
+      ? Math.max(lowestScale, Math.min(1,highestScale))
+      : highestScale;
     g.scenario.tierBalanceShortfalls = {};
-    for(const [side,wanted] of Object.entries(targets||{})){
-      if(!wanted||!Number.isFinite(wanted.credits))continue;
-      const cities=g.stations.filter(s=>s.owner===side);
-      if(!cities.length)continue;
-      let total=cities.reduce((sum,s)=>sum+cityStats(s).credits,0);
-      const target=Math.max(0,Math.round(wanted.credits));
-      // Upgrading an ordinary city never silently creates a new fortress battery.
-      while(total<target) {
-        const options=cities.filter(s=>!s.nationalCapital&&cityTierOf(s)<3)
-          .sort((a,b)=>cityTierOf(a)-cityTierOf(b)||b.tier-a.tier||a.id-b.id);
-        const city=options[0];
-        if(!city)break;
-        const next=cityTierOf(city)+1;
-        total+=CITY_STANDARD_STATS[next].credits-CITY_STANDARD_STATS[next-1].credits;
-        city.cityTier=next;
-        syncBuildings(g,city);
-        // New scenarios are initialized at full HP, with no current combat.
-        city.shield=city.maxShield;
+    g.scenario.tierBalanceSummary = {};
+    for (const [side] of sides) {
+      const {min,max,requested} = bounds[side];
+      const goal = Math.max(min,Math.min(max,Math.round(requested * scale)));
+      const cities = g.stations.filter(s => s.owner === side);
+      const total = () => cities.reduce((sum,s) => sum + cityStats(s).credits, 0);
+      const applyTier = (s,next) => {
+        const previousMax = Math.max(1,Number(s.maxShield)||1);
+        const fraction = Math.max(0,Math.min(1,(Number(s.shield)||0)/previousMax));
+        s.cityTier = next;
+        if (next === 4) {
+          s.fort = true;
+          s.gun ||= s.name + ' Defensive Battery';
+          s.gunReady ??= g.turn || 1;
+        } else if (s.fort) {
+          s.fort = false;
+          s.gun = null;
+          s.gunReady = 0;
+          delete s.gunUsedTurn;
+        }
+        syncBuildings(g,s);
+        s.shield = Math.round(s.maxShield * fraction);
+      };
+      let before = total(), current = before;
+      let raised = 0, lowered = 0, removedFortresses = 0, addedFortresses = 0;
+      // Lower ordinary cities first, then less-important fortresses, and
+      // demote headquarters last. National capitals are never downgraded.
+      while (current > goal) {
+        const candidates = cities.filter(s => !s.nationalCapital && cityTierOf(s)>1)
+          .map(s => ({
+            city:s, step:stats[cityTierOf(s)].credits-stats[cityTierOf(s)-1].credits,
+          }))
+          .filter(x => Math.abs(current-x.step-goal) < Math.abs(current-goal))
+          .sort((a,b) =>
+            Number(!!a.city.fort)-Number(!!b.city.fort) ||
+            Number(!!a.city.regionalHQ)-Number(!!b.city.regionalHQ) ||
+            Math.abs(current-a.step-goal)-Math.abs(current-b.step-goal) ||
+            a.city.id-b.city.id);
+        if (!candidates.length) break;
+        const s=candidates[0].city, wasFort=!!s.fort;
+        current-=candidates[0].step;
+        applyTier(s,cityTierOf(s)-1);
+        lowered++;
+        if (wasFort && !s.fort) removedFortresses++;
       }
-      g.scenario.tierBalanceShortfalls[side]=Math.max(0,target-total);
+      // Improve small regional economies via city upgrades. The transition
+      // from level 3 to level 4 creates the full fortress + battery, never a
+      // level-4 city without a battery.
+      while (current < goal) {
+        const candidates = cities.filter(s => !s.nationalCapital && cityTierOf(s)<4)
+          .map(s => ({
+            city:s, step:stats[cityTierOf(s)+1].credits-stats[cityTierOf(s)].credits,
+          }))
+          .filter(x => Math.abs(current+x.step-goal) < Math.abs(current-goal))
+          .sort((a,b) =>
+            cityTierOf(a.city)-cityTierOf(b.city) ||
+            Math.abs(current+a.step-goal)-Math.abs(current+b.step-goal) ||
+            Number(!a.city.regionalHQ)-Number(!b.city.regionalHQ) ||
+            a.city.id-b.city.id);
+        if (!candidates.length) break;
+        const s=candidates[0].city, wasFort=!!s.fort;
+        current+=candidates[0].step;
+        applyTier(s,cityTierOf(s)+1);
+        raised++;
+        if (!wasFort && s.fort) addedFortresses++;
+      }
+      g.scenario.tierBalanceShortfalls[side] = Math.max(0,requested-current);
+      g.scenario.tierBalanceSummary[side] = {
+        previousTarget:requested, scaledTarget:goal, before, after:total(),
+        raised, lowered, removedFortresses, addedFortresses,
+        minimum:min, maximum:max,
+      };
     }
+    g.scenario.tierBalanceVersion = 2;
   }
   function localizeScenarioIncome(g) {
     if(g?.mode!=='scenario'||!g.scenario||
