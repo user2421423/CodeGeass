@@ -100,7 +100,11 @@ function define(config){
    for(const u of E.allUnits(g)){
      const type=E.TYPES[u.type];
      u.side=translate(u.side);
-     if(type?.naval){
+     // Airships are tagged naval for combat, but unlike carriers they fly over
+     // land. Remap them to the new faction's airship, not its sea-only carrier.
+     if(type?.air){
+       u.type=E.AIRSHIPS[equipment[u.side]];
+     } else if(type?.naval){
        const navy=E.NAVAL[equipment[u.side]];
        u.type=type.naval==='ship'?navy.carrier:type.tier>=2?navy.amphibious2:navy.amphibious;
      } else if(type){
