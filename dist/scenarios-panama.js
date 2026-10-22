@@ -423,7 +423,7 @@
         Object.entries(funding[side]).map(([k,v])=>[k,Math.round(v)-base[k]]));
       const actual=E.income(g,side);
       for(const k of Object.keys(funding[side]))
-        g.economy[side][k]=actual[k]*(side===attacker?3:2);
+        g.economy[side][k]=({eu:{credits:2000,industry:500,science:246},cf:{credits:2000,industry:500,science:285},britannia:{credits:1590,industry:500,science:140}}[side]||{})[k] ?? actual[k]*(side===attacker?3:2);
     }
     E.applyScenarioDifficulty(g,difficulty);
     g.startUnits=Object.fromEntries(SIDES.map(s=>[s,E.allUnits(g).filter(u=>u.side===s).length]));
