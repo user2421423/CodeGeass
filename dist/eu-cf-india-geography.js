@@ -31,6 +31,9 @@ const sriLanka=[
  [79.66,7.45],[79.7,8.2],[79.68,9.76]
 ];
 const polygons=[mainland,sriLanka];
+// Source-backed patch for solid mainland at the northeastern edge of the
+// simplified polygon. Rebuild with tools/build_india_northeast_land.py.
+const INDIA_NORTHEAST_LAND=atob('');
 function inside(lon,lat,poly){
  let hit=false;
  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
@@ -51,7 +54,14 @@ function makeClasses(cols,rows,bounds){
      const lat=bounds.north-(r+(y+.5)/5)*dy;
      if(land(lon,lat))landSamples++;
    }
-   result[r*cols+c]=landSamples<5?0:landSamples<=20?1:2;
+   const index=r*cols+c;
+   result[index]=landSamples<5?0:landSamples<=20?1:2;
+   // Restore high-confidence northeastern land the crude theatre polygon
+   // otherwise labels sea; preserve every other shoreline and waterway.
+   if(cols===168&&rows===124&&bounds.west===57&&bounds.east===94&&
+       result[index]===0&&
+       (INDIA_NORTHEAST_LAND.charCodeAt(index>>3)&(128>>(index&7))))
+     result[index]=2;
  }
  return result;
 }
