@@ -380,17 +380,17 @@ function readyUnit(u) {
 }
 // Hearts of Iron-style map counters are deliberately limited to strategic zoom.
 // The tactical formation art, hover/selection logic and saved unit data are unchanged.
-// At strategic zoom, a formation is represented by its faction's flag alone.
-// The artwork retains its natural proportions (including the square BK flag).
-// No counter plate, type icon, commander star, stack count, strength or overlay.
+// Zoomed-out formations are displayed as small, unadorned faction flags.
+// Keep their own aspect ratios and do not add commander, strength or type glyphs.
 function drawStrategicDivisionCounter(u, type, scale, sea, time, selected, multi, spent, group, groupColor, focusedGroup) {
   ctx.save();
   ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
 
   const side = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
     ? 'ufn' : artSide(u.side);
-  const height = scale < 0.12 ? 12 : scale < 0.22 ? 15 : 18;
-  // Match the flag's source aspect ratio rather than cropping its crest.
+  // Roughly 25–30% smaller than the first flag-only preview; dimensions are
+  // screen pixels so the flags stay legible without filling entire hexes.
+  const height = scale < 0.12 ? 9 : scale < 0.22 ? 11 : 13;
   const aspect = side === 'bk' ? 1
     : side === 'britannia' || side === 'remnants' ? 157 / 260
     : side === 'eb' ? 116 / 175
@@ -399,17 +399,22 @@ function drawStrategicDivisionCounter(u, type, scale, sea, time, selected, multi
   const width = height / aspect;
   const x = -width / 2, y = -height / 2;
 
-  // Existing flag API includes a pole: clip to the fabric only, without
-  // adding any decoration around it. Loaded flags trigger a redraw via ART.
+  // Draw the fabric only, clipping the pole that ART.drawFlag normally adds.
+  // Preserve the supplied authentic flags and their original proportions.
   ctx.beginPath();
   ctx.rect(x, y, width, height);
   ctx.clip();
   const ready = ART.drawFlag(ctx, side, x, y, width);
   if (!ready) {
-    // Temporary solid flag-ground colour until the authentic artwork loads.
-    // Never show text or a military unit icon in a flag-only marker.
-    ctx.fillStyle = PLATE[artSide(u.side)]?.mid || '#656b70';
+    // Neutral/unsupported factions used to leave large blank brown blocks.
+    // Render a tiny striped neutral standard instead; while an existing flag
+    // asset is loading this is a temporary placeholder, not an extra marker.
+    const base = game.factions?.[u.side]?.color || E.FACTIONS[u.side]?.color ||
+      PLATE[artSide(u.side)]?.mid || '#8b8b83';
+    ctx.fillStyle = base;
     ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = '#e5dfc5';
+    ctx.fillRect(x, y + height * 0.36, width, height * 0.28);
   }
   ctx.restore();
 }
