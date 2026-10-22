@@ -380,43 +380,131 @@ function readyUnit(u) {
 }
 // Hearts of Iron-style map counters are deliberately limited to strategic zoom.
 // The tactical formation art, hover/selection logic and saved unit data are unchanged.
-// Zoomed-out formations are displayed as small, unadorned faction flags.
-// Keep their own aspect ratios and do not add commander, strength or type glyphs.
-function drawStrategicDivisionCounter(u, type, scale, sea, time, selected, multi, spent, group, groupColor, focusedGroup) {
-  ctx.save();
-  ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
+// HOI4-inspired strategic division tiles. The only identifying graphic is
+// the actual faction flag: no unit class, commander pip, strength or numbers.
+function strategicFlagAspect(side) {
+  if (side === 'bk') return 1;
+  if (side === 'britannia' || side === 'remnants') return 157 / 260;
+  if (side === 'eb') return 116 / 175;
+  if (side === 'eu' || side === 'cf') return 173 / 260;
+  if (side === 'ufn') return 594 / 831;
+  return 2 / 3;
+}
 
+function drawStrategicDivisionCounter(u, scale, selected, crowded = 1) {
+  ctx.save();
+  // Consistent SCREEN-space footprints stop square flags from looking like
+  // different-sized armies and keep all nation counters visually aligned.
+  ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
+  const w = scale < 0.12 ? 19 : scale < 0.22 ? 23 : 26;
+  const h = scale < 0.12 ? 11 : scale < 0.22 ? 13 : 15;
+  const x = -w / 2, y = -h / 2;
+  const allied = u.side !== game.player && u.side !== 'neutral' &&
+    !E.foe(game, game.player, u.side);
+  const bg = u.side === game.player ? '#455641'
+    : allied ? '#43505a' : u.side === 'neutral' ? '#4e4d40' : '#39413f';
+
+  // In a busy theatre, use a two-plate stack instead of rendering dozens of
+  // flag textures on top of one another. The stack never claims a unit count.
+  if (crowded > 1) {
+    ctx.fillStyle = '#111c21';
+    ctx.fillRect(x + 2, y - 2, w, h);
+    ctx.strokeStyle = '#798487';
+    ctx.lineWidth = 0.65;
+    ctx.strokeRect(x + 2.5, y - 1.5, w - 1, h - 1);
+  }
+  ctx.fillStyle = '#131a1c';
+  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = bg;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = selected ? '#ffe2a0' : '#9baba7';
+  ctx.lineWidth = selected ? 1.45 : 0.8;
+  ctx.strokeRect(x + 0.4, y + 0.4, w - 0.8, h - 0.8);
+
+  // Preserve the flag's original aspect rather than stretching it to a tile.
+  // The dark surrounding plate acts as the HOI4-style military counter.
   const side = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
     ? 'ufn' : artSide(u.side);
-  // Roughly 25–30% smaller than the first flag-only preview; dimensions are
-  // screen pixels so the flags stay legible without filling entire hexes.
-  const height = scale < 0.12 ? 9 : scale < 0.22 ? 11 : 13;
-  const aspect = side === 'bk' ? 1
-    : side === 'britannia' || side === 'remnants' ? 157 / 260
-    : side === 'eb' ? 116 / 175
-    : side === 'eu' || side === 'cf' ? 173 / 260
-    : side === 'ufn' ? 594 / 831 : 2 / 3;
-  const width = height / aspect;
-  const x = -width / 2, y = -height / 2;
-
-  // Draw the fabric only, clipping the pole that ART.drawFlag normally adds.
-  // Preserve the supplied authentic flags and their original proportions.
+  const flagH = h - 3.6;
+  const flagW = Math.min(w - 5, flagH / strategicFlagAspect(side));
+  const flagX = -flagW / 2, flagY = -flagH / 2;
+  ctx.save();
   ctx.beginPath();
-  ctx.rect(x, y, width, height);
+  ctx.rect(flagX, flagY, flagW, flagH);
   ctx.clip();
-  const ready = ART.drawFlag(ctx, side, x, y, width);
-  if (!ready) {
-    // Neutral/unsupported factions used to leave large blank brown blocks.
-    // Render a tiny striped neutral standard instead; while an existing flag
-    // asset is loading this is a temporary placeholder, not an extra marker.
-    const base = game.factions?.[u.side]?.color || E.FACTIONS[u.side]?.color ||
-      PLATE[artSide(u.side)]?.mid || '#8b8b83';
-    ctx.fillStyle = base;
-    ctx.fillRect(x, y, width, height);
-    ctx.fillStyle = '#e5dfc5';
-    ctx.fillRect(x, y + height * 0.36, width, height * 0.28);
+  // ART.drawFlag includes a pole for city banners. Clipping keeps only fabric.
+  const painted = ART.drawFlag(ctx, side, flagX, flagY, flagW);
+  ctx.restore();
+  if (!painted) {
+    // Neutral nations without official art still have an actual miniature
+    // flag-shaped marking, not a large empty square.
+    ctx.fillStyle = game.factions?.[u.side]?.color ||
+      E.FACTIONS[u.side]?.color || PLATE[artSide(u.side)]?.mid || '#858984';
+    ctx.fillRect(flagX, flagY, flagW, flagH);
+    ctx.fillStyle = '#cbd1c4';
+    ctx.fillRect(flagX, flagY + flagH * 0.45, flagW, flagH * 0.12);
   }
   ctx.restore();
+}
+
+// HOI4-style screen-space decluttering at distant zoom. Compress only nearby
+// formations of the SAME faction, preserving frontlines and opponent flags.
+// No unit/save state is changed; normal unit selection still uses real hexes.
+function drawStrategicOverviewFlags(units, scale, copies, visible, selection, selectedIds) {
+  const clusters = [];
+  const cells = new Map();
+  const stepX = scale < 0.12 ? 22 : scale < 0.22 ? 25 : 29;
+  const stepY = scale < 0.12 ? 15 : scale < 0.22 ? 17 : 19;
+
+  for (const u of units) {
+    const pos = animatedPosition(u);
+    if (!visible(pos)) continue;
+    const chosen = selection?.kind === 'unit' && selection.id === u.id ||
+      selectedIds.has(u.id);
+    for (const x of copies(pos.x)) {
+      const sx = x * scale, sy = pos.y * scale;
+      const col = Math.floor(sx / stepX), row = Math.floor(sy / stepY);
+      let entry = null;
+      for (let dc = -1; dc <= 1 && !entry; dc++)
+        for (let dr = -1; dr <= 1 && !entry; dr++) {
+          const key = u.side + ':' + (col + dc) + ',' + (row + dr);
+          for (const index of cells.get(key) || []) {
+            const other = clusters[index];
+            if (Math.abs(sx - other.sx) < stepX &&
+                Math.abs(sy - other.sy) < stepY) {
+              entry = other;
+              break;
+            }
+          }
+        }
+      if (entry) {
+        entry.count++;
+        // Keep an explicitly selected unit at its real position and on top.
+        if (chosen && !entry.selected) {
+          entry.u = u;
+          entry.x = x;
+          entry.y = pos.y;
+          entry.selected = true;
+        }
+        continue;
+      }
+      const item = { u, x, y: pos.y, sx, sy, count: 1, selected: !!chosen };
+      const index = clusters.length;
+      clusters.push(item);
+      const key = u.side + ':' + col + ',' + row;
+      if (!cells.has(key)) cells.set(key, []);
+      cells.get(key).push(index);
+    }
+  }
+
+  // Selection is last so its border remains visible over nearby nations.
+  clusters.sort((a, b) => Number(a.selected) - Number(b.selected));
+  for (const cluster of clusters) {
+    ctx.save();
+    ctx.translate(cluster.x, cluster.y);
+    drawStrategicDivisionCounter(cluster.u, scale, cluster.selected, cluster.count);
+    ctx.restore();
+  }
 }
 
 // Unit strength: 1–3 metallic bars hung from the bottom of the token ring.
