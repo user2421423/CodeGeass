@@ -68,7 +68,7 @@
   }
   function newcomerUse(g,u,targetId){
     const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
-    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret','darlton','jeanrowe'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
+    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret','darlton','jeanrowe','johanne'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
     const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
@@ -99,6 +99,16 @@
         recordAbilitySignal(g,v,'EXCHANGE','buff');
         log(g,'Emergency Exchange: Jean trades positions with '+
           (COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
+        break;
+      }
+      case 'johanne':{
+        // The target is chosen at close range, but remains protected across
+        // turns, maps and distances. Reassignment replaces the prior target.
+        u.expJohanneWardTarget=v.id;
+        recordAbilitySignal(g,u,'BODYGUARD ASSIGNED','guard');
+        recordAbilitySignal(g,v,'DRAW THEIR FIRE','guard');
+        log(g,'Johanne protects '+(COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+
+          ' against the first direct enemy attack each hostile turn.',u.side);
         break;
       }
       case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;

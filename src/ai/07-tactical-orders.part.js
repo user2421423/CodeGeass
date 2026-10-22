@@ -17,6 +17,14 @@
     switch (u.cmd) {
       case 'olivia': case 'sayoko': return null;
       case 'norland': return canStrike(g,u) ? u : null;
+      case 'johanne': {
+        // Keep the long-distance standing assignment until the original ally
+        // dies; changing it automatically every turn undermines this ability.
+        if(g.units.some(v=>v.hp>0&&v.side===u.side&&v.id===u.expJohanneWardTarget))
+          return null;
+        return pickBest(options,v=>(v.cmd?50:0)+(v.elite?20:0)+
+          (v.hp/maxHP(v)<.5?10:0));
+      }
       case 'jeanrowe': {
         // Only rescue endangered commanders; avoid random AI teleports.
         if(u.hp/maxHP(u)<.65)return null;

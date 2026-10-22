@@ -519,7 +519,38 @@
     if(knight.hp<=0)kill(g,knight,attacker,false,null,redirected);
     return incoming-redirected;
   }
-  function smilasDealCombatDamage(g, victim, attacker, amount) {
+  // Johanne's designation persists on his unit in saved games, not the
+  // protected unit: changing targets instantly removes the previous ward.
+  // An enemy phase stamp means protection recharges for each hostile faction
+  // turn, even when several powers attack in the same world round.
+  function johanneBodyguard(g,victim,attacker){
+    if(!victim||victim.hp<=0||!attacker||!foe(g,victim.side,attacker.side))return null;
+    const phase=g.turn+':'+g.phase;
+    return g.units.find(v=>v.hp>0&&v.id!==victim.id&&v.cmd==='johanne'&&
+      v.side===victim.side&&v.expJohanneWardTarget===victim.id&&
+      v.expJohanneRedirectPhase!==phase)||null;
+  }
+  function johanneAbsorb(g,victim,attacker,guard,amount){
+    const incoming=Math.max(0,Math.round(amount||0)),previous=guard.hp;
+    guard.expJohanneRedirectPhase=g.turn+':'+g.phase;
+    guard.hp=Math.max(0,guard.hp-incoming);
+    guard.struck={turn:g.turn,side:attacker.side};
+    recordAbilitySignal(g,victim,'DRAW THEIR FIRE','guard');
+    recordAbilitySignal(g,guard,'INTERCEPT '+(previous-guard.hp),'guard');
+    recordWarEvent(g,'damage',attacker.side,{targetSide:guard.side,
+      value:previous-guard.hp,unitId:attacker.id,group:warGroup(g,attacker)});
+    log(g,'Draw Their Fire: Johanne absorbs '+(previous-guard.hp)+
+      ' damage protecting '+(COMMANDERS[victim.cmd]?.short||TYPES[victim.type].short)+
+      ' from anywhere on the map.',guard.side);
+    if(guard.hp<=0){
+      guard.expDirectIncoming=true;
+      kill(g,guard,attacker,false,null,incoming);
+      delete guard.expDirectIncoming;
+    }
+  }
+  function smilasDealCombatDamage(g, victim, attacker, amount, allowJohanne=true) {
+    const guard=allowJohanne?johanneBodyguard(g,victim,attacker):null;
+    if(guard){johanneAbsorb(g,victim,attacker,guard,amount);return 0;}
     const incoming = darltonProtect(g,victim,attacker,guilfordProtect(g,victim,attacker,amount));
     const priorHP = victim.hp;
     const split = smilasDamageShare(g,victim,incoming);
@@ -798,12 +829,15 @@
     const p = tile(g, c, r),
       d = unitAt(g, p),
       s = stationAt(g, p),
+      // A persistent Johanne ward redirects the entire first initiating
+      // strike. It does not grant the remote bodyguard free counterfire.
+      johanneRedirect = !!johanneBodyguard(g,d,a),
       crit = random(g) < pr.crit,
       variance = 0.92 + random(g) * 0.16,
       mult = variance * (crit ? pr.critMult : 1),
       shieldMult = variance * (crit ? pr.baseCritMult : 1),
       hit = [];
-    const kallenFirstStrike = !!d && !!f.firstStrike &&
+    const kallenFirstStrike = !johanneRedirect && !!d && !!f.firstStrike &&
       !(a.expKallenFirstTargets || []).includes(d.id);
     if (kallenFirstStrike) {
       (a.expKallenFirstTargets ||= []).push(d.id);
@@ -813,7 +847,7 @@
     const avoidance = genericLevel(g, a, TYPES[a.type].branch === 'Armor' ? 'blitzkrieg' : 'guerrilla');
     const evadeCounter = pr.counterAllowed && avoidance > 0 && random(g) < 0.12 * avoidance;
     // A volley has one firing state: retaliation and kill rewards cannot change later splash hits.
-    const splashHits = pr.splash ? g.units
+    const splashHits = !johanneRedirect && pr.splash ? g.units
       .filter(v => v.hp > 0 && foe(g, v.side, a.side) && v.id !== d?.id && dist(g, v, p) === 1 &&
         (!isAir(v) || canHitAir(a)))
       .map(v => ({ unit: v, amount: Math.round(power(g, a, v, stationAt(g, v), false, false) * pr.splash) })) : [];
@@ -847,6 +881,14 @@
       actualDefenderDamage = 0;
     if(a.expSmilasSuppression)delete a.expSmilasSuppression;
     if (d) {
+      if(johanneRedirect){
+        // This unit/city was never struck: its shields, statuses, normal
+        // counterattack and adjacent splash are all untouched. The shot
+        // is completely diverted, but still costs the attacker its action.
+        const incoming=Math.max(0,Math.round((pr.rawUnit??pr.unit)*mult));
+        smilasDealCombatDamage(g,d,a,incoming);
+        hit.push({id:d.id,c:p.c,r:p.r,damage:0});
+      } else {
       dmg = newcomerIntercept(g,d,Math.round((pr.rawUnit ?? pr.unit) * mult));
       if (d.expCCProtection) delete d.expCCProtection;
       consumeDefensiveSkills(g, d, a);
@@ -871,8 +913,9 @@
       // Senba's guard covers only the first attack each phase; Asahina reads who was struck this turn.
       d.struck = { turn: g.turn, side: a.side };
       if(d.skillMarks?.length)d.skillMarks=d.skillMarks.filter(m=>m.side!==a.side||!m.uses);
+      }
     }
-    if (s && foe(g, s.owner, a.side)) {
+    if (!johanneRedirect && s && foe(g, s.owner, a.side)) {
       const priorShield=s.shield;
       // Even after the defenses reach zero, another successful city assault
       // keeps its next regeneration suppressed.
@@ -887,12 +930,12 @@
       }
       if(priorShield>0&&s.shield<=0&&TYPES[a.type].branch==='Artillery'&&skillNear(g,a,'raikoCity',2))s.expYoshidaBreak={side:a.side,turn:g.turn};
     }
-    if (f.terror && d && d.hp > 0) {
+    if (!johanneRedirect && f.terror && d && d.hp > 0) {
       lowerMorale(g, d, 1);
       if (f.terrorWeaken) d.despairWeakened = { side: a.side, value: Math.max(d.despairWeakened?.value || 0, f.terrorWeaken) };
     }
     const aef = eliteFx(a);
-    if (aef.stun && d && d.hp > 0) {
+    if (!johanneRedirect && aef.stun && d && d.hp > 0) {
       d.moved = true;
       d.attacked = true;
       // Rival action flags refresh at turn start; carry the stun into that activation.
@@ -902,7 +945,7 @@
     let retaliation = 0;
     const senbaCounter=!!d&&!a.expFernandoOverloadStrike&&!xianglinExploitWeakness(g, a, d)&&d.morale>-3&&!d.expCharlesMemoryRewrite&&!d.expZeroGeass&&!d.expRoloFrozen&&!f.noCounterAttack&&!(a.cmd==='sayoko'&&a.expShadowAttackTurn===g.turn&&d.cmd)&&d.hp>0&&fx(d).guard&&d.held&&d.guardReady&&d.expSenbaCounterTurn!==g.turn&&
       !atSea(g,d)&&inRange(d,a,g)&&hostileTarget(g,d,a);
-    if (a.hp > 0 && d && d.hp > 0 && manfrediSuperiority(g,a,d)<2 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
+    if (!johanneRedirect && a.hp > 0 && d && d.hp > 0 && manfrediSuperiority(g,a,d)<2 && (fx(d).unrestrictedCounter || senbaCounter || (pr.counterAllowed && !evadeCounter))) {
       // First Senba retaliation replaces, rather than duplicates, ordinary counterfire.
       // Guaranteed critical counterfire uses the same critical multiplier as
       // a normal attacking volley; other defenders keep ordinary counterfire.
@@ -943,7 +986,7 @@
         if (v.hp <= 0) continue;
         if (v.expCCProtection) delete v.expCCProtection;
         const priorHP=v.hp;
-        const landed=smilasDealCombatDamage(g,v,a,amount);
+        const landed=smilasDealCombatDamage(g,v,a,amount,false); // Splash is not a direct targeted attack.
         recordWarEvent(g,'damage',a.side,{targetSide:v.side,value:priorHP-v.hp,unitId:a.id,group:warGroup(g,a)});
         hit.push({ id: v.id, c: v.c, r: v.r, damage: landed });
         kill(g, v, a,false,null,amount);
@@ -956,7 +999,7 @@
     }
     // No reactive supporting fire against an Estrella Barrage: its primary
     // and adjacent victims cannot answer with retaliation of any kind.
-    if(d && !f.estrellaBarrage)newcomerSupport(g,d,a);
+    if(d && !johanneRedirect && !f.estrellaBarrage)newcomerSupport(g,d,a);
     const destroyed = !!d && d.hp <= 0;
     // A shield-breaking volley must actually reduce an intact hostile city's defenses to zero.
     const defensesDestroyed = !!s && sd > 0 && s.shield <= 0;
@@ -986,7 +1029,7 @@
     if(a.expMargaretBonusTurn===g.turn)delete a.expMargaretBonusTurn;
     if(a.expShadowAttackTurn===g.turn)delete a.expShadowAttackTurn;
     if(f.dashStrike)a.expDashTurn=g.turn;
-    if(f.ziAmbush&&a.movedDistance>=2&&a.expZiAmbushTurn!==g.turn){a.expZiAmbushTurn=g.turn;if(d?.cmd)d.expZiWeakenNext=.2;}
+    if(f.ziAmbush&&a.movedDistance>=2&&a.expZiAmbushTurn!==g.turn){a.expZiAmbushTurn=g.turn;if(d?.cmd&&!johanneRedirect)d.expZiWeakenNext=.2;}
     if(f.highland)a.expHighlandTurn=g.turn;
     if(f.blackSeaFox&&tile(g,a.c,a.r)?.terrain==='mountain')a.expEduardoMountainTurn=g.turn;
     if(f.elitePenSupport&&d&&TYPES[d.type].branch==='Armor')a.expVritraUsedTurn=g.turn;
@@ -996,7 +1039,7 @@
       else a.expTamakiPenaltyTurn=g.turn;
     }
     delete a.expTamakiCharging;
-    if(f.diagnosis&&d)d.expJoeDiagnosis={side:a.side,until:g.turn+1};
+    if(f.diagnosis&&d&&!johanneRedirect)d.expJoeDiagnosis={side:a.side,until:g.turn+1};
     if(f.afterimage&&destroyed&&a.expAfterimageTurn!==g.turn){a.expAfterimage=true;a.expAfterimageTurn=g.turn;}
     if(a.expCalibration){
       // The calibration cost is nonlethal, but combat deaths must remain deaths.
@@ -1086,7 +1129,7 @@
     }
     // Full-strength free Oscar retaliation after an enemy initiates an
     // attack against an allied formation. This cannot produce counterfire.
-    const oscarReaction = d && !f.estrellaBarrage ? oscarGuardCounterstrike(g,a,d) : [];
+    const oscarReaction = d && !johanneRedirect && !f.estrellaBarrage ? oscarGuardCounterstrike(g,a,d) : [];
     checkVictory(g);
     return {
       ok: true,
