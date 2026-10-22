@@ -43,8 +43,11 @@
       dist(g, v, ship) <= 3).reduce((a, v) =>
         a + v.cargo.reduce((sum, u) => sum + u.stack, 0), 0);
     for (let i = (ship.cargo?.length || 0) - 1; i >= 0; i--) {
+      // A fresh passenger stays aboard until the next owner turn, even if the
+      // carrier has sailed to a legal beach this turn.
       if (deployReason(g, ship, i)) continue;
-      const strength = ship.cargo.reduce((a, c) => a + c.stack, 0),
+      const strength = ship.cargo.filter(c => c.boardedTurn !== g.turn)
+          .reduce((a, c) => a + c.stack, 0),
         spot = deployTargets(g, ship, i)
           .map(t => ({ t, s: landingScore(g, ship.side, t, strength + supportingCargo + landed.filter(v => v.hp > 0 && !atSea(g, v) && dist(g, v, t) <= 3).reduce((a, v) => a + v.stack, 0), fieldAt, masses) }))
           .filter(o => o.s != null)
@@ -96,6 +99,7 @@
       teams = (memo.navalTeams ||= {}),
       team = bound ? (teams[bound.id] ||= { landing: null }) : null,
       cargo = u.cargo || [],
+      readyCargo = cargo.filter(c => c.boardedTurn !== g.turn),
       reach = [...reachable(g, u).keys()]
         .map(k => {
           const [c, r] = k.split(',').map(Number);
@@ -109,7 +113,7 @@
       },
       danger = (p, grids = null) => grids ? grids.danger[p.r * g.cols + p.c] :
         g.units.filter(v => v.hp > 0 && foe(g, v.side, u.side) && dist(g, v, p) <= 2).length,
-      strength = cargo.reduce((a, c) => a + c.stack, 0),
+      strength = readyCargo.reduce((a, c) => a + c.stack, 0),
       landingSupport = g.units.filter(v => v.id !== u.id && v.side === u.side && v.hp > 0 &&
         TYPES[v.type]?.capacity > 0 && v.cargo?.length),
       landing = (p, grids = null) => {
@@ -121,8 +125,9 @@
           (scenarioMeta(g).ai?.synchronizedFlotillas &&
            v.invasionGroup && v.invasionGroup === u.invasionGroup &&
            dist(g, v, u) <= 9))
-          .reduce((n, v) => n + v.cargo.reduce((a, c) => a + c.stack, 0), 0);
-        const scores = deployTargetsAt(g, p, u.side, cargo.length > 0)
+          .reduce((n, v) => n + v.cargo.filter(c => c.boardedTurn !== g.turn)
+            .reduce((a, c) => a + c.stack, 0), 0);
+        const scores = deployTargetsAt(g, p, u.side, readyCargo.length > 0)
           .map(t => landingScore(g, u.side, t, strength + support, fieldAt, masses, grids))
           .filter(v => v != null);
         return scores.length ? Math.min(...scores) + danger(p, grids) * 2 + (team?.landing ? Math.min(30, dist(g, p, team.landing) * 4) : 0) : null;
@@ -152,8 +157,7 @@
       followSea(ports.map(p => [p, 0]));
       return true;
     }
-    const ready = cargo.some(c => c.boardedTurn !== g.turn);
-    if (ready && (cargo.length >= carrierCapacity(g, u) || job.wait >= 3)) {
+    if (readyCargo.length && (cargo.length >= carrierCapacity(g, u) || job.wait >= 3)) {
       if (landing(tile(g, u.c, u.r)) == null) {
         // Seed feasible landing positions, then route through navigable water rather
         // than following a land shortcut in the formation's strategic goal field.
