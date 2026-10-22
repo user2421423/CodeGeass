@@ -23,68 +23,73 @@
     g.scenario.startingResearchDoubled = true;
   }
 
-  // All regional battles keep their authored opening income targets and
-  // difficulty-adjusted reserves. Once their setup is complete, transfer the
-  // former fixed funding into the original cities. Thereafter, capturing a city
-  // transfers its supplemental output with it. Seaborne forces which start
-  // without cities get ten turns of their former income upfront, then earn
-  // nothing until taking a city.
+
+  // Replace scripted recurring subsidies with city-tier development. Scenario
+  // starting cash remains authored; cityless expeditions retain finite reserves.
+  function balanceScenarioTiers(g, targets) {
+    if(!g?.stations?.length)return;
+    g.scenario ||= {};
+    g.scenario.tierBalanceShortfalls = {};
+    for(const [side,wanted] of Object.entries(targets||{})){
+      if(!wanted||!Number.isFinite(wanted.credits))continue;
+      const cities=g.stations.filter(s=>s.owner===side);
+      if(!cities.length)continue;
+      let total=cities.reduce((sum,s)=>sum+cityStats(s).credits,0);
+      const target=Math.max(0,Math.round(wanted.credits));
+      // Upgrading an ordinary city never silently creates a new fortress battery.
+      while(total<target) {
+        const options=cities.filter(s=>!s.nationalCapital&&cityTierOf(s)<3)
+          .sort((a,b)=>cityTierOf(a)-cityTierOf(b)||b.tier-a.tier||a.id-b.id);
+        const city=options[0];
+        if(!city)break;
+        const next=cityTierOf(city)+1;
+        total+=CITY_STANDARD_STATS[next].credits-CITY_STANDARD_STATS[next-1].credits;
+        city.cityTier=next;
+        syncBuildings(g,city);
+        // New scenarios are initialized at full HP, with no current combat.
+        city.shield=city.maxShield;
+      }
+      g.scenario.tierBalanceShortfalls[side]=Math.max(0,target-total);
+    }
+  }
   function localizeScenarioIncome(g) {
-    if (g?.mode !== 'scenario' || !g.scenario ||
-        g.scenario.economyLocalized || g.scenario.localizingIncome) return false;
-    const funding = g.scenario.funding || {};
-    const sides = Object.keys(funding);
-    if (!sides.length) return false;
-    g.scenario.localizingIncome = true;
+    if(g?.mode!=='scenario'||!g.scenario||
+      g.scenario.economyLocalized||g.scenario.localizingIncome)return false;
+    const funding=g.scenario.funding||{};
+    const sides=Object.keys(funding);
+    if(!sides.length)return false;
+    g.scenario.localizingIncome=true;
     try {
-      for (const side of sides) {
-        const cities = g.stations.filter(s => s.owner === side)
-          .sort((a,b) => a.id - b.id);
-        if (!cities.length) {
-          // Do not give a continuing subsidy to armies offshore or in transit.
-          // Their extra war chest preserves the original income rate for ten
-          // turns of military spending, even if a city is never captured.
-          const oldIncome = income(g,side);
-          const wallet = funds(g,side);
-          // Individual invasion scenarios may specify a shorter finite reserve.
-          // Leave the ten-turn default unchanged for all existing scenarios.
-          const reserveTurns = Number.isInteger(g.scenario.citylessWarChestTurns) &&
-            g.scenario.citylessWarChestTurns > 0
-              ? g.scenario.citylessWarChestTurns : CITYLESS_WARCHEST_TURNS;
-          for (const resource of REGIONAL_RESOURCES)
-            wallet[resource] = Math.max(wallet[resource] || 0,
-              Math.max(0,Math.round(oldIncome[resource] * reserveTurns)));
+      const targets={};
+      for(const side of sides){
+        const cities=g.stations.filter(s=>s.owner===side);
+        if(!cities.length){
+          const former=income(g,side);
+          const wallet=funds(g,side);
+          const reserveTurns=Number.isInteger(g.scenario.citylessWarChestTurns)
+            &&g.scenario.citylessWarChestTurns>0
+              ?g.scenario.citylessWarChestTurns:CITYLESS_WARCHEST_TURNS;
+          for(const resource of REGIONAL_RESOURCES)
+            wallet[resource]=Math.max(wallet[resource]||0,
+              Math.max(0,Math.round(former[resource]*reserveTurns)));
           continue;
         }
-        for (const resource of REGIONAL_RESOURCES) {
-          const bonus = (funding[side]?.[resource] || 0) +
-            (resource === 'sakuradite' ? SAKURADITE.national : 0);
-          // Spread the complete former subsidy across starting cities. Keep
-          // fractional remainders on the first city so totals are unchanged.
-          // A negative remainder (signed funding, e.g. Defense of Japan) is
-          // spread one unit per city instead, so no single city becomes a
-          // loss for whoever captures it.
-          const whole=Math.trunc(bonus), each=Math.trunc(whole/cities.length),
-            remainder=whole-each*cities.length;
-          for (let i=0;i<cities.length;i++) {
-            const amount=each+(remainder<0 ? (i<-remainder?-1:0)+(i===0?bonus-whole:0)
-              : (i===0?remainder+(bonus-whole):0));
-            if (!amount) continue;
-            cities[i].regionalIncome ||= {};
-            cities[i].regionalIncome[resource] =
-              (cities[i].regionalIncome[resource] || 0) + amount;
-          }
-        }
+        // The scenario constructors set funding=target-base. Recover the
+        // intended credit target, but never retain a recurring hidden subsidy.
+        const base=income(g,side);
+        targets[side]={credits:Math.round(base.credits+(funding[side]?.credits||0))};
       }
-      g.scenario.funding = {};
-      g.scenario.economyLocalized = true;
+      if(!g.cityStandardMigrated)balanceScenarioTiers(g,targets);
+      g.scenario.funding={};
+      g.scenario.economyLocalized=true;
       return true;
-    } finally {
+    }finally {
       delete g.scenario.localizingIncome;
     }
   }
 
   function income(g, side) {
+    if(g?.stations?.length&&!g.cityStandardVersion)standardizeCities(g);
     // Regional constructors set startUnits only after calculating and storing
     // their opening resource reserves. This safely localizes funding on the
     // first post-construction income query for any scenario or campaign battle.
@@ -132,8 +137,8 @@
     }
     // Regional scenarios localize the national Sakuradite allotment into
     // cities as well; Conquest retains its national grant.
-    if (g.scenario?.id !== 'division-japan' && !g.scenario?.economyLocalized &&
-        g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side))
+    if (g.mode !== 'campaign' && (g.mode === 'scenario' ?
+        (g.order.includes(side) && g.stations.some(s=>s.owner===side)) : isMajor(g,side)) && alive(g,side))
       total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
     // Only during scenario construction and one-time migration do the authored
@@ -487,39 +492,33 @@
     if (s.expDecree) delete s.expDecree;
     s.cityTier = previous + 1;
     s.cityTierUpgradedTurn = g.turn;
-    s.income += previous === 1 ? 8 : previous === 2 ? 10 : 0;
     if (s.cityTier === 4) {
       s.fort = true;
       s.gun ||= s.name + ' battery';
       s.gunReady = Math.max(s.gunReady || 0, g.turn + 1);
     }
-    s.maxShield = cityDefenseFor(g, s) + (s.fortBonus || 0);
+    syncBuildings(g,s);
     s.shield = Math.min(s.shield, s.maxShield);
     if (g.mode === 'conquest' && s.owner === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.constructed = true;
     log(g, `${s.name}: upgraded to ${s.cityTier === 4 ? 'Fortress City' : 'City Level ' + s.cityTier}.`, s.owner);
     return { ok: true, tier: s.cityTier };
   }
-  // Remember each city's output before building contributions, including custom campaign cities.
-  // World-city data also recovers the foundation in older saves whose factories were already damaged.
-  // The foundation can be negative: some starting factories have less output than upgrades add.
-  function buildingFoundation(g, s) {
-    if (s.buildingFoundation) return s.buildingFoundation;
-    const row = g.mode === 'conquest' && CITY_DATA.find(r => r[0] === s.name),
-      base = row ? cityBase(row) : s,
-      tier = row ? row[4] : s.tier || 0,
-      lab = row ? row[5] ? 1 : 0 : s.lab || 0;
-    return s.buildingFoundation ||= {
-      industry: base.industry - 10 * tier,
-      science: base.science - 8 * lab,
-      maxShield: base.maxShield - (row ? 0 : s.fortBonus || 0) - 50 * tier,
+
+  // Factory and lab upgrades are additions to the universal city-tier yield.
+  function buildingFoundation(g,s) {
+    const stats=cityStats(s);
+    return s.buildingFoundation={
+      industry:stats.industry,science:stats.science,maxShield:stats.hp,
     };
   }
-  function syncBuildings(g, s) {
-    const base = buildingFoundation(g, s);
-    s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
-    s.science = Math.max(0, base.science + 8 * (s.lab || 0));
-    s.maxShield = cityDefenseFor(g, s) + (s.fortBonus || 0);
+  function syncBuildings(g,s) {
+    const stats=cityStats(s);
+    s.income=stats.credits;
+    s.industry=stats.industry+10*(s.tier||0);
+    s.science=stats.science+8*(s.lab||0);
+    s.maxShield=stats.hp;
+    s.buildingFoundation={industry:stats.industry,science:stats.science,maxShield:stats.hp};
   }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),
