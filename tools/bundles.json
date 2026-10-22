@@ -10,6 +10,7 @@
     "src/engine/07-save-compatibility.part.js",
     "src/engine/08-movement-and-deployment.part.js",
     "src/engine/09-combat.part.js",
+    "src/engine/09a-scenario-city-rosters.part.js",
     "src/engine/10-economy.part.js",
     "src/engine/11-city-automation.part.js",
     "src/engine/12-allegiances.part.js",
