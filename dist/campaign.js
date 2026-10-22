@@ -457,6 +457,7 @@
       for (const station of g.stations) E.raiseFactoryTier(g, station, 2);
     for (const spec of m.units) placeUnit(g, spec);
     addDifficultyReinforcements(g, d);
+    E.standardizeCities(g);
     fire(g, ev => ev.turn === 1 || ev.start);
     return g;
   }

@@ -667,6 +667,9 @@
       setTileTerrain(g, at, 'plains');
       g.stations.push(s);
     }
+    // Conquest city tier downgrades preserve the old balance after removing
+    // per-city economy tweaks. Factory and lab levels remain untouched.
+    standardizeCities(g);
     if (cfg.expectedCities) {
       const actual = Object.fromEntries([...majors, 'neutral'].map(side => [side, g.stations.filter(s => s.owner === side).length]));
       if (g.stations.length !== 168 || Object.keys(cfg.expectedCities).some(side => actual[side] !== cfg.expectedCities[side]))

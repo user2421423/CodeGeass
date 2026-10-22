@@ -252,7 +252,7 @@ function draw(time, dt) {
       ctx.restore();
     }
   }
-  // Cities destroyed by F.L.E.I.J.A.: a charred ring and the city's name for the rest of the conquest.
+  // Cities destroyed by F.L.E.I.J.A.: charred ruins that persist in conquests and scenarios.
   for (const ruin of game.ruins || []) {
     const c = visualCityCenter(ruin);
     if (!visible(c)) continue;

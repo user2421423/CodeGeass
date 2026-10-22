@@ -34,7 +34,7 @@ jobs:
       - name: Regenerate only the affected troop-free scenario maps
         env:
           NODE_PATH: /tmp/terrain-deps/node_modules
-          SCENARIO_IDS: cf-new-zealand,cf-pacific-northwest
+          SCENARIO_IDS: cf-new-zealand,cf-pacific-northwest,cf-eu-central-europe
         run: |
           node tools/generate-hires-regional-maps.cjs
           node tools/generate-scenario-previews.cjs
@@ -44,14 +44,16 @@ jobs:
           git add -- \
             dist/scenario-hires/cf-new-zealand.webp \
             dist/scenario-hires/cf-pacific-northwest.webp \
+            dist/scenario-hires/cf-eu-central-europe.webp \
             dist/scenario-previews/cf-new-zealand.webp \
-            dist/scenario-previews/cf-pacific-northwest.webp
+            dist/scenario-previews/cf-pacific-northwest.webp \
+            dist/scenario-previews/cf-eu-central-europe.webp
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Refresh New Zealand and Pacific Northwest maps without circular relief"
+            git commit -m "Refresh regional map backdrops for updated geography"
             git pull --rebase origin main
             git push origin HEAD:main
             echo "changed=true" >> "$GITHUB_OUTPUT"

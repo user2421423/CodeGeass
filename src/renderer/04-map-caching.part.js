@@ -171,7 +171,8 @@ function preloadRegionalMapImage(id) {
   mapAtlasHiResImages.set(id, entry);
   while (mapAtlasHiResImages.size > (mapAtlasMobile ? 1 : 3))
     mapAtlasHiResImages.delete(mapAtlasHiResImages.keys().next().value);
-  entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp';
+  entry.image.src = 'scenario-hires/' + encodeURIComponent(id) + '.webp' +
+    (id === 'cf-eu-central-europe' ? '?v=20261022-offmap' : '');
   return entry;
 }
 let mapAtlasStrategicOwners = { tiles: null, revision: -1, source: null, canvas: null };
@@ -261,7 +262,8 @@ function updateMapFallback() {
       if (typeof requestMapFrame === 'function') requestMapFrame();
     }
   };
-  low.src = 'scenario-previews/' + encodeURIComponent(id) + '.webp';
+  low.src = 'scenario-previews/' + encodeURIComponent(id) + '.webp' +
+    (id === 'cf-eu-central-europe' ? '?v=20261022-offmap' : '');
 }
 function refreshMapAtlas(scale) {
   const revision = game.mapRevision || 0;

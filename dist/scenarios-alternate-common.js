@@ -90,6 +90,7 @@ function define(config){
    for(const s of g.stations){
      s.owner=translate(s.owner);
      if(s.capitalOf)s.capitalOf=translate(s.capitalOf);
+     if(s.regionalHQOf)s.regionalHQOf=translate(s.regionalHQOf);
      if(s.portOwner)s.portOwner=translate(s.portOwner);
    }
    for(const t of g.tiles)if(t.owner)t.owner=translate(t.owner);

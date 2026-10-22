@@ -23,68 +23,164 @@
     g.scenario.startingResearchDoubled = true;
   }
 
-  // All regional battles keep their authored opening income targets and
-  // difficulty-adjusted reserves. Once their setup is complete, transfer the
-  // former fixed funding into the original cities. Thereafter, capturing a city
-  // transfers its supplemental output with it. Seaborne forces which start
-  // without cities get ten turns of their former income upfront, then earn
-  // nothing until taking a city.
+
+  // Replace scripted recurring subsidies with city-tier development. Scenario
+  // starting cash remains authored; cityless expeditions retain finite reserves.
+  // Several legacy scenario constructors clamp negative funding to zero. That
+  // destroys the original target once standardized city output exceeds it.
+  // Preserve their actual authored targets here rather than treating the
+  // inflated new income as the goal.
+  const REGIONAL_CREDIT_TARGETS = Object.freeze({
+    'cf-eu-france':{cf:880,eu:820},
+    'cf-eu-moscow':{cf:1080,eu:910},
+    'eu-cf-beijing':{eu:900,cf:1050},
+    'eu-cf-luoyang':{eu:1140,cf:1190},
+    'eu-cf-sichuan':{eu:890,cf:930},
+    'battle-luoyang':{britannia:1080,cf:1190},
+    'invasion-japan':{britannia:400,bk:300,cf:320},
+    'defense-japan':{bk:270,britannia:540},
+  });
+  // Reconcile every regional battle against its authored credit targets using
+  // *only* genuine city tiers. A fortress is always city level 4 with a battery;
+  // demoting one removes its battery as well. Factories and labs are untouched.
+  function balanceScenarioTiers(g, targets) {
+    if (!g?.stations?.length || !g.scenario) return;
+    const stats = CITY_STANDARD_STATS;
+    const sides = Object.entries(targets || {}).filter(([side, wanted]) =>
+      Number.isFinite(wanted?.credits) && g.stations.some(s => s.owner === side));
+    if (!sides.length) return;
+    const bounds = Object.fromEntries(sides.map(([side, wanted]) => {
+      const cities = g.stations.filter(s => s.owner === side);
+      const min = cities.reduce((n,s) => n + (s.nationalCapital ? stats.capital.credits : stats[1].credits), 0);
+      const max = cities.reduce((n,s) => n + (s.nationalCapital ? stats.capital.credits : stats[4].credits), 0);
+      return [side, {min, max, requested:Math.max(1,Math.round(wanted.credits))}];
+    }));
+    // If a small invasion army cannot earn its old budget even with all its
+    // cities at level 4, proportionally reduce the opposing targets too.
+    // If that is still impossible (e.g. Canada has 68 defending cities and
+    // the invasion holds only six), clamp to each side's legal tier limits.
+    const lowestScale = Math.max(...Object.values(bounds).map(b => b.min / b.requested));
+    const highestScale = Math.min(...Object.values(bounds).map(b => b.max / b.requested));
+    const scale = lowestScale <= highestScale
+      ? Math.max(lowestScale, Math.min(1,highestScale))
+      : highestScale;
+    g.scenario.tierBalanceShortfalls = {};
+    g.scenario.tierBalanceSummary = {};
+    for (const [side] of sides) {
+      const {min,max,requested} = bounds[side];
+      const goal = Math.max(min,Math.min(max,Math.round(requested * scale)));
+      const cities = g.stations.filter(s => s.owner === side);
+      const total = () => cities.reduce((sum,s) => sum + cityStats(s).credits, 0);
+      const applyTier = (s,next) => {
+        const previousMax = Math.max(1,Number(s.maxShield)||1);
+        const fraction = Math.max(0,Math.min(1,(Number(s.shield)||0)/previousMax));
+        s.cityTier = next;
+        if (next === 4) {
+          s.fort = true;
+          s.gun ||= s.name + ' Defensive Battery';
+          s.gunReady ??= g.turn || 1;
+        } else if (s.fort) {
+          s.fort = false;
+          s.gun = null;
+          s.gunReady = 0;
+          delete s.gunUsedTurn;
+        }
+        syncBuildings(g,s);
+        s.shield = Math.round(s.maxShield * fraction);
+      };
+      let before = total(), current = before;
+      let raised = 0, lowered = 0, removedFortresses = 0, addedFortresses = 0;
+      // Lower ordinary cities first, then less-important fortresses, and
+      // demote headquarters last. National capitals are never downgraded.
+      while (current > goal) {
+        const candidates = cities.filter(s => !s.nationalCapital && cityTierOf(s)>1)
+          .map(s => ({
+            city:s, step:stats[cityTierOf(s)].credits-stats[cityTierOf(s)-1].credits,
+          }))
+          .filter(x => Math.abs(current-x.step-goal) < Math.abs(current-goal))
+          .sort((a,b) =>
+            Number(!!a.city.fort)-Number(!!b.city.fort) ||
+            Number(!!a.city.regionalHQ)-Number(!!b.city.regionalHQ) ||
+            Math.abs(current-a.step-goal)-Math.abs(current-b.step-goal) ||
+            a.city.id-b.city.id);
+        if (!candidates.length) break;
+        const s=candidates[0].city, wasFort=!!s.fort;
+        current-=candidates[0].step;
+        applyTier(s,cityTierOf(s)-1);
+        lowered++;
+        if (wasFort && !s.fort) removedFortresses++;
+      }
+      // Improve small regional economies via city upgrades. The transition
+      // from level 3 to level 4 creates the full fortress + battery, never a
+      // level-4 city without a battery.
+      while (current < goal) {
+        const candidates = cities.filter(s => !s.nationalCapital && cityTierOf(s)<4)
+          .map(s => ({
+            city:s, step:stats[cityTierOf(s)+1].credits-stats[cityTierOf(s)].credits,
+          }))
+          .filter(x => Math.abs(current+x.step-goal) < Math.abs(current-goal))
+          .sort((a,b) =>
+            cityTierOf(a.city)-cityTierOf(b.city) ||
+            Math.abs(current+a.step-goal)-Math.abs(current+b.step-goal) ||
+            Number(!a.city.regionalHQ)-Number(!b.city.regionalHQ) ||
+            a.city.id-b.city.id);
+        if (!candidates.length) break;
+        const s=candidates[0].city, wasFort=!!s.fort;
+        current+=candidates[0].step;
+        applyTier(s,cityTierOf(s)+1);
+        raised++;
+        if (!wasFort && s.fort) addedFortresses++;
+      }
+      g.scenario.tierBalanceShortfalls[side] = Math.max(0,requested-current);
+      g.scenario.tierBalanceSummary[side] = {
+        previousTarget:requested, scaledTarget:goal, before, after:total(),
+        raised, lowered, removedFortresses, addedFortresses,
+        minimum:min, maximum:max,
+      };
+    }
+    g.scenario.tierBalanceVersion = 2;
+  }
   function localizeScenarioIncome(g) {
-    if (g?.mode !== 'scenario' || !g.scenario ||
-        g.scenario.economyLocalized || g.scenario.localizingIncome) return false;
-    const funding = g.scenario.funding || {};
-    const sides = Object.keys(funding);
-    if (!sides.length) return false;
-    g.scenario.localizingIncome = true;
+    if(g?.mode!=='scenario'||!g.scenario||
+      g.scenario.economyLocalized||g.scenario.localizingIncome)return false;
+    const funding=g.scenario.funding||{};
+    const sides=Object.keys(funding);
+    if(!sides.length)return false;
+    g.scenario.localizingIncome=true;
     try {
-      for (const side of sides) {
-        const cities = g.stations.filter(s => s.owner === side)
-          .sort((a,b) => a.id - b.id);
-        if (!cities.length) {
-          // Do not give a continuing subsidy to armies offshore or in transit.
-          // Their extra war chest preserves the original income rate for ten
-          // turns of military spending, even if a city is never captured.
-          const oldIncome = income(g,side);
-          const wallet = funds(g,side);
-          // Individual invasion scenarios may specify a shorter finite reserve.
-          // Leave the ten-turn default unchanged for all existing scenarios.
-          const reserveTurns = Number.isInteger(g.scenario.citylessWarChestTurns) &&
-            g.scenario.citylessWarChestTurns > 0
-              ? g.scenario.citylessWarChestTurns : CITYLESS_WARCHEST_TURNS;
-          for (const resource of REGIONAL_RESOURCES)
-            wallet[resource] = Math.max(wallet[resource] || 0,
-              Math.max(0,Math.round(oldIncome[resource] * reserveTurns)));
+      const targets={};
+      for(const side of sides){
+        const cities=g.stations.filter(s=>s.owner===side);
+        if(!cities.length){
+          const former=income(g,side);
+          const wallet=funds(g,side);
+          const reserveTurns=Number.isInteger(g.scenario.citylessWarChestTurns)
+            &&g.scenario.citylessWarChestTurns>0
+              ?g.scenario.citylessWarChestTurns:CITYLESS_WARCHEST_TURNS;
+          for(const resource of REGIONAL_RESOURCES)
+            wallet[resource]=Math.max(wallet[resource]||0,
+              Math.max(0,Math.round(former[resource]*reserveTurns)));
           continue;
         }
-        for (const resource of REGIONAL_RESOURCES) {
-          const bonus = (funding[side]?.[resource] || 0) +
-            (resource === 'sakuradite' ? SAKURADITE.national : 0);
-          // Spread the complete former subsidy across starting cities. Keep
-          // fractional remainders on the first city so totals are unchanged.
-          // A negative remainder (signed funding, e.g. Defense of Japan) is
-          // spread one unit per city instead, so no single city becomes a
-          // loss for whoever captures it.
-          const whole=Math.trunc(bonus), each=Math.trunc(whole/cities.length),
-            remainder=whole-each*cities.length;
-          for (let i=0;i<cities.length;i++) {
-            const amount=each+(remainder<0 ? (i<-remainder?-1:0)+(i===0?bonus-whole:0)
-              : (i===0?remainder+(bonus-whole):0));
-            if (!amount) continue;
-            cities[i].regionalIncome ||= {};
-            cities[i].regionalIncome[resource] =
-              (cities[i].regionalIncome[resource] || 0) + amount;
-          }
-        }
+        // The scenario constructors set funding=target-base. Recover the
+        // intended credit target, but never retain a recurring hidden subsidy.
+        // During localization income() still includes the authored funding,
+        // so this value is already the original target (do not add twice).
+        const totalWithFunding=income(g,side);
+        const explicit = REGIONAL_CREDIT_TARGETS[g.scenario.id]?.[side];
+        targets[side]={credits:explicit ?? Math.round(totalWithFunding.credits)};
       }
-      g.scenario.funding = {};
-      g.scenario.economyLocalized = true;
+      if(!g.cityStandardMigrated)balanceScenarioTiers(g,targets);
+      g.scenario.funding={};
+      g.scenario.economyLocalized=true;
       return true;
-    } finally {
+    }finally {
       delete g.scenario.localizingIncome;
     }
   }
 
   function income(g, side) {
+    if(g?.stations?.length&&!g.cityStandardVersion)standardizeCities(g);
     // Regional constructors set startUnits only after calculating and storing
     // their opening resource reserves. This safely localizes funding on the
     // first post-construction income query for any scenario or campaign battle.
@@ -132,8 +228,8 @@
     }
     // Regional scenarios localize the national Sakuradite allotment into
     // cities as well; Conquest retains its national grant.
-    if (g.scenario?.id !== 'division-japan' && !g.scenario?.economyLocalized &&
-        g.mode !== 'campaign' && (g.mode === 'scenario' ? g.order.includes(side) : isMajor(g, side)) && alive(g, side))
+    if (g.mode !== 'campaign' && (g.mode === 'scenario' ?
+        (g.order.includes(side) && g.stations.some(s=>s.owner===side)) : isMajor(g,side)) && alive(g,side))
       total.sakuradite += SAKURADITE.national;
     total.sakuradite = Math.round(total.sakuradite);
     // Only during scenario construction and one-time migration do the authored
@@ -487,39 +583,33 @@
     if (s.expDecree) delete s.expDecree;
     s.cityTier = previous + 1;
     s.cityTierUpgradedTurn = g.turn;
-    s.income += previous === 1 ? 8 : previous === 2 ? 10 : 0;
     if (s.cityTier === 4) {
       s.fort = true;
       s.gun ||= s.name + ' battery';
       s.gunReady = Math.max(s.gunReady || 0, g.turn + 1);
     }
-    s.maxShield = cityDefenseFor(g, s) + (s.fortBonus || 0);
+    syncBuildings(g,s);
     s.shield = Math.min(s.shield, s.maxShield);
     if (g.mode === 'conquest' && s.owner === g.player && g.challengePassRun?.version === 1)
       g.challengePassRun.constructed = true;
     log(g, `${s.name}: upgraded to ${s.cityTier === 4 ? 'Fortress City' : 'City Level ' + s.cityTier}.`, s.owner);
     return { ok: true, tier: s.cityTier };
   }
-  // Remember each city's output before building contributions, including custom campaign cities.
-  // World-city data also recovers the foundation in older saves whose factories were already damaged.
-  // The foundation can be negative: some starting factories have less output than upgrades add.
-  function buildingFoundation(g, s) {
-    if (s.buildingFoundation) return s.buildingFoundation;
-    const row = g.mode === 'conquest' && CITY_DATA.find(r => r[0] === s.name),
-      base = row ? cityBase(row) : s,
-      tier = row ? row[4] : s.tier || 0,
-      lab = row ? row[5] ? 1 : 0 : s.lab || 0;
-    return s.buildingFoundation ||= {
-      industry: base.industry - 10 * tier,
-      science: base.science - 8 * lab,
-      maxShield: base.maxShield - (row ? 0 : s.fortBonus || 0) - 50 * tier,
+
+  // Factory and lab upgrades are additions to the universal city-tier yield.
+  function buildingFoundation(g,s) {
+    const stats=cityStats(s);
+    return s.buildingFoundation={
+      industry:stats.industry,science:stats.science,maxShield:stats.hp,
     };
   }
-  function syncBuildings(g, s) {
-    const base = buildingFoundation(g, s);
-    s.industry = Math.max(0, base.industry + 10 * (s.tier || 0));
-    s.science = Math.max(0, base.science + 8 * (s.lab || 0));
-    s.maxShield = cityDefenseFor(g, s) + (s.fortBonus || 0);
+  function syncBuildings(g,s) {
+    const stats=cityStats(s);
+    s.income=stats.credits;
+    s.industry=stats.industry+10*(s.tier||0);
+    s.science=stats.science+8*(s.lab||0);
+    s.maxShield=stats.hp;
+    s.buildingFoundation={industry:stats.industry,science:stats.science,maxShield:stats.hp};
   }
   function build(g, id, kind) {
     const s = g.stations.find(s => s.id === id),

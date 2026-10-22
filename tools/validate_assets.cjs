@@ -23,7 +23,7 @@ function checkFile(relative) {
 }
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
-  if (!/^(data:|https?:|#)/.test(match[1])) checkFile(match[1]);
+  if (!/^(data:|https?:|#)/.test(match[1])) checkFile(match[1].split(/[?#]/, 1)[0]);
 }
 // Regional scenario files load from dist/scenario-manifest.js after startup, not from index.html.
 const scenarioEnv = {};

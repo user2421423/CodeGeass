@@ -447,7 +447,7 @@
         const range=nearest(u,border);
         return v+(range<=12 ? unitStrength(u)*(1-range/16):0);
       },0),
-        objectiveValue = border.reduce((v,s)=>v+(s.capitalOf===side?6:s.tier>=3?3:1),0);
+        objectiveValue = border.reduce((v,s)=>v+((s.capitalOf===side||s.regionalHQOf===side)?6:s.tier>=3?3:1),0);
       return [r,Math.max(1,enemyPower+objectiveValue+cities.length*0.3)];
     }));
     const savedPressure=state.theaterPressure||{};
@@ -499,7 +499,7 @@
     for(const [id,t] of Object.entries(oldTransfers))if(g.turn-(t.started??0)<=10 &&
       land.some(u=>u.id===Number(id)))transfers[id]=t;
     if(rivalIds.length===2 && g.turn-(state.lastWingTransfer??-99)>=STRATEGIC.transferCooldown){
-      const capital=allies.find(s=>s.capitalOf===side),
+      const capital=allies.find(s=>s.capitalOf===side||s.regionalHQOf===side),
         capitalAttackers=capital?opponents.filter(u=>
           massOf(g,u)===massOf(g,capital) && dist(g,u,capital)<=3):[],
         capitalThreat=capitalAttackers.reduce((v,u)=>v+unitStrength(u),0),
@@ -720,14 +720,14 @@
       if (foe(g, s.owner, side)) {
         // Warhead projects are public intelligence; rival Eliminator projects are classified.
         const project = s.project,
-          capital = s.capitalOf && alive(g, s.owner);
+          capital = (s.capitalOf || s.regionalHQOf) && alive(g, s.owner);
         if (!operational(s)) continue;
         const [value, seed] = project ? [100, -8] : capital ? [70, -6] : s.owner === 'neutral' ? [8, 1] : s.tier >= 3 ? [20, -1] : [10, 0];
         list.push({ key: 's' + s.id, c: s.c, r: s.r, name: s.name, owner: s.owner,
           value: project ? value : Math.max(6, Math.round(value * rivalWeight(s.owner))),
           seed, fortified: value >= 20 });
       } else if (s.owner === side) {
-        const vital = s.capitalOf === side || s.project?.side === side || s.eliminatorProject?.side === side;
+        const vital = (s.capitalOf === side || s.regionalHQOf === side) || s.project?.side === side || s.eliminatorProject?.side === side;
         const w = warning(s);
         if (w.immediate || w.projected)
           list.push({ key: 'd' + s.id, c: s.c, r: s.r, name: s.name, defend: true, city: true,

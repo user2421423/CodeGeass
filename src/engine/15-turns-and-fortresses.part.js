@@ -330,18 +330,18 @@
     // Shield recovery follows the city's engineering upgrades and Huang Qian's nearby administration aura.
     for (const s of g.stations) {
       if (s.owner !== side) continue;
-      const baseRate = .12+techValue(g,side,'cities.engineering');
-      const administrationBonus=mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3) ? .15 : 0;
+      const normalRegen=cityStats(s)[s.attackedSinceRegen?'attacked':'safe'];
+      const engineering=techValue(g,side,'cities.engineering');
+      const administrationBonus=mine.some(m=>fx(m).adminCity&&dist(g,m,s)<=3) ? Math.round(s.maxShield*.15) : 0;
       // Incoming fire halves ordinary repair, but Huang Qian still restores
       // the full additional 15% maximum shields every friendly turn.
       const occupant=unitAt(g,s);
       const miguelBlocked=occupant?.side===side&&!!occupant.expMiguelSupply;
       const gaudefroyRate=occupant?.side===side ? fx(occupant).fortressRegeneration : 0;
       const recovery=miguelBlocked||s.expArkFleet?.owner===side||s.expSupplyBlocked?.owner===side||s.expShieldRegenBlocked?.owner===side
-        ? 0 : gaudefroyRate ? (baseRate+administrationBonus)*gaudefroyRate
-          : (s.attackedSinceRegen?baseRate*.5:baseRate)+administrationBonus;
+        ? 0 : (normalRegen+engineering+administrationBonus)*(gaudefroyRate||1);
       if(s.expShieldRegenBlocked?.owner===side){s.expShieldRegenBlocked.turns--;if(s.expShieldRegenBlocked.turns<=0)delete s.expShieldRegenBlocked;}
-      s.shield = Math.min(s.maxShield, s.shield + Math.round(s.maxShield * recovery));
+      s.shield = Math.min(s.maxShield, s.shield + Math.round(recovery));
       delete s.attackedSinceRegen;
     }
     strategicTurn(g, side);
@@ -503,47 +503,109 @@
     return g?.era === 'ufn2018' ? 'Rise of the U.F.N. · 2018 a.t.b.' : 'World War · 2017 a.t.b.';
   }
 
-  // City development is separate from the factory production tier.
+
+  // City development is independent of factories and labs.
+  const CITY_STANDARD_VERSION = 1;
+  const CITY_STANDARD_STATS = Object.freeze({
+    1:{hp:500,credits:15,industry:6,science:2,safe:50,attacked:25},
+    2:{hp:800,credits:30,industry:12,science:3,safe:80,attacked:40},
+    3:{hp:1000,credits:50,industry:20,science:5,safe:100,attacked:45},
+    4:{hp:1500,credits:80,industry:30,science:7,safe:125,attacked:50},
+    capital:{hp:2000,credits:110,industry:40,science:10,safe:150,attacked:55},
+  });
+  const NATIONAL_CAPITALS = {
+    Pendragon:'britannia', Paris:'eu', Luoyang:'cf',
+    'St. Petersburg':'eb', 'St Petersburg':'eb',
+  };
   function cityTierOf(s) {
-    // Older/custom regional factories may already have been raised without
-    // recording cityTier. Their authored base HP identifies the city level;
-    // the factory level must not silently become a city upgrade on load.
-    const baseHP = (s?.maxShield || 0) - (s?.fortBonus || 0),
-      inferred = s?.fort ? 4 : ({200:1,250:2,300:3,400:4}[baseHP] ?? s?.tier);
-    return Math.max(1, Math.min(4, Math.trunc(Number(s?.cityTier ?? inferred) || 1)));
+    const baseHP=(s?.maxShield||0)-(s?.fortBonus||0);
+    const inferred=s?.fort?4:({200:1,250:2,300:3,400:4,500:1,800:2,1000:3,1500:4}[baseHP]??s?.tier);
+    return Math.max(1,Math.min(4,Math.trunc(Number(s?.cityTier??inferred)||1)));
   }
   function cityTierCost(s) {
-    return [{ credits: 200, industry: 50 }, { credits: 300, industry: 75 },
-      { credits: 500, industry: 125 }][cityTierOf(s) - 1] || null;
+    return [{credits:200,industry:50},{credits:300,industry:75},
+      {credits:500,industry:125}][cityTierOf(s)-1]||null;
   }
-  // Shared defenses: factory and research-lab levels do not affect base HP.
-  function cityDefenseHP(tier, fort = false, capital = false) {
-    if (capital) return 600;
-    if (fort || tier >= 4) return 400;
-    return [0, 200, 250, 300][Math.max(1, Math.min(3, Math.trunc(Number(tier)) || 1))];
+  function cityStats(s) {
+    return CITY_STANDARD_STATS[s?.nationalCapital?'capital':cityTierOf(s)];
   }
-  // Only canonical faction capitals get the 600-HP tier in regional scenarios.
-  // Regional command centers (e.g. Sydney, Ottawa, Mexico City) are not empire capitals.
-  function scenarioCityDefenseHP(tier, fort, name) {
-    const trueCapital = CITY_DATA.some(row => row[0] === name && row[5] === true);
-    return cityDefenseHP(tier, fort, trueCapital);
+  function cityDefenseHP(tier,fort=false,capital=false) {
+    return CITY_STANDARD_STATS[capital?'capital':(fort||tier>=4?4:
+      Math.max(1,Math.min(3,Math.trunc(Number(tier)||1))))].hp;
   }
-  // Regional HQ flags also drive economy/objectives and must not confer the
-  // true-capital HP tier during loading or subsequent building upgrades.
-  function cityDefenseFor(g, s) {
-    const tier = cityTierOf(s);
-    return g.mode === 'scenario'
-      ? scenarioCityDefenseHP(tier, !!s.fort, s.name)
-      : cityDefenseHP(tier, !!s.fort, !!s.capital);
+  function scenarioCityDefenseHP(tier,fort,name) {
+    const original= CITY_DATA.some(row=>row[0]===name&&row[5]===true);
+    return cityDefenseHP(tier,fort,original);
   }
-  // A city's starting output and defenses by tier, with its CITY_TWEAKS balance overrides.
-  function cityBase([name, , , , tier, capital = false, fort = false]) {
+  function cityDefenseFor(g,s) {
+    return cityDefenseHP(cityTierOf(s),!!s.fort,!!s.nationalCapital||!!s.capital);
+  }
+  function isNationalCapital(g,s) {
+    if(g.mode==='conquest')return !!s.capital;
+    const side=NATIONAL_CAPITALS[s.name];
+    return !!side&&!!s.capital&&(s.capitalOf===side||s.owner===side);
+  }
+  // Lower less-important ordinary city tiers to prevent Conquest economies
+  // from ballooning after removing the hand-authored income overrides.
+  function rebalanceConquestCityTiers(g) {
+    const targets=g.era==='ufn2018'
+      ? {britannia:1450,eb:600,cf:1550}
+      : {britannia:1135,eu:1150,cf:1150};
+    for(const [side,target] of Object.entries(targets)){
+      const cities=g.stations.filter(s=>s.owner===side);
+      let total=cities.reduce((sum,s)=>sum+cityStats(s).credits,0);
+      const choices=cities.filter(s=>!s.capital&&!s.fort)
+        .sort((a,b)=>cityTierOf(a)-cityTierOf(b)||a.id-b.id);
+      while(total>target){
+        const s=choices.find(city=>cityTierOf(city)>1);
+        if(!s)break;
+        const level=cityTierOf(s);
+        const saved=CITY_STANDARD_STATS[level].credits-CITY_STANDARD_STATS[level-1].credits;
+        if(total-saved<target&&total-target<saved/2)break;
+        s.cityTier=level-1;
+        total-=saved;
+      }
+    }
+  }
+  // Versioned conversion used both for new games and existing saved wars.
+  function standardizeCities(g,migrating=false) {
+    if(!g?.stations?.length||g.cityStandardVersion===CITY_STANDARD_VERSION)return false;
+    for(const s of g.stations){
+      const priorMax=Number(s.maxShield)||0;
+      const fraction=priorMax>0?Math.max(0,Math.min(1,(Number(s.shield)||0)/priorMax)):1;
+      s.cityTier=cityTierOf(s);
+      if(s.fort&&s.cityTier<4)s.cityTier=4;
+      if(g.mode==='scenario'){
+        if(s.capitalOf||s.capital){
+          s.regionalHQ=true;
+          s.regionalHQOf=s.capitalOf||s.owner;
+        }
+        s.nationalCapital=isNationalCapital(g,s);
+        s.capital=s.nationalCapital;
+        // Regional HQs retain their strategic role but cannot give capital
+        // conquest honors or national-capital economic/defensive bonuses.
+        if(!s.nationalCapital)s.capitalOf=null;
+      }else s.nationalCapital=!!s.capital;
+      delete s.regionalIncome;
+      delete s.divisionIncome;
+      delete s.fortBonus;
+      s._cityHPFraction=fraction;
+    }
+    if(g.mode==='conquest'&&!migrating)rebalanceConquestCityTiers(g);
+    for(const s of g.stations){
+      syncBuildings(g,s);
+      s.shield=migrating?Math.round(s.maxShield*s._cityHPFraction):s.maxShield;
+      delete s._cityHPFraction;
+    }
+    g.cityStandardVersion=CITY_STANDARD_VERSION;
+    return true;
+  }
+  // Factory bonuses are separate from city development.
+  function cityBase([name,,,,tier,capital=false,fort=false]){
+    const foundation=CITY_STANDARD_STATS[capital?'capital':(fort?4:tier)];
     return {
-      maxShield: cityDefenseHP(tier, fort, capital),
-      // Capitals: 50 plus the 15 their old refinery exported (refineries now need a Sakuradite deposit).
-      income: capital ? 65 : tier === 3 ? 30 : tier === 2 ? 20 : 12,
-      industry: capital ? 30 : 6 * tier,
-      science: capital ? 10 : 1 + tier,
-      ...CITY_TWEAKS[name],
+      maxShield:foundation.hp,income:foundation.credits,
+      industry:foundation.industry+10*tier,
+      science:foundation.science+(capital?8:0),
     };
   }

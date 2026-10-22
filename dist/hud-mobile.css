@@ -1016,3 +1016,72 @@ body .mobile-unit-toggle,
     white-space: normal;
   }
 }
+
+/* Carrier Knightmare cargo picker: use the available phone viewport.
+   The general-purpose side drawer's 124px top / 174px bottom offsets made
+   the hold virtually unusable on short mobile landscape screens. */
+@media (max-width: 760px), (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  body .side.open:has(> .deployment-only) {
+    box-sizing: border-box;
+    top: calc(max(7px, env(safe-area-inset-top)) + 104px);
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    right: auto;
+    width: min(410px, calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    max-width: calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    max-height: none;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 42px 14px 14px;
+    z-index: 18;
+  }
+  body .side.open .deployment-only h2 {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0 0 12px;
+  }
+  body .side.open .deployment-only .section-divider {
+    margin-top: 0;
+    min-width: 0;
+  }
+  body .side.open .deployment-only .building {
+    min-width: 0;
+    padding: 12px;
+    gap: 7px 10px;
+  }
+  body .side.open .deployment-only .building > .label {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+  body .side.open .deployment-only .building button {
+    min-height: 44px;
+    font-size: 14px;
+    justify-content: center;
+  }
+  body .side.open .deployment-only .description {
+    line-height: 1.45;
+  }
+  body .side.open:has(> .deployment-only) > .drawer-close {
+    position: sticky;
+    top: -34px;
+    float: right;
+    margin: -34px -5px 0 0;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 4px 10px;
+    font-size: 26px;
+  }
+}
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 600px) {
+  body .side.open:has(> .deployment-only) {
+    top: calc(max(4px, env(safe-area-inset-top)) + 44px);
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left));
+    width: min(420px, 52vw);
+    max-width: min(420px, 52vw);
+    padding: 38px 12px 12px;
+  }
+}

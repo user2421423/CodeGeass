@@ -567,7 +567,8 @@
     ['Dubai', 2],
   ];
   const NAVY_DATA = [
-    ['britannia', 'carrier', -158, 20.5, 1], ['britannia', 'carrier', -71, 39.5, 1], ['britannia', 'carrier', 135, 33, 1], ['britannia', 'carrier', -160, 23.5, 1],
+    // 2017 only: stage all four Britannian carriers offshore of Japan (Kyushu, Honshu and Hokkaido).
+    ['britannia', 'carrier', 132, 31.3333333, 1], ['britannia', 'carrier', 137, 33.04, 1], ['britannia', 'carrier', 142, 34.7466667, 1], ['britannia', 'carrier', 146, 44.9866667, 1],
     ['britannia', 'amphibious2', 131, 32.5, 1], ['britannia', 'amphibious', 141, 36, 2], ['britannia', 'amphibious', -157, 19.5, 2],
     ['britannia', 'amphibious', -162, 21, 2], ['britannia', 'amphibious2', -79, 8, 1], ['britannia', 'amphibious', -154, 23, 2],
     ['eu', 'carrier', 2, 53, 1], ['eu', 'carrier', -6, 35.5, 1], ['eu', 'carrier', 4, 40.5, 1], ['eu', 'carrier', 25, 37, 1],

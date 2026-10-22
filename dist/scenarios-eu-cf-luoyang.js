@@ -431,16 +431,17 @@
   }
   function onTurn(){return false;} // No scripted spawns or artificial deadlines.
   function objective(g,side=g.player){
-    return 'Take every city in the Luoyang theatre ('+
-      g.stations.filter(s=>s.owner===side).length+'/'+CITIES.length+
-      ' held). Luoyang alone is not sufficient; there is no turn limit.';
+    return 'Capture every surviving city in the Luoyang theatre ('+
+      g.stations.filter(s=>s.owner===side).length+' held; '+
+      g.stations.filter(s=>s.owner!==side).length+' remain; '+
+      (g.ruins||[]).length+' destroyed). Luoyang alone is not sufficient; there is no turn limit.';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!==ID||
-      g.stations.length!==CITIES.length)return null;
+      g.stations.length+(g.ruins||[]).length!==CITIES.length)return null;
     for(const side of SIDES)if(g.stations.every(s=>s.owner===side))
       return {winner:side,reason:E.FACTIONS[side].name+
-        ' has conquered every city of the Luoyang campaign finale.'};
+        ' controls every surviving city of the Luoyang campaign finale.'};
     return null;
   }
   function strategicScore(g,side){

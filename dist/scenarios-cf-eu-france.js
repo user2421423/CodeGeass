@@ -445,16 +445,16 @@
     const remaining=g.stations.filter(s=>s.owner==='eu').length;
     const expedition=E.allUnits(g).filter(u=>u.side==='cf'&&u.hp>0).length;
     return side==='cf'
-      ?'Land at Marseille/Toulon, advance through Lyon and take all French cities ('+
+      ?'Land at Marseille/Toulon, advance through Lyon and capture or destroy all opposing French cities ('+
         remaining+' E.U. cities remain). No turn limit.'
       :'Defend France; recapture any beachheads and eliminate the Federation expedition ('+
         expedition+' invaders active).';
   }
   function winner(g){
     if(g.mode!=='scenario'||g.scenario?.id!==ID||
-      g.stations.length!==CITIES.length)return null;
+      g.stations.length+(g.ruins||[]).length!==CITIES.length)return null;
     if(g.stations.every(s=>s.owner==='cf'))return {
-      winner:'cf',team:'cf',reason:'Chinese Federation conquered every city in France.'};
+      winner:'cf',team:'cf',reason:'Chinese Federation has eliminated every E.U.-held city in France.'};
     if(!g.stations.some(s=>s.owner==='cf')&&
        !E.allUnits(g).some(u=>u.side==='cf'&&u.hp>0))return {
       winner:'eu',team:'eu',reason:'The E.U. retained France and destroyed the entire Federation expedition.'};

@@ -947,7 +947,8 @@
     for (const [id, officer] of availableOfficers) {
       if (used.has(id)) continue;
       const side = ownerOf(id, officer);
-      const slots = armies.filter(a => a[0] === side && !a[5]);
+      const slots = armies.filter(a => a[0] === side && !a[5] &&
+        !(era === 'world' && side === 'eu' && a[1] === 'medium' && a[2] === -20 && a[3] === 65.4666667));
       const available = slots.find(a => fits(a[1], officer.role)) || slots[0];
       if (available) {
         available[5] = id;
@@ -974,9 +975,8 @@
   }
   // 2017 only: transfer 32 EU land formations from interior garrisons to the
   // contiguous Chinese Federation frontier, from the Caucasus to eastern Siberia.
-  // Retain 11 western/EU-capital, wZERO and African reserves, plus the Iceland
-  // garrison beside Reykjavik (1860d944). Naval units are unchanged.
-  const worldEuReserves = new Set(["medium:-20:65.4666667","heavy:30.3:59.9","super:2.35:48.85","rocket:0.5:48","medium:-3.6:52.2","support:-5.35:36.1","raider:21:52.2","rocket:18.5:51","medium:23:54","light:20.5:44.8","heavy:31.2:30","scout:-17.4:14.7"]);
+  // Retain 11 western/EU-capital, wZERO and African reserves. Naval units are unchanged.
+  const worldEuReserves = new Set(["heavy:30.3:59.9","super:2.35:48.85","rocket:0.5:48","medium:-3.6:52.2","support:-5.35:36.1","raider:21:52.2","rocket:18.5:51","medium:23:54","light:20.5:44.8","heavy:31.2:30","scout:-17.4:14.7","medium:-20:65.4666667"]);
   const worldEuFrontierHexes = [[111,20],[112,19],[112,17],[113,18],[114,16],[115,15],[112,15],[117,14],[118,15],[118,13],[120,13],[122,12],[124,12],[126,12],[128,12],[127,10],[130,12],[132,12],[134,12],[135,11],[137,12],[139,12],[141,12],[144,12],[146,12],[148,10],[151,11],[153,11],[155,11],[157,12],[158,10],[159,9]];
   let worldEuRebased = 0;
   for (const army of root.KnightmareData.ARMY_DATA) {
@@ -1024,6 +1024,62 @@
       throw new Error('Expected exactly one Augustus starting unit in ' + era);
     matches[0][2] = lon;
     matches[0][3] = lat;
+  }
+
+  // 2017 strategic staging after commander recruitment and special officers:
+  // occupy every friendly land/coastal hex in Japan and the Philippines while
+  // retaining Bismarck, Charles and the imperial airship near Pendragon.
+  const worldBritannian = root.KnightmareData.ARMY_DATA.filter(a => a[0] === 'britannia');
+  const mustStay = id => {
+    const found = worldBritannian.filter(a => a[5] === id);
+    if (found.length !== 1) throw new Error('Expected one 2017 starting ' + id);
+    return found[0];
+  };
+  const bismarckWorld = mustStay('bismarck'), charlesWorld = mustStay('charles');
+  // Bismarck retains his original position; Charles takes the adjacent
+  // Pendragon hex so the two commanders never compete for the same tile.
+  charlesWorld[2] = -114;
+  charlesWorld[3] = 74 - 21 * (128 / 75);
+  const japaneseStage = [[160,17],[160,18],[162,18],[159,19],[160,20],[158,22],[160,22],[155,23],
+    [156,23],[159,22],[157,23],[155,24],[159,21],[161,18],[158,23],[156,24]];
+  const philippineStage = [[149,33],[150,33],[150,36],[151,36],[152,36],[150,37],[151,37],[151,38],
+    [152,38],[150,39],[151,39],[152,39],[152,40],[150,35],[150,34]];
+  // Pearl Harbor has one Britannian-owned ground hex at this map scale.
+  // Three extra naval formations are independently anchored in NAVY_DATA.
+  const hawaiianStage = [[10,31]];
+  const alaskanStage = [[14,7],[16,6],[13,7],[15,6],[16,7],[11,7],[17,6]];
+  const greenlandStage = [[64,6],[65,5],[66,6],[65,7]];
+  const worldStage = [...japaneseStage,...philippineStage,...hawaiianStage,...alaskanStage,...greenlandStage];
+  const movableWorld = worldBritannian.filter(a => a !== bismarckWorld && a !== charlesWorld);
+  if (movableWorld.length !== worldStage.length)
+    throw new Error('Review 2017 Britannian staging capacity after changing commander roster');
+  const toHex = army => {
+    const r = Math.max(0, Math.min(75, Math.round((74 - army[3]) / (128 / 75))));
+    const c = ((Math.round((army[2] + 180) / 2 - 0.5 - 0.5 * (r & 1)) % 180) + 180) % 180;
+    return c + ',' + r;
+  };
+  const stageKeys = new Set(worldStage.map(([c,r]) => c + ',' + r));
+  if (stageKeys.size !== worldStage.length ||
+      worldStage.some(([c,r]) => {
+        const code = root.KnightmareData.WORLD_ROWS[r]?.[c];
+        return code === '.' || code === 'x' || !code;
+      })) throw new Error('Illegal or duplicated 2017 Pacific staging hex');
+  const occupied = new Map();
+  // Preserve commanders that are already staged on the requested front.
+  // Fill the remaining island slots with the other Britannian formations.
+  for (const army of movableWorld) {
+    const k = toHex(army);
+    if (stageKeys.has(k) && !occupied.has(k)) occupied.set(k, army);
+  }
+  const assigned = new Set(occupied.values());
+  const missing = worldStage.filter(([c,r]) => !occupied.has(c + ',' + r));
+  const remaining = movableWorld.filter(a => !assigned.has(a));
+  if (missing.length !== remaining.length) throw new Error('2017 staging roster duplication');
+  missing.forEach(([c,r],i) => occupied.set(c + ',' + r, remaining[i]));
+  for (const [c,r] of worldStage) {
+    const army = occupied.get(c + ',' + r);
+    army[2] = -180 + (c + 0.5 + 0.5 * (r & 1)) * 2;
+    army[3] = 74 - r * (128 / 75);
   }
   const CONQUESTS = {
     world: { id: 'world', title: '2017 — World War', majors: ['britannia', 'eu', 'cf'], selectable: ['britannia','eu','cf'], teams: {}, ownership: null, expectedCities: { britannia: 51, eu: 58, cf: 47, neutral: 12 } },
