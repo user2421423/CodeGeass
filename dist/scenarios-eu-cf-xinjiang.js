@@ -108,7 +108,7 @@ if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='norma
 g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
 const c=i%COLS,r=(i/COLS)|0;return {c,r,owner:null,terrain:landscape(geo(c,r),c,r)};});
     for(const [name,lon,lat,owner,tier,fort] of CITIES){
-      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&
+      const at=nearest(g,locate(lon,lat),t=>t.terrain!=='sea'&&!E.TERRAIN[t.terrain]?.blocked&&
 !g.stations.some(s=>s.c===t.c&&s.r===t.r),10);
       if(!at)throw Error('Cannot place Xinjiang city '+name);
       const capital=name==='Ürümqi'||name==='Almaty';
@@ -163,7 +163,7 @@ const c=i%COLS,r=(i/COLS)|0;return {c,r,owner:null,terrain:landscape(geo(c,r),c,
       const s=g.stations.find(v=>v.name===name);
       if(!s||s.owner!==side)throw Error('Invalid staging city '+name);
       for(let i=0;i<count;i++){
-        const at=nearest(g,s,t=>t.terrain!=='sea'&&!E.unitAt(g,t)&&
+        const at=nearest(g,s,t=>t.terrain!=='sea'&&!E.TERRAIN[t.terrain]?.blocked&&!E.unitAt(g,t)&&
           t.owner===side&&(!E.stationAt(g,t)||E.stationAt(g,t).owner===side),14);
         if(!at)throw Error('Cannot deploy unit at '+name);
         const cmd=i===0?commander:null;
