@@ -140,6 +140,90 @@
     }
     g.scenario.tierBalanceVersion = 2;
   }
+  // Regional starting economies are limited by removing actual minor cities,
+  // never by changing city yields or applying an invisible recurring penalty.
+  // This runs once while a NEW scenario's authored funding is being localized;
+  // already-localized saves and World Conquest are left untouched.
+  function pruneScenarioOpeningCities(g) {
+    if (g.mode !== 'scenario' || g.turn !== 1 || !g.startUnits ||
+        g.cityStandardMigrated || g.scenario.cityPruningVersion ||
+        g.scenario.pruningCities) return;
+    g.scenario.pruningCities = true;
+    try {
+    const LIMIT = 1000;
+    const removed = new Map(), report = {};
+    const focus = root.Knightmare?.scenarios?.byId?.[g.scenario.id]?.meta?.text?.focus || {};
+    const sides = [...new Set([...g.order, ...g.stations.map(s => s.owner)])]
+      .filter(side => side && side !== 'neutral');
+    for (const side of sides) {
+      let rate = income(g, side).credits;
+      if (rate <= LIMIT) continue;
+      const initialIncome = rate, initialCities = g.stations.filter(s => s.owner === side).length;
+      let removedCount = 0;
+      while (rate > LIMIT) {
+        const own = g.stations.filter(s => s.owner === side);
+        if (own.length <= 1) break;
+        const enemies = g.stations.filter(s => s.owner !== side && s.owner !== 'neutral');
+        const options = own.filter(s => !s.nationalCapital && s.name !== focus[side])
+          .map(s => {
+            const friends = own.filter(x => x !== s);
+            const nearestFriend = Math.min(...friends.map(x => dist(g, s, x)));
+            const nearbyFriends = friends.filter(x => dist(g, s, x) <= 4).length;
+            const nearestEnemy = enemies.length
+              ? Math.min(...enemies.map(x => dist(g, s, x))) : Infinity;
+            const commander = g.units.some(u => u.hp > 0 && u.cmd && u.c === s.c && u.r === s.r);
+            const atCity = g.units.some(u => u.hp > 0 && u.c === s.c && u.r === s.r);
+            const objective = (g.scenario.groups || []).some(x =>
+              x.origin === s.name || x.destinationName === s.name);
+            const score =
+              (s.capital || s.regionalHQ || s.capitalOf ? 10000 : 0) +
+              (s.portAt || s.portLevel ? 2000 : 0) +
+              (s.fort || s.gun ? 1500 : 0) +
+              (commander ? 800 : atCity ? 80 : 0) +
+              (objective ? 450 : 0) +
+              (cityTierOf(s) >= 3 ? 130 : 0) +
+              (nearestEnemy <= 3 ? 100 : 0) +
+              Math.max(0, nearestFriend - 3) * 20 -
+              Math.min(nearbyFriends, 5) * 12 -
+              cityStats(s).credits / 10;
+            return { city:s, score };
+          })
+          .sort((a,b) => a.score-b.score ||
+            cityStats(b.city).credits-cityStats(a.city).credits ||
+            a.city.id-b.city.id);
+        if (!options.length) break;
+        const victim = options[0].city;
+        g.stations.splice(g.stations.indexOf(victim), 1);
+        removed.set(victim.id, victim);
+        removedCount++;
+        rate = income(g, side).credits;
+      }
+      report[side] = { before:initialIncome, after:rate,
+        citiesBefore:initialCities, citiesAfter:initialCities-removedCount,
+        removed:removedCount };
+    }
+    if (removed.size) {
+      // Province pointers and mines must not point at city IDs we just deleted.
+      // Keep hex ownership and deployed formations unchanged.
+      const replacements = new Map();
+      for (const city of removed.values()) {
+        const sameOwner = g.stations.filter(s => s.owner === city.owner);
+        const choices = sameOwner.length ? sameOwner : g.stations;
+        if (!choices.length) continue;
+        replacements.set(city.id, choices.slice().sort((a,b) =>
+          dist(g,city,a)-dist(g,city,b) || a.id-b.id)[0].id);
+      }
+      for (const t of g.tiles)
+        if (replacements.has(t.provinceCity)) t.provinceCity = replacements.get(t.provinceCity);
+      for (const d of g.sites || [])
+        if (replacements.has(d.city)) d.city = replacements.get(d.city);
+      g.mapRevision = (g.mapRevision || 0) + 1;
+    }
+    g.scenario.cityPruningVersion = 1;
+    g.scenario.cityPruningSummary = report;
+    } finally { delete g.scenario.pruningCities; }
+  }
+
   function localizeScenarioIncome(g) {
     if(g?.mode!=='scenario'||!g.scenario||
       g.scenario.economyLocalized||g.scenario.localizingIncome)return false;
@@ -173,6 +257,7 @@
       if(!g.cityStandardMigrated)balanceScenarioTiers(g,targets);
       g.scenario.funding={};
       g.scenario.economyLocalized=true;
+      pruneScenarioOpeningCities(g);
       return true;
     }finally {
       delete g.scenario.localizingIncome;
@@ -184,8 +269,10 @@
     // Regional constructors set startUnits only after calculating and storing
     // their opening resource reserves. This safely localizes funding on the
     // first post-construction income query for any scenario or campaign battle.
-    if (g.mode === 'scenario' && g.startUnits && !g.scenario?.localizingIncome) {
+    if (g.mode === 'scenario' && g.startUnits && !g.scenario?.localizingIncome &&
+        !g.scenario?.pruningCities) {
       localizeScenarioIncome(g);
+      if (g.scenario?.economyLocalized) pruneScenarioOpeningCities(g);
       doubleScenarioResearch(g);
     }
     if (g.scenario?.economyLocalized && g.mode === 'scenario' &&
