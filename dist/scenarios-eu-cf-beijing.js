@@ -75,6 +75,13 @@
   // Sea-only berths remain separate from their parent land cities.
   const PORTS={Yingkou:3,Bayuquan:2,Huludao:2,Dalian:3,Lushun:2,
     Qinhuangdao:3,Shanhaiguan:2,Caofeidian:2,Tanggu:3,Hangu:1,Huanghua:2};
+  // Full footprint-sampled Natural Earth 1:50m land counts, MSB nibble first.
+  // Regenerated reproducibly by tools/build_beijing_landmask.py.
+  const BEIJING_LAND_COUNTS=atob('');
+  const landFractionAt=index=>{
+    const val=BEIJING_LAND_COUNTS.charCodeAt(index>>1);
+    return ((index&1)?(val&15):(val>>4))/9;
+  };
   // Geographic coast of western/northern Bohai, Liaodong Bay, and the
   // Liaodong Peninsula; the last points extend out of the scenario viewport.
   // This intentionally has no invented ocean north of the Great Wall.
@@ -322,7 +329,7 @@
       Object.keys(E.ELITE_FORCES).filter(id=>
         !E.ELITE_FORCES[id].scenarioOnly&&E.ELITE_FORCES[id].availableTo.includes(side))]));
     g.tiles=Array.from({length:COLS*ROWS},(_,i)=>{
-      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),fraction=coastFraction(p);
+      const c=i%COLS,r=(i/COLS)|0,p=geo(c,r),fraction=landFractionAt(i);
       const land=fraction>=.5;
       return {c,r,owner:null,terrain:land?
         (fraction<.8?'coast':landscape(p,c,r)):'sea'};
