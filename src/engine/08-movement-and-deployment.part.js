@@ -197,6 +197,9 @@
         }
         if (st && foe(g, st.owner, u.side) && !(canCapture(u) && st.shield <= 0)) continue;
         const cross = !t.naval && isSea(n) !== fromSea;
+        // Ordinary sea transports must begin their movement beside the landing hex.
+        // They may sail OR land this turn, never sail across water and land in one action.
+        if (cross && fromSea && cost > 0) continue;
         const step = isSea(n) ? 1 : terrainCost(g, u, n) + (rivers ? riverCrossingCost(g, p, n, u) : 0);
         const nc = (u.skillReposition || u.expOscarReposition)
           ? cost + step
@@ -271,6 +274,7 @@
     if (!u) return 'No unit aboard';
     return (
       turnReason(g, ship.side) ||
+      (u.boardedTurn === g.turn ? 'Troops cannot deploy until the turn after boarding' : null) ||
       (!deployTargets(g, ship, i).length ? 'No empty land hex next to the carrier' : null)
     );
   }
