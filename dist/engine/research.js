@@ -591,10 +591,10 @@
         },
         engineering: {
           name: 'Military Engineering',
-          values: [0.05, 0.10],
+          values: [20, 40],
           tiers: [2, 4],
           costs: [100, 200],
-          text: v => `Your cities regenerate an extra ${pct(v)} of maximum defenses at the start of each turn`,
+          text: v => `Your cities regenerate an extra ${v} defense HP each owner turn`,
         },
         overcharge: {
           name: 'Battery Overcharge',
