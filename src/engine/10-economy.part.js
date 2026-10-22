@@ -76,8 +76,10 @@
         }
         // The scenario constructors set funding=target-base. Recover the
         // intended credit target, but never retain a recurring hidden subsidy.
-        const base=income(g,side);
-        targets[side]={credits:Math.round(base.credits+(funding[side]?.credits||0))};
+        // During localization income() still includes the authored funding,
+        // so this value is already the original target (do not add twice).
+        const totalWithFunding=income(g,side);
+        targets[side]={credits:Math.round(totalWithFunding.credits)};
       }
       if(!g.cityStandardMigrated)balanceScenarioTiers(g,targets);
       g.scenario.funding={};
