@@ -108,5 +108,45 @@ for(const mutate of [b=>b.actor.cmd='suzaku',b=>b.g.turn++,b=>b.s.selection={kin
   assert.match(b.s.abilityTargetLabel(b.enemy),/Force friendly fire/);
   b.s.activateAbilityTarget(b.ally);assert.equal(b.ally.moved,false);assert.equal(b.ally.attacked,false);
 }
-console.log(`Visual ability targeting: ${targeted.length} targeted abilities, ${immediate.length} immediate abilities, cancellation and stale-target checks PASS`);
+// Jean's targeted swap must retain both formations' remaining normal actions
+// and cannot be used twice in the same friendly turn.
+{
+  const {g,actor,ally,enemy}=fixture('jeanrowe');
+  assert.equal(E.COMMANDERS.jeanrowe.stats.taken,undefined);
+  const a={c:actor.c,r:actor.r},b={c:ally.c,r:ally.r};
+  assert.equal(E.actionTargets(g,actor).some(v=>v.id===ally.id),true);
+  assert.equal(E.actionTargets(g,actor).some(v=>v.id===enemy.id),false);
+  const initial={am:actor.moved,aa:actor.attacked,bm:ally.moved,ba:ally.attacked,
+    ac:actor.moveActionsThisTurn,bc:ally.moveActionsThisTurn};
+  const done=E.feint(g,actor.id,ally.id);
+  assert.equal(done.ok,true,done.reason);
+  assert.equal(E.unitAt(g,a).id,ally.id);
+  assert.equal(E.unitAt(g,b).id,actor.id);
+  assert.deepEqual({am:actor.moved,aa:actor.attacked,bm:ally.moved,ba:ally.attacked,
+    ac:actor.moveActionsThisTurn,bc:ally.moveActionsThisTurn},initial);
+  assert.equal(E.feint(g,actor.id,ally.id).ok,false,'Once per friendly turn');
+  g.turn++;
+  assert.equal(E.feint(g,actor.id,ally.id).ok,true,'Ready next turn');
+}
+{
+  const {g,actor,ally}=fixture('jeanrowe');
+  actor.moved=actor.attacked=ally.moved=ally.attacked=true;
+  assert.equal(E.feint(g,actor.id,ally.id).ok,true);
+  assert.equal(actor.moved,true);assert.equal(actor.attacked,true);
+  assert.equal(ally.moved,true);assert.equal(ally.attacked,true);
+  assert.equal(actor.feintCD,0);
+}
+{
+  const {g,actor,ally}=fixture('jeanrowe');
+  const before=JSON.stringify(E.packSave(g));
+  assert.equal(E.feint(g,actor.id,999999).ok,false);
+  assert.equal(JSON.stringify(E.packSave(g)),before);
+  const p=E.tile(g,ally.c,ally.r),terrain=p.terrain;
+  p.terrain='sea';
+  assert.equal(E.actionTargets(g,actor).some(v=>v.id===ally.id),false);
+  assert.equal(E.feint(g,actor.id,ally.id).ok,false);
+  assert.notEqual(actor.feintUsedTurn,g.turn);
+  p.terrain=terrain;
+}
+console.log(`Visual ability targeting: ${targeted.length} targeted abilities, ${immediate.length} immediate abilities, Jean exchange and stale-target checks PASS`);
 module.exports={fixture};

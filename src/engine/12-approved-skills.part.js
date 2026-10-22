@@ -25,10 +25,30 @@
       return !isSea(p)||t.naval==='amphibious';
     }).map(p=>({...p,id:key(p)}));
   }
+  // A free positional exchange uses destination legality, not remaining
+  // movement points or whether either unit has already fired.
+  function jeanExchangeLegalHex(g,unit,p){
+    if(!p || !TYPES[unit.type])return false;
+    const t=TYPES[unit.type],city=stationAt(g,p);
+    if(city && foe(g,city.owner,unit.side))return false;
+    if(t.air)return !city;
+    if(TERRAIN[p.terrain]?.blocked)return false;
+    if(t.naval==='ship')return navigable(p) && !city;
+    return t.naval==='amphibious'||!isSea(p);
+  }
+  function jeanExchangeEligible(g,jean,v){
+    if(!jean||jean.cmd!=='jeanrowe'||!v||jean.id===v.id||
+       jean.hp<=0||v.hp<=0||jean.side!==v.side||
+       atSea(g,jean)||atSea(g,v)||dist(g,jean,v)>5)return false;
+    const from=tile(g,jean.c,jean.r),to=tile(g,v.c,v.r);
+    return !!from&&!!to&&unitAt(g,from)===jean&&unitAt(g,to)===v&&
+      jeanExchangeLegalHex(g,jean,to)&&jeanExchangeLegalHex(g,v,from);
+  }
   function newcomerTargets(g,u){
     const a=COMMANDERS[u?.cmd]?.action,k=a?.target,range=a?.range||0;
     if(!k)return [];
     if(u.cmd==='darlton')return darltonSummonTargets(g,u);
+    if(u.cmd==='jeanrowe')return g.units.filter(v=>jeanExchangeEligible(g,u,v));
     if(u.cmd==='gaohai')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)===1&&s.shield<s.maxShield&&g.stations.some(o=>o.owner===u.side&&o.c===u.c&&o.r===u.r&&o.shield>0));
     if(u.cmd==='huangqian')return g.stations.filter(s=>s.id!=null&&s.owner===u.side&&dist(g,u,s)<=3&&s.shield<s.maxShield);
     if(u.cmd==='chengzhong')return g.stations.filter(s=>s.id!=null&&foe(g,s.owner,u.side)&&dist(g,u,s)<=3);
@@ -48,7 +68,7 @@
   }
   function newcomerUse(g,u,targetId){
     const choices=newcomerTargets(g,u),action=COMMANDERS[u.cmd]?.action;
-    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret','darlton'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
+    if(targetId==null&&['marrybell','kate','gaohai','chengzhong','huangqian','sugiyama','kirihara','indira','olivia','diethard','margaret','darlton','jeanrowe'].includes(u.cmd))return {ok:false,reason:'Select the intended skill target.'};
     const v=targetId==null?choices[0]:choices.find(x=>x.id===targetId);
     if(!v)return {ok:false,reason:'No eligible target within range.'};
     const nearby=predicate=>g.units.find(w=>w.hp>0&&w.side===u.side&&w.id!==u.id&&!atSea(g,w)&&predicate(w));
@@ -59,6 +79,26 @@
         const knight=newUnit(g,type,u.side,v.c,v.r,1,null,true);
         knight.expDarltonSummonedBy=u.id;
         log(g,'Darlton summons a Glaston Knight ('+TYPES[knight.type].short+') at hex '+v.c+','+v.r+'.',u.side);
+        break;
+      }
+      case 'jeanrowe':{
+        if(!jeanExchangeEligible(g,u,v))
+          return {ok:false,reason:'The selected exchange is no longer legal.'};
+        const from={c:u.c,r:u.r},to={c:v.c,r:v.r};
+        u.c=to.c;u.r=to.r;v.c=from.c;v.r=from.r;
+        // Rebuild the unit index atomically; sequential reindex() calls
+        // would otherwise corrupt the map during an occupied-hex swap.
+        indexUnits(g);
+        for(const unit of [u,v]){
+          for(const passenger of unit.cargo||[]){passenger.c=unit.c;passenger.r=unit.r;}
+          // Preserve move/attack/chain flags and action counters; stationary
+          // guard and entrenched positions cannot travel with a formation.
+          unit.held=false;unit.guardReady=false;unit.entrenched=false;
+        }
+        recordAbilitySignal(g,u,'EXCHANGE','buff');
+        recordAbilitySignal(g,v,'EXCHANGE','buff');
+        log(g,'Emergency Exchange: Jean trades positions with '+
+          (COMMANDERS[v.cmd]?.short||TYPES[v.type].short)+'.',u.side);
         break;
       }
       case 'marrybell':v.forcedOffensive=true;v.expForcedVulnerable=true;v.expForcedOffensiveTurn=g.turn;break;

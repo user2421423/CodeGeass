@@ -13,7 +13,17 @@ for(const [id,c] of Object.entries(COMMANDERS)){groups[c.side]=(groups[c.side]||
 assert.deepEqual(groups,{britannia:23,eb:22,eu:23,cf:23,bk:27});
 assert.ok(!COMMANDERS.sakuya&&!RATINGS.sakuya&&COMMANDERS.norland);
 for(const id of added){
-  const c=COMMANDERS[id];assert.ok(c&&c.skill&&c.desc&&c.stats&&Object.keys(c.stats).length,id+' incomplete');
+  const c=COMMANDERS[id];assert.ok(c&&c.skill&&c.desc&&c.stats,id+' incomplete');
+  if(id==='jeanrowe'){
+    assert.equal(c.skill,'Emergency Exchange');
+    assert.equal(c.action?.kind,'special');
+    assert.equal(c.action?.target,'ally');
+    assert.equal(c.action?.range,5);
+    assert.equal(c.action?.cooldown,0);
+    assert.equal(Object.keys(c.stats).length,0);
+    continue;
+  }
+  assert.ok(Object.keys(c.stats).length,id+' needs a modest passive');
   assert.ok(!c.action&&(!c.fx||!Object.keys(c.fx).length),id+' must have a supported passive');
   const st=c.stats;
   if(st.dmg!==undefined)assert.ok(st.dmg>0&&st.dmg<=.08);
@@ -30,4 +40,4 @@ for(const name of ['dist/scenarios-protagonists-antagonists.js','dist/scenarios-
 for(const name of ['manifest.json','manifest.js']){
  const t=fs.readFileSync(path.join(root,'dist/assets/art',name),'utf8');assert.ok(!/"sakuya"/.test(t));assert.ok(/"norland"/.test(t));
 }
-console.log('PASS: 118 commanders, 19 modest passives, proper parity, Sakuya removed and Norland retained');
+console.log('PASS: 118 commanders, 18 modest passives plus Jean Emergency Exchange, parity intact');

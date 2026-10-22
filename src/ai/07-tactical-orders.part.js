@@ -17,6 +17,18 @@
     switch (u.cmd) {
       case 'olivia': case 'sayoko': return null;
       case 'norland': return canStrike(g,u) ? u : null;
+      case 'jeanrowe': {
+        // Only rescue endangered commanders; avoid random AI teleports.
+        if(u.hp/maxHP(u)<.65)return null;
+        const enemies=g.units.filter(w=>w.hp>0&&foe(g,w.side,u.side)&&!atSea(g,w));
+        const exposure=p=>enemies.filter(w=>inRange(w,p,g)).length;
+        const safe=exposure(u);
+        return pickBest(options,v=>{
+          if(!v.cmd||v.hp/maxHP(v)>.4)return 0;
+          const danger=exposure(v);
+          return danger>safe?(danger-safe)*40+(1-v.hp/maxHP(v))*100:0;
+        });
+      }
       case 'gaohai': {
         const source = stationAt(g, u);
         return pickBest(options, s => shieldGap(s) - shieldGap(source) - 0.2 > 0 ? shieldGap(s) + threatened(s) : 0);
