@@ -163,17 +163,21 @@ a clean playtest is not itself proof that a scenario is balanced.
   coverage is three hexes**, measured from the charge's city or carrier unit;
   this is the actual code value, not a five-hex radius.
 - **Sea transport:** a land unit steps onto a sea hex to embark and stops; embarked units sail 5 hexes a
-  turn, cannot fire or return fire and take 50% extra damage; landing on a coast ends the move (and captures an
-  undefended city).
+  turn, cannot fire or return fire and take 50% extra damage. An ordinary transport must **start its turn
+  adjacent to its landing hex** to land; it cannot sail several water hexes and land in one move. Landing ends
+  the move (and captures an undefended city).
 - **Navies and ports (Conquest):** every power fields the same navy under its own names: amphibious Knightmares
   that fight at sea and cross the coast without stopping, and Carrier-Battleships whose two formations launch onto
-  the beach ready to move and attack. Ports on coastal cities build and repair them; a Naval research branch improves
+  the beach ready to move and attack **from the turn after they boarded** (never immediately in the boarding turn).
+  Capacity remains two formations; there is no separate per-turn loading or unloading counter.
+  Ports on coastal cities build and repair them; a Naval research branch improves
   them, and the AI carries out its own carrier invasions.
 - **Airships (Conquest and regional scenarios):** every power can build its own floating battleship at a city with a
   level-3 factory: Britannia's Logres class (also Euro Britannia), the E.U.'s Charlemagne class, the 2017 Federation's
   Shenlong class and the Black Knights' Ikaruga class (the 2018 U.F.N. flies the Ikaruga). All four share one profile:
   700 HP, attack 90, armor 50, range 1–2, 10 hexes a turn over any land, sea or impassable peak, and two Knightmare
-  formations aboard that launch onto any adjacent land. Each costs 1,800 credits, 500 industry, 150 science and
+  formations aboard that launch onto any adjacent land on a later turn, with full movement and attack after launch.
+  Like naval carriers, an airship cannot deploy cargo on its boarding turn. Each costs 1,800 credits, 500 industry, 150 science and
   60 Sakuradite, is built in one turn and has no per-power limit. Airships cannot enter or capture cities, ports or
   mines, get no terrain cover, take no bonus damage from anti-ship or coastal abilities,
   can only be attacked or answered with return fire by Heavy and Super-heavy armor, Rocket and Siege artillery
@@ -287,6 +291,7 @@ The repository has no regression test suite. These checks verify the build, art 
 
 ```sh
 node tools/build_sources.cjs
+node tools/transport_turn_rules_test.cjs
 node tools/validate_assets.cjs --tracked
 python3 tools/check_map.py
 ```
