@@ -292,7 +292,7 @@ function create(player='cf',difficulty='normal',seed=201708){
    Object.entries(FUNDING[side]).map(([res,n])=>[res,Math.round(n)-base[res]]));
   const actual=E.income(g,side);
   for(const resource of Object.keys(FUNDING[side]))
-   g.economy[side][resource]=({"cf":{"credits":2000,"industry":500,"science":224},"eu":{"credits":2000,"industry":500,"science":216}}[side]||{})[resource] ?? (actual[resource]*2);
+   g.economy[side][resource]={"cf":{"credits":2000,"industry":500,"science":224,"sakuradite":120},"eu":{"credits":2000,"industry":500,"science":216,"sakuradite":114}}[side][resource];
  }
  if(difficulty!=='normal'&&difficulty!=='elite'){
   for(const side of SIDES.filter(x=>x!==player))
