@@ -392,49 +392,65 @@ function strategicFlagAspect(side) {
 }
 
 function drawStrategicDivisionCounter(u, scale, selected) {
+  // A small circular badge at strategic zoom, with ONLY the authentic
+  // faction flag inside. Screen-space sizing is stable while panning/zooming.
   ctx.save();
-  // Consistent SCREEN-space footprints stop square flags from looking like
-  // different-sized armies and keep all nation counters visually aligned.
   ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
-  const w = scale < 0.12 ? 19 : scale < 0.22 ? 23 : 26;
-  const h = scale < 0.12 ? 11 : scale < 0.22 ? 13 : 15;
-  const x = -w / 2, y = -h / 2;
+  const diameter = scale < 0.12 ? 14 : scale < 0.22 ? 16 : 19;
+  const radius = diameter / 2;
+
   const allied = u.side !== game.player && u.side !== 'neutral' &&
     !E.foe(game, game.player, u.side);
-  const bg = u.side === game.player ? '#455641'
+  const base = u.side === game.player ? '#455641'
     : allied ? '#43505a' : u.side === 'neutral' ? '#4e4d40' : '#39413f';
 
-  ctx.fillStyle = '#131a1c';
-  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
-  ctx.fillStyle = bg;
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = selected ? '#ffe2a0' : '#9baba7';
-  ctx.lineWidth = selected ? 1.45 : 0.8;
-  ctx.strokeRect(x + 0.4, y + 0.4, w - 0.8, h - 0.8);
+  // Flat circular silhouette: no counter rectangles, type symbols, stars,
+  // numbers, HP rings or unselected glow.
+  ctx.beginPath();
+  ctx.arc(0, 0, radius + 0.8, 0, Math.PI * 2);
+  ctx.fillStyle = '#101820';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 0.3, 0, Math.PI * 2);
+  ctx.fillStyle = base;
+  ctx.fill();
 
-  // Preserve the flag's original aspect rather than stretching it to a tile.
-  // The dark surrounding plate acts as the HOI4-style military counter.
   const side = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
     ? 'ufn' : artSide(u.side);
-  const flagH = h - 3.6;
-  const flagW = Math.min(w - 5, flagH / strategicFlagAspect(side));
-  const flagX = -flagW / 2, flagY = -flagH / 2;
+  // Contain the complete flag inside the circular token. This avoids
+  // cropping off the Chinese flag's stars or the Britannian standard's crest.
+  const maxWidth = diameter - 3.5;
+  const maxHeight = diameter - 3.5;
+  const aspect = strategicFlagAspect(side); // source flag height / width
+  const width = Math.min(maxWidth, maxHeight / aspect);
+  const height = width * aspect;
+  const x = -width / 2, y = -height / 2;
+
   ctx.save();
   ctx.beginPath();
-  ctx.rect(flagX, flagY, flagW, flagH);
+  ctx.arc(0, 0, radius - 1, 0, Math.PI * 2);
   ctx.clip();
-  // ART.drawFlag includes a pole for city banners. Clipping keeps only fabric.
-  const painted = ART.drawFlag(ctx, side, flagX, flagY, flagW);
-  ctx.restore();
+  // City flag drawing also paints a pole. A second clip removes the pole,
+  // retaining only the actual flag fabric inside the circle.
+  ctx.beginPath();
+  ctx.rect(x, y, width, height);
+  ctx.clip();
+  const painted = ART.drawFlag(ctx, side, x, y, width);
   if (!painted) {
-    // Neutral nations without official art still have an actual miniature
-    // flag-shaped marking, not a large empty square.
+    // The neutral/unsupported flag fallback remains inside the badge.
     ctx.fillStyle = game.factions?.[u.side]?.color ||
       E.FACTIONS[u.side]?.color || PLATE[artSide(u.side)]?.mid || '#858984';
-    ctx.fillRect(flagX, flagY, flagW, flagH);
+    ctx.fillRect(x, y, width, height);
     ctx.fillStyle = '#cbd1c4';
-    ctx.fillRect(flagX, flagY + flagH * 0.45, flagW, flagH * 0.12);
+    ctx.fillRect(x, y + height * 0.45, width, height * 0.12);
   }
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 0.3, 0, Math.PI * 2);
+  ctx.strokeStyle = selected ? '#ffe4a3' : '#9ba8a8';
+  ctx.lineWidth = selected ? 1.35 : 0.8;
+  ctx.stroke();
   ctx.restore();
 }
 
