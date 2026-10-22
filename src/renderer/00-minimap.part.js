@@ -180,14 +180,10 @@ function paintMapMarkers(b, g, width, height, dpr, allUnits = false) {
     b.arc(p.x * sx, p.y * sy, (allUnits ? 2.4 : 2.1) * dpr, 0, Math.PI * 2);
     b.fillStyle = unitFactionDotColor(g, u);
     b.fill();
-    // A single outlined minimap marker for allied and hostile formations.
-    if (u.side !== 'neutral') {
-      b.strokeStyle = '#fff4dc';
-      b.lineWidth = 2.1 * dpr;
-      b.stroke();
-    }
-    b.strokeStyle = '#071320';
-    b.lineWidth = 1.1 * dpr;
+    // Just one outline. Avoid a miniature bullseye on the minimap too.
+    b.strokeStyle = u.side !== 'neutral' && !E.foe(g, g.player, u.side)
+      ? '#c0f1ff' : '#071320';
+    b.lineWidth = 1.35 * dpr;
     b.stroke();
   }
 }
