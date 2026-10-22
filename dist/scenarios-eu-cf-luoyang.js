@@ -422,7 +422,7 @@
           [kind,Math.max(0,Math.round(rate)-base[kind])]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(wanted))
-        g.economy[side][resource]=({eu:{credits:2000,industry:500,science:330},cf:{credits:2000,industry:500,science:315}}[side]||{})[resource] ?? actual[resource]*3;
+        g.economy[side][resource]=({eu:{credits:2000,industry:500,science:330,sakuradite:162},cf:{credits:2000,industry:500,science:315,sakuradite:162}}[side])[resource];
     }
     // Enemy advantages use the same standard difficulty stack rules as other
     // regional battles. Elite is handled exclusively by the shared system.
