@@ -5,6 +5,7 @@ const define=root.KNIGHTMARE_EXCLUSIVE?.define||(typeof require==='function'?req
 const knights=["bismarck", "suzaku", "gino", "anya", "dorothea", "nonette"];
 const anchors=[["Reno", -119.814, 39.53], ["Las Vegas", -115.14, 36.17], ["Tooele", -112.298, 40.53], ["Ely", -114.888, 39.247], ["Bishop", -118.399, 37.361], ["Pendragon", -117, 37.5]];
 const config={
+  treasury:{"knight_bismarck":{"credits":600,"industry":300,"science":100,"sakuradite":35},"knight_suzaku":{"credits":600,"industry":300,"science":100,"sakuradite":35},"knight_gino":{"credits":600,"industry":300,"science":100,"sakuradite":35},"knight_anya":{"credits":600,"industry":300,"science":100,"sakuradite":35},"knight_dorothea":{"credits":600,"industry":300,"science":100,"sakuradite":35},"knight_nonette":{"credits":600,"industry":300,"science":100,"sakuradite":35}},
   "id": "rounds-tournament",
   "title": "Knights of the Round Tournament",
   "parent": "eu-pendragon",
