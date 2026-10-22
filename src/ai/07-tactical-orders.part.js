@@ -517,10 +517,11 @@
           sc -= 14 + danger * 40 + (nearestEnemy <= 2 ? 30 : 0) + (fromLand && (!convoy || guard) ? 1000 : 0);
           // A sea transport must spend a turn sailing to a staging hex beside
           // a legal beach; only on its following turn may it move onto land.
-          if (atSeaTransport && fieldAt(p) <= currentField && adjacent(g, p).some(n =>
-            !isSea(n) && !TERRAIN[n.terrain]?.blocked && !unitAt(g, n) &&
-            (!stationAt(g, n) || !foe(g, stationAt(g, n).owner, u.side) || stationAt(g, n).shield <= 0)))
-            sc += 24;
+          if (atSeaTransport && fieldAt(p) <= currentField && adjacent(g, p).some(n => {
+            if (isSea(n) || TERRAIN[n.terrain]?.blocked || unitAt(g, n)) return false;
+            const city = stationAt(g, n);
+            return !city || !foe(g, city.owner, u.side) || city.shield <= 0;
+          })) sc += 24;
           if (fromLand && convoy && fieldAt(p) < currentField) sc += 75;
         } else if (!fromLand) {
           sc += naval ? 30 : 90;
