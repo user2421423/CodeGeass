@@ -4,6 +4,7 @@ const E=root.Knightmare||(typeof require==='function'?require('./engine.js'):nul
 const define=root.KNIGHTMARE_EXCLUSIVE?.define||(typeof require==='function'?require('./scenarios-exclusive-common.js').define:null);
 
 const config={
+  treasury:{"geass_order":{"credits":1152,"industry":500,"science":231,"sakuradite":99},"anti_geass":{"credits":1733,"industry":500,"science":336,"sakuradite":141}},
   "id": "geass-war",
   "title": "The Geass War",
   "parent": "european-war",
