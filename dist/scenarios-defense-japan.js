@@ -154,6 +154,7 @@
     // redundant cities before setting up either faction's forces or economy.
     const g=japan.create(player,'normal',seed);
     removeSecondaryCities(g);
+    if(g.stations.length!==CITY_COUNT)throw Error('Unexpected Defense of Japan city count');
     const cities=new Map(g.stations.map(s=>[s.name,s]));
     g.startUnits=null; // Do not localize income before our own setup is complete.
     g.player=player;g.difficulty=difficulty;g.era='defense-japan';

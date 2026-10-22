@@ -3,7 +3,7 @@
 'use strict';
 const SCENARIO_MANIFEST = Object.freeze([
   {id:"invasion-japan",title:"The Invasion of Japan",note:"44 cities · 3 sides"},
-  {id:"defense-japan",title:"Defense of Japan",note:"44 cities · 2 sides · carrier invasion"},
+  {id:"defense-japan",title:"Defense of Japan",note:"28 cities · 2 sides · carrier invasion"},
   {id:"division-japan",title:"The Division of Japan",note:"44 cities · 3 sides"},
   {id:"european-war",title:"The European War",note:"44 cities · 2 sides"},
   {id:"operation-stonehenge",title:"Operation Stonehenge",note:"37 cities · 2 sides"},

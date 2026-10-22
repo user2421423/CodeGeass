@@ -39,7 +39,7 @@ const SCENARIO_CATALOG = Object.freeze({
     "meta": {
       "text": {
         "era": "Japan · Alternate 2017",
-        "intro": "The Black Knights control all 44 Japanese cities. Britannia begins at sea with loaded carriers and no bases or land forces ashore.",
+        "intro": "The Black Knights control 28 Japanese cities, with secondary settlements removed to open the invasion fronts. Britannia begins at sea with loaded carriers and no bases or land forces ashore.",
         "diplomacy": "The Black Knights and Britannia are enemies from turn 1. Capture all cities as Britannia, or destroy the cityless invasion as the Black Knights.",
         "elite": "Elite Japan upgrades eligible land formations to faction Elite Forces while carriers remain conventional. Existing Elite difficulty research and commander rules apply.",
         "focus": {

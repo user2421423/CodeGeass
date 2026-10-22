@@ -535,11 +535,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "defense-japan": {
-    "cities": 44,
+    "cities": 28,
     "formations": 45,
     "sides": {
       "bk": {
-        "cities": 44,
+        "cities": 28,
         "formations": 18
       },
       "britannia": {
