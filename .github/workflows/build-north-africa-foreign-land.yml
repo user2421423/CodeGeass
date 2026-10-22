@@ -59,6 +59,7 @@ jobs:
           python3 tools/patch_greenland_mask.py
           python3 tools/build_greenland_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_luoyang_bohai_mask.py /tmp/natural-earth-land.geojson
+          python3 tools/build_manchuria_border_land.py /tmp/natural-earth-land.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
