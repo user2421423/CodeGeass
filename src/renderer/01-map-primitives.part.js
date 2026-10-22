@@ -380,98 +380,36 @@ function readyUnit(u) {
 }
 // Hearts of Iron-style map counters are deliberately limited to strategic zoom.
 // The tactical formation art, hover/selection logic and saved unit data are unchanged.
+// At strategic zoom, a formation is represented by its faction's flag alone.
+// The artwork retains its natural proportions (including the square BK flag).
+// No counter plate, type icon, commander star, stack count, strength or overlay.
 function drawStrategicDivisionCounter(u, type, scale, sea, time, selected, multi, spent, group, groupColor, focusedGroup) {
-  // Strategic counter dimensions are in SCREEN pixels, not world coordinates.
-  // Small, flat silhouettes are less likely to obscure neighbors in dense theaters.
   ctx.save();
   ctx.scale(1 / Math.max(scale, 0.05), 1 / Math.max(scale, 0.05));
-  const w = scale < 0.12 ? 26 : scale < 0.22 ? 31 : 36;
-  const h = scale < 0.12 ? 14 : scale < 0.22 ? 16 : 18;
-  const x = -w / 2, y = -h / 2;
-  const player = u.side === game.player;
-  const allied = !player && u.side !== 'neutral' && !hostileUnit(u);
-  const faction = unitFactionDotColor(game, u);
-  const focused = !!(focusedGroup && group && focusedGroup.id === group.id);
-  const highlighted = selected || multi;
-  const outline = highlighted ? '#ffe7a4' : focused ? groupColor : allied ? '#7b99ae' : '#4c5662';
 
-  // Quiet, HOI4-inspired military tile: one crisp edge, no normal/ready glow,
-  // no HP strip, stack number, strength text or extra dot/ring.
-  ctx.globalAlpha = spent && player && !highlighted ? 0.84 : 1;
-  ctx.fillStyle = '#0b121b';
-  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
-  ctx.fillStyle = '#252d35';
-  ctx.fillRect(x, y, w, h);
-  if (highlighted) {
-    ctx.shadowColor = '#ffdc83';
-    ctx.shadowBlur = 4;
-  }
-  ctx.strokeStyle = outline;
-  ctx.lineWidth = highlighted ? 1.6 : 0.9;
-  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
-  ctx.shadowBlur = 0;
-  // Restrained faction strip helps distinguish similar standards at a glance.
-  ctx.fillStyle = faction;
-  ctx.fillRect(x + 1.3, y + 1.3, 1.5, h - 2.6);
-
-  const flagSide = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
+  const side = game.mode === 'conquest' && game.era === 'ufn2018' && u.side === 'cf'
     ? 'ufn' : artSide(u.side);
-  const flagW = scale < 0.12 ? 10 : 12;
-  const flagH = h - 5;
-  const flagX = x + 4, flagY = y + (h - flagH) / 2;
-  ctx.fillStyle = PLATE[artSide(u.side)]?.mid || '#444b53';
-  ctx.fillRect(flagX, flagY, flagW, flagH);
-  // Clip ART.drawFlag's pole; reuse the authentic game standards.
-  ctx.save();
+  const height = scale < 0.12 ? 12 : scale < 0.22 ? 15 : 18;
+  // Match the flag's source aspect ratio rather than cropping its crest.
+  const aspect = side === 'bk' ? 1
+    : side === 'britannia' || side === 'remnants' ? 157 / 260
+    : side === 'eb' ? 116 / 175
+    : side === 'eu' || side === 'cf' ? 173 / 260
+    : side === 'ufn' ? 594 / 831 : 2 / 3;
+  const width = height / aspect;
+  const x = -width / 2, y = -height / 2;
+
+  // Existing flag API includes a pole: clip to the fabric only, without
+  // adding any decoration around it. Loaded flags trigger a redraw via ART.
   ctx.beginPath();
-  ctx.rect(flagX, flagY, flagW, flagH);
+  ctx.rect(x, y, width, height);
   ctx.clip();
-  const hasFlag = ART.drawFlag(ctx, flagSide, flagX, flagY, flagW);
-  ctx.restore();
-  if (!hasFlag) {
-    ctx.fillStyle = '#f8f4e7';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 8px sans-serif';
-    ctx.fillText(F(u.side).letter || '?', flagX + flagW / 2, flagY + flagH / 2);
-  }
-  ctx.strokeStyle = '#c0ced477';
-  ctx.lineWidth = 0.6;
-  ctx.strokeRect(flagX + 0.3, flagY + 0.3, flagW - 0.6, flagH - 0.6);
-
-  // Simplified NATO military symbol. No strength/stack count: the entire
-  // right half is reserved for the branch pictogram.
-  const iw = Math.max(8, w - flagW - 9);
-  const ih = Math.max(7, h - 7);
-  const ix = x + w - iw - 3, iy = y + (h - ih) / 2;
-  ctx.strokeStyle = '#e4e9eb';
-  ctx.lineWidth = 1.15;
-  ctx.beginPath();
-  if (type.air) {
-    ctx.moveTo(ix, iy + ih); ctx.lineTo(ix + iw / 2, iy);
-    ctx.lineTo(ix + iw, iy + ih);
-    ctx.moveTo(ix + 1, iy + ih * 0.65); ctx.lineTo(ix + iw - 1, iy + ih * 0.65);
-  } else if (type.naval === 'ship') {
-    ctx.moveTo(ix, iy + ih * 0.52); ctx.lineTo(ix + iw, iy + ih * 0.52);
-    ctx.moveTo(ix + 1, iy + ih * 0.8); ctx.lineTo(ix + iw - 1, iy + ih * 0.8);
-    ctx.moveTo(ix + iw / 2, iy); ctx.lineTo(ix + iw / 2, iy + ih * 0.52);
-  } else if (type.branch === 'Armor') {
-    ctx.ellipse(ix + iw / 2, iy + ih / 2, iw / 2, ih / 2, 0, 0, Math.PI * 2);
-  } else if (type.branch === 'Artillery') {
-    ctx.arc(ix + iw / 2, iy + ih / 2, Math.min(iw, ih) * 0.33, 0, Math.PI * 2);
-  } else {
-    ctx.moveTo(ix, iy); ctx.lineTo(ix + iw, iy + ih);
-    ctx.moveTo(ix + iw, iy); ctx.lineTo(ix, iy + ih);
-  }
-  ctx.stroke();
-
-  // A tiny integrated star, rather than a large floating star above the map.
-  if (u.cmd) {
-    ctx.font = 'bold 7px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = '#f2d288';
-    ctx.fillText('★', x + w - 1.5, y + 1);
+  const ready = ART.drawFlag(ctx, side, x, y, width);
+  if (!ready) {
+    // Temporary solid flag-ground colour until the authentic artwork loads.
+    // Never show text or a military unit icon in a flag-only marker.
+    ctx.fillStyle = PLATE[artSide(u.side)]?.mid || '#656b70';
+    ctx.fillRect(x, y, width, height);
   }
   ctx.restore();
 }
