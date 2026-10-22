@@ -93,7 +93,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "bf-south-china": {
-    "cities": 65,
+    "cities": 60,
     "formations": 195,
     "sides": {
       "britannia": {
@@ -101,7 +101,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 84
       },
       "cf": {
-        "cities": 53,
+        "cities": 48,
         "formations": 111
       }
     }
@@ -171,15 +171,15 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "britannia-iraq-iran": {
-    "cities": 84,
+    "cities": 53,
     "formations": 154,
     "sides": {
       "britannia": {
-        "cities": 17,
+        "cities": 15,
         "formations": 47
       },
       "cf": {
-        "cities": 67,
+        "cities": 38,
         "formations": 107
       }
     }
@@ -255,7 +255,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "invasion-brazil": {
-    "cities": 57,
+    "cities": 44,
     "formations": 124,
     "sides": {
       "eu": {
@@ -263,7 +263,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 48
       },
       "britannia": {
-        "cities": 57,
+        "cities": 44,
         "formations": 76
       }
     }
@@ -283,7 +283,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "invasion-canada": {
-    "cities": 74,
+    "cities": 71,
     "formations": 126,
     "sides": {
       "eu": {
@@ -291,7 +291,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 53
       },
       "britannia": {
-        "cities": 68,
+        "cities": 65,
         "formations": 73
       }
     }
@@ -311,11 +311,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "eu-great-lakes": {
-    "cities": 56,
+    "cities": 53,
     "formations": 152,
     "sides": {
       "eu": {
-        "cities": 18,
+        "cities": 15,
         "formations": 88
       },
       "britannia": {
@@ -325,15 +325,15 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "bf-yangtze": {
-    "cities": 60,
+    "cities": 39,
     "formations": 140,
     "sides": {
       "britannia": {
-        "cities": 25,
+        "cities": 16,
         "formations": 57
       },
       "cf": {
-        "cities": 35,
+        "cities": 23,
         "formations": 83
       }
     }
@@ -367,7 +367,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-new-zealand": {
-    "cities": 63,
+    "cities": 45,
     "formations": 150,
     "sides": {
       "cf": {
@@ -375,13 +375,13 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 59
       },
       "britannia": {
-        "cities": 63,
+        "cities": 45,
         "formations": 91
       }
     }
   },
   "invasion-american-east-coast": {
-    "cities": 62,
+    "cities": 39,
     "formations": 143,
     "sides": {
       "eu": {
@@ -389,7 +389,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 75
       },
       "britannia": {
-        "cities": 62,
+        "cities": 39,
         "formations": 68
       }
     }
@@ -423,29 +423,29 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "eu-pendragon": {
-    "cities": 70,
+    "cities": 37,
     "formations": 256,
     "sides": {
       "eu": {
-        "cities": 22,
+        "cities": 12,
         "formations": 112
       },
       "britannia": {
-        "cities": 48,
+        "cities": 25,
         "formations": 144
       }
     }
   },
   "cf-pendragon": {
-    "cities": 70,
+    "cities": 43,
     "formations": 273,
     "sides": {
       "cf": {
-        "cities": 19,
+        "cities": 11,
         "formations": 117
       },
       "britannia": {
-        "cities": 51,
+        "cities": 32,
         "formations": 156
       }
     }
@@ -465,7 +465,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-pacific-northwest": {
-    "cities": 63,
+    "cities": 39,
     "formations": 175,
     "sides": {
       "cf": {
@@ -473,13 +473,13 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 67
       },
       "britannia": {
-        "cities": 63,
+        "cities": 39,
         "formations": 108
       }
     }
   },
   "cf-central-america": {
-    "cities": 81,
+    "cities": 65,
     "formations": 210,
     "sides": {
       "cf": {
@@ -487,13 +487,13 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 69
       },
       "britannia": {
-        "cities": 81,
+        "cities": 65,
         "formations": 141
       }
     }
   },
   "cf-mexico": {
-    "cities": 80,
+    "cities": 69,
     "formations": 155,
     "sides": {
       "cf": {
@@ -501,35 +501,35 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 64
       },
       "britannia": {
-        "cities": 76,
+        "cities": 65,
         "formations": 91
       }
     }
   },
   "eu-rocky-mountains": {
-    "cities": 101,
+    "cities": 52,
     "formations": 252,
     "sides": {
       "eu": {
-        "cities": 29,
+        "cities": 13,
         "formations": 77
       },
       "britannia": {
-        "cities": 72,
+        "cities": 39,
         "formations": 175
       }
     }
   },
   "battle-luoyang": {
-    "cities": 83,
+    "cities": 65,
     "formations": 120,
     "sides": {
       "britannia": {
-        "cities": 31,
+        "cities": 28,
         "formations": 49
       },
       "cf": {
-        "cities": 52,
+        "cities": 37,
         "formations": 71
       }
     }
@@ -563,35 +563,35 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "eu-cf-persia": {
-    "cities": 61,
+    "cities": 51,
     "formations": 161,
     "sides": {
       "eu": {
-        "cities": 17,
+        "cities": 15,
         "formations": 75
       },
       "cf": {
-        "cities": 44,
+        "cities": 36,
         "formations": 86
       }
     }
   },
   "eu-cf-xinjiang": {
-    "cities": 70,
+    "cities": 56,
     "formations": 133,
     "sides": {
       "eu": {
-        "cities": 19,
+        "cities": 15,
         "formations": 73
       },
       "cf": {
-        "cities": 51,
+        "cities": 41,
         "formations": 60
       }
     }
   },
   "eu-cf-india": {
-    "cities": 113,
+    "cities": 76,
     "formations": 141,
     "sides": {
       "eu": {
@@ -599,7 +599,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 77
       },
       "cf": {
-        "cities": 102,
+        "cities": 65,
         "formations": 64
       }
     }
@@ -633,7 +633,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "eu-cf-himalayas": {
-    "cities": 57,
+    "cities": 52,
     "formations": 111,
     "sides": {
       "eu": {
@@ -641,7 +641,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 60
       },
       "cf": {
-        "cities": 26,
+        "cities": 21,
         "formations": 51
       }
     }
@@ -661,7 +661,7 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "eu-cf-beijing": {
-    "cities": 56,
+    "cities": 51,
     "formations": 129,
     "sides": {
       "eu": {
@@ -669,31 +669,31 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
         "formations": 79
       },
       "cf": {
-        "cities": 39,
+        "cities": 34,
         "formations": 50
       }
     }
   },
   "eu-cf-luoyang": {
-    "cities": 83,
+    "cities": 64,
     "formations": 139,
     "sides": {
       "eu": {
-        "cities": 18,
+        "cities": 14,
         "formations": 79
       },
       "cf": {
-        "cities": 65,
+        "cities": 50,
         "formations": 60
       }
     }
   },
   "cf-eu-siberia": {
-    "cities": 72,
+    "cities": 71,
     "formations": 133,
     "sides": {
       "cf": {
-        "cities": 13,
+        "cities": 12,
         "formations": 73
       },
       "eu": {
@@ -703,11 +703,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-eu-caucasus": {
-    "cities": 67,
+    "cities": 65,
     "formations": 124,
     "sides": {
       "cf": {
-        "cities": 14,
+        "cities": 12,
         "formations": 63
       },
       "eu": {
@@ -717,11 +717,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-eu-turkey": {
-    "cities": 71,
+    "cities": 70,
     "formations": 169,
     "sides": {
       "cf": {
-        "cities": 13,
+        "cities": 12,
         "formations": 79
       },
       "eu": {
@@ -731,11 +731,11 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-eu-volga": {
-    "cities": 69,
+    "cities": 60,
     "formations": 145,
     "sides": {
       "cf": {
-        "cities": 30,
+        "cities": 21,
         "formations": 79
       },
       "eu": {
@@ -745,25 +745,25 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-eu-suez": {
-    "cities": 46,
+    "cities": 40,
     "formations": 99,
     "sides": {
       "cf": {
-        "cities": 17,
+        "cities": 14,
         "formations": 54
       },
       "eu": {
-        "cities": 29,
+        "cities": 26,
         "formations": 45
       }
     }
   },
   "cf-eu-moscow": {
-    "cities": 56,
+    "cities": 54,
     "formations": 162,
     "sides": {
       "cf": {
-        "cities": 17,
+        "cities": 15,
         "formations": 92
       },
       "eu": {
@@ -801,15 +801,15 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "cf-eu-central-europe": {
-    "cities": 102,
+    "cities": 55,
     "formations": 237,
     "sides": {
       "cf": {
-        "cities": 20,
+        "cities": 12,
         "formations": 118
       },
       "eu": {
-        "cities": 82,
+        "cities": 43,
         "formations": 119
       }
     }
@@ -829,15 +829,15 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "rounds-rebellion": {
-    "cities": 70,
+    "cities": 37,
     "formations": 277,
     "sides": {
       "rounds": {
-        "cities": 22,
+        "cities": 12,
         "formations": 133
       },
       "britannia": {
-        "cities": 48,
+        "cities": 25,
         "formations": 144
       }
     }
@@ -857,15 +857,15 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "chinese-civil-war": {
-    "cities": 83,
+    "cities": 32,
     "formations": 137,
     "sides": {
       "loyalists": {
-        "cities": 31,
+        "cities": 21,
         "formations": 66
       },
       "eunuchs": {
-        "cities": 52,
+        "cities": 11,
         "formations": 71
       }
     }
@@ -957,33 +957,33 @@ const SCENARIO_STATIC_MAPS=Object.freeze({
     }
   },
   "partition-britannia": {
-    "cities": 78,
+    "cities": 65,
     "formations": 132,
     "sides": {
       "eu": {
-        "cities": 30,
+        "cities": 20,
         "formations": 50
       },
       "cf": {
-        "cities": 21,
+        "cities": 19,
         "formations": 45
       },
       "remnants": {
-        "cities": 27,
+        "cities": 26,
         "formations": 37
       }
     }
   },
   "ufn-civil-war": {
-    "cities": 119,
+    "cities": 52,
     "formations": 116,
     "sides": {
       "ufn": {
-        "cities": 50,
+        "cities": 25,
         "formations": 48
       },
       "cf": {
-        "cities": 69,
+        "cities": 27,
         "formations": 68
       }
     }
