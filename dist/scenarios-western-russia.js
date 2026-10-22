@@ -320,7 +320,7 @@
         .map(([res,n])=>[res,Math.round(n)-base[res]]));
       const actual=E.income(g,side);
       for(const res of Object.keys(FUNDING[side]))
-        g.economy[side][res]=actual[res]*2;
+        g.economy[side][res]=({"britannia":{"credits":990,"industry":500,"science":112},"eu":{"credits":1250,"industry":500,"science":132}}[side]||{})[res] ?? (actual[res]*2);
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       const rivals=g.units.filter(u=>u.side!==player&&!E.TYPES[u.type].naval);
