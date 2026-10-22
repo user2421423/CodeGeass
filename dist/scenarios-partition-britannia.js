@@ -44,7 +44,7 @@ function create(_,__,seed){
  g.scenario={bounds:B,projection:{centerLon:lon,centerLat:lat,angle:0,uMin:(B.west-lon)*k,uMax:(B.east-lon)*k,vMin:B.south-lat,vMax:B.north-lat}};
  g.tiles=Array.from({length:C*R},(_,i)=>{const c=i%C,r=(i/C)|0,p=geo(c,r),kind=raw.charCodeAt(i);
   const rocky=p.lon>-122&&p.lon<-104&&p.lat>35&&p.lat<61;
-  return {c,r,owner:null,terrain:kind===0?'sea':kind===3?'offmap':kind===1?'coast':p.lat>61?'tundra':rocky?'mountain':p.lat>50||p.lon>-85?'forest':p.lon<-108&&p.lat<38?'desert':'plains'};
+  return {c,r,owner:null,terrain:kind===0?'sea':kind===3?'offmap':kind===1?'coast':p.lat>61?'snow':rocky?'mountain':p.lat>50||p.lon>-85?'forest':p.lon<-108&&p.lat<38?'desert':'plains'};
  });
  for(const [name,lon,lat,owner,tier] of cityData){
   const at=E.nearestTile(g,locate(lon,lat),t=>!E.isSea(t)&&!E.TERRAIN[t.terrain]?.blocked&&!g.stations.some(s=>s.c===t.c&&s.r===t.r),5);
@@ -75,7 +75,7 @@ function migrateSavedTerrain(g) {
  const cities = new Set(g.stations.map(s => s.r * C + s.c));
  const biome = (c, r) => {
    const p = geo(c,r), rocky = p.lon > -122 && p.lon < -104 && p.lat > 35 && p.lat < 61;
-   return p.lat > 61 ? 'tundra' : rocky ? 'mountain' :
+   return p.lat > 61 ? 'snow' : rocky ? 'mountain' :
      p.lat > 50 || p.lon > -85 ? 'forest' :
      p.lon < -108 && p.lat < 38 ? 'desert' : 'plains';
  };
