@@ -321,7 +321,7 @@ function landscape(p,c,r){
         Object.entries(FUNDING[side]).map(([res,n])=>[res,Math.round(n)-base[res]]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(FUNDING[side]))
-        g.economy[side][resource]=({"cf":{"credits":2000,"industry":500,"science":236},"eu":{"credits":1980,"industry":500,"science":212}}[side]||{})[resource] ?? (actual[resource]*2);
+        g.economy[side][resource]={"cf":{"credits":2000,"industry":500,"science":236,"sakuradite":120},"eu":{"credits":1980,"industry":500,"science":212,"sakuradite":108}}[side][resource];
     }
     if(difficulty!=='normal'&&difficulty!=='elite'){
       for(const side of SIDES.filter(v=>v!==player))
