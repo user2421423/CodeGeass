@@ -133,6 +133,9 @@
     if (!u.moved && health() >= AIRLIFT.ready) lift();
     if (u.cargo?.length) job.loaded ??= g.turn;
     else delete job.loaded;
+    // Do not plan an instant drop of passengers picked up during this turn.
+    // The airship may still fly toward its front with them aboard.
+    const readyCargo = (u.cargo || []).filter(c => c.boardedTurn !== g.turn);
     // 3. Drop: a landing hex scores for an empty enemy city it takes at once (more if the front wants it), then for
     // one the troops can walk into, else for nearness to the front's goals on the same landmass (any enemy city
     // without a front), less the fire it will draw. Only a clearly useful landing is worth giving up the troops'
@@ -150,17 +153,18 @@
           d = nearest(aims, p);
         return d > (stale ? 8 : 4) ? -Infinity : (8 - d) * 25 - localThreat(g, u, p) / 4;
       };
-    if (u.cargo?.length && !u.moved) {
+    if (readyCargo.length && !u.moved) {
       let best = null;
       for (const p of spots()) {
         const hexes = deployTargetsAt(g, p, side, true).map(t => ({ t, s: landing(t) }))
-          .filter(o => o.s > -Infinity).sort((a, b) => b.s - a.s).slice(0, u.cargo.length);
+          .filter(o => o.s > -Infinity).sort((a, b) => b.s - a.s).slice(0, readyCargo.length);
         if (!hexes.length) continue;
         const score = hexes.reduce((a, o) => a + o.s, 0) - danger(p);
         if (!best || score > best.score) best = { p, score };
       }
       if (best && best.score > (stale ? -Infinity : 100) && fly(best.p)) {
         for (let i = u.cargo.length - 1; i >= 0; i--) {
+          if (deployReason(g, u, i)) continue;
           const t = deployTargets(g, u, i).map(t => ({ t, s: landing(t) })).sort((a, b) => b.s - a.s)[0]?.t;
           if (!t) break;
           const d = deploy(g, id, i, t.c, t.r);
