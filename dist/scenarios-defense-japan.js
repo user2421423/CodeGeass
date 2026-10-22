@@ -1,5 +1,6 @@
-/* Defense of Japan — Black Knights defend the full existing Japan map from a
-   cityless Britannian carrier invasion. Existing Japan variants are untouched. */
+/* Defense of Japan — Black Knights defend Japan against a cityless Britannian
+   carrier invasion. The geography is shared, but secondary cities are removed
+   only for this scenario; all other Japan variants remain untouched. */
 (function (root) {
   'use strict';
   const E = root.Knightmare || (typeof require === 'function' ? require('./engine.js') : null);
@@ -7,7 +8,12 @@
   if (!japan) throw new Error('Defense of Japan requires the original Japan scenario');
   const SIDES = Object.freeze(['bk', 'britannia']);
   const TITLE = 'Defense of Japan';
-  const CITY_COUNT = japan.cityData.length;
+  // Thin out overlapping minor settlements. Keep every deployment anchor,
+  // working port, original fortress and Sakuradite host. This changes only
+  // Defense of Japan, never the shared Japan scenario definitions.
+  const REMOVED_CITIES = Object.freeze(["Asahikawa","Kushiro","Morioka","Akita","Fukushima","Narita","Kofu","Nagano","Hamamatsu","Wakayama","Tottori","Okayama","Yamaguchi","Kochi","Oita","Miyazaki"]);
+  const REMOVED_CITY_SET = new Set(REMOVED_CITIES);
+  const CITY_COUNT = japan.cityData.length - REMOVED_CITIES.length;
 
   // 34 two-frame formations (68 land frames); five additional two-frame units
   // reinforce the five invasion fronts without altering commander placements.
@@ -92,12 +98,62 @@
     }
     return depth;
   }
+  function removeSecondaryCities(g) {
+    const retired = new Map(g.stations.filter(s=>REMOVED_CITY_SET.has(s.name))
+      .map(s=>[s.id,s]));
+    if(retired.size!==REMOVED_CITIES.length)
+      throw Error('Defense of Japan secondary city list is out of date');
+    g.stations=g.stations.filter(s=>!retired.has(s.id));
+
+    // City IDs remain stable. Reattach all provinces from deleted cities so
+    // captures transfer their territory correctly, and never attach provinces
+    // to another island across the sea.
+    const regions=new Map();
+    let regionId=0;
+    for(const start of g.tiles){
+      const key=E.key(start);
+      if(start.terrain==='sea'||start.terrain==='offmap'||regions.has(key))continue;
+      const open=[start];
+      regions.set(key,regionId);
+      for(let i=0;i<open.length;i++)
+        for(const neighbor of E.adjacent(g,open[i])){
+          const k=E.key(neighbor);
+          if(neighbor.terrain==='sea'||neighbor.terrain==='offmap'||regions.has(k))continue;
+          regions.set(k,regionId);
+          open.push(neighbor);
+        }
+      regionId++;
+    }
+    const byRegion=new Map();
+    for(const city of g.stations){
+      const region=regions.get(E.key(city));
+      if(!byRegion.has(region))byRegion.set(region,[]);
+      byRegion.get(region).push(city);
+    }
+    function replacement(tile){
+      const sameLand=byRegion.get(regions.get(E.key(tile)))||[];
+      const candidates=sameLand.length?sameLand:g.stations;
+      let best=null,dist=Infinity;
+      for(const city of candidates){
+        const d=E.distance(tile,city,g);
+        if(d<dist){dist=d;best=city;}
+      }
+      if(!best)throw Error('Defense of Japan has an unassigned island');
+      return best.id;
+    }
+    for(const tile of g.tiles)
+      if(retired.has(tile.provinceCity))tile.provinceCity=replacement(tile);
+    for(const site of g.sites||[])
+      if(retired.has(site.city))site.city=replacement(retired.get(site.city));
+    g.mapRevision=(g.mapRevision||0)+1;
+  }
   function create(player='bk',difficulty='normal',seed=246801) {
     if(!SIDES.includes(player))throw new Error('Unsupported Defense of Japan faction: '+player);
     if(!['normal','hard','challenge','elite'].includes(difficulty))difficulty='normal';
-    // Reuse the complete 110x84 Japan theatre (44 cities, island-aware
-    // provinces, terrain, coastline, ports and Sakuradite sites).
+    // Retain the complete 110x84 geography, coastline and ports, but prune
+    // redundant cities before setting up either faction's forces or economy.
     const g=japan.create(player,'normal',seed);
+    removeSecondaryCities(g);
     const cities=new Map(g.stations.map(s=>[s.name,s]));
     g.startUnits=null; // Do not localize income before our own setup is complete.
     g.player=player;g.difficulty=difficulty;g.era='defense-japan';
@@ -112,6 +168,7 @@
     }
     g.scenario={
       id:'defense-japan',title:TITLE,version:1,phase:'carrier-invasion',
+      removedCities:REMOVED_CITIES,
       groups:[],funding:{},citylessFunding:['britannia'],
       citylessWarChestTurns:3, // This invasion's finite reserve; other scenarios keep the global default.
       bounds:japan.bounds,projection:g.scenario.projection,
@@ -206,8 +263,8 @@
       const base=E.income(g,side);
       g.scenario.funding[side]=Object.fromEntries(
         Object.entries(TARGET_INCOME[side]).map(([key,value])=>
-          // Signed city funding is necessary because the 44 existing Black
-          // Knights cities alone can exceed half Britannia's funding levels.
+          // Signed city funding is necessary because the remaining Black
+          // Knights cities can exceed half Britannia's funding levels.
           [key,side==='bk'?Math.round(value)-base[key]
             :Math.max(0,Math.round(value)-base[key])]));
       const actual=E.income(g,side);
@@ -232,15 +289,16 @@
     const bkCities=g.stations.filter(s=>s.owner==='bk').length;
     const britCities=g.stations.filter(s=>s.owner==='britannia').length;
     const invaders=g.units.filter(u=>u.side==='britannia'&&u.hp>0).length;
+    const totalCities=g.stations.length; // Also accurate for pre-change saves.
     return side==='bk'
       ?'Defend all of Japan and eliminate the Britannian invasion ('+
-        bkCities+'/'+CITY_COUNT+' cities held; '+invaders+' invading units at large).'
-      :'Land carrier troops and capture all '+CITY_COUNT+' Japanese cities ('+
-        britCities+'/'+CITY_COUNT+' captured).';
+        bkCities+'/'+totalCities+' cities held; '+invaders+' invading units at large).'
+      :'Land carrier troops and capture all '+totalCities+' Japanese cities ('+
+        britCities+'/'+totalCities+' captured).';
   }
   function winner(g) {
     if(g.mode!=='scenario'||g.scenario?.id!=='defense-japan'||
-      g.stations.length!==CITY_COUNT)return null;
+      !g.stations.length)return null;
     if(g.stations.every(s=>s.owner==='britannia'))
       return {winner:'britannia',team:'britannia',
         reason:'Britannia has conquered every city in Japan.'};
@@ -251,7 +309,8 @@
     return null;
   }
   const api={id:'defense-japan',title:TITLE,cols:japan.cols,rows:japan.rows,
-    sides:SIDES,bounds:japan.bounds,cityData:japan.cityData,
+    sides:SIDES,bounds:japan.bounds,
+    cityData:japan.cityData.filter(city=>!REMOVED_CITY_SET.has(city[0])),
     create,onTurn:()=>false,objective,winner,
     strategicScore:japan.strategicScore,orderGroup:japan.orderGroup};
   api.meta={
@@ -260,7 +319,7 @@
     ai:{doctrine:'invasion',synchronizedFlotillas:true},
     text:{
       era:'Japan · Alternate 2017',
-      intro:'The Black Knights defend all 44 Japanese cities with 68 land frames and eleven ships but only half the Britannian nominal economic funding. Britannia arrives in loaded carriers with no bases ashore and a three-turn reserve.',
+      intro:'The Black Knights defend 28 Japanese cities with 68 land frames and eleven ships but only half the Britannian nominal economic funding. Britannia arrives in loaded carriers with no bases ashore and a three-turn reserve.',
       diplomacy:'The Black Knights and Britannia are enemies from turn 1. Capture all cities as Britannia, or destroy the cityless invasion as the Black Knights.',
       elite:'Elite Japan upgrades eligible land formations to faction Elite Forces while carriers remain conventional. Existing Elite difficulty research and commander rules apply.',
       focus:{bk:'Tokyo Settlement',britannia:''}
