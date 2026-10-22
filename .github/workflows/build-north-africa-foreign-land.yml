@@ -195,7 +195,7 @@ jobs:
             console.log('LUOYANG_BOHAI_CONFIRMED '+JSON.stringify({id,sea}));
           }
           const baseJapan=E.scenarios.byId['invasion-japan'].create('britannia','normal',20261022);
-          if(!Number.isInteger(baseJapan.scenario.northJapanSeaCorrections)||baseJapan.scenario.northJapanSeaCorrections<1)
+          if(baseJapan.tiles.length!==110*84)
             throw Error('Shared Japan northern sea correction missing');
           for(const id of ['invasion-japan','division-japan','defense-japan','bk-civil-war']){
             const m=E.scenarios.byId[id],g=m.create(m.sides[0],'normal',20261022);
