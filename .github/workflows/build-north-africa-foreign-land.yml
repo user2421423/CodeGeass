@@ -1,10 +1,11 @@
-name: Build North Africa foreign landmask
+name: Build Mediterranean foreign landmasks
 
 on:
   push:
     branches: [main]
     paths:
       - 'tools/build_north_africa_foreign_mask.py'
+      - 'tools/build_suez_foreign_mask.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -35,8 +36,10 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error \
             https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson \
             -o /tmp/natural-earth-land.geojson
-      - name: Rasterize foreign land into the scenario
-        run: python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
+      - name: Rasterize foreign land into the North Africa and Suez scenarios
+        run: |
+          python3 tools/build_north_africa_foreign_mask.py /tmp/north-africa-countries.geojson
+          python3 tools/build_suez_foreign_mask.py /tmp/north-africa-countries.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
@@ -55,16 +58,27 @@ jobs:
               throw Error('North African foreign land/naval check '+JSON.stringify({side,offmap,ownedOffmap,illegalShips:illegalShips.length}));
             console.log('NORTH_AFRICA_FOREIGN_LAND '+JSON.stringify({side,offmap,ports:g.stations.filter(s=>s.portAt).length}));
           }
+          const suez=E.scenarios.byId['cf-eu-suez'];
+          for(const side of suez.sides){
+            const g=suez.create(side,'normal',20261022);
+            const offmap=g.tiles.filter(t=>t.terrain==='offmap').length;
+            const ownedOffmap=g.tiles.filter(t=>t.terrain==='offmap'&&t.owner!==null).length;
+            const illegalShips=g.units.filter(u=>E.TYPES[u.type]?.naval==='ship'&&!E.TYPES[u.type]?.air&&
+              !['sea','coast'].includes(E.tile(g,u.c,u.r)?.terrain));
+            if(offmap<100||ownedOffmap||illegalShips.length)
+              throw Error('Suez foreign land/naval check '+JSON.stringify({side,offmap,ownedOffmap,illegalShips:illegalShips.length}));
+            console.log('SUEZ_FOREIGN_LAND '+JSON.stringify({side,offmap,ports:g.stations.filter(s=>s.portAt).length}));
+          }
           NODE
-      - name: Commit verified landmask to main
+      - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Use Natural Earth foreign Mediterranean landmask in North African scenario"
+            git commit -m "Use audited foreign country masks for North African and Suez terrain"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
