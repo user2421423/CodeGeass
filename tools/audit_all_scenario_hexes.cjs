@@ -52,6 +52,18 @@ function land(x,y){
 }
 function geoAt(m,g,c,r){
  if(typeof m.geographicAt==='function')return m.geographicAt(c,r);
+ // The four Japan modes reuse an inset/zoomed geographic projection, not a
+ // rectangular interpolation of their broad source-mask bounds. Compare the
+ // independent coastline at the actual displayed hex footprint instead.
+ if(['invasion-japan','division-japan','defense-japan','bk-civil-war'].includes(m.id)){
+  const p=g.scenario?.projection;
+  if(p&&[p.centerLon,p.centerLat,p.uMin,p.uMax,p.vMin,p.vMax].every(Number.isFinite)){
+   const a=(p.angle||0)*Math.PI/180,co=Math.cos(a),si=Math.sin(a),k=Math.cos(p.centerLat*Math.PI/180);
+   const u=p.uMin+(c+.5*(r&1))*(p.uMax-p.uMin)/(g.cols-1);
+   const v=p.vMax-r*(p.vMax-p.vMin)/(g.rows-1);
+   return {lon:p.centerLon+(u*co-v*si)/k,lat:p.centerLat+u*si+v*co};
+  }
+ }
  if(typeof m.geo==='function')return m.geo(c,r);
  const b=g.scenario?.bounds||m.bounds;
  if(!b||![b.west,b.east,b.north,b.south].every(Number.isFinite))return null;
