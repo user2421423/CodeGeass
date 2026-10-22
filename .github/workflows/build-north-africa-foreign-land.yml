@@ -14,6 +14,7 @@ on:
       - 'tools/build_india_northeast_land.py'
       - 'tools/patch_greenland_mask.py'
       - 'tools/build_greenland_foreign_mask.py'
+      - 'tools/audit_all_scenario_variants.cjs'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -60,6 +61,7 @@ jobs:
         run: |
           node tools/build_sources.cjs
           node tools/audit_all_scenario_hexes.cjs /tmp/natural-earth-land.geojson
+          node tools/audit_all_scenario_variants.cjs
           node - <<'NODE'
           const E=require('./dist/engine.js');
           require('./tools/scenario_sim.cjs');
