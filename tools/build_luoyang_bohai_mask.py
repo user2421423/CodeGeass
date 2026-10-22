@@ -23,10 +23,12 @@ for r in range(R):
             bits[k>>3]|=128>>(k&7)
             count+=1
 if count<1 or count>300:raise RuntimeError('Unexpected Bohai water count '+str(count))
-path=Path(__file__).resolve().parents[1]/'dist/scenarios-luoyang.js'
-s=path.read_text()
-if "const LUOYANG_BOHAI_BITS=atob(" not in s:
-    insert="""  const LUOYANG_BOHAI_BITS=atob('');
+encoded=base64.b64encode(bits).decode('ascii')
+for filename in ('scenarios-luoyang.js','scenarios-eu-cf-luoyang.js'):
+    path=Path(__file__).resolve().parents[1]/'dist'/filename
+    s=path.read_text()
+    if "const LUOYANG_BOHAI_BITS=atob(" not in s:
+        insert="""  const LUOYANG_BOHAI_BITS=atob('');
   function restoreBohaiSea(g){
     for(const t of g.tiles){
       const i=t.r*COLS+t.c;
@@ -34,13 +36,14 @@ if "const LUOYANG_BOHAI_BITS=atob(" not in s:
     }
   }
 """
-    assert s.count('  function makeRiver(g) {')==1
-    s=s.replace('  function makeRiver(g) {',insert+'  function makeRiver(g) {',1)
-    assert s.count('    openApproaches(g);')==1
-    s=s.replace('    openApproaches(g);','    openApproaches(g);\n    restoreBohaiSea(g);',1)
-encoded=base64.b64encode(bits).decode('ascii')
-s,n=re.subn(r"const LUOYANG_BOHAI_BITS=atob\('[A-Za-z0-9+/=]*'\);",
- lambda m:"const LUOYANG_BOHAI_BITS=atob('"+encoded+"');",s)
-if n!=1:raise RuntimeError('Bohai mask insertion missing')
-path.write_text(s)
-print('LUOYANG_BOHAI_SEA',count)
+        if s.count('  function makeRiver(g) {')!=1:
+            raise RuntimeError('Missing Luoyang river insertion: '+filename)
+        s=s.replace('  function makeRiver(g) {',insert+'  function makeRiver(g) {',1)
+        if s.count('    openApproaches(g);')!=1:
+            raise RuntimeError('Missing Luoyang land/sea insertion: '+filename)
+        s=s.replace('    openApproaches(g);','    openApproaches(g);\n    restoreBohaiSea(g);',1)
+    s,n=re.subn(r"const LUOYANG_BOHAI_BITS=atob\('[A-Za-z0-9+/=]*'\);",
+        lambda m:"const LUOYANG_BOHAI_BITS=atob('"+encoded+"');",s)
+    if n!=1:raise RuntimeError('Bohai sea-mask missing: '+filename)
+    path.write_text(s)
+    print('LUOYANG_BOHAI_SEA',filename,count)
