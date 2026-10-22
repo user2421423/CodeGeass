@@ -185,6 +185,12 @@
     if (regional) g.scenario.startingResearchDoubled = true;
     // Old Stonehenge saves had a different map and an extra playable power.
     if (regional && scenarioMeta(g).saveVersion && g.scenario.version !== scenarioMeta(g).saveVersion) return null;
+    // One-time migration: preserve city HP fraction, city tiers and all active wars.
+    // Do this before legacy regional funding logic can recalculate city subsidies.
+    if(g.cityStandardVersion!==CITY_STANDARD_VERSION){
+      g.cityStandardMigrated=true;
+      standardizeCities(g,true);
+    }
     // Prior Division of Japan saves stored permanent off-map stipends. Move
     // them into the original starting cities, including the universal national
     // Sakuradite allotment, without resetting accumulated resources or territory.
