@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Generate Black Sea/Sea of Azov and Caspian footprint water samples.
 
-Natural Earth 1:50m land outlines identify Black Sea/Sea of Azov water,
-and its 1:50m lakes layer identifies the landlocked Caspian Sea. The two
+Natural Earth 1:50m land outlines identify Black Sea/Sea of Azov water.
+Caspian Sea retains the scenario's established independent shoreline polygon
+because Natural Earth's 50m lakes layer does not include the Caspian. The two
 basins are sampled separately to keep scenario fleets in their true basins.
 Each hex packs nine-sample counts as (Caspian<<4)|Black.
 """
@@ -12,6 +13,18 @@ from pathlib import Path
 C, R = 164, 114
 WEST, EAST, NORTH, SOUTH = 37.1, 51.9, 46.65, 37.05
 TARGET=Path(__file__).resolve().parents[1]/'dist/scenarios-cf-eu-caucasus.js'
+CASPIAN_SHORE=[(37.0,49.55),(38.0,49.06),(38.65,48.84),(39.4,49.03),
+ (40.0,49.54),(40.36,49.79),(40.75,49.22),(41.25,48.84),
+ (42.06,48.32),(43.0,47.53),(43.8,47.12),(44.5,46.89),
+ (45.2,46.92),(46.0,47.43),(46.65,47.64)]
+
+def caspian_coast_lon(lat):
+    if lat<=CASPIAN_SHORE[0][0]:return CASPIAN_SHORE[0][1]
+    for i in range(1,len(CASPIAN_SHORE)):
+        b=CASPIAN_SHORE[i];a=CASPIAN_SHORE[i-1]
+        if lat<=b[0]:
+            return a[1]+(b[1]-a[1])*(lat-a[0])/(b[0]-a[0])
+    return CASPIAN_SHORE[-1][1]
 
 def contains_ring(x,y,ring):
     inside=False
@@ -46,10 +59,10 @@ def inside(x,y,polys):
     return False
 
 def main():
-    if len(sys.argv)!=3:
-        raise SystemExit('Usage: build_caucasus_watermask.py <NE land.geojson> <NE lakes.geojson>')
-    land=get_polys(sys.argv[1]);lakes=get_polys(sys.argv[2])
-    if not land or not lakes:raise RuntimeError('Missing geographic reference polygons')
+    if len(sys.argv)!=2:
+        raise SystemExit('Usage: build_caucasus_watermask.py <NE land.geojson>')
+    land=get_polys(sys.argv[1])
+    if not land:raise RuntimeError('Missing geographic reference polygons')
     dx=(EAST-WEST)/C;dy=(NORTH-SOUTH)/R
     raw=bytearray(C*R)
     sea=[0,0]
@@ -61,11 +74,11 @@ def main():
             for x in (-.34,0,.34):
                 for y in (-.34,0,.34):
                     px=lon+x*dx;py=lat+y*dy
-                    # Black Sea and its Azov extension are outside Natural Earth
-                    # land; the Caspian is represented by an inland lake polygon.
+                    # Black Sea and Azov extension use independent real land
+                    # outline; Caspian is a separate existing playable basin.
                     if px<=43 and py>=40.3 and not inside(px,py,land):
                         black+=1
-                    elif px>=46.25 and py>=37.05 and inside(px,py,lakes):
+                    elif py>=37.05 and py<=46.65 and px>caspian_coast_lon(py):
                         caspian+=1
             raw[r*C+c]=(caspian<<4)|black
             if black>=8:sea[0]+=1
@@ -78,7 +91,7 @@ def main():
         lambda _:"const CAUCASUS_WATER_COUNTS=atob('"+b64+"');",src)
     if n!=1:raise RuntimeError('Caucasus watermask insertion point missing')
     TARGET.write_text(new)
-    print('CAUCASUS_WATERMASK '+json.dumps({'seaTiles':sea,'landPolygons':len(land),'lakePolygons':len(lakes),'bytes':len(raw)}))
+    print('CAUCASUS_WATERMASK '+json.dumps({'seaTiles':sea,'landPolygons':len(land),'caspianShorePoints':len(CASPIAN_SHORE),'bytes':len(raw)}))
 
 if __name__=='__main__':
     main()
