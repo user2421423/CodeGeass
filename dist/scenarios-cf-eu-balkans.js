@@ -410,7 +410,7 @@ function create(player='cf',difficulty='normal',seed=201720){
   g.scenario.funding[side]=Object.fromEntries(
    Object.entries(FUNDING[side]).map(([resource,n])=>[resource,Math.round(n)-base[resource]]));
   const actual=E.income(g,side);
-  for(const res of Object.keys(FUNDING[side]))g.economy[side][res]=actual[res]*2;
+  for(const res of Object.keys(FUNDING[side]))g.economy[side][res]=({"cf":{"credits":1840,"industry":500,"science":200},"eu":{"credits":1920,"industry":500,"science":210}}[side]||{})[res] ?? (actual[res] * (2));
  }
  if(difficulty!=='normal'&&difficulty!=='elite'){
   for(const side of SIDES.filter(s=>s!==player))
