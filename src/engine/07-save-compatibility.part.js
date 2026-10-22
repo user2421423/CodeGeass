@@ -132,6 +132,10 @@
   function migrateSave(g) {
     g = unpackSave(g);
     if (!g || g.game !== 'knightmare' || !Array.isArray(g.units)) return null;
+    // A restored regional battle keeps its existing city layout, even when
+    // loaded on the first turn after starting-income city pruning was added.
+    if (g.mode === 'scenario' && g.scenario && !g.scenario.cityPruningVersion)
+      g.scenario.cityPruningVersion = 'legacy-save';
     // Existing operations migrate commanders, cargo, scenario allegiances
     // and purchased officer progression without losing saved battle state.
     for(const records of [g.officers,g.roster])if(records)
