@@ -17,6 +17,7 @@ on:
       - 'tools/audit_all_scenario_variants.cjs'
       - 'tools/build_luoyang_bohai_mask.py'
       - 'tools/build_manchuria_border_land.py'
+      - 'tools/build_remaining_regional_shores.py'
       - '.github/workflows/build-north-africa-foreign-land.yml'
   workflow_dispatch:
 
@@ -73,10 +74,12 @@ jobs:
           python3 tools/build_greenland_foreign_mask.py /tmp/north-africa-countries.geojson
           python3 tools/build_luoyang_bohai_mask.py /tmp/natural-earth-land.geojson
           python3 tools/build_manchuria_border_land.py /tmp/natural-earth-land.geojson
+          python3 tools/build_remaining_regional_shores.py /tmp/natural-earth-land.geojson
       - name: Rebuild and audit every scenario before pushing
         run: |
           node tools/build_sources.cjs
           node tools/audit_all_scenario_hexes.cjs /tmp/natural-earth-land.geojson
+          node tools/audit_all_scenario_variants.cjs
           node - <<'NODE'
           const E=require('./dist/engine.js');
           require('./tools/scenario_sim.cjs');
@@ -191,16 +194,27 @@ jobs:
             if(sea<=164)throw Error('Bohai shoreline correction missing in '+id+': '+sea);
             console.log('LUOYANG_BOHAI_CONFIRMED '+JSON.stringify({id,sea}));
           }
+          for(const id of ['invasion-japan','division-japan','defense-japan','bk-civil-war']){
+            const m=E.scenarios.byId[id],g=m.create(m.sides[0],'normal',20261022);
+            if(!Number.isInteger(g.scenario.northJapanSeaCorrections)||g.scenario.northJapanSeaCorrections<1)
+              throw Error('Japan northern sea not corrected '+id);
+            console.log('JAPAN_SHARED_SHORE '+JSON.stringify({id,corrections:g.scenario.northJapanSeaCorrections,ports:g.stations.filter(x=>x.portAt).length}));
+          }
+          const europe=E.scenarios.byId['european-war'];
+          const eg=europe.create(europe.sides[0],'normal',20261022);
+          if(!Number.isInteger(eg.scenario.nordicTerrainCorrections)||eg.scenario.nordicTerrainCorrections<1)
+            throw Error('Europe shared northern mainland not corrected');
+          console.log('EUROPE_NORDIC_SHORE '+JSON.stringify({corrections:eg.scenario.nordicTerrainCorrections}));
           NODE
       - name: Commit verified landmasks to main
         run: |
-          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js dist/scenarios-luoyang.js dist/scenarios-eu-cf-luoyang.js
+          git add dist/scenarios-cf-eu-north-africa.js dist/scenarios-cf-eu-suez.js dist/scenarios-cf-eu-france.js dist/scenarios-eu-cf-beijing.js dist/scenarios-korea.js dist/scenarios-cf-eu-caucasus.js dist/scenarios-eu-cf-manchuria.js dist/eu-cf-india-geography.js dist/scenarios-greenland.js dist/scenarios-luoyang.js dist/scenarios-eu-cf-luoyang.js dist/scenarios.js dist/scenarios-europe.js
           if git diff --cached --quiet; then
             echo 'Foreign landmask already current.'
           else
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m "Restore actual Bohai Sea water in Luoyang and derived scenarios"
+            git commit -m "Correct shared Japan and northern Europe terrain from independent geographic data"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
