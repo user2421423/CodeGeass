@@ -420,7 +420,7 @@
         ([type,amount])=>[type,Math.max(0,Math.round(amount)-current[type])]));
       const actual=E.income(g,side);
       for(const resource of Object.keys(desired))
-        g.economy[side][resource]=({"eu":{"credits":1800,"industry":500,"science":170},"cf":{"credits":2000,"industry":500,"science":200}}[side]||{})[resource] ?? (actual[resource]*2);
+        g.economy[side][resource]={"eu":{"credits":1800,"industry":500,"science":170,"sakuradite":80},"cf":{"credits":2000,"industry":500,"science":200,"sakuradite":96}}[side][resource];
     }
     if(difficulty==='hard'||difficulty==='challenge'){
       g.units.filter(u=>u.side!==player&&!E.TYPES[u.type]?.naval).forEach(u=>E.addDifficultyFrames(u,difficulty));
