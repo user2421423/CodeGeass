@@ -1,0 +1,37 @@
+name: One-time full scenario terrain classification audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/audit_all_scenario_hexes.cjs'
+      - '.github/workflows/all-scenario-hex-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build current scenario runtime
+        run: node tools/build_sources.cjs
+      - name: Get independent Natural Earth land polygons
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_land.geojson \
+            -o /tmp/natural-earth-land.geojson
+          wc -c /tmp/natural-earth-land.geojson
+      - name: Exhaustively audit every hex in every scenario for every playable side
+        run: node tools/audit_all_scenario_hexes.cjs /tmp/natural-earth-land.geojson
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: all-scenario-terrain-findings
+          path: /tmp/all-scenario-hex-report.json
