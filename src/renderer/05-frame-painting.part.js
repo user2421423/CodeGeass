@@ -335,7 +335,9 @@ function draw(time, dt) {
   const focusedGroup=strategicOverlay?activeArmyGroup():null;
   // Unit tokens drawn back to front: base plate, frame ring, Knightmares, strength bars and commander pins.
   const living = game.units.filter(u => u.hp > 0).sort((a, b) => a.r - b.r || a.c - b.c);
-  for (const u of living) {
+  if (!detail) drawStrategicOverviewFlags(living, scale, copies, visible, selection, multiSelectedIds);
+  // Tactical art remains one formation per real hex, exactly as before.
+  if (detail) for (const u of living) {
     const base = animatedPosition(u);
     if (!visible(base)) continue;
     const t = E.TYPES[u.type],
@@ -349,12 +351,6 @@ function draw(time, dt) {
       if (readyUnit(u)) mapHasPulse = true;
       ctx.save();
       ctx.translate(x, base.y);
-      if (!detail) {
-        // Strategic zoom uses HOI4-inspired flag counters; tactical unit art is unchanged.
-        drawStrategicDivisionCounter(u, t, scale, sea, time, sel, multi, spent, group, groupColor, focusedGroup);
-        ctx.restore();
-        continue;
-      }
       drawPlate(u, scale, sea, time, sel || multi);
       ctx.globalAlpha=spent?0.6:1;
       const size = t.air ? R * 2.3 : t.cls === 'super' || t.cls === 'siege' ? R * 2.05 : t.branch === 'Armor' ? R * 1.9 : R * 1.75,
