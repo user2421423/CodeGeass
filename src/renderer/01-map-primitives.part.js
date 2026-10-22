@@ -403,13 +403,22 @@ function drawStrategicDivisionCounter(u, scale, selected) {
     !E.foe(game, game.player, u.side);
   const base = u.side === game.player ? '#455641'
     : allied ? '#43505a' : u.side === 'neutral' ? '#4e4d40' : '#39413f';
+  // Match the game's cached ready-unit state, but only glow when movement
+  // or the normal attack action remains. Repair-only/other orders do not glow.
+  const actionReady = readyUnit(u) && (!u.moved || !u.attacked);
 
   // Flat circular silhouette: no counter rectangles, type symbols, stars,
-  // numbers, HP rings or unselected glow.
+  // numbers or HP rings. A faint halo identifies units with orders left.
   ctx.beginPath();
   ctx.arc(0, 0, radius + 0.8, 0, Math.PI * 2);
   ctx.fillStyle = '#101820';
+  if (actionReady) {
+    ctx.shadowColor = 'rgba(255, 213, 120, 0.48)';
+    ctx.shadowBlur = 5;
+  }
   ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
   ctx.beginPath();
   ctx.arc(0, 0, radius - 0.3, 0, Math.PI * 2);
   ctx.fillStyle = base;
@@ -448,8 +457,8 @@ function drawStrategicDivisionCounter(u, scale, selected) {
 
   ctx.beginPath();
   ctx.arc(0, 0, radius - 0.3, 0, Math.PI * 2);
-  ctx.strokeStyle = selected ? '#ffe4a3' : '#9ba8a8';
-  ctx.lineWidth = selected ? 1.35 : 0.8;
+  ctx.strokeStyle = selected ? '#ffe4a3' : actionReady ? '#e4bf79' : '#9ba8a8';
+  ctx.lineWidth = selected ? 1.35 : actionReady ? 1 : 0.8;
   ctx.stroke();
   ctx.restore();
 }
